@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bounded Screen 1 controller. Default is a no-network, no-GPU dry run.
+"""Bounded Screen 1b controller. Default is a no-network, no-GPU dry run.
 
 prepare --execute pulls only after admission; run --execute starts one server.
 No automatic retry, restart, hard kill, settings changes, or installations.
@@ -19,6 +19,12 @@ import socket
 import subprocess
 import sys
 import time
+import threading
+
+from memory_watchdog import MemoryWatchdog, sample_memory, trip_reason
+from memory_plan import (build_prediction, format_table, enforce_prediction,
+                         collect_observations, paired_observations)
+from apply_overlay import verify_package
 import urllib.request
 
 HERE = Path(__file__).resolve().parent
@@ -51,52 +57,7 @@ def journal(since=None):
 
 
 def overlay_check():
-    root = Path(OVERLAY['source'])
-    for rel, digest in OVERLAY['files'].items():
-        path = root / rel
-        if hashlib.sha256(path.read_bytes()).hexdigest() != digest:
-            raise RuntimeError(f'Overlay drift: {path}')
-
-
-SCAN_SNIPPET = r'''
-import json, os, sys
-from pathlib import Path
-targets = set(sys.argv[1:])
-held, unreadable = [], []
-for proc in Path('/proc').glob('[0-9]*'):
-    try:
-        fds = list((proc / 'fd').iterdir())
-    except FileNotFoundError:
-        continue
-    except PermissionError:
-        unreadable.append(proc.name)
-        continue
-    for fd in fds:
-        try:
-            target = os.readlink(fd)
-        except FileNotFoundError:
-            continue
-        except PermissionError:
-            unreadable.append(proc.name)
-            break
-        if target in targets:
-            held.append({'pid': proc.name, 'node': target})
-print(json.dumps({'held': held, 'unreadable': sorted(set(unreadable))}))
-'''
-
-
-def privileged_scan(targets):
-    """Run the same fd scan as root so every PID is visible. The sudo password is read from the
-    owner's local file (outside Git) and passed on stdin only; it is never logged or echoed."""
-    pw_file = os.environ.get('SCREEN_SUDO_PASSWORD_FILE', '/home/steve/SUDOPASSWORD.txt')
-    with open(pw_file, 'rb') as fh:
-        pw = fh.read()
-    p = subprocess.run(['sudo', '-S', '-p', '', '/usr/bin/python3', '-c', SCAN_SNIPPET, *sorted(targets)],
-                       input=pw, capture_output=True, timeout=120)
-    if p.returncode != 0:
-        raise RuntimeError('privileged render-node scan failed (rc=%d)' % p.returncode)
-    out = json.loads(p.stdout.decode().strip().splitlines()[-1])
-    return out['held'], out['unreadable']
+    verify_package(HERE)
 
 
 def idle():
@@ -104,11 +65,6 @@ def idle():
     if len(nodes) != 4:
         raise RuntimeError(f'Expected four render nodes, found {len(nodes)}')
     targets = {str(n) for n in nodes}
-    if os.environ.get('SCREEN_PRIVILEGED_FD_SCAN') == '1':
-        held, unreadable = privileged_scan(targets)
-        if held or unreadable:
-            raise RuntimeError(f'Render-node idle check failed (privileged scan): holders={held}, inaccessible PIDs={unreadable}.')
-        return
     # fuser may silently miss inaccessible PIDs. Refuse incomplete /proc visibility.
     held, unreadable = [], []
     for proc in Path('/proc').glob('[0-9]*'):
@@ -142,22 +98,21 @@ def storage(required):
             raise RuntimeError('Disk admission refused; no files are deleted automatically')
 
 
-def preflight(args, image_present=False):
+def preflight(args, image_present=False, observations=None):
     if socket.gethostname() != 'steve-b70s':
         raise RuntimeError('Wrong host')
     if call(['git', '-C', REPO, 'branch', '--show-current'], capture_output=True).stdout.strip() != 'main':
         raise RuntimeError('Must remain on main')
     storage(PLAN['required_when_present_gib'] if image_present else PLAN['required_before_pull_gib'])
     overlay_check()
+    prediction = memory_prediction(args, args.run_dir if hasattr(args, 'run_dir') else HERE / 'runs' / 'screen1b-mtp1', observations)
+    enforce_prediction(prediction, require_post_hash=observations is not None)
     idle()
     with socket.socket() as s:
         s.bind(('127.0.0.1', args.port))
     text = journal()
     if FAULT.search(text):
         raise RuntimeError('Fault signature in this boot; evidence/recovery review required, no launch')
-    mem = dict(re.findall(r'^(\w+):\s+(\d+) kB', Path('/proc/meminfo').read_text(), re.M))
-    if int(mem['MemAvailable']) * 1024 < 100 * GIB:
-        raise RuntimeError('Require 100 GiB available RAM for 65+ GiB offload, runtime and loading headroom')
     print('Passive admission passed. Full 185.6 GB model hashing remains required before launch.')
 
 
@@ -172,6 +127,7 @@ def launch(args, run):
         'CCL_SYCL_ALLREDUCE_TMP_BUF': '1', 'VLLM_TARGET_DEVICE': 'xpu',
         'VLLM_WORKER_MULTIPROC_METHOD': 'spawn', 'VLLM_USE_V2_MODEL_RUNNER': '1',
         'VLLM_XPU_ENABLE_XPU_GRAPH': '1', 'B70_GDN_MODE': 'official',
+        'B70_SCREEN1B': '1', 'B70_SCREEN1B_STATE_DIR': '/screen',
         'B70_PLE_FP8': '0', 'B70_PLE_INT8': '0', 'B70_PLE_DIRECT_PINNED': '0',
         'HF_HUB_OFFLINE': '1', 'TRANSFORMERS_OFFLINE': '1',
         'HF_DATASETS_OFFLINE': '1', 'HF_HOME': '/screen/cache/hf',
@@ -183,9 +139,8 @@ def launch(args, run):
         cmd += ['-e', f'{key}={value}']
     cmd += ['-v', f'{MODEL}:/model:ro', '-v', f'{run}:/screen',
             '-v', f'{HERE / "container-entrypoint.sh"}:/screen-entrypoint.sh:ro']
-    # File mounts retain the image's installed native/Rust artifacts and metadata.
-    for rel in OVERLAY['files']:
-        cmd += ['-v', f'{OVERLAY["source"]}/{rel}:/opt/venv/lib/python3.12/site-packages/{rel}:ro']
+    # Apply hash-checked Python files inside the disposable container layer.
+    cmd += ['-v', f'{HERE}:/screen-package:ro']
     cmd += [PLAN['image'], '/screen-entrypoint.sh', '--execute', 'serve', '/model',
             '--host', '127.0.0.1', '--port', str(args.port),
             '--served-model-name', 'qwen38-flash-next-fp8-tp4',
@@ -200,6 +155,7 @@ def launch(args, run):
             '--offload-backend', 'uva', '--cpu-offload-gb', '16.25',
             '--cpu-offload-params', 'ple_embedding.ngram_embedding.weight',
             'mlp.experts.w13_weight', 'mlp.experts.w2_weight',
+            '--safetensors-load-strategy', 'lazy',
             '--moe-backend', 'triton', '--enable-prompt-tokens-details',
             '--limit-mm-per-prompt', '{"image":0,"video":0}',
             '--compilation-config', json.dumps({'cudagraph_mode': 'FULL_DECODE_ONLY', 'cudagraph_capture_sizes': {'mtp0': [1], 'mtp1': [1, 2], 'mtp3': [1, 4]}[args.mode]}),
@@ -207,6 +163,15 @@ def launch(args, run):
     if args.mode != 'mtp0':
         cmd += ['--speculative-config', json.dumps({'method': 'mtp', 'num_speculative_tokens': int(args.mode[-1]), 'rejection_sample_method': 'standard'})]
     return cmd
+
+
+def memory_prediction(args, run, observations=None):
+    prediction = build_prediction(launch(args, run), model_root=MODEL,
+                                  observations=observations)
+    print(format_table(prediction), flush=True)
+    if run.is_dir():
+        (run / 'host-memory-prediction.json').write_text(json.dumps(prediction, indent=2) + '\n')
+    return prediction
 
 
 def supervise(args, run):
@@ -221,10 +186,15 @@ def supervise_locked(args, run):
     preflight(args, image_present=True)
     with open(run / 'image-inspect.json', 'w') as receipt:
         call(['docker', 'image', 'inspect', PLAN['image']], stdout=receipt)
+    before_hash = collect_observations()
+    (run / 'memory-before-hash.json').write_text(json.dumps(before_hash, indent=2) + '\n')
     call([sys.executable, REPO / 'scripts/verify-qwen38-flash-next-fp8-tree.py',
           '--model-root', MODEL, '--receipt', run / 'model-verification.json'])
+    after_hash = collect_observations()
+    (run / 'memory-after-hash.json').write_text(json.dumps(after_hash, indent=2) + '\n')
     # Model hashing takes time. Recheck ground truth immediately before launch.
-    preflight(args, image_present=True)
+    preflight(args, image_present=True,
+              observations=paired_observations(before_hash, after_hash))
     cmd = launch(args, run)
     (run / 'launch.json').write_text(json.dumps(cmd, indent=2) + '\n')
     since = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
@@ -240,9 +210,39 @@ def supervise_locked(args, run):
     name = 'flashnext-screen1-' + run.name
     base = f'http://127.0.0.1:{args.port}'
     start = time.monotonic()
+    stop_lock = threading.Lock()
+    stop_sent = False
+    def request_stop(reason):
+        nonlocal stopping, stop_sent
+        stopping = True
+        # All workers see the latch before the entry process receives SIGINT.
+        with stop_lock:
+            latch_error = None
+            try:
+                (run / 'STOP').write_text(reason + '\n')
+            except OSError as exc:
+                latch_error = str(exc)
+            if server is None or stop_sent:
+                return
+            stop_sent = True  # never retry, including a failed Docker signal
+            try:
+                p = subprocess.run(['docker', 'kill', '--signal=SIGINT', name],
+                                   capture_output=True, text=True, timeout=10)
+                result = {'rc': p.returncode, 'stderr': p.stderr}
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                result = {'rc': None, 'error': str(exc)}
+            (run / 'graceful-stop.json').write_text(json.dumps({
+                'signal': 'SIGINT', **result,
+                'reason': reason, 'monotonic': time.monotonic(),
+                'container_name': name, 'latch_error': latch_error,
+            }, indent=2) + '\n')
+    watchdog = MemoryWatchdog(run, request_stop)
     try:
+        if watchdog.check():
+            raise RuntimeError('Memory watchdog refused allocation before launch')
         with open(run / 'server.log', 'w') as log, open(run / 'client.log', 'w') as client_log:
             server = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT)
+            watchdog.start()
             ready = False
             while time.monotonic() - start < 1800:
                 if stopping or server.poll() is not None:
@@ -286,8 +286,7 @@ def supervise_locked(args, run):
                 (run / 'client-stop-timeout.txt').write_text('Client did not drain in 30s; continue mandatory GPU shutdown.\n')
         if server:
             # docker stop with a timeout escalates to SIGKILL: deliberately avoid it.
-            p = subprocess.run(['docker', 'kill', '--signal=SIGINT', name], capture_output=True, text=True)
-            (run / 'graceful-stop.json').write_text(json.dumps({'signal': 'SIGINT', 'rc': p.returncode, 'stderr': p.stderr}))
+            request_stop('controller completion or failure')
             deadline = time.monotonic() + 300
             while time.monotonic() < deadline:
                 state = subprocess.run(['docker', 'inspect', '--format', '{{.State.Running}}', name], capture_output=True, text=True)
@@ -295,9 +294,11 @@ def supervise_locked(args, run):
                     break
                 time.sleep(2)
             else:
+                watchdog.close()
                 raise RuntimeError('Graceful shutdown did not finish within 300s. Preserve container, do not relaunch; owner must review.')
             if server.poll() is None:
                 server.wait(timeout=15)
+        watchdog.close()
         end = journal()
         (run / 'kernel-postflight.log').write_text(end)
         idle()
@@ -312,9 +313,9 @@ def check_live(run, since):
         raise RuntimeError('GPU fault: stop new requests and preserve evidence')
     if shutil.disk_usage(run).free < 50 * GIB:
         raise RuntimeError('50 GiB reserve breached; gracefully stop')
-    mem = re.search(r'^MemAvailable:\s+(\d+) kB', Path('/proc/meminfo').read_text(), re.M)
-    if int(mem[1]) * 1024 < 8 * GIB:
-        raise RuntimeError('Available RAM below 8 GiB; gracefully stop')
+    reason = trip_reason(sample_memory())
+    if reason:
+        raise RuntimeError(reason + '; gracefully stop')
 
 
 def main():
@@ -322,20 +323,24 @@ def main():
     p.add_argument('action', choices=['preflight', 'prepare', 'run', '_worker'])
     p.add_argument('--mode', choices=['mtp0', 'mtp1', 'mtp3'], default='mtp1')
     p.add_argument('--port', type=int, default=19988)
-    p.add_argument('--run-dir', type=Path, default=HERE / 'runs' / 'screen1-mtp1')
+    p.add_argument('--run-dir', type=Path, default=HERE / 'runs' / 'screen1b-mtp1')
     x = p.add_mutually_exclusive_group()
     x.add_argument('--execute', action='store_true')
     x.add_argument('--dry-run', action='store_true')
     args = p.parse_args()
     run = args.run_dir.resolve()
+    args.run_dir = run
     if args.port == 8188 or not 1024 <= args.port <= 65535:
         p.error('Choose an unused non-LTX unprivileged port')
     overlay_check()
     print(json.dumps({'mode': args.mode, 'image': PLAN['image'], 'disk_before_pull_gib': 89,
                       'requests': 16, 'launches': 1, 'promotion_eligible': False}, indent=2))
     if not args.execute:
-        print('DRY RUN: no GPU, network, process inspection, pull, model hashing or writes.')
-        show(['docker', 'pull', PLAN['image']])
+        prediction = build_prediction(launch(args, run), model_root=MODEL)
+        print(format_table(prediction))
+        print('DRY RUN: reads config/index/tensor headers only; no GPU, network, process inspection, Docker operation or writes.')
+        if args.action == 'prepare':
+            show(['docker', 'pull', PLAN['image']])
         show([sys.executable, REPO / 'scripts/verify-qwen38-flash-next-fp8-tree.py', '--model-root', MODEL, '--receipt', run / 'model-verification.json'])
         show(launch(args, run))
         show([sys.executable, HERE / 'protocol.py', '--mode', args.mode, '--base-url', f'http://127.0.0.1:{args.port}', '--output-dir', run / 'client', '--execute'])
@@ -350,14 +355,15 @@ def main():
         call(['docker', 'pull', PLAN['image']])
         storage(60)
     elif args.action == 'run':
+        if run.exists():
+            raise RuntimeError('Result directory already exists; preserve it and choose a fresh --run-dir')
         preflight(args, image_present=True)
         call(['docker', 'image', 'inspect', PLAN['image']], stdout=subprocess.DEVNULL)
         run.mkdir(parents=True, exist_ok=False)
         for d in ['tmp', 'hf', 'triton', 'vllm', 'xdg']:
             (run / 'cache' / d).mkdir(parents=True)
         unit = 'flashnext-screen1-' + datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
-        passthrough = [f'--setenv={k}={os.environ[k]}' for k in ('SCREEN_PRIVILEGED_FD_SCAN', 'SCREEN_SUDO_PASSWORD_FILE') if k in os.environ]
-        command = ['systemd-run', '--user', '--unit', unit, '--collect', *passthrough,
+        command = ['systemd-run', '--user', '--unit', unit, '--collect',
                    '--property=Restart=no', '--property=KillMode=process', '--property=SendSIGKILL=no',
                    '--property=TimeoutStopSec=360', sys.executable, str(HERE / 'screen.py'), '_worker',
                    '--mode', args.mode, '--port', str(args.port), '--run-dir', str(run), '--execute']

@@ -65,17 +65,51 @@ class Tests(unittest.TestCase):
             return SimpleNamespace(returncode=0, stdout='false\n', stderr='')
         with tempfile.TemporaryDirectory() as tmp, \
              patch.object(screen, 'preflight'), patch.object(screen, 'call'), \
+             patch.object(screen, 'MemoryWatchdog') as watchdog, \
+             patch.object(screen, 'collect_observations', return_value={}), \
              patch.object(screen, 'check_live'), patch.object(screen, 'idle'), \
              patch.object(screen, 'journal', return_value='clean boot\n'), \
              patch.object(screen.signal, 'signal'), \
              patch.object(screen.subprocess, 'Popen', side_effect=[server, client]), \
              patch.object(screen.subprocess, 'run', side_effect=fake_run), \
              patch.object(screen.urllib.request, 'urlopen', side_effect=responses):
+            watchdog.return_value.check.return_value = None
             with self.assertRaisesRegex(RuntimeError, 'Client failed'):
                 screen.supervise(args, Path(tmp))
         self.assertEqual(sum(c[:2] == ['docker', 'kill'] for c in commands), 1)
         self.assertIn('--signal=SIGINT', commands[0])
         self.assertFalse(any('SIGKILL' in str(c) or 'restart' in c for c in commands))
+
+    def test_watchdog_and_cleanup_share_one_sigint(self):
+        args = SimpleNamespace(mode='mtp1', port=19988)
+        commands = []
+        class Process:
+            def poll(self): return None
+            def wait(self, timeout): return 0
+        class Watchdog:
+            def __init__(self, run, callback): self.callback = callback
+            def check(self): return None
+            def start(self): self.callback('test pressure trip')
+            def close(self): pass
+        def fake_run(command, **kwargs):
+            commands.append(command)
+            return SimpleNamespace(returncode=0, stdout='false\n', stderr='')
+        with tempfile.TemporaryDirectory() as tmp, \
+             patch.object(screen, 'preflight'), patch.object(screen, 'call'), \
+             patch.object(screen, 'collect_observations', return_value={}), \
+             patch.object(screen, 'MemoryWatchdog', Watchdog), \
+             patch.object(screen, 'idle'), \
+             patch.object(screen, 'journal', return_value='clean boot\n'), \
+             patch.object(screen.signal, 'signal'), \
+             patch.object(screen.subprocess, 'Popen', return_value=Process()), \
+             patch.object(screen.subprocess, 'run', side_effect=fake_run):
+            with self.assertRaisesRegex(RuntimeError, 'Startup stopped'):
+                screen.supervise(args, Path(tmp))
+            self.assertIn('controller completion', (Path(tmp) / 'STOP').read_text())
+            stop = json.loads((Path(tmp) / 'graceful-stop.json').read_text())
+            self.assertEqual(stop['reason'], 'test pressure trip')
+        self.assertEqual(sum(c[:2] == ['docker', 'kill'] for c in commands), 1)
+        self.assertFalse(any('SIGKILL' in str(c) for c in commands))
 
 
 if __name__ == '__main__':

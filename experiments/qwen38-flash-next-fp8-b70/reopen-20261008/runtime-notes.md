@@ -1,4 +1,4 @@
-# Screen 1 runtime/source review (2026-10-08; CPU only)
+# Screen 1b runtime/source review (2026-10-08; CPU only)
 
 Scope: static portability and experiment preparation under the repository's
 review-model-contribution skill. Lumnus/wu1ff deltas remain community-reported;
@@ -7,8 +7,8 @@ no new speed, exactness or safe memory-fit result has been measured.
 ## Runtime choice
 
 Choose official `vllm/vllm-openai-xpu:v0.30.0`, resolved to the inspected amd64
-manifest, with the reviewed Lumnus Python files mounted over the corresponding
-installed files. This is the cheapest way to screen a modern runtime without a
+manifest, with the reviewed Lumnus Python files and lab port applied as hash-checked
+replacements of the corresponding installed files. This is the cheapest way to screen a modern runtime without a
 native compile. Do not mount a whole `vllm/` directory over site-packages: that
 can hide wheel-provided compiled/Rust artifacts. Run from `/`, because the image's
 `/workspace/vllm` source checkout otherwise shadows the installed package.
@@ -37,43 +37,116 @@ checkpoint's indexer keys and quantization exclusions, and do not enable
 `B70_PLE_FP8`, `B70_PLE_INT8`, `B70_PLE_INT8_NVME`, external `PLE_TABLE_PATH`,
 CPU KV offload, sampler defaults or the private residency shim.
 
-### Memory route and its limits
+### Screen 1b port and memory gates
 
-The new model's exact suffix is still
-`ple_embedding.ngram_embedding.weight`: `Qwen4ExpDecoderLayer.ple` contains
-`Qwen4ExpPLELayer.ple_embedding`, which contains
-`Qwen4ExpNGramEmbedding.ngram_embedding`.
-`model_executor/models/utils.py:make_layers` routes each decoder layer through
-`model_executor/offloader/uva.py:UVAOffloader.wrap_modules`; this covers PLE.
-Token embeddings are outside that loop, so merely listing `embed_tokens.weight`
-does not guarantee their offload. Keep them resident and budget ~0.3 GiB/rank.
+Screen 1 failed during loading. Its 16.25 GiB/rank generic offloader could
+make both a pageable and pinned copy of the 12.800 GB native FP8 PLE shard.
+The new Python overlay allocates final pinned PLE storage directly and exposes
+an XPU UVA view. It counts that allocation in the same selective offload budget;
+it never adds a second PLE table. Only explicitly checkpoint-backed PLE may
+discard its initial unfilled bytes. Ordinary selected expert tensors preserve
+their contents through bounded copies. Token embeddings remain on device.
 
-A concrete no-native-port candidate is:
+The lab contracts come from the certified lossless-MTP1 series: direct
+allocation (0010), root-level complete shard coverage (0027/0030/0031),
+pre-materialization filtering (0033), device ownership (0007), and bounded
+transport/drainage (0003/0032). The selected route is direct UVA; no separate
+PLE worker, external table, compression or process transport is enabled. The
+port refuses other routes instead of pretending to support them. PLE scales,
+padding, shard ranges and original checkpoint values remain part of loading.
+
+All new code is in Python whole-file replacements; `apply_overlay.py` verifies
+the official V30 base or the exact already-applied output before replacing
+files. `overlay-manifest.json` pins both sides. The original source tree is
+unchanged. No native wheel, GDN operator, FP8 checkpoint or sampler is replaced
+by this port. Existing pinned Lumnus files are included for a self-contained
+Python overlay; upstream/native provenance remains separate.
+
+One cross-rank allocation lock covers only collective-free pin allocations
+and bounded copies, never the whole model constructor. The lazy safetensors
+path filters unowned PLE shard names before materialization. Copies account for
+source plus destination within a 256 MiB live-copy ceiling and drain before
+source release. Root-load validation refuses missing, duplicate, malformed
+or unexpected PLE shards. Unsupported oversized conversion temporaries refuse
+rather than falling back to unbounded staging. Construction/postprocessing
+allocations outside that copy mechanism remain an explicit qualification risk.
+
+The loading guard observes `/screen/STOP` before new work. Worker startup and
+engine/worker cleanup are patched for early cancellation and draining, including
+the engine manager's separate escalation path. The controller's 250 ms watchdog
+trips at whole-host pressure ≥80,000,000,000 bytes or MemAvailable ≤32 GiB.
+Next-allocation admission uses the same limits. One controller SIGINT is shared
+between watchdog and normal cleanup; no Docker stop-to-kill timeout is used.
+A stalled drain is recorded for the owner and is never escalated to a hard kill.
+
+#### MTP1 / maximum length 4,352 prediction
+
+GB means decimal bytes; GiB means 2^30 bytes. Values are source/header-derived
+sizes or explicitly labeled assumptions, **not measurements**.
+
+| Whole-host component | Bytes | GB | Basis |
+| --- | ---: | ---: | --- |
+| Final pinned PLE + selected whole expert tensors | 70,494,044,160 | 70.494044 | Actual parameter order and budget overshoot; PLE counted once |
+| Runtime/private/retained allocation allowance | 12,884,901,888 | 12.884902 | Fit-note assumption, unqualified on V30 |
+| Active unique file/staging allowance | 4,294,967,296 | 4.294967 | Fit-note assumption, not all checkpoint page cache |
+| Other host + driver allowance | 4,294,967,296 | 4.294967 | Fit-note assumption, not summed RSS |
+| Maximum extra in-flight bounded copy | 268,435,456 | 0.268435 | One admitted rank; 256 MiB source plus destination |
+| **Planning peak** | **92,237,316,096** | **92.237316** | **Exceeds 90 GB** |
+
+`memory_plan.py` reads config/index and bounded safetensors headers, checks source
+identity, enumerates PLE/w13/w2 registration order, and evaluates exactly:
 
 ```text
---offload-backend uva --cpu-offload-gb 16.25
---cpu-offload-params ple_embedding.ngram_embedding.weight mlp.experts.w13_weight mlp.experts.w2_weight
---moe-backend triton
+Hphase = B_other_host + sum_r(P_final_live + A_private_excluding_P
+         + T_copies_live + A_retained) + F_active_unique + K_driver + safety
+Hpred = max(Hphase)
+Vpeak[r] = max(Vphase[r])
+require Hpred <= 90_000_000_000
+require physical_VRAM[r] - Vpeak[r] >= 4 * 2**30
+require post-hash MemAvailable >= remaining_growth + shutdown_margin
 ```
 
-This is whole-tensor expert offload, not the lab's selected 3.5 GiB/rank expert-row
-placement. It preserves all callable weights but can be slower on ordinary
-prompts. The checkpoint declares `ple_layer_ids=[2]`: the first decoder layer's
-expert tensors are considered before the second layer's ~11.92 GiB/rank PLE,
-then later expert tensors consume the remaining budget. The UVA offloader checks
-its budget before each parameter and can exceed it by one whole parameter.
-The runtime must record actual offloaded bytes, served backend and memory fit;
-16.25 GiB is an admission assumption, not a measured fit. Do not silently reduce
-KV precision or change placement if it fails. The four ranks need approximately
-65 GiB of pinned weight storage plus loading/runtime overhead; require a separate
-host-RAM admission (100 GiB MemAvailable is conservative preparation guidance).
+The phase manifest explicitly lists construction, pinning, checkpoint copy,
+postprocessing, MTP, KV, capture and serving. Unknown bounds are `null` and
+refuse. Observed RSS/cgroup/meminfo values describe memory ownership; they are
+not added on top of pinned storage. Complete bounds require source/config/launch
+identity and qualified lifetime evidence, plus pre/post-hash observations.
+`host-memory-prediction.json` is the static refusal receipt for the candidate.
 
-`platforms/xpu.py` automatically disables Inductor's static Triton launcher for
-UVA. Without that, host-USM pointers can be rejected. `PLE_TABLE_PATH` is not a
-safe dummy switch: it eventually invokes `torch.load` on that file. Selecting
-Lumnus pinned-host PLE explicitly in source is an alternative, but its slab
-materialization temporarily retains pageable and pinned copies and needs its own
-memory audit. It is not needed merely to enable the existing generic UVA route.
+Final v5 row placement is **not ported into Screen 1b**. It cannot remedy the
+allocation-total conflict under these allowances. The static conditional proof
+allows arbitrary placement and optimistically shards all checkpoint storage
+except source-proven replicated HC matrices. Given the host pin ceiling, it
+still needs at least 28.560915 GiB/card including the explicit full-precision KV,
+even before GDN/capture/workspaces. A nominal 32 GiB card then has less than
+four GiB spare. The actual physical capacity is smaller; exact per-card receipts
+and complete V30 upper bounds remain required. This does not establish that
+all lossless approaches are impossible: the allowances need evidence, and
+further runtime-memory work can change the total.
+
+The historical placement series' global compaction failed; it must not be
+reintroduced. If later evidenced bounds show fine row placement is needed,
+port final **load-time v5** resident/host allocation and row-view loading with
+unchanged Triton addressing/scales, not the old whole-rank staging attempts.
+
+#### Exactness limits and future command
+
+Fused GDN remains active. The 2K/4K pins compare exact fixture token streams
+against the certified older lane. A mismatch is real fixture divergence but
+cannot isolate GDN from changed model lineage, MoE arithmetic or compilation.
+A match is fixture evidence, not general output parity or a substitute for
+quality gates and fresh-server repeats. MTP3 requires independent qualification.
+No speed claim follows from this CPU port.
+
+From `experiments/qwen38-flash-next-fp8-b70/reopen-20261008`:
+
+```sh
+python3 screen.py run --mode mtp1 --execute
+```
+
+The supplied configuration **refuses before launch**. It is the exact future
+controller command, not permission to use cards currently owned by LTX. Use
+`--dry-run` to print the complete prediction and launch flags on CPU.
 
 ### What missing b70.3 native changes lose
 

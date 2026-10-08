@@ -1,0 +1,177 @@
+{
+  "schema": "screen1b.memory-phase-bounds.v1",
+  "qualified": false,
+  "source_root": "/home/steve/src/lumnus-20261008/vllm",
+  "source_sha256": {
+    "vllm/models/qwen4_exp/nvidia/model.py": "ff413ff88dd8830b5e147983b997f956ebfd446ddf57fdf0d10168fdfd75a5db",
+    "vllm/models/qwen4_exp/nvidia/hyperconnection.py": "15eaf5683f62dca162eb8a1825b632598f60b230ceaf56b8611a338cb1315663",
+    "vllm/models/qwen4_exp/nvidia/ngram_embedding.py": "c56577011b058f386ddc44b1b713e34a2e4086a68b2c2a6e971f82fdf0dcd1fc",
+    "vllm/models/qwen4_exp/nvidia/mtp.py": "d1ba61dd9843e536fff1933b2dca18d92a308d6d7516f0c6ff73ce1b56ea963c",
+    "vllm/model_executor/offloader/uva.py": "4e6a82e71d610bd449cf2fed059a7fe91bfa12dbe6622ba9bdcf39cbf0ebe7ee",
+    "vllm/model_executor/model_loader/default_loader.py": "9c9d54b1b650bf5affc924ebb8b8c73711e187ae7486cadd9f737bb1279cc7b8",
+    "vllm/model_executor/layers/quantization/fp8.py": "947540b443c15e9e5b4c08ff07f7a7c0e8d8f0d8494f3964c0172a772a779fe5",
+    "vllm/v1/worker/gpu/model_runner.py": "0b02bdb26b340d57869861c0570815bc68d36812a87c1b78a16960f3b20f842a"
+  },
+  "model_config_sha256": "99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e70a15a90a8d",
+  "model_index_sha256": "0419e2c2dfbb925257d7409405433a793cf7ff7d96f3eba882a815ec6d9fe7a6",
+  "physical_vram_bytes_per_rank": [
+    34242297856,
+    null,
+    null,
+    null
+  ],
+  "physical_vram_evidence": {
+    "rank0": {
+      "receipt": "../data/20260826-fullshape-triton-fp8-moe-pressure-isolation.json",
+      "sha256": "1e3c648f797e735e1b89c5768848112ea762811442ae1ede2f14d4e9dcba5838",
+      "json_field": "full_model_attempt12_boundary.device_total_bytes",
+      "value_bytes": 34242297856,
+      "scope": "historical rank0 device capacity; no current boot/card identity attestation"
+    },
+    "ranks1_to_3": "exact per-card receipts not located; required bounds remain null",
+    "nominal_32gib": "optimistic capacity upper bound only for conditional impossibility proof; never admission"
+  },
+  "illustrative_assumptions": {
+    "private_runtime_and_retention_bytes": 12884901888,
+    "active_files_bytes": 4294967296,
+    "other_host_and_driver_bytes": 4294967296
+  },
+  "illustrative_assumptions_source": "../notes/2026-10-08-screen1b-host-memory-fit.md: explicitly chosen 12+4+4 GiB allowances, not measurements or certified bounds",
+  "enforced_candidate_contract": {
+    "maximum_copy_ranks": 1,
+    "maximum_live_copy_bytes": 268435456,
+    "direct_ple_destination_allocation": true,
+    "model_and_ple_requantization": false
+  },
+  "remaining_committed_growth_bytes": null,
+  "phases": {
+    "construction": {
+      "other_host": null,
+      "private_per_rank": null,
+      "copies_per_rank": null,
+      "retained_per_rank": null,
+      "active_files": null,
+      "driver": null,
+      "safety": null,
+      "vram_peak_per_rank": [
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "pinning": {
+      "other_host": null,
+      "private_per_rank": null,
+      "copies_per_rank": null,
+      "retained_per_rank": null,
+      "active_files": null,
+      "driver": null,
+      "safety": null,
+      "vram_peak_per_rank": [
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "checkpoint_copy": {
+      "other_host": null,
+      "private_per_rank": null,
+      "copies_per_rank": null,
+      "retained_per_rank": null,
+      "active_files": null,
+      "driver": null,
+      "safety": null,
+      "vram_peak_per_rank": [
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "postprocessing": {
+      "other_host": null,
+      "private_per_rank": null,
+      "copies_per_rank": null,
+      "retained_per_rank": null,
+      "active_files": null,
+      "driver": null,
+      "safety": null,
+      "vram_peak_per_rank": [
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "mtp_load": {
+      "other_host": null,
+      "private_per_rank": null,
+      "copies_per_rank": null,
+      "retained_per_rank": null,
+      "active_files": null,
+      "driver": null,
+      "safety": null,
+      "vram_peak_per_rank": [
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "kv_allocation": {
+      "other_host": null,
+      "private_per_rank": null,
+      "copies_per_rank": null,
+      "retained_per_rank": null,
+      "active_files": null,
+      "driver": null,
+      "safety": null,
+      "vram_peak_per_rank": [
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "compilation_capture": {
+      "other_host": null,
+      "private_per_rank": null,
+      "copies_per_rank": null,
+      "retained_per_rank": null,
+      "active_files": null,
+      "driver": null,
+      "safety": null,
+      "vram_peak_per_rank": [
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "serving": {
+      "other_host": null,
+      "private_per_rank": null,
+      "copies_per_rank": null,
+      "retained_per_rank": null,
+      "active_files": null,
+      "driver": null,
+      "safety": null,
+      "vram_peak_per_rank": [
+        null,
+        null,
+        null,
+        null
+      ]
+    }
+  },
+  "unknowns": [
+    "V30 per-rank private runtime, allocator retention, CCL and driver bound",
+    "Postprocessing duplicate/repack and compilation/capture pool bound",
+    "Complete per-rank resident weight partition and MTP/GDN/workspace upper bound",
+    "Exact physical VRAM capacities for all four cards",
+    "Post-hash host, cgroup, process observations in an otherwise idle launch window",
+    "Load cancellation latency and complete allocation lifetime qualification"
+  ]
+}
