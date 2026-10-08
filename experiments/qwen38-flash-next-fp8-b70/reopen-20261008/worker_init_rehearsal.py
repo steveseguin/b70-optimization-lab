@@ -171,6 +171,14 @@ def bootstrap(rank=0, guard_source=None):
         module = importlib.util.module_from_spec(spec)
         sys.modules[spec.name] = module
         spec.loader.exec_module(module)
+        # Keep the old conversion/admission implementation under test. Supply
+        # only the new pure byte-accounting API needed by today's placement.
+        current_spec = importlib.util.spec_from_file_location('current_guard_accounting', HERE/'overlay/vllm/screen1b_guard.py')
+        current = importlib.util.module_from_spec(current_spec)
+        current_spec.loader.exec_module(current)
+        module.pinned_allocation_bytes = current.pinned_allocation_bytes
+        module.PINNED_ALLOC_ENVS = current.PINNED_ALLOC_ENVS
+        module.PINNED_ALLOC_CONF = current.PINNED_ALLOC_CONF
     platforms = package('vllm.platforms', [SOURCE / 'vllm/platforms'])
     from vllm.platforms.interface import Platform, PlatformEnum, CpuArchEnum
     class RehearsalPlatform(Platform):
@@ -253,6 +261,7 @@ def bootstrap(rank=0, guard_source=None):
         (root / 'placement.json').write_text(json.dumps(placement))
         stack.enter_context(patch.dict(os.environ, {
             'B70_SCREEN1B': '1', 'B70_SCREEN1B_STATE_DIR': temp,
+            **dict.fromkeys(guard.PINNED_ALLOC_ENVS, guard.PINNED_ALLOC_CONF),
             'Q38_EXPERT_HOST_PLACEMENT': str(root / 'placement.json')}))
         stack.enter_context(patch.object(guard, 'synchronize', lambda: None))
         # Deterministic fixture pressure; another lane's live memory must not

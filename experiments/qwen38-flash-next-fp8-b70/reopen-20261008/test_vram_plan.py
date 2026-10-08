@@ -54,8 +54,8 @@ class VramPlanTests(unittest.TestCase):
         p = memory_plan.build_prediction(self.command)
         self.assertEqual(p['final_pins_bytes_per_rank'], [14171275264]*4)
         self.assertEqual(sum(p['replication_aware_weight_census_before_offload'].values()), 35842011128)
-        self.assertGreater(p['illustrative_host_peak_bytes'], 97_000_000_000)
-        self.assertEqual(p['illustrative_components']['pinned_allocator_rounding_bytes'], 24_249_237_504)
+        self.assertLess(p['illustrative_host_peak_bytes'], 90_000_000_000)
+        self.assertEqual(p['illustrative_components']['pinned_allocator_rounding_bytes'], 393_216)
         for row in p['vram_planning_scenario']['ranks']:
             self.assertGreaterEqual(row['utilization_headroom_bytes'], v.GIB)
             self.assertGreaterEqual(row['total_used_utilization_headroom_bytes'], v.GIB)

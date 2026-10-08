@@ -393,6 +393,9 @@ def launch(args, run):
         # Per-process NEO allocation policy, not a host setting. See the LTX
         # 2026-10-04-host-ram-shadow-of-vram note; retain peer sharing.
         'NEOReadDebugKeys': '1', 'EnableDeferBacking': '0',
+        # Set all aliases: torch 2.13 checks legacy names before the generic one.
+        **{key: 'pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1' for key in
+           ('PYTORCH_ALLOC_CONF', 'PYTORCH_CUDA_ALLOC_CONF', 'PYTORCH_HIP_ALLOC_CONF')},
         'ZE_AFFINITY_MASK': '0,1,2,3', 'ZE_FLAT_DEVICE_HIERARCHY': 'FLAT',
         'CCL_ZE_IPC_EXCHANGE': 'sockets', 'CCL_SYCL_ALLGATHERV_TMP_BUF': '1',
         'CCL_SYCL_ALLREDUCE_TMP_BUF': '1', 'VLLM_TARGET_DEVICE': 'xpu',
@@ -410,7 +413,7 @@ def launch(args, run):
     if args.mode == 'calibrate-load':
         limit = getattr(args, 'loading_ram_guard_gb', None)
         limit = 90 if limit is None else limit
-        require(0 < limit <= 90, 'calibrate-load RAM guard must be positive and at most 90 GB')
+        require(0 < limit <= 96, 'calibrate-load RAM guard must be positive and at most 96 GB')
         env[calibration.LOADING_GUARD_ENV] = str(int(limit * 1_000_000_000))
     for key, value in env.items():
         cmd += ['-e', f'{key}={value}']
@@ -688,7 +691,7 @@ def main():
                    help='Same-boot four-card health receipt (<6 h); required after a boot fault')
     p.add_argument('--calibration', type=Path, help='Qualified calibration-load.json for MTP1')
     p.add_argument('--loading-ram-guard-gb', type=int,
-                   help='Calibrate-load only: host-use ceiling in decimal GB (default 90, maximum 90)')
+                   help='Calibrate-load only: host-use ceiling in decimal GB (default 90, maximum 96)')
     p.add_argument('--port', type=int, default=19988)
     p.add_argument('--run-dir', type=Path, default=None)
     x = p.add_mutually_exclusive_group()
@@ -696,8 +699,8 @@ def main():
     x.add_argument('--dry-run', action='store_true')
     args = p.parse_args()
     if args.loading_ram_guard_gb is not None:
-        if args.mode != 'calibrate-load' or not 0 < args.loading_ram_guard_gb <= 90:
-            p.error('--loading-ram-guard-gb requires calibrate-load and a value from 1 to 90')
+        if args.mode != 'calibrate-load' or not 0 < args.loading_ram_guard_gb <= 96:
+            p.error('--loading-ram-guard-gb requires calibrate-load and a value from 1 to 96')
     elif args.mode == 'calibrate-load':
         args.loading_ram_guard_gb = 90
     run = (args.run_dir or HERE / 'runs' / ('screen1b-' + args.mode)).resolve()

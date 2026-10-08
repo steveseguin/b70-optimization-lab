@@ -70,6 +70,11 @@ class FakeTensor:
         return math.prod(self.shape)
     def data_ptr(self):return self.ptr
     def is_pinned(self):return self.pinned
+    def is_contiguous(self):return True
+    def stride(self, dim=None):
+        import math
+        strides=tuple(math.prod(self.shape[i+1:]) for i in range(len(self.shape)))
+        return strides if dim is None else strides[dim]
     def to(self,device):self.device=device;return self
 
 
@@ -83,7 +88,8 @@ class AllocationTests(unittest.TestCase):
         def tensor(values,**kw):return FakeTensor([len(values)],device=kw['device'],values=values)
         torch=NS(empty=tensor_empty,tensor=tensor,int64='int64',
                  nn=NS(Parameter=lambda x,**kw:x),xpu=NS(device=lambda d:contextlib.nullcontext()))
-        guard=NS(admission=lambda *a:contextlib.nullcontext(),receipt=lambda *a,**k:None)
+        from test_overlay_cpu import guard as real_guard
+        guard=NS(pinned_allocation_bytes=real_guard.pinned_allocation_bytes,admission=lambda *a:contextlib.nullcontext(),receipt=lambda *a,**k:None)
         def uva(host):
             view=FakeTensor(host.shape);view.device=device;return view
         device=NS(type='xpu')

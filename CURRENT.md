@@ -5,6 +5,17 @@ below remain that host's own research record; this consolidation did not operate
 
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
+**2026-10-08, Flash-Next attempt 7 prepared on CPU:** large pinned buffers
+now request their exact sizes through the runtime's allocator setting. This
+removes about **24.25 GB of padding** without changing the stored model bytes.
+The estimate is **76.37 GB steadily** and **76.64 GB during loading**, or
+**78.79 GB** with extra room for later work. The current row placement and
+4 GiB PLE cache stay in place; moving rows back to cards 1–3 is unnecessary
+in this budget. A **96 GB load-only guard** is prepared; the watchdog and
+answer-generation gates are unchanged. All 213 CPU tests pass. Native fit and output checks still
+need measurement. Nothing was launched or committed; LTX and port 8188 were
+untouched. [Budget, CPU checks and prepared command](experiments/qwen38-flash-next-fp8-b70/reopen-20261008/ATTEMPT7-BUDGET.md).
+
 **2026-10-08, Flash-Next attempt 6 checked on CPU:** the host buffers are
 larger than their tensor sizes because the allocator rounds each one up.
 The saved samples match that explanation. Completing the current placement

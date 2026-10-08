@@ -84,8 +84,11 @@ def allocate_weight(layer, name, shape, dtype):
     tail = tuple(shape[1:])
     itemsize = torch.empty((), device='meta', dtype=dtype).element_size()
     row_bytes = math.prod(tail) * itemsize
-    with guard.admission('v5_final_host_rows', len(host_rows) * row_bytes):
+    allocation = guard.pinned_allocation_bytes(len(host_rows) * row_bytes)
+    with guard.admission('v5_final_host_rows', allocation['allocator_request_bytes']):
         host = torch.empty((len(host_rows), *tail), dtype=dtype, device='cpu', pin_memory=True)
+        if not host.is_contiguous() or host.stride(0) * itemsize != row_bytes:
+            raise RuntimeError('v5 host rows must remain contiguous with unchanged row stride')
         if not host.is_pinned():
             raise RuntimeError('v5 host allocation was not pinned')
         resident = torch.empty((len(resident_rows), *tail), dtype=dtype)
@@ -110,7 +113,9 @@ def allocate_weight(layer, name, shape, dtype):
         layer.__dict__['_q38_placed_' + name] = param
         guard.receipt('v5_allocated', layer=layer.layer_name, parameter=name,
                       logical_experts=shape[0], host_rows=len(host_rows),
-                      host_bytes=host.numel()*itemsize, device_bytes=resident.numel()*itemsize)
+                      host_bytes=host.numel()*itemsize, device_bytes=resident.numel()*itemsize,
+                      pinned_allocation=allocation, host_stride=list(host.stride()),
+                      host_alignment_remainder=host.data_ptr() % 256)
         return param
 
 

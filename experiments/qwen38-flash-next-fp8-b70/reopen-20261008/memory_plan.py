@@ -197,6 +197,9 @@ def launch_identity(command):
         raise ValueError('registration census supports exactly PLE/w13/w2 suffixes')
     return {'tensor_parallel_size': tp, 'expert_parallel_size': tp,
             'driver_environment': driver_env,
+            'pinned_allocator_environment': {key: [command[i+1].split('=', 1)[1]
+                for i, arg in enumerate(command[:-1]) if arg == '-e' and command[i+1].startswith(key+'=')]
+                for key in ('PYTORCH_ALLOC_CONF', 'PYTORCH_CUDA_ALLOC_CONF', 'PYTORCH_HIP_ALLOC_CONF')},
             'cpu_offload_bytes_per_rank': budget,
             'offload_suffixes': suffixes,
             'placement': placement,
@@ -430,7 +433,10 @@ def build_prediction(command, model_root=DEFAULT_MODEL, bounds_path=None, observ
         expert_and_embedding = [b['bytes'] for r in placement_census
                                 for b in r['buffers'] if b['name'] != 'PLE']
         logical_pins = expert_and_embedding + [adapter['ple_cache_bytes_per_rank'], step_bytes] * tp
-        scenario['pinned_allocator_rounding_bytes'] = sum(round_pin(n)-n for n in logical_pins)
+        exact_pins = all(value == ['pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1']
+                         for value in identity['pinned_allocator_environment'].values())
+        scenario['pinned_allocator_rounding_bytes'] = sum(
+            (n if exact_pins and n > MIB else round_pin(n))-n for n in logical_pins)
         overhead = sum(scenario.values())
         illustration = pins + overhead + CHUNK_BYTES
     refusal = []

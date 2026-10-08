@@ -1,0 +1,56 @@
+{
+  "schema": "screen1b.attempt7-exact-pins-budget.v1",
+  "prediction_is_measurement": false,
+  "placement_changed": false,
+  "move_rows_to_ranks_1_3_needed": false,
+  "allocator_environment": {
+    "PYTORCH_ALLOC_CONF": [
+      "pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1"
+    ],
+    "PYTORCH_CUDA_ALLOC_CONF": [
+      "pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1"
+    ],
+    "PYTORCH_HIP_ALLOC_CONF": [
+      "pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1"
+    ]
+  },
+  "expert_payload_bytes": 51118080000,
+  "expert_allocator_request_bytes": 51118080000,
+  "previous_expert_rounded_bytes": 74490839040,
+  "embedding_allocator_request_bytes": 1271398400,
+  "ple_cache_bytes": 4294967296,
+  "ple_step_allocator_request_bytes": 1048576,
+  "ple_metadata_bytes": 1736346392,
+  "private_runtime_excluding_ple_metadata_bytes": 10186775866,
+  "other_gpuactive_residual_bytes": 1390067712,
+  "host_baseline_bytes": 4969857024,
+  "other_pressure_residual_bytes": 1405648896,
+  "removed_padding_bytes": 24248844288,
+  "steady_pressure_bytes": 76374190162,
+  "global_staging_bytes": 268435456,
+  "loading_pressure_bytes": 76642625618,
+  "loading_plus_2gib_retention_bytes": 78790109266,
+  "active_file_speed_allowance_bytes": 4294967296,
+  "loading_plus_active_files_plus_2gib_retention_bytes": 83085076562,
+  "conservative_planner_steady_bytes": 76391697688,
+  "conservative_planner_working_memory_bytes": 80955100440,
+  "recommended_loading_guard_bytes": 96000000000,
+  "unchanged_watchdog_pressure_line_bytes": 98409328640,
+  "mtp1_measured_plateau_max_bytes": 78260869565.21739,
+  "assumptions": [
+    "Same runtime/OS/driver residual as attempt 6; do not add worker RSS twice.",
+    "Exact requests supported by reviewed torch 2.13 source; installed XPU behavior unmeasured.",
+    "Large pins are not cached after free; no savings credited for freed large staging buffers.",
+    "Driver/page granularity and later MTP/capture retention are not a measured upper bound.",
+    "File-cache allowance is desired working memory, not necessarily MemTotal minus MemAvailable."
+  ],
+  "input_sha256": {
+    "placement-attempt6-v5.json": "b64cf1c9cf732d9093ed55a90cc59e1d52b5be5a755914fc04d860aecf384ce6",
+    "memory-contract.json": "5b76ab8735f74e11bd7d7048b5879991ab637a701576ce85b563965f36b2544b",
+    "overlay-manifest.json": "3fc4277b1d87df8ef80c82a1b94a7751aa1d98937ecc67529a97a75cfe1a8c42",
+    "analyze_host_budget.py": "04ed1860094c6f2323ba3b49142b2762e9057302271c0d306dc840c2a0b8f116",
+    "attempt7_budget.py": "9e6f05e35892c28dace0256f5bd97f1490cb2591992236289bc7fbd41a09934e",
+    "evidence/attempt6-host-attribution.json": "7d75c77687fb743db581dbaeb7f25192b3e36641d6a91b3ed4e4c9db1b4730d6",
+    "evidence/torch-2.13-pinned-allocator/sources.json": "b51497ed592c2d09956384119d3ed65f99ff3a9c7d660e9ec4c7ed1292f6915c"
+  }
+}

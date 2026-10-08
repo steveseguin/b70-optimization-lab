@@ -1,5 +1,43 @@
 # Screen 1b CPU validation — native FP8 mmap, 2026-10-08
 
+## Attempt 7: exact large pinned allocations
+
+**213/213 CPU tests pass, zero skips**, including all four rank rehearsals.
+Sealed-package dry run and link checks pass.
+
+Selected the owner-permitted torch allocator configuration alternative. No
+native allocator, slab ownership change, placement edit or kernel change.
+All aliases are set before Python import; entrypoint requires them and torch
+2.13. Requests above 1 MiB bypass rounding and are not cached after free.
+CPU receipts distinguish exact payload, prior rounded blocks and source-derived
+allocator request bytes; they never label those as measured native reservations.
+
+The synthetic packing comparison checks raw uint8/FP8/BF16 bytes, 512-byte base
+alignment, contiguous subviews, shared storage, row strides and signed UVA
+address-table reconstruction. The four-rank real model/loader rehearsals run the
+selected separate-tensor path with the new policy in their environment. Native
+pinning/USM, full-size peak, MTP/capture retention and native output gates remain
+open. Snapshot tests use large logical sizes without allocating large buffers.
+Additional checks cover all launch modes, conflicting legacy aliases, missing
+configuration, 1 MiB boundaries, source hashes, exact versus old-size receipts,
+96 GB boundary/cancellation and unchanged normal-mode/MTP1 gates.
+
+Reproduce the complete suite and the budget without any accelerator operation:
+
+```sh
+SCREEN1B_CPU_EVIDENCE_DIR=experiments/qwen38-flash-next-fp8-b70/reopen-20261008/evidence/attempt7-exact-pins-cpu-rehearsal \
+PYTHONDONTWRITEBYTECODE=1 /home/steve/.venvs/ltx25-baseline/bin/python -m unittest discover \
+  -s experiments/qwen38-flash-next-fp8-b70/reopen-20261008 -p 'test_*.py' -v
+python3 -B experiments/qwen38-flash-next-fp8-b70/reopen-20261008/attempt7_budget.py
+```
+
+[Test log](evidence/cpu-attempt7-exact-pins-tests.log),
+[four-rank receipts](evidence/attempt7-exact-pins-cpu-rehearsal/),
+[exact budget, source comparison and prepared command](ATTEMPT7-BUDGET.md).
+No GPU, Docker, server, install, secret, Git branch/commit, host setting or
+port 8188 operation was performed. Existing historical results below are intact.
+
+
 ## Attempt 6: VRAM placement and CPU verification
 
 The new mask preserves every certified host expert row and extends each rank

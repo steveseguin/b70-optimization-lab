@@ -60,7 +60,7 @@ class LoadingGuardTests(unittest.TestCase):
                 self.check(89_000_000_001)
 
     def test_invalid_overlay_threshold_refused(self):
-        for value in ('0','-1','90000000001','NaN'):
+        for value in ('0','-1','96000000001','NaN'):
             with self.subTest(value=value), patch.dict(guard.os.environ,{c.LOADING_GUARD_ENV:value}):
                 with self.assertRaises(ValueError): self.check(70_000_000_000)
 
@@ -81,7 +81,7 @@ class LoadingGuardTests(unittest.TestCase):
 
     def test_cli_rejects_wrong_mode_and_invalid_values_before_operations(self):
         for mode, value in (('mtp1','90'),('mtp0','90'),('mtp3','90'),
-                            ('calibrate-load','0'),('calibrate-load','91'),
+                            ('calibrate-load','0'),('calibrate-load','97'),
                             ('calibrate-load','nan')):
             with self.subTest(mode=mode,value=value), \
                  patch.object(screen.sys,'argv',['screen.py','run','--mode',mode,

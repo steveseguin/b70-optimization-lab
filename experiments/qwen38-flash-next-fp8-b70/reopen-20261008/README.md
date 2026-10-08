@@ -1,15 +1,22 @@
 # Flash-Next Screen 1b — native FP8 mmap adapter
 
-**Current: attempt 6 analyzed on CPU; a threshold-only attempt 7 is not prepared.**
-Pinned host allocations round up separately: 51.118 GB of expert tensor data
-requires about 74.491 GB of allocator blocks. Saved samples support a steady
-host-pressure estimate of **100.623 GB**, with **100.891 GB** including explicit
-staging. This exceeds the 97 GB criterion. The guard and watchdog stay unchanged.
-A proposed lossless change on ranks 1–3 could save **6.744 GB** host memory for
-**0.924 GB** more VRAM total; it has not been implemented or qualified.
-[Measured phases, corrected budget, alternatives and command decision](ATTEMPT7-BUDGET.md).
-The earlier shadow-removal inference and 77.955 GB estimate below are withdrawn;
-attempt 5 died before loading. Historical commands below are not current advice.
+**Current: attempt 7 prepared on CPU using exact large pinned allocations.**
+The torch 2.13 allocator policy removes **24.249 GB** of padding while preserving
+all bytes, dtypes, row mappings and the current placement. The prediction is
+**76.374 GB steady**, **76.643 GB loading**, or **78.790 GB** with another assumed
+2 GiB for later retention. No row move onto ranks 1–3 is needed. The 4 GiB PLE
+cache stays intact. These are estimates; full-size native fit remains open.
+
+The selected configuration alternative uses
+`pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1` in all three PyTorch
+allocator environment aliases before import. Large blocks are exact-size and
+not cached after free; small pins retain caching. No new slab allocator is
+introduced. The runner accepts an explicit **96 GB load-only guard**; its default
+is still 90 GB and the watchdog and MTP1 admission gates are unchanged.
+[Source audit, slab comparison, exact budget and attempt-7 command](ATTEMPT7-BUDGET.md).
+[CPU validation](VALIDATION.md#attempt-7-exact-large-pinned-allocations).
+**213/213 CPU tests pass, zero skips**, including all four rank rehearsals.
+No launch or commit occurred. Historical commands below are not current advice.
 
 ## Historical preparation (superseded by attempt 6 evidence)
 

@@ -1,4 +1,165 @@
-# Attempt 6 host-memory correction and attempt 7 decision
+# Attempt 7: exact large pinned allocations (CPU implementation)
+
+2026-10-08, steve-b70s. **Prepared, not launched.** The permitted allocator
+configuration alternative is selected: no new slab allocator is needed.
+It removes **24.248844 GB** of power-of-two padding (23.372759 GB experts and
+0.876085 GB input embeddings) without changing any tensor bytes or placement.
+The estimate is **76.374190 GB steady**, **76.642626 GB loading**;
+loading plus an additional assumed 2 GiB retention is **78.790109 GB**.
+Moving expert rows back onto ranks 1–3 is **not needed** in this scenario.
+Full-size fit, native UVA behavior and output parity remain unmeasured.
+
+## Selected allocator policy and comparison
+
+All Screen 1b modes pass this before Python starts, through **all three**
+`PYTORCH_ALLOC_CONF`, `PYTORCH_CUDA_ALLOC_CONF`, `PYTORCH_HIP_ALLOC_CONF` aliases:
+
+```text
+pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1
+```
+
+The entrypoint refuses missing/conflicting aliases and requires torch 2.13.
+The reviewed [2.13 parser](https://raw.githubusercontent.com/pytorch/pytorch/v2.13.0/c10/core/AllocatorConfig.cpp)
+uses MiB (`1024*1024`) despite the `_mb` spelling and checks CUDA, HIP, then
+generic environment names, taking the first present. All three are explicit
+to defeat inherited image defaults; header prose claiming generic precedence
+is not what this implementation does. No device-allocator options are set.
+
+The [common allocator](https://raw.githubusercontent.com/pytorch/pytorch/v2.13.0/aten/src/ATen/core/CachingHostAllocator.h)
+rounds only when a request is at or below **both** thresholds. Thus requests
+above 1 MiB are exact. On free, blocks above the cache cap are destroyed after
+their recorded stream events complete. Small allocations retain their existing
+rounding and reuse. The matching cache cap is intentional: a rounding-only
+change would leave non-power-of-two sizes in free lists indexed only by
+power-of-two bucket. In the reviewed implementation, `get_free_block` pops
+from that bucket without checking the saved block size. Do not use the
+rounding-only variant here.
+
+The [XPU implementation](https://raw.githubusercontent.com/pytorch/pytorch/v2.13.0/aten/src/ATen/xpu/CachingHostAllocator.cpp)
+inherits these methods without overriding either threshold, and passes the
+requested size to `sycl::aligned_alloc_host` with **512-byte base alignment**.
+The snapshots and SHA256s are kept in
+[evidence/torch-2.13-pinned-allocator/](evidence/torch-2.13-pinned-allocator/).
+These establish source behavior, not inspection or measurement of the installed
+container binary. Driver page granularity and later runtime allocations remain
+part of the fit measurement. The real expert and embedding lengths are already
+multiples of 4096, so page alignment adds no padding to these requests.
+
+The setting is process-wide for pinned allocations. It also removes embedding
+rounding and disables caching of freed large PLE/staging blocks. Allocating and
+freeing those blocks may cost more; persistent expert and PLE-cache tensors
+retain their original lifetimes, so steady reads do not allocate them anew.
+No speed benefit or lower staging retention is credited to this side effect.
+
+| Alternative | Expert backing request, four ranks | Cost / choice |
+| --- | ---: | --- |
+| Separate tensors, default allocator | 74.490839 GB | Old wasted padding |
+| One ordinary torch pinned slab per rank, default allocator | 68.719477 GB | Still rounded to 16 GiB/rank |
+| Two ordinary torch slabs per rank, w13/w2 groups, default allocator | 51.539608 GB | Still 0.421528 GB padding; new packing and ownership code |
+| Direct SYCL exact slabs | 51.118080 GB | Needs native allocation, ownership and lifetime integration |
+| **Exact large allocation policy, existing tensors** | **51.118080 GB** | **Selected: least code, no new storage ownership** |
+
+Lumnus pinned slabs remain prior art already reviewed by the lane. No new
+Lumnus patch is adopted or performance credited in this change. The permitted
+configuration alternative avoids adding a second host allocator or repacking
+a loaded model. The existing fixed 1 GiB/rank PLE slab stays intact.
+
+## Row addressing and bytes
+
+`q38_expert_placement.allocate_weight` still allocates final separate
+`[host_rows, *tail]` tensors with the original dtype. The loader writes the same
+logical rows through `row_view`; scales, target arithmetic and full 16-bit KV
+are unchanged. The overlay now explicitly checks contiguous host layout and
+`stride(0)*itemsize == row_bytes`. Its signed int64 table holds each row's
+address relative to the resident tensor base. The certified Triton path in
+`fused_moe.py` uses `b_base = b_ptr + b_table[expert]`, then only the unchanged
+K/N strides within that row. It never assumes host rows share an allocation
+with the resident rows. Both the selected separate tensors and contiguous
+aligned slab subviews satisfy that addressing contract. Base virtual addresses
+can change between launches, as before; the pointer/stride contract does not.
+
+CPU comparison tests pack synthetic uint8, FP8 and BF16 groups into an aligned
+ordinary CPU slab, check every raw byte (including FP8 encodings), shared-storage
+subviews, strides and row addresses against separate tensors. This is a test
+of the alternative's layout, not a shipped slab implementation or native pinning
+test. Four actual model/loader rehearsals continue to use the selected separate
+allocation path with emulated XPU transport. Receipts report `payload_bytes`,
+`default_rounded_bytes`, `allocator_request_bytes`, environment, layout and
+`allocator_bytes_measured=false`. Full snapshots deduplicate storage first.
+
+## Revised budget
+
+All GB below are decimal. Keep the attempt-6 residuals; subtract only padding.
+No speculative device-shadow credit, RSS double counting or file-cache drop.
+
+| Retained component | Predicted GB |
+| --- | ---: |
+| Expert rows, four ranks (12.779520 each) | 51.118080 |
+| Input embeddings, four ranks | 1.271398 |
+| PLE pinned cache, exactly 4 GiB | 4.294967 |
+| Small PLE step buffers, still rounded | 0.001049 |
+| PLE metadata | 1.736346 |
+| Private runtime excluding bound PLE metadata | 10.186776 |
+| Other driver/GPUActive residual | 1.390068 |
+| OS/initial host-use allowance | 4.969857 |
+| Other observed pressure residual | 1.405649 |
+| **Steady pressure** | **76.374190** |
+| Shared staging cap | +0.268435 |
+| **Loading scenario** | **76.642626** |
+| **Loading plus assumed 2 GiB later retention** | **78.790109** |
+| Loading + 2 GiB retention + desired 4 GiB file working set | 83.085077 |
+
+Worker RSS at the saved anchor was 2.902/2.782/2.788/3.442 GB and includes shared
+and mapped pages. The private-runtime term above comes from cgroup anon after
+removing already-counted PLE metadata; worker RSS is **not added again**.
+The desired 4 GiB file working set is separate from the 4 GiB pinned PLE cache;
+it is reclaimable and not necessarily additional measured host pressure.
+The generic planner rounds the runtime/driver/residual allowance to 13 GB:
+**76.391698 GB steady**, **80.955100 GB** including staging and file allowance.
+Adding 2 GiB extra retention to that planner gives **83.102584 GB**.
+Both approaches satisfy the requested <=90 GB steady / <=96 GB loading targets
+as predictions, not measured upper bounds.
+
+The mask, 0.90 utilization, per-rank VRAM forecast and reserve remain unchanged.
+The previous 62/64/62-row proposal was exploiting size-class boundaries that
+this change removes; it would now save only the row payload and is unnecessary.
+[Exact arithmetic and input hashes](evidence/attempt7-exact-pins-budget.json),
+[conservative planner](evidence/attempt7-exact-pins-prediction.json).
+Reproduce both with `python3 -B experiments/qwen38-flash-next-fp8-b70/reopen-20261008/attempt7_budget.py`.
+
+## Attempt-7 command, not executed
+
+Recommend **96 decimal GB** for the explicit load-only diagnostic ceiling;
+the default remains 90 GB. At the saved MemTotal this leaves 28.179132 GB
+available, 2.409329 GB before the unchanged 24 GiB watchdog line. No change to
+the watchdog, normal-mode guards or MTP1 admission: a measured plateau times
+1.15 must still fit within 90 GB (plateau <=78.260870 GB), and every health,
+VRAM, identity and quality gate remains. A higher permitted loading guard is
+not a higher serving budget. A fresh owner-supplied receipt, exclusive idle-card
+window and existing stop gap are required by the runner.
+
+```sh
+SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run \
+  --mode calibrate-load --loading-ram-guard-gb 96 \
+  --health-receipt /PATH/TO/FRESH-HEALTH-RECEIPT.json \
+  --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt7 \
+  --execute
+```
+
+**213/213 CPU tests pass, zero skips**, including all four rank rehearsals.
+Sealed-package CPU dry run and documentation links pass.
+
+This CPU task ran no GPU, Docker, server, installation, secret access, branch,
+commit or host-setting operation and did not touch LTX or port 8188.
+[CPU validation and reproduction](VALIDATION.md#attempt-7-exact-large-pinned-allocations).
+
+---
+
+## Historical attempt-6 correction and threshold-only decision
+
+The record below predates the exact-size allocator change above. Its refusal
+of a threshold-only retry remains correct for the old rounded allocation path.
+
 
 2026-10-08, CPU-only on steve-b70s. **Do not prepare a threshold-only attempt
 7.** The unchanged placement projects **100.623 GB steady pressure**, above

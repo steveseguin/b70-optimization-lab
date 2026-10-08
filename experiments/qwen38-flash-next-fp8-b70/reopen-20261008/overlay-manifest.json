@@ -20,7 +20,7 @@
     "vllm/models/qwen4_exp/nvidia/mtp.py": "d1ba61dd9843e536fff1933b2dca18d92a308d6d7516f0c6ff73ce1b56ea963c",
     "vllm/models/qwen4_exp/nvidia/ngram_embedding.py": "b9b540010e8982801a4c037a8a59aedfca6c3a72d2fd6707334f7cddb81b590f",
     "vllm/models/qwen4_exp/nvidia/ple_nvme.py": "6e3b952277dfb4beefd34491dfe19664b0d030d1cc98016b63b28859dd4fb7db",
-    "vllm/screen1b_guard.py": "fccaee4dfb5767bdf48cf0d9ae3f743030c929a0a00e303e5ab67ff116af4c81",
+    "vllm/screen1b_guard.py": "8218ff45284d9ceba4dd498534e39d4c4c5b1c6e2a1bcaa365f92543f1606e58",
     "vllm/v1/attention/backends/gdn_attn.py": "e8afd4989233d1f971397cff49a5c760b99729fe9af539cfc19786f6139a627c",
     "vllm/v1/attention/backends/gdn_spec_metadata.py": "97f7ae107e03a64ccab4d73ca9bc705141d7ddcd64223d61dfbfb1a98721279c",
     "vllm/v1/attention/backends/gdn_spec_metadata_batched.py": "88f1c49b152c5468838c3b448126275c04c34afb50526ffbe954b61b5e11ee9f",
@@ -48,7 +48,7 @@
     "vllm/model_executor/layers/fused_moe/modular_kernel.py": "0f070a39fd5149d3b37042cad6c40828206c341967f3be2c3ba4578099f9a347",
     "vllm/model_executor/layers/fused_moe/routed_experts.py": "89c281c171042ffd3b5215fa5c424dff739cd65a9a6aeb11146ac056cada6527",
     "vllm/model_executor/layers/quantization/fp8.py": "dd1a2cc2d89d694ecde7cca16c82aebf61eaed08babb516c955075be9f7186cf",
-    "vllm/q38_expert_placement.py": "d1ed06046ab90f5d2939fafb370e6f91443a59282cec4357ce705cd159956b90",
+    "vllm/q38_expert_placement.py": "4e1e3eaa3016ce3c364db64fde8294073f8575e0f06590a50c267a974988a2c7",
     "vllm/screen1b_ple.py": "7f557bdef9b38962154646598393a0f4d65d86d93d8c48724141d9be8fb9ebca"
   },
   "schema": "neural.download.screen1b-overlay.v1",
@@ -125,7 +125,7 @@
     },
     "vllm/screen1b_guard.py": {
       "base_sha256": null,
-      "sha256": "fccaee4dfb5767bdf48cf0d9ae3f743030c929a0a00e303e5ab67ff116af4c81"
+      "sha256": "8218ff45284d9ceba4dd498534e39d4c4c5b1c6e2a1bcaa365f92543f1606e58"
     },
     "vllm/v1/attention/backends/gdn_attn.py": {
       "base_sha256": "3831019404a92200a38b43571c040cffeb6638bbdc71e4cb5e680dbc6c93d054",
@@ -237,7 +237,7 @@
     },
     "vllm/q38_expert_placement.py": {
       "base_sha256": null,
-      "sha256": "d1ed06046ab90f5d2939fafb370e6f91443a59282cec4357ce705cd159956b90"
+      "sha256": "4e1e3eaa3016ce3c364db64fde8294073f8575e0f06590a50c267a974988a2c7"
     },
     "vllm/screen1b_ple.py": {
       "base_sha256": null,
@@ -246,11 +246,11 @@
   },
   "support_files": {
     "apply_overlay.py": "4c3620bde0cd73686fce04df94253a8e3615e6fc458283a3bfe4cc8196259ddf",
-    "container-entrypoint.sh": "56ef3bba57278c421971936b501baaa11b606697fca1cee16e8f3ff430e30145",
+    "container-entrypoint.sh": "12c3d3a9a93a2c5c90bc48dec0d983f2feca07ffad4fc703916eb5abdc67a7d0",
     "placement-certified-v5.json": "f3f4812cfae2f4f704e75cc9b47a4031a476f846b353e3def23141b9d9c05f96",
     "memory-contract.json": "5b76ab8735f74e11bd7d7048b5879991ab637a701576ce85b563965f36b2544b",
     "memory-bounds.json": "7f7a0a5458aedac8e371aeac4a82033b55d1f783276a2073861e50b45007b70d",
-    "memory_plan.py": "af382e7389ce544548bd3f85164e75dd3096c4f9f0978f92006b1dbe035b3e6b",
+    "memory_plan.py": "8e0ee052d88901cdf54b92dd18bf11a2f29ba4a0e2317cbab8920fe065880600",
     "placement-attempt6-v5.json": "b64cf1c9cf732d9093ed55a90cc59e1d52b5be5a755914fc04d860aecf384ce6",
     "vram_plan.py": "75b1c1e5671ab5a34d6375df137eec8a3f62f108432eb31c05d87cb56b784955",
     "placement_plan.py": "eb9953f4f09ae6da682dc1701bedade66680a597f0509203102bfacd47cbd8e5"
@@ -263,6 +263,7 @@
     "sampler": "unchanged",
     "exact_gdn_native_kernel": "not ported; fused official kernel unchanged",
     "embedding": "certified input embedding selected for generic UVA, shared MTP alias counted once",
-    "driver_allocation": "NEOReadDebugKeys=1 EnableDeferBacking=0 retained; Flash-Next shadow-saving claim withdrawn after attempt 6; pinned host reservation remains."
+    "driver_allocation": "NEOReadDebugKeys=1 EnableDeferBacking=0 retained; Flash-Next shadow-saving claim withdrawn after attempt 6; pinned host reservation remains.",
+    "pinned_allocator": "Torch 2.13: all allocator environment aliases set pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1 before import; exact large pins, small cached pins; source-derived sizes, runtime fit unqualified"
   }
 }

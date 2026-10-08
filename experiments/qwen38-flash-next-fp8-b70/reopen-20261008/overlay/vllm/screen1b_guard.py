@@ -31,6 +31,26 @@ _cancelled = False
 _signalled_pids = set()
 
 
+PINNED_ALLOC_CONF = 'pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1'
+PINNED_ALLOC_ENVS = ('PYTORCH_ALLOC_CONF', 'PYTORCH_CUDA_ALLOC_CONF', 'PYTORCH_HIP_ALLOC_CONF')
+
+
+def pinned_allocation_bytes(size):
+    """Source-derived allocator request, NOT measured physical backing.
+
+    A fresh process must set every alias before importing torch. The matching
+    cache cap prevents non-power-of-two blocks entering power-of-two buckets.
+    Small pins retain their existing rounding/reuse. No global cache flush.
+    """
+    if type(size) is not int or size < 0:
+        raise ValueError('pinned allocation size must be a nonnegative integer')
+    rounded = 1 << (size-1).bit_length() if size else 0
+    exact = all(os.environ.get(key) == PINNED_ALLOC_CONF for key in PINNED_ALLOC_ENVS)
+    return dict(payload_bytes=size, default_rounded_bytes=rounded,
+                allocator_request_bytes=size if exact and size > 2**20 else rounded,
+                exact_large_policy=exact, allocator_bytes_measured=False)
+
+
 class LoadCancelled(RuntimeError):
     pass
 
@@ -111,8 +131,8 @@ def check_admission(growth=0):
     calibration_limit = os.environ.get(CALIBRATION_GUARD_ENV)
     if calibration_limit is not None:
         limit = int(calibration_limit)
-        if not 0 < limit <= 90_000_000_000:
-            raise ValueError('calibrate-load RAM guard must be positive and at most 90 GB')
+        if not 0 < limit <= 96_000_000_000:
+            raise ValueError('calibrate-load RAM guard must be positive and at most 96 GB')
         # Calibration measures through the admission line. The independent
         # watchdog still sends SIGINT below 24 GiB MemAvailable.
         floor = m['MemTotal'] - limit
@@ -520,6 +540,11 @@ def allocation_snapshot(model, phase='load_complete', contract_path='/screen-pac
         row = groups.setdefault(group, dict(pinned_bytes=0, host_pageable_bytes=0,
                                             device_bytes=0, mmap_resident_bytes=0, mmap_payload_bytes=0))
         row[kind] += storage.nbytes()
+        if kind == 'pinned_bytes':
+            estimate = pinned_allocation_bytes(storage.nbytes())
+            for field in ('default_rounded_bytes', 'allocator_request_bytes'):
+                row[field] = row.get(field, 0) + estimate[field]
+            row['allocator_bytes_measured'] = False
     for owner in _models:
         for name, tensor in list(owner.named_parameters()) + list(owner.named_buffers()):
             group = ('PLE' if 'ple_embedding' in name else 'experts' if '.experts.' in name
@@ -567,6 +592,7 @@ def allocation_snapshot(model, phase='load_complete', contract_path='/screen-pac
     contract_path = Path(contract_path)
     raw = contract_path.read_bytes()
     contract = json.loads(raw)
+    runtime['pinned_allocator_environment'] = {key: os.environ.get(key) for key in PINNED_ALLOC_ENVS}
     runtime['pinned_expert_bytes'] = groups.get('experts', {}).get('pinned_bytes', 0)
     runtime['pinned_input_embedding_bytes'] = groups.get('input_embedding', {}).get('pinned_bytes', 0)
     row = dict(schema='screen1b.rank-allocation.v1', rank=rank, pid=os.getpid(), phase=phase,
