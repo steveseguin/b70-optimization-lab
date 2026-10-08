@@ -1,0 +1,109 @@
+(APIServer pid=1) INFO 10-08 14:02:10 [api_utils.py:347] 
+(APIServer pid=1) INFO 10-08 14:02:10 [api_utils.py:347]        █     █     █▄   ▄█
+(APIServer pid=1) INFO 10-08 14:02:10 [api_utils.py:347]  ▄▄ ▄█ █     █     █ ▀▄▀ █  version 0.30.0
+(APIServer pid=1) INFO 10-08 14:02:10 [api_utils.py:347]   █▄█▀ █     █     █     █  model   /model
+(APIServer pid=1) INFO 10-08 14:02:10 [api_utils.py:347]    ▀▀  ▀▀▀▀▀ ▀▀▀▀▀ ▀     ▀
+(APIServer pid=1) INFO 10-08 14:02:10 [api_utils.py:347] 
+(APIServer pid=1) INFO 10-08 14:02:10 [api_utils.py:286] non-default args: {'model_tag': '/model', 'enable_prompt_tokens_details': True, 'host': '127.0.0.1', 'port': 19988, 'model': '/model', 'dtype': 'bfloat16', 'max_model_len': 4352, 'quantization': 'fp8', 'served_model_name': ['qwen38-flash-next-fp8-tp4'], 'generation_config': 'vllm', 'tensor_parallel_size': 4, 'enable_expert_parallel': True, 'gpu_memory_utilization': 0.95, 'kv_cache_memory_bytes': 376569856, 'enable_prefix_caching': False, 'offload_backend': 'uva', 'cpu_offload_gb': 16.25, 'cpu_offload_params': ['ple_embedding.ngram_embedding.weight', 'mlp.experts.w13_weight', 'mlp.experts.w2_weight'], 'limit_mm_per_prompt': {'image': 0, 'video': 0}, 'cudagraph_metrics': True, 'max_num_batched_tokens': 64, 'max_num_seqs': 1, 'enable_chunked_prefill': True, 'async_scheduling': False, 'moe_backend': 'triton', 'speculative_config': {'method': 'mtp', 'num_speculative_tokens': 1, 'rejection_sample_method': 'standard'}, 'compilation_config': {'mode': None, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': [], 'ir_enable_torch_wrap': None, 'splitting_ops': None, 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': None, 'compile_ranges_endpoints': None, 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_DECODE_ONLY: (2, 0)>, 'cudagraph_num_of_warmups': 0, 'cudagraph_capture_sizes': [1, 2], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': None, 'pass_config': {}, 'max_cudagraph_capture_size': None, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': None, 'static_all_moe_layers': []}}
+(APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(APIServer pid=1) INFO 10-08 14:02:34 [model.py:692] Resolved architecture: Qwen4ExpForConditionalGeneration
+(APIServer pid=1) INFO 10-08 14:02:34 [model.py:2030] Using max model len 4352
+(APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(APIServer pid=1) INFO 10-08 14:02:36 [registry.py:146] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+(APIServer pid=1) INFO 10-08 14:02:36 [model.py:900] Disabled mm_prefix attention mode because multimodal inputs are configuration-disabled. Attention backends without mm_prefix support may now be selected.
+(APIServer pid=1) WARNING 10-08 14:02:36 [indexer_topk.py:29] Failed to import the DeepSelect extension (vllm._deepselect_C): No module named 'vllm._deepselect_C'
+(APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(APIServer pid=1) INFO 10-08 14:02:54 [model.py:692] Resolved architecture: Qwen4ExpMTP
+(APIServer pid=1) INFO 10-08 14:02:54 [model.py:2030] Using max model len 262144
+(APIServer pid=1) INFO 10-08 14:02:54 [speculative.py:1651] Overriding draft model max model len from 262144 to 4352
+(APIServer pid=1) INFO 10-08 14:02:54 [scheduler.py:288] Chunked prefill is enabled with max_num_batched_tokens=64.
+(APIServer pid=1) INFO 10-08 14:02:54 [vllm.py:762] Auto-enabling VLLM_USE_BREAKABLE_CUDAGRAPH=1. Set VLLM_USE_BREAKABLE_CUDAGRAPH=0 to opt out.
+(APIServer pid=1) INFO 10-08 14:02:54 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['vllm_c', 'native'], fused_add_rms_norm=['vllm_c', 'native'], gelu_and_mul_sparse=['native'])
+(APIServer pid=1) WARNING 10-08 14:02:54 [vllm.py:2135] max_num_scheduled_tokens is set to 64 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommodate the additional draft token slots, or decrease num_speculative_tokens.
+(APIServer pid=1) WARNING 10-08 14:02:54 [xpu.py:308] XPU Graph support is experimental and currently only supports single-GPU execution.
+(APIServer pid=1) INFO 10-08 14:02:54 [xpu.py:382] XPU platform: set server shutdown_timeout=5.
+(APIServer pid=1) INFO 10-08 14:02:54 [compilation.py:336] Enabled custom fusions: norm_quant, act_quant
+(EngineCore pid=338) INFO 10-08 14:03:12 [core.py:123] Initializing a V1 LLM engine (v0.30.0) with config: model='/model', speculative_config=SpeculativeConfig(method='mtp', model='/model', num_spec_tokens=1), tokenizer='/model', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=4352, download_dir=None, load_format=auto, tensor_parallel_size=4, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=True, quantization=fp8, quantization_config=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=xpu, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, per_request_spec_decode_metrics='none', kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=True, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False, jit_monitor_mode='warn', jit_monitor_verbose=False), seed=0, served_model_name=qwen38-flash-next-fp8-tp4, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.NONE: 0>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['+quant_fp8', 'all', '+quant_fp8'], 'ir_enable_torch_wrap': False, 'splitting_ops': [], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': [], 'compile_ranges_endpoints': [64], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_DECODE_ONLY: (2, 0)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': True, 'fuse_act_quant': True, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False, 'enable_qk_norm_rope_fusion': False, 'fuse_rope_kvcache_cat_mla': False, 'fuse_act_padding': False, 'fuse_qk_norm_rope_kvcache': False}, 'max_cudagraph_capture_size': 2, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': False, 'static_all_moe_layers': []}, kernel_config=KernelConfig(ir_op_priority=IrOpPriorityConfig(rms_norm=['vllm_c', 'native'], fused_add_rms_norm=['vllm_c', 'native'], gelu_and_mul_sparse=['native']), enable_flashinfer_autotune=True, enable_cutedsl_warmup=True, enable_jit_warmup=True, moe_backend='triton', sparse_indexer_topk_backend='auto', linear_backend='auto', linear_backend_per_quant=None)
+(EngineCore pid=338) INFO 10-08 14:03:12 [multiproc_executor.py:153] DP group leader: node_rank=0, node_rank_within_dp=0, master_addr=127.0.0.1, mq_connect_ip=10.0.0.65 (local), world_size=4, local_world_size=4
+WARNING 10-08 14:03:29 [indexer_topk.py:29] Failed to import the DeepSelect extension (vllm._deepselect_C): No module named 'vllm._deepselect_C'
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+INFO 10-08 14:03:30 [registry.py:146] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+(Worker pid=449) INFO 10-08 14:03:31 [parallel_state.py:1827] world_size=4 rank=0 local_rank=0 distributed_init_method=file:///screen/cache/tmp/vllm_dist_08908d09b56742ab922f8a2ff06c7b25 backend=xccl
+WARNING 10-08 14:03:44 [indexer_topk.py:29] Failed to import the DeepSelect extension (vllm._deepselect_C): No module named 'vllm._deepselect_C'
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+INFO 10-08 14:03:46 [registry.py:146] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+(Worker pid=476) INFO 10-08 14:03:46 [parallel_state.py:1827] world_size=4 rank=1 local_rank=1 distributed_init_method=file:///screen/cache/tmp/vllm_dist_08908d09b56742ab922f8a2ff06c7b25 backend=xccl
+WARNING 10-08 14:03:59 [indexer_topk.py:29] Failed to import the DeepSelect extension (vllm._deepselect_C): No module named 'vllm._deepselect_C'
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+INFO 10-08 14:04:01 [registry.py:146] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+(Worker pid=510) INFO 10-08 14:04:01 [parallel_state.py:1827] world_size=4 rank=2 local_rank=2 distributed_init_method=file:///screen/cache/tmp/vllm_dist_08908d09b56742ab922f8a2ff06c7b25 backend=xccl
+WARNING 10-08 14:04:15 [indexer_topk.py:29] Failed to import the DeepSelect extension (vllm._deepselect_C): No module named 'vllm._deepselect_C'
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+INFO 10-08 14:04:16 [registry.py:146] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+(Worker pid=544) INFO 10-08 14:04:17 [parallel_state.py:1827] world_size=4 rank=3 local_rank=3 distributed_init_method=file:///screen/cache/tmp/vllm_dist_08908d09b56742ab922f8a2ff06c7b25 backend=xccl
+(Worker pid=449) INFO 10-08 14:04:17 [parallel_state.py:2267] rank 0 in world size 4 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, ETP rank 0, EP rank 0, EPLB rank N/A
+2026:10:08-14:04:17:  544 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:10:08-14:04:17:  544 |CCL_WARN| value of CCL_SYCL_ALLREDUCE_TMP_BUF changed to be 1 (default:0)
+2026:10:08-14:04:17:  544 |CCL_WARN| value of CCL_SYCL_ALLGATHERV_TMP_BUF changed to be 1 (default:0)
+2026:10:08-14:04:17:  449 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:10:08-14:04:17:  449 |CCL_WARN| value of CCL_SYCL_ALLREDUCE_TMP_BUF changed to be 1 (default:0)
+2026:10:08-14:04:17:  449 |CCL_WARN| value of CCL_SYCL_ALLGATHERV_TMP_BUF changed to be 1 (default:0)
+2026:10:08-14:04:17:  476 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:10:08-14:04:17:  476 |CCL_WARN| value of CCL_SYCL_ALLREDUCE_TMP_BUF changed to be 1 (default:0)
+2026:10:08-14:04:17:  476 |CCL_WARN| value of CCL_SYCL_ALLGATHERV_TMP_BUF changed to be 1 (default:0)
+2026:10:08-14:04:17:  510 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:10:08-14:04:17:  510 |CCL_WARN| value of CCL_SYCL_ALLREDUCE_TMP_BUF changed to be 1 (default:0)
+2026:10:08-14:04:17:  510 |CCL_WARN| value of CCL_SYCL_ALLGATHERV_TMP_BUF changed to be 1 (default:0)
+2026:10:08-14:04:17:  544 |CCL_WARN| value of CCL_ZE_IPC_EXCHANGE changed to be sockets (default:pidfd)
+2026:10:08-14:04:17:  544 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:10:08-14:04:17:  449 |CCL_WARN| value of CCL_ZE_IPC_EXCHANGE changed to be sockets (default:pidfd)
+2026:10:08-14:04:17:  476 |CCL_WARN| value of CCL_ZE_IPC_EXCHANGE changed to be sockets (default:pidfd)
+2026:10:08-14:04:17:  449 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:10:08-14:04:17:  476 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:10:08-14:04:17:  510 |CCL_WARN| value of CCL_ZE_IPC_EXCHANGE changed to be sockets (default:pidfd)
+2026:10:08-14:04:17:  510 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:10:08-14:04:18:  544:[3] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+2026:10:08-14:04:18:  510:[2] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+2026:10:08-14:04:18:  476:[1] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+2026:10:08-14:04:18:  449:[0] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+(Worker pid=449) INFO 10-08 14:04:18 [xpu_worker.py:169] Using V2 Model Runner
+(Worker pid=449) INFO 10-08 14:04:19 [base.py:138] Offloader set to UVAOffloader
+(Worker_TP0_EP0 pid=449) INFO 10-08 14:04:19 [model_runner.py:397] Loading model from scratch...
+(Worker_TP0_EP0 pid=449) INFO 10-08 14:04:19 [xpu.py:233] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(Worker_TP0_EP0 pid=449) INFO 10-08 14:04:19 [mm_encoder_attention.py:372] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(Worker_TP0_EP0 pid=449) INFO 10-08 14:04:19 [qwen_gdn_linear_attn.py:176] Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128).
+(Worker_TP0_EP0 pid=449) INFO 10-08 14:04:19 [qwen_gdn_linear_attn.py:528] GDN decode kernel: cuda
+(Worker_TP0_EP0 pid=449) INFO 10-08 14:04:20 [expert_map_manager.py:245] [EP Rank 0/4] Expert parallelism is enabled. Expert placement strategy: linear. Local/global number of experts: 128/512. Experts local to global index map: 0->0, 1->1, 2->2, 3->3, 4->4, 5->5, 6->6, 7->7, 8->8, 9->9, 10->10, 11->11, 12->12, 13->13, 14->14, 15->15, 16->16, 17->17, 18->18, 19->19, 20->20, 21->21, 22->22, 23->23, 24->24, 25->25, 26->26, 27->27, 28->28, 29->29, 30->30, 31->31, 32->32, 33->33, 34->34, 35->35, 36->36, 37->37, 38->38, 39->39, 40->40, 41->41, 42->42, 43->43, 44->44, 45->45, 46->46, 47->47, 48->48, 49->49, 50->50, 51->51, 52->52, 53->53, 54->54, 55->55, 56->56, 57->57, 58->58, 59->59, 60->60, 61->61, 62->62, 63->63, 64->64, 65->65, 66->66, 67->67, 68->68, 69->69, 70->70, 71->71, 72->72, 73->73, 74->74, 75->75, 76->76, 77->77, 78->78, 79->79, 80->80, 81->81, 82->82, 83->83, 84->84, 85->85, 86->86, 87->87, 88->88, 89->89, 90->90, 91->91, 92->92, 93->93, 94->94, 95->95, 96->96, 97->97, 98->98, 99->99, 100->100, 101->101, 102->102, 103->103, 104->104, 105->105, 106->106, 107->107, 108->108, 109->109, 110->110, 111->111, 112->112, 113->113, 114->114, 115->115, 116->116, 117->117, 118->118, 119->119, 120->120, 121->121, 122->122, 123->123, 124->124, 125->125, 126->126, 127->127.
+(Worker_TP0_EP0 pid=449) INFO 10-08 14:04:20 [fp8.py:359] Using TRITON Fp8 MoE backend out of potential backends: ['XPU', 'AITER', 'FLASHINFER_TRTLLM', 'FLASHINFER_CUTLASS', 'DEEPGEMM', 'VLLM_CUTLASS', 'TRITON', 'MARLIN', 'HUMMING', 'BATCHED_DEEPGEMM', 'BATCHED_VLLM_CUTLASS', 'BATCHED_TRITON', 'CPU', 'HPC'].
+(Worker_TP2_EP2 pid=510) INFO 10-08 14:04:23 [ngram_embedding.py:2219] Initialized PLE embedding language_model.model.layers.1.ple.ple_embedding.ngram_embedding: quantization_method=Qwen4ExpPLEFp8EmbeddingMethod, weight_dtype=torch.float8_e4m3fn, weight_device=xpu:2, pinned=False
+(Worker_TP0_EP0 pid=449) INFO 10-08 14:04:23 [ngram_embedding.py:2219] Initialized PLE embedding language_model.model.layers.1.ple.ple_embedding.ngram_embedding: quantization_method=Qwen4ExpPLEFp8EmbeddingMethod, weight_dtype=torch.float8_e4m3fn, weight_device=xpu:0, pinned=False
+(Worker_TP1_EP1 pid=476) INFO 10-08 14:04:23 [ngram_embedding.py:2219] Initialized PLE embedding language_model.model.layers.1.ple.ple_embedding.ngram_embedding: quantization_method=Qwen4ExpPLEFp8EmbeddingMethod, weight_dtype=torch.float8_e4m3fn, weight_device=xpu:1, pinned=False
+(Worker_TP3_EP3 pid=544) INFO 10-08 14:04:23 [ngram_embedding.py:2219] Initialized PLE embedding language_model.model.layers.1.ple.ple_embedding.ngram_embedding: quantization_method=Qwen4ExpPLEFp8EmbeddingMethod, weight_dtype=torch.float8_e4m3fn, weight_device=xpu:3, pinned=False
