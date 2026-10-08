@@ -180,6 +180,12 @@ def test_frame49():
               'rc=%d rows=%d probs=%s refusals=%s last=%s' % (cp.returncode, len(rows), probs[:4], st['refusals'],
                                                              out.strip().splitlines()[-1:]))
         recs = [e.receipt(k) for k in range(8)]
+        lines = [ln for ln in out.splitlines() if ' stream_seq ' in ln and 'submit->preview' in ln]
+        check('F%d log stage buckets (116a): video-decode(chain), anchor-handoff, receipt, decode-tail(off-chain); '
+              'no decode(in-chain)' % (5 + (1 - dg)),
+              len(lines) == 8 and all('video-decode(chain)' in ln and 'decode(in-chain)' not in ln and
+                                      'anchor-handoff' in ln and 'decode-tail(off-chain)' in ln and ' receipt ' in ln
+                                      for ln in lines), lines[:1])
         q0 = e.qdecode('stream116-qgraph-c000000')
         check('F%d 116a: frame stream receipts commit before their decode records (state video_done); the gated '
               'qualification chunks waited for their whole decode; dg%d decoder rows' % (2 + 2 * (1 - dg), dg),
@@ -208,6 +214,10 @@ def test_frame97_and_ab_modes():
         e.start_fake('--anchor', anchor, '--phase', 'stream', '--decode-delay', '0.05', '--preview-delay', '0.05')
         cp = e.client('--skip-qualification', '--max-chunks', '4', '--expect-anchor', anchor)
         rows = e.manifest()
+        out = cp.stdout + cp.stderr
+        check('N4 %s log buckets: video-decode(off-chain) and decode-tail(off-chain), no decode(in-chain)' % anchor,
+              'video-decode(off-chain)' in out and 'decode-tail(off-chain)' in out and 'decode(in-chain)' not in out,
+              '')
         check('N2 A/B anchor %s on a 116 server streams 4 chunks with 116 manifest labels' % anchor,
               cp.returncode == 0 and len(rows) == 4 and not manifest_problems(rows, 49, anchor),
               'rc=%d rows=%d probs=%s' % (cp.returncode, len(rows), manifest_problems(rows, 49, anchor)[:3]))

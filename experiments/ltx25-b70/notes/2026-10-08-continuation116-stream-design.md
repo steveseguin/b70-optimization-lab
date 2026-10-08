@@ -132,3 +132,95 @@ on the sealed decoder with a fake graph API).
 2. Audio is still unconditioned per chunk and 0.03 s shorter than the video (as 113-115).
 3. The owner A/B at 97 frames: 116 frame (sharp, ≈1.1 s/s predicted with the decoder graph) against 115
    mixed (soft first frames, ≈1.0 s/s).
+
+## 116b (2026-10-08, after the live 116 refusal)
+
+**Live 116 result** (97 frames, frame anchor, `LTX_DECODER_GRAPH=1`): the window probe passed, then `prepare` refused
+with `na3d on xpu:3 does not dispatch to the eager backend (<bound method AxisRouter._dispatch …>)`
+(`_install_decoder_graph`). The server latched before any capture, with no device fault. Evidence:
+`encoder-server-continuation-stream-116-frame-dg1-two-way20-28-w1-b1-p1-dxpu2-s256x256-f97.refused-20261008T1742Z`.
+
+**Cause.** The launcher whitelists the custom node `ltx_na_axis_decode_lab`, which is the same file as
+`source/scripts/na_axis_decode_node.py` (sha `21774a7a…`). Its module code calls `initialize()` when
+`LTX_ENCODER_RUN_DIR` is set, which runs `ltx_na_axis_router.install()` (sha `1fe42fe9…`). The installed
+`AxisRouter` replaces the eager backend attribute `comfy_kitchen.backends.eager.na3d` with its bound `_dispatch`.
+Inside an `LTXNAAxisDecode` scope the router calls a sandboxed "axis-cache" candidate (sha `d2907c1e…`). With no
+scope open (its ContextVar is None) it calls `router.original`, which is the pinned eager `na.na3d` itself. The
+stream server never opens such a scope; its decode thread calls the native `VAEDecode`. 116's proof required the
+registry's resolution to *be* `na.na3d`, so it refused correctly but unnecessarily.
+
+**Effect on the caches: none.** The router changes only the backend attribute. `na.na3d`, `na._group_mask` and
+`rope_inv_freqs` keep their identities, and `router.validate()` requires `source.na3d is original`. The no-scope
+route runs `na.na3d`, whose module global `_group_mask` is the wrapped cache. The CPU test asserts all three
+identities after installing the router.
+
+**Fix (116b, installer only).** `stream_decoder_graph.na_route` accepts two resolutions:
+- the plain eager `na.na3d` (route `eager`);
+- the pinned AxisRouter (route `axis-router-original`), under all of these conditions: class `AxisRouter`, the
+  module's source sha equals the sealed packet file, its `ORIGINAL_SHA` and `CANDIDATE_SHA` equal the pins,
+  `router.source is na`, `router.original is na.na3d`, the wrapper equals the registry's resolution,
+  `router.validate()` passes, and the scope is unset.
+
+The route is recorded in `stream-decoder-graph-install.json` (`na3d_route`). Before every graph decode,
+`DecoderGraph.graph_decode` re-runs `router.validate()` and requires the router scope to be unset on the decode
+thread. The gate, the caches and the numerics are unchanged.
+
+**CPU tests added.** `test_decoder_graph.AxisRouterInstall`:
+- executes the sealed `custom_nodes/ltx_na_axis_decode_lab/__init__.py` the way ComfyUI imports it, with the env
+  set, so `initialize()` → `install()` runs against the real comfy_kitchen registry;
+- asserts that the registry's resolution is the router wrapper and that `na_route` accepts it;
+- asserts that graph decodes through the router are byte-identical and hit the mask cache;
+- asserts that an open router scope (`original` or `axis-cache`) refuses a graph decode;
+- asserts that a wrong router hash, a foreign callable, a scope open at install, and a router whose `original` is
+  not `na.na3d` are each refused.
+
+The CPU kitchen stub now dispatches through the real `comfy_kitchen.registry` for every na3d call, as `na.py`'s
+custom op does.
+
+**Packet.** `prepared-continuation-stream-116b`:
+- manifest `06688f41f6b06b1fc0a1596bf61abbe8a74388836badf639330d0d272570442b`;
+- plan `ac5a1abc…31b3be`;
+- names `stream116b-`, packet id `'116b'`, clip bases 11620000 / 11621000;
+- build receipt `data/resume-20261008/continuation116b-build.json`.
+
+Predictions and memory are unchanged from 116.
+
+### 116 frame f97 dg0 live measurement: where the 1.76 s goes (receipt evidence)
+
+Source: `encoder-server-continuation-stream-116-frame-dg0-two-way20-28-w1-b1-p1-dxpu2-s256x256-f97`. The figures
+are medians over 67 anchored stream chunks that have both a receipt and a decode record (min–max in brackets).
+
+| Interval (from the decode record and receipt `timing_ns`) | Median |
+|---|---|
+| output node → decode queued | 0.002 s |
+| queue wait on the decode thread | 0.000 s (0.0–0.0) |
+| **video decode** (decode_start → video_done) | **1.719 s** (1.712–1.737) |
+| anchor hand-off (video_done → anchor_ready: last-frame bytes, finiteness check, fsync) | 0.031 s |
+| = receipt `decode_in_chain` | 1.751 s (1.740–1.769) |
+| anchor_ready → receipt_staged | 0.173 s |
+| audio decode, off the chain (anchor_ready → audio_done) | 0.853 s (0.66–1.11) |
+| hashes and diagnostics, off the chain | 0.078 s |
+
+**Attribution: 116a works as designed.**
+- The chain waits only for the video decode plus a 31 ms hand-off.
+- The audio decode, hashing and record run beside the next chunk: `decode_at_start.pending` is 1 on every chunk,
+  and the next video decode never queues (`queue wait` 0).
+- The audio decode takes 0.85 s instead of about 0.19 s alone, because it shares CPU and xpu:3 with the next
+  chunk's text encode and stage A.
+
+**Two labelling problems.**
+- The client's `anchor` bucket (stage_b_done → anchor_ready, 1.76 s) is this video decode.
+- The client's `decode(in-chain)` bucket (the decode record's `timing_s.decode` = video + audio, 2.67 s) is mostly
+  off the chain. It is mislabelled; the client is being fixed to show `video-decode(chain)`,
+  `anchor-handoff`, `receipt` and `decode-tail(off-chain)`.
+
+**What was wrong is the estimate.** The video decode alone at 97 frames is 1.72 s, not the 1.15–1.4 s predicted.
+The 114 frame f97 `decode_in_chain` of 2.0 s was video + audio + hashing. 116a therefore removed about 0.24 s per
+chunk (5.98 → 5.74 s cadence), not about 0.5 s.
+
+**The remaining lever is the decoder graph (116b, dg1).** The 1.72 s video decode is now the chain's largest single
+item. At the assumed 45–60% dispatch/sync share, replay would give 0.7–0.95 s, i.e. a cadence of about
+4.7–5.0 s at 97 frames.
+
+Smaller items: the 0.17 s anchor_ready → receipt_staged (adapter after-request snapshots and the safety drain) and
+the client turnaround. No server scheduling change is needed for 116b.

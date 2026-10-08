@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ltx_continuation_client.py - the stream client for the packet 112 / 113 / 114 / 115 / 116 continuation servers.
+"""ltx_continuation_client.py - the stream client for the packet 112 / 113 / 114 / 115 / 116 / 116b continuation servers.
 
     /home/steve/.venvs/ltx25-baseline/bin/python -B ltx_continuation_client.py --work-dir DIR [options]
 
@@ -52,6 +52,9 @@ the preview record, as for 115. The qualification re-derivation uses the 116 gat
 and the sealed cross-packet reference hashes (resolution/reference-frame-hashes.json, SHA-256 checked against
 the sealed manifest; --reference-hashes replaces it for fake servers off the live port). Manifest lines add
 decoder_graph and decoder_mode. stream116- run names.
+
+Packet 116b (--packet 116b): exactly 116 for the client (status, features, receipts, records, gate, reference),
+with the string packet id '116b' (status packet '116b'), stream116b- run names and its own sealed contract module.
 
 Never retries a refused request, never restarts or signals anything. Halts:
 exit 0 clean stop; 2 server halted / execution error; 4 FAULT.json; 5 HTTP failure (> --http-fail-
@@ -126,8 +129,17 @@ PACKETS[116] = {'dir': R / 'prepared-continuation-stream-116',
                             'stream_receipts': '6b316cd4d0290c91480f07af113077204df89a00e7a247d5591c9a527669acef',
                             'qualification_gate': 'bc8598be36e03884264a938e4ad65256036d49b3037d17f59b0cb6a585acf0c0'},
                 'reference_sha256': '47040972fdcbb7f5837086d067122afd5130441bc5396f7b562a028e7faf5bb7'}
-DECODE_THREAD_PACKETS = (114, 115, 116)          # anchor mode, decode thread, decode records
-RESET_PACKETS = (113, 114, 115, 116)             # chain resets, preview after receipt
+# Packet 116b (built 2026-10-08): packet 116 plus the NA axis-router acceptance in the decoder-graph
+# installer; string packet id '116b', stream116b- names; receipts, records, gate and reference as 116.
+PACKETS['116b'] = {'dir': R / 'prepared-continuation-stream-116b',
+                   'manifest_sha256': '06688f41f6b06b1fc0a1596bf61abbe8a74388836badf639330d0d272570442b',
+                   'modules': {'stream_contract': '32705611a81c2c1d99da759f14bcc8df0dc75302a87aa34fc23a96ed1560ddf7',
+                               'stream_receipts': '6b316cd4d0290c91480f07af113077204df89a00e7a247d5591c9a527669acef',
+                               'qualification_gate': 'bc8598be36e03884264a938e4ad65256036d49b3037d17f59b0cb6a585acf0c0'},
+                   'reference_sha256': '47040972fdcbb7f5837086d067122afd5130441bc5396f7b562a028e7faf5bb7'}
+DECODER_GRAPH_PACKETS = (116, '116b')            # decoder_graph field, 116 preflight, 116 gate and references
+DECODE_THREAD_PACKETS = (114, 115, 116, '116b')  # anchor mode, decode thread, decode records
+RESET_PACKETS = (113, 114, 115, 116, '116b')     # chain resets, preview after receipt
 # ----------------------------------------------------------------------------------------------
 PACKET = PACKETS[112]['dir']                     # packet 112 defaults (unchanged)
 CONTRACT_DIR = PACKET / 'resolution/components'
@@ -141,6 +153,7 @@ STREAM_DIR_RE = re.compile(r'stream112-s[0-9]{8}')   # integration.RUN_NAME_RE, 
 STREAM_DIR_RE_114 = re.compile(r'stream114-s[0-9]{8}')   # packet 114 (stream_contract.RUN_PREFIX stream114)
 STREAM_DIR_RE_115 = re.compile(r'stream115-s[0-9]{8}')   # packet 115
 STREAM_DIR_RE_116 = re.compile(r'stream116-s[0-9]{8}')   # packet 116
+STREAM_DIR_RE_116B = re.compile(r'stream116b-s[0-9]{8}')  # packet 116b
 PREVIEW_RE = re.compile(r'preview_[0-9]{5}_\.mp4')
 SETUP_TIMEOUT_S = 1800                          # qualify_client.py bounds
 QUAL_CHUNK_TIMEOUT_S = 900
@@ -390,6 +403,11 @@ class Api:
         return status, self.parse(raw)
 
 
+def packet_id(text):
+    """--packet: an int for digit strings (112-116), the string itself otherwise ('116b')."""
+    return int(text) if str(text).isdigit() else str(text)
+
+
 def refusal(status, body):
     err = body.get('error') if isinstance(body, dict) else None
     code = err.get('code') if isinstance(err, dict) else None
@@ -410,10 +428,10 @@ class Client:
         self.a, self.c, self.rc, self.gate = a, contract, receipts, gate
         self.api = Api('http://%s:%d' % (a.host, a.port), a.http_fail_seconds)
         self.client_id = ({114: 'stream114-client-', 115: 'stream115-client-',
-                           116: 'stream116-client-'}.get(a.packet, 'stream112-client-') +
+                           116: 'stream116-client-', '116b': 'stream116b-client-'}.get(a.packet, 'stream112-client-') +
                           uuid.uuid4().hex[:12])
         self.stream_dir_re = {114: STREAM_DIR_RE_114, 115: STREAM_DIR_RE_115,
-                              116: STREAM_DIR_RE_116}.get(a.packet, STREAM_DIR_RE)
+                              116: STREAM_DIR_RE_116, '116b': STREAM_DIR_RE_116B}.get(a.packet, STREAM_DIR_RE)
         self.decoder_graph = None           # packet 116: the server's LTX_DECODER_GRAPH
         self.anchor = None
         self.state = json.loads(a.state.read_text()) if a.state.is_file() else {}
@@ -501,7 +519,7 @@ class Client:
                 st.get('text_reuse') not in (0, 1):
             problems.append('status frames/placement/text_reuse invalid: %r/%r/%r'
                             % (st.get('frames'), st.get('placement'), st.get('text_reuse')))
-        elif self.a.packet == 116:
+        elif self.a.packet in DECODER_GRAPH_PACKETS:
             if st.get('anchor') not in self.c.ANCHORS or st.get('decoder_graph') not in self.c.DECODER_GRAPH_CHOICES:
                 problems.append('status anchor/decoder_graph invalid: %r/%r' % (st.get('anchor'), st.get('decoder_graph')))
             elif st.get('qualification_id') != self.c.qualification_id(st['frames'], st['placement'], st['anchor'],
@@ -535,13 +553,14 @@ class Client:
                 all(feats.get(k + '_anchor') is (st.get('anchor') == k) for k in ('mixed', 'latent', 'guide'))):
             problems.append('--packet 115 needs a packet 115 server (status packet=%r anchor=%r features=%r)'
                             % (st.get('packet'), st.get('anchor'), feats))
-        if self.a.packet == 116 and not (st.get('packet') == 116 and all(feats.get(k) is True for k in (
+        if self.a.packet in DECODER_GRAPH_PACKETS and not (st.get('packet') == self.a.packet and all(feats.get(k) is True for k in (
                 'decode_thread', 'async_preview', 'chain_reset', 'chunk_length_choice', 'sharpness_diagnostic',
                 'video_first_handoff')) and
                 all(feats.get(k + '_anchor') is (st.get('anchor') == k) for k in ('frame', 'mixed', 'latent', 'guide'))
                 and feats.get('decoder_graph') is (st.get('decoder_graph') == 1)):
-            problems.append('--packet 116 needs a packet 116 server (status packet=%r anchor=%r decoder_graph=%r '
-                            'features=%r)' % (st.get('packet'), st.get('anchor'), st.get('decoder_graph'), feats))
+            problems.append('--packet %s needs a packet %s server (status packet=%r anchor=%r decoder_graph=%r '
+                            'features=%r)' % (self.a.packet, self.a.packet, st.get('packet'), st.get('anchor'),
+                                              st.get('decoder_graph'), feats))
         if problems:
             raise Stop(8, 'preflight refused: ' + '; '.join(problems))
         self.bind_dirs(st)
@@ -553,7 +572,7 @@ class Client:
 
     # ---- qualification -------------------------------------------------------------------
     def qual_params(self, st):
-        if self.a.packet == 116:
+        if self.a.packet in DECODER_GRAPH_PACKETS:
             return self.c.qualification_params(st['frames'], st['text_reuse'], st['placement'], st['anchor'],
                                                st['decoder_graph'])
         if self.a.packet in DECODE_THREAD_PACKETS:
@@ -689,7 +708,7 @@ class Client:
                 except ValueError as e:
                     raise Stop(13, 'qualification decode record %s fails its schema: %s' % (name, e))
         captures = v.get('captures') or {}
-        if self.a.packet == 116:
+        if self.a.packet in DECODER_GRAPH_PACKETS:
             mine = self.gate.decide(receipts, decodes, captures, st.get('plan_sha256'), st['frames'],
                                     st['text_reuse'], st['placement'], st['anchor'],
                                     decoder_graph=st['decoder_graph'], references=self.reference_hashes())
@@ -714,12 +733,12 @@ class Client:
         """Packet 116: the cross-packet reference document the gate checks the eager chain against. Default:
         the sealed packet's resolution/reference-frame-hashes.json, SHA-256 checked against its manifest entry;
         --reference-hashes (fake servers, never the live port) replaces it."""
-        path = self.a.reference_hashes or PACKETS[116]['dir'] / 'resolution/reference-frame-hashes.json'
+        path = self.a.reference_hashes or PACKETS[self.a.packet]['dir'] / 'resolution/reference-frame-hashes.json'
         try:
             raw = Path(path).read_bytes()
         except OSError as e:
             raise Stop(13, 'cannot read the reference hashes %s: %s' % (path, e))
-        if self.a.reference_hashes is None and sha256_bytes(raw) != PACKETS[116]['reference_sha256']:
+        if self.a.reference_hashes is None and sha256_bytes(raw) != PACKETS[self.a.packet]['reference_sha256']:
             raise Stop(13, 'reference hashes %s differ from the sealed packet (sha256 %s)' % (path, sha256_bytes(raw)))
         try:
             doc = json.loads(raw)
@@ -871,7 +890,7 @@ class Client:
                 'committed': True, 'server_identity_sha256': self.ident}
         if self.a.packet in DECODE_THREAD_PACKETS:
             want['anchor'] = self.anchor
-        if self.a.packet == 116:
+        if self.a.packet in DECODER_GRAPH_PACKETS:
             want['decoder_graph'] = self.decoder_graph
         for key in ('prompt_id', 'seed', 'scene_id', 'reuse_text'):
             if key in expect:
@@ -1033,7 +1052,7 @@ class Client:
                 line.update(sharpness_relative=sharp.get('relative_to_reference'),
                             sharpness_first_frames_min=sharp.get('first_frames_min_relative'),
                             frame_wait_s=timing.get('frame_wait'))
-            if self.a.packet == 116:         # packet 116: the decoder that produced this chunk's pixels
+            if self.a.packet in DECODER_GRAPH_PACKETS:         # packet 116: the decoder that produced this chunk's pixels
                 line.update(decoder_graph=r.get('decoder_graph'),
                             decoder_mode=(drec.get('decoder') or {}).get('mode'),
                             video_decode_s=(drec.get('decoder') or {}).get('video_decode_s'),
@@ -1070,6 +1089,25 @@ class Client:
                       ('decode(%s)' % ('in-chain' if r['anchor'] == 'frame' else 'off-chain'),
                        (drec.get('timing_s') or {}).get('decode')),
                       ('preview(off-chain)', (precord.get('timing_s') or {}).get('write'))]
+            if self.a.packet in DECODER_GRAPH_PACKETS:
+                # Packet 116/116b (116a): only the video decode and the anchor hand-off are on the chain (frame);
+                # the audio decode, hashes and the record (the decode tail) run beside the next chunk.
+                dn = drec.get('timing_ns') or {}
+
+                def dd(a_key, b_key):
+                    a, b = dn.get(a_key), dn.get(b_key)
+                    return None if a is None or b is None else (b - a) / 1e9
+                frame = r['anchor'] == 'frame'
+                stages = stages[:5]
+                if frame:
+                    stages += [('video-decode(chain)', d('decode_queued', 'video_done')),
+                               ('anchor-handoff', d('video_done', 'anchor_ready'))]
+                else:
+                    stages += [('anchor', d('stage_b_done', 'anchor_ready')),
+                               ('video-decode(off-chain)', dd('decode_start', 'video_done'))]
+                stages += [('receipt', d('anchor_ready', 'receipt_staged')),
+                           ('decode-tail(off-chain)', dd('anchor_ready' if frame else 'video_done', 'record_staged')),
+                           ('preview(off-chain)', (precord.get('timing_s') or {}).get('write'))]
         elif precord is not None:
             stages[-1] = ('anchor', d('decode_done', 'anchor_ready'))
             stages.append(('preview(off-chain)', precord['timing_s']['anchor_ready_to_preview_written']))
@@ -1106,7 +1144,7 @@ class Client:
         extra = {'reset': reset} if self.a.packet in RESET_PACKETS else {}
         if self.a.packet in DECODE_THREAD_PACKETS:
             extra['anchor'] = self.anchor
-        if self.a.packet == 116:
+        if self.a.packet in DECODER_GRAPH_PACKETS:
             extra['decoder_graph'] = self.decoder_graph
         params = self.c.stream_params(self.frames, n, prompt, seed, predecessor, scene['scene_id'], reuse,
                                       placement=self.placement, **extra)
@@ -1257,7 +1295,7 @@ class Client:
         self.frames, self.placement, self.text_reuse = st['frames'], st['placement'], st['text_reuse']
         if self.a.packet in DECODE_THREAD_PACKETS:
             self.anchor = st['anchor']
-        if self.a.packet == 116:
+        if self.a.packet in DECODER_GRAPH_PACKETS:
             self.decoder_graph = st['decoder_graph']
         # A guide-anchored chunk delivers all its frames; slot-0 anchors drop the overlap frame.
         self.chunk_seconds = (self.frames if self.anchor == 'guide' else self.frames - 1) / FPS
@@ -1311,10 +1349,10 @@ class Client:
         log('server %s identity %s phase %s frames %s placement %s text_reuse %s next_stream_seq %s%s' % (
             self.run_dir.name, self.ident[:12], st.get('phase'), st.get('frames'), st.get('placement'),
             st.get('text_reuse'), st.get('next_stream_seq'),
-            (' anchor %s packet %d' % (st.get('anchor'), self.a.packet)) if self.a.packet in DECODE_THREAD_PACKETS
+            (' anchor %s packet %s' % (st.get('anchor'), self.a.packet)) if self.a.packet in DECODE_THREAD_PACKETS
             else ''))
         anchor_kw = {'anchor': st['anchor']} if self.a.packet in DECODE_THREAD_PACKETS else {}
-        if self.a.packet == 116:
+        if self.a.packet in DECODER_GRAPH_PACKETS:
             anchor_kw['decoder_graph'] = st['decoder_graph']
         self.schedule = Schedule(a.scenes, a.default_chunks)
         window = WindowCheck(a.token_check, a.text_encoder)
@@ -1361,11 +1399,13 @@ def main(argv=None):
     ap.add_argument('--host', default='127.0.0.1')
     ap.add_argument('--port', type=int, default=8188)
     ap.add_argument('--root', type=Path, default=R, help='results root holding the server run dir and output/')
-    ap.add_argument('--packet', type=int, choices=sorted(PACKETS), default=112,
+    ap.add_argument('--packet', type=packet_id, choices=list(PACKETS), default=112, metavar='{%s}' %
+                    ','.join(str(k) for k in PACKETS),
                     help='server packet: 112 (default, unchanged behaviour), 113 (preview after receipt, resets) '
                          'or 114 (latent/frame anchor, decode thread, 49/97 frames, text reuse on by default) '
                          'or 115 (mixed/latent/frame/guide anchor, sharpness profile) '
-                         'or 116 (frame anchor by default, video-first hand-off, decoder graph)')
+                         'or 116 (frame anchor by default, video-first hand-off, decoder graph) '
+                         'or 116b (116 with the NA axis-router acceptance; stream116b- names)')
     ap.add_argument('--manifest-sha256', help='expected runtime_manifest_sha256 (default: the --packet build)')
     ap.add_argument('--contract-dir', type=Path, help='sealed stream_contract.py location (default: the --packet build)')
     ap.add_argument('--reset-every-chunks', type=int, default=0,
@@ -1412,8 +1452,8 @@ def main(argv=None):
         raise SystemExit('--reset-every-chunks / --reset-on-scene-change need --packet 113, 114, 115 or 116')
     if a.expect_anchor is not None and a.packet not in DECODE_THREAD_PACKETS:
         raise SystemExit('--expect-anchor needs --packet 114, 115 or 116')
-    if (a.expect_decoder_graph is not None or a.reference_hashes is not None) and a.packet != 116:
-        raise SystemExit('--expect-decoder-graph / --reference-hashes need --packet 116')
+    if (a.expect_decoder_graph is not None or a.reference_hashes is not None) and a.packet not in DECODER_GRAPH_PACKETS:
+        raise SystemExit('--expect-decoder-graph / --reference-hashes need --packet 116 or 116b')
     if a.reference_hashes is not None and a.port == 8188:
         raise SystemExit('--reference-hashes is for fake servers; the live port uses the sealed reference')
     if a.expect_anchor in ('mixed', 'guide') and a.packet == 114:
@@ -1428,7 +1468,7 @@ def main(argv=None):
         if str(p).startswith(str(R.resolve()) + '/prepared-'):
             raise SystemExit('refusing to write under %s/prepared-*: %s' % (R, p))
     if a.port == 8188 and a.contract_dir.resolve() != sealed['dir'] / 'resolution/components':
-        raise SystemExit('the live port needs the sealed --contract-dir of --packet %d' % a.packet)
+        raise SystemExit('the live port needs the sealed --contract-dir of --packet %s' % a.packet)
     a.work_dir.mkdir(parents=True, exist_ok=True)
     client = None
     try:

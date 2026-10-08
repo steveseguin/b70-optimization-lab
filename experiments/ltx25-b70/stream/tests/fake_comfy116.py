@@ -18,7 +18,8 @@ recovery/20261008-continuation116-stream):
 
     python3 -B fake_comfy116.py --root ROOT --port 18190 [--anchor frame] [--decoder-graph 1] [--frames 49] ...
 
-Injection options as fake_comfy115.py. Test evidence in ROOT/fake116-stats.json. Never binds port 8188.
+With --contract-dir pointing at recovery/20261008-continuation116b-stream it emulates packet 116b (status
+packet '116b', stream116b- names, the 116b manifest default). Injection options as fake_comfy115.py. Test evidence in ROOT/fake116-stats.json. Never binds port 8188.
 """
 import argparse, array, hashlib, json, os, queue, shutil, sys, threading, time, uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -36,7 +37,7 @@ ap.add_argument('--anchor', default='frame', choices=('mixed', 'latent', 'frame'
 ap.add_argument('--decoder-graph', type=int, default=1, choices=(0, 1))
 ap.add_argument('--audio-delay', type=float, default=0.15, help='seconds the fake audio decode takes')
 ap.add_argument('--text-reuse', type=int, default=1, choices=(0, 1))
-ap.add_argument('--manifest-sha256', default=hashlib.sha256(b'fake-packet-116-manifest').hexdigest())
+ap.add_argument('--manifest-sha256', default=None, help='default sha256(fake-packet-<PACKET>-manifest)')
 ap.add_argument('--decode-delay', type=float, default=0.2, help='seconds the fake decode thread takes per chunk')
 ap.add_argument('--preview-delay', type=float, default=0.2, help='seconds the fake writer takes per MP4')
 ap.add_argument('--delay', type=float, default=0.05)
@@ -56,13 +57,15 @@ sys.path.insert(0, str(a.contract_dir))
 import stream_contract as c          # noqa: E402
 import stream_receipts as sr         # noqa: E402
 import qualification_gate as qg      # noqa: E402
-assert c.PACKET == 116, 'fake_comfy116 needs the packet 116 contract modules'
+assert c.PACKET in (116, '116b'), 'fake_comfy116 needs the packet 116 or 116b contract modules'
+if a.manifest_sha256 is None:
+    a.manifest_sha256 = hashlib.sha256(('fake-packet-%s-manifest' % c.PACKET).encode()).hexdigest()
 
 ROOT = a.root
 G = c.geometry(a.frames)
 DIAG = sr.border_diagnostic_reference(array.array('f', [0.25, 0.5, 0.75] * (c.ANCHOR_BYTES // 12)).tobytes())
-RUN = ROOT / ('encoder-server-continuation-stream-116-%s-dg%d-%s-w1-b1-p1-dxpu2-s256x256-f%d'
-              % (a.anchor, a.decoder_graph, a.placement, a.frames))
+RUN = ROOT / ('encoder-server-continuation-stream-%s-%s-dg%d-%s-w1-b1-p1-dxpu2-s256x256-f%d'
+              % (c.PACKET, a.anchor, a.decoder_graph, a.placement, a.frames))
 OFF_CHAIN = a.anchor in c.OFF_CHAIN_DECODE
 OUT = ROOT / 'output'
 if RUN.exists():                      # a new launch never reuses a run dir: archive the old one
@@ -109,9 +112,17 @@ def save_stats():
 
 
 def write_exclusive(path, value):
+    # Written under a hidden name and hard-linked into place (exclusive), so a reader that sees the name
+    # always sees the complete file (the 115 fake's open('xb') + write let a route read it half-written).
     raw = c.canonical(value) + b'\n'
-    with open(path, 'xb') as f:
+    path = Path(path)
+    tmp = path.with_name('.' + path.name + '.%d.partial' % threading.get_ident())
+    with open(tmp, 'xb') as f:
         f.write(raw)
+    try:
+        os.link(tmp, path)
+    finally:
+        os.unlink(tmp)
     return hashlib.sha256(raw).hexdigest()
 
 
@@ -755,7 +766,7 @@ def status():
                 'server_identity_sha256': IDENT, 'runtime_manifest_sha256': a.manifest_sha256, 'plan_sha256': PLAN,
                 'fault': fault(), 'receipt_dir': str(RUN / 'receipts'),
                 'qualified_text_windows': [64] if S['phase'] == 'stream' else None,
-                'output_directory': str(OUT), 'packet': 116,
+                'output_directory': str(OUT), 'packet': c.PACKET,
                 'features': {'latent_anchor': a.anchor == 'latent', 'mixed_anchor': a.anchor == 'mixed',
                              'guide_anchor': a.anchor == 'guide', 'frame_anchor': a.anchor == 'frame',
                              'decode_thread': True, 'async_preview': True,
