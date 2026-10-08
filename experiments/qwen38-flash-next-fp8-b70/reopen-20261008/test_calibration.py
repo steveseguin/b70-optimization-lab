@@ -181,10 +181,16 @@ class VerdictTests(unittest.TestCase):
 
 
 class ControllerTests(unittest.TestCase):
-    def test_launch_identical_to_mtp1(self):
+    def test_launch_identity_matches_mtp1_except_loading_guard(self):
         run=Path('/tmp/fixture')
-        self.assertEqual(screen.launch(SimpleNamespace(mode='calibrate-load',port=19988),run),
-                         screen.launch(SimpleNamespace(mode='mtp1',port=19988),run))
+        load=screen.launch(SimpleNamespace(mode='calibrate-load',port=19988),run)
+        mtp=screen.launch(SimpleNamespace(mode='mtp1',port=19988),run)
+        self.assertEqual(c.loading_guard_bytes(load),90_000_000_000)
+        self.assertIsNone(c.loading_guard_bytes(mtp))
+        with patch.object(c,'file_hash',return_value='fixture'):
+            self.assertEqual(c.identity(load,run,run),c.identity(mtp,run,run))
+            changed=mtp.copy(); changed[changed.index('--dtype')+1]='float16'
+            self.assertNotEqual(c.identity(load,run,run),c.identity(changed,run,run))
 
     def test_calibration_preflight_bypasses_prediction_only(self):
         args=SimpleNamespace(mode='calibrate-load',port=19988,run_dir=Path('/tmp/fixture'))
@@ -246,6 +252,8 @@ class ControllerTests(unittest.TestCase):
              patch.object(screen.time,'sleep',side_effect=sleep), \
              patch.object(screen,'write_calibration',return_value={'verdict':{'passed':True}}) as receipt:
             screen.supervise_locked(args,Path(d))
+            launch_receipt=json.loads((Path(d)/'launch.json').read_text())
+            self.assertEqual(c.loading_guard_bytes(launch_receipt),90_000_000_000)
             self.assertEqual(launches.call_count,1)
             self.assertEqual(events,['watchdog','launch'])
             self.assertEqual(clock[0],22 if defer else 20)
@@ -258,7 +266,8 @@ class ControllerTests(unittest.TestCase):
     def test_privileged_passthrough_worker(self):
         with tempfile.TemporaryDirectory() as d:
             path=Path(d)/'fresh'
-            args=['screen.py','run','--mode','calibrate-load','--run-dir',str(path),'--execute']
+            args=['screen.py','run','--mode','calibrate-load','--loading-ram-guard-gb','89',
+                  '--run-dir',str(path),'--execute']
             env={'SCREEN_PRIVILEGED_FD_SCAN':'1','SCREEN_SUDO_PASSWORD_FILE':'/not-read'}
             with patch.object(screen.sys,'argv',args),patch.dict(screen.os.environ,env), \
                  patch.object(screen,'preflight'),patch.object(screen,'overlay_check'), \
@@ -267,6 +276,7 @@ class ControllerTests(unittest.TestCase):
                 command=call.call_args.args[0]
                 self.assertIn('--setenv=SCREEN_PRIVILEGED_FD_SCAN=1',command)
                 self.assertIn('--setenv=SCREEN_SUDO_PASSWORD_FILE=/not-read',command)
+                self.assertEqual(command[command.index('--loading-ram-guard-gb')+1],'89')
 
 
 if __name__ == '__main__': unittest.main()

@@ -1,5 +1,47 @@
 # Screen 1b CPU validation — native FP8 mmap, 2026-10-08
 
+## Attempt 4 calibration loading threshold
+
+CPU-only change, 2026-10-08. Calibrate-load now defaults to the explicit
+`--loading-ram-guard-gb 90` parameter (decimal GB). The systemd worker passes
+it into the overlay as `B70_SCREEN1B_CALIBRATE_LOAD_RAM_GUARD_BYTES=90000000000`.
+Only this mode replaces both old loader limits (80 GB host use / 32 GiB
+available) with projected host use **>90,000,000,000 bytes**. Exactly 90 GB
+is allowed, matching the admission ceiling. At attempt 3's MemTotal this
+corresponds to 34.18 GB / 31.83 GiB available; no fixed 31 GB approximation
+is used. The parameter accepts integer GB from 1 to 90; other modes reject it.
+
+The threshold is retained in `launch.json`, admitted/refused loader events
+(`pressure_limit_bytes`, `available_floor_bytes`, `calibrate_load`), and
+`calibration-load.json` (`loading_ram_guard_bytes`). Model/runtime identity
+normalization excludes only this calibration guard environment entry so the
+receipt remains comparable to MTP1; other runtime settings remain identity-bound.
+Both overlay payload hash pins were refreshed. Old run receipts are untouched.
+
+The independent 0.5-second watchdog still sends one SIGINT at MemAvailable
+<24 GiB. Cancellation reporting, memory-attribution sampling, generation-mode
+limits and the **plateau ×1.15 ≤90 GB** MTP1 gate remain unchanged. No memory
+fit or completed plateau is claimed. This supersedes the prior recommendation
+to retry attempt 4 under the same 80 GB guard. The prepared command with a
+placeholder health receipt is in the [README](README.md).
+
+**179/179 CPU tests passed, zero skips**, including all four real-model CPU
+construction rehearsals. Eight new tests cover attempt 3's pressure, exact
+and over-limit boundaries (including projected growth and the old available
+floor), configurable limits, invalid arguments, mode isolation, receipt fields
+and first-cause retention. Existing controller tests now check worker argument
+forwarding, `launch.json` recording and MTP1 identity equivalence; watchdog
+and plateau-margin regression tests still pass.
+[Full test log](evidence/cpu-attempt4-threshold-tests.log).
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/steve/.venvs/ltx25-baseline/bin/python -m unittest discover \
+  -s experiments/qwen38-flash-next-fp8-b70/reopen-20261008 -p 'test_*.py' -v
+```
+
+No GPU, Docker, server, install, secret, host-setting, branch/commit or port
+8188 operation occurred. Attempt 4 was not launched.
+
 ## Calibrate-load attempt 3: memory-guard cancellation
 
 **attempt 3: the internal host-memory guard stopped TP1 during construction;

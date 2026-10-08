@@ -202,9 +202,25 @@ def file_hash(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+LOADING_GUARD_ENV = 'B70_SCREEN1B_CALIBRATE_LOAD_RAM_GUARD_BYTES'
+
+
+def loading_guard_bytes(command):
+    for i, value in enumerate(command):
+        if value == '-e' and command[i+1].startswith(LOADING_GUARD_ENV + '='):
+            return int(command[i+1].split('=', 1)[1])
+    return None
+
+
 def identity(command, package, model):
     # Canonical run path/name/port so a fresh MTP1 run can use the receipt.
     cmd = list(map(str, command))
+    # Loading cancellation policy differs only in measurement mode. Record it
+    # separately in the receipt; keep the model/runtime identity comparable
+    # to MTP1, whose measured plateau + 15% admission gate is unchanged.
+    for i in range(len(cmd)-2, -1, -1):
+        if cmd[i] == '-e' and cmd[i+1].startswith(LOADING_GUARD_ENV + '='):
+            del cmd[i:i+2]
     for flag in ('--name', '--port'):
         cmd[cmd.index(flag)+1] = '<run>'
     for i, value in enumerate(cmd):

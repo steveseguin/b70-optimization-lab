@@ -404,6 +404,11 @@ def launch(args, run):
         'XDG_CACHE_HOME': '/screen/cache/xdg', 'TMPDIR': '/screen/cache/tmp',
         'PYTHONDONTWRITEBYTECODE': '1',
     }
+    if args.mode == 'calibrate-load':
+        limit = getattr(args, 'loading_ram_guard_gb', None)
+        limit = 90 if limit is None else limit
+        require(0 < limit <= 90, 'calibrate-load RAM guard must be positive and at most 90 GB')
+        env[calibration.LOADING_GUARD_ENV] = str(int(limit * 1_000_000_000))
     for key, value in env.items():
         cmd += ['-e', f'{key}={value}']
     cmd += ['-v', f'{MODEL}:/model:ro', '-v', f'{run}:/screen',
@@ -649,6 +654,7 @@ def write_calibration(run, cmd, ready, clean_exit, watchdog_reason, failure):
                if samples_path.exists() else [])
     result = {'schema': 'neural.download.screen1b-calibration-load.v1',
               'identity': calibration.identity(cmd, HERE, MODEL),
+              'loading_ram_guard_bytes': calibration.loading_guard_bytes(cmd),
               'generation_requests': 0, 'ready': ready, 'clean_exit': clean_exit,
               'watchdog_reason': watchdog_reason, 'failure': failure,
               'samples_sha256': calibration.file_hash(samples_path) if samples_path.exists() else None,
@@ -678,12 +684,19 @@ def main():
     p.add_argument('--health-receipt', type=Path,
                    help='Same-boot four-card health receipt (<6 h); required after a boot fault')
     p.add_argument('--calibration', type=Path, help='Qualified calibration-load.json for MTP1')
+    p.add_argument('--loading-ram-guard-gb', type=int,
+                   help='Calibrate-load only: host-use ceiling in decimal GB (default 90, maximum 90)')
     p.add_argument('--port', type=int, default=19988)
     p.add_argument('--run-dir', type=Path, default=None)
     x = p.add_mutually_exclusive_group()
     x.add_argument('--execute', action='store_true')
     x.add_argument('--dry-run', action='store_true')
     args = p.parse_args()
+    if args.loading_ram_guard_gb is not None:
+        if args.mode != 'calibrate-load' or not 0 < args.loading_ram_guard_gb <= 90:
+            p.error('--loading-ram-guard-gb requires calibrate-load and a value from 1 to 90')
+    elif args.mode == 'calibrate-load':
+        args.loading_ram_guard_gb = 90
     run = (args.run_dir or HERE / 'runs' / ('screen1b-' + args.mode)).resolve()
     if args.calibration:
         args.calibration = args.calibration.resolve()
@@ -735,6 +748,8 @@ def main():
                    '--mode', args.mode, '--port', str(args.port), '--run-dir', str(run), '--execute']
         if args.calibration:
             command += ['--calibration', str(args.calibration)]
+        if args.loading_ram_guard_gb is not None:
+            command += ['--loading-ram-guard-gb', str(args.loading_ram_guard_gb)]
         if args.health_receipt:
             command += ['--health-receipt', str(args.health_receipt)]
         (run / 'unit.txt').write_text(unit + '\n')

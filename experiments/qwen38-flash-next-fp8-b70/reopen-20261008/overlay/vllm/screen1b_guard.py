@@ -22,6 +22,7 @@ import time
 COPY_LIMIT = 256 * 2**20
 PRESSURE_LIMIT = 80_000_000_000
 AVAILABLE_FLOOR = 32 * 2**30
+CALIBRATION_GUARD_ENV = 'B70_SCREEN1B_CALIBRATE_LOAD_RAM_GUARD_BYTES'
 WAIT_SECONDS = 120
 _local = threading.local()
 _tables = {}
@@ -107,16 +108,32 @@ def check_admission(growth=0):
     m = memory()
     available = m['MemAvailable'] - growth
     pressure = m['MemTotal'] - m['MemAvailable'] + growth
-    if available <= AVAILABLE_FLOOR or pressure >= PRESSURE_LIMIT:
-        reason = ('allocation would cross 80 GB pressure or 32 GiB MemAvailable: '
+    calibration_limit = os.environ.get(CALIBRATION_GUARD_ENV)
+    if calibration_limit is not None:
+        limit = int(calibration_limit)
+        if not 0 < limit <= 90_000_000_000:
+            raise ValueError('calibrate-load RAM guard must be positive and at most 90 GB')
+        # Calibration measures through the admission line. The independent
+        # watchdog still sends SIGINT below 24 GiB MemAvailable.
+        floor = m['MemTotal'] - limit
+        refused = pressure > limit
+    else:
+        limit, floor = PRESSURE_LIMIT, AVAILABLE_FLOOR
+        refused = available <= floor or pressure >= limit
+    thresholds = {'pressure_limit_bytes': limit, 'available_floor_bytes': floor,
+                  'calibrate_load': calibration_limit is not None}
+    if refused:
+        reason = (f'allocation would cross {limit / 1e9:g} GB pressure or '
+                  f'{floor / 2**30:g} GiB MemAvailable: '
                   f'pid={os.getpid()}, pressure_bytes={pressure-growth}, '
                   f'next_bytes={growth}, projected_pressure_bytes={pressure}, '
                   f'MemAvailable={m["MemAvailable"]}')
         receipt('allocation_refused', next_bytes=growth,
-                pressure_bytes=pressure-growth, projected_pressure_bytes=pressure, **m)
+                pressure_bytes=pressure-growth, projected_pressure_bytes=pressure,
+                **thresholds, **m)
         request_stop(reason)
         raise LoadCancelled(f'Screen 1b next allocation exceeds early stop margin; {reason}')
-    return m
+    return {**m, **thresholds}
 
 
 @contextmanager

@@ -10,8 +10,17 @@ The fix preserves the first stop reason and exact memory counters in subsequent
 cancellation errors, and records the loader exception separately. The sampler
 now retains all KiB-valued meminfo counters (including GPUActive when available)
 and cgroup memory.stat for the next attribution check. **This is a diagnosis and
-coverage fix, not a proven RAM-fit fix.** The 80 GB/32 GiB guard stays intact;
-an unchanged-size retry may stop there again.
+coverage fix, not a proven RAM-fit fix.** For attempt 4, calibrate-load alone
+now uses `--loading-ram-guard-gb 90` (decimal GB, also the default). The loader
+cancels only when projected host use exceeds 90,000,000,000 bytes; the old
+32 GiB available-memory floor does not apply in this mode. With attempt 3's
+MemTotal, that leaves 34.18 GB (31.83 GiB) available. The separate watchdog
+still sends SIGINT at MemAvailable <24 GiB. MTP0/MTP1/MTP3 keep their old
+80 GB/32 GiB guard; MTP1's plateau +15% ≤90 GB gate is unchanged.
+The parameter travels through the systemd worker into `launch.json`, loader
+admission/refusal events, and `calibration-load.json` (`loading_ram_guard_bytes`).
+It accepts whole decimal GB from 1 through 90, only in calibrate-load mode.
+[Threshold validation](VALIDATION.md#attempt-4-calibration-loading-threshold).
 
 The CPU rehearsal now asserts the real V30 factory → ExpertMapManager →
 `determine_expert_map` path on **all four ranks**, using the actual certified v5
@@ -37,7 +46,7 @@ installation, secrets, host settings, Git branches/commits or port 8188.
 
 ```sh
 SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run \
-  --mode calibrate-load \
+  --mode calibrate-load --loading-ram-guard-gb 90 \
   --health-receipt /PATH/TO/FRESH-HEALTH-RECEIPT.json \
   --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt4 \
   --execute
@@ -129,8 +138,8 @@ and the global staging peak. Graph/driver/private-runtime allocations remain
 unqualified. The overlay manifest seals the adapter, loader, contract and
 predictor before the container entrypoint can apply them.
 
-MTP0/MTP1/MTP3 commands, calibrate-load behavior and watchdog thresholds stay
-unchanged. The **80 GB/32 GiB internal guard**, measured plateau margin, and
+MTP0/MTP1/MTP3 guards and all watchdog thresholds stay unchanged. Calibration
+uses the explicit 90 GB loading guard described above. The measured plateau margin and
 known **4 GiB/card reserve conflict** still block any claim of admission.
 The next-attempt command below has **not been executed**. This task made no commits; no GPU, Docker, server, installation, secret, host setting or
 port 8188 operation occurred.
@@ -211,9 +220,9 @@ host-peak and VRAM pool receipts are listed in the calibration note.
 The generation-run watchdog polls every 250 ms and sends one SIGINT at accounted
 host pressure ≥80 GB or MemAvailable ≤32 GiB. Allocation admission checks the
 next buffer too. Nothing retries or escalates to hard kill. A below-85-GB
-scenario can still trip this stricter watchdog. The allocation guard inside the unchanged overlay also retains these
-stricter thresholds, including during calibration; it can cancel before
-the external calibration watchdog reaches its 24 GiB floor.
+scenario can still trip this stricter watchdog. Calibrate-load alone replaces
+the loader limits with the explicit 90 GB host-use line; its independent
+watchdog retains the 24 GiB available-memory hard stop.
 
 No server, GPU, Docker run/pull/create, install, credential access, branch,
 commit or host-setting change was performed. Port 8188 was never contacted.
@@ -279,13 +288,13 @@ The pinned image must already exist. Existing `SCREEN_PRIVILEGED_FD_SCAN` and
 the opt-in fd scan uses that existing privileged path. The sampler never does.
 
 ```sh
-SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode calibrate-load --health-receipt /PATH/TO/FRESH-HEALTH-RECEIPT.json --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt4 --execute
+SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode calibrate-load --loading-ram-guard-gb 90 --health-receipt /PATH/TO/FRESH-HEALTH-RECEIPT.json --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt4 --execute
 ```
 
 This command uses the fresh `runs/screen1b-mmap-calibrate-load-20261008-attempt4/`.
 The original run directory, STOP latch and failed calibration stay intact.
 The controller default remains `runs/screen1b-calibrate-load/`; choose another
-fresh `--run-dir` if the selected directory exists. The mode uses **the exact MTP1 launch command**, including
+fresh `--run-dir` if the selected directory exists. The mode uses **the MTP1 model/runtime configuration**, with only the loading guard changed, including
 the ported v5 placement, native FP8 mmap adapter, unchanged weights, full
 16-bit KV, graph configuration and bounded loader. Its admission comes from the watchdog, not a predicted
 complete peak. It still verifies disk, model hashes, overlay hashes, idle
@@ -305,7 +314,8 @@ No XPU-SMI polling or device API fallback exists. If xe exposes no readable
 counters, sampling skips VRAM, and the final receipt **cannot admit MTP1**
 until four-card reserve evidence is available. Any reported rank below
 **2 GiB free**, or host MemAvailable below **24 GiB**, latches STOP and sends
-**one SIGINT**. The existing stricter loader allocation checks remain active.
+**one SIGINT**. The loader also checks projected host use against the explicit
+90 GB threshold before each admitted allocation.
 Missing host observations also cancel. There is no restart or hard-kill escalation.
 
 Only GET `/health` and GET `/v1/models` are sent. After health 200 and the
