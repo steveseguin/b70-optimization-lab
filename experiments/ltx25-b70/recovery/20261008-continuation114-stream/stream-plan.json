@@ -1,0 +1,1438 @@
+{
+  "plan": {
+    "admission": {
+      "conditioning_stage_floors": "frame anchor: same; latent anchor: no stage snapshots (no encode)",
+      "note": "Unchanged floors; see LAUNCH.md for the per-card memory estimate at 97 frames",
+      "post_floor_gib": 2,
+      "pre_floor_gib": [
+        8,
+        8,
+        2,
+        9
+      ]
+    },
+    "basis": {
+      "design": "notes/2026-10-08-continuation114-stream-design.md",
+      "parent_manifest_sha256": "a23dbc946d156df70c3e61134dc3231b147817c5cb110a015f84c8f020f7f28b",
+      "parent_packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-113",
+      "specification": "notes/2026-10-08-continuation-latent-anchor-design.md (packet 114 preregistration)"
+    },
+    "budget": {
+      "build_allowance_bytes": 167772160,
+      "reserve_bytes": 53687091200,
+      "retries": 0,
+      "run_allowance_bytes": 3221225472
+    },
+    "capture_contract": {
+      "49": {
+        "count": 9,
+        "full_file_bound_bytes": 39628040,
+        "full_payload_bytes": 39562496,
+        "raw_capture_bound_bytes": 356652360
+      },
+      "97": {
+        "count": 9,
+        "full_file_bound_bytes": 78366984,
+        "full_payload_bytes": 78301440,
+        "raw_capture_bound_bytes": 705302856
+      }
+    },
+    "claims": {
+      "adopted": false,
+      "audio_alignment_resolved": false,
+      "decoder_graph_capture": false,
+      "geometry_97_measured": false,
+      "graph_replay_qualified": false,
+      "seam_quality_accepted": false,
+      "speed_claim": false,
+      "text_reuse_default": 1
+    },
+    "execution_order": [
+      "stream114-window-probe",
+      "stream114-prepare",
+      "stream114-qeager-c000000",
+      "stream114-qeager-c000001",
+      "stream114-qeager-c000002",
+      "stream114-qgraph-c000000",
+      "stream114-qgraph-c000001",
+      "stream114-qgraph-c000002",
+      "stream114-qrepeat-c000000",
+      "stream114-qrepeat-c000001",
+      "stream114-qrepeat-c000002",
+      "action:qualify-verdict"
+    ],
+    "geometry": {
+      "49": {
+        "anchor_frame_index": 48,
+        "audio_latents": 51,
+        "audio_samples": 96480,
+        "decoded_shapes": {
+          "images": [
+            49,
+            256,
+            256,
+            3
+          ],
+          "waveform": [
+            1,
+            2,
+            96480
+          ]
+        },
+        "frames": 49,
+        "full_payload_bytes": 39562496,
+        "latent_anchor_slot": 6,
+        "latent_shapes": {
+          "audio_latent": [
+            1,
+            8,
+            51,
+            16
+          ],
+          "stage_a_latent": [
+            1,
+            128,
+            7,
+            4,
+            4
+          ],
+          "video_latent": [
+            1,
+            128,
+            7,
+            8,
+            8
+          ]
+        },
+        "new_frames_continuation": 48,
+        "new_frames_first_chunk": 49,
+        "noise_mask_shape": [
+          1,
+          1,
+          7,
+          1,
+          1
+        ],
+        "provenance": "measured (packets 110-113)",
+        "seconds_per_chunk": 2.0416666666666665,
+        "stage_shapes": {
+          "A": [
+            1,
+            128,
+            7,
+            4,
+            4
+          ],
+          "B": [
+            1,
+            128,
+            7,
+            8,
+            8
+          ]
+        },
+        "stage_tokens": {
+          "A": 112,
+          "B": 448
+        },
+        "temporal_latents": 7,
+        "tensor_shapes": {
+          "audio_latent": [
+            1,
+            8,
+            51,
+            16
+          ],
+          "images": [
+            49,
+            256,
+            256,
+            3
+          ],
+          "video_latent": [
+            1,
+            128,
+            7,
+            8,
+            8
+          ],
+          "waveform": [
+            1,
+            2,
+            96480
+          ]
+        }
+      },
+      "97": {
+        "anchor_frame_index": 96,
+        "audio_latents": 101,
+        "audio_samples": 192480,
+        "decoded_shapes": {
+          "images": [
+            97,
+            256,
+            256,
+            3
+          ],
+          "waveform": [
+            1,
+            2,
+            192480
+          ]
+        },
+        "frames": 97,
+        "full_payload_bytes": 78301440,
+        "latent_anchor_slot": 12,
+        "latent_shapes": {
+          "audio_latent": [
+            1,
+            8,
+            101,
+            16
+          ],
+          "stage_a_latent": [
+            1,
+            128,
+            13,
+            4,
+            4
+          ],
+          "video_latent": [
+            1,
+            128,
+            13,
+            8,
+            8
+          ]
+        },
+        "new_frames_continuation": 96,
+        "new_frames_first_chunk": 97,
+        "noise_mask_shape": [
+          1,
+          1,
+          13,
+          1,
+          1
+        ],
+        "provenance": "derived from audio_vae.py and the two measured lengths; checked on the first eager chunk",
+        "seconds_per_chunk": 4.041666666666667,
+        "stage_shapes": {
+          "A": [
+            1,
+            128,
+            13,
+            4,
+            4
+          ],
+          "B": [
+            1,
+            128,
+            13,
+            8,
+            8
+          ]
+        },
+        "stage_tokens": {
+          "A": 208,
+          "B": 832
+        },
+        "temporal_latents": 13,
+        "tensor_shapes": {
+          "audio_latent": [
+            1,
+            8,
+            101,
+            16
+          ],
+          "images": [
+            97,
+            256,
+            256,
+            3
+          ],
+          "video_latent": [
+            1,
+            128,
+            13,
+            8,
+            8
+          ],
+          "waveform": [
+            1,
+            2,
+            192480
+          ]
+        }
+      }
+    },
+    "launch_parameters": {
+      "LTX_ANCHOR": {
+        "choices": [
+          "latent",
+          "frame"
+        ],
+        "default": "latent"
+      },
+      "LTX_SAMPLER_PLACEMENT": {
+        "choices": [
+          "two-way",
+          "two-way20-28"
+        ],
+        "default": "two-way",
+        "launch": "two-way20-28"
+      },
+      "LTX_STREAM_FRAMES": {
+        "choices": [
+          "49",
+          "97"
+        ],
+        "default": "49",
+        "launch": "97"
+      },
+      "LTX_STREAM_TEXT_REUSE": {
+        "choices": [
+          "0",
+          "1"
+        ],
+        "default": "1"
+      }
+    },
+    "naming": {
+      "checked_directories": [
+        "output",
+        "output/validation",
+        "requests"
+      ],
+      "fixed_names": [
+        "stream114-window-probe",
+        "stream114-prepare",
+        "stream114-qeager-c000000",
+        "stream114-qeager-c000001",
+        "stream114-qeager-c000002",
+        "stream114-qgraph-c000000",
+        "stream114-qgraph-c000001",
+        "stream114-qgraph-c000002",
+        "stream114-qrepeat-c000000",
+        "stream114-qrepeat-c000001",
+        "stream114-qrepeat-c000002"
+      ],
+      "prefix": "stream114-",
+      "rule": "the launcher refuses (also in --check-only) when any fixed name or any entry starting with the prefix already exists in a checked directory"
+    },
+    "numerical_contracts": {
+      "49/two-way/frame": {
+        "anchor": "frame",
+        "conditioning": {
+          "anchor": "previous chunk images[48], F32, no conversion",
+          "bypass": false,
+          "native": "LTXVImgToVideoInplace.execute",
+          "stage_B_after_upsampler": true,
+          "stages": [
+            "A",
+            "B"
+          ],
+          "strength": 1.0
+        },
+        "decoder": "native VAEDecode.decode + LTXVAudioVAEDecode.execute on the resident VAEs (xpu:3), called by one in-order decode thread under inference_mode",
+        "graph_replay": {
+          "chain": "1",
+          "freeze_after_qualification": true,
+          "lean_memo": false,
+          "max_signatures_per_block": 8,
+          "node": "LTXGraphCaptureGate",
+          "selection": "all48"
+        },
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "output_tensor_shapes": {
+          "audio_latent": [
+            1,
+            8,
+            51,
+            16
+          ],
+          "images": [
+            49,
+            256,
+            256,
+            3
+          ],
+          "video_latent": [
+            1,
+            128,
+            7,
+            8,
+            8
+          ],
+          "waveform": [
+            1,
+            2,
+            96480
+          ]
+        },
+        "placement": "two-way",
+        "precision": "BF16 weights, F32 CPU intermediates, strict deterministic algorithms",
+        "preview": "CreateVideo fps24 8-bit sRGB + SaveVideo mp4 auto, one in-order writer behind the decode thread",
+        "sample_rate": 48000,
+        "sampler_batch": 1,
+        "sampler_blocks": {
+          "xpu:0": [
+            0,
+            23
+          ],
+          "xpu:1": [
+            23,
+            48
+          ]
+        },
+        "sampler_workers": 1,
+        "schema": "ltx.stream114.numerical-contract.v1",
+        "shared_pool": 1,
+        "stage_A_latent_shape": [
+          1,
+          128,
+          7,
+          4,
+          4
+        ],
+        "stage_B_latent_shape": [
+          1,
+          128,
+          7,
+          8,
+          8
+        ],
+        "steps": {
+          "cfg": {
+            "audio": 1.0,
+            "video": 1.0
+          },
+          "sampler": "euler_ancestral",
+          "stage_A_sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0",
+          "stage_B_sigmas": "0.85, 0.7250, 0.4219, 0.0"
+        },
+        "text": "LTXPipelineTextEncode pipeline-window on the accepted graph-sharded encoder",
+        "workload": "serial anchored continuation, 256x256, 49 frames, 24 fps, frame anchor"
+      },
+      "49/two-way/latent": {
+        "anchor": "latent",
+        "conditioning": {
+          "anchor": {
+            "A": "previous chunk node 367 video_latent[:, :, 6:7] (stage A, before the upsampler)",
+            "B": "previous chunk node 369 video_latent[:, :, 6:7] (stage B)"
+          },
+          "format": "F32 little-endian, 40960 bytes, whole-file SHA-256",
+          "node": "LTXStreamLatentCondition114 (nodes_lt.py:156,172-175 with t = the anchor latent; no VAE encode)",
+          "stage_B_after_upsampler": true,
+          "stages": [
+            "A",
+            "B"
+          ],
+          "strength": 1.0
+        },
+        "decoder": "native VAEDecode.decode + LTXVAudioVAEDecode.execute on the resident VAEs (xpu:3), called by one in-order decode thread under inference_mode",
+        "graph_replay": {
+          "chain": "1",
+          "freeze_after_qualification": true,
+          "lean_memo": false,
+          "max_signatures_per_block": 8,
+          "node": "LTXGraphCaptureGate",
+          "selection": "all48"
+        },
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "output_tensor_shapes": {
+          "audio_latent": [
+            1,
+            8,
+            51,
+            16
+          ],
+          "images": [
+            49,
+            256,
+            256,
+            3
+          ],
+          "video_latent": [
+            1,
+            128,
+            7,
+            8,
+            8
+          ],
+          "waveform": [
+            1,
+            2,
+            96480
+          ]
+        },
+        "placement": "two-way",
+        "precision": "BF16 weights, F32 CPU intermediates, strict deterministic algorithms",
+        "preview": "CreateVideo fps24 8-bit sRGB + SaveVideo mp4 auto, one in-order writer behind the decode thread",
+        "sample_rate": 48000,
+        "sampler_batch": 1,
+        "sampler_blocks": {
+          "xpu:0": [
+            0,
+            23
+          ],
+          "xpu:1": [
+            23,
+            48
+          ]
+        },
+        "sampler_workers": 1,
+        "schema": "ltx.stream114.numerical-contract.v1",
+        "shared_pool": 1,
+        "stage_A_latent_shape": [
+          1,
+          128,
+          7,
+          4,
+          4
+        ],
+        "stage_B_latent_shape": [
+          1,
+          128,
+          7,
+          8,
+          8
+        ],
+        "steps": {
+          "cfg": {
+            "audio": 1.0,
+            "video": 1.0
+          },
+          "sampler": "euler_ancestral",
+          "stage_A_sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0",
+          "stage_B_sigmas": "0.85, 0.7250, 0.4219, 0.0"
+        },
+        "text": "LTXPipelineTextEncode pipeline-window on the accepted graph-sharded encoder",
+        "workload": "serial anchored continuation, 256x256, 49 frames, 24 fps, latent anchor"
+      },
+      "49/two-way20-28/frame": {
+        "anchor": "frame",
+        "conditioning": {
+          "anchor": "previous chunk images[48], F32, no conversion",
+          "bypass": false,
+          "native": "LTXVImgToVideoInplace.execute",
+          "stage_B_after_upsampler": true,
+          "stages": [
+            "A",
+            "B"
+          ],
+          "strength": 1.0
+        },
+        "decoder": "native VAEDecode.decode + LTXVAudioVAEDecode.execute on the resident VAEs (xpu:3), called by one in-order decode thread under inference_mode",
+        "graph_replay": {
+          "chain": "1",
+          "freeze_after_qualification": true,
+          "lean_memo": false,
+          "max_signatures_per_block": 8,
+          "node": "LTXGraphCaptureGate",
+          "selection": "all48"
+        },
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "output_tensor_shapes": {
+          "audio_latent": [
+            1,
+            8,
+            51,
+            16
+          ],
+          "images": [
+            49,
+            256,
+            256,
+            3
+          ],
+          "video_latent": [
+            1,
+            128,
+            7,
+            8,
+            8
+          ],
+          "waveform": [
+            1,
+            2,
+            96480
+          ]
+        },
+        "placement": "two-way20-28",
+        "precision": "BF16 weights, F32 CPU intermediates, strict deterministic algorithms",
+        "preview": "CreateVideo fps24 8-bit sRGB + SaveVideo mp4 auto, one in-order writer behind the decode thread",
+        "sample_rate": 48000,
+        "sampler_batch": 1,
+        "sampler_blocks": {
+          "xpu:0": [
+            0,
+            20
+          ],
+          "xpu:1": [
+            20,
+            48
+          ]
+        },
+        "sampler_workers": 1,
+        "schema": "ltx.stream114.numerical-contract.v1",
+        "shared_pool": 1,
+        "stage_A_latent_shape": [
+          1,
+          128,
+          7,
+          4,
+          4
+        ],
+        "stage_B_latent_shape": [
+          1,
+          128,
+          7,
+          8,
+          8
+        ],
+        "steps": {
+          "cfg": {
+            "audio": 1.0,
+            "video": 1.0
+          },
+          "sampler": "euler_ancestral",
+          "stage_A_sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0",
+          "stage_B_sigmas": "0.85, 0.7250, 0.4219, 0.0"
+        },
+        "text": "LTXPipelineTextEncode pipeline-window on the accepted graph-sharded encoder",
+        "workload": "serial anchored continuation, 256x256, 49 frames, 24 fps, frame anchor"
+      },
+      "49/two-way20-28/latent": {
+        "anchor": "latent",
+        "conditioning": {
+          "anchor": {
+            "A": "previous chunk node 367 video_latent[:, :, 6:7] (stage A, before the upsampler)",
+            "B": "previous chunk node 369 video_latent[:, :, 6:7] (stage B)"
+          },
+          "format": "F32 little-endian, 40960 bytes, whole-file SHA-256",
+          "node": "LTXStreamLatentCondition114 (nodes_lt.py:156,172-175 with t = the anchor latent; no VAE encode)",
+          "stage_B_after_upsampler": true,
+          "stages": [
+            "A",
+            "B"
+          ],
+          "strength": 1.0
+        },
+        "decoder": "native VAEDecode.decode + LTXVAudioVAEDecode.execute on the resident VAEs (xpu:3), called by one in-order decode thread under inference_mode",
+        "graph_replay": {
+          "chain": "1",
+          "freeze_after_qualification": true,
+          "lean_memo": false,
+          "max_signatures_per_block": 8,
+          "node": "LTXGraphCaptureGate",
+          "selection": "all48"
+        },
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "output_tensor_shapes": {
+          "audio_latent": [
+            1,
+            8,
+            51,
+            16
+          ],
+          "images": [
+            49,
+            256,
+            256,
+            3
+          ],
+          "video_latent": [
+            1,
+            128,
+            7,
+            8,
+            8
+          ],
+          "waveform": [
+            1,
+            2,
+            96480
+          ]
+        },
+        "placement": "two-way20-28",
+        "precision": "BF16 weights, F32 CPU intermediates, strict deterministic algorithms",
+        "preview": "CreateVideo fps24 8-bit sRGB + SaveVideo mp4 auto, one in-order writer behind the decode thread",
+        "sample_rate": 48000,
+        "sampler_batch": 1,
+        "sampler_blocks": {
+          "xpu:0": [
+            0,
+            20
+          ],
+          "xpu:1": [
+            20,
+            48
+          ]
+        },
+        "sampler_workers": 1,
+        "schema": "ltx.stream114.numerical-contract.v1",
+        "shared_pool": 1,
+        "stage_A_latent_shape": [
+          1,
+          128,
+          7,
+          4,
+          4
+        ],
+        "stage_B_latent_shape": [
+          1,
+          128,
+          7,
+          8,
+          8
+        ],
+        "steps": {
+          "cfg": {
+            "audio": 1.0,
+            "video": 1.0
+          },
+          "sampler": "euler_ancestral",
+          "stage_A_sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0",
+          "stage_B_sigmas": "0.85, 0.7250, 0.4219, 0.0"
+        },
+        "text": "LTXPipelineTextEncode pipeline-window on the accepted graph-sharded encoder",
+        "workload": "serial anchored continuation, 256x256, 49 frames, 24 fps, latent anchor"
+      },
+      "97/two-way/frame": {
+        "anchor": "frame",
+        "conditioning": {
+          "anchor": "previous chunk images[96], F32, no conversion",
+          "bypass": false,
+          "native": "LTXVImgToVideoInplace.execute",
+          "stage_B_after_upsampler": true,
+          "stages": [
+            "A",
+            "B"
+          ],
+          "strength": 1.0
+        },
+        "decoder": "native VAEDecode.decode + LTXVAudioVAEDecode.execute on the resident VAEs (xpu:3), called by one in-order decode thread under inference_mode",
+        "graph_replay": {
+          "chain": "1",
+          "freeze_after_qualification": true,
+          "lean_memo": false,
+          "max_signatures_per_block": 8,
+          "node": "LTXGraphCaptureGate",
+          "selection": "all48"
+        },
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "output_tensor_shapes": {
+          "audio_latent": [
+            1,
+            8,
+            101,
+            16
+          ],
+          "images": [
+            97,
+            256,
+            256,
+            3
+          ],
+          "video_latent": [
+            1,
+            128,
+            13,
+            8,
+            8
+          ],
+          "waveform": [
+            1,
+            2,
+            192480
+          ]
+        },
+        "placement": "two-way",
+        "precision": "BF16 weights, F32 CPU intermediates, strict deterministic algorithms",
+        "preview": "CreateVideo fps24 8-bit sRGB + SaveVideo mp4 auto, one in-order writer behind the decode thread",
+        "sample_rate": 48000,
+        "sampler_batch": 1,
+        "sampler_blocks": {
+          "xpu:0": [
+            0,
+            23
+          ],
+          "xpu:1": [
+            23,
+            48
+          ]
+        },
+        "sampler_workers": 1,
+        "schema": "ltx.stream114.numerical-contract.v1",
+        "shared_pool": 1,
+        "stage_A_latent_shape": [
+          1,
+          128,
+          13,
+          4,
+          4
+        ],
+        "stage_B_latent_shape": [
+          1,
+          128,
+          13,
+          8,
+          8
+        ],
+        "steps": {
+          "cfg": {
+            "audio": 1.0,
+            "video": 1.0
+          },
+          "sampler": "euler_ancestral",
+          "stage_A_sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0",
+          "stage_B_sigmas": "0.85, 0.7250, 0.4219, 0.0"
+        },
+        "text": "LTXPipelineTextEncode pipeline-window on the accepted graph-sharded encoder",
+        "workload": "serial anchored continuation, 256x256, 97 frames, 24 fps, frame anchor"
+      },
+      "97/two-way/latent": {
+        "anchor": "latent",
+        "conditioning": {
+          "anchor": {
+            "A": "previous chunk node 367 video_latent[:, :, 12:13] (stage A, before the upsampler)",
+            "B": "previous chunk node 369 video_latent[:, :, 12:13] (stage B)"
+          },
+          "format": "F32 little-endian, 40960 bytes, whole-file SHA-256",
+          "node": "LTXStreamLatentCondition114 (nodes_lt.py:156,172-175 with t = the anchor latent; no VAE encode)",
+          "stage_B_after_upsampler": true,
+          "stages": [
+            "A",
+            "B"
+          ],
+          "strength": 1.0
+        },
+        "decoder": "native VAEDecode.decode + LTXVAudioVAEDecode.execute on the resident VAEs (xpu:3), called by one in-order decode thread under inference_mode",
+        "graph_replay": {
+          "chain": "1",
+          "freeze_after_qualification": true,
+          "lean_memo": false,
+          "max_signatures_per_block": 8,
+          "node": "LTXGraphCaptureGate",
+          "selection": "all48"
+        },
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "output_tensor_shapes": {
+          "audio_latent": [
+            1,
+            8,
+            101,
+            16
+          ],
+          "images": [
+            97,
+            256,
+            256,
+            3
+          ],
+          "video_latent": [
+            1,
+            128,
+            13,
+            8,
+            8
+          ],
+          "waveform": [
+            1,
+            2,
+            192480
+          ]
+        },
+        "placement": "two-way",
+        "precision": "BF16 weights, F32 CPU intermediates, strict deterministic algorithms",
+        "preview": "CreateVideo fps24 8-bit sRGB + SaveVideo mp4 auto, one in-order writer behind the decode thread",
+        "sample_rate": 48000,
+        "sampler_batch": 1,
+        "sampler_blocks": {
+          "xpu:0": [
+            0,
+            23
+          ],
+          "xpu:1": [
+            23,
+            48
+          ]
+        },
+        "sampler_workers": 1,
+        "schema": "ltx.stream114.numerical-contract.v1",
+        "shared_pool": 1,
+        "stage_A_latent_shape": [
+          1,
+          128,
+          13,
+          4,
+          4
+        ],
+        "stage_B_latent_shape": [
+          1,
+          128,
+          13,
+          8,
+          8
+        ],
+        "steps": {
+          "cfg": {
+            "audio": 1.0,
+            "video": 1.0
+          },
+          "sampler": "euler_ancestral",
+          "stage_A_sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0",
+          "stage_B_sigmas": "0.85, 0.7250, 0.4219, 0.0"
+        },
+        "text": "LTXPipelineTextEncode pipeline-window on the accepted graph-sharded encoder",
+        "workload": "serial anchored continuation, 256x256, 97 frames, 24 fps, latent anchor"
+      },
+      "97/two-way20-28/frame": {
+        "anchor": "frame",
+        "conditioning": {
+          "anchor": "previous chunk images[96], F32, no conversion",
+          "bypass": false,
+          "native": "LTXVImgToVideoInplace.execute",
+          "stage_B_after_upsampler": true,
+          "stages": [
+            "A",
+            "B"
+          ],
+          "strength": 1.0
+        },
+        "decoder": "native VAEDecode.decode + LTXVAudioVAEDecode.execute on the resident VAEs (xpu:3), called by one in-order decode thread under inference_mode",
+        "graph_replay": {
+          "chain": "1",
+          "freeze_after_qualification": true,
+          "lean_memo": false,
+          "max_signatures_per_block": 8,
+          "node": "LTXGraphCaptureGate",
+          "selection": "all48"
+        },
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "output_tensor_shapes": {
+          "audio_latent": [
+            1,
+            8,
+            101,
+            16
+          ],
+          "images": [
+            97,
+            256,
+            256,
+            3
+          ],
+          "video_latent": [
+            1,
+            128,
+            13,
+            8,
+            8
+          ],
+          "waveform": [
+            1,
+            2,
+            192480
+          ]
+        },
+        "placement": "two-way20-28",
+        "precision": "BF16 weights, F32 CPU intermediates, strict deterministic algorithms",
+        "preview": "CreateVideo fps24 8-bit sRGB + SaveVideo mp4 auto, one in-order writer behind the decode thread",
+        "sample_rate": 48000,
+        "sampler_batch": 1,
+        "sampler_blocks": {
+          "xpu:0": [
+            0,
+            20
+          ],
+          "xpu:1": [
+            20,
+            48
+          ]
+        },
+        "sampler_workers": 1,
+        "schema": "ltx.stream114.numerical-contract.v1",
+        "shared_pool": 1,
+        "stage_A_latent_shape": [
+          1,
+          128,
+          13,
+          4,
+          4
+        ],
+        "stage_B_latent_shape": [
+          1,
+          128,
+          13,
+          8,
+          8
+        ],
+        "steps": {
+          "cfg": {
+            "audio": 1.0,
+            "video": 1.0
+          },
+          "sampler": "euler_ancestral",
+          "stage_A_sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0",
+          "stage_B_sigmas": "0.85, 0.7250, 0.4219, 0.0"
+        },
+        "text": "LTXPipelineTextEncode pipeline-window on the accepted graph-sharded encoder",
+        "workload": "serial anchored continuation, 256x256, 97 frames, 24 fps, frame anchor"
+      },
+      "97/two-way20-28/latent": {
+        "anchor": "latent",
+        "conditioning": {
+          "anchor": {
+            "A": "previous chunk node 367 video_latent[:, :, 12:13] (stage A, before the upsampler)",
+            "B": "previous chunk node 369 video_latent[:, :, 12:13] (stage B)"
+          },
+          "format": "F32 little-endian, 40960 bytes, whole-file SHA-256",
+          "node": "LTXStreamLatentCondition114 (nodes_lt.py:156,172-175 with t = the anchor latent; no VAE encode)",
+          "stage_B_after_upsampler": true,
+          "stages": [
+            "A",
+            "B"
+          ],
+          "strength": 1.0
+        },
+        "decoder": "native VAEDecode.decode + LTXVAudioVAEDecode.execute on the resident VAEs (xpu:3), called by one in-order decode thread under inference_mode",
+        "graph_replay": {
+          "chain": "1",
+          "freeze_after_qualification": true,
+          "lean_memo": false,
+          "max_signatures_per_block": 8,
+          "node": "LTXGraphCaptureGate",
+          "selection": "all48"
+        },
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "output_tensor_shapes": {
+          "audio_latent": [
+            1,
+            8,
+            101,
+            16
+          ],
+          "images": [
+            97,
+            256,
+            256,
+            3
+          ],
+          "video_latent": [
+            1,
+            128,
+            13,
+            8,
+            8
+          ],
+          "waveform": [
+            1,
+            2,
+            192480
+          ]
+        },
+        "placement": "two-way20-28",
+        "precision": "BF16 weights, F32 CPU intermediates, strict deterministic algorithms",
+        "preview": "CreateVideo fps24 8-bit sRGB + SaveVideo mp4 auto, one in-order writer behind the decode thread",
+        "sample_rate": 48000,
+        "sampler_batch": 1,
+        "sampler_blocks": {
+          "xpu:0": [
+            0,
+            20
+          ],
+          "xpu:1": [
+            20,
+            48
+          ]
+        },
+        "sampler_workers": 1,
+        "schema": "ltx.stream114.numerical-contract.v1",
+        "shared_pool": 1,
+        "stage_A_latent_shape": [
+          1,
+          128,
+          13,
+          4,
+          4
+        ],
+        "stage_B_latent_shape": [
+          1,
+          128,
+          13,
+          8,
+          8
+        ],
+        "steps": {
+          "cfg": {
+            "audio": 1.0,
+            "video": 1.0
+          },
+          "sampler": "euler_ancestral",
+          "stage_A_sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0",
+          "stage_B_sigmas": "0.85, 0.7250, 0.4219, 0.0"
+        },
+        "text": "LTXPipelineTextEncode pipeline-window on the accepted graph-sharded encoder",
+        "workload": "serial anchored continuation, 256x256, 97 frames, 24 fps, latent anchor"
+      }
+    },
+    "out_of_scope": {
+      "decoder_capture": "not planned",
+      "encode_ahead": "packet 115 (contract change)",
+      "latent_guide_preroll_L2": "only if the L1 seam fails the owner look",
+      "stage_overlap_across_sampler_cards": "packet 115 (not a contained change; see design note)",
+      "two_chains": "no"
+    },
+    "qualification": [
+      {
+        "capture_role": "full",
+        "capture_writer": "decode thread (LTXBaselineCapture.capture)",
+        "chunk_index": 0,
+        "gate_mode": "original",
+        "graph_sha256": {
+          "49/two-way/frame/0": "2e2345ff37ef883e57d5d041adcc62a9176ea80fee2fc1a80423c6e3d733f93b",
+          "49/two-way/frame/1": "2e2345ff37ef883e57d5d041adcc62a9176ea80fee2fc1a80423c6e3d733f93b",
+          "49/two-way/latent/0": "f6eba8d1dcbde941b6d3b76e43d0c695fa88309a04c73ba43adfcb0d0ed76be6",
+          "49/two-way/latent/1": "f6eba8d1dcbde941b6d3b76e43d0c695fa88309a04c73ba43adfcb0d0ed76be6",
+          "49/two-way20-28/frame/0": "1bfa6730afb47dd120fe1bc7ec8d9f257cdeb2da7e0337da32f1b873a69735f9",
+          "49/two-way20-28/frame/1": "1bfa6730afb47dd120fe1bc7ec8d9f257cdeb2da7e0337da32f1b873a69735f9",
+          "49/two-way20-28/latent/0": "dc33d7da41643ac4ba6782fea38251f0e8c3241dd88250d1fc1031dd5a5659a7",
+          "49/two-way20-28/latent/1": "dc33d7da41643ac4ba6782fea38251f0e8c3241dd88250d1fc1031dd5a5659a7",
+          "97/two-way/frame/0": "ade31bf3866e827c2d7b4903fbbeb03fb8a27d7953caf7877c4e7bca27a5827a",
+          "97/two-way/frame/1": "ade31bf3866e827c2d7b4903fbbeb03fb8a27d7953caf7877c4e7bca27a5827a",
+          "97/two-way/latent/0": "5af97ef808f231908309d89afd43dea9c10c5d3aa389d60c2062c86a53bb0141",
+          "97/two-way/latent/1": "5af97ef808f231908309d89afd43dea9c10c5d3aa389d60c2062c86a53bb0141",
+          "97/two-way20-28/frame/0": "1800f6ac3abebca1a8f96d873e9d60881a1d1d8cf337f15eec5c6399d5b1a5e4",
+          "97/two-way20-28/frame/1": "1800f6ac3abebca1a8f96d873e9d60881a1d1d8cf337f15eec5c6399d5b1a5e4",
+          "97/two-way20-28/latent/0": "aca6af7f7c34ec1e0b81c87aa3d88ffe3a3bc197ef02d87dd1359137aed1a064",
+          "97/two-way20-28/latent/1": "aca6af7f7c34ec1e0b81c87aa3d88ffe3a3bc197ef02d87dd1359137aed1a064"
+        },
+        "kind": "qualify-eager",
+        "name": "stream114-qeager-c000000",
+        "prompt_sha256": "666d0d68193d5b09b8e35bd8762be946ca398db1ec436eea4438f73ffa555a99",
+        "scene_id": "qeager",
+        "seed": 42
+      },
+      {
+        "capture_role": "full",
+        "capture_writer": "decode thread (LTXBaselineCapture.capture)",
+        "chunk_index": 1,
+        "gate_mode": "original",
+        "graph_sha256": {
+          "49/two-way/frame/0": "e6bc9bc74378629bc6d235b1c7a44fdd41fd98b25460acdad4465d0bfdc34bac",
+          "49/two-way/frame/1": "e6bc9bc74378629bc6d235b1c7a44fdd41fd98b25460acdad4465d0bfdc34bac",
+          "49/two-way/latent/0": "0bade051ef35f85a334b5d31f108492f768b100458777c4473b61c2ffa02561b",
+          "49/two-way/latent/1": "0bade051ef35f85a334b5d31f108492f768b100458777c4473b61c2ffa02561b",
+          "49/two-way20-28/frame/0": "ed1d7521fba81b09261cb13af44f09bee4cdeaa96c77eeb4eee792ea7299d90d",
+          "49/two-way20-28/frame/1": "ed1d7521fba81b09261cb13af44f09bee4cdeaa96c77eeb4eee792ea7299d90d",
+          "49/two-way20-28/latent/0": "44f09e12f2652f72df7ef3d9a339b52bb20ed785c85c137f30c1f6c457fa91f2",
+          "49/two-way20-28/latent/1": "44f09e12f2652f72df7ef3d9a339b52bb20ed785c85c137f30c1f6c457fa91f2",
+          "97/two-way/frame/0": "666087ac2b816f3fa50f7f9d6ea8e88929085f28019f446b4d815324a2a3f9d3",
+          "97/two-way/frame/1": "666087ac2b816f3fa50f7f9d6ea8e88929085f28019f446b4d815324a2a3f9d3",
+          "97/two-way/latent/0": "d1b924865b6e035caed53f9f0687e49d153f5fa71896a1167e12384a9efb9f08",
+          "97/two-way/latent/1": "d1b924865b6e035caed53f9f0687e49d153f5fa71896a1167e12384a9efb9f08",
+          "97/two-way20-28/frame/0": "c94a696e4ce11e644ca9f501b4503ec322296a5375eb0e280eaa02a552681fd2",
+          "97/two-way20-28/frame/1": "c94a696e4ce11e644ca9f501b4503ec322296a5375eb0e280eaa02a552681fd2",
+          "97/two-way20-28/latent/0": "fa1b9fbcf8721b887698a2c133d0c72225c2a0ab759875f3464767df89c02b09",
+          "97/two-way20-28/latent/1": "fa1b9fbcf8721b887698a2c133d0c72225c2a0ab759875f3464767df89c02b09"
+        },
+        "kind": "qualify-eager",
+        "name": "stream114-qeager-c000001",
+        "prompt_sha256": "666d0d68193d5b09b8e35bd8762be946ca398db1ec436eea4438f73ffa555a99",
+        "scene_id": "qeager",
+        "seed": 43
+      },
+      {
+        "capture_role": "full",
+        "capture_writer": "decode thread (LTXBaselineCapture.capture)",
+        "chunk_index": 2,
+        "gate_mode": "original",
+        "graph_sha256": {
+          "49/two-way/frame/0": "ca65e25c2a1752f08f544205ab7b1e0d3aaefc349266963e461ec944ea9b6a6d",
+          "49/two-way/frame/1": "ca65e25c2a1752f08f544205ab7b1e0d3aaefc349266963e461ec944ea9b6a6d",
+          "49/two-way/latent/0": "a594e585eb46b719b820c554b175cbe2bbd8f32f0978ac55ea6e9a4d3982cc5f",
+          "49/two-way/latent/1": "a594e585eb46b719b820c554b175cbe2bbd8f32f0978ac55ea6e9a4d3982cc5f",
+          "49/two-way20-28/frame/0": "d00a4a6ce85d803ca89b1afe0bcd61b5891c4523a772fb5578d51863098ef473",
+          "49/two-way20-28/frame/1": "d00a4a6ce85d803ca89b1afe0bcd61b5891c4523a772fb5578d51863098ef473",
+          "49/two-way20-28/latent/0": "5ea768855744bd558441d5b331acb98a906cc28032b3b116387e91e9e327f757",
+          "49/two-way20-28/latent/1": "5ea768855744bd558441d5b331acb98a906cc28032b3b116387e91e9e327f757",
+          "97/two-way/frame/0": "781d840d13c4976b255fb039c745b88b86a1a7e2d9abc2588d87598c28788afd",
+          "97/two-way/frame/1": "781d840d13c4976b255fb039c745b88b86a1a7e2d9abc2588d87598c28788afd",
+          "97/two-way/latent/0": "51fd889d801da624e18ad67e1800f25192b3515ede33fe9f25638a9aaa330d5a",
+          "97/two-way/latent/1": "51fd889d801da624e18ad67e1800f25192b3515ede33fe9f25638a9aaa330d5a",
+          "97/two-way20-28/frame/0": "6b5b3d600f11d5ef40b0f750d01984b6a7f7c7b0af54f9f61fe2c4d5dd645f45",
+          "97/two-way20-28/frame/1": "6b5b3d600f11d5ef40b0f750d01984b6a7f7c7b0af54f9f61fe2c4d5dd645f45",
+          "97/two-way20-28/latent/0": "532e6f635ab754c96fd8b274b50e60b9086875e7786c98e3e3591496dab26881",
+          "97/two-way20-28/latent/1": "532e6f635ab754c96fd8b274b50e60b9086875e7786c98e3e3591496dab26881"
+        },
+        "kind": "qualify-eager",
+        "name": "stream114-qeager-c000002",
+        "prompt_sha256": "e3084519bedf9cff6b53bccb355b0624250be52a0e9be9b666d556890b66d0ae",
+        "scene_id": "qeager",
+        "seed": 44
+      },
+      {
+        "capture_role": "full",
+        "capture_writer": "decode thread (LTXBaselineCapture.capture)",
+        "chunk_index": 0,
+        "gate_mode": "graph",
+        "graph_sha256": {
+          "49/two-way/frame/0": "2d2f6fd6b212fb3413c329adb95ae6629e440fe524a90a4f9b3fd7d69b10882c",
+          "49/two-way/frame/1": "2d2f6fd6b212fb3413c329adb95ae6629e440fe524a90a4f9b3fd7d69b10882c",
+          "49/two-way/latent/0": "efcb1b689bbe72f728a78c8db60f83c3ea26604b2328a958fcd9e90e479ee8a3",
+          "49/two-way/latent/1": "efcb1b689bbe72f728a78c8db60f83c3ea26604b2328a958fcd9e90e479ee8a3",
+          "49/two-way20-28/frame/0": "320cbb8db9f192a29f356a00afe8d0de8319eaf01d2848f8354f66db7373e686",
+          "49/two-way20-28/frame/1": "320cbb8db9f192a29f356a00afe8d0de8319eaf01d2848f8354f66db7373e686",
+          "49/two-way20-28/latent/0": "737e570e5999a6927e6fef142ee3362343f23abe553a94eb48525767b2cc4a8a",
+          "49/two-way20-28/latent/1": "737e570e5999a6927e6fef142ee3362343f23abe553a94eb48525767b2cc4a8a",
+          "97/two-way/frame/0": "72af7297dd020105ec2f6793f2ce9b43594351715f7568a91d302b03f1a7077a",
+          "97/two-way/frame/1": "72af7297dd020105ec2f6793f2ce9b43594351715f7568a91d302b03f1a7077a",
+          "97/two-way/latent/0": "dcd7e4cd1ac94bedb37f59967c8dcd558567206f413e6c274dcaac9d5e190bc3",
+          "97/two-way/latent/1": "dcd7e4cd1ac94bedb37f59967c8dcd558567206f413e6c274dcaac9d5e190bc3",
+          "97/two-way20-28/frame/0": "406401486e28b85f8b575f61da7da87a8b7b4b800a4d8e3bd07fec01947503f2",
+          "97/two-way20-28/frame/1": "406401486e28b85f8b575f61da7da87a8b7b4b800a4d8e3bd07fec01947503f2",
+          "97/two-way20-28/latent/0": "bb09e34fac129509d6595bffa4fb7afd937a91b57a87e328b34f9397a36315ea",
+          "97/two-way20-28/latent/1": "bb09e34fac129509d6595bffa4fb7afd937a91b57a87e328b34f9397a36315ea"
+        },
+        "kind": "qualify-graph",
+        "name": "stream114-qgraph-c000000",
+        "prompt_sha256": "666d0d68193d5b09b8e35bd8762be946ca398db1ec436eea4438f73ffa555a99",
+        "scene_id": "qgraph",
+        "seed": 42
+      },
+      {
+        "capture_role": "full",
+        "capture_writer": "decode thread (LTXBaselineCapture.capture)",
+        "chunk_index": 1,
+        "gate_mode": "graph",
+        "graph_sha256": {
+          "49/two-way/frame/0": "3614c04e53021a596a2dd93bb8abc4b078a34a7e3e9b5ffb916ec55f0a036db9",
+          "49/two-way/frame/1": "eb77ca5e4a7435c341629f75df2e80c3ae865ccbe1ee53945a53acfce9505867",
+          "49/two-way/latent/0": "0e58d13daa24bf1e6319081322f5212dcfe37370ca6172738594ac209ae04c7b",
+          "49/two-way/latent/1": "fc479f3ec651cdf925617ce698764bd3f114ef6433e1ff6fa4b3c9cf295f257e",
+          "49/two-way20-28/frame/0": "0fda85ba4be62b7b4fe185fa4633ea7841d745e89e8720dbd8fa98b9d153f2cd",
+          "49/two-way20-28/frame/1": "1b78e4fa001cf08780ddee62fa4a0a1dbd9c17407a8db2ef4036ff491fe3208b",
+          "49/two-way20-28/latent/0": "a803a7176a6bd95bc76c4819f0ceeb48ba12a1dd027b834e456bcfcf0eb23107",
+          "49/two-way20-28/latent/1": "76770efe92556bf30170a73d9a0ac46424683f53d368b8fe3e094844105c0d97",
+          "97/two-way/frame/0": "85a43f6a02c95574e27bf31d45a95648dbf2f929f1a875e4057de4594c117b33",
+          "97/two-way/frame/1": "14bbe2804734609e4db6a2f1418d4240ab48c3c080c82e8636f826d5efcc3aad",
+          "97/two-way/latent/0": "28efde4992d3dd2a168e73c1603abca678f9d4ecce6863e083df38d474190e23",
+          "97/two-way/latent/1": "f6c04e98dffb89b1d87b4865c9e88ebff028d356ab2bbf36685d5ef96af37d51",
+          "97/two-way20-28/frame/0": "872d6506a8d62ade2db7e0e8fd2df884091d52a239d50812f3cdbba28a3f19cf",
+          "97/two-way20-28/frame/1": "44cdc8e9d9a3149e2a415e7e50266fdd33062e9f15eeb20cabac334fb0bf9384",
+          "97/two-way20-28/latent/0": "c3a86a14124fb7aebfbc5e87f0b173e18f99e765fdf67cde2518ba309a91f71a",
+          "97/two-way20-28/latent/1": "7e43e9b717bc39bf62a20fdbcc65574f1d6ac8207a0f1394e2442278934c1374"
+        },
+        "kind": "qualify-graph",
+        "name": "stream114-qgraph-c000001",
+        "prompt_sha256": "666d0d68193d5b09b8e35bd8762be946ca398db1ec436eea4438f73ffa555a99",
+        "scene_id": "qgraph",
+        "seed": 43
+      },
+      {
+        "capture_role": "full",
+        "capture_writer": "decode thread (LTXBaselineCapture.capture)",
+        "chunk_index": 2,
+        "gate_mode": "graph",
+        "graph_sha256": {
+          "49/two-way/frame/0": "c9c3c3bcdb38cdfa4842fc0cdcc4b05a4c7df150c9e7cb508c988a940aaf684e",
+          "49/two-way/frame/1": "c9c3c3bcdb38cdfa4842fc0cdcc4b05a4c7df150c9e7cb508c988a940aaf684e",
+          "49/two-way/latent/0": "968cae63b5eba857256939eb02e16023ee85b9d3f1a3d320ed5592f10fc3e36e",
+          "49/two-way/latent/1": "968cae63b5eba857256939eb02e16023ee85b9d3f1a3d320ed5592f10fc3e36e",
+          "49/two-way20-28/frame/0": "02e825c482af20d332308eda6f0d05fbafc1143e7dd28d915fc7fda62abf714e",
+          "49/two-way20-28/frame/1": "02e825c482af20d332308eda6f0d05fbafc1143e7dd28d915fc7fda62abf714e",
+          "49/two-way20-28/latent/0": "995e77474a3f9061f684865d573c1477e886a28f882f9970b9a65057abf9125a",
+          "49/two-way20-28/latent/1": "995e77474a3f9061f684865d573c1477e886a28f882f9970b9a65057abf9125a",
+          "97/two-way/frame/0": "9a7acb40dcef39cfc0210768dcb1694706e536a3931b04b8853c3664ee3464db",
+          "97/two-way/frame/1": "9a7acb40dcef39cfc0210768dcb1694706e536a3931b04b8853c3664ee3464db",
+          "97/two-way/latent/0": "9a1e23705f5c3a6691a98fbd36f42c32e8074aac6eed1805af5f2d83825d5168",
+          "97/two-way/latent/1": "9a1e23705f5c3a6691a98fbd36f42c32e8074aac6eed1805af5f2d83825d5168",
+          "97/two-way20-28/frame/0": "19c3741ce3af95c6ce9f567571a6a7795d4e92e8e45413305d852ad1c58ef8c5",
+          "97/two-way20-28/frame/1": "19c3741ce3af95c6ce9f567571a6a7795d4e92e8e45413305d852ad1c58ef8c5",
+          "97/two-way20-28/latent/0": "69e8073d1f0cba295df0470d5f87d9524fe9a7cff21ee8d99ebbe95b29313e54",
+          "97/two-way20-28/latent/1": "69e8073d1f0cba295df0470d5f87d9524fe9a7cff21ee8d99ebbe95b29313e54"
+        },
+        "kind": "qualify-graph",
+        "name": "stream114-qgraph-c000002",
+        "prompt_sha256": "e3084519bedf9cff6b53bccb355b0624250be52a0e9be9b666d556890b66d0ae",
+        "scene_id": "qgraph",
+        "seed": 44
+      },
+      {
+        "capture_role": "full",
+        "capture_writer": "decode thread (LTXBaselineCapture.capture)",
+        "chunk_index": 0,
+        "gate_mode": "absent (stream graph form; routes persist on the patcher)",
+        "graph_sha256": {
+          "49/two-way/frame/0": "7dd7787c559203b17ed9fc10da745875731127c640349499802da9142dceaae4",
+          "49/two-way/frame/1": "7dd7787c559203b17ed9fc10da745875731127c640349499802da9142dceaae4",
+          "49/two-way/latent/0": "ca648e8524566ba890462963b070046e58fcc4c61a5ad313f1a7520a759f7e9f",
+          "49/two-way/latent/1": "ca648e8524566ba890462963b070046e58fcc4c61a5ad313f1a7520a759f7e9f",
+          "49/two-way20-28/frame/0": "16a0778c8b6119ab94c916832b880fea45722f18eacfe4d8d7d15e76522fee28",
+          "49/two-way20-28/frame/1": "16a0778c8b6119ab94c916832b880fea45722f18eacfe4d8d7d15e76522fee28",
+          "49/two-way20-28/latent/0": "8363502e58e0f1852a6545d02c186b31c93c5efb96c2d3f581ac49d3b006e3aa",
+          "49/two-way20-28/latent/1": "8363502e58e0f1852a6545d02c186b31c93c5efb96c2d3f581ac49d3b006e3aa",
+          "97/two-way/frame/0": "6262d2d6411d745d8f62f84b2e0fc61cd732b9133c805d66dd129bae4c722e97",
+          "97/two-way/frame/1": "6262d2d6411d745d8f62f84b2e0fc61cd732b9133c805d66dd129bae4c722e97",
+          "97/two-way/latent/0": "467ea05e52d3d9e72c19330302e7b8156a2a299a02a72ce3e9fb5cc506986107",
+          "97/two-way/latent/1": "467ea05e52d3d9e72c19330302e7b8156a2a299a02a72ce3e9fb5cc506986107",
+          "97/two-way20-28/frame/0": "06653063ad999f9d74b41b6206220fce04bbd621004b279c4460ad2a4c0c32e7",
+          "97/two-way20-28/frame/1": "06653063ad999f9d74b41b6206220fce04bbd621004b279c4460ad2a4c0c32e7",
+          "97/two-way20-28/latent/0": "dcc85fcabbc12efec06e5920d70bbdfa930c5665054e2eba67b1e238c63699e3",
+          "97/two-way20-28/latent/1": "dcc85fcabbc12efec06e5920d70bbdfa930c5665054e2eba67b1e238c63699e3"
+        },
+        "kind": "qualify-repeat",
+        "name": "stream114-qrepeat-c000000",
+        "prompt_sha256": "666d0d68193d5b09b8e35bd8762be946ca398db1ec436eea4438f73ffa555a99",
+        "scene_id": "qrepeat",
+        "seed": 42
+      },
+      {
+        "capture_role": "full",
+        "capture_writer": "decode thread (LTXBaselineCapture.capture)",
+        "chunk_index": 1,
+        "gate_mode": "absent (stream graph form; routes persist on the patcher)",
+        "graph_sha256": {
+          "49/two-way/frame/0": "bce94b75138fc14133e8e9bffddd774f278cad021405d27e76f89ceea3a9635e",
+          "49/two-way/frame/1": "c612d2423a180eb91ff84e48a71b888df8f4a04d297a5c1986448c1957c29953",
+          "49/two-way/latent/0": "41856924eb17bd848552ed54a26c876e8f728cc439e5dea043d4455e07458ce9",
+          "49/two-way/latent/1": "9153597637568f595eadebe28e71d9ab0df2870fac3a5a2ee672912f07b28d8e",
+          "49/two-way20-28/frame/0": "53a9df51f49d631bb986f6c868ac7b0ee89c9f4ad8e7158bb4a5117a5711bc07",
+          "49/two-way20-28/frame/1": "04551c258cd12ffe9efe7f6178b2861b5193c64cc53d55e68965dcc775121baf",
+          "49/two-way20-28/latent/0": "4ce469061d12ccd1ad8964a6850d08ad5506a387d2d3ff1c5fad466c4e8f29b8",
+          "49/two-way20-28/latent/1": "174611968614e1b31f5c3b56b1d44be541e7182f0dd20cca75ab453402d0acdc",
+          "97/two-way/frame/0": "b05981cbc8b96b7801bc8e01cbc0245185ac3ff3ebd8a289d47e90232b71ebc6",
+          "97/two-way/frame/1": "43e3b71beae06ddc6f326672ac1d0655d3df52633695f1dcd6324cb6e2ba0684",
+          "97/two-way/latent/0": "8cf9f76f786b68cbf1cc4aeb761a0f9507eaa4563c0875d276e6249e6f878af8",
+          "97/two-way/latent/1": "d3bed3fb17cd2a3556aee65ea3360c6b8ac442ec09f778947b11ae37d497626d",
+          "97/two-way20-28/frame/0": "5ca8a67510a0bd5f2e70c4e44139114d3c48ba9628604d820091ae065f5be0bb",
+          "97/two-way20-28/frame/1": "423cda967a4039ca61ec6e162d6884cd8ee3f948d47364ef0735691fe2ed08a0",
+          "97/two-way20-28/latent/0": "4da04e8c3c5cd374a79603c1dd704e15a6194d15305acd19ae91b93a1be07762",
+          "97/two-way20-28/latent/1": "f7520644b6987f43761587dafad7100af1bbe363c1646ea6c8b8a81c217720c5"
+        },
+        "kind": "qualify-repeat",
+        "name": "stream114-qrepeat-c000001",
+        "prompt_sha256": "666d0d68193d5b09b8e35bd8762be946ca398db1ec436eea4438f73ffa555a99",
+        "scene_id": "qrepeat",
+        "seed": 43
+      },
+      {
+        "capture_role": "full",
+        "capture_writer": "decode thread (LTXBaselineCapture.capture)",
+        "chunk_index": 2,
+        "gate_mode": "absent (stream graph form; routes persist on the patcher)",
+        "graph_sha256": {
+          "49/two-way/frame/0": "1632f5347d740f47a39f65bba6439ffc3b202047057d32f7575d60e4283b68d8",
+          "49/two-way/frame/1": "1632f5347d740f47a39f65bba6439ffc3b202047057d32f7575d60e4283b68d8",
+          "49/two-way/latent/0": "ff60ca2830fec2d567874a3ddec7e254a883d0a07eef2c15a2ea1a7c6f4c9aa2",
+          "49/two-way/latent/1": "ff60ca2830fec2d567874a3ddec7e254a883d0a07eef2c15a2ea1a7c6f4c9aa2",
+          "49/two-way20-28/frame/0": "f39b0dde0e049dca60ab22f19d4375462b255242ac99b4fa589f379169184a39",
+          "49/two-way20-28/frame/1": "f39b0dde0e049dca60ab22f19d4375462b255242ac99b4fa589f379169184a39",
+          "49/two-way20-28/latent/0": "bd2b7d7c3d84a1de2b9d7f64ac7d815d576d7a61f369a13484e5a7cc9ac76bcb",
+          "49/two-way20-28/latent/1": "bd2b7d7c3d84a1de2b9d7f64ac7d815d576d7a61f369a13484e5a7cc9ac76bcb",
+          "97/two-way/frame/0": "f58e0910da84bb7615a82fba11cbb4a93a5a5ef1fc4834812d5b57435c3df867",
+          "97/two-way/frame/1": "f58e0910da84bb7615a82fba11cbb4a93a5a5ef1fc4834812d5b57435c3df867",
+          "97/two-way/latent/0": "0bea2289a8c489991fd49b228f3a86b16ffe5fdd17f7569cf5f194bb7cad21f8",
+          "97/two-way/latent/1": "0bea2289a8c489991fd49b228f3a86b16ffe5fdd17f7569cf5f194bb7cad21f8",
+          "97/two-way20-28/frame/0": "1782161e1dae3a3615c7ee370eb9a66d6146b9042eb4e09b80fbcf98a14b1b9b",
+          "97/two-way20-28/frame/1": "1782161e1dae3a3615c7ee370eb9a66d6146b9042eb4e09b80fbcf98a14b1b9b",
+          "97/two-way20-28/latent/0": "1402d03f9aa86f3cb4effeabb9f6527a89a91a822d3cf6633441a8ae92b95369",
+          "97/two-way20-28/latent/1": "1402d03f9aa86f3cb4effeabb9f6527a89a91a822d3cf6633441a8ae92b95369"
+        },
+        "kind": "qualify-repeat",
+        "name": "stream114-qrepeat-c000002",
+        "prompt_sha256": "e3084519bedf9cff6b53bccb355b0624250be52a0e9be9b666d556890b66d0ae",
+        "scene_id": "qrepeat",
+        "seed": 44
+      }
+    ],
+    "qualification_gate": {
+      "anchors": "each chain consumes only its own verified predecessor anchor; chunk 0 is unanchored",
+      "compare": "per chunk, byte-identical across the eager chain, the graph chain and the graph repeat: the three latents (video, audio, stage A), the anchor file, and the decode thread's images and waveform; the four captured tensors are re-read from the capture files",
+      "decode_overlap": "the decode thread runs in all three chains; it is drained before every gated request (eager and graph chains: no overlap, the controls) and overlaps the next chunk in the repeat chain (streaming form)",
+      "diagnostic_only": "slot-0 pin (output slot 0 equals the anchor bytes or differs only in signed zeros)",
+      "graph": "eager chain observes zero routes; graph chain chunk 2 and the whole repeat chain capture nothing new; uniform <=8 signatures on the prompt thread; frozen afterwards",
+      "on_failure": "latch: the server refuses all streaming requests",
+      "prompt_cut": "chunk 2 of every chain changes the prompt on the same anchor chain",
+      "stream_form": "the repeat chain uses the streaming graph form (no gate nodes)"
+    },
+    "qualification_ids": {
+      "49/two-way/frame": "f1f0214eb35003db3f1a3c7485a9811fd900b0a946b785b91c073c77a577f5f1",
+      "49/two-way/latent": "53d3e465e40f96358138a80eca86dc6e0c94109caa670e03745652954c936eb8",
+      "49/two-way20-28/frame": "9cc374ee97d4d00d278f5a6c562ebf0d5da77331860ebc686a0106f818d64f1e",
+      "49/two-way20-28/latent": "d49c4874b23d5e03b545d123c44b7aedbd764e332e18e54d1eb47442fed577eb",
+      "97/two-way/frame": "a8b9f54441e6517d2e1717928ac2b812a14b6937868db9d494487ca2456196ab",
+      "97/two-way/latent": "ab1f02edeab2e88e6c885199daa51ce36b1690aedc0b6627e90e5531f1f5115a",
+      "97/two-way20-28/frame": "f213bfd0b228152e05fe36de935d705d5ddeaa7e717f08d003745f515da4562e",
+      "97/two-way20-28/latent": "d85b23d7b79386a05c42dce3a5d86d5d5df68af6fab2d8d16932eebdb07e3d52"
+    },
+    "schema": "ltx.stream114.plan.v1",
+    "setup": [
+      {
+        "graph": {
+          "420": {
+            "class_type": "LTXHostEmbeddingComponents",
+            "inputs": {
+              "encoder_mode": "control",
+              "placement": "split"
+            }
+          },
+          "425": {
+            "class_type": "LTXTextEncoderGraphGate",
+            "inputs": {
+              "clip": [
+                "420",
+                1
+              ],
+              "mode": "graph-shard",
+              "run_name": "stream114-window-probe"
+            }
+          },
+          "470": {
+            "class_type": "LTXTextWindowProbe",
+            "inputs": {
+              "clip": [
+                "425",
+                0
+              ],
+              "run_name": "stream114-window-probe"
+            }
+          }
+        },
+        "graph_sha256": "0156de1ed904da3d74bdb7e3a24065a9331609116481a3533fbef7e5236b82e1",
+        "kind": "window-probe",
+        "name": "stream114-window-probe"
+      },
+      {
+        "graph": {
+          "490": {
+            "class_type": "LTXStreamPrepare114",
+            "inputs": {
+              "run_name": "stream114-prepare"
+            }
+          }
+        },
+        "graph_sha256": "e4b93574ab529ed647d3b3f8027861ba4f2b2e7f1c2a7cc42b091d1942c169bc",
+        "kind": "prepare",
+        "name": "stream114-prepare"
+      }
+    ],
+    "status": "cpu-prepared-not-admitted",
+    "stream_contract": {
+      "anchor_ready": "latent: three latents hashed and the latent anchor fsynced, decode queued; frame: after the decode thread returned the last frame",
+      "decode": "one ordered decode thread on xpu:3; receipts/decode-<run_name>.json",
+      "full_captures": 0,
+      "module": "stream_contract.py",
+      "ordering": "one anchor chain; stream_seq n>0 names the anchor of n-1; the prompt may change at any chunk; a chunk flagged reset is unanchored (stream_seq 0 form) and restarts the chain",
+      "per_chunk_sanity": [
+        "finite",
+        "shapes",
+        "anchor_chain"
+      ],
+      "preview": "one bounded in-order writer behind the decode thread; receipts/preview-<run_name>.json",
+      "schema": "ltx.stream114.chunk-contract.v1"
+    }
+  },
+  "plan_sha256": "e87c62149c1310617da15510ed71167c0fb9cceb52556d220ffca69f57949b5b"
+}

@@ -1,4 +1,4 @@
-# Packet 112 / 113 continuation stream client
+# Packet 112 / 113 / 114 continuation stream client
 
 ## Packet 113 (`--packet 113`)
 
@@ -32,6 +32,53 @@ Tests: `tests/run_tests_113.py` against `tests/fake_comfy113.py` (11/11).
 Measured on the live 112 receipts: the next submit followed each commit by a
 median of 0.41 s, which is the `--poll 0.5` status-poll interval.
 `--poll 0.05` recovers most of that on either packet.
+
+## Packet 114 (`--packet 114`)
+
+Against a packet 114 server, add **`--packet 114`**. The 112 default and
+`--packet 113` behave exactly as before. Packet 114 is **not sealed yet**, so
+for now the client needs `--manifest-sha256` and `--contract-dir`; without
+them it stops with exit 8 before sending anything. After the build, fill in
+`PACKET114_MANIFEST_SHA256` and re-check `PACKET114_MODULE_SHA256` near the top
+of `ltx_continuation_client.py` (both in one marked block). The module hashes
+there were taken from the author's files in
+`recovery/20261008-continuation114-stream/` on 2026-10-08.
+
+What it does differently from 113:
+
+- **Anchor mode and chunk length come from the server.** The status route
+  says `anchor` (`latent`, the default, or `frame`) and `frames` (49 or 97).
+  Every request is built with both. `--expect-anchor` and `--expect-frames 97`
+  only guard against the wrong server. Run names start with `stream114-`.
+- **Decode record, then preview.** With the latent anchor the server commits
+  the receipt before the decode. The client submits the next chunk first, then
+  waits for `GET /ltx-stream/decode/<run>` and then
+  `GET /ltx-stream/preview/<run>`. It checks both records against the receipt
+  and the MP4's bytes and SHA-256 against the preview record. One
+  `--save-wait` bound covers both; on 114 its default is **30 s** (a 97-frame
+  preview can lag the receipt by a few seconds). Nothing arriving in time is
+  exit 7. A failed decode thread (`stream-decode-failure-*.json`, or 503 from
+  the decode route) is exit 2. With the frame anchor the decode record exists
+  before the receipt.
+- **Qualification.** The client re-runs the 114 `qualification_gate.decide`
+  over the nine receipts, the nine decode records (fetched from the decode
+  route and checked against the hashes the verdict file binds) and the
+  server's capture re-reads from the verdict file.
+- **Text reuse is on by default on 114 servers.** The client sends
+  `reuse_text: 1` exactly when the server requires it: not chunk 0, not a
+  reset, same prompt as the chunk before. Otherwise 0.
+- **Resets** (`--reset-every-chunks`, `--reset-on-scene-change`) work as on 113.
+- **Manifest lines** keep `skip_first_frames: 1` on anchored chunks and leave
+  it out on chunk 0 and resets. 114 lines also carry `frames`, `new_frames`,
+  `seconds` (new frames / 24, so 2.0 s at 49 frames and 4.0 s at 97),
+  `anchor`, `reuse_text`, `last_frame_sha256`, `images_sha256`,
+  `submit_to_decode_done`, and the border diagnostic, which now comes from the
+  decode record.
+
+Tests: `tests/run_tests_114.py` against `tests/fake_comfy114.py` (26/26 on
+2026-10-08). The fake takes `--anchor`, `--frames`, `--text-reuse`,
+`--decode-delay`, `--preview-delay` and the fault injections listed in its
+docstring.
 
 `ltx_continuation_client.py` drives the packet 112 continuation server
 (`recovery/20261008-continuation112-stream/CONTRACT.md`, `LAUNCH.md`). It runs

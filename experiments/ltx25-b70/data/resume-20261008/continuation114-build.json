@@ -1,0 +1,325 @@
+{
+  "auxiliary_files_not_in_packet": {
+    "CONTRACT.md": "951b91b3a8003af090ff5bfb16460ff2a42382a8b5183037e0dc023740f822aa",
+    "LAUNCH.md": "93b0501a3aa19a8f8f39fbf40d83f16750adfeddbfc82ed5422925ac48e911ef",
+    "harness_runtime.py": "51398954bdb1b71480d65e0be3e3ea2ff059d2e3c74411d76365e15a8cf5e885",
+    "owner_seam_view.py": "6d392895adcfcf4fb32940eae4221a7644a3ce36a08fae9abb5834d7e97c5c4f",
+    "reference-113-qualification-hashes.json": "a08b5803e27605b65c7d6ad384c88c020a0b1997281099fe24b0a3920f665aad"
+  },
+  "builder": "recovery/20261008-continuation114-stream/runtime_packet.py (sealed-113 successor)",
+  "claims": {
+    "geometry_97_measured": false,
+    "gpu_qualified": false,
+    "graph_replay_exact": false,
+    "seam_quality": false,
+    "speed": false
+  },
+  "client_pins": {
+    "PACKET114_MANIFEST_SHA256": "3e8b7abeb21fff903869907fd67c41128dd6179fa17fa441abdd5544468c97f3",
+    "file": "stream/ltx_continuation_client.py",
+    "modules": {
+      "qualification_gate": "fa1787006328ee2cbfba72e74ec333342c1eff0dbaf7889379ccaaaf05219cf8",
+      "stream_contract": "1efc6f71c1984822a9389c2fa3b1c7dbfd21d88260c8ac18e0faefdde4a0272c",
+      "stream_receipts": "15ba85ac5f01478ce3b0e722d19f4f7db735f0136fe03624c5d1670d7a21500d"
+    }
+  },
+  "command": [
+    "/home/steve/.venvs/ltx25-baseline/bin/python",
+    "-B",
+    "experiments/ltx25-b70/recovery/20261008-continuation114-stream/runtime_packet.py",
+    "--build",
+    "--input-inventory-sha256",
+    "d520d3dcf000582fa9fa518b6745cd8a038c35f329a8aab11347ba07dbebf984"
+  ],
+  "cpu_tests": {
+    "client": {
+      "stream/tests/run_tests_112.py": "46/46",
+      "stream/tests/run_tests_113.py": "11/11",
+      "stream/tests/run_tests_114.py (--packet 114, fake_comfy114.py)": "26/26"
+    },
+    "command": "PYTHONDONTWRITEBYTECODE=1 /home/steve/.venvs/ltx25-baseline/bin/python -B -m unittest discover -s experiments/ltx25-b70/recovery/20261008-continuation114-stream -p \"test_*.py\"",
+    "files": {
+      "test_candidate_safety.py": 15,
+      "test_contract.py": 20,
+      "test_decode.py": 14,
+      "test_gate_receipts.py": 20,
+      "test_latent_anchor.py": 8,
+      "test_preview.py": 10,
+      "test_reset.py": 8,
+      "test_runtime_flow.py": 6,
+      "test_runtime_packet.py": 15,
+      "test_session.py": 14
+    },
+    "packet112_suite_unchanged": {
+      "passed": 63,
+      "ran": 63
+    },
+    "packet113_suite_unchanged": {
+      "passed": 80,
+      "ran": 80
+    },
+    "passed": 130,
+    "ran": 130,
+    "runtime_harness": "harness_runtime.py drives the real integration.Runtime with fake ComfyUI/device modules (torch.xpu calls raise); 6 cases in test_runtime_flow.py"
+  },
+  "devices_touched": false,
+  "input_inventory": {
+    "candidate_safety.py": "087772db88cbd26d8ddb4c9905f0d27cf583f57a9cdff56a932ba6de8ab7e510",
+    "conditioning_guard.py": "5a04ccc7f7ad31e11989191eecbe6a14cf4453a0fa37f5e46569a6f3bb8a922d",
+    "continuation_anchor.py": "89812304ab8471cfafae5156170ccd1f428ed0dac257aa7a41f569be34577264",
+    "derive_from_111.py": "e324b85e6a13195fe2ff19baa145be2603e46008f9d1cdde4237ac5d98695390",
+    "integration.py": "2f8ea4788a52366ee3eaa825e711741f3fcb8f2f4b8dcc091044f7ca7c6a5eae",
+    "latent_anchor.py": "3d9c07f44c26e6c7fed22e0b9d84203c6e31d1b5585fb88fd508c6b43816c502",
+    "native_bindings.py": "1ce082ecd4c79cc0a3d7a58c3938e13bc84a94c0efbf42bfdb91ef6b92e8cf43",
+    "plan.py": "4e157b010c8674e7efa06ff72ac3c59a12ed968a3292c6522705219f1792b9ff",
+    "qualification_gate.py": "fa1787006328ee2cbfba72e74ec333342c1eff0dbaf7889379ccaaaf05219cf8",
+    "qualify_client.py": "f710e8039c6b7b334450f2f3c86fbc6d486d8f699fe4c6d067b6144142329afc",
+    "runtime_packet.py": "afd32051ede883447e375233cba58d210b6ec9e61f99b8aced8b35d348699045",
+    "session.py": "ae6b0e4e40fdea893727dd82d9560b0daee6a83ebea9d4bdebfd6098f8eb4cdf",
+    "stream-plan.json": "fba32ad10d2a7df51977803d37f94dbcf854e6156e6292a6dc61a1c242b9eb4c",
+    "stream_contract.py": "1efc6f71c1984822a9389c2fa3b1c7dbfd21d88260c8ac18e0faefdde4a0272c",
+    "stream_decode.py": "c86410f42e2fc3512021b437a7c27b40065906ff04c054ec508f0f4e39ae21b8",
+    "stream_preview.py": "a84f633d8c7dc7d913cbb2db78a3598fc940ff6025687f1dd94fda4c27289c0f",
+    "stream_receipts.py": "15ba85ac5f01478ce3b0e722d19f4f7db735f0136fe03624c5d1670d7a21500d"
+  },
+  "manifest_sha256": "3e8b7abeb21fff903869907fd67c41128dd6179fa17fa441abdd5544468c97f3",
+  "model_requests": 0,
+  "packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-114",
+  "parent": {
+    "manifest_sha256": "a23dbc946d156df70c3e61134dc3231b147817c5cb110a015f84c8f020f7f28b",
+    "packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-113"
+  },
+  "payload_bytes": 113443722,
+  "plan_sha256": "e87c62149c1310617da15510ed71167c0fb9cceb52556d220ffca69f57949b5b",
+  "processes_touched": false,
+  "pycache_in_sealed_packets": 0,
+  "qualification_ids": {
+    "49/two-way/frame": "f1f0214eb35003db3f1a3c7485a9811fd900b0a946b785b91c073c77a577f5f1",
+    "49/two-way/latent": "53d3e465e40f96358138a80eca86dc6e0c94109caa670e03745652954c936eb8",
+    "49/two-way20-28/frame": "9cc374ee97d4d00d278f5a6c562ebf0d5da77331860ebc686a0106f818d64f1e",
+    "49/two-way20-28/latent": "d49c4874b23d5e03b545d123c44b7aedbd764e332e18e54d1eb47442fed577eb",
+    "97/two-way/frame": "a8b9f54441e6517d2e1717928ac2b812a14b6937868db9d494487ca2456196ab",
+    "97/two-way/latent": "ab1f02edeab2e88e6c885199daa51ce36b1690aedc0b6627e90e5531f1f5115a",
+    "97/two-way20-28/frame": "f213bfd0b228152e05fe36de935d705d5ddeaa7e717f08d003745f515da4562e",
+    "97/two-way20-28/latent": "d85b23d7b79386a05c42dce3a5d86d5d5df68af6fab2d8d16932eebdb07e3d52"
+  },
+  "result": {
+    "input_inventory_sha256": "d520d3dcf000582fa9fa518b6745cd8a038c35f329a8aab11347ba07dbebf984",
+    "manifest_sha256": "3e8b7abeb21fff903869907fd67c41128dd6179fa17fa441abdd5544468c97f3",
+    "model_requests": 0,
+    "packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-114",
+    "status": "prepared-not-GPU-qualified",
+    "storage_admission": {
+      "admitted": true,
+      "available_bytes": 120947740672,
+      "checked_existing_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913",
+      "destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-114",
+      "failures": [],
+      "filesystem": {
+        "filesystem_type": "ext4",
+        "mount_id": 33,
+        "mount_point": "/",
+        "source": "/dev/nvme0n1p2"
+      },
+      "min_free_bytes": 56908316672,
+      "planned_write_bytes": 167772160,
+      "remaining_after_planned_write_bytes": 120779968512,
+      "required_bytes": 57076088832,
+      "required_mount": null,
+      "resolved_destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-114",
+      "schema_version": 1
+    }
+  },
+  "returncode": 0,
+  "schema": "ltx.stream114.build-receipt.v1",
+  "scope": {
+    "1_latent_anchor": "shipped (default LTX_ANCHOR=latent; frame anchor kept as LTX_ANCHOR=frame)",
+    "2_decode_off_chain": "shipped (one ordered decode thread on xpu:3, bounded FIFO, back-pressure, latch; preview writer behind it)",
+    "2b_stage_overlap_across_sampler_cards": "not shipped: not a contained change (both stages span both cards per forward; needs two prompts in flight, per-thread graph routes and a new authority) -> packet 115",
+    "3_chunk_length": "shipped (LTX_STREAM_FRAMES 49|97; 97 audio shapes derived from sealed formulas, checked on the first eager chunk)",
+    "4_text_reuse_default_on": "shipped",
+    "5_naming": "shipped (stream114- prefix; launcher collision preflight incl. --check-only; CPU test on a fake root)",
+    "6_gate": "shipped (eager vs graph vs repeat, latents + anchor file + decode-thread images/waveform, captures re-read)",
+    "7_client": "shipped (--packet 114)"
+  },
+  "source_delta": {
+    "launch/encoder_runtime_common.py": {
+      "after_sha256": "afd32051ede883447e375233cba58d210b6ec9e61f99b8aced8b35d348699045",
+      "before_sha256": "0efbb28bc242ecadf5ccdec987694ed0d2040574d845aeff7578d3cf32959236"
+    },
+    "launch/serve-encoder.py": {
+      "after_sha256": "b6f756d6c1e9804e2bd4fb21d4c40e843d826d892448cb97be05d8dd8720fc7f",
+      "before_sha256": "425415a5ef2663eca0c19bd861ef620ea0504a08a136d5cc17b9581323c9f41a"
+    },
+    "provenance/packet113-manifest.json": {
+      "after_sha256": "a23dbc946d156df70c3e61134dc3231b147817c5cb110a015f84c8f020f7f28b",
+      "before_sha256": null
+    },
+    "resolution/components/integration.py": {
+      "after_sha256": "2f8ea4788a52366ee3eaa825e711741f3fcb8f2f4b8dcc091044f7ca7c6a5eae",
+      "before_sha256": "2e50f29c521fa4dc6c2d54078c9e4564eb7b87b5b1f6209740cc1e35ad8c7bb4"
+    },
+    "resolution/components/latent_anchor.py": {
+      "after_sha256": "3d9c07f44c26e6c7fed22e0b9d84203c6e31d1b5585fb88fd508c6b43816c502",
+      "before_sha256": null
+    },
+    "resolution/components/plan.py": {
+      "after_sha256": "4e157b010c8674e7efa06ff72ac3c59a12ed968a3292c6522705219f1792b9ff",
+      "before_sha256": "36acdc7f97189881acbf2e3e37506e27299cf9c972e3c289955cc72fa2265612"
+    },
+    "resolution/components/qualification_gate.py": {
+      "after_sha256": "fa1787006328ee2cbfba72e74ec333342c1eff0dbaf7889379ccaaaf05219cf8",
+      "before_sha256": "828ac51d2b071621b7492f3e1016edd62d7a5ff692e501e11f3fc3a854b2aec1"
+    },
+    "resolution/components/qualify_client.py": {
+      "after_sha256": "f710e8039c6b7b334450f2f3c86fbc6d486d8f699fe4c6d067b6144142329afc",
+      "before_sha256": "e3df036bc29c8ffefb5a6470892a10b563b9cf12d892ac11b7989476443c1b50"
+    },
+    "resolution/components/runtime_packet.py": {
+      "after_sha256": "afd32051ede883447e375233cba58d210b6ec9e61f99b8aced8b35d348699045",
+      "before_sha256": "0efbb28bc242ecadf5ccdec987694ed0d2040574d845aeff7578d3cf32959236"
+    },
+    "resolution/components/session.py": {
+      "after_sha256": "ae6b0e4e40fdea893727dd82d9560b0daee6a83ebea9d4bdebfd6098f8eb4cdf",
+      "before_sha256": "25e351d087c3a8089db4f9baec083b7b0b61e450c14d2ad6238e4b21df5e19ca"
+    },
+    "resolution/components/stream_contract.py": {
+      "after_sha256": "1efc6f71c1984822a9389c2fa3b1c7dbfd21d88260c8ac18e0faefdde4a0272c",
+      "before_sha256": "5ea528f08d9237beac177f462688f66bbab3358f735b9780e4b0779d5b125205"
+    },
+    "resolution/components/stream_decode.py": {
+      "after_sha256": "c86410f42e2fc3512021b437a7c27b40065906ff04c054ec508f0f4e39ae21b8",
+      "before_sha256": null
+    },
+    "resolution/components/stream_preview.py": {
+      "after_sha256": "a84f633d8c7dc7d913cbb2db78a3598fc940ff6025687f1dd94fda4c27289c0f",
+      "before_sha256": "d7d980e6f96f90cac35d1402b0ce44f476098580fd1f5837525bc5ea14fce09d"
+    },
+    "resolution/components/stream_receipts.py": {
+      "after_sha256": "15ba85ac5f01478ce3b0e722d19f4f7db735f0136fe03624c5d1670d7a21500d",
+      "before_sha256": "878b02037fa8fdc8520b058c5186034f48e12c0381bb6a5a13a6ec2348130613"
+    },
+    "resolution/stream-plan.json": {
+      "after_sha256": "fba32ad10d2a7df51977803d37f94dbcf854e6156e6292a6dc61a1c242b9eb4c",
+      "before_sha256": "1102bd4c3696d97908751b5c05a32e129657328d5a1e3ec4e2234f9241414e8c"
+    },
+    "source/scripts/integration.py": {
+      "after_sha256": "2f8ea4788a52366ee3eaa825e711741f3fcb8f2f4b8dcc091044f7ca7c6a5eae",
+      "before_sha256": "2e50f29c521fa4dc6c2d54078c9e4564eb7b87b5b1f6209740cc1e35ad8c7bb4"
+    },
+    "source/scripts/latent_anchor.py": {
+      "after_sha256": "3d9c07f44c26e6c7fed22e0b9d84203c6e31d1b5585fb88fd508c6b43816c502",
+      "before_sha256": null
+    },
+    "source/scripts/ltx_duration_guard.py": {
+      "after_sha256": "38f32863c53e5097203f6b815b5d6406c5d10e9183e5f1a74aa2cc1e45d48e1d",
+      "before_sha256": "dd56951309bddf72b5d964d8538f25acca30c4c8793efb84827b6fee2558a68c"
+    },
+    "source/scripts/ltx_output_size_98.py": {
+      "after_sha256": "f4d6ed0b2435d490f491831165e66876abb47272eedbff9cc7e3b20395e02573",
+      "before_sha256": "237f629508c870c91985ad844adc51cdd53f890f26870fe224752552de499014"
+    },
+    "source/scripts/ltx_resolution_session.py": {
+      "after_sha256": "ae6b0e4e40fdea893727dd82d9560b0daee6a83ebea9d4bdebfd6098f8eb4cdf",
+      "before_sha256": "25e351d087c3a8089db4f9baec083b7b0b61e450c14d2ad6238e4b21df5e19ca"
+    },
+    "source/scripts/qualification_gate.py": {
+      "after_sha256": "fa1787006328ee2cbfba72e74ec333342c1eff0dbaf7889379ccaaaf05219cf8",
+      "before_sha256": "828ac51d2b071621b7492f3e1016edd62d7a5ff692e501e11f3fc3a854b2aec1"
+    },
+    "source/scripts/stream_contract.py": {
+      "after_sha256": "1efc6f71c1984822a9389c2fa3b1c7dbfd21d88260c8ac18e0faefdde4a0272c",
+      "before_sha256": "5ea528f08d9237beac177f462688f66bbab3358f735b9780e4b0779d5b125205"
+    },
+    "source/scripts/stream_decode.py": {
+      "after_sha256": "c86410f42e2fc3512021b437a7c27b40065906ff04c054ec508f0f4e39ae21b8",
+      "before_sha256": null
+    },
+    "source/scripts/stream_preview.py": {
+      "after_sha256": "a84f633d8c7dc7d913cbb2db78a3598fc940ff6025687f1dd94fda4c27289c0f",
+      "before_sha256": "d7d980e6f96f90cac35d1402b0ce44f476098580fd1f5837525bc5ea14fce09d"
+    },
+    "source/scripts/stream_receipts.py": {
+      "after_sha256": "15ba85ac5f01478ce3b0e722d19f4f7db735f0136fe03624c5d1670d7a21500d",
+      "before_sha256": "878b02037fa8fdc8520b058c5186034f48e12c0381bb6a5a13a6ec2348130613"
+    }
+  },
+  "startup_check_only": {
+    "49-frame/two-way20-28": {
+      "health_receipt": {
+        "boot_id": "10192010-9700-4915-ac6c-980d6b74afa0",
+        "end_utc": "2026-10-08 13:48:49 UTC",
+        "path": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261008/postflight-stream113c.json",
+        "sha256": "47c5cf04c349c59895628233914a0c9ac93dc3d8422abb3419cac871a27e8013",
+        "verified": "schema, passed, four cards, boot id, age; the journal-since-receipt check runs only at launch"
+      },
+      "run_dir": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-114-frame-two-way20-28-w1-b1-p1-dxpu2-s256x256-f49",
+      "status": "inactive-startup-check-passed"
+    },
+    "49-latent/two-way20-28": {
+      "health_receipt": {
+        "boot_id": "10192010-9700-4915-ac6c-980d6b74afa0",
+        "end_utc": "2026-10-08 13:48:49 UTC",
+        "path": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261008/postflight-stream113c.json",
+        "sha256": "47c5cf04c349c59895628233914a0c9ac93dc3d8422abb3419cac871a27e8013",
+        "verified": "schema, passed, four cards, boot id, age; the journal-since-receipt check runs only at launch"
+      },
+      "run_dir": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-114-latent-two-way20-28-w1-b1-p1-dxpu2-s256x256-f49",
+      "status": "inactive-startup-check-passed"
+    },
+    "97-frame/two-way20-28": {
+      "health_receipt": {
+        "boot_id": "10192010-9700-4915-ac6c-980d6b74afa0",
+        "end_utc": "2026-10-08 13:48:49 UTC",
+        "path": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261008/postflight-stream113c.json",
+        "sha256": "47c5cf04c349c59895628233914a0c9ac93dc3d8422abb3419cac871a27e8013",
+        "verified": "schema, passed, four cards, boot id, age; the journal-since-receipt check runs only at launch"
+      },
+      "run_dir": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-114-frame-two-way20-28-w1-b1-p1-dxpu2-s256x256-f97",
+      "status": "inactive-startup-check-passed"
+    },
+    "97-latent/two-way20-28": {
+      "health_receipt": {
+        "boot_id": "10192010-9700-4915-ac6c-980d6b74afa0",
+        "end_utc": "2026-10-08 13:48:49 UTC",
+        "path": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261008/postflight-stream113c.json",
+        "sha256": "47c5cf04c349c59895628233914a0c9ac93dc3d8422abb3419cac871a27e8013",
+        "verified": "schema, passed, four cards, boot id, age; the journal-since-receipt check runs only at launch"
+      },
+      "run_dir": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-114-latent-two-way20-28-w1-b1-p1-dxpu2-s256x256-f97",
+      "status": "inactive-startup-check-passed"
+    }
+  },
+  "storage": {
+    "build_admission": {
+      "admitted": true,
+      "available_bytes": 120947740672,
+      "checked_existing_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913",
+      "destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-114",
+      "failures": [],
+      "filesystem": {
+        "filesystem_type": "ext4",
+        "mount_id": 33,
+        "mount_point": "/",
+        "source": "/dev/nvme0n1p2"
+      },
+      "min_free_bytes": 56908316672,
+      "planned_write_bytes": 167772160,
+      "remaining_after_planned_write_bytes": 120779968512,
+      "required_bytes": 57076088832,
+      "required_mount": null,
+      "resolved_destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-114",
+      "schema_version": 1
+    },
+    "build_allowance_bytes": 167772160,
+    "reserve_bytes": 53687091200,
+    "run_allowance_bytes": 3221225472,
+    "run_dir_admission_97_latent_two_way20_28": {
+      "admitted": true,
+      "available_bytes": 120829009920,
+      "remaining_after_planned_write_bytes": 117607784448,
+      "required_bytes": 56908316672
+    }
+  },
+  "utc": "2026-10-08T14:32:11.431228+00:00"
+}
