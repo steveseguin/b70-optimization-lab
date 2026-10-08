@@ -55,7 +55,9 @@ class Clip:
 
 def decode_clip(entry, W, H):
     """Decode one clip with PyAV: scale (lanczos) + letterbox video to WxH rgb24,
-    resample audio to s16 stereo 48 kHz and pad/trim it to exactly len(frames)*SPF."""
+    resample audio to s16 stereo 48 kHz and pad/trim it to exactly len(frames)*SPF.
+    An optional manifest field skip_first_frames=k drops the first k video frames and the
+    first k*SPF audio samples (k/24 s) after that, so the clip stays frame/sample aligned."""
     with av.open(entry["path"]) as c:
         vs = c.streams.video[0]
         rate = float(vs.average_rate or FPS)
@@ -107,6 +109,11 @@ def decode_clip(entry, W, H):
         audio = bytearray()
     need = len(frames) * ABYTES
     audio = bytes(audio[:need]) + b"\0" * max(0, need - len(audio))
+    skip = int(entry.get("skip_first_frames") or 0)   # continuation chunks: frame 0 repeats the last one
+    if skip:
+        if not 0 < skip < len(frames):
+            raise ValueError(f"skip_first_frames={skip} with {len(frames)} frames")
+        frames, audio = frames[skip:], audio[skip * ABYTES:]   # and the matching skip/24 s of audio
     return Clip(entry, frames, audio)
 
 
