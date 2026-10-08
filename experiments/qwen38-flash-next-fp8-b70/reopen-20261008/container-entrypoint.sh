@@ -9,6 +9,8 @@ shift
 [[ "${1:-}" == serve && "${2:-}" == /model ]] || exit 2
 [[ "${B70_SCREEN1B:-}" == 1 ]] || { echo 'Screen 1b guard must be enabled' >&2; exit 2; }
 [[ ! -e /screen/STOP ]] || { echo 'Screen 1b cancellation is latched' >&2; exit 2; }
+# Required native-FP8 mmap contract is sealed with the overlay. No table rewrite.
+[[ "${VLLM_USE_V2_MODEL_RUNNER:-}" == 1 ]] || { echo 'mmap PLE needs the V2 pre-forward hook' >&2; exit 2; }
 # Apply before any vLLM import. Official container Python tree only, never a host venv.
 /opt/venv/bin/python /screen-package/apply_overlay.py \
     --root /opt/venv/lib/python3.12/site-packages > /screen/overlay-application.json

@@ -16,11 +16,11 @@
     "vllm/models/qwen4_exp/common/ple.py": "fcc620187d227aa1d4b3149b22e5db3d708edefc48da3893eda4937897c9b8c8",
     "vllm/models/qwen4_exp/nvidia/hyperconnection.py": "15eaf5683f62dca162eb8a1825b632598f60b230ceaf56b8611a338cb1315663",
     "vllm/models/qwen4_exp/nvidia/model.py": "72578443c9470fb6251ea33f4b02bcbd9e2dd2f4870ab06ec927848af0145b0f",
-    "vllm/models/qwen4_exp/nvidia/model_state.py": "4940c2db71e9686cd157c7e61b415a66935f0b0d120efa695466d83449c869cd",
+    "vllm/models/qwen4_exp/nvidia/model_state.py": "205e98d995139d2481772a4c0d6a1df41f540b813010d6594ffff754f5e086a0",
     "vllm/models/qwen4_exp/nvidia/mtp.py": "d1ba61dd9843e536fff1933b2dca18d92a308d6d7516f0c6ff73ce1b56ea963c",
-    "vllm/models/qwen4_exp/nvidia/ngram_embedding.py": "29f009227b020ab111cc2ed4d88dc4cf1f1a1374a339bc7ddfc6dfd921832b70",
+    "vllm/models/qwen4_exp/nvidia/ngram_embedding.py": "b9b540010e8982801a4c037a8a59aedfca6c3a72d2fd6707334f7cddb81b590f",
     "vllm/models/qwen4_exp/nvidia/ple_nvme.py": "6e3b952277dfb4beefd34491dfe19664b0d030d1cc98016b63b28859dd4fb7db",
-    "vllm/screen1b_guard.py": "5dd2d47b0abc1153826e19778c9c59b9bfec30dd837531314c6724605f034a7b",
+    "vllm/screen1b_guard.py": "b9309b0be1857779b56e8ffa96f9033f4eff8689a75ae5284e06f9e20c89e7d6",
     "vllm/v1/attention/backends/gdn_attn.py": "e8afd4989233d1f971397cff49a5c760b99729fe9af539cfc19786f6139a627c",
     "vllm/v1/attention/backends/gdn_spec_metadata.py": "97f7ae107e03a64ccab4d73ca9bc705141d7ddcd64223d61dfbfb1a98721279c",
     "vllm/v1/attention/backends/gdn_spec_metadata_batched.py": "88f1c49b152c5468838c3b448126275c04c34afb50526ffbe954b61b5e11ee9f",
@@ -37,7 +37,7 @@
     "vllm/v1/kv_offload/tiering/manager.py": "1bb9af3d334fc322911aaffa6e21d2f15c19ae1b2bb6a5be425e31143172bcc6",
     "vllm/v1/utils.py": "ddedc85392c3f3f782bec31b6e2b671639cca41f3f7aabcb8b518cea05e4606c",
     "vllm/v1/worker/gpu/attn_utils.py": "d5ef338178e824f0d2fb9447cdebda1e8f4e7ec9cd7791994083007ff1ad77c8",
-    "vllm/v1/worker/gpu/model_runner.py": "0b02bdb26b340d57869861c0570815bc68d36812a87c1b78a16960f3b20f842a",
+    "vllm/v1/worker/gpu/model_runner.py": "f972f6499a3f5adfd95c9f4143651085af91ad157202b59707a8cde9d7545121",
     "vllm/v1/worker/gpu/model_states/mamba_hybrid.py": "e2b41b0b066d1d9e18ca0ce4f135df46ebf0ba0084888441dba4d171d1342021",
     "vllm/v1/worker/gpu/sample/prompt_logprob.py": "ab17fa440e054fe1414956d80f08b67fa733171020ebe1a67c8a6bdaab29f9d1",
     "vllm/v1/worker/gpu/spec_decode/autoregressive/speculator.py": "5f688e3972a0a7491ecfa786135d2fa0e1a5aa148e97a9ef3cf507cff6dbe171",
@@ -48,7 +48,8 @@
     "vllm/model_executor/layers/fused_moe/modular_kernel.py": "0f070a39fd5149d3b37042cad6c40828206c341967f3be2c3ba4578099f9a347",
     "vllm/model_executor/layers/fused_moe/routed_experts.py": "89c281c171042ffd3b5215fa5c424dff739cd65a9a6aeb11146ac056cada6527",
     "vllm/model_executor/layers/quantization/fp8.py": "dd1a2cc2d89d694ecde7cca16c82aebf61eaed08babb516c955075be9f7186cf",
-    "vllm/q38_expert_placement.py": "d1ed06046ab90f5d2939fafb370e6f91443a59282cec4357ce705cd159956b90"
+    "vllm/q38_expert_placement.py": "d1ed06046ab90f5d2939fafb370e6f91443a59282cec4357ce705cd159956b90",
+    "vllm/screen1b_ple.py": "7f557bdef9b38962154646598393a0f4d65d86d93d8c48724141d9be8fb9ebca"
   },
   "schema": "neural.download.screen1b-overlay.v1",
   "source_tree": "/home/steve/src/lumnus-20261008/vllm",
@@ -108,7 +109,7 @@
     },
     "vllm/models/qwen4_exp/nvidia/model_state.py": {
       "base_sha256": "a5b062d0354f82b93ee78f0e5d9089fd011a073c817b6ee0d61e99536e54b3a4",
-      "sha256": "4940c2db71e9686cd157c7e61b415a66935f0b0d120efa695466d83449c869cd"
+      "sha256": "205e98d995139d2481772a4c0d6a1df41f540b813010d6594ffff754f5e086a0"
     },
     "vllm/models/qwen4_exp/nvidia/mtp.py": {
       "base_sha256": "928c450001ee42cae9f6b0d5e9dc477b63019af2e90baa77505659ea3334eb88",
@@ -116,7 +117,7 @@
     },
     "vllm/models/qwen4_exp/nvidia/ngram_embedding.py": {
       "base_sha256": "f3aaf29281b803dcebb4b179d5177704ed7b913170edf8107e33f729be825429",
-      "sha256": "29f009227b020ab111cc2ed4d88dc4cf1f1a1374a339bc7ddfc6dfd921832b70"
+      "sha256": "b9b540010e8982801a4c037a8a59aedfca6c3a72d2fd6707334f7cddb81b590f"
     },
     "vllm/models/qwen4_exp/nvidia/ple_nvme.py": {
       "base_sha256": null,
@@ -124,7 +125,7 @@
     },
     "vllm/screen1b_guard.py": {
       "base_sha256": null,
-      "sha256": "5dd2d47b0abc1153826e19778c9c59b9bfec30dd837531314c6724605f034a7b"
+      "sha256": "b9309b0be1857779b56e8ffa96f9033f4eff8689a75ae5284e06f9e20c89e7d6"
     },
     "vllm/v1/attention/backends/gdn_attn.py": {
       "base_sha256": "3831019404a92200a38b43571c040cffeb6638bbdc71e4cb5e680dbc6c93d054",
@@ -192,7 +193,7 @@
     },
     "vllm/v1/worker/gpu/model_runner.py": {
       "base_sha256": "174c93db921c23cf0396eee4764be25b2bd2d4b6a06e9fa41ce3598b884ce8ce",
-      "sha256": "0b02bdb26b340d57869861c0570815bc68d36812a87c1b78a16960f3b20f842a"
+      "sha256": "f972f6499a3f5adfd95c9f4143651085af91ad157202b59707a8cde9d7545121"
     },
     "vllm/v1/worker/gpu/model_states/mamba_hybrid.py": {
       "base_sha256": "573e130ac5587d4822fabf97adad1ad0fda02ff83c5e70df879a5bb175ae845c",
@@ -237,16 +238,23 @@
     "vllm/q38_expert_placement.py": {
       "base_sha256": null,
       "sha256": "d1ed06046ab90f5d2939fafb370e6f91443a59282cec4357ce705cd159956b90"
+    },
+    "vllm/screen1b_ple.py": {
+      "base_sha256": null,
+      "sha256": "7f557bdef9b38962154646598393a0f4d65d86d93d8c48724141d9be8fb9ebca"
     }
   },
   "support_files": {
     "apply_overlay.py": "4c3620bde0cd73686fce04df94253a8e3615e6fc458283a3bfe4cc8196259ddf",
-    "container-entrypoint.sh": "ec3f9dcee939b8b0ccccd4824fc76de8b6d0b5869f8b84b72fca1983a2eb1809",
-    "placement-certified-v5.json": "f3f4812cfae2f4f704e75cc9b47a4031a476f846b353e3def23141b9d9c05f96"
+    "container-entrypoint.sh": "bfe1e2e177bd4cba7d52ecd66e2b2e9ea2d92af07ca29e43831ab4a9688ed86d",
+    "placement-certified-v5.json": "f3f4812cfae2f4f704e75cc9b47a4031a476f846b353e3def23141b9d9c05f96",
+    "memory-contract.json": "6fcf3411fe9e58786ad2c773d2cfdb31336a4b43f006f47ea11925b0790decf3",
+    "memory-bounds.json": "7bf1f66042eaac46d372703f2dc9cb4bba5ecd7e740ba91fe5d1edac7272bc4a",
+    "memory_plan.py": "65585fd794153ec8674e92b4ee7727965b6b97222daa9c2697b5045860c7aefe"
   },
   "semantics": {
-    "PLE": "native checkpoint dtype/values/global scale; direct pinned CPU allocation with XPU UVA view; owned-shard and global-index coverage",
-    "loading": "lazy single thread; cross-rank collective-free allocation/copy flock; at most 256 MiB source+destination bytes per copy; conversion over bound refuses",
+    "PLE": "native FP8 shard mmap; fixed 1 GiB pinned clock cache/rank; original hash, raw int8 owner reduction and unchanged dequantization; synchronous pre-forward staging",
+    "loading": "cross-rank serialized <=256 MiB copies; aggregate conversion storage reservations held through last storage view; rank allocation JSON at load/capture",
     "shutdown": "STOP before container SIGINT; early worker/engine latch; synchronise before transfer storage release; no kill escalation; wait for child drain",
     "final_v5_placement": "CPU port: final-size creation, row loader, unchanged block scales, Triton offset table, logical E in all config/dispatch paths; native execution unqualified",
     "sampler": "unchanged",

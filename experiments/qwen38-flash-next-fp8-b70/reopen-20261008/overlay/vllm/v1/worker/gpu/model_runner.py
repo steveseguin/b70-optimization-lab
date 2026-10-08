@@ -1069,6 +1069,11 @@ class GPUModelRunner(LoRAModelRunnerMixin):
             elapsed_time,
             cuda_graph_size / (1 << 30),
         )
+        if not profile_only:
+            from vllm import screen1b_guard as guard
+            if guard.enabled():
+                guard.allocation_snapshot(None, phase='capture_complete',
+                    extra_tensor_groups={'kv_and_recurrent_cache': self.kv_caches})
         return cuda_graph_size
 
     def _remove_request(self, req_id: str) -> bool:

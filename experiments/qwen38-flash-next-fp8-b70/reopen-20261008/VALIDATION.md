@@ -1,4 +1,56 @@
-# Screen 1b CPU validation — follow-up, 2026-10-08
+# Screen 1b CPU validation — native FP8 mmap, 2026-10-08
+
+**126/126 CPU tests pass, no skips: prior 77 + 22 calibration + 27 new tests.**
+The new prediction is **87,765,002,264 bytes**; admission remains REFUSED.
+
+Full suite executed without installations, using an existing interpreter:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/steve/.venvs/ltx25-baseline/bin/python -m unittest discover \
+  -s experiments/qwen38-flash-next-fp8-b70/reopen-20261008 -p 'test_*.py'
+```
+
+Torch 2.14.0+xpu, safetensors 0.8.0 and NumPy 2.5.2 were imported for explicit
+CPU tensors only. No accelerator enumeration, availability check or execution
+was called. System Python still runs the stdlib suite; seven torch-dependent
+checks require the existing interpreter above and otherwise skip explicitly.
+No venv was modified. No original full-size allocation/`mlock` experiment was
+repeated: cache fixtures are tiny and actual checkpoint probes map at most
+five rows per window, including TP/shard edges and final padding.
+
+New checks cover raw-byte equality against direct safetensors reads, random
+and repeated IDs, page/shard/TP edges, cache eviction and hits, nonowner zeros,
+invalid IDs, malformed/missing/truncated shards, read failure, immutable files,
+metadata/cap arithmetic, mmap residency unknowns, and current-step replacement.
+The original torch hash is executed on CPU and compared to an independent
+wrapping-int64 mirror at EOS/request boundaries and changed draft-like inputs.
+All 256 FP8 byte codes are tested through the original cast/scale arithmetic;
+NaNs are compared by output bytes. The static gather's clone is checked against
+in-place corruption. Storage finalizers are checked through surviving views, including the real
+CPU TorchDispatchMode conversion guard.
+
+Loading tests exercise aggregate conversion reservations, nested admission,
+chunking with retained staging, actual two-process lock serialization, and
+one-table cache enforcement. Allocation snapshots test UVA/model alias
+suppression, expert host/device storage, deduplicated KV tensors, actual
+cache/step geometry and explicit unknown driver/graph bytes. Earlier watchdog,
+calibration, overlay identity/application, placement and refusal tests remain.
+Only expected-value assertions for the new memory prediction were updated.
+
+The bounded predictor was regenerated from checkpoint headers (no whole-model
+hash/scan), all overlay/support hashes refreshed, and every Python overlay
+parsed. Shell syntax and `git diff --check` pass. MTP0/1/3 and calibrate-load
+previews use `--dry-run`; these generate commands without Docker or network
+operations. [CPU receipt](cpu-adapter-validation.json).
+
+Open runtime risks: XPU UVA/FP8 transport and graph capture parity, unchanged
+certified output pins under the V30 model, actual allocator/driver peaks,
+NVMe miss tails/readahead, and the existing host/VRAM admission conflict. The
+implemented pre-forward fetch is synchronous; no latency overlap is claimed.
+No runtime, checkpoint, LTX process or port was changed. This task made no Git commits.
+
+## Earlier 99-test calibration pass (historical)
+
 
 **99 CPU tests pass (77 existing + 22 calibration tests). Prediction-based
 MTP1 admission remains REFUSED.** This is a CPU-reviewed

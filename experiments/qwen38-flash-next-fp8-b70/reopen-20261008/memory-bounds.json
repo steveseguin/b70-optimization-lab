@@ -40,9 +40,13 @@
   "enforced_candidate_contract": {
     "maximum_copy_ranks": 1,
     "maximum_live_copy_bytes": 268435456,
-    "direct_ple_destination_allocation": true,
+    "direct_ple_destination_allocation": false,
     "model_and_ple_requantization": false,
-    "final_size_v5_expert_placement": true
+    "final_size_v5_expert_placement": true,
+    "ple_storage": "read-only safetensors mmap; native FP8 bytes",
+    "ple_cache_bytes_per_rank": 1073741824,
+    "ple_total_cache_bytes": 4294967296,
+    "conversion_reservations_held_to_storage_release": true
   },
   "remaining_committed_growth_bytes": null,
   "phases": {
@@ -224,5 +228,6 @@
       29.54,
       29.38
     ]
-  }
+  },
+  "mmap_memory_contract": "memory-contract.json"
 }

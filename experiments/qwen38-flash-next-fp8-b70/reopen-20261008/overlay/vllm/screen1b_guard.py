@@ -113,7 +113,7 @@ def admission(label, growth=0):
         return
     depth = getattr(_local, 'depth', 0)
     if depth:
-        check_cancel()
+        check_admission(growth)
         yield
         return
     # Nonblocking lock with deadline: a failed rank cannot strand a waiter.
@@ -160,25 +160,39 @@ def bounded_copy(target, source, **kwargs):
         return target
     # Count both source and destination bytes as in-flight even for direct UVA.
     nbytes = target.numel() * (target.element_size() + source.element_size())
-    if nbytes > COPY_LIMIT:
+    # Hold the cross-rank lock over a logical copy and all slices, so the
+    # retained-conversion headroom cannot shrink under the slicing decision.
+    if not getattr(_local, 'depth', 0):
+        with admission('copy_sequence'):
+            return bounded_copy(target, source, **kwargs)
+    ledger = root() / 'staging-live.json'
+    live = json.loads(ledger.read_text())['live'] if ledger.exists() else {}
+    limit = COPY_LIMIT - sum(v['bytes'] for v in live.values())
+    if limit <= 0:
+        raise LoadCancelled('no transient staging headroom')
+    if nbytes > limit:
         if target.ndim == 0:
             raise RuntimeError('unbounded scalar copy')
         per_row = math.prod(target.shape[1:]) * (target.element_size() + source.element_size())
-        if per_row > COPY_LIMIT:
+        if per_row > limit:
             # Select a leading row until another dimension is splittable.
             for i in range(target.shape[0]):
                 bounded_copy(target[i], source[i], **kwargs)
         else:
-            rows = max(1, COPY_LIMIT // per_row)
+            rows = max(1, limit // per_row)
             for start in range(0, target.shape[0], rows):
                 bounded_copy(target[start:start + rows], source[start:start + rows], **kwargs)
         return target
     with admission('copy', nbytes):
         # Blocking copies plus explicit completion before source release.
         kwargs['non_blocking'] = False
-        with torch.no_grad():
-            target.copy_(source, **kwargs)
-        synchronize()
+        token = reserve_staging(nbytes, 'copy')
+        try:
+            with torch.no_grad():
+                target.copy_(source, **kwargs)
+            synchronize()
+        finally:
+            release_staging(token)
     return target
 
 
@@ -188,6 +202,8 @@ def register_ple(prefix, module):
     if match is None:
         raise RuntimeError(f'Cannot identify PLE owner: {prefix}')
     key = int(match.group(1))
+    if _tables and key not in _tables:
+        raise RuntimeError('Screen 1b 4 GiB total cache contract permits one PLE table only')
     if key in _tables and _tables[key] is not module:
         raise RuntimeError('duplicate real PLE owner for layer')
     _tables[key] = module
@@ -212,6 +228,8 @@ def filter_ple_weight(name):
     expected_all = set(range(module.split_ngram_parts))
     if shard not in expected_all:
         raise RuntimeError(f'unexpected PLE shard {shard}')
+    if hasattr(getattr(module, 'ngram_embedding', None), '_screen1b_cache'):
+        return True
     return shard not in module.screen1b_expected_shards()
 
 
@@ -242,12 +260,25 @@ def guarded_load(fn):
                         request_stop('unbounded loader conversion')
                         raise LoadCancelled(f'conversion exceeds 256 MiB: {nbytes}')
                     with admission('conversion', nbytes):
-                        out = func(*args, **kwargs)
-                        synchronize()
+                        import weakref
+                        token = reserve_staging(nbytes, 'conversion')
+                        try:
+                            out = func(*args, **kwargs)
+                            synchronize()
+                        except BaseException:
+                            release_staging(token)
+                            raise
+                        # Storage rather than tensor lifetime: views can outlive
+                        # the returned tensor. PyTorch storage wrapper owns data.
+                        if out.device.type == 'cpu':
+                            weakref.finalize(out.untyped_storage(), release_staging, token)
+                        else:
+                            # Device destination is final device storage, not
+                            # retained host staging. Transfer is drained above.
+                            release_staging(token)
                         return out
                 return func(*args, **kwargs)
 
-        _tables.clear()
         _loading = True
         receipt('load_begin')
         try:
@@ -255,6 +286,7 @@ def guarded_load(fn):
             with CopyMode():
                 model = fn(*args, **kwargs)
             check_cancel()
+            allocation_snapshot(model)
             return model
         except BaseException:
             request_stop('loader failed or cancelled')
@@ -333,4 +365,165 @@ def validate_ple_index(folder):
             raise RuntimeError(f'global PLE index coverage mismatch at layer {layer}: '
                                f'missing={sorted(expected-seen[layer])}, '
                                f'unexpected={sorted(seen[layer]-expected)}')
+    for layer, module in _tables.items():
+        if hasattr(module, 'ngram_embedding'):
+            from vllm.screen1b_ple import bind_module
+            names = [n.rsplit('.shard_', 1)[0] for n in index
+                     if re.search(rf'layers\.{layer}\..*ngram_embedding\.shard_0\.weight$', n)]
+            if len(names) != 1:
+                raise RuntimeError('ambiguous PLE checkpoint prefix')
+            bind_module(module, folder, names[0])
     receipt('PLE_index_complete')
+
+
+# Shared reservation ledger. Conversion storage can outlive its copy call;
+# retain its reservation until the returned tensor is collected. A crashed
+# rank leaves a reservation behind and STOP/timeout fails closed, never retries.
+def reserve_staging(size, label):
+    import uuid
+    if not 0 <= size <= COPY_LIMIT:
+        raise LoadCancelled('staging reservation exceeds global 256 MiB cap')
+    token = f'{os.getpid()}-{uuid.uuid4().hex}'
+    with admission('staging_reservation', size):
+        path = root() / 'staging-live.json'
+        state = json.loads(path.read_text()) if path.exists() else {'live': {}, 'peak_bytes': 0}
+        total = sum(v['bytes'] for v in state['live'].values()) + size
+        if total > COPY_LIMIT:
+            request_stop('live staging allocations exceed global 256 MiB cap')
+            raise LoadCancelled('live staging cap exceeded; no allocation attempted')
+        state['live'][token] = {'bytes': size, 'label': label, 'pid': os.getpid()}
+        state['peak_bytes'] = max(total, state['peak_bytes'])
+        temp = path.with_suffix('.tmp')
+        temp.write_text(json.dumps(state))
+        os.replace(temp, path)
+        receipt('staging_reserved', token=token, bytes=size, global_live_bytes=total)
+    return token
+
+
+def release_staging(token):
+    # Cleanup must work after STOP. Same process-thread nesting as admission.
+    from contextlib import nullcontext
+    nested = getattr(_local, 'depth', 0)
+    with (nullcontext() if nested else (root() / 'allocation.lock').open('a')) as lock:
+        if not nested:
+            deadline = time.monotonic() + WAIT_SECONDS
+            while True:
+                try:
+                    fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    break
+                except BlockingIOError:
+                    if time.monotonic() >= deadline:
+                        request_stop('staging cleanup lock timed out; reservation retained')
+                        return
+                    time.sleep(.05)
+        try:
+            path = root() / 'staging-live.json'
+            state = json.loads(path.read_text())
+            state['live'].pop(token)
+            temp = path.with_suffix('.tmp')
+            temp.write_text(json.dumps(state))
+            os.replace(temp, path)
+            receipt('staging_released', token=token,
+                    global_live_bytes=sum(v['bytes'] for v in state['live'].values()))
+        finally:
+            if not nested:
+                fcntl.flock(lock, fcntl.LOCK_UN)
+
+
+_models = []
+_snapshot_sequence = 0
+
+
+def allocation_snapshot(model, phase='load_complete', contract_path='/screen-package/memory-contract.json', extra_tensor_groups=None):
+    """Retained tensor inventory, not RSS+pins or a complete allocator census.
+
+    UVA device-labelled aliases are charged to their CPU backing storage once.
+    Unknown non-tensor driver/graph/workspace bytes remain explicitly unknown.
+    Per-mapping RSS is an observation of shared file pages, not another pin.
+    """
+    global _snapshot_sequence
+    import hashlib
+    from vllm.distributed import get_tensor_model_parallel_rank
+    from vllm.screen1b_ple import metadata_bytes
+    if model is not None and all(m is not model for m in _models):
+        _models.append(model)
+    rank = get_tensor_model_parallel_rank()
+    groups, seen, runtime = {}, set(), {}
+    def add(group, tensor, kind=None):
+        if tensor is None or tensor.numel() == 0:
+            return
+        storage = tensor.untyped_storage()
+        key = (str(tensor.device), storage.data_ptr())
+        if key in seen:
+            return
+        seen.add(key)
+        kind = kind or ('pinned_bytes' if tensor.device.type == 'cpu' and tensor.is_pinned()
+                        else 'host_pageable_bytes' if tensor.device.type == 'cpu' else 'device_bytes')
+        row = groups.setdefault(group, dict(pinned_bytes=0, host_pageable_bytes=0,
+                                            device_bytes=0, mmap_resident_bytes=0, mmap_payload_bytes=0))
+        row[kind] += storage.nbytes()
+    for owner in _models:
+        for name, tensor in list(owner.named_parameters()) + list(owner.named_buffers()):
+            group = ('PLE' if 'ple_embedding' in name else 'experts' if '.experts.' in name
+                     else 'input_embedding' if 'embed_tokens' in name else 'other_model')
+            host = getattr(tensor, '_screen1b_host_storage', None)
+            if host is not None:
+                add(group, host)
+            else:
+                add(group, tensor)
+            add('experts', getattr(tensor, '_q38_host_cpu', None))
+            add('experts', getattr(tensor, '_q38_base_table', None))
+    def add_tree(group, value):
+        if hasattr(value, 'untyped_storage'):
+            add(group, value)
+        elif isinstance(value, dict):
+            for item in value.values():
+                add_tree(group, item)
+        elif isinstance(value, (tuple, list)):
+            for item in value:
+                add_tree(group, item)
+    for group, tensors in (extra_tensor_groups or {}).items():
+        add_tree(group, tensors)
+    for module in _tables.values():
+        embedding = module.ngram_embedding
+        cache = getattr(embedding, '_screen1b_cache', None)
+        if cache is None:
+            continue
+        add('PLE_cache', embedding._screen1b_cache_slab)
+        add('PLE_step', embedding._screen1b_step_host)
+        add('PLE_step', embedding._screen1b_step_device)
+        store = cache.store
+        groups[f'PLE_mmap_layer{next(k for k,v in _tables.items() if v is module)}'] = dict(pinned_bytes=0, device_bytes=0,
+            host_pageable_bytes=metadata_bytes(store.end-store.start, len(cache.buffer), store.width),
+            mmap_payload_bytes=(store.end-store.start)*store.width,
+            mmap_resident_bytes=store.resident_bytes(),
+            cache_hits=cache.hits, cache_misses=cache.misses, cache_evictions=cache.evictions)
+        runtime['PLE'] = dict(rows=store.rows, row_bytes=store.width,
+            owned_rows=[store.start, store.end], cache_bytes=len(cache.buffer),
+            cache_slots=cache.capacity, metadata_bytes=metadata_bytes(store.end-store.start, len(cache.buffer), store.width),
+            step_tokens=embedding._screen1b_step_capacity,
+            step_heads=embedding._screen1b_step_host.shape[1],
+            step_host_bytes=embedding._screen1b_step_host.numel(),
+            step_device_bytes=embedding._screen1b_step_device.numel(),
+            index_sha256=store.index_sha256, header_sha256=store.header_sha256)
+    contract_path = Path(contract_path)
+    raw = contract_path.read_bytes()
+    contract = json.loads(raw)
+    runtime['pinned_expert_bytes'] = groups.get('experts', {}).get('pinned_bytes', 0)
+    runtime['pinned_input_embedding_bytes'] = groups.get('input_embedding', {}).get('pinned_bytes', 0)
+    row = dict(schema='screen1b.rank-allocation.v1', rank=rank, pid=os.getpid(), phase=phase,
+               groups=groups, actual_runtime_inputs=runtime, host_ram_prediction_inputs=contract,
+               prediction_inputs_sha256=hashlib.sha256(raw).hexdigest(),
+               copy_cap_bytes=COPY_LIMIT, memory=memory(),
+               untracked_runtime_driver_graph_bytes=None,
+               accounting='unique retained tensor storage; mmap RSS shared, never sum with host pressure')
+    phase_path = root()/f'allocations-rank{rank}-{phase}-{_snapshot_sequence:04d}.json'
+    _snapshot_sequence += 1
+    # Preserve construction/load/capture history as well as a convenient latest.
+    with phase_path.open('x') as stream:
+        stream.write(json.dumps(row, indent=2)+'\n')
+    path = root()/f'allocations-rank{rank}.json'
+    temp = path.with_suffix('.tmp')
+    temp.write_text(json.dumps(row, indent=2)+'\n')
+    os.replace(temp, path)
+    receipt('allocation_snapshot', rank=rank, phase=phase, path=str(phase_path))

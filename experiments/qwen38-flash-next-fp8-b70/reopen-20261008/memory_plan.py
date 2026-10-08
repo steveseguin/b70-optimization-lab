@@ -335,6 +335,25 @@ def build_prediction(command, model_root=DEFAULT_MODEL, bounds_path=None, observ
         rank_pins = [r['pinned_bytes'] for r in placement_census]
         selected = [{'name': b['name'], 'bytes': b['bytes'], 'kind': 'v5-final'}
                     for b in placement_census[0]['buffers']]
+    legacy_rank_pins = list(rank_pins)
+    adapter = None
+    if placement_census:
+        adapter = json.loads((HERE / 'memory-contract.json').read_text())
+        table_bytes = sum(b['bytes'] for r in placement_census for b in r['buffers'] if b['name'] == 'PLE')
+        if table_bytes != adapter['ple_nvme_bytes'] or tp != adapter['ranks']:
+            raise ValueError('mmap adapter contract differs from checkpoint geometry')
+        # Per-step host stage is retained, and its device twin is added below.
+        if identity['max_num_batched_tokens'] != adapter['max_total_tokens']:
+            raise ValueError('step token capacity differs from mmap memory contract')
+        heads = (config['text_config']['ngram_size'] - 1) * config['text_config']['heads_per_ngram']
+        if heads != adapter['ngram_heads']:
+            raise ValueError('ngram head geometry differs from memory contract')
+        step_bytes = identity['max_num_batched_tokens'] * heads * adapter['ple_row_bytes']
+        rank_pins = [r['pinned_bytes'] - next(b['bytes'] for b in r['buffers'] if b['name']=='PLE')
+                     + adapter['ple_cache_bytes_per_rank'] + step_bytes for r in placement_census]
+        selected = [p for p in selected if p['name'] != 'PLE'] + [
+            dict(name='PLE_cache', bytes=adapter['ple_cache_bytes_per_rank'], kind='pinned-raw-FP8'),
+            dict(name='PLE_step', bytes=step_bytes, kind='pinned-raw-FP8')]
     pins = sum(rank_pins)
     # Count only unambiguously loaded weight tensors for the LOWER bound.
     # Exclude biases, buffers and every scale (even device-resident scales),
@@ -355,10 +374,22 @@ def build_prediction(command, model_root=DEFAULT_MODEL, bounds_path=None, observ
     replicated = sum(t['bytes'] for n, t in tensors.items()
                      if n.endswith(('input_mix_weight_up.weight', 'input_mix_weight_down.weight'))
                      and (identity['mtp_depth'] or not n.startswith('mtp.')))
-    floors = [math.ceil((total_weights + replicated * (tp - 1)) / tp) - pin + identity['kv_bytes_per_rank'] for pin in rank_pins]
+    floors = [math.ceil((total_weights + replicated * (tp - 1)) / tp) - pin + identity['kv_bytes_per_rank'] for pin in legacy_rank_pins]
+    if adapter:
+        floors = [f + step_bytes for f in floors]
     scenario = bound['illustrative_assumptions']
     overhead = sum(scenario[k] for k in ('private_runtime_and_retention_bytes', 'active_files_bytes', 'other_host_and_driver_bytes'))
     illustration = pins + overhead + CHUNK_BYTES
+    if adapter:
+        scenario = {
+            'historical_unattributed_residual_bytes': adapter['historical_pressure_delta_bytes'] - adapter['historical_native_pins_bytes'],
+            'cache_metadata_bytes': adapter['ple_metadata_bytes'],
+            'active_files_bytes': adapter['active_file_allowance_bytes'],
+            'host_baseline_bytes': adapter['host_baseline_bytes'],
+            'runtime_difference_contingency_bytes': adapter['runtime_difference_contingency_bytes'],
+        }
+        overhead = sum(scenario.values())
+        illustration = pins + overhead + CHUNK_BYTES
     refusal = []
     if metadata['config_sha256'] != bound['model_config_sha256'] or metadata['index_sha256'] != bound['model_index_sha256']:
         refusal.append('model config/index identity differs from phase manifest')
@@ -419,8 +450,11 @@ def build_prediction(command, model_root=DEFAULT_MODEL, bounds_path=None, observ
             'physical_vram_evidence': bound['physical_vram_evidence'],
             'selected_parameters_rank0': selected, 'final_pins_bytes_per_rank': rank_pins,
             'placement_census': placement_census,
+            'mmap_adapter': adapter,
+            'historical_placement_pins_bytes_per_rank': legacy_rank_pins,
             'calibration': bound.get('calibration'),
             'candidate_table': enumerate_candidates(config, tensors) if placement_census else [],
+            'candidate_table_scope': 'historical full-PLE alternatives, not mmap adapter',
             'final_pins_total_bytes': pins, 'offload_budget_overshoot_bytes_per_rank': (None if placement_census else pins_per_rank - identity['cpu_offload_bytes_per_rank']),
             'checkpoint_weight_bytes': total_weights, 'checkpoint_total_bytes': sum(t['bytes'] for t in tensors.values()),
             'static_floor_excluded_nonweight_bytes': sum(t['bytes'] for t in tensors.values()) - total_weights,
@@ -429,12 +463,12 @@ def build_prediction(command, model_root=DEFAULT_MODEL, bounds_path=None, observ
             'host_phases_bytes': phases, 'vram_phases_bytes_per_rank': vram_phases, **result,
             'illustrative_host_peak_bytes': illustration,
             'illustrative_components': {'pins': pins, **scenario, 'concurrent_staging_bytes': CHUNK_BYTES},
-            'joint_gate_obstruction': {'assumed_nonpin_host_bytes': overhead + CHUNK_BYTES,
+            'joint_gate_obstruction': {'scope': 'historical full-PLE generic budget, not mmap placement', 'assumed_nonpin_host_bytes': overhead + CHUNK_BYTES,
                 'maximum_total_pins_under_host_gate_bytes': pin_ceiling,
                 'best_possible_vram_lower_bound_bytes_per_rank': joint_floor,
                 'nominal_capacity_upper_bound_bytes': 32 * GIB,
                 'cannot_fit_even_nominal_32gib': joint_floor > 28 * GIB,
-                'meaning': 'sensitivity to the old 20 GiB allowance ONLY; no impossibility claim without measured overhead'},
+                'meaning': 'generic full-PLE sensitivity only; not a device bound or mmap admission'},
             'generic_budget_sweep': sweep, 'refusal_reasons': refusal,
             'remaining_committed_growth_bytes': bound.get('remaining_committed_growth_bytes'),
             'unknowns': bound['unknowns'], 'observations': observed}
@@ -468,7 +502,7 @@ def format_table(prediction):
     for rank, lower in enumerate(prediction['vram_static_lower_bound_bytes_per_rank']):
         lines.append(f'Rank {rank}: static VRAM LOWER bound {lower/GIB:.6f} GiB; complete Vpeak/reserve UNKNOWN')
     if prediction.get('candidate_table'):
-        lines += ['V30 candidates: native host PLE, KV 376569856, FULL_DECODE_ONLY; no calibrated peak available.',
+        lines += ['Historical full-PLE candidates (NOT mmap adapter): KV 376569856, FULL_DECODE_ONLY; no calibrated peak available.',
                   'Candidate             Mode    Pins GB   Nonpin room to 85 GB   Static reserve UPPER bound GiB (r0..r3)']
         for row in prediction['candidate_table']:
             reserves = '/'.join(f'{x:.3f}' for x in row['conditional_static_reserve_gib_per_rank'])

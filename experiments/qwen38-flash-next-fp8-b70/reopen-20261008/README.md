@@ -1,4 +1,43 @@
-# Flash-Next Screen 1b — v5 port and CPU memory reconstruction
+# Flash-Next Screen 1b — native FP8 mmap adapter
+
+**CPU implementation complete; runtime qualification remains open.** PLE now
+uses the original safetensors shards through read-only mmap, a fixed **1 GiB
+pinned raw-row clock cache per rank (4 GiB total)**, and small stable step
+buffers. The original hash, TP ownership, int8 byte reduction and scale/cast
+arithmetic remain. No PLE requantization or checkpoint rewrite occurs.
+
+The updated unqualified prediction is **87.765002 GB (81.737528 GiB)** of host
+pressure, with **16.704864 GB** of final pins. The full 51.200246 GB table stays
+file-backed. Cache metadata, staging, active-page allowance and the historical
+unexplained memory residual are included. See [prediction](host-memory-prediction.json),
+[shared inputs](memory-contract.json), and [latency/exactness design](../notes/2026-10-08-host-memory-reduction-design.md).
+The 4 GiB page allowance is an assumption, not an enforced page-cache ceiling.
+
+**126 CPU tests pass: prior 77 + 22 calibration + 27 adapter/receipt tests.**
+Tests include direct safetensors reads of random/adversarial synthetic rows
+and small actual checkpoint boundary reads. They do not qualify XPU transport,
+graph replay, V30 arithmetic or generated outputs. The synchronous pre-forward
+fetch puts misses on the critical path; no overlap or speedup is claimed.
+[Validation and exact command](VALIDATION.md).
+
+The loader serializes copy sections across ranks and caps aggregate live
+staging at **256 MiB**, retaining CPU conversion reservations through storage
+lifetime. Final expert placement and full 16-bit KV are unchanged. At load and
+capture completion, `allocations-rank<N>.json` records unique pinned/device
+storage by group, observed mmap RSS (or null), actual geometry, and prediction
+inputs. `loader-<pid>.jsonl` and `staging-live.json` retain allocation events
+and the global staging peak. Graph/driver/private-runtime allocations remain
+unqualified. The overlay manifest seals the adapter, loader, contract and
+predictor before the container entrypoint can apply them.
+
+MTP0/MTP1/MTP3 commands, calibrate-load behavior and watchdog thresholds stay
+unchanged. The **80 GB/32 GiB internal guard**, measured plateau margin, and
+known **4 GiB/card reserve conflict** still block any claim of admission.
+The prepared calibrate-load command below was **not executed**. This task made no commits; no GPU, Docker, server, installation, secret, host setting or
+port 8188 operation occurred.
+
+## Earlier full-PLE memory reconstruction (historical)
+
 
 **No honest joint fit is established yet.** The certified placement is now
 ported and its **63.609487 GB** of host buffers is validated with real-shape
@@ -24,7 +63,7 @@ reserves. The load-only measurement mode below bypasses that prediction gate.
 
 Reserve is the worst rank, assuming historical rank0 capacity on all cards,
 **before** graph/runtime/allocator overhead; it is not promised free VRAM.
-All alternatives use native host PLE, full 16-bit KV at **376,569,856
+These historical alternatives use native host PLE, full 16-bit KV at **376,569,856
 bytes/rank**, **FULL_DECODE_ONLY**, length **4,352**, TP4/EP4. None qualifies.
 The default remains the certified mask with MTP1 to minimize differences while
 resolving memory accounting; it is not labelled as a fitting selection.
@@ -97,13 +136,14 @@ The pinned image must already exist. Existing `SCREEN_PRIVILEGED_FD_SCAN` and
 the opt-in fd scan uses that existing privileged path. The sampler never does.
 
 ```sh
-SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode calibrate-load --execute
+SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode calibrate-load --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008 --execute
 ```
 
-Default output: `runs/screen1b-calibrate-load/`. Choose a fresh `--run-dir` if
-that directory exists. The mode uses **the exact MTP1 launch command**, including
-the ported v5 placement, unchanged weights, full 16-bit KV, graph configuration
-and bounded loader. Its admission comes from the watchdog, not a predicted
+This command uses the fresh `runs/screen1b-mmap-calibrate-load-20261008/`.
+The controller default remains `runs/screen1b-calibrate-load/`; choose another
+fresh `--run-dir` if the selected directory exists. The mode uses **the exact MTP1 launch command**, including
+the ported v5 placement, native FP8 mmap adapter, unchanged weights, full
+16-bit KV, graph configuration and bounded loader. Its admission comes from the watchdog, not a predicted
 complete peak. It still verifies disk, model hashes, overlay hashes, idle
 cards, port ownership and the kernel journal.
 
@@ -143,7 +183,7 @@ After reviewing a passing receipt and leaving the five-minute stop-to-launch
 gap, use a fresh MTP1 run with that receipt explicitly supplied:
 
 ```sh
-SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode mtp1 --calibration /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-calibrate-load/calibration-load.json --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mtp1-calibrated --execute
+SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode mtp1 --calibration /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008/calibration-load.json --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mtp1-calibrated --execute
 ```
 
 The gate rechecks sample hashes and recomputes the verdict. Image, overlay,

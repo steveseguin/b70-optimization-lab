@@ -27,7 +27,7 @@
     "max_num_batched_tokens": 64,
     "kv_bytes_per_rank": 376569856,
     "mtp_depth": 1,
-    "command_sha256": "72bae27bf3350a156ad21c950dc6f3ab3457a7007e3f21f7e223ecb088e034f1"
+    "command_sha256": "1e806e869f116aa685d8d13eb779ede5866b6f5d963bfe1d87a676aa1e148dc1"
   },
   "metadata": {
     "config_sha256": "99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e70a15a90a8d",
@@ -177,8 +177,8 @@
     "vllm/model_executor/layers/quantization/fp8.py": "947540b443c15e9e5b4c08ff07f7a7c0e8d8f0d8494f3964c0172a772a779fe5",
     "vllm/v1/worker/gpu/model_runner.py": "0b02bdb26b340d57869861c0570815bc68d36812a87c1b78a16960f3b20f842a"
   },
-  "overlay_manifest_sha256": "4b63d55d9ebd164bbb240ec40fe3c1e389d9eaed6f177cc5a60b67791b8cdf7c",
-  "phase_bounds_manifest_sha256": "a9094a0d0f50caa4aced83a26da85685cf9cd09baad2a72dbd6eecccf6bddeae",
+  "overlay_manifest_sha256": "48437117087a329825c4dad0b609fea2e00e4dfd9e0709be2fa440c41f65e50a",
+  "phase_bounds_manifest_sha256": "7bf1f66042eaac46d372703f2dc9cb4bba5ecd7e740ba91fe5d1edac7272bc4a",
   "physical_vram_bytes_per_rank": [
     34242297856,
     null,
@@ -197,11 +197,6 @@
     "nominal_32gib": "optimistic capacity upper bound only for conditional impossibility proof; never admission"
   },
   "selected_parameters_rank0": [
-    {
-      "name": "PLE",
-      "bytes": 12800061440,
-      "kind": "v5-final"
-    },
     {
       "name": "input_embedding",
       "bytes": 317849600,
@@ -686,13 +681,23 @@
       "name": "layer47.w2",
       "bytes": 26214400,
       "kind": "v5-final"
+    },
+    {
+      "name": "PLE_cache",
+      "bytes": 1073741824,
+      "kind": "pinned-raw-FP8"
+    },
+    {
+      "name": "PLE_step",
+      "bytes": 163840,
+      "kind": "pinned-raw-FP8"
     }
   ],
   "final_pins_bytes_per_rank": [
-    15786864640,
-    16003133440,
-    15821271040,
-    15998218240
+    4060708864,
+    4276977664,
+    4095115264,
+    4272062464
   ],
   "placement_census": [
     {
@@ -4644,6 +4649,37 @@
       "pinned_bytes": 15998218240
     }
   ],
+  "mmap_adapter": {
+    "schema": "screen1b.mmap-memory-contract.v1",
+    "ranks": 4,
+    "ple_rows": 320001536,
+    "ple_row_bytes": 160,
+    "ple_nvme_bytes": 51200245760,
+    "ple_cache_bytes_per_rank": 1073741824,
+    "ple_metadata_bytes": 1736346392,
+    "global_staging_bytes": 268435456,
+    "active_file_allowance_bytes": 4294967296,
+    "historical_pressure_delta_bytes": 115869876224,
+    "historical_native_pins_bytes": 63609487360,
+    "host_baseline_bytes": 2500000000,
+    "runtime_difference_contingency_bytes": 10000000000,
+    "prediction_is_measurement": false,
+    "max_total_tokens": 64,
+    "ngram_heads": 16,
+    "pinned_expert_bytes_per_rank": [
+      2668953600,
+      2885222400,
+      2703360000,
+      2880307200
+    ],
+    "pinned_input_embedding_bytes_per_rank": 317849600
+  },
+  "historical_placement_pins_bytes_per_rank": [
+    15786864640,
+    16003133440,
+    15821271040,
+    15998218240
+  ],
   "calibration": {
     "status": "PARTIAL_A367_HOST_PRESSURE_CALIBRATION; V30_COMPLETE_PEAKS_UNKNOWN",
     "certified_pins_total_bytes": 63609487360,
@@ -4964,17 +5000,18 @@
       "reason": "peak calibration unavailable; static floor is not a VRAM upper bound"
     }
   ],
-  "final_pins_total_bytes": 63609487360,
+  "candidate_table_scope": "historical full-PLE alternatives, not mmap adapter",
+  "final_pins_total_bytes": 16704864256,
   "offload_budget_overshoot_bytes_per_rank": null,
   "checkpoint_weight_bytes": 185486485760,
   "checkpoint_total_bytes": 185502232570,
   "static_floor_excluded_nonweight_bytes": 15746810,
   "replicated_hc_bytes": 1310720000,
   "vram_static_lower_bound_bytes_per_rank": [
-    31944366656,
-    31728097856,
-    31909960256,
-    31733013056
+    31944530496,
+    31728261696,
+    31910124096,
+    31733176896
   ],
   "host_phases_bytes": {
     "construction": null,
@@ -5049,27 +5086,30 @@
     null,
     null
   ],
-  "illustrative_host_peak_bytes": 85352759296,
+  "illustrative_host_peak_bytes": 87765002264,
   "illustrative_components": {
-    "pins": 63609487360,
-    "private_runtime_and_retention_bytes": 12884901888,
+    "pins": 16704864256,
+    "historical_unattributed_residual_bytes": 52260388864,
+    "cache_metadata_bytes": 1736346392,
     "active_files_bytes": 4294967296,
-    "other_host_and_driver_bytes": 4294967296,
+    "host_baseline_bytes": 2500000000,
+    "runtime_difference_contingency_bytes": 10000000000,
     "concurrent_staging_bytes": 268435456
   },
   "joint_gate_obstruction": {
-    "assumed_nonpin_host_bytes": 21743271936,
-    "maximum_total_pins_under_host_gate_bytes": 68256728064,
-    "best_possible_vram_lower_bound_bytes_per_rank": 30667049280,
+    "scope": "historical full-PLE generic budget, not mmap placement",
+    "assumed_nonpin_host_bytes": 71060138008,
+    "maximum_total_pins_under_host_gate_bytes": 18939861992,
+    "best_possible_vram_lower_bound_bytes_per_rank": 42996265798,
     "nominal_capacity_upper_bound_bytes": 34359738368,
     "cannot_fit_even_nominal_32gib": true,
-    "meaning": "sensitivity to the old 20 GiB allowance ONLY; no impossibility claim without measured overhead"
+    "meaning": "generic full-PLE sensitivity only; not a device bound or mmap admission"
   },
   "generic_budget_sweep": [
     {
       "budget_gib_per_rank": 12.0,
       "final_pins_bytes": 53716828160,
-      "scenario_host_peak_bytes": 75460100096,
+      "scenario_host_peak_bytes": 124776966168,
       "vram_lower_bound_bytes_per_rank": 34302024256,
       "reserve_upper_bound_at_nominal_32gib_bytes": 57714112,
       "joint_scenario_possible": false
@@ -5077,7 +5117,7 @@
     {
       "budget_gib_per_rank": 12.25,
       "final_pins_bytes": 53716828160,
-      "scenario_host_peak_bytes": 75460100096,
+      "scenario_host_peak_bytes": 124776966168,
       "vram_lower_bound_bytes_per_rank": 34302024256,
       "reserve_upper_bound_at_nominal_32gib_bytes": 57714112,
       "joint_scenario_possible": false
@@ -5085,7 +5125,7 @@
     {
       "budget_gib_per_rank": 12.5,
       "final_pins_bytes": 53716828160,
-      "scenario_host_peak_bytes": 75460100096,
+      "scenario_host_peak_bytes": 124776966168,
       "vram_lower_bound_bytes_per_rank": 34302024256,
       "reserve_upper_bound_at_nominal_32gib_bytes": 57714112,
       "joint_scenario_possible": false
@@ -5093,7 +5133,7 @@
     {
       "budget_gib_per_rank": 12.75,
       "final_pins_bytes": 55394549760,
-      "scenario_host_peak_bytes": 77137821696,
+      "scenario_host_peak_bytes": 126454687768,
       "vram_lower_bound_bytes_per_rank": 33882593856,
       "reserve_upper_bound_at_nominal_32gib_bytes": 477144512,
       "joint_scenario_possible": false
@@ -5101,7 +5141,7 @@
     {
       "budget_gib_per_rank": 13.0,
       "final_pins_bytes": 56233410560,
-      "scenario_host_peak_bytes": 77976682496,
+      "scenario_host_peak_bytes": 127293548568,
       "vram_lower_bound_bytes_per_rank": 33672878656,
       "reserve_upper_bound_at_nominal_32gib_bytes": 686859712,
       "joint_scenario_possible": false
@@ -5109,7 +5149,7 @@
     {
       "budget_gib_per_rank": 13.25,
       "final_pins_bytes": 57911132160,
-      "scenario_host_peak_bytes": 79654404096,
+      "scenario_host_peak_bytes": 128971270168,
       "vram_lower_bound_bytes_per_rank": 33253448256,
       "reserve_upper_bound_at_nominal_32gib_bytes": 1106290112,
       "joint_scenario_possible": false
@@ -5117,7 +5157,7 @@
     {
       "budget_gib_per_rank": 13.5,
       "final_pins_bytes": 58749992960,
-      "scenario_host_peak_bytes": 80493264896,
+      "scenario_host_peak_bytes": 129810130968,
       "vram_lower_bound_bytes_per_rank": 33043733056,
       "reserve_upper_bound_at_nominal_32gib_bytes": 1316005312,
       "joint_scenario_possible": false
@@ -5125,7 +5165,7 @@
     {
       "budget_gib_per_rank": 13.75,
       "final_pins_bytes": 60427714560,
-      "scenario_host_peak_bytes": 82170986496,
+      "scenario_host_peak_bytes": 131487852568,
       "vram_lower_bound_bytes_per_rank": 32624302656,
       "reserve_upper_bound_at_nominal_32gib_bytes": 1735435712,
       "joint_scenario_possible": false
@@ -5133,7 +5173,7 @@
     {
       "budget_gib_per_rank": 14.0,
       "final_pins_bytes": 60427714560,
-      "scenario_host_peak_bytes": 82170986496,
+      "scenario_host_peak_bytes": 131487852568,
       "vram_lower_bound_bytes_per_rank": 32624302656,
       "reserve_upper_bound_at_nominal_32gib_bytes": 1735435712,
       "joint_scenario_possible": false
@@ -5141,7 +5181,7 @@
     {
       "budget_gib_per_rank": 14.25,
       "final_pins_bytes": 61266575360,
-      "scenario_host_peak_bytes": 83009847296,
+      "scenario_host_peak_bytes": 132326713368,
       "vram_lower_bound_bytes_per_rank": 32414587456,
       "reserve_upper_bound_at_nominal_32gib_bytes": 1945150912,
       "joint_scenario_possible": false
@@ -5149,7 +5189,7 @@
     {
       "budget_gib_per_rank": 14.5,
       "final_pins_bytes": 62944296960,
-      "scenario_host_peak_bytes": 84687568896,
+      "scenario_host_peak_bytes": 134004434968,
       "vram_lower_bound_bytes_per_rank": 31995157056,
       "reserve_upper_bound_at_nominal_32gib_bytes": 2364581312,
       "joint_scenario_possible": false
@@ -5157,7 +5197,7 @@
     {
       "budget_gib_per_rank": 14.75,
       "final_pins_bytes": 63783157760,
-      "scenario_host_peak_bytes": 85526429696,
+      "scenario_host_peak_bytes": 134843295768,
       "vram_lower_bound_bytes_per_rank": 31785441856,
       "reserve_upper_bound_at_nominal_32gib_bytes": 2574296512,
       "joint_scenario_possible": false
@@ -5165,7 +5205,7 @@
     {
       "budget_gib_per_rank": 15.0,
       "final_pins_bytes": 65460879360,
-      "scenario_host_peak_bytes": 87204151296,
+      "scenario_host_peak_bytes": 136521017368,
       "vram_lower_bound_bytes_per_rank": 31366011456,
       "reserve_upper_bound_at_nominal_32gib_bytes": 2993726912,
       "joint_scenario_possible": false
@@ -5173,7 +5213,7 @@
     {
       "budget_gib_per_rank": 15.25,
       "final_pins_bytes": 66299740160,
-      "scenario_host_peak_bytes": 88043012096,
+      "scenario_host_peak_bytes": 137359878168,
       "vram_lower_bound_bytes_per_rank": 31156296256,
       "reserve_upper_bound_at_nominal_32gib_bytes": 3203442112,
       "joint_scenario_possible": false
@@ -5181,7 +5221,7 @@
     {
       "budget_gib_per_rank": 15.5,
       "final_pins_bytes": 67977461760,
-      "scenario_host_peak_bytes": 89720733696,
+      "scenario_host_peak_bytes": 139037599768,
       "vram_lower_bound_bytes_per_rank": 30736865856,
       "reserve_upper_bound_at_nominal_32gib_bytes": 3622872512,
       "joint_scenario_possible": false
@@ -5189,7 +5229,7 @@
     {
       "budget_gib_per_rank": 15.75,
       "final_pins_bytes": 67977461760,
-      "scenario_host_peak_bytes": 89720733696,
+      "scenario_host_peak_bytes": 139037599768,
       "vram_lower_bound_bytes_per_rank": 30736865856,
       "reserve_upper_bound_at_nominal_32gib_bytes": 3622872512,
       "joint_scenario_possible": false
@@ -5197,7 +5237,7 @@
     {
       "budget_gib_per_rank": 16.0,
       "final_pins_bytes": 68816322560,
-      "scenario_host_peak_bytes": 90559594496,
+      "scenario_host_peak_bytes": 139876460568,
       "vram_lower_bound_bytes_per_rank": 30527150656,
       "reserve_upper_bound_at_nominal_32gib_bytes": 3832587712,
       "joint_scenario_possible": false
@@ -5205,7 +5245,7 @@
     {
       "budget_gib_per_rank": 16.25,
       "final_pins_bytes": 70494044160,
-      "scenario_host_peak_bytes": 92237316096,
+      "scenario_host_peak_bytes": 141554182168,
       "vram_lower_bound_bytes_per_rank": 30107720256,
       "reserve_upper_bound_at_nominal_32gib_bytes": 4252018112,
       "joint_scenario_possible": false
@@ -5213,7 +5253,7 @@
     {
       "budget_gib_per_rank": 16.5,
       "final_pins_bytes": 71332904960,
-      "scenario_host_peak_bytes": 93076176896,
+      "scenario_host_peak_bytes": 142393042968,
       "vram_lower_bound_bytes_per_rank": 29898005056,
       "reserve_upper_bound_at_nominal_32gib_bytes": 4461733312,
       "joint_scenario_possible": false
@@ -5221,7 +5261,7 @@
     {
       "budget_gib_per_rank": 16.75,
       "final_pins_bytes": 73010626560,
-      "scenario_host_peak_bytes": 94753898496,
+      "scenario_host_peak_bytes": 144070764568,
       "vram_lower_bound_bytes_per_rank": 29478574656,
       "reserve_upper_bound_at_nominal_32gib_bytes": 4881163712,
       "joint_scenario_possible": false
@@ -5229,7 +5269,7 @@
     {
       "budget_gib_per_rank": 17.0,
       "final_pins_bytes": 73849487360,
-      "scenario_host_peak_bytes": 95592759296,
+      "scenario_host_peak_bytes": 144909625368,
       "vram_lower_bound_bytes_per_rank": 29268859456,
       "reserve_upper_bound_at_nominal_32gib_bytes": 5090878912,
       "joint_scenario_possible": false
@@ -5237,7 +5277,7 @@
     {
       "budget_gib_per_rank": 17.25,
       "final_pins_bytes": 75527208960,
-      "scenario_host_peak_bytes": 97270480896,
+      "scenario_host_peak_bytes": 146587346968,
       "vram_lower_bound_bytes_per_rank": 28849429056,
       "reserve_upper_bound_at_nominal_32gib_bytes": 5510309312,
       "joint_scenario_possible": false
@@ -5245,7 +5285,7 @@
     {
       "budget_gib_per_rank": 17.5,
       "final_pins_bytes": 75527208960,
-      "scenario_host_peak_bytes": 97270480896,
+      "scenario_host_peak_bytes": 146587346968,
       "vram_lower_bound_bytes_per_rank": 28849429056,
       "reserve_upper_bound_at_nominal_32gib_bytes": 5510309312,
       "joint_scenario_possible": false
@@ -5253,7 +5293,7 @@
     {
       "budget_gib_per_rank": 17.75,
       "final_pins_bytes": 76366069760,
-      "scenario_host_peak_bytes": 98109341696,
+      "scenario_host_peak_bytes": 147426207768,
       "vram_lower_bound_bytes_per_rank": 28639713856,
       "reserve_upper_bound_at_nominal_32gib_bytes": 5720024512,
       "joint_scenario_possible": false
@@ -5261,7 +5301,7 @@
     {
       "budget_gib_per_rank": 18.0,
       "final_pins_bytes": 78043791360,
-      "scenario_host_peak_bytes": 99787063296,
+      "scenario_host_peak_bytes": 149103929368,
       "vram_lower_bound_bytes_per_rank": 28220283456,
       "reserve_upper_bound_at_nominal_32gib_bytes": 6139454912,
       "joint_scenario_possible": false

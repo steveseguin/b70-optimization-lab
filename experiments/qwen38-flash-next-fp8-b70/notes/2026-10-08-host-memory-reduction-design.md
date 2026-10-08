@@ -437,3 +437,101 @@ C/README.md:29–43,53–60]
 **Single recommended next action:** implement and CPU-test the unchanged-byte
 FP8 PLE mmap/4 GiB-cache adapter with bounded loading and allocation receipts;
 do not relaunch Flash-Next yet.
+
+## 5. CPU implementation and latency estimate — 2026-10-08 follow-up
+
+Implemented in `S/overlay/vllm/screen1b_ple.py`, with the existing V2
+pre-forward hook and Screen 1b loader guard. This follow-up changes the
+Screen 1b overlay; the original design-only statement above describes the
+preceding pass. No runtime checkout, installed environment or checkpoint was
+changed. There was no GPU, Docker, endpoint or server operation.
+
+The adapter maps only locally owned PLE payload ranges, directly from the
+original safetensors shards. It validates all 128 shard headers before
+skipping ordinary PLE loading. A zero-row FP8 parameter retains loader/type
+metadata without a full-table allocation. Each rank allocates one **1 GiB
+pinned byte cache**, fixed dense row-to-slot/slot-to-row arrays, reference bits
+and generation counters, using clock eviction. No table conversion is involved.
+Every miss copies the original 160-byte row. The current step is copied into
+stable pinned/device buffers, including zeros for nonowned rows. Forward
+clones the device buffer before the unchanged owner mask/int8 reduction;
+the existing FP8 cast and global-scale multiply remain unchanged. The
+checkpoint's BF16 scale still loads into its FP32 runtime parameter normally.
+
+The pre-forward hook computes IDs with the **original device hash**, using
+current padded tokens and context on each call. Cached content is immutable
+model rows, not prompts, token histories, draft decisions or responses.
+CPU tests compare a separate integer hash mirror with the original torch
+method, including signed-int64 overflow, EOS, multiple requests, empty
+requests and replacement of draft-like inputs. Direct safetensors tests
+cover all FP8 byte codes, random rows, duplicates, eviction and shard/TP/page
+boundaries; small reads also compare actual checkpoint boundaries and final
+padding. This proves CPU row transport, not XPU graph or generated-token parity.
+
+The per-rank stage is 64 × 16 × 160 = **163,840 pinned bytes**, plus an equal
+fixed device buffer. The implementation adds these explicitly to the earlier
+scenario: predicted host pressure is now **87,765,002,264 bytes = 87.765002 GB
+= 81.737528 GiB**. Fixed pins total **16.704864 GB**: 11.137843 GB experts,
+1.271398 GB input embeddings, 4.294967 GB raw-row cache, and 0.000655 GB stages.
+Metadata is **1.736346 GB** (actual array sizes). The unchanged residual,
+4 GiB active-page assumption, 256 MiB staging allowance, 2.5 GB baseline and
+10 GB runtime contingency account for the rest. File mappings are not extra
+permanent pins. The metadata rounding differs by a few bytes from section 4;
+`S/memory-contract.json` and `S/host-memory-prediction.json` are the exact inputs.
+
+Loading still serializes collective-free copy sections between ranks. It now
+keeps a shared live-byte ledger for CPU conversion storage until its last
+storage view is released; copy slices use the remaining budget. Device
+conversion transfers release their staging reservation after synchronization.
+The cap is **256 MiB globally**, not four caps. Final pins/device tensors are
+accounted separately. This does not establish a bound on every private torch,
+driver or graph allocation. Unknown lifetime bounds remain unknown.
+`allocations-rank0.json` through `allocations-rank3.json` record retained tensor
+groups at load completion and after capture, actual cache/step/owner geometry,
+expert pins, per-mapping RSS or null, input hashes and prediction inputs.
+`loader-<pid>.jsonl` and `staging-live.json` retain allocation events and the
+staging high-water mark. UVA aliases and shared model/draft tensors count once.
+Do not sum mapping RSS, pins, cgroup memory and whole-host pressure together.
+
+### Decode lookup cost: assumptions, not measurements
+
+There are **16 n-gram heads per input token**, each fetching one **160-byte
+FP8 row**. One-user MTP0, MTP1 and MTP3 target steps therefore request at most
+16, 32 and 64 rows respectively (2,560 / 5,120 / 10,240 logical bytes), before
+duplicate removal. The MTP arms and their verifier settings are unchanged.
+
+No certified row-ID/cache-hit distribution was found in the retained fixtures
+or receipts. Use **0% hits for a cold cache**. A fully occupied uniform random
+cache gives only **4 GiB / 51,200,245,760 = 8.3886%** expected hits; it is a
+sensitivity case, not a measured hit rate. Repeated language may improve
+locality, but no such improvement is credited. TP-local head ranges can also
+make per-rank pressure uneven.
+
+For MTP1, cold and occupied-uniform cases imply **32 and 29.32 misses/step**.
+Assume **50–200 microseconds per random 4 KiB page read**, explicitly without
+claiming an NVMe measurement on this host. Serial service across all rows
+would cost **1.60–6.40 ms cold**, or **1.47–5.86 ms** at 8.3886% hits. Four
+ranks can fault concurrently: perfectly balanced eight-miss streams suggest
+**0.40–1.60 ms** cold per-rank service, plus synchronization and scheduling.
+This is an idealized sensitivity, not a latency bound. Each 160-byte row can
+cross a page, roughly another 4% of reads for uniformly distributed offsets;
+filesystem readahead, device contention and queue tails can amplify both
+traffic and time. Cold logical traffic is 5 KiB, but page traffic is at least
+128 KiB before crossings/readahead. Default mmap readahead is unchanged.
+
+**The implemented hook is synchronous and misses remain on the decode critical
+path.** It resolves rows before attention and before graph replay; issuing work
+earlier does not itself overlap it. Device IDs must first be ready, which
+waits for the preceding sampling step. An asynchronous worker could overlap
+misses with layer 0 before PLE in layer 1, provided graph-safe readiness and
+buffer-lifetime gates are implemented. It could only prefetch a later decode
+step once that step's real tokens/drafts are known. No speculative history
+shortcut, asynchronous overlap or off-critical-path guarantee is implemented.
+Load-only calibration cannot measure any of these decode tails.
+
+The existing **80 GB / 32 GiB internal guard**, calibration watchdog,
+90 GB loading ceiling, 15% plateau margin and 4 GiB/card generation reserve
+remain unchanged. The scenario does not pass those gates by declaration;
+it still has the known device-reserve conflict. Next permitted runtime work
+would be an independently authorized exclusive `calibrate-load`, followed by
+XPU row-byte/graph tests and certified output gates before performance claims.

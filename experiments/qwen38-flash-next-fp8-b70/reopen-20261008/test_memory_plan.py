@@ -232,8 +232,8 @@ class QualificationTests(unittest.TestCase):
 class ReceiptTests(unittest.TestCase):
     def test_checked_in_candidate_refuses(self):
         receipt = json.loads((m.HERE/'host-memory-prediction.json').read_text())
-        self.assertEqual(receipt['final_pins_total_bytes'], 63_609_487_360)
-        self.assertEqual(receipt['illustrative_host_peak_bytes'], 85_352_759_296)
+        self.assertEqual(receipt['final_pins_total_bytes'], 16_704_864_256)
+        self.assertEqual(receipt['illustrative_host_peak_bytes'], 87_765_002_264)
         self.assertIsNone(receipt['host_peak_bytes'])
         with self.assertRaises(RuntimeError): m.enforce_prediction(receipt)
 

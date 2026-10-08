@@ -697,6 +697,9 @@ class Qwen4ExpPLEEmbeddingMethod(QuantizeMethodBase):
         raise NotImplementedError("PLE weights only support embedding lookup")
 
     def embedding(self, layer: nn.Module, input_: torch.Tensor) -> torch.Tensor:
+        if _s1b.enabled() and hasattr(layer, '_screen1b_step_device'):
+            from vllm.screen1b_ple import gather_prepared
+            return gather_prepared(layer, input_)
         return F.embedding(input_, layer.weight)
 
     @abstractmethod
@@ -897,19 +900,11 @@ class Qwen4ExpPLEDeviceEmbedding(Qwen4ExpPLEEmbedding):
     ) -> torch.Tensor:
         """Allocate the complete PLE weight on the active device."""
         if _s1b.enabled():
-            if not _is_xpu() or not is_uva_available():
-                raise RuntimeError("Screen 1b direct PLE requires XPU UVA")
-            from vllm.model_executor.offloader.base import should_pin_memory
-            if not should_pin_memory():
-                raise RuntimeError("Screen 1b direct PLE requires pinned host memory")
-            element = torch.empty((), dtype=dtype, device="meta").element_size()
-            with _s1b.admission("PLE_final_storage", num_embeddings * embedding_dim * element):
-                host = torch.empty(num_embeddings, embedding_dim, dtype=dtype,
-                                   device="cpu", pin_memory=True)
-                if not host.is_pinned():
-                    raise RuntimeError("Screen 1b PLE allocation failed to pin; no copy fallback")
-                self._screen1b_host_storage = host
-                return get_accelerator_view_from_cpu_tensor(host)
+            if not _is_xpu() or dtype != torch.float8_e4m3fn:
+                raise RuntimeError("Screen 1b mmap PLE requires native FP8 on XPU")
+            # Metadata placeholder only. The publisher table is never allocated.
+            # Global/TP dimensions remain in VocabParallelEmbedding metadata.
+            return torch.empty((0, embedding_dim), dtype=dtype)
         return torch.empty(num_embeddings, embedding_dim, dtype=dtype)
 
     def start_prefetch(
@@ -2235,7 +2230,8 @@ class Qwen4ExpNGramEmbedding(nn.Module):
             parameter._vllm_offload_discard_initial_data = True
             parameter._screen1b_direct_ple = True
             parameter._vllm_is_uva_offloaded = True
-            parameter._screen1b_host_storage = self.ngram_embedding._screen1b_host_storage
+            from vllm.screen1b_ple import allocate_step_buffers
+            allocate_step_buffers(self.ngram_embedding, max_total_tokens, self.ngram_heads)
             _s1b.register_ple(prefix, self)
         # B70 0013: True once the NVMe (or SYNC_ONLY) host path is set up.
         self._b70_nvme_active = False
@@ -2411,6 +2407,10 @@ class Qwen4ExpNGramEmbedding(nn.Module):
         if not _s1b.enabled():
             return
         expected = self.screen1b_expected_shards()
+        if hasattr(self.ngram_embedding, '_screen1b_cache'):
+            # RowStore validates every header and the full local interval;
+            # the ordinary iterator skips these payloads before get_tensor.
+            self._screen1b_observed_shards = expected
         observed = getattr(self, "_screen1b_observed_shards", set())
         if observed != expected:
             raise RuntimeError("PLE embedding checkpoint shard coverage is incomplete: "
@@ -2426,7 +2426,9 @@ class Qwen4ExpNGramEmbedding(nn.Module):
             "ngram_heads_offsets": self.ngram_heads_offsets,
             "ngram_heads_vocab_sizes": self.ngram_heads_vocab_sizes,
         }
-        loaded: set[str] = set()
+        loaded: set[str] = ({"ngram_embedding.weight"}
+                            if _s1b.enabled() and hasattr(self.ngram_embedding, '_screen1b_cache')
+                            else set())
         regular_weights: list[tuple[str, torch.Tensor]] = []
         shard_prefix = "ngram_embedding.shard_"
 

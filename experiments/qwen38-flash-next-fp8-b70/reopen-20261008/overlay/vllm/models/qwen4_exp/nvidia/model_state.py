@@ -226,6 +226,11 @@ class Qwen4ExpModelState(MambaHybridModelState):
         """
         if not self.uses_ngram_embedding:
             return
+        from vllm import screen1b_guard as guard
+        if guard.enabled():
+            from vllm.screen1b_ple import pre_forward
+            pre_forward(model_inputs)
+            return
         modules = self._b70_nvme_modules()
         if not modules:
             return
