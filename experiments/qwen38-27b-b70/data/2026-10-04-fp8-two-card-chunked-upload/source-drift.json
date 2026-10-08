@@ -54,6 +54,24 @@
       },
       "change": "Commit 8a9770b7eea6ff26ee7d1bfa2bf4a64455e1a985 adds pinned tokenizer and runtime metadata at the same revision. All 66 original weights and all original model identity fields remain exact. This does not rerun the archived serving acceptance.",
       "declared": "2026-10-07"
+    },
+    {
+      "path": "packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py",
+      "frozen_sha256": "9668a6baea99833d852ece012d202b75f19806e90a652f6ab2eb3e6c359f9baa",
+      "current_sha256": "a1af5f42e4400ff990f71f95c669851d3920102f98676c918ba9d61fb4a1427e",
+      "acceptance": "pending",
+      "reason": "Adds a third launcher profile, `multi-user` (64 users at once, no speculation, two scheduling/attention overlays; measured 2026-10-04 on the same R310 image, data/2026-10-04-fp8-multiuser/prefill-batch8-limits-s64/). docker_argv now reads --max-num-seqs, extra environment and the speculative config from the profile; the recommended and depth-1 argv are token-for-token identical to the frozen launcher's (proof below). The multi-user profile itself is not covered by this packet.",
+      "retire_by": "A separately authorized fresh acceptance packet with the new exact source identity (multi-user profile included); do not rewrite this historical packet.",
+      "proof": {
+        "kind": "docker_argv",
+        "profiles": [
+          "recommended",
+          "depth-1"
+        ],
+        "differences": []
+      },
+      "change": "Adds a third launcher profile, `multi-user` (64 users at once, no speculation, two scheduling/attention overlays; measured 2026-10-04 on the same R310 image, data/2026-10-04-fp8-multiuser/prefill-batch8-limits-s64/). docker_argv now reads --max-num-seqs, extra environment and the speculative config from the profile; the recommended and depth-1 argv are token-for-token identical to the frozen launcher's (proof below). The multi-user profile itself is not covered by this packet.",
+      "declared": "2026-10-07"
     }
   ]
 }

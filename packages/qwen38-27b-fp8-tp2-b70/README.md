@@ -39,6 +39,32 @@ serves the official **FP8** weights. Add `--profile depth-1` for the previous re
 wait for `Ready`. The launcher checks the pinned model and runtime, fixes the qualified settings, preserves logs,
 refuses competing GPU work, and never restarts the server on its own.
 
+## Many users at once
+
+The `multi-user` profile serves up to 64 people at the same time on the same two cards, image and 33,024-token
+context. Every user gets exactly the answer they would get using the server alone: the profile turns drafting off
+and adds two small overlays that keep each request's arithmetic the same whoever else is being served (each step
+either reads prompts or writes answers, never both, and long conversations get their own attention call). It is
+exact by construction, not by luck, and it was checked: 64 of 64 answers matched each user's solo answer on short
+and long prompts, and matched the frozen single-user reference, twice each.
+
+| Users at once | Short prompts | Long prompts (2K to 8K tokens) |
+| ---: | ---: | ---: |
+| 64 | **874 tok/s** all users together | 66 tok/s all users together |
+
+One person waits a little longer per answer than on `recommended` (no drafting), so use it when several people or
+programs share the server.
+
+```bash
+python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --profile multi-user --model-dir /path/qwen3.8-27b-fp8 --state-dir /path/fp8-session
+```
+
+Measured October 4 on this package's image
+([results](../../experiments/qwen38-27b-b70/data/2026-10-04-fp8-multiuser/prefill-batch8-limits-s64/results.json),
+[summary](../../experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md)) with the research
+launcher; the same launch settings now come from `serve.py`. Its own acceptance packet through this launcher is
+pending.
+
 ## Use and stop
 
 ```bash

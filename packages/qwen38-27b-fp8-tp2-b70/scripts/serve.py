@@ -24,11 +24,23 @@ MODEL = 'qwen38-27b-fp8'
 SHORTLIST = '/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt'
 FAULT = re.compile(r'(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine reset|gt reset|GPU reset|coredump|Timedout job|timed out|\bhung\b|wedged|device lost)|soft lockup', re.I)
 
-# Both profiles: two cards, one user, 33,024 total tokens (a 32,768-token input plus 256 for the answer).
+# `recommended` and `depth-1`: two cards, one user, 33,024 total tokens (a 32,768-token input plus 256 for the answer).
 # Measured 2026-09-16/17 on the R310 image; every profile's outputs are identical to no-MTP decoding.
+# `multi-user`: the same cards, image and 33,024-token window, up to 64 users at once with no speculation. Two
+# scheduling/attention overlays make every user's answer the one that user gets alone (64/64 equal to the frozen
+# single-user reference, short and long prompts, R310, 2026-10-04:
+# experiments/qwen38-27b-b70/data/2026-10-04-fp8-multiuser/prefill-batch8-limits-s64/). Its own acceptance packet is
+# pending. `seqs` is --max-num-seqs (1 when absent); `env` is added on top of BASE_ENV.
 PROFILES = {
     'recommended': dict(depth=5, shortlist=True),   # MTP depth 5, draft-only INT4 shortlist head
     'depth-1': dict(depth=1, shortlist=False),      # the September 14 recipe (MTP depth 1, full-vocabulary draft head)
+    'multi-user': dict(depth=0, shortlist=False, seqs=64, env={
+        'B70_CHUNKED_UPLOAD': '1',             # the overlay's default, written out as in the measured launch
+        'B70_EXCLUSIVE_PREFILL': '1',          # each step is prompt-only or decode-only, as it is for a lone user
+        'B70_EXCLUSIVE_PREFILL_BATCH': '8',    # up to 8 new 17-512-token prompts per prompt-only step (census-proved)
+        'B70_FA_DECODE_PER_SEQ': '1',          # one attention decode call per sequence once keys are long
+        'VLLM_XPU_DRAFT_LM_HEAD_INT4': '0',    # no draft model without speculation (as in the measured launch)
+    }),
 }
 MAX_MODEL_LEN = 33024
 
@@ -215,6 +227,7 @@ def docker_argv(profile, model, state, port, name):
     """The complete `docker run` command. Nothing from the caller's environment reaches it."""
     settings = PROFILES[profile]
     env = dict(BASE_ENV)
+    env.update(settings.get('env', {}))
     if settings['shortlist']:
         env['VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST'] = SHORTLIST
     # `--memory-swap` equals `--memory`, which in Docker means the container gets NO swap at all
@@ -241,10 +254,11 @@ def docker_argv(profile, model, state, port, name):
     argv += [IMAGE, '--model', '/model', '--served-model-name', MODEL, '--host', '0.0.0.0', '--port', '8000',
              '--tensor-parallel-size', '2', '--dtype', 'float16', '--quantization', 'fp8', '--kv-cache-dtype', 'auto',
              '--gpu-memory-utilization', '0.95', '--max-model-len', str(MAX_MODEL_LEN),
-             '--block-size', '64', '--max-num-seqs', '1', '--max-num-batched-tokens', '4096',
-             '--no-enable-prefix-caching', '--enable-prompt-tokens-details', '--language-model-only',
-             '--speculative-config', json.dumps({'method': 'qwen3_next_mtp', 'num_speculative_tokens': settings['depth']}),
-             '--compilation-config', COMPILATION]
+             '--block-size', '64', '--max-num-seqs', str(settings.get('seqs', 1)), '--max-num-batched-tokens', '4096',
+             '--no-enable-prefix-caching', '--enable-prompt-tokens-details', '--language-model-only']
+    if settings['depth']:
+        argv += ['--speculative-config', json.dumps({'method': 'qwen3_next_mtp', 'num_speculative_tokens': settings['depth']})]
+    argv += ['--compilation-config', COMPILATION]
     return argv
 
 

@@ -204,5 +204,94 @@ class ServingTests(unittest.TestCase):
             self.assertEqual(json.loads((root / 'state/state.json').read_text())['status'], 'failed')
 
 
+# The launcher bytes the current acceptance packet was measured with (packet sha256 9668a6ba..., git blob below).
+FROZEN_SERVE_BLOB = 'eac8cccd41b964bc3641cb33631c69a6c299faac'
+
+
+def frozen_serve():
+    """The pre-multi-user serve.py, from git: the pinned blob, else HEAD's copy. None when git has neither."""
+    root = SOURCE.parents[3]
+    for ref in (FROZEN_SERVE_BLOB, 'HEAD:' + str(SOURCE.relative_to(root))):
+        result = subprocess.run(['git', '-C', str(root), 'show', ref], capture_output=True)
+        if result.returncode == 0:
+            with tempfile.NamedTemporaryFile('wb', suffix='.py', delete=False) as handle:
+                handle.write(result.stdout)
+            try:
+                frozen_spec = importlib.util.spec_from_file_location('fp8_serve_frozen', handle.name)
+                module = importlib.util.module_from_spec(frozen_spec)
+                frozen_spec.loader.exec_module(module)
+            finally:
+                os.unlink(handle.name)
+            return module
+    return None
+
+
+class MultiUserProfileTests(unittest.TestCase):
+    FIXED = (Path('/model'), Path('/state'), 18124, 'owned')
+
+    def test_single_user_profiles_launch_exactly_as_before(self):
+        frozen = frozen_serve()
+        if frozen is None:
+            self.skipTest('git history unavailable')
+        for profile in frozen.PROFILES:
+            with self.subTest(profile=profile):
+                self.assertEqual(serve.docker_argv(profile, *self.FIXED), frozen.docker_argv(profile, *self.FIXED))
+
+    def test_multi_user_profile(self):
+        argv = serve.docker_argv('multi-user', *self.FIXED)
+        env = dict(argv[i + 1].split('=', 1) for i in range(len(argv)) if argv[i] == '--env')
+        for key, value in (('B70_ALLGATHER_ALLREDUCE', '1'), ('B70_CHUNKED_UPLOAD', '1'), ('B70_EXCLUSIVE_PREFILL', '1'),
+                           ('B70_EXCLUSIVE_PREFILL_BATCH', '8'), ('B70_FA_DECODE_PER_SEQ', '1'), ('B70_FA_VERIFY_ROWS', '1'),
+                           ('VLLM_XPU_DRAFT_LM_HEAD_INT4', '0'), ('PYTHONPATH', '/overlay')):
+            self.assertEqual(env[key], value)
+        self.assertNotIn('VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST', env)
+        for flag, value in (('--tensor-parallel-size', '2'), ('--max-model-len', '33024'), ('--max-num-seqs', '64'),
+                            ('--max-num-batched-tokens', '4096'), ('--gpu-memory-utilization', '0.95')):
+            self.assertEqual(argv[argv.index(flag) + 1], value)
+        self.assertIn('--no-enable-prefix-caching', argv)
+        self.assertNotIn('--enable-prefix-caching', argv)
+        self.assertNotIn('--speculative-config', argv)
+        self.assertEqual(argv[argv.index('--memory-swap') + 1], argv[argv.index('--memory') + 1])
+        # Every other variable is the single-user recipe's.
+        single = serve.docker_argv('depth-1', *self.FIXED)
+        single_env = dict(single[i + 1].split('=', 1) for i in range(len(single)) if single[i] == '--env')
+        self.assertEqual({k for k in env.keys() | single_env.keys() if env.get(k) != single_env.get(k)},
+                         set(serve.PROFILES['multi-user']['env']))
+
+    def test_shipped_overlays_are_inert_without_their_switch(self):
+        overlays = SOURCE.parents[1] / 'overlays'
+        for module, switch in (('b70_exclusive_prefill', 'B70_EXCLUSIVE_PREFILL'), ('b70_fa_decode_per_seq', 'B70_FA_DECODE_PER_SEQ')):
+            with self.subTest(module=module):
+                text = (overlays / f'{module}.py').read_text()
+                self.assertIn(f"os.environ.get('{switch}', '').strip() != '1'", text)
+                points = (overlays / f'{module}-0.1.0.dist-info/entry_points.txt').read_text()
+                self.assertIn(f'{module} = {module}:register', points)
+                self.assertTrue((overlays / f'{module}-0.1.0.dist-info/METADATA').is_file())
+
+    def test_matches_the_measured_launch_when_available(self):
+        """The 874 tok/s, 64/64-exact launch of 2026-10-04 (lab host only): same argv apart from name, port,
+        paths, the image reference, and two variables the image itself sets."""
+        record = Path('/mnt/fast-ai/bench-results/fp8-multiuser-pb8b-s64-20261004/tp2-pb8-pure-faseq-mtp0-s64/launch.json')
+        if not record.exists():
+            self.skipTest('measured launch record is on the lab host only')
+        measured = json.loads(record.read_text())['argv']
+        ours = serve.docker_argv('multi-user', *self.FIXED)
+
+        def normal(argv):
+            out, skip = [], {'--name', '-p', '--mount'}
+            i = 0
+            while i < len(argv):
+                if argv[i] in skip:
+                    i += 2
+                    continue
+                if argv[i] == '--env' and argv[i + 1].split('=')[0] in ('VLLM_TARGET_DEVICE', 'VLLM_WORKER_MULTIPROC_METHOD'):
+                    i += 2
+                    continue
+                out.append(serve.IMAGE_ID if argv[i] == serve.IMAGE else argv[i])
+                i += 1
+            return out
+        self.assertEqual(normal(ours), normal(measured))
+
+
 if __name__ == '__main__':
     unittest.main()

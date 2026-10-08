@@ -96,7 +96,9 @@
       "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-gdn-fwd-o-global-barriers-r310-20260915.patch",
       "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_verify_rows.py",
       "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_allgather_allreduce.py",
-      "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_chunked_upload.py"
+      "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_chunked_upload.py",
+      "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_exclusive_prefill.py",
+      "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_decode_per_seq.py"
     ]
   },
   "commands": {
@@ -578,7 +580,14 @@
     "experiments/qwen38-27b-b70/data/2026-10-04-fp8-two-card-chunked-upload/manifest.json",
     "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_chunked_upload.py",
     "experiments/qwen38-27b-b70/overlays/b70-chunked-upload/b70_chunked_upload.py",
-    "experiments/qwen38-27b-b70/notes/2026-10-04-gpu-fault-mtp-start.md"
+    "experiments/qwen38-27b-b70/notes/2026-10-04-gpu-fault-mtp-start.md",
+    "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_exclusive_prefill.py",
+    "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_decode_per_seq.py",
+    "experiments/qwen38-27b-b70/overlays/b70-exclusive-prefill/b70_exclusive_prefill.py",
+    "experiments/qwen38-27b-b70/overlays/b70-fa-decode-per-seq/b70_fa_decode_per_seq.py",
+    "experiments/qwen38-27b-b70/scripts/run-20261004-fp8-multiuser-campaign.py",
+    "experiments/qwen38-27b-b70/data/2026-10-04-fp8-multiuser/prefill-batch8-limits-s64/results.json",
+    "experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md"
   ],
   "performance_profiles": [
     {
@@ -1619,6 +1628,43 @@
       "image": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2",
       "evidence": "experiments/qwen38-27b-b70/data/2026-09-16-fp8-flagship/summary.json",
       "r310_decode_tokens_s": 54.89813975243729
+    },
+    "multi_user_profile": {
+      "profile": "multi-user",
+      "cards": 2,
+      "mtp_depth": 0,
+      "max_model_len": 33024,
+      "max_num_batched_tokens": 4096,
+      "max_num_seqs": 64,
+      "prefix_caching": false,
+      "overlays": [
+        "b70_allgather_allreduce",
+        "b70_exclusive_prefill",
+        "b70_fa_decode_per_seq",
+        "b70_chunked_upload",
+        "b70_fa_verify_rows"
+      ],
+      "env": {
+        "B70_ALLGATHER_ALLREDUCE": "1",
+        "B70_CHUNKED_UPLOAD": "1",
+        "B70_EXCLUSIVE_PREFILL": "1",
+        "B70_EXCLUSIVE_PREFILL_BATCH": "8",
+        "B70_FA_DECODE_PER_SEQ": "1"
+      },
+      "image": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04",
+      "launcher": "packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py",
+      "short_prompts_64_users_tokens_s": [
+        874.29,
+        874.43
+      ],
+      "long_prompts_64_users_tokens_s": [
+        66.44,
+        66.59
+      ],
+      "exact": "64/64 equal to each user's solo answer on short and long prompts, and 64/64 equal to the frozen single-user no-MTP reference (short prompts), two passes each",
+      "acceptance_status": "pending",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-10-04-fp8-multiuser/prefill-batch8-limits-s64/results.json",
+      "note": "experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md"
     }
   }
 }

@@ -50,7 +50,9 @@ class EvidenceTests(unittest.TestCase):
         declared=self.drift()
         entry=declared.get('packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py')
         if not entry:self.skipTest('the two-card launcher has not drifted from this packet')
-        faked=json.loads(json.dumps(entry));faked['proof']['differences']=[]
+        faked=json.loads(json.dumps(entry))
+        # Declare something other than what changed: no differences when some are declared, else a flag that did not change.
+        faked['proof']['differences']=[] if entry['proof'].get('differences') else [{'flag':'--max-num-seqs','frozen':'1','current':'64'}]
         with self.assertRaisesRegex(AssertionError,'but source-drift.json declares'):
             MODULE.check_sources(self.sources(),dict(declared,**{faked['path']:faked}),self.files)
 
