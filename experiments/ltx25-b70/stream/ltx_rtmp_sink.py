@@ -218,7 +218,7 @@ class FfmpegOutput:
                             f":line_spacing={fs // 4}:box=1:boxcolor=black@0.55:boxborderw={fs // 3}"
                             f":x=(w-text_w)/2:y=h-text_h-{fs}")]
         cmd += ["-map", "0:v", "-map", "1:a",
-                "-c:v", "libx264", "-preset", "veryfast", "-tune", "zerolatency",
+                "-c:v", "libx264", "-preset", "veryfast", "-tune", "zerolatency", "-bf", "0",
                 "-b:v", "2500k", "-maxrate", "2500k", "-bufsize", "5000k",
                 "-g", "48", "-keyint_min", "48", "-sc_threshold", "0", "-pix_fmt", "yuv420p",
                 "-c:a", "aac", "-b:a", "128k", "-ar", str(SR), "-ac", "2",
