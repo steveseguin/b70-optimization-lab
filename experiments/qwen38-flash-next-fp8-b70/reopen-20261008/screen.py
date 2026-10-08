@@ -58,13 +58,59 @@ def overlay_check():
             raise RuntimeError(f'Overlay drift: {path}')
 
 
+SCAN_SNIPPET = r'''
+import json, os, sys
+from pathlib import Path
+targets = set(sys.argv[1:])
+held, unreadable = [], []
+for proc in Path('/proc').glob('[0-9]*'):
+    try:
+        fds = list((proc / 'fd').iterdir())
+    except FileNotFoundError:
+        continue
+    except PermissionError:
+        unreadable.append(proc.name)
+        continue
+    for fd in fds:
+        try:
+            target = os.readlink(fd)
+        except FileNotFoundError:
+            continue
+        except PermissionError:
+            unreadable.append(proc.name)
+            break
+        if target in targets:
+            held.append({'pid': proc.name, 'node': target})
+print(json.dumps({'held': held, 'unreadable': sorted(set(unreadable))}))
+'''
+
+
+def privileged_scan(targets):
+    """Run the same fd scan as root so every PID is visible. The sudo password is read from the
+    owner's local file (outside Git) and passed on stdin only; it is never logged or echoed."""
+    pw_file = os.environ.get('SCREEN_SUDO_PASSWORD_FILE', '/home/steve/SUDOPASSWORD.txt')
+    with open(pw_file, 'rb') as fh:
+        pw = fh.read()
+    p = subprocess.run(['sudo', '-S', '-p', '', '/usr/bin/python3', '-c', SCAN_SNIPPET, *sorted(targets)],
+                       input=pw, capture_output=True, timeout=120)
+    if p.returncode != 0:
+        raise RuntimeError('privileged render-node scan failed (rc=%d)' % p.returncode)
+    out = json.loads(p.stdout.decode().strip().splitlines()[-1])
+    return out['held'], out['unreadable']
+
+
 def idle():
     nodes = sorted(Path('/dev/dri').glob('renderD*'))
     if len(nodes) != 4:
         raise RuntimeError(f'Expected four render nodes, found {len(nodes)}')
+    targets = {str(n) for n in nodes}
+    if os.environ.get('SCREEN_PRIVILEGED_FD_SCAN') == '1':
+        held, unreadable = privileged_scan(targets)
+        if held or unreadable:
+            raise RuntimeError(f'Render-node idle check failed (privileged scan): holders={held}, inaccessible PIDs={unreadable}.')
+        return
     # fuser may silently miss inaccessible PIDs. Refuse incomplete /proc visibility.
     held, unreadable = [], []
-    targets = {str(n) for n in nodes}
     for proc in Path('/proc').glob('[0-9]*'):
         try:
             fds = list((proc / 'fd').iterdir())
