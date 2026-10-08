@@ -1,5 +1,196 @@
 # Screen 1b CPU validation — native FP8 mmap, 2026-10-08
 
+## Calibrate-load attempt 3: memory-guard cancellation
+
+**attempt 3: the internal host-memory guard stopped TP1 during construction;
+TP0 encountered that shared stop in `determine_expert_map`.** It is not an
+expert-map failure. The unit/hash stage began at 18:09 UTC; the container receipt
+runs **18:11:45.808–18:14:46.052 UTC**. No readiness, OOM, output or memory-fit
+claim follows. `container-exit.json` records exit 1, `OOMKilled=false`.
+
+### First cause, not traceback print order
+
+The complete [server log](runs/screen1b-mmap-calibrate-load-20261008-attempt3/server.log)
+shows TP1 at lines 306–395: `Fp8MoEMethod.create_weights` → v5
+`allocate_weight` → CPU int64 address-table `.to(resident.device)` → guarded
+conversion → `check_admission`. Its exception is **“next allocation exceeds
+early stop margin”**, not a dtype or shape exception.
+
+`loader-477.jsonl:271` records the first refusal at monotonic
+**357096.617205949**: MemTotal **124,179,132,416**, MemAvailable
+**44,173,471,744**, next bytes **2,048**. Subtraction gives
+**80,005,660,672 bytes** already in use; projected pressure is
+**80,005,662,720**, above the existing **80,000,000,000** limit. Available RAM
+was still above the separate 32 GiB floor. The tiny address-table transfer
+was where the excess was detected, not the source of 80 GB of consumption.
+TP1 writes the first `cancel_requested` at **357096.618303304**. TP2, TP0 and
+TP3 follow. TP0's lines 455–493 end in **“cancellation latched”**, while waiting
+for copy admission at V30's expert-map slice assignment. The later parent and
+EngineCore failures are consequences. The external calibration watchdog did
+not trigger (`watchdog_reason=null`); the internal allocation guard did.
+
+The map and both assignment operands are int32. Its 512 entries map this
+rank's consecutive 128 global IDs to local IDs 0–127, leaving all other entries
+−1. The v5 int64 table separately stores byte-address offsets and preserves
+all 128 logical experts despite fewer device-resident rows. There is no
+traceback evidence for geometry mismatch, an int64/device bug, or signature
+drift. V30's map function is unchanged. The existing rehearsal already went
+through the real constructors, but did not assert this call or use the actual
+certified masks; a four-layer tiny fixture cannot exercise full-size pressure.
+
+### Fix and explicit regression coverage
+
+[screen1b_guard.py](overlay/vllm/screen1b_guard.py) now carries the first STOP
+writer's reason into every later cancellation error. Memory refusals include
+observed/projected pressure and requested growth; `load_failed` retains the
+exception type and message. Later failures do not replace the original STOP.
+Missing or partially written reasons still cancel safely. Both overlay pins
+were refreshed. Thresholds, allocation arithmetic and placement are unchanged.
+
+[calibration.py](calibration.py) additionally retains all KiB-valued meminfo
+fields (including GPUActive/GPUReclaim if available) and cgroup memory.stat in
+future samples. Counter units are retained: memory.stat includes byte values
+and event counts. Missing attribution stays unknown. These overlapping fields
+are never added to pressure and do not change admission. Attempt 3 did not
+save these fields during construction, so driver/private-memory attribution
+cannot be recovered from that run.
+
+[worker_init_rehearsal.py](worker_init_rehearsal.py) now explicitly selects
+linear placement and loads the hash-bound **actual** `placement-certified-v5.json`.
+For each rank it executes and checks:
+
+- Four real factory → ExpertMapManager → V30 `determine_expert_map` calls in
+  reduced-size model construction, with exact values, int32 type, logical
+  device, 512 global/128 local counts and no optional mask.
+- All 48 certified layer masks against the real map, covering every local ID
+  exactly once. The four constructed layers check actual host/resident sizes,
+  preserved logical counts and int64 address tables. Synthetic weights verify
+  at least one host and one resident row from the actual first-layer mask.
+- The exact attempt-3 MemTotal/MemAvailable/2,048-byte admission refusal, without
+  allocating those bytes, followed by a sibling STOP injected immediately
+  after real `torch.arange` and caught at the real expert-map assignment.
+  The resulting traceback must name `expert_map_manager.py` and the first
+  memory-refusal reason. All of this uses CPU storage and emulated transport.
+
+Four successful constructor maps plus 48 explicit map checks per rank make
+**208 successful real-map calls**, plus four negative cancellation replays.
+The pressure replay is synthetic evidence for guard behavior, never a memory
+measurement. Original attempt-2 old-guard failure coverage remains. The
+existing no-native-kernel/CCL/graph/MTP/full-size/output-parity limitations apply.
+[Four rank receipts and traces](evidence/attempt3-cpu-rehearsal/).
+
+### Partial measured host-RAM curve
+
+The reproducible [analysis script](analyze_partial_load.py) reads the complete
+364 half-second samples and all six loader logs, hashes its inputs, and joins
+by monotonic time. [JSON analysis](evidence/attempt3-partial-memory.json),
+[all measured points, bytes](evidence/attempt3-partial-memory.csv).
+“In use” below means **MemTotal − MemAvailable**, not RSS plus pins. Seconds
+are relative to the first `load_begin` (357089.209523809), not unit launch.
+No point is extrapolated. The source sampler called the entire run “loading”;
+the reconstruction separates cancellation/drain from construction.
+
+| Observed stage | Seconds from construction | Bytes in use | Completed v5 parameters |
+| --- | ---: | ---: | ---: |
+| Before model hash | — | 5,701,885,952 | 0 |
+| After model hash | — | 5,695,090,688 | 0 |
+| Last startup sample before constructor | −0.230 | 14,722,813,952 | 0 |
+| Early construction | 0.270 | 17,237,245,952 | 0 |
+| Construction | 1.271 | 25,797,988,352 | 16 |
+| Construction | 2.271 | 38,961,741,824 | 43 |
+| Construction | 3.271 | 48,535,633,920 | 72 |
+| Construction | 4.271 | 56,847,196,160 | 98 |
+| Construction | 5.271 | 64,798,928,896 | 118 |
+| Construction | 6.277 | 71,692,849,152 | 139 |
+| Last sampler point before refusal | 7.277 | 78,731,689,984 | 162 |
+| TP1 allocation-refusal observation | 7.408 | **80,005,660,672** | 164 completed receipts |
+| Sampler peak, already cancelling | 7.777 | 79,478,317,056 | 164 |
+
+The refusal's available RAM is **44.173 GB**; the sampler minimum is
+**44.701 GB**. The user's “about 75 GB” is **79.478 decimal GB / 74.02 GiB**
+in the sampler, using this host's actual 124.179 GB MemTotal. The first
+refusal is **80.006 GB / 74.51 GiB**. Half-second sampling alone missed it.
+
+Final completed v5 receipts are:
+
+| Rank / PID | Last completed layer (zero-based) | Parameters | Host bytes | Device tensor bytes |
+| --- | ---: | ---: | ---: | ---: |
+| 0 / 450 | 17 | 36 | 742,195,200 | 10,582,425,600 |
+| 1 / 477 | 22 | 46 | 1,096,089,600 | 13,374,259,200 |
+| 2 / 512 | 19 | 40 | 865,075,200 | 11,717,836,800 |
+| 3 / 547 | 20 | 42 | 1,037,107,200 | 12,174,950,400 |
+| Total | — | 164 | **3,740,467,200** | **47,849,472,000** |
+
+Rank 1 was constructing layer 23 when it refused. These are completed tensor
+allocation events, not RSS or measured VRAM residency; the in-progress
+allocation is absent. There are **no `allocations-rank*.json` snapshots**:
+those are emitted after load completion, which was never reached. There are
+no PLE mmap/index/coverage events. The checkpoint-copy, postprocessing, MTP,
+KV, capture and ready phases were not reached. The shared staging ledger is
+empty after drain, with peak **268,431,360 bytes**, below its 268,435,456-byte cap;
+all **263** reservations across the four workers have matching releases.
+
+Container memory.current peaked at **11,503,972,352 bytes** (memory.peak
+**11,504,226,304**). Separate per-rank RSS peaks were **2,770,513,920 /
+2,770,341,888 / 2,772,836,352 / 2,783,797,248 bytes**. These overlap and peak at
+different instants; neither their sum nor the cgroup total explains whole-host
+pressure. Mlocked/Unevictable also do not account for all driver-managed pins.
+The missing RAM categories remain unattributed, not assigned to a guessed leak.
+
+### Comparison with the prediction
+
+| Quantity | Prediction | Attempt-3 observation |
+| --- | ---: | ---: |
+| Whole-host complete peak | 87,765,002,264 bytes, illustrative | 80,005,660,672 bytes at partial construction |
+| Host baseline | 2,500,000,000 bytes assumed | 5,695,090,688 bytes after hashing |
+| Final pins | 16,704,864,256 bytes | 3,740,467,200 bytes in completed expert-host events only |
+| Global staging cap | 268,435,456 bytes | 268,431,360-byte ledger peak |
+| Construction phase bound | Unknown (`null`) | Partial peak observed; phase incomplete |
+| Later phases / final fit | Unknown | Not reached |
+
+Pressure increased **74,310,569,984 bytes** from the post-hash baseline. The
+partial observation is only **7,759,341,592 bytes below** the illustrative
+complete peak, while many layers and later phases remain. That difference is
+not spare memory or a prediction error estimate. The measured baseline alone
+exceeds the assumed baseline by 3,195,090,688 bytes. Do not scale partial
+layers to a complete load, substitute historical full-PLE candidate rows for
+the mmap adapter, or mark the 87.765 GB scenario calibrated/passing.
+
+**The memory-fit blocker is unresolved.** The guard performed its intended
+job. There is no supported expert-map patch that fixes it, and this CPU-only
+work does not establish which unmeasured allocation owns the remaining host
+pressure. The next diagnostic command is in the README, using fresh
+`attempt4` and `/PATH/TO/FRESH-HEALTH-RECEIPT.json`; it was not run and may stop
+at the same guard. A fresh receipt does not waive exclusive ownership, memory,
+five-minute stop gap or VRAM checks. Attempt 3's failed receipt cannot admit
+MTP1. Raw run files and the prediction are preserved unchanged.
+
+### CPU validation
+
+**171 passed, zero failures, zero skips** in the existing LTX interpreter:
+163 previous tests, four first-cause checks, three raw-receipt reconstruction
+checks and one added memory-attribution test; all four rehearsal tests now
+include the new real-map and pressure coverage. System Python discovers 171:
+146 pass, 25 dependency skips. The initial run caught a reporting-test mistake:
+it expected the post-cancellation sampler peak in the pre-refusal interval;
+the assertion was corrected to 78,731,689,984 bytes, and the full suite rerun.
+[Final log](evidence/cpu-attempt3-tests.log),
+[initial log](evidence/cpu-attempt3-tests-initial.log),
+[validation receipt](evidence/cpu-attempt3-validation.json).
+
+```sh
+SCREEN1B_CPU_EVIDENCE_DIR=experiments/qwen38-flash-next-fp8-b70/reopen-20261008/evidence/attempt3-cpu-rehearsal \
+PYTHONDONTWRITEBYTECODE=1 /home/steve/.venvs/ltx25-baseline/bin/python -m unittest discover \
+  -s experiments/qwen38-flash-next-fp8-b70/reopen-20261008 -p 'test_*.py' -v
+
+python3 experiments/qwen38-flash-next-fp8-b70/reopen-20261008/analyze_partial_load.py \
+  experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt3 \
+  --output experiments/qwen38-flash-next-fp8-b70/reopen-20261008/evidence/attempt3-partial-memory.json
+```
+
+No device, Docker, server, installation, secret, host-setting, branch/commit
+or port 8188 operation occurred. The live LTX lane was untouched.
+
 ## Calibrate-load attempt 2: worker-init failure
 
 **attempt 2: failed at worker init: device-only RoPE conversion incorrectly

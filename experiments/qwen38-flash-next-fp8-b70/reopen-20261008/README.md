@@ -1,5 +1,50 @@
 # Flash-Next Screen 1b — native FP8 mmap adapter
 
+**attempt 3: stopped by the internal 80 GB host-memory guard during model
+construction. TP1 caused the stop; TP0's expert-map traceback was a consequence.**
+The first refusal records **80,005,660,672 bytes** in use and a 2,048-byte next
+conversion. The sampler peaked at **79,478,317,056 bytes** just after the stop.
+No expert-map geometry, dtype/device or overlay-signature error is recorded.
+
+The fix preserves the first stop reason and exact memory counters in subsequent
+cancellation errors, and records the loader exception separately. The sampler
+now retains all KiB-valued meminfo counters (including GPUActive when available)
+and cgroup memory.stat for the next attribution check. **This is a diagnosis and
+coverage fix, not a proven RAM-fit fix.** The 80 GB/32 GiB guard stays intact;
+an unchanged-size retry may stop there again.
+
+The CPU rehearsal now asserts the real V30 factory → ExpertMapManager →
+`determine_expert_map` path on **all four ranks**, using the actual certified v5
+placement: 512 global / 128 local experts, int32 linear maps, int64 address
+tables, and every one of the 48 host/resident masks. It also replays the exact
+refusal counters and sibling cancellation at the expert-map assignment.
+**171/171 CPU tests pass, no skips.** Full-size memory, native device behavior,
+MTP construction and output parity remain unqualified.
+
+Measured pressure rose from **5.695 GB after hashing** to **80.006 GB** after
+7.408 seconds of model construction. Only **3.740 GB** of completed expert-host
+allocations had receipts, versus **16.705 GB** predicted final pins. The complete
+**87.765 GB** prediction remains unvalidated; no checkpoint loading, PLE binding,
+ready plateau or complete allocation snapshot was reached.
+[Full curve, first-cause evidence and coverage](VALIDATION.md#calibrate-load-attempt-3-memory-guard-cancellation).
+[Measured samples and phase labels](evidence/attempt3-partial-memory.csv).
+
+**Attempt 4 command, prepared only; not executed.** It requires a fresh
+owner-provided health receipt and an exclusive idle-card window, with the
+existing stop gap and admission checks. It is a diagnostic retry, not a claim
+that the memory problem is solved. This CPU task used no GPU, Docker, server,
+installation, secrets, host settings, Git branches/commits or port 8188.
+
+```sh
+SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run \
+  --mode calibrate-load \
+  --health-receipt /PATH/TO/FRESH-HEALTH-RECEIPT.json \
+  --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt4 \
+  --execute
+```
+
+## Attempt 2 (historical; superseded by the diagnosis above)
+
 **attempt 2: failed at worker init: the loader guard mistook a device-only
 RoPE conversion for host staging and rejected 402,653,184 bytes (384 MiB).**
 TP0 triggered the stop; TP1's `LoadCancelled` was a consequence. Available host
@@ -20,8 +65,7 @@ post-load processing, row-byte checks and allocation receipts. It cannot
 qualify native XPU kernels, CCL, graph capture, full-size memory or output parity.
 [Detailed coverage, limits and evidence](VALIDATION.md#calibrate-load-attempt-2-worker-init-failure).
 
-**Attempt 3 is prepared, not launched. A fresh owner-provided health receipt is
-required.** Replace the placeholder below; keep the existing idle-card,
+**Historical attempt-3 preparation (it subsequently ran and failed as above).** Replace the placeholder below; keep the existing idle-card,
 five-minute stop gap and admission checks. This CPU-only task made no commits
 and did not operate Docker, devices, servers, secrets, host settings or port 8188.
 
@@ -225,7 +269,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover \
 
 ## Owner-approved sequence: calibrate-load → mtp1
 
-Attempts 1 and 2 failed as recorded above. These attempt-3 commands are prepared
+Attempts 1, 2 and 3 failed as recorded above. These attempt-4 commands are prepared
 for the owner and **were not executed in this CPU-only fix**. First arrange exclusive idle cards and the existing
 recovered-boot admission above, with at least five minutes after the previous
 server stops.
@@ -235,10 +279,10 @@ The pinned image must already exist. Existing `SCREEN_PRIVILEGED_FD_SCAN` and
 the opt-in fd scan uses that existing privileged path. The sampler never does.
 
 ```sh
-SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode calibrate-load --health-receipt /PATH/TO/FRESH-HEALTH-RECEIPT.json --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt3 --execute
+SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode calibrate-load --health-receipt /PATH/TO/FRESH-HEALTH-RECEIPT.json --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt4 --execute
 ```
 
-This command uses the fresh `runs/screen1b-mmap-calibrate-load-20261008-attempt3/`.
+This command uses the fresh `runs/screen1b-mmap-calibrate-load-20261008-attempt4/`.
 The original run directory, STOP latch and failed calibration stay intact.
 The controller default remains `runs/screen1b-calibrate-load/`; choose another
 fresh `--run-dir` if the selected directory exists. The mode uses **the exact MTP1 launch command**, including
@@ -283,7 +327,7 @@ After reviewing a passing receipt and leaving the five-minute stop-to-launch
 gap, use a fresh MTP1 run with that receipt explicitly supplied:
 
 ```sh
-SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode mtp1 --health-receipt /PATH/TO/FRESH-HEALTH-RECEIPT.json --calibration /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt3/calibration-load.json --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mtp1-calibrated --execute
+SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode mtp1 --health-receipt /PATH/TO/FRESH-HEALTH-RECEIPT.json --calibration /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt4/calibration-load.json --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mtp1-calibrated --execute
 ```
 
 The gate rechecks sample hashes and recomputes the verdict. Image, overlay,

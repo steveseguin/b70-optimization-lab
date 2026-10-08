@@ -32,6 +32,18 @@ class WorkerInitRehearsalTests(unittest.TestCase):
             self.assertEqual(receipt['rank'], rank)
             self.assertEqual(receipt['v5_parameters'], 8)
             self.assertEqual(receipt['staging']['live'], {})
+            self.assertEqual(receipt['constructor_expert_map_calls'], 4)
+            self.assertEqual(len(receipt['expert_maps']), 52)
+            self.assertEqual(len(receipt['placement_checks']), 48)
+            self.assertEqual(receipt['placement_sha256'], hashlib.sha256(
+                (HERE/'placement-certified-v5.json').read_bytes()).hexdigest())
+            for mapping in receipt['expert_maps']:
+                self.assertEqual(mapping['values'],
+                                 [-1]*(rank*128) + list(range(128)) + [-1]*((3-rank)*128))
+                self.assertEqual(mapping['dtype'], 'torch.int32')
+            self.assertEqual(receipt['pressure_replay']['pressure_bytes'], 80005660672)
+            self.assertIn('expert_map_manager.py', receipt['pressure_replay']['sibling_traceback'])
+            self.assertIn('first stop:', receipt['pressure_replay']['sibling_traceback'])
             if dest := os.environ.get('SCREEN1B_CPU_EVIDENCE_DIR'):
                 Path(dest).mkdir(parents=True, exist_ok=True)
                 (Path(dest)/f'rank{rank}.json').write_text(output.read_text())

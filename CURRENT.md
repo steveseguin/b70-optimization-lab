@@ -5,6 +5,20 @@ below remain that host's own research record; this consolidation did not operate
 
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
+
+**2026-10-08, Flash-Next attempt 3 reviewed on CPU:** the first stop came
+from rank 1 when host memory in use crossed 80 GB. Rank 0 then noticed the
+same stop while building its expert map; the map was not broken. Errors now
+retain the original cause. The stronger rehearsal checks the real maps and
+certified placement on all four ranks and reproduces the memory stop. All
+171 CPU tests pass. Measured use rose from 5.695 GB after hashing to 80.006 GB
+partway through construction; the 87.765 GB full-load estimate is still
+unproven. Memory fit remains open. The prepared fourth-attempt command is
+only a diagnostic retry and may hit the same guard. Nothing was launched or
+committed, and LTX was untouched.
+[Evidence, memory curve and next command](experiments/qwen38-flash-next-fp8-b70/reopen-20261008/VALIDATION.md#calibrate-load-attempt-3-memory-guard-cancellation).
+
+
 **2026-10-08, Flash-Next attempt 2 fixed on CPU:** startup stopped because the
 loader counted a conversion on the card as temporary host memory. Available
 host RAM stayed above 95 GB. The guard now distinguishes those operations;
@@ -68,7 +82,7 @@ four-card postflight passed 00:54:58 UTC, zero fault lines this boot.
 
 **18:35 UTC: packet 116b qualified exact WITH the captured decoder.** Launched 18:21 UTC (97 frames, frame anchor, `LTX_DECODER_GRAPH=1`, manifest `06688f41…`). Gate: eager chain vs graph-replay chain vs repeat all byte-identical; the graph chain's decode ran twice (uncached eager first, then the captured decoder with the bounded RoPE/mask/noise caches) and matched byte for byte; no refusal latch written; the eager chain equals the 114 frame reference. First chunk: submit→anchor 4.78 s (text+A-prep 0.45, sampler A 1.54, sampler B 1.11, video decode 1.60 on the chain, handoff 0.02, receipt 0.08), decode tail 0.76 and preview 0.45 off-chain. Cadence over ~60 chunks being measured. Receipts `postflight-pre116b-frame-f97.json`, `continuation116b-frame-dg1-f97-storage-admission.json`.
 
-**18:20 UTC: Flash-Next calibrate-load attempts 2 and 3 failed at worker init (no fault, no OOM); 116b launching.** Attempt 2 (17:21 UTC): TP0's device-only RoPE conversion was mis-charged as host staging and cancelled the load (fixed; a CPU rehearsal of all four ranks' model construction now exists, 163 tests). Attempt 3 (18:09 UTC): loading reached ~75 GB of host use (MemAvailable min 44.7 GB) before TP0 failed in `determine_expert_map` and the guard's cancellation latched the other ranks; Codex is fixing it and extending the rehearsal to that path; the partial memory curve is the first real calibration data. The watchdog never had to act; kernel log clean (local-time windows). **Packet 116b** (decoder-graph guard accepts the pinned axis router, 198/198 tests, manifest `06688f41…`) is launching at 97 frames, frame anchor, decoder graph on; 116's receipts show the chain wait is the video decode itself (1.72 s at 97), so the graph is the lever (predicted 4.7–5.0 s per 4.04 s chunk).
+**18:20 UTC: Flash-Next calibrate-load attempts 2 and 3 failed at worker init (no fault, no OOM); 116b launching.** Attempt 2 (17:21 UTC): TP0's device-only RoPE conversion was mis-charged as host staging and cancelled the load (fixed; a CPU rehearsal of all four ranks' model construction now exists, 163 tests). Attempt 3 (18:09 UTC), corrected after full receipt review: rank 1's internal allocation guard stopped construction at 80.006 GB of host pressure; rank 0 observed that cancellation in `determine_expert_map`. The half-second sampler peaked at 79.478 GB (MemAvailable 44.701 GB). The CPU fix preserves the first cause and explicitly tests all four maps; memory fit remains open. The external watchdog did not act; kernel log clean (local-time windows). **Packet 116b** (decoder-graph guard accepts the pinned axis router, 198/198 tests, manifest `06688f41…`) is launching at 97 frames, frame anchor, decoder graph on; 116's receipts show the chain wait is the video decode itself (1.72 s at 97), so the graph is the lever (predicted 4.7–5.0 s per 4.04 s chunk).
 
 **18:05 UTC: 116 scheduling-only arm measured (decoder graph off, frame anchor, 97 frames):** exact gate pass (eager chain equal to the 114 frame reference); **5.74 s per 4.04 s chunk (1.42 s/s)** vs the 5.98 s baseline; seams identical to the baseline (0.87–0.96). Stage costs: text+A-prep 0.53, sampler A 1.63, upsample+B-prep 0.29, sampler B 1.19, decode in-chain 2.67, anchor handoff still 1.76 (the chain is not yet waiting only for the video decode as designed; the 116b builder is checking the receipts), preview 0.50 off-chain. So the scheduling change alone buys ~0.25 s; the decoder graph (116b, router-aware guard) is the lever that matters. Server stopped once after the measurement; postflight pass.
 

@@ -33,6 +33,13 @@ class ParsingTests(unittest.TestCase):
         self.assertEqual(s['committed_as_bytes'], 200*1024)
         self.assertEqual(s['mlocked_bytes'], 10*1024)
         self.assertEqual(s['unevictable_bytes'], 11*1024)
+        self.assertEqual(s['meminfo_bytes']['MemAvailable'], 60*1024)
+
+    def test_driver_meminfo_preserved_without_double_count(self):
+        s = c.parse_meminfo('MemTotal: 100 kB\nMemAvailable: 60 kB\nCommitted_AS: 200 kB\nMlocked: 10 kB\nUnevictable: 11 kB\nGPUActive: 30 kB\nGPUReclaim: 2 kB\n')
+        self.assertEqual(s['meminfo_bytes']['GPUActive'], 30*1024)
+        self.assertEqual(s['meminfo_bytes']['GPUReclaim'], 2*1024)
+        self.assertEqual(s['accounted_pressure_bytes'], 40*1024)
 
     def test_missing_meminfo_fails(self):
         with self.assertRaises(ValueError): c.parse_meminfo('MemTotal: 12 kB\n')
@@ -45,6 +52,7 @@ class ParsingTests(unittest.TestCase):
             (proc/'1').mkdir(); (proc/'1'/'cgroup').write_text('0::/docker-test\n')
             (cg/'cgroup.procs').write_text('2\n3\n4\n5\n')
             (cg/'memory.current').write_text('120'); (cg/'memory.peak').write_text('140')
+            (cg/'memory.stat').write_text('anon 80\nfile 40\npgfault 7\n')
             for rank in range(4):
                 p=proc/str(rank+2); p.mkdir()
                 (p/'comm').write_text(f'vLLM::Worker_TP{rank}')
@@ -55,9 +63,15 @@ class ParsingTests(unittest.TestCase):
             self.assertEqual(s['worker_rss_bytes'], [10240,11264,12288,13312])
             self.assertEqual(s['cgroup_memory_current_bytes'],120)
             self.assertEqual(s['cgroup_memory_peak_bytes'],140)
+            self.assertEqual(s['cgroup_memory_stat'], {'anon':80, 'file':40, 'pgfault':7})
             self.assertEqual(s['vram_free_bytes_per_rank'],[None]*4)
             (proc/'3'/'status').unlink()
             self.assertIsNone(sampler()['worker_rss_bytes'][1])
+            (cg/'memory.stat').unlink()
+            missing = sampler()
+            self.assertIsNone(missing['cgroup_memory_stat'])
+            self.assertTrue(missing['attribution_errors'])
+            self.assertEqual(missing['accounted_pressure_bytes'], 40*1024)
 
     def test_sysfs_counter_units_and_unknowns(self):
         with tempfile.TemporaryDirectory() as d:

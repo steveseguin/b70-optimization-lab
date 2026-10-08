@@ -35,7 +35,10 @@ def parse_meminfo(text):
             'mem_available_bytes': m['MemAvailable'],
             'accounted_pressure_bytes': m['MemTotal'] - m['MemAvailable'],
             'committed_as_bytes': m['Committed_AS'], 'mlocked_bytes': m['Mlocked'],
-            'unevictable_bytes': m['Unevictable']}
+            'unevictable_bytes': m['Unevictable'],
+            # Preserve attribution evidence (including GPUActive/GPUReclaim
+            # when this kernel exposes them), without changing pressure math.
+            'meminfo_bytes': m}
 
 
 def trip_reason(sample):
@@ -93,7 +96,8 @@ class Sampler:
         sample = parse_meminfo((self.proc / 'meminfo').read_text())
         sample.update(phase=self.phase, worker_rss_bytes=[None]*4,
                       worker_pids=[None]*4, cgroup_memory_current_bytes=None,
-                      cgroup_memory_peak_bytes=None, accounting_errors=[])
+                      cgroup_memory_peak_bytes=None, cgroup_memory_stat=None,
+                      attribution_errors=[], accounting_errors=[])
         if self.container_pid:
             try:
                 entries = (self.proc / str(self.container_pid) / 'cgroup').read_text().splitlines()
@@ -105,6 +109,14 @@ class Sampler:
                 sample['cgroup_memory_current_bytes'] = int((cg / 'memory.current').read_text())
                 if (cg / 'memory.peak').exists():
                     sample['cgroup_memory_peak_bytes'] = int((cg / 'memory.peak').read_text())
+                try:
+                    # Values have the kernel's native units: memory sizes are
+                    # bytes, pgfault and similar entries are counts.
+                    sample['cgroup_memory_stat'] = {
+                        k: int(v) for k, v in (line.split() for line in
+                                              (cg / 'memory.stat').read_text().splitlines())}
+                except (OSError, ValueError) as exc:
+                    sample['attribution_errors'].append(str(exc))
                 pid_files = [cg / 'cgroup.procs', *cg.glob('**/cgroup.procs')]
                 pids = set(p for file in pid_files for p in file.read_text().split())
                 for pid in sorted(pids):

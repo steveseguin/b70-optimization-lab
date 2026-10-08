@@ -78,7 +78,15 @@ def check_cancel():
     if enabled() and (_cancelled or (root() / 'STOP').exists()):
         if _loading:
             synchronize()
-        raise LoadCancelled('Screen 1b cancellation latched; no new allocations/copies')
+        # A sibling's traceback only identifies where it noticed STOP. Keep
+        # the first writer's cause visible instead of blaming that operation.
+        try:
+            with (root() / 'STOP').open() as f:
+                reason = f.read(4096).strip() or 'first stop reason not yet written'
+        except OSError:
+            reason = 'first stop reason unavailable; see loader receipts'
+        raise LoadCancelled('Screen 1b cancellation latched; no new allocations/copies; '
+                            f'first stop: {reason}')
 
 
 def memory():
@@ -100,9 +108,14 @@ def check_admission(growth=0):
     available = m['MemAvailable'] - growth
     pressure = m['MemTotal'] - m['MemAvailable'] + growth
     if available <= AVAILABLE_FLOOR or pressure >= PRESSURE_LIMIT:
-        receipt('allocation_refused', next_bytes=growth, **m)
-        request_stop('allocation would cross 80 GB pressure or 32 GiB MemAvailable')
-        raise LoadCancelled('Screen 1b next allocation exceeds early stop margin')
+        reason = ('allocation would cross 80 GB pressure or 32 GiB MemAvailable: '
+                  f'pid={os.getpid()}, pressure_bytes={pressure-growth}, '
+                  f'next_bytes={growth}, projected_pressure_bytes={pressure}, '
+                  f'MemAvailable={m["MemAvailable"]}')
+        receipt('allocation_refused', next_bytes=growth,
+                pressure_bytes=pressure-growth, projected_pressure_bytes=pressure, **m)
+        request_stop(reason)
+        raise LoadCancelled(f'Screen 1b next allocation exceeds early stop margin; {reason}')
     return m
 
 
@@ -315,7 +328,8 @@ def guarded_load(fn):
             check_cancel()
             allocation_snapshot(model)
             return model
-        except BaseException:
+        except BaseException as error:
+            receipt('load_failed', error_type=type(error).__name__, error=str(error))
             request_stop('loader failed or cancelled')
             raise
         finally:

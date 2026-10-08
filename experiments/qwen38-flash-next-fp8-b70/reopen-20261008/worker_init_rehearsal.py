@@ -214,7 +214,7 @@ def bootstrap(rank=0, guard_source=None):
     mc = ModelConfig(model='/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8',
                      dtype='bfloat16', max_model_len=4352, enforce_eager=True,
                      language_model_only=False)
-    vc = VllmConfig(model_config=mc, parallel_config=ParallelConfig(tensor_parallel_size=4, enable_expert_parallel=True),
+    vc = VllmConfig(model_config=mc, parallel_config=ParallelConfig(tensor_parallel_size=4, enable_expert_parallel=True, expert_placement_strategy='linear'),
                     compilation_config=CompilationConfig(mode=0),
                     cache_config=CacheConfig(cache_dtype='bfloat16', mamba_cache_mode='align'))
     vc.kernel_config.moe_backend = 'triton'
@@ -249,12 +249,16 @@ def bootstrap(rank=0, guard_source=None):
     Transport, DeviceTensor, pinned = cpu_transport(torch, rank)
     with tempfile.TemporaryDirectory() as temp, contextlib.ExitStack() as stack:
         root = Path(temp)
-        placement = {str(r): {str(i): [0, 2, 127] for i in range(4)} for r in range(4)}
+        placement = json.loads((HERE / 'placement-certified-v5.json').read_text())
         (root / 'placement.json').write_text(json.dumps(placement))
         stack.enter_context(patch.dict(os.environ, {
             'B70_SCREEN1B': '1', 'B70_SCREEN1B_STATE_DIR': temp,
             'Q38_EXPERT_HOST_PLACEMENT': str(root / 'placement.json')}))
         stack.enter_context(patch.object(guard, 'synchronize', lambda: None))
+        # Deterministic fixture pressure; another lane's live memory must not
+        # decide a tiny CPU regression test. The real refusal is replayed below.
+        stack.enter_context(patch.object(guard, 'memory', lambda: {
+            'MemTotal': 124179132416, 'MemAvailable': 118574915584}))
         stack.enter_context(patch.object(guard, 'COPY_LIMIT', 1 << 20))
         stack.enter_context(patch.object(torch.xpu, 'device', lambda d: contextlib.nullcontext()))
         stack.enter_context(patch.object(torch.Tensor, 'is_pinned', lambda x: x.untyped_storage().data_ptr() in pinned))
@@ -287,7 +291,10 @@ def bootstrap(rank=0, guard_source=None):
             weights[f'{prefix}.shard_{i}.weight'] = raw_rows.chunk(4)[i].view(torch.float8_e4m3fn).contiguous()
         weights[f'{prefix}.weight_scale'] = torch.tensor([0.5], dtype=torch.float32, device='cpu')
         weights['model.language_model.embed_tokens.weight'] = torch.ones((256,128), dtype=torch.bfloat16, device='cpu')
-        for expert in (rank*128, rank*128+1, rank*128+127):
+        from vllm import q38_expert_placement as placement_module
+        resident0, host0 = placement_module.row_plan(placement, rank, 0)
+        loaded_rows = sorted({resident0[0], host0[0], 127})
+        for expert in (rank*128+r for r in loaded_rows):
             for projection in ('gate_proj', 'up_proj', 'down_proj'):
                 name = f'model.language_model.layers.0.mlp.experts.{expert}.{projection}.weight'
                 weights[name] = torch.full((128,128), 1.0, dtype=torch.float32, device='cpu').to(torch.float8_e4m3fn)
@@ -300,19 +307,50 @@ def bootstrap(rank=0, guard_source=None):
         stack.enter_context(patch.object(torch.accelerator, 'max_memory_allocated', lambda: 0))
         def construct():
             return DefaultModelLoader(vc.load_config).load_model(vc, mc)
+        from vllm.model_executor.layers.fused_moe import expert_map_manager as maps
+        real_map = maps.determine_expert_map
+        map_calls = []
+        def checked_map(*args, **kwargs):
+            import inspect
+            bound = inspect.signature(real_map).bind(*args, **kwargs)
+            bound.apply_defaults()
+            assert bound.arguments['ep_size'] == 4
+            assert bound.arguments['ep_rank'] == rank
+            assert bound.arguments['global_num_experts'] == 512
+            assert bound.arguments['expert_placement_strategy'] == 'linear'
+            result = real_map(*args, **kwargs)
+            count, mapping, mask = result
+            assert count == 128 and mask is None
+            assert mapping.dtype == torch.int32
+            assert mapping.device == torch.device(f'xpu:{rank}')
+            expected = [-1]*512
+            expected[rank*128:(rank+1)*128] = range(128)
+            assert mapping.tolist() == expected
+            map_calls.append(dict(local_experts=count, global_experts=512,
+                                  rank=rank, strategy='linear', dtype=str(mapping.dtype),
+                                  device=str(mapping.device), values=mapping.tolist()))
+            return result
+        stack.enter_context(patch.object(maps, 'determine_expert_map', checked_map))
         with set_current_vllm_config(vc), set_default_torch_dtype(torch.bfloat16), Transport(), torch.device(f'xpu:{rank}'):
             model = construct()
-            from vllm import q38_expert_placement as placement_module
+            assert len(map_calls) == 4  # Real factory -> manager -> V30 function.
             layers = model.language_model.model.layers
             assert len(layers) == 4 and layers[1].ple is not None
             assert layers[3].self_attn.rotary_emb.cos_sin_cache.dtype == torch.bfloat16
             expert_weights = [p for p in model.parameters() if hasattr(p, '_q38_row_map')]
             assert len(expert_weights) == 8
-            for p in expert_weights:
-                assert p.shape[0] == 125 and p._q38_host_cpu.shape[0] == 3
+            for i, layer in enumerate(layers):
+                resident_rows, host_rows = placement_module.row_plan(placement, rank, i)
+                for name in ('w13_weight', 'w2_weight'):
+                    p = getattr(layer.mlp.experts.routed_experts, name)
+                    assert p.shape[0] == len(resident_rows)
+                    assert p._q38_host_cpu.shape[0] == len(host_rows)
+                    assert p._q38_num_experts == 128
+                    assert p._q38_base_table.dtype == torch.int64
+                    assert sorted(p._q38_row_map) == list(range(128))
             for name in ('w13_weight', 'w2_weight'):
                 p = getattr(layers[0].mlp.experts.routed_experts, name)
-                for logical_row in (0, 1, 127):
+                for logical_row in loaded_rows:
                     row = placement_module.row_view(p, logical_row)
                     actual = row.elem if isinstance(row, DeviceTensor) else row
                     assert torch.equal(actual.float(), torch.ones_like(actual, dtype=torch.float32))
@@ -343,6 +381,14 @@ def bootstrap(rank=0, guard_source=None):
             assert torch.equal(changed, expected)
             owner.validate_checkpoint_shard_coverage()
             guard.allocation_snapshot(model, phase='rehearsal_complete')
+            # All 48 certified masks preserve every local ID from the real
+            # map, even though only four reduced-size layers are constructed.
+            placement_checks = []
+            for i in range(48):
+                resident_rows, host_rows = placement_module.row_plan(placement, rank, i)
+                count, mapping, _ = checked_map(4, rank, 512, 'linear')
+                assert sorted(resident_rows + host_rows) == mapping.tolist()[rank*128:(rank+1)*128]
+                placement_checks.append(dict(layer=i, host_rows=host_rows, resident_rows=resident_rows))
         import gc
         gc.collect()
         ledger = json.loads((root / 'staging-live.json').read_text())
@@ -372,11 +418,54 @@ def bootstrap(rank=0, guard_source=None):
                        vision_depth=vision.depth,
                        rope_cache_shape=list(layers[3].self_attn.rotary_emb.cos_sin_cache.shape),
                        v5_parameters=len(expert_weights), fixture_checkpoint_weights=len(weights),
+                       expert_maps=map_calls, constructor_expert_map_calls=4,
+                       placement_sha256=hashlib.sha256((HERE/'placement-certified-v5.json').read_bytes()).hexdigest(),
+                       placement_checks=placement_checks,
                        event_counts={name: sum(e['event']==name for e in events) for name in sorted(event_names)},
                        devices='CPU storage only; logical XPU labels are emulated',
                        limits=['tiny dimensions and partial synthetic checkpoint', 'no MTP draft construction',
                                'no native kernels, CCL, graph replay, worker multiprocessing, full-size memory or output parity'])
         embedding._screen1b_cache.close()
+        # Replay the real failure counter without allocating large buffers.
+        # Then prove a sibling observes the same cause inside V30's map copy.
+        with patch.object(guard, 'memory', lambda: {
+                'MemTotal': 124179132416, 'MemAvailable': 44173471744}):
+            try:
+                guard.check_admission(2048)
+            except guard.LoadCancelled as error:
+                refusal = str(error)
+            else:
+                raise AssertionError('attempt-3 pressure must refuse')
+        stop_reason = (root/'STOP').read_text().strip()
+        real_arange = torch.arange
+        # Clear only our synthetic latch, then inject its original reason at
+        # arange's return, immediately before V30's expert-map copy dispatch.
+        guard._cancelled = False
+        (root/'STOP').unlink()
+        def arange_then_stop(*args, **kwargs):
+            result = real_arange(*args, **kwargs)
+            guard.request_stop(stop_reason)
+            return result
+        @guard.guarded_load
+        def sibling():
+            with patch.object(torch, 'arange', arange_then_stop):
+                return real_map(4, rank, 512, 'linear')
+        import traceback
+        with Transport(), torch.device(f'xpu:{rank}'):
+            try:
+                sibling()
+            except guard.LoadCancelled as error:
+                sibling_trace = traceback.format_exc()
+                assert 'expert_map_manager.py' in sibling_trace
+                assert 'first stop: ' + stop_reason in str(error)
+                assert (root/'STOP').read_text().strip() == stop_reason
+            else:
+                raise AssertionError('sibling map must observe STOP')
+        receipt['pressure_replay'] = dict(
+            pressure_bytes=80005660672, next_bytes=2048,
+            projected_pressure_bytes=80005662720, refusal=refusal,
+            sibling_traceback=sibling_trace,
+            scope='synthetic pressure and cancellation replay; not a measured fit')
         return receipt
 
 
