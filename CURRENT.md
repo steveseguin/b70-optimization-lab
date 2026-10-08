@@ -568,6 +568,15 @@ human transcripts. Fresh hosted assistant sessions supplied these answers; this
 does not qualify local Qwen, general memory or speed. No local model server or
 GPU experiment was started. Existing context owner units remain inactive.
 
+## 2026-10-08 03:50 EDT, two-B70 host: retention study on an outside benchmark, stage 1 done, stage 2 running
+
+**One two-card server is up for the study (unit `ctx-lme-stage2`, about 19 h); it stops itself.** LongMemEval
+(56 questions, ~110K tokens of chat history each): whole history in one call **46/56** judged; pilot (7 questions)
+summarise-at-75% 6/7 at 17 min and 62K tokens written per question, archive-and-recall with free notes 4/7 at
+6 min and 10K tokens, plain files agent 1/7. Judge is the 27B itself (secondary) until a GPT-4o key is given.
+[Interim note](experiments/qwen38-27b-b70/notes/2026-10-08-longmemeval-stage1-result.md),
+data `experiments/qwen38-27b-b70/data/2026-10-08-longmemeval-stage1/`. Stage 2 runs both deciding arms on all 56.
+
 ## 2026-10-07 23:30 EDT, two-B70 host: the many-users profile is an accepted package profile (875 tok/s at 64 users, exact)
 
 **No model server is running.** One acceptance session through the public two-card package launcher
