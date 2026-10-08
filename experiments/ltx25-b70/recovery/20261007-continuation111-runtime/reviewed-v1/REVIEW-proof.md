@@ -1,0 +1,1 @@
+Superseded by ../proof.py. Root found proc_start_ticks was required as int, but inherited real launcher identity uses an ASCII decimal string. This reviewed CPU-only version was never runtime-admitted. Source SHA90dd04dbb3982e40e74cefd8fc6c3914a1811c0b14a306225e32352e89f2222c.

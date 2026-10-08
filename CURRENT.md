@@ -38,9 +38,20 @@ encoding and the existing decoder path. The fixed eight-request native-only plan
 review; its six-output capture restriction passes five tests. The corrected per-stage memory guard and related safety components pass all
 37 combined CPU tests in the actual LTX Python environment. Independent review
 confirmed both ordering/reentry findings resolved; the earlier version is preserved.
-Next is the native-only runtime authority, provider, proof/client wiring and sealed
-source assembly, followed by fresh storage/memory admission. Nothing has been
-registered, built or launched for continuation.
+The native-only runtime authority, provider, proof/client wiring and sealed source
+assembly are now complete. All126 combined CPU tests pass, including actual110
+receipt compatibility and independent source/concurrency reviews. The111 packet
+was built exclusively while110 stayed running; its actual sealed CPU startup
+check passed, without device discovery. No111 application or model request has
+been launched. A480,219-entry filename scan found no collisions for its eight
+request names or six physical indices.4GiB runtime plus384MiB build admission
+preserves the50GiB reserve; this is monitored headroom, not a filesystem quota.
+111 manifest`65adf13fca14f92047960ed939c507cd7e28a08b41940decd089189c86c41363`.
+Next is the necessary controlled application reload, fresh fault/storage/health
+admission and fixed eight-request native continuation/replay run. The first
+native and first conditioned proofs gate further requests. Seams and audio
+alignment remain separate quality questions; no new speed result is claimed.
+[Runtime integration and reviewed fixes](experiments/ltx25-b70/notes/2026-10-07-continuation111-runtime.md).
 [Integration design](experiments/ltx25-b70/notes/2026-10-07-continuation111-integration-design.md),
 [memory design](experiments/ltx25-b70/notes/2026-10-07-continuation111-memory-design.md).
 [Runtime interface map](experiments/ltx25-b70/notes/2026-10-07-continuation111-runtime-interface-map.md)

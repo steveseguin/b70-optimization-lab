@@ -1,0 +1,426 @@
+"""Native-only111 integration. Inert until the sealed launcher calls install.
+
+Exactly eight graphs, six raw captures and verified predecessor barriers. No
+application lifecycle, retry, allocator reset, settings changes or GPU imports
+at module import. Historical110 optimized phases are deliberately absent.
+"""
+import asyncio
+import copy
+import os
+from pathlib import Path
+import shutil
+import threading
+import time
+
+_CTX = None
+_ROUTES_INSTALLED = False
+GIB = 2**30
+
+
+class Runtime:
+    def __init__(self, packet, manifest, manifest_sha, run):
+        import ltx_resolution_session as session
+        import ltx_duration_guard as capture
+        from proof import ProofVerifier
+        self.session = session
+        self.packet, self.run, self.manifest = Path(packet), Path(run), manifest
+        self.root = self.run.parent
+        self.manifest_sha = manifest_sha
+        self.identity_sha = session.digest(session.read_regular(self.run/'server-identity.json'))
+        identity = session.strict_json(session.read_regular(self.run/'server-identity.json'))
+        session.require(identity['source_packet_manifest_sha256'] == manifest_sha,
+                        'Server/source manifest identity differs')
+        self.lock = threading.RLock()
+        self.action_busy = False
+        self.actions_done = set()
+        self.adapter = self.bindings = self.conditioning = None
+        self.provider_seen = set()
+        self.anchor_image = None
+        self.authority = session.configure(self.packet/'resolution/candidate-plan.json', manifest_sha,
+            self.identity_sha, self.run, self.inspect_state, self._verify_proof)
+        self.verifier = ProofVerifier(self.packet, manifest, manifest_sha, self.run,
+                                      self.authority.plan, self.identity_sha)
+        session.require(session.digest(Path(capture.__file__).read_bytes()) ==
+                        manifest['files']['source/scripts/ltx_duration_guard.py'],
+                        'Capture guard differs from sealed source')
+        rows = [{'name': row['name'], 'graph_sha256': row['graph_sha256'], 'role': 'full'}
+                for row in self.authority.plan['requests'] if row['capture_role'] == 'full']
+        self.capture_guard = capture.configure(session.PLAN_SHA256, rows, self.active_capture_request)
+        self.previous_free = shutil.disk_usage(self.root).free
+        self.consumed = 0
+        self.storage_check()
+
+    def _verify_proof(self, name, path, sha):
+        return self.verifier.verify(name, path, sha)
+
+    def fault(self):
+        return (self.root/'FAULT.json').exists() or (self.run/'resolution-halt.json').exists()
+
+    def inspect_state(self):
+        import runtime_observer
+        return runtime_observer.actual_state(fault=self.fault())
+
+    def common(self, name, prompt_id=None):
+        if prompt_id is None:
+            prompt_id = self.authority.request_prompt_ids[name]
+        return {'plan_sha256': self.session.PLAN_SHA256,
+                'runtime_manifest_sha256': self.manifest_sha,
+                'server_identity_sha256': self.identity_sha, 'name': name, 'prompt_id': prompt_id}
+
+    def write(self, name, value):
+        self.session.write_exclusive(self.run/name, value)
+
+    def storage_check(self):
+        free = shutil.disk_usage(self.root).free
+        self.consumed += max(0, self.previous_free-free)
+        self.previous_free = free
+        self.session.require(self.consumed <= 4*GIB and
+            free >= 50*GIB + (4*GIB-self.consumed), 'Continuation storage allowance exhausted')
+
+    def active_row(self, name):
+        self.authority.healthy()
+        self.session.require(not self.fault(), 'Fault prevents continuation')
+        active = self.authority.active
+        self.session.require(active is not None and active['name'] == name,
+                             'No admitted active continuation request')
+        return self.authority.requests[name], active['prompt_id']
+
+    def active_capture_request(self):
+        with self.authority.lock:
+            active = self.authority.active
+            self.session.require(active is not None, 'Capture outside active request')
+            row, prompt_id = self.active_row(active['name'])
+            self.session.require(row['capture_role'] == 'full', 'Setup cannot capture output')
+            return {'name': row['name'], 'prompt_id': prompt_id,
+                    'plan_sha256': self.session.PLAN_SHA256, 'graph_sha256': row['graph_sha256']}
+
+    def before_request(self, row, prompt_id):
+        self.session.require(not self.action_busy, 'Proof action is active')
+        self.storage_check()
+        if row['kind'] == 'native-chunk':
+            self.session.require(self.adapter is not None and self.adapter.ready and
+                self.adapter.failed is None and self.conditioning is not None,
+                'Native continuation has not been prepared')
+            self.session.require(self.conditioning.active is None and self.anchor_image is None,
+                                 'Prior conditioning ownership remains active')
+            self.bindings.check_native()
+            self.bindings.settings()
+            value = self.adapter.before_request(row['name'])
+            self.write('native-memory-before-'+row['name']+'.json', value)
+
+    def _complete_policy(self, stages):
+        self.session.require(len(stages) == 2 and [r['stage'] for r in stages] == ['A', 'B'] and
+                             all(r['completed'] is True for r in stages), 'Conditioning stages incomplete')
+        state = self.inspect_state()
+        self.session.require(state['fault'] is False and state['sampler_routes'] == 0 and
+            state['lean_state'] == 0 and state['decode_replicas'] == 0, 'Optimized/faulted continuation state')
+        inputs = [r['input'] for r in stages]
+        self.session.require(inputs[0]['dtype'] == inputs[1]['dtype'] and
+                             inputs[0]['device'] == inputs[1]['device'], 'Conditioning policy differs across stages')
+        before = [[r['before']['required_physical_free_bytes']['xpu:%d' % i] for i in range(4)] for r in stages]
+        after = [v for r in stages for v in r['after']['required_physical_free_bytes'].values()]
+        self.session.require(before == [[8*GIB, 8*GIB, 2*GIB, 9*GIB]]*2 and
+                             after == [2*GIB]*8, 'Conditioning memory floors changed')
+        return {**self.bindings.settings(), 'sampler_capture_routes': state['sampler_routes'],
+            'lean_sampler_installed': state['lean_state'] != 0, 'decoder_replicas': state['decode_replicas'],
+            'conditioning_latent_dtype': inputs[0]['dtype'], 'conditioning_latent_device': inputs[0]['device'],
+            'stage_A_latent_shape': inputs[0]['shape'], 'stage_B_latent_shape': inputs[1]['shape'],
+            'before_each_conditioning_stage_floor_gib': [v//GIB for v in before[0]],
+            'after_each_conditioning_stage_floor_gib': after[0]//GIB}
+
+    def after_request(self, row, prompt_id):
+        name = row['name']
+        if row['kind'] == 'native-chunk':
+            if row['chunk_index']:
+                self.session.require(name in self.provider_seen and self.anchor_image is not None,
+                                     'Conditioned request skipped its provider')
+                self.conditioning.finish_request(name)
+                receipts = [r for r in self.conditioning.receipts if r['request_id'] == name]
+                stages = [r for r in receipts if r['event'] == 'stage']
+                policy = self._complete_policy(stages)
+                self.write('conditioning-receipt-'+name+'.json', {
+                    **self.common(name, prompt_id), 'guard_receipts': receipts,
+                    'controller_receipts': copy.deepcopy(self.adapter.controller.receipts),
+                    'failed': self.conditioning.failed, 'native_call_binding': self.bindings.receipt(),
+                    'runtime_policy': policy})
+            else:
+                self.session.require(name not in self.provider_seen and self.conditioning.active is None,
+                                     'Ordinary chunk cannot consume an anchor')
+            value = self.adapter.after_request(name)
+            self.write('native-memory-after-'+name+'.json', value)
+            # Runtime retains its image until the entire native request and its
+            # post-memory checks finish, even though guard.finish releases it.
+            self.anchor_image = None
+        elif row['kind'] == 'window-probe':
+            import setup_gates
+            value = self.session.strict_json(self.session.read_regular(self.run/('text-window-probe-'+name+'.json')))
+            checked = setup_gates.validate_window(value, name, self.identity_sha)
+            self.write('resolution-setup-accepted-'+name+'.json', checked)
+        elif row['kind'] == 'prepare-native':
+            self.session.require(self.adapter is not None and self.adapter.ready and
+                                 self.adapter.failed is None, 'Native preparation did not finish')
+        self.storage_check()
+
+    def on_failure(self, row, prompt_id, error):
+        adapter = self.adapter
+        try:
+            if adapter is not None and adapter.controller is not None:
+                adapter.abort_request(error)
+        finally:
+            self.write('continuation-native-failure-'+row['name']+'.json', {
+                **self.common(row['name'], prompt_id), 'error': str(error),
+                'adapter_receipts': adapter.receipts if adapter is not None else [],
+                'controller_receipts': adapter.controller.receipts if adapter is not None and adapter.controller is not None else [],
+                'conditioning_receipts': self.conditioning.receipts if self.conditioning is not None else []})
+
+    def prepare_native(self, name):
+        import torch
+        import nodes
+        import comfy.model_management as mm
+        import continuation_anchor
+        import conditioning_guard
+        from comfy_api.latest import io
+        from native_adapter import NativeAdapter
+        from native_bindings import NativeBindings
+        row, _ = self.active_row(name)
+        self.session.require(row['kind'] == 'prepare-native' and self.adapter is None,
+                             'Unexpected/repeated native preparation')
+        self.session.require_phase('native', self.authority.plan['qualification_id'], name)
+        hashes = {str(self.packet/path): value for path, value in self.manifest['files'].items()
+                  if path.startswith('source/')}
+        hashes.update(self.manifest['runtime']['files'])
+        self.adapter = NativeAdapter(torch=torch, nodes=nodes, model_management=mm,
+            session=self.session, qualification_id=self.authority.plan['qualification_id'], run_name=name,
+            plan_sha256=self.session.PLAN_SHA256, runtime_sha256=self.manifest_sha,
+            source_hashes=hashes, fault_check=self.fault)
+        snapshot = self.adapter.prepare()
+        self.write('native-preparation.json', {'snapshot': snapshot, 'receipts': self.adapter.receipts})
+        self.bindings = NativeBindings(packet=self.packet, manifest=self.manifest, torch=torch, nodes=nodes,
+            model_management=mm, adapter=self.adapter, anchor_module=continuation_anchor,
+            guard_module=conditioning_guard, output_type=io.NodeOutput)
+        self.conditioning = conditioning_guard.ConditioningStageGuard(controller=self.adapter.controller,
+            tensor_metadata=self.bindings.tensor_metadata, inspect_anchor=self.bindings.inspect_anchor,
+            inspect_encoder_cache=self.bindings.inspect_encoder_cache, unwrap_output=self.bindings.unwrap_output)
+        self.write('continuation-native-binding.json', self.bindings.receipt())
+        return snapshot
+
+    def provide_anchor(self, name):
+        with self.authority.lock:
+            row, prompt_id = self.active_row(name)
+            self.session.require(row['kind'] == 'native-chunk' and row['chunk_index'] in (1, 2) and
+                name not in self.provider_seen and self.anchor_image is None,
+                'Anchor provider is not the next single admitted consumer')
+            self.session.require(self.adapter.current_name == name and self.adapter.guard is not None,
+                                 'Anchor loading requires active native no-eviction scope')
+            previous = row['predecessor_capture']
+            proof = self.authority.revalidate_proof(previous)
+            # revalidate_proof returns the checked proof, never a caller binding.
+            checked = proof['checked'] if 'checked' in proof else proof
+            binding = checked['anchor_binding']
+            predecessor = self.authority.requests[previous]
+            context = {'runtime_manifest_sha256': self.manifest_sha,
+                'model_verification_sha256': self.manifest['model_verification_sha256'],
+                'plan_sha256': self.session.PLAN_SHA256,
+                'prompt_sha256': self.session.digest(predecessor['graph']['364']['inputs']['text'].encode()),
+                'pass_index': predecessor['pass_index'], 'chunk_index': predecessor['chunk_index'],
+                'seed': predecessor['seed'], 'graph_sha256': predecessor['graph_sha256'], 'capture_name': previous}
+            self.bindings.check_native()
+            image = self.bindings.anchor_module.load_image(binding, context, self.bindings.torch)
+            self.active_row(name)
+            self.conditioning.begin_request(name, anchor=image, expected_anchor_sha256=binding['anchor_sha256'])
+            self.anchor_image = image
+            self.provider_seen.add(name)
+            self.write('provider-receipt-'+name+'.json', {**self.common(name, prompt_id),
+                'binding': copy.deepcopy(binding), 'anchor_metadata': self.bindings.tensor_metadata(image),
+                'calls': 1, 'predecessor_name': previous,
+                'predecessor_proof_sha256': self.authority.proofs[previous]['sha256'],
+                'current_graph_sha256': row['graph_sha256']})
+            return image
+
+    def condition(self, vae, image, latent, strength, bypass, run_name, stage):
+        with self.authority.lock:
+            row, _ = self.active_row(run_name)
+            self.session.require(row['kind'] == 'native-chunk' and row['chunk_index'] in (1, 2) and
+                image is self.anchor_image and image is self.conditioning.anchor and
+                type(strength) in (float, int) and strength == 1.0 and bypass is False and
+                stage in ('A', 'B'), 'Conditioning node differs from its fixed admitted inputs')
+            self.session.require(self.adapter.current_name == run_name and self.adapter.guard is not None,
+                                 'Conditioning requires active native no-eviction scope')
+            return self.conditioning.run_stage(stage, request_id=run_name, vae=vae, latent=latent,
+                                                native_call=self.bindings.native_call)
+
+    def quiescent(self):
+        self.authority.healthy()
+        self.session.require(self.authority.active is None and not self.fault(), 'Active/faulted proof barrier')
+        state = self.inspect_state()
+        self.session.require(state['fault'] is False, 'Fault at continuation barrier')
+        self.session.require_quiescent(state, no_tails=True)
+        self.session.require(state['sampler_routes'] == state['lean_state'] == state['decode_replicas'] == 0,
+                             'Native-only proof cannot observe optimized state')
+        return state
+
+    def action(self, action):
+        with self.lock:
+            self.authority.healthy()
+            self.session.require(action not in self.actions_done, 'Proof action repeated')
+            self.storage_check()
+            state = self.quiescent()
+            if action.startswith('verify:'):
+                name = action.split(':', 1)[1]
+                self.session.require(name in self.authority.completed and name not in self.authority.proofs,
+                                     'Request not completed or already proved')
+                expected = self.authority.plan['execution_order'][len(self.authority.proofs)]
+                self.session.require(name == expected, 'Proof order differs from fixed plan')
+                snapshot = self.adapter.native_state() if self.adapter is not None else None
+                self.write('continuation-observation-'+name+'.json', {
+                    **self.common(name), 'state': state, 'native_snapshot': snapshot})
+                row = self.authority.requests[name]
+                if row['kind'] == 'native-chunk':
+                    self.write('capture-checkpoint-'+name+'.json', {
+                        **self.common(name), 'prewrite': self.capture_guard.receipt()})
+                value = self.verifier.produce(name)
+                path = self.run/('continuation-proof-'+name+'.json')
+                self.session.write_exclusive(path, value)
+                sha = self.session.digest(self.session.read_regular(path))
+                self.authority.accept_proof(name, path, sha)
+                result = {'passed': True, 'action': action, 'phase': self.authority.phase, 'proof_sha256': sha}
+            elif action == 'verify-final':
+                self.session.require(self.authority.completed == self.authority.plan['execution_order'] and
+                    list(self.authority.proofs) == self.authority.plan['execution_order'], 'Eight complete proved requests required')
+                checked = {name: self.authority.revalidate_proof(name) for name in self.authority.completed}
+                self.session.require(self.capture_guard.receipt()['captures_reserved'] == 6 and
+                    self.capture_guard.receipt()['failed'] is None and self.conditioning.active is None and
+                    self.conditioning.failed is None and len(self.provider_seen) == 4,
+                    'Final continuation runtime obligations incomplete')
+                self.write('continuation-final.json', {
+                    'schema': 'ltx.continuation111.final.v1', 'verified': True,
+                    'plan_sha256': self.session.PLAN_SHA256, 'runtime_manifest_sha256': self.manifest_sha,
+                    'server_identity_sha256': self.identity_sha, 'proofs': copy.deepcopy(self.authority.proofs),
+                    'state': state, 'exact_replay_pairs': 3, 'unique_video_frames_per_chain': 145,
+                    'claims': {'seam_quality_accepted': False, 'audio_alignment_resolved': False,
+                               'performance_improvement': False, 'adopted': False},
+                    'capture': self.capture_guard.receipt()})
+                result = {'passed': True, 'action': action, 'phase': self.authority.phase}
+            else:
+                raise RuntimeError('Unknown finite continuation action')
+            self.actions_done.add(action)
+            self.storage_check()
+            return result
+
+
+class LTXResolutionPrepareNative:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {'required': {'run_name': ('STRING',)}}
+    RETURN_TYPES = ()
+    OUTPUT_NODE = True
+    FUNCTION = 'apply'
+    CATEGORY = 'lab/validation'
+
+    def apply(self, run_name):
+        if _CTX is None: raise RuntimeError('Continuation runtime not installed')
+        _CTX.prepare_native(run_name)
+        return {'ui': {'text': ['native residence admitted']}}
+
+
+class LTXContinuationAnchor111:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {'required': {'run_name': ('STRING',)}}
+    RETURN_TYPES = ('IMAGE',)
+    FUNCTION = 'apply'
+    CATEGORY = 'lab/validation'
+
+    @classmethod
+    def IS_CHANGED(cls, **kwargs): return float('nan')
+
+    def apply(self, run_name):
+        if _CTX is None: raise RuntimeError('Continuation runtime not installed')
+        return (_CTX.provide_anchor(run_name),)
+
+
+class LTXContinuationCondition111:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {'required': {'vae': ('VAE',), 'image': ('IMAGE',), 'latent': ('LATENT',),
+            'strength': ('FLOAT', {'default': 1.0}), 'bypass': ('BOOLEAN', {'default': False}),
+            'run_name': ('STRING',), 'stage': (['A', 'B'],)}}
+    RETURN_TYPES = ('LATENT',)
+    FUNCTION = 'apply'
+    CATEGORY = 'lab/validation'
+
+    def apply(self, vae, image, latent, strength, bypass, run_name, stage):
+        if _CTX is None: raise RuntimeError('Continuation runtime not installed')
+        return _CTX.condition(vae, image, latent, strength, bypass, run_name, stage)
+
+
+NODE_CLASS_MAPPINGS = {cls.__name__: cls for cls in
+    (LTXResolutionPrepareNative, LTXContinuationAnchor111, LTXContinuationCondition111)}
+
+
+def install(packet, manifest, manifest_sha, run):
+    global _CTX
+    if _CTX is not None: raise RuntimeError('Continuation runtime already installed')
+    import execution
+    import executor_guard
+    _CTX = Runtime(packet, manifest, manifest_sha, run)
+    result = executor_guard.install(execution.PromptExecutor, _CTX.authority,
+                                    _CTX.before_request, _CTX.after_request, _CTX.on_failure)
+    _CTX.write('resolution-executor-guard.json', result)
+
+
+def install_routes():
+    global _ROUTES_INSTALLED
+    if _ROUTES_INSTALLED or _CTX is None: raise RuntimeError('Continuation routes require one sealed installation')
+    from aiohttp import web
+    from server import PromptServer
+
+    @web.middleware
+    async def admission(request, handler):
+        if request.method == 'POST' and request.path == '/prompt':
+            if _CTX.action_busy or _CTX.authority.failed is not None or _CTX.fault():
+                return web.json_response({'error': 'continuation closed or halted'}, status=503)
+        return await handler(request)
+    PromptServer.instance.app.middlewares.append(admission)
+
+    @PromptServer.instance.routes.get('/ltx-resolution/status')
+    async def status(request):
+        with _CTX.authority.lock:
+            state = _CTX.inspect_state()
+            observation = {'schema': 'ltx.resolution-client-phase.v1', 'phase': _CTX.authority.phase,
+                'plan_sha256': _CTX.session.PLAN_SHA256, 'runtime_manifest_sha256': _CTX.manifest_sha,
+                'server_identity_sha256': _CTX.identity_sha,
+                'qualification_id': _CTX.authority.plan['qualification_id'],
+                'reference_receipt_sha256': None, 'candidate_receipt_sha256': None,
+                'active_request': _CTX.authority.active, 'fault': _CTX.fault() or _CTX.authority.failed is not None,
+                'observed_at_ms': time.time_ns()//1000000,
+                'queue_running': state['queue_running'], 'queue_pending': state['queue_pending']}
+            temporary = _CTX.run/'resolution-client-phase.json.next'
+            _CTX.session.write_exclusive(temporary, observation)
+            os.replace(temporary, _CTX.run/'resolution-client-phase.json')
+            fd = os.open(_CTX.run, os.O_RDONLY | os.O_DIRECTORY)
+            try: os.fsync(fd)
+            finally: os.close(fd)
+            return web.json_response({'phase': _CTX.authority.phase, 'halted': _CTX.authority.failed,
+                'active': _CTX.authority.active, 'completed': list(_CTX.authority.completed),
+                'proofs': list(_CTX.authority.proofs), 'actions': sorted(_CTX.actions_done), 'state': state,
+                'server_identity_sha256': _CTX.identity_sha, 'runtime_manifest_sha256': _CTX.manifest_sha})
+
+    @PromptServer.instance.routes.post('/ltx-resolution/action')
+    async def action(request):
+        if _CTX.action_busy: return web.json_response({'error': 'action already active'}, status=409)
+        body = await request.json()
+        if type(body) is not dict or set(body) != {'action'} or type(body['action']) is not str:
+            return web.json_response({'error': 'one named action required'}, status=400)
+        if _CTX.action_busy: return web.json_response({'error': 'action already active'}, status=409)
+        _CTX.action_busy = True
+        try:
+            result = await asyncio.to_thread(_CTX.action, body['action'])
+            return web.json_response(result)
+        except Exception as error:
+            try: _CTX.authority.halt(error)
+            except Exception: pass
+            return web.json_response({'error': str(error), 'halted': True}, status=409)
+        finally:
+            _CTX.action_busy = False
+    _ROUTES_INSTALLED = True

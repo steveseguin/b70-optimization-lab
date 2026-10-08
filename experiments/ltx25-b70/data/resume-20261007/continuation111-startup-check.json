@@ -1,0 +1,21 @@
+{
+  "utc": "2026-10-08T00:23:31.898286+00:00",
+  "command": [
+    "/home/steve/.venvs/ltx25-baseline/bin/python",
+    "-B",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-native-111/launch/serve-encoder.py",
+    "--packet",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-native-111",
+    "--manifest-sha256",
+    "65adf13fca14f92047960ed939c507cd7e28a08b41940decd089189c86c41363",
+    "--run-name",
+    "encoder-server-continuation-native-111-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49",
+    "--health-receipt",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261007/postflight-109.json",
+    "--check-only"
+  ],
+  "returncode": 0,
+  "stdout": "{\n  \"status\": \"inactive-startup-check-passed\",\n  \"run_dir\": \"/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-native-111-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49\",\n  \"packet_manifest_sha256\": \"65adf13fca14f92047960ed939c507cd7e28a08b41940decd089189c86c41363\",\n  \"server_args\": [\n    \"/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-native-111/source/main.py\",\n    \"--listen\",\n    \"127.0.0.1\",\n    \"--port\",\n    \"8188\",\n    \"--disable-auto-launch\",\n    \"--cache-none\",\n    \"--deterministic\",\n    \"--disable-async-offload\",\n    \"--disable-dynamic-vram\",\n    \"--disable-comfy-compiler\",\n    \"--disable-cuda-graphs\",\n    \"--disable-pinned-memory\",\n    \"--reserve-vram\",\n    \"2\",\n    \"--bf16-unet\",\n    \"--bf16-text-enc\",\n    \"--bf16-vae\",\n    \"--use-pytorch-cross-attention\",\n    \"--disable-xformers\",\n    \"--disable-api-nodes\",\n    \"--extra-model-paths-config\",\n    \"/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-native-111/model-paths.yaml\",\n    \"--output-directory\",\n    \"/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output\",\n    \"--user-directory\",\n    \"/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-native-111-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49/user\",\n    \"--temp-directory\",\n    \"/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-native-111-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49/temp\",\n    \"--input-directory\",\n    \"/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-native-111-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49/input\",\n    \"--disable-all-custom-nodes\",\n    \"--whitelist-custom-nodes\",\n    \"ltx_speed_lab\",\n    \"ltx_baseline_capture\",\n    \"ltx_encoder_diagnostics\",\n    \"ltx_encoder_identity\",\n    \"ltx_block_compile_lab\",\n    \"ltx_multiblock_compile_lab\",\n    \"ltx_na_axis_decode_lab\",\n    \"ltx_host_embedding_lab\",\n    \"ltx_graph_capture_lab\",\n    \"ltx_graph_vae_lab\",\n    \"ltx_qkv_fusion_lab\",\n    \"ltx_graph_text_encoder_lab\",\n    \"ltx_pipeline_lab\",\n    \"ltx_pipeline_decode_lab\",\n    \"ltx_concurrent_cfg_lab\",\n    \"ltx_pipeline_sampler_lab\",\n    \"ltx_graph_upsampler_lab\",\n    \"ltx_phase_timed_upsampler_lab\",\n    \"ltx_resident_fastpath_lab\",\n    \"ltx_resolution_lab\"\n  ],\n  \"limits\": \"No device discovery, locks, process changes or GPU work; exclusive preflight occurs only at launch\",\n  \"health_receipt\": {\n    \"path\": \"/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261007/postflight-109.json\",\n    \"sha256\": \"bf67304eb6279b31db2d1ee1f0283f824f02f02bcd38eb55403cc2b25f53f7fa\",\n    \"end_utc\": \"2026-10-07 23:15:46 UTC\",\n    \"boot_id\": \"10192010-9700-4915-ac6c-980d6b74afa0\",\n    \"verified\": \"schema, passed, four cards, boot id, age; the journal-since-receipt check runs only at launch\"\n  }\n}\n",
+  "stderr": "",
+  "claim": "Actual sealed CPU startup path while110 retained; no device discovery or model requests. Fresh post110 health required before launch."
+}

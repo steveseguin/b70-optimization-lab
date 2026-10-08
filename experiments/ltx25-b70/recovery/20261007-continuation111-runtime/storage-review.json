@@ -1,0 +1,187 @@
+{
+  "anchor_disk_bytes_required": 0,
+  "anchor_payload_bytes_in_cpu_memory_each": 2949120,
+  "cache_evidence": {
+    "launcher_policy": [
+      "--disable-comfy-compiler",
+      "TORCHINDUCTOR_COMPILE_THREADS=1",
+      "TORCHINDUCTOR_CACHE_DIR=run/inductor-cache",
+      "TRITON_CACHE_DIR=run/triton-cache",
+      "sys.dont_write_bytecode=True"
+    ],
+    "limits": "Current final cache metadata is not a peak-write measurement. Shared driver/SYCL caches and new encode kernels are not independently bounded or exhaustively inventoried.",
+    "payload_bytes": 0,
+    "regular_payload_files": 0,
+    "run_inductor_cache": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-duration-full-110-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49/inductor-cache",
+    "triton_cache_exists": false
+  },
+  "cancellation_review": {
+    "conclusion": "No new concrete finding: shielded worker remains owned; admission stays busy through cancellation cleanup; halt runs off event loop after worker finishes; status refuses busy before authority lock. No thread/process termination.",
+    "source_sha256": "b2de87b9c28d852bc0c88ff9285a0651204d0dcf19750e984f311b629407713f"
+  },
+  "conclusion": "Four GiB is a reasonable monitored admission allowance for this six-capture native experiment against completed110 metadata; it is not a hard total filesystem-write cap or a proven peak bound.",
+  "engineering_allowances_bytes": {
+    "compiler_and_other_cache_allowance": 1073741824,
+    "logs_receipts_requests_allowance": 201326592,
+    "preview_allowance": 536870912,
+    "raw_six_full_captures": 877383216
+  },
+  "engineering_sum_bytes": 2689322544,
+  "extra_unassigned_margin_within_4gib_bytes": 1605644752,
+  "filesystem": {
+    "admission_at_observation": true,
+    "available_bytes": 62216933376,
+    "block_bytes": 4096,
+    "build_allowance_bytes": 402653184,
+    "device": 66306,
+    "estimated_free_after_full_allowances_bytes": 57519312896,
+    "excess_before_build_bytes": 3832221696,
+    "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-duration-full-110-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49",
+    "required_before_build_bytes": 58384711680,
+    "reserve_bytes": 53687091200,
+    "run_allowance_bytes": 4294967296
+  },
+  "historical110_bound_output_inventory": {
+    "capture_metadata": {
+      "current_allocated_bytes": 204800,
+      "files": 50,
+      "logical_bytes": 73352
+    },
+    "preview": {
+      "current_allocated_bytes": 7979008,
+      "files": 24,
+      "logical_bytes": 7938986
+    },
+    "raw_capture": {
+      "current_allocated_bytes": 5851783168,
+      "files": 50,
+      "logical_bytes": 5851616960
+    },
+    "request_evidence": {
+      "current_allocated_bytes": 12521472,
+      "files": 456,
+      "logical_bytes": 10944847
+    }
+  },
+  "historical110_parent_manifest_file_inventory": {
+    "allocated_file_bytes": 113680384,
+    "files": 1678,
+    "logical_bytes": 110077765
+  },
+  "historical110_run_inventory": {
+    "inductor-cache": {
+      "allocated_bytes": 4096,
+      "directories": 1,
+      "files": 0,
+      "logical_bytes": 0
+    },
+    "input": {
+      "allocated_bytes": 8192,
+      "directories": 2,
+      "files": 0,
+      "logical_bytes": 0
+    },
+    "resolution-client": {
+      "allocated_bytes": 16384,
+      "directories": 1,
+      "files": 2,
+      "logical_bytes": 8987
+    },
+    "temp": {
+      "allocated_bytes": 8192,
+      "directories": 2,
+      "files": 0,
+      "logical_bytes": 0
+    },
+    "top-level": {
+      "allocated_bytes": 23597056,
+      "directories": 1,
+      "files": 650,
+      "logical_bytes": 22087976
+    },
+    "user": {
+      "allocated_bytes": 4096,
+      "directories": 1,
+      "files": 0,
+      "logical_bytes": 0
+    }
+  },
+  "historical_runtime_manifest_sha256": "bfa78fcf6af59acc3d63318ca97c61846b3a9b80999f6f17cb4c4d3651f2ad09",
+  "input_bindings": [
+    {
+      "allocated_bytes": 352256,
+      "bytes": 348573,
+      "inode": 50469429,
+      "mtime_ns": 1791416499757295211,
+      "nlink": 1,
+      "path": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261007/duration110-closeout/summary.json",
+      "sha256": "30a7861750521aca83911d8922d89071f31eb51ad38df971b68837c6c3ac816d"
+    },
+    {
+      "allocated_bytes": 274432,
+      "bytes": 270763,
+      "inode": 44706943,
+      "mtime_ns": 1791414864616378303,
+      "nlink": 1,
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-full-110/manifest.json",
+      "sha256": "bfa78fcf6af59acc3d63318ca97c61846b3a9b80999f6f17cb4c4d3651f2ad09"
+    },
+    {
+      "allocated_bytes": 24576,
+      "bytes": 24187,
+      "inode": 44705096,
+      "mtime_ns": 1791414854402882994,
+      "nlink": 1,
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-full-110/launch/serve-encoder.py",
+      "sha256": "ea8025de915fed5d4a9961a53226c025006cb37fb731b633dd7c86550d3dc5e8"
+    },
+    {
+      "allocated_bytes": 73728,
+      "bytes": 73155,
+      "inode": 50469629,
+      "mtime_ns": 1791417418772041873,
+      "nlink": 1,
+      "path": "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-continuation111-plan/candidate-plan.json",
+      "sha256": "99b2db948642406c6150f425a13efb09d12f1fea54233a8cba8c7eebe801e93e"
+    },
+    {
+      "allocated_bytes": 16384,
+      "bytes": 15628,
+      "inode": 50469740,
+      "mtime_ns": 1791418698006297499,
+      "nlink": 1,
+      "path": "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-continuation111-runtime/runtime_packet.py",
+      "sha256": "4d5a493a65ba32a81764f5e8e0cc5a8686d0a64c0443b07f3e85a2709f375b94"
+    },
+    {
+      "allocated_bytes": 28672,
+      "bytes": 25206,
+      "inode": 50469707,
+      "mtime_ns": 1791418191219534674,
+      "nlink": 1,
+      "path": "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-continuation111-runtime/request_client.py",
+      "sha256": "0887bbe051443f0cec77e36e4700ec9e158cfea486d325956b75e3dafb7151a1"
+    },
+    {
+      "allocated_bytes": 28672,
+      "bytes": 26888,
+      "inode": 50469719,
+      "mtime_ns": 1791418600038633380,
+      "nlink": 1,
+      "path": "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-continuation111-runtime/integration.py",
+      "sha256": "b2de87b9c28d852bc0c88ff9285a0651204d0dcf19750e984f311b629407713f"
+    }
+  ],
+  "limits": [
+    "Only six exact raw files have a prewrite shape/size bound; metadata/cache/log/preview writes are monitored aggregate allowances.",
+    "Admission reserves no capacity; unrelated filesystem writers and writes between checkpoints can consume margin.",
+    "Free-space debit observes positive net changes between checkpoints, not total lifetime write I/O; concurrent deletion can mask simultaneous allocations.",
+    "Historical110 ran57 requests/50 captures, while111 runs8 requests/6 captures, but native image encoding is new to111.",
+    "Fresh build and launch admission remain required; this dated observation is not launch authorization.",
+    "No persisted anchor files; reviewed provider owns CPU image until native postchecks."
+  ],
+  "observed_at_utc": "2026-10-08T00:20:15.944868+00:00",
+  "plan_sha256": "7944f8701244bd386c41bc5cdd6c4e9df1ea8fcf4d9dedf91e249f476105b2c5",
+  "schema": "ltx.continuation111.storage-review.v1",
+  "scope": "Metadata/stat only for exact110 run, manifest-listed source, and closeout-listed request/output paths; no raw/model payload reads or runtime operations."
+}
