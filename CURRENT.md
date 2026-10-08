@@ -21,7 +21,9 @@ four-card postflight passed 00:54:58 UTC, zero fault lines this boot.
 [Results](experiments/ltx25-b70/notes/2026-10-08-continuation111-results.md),
 [stop receipt](experiments/ltx25-b70/data/resume-20261007/continuation111-stop.json).
 
-**Now:** the packet-97 server (two-way, two sampler workers, batch 2, shared
+**Stream live since 01:34 UTC (local discard receiver until the owner supplies an RTMP/WHIP destination):** warm-up on the stream01 server passed (window probe, two capture passes, pool calibration, decode replica exact 10/10, freeze, self-check, both proof arms 20/20 byte-identical to `stability-01-b2`); the first ten stream clips also matched their references. Generation runs at 0.98 s per clip (about 25.5 fps generated, 24 fps played), the sink has played ~1,000 clips with one 11 s startup hold and no slips, buffer about 65 s, driver throttle at 300 s ahead. Start scripts `/home/steve/ltx-stream/start-sink.sh` / `start-driver.sh`; the key file is `~/.config/ltx-stream/rtmp_url` (outside Git). Stream clips' oracle tensors are pruned after hashing; disk growth is being measured for a receipt cleaner.
+
+**Server:** the packet-97 server (two-way, two sampler workers, batch 2, shared
 pool, decode replica on xpu:2; the 27.5 fps configuration of 2026-10-06, 613/613
 exact against the `stability-01-b2` references) is being launched once as
 `encoder-server-place-97-two-way-w2-b2-p1-dxpu2-stream01` (unit
