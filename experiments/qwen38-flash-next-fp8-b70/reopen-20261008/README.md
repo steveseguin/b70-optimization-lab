@@ -1,5 +1,25 @@
 # Flash-Next Screen 1b — native FP8 mmap adapter
 
+**calibrate-load attempt 1: failed at worker init: re-entrant copy dispatch
+double-reserved staging space and triggered the 120-second allocation-lock
+timeout.** The 16:44–16:51 UTC attempt exited 1 at 16:50:55 UTC, before readiness.
+The loader's bounded UVA copy called `copy_` under its own `CopyMode`; the mode
+bounded that same copy again. A 268,431,360-byte reservation left just 4,096
+bytes of the 256 MiB budget, causing thousands of tiny copies. Rank 1 recorded
+157,290 reservations; ranks 0 and 2 timed out while waiting for the lock.
+The later EngineCore error was the wrapper, not the cause. Host MemAvailable
+bottomed at **106,956,197,888 bytes (106.956 GB, about 107 GB)** and
+`OOMKilled=false`; this attempt does not establish the model's memory fit.
+
+The overlay now marks only an already-admitted leaf copy so its dispatch hook
+passes through without a second reservation. It restores the marker on error.
+The byte cap, rank serialization, cancellation checks and timeout remain.
+**149/149 CPU tests pass, no skips**, including four new real CPU dispatch tests
+that construct the UVA offloader with stubbed pin/platform interfaces. Three
+of those checks failed against the original code. Overlay hashes are refreshed;
+entrypoint and controller behavior need no change. [Diagnosis and validation](VALIDATION.md#calibrate-load-attempt-1-worker-init-failure).
+No launch occurred during this fix. Attempt 1's raw receipts remain unchanged.
+
 **CPU implementation complete; runtime qualification remains open.** PLE now
 uses the original safetensors shards through read-only mmap, a fixed **1 GiB
 pinned raw-row clock cache per rank (4 GiB total)**, and small stable step
@@ -13,7 +33,7 @@ unexplained memory residual are included. See [prediction](host-memory-predictio
 [shared inputs](memory-contract.json), and [latency/exactness design](../notes/2026-10-08-host-memory-reduction-design.md).
 The 4 GiB page allowance is an assumption, not an enforced page-cache ceiling.
 
-**126 CPU tests pass: prior 77 + 22 calibration + 27 adapter/receipt tests.**
+**Earlier adapter validation: 126 CPU tests passed (77 + 22 + 27).**
 Tests include direct safetensors reads of random/adversarial synthetic rows
 and small actual checkpoint boundary reads. They do not qualify XPU transport,
 graph replay, V30 arithmetic or generated outputs. The synchronous pre-forward
@@ -33,7 +53,7 @@ predictor before the container entrypoint can apply them.
 MTP0/MTP1/MTP3 commands, calibrate-load behavior and watchdog thresholds stay
 unchanged. The **80 GB/32 GiB internal guard**, measured plateau margin, and
 known **4 GiB/card reserve conflict** still block any claim of admission.
-The prepared calibrate-load command below was **not executed**. This task made no commits; no GPU, Docker, server, installation, secret, host setting or
+The next-attempt command below has **not been executed**. This task made no commits; no GPU, Docker, server, installation, secret, host setting or
 port 8188 operation occurred.
 
 ## Earlier full-PLE memory reconstruction (historical)
@@ -93,7 +113,7 @@ python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reop
 Exact requested execution command — **not run, currently refuses admission**:
 
 ```sh
-python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode mtp1 --health-receipt /home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261008/postflight-stream115-guide.json --execute
+python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode mtp1 --health-receipt /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008/postflight-after-calibrate.json --execute
 ```
 
 The fallback CPU measurement was implemented and run:
@@ -152,8 +172,9 @@ SHA-256 of the health receipt. Startup, generation, calibration plateau and
 postflight check for new faults after the admission cutoff; a new fault uses
 the existing single-SIGINT shutdown, without retry or hard-kill escalation.
 
-The commands below use the existing `postflight-stream115-guide.json` receipt,
-ending **2026-10-08 16:22:34 UTC**. It expires at **22:22:34 UTC** that day and
+The commands below use attempt 1’s `postflight-after-calibrate.json` receipt.
+The passing probe started **2026-10-08 17:14:58 UTC** and ended **17:15:04 UTC**.
+It expires at **23:15:04 UTC** that day and
 cannot cover any newer fault. Supply a current passing receipt when needed;
 a receipt does not waive the memory, storage, idle-card or port checks.
 These commands were not executed in this CPU-only change.
@@ -171,8 +192,8 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover \
 
 ## Owner-approved sequence: calibrate-load → mtp1
 
-These commands are prepared for the owner; **neither was executed in this
-CPU-only follow-up**. First arrange exclusive idle cards and the existing
+Attempt 1 failed as recorded above. These next-attempt commands are prepared
+for the owner and **were not executed in this CPU-only fix**. First arrange exclusive idle cards and the existing
 recovered-boot admission above, with at least five minutes after the previous
 server stops.
 No mode displaces LTX, uses port 8188, installs anything, or pulls an image.
@@ -181,10 +202,11 @@ The pinned image must already exist. Existing `SCREEN_PRIVILEGED_FD_SCAN` and
 the opt-in fd scan uses that existing privileged path. The sampler never does.
 
 ```sh
-SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode calibrate-load --health-receipt /home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261008/postflight-stream115-guide.json --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008 --execute
+SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode calibrate-load --health-receipt /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008/postflight-after-calibrate.json --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt2 --execute
 ```
 
-This command uses the fresh `runs/screen1b-mmap-calibrate-load-20261008/`.
+This command uses the fresh `runs/screen1b-mmap-calibrate-load-20261008-attempt2/`.
+The original run directory, STOP latch and failed calibration stay intact.
 The controller default remains `runs/screen1b-calibrate-load/`; choose another
 fresh `--run-dir` if the selected directory exists. The mode uses **the exact MTP1 launch command**, including
 the ported v5 placement, native FP8 mmap adapter, unchanged weights, full
@@ -228,7 +250,7 @@ After reviewing a passing receipt and leaving the five-minute stop-to-launch
 gap, use a fresh MTP1 run with that receipt explicitly supplied:
 
 ```sh
-SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode mtp1 --health-receipt /home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261008/postflight-stream115-guide.json --calibration /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008/calibration-load.json --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mtp1-calibrated --execute
+SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode mtp1 --health-receipt /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008/postflight-after-calibrate.json --calibration /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt2/calibration-load.json --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mtp1-calibrated --execute
 ```
 
 The gate rechecks sample hashes and recomputes the verdict. Image, overlay,

@@ -1,6 +1,81 @@
 # Screen 1b CPU validation — native FP8 mmap, 2026-10-08
 
-**126/126 CPU tests pass, no skips: prior 77 + 22 calibration + 27 new tests.**
+## Calibrate-load attempt 1: worker-init failure
+
+**calibrate-load attempt 1: failed at worker init: re-entrant copy dispatch
+double-reserved staging space and triggered the 120-second allocation-lock
+timeout.** No ready plateau or generation occurred. Exit 1 at
+2026-10-08 16:50:55.184240446 UTC; `OOMKilled=false`.
+
+Read all 520 lines of [server.log](runs/screen1b-mmap-calibrate-load-20261008/server.log)
+and parsed all **331,109 loader receipt rows** plus all 554 host samples.
+The failing chain is `UVAOffloader._make_cpu_data` at
+`overlay/vllm/model_executor/offloader/uva.py:89` → `bounded_copy` →
+`target.copy_` → `CopyMode.__torch_dispatch__` → `bounded_copy` again.
+In attempt 1's `overlay/vllm/screen1b_guard.py`, the unprotected call was
+line **192**, the second interception **253**, and the resulting lock timeout
+**130**. The source fix is in [screen1b_guard.py](overlay/vllm/screen1b_guard.py).
+
+Rank 1 (PID 477) reserved **268,431,360 bytes**, leaving **4,096 bytes** under
+256 MiB. The second interception split the already-budgeted copy into 4,096-
+and 2,048-byte transfers, each with ledger writes and synchronization. Its
+embedding copy occupied the lock for about **114 seconds** and it recorded
+**157,290 reservations** overall. Rank 3 then took the lock; ranks 0 and 2 hit
+their 120-second wait at 16:50:48 UTC and latched STOP. Other workers' cancelled
+exceptions and EngineCore's `core.py:1375` message follow that failure.
+All reservations were released. No allocation-pressure refusal occurred.
+
+The host trace minimum is **106,956,197,888 bytes available (106.956 GB)**;
+the external watchdog did not trip. This is a loader control-flow failure,
+not evidence of memory exhaustion or of a successful full-model fit.
+The [failed calibration](runs/screen1b-mmap-calibrate-load-20261008/calibration-load.json)
+and all original receipts are preserved, including their original identity hashes.
+
+Fix: a thread-local marker covers just the admitted leaf `copy_`. The loader's
+copy hook passes that operation through to lower dispatch layers without
+reserving the same bytes twice. A `finally` restores the marker even on errors;
+the outer owner still synchronizes and releases the reservation. Ordinary
+copies and conversions remain guarded. No increase to the staging cap or
+lock timeout; no change to entrypoint or `screen.py` is needed. The overlay
+manifest now seals the corrected guard.
+
+[Four new CPU regressions](test_copy_dispatch.py) import and construct the real
+UVA offloader inside the real loader `TorchDispatchMode`, with tiny CPU tensors
+and stubbed pin/platform/synchronization interfaces. They cover exact-cap
+copies, row-rounding remainders, ordinary copies after an explicit copy,
+dtype conversion, exact data, reservation counts, and exception cleanup.
+Against the old guard, three tests failed (two count mismatches and one
+`no transient staging headroom` exception); all four pass after the fix.
+Existing two-process serialization, retained-conversion, cancellation,
+overlay application, health-receipt and calibration tests also pass.
+
+Full suite: **149 passed, zero failures, zero skips** using the existing
+interpreter below. System Python: **149 discovered, 138 passed, 11
+dependency-related skips**. All 47 overlay hashes verify; all overlay Python
+parses; shell syntax and `git diff --check` pass. The attempt-2 command was
+previewed with `--dry-run` only. [CPU validation receipt](evidence/cpu-worker-init-validation.json).
+No installs or accelerator calls. No GPU/runtime qualification is claimed.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/steve/.venvs/ltx25-baseline/bin/python -m unittest discover \
+  -s experiments/qwen38-flash-next-fp8-b70/reopen-20261008 -p 'test_*.py' -v
+```
+
+Next attempt (prepared only; fresh result directory):
+
+```sh
+SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode calibrate-load --health-receipt /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008/postflight-after-calibrate.json --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt2 --execute
+```
+
+That receipt passed all four cards; its start is **17:14:58 UTC**, its end
+**17:15:04 UTC** on October 8. The six-hour admission age is measured from the
+end, expiring at **23:15:04 UTC**. Existing same-boot/new-fault, idle-card,
+stop-gap and other admission checks still apply. No health probe or launch
+was run during this fix; no secrets or port 8188 were accessed.
+
+## Earlier adapter CPU validation
+
+**Earlier adapter validation: 126/126 CPU tests passed, no skips.**
 The new prediction is **87,765,002,264 bytes**; admission remains REFUSED.
 
 Full suite executed without installations, using an existing interpreter:

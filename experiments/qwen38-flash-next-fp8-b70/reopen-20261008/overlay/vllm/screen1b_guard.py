@@ -188,8 +188,17 @@ def bounded_copy(target, source, **kwargs):
         kwargs['non_blocking'] = False
         token = reserve_staging(nbytes, 'copy')
         try:
-            with torch.no_grad():
-                target.copy_(source, **kwargs)
+            # Explicit UVA/PLE copies can enter here with CopyMode still on
+            # the dispatch stack. This leaf already owns its reservation;
+            # intercepting it again double-charges the same bytes and splits
+            # against only the rounding remainder (4 KiB in attempt 1).
+            previous = getattr(_local, 'copy_in_progress', False)
+            _local.copy_in_progress = True
+            try:
+                with torch.no_grad():
+                    target.copy_(source, **kwargs)
+            finally:
+                _local.copy_in_progress = previous
             synchronize()
         finally:
             release_staging(token)
@@ -247,6 +256,10 @@ def guarded_load(fn):
                 kwargs = kwargs or {}
                 check_cancel()
                 if func == torch.ops.aten.copy_.default:
+                    if getattr(_local, 'copy_in_progress', False):
+                        # Only the already-admitted leaf bypasses our second
+                        # reservation. Other dispatch modes still see the op.
+                        return func(*args, **kwargs)
                     kw = dict(kwargs)
                     if len(args) > 2:
                         kw['non_blocking'] = args[2]
