@@ -1297,10 +1297,6 @@ def main(argv=None):
         raise SystemExit('--reset-every-chunks / --reset-on-scene-change need --packet 113 or 114')
     if a.expect_anchor is not None and a.packet != 114:
         raise SystemExit('--expect-anchor needs --packet 114')
-    if a.manifest_sha256 == PACKET114_MANIFEST_SHA256:
-        log('STOPPED (exit 8): packet 114 is not sealed yet (PACKET114_MANIFEST_SHA256 is %s); pass '
-            '--manifest-sha256 or fill the constant after the build' % PACKET114_MANIFEST_SHA256)
-        return 8
     if a.reset_every_chunks < 0:
         raise SystemExit('--reset-every-chunks must be >= 0')
     a.work_dir = a.work_dir.resolve()
