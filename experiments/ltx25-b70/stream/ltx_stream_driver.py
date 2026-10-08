@@ -750,7 +750,7 @@ class Driver:
                 'clip_name': clip['name'], 'prefix': prefix, 't_done': t_done, 't_start': t_start,
                 'marker': self.run / ('pipeline-done-save-%d.json' % emitted), 'since': time.monotonic(),
                 'check': None, 'decode_split': drec['detail'].get('decode_split')}
-        if cycle == 0:
+        if cycle == 0 and fx.get('reference'):
             item['check'] = self.start_check(item)
         self.ready.append(item)
 

@@ -18,5 +18,5 @@ fi
 echo "sink destination: $DEST ($(date -u +%FT%TZ))" >> $W/sink-destinations.log
 exec $PY -B $SINK --manifest $W/manifest.jsonl --rtmp "$URL" --state $W/sink-state.json --stats $W/sink-stats.json \
   --workdir $W/sinkwork --size 768x768 --decode-threads 2 \
-  --title "LTX-2.5 live on 4x Intel Arc Pro B70 - 256x256 native, batch-2 lane, every clip freshly generated (independent takes, not yet a continuous scene)" \
-  --delete-played-after-seconds 3600 --disposable-dir-regex 's97-twowayw2b2p1dxpu2-stream01-[0-9]{7}'
+  --title "LTX-2.5 kittens, live on 4x Intel Arc Pro B70 - 256x256 native, every clip freshly generated (independent takes; continuous scenes coming)" \
+  --delete-played-after-seconds 3600 --disposable-dir-regex 's97-twowayw2b2p1dxpu2-stream01-[0-9]{7}' "$@"
