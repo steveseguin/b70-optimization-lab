@@ -249,7 +249,7 @@ def bootstrap(rank=0, guard_source=None):
     Transport, DeviceTensor, pinned = cpu_transport(torch, rank)
     with tempfile.TemporaryDirectory() as temp, contextlib.ExitStack() as stack:
         root = Path(temp)
-        placement = json.loads((HERE / 'placement-certified-v5.json').read_text())
+        placement = json.loads((HERE / 'placement-attempt6-v5.json').read_text())
         (root / 'placement.json').write_text(json.dumps(placement))
         stack.enter_context(patch.dict(os.environ, {
             'B70_SCREEN1B': '1', 'B70_SCREEN1B_STATE_DIR': temp,
@@ -419,7 +419,7 @@ def bootstrap(rank=0, guard_source=None):
                        rope_cache_shape=list(layers[3].self_attn.rotary_emb.cos_sin_cache.shape),
                        v5_parameters=len(expert_weights), fixture_checkpoint_weights=len(weights),
                        expert_maps=map_calls, constructor_expert_map_calls=4,
-                       placement_sha256=hashlib.sha256((HERE/'placement-certified-v5.json').read_bytes()).hexdigest(),
+                       placement_sha256=hashlib.sha256((HERE/'placement-attempt6-v5.json').read_bytes()).hexdigest(),
                        placement_checks=placement_checks,
                        event_counts={name: sum(e['event']==name for e in events) for name in sorted(event_names)},
                        devices='CPU storage only; logical XPU labels are emulated',

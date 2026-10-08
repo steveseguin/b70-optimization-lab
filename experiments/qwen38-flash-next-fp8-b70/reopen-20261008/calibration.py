@@ -226,7 +226,7 @@ def identity(command, package, model):
     for i, value in enumerate(cmd):
         if value.endswith(':/screen'):
             cmd[i] = '<run>:/screen'
-    files = ['overlay-manifest.json', 'placement-certified-v5.json', 'container-entrypoint.sh',
+    files = ['overlay-manifest.json', 'placement-attempt6-v5.json', 'container-entrypoint.sh',
              'screen.py', 'calibration.py', 'memory_watchdog.py']
     return {'command': cmd, 'package_sha256': {f: file_hash(package/f) for f in files},
             'model_sha256': {f: file_hash(model/f) for f in ('config.json', 'model.safetensors.index.json')}}

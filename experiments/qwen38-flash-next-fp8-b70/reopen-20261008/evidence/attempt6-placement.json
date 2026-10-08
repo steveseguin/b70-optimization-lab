@@ -1,0 +1,62 @@
+{
+  "schema": "screen1b.attempt6-placement.v1",
+  "algorithm": "preserve certified rows, then (count, layer, expert) ascending; retain >=1 device row/layer",
+  "goal_rows_per_rank": 2600,
+  "expert_row_bytes": 4915200,
+  "ranks": [
+    {
+      "rank": 0,
+      "old_rows": 543,
+      "host_rows": 2600,
+      "expert_offload_bytes": 12779520000,
+      "additional_offload_bytes": 10110566400,
+      "additional_historical_routed_selections": 19350,
+      "historical_routed_selections": 2563202,
+      "min_resident_rows_per_layer": 47
+    },
+    {
+      "rank": 1,
+      "old_rows": 587,
+      "host_rows": 2600,
+      "expert_offload_bytes": 12779520000,
+      "additional_offload_bytes": 9894297600,
+      "additional_historical_routed_selections": 17434,
+      "historical_routed_selections": 322494,
+      "min_resident_rows_per_layer": 50
+    },
+    {
+      "rank": 2,
+      "old_rows": 550,
+      "host_rows": 2600,
+      "expert_offload_bytes": 12779520000,
+      "additional_offload_bytes": 10076160000,
+      "additional_historical_routed_selections": 17186,
+      "historical_routed_selections": 323830,
+      "min_resident_rows_per_layer": 47
+    },
+    {
+      "rank": 3,
+      "old_rows": 586,
+      "host_rows": 2600,
+      "expert_offload_bytes": 12779520000,
+      "additional_offload_bytes": 9899212800,
+      "additional_historical_routed_selections": 14886,
+      "historical_routed_selections": 311754,
+      "min_resident_rows_per_layer": 42
+    }
+  ],
+  "input_sha256": {
+    "reopen-20261008/placement-certified-v5.json": "f3f4812cfae2f4f704e75cc9b47a4031a476f846b353e3def23141b9d9c05f96",
+    "data/20260907-tp4-mtp1-a315-routing-census-rank0.json": "5a4c338cb08051dffb28fa15db9484114c33528cfd50d8e5aea316969379d740",
+    "data/20260907-tp4-mtp1-a315-routing-census-rank1.json": "0647e5b1141bed78249a3affeb1da77e3d2de38b264f0821f807215029c34d55",
+    "data/20260907-tp4-mtp1-a315-routing-census-rank2.json": "c55833b9c63771a32d4b48eda83482e17df04e700ad27379e687847c71d7e385",
+    "data/20260907-tp4-mtp1-a315-routing-census-rank3.json": "9d5f64bc815ec9c7157141fd4a07a8faa2d905afcbb74f492670194f54fdfb85"
+  },
+  "placement_sha256": "b64cf1c9cf732d9093ed55a90cc59e1d52b5be5a755914fc04d860aecf384ce6",
+  "decode_cost": {
+    "assumed_ms_per_extra_selected_expert": 0.1,
+    "measured_for_this_placement": false,
+    "formula": "extra selected host expert hits on the critical path * 0.1 ms; not allocated rows * 0.1 ms",
+    "caveat": "old census frequencies are not a decode-step denominator or a V30 workload prediction"
+  }
+}

@@ -180,9 +180,9 @@
     "Load cancellation latency and complete allocation lifetime qualification",
     "Rescued A367 MemAvailable change measured; RSS, absolute host peak and complete live VRAM reserve still missing; V30 requires its own load receipt"
   ],
-  "placement_sha256": "f3f4812cfae2f4f704e75cc9b47a4031a476f846b353e3def23141b9d9c05f96",
+  "placement_sha256": "b64cf1c9cf732d9093ed55a90cc59e1d52b5be5a755914fc04d860aecf384ce6",
   "calibration": {
-    "status": "PARTIAL_A367_HOST_PRESSURE_CALIBRATION; V30_COMPLETE_PEAKS_UNKNOWN",
+    "status": "ATTEMPT5_HOST_SHADOW_CONFIRMED; ATTEMPT6_EXPANDED_PLACEMENT_FULL_PEAKS_UNKNOWN",
     "certified_pins_total_bytes": 63609487360,
     "certified_host_peak_bytes": null,
     "certified_worker_rss_bytes": [
@@ -229,5 +229,33 @@
       29.38
     ]
   },
-  "mmap_memory_contract": "memory-contract.json"
+  "mmap_memory_contract": "memory-contract.json",
+  "attempt6_vram_scenario": {
+    "qualified": false,
+    "prediction_is_measurement": false,
+    "reported_total_gib_lower_edge": 30.295,
+    "reported_free_gib_lower_edges": [
+      27.645,
+      27.865,
+      27.865,
+      27.865
+    ],
+    "reported_values_source": "runs/screen1b-mmap-calibrate-load-20261008-attempt5/server.log",
+    "allowance_bytes": {
+      "static_replication_scales_allowance_bytes": 1342177280,
+      "activation_workspace_allowance_bytes": 536870912,
+      "graph_pools_allowance_bytes": 536870912,
+      "runtime_allocator_allowance_bytes": 805306368
+    },
+    "allowance_scope": "source-driven static correction rounded up; workspace, graph pools and allocator allowances are unmeasured, not upper bounds",
+    "context_tokens": 4352,
+    "max_num_batched_tokens": 64,
+    "capture_sizes": [
+      1,
+      2
+    ],
+    "minimum_utilization_headroom_bytes": 1073741824,
+    "existing_required_free_bytes": 4294967296,
+    "admission": "Keep all qualified phase bounds null; existing measured >=4 GiB free/card gate unchanged. Driver usable memory differs from physical sysfs counters."
+  }
 }

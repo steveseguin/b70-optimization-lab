@@ -36,7 +36,7 @@ class WorkerInitRehearsalTests(unittest.TestCase):
             self.assertEqual(len(receipt['expert_maps']), 52)
             self.assertEqual(len(receipt['placement_checks']), 48)
             self.assertEqual(receipt['placement_sha256'], hashlib.sha256(
-                (HERE/'placement-certified-v5.json').read_bytes()).hexdigest())
+                (HERE/'placement-attempt6-v5.json').read_bytes()).hexdigest())
             for mapping in receipt['expert_maps']:
                 self.assertEqual(mapping['values'],
                                  [-1]*(rank*128) + list(range(128)) + [-1]*((3-rank)*128))

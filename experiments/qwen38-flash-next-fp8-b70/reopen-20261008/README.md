@@ -1,5 +1,15 @@
 # Flash-Next Screen 1b — native FP8 mmap adapter
 
+**Current: attempt 6 prepared on CPU, not launched.** Attempt 5 cleared the
+large host-memory shadow but failed the initial usable-VRAM check. The new
+v5 mask offloads 2,600 experts/rank and uses utilization 0.90. Predicted host
+pressure is **77.955 GB**; engine VRAM is **23.334 GiB/rank**, with **1.281 GiB**
+headroom below the 90% line on rank 0 even after startup-unavailable memory.
+These are unqualified estimates; existing memory and quality gates remain.
+[Full budget, source comparison, latency sensitivity and attempt-6 command](ATTEMPT6.md).
+Earlier attempt commands below are historical; use the attempt-6 command.
+
+
 **Attempt 5 is prepared; nothing was launched.** All four Screen 1b modes now
 set `NEOReadDebugKeys=1 EnableDeferBacking=0` in the container. These are
 per-process Intel NEO driver settings, not host settings. The entrypoint

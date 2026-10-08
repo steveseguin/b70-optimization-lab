@@ -5,6 +5,18 @@ below remain that host's own research record; this consolidation did not operate
 
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
+**2026-10-08, Flash-Next attempt 6 prepared on CPU:** more unchanged expert
+rows now live in host memory, with 2,600 rows on each rank. The startup
+utilization is 0.90. The estimate is **77.955 GB host pressure** and
+**23.334 GiB engine memory per card**. Counting memory already unavailable
+at startup leaves **1.281 GiB below the 90% line** on the tightest card.
+Graph and workspace costs remain estimates, so the load measurement and
+quality checks are still required. All 193 CPU tests and four rank rehearsals
+pass. All existing safety gates stay in place.
+Nothing was launched or committed; LTX, host settings and port 8188 were untouched.
+[Source evidence, CPU checks and the prepared command](experiments/qwen38-flash-next-fp8-b70/reopen-20261008/ATTEMPT6.md).
+
+
 
 **2026-10-08, Flash-Next attempt 5 prepared on CPU:** attempt 4's saved launch
 omitted the driver settings that LTX already uses. Its memory samples show

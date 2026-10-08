@@ -1,5 +1,30 @@
 # Screen 1b CPU validation — native FP8 mmap, 2026-10-08
 
+## Attempt 6: VRAM placement and CPU verification
+
+The new mask preserves every certified host expert row and extends each rank
+to 2,600 rows. Utilization is 0.90. The predictor seals the new placement,
+checks offload bytes against the memory contract, validates context/chunk/graph
+geometry, and separately reports engine-only and startup-inclusive headroom.
+Qualified phase bounds and measured admission gates remain unchanged.
+**193/193 CPU tests pass, no skips**, including all four rank rehearsals.
+Sealed-package dry run, focused local-link checks and `git diff --check` pass.
+[Budget and exact next command](ATTEMPT6.md),
+[startup source audit](evidence/attempt6-startup-source-audit.md),
+[device census](evidence/attempt6-budget-source-audit.md),
+[CPU test log](evidence/cpu-attempt6-tests.log),
+[four-rank rehearsal receipts](evidence/attempt6-cpu-rehearsal/).
+
+```sh
+SCREEN1B_CPU_EVIDENCE_DIR=experiments/qwen38-flash-next-fp8-b70/reopen-20261008/evidence/attempt6-cpu-rehearsal \
+PYTHONDONTWRITEBYTECODE=1 /home/steve/.venvs/ltx25-baseline/bin/python -m unittest discover \
+  -s experiments/qwen38-flash-next-fp8-b70/reopen-20261008 -p 'test_*.py' -v
+```
+
+No runtime was launched and no commits were made. Historical validation and
+failed-attempt receipts below remain intact.
+
+
 ## Attempt 5: per-process driver backing (CPU-only preparation)
 
 **185/185 CPU tests pass, zero skips. New predicted host peak: 35.505 GB

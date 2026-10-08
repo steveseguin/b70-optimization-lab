@@ -11,6 +11,7 @@ import argparse
 from collections import defaultdict
 from decimal import Decimal
 from placement_plan import storage_plan, enumerate_candidates
+from vram_plan import scenario as vram_scenario, weight_census
 import hashlib
 import json
 import math
@@ -183,12 +184,12 @@ def launch_identity(command):
                 'mlp.experts.w2_weight'}
     placement = next((x.split('=', 1)[1] for x in command if x.startswith('Q38_EXPERT_HOST_PLACEMENT=')), None)
     if placement:
-        if placement != '/screen-package/placement-certified-v5.json':
+        if placement != '/screen-package/placement-attempt6-v5.json':
             raise ValueError('unbound placement path')
         if set(suffixes) != {'ple_embedding.ngram_embedding.weight', 'embed_tokens.weight'} or budget != int(12.25*GIB):
             raise ValueError('v5 requires certified PLE/embedding budget and suffixes')
-        if flag(command, '--gpu-memory-utilization') != '0.92':
-            raise ValueError('v5 prediction requires certified utilization')
+        if flag(command, '--gpu-memory-utilization') != '0.90':
+            raise ValueError('attempt6 prediction requires utilization 0.90')
         graph = json.loads(flag(command, '--compilation-config'))
         if graph.get('mode') != 0 or graph.get('cudagraph_mode') != 'FULL_DECODE_ONLY':
             raise ValueError('v5 prediction requires compilation NONE / FULL_DECODE_ONLY')
@@ -362,7 +363,7 @@ def build_prediction(command, model_root=DEFAULT_MODEL, bounds_path=None, observ
     rank_pins = [pins_per_rank] * tp
     placement_census = None
     if identity.get('placement'):
-        placement_path = HERE / 'placement-certified-v5.json'
+        placement_path = HERE / 'placement-attempt6-v5.json'
         if sha256(placement_path) != bound['placement_sha256']:
             raise ValueError('placement identity drift')
         placement_census = storage_plan(config, tensors, json.loads(placement_path.read_text()))
@@ -374,6 +375,9 @@ def build_prediction(command, model_root=DEFAULT_MODEL, bounds_path=None, observ
     if placement_census:
         adapter = json.loads((HERE / 'memory-contract.json').read_text())
         table_bytes = sum(b['bytes'] for r in placement_census for b in r['buffers'] if b['name'] == 'PLE')
+        expert_pins = [sum(b['bytes'] for b in r['buffers'] if b['name'].startswith('layer')) for r in placement_census]
+        if expert_pins != adapter['pinned_expert_bytes_per_rank']:
+            raise ValueError('placement expert bytes differ from mmap memory contract')
         if table_bytes != adapter['ple_nvme_bytes'] or tp != adapter['ranks']:
             raise ValueError('mmap adapter contract differs from checkpoint geometry')
         # Per-step host stage is retained, and its device twin is added below.
@@ -483,6 +487,8 @@ def build_prediction(command, model_root=DEFAULT_MODEL, bounds_path=None, observ
             'selected_parameters_rank0': selected, 'final_pins_bytes_per_rank': rank_pins,
             'placement_census': placement_census,
             'mmap_adapter': adapter,
+            'replication_aware_weight_census_before_offload': weight_census(tensors, bool(identity['mtp_depth'])),
+            'vram_planning_scenario': vram_scenario(floors, bound['attempt6_vram_scenario'], identity) if adapter else None,
             'historical_placement_pins_bytes_per_rank': legacy_rank_pins,
             'calibration': bound.get('calibration'),
             'candidate_table': enumerate_candidates(config, tensors) if placement_census else [],
@@ -534,6 +540,9 @@ def format_table(prediction):
         lines.append(f'Rescued A367: measured host-pressure increase {historical/1e9:.6f} GB (historical whole-host peak lower bound, not a V30 bound).')
     for rank, lower in enumerate(prediction['vram_static_lower_bound_bytes_per_rank']):
         lines.append(f'Rank {rank}: static VRAM LOWER bound {lower/GIB:.6f} GiB; complete Vpeak/reserve UNKNOWN')
+    if prediction.get('vram_planning_scenario'):
+        for row in prediction['vram_planning_scenario']['ranks']:
+            lines.append(f"Rank {row['rank']}: planned engine peak {row['engine_peak_bytes']/GIB:.6f} GiB; free {row['predicted_free_bytes']/GIB:.6f} GiB; unmeasured allowances, NOT admission")
     if prediction.get('candidate_table'):
         lines += ['Historical full-PLE candidates (NOT mmap adapter): KV 376569856, FULL_DECODE_ONLY; no calibrated peak available.',
                   'Candidate             Mode    Pins GB   Nonpin room to 85 GB   Static reserve UPPER bound GiB (r0..r3)']
