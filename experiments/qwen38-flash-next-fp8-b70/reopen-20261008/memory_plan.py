@@ -325,19 +325,19 @@ def should_stop(sample, next_allocation_bytes=0):
 def adapter_scenario(adapter, identity):
     """Illustrative attribution only; never a measured or qualified phase bound.
 
-    A367 did not measure GPUActive. Remove only the residual actually carried
-    in the old model, conditional on explicit, unambiguous container settings.
-    The runtime contingency still covers private runtime and remaining driver
-    memory; do not subtract the entire device footprint from host buffers.
+    A367 did not measure GPUActive. Its residual is not transferable to the
+    mmap placement and is NOT evidence of removable device shadow. Attempt 6
+    instead supports rounded pinned allocations plus private/runtime costs.
+    Retain the old residual only as a default-backing sensitivity when the
+    explicit process settings are absent; never call its omission a saving.
     """
     residual = adapter['historical_pressure_delta_bytes'] - adapter['historical_native_pins_bytes']
     disabled = identity.get('driver_environment') == {
         'NEOReadDebugKeys': ['1'], 'EnableDeferBacking': ['0']}
-    credit = adapter['deferred_backing_shadow_credit_bytes'] if disabled else 0
-    if not 0 <= credit <= residual:
-        raise ValueError('driver shadow credit exceeds historical residual')
+    if residual < 0:
+        raise ValueError('negative historical residual')
     return {
-        'historical_unattributed_residual_bytes': residual - credit,
+        'historical_unattributed_residual_bytes': 0 if disabled else residual,
         'cache_metadata_bytes': adapter['ple_metadata_bytes'],
         'active_files_bytes': adapter['active_file_allowance_bytes'],
         'host_baseline_bytes': adapter['host_baseline_bytes'],
@@ -345,9 +345,11 @@ def adapter_scenario(adapter, identity):
     }, {
         'enabled_by_explicit_container_environment': disabled,
         'historical_residual_before_credit_bytes': residual,
-        'subtracted_shadow_bytes': credit,
+        'subtracted_shadow_bytes': 0,
+        'historical_residual_not_transferred_bytes': residual if disabled else 0,
+        'causal_shadow_claim_withdrawn': True,
         'evidence': adapter['deferred_backing_evidence'],
-        'qualification': 'unmeasured attribution assumption; remaining driver memory is within the runtime contingency',
+        'qualification': 'attempt 5 never loaded; no measured Flash-Next shadow saving. Historical residual omitted, not subtracted from current pins.',
     }
 
 
@@ -421,6 +423,14 @@ def build_prediction(command, model_root=DEFAULT_MODEL, bounds_path=None, observ
     shadow_adjustment = None
     if adapter:
         scenario, shadow_adjustment = adapter_scenario(adapter, identity)
+        # Tensor storage.nbytes() misses the XPU pinned allocator size class.
+        # Round EACH retained allocation, not their sum. Device floors keep
+        # using tensor payload bytes: host padding does not remove more VRAM.
+        round_pin = lambda size: 1 << (size - 1).bit_length() if size else 0
+        expert_and_embedding = [b['bytes'] for r in placement_census
+                                for b in r['buffers'] if b['name'] != 'PLE']
+        logical_pins = expert_and_embedding + [adapter['ple_cache_bytes_per_rank'], step_bytes] * tp
+        scenario['pinned_allocator_rounding_bytes'] = sum(round_pin(n)-n for n in logical_pins)
         overhead = sum(scenario.values())
         illustration = pins + overhead + CHUNK_BYTES
     refusal = []
@@ -465,7 +475,7 @@ def build_prediction(command, model_root=DEFAULT_MODEL, bounds_path=None, observ
         refusal.append(f'note-based conservative scenario exceeds host ceiling: {illustration} bytes (assumed overhead)')
     # Preserve the historical full-PLE/default-backing sensitivity, separate
     # from the new mmap/per-process-driver candidate.
-    historical_overhead = overhead + (shadow_adjustment['subtracted_shadow_bytes'] if shadow_adjustment else 0)
+    historical_overhead = overhead + (shadow_adjustment['historical_residual_not_transferred_bytes'] if shadow_adjustment else 0)
     pin_ceiling = HOST_LIMIT - historical_overhead - CHUNK_BYTES
     joint_floor = math.ceil((total_weights - pin_ceiling + replicated * (tp - 1)) / tp) + identity['kv_bytes_per_rank']
     sweep = []

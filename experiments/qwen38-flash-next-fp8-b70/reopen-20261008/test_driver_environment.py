@@ -42,13 +42,15 @@ class DriverEnvironmentTests(unittest.TestCase):
             cmd[cmd.index('EnableDeferBacking=0')] = 'EnableDeferBacking=1'
             self.assertNotEqual(a, calibration.identity(cmd, screen.HERE, root))
 
-    def test_credit_requires_both_explicit_unambiguous_values(self):
+    def test_historical_residual_is_not_a_measured_shadow_credit(self):
         contract = json.loads((m.HERE/'memory-contract.json').read_text())
         original = self.command()
         scenario, adjustment = m.adapter_scenario(contract, m.launch_identity(original))
-        self.assertEqual(adjustment['subtracted_shadow_bytes'], 52_260_388_864)
+        self.assertEqual(adjustment['subtracted_shadow_bytes'], 0)
+        self.assertTrue(adjustment['causal_shadow_claim_withdrawn'])
+        self.assertEqual(adjustment['historical_residual_not_transferred_bytes'], 52_260_388_864)
         self.assertEqual(scenario['historical_unattributed_residual_bytes'], 0)
-        self.assertEqual(scenario['runtime_difference_contingency_bytes'], 10_000_000_000)
+        self.assertEqual(scenario['runtime_difference_contingency_bytes'], 13_000_000_000)
         variants = []
         for key in ('NEOReadDebugKeys=1', 'EnableDeferBacking=0'):
             cmd = original.copy(); i = cmd.index(key); del cmd[i-1:i+1]; variants.append(cmd)
@@ -61,10 +63,10 @@ class DriverEnvironmentTests(unittest.TestCase):
                 self.assertEqual(a['subtracted_shadow_bytes'], 0)
                 self.assertEqual(s['historical_unattributed_residual_bytes'], 52_260_388_864)
 
-    def test_credit_cannot_subtract_real_host_buffers(self):
+    def test_negative_historical_residual_refuses(self):
         contract = json.loads((m.HERE/'memory-contract.json').read_text())
-        contract['deferred_backing_shadow_credit_bytes'] += 1
-        with self.assertRaisesRegex(ValueError, 'exceeds historical residual'):
+        contract['historical_native_pins_bytes'] = contract['historical_pressure_delta_bytes'] + 1
+        with self.assertRaisesRegex(ValueError, 'negative historical residual'):
             m.adapter_scenario(contract, m.launch_identity(self.command()))
 
     def test_entrypoint_refuses_missing_or_wrong_values_before_any_runtime(self):

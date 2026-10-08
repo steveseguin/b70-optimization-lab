@@ -1,5 +1,10 @@
 # Attempt 6: move more unchanged expert rows to host RAM
 
+**Superseded after the owner's run:** the 77.955 GB host estimate below omitted
+pinned allocator rounding. Attempt 5 did not establish shadow removal; it failed
+before loading. The corrected steady estimate is 100.623 GB. See the
+[attempt 6 analysis and attempt 7 decision](ATTEMPT7-BUDGET.md).
+
 2026-10-08, CPU-only preparation on steve-b70s. Attempt 6 has **not run**.
 The placement and utilization are updated; the certified placement and all
 previous run receipts remain intact. No GPU, Docker, server, install, secret,

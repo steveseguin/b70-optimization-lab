@@ -5,6 +5,19 @@ below remain that host's own research record; this consolidation did not operate
 
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
+**2026-10-08, Flash-Next attempt 6 checked on CPU:** the host buffers are
+larger than their tensor sizes because the allocator rounds each one up.
+The saved samples match that explanation. Completing the current placement
+is estimated to use **100.6 GB steadily**, or **100.9 GB with staging**.
+That is above the 97 GB target, so a 96 GB retry is not prepared and the
+watchdog stays unchanged. Moving 62/64/62 unchanged expert rows back to
+cards 1–3 could save **6.74 GB of host RAM** for **0.92 GB more card memory**;
+this is a proposal, not a measured fit. The old shadow-removal explanation
+and 78 GB forecast are withdrawn. Nothing was launched or committed; LTX
+and port 8188 were untouched.
+[Evidence, corrected planner and lossless options](experiments/qwen38-flash-next-fp8-b70/reopen-20261008/ATTEMPT7-BUDGET.md).
+
+
 **2026-10-08, Flash-Next attempt 6 prepared on CPU:** more unchanged expert
 rows now live in host memory, with 2,600 rows on each rank. The startup
 utilization is 0.90. The estimate is **77.955 GB host pressure** and
@@ -115,6 +128,8 @@ audio alignment unreviewed). 111 stopped once with SIGINT at 00:54:03 UTC;
 four-card postflight passed 00:54:58 UTC, zero fault lines this boot.
 [Results](experiments/ltx25-b70/notes/2026-10-08-continuation111-results.md),
 [stop receipt](experiments/ltx25-b70/data/resume-20261007/continuation111-stop.json).
+
+**20:40 UTC: correction — attempt 6 disproves my shadow claim.** With `NEOReadDebugKeys=1 EnableDeferBacking=0` set (verified in both launch.json files), attempt 6 still reached GPUActive 73.1 GB and 90.1 GB of host pressure during loading before the 90 GB guard cancelled it (MemAvailable min 34.1 GB; no OOM, no fault). Attempt 5's 1.4 GB GPUActive only meant it died at device init before the weights loaded. So on this stack `GPUActive` is most likely the pinned host-resident expert rows that the offload design places in host RAM on purpose (≈16 GiB per rank), not a shadow of device memory; the 19:40 UTC entry's conclusion is withdrawn. The real budget: ≥70 GB of weights must live in host RAM because four cards give only ≈110 GiB usable VRAM for 185 GB of weights, plus workers (≈11 GB) and the 4 GiB PLE cache — a plateau near 85–92 GB on a 121 GB host. Codex is re-interpreting the counter from the attempt 4–6 samples and sizing one plateau measurement (loading guard raised, watchdog kept as the hard stop) before any MTP1 run.
 
 **20:04 UTC: attempt 6 running** (unit `flashnext-screen1-20261008T160407`): utilization 0.90, more expert rows in pinned host memory (predicted engine peak 23.3 GiB per rank, 1.3–1.5 GiB below the line; predicted host peak 78 GB with the shadow gone), fresh probe `runs/postflight-pre-attempt6.json`. Packet 117 (LTX: cone anchor decode, stage-B encode overlap, 121-frame chunks, prep-ahead) is being built on CPU in parallel.
 
