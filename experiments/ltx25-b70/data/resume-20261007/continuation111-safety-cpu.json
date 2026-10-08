@@ -1,0 +1,34 @@
+{
+  "combined_tests": 37,
+  "components": {
+    "capture_restriction": 5,
+    "conditioning_stage_guard": 26,
+    "encode_oom_refusal": 6
+  },
+  "created_utc": "2026-10-08T00:01:38.009153+00:00",
+  "elapsed_seconds": 0.433,
+  "gpu_requests": 0,
+  "independent_review": "Both prior findings resolved. Busy flag covers all public operations through callbacks/snapshots; nested rejected operations cannot release it. Anchor/cache invariants rechecked after both snapshots. No remaining inactive-guard blocker.",
+  "memory_or_storage_admitted": false,
+  "new_nodes_registered": false,
+  "passed": true,
+  "prior_reviewed_version_exactly_preserved": {
+    "README-stage-guard.md": "9165659532cbc5ca26b29f72cd6b5852a65c730902219533cdc2f407a9a6ee09",
+    "conditioning_guard.py": "bf0379fc9524757c628b23836c376fa82e8aa3653e08a521fe4a7a8a98baf39b",
+    "test_conditioning_guard.py": "c8cd95ab808e8dcbe1e313d0bd223617d28c7b92a6a0367763b73413f939a1ec"
+  },
+  "python": "/home/steve/.venvs/ltx25-baseline/bin/python",
+  "runtime_built": false,
+  "runtime_integration_required": true,
+  "schema": "ltx.continuation111.safety-cpu.v2",
+  "source_sha256": {
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-continuation111-safety/README-stage-guard.md": "589bb5f402407cd384e95eb580374890fe6da7fcd2b8ceae8e5b30317e5b4c33",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-continuation111-safety/README.md": "f681d3faad53fc7159842c40f8563b5909217e64fa691dfde2e570b3c65aded0",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-continuation111-safety/capture_adapter.py": "c08da42c69e23bf20f34d1a5b7d3ea0e2620d30d0f2e9c17117b153b12c01463",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-continuation111-safety/conditioning_guard.py": "5cf7c634e35e111299552b086df4bbbbe856fc1db6838d0fde2f85f2927dfaa1",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-continuation111-safety/encode_safety.py": "e7934411abe632f128a87300b51189ad3456a98730a2f446a4e1a96fcd019073",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-continuation111-safety/test_capture_adapter.py": "32354d153e67255a806822235c8dd56fbe552059c50bfe3577533385dee6f847",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-continuation111-safety/test_conditioning_guard.py": "ae8936d72a27ef6c3d5b59ebe11488114a212a5cf58f742e4e3cfafac611e8de",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-continuation111-safety/test_encode_safety.py": "3ac4d5b5a1a949006fb6e690e7e59371a7593fc055e9115693d9f9efb410f237"
+  }
+}

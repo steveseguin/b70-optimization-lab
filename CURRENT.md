@@ -35,10 +35,12 @@ gates. Raw audio remains unchanged and separate until its timeline is resolved.
 The inactive frame/graph prototype passes 16 CPU tests and independent review.
 The source-pinned encoder OOM refusal passes six tests; it preserves successful
 encoding and the existing decoder path. The fixed eight-request native-only plan passes twelve CPU tests and independent
-review; its six-output capture restriction passes five tests. The per-stage memory
-guard passed its existing controls, but independent review found two ordering/reentry
-gaps being corrected before runtime integration. Nothing has been registered,
-built or launched for continuation.
+review; its six-output capture restriction passes five tests. The corrected per-stage memory guard and related safety components pass all
+37 combined CPU tests in the actual LTX Python environment. Independent review
+confirmed both ordering/reentry findings resolved; the earlier version is preserved.
+Next is the native-only runtime authority, provider, proof/client wiring and sealed
+source assembly, followed by fresh storage/memory admission. Nothing has been
+registered, built or launched for continuation.
 [Integration design](experiments/ltx25-b70/notes/2026-10-07-continuation111-integration-design.md),
 [memory design](experiments/ltx25-b70/notes/2026-10-07-continuation111-memory-design.md).
 
