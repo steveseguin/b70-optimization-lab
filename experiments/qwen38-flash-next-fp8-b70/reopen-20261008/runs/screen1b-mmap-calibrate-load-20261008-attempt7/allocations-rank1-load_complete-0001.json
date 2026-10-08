@@ -1,0 +1,172 @@
+{
+  "schema": "screen1b.rank-allocation.v1",
+  "rank": 1,
+  "pid": 478,
+  "phase": "load_complete",
+  "groups": {
+    "input_embedding": {
+      "pinned_bytes": 317849600,
+      "host_pageable_bytes": 0,
+      "device_bytes": 317849600,
+      "mmap_resident_bytes": 0,
+      "mmap_payload_bytes": 0,
+      "default_rounded_bytes": 536870912,
+      "allocator_request_bytes": 317849600,
+      "allocator_bytes_measured": false
+    },
+    "other_model": {
+      "pinned_bytes": 0,
+      "host_pageable_bytes": 0,
+      "device_bytes": 3869677808,
+      "mmap_resident_bytes": 0,
+      "mmap_payload_bytes": 0
+    },
+    "experts": {
+      "pinned_bytes": 12779520000,
+      "host_pageable_bytes": 0,
+      "device_bytes": 18056339456,
+      "mmap_resident_bytes": 0,
+      "mmap_payload_bytes": 0,
+      "default_rounded_bytes": 18522046464,
+      "allocator_request_bytes": 12779520000,
+      "allocator_bytes_measured": false
+    },
+    "PLE": {
+      "pinned_bytes": 0,
+      "host_pageable_bytes": 0,
+      "device_bytes": 284,
+      "mmap_resident_bytes": 0,
+      "mmap_payload_bytes": 0
+    },
+    "PLE_cache": {
+      "pinned_bytes": 1073741824,
+      "host_pageable_bytes": 0,
+      "device_bytes": 0,
+      "mmap_resident_bytes": 0,
+      "mmap_payload_bytes": 0,
+      "default_rounded_bytes": 1073741824,
+      "allocator_request_bytes": 1073741824,
+      "allocator_bytes_measured": false
+    },
+    "PLE_step": {
+      "pinned_bytes": 163840,
+      "host_pageable_bytes": 0,
+      "device_bytes": 163840,
+      "mmap_resident_bytes": 0,
+      "mmap_payload_bytes": 0,
+      "default_rounded_bytes": 262144,
+      "allocator_request_bytes": 262144,
+      "allocator_bytes_measured": false
+    },
+    "PLE_mmap_layer1": {
+      "pinned_bytes": 0,
+      "device_bytes": 0,
+      "host_pageable_bytes": 434086598,
+      "mmap_payload_bytes": 12800061440,
+      "mmap_resident_bytes": 0,
+      "cache_hits": 0,
+      "cache_misses": 0,
+      "cache_evictions": 0
+    }
+  },
+  "actual_runtime_inputs": {
+    "PLE": {
+      "rows": 320001536,
+      "row_bytes": 160,
+      "owned_rows": [
+        80000384,
+        160000768
+      ],
+      "cache_bytes": 1073741824,
+      "cache_slots": 6710886,
+      "metadata_bytes": 434086598,
+      "step_tokens": 64,
+      "step_heads": 16,
+      "step_host_bytes": 163840,
+      "step_device_bytes": 163840,
+      "index_sha256": "0419e2c2dfbb925257d7409405433a793cf7ff7d96f3eba882a815ec6d9fe7a6",
+      "header_sha256": {
+        "model-00005-of-00131.safetensors": "f4e4de73987418abcf641a2b1d3ec07e968cdd89ff2e8388c60b60a2b10be292",
+        "model-00006-of-00131.safetensors": "a4d452a2b9874dd3af1a6d37e85da3e04dbddc7064c61e72d665546f06e63d28",
+        "model-00007-of-00131.safetensors": "796a83564988e21e23cc049724d97c9bbca8cbed3286c1a91f3ffe96901c09db",
+        "model-00008-of-00131.safetensors": "97c5ad215e91f08bc79b3db633e2eb9c171ccbce04c9476028bb5e942a8c89b6",
+        "model-00009-of-00131.safetensors": "0e69981f9d68d08d999dfb45ee59caf33fdb739e9956d113b06626218350052a",
+        "model-00010-of-00131.safetensors": "117ab5e7e1ad62602bf63e5ec50d45a79e213be54c09f8c02a4a0bbb1dd34216",
+        "model-00011-of-00131.safetensors": "4cac18ccfd8616d9de8bf2dc39cfc1f97162c352844b1622523409f2632aea53",
+        "model-00012-of-00131.safetensors": "ca9c5511f15bf6a42f6a9d1f3dd68b9360fe5956863fc32e637f57cf0798ef5b",
+        "model-00013-of-00131.safetensors": "d1108b2a5c9d401c87edcc54e7f3b34b7f6f415f3f4205d4b024074f8627e496",
+        "model-00014-of-00131.safetensors": "af31a006eac17244349b8e1d185064324d57eede0f305c8460e795c02736a0fc",
+        "model-00015-of-00131.safetensors": "51f98c1549c5a20617eea56c2746d75848f5a821f49ed9ab8cae22509caa6c6a",
+        "model-00016-of-00131.safetensors": "435fb1af5ede43c78f40b99add886bed8d924e0e9307f1f75a34ba2175f62a56",
+        "model-00017-of-00131.safetensors": "9f1ac43b1aaf441cd8e1ce1493fa54b814cdc0bf24e47a414dc98a880f1eb044",
+        "model-00018-of-00131.safetensors": "353d675faa8982aefaf3085a056feb2760862a8ae365251bb65a5bc2b885925f",
+        "model-00019-of-00131.safetensors": "a37f78c0eeae15a1f5abb5c46b37330be33c863a33a776b5f08cb9c6219384b4",
+        "model-00020-of-00131.safetensors": "ddc14e25b0650ba43dccbe85a4961068548804d3040fc27f3c01179c9d80c25f",
+        "model-00021-of-00131.safetensors": "63c749e68131fd989dda2dac0910ea0ef193fbecbcda78547fd4b95ce4f517a8",
+        "model-00022-of-00131.safetensors": "7f3abc497f65928bd7c4bafbc24a37060b713fd458b840251c5da47fbe2322c0",
+        "model-00023-of-00131.safetensors": "4b1c1bb58f72cb7a095e885c426c106f7ba2b75b55c034f5d9822e52dad27a4b",
+        "model-00024-of-00131.safetensors": "de242e9357b0ec2d31cddae3f15bb7522bb378e6e4bdeb74080a3c1f218e828f",
+        "model-00025-of-00131.safetensors": "276d67ad263a58a74e1468cb37bc7cf76502cda8d47d2f46a559028f11366d47",
+        "model-00026-of-00131.safetensors": "8266b377d6d8d9c7b3acbbe6d0ad50085666e90c930f9743b9ae519fcb9da727",
+        "model-00027-of-00131.safetensors": "837abb429fe65a4fb1f961e96c082e7b1dae67e2e36d66332da01905a280f9db",
+        "model-00028-of-00131.safetensors": "b367d36f69fb4b4024443f1ae63bb75db4688870c0bf1964f25f823b0329a532",
+        "model-00029-of-00131.safetensors": "ab5419e61f2682e2ba3b8c122d643a5640840f075eac8163f955ef93dd401cc8",
+        "model-00030-of-00131.safetensors": "47a779a3f1d2fa9b588ab9e6a50daab71cdcab6bc720f8ba817f04bc93f968d8",
+        "model-00031-of-00131.safetensors": "596bc4a67b3701280ead0479b5cf243f62244f4dddaa4ec848395b1ce63601f4",
+        "model-00032-of-00131.safetensors": "0fac5d1b5916b46932dbb77f5848a9007ebd62d81883477b2b461ccf975b88f9",
+        "model-00033-of-00131.safetensors": "6da5c12bcfd0aad7fd08a05bb8ef9aa30f9785979757f6d2ce2c024be147e019",
+        "model-00034-of-00131.safetensors": "a9f5a74f9209c15f383a805ce091622ad563b1e105dc607ee4ab0fa1e54775c3",
+        "model-00035-of-00131.safetensors": "3c460b8d3e8db25355c2156269d560e9d1862949adf962c8c56594610f58f3ae",
+        "model-00036-of-00131.safetensors": "090621e77261e6876c1d5ad5b76a234f2a2cb0529d7030321bba6736d3efa886",
+        "model-00037-of-00131.safetensors": "761f7ea61a61208ccc782276348a21d4c2eb7ea4168c6e281525ac4b83e65e7b"
+      }
+    },
+    "pinned_allocator_environment": {
+      "PYTORCH_ALLOC_CONF": "pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1",
+      "PYTORCH_CUDA_ALLOC_CONF": "pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1",
+      "PYTORCH_HIP_ALLOC_CONF": "pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1"
+    },
+    "pinned_expert_bytes": 12779520000,
+    "pinned_input_embedding_bytes": 317849600
+  },
+  "host_ram_prediction_inputs": {
+    "schema": "screen1b.mmap-memory-contract.v1",
+    "ranks": 4,
+    "ple_rows": 320001536,
+    "ple_row_bytes": 160,
+    "ple_nvme_bytes": 51200245760,
+    "ple_cache_bytes_per_rank": 1073741824,
+    "ple_metadata_bytes": 1736346392,
+    "global_staging_bytes": 268435456,
+    "active_file_allowance_bytes": 4294967296,
+    "historical_pressure_delta_bytes": 115869876224,
+    "historical_native_pins_bytes": 63609487360,
+    "deferred_backing_shadow_credit_bytes": 52260388864,
+    "deferred_backing_evidence": "experiments/ltx25-b70/notes/2026-10-04-host-ram-shadow-of-vram.md",
+    "deferred_backing_credit_is_measured": false,
+    "host_baseline_bytes": 4969857024,
+    "runtime_difference_contingency_bytes": 13000000000,
+    "prediction_is_measurement": false,
+    "max_total_tokens": 64,
+    "ngram_heads": 16,
+    "pinned_expert_bytes_per_rank": [
+      12779520000,
+      12779520000,
+      12779520000,
+      12779520000
+    ],
+    "pinned_input_embedding_bytes_per_rank": 317849600,
+    "host_baseline_evidence": "runs/screen1b-mmap-calibrate-load-20261008-attempt5/memory-after-hash.json",
+    "placement_file": "placement-attempt6-v5.json",
+    "deferred_backing_credit_withdrawn": true,
+    "attempt6_attribution_note": "ATTEMPT7-BUDGET.md"
+  },
+  "prediction_inputs_sha256": "5b76ab8735f74e11bd7d7048b5879991ab637a701576ce85b563965f36b2544b",
+  "copy_cap_bytes": 268435456,
+  "memory": {
+    "MemTotal": 124179132416,
+    "MemAvailable": 53096697856
+  },
+  "untracked_runtime_driver_graph_bytes": null,
+  "accounting": "unique retained tensor storage; mmap RSS shared, never sum with host pressure"
+}
