@@ -6,16 +6,28 @@ files, pull the image by digest, start one owned server through the package laun
 six practical requests, stop it once through the package's stop command, and record health before and after.
 The receipts feed collect-fp8-tp2-acceptance-evidence.py. Owns exactly one server; no restart, no retry.
 
-usage: run-fp8-tp2-acceptance-session.py --commit <sha> --out /mnt/fast-ai/bench-results/<new dir>
+With `--multi-user` the same session then covers the package's `multi-user` profile (64 users, no speculation,
+overlays b70_exclusive_prefill + b70_fa_decode_per_seq, prefix cache off): after the recommended-profile server is
+stopped and the cards are free again, it starts ONE second server through the same downloaded package launcher
+(`serve.py start --profile multi-user`), runs the research campaign's client (scripts/bench-openai-concurrency-oracle.py)
+on the short ladder suite and on the long-prompt suite, each as one sequential pass plus two passes at 16, 32 and 64
+users at once, compares every answer token for token with the frozen single-user no-MTP answers the 2026-10-04
+campaign used (compare-ladder-oracles.py's compare_rows), and stops that server through `serve.py stop`. Each
+server is started once; nothing is retried; no server is left running. Results: <out>/multi-user/summary.json.
+
+usage: run-fp8-tp2-acceptance-session.py --commit <sha> --out /mnt/fast-ai/bench-results/<new dir> [--multi-user]
 """
 import argparse
 import datetime as dt
+import fcntl
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
 import re
 import shutil
+import signal
 import socket
 import subprocess
 import sys
@@ -37,6 +49,16 @@ PINNED = ['packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py',
           'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_verify_rows-0.1.0.dist-info/entry_points.txt',
           'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_allgather_allreduce.py',
           'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_allgather_allreduce-0.1.0.dist-info/entry_points.txt',
+          'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_chunked_upload.py',
+          'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_chunked_upload-0.1.0.dist-info/entry_points.txt',
+          'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_exclusive_prefill.py',
+          'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_exclusive_prefill-0.1.0.dist-info/entry_points.txt',
+          'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_decode_per_seq.py',
+          'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_decode_per_seq-0.1.0.dist-info/entry_points.txt',
+          'scripts/bench-openai-concurrency-oracle.py',
+          'experiments/qwen38-27b-b70/scripts/compare-ladder-oracles.py',
+          'experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json',
+          'experiments/qwen38-27b-b70/data/2026-10-04-fp8-multiuser/long-prompt-suite.json',
           'packages/qwen38-27b-fp8-tp2-b70/package.json',
           'packages/qwen38-27b-fp8-tp2-b70/compose.yaml',
           'experiments/qwen38-27b-b70/scripts/check-fp8-practical-session.py',
@@ -116,10 +138,243 @@ def listening(port):
             return True
 
 
+# ---------------------------------------------------------------------------------------------------------------
+# Optional multi-user stage (--multi-user). Same client, suites, request settings and frozen references as the
+# 2026-10-04 research campaign (run-20261004-fp8-multiuser-campaign.py: R.LADDER, R.LADDER_SUITE and the arguments
+# of its `oracle`/long-suite calls; REF_LADDER; LONG_REF), so a pass here means what "exact" meant there
+# (notes/2026-10-04-fp8-multiuser-prereg.md): every answer, in BOTH passes, at 16, 32 and 64 users, equal token
+# for token to the frozen single-user no-MTP answer. Totals are recorded, never gated.
+MULTI_USER_PROFILE = 'multi-user'
+MULTI_USER_LEVELS = (16, 32, 64)
+MULTI_USER_REPEATS = 2
+MULTI_USER_DIR = 'multi-user'
+LADDER = 'scripts/bench-openai-concurrency-oracle.py'
+COMPARE_LADDER = 'experiments/qwen38-27b-b70/scripts/compare-ladder-oracles.py'
+STAGE_LOCK = Path('/tmp/qwen-short-prefill-stage.lock')  # held by every FP8 launcher while it owns a server
+MULTI_USER_SUITES = {
+    # 64 short chat prompts. Reference: the comm-2 campaign's two-card no-MTP server (R310, allgather overlay),
+    # one request at a time -- the campaign's REF_LADDER ("frozen single-user no-MTP answers").
+    'short': {'suite': 'experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json',
+              'reference': Path('/mnt/fast-ai/bench-results/fp8-comm2-20260917/tp2-ag-mtp0-ladder.json'),
+              'reference_sha256': '843ef0c2e053f03deb94b74390b3df5bdddde2fd0ef6e44e3a0fa3758ecc1878',
+              'request_timeout': 1800, 'client_timeout': 5400},
+    # 2K-8K-token prompts. Reference: the one-request-at-a-time pass of the 2026-10-04 64-user run, no speculation
+    # -- the campaign's LONG_REF (no older single-user answers exist for these prompts).
+    'long': {'suite': 'experiments/qwen38-27b-b70/data/2026-10-04-fp8-multiuser/long-prompt-suite.json',
+             'reference': Path('/mnt/fast-ai/bench-results/fp8-multiuser-three-s64-20261004/'
+                               'tp2-pure-faseq-head4-mtp0-s64-long-concurrency.json'),
+             'reference_sha256': '680167246a80d7f95f07d5b79c582ea07a6523a05e5b8825c97eb82e1e5e31dc',
+             'request_timeout': 3600, 'client_timeout': 7200},
+}
+
+
+def load_compare(source_dir):
+    """compare-ladder-oracles.py as a module: its compare_rows is the campaign's token-for-token comparator."""
+    spec = importlib.util.spec_from_file_location('compare_ladder_oracles', Path(source_dir) / COMPARE_LADDER)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def multi_user_client_argv(source_dir, key, base_url, out_path):
+    """The campaign's client call: one sequential pass, then 16, 32 and 64 requests at once, twice."""
+    suite = MULTI_USER_SUITES[key]
+    return [sys.executable, Path(source_dir) / LADDER, '--base-url', base_url, '--model', MODEL_NAME,
+            '--api-mode', 'completions', '--suite', Path(source_dir) / suite['suite'],
+            '--concurrency', ','.join(str(n) for n in MULTI_USER_LEVELS), '--repeats', str(MULTI_USER_REPEATS),
+            '--max-tokens', '128', '--seed', '42', '--timeout', str(suite['request_timeout']), '--return-token-ids',
+            '--out', out_path]
+
+
+def suite_result(ladder, reference, compare_rows):
+    """Every answer of one client run (its sequential pass and each batch) against the frozen single-user answers.
+
+    Recomputed from token ids, so the collector can run it again from the packet alone. JSON-native values only:
+    the collector compares this with the frozen summary.json.
+    """
+    ref = {row['prompt_id']: row for row in reference['oracle']['rows']}
+
+    def divergences(mismatches):
+        return [[m['prompt_id'], m.get('first_divergence', m.get('reason'))] for m in mismatches][:8]
+    exact, mismatches = compare_rows(ladder['oracle']['rows'], ref)
+    sequential = {'answers': len(ladder['oracle']['rows']), 'reference_answers': len(ref), 'exact_vs_reference': exact,
+                  'cache_zero': ladder['oracle'].get('cached_tokens_all_zero') is True,
+                  'first_divergences': divergences(mismatches)}
+    passes = []
+    for batch in ladder.get('batches', []):
+        exact, mismatches = compare_rows(batch['rows'], ref)
+        rate = batch.get('aggregate_tok_s_wall')
+        passes.append({'users': batch['concurrency'], 'repeat': batch['repeat'], 'answers': len(batch['rows']),
+                       'exact_vs_reference': exact, 'exact_vs_own_solo': batch.get('oracle_exact_count'),
+                       'tok_s_together': round(rate, 2) if isinstance(rate, (int, float)) else None,
+                       'generated_tokens': batch.get('total_completion_tokens'), 'elapsed_s': batch.get('elapsed_s'),
+                       'cache_zero': batch.get('cached_tokens_all_zero') is True,
+                       'first_divergences': divergences(mismatches)})
+    passes.sort(key=lambda p: (p['users'], p['repeat']))
+    expected = sorted([u, r] for u in MULTI_USER_LEVELS for r in range(1, MULTI_USER_REPEATS + 1))
+    passed = (sequential['answers'] == sequential['reference_answers'] == sequential['exact_vs_reference'] > 0
+              and sequential['cache_zero'] and [[p['users'], p['repeat']] for p in passes] == expected
+              and all(p['answers'] == p['users'] == p['exact_vs_reference'] == p['exact_vs_own_solo'] and p['cache_zero']
+                      for p in passes))
+    return {'passed': passed, 'sequential': sequential, 'passes': passes}
+
+
+def cards_free(port):
+    """(free, reason): the port, the render nodes and the launchers' stage lock, as serve.py's start will see them.
+
+    The port probe binds without SO_REUSEADDR, exactly like serve.py's check_available, so a just-stopped server's
+    socket in TIME_WAIT counts as busy here too (a start inside that window fails with Errno 98).
+    """
+    if listening(port):
+        return False, f'port {port} is still bound'
+    nodes = sorted(Path('/dev/dri').glob('renderD*'))
+    busy = subprocess.run(['fuser', *map(str, nodes)], capture_output=True, text=True)
+    if busy.returncode != 1 or busy.stdout.strip():
+        return False, 'a render device is open'
+    with STAGE_LOCK.open('a') as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            fcntl.flock(lock, fcntl.LOCK_UN)
+        except BlockingIOError:
+            return False, 'the stage lock is held'
+    return True, 'free'
+
+
+def wait_cards_free(port, timeout=300, probe=cards_free, clock=time.monotonic, sleep=time.sleep):
+    """Bounded wait for the previous server's teardown; one answer, no retry of anything else."""
+    deadline = clock() + timeout
+    while True:
+        free, reason = probe(port)
+        if free or clock() >= deadline:
+            return free, reason
+        sleep(5)
+
+
+def wait_ready(session, helper, timeout, clock=time.monotonic, sleep=time.sleep):
+    """The launcher's state receipt once it says ready/failed/stopped, or once the helper exits or time runs out."""
+    deadline = clock() + timeout
+    state = {}
+    while clock() < deadline:
+        if (session / 'state.json').exists():
+            state = json.loads((session / 'state.json').read_text())
+            if state.get('status') in ('ready', 'failed', 'stopped'):
+                break
+        if helper.poll() is not None:
+            break
+        sleep(5)
+    return state
+
+
+def run_multi_user(source_dir, out, say, sh, popen=subprocess.Popen, ready_timeout=1900, free_timeout=300):
+    """The multi-user stage: one `multi-user` server through the downloaded package launcher, both suites, one stop.
+
+    Returns 0 when every answer at every level in both passes of both suites equals the frozen single-user answer
+    and the server stopped cleanly; 1 when it ran and did not; a short string when it could not start. Writes
+    <out>/multi-user/summary.json in every case. Never leaves the server running: the stop is in a `finally`.
+    """
+    stage = out / MULTI_USER_DIR
+    stage.mkdir()
+    serve = Path(source_dir) / 'packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py'
+    summary = {'schema': 'neural.download.fp8-tp2-multi-user-stage.v1', 'profile': MULTI_USER_PROFILE,
+               'users': list(MULTI_USER_LEVELS), 'repeats': MULTI_USER_REPEATS, 'started_at': now(), 'ran': False,
+               'passed': False, 'rcs': {}, 'references': {}, 'suites': {}, 'speed_gated': False}
+    rcs = summary['rcs']
+
+    def finish(result):
+        summary['finished_at'] = now()
+        dump(stage / 'summary.json', summary)
+        return result
+
+    for key, suite in MULTI_USER_SUITES.items():
+        body = suite['reference'].read_bytes() if suite['reference'].exists() else b''
+        summary['references'][key] = {'path': str(suite['reference']), 'sha256': sha(body),
+                                      'expected_sha256': suite['reference_sha256']}
+    bad = sorted(k for k, r in summary['references'].items() if r['sha256'] != r['expected_sha256'])
+    if bad:
+        summary['reason'] = f'frozen single-user reference missing or changed: {bad}; no server started'
+        say(f'multi-user: {summary["reason"]}')
+        return finish('reference missing')
+    free, reason = wait_cards_free(PORT, timeout=free_timeout)
+    if not free:
+        summary['reason'] = f'cards not free after the first server: {reason}; no server started'
+        say(f'multi-user: {summary["reason"]}')
+        return finish('cards not free')
+
+    session = stage / 'session'
+
+    def serve_status(name):
+        result = subprocess.run([sys.executable, str(serve), 'status', '--state-dir', str(session)], capture_output=True,
+                                text=True, cwd=source_dir)
+        (stage / f'{name}.json').write_text(result.stdout if result.returncode == 0 else json.dumps({'error': result.stderr}))
+
+    with (stage / 'helper.stdout').open('w') as helper_out:
+        helper = popen([sys.executable, str(serve), 'start', '--profile', MULTI_USER_PROFILE, '--model-dir', str(MODEL),
+                        '--state-dir', str(session), '--port', str(PORT)], cwd=source_dir, stdout=helper_out,
+                       stderr=subprocess.STDOUT)
+        state = {}
+        try:
+            state = wait_ready(session, helper, ready_timeout)
+            summary['server'] = {k: state.get(k) for k in ('status', 'error', 'ready_at', 'container_id', 'profile')}
+            say(f'multi-user helper: {state.get("status")} {state.get("error") or ""}')
+            if state.get('status') == 'ready':
+                summary['ran'] = True
+                serve_status('status-ready')
+                for key, suite in MULTI_USER_SUITES.items():
+                    argv = multi_user_client_argv(source_dir, key, f'http://127.0.0.1:{PORT}', stage / f'{key}-ladder.json')
+                    try:
+                        rcs[f'{key}_client'] = sh(argv, stage / f'{key}-ladder.stdout', cwd=source_dir,
+                                                  timeout=suite['client_timeout'])
+                    except subprocess.TimeoutExpired:
+                        rcs[f'{key}_client'] = 'timeout'
+                        say(f'multi-user {key}: client timed out after {suite["client_timeout"]} s')
+                serve_status('status-after-requests')
+                dump(stage / 'cgroup-memory.json', cgroup_memory(state.get('container_id') or ''))
+        finally:
+            if state.get('status') == 'ready':
+                try:
+                    rcs['stop'] = sh([sys.executable, serve, 'stop', '--state-dir', session], stage / 'stop.stdout',
+                                     cwd=source_dir, timeout=120)
+                except subprocess.TimeoutExpired:
+                    rcs['stop'] = 'timeout'
+            elif helper.poll() is None:
+                helper.send_signal(signal.SIGINT)  # the launcher's own graceful Ctrl+C path; it stops what it owns
+                rcs['stop'] = 'interrupt'
+            try:
+                helper.wait(timeout=180)
+                rcs['helper'] = helper.returncode
+            except subprocess.TimeoutExpired:
+                rcs['helper'] = 'still running'
+    serve_status('status-stopped')
+    final = json.loads((session / 'state.json').read_text()) if (session / 'state.json').exists() else {}
+    summary.setdefault('server', {})['final_status'] = final.get('status')
+    if summary['ran']:
+        compare = load_compare(source_dir)
+        for key, suite in MULTI_USER_SUITES.items():
+            ladder = stage / f'{key}-ladder.json'
+            if ladder.exists():
+                try:
+                    summary['suites'][key] = suite_result(json.loads(ladder.read_text()),
+                                                          json.loads(suite['reference'].read_text()), compare.compare_rows)
+                except (ValueError, KeyError, TypeError) as exc:
+                    summary['suites'][key] = {'passed': False, 'reason': f'unreadable client output: {exc!r}'}
+            else:
+                summary['suites'][key] = {'passed': False, 'reason': 'no client output'}
+            for row in summary['suites'][key].get('passes', []):
+                say(f"multi-user {key}: {row['users']} users, pass {row['repeat']}: {row['exact_vs_reference']}/{row['answers']} "
+                    f"equal to the single-user answers, {row['tok_s_together']} tok/s together")
+    summary['passed'] = (summary['ran'] and set(summary['suites']) == set(MULTI_USER_SUITES)
+                         and all(s['passed'] for s in summary['suites'].values())
+                         and all(rcs.get(f'{k}_client') == 0 for k in MULTI_USER_SUITES)
+                         and rcs.get('stop') == 0 and rcs.get('helper') == 0 and final.get('status') == 'stopped')
+    say(f"multi-user stage: {'PASSED, every answer exact' if summary['passed'] else 'NOT passed'}; rcs {rcs}")
+    return finish(0 if summary['passed'] else 1)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--commit', required=True)
     ap.add_argument('--out', type=Path, required=True)
+    ap.add_argument('--multi-user', action='store_true', help='after the single-user gates, also run the multi-user profile stage')
     a = ap.parse_args()
     out = a.out.resolve()
     out.mkdir(parents=True, exist_ok=False)
@@ -227,6 +482,8 @@ def main():
         rcs['helper'] = 'still running'
     helper_out.close()
     status('status-stopped')
+    if a.multi_user:  # second server, the `multi-user` profile; starts only once the first one's teardown is complete
+        rcs['multi_user'] = run_multi_user(source_dir, out, say, sh)
 
     # 7. postflight
     rcs['postflight'] = sh(['bash', HEALTH], health / 'postflight.log', env={'PYTHON': str(XPU_PYTHON)}, timeout=1200)

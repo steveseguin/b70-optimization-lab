@@ -18,28 +18,37 @@
     {
       "path": "experiments/qwen38-27b-b70/scripts/collect-fp8-tp2-acceptance-evidence.py",
       "frozen_sha256": "083adddb9834e48b0cfb62e0ea8e1131122757f0482b6bceb1d3a8a25339f38a",
-      "current_sha256": "3d0074971846a0a74230803f6566c136fbb4050ca51e33991a7d45a514f495c1",
+      "current_sha256": "c9b8bcf45778efef83461532a4e8306d563b2b87d5fb71d49db197d7562f8182",
       "acceptance": "pending",
-      "reason": "Register two shared narrow CPU source-drift proofs. Every existing top-level function/class remains byte-identical, including derive, check_sources, freeze and verify. No frozen outcome or hash is rewritten.",
-      "retire_by": "A separately authorized fresh acceptance packet with the new exact source identity; do not rewrite this historical packet.",
+      "reason": "Register two shared narrow CPU source-drift proofs (2026-10-07, commit 7e7206158), then add the optional multi-user stage (2026-10-07): new pins in SOURCE_PATHS, a new derive_multi_user, and inserted lines in derive (one gate and one summary section, added only when the packet holds run/multi-user/), collect (copies the two frozen single-user reference files) and verify (one report line). Purely additive: every other top-level definition is byte-identical to the frozen copy and the four named ones only gained lines, so this packet (which has no run/multi-user/) derives exactly the summary it froze. No frozen outcome or hash is rewritten.",
+      "retire_by": "A separately authorized fresh acceptance packet with the new exact source identity (run with --multi-user); do not rewrite this historical packet.",
       "proof": {
-        "kind": "unchanged_definitions",
-        "definitions": [
-          "digest",
-          "dump",
-          "load_module",
-          "definitions",
-          "segments",
-          "prove_docker_argv",
-          "prove_unchanged",
-          "prove_additive",
-          "check_sources",
+        "kind": "additive",
+        "additive": [
+          "SOURCE_PATHS",
           "derive",
           "collect",
           "verify"
         ]
       },
-      "change": "Register two shared narrow CPU source-drift proofs. Every existing top-level function/class remains byte-identical, including derive, check_sources, freeze and verify. No frozen outcome or hash is rewritten.",
+      "change": "Shared source-drift proofs registered; optional multi-user stage added (derive_multi_user; inserted lines only in SOURCE_PATHS, derive, collect and verify). The twelve existing gates are unchanged.",
+      "declared": "2026-10-07"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/scripts/run-fp8-tp2-acceptance-session.py",
+      "frozen_sha256": "6166d09fbf9923ede457f7202f2c1ad34865f6417acde522aeea0383e490052a",
+      "current_sha256": "5a86acb186dffcbdf7fe5c8ffee87387265a2d1cd4df1412a846f1faf6748ce5",
+      "acceptance": "pending",
+      "reason": "Adds the optional --multi-user stage (the package's multi-user profile at 16/32/64 users vs the frozen single-user answers). Purely additive: PINNED gains ten entries and main gains the flag and one guarded call, both by inserted lines only; every other top-level definition is byte-identical; the new stage runs only with --multi-user, so the measured single-user path is unchanged.",
+      "retire_by": "A separately authorized fresh acceptance packet with the new exact source identity (run with --multi-user); do not rewrite this historical packet.",
+      "proof": {
+        "kind": "additive",
+        "additive": [
+          "PINNED",
+          "main"
+        ]
+      },
+      "change": "Optional --multi-user stage added (new functions; inserted lines only in PINNED and main).",
       "declared": "2026-10-07"
     },
     {

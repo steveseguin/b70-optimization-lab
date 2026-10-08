@@ -10,6 +10,16 @@ bytes of every source file involved, so `verify` recomputes all gates from the a
 caught. When it moves for a reason that has nothing to do with the measured result, the honest answer is neither
 to re-freeze the packet from bytes that never ran nor to drop the pin: it is to declare the drift in the packet's
 source-drift.json and prove, offline, that the change is exactly what is declared. See `check_sources`.
+
+Multi-user stage (2026-10-07). When the session ran with `--multi-user`, the raw directory holds `multi-user/`
+(the `multi-user` profile's server receipts, both client outputs and the session's summary). `collect` then also
+freezes the two frozen single-user no-MTP reference files the stage was compared with (reference/multi-user/), and
+`derive` adds one gate, `multi_user_exact_16_32_64_both_passes`, plus a `multi_user` section with the totals
+(tok/s together) and exact counts per level and pass, all recomputed from token ids by `derive_multi_user`. A packet
+without that directory derives exactly what it did before; none of the twelve existing gates changed.
+
+Before collecting a NEW packet, repoint DEFAULT at it (the packet pins this file's own bytes, so the edit must come
+first; see notes/2026-10-07-multi-user-profile-acceptance-plan.md) and set QUALIFIED_CONTAINER as for the session.
 """
 import argparse
 import ast
@@ -40,6 +50,14 @@ SOURCE_PATHS = ['packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py',
                 'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_verify_rows.py',
                 'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_allgather_allreduce.py',
                 'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_chunked_upload.py',
+                'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_exclusive_prefill.py',
+                'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_exclusive_prefill-0.1.0.dist-info/entry_points.txt',
+                'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_decode_per_seq.py',
+                'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_decode_per_seq-0.1.0.dist-info/entry_points.txt',
+                'scripts/bench-openai-concurrency-oracle.py',
+                'experiments/qwen38-27b-b70/scripts/compare-ladder-oracles.py',
+                'experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json',
+                'experiments/qwen38-27b-b70/data/2026-10-04-fp8-multiuser/long-prompt-suite.json',
                 'experiments/qwen38-27b-b70/scripts/check-fp8-practical-session.py',
                 'experiments/qwen38-27b-b70/scripts/collect-fp8-tp2-acceptance-evidence.py',
                 'experiments/qwen38-27b-b70/scripts/run-fp8-tp2-acceptance-session.py',
@@ -250,9 +268,13 @@ def derive(files):
         'post_stop_absent': not get('run/status-stopped.json')['container_present'] and not get('run/status-stopped.json')['api_healthy'],
         'pre_post_health': health['preflight_rc'] == health['postflight_rc'] == 0 and health['gpu_faults'] == [],
     }
+    multi_user = derive_multi_user(files) if MULTI_USER_RAW + 'summary.json' in files else None  # only with --multi-user
+    if multi_user is not None:
+        gates['multi_user_exact_16_32_64_both_passes'] = multi_user['passed']
     return {'schema': 'neural.download.fp8-tp2-acceptance-result.v1', 'passed': all(gates.values()), 'gates': gates,
             'public_source_commit': source['commit'], 'public_source_archive_sha256': source['archive_sha256'],
             'configuration': CONFIGURATION,
+            **({'multi_user': multi_user} if multi_user is not None else {}),
             'strict': {'no_mtp_reference_exact': exact, 'requests': len(right), 'decode_tokens_s': speed,
                        'no_mtp_reference_decode_tokens_s': reference_speed, 'speedup_vs_no_mtp': speed / reference_speed,
                        'interpretation': os.environ.get('FIRST_SERVER_NOTE', 'second fresh depth-5 server of the two-run pair (the first is the comm-2 campaign tp2-ag-mtp5 stage, 2026-09-17, allgather allreduce overlay); outputs identical to the same-image no-MTP reference')},
@@ -261,6 +283,85 @@ def derive(files):
             'limits': ['one configured lab host; existing hash-verified model files and Docker layers reused',
                        'clean source/state directories, not clean driver installation or independent-host replay',
                        'three supplied chat tasks, not long-context retrieval quality or a prolonged soak']}
+
+
+MULTI_USER_RAW = 'run/multi-user/'
+MULTI_USER_REFERENCE = 'reference/multi-user/'
+SESSION_RUNNER = 'experiments/qwen38-27b-b70/scripts/run-fp8-tp2-acceptance-session.py'
+LADDER_COMPARATOR = 'experiments/qwen38-27b-b70/scripts/compare-ladder-oracles.py'
+LAUNCHER = 'packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py'
+MULTI_USER_DOWNLOADED_MUST_MATCH = (LAUNCHER,
+                                    'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_exclusive_prefill.py',
+                                    'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_decode_per_seq.py',
+                                    'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_chunked_upload.py',
+                                    'scripts/bench-openai-concurrency-oracle.py', LADDER_COMPARATOR)
+
+
+def load_frozen_module(name, source, relpath):
+    """load_module for a script that derives ROOT from its own location: it is placed at its repository-relative path
+    under a scratch root first, so `Path(__file__).resolve().parents[N]` resolves (to the scratch root)."""
+    with tempfile.TemporaryDirectory() as root:
+        path = Path(root) / relpath
+        path.parent.mkdir(parents=True)
+        path.write_bytes(source)
+        spec = importlib.util.spec_from_file_location(name, path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+
+def derive_multi_user(files):
+    """The `--multi-user` stage, recomputed from the packet alone. Speed is recorded, never gated.
+
+    The session runner, the comparator and the launcher are loaded from the packet's own frozen bytes, so the
+    levels, references and argv checked are the ones that ran. Exact means: the multi-user server's sequential pass
+    and both passes at 16, 32 and 64 users are token-for-token equal to the frozen single-user no-MTP answers, on
+    the short ladder suite and on the long-prompt suite (runner.suite_result).
+    """
+    def get(name): return json.loads(files[name])
+    try:
+        runner = load_frozen_module('frozen_acceptance_session', files['source/' + SESSION_RUNNER], SESSION_RUNNER)
+        compare = load_module('frozen_compare_ladder_oracles', files['source/' + LADDER_COMPARATOR])
+        launcher = load_module('frozen_launcher_multi_user', files['source/' + LAUNCHER])
+        stage = get(MULTI_USER_RAW + 'summary.json')
+        suites, references = {}, {}
+        for key, suite in runner.MULTI_USER_SUITES.items():
+            reference = files[MULTI_USER_REFERENCE + f'{key}-ladder.json']
+            references[key] = {'sha256': digest(reference), 'frozen_at': str(suite['reference'])}
+            suites[key] = runner.suite_result(get(MULTI_USER_RAW + f'{key}-ladder.json'), json.loads(reference), compare.compare_rows)
+        state = get(MULTI_USER_RAW + 'session/state.json')
+        actual = get(MULTI_USER_RAW + 'session/container-inspect.json')
+        stop = get(MULTI_USER_RAW + 'session/stop-request.json')
+        launch = get(MULTI_USER_RAW + 'session/launch.json')
+        stopped = get(MULTI_USER_RAW + 'status-stopped.json')
+        expected = launcher.docker_argv(runner.MULTI_USER_PROFILE, Path(state['model_dir']), Path(state['state_dir']),
+                                        state['port'], state['container_name'])
+        at = expected.index(launcher.IMAGE)
+        command = actual['Config']['Cmd']
+        launcher_env = {expected[i + 1] for i in range(at) if expected[i] == '--env'}
+        gates = {
+            'references_are_the_frozen_single_user_answers': all(references[k]['sha256'] == s['reference_sha256'] for k, s in runner.MULTI_USER_SUITES.items()),
+            'short_suite_exact_all_levels_both_passes': suites['short']['passed'],
+            'long_suite_exact_all_levels_both_passes': suites['long']['passed'],
+            'launched_multi_user_profile': (state.get('profile') == runner.MULTI_USER_PROFILE and launch['argv'] == expected
+                                            and command == expected[at + 1:] and launcher_env <= set(actual['Config']['Env'])
+                                            and '--speculative-config' not in command and '--no-enable-prefix-caching' in command
+                                            and command[command.index('--max-num-seqs') + 1] == str(max(runner.MULTI_USER_LEVELS))),
+            'image': state.get('image_id') == EXPECTED_IMAGE and actual['Image'] == state.get('local_image_id', EXPECTED_IMAGE),
+            'owned_clean_stop': (bool(re.fullmatch('[0-9a-f]{64}', state.get('container_id') or '')) and state['container_id'] == actual['Id'] == stop['container_id']
+                                 and state['container_name'] == actual['Name'].lstrip('/') and state['status'] == 'stopped'
+                                 and not state.get('error') and stop.get('requested') is True),
+            'post_stop_absent': not stopped['container_present'] and not stopped['api_healthy'],
+            'downloaded_sources_match': all(files.get('downloaded-source/' + p) == files['source/' + p] for p in MULTI_USER_DOWNLOADED_MUST_MATCH),
+            'session_summary_agrees': stage.get('passed') is True and stage.get('suites') == suites,
+        }
+    except (KeyError, ValueError, TypeError, IndexError, AttributeError) as exc:
+        return {'passed': False, 'error': f'multi-user stage incomplete or unreadable: {exc!r}'}
+    return {'passed': all(gates.values()), 'gates': gates, 'profile': runner.MULTI_USER_PROFILE,
+            'users': list(runner.MULTI_USER_LEVELS), 'repeats': runner.MULTI_USER_REPEATS, 'references': references,
+            'suites': suites, 'speed_gated': False,
+            'interpretation': 'tok_s_together is generated tokens of one batch over its wall time (all users at once); '
+                              'exact counts are against the frozen single-user no-MTP answers of the 2026-10-04 campaign'}
 
 
 def collect(raw, out):
@@ -275,6 +376,8 @@ def collect(raw, out):
     for name in ('performance.json', 'canaries.json', 'campaign-identity.json'):
         files['reference/strict/' + name] = (REFERENCE_STRICT / name).read_bytes()
     files['reference/qualified/container-inspect.json'] = QUALIFIED_CONTAINER.read_bytes()
+    for key, row in (json.loads((raw / 'multi-user/summary.json').read_text())['references'].items() if (raw / 'multi-user/summary.json').exists() else ()):
+        files[MULTI_USER_REFERENCE + f'{key}-ladder.json'] = Path(row['path']).read_bytes()  # derive_multi_user checks the digest
     sources = []
     for name in SOURCE_PATHS:
         body = (ROOT / name).read_bytes(); files['source/' + name] = body; sources.append({'path': name, 'sha256': digest(body)})
@@ -311,6 +414,8 @@ def verify(out):
     summary = derive(files); assert summary == json.loads((out / 'summary.json').read_text())
     assert summary['passed'], summary['gates']
     print(f"FP8 two-card acceptance evidence verified: {len(files)} files, strict 12/12 vs no-MTP, practical 6/6, owned clean stop")
+    for key, suite in (summary.get('multi_user') or {}).get('suites', {}).items():
+        print(f'  multi-user, {key} prompts: ' + '; '.join(f"{p['users']} users pass {p['repeat']} {p['exact_vs_reference']}/{p['answers']} exact, {p['tok_s_together']} tok/s together" for p in suite['passes']))
     for entry in pending:
         print(f"  ACCEPTANCE PENDING  {entry['path']}: {entry['change']} (declared {entry['declared']}); "
               f"the gates above were measured on the previous bytes. Retire with: {entry['retire_by']}")
