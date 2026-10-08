@@ -462,6 +462,9 @@ def format_table(prediction):
     value = prediction['illustrative_host_peak_bytes']
     lines.append(f'{"Sensitivity peak (unqualified allowances)":43} {value:16,d} {value/1e9:10.6f} {value/GIB:10.6f}')
     lines.append(f'Qualified Hpred: {prediction["host_peak_bytes"]!r}; status: {prediction["status"]}')
+    historical = (prediction.get('calibration') or {}).get('certified_host_peak_lower_bound_bytes')
+    if historical is not None:
+        lines.append(f'Rescued A367: measured host-pressure increase {historical/1e9:.6f} GB (historical whole-host peak lower bound, not a V30 bound).')
     for rank, lower in enumerate(prediction['vram_static_lower_bound_bytes_per_rank']):
         lines.append(f'Rank {rank}: static VRAM LOWER bound {lower/GIB:.6f} GiB; complete Vpeak/reserve UNKNOWN')
     if prediction.get('candidate_table'):

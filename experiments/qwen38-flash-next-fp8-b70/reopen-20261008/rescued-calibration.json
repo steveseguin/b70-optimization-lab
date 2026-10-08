@@ -1,0 +1,178 @@
+{
+  "schema": "screen1b.rescued-calibration.v1",
+  "rescue_root": "/home/steve/git-archives/flash-next-rescue-20261007",
+  "rescue_file_count": 121,
+  "runs": {
+    "A367": {
+      "samples": 1241,
+      "first_available_bytes": 132425543680,
+      "minimum_available_bytes": 16555667456,
+      "minimum_timestamp": "2026-09-13T00:11:42,504265793-04:00",
+      "last_available_bytes": 130026037248,
+      "pressure_increase_from_first_sample_bytes": 115869876224,
+      "whole_host_peak_lower_bound_bytes": 115869876224,
+      "definition": "MemAvailable(first)-min(MemAvailable); whole-host change, not worker RSS. Absolute peak unknown without historical MemTotal.",
+      "source": "/home/steve/git-archives/flash-next-rescue-20261007/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-4352-ple-only-r1-attempt367-supervisor/host-pressure.tsv",
+      "source_sha256": "683f7a9888f71e4c734c18a24741453ce8be5774c728d0903eccc6d1a65e669e",
+      "local_copy": "evidence/a367-host-pressure.tsv",
+      "worker_rss_bytes": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "measured_pinned_bytes": null,
+      "loaded_model_reported_gib_per_rank": [
+        29.57,
+        29.37,
+        29.54,
+        29.38
+      ],
+      "complete_vram_peak_bytes_per_rank": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "server_log_sha256": "18cd6ccc5727b1572a6f1cc90735fb1ff1254b6e657711b2f2f176c0df2f69c1",
+      "allocation_log_lines": [
+        "(Worker_TP3_EP3 pid=6797) INFO 09-13 00:02:11 [model_runner.py:426] Model loading took 29.38 GiB memory and 687.688188 seconds",
+        "(Worker_TP0_EP0 pid=6215) INFO 09-13 00:02:11 [model_runner.py:426] Model loading took 29.57 GiB memory and 688.182548 seconds",
+        "(Worker_TP2_EP2 pid=6610) INFO 09-13 00:02:11 [model_runner.py:426] Model loading took 29.54 GiB memory and 688.363632 seconds",
+        "(Worker_TP1_EP1 pid=6370) INFO 09-13 00:02:11 [model_runner.py:426] Model loading took 29.37 GiB memory and 688.365001 seconds"
+      ],
+      "allocation_scope": "rounded runtime allocation delta; excludes complete KV/graph/driver peak",
+      "idle_vram_snapshots": {
+        "/home/steve/git-archives/flash-next-rescue-20261007/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-4352-ple-only-r1-attempt367/xpu-stats-0.json": {
+          "sha256": "20be4edb8861ec324883af98ebf27f67c8788d5cbb442d168d0fdad146dc7291",
+          "memory_used_reported": 44.796875,
+          "memory_utilization_percent": 0.13
+        },
+        "/home/steve/git-archives/flash-next-rescue-20261007/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-4352-ple-only-r1-attempt367/xpu-stats-1.json": {
+          "sha256": "8b7e2b9006643c371fc064a18c7d2b87cdc2de0745e91763a101c25a6eb1eb7f",
+          "memory_used_reported": 44.78125,
+          "memory_utilization_percent": 0.13
+        },
+        "/home/steve/git-archives/flash-next-rescue-20261007/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-4352-ple-only-r1-attempt367/xpu-stats-2.json": {
+          "sha256": "47c3b5ab670bfa353caee9b6df2a20df8a5a594c2048bcc3898dbdc058b24cba",
+          "memory_used_reported": 44.78125,
+          "memory_utilization_percent": 0.13
+        },
+        "/home/steve/git-archives/flash-next-rescue-20261007/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-4352-ple-only-r1-attempt367/xpu-stats-3.json": {
+          "sha256": "11d39831f7990017a2f79ac6efa88ad56424c9b501261a4cf67b0522bae542c7",
+          "memory_used_reported": 44.78125,
+          "memory_utilization_percent": 0.13
+        },
+        "/home/steve/git-archives/flash-next-rescue-20261007/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-4352-ple-only-r1-attempt367-supervisor/xpu-stats-0.json": {
+          "sha256": "527215a98d7544960ebee7927870869fee17a7de4f0e77c71a075356a5986eeb",
+          "memory_used_reported": 44.7890625,
+          "memory_utilization_percent": 0.13
+        },
+        "/home/steve/git-archives/flash-next-rescue-20261007/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-4352-ple-only-r1-attempt367-supervisor/xpu-stats-1.json": {
+          "sha256": "67ebd9e0b0c0c8da739629515028b8b1dcbe1cde1648191f5d7005569aa55a1d",
+          "memory_used_reported": 44.78125,
+          "memory_utilization_percent": 0.13
+        },
+        "/home/steve/git-archives/flash-next-rescue-20261007/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-4352-ple-only-r1-attempt367-supervisor/xpu-stats-2.json": {
+          "sha256": "7f5d238a0868b153d6706ff86e628f3b273f79539517b309d96ce719472e67f3",
+          "memory_used_reported": 44.78125,
+          "memory_utilization_percent": 0.13
+        },
+        "/home/steve/git-archives/flash-next-rescue-20261007/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-4352-ple-only-r1-attempt367-supervisor/xpu-stats-3.json": {
+          "sha256": "9efb9c09cc697c689e4488b4173645dbcc956cd10d7c349afd669b5cb5ada0b3",
+          "memory_used_reported": 44.78125,
+          "memory_utilization_percent": 0.13
+        }
+      },
+      "same_certified_4352_configuration": true
+    },
+    "A394": {
+      "samples": 1737,
+      "first_available_bytes": 130361491456,
+      "minimum_available_bytes": 8300126208,
+      "minimum_timestamp": "2026-09-13T14:30:47,026588123-04:00",
+      "last_available_bytes": 129983614976,
+      "pressure_increase_from_first_sample_bytes": 122061365248,
+      "whole_host_peak_lower_bound_bytes": 122061365248,
+      "definition": "MemAvailable(first)-min(MemAvailable); whole-host change, not worker RSS. Absolute peak unknown without historical MemTotal.",
+      "source": "/home/steve/git-archives/flash-next-rescue-20261007/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-33280-ple-only-r1-attempt394-supervisor/host-pressure.tsv",
+      "source_sha256": "08182e5556d34cca87427e47ec932954845d3b83be4ca74e508241755ebe0e40",
+      "local_copy": "evidence/a394-host-pressure.tsv",
+      "worker_rss_bytes": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "measured_pinned_bytes": null,
+      "loaded_model_reported_gib_per_rank": [
+        28.49,
+        28.33,
+        28.09,
+        28.18
+      ],
+      "complete_vram_peak_bytes_per_rank": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "server_log_sha256": "0a05d167f85ea153c84f74247a0192f5f3de7ec08a7e2d812a850e819dbd70ed",
+      "allocation_log_lines": [
+        "(Worker_TP3_EP3 pid=282489) INFO 09-13 14:14:03 [model_runner.py:426] Model loading took 28.18 GiB memory and 675.099995 seconds",
+        "(Worker_TP0_EP0 pid=281981) INFO 09-13 14:14:03 [model_runner.py:426] Model loading took 28.49 GiB memory and 675.143096 seconds",
+        "(Worker_TP2_EP2 pid=282326) INFO 09-13 14:14:03 [model_runner.py:426] Model loading took 28.09 GiB memory and 675.157643 seconds",
+        "(Worker_TP1_EP1 pid=282146) INFO 09-13 14:14:03 [model_runner.py:426] Model loading took 28.33 GiB memory and 675.175971 seconds"
+      ],
+      "allocation_scope": "rounded runtime allocation delta; excludes complete KV/graph/driver peak",
+      "idle_vram_snapshots": {
+        "/home/steve/git-archives/flash-next-rescue-20261007/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-33280-ple-only-r1-attempt394/xpu-stats-0.json": {
+          "sha256": "3a6d5b42f5a3be4e035a98db88cf359496138490d20aa12dd57c43a4872acdc5",
+          "memory_used_reported": 44.79296875,
+          "memory_utilization_percent": 0.13
+        },
+        "/home/steve/git-archives/flash-next-rescue-20261007/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-33280-ple-only-r1-attempt394/xpu-stats-1.json": {
+          "sha256": "8b37d5195deb91d1e2979527f2c870181078aef9f4a116775e2cfe2218780dc6",
+          "memory_used_reported": 44.78515625,
+          "memory_utilization_percent": 0.13
+        },
+        "/home/steve/git-archives/flash-next-rescue-20261007/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-33280-ple-only-r1-attempt394/xpu-stats-2.json": {
+          "sha256": "5f306b5f1f49995bd0f98ffe1408a6a98bf99a306d5d671869a1da23df7252c8",
+          "memory_used_reported": 44.78515625,
+          "memory_utilization_percent": 0.13
+        },
+        "/home/steve/git-archives/flash-next-rescue-20261007/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-33280-ple-only-r1-attempt394/xpu-stats-3.json": {
+          "sha256": "39b29513a0247fcb8f3076dbf69ba6b13587e5dcf3cf7dc95ceca0801cf834e1",
+          "memory_used_reported": 44.78125,
+          "memory_utilization_percent": 0.13
+        },
+        "/home/steve/git-archives/flash-next-rescue-20261007/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-33280-ple-only-r1-attempt394-supervisor/xpu-stats-0.json": {
+          "sha256": "897677608ce73ba25b234c1afb3c52500aacaeb252f6b1b7b4c41418c3a38636",
+          "memory_used_reported": 44.78515625,
+          "memory_utilization_percent": 0.13
+        },
+        "/home/steve/git-archives/flash-next-rescue-20261007/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-33280-ple-only-r1-attempt394-supervisor/xpu-stats-1.json": {
+          "sha256": "65794aecb0c753a90fc27870c462523150ff1d828786b95c6bbc7fb692640c36",
+          "memory_used_reported": 44.78515625,
+          "memory_utilization_percent": 0.13
+        },
+        "/home/steve/git-archives/flash-next-rescue-20261007/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-33280-ple-only-r1-attempt394-supervisor/xpu-stats-2.json": {
+          "sha256": "b71af5526ed645e036d3a3e66e1cd0bec753712eefe8c90a27d55d230b124028",
+          "memory_used_reported": 44.78125,
+          "memory_utilization_percent": 0.13
+        },
+        "/home/steve/git-archives/flash-next-rescue-20261007/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-33280-ple-only-r1-attempt394-supervisor/xpu-stats-3.json": {
+          "sha256": "d60245f6970272a0170a869cb17d1640ca9f4672f24eec0aadc2a223c3494a7e",
+          "memory_used_reported": 44.78125,
+          "memory_utilization_percent": 0.13
+        }
+      },
+      "same_certified_4352_configuration": false
+    }
+  },
+  "verdict": {
+    "historical_host_calibration": "PARTIAL_MEASURED_PRESSURE_CHANGE",
+    "v30_admitted": false,
+    "reason": "A367 host peak lower bound exceeds 90 GB; old runtime does not calibrate V30 lifetimes. Complete live VRAM reserve and worker RSS unavailable. A394 is a different context/placement."
+  }
+}

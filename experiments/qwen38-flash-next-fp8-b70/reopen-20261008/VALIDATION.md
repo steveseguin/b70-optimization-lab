@@ -1,8 +1,9 @@
 # Screen 1b CPU validation — follow-up, 2026-10-08
 
-**77 CPU tests pass. Memory admission remains REFUSED.** This is a CPU-reviewed
+**99 CPU tests pass (77 existing + 22 calibration tests). Prediction-based
+MTP1 admission remains REFUSED.** This is a CPU-reviewed
 v5 source port and allocation census, not a GPU-fit or exact-output certificate.
-The preceding 67-test packet is superseded by this follow-up.
+The preceding 77-test packet is extended by the load-only calibration mode.
 
 Executed from the repository root:
 
@@ -40,10 +41,11 @@ matched its predicted buffer bytes. The sum of those sequential measurements
 is **63.609487 GB**, not a simultaneous four-rank/server measurement. All locked
 mappings were released. No XPU allocator or driver retention was measured.
 
-The [reconstruction](certified-memory-reconstruction.json) pins the available
-certification sources. Missing raw A364–A367 directories are recorded in
-[the read-only search](certified-run-search.json). Host peak, per-worker RSS
-and per-rank VRAM weights/graph measurements remain null, not invented zeroes.
+The [reconstruction](certified-memory-reconstruction.json) now also pins the
+[rescued calibration](rescued-calibration.json). The initial
+[search](certified-run-search.json) missed the rescue directory. The recovered
+A367 MemAvailable series establishes a 115.869876 GB historical host-pressure
+increase. Absolute host peak, worker RSS and complete VRAM peaks remain unknown.
 The 85.352759 GB result is only the previous 20 GiB allowance applied to the new
 pins, not a calibrated prediction. Both MTP modes and five placement choices
 are enumerated in [CALIBRATION.md](CALIBRATION.md).
@@ -52,5 +54,28 @@ No Docker run/pull/create, server launch, HTTP request, device enumeration,
 GPU execution, installation, secret access, host-setting change, branch or
 commit occurred. The process-local memory cap did not change host settings.
 Port 8188, concurrent LTX files, source checkouts, installed runtimes and prior
-run evidence were untouched. Work remains uncommitted on main; CURRENT.md is
-unchanged because there was no change to live GPU state.
+run evidence were untouched. Work remains uncommitted on main. CURRENT.md records this CPU-only follow-up;
+this work made no change to live GPU state.
+
+
+## Load-only follow-up validation
+
+The 22 new CPU tests cover meminfo kB parsing, missing fields, four synthetic
+worker processes and their container cgroup, byte-valued sysfs VRAM counters,
+missing VRAM, strict 24 GiB/2 GiB threshold boundaries on each rank, one-stop
+watchdog behavior and its 0.5-second interval, separate phase peaks, the exact
+15%/90 GB admission boundary, short/missing plateaus, loading peaks, unknown
+or insufficient reserve, missing worker/cgroup accounting, shutdown failures,
+sampling gaps, sample-hash/configuration binding, and historical pressure
+change parsing. Controller tests prove calibration and MTP1 commands are
+identical, prediction is bypassed only for measurement, one mock launch sends
+only health/models GETs, the watchdog starts first, the plateau lasts 20 seconds,
+and the single SIGINT is followed by verified clean exit, including when
+container visibility briefly delays the stop signal. The privileged-scan
+environment passthrough is mocked; no password file is opened.
+
+The rescued summary was rebuilt on CPU, and `host-memory-prediction.json` was
+regenerated and explicitly rejected again by `enforce_prediction`. Both mode
+previews were run with `--dry-run`. No live sampler, endpoint or load-only
+experiment ran. The original buffer allocation measurement above is historical;
+this follow-up did not rerun its allocations or mlock calls.

@@ -4,7 +4,8 @@
 reserve on each card. This is missing calibration, not proof that fitting is
 impossible.** The previous argument that v5 could not help relied on an
 arbitrary 20 GiB overhead allowance; that argument is withdrawn. v5 is now
-ported. The 90 GB gate and the watchdog have not been relaxed.
+ported. The 90 GB prediction gate remains closed. The later load-only
+follow-up below adds a separate owner-requested measurement admission.
 
 ## Certified evidence and its limits
 
@@ -13,7 +14,9 @@ The [A364 summary](../data/20260913-tp4-mtp1-a364-native-exact-gdn-ple-only-qsa-
 [A366 summary](../data/20260913-tp4-mtp1-a366-native-exact-gdn-ple-only-qsa-stable-summary.json),
 [A367 identity](../data/20260913-tp4-mtp1-a367-native-exact-gdn-identity.txt),
 and [certified guide](../../../repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md)
-identify the certified 46.854250 tok/s lane. Their raw A364–A367 run directories
+identify the certified 46.854250 tok/s lane. The initial search reported
+missing raw directories; the later rescue search below recovers A367
+supervisor pressure measurements. Their original A364–A367 run directories
 are absent from `/mnt/fast-ai/bench-results` and
 `/home/steve/qwen38-current-main-runs`. The recorded launcher destination,
 `/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70`, does not exist on the
@@ -164,3 +167,53 @@ Non-launch measurements still needed:
    still needs separate evidence; the old server's peak alone cannot bound it.
 
 The result therefore remains **REFUSED**. Nothing was launched or connected.
+
+## Rescued supervisor evidence and load-only follow-up
+
+The earlier search missed `/home/steve/git-archives/flash-next-rescue-20261007/`.
+All **121 rescued files** were inventoried. The A367 and A394 supervisor
+`host-pressure.tsv` files contain genuine MemAvailable time series. Their
+unmodified copies are retained in [A367](evidence/a367-host-pressure.tsv) and
+[A394](evidence/a394-host-pressure.tsv), with source hashes and the relevant
+server allocation lines in [rescued-calibration.json](rescued-calibration.json).
+Rebuild this summary with `python3 rescue_calibration.py` from this directory.
+
+| Receipt | Samples | First MemAvailable GB | Minimum GB | Pressure increase GB |
+| --- | ---: | ---: | ---: | ---: |
+| A367, certified 4,352 context | 1,241 | 132.425544 | 16.555667 | **115.869876** |
+| A394, different 33,280 context/placement | 1,737 | 130.361491 | 8.300126 | **122.061365** |
+
+The difference `first_available - minimum_available` is a measured whole-host
+pressure change. It is also a lower bound on the historical whole-host peak
+because historical MemTotal cannot be less than the first MemAvailable.
+Neither trace records MemTotal, worker RSS, Committed_AS or locked bytes;
+we do not substitute today's MemTotal or call this process memory. Concurrent
+host activity and loader file pages are included. The A367 lower bound alone
+exceeds 90 GB, so these receipts cannot justify admission on today's host.
+The old 85.35 GB illustrative scenario is not validated by the recovered data.
+The model now carries this historical calibration in `memory-bounds.json`,
+`certified-memory-reconstruction.json` and `host-memory-prediction.json`.
+
+A367's server reports model-loading allocation deltas of **29.57 / 29.37 /
+29.54 / 29.38 GiB** for ranks 0–3. They are rounded runtime allocation deltas,
+not complete card peaks. The saved `xpu-stats` readings show roughly 45 MiB
+and 0.13% utilization: idle preflight/postflight snapshots, not live reserve.
+No XPU-SMI command was executed. Missing live VRAM, graph pools and RSS remain
+unknown. The newer V30 model also retains vision components absent from the
+historical text-only launch, so historical allocation deltas cannot be copied
+into its phase bounds.
+
+The named current-main-runs tree had 65,489 inventoried paths and no files
+named host-memory, memory-*, hostmem, meminfo, host-pressure or docker-stats.
+Content matches were older/different-model metrics, cache artifacts and
+manifests. Some root-owned model-info/compile-cache files were unreadable;
+no privilege escalation was attempted. The lane data directory contains
+summaries and older memory-failure reports, but no additional A364–A367
+worker/whole-host/VRAM time series. This was a **partial historical calibration**,
+not a successful V30 joint-fit calibration. The prediction gate still refuses.
+
+`calibrate-load` is now the separate, owner-requested measurement admission.
+It uses the identical MTP1 container command and v5 overlay, sends no generation
+requests, observes a 20-second readiness plateau and stops once. See the
+[README sequence](README.md#owner-approved-sequence-calibrate-load--mtp1) for
+thresholds, missing-counter behavior, receipt rules and the owner-only commands.

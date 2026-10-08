@@ -73,5 +73,18 @@
   "ple_view": "rank-local XPU UVA view of CPU storage; not duplicate VRAM",
   "host_peak_relative_error": null,
   "pin_formula_vs_cpu_os_locked_relative_error": 0,
-  "warning": "CPU OS-locked storage is not the XPU pinned allocator. No 10% server-peak calibration is possible from surviving receipts."
+  "warning": "CPU OS-locked storage is not the XPU pinned allocator. No 10% server-peak calibration is possible from surviving receipts.",
+  "rescued_calibration": {
+    "receipt": "rescued-calibration.json",
+    "sha256": "79c4f65b1a66d6cc78ed9c6bd350388c277235aee67f9699b4c52cab4835fa6f",
+    "host_peak_lower_bound_bytes": 115869876224,
+    "mem_available_min_bytes": 16555667456,
+    "reported_model_allocation_gib_per_rank": [
+      29.57,
+      29.37,
+      29.54,
+      29.38
+    ],
+    "scope": "Historical A367 pressure and model-allocation deltas; not V30 complete peaks."
+  }
 }

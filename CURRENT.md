@@ -5,6 +5,19 @@ below remain that host's own research record; this consolidation did not operate
 
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
+
+**2026-10-08, Flash-Next CPU-only calibration follow-up:** the rescued A367
+supervisor trace was found: available RAM fell by **115.87 GB**, so the old
+run does not demonstrate a 90 GB fit. Worker RSS and complete live card-memory
+peaks are still missing. A load-only measurement mode is now prepared: no
+answers generated, half-second memory checks, a 20-second ready plateau, then
+one graceful stop. It bypasses the missing prediction only for measurement;
+MTP1 needs a passing receipt. Nothing was launched, no credentials were read,
+and this work did not touch the LTX service or its port. The owner-approved
+sequence and remaining admission checks are in the
+[Screen 1b README](experiments/qwen38-flash-next-fp8-b70/reopen-20261008/README.md).
+
+
 **Live update, 2026-10-08 01:00 UTC (10-07 evening local):** the owner set two
 priorities: Flash-Next is not given up (re-open against the matured ecosystem;
 "stratra" = Strata, a 1-bit IQ1_M engine at 70–78 tok/s on one B70, not a

@@ -178,7 +178,7 @@
     "vllm/v1/worker/gpu/model_runner.py": "0b02bdb26b340d57869861c0570815bc68d36812a87c1b78a16960f3b20f842a"
   },
   "overlay_manifest_sha256": "4b63d55d9ebd164bbb240ec40fe3c1e389d9eaed6f177cc5a60b67791b8cdf7c",
-  "phase_bounds_manifest_sha256": "1aa4903e1e08c4387a6edb44eaf2bf2664600d55d624c20bfaa3c9968adef4d3",
+  "phase_bounds_manifest_sha256": "a9094a0d0f50caa4aced83a26da85685cf9cd09baad2a72dbd6eecccf6bddeae",
   "physical_vram_bytes_per_rank": [
     34242297856,
     null,
@@ -4645,7 +4645,7 @@
     }
   ],
   "calibration": {
-    "status": "PIN_BYTES_VALIDATED_ONLY; SERVER_PEAK_CALIBRATION_UNAVAILABLE",
+    "status": "PARTIAL_A367_HOST_PRESSURE_CALIBRATION; V30_COMPLETE_PEAKS_UNKNOWN",
     "certified_pins_total_bytes": 63609487360,
     "certified_host_peak_bytes": null,
     "certified_worker_rss_bytes": [
@@ -4675,12 +4675,22 @@
       ]
     },
     "peak_relative_error": null,
-    "reason": "A364-A367 raw run directories absent at named locations; recorded USB evidence path unavailable. Summaries/identity/guide give allocation/flags, not RSS or peak.",
+    "reason": "A367 host peak lower bound exceeds 90 GB; old runtime does not calibrate V30 lifetimes. Complete live VRAM reserve and worker RSS unavailable. A394 is a different context/placement.",
     "cpu_measurement": "cpu-buffer-measurement.json",
     "cpu_measurement_sha256": "abf1826ea3813e09f76b75b301d580ef624a6cfe4f766d214af951c8c1099fd2",
     "cpu_measurement_scope": "OS mlock of exact host buffer shapes, one rank at a time, not XPU pin allocator or server peak",
     "reconstruction": "certified-memory-reconstruction.json",
-    "reconstruction_sha256": "22593408f471c80da9894ada963e4f83ced0a783deff24c25d0ac317aeb9205c"
+    "reconstruction_sha256": "db7b54cefa07aee7c3f5265cec46bf30cc7f1003a0dc7418f50883f86f987287",
+    "rescued_receipt": "rescued-calibration.json",
+    "rescued_receipt_sha256": "79c4f65b1a66d6cc78ed9c6bd350388c277235aee67f9699b4c52cab4835fa6f",
+    "certified_host_peak_lower_bound_bytes": 115869876224,
+    "certified_mem_available_min_bytes": 16555667456,
+    "certified_reported_model_allocation_gib_per_rank": [
+      29.57,
+      29.37,
+      29.54,
+      29.38
+    ]
   },
   "candidate_table": [
     {
@@ -5275,7 +5285,7 @@
     "Exact physical VRAM capacities for all four cards",
     "Post-hash host, cgroup, process observations in an otherwise idle launch window",
     "Load cancellation latency and complete allocation lifetime qualification",
-    "Certified A364-A367 worker RSS and host/VRAM peaks unavailable; a 10% peak calibration cannot be computed"
+    "Rescued A367 MemAvailable change measured; RSS, absolute host peak and complete live VRAM reserve still missing; V30 requires its own load receipt"
   ],
   "observations": {}
 }
