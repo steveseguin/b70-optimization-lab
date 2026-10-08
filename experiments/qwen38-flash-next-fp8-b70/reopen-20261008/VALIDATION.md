@@ -1,5 +1,124 @@
 # Screen 1b CPU validation — native FP8 mmap, 2026-10-08
 
+## Calibrate-load attempt 2: worker-init failure
+
+**attempt 2: failed at worker init: device-only RoPE conversion incorrectly
+charged to the host staging cap.** The 17:21–17:26 UTC run is preserved in
+[runs/screen1b-mmap-calibrate-load-20261008-attempt2/](runs/screen1b-mmap-calibrate-load-20261008-attempt2/server.log).
+The first cause is TP0, `server.log:255–279`: QSA → `get_rope` →
+`MRotaryEmbedding` → `RotaryEmbeddingBase.__init__:61`, `cache.to(dtype)`.
+The overlaid `screen1b_guard.py:267–274` (attempt-2 lines) charged every
+`aten._to_copy` as host staging, including this XPU FP32→BF16 cache conversion:
+`LoadCancelled: conversion exceeds 256 MiB: 402653184`.
+The real config gives 262,144 positions × 4 (MRotary's cache extension) × 64
+rotary dimensions × (4-byte source + 2-byte destination) = 402,653,184 bytes.
+The rank-0 loader receipt records `unbounded loader conversion` at monotonic
+354224.473663639. TP1 reports cancellation at 354224.48018927; its placement
+`torch.empty(..., device='meta')` frame is where it noticed STOP, not the cause.
+The [calibration receipt](runs/screen1b-mmap-calibrate-load-20261008-attempt2/calibration-load.json)
+records minimum MemAvailable **95,081,541,632 bytes**; exit was 1 and
+`OOMKilled=false`. No readiness or fit was established.
+
+The fix is [screen1b_guard.py](overlay/vllm/screen1b_guard.py), beginning at
+line 268. It preserves the original operation for conversions staying on the
+same XPU and for destinations on `meta` (metadata without storage). The latter
+also matters: the rehearsal exposed V30's `record_metadata_for_reloading` →
+`capture_layer_to_meta` → `tensor.data.to("meta")` as another erroneous staging
+charge. Host→host, host→device, device→host, and cross-device conversions still
+use the bounded ledger. STOP is checked before either exemption. The copy
+re-entry fix, 256 MiB production cap, admission thresholds and launch flags
+are unchanged. Both manifest hashes for the guard were refreshed.
+
+### Real-source worker-init rehearsal
+
+[worker_init_rehearsal.py](worker_init_rehearsal.py) imports the overlay first
+and missing files from `/home/steve/src/lumnus-20261008/vllm`, without modifying
+either the clone or any installed package. Existing LTX Python provides torch
+2.14.0+xpu on CPU; missing Python dependencies come from the existing
+`/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages` through a read-only
+fallback path (no `.pth` execution or installation). No official-image Python
+execution or official-wheel compatibility is claimed. Each receipt pins every
+imported vLLM source file and the actual model `config.json` by SHA-256.
+
+The four isolated CPU processes execute:
+
+- Real `DefaultModelLoader.load_model` → guarded load → `create_model` →
+  `initialize_model` → `Qwen4ExpForConditionalGeneration`, including a small
+  vision tower, HC, three GDN layers, PLE, one QSA/MRotary layer and FP8 MoE.
+- Real `Fp8MoEMethod.create_weights`, v5 host/resident allocation, address
+  tables and restored metadata: 512 global/128 local experts, eight placed
+  parameters per rank. The small placement fixture uses host rows 0, 2, 127
+  in each layer. Actual CPU storage is aligned to 256 bytes for the table.
+- Real default-loader lazy safetensors iteration, global PLE index validation,
+  mmap cache binding, skipped PLE payloads, shard-coverage checks, parameter
+  loaders, and post-load processing. Fifteen synthetic tensors cover four
+  PLE shards, its FP32 scale, input embedding, and gate/up/down weights for
+  both host and resident experts. Loaded rows are checked against their bytes.
+- Real PLE hash, mmap row gathering and pre-forward step replacement with two
+  input sequences; owned rows match original synthetic FP8 bytes and nonowned
+  rows are zero. No full forward or generated-answer claim follows.
+- Real allocation receipts and bounded staging, with a reduced **1 MiB** test
+  cap to force chunking. Live reservations must drain to zero; all four rank
+  snapshots include expert pins, PLE cache/steps and explicit unknown runtime
+  memory. The tiny contract is labeled `fixture_only`; these are not physical
+  XPU pin or memory-fit measurements.
+
+Only hardware interfaces are substituted: platform capability/selection,
+CPU-backed logical XPU allocations/transfers/UVA, pin labels, synchronization,
+memory-counter query and CCL group metadata. Native kernels raise if called;
+accelerator initialization/query entry points are blocked. Model constructors,
+config parsing, loader, PLE adapter, placement and guard are not mocked.
+Process-local cache paths use temporary directories and imports are offline.
+
+Sizes are deliberately reduced (four target layers, one vision block, hidden
+128, vocabulary 256, PLE 2,816 rows × 160 bytes, 5,120-byte row cache/rank,
+32 step tokens, RoPE maximum 8,192). Expert count, PLE head width, native FP8
+and BF16 types, and the relevant constructor branches stay intact. The
+rehearsal does **not** cover the MTP draft constructor, real distributed worker
+startup/IPC, native XPU allocator/pins/UVA addresses or kernels, CCL transport,
+graph capture, the complete original checkpoint, full-size memory pressure,
+output identity, performance, or official-image dependency/ABI differences.
+It is a startup regression test, not runtime qualification.
+
+The hash-pinned old guard (`e1940e561f559cf92b846c94380da2b270674332` Git blob,
+SHA-256 `f34291011176d86fcd1ce36908f90d26fa7422c744ace2f47cf9324a3e8e73cf`)
+fails inside the **real MRotary constructor**, at `cache.to(dtype)`, with
+12,582,912 bytes against the reduced 1 MiB cap. The fixed guard passes all
+four ranks. [Negative traceback](evidence/attempt2-cpu-rehearsal/attempt2-guard-negative.log),
+[rank 0](evidence/attempt2-cpu-rehearsal/rank0.json),
+[rank 1](evidence/attempt2-cpu-rehearsal/rank1.json),
+[rank 2](evidence/attempt2-cpu-rehearsal/rank2.json),
+[rank 3](evidence/attempt2-cpu-rehearsal/rank3.json).
+
+### Validation and next command
+
+**163 passed, zero failures, zero skips:** 149 previous checks + nine conversion
+checks + four full rehearsal ranks + one old-guard negative control.
+System Python: **163 discovered, 138 passed, 25 dependency-related skips**.
+[Validation receipt](evidence/cpu-attempt2-validation.json).
+
+```sh
+SCREEN1B_CPU_EVIDENCE_DIR=experiments/qwen38-flash-next-fp8-b70/reopen-20261008/evidence/attempt2-cpu-rehearsal \
+PYTHONDONTWRITEBYTECODE=1 /home/steve/.venvs/ltx25-baseline/bin/python -m unittest discover \
+  -s experiments/qwen38-flash-next-fp8-b70/reopen-20261008 -p 'test_*.py' -v
+```
+
+Attempt 3 — **prepared only; fresh owner-provided health receipt required**:
+
+```sh
+SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run \
+  --mode calibrate-load \
+  --health-receipt /PATH/TO/FRESH-HEALTH-RECEIPT.json \
+  --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt3 \
+  --execute
+```
+
+The placeholder is intentional. No health probe or launch was run. Both failed
+run directories and their STOP latches remain untouched. Existing five-minute
+gap, idle-card and health/memory admission checks still apply. No Docker, GPU,
+server, install, secret, host-setting, branch, commit or port 8188 operation
+occurred. Concurrent LTX work was preserved.
+
 ## Calibrate-load attempt 1: worker-init failure
 
 **calibrate-load attempt 1: failed at worker init: re-entrant copy dispatch

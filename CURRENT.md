@@ -5,6 +5,17 @@ below remain that host's own research record; this consolidation did not operate
 
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
+**2026-10-08, Flash-Next attempt 2 fixed on CPU:** startup stopped because the
+loader counted a conversion on the card as temporary host memory. Available
+host RAM stayed above 95 GB. The guard now distinguishes those operations;
+the stronger CPU rehearsal also found and fixed the same mistake for metadata
+that has no stored payload. All 163 CPU tests pass, including real model and
+loader construction for four simulated ranks. This does not establish GPU
+startup, memory fit or output quality. Nothing was launched. Attempt 3 is
+prepared and needs a fresh health receipt from the owner.
+[Cause, rehearsal limits and command](experiments/qwen38-flash-next-fp8-b70/reopen-20261008/VALIDATION.md#calibrate-load-attempt-2-worker-init-failure).
+
+
 
 **2026-10-08, Flash-Next calibration failure fixed on CPU:** the first mmap
 load attempt exited during worker startup. The loader counted the same copy

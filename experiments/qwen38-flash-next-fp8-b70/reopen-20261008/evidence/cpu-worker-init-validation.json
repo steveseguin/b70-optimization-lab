@@ -1,0 +1,43 @@
+{
+  "schema": "screen1b.worker-init-cpu-validation.v1",
+  "created_utc": "2026-10-08T17:21:07.006725+00:00",
+  "result": "calibrate-load attempt 1: failed at worker init: re-entrant copy dispatch double-reserved staging space and triggered the 120-second allocation-lock timeout",
+  "cpu_tests": {
+    "interpreter": "/home/steve/.venvs/ltx25-baseline/bin/python",
+    "discovered": 149,
+    "passed": 149,
+    "skipped": 0,
+    "failures": 0,
+    "new_regressions": 4,
+    "original_guard_regressions": {
+      "passed": 1,
+      "failures": 2,
+      "errors": 1
+    }
+  },
+  "system_python_tests": {
+    "discovered": 149,
+    "passed": 138,
+    "skipped": 11,
+    "failures": 0
+  },
+  "launch_performed": false,
+  "files_sha256": {
+    "overlay/vllm/screen1b_guard.py": "f34291011176d86fcd1ce36908f90d26fa7422c744ace2f47cf9324a3e8e73cf",
+    "overlay-manifest.json": "5a33d081493dfb7e09287848e21be3bde71da7b10f83c41815e68c1187821450",
+    "test_copy_dispatch.py": "8b283b56716545038d07f0090b968d75ed175bbc5cb7c16771cbcc692b0d911f"
+  },
+  "attempt_1_evidence_sha256": {
+    "server.log": "fa937cc5fdbc555c1a0f44170207ae1cc218c99c1d96e644e6906035d1a14f89",
+    "loader-1.jsonl": "dfff49d56e7f76e130320834d4568dee968d0a9771215a98235269a103c8a74a",
+    "loader-339.jsonl": "aefe37553668efaed9df7dcfae8417c7747f8b0c3137c00d39a64795f3ab9c63",
+    "loader-450.jsonl": "305e0b4b4d81123189f374330eb5adccce82525e1944047a236af77850cf80dc",
+    "loader-477.jsonl": "399411834d79694ce0ec7fb8a618dccde32e3d2ba76b382520d5c123b995dcce",
+    "loader-512.jsonl": "9ae22db83719806707f40e65c3a166b00c16adde4f1c4f246586a7ad7adeeed4",
+    "loader-547.jsonl": "d1e0e0e68c5b002d0c5fe0ee8b91f28894f5beadb9bc4844d23780b8e46e18b0",
+    "host-memory-samples.jsonl": "78ef0e400c280dd2416b9265e8490c1f10b22a6573feeb3cc3057b8dfd4606c5",
+    "calibration-load.json": "84bcf98ebb40beb1ac35514e9910d398e6c0714ca7a867bd0e4ce4732f782172",
+    "container-exit.json": "9aeb5569ca9e93fa039cbd841977f178d705c8e6553a9485089453174439f803",
+    "postflight-after-calibrate.json": "407ab2431031e535ed2da00ceed70c98e6de4614dc65f3e885d19e3a06e4ab4f"
+  }
+}

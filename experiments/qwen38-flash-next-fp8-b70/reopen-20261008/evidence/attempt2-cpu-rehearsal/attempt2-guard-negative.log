@@ -1,0 +1,97 @@
+W1008 13:56:22.278000 1713179 torch/_opaque_base.py:6] torch._opaque_base is deprecated, use torch._custom_class_base instead
+W1008 13:56:22.278000 1713179 torch/_library/opaque_object.py:288] register_opaque_type is deprecated, use register_custom_class instead
+W1008 13:56:22.279000 1713179 torch/_library/opaque_object.py:211] typ='value' is deprecated, use typ='constant' instead
+/home/steve/src/lumnus-20261008/vllm/vllm/transformers_utils/repo_utils.py:26: RuntimeWarning: Failed to read commit hash:
+No module named 'vllm._version'
+  from vllm.version import __version__ as VLLM_VERSION
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/worker_init_rehearsal.py", line 394, in <module>
+    result = bootstrap(args.rank, args.guard_source)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/worker_init_rehearsal.py", line 304, in bootstrap
+    model = construct()
+            ^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/worker_init_rehearsal.py", line 302, in construct
+    return DefaultModelLoader(vc.load_config).load_model(vc, mc)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/src/lumnus-20261008/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/tmpqniqlbzo/attempt2_guard.py", line 300, in wrapped
+    model = fn(*args, **kwargs)
+            ^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay/vllm/model_executor/model_loader/base_loader.py", line 70, in load_model
+    model = self.create_model(
+            ^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay/vllm/model_executor/model_loader/base_loader.py", line 47, in create_model
+    model = initialize_model(
+            ^^^^^^^^^^^^^^^^^
+  File "/home/steve/src/lumnus-20261008/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/src/lumnus-20261008/vllm/vllm/model_executor/model_loader/utils.py", line 59, in initialize_model
+    model = model_class(vllm_config=vllm_config, prefix=prefix)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay/vllm/models/qwen4_exp/nvidia/model.py", line 965, in __init__
+    self.language_model = Qwen4ExpForCausalLM(
+                          ^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay/vllm/models/qwen4_exp/nvidia/model.py", line 682, in __init__
+    self.model = Qwen4ExpModel(
+                 ^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay/vllm/models/qwen4_exp/nvidia/model.py", line 416, in __init__
+    self.start_layer, self.end_layer, self.layers = make_layers(
+                                                    ^^^^^^^^^^^^
+  File "/home/steve/src/lumnus-20261008/vllm/vllm/model_executor/models/utils.py", line 881, in make_layers
+    + get_offloader().wrap_modules(
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay/vllm/model_executor/offloader/uva.py", line 67, in wrap_modules
+    self._maybe_offload_to_cpu(module, prefix) for module in modules_generator
+                                                             ^^^^^^^^^^^^^^^^^
+  File "/home/steve/src/lumnus-20261008/vllm/vllm/model_executor/models/utils.py", line 882, in <genexpr>
+    layer_fn(prefix=f"{prefix}.{idx}") for idx in range(start_layer, end_layer)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay/vllm/models/qwen4_exp/nvidia/model.py", line 410, in get_layer
+    return Qwen4ExpDecoderLayer(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay/vllm/models/qwen4_exp/nvidia/model.py", line 229, in __init__
+    self.self_attn = Qwen4ExpQSAAttention(
+                     ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/src/lumnus-20261008/vllm/vllm/models/qwen4_exp/nvidia/qsa.py", line 252, in __init__
+    self.rotary_emb = get_rope(
+                      ^^^^^^^^^
+  File "/home/steve/src/lumnus-20261008/vllm/vllm/model_executor/layers/rotary_embedding/__init__.py", line 112, in get_rope
+    rotary_emb = MRotaryEmbedding(
+                 ^^^^^^^^^^^^^^^^^
+  File "/home/steve/src/lumnus-20261008/vllm/vllm/model_executor/layers/rotary_embedding/mrope.py", line 284, in __init__
+    super().__init__(
+  File "/home/steve/src/lumnus-20261008/vllm/vllm/model_executor/layers/rotary_embedding/base.py", line 61, in __init__
+    cache = cache.to(dtype)
+            ^^^^^^^^^^^^^^^
+  File "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/utils/_device.py", line 122, in __torch_function__
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/utils/_device.py", line 122, in __torch_function__
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/worker_init_rehearsal.py", line 126, in __torch_function__
+    result = func(*args, **kw)
+             ^^^^^^^^^^^^^^^^^
+  File "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_compile.py", line 54, in inner
+    return disable_fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py", line 1548, in _fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/tmp/tmpqniqlbzo/attempt2_guard.py", line 274, in __torch_dispatch__
+    raise LoadCancelled(f'conversion exceeds 256 MiB: {nbytes}')
+vllm.screen1b_guard.LoadCancelled: conversion exceeds 256 MiB: 12582912

@@ -1,0 +1,65 @@
+{
+  "schema": "screen1b.cpu-attempt2-validation.v1",
+  "utc": "2026-10-08T17:59:48.563176+00:00",
+  "cpu_only": true,
+  "attempt3_launched": false,
+  "tests": {
+    "ltx_interpreter": {
+      "discovered": 163,
+      "passed": 163,
+      "skipped": 0,
+      "failures": 0
+    },
+    "system_python": {
+      "discovered": 163,
+      "passed": 138,
+      "skipped": 25,
+      "failures": 0
+    }
+  },
+  "overlay_hashes_verified": 47,
+  "checks": [
+    "overlay and harness AST parse",
+    "bash -n container-entrypoint.sh",
+    "git diff --check",
+    "calibrate-load attempt3 --dry-run",
+    "check-doc-links.py: 0 new broken links",
+    "check-manifest-paths.py: 6148 paths, 0 missing"
+  ],
+  "root_cause": {
+    "file": "overlay/vllm/screen1b_guard.py",
+    "original_line": 274,
+    "fix_line": 268,
+    "rank": 0,
+    "exception": "LoadCancelled: conversion exceeds 256 MiB: 402653184",
+    "secondary_rank1": "STOP cancellation during placement allocation"
+  },
+  "rehearsal_ranks": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "old_guard_negative": "real MRotary cache.to(dtype) fails against scaled staging cap",
+  "sha256": {
+    "overlay/vllm/screen1b_guard.py": "db25db747f36097fffbf351bf44cc1cfecff87656958005177b4c403663a9eb6",
+    "overlay-manifest.json": "ed509e112756ed267d2bad03f8dce936ed02f3dd1f48a638f9e6ff03301838f9",
+    "worker_init_rehearsal.py": "aa36751fc28fcf3949ceaf74e92c03d8a0b227747745e79132f5f194f97dd636",
+    "test_conversion_dispatch.py": "674397b10da7e349d7f9a43e667060e812381921ed054f9213df64b7d64846e1",
+    "test_worker_init_rehearsal.py": "7c944c167fcdc6f730031f1e2bd42ca77bbcf78c1f480100dd9ed00b516a75bf",
+    "evidence/attempt2-cpu-rehearsal/attempt2-guard-negative.log": "167b4901b644ca863ad0e149d4095ad906a0ad25126a181397bcc6b548559c62",
+    "evidence/attempt2-cpu-rehearsal/attempt3-dry-run.json": "2cedd17ec06d86c24093efac5d1ae5b31b6ad65c2882d5a153a4823ac1d76990",
+    "evidence/attempt2-cpu-rehearsal/full-tests.log": "33cd0dfb237adad91dafe8244a29a9f358dc1694a4b99fe0c108ef32bbb0da34",
+    "evidence/attempt2-cpu-rehearsal/rank0.json": "42843ce2aaffb7fd59cbc07fdce352d36db4a80e77b4815be030aeb69c2b037a",
+    "evidence/attempt2-cpu-rehearsal/rank0.log": "984d4816e77526d07ebc0b8c7181526872a7fcdeb3be9a707e887a1807dbcaf5",
+    "evidence/attempt2-cpu-rehearsal/rank1.json": "2b92d2ad1d5a731318dbb4de40541c7b7f649c78fa4151fe4ed291e6f9b9b68c",
+    "evidence/attempt2-cpu-rehearsal/rank1.log": "a216fa799af52928fa7ce0baf1c588d0a2a176555a52004b898b06ae9f25af16",
+    "evidence/attempt2-cpu-rehearsal/rank2.json": "80a6fe1231c1294690743de7c9e763de8bb3326969db1bbcb4cbdc8aa38d222b",
+    "evidence/attempt2-cpu-rehearsal/rank2.log": "6d6ce638ed8236b19e69d4c8602a09d78f0d9115e9e775e3fd9d571fb7e417a9",
+    "evidence/attempt2-cpu-rehearsal/rank3.json": "e8a7b08abaa03ca834c7f872b810abc6e1dbf7aba2b744ab6f33f537c0bcec03",
+    "evidence/attempt2-cpu-rehearsal/rank3.log": "0fd6a7a7cf5c79654ffdf030b9965c47012e7923a64f3f43647f840f77140957",
+    "evidence/attempt2-cpu-rehearsal/system-tests.log": "d5f1d5dbcce8ef4084e7aba7b708f7ca1678bd0307e9a0737dcd2f595e356615",
+    "README.md": "8248fbaa491358df727a58670f7de53ff29a6e2bfad1cb855d826ac190ac8773",
+    "VALIDATION.md": "e0d040c8801a5fc834316195a956ad240fa252ac9e0f5bbffc832c654da95d1e"
+  }
+}

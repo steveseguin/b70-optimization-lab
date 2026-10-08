@@ -265,6 +265,20 @@ def guarded_load(fn):
                         kw['non_blocking'] = args[2]
                     return bounded_copy(args[0], args[1], **kw)
                 if func == torch.ops.aten._to_copy.default:
+                    source_device = args[0].device
+                    target_device = torch.device(kwargs.get('device') or source_device)
+                    if target_device.type == 'meta':
+                        # V30 records reload metadata after construction.
+                        # A meta tensor has no payload allocation or transfer.
+                        return func(*args, **kwargs)
+                    if (source_device.type == 'xpu'
+                            and target_device.type == 'xpu'
+                            and target_device.index in (None, source_device.index)):
+                        # Constructor buffers (notably RoPE's FP32 -> BF16
+                        # cache) stay on the worker's device. They allocate no
+                        # transient host staging. Keep native conversion and
+                        # cancellation, without charging the host copy ledger.
+                        return func(*args, **kwargs)
                     # A conversion temporary cannot hide outside the copy budget.
                     dtype = kwargs.get('dtype', args[0].dtype)
                     element = torch.empty((), dtype=dtype, device='meta').element_size()

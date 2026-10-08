@@ -1,5 +1,40 @@
 # Flash-Next Screen 1b — native FP8 mmap adapter
 
+**attempt 2: failed at worker init: the loader guard mistook a device-only
+RoPE conversion for host staging and rejected 402,653,184 bytes (384 MiB).**
+TP0 triggered the stop; TP1's `LoadCancelled` was a consequence. Available host
+RAM stayed at or above **95.081541632 GB**; the container exited 1, without OOM.
+
+Fixed in `overlay/vllm/screen1b_guard.py:268`: same-device XPU conversions and
+payload-free meta conversions pass through unchanged. CPU conversions and
+host/device transfers keep their staging cap, cancellation and cleanup checks.
+The meta case was another startup blocker found by the new rehearsal.
+
+**163/163 CPU tests pass, no skips**, including four logical-rank rehearsals
+through the real V30 model and loader, an old-guard failure reproduction, and
+nine conversion checks. The rehearsal uses the actual config with smaller
+sizes, real CPU tensor arithmetic, tiny synthetic checkpoint weights, and
+emulated device allocation/transport and CCL metadata. It covers the vision
+and language constructors, PLE mmap binding, v5 placement, weight staging,
+post-load processing, row-byte checks and allocation receipts. It cannot
+qualify native XPU kernels, CCL, graph capture, full-size memory or output parity.
+[Detailed coverage, limits and evidence](VALIDATION.md#calibrate-load-attempt-2-worker-init-failure).
+
+**Attempt 3 is prepared, not launched. A fresh owner-provided health receipt is
+required.** Replace the placeholder below; keep the existing idle-card,
+five-minute stop gap and admission checks. This CPU-only task made no commits
+and did not operate Docker, devices, servers, secrets, host settings or port 8188.
+
+```sh
+SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run \
+  --mode calibrate-load \
+  --health-receipt /PATH/TO/FRESH-HEALTH-RECEIPT.json \
+  --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt3 \
+  --execute
+```
+
+## Attempt 1 (historical)
+
 **calibrate-load attempt 1: failed at worker init: re-entrant copy dispatch
 double-reserved staging space and triggered the 120-second allocation-lock
 timeout.** The 16:44–16:51 UTC attempt exited 1 at 16:50:55 UTC, before readiness.
@@ -113,7 +148,7 @@ python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reop
 Exact requested execution command — **not run, currently refuses admission**:
 
 ```sh
-python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode mtp1 --health-receipt /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008/postflight-after-calibrate.json --execute
+python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode mtp1 --health-receipt /PATH/TO/FRESH-HEALTH-RECEIPT.json --execute
 ```
 
 The fallback CPU measurement was implemented and run:
@@ -172,11 +207,9 @@ SHA-256 of the health receipt. Startup, generation, calibration plateau and
 postflight check for new faults after the admission cutoff; a new fault uses
 the existing single-SIGINT shutdown, without retry or hard-kill escalation.
 
-The commands below use attempt 1’s `postflight-after-calibrate.json` receipt.
-The passing probe started **2026-10-08 17:14:58 UTC** and ended **17:15:04 UTC**.
-It expires at **23:15:04 UTC** that day and
-cannot cover any newer fault. Supply a current passing receipt when needed;
-a receipt does not waive the memory, storage, idle-card or port checks.
+The commands below require a **fresh owner-provided health receipt**. The
+attempt-1 receipt was used historically for attempt 2; it is not reused here.
+A receipt does not waive memory, storage, idle-card, port or stop-gap checks.
 These commands were not executed in this CPU-only change.
 
 Synthetic CPU tests cover clean boot, recovered first incident, new fault,
@@ -192,7 +225,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover \
 
 ## Owner-approved sequence: calibrate-load → mtp1
 
-Attempt 1 failed as recorded above. These next-attempt commands are prepared
+Attempts 1 and 2 failed as recorded above. These attempt-3 commands are prepared
 for the owner and **were not executed in this CPU-only fix**. First arrange exclusive idle cards and the existing
 recovered-boot admission above, with at least five minutes after the previous
 server stops.
@@ -202,10 +235,10 @@ The pinned image must already exist. Existing `SCREEN_PRIVILEGED_FD_SCAN` and
 the opt-in fd scan uses that existing privileged path. The sampler never does.
 
 ```sh
-SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode calibrate-load --health-receipt /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008/postflight-after-calibrate.json --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt2 --execute
+SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode calibrate-load --health-receipt /PATH/TO/FRESH-HEALTH-RECEIPT.json --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt3 --execute
 ```
 
-This command uses the fresh `runs/screen1b-mmap-calibrate-load-20261008-attempt2/`.
+This command uses the fresh `runs/screen1b-mmap-calibrate-load-20261008-attempt3/`.
 The original run directory, STOP latch and failed calibration stay intact.
 The controller default remains `runs/screen1b-calibrate-load/`; choose another
 fresh `--run-dir` if the selected directory exists. The mode uses **the exact MTP1 launch command**, including
@@ -250,7 +283,7 @@ After reviewing a passing receipt and leaving the five-minute stop-to-launch
 gap, use a fresh MTP1 run with that receipt explicitly supplied:
 
 ```sh
-SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode mtp1 --health-receipt /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008/postflight-after-calibrate.json --calibration /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt2/calibration-load.json --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mtp1-calibrated --execute
+SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode mtp1 --health-receipt /PATH/TO/FRESH-HEALTH-RECEIPT.json --calibration /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt3/calibration-load.json --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mtp1-calibrated --execute
 ```
 
 The gate rechecks sample hashes and recomputes the verdict. Image, overlay,
