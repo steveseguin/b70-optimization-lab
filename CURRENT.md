@@ -5,7 +5,16 @@ below remain that host's own research record; this consolidation did not operate
 
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
-**Live update, 2026-10-07:** the full ten-fixture, 49-frame LTX qualification
+**Live update, 2026-10-07 local / October8 UTC:** the native three-chunk
+continuation/replay test is running under its fixed eight-request plan.111
+launched once after a clean controlled110 application shutdown and passing
+four-card postflight. PID3415570/start ticks29306475, unit
+`ltx111-continuation-server-20261007`; campaign
+`ltx111-continuation-campaign-20261007` started00:28:07 UTC. No continuation
+quality or speed result is established yet. Preserve every predecessor and
+capture; faults halt requests, successful application retained.
+
+The preceding full ten-fixture,49-frame LTX qualification
 passed. All 57 requests completed at 23:35:42 UTC. Twenty native outputs formed
 ten exact repeat pairs; ten optimized and ten timed clips matched all four
 video/audio tensors. The unchanged sealed verifier independently rebuilt the
@@ -17,9 +26,10 @@ generated frames/s. This is a short qualification screen, not a matched speed
 gain, endurance result or public record. Playback remains 24 FPS; independent
 clips do not establish coherent streaming.
 
-The successful application stays available: PID3391197, start ticks28885324,
-unit `ltx110-duration-server-20261007`, same boot. It is idle, with no observer
-or extra request stream. Its finite request authority is consumed.
+The successful110 application received one necessary graceful SIGINT for the
+111 continuation reload; PID3391197 was gone at00:26:31 UTC. All four cards
+passed postflight with no faults this boot. No host restart or settings change.
+Its finite57-request authority stays consumed; all outputs remain protected.
 110 manifest`bfa78fcf6af59acc3d63318ca97c61846b3a9b80999f6f17cb4c4d3651f2ad09`;
 client contract`70b5379a715b7c51008fbc65967e2dc503554b70e5e460d02ddbe8d4689df27d`.
 [Completed proof and 1,246 file bindings](experiments/ltx25-b70/data/resume-20261007/duration110-closeout/summary.json),
@@ -42,14 +52,16 @@ The native-only runtime authority, provider, proof/client wiring and sealed sour
 assembly are now complete. All126 combined CPU tests pass, including actual110
 receipt compatibility and independent source/concurrency reviews. The111 packet
 was built exclusively while110 stayed running; its actual sealed CPU startup
-check passed, without device discovery. No111 application or model request has
-been launched. A480,219-entry filename scan found no collisions for its eight
+check passed, without device discovery. The application and finite campaign
+are now live as recorded above. A480,219-entry filename scan found no collisions for its eight
 request names or six physical indices.4GiB runtime plus384MiB build admission
 preserves the50GiB reserve; this is monitored headroom, not a filesystem quota.
 111 manifest`65adf13fca14f92047960ed939c507cd7e28a08b41940decd089189c86c41363`.
-Next is the necessary controlled application reload, fresh fault/storage/health
-admission and fixed eight-request native continuation/replay run. The first
-native and first conditioned proofs gate further requests. Seams and audio
+Fresh launch admission left53.84GiB after the4GiB allowance. Actual registered
+classes, source/process identity and client contract checks passed. IdentitySHA
+`294fee41017abbe81ea1bba3160af98b28f1607cd4f2d018c17c23c604239909`;
+clientcontractSHA`d6ad20e0534ebe6b152990dfa04b833d855952c188a9f0abc58ebfdfdca1f107`.
+The first native and first conditioned proofs gate further requests. Seams and audio
 alignment remain separate quality questions; no new speed result is claimed.
 [Runtime integration and reviewed fixes](experiments/ltx25-b70/notes/2026-10-07-continuation111-runtime.md).
 [Integration design](experiments/ltx25-b70/notes/2026-10-07-continuation111-integration-design.md),

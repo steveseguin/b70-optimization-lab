@@ -1,0 +1,22 @@
+{
+  "command": [
+    "systemd-run",
+    "--user",
+    "--unit=ltx111-continuation-campaign-20261007",
+    "--property=Restart=no",
+    "--property=SendSIGKILL=no",
+    "--property=KillSignal=SIGINT",
+    "--property=WorkingDirectory=/home/steve/llm-optimizations",
+    "/home/steve/.venvs/ltx25-baseline/bin/python",
+    "-B",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-native-111/resolution/components/campaign.py",
+    "--contract",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-native-111-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49/resolution-client-contract.json",
+    "--contract-sha256",
+    "d6ad20e0534ebe6b152990dfa04b833d855952c188a9f0abc58ebfdfdca1f107",
+    "--run"
+  ],
+  "registered_at": "2026-10-08T00:28:07.134018+00:00",
+  "max_attempts": 8,
+  "application_lifecycle": "retained; no automatic stop or restart"
+}

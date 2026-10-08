@@ -88,3 +88,29 @@ the actual reload. [Startup check](../data/resume-20261007/continuation111-start
 A filename-only scan of480,219 common-root entries found no request/capture/index
 collisions. [Namespace check](../data/resume-20261007/continuation111-namespace-check.json).
 The successful110 application remains retained;111 is constructed but unlaunched.
+
+## Controlled reload and live bounded test
+
+110 received one SIGINT after fresh idle/process/source/kernel checks, and was
+gone at2026-10-08T00:26:31.621715+00:00. The first passive preflight attempt
+lacked the launch directory on Python's import path and failed before any
+intent or signal; the corrected passive check is documented in the stop receipt.
+All four cards then passed the existing fault-halt health probe; no fault earlier
+this boot or during postflight. No host restart, reset, hard kill or settings
+change occurred. [Stop evidence](../data/resume-20261007/duration110-closeout/controlled-reload-stopped.json),
+[postflight](../data/resume-20261007/postflight-110.json).
+
+111 launched once with the unchanged explicit environment and no restart policy.
+PID3415570/start29306475, same boot. Fresh4GiB launch admission left53.837GiB
+above the50GiB reserve. Actual node registrations, all eight graph classes,
+initial idle phase, exact process/source identity and the sealed client constructor
+passed before any model request. IdentitySHA
+`294fee41017abbe81ea1bba3160af98b28f1607cd4f2d018c17c23c604239909`;
+clientcontractSHA`d6ad20e0534ebe6b152990dfa04b833d855952c188a9f0abc58ebfdfdca1f107`.
+The finite campaign started2026-10-08T00:28:07.179316+00:00. There is no second
+request stream, retry or lifecycle action in that client. Setup and every native
+request are separately proved; first-native and first-conditioned barriers remain.
+[Preregistration](../data/resume-20261007/continuation111-preregistration.json),
+[client admission](../data/resume-20261007/continuation111-admitted-client.json),
+[campaign launch](../data/resume-20261007/continuation111-campaign-launch.json).
+No continuation success, speed gain or quality adoption is assumed at launch.

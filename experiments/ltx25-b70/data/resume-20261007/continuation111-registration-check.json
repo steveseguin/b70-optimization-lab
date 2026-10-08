@@ -1,0 +1,1248 @@
+{
+  "classes": {
+    "EmptyLTXVLatentVideo": {
+      "api_node": false,
+      "category": "model/latent/ltxv",
+      "deprecated": false,
+      "description": "",
+      "dev_only": false,
+      "display_name": "Empty LTXV Latent Video",
+      "essentials_category": null,
+      "experimental": false,
+      "has_intermediate_output": false,
+      "input": {
+        "required": {
+          "batch_size": [
+            "INT",
+            {
+              "default": 1,
+              "max": 4096,
+              "min": 1
+            }
+          ],
+          "height": [
+            "INT",
+            {
+              "default": 512,
+              "max": 16384,
+              "min": 64,
+              "step": 32
+            }
+          ],
+          "length": [
+            "INT",
+            {
+              "default": 97,
+              "max": 16384,
+              "min": 1,
+              "step": 8
+            }
+          ],
+          "width": [
+            "INT",
+            {
+              "default": 768,
+              "max": 16384,
+              "min": 64,
+              "step": 32
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "width",
+          "height",
+          "length",
+          "batch_size"
+        ]
+      },
+      "is_input_list": false,
+      "name": "EmptyLTXVLatentVideo",
+      "output": [
+        "LATENT"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_matchtypes": null,
+      "output_name": [
+        "LATENT"
+      ],
+      "output_node": false,
+      "output_tooltips": [
+        null
+      ],
+      "price_badge": null,
+      "python_module": "comfy_extras.nodes_lt",
+      "search_aliases": null
+    },
+    "KSamplerSelect": {
+      "api_node": false,
+      "category": "model/sampling/samplers",
+      "deprecated": false,
+      "description": "",
+      "dev_only": false,
+      "display_name": null,
+      "essentials_category": null,
+      "experimental": false,
+      "has_intermediate_output": false,
+      "input": {
+        "required": {
+          "sampler_name": [
+            "COMBO",
+            {
+              "multiselect": false,
+              "options": [
+                "euler",
+                "euler_cfg_pp",
+                "euler_ancestral",
+                "euler_ancestral_cfg_pp",
+                "heun",
+                "heunpp2",
+                "exp_heun_2_x0",
+                "exp_heun_2_x0_sde",
+                "dpm_2",
+                "dpm_2_ancestral",
+                "lms",
+                "dpm_fast",
+                "dpm_adaptive",
+                "dpmpp_2s_ancestral",
+                "dpmpp_2s_ancestral_cfg_pp",
+                "dpmpp_sde",
+                "dpmpp_sde_gpu",
+                "dpmpp_2m",
+                "dpmpp_2m_cfg_pp",
+                "dpmpp_2m_sde",
+                "dpmpp_2m_sde_gpu",
+                "dpmpp_2m_sde_heun",
+                "dpmpp_2m_sde_heun_gpu",
+                "dpmpp_3m_sde",
+                "dpmpp_3m_sde_gpu",
+                "ddpm",
+                "lcm",
+                "ipndm",
+                "ipndm_v",
+                "deis",
+                "cfgpp_ud10_ab",
+                "res_multistep",
+                "res_multistep_cfg_pp",
+                "res_multistep_ancestral",
+                "res_multistep_ancestral_cfg_pp",
+                "gradient_estimation",
+                "gradient_estimation_cfg_pp",
+                "er_sde",
+                "seeds_2",
+                "seeds_3",
+                "sa_solver",
+                "sa_solver_pece",
+                "ddim",
+                "uni_pc",
+                "uni_pc_bh2"
+              ]
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "sampler_name"
+        ]
+      },
+      "is_input_list": false,
+      "name": "KSamplerSelect",
+      "output": [
+        "SAMPLER"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_matchtypes": null,
+      "output_name": [
+        "SAMPLER"
+      ],
+      "output_node": false,
+      "output_tooltips": [
+        null
+      ],
+      "price_badge": null,
+      "python_module": "comfy_extras.nodes_custom_sampler",
+      "search_aliases": null
+    },
+    "LTXBaselineCapture": {
+      "category": "lab/validation",
+      "description": "",
+      "display_name": "LTXBaselineCapture",
+      "has_intermediate_output": false,
+      "input": {
+        "required": {
+          "audio": [
+            "AUDIO"
+          ],
+          "audio_latent": [
+            "LATENT"
+          ],
+          "images": [
+            "IMAGE"
+          ],
+          "run_name": [
+            "STRING",
+            {
+              "default": "baseline-01"
+            }
+          ],
+          "video_latent": [
+            "LATENT"
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "images",
+          "video_latent",
+          "audio_latent",
+          "audio",
+          "run_name"
+        ]
+      },
+      "is_input_list": false,
+      "name": "LTXBaselineCapture",
+      "output": [],
+      "output_is_list": [],
+      "output_name": [],
+      "output_node": true,
+      "python_module": "custom_nodes.ltx_baseline_capture",
+      "search_aliases": []
+    },
+    "LTXContinuationAnchor111": {
+      "category": "lab/validation",
+      "description": "",
+      "display_name": "LTXContinuationAnchor111",
+      "has_intermediate_output": false,
+      "input": {
+        "required": {
+          "run_name": [
+            "STRING"
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "run_name"
+        ]
+      },
+      "is_input_list": false,
+      "name": "LTXContinuationAnchor111",
+      "output": [
+        "IMAGE"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "IMAGE"
+      ],
+      "output_node": false,
+      "python_module": "custom_nodes.ltx_resolution_lab",
+      "search_aliases": []
+    },
+    "LTXContinuationCondition111": {
+      "category": "lab/validation",
+      "description": "",
+      "display_name": "LTXContinuationCondition111",
+      "has_intermediate_output": false,
+      "input": {
+        "required": {
+          "bypass": [
+            "BOOLEAN",
+            {
+              "default": false
+            }
+          ],
+          "image": [
+            "IMAGE"
+          ],
+          "latent": [
+            "LATENT"
+          ],
+          "run_name": [
+            "STRING"
+          ],
+          "stage": [
+            [
+              "A",
+              "B"
+            ]
+          ],
+          "strength": [
+            "FLOAT",
+            {
+              "default": 1.0
+            }
+          ],
+          "vae": [
+            "VAE"
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "vae",
+          "image",
+          "latent",
+          "strength",
+          "bypass",
+          "run_name",
+          "stage"
+        ]
+      },
+      "is_input_list": false,
+      "name": "LTXContinuationCondition111",
+      "output": [
+        "LATENT"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "LATENT"
+      ],
+      "output_node": false,
+      "python_module": "custom_nodes.ltx_resolution_lab",
+      "search_aliases": []
+    },
+    "LTXHostEmbeddingComponents": {
+      "category": "lab/validation",
+      "description": "",
+      "display_name": "LTXHostEmbeddingComponents",
+      "has_intermediate_output": false,
+      "input": {
+        "required": {
+          "encoder_mode": [
+            [
+              "control",
+              "host-table"
+            ]
+          ],
+          "placement": [
+            [
+              "split"
+            ]
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "placement",
+          "encoder_mode"
+        ]
+      },
+      "is_input_list": false,
+      "name": "LTXHostEmbeddingComponents",
+      "output": [
+        "MODEL",
+        "CLIP",
+        "VAE",
+        "VAE",
+        "LATENT_UPSCALE_MODEL"
+      ],
+      "output_is_list": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "output_name": [
+        "model",
+        "clip",
+        "video_vae",
+        "audio_vae",
+        "upscaler"
+      ],
+      "output_node": false,
+      "python_module": "custom_nodes.ltx_host_embedding_lab",
+      "search_aliases": []
+    },
+    "LTXPipelineTextEncode": {
+      "category": "lab/validation",
+      "description": "",
+      "display_name": "LTXPipelineTextEncode",
+      "has_intermediate_output": false,
+      "input": {
+        "optional": {
+          "comparison_mode": [
+            "STRING",
+            {
+              "default": "historical"
+            }
+          ],
+          "output_size": [
+            "STRING",
+            {
+              "default": "256x256"
+            }
+          ],
+          "qualification_id": [
+            "STRING",
+            {
+              "default": ""
+            }
+          ],
+          "speed_only": [
+            "BOOLEAN",
+            {
+              "default": false
+            }
+          ]
+        },
+        "required": {
+          "clip": [
+            "CLIP"
+          ],
+          "clip_index": [
+            "INT",
+            {
+              "default": 0,
+              "max": 100000000,
+              "min": 0
+            }
+          ],
+          "depth": [
+            "INT",
+            {
+              "default": 1,
+              "max": 4,
+              "min": 1
+            }
+          ],
+          "mode": [
+            [
+              "original",
+              "pipeline",
+              "pipeline-window"
+            ]
+          ],
+          "run_name": [
+            "STRING",
+            {
+              "default": "assign-unique-request-name"
+            }
+          ],
+          "text": [
+            "STRING",
+            {
+              "multiline": true
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "optional": [
+          "output_size",
+          "comparison_mode",
+          "qualification_id",
+          "speed_only"
+        ],
+        "required": [
+          "clip",
+          "text",
+          "mode",
+          "clip_index",
+          "depth",
+          "run_name"
+        ]
+      },
+      "is_input_list": false,
+      "name": "LTXPipelineTextEncode",
+      "output": [
+        "CONDITIONING"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "CONDITIONING"
+      ],
+      "output_node": false,
+      "python_module": "custom_nodes.ltx_pipeline_lab",
+      "search_aliases": []
+    },
+    "LTXResolutionPrepareNative": {
+      "category": "lab/validation",
+      "description": "",
+      "display_name": "LTXResolutionPrepareNative",
+      "has_intermediate_output": false,
+      "input": {
+        "required": {
+          "run_name": [
+            "STRING"
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "run_name"
+        ]
+      },
+      "is_input_list": false,
+      "name": "LTXResolutionPrepareNative",
+      "output": [],
+      "output_is_list": [],
+      "output_name": [],
+      "output_node": true,
+      "python_module": "custom_nodes.ltx_resolution_lab",
+      "search_aliases": []
+    },
+    "LTXTextEncoderGraphGate": {
+      "category": "lab/validation",
+      "description": "",
+      "display_name": "LTXTextEncoderGraphGate",
+      "has_intermediate_output": false,
+      "input": {
+        "required": {
+          "clip": [
+            "CLIP"
+          ],
+          "mode": [
+            [
+              "original",
+              "graph",
+              "graph-shard",
+              "restored"
+            ]
+          ],
+          "run_name": [
+            "STRING",
+            {
+              "default": "assign-unique-request-name"
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "clip",
+          "mode",
+          "run_name"
+        ]
+      },
+      "is_input_list": false,
+      "name": "LTXTextEncoderGraphGate",
+      "output": [
+        "CLIP"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "CLIP"
+      ],
+      "output_node": false,
+      "python_module": "custom_nodes.ltx_graph_text_encoder_lab",
+      "search_aliases": []
+    },
+    "LTXTextWindowProbe": {
+      "category": "lab/validation",
+      "description": "",
+      "display_name": "LTXTextWindowProbe",
+      "has_intermediate_output": false,
+      "input": {
+        "required": {
+          "clip": [
+            "CLIP"
+          ],
+          "run_name": [
+            "STRING",
+            {
+              "default": "assign-unique-request-name"
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "clip",
+          "run_name"
+        ]
+      },
+      "is_input_list": false,
+      "name": "LTXTextWindowProbe",
+      "output": [],
+      "output_is_list": [],
+      "output_name": [],
+      "output_node": true,
+      "python_module": "custom_nodes.ltx_pipeline_lab",
+      "search_aliases": []
+    },
+    "LTXVAudioVAEDecode": {
+      "api_node": false,
+      "category": "model/latent/ltxv",
+      "deprecated": false,
+      "description": "",
+      "dev_only": false,
+      "display_name": "LTXV Audio VAE Decode",
+      "essentials_category": null,
+      "experimental": false,
+      "has_intermediate_output": false,
+      "input": {
+        "required": {
+          "audio_vae": [
+            "VAE",
+            {
+              "display_name": "Audio VAE",
+              "tooltip": "The Audio VAE model used for decoding the latent."
+            }
+          ],
+          "samples": [
+            "LATENT",
+            {
+              "tooltip": "The latent to be decoded."
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "samples",
+          "audio_vae"
+        ]
+      },
+      "is_input_list": false,
+      "name": "LTXVAudioVAEDecode",
+      "output": [
+        "AUDIO"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_matchtypes": null,
+      "output_name": [
+        "Audio"
+      ],
+      "output_node": false,
+      "output_tooltips": [
+        null
+      ],
+      "price_badge": null,
+      "python_module": "comfy_extras.nodes_lt_audio",
+      "search_aliases": null
+    },
+    "LTXVConcatAVLatent": {
+      "api_node": false,
+      "category": "model/latent/ltxv",
+      "deprecated": false,
+      "description": "Merge a video latent and an audio latent into a joint AV latent (any AV model, e.g. LTXV or MiniMax H3).",
+      "dev_only": false,
+      "display_name": "Concat AV Latent",
+      "essentials_category": null,
+      "experimental": false,
+      "has_intermediate_output": false,
+      "input": {
+        "required": {
+          "audio_latent": [
+            "LATENT",
+            {}
+          ],
+          "video_latent": [
+            "LATENT",
+            {}
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "video_latent",
+          "audio_latent"
+        ]
+      },
+      "is_input_list": false,
+      "name": "LTXVConcatAVLatent",
+      "output": [
+        "LATENT"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_matchtypes": null,
+      "output_name": [
+        "latent"
+      ],
+      "output_node": false,
+      "output_tooltips": [
+        null
+      ],
+      "price_badge": null,
+      "python_module": "comfy_extras.nodes_lt",
+      "search_aliases": null
+    },
+    "LTXVConditioning": {
+      "api_node": false,
+      "category": "model/conditioning/ltxv",
+      "deprecated": false,
+      "description": "",
+      "dev_only": false,
+      "display_name": null,
+      "essentials_category": null,
+      "experimental": false,
+      "has_intermediate_output": false,
+      "input": {
+        "required": {
+          "frame_rate": [
+            "FLOAT",
+            {
+              "default": 25.0,
+              "max": 1000.0,
+              "min": 0.0,
+              "step": 0.01
+            }
+          ],
+          "negative": [
+            "CONDITIONING",
+            {}
+          ],
+          "positive": [
+            "CONDITIONING",
+            {}
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "positive",
+          "negative",
+          "frame_rate"
+        ]
+      },
+      "is_input_list": false,
+      "name": "LTXVConditioning",
+      "output": [
+        "CONDITIONING",
+        "CONDITIONING"
+      ],
+      "output_is_list": [
+        false,
+        false
+      ],
+      "output_matchtypes": null,
+      "output_name": [
+        "positive",
+        "negative"
+      ],
+      "output_node": false,
+      "output_tooltips": [
+        null,
+        null
+      ],
+      "price_badge": null,
+      "python_module": "comfy_extras.nodes_lt",
+      "search_aliases": null
+    },
+    "LTXVDualCFGGuider": {
+      "api_node": false,
+      "category": "model/sampling/guiders",
+      "deprecated": false,
+      "description": "Separate CFG scales for the video and audio modalities of a packed LTXV-AV latent.",
+      "dev_only": false,
+      "display_name": "LTXV Dual CFG Guider",
+      "essentials_category": null,
+      "experimental": false,
+      "has_intermediate_output": false,
+      "input": {
+        "required": {
+          "audio_cfg": [
+            "FLOAT",
+            {
+              "default": 7.0,
+              "max": 100.0,
+              "min": 0.0,
+              "round": 0.01,
+              "step": 0.1
+            }
+          ],
+          "model": [
+            "MODEL",
+            {}
+          ],
+          "negative": [
+            "CONDITIONING",
+            {}
+          ],
+          "positive": [
+            "CONDITIONING",
+            {}
+          ],
+          "video_cfg": [
+            "FLOAT",
+            {
+              "default": 3.0,
+              "max": 100.0,
+              "min": 0.0,
+              "round": 0.01,
+              "step": 0.1
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "model",
+          "positive",
+          "negative",
+          "video_cfg",
+          "audio_cfg"
+        ]
+      },
+      "is_input_list": false,
+      "name": "LTXVDualCFGGuider",
+      "output": [
+        "GUIDER"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_matchtypes": null,
+      "output_name": [
+        "GUIDER"
+      ],
+      "output_node": false,
+      "output_tooltips": [
+        null
+      ],
+      "price_badge": null,
+      "python_module": "comfy_extras.nodes_lt",
+      "search_aliases": null
+    },
+    "LTXVEmptyLatentAudio": {
+      "api_node": false,
+      "category": "model/latent/ltxv",
+      "deprecated": false,
+      "description": "",
+      "dev_only": false,
+      "display_name": "Empty LTXV Latent Audio",
+      "essentials_category": null,
+      "experimental": false,
+      "has_intermediate_output": false,
+      "input": {
+        "required": {
+          "audio_vae": [
+            "VAE",
+            {
+              "display_name": "Audio VAE",
+              "tooltip": "The Audio VAE model to get configuration from."
+            }
+          ],
+          "batch_size": [
+            "INT",
+            {
+              "default": 1,
+              "display": "number",
+              "max": 4096,
+              "min": 1,
+              "tooltip": "The number of latent audio samples in the batch."
+            }
+          ],
+          "frame_rate": [
+            "FLOAT,INT",
+            {
+              "default": 25.0,
+              "display": "number",
+              "max": 1000.0,
+              "min": 1.0,
+              "step": 0.01,
+              "tooltip": "Number of frames per second.",
+              "widgetType": "FLOAT"
+            }
+          ],
+          "frames_number": [
+            "INT",
+            {
+              "default": 97,
+              "display": "number",
+              "max": 1000,
+              "min": 1,
+              "step": 1,
+              "tooltip": "Number of frames."
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "frames_number",
+          "frame_rate",
+          "batch_size",
+          "audio_vae"
+        ]
+      },
+      "is_input_list": false,
+      "name": "LTXVEmptyLatentAudio",
+      "output": [
+        "LATENT"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_matchtypes": null,
+      "output_name": [
+        "Latent"
+      ],
+      "output_node": false,
+      "output_tooltips": [
+        null
+      ],
+      "price_badge": null,
+      "python_module": "comfy_extras.nodes_lt_audio",
+      "search_aliases": null
+    },
+    "LTXVLatentUpsampler": {
+      "api_node": false,
+      "category": "model/latent/ltxv",
+      "deprecated": false,
+      "description": "",
+      "dev_only": false,
+      "display_name": null,
+      "essentials_category": null,
+      "experimental": true,
+      "has_intermediate_output": false,
+      "input": {
+        "required": {
+          "samples": [
+            "LATENT",
+            {}
+          ],
+          "upscale_model": [
+            "LATENT_UPSCALE_MODEL",
+            {}
+          ],
+          "vae": [
+            "VAE",
+            {}
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "samples",
+          "upscale_model",
+          "vae"
+        ]
+      },
+      "is_input_list": false,
+      "name": "LTXVLatentUpsampler",
+      "output": [
+        "LATENT"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_matchtypes": null,
+      "output_name": [
+        "LATENT"
+      ],
+      "output_node": false,
+      "output_tooltips": [
+        null
+      ],
+      "price_badge": null,
+      "python_module": "comfy_extras.nodes_lt_upsampler",
+      "search_aliases": null
+    },
+    "LTXVSeparateAVLatent": {
+      "api_node": false,
+      "category": "model/latent/ltxv",
+      "deprecated": false,
+      "description": "Split a joint AV latent into its video and audio latents (any AV model, e.g. LTXV or MiniMax H3).",
+      "dev_only": false,
+      "display_name": "Separate AV Latent",
+      "essentials_category": null,
+      "experimental": false,
+      "has_intermediate_output": false,
+      "input": {
+        "required": {
+          "av_latent": [
+            "LATENT",
+            {}
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "av_latent"
+        ]
+      },
+      "is_input_list": false,
+      "name": "LTXVSeparateAVLatent",
+      "output": [
+        "LATENT",
+        "LATENT"
+      ],
+      "output_is_list": [
+        false,
+        false
+      ],
+      "output_matchtypes": null,
+      "output_name": [
+        "video_latent",
+        "audio_latent"
+      ],
+      "output_node": false,
+      "output_tooltips": [
+        null,
+        null
+      ],
+      "price_badge": null,
+      "python_module": "comfy_extras.nodes_lt",
+      "search_aliases": null
+    },
+    "ManualSigmas": {
+      "api_node": false,
+      "category": "model/sampling/sigmas",
+      "deprecated": false,
+      "description": "",
+      "dev_only": false,
+      "display_name": null,
+      "essentials_category": null,
+      "experimental": true,
+      "has_intermediate_output": false,
+      "input": {
+        "required": {
+          "sigmas": [
+            "STRING",
+            {
+              "default": "1, 0.5",
+              "multiline": false
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "sigmas"
+        ]
+      },
+      "is_input_list": false,
+      "name": "ManualSigmas",
+      "output": [
+        "SIGMAS"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_matchtypes": null,
+      "output_name": [
+        "SIGMAS"
+      ],
+      "output_node": false,
+      "output_tooltips": [
+        null
+      ],
+      "price_badge": null,
+      "python_module": "comfy_extras.nodes_custom_sampler",
+      "search_aliases": [
+        "custom noise schedule",
+        "define sigmas"
+      ]
+    },
+    "RandomNoise": {
+      "api_node": false,
+      "category": "model/sampling/noise",
+      "deprecated": false,
+      "description": "",
+      "dev_only": false,
+      "display_name": null,
+      "essentials_category": null,
+      "experimental": false,
+      "has_intermediate_output": false,
+      "input": {
+        "required": {
+          "noise_seed": [
+            "INT",
+            {
+              "control_after_generate": true,
+              "default": 0,
+              "max": 18446744073709551615,
+              "min": 0
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "noise_seed"
+        ]
+      },
+      "is_input_list": false,
+      "name": "RandomNoise",
+      "output": [
+        "NOISE"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_matchtypes": null,
+      "output_name": [
+        "NOISE"
+      ],
+      "output_node": false,
+      "output_tooltips": [
+        null
+      ],
+      "price_badge": null,
+      "python_module": "comfy_extras.nodes_custom_sampler",
+      "search_aliases": null
+    },
+    "SamplerCustomAdvanced": {
+      "api_node": false,
+      "category": "model/sampling/custom",
+      "deprecated": false,
+      "description": "",
+      "dev_only": false,
+      "display_name": null,
+      "essentials_category": null,
+      "experimental": false,
+      "has_intermediate_output": false,
+      "input": {
+        "required": {
+          "guider": [
+            "GUIDER",
+            {}
+          ],
+          "latent_image": [
+            "LATENT",
+            {}
+          ],
+          "noise": [
+            "NOISE",
+            {}
+          ],
+          "sampler": [
+            "SAMPLER",
+            {}
+          ],
+          "sigmas": [
+            "SIGMAS",
+            {}
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "noise",
+          "guider",
+          "sampler",
+          "sigmas",
+          "latent_image"
+        ]
+      },
+      "is_input_list": false,
+      "name": "SamplerCustomAdvanced",
+      "output": [
+        "LATENT",
+        "LATENT"
+      ],
+      "output_is_list": [
+        false,
+        false
+      ],
+      "output_matchtypes": null,
+      "output_name": [
+        "output",
+        "denoised_output"
+      ],
+      "output_node": false,
+      "output_tooltips": [
+        null,
+        null
+      ],
+      "price_badge": null,
+      "python_module": "comfy_extras.nodes_custom_sampler",
+      "search_aliases": null
+    },
+    "VAEDecode": {
+      "category": "model/latent",
+      "description": "Decodes latent images back into pixel space images.",
+      "display_name": "VAE Decode",
+      "has_intermediate_output": false,
+      "input": {
+        "required": {
+          "samples": [
+            "LATENT",
+            {
+              "tooltip": "The latent to be decoded."
+            }
+          ],
+          "vae": [
+            "VAE",
+            {
+              "tooltip": "The VAE model used for decoding the latent."
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "samples",
+          "vae"
+        ]
+      },
+      "is_input_list": false,
+      "name": "VAEDecode",
+      "output": [
+        "IMAGE"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "IMAGE"
+      ],
+      "output_node": false,
+      "output_tooltips": [
+        "The decoded image."
+      ],
+      "python_module": "nodes",
+      "search_aliases": [
+        "decode",
+        "decode latent",
+        "latent to image",
+        "render latent"
+      ]
+    }
+  },
+  "initial_status": {
+    "actions": [],
+    "active": null,
+    "completed": [],
+    "halted": null,
+    "phase": "native_reference",
+    "proofs": [],
+    "runtime_manifest_sha256": "65adf13fca14f92047960ed939c507cd7e28a08b41940decd089189c86c41363",
+    "server_identity_sha256": "294fee41017abbe81ea1bba3160af98b28f1607cd4f2d018c17c23c604239909",
+    "state": {
+      "captures_frozen": false,
+      "decode_replicas": 0,
+      "fault": false,
+      "lean_state": 0,
+      "loads_frozen": false,
+      "pipeline": {
+        "running": 0,
+        "stages": {}
+      },
+      "preview_failures": 0,
+      "preview_pending": 0,
+      "queue_pending": 0,
+      "queue_pending_ids": [],
+      "queue_running": 0,
+      "queue_running_ids": [],
+      "registered_module_paths": {
+        "decode": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-native-111/source/custom_nodes/ltx_pipeline_decode_lab/__init__.py",
+        "graph": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-native-111/source/custom_nodes/ltx_graph_capture_lab/__init__.py"
+      },
+      "sampler_routes": 0
+    }
+  },
+  "manifest_sha256": "65adf13fca14f92047960ed939c507cd7e28a08b41940decd089189c86c41363",
+  "server_identity_sha256": "294fee41017abbe81ea1bba3160af98b28f1607cd4f2d018c17c23c604239909",
+  "utc": "2026-10-08T00:27:55.474633+00:00"
+}

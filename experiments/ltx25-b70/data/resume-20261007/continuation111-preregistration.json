@@ -1,0 +1,63 @@
+{
+  "schema": "ltx.continuation111.preregistration.v1",
+  "utc": "2026-10-08T00:27:06.891179+00:00",
+  "source_commit": "69a019ecf7eb4826201c939aa4d4a00cb4eabf65",
+  "packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-native-111",
+  "manifest_sha256": "65adf13fca14f92047960ed939c507cd7e28a08b41940decd089189c86c41363",
+  "plan_sha256": "7944f8701244bd386c41bc5cdd6c4e9df1ea8fcf4d9dedf91e249f476105b2c5",
+  "run_name": "encoder-server-continuation-native-111-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49",
+  "server_unit": "ltx111-continuation-server-20261007",
+  "campaign_unit": "ltx111-continuation-campaign-20261007",
+  "environment": {
+    "EnableDeferBacking": "0",
+    "LTX_BUSY_WINDOWS": "0",
+    "LTX_DECODE_REPLICAS": "1",
+    "LTX_DECODE_REPLICA_DEVICE": "xpu:2",
+    "LTX_OUTPUT_SIZE": "640x384",
+    "LTX_SAMPLER_BATCH": "1",
+    "LTX_SAMPLER_PLACEMENT": "two-way20-28",
+    "LTX_SAMPLER_SHARED_POOL": "1",
+    "LTX_SAMPLER_WORKERS": "2",
+    "NEOReadDebugKeys": "1"
+  },
+  "requests": [
+    "continuation111-window-probe",
+    "continuation111-prepare-native",
+    "continuation111-pass0-chunk0",
+    "continuation111-pass0-chunk1",
+    "continuation111-pass0-chunk2",
+    "continuation111-pass1-chunk0",
+    "continuation111-pass1-chunk1",
+    "continuation111-pass1-chunk2"
+  ],
+  "limits": {
+    "requests": 8,
+    "captures": 6,
+    "runtime_allowance_bytes": 4294967296,
+    "reserve_bytes": 53687091200,
+    "available_bytes": 62102425600,
+    "per_request_seconds": 1800,
+    "proof_action_seconds": 600
+  },
+  "health_receipt": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261007/postflight-110.json",
+  "health_sha256": "95b67b977fac1baa691e1cee10cae4aa2d24df86ef8c579b13868f48b5f73b7c",
+  "memory_gib": {
+    "before": [
+      8,
+      8,
+      2,
+      9
+    ],
+    "after_each": 2,
+    "not_peak_bounds": true
+  },
+  "claims": {
+    "reference_only": true,
+    "quality_adoption": false,
+    "speed_improvement": false,
+    "seam_accepted": false,
+    "audio_alignment_resolved": false
+  },
+  "gates": "Per-request durable independent proof; first native and first conditioned result gate later execution. All three complete four-tensor replay pairs exact before separate seam review.",
+  "lifecycle": "Single controlled110-to111 application reload. Retain success. No retries, automatic restart, host reboot or driver reset. Any fault halts new requests."
+}
