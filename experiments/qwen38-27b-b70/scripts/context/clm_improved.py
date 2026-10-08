@@ -475,8 +475,9 @@ ANSWERS = "/app/answers.json"
 _WRITES = re.compile(r">|open\(|json\.dump|write|tee\b|cp\b|mv\b")
 _ITEM_UPDATE = re.compile(r"ITEM \d+/\d+ \((?!QUERY|GET)")
 _ITEM_FINAL = re.compile(r"ITEM \d+/\d+ \((?:QUERY|GET)\)")
-# quoted mode: an events command is the here-document and nothing else
-_EVENTS_CMD = re.compile(r"(?s)\s*ctxfold\s+--events(?:\s+[A-Z]+)*\s*<<-?\s*(['\"]?)(\w+)\1[ \t]*\n.*?\n?\2\s*$")
+# Quoting the delimiter is required: an unquoted heredoc executes shell expansions
+# before ctxfold runs, allowing side effects even when the command otherwise stands alone.
+_EVENTS_CMD = re.compile(r"(?s)\s*ctxfold\s+--events(?:\s+[A-Z]+)*\s*<<-?\s*(['\"])(\w+)\1[ \t]*\n.*?\n?\2\s*$")
 
 
 def _events_cmd_alone(cmd: str) -> bool:

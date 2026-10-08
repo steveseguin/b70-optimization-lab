@@ -202,7 +202,7 @@ def events(final):
         if len(p) == 2 and re.fullmatch(r"[a-z]+\d\d", p[0]):
             st[p[0]] = None if p[1] == "removed" else int(p[1]) if re.fullmatch(r"-?\d+", p[1]) else None
     parts = HDR.split(s)
-    out, done, named, texts, merged = [parts[0]], [], set(), {}, set()
+    out, done, named, texts = [parts[0]], [], set(), {}
     for i in range(1, len(parts), 2):
         h, b = parts[i], (parts[i + 1] if i + 1 < len(parts) else "")
         m = ITEM.match(b)
@@ -218,29 +218,21 @@ def events(final):
                 named |= set(re.findall(r"\b[a-z]+\d\d\b", body[hm.end():end]))
             continue
         out += [h, b]
-    if not done and os.path.exists(ARCH + "/.on"):
-        # an item the model merged into another turn while compacting (B32iq d12 rerun: item 23 ended up
-        # inside its own note turn and ctxfold said "no delivered item" for 230 steps): an UPDATE item
-        # that is not archived yet, found anywhere in the context, from its header to the next turn
-        for idx in range(2, len(out), 2):
-            b = out[idx]
-            for hm in list(ITEMS.finditer(b)):
-                n = int(hm.group(1))
-                if (hm.group(3) in final or os.path.exists(f"{ARCH}/item-{n:03d}.txt") or n in texts
-                        or os.path.exists(f"{ARCH}/.done-{n:03d}")):
-                    continue
-                nxt = ITEMS.search(b, hm.end())
-                end = nxt.start() if nxt else len(b)
-                ec = b.find("\n\n(exit_code=", hm.end())
-                if ec != -1:
-                    end = min(end, ec)
-                texts[n] = b[hm.end():end].strip()
-                named |= set(re.findall(r"\b[a-z]+\d\d\b", texts[n]))
-                done.append(n)
-                merged.add(n)   # not archived: the text may carry the model's own notes (not verbatim)
-                out[idx] = b[:hm.start()] + b[end:]
-                b = out[idx]
-                break
+    # A copied ITEM header in an edited turn is not authenticated delivery text. Reject
+    # it before applying any normal item, including later items already collected above:
+    # otherwise a pending earlier set can be applied after a later add. Archived item
+    # copies are harmless; their events have already been handled. Never apply or drop
+    # unverified text, and never replace its recall evidence with an empty marker.
+    for idx in range(2, len(out), 2):
+        for hm in ITEMS.finditer(out[idx]):
+            n = int(hm.group(1))
+            if (hm.group(3) in final or n in texts
+                    or os.path.exists(f"{ARCH}/item-{n:03d}.txt")
+                    or os.path.exists(f"{ARCH}/.done-{n:03d}")):
+                continue
+            refuse("unverified item", f"item {n} appears inside an edited or non-tool turn, not an intact "
+                   f"delivered item; its quotes cannot be verified. Restore the original untouched "
+                   f"delivery turn before retrying; do not reconstruct it from notes")
     if not done:
         print("ctxfold: no delivered item in your context")
         return
@@ -352,9 +344,6 @@ def events(final):
     archived = 0
     if os.path.exists(ARCH + "/.on"):
         for n, t in texts.items():
-            if n in merged:
-                open(f"{ARCH}/.done-{n:03d}", "w").close()   # empty marker: applied, never apply again
-                continue
             f = f"{ARCH}/item-{n:03d}.txt"
             if not os.path.exists(f):
                 with open(f, "w") as fh:
@@ -366,9 +355,7 @@ def events(final):
           f"({', '.join(f'{k} {v}' for k, v in sorted(applied.items())) or 'none'}) from items {done}"
           + (f"; archived verbatim: {archived}" if archived else "")
           + f"; STATE.txt now has {len(new)} counter lines"
-          + (f"; name typos corrected from the quotes: {', '.join(fixed)}" if fixed else "")
-          + (f"; items {sorted(merged)} were found inside an edited turn (applied, not archived: do not merge "
-             f"items into notes)" if merged else ""))
+          + (f"; name typos corrected from the quotes: {', '.join(fixed)}" if fixed else ""))
 
 
 def main():
