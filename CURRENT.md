@@ -8,7 +8,7 @@ below remain that host's own research record; this consolidation did not operate
 
 **2026-10-08, Flash-Next CPU-only memory adapter:** the unchanged FP8 PLE rows
 can now be read from their original files with a 4 GiB total pinned row cache.
-Loading has a shared staging cap and per-rank memory receipts. All 125 CPU
+Loading has a shared staging cap and per-rank memory receipts. All 126 CPU
 tests pass, including small checks against the real checkpoint. The revised
 host-memory estimate is **87.765 GB**, not a measured fit. Existing host and
 card-memory guards still apply; reading missed rows will add decode latency.
@@ -44,6 +44,8 @@ audio alignment unreviewed). 111 stopped once with SIGINT at 00:54:03 UTC;
 four-card postflight passed 00:54:58 UTC, zero fault lines this boot.
 [Results](experiments/ltx25-b70/notes/2026-10-08-continuation111-results.md),
 [stop receipt](experiments/ltx25-b70/data/resume-20261007/continuation111-stop.json).
+
+**16:45 UTC: sharp-seam baseline at 97 frames measured (114, `LTX_ANCHOR=frame`, text reuse):** exact gate pass; **5.98 s per 4.04 s chunk (1.48 s/s)** with seams at 0.87–0.96 relative sharpness (none below 85%). Stage costs: text+A-prep 0.50, sampler A 1.62, upsample+B-prep 0.28, sampler B 1.19, decode in-chain 2.01, anchor handoff 2.15 (includes waiting for the decode thread's post-work: audio, hashing, record), preview 0.94 off-chain. This is what packet 116 must beat with sharp seams: the tail-decode idea is not exact (the LTX-2.5 decoder is a non-causal neighbourhood-attention diffusion decoder; every latent frame feeds the last pixel frame; row counts change rounding), so 116 = scheduling (chain waits only for the video decode; audio/hash/record/preview behind it) + decoder graph capture with bounded RoPE/mask/noise caches (owner-authorized experiment, byte-identity gated) + optional stage-B encode overlap. Predicted 116a ≈4.9 s at 97 (1.2 s/s); with decoder capture lower. [Design](experiments/ltx25-b70/notes/2026-10-08-continuation-tail-decode-design.md). Process slip to record: this 114 frame-mode launch went out about one minute after the previous stop instead of the lane's five-minute gap (probe had passed; no harm observed); the gap is restored in the launch scripts from here on.
 
 **16:35 UTC: the softness is not a model fade-in.** Seven unanchored text-to-video first chunks (stream_seq 0 and qualification chunk 0 across the 112–115 runs) are sharp from frame 0 (relative sharpness 1.07–1.26 over frames 0–12), so the start-of-chunk softness is caused specifically by latent-side conditioning. Guide run stopped once at 16:22:29 UTC (154 chunks, exact); postflight pass. No server running. Receipts `stream115-guide49-stop.json`, `postflight-stream115-guide.json`. The tail-decode design for packet 116 is in progress.
 
