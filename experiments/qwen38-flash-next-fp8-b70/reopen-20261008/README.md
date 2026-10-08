@@ -93,7 +93,7 @@ python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reop
 Exact requested execution command — **not run, currently refuses admission**:
 
 ```sh
-python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode mtp1 --execute
+python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode mtp1 --health-receipt /home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261008/postflight-stream115-guide.json --execute
 ```
 
 The fallback CPU measurement was implemented and run:
@@ -123,20 +123,65 @@ preserved. Generation execution needs a qualified memory receipt or resolved bou
 and all execution needs idle cards; this packet is not authorization to displace LTX.
 
 
+## Same-boot fault admission
+
+`--health-receipt PATH` is required for any `--execute` action when the boot
+journal contains a GPU fault or unexplained host stall. After one fault,
+keep the evidence and use the result of the one bounded
+[`check-four-card-health.py`](../../ltx25-b70/scripts/check-four-card-health.py)
+probe. Screen reads that JSON; it never runs a recovery probe or reboots.
+
+The checks mirror local LTX packet 115's `launch/serve-encoder.py`: receipt
+schema, current boot ID, end time strictly less than six hours old, no faults
+during the probe, and complete passing copy/GEMM evidence for xpu:0–3.
+Only fault lines **older than the receipt end time** are admitted. The boundary
+second is refused too because the probe records whole seconds. GPU fault
+lines separated by at most 60 seconds form one incident; two or more incidents
+anywhere in this boot refuse launch regardless of receipt, with an explicit
+message that the owner must decide about rebooting.
+
+`Xe device coredump has been deleted` is housekeeping and is ignored in both
+admission and monitoring. Creation, timeout, reset and other GPU fault lines
+still stop the run. LTX's specific known xe GuC host-stall classification is
+retained; it never exempts a GPU fault. Timestamps include timezone and
+microseconds, avoiding local/UTC ambiguity and an admission-to-start gap.
+
+The worker rechecks admission after model hashing. Its run directory retains
+`journal-admitted-faults.txt`, the complete preflight journal, and a copy and
+SHA-256 of the health receipt. Startup, generation, calibration plateau and
+postflight check for new faults after the admission cutoff; a new fault uses
+the existing single-SIGINT shutdown, without retry or hard-kill escalation.
+
+The commands below use the existing `postflight-stream115-guide.json` receipt,
+ending **2026-10-08 16:22:34 UTC**. It expires at **22:22:34 UTC** that day and
+cannot cover any newer fault. Supply a current passing receipt when needed;
+a receipt does not waive the memory, storage, idle-card or port checks.
+These commands were not executed in this CPU-only change.
+
+Synthetic CPU tests cover clean boot, recovered first incident, new fault,
+second incident, deletion, receipt evidence/age, host-stall classification,
+worker argument forwarding, live fault monitoring and graceful shutdown.
+All **19 new tests pass**. The full system-Python suite ran **145 tests: 138
+passed, seven existing dependency-related skips**; `git diff --check` passed:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover \
+  -s experiments/qwen38-flash-next-fp8-b70/reopen-20261008 -p 'test_journal.py' -v
+```
+
 ## Owner-approved sequence: calibrate-load → mtp1
 
 These commands are prepared for the owner; **neither was executed in this
 CPU-only follow-up**. First arrange exclusive idle cards and the existing
-clean/recovered-boot admission, with at least five minutes after the previous
-server stops. This controller retains its conservative whole-boot fault
-refusal; the earlier recovered fault is not silently waived by calibration.
+recovered-boot admission above, with at least five minutes after the previous
+server stops.
 No mode displaces LTX, uses port 8188, installs anything, or pulls an image.
 The pinned image must already exist. Existing `SCREEN_PRIVILEGED_FD_SCAN` and
 `SCREEN_SUDO_PASSWORD_FILE` settings pass through to the systemd worker; only
 the opt-in fd scan uses that existing privileged path. The sampler never does.
 
 ```sh
-SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode calibrate-load --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008 --execute
+SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode calibrate-load --health-receipt /home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261008/postflight-stream115-guide.json --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008 --execute
 ```
 
 This command uses the fresh `runs/screen1b-mmap-calibrate-load-20261008/`.
@@ -183,7 +228,7 @@ After reviewing a passing receipt and leaving the five-minute stop-to-launch
 gap, use a fresh MTP1 run with that receipt explicitly supplied:
 
 ```sh
-SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode mtp1 --calibration /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008/calibration-load.json --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mtp1-calibrated --execute
+SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode mtp1 --health-receipt /home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261008/postflight-stream115-guide.json --calibration /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008/calibration-load.json --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mtp1-calibrated --execute
 ```
 
 The gate rechecks sample hashes and recomputes the verdict. Image, overlay,

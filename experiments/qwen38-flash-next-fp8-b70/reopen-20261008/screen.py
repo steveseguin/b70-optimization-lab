@@ -34,8 +34,216 @@ REPO = HERE.parents[2]
 PLAN = json.loads((HERE / 'image-plan.json').read_text())
 OVERLAY = json.loads((HERE / 'overlay-manifest.json').read_text())
 MODEL = Path('/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8')
-FAULT = re.compile(r'Fault response|CAT error|engine.*reset|reset.*engine|devcoredump|device coredump|timed.?out job|job[^\n]*timed\s*out|GPU HANG', re.I)
+# Mirrored from local LTX packet 115 launch/serve-encoder.py: journal
+# classification and complete four-card probe evidence, with Screen's legacy
+# engine-reset/timeout spellings retained. No runtime dependency on that packet.
+FAULT = re.compile(
+    r'Fault response|CAT error|engine.*reset|reset.*engine|GPU HANG|GuC.*reset|coredump|timed.?out job|job[^\n]*timed\s*out|wedged|'
+    r'\bBUG:[ \t]+soft lockup[ \t]+-[ \t]+CPU#\d+[ \t]+stuck for[ \t]+\d+(?:\.\d+)?s!|'
+    r'\bINFO:[ \t]+rcu_(?:preempt|sched|bh|tasks(?:_rude|_trace)?)[ \t]+(?:self-)?detected[ \t]+(?:expedited[ \t]+)?stalls?[ \t]+on[ \t]+(?:CPUs?(?:/tasks)?|tasks)\b|'
+    r'\brcu_(?:preempt|sched|bh|tasks(?:_rude|_trace)?)[ \t]+kthread starved for[ \t]+\d+[ \t]+jiffies\b|'
+    r'\bINFO:[ \t]+task[ \t]+[^\r\n]+:\d+[ \t]+blocked for more than[ \t]+\d+(?:\.\d+)?[ \t]+seconds\.'
+    , re.I)
+
+# Match LTX's known xe GuC stall tolerance; GPU faults always latch.
+# Only a hard-lockup trace naming xe_guc_irq_handler/g2h_read can explain
+# a following HOST_STALL within 180 seconds. Full journals retain the evidence.
+GPU_FAULT = re.compile(r'Fault response|CAT error|engine.*reset|reset.*engine|GPU HANG|GuC.*reset|coredump|timed.?out job|job[^\n]*timed\s*out|wedged',
+                       re.I)
+# Packet115: the driver deleting an earlier devcoredump is cleanup, not a fault (the 114 false latch of
+# 2026-10-08 15:06:16 UTC). Creation lines and the devcoredump trace still latch.
+COREDUMP_DELETED = re.compile(r'coredump has been deleted', re.I)
+HOST_STALL = re.compile(FAULT.pattern.split('wedged|', 1)[1], re.I)
+STALL_FOLLOWER = re.compile(HOST_STALL.pattern + r'|\bclocksource: Long readout', re.I)
+HARD_LOCKUP = re.compile(r'hard LOCKUP on cpu', re.I)
+XE_STALL_TRACE = re.compile(r'\bxe_guc_irq_handler\b|\bg2h_read\b')
+STALL_WINDOW_S = 180
+STALL_LEAD_S = 10        # the watchdog reports a hard lockup after about 10 s of it
+_TS_UNIX = re.compile(r'^(\d{9,11}\.\d+)\s')
+_TS_ISO = re.compile(r'^(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?[+-]\d\d:?\d\d)\s')
+_TS_CLASSIC = re.compile(r'^([A-Z][a-z]{2} [ \d]\d \d\d:\d\d:\d\d)\s')
+
+
+def line_time(line, year=None):
+    """Unix time of a journal line (short-unix, ISO or classic short format), or None."""
+    m = _TS_UNIX.match(line)
+    if m:
+        return float(m.group(1))
+    m = _TS_ISO.match(line)
+    if m:
+        return datetime.datetime.fromisoformat(m.group(1)).timestamp()
+    m = _TS_CLASSIC.match(line)
+    if m:
+        year = year or datetime.datetime.now().year
+        return datetime.datetime.strptime('%d %s' % (year, m.group(1)), '%Y %b %d %H:%M:%S').timestamp()
+    return None
+
+
+def classify_journal(journal, year=None):
+    """Split a kernel journal into GPU faults, unexplained host stalls (both latch) and
+    known xe GuC stall events (tolerated, retained in journal snapshots)."""
+    rows, last = [], None
+    for line in journal.splitlines():
+        t = line_time(line, year)
+        last = t if t is not None else last
+        rows.append((last, line))
+    events = []
+    for i, (t, line) in enumerate(rows):
+        if t is None or not HARD_LOCKUP.search(line):
+            continue
+        second = int(t)
+        trace = [l for tt, l in rows[i + 1:i + 200] if tt is not None and int(tt) == second and XE_STALL_TRACE.search(l)]
+        if trace:
+            events.append({'start_unix': t, 'end_unix': t, 'anchor': line, 'trace': trace[0], 'lines': [line]})
+    gpu, unexplained = [], []
+    for t, line in rows:
+        if GPU_FAULT.search(line) and not COREDUMP_DELETED.search(line):
+            gpu.append(line)
+            continue
+        if HOST_STALL.search(line) or STALL_FOLLOWER.search(line):
+            owner = next((e for e in events if t is not None and e['start_unix'] <= t <= e['start_unix'] + STALL_WINDOW_S),
+                         None)
+            if owner is not None:
+                owner['lines'].append(line)
+                owner['end_unix'] = max(owner['end_unix'], t)
+            elif HOST_STALL.search(line):
+                unexplained.append(line)
+    for e in events:
+        e['window_unix'] = [e['start_unix'] - STALL_LEAD_S, e['end_unix']]
+        e['duration_s'] = round(e['end_unix'] - e['start_unix'] + STALL_LEAD_S, 1)
+    return {'gpu_faults': gpu, 'unexplained_host': unexplained, 'stalls': events,
+            'latch': bool(gpu or unexplained)}
+
+
+HEALTH_SCHEMA = 'ltx.four-card-health.v1'
+HEALTH_MAX_AGE = datetime.timedelta(hours=6)
+# The probe's own pass thresholds (scripts/check-four-card-health.py).
+HEALTH_FP32_MAX_ERR = 1e-2
+HEALTH_BF16_MAX_ERR = 5.0
+HEALTH_DEVICES = ('xpu:0', 'xpu:1', 'xpu:2', 'xpu:3')
+
+
+def parse_utc(text):
+    return datetime.datetime.strptime(text, '%Y-%m-%d %H:%M:%S UTC').replace(tzinfo=datetime.timezone.utc)
+
+
+def _number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and 0 <= value < float("inf")
+
+
+def verify_health_receipt(receipt, boot_id, now):
+    """Return the receipt's end time if it admits a same-boot start, else raise.
+
+    Requires the complete evidence check-four-card-health.py writes, re-checked
+    against that probe's own thresholds; a bare {"pass": true} is not evidence."""
+    req = require
+    req(isinstance(receipt, dict) and receipt.get('schema') == HEALTH_SCHEMA,
+        'Health receipt schema is not ' + HEALTH_SCHEMA)
+    req(receipt.get('passed') is True, 'Health receipt did not pass')
+    for key in ('kernel', 'torch', 'boot_id', 'start_utc', 'end_utc'):
+        req(isinstance(receipt.get(key), str) and receipt[key].strip(), 'Health receipt lacks ' + key)
+    req(receipt.get('boot_id') == boot_id, 'Health receipt is from another boot')
+    req('journal_fault_lines_during_probe' in receipt and receipt['journal_fault_lines_during_probe'] == [],
+        'Health receipt saw fault lines during its own probe, or lacks that evidence')
+    cards = receipt.get('cards')
+    req(receipt.get('device_count') == 4 and isinstance(cards, list) and len(cards) == 4,
+        'Health receipt does not show four passing cards')
+    req([c.get('device') if isinstance(c, dict) else None for c in cards] == list(HEALTH_DEVICES),
+        'Health receipt does not show four passing cards (devices xpu:0..3 in order)')
+    for i, c in enumerate(cards):
+        ok = (isinstance(c.get('name'), str) and c['name'].strip() and c.get('pass') is True and
+              'error' not in c and c.get('copy_roundtrip_exact') is True and c.get('gemm_repeat_exact') is True and
+              _number(c.get('gemm_fp32_max_abs_err')) and c['gemm_fp32_max_abs_err'] < HEALTH_FP32_MAX_ERR and
+              _number(c.get('gemm_bf16_max_abs_err')) and c['gemm_bf16_max_abs_err'] < HEALTH_BF16_MAX_ERR and
+              (i == 0 or c.get('staged_from_previous_exact') is True))
+        req(ok, 'Health receipt does not show four passing cards (card %d evidence missing or out of bounds)' % i)
+    try:
+        start, end = parse_utc(receipt['start_utc']), parse_utc(receipt['end_utc'])
+    except (KeyError, TypeError, ValueError):
+        raise RuntimeError('Health receipt has no readable start_utc/end_utc')
+    req(start <= end, 'Health receipt ends before it starts')
+    req(end <= now, 'Health receipt end_utc is in the future')
+    req(now - end < HEALTH_MAX_AGE, 'Health receipt is 6 hours old or older')
+    return end
+
+
 GIB = 2**30
+
+
+def require(condition, message):
+    if not condition:
+        raise RuntimeError(message)
+
+
+def fault_incidents(lines):
+    """Cluster GPU fault lines by adjacent gaps of at most 60 seconds."""
+    times = [line_time(line) for line in lines]
+    require(all(t is not None for t in times),
+            'Cannot timestamp GPU fault evidence; no launch')
+    times.sort()
+    return int(bool(times)) + sum(b - a > 60 for a, b in zip(times, times[1:]))
+
+
+def new_fault_lines(whole_boot, cutoff):
+    # Classify the whole journal first: known host-stall trace context may
+    # precede the cutoff. Never let that tolerance suppress a GPU fault.
+    verdict = classify_journal(whole_boot)
+    lines = verdict['gpu_faults'] + verdict['unexplained_host']
+    later = []
+    for line in lines:
+        timestamp = line_time(line)
+        require(timestamp is not None, 'Cannot timestamp fault evidence; no launch')
+        # Receipt timestamps have one-second precision. Include the boundary
+        # second, just as LTX's journalctl --since does: only OLDER lines qualify.
+        if timestamp >= cutoff:
+            later.append(line)
+    return later
+
+
+def admit_journal(whole_boot, receipt=None, *, boot_id=None, now=None):
+    """Validate recovery and return (admitted lines, monitoring cutoff)."""
+    now = now or datetime.datetime.now(datetime.timezone.utc)
+    verdict = classify_journal(whole_boot)
+    incidents = fault_incidents(verdict['gpu_faults'])
+    require(incidents < 2,
+            f'{incidents} GPU fault incidents this boot; owner must decide (reboot). No launch')
+    lines = verdict['gpu_faults'] + verdict['unexplained_host']
+    require(not lines or receipt is not None,
+            'Fault signature in this boot; --health-receipt PATH required after one bounded '
+            'four-card health probe; no launch')
+    cutoff = (verify_health_receipt(receipt, boot_id, now).timestamp()
+              if receipt is not None else now.timestamp())
+    later = new_fault_lines(whole_boot, cutoff)
+    require(not later, 'Kernel device or host fault after the health receipt: ' +
+            (later[:1] or [''])[0][:200])
+    return lines, cutoff
+
+
+def journal_admission(args):
+    # Take the clean-boot cutoff BEFORE reading the journal, so there is no
+    # unmonitored gap between admission and server startup.
+    now = datetime.datetime.now(datetime.timezone.utc)
+    receipt_path = getattr(args, 'health_receipt', None)
+    receipt, receipt_bytes = None, None
+    if receipt_path is not None:
+        try:
+            receipt_bytes = Path(receipt_path).read_bytes()
+            receipt = json.loads(receipt_bytes)
+        except (OSError, ValueError) as exc:
+            raise RuntimeError(f'Cannot read health receipt: {exc}') from exc
+        require(isinstance(receipt, dict), 'Health receipt must be a JSON object')
+    whole_boot = journal()
+    admitted, cutoff = admit_journal(
+        whole_boot, receipt, boot_id=Path('/proc/sys/kernel/random/boot_id').read_text().strip(), now=now)
+    run = getattr(args, 'run_dir', None)
+    if run is not None and run.is_dir():
+        (run / 'kernel-preflight.log').write_text(whole_boot)
+        (run / 'journal-admitted-faults.txt').write_text(''.join(line + '\n' for line in admitted))
+        if receipt_bytes is not None:
+            (run / 'health-receipt.json').write_bytes(receipt_bytes)
+            (run / 'health-receipt.sha256').write_text(
+                hashlib.sha256(receipt_bytes).hexdigest() + '  health-receipt.json\n')
+    return cutoff
 
 
 def call(args, **kwargs):
@@ -47,7 +255,7 @@ def show(args):
 
 
 def journal(since=None):
-    args = ['journalctl', '-k', '-b', '--no-pager', '-o', 'short-iso']
+    args = ['journalctl', '-k', '-b', '--no-pager', '-o', 'short-iso-precise']
     if since:
         args += ['--since', since]
     p = call(args, capture_output=True)
@@ -170,10 +378,9 @@ def preflight(args, image_present=False, observations=None):
     idle()
     with socket.socket() as s:
         s.bind(('127.0.0.1', args.port))
-    text = journal()
-    if FAULT.search(text):
-        raise RuntimeError('Fault signature in this boot; evidence/recovery review required, no launch')
+    cutoff = journal_admission(args)
     print('Passive admission passed. Full 185.6 GB model hashing remains required before launch.')
+    return cutoff
 
 
 def launch(args, run):
@@ -256,8 +463,8 @@ def supervise_locked(args, run):
     after_hash = collect_observations()
     (run / 'memory-after-hash.json').write_text(json.dumps(after_hash, indent=2) + '\n')
     # Model hashing takes time. Recheck ground truth immediately before launch.
-    preflight(args, image_present=True,
-              observations=paired_observations(before_hash, after_hash))
+    journal_cutoff = preflight(args, image_present=True,
+                               observations=paired_observations(before_hash, after_hash))
     cmd = launch(args, run)
     (run / 'launch.json').write_text(json.dumps(cmd, indent=2) + '\n')
     since = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
@@ -334,7 +541,7 @@ def supervise_locked(args, run):
             while time.monotonic() - start < 1800:
                 if stopping or server.poll() is not None:
                     raise RuntimeError('Startup stopped/exited; no retry')
-                check_live(run, since, calibrating=calibrating)
+                check_live(run, journal_cutoff, calibrating=calibrating)
                 if sampler and sampler.container_pid is None:
                     info = subprocess.run(['docker', 'inspect', '--format', '{{.State.Pid}}', name],
                                           capture_output=True, text=True, timeout=2)
@@ -365,7 +572,7 @@ def supervise_locked(args, run):
                 while time.monotonic() - plateau_start < calibration.PLATEAU_SECONDS:
                     if stopping or server.poll() is not None:
                         raise RuntimeError('Calibration plateau interrupted')
-                    check_live(run, since, calibrating=True)
+                    check_live(run, journal_cutoff, calibrating=True)
                     time.sleep(.5)
                 watchdog.check()
                 if stopping:
@@ -377,7 +584,7 @@ def supervise_locked(args, run):
                 while client.poll() is None:
                     if stopping or server.poll() is not None or time.monotonic() - start > 5400:
                         raise RuntimeError('Stop/server exit/90 minute experiment bound; no retry')
-                    check_live(run, since)
+                    check_live(run, journal_cutoff)
                     time.sleep(2)
                 if client.returncode:
                     raise RuntimeError(f'Client failed: {client.returncode}')
@@ -423,7 +630,7 @@ def supervise_locked(args, run):
             end = journal()
             (run / 'kernel-postflight.log').write_text(end)
             idle()
-            if FAULT.search(end):
+            if new_fault_lines(end, journal_cutoff):
                 raise RuntimeError('Fault recorded; no recovery or second launch is automated')
         except BaseException as exc:
             failure = f'{type(exc).__name__}: {exc}'
@@ -451,10 +658,10 @@ def write_calibration(run, cmd, ready, clean_exit, watchdog_reason, failure):
     return result
 
 
-def check_live(run, since, *, calibrating=False):
+def check_live(run, journal_cutoff, *, calibrating=False):
     text = journal()  # whole current boot avoids empty --since false negatives
     (run / 'kernel-latest.log').write_text(text)
-    if FAULT.search(text):
+    if new_fault_lines(text, journal_cutoff):
         raise RuntimeError('GPU fault: stop new requests and preserve evidence')
     if shutil.disk_usage(run).free < 50 * GIB:
         raise RuntimeError('50 GiB reserve breached; gracefully stop')
@@ -468,6 +675,8 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('action', choices=['preflight', 'prepare', 'run', '_worker'])
     p.add_argument('--mode', choices=['mtp0', 'mtp1', 'mtp3', 'calibrate-load'], default='mtp1')
+    p.add_argument('--health-receipt', type=Path,
+                   help='Same-boot four-card health receipt (<6 h); required after a boot fault')
     p.add_argument('--calibration', type=Path, help='Qualified calibration-load.json for MTP1')
     p.add_argument('--port', type=int, default=19988)
     p.add_argument('--run-dir', type=Path, default=None)
@@ -478,6 +687,8 @@ def main():
     run = (args.run_dir or HERE / 'runs' / ('screen1b-' + args.mode)).resolve()
     if args.calibration:
         args.calibration = args.calibration.resolve()
+    if args.health_receipt:
+        args.health_receipt = args.health_receipt.resolve()
     if args.mode == 'calibrate-load' and args.action not in ('run', '_worker', 'preflight'):
         p.error('calibrate-load uses the already-present image; prepare is not a calibration action')
     args.run_dir = run
@@ -524,6 +735,8 @@ def main():
                    '--mode', args.mode, '--port', str(args.port), '--run-dir', str(run), '--execute']
         if args.calibration:
             command += ['--calibration', str(args.calibration)]
+        if args.health_receipt:
+            command += ['--health-receipt', str(args.health_receipt)]
         (run / 'unit.txt').write_text(unit + '\n')
         call(command)
         print(f'Follow: journalctl --user -fu {unit}; stop gracefully: systemctl --user stop {unit}')
