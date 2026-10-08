@@ -43,6 +43,10 @@ source assembly, followed by fresh storage/memory admission. Nothing has been
 registered, built or launched for continuation.
 [Integration design](experiments/ltx25-b70/notes/2026-10-07-continuation111-integration-design.md),
 [memory design](experiments/ltx25-b70/notes/2026-10-07-continuation111-memory-design.md).
+[Runtime interface map](experiments/ltx25-b70/notes/2026-10-07-continuation111-runtime-interface-map.md)
+identifies the exact authority, registration and native output interfaces to reuse.
+The new authority must enforce all eight requests and durable per-chunk proofs in
+global order;110's phase-local ordering cannot be reused unchanged.
 
 The preceding49-frame109 pilot completed successfully at
 22:56:44 UTC. Its application stopped cleanly once at2026-10-07T23:15:35.660027+00:00
