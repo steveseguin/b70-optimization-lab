@@ -6,6 +6,16 @@ below remain that host's own research record; this consolidation did not operate
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
 
+**2026-10-08, Flash-Next calibration failure fixed on CPU:** the first mmap
+load attempt exited during worker startup. The loader counted the same copy
+twice, broke it into thousands of tiny copies, and made waiting workers time
+out. Available host RAM stayed near or above 107 GB. The copy guard is fixed;
+all 149 CPU tests pass, including a test that reproduces the failure.
+No new launch occurred. The next attempt needs a fresh result directory and
+uses the passing postflight started at 17:14:58 UTC.
+[Cause, tests and next command](experiments/qwen38-flash-next-fp8-b70/reopen-20261008/VALIDATION.md#calibrate-load-attempt-1-worker-init-failure).
+
+
 **2026-10-08, Flash-Next CPU-only memory adapter:** the unchanged FP8 PLE rows
 can now be read from their original files with a 4 GiB total pinned row cache.
 Loading has a shared staging cap and per-rank memory receipts. All 126 CPU
@@ -44,6 +54,8 @@ audio alignment unreviewed). 111 stopped once with SIGINT at 00:54:03 UTC;
 four-card postflight passed 00:54:58 UTC, zero fault lines this boot.
 [Results](experiments/ltx25-b70/notes/2026-10-08-continuation111-results.md),
 [stop receipt](experiments/ltx25-b70/data/resume-20261007/continuation111-stop.json).
+
+**17:45 UTC: packet 116 built and launched; refused itself at `prepare` (software, no fault).** 116 = frame anchor at both stages, the chain waiting only for the video decode (audio, hashing, record and preview behind it), and a decoder graph capture with bounded RoPE/mask/noise caches behind a byte-identity gate (`LTX_DECODER_GRAPH=1`), `stream116-` names; 195/195 new CPU tests; manifest `6bced5b4…`. Launched 17:31 UTC at 97 frames with the decoder graph on; the window probe passed, then the decoder-graph installer required `na3d` on xpu:3 to dispatch directly to the pinned eager backend, but the live runtime routes it through the lab's `ltx_na_axis_router.AxisRouter` (`integration.py:1113`), so it refused before any capture and the server latched. Kernel log clean (local-time window); server stopped once at 17:45 UTC; postflight pass; run dir kept as `…-f97.refused-20261008T1742Z`. Fix: accept the router when it resolves to the pinned eager module (and pin the router), re-seal as 116b. Flash-Next calibrate-load attempt 2 also failed at worker init (`create_model`, MemAvailable ≥95 GB, not memory); Codex is building a CPU worker-init rehearsal so the port stops iterating by live crash. Receipts `stream116-dg1-f97-stop.json`, `postflight-stream116-refused.json`.
 
 **16:45 UTC: sharp-seam baseline at 97 frames measured (114, `LTX_ANCHOR=frame`, text reuse):** exact gate pass; **5.98 s per 4.04 s chunk (1.48 s/s)** with seams at 0.87–0.96 relative sharpness (none below 85%). Stage costs: text+A-prep 0.50, sampler A 1.62, upsample+B-prep 0.28, sampler B 1.19, decode in-chain 2.01, anchor handoff 2.15 (includes waiting for the decode thread's post-work: audio, hashing, record), preview 0.94 off-chain. This is what packet 116 must beat with sharp seams: the tail-decode idea is not exact (the LTX-2.5 decoder is a non-causal neighbourhood-attention diffusion decoder; every latent frame feeds the last pixel frame; row counts change rounding), so 116 = scheduling (chain waits only for the video decode; audio/hash/record/preview behind it) + decoder graph capture with bounded RoPE/mask/noise caches (owner-authorized experiment, byte-identity gated) + optional stage-B encode overlap. Predicted 116a ≈4.9 s at 97 (1.2 s/s); with decoder capture lower. [Design](experiments/ltx25-b70/notes/2026-10-08-continuation-tail-decode-design.md). Process slip to record: this 114 frame-mode launch went out about one minute after the previous stop instead of the lane's five-minute gap (probe had passed; no harm observed); the gap is restored in the launch scripts from here on.
 
