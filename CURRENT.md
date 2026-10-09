@@ -16,6 +16,16 @@ below remain that host's own research record; this consolidation did not operate
 
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
+**2026-10-09 03:00 UTC tick (halt holds; CPU work continues).** Codex's exit-lifecycle analysis
+(`experiments/qwen38-flash-next-fp8-b70/notes/2026-10-09-exit-lifecycle-analysis.md`, commit 929ba2897): the two
+probe faults fit a closed-VM fault response (upstream v7.0 `xe_pagefault_service` returns `-ENOENT` for a VM
+already marked closed) raised while NEO's direct-submission ring is still active when `_exit` bypasses native
+finalization; medium confidence (distro xe source unverified, ring activity unmeasured). Screen 1 faulted before its
+OOM kills and attempt 7's ordering is unresolved, so "abrupt exit" is strongly supported for the probes but not proven
+for all four incidents. Prepared, not run: `--clean-exit` and `--exit-after-sleep N` probe variants with a preregistered
+interpretation table (26 CPU tests). Started next: Codex implements the graceful-teardown overlay patch (unapplied, CPU
+tests). Opus packet-118 build in progress (39 files in `recovery/20261009-continuation118-stream/`, not yet sealed).
+
 **2026-10-09 02:35 UTC, HALT: second GPU fault incident of boot 4aafe57b; owner decision needed (reboot, or accept continuing LTX on this boot).**
 The slab probe with the host user-mode driver overlaid into the vLLM image (remedy A) reproduced the first probe
 exactly: gather byte-correct, then at the worker's `os._exit` card 23:00.0 logged `-ENOENT` + bcs engine reset
