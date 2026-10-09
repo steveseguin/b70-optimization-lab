@@ -2,7 +2,7 @@
 # Common runner: one Harbor job of one agent over a task or dataset directory.
 # Called by run-contextbench-clm.sh / run-contextbench-baseline.sh / smoke.sh; can be used directly:
 #
-#   run-context-job.sh <clm|plain|summary> <out_dir> [extra harbor args...]
+#   run-context-job.sh <clm|plain|summary|improved|truncate|compact> <out_dir> [extra harbor args...]
 #
 # Environment (defaults in brackets):
 #   API_BASE          OpenAI-compatible endpoint [http://127.0.0.1:8000/v1]
@@ -18,7 +18,7 @@
 #   OBS_MAX_CHARS     observation_max_chars [auto: max(60000, 2 x largest item) ]  (a 100-SET batch is ~16k chars)
 #   THINK_CAP         improved agent only: per-turn thinking cap in tokens (two-call continue protocol,
 #                     see clm_improved.py) [unset = off]
-#   SHOW_WINDOW       plain agent: 1 = every tool result ends with "[context: N of M tokens used; K left]"
+#   SHOW_WINDOW       plain/truncate/compact agents: 1 = every tool result ends with "[context: N of M tokens used; K left]"
 #                     (M = server window - MAX_TOKENS) and a `next` that cannot fit is refused [0]
 #                     (WINDOW_TOKENS overrides the window read from /v1/models)
 #   STABLE_RENDER     1 = with dropped thinking, send preserve_thinking=true (earlier thinking is
@@ -79,8 +79,10 @@ case "$AGENT_KIND" in
            [[ "$DROP_OLD_THINKING" == 1 ]] && AGENT=clm_baselines:ClmAgentT ;;
   plain)   AGENT=clm_baselines:PlainAgent ;;
   summary) AGENT=clm_baselines:SummaryAgent ;;
+  truncate) AGENT=clm_baselines:TruncateAgent ;;  # lossy: drop oldest turns over the limit, down to 0.75
+  compact)  AGENT=clm_baselines:CompactAgent ;;   # lossy: stub old tool outputs at 0.75, then drop oldest
   improved) AGENT=clm_improved:ClmImprovedAgent ;;   # drops old thinking itself (drop_old_thinking=true default)
-  *) echo "unknown agent kind $AGENT_KIND (clm|plain|summary|improved)" >&2; exit 2 ;;
+  *) echo "unknown agent kind $AGENT_KIND (clm|plain|summary|improved|truncate|compact)" >&2; exit 2 ;;
 esac
 
 mkdir -p "$OUT_DIR"
@@ -160,7 +162,7 @@ KW=(
 [[ -n "${LM_CALL_CAP:-}" ]] && KW+=(--agent-kwarg "lm_call_cap=$LM_CALL_CAP")
 [[ "$AGENT_KIND" == summary ]] && KW+=(--agent-kwarg "summary_trigger_ratio=$SUMMARY_TRIGGER")
 [[ "$DROP_OLD_THINKING" == 1 ]] && KW+=(--agent-kwarg "drop_old_thinking=true")
-if [[ "${SHOW_WINDOW:-0}" == 1 && "$AGENT_KIND" == plain ]]; then   # arm Aw: window line + fetch guard
+if [[ "${SHOW_WINDOW:-0}" == 1 && "$AGENT_KIND" =~ ^(plain|truncate|compact)$ ]]; then   # arm Aw: window line + fetch guard
   WIN=${WINDOW_TOKENS:-$("$PY" - "$API_BASE" "$MODEL_NAME" <<'PY'
 import json, sys, urllib.request
 d = json.load(urllib.request.urlopen(sys.argv[1].rstrip("/") + "/models", timeout=10))

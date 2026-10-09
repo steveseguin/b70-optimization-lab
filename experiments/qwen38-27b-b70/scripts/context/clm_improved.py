@@ -155,7 +155,9 @@ PROTOCOL = """
 - Your earlier thinking is not kept between turns: write anything you must remember into
   STATE.txt. Keep each turn's thinking short; act every turn.
 - Write /app/answers.json only after the final item with the questions has arrived, and put in it only
-  the counters it asks for (never the whole table). The harness refuses an earlier write or submit.
+  the counters it asks for (never the whole table). The harness refuses an earlier write or submit. The one
+  exception: a PROBE item asks a few questions mid-stream; answer those at once under the keys it gives
+  (add to the file, keep every key already in it), then fold the probe item like any other and carry on.
 - If STATE.txt plus the next item cannot fit in your budget, you must decide what to drop from
   STATE.txt yourself; anything dropped is lost (answer "" for it), so drop the least useful.
 """
@@ -225,7 +227,9 @@ PROTOCOL_READ = """
 - Your earlier thinking is not kept between turns. Keep your thinking to what the current item needs;
   act every turn.
 - Write /app/answers.json only after the final item with the questions has arrived, and put in it only
-  the counters it asks for (never the whole table). The harness refuses an earlier write or submit.
+  the counters it asks for (never the whole table). The harness refuses an earlier write or submit. The one
+  exception: a PROBE item asks a few questions mid-stream; answer those at once under the keys it gives
+  (add to the file, keep every key already in it), then fold the probe item like any other and carry on.
 """
 
 PROTOCOL_QUOTED = """
@@ -274,7 +278,9 @@ PROTOCOL_QUOTED = """
 - Your earlier thinking is not kept between turns. Keep your thinking to what the current item needs;
   act every turn.
 - Write /app/answers.json only after the final item with the questions has arrived, and put in it only
-  the counters it asks for (never the whole table). The harness refuses an earlier write or submit.
+  the counters it asks for (never the whole table). The harness refuses an earlier write or submit. The one
+  exception: a PROBE item asks a few questions mid-stream; answer those at once under the keys it gives
+  (add to the file, keep every key already in it), then fold the probe item like any other and carry on.
 - A question about a counter's value at the end of an earlier item: `recall NAME` lists every archived
   sentence about it with its item number (one short command per counter); apply them in order up to that
   item. Do not answer such a question with the current value.
@@ -335,11 +341,12 @@ class _ImprovedEnv(ContextEnv):
         # /app/answers.json before the final item with the questions had arrived -> VOID): writing the
         # answers file or submitting is not run until the final item has been delivered.
         if a.answers_guard and not a._final_seen and (
-                (ANSWERS in cmd and _WRITES.search(cmd)) or cmd == "echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT"):
+                (ANSWERS in cmd and _WRITES.search(cmd) and not a._asked)
+                or cmd == "echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT"):
             a.n_answers_refused += 1
             text = ("NOT RUN: the final item with the questions has not arrived yet. Fetch it with `next` "
-                    "(keep folding items until it comes). /app/answers.json may be written only after it, "
-                    "and only with the counters it asks for.")
+                    "(keep folding items until it comes). /app/answers.json may be written only after it "
+                    "(or after a PROBE item, with the keys that item asks for), and only with the counters it asks for.")
             res = types.SimpleNamespace(stdout=text, stderr="", return_code=75)
             return StepResult(result=res, ctx_changed=False, stdout_block=text + "\n\n(exit_code=75)",
                               readout="", notes="", exec_time=0.0, touched_ctx=False)
@@ -383,21 +390,24 @@ class _ImprovedEnv(ContextEnv):
                                    and _ITEM_UPDATE.match(str(m.get("content") or ""))) < items_before:
             a._fold_ok = True
         out0 = getattr(res.result, "stdout", "") or ""
+        if _ITEM_PROBE.search(out0):
+            a.n_probes_seen += 1
+            a._asked = a._asked + re.findall(r"(?m)^ASK (\S+?):", out0)
         if _ITEM_FINAL.search(out0):
             a._final_seen = True
-            a._asked = re.findall(r"(?m)^(?:QUERY|GET) (\S+)\s*$", out0) + re.findall(r"(?m)^ASK (\S+?):", out0)
+            a._asked = a._asked + re.findall(r"(?m)^(?:QUERY|GET) (\S+)\s*$", out0) + re.findall(r"(?m)^ASK (\S+?):", out0)
             if a.quoted:
                 # keep the final item (the questions) in the pinned message: B32iq ret s0 rerun compacted the
                 # mirror after two recalls, cut the final item away with it, and left all 12 retention
                 # questions blank (final items are never archived, so recall could not bring them back)
                 fm = _ITEM_FINAL.search(out0)
                 a._final_text = out0[fm.start():].split("\n\n(exit_code=")[0].strip()
-        if a.answers_guard and a._final_seen and ANSWERS in cmd and _WRITES.search(cmd):
+        if a.answers_guard and a._asked and ANSWERS in cmd and _WRITES.search(cmd):
             try:
                 r = await environment.exec(command="python3 -c 'import json; print(json.dumps(sorted("
                                                    "json.load(open(\"/app/answers.json\")))))'", timeout_sec=30)
                 keys = set(json.loads((getattr(r, "stdout", "") or "[]").strip() or "[]"))
-                extra, missing = sorted(keys - set(a._asked)), sorted(set(a._asked) - keys)
+                extra, missing = sorted(keys - set(a._asked)), (sorted(set(a._asked) - keys) if a._final_seen else [])
                 if extra or missing:
                     a.n_answer_key_notes += 1
                     res.notes += (f"\n[harness: /app/answers.json has {len(extra)} keys that were not asked"
@@ -475,6 +485,7 @@ ANSWERS = "/app/answers.json"
 _WRITES = re.compile(r">|open\(|json\.dump|write|tee\b|cp\b|mv\b")
 _ITEM_UPDATE = re.compile(r"ITEM \d+/\d+ \((?!QUERY|GET)")
 _ITEM_FINAL = re.compile(r"ITEM \d+/\d+ \((?:QUERY|GET)\)")
+_ITEM_PROBE = re.compile(r"ITEM \d+/\d+ \(PROBE\)")   # mid-stream questions (make_sparse_prose_tasks --probes-every)
 # Quoting the delimiter is required: an unquoted heredoc executes shell expansions
 # before ctxfold runs, allowing side effects even when the command otherwise stands alone.
 _EVENTS_CMD = re.compile(r"(?s)\s*ctxfold\s+--events(?:\s+[A-Z]+)*\s*<<-?\s*(['\"])(\w+)\1[ \t]*\n.*?\n?\2\s*$")
@@ -628,6 +639,7 @@ class ClmImprovedAgent(_h.ClmAgent):
         self.fold_batches = max(1, int(fold_batches or 1))
         self.n_archive_refused = self.n_recalls = self.recall_tokens = 0
         self._final_seen, self._asked = False, []
+        self.n_probes_seen = 0
         self.n_answers_refused = self.n_answer_key_notes = 0
         self._last_cmd, self._deliveries, self._deliveries_at_last = "", 0, -1
         self._item_pending = True

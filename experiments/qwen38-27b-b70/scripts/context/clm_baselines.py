@@ -471,3 +471,162 @@ class SummaryAgent(_h.ClmAgent):
         self.summary_calls.append(rec)
         self._budget.note_compaction()
         logger.info("summary compaction %d -> %d tokens", before, rec["after"])
+
+
+# ---------------------------------------------------------------------------------------
+# Lossy harness-side baselines (2026-10-08, long-running-task study). Neither asks the model
+# anything; both act right before the budget gate of every iteration (same hook as _SummaryGuard),
+# measure with the same calibrated count as SummaryAgent (self._budget.count) against the enforced
+# limit (strict_target), and leave PlainAgent's behaviour (show_window line, `next` deliveries,
+# final-turn stop) otherwise unchanged.
+#   TruncateAgent  sliding window: once the context is over `truncate_trigger_ratio` (1.0) x limit,
+#                  drop the oldest whole turns after the protected prefix until it is under
+#                  `truncate_target_ratio` (0.75) x limit; one note at the cut point says how many
+#                  turns are gone. truncate_calls.json: one record per truncation.
+#   CompactAgent   what coding agents do: once over `compact_trigger_ratio` (0.75) x limit, replace
+#                  every tool output but the newest `keep_tool_outputs` (3) with a one-line stub and
+#                  strip thinking from earlier assistant turns; if still over the limit, drop the
+#                  oldest turns as TruncateAgent does. compact_calls.json: one record per compaction.
+TRUNC_NOTE = "[earlier conversation removed: {n} turns]"
+_TRUNC_RE = re.compile(r"^\[earlier conversation removed: (\d+) turns\]$")
+
+
+class _ManageGuard:
+    """Wraps the checkpointer: after its maybe() (and the drop-thinking strip, if on), calls
+    agent._manage(messages), i.e. right before the budget gate and the model call."""
+
+    def __init__(self, inner: Any, agent: Any) -> None:
+        self._inner, self._agent = inner, agent
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._inner, name)
+
+    async def maybe(self, environment: Any, messages: list[dict[str, Any]]) -> bool:
+        r = await self._inner.maybe(environment, messages)
+        self._agent._manage(messages)
+        return r
+
+
+class TruncateAgent(PlainAgent):
+    """Sliding-window truncation baseline (see the block comment above)."""
+
+    calls_file = "truncate_calls.json"
+
+    @staticmethod
+    def name() -> str:
+        return "truncate-baseline"
+
+    def __init__(self, *args: Any, truncate_trigger_ratio: float | str = 1.0,
+                 truncate_target_ratio: float | str = 0.75, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.trigger_ratio = float(truncate_trigger_ratio)
+        self.target_ratio = float(truncate_target_ratio)
+        self.manage_calls: list[dict[str, Any]] = []
+        self._ckpt = _ManageGuard(self._ckpt, self)
+
+    def _head(self, messages: list[dict[str, Any]]) -> tuple[int, int]:
+        """(index after the protected prefix and the cut note, turns already removed)."""
+        i = self._protect
+        if i < len(messages) and messages[i].get("role") == "user":
+            m = _TRUNC_RE.match(str(messages[i].get("content") or ""))
+            if m:
+                return i + 1, int(m.group(1))
+        return i, 0
+
+    def _drop_oldest(self, messages: list[dict[str, Any]], target: int) -> int:
+        """Drop whole turns (an assistant message and everything up to the next assistant
+        message: its tool result, nudges) oldest first, never the newest turn, until the count
+        is under `target`. Updates or inserts the cut note. Returns turns dropped."""
+        start, prev = self._head(messages)
+        body = messages[start:]
+        starts = [k for k, m in enumerate(body) if m.get("role") == "assistant"]
+        if starts and starts[0] > 0:
+            starts.insert(0, 0)  # leading non-assistant messages count as one turn
+        n, keep = 0, body
+        for cut in starts[1:]:  # never drop the newest turn
+            if self._budget.count(messages[:self._protect] + [{"role": "user", "content": TRUNC_NOTE.format(n=prev + n)}] + keep) < target:
+                break
+            n += 1
+            keep = body[cut:]
+        if n:
+            note = {"role": "user", "content": TRUNC_NOTE.format(n=prev + n)}
+            messages[:] = messages[:self._protect] + [note] + keep
+        return n
+
+    def _manage(self, messages: list[dict[str, Any]]) -> None:
+        limit = self._budget.strict_target
+        if not limit:
+            return
+        before = self._budget.count(messages)
+        if before <= self.trigger_ratio * limit:
+            return
+        n = self._drop_oldest(messages, int(self.target_ratio * limit))
+        self._record({"reason": "truncate", "turns_dropped": n, "before": before,
+                      "after": self._budget.count(messages)})
+
+    def _record(self, rec: dict[str, Any]) -> None:
+        rec = {"step": self.n_lm_calls, "limit": self._budget.strict_target, **rec}
+        self.manage_calls.append(rec)
+        self._server_total = 0  # the window line falls back to the harness count until the next call
+        logger.info("%s: %s", self.name(), rec)
+
+    async def run(self, instruction, environment, context) -> None:
+        try:
+            await super().run(instruction, environment, context)
+        finally:
+            (self.logs_dir / self.calls_file).write_text(
+                json.dumps(self.manage_calls, indent=2) + "\n")
+
+
+class CompactAgent(TruncateAgent):
+    """Coding-agent compaction baseline (see the block comment above)."""
+
+    calls_file = "compact_calls.json"
+
+    @staticmethod
+    def name() -> str:
+        return "compact-baseline"
+
+    def __init__(self, *args: Any, compact_trigger_ratio: float | str = 0.75,
+                 keep_tool_outputs: int | str = 3, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.compact_trigger_ratio = float(compact_trigger_ratio)
+        self.keep_tool_outputs = int(keep_tool_outputs)
+
+    def _manage(self, messages: list[dict[str, Any]]) -> None:
+        limit = self._budget.strict_target
+        if not limit:
+            return
+        before = self._budget.count(messages)
+        if before <= self.compact_trigger_ratio * limit:
+            return
+        start = self._head(messages)[0]
+        tools = [k for k in range(start, len(messages)) if messages[k].get("role") == "tool"]
+        stubbed = stub_chars = thinking = 0
+        for k in tools[:max(len(tools) - self.keep_tool_outputs, 0)]:
+            c = str(messages[k].get("content") or "")
+            if c.startswith("[tool output removed"):
+                continue
+            messages[k] = {**messages[k], "content": f"[tool output removed, {len(c)} chars]"}
+            stubbed += 1
+            stub_chars += len(c)
+        last_asst = max((k for k in range(len(messages)) if messages[k].get("role") == "assistant"), default=-1)
+        for k in range(start, last_asst):  # earlier assistant turns only
+            m = messages[k]
+            if m.get("role") != "assistant":
+                continue
+            psf = m.get("provider_specific_fields")
+            if m.get("reasoning_content") or m.get("reasoning") or (isinstance(psf, dict) and (
+                    psf.get("reasoning") or psf.get("reasoning_content"))):
+                m = messages[k] = {kk: v for kk, v in m.items() if kk not in ("reasoning_content", "reasoning")}
+                if isinstance(psf, dict):
+                    m["provider_specific_fields"] = {kk: v for kk, v in psf.items()
+                                                     if kk not in ("reasoning", "reasoning_content")}
+                thinking += 1
+        mid = self._budget.count(messages)
+        n = self._drop_oldest(messages, int(self.target_ratio * limit)) if mid > limit else 0
+        if not (stubbed or thinking or n):
+            return  # nothing left to compact (all stubbed, under the limit): no record
+        self._record({"reason": "compact", "tool_outputs_stubbed": stubbed, "stubbed_chars": stub_chars,
+                      "thinking_stripped": thinking, "before": before, "after_stub": mid,
+                      "turns_dropped": n, "after": self._budget.count(messages)})

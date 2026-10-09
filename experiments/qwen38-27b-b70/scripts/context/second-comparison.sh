@@ -32,6 +32,12 @@
 #          item, checks the counters, does the arithmetic, archives and drops the item (QUOTED=1)
 #   KINDS=sparse  sparse prose (make_sparse_prose_tasks.py), options from SPARSE_ARGS (e.g. "--density 6 --words")
 #   PROSE_BATCH_TOKENS  prose batch size at generation [6400] (use a new OUT_DIR when changing it)
+#   W48 D48 C48 B48ir B48ira B48ira-free   live-cap study at budget 49,152 (48K): W = truncate (clm_baselines
+#          TruncateAgent: drop oldest turns once over the limit, down to 75 %), D = compact (CompactAgent: at 75 %
+#          stub all but the newest 3 tool outputs and strip earlier thinking, then drop oldest if still over),
+#          C = summary at 75 %, B..ir/ira as B32ir/B32ira, B..ira-free as longmemeval-run.sh B32ira-free
+#          (clm_freenotes.ClmFreeNotesAgent, state_max_tokens STATE_MAX_TOKENS [6144]). W, D are LOSSY baselines.
+#   W200 D200 C200 B200ir B200ira B200ira-free   the same at budget 204,800 (200K cap)
 #   Aw     A + SHOW_WINDOW: every tool result states the window used/left, and a fetch that cannot
 #          fit (context + largest item so far + max_tokens > window) is refused with a request to
 #          write down what is needed first (keep-everything seed 1 ran into the window at ~246K)
@@ -123,6 +129,10 @@ ARMS = {"A": ("plain", "memory", 0), "B32": ("clm", "memory", 32768), "B131": ("
         "E32o": ("plain", "notes", 32768), "Aw": ("plain", "memory", 0),
         "B32ir": ("improved", "memory", 32768), "Ar": ("plain", "memory", 0), "E32r": ("plain", "notes", 32768),
         "B32ira": ("improved", "memory", 32768), "B32iq": ("improved", "memory", 32768)}
+for cap, b in (("48", 49152), ("200", 204800)):  # live-cap study: lossy baselines vs the improved agent
+    ARMS.update({"W" + cap: ("truncate", "memory", b), "D" + cap: ("compact", "memory", b),
+                 "C" + cap: ("summary", "memory", b), "B" + cap + "ir": ("improved", "memory", b),
+                 "B" + cap + "ira": ("improved", "memory", b), "B" + cap + "ira-free": ("improved", "memory", b)})
 for a in ("A", "B32", "C32", "E32"):  # same arm with earlier thinking dropped from every call
     ARMS[a + "t"] = ARMS[a]
 bad = [a for a in arms if a not in ARMS]
@@ -228,7 +238,17 @@ run_one() {  # arm agent budget task_dir job_name drop_old_thinking
   [[ "$arm" == B32ira ]] && ar=1                   # B32ira: + archive-on-drop and `recall`
   [[ "$arm" == B32iq ]] && ar=1 && qt=1            # B32iq: + quoted events (`ctxfold --events`)
   [[ "$arm" == Ar ]] && sw=1                       # Ar: keep everything + window line (reading task baseline)
-  TASKS="$td" JOB_NAME="$job" CONTEXT_BUDGET="$budget" DROP_OLD_THINKING="$drop" THINK_CAP="$tc" ENABLE_THINKING="$et" THINKING_POLICY="$tp" SHOW_WINDOW="$sw" FOLD_MODE="$fm" ARCHIVE="$ar" QUOTED="$qt" "$D/run-context-job.sh" "$agent" "$RUNS" > "$RUNS/$job.out" 2>&1
+  local xa=() extra=""
+  if [[ "$arm" =~ ^B(48|200)(ir|ira|ira-free)$ ]]; then   # live-cap arms: as B32ir / B32ira / longmemeval B32ira-free
+    fm=read; tp=judgement; tc=${THINK_CAP_R:-4096}
+    [[ "$arm" == *ira* ]] && ar=1
+    if [[ "$arm" == *-free ]]; then
+      extra="state_max_tokens=${STATE_MAX_TOKENS:-6144}"
+      xa=(-a clm_freenotes:ClmFreeNotesAgent)      # harbor: the last --agent wins; run-context-job.sh passes "$@" last
+    fi
+  fi
+  echo "arm=$arm agent_class=${xa[1]:-run-context-job.sh default for $agent} extra_kwargs=$extra" > "$RUNS/$job.arm.txt"
+  TASKS="$td" JOB_NAME="$job" CONTEXT_BUDGET="$budget" DROP_OLD_THINKING="$drop" THINK_CAP="$tc" ENABLE_THINKING="$et" THINKING_POLICY="$tp" SHOW_WINDOW="$sw" FOLD_MODE="$fm" ARCHIVE="$ar" QUOTED="$qt" EXTRA_KWARGS="${EXTRA_KWARGS:-} $extra" "$D/run-context-job.sh" "$agent" "$RUNS" "${xa[@]}" > "$RUNS/$job.out" 2>&1
   echo "   rc=$? $(grep -h -o '[a-z]* score [0-9.]* raw [0-9.]*.*void=[A-Za-z]*' "$RUNS/jobs/$job"/*/verifier/test-stdout.txt 2>/dev/null | head -1)"
   if ! "$PY" "$D/summarize_results.py" --brief --check "$RUNS/jobs/$job" > "$RUNS/$job.check" 2>&1; then
     echo "!!! $job: a cap, timeout, server refusal or the storage rule ended this run; it does not count:"
@@ -266,5 +286,5 @@ if [[ "${STUB:-0}" == 1 ]]; then   # storage-rule probes (memory mode, no budget
 fi
 
 echo; echo "== table (all trials of this comparison)"
-"$PY" "$D/summarize_results.py" --json "$O/summary.json" "$RUNS"/jobs/[A-E]* | tee "$O/summary.txt"
+"$PY" "$D/summarize_results.py" --json "$O/summary.json" "$RUNS"/jobs/[A-EW]* | tee "$O/summary.txt"
 [[ $FAILED == 0 ]] || { echo "!!! at least one trial was ended by a cap/timeout/rule; see the lines above"; exit 1; }

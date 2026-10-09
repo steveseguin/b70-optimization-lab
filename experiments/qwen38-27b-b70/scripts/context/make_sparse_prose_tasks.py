@@ -38,6 +38,7 @@ from __future__ import annotations
 import argparse
 import json
 import random
+import re
 from pathlib import Path
 
 from make_kvstream_tasks import DEFAULT_TOKENIZER, STORAGE_MEMORY, STORAGE_NOTES, word, write_task
@@ -68,7 +69,7 @@ SMALL = ["The bus was {n} minutes late.", "Someone counted {n} gulls on the roof
 INSTRUCTION = """\
 You are connected to a ledger stream. Run the command `next` to receive the next item of the
 stream. There are {total} items: {n_batches} batch(es) of a narrative day book (one batch is
-about {batch_tokens:,} tokens), then one final item that lists {n_get} counters to report. The
+about {batch_tokens:,} tokens){probe_note}, then one final item that lists {n_get} counters to report. The
 whole stream is about {stream_tokens:,} tokens and concerns {n_counters} named counters (names such
 as `{example}`).
 
@@ -282,15 +283,84 @@ def surprise_questions(srng: random.Random, k: int, refs: list, fills: list, fin
     return [(f"s{i}", q, a, t, b) for i, (q, a, t, b) in enumerate(out, 1)]
 
 
+PROBE_BINS = ((1, 4), (5, 24), (25, 99), (100, 399), (400, 10 ** 9))
+
+
+def probe_questions(prng: random.Random, after_batch: int, k: int, refs: list, fills: list, bt: list,
+                    item_no: dict, used: set) -> list:
+    """k questions delivered as a PROBE item right after batch `after_batch`, about earlier batches at
+    controlled distances (one per distance bin, cycling through the bins that exist yet). Types:
+    current (a counter's value now; distance = since its last change), old_value (a value later
+    overwritten), who / small (a filler detail that occurs once in its batch). Returns
+    (question, answer, type, ref_batch, distance_items, tokens_back)."""
+    b = after_batch
+    state = lambda i: refs[i - 1]["state"]          # state after batch i (1-based)
+    now = state(b)
+    cands = {}
+    # current: counters alive now, keyed by the batch of their last change
+    last = {}
+    for i in range(1, b + 1):
+        prev = state(i - 1) if i > 1 else {}
+        for c, v in state(i).items():
+            if prev.get(c) != v:
+                last[c] = i
+    for c, i in last.items():
+        if c in now:
+            cands.setdefault(b - i, []).append(("current", c, i, now[c], f"What value does {c} hold now?"))
+    # old values: v held by c at the end of batch i, set at i, and no longer the value now
+    for i in range(1, b):
+        prev = state(i - 1) if i > 1 else {}
+        for c, v in state(i).items():
+            if prev.get(c) != v and now.get(c) != v:
+                cands.setdefault(b - i, []).append(("old_value", c, i, v, f"What value did {c} hold at the end of item {item_no[i]}?"))
+    small_q = {"The bus was {n} minutes late.": "how many minutes late was the bus",
+               "Someone counted {n} gulls on the roof.": "how many gulls were counted on the roof",
+               "The kettle took {n} minutes to boil.": "how many minutes did the kettle take to boil",
+               "The walk to the station took {n} minutes.": "how many minutes did the walk to the station take",
+               "There were {n} chairs in the meeting room.": "how many chairs were in the meeting room",
+               "The old clock was {n} seconds fast.": "how many seconds fast was the old clock"}
+    for i in range(1, b + 1):
+        fl = fills[i - 1]
+        acts = [f for f in fl if f["kind"] == "act"]
+        for f in acts:
+            if sum(1 for x in acts if x["act"] == f["act"] and x["place"] == f["place"]) == 1:
+                cands.setdefault(b - i, []).append(("who", None, i, f["who"], f"In item {item_no[i]}, who {f['act']} {f['place']}?"))
+        smalls = [f for f in fl if f["kind"] == "small"]
+        for f in smalls:
+            if sum(1 for x in smalls if x["t"] == f["t"]) == 1:
+                cands.setdefault(b - i, []).append(("small", None, i, f["n"], f"In item {item_no[i]}, {small_q[f['t']]}?"))
+    out = []
+    bins = [(lo, hi) for lo, hi in PROBE_BINS if lo <= b]
+    types = (("current",), ("old_value",), ("who", "small"))   # one of each per probe, then repeat
+    start = prng.randrange(len(bins))                            # the bin each probe starts from varies
+    for j in range(k):
+        want = types[j % len(types)]
+        picked = None
+        for step in range(len(bins)):                            # nearest bin that has a candidate
+            lo, hi = bins[(start + j + step) % len(bins)]
+            pool = [q for d, qs in cands.items() if lo <= d <= hi for q in qs
+                    if q[0] in want and (q[0], q[1], q[2], q[4]) not in used]
+            if pool:
+                picked = prng.choice(pool)
+                break
+        if picked is None:
+            continue
+        t, c, i, a, q = picked
+        used.add((t, c, i, q))
+        out.append((q, a, t, i, b - i, sum(bt[i:b])))
+    return out
+
+
 def build(out: Path, name: str, target_tokens: int, seed: int, batch_tokens: int, density: float,
           n_get: int, n_counters: int, mode: str, opts: dict, cpt: float, count_exact,
-          n_batches: int | None, surprise: int = 0) -> dict:
+          n_batches: int | None, surprise: int = 0, probes_every: int = 0, probes_k: int = 3) -> dict:
     tag = "".join(k[0] for k in ("words", "pronouns", "corrections", "plans", "relative") if opts[k]) or "plain"
     rng = random.Random(f"sparse-{seed}-{target_tokens}-{batch_tokens}-{density}-{tag}-{n_counters}")
     g = Sparse(rng, n_counters, opts)
     count = count_exact or (lambda t: int(len(t) / cpt))
     batches, refs, tokens = [], [], 0
     fills = []
+    bt: list[int] = [0]   # tokens per batch, 1-based
     while True:
         g.ops = []
         g.fill_log = []
@@ -319,7 +389,8 @@ def build(out: Path, name: str, target_tokens: int, seed: int, batch_tokens: int
         batches.append(text)
         refs.append({"state": dict(g.state), "ops": g.ops})
         fills.append(g.fill_log)
-        tokens += count(text)
+        bt.append(count(text))
+        tokens += bt[-1]
         if n_batches is not None:
             if len(batches) >= n_batches:
                 break
@@ -331,18 +402,52 @@ def build(out: Path, name: str, target_tokens: int, seed: int, batch_tokens: int
     queried = rng.sample(gone, n_gone) + rng.sample(alive, min(n_get - n_gone, len(alive)))
     rng.shuffle(queried)
     exp = {n: g.state.get(n) for n in queried}
-    total = len(batches) + 1
+    # item numbering: probes (--probes-every N) are delivered as items of their own after every N-th batch
+    n_probes = (len(batches) - 1) // probes_every if probes_every else 0
+    total = len(batches) + n_probes + 1
+    item_no: dict[int, int] = {}
+    n_item = 0
+    probe_after: list[int] = []
+    for bi in range(1, len(batches) + 1):
+        n_item += 1
+        item_no[bi] = n_item
+        if probes_every and bi % probes_every == 0 and bi < len(batches):
+            n_item += 1
+            probe_after.append(bi)
     # --surprise K: hidden retention questions (asked only in the final item) about OLD values that were
     # later overwritten and about details of the narrative filler. A separate random stream, so the
     # report text is identical with and without --surprise.
     asks = surprise_questions(random.Random(f"surprise-{seed}-{target_tokens}-{density}-{tag}"), surprise,
                               refs, fills, g.state) if surprise else []
+    if probes_every:
+        asks = [(k, re.sub(r"item (\d+)", lambda m: f"item {item_no[int(m.group(1))]}", q), a, t, b) for k, q, a, t, b in asks]
     for key, q, a, _t, _b in asks:
         exp[key] = a
+    probes: dict[str, dict] = {}
+    probe_items: dict[int, str] = {}
+    if probes_every:
+        prng = random.Random(f"probes-{seed}-{target_tokens}-{density}-{tag}-{probes_every}-{probes_k}")
+        used: set = set()
+        for j, bi in enumerate(probe_after, 1):
+            qs = probe_questions(prng, bi, probes_k, refs, fills, bt, item_no, used)
+            lines = []
+            for i, (q, a, t, rb, dist, back) in enumerate(qs, 1):
+                key = f"p{j}_{i}"
+                exp[key] = a
+                probes[key] = {"q": q, "a": a, "type": t, "item": item_no[bi] + 1, "ref_item": item_no[rb],
+                               "distance": item_no[bi] + 1 - item_no[rb], "tokens_back": back}
+                lines.append(f"ASK {key}: {q}")
+            probe_items[bi] = ("PROBE: answer these questions now, before fetching the next item. Add the keys to "
+                               "/app/answers.json (create it if needed; keep every key already in it; a number, or the "
+                               "words asked for; \"\" if you no longer know). Then continue with `next`.\n" + "\n".join(lines))
     ask_txt = ("\n\nAlso answer these questions about earlier items in /app/answers.json, under the keys "
                "given (a number, or the words asked for):\n" + "\n".join(f"ASK {k}: {q}" for k, q, _a, _t, _b in asks)
                ) if asks else ""
-    items = [{"kind": "UPDATE", "total": total, "text": b} for b in batches]
+    items = []
+    for bi, b in enumerate(batches, 1):
+        items.append({"kind": "UPDATE", "total": total, "text": b})
+        if bi in probe_items:
+            items.append({"kind": "PROBE", "total": total, "text": probe_items[bi]})
     items.append({"kind": "QUERY", "total": total,
                   "text": "The auditors ask for the current value of each counter below (null if it has "
                           "been removed). Answer in /app/answers.json:\n" + "\n".join(f"QUERY {n}" for n in queried)
@@ -358,6 +463,12 @@ def build(out: Path, name: str, target_tokens: int, seed: int, batch_tokens: int
         extra.append('A correction of a figure given earlier ("should have been 40, not 14") replaces that figure.')
     if opts["plans"]:
         extra.append("A plan changes a counter only if a later sentence says it went ahead.")
+    if probes:
+        extra.append("Some items are PROBE items: a few questions about earlier items (a counter's value now, "
+                     "the value it held at the end of a given item, or a detail of the day book: who did something, "
+                     "a small number). Answer them at once in /app/answers.json under the keys given (p1_1, p1_2, ...), "
+                     "keeping every key already in the file, then continue with `next`. Items are numbered as "
+                     "delivered (ITEM n/total); questions refer to those numbers.")
     if asks:
         extra.append("The final item may also ask questions about earlier items: a value a counter held at the "
                      "end of a given item, or a detail of the day book (who did something, a small number); answer "
@@ -365,6 +476,7 @@ def build(out: Path, name: str, target_tokens: int, seed: int, batch_tokens: int
     rel = ", doubled, reduced by a third, or increased by as much as another counter holds" if opts["relative"] else ""
     instr = INSTRUCTION.format(
         total=total, n_batches=len(batches), batch_tokens=tokens // len(batches), n_get=len(queried),
+        probe_note=(f", {len(probe_after)} PROBE items with questions in between" if probes else ""),
         stream_tokens=tokens, n_counters=len(g.ever), example=g.names[0], rel=rel,
         extra=("\n".join(extra) + "\n") if extra else "",
         storage_rule=STORAGE_MEMORY.replace("values, keys, SET lines", "counter names, values, report text")
@@ -376,14 +488,15 @@ def build(out: Path, name: str, target_tokens: int, seed: int, batch_tokens: int
                          "token_counter": "tokenizer" if count_exact else f"chars/{cpt}",
                          "batch_tokens": tokens // len(batches), "density": density, "setting": tag,
                          "n_get": len(queried), "n_counters": len(g.ever), "n_deleted_queried": n_gone,
-                         "n_surprise": len(asks)},
+                         "n_surprise": len(asks), "n_probes": len(probes), "probes_every": probes_every},
                description=f"sparse prose ledger ({tag}, density {density}), {mode}, ~{tokens} tokens, seed {seed}",
                kind="sparse")
     (d / "tests" / "reference.json").write_text(json.dumps({
         "after_batch": refs,
-        "surprise": {k: {"q": q, "a": a, "type": t, "item": b} for k, q, a, t, b in asks}}))
+        "surprise": {k: {"q": q, "a": a, "type": t, "item": b} for k, q, a, t, b in asks},
+        "probes": probes, "item_no": item_no, "batch_tokens_list": bt[1:]}))
     return {"name": name, "setting": tag, "density": density, "n_batches": len(batches),
-            "stream_tokens": tokens, "counters": len(g.ever),
+            "stream_tokens": tokens, "counters": len(g.ever), "probes": len(probes),
             "changes": sum(len([o for o in r["ops"]]) for r in refs)}
 
 
@@ -399,6 +512,9 @@ def main() -> None:
     for f in ("words", "pronouns", "corrections", "plans", "relative", "all"):
         ap.add_argument(f"--{f}", action="store_true")
     ap.add_argument("--n-get", type=int, default=24)
+    ap.add_argument("--probes-every", type=int, default=0,
+                    help="deliver a PROBE item (questions about earlier items, answered at once) after every N-th batch")
+    ap.add_argument("--probes-k", type=int, default=3, help="questions per PROBE item (one per distance bin, cycling)")
     ap.add_argument("--surprise", type=int, default=0,
                     help="add K hidden retention questions to the final item (old values, filler details)")
     ap.add_argument("--n-counters", type=int, default=60)
@@ -418,7 +534,7 @@ def main() -> None:
             size = f"b{a.n_batches}" if a.n_batches else f"t{n // 1000}k"
             print(json.dumps(build(out, f"sparse-{a.mode}-{size}-s{s}", n, s, a.batch_tokens, a.density,
                                    a.n_get, a.n_counters, a.mode, opts, a.chars_per_token, count_exact,
-                                   a.n_batches, a.surprise)))
+                                   a.n_batches, a.surprise, a.probes_every, a.probes_k)))
 
 
 if __name__ == "__main__":

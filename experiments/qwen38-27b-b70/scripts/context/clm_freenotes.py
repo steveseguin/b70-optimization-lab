@@ -35,9 +35,10 @@ PROTOCOL_FREE = """
 
 - Keep your notes in `/tmp/.live_ctx/STATE.txt`: free-form lines, at most about {cap} tokens in all. It is
   part of your context: the harness shows it in a pinned message every turn. It is NOT a notes file.
-- You do not know the final question in advance. From each item, note briefly what may matter later about
-  the user: facts, preferences, possessions, people, plans and events, each with its session date, and what
-  changed (old -> new, with both dates). Keep it compact; merge or shorten older lines when space runs low.
+- You do not know the final questions in advance. From each item, note briefly what may matter later:
+  facts and values (a counter's current value, with the item it was set in), people, places and events, plans,
+  and what changed (old -> new, with both items or dates). Keep it compact; merge or shorten older lines
+  when space runs low, but keep the current value of every live counter.
 - After each item, in ONE command: update STATE.txt with a short inline command (for example a here-document
   or `python3 - <<'EOF'` that rewrites the file), then `ctxfold --drop`, which moves the item verbatim into
   the archive and removes it from your context.
@@ -47,15 +48,18 @@ PROTOCOL_FREE = """
   to run such a command when the item would not fit ("NOT RUN").
 - Your earlier thinking is not kept between turns. Keep your thinking to what the current item needs; act
   every turn.
-- Write /app/answers.json only after the final item with the question has arrived, with exactly the key it
-  asks for. The harness refuses an earlier write or submit.
+- Write /app/answers.json only after the final item with the questions has arrived, with exactly the keys
+  it asks for. The harness refuses an earlier write or submit. The one exception: a PROBE item asks a few
+  questions mid-stream; answer those at once under the keys it gives (add to the file, keep every key already
+  in it), search the archive first when your notes do not hold the answer, then drop the probe item and go on.
 """
 
 ARCHIVE_NOTE_FREE = """- Every item you drop is kept verbatim in a read-only archive (nothing is lost, only moved out of view).
   `recall PATTERN` prints the archived sentences that match (case-insensitive regex, as `item N: ...`);
   `recall --item N` prints item N (its first line gives the session number and date). Their output enters
-  your context like any tool output, so search narrowly. When the final question arrives, search the archive
-  for its key words before answering: your notes may have missed the detail it asks about.
+  your context like any tool output, so search narrowly. When a question arrives (a PROBE item or the final
+  item), search the archive for its key words before answering: your notes may have missed the detail it asks
+  about; `recall --item N` gives item N whole when a question names it.
 """
 
 # --drop always forced; everything else passed through to the unchanged ctxfold.py
