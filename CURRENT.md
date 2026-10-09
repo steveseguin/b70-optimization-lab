@@ -5,6 +5,14 @@ below remain that host's own research record; this consolidation did not operate
 
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
+**2026-10-09, Flash-Next CPU-only runtime review:** the faulting image uses newer GPU drivers
+than LTX, but older Torch and SYCL libraries. All twelve local alternative images keep the
+same driver versions. The host libraries pass dependency checks inside the image; a later
+single-card comparison is designed but was not run. The old 14:04 fault happened before
+the OOM kills, while the tiny probe fault coincided with its GPU worker exiting. These are
+not three proven instances of the same teardown bug. LTX remains protected; no GPU work
+or host changes were made. [Runtime comparison and unexecuted remedy designs](experiments/qwen38-flash-next-fp8-b70/notes/2026-10-09-runtime-comparison.md).
+
 **2026-10-09 01:30 UTC, resumed after the owner reboot; packet 117 at 97 frames is the new best sharp coherent chain.**
 Boot 4aafe57b verified (kernel 7.0.0-39, memory blocks 53–57 offline, lockup panics off, zero xe fault lines);
 stale `FAULT.json` archived with a receipt; fresh four-card receipt `postflight-reboot-20261008T2101Z.json`.
