@@ -362,3 +362,19 @@ Receipts must carry the launch `levers`. Manifest lines add `levers`, `anchor_de
 `decode-tail(off-chain)`, `preview(off-chain)`. The packet's manifest and module hashes are placeholders
 (`PACKET117_MANIFEST_SHA256`, `PACKET117_MODULE_SHAS` in `ltx_continuation_client.py`) until the 117 build.
 Tests: `tests/run_tests_117.py` against `tests/fake_comfy117.py` (port 18192).
+
+## Packet 118 (`--packet 118`)
+
+Requests are packet 117's (same graph form, same three lever fields, 49/97/121 frames). The server adds two
+launch options that are not request fields: `snapshot_mode` (`walk` | `fingerprint`, how the four-card safety
+snapshots check residence) and `decoder_graph_pool_cap_bytes` (null, or the decoder-graph pool cap). Preflight
+checks them against `--expect-snapshot-mode walk|fingerprint` and `--expect-pool-cap-gb GB|none`, and requires the
+118 features (`timing_split`, `snapshot_fingerprint`, `decoder_graph_pool_cap`). Every receipt must carry
+`server_options` equal to the status values. Qualification is re-derived with the 118 gate and the server options
+(in fingerprint mode every qualification snapshot must have run the walk beside the fingerprint and agreed;
+`snapshot_failures` refuses). Manifest lines add `server_options`, `submit_split` (the named sub-buckets of
+submit -> sampler A), `snapshots` (labels, seconds, total, dual count, smallest floor margin), `authority_checks`,
+`turnaround` (the server's split of the predecessor's receipt -> this submit) and the client's own
+`client_turnaround_s` (receipt verified -> next POST) and `client_post_s`. Names `stream118-`. Start script:
+`start-client-118.sh <frames> <dg> <ad> <bo> <pa> <walk|fingerprint> <cap GB|none>`. Tests:
+`tests/run_tests_118.py` against `tests/fake_comfy118.py` (port 18193).
