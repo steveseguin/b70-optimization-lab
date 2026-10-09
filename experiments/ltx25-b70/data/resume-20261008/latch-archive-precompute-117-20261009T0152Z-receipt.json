@@ -1,0 +1,25 @@
+{
+ "schema": "ltx.latch-archive-receipt.v1",
+ "time_utc": "2026-10-09T01:53:52Z",
+ "archived_from": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/precompute-117-refused.json",
+ "archived_to": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/latch-archive/precompute-117-refused-20261009T0152Z-xpu3-floor-121-dg1.json",
+ "latch": {
+  "detail": {
+   "stage": "A"
+  },
+  "latch": "precompute-117-refused.json",
+  "levers": [
+   "cone",
+   1,
+   1
+  ],
+  "reason": "PrecomputeRefusal('P5: xpu:3 physical free 9587769344 below the 9663676416-byte floor (precompute-A-before)')",
+  "rule": "the launcher refuses this lever until an owner archives this file; relaunch with it off (no automatic fallback)",
+  "run_dir": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-117-frame-dg1-adcone-bo1-pa1-two-way20-28-w1-b1-p1-dxpu2-s256x256-f121",
+  "run_name": "stream117-qgraph-c000001",
+  "schema": "ltx.stream117.lever-latch.v1",
+  "time_ns": 1791510738450304115
+ },
+ "review": "Memory-floor refusal, not a lever defect: at 121 frames with the decoder graph (dg1) the xpu:3 pool plus the eager cone transient left 9,587,769,344 B free before the stage-A precompute of stream117-qgraph-c000001 against the 9,663,676,416 B floor (76 MB short); stream117-qgraph-c000000 had 15,825,817,600 B free before its decode (before the captures). LAUNCH.md section 4 predicted this case and preregistered the fallback: 121 frames with LTX_DECODER_GRAPH=0 (no pool, about 15.6 GB free before every decode). No exactness failure, no GPU fault (kernel fault count unchanged at 2, both from the 01:39 slab probe). Coordinator archives the latch under the owner approval of 2026-10-08 13:40 UTC (try what you want) and relaunches the preregistered dg0 variant with the same levers.",
+ "written_by": "coordinator"
+}
