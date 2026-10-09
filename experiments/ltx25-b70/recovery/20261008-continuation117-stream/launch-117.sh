@@ -13,7 +13,7 @@ for L in decoder-graph-116-refused.json anchor-decode-117-refused.json precomput
 ss -ltn | grep -q ':8188 ' && { echo "REFUSE: port 8188 busy"; exit 2; }
 systemctl --user is-active --quiet $UNIT && { echo "REFUSE: unit $UNIT active"; exit 2; }
 [ -e $R/$NAME ] && { echo "REFUSE: run dir exists $NAME"; exit 2; }
-COLL=$(cd $P && ls output output/validation requests 2>/dev/null | grep -c stream117 || true); [ "$COLL" = 0 ] || { echo "REFUSE: $COLL stream117 names present"; exit 2; }
+COLL=$(cd $R && ls output output/validation requests 2>/dev/null | grep -c "^stream117-" || true); [ "$COLL" = 0 ] || { echo "REFUSE: $COLL stream117 names present"; exit 2; }
 PYC=$(find $P -name __pycache__ | wc -l); [ "$PYC" = 0 ] || { echo "REFUSE: $PYC __pycache__ in packet"; exit 2; }
 [ -s "$REC" ] || { echo "REFUSE: receipt missing"; exit 2; }
 $PY -B $P/launch/check-storage-headroom.py $R/$NAME --min-free-bytes 50GiB --planned-write-bytes 3GiB
