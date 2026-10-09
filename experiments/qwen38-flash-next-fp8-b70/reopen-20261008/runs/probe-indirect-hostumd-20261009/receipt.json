@@ -1,0 +1,172 @@
+{
+  "boot_id": "4aafe57b-a54f-4bfd-b4ed-9f1cbb8830c7",
+  "bytes_equal": true,
+  "environment": {
+    "FLASHNEXT_PROBE_RENDER_BYPATH": "/dev/dri/by-path/pci-0000:23:00.0-render",
+    "FLASHNEXT_PROBE_RENDER_NODE": "/dev/dri/renderD130",
+    "FLASHNEXT_PROBE_UMD": "host-26.18.38308"
+  },
+  "exception": null,
+  "expected_sha256": "1b0d0ccda63a0e5fd238f493ee738c352e765bac7fa7b3f733a6b7d2b4d28710",
+  "explicit_synchronizations": 1,
+  "forwarded_signals": [],
+  "gather_launches": 1,
+  "health_end_unix": 1791512837.0,
+  "health_sha256": "48148ebf0fa76e9c9ca0c8c9c134738da95da2b712500b7948734c7d6b0ee156",
+  "input_sha256": "4348e3b98e8a327b34ced39c1da9e67cdb4cd5e48e4d7960607a3ae403d35f0c",
+  "output_ptr": 18446697167134409216,
+  "output_sha256": "1b0d0ccda63a0e5fd238f493ee738c352e765bac7fa7b3f733a6b7d2b4d28710",
+  "output_span": [
+    18446697167134409216,
+    18446697167134425600
+  ],
+  "passed": false,
+  "postflight_exception": {
+    "message": "fault watcher STOP latched; no submissions",
+    "type": "RuntimeError"
+  },
+  "postflight_requested_unix": 1791512852.185534,
+  "queue_handle": 1007212656,
+  "reconstructed_addresses": [
+    123188757413888,
+    123188757401600,
+    123188757409792,
+    123188757405696
+  ],
+  "resident_base": 18446697167134392320,
+  "resident_span": [
+    18446697167134392320,
+    18446697167134408704
+  ],
+  "rows": [
+    3,
+    0,
+    2,
+    1
+  ],
+  "schema": "neural.download.flashnext-slab-probe.v1",
+  "slab_sha256": "61c8980a79a926eb483d775672f9d2d3094264e6b90deea4979a975d0ebc5f0b",
+  "source_sha256": "7fc61a2ccde39dbc9f9d43fe77a5f07fec55b08bb63c2686650d12e5dd3c6e15",
+  "stage": "bytes_equal_waiting_postflight",
+  "table_ptr": 18446697167134408704,
+  "table_sha256": "e8eca9232981a1f21f661f0b99e03d5eeffa2417cf0fca516bd986c3df69b60b",
+  "table_span": [
+    18446697167134408704,
+    18446697167134408736
+  ],
+  "table_values": [
+    170095332573184,
+    170095332560896,
+    170095332569088,
+    170095332564992
+  ],
+  "tensors": {
+    "slab": {
+      "data_ptr": 123188757397504,
+      "dtype": "torch.uint8",
+      "is_pinned": true,
+      "logical_bytes": 3145728,
+      "shape": [
+        3145728
+      ],
+      "span": [
+        123188757397504,
+        123188760543232
+      ],
+      "storage_bytes": 3145728,
+      "storage_offset": 0,
+      "stride": [
+        1
+      ]
+    },
+    "uva": {
+      "data_ptr": 123188757401600,
+      "dtype": "torch.uint8",
+      "is_pinned": null,
+      "logical_bytes": 16384,
+      "shape": [
+        4,
+        4096
+      ],
+      "span": [
+        123188757401600,
+        123188757417984
+      ],
+      "storage_bytes": 16384,
+      "storage_offset": 0,
+      "stride": [
+        4096,
+        1
+      ]
+    },
+    "view": {
+      "data_ptr": 123188757401600,
+      "dtype": "torch.uint8",
+      "is_pinned": true,
+      "logical_bytes": 16384,
+      "shape": [
+        4,
+        4096
+      ],
+      "span": [
+        123188757401600,
+        123188757417984
+      ],
+      "storage_bytes": 3145728,
+      "storage_offset": 4096,
+      "stride": [
+        4096,
+        1
+      ]
+    }
+  },
+  "timeout_seconds": 120,
+  "triton_ir": {
+    "llir": {
+      "path": "/receipts/ir/slab_gather.llir",
+      "sha256": "f4992e0a387aa86d89fae752f21838d4a63a33ff720a78fddb6e8d201b07f4c4"
+    },
+    "spv": {
+      "path": "/receipts/ir/slab_gather.spv",
+      "sha256": "3bcc3db705532083892fa8647a408b5840fc8e744016a07f7828212a79fa9e49"
+    },
+    "ttgir": {
+      "path": "/receipts/ir/slab_gather.ttgir",
+      "sha256": "c44cddaa752497411595cc25745c578680f9fba895e41430d81008faaae1efcb"
+    },
+    "ttir": {
+      "path": "/receipts/ir/slab_gather.ttir",
+      "sha256": "8cceed084afa2c899202da8deb1d814d9ba8f741ed3ed89b92085a613bab8d89"
+    }
+  },
+  "usm_query": {
+    "inspected": [
+      "launch stream.get_context"
+    ],
+    "kinds": null,
+    "pointers": [
+      123188757397504,
+      123188757401600
+    ],
+    "queue_handle": 1007212656,
+    "reason": "no read-only pointer-kind query in launch queue context",
+    "status": "unavailable"
+  },
+  "variant": "indirect",
+  "versions": {
+    "torch": "2.13.0+xpu",
+    "transformers": "5.16.1",
+    "triton": "3.7.2+xpu",
+    "vllm": "0.30.0+xpu",
+    "vllm-xpu-kernels": "0.1.14.1"
+  },
+  "watcher_at_completion": {
+    "boot_id": "4aafe57b-a54f-4bfd-b4ed-9f1cbb8830c7",
+    "health_sha256": "48148ebf0fa76e9c9ca0c8c9c134738da95da2b712500b7948734c7d6b0ee156",
+    "new_fault_lines": [],
+    "passed": true,
+    "read_started_unix": 1791512851.342592,
+    "updated_unix": 1791512851.5553787
+  },
+  "worker_wait_status": 0
+}

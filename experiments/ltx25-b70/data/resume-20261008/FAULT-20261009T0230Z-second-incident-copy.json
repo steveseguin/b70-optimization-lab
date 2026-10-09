@@ -1,0 +1,8 @@
+{
+ "reason": "Second GPU fault incident of boot 4aafe57b-a54f-4bfd-b4ed-9f1cbb8830c7: card 0000:23:00.0 logged Fault response -ENOENT and a bcs engine reset at 2026-10-09T02:27:32Z at the exit of the Flash-Next single-card slab probe run with the host user-mode driver overlaid into the vLLM 0.30.0 image (receipts reopen-20261008/runs/probe-indirect-hostumd-20261009). First incident: the same probe with the image driver at 01:39:27Z (bcs reset at worker exit). Both probes returned byte-correct gathers; the faults coincide with abrupt process exit (os._exit) while pinned host USM and a queue are live. The LTX lane (host venv, graceful SIGINT stops) has had no fault on this boot. Owner decision required: reboot, or explicitly accept continuing LTX launches on this boot. No GPU launches until then; CPU work (packet 118 build, exit-lifecycle analysis) continues.",
+ "time": 1791512946,
+ "time_utc": "2026-10-09T02:29:06Z",
+ "boot_id": "4aafe57b-a54f-4bfd-b4ed-9f1cbb8830c7",
+ "run": "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/probe-indirect-hostumd-20261009",
+ "written_by": "coordinator"
+}

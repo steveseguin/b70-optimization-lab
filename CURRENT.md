@@ -5,6 +5,17 @@ below remain that host's own research record; this consolidation did not operate
 
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
+**2026-10-09 02:35 UTC, HALT: second GPU fault incident of boot 4aafe57b; owner decision needed (reboot, or accept continuing LTX on this boot).**
+The slab probe with the host user-mode driver overlaid into the vLLM image (remedy A) reproduced the first probe
+exactly: gather byte-correct, then at the worker's `os._exit` card 23:00.0 logged `-ENOENT` + bcs engine reset
+(0.4 ms before the guardian's post-exit timestamp, both times). Driver version cleared; MoE addressing cleared;
+what remains is **abrupt process exit with live USM host mappings** (the 14:04 OOM-kill incident fits; the LTX
+venv's graceful exits never fault). `FAULT.json` set; post-fault health probe passed on all four cards. Notes
+`experiments/qwen38-flash-next-fp8-b70/notes/2026-10-09-slab-probe-hostumd-result.md`. Continuing on CPU:
+Codex prepares the `--clean-exit` probe variant and the exit-lifecycle analysis; an Opus agent builds LTX packet
+118 (timing split of `submit_to_sampler_start`, fingerprint four-card snapshots proven against the walk, bounded
+decoder-graph pool for 121 dg1). LTX 117 at 121 frames stands at **1.08 s/s** (5.40 s per 5.04 s chunk).
+
 **2026-10-09 02:15 UTC, Flash-Next: the slab probe cleared the MoE addressing and pointed at the image runtime; LTX 117 at 121 frames streaming (dg0).**
 In the idle gap after the 97-frame run, the Codex-prepared single-card slab probe ran in the vLLM 0.30.0 image on
 card 23:00.0: the production table-only indirect gather from an exact-size pinned host slab was **byte-correct**,
