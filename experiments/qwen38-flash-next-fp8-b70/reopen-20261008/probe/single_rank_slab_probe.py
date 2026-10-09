@@ -9,6 +9,7 @@ import datetime as dt
 import hashlib
 import importlib.util
 import json
+import math
 import os
 from pathlib import Path
 import signal
@@ -25,6 +26,45 @@ SLAB_BYTES = 3 * 2**20
 VIEW_OFFSET = 4096
 ROW_BYTES = 4096
 FAILED_BOOT = '10192010'  # attempt-7 boot prefix; no same-boot retry
+
+
+def idle_seconds(value):
+    seconds = float(value)
+    if not math.isfinite(seconds) or not 0 <= seconds <= 30:
+        raise argparse.ArgumentTypeError('idle seconds must be finite and between 0 and 30 (120-second worker bound unchanged)')
+    return seconds
+
+
+def add_exit_arguments(parser):
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--clean-exit', action='store_true',
+                       help='ordered release and normal interpreter exit; prepared experiment only')
+    group.add_argument('--exit-after-sleep', type=idle_seconds, default=None, metavar='N',
+                       help='idle after local references drop, then os._exit; 0 <= N <= 30')
+
+
+def mark(receipt, save, event):
+    receipt.setdefault('lifecycle', {})[event] = {
+        'unix': time.time(), 'monotonic_ns': time.monotonic_ns(),
+        'utc': dt.datetime.now(dt.timezone.utc).isoformat()}
+    save()
+
+
+def idle_before_exit(args, receipt, save):
+    """No device calls: same local-reference release boundary as old probe."""
+    if args.exit_after_sleep is None:
+        return
+    mark(receipt, save, 'idle_begin')
+    deadline = time.monotonic() + args.exit_after_sleep
+    while True:
+        check_watcher(args.receipt_dir, receipt['boot_id'], receipt['health_sha256'])
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            break
+        time.sleep(min(.1, remaining))
+    # A heartbeat read BEFORE idle is not evidence of a clean idle interval.
+    receipt['watcher_after_idle'] = wait_postflight(args.receipt_dir, receipt, time.time())
+    mark(receipt, save, 'idle_end')
 
 
 def require(ok, message):
@@ -244,7 +284,43 @@ def run_device(args, receipt, save):
     receipt['watcher_at_completion'] = check()
     receipt.update(stage='bytes_equal_waiting_postflight', bytes_equal=True, passed=False, exception=None)
     save()
-    # Owners remain live through the exact comparison; normal return frees them.
+    mark(receipt, save, 'comparison_complete')
+    if args.clean_exit:
+        check()
+        mark(receipt, save, 'before_free')
+        # Drop ALL aliases first: operands retains device tensors, the loop's
+        # tensor retains UVA. Direct mode has two additional device tensors.
+        del operands, tensor
+        if args.direct_host_pointer:
+            del local_rows, selectors
+        del output, table, resident, uva, view, slab
+        del actual, readback, expected_output, source
+        del compiled, kernel  # Triton's global cache may still own the module.
+        import gc
+        gc.collect()
+        check()
+        receipt['cleanup_synchronizations'] = 1
+        save()
+        torch.xpu.synchronize()  # separate from the unchanged gather sync
+        check()
+        torch.xpu.empty_cache()
+        check()
+        # Reviewed image's public accelerator API dispatches to its current
+        # host allocator. Do not substitute a CUDA/private allocator binding.
+        empty_host_cache = getattr(torch.accelerator, 'empty_host_cache', None)
+        receipt['pinned_host_cache_release'] = {
+            'api': 'torch.accelerator.empty_host_cache',
+            'status': 'calling' if callable(empty_host_cache) else 'unavailable'}
+        save()
+        if callable(empty_host_cache):
+            empty_host_cache()
+            receipt['pinned_host_cache_release']['status'] = 'called'
+        del stream  # runtime-owned queues/context survive until finalization
+        mark(receipt, save, 'after_free')
+        receipt['watcher_after_free'] = wait_postflight(args.receipt_dir, receipt, time.time())
+    # In the original arm normal return drops local references too. It does
+    # NOT prove native cached allocations/modules/queues have been destroyed.
+    mark(receipt, save, 'before_return')
 
 
 def main(argv=None):
@@ -252,6 +328,7 @@ def main(argv=None):
     parser.add_argument('--health-receipt', type=Path, required=True)
     parser.add_argument('--receipt-dir', type=Path, required=True)
     parser.add_argument('--direct-host-pointer', action='store_true')
+    add_exit_arguments(parser)
     args = parser.parse_args(argv)
     args.receipt_dir.mkdir(parents=True, exist_ok=True)
     path = args.receipt_dir / 'receipt.json'
@@ -263,6 +340,9 @@ def main(argv=None):
                'stage': 'admission', 'exception': None, 'triton_ir': {},
                'gather_launches': 0, 'explicit_synchronizations': 0,
                'timeout_seconds': 120, 'source_sha256': digest(Path(__file__).read_bytes())}
+    receipt.update(exit_mode='clean' if args.clean_exit else 'abrupt',
+                   exit_after_sleep_seconds=args.exit_after_sleep,
+                   cleanup_synchronizations=0, lifecycle={})
     receipt['environment'] = {
         'FLASHNEXT_PROBE_UMD': os.environ.get('FLASHNEXT_PROBE_UMD', 'image-26.27.39122'),
         **{key: value for key, value in os.environ.items()
@@ -287,12 +367,19 @@ def main(argv=None):
         signal.alarm(120)
         try:
             run_device(args, receipt, save)
+            mark(receipt, save, 'after_return')
+            idle_before_exit(args, receipt, save)
+            mark(receipt, save, 'before_exit')
         except BaseException as exc:
             receipt.update(passed=False, exception={'type': type(exc).__name__, 'message': str(exc),
                 'repr': repr(exc), 'traceback': traceback.format_exc()})
             save()
             # No further device calls, cleanup synchronize, or retry on failure.
             os._exit(2)
+        if args.clean_exit:
+            # Outside the BaseException handler: SystemExit must reach Python
+            # finalization, never the os._exit failure path. Alarm stays armed.
+            sys.exit(0)
         os._exit(0)
     forwarded = []
     def forward_once(signum, frame):

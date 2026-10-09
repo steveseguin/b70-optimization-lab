@@ -7,6 +7,7 @@ from pathlib import Path
 import os
 import re
 import shlex
+from single_rank_slab_probe import add_exit_arguments, idle_seconds
 
 HERE = Path(__file__).resolve().parent
 PACKAGE = HERE.parent
@@ -69,7 +70,12 @@ def host_umd_mounts():
     return mounts
 
 
-def command(render_node, health, receipt_dir, direct=False, host_umd_overlay=False):
+def command(render_node, health, receipt_dir, direct=False, host_umd_overlay=False,
+            clean_exit=False, exit_after_sleep=None):
+    if clean_exit and exit_after_sleep is not None:
+        raise ValueError('--clean-exit and --exit-after-sleep are mutually exclusive')
+    if exit_after_sleep is not None:
+        exit_after_sleep = idle_seconds(exit_after_sleep)
     if not re.fullmatch(r'/dev/dri/by-path/pci-0000:(23|27|43|47):00\.0-render', render_node):
         raise ValueError('select one four-card-host by-path render node')
     # The lane's screen.py computes REPO = HERE.parents[2] at import (attempt 2 of 2026-10-09 refused with
@@ -112,6 +118,10 @@ def command(render_node, health, receipt_dir, direct=False, host_umd_overlay=Fal
             '--receipt-dir', '/receipts']
     if direct:
         cmd += ['--direct-host-pointer']
+    if clean_exit:
+        cmd += ['--clean-exit']
+    if exit_after_sleep is not None:
+        cmd += ['--exit-after-sleep', str(exit_after_sleep)]
     return cmd
 
 
@@ -123,9 +133,11 @@ def main():
     parser.add_argument('--direct-host-pointer', action='store_true')
     parser.add_argument('--host-umd-overlay', action='store_true',
                         help='verify and bind the twelve pinned Remedy A host libraries read-only')
+    add_exit_arguments(parser)
     args = parser.parse_args()
     print(shlex.join(command(args.render_node, args.health_receipt, args.receipt_dir,
-                             args.direct_host_pointer, args.host_umd_overlay)))
+                             args.direct_host_pointer, args.host_umd_overlay,
+                             args.clean_exit, args.exit_after_sleep)))
 
 
 if __name__ == '__main__':

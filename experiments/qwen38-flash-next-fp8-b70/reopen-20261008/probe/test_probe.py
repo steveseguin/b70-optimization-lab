@@ -1,5 +1,6 @@
 """CPU-only refusal/address tests; no runtime imports or device emulation."""
 import ast
+import argparse
 import datetime as dt
 import importlib.util
 import hashlib
@@ -123,6 +124,87 @@ class ProbeTests(unittest.TestCase):
             command = container_command.command('/dev/dri/by-path/pci-0000:23:00.0-render',
                                                 '/tmp/health file.json', '/tmp/receipt dir')
         self.assertEqual(shlex.join(command) + '\n', expected)
+
+    def test_exit_flag_plumbing_both_parsers(self):
+        for flag in (['--clean-exit'], ['--exit-after-sleep', '10']):
+            with self.subTest(flag=flag):
+                p = subprocess.run(['bash', str(HERE / 'run-probe-in-container.sh'),
+                    '--render-node', '/dev/dri/by-path/pci-0000:23:00.0-render',
+                    '--health-receipt', str(self.path), '--receipt-dir', str(self.root),
+                    *flag], capture_output=True, text=True, timeout=10)
+                self.assertEqual(p.returncode, 0, p.stderr)
+                command = shlex.split(p.stdout)
+                parser = argparse.ArgumentParser()
+                probe.add_exit_arguments(parser)
+                index = command.index(flag[0])
+                args = parser.parse_args(command[index:])
+                self.assertEqual(args.clean_exit, flag[0] == '--clean-exit')
+                self.assertEqual(args.exit_after_sleep, 10 if len(flag) == 2 else None)
+
+    def test_invalid_exit_modes_refused_before_receipt_or_import(self):
+        for flags in (['--clean-exit', '--exit-after-sleep', '1'],
+                      *[['--exit-after-sleep', n] for n in ('-1', '31', 'nan', 'inf')]):
+            with self.subTest(flags=flags), patch('sys.stderr', new_callable=io.StringIO):
+                with self.assertRaises(SystemExit):
+                    probe.main(['--health-receipt', str(self.path),
+                                '--receipt-dir', str(self.root / 'invalid'), *flags])
+                self.assertFalse((self.root / 'invalid').exists())
+        with self.assertRaises(ValueError):
+            container_command.command('/dev/dri/by-path/pci-0000:23:00.0-render',
+                                      self.path, self.root, clean_exit=True, exit_after_sleep=0)
+
+    def test_exit_modes_recorded_on_refusal(self):
+        for i, flags in enumerate((['--clean-exit'], ['--exit-after-sleep', '10'])):
+            directory = self.root / str(i)
+            with patch.dict(os.environ, {'FLASHNEXT_PROBE_ADMIT': '0'}):
+                self.assertEqual(probe.main(['--health-receipt', str(self.path),
+                                 '--receipt-dir', str(directory), *flags]), 2)
+            receipt = json.loads((directory / 'receipt.json').read_text())
+            self.assertEqual(receipt['exit_mode'], 'clean' if i == 0 else 'abrupt')
+            self.assertEqual(receipt['exit_after_sleep_seconds'], None if i == 0 else 10)
+
+    def test_idle_watcher_stop_prevents_exit_marker(self):
+        args = types.SimpleNamespace(exit_after_sleep=10, receipt_dir=self.root)
+        receipt = dict(boot_id='test-boot', health_sha256='hash')
+        with patch.object(probe, 'check_watcher', side_effect=RuntimeError('STOP')):
+            with self.assertRaisesRegex(RuntimeError, 'STOP'):
+                probe.idle_before_exit(args, receipt, lambda: None)
+        self.assertIn('idle_begin', receipt['lifecycle'])
+        self.assertNotIn('idle_end', receipt['lifecycle'])
+
+    def test_guardian_clean_exit_runs_atexit_abrupt_does_not(self):
+        # Real OS fork/finalization, but run_device replaced before execution;
+        # no Torch import, device call, or emulated device operation.
+        for i, flags in enumerate((['--clean-exit'], ['--exit-after-sleep', '0'])):
+            directory = self.root / ('exit' + str(i))
+            marker = self.root / ('atexit' + str(i))
+            code = f'''
+import atexit, sys
+from pathlib import Path
+sys.path.insert(0, {str(HERE)!r})
+import single_rank_slab_probe as p
+p.admission = lambda *a: dict(boot_id='cpu', health_sha256='hash')
+p.check_watcher = lambda *a: dict(passed=True)
+p.wait_postflight = lambda *a: dict(passed=True)
+p.production_placement = lambda: None
+def fake_device(args, receipt, save):
+    atexit.register(lambda: Path({str(marker)!r}).write_text('finalized'))
+    receipt['bytes_equal'] = True
+    p.mark(receipt, save, 'before_return')
+p.run_device = fake_device
+raise SystemExit(p.main({['--health-receipt', str(self.path), '--receipt-dir', str(directory), *flags]!r}))
+'''
+            p = subprocess.run([sys.executable, '-B', '-c', code],
+                               capture_output=True, text=True, timeout=10)
+            self.assertEqual(p.returncode, 0, p.stderr)
+            receipt = json.loads((directory / 'receipt.json').read_text())
+            self.assertEqual(marker.exists(), i == 0)
+            self.assertTrue(receipt['passed'])
+            self.assertIn('before_exit', receipt['lifecycle'])
+            if i == 1:
+                self.assertIn('watcher_after_idle', receipt)
+                self.assertLessEqual(receipt['lifecycle']['idle_end']['monotonic_ns'],
+                                     receipt['lifecycle']['before_exit']['monotonic_ns'])
 
     def test_overlay_closure_matches_remedy_a(self):
         note = (HERE.parents[1] / 'notes/2026-10-09-runtime-comparison.md').read_text()

@@ -1,8 +1,11 @@
-# Single-card slab probe — prepared only
+# Single-card slab probe — exit variants prepared, launches halted
 
-The host UMD overlay is prepared but has not run on a GPU. The original image's
-tiny probe returned correct bytes, then faulted at worker exit; see the
-[runtime comparison](../../notes/2026-10-09-runtime-comparison.md).
+**2026-10-09: both image NEO 26.27 and host-overlay NEO 26.18 returned exact
+bytes, then faulted at the worker exit/postflight boundary. This boot has two
+incidents; all GPU launches remain halted pending the owner's decision.**
+The UMD version did not discriminate. See the
+[exit lifecycle analysis](../../notes/2026-10-09-exit-lifecycle-analysis.md).
+The commands below are prepared procedures, not current launch authorization.
 This tests the [attempt-7 hypothesis](../../notes/2026-10-08-attempt7-gpu-fault-analysis.md), not model output or performance.
 The indirect variant hides the host allocation behind the production signed table.
 The direct variant passes and uses the host pointer, local row and selector.
@@ -56,7 +59,8 @@ printf 'probe=%s watcher=%s\n' "$probe_status" "$watcher_status"
 cat "$receipt/receipt.json"
 ```
 
-This is one diagnostic launch, four programs and one explicit synchronization.
+This is one diagnostic launch, four programs and one gather synchronization
+(clean-exit adds its separately recorded cleanup synchronization).
 Setup transfers and the final blocking CPU copy can synchronize internally.
 The CPU guardian never imports Torch; its single device worker has a default
 OS SIGALRM after 120 seconds, covering imports, JIT and native waits. This hard
@@ -77,7 +81,7 @@ sequence, adding `--direct-host-pointer` to the printer command. The standalone
 `single_rank_slab_probe_direct.py` selects that same flag; it is not a second
 implementation and never runs after an indirect failure automatically.
 
-## Opt-in host UMD comparison
+## Opt-in host UMD comparison (completed; both arms faulted)
 
 For a later coordinator-admitted single-card window, `--host-umd-overlay`
 selects exactly the twelve read-only mounts in
@@ -111,8 +115,76 @@ Without the flag, the printed command is byte-for-byte unchanged.
 `image-26.27.39122` when unset, and all `FLASHNEXT_PROBE_RENDER_*` variables.
 The overlay command explicitly supplies the host identity. Existing render-node
 symlink resolution and the package mount's repository depth are preserved.
-The worker's `os._exit` boundary, timeout, gather and post-worker journal check
-are unchanged, keeping this comparison limited to the UMD libraries.
+The completed UMD comparison retained the original `os._exit` boundary,
+timeout, gather and post-worker journal check. The new lifecycle options below
+are separate experiments; the default arm still uses abrupt exit.
+
+## Exit lifecycle discrimination — prepared, not executed
+
+The default returns from `run_device` (dropping its local references), then
+calls `os._exit(0)`. It does **not** deliberately keep the slab tensor live at
+exit. Native allocation caches, Triton modules and runtime queues/context can
+outlive those references. The 3 MiB slab exceeds the 1 MiB host-cache threshold;
+its mapping lifetime at exit was not measured.
+
+`--clean-exit` preserves allocation, compilation, one gather, one gather sync,
+and the blocking readback. On success it drops `operands` and the loop's `tensor`
+alias, direct-only buffers if present, then output/table/resident/UVA/view/slab
+and CPU results; drops local compiled/kernel references; collects garbage;
+synchronizes; empties the XPU cache; and calls the image's public
+`torch.accelerator.empty_host_cache()` if present. The receipt records called
+or unavailable. It releases the stream wrapper and returns, then calls
+`sys.exit(0)` outside the exception handler so normal finalization can run.
+Triton's global module cache and runtime-owned queues are left to finalization;
+this is not proof they were destroyed. The extra sync is separately counted
+as `cleanup_synchronizations`, never hidden in the original gather count.
+
+`--exit-after-sleep N` returns at the original local-reference release boundary,
+idles without device calls while checking the watcher, obtains a fresh journal
+read after the idle interval, then calls `os._exit(0)`. Thus it separates elapsed
+time after release from interpreter exit; it does not test holding the slab live.
+N must be finite, 0–30 seconds; modes are mutually exclusive. The original
+120-second worker alarm and 150-second watcher bound are not extended. An alarm
+or other error invalidates the comparison and retains the original failure
+path (no cleanup device calls, abrupt failure exit, no retry).
+
+Receipt `lifecycle` entries retain UTC, Unix and monotonic times for comparison,
+`before_free`/`after_free` (clean mode), `before_return`, `after_return`, idle
+begin/end (sleep mode), and `before_exit`. `after_free` means requested release
+operations returned, not a native mapping census. The guardian still requires
+a new kernel read begun after worker death; clean bytes alone never pass.
+
+Prepared **print-only** commands from repo root (distinct NEW directories; do
+not execute their output while launches are halted):
+
+```sh
+probe=experiments/qwen38-flash-next-fp8-b70/reopen-20261008/probe
+bash "$probe/run-probe-in-container.sh" --render-node /dev/dri/by-path/pci-0000:23:00.0-render --health-receipt /PATH/FRESH-HEALTH.json --receipt-dir /PATH/NEW-CLEAN-RECEIPTS --clean-exit
+bash "$probe/run-probe-in-container.sh" --render-node /dev/dri/by-path/pci-0000:23:00.0-render --health-receipt /PATH/FRESH-HEALTH.json --receipt-dir /PATH/NEW-SLEEP-RECEIPTS --exit-after-sleep 10
+```
+
+Hold image, UMD, card, allocator policy and gather variant fixed. These commands
+select the image UMD. Host UMD requires `--host-umd-overlay` on both compared
+arms. No sequential campaign is authorized: a fault stops work, and another
+arm requires a separately admitted state under the same guardian/watcher rule.
+
+| Matched result | Preregistered interpretation |
+|---|---|
+| Clean exit clean; abrupt exit faults | Supports teardown class; does not uniquely identify slab versus internal queue/ring mapping. |
+| Both fault | Allocation/mapping/runtime class remains; not cured by this cleanup. A fault only during clean finalization can still be teardown, so this is not proof of allocation-time failure. |
+| Both clean | Flaky/other or changed state; historical faults remain unexplained. |
+| Clean exit faults; abrupt exit clean | Cleanup-specific failure or flakiness; no teardown fix established. |
+| Sleep remains clean until abrupt exit | Exit boundary is stronger than elapsed-time explanation. |
+| Fault during sleep, before exit | Release/idle/asynchronous fault; abrupt interpreter exit is not necessary. |
+
+A missing marker, timeout, stale watcher, unavailable required evidence or
+exception is inconclusive. Compare fault timestamps to release/exit markers;
+one clean run never certifies production stability.
+
+**CPU validation: 26 probe tests passed**, including both flag parsers, invalid
+values/conflicting modes, refusal receipts, watcher-stop behavior and real
+CPU fork/finalizer behavior. No Torch import or GPU call was needed for these
+tests; they do not validate native cleanup. See [validation](cpu-exit-lifecycle-validation.json).
 
 ## Evidence and limits
 

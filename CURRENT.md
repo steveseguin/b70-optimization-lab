@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**2026-10-09, Flash-Next CPU-only exit review: GPU launches remain halted.**
+The host-driver probe also returned correct bytes and then faulted as its worker
+exited. That is the second incident on this boot; the owner's decision is still
+needed. Changing the driver version did not separate the outcomes. The two tiny
+probes point to shutdown, but the older load faults do not prove the same cause:
+Screen 1 faulted before its OOM kills, and attempt 7's crash ordering is uncertain.
+A normal-exit variant and a delayed abrupt-exit variant are prepared, with 26 CPU
+tests passing. Neither ran. The production overlay is unchanged. This supersedes
+the earlier proposed host-driver comparison and “while idling” description below.
+[Evidence and prepared tests](experiments/qwen38-flash-next-fp8-b70/notes/2026-10-09-exit-lifecycle-analysis.md).
+
 Latest four-card review: **2026-10-07, LTX optimization resumed by the owner**. The dated two-card entries
 below remain that host's own research record; this consolidation did not operate it.
 
