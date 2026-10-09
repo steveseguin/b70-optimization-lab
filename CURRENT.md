@@ -5,6 +5,17 @@ below remain that host's own research record; this consolidation did not operate
 
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
+**2026-10-09 01:30 UTC, resumed after the owner reboot; packet 117 at 97 frames is the new best sharp coherent chain.**
+Boot 4aafe57b verified (kernel 7.0.0-39, memory blocks 53–57 offline, lockup panics off, zero xe fault lines);
+stale `FAULT.json` archived with a receipt; fresh four-card receipt `postflight-reboot-20261008T2101Z.json`.
+Packet 117 (cone anchor decode + stage-B encode overlap + prep-ahead on the frame anchor with the decoder graph)
+qualified 3/3 exact, eager chain equal to the 114 reference, and 62/62 stream chunks byte-identical to 116b:
+**4.82 s per 4.04 s chunk (1.19 s/s; 116b 5.54, 1.37 s/s)**, cone decode 0.69 s on the chain vs 1.57 full,
+`cone_equal` true on all 100 measured chunks, floors kept. Target ≤4.4 s missed: `submit_to_sampler_start`
+stayed at 0.51 s. Note `experiments/ltx25-b70/notes/2026-10-09-continuation117-results-97.md`. Controlled stop
+01:27:22 UTC. Next: the Flash-Next single-rank slab probe (Codex-prepared, 237 CPU tests) in the idle window,
+then packet 117 at 121 frames.
+
 **2026-10-08, Flash-Next attempt 7 prepared on CPU:** large pinned buffers
 now request their exact sizes through the runtime's allocator setting. This
 removes about **24.25 GB of padding** without changing the stored model bytes.
