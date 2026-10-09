@@ -18,7 +18,7 @@ driver into the container (CPU ABI check passed, `probe/remedy-a-abi-check-20261
 gaining an opt-in `--host-umd-overlay`. Next GPU step: the same probe with the host driver, one card, in the next
 idle window, same stop rule. LTX: 117 at 121 frames with the decoder graph latched on the xpu:3 floor (9.59 GB vs
 9.66 floor, predicted in LAUNCH.md §4; latch archived with a review receipt); the preregistered dg0 fallback
-qualified 3/3 exact and is streaming (measurement in progress).
+qualified 3/3 exact: **5.40 s per 5.04 s chunk = 1.08 s of work per second of video** (97 f: 1.19; 116b: 1.37), cone exact on 100/100 chunks, floors wide (xpu:3 15.6 GB before decodes). Note `experiments/ltx25-b70/notes/2026-10-09-continuation117-results-121.md`. Sampler A+B are 64 % of the period; `submit_to_sampler_start` (0.52 s, unexplained by the precompute waits) is the next cheapest lever.
 
 **2026-10-09, Flash-Next CPU-only runtime review:** the faulting image uses newer GPU drivers
 than LTX, but older Torch and SYCL libraries. All twelve local alternative images keep the
