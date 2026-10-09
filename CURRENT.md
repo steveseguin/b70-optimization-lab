@@ -23,6 +23,14 @@ below remain that host's own research record; this consolidation did not operate
 
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
+**2026-10-09 03:35 UTC tick:** Codex's graceful-teardown overlay patch is prepared and reviewed, **unapplied**
+(`reopen-20261008/overlay-fix-teardown/`, commit 8aee5f711; 207 lane + 26 probe + 49 teardown CPU tests pass; handoff
+`notes/2026-10-09-teardown-patch-prep.md`). It orders per-rank release (drain, pinned slabs/PLE/tables, synchronize,
+pools) before any exit and routes SIGINT/SIGTERM through the same path; OOM/SIGKILL cannot be made graceful and stay
+prevented by the loading RAM guard. Halt holds (boot 4aafe57b, 4 fault-class lines, all from the two probes). Packet 118
+build still in progress. Next CPU step started: Codex re-reads attempt 7's ordering (the one incident that does not fit
+abrupt exit).
+
 **2026-10-09 03:00 UTC tick (halt holds; CPU work continues).** Codex's exit-lifecycle analysis
 (`experiments/qwen38-flash-next-fp8-b70/notes/2026-10-09-exit-lifecycle-analysis.md`, commit 929ba2897): the two
 probe faults fit a closed-VM fault response (upstream v7.0 `xe_pagefault_service` returns `-ENOENT` for a VM
