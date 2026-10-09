@@ -758,6 +758,18 @@ human transcripts. Fresh hosted assistant sessions supplied these answers; this
 does not qualify local Qwen, general memory or speed. No local model server or
 GPU experiment was started. Existing context owner units remain inactive.
 
+## 2026-10-08 21:10 EDT, two-B70 host: retention study decided; archive-and-recall is the method; no more full-day runs
+
+**Cards empty.** LongMemEval stage 2 (judged by the 27B, secondary): whole history in one call 46/56;
+archive-and-recall with free notes 42/56 at 341 s and 10.5K tokens per question; summarising 19/23 at 960 s and
+58K tokens (stopped after 23 by owner rule: "Do not do full day soaks like this; it's a waste of time"). On the
+same 23 questions: 21 / 20 / 19. Archive-and-recall is recommended inside a 32K budget: same accuracy, a third
+of the time, a sixth of the tokens. Its gap to whole-history reading is abstention (1/8 vs 4/8), the next lever.
+[Result note](experiments/qwen38-27b-b70/notes/2026-10-08-longmemeval-stage2-result.md),
+data `experiments/qwen38-27b-b70/data/2026-10-08-longmemeval-stage2/`. H3 live session earlier today: 17 passes,
+136 clips (8-step turbo path, 960x544) streamed to the owner's meshcast endpoint 09:41-13:33, no faults.
+Standing rule from today: any study must decide within a few hours (pilot, concurrency, stop early).
+
 ## 2026-10-08 09:35 EDT, two-B70 host: H3 live stream is on air; retention stage 2 interrupted by a memory-guard stop, resumes after the live session
 
 **Live H3 video is streaming to the owner's meshcast.io RTMP endpoint** (unit `h3-stream`, key in
