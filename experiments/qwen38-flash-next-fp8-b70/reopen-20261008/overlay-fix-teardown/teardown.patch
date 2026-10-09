@@ -1,0 +1,2837 @@
+--- a/container-entrypoint.sh
++++ b/container-entrypoint.sh
+@@ -6,6 +6,17 @@
+     exit 0
+ fi
+ shift
++# A background parent may inherit SIGINT ignored. Bash alone cannot undo that.
++if [[ "${SCREEN1B_SIGNAL_DEFAULTS:-}" != 1 ]]; then
++    exec env --default-signal=INT --default-signal=TERM SCREEN1B_SIGNAL_DEFAULTS=1 \
++        /bin/bash "$0" --execute "$@"
++fi
++# Setup is CPU-only. Cancellation before exec must latch and prevent launch.
++setup_cancel() {
++    printf '%s\n' 'entrypoint setup interrupted' > /screen/STOP
++    exit 130
++}
++trap setup_cancel INT TERM
+ [[ "${1:-}" == serve && "${2:-}" == /model ]] || exit 2
+ # NEO reads these in each process before device initialization. This changes
+ # allocation backing only, never host settings or peer-sharing policy.
+--- a/memory_watchdog.py
++++ b/memory_watchdog.py
+@@ -6,6 +6,8 @@
+ import json
+ import os
+ from pathlib import Path
++import signal
++import subprocess
+ import threading
+ import time
+
+@@ -109,3 +111,56 @@
+         self.done.set()
+         if self.thread:
+             self.thread.join(timeout=2)
++
++
++class DeferredStop:
++    """Latch before one SIGINT; retry inspection only, never retry a signal.
++
++    Signal callbacks only record intent: no lock or Docker call can interrupt
++    an allocation or deadlock a callback running on the controller thread.
++    The supervision/finally path calls request() to drain that intent.
++    """
++    def __init__(self, run, name, runner=subprocess.run):
++        self.run = Path(run)
++        self.name = name
++        self.runner = runner
++        self.requested = False
++        self.reason = None
++        self.sent = False
++        self.armed = False
++        self.lock = threading.Lock()
++
++    def signal_handler(self, signum, frame):
++        self.requested = True
++        self.reason = self.reason or ('controller received ' + signal.Signals(signum).name)
++
++    def request(self, reason):
++        self.requested = True
++        self.reason = self.reason or reason
++        with self.lock:
++            latch_error = None
++            try:
++                (self.run / 'STOP').write_text(self.reason + '\n')
++            except OSError as exc:
++                latch_error = str(exc)
++            if not self.armed or self.sent:
++                return
++            try:
++                state = self.runner(['docker', 'inspect', '--format', '{{.State.Running}}', self.name],
++                                    capture_output=True, text=True, timeout=2)
++            except (OSError, subprocess.TimeoutExpired):
++                return
++            if state.returncode != 0 or state.stdout.strip() != 'true':
++                return
++            self.sent = True  # ambiguous delivery also must never be retried
++            try:
++                result = self.runner(['docker', 'kill', '--signal=SIGINT', self.name],
++                                     capture_output=True, text=True, timeout=10)
++                receipt = {'rc': result.returncode, 'stderr': result.stderr}
++            except (OSError, subprocess.TimeoutExpired) as exc:
++                receipt = {'rc': None, 'error': str(exc)}
++            (self.run / 'graceful-stop.json').write_text(json.dumps({
++                'signal': 'SIGINT', **receipt, 'reason': self.reason,
++                'monotonic': time.monotonic(), 'container_name': self.name,
++                'latch_error': latch_error,
++            }, indent=2) + '\n')
+--- a/overlay-manifest.json
++++ b/overlay-manifest.json
+@@ -11,7 +11,7 @@
+     "vllm/model_executor/model_loader/base_loader.py": "bcabfbdcad7079a0e67c3329b1479b4767d024e1305b3c093240fd2f833c6147",
+     "vllm/model_executor/model_loader/default_loader.py": "9fe34d9e1d21ad53aebc1a9fb9206fa76f99286bb34a2e81307e93797ab0559f",
+     "vllm/model_executor/model_loader/weight_utils.py": "8622286d549dcae04187fe5776e028caf47eaaf248bc797adbb52b64d7cab163",
+-    "vllm/model_executor/offloader/uva.py": "4d6e15422b454f1290ad241a4be2b6dc7eb63e4dc68cfc77502b86738e270449",
++    "vllm/model_executor/offloader/uva.py": "e3602914cf780d5659d45101912d9d9b4718dfe687b88bb87efc7bb94df41125",
+     "vllm/models/qwen4_exp/__init__.py": "0677522662c9921dad228f8bf1d37975c13d30439f8d08bdf1514f3e81e57de5",
+     "vllm/models/qwen4_exp/common/ple.py": "fcc620187d227aa1d4b3149b22e5db3d708edefc48da3893eda4937897c9b8c8",
+     "vllm/models/qwen4_exp/nvidia/hyperconnection.py": "15eaf5683f62dca162eb8a1825b632598f60b230ceaf56b8611a338cb1315663",
+@@ -20,14 +20,14 @@
+     "vllm/models/qwen4_exp/nvidia/mtp.py": "d1ba61dd9843e536fff1933b2dca18d92a308d6d7516f0c6ff73ce1b56ea963c",
+     "vllm/models/qwen4_exp/nvidia/ngram_embedding.py": "b9b540010e8982801a4c037a8a59aedfca6c3a72d2fd6707334f7cddb81b590f",
+     "vllm/models/qwen4_exp/nvidia/ple_nvme.py": "6e3b952277dfb4beefd34491dfe19664b0d030d1cc98016b63b28859dd4fb7db",
+-    "vllm/screen1b_guard.py": "8218ff45284d9ceba4dd498534e39d4c4c5b1c6e2a1bcaa365f92543f1606e58",
++    "vllm/screen1b_guard.py": "dd111ba0d8abaf46d629b60bb806ee4f5b545fc779689047972d25b97c91d472",
+     "vllm/v1/attention/backends/gdn_attn.py": "e8afd4989233d1f971397cff49a5c760b99729fe9af539cfc19786f6139a627c",
+     "vllm/v1/attention/backends/gdn_spec_metadata.py": "97f7ae107e03a64ccab4d73ca9bc705141d7ddcd64223d61dfbfb1a98721279c",
+     "vllm/v1/attention/backends/gdn_spec_metadata_batched.py": "88f1c49b152c5468838c3b448126275c04c34afb50526ffbe954b61b5e11ee9f",
+     "vllm/v1/core/kv_cache_coordinator.py": "62e4a41a1b638ec2b4382d768c5c0759d4d0cabedcfa2b128942779482b35140",
+     "vllm/v1/core/sched/scheduler.py": "937e354df45010190858fb4460b50ebe3fdbd7dc570fd8391fe566cd53d792e2",
+-    "vllm/v1/engine/core.py": "77047314a485a0b456b85dda08e1876379d1ef9566f129a04ef5c07bbfbd835d",
+-    "vllm/v1/executor/multiproc_executor.py": "c2561bc871827bc3569242d0692f8d3d7865c28b064736a8b793736c1103c6b5",
++    "vllm/v1/engine/core.py": "6067951188f96216840913c00d52ba97846a6ad3b69874da97764a8965db184e",
++    "vllm/v1/executor/multiproc_executor.py": "a4305b728c5613f6bd3b2c2c9ccb0b3fa2b19e9096594a0b5d653ee53ff44230",
+     "vllm/v1/kv_offload/base.py": "6b3af4ef35901b7608f16686573efa0e33a226de6e510dd79fac83cd133a9747",
+     "vllm/v1/kv_offload/cpu/gpu_worker.py": "98b50a3b6e780ecdb7deb96a1e9ca3663cc7aba9e4ffe051f97c1b14d3df0fe8",
+     "vllm/v1/kv_offload/cpu/manager.py": "8ae30d43a7b1e527e00901be2ceaaeaabded088aff89cd83afb983fb04af739d",
+@@ -37,7 +37,7 @@
+     "vllm/v1/kv_offload/tiering/manager.py": "1bb9af3d334fc322911aaffa6e21d2f15c19ae1b2bb6a5be425e31143172bcc6",
+     "vllm/v1/utils.py": "ddedc85392c3f3f782bec31b6e2b671639cca41f3f7aabcb8b518cea05e4606c",
+     "vllm/v1/worker/gpu/attn_utils.py": "d5ef338178e824f0d2fb9447cdebda1e8f4e7ec9cd7791994083007ff1ad77c8",
+-    "vllm/v1/worker/gpu/model_runner.py": "f972f6499a3f5adfd95c9f4143651085af91ad157202b59707a8cde9d7545121",
++    "vllm/v1/worker/gpu/model_runner.py": "8a70ef96ca611702be151cdf3ee7d883f84d90e7657273103d19206aec6e19c3",
+     "vllm/v1/worker/gpu/model_states/mamba_hybrid.py": "e2b41b0b066d1d9e18ca0ce4f135df46ebf0ba0084888441dba4d171d1342021",
+     "vllm/v1/worker/gpu/sample/prompt_logprob.py": "ab17fa440e054fe1414956d80f08b67fa733171020ebe1a67c8a6bdaab29f9d1",
+     "vllm/v1/worker/gpu/spec_decode/autoregressive/speculator.py": "5f688e3972a0a7491ecfa786135d2fa0e1a5aa148e97a9ef3cf507cff6dbe171",
+@@ -48,8 +48,11 @@
+     "vllm/model_executor/layers/fused_moe/modular_kernel.py": "0f070a39fd5149d3b37042cad6c40828206c341967f3be2c3ba4578099f9a347",
+     "vllm/model_executor/layers/fused_moe/routed_experts.py": "89c281c171042ffd3b5215fa5c424dff739cd65a9a6aeb11146ac056cada6527",
+     "vllm/model_executor/layers/quantization/fp8.py": "dd1a2cc2d89d694ecde7cca16c82aebf61eaed08babb516c955075be9f7186cf",
+-    "vllm/q38_expert_placement.py": "4e1e3eaa3016ce3c364db64fde8294073f8575e0f06590a50c267a974988a2c7",
+-    "vllm/screen1b_ple.py": "7f557bdef9b38962154646598393a0f4d65d86d93d8c48724141d9be8fb9ebca"
++    "vllm/q38_expert_placement.py": "ffe5c85153c9cbc31cab4798f198161aafc7b31407d7d20dbcfbfd2f9e5fcbe9",
++    "vllm/screen1b_ple.py": "ecd36c30c6cafa739f3565b98cb3cb3936c7f1cbc6746d7581c900e610d0cbb2",
++    "vllm/screen1b_teardown.py": "c37445ab688ff43ff0366698e689af50c5780dc1a4aa5112f2e517059cf04449",
++    "vllm/v1/worker/gpu_worker.py": "1b55f9910bf1569a138e5ab458ea97694afc9d3e3543d9a82bd0a4fc197f57b0",
++    "vllm/v1/worker/xpu_worker.py": "b976b96b49de5feafc3f750e0087fab62f336a1ec2751cab884edae10662666f"
+   },
+   "schema": "neural.download.screen1b-overlay.v1",
+   "source_tree": "/home/steve/src/lumnus-20261008/vllm",
+@@ -89,7 +92,7 @@
+     },
+     "vllm/model_executor/offloader/uva.py": {
+       "base_sha256": "4e6a82e71d610bd449cf2fed059a7fe91bfa12dbe6622ba9bdcf39cbf0ebe7ee",
+-      "sha256": "4d6e15422b454f1290ad241a4be2b6dc7eb63e4dc68cfc77502b86738e270449"
++      "sha256": "e3602914cf780d5659d45101912d9d9b4718dfe687b88bb87efc7bb94df41125"
+     },
+     "vllm/models/qwen4_exp/__init__.py": {
+       "base_sha256": "8cf06cea48bb14bc300b0fadd932dc542433bb294e4de86a48bbf96e11e5805b",
+@@ -125,7 +128,7 @@
+     },
+     "vllm/screen1b_guard.py": {
+       "base_sha256": null,
+-      "sha256": "8218ff45284d9ceba4dd498534e39d4c4c5b1c6e2a1bcaa365f92543f1606e58"
++      "sha256": "dd111ba0d8abaf46d629b60bb806ee4f5b545fc779689047972d25b97c91d472"
+     },
+     "vllm/v1/attention/backends/gdn_attn.py": {
+       "base_sha256": "3831019404a92200a38b43571c040cffeb6638bbdc71e4cb5e680dbc6c93d054",
+@@ -149,11 +152,11 @@
+     },
+     "vllm/v1/engine/core.py": {
+       "base_sha256": "268bf40534a853812867ae8e80040f190983cb364b41182b55969aace20c93f5",
+-      "sha256": "77047314a485a0b456b85dda08e1876379d1ef9566f129a04ef5c07bbfbd835d"
++      "sha256": "6067951188f96216840913c00d52ba97846a6ad3b69874da97764a8965db184e"
+     },
+     "vllm/v1/executor/multiproc_executor.py": {
+       "base_sha256": "3ed0149a8a8e1550c4f062af40e645d1b734e70f99981bc5bf15f0360507648a",
+-      "sha256": "c2561bc871827bc3569242d0692f8d3d7865c28b064736a8b793736c1103c6b5"
++      "sha256": "a4305b728c5613f6bd3b2c2c9ccb0b3fa2b19e9096594a0b5d653ee53ff44230"
+     },
+     "vllm/v1/kv_offload/base.py": {
+       "base_sha256": "ea648adaa4c8b960623c75de4c483539c16a2da2d911ab4c666feca3dd52474b",
+@@ -193,7 +196,7 @@
+     },
+     "vllm/v1/worker/gpu/model_runner.py": {
+       "base_sha256": "174c93db921c23cf0396eee4764be25b2bd2d4b6a06e9fa41ce3598b884ce8ce",
+-      "sha256": "f972f6499a3f5adfd95c9f4143651085af91ad157202b59707a8cde9d7545121"
++      "sha256": "8a70ef96ca611702be151cdf3ee7d883f84d90e7657273103d19206aec6e19c3"
+     },
+     "vllm/v1/worker/gpu/model_states/mamba_hybrid.py": {
+       "base_sha256": "573e130ac5587d4822fabf97adad1ad0fda02ff83c5e70df879a5bb175ae845c",
+@@ -237,28 +240,43 @@
+     },
+     "vllm/q38_expert_placement.py": {
+       "base_sha256": null,
+-      "sha256": "4e1e3eaa3016ce3c364db64fde8294073f8575e0f06590a50c267a974988a2c7"
++      "sha256": "ffe5c85153c9cbc31cab4798f198161aafc7b31407d7d20dbcfbfd2f9e5fcbe9"
+     },
+     "vllm/screen1b_ple.py": {
+       "base_sha256": null,
+-      "sha256": "7f557bdef9b38962154646598393a0f4d65d86d93d8c48724141d9be8fb9ebca"
++      "sha256": "ecd36c30c6cafa739f3565b98cb3cb3936c7f1cbc6746d7581c900e610d0cbb2"
++    },
++    "vllm/screen1b_teardown.py": {
++      "base_sha256": null,
++      "sha256": "c37445ab688ff43ff0366698e689af50c5780dc1a4aa5112f2e517059cf04449"
++    },
++    "vllm/v1/worker/gpu_worker.py": {
++      "base_sha256": "6994436e4547c0996ab555b3e814e8ccea26b650dfc1b378b97d640745309347",
++      "sha256": "1b55f9910bf1569a138e5ab458ea97694afc9d3e3543d9a82bd0a4fc197f57b0"
++    },
++    "vllm/v1/worker/xpu_worker.py": {
++      "base_sha256": "711b56432506b58041cd86e71320c3960413f7bd61061990b66488421d81cfc3",
++      "sha256": "b976b96b49de5feafc3f750e0087fab62f336a1ec2751cab884edae10662666f"
+     }
+   },
+   "support_files": {
+     "apply_overlay.py": "4c3620bde0cd73686fce04df94253a8e3615e6fc458283a3bfe4cc8196259ddf",
+-    "container-entrypoint.sh": "12c3d3a9a93a2c5c90bc48dec0d983f2feca07ffad4fc703916eb5abdc67a7d0",
++    "container-entrypoint.sh": "969d6372ac635d3444dea2368686c153cfd0dcae6a6dbdf6c6bc65a076d9692b",
+     "placement-certified-v5.json": "f3f4812cfae2f4f704e75cc9b47a4031a476f846b353e3def23141b9d9c05f96",
+     "memory-contract.json": "5b76ab8735f74e11bd7d7048b5879991ab637a701576ce85b563965f36b2544b",
+     "memory-bounds.json": "7f7a0a5458aedac8e371aeac4a82033b55d1f783276a2073861e50b45007b70d",
+     "memory_plan.py": "8e0ee052d88901cdf54b92dd18bf11a2f29ba4a0e2317cbab8920fe065880600",
+     "placement-attempt6-v5.json": "b64cf1c9cf732d9093ed55a90cc59e1d52b5be5a755914fc04d860aecf384ce6",
+     "vram_plan.py": "75b1c1e5671ab5a34d6375df137eec8a3f62f108432eb31c05d87cb56b784955",
+-    "placement_plan.py": "eb9953f4f09ae6da682dc1701bedade66680a597f0509203102bfacd47cbd8e5"
++    "placement_plan.py": "eb9953f4f09ae6da682dc1701bedade66680a597f0509203102bfacd47cbd8e5",
++    "memory_watchdog.py": "f084dd183b57e6340d43bef1c0dcb7194ee2f449469e31195d248ae8129966c7",
++    "screen.py": "1f0502aab11d773a9abcf05231c7e60330511b311e9ada731a9f73b910fac8ae",
++    "teardown_receipts.py": "46099d077ec2025d2849ffc4052baee603e15b5f32b811a536a14ebb5727b5a7"
+   },
+   "semantics": {
+     "PLE": "native FP8 shard mmap; fixed 1 GiB pinned clock cache/rank; original hash, raw int8 owner reduction and unchanged dequantization; synchronous pre-forward staging",
+     "loading": "cross-rank serialized <=256 MiB copies; aggregate conversion storage reservations held through last storage view; rank allocation JSON at load/capture",
+-    "shutdown": "STOP before container SIGINT; early worker/engine latch; synchronise before transfer storage release; no kill escalation; wait for child drain",
++    "shutdown": "UNQUALIFIED teardown candidate: cooperative signals; ordered alias/PLE/pin release; worker then communicator cleanup; per-rank release receipts; no kill escalation",
+     "final_v5_placement": "CPU port: final-size creation, row loader, unchanged block scales, Triton offset table, logical E in all config/dispatch paths; native execution unqualified",
+     "sampler": "unchanged",
+     "exact_gdn_native_kernel": "not ported; fused official kernel unchanged",
+--- a/overlay/vllm/model_executor/offloader/uva.py
++++ b/overlay/vllm/model_executor/offloader/uva.py
+@@ -91,6 +91,7 @@
+
+     def _maybe_offload_to_cpu(self, module: nn.Module, prefix: str = "") -> nn.Module:
+         """Offload module parameters to CPU using UVA if budget allows."""
++        _s1b.retain_module(module)
+         if (params := next(module.parameters(), None)) is None:
+             return module
+
+--- a/overlay/vllm/q38_expert_placement.py
++++ b/overlay/vllm/q38_expert_placement.py
+@@ -78,6 +78,7 @@
+     import torch
+     from vllm import screen1b_guard as guard
+     from vllm.utils.torch_utils import get_accelerator_view_from_cpu_tensor
++    guard.retain_module(layer)
+     resident_rows, host_rows = layer_rows(layer, shape[0])
+     if not host_rows:
+         return torch.nn.Parameter(torch.empty(shape, dtype=dtype), requires_grad=False)
+--- a/overlay/vllm/screen1b_guard.py
++++ b/overlay/vllm/screen1b_guard.py
+@@ -383,6 +383,14 @@
+
+
+ def wait_processes(procs, *, signal_once=False):
++    try:
++        _wait_processes(procs, signal_once=signal_once)
++    except BaseException as error:
++        from vllm.screen1b_teardown import preserve_failure
++        preserve_failure(sys.modules[__name__], -1, error)
++
++
++def _wait_processes(procs, *, signal_once=False):
+     """No timeout-to-kill escalation; retain PID1 until every child has drained.
+
+     The receipt after 120 seconds requests owner intervention. Waiting continues
+@@ -509,6 +517,25 @@
+
+
+ _models = []
++_owned_modules = []
++
++
++def retain_module(module):
++    # Also retain partially constructed modules, before the load snapshot.
++    if enabled() and all(m is not module for m in _owned_modules):
++        _owned_modules.append(module)
++
++
++def signal_stop(signum, frame):
++    # Python signal callbacks only latch intent: no allocator, locks, JSON I/O,
++    # SystemExit, or reentrant synchronization in a signal handler.
++    global _cancelled
++    _cancelled = True
++
++
++def stop_requested():
++    return _cancelled or (root() / 'STOP').exists()
++
+ _snapshot_sequence = 0
+
+
+--- a/overlay/vllm/screen1b_ple.py
++++ b/overlay/vllm/screen1b_ple.py
+@@ -202,8 +202,13 @@
+             out[n*width:(n+1)*width] = (self._row(row) if self.store.start <= row < self.store.end else zero)
+
+     def close(self):
+-        self.buffer.release()
++        # Drop the exported NumPy/slab view before its pinned storage owner.
++        # A failed mmap close stays reachable and can never count as complete.
++        if self.buffer is not None:
++            self.buffer.release()
++            self.buffer = None
+         self.store.close()
++        self.row2slot = self.slot2row = self.reference = self.epoch = None
+
+
+ def host_ngram_ids(tokens, qsl, context, multipliers, sizes, offsets, eos, heads_per_ngram):
+--- /dev/null
++++ b/overlay/vllm/screen1b_teardown.py
+@@ -0,0 +1,233 @@
++"""Cooperative Screen 1b teardown. Stdlib import; runtime is injected by caller.
++
++Receipts attest completed Python release calls, NOT a zero-USM/queue census.
++No signal callback enters this module. Failed drains preserve the live process.
++"""
++import datetime
++import gc
++import json
++import os
++import threading
++import time
++
++_timestamps = {}
++_complete = False
++_releasing = False
++
++
++def mark(phase):
++    _timestamps[phase] = dict(
++        utc=datetime.datetime.now(datetime.timezone.utc).isoformat(),
++        unix_ns=time.time_ns(), monotonic_ns=time.monotonic_ns())
++
++
++def _parameters(guard, runner):
++    roots = list(guard._models) + list(guard._tables.values()) + list(guard._owned_modules)
++    if getattr(runner, 'model', None) is not None:
++        roots.append(runner.model)
++    speculator = getattr(runner, 'speculator', None)
++    if getattr(speculator, 'model', None) is not None:
++        roots.append(speculator.model)
++    modules, params = {}, {}
++    for root in roots:
++        for module in root.modules():
++            modules[id(module)] = module
++            for param in module.parameters(recurse=False):
++                params[id(param)] = param
++            # Postprocessing retains the old Parameter outside _parameters.
++            for key, param in vars(module).items():
++                if key.startswith('_q38_placed_'):
++                    params[id(param)] = param
++    return list(modules.values()), list(params.values())
++
++
++def release_runner(runner, guard, torch, release_runtime=lambda: None):
++    """Services have stopped; current RPC has returned; synchronous scheduler only."""
++    if getattr(runner, '_screen1b_released', False):
++        return
++    # Drain ALL streams on this rank before changing graph/pointer ownership.
++    torch.xpu.synchronize()
++    mark('drained')
++    runner.cudagraph_manager = None
++    runner.fast_prefill = None
++    gc.collect()
++    mark('graphs_released')
++    modules, params = _parameters(guard, runner)
++    release_runtime()  # workspace, rotary/global forward-context owners
++    # Hold every CPU owner explicitly through pointer-table/UVA destruction.
++    owners = []
++    for param in params:
++        for key in ('_q38_host_cpu', '_screen1b_host_storage'):
++            owner = getattr(param, key, None)
++            if owner is not None:
++                owners.append(owner)
++    owner = None
++    for param in params:
++        if hasattr(param, '_q38_base_table'):
++            del param._q38_base_table
++    gc.collect()
++    mark('expert_tables_released')
++    for param in params:
++        if hasattr(param, '_q38_host_storage'):
++            del param._q38_host_storage
++        if hasattr(param, '_screen1b_host_storage'):
++            # Generic UVA is p.data, not merely a Python metadata attribute.
++            param.data = torch.empty(0, dtype=param.dtype, device='cpu')
++    gc.collect()
++    torch.xpu.synchronize()
++    mark('uva_released')
++    for module in modules:
++        cache = getattr(module, '_screen1b_cache', None)
++        if cache is not None:
++            cache.close()  # memoryview -> mmap -> metadata, before pinned slab
++            del module._screen1b_cache
++        if hasattr(module, '_screen1b_step_device'):
++            del module._screen1b_step_device
++    cache = None
++    mark('ple_closed')
++    for param in params:
++        for key in ('_q38_host_cpu', '_screen1b_host_storage'):
++            if hasattr(param, key):
++                delattr(param, key)
++    for module in modules:
++        for key in ('_screen1b_cache_slab', '_screen1b_step_host'):
++            if hasattr(module, key):
++                delattr(module, key)
++        for key in tuple(vars(module)):
++            if key.startswith('_q38_placed_'):
++                delattr(module, key)
++    owners.clear()
++    gc.collect()
++    mark('pinned_released')
++    guard._tables.clear()
++    guard._models.clear()
++    guard._owned_modules.clear()
++    # Drop every runner field, including request buffers, graph input/output
++    # aliases and speculator. Services have already stopped in GPUWorker.
++    # Keep only the idempotence marker; no runtime code may use this runner again.
++    vars(runner).clear()
++    runner._screen1b_released = True
++    modules.clear()
++    params.clear()
++    module = param = None
++    gc.collect()
++    torch.xpu.synchronize()
++    mark('registries_cleared')
++
++
++def preserve_failure(guard, rank, error):
++    """Do not exit a GPU-owning process when release failed; no automatic retry."""
++    try:
++        guard.request_stop('rank teardown failed; owner intervention required')
++        guard.receipt('rank_teardown_failed', schema='screen1b.teardown.v1',
++                      rank=rank, status='failed', timestamps=dict(_timestamps),
++                      error_type=type(error).__name__, error=str(error))
++    finally:
++        # Even failed logging/STOP persistence must never bypass preservation.
++        # No automatic retry, exit, or escalation; handlers remain intent-only.
++        threading.Event().wait()
++
++
++
++def shutdown_rank(proc, guard, torch, destroy_model_parallel,
++                  destroy_distributed_environment, *, on_failure=preserve_failure):
++    global _complete, _releasing
++    if _complete or _releasing:
++        return
++    _releasing = True
++    rank = proc.rank  # retained before worker/communicators disappear
++    try:
++        if not torch.xpu.is_initialized():
++            # No device-side state was ever created. This is not a successful
++            # native release and cannot qualify calibrate-load.
++            guard.receipt('rank_teardown_uninitialized', rank=rank, status='uninitialized')
++            _complete = True
++            return
++        guard.request_stop('ordered rank release')
++        mark('submissions_stopped')
++        if getattr(proc, 'use_async_scheduling', False):
++            raise RuntimeError('unqualified async output worker; preserve process')
++        mark('async_output_drained')  # disabled by mandatory launch/init guard
++        for key in ('rpc_broadcast_mq', 'worker_response_mq'):
++            queue = getattr(proc, key, None)
++            if queue is not None:
++                queue.shutdown()
++                setattr(proc, key, None)
++        queue = None
++        mark('queues_closed')
++        if proc.worker is not None:
++            proc.worker.shutdown()  # services -> runner -> XPU pools
++            # Wrapper may otherwise retain worker/runner buffers until exit.
++            proc.worker.worker = None
++            proc.worker = None
++        # If init failed before a runner existed, release registered partial
++        # modules using the identical ownership path.
++        if 'registries_cleared' not in _timestamps:
++            class PartialRunner:
++                pass
++            release_runner(PartialRunner(), guard, torch)
++        gc.collect()
++        mark('worker_released')
++        destroy_model_parallel()
++        destroy_distributed_environment()
++        gc.collect()
++        mark('distributed_released')
++        # Do not initialize a device just to clean up failed CPU-side init.
++        if not torch.xpu.is_initialized():
++            raise RuntimeError('rank never initialized XPU; no native teardown receipt')
++        torch.xpu.synchronize()
++        mark('final_sync')
++        torch.xpu.empty_cache()
++        mark('device_cache_empty')
++        # Required public API in this pinned Torch 2.13 image. No fallback to
++        # undocumented native calls, no success receipt if unavailable/failing.
++        torch.accelerator.empty_host_cache()
++        mark('host_cache_empty')
++        torch.xpu.synchronize()
++        mark('post_cache_sync')
++        mark('complete')
++        row = dict(schema='screen1b.teardown.v1', rank=rank, pid=os.getpid(),
++                   status='complete', timestamps=dict(_timestamps),
++                   native_queue_destruction_verified=False)
++        guard.receipt('rank_teardown_complete', **row)
++        print('SCREEN1B_TEARDOWN ' + json.dumps(
++            dict(event='rank_teardown_complete', **row), sort_keys=True), flush=True)
++        _complete = True
++    except BaseException as error:
++        on_failure(guard, rank, error)
++
++
++def shutdown_executor(executor, guard, *, on_failure=preserve_failure):
++    """Concurrent main/monitor callers both wait for all children to exit."""
++    with executor._screen1b_shutdown_lock:
++        if executor._screen1b_shutdown_complete:
++            return
++        try:
++            executor.shutting_down = True
++            guard.request_stop('executor shutdown')
++            workers = getattr(executor, 'workers', None) or []
++            for worker in workers:
++                pipe = worker.death_writer
++                if pipe is not None:
++                    try:
++                        pipe.close()
++                    except Exception:
++                        # STOP also wakes the child's monitor, even on bad pipe.
++                        pass
++                    worker.death_writer = None
++            guard.wait_processes([worker.proc for worker in workers])
++            for worker in workers:
++                queue = worker.worker_response_mq
++                if queue is not None:
++                    queue.shutdown()
++                    worker.worker_response_mq = None
++            queue = getattr(executor, 'rpc_broadcast_mq', None)
++            if queue is not None:
++                queue.shutdown()
++                executor.rpc_broadcast_mq = None
++            for queue in getattr(executor, 'response_mqs', None) or []:
++                queue.shutdown()
++            executor.response_mqs = []
++            executor._screen1b_shutdown_complete = True
++        except BaseException as error:
++            on_failure(guard, -1, error)  # a parent must not orphan its children
+--- a/overlay/vllm/v1/engine/core.py
++++ b/overlay/vllm/v1/engine/core.py
+@@ -1290,10 +1290,16 @@
+         if _s1b.enabled():
+             # Engine construction waits for TP workers. Signals must latch the
+             # loader cancellation instead of killing their supervising process.
+-            def startup_signal(signum, frame):
+-                _s1b.request_stop(f"engine startup signal {signum}")
+-            signal.signal(signal.SIGTERM, startup_signal)
+-            signal.signal(signal.SIGINT, startup_signal)
++            signal.signal(signal.SIGTERM, _s1b.signal_stop)
++            signal.signal(signal.SIGINT, _s1b.signal_stop)
++            # Constructor waits on children; publish signal intent from a CPU
++            # observer, never perform receipt/file I/O inside a signal handler.
++            def publish_startup_stop():
++                while not _s1b.stop_requested():
++                    time.sleep(.05)
++                _s1b.request_stop("engine cancellation")
++            threading.Thread(target=publish_startup_stop, daemon=True,
++                             name="Screen1bEngineStop").start()
+
+         engine_core: EngineCoreProc | None = None
+         signal_callback: SignalCallback | None = None
+@@ -1378,8 +1384,10 @@
+                 engine_core._send_engine_dead()
+             raise e
+         finally:
+-            signal.signal(signal.SIGTERM, signal.SIG_DFL)
+-            signal.signal(signal.SIGINT, signal.SIG_DFL)
++            # Repeated signals must not kill a parent that still owns workers.
++            handler = _s1b.signal_stop if _s1b.enabled() else signal.SIG_DFL
++            signal.signal(signal.SIGTERM, handler)
++            signal.signal(signal.SIGINT, handler)
+             if signal_callback is not None:
+                 signal_callback.stop()
+             if engine_core is not None:
+--- a/overlay/vllm/v1/executor/multiproc_executor.py
++++ b/overlay/vllm/v1/executor/multiproc_executor.py
+@@ -114,6 +114,8 @@
+
+     def __init__(self, vllm_config: VllmConfig, monitor_workers: bool = True):
+         self.monitor_workers = monitor_workers
++        self._screen1b_shutdown_lock = threading.RLock()
++        self._screen1b_shutdown_complete = False
+         super().__init__(vllm_config)
+
+     def _init_executor(self) -> None:
+@@ -258,11 +260,17 @@
+             if not success:
+                 # Clean up the worker procs if there was a failure.
+                 # Close death_writers first to signal workers to exit
+-                for uw in unready_workers:
+-                    if uw.death_writer is not None:
+-                        uw.death_writer.close()
+-                        uw.death_writer = None
+-                self._ensure_worker_termination([uw.proc for uw in unready_workers])
++                try:
++                    for uw in unready_workers:
++                        if uw.death_writer is not None:
++                            try:
++                                uw.death_writer.close()
++                            except Exception:
++                                if not _s1b.enabled():
++                                    raise
++                            uw.death_writer = None
++                finally:
++                    self._ensure_worker_termination([uw.proc for uw in unready_workers])
+
+         self.output_rank = self._get_output_rank()
+
+@@ -506,6 +514,10 @@
+
+     def shutdown(self):
+         """Properly shut down the executor and its workers"""
++        if _s1b.enabled():
++            from vllm.screen1b_teardown import shutdown_executor
++            shutdown_executor(self, _s1b)
++            return
+         if not getattr(self, "shutting_down", False):
+             worker_count = len(getattr(self, "workers", None) or [])
+             logger.debug(
+@@ -653,6 +665,8 @@
+         is_driver_worker: bool,
+     ):
+         self.rank = rank
++        if _s1b.enabled() and vllm_config.scheduler_config.async_scheduling:
++            raise RuntimeError("Screen 1b teardown requires --no-async-scheduling")
+         self.rpc_broadcast_mq = None
+         self.worker_response_mq = None
+         self.worker = None
+@@ -756,8 +770,15 @@
+             proc.start()
+
+         # Close child ends of pipes here in the parent
+-        ready_writer.close()
+-        death_reader.close()
++        for pipe in (ready_writer, death_reader):
++            try:
++                pipe.close()
++            except Exception:
++                if not _s1b.enabled():
++                    raise
++                # Publish the started process handle even if a pipe close
++                # fails, so the executor still owns and waits for this child.
++                pass
+         # Keep death_writer open in parent - when parent exits,
+         # death_reader in child will get EOFError
+         return UnreadyWorkerProcHandle(proc, rank, ready_reader, death_writer)
+@@ -822,6 +843,11 @@
+         return cast(list[WorkerProcHandle], ready_proc_handles)
+
+     def shutdown(self):
++        if _s1b.enabled():
++            from vllm.screen1b_teardown import shutdown_rank
++            shutdown_rank(self, _s1b, torch, destroy_model_parallel,
++                          destroy_distributed_environment)
++            return
+         if self.rpc_broadcast_mq is not None:
+             self.rpc_broadcast_mq.shutdown()
+         if self.worker_response_mq is not None:
+@@ -873,12 +899,8 @@
+         def signal_handler(signum, frame):
+             nonlocal shutdown_requested
+             if _s1b.enabled():
+-                _s1b.request_stop(f"worker signal {signum}")
+-                shutdown_requested.set()
+-                if initializing or _s1b.loading():
+-                    return
+-                _s1b.synchronize()
+-                raise SystemExit()
++                _s1b.signal_stop(signum, frame)
++                return
+             if not shutdown_requested.is_set():
+                 shutdown_requested.set()
+                 logger.debug(
+@@ -933,6 +955,7 @@
+                 worker.rpc_broadcast_mq = None
+                 worker.worker_response_mq = None
+                 worker.worker = None
++                worker.rank = rank
+
+                 def early_death_monitor():
+                     while True:
+@@ -944,7 +967,7 @@
+                             dead = True
+                         except (OSError, ValueError):
+                             return
+-                        if dead or (_s1b.root() / "STOP").exists():
++                        if dead or _s1b.stop_requested():
+                             _s1b.request_stop("parent exit or controller cancellation")
+                             shutdown_requested.set()
+                             for key in ("rpc_broadcast_mq", "worker_response_mq"):
+@@ -1017,17 +1040,33 @@
+                 )
+             else:
+                 logger.warning("WorkerProc was terminated")
+-            # SystemExit must never be ignored
+-            raise e
++            # The Screen 1b cleanup runs AFTER this exception scope, so RPC
++            # traceback locals cannot retain device/USM aliases during release.
++            if not _s1b.enabled():
++                raise e
++
++        except BaseException:
++            if not _s1b.enabled():
++                raise
++            _s1b.request_stop("worker interrupted; ordered cleanup required")
++            shutdown_requested.set()
+
+         finally:
+-            if ready_writer is not None:
+-                ready_writer.close()
+-            if death_pipe is not None:
+-                death_pipe.close()
++            for pipe in (ready_writer, death_pipe):
++                if pipe is not None:
++                    try:
++                        pipe.close()
++                    except Exception:
++                        if not _s1b.enabled():
++                            raise
++                        # Diagnostic pipe errors cannot skip device cleanup.
++                        pass
+             # Clean up once worker exits busy loop
+-            if worker is not None:
++            if worker is not None and not _s1b.enabled():
+                 worker.shutdown()
++
++        if _s1b.enabled() and worker is not None:
++            worker.shutdown()
+
+     class ResponseStatus(Enum):
+         SUCCESS = auto()
+@@ -1084,7 +1123,13 @@
+         """Main busy loop for Multiprocessing Workers"""
+         assert self.rpc_broadcast_mq is not None
+         while True:
+-            self._execute_worker_rpc(self.rpc_broadcast_mq.dequeue(indefinite=True))
++            if _s1b.enabled() and _s1b.stop_requested():
++                return
++            request = self.rpc_broadcast_mq.dequeue(indefinite=True)
++            if _s1b.enabled() and _s1b.stop_requested():
++                return
++            self._execute_worker_rpc(request)
++            del request
+
+     def _execute_worker_rpc(
+         self,
+--- a/overlay/vllm/v1/worker/gpu/model_runner.py
++++ b/overlay/vllm/v1/worker/gpu/model_runner.py
+@@ -2284,6 +2284,12 @@
+     def shutdown(self) -> None:
+         """Release GPU tensors (model weights, KV caches, workspace) so that
+         memory is reclaimable when running in the same process."""
++        from vllm import screen1b_guard as guard
++        if guard.enabled():
++            from vllm.screen1b_teardown import release_runner
++            release_runner(self, guard, torch,
++                           lambda: free_before_shutdown(self.vllm_config))
++            return
+         torch.accelerator.synchronize()
+         self.cudagraph_manager = None
+         self.fast_prefill = None
+--- /dev/null
++++ b/overlay/vllm/v1/worker/gpu_worker.py
+@@ -0,0 +1,1571 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""A GPU worker class."""
++
++import gc
++import os
++import time
++from collections.abc import Callable
++from contextlib import AbstractContextManager, contextmanager, nullcontext
++from datetime import timedelta
++from types import NoneType
++from typing import TYPE_CHECKING, Any, cast
++
++import numpy as np
++import regex as re
++import torch
++import torch.nn as nn
++
++import vllm.envs as envs
++from vllm.config import CUDAGraphMode, VllmConfig, set_current_vllm_config
++from vllm.config.compilation import CompilationMode
++from vllm.device_allocator import get_mem_allocator_instance
++from vllm.distributed import (
++    ensure_model_parallel_initialized,
++    init_distributed_environment,
++    set_custom_all_reduce,
++)
++from vllm.distributed.ec_transfer import (
++    ensure_ec_transfer_initialized,
++    ensure_ec_transfer_shutdown,
++    get_ec_transfer,
++    has_ec_transfer,
++)
++from vllm.distributed.eplb.eplb_utils import override_envs_for_eplb
++from vllm.distributed.kv_transfer import (
++    ensure_kv_transfer_initialized,
++    ensure_kv_transfer_shutdown,
++    get_kv_transfer_group,
++    has_kv_transfer_group,
++)
++from vllm.distributed.kv_transfer.kv_connector.v1.base import (
++    KVConnectorHandshakeMetadata,
++)
++from vllm.distributed.parallel_state import (
++    Handle,
++    checkpoint_prepare_distributed_state,
++    checkpoint_restore_distributed_state,
++    get_pcp_group,
++    get_pp_group,
++    get_tp_group,
++    resume_device_comms,
++    suspend_device_comms,
++)
++from vllm.distributed.weight_transfer import (
++    WeightTransferEngine,
++    WeightTransferEngineFactory,
++)
++from vllm.logger import init_logger
++from vllm.lora.request import LoRARequest
++from vllm.model_executor.warmup.kernel_warmup import kernel_warmup
++from vllm.multimodal.gpu_ipc_memory import reserve_mm_ipc_gpu_memory
++from vllm.platforms import current_platform
++from vllm.profiler.wrapper import (
++    CudaProfilerWrapper,
++    ProtonProfilerWrapper,
++    TorchProfilerWrapper,
++    create_graph_capture_profiler,
++)
++from vllm.sequence import IntermediateTensors
++from vllm.tasks import SupportedTask
++from vllm.tracing import instrument
++from vllm.utils.gc_utils import freeze_gc_heap, maybe_attach_gc_debug_callback
++from vllm.utils.gpu_sync_debug import enable_gpu_sync_check, with_gpu_sync_check
++from vllm.utils.mem_constants import GiB_bytes
++from vllm.utils.mem_utils import (
++    MemoryProfilingResult,
++    MemorySnapshot,
++    format_gib,
++    memory_profiling,
++)
++from vllm.utils.torch_utils import set_random_seed, set_torch_threads_for_runtime
++from vllm.v1.attention.backends.utils import record_kv_cache_layout
++from vllm.v1.core.sched.output import GrammarOutput, SchedulerOutput
++from vllm.v1.kv_cache_interface import KVCacheConfig, KVCacheSpec
++from vllm.v1.outputs import (
++    AsyncModelRunnerOutput,
++    DraftTokenIds,
++    ModelRunnerOutput,
++)
++from vllm.v1.utils import compute_iteration_details, report_usage_stats
++from vllm.v1.worker.sentinel.gpu_worker_sentinel import WorkerSentinel
++from vllm.v1.worker.startup_plan import (
++    maybe_apply_startup_plan,
++    maybe_save_startup_plan,
++)
++from vllm.v1.worker.utils import is_residual_scattered_for_sp
++from vllm.v1.worker.worker_base import CompilationTimes, WorkerBase
++from vllm.v1.worker.workspace import init_workspace_manager
++
++from ...model_executor.model_loader import TensorizerLoader
++from .gpu.warmup import warmup_kernels
++from .utils import request_memory
++
++logger = init_logger(__name__)
++
++
++def _num_workspace_lanes(vllm_config: VllmConfig, use_v2_model_runner: bool) -> int:
++    spec_config = vllm_config.speculative_config
++    return (
++        2
++        if use_v2_model_runner and spec_config is not None and spec_config.use_dspark()
++        else 1
++    )
++
++
++def maybe_rocm_profiling_fallback(profile_result: MemoryProfilingResult) -> int | None:
++    """Memory in bytes to size the KV cache from when profiling measured a
++    release on ROCm, or None to keep what profiling measured.
++
++    The measurement is the drop in free device memory across startup, so it comes
++    out negative when anything else on the device released memory meanwhile. Torch
++    reserved is process local, so it stands in as a lower bound instead of refusing
++    to start. Kept to ROCm, where the AMD CI groups hit this, following #45490.
++    """
++    if profile_result.total_consumed >= 0 or not current_platform.is_rocm():
++        return None
++
++    baseline = profile_result.before_create
++    after_profile = profile_result.after_profile
++    torch_reserved = max(after_profile.torch_memory - baseline.torch_memory, 0)
++    logger.warning(
++        "Free memory grew by %s GiB during profiling (initial %s GiB, current "
++        "%s GiB). Sizing the KV cache from the %s GiB torch reserved instead of "
++        "the profiling difference.",
++        format_gib(-profile_result.total_consumed),
++        format_gib(baseline.free_memory),
++        format_gib(after_profile.free_memory),
++        format_gib(torch_reserved),
++    )
++    return torch_reserved
++
++
++if TYPE_CHECKING:
++    from vllm.device_allocator.sleep_mode_backend import SleepModeBackend
++    from vllm.model_executor.model_loader.tensorizer import TensorizerConfig
++    from vllm.v1.worker.gpu.model_runner import GPUModelRunner as GPUModelRunnerV2
++    from vllm.v1.worker.gpu_model_runner import GPUModelRunner
++
++
++class AsyncIntermediateTensors(IntermediateTensors):
++    """IntermediateTensors with lazy comm synchronization"""
++
++    def __init__(
++        self,
++        tensors: dict[str, torch.Tensor],
++        comm_handles: list[Handle] | None = None,
++        comm_postprocess: list[Callable[[], None]] | None = None,
++    ) -> None:
++        super().__init__(tensors)
++        self._comm_handles = comm_handles
++        self._comm_postprocess = comm_postprocess
++        self._comm_waited = False
++
++    def wait_for_comm(self) -> None:
++        if self._comm_waited:
++            return
++        if self._comm_handles:
++            for handle in self._comm_handles:
++                handle.wait()
++        if self._comm_postprocess:
++            for fn in self._comm_postprocess:
++                fn()
++        self._comm_waited = True
++
++    def __getattribute__(self, name: str):
++        # ensure `.tensors` is ready before use
++        if name == "tensors" and not object.__getattribute__(self, "_comm_waited"):
++            object.__getattribute__(self, "wait_for_comm")()
++        return object.__getattribute__(self, name)
++
++
++class Worker(WorkerBase):
++    def __init__(
++        self,
++        vllm_config: VllmConfig,
++        local_rank: int,
++        rank: int,
++        distributed_init_method: str,
++        is_driver_worker: bool = False,
++    ):
++        super().__init__(
++            vllm_config=vllm_config,
++            local_rank=local_rank,
++            rank=rank,
++            distributed_init_method=distributed_init_method,
++            is_driver_worker=is_driver_worker,
++        )
++
++        # configure float32 matmul precision according to vLLM env.
++        precision = envs.VLLM_FLOAT32_MATMUL_PRECISION
++        torch.set_float32_matmul_precision(precision)
++
++        from vllm.distributed.elastic_ep.elastic_execute import ElasticEPScalingExecutor
++
++        self.elastic_ep_executor = ElasticEPScalingExecutor(self)
++        self.worker_sentinel: WorkerSentinel | None = None
++        if self.parallel_config.enable_fault_tolerance:
++            self.worker_sentinel = WorkerSentinel(worker=self)
++        # Buffers saved before sleep
++        self._sleep_saved_buffers: dict[str, torch.Tensor] = {}
++        self._sleep_saved_draft_buffers: dict[str, torch.Tensor] = {}
++
++        # Weight transfer engine is created in `load_model` once the model
++        # is available, since the engine needs a reference to the model.
++        self.weight_transfer_engine: WeightTransferEngine | None = None
++        self._weight_update_active = False
++        self._weight_update_is_draft = False
++
++        # Worker profiler. Enabled and configured through profiler_config.
++        # Profiler wrapper is created lazily in profile() when start is called,
++        # so we have all the information needed for proper trace naming.
++        self.profiler: Any | None = None
++        self.profiler_config = vllm_config.profiler_config
++
++        self.use_v2_model_runner = vllm_config.use_v2_model_runner
++
++        # Device handles of the previous step's PP intermediate-tensor send.
++        self._pp_send_work: list[Handle] = []
++
++        # Resolved lazily on first sleep/wake; persists worker-process state.
++        self._sleep_mode_backend: SleepModeBackend | None = None
++
++    @property
++    def sleep_mode_backend(self) -> "SleepModeBackend":
++        if self._sleep_mode_backend is None:
++            from vllm.device_allocator.sleep_mode_backend import (
++                SleepModeBackendFactory,
++            )
++
++            self._sleep_mode_backend = SleepModeBackendFactory.create_backend(
++                self.vllm_config.model_config
++            )
++        return self._sleep_mode_backend
++
++    def sleep(self, level: int = 1) -> None:
++        torch.accelerator.synchronize()
++        free_bytes_before_sleep = torch.accelerator.get_memory_info()[0]
++
++        # Save the buffers before level 2 sleep
++        if level == 2:
++            model = self.model_runner.model
++            self._sleep_saved_buffers = {
++                name: buffer.cpu().clone() for name, buffer in model.named_buffers()
++            }
++            draft = self.get_draft_model()
++            if draft is not None:
++                self._sleep_saved_draft_buffers = {
++                    name: buffer.cpu().clone() for name, buffer in draft.named_buffers()
++                }
++
++        self.sleep_mode_backend.suspend(level)
++        if self.vllm_config.model_config.enable_nccl_comm_suspend:
++            suspend_device_comms()
++
++        torch.accelerator.synchronize()
++        deadline = time.monotonic() + (5.0 if current_platform.is_rocm() else 0)
++        while True:
++            free_bytes_after_sleep, total = torch.accelerator.get_memory_info()
++            freed_bytes = free_bytes_after_sleep - free_bytes_before_sleep
++            if freed_bytes >= 0 or time.monotonic() >= deadline:
++                break
++            time.sleep(0.1)
++
++        used_bytes = total - free_bytes_after_sleep
++        assert freed_bytes >= 0, "Memory usage increased after sleeping."
++        logger.info(
++            "Sleep mode freed %s GiB memory, %s GiB memory is still in use.",
++            format_gib(freed_bytes),
++            format_gib(used_bytes),
++        )
++
++    def wake_up(self, tags: list[str] | None = None) -> None:
++        self.sleep_mode_backend.resume(tags)
++        if self.vllm_config.model_config.enable_nccl_comm_suspend:
++            resume_device_comms()
++
++        # Restore the buffers after level 2 sleep
++        wake_weights = tags is None or "weights" in tags
++        if wake_weights and len(self._sleep_saved_buffers):
++            model = self.model_runner.model
++            for name, buffer in model.named_buffers():
++                if name in self._sleep_saved_buffers:
++                    buffer.data.copy_(self._sleep_saved_buffers[name].data)
++            self._sleep_saved_buffers = {}
++
++        if wake_weights and len(self._sleep_saved_draft_buffers):
++            draft = self.get_draft_model()
++            if draft is not None:
++                for name, buffer in draft.named_buffers():
++                    if name in self._sleep_saved_draft_buffers:
++                        buffer.data.copy_(self._sleep_saved_draft_buffers[name].data)
++            self._sleep_saved_draft_buffers = {}
++
++        self.synchronize_device()
++
++    def checkpoint_prepare(self) -> None:
++        checkpoint_prepare_distributed_state()
++
++    def checkpoint_restore(self) -> None:
++        checkpoint_restore_distributed_state()
++
++    def _maybe_get_memory_pool_context(self, tag: str) -> AbstractContextManager:
++        if (
++            current_platform.is_cuda_alike()
++            and not self.vllm_config.model_config.enable_cumem_allocator
++        ):
++            return nullcontext()
++
++        if (
++            current_platform.is_xpu()
++            and not self.vllm_config.model_config.enable_sleep_mode
++        ):
++            return nullcontext()
++
++        if current_platform.is_cpu():
++            return nullcontext()
++
++        allocator = get_mem_allocator_instance()
++        if tag == "weights":
++            assert allocator.get_current_usage() == 0, (
++                "CuMem allocator can only be used for one instance per process."
++            )
++        return allocator.use_memory_pool(tag=tag)
++
++    @contextmanager
++    def _scoped_allocator_max_split(self, max_split_size_mb: int):
++        """Temporarily set max_split_size_mb to reduce allocator fragmentation at the
++        cost of more cudaMalloc calls (negligible in practice). Restores the original
++        value on exit."""
++        if not current_platform.is_cuda():
++            yield
++            return
++
++        conf = os.environ.get("PYTORCH_CUDA_ALLOC_CONF", "")
++        match = re.search(r"max_split_size_mb:(\d+)", conf)
++        original_value = match.group(1) if match else None
++
++        torch._C._accelerator_setAllocatorSettings(
++            f"max_split_size_mb:{max_split_size_mb}"
++        )
++        try:
++            yield
++        finally:
++            # PyTorch defaults to SIZE_MAX (no limit).
++            _SIZE_MAX_MB = (2**64 - 1) // (1024 * 1024)
++            restore = original_value if original_value else str(_SIZE_MAX_MB)
++            torch._C._accelerator_setAllocatorSettings(f"max_split_size_mb:{restore}")
++
++    @instrument(span_name="Init device")
++    def init_device(self):
++        if self.device_config.device_type == "cuda":
++            # This env var set by Ray causes exceptions with graph building.
++            os.environ.pop("NCCL_ASYNC_ERROR_HANDLING", None)
++            parallel_config = self.parallel_config
++            if (
++                parallel_config.distributed_executor_backend
++                not in ("ray", "external_launcher")
++                and parallel_config.data_parallel_backend != "ray"
++                and parallel_config.nnodes_within_dp == 1
++            ):
++                # Use local DP rank if available, otherwise use global DP rank.
++                dp_local_rank = self.parallel_config.data_parallel_rank_local
++                if dp_local_rank is None:
++                    dp_local_rank = self.parallel_config.data_parallel_index
++
++                tp_pp_world_size = (
++                    self.parallel_config.pipeline_parallel_size
++                    * self.parallel_config.tensor_parallel_size
++                )
++
++                # DP_LOCAL_RANK * TP_PP_WORLD_SIZE + TP_LOCAL_RANK
++                self.local_rank += dp_local_rank * tp_pp_world_size
++
++            # Publish the logical-to-physical mapping for topology queries
++            # such as NIC affinity and P2P checks.
++            assigned_physical_gpu_ids = parallel_config.assigned_physical_gpu_ids
++            if assigned_physical_gpu_ids is not None:
++                from vllm.platforms.interface import set_assigned_physical_gpu_ids
++
++                set_assigned_physical_gpu_ids(assigned_physical_gpu_ids)
++                assert self.local_rank < len(assigned_physical_gpu_ids), (
++                    f"local_rank {self.local_rank} is out of bounds for "
++                    f"assigned_physical_gpu_ids {assigned_physical_gpu_ids}"
++                )
++                # NOTE(patch pr45026): local_world_size is derived from
++                # parallel_config.nnodes, which is only set for the "mp"
++                # multi-node backend. With the "ray"/"external_launcher"
++                # backends nnodes stays 1, so local_world_size collapses to
++                # the full world_size and this check wrongly fires on
++                # cross-node deployments. assigned_physical_gpu_ids is already
++                # per-node and the local_rank bound above fully validates the
++                # mapping for these backends, so skip the check for them.
++                if parallel_config.distributed_executor_backend not in (
++                    "ray",
++                    "external_launcher",
++                ):
++                    assert self.parallel_config.local_world_size <= len(
++                        assigned_physical_gpu_ids
++                    ), (
++                        f"local_world_size ({self.parallel_config.local_world_size})"
++                        " exceeds assigned_physical_gpu_ids count "
++                        f"({len(assigned_physical_gpu_ids)})"
++                    )
++            else:
++                assert self.local_rank < torch.accelerator.device_count(), (
++                    f"DP adjusted local rank {self.local_rank} is out of "
++                    f"bounds for {torch.accelerator.device_count()} devices."
++                )
++
++            visible_device_index = (
++                current_platform.logical_device_id_to_visible_device_id(self.local_rank)
++            )
++            self.device = torch.device(f"cuda:{visible_device_index}")
++            torch.accelerator.set_device_index(self.device)
++
++            current_platform.check_if_supports_dtype(self.model_config.dtype)
++
++            # Initialize the distributed environment BEFORE taking
++            # memory snapshot
++            # This ensures NCCL buffers are allocated before we measure
++            # available memory
++            init_worker_distributed_environment(
++                self.vllm_config,
++                self.rank,
++                self.distributed_init_method,
++                self.local_rank,
++                current_platform.dist_backend,
++            )
++
++            if self.use_v2_model_runner:
++                logger.info_once("Using V2 Model Runner")
++
++            # Set random seed.
++            set_random_seed(self.model_config.seed)
++
++            # Now take memory snapshot after NCCL is initialized
++            gc.collect()
++            torch.accelerator.empty_cache()
++
++            # take current memory snapshot
++            self.init_snapshot = init_snapshot = MemorySnapshot(device=self.device)
++            self.requested_memory = request_memory(init_snapshot, self.cache_config)
++            logger.debug("worker init memory snapshot: %r", self.init_snapshot)
++            logger.debug(
++                "worker requested memory: %sGiB", format_gib(self.requested_memory)
++            )
++        else:
++            raise RuntimeError(f"Unsupported device type: {self.device_config.device}")
++
++        # DSpark target and draft CUDA graphs retain workspace views concurrently.
++        num_ubatches = 2 if self.vllm_config.parallel_config.enable_dbo else 1
++        init_workspace_manager(
++            self.device,
++            num_ubatches,
++            _num_workspace_lanes(self.vllm_config, self.use_v2_model_runner),
++        )
++
++        # Construct the model runner
++        if self.use_v2_model_runner:
++            if self.vllm_config.is_mm_encoder_only:
++                from vllm.v1.worker.mm_encoder_model_runner import (
++                    MMEncoderModelRunner as GPUModelRunnerV2,
++                )
++            else:
++                from vllm.v1.worker.gpu.model_runner import (  # type: ignore[assignment]
++                    GPUModelRunner as GPUModelRunnerV2,
++                )
++
++            # HACK(woosuk): This is a temporary fix to avoid type errors.
++            self.model_runner: GPUModelRunner = GPUModelRunnerV2(  # type: ignore
++                self.vllm_config, self.device
++            )
++        else:
++            from vllm.v1.worker.gpu_model_runner import (
++                GPUModelRunner as GPUModelRunnerV1,
++            )
++
++            self.model_runner = GPUModelRunnerV1(self.vllm_config, self.device)
++
++        if self.rank == 0:
++            # If usage stat is enabled, collect relevant info.
++            report_usage_stats(self.vllm_config)
++
++    def handle_ft_command(self, ft_request):
++        assert self.worker_sentinel is not None
++        return self.worker_sentinel.handle_command(ft_request)
++
++    # FIXME(youkaichao & ywang96): Use TorchDispatchMode instead of memory pool
++    # to hijack tensor allocation.
++    def load_model(self, *, load_dummy_weights: bool = False) -> None:
++        with (
++            self._maybe_get_memory_pool_context(tag="weights"),
++            set_current_vllm_config(self.vllm_config),
++            # 20 MiB is the minimum PyTorch allows for max_split_size_mb.
++            self._scoped_allocator_max_split(max_split_size_mb=20),
++        ):
++            self.model_runner.load_model(load_dummy_weights=load_dummy_weights)
++
++        if has_ec_transfer():
++            get_ec_transfer().start_worker_services()
++
++        if self.vllm_config.weight_transfer_config is not None:
++            self.weight_transfer_engine = WeightTransferEngineFactory.create_engine(
++                self.vllm_config.weight_transfer_config,
++                self.vllm_config,
++                self.device,
++                self.model_runner.get_model(),
++            )
++
++    def update_config(self, overrides: dict[str, Any]) -> None:
++        self.model_runner.update_config(overrides)
++
++    def reload_weights(self, *args, **kwargs) -> None:
++        with set_current_vllm_config(self.vllm_config):
++            self.model_runner.reload_weights(*args, **kwargs)
++
++    @torch.inference_mode()
++    def determine_available_memory(self) -> int:
++        """Profiles the peak memory usage of the model to determine how much
++        memory can be used for KV cache without OOMs.
++
++        The engine will first conduct a profiling of the existing memory usage.
++        Then, it calculates the free memory that can be used for KV cache in
++        bytes.
++
++        Tip:
++            You may limit the usage of GPU memory
++            by adjusting the `gpu_memory_utilization` parameter.
++        """
++        maybe_apply_startup_plan(self)
++
++        if kv_cache_memory_bytes := self.cache_config.kv_cache_memory_bytes:
++            # still need a profile run which compiles the model for
++            # max_num_batched_tokens
++            self.model_runner.profile_run()
++
++            msg = (
++                f"Initial free memory {format_gib(self.init_snapshot.free_memory)} "
++                f"GiB, reserved {format_gib(kv_cache_memory_bytes)} GiB memory for "
++                "KV Cache as specified by kv_cache_memory_bytes config and "
++                "skipped memory profiling. This does not respect the "
++                "gpu_memory_utilization config. Only use kv_cache_memory_bytes "
++                "config when you want manual control of KV cache memory "
++                "size. If OOM'ed, check the difference of initial free "
++                "memory between the current run and the previous run "
++                "where kv_cache_memory_bytes is suggested and update it "
++                "correspondingly."
++            )
++            logger.info(msg)
++            return reserve_mm_ipc_gpu_memory(
++                kv_cache_memory_bytes,
++                self.model_config.multimodal_config,
++                getattr(self.parallel_config, "_api_process_count", 1),
++            )
++
++        # Execute a forward pass with dummy inputs to profile the memory usage
++        # of the model.
++        with memory_profiling(
++            self.init_snapshot,
++            weights_memory=int(self.model_runner.model_memory_usage),
++        ) as profile_result:
++            self.model_runner.profile_run()
++
++        # Profile CUDA graph memory if graphs will be captured.
++        # ROCm is included: #44825 moved the profiler to
++        # torch.accelerator.get_memory_info (reliable on ROCm, as used by
++        # the AMD-CI mem tests), and graph_pool_handle resolves to the same
++        # torch.cuda handle the live capture path already uses on ROCm.
++        # XPU stays excluded (see #39977).
++        cudagraph_memory_estimate = 0
++        if (
++            current_platform.is_cuda_alike()
++            and self.vllm_config.compilation_config.cudagraph_mode != CUDAGraphMode.NONE
++        ):
++            cudagraph_memory_estimate = self.model_runner.profile_cudagraph_memory()
++
++        # Respect the opt-in flag as originally designed.
++        cudagraph_memory_estimate_applied = (
++            cudagraph_memory_estimate
++            if envs.VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS
++            else 0
++        )
++
++        init_free_memory = self.init_snapshot.free_memory
++        free_gpu_memory = profile_result.after_profile.free_memory
++        rocm_fallback = maybe_rocm_profiling_fallback(profile_result)
++        if rocm_fallback is None:
++            # NOTE(woosuk): Here we assume that the other processes using the same
++            # GPU did not change their memory usage during the profiling.
++            assert init_free_memory >= free_gpu_memory, (
++                "Error in memory profiling. "
++                f"Initial free memory {format_gib(init_free_memory)} GiB, "
++                f"current free memory {format_gib(free_gpu_memory)} GiB. "
++                "This happens when other processes sharing the same container "
++                "release GPU memory while vLLM is profiling during initialization. "
++                "To fix this, ensure consistent GPU memory allocation or "
++                "isolate vLLM in its own container."
++            )
++        else:
++            profile_result.total_consumed = rocm_fallback
++            profile_result.non_kv_cache_memory = (
++                profile_result.total_consumed + profile_result.transient_peak_headroom
++            )
++
++        self.total_consumed = profile_result.total_consumed
++        self.peak_activation_memory = (
++            profile_result.transient_peak_headroom + cudagraph_memory_estimate_applied
++        )
++        self.cudagraph_memory_estimate = cudagraph_memory_estimate
++
++        self.available_kv_cache_memory_bytes = (
++            self.requested_memory
++            - profile_result.non_kv_cache_memory
++            - cudagraph_memory_estimate_applied
++        )
++
++        unrequested_memory = self.init_snapshot.free_memory - self.requested_memory
++        logger.debug(
++            "Initial free memory: %s GiB; Requested memory: %f (util), %s GiB",
++            format_gib(self.init_snapshot.free_memory),
++            self.cache_config.gpu_memory_utilization,
++            format_gib(self.requested_memory),
++        )
++        logger.debug(
++            "Free memory after profiling: %s GiB (total), %s GiB (within requested)",
++            format_gib(free_gpu_memory),
++            format_gib(free_gpu_memory - unrequested_memory),
++        )
++        logger.debug(profile_result)
++        logger.info_once(
++            "Available KV cache memory: %s GiB",
++            format_gib(self.available_kv_cache_memory_bytes),
++        )
++
++        if cudagraph_memory_estimate > 0:
++            total_mem = self.init_snapshot.total_memory
++            current_util = self.cache_config.gpu_memory_utilization
++            cg_util_delta = cudagraph_memory_estimate / total_mem
++            if envs.VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS:
++                equiv_util = round(current_util - cg_util_delta, 4)
++                suggested_util = min(
++                    round(current_util + cg_util_delta, 4),
++                    1.0,
++                )
++                logger.info(
++                    "CUDA graph memory profiling is enabled (default since "
++                    "v0.21.0). The current --gpu-memory-utilization=%.4f is "
++                    "equivalent to --gpu-memory-utilization=%.4f without "
++                    "CUDA graph memory profiling. To maintain the same "
++                    "effective KV cache size as before, increase "
++                    "--gpu-memory-utilization to %.4f. To disable, set "
++                    "VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=0.",
++                    current_util,
++                    equiv_util,
++                    suggested_util,
++                )
++            else:
++                suggested_util = min(
++                    round(current_util + cg_util_delta, 4),
++                    1.0,
++                )
++                logger.warning(
++                    "CUDA graph memory profiling is disabled "
++                    "(VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=0). "
++                    "Without it, CUDA graph memory is not accounted for "
++                    "during KV cache allocation, which may require lowering "
++                    "--gpu-memory-utilization to avoid OOM. Consider "
++                    "re-enabling it (the default as of v0.21.0) and increasing "
++                    "--gpu-memory-utilization from %.4f to %.4f.",
++                    current_util,
++                    suggested_util,
++                )
++
++        return reserve_mm_ipc_gpu_memory(
++            int(self.available_kv_cache_memory_bytes),
++            self.model_config.multimodal_config,
++            getattr(self.parallel_config, "_api_process_count", 1),
++        )
++
++    def get_kv_connector_handshake_metadata(
++        self,
++    ) -> dict[tuple[int, int], KVConnectorHandshakeMetadata] | None:
++        """Get KV connector metadata from this worker if available.
++
++        Returned dict is keyed by `(pp_rank, tp_rank)`.
++        """
++
++        if not has_kv_transfer_group():
++            return None
++
++        connector = get_kv_transfer_group()
++        # Return None for connectors that don't need to exchange handshake
++        # metadata across workers.
++        if (metadata := connector.get_handshake_metadata()) is None:
++            return None
++
++        pp_rank = get_pp_group().rank_in_group
++        tp_rank = get_tp_group().rank_in_group
++        parallel_config = self.vllm_config.parallel_config
++        if (
++            parallel_config.prefill_context_parallel_size > 1
++            and parallel_config.decode_context_parallel_size > 1
++        ):
++            tp_rank += (
++                get_pcp_group().rank_in_group * parallel_config.tensor_parallel_size
++            )
++        return {(pp_rank, tp_rank): metadata}
++
++    def get_kv_cache_spec(self) -> dict[str, KVCacheSpec]:
++        return self.model_runner.get_kv_cache_spec()
++
++    def update_max_model_len(self, max_model_len: int) -> None:
++        """Update max_model_len after auto-fit to GPU memory.
++        This is called when max_model_len=-1 is used and the engine
++        automatically determines the maximum context length that fits
++        in GPU memory. Workers need to update their cached max_model_len
++        to match the engine's decision.
++        """
++        self.model_config.max_model_len = max_model_len
++        if self.model_runner is not None:
++            self.model_runner.update_max_model_len(max_model_len)
++        logger.debug("Updated max_model_len to %d", max_model_len)
++
++    @instrument(span_name="Allocate KV cache")
++    def initialize_from_config(self, kv_cache_config: KVCacheConfig) -> None:
++        """Allocate GPU KV cache with the specified kv_cache_config."""
++
++        # Update local config with adjusted num blocks after profiling,
++        # so that it's available to the warmup stage.
++        self.cache_config.num_gpu_blocks = kv_cache_config.num_blocks
++
++        # Adopt the engine core's layout; workers spawned after resolution
++        # (e.g. elastic EP scale-up) only see it through the config.
++        if kv_cache_config.kv_cache_layout is not None:
++            record_kv_cache_layout(self.cache_config, kv_cache_config.kv_cache_layout)
++
++        # Init kv cache connector here, because it requires
++        # `kv_cache_config`.
++        # NOTE(Kuntai): This need to be done before `initialize_kv_cache`,
++        # because `initialize_kv_cache` will inject kv cache groups not
++        # related to kv cache connector (e.g. kv cache sharing layers).
++        ensure_kv_transfer_initialized(self.vllm_config, kv_cache_config)
++
++        self.model_runner.initialize_kv_cache(
++            kv_cache_config,
++            kv_cache_allocation_context=self._maybe_get_memory_pool_context(
++                tag="kv_cache"
++            ),
++        )
++
++        if self.model_config.enable_return_routed_experts:
++            self.model_runner.init_routed_experts_capturer()
++
++        # Build KV-zero metadata outside the CuMem pool so the bookkeeping
++        # GPU tensors (seg_addrs, block-id buffers) use the standard PyTorch
++        # allocator and are not discarded during sleep/wake cycles.
++        if kv_cache_config.needs_kv_cache_zeroing and hasattr(
++            self.model_runner, "_init_kv_zero_meta"
++        ):
++            self.model_runner._init_kv_zero_meta()
++
++    @instrument(span_name="Warmup (GPU)")
++    def compile_or_warm_up_model(self) -> CompilationTimes:
++        warmup_sizes: list[int] = []
++
++        if self.vllm_config.compilation_config.mode == CompilationMode.VLLM_COMPILE:
++            # warm up sizes that are not in cudagraph capture sizes,
++            # but users still want to compile for better performance,
++            # e.g. for the max-num-batched token size in chunked prefill.
++            compile_sizes = self.vllm_config.compilation_config.compile_sizes
++            warmup_sizes = compile_sizes.copy() if compile_sizes is not None else []  # type: ignore[assignment]
++            cg_capture_sizes: list[int] = []
++
++            if self.vllm_config.compilation_config.cudagraph_mode != CUDAGraphMode.NONE:
++                cg_sizes = self.vllm_config.compilation_config.cudagraph_capture_sizes
++                cg_capture_sizes = [] if cg_sizes is None else cg_sizes
++                warmup_sizes = [x for x in warmup_sizes if x not in cg_capture_sizes]
++
++            compile_ranges = self.vllm_config.compilation_config.get_compile_ranges()
++            # For each compile_range, if none of the batch sizes
++            # in warmup_sizes or cudagraph_capture_sizes are in the range,
++            # add the end of the range to ensure compilation/warmup.
++            all_sizes = set(cg_capture_sizes)
++            all_sizes.update([x for x in warmup_sizes if isinstance(x, int)])
++            for compile_range in compile_ranges:
++                if not any(x in compile_range for x in all_sizes):
++                    warmup_sizes.append(compile_range.end)
++
++        # We skip EPLB here since we don't want to record dummy metrics
++        for size in sorted(warmup_sizes, reverse=True):
++            logger.info("Compile and warming up model for size %d", size)
++            self.model_runner._dummy_run(size, skip_eplb=True, remove_lora=False)
++        self.model_runner.maybe_remove_all_loras(self.model_runner.lora_config)
++
++        # Warmup and tune the kernels used during model execution before
++        # cuda graph capture.
++        kernel_warmup(self)
++
++        if self.use_v2_model_runner:
++            # A workspace resize after capture frees what the graphs point at.
++            warmup_kernels(self.model_runner, self.execute_model, self.sample_tokens)
++
++        cuda_graph_memory_bytes = 0
++        if not self.model_config.enforce_eager:
++            with self._get_cudagraph_capture_context():
++                cuda_graph_memory_bytes = self.model_runner.capture_model()
++
++        # Compare actual vs estimated CUDA graph memory (if we did profiling)
++        if (
++            hasattr(self, "cudagraph_memory_estimate")
++            and self.cudagraph_memory_estimate > 0
++        ):
++            GiB = lambda b: round(b / GiB_bytes, 2)
++            diff = abs(cuda_graph_memory_bytes - self.cudagraph_memory_estimate)
++            logger.info(
++                "CUDA graph pool memory: %s GiB (actual), %s GiB (estimated), "
++                "difference: %s GiB (%.1f%%).",
++                GiB(cuda_graph_memory_bytes),
++                GiB(self.cudagraph_memory_estimate),
++                GiB(diff),
++                100 * diff / max(cuda_graph_memory_bytes, 1),
++            )
++
++        if self.cache_config.kv_cache_memory_bytes is None and hasattr(
++            self, "peak_activation_memory"
++        ):
++            # Suggests optimal kv cache memory size if we rely on
++            # memory_profiling to guess the kv cache memory size which
++            # provides peak_activation_memory and a few other memory
++            # consumption. `memory_profiling` does not consider
++            # CUDAGraph memory size and may not utilize all gpu memory.
++            # Users may want fine-grained control to specify kv cache
++            # memory size.
++
++            # empirically observed that the memory profiling may
++            # slightly underestimate the memory consumption.
++            # So leave a small buffer (=150MiB) to avoid OOM.
++            redundancy_buffer_memory = 150 * (1 << 20)
++
++            non_kv_cache_memory = (
++                self.total_consumed
++                + self.peak_activation_memory
++                + cuda_graph_memory_bytes
++            )
++            kv_cache_memory_bytes_to_gpu_limit = (
++                self.init_snapshot.free_memory
++                - non_kv_cache_memory
++                - redundancy_buffer_memory
++            )
++            kv_cache_memory_bytes_to_requested_limit = (
++                int(self.requested_memory)
++                - non_kv_cache_memory
++                - redundancy_buffer_memory
++            )
++
++            msg = (
++                f"Free memory on device "
++                f"({format_gib(self.init_snapshot.free_memory)}/"
++                f"{format_gib(self.init_snapshot.total_memory)} GiB) on startup. "
++                f"Desired GPU memory utilization is "
++                f"({self.cache_config.gpu_memory_utilization}, "
++                f"{format_gib(self.requested_memory)} GiB). "
++                f"Actual usage is {format_gib(self.total_consumed)} "
++                f"GiB for consumed memory (weights + non-torch), "
++                f"{format_gib(self.peak_activation_memory)} GiB "
++                f"for peak activation, and {format_gib(cuda_graph_memory_bytes)} "
++                f"GiB for CUDAGraph memory. Replace gpu_memory_utilization "
++                f"config with `--kv-cache-memory="
++                f"{kv_cache_memory_bytes_to_requested_limit}` "
++                f"({format_gib(kv_cache_memory_bytes_to_requested_limit)} GiB) to fit "
++                f"into requested memory, or `--kv-cache-memory="
++                f"{kv_cache_memory_bytes_to_gpu_limit}` "
++                f"({format_gib(kv_cache_memory_bytes_to_gpu_limit)} GiB) to fully "
++                f"utilize gpu memory. Current kv cache memory in use is "
++                f"{format_gib(self.available_kv_cache_memory_bytes)} GiB."
++            )
++
++            logger.info(msg)
++
++            maybe_save_startup_plan(self, kv_cache_memory_bytes_to_requested_limit)
++
++        if not self.use_v2_model_runner and get_pp_group().is_last_rank:
++            # V1: Warm up sampler and preallocate memory buffer for logits and other
++            # sampling related tensors of max possible shape to avoid memory
++            # fragmentation issue.
++            # NOTE: This is called after `capture_model` on purpose to prevent
++            # memory buffers from being cleared by `torch.accelerator.empty_cache`.
++            max_num_reqs = min(
++                self.scheduler_config.max_num_seqs,
++                self.scheduler_config.max_num_batched_tokens,
++            )
++
++            # We skip EPLB here since we don't want to record dummy metrics
++            hidden_states, last_hidden_states = self.model_runner._dummy_run(
++                num_tokens=max_num_reqs,
++                skip_eplb=True,
++                cudagraph_runtime_mode=CUDAGraphMode.NONE,
++            )
++            if self.model_runner.is_pooling_model:
++                self.model_runner._dummy_pooler_run(hidden_states)
++            else:
++                self.model_runner._dummy_sampler_run(hidden_states=last_hidden_states)
++
++        # Reset the seed to ensure that the random state is not affected by
++        # the model initialization and profiling.
++        set_random_seed(self.model_config.seed)
++
++        # Eagerly trigger inductor's once-per-process lazy inits during
++        # warmup (rather than on a later compile cache-miss at runtime).
++        c_config = self.compilation_config
++        if c_config.mode != CompilationMode.NONE and c_config.backend == "inductor":
++            from vllm.compilation.compiler_interface import (
++                trigger_inductor_lazy_init,
++            )
++
++            trigger_inductor_lazy_init(self.device)
++
++        # All warmup is done — start monitoring for unexpected JIT
++        # compilations that would cause latency spikes during inference.
++        from vllm.utils.jit_monitor import activate as activate_jit_monitor
++
++        activate_jit_monitor(
++            mode=self.observability_config.jit_monitor_mode,
++            verbose=self.observability_config.jit_monitor_verbose,
++        )
++
++        # Freeze the worker heap so the GC won't scan static objects
++        # (model weights, KV caches, CUDA graphs) during inference.
++        freeze_gc_heap()
++        maybe_attach_gc_debug_callback()
++
++        # Warmup / first-compile is done — activate the `VLLM_GPU_SYNC_CHECK`
++        # gate so subsequent `execute_model` / `sample_tokens` calls enforce it.
++        enable_gpu_sync_check()
++
++        # Startup is done; steady-state serving gets no benefit from torch
++        # intra-op parallelism.
++        set_torch_threads_for_runtime()
++
++        return CompilationTimes(
++            language_model=self.compilation_config.compilation_time,
++            encoder=self.compilation_config.encoder_compilation_time,
++        )
++
++    def _get_cudagraph_capture_context(self) -> AbstractContextManager[None]:
++        """Let the configured profiler observe CUDA graph capture."""
++        if not self.use_v2_model_runner:
++            return nullcontext()
++        if self.profiler is None:
++            model_runner = cast("GPUModelRunnerV2", self.model_runner)
++            if not model_runner.needs_cudagraph_capture():
++                return nullcontext()
++            self.profiler = create_graph_capture_profiler(
++                self.profiler_config, global_rank=self.rank
++            )
++            if self.profiler is None:
++                return nullcontext()
++        return self.profiler.capture_cuda_graphs()
++
++    def reset_mm_cache(self) -> None:
++        self.model_runner.reset_mm_cache()
++
++    def reset_encoder_cache(self) -> None:
++        self.model_runner.reset_encoder_cache()
++
++    def get_model(self) -> nn.Module:
++        return self.model_runner.get_model()
++
++    def get_draft_model(self) -> nn.Module | None:
++        return self.model_runner.get_draft_model()
++
++    def supports_draft_weight_updates(self) -> bool:
++        engine = self.weight_transfer_engine
++        speculative_config = self.speculative_config
++        get_draft_model = getattr(self.model_runner, "get_draft_model", None)
++        return (
++            engine is not None
++            and engine.supports_draft_weight_update
++            and callable(get_draft_model)
++            and get_draft_model() is not None
++            and speculative_config is not None
++            and speculative_config.draft_model_config is not None
++        )
++
++    def _set_draft_weight_update_target(self) -> None:
++        assert self.weight_transfer_engine is not None
++
++        draft_model = self.get_draft_model()
++        if draft_model is None:
++            raise RuntimeError(
++                "Draft model weight update requested, but no draft model is configured."
++            )
++
++        speculative_config = self.speculative_config
++        if speculative_config is None or speculative_config.draft_model_config is None:
++            raise RuntimeError(
++                "Draft model weight update requested, but no draft model "
++                "config is configured."
++            )
++
++        self.weight_transfer_engine.set_weight_update_target(
++            draft_model, speculative_config.draft_model_config
++        )
++
++    def get_supported_tasks(self) -> tuple[SupportedTask, ...]:
++        return self.model_runner.get_supported_tasks()
++
++    def get_compilation_match_table(self) -> dict[str, int]:
++        from vllm.compilation.passes.vllm_inductor_pass import get_match_table
++
++        return get_match_table()
++
++    def get_encoder_timing_stats(self) -> dict[str, dict[str, float | int]]:
++        """Get encoder timing stats from model runner."""
++        return self.model_runner.get_encoder_timing_stats()
++
++    def annotate_profile(self, scheduler_output):
++        # add trace annotation so that we can easily distinguish
++        # context/generation request numbers in each iteration.
++        # A context request is a request that has not yet generated any tokens
++        if not self.profiler:
++            return nullcontext()
++
++        self.profiler.step()
++        if not self.profiler.is_running:
++            return nullcontext()
++
++        iteration_details = compute_iteration_details(scheduler_output)
++
++        if self.vllm_config.profiler_config.detailed_trace_annotation:
++            # Compute roofline-model metrics per request, split by phase
++            # (context vs generation). These help estimate compute and
++            # memory intensity from the trace.
++            #
++            # Per-request quantities:
++            #   query_len = number of scheduled (new) tokens for this request
++            #   seq_len   = total sequence length (computed + scheduled tokens)
++            #
++            # Aggregated across requests in each phase
++            # (ctx_=context, gen_=generation):
++            #   seq_len_sum = sum of seq_len   (total KV length)
++            #   qq_compute  = sum of query_len*query_len
++            #                 (proxy for QK^T compute cost)
++            #   qk_compute  = sum of query_len*seq_len
++            #                 (proxy for QK^T compute cost for decode and
++            #                  chunked prefill)
++            #   total_scheduled_tokens = scheduled tokens across all requests
++            ctx_seq_len_sum = 0
++            ctx_qq_compute = 0
++            ctx_qk_compute = 0
++            gen_seq_len_sum = 0
++            gen_qq_compute = 0
++            gen_qk_compute = 0
++            total_scheduled_tokens = 0
++
++            # Build a map of req_id -> num_computed_tokens for all requests
++            new_req_ids = {
++                new_req.req_id for new_req in scheduler_output.scheduled_new_reqs
++            }
++            num_computed_tokens_ids = {
++                new_req.req_id: new_req.num_computed_tokens
++                for new_req in scheduler_output.scheduled_new_reqs
++            }
++            for req_id, num_computed_tokens in zip(
++                scheduler_output.scheduled_cached_reqs.req_ids,
++                scheduler_output.scheduled_cached_reqs.num_computed_tokens,
++            ):
++                num_computed_tokens_ids[req_id] = num_computed_tokens
++
++            # Accumulate per-phase metrics
++            for req_id, num_tokens in scheduler_output.num_scheduled_tokens.items():
++                query_len = num_tokens
++                total_scheduled_tokens += query_len
++                seq_len = num_computed_tokens_ids.get(req_id, 0) + query_len
++                if (
++                    scheduler_output.scheduled_cached_reqs.is_context_phase(req_id)
++                    or req_id in new_req_ids
++                ):
++                    ctx_seq_len_sum += seq_len
++                    ctx_qq_compute += query_len * query_len
++                    ctx_qk_compute += query_len * seq_len
++                else:
++                    gen_seq_len_sum += seq_len
++                    gen_qq_compute += query_len * query_len
++                    gen_qk_compute += query_len * seq_len
++            annotation = "".join(
++                [
++                    "execute_",
++                    str(total_scheduled_tokens),
++                    "_context_",
++                    str(iteration_details.num_ctx_requests),
++                    "(sq",
++                    str(iteration_details.num_ctx_tokens),
++                    "sk",
++                    str(ctx_seq_len_sum),
++                    "sqsq",
++                    str(ctx_qq_compute),
++                    "sqsk",
++                    str(ctx_qk_compute),
++                    ")_generation_",
++                    str(iteration_details.num_generation_requests),
++                    "(sq",
++                    str(iteration_details.num_generation_tokens),
++                    "sk",
++                    str(gen_seq_len_sum),
++                    "sqsq",
++                    str(gen_qq_compute),
++                    "sqsk",
++                    str(gen_qk_compute),
++                    ")",
++                ]
++            )
++        else:
++            annotation = "".join(
++                [
++                    "execute_context_",
++                    str(iteration_details.num_ctx_requests),
++                    "(",
++                    str(iteration_details.num_ctx_tokens),
++                    ")",
++                    "_generation_",
++                    str(iteration_details.num_generation_requests),
++                    "(",
++                    str(iteration_details.num_generation_tokens),
++                    ")",
++                ]
++            )
++        return self.profiler.annotate_context_manager(annotation)
++
++    @torch.inference_mode()
++    @with_gpu_sync_check
++    def sample_tokens(
++        self, grammar_output: "GrammarOutput | None"
++    ) -> ModelRunnerOutput | AsyncModelRunnerOutput:
++        return self.model_runner.sample_tokens(grammar_output)
++
++    @torch.inference_mode()
++    @with_gpu_sync_check
++    def execute_model(
++        self, scheduler_output: "SchedulerOutput"
++    ) -> ModelRunnerOutput | AsyncModelRunnerOutput | None:
++        # Wait for the previous step's sends so this forward pass cannot
++        # overwrite buffers they are still reading.
++        if self._pp_send_work:
++            for handle in self._pp_send_work:
++                handle.wait()
++            self._pp_send_work = []
++
++        intermediate_tensors = None
++        forward_pass = scheduler_output.total_num_scheduled_tokens > 0
++        num_scheduled_tokens = scheduler_output.total_num_scheduled_tokens
++        all_gather_tensors = {}
++        compilation_config = self.vllm_config.compilation_config
++        parallel_config = self.vllm_config.parallel_config
++
++        if (
++            parallel_config.pipeline_parallel_size > 1
++            and compilation_config.pass_config.enable_sp
++            and forward_pass
++        ):
++            # currently only supported by V1 GPUModelRunner
++            assert not self.use_v2_model_runner
++            num_scheduled_tokens_np = np.array(
++                list(scheduler_output.num_scheduled_tokens.values()),
++                dtype=np.int32,
++            )
++            # TODO(lucas): This is pretty gross; ideally we should only ever call
++            # `_determine_batch_execution_and_padding` once (will get called again
++            # in `execute_model`) but this requires a larger refactor of PP.
++            _, batch_desc, _, _, _ = (
++                self.model_runner._determine_batch_execution_and_padding(
++                    num_tokens=num_scheduled_tokens,
++                    num_reqs=len(num_scheduled_tokens_np),
++                    num_scheduled_tokens_np=num_scheduled_tokens_np,
++                    max_num_scheduled_tokens=num_scheduled_tokens_np.max(),
++                    use_cascade_attn=False,  # TODO(lucas): Handle cascade attention
++                )
++            )
++            all_gather_tensors = {
++                "residual": not is_residual_scattered_for_sp(
++                    self.vllm_config, batch_desc.num_tokens
++                )
++            }
++
++        if forward_pass and not get_pp_group().is_first_rank:
++            tensor_dict, comm_handles, comm_postprocess = (
++                get_pp_group().irecv_tensor_dict(
++                    all_gather_group=get_tp_group(),
++                    all_gather_tensors=all_gather_tensors,
++                )
++            )
++            assert tensor_dict is not None
++            intermediate_tensors = AsyncIntermediateTensors(
++                tensor_dict,
++                comm_handles=comm_handles,
++                comm_postprocess=comm_postprocess,
++            )
++
++        with self.annotate_profile(scheduler_output):
++            output = self.model_runner.execute_model(
++                scheduler_output, intermediate_tensors
++            )
++            if (
++                self.use_v2_model_runner
++                and self.model_runner.is_pooling_model
++                and output is None
++            ):
++                output = self.model_runner.pool()  # type: ignore
++            if isinstance(
++                output, ModelRunnerOutput | AsyncModelRunnerOutput | NoneType
++            ):
++                return output
++
++        assert isinstance(output, IntermediateTensors)
++        parallel_config = self.vllm_config.parallel_config
++        assert (
++            parallel_config.distributed_executor_backend != "external_launcher"
++            and not get_pp_group().is_last_rank
++        )
++
++        # Non-blocking send of the intermediate tensors. The metadata handle
++        # is reaped lazily by the GroupCoordinator; the device handles are
++        # waited at the top of the next step.
++        handles = get_pp_group().isend_tensor_dict(
++            output.tensors,
++            all_gather_group=get_tp_group(),
++            all_gather_tensors=all_gather_tensors,
++        )
++        self._pp_send_work = handles[1:]
++
++        if self.use_v2_model_runner and self.model_runner.is_pooling_model:
++            return self.model_runner.pool()  # type: ignore
++        return None
++
++    def take_draft_token_ids(self) -> DraftTokenIds | None:
++        return self.model_runner.take_draft_token_ids()
++
++    def profile(self, is_start: bool = True, profile_prefix: str | None = None):
++        # Check if profiling is enabled
++        if self.profiler_config is None or self.profiler_config.profiler is None:
++            raise RuntimeError(
++                "Profiling is not enabled. Please set --profiler-config to enable "
++                "profiling. Example: "
++                "'--profiler-config.profiler=torch --profiler-config.torch_profiler_dir"
++                "=YOUR_DIR_PATH_TO_DUMP_TRACE'"
++            )
++
++        if is_start:
++            profiler_type = self.profiler_config.profiler
++            # Generate the trace name by combining prefix with comprehensive rank suffix
++            from vllm.distributed.utils import get_worker_rank_suffix
++
++            rank_suffix = get_worker_rank_suffix(global_rank=self.rank)
++
++            # Build the full trace name
++            if profile_prefix:
++                trace_name = f"{profile_prefix}_{rank_suffix}"
++            else:
++                trace_name = rank_suffix
++
++            if profiler_type == "proton" and self.profiler is not None:
++                self.profiler.set_output_name(trace_name)
++
++            # Create the profiler wrapper only on the first start call
++            if self.profiler is None:
++                if profiler_type == "torch":
++                    self.profiler = TorchProfilerWrapper(
++                        self.profiler_config,
++                        worker_name=trace_name,
++                        local_rank=self.local_rank,
++                        activities=["CPU", "CUDA"],
++                    )
++                    logger.debug(
++                        "Starting torch profiler with trace name: %s", trace_name
++                    )
++                elif profiler_type == "cuda":
++                    self.profiler = CudaProfilerWrapper(self.profiler_config)
++                    logger.debug("Starting CUDA profiler")
++                elif profiler_type == "proton":
++                    self.profiler = ProtonProfilerWrapper(
++                        self.profiler_config, worker_name=trace_name
++                    )
++                    logger.debug(
++                        "Starting Proton profiler with trace name: %s", trace_name
++                    )
++                else:
++                    # Config validation should prevent this code being reached
++                    raise ValueError(
++                        f"Invalid profiler value of {self.profiler_config.profiler}"
++                    )
++
++            self.profiler.start()
++        else:
++            if self.profiler is None:
++                logger.warning("Profiler was not started, nothing to stop.")
++                return
++            try:
++                self.profiler.stop()
++            finally:
++                if self.profiler_config.profiler == "proton" and not (
++                    self.profiler.has_cuda_graph_session
++                ):
++                    # Proton output names are fixed when the wrapper is constructed.
++                    # Recreate it so the next profile_prefix is honored.
++                    self.profiler = None
++
++    def execute_dummy_batch(self) -> None:
++        num_tokens = getattr(self.model_runner, "uniform_decode_query_len", 1)
++        self.model_runner._dummy_run(num_tokens, uniform_decode=True)
++
++    def add_lora(self, lora_request: LoRARequest) -> bool:
++        return self.model_runner.add_lora(lora_request)
++
++    def remove_lora(self, lora_id: int) -> bool:
++        return self.model_runner.remove_lora(lora_id)
++
++    def list_loras(self) -> set[int]:
++        return self.model_runner.list_loras()
++
++    def pin_lora(self, lora_id: int) -> bool:
++        return self.model_runner.pin_lora(lora_id)
++
++    def check_health(self) -> None:
++        # worker will always be healthy as long as it's running.
++        return
++
++    def save_sharded_state(
++        self,
++        path: str,
++        pattern: str | None = None,
++        max_size: int | None = None,
++    ) -> None:
++        from vllm.model_executor.model_loader import ShardedStateLoader
++
++        ShardedStateLoader.save_model(
++            self.model_runner.model,
++            path,
++            pattern=pattern,
++            max_size=max_size,
++        )
++
++    def save_tensorized_model(self, tensorizer_config: "TensorizerConfig") -> None:
++        TensorizerLoader.save_model(
++            self.get_model(),
++            tensorizer_config=tensorizer_config,
++            model_config=self.model_config,
++        )
++
++    def _check_weight_transfer_engine(self) -> None:
++        if self.weight_transfer_engine is None:
++            raise RuntimeError(
++                "Weight transfer not configured. "
++                "Please set weight_transfer_config to enable weight transfer."
++            )
++
++    def init_weight_transfer_engine(self, init_info: dict) -> None:
++        """
++        Initialize weight transfer mechanism.
++        For NCCL backend, this creates a process group with the trainer.
++
++        Args:
++            init_info: Dictionary containing backend-specific initialization info
++        """
++        self._check_weight_transfer_engine()
++        assert self.weight_transfer_engine is not None
++        # Parse dict into backend-specific typed dataclass
++        typed_init_info = self.weight_transfer_engine.parse_init_info(init_info)
++        self.weight_transfer_engine.init_transfer_engine(typed_init_info)
++
++    def start_weight_update(self) -> None:
++        """
++        Start a new weight update session.
++
++        Delegates engine-specific preparation (e.g. layerwise reload setup) to
++        the configured weight transfer engine. The worker only tracks that a
++        session is active.
++        """
++        with set_current_vllm_config(self.vllm_config):
++            self._start_weight_update()
++
++    def start_draft_weight_update(self) -> None:
++        """
++        Like start_weight_update, but retargets the engine at the speculative
++        draft model for this session.
++        """
++        with set_current_vllm_config(self.vllm_config):
++            self._start_weight_update(is_draft=True)
++
++    def _start_weight_update(self, is_draft: bool = False) -> None:
++        self._check_weight_transfer_engine()
++        assert self.weight_transfer_engine is not None
++
++        if is_draft and not self.weight_transfer_engine.supports_draft_weight_update:
++            raise RuntimeError(
++                f"{type(self.weight_transfer_engine).__name__} does not support "
++                "draft model weight updates."
++            )
++
++        if self._weight_update_active:
++            raise RuntimeError(
++                "start_weight_update called while a weight update is already "
++                "active. Call finish_weight_update first."
++            )
++
++        try:
++            if is_draft:
++                self._set_draft_weight_update_target()
++            self.weight_transfer_engine.start_weight_update()
++        except BaseException:
++            self.weight_transfer_engine.reset_weight_update_target()
++            raise
++        self._weight_update_active = True
++        self._weight_update_is_draft = is_draft
++
++    def update_weights(self, update_info: dict | list[dict]) -> None:
++        """
++        Receive one weight update chunk from the trainer.
++
++        start_weight_update must be called before update_weights and
++        finish_weight_update must be called after all chunks have been sent.
++        Every chunk loads into whichever model the session's start_weight_update
++        / start_draft_weight_update call selected.
++
++        Args:
++            update_info: Backend-specific update info, or a list indexed by
++                global worker rank across data parallel replicas.
++        """
++        self._check_weight_transfer_engine()
++        assert self.weight_transfer_engine is not None
++
++        if not self._weight_update_active:
++            raise RuntimeError(
++                "start_weight_update must be called before update_weights."
++            )
++
++        with set_current_vllm_config(self.vllm_config):
++            try:
++                if isinstance(update_info, list):
++                    parallel_config = self.vllm_config.parallel_config
++                    local_update_info = update_info[
++                        parallel_config.data_parallel_rank * parallel_config.world_size
++                        + self.rank
++                    ]
++                else:
++                    local_update_info = update_info
++                self.weight_transfer_engine.update_weights(local_update_info)
++            except BaseException:
++                self._weight_update_active = False
++                self.weight_transfer_engine.reset_weight_update_target()
++                raise
++
++    def finish_weight_update(self) -> None:
++        """Finish the current weight update session."""
++        self._check_weight_transfer_engine()
++        assert self.weight_transfer_engine is not None
++
++        if not self._weight_update_active:
++            raise RuntimeError(
++                "finish_weight_update called without a matching start_weight_update."
++            )
++
++        with set_current_vllm_config(self.vllm_config):
++            self.weight_transfer_engine.finish_weight_update()
++            self.weight_transfer_engine.reset_weight_update_target()
++            self._weight_update_active = False
++
++        # Weight transfer bypasses GPUModelRunner.reload_weights().
++        if not self._weight_update_is_draft:
++            self.model_runner.reset_lora_state()
++
++    def shutdown(self) -> None:
++        gc.unfreeze()
++
++        # has_kv_transfer_group can be None during interpreter shutdown.
++        if ensure_kv_transfer_shutdown is not None:
++            ensure_kv_transfer_shutdown()
++        if ensure_ec_transfer_shutdown is not None:
++            ensure_ec_transfer_shutdown()
++        if getattr(self, "profiler", None) is not None:
++            self.profiler.shutdown()
++
++        if weight_transfer_engine := getattr(self, "weight_transfer_engine", None):
++            weight_transfer_engine.shutdown()
++
++        if getattr(self, "elastic_ep_executor", None) is not None:
++            self.elastic_ep_executor.shutdown()
++
++        # Even an init_device failure before runner construction can retain
++        # workspace/static-forward globals. Release them before XPU pools.
++        from vllm import screen1b_guard as guard
++        if guard.enabled() and getattr(self, "model_runner", None) is None:
++            from types import SimpleNamespace
++            from vllm.screen1b_teardown import release_runner
++            from vllm.v1.worker.gpu.shutdown import free_before_shutdown
++            release_runner(SimpleNamespace(), guard, torch,
++                           lambda: free_before_shutdown(self.vllm_config))
++
++        # Release GPU resources held by the model runner so that memory
++        # can be reclaimed when running in-process
++        if model_runner := getattr(self, "model_runner", None):
++            model_runner.shutdown()
++            from vllm import screen1b_guard as guard
++            if guard.enabled():
++                self.model_runner = None
++
++        # Release kept-alive cumem pools while the pluggable allocator wrappers
++        # and callbacks are still alive, so MemPool teardown is not deferred to
++        # interpreter finalization (pytorch/pytorch#145168).
++        if current_platform.is_cuda_alike():
++            from vllm.device_allocator.cumem import CuMemAllocator
++
++            if CuMemAllocator.instance is not None:
++                CuMemAllocator.instance.release_pools()
++
++    def elastic_ep_execute(self, execute_method: str, *args, **kwargs):
++        return self.elastic_ep_executor.execute(execute_method, *args, **kwargs)
++
++
++def init_worker_distributed_environment(
++    vllm_config: VllmConfig,
++    rank: int,
++    distributed_init_method: str | None = None,
++    local_rank: int = -1,
++    backend: str = "nccl",
++) -> None:
++    """Initialize the distributed environment."""
++    parallel_config = vllm_config.parallel_config
++    from vllm.model_executor.determinism.batch_invariant import init_batch_invariance
++
++    init_batch_invariance()
++    override_envs_for_eplb(
++        parallel_config,
++        moe_backend=getattr(vllm_config.kernel_config, "moe_backend", None),
++    )
++    set_custom_all_reduce(not parallel_config.disable_custom_all_reduce)
++
++    init_method = distributed_init_method or "env://"
++
++    timeout = None
++    if parallel_config.distributed_timeout_seconds is not None:
++        timeout = timedelta(seconds=parallel_config.distributed_timeout_seconds)
++
++    init_distributed_environment(
++        parallel_config.world_size,
++        rank,
++        init_method,
++        local_rank,
++        backend,
++        timeout,
++    )
++
++    ensure_model_parallel_initialized(
++        parallel_config.tensor_parallel_size,
++        parallel_config.pipeline_parallel_size,
++        parallel_config.prefill_context_parallel_size,
++        parallel_config.decode_context_parallel_size,
++    )
++
++    # Init ec connector here before KV caches init
++    # NOTE: We do not init KV caches for Encoder-only instance in EPD disagg mode
++    ensure_ec_transfer_initialized(vllm_config)
+--- /dev/null
++++ b/overlay/vllm/v1/worker/xpu_worker.py
+@@ -0,0 +1,252 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++import gc
++import os
++
++import torch
++
++from vllm.config import VllmConfig
++from vllm.logger import init_logger
++from vllm.platforms import current_platform
++from vllm.profiler.wrapper import TorchProfilerWrapper
++from vllm.utils.mem_utils import MemorySnapshot, format_gib
++from vllm.utils.torch_utils import set_random_seed
++from vllm.v1.utils import report_usage_stats
++from vllm.v1.worker.gpu_worker import Worker, init_worker_distributed_environment
++from vllm.v1.worker.workspace import init_workspace_manager
++from vllm.v1.worker.xpu_model_runner import XPUModelRunner, XPUModelRunnerV2
++
++from .utils import request_memory
++
++logger = init_logger(__name__)
++
++
++class XPUWorker(Worker):
++    """A XPU worker class."""
++
++    def __init__(
++        self,
++        vllm_config: VllmConfig,
++        local_rank: int,
++        rank: int,
++        distributed_init_method: str,
++        is_driver_worker: bool = False,
++    ):
++        super().__init__(
++            vllm_config, local_rank, rank, distributed_init_method, is_driver_worker
++        )
++        device_config = self.device_config
++        assert device_config.device_type == "xpu"
++        assert current_platform.is_xpu()
++
++    def init_device(self):
++        # In DP mode, XPU workers see all visible devices.
++        # Offset local_rank by the local DP shard.
++        parallel_config = self.parallel_config
++        if (
++            parallel_config.distributed_executor_backend
++            not in ("ray", "external_launcher")
++            and parallel_config.data_parallel_backend != "ray"
++            and (
++                parallel_config.data_parallel_external_lb
++                or parallel_config.nnodes_within_dp == 1
++            )
++        ):
++            dp_local_rank = parallel_config.data_parallel_rank_local
++            if dp_local_rank is None:
++                dp_local_rank = parallel_config.data_parallel_index
++            replica_world_size = parallel_config.world_size
++            visible_device_count = torch.accelerator.device_count()
++
++            if parallel_config.data_parallel_external_lb:
++                if parallel_config.nnodes_within_dp > 1:
++                    # The replica spans nodes, so use its node-local shard.
++                    replica_world_size = parallel_config.local_world_size
++                    if replica_world_size > visible_device_count:
++                        raise ValueError(
++                            f"Local TP/PP/PCP replica size ({replica_world_size}) "
++                            "exceeds the number of visible XPU devices "
++                            f"({visible_device_count})."
++                        )
++                    local_dp_capacity = visible_device_count // replica_world_size
++                elif replica_world_size < visible_device_count:
++                    # A node can host multiple complete TP/PP/PCP replicas.
++                    local_dp_capacity = visible_device_count // replica_world_size
++                    if visible_device_count % replica_world_size != 0:
++                        logger.warning_once(
++                            "XPU external LB cannot evenly divide "
++                            "%d visible devices into TP/PP/PCP replicas of "
++                            "size %d. This node can host %d complete DP "
++                            "replicas, leaving %d visible devices unused.",
++                            visible_device_count,
++                            replica_world_size,
++                            local_dp_capacity,
++                            visible_device_count % replica_world_size,
++                        )
++                elif replica_world_size == visible_device_count:
++                    # A node hosts exactly one complete TP/PP/PCP replica.
++                    local_dp_capacity = 1
++                    logger.warning_once(
++                        "XPU external LB sees exactly enough devices for one "
++                        "TP/PP/PCP replica. This may be the intended "
++                        "configuration, but it may also indicate that device "
++                        "visibility is misconfigured. Every DP rank must see "
++                        "all XPU devices on its node; consider removing "
++                        "ZE_AFFINITY_MASK or setting it to expose the complete "
++                        "device set."
++                    )
++                else:
++                    # The topology says single-node, but the replica does not fit.
++                    raise ValueError(
++                        f"TP/PP/PCP replica size ({replica_world_size}) exceeds "
++                        f"the number of visible XPU devices ({visible_device_count}), "
++                        "but nnodes_within_dp is 1. Configure the multi-node "
++                        "topology, or ensure every DP rank can see all devices "
++                        "on its node."
++                    )
++                # Strip the node component off the global DP index to get this
++                # engine's slot on its own node. Assumes the launcher assigns
++                # DP ranks to nodes in contiguous blocks (node 0 gets ranks
++                # 0..capacity-1, and so on), which is what the usual sequential
++                # and one-pod-per-rank deployments do. A round-robin or
++                # unbalanced assignment would silently map two engines onto the
++                # same device.
++                dp_local_rank = parallel_config.data_parallel_index % local_dp_capacity
++
++            self.local_rank += dp_local_rank * replica_world_size
++
++            assert self.local_rank < visible_device_count, (
++                f"DP adjusted local rank {self.local_rank} is out of bounds. "
++            )
++            assert parallel_config.local_world_size <= visible_device_count, (
++                f"local_world_size ({parallel_config.local_world_size}) must "
++                f"be less than or equal to the number of visible devices "
++                f"({visible_device_count})."
++            )
++
++        device = self.device_config.device
++        if (
++            isinstance(device, torch.device)
++            and device.type == "xpu"
++            and current_platform.is_xpu()
++        ):
++            self.device = torch.device(f"xpu:{self.local_rank}")
++            torch.accelerator.set_device_index(self.device)
++            current_platform.check_if_supports_dtype(self.model_config.dtype)
++            torch.accelerator.empty_cache()
++            self.init_gpu_memory = torch.xpu.get_device_properties(
++                self.local_rank
++            ).total_memory
++        else:
++            raise RuntimeError(f"Unsupported device type: {self.device_config.device}")
++
++        ENV_CCL_ATL_TRANSPORT = os.getenv("CCL_ATL_TRANSPORT", "ofi")
++        ENV_LOCAL_WORLD_SIZE = os.getenv(
++            "LOCAL_WORLD_SIZE", str(self.parallel_config.world_size)
++        )
++        os.environ["CCL_ATL_TRANSPORT"] = ENV_CCL_ATL_TRANSPORT
++        os.environ["LOCAL_WORLD_SIZE"] = ENV_LOCAL_WORLD_SIZE
++        os.environ["LOCAL_RANK"] = str(self.local_rank)
++
++        init_worker_distributed_environment(
++            self.vllm_config,
++            self.rank,
++            self.distributed_init_method,
++            self.local_rank,
++            current_platform.dist_backend,
++        )
++
++        # oneCCL warm-up; only meaningful for multi-device runs. Requiring it
++        # with a single worker breaks platforms where oneCCL cannot enumerate
++        # device topology (e.g. paravirtualized GPUs).
++        if (
++            self.parallel_config.world_size > 1
++            and torch.distributed.is_xccl_available()
++        ):
++            torch.distributed.all_reduce(torch.zeros(1).xpu())
++
++        if self.use_v2_model_runner:
++            logger.info_once("Using V2 Model Runner")
++
++        # Set random seed.
++        set_random_seed(self.model_config.seed)
++
++        # Now take memory snapshot after NCCL is initialized
++        gc.collect()
++        torch.accelerator.empty_cache()
++
++        # take current memory snapshot
++        self.init_snapshot = init_snapshot = MemorySnapshot(device=self.device)
++        self.requested_memory = request_memory(init_snapshot, self.cache_config)
++        logger.debug("worker init memory snapshot: %r", self.init_snapshot)
++        logger.debug(
++            "worker requested memory: %sGiB", format_gib(self.requested_memory)
++        )
++
++        # Initialize workspace manager
++        num_ubatches = 2 if self.vllm_config.parallel_config.enable_dbo else 1
++        init_workspace_manager(self.device, num_ubatches)
++
++        # Construct the model runner
++        model_runner = XPUModelRunnerV2 if self.use_v2_model_runner else XPUModelRunner
++        from vllm import screen1b_guard as guard
++        if guard.enabled():
++            # Publish before constructor allocations for partial-init cleanup.
++            self.model_runner = model_runner.__new__(model_runner)
++            model_runner.__init__(self.model_runner, self.vllm_config, self.device)
++        else:
++            self.model_runner = model_runner(  # type: ignore
++                self.vllm_config, self.device
++            )
++
++        if self.rank == 0:
++            # If usage stat is enabled, collect relevant info.
++            report_usage_stats(self.vllm_config)
++
++    def profile(self, is_start: bool = True, profile_prefix: str | None = None):
++        if self.profiler_config is None or self.profiler_config.profiler is None:
++            raise RuntimeError(
++                "Profiling is not enabled. Please set --profiler-config to enable "
++                "profiling. Example: "
++                "'--profiler-config.profiler=torch --profiler-config.torch_profiler_dir"
++                "=YOUR_DIR_PATH_TO_DUMP_TRACE'"
++            )
++
++        if is_start and self.profiler is None:
++            from vllm.distributed.utils import get_worker_rank_suffix
++
++            rank_suffix = get_worker_rank_suffix(global_rank=self.rank)
++            trace_name = (
++                f"{profile_prefix}_{rank_suffix}" if profile_prefix else rank_suffix
++            )
++
++            self.profiler = TorchProfilerWrapper(
++                self.profiler_config,
++                worker_name=trace_name,
++                local_rank=self.local_rank,
++                activities=["CPU", "XPU"],
++            )
++            logger.debug("Starting torch profiler with trace name: %s", trace_name)
++
++        super().profile(is_start=is_start, profile_prefix=profile_prefix)
++
++    def shutdown(self) -> None:
++        logger.info(
++            "XPUWorker shutdown: cleaning up (rank=%d, local_rank=%d)",
++            self.rank,
++            self.local_rank,
++        )
++        super().shutdown()
++        from vllm import screen1b_guard as guard
++        if guard.enabled():
++            # Runner destruction may enqueue allocator events before pool free.
++            torch.xpu.synchronize()
++        from vllm.device_allocator.xpumem import XpuMemAllocator
++
++        if XpuMemAllocator.instance is not None:
++            XpuMemAllocator.instance.release_pools()
++        logger.info(
++            "XPUWorker shutdown: done (rank=%d, local_rank=%d)",
++            self.rank,
++            self.local_rank,
++        )
+--- a/screen.py
++++ b/screen.py
+@@ -23,7 +23,8 @@
+
+ import calibration
+
+-from memory_watchdog import MemoryWatchdog, sample_memory, trip_reason
++from memory_watchdog import DeferredStop, MemoryWatchdog, sample_memory, trip_reason
++from teardown_receipts import validate_rank_receipts
+ from memory_plan import (build_prediction, format_table, enforce_prediction,
+                          collect_observations, paired_observations)
+ from apply_overlay import verify_package
+@@ -388,7 +389,7 @@
+     cmd = ['docker', 'run', '--name', 'flashnext-screen1-' + run.name,
+            '--pull=never', '--restart=no', '--network=host', '--device=/dev/dri',
+            '--ipc=host', '--security-opt=seccomp=unconfined', '--stop-signal=SIGINT',
+-           '--entrypoint=/bin/bash', '-w', '/opt/venv']
++           '--stop-timeout=-1', '--entrypoint=/bin/bash', '-w', '/opt/venv']
+     env = {
+         # Per-process NEO allocation policy, not a host setting. See the LTX
+         # 2026-10-04-host-ram-shadow-of-vram note; retain peer sharing.
+@@ -480,58 +481,20 @@
+     (run / 'launch.json').write_text(json.dumps(cmd, indent=2) + '\n')
+     since = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+     (run / 'started-utc.txt').write_text(since + '\n')
+-    stopping = False
+-    def stop_signal(signum, frame):
+-        nonlocal stopping
+-        stopping = True
+-    signal.signal(signal.SIGTERM, stop_signal)
+-    signal.signal(signal.SIGINT, stop_signal)
+     server = None
+     client = None
+     name = 'flashnext-screen1-' + run.name
++    stop = DeferredStop(run, name)
++    previous_handlers = {sig: signal.signal(sig, stop.signal_handler)
++                         for sig in (signal.SIGINT, signal.SIGTERM)}
+     base = f'http://127.0.0.1:{args.port}'
+     start = time.monotonic()
+-    stop_lock = threading.Lock()
+-    stop_sent = False
+-    def request_stop(reason):
+-        nonlocal stopping, stop_sent
+-        stopping = True
+-        # All workers see the latch before the entry process receives SIGINT.
+-        with stop_lock:
+-            latch_error = None
+-            try:
+-                (run / 'STOP').write_text(reason + '\n')
+-            except OSError as exc:
+-                latch_error = str(exc)
+-            if server is None or stop_sent:
+-                return
+-            if calibrating:
+-                # docker run may still be creating the container when the first
+-                # sample trips. Keep STOP latched; defer the sole signal until
+-                # inspection confirms the owned container is running.
+-                try:
+-                    state = subprocess.run(['docker', 'inspect', '--format', '{{.State.Running}}', name],
+-                                           capture_output=True, text=True, timeout=2)
+-                except (OSError, subprocess.TimeoutExpired):
+-                    return
+-                if state.returncode != 0 or state.stdout.strip() != 'true':
+-                    return
+-            stop_sent = True  # never retry, including a failed Docker signal
+-            try:
+-                p = subprocess.run(['docker', 'kill', '--signal=SIGINT', name],
+-                                   capture_output=True, text=True, timeout=10)
+-                result = {'rc': p.returncode, 'stderr': p.stderr}
+-            except (OSError, subprocess.TimeoutExpired) as exc:
+-                result = {'rc': None, 'error': str(exc)}
+-            (run / 'graceful-stop.json').write_text(json.dumps({
+-                'signal': 'SIGINT', **result,
+-                'reason': reason, 'monotonic': time.monotonic(),
+-                'container_name': name, 'latch_error': latch_error,
+-            }, indent=2) + '\n')
++    request_stop = stop.request
+     calibrating = args.mode == 'calibrate-load'
+     sampler = calibration.Sampler() if calibrating else None
+     ready = False
+     clean_exit = False
++    container_clean = False
+     failure = None
+     watchdog = (MemoryWatchdog(run, request_stop, sampler,
+                               threshold=calibration.trip_reason, interval=calibration.INTERVAL)
+@@ -543,14 +506,15 @@
+             # Start before Popen: no unmonitored first-second allocation window.
+             if calibrating:
+                 watchdog.start()
+-            if stopping:
++            if stop.requested:
+                 raise RuntimeError('Watchdog stopped before launch')
+             server = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT)
++            stop.armed = True
+             if not calibrating:
+                 watchdog.start()
+             ready = False
+             while time.monotonic() - start < 1800:
+-                if stopping or server.poll() is not None:
++                if stop.requested or server.poll() is not None:
+                     raise RuntimeError('Startup stopped/exited; no retry')
+                 check_live(run, journal_cutoff, calibrating=calibrating)
+                 if sampler and sampler.container_pid is None:
+@@ -581,19 +545,19 @@
+                 watchdog.check()
+                 plateau_start = time.monotonic()
+                 while time.monotonic() - plateau_start < calibration.PLATEAU_SECONDS:
+-                    if stopping or server.poll() is not None:
++                    if stop.requested or server.poll() is not None:
+                         raise RuntimeError('Calibration plateau interrupted')
+                     check_live(run, journal_cutoff, calibrating=True)
+                     time.sleep(.5)
+                 watchdog.check()
+-                if stopping:
++                if stop.requested:
+                     raise RuntimeError('Calibration plateau watchdog trip')
+             else:
+                 client_cmd = [sys.executable, str(HERE / 'protocol.py'), '--mode', args.mode,
+                               '--base-url', base, '--output-dir', str(run / 'client'), '--execute']
+                 client = subprocess.Popen(client_cmd, stdout=client_log, stderr=subprocess.STDOUT)
+                 while client.poll() is None:
+-                    if stopping or server.poll() is not None or time.monotonic() - start > 5400:
++                    if stop.requested or server.poll() is not None or time.monotonic() - start > 5400:
+                         raise RuntimeError('Stop/server exit/90 minute experiment bound; no retry')
+                     check_live(run, journal_cutoff)
+                     time.sleep(2)
+@@ -621,16 +585,16 @@
+                 while time.monotonic() < deadline:
+                     state = subprocess.run(['docker', 'inspect', '--format', '{{.State.Running}}', name], capture_output=True, text=True, timeout=5)
+                     if state.returncode == 0 and state.stdout.strip() == 'false':
+-                        if calibrating:
++                        if server:
+                             status = subprocess.run(['docker', 'inspect', '--format', '{{json .State}}', name],
+                                                     capture_output=True, text=True, timeout=5)
+                             if status.returncode == 0:
+                                 state_data = json.loads(status.stdout)
+-                                clean_exit = (state_data.get('ExitCode') == 0 and
++                                container_clean = (state_data.get('ExitCode') == 0 and
+                                               not state_data.get('OOMKilled') and not state_data.get('Error'))
+                                 (run / 'container-exit.json').write_text(json.dumps(state_data, indent=2) + '\n')
+                         break
+-                    if calibrating and not stop_sent:
++                    if not stop.sent:
+                         request_stop('deferred stop after container creation')
+                     time.sleep(2)
+                 else:
+@@ -643,11 +607,20 @@
+             idle()
+             if new_fault_lines(end, journal_cutoff):
+                 raise RuntimeError('Fault recorded; no recovery or second launch is automated')
++            if server:
++                teardown = validate_rank_receipts(run, expected_ranks=range(4))
++                (run / 'teardown-validation.json').write_text(json.dumps(teardown, indent=2) + '\n')
++                require(teardown['passed'], 'Missing or invalid final worker teardown receipts')
++                require(container_clean, 'Container exit was not clean')
++                clean_exit = True  # only after rank receipts AND clean kernel postflight
++
+         except BaseException as exc:
+             failure = f'{type(exc).__name__}: {exc}'
+             raise
+         finally:
+             watchdog.close()
++            for sig, previous in previous_handlers.items():
++                signal.signal(sig, previous)
+             if calibrating:
+                 result = write_calibration(run, cmd, ready, clean_exit, watchdog.reason, failure)
+         if calibrating and not result['verdict']['passed']:
+--- /dev/null
++++ b/teardown_receipts.py
+@@ -0,0 +1,69 @@
++"""Read final per-rank cleanup receipts without importing a device runtime.
++
++A receipt certifies observed Python cleanup calls, not native queue destruction.
++Only fresh controller-owned run directories are valid input.
++"""
++import datetime
++import json
++from pathlib import Path
++
++SCHEMA = 'screen1b.teardown.v1'
++REQUIRED_PHASES = ('submissions_stopped', 'async_output_drained', 'queues_closed',
++                   'drained', 'graphs_released', 'expert_tables_released',
++                   'uva_released', 'ple_closed', 'pinned_released',
++                   'registries_cleared', 'worker_released', 'distributed_released',
++                   'final_sync', 'device_cache_empty', 'host_cache_empty',
++                   'post_cache_sync', 'complete')
++
++
++def _validate(row, path):
++    if row.get('schema') != SCHEMA or row.get('status') != 'complete':
++        raise ValueError('wrong schema or unsuccessful release')
++    rank, pid = row.get('rank'), row.get('pid')
++    if type(rank) is not int or rank < 0 or type(pid) is not int or pid <= 0:
++        raise ValueError('invalid rank/PID')
++    if path.name != f'loader-{pid}.jsonl':
++        raise ValueError('receipt PID does not match loader filename')
++    if row.get('error') or row.get('errors'):
++        raise ValueError('receipt contains cleanup errors')
++    timestamps = row.get('timestamps', {})
++    previous = -1
++    for phase in REQUIRED_PHASES:
++        stamp = timestamps.get(phase, {})
++        mono, unix = stamp.get('monotonic_ns'), stamp.get('unix_ns')
++        if (type(mono) is not int or type(unix) is not int or
++                mono < previous or mono < 0 or unix <= 0):
++            raise ValueError('missing or unordered release timestamp: ' + phase)
++        utc = datetime.datetime.fromisoformat(stamp['utc'].replace('Z', '+00:00'))
++        if utc.utcoffset() != datetime.timedelta(0):
++            raise ValueError('timestamp must be UTC')
++        if abs(utc.timestamp() - unix / 1_000_000_000) > 1:
++            raise ValueError('UTC and Unix timestamp disagree')
++        previous = mono
++    return rank
++
++
++def validate_rank_receipts(run, expected_ranks=range(4)):
++    expected, found, errors = set(expected_ranks), {}, []
++    for path in sorted(Path(run).glob('loader-*.jsonl')):
++        try:
++            for line in path.read_text().splitlines():
++                row = json.loads(line)
++                if not isinstance(row, dict):
++                    raise ValueError('non-object loader event')
++                if row.get('event') == 'rank_teardown_failed':
++                    raise ValueError('worker reported failed teardown')
++                if row.get('event') != 'rank_teardown_complete':
++                    continue
++                rank = _validate(row, path)
++                if rank not in expected or rank in found:
++                    raise ValueError('unexpected or duplicate rank ' + str(rank))
++                found[rank] = row
++        except (OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
++            errors.append(f'{path.name}: {exc}')
++    missing = sorted(expected - set(found))
++    if missing:
++        errors.append('missing final rank receipts: ' + str(missing))
++    return {'schema': 'screen1b.teardown-validation.v1',
++            'passed': not errors, 'expected_ranks': sorted(expected),
++            'received_ranks': sorted(found), 'errors': errors}

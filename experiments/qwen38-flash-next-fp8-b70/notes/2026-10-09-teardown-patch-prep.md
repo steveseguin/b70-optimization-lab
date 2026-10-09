@@ -1,0 +1,14 @@
+# Flash-Next teardown patch handoff — 2026-10-09
+- GPU launches remain halted; no GPU work or host settings changed.
+- [Unapplied patch and module copies](../reopen-20261008/overlay-fix-teardown/README.md) are CPU-reviewed only.
+- Release order: drain, graphs/tables/UVA, PLE views/mmaps, pinned owners, registries, worker pools, communicators, final cache drains.
+- SIGINT/SIGTERM defer to the same release; repeated signals cannot unwind cleanup.
+- Parent callers wait for workers; failed release/wait preserves the process without retries or kills.
+- Docker uses SIGINT and unlimited stop timeout; watchdog retains one STOP-then-SIGINT path.
+- Calibration needs four ordered final receipts, clean container status and clean kernel postflight.
+- CPU results: lane 207 passed / 6 prohibited skips (213 total); probe 26 passed; new teardown 49 passed.
+- Existing worker-init rehearsal was excluded; four-rank fixture rehearsal uses extracted worker code and fakes.
+- Independent ordering review passed after fixes; active overlay, saved runs and protected work untouched.
+- [Probe decision table](../reopen-20261008/probe/README.md#exit-lifecycle-discrimination--prepared-not-executed) now states each production decision.
+- Receipts do not prove native Level Zero queues are gone; OOM/SIGKILL remain uncatchable and require the loading RAM guard.
+- Next GPU step needs owner resolution of the boot halt and separately admitted native qualification; do not apply automatically.

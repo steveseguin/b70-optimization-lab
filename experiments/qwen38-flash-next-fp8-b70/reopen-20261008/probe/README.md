@@ -168,14 +168,19 @@ select the image UMD. Host UMD requires `--host-umd-overlay` on both compared
 arms. No sequential campaign is authorized: a fault stops work, and another
 arm requires a separately admitted state under the same guardian/watcher rule.
 
-| Matched result | Preregistered interpretation |
-|---|---|
-| Clean exit clean; abrupt exit faults | Supports teardown class; does not uniquely identify slab versus internal queue/ring mapping. |
-| Both fault | Allocation/mapping/runtime class remains; not cured by this cleanup. A fault only during clean finalization can still be teardown, so this is not proof of allocation-time failure. |
-| Both clean | Flaky/other or changed state; historical faults remain unexplained. |
-| Clean exit faults; abrupt exit clean | Cleanup-specific failure or flakiness; no teardown fix established. |
-| Sleep remains clean until abrupt exit | Exit boundary is stronger than elapsed-time explanation. |
-| Fault during sleep, before exit | Release/idle/asynchronous fault; abrupt interpreter exit is not necessary. |
+| Matched result | Preregistered interpretation | Exact production decision |
+|---|---|---|
+| Clean exit clean; abrupt exit faults | Supports teardown class; does not uniquely identify slab versus internal queue/ring mapping. | Keep the production overlay unchanged. The unapplied teardown candidate may proceed to separately authorized native validation: normal, partial-load, SIGINT/SIGTERM and calibrate-load exits, four rank receipts, clean kernel evidence and unchanged output/fresh-server gates. A single clean probe does not authorize adoption. |
+| Both fault | Allocation/mapping/runtime class remains; cleanup did not cure it. A fault during clean finalization can still be teardown. | Do not apply or launch full production with this candidate. Preserve the halt and investigate native release/queue ownership and mapping faults; revise the candidate before another separately admitted test. |
+| Both clean | Flaky/other or changed state; historical faults remain unexplained. | No production change or safety certification. Preserve the candidate as unqualified; require a separately admitted matched repeat before choosing a production remedy. |
+| Clean exit faults; abrupt exit clean | Cleanup-specific failure or flakiness; no fix established. | Reject adoption of this candidate. Inspect the release phase that failed and revise/test that mechanism before any production run. Do not adopt abrupt exit as a workaround. |
+| Sleep remains clean until abrupt exit, then faults | Exit boundary is stronger than elapsed-time explanation; it does not establish live pinned slabs. | Keep production unchanged. Prioritize the ordered-release/native-finalization candidate for separately authorized validation; this outcome alone does not qualify it. |
+| Fault during sleep, before exit | Release/idle/asynchronous fault; abrupt interpreter exit is not necessary. | Do not treat graceful interpreter exit as a sufficient remedy or resume production. Investigate release-time mapping/queue behavior and pending runtime work before revising the candidate. |
+| Missing marker, timeout, stale watcher, exception or missing evidence | Comparison is inconclusive. | No production decision, patch adoption, automatic retry or full-load launch. Preserve evidence and obtain a separately admitted valid comparison. |
+
+All rows keep the current boot halt in force until the owner resolves it.
+The [unapplied teardown patch](../overlay-fix-teardown/README.md) has CPU ordering
+tests only; no row turns a probe result into production approval.
 
 A missing marker, timeout, stale watcher, unavailable required evidence or
 exception is inconclusive. Compare fault timestamps to release/exit markers;

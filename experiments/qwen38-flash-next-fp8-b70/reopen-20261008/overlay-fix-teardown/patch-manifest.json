@@ -1,0 +1,71 @@
+{
+  "schema": "screen1b.unapplied-teardown-patch.v1",
+  "applied": false,
+  "image": "vllm/vllm-openai-xpu@sha256:e4446310b1d30015e8fdc1a0a2ef1669ac6bef857cbe772487571ed5c1a926a9",
+  "files": {
+    "container-entrypoint.sh": {
+      "before_sha256": "12c3d3a9a93a2c5c90bc48dec0d983f2feca07ffad4fc703916eb5abdc67a7d0",
+      "after_sha256": "969d6372ac635d3444dea2368686c153cfd0dcae6a6dbdf6c6bc65a076d9692b"
+    },
+    "memory_watchdog.py": {
+      "before_sha256": "67dbc41ac77e58853d0c950980c2567932ff97e171f74fc8d72886039e843005",
+      "after_sha256": "f084dd183b57e6340d43bef1c0dcb7194ee2f449469e31195d248ae8129966c7"
+    },
+    "overlay-manifest.json": {
+      "before_sha256": "3fc4277b1d87df8ef80c82a1b94a7751aa1d98937ecc67529a97a75cfe1a8c42",
+      "after_sha256": "21f4a79c000aa4cf9772082379b486384f5ac8bc1a38210c96c567f555ef7648"
+    },
+    "overlay/vllm/model_executor/offloader/uva.py": {
+      "before_sha256": "4d6e15422b454f1290ad241a4be2b6dc7eb63e4dc68cfc77502b86738e270449",
+      "after_sha256": "e3602914cf780d5659d45101912d9d9b4718dfe687b88bb87efc7bb94df41125"
+    },
+    "overlay/vllm/q38_expert_placement.py": {
+      "before_sha256": "4e1e3eaa3016ce3c364db64fde8294073f8575e0f06590a50c267a974988a2c7",
+      "after_sha256": "ffe5c85153c9cbc31cab4798f198161aafc7b31407d7d20dbcfbfd2f9e5fcbe9"
+    },
+    "overlay/vllm/screen1b_guard.py": {
+      "before_sha256": "8218ff45284d9ceba4dd498534e39d4c4c5b1c6e2a1bcaa365f92543f1606e58",
+      "after_sha256": "dd111ba0d8abaf46d629b60bb806ee4f5b545fc779689047972d25b97c91d472"
+    },
+    "overlay/vllm/screen1b_ple.py": {
+      "before_sha256": "7f557bdef9b38962154646598393a0f4d65d86d93d8c48724141d9be8fb9ebca",
+      "after_sha256": "ecd36c30c6cafa739f3565b98cb3cb3936c7f1cbc6746d7581c900e610d0cbb2"
+    },
+    "overlay/vllm/screen1b_teardown.py": {
+      "before_sha256": null,
+      "after_sha256": "c37445ab688ff43ff0366698e689af50c5780dc1a4aa5112f2e517059cf04449"
+    },
+    "overlay/vllm/v1/engine/core.py": {
+      "before_sha256": "77047314a485a0b456b85dda08e1876379d1ef9566f129a04ef5c07bbfbd835d",
+      "after_sha256": "6067951188f96216840913c00d52ba97846a6ad3b69874da97764a8965db184e"
+    },
+    "overlay/vllm/v1/executor/multiproc_executor.py": {
+      "before_sha256": "c2561bc871827bc3569242d0692f8d3d7865c28b064736a8b793736c1103c6b5",
+      "after_sha256": "a4305b728c5613f6bd3b2c2c9ccb0b3fa2b19e9096594a0b5d653ee53ff44230"
+    },
+    "overlay/vllm/v1/worker/gpu/model_runner.py": {
+      "before_sha256": "f972f6499a3f5adfd95c9f4143651085af91ad157202b59707a8cde9d7545121",
+      "after_sha256": "8a70ef96ca611702be151cdf3ee7d883f84d90e7657273103d19206aec6e19c3"
+    },
+    "overlay/vllm/v1/worker/gpu_worker.py": {
+      "before_sha256": null,
+      "after_sha256": "1b55f9910bf1569a138e5ab458ea97694afc9d3e3543d9a82bd0a4fc197f57b0"
+    },
+    "overlay/vllm/v1/worker/xpu_worker.py": {
+      "before_sha256": null,
+      "after_sha256": "b976b96b49de5feafc3f750e0087fab62f336a1ec2751cab884edae10662666f"
+    },
+    "screen.py": {
+      "before_sha256": "88d40ded9ca991a02d0334e2bdee0ff22d0857d0b947f537fb38c49fbe2ad532",
+      "after_sha256": "1f0502aab11d773a9abcf05231c7e60330511b311e9ada731a9f73b910fac8ae"
+    },
+    "teardown_receipts.py": {
+      "before_sha256": null,
+      "after_sha256": "46099d077ec2025d2849ffc4052baee603e15b5f32b811a536a14ebb5727b5a7"
+    }
+  },
+  "native_base_sources": {
+    "vllm/v1/worker/gpu_worker.py": "6994436e4547c0996ab555b3e814e8ccea26b650dfc1b378b97d640745309347",
+    "vllm/v1/worker/xpu_worker.py": "711b56432506b58041cd86e71320c3960413f7bd61061990b66488421d81cfc3"
+  }
+}

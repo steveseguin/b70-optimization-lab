@@ -1,0 +1,75 @@
+{
+  "schema": "screen1b.teardown-cpu-validation.v1",
+  "utc": "2026-10-09T03:09:04.886666+00:00",
+  "base_repo_commit": "8fe4b6eb90d61d8eb830dad83be78aa867297f93",
+  "applied": false,
+  "gpu_execution": false,
+  "host_changes": false,
+  "native_queue_destruction_verified": false,
+  "suites": {
+    "lane": {
+      "suite": "lane",
+      "discovered": 213,
+      "passed": 207,
+      "skipped": 6,
+      "failures": 0,
+      "errors": 0,
+      "exclusions": [
+        "test_ple_mmap.TensorExactnessTests.test_real_checkpoint_boundary_bytes_without_table_allocation",
+        "test_worker_init_rehearsal.WorkerInitRehearsalTests.test_attempt2_guard_fails_real_rope_constructor",
+        "test_worker_init_rehearsal.WorkerInitRehearsalTests.test_rank0",
+        "test_worker_init_rehearsal.WorkerInitRehearsalTests.test_rank1",
+        "test_worker_init_rehearsal.WorkerInitRehearsalTests.test_rank2",
+        "test_worker_init_rehearsal.WorkerInitRehearsalTests.test_rank3"
+      ],
+      "native_cleanup_executed": false
+    },
+    "probe": {
+      "suite": "probe",
+      "discovered": 26,
+      "passed": 26,
+      "skipped": 0,
+      "failures": 0,
+      "errors": 0,
+      "exclusions": [],
+      "native_cleanup_executed": false
+    },
+    "teardown": {
+      "suite": "teardown",
+      "discovered": 49,
+      "passed": 49,
+      "skipped": 0,
+      "failures": 0,
+      "errors": 0,
+      "exclusions": [],
+      "native_cleanup_executed": false
+    }
+  },
+  "sha256": {
+    "base-runtime/vllm/v1/worker/gpu_worker.py": "6994436e4547c0996ab555b3e814e8ccea26b650dfc1b378b97d640745309347",
+    "base-runtime/vllm/v1/worker/xpu_worker.py": "711b56432506b58041cd86e71320c3960413f7bd61061990b66488421d81cfc3",
+    "build_patch.py": "664b8f6892cf4eca22e847b73056026f00da34f3e95e6ef15f8f2103e6d6af31",
+    "copies/container-entrypoint.sh": "969d6372ac635d3444dea2368686c153cfd0dcae6a6dbdf6c6bc65a076d9692b",
+    "copies/memory_watchdog.py": "f084dd183b57e6340d43bef1c0dcb7194ee2f449469e31195d248ae8129966c7",
+    "copies/overlay/vllm/model_executor/offloader/uva.py": "e3602914cf780d5659d45101912d9d9b4718dfe687b88bb87efc7bb94df41125",
+    "copies/overlay/vllm/q38_expert_placement.py": "ffe5c85153c9cbc31cab4798f198161aafc7b31407d7d20dbcfbfd2f9e5fcbe9",
+    "copies/overlay/vllm/screen1b_guard.py": "dd111ba0d8abaf46d629b60bb806ee4f5b545fc779689047972d25b97c91d472",
+    "copies/overlay/vllm/screen1b_ple.py": "ecd36c30c6cafa739f3565b98cb3cb3936c7f1cbc6746d7581c900e610d0cbb2",
+    "copies/overlay/vllm/screen1b_teardown.py": "c37445ab688ff43ff0366698e689af50c5780dc1a4aa5112f2e517059cf04449",
+    "copies/overlay/vllm/v1/engine/core.py": "6067951188f96216840913c00d52ba97846a6ad3b69874da97764a8965db184e",
+    "copies/overlay/vllm/v1/executor/multiproc_executor.py": "a4305b728c5613f6bd3b2c2c9ccb0b3fa2b19e9096594a0b5d653ee53ff44230",
+    "copies/overlay/vllm/v1/worker/gpu/model_runner.py": "8a70ef96ca611702be151cdf3ee7d883f84d90e7657273103d19206aec6e19c3",
+    "copies/overlay/vllm/v1/worker/gpu_worker.py": "1b55f9910bf1569a138e5ab458ea97694afc9d3e3543d9a82bd0a4fc197f57b0",
+    "copies/overlay/vllm/v1/worker/xpu_worker.py": "b976b96b49de5feafc3f750e0087fab62f336a1ec2751cab884edae10662666f",
+    "copies/overlay-manifest.json": "21f4a79c000aa4cf9772082379b486384f5ac8bc1a38210c96c567f555ef7648",
+    "copies/screen.py": "1f0502aab11d773a9abcf05231c7e60330511b311e9ada731a9f73b910fac8ae",
+    "copies/teardown_receipts.py": "46099d077ec2025d2849ffc4052baee603e15b5f32b811a536a14ebb5727b5a7",
+    "patch-manifest.json": "fcd4b160212fa23a8e2c07ec935b35754b62df8dda33823dd863244add48f413",
+    "run_cpu_tests.py": "1d23c5db0107a31ed12d09fa41435b7604b3afd359000ac4832235f50febe151",
+    "teardown.patch": "3a9ea39d03d5888ed4c05eadd40c083216bfbe58dc6e35caeee2068d1fb71f62",
+    "tests/test_controller_teardown.py": "975cb3fd7cffd0e400670615062a1ab48d4024f07d0a312ff90453514ce59ac4",
+    "tests/test_patch_bundle.py": "f093dffb304172c21a0755be03934962159daa2a54d47896da85e9959d6a60cd",
+    "tests/test_rank_teardown.py": "4465a92eb3caeac526abbfac6f5cdad7c22ae1a72091a557585f4267c06260c0",
+    "tests/test_worker_shutdown_order.py": "41a47127969b47e1933db5faab1e0f1a04e22411714e3833ac9afeef18bfab0f"
+  }
+}

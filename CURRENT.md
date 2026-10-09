@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**2026-10-09, Flash-Next teardown patch prepared on CPU; GPU halt unchanged.**
+The proposed cleanup patch is saved for review and has not been applied.
+It releases owned buffers in order and waits for every worker before exit.
+CPU checks: 207 lane tests passed (six prohibited tests skipped), 26 probe
+checks and 49 new teardown checks passed. These do not prove native queue
+cleanup or safe GPU operation. [Patch, limits and review](experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-fix-teardown/README.md).
+
 **2026-10-09, Flash-Next CPU-only exit review: GPU launches remain halted.**
 The host-driver probe also returned correct bytes and then faulted as its worker
 exited. That is the second incident on this boot; the owner's decision is still
