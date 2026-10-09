@@ -1,0 +1,57 @@
+{
+  "schema": "neural.download.flashnext-probe-cpu-preparation.v1",
+  "prepared_only": true,
+  "cpu_tests": {
+    "lane": {
+      "passed": 213,
+      "failures": 0,
+      "skips": 0,
+      "log": "cpu-lane-tests.log"
+    },
+    "probe": {
+      "passed": 15,
+      "failures": 0,
+      "skips": 0,
+      "log": "cpu-probe-tests.log"
+    },
+    "hostptr": {
+      "passed": 9,
+      "failures": 0,
+      "skips": 0,
+      "log": "cpu-hostptr-tests.log"
+    },
+    "total_passed": 237
+  },
+  "interpreter": "/home/steve/.venvs/ltx25-baseline/bin/python -B",
+  "checks": {
+    "overlay_hashes_unchanged": 47,
+    "python_ast": true,
+    "shell_syntax": true
+  },
+  "independent_review": "addressing_review subagent: signed/wrapping address math, actual host-pointer use, unchanged K/N and FP8, post-worker journal handshake; no remaining CPU-scope blocker",
+  "unverified": [
+    "native USM-query availability/context",
+    "native UVA",
+    "Triton JIT/IR pointer retention",
+    "tiny GPU byte equality",
+    "host residency hypothesis",
+    "large MoE and FP8 arithmetic/output gates",
+    "TP4/PLE/startup",
+    "fresh-runtime repeats"
+  ],
+  "files_sha256": {
+    "probe/container_command.py": "0c72c34e3bcf42a6e5fc59cc41e53b45884a3a4dc2ed5cb686d5ac0df74d07c7",
+    "probe/single_rank_slab_probe.py": "4bd8d426d6964f113d7b2f3c46cc67b11de081c29f83bdc38b86c6818c80183d",
+    "probe/single_rank_slab_probe_direct.py": "807cb90a72d8a2114c0b16d217a974b7f8f5d0c44e5e37ba63f0e1e59bf2c930",
+    "probe/slab_kernels.py": "a04098362aababb2a3beb4aae684134cdb44b06c49378cc7d6be5bfc901ca42b",
+    "probe/test_probe.py": "4a19cc3752019ca480b2bb0f9a21bde05305c7dfcff94b1633e4930b1076652d",
+    "probe/watch_kernel.py": "5ab68ce4240d83b95ec99d6db77c0c1306d8c03b57d52b1d8e732a5758acaa03",
+    "probe/run-probe-in-container.sh": "0b72cb5c1c8144a074908e4c7ce4b495dd0d9b342870e59d356e17fd9b660604",
+    "overlay-fix-hostptr/modules/vllm/model_executor/layers/fused_moe/fused_moe.py": "464b86437f178805e260b854af87c4b51ae0a8e18b577cc4ab24a174bde43d02",
+    "overlay-fix-hostptr/modules/vllm/q38_expert_placement.py": "7222800cc72dc43eb8a80eae086f9be6604a6ac2f689a05d327b543576830328",
+    "overlay-fix-hostptr/test_addressing.py": "04250b56906e08365e3fa105b3e6729bae3fc5e1141874abc62a396803ff0a5c",
+    "overlay-fix-hostptr/explicit-host-pointer.patch": "3d3b7529787e3e5b5768a96d0e451d80114388fd9c447bc7f09e87a9cb169b1f",
+    "overlay-manifest.json": "3fc4277b1d87df8ef80c82a1b94a7751aa1d98937ecc67529a97a75cfe1a8c42",
+    "image-plan.json": "08bf4e83bff6fb77dc6d4bb0d11e53edd63a59ebfd9bfb9a36e7197806469cee"
+  }
+}

@@ -1,0 +1,156 @@
+--- a/vllm/model_executor/layers/fused_moe/fused_moe.py
++++ b/vllm/model_executor/layers/fused_moe/fused_moe.py
+@@ -300,7 +300,9 @@
+     # Pointers to matrices
+     a_ptr,
+     b_ptr,
+-    b_table_ptr,
++    b_host_ptr,
++    b_local_row_ptr,
++    b_is_host_ptr,
+     c_ptr,
+     b_bias_ptr,
+     a_scale_ptr,
+@@ -351,7 +353,7 @@
+     per_channel_quant: tl.constexpr,
+     HAS_BIAS: tl.constexpr,
+     SWAP_AB: tl.constexpr,
+-    USE_B_TABLE: tl.constexpr = False,
++    USE_B_HOSTPTR: tl.constexpr = False,
+     # Tensor-descriptor path for the A gather and B load in the K-loop.
+     USE_TD: tl.constexpr = False,
+ ):
+@@ -423,9 +425,14 @@
+     token_mask = offs_token < num_valid_tokens
+ 
+     off_experts = tl.load(expert_ids_ptr + pid_m).to(tl.int64)
+-    if USE_B_TABLE:
+-        b_off = tl.load(b_table_ptr + tl.maximum(off_experts, 0))
+-        b_base = b_ptr + tl.multiple_of(b_off, 256)
++    if USE_B_HOSTPTR:
++        logical = tl.maximum(off_experts, 0)
++        local_row = tl.load(b_local_row_ptr + logical).to(tl.int64)
++        is_host = tl.load(b_is_host_ptr + logical) != 0
++        # Both allocations are actual, used launch arguments. Select first,
++        # then add only a row offset inside that selected allocation.
++        selected_base = tl.where(is_host, b_host_ptr, b_ptr)
++        b_base = selected_base + tl.multiple_of(local_row * stride_be, 256)
+     else:
+         b_base = b_ptr + off_experts * stride_be
+     if off_experts == -1:
+@@ -869,10 +876,33 @@
+         A_scale = A_scale.reshape(1)
+ 
+     _q38_b_table = getattr(B, "_q38_base_table", None)
++    _q38_host = getattr(B, "_q38_host_storage", None)
++    _q38_local_rows = getattr(B, "_q38_local_row_table", None)
++    _q38_is_host = getattr(B, "_q38_is_host_table", None)
++    _q38_parts = (_q38_b_table, _q38_host, _q38_local_rows, _q38_is_host)
++    if any(part is not None for part in _q38_parts):
++        if any(part is None for part in _q38_parts):
++            raise RuntimeError("v5 hostptr metadata is incomplete; old tables cannot launch")
++        from vllm.q38_expert_placement import validate_hostptr_storage
++        validate_hostptr_storage(B)
++        if (_q38_host.device != B.device or _q38_host.dtype != B.dtype
++                or _q38_host.shape[1:] != B.shape[1:]
++                or _q38_host.stride() != B.stride()
++                or not _q38_host.is_contiguous()
++                or not B.is_contiguous()):
++            raise RuntimeError("v5 hostptr weight geometry or device changed")
++        for table, dtype in ((_q38_local_rows, torch.int64),
++                             (_q38_is_host, torch.uint8)):
++            if (table.device != B.device or table.dtype != dtype
++                    or tuple(table.shape) != (B._q38_num_experts,)
++                    or not table.is_contiguous()):
++                raise RuntimeError("v5 hostptr routing table geometry or device changed")
+     fused_moe_kernel[grid](
+         A,
+         B,
+-        B if _q38_b_table is None else _q38_b_table,
++        B if _q38_host is None else _q38_host,
++        B if _q38_local_rows is None else _q38_local_rows,
++        B if _q38_is_host is None else _q38_is_host,
+         C,
+         B_bias,
+         A_scale,
+@@ -912,7 +942,7 @@
+         HAS_BIAS=HAS_BIAS,
+         BLOCK_SIZE_K=BLOCK_SIZE_K,
+         SWAP_AB=SWAP_AB,
+-        USE_B_TABLE=_q38_b_table is not None,
++        USE_B_HOSTPTR=_q38_host is not None,
+         USE_TD=use_td,
+         **config,
+     )
+--- a/vllm/q38_expert_placement.py
++++ b/vllm/q38_expert_placement.py
+@@ -74,6 +74,32 @@
+     return table
+ 
+ 
++
++def local_row_tables(resident_rows, host_rows, row_elements):
++    """Per-expert in-allocation row index and host selector; no addresses."""
++    count = len(resident_rows) + len(host_rows)
++    if sorted(resident_rows + host_rows) != list(range(count)):
++        raise ValueError('row partition must cover all logical experts exactly once')
++    if row_elements <= 0 or row_elements % 256:
++        raise ValueError('unaligned hostptr row stride')
++    local_rows, is_host = [0] * count, [0] * count
++    for selector, rows in enumerate((resident_rows, host_rows)):
++        for index, logical in enumerate(rows):
++            local_rows[logical], is_host[logical] = index, selector
++    return local_rows, is_host
++
++
++def storage_facts(*tensors):
++    """Immutable host-side snapshot; querying tensor metadata submits no work."""
++    return tuple((tensor.data_ptr(), tuple(tensor.shape), tensor.stride(),
++                  str(tensor.dtype), str(tensor.device)) for tensor in tensors)
++
++
++def validate_hostptr_storage(param):
++    if storage_facts(param, param._q38_host_cpu, param._q38_host_storage) != param._q38_storage_facts:
++        raise RuntimeError('v5 hostptr storage changed after table construction')
++
++
+ def allocate_weight(layer, name, shape, dtype):
+     import torch
+     from vllm import screen1b_guard as guard
+@@ -102,13 +128,27 @@
+         table = torch.tensor(offsets(resident.data_ptr(), uva.data_ptr(), resident_rows,
+                                      host_rows, row_bytes, itemsize),
+                              dtype=torch.int64, device='cpu').to(resident.device)
++        local_rows, is_host = local_row_tables(resident_rows, host_rows,
++                                               row_bytes // itemsize)
++        local_table = torch.tensor(local_rows, dtype=torch.int64,
++                                   device='cpu').to(resident.device)
++        host_table = torch.tensor(is_host, dtype=torch.uint8,
++                                  device='cpu').to(resident.device)
++        if (uva.data_ptr() != host.data_ptr() or uva.dtype != host.dtype
++                or tuple(uva.shape) != tuple(host.shape)
++                or uva.stride() != host.stride()):
++            raise RuntimeError('v5 hostptr UVA must preserve pointer/dtype/shape/stride')
+         param = torch.nn.Parameter(resident, requires_grad=False)
+         param._q38_row_map = ({e: ('resident', i) for i, e in enumerate(resident_rows)} |
+                               {e: ('host', i) for i, e in enumerate(host_rows)})
+         param._q38_host_cpu = host
+         param._q38_host_storage = uva
+         param._q38_num_experts = shape[0]
++        # Preserve the original signed-offset oracle for review, not GPU reads.
+         param._q38_base_table = table
++        param._q38_local_row_table = local_table
++        param._q38_is_host_table = host_table
++        param._q38_storage_facts = storage_facts(param, host, uva)
+         # Save on __dict__, not register a second parameter alias in the module.
+         layer.__dict__['_q38_placed_' + name] = param
+         guard.receipt('v5_allocated', layer=layer.layer_name, parameter=name,
+@@ -137,5 +177,7 @@
+         if current.data_ptr() != saved.data_ptr() or current.shape != saved.shape:
+             raise RuntimeError('v5 postprocessing changed placed weight storage')
+         for key in ('_q38_row_map', '_q38_host_cpu', '_q38_host_storage',
+-                    '_q38_num_experts', '_q38_base_table'):
++                    '_q38_num_experts', '_q38_base_table',
++                    '_q38_local_row_table', '_q38_is_host_table',
++                    '_q38_storage_facts'):
+             setattr(current, key, getattr(saved, key))
