@@ -1,0 +1,17 @@
+{
+  "exception": {
+    "message": "2",
+    "repr": "IndexError(2)",
+    "traceback": "Traceback (most recent call last):\n  File \"/probe/single_rank_slab_probe.py\", line 268, in main\n    receipt.update(admission(args.health_receipt))\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/probe/single_rank_slab_probe.py\", line 72, in admission\n    end = lane().verify_health_receipt(json.loads(raw), boot, now)\n          ^^^^^^\n  File \"/probe/single_rank_slab_probe.py\", line 47, in lane\n    import screen  # stdlib-only import; no operational functions invoked\n    ^^^^^^^^^^^^^\n  File \"/screen-package/screen.py\", line 33, in <module>\n    REPO = HERE.parents[2]\n           ~~~~~~~~~~~~^^^\n  File \"/usr/lib/python3.12/pathlib.py\", line 281, in __getitem__\n    raise IndexError(idx)\nIndexError: 2\n",
+    "type": "IndexError"
+  },
+  "explicit_synchronizations": 0,
+  "gather_launches": 0,
+  "passed": false,
+  "schema": "neural.download.flashnext-slab-probe.v1",
+  "source_sha256": "4bd8d426d6964f113d7b2f3c46cc67b11de081c29f83bdc38b86c6818c80183d",
+  "stage": "admission",
+  "timeout_seconds": 120,
+  "triton_ir": {},
+  "variant": "indirect"
+}

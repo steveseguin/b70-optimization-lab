@@ -18,8 +18,8 @@ Client `stream/start-client-117.sh 97 cone 1 1` (work dir /home/steve/ltx-stream
 - Reference check: the eager chain (levers off) equals `stream114-qeager-c00000{0,1,2}` byte for byte on all seven
   tensors (anchor file, audio latent, images, last frame, stage-A latent, video latent, waveform).
 - `stream-geometry-measured.json` matches.
-- Stream bytes: all 62 chunks that 116b produced from the same seeds (`s116b-frame97-dg1`) are byte-identical in
-  `images_sha256` and `anchor_sha256` to 117's chunks 0–61. The 117 levers changed no output byte.
+- Stream bytes: all 72 chunks that 116b produced from the same seeds (`s116b-frame97-dg1`) are byte-identical in
+  `images_sha256` and `anchor_sha256` to 117's chunks 0–71. The 117 levers changed no output byte.
 
 ## Stream cadence (medians over chunks 10–109, 100 chunks; 116b in brackets)
 

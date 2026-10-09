@@ -3,6 +3,7 @@
 import argparse
 import json
 from pathlib import Path
+import os
 import re
 import shlex
 
@@ -14,26 +15,34 @@ CONF = 'pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1'
 def command(render_node, health, receipt_dir, direct=False):
     if not re.fullmatch(r'/dev/dri/by-path/pci-0000:(23|27|43|47):00\.0-render', render_node):
         raise ValueError('select one four-card-host by-path render node')
+    # The lane's screen.py computes REPO = HERE.parents[2] at import (attempt 2 of 2026-10-09 refused with
+    # IndexError at /screen-package), so the package is mounted at its repo-relative depth under /repo.
+    # Docker splits --device on ':' and the by-path name contains two (attempt 1 of 2026-10-09 was
+    # refused with "bad format for path"); pass the resolved renderD node and keep the by-path name in the env.
+    resolved = os.path.realpath(render_node)
+    if not re.fullmatch(r'/dev/dri/renderD\d+', resolved):
+        raise ValueError('by-path render node does not resolve to /dev/dri/renderD*: ' + resolved)
     health = Path(health).absolute()
     receipt_dir = Path(receipt_dir).absolute()
     if any(',' in str(p) or '\n' in str(p) for p in (HERE, PACKAGE, health, receipt_dir)):
         raise ValueError('Docker mount paths may not contain comma/newline')
     cmd = ['docker', 'run', '--rm', '--pull=never', '--restart=no', '--network=none',
-           '--device=' + render_node + ':/dev/dri/renderD128:rw',
+           '--device=' + resolved + ':/dev/dri/renderD128:rw',
            '--security-opt=seccomp=unconfined', '--stop-signal=SIGINT',
            '--entrypoint=/opt/venv/bin/python', '-w', '/opt/venv']
-    env = {'NEOReadDebugKeys': '1', 'EnableDeferBacking': '0',
+    env = {'FLASHNEXT_PROBE_RENDER_BYPATH': render_node, 'FLASHNEXT_PROBE_RENDER_NODE': resolved,
+           'NEOReadDebugKeys': '1', 'EnableDeferBacking': '0',
            **{k: CONF for k in ('PYTORCH_ALLOC_CONF', 'PYTORCH_CUDA_ALLOC_CONF', 'PYTORCH_HIP_ALLOC_CONF')},
            'ZE_AFFINITY_MASK': '0', 'ZE_FLAT_DEVICE_HIERARCHY': 'FLAT',
            'VLLM_TARGET_DEVICE': 'xpu', 'HF_HUB_OFFLINE': '1', 'TRANSFORMERS_OFFLINE': '1',
            'HF_DATASETS_OFFLINE': '1', 'HF_HOME': '/receipts/cache/hf',
            'TRITON_CACHE_DIR': '/receipts/cache/triton', 'VLLM_CACHE_ROOT': '/receipts/cache/vllm',
            'XDG_CACHE_HOME': '/receipts/cache/xdg', 'PYTHONDONTWRITEBYTECODE': '1',
-           'OMP_NUM_THREADS': '1', 'FLASHNEXT_PROBE_PACKAGE': '/screen-package',
+           'OMP_NUM_THREADS': '1', 'FLASHNEXT_PROBE_PACKAGE': '/repo/experiments/qwen38-flash-next-fp8-b70/reopen-20261008',
            'FLASHNEXT_PROBE_ADMIT': '1'}
     for key, value in env.items():
         cmd += ['-e', key + '=' + value]
-    for source, target, readonly in ((HERE, '/probe', True), (PACKAGE, '/screen-package', True),
+    for source, target, readonly in ((HERE, '/probe', True), (PACKAGE, '/repo/experiments/qwen38-flash-next-fp8-b70/reopen-20261008', True),
                                     (health, '/health.json', True), (receipt_dir, '/receipts', False)):
         cmd += ['--mount', f'type=bind,src={source},dst={target}' + (',readonly' if readonly else '')]
     image = json.loads((PACKAGE / 'image-plan.json').read_text())['image']
