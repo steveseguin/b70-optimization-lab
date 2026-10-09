@@ -1,0 +1,238 @@
+{
+  "schema": "flashnext.attempt7-ordering-evidence.v1",
+  "scope": "CPU-only read-only source extraction; original runs unchanged",
+  "boot_id": "1019201097004915ac6c980d6b74afa0",
+  "container_name": "flashnext-screen1-screen1b-mmap-calibrate-load-20261008-attempt7",
+  "clock_note": "journal --since/--until supplied in host EDT; JSON timestamps are Unix microseconds; Docker timestamps are log reception, not execution",
+  "sources_sha256": {
+    "server.log": "c970f5fbc3bd4d86f0e5ae97aae8057cb3773265c3c88ccabc991056ada9cd06",
+    "host-memory-samples.jsonl": "35deae071bdb5bb41723b0a0f2661b00ad06517925801245ce16f42211e8113f",
+    "calibration-load.json": "db8c387e8926de35a219775074e718634620c378d72c6cdad7c0495ca8906c66",
+    "graceful-stop.json": "1323526753368bb6fcd253e9f6aaf7363fe104bd268b0ef79ad5857eaf1f5b7a",
+    "container-exit.json": "2d849d65ec21e07d71bb34dfb950b3faed36375793bf47703a93040b36cbec38"
+  },
+  "docker": {
+    "command": [
+      "docker",
+      "logs",
+      "--timestamps",
+      "--since",
+      "2026-10-08T21:10:00Z",
+      "--until",
+      "2026-10-08T21:13:20Z",
+      "flashnext-screen1-screen1b-mmap-calibrate-load-20261008-attempt7"
+    ],
+    "selected_lines": [
+      "2026-10-08T21:10:40.029331155Z (Worker_TP1_EP1 pid=478) INFO 10-08 21:10:40 [model_runner.py:429] Model loading took 20.87 GiB memory and 489.555930 seconds",
+      "2026-10-08T21:10:40.054376483Z (Worker_TP1_EP1 pid=478) INFO 10-08 21:10:40 [xpu.py:429] [XPU]Setting attention block size to 832 tokens to ensure multiple of 64, set mamba_page_size_padded to 851968 bytes accordingly, before was 819200 bytes.",
+      "2026-10-08T21:10:40.495408739Z (Worker_TP2_EP2 pid=513) INFO 10-08 21:10:40 [model_runner.py:429] Model loading took 20.87 GiB memory and 490.022026 seconds",
+      "2026-10-08T21:10:40.514100151Z (Worker_TP2_EP2 pid=513) INFO 10-08 21:10:40 [xpu.py:429] [XPU]Setting attention block size to 832 tokens to ensure multiple of 64, set mamba_page_size_padded to 851968 bytes accordingly, before was 819200 bytes.",
+      "2026-10-08T21:10:40.538954680Z (Worker_TP3_EP3 pid=548) INFO 10-08 21:10:40 [model_runner.py:429] Model loading took 20.87 GiB memory and 490.053580 seconds",
+      "2026-10-08T21:10:40.557834647Z (Worker_TP3_EP3 pid=548) INFO 10-08 21:10:40 [xpu.py:429] [XPU]Setting attention block size to 832 tokens to ensure multiple of 64, set mamba_page_size_padded to 851968 bytes accordingly, before was 819200 bytes.",
+      "2026-10-08T21:11:12.939926173Z (Worker_TP0_EP0 pid=450) INFO 10-08 21:11:12 [model_runner.py:429] Model loading took 20.87 GiB memory and 522.464889 seconds",
+      "2026-10-08T21:11:12.974068040Z (Worker_TP0_EP0 pid=450) INFO 10-08 21:11:12 [xpu.py:429] [XPU]Setting attention block size to 832 tokens to ensure multiple of 64, set mamba_page_size_padded to 851968 bytes accordingly, before was 819200 bytes.",
+      "2026-10-08T21:11:13.235688674Z (EngineCore pid=339) INFO 10-08 21:11:13 [utils.py:320] Using BLNHC KV cache layout.",
+      "2026-10-08T21:11:18.390204924Z (Worker_TP0_EP0 pid=450) WARNING 10-08 21:11:18 [fused_moe.py:1175] Using default MoE config. Performance might be sub-optimal! Config file not found at /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/fused_moe/configs/E=128,N=640,device_name=Intel(R)_Arc(TM)_Pro_B70_Graphics,dtype=fp8_w8a8,block_shape=[128,128].json",
+      "2026-10-08T21:11:36.408525597Z !!!!!!! Segfault encountered !!!!!!!",
+      "2026-10-08T21:11:36.408698923Z !!!!!!! Segfault encountered !!!!!!!",
+      "2026-10-08T21:11:36.408809991Z !!!!!!! Segfault encountered !!!!!!!",
+      "2026-10-08T21:11:36.774845438Z !!!!!!! Segfault encountered !!!!!!!",
+      "2026-10-08T21:12:07.128311299Z (EngineCore pid=339) ERROR 10-08 21:12:07 [multiproc_executor.py:315] Worker proc VllmWorker-3 died unexpectedly (exit code: None), shutting down executor.",
+      "2026-10-08T21:12:56.864276029Z (EngineCore pid=339) ERROR 10-08 21:12:56 [core.py:1375] EngineCore failed to start.",
+      "2026-10-08T21:12:56.864473691Z (EngineCore pid=339) ERROR 10-08 21:12:56 [core.py:1375] RuntimeError: cancelled",
+      "2026-10-08T21:12:56.867625702Z (EngineCore pid=339) RuntimeError: cancelled"
+    ]
+  },
+  "kernel": {
+    "command": [
+      "journalctl",
+      "-k",
+      "-b",
+      "1019201097004915ac6c980d6b74afa0",
+      "--since",
+      "2026-10-08 17:11:17",
+      "--until",
+      "2026-10-08 17:11:20",
+      "--no-pager",
+      "-o",
+      "json"
+    ],
+    "selection": "First event per card and fault category, plus engine-reset messages",
+    "events": [
+      {
+        "__REALTIME_TIMESTAMP": "1791493878369060",
+        "__MONOTONIC_TIMESTAMP": "367710128027",
+        "MESSAGE": "xe 0000:47:00.0: [drm] Tile0: GT0: \n\tASID: 1164\n\tFaulted Address: 0x00000000f4725000\n\tFaultType: 0\n\tAccessType: 1\n\tFaultLevel: 3\n\tEngineClass: 5 ccs\n\tEngineInstance: 0"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1791493878371641",
+        "__MONOTONIC_TIMESTAMP": "367710130608",
+        "MESSAGE": "xe 0000:47:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1791493878372442",
+        "__MONOTONIC_TIMESTAMP": "367710131409",
+        "MESSAGE": "xe 0000:47:00.0: [drm] Tile0: GT0: Engine memory CAT error [18]: class=ccs, logical_mask: 0x1, guc_id=42"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1791493878385005",
+        "__MONOTONIC_TIMESTAMP": "367710143972",
+        "MESSAGE": "xe 0000:47:00.0: [drm] Tile0: GT0: Engine reset: engine_class=ccs, logical_mask: 0x1, guc_id=42, state=0x249"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1791493878385335",
+        "__MONOTONIC_TIMESTAMP": "367710144302",
+        "MESSAGE": "xe 0000:43:00.0: [drm] Tile0: GT0: \n\tASID: 1161\n\tFaulted Address: 0x0000f5569ed25000\n\tFaultType: 0\n\tAccessType: 1\n\tFaultLevel: 2\n\tEngineClass: 5 ccs\n\tEngineInstance: 0"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1791493878385515",
+        "__MONOTONIC_TIMESTAMP": "367710144482",
+        "MESSAGE": "xe 0000:43:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1791493878386758",
+        "__MONOTONIC_TIMESTAMP": "367710145725",
+        "MESSAGE": "xe 0000:43:00.0: [drm] Tile0: GT0: Engine memory CAT error [18]: class=ccs, logical_mask: 0x1, guc_id=32"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1791493878398380",
+        "__MONOTONIC_TIMESTAMP": "367710157347",
+        "MESSAGE": "xe 0000:43:00.0: [drm] Tile0: GT0: Engine reset: engine_class=ccs, logical_mask: 0x1, guc_id=32, state=0x249"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1791493878398658",
+        "__MONOTONIC_TIMESTAMP": "367710157625",
+        "MESSAGE": "kworker/u128:0: page allocation failure: order:9, mode:0x40820(GFP_ATOMIC|__GFP_COMP), nodemask=(null),cpuset=/,mems_allowed=0"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1791493878399930",
+        "__MONOTONIC_TIMESTAMP": "367710158897",
+        "MESSAGE": "xe 0000:27:00.0: [drm] Tile0: GT0: \n\tASID: 1159\n\tFaulted Address: 0x0000eaaa4b285000\n\tFaultType: 0\n\tAccessType: 1\n\tFaultLevel: 2\n\tEngineClass: 5 ccs\n\tEngineInstance: 0"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1791493878400219",
+        "__MONOTONIC_TIMESTAMP": "367710159186",
+        "MESSAGE": "xe 0000:27:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1791493878401031",
+        "__MONOTONIC_TIMESTAMP": "367710159998",
+        "MESSAGE": "xe 0000:27:00.0: [drm] Tile0: GT0: Engine memory CAT error [18]: class=ccs, logical_mask: 0x1, guc_id=22"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1791493878413201",
+        "__MONOTONIC_TIMESTAMP": "367710172167",
+        "MESSAGE": "xe 0000:27:00.0: [drm] Tile0: GT0: Engine reset: engine_class=ccs, logical_mask: 0x1, guc_id=22, state=0x249"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1791493878413856",
+        "__MONOTONIC_TIMESTAMP": "367710172823",
+        "MESSAGE": "xe 0000:23:00.0: [drm] Tile0: GT0: \n\tASID: 1155\n\tFaulted Address: 0x0000e001f30e5000\n\tFaultType: 0\n\tAccessType: 1\n\tFaultLevel: 2\n\tEngineClass: 5 ccs\n\tEngineInstance: 0"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1791493878414139",
+        "__MONOTONIC_TIMESTAMP": "367710173106",
+        "MESSAGE": "xe 0000:23:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1791493878415646",
+        "__MONOTONIC_TIMESTAMP": "367710174613",
+        "MESSAGE": "xe 0000:23:00.0: [drm] Tile0: GT0: Engine memory CAT error [18]: class=ccs, logical_mask: 0x1, guc_id=12"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1791493878423515",
+        "__MONOTONIC_TIMESTAMP": "367710182482",
+        "MESSAGE": "xe 0000:23:00.0: [drm] Tile0: GT0: Engine reset: engine_class=ccs, logical_mask: 0x1, guc_id=12, state=0x249"
+      }
+    ]
+  },
+  "controller": {
+    "command": [
+      "journalctl",
+      "--user",
+      "-b",
+      "1019201097004915ac6c980d6b74afa0",
+      "--since",
+      "2026-10-08 17:10:00",
+      "--until",
+      "2026-10-08 17:14:00",
+      "--no-pager",
+      "-o",
+      "json",
+      "-u",
+      "flashnext-screen1-20261008T165744.service"
+    ],
+    "selected_events": [
+      {
+        "__REALTIME_TIMESTAMP": "1791493998890288",
+        "__MONOTONIC_TIMESTAMP": "367830649255",
+        "MESSAGE": "REFUSED/STOPPED: Fault recorded; no recovery or second launch is automated"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1791493999092324",
+        "__MONOTONIC_TIMESTAMP": "367830851291",
+        "MESSAGE": "flashnext-screen1-20261008T165744.service: Main process exited, code=exited, status=2/INVALIDARGUMENT"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1791493999094045",
+        "__MONOTONIC_TIMESTAMP": "367830853012",
+        "MESSAGE": "flashnext-screen1-20261008T165744.service: Failed with result 'exit-code'."
+      }
+    ]
+  },
+  "prefault_journal_crash_search": {
+    "command": [
+      "journalctl",
+      "-b",
+      "1019201097004915ac6c980d6b74afa0",
+      "--since",
+      "2026-10-08 17:00:00",
+      "--until",
+      "2026-10-08 17:14:00",
+      "--no-pager",
+      "-o",
+      "json"
+    ],
+    "message_regex": "(?i)(segfault|SIGSEGV|SIGBUS|out of memory|oom-kill|killed process|systemd-coredump|code=killed)",
+    "cutoff_unix_us": 1791493878369060,
+    "matching_records": 0,
+    "limitation": "Absence of logged events does not exclude an unlogged fatal signal or delayed reporting."
+  },
+  "docker_daemon": {
+    "command": [
+      "journalctl",
+      "-b",
+      "1019201097004915ac6c980d6b74afa0",
+      "--since",
+      "2026-10-08 17:00:00",
+      "--until",
+      "2026-10-08 17:14:00",
+      "--no-pager",
+      "-o",
+      "json"
+    ],
+    "selection": "container-specific docker/containerd records in inspected window",
+    "events": [
+      {
+        "__REALTIME_TIMESTAMP": "1791493200822139",
+        "MESSAGE": "time=\"2026-10-08T17:00:00.822106288-04:00\" level=info msg=\"connecting to shim 70f04ed5369a441613c0e6800b744c09eb7bb1aef55da6aca962d14572e79a59\" address=\"unix:///run/containerd/s/2218402e898e89dfa30944f2bbafdc13385ea547d43f554129020e99429bf8e0\" namespace=moby protocol=ttrpc version=3"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1791493996476944",
+        "MESSAGE": "time=\"2026-10-08T17:13:16.476812516-04:00\" level=info msg=\"shim disconnected\" id=70f04ed5369a441613c0e6800b744c09eb7bb1aef55da6aca962d14572e79a59 namespace=moby"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1791493996476944",
+        "MESSAGE": "time=\"2026-10-08T17:13:16.476945926-04:00\" level=info msg=\"cleaning up after shim disconnected\" id=70f04ed5369a441613c0e6800b744c09eb7bb1aef55da6aca962d14572e79a59 namespace=moby"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1791493996477482",
+        "MESSAGE": "time=\"2026-10-08T17:13:16.476954392-04:00\" level=info msg=\"cleaning up dead shim\" id=70f04ed5369a441613c0e6800b744c09eb7bb1aef55da6aca962d14572e79a59 namespace=moby"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1791493996477512",
+        "MESSAGE": "time=\"2026-10-08T17:13:16.477147775-04:00\" level=info msg=\"received task-delete event from containerd\" container=70f04ed5369a441613c0e6800b744c09eb7bb1aef55da6aca962d14572e79a59 module=libcontainerd namespace=moby topic=/tasks/delete type=\"*events.TaskDelete\""
+      }
+    ]
+  }
+}
