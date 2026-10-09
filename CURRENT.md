@@ -5,6 +5,21 @@ below remain that host's own research record; this consolidation did not operate
 
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
+**2026-10-09 02:15 UTC, Flash-Next: the slab probe cleared the MoE addressing and pointed at the image runtime; LTX 117 at 121 frames streaming (dg0).**
+In the idle gap after the 97-frame run, the Codex-prepared single-card slab probe ran in the vLLM 0.30.0 image on
+card 23:00.0: the production table-only indirect gather from an exact-size pinned host slab was **byte-correct**,
+then about one second later, while the process idled, the card logged `-ENOENT` and a **bcs (blitter) engine
+reset** at an unmapped device address. First fault incident of boot 4aafe57b; the bounded health probe passed;
+the direct-pointer variant was not run (it could discriminate nothing). All three faults of this lineage are inside
+the image; the LTX venv ran the same cards for a day without one. Codex's runtime comparison
+(`notes/2026-10-09-runtime-comparison.md`): the image's NEO 26.27.39122 / IGC 2.38.2 / L0 1.32.0 are **newer**
+than the host's 26.18.38308 / 2.34.4 / 1.28.2 that the LTX venv loads; remedy A = bind-mount the host user-mode
+driver into the container (CPU ABI check passed, `probe/remedy-a-abi-check-20261009.json`); the probe printer is
+gaining an opt-in `--host-umd-overlay`. Next GPU step: the same probe with the host driver, one card, in the next
+idle window, same stop rule. LTX: 117 at 121 frames with the decoder graph latched on the xpu:3 floor (9.59 GB vs
+9.66 floor, predicted in LAUNCH.md §4; latch archived with a review receipt); the preregistered dg0 fallback
+qualified 3/3 exact and is streaming (measurement in progress).
+
 **2026-10-09, Flash-Next CPU-only runtime review:** the faulting image uses newer GPU drivers
 than LTX, but older Torch and SYCL libraries. All twelve local alternative images keep the
 same driver versions. The host libraries pass dependency checks inside the image; a later
