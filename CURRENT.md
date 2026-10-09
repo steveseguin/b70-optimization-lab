@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**2026-10-09, Flash-Next attempt 7 ordering reviewed on CPU; GPU halt unchanged.**
+The first GPU fault came before the controller stop and all recorded crash reports.
+Free memory stayed well above the stop threshold. The failing operation is still
+unknown: the logs describe a write fault, and cannot exclude a native crash whose
+report arrived late. A one-layer test is designed only, pending the owner's decision.
+[Timeline, evidence and limits](experiments/qwen38-flash-next-fp8-b70/notes/2026-10-09-attempt7-ordering.md).
+
 **2026-10-09, Flash-Next teardown patch prepared on CPU; GPU halt unchanged.**
 The proposed cleanup patch is saved for review and has not been applied.
 It releases owned buffers in order and waits for every worker before exit.
@@ -39,7 +46,7 @@ finalization; medium confidence (distro xe source unverified, ring activity unme
 OOM kills and attempt 7's ordering is unresolved, so "abrupt exit" is strongly supported for the probes but not proven
 for all four incidents. Prepared, not run: `--clean-exit` and `--exit-after-sleep N` probe variants with a preregistered
 interpretation table (26 CPU tests). Started next: Codex implements the graceful-teardown overlay patch (unapplied, CPU
-tests). Opus packet-118 build in progress (39 files in `recovery/20261009-continuation118-stream/`, not yet sealed).
+tests). Packet 118 built and sealed (not launched): `prepared-continuation-stream-118`, manifest `cb68515a…3f482f6`, 289/289 CPU tests; first launch `recovery/20261009-continuation118-stream/launch-118.sh 97 frame 1 cone 1 1 fingerprint - <fresh receipt>` after its `--check-only` (LAUNCH.md).
 
 **2026-10-09 02:35 UTC, HALT: second GPU fault incident of boot 4aafe57b; owner decision needed (reboot, or accept continuing LTX on this boot).**
 The slab probe with the host user-mode driver overlaid into the vLLM image (remedy A) reproduced the first probe
