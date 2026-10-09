@@ -30,6 +30,13 @@ below remain that host's own research record; this consolidation did not operate
 
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
+**2026-10-09 04:10 UTC tick:** Codex's attempt-7 ordering note (`notes/2026-10-09-attempt7-ordering.md`, commit
+1e68b46b4): the first CCS fault preceded the controller's SIGINT completion by 744 ms and the crash reports by ~18 s, with
+46.6 GiB host free, so attempt 7 was **not** an abrupt-exit fault; the recorded fault is a *write* fault on card 47, which
+does not establish a host-expert read failure, and the exact cause stays unresolved by the saved logs. A one-layer
+single-rank first-forward test with production-size pinned slabs under the teardown patch is designed, not run. Halt holds
+(boot 4aafe57b, 4 fault-class lines). Packet 118 sealed and waiting; nothing running on the cards.
+
 **2026-10-09 03:35 UTC tick:** Codex's graceful-teardown overlay patch is prepared and reviewed, **unapplied**
 (`reopen-20261008/overlay-fix-teardown/`, commit 8aee5f711; 207 lane + 26 probe + 49 teardown CPU tests pass; handoff
 `notes/2026-10-09-teardown-patch-prep.md`). It orders per-rank release (drain, pinned slabs/PLE/tables, synchronize,
