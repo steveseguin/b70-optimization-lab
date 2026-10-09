@@ -263,6 +263,11 @@ def main(argv=None):
                'stage': 'admission', 'exception': None, 'triton_ir': {},
                'gather_launches': 0, 'explicit_synchronizations': 0,
                'timeout_seconds': 120, 'source_sha256': digest(Path(__file__).read_bytes())}
+    receipt['environment'] = {
+        'FLASHNEXT_PROBE_UMD': os.environ.get('FLASHNEXT_PROBE_UMD', 'image-26.27.39122'),
+        **{key: value for key, value in os.environ.items()
+           if key.startswith('FLASHNEXT_PROBE_RENDER_')},
+    }
     save = lambda: atomic_json(path, receipt)
     try:
         receipt.update(admission(args.health_receipt))

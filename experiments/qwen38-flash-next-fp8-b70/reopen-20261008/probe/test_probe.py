@@ -2,8 +2,11 @@
 import ast
 import datetime as dt
 import importlib.util
+import hashlib
+import io
 import json
 import os
+import re
 from pathlib import Path
 import shlex
 import subprocess
@@ -112,6 +115,80 @@ class ProbeTests(unittest.TestCase):
         self.assertTrue(p.stdout.startswith('docker run --rm '))
         self.assertIn('--direct-host-pointer', shlex.split(p.stdout))
         self.assertFalse(Path('/PATH/receipts').exists())
+
+    def test_default_command_byte_for_byte(self):
+        expected = (HERE / 'default-command.txt').read_text().format(probe=HERE, package=HERE.parent)
+        with patch.object(container_command.os.path, 'realpath', return_value='/dev/dri/renderD128'), \
+             patch.object(container_command, 'host_umd_mounts', side_effect=AssertionError('opt-in only')):
+            command = container_command.command('/dev/dri/by-path/pci-0000:23:00.0-render',
+                                                '/tmp/health file.json', '/tmp/receipt dir')
+        self.assertEqual(shlex.join(command) + '\n', expected)
+
+    def test_overlay_closure_matches_remedy_a(self):
+        note = (HERE.parents[1] / 'notes/2026-10-09-runtime-comparison.md').read_text()
+        mounts = [line.split('|') for line in note.split("done <<'MOUNTS'\n")[1].split('\nMOUNTS')[0].splitlines()]
+        hashes = dict(re.findall(r'\| `([^`]+)` \| `([0-9a-f]{64})` \|', note))
+        self.assertEqual(len(mounts), 12)
+        self.assertEqual(container_command.HOST_UMD_OVERLAY,
+                         tuple((source, target, hashes[source]) for source, target in mounts))
+
+    def overlay_fixture(self):
+        closure = []
+        for i, (_, target, _) in enumerate(container_command.HOST_UMD_OVERLAY):
+            source = self.root / ('library' + str(i))
+            data = ('library bytes ' + str(i)).encode()
+            source.write_bytes(data)
+            closure.append((str(source), target, hashlib.sha256(data).hexdigest()))
+        return tuple(closure)
+
+    def test_overlay_command_order_env_and_cli(self):
+        closure = self.overlay_fixture()
+        argv = ['container_command.py', '--render-node', '/dev/dri/by-path/pci-0000:23:00.0-render',
+                '--health-receipt', str(self.path), '--receipt-dir', str(self.root), '--host-umd-overlay']
+        with patch.object(container_command, 'HOST_UMD_OVERLAY', closure), \
+             patch.object(container_command.os.path, 'realpath', return_value='/dev/dri/renderD128'), \
+             patch.object(sys, 'argv', argv), patch('sys.stdout', new_callable=io.StringIO) as output:
+            container_command.main()
+        command = shlex.split(output.getvalue())
+        mounts = [command[i+1] for i, value in enumerate(command) if value == '--mount']
+        self.assertEqual(len(mounts), 16)
+        self.assertEqual(mounts[4:], [f'type=bind,src={src},dst={dst},readonly' for src, dst, _ in closure])
+        self.assertIn('LD_LIBRARY_PATH=/usr/local/lib:/opt/ucx/lib:/opt/venv/lib', command)
+        self.assertIn('FLASHNEXT_PROBE_UMD=host-26.18.38308', command)
+        self.assertIn('--device=/dev/dri/renderD128:/dev/dri/renderD128:rw', command)
+        self.assertIn(f'type=bind,src={HERE.parent},dst=/repo/experiments/qwen38-flash-next-fp8-b70/reopen-20261008,readonly', command)
+
+    def test_overlay_missing_file_refuses(self):
+        for index in range(12):
+            closure = self.overlay_fixture()
+            Path(closure[index][0]).unlink()
+            with self.subTest(index=index), patch.object(container_command, 'HOST_UMD_OVERLAY', closure), \
+                 self.assertRaisesRegex(ValueError, 'source missing or unreadable'):
+                container_command.host_umd_mounts()
+
+    def test_overlay_changed_hash_refuses(self):
+        for index in range(12):
+            closure = self.overlay_fixture()
+            Path(closure[index][0]).write_bytes(b'changed host package')
+            with self.subTest(index=index), patch.object(container_command, 'HOST_UMD_OVERLAY', closure), \
+                 self.assertRaisesRegex(ValueError, 'SHA-256 mismatch'):
+                container_command.host_umd_mounts()
+
+    def test_receipt_records_runtime_and_render_environment_on_refusal(self):
+        for identity in (None, 'host-26.18.38308'):
+            directory = self.root / ('image' if identity is None else 'host')
+            env = dict(FLASHNEXT_PROBE_ADMIT='0', FLASHNEXT_PROBE_RENDER_NODE='/dev/dri/renderD128',
+                       FLASHNEXT_PROBE_RENDER_BYPATH='/dev/dri/by-path/pci-0000:23:00.0-render',
+                       FLASHNEXT_PROBE_RENDER_EXTRA='future-field', UNRELATED_SECRET='excluded')
+            if identity is not None:
+                env['FLASHNEXT_PROBE_UMD'] = identity
+            with self.subTest(identity=identity), patch.dict(os.environ, env, clear=True):
+                self.assertEqual(probe.main(['--health-receipt', str(self.path),
+                                            '--receipt-dir', str(directory)]), 2)
+            receipt = json.loads((directory / 'receipt.json').read_text())
+            self.assertEqual(receipt['environment'], {
+                'FLASHNEXT_PROBE_UMD': identity or 'image-26.27.39122',
+                **{k: v for k, v in env.items() if k.startswith('FLASHNEXT_PROBE_RENDER_')}})
 
     def test_watcher_stale_failed_or_stopped_refuses(self):
         now = dt.datetime.now(dt.timezone.utc).timestamp()
