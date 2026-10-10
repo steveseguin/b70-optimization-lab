@@ -1,5 +1,11 @@
 # Current Workspace State
 
+**2026-10-10 16:00 UTC, 135 (production arm, GC 60) session 1: n = 111, median 5.248 s per 6.0 s = 0.875 s/s (even 5.21 / odd 5.53, p90 5.92, mean 5.73 with outliers), exact (verdict 7ca7bbdde174), no stops; GC-10 A/B arm launched (`s135-gc10-live01`).**
+The inode-aware storage guard ran the whole session without a halt. The A/B keeps every other option identical and sets
+`LTX_GC_INTERVAL_SECONDS=10` with idle maintenance; the question is whether the 60 s boundary cleanup is the residual even/odd gap (0.3 s).
+Ops: `stream/ops/production-arm.json` describes the 135 arm; client/sink units now start with `SendSIGKILL=no` so `swap-to-packet.sh` /
+`resume-production.sh` (commit 08d937017d, 62 CPU tests) can be adopted at the next swap after a `--dry-run`.
+
 **2026-10-10, stream swap and production-resume commands prepared and reviewed; 62 CPU tests pass.**
 The coordinator now has one command for a packet swap and one for a production
 relaunch, with archive and failure receipts, a five-minute gap, and no restart
