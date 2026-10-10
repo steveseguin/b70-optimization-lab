@@ -143,3 +143,17 @@ preserves the receipt and the delta in the run identity. This validates an
 owner-supplied declaration, not a cryptographic signature of a person's identity.
 The separate owner-window flag must pin the receipt hash. Existing halt,
 fresh-health, payload, teardown-gap and capacity checks still apply.
+
+## Path to matched evidence (reviewer note, 2026-10-10 21:05 UTC)
+
+The historical trace behind the 133,542,784 KiB need was recorded before the
+host-RAM shadow fix (`NEOReadDebugKeys=1 EnableDeferBacking=0`, see the
+multi-card host-RAM shadow notes) and before the 10 GiB memory exclusion. The
+Flash-Next lane already has the measurement that produces matched evidence: the
+preregistered **attempt 8 calibrate-load** run
+(`reopen-20261008/screen.py run --mode calibrate-load --loading-ram-guard-gb 96`),
+which loads the certified TP4 line under a loading RAM guard and records the
+real peak host demand on this boot. The first authorized window therefore runs
+in this order: health receipt, attempt 8 calibrate-load, revised need
+calculation from its receipt, owner approval receipt for the derived floor,
+then the fixture extraction. No floor is lowered without that measurement.
