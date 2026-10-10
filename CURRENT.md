@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**2026-10-10 05:58 UTC, 123b server live at 145 frames with `aux_residency=xpu2`; client preflight pin bug fixed; qualification running.**
+Server ready 05:55:17 UTC (status reports frames 145, aux xpu2). The 123b client refused at preflight (exit 8, "plan differs from the
+pinned plan"): Codex had pinned the plan file's byte hash (`0537b39f…`) while the server reports the inner `plan_sha256`
+(`75e97784…`, also in the build receipt); the never-launched 123 pin had the same defect. Both pins corrected in
+`stream/ltx_continuation_client.py` (commit 9f6b4414b; `run_tests_123b.py` 202/205, the three failures are the CPU-runner device-open
+audit tests, unrelated). Client started 05:57:49 UTC; this run is the 145-frame qualification of the residency move that gates 169.
+
 **2026-10-10 05:58 UTC, packet 123b sealed (run-own-writes storage allowance); swap to 123b at 145 frames with `LTX_AUX_RESIDENCY=xpu2`.**
 Codex sealed 123b (commits af43e4e73, 9fbe0645b; manifest `5bdc0956…d433`; 592 recovery / 1,238 client / 10 preflight CPU checks,
 2,064 files): the 3 GiB run allowance now counts the run's own writes (run dir + its output/validation/request entries), with
