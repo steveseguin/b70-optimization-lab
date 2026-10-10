@@ -1,5 +1,9 @@
 # Current Workspace State
 
+**2026-10-10, IQ3 reference build prepared on CPU:** The [pinned llama.cpp baseline](experiments/qwen38-flash-next-ud-iq3xxs-b70/baseline-llamacpp/README.md) supports the GGUF architecture in source, builds for B70, and passes help/version checks without GPU access.
+Its two-card, target-only window plan uses full 16-bit KV and all twelve fixed prompts twice in fresh processes; load, fit, speed and output equality are still unmeasured, and the incomplete download kept the live GGUF check pending.
+This is a measurement baseline for our own runtime, not its code base; no GPU, server, unit, port, model file or host setting was touched, and the fault halt remains unchanged.
+
 **2026-10-10, H3 source correction:** The denoiser is Comfy-Org's published file, already on turin (two B70 cards, 15 GiB RAM), and the owner's model acceptance also approves that source; the [corrected packet](repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md) records publisher pins and read-only file checks.
 The fit search and re-download queue are superseded; the recipe stays draft because baseline/reference receipts, clean-build/runtime, independent full-suite repeat and portable public-release evidence are still missing.
 This CPU-only correction used no GPU, service, unit or weight download and changed no model files.

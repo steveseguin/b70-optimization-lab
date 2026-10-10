@@ -1,0 +1,436 @@
+{
+  "schema": "qwen38-flash-next-ud-iq3xxs.baseline-llamacpp.build.v1",
+  "observed_utc": "2026-10-10T23:14:08.265391+00:00",
+  "host": "steve-b70s",
+  "purpose": "Unmodified upstream measurement baseline for our own runtime to beat; never our code base.",
+  "source": {
+    "repository": "https://github.com/ggml-org/llama.cpp.git",
+    "commit": "23b0202a189c44a54625aadcb37a946dd1d6278d",
+    "commit_time": "2026-10-10T21:25:38+02:00",
+    "clean": true,
+    "checkout": "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp",
+    "shallow": true,
+    "patches": [],
+    "files": {
+      "src/llama-arch.cpp": "9c763aefe0749ac3593d4eb03208e164e0009ee4130fb7e004ca1080398ed099",
+      "src/models/qwen4exp.cpp": "e562fc60c6ccf9577820f17cac41c33b69fd41f5a5a79d0d2375f2ed1c0b8d7b",
+      "ggml/src/ggml-sycl/CMakeLists.txt": "9900df07cf0165d07a1e20a8b2625000f935c38950f9107b47219c531afb76bf",
+      "tools/cli/cli.cpp": "93ae9fa992de428e21438a509f247dc478af45a1d312e9c7ea9a6d992a87ad24",
+      "tools/cli/cli-server.h": "d463b06b589e9967b25c746f9f751ab484efe37f696a3032d3f5b0f89f4e205d",
+      "tools/completion/completion.cpp": "436292f5007dcb0b012452e643a31a531e8efe930176196e3eebf735199a9dc1",
+      "common/arg.cpp": "8fbac51f5dfa20500a66e9c388663a6b6648a8038acbd57ced2972a392d73d7e",
+      "common/common.cpp": "09927ad4006dfda02dde98fefb0e3dca9d58d60cb7e8b08d56c6e7acc0c7c197",
+      "gguf-py/gguf/scripts/gguf_dump.py": "d8b8fc28e96d15d8a4d6f05cdff4a747f5a06f31172efee9dfc971998ed0203f"
+    }
+  },
+  "architecture": {
+    "gguf": "qwen4exp",
+    "registered_in": "src/llama-arch.cpp:44",
+    "implementation": "src/models/qwen4exp.cpp",
+    "source_supported": true,
+    "sycl_native_fit_or_correctness_tested": false
+  },
+  "build": {
+    "status": "passed",
+    "exit_code": 0,
+    "directory": "/home/steve/build/flash-next-iq3-baseline-20261010/build",
+    "targets": [
+      "llama-cli",
+      "llama-completion"
+    ],
+    "generator": "Ninja",
+    "nice": 19,
+    "parallel_jobs": 8,
+    "environment": {
+      "OMP_NUM_THREADS": "2",
+      "MKL_NUM_THREADS": "2",
+      "ONEAPI_ROOT": "/opt/intel/oneapi",
+      "CMAKE_PREFIX_PATH": "/opt/intel/oneapi/compiler/2026.0:/opt/intel/oneapi/mkl/2026.0",
+      "LD_LIBRARY_PATH": "/opt/intel/oneapi/compiler/2026.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/tbb/2023.0/lib"
+    },
+    "cmake_definitions": [
+      "CMAKE_BUILD_TYPE=Release",
+      "CMAKE_C_COMPILER=/usr/bin/cc",
+      "CMAKE_CXX_COMPILER=/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+      "MKL_DIR=/opt/intel/oneapi/mkl/2026.0/lib/cmake/mkl",
+      "TBB_DIR=/opt/intel/oneapi/tbb/2023.0/lib/cmake/tbb",
+      "GGML_CCACHE=OFF",
+      "BUILD_SHARED_LIBS=ON",
+      "GGML_NATIVE=ON",
+      "LLAMA_BUILD_TESTS=OFF",
+      "LLAMA_BUILD_UI=OFF",
+      "LLAMA_USE_PREBUILT_UI=OFF",
+      "GGML_SYCL=ON",
+      "GGML_SYCL_TARGET=INTEL",
+      "GGML_SYCL_DEVICE_ARCH=bmg_g31",
+      "GGML_SYCL_F16=OFF",
+      "GGML_SYCL_GRAPH=OFF",
+      "GGML_SYCL_DNN=OFF",
+      "GGML_SYCL_HOST_MEM_FALLBACK=OFF",
+      "GGML_SYCL_SUPPORT_LEVEL_ZERO_API=ON"
+    ],
+    "resolved_toolkit": {
+      "CMAKE_CXX_COMPILER": "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+      "CMAKE_C_COMPILER": "/usr/bin/cc",
+      "MKL_DIR": "/opt/intel/oneapi/mkl/2026.0/lib/cmake/mkl",
+      "SYCL_COMPILER": "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+      "SYCL_COMPILER_VERSION": "20260000",
+      "SYCL_INCLUDE_DIR": "/opt/intel/oneapi/compiler/2026.0/include",
+      "SYCL_INCLUDE_SYCL_DIR": "/opt/intel/oneapi/compiler/2026.0/include/sycl",
+      "SYCL_LANGUAGE_VERSION": "202012",
+      "SYCL_LIBRARY": "/opt/intel/oneapi/compiler/2026.0/lib/libsycl.so",
+      "SYCL_LIBRARY_DIR": "/opt/intel/oneapi/compiler/2026.0/lib",
+      "SYCL_PACKAGE_DIR": "/opt/intel/oneapi/compiler/2026.0",
+      "TBB_DIR": "/opt/intel/oneapi/tbb/2023.0/lib/cmake/tbb"
+    },
+    "script_sha256": "02fa60c1e88d972bb9c2f8f8baa824590c6a86614adb949241b032d7b143f13a",
+    "initial_configure_failure": "MKL::MKL_SYCL::BLAS unavailable because TBB not found; fixed with explicit TBB_DIR=/opt/intel/oneapi/tbb/2023.0/lib/cmake/tbb; no source patch.",
+    "build_log_final_line": "[332/332] Linking CXX executable bin/llama-cli"
+  },
+  "compiler_versions": {
+    "/opt/intel/oneapi/compiler/2026.0/bin/icpx": "Intel(R) oneAPI DPC++/C++ Compiler 2026.0.0 (2026.0.0.20260331)\nTarget: x86_64-unknown-linux-gnu\nThread model: posix\nInstalledDir: /opt/intel/oneapi/compiler/2026.0/bin/compiler\nConfiguration file: /opt/intel/oneapi/compiler/2026.0/bin/compiler/../icpx.cfg\n",
+    "/usr/bin/cc": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0\nCopyright (C) 2023 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+    "cmake": "cmake version 4.3.2\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake).\n",
+    "ninja": "1.13.0.git.kitware.jobserver-pipe-1\n"
+  },
+  "elf_inspection": [
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/llama-cli",
+      "needed_and_runpath": [
+        "0x0000000000000001 (NEEDED)             Shared library: [libllama-cli-impl.so]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libllama-server-impl.so]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libmtmd.so.0]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libssl.so.3]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libcrypto.so.3]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libllama-common.so.0]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libllama.so.0]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libggml.so.0]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libggml-cpu.so.0]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libggml-sycl.so.0]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libggml-base.so.0]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]",
+        "0x000000000000001d (RUNPATH)            Library runpath: [/home/steve/build/flash-next-iq3-baseline-20261010/build/bin:]"
+      ]
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/llama-completion",
+      "needed_and_runpath": [
+        "0x0000000000000001 (NEEDED)             Shared library: [libllama-completion-impl.so]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libllama-common.so.0]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libllama.so.0]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libggml.so.0]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libggml-cpu.so.0]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libggml-sycl.so.0]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libggml-base.so.0]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]",
+        "0x000000000000001d (RUNPATH)            Library runpath: [/home/steve/build/flash-next-iq3-baseline-20261010/build/bin:]"
+      ]
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libggml-sycl.so",
+      "needed_and_runpath": [
+        "0x0000000000000001 (NEEDED)             Shared library: [libggml-base.so.0]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libze_loader.so.1]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libsycl.so.9]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libmkl_sycl_blas.so.6]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libmkl_intel_ilp64.so.3]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libmkl_tbb_thread.so.3]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libmkl_core.so.3]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libtbb.so.12]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libimf.so]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libsvml.so]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libirng.so]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libintlc.so.5]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]",
+        "0x000000000000001d (RUNPATH)            Library runpath: [/home/steve/build/flash-next-iq3-baseline-20261010/build/bin:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/tbb/2023.0/lib/intel64/gcc4.8:]"
+      ]
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libllama-completion-impl.so",
+      "needed_and_runpath": [
+        "0x0000000000000001 (NEEDED)             Shared library: [libllama-common.so.0]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libllama.so.0]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libggml.so.0]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libggml-cpu.so.0]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libggml-sycl.so.0]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libggml-base.so.0]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libsvml.so]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libirng.so]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libimf.so]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libintlc.so.5]",
+        "0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]",
+        "0x000000000000001d (RUNPATH)            Library runpath: [/home/steve/build/flash-next-iq3-baseline-20261010/build/bin:]"
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libggml-base.so",
+      "resolved_path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libggml-base.so.0.26.0",
+      "bytes": 908352,
+      "sha256": "4d4546fd3ac0b30f43eb13c8fd313c8b4122e2b7999491b753082be067d88b21"
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libggml-base.so.0",
+      "resolved_path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libggml-base.so.0.26.0",
+      "bytes": 908352,
+      "sha256": "4d4546fd3ac0b30f43eb13c8fd313c8b4122e2b7999491b753082be067d88b21"
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libggml-base.so.0.26.0",
+      "resolved_path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libggml-base.so.0.26.0",
+      "bytes": 908352,
+      "sha256": "4d4546fd3ac0b30f43eb13c8fd313c8b4122e2b7999491b753082be067d88b21"
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libggml-cpu.so",
+      "resolved_path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libggml-cpu.so.0.26.0",
+      "bytes": 2416200,
+      "sha256": "4aaf299a34f7976040e63885fe7e7b872db4c6346b11e96af72d7fcce7262ade"
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libggml-cpu.so.0",
+      "resolved_path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libggml-cpu.so.0.26.0",
+      "bytes": 2416200,
+      "sha256": "4aaf299a34f7976040e63885fe7e7b872db4c6346b11e96af72d7fcce7262ade"
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libggml-cpu.so.0.26.0",
+      "resolved_path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libggml-cpu.so.0.26.0",
+      "bytes": 2416200,
+      "sha256": "4aaf299a34f7976040e63885fe7e7b872db4c6346b11e96af72d7fcce7262ade"
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libggml-sycl.so",
+      "resolved_path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libggml-sycl.so.0.26.0",
+      "bytes": 265584680,
+      "sha256": "b3c8f62f120aca71503a120060a3735a2ff314d082938457aabd8c2e03566f1f"
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libggml-sycl.so.0",
+      "resolved_path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libggml-sycl.so.0.26.0",
+      "bytes": 265584680,
+      "sha256": "b3c8f62f120aca71503a120060a3735a2ff314d082938457aabd8c2e03566f1f"
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libggml-sycl.so.0.26.0",
+      "resolved_path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libggml-sycl.so.0.26.0",
+      "bytes": 265584680,
+      "sha256": "b3c8f62f120aca71503a120060a3735a2ff314d082938457aabd8c2e03566f1f"
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libggml.so",
+      "resolved_path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libggml.so.0.26.0",
+      "bytes": 55536,
+      "sha256": "0cd433980ca624b8f5f869a7fbe2b5d76fee04497aaf2776f7e9c6632713163c"
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libggml.so.0",
+      "resolved_path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libggml.so.0.26.0",
+      "bytes": 55536,
+      "sha256": "0cd433980ca624b8f5f869a7fbe2b5d76fee04497aaf2776f7e9c6632713163c"
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libggml.so.0.26.0",
+      "resolved_path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libggml.so.0.26.0",
+      "bytes": 55536,
+      "sha256": "0cd433980ca624b8f5f869a7fbe2b5d76fee04497aaf2776f7e9c6632713163c"
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libllama-cli-impl.so",
+      "resolved_path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libllama-cli-impl.so",
+      "bytes": 244568,
+      "sha256": "c5e20dec760e6a67647d6e32afb883a7a93eea1e4a20e3c3512fcec7882b225f"
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libllama-common.so",
+      "resolved_path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libllama-common.so.0.6.0",
+      "bytes": 5849976,
+      "sha256": "a31eb7832bf8d410e5cdfe4ef1811dc40a938f24a029c59837f8ae49429f5fb6"
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libllama-common.so.0",
+      "resolved_path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libllama-common.so.0.6.0",
+      "bytes": 5849976,
+      "sha256": "a31eb7832bf8d410e5cdfe4ef1811dc40a938f24a029c59837f8ae49429f5fb6"
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libllama-common.so.0.6.0",
+      "resolved_path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libllama-common.so.0.6.0",
+      "bytes": 5849976,
+      "sha256": "a31eb7832bf8d410e5cdfe4ef1811dc40a938f24a029c59837f8ae49429f5fb6"
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libllama-completion-impl.so",
+      "resolved_path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libllama-completion-impl.so",
+      "bytes": 145160,
+      "sha256": "9add1d64d91430f4127ad11b4aa3e3f602ae0ad2c4124e6ad7182db7c7e061b9"
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libllama-server-impl.so",
+      "resolved_path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libllama-server-impl.so",
+      "bytes": 4309968,
+      "sha256": "ca93b25d615a7ebd2e24e5baf60117839808d1ed5621cdf76fa9f00df1b20e91"
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libllama.so",
+      "resolved_path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libllama.so.0.6.0",
+      "bytes": 4644688,
+      "sha256": "8d65209ab422ddd33de564fe001c3386d52f307a4fe560f566bcd09ddce8ca18"
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libllama.so.0",
+      "resolved_path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libllama.so.0.6.0",
+      "bytes": 4644688,
+      "sha256": "8d65209ab422ddd33de564fe001c3386d52f307a4fe560f566bcd09ddce8ca18"
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libllama.so.0.6.0",
+      "resolved_path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libllama.so.0.6.0",
+      "bytes": 4644688,
+      "sha256": "8d65209ab422ddd33de564fe001c3386d52f307a4fe560f566bcd09ddce8ca18"
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libmtmd.so",
+      "resolved_path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libmtmd.so.0.6.0",
+      "bytes": 1873216,
+      "sha256": "6e31ff933c0db98835476e8e3c6fe99a70f5056a765b74c5c0c7c0d8d5b7eb2e"
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libmtmd.so.0",
+      "resolved_path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libmtmd.so.0.6.0",
+      "bytes": 1873216,
+      "sha256": "6e31ff933c0db98835476e8e3c6fe99a70f5056a765b74c5c0c7c0d8d5b7eb2e"
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libmtmd.so.0.6.0",
+      "resolved_path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/libmtmd.so.0.6.0",
+      "bytes": 1873216,
+      "sha256": "6e31ff933c0db98835476e8e3c6fe99a70f5056a765b74c5c0c7c0d8d5b7eb2e"
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/llama-cli",
+      "resolved_path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/llama-cli",
+      "bytes": 737624,
+      "sha256": "e395e26925182248253855e9281c957985dc7d100080d4b8fd450c6d7bec4d45"
+    },
+    {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/llama-completion",
+      "resolved_path": "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/llama-completion",
+      "bytes": 551504,
+      "sha256": "0d068bea7d9af6a7eff4040cb6c72e38b7794c6eb9fa15f4be3d6a22d32ff1e0"
+    }
+  ],
+  "logs": {
+    "configure-attempt1.log": {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/configure-attempt1.log",
+      "sha256": "b1ee15352b3c39f0fc2fbcb53a1e0882d02d36f71f58be502f9f6fd54988653e"
+    },
+    "configure.log": {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/configure.log",
+      "sha256": "dec2864d457e0bd05bb17925d94b4718a0c2d2f2f0faf0cd23fdf08422dfbe7a"
+    },
+    "build.log": {
+      "path": "/home/steve/build/flash-next-iq3-baseline-20261010/build.log",
+      "sha256": "86daf32f11128ad201883898cbe70ebd857a698704adb3122488ba6b6b36807c"
+    }
+  },
+  "cpu_smoke": {
+    "utc": "2026-10-10T23:13:13.959321+00:00",
+    "early_exit_smokes": [
+      {
+        "argv": [
+          "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/llama-cli",
+          "--help"
+        ],
+        "returncode": 0,
+        "stdout_sha256": "d9bc36768ae027f41b8dcdd0001d7d45ba8f9de4c4f88ece6e383c951a943bb5",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "file_syscall_trace_sha256": "1cbcb7aaf725693092885c1c6e2f5816c71cdaccecb7c8683cd71a90334882ec",
+        "device_node_access": false
+      },
+      {
+        "argv": [
+          "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/llama-cli",
+          "--version"
+        ],
+        "returncode": 0,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "fe0a6f8c07cca9688c56184f51baaa83b40c181fbfff0fd4750153ba0376aa8d",
+        "file_syscall_trace_sha256": "d00562b5768430c27ede6fcbd1e4d8b1ea8e6b7467fbfb8d656bbaecfc1c243b",
+        "device_node_access": false
+      },
+      {
+        "argv": [
+          "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/llama-completion",
+          "--help"
+        ],
+        "returncode": 0,
+        "stdout_sha256": "fe94ca2238e7891db6eb18138dbdb165cc551f1d8cccc703e8feb1fc9eaa3aa9",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "file_syscall_trace_sha256": "ad4f21a216cf8fd5bf9e966efa968ddec022bec64988e824d295802db0f9e516",
+        "device_node_access": false
+      },
+      {
+        "argv": [
+          "/home/steve/build/flash-next-iq3-baseline-20261010/build/bin/llama-completion",
+          "--version"
+        ],
+        "returncode": 0,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "fe0a6f8c07cca9688c56184f51baaa83b40c181fbfff0fd4750153ba0376aa8d",
+        "file_syscall_trace_sha256": "f895d229ae800f8be1882dbfdace553c7637d6c1d957836c70f02f5fe69d1593",
+        "device_node_access": false
+      }
+    ],
+    "gguf_dump": {
+      "status": "skipped",
+      "reason": "Download incomplete; no live GGUF parser invoked.",
+      "files": [
+        {
+          "path": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00001-of-00003.gguf",
+          "expected_bytes": 10946624,
+          "observed_bytes": 10946624
+        },
+        {
+          "path": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+          "expected_bytes": 49567921344,
+          "observed_bytes": null
+        },
+        {
+          "path": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00003-of-00003.gguf",
+          "expected_bytes": 32382955968,
+          "observed_bytes": null
+        }
+      ]
+    },
+    "source_audit": "tools/cli/cli.cpp and tools/completion/completion.cpp parse help/version before llama_backend_init; common/arg.cpp exits early; common_init only sets logging.",
+    "scope": "CPU only; no model inference, device enumeration, health probe, server or port operation."
+  },
+  "cpu_tests": {
+    "command": "OMP_NUM_THREADS=2 python3 -B experiments/qwen38-flash-next-ud-iq3xxs-b70/baseline-llamacpp/test_cpu.py",
+    "passed": 5,
+    "native_processes": 0
+  },
+  "native_results": {
+    "model_load": "not run",
+    "two_card_fit": "not measured",
+    "prefill": "not measured",
+    "decode": "not measured",
+    "repeat_equality": "not tested",
+    "cpu_dequantization_parity": "not tested"
+  },
+  "cleanup": "Temporary Python test directories removed by TemporaryDirectory. Compiler temporary files cleaned by compiler; retained external build directory is the requested window artifact, not disposable scratch."
+}
