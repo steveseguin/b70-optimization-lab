@@ -23,7 +23,7 @@ class ReproGuideValidationTest(unittest.TestCase):
         repo = Path(__file__).resolve().parents[1]
         errors, counts = MODULE.validate(repo)
         self.assertEqual(errors, [])
-        self.assertEqual(sum(counts.values()), 41)
+        self.assertEqual(sum(counts.values()), 42)
 
     def test_video_observations_require_real_evidence_and_valid_timing(self):
         with tempfile.TemporaryDirectory() as raw:

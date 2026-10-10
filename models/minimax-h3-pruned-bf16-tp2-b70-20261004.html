@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MiniMax-H3 video with audio on two B70 cards — strict benchmark pending — neural.download</title>
+<meta name="description" content="Owner-approved AdaLN-fitted variant; one receipted eight-clip batch: 3173 seconds total, 396.625 seconds per clip. Exact scheduling against its own reference. Reconstruction incomplete.">
+<link rel="icon" href="../favicon.ico" sizes="32x32">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<link rel="canonical" href="https://neural.download/models/minimax-h3-pruned-bf16-tp2-b70-20261004.html">
+<meta name="theme-color" content="#0f62e8">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="neural.download">
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://neural.download/models/minimax-h3-pruned-bf16-tp2-b70-20261004.html">
+<meta property="og:title" content="MiniMax-H3 video with audio on two B70 cards — strict benchmark pending">
+<meta property="og:description" content="Owner-approved AdaLN-fitted variant; one receipted eight-clip batch: 3173 seconds total, 396.625 seconds per clip. Exact scheduling against its own reference. Reconstruction incomplete.">
+<meta property="og:image" content="https://neural.download/models/cards/minimax-h3-pruned-bf16-tp2-b70-20261004.png">
+<meta property="og:image:secure_url" content="https://neural.download/models/cards/minimax-h3-pruned-bf16-tp2-b70-20261004.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="MiniMax-H3 video with audio on two B70 cards: strict benchmark pending on Intel Arc Pro B70 — neural.download">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@xyster">
+<meta name="twitter:creator" content="@xyster">
+<meta name="twitter:url" content="https://neural.download/models/minimax-h3-pruned-bf16-tp2-b70-20261004.html">
+<meta name="twitter:title" content="MiniMax-H3 video with audio on two B70 cards — strict benchmark pending">
+<meta name="twitter:description" content="Owner-approved AdaLN-fitted variant; one receipted eight-clip batch: 3173 seconds total, 396.625 seconds per clip. Exact scheduling against its own reference. Reconstruction incomplete.">
+<meta name="twitter:image" content="https://neural.download/models/cards/minimax-h3-pruned-bf16-tp2-b70-20261004.png">
+<meta name="twitter:image:alt" content="MiniMax-H3 video with audio on two B70 cards: strict benchmark pending on Intel Arc Pro B70 — neural.download">
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "TechArticle", "headline": "MiniMax-H3 video with audio on two B70 cards", "description": "Owner-approved AdaLN-fitted variant; one receipted eight-clip batch: 3173 seconds total, 396.625 seconds per clip. Exact scheduling against its own reference. Reconstruction incomplete. Owner-approved measured batch; strict headline certification pending: historical input binding and independent full-suite repeats are incomplete.. Exact recipe and diagnostic evidence are retained, but no unqualified headline is published.", "url": "https://neural.download/models/minimax-h3-pruned-bf16-tp2-b70-20261004.html", "dateModified": "2026-10-10", "inLanguage": "en", "isAccessibleForFree": true, "author": {"@type": "Organization", "name": "Unofficial Intel XPU Optimization Lab", "url": "https://neural.download/"}, "publisher": {"@type": "Organization", "name": "neural.download", "url": "https://neural.download/"}, "isPartOf": {"@type": "WebSite", "name": "neural.download", "url": "https://neural.download/"}, "about": ["MiniMax-H3", "Intel Arc Pro B70", "local video generation"]}
+</script>
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "neural.download", "item": "https://neural.download/"}, {"@type": "ListItem", "position": 2, "name": "Models", "item": "https://neural.download/models/"}, {"@type": "ListItem", "position": 3, "name": "MiniMax-H3 · video with audio", "item": "https://neural.download/models/minimax-h3.html"}, {"@type": "ListItem", "position": 4, "name": "MiniMax-H3 video with audio on two B70 cards", "item": "https://neural.download/models/minimax-h3-pruned-bf16-tp2-b70-20261004.html"}]}
+</script>
+<link rel="stylesheet" href="../learn/learn.css">
+<link rel="preconnect" href="https://mlbottleneck.com">
+<style>
+  .profile { margin: 10px 0; border: 1px solid var(--line); padding: 10px 14px; }
+  .profile summary { cursor: pointer; font-weight: 700; }
+  .profile small { color: var(--muted); font-weight: 400; }
+  .table-scroll { overflow-x: auto; }
+  .exact-values { margin: 12px 0; }
+  .chart { overflow-x: auto; }
+  .graph-scroll-hint { display: none; }
+  @media (max-width: 600px) {
+    .chart .short-plot text { font-size: 24px; }
+    .chart .dense-plot { min-width: 560px; }
+    .graph-scroll-hint { display: block; font-size: 12px; }
+  }
+  .facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px 16px; margin: 14px 0 22px; padding: 14px 16px; border: 2px solid var(--ink); background: var(--paper); }
+  .facts div { min-width: 0; }
+  .facts dt { font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .facts dd { margin: 2px 0 0; font-size: 13.5px; overflow-wrap: anywhere; }
+  .use-chip { display: inline-block; border: 1px solid var(--ink); padding: 1px 7px 0; font: 700 11px var(--mono); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; margin: 0 4px 4px 0; }
+  .placeholder { margin: 10px 0 22px; padding: 12px 16px; border: 2px solid var(--line); background: var(--surface); color: var(--muted); }
+  .placeholder p { margin: 0; font-size: 13.5px; }
+  .badge.todo { background: var(--surface); color: var(--muted); border-color: var(--muted); }
+  .missing { margin: 0 0 22px; padding: 12px 16px; border: 2px solid var(--ink); background: var(--surface); }
+  .missing-tag { margin: 0 0 6px; font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--warn); }
+  .missing ul { margin: 0; padding-left: 18px; font-size: 13px; }
+  .limitations { margin: 0 0 22px; padding: 12px 16px; border: 2px solid var(--line); background: var(--surface); }
+  .limitations-tag { margin: 0 0 6px; font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ink); }
+  .limitations ul { margin: 0; padding-left: 18px; font-size: 13px; }
+  .measured { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 18px; margin: 8px 0 6px; }
+  .measured .big { font: 900 44px/1 var(--display); color: var(--spot-dark); }
+  .measured .unit { font: 700 13px var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+  .scope { margin: 0 0 6px; color: var(--muted); font-size: 13px; }
+  .scope-gloss { margin: 0 0 12px; color: var(--muted); font-size: 11.5px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 9px 12px; margin: 14px 0 22px; align-items: center; }
+  .actions .button { display: inline-flex; align-items: center; min-height: 36px; padding: 7px 12px; border: 2px solid var(--ink); background: var(--ink); color: var(--paper); font: 700 11px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+  .actions .button:hover { background: var(--spot); border-color: var(--spot); color: #fff; }
+  .actions .button.secondary { background: transparent; color: var(--ink); }
+  .actions .button.secondary:hover { background: var(--ink); color: var(--paper); }
+  .copy-md { appearance: none; border: 2px solid var(--ink); border-radius: 0; background: transparent; color: var(--ink); min-height: 36px; padding: 6px 10px; font: 700 11px var(--mono); letter-spacing: .05em; text-transform: uppercase; cursor: pointer; }
+  .copy-md:hover { background: var(--ink); color: var(--paper); }
+  .copy-md.copied { background: var(--spot); border-color: var(--spot); color: #fff; }
+  .copy-md.failed { border-color: #a12820; color: #a12820; }
+  .hr-card { border: 2px solid var(--ink); background: var(--paper); padding: 13px 14px 11px; margin: 0 0 12px; }
+  .hr-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+  .hr-card h3 { margin: 0; font: 900 15px var(--display); text-transform: uppercase; }
+  .hr-deploy { margin: 3px 0 0; color: var(--muted); font: 10.5px var(--mono); }
+  .hr-grade { flex: 0 0 auto; text-align: right; }
+  .hr-grade-letter { display: block; font: 900 26px/1 var(--display); color: var(--spot-dark); }
+  .hr-grade-note { display: block; margin-top: 3px; color: var(--muted); font: 700 9.5px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+  .hr-bar-row { display: grid; grid-template-columns: 108px 1fr 78px; align-items: center; gap: 8px; margin: 5px 0; font: 10.5px var(--mono); }
+  .hr-bar-label { color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .hr-bar-track { display: block; height: 9px; background: var(--surface); border: 1px solid var(--ink); }
+  .hr-bar { display: block; height: 100%; background: var(--ink); }
+  .hr-bar.is-measured { background: var(--spot); }
+  .hr-bar.is-stock { background: var(--ink); opacity: .45; }
+  .hr-bar.is-physical { background: var(--muted); opacity: .55; }
+  .hr-bar-value { text-align: right; font-weight: 700; white-space: nowrap; }
+  .hr-bar-value small { font-weight: 400; color: var(--muted); }
+  .hr-why { margin: 9px 0 0; color: var(--muted); font-size: 12px; }
+  .hr-links { margin: 7px 0 0; font: 10.5px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+  .hr-links a { border-bottom: 1px solid currentColor; }
+  @media (max-width: 520px) { .hr-bar-row { grid-template-columns: 92px 1fr 70px; } .measured .big { font-size: 36px; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="site-nav"><div class="wrap">
+  <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
+  <nav aria-label="Primary">
+    <a href="index.html" aria-current="page">Models</a>
+    <a href="../learn.html">Learn</a>
+    <a href="../guides.html">Recipes</a>
+    <a href="../index.html#lab-speeds">Benchmarks</a>
+    <a href="../index.html#contribute">Contribute</a>
+    <a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / <a href="minimax-h3.html">MiniMax-H3 · video with audio</a> / AdaLN-fitted BF16 denoiser; INT8 ConvRot encoder</p>
+  <p class="eyebrow">Candidate package · Native diffusers / PyTorch XPU · 2× Intel Arc Pro B70</p>
+  <h1>MiniMax-H3 video with audio on two B70 cards</h1>
+  <p>Make independent video clips with stereo sound on two cards. Eight clips took 396.6 seconds each on average. The owner chose this AdaLN-fitted version; the rebuild recipe still has missing inputs.</p>
+</div></header>
+
+<main id="main"><div class="wrap"><div class="col prose" id="package-page">
+
+  <h2 id="measured">Public headline <span class="badge todo">Pending</span></h2><p class="scope">Owner-approved measured batch; strict headline certification pending: historical input binding and independent full-suite repeats are incomplete.</p><h2 id="video-observations">Measured video timing <span class="badge todo">Scoped observation</span></h2><div class="measured"><a class="big inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-h3-pruned-bf16-tp2-b70-20261004/featured-observation.json">396.62</a><span class="unit">seconds per clip (whole-batch average)</span></div><p class="scope">Owner-approved measured batch; 32 MATCH / 0 DIFFERS, 8 clip repeat passes against own reference · 8 samples.</p><p class="scope">One eight-clip batch. Whole-batch wall divided by eight; not observed delivery cadence or first-clip latency. 124 frames at 960×544 and 24 fps per clip. 32 kHz stereo; 50 NFE, seed 42, no LoRA, FP32 decode. <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-h3-pruned-bf16-tp2-b70-20261004/featured-observation.json">Test details on GitHub</a></p>
+  <div class="actions">
+    <a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md">Open the full guide</a>
+    <button type="button" class="copy-md" data-copy-markdown="../repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md" aria-label="Copy the guide Markdown" aria-live="polite">Copy Markdown</button>
+    <a class="button secondary" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&title=MiniMax-H3%20video%20with%20audio%20on%20two%20B70%20cards">Submit an improvement</a>
+  </div>
+
+  <dl class="facts"><div><dt>Model</dt><dd>MiniMax-H3 AdaLN-fitted BF16 denoiser; INT8 ConvRot encoder</dd></div><div><dt>Publisher</dt><dd>MiniMaxAI</dd></div><div><dt>Compression</dt><dd>AdaLN-fitted BF16 denoiser + INT8 ConvRot encoder</dd></div><div><dt>Software</dt><dd>Native diffusers / PyTorch XPU</dd></div><div><dt>Cards</dt><dd>2× Intel Arc Pro B70 32 GiB</dd></div><div><dt>Model download</dt><dd>—</dd></div><div><dt>Operating systems</dt><dd>Linux</dd></div><div><dt>Delivery</dt><dd>native</dd></div><div><dt>Good for</dt><dd><span class="use-chip">video generation</span> <span class="use-chip">independent clips with audio</span></dd></div><div><dt>Fresh install tested</dt><dd>not yet — follow the guide carefully</dd></div></dl>
+<p class="missing">This setup still needs installation checks. <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md">See what remains in the guide.</a></p>
+<p class="limitations">AdaLN tables are a fitted approximation measured below the BF16 noise floor; all other denoiser weights are bit-exact with the official checkpoint. Exact scheduling against its own reference: 32 MATCH / 0 DIFFERS, 8 repeat passes. The 800.8 s/clip comparison is a ledger-recorded baseline, raw receipts not retained. No official-model parity claim. <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md">Read the limits before choosing settings.</a></p>
+<h2 id="prefill">Prompt reading</h2><p>Language-model prefill rates do not apply to this video timing. Text-encoding time is not reported separately.</p>
+<p class="scope">Seconds per clip is the total batch time divided by its clip count. It is not the wait for the first clip or the time between deliveries. Playback seconds say how long each finished clip plays.</p>
+<h2 id="video-progression">How the video setup progressed</h2><div class="table-scroll"><table><caption>Recorded timings for each setup; settings and measurement windows differ.</caption><thead><tr><th>Setup</th><th>Batch seconds / clip count</th><th>Playback seconds per clip</th><th>Clips in one batch</th><th>Evidence scope</th></tr></thead><tbody><tr><th scope="row"><a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-h3-pruned-bf16-tp2-b70-20261004/featured-observation.json">Eight independent clips, persistent decode and audio overlap</a></th><td>396.625</td><td>5.166666666666667</td><td>8</td><td>Owner-approved measured batch; 32 MATCH / 0 DIFFERS, 8 clip repeat passes against own reference</td></tr></tbody></table></div>
+<h2 id="multi-user">Several video streams at once</h2><p>Not measured. This package measures one batch of independent clips, not a continuing stream.</p>
+<details class="profile"><summary>Speed estimates</summary>
+  <h2 id="projection">How much faster could this get? <span class="badge todo">No projection</span></h2>
+  <div class="placeholder"><p>This package's measured workload does not map cleanly onto a single model + compression + card-count shape, so no like-for-like projection is shown. The measured numbers above stand on their own.</p></div></details>
+
+  <div class="related">
+    <h2>Keep going</h2>
+    <div class="related-grid">
+      <a href="minimax-h3.html"><b>MiniMax-H3 · video with audio coverage</b><span>Variants, evidence, gaps, and recipes</span></a>
+
+      <a href="../learn.html"><b>Learn</b><span>What sets these numbers</span></a>
+      <a href="../guides.html"><b>Recipes</b><span>Every package, filterable</span></a>
+      <a href="../index.html#contribute"><b>Contribute</b><span>Made it faster? Send it in</span></a>
+    </div>
+  </div>
+
+</div></div></main>
+
+<footer><div class="wrap">
+  <span>Unofficial lab, not affiliated with Intel. Measured numbers link to proof; projections are labeled.</span>
+  <span><a href="../learn.html">Learn</a> · <a href="../guides.html">Recipes</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a> · <a href="https://mlbottleneck.com/" title="Physics-based LLM speed and memory planner for any GPU — same author">ML Bottleneck</a> · <a href="https://style-genome.com/" title="Design-system generator used to style this site — same author">Style Genome</a></span>
+</div></footer>
+<script defer src="../learn/assets/mlbottleneck-bridge.js?v=2bb3049222"></script>
+<script>
+(() => {
+  document.querySelectorAll("[data-copy-markdown]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const original = button.textContent; button.disabled = true; button.textContent = "Copying…";
+      try {
+        const response = await fetch(button.dataset.copyMarkdown, { cache: "no-store" });
+        if (!response.ok) throw new Error("fetch failed");
+        await navigator.clipboard.writeText(await response.text());
+        button.textContent = "Copied"; button.classList.add("copied");
+      } catch (error) { button.textContent = "Copy failed"; button.classList.add("failed"); }
+      window.setTimeout(() => { button.textContent = original; button.classList.remove("copied", "failed"); button.disabled = false; }, 1800);
+    });
+  });
+})();
+</script>
+</body>
+</html>

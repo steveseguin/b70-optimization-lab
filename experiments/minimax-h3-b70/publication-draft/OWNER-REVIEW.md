@@ -1,6 +1,8 @@
 # MiniMax-H3: owner review before publication
 
-Prepared 2026-10-10. **No publication requested or performed by this change.**
+Update, 2026-10-10: the owner has reviewed and selected the AdaLN-fitted target and scheduling result. See the [recorded decision](../../../repro/minimax-h3-pruned-bf16-tp2-b70-20261004/owner-decision.json) and [registered guide](../../../repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md). Approval is no longer pending. The exact fit producer and other technical gates were not recovered, so registration uses an honest draft native-video contract rather than asserting the `published` prerequisite in the historical commands below. The old pruned-target editorial text is superseded by AdaLN-fitted wording.
+
+Historical preparation follows. Prepared 2026-10-10. **No publication requested or performed by this change.**
 Only this draft directory is in scope. The page, catalogs, generator and family
 inputs remain unchanged. The owner's H3 decision is in
 [AGENTS.md](../../../AGENTS.md), Lane Decisions (2026-09-19/20):

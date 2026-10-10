@@ -1451,6 +1451,161 @@
       }
     },
     {
+      "manifest": "packages/minimax-h3-pruned-bf16-tp2-b70-20261004/package.json",
+      "format": "b70-model-package-v1",
+      "id": "minimax-h3-pruned-bf16-tp2-b70-20261004",
+      "name": "MiniMax-H3 video with audio on two B70 cards",
+      "status": "candidate",
+      "audience": "expert",
+      "guide": "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md",
+      "clean_host_tested": false,
+      "library": {
+        "model_family": "MiniMax-H3",
+        "publisher": "MiniMaxAI",
+        "variant": "AdaLN-fitted BF16 denoiser; INT8 ConvRot encoder",
+        "summary": "Owner-approved AdaLN-fitted variant; one receipted eight-clip batch: 3173 seconds total, 396.625 seconds per clip. Exact scheduling against its own reference. Reconstruction incomplete.",
+        "public_summary": "Make independent video clips with stereo sound on two cards. Eight clips took 396.6 seconds each on average. The owner chose this AdaLN-fitted version; the rebuild recipe still has missing inputs.",
+        "public_caveat": "AdaLN tables are a fitted approximation measured below the BF16 noise floor; all other denoiser weights are bit-exact with the official checkpoint. Exact scheduling against its own reference: 32 MATCH / 0 DIFFERS, 8 repeat passes. The 800.8 s/clip comparison is a ledger-recorded baseline, raw receipts not retained. No official-model parity claim.",
+        "quantization": "AdaLN-fitted BF16 denoiser + INT8 ConvRot encoder",
+        "runtime_label": "Native diffusers / PyTorch XPU",
+        "operating_systems": [
+          "Linux"
+        ],
+        "delivery": [
+          "native"
+        ],
+        "modalities": [
+          "video",
+          "audio"
+        ],
+        "use_cases": [
+          "video generation",
+          "independent clips with audio"
+        ],
+        "tags": [
+          "two cards",
+          "AdaLN fitted",
+          "owner approved",
+          "eight-clip batch"
+        ],
+        "published_at": "2026-10-10",
+        "featured_metric": null,
+        "benchmark_status": "Owner-approved measured batch; strict headline certification pending: historical input binding and independent full-suite repeats are incomplete."
+      },
+      "contributors": [
+        {
+          "id": "b70-optimization-lab",
+          "name": "neural.download lab",
+          "kind": "lab",
+          "profile": "https://github.com/steveseguin/b70-optimization-lab",
+          "contribution": "XPU loader, scheduling, persistent decode and audio overlap.",
+          "status": "acknowledged",
+          "validated_effect": "396.625 s/clip, eight-clip batch; historical 2.019x uses a ledger-recorded baseline, raw receipts not retained.",
+          "evidence": "experiments/minimax-h3-b70/data/2026-10-04-soak8/session.log"
+        },
+        {
+          "id": "comfy-org-h3",
+          "name": "Comfy-Org",
+          "kind": "external",
+          "profile": "https://huggingface.co/Comfy-Org/MiniMax-H3",
+          "contribution": "Source of AdaLN-fitted checkpoint and INT8 ConvRot encoder; fit producer not recovered by the lab.",
+          "status": "acknowledged",
+          "validated_effect": "Isolated speed effect not measured; no credit for lab scheduling.",
+          "evidence": "experiments/minimax-h3-b70/notes/2026-09-17-adaln-table-exactness.md"
+        }
+      ],
+      "hardware": {
+        "accelerator": "Intel Arc Pro B70 32 GiB",
+        "cards": 2,
+        "host_memory": "15 GiB on measured host; portable minimum unqualified"
+      },
+      "model": {
+        "repository": "MiniMaxAI/MiniMax-H3",
+        "revision": "42ed227ee7df40d41602854ae760620d6eb651fe",
+        "manifest": "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/model-manifest.json",
+        "revision_scope": "Official reconstruction pin only; historical run bytes unbound"
+      },
+      "runtime": {
+        "kind": "native",
+        "repository": "huggingface/diffusers",
+        "revision": "7221eef4573574925b67a69e9fc1482bf093e569",
+        "build": "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md"
+      },
+      "project_patches": {
+        "required": true,
+        "items": [
+          "experiments/minimax-h3-b70/scripts"
+        ],
+        "reason": "Historical runner bound in runtime manifest; complete editable upstream delta not retained."
+      },
+      "commands": {
+        "preflight": "python3 -B repro/minimax-h3-pruned-bf16-tp2-b70-20261004/verify-evidence.py",
+        "launch": "Read repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md for exact historical batch commands; fit/runtime reconstruction incomplete.",
+        "health": "Read repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md for mandatory wrapper preflight, watchdog and health requirements.",
+        "benchmark": "python3 -B repro/minimax-h3-pruned-bf16-tp2-b70-20261004/verify-evidence.py # CPU audit; future GPU commands are in guide.",
+        "stop": "Read repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md: finite batch completion joins workers; mid-batch stop unqualified."
+      },
+      "missing": [
+        "Exact official-to-AdaLN-fitted checkpoint producer and its build receipt",
+        "Historical model full-file hashes and September baseline/reference receipts",
+        "Complete editable diffusers source delta, clean build and runtime smoke",
+        "Independent fresh-process 50-NFE full-suite repeats",
+        "Portable model paths and qualified mid-batch graceful stop",
+        "Public release assets and native-video published certification",
+        "Clean-host installation and replay"
+      ],
+      "known_limitations": [
+        "Whole-batch wall / eight; not first-clip latency or delivery cadence.",
+        "AdaLN approximation and INT8 encoder are accepted choices, not official-model parity.",
+        "One retained batch; 800.8 s/clip ledger-recorded baseline, raw receipts not retained.",
+        "Reconstruction revision is not a verified historical run pin.",
+        "Independent clips; no seamless continuation, streaming guarantee or prefill rate."
+      ],
+      "video_measurements": {
+        "measurement_kind": "batch-average",
+        "evidence": "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/featured-observation.json",
+        "headline_row_label": "Eight independent clips, persistent decode and audio overlap",
+        "scope": "One eight-clip batch. Whole-batch wall divided by eight; not observed delivery cadence or first-clip latency. 124 frames at 960×544 and 24 fps per clip. 32 kHz stereo; 50 NFE, seed 42, no LoRA, FP32 decode.",
+        "rows": [
+          {
+            "label": "Eight independent clips, persistent decode and audio overlap",
+            "status": "Owner-approved measured batch; 32 MATCH / 0 DIFFERS, 8 clip repeat passes against own reference",
+            "evidence": "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/featured-observation.json",
+            "period_seconds": 396.625,
+            "new_video_seconds": 5.166666666666667,
+            "samples": 8
+          }
+        ]
+      },
+      "dependencies": [
+        "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-00-receipt.json",
+        "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-01-receipt.json",
+        "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-02-receipt.json",
+        "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-03-receipt.json",
+        "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-04-receipt.json",
+        "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-05-receipt.json",
+        "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-06-receipt.json",
+        "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-07-receipt.json",
+        "experiments/minimax-h3-b70/data/2026-10-04-soak8/session.log",
+        "experiments/minimax-h3-b70/data/environment.txt",
+        "experiments/minimax-h3-b70/notes/2026-09-17-adaln-table-exactness.md",
+        "experiments/minimax-h3-b70/notes/2026-09-20-realtime-goal.md",
+        "experiments/minimax-h3-b70/notes/h3-soak8-prompts.txt",
+        "experiments/minimax-h3-b70/publication-draft/EVIDENCE.md",
+        "experiments/minimax-h3-b70/scripts",
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md",
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/evidence-manifest.json",
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/featured-observation.json",
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/model-manifest.json",
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/owner-decision.json",
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/promotion-attestation.json",
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/publication-manifest.json",
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/runtime-manifest.json",
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/verify-evidence.py",
+        "results/minimax-h3-b70/README.md"
+      ]
+    },
+    {
       "manifest": "packages/minimax-m27-int4-autoround-b70/package.json",
       "format": "b70-model-package-v1",
       "id": "minimax-m27-b70-89tps-20260520",

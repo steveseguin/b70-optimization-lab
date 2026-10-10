@@ -308,11 +308,14 @@ def metric_text(library):
 def video_observations(measurements, section="all"):
     """Render scoped video observations without upgrading them to a headline."""
     rows = measurements.get("rows") or []
+    batch_average = measurements.get("measurement_kind") == "batch-average"
     selected = next((row for row in rows if row.get("label") == measurements.get("headline_row_label")), None)
     highlight = ""
     if selected and isinstance(selected.get("period_seconds"), (int, float)):
         duration = selected.get("new_video_seconds")
         duration_text = f' per {duration:g} seconds of new video' if isinstance(duration, (int, float)) else ' per chunk'
+        if batch_average:
+            duration_text = ' per clip (whole-batch average)'
         highlight = (
             f'<div class="measured"><a class="big inline" href="{GITHUB}{esc(selected["evidence"])}">{selected["period_seconds"]:.2f}</a>'
             f'<span class="unit">seconds{esc(duration_text)}</span></div>'
@@ -335,6 +338,8 @@ def video_observations(measurements, section="all"):
         '<h2 id="video-progression">How the video setup progressed</h2><div class="table-scroll"><table><caption>Recorded timings for each setup; settings and measurement windows differ.</caption><thead><tr><th>Setup</th><th>Seconds per chunk</th><th>New video seconds</th><th>Samples</th><th>Evidence scope</th></tr></thead><tbody>'
         + "".join(cells) + '</tbody></table></div>'
     )
+    if batch_average:
+        table = table.replace('Seconds per chunk', 'Batch seconds / clip count').replace('New video seconds', 'Playback seconds per clip').replace('<th>Samples</th>', '<th>Clips in one batch</th>')
     return summary if section == "summary" else table if section == "table" else summary + table
 
 
@@ -454,6 +459,8 @@ def page(pkg, all_pkgs, family=None):
     if is_video:
         prefill_section = '<h2 id="prefill">Prompt reading</h2><p>Language-model prefill rates do not apply to this video timing. Text-encoding time is not reported separately.</p>'
         metric_explanation = '<p class="scope">Seconds per chunk measure how long the next piece of video takes to make. Lower is faster. New video seconds measure its playback duration. A timing below playback duration means that measured chunk was ready faster than it plays; a short window does not prove sustained playback.</p>'
+        if pkg.get('video_measurements', {}).get('measurement_kind') == 'batch-average':
+            metric_explanation = '<p class="scope">Seconds per clip is the total batch time divided by its clip count. It is not the wait for the first clip or the time between deliveries. Playback seconds say how long each finished clip plays.</p>'
     evidence_link = f'<a class="inline" href="{GITHUB}{esc(fm["evidence"])}">Test details on GitHub</a>' if fm.get("evidence") else ""
     missing_html = ('<p class="missing">This setup still needs installation checks. <a class="inline" href="' + GITHUB + esc(pkg.get("guide", "")) + '">See what remains in the guide.</a></p>') if pkg.get("missing") else ""
     caveats = []
@@ -519,6 +526,8 @@ def page(pkg, all_pkgs, family=None):
     if is_video:
         profiles_section = video_observations(pkg["video_measurements"], section="table") if pkg.get("video_measurements") else '<h2 id="video-observations">Measured video timing</h2><p>Not measured yet for this setup.</p>'
         multiuser_section = '<h2 id="multi-user">Several video streams at once</h2><p>Not measured. The published observations use one stream.</p>'
+        if pkg.get('video_measurements', {}).get('measurement_kind') == 'batch-average':
+            multiuser_section = '<h2 id="multi-user">Several video streams at once</h2><p>Not measured. This package measures one batch of independent clips, not a continuing stream.</p>'
     projection_html = ""
     if exact_projection_workload:
         projection_html = f"""

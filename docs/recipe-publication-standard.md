@@ -79,6 +79,15 @@ standalone assets.
 
 ## Status rules
 
+An incomplete native video packet may declare `runtime_kind: native-video-draft`
+under the v2 format. This narrowly scoped contract requires hash-bound tracked
+evidence, explicit missing gates, all three build/smoke/quality certification
+booleans false, an empty release-asset list and null remote verification time.
+Both validator modes audit its evidence; neither certifies a public rebuild.
+This contract rejects `published` unconditionally. A completed native video
+release needs a separately reviewed native build/asset contract, not invented
+vLLM or GDN binaries. Existing binary publication gates are unchanged.
+
 - `draft`: assets or a gate may still be missing. Direct URLs can be planned,
   but the website and README must say the packet is incomplete.
 - `published`: all required asset types exist, all three validation gates pass,

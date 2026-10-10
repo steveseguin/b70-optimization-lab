@@ -1,7 +1,7 @@
 {
   "reviewed_at": "2026-10-10",
   "scope": "All 21 cataloged families and all 29 site-listed packages, including candidate/lab-replay states. Site-listed does not mean recipe-publication.v2 published.",
-  "formula": "5*popularity + 7*recency_capability + 8*optimization (0–100 editorial score); final order applies card-fit and distinct-role constraints.",
+  "formula": "5*popularity + 7*recency_capability + 8*optimization (0\u2013100 editorial score); final order applies card-fit and distinct-role constraints.",
   "families": [
     {
       "family_id": "deepseek-coder-v2",
@@ -275,6 +275,15 @@
       "repository_created": "2026-07-23",
       "basis": "22B audio/video generation; recent native multi-shot capability. Lab continuation chunks are byte-exact; sustained speed and seam/audio acceptance are pending.",
       "evidence": "families/ltx-25.json"
+    },
+    {
+      "family_id": "minimax-h3",
+      "popularity": null,
+      "recency_capability": null,
+      "optimization": null,
+      "score": null,
+      "score_status": "Not scored; owner-selected distinct video role",
+      "evidence": "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/owner-decision.json"
     }
   ],
   "deployments": [
@@ -485,7 +494,7 @@
         "value": 26.668277,
         "unit": "tok/s",
         "label": "decode (MTP-assisted, full package resident)",
-        "scope": "Conventional 99-interval median, cold 12-prompt suite, up to 512-token responses, cache-zero, at 262144 configured capacity with q8_0 K/V, vision mmproj, and MTP draft loaded; active prompts were 48–78 tokens and the second fresh-server run measured 26.640510. Speculation-assisted and labeled as such; target-only tg128 at depth 0 is 22.64 tok/s (raw engine).",
+        "scope": "Conventional 99-interval median, cold 12-prompt suite, up to 512-token responses, cache-zero, at 262144 configured capacity with q8_0 K/V, vision mmproj, and MTP draft loaded; active prompts were 48\u201378 tokens and the second fresh-server run measured 26.640510. Speculation-assisted and labeled as such; target-only tg128 at depth 0 is 22.64 tok/s (raw engine).",
         "evidence": "repro/qwen38-27b-256k-vision-mtp-b70/README.md"
       },
       "guide": "repro/qwen38-27b-256k-vision-mtp-b70/README.md",
@@ -521,7 +530,7 @@
       "metric": {
         "value": 54.03648366755944,
         "unit": "tok/s",
-        "label": "Writing speed · MTP depth 5 · one card",
+        "label": "Writing speed \u00b7 MTP depth 5 \u00b7 one card",
         "scope": "Median of two strict runs on a fresh R312d-c package-launcher server (54.047 / 54.026) at a 32,768-token context (2,048-token prefill chunk, single-checkpoint recurrent state, one-pass verifier attention) on the fixed 12-prompt six-class suite, 512-token answers, class-balanced median of tokens 1-100, cache zero, canaries passed, 12/12 complete outputs identical to no-MTP decoding on both runs, 64/64 on the sequential oracle. The research launcher measured 54.212 / 53.896 on its own fresh server of the same image.",
         "evidence": "experiments/qwen38-27b-b70/data/2026-10-04-fp8-onecard-chunked-upload/tp1-pkg-32k-strict-performance.json"
       },
@@ -540,7 +549,7 @@
       "metric": {
         "value": 90.30984105545438,
         "unit": "tok/s",
-        "label": "Writing speed · MTP depth 5 · allgather allreduce · two cards",
+        "label": "Writing speed \u00b7 MTP depth 5 \u00b7 allgather allreduce \u00b7 two cards",
         "scope": "Median of two fresh R310 two-card servers (90.370 / 90.250) at a 33,024-token context on the fixed 12-prompt six-class suite, 512-token answers, class-balanced median of tokens 1-100, cache zero, canaries passed, 12/12 complete outputs identical to no-MTP decoding (33.86 tok/s on the same image), 64/64 on the sequential oracle.",
         "evidence": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-comm2/tp2-ag-mtp5-strict-performance.json"
       },
@@ -782,13 +791,31 @@
       },
       "guide": "repro/qwen38-flash-next-fp8-tp4-mtp1-qsafused-b70-38tps-20260907/README.md",
       "decision": "Historical predecessor; current certified exactGDN package fills this role."
+    },
+    {
+      "package_id": "minimax-h3-pruned-bf16-tp2-b70-20261004",
+      "family_id": "minimax-h3",
+      "popularity": null,
+      "recency_capability": null,
+      "optimization": null,
+      "score": null,
+      "score_status": "Not scored; owner-selected video role, not a fabricated interest rating",
+      "featured_rank": 8,
+      "selection_reason": "Owner explicitly selected H3 for two-card video with audio; LTX retained for continuation",
+      "evidence": "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/owner-decision.json",
+      "cards": 2,
+      "metric": null,
+      "guide": "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md",
+      "decision": "Owner-selected two-card independent-video role"
     }
   ],
   "h3": {
     "identity": "MiniMax-H3, 33B audio/video generator, not MiniMax M2.7",
-    "site_package_published": false,
-    "evidence": "experiments/minimax-h3-b70/README.md",
+    "site_package_published": true,
+    "evidence": "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/owner-decision.json",
     "release": "2026-08-02",
-    "release_source": "https://huggingface.co/MiniMaxAI/MiniMax-H3/blob/main/LICENSE"
+    "release_source": "https://huggingface.co/MiniMaxAI/MiniMax-H3/blob/main/LICENSE",
+    "package_id": "minimax-h3-pruned-bf16-tp2-b70-20261004",
+    "status": "Owner-approved AdaLN-fitted variant; scoped measured batch, public rebuild incomplete"
   }
 }

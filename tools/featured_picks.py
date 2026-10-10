@@ -168,12 +168,27 @@ def groups(catalog):
          'Qualified package · separate October check','A 2.6B model. The strict package passed its gates; the October setup failed its quick answer check and concurrent answers differed.'),
     ]:
         small.append(use_profile(pick(pid, name, status, why), profile))
+    h3 = pick('minimax-h3-pruned-bf16-tp2-b70-20261004',
+        'MiniMax-H3 · video with audio on two cards',
+        'Owner-approved AdaLN-fitted variant · exact scheduling',
+        'Independent clips with stereo sound. The fitted AdaLN tables approximate the official '
+        'model below the measured BF16 noise floor; all other denoiser weights are bit-exact. '
+        'The scheduling speedup preserves this variant’s own reference.', research=True)
+    h3_path = 'repro/minimax-h3-pruned-bf16-tp2-b70-20261004/featured-observation.json'
+    h3_run = read(h3_path)
+    assert h3_run['run_name'] == 'duet-20261004T042838Z'
+    assert h3_run['wall_seconds'] == 3173 and h3_run['clips'] == 8
+    h3['observation'] = (f"{h3_run['wall_seconds']/h3_run['clips']:.1f} seconds per clip (eight-clip batch average)", h3_path)
+    h3['note'] = ('124 frames at 960×544 per clip; 24 fps is playback speed. '
+                  '32 MATCH / 0 DIFFERS, 8 repeat passes against its own reference. '
+                  'The 2× comparison uses an 800.8 s/clip ledger-recorded baseline, raw receipts not retained. '
+                  'Exact fit reconstruction and public runtime rebuild remain incomplete.')
     # One editorial role per featured setup; scores never clear quality gates.
-    featured = [int4, gemma, fp8, laguna, shared, flash, video]
+    featured = [int4, gemma, fp8, laguna, shared, flash, video, h3]
     roles = ['Everyday assistant', 'Fast single-user replies on one card',
              'Longer documents with official FP8 weights', 'Dedicated coding setup',
              'Many people at once', 'Larger model for demanding tasks',
-             'Continuing video with audio']
+             'Continuing video with audio', 'Independent video clips with audio on two cards']
     for p, role in zip(featured, roles):
         p['role'] = role
     int4['why'] = ('Start here for everyday chat and code on one card. A recent dense 27B model '
@@ -214,7 +229,7 @@ def render_pick(pick, rank):
     if pick.get('observation'):
         label, evidence = pick['observation']
         metrics.append(f'<p class="pick-note"><a href="{GITHUB}{esc(evidence)}">{esc(label)}</a></p>')
-    if not any(m['label'] == 'Reads a prompt' for m in pick['metrics']) and pick['id'] != 'ltx25-continuation-stream-b70-145f-20261010':
+    if not any(m['label'] == 'Reads a prompt' for m in pick['metrics']) and pick['id'] not in {'ltx25-continuation-stream-b70-145f-20261010', 'minimax-h3-pruned-bf16-tp2-b70-20261004'}:
         metrics.append('<p class="pick-note">Prompt reading: not measured for this exact result.</p>')
     metrics.append(f'<p class="pick-note">{esc(pick["note"])}</p>')
     return f'''      <li class="pick-row{research}" data-pick-id="{esc(pick['id'])}">
@@ -233,7 +248,7 @@ def render(catalog):
     out = [START, '''<section id="featured">
   <div class="wrap">
     <h2 id="t-featured">What should I run?</h2>
-    <p class="sub"><strong>1 card:</strong> Qwen 27B for everyday work, Gemma 26B for fast replies. <strong>2 cards:</strong> Qwen 27B shared chat. <strong>3 cards:</strong> use the tested two-card recipe; three-card scaling is not measured here. <strong>4 cards:</strong> Laguna for code, Flash-Next for demanding tasks, LTX for video.</p>
+    <p class="sub"><strong>1 card:</strong> Qwen 27B for everyday work, Gemma 26B for fast replies. <strong>2 cards:</strong> Qwen 27B shared chat; MiniMax-H3 video with audio. <strong>3 cards:</strong> use the tested two-card recipe; three-card scaling is not measured here. <strong>4 cards:</strong> Laguna for code, Flash-Next for demanding tasks, LTX for video.</p>
     <p class="sub">For owners of 32 GB Intel Arc Pro B70 cards. We weigh public interest in the model family, how recent and capable it is, and our optimization and quality evidence, then choose one setup per need. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/notes/2026-10-10-neural-download-featured-ranking.md">Scores, sources and selection reasons</a>. A certified result does not mean a clean-host installer is ready.</p>
     <p class="sub">Writing speed is in tokens per second (tok/s); a token is about three quarters of a word. Bars compare speed, not capability. Use <a href="#uniform">Same test, every model</a> for the shared test conditions.</p>''']
     for group_id, title, picks in groups(catalog):
@@ -247,7 +262,7 @@ def render(catalog):
         if group_id in ('small-quick', 'other-picks'):
             out.append('</details>')
     out.extend(['''    <p class="pick-scale">Bars use fixed scales: one person 250 tok/s; combined users 1,400 tok/s; prompt reading 4,200 tok/s. User counts and tests differ; every value links to its receipt. Video has its own units and no token-speed bar.</p>
-    <p class="research-links">All recipes and numbers remain in the tables below and the <a href="models/">model library</a>. H3 means MiniMax-H3, an audio/video generator. It has <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/minimax-h3-b70/README.md">public lab notes</a>, but no published site package yet.</p>
+    <p class="research-links">All recipes and numbers remain in the tables below and the <a href="models/">model library</a>. H3 means MiniMax-H3, an audio/video generator. It has <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/minimax-h3-b70/README.md">public lab notes</a>, and an owner-approved AdaLN-fitted package; its public rebuild remains incomplete.</p>
   </div>
 </section>''', END])
     return '\n'.join(out)

@@ -1,0 +1,96 @@
+{
+  "format": "neural-download-model-family-v1",
+  "id": "minimax-h3",
+  "primary_packet_id": "minimax-h3-pruned-bf16-tp2-b70-20261004",
+  "name": "MiniMax-H3",
+  "display_name": "MiniMax-H3 \u00b7 video with audio",
+  "publisher": "MiniMaxAI",
+  "updated_at": "2026-10-10",
+  "summary": "Owner-selected AdaLN-fitted video model on two B70 cards, with an INT8 encoder. The receipted eight-clip batch averaged 396.6 seconds per clip. Scheduling preserves its own reference; this is not parity with the official model. Open the packet for the exact scope, license, baseline caveat and incomplete rebuild steps.",
+  "architecture": {
+    "class": "MiniMax-H3 video/audio diffusion model",
+    "design": "video generation",
+    "evidence": "results/minimax-h3-b70/README.md"
+  },
+  "dimensions": {},
+  "weight_revisions": [
+    {
+      "id": "h3-official-reconstruction",
+      "label": "Official source reconstruction pin; historical fitted run bytes unbound",
+      "role": "reconstruction source, not measured file identity",
+      "repository": "MiniMaxAI/MiniMax-H3",
+      "revision": "42ed227ee7df40d41602854ae760620d6eb651fe",
+      "model_manifest": "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/model-manifest.json"
+    }
+  ],
+  "model_variants": [],
+  "transfer_scope": {
+    "status": "Chosen AdaLN-fitted variant and its own scheduling reference",
+    "transfers": [
+      "Retained eight-clip timings and session hash reports"
+    ],
+    "does_not_transfer": [
+      "Scheduling exactness to official-model parity",
+      "Ledger baseline ratio to a matched raw baseline measurement",
+      "One batch to fresh-run repeat certification",
+      "Video batch time to delivery cadence or token rates"
+    ],
+    "evidence": "results/minimax-h3-b70/README.md"
+  },
+  "model_signals": {
+    "b70_fit": {
+      "band": "two-card measured",
+      "scope": "124 frames, 960\u00d7544, 50 NFE, eight-clip batch",
+      "basis": "Eight retained receipts and session log",
+      "reviewed_at": "2026-10-10"
+    },
+    "quality_evidence": {
+      "band": "own-reference scheduling exactness",
+      "scope": "32 MATCH / 0 DIFFERS, 8 clip repeat passes in session report; original reference receipts absent",
+      "evidence": [
+        "results/minimax-h3-b70/README.md"
+      ]
+    },
+    "popularity": {
+      "state": "not-scored",
+      "reason": "Owner-selected video role; no new numerical interest score"
+    }
+  },
+  "run_measurements": [],
+  "series_measurements": [],
+  "estimates": [],
+  "packets": [
+    {
+      "id": "minimax-h3-pruned-bf16-tp2-b70-20261004",
+      "label": "AdaLN-fitted video with audio \u00b7 two B70 cards",
+      "revision": "h3-official-reconstruction",
+      "quantization": "AdaLN-fitted BF16 + INT8 encoder",
+      "runtime": "Native diffusers / PyTorch XPU",
+      "cards": 2,
+      "status": "candidate",
+      "evidence_level": "Owner-approved scoped batch; public rebuild incomplete",
+      "coverage": [
+        "eight-clip timing",
+        "own-reference hash report",
+        "input metadata pins"
+      ],
+      "manifest": "packages/minimax-h3-pruned-bf16-tp2-b70-20261004/package.json",
+      "guide": "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md",
+      "grades": {
+        "evidence": {
+          "grade": "C",
+          "scope": "Retained one-batch evidence on the two-card host",
+          "basis": "Fit producer, historical byte bindings, baseline receipts and clean rebuild are incomplete.",
+          "reviewed_at": "2026-10-10",
+          "evidence": [
+            "results/minimax-h3-b70/README.md"
+          ]
+        }
+      }
+    }
+  ],
+  "views": [],
+  "coverage_views": [],
+  "coverage_contracts": [],
+  "family_closures": []
+}

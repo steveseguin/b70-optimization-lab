@@ -121,6 +121,10 @@ Other variants are **not modeled** in this review: the current Qwen FP8 dynamic 
 
 ## H3 and video publication boundary
 
+October 10 owner decision supersedes the original no-package finding below: H3 is now the eighth featured pick, for independent video with audio on two cards. The [chosen AdaLN-fitted target and batch](../repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md) retain their evidence limits. This is an explicit owner selection, not a new numerical interest score. LTX remains the continuing-video pick. Public rebuild closure remains incomplete.
+
+Historical review before that decision:
+
 **H3 is MiniMax-H3**, a 33B generator of video with synchronized audio, not MiniMax M2.7. The [publisher license](https://huggingface.co/MiniMaxAI/MiniMax-H3/blob/main/LICENSE) dates its release to August 2, 2026. The [lab lane](../experiments/minimax-h3-b70/README.md) and its results/notes establish the identity and retained exactness work. Searches of the family catalog, package catalog, results and notes found **no H3 site package or family page**. Its research link remains visible, with that gap stated. No new H3 publication or quality decision is implied.
 
 LTX 2.5 is the published continuation-stream lab recipe. Its saved chunks match reference bytes, while seam/audio acceptance and sustained unthrottled performance remain open. The card describes recorded continuation, not a promise that a server is live now. No host service was inspected, launched or touched.

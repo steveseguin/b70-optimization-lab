@@ -502,6 +502,19 @@ the deepest CPU idle state disabled) are in
 
 Owner decisions that bind one lane:
 
+- **MiniMax-H3 (2026-10-10):** Owner decision, verbatim: "we will use the H3 model as we have optimized it; that will be the package and the result we will use. It's an appropriated denoiser, but from my understanding it is lossless, just different prompt->result, but mathematically lossless. It was a trade I was willing to make for a sizable performance boost. Either way, package it, turn it into a recipe, document it, publish it, etc."
+  The owner has reviewed and chosen this result; the September 19/20
+  "owner reviews first" gate is satisfied for it. H3 stays featured on
+  neural.download. The served denoiser is the AdaLN-fitted variant (all other
+  weights bit-exact with the official checkpoint; the AdaLN tables are a
+  fitted approximation measured below the BF16 noise floor). The 2x result
+  is an exact scheduling speedup against that denoiser's own reference
+  (32 MATCH / 0 DIFFERS, 8 repeat passes). This is not a claim of losslessness
+  versus the official model. The historical 800.8 s/clip is a
+  **ledger-recorded baseline, raw receipts not retained**; the receipted
+  measured result is 396.6 s/clip in one eight-clip batch. Missing input,
+  fit-reconstruction and clean-build evidence stays explicitly pending.
+
 - **Qwen 27B FP8 (2026-09-14):** DFlash is excluded from further work. Keep
   native MTP, official FP8 target weights, the qualified target arithmetic and
   KV settings, and lossless output gates. Investigate other transferable ideas

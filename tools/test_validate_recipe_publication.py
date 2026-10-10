@@ -24,6 +24,31 @@ SPEC.loader.exec_module(MODULE)
 
 
 class RecipePublicationValidationTest(unittest.TestCase):
+    def test_native_video_draft_cannot_bypass_publication_or_hash_gates(self):
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw)
+            subprocess.run(['git', 'init', '-q', str(repo)], check=True)
+            evidence = repo / 'receipt.json'
+            evidence.write_text('{}\n')
+            subprocess.run(['git', '-C', str(repo), 'add', 'receipt.json'], check=True)
+            manifest = {
+                'publication_status': 'draft', 'missing': ['Exact fit producer absent'],
+                'release': {'assets': [], 'remote_verified_at': None},
+                'validation': dict(clean_source_build=False, runtime_smoke=False, quality_gate=False),
+                'evidence': [{'path': 'receipt.json', 'sha256': hashlib.sha256(evidence.read_bytes()).hexdigest()}],
+            }
+            self.assertEqual(MODULE._validate_native_video_draft(repo, manifest, 'draft'), [])
+            manifest['publication_status'] = 'published'
+            self.assertTrue(any('cannot certify' in x for x in MODULE._validate_native_video_draft(repo, manifest, 'draft')))
+            manifest['publication_status'] = 'draft'
+            manifest['validation']['quality_gate'] = True
+            self.assertTrue(any('must remain false' in x for x in MODULE._validate_native_video_draft(repo, manifest, 'draft')))
+            manifest['validation']['quality_gate'] = False
+            evidence.write_text('{"changed":true}\n')
+            self.assertTrue(any('digest mismatch' in x for x in MODULE._validate_native_video_draft(repo, manifest, 'draft')))
+            manifest['release']['remote_verified_at'] = '2026-10-10T00:00:00Z'
+            self.assertTrue(any('cannot claim' in x for x in MODULE._validate_native_video_draft(repo, manifest, 'draft')))
+
     def test_rejects_build_script_digest_disagreement(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             repo = Path(raw)

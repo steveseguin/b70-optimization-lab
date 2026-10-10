@@ -1,5 +1,7 @@
 # Performance Index
 
+MiniMax-H3 video: [396.6 s/clip measured eight-clip batch](minimax-h3-b70/README.md), owner-approved AdaLN-fitted target and exact scheduling against its own reference. The 800.8 s/clip comparison is a ledger-recorded baseline, raw receipts not retained.
+
 This is a small, manually maintained index of useful performance expectations.
 It is not the identity of the project, a universal leaderboard, or a replacement
 for the linked result packets. Those packets and their JSON/log evidence are the

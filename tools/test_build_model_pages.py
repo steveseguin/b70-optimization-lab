@@ -18,10 +18,10 @@ class HumanPages(unittest.TestCase):
         self.assertEqual([s[0] for s in sections],
                          ['task-picks', 'other-picks', 'small-quick'])
         featured = sections[0][2]
-        self.assertEqual(len(featured), 7)
-        self.assertEqual(len({p['role'] for p in featured}), 7)
+        self.assertEqual(len(featured), 8)
+        self.assertEqual(len({p['role'] for p in featured}), 8)
         self.assertIn('27B AutoRound', featured[0]['name'])
-        self.assertEqual([p['cards'] for p in featured], [1, 1, 1, 4, 2, 4, 4])
+        self.assertEqual([p['cards'] for p in featured], [1, 1, 1, 4, 2, 4, 4, 2])
         flash = next(p for p in featured if 'Flash-Next' in p['name'])
         shared = next(p for p in featured if 'shared chat' in p['name'])
         self.assertAlmostEqual(flash['metrics'][0]['value'], 46.85424994838007)
@@ -37,6 +37,11 @@ class HumanPages(unittest.TestCase):
         self.assertIn('Neither proves sustained 24/7 uptime', output)
         self.assertIn('0.875 seconds elapsed per second of video', output)
         self.assertIn('LFM2.5 2.6B', output)
+        self.assertIn('396.6 seconds per clip (eight-clip batch average)', output)
+        self.assertIn('ledger-recorded baseline, raw receipts not retained', output)
+        h3 = next(p for p in featured if p['id'].startswith('minimax-h3-'))
+        self.assertEqual(h3['metrics'], [])
+        self.assertEqual(h3['cards'], 2)
         for _, _, picks in sections:
             for pick in picks:
                 self.assertTrue((ROOT / pick['guide']).is_file())
@@ -45,6 +50,16 @@ class HumanPages(unittest.TestCase):
                     self.assertTrue((ROOT / metric['evidence']).is_file())
                     self.assertIn(MODULE.GITHUB + metric['evidence'], output)
         self.assertIn(output, (ROOT / 'index.html').read_text())
+
+    def test_h3_batch_page_does_not_claim_delivery_cadence(self):
+        package = json.loads((ROOT / 'packages/minimax-h3-pruned-bf16-tp2-b70-20261004/package.json').read_text())
+        output = MODULE.page(package, [package])
+        self.assertIn('whole-batch average', output)
+        self.assertIn('Batch seconds / clip count', output)
+        self.assertIn('not a continuing stream', output)
+        self.assertNotIn('how long the next piece of video takes', output)
+        self.assertNotIn('observations use one stream', output)
+        self.assertIsNone(package['library']['featured_metric'])
 
     def test_featured_scorecard_covers_every_family_and_deployment(self):
         rank = json.loads((ROOT / 'data/neural-download-featured-ranking-20261010.json').read_text())
@@ -55,8 +70,12 @@ class HumanPages(unittest.TestCase):
         self.assertEqual({r['package_id'] for r in rank['deployments']},
                          {r['id'] for r in catalog['packages']})
         for r in rank['families'] + rank['deployments']:
+            if r.get('family_id') == 'minimax-h3':
+                self.assertTrue(all(r[k] is None for k in ('score', 'popularity', 'recency_capability', 'optimization')))
+                self.assertIn('Not scored', r['score_status'])
+                continue
             self.assertEqual(r['score'], 5*r['popularity'] + 7*r['recency_capability'] + 8*r['optimization'])
-        self.assertFalse(rank['h3']['site_package_published'])
+        self.assertTrue(rank['h3']['site_package_published'])
         from featured_picks import groups
         ordered = sorted((r for r in rank['deployments'] if r.get('featured_rank')),
                          key=lambda r: r['featured_rank'])

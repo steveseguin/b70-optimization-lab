@@ -1,5 +1,11 @@
 # Current Workspace State
 
+**2026-10-10, CPU-only H3 publication:** The owner chose the AdaLN-fitted H3 variant and its scheduling result, and that decision is now in AGENTS.md.
+The [package and guide](repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md) show the measured eight-clip batch at 396.6 seconds per clip, with 32 matching hash checks; the older baseline is clearly marked as ledger-only.
+H3 is featured beside LTX, with official input metadata pins and the exact historical batch settings.
+The fit checker does not reproduce the original fitted weights, and missing historical receipts and clean-build evidence keep the public rebuild incomplete; no derived weights are distributed.
+No GPU, server, unit, protected model directory or host setting was touched.
+
 **2026-10-10, own-runtime memory admission review (owner decision pending):** The [CPU review](experiments/own-xpu-runtime/stage1/packet4-prep/MEMORY-ADMISSION-REVISION.md) derives a 133,542,784 KiB floor from A367's measured need, its reserve and the fixture budget; this exceeds current capacity, so a lower passing floor is not justified.
 All 18 certified kernel files now pass on the read-only mount, but the fault halt and a historical model-receipt hash mismatch still block the window.
 The driver requires a document-bound owner receipt for any revision and passes 59 CPU tests; no GPU, server, unit or host setting was touched, and test scratch was removed.
