@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**2026-10-10 14:48 UTC, new best line: 133b at 145 (text layers 36–47 on xpu:2, cone decoder graph, display xpu:3, idle maintenance, GC 60, digest cache): early median 5.213 s per 6.0 s = 0.869 s/s (n = 23), byte-identical to 129 on 31/31 chunks, cone exact, even 5.17 / odd 5.25.**
+Qualification verdict 94cd0653ca49 (exact replay c0/c1/c2; first cone capture admitted at Q06 in 21 s; floors held through the repeat chain).
+Against the 129 production session 4 (5.522 median, n = 205) the cone graph saves ≈ 0.3 s per chunk (cone 0.74 vs 0.93) and the 2-cycle is
+nearly gone. Minimum snapshot margin 1.36 GB, dual snapshots periodic. Results note at ≥ 100 periods. Next (Codex, packet 134): re-census 169
+frames under split36 (xpu:3 now has the text shard's 5 GiB back) with the cone graph and display on xpu:3; and whether the 0.75 GiB screening
+band leaves room at 169.
+
 **2026-10-10 14:32 UTC, packet 133b sealed (helper and text oracle bundled under `launch/`; six sealed-import tests added); launching 133b at 145 with split36 + cone graph; 129 session 4 (≈ 250 chunks, exact) stopped by one controlled stop.**
 133b (commit f44f55a215; manifest `ed908a90…4fd3`; inner plan `b67b1a8f…ab7b`; 1,058 recovery incl. 6 sealed-import tests, 6,351 client,
 10 preflight, 22 output comparisons). Root cause of the 133 failure: the helper existed under `resolution/components/` and `source/scripts/`
