@@ -1,0 +1,32 @@
+{
+  "checks": [
+    {
+      "tool": "tools/check-doc-links.py",
+      "returncode": 0,
+      "log": "experiments/ltx25-b70/data/resume-20261008/continuation132-tests/doc-links-final.log",
+      "sha256": "b2afa2144b99bc7e979cb158f6c3757ad1fe60e2b03905d3e7deb4d90d74fb73",
+      "summary": "checked 216 documents, 0 new broken repository-relative link(s) in 0 file(s), 0 known-broken"
+    },
+    {
+      "tool": "tools/check-manifest-paths.py",
+      "returncode": 0,
+      "log": "experiments/ltx25-b70/data/resume-20261008/continuation132-tests/manifest-paths-final.log",
+      "sha256": "232ed0aa526b97047df6c75a6b21f71fad7b5fc9d28806de0f022e8496f3be44",
+      "summary": "checked 6148 repo-relative paths in 51 manifests; 0 missing"
+    },
+    {
+      "tool": "tools/check-pinned-hashes.py",
+      "returncode": 1,
+      "log": "experiments/ltx25-b70/data/resume-20261008/continuation132-tests/pinned-hashes-final.log",
+      "sha256": "30ec0c61959e6c406a56bcf2124cf8c7b954cadf298951dd61b03d97910e6449",
+      "summary": "checked 318 literal file pins: 87 match, 231 drifted, 0 target absent"
+    }
+  ],
+  "preexisting_pin_drift": {
+    "count": 231,
+    "lane": "qwen38-flash-next-fp8-b70",
+    "unchanged_from_before_packet132": true
+  },
+  "new_pin_failures": 0,
+  "git_diff_check_passed": true
+}

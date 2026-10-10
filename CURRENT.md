@@ -1,5 +1,40 @@
 # Current Workspace State
 
+**2026-10-10, packet 132 sealed; audio-only move prepared for the 145-frame cone graph, native qualification still pending.**
+Packet 131's allocator release freed nothing on card 3. Its admission was short
+12,451,840 bytes, already including the full screening band. Moving only the
+audio VAE and vocoder to card 2 projects 0.340 GiB freed and a 0.328 GiB margin
+with the original 5 GiB capture reserve, 9 GiB floor and 0.75 GiB band.
+The upsampler stays on card 0. Three native cross-card waveform checks must
+pass before capture; all nine existing output checks remain. Audio placement
+and its timing can be tested separately from the graph option.
+
+The two 121-frame captures support a 4.506 GiB estimate at 145, but do not
+prove its peak memory bound. The proposed 4.76 GiB reserve is recognized and
+refused until suitable measured evidence exists. It would lower the budget
+by 0.24 GiB, not free physical memory. The larger encoder move is deferred
+because its owner is shared with the decoder. No further allocator savings
+are demonstrated. The conditional forecast remains 5.25–5.35 s per 6 s of
+video (0.875–0.892 s/s), plus the unmeasured audio-placement cost.
+
+The packet is sealed with its parent 131 identity and matching client pins.
+All 960 recovery cases passed in the final full run. All 5,677 client checks
+across 39 suites passed, including 28 inner-plan pin assertions; an inherited
+packet 131 test fixture passed its corrected rerun. Ten mocked preflight checks
+and 22 output-hash comparisons across three CPU runtime cases passed.
+Recursive verification covers 2,269 bound files, with zero Python caches.
+Owned scratch is removed; the two test-fixture corrections and original failure
+logs are preserved. No GPU, model launch, live-port,
+unit, process-signal, host-setting, existing-run or ltx-stream operation occurred.
+The coordinator retains control of live work; no service state was changed.
+The next native step is the audio-only option with the parent reserve, under
+the coordinator's launch authority. Actual freed memory, waveform exactness,
+145-frame capture and sustained timing remain unmeasured here.
+[Design](experiments/ltx25-b70/notes/2026-10-10-continuation132-stream-design.md),
+[memory evidence](experiments/ltx25-b70/notes/2026-10-10-continuation132-memory-evidence.md),
+[build receipt](experiments/ltx25-b70/data/resume-20261008/continuation132-build.json),
+[future launch](experiments/ltx25-b70/recovery/20261010-continuation132-stream/LAUNCH.md).
+
 **2026-10-10 11:45 UTC, 131 cone-graph arm refused by its memory guard by 12 MB (no fault); both latches archived with a receipt; 129 production relaunching (`s129-live02`).**
 At qgraph-c000000 the cone-graph admission required 15,837,691,904 B free on xpu:3 (5 GiB capture reserve + 9 GiB floor + 0.75 GiB screening)
 and found 15,825,240,064 B (margin −12.45 MB) after the display moved to the xpu:2 replica and the allocator release ran. Kernel journal

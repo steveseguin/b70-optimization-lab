@@ -1,7 +1,7 @@
 #!/home/steve/.venvs/ltx25-baseline/bin/python -B
-"""CPU-only packet131 client contract tests; no server, sockets, signals or GPU imports.
+"""CPU-only packet132 client contract tests; no server, sockets, signals or GPU imports.
 
-Run with bin/python -B tests/run_cpu_suites.py run_tests_131.py. Synthetic evidence
+Run with bin/python -B tests/run_cpu_suites.py run_tests_132.py. Synthetic evidence
 checks admission and binding; it proves neither numerical equality nor runtime timing.
 """
 import contextlib
@@ -16,10 +16,11 @@ import sys
 from types import SimpleNamespace
 
 HERE = Path(__file__).resolve().parent
-spec = importlib.util.spec_from_file_location('client131_test', HERE.parent / 'ltx_continuation_client.py')
+spec = importlib.util.spec_from_file_location('client132_test', HERE.parent / 'ltx_continuation_client.py')
 m = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(m)
-TMP = Path(tempfile.mkdtemp(prefix='ltx-client131-cpu-'))
+m.load_contract_modules(m.PACKETS[132]['dir'] / 'resolution/components', module_sha=m.PACKETS[132]['modules'])
+TMP = Path(tempfile.mkdtemp(prefix='ltx-client132-cpu-'))
 RESULTS = []
 
 
@@ -36,23 +37,23 @@ def stopped(code, fn):
     return False
 
 
-OPTIONS = {'cone_graph_memory': 'off', 'display_allocator_release': 'off', 'maintenance_mode': 'parent', 'snapshot_digest_cache': 0, 'storage_scan_mode': 'request', 'gc_interval_seconds': 10, 'display_worker': 'serial', 'run_write_allowance_bytes': 3 * 2**30, 'snapshot_mode': 'fingerprint', 'decoder_graph_pool_cap_bytes': 10**9, 'aux_residency': 'legacy', 'residency_qualification_id': 'residency-legacy',
+OPTIONS = {'audio_residency': 'legacy', 'cone_capture_reserve': 'parent', 'cone_graph_memory': 'off', 'display_allocator_release': 'off', 'maintenance_mode': 'parent', 'snapshot_digest_cache': 0, 'storage_scan_mode': 'request', 'gc_interval_seconds': 10, 'display_worker': 'serial', 'run_write_allowance_bytes': 3 * 2**30, 'snapshot_mode': 'fingerprint', 'decoder_graph_pool_cap_bytes': 10**9, 'aux_residency': 'legacy', 'residency_qualification_id': 'residency-legacy',
            'display_schedule': 'eager-display', 'anchor_read_ahead': 0, 'snapshot_schedule': 'full', 'display_device': 'xpu:3'}
 FEATURES = {k: True for k in ('decode_thread', 'async_preview', 'chain_reset', 'chunk_length_choice',
                             'sharpness_diagnostic', 'video_first_handoff', 'frame_anchor', 'decoder_graph',
                             'cone_anchor_decode', 'bencode_overlap', 'prep_ahead', 'chunk_121', 'chunk_145', 'timing_split',
                             'snapshot_fingerprint', 'decoder_graph_pool_cap')}
-FEATURES.update(cone_graph_memory=True, chunk_169=True, atomic_preview=True, atomic_evidence_publication=True)
+FEATURES.update(audio_residency=True, cone_capture_reserve=True, cone_graph_memory=True, chunk_169=True, atomic_preview=True, atomic_evidence_publication=True)
 FEATURES.update({k + '_anchor': False for k in ('mixed', 'latent', 'guide')})
-STATUS = dict(OPTIONS, packet=131, runtime_manifest_sha256='m', frames=121, placement='two-way20-28',
+STATUS = dict(OPTIONS, packet=132, runtime_manifest_sha256='m', frames=121, placement='two-way20-28',
               text_reuse=1, anchor='frame', decoder_graph=1, anchor_decode='cone', bencode_overlap=1,
               prep_ahead=1, server_identity_sha256='s', receipt_dir=str(TMP / 'receipts'),
-              output_directory=str(TMP / 'output'), features=FEATURES, phase='stream', plan_sha256=m.PACKETS[131]['plan_sha256'])
+              output_directory=str(TMP / 'output'), features=FEATURES, phase='stream', plan_sha256=m.PACKETS[132]['plan_sha256'])
 
 
 def client():
     c = m.Client.__new__(m.Client)
-    c.a = SimpleNamespace(packet=131, expect_cone_graph_memory='off', manifest_sha256='m', expect_frames=None, expect_placement=None,
+    c.a = SimpleNamespace(packet=132, expect_audio_residency='legacy', expect_cone_capture_reserve='parent', expect_cone_graph_memory='off', manifest_sha256='m', expect_frames=None, expect_placement=None,
                           expect_text_reuse=None, expect_anchor=None, expect_decoder_graph=None,
                           expect_anchor_decode=None, expect_bencode_overlap=None, expect_prep_ahead=None,
                           expect_snapshot_mode=None, expect_pool_cap_bytes=None, expect_pool_cap_gb=None,
@@ -73,10 +74,10 @@ def client():
 
 
 for attr in ('DECODER_GRAPH_PACKETS', 'DECODE_THREAD_PACKETS', 'RESET_PACKETS', 'LEVER_PACKETS', 'SERVER_OPTION_PACKETS'):
-    check('123 participates in ' + attr, 131 in getattr(m, attr))
-check('numeric packet123 parser', m.packet_id('131') == 131)
-check('123 stream directory accepted', m.STREAM_DIR_RE_131.fullmatch('stream131-s00000012') is not None)
-check('118b stream directory refused', m.STREAM_DIR_RE_131.fullmatch('stream118b-s00000012') is None)
+    check('123 participates in ' + attr, 132 in getattr(m, attr))
+check('numeric packet123 parser', m.packet_id('132') == 132)
+check('123 stream directory accepted', m.STREAM_DIR_RE_132.fullmatch('stream132-s00000012') is not None)
+check('118b stream directory refused', m.STREAM_DIR_RE_132.fullmatch('stream118b-s00000012') is None)
 for ds in ('sampler-a', 'sampler-b', 'eager-display'):
     for ar in (0, 1):
         for ss in ('full', 'a-xpu3-sync'):
@@ -116,7 +117,7 @@ c.a.packet = '118b'
 check('118b preserves its two-field options', c.status_server_options(STATUS) == {
     'snapshot_mode': 'fingerprint', 'decoder_graph_pool_cap_bytes': 10**9})
 
-expect = {'run_name': 'stream131-s00000000', 'stream_seq': 0, 'predecessor': None}
+expect = {'run_name': 'stream132-s00000000', 'stream_seq': 0, 'predecessor': None}
 receipt = dict(run_name=expect['run_name'], kind='stream', stream_seq=0, chunk_index=0, frames=121,
                placement='two-way20-28', committed=True, server_identity_sha256='s', anchor='frame',
                decoder_graph=1, levers=dict(anchor_decode='cone', bencode_overlap=1, prep_ahead=1),
@@ -136,7 +137,7 @@ for key in OPTIONS:
 for key in OPTIONS:
     c = client()
     v = {'passed': True, 'failures': [], 'exact_replay': [{'all_identical': True}] * 3,
-         'plan_sha256': m.PACKETS[131]['plan_sha256'], 'server_options': OPTIONS.copy()}
+         'plan_sha256': m.PACKETS[132]['plan_sha256'], 'server_options': OPTIONS.copy()}
     del v['server_options'][key]
     raw = json.dumps(v).encode()
     (TMP / 'stream-qualification-verdict.json').write_bytes(raw)
@@ -146,7 +147,7 @@ for key in OPTIONS:
 for key in OPTIONS:
     c = client()
     v = {'passed': True, 'failures': [], 'exact_replay': [{'all_identical': True}] * 3,
-         'plan_sha256': m.PACKETS[131]['plan_sha256'], 'server_options': OPTIONS.copy()}
+         'plan_sha256': m.PACKETS[132]['plan_sha256'], 'server_options': OPTIONS.copy()}
     raw = json.dumps(v).encode()
     (TMP / 'stream-qualification-verdict.json').write_bytes(raw)
     st = dict(STATUS, qualification_verdict_sha256=hashlib.sha256(raw).hexdigest())
@@ -191,7 +192,7 @@ for kind, configured, actual, passes in (
 c = client()
 c.a.packet = 119
 check('119 option identity remains five fields', c.status_server_options(STATUS) ==
-      {key: value for key, value in OPTIONS.items() if key not in ('display_device', 'aux_residency', 'residency_qualification_id', 'run_write_allowance_bytes', 'display_worker', 'gc_interval_seconds', 'storage_scan_mode', 'snapshot_digest_cache', 'maintenance_mode', 'display_allocator_release', 'cone_graph_memory')})
+      {key: value for key, value in OPTIONS.items() if key not in ('display_device', 'aux_residency', 'residency_qualification_id', 'run_write_allowance_bytes', 'display_worker', 'gc_interval_seconds', 'storage_scan_mode', 'snapshot_digest_cache', 'maintenance_mode', 'display_allocator_release', 'cone_graph_memory', 'audio_residency', 'cone_capture_reserve')})
 check('119 decode records do not gain a required123 field', c.validate_decode_identity({}, {}) == {})
 with contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.StringIO()):
     try:
@@ -202,7 +203,7 @@ with contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.St
 check('119 refuses123 display device flag', ok)
 
 # Audit events exercise the guard without calling open(), stat() or any device API.
-for device_path in ('/dev/dri/renderD131', '/dev/dri', b'/dev/dri/card0'):
+for device_path in ('/dev/dri/renderD132', '/dev/dri', b'/dev/dri/card0'):
     try:
         sys.audit('open', device_path, 'r', 0)
         blocked = False
@@ -210,12 +211,12 @@ for device_path in ('/dev/dri/renderD131', '/dev/dri', b'/dev/dri/card0'):
         blocked = 'CPU suite refused device open' in str(exc)
     check('CPU runner blocks synthetic device-open audit %r' % device_path, blocked)
 
-launcher = (HERE.parent / 'start-client-131.sh').read_text()
+launcher = (HERE.parent / 'start-client-132.sh').read_text()
 check('client wrapper uses fingerprint-pinned bin/python -B', '/bin/python -B ' in launcher and '/bin/python3' not in launcher)
 check('client wrapper caps OMP', '--setenv=OMP_NUM_THREADS=2' in launcher)
 check('client wrapper binds all three options', all(flag in launcher for flag in (
     '--expect-display-schedule', '--expect-anchor-read-ahead', '--expect-snapshot-schedule', '--expect-display-device')))
-check('client wrapper workdir uses123 default', 'LTX_STREAM_WORKDIR:-/home/steve/ltx-stream/s131-live01' in launcher)
+check('client wrapper workdir uses123 default', 'LTX_STREAM_WORKDIR:-/home/steve/ltx-stream/s132-live01' in launcher)
 check('client wrapper does not reset units', 'reset-failed' not in launcher)
 for frames in (121, 145):
     for device in ('xpu:3', 'xpu:2'):
@@ -279,7 +280,7 @@ for packet in (120, 121):
 for value in ('NaN', 'Infinity', '-1', '0', '9', '0.00000000001'):
     with contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.StringIO()):
         try:
-            m.main(['--work-dir', str(TMP / 'args'), '--packet', '131', '--expected-cone-graph-memory', 'off', '--port', '18199',
+            m.main(['--work-dir', str(TMP / 'args'), '--packet', '132', '--expected-cone-graph-memory', 'off', '--port', '18199',
                     '--expect-display-transient-gib', value])
             ok = False
         except SystemExit as exc:
@@ -375,13 +376,13 @@ for label, response, error in (
         check('exit7 %s records unavailable without throwing' % label, not snapshot['available'])
 
 # Actual sealed dependency closure and reference pins: CPU imports/read-only only.
-sealed = m.PACKETS[131]
+sealed = m.PACKETS[132]
 modules = m.load_contract_modules(sealed['dir'] / 'resolution/components', module_sha=sealed['modules'])
-check('131 sealed comparison identity is new', modules[0].COMPARISON_MODE == 'stream-candidate-131-v1')
-check('131 sealed qualification clip base is new', modules[0].QUALIFICATION_CLIP_BASE == 13100000)
-check('131 sealed stream clip base is new', modules[0].STREAM_CLIP_BASE == 13101000)
+check('132 sealed comparison identity is new', modules[0].COMPARISON_MODE == 'stream-candidate-132-v1')
+check('132 sealed qualification clip base is new', modules[0].QUALIFICATION_CLIP_BASE == 13200000)
+check('132 sealed stream clip base is new', modules[0].STREAM_CLIP_BASE == 13201000)
 check('sealed123 imports hash-pinned residency helper before receipt and gate modules',
-      modules[0].PACKET == 131 and Path(sys.modules['residency123'].__file__) ==
+      modules[0].PACKET == 132 and Path(sys.modules['residency123'].__file__) ==
       sealed['dir'] / 'resolution/components/residency123.py')
 c = client()
 c.a.reference_hashes = None
@@ -392,14 +393,14 @@ bad_pins = dict(sealed['modules'], residency123='0' * 64)
 check('changed residency helper pin refuses before import', stopped(8, lambda: m.load_contract_modules(
       sealed['dir'] / 'resolution/components', module_sha=bad_pins)))
 
-check('131 hash-pinned publication helper loaded from sealed packet',
+check('132 hash-pinned publication helper loaded from sealed packet',
       Path(sys.modules['evidence_publication'].__file__) ==
       sealed['dir'] / 'resolution/components/evidence_publication.py')
 bad_pins = dict(sealed['modules'], evidence_publication='0' * 64)
 check('changed publication helper pin refuses before import', stopped(8, lambda: m.load_contract_modules(
       sealed['dir'] / 'resolution/components', module_sha=bad_pins)))
 
-check('131 hash-pinned allocator helper loaded from sealed packet',
+check('132 hash-pinned allocator helper loaded from sealed packet',
       Path(sys.modules['allocator_release130'].__file__) ==
       sealed['dir'] / 'resolution/components/allocator_release130.py')
 bad_pins = dict(sealed['modules'], allocator_release130='0' * 64)
@@ -419,7 +420,7 @@ for value in (None, True, '3221225472', 0, 2**30+1, 65*2**30, 8*2**30):
 for value in ('', '0', '65', '3.0', '-1', '03', ' 3', '+3'):
     with contextlib.redirect_stderr(io.StringIO()):
         try:
-            m.main(['--work-dir', str(TMP / 'args'), '--packet', '131', '--expected-cone-graph-memory', 'off', '--port', '18205', '--expect-run-write-allowance-gib', value])
+            m.main(['--work-dir', str(TMP / 'args'), '--packet', '132', '--expected-cone-graph-memory', 'off', '--port', '18205', '--expect-run-write-allowance-gib', value])
             ok = False
         except SystemExit as exc:
             ok = exc.code == 2
@@ -431,7 +432,7 @@ del r['server_options']['run_write_allowance_bytes']
 check('missing receipt allowance refuses exit12', stopped(12, lambda: client().verify_receipt(json.dumps(r).encode(), None, expect)))
 check('client launcher binds write allowance', '--expect-run-write-allowance-gib "$WA"' in launcher)
 
-# Packet131 parallel display only runs on the admitted long eager replica path.
+# Packet132 parallel display only runs on the admitted long eager replica path.
 for frames in (145, 169):
     for worker in ('serial', 'parallel'):
         st = copy.deepcopy(STATUS)
@@ -441,7 +442,7 @@ for frames in (145, 169):
         c = client()
         c.a.expect_display_worker = worker
         c.preflight(st)
-        check('131 f%d legacy replica %s admitted' % (frames, worker),
+        check('132 f%d legacy replica %s admitted' % (frames, worker),
               c.status_server_options(st)['display_worker'] == worker)
         wrong = copy.deepcopy(st)
         wrong['display_worker'] = 'parallel' if worker == 'serial' else 'serial'
@@ -471,7 +472,7 @@ check('historical packet refuses126 worker option before network', ok)
 check('wrapper binds worker environment option', 'LTX_DISPLAY_WORKER:-serial' in launcher
       and '--expect-display-worker "$DW"' in launcher)
 
-# Packet131 admission is narrow;10 retains the parent's application cadence.
+# Packet132 admission is narrow;10 retains the parent's application cadence.
 for aux in ('legacy', 'xpu2'):
     for interval in (10, 60):
         st = copy.deepcopy(STATUS)
@@ -482,7 +483,7 @@ for aux in ('legacy', 'xpu2'):
         c = client()
         c.a.expect_gc_interval_seconds = interval
         c.preflight(st)
-        check('131 %s/%ss maintenance admitted and bound' % (aux, interval),
+        check('132 %s/%ss maintenance admitted and bound' % (aux, interval),
               c.status_server_options(st)['gc_interval_seconds'] == interval)
         other = dict(st, gc_interval_seconds=10 if interval == 60 else 60)
         check('maintenance expectation mismatch refuses', stopped(8, lambda: c.preflight(other)))
@@ -526,9 +527,8 @@ for packet, sealed in m.PACKETS.items():
           sealed['plan_sha256'] == plan['plan_sha256'])
     check('packet%s pin does not equal plan file byte hash' % packet,
           sealed['plan_sha256'] != hashlib.sha256(raw).hexdigest())
-sealed = m.PACKETS[131]  # The all-pins loop may finish on a newer packet.
 st = dict(STATUS, plan_sha256=hashlib.sha256(
-    (m.PACKETS[131]['dir'] / 'resolution/stream-plan.json').read_bytes()).hexdigest())
+    (m.PACKETS[132]['dir'] / 'resolution/stream-plan.json').read_bytes()).hexdigest())
 check('server file-byte plan hash refuses instead of inner plan', stopped(8, lambda: client().preflight(st)))
 
 for mode in ('request', 'background'):
@@ -543,7 +543,7 @@ for mode in (None, '', 'walk', True):
     check('invalid storage mode %r refused' % mode,
           stopped(8, lambda: client().preflight(dict(STATUS, storage_scan_mode=mode))))
 
-# Packet131 caches only derived digests; option is bound throughout the protocol.
+# Packet132 caches only derived digests; option is bound throughout the protocol.
 cache_status = dict(STATUS, frames=145, decoder_graph=0, decoder_graph_pool_cap_bytes=None,
                     snapshot_digest_cache=1, display_schedule='sampler-a',
                     features=dict(FEATURES, decoder_graph=False, decoder_graph_pool_cap=False))
@@ -586,7 +586,7 @@ for packet in (125, 126):
 check('wrapper binds snapshot digest cache option', 'LTX_SNAPSHOT_DIGEST_CACHE:-0' in launcher
       and '--expect-snapshot-digest-cache "$CACHE"' in launcher)
 
-# Packet131 mode is explicit and bound on every protocol record.
+# Packet132 mode is explicit and bound on every protocol record.
 idle_status = dict(STATUS, frames=145, decoder_graph=0, decoder_graph_pool_cap_bytes=None,
                    display_schedule='sampler-a', maintenance_mode='idle',
                    features=dict(FEATURES, decoder_graph=False, decoder_graph_pool_cap=False))
@@ -625,7 +625,7 @@ for value in (None, '', 'thread', True, 0):
 for packet in (125, 126, 127):
     c = client()
     c.a.packet = packet
-    check('historical packet%d excludes131 maintenance option' % packet,
+    check('historical packet%d excludes132 maintenance option' % packet,
           'maintenance_mode' not in c.status_server_options(STATUS))
     with contextlib.redirect_stderr(io.StringIO()):
         try:
@@ -634,11 +634,11 @@ for packet in (125, 126, 127):
             ok = False
         except SystemExit as exc:
             ok = exc.code == 2
-    check('historical packet%d refuses131 option before network' % packet, ok)
+    check('historical packet%d refuses132 option before network' % packet, ok)
 for value in ('bad', '0', 'IDLE', ''):
     with contextlib.redirect_stderr(io.StringIO()):
         try:
-            m.main(['--work-dir', str(TMP / 'args'), '--packet', '131', '--expected-cone-graph-memory', 'off', '--port', '18229',
+            m.main(['--work-dir', str(TMP / 'args'), '--packet', '132', '--expected-cone-graph-memory', 'off', '--port', '18229',
                     '--expect-maintenance-mode', value])
             ok = False
         except SystemExit as exc:
@@ -646,8 +646,8 @@ for value in ('bad', '0', 'IDLE', ''):
     check('invalid maintenance CLI %r refuses before network' % value, ok)
 c = client()
 c.a.packet = 127
-check('off131 options equal127 plus explicit parent identity',
-      client().status_server_options(STATUS) == dict(c.status_server_options(STATUS), maintenance_mode='parent', display_allocator_release='off', cone_graph_memory='off'))
+check('off132 options equal127 plus explicit parent identity',
+      client().status_server_options(STATUS) == dict(c.status_server_options(STATUS), maintenance_mode='parent', display_allocator_release='off', cone_graph_memory='off', audio_residency='legacy', cone_capture_reserve='parent'))
 r = copy.deepcopy(receipt)
 r['server_options']['maintenance_mode'] = 'idle'
 check('receipt maintenance drift rejected',
@@ -686,7 +686,7 @@ for value in (None, 'idle'):
 check('wrapper binds maintenance mode with parent default', 'LTX_MAINTENANCE_MODE:-parent' in launcher
       and '--expect-maintenance-mode "$MAINT"' in launcher)
 
-# Packet131's writer protocol is mandatory and has no separate launch option.
+# Packet132's writer protocol is mandatory and has no separate launch option.
 for value in (None, False, 0, 1, 'true'):
     st = copy.deepcopy(STATUS)
     if value is None:
@@ -697,9 +697,9 @@ for value in (None, False, 0, 1, 'true'):
           stopped(8, lambda: client().preflight(st)))
 c = client()
 c.a.packet = 129
-check('131 off server options add only release identity to129',
-      client().status_server_options(STATUS) == dict(c.status_server_options(STATUS), display_allocator_release='off', cone_graph_memory='off'))
-check('131 wrapper exposes no publication toggle', 'ATOMIC_EVIDENCE' not in launcher)
+check('132 off server options add only release identity to129',
+      client().status_server_options(STATUS) == dict(c.status_server_options(STATUS), display_allocator_release='off', cone_graph_memory='off', audio_residency='legacy', cone_capture_reserve='parent'))
+check('132 wrapper exposes no publication toggle', 'ATOMIC_EVIDENCE' not in launcher)
 
 
 # Every byte-bound record carries the allocation policy, including its off form.
@@ -762,10 +762,10 @@ for value in (None,'before-admission'):
         ok=False
     except ValueError: ok=True
     check('decode release missing/drift %r refuses' % value,ok)
-check('131 wrapper binds off-default allocator release',
+check('132 wrapper binds off-default allocator release',
       'LTX_DISPLAY_ALLOCATOR_RELEASE:-off' in launcher and '--expect-display-allocator-release "$RELEASE"' in launcher)
 
-# Packet131 new option and exact narrow graph/replica admission.
+# Packet132 new option and exact narrow graph/replica admission.
 candidate = dict(STATUS, frames=145, decoder_graph=1, decoder_graph_pool_cap_bytes=None,
                  display_device='xpu:2', display_schedule='eager-display', cone_graph_memory='replica-release',
                  features=dict(FEATURES, decoder_graph_pool_cap=False))
@@ -782,7 +782,7 @@ for interval in (10, 60):
             c.a.expect_maintenance_mode = mode
             st = dict(candidate, gc_interval_seconds=interval, snapshot_digest_cache=cache, maintenance_mode=mode)
             c.preflight(st)
-            check('131 candidate supports GC%d/cache%d/%s' % (interval, cache, mode),
+            check('132 candidate supports GC%d/cache%d/%s' % (interval, cache, mode),
                   c.status_server_options(st)['cone_graph_memory'] == 'replica-release')
 for key, value in (('frames', 121), ('frames', 169), ('placement', 'two-way'), ('anchor', 'latent'),
                    ('decoder_graph', 0), ('anchor_decode', 'full'), ('bencode_overlap', 0), ('prep_ahead', 0),
@@ -790,16 +790,16 @@ for key, value in (('frames', 121), ('frames', 169), ('placement', 'two-way'), (
                    ('aux_residency', 'xpu2'), ('display_worker', 'parallel'), ('display_device', 'xpu:3'),
                    ('display_schedule', 'sampler-a'), ('display_allocator_release', 'before-admission'),
                    ('decoder_graph_pool_cap_bytes', 10**9)):
-    check('131 candidate rejects changed scope %s=%r' % (key,value),
+    check('132 candidate rejects changed scope %s=%r' % (key,value),
           stopped(8, lambda: candidate_client().preflight(dict(candidate, **{key:value}))))
 for value in (None, '', True, 1, 'on', 'replica'):
-    check('131 rejects invalid mode %r' % value,
+    check('132 rejects invalid mode %r' % value,
           stopped(8, lambda: client().preflight(dict(STATUS, cone_graph_memory=value))))
-check('131 off expectation refuses candidate', stopped(8, lambda: client().preflight(candidate)))
-check('131 candidate expectation refuses off', stopped(8, lambda: candidate_client().preflight(STATUS)))
-check('131 missing new feature refuses', stopped(8, lambda: client().preflight(
+check('132 off expectation refuses candidate', stopped(8, lambda: client().preflight(candidate)))
+check('132 candidate expectation refuses off', stopped(8, lambda: candidate_client().preflight(STATUS)))
+check('132 missing new feature refuses', stopped(8, lambda: client().preflight(
     dict(STATUS, features=dict(FEATURES, cone_graph_memory=False)))))
-for packet, args in ((131, []), (130, ['--expected-cone-graph-memory','off']),
+for packet, args in ((132, []), (130, ['--expected-cone-graph-memory','off']),
                      (129, ['--expected-cone-graph-memory','replica-release'])):
     with contextlib.redirect_stderr(io.StringIO()):
         try:
@@ -807,13 +807,13 @@ for packet, args in ((131, []), (130, ['--expected-cone-graph-memory','off']),
             ok=False
         except SystemExit as exc:
             ok=exc.code==2
-    check('131 required mode/historical CLI rejects packet%s %r' % (packet,args),ok)
-check('131 wrapper binds mandatory off-default cone option',
+    check('132 required mode/historical CLI rejects packet%s %r' % (packet,args),ok)
+check('132 wrapper binds mandatory off-default cone option',
       'LTX_CONE_GRAPH_MEMORY:-off' in launcher and '--expected-cone-graph-memory "$CONE"' in launcher)
-check('131 sealed cone module hash pin loads before receipts',
+check('132 sealed cone module hash pin loads before receipts',
       Path(sys.modules['cone_memory131'].__file__) == sealed['dir']/'resolution/components/cone_memory131.py')
 bad_pins=dict(sealed['modules'],cone_memory131='0'*64)
-check('131 changed cone helper pin refuses',stopped(8,lambda:m.load_contract_modules(
+check('132 changed cone helper pin refuses',stopped(8,lambda:m.load_contract_modules(
       sealed['dir']/'resolution/components',module_sha=bad_pins)))
 # Admission mutation checks run the same sealed CPU validator as the client.
 cm=sys.modules['cone_memory131']
@@ -829,25 +829,113 @@ for first in (True, False):
     r=dict(kind='qualify-graph' if first else 'stream',chunk_index=0,
            server_options=dict(OPTIONS,cone_graph_memory='replica-release',display_device='xpu:2'))
     d=dict(display_device='xpu:2',server_options=r['server_options'],cone_graph_memory_admission=adm)
-    check('131 client validates admitted capture=%s' % first, candidate_client().validate_decode_identity(d,r)==d)
+    check('132 client validates admitted capture=%s' % first, candidate_client().validate_decode_identity(d,r)==d)
     try:
         candidate_client().validate_decode_identity(d,dict(r,kind='stream' if first else 'qualify-graph'));ok=False
     except ValueError:ok=True
-    check('131 capture phase drift refuses first=%s' % first,ok)
+    check('132 capture phase drift refuses first=%s' % first,ok)
     for key in adm:
         broken=copy.deepcopy(d);del broken['cone_graph_memory_admission'][key]
         try:
             candidate_client().validate_decode_identity(broken,r);ok=False
         except ValueError:ok=True
-        check('131 missing admission field %s capture=%s refuses' % (key,first),ok)
+        check('132 missing admission field %s capture=%s refuses' % (key,first),ok)
     for kind, enabled in (('qualify-eager',True),('stream',False)):
         badr=dict(r,kind=kind,server_options=dict(r['server_options'],cone_graph_memory='replica-release' if enabled else 'off'))
         badd=dict(d,display_device='xpu:3' if kind=='qualify-eager' else 'xpu:2',server_options=badr['server_options'])
         try:
             candidate_client().validate_decode_identity(badd,badr);ok=False
         except ValueError:ok=True
-        check('131 unexpected admission kind=%s enabled=%s refuses' % (kind,enabled),ok)
+        check('132 unexpected admission kind=%s enabled=%s refuses' % (kind,enabled),ok)
 
+
+# Packet132 exact identities and independent audio option.
+audio_candidate = dict(candidate, audio_residency='xpu2')
+def audio_client():
+    c = candidate_client()
+    c.a.expect_audio_residency = 'xpu2'
+    return c
+c = audio_client()
+c.preflight(audio_candidate)
+check('132 audio candidate accepted with parent capture reserve', c.status_server_options(audio_candidate)['audio_residency']=='xpu2')
+check('132 unrequested audio move refuses', stopped(8, lambda: candidate_client().preflight(audio_candidate)))
+check('132 absent requested audio move refuses', stopped(8, lambda: audio_client().preflight(candidate)))
+for key in ('audio_residency', 'cone_capture_reserve'):
+    for value in (None, False, 0, 1, 'true'):
+        st = copy.deepcopy(STATUS)
+        st['features'][key] = value
+        check('132 feature %s=%r refuses' % (key,value), stopped(8, lambda: client().preflight(st)))
+    for value in (None, '', True, 0, 'other'):
+        check('132 invalid identity %s=%r refuses' % (key,value), stopped(8,lambda:client().preflight(dict(STATUS,**{key:value}))))
+for frames in (121,169):
+    check('132 audio move fixed145 refuses%d' % frames, stopped(8,lambda:audio_client().preflight(dict(audio_candidate,frames=frames))))
+c = candidate_client()
+c.a.expect_cone_capture_reserve='scaled-476'
+check('132 lower reserve fails closed even with matching expectation', stopped(8,lambda:c.preflight(dict(candidate,cone_capture_reserve='scaled-476'))))
+for packet in (112,130,131):
+    c=client(); c.a.packet=packet
+    check('historical packet%d omits132 identities' % packet, all(k not in c.status_server_options(STATUS) for k in ('audio_residency','cone_capture_reserve')))
+    for flag in ('--expect-audio-residency','--expect-cone-capture-reserve'):
+        with contextlib.redirect_stderr(io.StringIO()):
+            try:
+                m.main(['--packet',str(packet),'--work-dir',str(TMP/'args'),'--port','18235',flag,'legacy' if flag.endswith('residency') else 'parent']); ok=False
+            except SystemExit as exc: ok=exc.code==2
+        check('historical packet%d refuses132 flag%s' % (packet,flag),ok)
+check('132 wrapper uses new folder and pinned python', 's132-live01' in launcher and '/bin/python -B' in launcher)
+check('132 wrapper defaults separate audio and parent reserve', 'LTX_AUDIO_RESIDENCY:-legacy' in launcher and 'LTX_CONE_CAPTURE_RESERVE:-parent' in launcher)
+check('132 audio module sealed pin loaded',Path(sys.modules['audio_residency132'].__file__)==sealed['dir']/'resolution/components/audio_residency132.py')
+bad_pins=dict(sealed['modules'],audio_residency132='0'*64)
+check('132 changed audio helper pin refuses',stopped(8,lambda:m.load_contract_modules(sealed['dir']/'resolution/components',module_sha=bad_pins)))
+
+diagnostic_audio = dict(audio_candidate, decoder_graph=0, cone_graph_memory='off',
+                        features=dict(FEATURES, decoder_graph=False, decoder_graph_pool_cap=False))
+c=client(); c.a.expect_audio_residency='xpu2'
+c.preflight(diagnostic_audio)
+check('132 audio dg0 diagnostic accepts matched off cone identity',True)
+for key,value in (('frames',121),('frames',169),('display_worker','parallel'),('display_device','xpu:3'),('aux_residency','xpu2'),('cone_graph_memory','replica-release')):
+    check('132 audio dg0 diagnostic rejects %s=%r' % (key,value),stopped(8,lambda:c.preflight(dict(diagnostic_audio,**{key:value}))))
+
+for key, changed in (('audio_residency','xpu2'),('cone_capture_reserve','scaled-476')):
+    for value in (None,changed):
+        r=copy.deepcopy(receipt)
+        if value is None: r['server_options'].pop(key)
+        else: r['server_options'][key]=value
+        check('132 receipt option missing/drift %s=%r refuses' % (key,value),
+              stopped(12,lambda:client().verify_receipt(json.dumps(r).encode(),None,expect)))
+
+# Same-waveform gate survives transport through the client decode validator.
+ar=sys.modules['audio_residency132']
+def audio_fixture():
+    run='stream132-qref-c000000'; options=dict(OPTIONS,audio_residency='xpu2',display_device='xpu:2')
+    receipt=dict(run_name=run,prompt_id='p',kind='qualify-eager',chunk_index=0,server_options=options)
+    released=dict(device='cpu',active=False,calls=1,resident_bytes_on_xpu3=0,weight_sha256='b'*64)
+    def ws(device,resident=0):
+        return dict(before=ar.check_workspace(24*2**30,device,True,resident),after=ar.check_workspace(24*2**30,device,False))
+    wave=dict(sha256='a'*64,shape=[1,2,288480],dtype='torch.float32')
+    row=dict(mode='xpu2',device='xpu:2',kind=receipt['kind'],run_name=run,workspace=ws('xpu:2'),
+        candidate_native_node_seconds=0.001,reference_released=released,
+        cross_card=dict(equal=True,device='xpu:2',reference_device='xpu:3',mode='native-eager-uncached',
+            sample_rate=48000,shape=wave['shape'],dtype=wave['dtype'],waveform_sha256='a'*64,reference_waveform_sha256='a'*64),
+        reference=dict(workspace=ws('xpu:3',364666868),released=dict(released),seconds={k:0.001 for k in
+            ('reference_weight_and_latent_copy','reference_decode','reference_output_copy','reference_unload','reference_total')}))
+    record=dict(receipt,display_device='xpu:3',audio_residency='xpu2',audio_device='xpu:2',
+        audio_residency_evidence=row,tensors={'waveform':wave},sample_rate=48000,cone_graph_memory_admission=None)
+    return receipt,record
+r,d=audio_fixture()
+check('132 client accepts same-waveform cross-card evidence',audio_client().validate_decode_identity(d,r)==d)
+for path,value in ((('audio_device',),'xpu:3'),(('prompt_id',),'different'),(('audio_residency_evidence',),None),
+    (('audio_residency_evidence','cross_card','equal'),False),
+    (('audio_residency_evidence','cross_card','reference_waveform_sha256'),'c'*64),
+    (('audio_residency_evidence','reference_released','resident_bytes_on_xpu3'),364666868),
+    (('audio_residency_evidence','reference_released','calls'),0),
+    (('audio_residency_evidence','candidate_native_node_seconds'),float('nan')),
+    (('audio_residency_evidence','workspace','before','free_bytes'),0)):
+    r,d=audio_fixture(); node=d
+    for key in path[:-1]: node=node[key]
+    node[path[-1]]=value
+    try: audio_client().validate_decode_identity(d,r);ok=False
+    except ValueError:ok=True
+    check('132 client rejects audio evidence drift '+'.'.join(path),ok)
 bad = [name for name, ok in RESULTS if not ok]
 print('\n%d/%d passed; CPU-only files in %s' % (len(RESULTS)-len(bad), len(RESULTS), TMP))
 raise SystemExit(1 if bad else 0)

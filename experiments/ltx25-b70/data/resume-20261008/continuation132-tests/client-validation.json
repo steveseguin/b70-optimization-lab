@@ -1,0 +1,1235 @@
+{
+  "schema": "ltx.stream132.client-validation.v1",
+  "cpu_only": true,
+  "interpreter": "/home/steve/.venvs/ltx25-baseline/bin/python -B",
+  "nice": 19,
+  "OMP_NUM_THREADS": 2,
+  "MKL_NUM_THREADS": 2,
+  "suite_count": 39,
+  "passed": 5677,
+  "count": 5677,
+  "all_pins": 28,
+  "all_pins_packets": [
+    "120",
+    "121",
+    "122",
+    "123",
+    "123b",
+    "124",
+    "125",
+    "126",
+    "127",
+    "128",
+    "129",
+    "130",
+    "131",
+    "132"
+  ],
+  "manifest_sha256": "67ec59a5b0c5131d0b129e4c0b9187386c29c0395ac225dc28422516684991ad",
+  "inner_plan_sha256": "fbb1d04b2cc87c61353bdf275565d14d6429c3fc45429995d4610fc817761e8f",
+  "final_client_sha256": "f3c6ba656670584bcf2ce83e10168392b64cb51f8cab0a47fd594d12d963d5e2",
+  "execution_note": "All39 suites cover the unchanged final client and sealed132 pins. The131 all-pins test shadowed its own sealed fixture variable after visiting132; initial544/545 retained, narrow test-only restoration of131 fixture passes545/545 on rerun. Other38 suites passed unchanged. Fourteen inner-plan identities pass equality-to-inner and inequality-to-file-hash checks. CPU fakes prove protocol behavior, not native correctness or performance.",
+  "commands": [
+    [
+      "nice",
+      "-n",
+      "19",
+      "env",
+      "OMP_NUM_THREADS=2",
+      "MKL_NUM_THREADS=2",
+      "/home/steve/.venvs/ltx25-baseline/bin/python",
+      "-B",
+      "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation132-stream/run_client_suites_132.py"
+    ],
+    [
+      "nice",
+      "-n",
+      "19",
+      "env",
+      "OMP_NUM_THREADS=2",
+      "MKL_NUM_THREADS=2",
+      "/home/steve/.venvs/ltx25-baseline/bin/python",
+      "-B",
+      "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+      "run_tests_131.py"
+    ]
+  ],
+  "suites": [
+    {
+      "suite": "run_tests_112.py",
+      "passed": 46,
+      "count": 46,
+      "counts": [
+        46,
+        46
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-112-final.log",
+      "log_sha256": "2354cc64f377c0e548c2f8f59785d78d901cb1bbfaaa62443c85bbaaf52211b3",
+      "source": "stream/tests/run_tests_112.py",
+      "source_sha256": "2aba66cfe404e43a1c64851b7e618cefb7444ac41ab11dd3076fc62dcede85ac",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_112.py"
+      ]
+    },
+    {
+      "suite": "run_tests_113.py",
+      "passed": 11,
+      "count": 11,
+      "counts": [
+        11,
+        11
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-113-final.log",
+      "log_sha256": "245143353c9cd181c535075c998e374fccaa561194104e023e7ebe8462877641",
+      "source": "stream/tests/run_tests_113.py",
+      "source_sha256": "22cb76c143cdffa3cdf8671ac0e40fc0097b61c5e8a84087fdf1634b7119fd4e",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_113.py"
+      ]
+    },
+    {
+      "suite": "run_tests_114.py",
+      "passed": 26,
+      "count": 26,
+      "counts": [
+        26,
+        26
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-114-final.log",
+      "log_sha256": "fa44204dccf1e511a42a475596292d9f8da80e27242d8363099e036245e901e3",
+      "source": "stream/tests/run_tests_114.py",
+      "source_sha256": "c27a1da276207144e1f3f0b07d59e5655135393c61b4a8e3dcae4bb8f23fdd60",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_114.py"
+      ]
+    },
+    {
+      "suite": "run_tests_115.py",
+      "passed": 20,
+      "count": 20,
+      "counts": [
+        20,
+        20
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-115-final.log",
+      "log_sha256": "d70c8354e6f3735b1051a9422215adc09e964c5661deda832dae41b2612dfeab",
+      "source": "stream/tests/run_tests_115.py",
+      "source_sha256": "b597b52597bf60df19999f6d2c8d05c3b5fb19f24ce1fa0e97d2c36a622e1160",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_115.py"
+      ]
+    },
+    {
+      "suite": "run_tests_116.py",
+      "passed": 30,
+      "count": 30,
+      "counts": [
+        30,
+        30
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-116-final.log",
+      "log_sha256": "974fe9a1411523d46538dbb2e805c6c87073eb11bc89d3ea4c70f6df7b83ed88",
+      "source": "stream/tests/run_tests_116.py",
+      "source_sha256": "5161c85b6250ac3a45f6f23ac632e81dc6cbad33808c15b3f17d3ac913d144ad",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_116.py"
+      ]
+    },
+    {
+      "suite": "run_tests_116b.py",
+      "passed": 8,
+      "count": 8,
+      "counts": [
+        8,
+        8
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-116b-final.log",
+      "log_sha256": "5aee5618d5f88fd80b8f86db40436900c8c1992e38482d76f0e62029742dd221",
+      "source": "stream/tests/run_tests_116b.py",
+      "source_sha256": "d8c4703272361e25d63f2cb367c1373f73fc7ca12e1abdc7fa9fb54115585b81",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_116b.py"
+      ]
+    },
+    {
+      "suite": "run_tests_117.py",
+      "passed": 21,
+      "count": 21,
+      "counts": [
+        21,
+        21
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-117-final.log",
+      "log_sha256": "fc9c74e4fc9301641b1b5bd8e359381c9c719863a6ae500bbac03cf8cd3cffd3",
+      "source": "stream/tests/run_tests_117.py",
+      "source_sha256": "c98096229c87ed1d9eb8f2a17ef8c8247862c9c2470c855a055cc1bb554178c1",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_117.py"
+      ]
+    },
+    {
+      "suite": "run_tests_118.py",
+      "passed": 15,
+      "count": 15,
+      "counts": [
+        15,
+        15
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-118-final.log",
+      "log_sha256": "1f783cd95735b902ebce23d504399fbad3ec02111dc6e33d78bc9e88df54faa6",
+      "source": "stream/tests/run_tests_118.py",
+      "source_sha256": "6ead550c9ebbef50be49e55849004962878bbf773aa2e41b480ed98e29d82f5c",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_118.py"
+      ]
+    },
+    {
+      "suite": "run_tests_118b.py",
+      "passed": 16,
+      "count": 16,
+      "counts": [
+        16,
+        16
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-118b-final.log",
+      "log_sha256": "9306a194e35365a982e1e96c4433367db3a7f60094b727862b11309197f1d9b7",
+      "source": "stream/tests/run_tests_118b.py",
+      "source_sha256": "57db9eacdea9fa020e1b69f03018664f8839821a8844f91c2a22bf913c746c27",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_118b.py"
+      ]
+    },
+    {
+      "suite": "run_tests_119.py",
+      "passed": 70,
+      "count": 70,
+      "counts": [
+        70,
+        70
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-119-final.log",
+      "log_sha256": "9210475cb4b6f3fc6e694b898949cef0f3610b11552093354a4b2ff707e49f0b",
+      "source": "stream/tests/run_tests_119.py",
+      "source_sha256": "0002d121b5365e0637dc555dfcfc445cb684c8d860e9389e28548f1c40c2f3d6",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_119.py"
+      ]
+    },
+    {
+      "suite": "run_tests_119_integration.py",
+      "passed": 15,
+      "count": 15,
+      "counts": [
+        15,
+        15
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-119_integration-final.log",
+      "log_sha256": "6da97ab729c50afd5b017e7eef51cd79d062fbc990a8bcf3bd260a35a7e54f7d",
+      "source": "stream/tests/run_tests_119_integration.py",
+      "source_sha256": "6d26d63fdebb31084c1e755323c7d958375310bc3f131525857e7085d89d7b8e",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_119_integration.py"
+      ]
+    },
+    {
+      "suite": "run_tests_120.py",
+      "passed": 101,
+      "count": 101,
+      "counts": [
+        101,
+        101
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-120-final.log",
+      "log_sha256": "d5d1fe8a1a100fca718e6b339c1d155d40de1163d1abaedd1ff7a2b3fb121cb3",
+      "source": "stream/tests/run_tests_120.py",
+      "source_sha256": "0c5dc12cc5957cb6938644950148f6fd86d9228bad1aa8822fe225129d57b92e",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_120.py"
+      ]
+    },
+    {
+      "suite": "run_tests_120_integration.py",
+      "passed": 24,
+      "count": 24,
+      "counts": [
+        24,
+        24
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-120_integration-final.log",
+      "log_sha256": "86cd64db78396c0866c5110b9c2cc58dc58e09b05f37e49cdcb1d920e89ad038",
+      "source": "stream/tests/run_tests_120_integration.py",
+      "source_sha256": "3e8d0f16573fbc3a6c681e2ceb62ee57652b46edd4ed66cd217218f59f298a95",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_120_integration.py"
+      ]
+    },
+    {
+      "suite": "run_tests_121.py",
+      "passed": 112,
+      "count": 112,
+      "counts": [
+        112,
+        112
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-121-final.log",
+      "log_sha256": "f2220d7f77be66e2cd37b1e28ed50b6b93a50b021c1a18abed1fcad7eb5ce005",
+      "source": "stream/tests/run_tests_121.py",
+      "source_sha256": "adf9ac65fec1198dc7b7b325d1a62fa263975e7f4d285ecb04bc6c8192d75782",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_121.py"
+      ]
+    },
+    {
+      "suite": "run_tests_121_integration.py",
+      "passed": 56,
+      "count": 56,
+      "counts": [
+        56,
+        56
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-121_integration-final.log",
+      "log_sha256": "19ea58d0845d669493d95ed678940a8d3ea29a0875691fc6d35ad1a5d91359ec",
+      "source": "stream/tests/run_tests_121_integration.py",
+      "source_sha256": "b2b0710303326f6d6a4318ce27a2527ec39c9bde9bc2dcbebb13def3ed76f801",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_121_integration.py"
+      ]
+    },
+    {
+      "suite": "run_tests_122.py",
+      "passed": 138,
+      "count": 138,
+      "counts": [
+        138,
+        138
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-122-final.log",
+      "log_sha256": "f4abda6980eceb218fabe9818e8d52b338a088e88faba73f88c69441ef9613f6",
+      "source": "stream/tests/run_tests_122.py",
+      "source_sha256": "d3449ada4a35993600bf55f447d3066ede31d02fa103d554865ccc08f41bfd76",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_122.py"
+      ]
+    },
+    {
+      "suite": "run_tests_122_integration.py",
+      "passed": 74,
+      "count": 74,
+      "counts": [
+        74,
+        74
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-122_integration-final.log",
+      "log_sha256": "afe824bd612755a678aa98e444f95c8cd07eb674b82bafa5d8106648947c66d9",
+      "source": "stream/tests/run_tests_122_integration.py",
+      "source_sha256": "6ae733c35f0036d1ca2377e4286180118544e03eb159c10ae7f3411e19170307",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_122_integration.py"
+      ]
+    },
+    {
+      "suite": "run_tests_123.py",
+      "passed": 180,
+      "count": 180,
+      "counts": [
+        180,
+        180
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-123-final.log",
+      "log_sha256": "79d745329f2289de5e1d5b6f4fda333244076e0c0762d29befbee0c7e539781a",
+      "source": "stream/tests/run_tests_123.py",
+      "source_sha256": "de14fecb18a9b1d8cc6b6f4f123dd344e2abebc6cb020b786501372de412b20f",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_123.py"
+      ]
+    },
+    {
+      "suite": "run_tests_123_integration.py",
+      "passed": 32,
+      "count": 32,
+      "counts": [
+        32,
+        32
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-123_integration-final.log",
+      "log_sha256": "46e4cd3da8935c65e2057a981a48dddd8d9e107ae0faf6aa0527ed2e68d96231",
+      "source": "stream/tests/run_tests_123_integration.py",
+      "source_sha256": "c5feebcecbd342542c4f5518b74740fdd4524f98658fe9d066733d5649b0724a",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_123_integration.py"
+      ]
+    },
+    {
+      "suite": "run_tests_123b.py",
+      "passed": 205,
+      "count": 205,
+      "counts": [
+        205,
+        205
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-123b-final.log",
+      "log_sha256": "08f799af3155627541ae43c5f3f0a1d2857d38371b4bc1957400e1a971385bcb",
+      "source": "stream/tests/run_tests_123b.py",
+      "source_sha256": "26aedb427b3c51a6e7175ecbdaa7c896ccf98da6b151ead954f4160b2805c953",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_123b.py"
+      ]
+    },
+    {
+      "suite": "run_tests_123b_integration.py",
+      "passed": 38,
+      "count": 38,
+      "counts": [
+        38,
+        38
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-123b_integration-final.log",
+      "log_sha256": "1437239b5b095e5c8b7e052ba86f4db9a912bb5fc72ff8f92efd8f2111f1e2fa",
+      "source": "stream/tests/run_tests_123b_integration.py",
+      "source_sha256": "c71e1694dd5976362b21684e70e17786466db25d6c75741c03564372f1900596",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_123b_integration.py"
+      ]
+    },
+    {
+      "suite": "run_tests_124.py",
+      "passed": 270,
+      "count": 270,
+      "counts": [
+        270,
+        270
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-124-final.log",
+      "log_sha256": "6ea87d9cb560cf356aa6c50dfb3f6f9c6054ec14ba1098c26e4ebcae007d246b",
+      "source": "stream/tests/run_tests_124.py",
+      "source_sha256": "3b85ec8cdde7140b2619db1c6f160e62a79b9f2a6309cd161651dfaf6a30e794",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_124.py"
+      ]
+    },
+    {
+      "suite": "run_tests_124_integration.py",
+      "passed": 58,
+      "count": 58,
+      "counts": [
+        58,
+        58
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-124_integration-final.log",
+      "log_sha256": "90816a63616dd761dc7b4c37d464b4c9207acd702fec5af2e2cfc088cf4675d9",
+      "source": "stream/tests/run_tests_124_integration.py",
+      "source_sha256": "cfc88e2fe9b258b3abbb915c1691bfc38b47229745edc9b9316caf797a4d9a05",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_124_integration.py"
+      ]
+    },
+    {
+      "suite": "run_tests_125.py",
+      "passed": 326,
+      "count": 326,
+      "counts": [
+        326,
+        326
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-125-final.log",
+      "log_sha256": "223ac772c20d9fddc0af7dffc8a44812450d71b01964b374eced81d905516d5b",
+      "source": "stream/tests/run_tests_125.py",
+      "source_sha256": "b9db28528a4151b8994d5fabc756c5f8c0cee2e2156f3e0e5b185af2be44016a",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_125.py"
+      ]
+    },
+    {
+      "suite": "run_tests_125_integration.py",
+      "passed": 78,
+      "count": 78,
+      "counts": [
+        78,
+        78
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-125_integration-final.log",
+      "log_sha256": "d19aa806fe4ab4a1dd22efcf0b4e45e0308e1759542f8bb1b9e859bc50716437",
+      "source": "stream/tests/run_tests_125_integration.py",
+      "source_sha256": "caa6983f23ddb0cf7c8084f7f577e7e83dd84920332498d5c1439cca70b98f8b",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_125_integration.py"
+      ]
+    },
+    {
+      "suite": "run_tests_126.py",
+      "passed": 337,
+      "count": 337,
+      "counts": [
+        337,
+        337
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-126-final.log",
+      "log_sha256": "49fd72b45cc07434626c415ab0dfb0acdd5ada3dbba2b4ff784bd2b748145d28",
+      "source": "stream/tests/run_tests_126.py",
+      "source_sha256": "e3311f9ae6963c756a11c1c40b77bc67b3f7f9191a5851fec30c003cc4f8617c",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_126.py"
+      ]
+    },
+    {
+      "suite": "run_tests_126_integration.py",
+      "passed": 82,
+      "count": 82,
+      "counts": [
+        82,
+        82
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-126_integration-final.log",
+      "log_sha256": "d4580c178955b819fd13c6a293e4f07da3c585fbbc251c1abe6b8cd80f82e873",
+      "source": "stream/tests/run_tests_126_integration.py",
+      "source_sha256": "6b5a7040c2415e7adaa3b2145bb5e3fb59f5da38a90ec042850f56cb70d85bf8",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_126_integration.py"
+      ]
+    },
+    {
+      "suite": "run_tests_127.py",
+      "passed": 372,
+      "count": 372,
+      "counts": [
+        372,
+        372
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-127-final.log",
+      "log_sha256": "b4bdc6c67c777eb5c33c0aa43902a714075b5b10e0b37b7f6950af0c5a115df1",
+      "source": "stream/tests/run_tests_127.py",
+      "source_sha256": "c773bb9d89f4ca62c0c8a13a609778b6da402625dedb5ccce14cc0f0381d0c17",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_127.py"
+      ]
+    },
+    {
+      "suite": "run_tests_127_integration.py",
+      "passed": 86,
+      "count": 86,
+      "counts": [
+        86,
+        86
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-127_integration-final.log",
+      "log_sha256": "cba931c82d9624eef2ac56a1daeb4eba47e50748b04defa72fb5af1d80de057c",
+      "source": "stream/tests/run_tests_127_integration.py",
+      "source_sha256": "b7a722b4895a996ff48680f7e7e51930206aecd0c49a2c9dc34f3a2515906390",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_127_integration.py"
+      ]
+    },
+    {
+      "suite": "run_tests_128.py",
+      "passed": 417,
+      "count": 417,
+      "counts": [
+        417,
+        417
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-128-final.log",
+      "log_sha256": "39a62afeaa1067ec9bc6abda9c56ece78491363844ae6aff4975ddb64736c0b6",
+      "source": "stream/tests/run_tests_128.py",
+      "source_sha256": "078404670ed11cb22d191d961b9c43ff28f5b8a45b9f1aec7ffce83f5c8776b3",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_128.py"
+      ]
+    },
+    {
+      "suite": "run_tests_128_integration.py",
+      "passed": 98,
+      "count": 98,
+      "counts": [
+        98,
+        98
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-128_integration-final.log",
+      "log_sha256": "ef0946e5bf4564414f07a76576f8d43a997e4699c3469a8529bc6b02e8d314d4",
+      "source": "stream/tests/run_tests_128_integration.py",
+      "source_sha256": "daa97db05543ccb56119afe43c1a91b722c9ab4a91d518871162040eb5ec0900",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_128_integration.py"
+      ]
+    },
+    {
+      "suite": "run_tests_129.py",
+      "passed": 426,
+      "count": 426,
+      "counts": [
+        426,
+        426
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-129-final.log",
+      "log_sha256": "38f0d26a1d5202ed582fcb4524c3f08620f3ac2b9c4ca69e462ac026d5c6f906",
+      "source": "stream/tests/run_tests_129.py",
+      "source_sha256": "435c74571d1a65383c1f48bbbfbf3b5ea4a9d340ca02dfd83980ea2b1672586e",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_129.py"
+      ]
+    },
+    {
+      "suite": "run_tests_129_integration.py",
+      "passed": 98,
+      "count": 98,
+      "counts": [
+        98,
+        98
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-129_integration-final.log",
+      "log_sha256": "8132b0735356df5421e3f7c0d92f0a445352520a5e2b95f3111666723dcee02d",
+      "source": "stream/tests/run_tests_129_integration.py",
+      "source_sha256": "33e74bf97f87ed97911829e8d03b106273443778c7864e46ee1e4129b5cde5ca",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_129_integration.py"
+      ]
+    },
+    {
+      "suite": "run_tests_130.py",
+      "passed": 469,
+      "count": 469,
+      "counts": [
+        469,
+        469
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-130-final.log",
+      "log_sha256": "2a0176d5927a54787267c663d61c6c76532b15937a410f8c3a1b965fd996c920",
+      "source": "stream/tests/run_tests_130.py",
+      "source_sha256": "d11925ff11a145436ac3112b12da5f7ebd534ef0d47e0aa08c16f4fa48317271",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_130.py"
+      ]
+    },
+    {
+      "suite": "run_tests_130_integration.py",
+      "passed": 104,
+      "count": 104,
+      "counts": [
+        104,
+        104
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-130_integration-final.log",
+      "log_sha256": "d539c58931a306e2d9ee554ed920fc07dde0941993d372930450d1b0187833f7",
+      "source": "stream/tests/run_tests_130_integration.py",
+      "source_sha256": "ec0aa4a2fe73126a03ebbe53b7d51c9fc05a520fd24252af73b46fb445732833",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_130_integration.py"
+      ]
+    },
+    {
+      "suite": "run_tests_131.py",
+      "passed": 545,
+      "count": 545,
+      "counts": [
+        545,
+        545
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-131-corrected-final.log",
+      "log_sha256": "c5f03bdea4b8d118042ddad61091d693dcd5d4df757917064d649db009fddea4",
+      "source": "stream/tests/run_tests_131.py",
+      "source_sha256": "e2b504e64dd86514aacdb50c27b27c378a68de54c4e9dc3fa25bd8c841da8845",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_131.py"
+      ]
+    },
+    {
+      "suite": "run_tests_131_integration.py",
+      "passed": 25,
+      "count": 25,
+      "counts": [
+        25,
+        25
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-131_integration-final.log",
+      "log_sha256": "c81cfe7bef253d1d83916f55e6a5dff9249575d6d115a9e710dd528ce38e56dc",
+      "source": "stream/tests/run_tests_131_integration.py",
+      "source_sha256": "7e8f0c11ddbde0d89630f49e60285a813923af6b1fd5034f3a926ced03a963a8",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_131_integration.py"
+      ]
+    },
+    {
+      "suite": "run_tests_132.py",
+      "passed": 611,
+      "count": 611,
+      "counts": [
+        611,
+        611
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-132-final.log",
+      "log_sha256": "57060eee8ecc22a66007513c2fc4808e21371d60d2a8786240fdd6b9bffc3eea",
+      "source": "stream/tests/run_tests_132.py",
+      "source_sha256": "2dd78586ed3642eda5e11d6f7cf34932ce7707acd025635acf086ca96d0de54a",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_132.py"
+      ]
+    },
+    {
+      "suite": "run_tests_132_integration.py",
+      "passed": 37,
+      "count": 37,
+      "counts": [
+        37,
+        37
+      ],
+      "returncode": 0,
+      "log": "data/resume-20261008/continuation132-tests/client-132_integration-final.log",
+      "log_sha256": "8ec58bd4d3e99f7a1b3ffe065bb55d838f3de6af5e93aebc54e4bb56e4b8dd71",
+      "source": "stream/tests/run_tests_132_integration.py",
+      "source_sha256": "a444015c9c39f916134511cc0814d459f0ae2aa6fe2f540dd05ec77b8867ae04",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "MKL_NUM_THREADS=2",
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py",
+        "run_tests_132_integration.py"
+      ]
+    }
+  ],
+  "file_sha256": {
+    "stream/ltx_continuation_client.py": "f3c6ba656670584bcf2ce83e10168392b64cb51f8cab0a47fd594d12d963d5e2",
+    "stream/start-client-132.sh": "7a22b7b3956c9bd4cc5235302a22c866617f01d169559522dac8f7637df9faaa",
+    "recovery/20261010-continuation132-stream/run_client_suites_132.py": "0816efe43fecb385316b567cbf527c769725b90197bda865cb98404764a7c40e",
+    "stream/tests/fake_comfy.py": "c473d1393a93f63e9027e9d046c7054b0d518954fddf2d68a45274f6f7e10a19",
+    "stream/tests/fake_comfy112.py": "1ad7930914cd2f50ef62cb9d75de780edb95e0d9faa3bf86b2ce6204a6a9766e",
+    "stream/tests/fake_comfy113.py": "6a1952097e8089c7623a25fbe7a705a5c87a8897e6324636745e06f1461aa4f2",
+    "stream/tests/fake_comfy114.py": "3259601548ad237177fd0a227a558c9ffce8df2a63d9e0b7ff637db28aec6327",
+    "stream/tests/fake_comfy115.py": "7388c31173c02f04cad4b6943f314103a927b2e05c616a1e7bb7ffd90bf5cec9",
+    "stream/tests/fake_comfy116.py": "c3b1fa94898ecdba2115ae90c22697097618d6e1aa027a1632c21f81558b9fa6",
+    "stream/tests/fake_comfy117.py": "bb1acec889db458d959ee57eeb0e55a869e307951e723a85185fa9b2b18a2578",
+    "stream/tests/fake_comfy118.py": "6288e535e5b84838d74c7c3afcff75cffc118caf289371ff88fca4c6f33838ce",
+    "stream/tests/fake_comfy119.py": "61aaeabf385afb44b6448f3f3c8e6d7223adc634727d27e0415675326743bc49",
+    "stream/tests/fake_comfy120.py": "fb1a936608ee1a4a428f02daebd0015a1a9fa1008dc57411dbbdb19efe7b3b1b",
+    "stream/tests/fake_comfy121.py": "e6f944db23e8731f91ad0ef1d3d845a3391b47ce3bf3b62385db7870090c45a9",
+    "stream/tests/fake_comfy122.py": "1ea1ba741d86cd7b88d98a9ff8550bc12a35f52c19475e43774bb84b243cad00",
+    "stream/tests/fake_comfy123.py": "4e6ad91fed5ec0e1015da74046c2412325b2060e520d509de932cb5ea5af464d",
+    "stream/tests/fake_comfy123b.py": "9235d6966ef292d9679182864f4afa509d2d6c09590fca3066f68cad7277946e",
+    "stream/tests/fake_comfy124.py": "ea4feccf88f67ba918af3d86acedbedce1bf51f00792db5b9d7b7fc3fb2e8105",
+    "stream/tests/fake_comfy125.py": "ba1eb7185077795fb2b5b9c9773e51bd5414486dbf86660676b98fe11360d173",
+    "stream/tests/fake_comfy126.py": "2c1de12066828be3e12591ba8aaae98bb2e7ff21597a06c1f8554f9d48ced01a",
+    "stream/tests/fake_comfy127.py": "7834452ac0267989531a63e25ad74f55d1971c830ee1bd99ab328929ee9d7187",
+    "stream/tests/fake_comfy128.py": "8996dce55aeca2aaec9e7b798f112dc8e95aeefa2cc8ba6b785b70d8d7481b35",
+    "stream/tests/fake_comfy129.py": "4295d817c39d0767d184ad927991b68a1c1b81a55bee4cf07ca7e7dca54f921b",
+    "stream/tests/fake_comfy130.py": "9077a858518e1be780c143b2db17b3a2fdd298de5d9695aa423b48fbb901c0e7",
+    "stream/tests/fake_comfy131.py": "1209148a23058b274649df2b63c2fe9bc290e5ccf31bd00475f7330dab509da9",
+    "stream/tests/fake_comfy132.py": "9cef313ebfc22969defb2e62022920ed15c99e6cf8c2492ff7f3733f8cf5a0ba",
+    "stream/tests/fake_compare.py": "94ac227eb4b436e25087d6c702905f39b9b8cc5574ac824b5edc386d10d3126c",
+    "stream/tests/run_cpu_suites.py": "726f1c2be126830bbe3ac3a6648ad7dad1bcadc269fe8eb3ddcf660761728f1b",
+    "stream/tests/run_tests.py": "8bae7d1a2cb93253f91483ee09171b395fad36a41d3038d6b4a69cf014061da2",
+    "stream/tests/run_tests_112.py": "2aba66cfe404e43a1c64851b7e618cefb7444ac41ab11dd3076fc62dcede85ac",
+    "stream/tests/run_tests_113.py": "22cb76c143cdffa3cdf8671ac0e40fc0097b61c5e8a84087fdf1634b7119fd4e",
+    "stream/tests/run_tests_114.py": "c27a1da276207144e1f3f0b07d59e5655135393c61b4a8e3dcae4bb8f23fdd60",
+    "stream/tests/run_tests_115.py": "b597b52597bf60df19999f6d2c8d05c3b5fb19f24ce1fa0e97d2c36a622e1160",
+    "stream/tests/run_tests_116.py": "5161c85b6250ac3a45f6f23ac632e81dc6cbad33808c15b3f17d3ac913d144ad",
+    "stream/tests/run_tests_116b.py": "d8c4703272361e25d63f2cb367c1373f73fc7ca12e1abdc7fa9fb54115585b81",
+    "stream/tests/run_tests_117.py": "c98096229c87ed1d9eb8f2a17ef8c8247862c9c2470c855a055cc1bb554178c1",
+    "stream/tests/run_tests_118.py": "6ead550c9ebbef50be49e55849004962878bbf773aa2e41b480ed98e29d82f5c",
+    "stream/tests/run_tests_118b.py": "57db9eacdea9fa020e1b69f03018664f8839821a8844f91c2a22bf913c746c27",
+    "stream/tests/run_tests_119.py": "0002d121b5365e0637dc555dfcfc445cb684c8d860e9389e28548f1c40c2f3d6",
+    "stream/tests/run_tests_119_integration.py": "6d26d63fdebb31084c1e755323c7d958375310bc3f131525857e7085d89d7b8e",
+    "stream/tests/run_tests_120.py": "0c5dc12cc5957cb6938644950148f6fd86d9228bad1aa8822fe225129d57b92e",
+    "stream/tests/run_tests_120_integration.py": "3e8d0f16573fbc3a6c681e2ceb62ee57652b46edd4ed66cd217218f59f298a95",
+    "stream/tests/run_tests_121.py": "adf9ac65fec1198dc7b7b325d1a62fa263975e7f4d285ecb04bc6c8192d75782",
+    "stream/tests/run_tests_121_integration.py": "b2b0710303326f6d6a4318ce27a2527ec39c9bde9bc2dcbebb13def3ed76f801",
+    "stream/tests/run_tests_122.py": "d3449ada4a35993600bf55f447d3066ede31d02fa103d554865ccc08f41bfd76",
+    "stream/tests/run_tests_122_integration.py": "6ae733c35f0036d1ca2377e4286180118544e03eb159c10ae7f3411e19170307",
+    "stream/tests/run_tests_123.py": "de14fecb18a9b1d8cc6b6f4f123dd344e2abebc6cb020b786501372de412b20f",
+    "stream/tests/run_tests_123_integration.py": "c5feebcecbd342542c4f5518b74740fdd4524f98658fe9d066733d5649b0724a",
+    "stream/tests/run_tests_123b.py": "26aedb427b3c51a6e7175ecbdaa7c896ccf98da6b151ead954f4160b2805c953",
+    "stream/tests/run_tests_123b_integration.py": "c71e1694dd5976362b21684e70e17786466db25d6c75741c03564372f1900596",
+    "stream/tests/run_tests_124.py": "3b85ec8cdde7140b2619db1c6f160e62a79b9f2a6309cd161651dfaf6a30e794",
+    "stream/tests/run_tests_124_integration.py": "cfc88e2fe9b258b3abbb915c1691bfc38b47229745edc9b9316caf797a4d9a05",
+    "stream/tests/run_tests_125.py": "b9db28528a4151b8994d5fabc756c5f8c0cee2e2156f3e0e5b185af2be44016a",
+    "stream/tests/run_tests_125_integration.py": "caa6983f23ddb0cf7c8084f7f577e7e83dd84920332498d5c1439cca70b98f8b",
+    "stream/tests/run_tests_126.py": "e3311f9ae6963c756a11c1c40b77bc67b3f7f9191a5851fec30c003cc4f8617c",
+    "stream/tests/run_tests_126_integration.py": "6b5a7040c2415e7adaa3b2145bb5e3fb59f5da38a90ec042850f56cb70d85bf8",
+    "stream/tests/run_tests_127.py": "c773bb9d89f4ca62c0c8a13a609778b6da402625dedb5ccce14cc0f0381d0c17",
+    "stream/tests/run_tests_127_integration.py": "b7a722b4895a996ff48680f7e7e51930206aecd0c49a2c9dc34f3a2515906390",
+    "stream/tests/run_tests_128.py": "078404670ed11cb22d191d961b9c43ff28f5b8a45b9f1aec7ffce83f5c8776b3",
+    "stream/tests/run_tests_128_integration.py": "daa97db05543ccb56119afe43c1a91b722c9ab4a91d518871162040eb5ec0900",
+    "stream/tests/run_tests_129.py": "435c74571d1a65383c1f48bbbfbf3b5ea4a9d340ca02dfd83980ea2b1672586e",
+    "stream/tests/run_tests_129_integration.py": "33e74bf97f87ed97911829e8d03b106273443778c7864e46ee1e4129b5cde5ca",
+    "stream/tests/run_tests_130.py": "d11925ff11a145436ac3112b12da5f7ebd534ef0d47e0aa08c16f4fa48317271",
+    "stream/tests/run_tests_130_integration.py": "ec0aa4a2fe73126a03ebbe53b7d51c9fc05a520fd24252af73b46fb445732833",
+    "stream/tests/run_tests_131.py": "e2b504e64dd86514aacdb50c27b27c378a68de54c4e9dc3fa25bd8c841da8845",
+    "stream/tests/run_tests_131_integration.py": "7e8f0c11ddbde0d89630f49e60285a813923af6b1fd5034f3a926ced03a963a8",
+    "stream/tests/run_tests_132.py": "2dd78586ed3642eda5e11d6f7cf34932ce7707acd025635acf086ca96d0de54a",
+    "stream/tests/run_tests_132_integration.py": "a444015c9c39f916134511cc0814d459f0ae2aa6fe2f540dd05ec77b8867ae04",
+    "stream/tests/test_cleaner.py": "b6fe159840edf04788fcbbd423e085014bffee477f1d0f6ee821762be809cb08",
+    "stream/tests/test_client_preflight_118b.py": "f06d2dec7f38c8b2eeac5d734d9b4b281d8dbf95c8200739923af108b56588b8"
+  },
+  "scratch_roots_created": [
+    "/tmp/ltx-cpu-suite-0a2gbt65",
+    "/tmp/ltx-cpu-suite-2cc8rcqb",
+    "/tmp/ltx-cpu-suite-3kyhd189",
+    "/tmp/ltx-cpu-suite-48usej1a",
+    "/tmp/ltx-cpu-suite-4px3oxho",
+    "/tmp/ltx-cpu-suite-4xobaywg",
+    "/tmp/ltx-cpu-suite-5c6i28p4",
+    "/tmp/ltx-cpu-suite-5mvdln9p",
+    "/tmp/ltx-cpu-suite-5uzj9ypx",
+    "/tmp/ltx-cpu-suite-6a05coto",
+    "/tmp/ltx-cpu-suite-7d170rih",
+    "/tmp/ltx-cpu-suite-8ssdjj5r",
+    "/tmp/ltx-cpu-suite-94_er84l",
+    "/tmp/ltx-cpu-suite-973e98ci",
+    "/tmp/ltx-cpu-suite-9czfaop1",
+    "/tmp/ltx-cpu-suite-9lbumei4",
+    "/tmp/ltx-cpu-suite-a2o0ke3h",
+    "/tmp/ltx-cpu-suite-biu9mwpc",
+    "/tmp/ltx-cpu-suite-eg_w38v6",
+    "/tmp/ltx-cpu-suite-ekdidz1p",
+    "/tmp/ltx-cpu-suite-exv039pe",
+    "/tmp/ltx-cpu-suite-f9dxpa2a",
+    "/tmp/ltx-cpu-suite-ff35uo3h",
+    "/tmp/ltx-cpu-suite-h5uexj1e",
+    "/tmp/ltx-cpu-suite-kpmn_mk7",
+    "/tmp/ltx-cpu-suite-lpurvfff",
+    "/tmp/ltx-cpu-suite-lqhonq5w",
+    "/tmp/ltx-cpu-suite-lrcztupe",
+    "/tmp/ltx-cpu-suite-lxgbiplr",
+    "/tmp/ltx-cpu-suite-nxfh2772",
+    "/tmp/ltx-cpu-suite-ogzg_43e",
+    "/tmp/ltx-cpu-suite-ov91_8cv",
+    "/tmp/ltx-cpu-suite-ozd1fa45",
+    "/tmp/ltx-cpu-suite-pbo6v479",
+    "/tmp/ltx-cpu-suite-pm4o715v",
+    "/tmp/ltx-cpu-suite-r9_g8dis",
+    "/tmp/ltx-cpu-suite-u9vci4mt",
+    "/tmp/ltx-cpu-suite-vfk_njct",
+    "/tmp/ltx-cpu-suite-yroqnb8v",
+    "/tmp/ltx-cpu-suite-zs3otyz0"
+  ],
+  "scratch_roots_removed": 40,
+  "scratch_remaining": [],
+  "development_scratch_roots_created": [
+    "/tmp/ltx-cpu-suite-7q96paxf",
+    "/tmp/ltx-cpu-suite-sdpmaye0",
+    "/tmp/ltx-cpu-suite-tj4izlu7"
+  ],
+  "development_scratch_roots_removed": 3,
+  "development_attempts": 4,
+  "development_unrecorded_scratch_path_count": 1,
+  "development_note": "Four focused132 attempts: initial helper-load fixture error, inherited119 option-filter fixture failure, final611/611 unit, final37/37 integration. Audited TemporaryDirectory cleanup ran for all four; first failed attempt scratch name was not retained. Three observed roots are listed. No production client change was needed after final seal pinning.",
+  "cleanup_method": "Audited run_cpu_suites.py TemporaryDirectory cleanup after cooperative child exit; no process kills or broad scratch deletion. Owned /tmp focus logs archived into test evidence then unlinked.",
+  "python_cache_paths": [],
+  "violations": [],
+  "wrapper_bash_n": {
+    "returncode": 0,
+    "executed": false
+  },
+  "initial131": {
+    "suite": "131",
+    "returncode": 1,
+    "passed": 544,
+    "count": 545,
+    "log": "client-131-final.log",
+    "sha256": "0709e355519e659b659310a4f63186a7a4359a85b4dc27a48223fb64dd614d01"
+  },
+  "corrected131": {
+    "suite": "131",
+    "returncode": 0,
+    "passed": 545,
+    "count": 545,
+    "log": "client-131-corrected-final.log",
+    "sha256": "c5f03bdea4b8d118042ddad61091d693dcd5d4df757917064d649db009fddea4"
+  },
+  "focused132": {
+    "unit": {
+      "passed": 611,
+      "count": 611,
+      "log": "client-132-focused-unit.log",
+      "sha256": "c8e5fe4e3e9fe9c6b4472550f282bf1c8c9839acf6efd01be51e22fdb2968a6c"
+    },
+    "integration": {
+      "passed": 37,
+      "count": 37,
+      "log": "client-132-focused-integration.log",
+      "sha256": "5d1c246c20a2c66a2fd663920e272529286af7c580f105e24c3bc7a62d8ece50"
+    }
+  }
+}

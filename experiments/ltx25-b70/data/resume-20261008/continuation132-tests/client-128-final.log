@@ -1,0 +1,419 @@
+PASS 123 participates in DECODER_GRAPH_PACKETS
+PASS 123 participates in DECODE_THREAD_PACKETS
+PASS 123 participates in RESET_PACKETS
+PASS 123 participates in LEVER_PACKETS
+PASS 123 participates in SERVER_OPTION_PACKETS
+PASS numeric packet123 parser
+PASS 123 stream directory accepted
+PASS 118b stream directory refused
+PASS valid status sampler-a/0/full
+PASS valid status sampler-a/0/a-xpu3-sync
+PASS valid status sampler-a/1/full
+PASS valid status sampler-a/1/a-xpu3-sync
+PASS valid status sampler-b/0/full
+PASS valid status sampler-b/0/a-xpu3-sync
+PASS valid status sampler-b/1/full
+PASS valid status sampler-b/1/a-xpu3-sync
+PASS valid status eager-display/0/full
+PASS valid status eager-display/0/a-xpu3-sync
+PASS valid status eager-display/1/full
+PASS valid status eager-display/1/a-xpu3-sync
+PASS invalid status display_schedule=None
+PASS invalid status display_schedule=''
+PASS invalid status display_schedule='other'
+PASS invalid status anchor_read_ahead=None
+PASS invalid status anchor_read_ahead=True
+PASS invalid status anchor_read_ahead='1'
+PASS invalid status anchor_read_ahead=2
+PASS invalid status snapshot_schedule=None
+PASS invalid status snapshot_schedule=''
+PASS invalid status snapshot_schedule='other'
+PASS sparse barriers refuse walk snapshot mode
+PASS expected display_schedule mismatch refuses
+PASS expected display_schedule matching accepts
+PASS expected anchor_read_ahead mismatch refuses
+PASS expected anchor_read_ahead matching accepts
+PASS expected snapshot_schedule mismatch refuses
+PASS expected snapshot_schedule matching accepts
+PASS expected display_device mismatch refuses
+PASS expected display_device matching accepts
+PASS packet type/identity '123' refuses
+PASS packet type/identity '118b' refuses
+PASS packet type/identity 118 refuses
+PASS complete six-field options from status
+PASS 118b preserves its two-field options
+PASS receipt consistent options accepts
+PASS receipt display_schedule drift refused
+PASS receipt anchor_read_ahead drift refused
+PASS receipt snapshot_schedule drift refused
+PASS receipt display_device drift refused
+PASS receipt snapshot_mode drift refused
+PASS receipt decoder_graph_pool_cap_bytes drift refused
+PASS receipt missing maintenance_mode refused
+PASS receipt missing snapshot_digest_cache refused
+PASS receipt missing storage_scan_mode refused
+PASS receipt missing gc_interval_seconds refused
+PASS receipt missing display_worker refused
+PASS receipt missing run_write_allowance_bytes refused
+PASS receipt missing snapshot_mode refused
+PASS receipt missing decoder_graph_pool_cap_bytes refused
+PASS receipt missing aux_residency refused
+PASS receipt missing residency_qualification_id refused
+PASS receipt missing display_schedule refused
+PASS receipt missing anchor_read_ahead refused
+PASS receipt missing snapshot_schedule refused
+PASS receipt missing display_device refused
+PASS verdict missing maintenance_mode refused before gate
+PASS verdict missing snapshot_digest_cache refused before gate
+PASS verdict missing storage_scan_mode refused before gate
+PASS verdict missing gc_interval_seconds refused before gate
+PASS verdict missing display_worker refused before gate
+PASS verdict missing run_write_allowance_bytes refused before gate
+PASS verdict missing snapshot_mode refused before gate
+PASS verdict missing decoder_graph_pool_cap_bytes refused before gate
+PASS verdict missing aux_residency refused before gate
+PASS verdict missing residency_qualification_id refused before gate
+PASS verdict missing display_schedule refused before gate
+PASS verdict missing anchor_read_ahead refused before gate
+PASS verdict missing snapshot_schedule refused before gate
+PASS verdict missing display_device refused before gate
+PASS qualification receipt missing maintenance_mode refused
+PASS qualification receipt missing snapshot_digest_cache refused
+PASS qualification receipt missing storage_scan_mode refused
+PASS qualification receipt missing gc_interval_seconds refused
+PASS qualification receipt missing display_worker refused
+PASS qualification receipt missing run_write_allowance_bytes refused
+PASS qualification receipt missing snapshot_mode refused
+PASS qualification receipt missing decoder_graph_pool_cap_bytes refused
+PASS qualification receipt missing aux_residency refused
+PASS qualification receipt missing residency_qualification_id refused
+PASS qualification receipt missing display_schedule refused
+PASS qualification receipt missing anchor_read_ahead refused
+PASS qualification receipt missing snapshot_schedule refused
+PASS qualification receipt missing display_device refused
+PASS new flag --expect-display-schedule refused for118b
+PASS new flag --expect-anchor-read-ahead refused for118b
+PASS new flag --expect-snapshot-schedule refused for118b
+PASS invalid display device None refused
+PASS invalid display device '' refused
+PASS invalid display device 'cpu' refused
+PASS invalid display device 'xpu:0' refused
+PASS invalid display device 2 refused
+PASS replica invalid combination frames refused
+PASS replica invalid combination anchor refused
+PASS replica invalid combination anchor_decode refused
+PASS replica invalid combination display_schedule refused
+PASS unrecognized plan refuses
+PASS decode device binding stream/xpu:3/xpu:3
+PASS decode device binding stream/xpu:2/xpu:2
+PASS decode device binding stream/xpu:2/xpu:3
+PASS decode device binding stream/xpu:3/None
+PASS decode device binding qualify-eager/xpu:2/xpu:3
+PASS decode device binding qualify-eager/xpu:2/xpu:2
+PASS decode device binding qualify-graph/xpu:2/xpu:2
+PASS decode device binding qualify-repeat/xpu:2/xpu:3
+PASS 119 option identity remains five fields
+PASS 119 decode records do not gain a required123 field
+PASS 119 refuses123 display device flag
+PASS CPU runner blocks synthetic device-open audit '/dev/dri/renderD128'
+PASS CPU runner blocks synthetic device-open audit '/dev/dri'
+PASS CPU runner blocks synthetic device-open audit b'/dev/dri/card0'
+PASS client wrapper uses fingerprint-pinned bin/python -B
+PASS client wrapper caps OMP
+PASS client wrapper binds all three options
+PASS client wrapper workdir uses123 default
+PASS client wrapper does not reset units
+PASS length 121 display xpu:3 admitted
+PASS length 121 display xpu:2 admitted
+PASS length 145 display xpu:3 admitted
+PASS length 145 display xpu:2 admitted
+PASS missing long-chunk feature chunk_145 refuses
+PASS old packet 117 refuses frames145 before network
+PASS old packet 118b refuses frames145 before network
+PASS old packet 119 refuses frames145 before network
+PASS old packet 120 refuses frames145 before network
+PASS packet120 still refuses long replica configuration
+PASS explicit budget 4 GiB at121 accepts and binds
+PASS explicit budget 6 GiB at145 accepts and binds
+PASS explicit budget 8 GiB at145 accepts and binds
+PASS invalid145 transient budget None refuses
+PASS invalid145 transient budget True refuses
+PASS invalid145 transient budget '6442450944' refuses
+PASS invalid145 transient budget 4294967296 refuses
+PASS invalid145 transient budget 8589934593 refuses
+PASS explicit budget on xpu3 refuses
+PASS unrequested override refuses
+PASS override expectation mismatch refuses
+PASS required override absent refuses
+PASS default options omit budget field
+PASS historical120 options ignore new field
+PASS historical121 options ignore new field
+PASS CLI invalid transient budget NaN refuses before network
+PASS CLI invalid transient budget Infinity refuses before network
+PASS CLI invalid transient budget -1 refuses before network
+PASS CLI invalid transient budget 0 refuses before network
+PASS CLI invalid transient budget 9 refuses before network
+PASS CLI invalid transient budget 0.00000000001 refuses before network
+PASS old packet refuses explicit transient flag before network
+PASS wrapper binds explicit transient environment option
+PASS receipt explicit budget agrees
+PASS receipt budget drift refuses
+PASS receipt budget missing refuses
+PASS auxiliary residency legacy accepts its identity
+PASS auxiliary residency legacy rejects drifted identity
+PASS auxiliary residency xpu2 accepts its identity
+PASS auxiliary residency xpu2 rejects drifted identity
+PASS invalid auxiliary residency None refuses
+PASS invalid auxiliary residency '' refuses
+PASS invalid auxiliary residency 'cpu' refuses
+PASS invalid auxiliary residency 'xpu:2' refuses
+PASS invalid auxiliary residency 1 refuses
+PASS 169 xpu2 dg0 accepts
+PASS 169 refuses unsafe aux_residency
+PASS 169 refuses unsafe decoder_graph
+PASS 169 refuses unsafe placement
+PASS 169 refuses unsafe anchor
+PASS 169 refuses unsafe anchor_decode
+PASS 169 refuses unsafe display_device
+PASS 123 refuses missing chunk_169 feature
+PASS 123 refuses missing atomic_preview feature
+PASS long dg1 replica f145 refuses
+PASS long dg1 replica f169 refuses
+PASS expected auxiliary residency mismatch refuses
+PASS client wrapper binds residency environment
+PASS exit7 healthy makes exactly one bounded status observation
+PASS exit7 healthy is logged
+PASS exit7 healthy preserves fault and health evidence
+PASS exit7 fault makes exactly one bounded status observation
+PASS exit7 fault is logged
+PASS exit7 fault preserves fault and health evidence
+PASS exit7 unavailable makes exactly one bounded status observation
+PASS exit7 unavailable is logged
+PASS exit7 unavailable records unavailable without throwing
+PASS exit7 status500 makes exactly one bounded status observation
+PASS exit7 status500 is logged
+PASS exit7 status500 records unavailable without throwing
+PASS sealed123 imports hash-pinned residency helper before receipt and gate modules
+PASS sealed123 reference pin verifies and includes145 legacy qualification
+PASS changed residency helper pin refuses before import
+PASS allowance 1 GiB accepts and binds
+PASS allowance 3 GiB accepts and binds
+PASS allowance 8 GiB accepts and binds
+PASS allowance 64 GiB accepts and binds
+PASS invalid or unrequested allowance None refuses
+PASS invalid or unrequested allowance True refuses
+PASS invalid or unrequested allowance '3221225472' refuses
+PASS invalid or unrequested allowance 0 refuses
+PASS invalid or unrequested allowance 1073741825 refuses
+PASS invalid or unrequested allowance 69793218560 refuses
+PASS invalid or unrequested allowance 8589934592 refuses
+PASS invalid allowance CLI '' refuses before network
+PASS invalid allowance CLI '0' refuses before network
+PASS invalid allowance CLI '65' refuses before network
+PASS invalid allowance CLI '3.0' refuses before network
+PASS invalid allowance CLI '-1' refuses before network
+PASS invalid allowance CLI '03' refuses before network
+PASS invalid allowance CLI ' 3' refuses before network
+PASS invalid allowance CLI '+3' refuses before network
+PASS receipt allowance drift refuses exit12
+PASS missing receipt allowance refuses exit12
+PASS client launcher binds write allowance
+PASS 128 f145 legacy replica serial admitted
+PASS worker expectation mismatch rejects
+PASS 128 f145 legacy replica parallel admitted
+PASS worker expectation mismatch rejects
+PASS parallel refuses frames=121
+PASS parallel refuses display_device=xpu:3
+PASS parallel refuses aux_residency=xpu2
+PASS parallel refuses decoder_graph=1
+PASS parallel refuses placement=two-way
+PASS parallel refuses anchor=latent
+PASS parallel refuses anchor_decode=full
+PASS parallel refuses display_schedule=sampler-a
+PASS 128 f169 legacy replica serial admitted
+PASS worker expectation mismatch rejects
+PASS 128 f169 legacy replica parallel admitted
+PASS worker expectation mismatch rejects
+PASS parallel refuses frames=121
+PASS parallel refuses display_device=xpu:3
+PASS parallel refuses aux_residency=xpu2
+PASS parallel refuses decoder_graph=1
+PASS parallel refuses placement=two-way
+PASS parallel refuses anchor=latent
+PASS parallel refuses anchor_decode=full
+PASS parallel refuses display_schedule=sampler-a
+PASS invalid worker None refuses
+PASS invalid worker '' refuses
+PASS invalid worker 1 refuses
+PASS invalid worker True refuses
+PASS invalid worker 'other' refuses
+PASS historical packet123 keeps worker absent
+PASS historical packet123b keeps worker absent
+PASS historical packet refuses126 worker option before network
+PASS wrapper binds worker environment option
+PASS 128 legacy/10s maintenance admitted and bound
+PASS maintenance expectation mismatch refuses
+PASS 128 legacy/60s maintenance admitted and bound
+PASS maintenance expectation mismatch refuses
+PASS 60-second maintenance refuses frames=121
+PASS 60-second maintenance refuses frames=169
+PASS 60-second maintenance refuses placement='two-way'
+PASS 60-second maintenance refuses anchor='latent'
+PASS 60-second maintenance refuses decoder_graph=1
+PASS 60-second maintenance refuses anchor_decode='full'
+PASS 60-second maintenance refuses prep_ahead=0
+PASS 60-second maintenance refuses bencode_overlap=0
+PASS 60-second maintenance refuses display_worker='parallel'
+PASS 60-second maintenance refuses display_device='xpu:2'
+PASS 60-second maintenance refuses display_schedule='sampler-b'
+PASS 60-second maintenance refuses display_schedule='eager-display'
+PASS 60-second maintenance refuses anchor_read_ahead=1
+PASS 60-second maintenance refuses snapshot_schedule='a-xpu3-sync'
+PASS 128 xpu2/10s maintenance admitted and bound
+PASS maintenance expectation mismatch refuses
+PASS 128 xpu2/60s maintenance admitted and bound
+PASS maintenance expectation mismatch refuses
+PASS 60-second maintenance refuses frames=121
+PASS 60-second maintenance refuses frames=169
+PASS 60-second maintenance refuses placement='two-way'
+PASS 60-second maintenance refuses anchor='latent'
+PASS 60-second maintenance refuses decoder_graph=1
+PASS 60-second maintenance refuses anchor_decode='full'
+PASS 60-second maintenance refuses prep_ahead=0
+PASS 60-second maintenance refuses bencode_overlap=0
+PASS 60-second maintenance refuses display_worker='parallel'
+PASS 60-second maintenance refuses display_device='xpu:2'
+PASS 60-second maintenance refuses display_schedule='sampler-b'
+PASS 60-second maintenance refuses display_schedule='eager-display'
+PASS 60-second maintenance refuses anchor_read_ahead=1
+PASS 60-second maintenance refuses snapshot_schedule='a-xpu3-sync'
+PASS invalid gc_interval_seconds None refuses
+PASS invalid gc_interval_seconds '' refuses
+PASS invalid gc_interval_seconds '60' refuses
+PASS invalid gc_interval_seconds 1 refuses
+PASS invalid gc_interval_seconds True refuses
+PASS invalid gc_interval_seconds 10.0 refuses
+PASS invalid gc_interval_seconds 60.0 refuses
+PASS invalid gc_interval_seconds 0 refuses
+PASS invalid gc_interval_seconds 30 refuses
+PASS invalid gc_interval_seconds 600 refuses
+PASS historical packet123 keeps maintenance option absent
+PASS historical packet123 refuses maintenance option before network
+PASS historical packet123b keeps maintenance option absent
+PASS historical packet123b refuses maintenance option before network
+PASS historical packet124 keeps maintenance option absent
+PASS historical packet124 refuses maintenance option before network
+PASS wrapper binds maintenance environment option
+PASS packet120 pin equals sealed inner plan_sha256
+PASS packet120 pin does not equal plan file byte hash
+PASS packet121 pin equals sealed inner plan_sha256
+PASS packet121 pin does not equal plan file byte hash
+PASS packet122 pin equals sealed inner plan_sha256
+PASS packet122 pin does not equal plan file byte hash
+PASS packet123 pin equals sealed inner plan_sha256
+PASS packet123 pin does not equal plan file byte hash
+PASS packet123b pin equals sealed inner plan_sha256
+PASS packet123b pin does not equal plan file byte hash
+PASS packet124 pin equals sealed inner plan_sha256
+PASS packet124 pin does not equal plan file byte hash
+PASS packet125 pin equals sealed inner plan_sha256
+PASS packet125 pin does not equal plan file byte hash
+PASS packet126 pin equals sealed inner plan_sha256
+PASS packet126 pin does not equal plan file byte hash
+PASS packet127 pin equals sealed inner plan_sha256
+PASS packet127 pin does not equal plan file byte hash
+PASS packet128 pin equals sealed inner plan_sha256
+PASS packet128 pin does not equal plan file byte hash
+PASS packet129 pin equals sealed inner plan_sha256
+PASS packet129 pin does not equal plan file byte hash
+PASS packet130 pin equals sealed inner plan_sha256
+PASS packet130 pin does not equal plan file byte hash
+PASS packet131 pin equals sealed inner plan_sha256
+PASS packet131 pin does not equal plan file byte hash
+PASS packet132 pin equals sealed inner plan_sha256
+PASS packet132 pin does not equal plan file byte hash
+PASS server file-byte plan hash refuses instead of inner plan
+PASS storage mode accepts matching request
+PASS storage mode rejects mismatched request
+PASS storage mode accepts matching background
+PASS storage mode rejects mismatched background
+PASS invalid storage mode None refused
+PASS invalid storage mode '' refused
+PASS invalid storage mode 'walk' refused
+PASS invalid storage mode True refused
+PASS cache1 admitted with GC10 and option bound
+PASS cache1 rejects parent expectation GC10
+PASS cache1 admitted with GC60 and option bound
+PASS cache1 rejects parent expectation GC60
+PASS cache1 refuses changed scope frames=121
+PASS cache1 refuses changed scope frames=169
+PASS cache1 refuses changed scope placement='two-way'
+PASS cache1 refuses changed scope anchor='mixed'
+PASS cache1 refuses changed scope decoder_graph=1
+PASS cache1 refuses changed scope anchor_decode='full'
+PASS cache1 refuses changed scope prep_ahead=0
+PASS cache1 refuses changed scope bencode_overlap=0
+PASS cache1 refuses changed scope display_worker='parallel'
+PASS cache1 refuses changed scope display_device='xpu:2'
+PASS cache1 refuses changed scope display_schedule='eager-display'
+PASS cache1 refuses changed scope anchor_read_ahead=1
+PASS cache1 refuses changed scope snapshot_schedule='a-xpu3-sync'
+PASS cache1 refuses changed scope snapshot_mode='walk'
+PASS cache1 refuses changed scope aux_residency='xpu2'
+PASS cache rejects non-integer option None
+PASS cache rejects non-integer option ''
+PASS cache rejects non-integer option '1'
+PASS cache rejects non-integer option True
+PASS cache rejects non-integer option False
+PASS cache rejects non-integer option 1.0
+PASS cache rejects non-integer option -1
+PASS cache rejects non-integer option 2
+PASS historical packet125 excludes new cache option
+PASS historical packet125 refuses cache option before network
+PASS historical packet126 excludes new cache option
+PASS historical packet126 refuses cache option before network
+PASS wrapper binds snapshot digest cache option
+PASS idle mode admits inherited safe 145/serial
+PASS idle mode refuses parent expectation 145/serial
+PASS idle mode admits inherited safe 145/parallel
+PASS idle mode refuses parent expectation 145/parallel
+PASS idle mode admits inherited safe 169/parallel
+PASS idle mode refuses parent expectation 169/parallel
+PASS 169 idle preserves inherited refusal snapshot_digest_cache
+PASS 169 idle preserves inherited refusal gc_interval_seconds
+PASS idle refuses changed scope frames=121
+PASS idle refuses changed scope placement='two-way'
+PASS idle refuses changed scope anchor='mixed'
+PASS idle refuses changed scope decoder_graph=1
+PASS idle refuses changed scope anchor_decode='full'
+PASS idle refuses changed scope prep_ahead=0
+PASS idle refuses changed scope bencode_overlap=0
+PASS idle refuses changed scope display_schedule='sampler-b'
+PASS idle refuses changed scope anchor_read_ahead=1
+PASS idle refuses changed scope snapshot_schedule='a-xpu3-sync'
+PASS idle refuses changed scope snapshot_mode='walk'
+PASS idle refuses changed scope aux_residency='xpu2'
+PASS maintenance rejects invalid mode None
+PASS maintenance rejects invalid mode ''
+PASS maintenance rejects invalid mode 'thread'
+PASS maintenance rejects invalid mode True
+PASS maintenance rejects invalid mode 0
+PASS historical packet125 excludes128 maintenance option
+PASS historical packet125 refuses128 option before network
+PASS historical packet126 excludes128 maintenance option
+PASS historical packet126 refuses128 option before network
+PASS historical packet127 excludes128 maintenance option
+PASS historical packet127 refuses128 option before network
+PASS invalid maintenance CLI 'bad' refuses before network
+PASS invalid maintenance CLI '0' refuses before network
+PASS invalid maintenance CLI 'IDLE' refuses before network
+PASS invalid maintenance CLI '' refuses before network
+PASS off128 options equal127 plus explicit parent identity
+PASS receipt maintenance drift rejected
+PASS decode maintenance missing/drift None rejected
+PASS decode maintenance missing/drift 'idle' rejected
+PASS preview maintenance missing/drift None rejected
+PASS preview maintenance missing/drift 'idle' rejected
+PASS wrapper binds maintenance mode with parent default
+
+417/417 passed; CPU-only files in /tmp/ltx-cpu-suite-5uzj9ypx/ltx-client128-cpu-dki6s87y
