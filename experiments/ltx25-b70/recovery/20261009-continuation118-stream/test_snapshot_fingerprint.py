@@ -568,6 +568,7 @@ class ThroughCandidateSafety(unittest.TestCase):
         free['value'] = 9 * GIB + 1                            # near the 9 GiB floor: dual
         self.assertEqual(fingerprint('audio_vae'), ctl.expected_residence['audio_vae'])
         self.assertEqual(inspector.ledger.stats['xpu3_dual'], before['xpu3_dual'] + 1)
+        self.assertTrue(inspector.near_floor)
         free['value'] = 13 * GIB
         inspector.begin_request(20, 'stream')                  # every 20th chunk: dual
         fingerprint('video_vae')
@@ -579,6 +580,85 @@ class ThroughCandidateSafety(unittest.TestCase):
         w2, ctl2, inspector2, _, _ = self.build('walk')
         with self.assertRaises(sf.LedgerRefusal):              # walk mode keeps packet 117's P7 callables
             inspector2.xpu3_callbacks(lambda: 13 * GIB, 9 * GIB)
+
+
+    def test_review_decode_policy_survives_successor_request(self):
+        _, ctl, inspector, _, _ = self.build('fingerprint')
+        inspector.begin_request(20, 'stream')
+        rows, fingerprint = inspector.xpu3_callbacks(lambda: 13 * GIB, 9 * GIB, always_dual=True)
+        inspector.begin_request(21, 'stream')
+        before = inspector.ledger.stats['xpu3_dual']
+        for role in ('text_secondary', 'video_vae', 'audio_vae'):
+            self.assertEqual(fingerprint(rows(role)), ctl.expected_residence[role])
+        self.assertEqual(inspector.ledger.stats['xpu3_dual'] - before, 3)
+
+    def test_review_actual_p5_reading_inclusive_boundary_is_sticky(self):
+        import precompute_guard as pg
+        w, ctl, inspector, _, _ = self.build('fingerprint')
+        inspector.begin_request(21, 'stream')
+        # No extra memory read is allowed to replace P5's observed near-floor reading.
+        def reread():
+            self.fail('P7 must not reread memory to choose its runtime policy')
+        rows, fingerprint = inspector.xpu3_callbacks(reread, pg.PRE_FLOOR, always_dual=True)
+        synced = []
+        guard = pg.Xpu3Snapshot(
+            controller=ctl, phase_ok=lambda: True, fault=lambda: False, synchronize=synced.append,
+            free_bytes=lambda card: pg.PRE_FLOOR + sf.NEAR_FLOOR_BYTES,
+            counters=lambda card: {'allocated': 1, 'reserved': 2, 'peak': 3},
+            rows=rows, fingerprint=fingerprint,
+            observe_free=lambda free: inspector.observe_xpu3_free(free, pg.PRE_FLOOR))
+        before = inspector.ledger.stats['xpu3_dual']
+        guard.take('precompute-A-before', pg.PRE_FLOOR)
+        self.assertEqual(synced, ['xpu:3'])
+        self.assertTrue(inspector.near_floor)
+        self.assertEqual(inspector.ledger.stats['xpu3_dual'] - before, 3)
+        inspector.expect('request-before')
+        ctl.before('successor')
+        self.assertTrue(inspector.records[-1]['dual'])
+
+    def test_review_dual_checks_floor_and_counter_verdicts(self):
+        for mutate in (lambda s: s['physical_free_bytes'].__setitem__('xpu:3', 0),
+                       lambda s: s['peaks']['xpu:3'].__setitem__('reserved', 0)):
+            w, _, inspector, _, latches = self.build('fingerprint')
+            original = inspector._fingerprint
+            def changed(objects, observation=False):
+                snap, parts = original(objects, observation)
+                mutate(snap)
+                return snap, parts
+            inspector._fingerprint = changed
+            with self.assertRaises(sf.SnapshotDisagreement):
+                inspector._dual(w.objects, False, None, 'request-before')
+            self.assertEqual(len(latches), 1)
+
+    def test_review_dual_compares_admission_not_exact_bytes_or_wrong_floor(self):
+        w, _, inspector, _, latches = self.build('fingerprint')
+        original = inspector._fingerprint
+        def changed(objects, observation=False):
+            snap, parts = original(objects, observation)
+            snap['physical_free_bytes']['xpu:3'] = 3 * GIB
+            return snap, parts
+        inspector._fingerprint = changed
+        inspector._dual(w.objects, False, None, 'B-after')
+        self.assertEqual(latches, [])
+        self.assertTrue(inspector.near_floor)
+
+    def test_review_near_floor_equality_and_dual_walk_reading(self):
+        w, _, inspector, _, _ = self.build('fingerprint')
+        inspector.begin_request(21, 'stream')
+        w.free['xpu:3'] = 9 * GIB + sf.NEAR_FLOOR_BYTES
+        inspector.expect('request-before')
+        inspector(w.objects)
+        self.assertTrue(inspector.records[-1]['dual'])
+        self.assertTrue(inspector.near_floor)
+        inspector.begin_request(40, 'stream')
+        original = inspector._fingerprint
+        def high(objects, observation=False):
+            snap, parts = original(objects, observation)
+            snap['physical_free_bytes']['xpu:3'] = 13 * GIB
+            return snap, parts
+        inspector._fingerprint = high
+        inspector._dual(w.objects, False, None, 'request-before')
+        self.assertTrue(inspector.near_floor)
 
 
 class Wiring(unittest.TestCase):

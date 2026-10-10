@@ -229,14 +229,14 @@ class SnapshotInspector:
             snap, parts = self._timed_walk(objects, observation)
             dual = agree = False
         elif self.chunk_dual or self.near_floor:
-            snap, parts = self._dual(objects, observation, None)
+            snap, parts = self._dual(objects, observation, None, label)
             dual = agree = True
         else:
             snap, parts = self._fingerprint(objects, observation)
             dual = agree = False
             if self._near(snap):
                 self.near_floor = True
-                snap, walk_parts = self._dual(objects, observation, snap)
+                snap, walk_parts = self._dual(objects, observation, snap, label)
                 parts.update(walk_parts)
                 dual = agree = True
         end = self.clock()
@@ -256,7 +256,7 @@ class SnapshotInspector:
 
     def _near(self, snap):
         margin = self._margin(snap)
-        return margin is not None and margin < NEAR_FLOOR_BYTES
+        return margin is not None and margin <= NEAR_FLOOR_BYTES
 
     def _timed_walk(self, objects, observation):
         t0 = time.perf_counter()
@@ -295,7 +295,7 @@ class SnapshotInspector:
                  'physical_free_bytes': free, 'peaks': peaks,
                  'observed_state': state, 'timestamp_ns': time.time_ns(), 'residence_mode': 'fingerprint'}, parts)
 
-    def _dual(self, objects, observation, fingerprint_snap):
+    def _dual(self, objects, observation, fingerprint_snap, label=None):
         """Walk and fingerprint on the same objects; the walk's snapshot is the one the controller admits."""
         ledger = self.ledger
         ledger.bump('dual_walks')
@@ -321,9 +321,40 @@ class SnapshotInspector:
         differ = sorted(k for k in VERDICT_KEYS if walk.get(k) != fp.get(k))
         if differ:
             self._disagree('verdict fields differ: %s' % differ, None)
+        # Compare admission verdicts, not changing allocator byte counts. The six labeled
+        # sites use PRE_BYTES before and 2 GiB after, as the sealed controller does.
+        required = ({c: 2 ** 31 for c in self.cards} if label and label.endswith('-after')
+                    else self.pre_floors)
+        if self._memory_admitted(walk, required) != self._memory_admitted(fp, required):
+            self._disagree('memory admission verdicts differ', None)
+        if self._near(walk) or self._near(fp):
+            self.near_floor = True
         ledger.bump('agreements')
         walk = dict(walk, residence_mode='walk+fingerprint')
         return walk, {'dual_walk': t1 - t0, 'dual_fingerprint': t2 - t1}
+
+    def _memory_admitted(self, snap, required):
+        # CandidateSafety._snapshot's free/allocator checks, without mutating the controller.
+        valid_bytes = lambda v: isinstance(v, int) and not isinstance(v, bool) and v >= 0
+        free, peaks = snap.get('physical_free_bytes'), snap.get('peaks')
+        if not isinstance(free, dict) or set(free) != set(self.cards):
+            return False
+        if not isinstance(peaks, dict) or set(peaks) != set(self.cards):
+            return False
+        for card in self.cards:
+            if not valid_bytes(free[card]) or free[card] < required[card]:
+                return False
+            row = peaks[card]
+            if (not isinstance(row, dict) or set(row) != {'allocated', 'reserved', 'peak'} or
+                    not all(valid_bytes(v) for v in row.values()) or
+                    row['reserved'] < row['allocated'] or row['peak'] < row['allocated']):
+                return False
+        return True
+
+    def observe_xpu3_free(self, free, floor):
+        # Use the actual P5 reading, including on the post-encode snapshot.
+        if type(free) is int and free <= floor + NEAR_FLOOR_BYTES:
+            self.near_floor = True
 
     def _disagree(self, why, error):
         self.ledger.bump('disagreements')
@@ -335,7 +366,7 @@ class SnapshotInspector:
             raise SnapshotDisagreement(reason)
 
     # -- the decode thread's xpu:3 snapshot (P7) -----------------------------------------------------
-    def xpu3_callbacks(self, xpu3_free, xpu3_floor):
+    def xpu3_callbacks(self, xpu3_free, xpu3_floor, *, always_dual=False):
         """(rows, fingerprint) callables for precompute_guard.Xpu3Snapshot: rows(role) -> role; fingerprint(role)
         -> the role's residence SHA-256 (fingerprint, or dual with the walk under the same policy)."""
         ledger = self.ledger
@@ -344,8 +375,11 @@ class SnapshotInspector:
         def fingerprint(role):
             if not ledger.ready:
                 return ledger.walk_ownership(role)
-            dual = (self.phase() != 'stream' or self.chunk_dual or self.near_floor or
-                    xpu3_free() < xpu3_floor + NEAR_FLOOR_BYTES)
+            # Runtime always dual-checks P7: decode jobs overlap successor requests,
+            # so their policy cannot safely use the prompt thread's mutable chunk number.
+            if not always_dual:
+                self.observe_xpu3_free(xpu3_free(), xpu3_floor)
+            dual = always_dual or self.phase() != 'stream' or self.chunk_dual or self.near_floor
             value = None
             error = None
             try:

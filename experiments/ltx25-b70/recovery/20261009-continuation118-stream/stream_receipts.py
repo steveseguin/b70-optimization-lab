@@ -8,8 +8,16 @@ Packet118 (schemas ltx.stream118.*), measurement and identity only:
   request); `timing_s.submit_split` (SUBMIT_SPLIT: named sub-buckets of submit_to_sampler_start, whose sum plus
   `other` equals it); `snapshots` (each four-card safety snapshot of the request: label, mode, dual walk,
   agreement, duration and its parts); `authority_checks` (healthy() calls and seconds during the request);
-  `turnaround` (the predecessor's receipt -> this submit: TURNAROUND_SPLIT, HTTP visibility and poll count);
+  `turnaround` (the predecessor's receipt -> this submit: TURNAROUND_SPLIT, HTTP response construction and poll count);
 - decode records carry `decoder.pool` (the decoder-graph pool cap, measured growth, captured and capped methods).
+
+Timing event semantics: `queued` is the POST handler's return, not its actual queue put. The executor
+can start first, giving a negative queue_to_executor interval. Admission marks are refreshed at receipt
+staging; a handler that has not returned then leaves queued=None. `first_served` means the route read the
+receipt and constructed an HTTP 200 response, not completed network delivery, client receipt or durable
+commit. Files can be read before fsync finishes, giving a negative commit_to_first_served interval.
+Missing marks and negative intervals are preserved. Algebraic split closure does not prove causal buckets
+or zero overhead: CPU locks, allocations, timestamps and file metadata/receipt I/O have unmeasured cost.
 
 Packet117 (kept): receipts carry `levers` (anchor_decode, bencode_overlap, prep_ahead) and,
 for anchored frame chunks, `conditioning_sources` (per stage: native, precomputed or native-inline, the
@@ -81,8 +89,8 @@ TIMING_KEYS = ('submit', 'execution_start', 'text_start', 'sampler_a_start', 'st
 # the sum of the buckets that exist, so the split always adds up.
 SUBMIT_SPLIT = (
     ('precheck', 'submit', 'precheck_done'),                       # storage, observer, graph parse + compare
-    ('comfy_validate_queue', 'precheck_done', 'queued'),           # ComfyUI /prompt: validate_prompt, queue put
-    ('queue_to_executor', 'queued', 'executor_entry'),             # prompt worker wake-up
+    ('comfy_validate_queue', 'precheck_done', 'queued'),           # ComfyUI /prompt through handler return
+    ('queue_to_executor', 'queued', 'executor_entry'),             # handler return -> worker entry; can be negative
     ('authority_begin', 'executor_entry', 'execution_start'),      # classify again, runtime observer, active row
     ('before_request_checks', 'execution_start', 'request_snapshot_start'),   # drain/check, registry, bindings
     ('request_before_snapshot', 'request_snapshot_start', 'request_snapshot_done'),
@@ -104,8 +112,8 @@ SUBMIT_TILES = ('precheck', 'comfy_validate_queue', 'queue_to_executor', 'author
 TURNAROUND_SPLIT = (
     ('receipt_staged_to_commit', 'receipt_staged', 'commit'),          # after_request tail, executor, finish
     ('commit_write', 'commit', 'commit_written'),                       # exclusive write + fsync of the receipt
-    ('commit_to_first_served', 'commit_written', 'first_served'),       # HTTP visibility (client poll period)
-    ('served_to_admission', 'first_served', 'admission_received'),      # client: verify, build graph, POST
+    ('commit_to_first_served', 'commit_written', 'first_served'),       # fsync end -> response construction; can be negative
+    ('served_to_admission', 'first_served', 'admission_received'),      # includes network delivery, client work, next POST
     ('admission_parse', 'admission_received', 'submit'))                # body read + JSON parse
 SNAPSHOT_LABELS = ('request-before', 'A-before', 'A-after', 'B-before', 'B-after', 'request-after')
 EVENT_NODES = {'364': 'text_start', '344': 'sampler_a_start', '367': 'stage_a_done', '348': 'upsampler_start',
@@ -203,6 +211,12 @@ def delivery(chunk_index, frames, anchored=None, anchor='mixed'):
             'first_new_frame_index': 0 if first else 1, 'drop_leading_frames': 0 if first else 1,
             'overlap': None if first else
             'frame 0 continues the predecessor\'s last frame (its frame %d); drop it' % g['anchor_frame_index']}
+
+
+def refresh_admission_timing(timing, marks):
+    """Snapshot shared middleware marks; keep absent/late events missing without waiting."""
+    for key in ('admission_received', 'precheck_done', 'queued'):
+        timing[key] = marks.get(key)
 
 
 def seconds(timing, start, end):

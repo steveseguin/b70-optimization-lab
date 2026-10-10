@@ -2,13 +2,14 @@
 
 Inert until the sealed launcher calls install().
 
-Packet118 (no output byte changes; every lever has an off form that is packet 117's code path):
+Packet118 (no tensor output byte changes; off forms retain packet 117's model operations).
+Timing adds CPU locks, allocations, timestamps and receipt I/O; its cost is not measured here.
 
 A. Timing split (always on, measurement only): the admission middleware, an outer timing wrapper of the
    executor, the before_request hook, the stage nodes and the 'executing' events record marks; the receipt
    splits submit -> sampler A into named sub-buckets (stream_receipts.SUBMIT_SPLIT), lists every snapshot with
    its duration and parts, counts the authority's healthy() calls, and splits the predecessor's receipt -> this
-   submit (commit, HTTP visibility of the receipt, client turnaround; stream_receipts.TURNAROUND_SPLIT).
+   submit (commit, receipt HTTP response construction, client turnaround; stream_receipts.TURNAROUND_SPLIT).
 B. LTX_SNAPSHOT_MODE=walk|fingerprint (snapshot_fingerprint.py): the controller's inspect callable is the
    SnapshotInspector. walk = packet 117's CandidateAdapter._inspect (timed). fingerprint = the same checks
    with the residence/ownership and the sampler placement from fact tuples bound at the placement event to the
@@ -198,7 +199,7 @@ class Runtime:
         self.admission_marks = {}   # prompt_id -> {admission_received, precheck_done, queued}
         self.exec_marks = {}        # prompt_id -> {entry, exit} of the executor (outer timing wrapper)
         self.node_events = {}       # prompt_id -> {node: first executing ns}
-        self.receipt_served = {}    # run_name -> first HTTP 200 of its receipt (ns)
+        self.receipt_served = {}    # run_name -> first constructed receipt HTTP 200 (ns), not delivery
         self.receipt_polls = {}     # run_name -> HTTP 404s of its receipt before that
         self.staged_ns = {}         # run_name -> its receipt_staged mark
         self.route_lock = threading.Lock()
@@ -790,9 +791,9 @@ class Runtime:
             timing['submit'] = self.submit_ns.pop(prompt_id, None)
             timing['execution_start'] = self.authority.active['start_ns']
             # Packet118 timing split (measurement only).
-            marks = self.admission_marks.pop(prompt_id, {})
-            for key in ('admission_received', 'precheck_done', 'queued'):
-                timing[key] = marks.get(key)
+            # Keep the shared marks: the executor can enter before the POST handler returns.
+            self.current['admission_marks'] = self.admission_marks.pop(prompt_id, {})
+            stream_receipts.refresh_admission_timing(timing, self.current['admission_marks'])
             timing['executor_entry'] = (self.exec_marks.get(prompt_id) or {}).get('entry')
             self.current['health_before'] = self.authority.health_snapshot()
             self.current['routes_before'] = self.route_snapshot()
@@ -1308,6 +1309,8 @@ class Runtime:
         self.session.require(chain_ok, 'Anchor chain check failed')
         events = self.events.pop(cur['prompt_id'], {})
         timing = cur['timing']
+        # Snapshot late handler marks before freezing the receipt; never wait for HTTP.
+        stream_receipts.refresh_admission_timing(timing, cur.get('admission_marks', {}))
         for node, key in stream_receipts.EVENT_NODES.items():
             timing[key] = events.get(node)
         node_starts = self.node_events.pop(cur['prompt_id'], {})
@@ -1632,7 +1635,7 @@ class Runtime:
         if self.snapshot_mode == 'fingerprint':
             # Packet118: P7 from the residence ledger, dual with the walk under the inspector's policy.
             rows, fingerprint = self.inspector.xpu3_callbacks(lambda: torch.xpu.mem_get_info('xpu:3')[0],
-                                                              pg.PRE_FLOOR)
+                                                              pg.PRE_FLOOR, always_dual=True)
         return pg.Xpu3Snapshot(
             controller=controller,
             phase_ok=lambda: (self.authority.failed is None and
@@ -1643,7 +1646,9 @@ class Runtime:
             counters=lambda card: {'allocated': int(torch.xpu.memory_allocated(card)),
                                    'reserved': int(torch.xpu.memory_reserved(card)),
                                    'peak': int(torch.xpu.max_memory_allocated(card))},
-            rows=rows, fingerprint=fingerprint)
+            rows=rows, fingerprint=fingerprint,
+            observe_free=(lambda free: self.inspector.observe_xpu3_free(free, pg.PRE_FLOOR))
+            if self.snapshot_mode == 'fingerprint' else None)
 
     # -- admission (middleware) --------------------------------------------------
     def precheck(self, graph):
@@ -2140,7 +2145,7 @@ def install_routes():
                 ctx.submit_ns.pop(next(iter(ctx.submit_ns)))
             _bound(ctx.admission_marks, keep=16)
             response = await handler(request)
-            marks['queued'] = time.time_ns()
+            marks['queued'] = time.time_ns()  # POST handler return, not the queue's actual put
             if getattr(response, 'status', 200) != 200:
                 ctx.submit_ns.pop(prompt_id, None)
                 ctx.admission_marks.pop(prompt_id, None)
@@ -2194,21 +2199,23 @@ def install_routes():
             if not RUN_NAME_RE.fullmatch(name):
                 return refuse('contract', 'Invalid run name', 400)
             path = ctx.run / 'receipts' / (prefix + name + '.json')
-            if prefix == 'receipt-':
-                # Packet118 (measurement only): when a chunk receipt first became visible over HTTP.
-                if path.is_file():
-                    ctx.receipt_served.setdefault(name, time.time_ns())
-                else:
-                    ctx.receipt_polls[name] = ctx.receipt_polls.get(name, 0) + 1
-                _bound(ctx.receipt_served, ctx.receipt_polls)
             if not path.is_file():
+                if prefix == 'receipt-':
+                    ctx.receipt_polls[name] = ctx.receipt_polls.get(name, 0) + 1
+                    _bound(ctx.receipt_served, ctx.receipt_polls)
                 # A record that can no longer come: its own worker or one upstream of it failed.
                 for worker in workers:
                     if worker.failed is not None:
                         return refuse('halted', '%s failed: %s' % (worker.name if hasattr(worker, 'name') else
                                                                   'preview writer', worker.failed[:500]), 503)
                 return refuse('not-found', 'No committed %s record for %s' % (prefix.rstrip('-'), name), 404)
-            return web.Response(body=ctx.session.read_regular(path), content_type='application/json')
+            response = web.Response(body=ctx.session.read_regular(path), content_type='application/json')
+            if prefix == 'receipt-':
+                # first_served means successfully read and HTTP 200 constructed, not bytes delivered.
+                # The file may be visible before its writer's fsync; retain negative commit intervals.
+                ctx.receipt_served.setdefault(name, time.time_ns())
+                _bound(ctx.receipt_served, ctx.receipt_polls)
+            return response
         return route
 
     server.routes.get('/ltx-stream/receipt/{run_name}')(record_route('receipt-'))

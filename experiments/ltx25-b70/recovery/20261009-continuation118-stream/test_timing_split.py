@@ -17,6 +17,8 @@ import json
 import unittest
 from pathlib import Path
 import sys
+from types import SimpleNamespace
+from unittest import mock
 
 sys.dont_write_bytecode = True
 HERE = Path(__file__).resolve().parent
@@ -199,6 +201,88 @@ class ExecutorTiming(unittest.TestCase):
             integration.install_executor_timing(Bare, ctx)              # without the resolution guard
 
 
+class ReviewTimingRegression(unittest.TestCase):
+    def test_queued_late_write_is_refreshed_without_mutating_frozen_copy(self):
+        shared = {'admission_received': 1, 'precheck_done': 2, 'queued': None}
+        timing = {}
+        rec.refresh_admission_timing(timing, shared)
+        self.assertIsNone(timing['queued'])
+        shared['queued'] = 10                    # handler returns after executor entry
+        rec.refresh_admission_timing(timing, shared)
+        self.assertEqual(timing['queued'], 10)
+        shared['queued'] = 11
+        self.assertEqual(timing['queued'], 10)   # receipt owns a value snapshot, not a live dict
+        rec.refresh_admission_timing(timing, {})
+        self.assertTrue(all(v is None for v in timing.values()))
+
+    def test_negative_queue_interval_is_not_clamped(self):
+        timing = marks()
+        timing['queued'] = timing['executor_entry'] + MS
+        split = rec.submit_split(timing)
+        self.assertEqual(split['queue_to_executor'], -0.001)
+        self.assertAlmostEqual(sum(split[k] for k in rec.SUBMIT_TILES if split[k] is not None) +
+                               split['other'], split['total'])
+
+    def test_response_ready_before_fsync_preserves_negative_interval(self):
+        split = rec.turnaround_split({'commit_written': 20 * MS, 'first_served': 19 * MS})
+        self.assertEqual(split['commit_to_first_served'], -0.001)
+        self.assertIsNone(split['total'])
+        self.assertIsNone(split['other'])
+
+    def route_fixture(self):
+        # Compile only the nested route factory: no server, HTTP socket or runtime installation.
+        tree = ast.parse((HERE / 'integration.py').read_text())
+        factory = next(n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == 'record_route')
+        path = mock.MagicMock()
+        path.__truediv__.return_value = path
+        path.is_file.return_value = True
+        ctx = SimpleNamespace(run=path, receipt_served={}, receipt_polls={},
+                              session=SimpleNamespace(read_regular=mock.Mock(return_value=b'{}')))
+        response = SimpleNamespace(status=200)
+        web = SimpleNamespace(Response=mock.Mock(return_value=response))
+        clock = mock.Mock(side_effect=[100, 200])
+        env = {'ctx': ctx, 'web': web, 'time': SimpleNamespace(time_ns=clock),
+               'RUN_NAME_RE': SimpleNamespace(fullmatch=lambda name: True),
+               '_bound': lambda *args: None,
+               'refuse': lambda code, message, status: SimpleNamespace(status=status)}
+        exec(compile(ast.Module(body=[factory], type_ignores=[]), '<receipt-route-only>', 'exec'), env)
+        return env['record_route']('receipt-'), ctx, web, clock, response
+
+    def test_first_served_is_first_successful_response_construction(self):
+        route, ctx, web, clock, response = self.route_fixture()
+        request = SimpleNamespace(match_info={'run_name': 'chunk'})
+        def construct(**kwargs):
+            self.assertEqual(ctx.receipt_served, {})
+            self.assertEqual(kwargs['body'], b'{}')
+            return response
+        web.Response.side_effect = construct
+        self.assertIs(asyncio.run(route(request)), response)
+        self.assertEqual(ctx.receipt_served, {'chunk': 100})
+        web.Response.side_effect = None
+        asyncio.run(route(request))
+        self.assertEqual(ctx.receipt_served, {'chunk': 100})
+        self.assertEqual(ctx.run.is_file.call_count, 2)     # one stat per route call
+
+    def test_missing_or_failed_receipt_response_is_not_served(self):
+        route, ctx, web, clock, _ = self.route_fixture()
+        request = SimpleNamespace(match_info={'run_name': 'chunk'})
+        ctx.run.is_file.return_value = False
+        self.assertEqual(asyncio.run(route(request)).status, 404)
+        self.assertEqual(ctx.receipt_polls, {'chunk': 1})
+        self.assertEqual(ctx.receipt_served, {})
+        ctx.run.is_file.return_value = True
+        ctx.session.read_regular.side_effect = OSError('read failed')
+        with self.assertRaises(OSError):
+            asyncio.run(route(request))
+        self.assertEqual(ctx.receipt_served, {})
+        ctx.session.read_regular.side_effect = None
+        web.Response.side_effect = RuntimeError('response failed')
+        with self.assertRaises(RuntimeError):
+            asyncio.run(route(request))
+        self.assertEqual(ctx.receipt_served, {})
+        clock.assert_not_called()
+
+
 class Structure(unittest.TestCase):
     def test_middleware_and_route_marks(self):
         tree = ast.parse((HERE / 'integration.py').read_text())
@@ -207,7 +291,11 @@ class Structure(unittest.TestCase):
         self.assertLess(admission.index('received = time.time_ns()'), admission.index('await request.json()'))
         self.assertLess(admission.index("'precheck_done': time.time_ns()"), admission.index('await handler(request)'))
         self.assertLess(admission.index('await handler(request)'), admission.index("marks['queued'] = time.time_ns()"))
-        self.assertIn("ctx.receipt_served.setdefault(name, time.time_ns())", fn['route'])
+        self.assertLess(fn['route'].index('response = web.Response'),
+                        fn['route'].index('ctx.receipt_served.setdefault(name, time.time_ns())'))
+        self.assertIn("self.current['admission_marks'] = self.admission_marks.pop(prompt_id, {})",
+                      fn['before_request'])
+        self.assertIn('stream_receipts.refresh_admission_timing', fn['_after_chunk'])
         self.assertIn('install_executor_timing(execution.PromptExecutor, _CTX)', fn['install'])
         self.assertIn('ctx.note_status_route(time.perf_counter() - started)', fn['status'])
         # measurement only: the before_request marks wrap the unchanged before_request call

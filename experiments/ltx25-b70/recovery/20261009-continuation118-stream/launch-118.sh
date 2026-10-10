@@ -4,6 +4,7 @@
 set -euo pipefail
 FR=${1:?frames}; AN=${2:?anchor}; DG=${3:?dg}; AD=${4:?ad full|cone}; BO=${5:?bo}; PA=${6:?pa}
 SM=${7:?sm walk|fingerprint}; CAP=${8:?pool cap GB or -}; REC=${9:?health receipt}; MODE=${10:-launch}
+case "$MODE" in launch|--check-only) ;; *) echo "REFUSE: mode must be launch or --check-only"; exit 2 ;; esac
 R=/mnt/fast-ai/bench-results/ltx25-baseline-20260913
 P=$R/prepared-continuation-stream-118
 MAN=cb68515a1e770697ad0ac2d0c2abd9709780043e9d1579cba81706bb53f482f6
@@ -33,9 +34,9 @@ ENVS=(EnableDeferBacking=0 LTX_ANCHOR=$AN LTX_DECODER_GRAPH=$DG LTX_ANCHOR_DECOD
 ARGS=(-B $P/launch/serve-encoder.py --packet $P --manifest-sha256 $MAN --run-name $NAME --health-receipt "$REC")
 if [ "$MODE" = --check-only ]; then
   ulimit -Sn 65536
-  cd /home/steve/llm-optimizations && exec env "${ENVS[@]}" $PY "${ARGS[@]}" --check-only
+  cd /home/steve/llm-optimizations && exec env -u LTX_DECODER_GRAPH_POOL_CAP_GB "${ENVS[@]}" $PY "${ARGS[@]}" --check-only
 fi
 systemctl --user reset-failed $UNIT 2>/dev/null || true
 exec systemd-run --user --unit=$UNIT --property=Restart=no --property=SendSIGKILL=no --property=KillSignal=SIGINT \
   --property=TimeoutStopSec=180 --property=LimitNOFILE=65536:1048576 --property=WorkingDirectory=/home/steve/llm-optimizations \
-  /usr/bin/env --default-signal=INT "${ENVS[@]}" $PY "${ARGS[@]}"
+  /usr/bin/env --default-signal=INT -u LTX_DECODER_GRAPH_POOL_CAP_GB "${ENVS[@]}" $PY "${ARGS[@]}"

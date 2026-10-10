@@ -457,6 +457,8 @@ class StreamAuthority:
                 anchor = receipt['anchor_out']
                 path = self.receipt_dir / ('receipt-' + name + '.json')
                 commit_started = time.time_ns()
+                # The exclusive file becomes readable before fsync returns; route response-ready
+                # timestamps can precede commit_written_ns. Timing retains that ordering.
                 sha = write_exclusive(path, {**receipt, 'committed': True,
                                              'commit_ns': commit_started})
                 chain = self.active['chain']

@@ -87,12 +87,14 @@ def tensor_sha256(torch, tensor):
 class Xpu3Snapshot:
     """The xpu:3-only safety snapshot of the decode thread's encode (checks P1-P8 of the module doc)."""
 
-    def __init__(self, *, controller, phase_ok, fault, synchronize, free_bytes, counters, rows, fingerprint):
+    def __init__(self, *, controller, phase_ok, fault, synchronize, free_bytes, counters, rows, fingerprint,
+                 observe_free=None):
         for fn in (phase_ok, fault, synchronize, free_bytes, counters, rows, fingerprint):
             require(callable(fn), 'Trusted snapshot callbacks required')
         self.controller = controller
         self.phase_ok, self.fault, self.synchronize = phase_ok, fault, synchronize
         self.free_bytes, self.counters, self.rows, self.fingerprint = free_bytes, counters, rows, fingerprint
+        self.observe_free = observe_free
         self.synchronized = []           # every card this guard synchronised (tests: only ever xpu:3)
 
     @staticmethod
@@ -107,6 +109,8 @@ class Xpu3Snapshot:
         self.synchronize(XPU3)                                                                    # P4
         self.synchronized.append(XPU3)
         free = self.free_bytes(XPU3)
+        if self.observe_free is not None:
+            self.observe_free(free)
         require(self._bytes(free) and free >= floor,                                              # P5
                 'P5: xpu:3 physical free %r below the %d-byte floor (%s)' % (free, floor, event))
         counters = self.counters(XPU3)
