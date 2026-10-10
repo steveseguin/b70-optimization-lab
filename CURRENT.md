@@ -1,5 +1,25 @@
 # Current Workspace State
 
+**2026-10-10, Flash-Next first-forward admission repaired and exit results recorded; CPU only.**
+The container mounted the probe beside the package, but its receipt treated
+both as one directory. Support hashes now work with that layout. A refusal
+before worker submission reports “harness refused before device work” promptly;
+the watcher still checks fresh kernel evidence and preserves stop/fault markers.
+Both earlier exit probes passed. That leaves the October 9 faults unexplained:
+both original probes also released their local tensor references before abrupt
+exit. Keeping references live at abrupt exit remains an unimplemented test;
+first-forward and the full four-card load remain untested by this window.
+
+CPU checks passed: lane 227, probes 84, teardown 49, first-forward 37 (included
+in probes); seven prohibited tests skipped, zero failures. No GPU/container,
+server, unit, LTX endpoint or existing run directory was changed by this repair.
+The next commands are text for the coordinator: corrected first-forward, then
+separately admitted matched clean/immediate-abrupt repeats. The supplied health
+expires at 23:44:21 UTC; later work needs fresh health and an exclusive window.
+[Results and exact next commands](experiments/qwen38-flash-next-fp8-b70/notes/2026-10-10-exit-probes-result.md),
+[CPU validation](experiments/qwen38-flash-next-fp8-b70/reopen-20261008/VALIDATION.md#probe-mount-admission-repair-2026-10-10).
+
+
 **2026-10-10 17:55 UTC, Flash-Next probe window run with the owner's go-ahead: clean-exit PASSED, exit-after-sleep PASSED (both 0 fault lines, watcher clean); first-forward blocked by a harness path bug before device work (no fault). LTX results published on neural.download. 137 production relaunching.**
 Probes (card 23:00.0, image UMD, owner-acceptance receipt, host watcher per README): `runs/probe-clean-exit-20261010b` passed (stage complete,
 clean exit, gather 1, explicit + cleanup sync); `runs/probe-exit-sleep-20261010b` passed (abrupt exit after 10 s idle, gather 1); both with

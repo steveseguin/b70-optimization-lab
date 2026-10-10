@@ -12,6 +12,79 @@ The indirect/direct gathers and new first-forward test are diagnostics, not
 model quality or performance evidence. The separate
 [host-pointer proposal](../overlay-fix-hostptr/README.md) remains unapplied.
 
+## Results and corrected commands, 2026-10-10
+
+The coordinator ran the exit probes on card `23:00.0` with image UMD:
+clean-exit `20261010b` passed (gather 1, explicit sync 1, cleanup sync 1), and
+exit-after-sleep `20261010b` passed (10 s idle, gather 1, explicit sync 1).
+Both post-worker watchers passed with zero new counted faults. The first
+clean-exit attempt lacked a watcher and is retained as an admission refusal.
+First-forward `20261010b` failed before device work: support hashing assumed
+`/probe` was beneath `/repo/...`. Its watcher subsequently reached 150 s and
+wrote STOP; no FAULT.json. Saved evidence was not rewritten.
+
+[Results and interpretation](../../notes/2026-10-10-exit-probes-result.md):
+“Both clean” leaves the October 9 faults unexplained. Those original tiny probes
+also released local references before abrupt exit. The live-reference abrupt
+arm has no implementation/flag yet. First-forward and TP4 native work remain
+unqualified. No production remedy follows from these two passes.
+
+Support hashes now use stable package-relative and `probe/<basename>` keys
+from their actual mounts. An explicit pre-worker admission refusal latches
+STOP and lets the watcher report **“harness refused before device work”** with
+failure status after a fresh clean journal read, without a 150 s wait. Faults
+still take precedence; incomplete markers and native stalls retain their bounds.
+The overlay pin is unchanged. CPU checks: lane 227 passed/6 skipped, combined
+probe 84/1, teardown 49/0, first-forward 37/0 (included in probe).
+[CPU evidence](../VALIDATION.md#probe-mount-admission-repair-2026-10-10).
+
+The following corrected commands are **text only**, using NEW empty directories
+that this task did not create. Each needs its own coordinator-admitted idle
+window and matching host watcher, not a sequential campaign. The health receipt
+expires at **2026-10-10 23:44:21 UTC**; replace it with fresh passing health
+for any later window. Retain the five-minute gap and stop at the first fault,
+refusal or other error. No LTX unit/endpoint operation is part of preparation.
+
+```sh
+p=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008
+health=experiments/ltx25-b70/data/resume-20261008/postflight-probe-window-20261010T174416Z.json
+owner=experiments/ltx25-b70/data/resume-20261008/fault-archive-20261010T011831Z-owner-accept-receipt.json
+
+# First-forward: new directory, corrected support hashing; printer only.
+nice -n 19 env OMP_NUM_THREADS=2 bash "$p/probe/run-first-forward-in-container.sh" \
+  --render-node /dev/dri/by-path/pci-0000:23:00.0-render \
+  --health-receipt "$health" --owner-acceptance "$owner" \
+  --receipt-dir "$p/runs/probe-first-forward-20261010c" \
+  --overlay-sha256 e00bb55d8378ecd0065e82a8c3b6fdd59268bd33aae6e0f356ca48f067926f2d
+
+# Separately admitted matched clean repeat; printer only.
+nice -n 19 env OMP_NUM_THREADS=2 bash "$p/probe/run-probe-in-container.sh" \
+  --render-node /dev/dri/by-path/pci-0000:23:00.0-render \
+  --health-receipt "$health" --owner-acceptance "$owner" \
+  --receipt-dir "$p/runs/probe-clean-exit-repeat-20261010c" --clean-exit
+
+# Separately admitted immediate abrupt repeat AFTER local-reference release.
+# No exit flag selects the original abrupt mode; this is NOT live-USM retention.
+nice -n 19 env OMP_NUM_THREADS=2 bash "$p/probe/run-probe-in-container.sh" \
+  --render-node /dev/dri/by-path/pci-0000:23:00.0-render \
+  --health-receipt "$health" --owner-acceptance "$owner" \
+  --receipt-dir "$p/runs/probe-abrupt-immediate-20261010c"
+```
+
+Pass `--owner-acceptance "$owner"` to the host watcher too, using exactly the
+selected arm's receipt directory. Start it using the coordinator sequence below;
+wait for the clean heartbeat before the printed container command. For first-forward:
+
+```sh
+# Select exactly ONE of the new receipt directories above for this window.
+receipt="$p/runs/probe-first-forward-20261010c"
+nice -n 19 env OMP_NUM_THREADS=2 python3 -B "$p/probe/watch_kernel.py" \
+  --health-receipt "$health" --owner-acceptance "$owner" --receipt-dir "$receipt"
+```
+
+The earlier dated preparation below is preserved as history; its health expired
+and its saved run directories must not be reused.
+
 ## Prepared for 2026-10-10 (written 2026-10-09)
 
 The three directories below were created **empty**. Git does not track empty
@@ -89,7 +162,7 @@ repository does not qualify it for production.
 | Fault during sleep, before exit | Release/idle/asynchronous fault; abrupt interpreter exit is not necessary. | Do not treat graceful interpreter exit as a sufficient remedy or resume production. Investigate release-time mapping/queue behavior and pending runtime work before revising the candidate. |
 | Missing marker, timeout, stale watcher, exception or missing evidence | Comparison is inconclusive. | No production decision, patch adoption, automatic retry or full-load launch. Preserve evidence and obtain a separately admitted valid comparison. |
 
-### One-layer single-rank first forward — prepared, not run
+### One-layer single-rank first forward — original preparation (admission later failed)
 
 ```sh
 p=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008
@@ -258,6 +331,10 @@ timeout, gather and post-worker journal check. The new lifecycle options below
 are separate experiments; the default arm still uses abrupt exit.
 
 ## Exit lifecycle discrimination — prepared, not executed
+
+Historical preparation title retained for links. The clean and sleep arms were
+subsequently run on October 10; see the dated results above. The live-reference
+abrupt variant remains absent.
 
 This preregistered table also governs the dated 2026-10-10 commands above.
 

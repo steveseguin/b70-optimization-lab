@@ -1,5 +1,55 @@
 # Screen 1b CPU validation — native FP8 mmap, 2026-10-08
 
+## Probe mount admission repair, 2026-10-10
+
+First-forward admission now hashes package support files relative to the package
+and probe support files relative to their own mount, retaining stable receipt
+keys. Source collection exceptions are caught before worker submission and
+write an atomic terminal refusal, time and STOP. The watcher still applies
+fault admission first, then requires a fresh journal read after an explicit
+pre-worker refusal before returning failure with “harness refused before device
+work”. Missing markers, worker paths, native bounds and postflight remain;
+existing STOP/FAULT evidence is never removed or overwritten.
+
+The CPU integration test mirrors `/probe`, `/repo/experiments/...`, `/receipts`
+and `/health.json` beneath temporary scratch, without mounts or containers.
+It imports the copied probe, completes real health/owner receipt/manifest/geometry
+admission, and stops at a mocked guardian. Runtime imports and device opens
+are forbidden. Twelve watcher tests cover refusal, fresh journal ordering,
+fault precedence, incomplete markers, worker evidence, timeout and preserved
+latches. An initial fixture run failed because its copied package lacked the
+`calibration` CPU helper; copying all top-level Python support files corrected
+the fixture, and all final guarded suites below passed. No native test was run.
+
+| CPU suite | Passed | Skipped | Discovered | Evidence |
+| --- | ---: | ---: | ---: | --- |
+| Lane | 227 | 6 | 233 | [Receipt](evidence/probe-admission-fix-20261010/lane.json), [log](evidence/probe-admission-fix-20261010/lane.log) |
+| Combined probes | 84 | 1 | 85 | [Receipt](evidence/probe-admission-fix-20261010/probe.json), [log](evidence/probe-admission-fix-20261010/probe.log) |
+| Teardown | 49 | 0 | 49 | [Receipt](evidence/probe-admission-fix-20261010/teardown.json), [log](evidence/probe-admission-fix-20261010/teardown.log) |
+| First-forward, also included in probes | 37 | 0 | 37 | [Receipt](evidence/probe-admission-fix-20261010/first-forward.json), [log](evidence/probe-admission-fix-20261010/first-forward.log) |
+
+**360 unique passes, seven skips, zero failures/errors**. Including the separate
+first-forward rerun: 397 passes across 404 executions. Six lane exclusions avoid
+the real checkpoint and XPU worker rehearsals; one probe exclusion avoids fatal
+SIGALRM. All use the restricted runner's device-open guard. Owned temporary
+scratch was removed. [Source-bound validation](evidence/probe-admission-fix-20261010/validation.json).
+
+```sh
+p=experiments/qwen38-flash-next-fp8-b70/reopen-20261008
+nice -n 19 env OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 PYTHONDONTWRITEBYTECODE=1 /home/steve/.venvs/ltx25-baseline/bin/python -B "$p/overlay-fix-teardown/run_cpu_tests.py" lane
+nice -n 19 env OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 PYTHONDONTWRITEBYTECODE=1 python3 -B "$p/overlay-fix-teardown/run_cpu_tests.py" probe
+nice -n 19 env OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 PYTHONDONTWRITEBYTECODE=1 python3 -B "$p/overlay-fix-teardown/run_cpu_tests.py" teardown
+nice -n 19 env OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 PYTHONDONTWRITEBYTECODE=1 python3 -B "$p/overlay-fix-teardown/run_cpu_tests.py" first-forward
+```
+
+[Corrected next commands](probe/README.md#results-and-corrected-commands-2026-10-10)
+are text only, with the same unchanged overlay hash and new receipt paths.
+[The result note](../notes/2026-10-10-exit-probes-result.md) records tonight's two
+passing exit probes and admission failure from preserved coordinator evidence.
+These native runs predate this CPU repair; their success does not validate
+first-forward, live-reference abrupt exit, TP4 or production teardown.
+
+
 ## Owner acceptance admission, 2026-10-10
 
 The explicit option validates the exact committed owner receipt at its canonical

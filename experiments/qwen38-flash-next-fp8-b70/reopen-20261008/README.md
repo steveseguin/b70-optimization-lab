@@ -1,24 +1,27 @@
 # Flash-Next Screen 1b — native FP8 mmap adapter
 
-**2026-10-10: admission now supports the owner's recorded boot decision.**
-`--owner-acceptance` explicitly selects the committed, SHA-256-pinned receipt.
-It must match the full boot ID and contain the decision and timestamp. Faults
-before 01:18:31 UTC are retained as excluded evidence; every later fault,
-including the boundary second, still refuses. The usual health and stop rules
-remain. Without the option, the original two-incident refusal is unchanged.
+**2026-10-10: both exit probes passed; first-forward admission is repaired on CPU.**
+The clean and ten-second-idle abrupt arms returned exact bytes with clean
+post-worker watchers on the image UMD. Both released local references before
+exit, as did the October 9 tiny probes. The earlier faults remain unexplained;
+native cleanup and TP4 remain unqualified. First-forward failed before device
+work because `/probe` support files were treated as children of `/repo/...`.
+The fixed receipt hashes the mounts independently and reports pre-worker
+refusal promptly without weakening fault admission or clearing STOP.
 
-The watcher, probe workers and Screen 1b launcher retain receipt hashes and
-counted/excluded fault lines. Workers require the same acceptance as the watcher.
-The current overlay manifest refreshes only the `screen.py` support pin;
-the [frozen teardown patch and copies](overlay-fix-teardown/README.md) retain
-their original hashes. Native cleanup and model qualification remain open.
+[Results, evidence and next arms](../notes/2026-10-10-exit-probes-result.md),
+[fixed text-only commands](probe/README.md#results-and-corrected-commands-2026-10-10),
+[CPU validation](VALIDATION.md#probe-mount-admission-repair-2026-10-10):
+360 unique passes, seven prohibited skips; first-forward separately passes 37.
+No device/container/server/unit work occurred during this repair. Saved runs
+are unchanged. The coordinator owns future windows and LTX operations.
 
-[Exact print-only commands](probe/README.md#prepared-for-2026-10-10-written-2026-10-09)
-name the supplied health receipt and owner acceptance. None were run. LTX stays
-with the coordinator; saved runs were not modified.
-[CPU validation](VALIDATION.md#owner-acceptance-admission-2026-10-10) records
-346 unique passing checks and seven prohibited skips. It also records an
-unintended device open by a faulty test mock and the added CPU-runner guard.
+The explicit `--owner-acceptance` gate remains bound to the committed owner
+receipt, full boot ID and decision time, 01:18:31 UTC. Earlier faults remain
+excluded evidence; every later classified fault refuses. The overlay manifest
+is unchanged at `e00bb55d8378ecd0065e82a8c3b6fdd59268bd33aae6e0f356ca48f067926f2d`.
+[Earlier admission validation](VALIDATION.md#owner-acceptance-admission-2026-10-10)
+and the [frozen teardown patch](overlay-fix-teardown/README.md) remain historical.
 
 ## Historical attempt-7 preparation (it later faulted)
 
