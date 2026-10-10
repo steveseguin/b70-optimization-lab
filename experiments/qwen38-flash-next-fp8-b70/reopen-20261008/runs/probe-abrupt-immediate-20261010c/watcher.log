@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/probe/watch_kernel.py", line 90, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/probe/watch_kernel.py", line 58, in main
+    screen.admit_journal(result.stdout, receipt, boot_id=boot,
+  File "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py", line 271, in admit_journal
+    require(not audit['counted_fault_lines'],
+  File "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py", line 176, in require
+    raise RuntimeError(message)
+RuntimeError: Kernel device or host fault at/after owner acceptance: 2026-10-10T14:07:19.034122-04:00 steve-b70s kernel: xe 0000:23:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT

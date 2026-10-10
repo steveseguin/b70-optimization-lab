@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**2026-10-10 18:10 UTC, HALT: third GPU fault incident of boot 4aafe57b, reproduced on purpose by the immediate-abrupt-exit probe; owner decision needed (reply "continue" to resume LTX on this boot, or reboot).**
+Probe window 2 (card 23:00.0, image UMD, owner-acceptance receipt, host watcher; LTX stopped 18:05:13 after 62 chunks of 137 session 2):
+`runs/probe-first-forward-20261010c` **PASSED** (one-layer single-rank first forward with production-size pinned slabs under the teardown
+patch: bytes equal, teardown complete, 0 fault lines). `runs/probe-abrupt-immediate-20261010c` (abrupt `os._exit` right after release, no idle):
+gather complete, then at 18:07:19 UTC card 23:00.0 logged `Fault response: Unsuccessful -ENOENT` + engine-reset-class lines (4 lines; saved
+in the run dir). Together with the clean-exit and exit-after-10-s-idle passes this is a deterministic reproduction: the fault is the abrupt
+process exit with work still in flight, and the graceful teardown path (already applied in the overlay) is the remedy. Per the fault-halt
+rule: `FAULT.json` written at the LTX results root, bounded health probe passed on all four cards
+(`postflight-after-third-incident-…`, 8 fault-class lines on this boot, none during the probe), no reboot, no reset. LTX launches refuse
+until the owner decides. Codex: interpretation note + attempt-8 (Screen 1b calibrate-load under the teardown overlay) command text.
+Packet 138 (scheduled text prefetch + pacing-aware metric) finished building; its launch waits for the halt decision.
+
 **2026-10-10, packet 138 sealed and CPU-tested; native validation is pending.**
 The server can prepare the next scene's text while the current chunk is being
 sampled. The client supplies its pinned schedule position. The result must
