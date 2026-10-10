@@ -1,0 +1,27 @@
+test_legacy_status_advertises_residency_and_null_oracle (__main__.StatusRoute133.test_legacy_status_advertises_residency_and_null_oracle) ... FAIL
+test_split36_status_advertises_residency_and_pinned_oracle (__main__.StatusRoute133.test_split36_status_advertises_residency_and_pinned_oracle) ... FAIL
+
+======================================================================
+FAIL: test_legacy_status_advertises_residency_and_null_oracle (__main__.StatusRoute133.test_legacy_status_advertises_residency_and_null_oracle)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "experiments/ltx25-b70/data/resume-20261008/continuation133-tests/test_status_route133.pending.py", line 89, in test_legacy_status_advertises_residency_and_null_oracle
+    self.check_mode('legacy')
+  File "experiments/ltx25-b70/data/resume-20261008/continuation133-tests/test_status_route133.pending.py", line 85, in check_mode
+    self.assertIs(status['features'].get('text_residency'), True,
+AssertionError: None is not True : Actual status must advertise the feature required by the packet133 client
+
+======================================================================
+FAIL: test_split36_status_advertises_residency_and_pinned_oracle (__main__.StatusRoute133.test_split36_status_advertises_residency_and_pinned_oracle)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "experiments/ltx25-b70/data/resume-20261008/continuation133-tests/test_status_route133.pending.py", line 92, in test_split36_status_advertises_residency_and_pinned_oracle
+    self.check_mode('split36')
+  File "experiments/ltx25-b70/data/resume-20261008/continuation133-tests/test_status_route133.pending.py", line 85, in check_mode
+    self.assertIs(status['features'].get('text_residency'), True,
+AssertionError: None is not True : Actual status must advertise the feature required by the packet133 client
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.080s
+
+FAILED (failures=2)

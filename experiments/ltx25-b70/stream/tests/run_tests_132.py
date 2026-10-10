@@ -527,6 +527,7 @@ for packet, sealed in m.PACKETS.items():
           sealed['plan_sha256'] == plan['plan_sha256'])
     check('packet%s pin does not equal plan file byte hash' % packet,
           sealed['plan_sha256'] != hashlib.sha256(raw).hexdigest())
+sealed = m.PACKETS[132]  # The all-pins loop may finish on a newer packet.
 st = dict(STATUS, plan_sha256=hashlib.sha256(
     (m.PACKETS[132]['dir'] / 'resolution/stream-plan.json').read_bytes()).hexdigest())
 check('server file-byte plan hash refuses instead of inner plan', stopped(8, lambda: client().preflight(st)))

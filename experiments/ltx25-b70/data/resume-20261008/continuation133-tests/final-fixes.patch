@@ -1,0 +1,169 @@
+--- a/experiments/ltx25-b70/recovery/20261010-continuation133-stream/test_cone_scope131.py
++++ b/experiments/ltx25-b70/recovery/20261010-continuation133-stream/test_cone_scope131.py
+@@ -25,13 +25,13 @@
+             with patch.dict(os.environ, env, clear=True):
+                 packet.check_control_environment(Path(root))
+ 
+-    def test_current_packet_namespace_is131_and_parent_is130(self):
+-        self.assertEqual(contract.PACKET, 132)
++    def test_current_packet_namespace_is133_and_parent_is132(self):
++        self.assertEqual(contract.PACKET, 133)
+         self.assertEqual(contract.RUN_PREFIX, 'stream133')
+         self.assertEqual(contract.COMPARISON_MODE, 'stream-candidate-133-v1')
+         self.assertEqual(contract.QUALIFICATION_CLIP_BASE, 13300000)
+         self.assertEqual(contract.STREAM_CLIP_BASE, 13301000)
+-        self.assertEqual(packet.PARENT.name, 'prepared-continuation-stream-131')
++        self.assertEqual(packet.PARENT.name, 'prepared-continuation-stream-132')
+ 
+     def test_offline_residency_uses_explicit_option_without_server_environment(self):
+         args = (145, 'two-way20-28', 'frame', 1, 'cone', 'legacy', 'xpu:2')
+--- a/experiments/ltx25-b70/recovery/20261010-continuation133-stream/test_identity_123.py
++++ b/experiments/ltx25-b70/recovery/20261010-continuation133-stream/test_identity_123.py
+@@ -7,21 +7,21 @@
+ import test_gate_receipts as fixtures
+ 
+ class ParentIdentity(unittest.TestCase):
+-    def test_all_geometry_matches_sealed131(self):
+-        path=Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-131/resolution/components/stream_contract.py')
++    def test_all_geometry_matches_sealed132(self):
++        path=Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-132/resolution/components/stream_contract.py')
+         spec=importlib.util.spec_from_file_location('contract127_geometry',path)
+         parent=importlib.util.module_from_spec(spec);spec.loader.exec_module(parent)
+         for frames in c.FRAME_CHOICES:
+             self.assertEqual(c.geometry(frames),parent.geometry(frames))
+ 
+     def test_all_3960_qualification_graphs_equal_after_namespace_normalization(self):
+-        path=Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-131/resolution/components/stream_contract.py')
++        path=Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-132/resolution/components/stream_contract.py')
+         spec=importlib.util.spec_from_file_location('contract120_identity',path)
+         parent=importlib.util.module_from_spec(spec);spec.loader.exec_module(parent)
+         def normalize(value):
+             if isinstance(value,dict):return {k:normalize(v) for k,v in value.items()}
+             if isinstance(value,list):return [normalize(v) for v in value]
+-            if isinstance(value,str):return value.replace('stream133-','stream131-').replace('stream-candidate-133-v1','stream-candidate-131-v1')
++            if isinstance(value,str):return value.replace('stream133-','stream132-').replace('stream-candidate-133-v1','stream-candidate-132-v1')
+             if type(value) is int and 13300000 <= value < 13301000:return value-100000
+             return value
+         count=0
+--- a/experiments/ltx25-b70/recovery/20261010-continuation133-stream/test_maintenance_scope128.py
++++ b/experiments/ltx25-b70/recovery/20261010-continuation133-stream/test_maintenance_scope128.py
+@@ -84,10 +84,10 @@
+         for text in ('MM=${LTX_MAINTENANCE_MODE:-parent}', 'LTX_MAINTENANCE_MODE=$MM', 'NAME=${NAME}-mi', 'PY=/home/steve/.venvs/ltx25-baseline/bin/python', 'ARGS=(-B '):
+             self.assertIn(text, source)
+ 
+-    def test_plan_bound_to_parent131(self):
++    def test_plan_bound_to_parent132(self):
+         import plan
+         envelope = plan.build_plan()
+-        self.assertEqual(envelope['plan']['basis']['parent_manifest_sha256'], 'e25d8d623741fed31fccfd049a323e9bf853302a21aaff472c48eda40fb1ed6f')
++        self.assertEqual(envelope['plan']['basis']['parent_manifest_sha256'], '67ec59a5b0c5131d0b129e4c0b9187386c29c0395ac225dc28422516684991ad')
+         option = envelope['plan']['launch_parameters']['LTX_MAINTENANCE_MODE']
+         self.assertEqual(option['default'], 'parent')
+         self.assertEqual(option['choices'], ['parent', 'idle'])
+--- a/experiments/ltx25-b70/recovery/20261010-continuation133-stream/test_packet123_admission.py
++++ b/experiments/ltx25-b70/recovery/20261010-continuation133-stream/test_packet123_admission.py
+@@ -36,6 +36,6 @@
+             self.assertEqual(p.read_text(),'{}')
+             os.environ['LTX_DISPLAY_DEVICE']='xpu:3'
+             rp.check_control_environment(Path(d))
+-    def test_parent_is_the_latest_sealed_131(self):
+-        self.assertEqual(rp.PARENT.name,'prepared-continuation-stream-131')
+-        self.assertEqual(rp.PARENT_SHA,'e25d8d623741fed31fccfd049a323e9bf853302a21aaff472c48eda40fb1ed6f')
++    def test_parent_is_the_latest_sealed_132(self):
++        self.assertEqual(rp.PARENT.name,'prepared-continuation-stream-132')
++        self.assertEqual(rp.PARENT_SHA,'67ec59a5b0c5131d0b129e4c0b9187386c29c0395ac225dc28422516684991ad')
+--- a/experiments/ltx25-b70/recovery/20261010-continuation133-stream/test_evidence_routes129.py
++++ b/experiments/ltx25-b70/recovery/20261010-continuation133-stream/test_evidence_routes129.py
+@@ -37,7 +37,7 @@
+             snapshot_mode='fingerprint', pool_cap=None, display_device='xpu:3', display_schedule='sampler-a',
+             anchor_read_ahead=0, snapshot_schedule='full', qualified_windows=None,
+             decoder_graph=None, cone=None, precompute=worker, inspector=worker, display_worker='serial',
+-            server_options={}, storage_check=lambda **kw: {}, note_status_route=lambda elapsed: None)
++            text_residency='legacy', server_options={'text_residency': 'legacy', 'text_oracle_sha256': None}, storage_check=lambda **kw: {}, note_status_route=lambda elapsed: None)
+         self.ctx.fault = lambda: (self.run/'stream-halt.json').exists()
+         from aiohttp import web
+         server = NS(routes=web.RouteTableDef(), app=web.Application(), send_sync=lambda *a: None)
+--- a/experiments/ltx25-b70/recovery/20261010-continuation133-stream/integration.py
++++ b/experiments/ltx25-b70/recovery/20261010-continuation133-stream/integration.py
+@@ -2456,7 +2456,7 @@
+                                 'decoder_graph': ctx.decoder_graph_flag == 1,
+                                 'cone_anchor_decode': ctx.anchor_decode == 'cone',
+                                 'bencode_overlap': ctx.bencode_overlap == 1, 'prep_ahead': ctx.prep_ahead == 1,
+-                                'chunk_121': True, 'chunk_145': True, 'chunk_169': True, 'atomic_preview': True, 'atomic_evidence_publication': True, 'cone_graph_memory': True, 'audio_residency': True, 'cone_capture_reserve': True, 'timing_split': True,
++                                'chunk_121': True, 'chunk_145': True, 'chunk_169': True, 'atomic_preview': True, 'atomic_evidence_publication': True, 'cone_graph_memory': True, 'audio_residency': True, 'cone_capture_reserve': True, 'text_residency': True, 'timing_split': True,
+                                 'snapshot_fingerprint': ctx.snapshot_mode == 'fingerprint',
+                                 'decoder_graph_pool_cap': ctx.pool_cap is not None},
+                       decoder_graph_state=(None if ctx.decoder_graph is None else
+--- a/experiments/ltx25-b70/recovery/20261010-continuation133-stream/runtime_packet.py
++++ b/experiments/ltx25-b70/recovery/20261010-continuation133-stream/runtime_packet.py
+@@ -272,9 +272,11 @@
+     if environ.get('LTX_DISPLAY_ALLOCATOR_RELEASE', 'off') != 'off':
+         base += '-arbefore-admission'
+     if environ.get('LTX_CONE_GRAPH_MEMORY', 'off') != 'off':
+-        base += '-cmreplica-release'
++        base += '-cm' + environ.get('LTX_CONE_GRAPH_MEMORY', 'off')
+     if environ.get('LTX_AUDIO_RESIDENCY', 'legacy') != 'legacy':
+         base += '-audioxpu2'
++    if environ.get('LTX_TEXT_RESIDENCY', 'legacy') != 'legacy':
++        base += '-textsplit36'
+     return base
+ 
+ 
+@@ -417,10 +419,10 @@
+             'cone_capture_reserve': {'default': 'parent', 'choices': ['parent', 'scaled-476'],
+                 'parent_bytes': 5*GIB, 'scaled_proposed_bytes': 5111011083,
+                 'scaled_launch_admitted': False, 'reason': '121 growth repeatability does not prove145 peak bound'},
+-            'cone_graph_memory': {'default': 'off', 'choices': ['off', 'replica-release'],
+-                'scope': 'fixed145 dg1 cone serial display2 eager-display with full snapshots',
++            'cone_graph_memory': {'default': 'off', 'choices': ['off', 'replica-release', 'text-shift'],
++                'scope': 'fixed145 dg1 cone serial eager-display/full; replica-release uses display2, text-shift uses split36/native display3',
+                 'capture_reserve_bytes': 5*GIB, 'floor_bytes': 9*GIB, 'screen_bytes': 3*GIB//4,
+-                'reserve_is_measured': False, 'effect': 'one optional allocator release then physical admission; all references and byte gates retained'},
++                'reserve_is_measured': False, 'effect': 'replica-release permits one allocator release; text-shift never releases; both require fresh physical admission and retain all references and byte gates'},
+             'display_allocator_release': {'default': 'off', 'choices': ['off', 'before-admission'],
+                 'scope': '169/frame/dg0/cone/bo1/pa1/two-way20-28/legacy/eager-display/xpu2/parallel/fingerprint/full/read-ahead0',
+                 'effect': 'one process-wide allocator empty_cache when below unchanged admission budget; reread all-card counters; no tensor, graph, precision or floor change'},
+--- a/experiments/ltx25-b70/recovery/20261010-continuation133-stream/CONTRACT.md
++++ b/experiments/ltx25-b70/recovery/20261010-continuation133-stream/CONTRACT.md
+@@ -14,8 +14,8 @@
+ frame/dg1/cone/bo1/pa1, text reuse1, fingerprint/full snapshots, read-ahead0,
+ serial eager display on native xpu:3, legacy audio and auxiliaries, no display
+ replica, display allocator release off, no pool cap, parent5GiB capture reserve.
+-Cone admission retains the parent's single bounded unused-allocator-cache
+-release only if its first physical reading fails, followed by a fresh reading.
++Text-shift performs no allocator-cache release; an insufficient physical
++reading refuses immediately.
+ `LTX_CONE_GRAPH_MEMORY=text-shift` is paired with split36. Before first capture
+ actual physical free must cover5+9+0.75GiB; subsequent cone admissions cover
+ 9+0.75GiB. Measured postcapture reserved growth must not exceed5GiB, and a
+--- a/experiments/ltx25-b70/recovery/20261010-continuation133-stream/test_transient_budget123.py
++++ b/experiments/ltx25-b70/recovery/20261010-continuation133-stream/test_transient_budget123.py
+@@ -119,6 +119,7 @@
+             component.with_name('allocator_release130.py').write_bytes(Path(rp.__file__).with_name('allocator_release130.py').read_bytes())
+             component.with_name('cone_memory131.py').write_bytes(Path(rp.__file__).with_name('cone_memory131.py').read_bytes())
+             component.with_name('audio_residency132.py').write_bytes(Path(rp.__file__).with_name('audio_residency132.py').read_bytes())
++            component.with_name('text_residency133.py').write_bytes(Path(rp.__file__).with_name('text_residency133.py').read_bytes())
+             deployed = packet / 'launch/encoder_runtime_common.py'
+             deployed.parent.mkdir()
+             with patch.object(rp, '__file__', str(deployed)):
+@@ -265,7 +266,8 @@
+         ctx.session.PLAN_SHA256 = 'p'*64
+         ctx.frames, ctx.anchor, ctx.decoder_graph_flag = 145, 'frame', 0
+         ctx.anchor_decode, ctx.bencode_overlap, ctx.prep_ahead = 'cone', 1, 1
+-        ctx.server_options = options
++        ctx.text_residency = 'legacy'
++        ctx.server_options = dict(options, text_residency='legacy', text_oracle_sha256=None)
+         for key, value in options.items():
+             setattr(ctx, key, value)
+         ctx.pool_cap = None
+--- a/experiments/ltx25-b70/recovery/20261010-continuation133-stream/test_runtime_flow.py
++++ b/experiments/ltx25-b70/recovery/20261010-continuation133-stream/test_runtime_flow.py
+@@ -406,7 +406,7 @@
+         for ch in d['chunks']:
+             self.assertEqual({s['mode'] for s in ch['snapshots']}, {'walk'})
+             self.assertFalse(any(s['dual'] for s in ch['snapshots']))
+-            self.assertEqual(ch['server_options'], {'audio_residency': 'legacy', 'cone_capture_reserve': 'parent', 'cone_graph_memory': 'off', 'display_allocator_release': 'off', 'maintenance_mode': 'parent', 'storage_scan_mode': 'request', 'snapshot_digest_cache': 0, 'gc_interval_seconds': 10, 'display_worker': 'serial', 'run_write_allowance_bytes': 3 * 2**30, 'display_schedule': 'sampler-a', 'anchor_read_ahead': 0, 'snapshot_schedule': 'full', 'display_device': 'xpu:3', 'snapshot_mode': 'walk', 'decoder_graph_pool_cap_bytes': None, 'aux_residency': 'legacy', 'residency_qualification_id': '692796408498da76c250fe324d8f52b1557493438a8bf927751313dace53c9c2'})
++            self.assertEqual(ch['server_options'], {'text_residency': 'legacy', 'text_oracle_sha256': None, 'audio_residency': 'legacy', 'cone_capture_reserve': 'parent', 'cone_graph_memory': 'off', 'display_allocator_release': 'off', 'maintenance_mode': 'parent', 'storage_scan_mode': 'request', 'snapshot_digest_cache': 0, 'gc_interval_seconds': 10, 'display_worker': 'serial', 'run_write_allowance_bytes': 3 * 2**30, 'display_schedule': 'sampler-a', 'anchor_read_ahead': 0, 'snapshot_schedule': 'full', 'display_device': 'xpu:3', 'snapshot_mode': 'walk', 'decoder_graph_pool_cap_bytes': None, 'aux_residency': 'legacy', 'residency_qualification_id': '692796408498da76c250fe324d8f52b1557493438a8bf927751313dace53c9c2'})
+         self.assertIsNone(d['snapshot_state']['ledger'])
+         self.assertEqual(d['verdict_file']['snapshot_failures'], [])
+ 

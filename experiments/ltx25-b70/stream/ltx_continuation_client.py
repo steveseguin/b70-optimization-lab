@@ -118,6 +118,10 @@ Packet132 binds separate --expect-audio-residency legacy|xpu2 and
 scaled-476 refuses pending measured145 evidence. Audio2 keeps the upsampler
 on0 and requires full waveform byte evidence from the three eager controls.
 
+Packet133 binds --expect-text-residency legacy|split36 and the sealed text
+oracle identity. Split36 requires the fixed145 cone-graph path with native
+display on3, legacy audio, and text-shift memory admission; legacy retains132.
+
 Never retries a refused request, never restarts or signals anything. Halts:
 exit 0 clean stop; 2 server halted / execution error; 4 FAULT.json; 5 HTTP failure (> --http-fail-
 seconds, or a POST whose outcome is unknown); 6 failed-job receipt (stream-failure-<run>.json);
@@ -368,11 +372,25 @@ PACKETS[132] = dict({'manifest_sha256': '67ec59a5b0c5131d0b129e4c0b9187386c29c03
              'qualification_gate': '1f73426fe5c98acc2ed877ea3a11d45dc5432051704c36866bc1951104cf4264'},
  'reference_sha256': 'ae3df94e25813eda97dc449301a5bd7203d60a0568b90e3e2057d66e9a5cbca9'},
                    dir=R / 'prepared-continuation-stream-132')
-DECODER_GRAPH_PACKETS = (116, '116b', 117, 118, '118b', 119, 120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132)            # decoder_graph field, 116 preflight, 116 gate and references
-DECODE_THREAD_PACKETS = (114, 115, 116, '116b', 117, 118, '118b', 119, 120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132)  # anchor mode, decode thread, decode records
-RESET_PACKETS = (113, 114, 115, 116, '116b', 117, 118, '118b', 119, 120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132)     # chain resets, preview after receipt
-LEVER_PACKETS = (117, 118, '118b', 119, 120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132)                                 # anchor_decode / bencode_overlap / prep_ahead, 121 frames
-SERVER_OPTION_PACKETS = (118, '118b', 119, 120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132)                             # snapshot_mode, decoder-graph pool cap, timing split
+# Packet133 pins are filled from the completed seal, never a stream-plan file hash.
+PACKETS[133] = dict({'manifest_sha256': 'a1f0fb23dbba64ea2530b58fb4787f736a602746a1be72a040688bf0eaf74bd6',
+ 'plan_sha256': 'b230f1dbd3f799b7f5227ef8ea7a72057a901aa0054be67f3babe664aa8700d9',
+ 'modules': {'allocator_release130': '406cc3183a5259cc68daa4b3f0a9ee6188a66d188dc817bfe6f77394837951c4',
+             'cone_memory131': '27d61504639c28ce997835957b0ce8971d9417849c1f03cb97ae55c2c7df0443',
+             'evidence_publication': 'a27a4f2b5d35a9ef76e571dc38943f546db7a9f2c405ddc549de25b45a6e7646',
+             'run_storage': '9fc3e659627f205afcf7654552c3e7c97d2036f6dd5d6fb45def3f98d0a29574',
+             'residency123': '8e8398631f27c5bf20815ffc54927c2c1dbc5b63b814f2e0b4bf29d84ab0e081',
+             'audio_residency132': '3a5d46e19083c6ec7280f57407f2eaf7b33cd761ed1ab9e53597d9130214c85b',
+             'stream_contract': 'd2d9232da3cab070d09fdce69cf2d1bd20563736fdc856e1a99fe3b4dee34f36',
+             'stream_receipts': 'bc3f897d670e337118044c022266525600ce81954b7007f248d3e6e76ff22779',
+             'qualification_gate': '542f95be3d77c48a3dd17f09c35595b3f32e49258bdaaad555ae96a9814ef3de',
+             'text_residency133': '658079c5e5d3581b0409952d98c77eb2b39950f12cf5fe5261b1f3dd6b7c7fd0'},
+ 'reference_sha256': 'ae3df94e25813eda97dc449301a5bd7203d60a0568b90e3e2057d66e9a5cbca9'}, dir=R / 'prepared-continuation-stream-133')
+DECODER_GRAPH_PACKETS = (116, '116b', 117, 118, '118b', 119, 120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133)            # decoder_graph field, 116 preflight, 116 gate and references
+DECODE_THREAD_PACKETS = (114, 115, 116, '116b', 117, 118, '118b', 119, 120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133)  # anchor mode, decode thread, decode records
+RESET_PACKETS = (113, 114, 115, 116, '116b', 117, 118, '118b', 119, 120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133)     # chain resets, preview after receipt
+LEVER_PACKETS = (117, 118, '118b', 119, 120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133)                                 # anchor_decode / bencode_overlap / prep_ahead, 121 frames
+SERVER_OPTION_PACKETS = (118, '118b', 119, 120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133)                             # snapshot_mode, decoder-graph pool cap, timing split
 # ----------------------------------------------------------------------------------------------
 PACKET = PACKETS[112]['dir']                     # packet 112 defaults (unchanged)
 CONTRACT_DIR = PACKET / 'resolution/components'
@@ -391,6 +409,7 @@ STREAM_DIR_RE_117 = re.compile(r'stream117-s[0-9]{8}')    # packet 117
 STREAM_DIR_RE_118 = re.compile(r'stream118-s[0-9]{8}')    # packet 118
 STREAM_DIR_RE_131 = re.compile(r'stream131-s[0-9]{8}')
 STREAM_DIR_RE_132 = re.compile(r'stream132-s[0-9]{8}')
+STREAM_DIR_RE_133 = re.compile(r'stream133-s[0-9]{8}')
 STREAM_DIR_RE_130 = re.compile(r'stream130-s[0-9]{8}')
 STREAM_DIR_RE_129 = re.compile(r'stream129-s[0-9]{8}')
 STREAM_DIR_RE_128 = re.compile(r'stream128-s[0-9]{8}')
@@ -452,7 +471,7 @@ class Stop(Exception):
 def load_contract_modules(directory, check_hashes=True, module_sha=None):
     module_sha = MODULE_SHA if module_sha is None else module_sha
     mods = {}
-    names = (('allocator_release130',) if 'allocator_release130' in module_sha else ()) + (('cone_memory131',) if 'cone_memory131' in module_sha else ()) + (('evidence_publication',) if 'evidence_publication' in module_sha else ()) + (('run_storage',) if 'run_storage' in module_sha else ()) + (('residency123',) if 'residency123' in module_sha else ()) + (('audio_residency132',) if 'audio_residency132' in module_sha else ()) + (
+    names = (('text_residency133',) if 'text_residency133' in module_sha else ()) + (('allocator_release130',) if 'allocator_release130' in module_sha else ()) + (('cone_memory131',) if 'cone_memory131' in module_sha else ()) + (('evidence_publication',) if 'evidence_publication' in module_sha else ()) + (('run_storage',) if 'run_storage' in module_sha else ()) + (('residency123',) if 'residency123' in module_sha else ()) + (('audio_residency132',) if 'audio_residency132' in module_sha else ()) + (
         'stream_contract', 'stream_receipts', 'qualification_gate')
     for name in names:
         path = Path(directory) / (name + '.py')
@@ -685,11 +704,11 @@ class Client:
         self.api = Api('http://%s:%d' % (a.host, a.port), a.http_fail_seconds)
         self.client_id = ({114: 'stream114-client-', 115: 'stream115-client-',
                            116: 'stream116-client-', '116b': 'stream116b-client-',
-                           117: 'stream117-client-', 118: 'stream118-client-', '118b': 'stream118b-client-', 119: 'stream119-client-', 120: 'stream120-client-', 121: 'stream121-client-', 122: 'stream122-client-', 123: 'stream123-client-', '123b': 'stream123b-client-', 124: 'stream124-client-', 125: 'stream125-client-', 126: 'stream126-client-', 127: 'stream127-client-', 128: 'stream128-client-', 129: 'stream129-client-', 130: 'stream130-client-', 131: 'stream131-client-', 132: 'stream132-client-'}.get(a.packet, 'stream112-client-') +
+                           117: 'stream117-client-', 118: 'stream118-client-', '118b': 'stream118b-client-', 119: 'stream119-client-', 120: 'stream120-client-', 121: 'stream121-client-', 122: 'stream122-client-', 123: 'stream123-client-', '123b': 'stream123b-client-', 124: 'stream124-client-', 125: 'stream125-client-', 126: 'stream126-client-', 127: 'stream127-client-', 128: 'stream128-client-', 129: 'stream129-client-', 130: 'stream130-client-', 131: 'stream131-client-', 132: 'stream132-client-', 133: 'stream133-client-'}.get(a.packet, 'stream112-client-') +
                           uuid.uuid4().hex[:12])
         self.stream_dir_re = {114: STREAM_DIR_RE_114, 115: STREAM_DIR_RE_115,
                               116: STREAM_DIR_RE_116, '116b': STREAM_DIR_RE_116B,
-                              117: STREAM_DIR_RE_117, 118: STREAM_DIR_RE_118, '118b': STREAM_DIR_RE_118B, 119: STREAM_DIR_RE_119, 120: STREAM_DIR_RE_120, 121: STREAM_DIR_RE_121, 122: STREAM_DIR_RE_122, 123: STREAM_DIR_RE_123, '123b': STREAM_DIR_RE_123B, 124: STREAM_DIR_RE_124, 125: STREAM_DIR_RE_125, 126: STREAM_DIR_RE_126, 127: STREAM_DIR_RE_127, 128: STREAM_DIR_RE_128, 129: STREAM_DIR_RE_129, 130: STREAM_DIR_RE_130, 131: STREAM_DIR_RE_131, 132: STREAM_DIR_RE_132}.get(a.packet, STREAM_DIR_RE)
+                              117: STREAM_DIR_RE_117, 118: STREAM_DIR_RE_118, '118b': STREAM_DIR_RE_118B, 119: STREAM_DIR_RE_119, 120: STREAM_DIR_RE_120, 121: STREAM_DIR_RE_121, 122: STREAM_DIR_RE_122, 123: STREAM_DIR_RE_123, '123b': STREAM_DIR_RE_123B, 124: STREAM_DIR_RE_124, 125: STREAM_DIR_RE_125, 126: STREAM_DIR_RE_126, 127: STREAM_DIR_RE_127, 128: STREAM_DIR_RE_128, 129: STREAM_DIR_RE_129, 130: STREAM_DIR_RE_130, 131: STREAM_DIR_RE_131, 132: STREAM_DIR_RE_132, 133: STREAM_DIR_RE_133}.get(a.packet, STREAM_DIR_RE)
         self.decoder_graph = None           # packet 116: the server's LTX_DECODER_GRAPH
         self.levers = None                  # packet 117: (anchor_decode, bencode_overlap, prep_ahead)
         self.server_options = None          # packet 118: {snapshot_mode, decoder_graph_pool_cap_bytes}
@@ -713,35 +732,38 @@ class Client:
     def status_server_options(self, st):
         options = {'snapshot_mode': st.get('snapshot_mode'),
                    'decoder_graph_pool_cap_bytes': st.get('decoder_graph_pool_cap_bytes')}
-        if self.a.packet in (119, 120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132):
+        if self.a.packet in (119, 120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133):
             options.update({key: st.get(key) for key in
                             ('display_schedule', 'anchor_read_ahead', 'snapshot_schedule')})
-        if self.a.packet in (120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132):
+        if self.a.packet in (120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133):
             options['display_device'] = st.get('display_device')
-        if self.a.packet in (122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132) and 'display_replica_transient_budget_bytes' in st:
+        if self.a.packet in (122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133) and 'display_replica_transient_budget_bytes' in st:
             options['display_replica_transient_budget_bytes'] = st['display_replica_transient_budget_bytes']
-        if self.a.packet in (123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132):
+        if self.a.packet in (123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133):
             options['aux_residency'] = st.get('aux_residency')
             options['residency_qualification_id'] = st.get('residency_qualification_id')
-        if self.a.packet in ('123b', 124, 125, 126, 127, 128, 129, 130, 131, 132):
+        if self.a.packet in ('123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133):
             options['run_write_allowance_bytes'] = st.get('run_write_allowance_bytes')
-        if self.a.packet in (124, 125, 126, 127, 128, 129, 130, 131, 132):
+        if self.a.packet in (124, 125, 126, 127, 128, 129, 130, 131, 132, 133):
             options['display_worker'] = st.get('display_worker')
-        if self.a.packet in (125, 126, 127, 128, 129, 130, 131, 132):
+        if self.a.packet in (125, 126, 127, 128, 129, 130, 131, 132, 133):
             options['gc_interval_seconds'] = st.get('gc_interval_seconds')
-        if self.a.packet in (126, 127, 128, 129, 130, 131, 132):
+        if self.a.packet in (126, 127, 128, 129, 130, 131, 132, 133):
             options['storage_scan_mode'] = st.get('storage_scan_mode')
-        if self.a.packet in (127, 128, 129, 130, 131, 132):
+        if self.a.packet in (127, 128, 129, 130, 131, 132, 133):
             options['snapshot_digest_cache'] = st.get('snapshot_digest_cache')
-        if self.a.packet in (128, 129, 130, 131, 132):
+        if self.a.packet in (128, 129, 130, 131, 132, 133):
             options['maintenance_mode'] = st.get('maintenance_mode')
-        if self.a.packet in (130, 131, 132):
+        if self.a.packet in (130, 131, 132, 133):
             options['display_allocator_release'] = st.get('display_allocator_release')
-        if self.a.packet in (131, 132):
+        if self.a.packet in (131, 132, 133):
             options['cone_graph_memory'] = st.get('cone_graph_memory')
-        if self.a.packet == 132:
+        if self.a.packet in (132, 133):
             options.update(audio_residency=st.get('audio_residency'),
                            cone_capture_reserve=st.get('cone_capture_reserve'))
+        if self.a.packet == 133:
+            options.update(text_residency=st.get('text_residency'),
+                           text_oracle_sha256=st.get('text_oracle_sha256'))
         return options
 
     # ---- state ---------------------------------------------------------------------------
@@ -831,8 +853,25 @@ class Client:
         log('exit-7 server status (one observation, no retry): ' + json.dumps(result, sort_keys=True))
         return result
 
+    def text_residency_candidate(self, st):
+        return (self.a.packet == 133 and st.get('text_residency') == 'split36'
+                and st.get('cone_graph_memory') == 'text-shift'
+                and st.get('frames') == 145 and st.get('placement') == 'two-way20-28'
+                and st.get('text_reuse') == 1 and st.get('anchor') == 'frame'
+                and st.get('decoder_graph') == 1 and st.get('anchor_decode') == 'cone'
+                and st.get('bencode_overlap') == 1 and st.get('prep_ahead') == 1
+                and st.get('snapshot_mode') == 'fingerprint' and st.get('snapshot_schedule') == 'full'
+                and st.get('anchor_read_ahead') == 0 and st.get('aux_residency') == 'legacy'
+                and st.get('audio_residency') == 'legacy' and st.get('cone_capture_reserve') == 'parent'
+                and st.get('display_worker') == 'serial' and st.get('display_device') == 'xpu:3'
+                and st.get('display_schedule') == 'eager-display'
+                and st.get('display_allocator_release') == 'off'
+                and st.get('decoder_graph_pool_cap_bytes') is None)
+
     def cone_graph_memory_candidate(self, st):
-        return (self.a.packet in (131, 132) and st.get('cone_graph_memory') == 'replica-release'
+        if self.text_residency_candidate(st):
+            return True
+        return (self.a.packet in (131, 132, 133) and st.get('cone_graph_memory') == 'replica-release'
                 and st.get('frames') == 145 and st.get('placement') == 'two-way20-28'
                 and st.get('anchor') == 'frame' and st.get('decoder_graph') == 1
                 and st.get('anchor_decode') == 'cone' and st.get('bencode_overlap') == 1
@@ -930,23 +969,23 @@ class Client:
                     not (cap is None or (type(cap) is int and cap > 0 and st.get('decoder_graph') == 1)):
                 problems.append('--packet %s needs a packet %s server with valid server options (snapshot_mode=%r '
                                 'pool cap=%r features=%r)' % (self.a.packet, self.a.packet, st.get('snapshot_mode'), cap, feats))
-        if self.a.packet in (119, 120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132):
+        if self.a.packet in (119, 120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133):
             if st.get('display_schedule') not in ('sampler-a', 'sampler-b', 'eager-display') or \
                     type(st.get('anchor_read_ahead')) is not int or st.get('anchor_read_ahead') not in (0, 1) or \
                     st.get('snapshot_schedule') not in ('full', 'a-xpu3-sync') or \
                     (st.get('snapshot_schedule') == 'a-xpu3-sync' and st.get('snapshot_mode') != 'fingerprint'):
                 problems.append('packet %s scheduling options invalid: %r' % (self.a.packet, self.status_server_options(st)))
-        if self.a.packet in (120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132):
+        if self.a.packet in (120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133):
             if st.get('plan_sha256') != PACKETS[self.a.packet]['plan_sha256']:
                 problems.append('packet %s plan differs from the pinned plan' % self.a.packet)
             if st.get('display_device') not in ('xpu:3', 'xpu:2') or (
                     st.get('display_device') == 'xpu:2' and
-                    (st.get('frames') not in ((121,) if self.a.packet == 120 else ((121, 145, 169) if self.a.packet in (123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132) else (121, 145))) or st.get('anchor') != 'frame' or st.get('anchor_decode') != 'cone' or
+                    (st.get('frames') not in ((121,) if self.a.packet == 120 else ((121, 145, 169) if self.a.packet in (123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133) else (121, 145))) or st.get('anchor') != 'frame' or st.get('anchor_decode') != 'cone' or
                      st.get('display_schedule') != 'eager-display')):
                 problems.append('packet %s display device requires its supported long length/frame/cone/eager-display' % self.a.packet)
-        if self.a.packet in (121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132) and feats.get('chunk_145') is not True:
+        if self.a.packet in (121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133) and feats.get('chunk_145') is not True:
             problems.append('packet %s requires chunk_145 feature' % self.a.packet)
-        if self.a.packet in (122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132):
+        if self.a.packet in (122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133):
             budget = st.get('display_replica_transient_budget_bytes')
             if 'display_replica_transient_budget_bytes' in st:
                 if (st.get('display_device') != 'xpu:2' or type(budget) is not int or
@@ -955,7 +994,7 @@ class Client:
                     problems.append('packet 122 display transient budget invalid or below its census')
                 if getattr(self.a, 'expect_display_transient_bytes', None) is None:
                     problems.append('packet 122 explicit display transient budget needs a client expectation')
-        if self.a.packet in ('123b', 124, 125, 126, 127, 128, 129, 130, 131, 132):
+        if self.a.packet in ('123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133):
             allowance = st.get('run_write_allowance_bytes')
             expected = getattr(self.a, 'expect_run_write_allowance_bytes', None)
             if expected is None:
@@ -963,7 +1002,7 @@ class Client:
             if (type(allowance) is not int or allowance % (2**30) or
                     not 2**30 <= allowance <= 64 * 2**30 or allowance != expected):
                 problems.append('packet 123b run write allowance differs from client expectation')
-        if self.a.packet in (123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132):
+        if self.a.packet in (123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133):
             if st.get('aux_residency') not in ('legacy', 'xpu2'):
                 problems.append('packet 123 aux_residency must be legacy or xpu2')
             else:
@@ -983,7 +1022,7 @@ class Client:
                     st.get('anchor') != 'frame' or st.get('anchor_decode') != 'cone'):
                 problems.append('xpu2 residency requires display xpu:3, 145/169 dg0 two-way20-28/frame/cone')
             if st.get('frames') == 169 and st.get('aux_residency') != 'xpu2':
-                replica124 = (self.a.packet in (124, 125, 126, 127, 128, 129, 130, 131, 132) and st.get('display_device') == 'xpu:2'
+                replica124 = (self.a.packet in (124, 125, 126, 127, 128, 129, 130, 131, 132, 133) and st.get('display_device') == 'xpu:2'
                               and st.get('aux_residency') == 'legacy' and st.get('decoder_graph') == 0
                               and st.get('placement') == 'two-way20-28')
                 if not replica124:
@@ -991,7 +1030,7 @@ class Client:
             if (st.get('frames') in (145, 169) and st.get('decoder_graph') == 1
                     and st.get('display_device') == 'xpu:2' and not self.cone_graph_memory_candidate(st)):
                 problems.append('long-chunk dg1 display replica is not memory-admissible')
-        if self.a.packet in (124, 125, 126, 127, 128, 129, 130, 131, 132):
+        if self.a.packet in (124, 125, 126, 127, 128, 129, 130, 131, 132, 133):
             worker = st.get('display_worker')
             if worker not in ('serial', 'parallel'):
                 problems.append('packet124 display_worker must be serial or parallel')
@@ -1001,7 +1040,7 @@ class Client:
                     and st.get('anchor_decode') == 'cone' and st.get('display_schedule') == 'eager-display'
                     and st.get('display_device') == 'xpu:2' and st.get('aux_residency') == 'legacy'):
                 problems.append('parallel display requires145/169 dg0 two-way20-28/frame/cone/eager-display xpu:2, aux legacy')
-        if self.a.packet in (125, 126, 127, 128, 129, 130, 131, 132):
+        if self.a.packet in (125, 126, 127, 128, 129, 130, 131, 132, 133):
             interval = st.get('gc_interval_seconds')
             if type(interval) is not int or interval not in (10, 60):
                 problems.append('packet125 gc_interval_seconds must be integer10 or60')
@@ -1014,12 +1053,12 @@ class Client:
                     and st.get('anchor_read_ahead') == 0 and st.get('snapshot_schedule') == 'full'
                     and st.get('aux_residency') in ('legacy', 'xpu2')):
                 problems.append('60-second maintenance requires145 two-way20-28/frame/dg0/cone/bo1/pa1 serial display3 sampler-a read-ahead0 full snapshots')
-        if self.a.packet in (126, 127, 128, 129, 130, 131, 132):
+        if self.a.packet in (126, 127, 128, 129, 130, 131, 132, 133):
             if st.get('storage_scan_mode') not in ('request', 'background'):
                 problems.append('packet126 storage_scan_mode must be request or background')
             if st.get('storage_scan_mode') != getattr(self.a, 'expect_storage_scan_mode', 'request'):
                 problems.append('storage scan mode differs from expectation')
-        if self.a.packet in (127, 128, 129, 130, 131, 132):
+        if self.a.packet in (127, 128, 129, 130, 131, 132, 133):
             cache = st.get('snapshot_digest_cache')
             if type(cache) is not int or cache not in (0, 1):
                 problems.append('packet127 snapshot_digest_cache must be integer0 or1')
@@ -1034,7 +1073,7 @@ class Client:
                     and st.get('anchor_read_ahead') == 0 and st.get('snapshot_schedule') == 'full'
                     and st.get('snapshot_mode') == 'fingerprint' and st.get('aux_residency') == 'legacy'):
                 problems.append('snapshot digest cache requires145 two-way20-28/frame/dg0/cone/bo1/pa1 fingerprint full serial display3 legacy sampler-a read-ahead0')
-        if self.a.packet in (128, 129, 130, 131, 132):
+        if self.a.packet in (128, 129, 130, 131, 132, 133):
             mode = st.get('maintenance_mode')
             if mode not in ('parent', 'idle'):
                 problems.append('packet128 maintenance_mode must be parent or idle')
@@ -1052,9 +1091,9 @@ class Client:
                         (st.get('display_worker') == 'parallel' and st.get('display_device') == 'xpu:2'
                          and st.get('display_schedule') == 'eager-display'))):
                 problems.append('idle maintenance requires145/169 two-way20-28/frame/dg0/cone/bo1/pa1 fingerprint full legacy read-ahead0 with serial display3 sampler-a or parallel display2 eager-display')
-        if self.a.packet in (129, 130, 131, 132) and feats.get('atomic_evidence_publication') is not True:
+        if self.a.packet in (129, 130, 131, 132, 133) and feats.get('atomic_evidence_publication') is not True:
             problems.append('packet129 requires atomic evidence publication')
-        if self.a.packet in (130, 131, 132):
+        if self.a.packet in (130, 131, 132, 133):
             release = st.get('display_allocator_release')
             if release not in ('off', 'before-admission'):
                 problems.append('packet130 display_allocator_release must be off or before-admission')
@@ -1069,17 +1108,17 @@ class Client:
                     and st.get('aux_residency') == 'legacy' and st.get('display_worker') == 'parallel'
                     and st.get('display_device') == 'xpu:2' and st.get('display_schedule') == 'eager-display'):
                 problems.append('allocator release requires169 two-way20-28/frame/dg0/cone/bo1/pa1 fingerprint full legacy read-ahead0 parallel display2 eager-display')
-        if self.a.packet in (131, 132):
+        if self.a.packet in (131, 132, 133):
             if feats.get('cone_graph_memory') is not True:
                 problems.append('packet131 requires cone graph memory feature')
             mode = st.get('cone_graph_memory')
-            if mode not in ('off', 'replica-release'):
+            if mode not in (('off', 'replica-release', 'text-shift') if self.a.packet == 133 else ('off', 'replica-release')):
                 problems.append('packet131 cone_graph_memory must be off or replica-release')
             if mode != getattr(self.a, 'expect_cone_graph_memory', None):
                 problems.append('cone graph memory differs from required expectation')
             if mode == 'replica-release' and not self.cone_graph_memory_candidate(st):
                 problems.append('cone memory requires145 two-way20-28/frame/dg1/cone/bo1/pa1 fingerprint full legacy read-ahead0 serial display2 eager-display allocator-release off')
-        if self.a.packet == 132:
+        if self.a.packet in (132, 133):
             for key, choices, default in (('audio_residency', ('legacy', 'xpu2'), 'legacy'),
                                           ('cone_capture_reserve', ('parent', 'scaled-476'), 'parent')):
                 if feats.get(key) is not True:
@@ -1095,6 +1134,21 @@ class Client:
                     (st.get('decoder_graph') == 0 and st.get('cone_graph_memory') == 'off' and
                      self.cone_graph_memory_candidate(dict(st, decoder_graph=1, cone_graph_memory='replica-release')))):
                 problems.append('audio xpu2 requires fixed145 serial replica2 cone scope with dg1/replica-release or dg0/off')
+        if self.a.packet == 133:
+            mode = st.get('text_residency')
+            if feats.get('text_residency') is not True:
+                problems.append('packet133 requires text residency feature')
+            if type(mode) is not str or mode not in ('legacy', 'split36'):
+                problems.append('packet133 invalid text residency')
+            if mode != getattr(self.a, 'expect_text_residency', 'legacy'):
+                problems.append('text residency differs from required expectation')
+            expected_oracle = sys.modules['text_residency133'].ORACLE_SHA256 if mode == 'split36' else None
+            if 'text_oracle_sha256' not in st or st.get('text_oracle_sha256') != expected_oracle:
+                problems.append('text oracle identity differs from the pinned contract')
+            if mode == 'split36' and not self.text_residency_candidate(st):
+                problems.append('split36 requires fixed145 native display3 cone graph scope')
+            if st.get('cone_graph_memory') == 'text-shift' and not self.text_residency_candidate(st):
+                problems.append('text-shift admission requires split36 text residency')
         if problems:
             raise Stop(8, 'preflight refused: ' + '; '.join(problems))
         self.bind_dirs(st)
@@ -1225,7 +1279,7 @@ class Client:
             raise Stop(13, 'verdict file is not a pass: passed=%r failures=%r' % (v.get('passed'), v.get('failures')))
         if v.get('plan_sha256') != st.get('plan_sha256'):
             raise Stop(13, 'verdict plan_sha256 differs from the server plan')
-        if self.a.packet in (119, 120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132) and v.get('server_options') != self.status_server_options(st):
+        if self.a.packet in (119, 120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133) and v.get('server_options') != self.status_server_options(st):
             raise Stop(13, 'verdict server_options differ from the server status')
         # Independent re-derivation: the nine committed receipts from the receipt route, the server's
         # own capture re-reads from the verdict file, and the sealed decision function.
@@ -1242,7 +1296,7 @@ class Client:
                 self.rc.validate_receipt(rec)
             except ValueError as e:
                 raise Stop(13, 'qualification receipt %s fails the receipt schema: %s' % (name, e))
-            if self.a.packet in (119, 120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132) and rec.get('server_options') != self.status_server_options(st):
+            if self.a.packet in (119, 120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133) and rec.get('server_options') != self.status_server_options(st):
                 raise Stop(13, 'qualification receipt %s server_options differ from the server status' % name)
             receipts.append(rec)
             if self.a.packet in DECODE_THREAD_PACKETS:
@@ -1528,25 +1582,27 @@ class Client:
             raise Stop(12, 'decode record of %s fails its schema / receipt binding: %s' % (name, e))
 
     def validate_decode_identity(self, record, receipt):
-        if self.a.packet in ('123b', 124, 125, 126, 127, 128, 129, 130, 131, 132) and record.get('server_options') != receipt.get('server_options'):
+        if self.a.packet in ('123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133) and record.get('server_options') != receipt.get('server_options'):
             raise ValueError('packet 123b decode server_options differ from receipt')
-        if self.a.packet in (120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132):
+        if self.a.packet in (120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133):
             options = receipt.get('server_options') or {}
             expected = 'xpu:3' if receipt.get('kind') == 'qualify-eager' else options.get('display_device')
             if expected not in ('xpu:3', 'xpu:2') or record.get('display_device') != expected:
                 raise ValueError('packet %s decode display_device differs from its receipt route' % self.a.packet)
-        if self.a.packet in (131, 132):
+        if self.a.packet in (131, 132, 133):
             admission = record.get('cone_graph_memory_admission')
-            enabled = (receipt.get('server_options') or {}).get('cone_graph_memory') == 'replica-release'
+            enabled = (receipt.get('server_options') or {}).get('cone_graph_memory') in ('replica-release', 'text-shift')
             if enabled and receipt.get('kind') != 'qualify-eager':
-                reserve_kw = ({'reserve_mode': options.get('cone_capture_reserve')} if self.a.packet == 132 else {})
+                if not isinstance(admission, dict) or admission.get('mode') != options.get('cone_graph_memory'):
+                    raise ValueError('cone admission mode differs from receipt server_options')
+                reserve_kw = ({'reserve_mode': options.get('cone_capture_reserve')} if self.a.packet in (132, 133) else {})
                 sys.modules['cone_memory131'].validate_record(admission, **reserve_kw)
                 first = receipt.get('kind') == 'qualify-graph' and receipt.get('chunk_index') == 0
                 if admission['first_capture'] is not first:
                     raise ValueError('cone admission capture phase differs from receipt')
             elif admission is not None:
                 raise ValueError('cone graph admission must be absent for off or eager qualification')
-        if self.a.packet == 132:
+        if self.a.packet in (132, 133):
             sys.modules['audio_residency132'].validate_evidence(receipt, record)
         return record
 
@@ -1581,7 +1637,7 @@ class Client:
             time.sleep(min(self.a.poll, 0.1))
         try:
             rec = self.rc.validate_preview_record(json.loads(raw), r)
-            if self.a.packet in ('123b', 124, 125, 126, 127, 128, 129, 130, 131, 132) and rec.get('server_options') != r.get('server_options'):
+            if self.a.packet in ('123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133) and rec.get('server_options') != r.get('server_options'):
                 raise ValueError('packet 123b preview server_options differ from receipt')
         except ValueError as e:
             raise Stop(7, 'preview record of %s fails its schema: %s' % (name, e))
@@ -1646,7 +1702,7 @@ class Client:
                             decoder_mode=(drec.get('decoder') or {}).get('mode'),
                             video_decode_s=(drec.get('decoder') or {}).get('video_decode_s'),
                             decode_in_chain=timing.get('decode_in_chain'))
-            if self.a.packet in (120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132):
+            if self.a.packet in (120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133):
                 line.update(display_device=drec['display_device'], display_replica=drec.get('display_replica'))
             if self.a.packet in LEVER_PACKETS:         # packet 117: the levers that produced this chunk
                 ad = drec.get('anchor_decode') or {}
@@ -1671,7 +1727,7 @@ class Client:
                             turnaround=(r.get('turnaround') or {}).get('split'),
                             client_turnaround_s=marks.get(r['run_name'], {}).get('turnaround_s'),
                             client_post_s=marks.get(r['run_name'], {}).get('post_s'))
-                if self.a.packet in (119, 120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132):
+                if self.a.packet in (119, 120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133):
                     line['anchor_read_source'] = r.get('anchor_read_source')
                     line['snapshots']['synchronized'] = [s.get('synchronized') for s in snaps]
                     line['snapshots']['memory_cards'] = [s.get('memory_cards') for s in snaps]
@@ -2058,7 +2114,7 @@ def main(argv=None):
                          'or 119 (display schedule, anchor read-ahead, optional snapshot schedule) '
                          'or 120 (isolated display decoder with cross-card byte gate) '
                          'or 121 (145-frame chunks) or 122 (refined memory census) or 123 (atomic previews and qualified residency) '
-                         'or 123b (run-owned storage allowance) or 124 (independent display worker) or 125 (application maintenance cadence) or 126 (off-request storage accounting) or 127 (checked signature digest cache) or 128 (idle maintenance admission) or 129 (atomic evidence publication) or 130 (display allocator release) or 131 (cone graph memory admission) or 132 (isolated audio placement and capture reserve evidence)')
+                         'or 123b (run-owned storage allowance) or 124 (independent display worker) or 125 (application maintenance cadence) or 126 (off-request storage accounting) or 127 (checked signature digest cache) or 128 (idle maintenance admission) or 129 (atomic evidence publication) or 130 (display allocator release) or 131 (cone graph memory admission) or 132 (isolated audio placement and capture reserve evidence) or 133 (text shard residency)')
     ap.add_argument('--manifest-sha256', help='expected runtime_manifest_sha256 (default: the --packet build)')
     ap.add_argument('--contract-dir', type=Path, help='sealed stream_contract.py location (default: the --packet build)')
     ap.add_argument('--reset-every-chunks', type=int, default=0,
@@ -2082,12 +2138,14 @@ def main(argv=None):
     ap.add_argument('--expect-display-transient-gib',
                     help='122/123/123b/124: explicit replica transient budget in GiB; unset expects the census default')
     ap.add_argument('--expect-run-write-allowance-gib', help='123b/124: integer GiB 1..64; default expectation 3')
+    ap.add_argument('--expect-text-residency', choices=('legacy', 'split36'),
+                    help='133: text layer placement identity (default legacy)')
     ap.add_argument('--expect-audio-residency', choices=('legacy', 'xpu2'), default=None,
                     help='132: audio placement identity (default legacy)')
     ap.add_argument('--expect-cone-capture-reserve', choices=('parent', 'scaled-476'), default=None,
                     help='132: capture allowance identity; scaled-476 fails closed')
     ap.add_argument('--expected-cone-graph-memory', '--expect-cone-graph-memory', dest='expect_cone_graph_memory',
-                    choices=('off', 'replica-release'), help='131: required cone graph memory admission identity')
+                    choices=('off', 'replica-release', 'text-shift'), help='131..133: required cone graph memory admission identity')
     ap.add_argument('--expect-display-allocator-release', choices=('off', 'before-admission'),
                     help='130: release unused device allocator blocks before display admission; default off')
     ap.add_argument('--expect-maintenance-mode', choices=('parent', 'idle'),
@@ -2150,66 +2208,72 @@ def main(argv=None):
     if (a.expect_anchor_decode is not None or a.expect_bencode_overlap is not None or
             a.expect_prep_ahead is not None) and a.packet not in LEVER_PACKETS:
         raise SystemExit('--expect-anchor-decode / --expect-bencode-overlap / --expect-prep-ahead need --packet 117, 118, 118b or 119 or 120 or 121 or 122 or 123')
-    if a.packet != 132 and (a.expect_audio_residency is not None or a.expect_cone_capture_reserve is not None):
+    if a.expect_text_residency is not None and a.packet != 133:
+        ap.error('--expect-text-residency needs --packet 133')
+    if a.packet == 133:
+        a.expect_text_residency = a.expect_text_residency or 'legacy'
+    if a.expect_cone_graph_memory == 'text-shift' and a.packet != 133:
+        ap.error('text-shift cone admission needs --packet 133')
+    if a.packet not in (132, 133) and (a.expect_audio_residency is not None or a.expect_cone_capture_reserve is not None):
         ap.error('audio residency and capture reserve expectations need --packet 132')
-    if a.packet == 132:
+    if a.packet in (132, 133):
         a.expect_audio_residency = a.expect_audio_residency or 'legacy'
         a.expect_cone_capture_reserve = a.expect_cone_capture_reserve or 'parent'
         if a.expect_cone_capture_reserve != 'parent':
             ap.error('scaled-476 refuses pending measured145 capture bound')
-    if a.expect_cone_graph_memory is not None and a.packet not in (131, 132):
+    if a.expect_cone_graph_memory is not None and a.packet not in (131, 132, 133):
         ap.error('--expected-cone-graph-memory needs --packet 131 or132')
-    if a.packet in (131, 132) and a.expect_cone_graph_memory is None:
+    if a.packet in (131, 132, 133) and a.expect_cone_graph_memory is None:
         ap.error('--packet 131/132 requires --expected-cone-graph-memory')
-    if a.expect_display_allocator_release is not None and a.packet not in (130, 131, 132):
+    if a.expect_display_allocator_release is not None and a.packet not in (130, 131, 132, 133):
         ap.error('--expect-display-allocator-release needs --packet 130')
-    if a.packet in (130, 131, 132) and a.expect_display_allocator_release is None:
+    if a.packet in (130, 131, 132, 133) and a.expect_display_allocator_release is None:
         a.expect_display_allocator_release = 'off'
-    if a.expect_maintenance_mode is not None and a.packet not in (128, 129, 130, 131, 132):
+    if a.expect_maintenance_mode is not None and a.packet not in (128, 129, 130, 131, 132, 133):
         ap.error('--expect-maintenance-mode needs --packet 128')
-    if a.packet in (128, 129, 130, 131, 132) and a.expect_maintenance_mode is None:
+    if a.packet in (128, 129, 130, 131, 132, 133) and a.expect_maintenance_mode is None:
         a.expect_maintenance_mode = 'parent'
-    if a.expect_snapshot_digest_cache is not None and a.packet not in (127, 128, 129, 130, 131, 132):
+    if a.expect_snapshot_digest_cache is not None and a.packet not in (127, 128, 129, 130, 131, 132, 133):
         ap.error('--expect-snapshot-digest-cache needs --packet 127')
-    if a.packet in (127, 128, 129, 130, 131, 132) and a.expect_snapshot_digest_cache is None:
+    if a.packet in (127, 128, 129, 130, 131, 132, 133) and a.expect_snapshot_digest_cache is None:
         a.expect_snapshot_digest_cache = 0
-    if a.expect_storage_scan_mode is not None and a.packet not in (126, 127, 128, 129, 130, 131, 132):
+    if a.expect_storage_scan_mode is not None and a.packet not in (126, 127, 128, 129, 130, 131, 132, 133):
         ap.error('--expect-storage-scan-mode needs --packet 126')
-    if a.packet in (126, 127, 128, 129, 130, 131, 132) and a.expect_storage_scan_mode is None:
+    if a.packet in (126, 127, 128, 129, 130, 131, 132, 133) and a.expect_storage_scan_mode is None:
         a.expect_storage_scan_mode = 'request'
-    if a.expect_gc_interval_seconds is not None and a.packet not in (125, 126, 127, 128, 129, 130, 131, 132):
+    if a.expect_gc_interval_seconds is not None and a.packet not in (125, 126, 127, 128, 129, 130, 131, 132, 133):
         ap.error('--expect-gc-interval-seconds needs --packet 125')
-    if a.packet in (125, 126, 127, 128, 129, 130, 131, 132) and a.expect_gc_interval_seconds is None:
+    if a.packet in (125, 126, 127, 128, 129, 130, 131, 132, 133) and a.expect_gc_interval_seconds is None:
         a.expect_gc_interval_seconds = 10
-    if a.expect_display_worker is not None and a.packet not in (124, 125, 126, 127, 128, 129, 130, 131, 132):
+    if a.expect_display_worker is not None and a.packet not in (124, 125, 126, 127, 128, 129, 130, 131, 132, 133):
         ap.error('--expect-display-worker needs --packet 124')
-    if a.packet in (124, 125, 126, 127, 128, 129, 130, 131, 132) and a.expect_display_worker is None:
+    if a.packet in (124, 125, 126, 127, 128, 129, 130, 131, 132, 133) and a.expect_display_worker is None:
         a.expect_display_worker = 'serial'
     a.expect_run_write_allowance_bytes = None
     if a.expect_run_write_allowance_gib is not None:
-        if a.packet not in ('123b', 124, 125, 126, 127, 128, 129, 130, 131, 132):
+        if a.packet not in ('123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133):
             ap.error('--expect-run-write-allowance-gib needs --packet 123b')
         if re.fullmatch(r'(?:[1-9]|[1-5][0-9]|6[0-4])', a.expect_run_write_allowance_gib) is None:
             ap.error('--expect-run-write-allowance-gib must be integer GiB 1..64')
         a.expect_run_write_allowance_bytes = int(a.expect_run_write_allowance_gib) * 2**30
-    if a.expect_frames == 169 and a.packet not in (123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132):
+    if a.expect_frames == 169 and a.packet not in (123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133):
         ap.error('--expect-frames 169 needs --packet 123 (with qualified residency)')
-    if a.expect_frames == 145 and a.packet not in (121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132):
+    if a.expect_frames == 145 and a.packet not in (121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133):
         raise SystemExit('--expect-frames 145 needs --packet 121 or 122 or 123')
     if a.expect_frames == 121 and a.packet not in LEVER_PACKETS:
         raise SystemExit('--expect-frames 121 needs --packet 117, 118, 118b or 119 or 120 or 121 or 122 or 123')
     if (a.expect_snapshot_mode is not None or a.expect_pool_cap_gb is not None) and a.packet not in SERVER_OPTION_PACKETS:
         raise SystemExit('--expect-snapshot-mode / --expect-pool-cap-gb need --packet 118, 118b or 119 or 120 or 121 or 122 or 123')
-    if a.packet not in (119, 120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132) and any(value is not None for value in
+    if a.packet not in (119, 120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133) and any(value is not None for value in
                               (a.expect_display_schedule, a.expect_anchor_read_ahead, a.expect_snapshot_schedule)):
         raise SystemExit('--expect-display-schedule / --expect-anchor-read-ahead / --expect-snapshot-schedule need --packet 119 or 120 or 121 or 122 or 123')
-    if a.packet not in (120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132) and a.expect_display_device is not None:
+    if a.packet not in (120, 121, 122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133) and a.expect_display_device is not None:
         raise SystemExit('--expect-display-device needs --packet 120 or 121 or 122 or 123')
-    if a.expect_aux_residency is not None and a.packet not in (123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132):
+    if a.expect_aux_residency is not None and a.packet not in (123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133):
         raise SystemExit('--expect-aux-residency needs --packet 123')
     a.expect_display_transient_bytes = None
     if a.expect_display_transient_gib is not None:
-        if a.packet not in (122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132):
+        if a.packet not in (122, 123, '123b', 124, 125, 126, 127, 128, 129, 130, 131, 132, 133):
             raise SystemExit('--expect-display-transient-gib needs --packet 122 or 123')
         try:
             budget = Decimal(a.expect_display_transient_gib) * 2**30

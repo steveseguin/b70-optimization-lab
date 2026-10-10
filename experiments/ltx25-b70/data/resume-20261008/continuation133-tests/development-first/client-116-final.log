@@ -1,0 +1,32 @@
+PASS F1 116 frame/49 dg1 (default anchor): qualification re-derived with the 116 gate, 8 chunks, exit 0, manifest labels, chain, sharpness and decoder fields intact rc=0 rows=8 probs=[] refusals={} last=['[c112 13:09:28.415] clean stop: 8 chunks this run, next stream_seq 8, next manifest seq 8']
+PASS F5 log stage buckets (116a): video-decode(chain), anchor-handoff, receipt, decode-tail(off-chain); no decode(in-chain) ['[c112 13:09:25.276] seq 0 stream_seq 0 scene boata seed 11400000 submit->preview 0.607 s submit->anchor 0.206 s [queue 0.00 text+A-prep 0.00 samplerA 0.00 upsample+B-prep 0.00 samplerB 0.00 video-decode(chain) 0.15 anchor-handoff 0.00 receipt 0.00 decode-tail(off-chain) 0.30 preview(off-chain) 0.00] anchor 299696c849ae']
+PASS F2 116a: frame stream receipts commit before their decode records (state video_done); the gated qualification chunks waited for their whole decode; dg1 decoder rows before_record=8 gated=6 q0={'captured_graphs_total': 2, 'flag': 1, 'frozen': False, 'mode': 'graph', 'new_captures': 2, 'reference': {'equal': True, 'images_sha256': '545de869e756c4a6772c8b3182da7d0403cb7882917260eb7660a803183d209d', 'mode': 'eager-uncached', 'seconds': 0.01}, 'replays': {'forward_diff_step': 0, 'forward_pre_diffusion': 0}, 'signatures': {'forward_diff_step': 1, 'forward_pre_diffusion': 1}, 'video_decode_s': 0.01}
+PASS F3 116 frame/49 dg0 (default anchor): qualification re-derived with the 116 gate, 8 chunks, exit 0, manifest labels, chain, sharpness and decoder fields intact rc=0 rows=8 probs=[] refusals={} last=['[c112 13:09:38.779] clean stop: 8 chunks this run, next stream_seq 8, next manifest seq 8']
+PASS F6 log stage buckets (116a): video-decode(chain), anchor-handoff, receipt, decode-tail(off-chain); no decode(in-chain) ['[c112 13:09:35.591] seq 0 stream_seq 0 scene boata seed 11400000 submit->preview 0.607 s submit->anchor 0.206 s [queue 0.00 text+A-prep 0.00 samplerA 0.00 upsample+B-prep 0.00 samplerB 0.00 video-decode(chain) 0.15 anchor-handoff 0.00 receipt 0.00 decode-tail(off-chain) 0.30 preview(off-chain) 0.00] anchor 299696c849ae']
+PASS F4 116a: frame stream receipts commit before their decode records (state video_done); the gated qualification chunks waited for their whole decode; dg0 decoder rows before_record=8 gated=6 q0={'captured_graphs_total': 0, 'flag': 0, 'frozen': None, 'mode': 'eager', 'new_captures': 0, 'reference': None, 'replays': {'forward_diff_step': 0, 'forward_pre_diffusion': 0}, 'signatures': {}, 'video_decode_s': 0.01}
+PASS N1 frame/97: 97 then 96 new frames, skip_first_frames 1, sharpness of 8 frames rc=0 rows=4 probs=[]
+PASS N4 mixed log buckets: video-decode(off-chain) and decode-tail(off-chain), no decode(in-chain) 
+PASS N2 A/B anchor mixed on a 116 server streams 4 chunks with 116 manifest labels rc=0 rows=4 probs=[]
+PASS N3 --expect-anchor frame against a mixed server refuses at preflight (exit 8) rc=8
+PASS N4 latent log buckets: video-decode(off-chain) and decode-tail(off-chain), no decode(in-chain) 
+PASS N2 A/B anchor latent on a 116 server streams 4 chunks with 116 manifest labels rc=0 rows=4 probs=[]
+PASS N3 --expect-anchor frame against a latent server refuses at preflight (exit 8) rc=8
+PASS N4 guide log buckets: video-decode(off-chain) and decode-tail(off-chain), no decode(in-chain) 
+PASS N2 A/B anchor guide on a 116 server streams 4 chunks with 116 manifest labels rc=0 rows=4 probs=[]
+PASS N3 --expect-anchor frame against a guide server refuses at preflight (exit 8) rc=8
+PASS E1 --expect-decoder-graph 0 against a decoder_graph 1 server refuses at preflight (exit 8), nothing posted rc=8
+PASS E2 --expect-decoder-graph 1 matches and streams rc=0
+PASS E3 --packet 115 --expect-decoder-graph is refused before contacting a server rc=1
+PASS Q1 qualification fail -> exit 13, nothing streamed rc=13 last=['[c112 13:10:00.390] STOPPED (exit 13): QUALIFICATION DID NOT PASS (HTTP 200): ["Eager/graph/repeat tensors differ at chunk 1: [\'anchor_file\', \'audio_latent\', \'images\', \'stage_a_latent\', \'video_latent\', \'waveform\']"]', '[c112 13:10:00.390] no retry, no restart: inspect the evidence before running again']
+PASS Q2 qualification lie (server says passed) -> client re-derivation fails, exit 13 rc=13 last=["[c112 13:10:04.365] STOPPED (exit 13): client-side re-derivation of the verdict FAILED: Eager/graph/repeat tensors differ at chunk 1: ['anchor_file', 'audio_latent', 'images', 'stage_a_latent', 'video_latent', 'waveform']", '[c112 13:10:04.366] no retry, no restart: inspect the evidence before running again']
+PASS Q3 with the sealed cross-packet reference the fake frame/49 outputs fail the client re-derivation (exit 13) rc=13 last=['[c112 13:10:08.619] no retry, no restart: inspect the evidence before running again']
+PASS D1 frame: a decode record that never appears (its receipt committed at the hand-off) -> client exit 7 within the --save-wait bound; chunk 2 not manifested rc=7 rows=2
+PASS D2 decode thread failure (chunk 3, before the hand-off) latches the server -> client exit 2 or 6, chunk 3 never manifested rc=2 rows=2
+PASS R1 --reset-every-chunks 3 on 116 frame: resets at 3, 6, 9 (no skip), chain continues rc=0 resets=[3, 6, 9] skips=[0, 1, 1, 0, 1, 1, 0, 1, 1, 0]
+PASS A1 a corrupt (stale) anchor -> the server refuses stale-anchor, client exit 10, no retry rc=10 refusals={'stale-anchor': 1} order=[0, 1, 2]
+PASS X1 a 115 client with the 116 manifest sha refuses a 116 server at preflight, exit 8 rc=8
+PASS X2 a 116 client against a 115 server refuses at preflight (manifest identity), exit 8 rc=8
+PASS X3 a 116 client with the 115 manifest sha still refuses (needs a packet 116 server), exit 8 rc=8
+PASS X4 --reference-hashes on the live port is refused before contacting a server rc=1
+
+30/30 passed; work in /home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261008/continuation133-tests/scratch/ltx-cpu-suite-girmkod1/ltx-c116-test-dgfgbp_m

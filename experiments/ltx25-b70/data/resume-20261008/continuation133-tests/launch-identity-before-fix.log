@@ -1,0 +1,18 @@
+test_full_split36_name_matches_prepared_shell_command (<run_path>.LaunchIdentity133.test_full_split36_name_matches_prepared_shell_command) ... FAIL
+test_legacy_off_name_equals_parent132_after_namespace_change (<run_path>.LaunchIdentity133.test_legacy_off_name_equals_parent132_after_namespace_change) ... ok
+test_legacy_replica_name_equals_parent132_after_namespace_change (<run_path>.LaunchIdentity133.test_legacy_replica_name_equals_parent132_after_namespace_change) ... ok
+test_prepared_shell_uses_selected_mode_then_audio_then_text (<run_path>.LaunchIdentity133.test_prepared_shell_uses_selected_mode_then_audio_then_text) ... ok
+
+======================================================================
+FAIL: test_full_split36_name_matches_prepared_shell_command (<run_path>.LaunchIdentity133.test_full_split36_name_matches_prepared_shell_command)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "experiments/ltx25-b70/data/resume-20261008/continuation133-tests/test_launch_identity133.pending.py", line 26, in test_full_split36_name_matches_prepared_shell_command
+    self.assertEqual(packet.expected_run_name(env),expected)
+AssertionError: 'enco[122 chars]-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmreplica-release' != 'enco[122 chars]-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36'
+Diff is 751 characters long. Set self.maxDiff to None to see it.
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.001s
+
+FAILED (failures=1)

@@ -1,5 +1,44 @@
 # Current Workspace State
 
+**2026-10-10, packet 133 sealed and CPU-validated: move twelve text layers to card 2 before capture; native qualification remains pending.**
+The proposed 145-frame setup keeps layers 0–35 on card 2 and 36–47 on card 3,
+with display back on card 3, no display replica and legacy audio placement.
+It moves 5.076 GiB of weights, plus an estimated 1.078 GiB of graph inputs,
+away from the decode card without copying weights at each scene cut.
+The 9 GiB floor, 5 GiB capture reserve and 0.75 GiB band remain unchanged.
+Using saved native-display readings and charging the full reserve, projected
+margins above floor plus band are 2.801 GiB on card 2 and 2.211 GiB on card 3.
+These are planning estimates, not measured memory released by packet 133.
+
+The option is `LTX_TEXT_RESIDENCY=split36` with `LTX_CONE_GRAPH_MEMORY=text-shift`;
+default `legacy` keeps packet 132 behavior. Every fresh text encode must match
+the pinned parent conditioning hashes for the two qualification prompts and
+ten kitten scenes. All 40 window-probe rows, the frozen 145-frame output table
+and existing nine output checks remain mandatory. Unknown prompts refuse.
+169 frames remain outside the new option. Native text equality, physical
+memory and sustained timing are still unmeasured. The conditional forecast is
+5.25–5.35 seconds per six seconds of video, plus unmeasured text-placement and
+native-display scheduling effects. No live service state was changed here;
+the coordinator retains control of the production line.
+
+All 1,052 recovery tests and 6,012 client checks across 41 suites passed in
+the final full runs. Ten mocked preflight checks, 22 runtime output comparisons
+and all 30 inner-plan pin assertions passed. Recursive verification covers
+2,299 bound files; Python caches are zero and owned scratch is removed.
+The initial development failures and their corrections are preserved.
+Manifest `a1f0fb23dbba64ea2530b58fb4787f736a602746a1be72a040688bf0eaf74bd6`;
+inner plan `b230f1dbd3f799b7f5227ef8ea7a72057a901aa0054be67f3babe664aa8700d9`.
+No GPU, model launch, check-only, live-port, unit, signal, host-setting,
+existing-run or ltx-stream operation occurred during preparation.
+
+Receipt audit corrects two details in the earlier 132 summary: its refusal was
+at conditioning-B-before, and recorded cone reservation growth was 3.545 GiB.
+That observed growth is not a peak bound and does not reduce the reserve.
+[Design and ranked options](experiments/ltx25-b70/notes/2026-10-10-continuation133-stream-design.md),
+[memory evidence](experiments/ltx25-b70/notes/2026-10-10-continuation133-memory-evidence.md),
+[build receipt](experiments/ltx25-b70/data/resume-20261008/continuation133-build.json),
+[prepared launch](experiments/ltx25-b70/recovery/20261010-continuation133-stream/LAUNCH.md).
+
 **2026-10-10 12:50 UTC, 132 at 145: the cone-graph capture was admitted for the first time, but the streaming floor then refused (xpu:3 9.10 GB free < 9.66 GB floor at qrepeat-c000001); no fault, no latch. The cone graph at 145 is closed as a lever under the current residency; 129 production relaunching (`s129-live03`).**
 With the display on the xpu:2 replica and the audio VAE/vocoder on xpu:2, the first cone capture fit (graph chunks 0–2 and repeat chunk 0 ran),
 but the captured pool (~4.5 GiB reserved) left xpu:3 at 9.10 GB before the next request against the 9 GiB (9.66 GB) pre-request floor

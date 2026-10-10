@@ -201,9 +201,12 @@ repeat comparisons and full native outputs remain mandatory. CPU accounting
 does not pass those gates.
 
 The inherited conditional cadence target is **5.25–5.35 seconds per6 seconds
-of new video =0.875–0.892 s/s**, plus any text-placement timing delta. There
-is no measured split36 period. Unlike moving the display/audio to2, this
-choice retains129's native display/audio arrangement. At roughly0.389 s/cut
+of new video =0.875–0.892 s/s**, plus the unmeasured text-placement and native3
+eager-display scheduling/contention deltas. There is no measured split36
+period. This choice retains129's native display/audio device placement, but
+changes its sampler-a display schedule to eager-display; the forecast came
+from a replica2/eager-display candidate and is not a matched timing result.
+At roughly0.389 s/cut
 every four chunks, current text contributes about0.097 s/chunk; that existing
 cost is already in the baseline and must not be added again. The hypothetical
 host-upload option would add0.273–0.545 s/chunk before recapture, yielding
