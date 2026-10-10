@@ -1,5 +1,19 @@
 # Current Workspace State
 
+**2026-10-10 13:55 UTC, launching 133 at 145: text layers 36–47 (5.08 GiB) moved from xpu:3 to xpu:2 before capture (`LTX_TEXT_RESIDENCY=split36`), no display replica, legacy audio, cone decoder graph (`LTX_CONE_GRAPH_MEMORY=text-shift`).**
+Codex's text inventory (`notes/2026-10-10-continuation133-stream-design.md`, commits 983eb2608, 30031ad55): text layers 0–23 on xpu:2
+(10.15 GiB) and 24–47 on xpu:3 (10.15 GiB), 480 pinned text graphs, no text state kept between cuts beyond one hash-checked conditioning
+result; a fresh encode costs ≈ 0.39 s per cut (every 4 chunks). Ranked options: split36 (zero per-cut cost; projected margins above floor +
+band 2.80 GiB on xpu:2 and 2.21 GiB on xpu:3 charging the full 5 GiB reserve) › host-resident shard (1–2 s per cut, graph-pointer issues)
+› all text on xpu:2 (not admitted) › scheduled prefetch (no memory) › dropping graph pools (no guaranteed memory). 133 (manifest
+`a1f0fb23…4bd6`; inner plan `b230f1db…00d9`; 1,052/1,052 recovery, 6,012/6,012 client, 10/10 preflight, 22/22 runtime comparisons) requires
+every fresh encode to match the pinned parent conditioning hashes (2 qualification prompts + 10 kitten scenes; unknown prompts refuse).
+129 production session 3 (≈ 450 chunks, exact, no stops) stopped by one controlled stop. Launch (work dir `s133-live01`):
+`LTX_TEXT_RESIDENCY=split36 LTX_CONE_GRAPH_MEMORY=text-shift LTX_AUDIO_RESIDENCY=legacy LTX_CONE_CAPTURE_RESERVE=parent LTX_DISPLAY_ALLOCATOR_RELEASE=off
+LTX_AUX_RESIDENCY=legacy LTX_DISPLAY_WORKER=serial LTX_MAINTENANCE_MODE=idle LTX_GC_INTERVAL_SECONDS=60 LTX_SNAPSHOT_DIGEST_CACHE=1
+LTX_STORAGE_SCAN_MODE=background LTX_RUN_WRITE_ALLOWANCE_GIB=16 launch-133.sh 145 frame 1 cone 1 1 fingerprint - eager-display 0 full xpu:3`;
+predicted 5.25–5.35 s (0.875–0.892 s/s); a refusal latches and the 129 line returns.
+
 **2026-10-10, packet 133 sealed and CPU-validated: move twelve text layers to card 2 before capture; native qualification remains pending.**
 The proposed 145-frame setup keeps layers 0–35 on card 2 and 36–47 on card 3,
 with display back on card 3, no display replica and legacy audio placement.
