@@ -38,7 +38,7 @@ class RecordedResult(unittest.TextTestResult):
         super().startTest(test)
 result=unittest.TextTestRunner(verbosity=2,resultclass=RecordedResult).run(suite)
 if args.receipt:
-    files=sorted(p for p in ROOT.rglob('*') if p.is_file() and p.suffix in ('.py','.json','.md','.txt') and p.name not in ('test-receipt.json',))
+    files=sorted(p for p in ROOT.rglob('*') if p.is_file() and p.suffix in ('.py','.json','.md','.txt') and p.name not in ('test-receipt.json','test-receipt-gate-correction.json'))
     files+=[ROOT.parent/'packet1/tensor-contract.json',ROOT.parent/'packet1/identity.json']
     receipt={'schema':'own-xpu-runtime.packet1b.cpu-tests.v1','utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
              'host':platform.node(),'python':sys.version,'executable':sys.executable,'torch':torch.__version__,

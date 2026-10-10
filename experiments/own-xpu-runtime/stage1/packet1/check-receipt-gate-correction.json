@@ -1,0 +1,294 @@
+{
+  "OMP_NUM_THREADS": "2",
+  "checked_utc": "2026-10-10T19:28:00.796400+00:00",
+  "checks": [
+    "source/config/suite/oracle hashes",
+    "official revision/index/shard coverage",
+    "64 dense layers: 48 GDN / 16 full attention, one MTP block",
+    "independent config-derived shape table",
+    "checked byte products/offsets/no overlaps/no gaps",
+    "FP8 scale pairing/exclusions and dtype census",
+    "package publisher hashes/sizes (metadata only)",
+    "12 oracle arrays/ranges/lengths/prompt hashes",
+    "deterministic manifests regenerated twice",
+    "malformed-header rejection"
+  ],
+  "command": "nice -n 19 env OMP_NUM_THREADS=2 python3 experiments/own-xpu-runtime/stage1/packet1/contract-checks.py --write-contracts --receipt experiments/own-xpu-runtime/stage1/packet1/check-receipt-gate-correction.json",
+  "exit_gate": "packet1_cpu_identity_and_tensor_contract",
+  "files": {
+    "contract-checks.py": "6fe31a527ed44dc8d055fe14170cf87b638ecb042a4f982f6de906216dc27d94",
+    "fetch-metadata.py": "4fa8fd5dd3fb988b69ca42c860ad7a5778b0ba08c4a0887c01eb90e95f628d62",
+    "identity.json": "1244a992fbee46ef41aa43d98df681493cfbffb39ecf70c4c5dfd86770d8e724",
+    "metadata/fetch-receipt.json": "6b1b88426946f265bce2d88952537b64389034b380db77bdf4e43f96e86485cb",
+    "oracle-token-ids.json": "c95300df7a0057bcdadcf05beb495ac215cd518bed9ab6d7d0492fdafa1b6cff",
+    "parser-fixtures.json": "b59a2e3b60a2bb4d7bea616737aaf175fcb97163d8e9251a86c024a9839313c8",
+    "tensor-contract.json": "fe89ffbde8a36a1f616bf7a05eaef986d546b187665a8f6bbad72545614c7f48"
+  },
+  "host": "steve-b70s",
+  "limitations": "Metadata only; no payload authentication, tokenizer execution, dequantization or native/performance gate.",
+  "mismatches": [
+    "Plan kernel-budget example assumes F32 scales; actual pinned headers store every weight_scale_inv in BF16. One 17408x5120 matrix plus scales is 89139840 bytes, not 89150720. No plan or checkpoint bytes changed.",
+    "Tensor payload is 203664 bytes smaller than package file total: exactly 66 header JSON regions plus 8-byte length prefixes.",
+    "HF aggregate parameter count excludes 1507520 BF16 block-scale elements (3015040 stored bytes); full tensor contract includes them."
+  ],
+  "nice": 19,
+  "oracle_lengths": [
+    512,
+    512,
+    272,
+    512,
+    512,
+    512,
+    512,
+    512,
+    512,
+    512,
+    512,
+    512
+  ],
+  "oracle_rows": 12,
+  "parser_fixtures": [
+    {
+      "accepted": true,
+      "name": "valid_bf16_matrix",
+      "passed": true,
+      "reason": null
+    },
+    {
+      "accepted": true,
+      "name": "valid_scalar",
+      "passed": true,
+      "reason": null
+    },
+    {
+      "accepted": true,
+      "name": "valid_fp8_and_bf16_scale",
+      "passed": true,
+      "reason": null
+    },
+    {
+      "accepted": true,
+      "name": "valid_fp16_exclusion",
+      "passed": true,
+      "reason": null
+    },
+    {
+      "accepted": false,
+      "name": "duplicate_tensor_name",
+      "passed": true,
+      "reason": "duplicate JSON key: x"
+    },
+    {
+      "accepted": false,
+      "name": "duplicate_dtype_key",
+      "passed": true,
+      "reason": "duplicate JSON key: dtype"
+    },
+    {
+      "accepted": false,
+      "name": "negative_dimension",
+      "passed": true,
+      "reason": "shape dimensions; zero-size tensors unsupported here"
+    },
+    {
+      "accepted": false,
+      "name": "boolean_dimension",
+      "passed": true,
+      "reason": "shape dimensions; zero-size tensors unsupported here"
+    },
+    {
+      "accepted": false,
+      "name": "fractional_dimension",
+      "passed": true,
+      "reason": "shape dimensions; zero-size tensors unsupported here"
+    },
+    {
+      "accepted": false,
+      "name": "zero_dimension",
+      "passed": true,
+      "reason": "shape dimensions; zero-size tensors unsupported here"
+    },
+    {
+      "accepted": false,
+      "name": "shape_overflow",
+      "passed": true,
+      "reason": "shape product overflow"
+    },
+    {
+      "accepted": false,
+      "name": "byte_overflow",
+      "passed": true,
+      "reason": "byte product overflow"
+    },
+    {
+      "accepted": false,
+      "name": "bad_shape_rank",
+      "passed": true,
+      "reason": "shape rank"
+    },
+    {
+      "accepted": false,
+      "name": "bad_shape_type",
+      "passed": true,
+      "reason": "shape rank"
+    },
+    {
+      "accepted": false,
+      "name": "unsupported_dtype",
+      "passed": true,
+      "reason": "unsupported dtype"
+    },
+    {
+      "accepted": false,
+      "name": "unknown_fp8",
+      "passed": true,
+      "reason": "unsupported dtype"
+    },
+    {
+      "accepted": false,
+      "name": "wrong_size",
+      "passed": true,
+      "reason": "offset/shape byte mismatch"
+    },
+    {
+      "accepted": false,
+      "name": "reversed_offsets",
+      "passed": true,
+      "reason": "offset/shape byte mismatch"
+    },
+    {
+      "accepted": false,
+      "name": "negative_offset",
+      "passed": true,
+      "reason": "offset integers"
+    },
+    {
+      "accepted": false,
+      "name": "boolean_offset",
+      "passed": true,
+      "reason": "offset integers"
+    },
+    {
+      "accepted": false,
+      "name": "offset_overflow",
+      "passed": true,
+      "reason": "offset integers"
+    },
+    {
+      "accepted": false,
+      "name": "out_of_file",
+      "passed": true,
+      "reason": "offset/shape byte mismatch"
+    },
+    {
+      "accepted": false,
+      "name": "overlap",
+      "passed": true,
+      "reason": "overlap or gap: y"
+    },
+    {
+      "accepted": false,
+      "name": "gap",
+      "passed": true,
+      "reason": "overlap or gap: x"
+    },
+    {
+      "accepted": false,
+      "name": "trailing_payload",
+      "passed": true,
+      "reason": "incomplete payload coverage"
+    },
+    {
+      "accepted": false,
+      "name": "unknown_field",
+      "passed": true,
+      "reason": "tensor fields"
+    },
+    {
+      "accepted": false,
+      "name": "metadata_not_string",
+      "passed": true,
+      "reason": "metadata strings"
+    },
+    {
+      "accepted": false,
+      "name": "no_tensors",
+      "passed": true,
+      "reason": "incomplete payload coverage"
+    },
+    {
+      "accepted": false,
+      "name": "truncated_json",
+      "passed": true,
+      "reason": "Expecting value: line 1 column 6 (char 5)"
+    },
+    {
+      "accepted": false,
+      "name": "non_object",
+      "passed": true,
+      "reason": "header must start with object"
+    },
+    {
+      "accepted": false,
+      "name": "non_finite_json",
+      "passed": true,
+      "reason": "non-finite JSON constant: NaN"
+    },
+    {
+      "accepted": false,
+      "name": "header_length_mismatch",
+      "passed": true,
+      "reason": "truncated or oversized header"
+    },
+    {
+      "accepted": false,
+      "name": "header_limit",
+      "passed": true,
+      "reason": "header bound"
+    },
+    {
+      "accepted": false,
+      "name": "header_underflow",
+      "passed": true,
+      "reason": "header bound"
+    },
+    {
+      "accepted": false,
+      "name": "file_too_short",
+      "passed": true,
+      "reason": "file bounds"
+    }
+  ],
+  "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "schema": "own-xpu-runtime.packet1.check-receipt.v1",
+  "stage1_complete": false,
+  "tensor_count": 1606,
+  "totals_bytes": {
+    "component": {
+      "dense_ffn": 17114849280,
+      "embedding": 2542796800,
+      "final_norm": 10240,
+      "full_attention": 1677942784,
+      "gdn": 5588296704,
+      "layer_norms": 1310720,
+      "native_mtp": 477199744,
+      "target_head": 2542796800,
+      "vision_unsupported": 921460192
+    },
+    "dtype": {
+      "BF16": 6167455584,
+      "F8_E4M3": 24699207680
+    },
+    "headers_and_prefixes": 203664,
+    "package_files": 30866866928,
+    "residency_class": {
+      "card0_mtp_planned": 477199744,
+      "card0_target_planned": 26925206528,
+      "embedding_device_or_uva_unresolved": 2542796800,
+      "not_admitted_vision": 921460192
+    },
+    "tensor_payload": 30866663264,
+    "unexplained_difference": 0
+  },
+  "verdict": "PASS"
+}

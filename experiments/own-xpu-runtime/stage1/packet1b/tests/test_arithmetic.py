@@ -46,6 +46,38 @@ def bits_equal(a,b):
 
 
 class Arithmetic(unittest.TestCase):
+    def test_attention_gate_official_source_contract(self):
+        import hashlib
+        gate_contract = CONTRACT['attention_output_gate']
+        self.assertEqual(gate_contract['effective_activation'], 'sigmoid')
+        self.assertEqual(gate_contract['publisher_config_value'], 'swish')
+        evidence_path = ROOT.parent/'packet3-prep/gate-evidence.json'
+        evidence = json.loads(evidence_path.read_text())
+        self.assertEqual(hashlib.sha256(evidence_path.read_bytes()).hexdigest(), gate_contract['evidence']['sha256'])
+        config = ROOT.parent/'packet1/metadata/config.json'
+        self.assertEqual(hashlib.sha256(config.read_bytes()).hexdigest(), evidence['config']['sha256'])
+        self.assertEqual(evidence['config']['architecture'], ['Qwen3_5ForConditionalGeneration'])
+        self.assertEqual(evidence['sources'][0]['output_gate_type_occurrences'], 0)
+        self.assertTrue(any('torch.sigmoid(gate)' in r['text'] for r in evidence['sources'][0]['evidence']))
+
+    def test_attention_gate_zero_and_negative_distinguish_swish(self):
+        out = torch.tensor([2., 2., 2.], dtype=F16)
+        gate = torch.tensor([-2., 0., 2.], dtype=F16)
+        actual = attention_output_gate(out, gate)
+        self.assertEqual(actual[1].item(), 1.) # swish(0) would erase the output
+        self.assertGreater(actual[0].item(), 0.) # swish(-2) has the wrong sign
+        expected = (2. / (1. + torch.exp(-gate.float()))).to(F16)
+        self.assertTrue(bits_equal(actual, expected))
+
+    def test_attention_zero_gate_in_full_path(self):
+        # One key: softmax is exactly 1, V is 2, sigmoid(0) is 1/2.
+        # Exercises gate placement after attention, without checkpoint weights.
+        w = {name: (lambda x, n=n, value=value: torch.full((x.shape[0],n), value,dtype=F16))
+             for name,n,value in [('q',24*512,0.),('k',4*256,0.),('v',4*256,2.)]}
+        w.update(q_norm=torch.zeros(256,dtype=BF16), k_norm=torch.zeros(256,dtype=BF16), out=lambda x:x)
+        output,_ = attention(torch.zeros(1,5120,dtype=F16),w,torch.tensor([0]),(torch.empty(0,4,256,dtype=F16),)*2)
+        self.assertTrue(bits_equal(output,torch.ones(1,24*256,dtype=F16)))
+
     def setUp(self):
         torch.manual_seed(19)
 

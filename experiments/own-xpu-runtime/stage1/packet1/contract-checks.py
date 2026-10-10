@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 import re
 import socket
+import shlex
 import sys
 
 HERE = Path(__file__).resolve().parent
@@ -310,6 +311,7 @@ def derive():
         "scope": "metadata-only; no payload authentication, dequantization, loader implementation, memory admission or native qualification",
         "scale_semantics": "Preserve publisher weight_scale_inv tensors and BF16 storage. Numerical dequantization/cast convention must be proven with known-value fixtures in packet 2; not inferred from the suffix here.",
         "storage_vs_compute": "BF16 exclusions stay BF16 on disk. Certified runtime profile uses W8A16, FP16 activation/KV and FP32 GDN state; no storage dtype is silently rewritten.",
+        "attention_output_gate": {"publisher_config_value": c["output_gate_type"], "effective_activation": "sigmoid", "authority": "Official Qwen3_5Attention.forward, not unused output_gate_type metadata", "evidence": file_pin(LANE + "/stage1/packet3-prep/gate-evidence.json"), "certified_device_cast_parity": "UNVERIFIED U5"},
         "unsupported_formats": ["GGUF", "INT4/AutoRound/compressed-tensors", "other FP8 encodings or block sizes", "unknown tensor names/dtypes", "zero-size tensors", "pickle or model-supplied Python"],
         "residency_note": "Classes are byte accounting for a future single-card placement, not measured allocations. Embedding device/UVA choice is unresolved; vision is excluded. Host mappings, KV/state, graph pools, scratch, shadows, staging and allocator overhead are not checkpoint tensors.",
         "tensor_count": len(directory), "layers": [{"layer": i, "kind": kind, "tensor_count": sum(n.startswith(f"model.language_model.layers.{i}.") for n in directory)} for i, kind in enumerate(c["layer_types"])],
@@ -404,7 +406,7 @@ def main():
                "checked_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
                "host": socket.gethostname(), "python": sys.version, "nice": os.getpriority(os.PRIO_PROCESS, 0),
                "OMP_NUM_THREADS": os.environ["OMP_NUM_THREADS"],
-               "command": "nice -n 19 env OMP_NUM_THREADS=2 python3 experiments/own-xpu-runtime/stage1/packet1/contract-checks.py --receipt experiments/own-xpu-runtime/stage1/packet1/check-receipt.json",
+               "command": "nice -n 19 env OMP_NUM_THREADS=2 python3 " + shlex.join(sys.argv),
                "files": {n: sha((HERE / n).read_bytes()) for n in [*products, "contract-checks.py", "parser-fixtures.json", "fetch-metadata.py", "metadata/fetch-receipt.json"]},
                "oracle_rows": 12, "oracle_lengths": [r["length"] for r in products["oracle-token-ids.json"]["rows"]],
                "tensor_count": products["tensor-contract.json"]["tensor_count"],

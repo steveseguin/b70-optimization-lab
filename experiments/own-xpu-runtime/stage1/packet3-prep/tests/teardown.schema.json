@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Packet 3 teardown receipt (process-local; kernel postflight separate)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "backend", "status", "exit_code", "safe_to_exit", "idle_marker_complete", "in_flight", "live_bytes", "error", "sequence"],
+  "properties": {
+    "schema": {"const": "own-xpu-runtime.teardown.v1"},
+    "backend": {"type": "string", "minLength": 1},
+    "status": {"enum": ["complete", "refused", "failed"]},
+    "exit_code": {"enum": [0, 1, 75]},
+    "safe_to_exit": {"type": "boolean"},
+    "idle_marker_complete": {"type": "boolean"},
+    "in_flight": {"type": "integer", "minimum": 0},
+    "live_bytes": {"type": "integer", "minimum": 0},
+    "error": {"type": "string"},
+    "sequence": {"type": "array", "items": {"type": "string"}}
+  },
+  "allOf": [
+    {"if": {"properties": {"status": {"const": "complete"}}},
+     "then": {"properties": {"exit_code": {"const": 0}, "safe_to_exit": {"const": true}, "error": {"const": ""}}}},
+    {"if": {"properties": {"safe_to_exit": {"const": true}}},
+     "then": {"properties": {"idle_marker_complete": {"const": true}, "in_flight": {"const": 0}, "live_bytes": {"const": 0}, "sequence": {"minItems": 6, "contains": {"const": "context-released"}}}}},
+    {"if": {"properties": {"status": {"const": "refused"}}},
+     "then": {"properties": {"safe_to_exit": {"const": false}, "exit_code": {"const": 75}}}}
+  ]
+}

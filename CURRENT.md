@@ -1,5 +1,10 @@
 # Current Workspace State
 
+**2026-10-10, our own runtime: packet 3 preparation is CPU-tested and compiled.**
+The [resource owner](experiments/own-xpu-runtime/stage1/packet3-prep/README.md) checks memory ownership, bounded copies and orderly shutdown with mock devices; the SYCL path was compiled but never run.
+Official model source resolves the attention gate to sigmoid, and the CPU reference and contract are corrected with tests.
+Native execution still needs the owner's authorization; the host halt and existing lanes were untouched.
+
 **2026-10-10, our own runtime: packet 1b adds a CPU reference and file readers.**
 The [reference and test receipt](experiments/own-xpu-runtime/stage1/packet1b/README.md)
 cover synthetic arithmetic, exact CPU repeats and header checks without reading weights or using a GPU.

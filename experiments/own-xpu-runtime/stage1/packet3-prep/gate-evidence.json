@@ -1,0 +1,45 @@
+{
+  "schema": "own-xpu-runtime.gate-evidence.v1",
+  "config": {
+    "path": "../packet1/metadata/config.json",
+    "sha256": "74227dd615bf1ea975aa676bdf355a0379858c12f394b5365cd9dfa5fc2c70bc",
+    "url": "https://huggingface.co/Qwen/Qwen3.8-27B-FP8/resolve/017b9c7af6b5689d5dd426a76e0bc077eb5ca20a/config.json",
+    "architecture": [
+      "Qwen3_5ForConditionalGeneration"
+    ],
+    "declared_output_gate_type": "swish"
+  },
+  "sources": [
+    {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/536ecc007387a50e77603bb5d92100e9b07514cc/src/transformers/models/qwen3_5/modeling_qwen3_5.py",
+      "revision": "536ecc007387a50e77603bb5d92100e9b07514cc",
+      "sha256": "496958ed2dc0bbf3d2ca0c0368cee9129742f08a79104c0951f505ac29d5a4e0",
+      "bytes": 87833,
+      "evidence": [
+        {
+          "line": 735,
+          "text": "class Qwen3_5Attention(nn.Module):"
+        },
+        {
+          "line": 804,
+          "text": "        attn_output = attn_output * torch.sigmoid(gate)"
+        },
+        {
+          "line": 1752,
+          "text": "class Qwen3_5ForConditionalGeneration(Qwen3_5PreTrainedModel, GenerationMixin):"
+        }
+      ],
+      "output_gate_type_occurrences": 0
+    },
+    {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/536ecc007387a50e77603bb5d92100e9b07514cc/src/transformers/models/qwen3_5/configuration_qwen3_5.py",
+      "revision": "536ecc007387a50e77603bb5d92100e9b07514cc",
+      "sha256": "e5316490555c2d3590682f1d84ca656bdf3d2aff7475b95b682c03afbb69e748",
+      "bytes": 7933,
+      "evidence": [],
+      "output_gate_type_occurrences": 0
+    }
+  ],
+  "verdict": "Full-attention output gate is sigmoid in the official Qwen3_5 architecture implementation. output_gate_type=swish is retained publisher metadata, not a field read by that implementation. GDN norm and FFN retain SiLU. Certified device cast/reduction parity remains U5.",
+  "execution": "Source/metadata reads only; no imported model code or weights."
+}

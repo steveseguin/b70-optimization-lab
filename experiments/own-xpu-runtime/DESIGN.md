@@ -120,12 +120,17 @@ Do not confuse the release name with the internal architecture name.
 | Layer schedule | 48 GDN + 16 full attention, every fourth full | 36 GDN + 12 full/QSA layers, every fourth full |
 | Full attention | 24 query / 4 KV heads, head dimension 256 | 24 query / 2 KV heads, head dimension 256 |
 | GDN | 16 key / 48 value heads, key/value dimensions 128, convolution width 4, FP32 recurrent state | Same head counts/dimensions/width; FP32 recurrent state |
-| Output gate | `attn_output_gate=true`, `output_gate_type=swish` | `output_gate_type=sigmoid`; do not substitute the 27B gate |
+| Full-attention output gate | **sigmoid** in the official `Qwen3_5Attention` implementation; publisher `output_gate_type=swish` is unused metadata, preserved verbatim | `output_gate_type=sigmoid`; bind implementation separately |
 | FFN/routing | Dense SiLU gate/up/down; no routed experts | 512 experts, top 10, intermediate 640; shared expert 640; preserve routing order/weights |
 | Additional Flash structure | Not applicable | Hyperconnections: 4 streams, low-rank 320. PLE at layer id 2: 20M vocabulary, ngram 3, 8 heads, split 128, embedding dimension 2560 |
 | QSA | Ordinary full-attention path | Indexer budget 2048, compression factor 4, indexer head dimension 128, 4 query / 1 KV heads; preserve index selection and compression state |
 | Native MTP | One block; shared input embeddings, untied output head | One full-attention hybrid block; shared embeddings, model-specific HC/MoE/QSA handling from lane evidence |
 | Vocabulary / rotary | 248320; theta 10,000,000, partial rotary factor 0.25 | 248320; main/MTP theta 10,000,000, partial rotary factor 0.25; default interleaved MRoPE configuration from snapshot |
+
+The [packet 3 preparation source check](stage1/packet3-prep/gate-evidence.json)
+corrects the earlier inference that the 27B config's swish field selected the
+attention gate. GDN gated normalization and the dense FFN still use SiLU;
+certified device arithmetic and cast boundaries remain unverified.
 
 Keep norm epsilon, gating, residual ordering and all exceptions from config
 and tensor census. `modules_to_not_convert` is not a graph definition (the 27B

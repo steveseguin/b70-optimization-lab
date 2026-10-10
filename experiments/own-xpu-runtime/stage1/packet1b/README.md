@@ -7,7 +7,10 @@ GPU operations, servers, systemd calls, port access, device-node access, native
 builds, or changes to existing environments were needed. Temporary synthetic
 files use automatically removed directories; no scratch is part of the packet.
 
-The [test receipt](test-receipt.json) binds the tests, source files, schema,
+The [initial test receipt](test-receipt.json) preserves the first swish reference.
+The [gate-corrected receipt](test-receipt-gate-correction.json) binds the current
+sigmoid reference after [official-source review](../packet3-prep/gate-evidence.json).
+The current receipt binds the tests, source files, schema,
 format data, documentation and packet 1 contract by SHA256. All tests run at
 nice 19 with `OMP_NUM_THREADS=2`, two torch CPU threads and one interop thread.
 The existing torch distribution has an `+xpu` build suffix; only CPU tensors
@@ -72,7 +75,7 @@ needed to run this packet.
 | S1 | [Rebuilt Flash-Next extension](../../../../patches/qwen38-flash-next-fp8-b70/xpu-kernels-gdn-exact-serial-bbae3c5/README.md), head `bbae3c59e226c1b0c2a2dca6c51b4465cf36fd26`; `csrc/xpu/gdn_attn/gated_delta_rule.hpp`, `causal_conv1d.hpp`, `spec_decode.hpp`. The [A361–A363 note](../../../qwen38-flash-next-fp8-b70/notes/2026-09-12-a361-a363-the-extension-exact-serial-mode-removes-the-tax.md) binds serial row execution; the [27B R311 patch](../../../qwen38-27b-b70/patches/vllm-xpu-kernels-gdn-single-checkpoint-r311-20260917.patch) and [checkpoint note](../../../qwen38-27b-b70/notes/2026-09-17-gdn-single-checkpoint-plan.md) establish accepted-row replay/commit. |
 | S2 | Kernel tree `e421889999bc1e5a5f11044d14548b9afdba644d`, `csrc/xpu/onednn/fp8_gemm_w8a16.h`: F16 activation / E4M3 weight dispatch, two-axis block scales and their supplied dtype passed to oneDNN. It does not disclose internal oneDNN reduction/cast geometry. |
 | S3 | Local vLLM tree `44fc8fde09fc311d3099dab10366b672d9142ea4`, `vllm/model_executor/layers/layernorm.py`, `GemmaRMSNorm.forward_native`: gain `1+w`, FP32 residual sum on the F16 path, final cast. `RMSNormGated` uses ordinary gain and normalizes before the gate. `models/qwen3_next.py` provides the residual/FFN schedule. This inspected tree is not itself a certified 27B image binding. |
-| S4 | Same model tree, `models/qwen3_next.py`: Q/gate split within each query head, Q/K norms, rotary, attention, output gate and projection. The pinned [27B config](../../data/qwen27-official-config.json) supplies 24/4 heads, D256, 64 rotary dimensions, theta 1e7 and **swish** gate. The inspected older model implementation uses sigmoid: this conflict is retained as U5, not hidden by substituting its gate. |
+| S4 | Same model tree, `models/qwen3_next.py`: Q/gate split within each query head, Q/K norms, rotary, attention, output gate and projection. The pinned [27B config](../../data/qwen27-official-config.json) supplies 24/4 heads, D256, 64 rotary dimensions and theta 1e7. Packet 3 prep resolves the gate: official `Qwen3_5Attention` uses **sigmoid** and never reads the publisher swish metadata. [Pinned source evidence](../packet3-prep/gate-evidence.json). |
 | S5 | Same tree, `models/qwen3_5_mtp.py`: separately normalize embedding and previous hidden, concatenate **embedding first**, merge, execute the MTP decoder, final norm, shared head. Its exact correspondence to the certified comparator is U7. |
 
 S1's recurrent state layout is `[value_head, value_dimension, key_dimension]`.
@@ -99,7 +102,7 @@ unknown device arithmetic is deliberately explicit.
 | U2 | Excluded BF16 weight load/casts, norms/conv/gate parameter conversion, embedding/head/merge execution precision | Keep BF16 storage, cast execution weights to FP16; A_log widens directly to FP32. Save post-load parameter bytes and excluded-linear fixtures, including head and MTP merge. |
 | U3 | RMS reduction tree, rsqrt/exp/sigmoid/SiLU accuracy, residual/norm/gate fusion and compiler rounding | Explicit FP32 operations, fixed CPU tree, stated FP16 boundaries, FP32 residual carry. Extract input/output/residual for each norm family, conv activation and FFN product. |
 | U4 | GDN subgroup sum tree, FMA contraction, exp/sqrt implementation, 27B serial/spec/checkpoint equivalence | Preserve row/lane dependency order with separate FP32 mul/add and FP32 state writes. Extract every row's conv/Q/K/gates, output and before/after recurrent state, including accepted-prefix replay. |
-| U5 | Certified attention kernel, RoPE cache casting, score/softmax/PV reductions, output-gate implementation | Text split-half RoPE with F16 tables; FP32 scores/softmax/PV; F16 output and KV; contract swish gate. Resolve older source sigmoid versus contract swish in the actual certified image. Test nonzero positions, past KV, causal multirow and context lengths. |
+| U5 | Certified attention kernel, RoPE cache casting, score/softmax/PV reductions, output-gate implementation | Text split-half RoPE with F16 tables; FP32 scores/softmax/PV; F16 output and KV; source-corrected sigmoid gate. Gate function is resolved; certified cast/fusion parity still needs an image-bound fixture. Test nonzero positions, past KV, causal multirow and context lengths. |
 | U6 | Target logits precision and certified stable tie/NaN policy | F16 linear output, full vocabulary, lowest index for ties; NaNs rejected. Save head logits and tie fixtures with comparator sampler dispatch. |
 | U7 | Certified MTP merge/norm/block boundaries and proposal-head profile | Embedding-first concatenation, one full-attention block, shared full target head. Save intermediate hidden/KV/logits; separately bind any certified draft shortlist. Acceptance/rollback is not implemented by this forward reference. |
 
@@ -116,7 +119,7 @@ From the repository root, using an existing environment with torch and
 jsonschema (no installation or environment mutation required here):
 
 ```bash
-nice -n 19 env OMP_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B experiments/own-xpu-runtime/stage1/packet1b/run_tests.py --receipt experiments/own-xpu-runtime/stage1/packet1b/test-receipt.json
+nice -n 19 env OMP_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B experiments/own-xpu-runtime/stage1/packet1b/run_tests.py --receipt experiments/own-xpu-runtime/stage1/packet1b/test-receipt-gate-correction.json
 ```
 
 Omit `--receipt` for a read-only rerun. The runner refuses other nice/thread

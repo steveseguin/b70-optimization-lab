@@ -245,13 +245,24 @@ def rope(x, positions):
     return torch.cat((rotated,x[...,64:]),-1)
 
 
+def attention_output_gate(out, gate):
+    """Official Qwen3_5Attention uses sigmoid, not the unused swish config key.
+
+    Source identity: ../packet3-prep/gate-evidence.json. Freeze FP32 sigmoid
+    and multiply followed by F16; certified device casts remain U5.
+    GDN gated RMS and FFN SiLU are separate and unchanged.
+    """
+    cpu(out, gate)
+    return (out.float() * torch.sigmoid(gate.float())).to(F16)
+
+
 def attention(x, w, positions, kv):
     """27B Q24/KV4/D256; Q projection interleaves Q/gate per head (S4).
 
     Q/K unit-offset RMS -> RoPE -> append F16 K/V -> causal serial rows.
     FP32 QK matmul /16, max-subtracted exp, tree denominator, FP32 PV;
-    F16 attention output -> swish gate (contract) -> F16 -> output projection.
-    U5 covers device softmax/reduction/casts and swish vs older sigmoid source.
+    F16 attention output -> sigmoid gate -> F16 -> output projection.
+    U5 covers device softmax/reduction/casts; gate function resolved in packet 3 prep.
     """
     cpu(x, positions, *kv)
     if x.ndim != 2 or x.shape[1] != 5120 or any(t.dtype != F16 for t in kv) or kv[0].shape != kv[1].shape or kv[0].shape[1:] != (4,256):
@@ -270,7 +281,7 @@ def attention(x, w, positions, kv):
         ex = torch.exp(score-score.max(-1,keepdim=True).values)
         prob = ex / tree_sum(ex).unsqueeze(-1)
         out = torch.matmul(prob[:,None,:],vh).squeeze(1).to(F16)
-        outputs.append((out.float()*silu(gate[row],F32)).to(F16).flatten())
+        outputs.append(attention_output_gate(out,gate[row]).flatten())
     return w['out'](torch.stack(outputs)), (keys,values)
 
 

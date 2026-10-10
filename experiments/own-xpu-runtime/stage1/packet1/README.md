@@ -7,6 +7,11 @@ oracle hashes and 12 rows, dense-model structure, and malformed-header
 rejection. The [check receipt](check-receipt.json) records the successful CPU
 run. This does not pass Stage 1's native, output-parity or speed gates.
 
+Packet 3 preparation adds a source-derived **sigmoid** attention-gate contract;
+the publisher config remains unchanged. The [correction receipt](check-receipt-gate-correction.json)
+checks the updated derived contracts; the original receipt above is historical.
+[Official source evidence](../packet3-prep/gate-evidence.json).
+
 ## Frozen identity
 
 [identity.json](identity.json) pins official `Qwen/Qwen3.8-27B-FP8` revision

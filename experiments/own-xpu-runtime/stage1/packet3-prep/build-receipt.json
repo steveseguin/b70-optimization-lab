@@ -1,0 +1,289 @@
+{
+  "schema": "own-xpu-runtime.packet3-prep.build.v1",
+  "utc": "2026-10-10T19:29:35.270946+00:00",
+  "host": "steve-b70s",
+  "cwd": "/home/steve/llm-optimizations",
+  "nice": 19,
+  "OMP_NUM_THREADS": "2",
+  "native_executed": false,
+  "native_executable_linked": false,
+  "commands": [
+    {
+      "argv": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "--version"
+      ],
+      "returncode": 0,
+      "stdout": "Intel(R) oneAPI DPC++/C++ Compiler 2026.0.0 (2026.0.0.20260331)\nTarget: x86_64-unknown-linux-gnu\nThread model: posix\nInstalledDir: /opt/intel/oneapi/compiler/2026.0/bin/compiler\nConfiguration file: /opt/intel/oneapi/compiler/2026.0/bin/compiler/../icpx.cfg\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "cmake",
+        "--version"
+      ],
+      "returncode": 0,
+      "stdout": "cmake version 4.3.2\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake).\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "dpkg-query",
+        "-W",
+        "libze-dev",
+        "libze1"
+      ],
+      "returncode": 0,
+      "stdout": "libze-dev:amd64\t1.28.2-1~24.04~ppa1\nlibze1:amd64\t1.28.2-1~24.04~ppa1\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "cmake",
+        "-S",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host",
+        "-DOWN_RT_HOST_ONLY=ON",
+        "-DOWN_RT_BUILD_NATIVE_SMOKE=OFF",
+        "-DPython3_EXECUTABLE=/home/steve/.venvs/vllm-xpu/bin/python"
+      ],
+      "returncode": 0,
+      "stdout": "-- Configuring done (0.2s)\n-- Generating done (0.0s)\n-- Build files have been written to: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "cmake",
+        "--build",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host",
+        "--clean-first",
+        "--verbose",
+        "-j2"
+      ],
+      "returncode": 0,
+      "stdout": "Change Dir: '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host'\n\nRun Clean Command: /home/steve/.local/share/uv/tools/cmake/lib/python3.12/site-packages/cmake/data/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile -j2 clean\n/usr/bin/gmake  -f CMakeFiles/Makefile2 clean\ngmake[1]: Entering directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host'\n/usr/bin/gmake  -f CMakeFiles/owner.dir/build.make CMakeFiles/owner.dir/clean\n/usr/bin/gmake  -f CMakeFiles/own-rt-smoke.dir/build.make CMakeFiles/own-rt-smoke.dir/clean\ngmake[2]: Entering directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host'\n/home/steve/.local/share/uv/tools/cmake/lib/python3.12/site-packages/cmake/data/bin/cmake -P CMakeFiles/owner.dir/cmake_clean.cmake\ngmake[2]: Entering directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host'\n/home/steve/.local/share/uv/tools/cmake/lib/python3.12/site-packages/cmake/data/bin/cmake -P CMakeFiles/own-rt-smoke.dir/cmake_clean.cmake\ngmake[2]: Leaving directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host'\ngmake[2]: Leaving directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host'\n/usr/bin/gmake  -f CMakeFiles/owner-tests.dir/build.make CMakeFiles/owner-tests.dir/clean\ngmake[2]: Entering directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host'\n/home/steve/.local/share/uv/tools/cmake/lib/python3.12/site-packages/cmake/data/bin/cmake -P CMakeFiles/owner-tests.dir/cmake_clean.cmake\ngmake[2]: Leaving directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host'\ngmake[1]: Leaving directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host'\n\nRun Build Command(s): /home/steve/.local/share/uv/tools/cmake/lib/python3.12/site-packages/cmake/data/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile -j2\n/home/steve/.local/share/uv/tools/cmake/lib/python3.12/site-packages/cmake/data/bin/cmake -S/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep -B/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host --check-build-system CMakeFiles/Makefile.cmake 0\n/home/steve/.local/share/uv/tools/cmake/lib/python3.12/site-packages/cmake/data/bin/cmake -E cmake_progress_start /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host/CMakeFiles /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host//CMakeFiles/progress.marks\n/usr/bin/gmake  -f CMakeFiles/Makefile2 all\ngmake[1]: Entering directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host'\n/usr/bin/gmake  -f CMakeFiles/owner.dir/build.make CMakeFiles/owner.dir/depend\ngmake[2]: Entering directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host'\ncd /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host && /home/steve/.local/share/uv/tools/cmake/lib/python3.12/site-packages/cmake/data/bin/cmake -E cmake_depends \"Unix Makefiles\" /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host/CMakeFiles/owner.dir/DependInfo.cmake \"--color=\" owner\ngmake[2]: Leaving directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host'\n/usr/bin/gmake  -f CMakeFiles/owner.dir/build.make CMakeFiles/owner.dir/build\ngmake[2]: Entering directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host'\n[ 16%] Building CXX object CMakeFiles/owner.dir/src/owner.cpp.o\n/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src -std=c++20 -Wall -Wextra -Werror -MD -MT CMakeFiles/owner.dir/src/owner.cpp.o -MF CMakeFiles/owner.dir/src/owner.cpp.o.d -o CMakeFiles/owner.dir/src/owner.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp\n[ 33%] Linking CXX static library libowner.a\n/home/steve/.local/share/uv/tools/cmake/lib/python3.12/site-packages/cmake/data/bin/cmake -P CMakeFiles/owner.dir/cmake_clean_target.cmake\n/home/steve/.local/share/uv/tools/cmake/lib/python3.12/site-packages/cmake/data/bin/cmake -E cmake_link_script CMakeFiles/owner.dir/link.txt --verbose=1\n/usr/bin/llvm-ar qc libowner.a CMakeFiles/owner.dir/src/owner.cpp.o\n/usr/bin/llvm-ranlib libowner.a\ngmake[2]: Leaving directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host'\n[ 33%] Built target owner\n/usr/bin/gmake  -f CMakeFiles/own-rt-smoke.dir/build.make CMakeFiles/own-rt-smoke.dir/depend\n/usr/bin/gmake  -f CMakeFiles/owner-tests.dir/build.make CMakeFiles/owner-tests.dir/depend\ngmake[2]: Entering directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host'\ncd /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host && /home/steve/.local/share/uv/tools/cmake/lib/python3.12/site-packages/cmake/data/bin/cmake -E cmake_depends \"Unix Makefiles\" /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host/CMakeFiles/own-rt-smoke.dir/DependInfo.cmake \"--color=\" own-rt-smoke\ngmake[2]: Entering directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host'\ncd /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host && /home/steve/.local/share/uv/tools/cmake/lib/python3.12/site-packages/cmake/data/bin/cmake -E cmake_depends \"Unix Makefiles\" /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host/CMakeFiles/owner-tests.dir/DependInfo.cmake \"--color=\" owner-tests\ngmake[2]: Leaving directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host'\n/usr/bin/gmake  -f CMakeFiles/own-rt-smoke.dir/build.make CMakeFiles/own-rt-smoke.dir/build\ngmake[2]: Leaving directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host'\n/usr/bin/gmake  -f CMakeFiles/owner-tests.dir/build.make CMakeFiles/owner-tests.dir/build\ngmake[2]: Entering directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host'\ngmake[2]: Entering directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host'\n[ 50%] Building CXX object CMakeFiles/own-rt-smoke.dir/src/smoke.cpp.o\n/opt/intel/oneapi/compiler/2026.0/bin/icpx -DOWN_RT_HOST_ONLY=1 -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src -std=c++20 -MD -MT CMakeFiles/own-rt-smoke.dir/src/smoke.cpp.o -MF CMakeFiles/own-rt-smoke.dir/src/smoke.cpp.o.d -o CMakeFiles/own-rt-smoke.dir/src/smoke.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/smoke.cpp\n[ 66%] Building CXX object CMakeFiles/owner-tests.dir/tests/owner_tests.cpp.o\n/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src -std=c++20 -MD -MT CMakeFiles/owner-tests.dir/tests/owner_tests.cpp.o -MF CMakeFiles/owner-tests.dir/tests/owner_tests.cpp.o.d -o CMakeFiles/owner-tests.dir/tests/owner_tests.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/tests/owner_tests.cpp\n[ 83%] Linking CXX executable own-rt-smoke\n/home/steve/.local/share/uv/tools/cmake/lib/python3.12/site-packages/cmake/data/bin/cmake -E cmake_link_script CMakeFiles/own-rt-smoke.dir/link.txt --verbose=1\n/opt/intel/oneapi/compiler/2026.0/bin/icpx \"CMakeFiles/own-rt-smoke.dir/src/smoke.cpp.o\" -o own-rt-smoke  libowner.a\ngmake[2]: Leaving directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host'\n[ 83%] Built target own-rt-smoke\n[100%] Linking CXX executable owner-tests\n/home/steve/.local/share/uv/tools/cmake/lib/python3.12/site-packages/cmake/data/bin/cmake -E cmake_link_script CMakeFiles/owner-tests.dir/link.txt --verbose=1\n/opt/intel/oneapi/compiler/2026.0/bin/icpx \"CMakeFiles/owner-tests.dir/tests/owner_tests.cpp.o\" -o owner-tests  libowner.a\ngmake[2]: Leaving directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host'\n[100%] Built target owner-tests\ngmake[1]: Leaving directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host'\n/home/steve/.local/share/uv/tools/cmake/lib/python3.12/site-packages/cmake/data/bin/cmake -E cmake_progress_start /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host/CMakeFiles 0\n\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "cmake",
+        "-S",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl",
+        "-DOWN_RT_HOST_ONLY=OFF",
+        "-DOWN_RT_BUILD_NATIVE_SMOKE=OFF"
+      ],
+      "returncode": 0,
+      "stdout": "-- Configuring done (0.0s)\n-- Generating done (0.0s)\n-- Build files have been written to: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "cmake",
+        "--build",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl",
+        "--clean-first",
+        "--verbose",
+        "-j2"
+      ],
+      "returncode": 0,
+      "stdout": "Change Dir: '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl'\n\nRun Clean Command: /home/steve/.local/share/uv/tools/cmake/lib/python3.12/site-packages/cmake/data/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile -j2 clean\n/usr/bin/gmake  -f CMakeFiles/Makefile2 clean\ngmake[1]: Entering directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl'\n/usr/bin/gmake  -f CMakeFiles/owner.dir/build.make CMakeFiles/owner.dir/clean\n/usr/bin/gmake  -f CMakeFiles/sycl-compile.dir/build.make CMakeFiles/sycl-compile.dir/clean\ngmake[2]: Entering directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl'\n/home/steve/.local/share/uv/tools/cmake/lib/python3.12/site-packages/cmake/data/bin/cmake -P CMakeFiles/owner.dir/cmake_clean.cmake\ngmake[2]: Entering directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl'\n/home/steve/.local/share/uv/tools/cmake/lib/python3.12/site-packages/cmake/data/bin/cmake -P CMakeFiles/sycl-compile.dir/cmake_clean.cmake\ngmake[2]: Leaving directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl'\ngmake[2]: Leaving directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl'\ngmake[1]: Leaving directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl'\n\nRun Build Command(s): /home/steve/.local/share/uv/tools/cmake/lib/python3.12/site-packages/cmake/data/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile -j2\n/home/steve/.local/share/uv/tools/cmake/lib/python3.12/site-packages/cmake/data/bin/cmake -S/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep -B/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl --check-build-system CMakeFiles/Makefile.cmake 0\n/home/steve/.local/share/uv/tools/cmake/lib/python3.12/site-packages/cmake/data/bin/cmake -E cmake_progress_start /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl/CMakeFiles /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl//CMakeFiles/progress.marks\n/usr/bin/gmake  -f CMakeFiles/Makefile2 all\ngmake[1]: Entering directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl'\n/usr/bin/gmake  -f CMakeFiles/owner.dir/build.make CMakeFiles/owner.dir/depend\n/usr/bin/gmake  -f CMakeFiles/sycl-compile.dir/build.make CMakeFiles/sycl-compile.dir/depend\ngmake[2]: Entering directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl'\ncd /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl && /home/steve/.local/share/uv/tools/cmake/lib/python3.12/site-packages/cmake/data/bin/cmake -E cmake_depends \"Unix Makefiles\" /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl/CMakeFiles/owner.dir/DependInfo.cmake \"--color=\" owner\ngmake[2]: Entering directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl'\ncd /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl && /home/steve/.local/share/uv/tools/cmake/lib/python3.12/site-packages/cmake/data/bin/cmake -E cmake_depends \"Unix Makefiles\" /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl/CMakeFiles/sycl-compile.dir/DependInfo.cmake \"--color=\" sycl-compile\ngmake[2]: Leaving directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl'\n/usr/bin/gmake  -f CMakeFiles/owner.dir/build.make CMakeFiles/owner.dir/build\ngmake[2]: Leaving directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl'\n/usr/bin/gmake  -f CMakeFiles/sycl-compile.dir/build.make CMakeFiles/sycl-compile.dir/build\ngmake[2]: Entering directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl'\ngmake[2]: Entering directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl'\n[ 25%] Building CXX object CMakeFiles/owner.dir/src/owner.cpp.o\n/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src -std=c++20 -Wall -Wextra -Werror -fsycl -MD -MT CMakeFiles/owner.dir/src/owner.cpp.o -MF CMakeFiles/owner.dir/src/owner.cpp.o.d -o CMakeFiles/owner.dir/src/owner.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp\n[ 50%] Building CXX object CMakeFiles/sycl-compile.dir/src/sycl_device.cpp.o\n/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src -std=c++20 -fsycl -Wall -Wextra -Werror -MD -MT CMakeFiles/sycl-compile.dir/src/sycl_device.cpp.o -MF CMakeFiles/sycl-compile.dir/src/sycl_device.cpp.o.d -o CMakeFiles/sycl-compile.dir/src/sycl_device.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp\n[ 75%] Linking CXX static library libowner.a\n/home/steve/.local/share/uv/tools/cmake/lib/python3.12/site-packages/cmake/data/bin/cmake -P CMakeFiles/owner.dir/cmake_clean_target.cmake\n/home/steve/.local/share/uv/tools/cmake/lib/python3.12/site-packages/cmake/data/bin/cmake -E cmake_link_script CMakeFiles/owner.dir/link.txt --verbose=1\n/usr/bin/llvm-ar qc libowner.a CMakeFiles/owner.dir/src/owner.cpp.o\n/usr/bin/llvm-ranlib libowner.a\ngmake[2]: Leaving directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl'\n[ 75%] Built target owner\n[100%] Building CXX object CMakeFiles/sycl-compile.dir/src/smoke.cpp.o\n/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src -std=c++20 -fsycl -Wall -Wextra -Werror -MD -MT CMakeFiles/sycl-compile.dir/src/smoke.cpp.o -MF CMakeFiles/sycl-compile.dir/src/smoke.cpp.o.d -o CMakeFiles/sycl-compile.dir/src/smoke.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/smoke.cpp\ngmake[2]: Leaving directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl'\n[100%] Built target sycl-compile\ngmake[1]: Leaving directory '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl'\n/home/steve/.local/share/uv/tools/cmake/lib/python3.12/site-packages/cmake/data/bin/cmake -E cmake_progress_start /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl/CMakeFiles 0\n\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "ctest",
+        "--test-dir",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host",
+        "--output-on-failure"
+      ],
+      "returncode": 0,
+      "stdout": "Test project /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host\n      Start  1: census\n 1/12 Test  #1: census ...........................   Passed    0.00 sec\n      Start  2: lifetime\n 2/12 Test  #2: lifetime .........................   Passed    0.00 sec\n      Start  3: closed\n 3/12 Test  #3: closed ...........................   Passed    0.00 sec\n      Start  4: inflight\n 4/12 Test  #4: inflight .........................   Passed    0.00 sec\n      Start  5: order\n 5/12 Test  #5: order ............................   Passed    0.00 sec\n      Start  6: copy_bounds\n 6/12 Test  #6: copy_bounds ......................   Passed    0.00 sec\n      Start  7: dependencies\n 7/12 Test  #7: dependencies .....................   Passed    0.00 sec\n      Start  8: graph_lifetime\n 8/12 Test  #8: graph_lifetime ...................   Passed    0.00 sec\n      Start  9: marker\n 9/12 Test  #9: marker ...........................   Passed    0.00 sec\n      Start 10: receipt\n10/12 Test #10: receipt ..........................   Passed    0.00 sec\n      Start 11: receipt_schema\n11/12 Test #11: receipt_schema ...................   Passed    0.13 sec\n      Start 12: mock_smoke\n12/12 Test #12: mock_smoke .......................   Passed    0.00 sec\n\n100% tests passed, 0 tests failed out of 12\n\nTotal Test time (real) =   0.16 sec\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "nice",
+        "-n",
+        "19",
+        "env",
+        "OMP_NUM_THREADS=2",
+        "readelf",
+        "-d",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host/own-rt-smoke"
+      ],
+      "returncode": 0,
+      "stdout": "\nDynamic section at offset 0x1dda0 contains 27 entries:\n  Tag        Type                         Name/Value\n 0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]\n 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]\n 0x000000000000000c (INIT)               0x403000\n 0x000000000000000d (FINI)               0x417f3c\n 0x0000000000000019 (INIT_ARRAY)         0x41e6a8\n 0x000000000000001b (INIT_ARRAYSZ)       16 (bytes)\n 0x000000000000001a (FINI_ARRAY)         0x41e6b8\n 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)\n 0x000000006ffffef5 (GNU_HASH)           0x400378\n 0x0000000000000005 (STRTAB)             0x400e40\n 0x0000000000000006 (SYMTAB)             0x400468\n 0x000000000000000a (STRSZ)              3228 (bytes)\n 0x000000000000000b (SYMENT)             24 (bytes)\n 0x0000000000000015 (DEBUG)              0x0\n 0x0000000000000003 (PLTGOT)             0x41efe8\n 0x0000000000000002 (PLTRELSZ)           1800 (bytes)\n 0x0000000000000014 (PLTREL)             RELA\n 0x0000000000000017 (JMPREL)             0x401f50\n 0x0000000000000007 (RELA)               0x401d10\n 0x0000000000000008 (RELASZ)             576 (bytes)\n 0x0000000000000009 (RELAENT)            24 (bytes)\n 0x000000006ffffffe (VERNEED)            0x401bb0\n 0x000000006fffffff (VERNEEDNUM)         3\n 0x000000006ffffff0 (VERSYM)             0x401adc\n 0x0000000000000000 (NULL)               0x0\n",
+      "stderr": ""
+    }
+  ],
+  "passed": true,
+  "development_failure": "Initial SYCL configure: dpkg format ${Version} expanded to empty by CMake. Fixed with bracket quoting; no GPU execution.",
+  "toolchain_inventory_sha256": "b617d57635f2bc41f1651abb78bb0558c32b25edf8dd3aa19ac0fee4f330cc3c",
+  "test_output": "Test project /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host\n      Start  1: census\n 1/12 Test  #1: census ...........................   Passed    0.00 sec\n      Start  2: lifetime\n 2/12 Test  #2: lifetime .........................   Passed    0.00 sec\n      Start  3: closed\n 3/12 Test  #3: closed ...........................   Passed    0.00 sec\n      Start  4: inflight\n 4/12 Test  #4: inflight .........................   Passed    0.00 sec\n      Start  5: order\n 5/12 Test  #5: order ............................   Passed    0.00 sec\n      Start  6: copy_bounds\n 6/12 Test  #6: copy_bounds ......................   Passed    0.00 sec\n      Start  7: dependencies\n 7/12 Test  #7: dependencies .....................   Passed    0.00 sec\n      Start  8: graph_lifetime\n 8/12 Test  #8: graph_lifetime ...................   Passed    0.00 sec\n      Start  9: marker\n 9/12 Test  #9: marker ...........................   Passed    0.00 sec\n      Start 10: receipt\n10/12 Test #10: receipt ..........................   Passed    0.00 sec\n      Start 11: receipt_schema\n11/12 Test #11: receipt_schema ...................   Passed    0.13 sec\n      Start 12: mock_smoke\n12/12 Test #12: mock_smoke .......................   Passed    0.00 sec\n\n100% tests passed, 0 tests failed out of 12\n\nTotal Test time (real) =   0.16 sec\n",
+  "mock_smoke": {
+    "schema": "own-xpu-runtime.teardown.v1",
+    "backend": "MockDevice",
+    "status": "complete",
+    "exit_code": 0,
+    "safe_to_exit": true,
+    "idle_marker_complete": true,
+    "in_flight": 0,
+    "live_bytes": 0,
+    "error": "",
+    "sequence": [
+      "quiesce",
+      "drain",
+      "graphs-released",
+      "free:output-ring:smoke-output",
+      "free:weights:smoke-weights",
+      "free:pinned-copy-slab:smoke-slab",
+      "idle-marker-complete",
+      "events-released",
+      "queue-released",
+      "context-released"
+    ]
+  },
+  "mock_census": {
+    "schema": "own-xpu-runtime.census.v1",
+    "totals": {
+      "device": 4096,
+      "host-pinned": 8192,
+      "host-shadow": 0
+    },
+    "allocations": [
+      {
+        "id": 1,
+        "label": "smoke-weights",
+        "category": "weights",
+        "lifetime": "process",
+        "memory": "device",
+        "bytes": 4096,
+        "live": true
+      },
+      {
+        "id": 2,
+        "label": "smoke-slab",
+        "category": "pinned-copy-slab",
+        "lifetime": "transfer",
+        "memory": "host-pinned",
+        "bytes": 4096,
+        "live": true
+      },
+      {
+        "id": 3,
+        "label": "smoke-output",
+        "category": "output-ring",
+        "lifetime": "request",
+        "memory": "host-pinned",
+        "bytes": 4096,
+        "live": true
+      }
+    ],
+    "unmeasured_driver_shadow_bytes": null,
+    "unmeasured_library_pool_bytes": null
+  },
+  "compile_commands": {
+    "host": [
+      {
+        "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host",
+        "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src -std=c++20 -Wall -Wextra -Werror -o CMakeFiles/owner.dir/src/owner.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp",
+        "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp",
+        "output": "CMakeFiles/owner.dir/src/owner.cpp.o"
+      },
+      {
+        "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host",
+        "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx -DOWN_RT_HOST_ONLY=1 -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src -std=c++20 -o CMakeFiles/own-rt-smoke.dir/src/smoke.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/smoke.cpp",
+        "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/smoke.cpp",
+        "output": "CMakeFiles/own-rt-smoke.dir/src/smoke.cpp.o"
+      },
+      {
+        "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/host",
+        "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src -std=c++20 -o CMakeFiles/owner-tests.dir/tests/owner_tests.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/tests/owner_tests.cpp",
+        "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/tests/owner_tests.cpp",
+        "output": "CMakeFiles/owner-tests.dir/tests/owner_tests.cpp.o"
+      }
+    ],
+    "sycl": [
+      {
+        "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl",
+        "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src -std=c++20 -Wall -Wextra -Werror -fsycl -o CMakeFiles/owner.dir/src/owner.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp",
+        "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp",
+        "output": "CMakeFiles/owner.dir/src/owner.cpp.o"
+      },
+      {
+        "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl",
+        "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src -std=c++20 -fsycl -Wall -Wextra -Werror -o CMakeFiles/sycl-compile.dir/src/sycl_device.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp",
+        "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp",
+        "output": "CMakeFiles/sycl-compile.dir/src/sycl_device.cpp.o"
+      },
+      {
+        "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/build/sycl",
+        "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src -std=c++20 -fsycl -Wall -Wextra -Werror -o CMakeFiles/sycl-compile.dir/src/smoke.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/smoke.cpp",
+        "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/smoke.cpp",
+        "output": "CMakeFiles/sycl-compile.dir/src/smoke.cpp.o"
+      }
+    ]
+  },
+  "host_ctest_count": 12,
+  "level_zero_header_sha256": "252c2f3138853c632763fc381b2814118938f874e15d11c3812f683cdd59410d",
+  "source_sha256": {
+    ".gitignore": "0cf256cc9234b415f912f5b0e9f8c9364688466041611047cd3f599c35f4efa6",
+    "CMakeLists.txt": "ef5727b84778cbc05b851e4a445c829470c015da4590d4c3b72cf360a518ecb5",
+    "README.md": "586f76eb5a0d059df8eaee8526975b594a25185a697e156d5c0185c9b9e0059c",
+    "gate-evidence.json": "3ec74f1b08ab064663db30ea4a74efab801d10f35104c38aad48ff62a53fbffc",
+    "src/mock_device.hpp": "1601434ade4c0753e4e2dc12b66531b53ebbabac8f4e0b5eeaf95d47a6c6a3c4",
+    "src/owner.cpp": "b25f4e4c55be00d801646d3fe8631ff61cf3e89398e6af6a81a8b618630b45aa",
+    "src/owner.hpp": "c9da49114e8b805811374d500bfd7cfdd18133750b24f6e8448734b2830b3a8e",
+    "src/smoke.cpp": "e79654dc1500c13e868dbc9456870784eff83d1f4e2064db1ca850a6fba1a790",
+    "src/sycl_device.cpp": "85394bfe179a2337f61a0d604b66497a180aeb670a448f00f979c36c7be72816",
+    "tests/check_receipt.py": "78f8cbfa50b6fbca832e44bf67edb79f8d816932827a8f060b598ef32c0ee284",
+    "tests/owner_tests.cpp": "0c6adf7584137336fac389b656d4092328a7f1691bcb962f49ea405b4fa58371",
+    "tests/teardown.schema.json": "565e96d7add25008ad6cdaf447f0e7b0e95b08c1c4da48cf6687858a848fba78",
+    "validate_build.py": "9573dd5518f16c9eea09b7f4fb540b5c4c3acf6190046d895781eeacaa4fdd01"
+  },
+  "build_directory_removed": true,
+  "documentation_note": "README link and completed packet1/1b counts finalized after the build; executable source hashes unchanged."
+}
