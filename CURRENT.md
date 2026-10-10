@@ -1,5 +1,11 @@
 # Current Workspace State
 
+**2026-10-10 08:40 UTC, 126 at 145 measured (verdict a4b739676c5a, exact): median 5.72 s = 0.954 s/s; half of the 122–125 regression recovered; 126 stays live (it keeps the storage and preview fixes).**
+n = 56 periods: median 5.722 (123b legacy 5.770; 121 legacy 5.636), even 5.59 / odd 6.10, p90 6.38. The background storage scan removed
+≈ 0.05 s; ≈ 0.08 s of the 121→123b difference remains unattributed (candidates left: exit-7 status plumbing, aux plumbing, the 122
+replica-reserve option path, atomic preview rename). Decision: keep 126 as the production line (reliability: own-writes allowance,
+atomic previews) rather than return to 121 for 0.08 s. Packet 127 (budget + next lever) is sealing.
+
 **2026-10-10 08:22 UTC, packet 126 sealed (request-thread storage walks removed; `LTX_STORAGE_SCAN_MODE=background`); swapping to 126 at 145.**
 Codex's regression analysis (`notes/2026-10-10-continuation123b-regression.md`, commits 78a57ca3a, 2287c2bfb): the 123b own-writes
 accounting ran filesystem walks on the request thread; the CPU plan-check replay saves 0.144 s per chunk with the scan moved to a
