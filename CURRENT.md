@@ -1,5 +1,42 @@
 # Current Workspace State
 
+**2026-10-10 07:05 UTC, two findings from the 145-frame sessions: an even/odd 2-cycle in the period, and the xpu:2 auxiliary residency costs +0.17 s; swapping to 123b at 145 with the legacy placement.**
+Across all four 145-frame sessions the period alternates: legacy placement (packet 121, n = 409 + 306) even-seq median 5.53–5.55 s vs
+odd-seq 5.91–5.94 s; aux xpu:2 (123b, n = 31 + 190) 5.64–5.71 vs 6.09–6.16. The slow chunks carry a longer pre-sampler path
+(`text+A-prep` 0.63 vs 0.50 legacy, 0.76 vs 0.51 aux) and longer go-wait; chain buckets otherwise equal. Whole-session medians: legacy
+5.71–5.76 s (0.95 s/s), aux 5.93 s (0.99 s/s): the residency move (which bought memory margin, +0.6 GB) costs ≈ 0.17 s per chunk,
+so it is only worth keeping where the margin is needed (169). Session `s123b-live02` (190 chunks, exact) stopped by one controlled stop;
+relaunching 123b at 145 with `LTX_AUX_RESIDENCY=legacy` (keeps the atomic previews and the own-writes allowance) as `s123b-legacy-live01`.
+Next design target (packet 125): the 2-cycle — likely the previous chunk's display decode + preview (≈ 3.5 s on the decode thread)
+colliding with the next chunk's stage-A prep-ahead and request snapshot on alternate chunks; removing it is worth ≈ 0.2 s per chunk
+(→ ≈ 0.92 s/s at 145).
+
+**2026-10-10, packet 124 prepared on CPU; live operations remain with the coordinator.**
+The saved 169-frame timeline corrects the earlier diagnosis below: the display
+usually finished before the next cone was queued. Audio and bookkeeping kept the
+same worker busy for about another 0.6 seconds. The cone itself cost about 1.14
+seconds, versus 1.02 at 145 frames; the three-second bound limits waiting for the
+next sampler, not display decoding.
+Packet 124 keeps the auxiliaries in their legacy places, puts display on xpu:2,
+and optionally runs audio earlier with a separate display/completion worker.
+Moving the auxiliaries to xpu:1 fails the required memory margin. Start with a
+145-frame placement control, then the 145-frame parallel path, then 169 with the
+6.5 GiB replica reserve. The 169 forecast is 6.20–6.65 seconds per seven seconds
+of video (0.886–0.950 s/s), with projected margins 1.34 / 1.80 / 2.21 / 1.81 GiB
+on cards 0–3. These are projections; native bytes, memory and timing remain open.
+The final seal is `897442d0…9926a5`; 2,087 files verified recursively, zero Python
+caches. The first unlaunched build is preserved as rejected after a CPU test
+caught a receipt-reader error. Full recovery discovery and documented rechecks
+validate 623 cases. Client pins use each sealed plan's inner hash, with a
+regression covering every plan pin. Exact client counts and logs are in the
+[build receipt](experiments/ltx25-b70/data/resume-20261008/continuation124-build.json).
+No live operation, GPU work, launch, check-only, port/unit access, process signal,
+existing-run/client-tree write or host change was performed. This preparation
+does not change the coordinator's recorded 123b/145 auxiliary-xpu2 live lane.
+[Analysis](experiments/ltx25-b70/notes/2026-10-10-continuation123b-results-169.md),
+[design and open gates](experiments/ltx25-b70/notes/2026-10-10-continuation124-stream-design.md),
+[future launch order](experiments/ltx25-b70/recovery/20261010-continuation124-stream/LAUNCH.md).
+
 **2026-10-10 06:35 UTC, 169 frames measured: exact but 0.975 s/s (loss vs 145's 0.94–0.955); back to 123b at 145 (aux xpu:2).**
 169 (verdict 4eeb3b603c94, n = 27 periods): median 6.824 s per 7.0 s of video; cone on the chain 1.73 s (145: 1.02) and the eager display
 decode 3.98 s (over its 3 s bound) share xpu:3, so the cone waits behind the previous display; memory held (min margin 1.93 GB, periodic

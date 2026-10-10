@@ -16,7 +16,7 @@ source = source.replace("QID = c.qualification_id(a.frames, a.placement, a.ancho
 SERVER_OPTIONS.update(aux_residency=a.aux_residency,
                       residency_qualification_id=c.residency_qualification_id(QID, a.aux_residency))""")
 source = source.replace("PLAN = '0ef91a395112bd7d1ffecbbc2d74bf5ccc89267751447be9b21a4b4ec107c060'",
-                        "PLAN = hashlib.sha256((a.contract_dir.parent / 'stream-plan.json').read_bytes()).hexdigest()")
+                        "PLAN = json.loads((a.contract_dir.parent / 'stream-plan.json').read_text())['plan_sha256']")
 source = source.replace('(4 * 2**30 * (((a.frames - 1) // 8 + 1) ** 2) + 255) // 256', 'c.display_transient_bytes(a.frames)')
 source = source.replace("'display_replica': replica_record(job, images['images']['sha256']),",
                         "'aux_residency': a.aux_residency, 'audio_device': 'xpu:2' if a.aux_residency == 'xpu2' else 'xpu:3', 'display_replica': replica_record(job, images['images']['sha256']),")
