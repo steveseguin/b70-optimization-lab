@@ -1,0 +1,34 @@
+vllm_xpu_kernels=/mnt/usb-models/qwen38-build/runtime-gdn-roundstate-bbae3c5-b70/vllm_xpu_kernels/__init__.py
+vllm_xpu_kernels._C=/mnt/usb-models/qwen38-build/runtime-gdn-roundstate-bbae3c5-b70/vllm_xpu_kernels/_C.abi3.so
+vllm_xpu_kernels._moe_C=/mnt/usb-models/qwen38-build/runtime-gdn-roundstate-bbae3c5-b70/vllm_xpu_kernels/_moe_C.abi3.so
+vllm_xpu_kernels._xpu_C=/mnt/usb-models/qwen38-build/runtime-gdn-roundstate-bbae3c5-b70/vllm_xpu_kernels/_xpu_C.abi3.so
+_C::per_token_group_fp8_quant(Tensor input, Tensor($0! -> ) output_q, Tensor($1! -> ) output_s, int group_size, float eps, float fp8_min, float fp8_max, bool scale_ue8m0, bool dummy_is_scale_transposed, bool dummy_is_tma_aligned) -> ()
+_C::xpu_host_register(Tensor ptr, int n_bytes) -> bool
+_moe_C::topk_softmax(Tensor($0! -> ) topk_weights, Tensor($1! -> ) topk_indices, Tensor($2! -> ) token_expert_indices, Tensor gating_output, bool renormalize, Tensor? bias, Tensor? is_padding) -> ()
+_xpu_C::gdn_attention(Tensor($0! -> ) core_attn_out, Tensor($1! -> ) z, Tensor projected_states_qkvz, Tensor projected_states_ba, int num_k_heads, int num_v_heads, int head_k_dim, int head_v_dim, Tensor($2! -> ) conv_state, Tensor($3! -> ) ssm_state, Tensor conv_weights, Tensor? conv_bias, str activation, Tensor A_log, Tensor dt_bias, int num_prefills, int num_decodes, Tensor? has_initial_state, Tensor non_spec_query_start_loc, Tensor non_spec_state_indices_tensor, int num_actual_tokens, int tp_size, bool reorder_input) -> ()
+_xpu_C::gdn_attention_spec_decode(Tensor($0! -> ) core_attn_out, Tensor($1! -> ) z, Tensor projected_states_qkvz, Tensor projected_states_ba, int num_k_heads, int num_v_heads, int head_k_dim, int head_v_dim, Tensor($2! -> ) conv_state, Tensor($3! -> ) ssm_state, Tensor conv_weights, Tensor? conv_bias, str activation, Tensor A_log, Tensor dt_bias, Tensor spec_query_start_loc, Tensor spec_state_indices_tensor, Tensor spec_token_indices, Tensor? num_accepted_tokens, int num_spec_decodes, int num_actual_tokens, int tp_size, bool reorder_input) -> ()
+xpu_device_count=4
+WARNING 09-12 23:49:32 [envs.py:2314] Unknown vLLM environment variable detected: VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT
+WARNING 09-12 23:49:32 [envs.py:2314] Unknown vLLM environment variable detected: VLLM_XPU_GDN_NATIVE_SPEC_COMPLETION_BARRIER
+WARNING 09-12 23:49:32 [envs.py:2314] Unknown vLLM environment variable detected: VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH
+WARNING 09-12 23:49:32 [envs.py:2314] Unknown vLLM environment variable detected: VLLM_USE_V1
+WARNING 09-12 23:49:32 [envs.py:2314] Unknown vLLM environment variable detected: VLLM_XPU_HC_TRITON
+INFO 09-12 23:49:48 [model.py:684] Resolved architecture: Qwen4ExpForConditionalGeneration
+INFO 09-12 23:49:48 [model.py:2021] Using max model len 4352
+WARNING 09-12 23:49:48 [model.py:981] Model does not support mm_device_do_normalize, forcing mm_device_do_normalize = False.
+INFO 09-12 23:49:49 [registry.py:141] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 09-12 23:49:49 [model.py:887] Disabled mm_prefix attention mode because multimodal inputs are configuration-disabled. Attention backends without mm_prefix support may now be selected.
+INFO 09-12 23:49:56 [model.py:684] Resolved architecture: Qwen4ExpMTP
+INFO 09-12 23:49:56 [model.py:2021] Using max model len 262144
+INFO 09-12 23:49:56 [speculative.py:1578] Overriding draft model max model len from 262144 to 4352
+INFO 09-12 23:49:56 [scheduler.py:246] Chunked prefill is enabled with max_num_batched_tokens=64.
+WARNING 09-12 23:49:56 [vllm.py:1422] Inductor compilation was disabled by user settings, optimizations settings that are only active during inductor compilation will be ignored.
+INFO 09-12 23:49:56 [kernel.py:365] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['vllm_c', 'native'], fused_add_rms_norm=['vllm_c', 'native'])
+WARNING 09-12 23:49:56 [vllm.py:1942] max_num_scheduled_tokens is set to 64 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommodate the additional draft token slots, or decrease num_speculative_tokens.
+WARNING 09-12 23:49:56 [xpu.py:307] XPU Graph support is experimental and currently only supports single-GPU execution.
+INFO 09-12 23:49:56 [xpu.py:381] XPU platform: set server shutdown_timeout=5.
+INFO 09-12 23:49:56 [compilation.py:329] Enabled custom fusions: norm_quant, act_quant
+engine_config=tp4_ep4_triton_fullgraphdet_mtp1_selective_ple_embed_budget12p25_uva
+ple_bytes_per_rank=12800061440
+embed_bytes_per_rank=317849600
+offload_bytes_per_rank=13117911040

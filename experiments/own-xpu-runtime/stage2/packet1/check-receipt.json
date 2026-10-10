@@ -1,0 +1,422 @@
+{
+  "active_bytes_per_decode": {
+    "embedding_lookup_bytes": 5120,
+    "fp32_scale_expansion_scope": "Conditional arithmetic only: widening all expert scales BF16 to FP32 doubles their stored byte count; the one PLE global scale adds two bytes. Activation scales/workspaces are additional and not checkpoint tensors.",
+    "mtp_dense_bytes": 181136896,
+    "mtp_fp32_scale_expansion_extra_bytes": 6000,
+    "mtp_hc_projection_replica_bytes_per_extra_rank": 39321600,
+    "mtp_proposal_weight_read_bytes": 1501698416,
+    "mtp_routed_bytes": 49158000,
+    "mtp_routed_scale_bytes": 6000,
+    "ple_metadata_bytes": 282,
+    "ple_selected_row_bytes": 2560,
+    "stored_fp32_scale_bytes": 0,
+    "target_decode_weight_read_bytes": 10983590682,
+    "target_dense_bytes": 8623998720,
+    "target_fp32_scale_expansion_extra_bytes": 288002,
+    "target_hc_projection_replica_bytes_per_extra_rank": 1271398400,
+    "target_plus_one_proposal_bytes": 12485289098,
+    "target_routed_bytes": 2359584000,
+    "target_routed_scale_bytes": 288000,
+    "tp2_target_weight_reads_with_hc_replication_floor_bytes": 12254989082,
+    "tp4_target_weight_reads_with_hc_replication_floor_bytes": 14797785882
+  },
+  "checks": [
+    "144 revision/etag/size and metadata Git blob/LFS identities against pinned HF",
+    "complete shard-index/config shape/dtype/name coverage including 49x512 experts",
+    "bounded headers, checked sizes and offsets, no duplicate/overlap/gap",
+    "BF16 expert scale shape pairing and PLE global scale",
+    "12 full cold chat oracle arrays, prompt/text/hash/range/length and class-balanced 99-interval rate",
+    "quality attestation evidence hashes and archived run hashes",
+    "deterministic rebuild of four products",
+    "TP4 mask counts and TP2 residency/streaming arithmetic"
+  ],
+  "command": "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B experiments/own-xpu-runtime/stage2/packet1/contract-checks.py --local --write-contracts --receipt experiments/own-xpu-runtime/stage2/packet1/check-receipt.json",
+  "components": {
+    "embedding": {
+      "bytes": 1271398400,
+      "tensors": 1
+    },
+    "gdn": {
+      "bytes": 4173011712,
+      "tensors": 288
+    },
+    "hyperconnections": {
+      "bytes": 1279262720,
+      "tensors": 290
+    },
+    "native_mtp": {
+      "bytes": 2698026496,
+      "tensors": 3101
+    },
+    "norms": {
+      "bytes": 2014208,
+      "tensors": 181
+    },
+    "ple_lookup": {
+      "bytes": 51200246042,
+      "tensors": 132
+    },
+    "ple_projection": {
+      "bytes": 65679360,
+      "tensors": 6
+    },
+    "qsa_attention": {
+      "bytes": 1195376640,
+      "tensors": 48
+    },
+    "qsa_indexer": {
+      "bytes": 39321600,
+      "tensors": 12
+    },
+    "routed_experts": {
+      "bytes": 120810700800,
+      "tensors": 147456
+    },
+    "routers": {
+      "bytes": 126074880,
+      "tensors": 96
+    },
+    "shared_experts": {
+      "bytes": 471859200,
+      "tensors": 144
+    },
+    "target_head": {
+      "bytes": 1271398400,
+      "tensors": 1
+    },
+    "vision_excluded": {
+      "bytes": 897862112,
+      "tensors": 333
+    }
+  },
+  "files": [
+    {
+      "bytes": 51957618,
+      "path": "experiments/own-xpu-runtime/stage2/packet1/tensor-contract.json",
+      "sha256": "37daac926403b543bd5e1d6db06e70487feebd8ef97880d106e58f91011b5c96"
+    },
+    {
+      "bytes": 90595,
+      "path": "experiments/own-xpu-runtime/stage2/packet1/oracle-token-ids.json",
+      "sha256": "bc66eb0f0c9fdb089169fb3a8a6f515122beff9443e02abebb71b45b073c0dea"
+    },
+    {
+      "bytes": 148425,
+      "path": "experiments/own-xpu-runtime/stage2/packet1/identity.json",
+      "sha256": "bac2ee1b05c57dbd883d98c2b4b1144d41668a34fe4474343b012f73f8084a19"
+    },
+    {
+      "bytes": 3406,
+      "path": "experiments/own-xpu-runtime/stage2/packet1/placement-arithmetic.json",
+      "sha256": "855b0765e06ed7b1071ecc55500a9555d7f2e83b6dae83ba8ecf65027a0130c3"
+    },
+    {
+      "bytes": 31386,
+      "path": "experiments/own-xpu-runtime/stage2/packet1/contract-checks.py",
+      "sha256": "ebc70dd9a45cffbbdffd1ea9d97593f236de039b4ec7a523f44fc2a83d212ba3"
+    },
+    {
+      "bytes": 3494,
+      "path": "experiments/own-xpu-runtime/stage2/packet1/capture-metadata.py",
+      "sha256": "3cf39c3a8e54a10e5080a60713cc9ef19797858d334632af288f9d401047107d"
+    },
+    {
+      "bytes": 28198,
+      "path": "experiments/own-xpu-runtime/stage1/packet1/contract-checks.py",
+      "sha256": "6fe31a527ed44dc8d055fe14170cf87b638ecb042a4f982f6de906216dc27d94"
+    },
+    {
+      "bytes": 9367,
+      "path": "experiments/own-xpu-runtime/stage1/packet1/parser-fixtures.json",
+      "sha256": "b59a2e3b60a2bb4d7bea616737aaf175fcb97163d8e9251a86c024a9839313c8"
+    },
+    {
+      "bytes": 12992,
+      "path": "experiments/own-xpu-runtime/stage2/packet1/README.md",
+      "sha256": "2fdab50533f5031196a997a6b6560d605862e7f758ef10155717afe59539b9df"
+    },
+    {
+      "bytes": 10788,
+      "path": "experiments/own-xpu-runtime/stage2/packet1/placement-census.md",
+      "sha256": "c2dbd7f4bfc2a7cb6f5b8fdc0428801fda10bf35b26951cf7b3960aea3c1182e"
+    },
+    {
+      "bytes": 1146,
+      "path": "experiments/own-xpu-runtime/stage2/README.md",
+      "sha256": "77415d648ce31f132daf7f3e8252703ce2220bcb601e70765b41a80d71e19be7"
+    }
+  ],
+  "gate": "CPU identity, complete header/shape contract, oracle and placement arithmetic only",
+  "host": "steve-b70s",
+  "limitations": [
+    "Header-only checkpoint audit does not reauthenticate tensor payload SHA256s.",
+    "No tokenizer execution, dequantization, runtime parity, GPU placement, bandwidth or performance measurement.",
+    "No new promotion; the historical line and its quality caveats remain unchanged."
+  ],
+  "local_headers_rechecked": true,
+  "parser_fixtures": [
+    {
+      "accepted": true,
+      "name": "valid_bf16_matrix",
+      "passed": true,
+      "reason": null
+    },
+    {
+      "accepted": true,
+      "name": "valid_scalar",
+      "passed": true,
+      "reason": null
+    },
+    {
+      "accepted": true,
+      "name": "valid_fp8_and_bf16_scale",
+      "passed": true,
+      "reason": null
+    },
+    {
+      "accepted": true,
+      "name": "valid_fp16_exclusion",
+      "passed": true,
+      "reason": null
+    },
+    {
+      "accepted": false,
+      "name": "duplicate_tensor_name",
+      "passed": true,
+      "reason": "duplicate JSON key: x"
+    },
+    {
+      "accepted": false,
+      "name": "duplicate_dtype_key",
+      "passed": true,
+      "reason": "duplicate JSON key: dtype"
+    },
+    {
+      "accepted": false,
+      "name": "negative_dimension",
+      "passed": true,
+      "reason": "shape dimensions; zero-size tensors unsupported here"
+    },
+    {
+      "accepted": false,
+      "name": "boolean_dimension",
+      "passed": true,
+      "reason": "shape dimensions; zero-size tensors unsupported here"
+    },
+    {
+      "accepted": false,
+      "name": "fractional_dimension",
+      "passed": true,
+      "reason": "shape dimensions; zero-size tensors unsupported here"
+    },
+    {
+      "accepted": false,
+      "name": "zero_dimension",
+      "passed": true,
+      "reason": "shape dimensions; zero-size tensors unsupported here"
+    },
+    {
+      "accepted": false,
+      "name": "shape_overflow",
+      "passed": true,
+      "reason": "shape product overflow"
+    },
+    {
+      "accepted": false,
+      "name": "byte_overflow",
+      "passed": true,
+      "reason": "byte product overflow"
+    },
+    {
+      "accepted": false,
+      "name": "bad_shape_rank",
+      "passed": true,
+      "reason": "shape rank"
+    },
+    {
+      "accepted": false,
+      "name": "bad_shape_type",
+      "passed": true,
+      "reason": "shape rank"
+    },
+    {
+      "accepted": false,
+      "name": "unsupported_dtype",
+      "passed": true,
+      "reason": "unsupported dtype"
+    },
+    {
+      "accepted": false,
+      "name": "unknown_fp8",
+      "passed": true,
+      "reason": "unsupported dtype"
+    },
+    {
+      "accepted": false,
+      "name": "wrong_size",
+      "passed": true,
+      "reason": "offset/shape byte mismatch"
+    },
+    {
+      "accepted": false,
+      "name": "reversed_offsets",
+      "passed": true,
+      "reason": "offset/shape byte mismatch"
+    },
+    {
+      "accepted": false,
+      "name": "negative_offset",
+      "passed": true,
+      "reason": "offset integers"
+    },
+    {
+      "accepted": false,
+      "name": "boolean_offset",
+      "passed": true,
+      "reason": "offset integers"
+    },
+    {
+      "accepted": false,
+      "name": "offset_overflow",
+      "passed": true,
+      "reason": "offset integers"
+    },
+    {
+      "accepted": false,
+      "name": "out_of_file",
+      "passed": true,
+      "reason": "offset/shape byte mismatch"
+    },
+    {
+      "accepted": false,
+      "name": "overlap",
+      "passed": true,
+      "reason": "overlap or gap: y"
+    },
+    {
+      "accepted": false,
+      "name": "gap",
+      "passed": true,
+      "reason": "overlap or gap: x"
+    },
+    {
+      "accepted": false,
+      "name": "trailing_payload",
+      "passed": true,
+      "reason": "incomplete payload coverage"
+    },
+    {
+      "accepted": false,
+      "name": "unknown_field",
+      "passed": true,
+      "reason": "tensor fields"
+    },
+    {
+      "accepted": false,
+      "name": "metadata_not_string",
+      "passed": true,
+      "reason": "metadata strings"
+    },
+    {
+      "accepted": false,
+      "name": "no_tensors",
+      "passed": true,
+      "reason": "incomplete payload coverage"
+    },
+    {
+      "accepted": false,
+      "name": "truncated_json",
+      "passed": true,
+      "reason": "Expecting value: line 1 column 6 (char 5)"
+    },
+    {
+      "accepted": false,
+      "name": "non_object",
+      "passed": true,
+      "reason": "header must start with object"
+    },
+    {
+      "accepted": false,
+      "name": "non_finite_json",
+      "passed": true,
+      "reason": "non-finite JSON constant: NaN"
+    },
+    {
+      "accepted": false,
+      "name": "header_length_mismatch",
+      "passed": true,
+      "reason": "truncated or oversized header"
+    },
+    {
+      "accepted": false,
+      "name": "header_limit",
+      "passed": true,
+      "reason": "header bound"
+    },
+    {
+      "accepted": false,
+      "name": "header_underflow",
+      "passed": true,
+      "reason": "header bound"
+    },
+    {
+      "accepted": false,
+      "name": "file_too_short",
+      "passed": true,
+      "reason": "file bounds"
+    },
+    {
+      "name": "unbuffered two-read payload boundary",
+      "passed": true
+    },
+    {
+      "name": "oversized length",
+      "passed": true
+    },
+    {
+      "name": "truncated prefix",
+      "passed": true
+    },
+    {
+      "name": "truncated header",
+      "passed": true
+    },
+    {
+      "name": "I64 PLE metadata header",
+      "passed": true
+    }
+  ],
+  "schema": "own-xpu-runtime.stage2.packet1.check-receipt.v1",
+  "stage2_runtime_qualified": false,
+  "tensor_payload_bytes_read": 0,
+  "tensors": 152089,
+  "totals_bytes": {
+    "all_root_files": 185563783127,
+    "headers_and_prefixes": 21084888,
+    "payload": 185502232570,
+    "shard_files": 185523317458
+  },
+  "two_card": {
+    "actual_host_streaming_per_token": "Depends on routed IDs and admitted resident mask; range zero to full selected-expert budget, not inferred from static gap. Whole-expert symmetric placement leaves more than 10 host experts/layer, so zero host hits cannot be guaranteed.",
+    "all_experts_host_plus_ple_embedding_bytes": 175799234560,
+    "all_experts_streaming_bytes_per_mtp_proposal": 49158000,
+    "all_experts_streaming_bytes_per_target_token": 2359584000,
+    "all_experts_with_scales_bytes": 123327590400,
+    "capacity_is_historical_rank0_not_current_measurement": true,
+    "capacity_scenario_per_card_bytes": 34242297856,
+    "dense_resident_floor_bytes": 10115855898,
+    "extra_gap_after_reusing_certified_host_experts_bytes": 53821007386,
+    "host_plus_device_weights_if_each_device_byte_has_one_host_shadow_bytes": 185915090458,
+    "minimum_whole_experts_offloaded_keep_scales_on_device": 13216,
+    "minimum_whole_experts_offloaded_with_scales": 13215,
+    "nominal_32gib_per_card_weight_gap_bytes": 64723969562,
+    "nonlookup_text_payload_bytes": 132132726298,
+    "optimistic_all_resident_weight_floor_bytes": 133443446298,
+    "optimistic_host_backing_minimum_bytes": 117430494746,
+    "weight_only_gap_bytes": 64958850586,
+    "with_same_kv_budget_per_rank_gap_bytes": 65711990298
+  },
+  "utc": "2026-10-10T19:45:26.490891+00:00",
+  "verdict": "PASS"
+}

@@ -1,5 +1,9 @@
 # Current Workspace State
 
+**2026-10-10, our own runtime: Flash-Next’s CPU identity packet passed.**
+The [packet and receipt](experiments/own-xpu-runtime/stage2/packet1/README.md) freeze all local tensor descriptions and the twelve certified answers, with file totals matching the official publisher.
+The two-card plan still needs about 65 GB of expert weights kept off the cards, before working space; native work awaits the owner’s window, and this task left the host halt and existing lanes untouched.
+
 **2026-10-10, our own runtime: packet 3 preparation is CPU-tested and compiled.**
 The [resource owner](experiments/own-xpu-runtime/stage1/packet3-prep/README.md) checks memory ownership, bounded copies and orderly shutdown with mock devices; the SYCL path was compiled but never run.
 Official model source resolves the attention gate to sigmoid, and the CPU reference and contract are corrected with tests.

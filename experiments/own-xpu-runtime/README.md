@@ -15,6 +15,8 @@ scales are BF16, correcting the plan's F32 size example. No weights were
 downloaded and no native work was done; this task ends at packet 1. The
 [stage index](stage1/README.md) tracks the remaining packets.
 
+**Stage 2 packet 1 passed, 2026-10-10 (CPU only):** [local Flash-Next identity, all tensor headers, 12 exact answers and placement arithmetic](stage2/packet1/README.md).
+
 The certified Qwen, Flash-Next, MiniMax and video lanes continue independently.
 This lane earns a replacement role only by matching their exact outputs and
 meeting their matched performance gates. Their historical records remain intact.

@@ -1,0 +1,77 @@
+{
+  "certified_host_tensor_bytes": 63609487360,
+  "certified_tp4_ep4": [
+    {
+      "historical_model_load_delta_gib": 29.57,
+      "host_embedding_bytes": 317849600,
+      "host_expert_weights_bytes": 2668953600,
+      "host_experts": 543,
+      "host_ple_bytes": 12800061440,
+      "host_tensor_bytes": 15786864640,
+      "kv_budget_bytes": 376569856,
+      "optimistic_device_weight_floor_bytes": 31347267974,
+      "rank": 0
+    },
+    {
+      "historical_model_load_delta_gib": 29.37,
+      "host_embedding_bytes": 317849600,
+      "host_expert_weights_bytes": 2885222400,
+      "host_experts": 587,
+      "host_ple_bytes": 12800061440,
+      "host_tensor_bytes": 16003133440,
+      "kv_budget_bytes": 376569856,
+      "optimistic_device_weight_floor_bytes": 31130999174,
+      "rank": 1
+    },
+    {
+      "historical_model_load_delta_gib": 29.54,
+      "host_embedding_bytes": 317849600,
+      "host_expert_weights_bytes": 2703360000,
+      "host_experts": 550,
+      "host_ple_bytes": 12800061440,
+      "host_tensor_bytes": 15821271040,
+      "kv_budget_bytes": 376569856,
+      "optimistic_device_weight_floor_bytes": 31312861574,
+      "rank": 2
+    },
+    {
+      "historical_model_load_delta_gib": 29.38,
+      "host_embedding_bytes": 317849600,
+      "host_expert_weights_bytes": 2880307200,
+      "host_experts": 586,
+      "host_ple_bytes": 12800061440,
+      "host_tensor_bytes": 15998218240,
+      "kv_budget_bytes": 376569856,
+      "optimistic_device_weight_floor_bytes": 31135914374,
+      "rank": 3
+    }
+  ],
+  "expert_stored_scale_bytes": 600,
+  "expert_weight_bytes": 4915200,
+  "input_embedding_bytes": 1271398400,
+  "ple_table_bytes": 51200245760,
+  "replicated_hc_projection_bytes": 1310720000,
+  "schema": "own-xpu-runtime.stage2.packet1.placement-arithmetic.v1",
+  "scope": "Arithmetic lower bounds, not measured allocation/fit. TP+EP dense partition optimistically balanced except proven replicated HC down/up. Other replicas, padding, state, scratch, graph/runtime overhead can only increase residency.",
+  "text_payload_bytes": 184604370458,
+  "two_card": {
+    "actual_host_streaming_per_token": "Depends on routed IDs and admitted resident mask; range zero to full selected-expert budget, not inferred from static gap. Whole-expert symmetric placement leaves more than 10 host experts/layer, so zero host hits cannot be guaranteed.",
+    "all_experts_host_plus_ple_embedding_bytes": 175799234560,
+    "all_experts_streaming_bytes_per_mtp_proposal": 49158000,
+    "all_experts_streaming_bytes_per_target_token": 2359584000,
+    "all_experts_with_scales_bytes": 123327590400,
+    "capacity_is_historical_rank0_not_current_measurement": true,
+    "capacity_scenario_per_card_bytes": 34242297856,
+    "dense_resident_floor_bytes": 10115855898,
+    "extra_gap_after_reusing_certified_host_experts_bytes": 53821007386,
+    "host_plus_device_weights_if_each_device_byte_has_one_host_shadow_bytes": 185915090458,
+    "minimum_whole_experts_offloaded_keep_scales_on_device": 13216,
+    "minimum_whole_experts_offloaded_with_scales": 13215,
+    "nominal_32gib_per_card_weight_gap_bytes": 64723969562,
+    "nonlookup_text_payload_bytes": 132132726298,
+    "optimistic_all_resident_weight_floor_bytes": 133443446298,
+    "optimistic_host_backing_minimum_bytes": 117430494746,
+    "weight_only_gap_bytes": 64958850586,
+    "with_same_kv_budget_per_rank_gap_bytes": 65711990298
+  }
+}
