@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**2026-10-10 08:02 UTC, 125 at 145 (GC interval 60 s) measured: exact (verdict 7c1e8a6ef3b2), neutral; 124 at 145 also neutral; 126 (regression hunt) about to seal.**
+125 GC 60, legacy, serial, display xpu:3 (n = 56 periods): median 5.780 s, even 5.73 / odd 6.07 (123b legacy baseline: 5.770, 5.70 / 6.12).
+The maintenance interval was not the 2-cycle's main cost; the parity gap and the median are unchanged within noise. 124 at 145 (display
+xpu:2, parallel worker, early audio; verdict 24e7fd6c6dbb, n = 35): median 5.746, even 5.57 / odd 6.06 — neutral at 145 as predicted
+(its value is at 169). Fastest 145 line remains packet 121 legacy at 5.61–5.64 s (0.94 s/s); packets 122–125 carry a ≈ +0.15 s regression
+that Codex's 126 attributes and removes (forecast 5.55–5.75). Next: 126 at 145 (legacy, serial, GC 10, display xpu:3) as soon as it seals,
+then 169 on 126 with 124's display worker.
+
 **2026-10-10 07:40 UTC, packet 125 sealed: the 145-frame 2-cycle is a 10-second server maintenance (GC) interval; `LTX_GC_INTERVAL_SECONDS=60` removes most of it. 124 at 145 qualified (verdict 24e7fd6c6dbb); swapping to 125 at 145 next.**
 Codex's 2-cycle analysis (`notes/2026-10-10-continuation-2cycle-analysis.md`, commit 5e548dbb6): the growing wait on the slow parity is receipt
 commit → first served, matching a 10 s maintenance cycle (also present at 121 frames); packet 125 (parent 124; manifest `3c2ed919…5421`;
