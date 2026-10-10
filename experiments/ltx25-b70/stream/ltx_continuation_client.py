@@ -236,13 +236,13 @@ PACKETS[122] = {'dir': R / 'prepared-continuation-stream-122',
 # Packet 123: atomic previews and qualified residency; pins set after CPU build.
 PACKETS[123] = {'dir': R / 'prepared-continuation-stream-123',
                 'manifest_sha256': 'db5ea277d381c8a77c1bae94cc4e25b1e22035a084a7e3a33b7d10e5d68b340d',
-                'plan_sha256': '50734e5b69e6a7e5cd459daa4ad31abf60742d13ada8688a022133dd9f7e47f4',
+                'plan_sha256': 'bd50cd30f77ab4e726c21624ece08f38c0ee1102d2f7d8e4a105314733cb575f',
                 'modules': {'residency123': 'da0b342bc1321eb48679e74a38057101c61a930bda51109d8dce2df54ca5e819',
                             'stream_contract': '0b74cf2d37f63b44b8351b2456fa78d30251ba31b68d722e51285da4de86d105',
                             'stream_receipts': 'b95539e405deff400aad995fce735cd44f5a60b31e8b46e8f3acd381bf3835cd',
                             'qualification_gate': '5a4b9ed4e82fc478a52aef20ab8f96c6f03722e19b5ff4a5773c782279caa87e'},
                 'reference_sha256': 'ae3df94e25813eda97dc449301a5bd7203d60a0568b90e3e2057d66e9a5cbca9'}
-PACKETS['123b'] = dict({'manifest_sha256': '5bdc0956f69259a99ca82849280e73b8bd2a80e28ff421ce5d61122e8a74d433', 'plan_sha256': '0537b39f44bed9bf4267ff77b1fe2ce0a9b63b29f11977ddbe5e07e21551ef6b', 'modules': {'run_storage': 'bb52a944950dc9f2ebfb75217274b3670509472ad8730345cfd49204d0703b40', 'residency123': 'da0b342bc1321eb48679e74a38057101c61a930bda51109d8dce2df54ca5e819', 'stream_contract': 'e452707e3fb62c93f825935fe0713709bf26c0db450bf4a63cf7c39c3dc1ca5d', 'stream_receipts': 'a76454a3f9dff58c4536367c84a72c04fcbf1d2a79e3c8aeb7caa42c387fc507', 'qualification_gate': 'f2d860c41bcb8927a2e9691ea40dfdc7f07de725908adc62eb9220b3aeb6f34d'}, 'reference_sha256': 'ae3df94e25813eda97dc449301a5bd7203d60a0568b90e3e2057d66e9a5cbca9'}, dir=R / 'prepared-continuation-stream-123b')
+PACKETS['123b'] = dict({'manifest_sha256': '5bdc0956f69259a99ca82849280e73b8bd2a80e28ff421ce5d61122e8a74d433', 'plan_sha256': '75e97784c342cd988f3519bafc81aa986833b64a5e551582b8616e9343ce3153', 'modules': {'run_storage': 'bb52a944950dc9f2ebfb75217274b3670509472ad8730345cfd49204d0703b40', 'residency123': 'da0b342bc1321eb48679e74a38057101c61a930bda51109d8dce2df54ca5e819', 'stream_contract': 'e452707e3fb62c93f825935fe0713709bf26c0db450bf4a63cf7c39c3dc1ca5d', 'stream_receipts': 'a76454a3f9dff58c4536367c84a72c04fcbf1d2a79e3c8aeb7caa42c387fc507', 'qualification_gate': 'f2d860c41bcb8927a2e9691ea40dfdc7f07de725908adc62eb9220b3aeb6f34d'}, 'reference_sha256': 'ae3df94e25813eda97dc449301a5bd7203d60a0568b90e3e2057d66e9a5cbca9'}, dir=R / 'prepared-continuation-stream-123b')
 DECODER_GRAPH_PACKETS = (116, '116b', 117, 118, '118b', 119, 120, 121, 122, 123, '123b')            # decoder_graph field, 116 preflight, 116 gate and references
 DECODE_THREAD_PACKETS = (114, 115, 116, '116b', 117, 118, '118b', 119, 120, 121, 122, 123, '123b')  # anchor mode, decode thread, decode records
 RESET_PACKETS = (113, 114, 115, 116, '116b', 117, 118, '118b', 119, 120, 121, 122, 123, '123b')     # chain resets, preview after receipt
