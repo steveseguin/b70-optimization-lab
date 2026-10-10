@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**2026-10-10 07:40 UTC, packet 125 sealed: the 145-frame 2-cycle is a 10-second server maintenance (GC) interval; `LTX_GC_INTERVAL_SECONDS=60` removes most of it. 124 at 145 qualified (verdict 24e7fd6c6dbb); swapping to 125 at 145 next.**
+Codex's 2-cycle analysis (`notes/2026-10-10-continuation-2cycle-analysis.md`, commit 5e548dbb6): the growing wait on the slow parity is receipt
+commit → first served, matching a 10 s maintenance cycle (also present at 121 frames); packet 125 (parent 124; manifest `3c2ed919…5421`;
+inner plan `238695df…9cd2`; 655 recovery / 1,942 client / 10 preflight CPU checks) adds `LTX_GC_INTERVAL_SECONDS=10|60` (10 = parent
+cadence). Recommended arm: 145, legacy, serial display worker, display xpu:3, GC 60 → predicted median 5.45–5.75 s (0.908–0.958 s/s) against
+the 123b legacy baseline 5.77. Sequence: stop 124 at 145 after 45 chunks (record), launch 125 at 145 (GC 60), then 125 at 169 with 124's
+display-xpu:2 parallel worker and the 6.5 GiB reserve. Codex is on packet 126 (the +0.15 s 121→123b regression).
+
 **2026-10-10 07:35 UTC, packet 125 sealed on CPU; live operations remain with the coordinator.**
 The saved 145-frame and 121-frame timelines put the alternating delay after the
 prompt finishes and the receipt commits, before the receipt is served. A prep
