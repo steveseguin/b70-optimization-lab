@@ -1,0 +1,41 @@
+{
+  "counting": "Rechecks overlap discovery and are not added to the unique case count.",
+  "development": "recovery-development.log preserves the earlier 623-case discovery (4 failures, 1 error) while sources were still being assembled; it is not a clean validation run.",
+  "full_discovery_cases": 655,
+  "full_run_failures": {
+    "test_packet123_admission.Admission.test_parent_is_the_requested_123": "FAIL",
+    "test_runtime_flow.Flow118.test_walk_mode_is_the_packet117_path_with_timing": "FAIL"
+  },
+  "full_run_log": "recovery-final.log",
+  "full_run_passed": 653,
+  "full_run_sha256": "d09cdb653951966163fdd0d247c46900fcd401f33951cad759185abf80738fbf",
+  "reason": "Two copied fixture expectations retained the old parent hash and omitted the new default gc_interval_seconds=10 field. Only test fixtures changed; sealed runtime source stayed unchanged.",
+  "rechecks": {
+    "options-fixture-recheck.log": {
+      "count": 7,
+      "sha256": "0f82a81956422ab9b610d8a3c3a205cac2812e53fc06d7b9edc88489d338de80",
+      "test_ids": [
+        "test_runtime_flow.Flow118.test_a_moved_tensor_halts_both_modes_alike",
+        "test_runtime_flow.Flow118.test_disagreement_injection_is_a_plain_refusal_in_walk_mode",
+        "test_runtime_flow.Flow118.test_disagreement_latches_the_snapshot_latch",
+        "test_runtime_flow.Flow118.test_fingerprint_policy_timing_split_and_turnaround",
+        "test_runtime_flow.Flow118.test_near_floor_reading_runs_the_walk_beside_the_fingerprint",
+        "test_runtime_flow.Flow118.test_pool_cap_captures_one_method_and_the_gate_passes",
+        "test_runtime_flow.Flow118.test_walk_mode_is_the_packet117_path_with_timing"
+      ]
+    },
+    "parent-fixture-recheck.log": {
+      "count": 5,
+      "sha256": "8be8e3f06e4fc8341d559f2124894e38ea21efdae566808dec647098f5d5d68c",
+      "test_ids": [
+        "test_packet123_admission.Admission.test_default_device_keeps_parent_schedule_suffix",
+        "test_packet123_admission.Admission.test_explicit_replica_and_unique_run_name",
+        "test_packet123_admission.Admission.test_invalid_scope_refused_before_any_launch",
+        "test_packet123_admission.Admission.test_parent_is_the_requested_123",
+        "test_packet123_admission.Admission.test_replica_latch_refuses_without_archiving_it"
+      ]
+    }
+  },
+  "status": "passed-after-documented-fixture-rechecks",
+  "unique_current_cases": 655
+}

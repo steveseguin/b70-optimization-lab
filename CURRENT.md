@@ -1,5 +1,32 @@
 # Current Workspace State
 
+**2026-10-10 07:35 UTC, packet 125 sealed on CPU; live operations remain with the coordinator.**
+The saved 145-frame and 121-frame timelines put the alternating delay after the
+prompt finishes and the receipt commits, before the receipt is served. A prep
+already precedes display, and preview already has a separate worker. The
+parent's ten-second garbage collection and allocator cleanup closely predict
+the slow handoffs. The later legacy 123b snapshot agrees in all 49 classified
+handoffs. These older logs did not time cleanup itself, so this remains a strong
+inference that packet 125's new timestamps can confirm.
+Packet 125 inherits sealed 124 and offers `LTX_GC_INTERVAL_SECONDS=10|60`:
+10 keeps the parent cadence; 60 is restricted to the 145-frame serial display3
+path and retains both cleanup calls. Start with legacy auxiliaries. Expected
+median is 5.45–5.75 seconds per six seconds of video, targeting 5.55 / 0.925 s/s.
+Occasional minute-interval cleanup and fresh-text costs remain; the later
+legacy baseline's fast side was 5.689 seconds. Native bytes, memory trends and
+speed on two fresh qualified servers remain open. No server was launched.
+The seal is `3c2ed919…565421`; inner plan `238695df…149cd2`; 2,109 files verified
+recursively, zero Python caches. Full discovery plus documented fixture
+rechecks validates 655 recovery cases; all 1,942 client checks in 25 suites and
+10 mocked preflight tests pass. Every client plan pin is checked against the
+sealed inner hash. Work stayed at nice 19 with OMP/MKL 2. No GPU, live endpoint,
+unit, process signal, existing-run/client-tree write or host setting change.
+The coordinator's live state and launch sequence remain theirs to manage.
+[Analysis](experiments/ltx25-b70/notes/2026-10-10-continuation-2cycle-analysis.md),
+[design](experiments/ltx25-b70/notes/2026-10-10-continuation125-stream-design.md),
+[build receipt](experiments/ltx25-b70/data/resume-20261008/continuation125-build.json),
+[future launch](experiments/ltx25-b70/recovery/20261010-continuation125-stream/LAUNCH.md).
+
 **2026-10-10 07:28 UTC, 123b legacy baseline done (61 chunks, exact, verdict b6bcdae18297); packet 124 launched at 145 frames (display replica on xpu:2, parallel display worker, early audio).**
 Launch `LTX_AUX_RESIDENCY=legacy LTX_DISPLAY_WORKER=parallel LTX_RUN_WRITE_ALLOWANCE_GIB=16 launch-124.sh 145 frame 0 cone 1 1 fingerprint - eager-display 0 full xpu:2`
 at 07:27 UTC after the gap; client `start-client-124.sh 145 0 cone 1 1 fingerprint none eager-display 0 full xpu:2` with the same variables

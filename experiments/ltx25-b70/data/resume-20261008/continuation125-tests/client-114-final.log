@@ -1,0 +1,28 @@
+PASS L1 114 latent/49: client qualification (11 requests + verdict re-derived with decode records), 8 chunks, exit 0, manifest labels and chain intact rc=0 rows=8 probs=[] refusals={}
+PASS L2 text reuse on by default: reuse_text=1 exactly on same-prompt anchored chunks, accepted by the server reuse=[0, 1, 1, 0, 1, 1, 1, 1] want=[0, 1, 1, 0, 1, 1, 1, 1]
+PASS L3 the next chunk is submitted before the previous decode record and preview exist (off the chain) before_decode=7 before_preview=7
+PASS L4 receipts carry the three latents and a 40,960-byte latent anchor; decode records arrive in order anchor_out=40960
+PASS L5 resume on the same 114 server continues the chain (decode records of the new chunks verified) rc=0 rows=10
+PASS L6 97 frames: chunk 0 delivers 97 frames (97/24 s), later chunks 96 new frames, 4.0 s, skip_first_frames 1 rc=0 rows=4 probs=[]
+PASS F1 frame anchor: qualification + 5 chunks, 786,432-byte anchors equal to the decoded last frame, exit 0 rc=0 rows=5 probs=[] ok=True
+PASS F2 --expect-anchor latent against a frame-anchor server refuses at preflight (exit 8) rc=8
+PASS T1 a text_reuse=0 server: every chunk sends reuse_text=0 and is admitted rc=0 refusals={}
+PASS Q1 qualification fail -> exit 13, nothing streamed rc=13 last=['[c112 07:24:52.481] STOPPED (exit 13): QUALIFICATION DID NOT PASS (HTTP 200): ["Eager/graph/repeat tensors differ at chunk 1: [\'anchor_file\', \'audio_latent\', \'images\', \'stage_a_latent\', \'video_latent\', \'waveform\']"]', '[c112 07:24:52.481] no retry, no restart: inspect the evidence before running again']
+PASS Q2 qualification lie (server says passed) -> client re-derivation fails, exit 13 rc=13 last=["[c112 07:24:55.027] STOPPED (exit 13): client-side re-derivation of the verdict FAILED: Eager/graph/repeat tensors differ at chunk 1: ['anchor_file', 'audio_latent', 'images', 'stage_a_latent', 'video_latent', 'waveform']", '[c112 07:24:55.028] no retry, no restart: inspect the evidence before running again']
+PASS D1 a decode record that never appears -> exit 7 within the --save-wait bound; chunk 2 not manifested rc=7 rows=2 3.5s
+PASS D2 decode thread failure (chunk 3) latches the server -> client exit 2 (halted), chunk 3 never manifested rc=2 rows=2
+PASS P1 a preview record that never appears -> exit 7 within the bound; chunk 2 not manifested rc=7 rows=2
+PASS P2 a preview write failure latches the server -> client exit 6 or 2, rows stop at 3 rc=6 rows=3
+PASS S1 default 114 --save-wait (30 s) covers a decode + preview lag of 11.5 s (beyond the 10 s 113 default) rc=0 rows=1 12.7s
+PASS R1 --reset-every-chunks 3 on 114: resets at 3, 6, 9; unanchored, reuse_text 0, 49 new frames, no skip rc=0 resets=[3, 6, 9] skips=[0, 1, 1, 0, 1, 1, 0, 1, 1, 0] reuse=[0, 1, 1, 0, 1, 1, 0, 1, 0, 0]
+PASS R2 after a reset the chain continues from the reset chunk's anchor 
+PASS R3 --reset-on-scene-change on 114: resets exactly at the scene boundaries 3, 8, 10 rc=0 resets=[3, 8, 10]
+PASS A1 a corrupt (stale) anchor -> the server refuses stale-anchor, client exit 10, no retry rc=10 refusals={'stale-anchor': 1} order=[0, 1, 2]
+PASS A2 a receipt whose anchor differs from the status chain -> exit 12 before any further submit rc=12
+PASS X1 a 113 client against a 114 server refuses at preflight (manifest identity), exit 8 rc=8
+PASS X2 a 113 client with the 114 manifest sha still refuses (packet / qualification_id), exit 8 rc=8
+PASS X3 a 114 client against a 113 server refuses at preflight (manifest identity), exit 8 rc=8
+PASS X4 a 114 client with the 113 manifest sha still refuses (needs a packet 114 server), exit 8 rc=8
+PASS X5 sealed packet 114 default manifest refuses a fake manifest (exit 8, nothing posted) rc=8
+
+26/26 passed; work in /tmp/ltx-c114-test-48txq38s

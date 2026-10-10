@@ -32,8 +32,8 @@ more rows. Source session identities match the receipt identities, rather than
 assuming a filename's device suffix describes its actual placement. Only
 completed manifest rows are included. Interior rows start at sequence 10 and
 require both neighbours; this excludes startup and the final bounded go wait.
-`s123b-legacy-live01/manifest.jsonl` did not exist at capture, so its requested
-contrast remains open. `s123b-live02` had 213 completed manifest rows at capture,
+`s123b-legacy-live01/manifest.jsonl` did not exist at the first capture;
+the later addendum below supplies that contrast without replacing this snapshot. `s123b-live02` had 213 completed manifest rows at capture,
 which is later than the coordinator's 190-row observation.
 
 **Parity convention:** the coordinator's fast even/slow odd period is the
@@ -277,3 +277,31 @@ Six structural checks passed: Python AST parsing, eight captured sessions,
 cone/display comparison true, and four retained consecutive detailed timelines
 per session. These are checks of the frozen analysis artifact, **not six native
 correctness tests**. Their names and outcomes are embedded in the evidence JSON.
+
+## Later legacy 123b snapshot
+
+At 07:33 UTC the previously missing session had 61 complete manifest rows.
+The [separate snapshot](../data/resume-20261008/continuation125-legacy-addendum.json)
+and [read-only reproduction script](../data/resume-20261008/continuation125-legacy-addendum.py)
+preserve the original eight-session capture. The receipt identity resolves to
+an archived run directory; its options confirm `aux_residency=legacy` and
+display on xpu:3 despite the historical `dxpu2` directory suffix.
+
+Sequences 10–59 provide 50 interior intervals. All A conditioning sources are
+precomputed, and the ten-second timer model matches all 49 classified handoffs.
+Even-source / odd-source period medians are 6.133 / 5.689 seconds;
+commit-to-first-served is 0.340 / 0.035 seconds, inner request snapshot
+0.071 / 0.067 seconds, and decode FIFO 54 / 52 microseconds.
+This independently supports the same wait attribution with legacy auxiliaries.
+The fast side is slower than the earlier 121-packet legacy baseline, so the
+5.55-second target remains a forecast, not a guaranteed packet125 outcome.
+
+The addendum retains the same full per-chunk measurements and four detailed
+nanosecond-origin timelines. For a direct consecutive-pair check:
+
+| Source sequence | Submit→executor exit | Submit→first served | Exit→first served | Submit→next submit |
+|---|---:|---:|---:|---:|
+| 10 | 5.686315 | 6.012832 | 0.326517 | 6.037689 |
+| 11 | 5.553214 | 5.569071 | 0.015857 | 5.591520 |
+| 12 | 6.053987 | 6.367101 | 0.313114 | 6.387215 |
+| 13 | 5.572366 | 5.606062 | 0.033696 | 5.631677 |
