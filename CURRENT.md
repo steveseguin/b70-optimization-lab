@@ -1,5 +1,10 @@
 # Current Workspace State
 
+**2026-10-10, own-runtime extraction driver prepared on CPU:** The [worker driver](experiments/own-xpu-runtime/stage1/packet4-prep/driver/README.md) passes 40 CPU checks and registers observations separately in all four mock workers, with changed answers rejected.
+The 45-minute Flash-only window is still blocked by the missing certified kernel stage, the original memory floor and the existing fault halt; owner authorization and fresh receipts remain required.
+No GPU, server, container, unit or existing venv was touched, and all test scratch was removed.
+
+
 **2026-10-10, own-runtime source hooks:** The [CPU adapter packet](experiments/own-xpu-runtime/stage1/packet4-prep/README.md) now maps 44 source boundaries and tests read-only capture, but native extraction still needs its worker driver and the listed internal-state bindings.
 The reopen image was present; A367 used a host environment, and its extension does not match that image, so no new certification is claimed.
 Only stopped-container file copies and CPU checks were used; scratch was removed and the host halt and existing lanes were untouched.

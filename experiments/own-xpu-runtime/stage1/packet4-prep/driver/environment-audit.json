@@ -1,0 +1,36 @@
+{
+  "schema": "own-xpu-runtime.packet4.driver-environment-audit.v1",
+  "unix": 1791664780.1209357,
+  "host": "steve-b70s",
+  "nice": 19,
+  "OMP_NUM_THREADS": "2",
+  "source_files_checked": 2305,
+  "source_files_match": true,
+  "patch_seal_members_match": 75,
+  "installed_versions": {
+    "torch": "2.11.0+xpu",
+    "triton-xpu": "3.7.0",
+    "vllm": "0.20.2rc1.dev2+gc51df4300.d20260523.xpu"
+  },
+  "default_kernel_stage_present": false,
+  "default_model_config_present": true,
+  "model_weights_read": false,
+  "mem_available_bytes": 119053426688,
+  "a367_admission_memory_floor_bytes": 122880000000,
+  "memory_floor_met": false,
+  "fault_file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/FAULT.json",
+  "fault_present": true,
+  "ready": false,
+  "remaining": [
+    "Locate/admit all18 loadable A367 kernel-stage members, including rebuilt _xpu_C SHA6b95dc90; historical default path is absent. No alternate searched binary is assumed certified.",
+    "A367 MemAvailable floor120000000KiB was not met; do not lower it or change host memory settings within this packet.",
+    "Owner must resolve current halt; FAULT.json must be absent; current code also refuses earlier fault lines on boot. It performs no reboot/archive/driver reset.",
+    "Owner supplies exclusive window flag, fresh four-card health, previous completed teardown time, exact PCI/firmware facts, and fresh full-payload verification receipt."
+  ],
+  "native_imported": false,
+  "device_access": false,
+  "servers_launched": 0,
+  "containers_started": 0,
+  "units_touched": false,
+  "scratch_created": false
+}
