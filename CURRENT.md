@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**2026-10-10 07:15 UTC, packet 124 sealed (display on xpu:2 with legacy auxiliaries; early audio; optional parallel display worker); plan: 123b legacy at 145 live → 124 at 145 (parallel + early audio) → 124 at 169.**
+Codex's 169 timeline (`notes/2026-10-10-continuation123b-results-169.md`, commit 58a22e4b9) corrects the coordinator's reading: the display
+decode usually finished before the next cone was queued; the cone's extra ≈ 0.6 s was the decode worker queueing behind audio decode and
+bookkeeping, and the cone itself cost 1.14 s (145: 1.02). Packet 124 (commit b99a7a8ee; manifest `897442d0…26a5`; inner plan
+`71fc6e9b…da68`; 623 recovery / 1,550 client / 10 preflight CPU checks; all client plan pins now checked against sealed inner hashes):
+display replica on xpu:2 with the auxiliaries in their legacy places (xpu:1 fails admission by margin), audio decode moved earlier, optional
+separate display/completion worker. Projections: 145 → 5.50–6.10 s; **169 (parallel + early audio, 6.5 GiB replica reserve) → 6.20–6.65 s
+per 7.0 s = 0.886–0.950 s/s** (adverse 7.2 s), margins 1.34 / 1.80 / 2.21 / 1.81 GiB. Packet 125 (the 145-frame even/odd 2-cycle) is in
+CPU design. Sequence: let the 123b legacy 145 session collect a baseline, then 124 at 145 (parallel + early audio), then 124 at 169.
+
 **2026-10-10 07:05 UTC, two findings from the 145-frame sessions: an even/odd 2-cycle in the period, and the xpu:2 auxiliary residency costs +0.17 s; swapping to 123b at 145 with the legacy placement.**
 Across all four 145-frame sessions the period alternates: legacy placement (packet 121, n = 409 + 306) even-seq median 5.53–5.55 s vs
 odd-seq 5.91–5.94 s; aux xpu:2 (123b, n = 31 + 190) 5.64–5.71 vs 6.09–6.16. The slow chunks carry a longer pre-sampler path
