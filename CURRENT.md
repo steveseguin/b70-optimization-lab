@@ -8,7 +8,7 @@ probe passed (`postflight-owner-accept-20261010T0119Z.json`, 4 earlier fault lin
 passing `--check-only`: unit `ltx117-stream-server-20261008`, 121 frames, frame anchor, dg0, cone/overlap/prep-ahead on.
 Client `ltx117-stream-client-20261008` (work dir `/home/steve/ltx-stream/s117-live01`, 10 kitten scenes, 40 chunks per
 cycle, unbounded) and sink `ltx117-stream-sink` → relay `ltx-relay` (forwarding to the owner's RTMP destination) →
-LAN preview `ltx-mjpeg` on :8090 are running. In parallel on CPU: Codex rebuilds packet 118b from the BLOCK review and
+LAN preview `ltx-mjpeg` on :8090 are running. **01:27 UTC: qualification passed** (verdict 508f2f2bac6a, exact replay c0/c1/c2 identical, 4 signatures per route, text window 64); first stream chunks at 01:27:30 UTC, sink playing with short holds (generation at 1.08 s/s is behind real time, as expected), relay forwarding to the owner's destination. In parallel on CPU: Codex rebuilds packet 118b from the BLOCK review and
 applies the Flash-Next teardown patch to the overlay. Fault-halt rule unchanged for any further incident.
 
 **2026-10-09, Flash-Next cleanup patch applied; three probes prepared on CPU.**
