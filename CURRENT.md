@@ -4,6 +4,11 @@
 All three variants lack the extra MTP block, so they cannot provide the certified speculative setup by themselves.
 Only headers were fetched; weights, quality review, storage and a native window remain pending, and the host halt and existing lanes were untouched.
 
+
+**2026-10-10, own-runtime fixture preparation:** The [recorder and CPU comparison tests](experiments/own-xpu-runtime/stage1/packet4-prep/README.md) pass on synthetic data, including state snapshots and changed-output rejection; no GPU, server or unit was used.
+The 46.85 Flash result used a host environment, so the requested certified image cannot be named from its evidence, and the real operator hooks still need an adapter before the [planned 60-minute Flash-only window](experiments/own-xpu-runtime/stage1/packet4-prep/WINDOW-RUNBOOK.md) can run.
+The host halt remains unchanged; this preparation does not qualify any real operator or authorize a launch.
+
 **2026-10-10, own-runtime Flash-Next CPU preparation:** The design now keeps
 Flash-Next's certified BF16 state between rows and keeps 27B's FP32 state.
 The [Stage 2 plan](experiments/own-xpu-runtime/STAGE2-PLAN.md) separates bandwidth

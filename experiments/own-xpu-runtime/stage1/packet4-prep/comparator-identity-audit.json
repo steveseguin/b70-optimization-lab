@@ -1,0 +1,603 @@
+{
+  "schema": "own-xpu-runtime.packet4.comparator-audit.v1",
+  "a367": {
+    "certified_image_digest": null,
+    "environment": "host Python 3.12 venv, torch 2.11.0+xpu, Triton 3.7.0, oneAPI 2025.3",
+    "record": {
+      "profile_id": "qwen38-flash-next-fp8-tp4-mtp1-fullgraphdet-4352-placement-hctriton-qsafused-exactgdn-realistic-v1",
+      "class_balanced_median_tok_s": 46.85424994838007,
+      "aggregation": "median of prompt-class medians, 99 inter-token intervals after TTFT, fixed cold realistic suite run once",
+      "localmaxxing_run": "cmtzask41000nlq011f16bpbc",
+      "measured_run": "A367 (2026-09-13)",
+      "certification_battery": "A364 (2026-09-13): frozen-client battery, exact-depth 2K 48.16/48.21 and 4K 48.52/48.49 tok/s, short suite, every gate passed, pins equal to the certified 37.83 line",
+      "fresh_server_repeat": "A365 (2026-09-13): same packet on a fresh server, exact-depth 2K 47.90/48.22 and 4K 48.52/48.54 tok/s, every pin equal; A366 (third server) equal again",
+      "predecessor": {
+        "guide": "qwen38-flash-next-fp8-tp4-mtp1-qsafused-b70-38tps-20260907",
+        "localmaxxing_run": "cmtrmp3mj001fps01thcathd0",
+        "class_balanced_median_tok_s": 37.82565425736173
+      },
+      "attestation": "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a367-promotion-attestation.json",
+      "performance_evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a367-native-exact-gdn-realistic-suite-v1-result.json",
+      "performance_evidence_sha256": "f88da9b4e041255dc36363363bd78756ebcd10418953e1ea7477d63e7b8014dc",
+      "suite_sha256": "0ad543d1c1f379a0b6cee88e06236e495c45eee7ba12cfcef062b6e03303e812",
+      "record_gate_replays": []
+    },
+    "runtime": {
+      "vllm_public_base": "76cfe1cd88d30d525eec8be5bff75f8b77471c88",
+      "vllm_overlay_head": "6d8724577dabbee5fa0bbc70c4d927c6174c8d8a",
+      "vllm_overlay_tree": "3e8dfc5937087d186cd4a99a6bf15213be732462",
+      "vllm_overlay_series": "patches/qwen38-flash-next-fp8-b70/vllm-qsafused-mtp1-6d872457/ (two fused-QSA commits over the Triton-HC MTP1 head 62219122; that head in patches/qwen38-flash-next-fp8-b70/vllm-hctriton-mtp1-62219122/, the placement head in .../vllm-placement-mtp1-005dc578/, the lossless MTP1 head in .../vllm-lossless-mtp1-1b2a17c1/)",
+      "vllm_package_version": "0.20.2rc1.dev2+gc51df4300.d20260523.xpu",
+      "kernel_stage_build_head": "bbae3c59e226c1b0c2a2dca6c51b4465cf36fd26",
+      "kernel_stage_manifest": "experiments/qwen38-flash-next-fp8-b70/data/runtime-stage-gdn-roundstate-v2-loadable.sha256",
+      "kernel_stage_release": "https://github.com/steveseguin/b70-optimization-lab/releases/tag/qwen38-flash-next-runtime-2f829747-20260827",
+      "kernel_source_head_in_venv": "e421889999bc1e5a5f11044d14548b9afdba644d",
+      "oneccl_public_commit": "4ceafd1",
+      "oneccl_libccl_sha256": "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700",
+      "oneccl_kernels_spv_sha256": "0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9",
+      "oneccl_receipt": "patches/qwen38-flash-next-fp8-b70/oneccl-4ceafd1-b70-public/README.md",
+      "torch": "2.11.0+xpu",
+      "triton": "3.7.0",
+      "python": "3.12",
+      "compiler_for_stage": "oneAPI 2025.3 icpx",
+      "vllm_lossless_mtp1_head": "1b2a17c1e7c41985d6a5e0eb324ada4775c25e60",
+      "vllm_placement_mtp1_head": "005dc57895896f770157ea94f68e473e7447139e",
+      "vllm_hctriton_mtp1_head": "622191221475b53cc6f7f4d847860939f4c300ab",
+      "kernel_stage_base_head": "e421889999bc1e5a5f11044d14548b9afdba644d",
+      "kernel_stage_series": "patches/qwen38-flash-next-fp8-b70/xpu-kernels-gdn-exact-serial-bbae3c5/README.md",
+      "kernel_stage_note": "served 2f829747 stage with _xpu_C.abi3.so rebuilt from bbae3c5 over e421889; the other 17 loadable files byte-identical to the served stage"
+    },
+    "configuration": {
+      "cards": 4,
+      "tensor_parallel": 4,
+      "expert_parallel": 4,
+      "all2all_backend": "allgather_reducescatter",
+      "moe_backend": "triton",
+      "tuned_config_folder": "experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32",
+      "tuned_config_map_sha256": "a8f1f8982e3e1af80ff31b9e0a00afaacf1af1b3c401585109b4d60d3c8267be",
+      "graph": "FULL_DECODE_ONLY, capture sizes [1, 2], one warmup",
+      "graph_enable_env": "VLLM_XPU_ENABLE_XPU_GRAPH=1",
+      "speculation": "publisher MTP, one speculative token (lossless: every output pin equal to the MTP0 line)",
+      "max_model_len": 4352,
+      "max_num_seqs": 1,
+      "max_num_batched_tokens": 64,
+      "kv_cache_memory_bytes": 376569856,
+      "kv_cache_layout": "BLHNC",
+      "offload_backend": "uva",
+      "cpu_offload_gb": 12.25,
+      "cpu_offload_params": [
+        "ple_embedding.ngram_embedding.weight",
+        "embed_tokens.weight"
+      ],
+      "offloaded_bytes_per_rank_expected": "12.22 GiB (PLE n-gram 11.92 + embeddings 0.30); every hot routed expert resident",
+      "mkldnn_deterministic": 1,
+      "ccl_sycl_allreduce_ll": "twoshots",
+      "dtype": "bfloat16 activations over the publisher FP8 block-128 weights",
+      "prefix_caching": false,
+      "async_scheduling": false,
+      "expert_host_placement": {
+        "file": "experiments/qwen38-flash-next-fp8-b70/data/20260906-q38-expert-host-placement-3p5gib-per-rank.json",
+        "sha256": "f3f4812cfae2f4f704e75cc9b47a4031a476f846b353e3def23141b9d9c05f96",
+        "host_gib_per_rank_budget": 3.5,
+        "experts_per_rank": {
+          "0": 543,
+          "1": 587,
+          "2": 550,
+          "3": 586
+        },
+        "selection": "experts never routed to in the A168 exact-2K trajectory census and the A197 realistic-suite census; placed in pinned host memory at load time behind a per-expert offset table in the Triton MoE kernel (USE_B_TABLE)"
+      },
+      "tuned_config_key": "logical expert count (placed layers are resident-sized; all three lookup sites key on _q38_num_experts)",
+      "hc_triton": "VLLM_XPU_HC_TRITON=1 printed into the packet's derived launch source: the Triton hyper-connection glue kernels (gate-mix, combine, combine-norm, silu) run on XPU instead of the torch fallbacks; MoE kernel, tuned map, offload and placement unchanged",
+      "qsa_fused_indexer": "VLLM_XPU_QSA_FUSED_INDEXER=1 printed into the packet's derived launch source: the model's reference fused QSA pre-indexer replaces the unfused projection, norm, rope, group compression and cache stores; on the MTP1 head it is placed after the row-serial verify path so the multi-row verification step keeps its exactness",
+      "gdn_verifier_rows": "the kernel extension's exact serial mode: VLLM_XPU_GDN_SERIAL_SPEC_DECODE=0, VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1, VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1, VLLM_XPU_GDN_NATIVE_SPEC_COMPLETION_BARRIER=1, printed into the packet's derived launch source; the per-row decode kernel runs inside gdn_attention_spec_decode with the state passing through the BF16 cache between rows, as vLLM's Python serial path did"
+    },
+    "sealed_series": [
+      {
+        "series": "vllm-lossless-mtp1-1b2a17c1",
+        "members": [
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0001-Merge-02f2b4c15dd987d9436e125aab29604447c77405-into-.patch",
+            "sha256": "40ca58bb2c67ed90a2e0b6dc38d71661452955f2fca6fc3efd9e94470e74ef63",
+            "observed_sha256": "40ca58bb2c67ed90a2e0b6dc38d71661452955f2fca6fc3efd9e94470e74ef63",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0002-support-PLE-Offload-for-Qwen3.8-Flash-Next.patch",
+            "sha256": "0a7767203cfaca9b4512b0200aa24625fb85f67f406f35a6eb337eef9412aea2",
+            "observed_sha256": "0a7767203cfaca9b4512b0200aa24625fb85f67f406f35a6eb337eef9412aea2",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0003-Support-eager-PLE-offload-transport-on-XPU.patch",
+            "sha256": "185db9fbe3869d12afdd768a2b498949f070aafb33858ca1346692f0ccfdedf5",
+            "observed_sha256": "185db9fbe3869d12afdd768a2b498949f070aafb33858ca1346692f0ccfdedf5",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0004-Enable-Qwen4Exp-model-dispatch-on-XPU.patch",
+            "sha256": "0e2544a396f8bea7af8fc07e8fb6e144a6db7ff3308bd8808b0e75c99fa52003",
+            "observed_sha256": "0e2544a396f8bea7af8fc07e8fb6e144a6db7ff3308bd8808b0e75c99fa52003",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0005-Add-Qwen4Exp-XPU-hyperconnection-fallbacks.patch",
+            "sha256": "4c54010bf06f02b16a586ae9e37e3bbec99468d3a370e2680df530fe8490f231",
+            "observed_sha256": "4c54010bf06f02b16a586ae9e37e3bbec99468d3a370e2680df530fe8490f231",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0006-Enable-Qwen4Exp-QSA-kernels-on-XPU.patch",
+            "sha256": "7f01403a2c32d1d97454664573664382b773c89d0f0dedc27388391b2a805cd6",
+            "observed_sha256": "7f01403a2c32d1d97454664573664382b773c89d0f0dedc27388391b2a805cd6",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0007-Fix-PLE-target-device-selection-across-accelerators.patch",
+            "sha256": "82a50d35ada566420f7509ad09d7c20dbf0da96b47e60b2a2e71241223d0624e",
+            "observed_sha256": "82a50d35ada566420f7509ad09d7c20dbf0da96b47e60b2a2e71241223d0624e",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0008-Restore-weight-skip-filters-for-Qwen4Exp.patch",
+            "sha256": "8e07e775c5313fc0c18fb01e4210b043dc6b58f4f319e5c84e2c3f2befc92df3",
+            "observed_sha256": "8e07e775c5313fc0c18fb01e4210b043dc6b58f4f319e5c84e2c3f2befc92df3",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0009-Port-QSA-compressed-cache-to-tokens-per-state.patch",
+            "sha256": "47038029291ca5a75244771dd96a10ec3066f39d5cd86a58bfa2944f78a546c5",
+            "observed_sha256": "47038029291ca5a75244771dd96a10ec3066f39d5cd86a58bfa2944f78a546c5",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0010-Avoid-copying-uninitialized-PLE-weights-during-offlo.patch",
+            "sha256": "b1dcbb7542360c48c35093403b7784f7e3568266b6b14e2316ed441e1539d12d",
+            "observed_sha256": "b1dcbb7542360c48c35093403b7784f7e3568266b6b14e2316ed441e1539d12d",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0011-Add-opt-in-XPU-MoE-phase-sync-trace.patch",
+            "sha256": "b2b6d9fc477f7638a07550b634e991aecce74cd5a06be6d2f6b83245d389c27d",
+            "observed_sha256": "b2b6d9fc477f7638a07550b634e991aecce74cd5a06be6d2f6b83245d389c27d",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0012-Allow-selective-UVA-offload-of-Qwen4Exp-embeddings.patch",
+            "sha256": "16744c581d7f48e8c8cd6fcefc3c8841ee1a65fc795f4427fed8d8cd276e707d",
+            "observed_sha256": "16744c581d7f48e8c8cd6fcefc3c8841ee1a65fc795f4427fed8d8cd276e707d",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0013-Capture-routed-MoE-replay-inputs-on-demand.patch",
+            "sha256": "33e781fd7b8a20ec564286fcd7cf7857de0fdb2bef46e94d7365c19e3bf9c21f",
+            "observed_sha256": "33e781fd7b8a20ec564286fcd7cf7857de0fdb2bef46e94d7365c19e3bf9c21f",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0014-Normalize-QSA-caches-from-logical-layout.patch",
+            "sha256": "9d74f39c74af86388e7bf07a9953c29090dbf6421a3e93f2edd52bb532080655",
+            "observed_sha256": "9d74f39c74af86388e7bf07a9953c29090dbf6421a3e93f2edd52bb532080655",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0015-Support-legacy-XPU-GDN-ABI-for-target-decode.patch",
+            "sha256": "96e4d82e98ae8ae9cd4a4901d9579c7cb6e92480b43750dc27662d7bda459d6c",
+            "observed_sha256": "96e4d82e98ae8ae9cd4a4901d9579c7cb6e92480b43750dc27662d7bda459d6c",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0016-Fail-closed-on-XPU-GDN-schema-mismatches.patch",
+            "sha256": "24a02f6645936540c73912a0fcdb489c9405342ce903fda7b7b2dd9be39ec079",
+            "observed_sha256": "24a02f6645936540c73912a0fcdb489c9405342ce903fda7b7b2dd9be39ec079",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0017-Revert-Capture-routed-MoE-replay-inputs-on-demand.patch",
+            "sha256": "75e51bf9d7b63d993492990b9ef7ea8aa6debd7d84ad7f4c0aec4eb8021eba3a",
+            "observed_sha256": "75e51bf9d7b63d993492990b9ef7ea8aa6debd7d84ad7f4c0aec4eb8021eba3a",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0018-Revert-Add-opt-in-XPU-MoE-phase-sync-trace.patch",
+            "sha256": "e628e0daf89a9ee1ae362349731b1bd380a71c8b380dd1191b72d363d8312001",
+            "observed_sha256": "e628e0daf89a9ee1ae362349731b1bd380a71c8b380dd1191b72d363d8312001",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0019-Port-Qwen4Exp-MTP-tests-to-tokens-per-state-cache-AP.patch",
+            "sha256": "a8f6af6a6909042842be2792258fdf30016901eef94b6157a220660aceec4f10",
+            "observed_sha256": "a8f6af6a6909042842be2792258fdf30016901eef94b6157a220660aceec4f10",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0020-Route-legacy-XPU-GDN-speculative-decode.patch",
+            "sha256": "bafad6c92784946415d664830e925bfc5da78799419db464b83be4d6351a7431",
+            "observed_sha256": "bafad6c92784946415d664830e925bfc5da78799419db464b83be4d6351a7431",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0021-Add-bounded-greedy-decision-trace.patch",
+            "sha256": "338ed63aea6b2cd3380be147ce827d26895c3bbd53d8c0038ecc8959f030f983",
+            "observed_sha256": "338ed63aea6b2cd3380be147ce827d26895c3bbd53d8c0038ecc8959f030f983",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0022-Revert-Add-bounded-greedy-decision-trace.patch",
+            "sha256": "fc4c417696946321120b6be83e6de97ee8a5f296720a8acd01bcb2c6480bddc8",
+            "observed_sha256": "fc4c417696946321120b6be83e6de97ee8a5f296720a8acd01bcb2c6480bddc8",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0023-Make-Qwen4Exp-XPU-QSA-selection-deterministic.patch",
+            "sha256": "ac46eaf28370bb3025449a73faa2a33e5948ddfdd5d6db412ff124002d75bc58",
+            "observed_sha256": "ac46eaf28370bb3025449a73faa2a33e5948ddfdd5d6db412ff124002d75bc58",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0024-Add-opt-in-Qwen4Exp-repeatability-trace.patch",
+            "sha256": "af4d8e7dfb60e8ef55ab0b806897ecaa9fd688f29881ae2fedde2e4c71559222",
+            "observed_sha256": "af4d8e7dfb60e8ef55ab0b806897ecaa9fd688f29881ae2fedde2e4c71559222",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0025-Trace-Qwen4Exp-PLE-layer-boundaries.patch",
+            "sha256": "ac4703b25cf27021bcc4436a432d1942c30d6cce3aadefa22249c2a7a74ea540",
+            "observed_sha256": "ac4703b25cf27021bcc4436a432d1942c30d6cce3aadefa22249c2a7a74ea540",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0026-Trace-Qwen4Exp-PLE-internals.patch",
+            "sha256": "4cebc7896f11c7838e2b111e11916dafce703014eb19235a11689e9eb7231eca",
+            "observed_sha256": "4cebc7896f11c7838e2b111e11916dafce703014eb19235a11689e9eb7231eca",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0027-Require-complete-Qwen4Exp-PLE-shard-coverage.patch",
+            "sha256": "581b2ca304352605af19890675ec4f569dff03916baa73c52fb44b03658af92a",
+            "observed_sha256": "581b2ca304352605af19890675ec4f569dff03916baa73c52fb44b03658af92a",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0028-Cover-Qwen4Exp-4K-ngram-context-progression.patch",
+            "sha256": "40bb0636db547ec80d93fd97b66c84e5e4d49a9ac4f083c35635022394140705",
+            "observed_sha256": "40bb0636db547ec80d93fd97b66c84e5e4d49a9ac4f083c35635022394140705",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0029-Allow-Qwen4Exp-traces-on-every-TP-rank.patch",
+            "sha256": "ad40e2f35d75d083df99a4e3f1e9ec37619e95b00939d37db03b21a006523e9c",
+            "observed_sha256": "ad40e2f35d75d083df99a4e3f1e9ec37619e95b00939d37db03b21a006523e9c",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0030-Validate-Qwen4Exp-PLE-shards-after-root-load.patch",
+            "sha256": "679c2f3a60db4422f165d3ed42e776cb836dedda8351b07dac2567da88aee952",
+            "observed_sha256": "679c2f3a60db4422f165d3ed42e776cb836dedda8351b07dac2567da88aee952",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0031-Skip-PLE-shard-coverage-on-GPU-placeholders.patch",
+            "sha256": "2ed9412b819ea25acc5d94a19aca0adc08ba074c944037773449d2932ce6ad4e",
+            "observed_sha256": "2ed9412b819ea25acc5d94a19aca0adc08ba074c944037773449d2932ce6ad4e",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0032-Bound-XPU-PLE-offload-waits.patch",
+            "sha256": "440a4cd9f7b524c3c98b13d91b6c1aa52026290a6369ce097e960c1d517e1e06",
+            "observed_sha256": "440a4cd9f7b524c3c98b13d91b6c1aa52026290a6369ce097e960c1d517e1e06",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0033-Filter-PLE-offload-weights-before-materialization.patch",
+            "sha256": "8b5a0d33cc1a6f2dd23dafe6b74ccc532713f0879d8f856666c610b035e1aeb0",
+            "observed_sha256": "8b5a0d33cc1a6f2dd23dafe6b74ccc532713f0879d8f856666c610b035e1aeb0",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0034-Isolate-filtered-loader-bookkeeping.patch",
+            "sha256": "a2059eb2801e1eab9ab4dbfbb9d42c413721f43f205389199be91447be6b83f9",
+            "observed_sha256": "a2059eb2801e1eab9ab4dbfbb9d42c413721f43f205389199be91447be6b83f9",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0035-Add-opt-in-XPU-async-UVA-PLE-prefetch.patch",
+            "sha256": "9ba9485109c27fda34a84b164fdae9c8295ef459416bc4111e6553fe246f6848",
+            "observed_sha256": "9ba9485109c27fda34a84b164fdae9c8295ef459416bc4111e6553fe246f6848",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0036-Add-guarded-Qwen-HC-grouped-up-integration.patch",
+            "sha256": "bf71b66a8703bf80693d415c462cb494c0902b7366b221d1d50d75275ac61598",
+            "observed_sha256": "bf71b66a8703bf80693d415c462cb494c0902b7366b221d1d50d75275ac61598",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0037-Qualify-Qwen-HC-grouped-up-dynamic-shapes.patch",
+            "sha256": "8297cbb6e649f31fe59eb7d1a20b5f8bfbee6504f3e4c0196c1e98272b95f65f",
+            "observed_sha256": "8297cbb6e649f31fe59eb7d1a20b5f8bfbee6504f3e4c0196c1e98272b95f65f",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0038-Add-opt-in-per-phase-Triton-MoE-configs.patch",
+            "sha256": "69de6fcf8fd23f3222e102181332d9c6916251ccb4cdf8a1199c9475fd7ac28f",
+            "observed_sha256": "69de6fcf8fd23f3222e102181332d9c6916251ccb4cdf8a1199c9475fd7ac28f",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0039-Qwen4Exp-Add-default-off-GDN-internal-records-to-the.patch",
+            "sha256": "0284e07d32bab80e737efbe546b1aaddb59040c91c163e77b5bc5557acbff826",
+            "observed_sha256": "0284e07d32bab80e737efbe546b1aaddb59040c91c163e77b5bc5557acbff826",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0040-Qwen4Exp-Read-repeatability-trace-settings-through-Q.patch",
+            "sha256": "c86d794d7db26228407587cf2ea01b2d40eb1a708ee9da18369efa4139e6ddae",
+            "observed_sha256": "c86d794d7db26228407587cf2ea01b2d40eb1a708ee9da18369efa4139e6ddae",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0041-XPU-Add-VLLM_XPU_MKLDNN_DETERMINISTIC-worker-flag.patch",
+            "sha256": "8803b20696a50f958455949613aa3ba5f55d50956d4008c5397fea3e6c738ea3",
+            "observed_sha256": "8803b20696a50f958455949613aa3ba5f55d50956d4008c5397fea3e6c738ea3",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0042-V2-runner-Report-CUDAGraphStat-so-cudagraph-metrics-.patch",
+            "sha256": "68b4dd588c2d593ef641080513c3f5ef6bc637944c1652c83d1585d15cec9391",
+            "observed_sha256": "68b4dd588c2d593ef641080513c3f5ef6bc637944c1652c83d1585d15cec9391",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0043-XPU-Serial-verifier-row-flash-attention-behind-VLLM_.patch",
+            "sha256": "b0df822aaf3b4bbc6604113f7fb1a08ab8e479b01bfba7f26ee08f3e7d8081d7",
+            "observed_sha256": "b0df822aaf3b4bbc6604113f7fb1a08ab8e479b01bfba7f26ee08f3e7d8081d7",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0044-XPU-One-time-diagnostic-of-the-serial-spec-attention.patch",
+            "sha256": "e44c0f564a5c37c3ada489a6fbd76a86598a23689e5ac44a2433c40de195d38c",
+            "observed_sha256": "e44c0f564a5c37c3ada489a6fbd76a86598a23689e5ac44a2433c40de195d38c",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0045-XPU-Register-VLLM_XPU_FA_SERIAL_SPEC_DECODE-so-the-e.patch",
+            "sha256": "2bf1a3ac82e66541aea45025f30f8087dc8df4425ffc8d84afc68092466eefb0",
+            "observed_sha256": "2bf1a3ac82e66541aea45025f30f8087dc8df4425ffc8d84afc68092466eefb0",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0046-XPU-One-time-entry-diagnostic-in-FlashAttentionImpl..patch",
+            "sha256": "16d58d3619c38f63a26761b2a0dee865f2c2f62393dff7b22b59ccc06459f456",
+            "observed_sha256": "16d58d3619c38f63a26761b2a0dee865f2c2f62393dff7b22b59ccc06459f456",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0047-XPU-Remove-the-two-one-time-attention-diagnostics-A8.patch",
+            "sha256": "b554a304bf19e2f14249ee4d7a413d7c96ca6c7de9b972bd9dc3fad767b07e39",
+            "observed_sha256": "b554a304bf19e2f14249ee4d7a413d7c96ca6c7de9b972bd9dc3fad767b07e39",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0048-XPU-Per-row-QSA-index-update-and-selection-for-small.patch",
+            "sha256": "66f3f7ef34f676defc94b112c5d7e673f6d3082e54ba5401fab8cb4eabacafe9",
+            "observed_sha256": "66f3f7ef34f676defc94b112c5d7e673f6d3082e54ba5401fab8cb4eabacafe9",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0049-XPU-Serial-QSA-indexer-build-the-single-row-query-of.patch",
+            "sha256": "dbb249099e0588c893c375548bcf39535e7ff2c0356d5a90e3ef7f31297f3a54",
+            "observed_sha256": "dbb249099e0588c893c375548bcf39535e7ff2c0356d5a90e3ef7f31297f3a54",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0050-XPU-Repeatability-trace-per-row-digests-for-small-mu.patch",
+            "sha256": "085a1466d334d05ddddd2067da571d20c12bcbbad99488ced3f235a7f1c98566",
+            "observed_sha256": "085a1466d334d05ddddd2067da571d20c12bcbbad99488ced3f235a7f1c98566",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0051-XPU-GDN-verifier-rows-through-the-single-row-decode-.patch",
+            "sha256": "d85a70097267992f65c43f56f37cf25df7734b04d7b4d71e66814d7680c58624",
+            "observed_sha256": "d85a70097267992f65c43f56f37cf25df7734b04d7b4d71e66814d7680c58624",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0052-XPU-Serial-GDN-verifier-rows-64-bit-indices-for-inde.patch",
+            "sha256": "79ab9091859efdbf4c97a239421b93ab4808e1a68dcc8cad3c54136e2aa27dac",
+            "observed_sha256": "79ab9091859efdbf4c97a239421b93ab4808e1a68dcc8cad3c54136e2aa27dac",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0053-XPU-VLLM_XPU_ROWWISE_ALLREDUCE_MAX_ROWS-all-reduce-s.patch",
+            "sha256": "0c94258eaacdc3b88d7b22962f9bceec6a765d67f33d8af3341712947806db30",
+            "observed_sha256": "0c94258eaacdc3b88d7b22962f9bceec6a765d67f33d8af3341712947806db30",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0054-XPU-Qwen4Exp-repeatability-trace-QSA-layer-inner-rec.patch",
+            "sha256": "cba49714a4f8cee409ff4774169c1c1aeeda4af62cd843b8c6252efc750d2887",
+            "observed_sha256": "cba49714a4f8cee409ff4774169c1c1aeeda4af62cd843b8c6252efc750d2887",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/0055-XPU-VLLM_XPU_ROWWISE_HC_NORM_MAX_ROWS-per-row-varian.patch",
+            "sha256": "bd1c1a5223c35586352ea85177dffb9c1cf2a93913d8dec114351c2a2c02ea39",
+            "observed_sha256": "bd1c1a5223c35586352ea85177dffb9c1cf2a93913d8dec114351c2a2c02ea39",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/vllm-q38-lossless-mtp1-1b2a17c1-20260906.bundle",
+            "sha256": "722c83e858e58bf50ba14f2acdab9a7e6ad3ddff5fdcd154f66a1d25c1901e3a",
+            "observed_sha256": "722c83e858e58bf50ba14f2acdab9a7e6ad3ddff5fdcd154f66a1d25c1901e3a",
+            "matched": true
+          }
+        ]
+      },
+      {
+        "series": "vllm-placement-mtp1-005dc578",
+        "members": [
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-placement-mtp1-005dc578/0001-XPU-Q38_EXPERT_HOST_PLACEMENT-on-the-promoted-line-p.patch",
+            "sha256": "b1ca54534f0f004b5c832be127143ce49d33c82c9f6380d3ab58e011b77a1eae",
+            "observed_sha256": "b1ca54534f0f004b5c832be127143ce49d33c82c9f6380d3ab58e011b77a1eae",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-placement-mtp1-005dc578/0002-XPU-Q38_EXPERT_HOST_PLACEMENT-free-the-original-expe.patch",
+            "sha256": "9342a05c76327de0086bbb7e57abd7af6ef514048c6ac3f98760119e5089186c",
+            "observed_sha256": "9342a05c76327de0086bbb7e57abd7af6ef514048c6ac3f98760119e5089186c",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-placement-mtp1-005dc578/0003-XPU-Q38_EXPERT_HOST_PLACEMENT-rank-serialized-global.patch",
+            "sha256": "59aa6a9d6a958f1ab80603ead91ecebaf41c5ccecf7a4a47d68a1f84be0dd7a2",
+            "observed_sha256": "59aa6a9d6a958f1ab80603ead91ecebaf41c5ccecf7a4a47d68a1f84be0dd7a2",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-placement-mtp1-005dc578/0004-XPU-Q38_EXPERT_HOST_PLACEMENT-v4-per-layer-stage-fre.patch",
+            "sha256": "b3c208eff7fbd331d88a0ef76d403b4d36a469f38f75b7a4b5d6e26a7d82ebb9",
+            "observed_sha256": "b3c208eff7fbd331d88a0ef76d403b4d36a469f38f75b7a4b5d6e26a7d82ebb9",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-placement-mtp1-005dc578/0005-XPU-Q38_EXPERT_HOST_PLACEMENT-v5-on-the-promoted-lin.patch",
+            "sha256": "10068551a5526b65c741febdacc9127530a82ee6544365a2f9a28aee05d5ccc0",
+            "observed_sha256": "10068551a5526b65c741febdacc9127530a82ee6544365a2f9a28aee05d5ccc0",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-placement-mtp1-005dc578/0006-XPU-Q38_EXPERT_HOST_PLACEMENT-pinned-host-rows-alloc.patch",
+            "sha256": "8cde5ae1282d17c39424e659723d4d53a98446774ae9916dc6db5de3870e7c79",
+            "observed_sha256": "8cde5ae1282d17c39424e659723d4d53a98446774ae9916dc6db5de3870e7c79",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-placement-mtp1-005dc578/0007-XPU-Q38_EXPERT_HOST_PLACEMENT-tuned-MoE-config-looku.patch",
+            "sha256": "037a7d98210ada534923e2b14400a40a0bdd9291b71463872f49f3741981353e",
+            "observed_sha256": "037a7d98210ada534923e2b14400a40a0bdd9291b71463872f49f3741981353e",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-placement-mtp1-005dc578/0008-XPU-Q38_EXPERT_HOST_PLACEMENT-the-modular-Triton-exp.patch",
+            "sha256": "2cb89370d3dbac6bf35d66b975512c275f3305333139aa6203c1b9f4a7d8f069",
+            "observed_sha256": "2cb89370d3dbac6bf35d66b975512c275f3305333139aa6203c1b9f4a7d8f069",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-placement-mtp1-005dc578/0009-XPU-Q38_EXPERT_HOST_PLACEMENT-the-M1-phase-config-lo.patch",
+            "sha256": "883512c9fc749c3229237c6e6dce82ad7b7cc4765227a442f241dccc5c5b4486",
+            "observed_sha256": "883512c9fc749c3229237c6e6dce82ad7b7cc4765227a442f241dccc5c5b4486",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-placement-mtp1-005dc578/vllm-q38-placement-mtp1-005dc578-20260906.bundle",
+            "sha256": "c51efd3d1ce5201b9bb57ac7fb83bc86be56f6ff2b6bab5ce76c4a368198b128",
+            "observed_sha256": "c51efd3d1ce5201b9bb57ac7fb83bc86be56f6ff2b6bab5ce76c4a368198b128",
+            "matched": true
+          }
+        ]
+      },
+      {
+        "series": "vllm-hctriton-mtp1-62219122",
+        "members": [
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-hctriton-mtp1-62219122/0001-XPU-VLLM_XPU_HC_TRITON-1-run-the-Triton-hyper-connec.patch",
+            "sha256": "7c8a64aefba8eb2016b7bdc870d61b04006156c6fc6c41616d9d3077de17dda4",
+            "observed_sha256": "7c8a64aefba8eb2016b7bdc870d61b04006156c6fc6c41616d9d3077de17dda4",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-hctriton-mtp1-62219122/vllm-q38-hctriton-mtp1-62219122-20260907.bundle",
+            "sha256": "1dc0501666d502e38606c9267e1f6880140678bec1f189ad028b368fb4c500c9",
+            "observed_sha256": "1dc0501666d502e38606c9267e1f6880140678bec1f189ad028b368fb4c500c9",
+            "matched": true
+          }
+        ]
+      },
+      {
+        "series": "vllm-qsafused-mtp1-6d872457",
+        "members": [
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-qsafused-mtp1-6d872457/0001-XPU-VLLM_XPU_QSA_FUSED_INDEXER-1-run-the-reference-f.patch",
+            "sha256": "d019579ca5b44336ee56910813c0856ab82658838f6a627d8b87e1c12f73cb64",
+            "observed_sha256": "d019579ca5b44336ee56910813c0856ab82658838f6a627d8b87e1c12f73cb64",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-qsafused-mtp1-6d872457/0002-XPU-the-fused-QSA-pre-indexer-must-not-preempt-the-r.patch",
+            "sha256": "92e9d57b5623650d4bc1c11fd64e14d0908f7b91ed569846094f992dc2e33ddf",
+            "observed_sha256": "92e9d57b5623650d4bc1c11fd64e14d0908f7b91ed569846094f992dc2e33ddf",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/vllm-qsafused-mtp1-6d872457/vllm-q38-qsafused-mtp1-6d872457-20260907.bundle",
+            "sha256": "95e5caee937d128177d34e268f56586879a0dab4cf3f3c6c1bddab1fec7bd3fc",
+            "observed_sha256": "95e5caee937d128177d34e268f56586879a0dab4cf3f3c6c1bddab1fec7bd3fc",
+            "matched": true
+          }
+        ]
+      },
+      {
+        "series": "xpu-kernels-gdn-exact-serial-bbae3c5",
+        "members": [
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/xpu-kernels-gdn-exact-serial-bbae3c5/vllm-xpu-kernels-q38-gdn-exact-serial-bbae3c5-20260913.bundle",
+            "sha256": "8a8e3fc89cfa405be7a17bb6517091e328adad0fac7566b290d715edfa068d81",
+            "observed_sha256": "8a8e3fc89cfa405be7a17bb6517091e328adad0fac7566b290d715edfa068d81",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/xpu-kernels-gdn-exact-serial-bbae3c5/vllm-xpu-kernels-32798565-gdn-spec-round-state.patch",
+            "sha256": "fe694c44f0e92c8bebad8c727c2cf4e50c3bb9911beb466e2d2b37ac7b668682",
+            "observed_sha256": "fe694c44f0e92c8bebad8c727c2cf4e50c3bb9911beb466e2d2b37ac7b668682",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/xpu-kernels-gdn-exact-serial-bbae3c5/vllm-xpu-kernels-bbae3c5-gdn-spec-unroll.patch",
+            "sha256": "f50b23043b8cd0e9d4849499301c3fe5499265c94d049480538e743e5bef4c23",
+            "observed_sha256": "f50b23043b8cd0e9d4849499301c3fe5499265c94d049480538e743e5bef4c23",
+            "matched": true
+          },
+          {
+            "path": "patches/qwen38-flash-next-fp8-b70/xpu-kernels-gdn-exact-serial-bbae3c5/runtime-stage-loadable.sha256",
+            "sha256": "39b5643a284cf9e13f96bdce76e32a1e3ad2aef71bcde83c0ab1349e640a8ce4",
+            "observed_sha256": "39b5643a284cf9e13f96bdce76e32a1e3ad2aef71bcde83c0ab1349e640a8ce4",
+            "matched": true
+          }
+        ]
+      }
+    ]
+  },
+  "reopen": {
+    "image": "vllm/vllm-openai-xpu@sha256:e4446310b1d30015e8fdc1a0a2ef1669ac6bef857cbe772487571ed5c1a926a9",
+    "overlay_manifest_sha256": "e00bb55d8378ecd0065e82a8c3b6fdd59268bd33aae6e0f356ca48f067926f2d",
+    "upstream": "ced6857afa0ea7b2e3f0846a62e1394e90f15607",
+    "head": "9d79d28d7e32f33bdbd115c85d116583ce679cb6",
+    "certified_as_A367": false,
+    "generation_qualified": false
+  },
+  "native_extraction_ready": false,
+  "blockers": [
+    "A367 is not a digest-pinned container; the guide explicitly calls its container route unbuilt/unadapted.",
+    "No reviewed source-bound native operator/state ABI adapter is present in this packet.",
+    "Eager full-token neutrality versus the graph-enabled certified line is not established.",
+    "Natural A367 MTP1 does not guarantee M=6; do not change its dispatch or invent rows.",
+    "Reopen full-model memory/output/teardown qualification and current host halt remain separate gates."
+  ],
+  "evidence": {
+    "repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/identity.json": "e87e2231469e313f84cbc87ca1e803cab36faf7b76145146b0d9edbb94507238",
+    "repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md": "15300b6e6f92bb3ea199fde3a976c9873041ba93ecab8b06be1ebc949ec5c59b",
+    "repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/frozen-a367-packet.sha256": "ea7b009f68db4fea0584f8291f2b798707d3f58e9d9b245d49558709828c2a21",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/image-plan.json": "08bf4e83bff6fb77dc6d4bb0d11e53edd63a59ebfd9bfb9a36e7197806469cee",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-manifest.json": "e00bb55d8378ecd0065e82a8c3b6fdd59268bd33aae6e0f356ca48f067926f2d",
+    "experiments/qwen38-flash-next-fp8-b70/data/runtime-stage-gdn-roundstate-v2-loadable.sha256": "39b5643a284cf9e13f96bdce76e32a1e3ad2aef71bcde83c0ab1349e640a8ce4",
+    "experiments/own-xpu-runtime/stage2/packet1/evidence/runtime-versions.txt": "9212e2589e79672c6d2689455ef9014368d7ff7405b7db1a045d3ccde4d6abcc",
+    "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/series.sha256": "c3e40371c7561b78fc257e04ecef363e655f470af5f648b3d5a06ae5c44111de",
+    "patches/qwen38-flash-next-fp8-b70/vllm-placement-mtp1-005dc578/series.sha256": "f589eb7643ed69ff352f4a83a909280e0a7488c9d00a88e5d5a0f5a0e311313e",
+    "patches/qwen38-flash-next-fp8-b70/vllm-hctriton-mtp1-62219122/series.sha256": "da85840977b4551658df8033c242872c8b630b6bede3e5446d3f4d021f60cb73",
+    "patches/qwen38-flash-next-fp8-b70/vllm-qsafused-mtp1-6d872457/series.sha256": "b7e5b40297e99f20de38984b5c741ef7326f5263e6cc144e1dd300f6ab99dfaa",
+    "patches/qwen38-flash-next-fp8-b70/xpu-kernels-gdn-exact-serial-bbae3c5/series.sha256": "c280c8ada213c26a4668b0b8227fc47a80bf37f69d03fd17a4db0b4043e64a7a"
+  }
+}
