@@ -1,11 +1,14 @@
 # Current Workspace State
 
-**2026-10-10, our own Intel Xe runtime: Stage 0 documents are ready for review.**
-The [design and inventory](experiments/own-xpu-runtime/README.md) cover the model shapes, saved answers, safe cleanup, nine source surveys and a ten-packet plan for the one-card 27B model.
-The first packet checks model identity and file formats on CPU; no runtime has been built or measured.
-This host has no 27B weights, and the storage audit's main cleanup proposal is 42 GB, with the rest of the roughly 83 GB requiring separate decisions.
-The owner still needs to review the design, choose storage, and resolve the GPU halt before native work; new quantized models also need agreed quality limits.
-The existing lanes and all protected work are unchanged, and this task used no GPU, server, unit, weight download or mount.
+**2026-10-10, our own Intel Xe runtime: the first CPU packet passed.**
+The owner approved the objective and the reviewer accepted Stage 0 for CPU work.
+The [packet and check receipt](experiments/own-xpu-runtime/stage1/packet1/README.md)
+freeze the official 27B identity, tokenizer requirements, all 12 saved answers
+and 1,606 tensor descriptions. The 35 file-format checks pass, and all file
+bytes match the package total. Stored scales are BF16; the plan's F32 size
+example was too large. No runtime has been built or measured. This task ends
+at packet 1; storage admission and native authorization remain later gates.
+No GPU, server, unit, weight download, mount or existing lane was touched.
 
 **2026-10-10, new long-running objective: our own model-specific inference runtimes for Intel Xe (B70).**
 The owner decided it after the Strata review. It is our own project; other

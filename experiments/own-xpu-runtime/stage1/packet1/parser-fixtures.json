@@ -1,0 +1,286 @@
+{
+  "cases": [
+    {
+      "accept": true,
+      "declared_length": 58,
+      "error_contains": "",
+      "file_bytes": 78,
+      "header_json": "{\"x\":{\"dtype\":\"BF16\",\"shape\":[2,3],\"data_offsets\":[0,12]}}",
+      "name": "valid_bf16_matrix"
+    },
+    {
+      "accept": true,
+      "declared_length": 53,
+      "error_contains": "",
+      "file_bytes": 65,
+      "header_json": "{\"x\":{\"dtype\":\"F32\",\"shape\":[],\"data_offsets\":[0,4]}}",
+      "name": "valid_scalar"
+    },
+    {
+      "accept": true,
+      "declared_length": 116,
+      "error_contains": "",
+      "file_bytes": 130,
+      "header_json": "{\"w\":{\"dtype\":\"F8_E4M3\",\"shape\":[2,2],\"data_offsets\":[0,4]},\"s\":{\"dtype\":\"BF16\",\"shape\":[1,1],\"data_offsets\":[4,6]}}",
+      "name": "valid_fp8_and_bf16_scale"
+    },
+    {
+      "accept": true,
+      "declared_length": 57,
+      "error_contains": "",
+      "file_bytes": 77,
+      "header_json": "{\"x\":{\"dtype\":\"F16\",\"shape\":[2,3],\"data_offsets\":[0,12]}}",
+      "name": "valid_fp16_exclusion"
+    },
+    {
+      "accept": false,
+      "declared_length": 111,
+      "error_contains": "duplicate JSON key",
+      "file_bytes": 131,
+      "header_json": "{\"x\":{\"dtype\":\"BF16\",\"shape\":[6],\"data_offsets\":[0,12]},\"x\":{\"dtype\":\"BF16\",\"shape\":[6],\"data_offsets\":[0,12]}}",
+      "name": "duplicate_tensor_name"
+    },
+    {
+      "accept": false,
+      "declared_length": 70,
+      "error_contains": "duplicate JSON key",
+      "file_bytes": 90,
+      "header_json": "{\"x\":{\"dtype\":\"BF16\",\"dtype\":\"F16\",\"shape\":[6],\"data_offsets\":[0,12]}}",
+      "name": "duplicate_dtype_key"
+    },
+    {
+      "accept": false,
+      "declared_length": 59,
+      "error_contains": "shape dimensions",
+      "file_bytes": 79,
+      "header_json": "{\"x\":{\"dtype\":\"BF16\",\"shape\":[-2,3],\"data_offsets\":[0,12]}}",
+      "name": "negative_dimension"
+    },
+    {
+      "accept": false,
+      "declared_length": 61,
+      "error_contains": "shape dimensions",
+      "file_bytes": 81,
+      "header_json": "{\"x\":{\"dtype\":\"BF16\",\"shape\":[true,6],\"data_offsets\":[0,12]}}",
+      "name": "boolean_dimension"
+    },
+    {
+      "accept": false,
+      "declared_length": 60,
+      "error_contains": "shape dimensions",
+      "file_bytes": 80,
+      "header_json": "{\"x\":{\"dtype\":\"BF16\",\"shape\":[2.0,3],\"data_offsets\":[0,12]}}",
+      "name": "fractional_dimension"
+    },
+    {
+      "accept": false,
+      "declared_length": 58,
+      "error_contains": "shape dimensions",
+      "file_bytes": 78,
+      "header_json": "{\"x\":{\"dtype\":\"BF16\",\"shape\":[0,3],\"data_offsets\":[0,12]}}",
+      "name": "zero_dimension"
+    },
+    {
+      "accept": false,
+      "declared_length": 76,
+      "error_contains": "shape product overflow",
+      "file_bytes": 96,
+      "header_json": "{\"x\":{\"dtype\":\"BF16\",\"shape\":[4611686018427387904,4],\"data_offsets\":[0,12]}}",
+      "name": "shape_overflow"
+    },
+    {
+      "accept": false,
+      "declared_length": 74,
+      "error_contains": "byte product overflow",
+      "file_bytes": 94,
+      "header_json": "{\"x\":{\"dtype\":\"BF16\",\"shape\":[4611686018427387904],\"data_offsets\":[0,12]}}",
+      "name": "byte_overflow"
+    },
+    {
+      "accept": false,
+      "declared_length": 72,
+      "error_contains": "shape rank",
+      "file_bytes": 92,
+      "header_json": "{\"x\":{\"dtype\":\"BF16\",\"shape\":[1,1,1,1,1,1,1,1,1],\"data_offsets\":[0,12]}}",
+      "name": "bad_shape_rank"
+    },
+    {
+      "accept": false,
+      "declared_length": 56,
+      "error_contains": "shape rank",
+      "file_bytes": 76,
+      "header_json": "{\"x\":{\"dtype\":\"BF16\",\"shape\":\"6\",\"data_offsets\":[0,12]}}",
+      "name": "bad_shape_type"
+    },
+    {
+      "accept": false,
+      "declared_length": 56,
+      "error_contains": "unsupported dtype",
+      "file_bytes": 76,
+      "header_json": "{\"x\":{\"dtype\":\"I4\",\"shape\":[2,3],\"data_offsets\":[0,12]}}",
+      "name": "unsupported_dtype"
+    },
+    {
+      "accept": false,
+      "declared_length": 61,
+      "error_contains": "unsupported dtype",
+      "file_bytes": 81,
+      "header_json": "{\"x\":{\"dtype\":\"F8_E5M2\",\"shape\":[2,3],\"data_offsets\":[0,12]}}",
+      "name": "unknown_fp8"
+    },
+    {
+      "accept": false,
+      "declared_length": 58,
+      "error_contains": "offset/shape byte mismatch",
+      "file_bytes": 78,
+      "header_json": "{\"x\":{\"dtype\":\"BF16\",\"shape\":[2,3],\"data_offsets\":[0,10]}}",
+      "name": "wrong_size"
+    },
+    {
+      "accept": false,
+      "declared_length": 58,
+      "error_contains": "offset/shape byte mismatch",
+      "file_bytes": 78,
+      "header_json": "{\"x\":{\"dtype\":\"BF16\",\"shape\":[2,3],\"data_offsets\":[12,0]}}",
+      "name": "reversed_offsets"
+    },
+    {
+      "accept": false,
+      "declared_length": 59,
+      "error_contains": "offset integers",
+      "file_bytes": 79,
+      "header_json": "{\"x\":{\"dtype\":\"BF16\",\"shape\":[2,3],\"data_offsets\":[-1,11]}}",
+      "name": "negative_offset"
+    },
+    {
+      "accept": false,
+      "declared_length": 62,
+      "error_contains": "offset integers",
+      "file_bytes": 82,
+      "header_json": "{\"x\":{\"dtype\":\"BF16\",\"shape\":[2,3],\"data_offsets\":[false,12]}}",
+      "name": "boolean_offset"
+    },
+    {
+      "accept": false,
+      "declared_length": 75,
+      "error_contains": "offset integers",
+      "file_bytes": 95,
+      "header_json": "{\"x\":{\"dtype\":\"BF16\",\"shape\":[2,3],\"data_offsets\":[0,9223372036854775808]}}",
+      "name": "offset_overflow"
+    },
+    {
+      "accept": false,
+      "declared_length": 58,
+      "error_contains": "offset/shape byte mismatch",
+      "file_bytes": 78,
+      "header_json": "{\"x\":{\"dtype\":\"BF16\",\"shape\":[2,3],\"data_offsets\":[1,13]}}",
+      "name": "out_of_file"
+    },
+    {
+      "accept": false,
+      "declared_length": 115,
+      "error_contains": "overlap or gap",
+      "file_bytes": 135,
+      "header_json": "{\"x\":{\"dtype\":\"BF16\",\"shape\":[2,3],\"data_offsets\":[0,12]},\"y\":{\"dtype\":\"BF16\",\"shape\":[2,3],\"data_offsets\":[0,12]}}",
+      "name": "overlap"
+    },
+    {
+      "accept": false,
+      "declared_length": 56,
+      "error_contains": "overlap or gap",
+      "file_bytes": 76,
+      "header_json": "{\"x\":{\"dtype\":\"BF16\",\"shape\":[5],\"data_offsets\":[2,12]}}",
+      "name": "gap"
+    },
+    {
+      "accept": false,
+      "declared_length": 58,
+      "error_contains": "incomplete payload coverage",
+      "file_bytes": 80,
+      "header_json": "{\"x\":{\"dtype\":\"BF16\",\"shape\":[2,3],\"data_offsets\":[0,12]}}",
+      "name": "trailing_payload"
+    },
+    {
+      "accept": false,
+      "declared_length": 71,
+      "error_contains": "tensor fields",
+      "file_bytes": 91,
+      "header_json": "{\"x\":{\"dtype\":\"BF16\",\"shape\":[2,3],\"data_offsets\":[0,12],\"surprise\":0}}",
+      "name": "unknown_field"
+    },
+    {
+      "accept": false,
+      "declared_length": 86,
+      "error_contains": "metadata strings",
+      "file_bytes": 106,
+      "header_json": "{\"__metadata__\":{\"format\":1},\"x\":{\"dtype\":\"BF16\",\"shape\":[2,3],\"data_offsets\":[0,12]}}",
+      "name": "metadata_not_string"
+    },
+    {
+      "accept": false,
+      "declared_length": 2,
+      "error_contains": "incomplete payload coverage",
+      "file_bytes": 10,
+      "header_json": "{}",
+      "name": "no_tensors"
+    },
+    {
+      "accept": false,
+      "declared_length": 5,
+      "error_contains": "Expecting value",
+      "file_bytes": 25,
+      "header_json": "{\"x\":",
+      "name": "truncated_json"
+    },
+    {
+      "accept": false,
+      "declared_length": 2,
+      "error_contains": "header must start with object",
+      "file_bytes": 22,
+      "header_json": "[]",
+      "name": "non_object"
+    },
+    {
+      "accept": false,
+      "declared_length": 9,
+      "error_contains": "non-finite JSON constant",
+      "file_bytes": 29,
+      "header_json": "{\"x\":NaN}",
+      "name": "non_finite_json"
+    },
+    {
+      "accept": false,
+      "declared_length": 100,
+      "error_contains": "truncated or oversized header",
+      "file_bytes": 78,
+      "header_json": "{\"x\":{\"dtype\":\"BF16\",\"shape\":[2,3],\"data_offsets\":[0,12]}}",
+      "name": "header_length_mismatch"
+    },
+    {
+      "accept": false,
+      "declared_length": 2000001,
+      "error_contains": "header bound",
+      "file_bytes": 78,
+      "header_json": "{\"x\":{\"dtype\":\"BF16\",\"shape\":[2,3],\"data_offsets\":[0,12]}}",
+      "name": "header_limit"
+    },
+    {
+      "accept": false,
+      "declared_length": 1,
+      "error_contains": "header bound",
+      "file_bytes": 78,
+      "header_json": "{\"x\":{\"dtype\":\"BF16\",\"shape\":[2,3],\"data_offsets\":[0,12]}}",
+      "name": "header_underflow"
+    },
+    {
+      "accept": false,
+      "declared_length": 58,
+      "error_contains": "file bounds",
+      "file_bytes": 8,
+      "header_json": "{\"x\":{\"dtype\":\"BF16\",\"shape\":[2,3],\"data_offsets\":[0,12]}}",
+      "name": "file_too_short"
+    }
+  ],
+  "provenance": "Original lab synthetic metadata fixtures for packet 1. No payload bytes; not model/operator fixtures. Cases test the bounded metadata parser, not dequantization.",
+  "schema": "own-xpu-runtime.packet1.parser-fixtures.v1"
+}
