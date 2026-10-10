@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**2026-10-10 10:10 UTC, packet 129 sealed: every HTTP-route-read evidence file (receipts, decode records, /view captures, identity/halt files) is now published by temp + fsync + rename; the route guard is unchanged.**
+Codex (commits 083748b2b, fd3b22b9e; manifest `42e6a745…886c`; inner plan `466039fc…6536`; 796/796 recovery incl. 33 publication tests,
+3,850/3,850 client, 10/10 preflight; inventory `recovery/20261010-continuation129-stream/inventory129.md`; its /tmp scratch deleted).
+This closes the two exit-7 client stops of the night (preview at chunk 154 on 121, decode record at chunk 80 on 127). Plan: once the
+combined 128 arm (idle + GC 60 + digest cache, `s128-gc60-live01`) has ≥ 60 chunks for the record, swap to 129 with the same production
+configuration; 129 is reliability-only, speed expected equal to 128.
+
 **2026-10-10 09:57 UTC, 128 idle-maintenance (GC 10) session closed at 70 chunks (verdict 86134e704d4f, exact); launched the combined arm: 128 with idle maintenance + GC 60 + digest cache (`s128-gc60-live01`).**
 The GC-10 idle session's final figures (n = 60): median 5.493 s = 0.915 s/s, even 5.45 / odd 5.79, p90 5.97. The combined arm's command:
 `LTX_MAINTENANCE_MODE=idle LTX_GC_INTERVAL_SECONDS=60 LTX_SNAPSHOT_DIGEST_CACHE=1 LTX_STORAGE_SCAN_MODE=background LTX_AUX_RESIDENCY=legacy
