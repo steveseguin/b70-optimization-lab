@@ -1,5 +1,38 @@
 # Current Workspace State
 
+**2026-10-10 09:57 UTC, 128 idle-maintenance (GC 10) session closed at 70 chunks (verdict 86134e704d4f, exact); launched the combined arm: 128 with idle maintenance + GC 60 + digest cache (`s128-gc60-live01`).**
+The GC-10 idle session's final median is in the line below; the combined arm's command:
+`LTX_MAINTENANCE_MODE=idle LTX_GC_INTERVAL_SECONDS=60 LTX_SNAPSHOT_DIGEST_CACHE=1 LTX_STORAGE_SCAN_MODE=background LTX_AUX_RESIDENCY=legacy
+LTX_DISPLAY_WORKER=serial LTX_RUN_WRITE_ALLOWANCE_GIB=16 launch-128.sh 145 frame 0 cone 1 1 fingerprint - sampler-a 0 full xpu:3`. Target ≈ 5.4 s.
+
+**2026-10-10, packet 129 sealed and fully CPU-validated; the coordinator still owns the live server.**
+Receipts, decode records and the other route evidence now appear only after
+writing finishes and the file is flushed to disk. Final files cannot be
+replaced. The evidence reader and every hash and byte gate stay unchanged.
+Capture files, anchors and startup evidence use the same rule; preview
+publication keeps packet 123's fix. Private partial files cannot be served by
+`/view`. No route consumes an append-only evidence manifest.
+
+Use the 127 production arm at 145 frames with GC60, digest cache, background
+storage, legacy auxiliaries and serial display on xpu:3, plus 128's idle option.
+The idle option gives no extra delay past its existing 60-second hard bound;
+no additional speed gain is claimed. The default client folder is `s129-live01`.
+Native qualification and the 169-frame memory refusal remain with the
+coordinator. This preparation performed no live operation.
+
+Parent128; manifest `42e6a745…a4886c`; inner plan `466039fc…d06536`.
+All **796 recovery tests** pass, including 33 atomic-publication tests. All
+**3,850 client checks in 33 suites**, **10 mocked preflight tests**, and **two
+complete CPU runtime cases** pass. Recursive verification covers 2,196 bound
+files (2,198 total), with zero Python caches. Client pins use the inner plan.
+All 33 client scratch roots under `/tmp` are deleted; recovery scratch is also
+removed. Work used nice19, OMP/MKL2 and the pinned Python -B. The unrelated
+broad pin audit retains the same 231 existing Flash-Next drifts.
+[Route/file inventory](experiments/ltx25-b70/recovery/20261010-continuation129-stream/inventory129.md),
+[design](experiments/ltx25-b70/notes/2026-10-10-continuation129-stream-design.md),
+[build receipt](experiments/ltx25-b70/data/resume-20261008/continuation129-build.json),
+[future launch](experiments/ltx25-b70/recovery/20261010-continuation129-stream/LAUNCH.md).
+
 **2026-10-10 09:50 UTC, new best 145-frame line: packet 127 (digest cache + GC 60, serial, xpu:3) measured median 5.467 s = 0.911 s/s (n = 85, exact, verdict cbd91ba8a8cc); 128 (idle maintenance, GC 10) early 5.51 s with the parity gap closed (even 5.49 / odd 5.58, n = 27).**
 Session medians at 145 (chunks ≥ 10): 121 legacy 5.636; 123b 5.770; 126 5.759 (n = 241); **127 5.467** (even 5.44 / odd 5.70, p90 6.04);
 128 5.511 so far. 127's lever was estimated at 0.03–0.07 s; measured against 126 it is −0.29 s, so the digest cache (immutable signature
