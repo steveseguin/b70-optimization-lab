@@ -18,6 +18,14 @@ needs a newly recorded decision and matching admission support. Another abrupt
 exit test is not needed now. [Verdict, evidence and next command](experiments/qwen38-flash-next-fp8-b70/notes/2026-10-10-exit-fault-reproduced.md).
 
 
+**2026-10-10, CPU-only site update: featured picks now start with large one-card models.**
+The home page groups choices by one card, multiple cards and video. Small
+models are collapsed below them. Every speed keeps its receipt and quality
+status; the same-test table is unchanged. Flash-Next stays four-card, the
+875 tok/s shared-chat result stays Qwen27B, and LTX timing does not promise
+24/7 uptime. No running work or host state was changed.
+[Order, evidence and publication checks](notes/2026-10-10-neural-download-b70-featured-picks.md).
+
 **2026-10-10 18:10 UTC, HALT: third GPU fault incident of boot 4aafe57b, reproduced on purpose by the immediate-abrupt-exit probe; owner decision needed (reply "continue" to resume LTX on this boot, or reboot).**
 Probe window 2 (card 23:00.0, image UMD, owner-acceptance receipt, host watcher; LTX stopped 18:05:13 after 62 chunks of 137 session 2):
 `runs/probe-first-forward-20261010c` **PASSED** (one-layer single-rank first forward with production-size pinned slabs under the teardown

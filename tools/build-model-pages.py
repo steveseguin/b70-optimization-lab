@@ -24,6 +24,7 @@ import re
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from site_seo import seo_head  # noqa: E402
+from featured_picks import update as update_featured_picks  # noqa: E402
 CATALOG = os.path.join(ROOT, "packages", "catalog.json")
 FAMILY_CATALOG = os.path.join(ROOT, "families", "catalog.json")
 OUT_DIR = os.path.join(ROOT, "models")
@@ -808,6 +809,7 @@ def index_page(pkgs, families):
 def main():
     with open(CATALOG, encoding="utf-8") as handle:
         catalog = json.load(handle)
+    update_featured_picks(catalog)
     pkgs = sorted(
         catalog["packages"],
         key=lambda p: (

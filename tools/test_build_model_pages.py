@@ -11,6 +11,40 @@ SPEC.loader.exec_module(MODULE)
 
 
 class HumanPages(unittest.TestCase):
+    def test_featured_picks_keep_topology_and_quality_boundaries(self):
+        from featured_picks import groups, render
+        catalog = json.loads((ROOT / 'packages/catalog.json').read_text())
+        sections = groups(catalog)
+        self.assertEqual([s[0] for s in sections],
+                         ['one-card', 'multi-card', 'video-pick', 'small-quick'])
+        one_card = sections[0][2]
+        self.assertEqual([p['cards'] for p in one_card], [1] * 5)
+        self.assertEqual([p['name'] for p in one_card], [
+            'Ornith 1.5 35B-A3B Q4_K_M', 'Nemotron 3.5 Lightning 30B-A3B',
+            'Qwen3.8 27B AutoRound INT4', 'Qwen3.8 27B FP8', 'Gemma 4 26B-A4B Q8'])
+        self.assertTrue(all('pending' in p['status'] for p in one_card[:2]))
+        flash, shared = sections[1][2][:2]
+        self.assertEqual(flash['cards'], 4)
+        self.assertAlmostEqual(flash['metrics'][0]['value'], 46.85424994838007)
+        self.assertEqual(shared['cards'], 2)
+        self.assertIn('27B', shared['name'])
+        self.assertEqual(shared['metrics'][1]['value'], 875.31)
+        output = render(catalog)
+        self.assertIn('<details id="small-quick">', output)
+        self.assertNotIn('<details id="small-quick" open', output)
+        self.assertIn('not a lossless recommendation', output)
+        self.assertIn('Neither proves sustained 24/7 uptime', output)
+        self.assertIn('0.875 seconds elapsed per second of video', output)
+        self.assertIn('LFM2.5 2.6B', output)
+        for _, _, picks in sections:
+            for pick in picks:
+                self.assertTrue((ROOT / pick['guide']).is_file())
+                self.assertTrue((ROOT / pick['detail']).is_file())
+                for metric in pick['metrics']:
+                    self.assertTrue((ROOT / metric['evidence']).is_file())
+                    self.assertIn(MODULE.GITHUB + metric['evidence'], output)
+        self.assertIn(output, (ROOT / 'index.html').read_text())
+
     def test_video_observation_stays_scoped_and_missing_points_stay_missing(self):
         package = {
             'id': 'video-example', 'name': 'Video example', 'status': 'candidate',
