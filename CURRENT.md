@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**2026-10-10 15:30 UTC, packet 135 sealed (inode-aware storage guard: records path/link counts, retries once, counts internal hard links by inode, refuses only external links; the old guard also refused nlink = 0, a deletion race the CPU tests reproduced); swapping 133b → 135, same arm.**
+133b session 2: n = 222, median 5.390 s (even 5.34 / odd 5.70, p90 6.07) = 0.898 s/s, exact, no stops (the session-1 halt was the guard, not the stream). 135 (commit 1782495369; manifest `4356482e…02c3`;
+inner plan `7750e7b5…58c4`; 1,076 recovery, 6,718 client, 9 sealed-import tests over 67 helpers, 10 preflight). The offending path of the
+session-1 halt is unrecorded (old guard) and every retained file now has one link, so the deletion race (a consumed preview removed by the
+client mid-scan) is the likely cause. Launch (work dir `s135-live01`): the 133b production command with `launch-135.sh`.
+Codex 134 (169 census under split36) is still running; its audit commit fa297c8e88 is in.
+
 **2026-10-10, packet 135 sealed and CPU-validated: storage accounting tolerates deletion races and links wholly inside its owned files.**
 The stopped 133b run did not record the offending path or link count, and all
 retained files now have one link. Its guard also rejected zero links; a CPU
