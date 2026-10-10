@@ -31,6 +31,8 @@ Docs should point to those artifacts instead of duplicating every script.
 - [Own Model-Specific Runtimes For Intel Xe](own-xpu-runtime-objective.md):
   the 2026-10-10 long-running objective, its rules (own project, official or
   Unsloth weights, B70 only), design pillars and staged gates.
+  [Stage 0 design, inventory, idea survey and storage plan](../experiments/own-xpu-runtime/README.md)
+  include the first ten packets for the one-card 27B decode core.
 - [Model Distribution And Packaging Roadmap](model-distribution-and-packaging-roadmap.md):
   novice one/two-GPU packets, contributor recognition, digest-pinned Docker
   packaging, and the bounded Windows path.

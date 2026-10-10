@@ -1,0 +1,257 @@
+{
+  "observed_utc": "2026-10-10T18:45:30.549722+00:00",
+  "scope": "CPU-only version strings and package/file metadata; no device initialization, compilation, installation or runtime import",
+  "commands": [
+    {
+      "command": [
+        "hostname"
+      ],
+      "returncode": 0,
+      "stdout": "steve-b70s\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "uname",
+        "-r"
+      ],
+      "returncode": 0,
+      "stdout": "7.0.0-39-generic\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "--version"
+      ],
+      "returncode": 0,
+      "stdout": "Intel(R) oneAPI DPC++/C++ Compiler 2026.0.0 (2026.0.0.20260331)\nTarget: x86_64-unknown-linux-gnu\nThread model: posix\nInstalledDir: /opt/intel/oneapi/compiler/2026.0/bin/compiler\nConfiguration file: /opt/intel/oneapi/compiler/2026.0/bin/compiler/../icpx.cfg\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/opt/intel/oneapi/compiler/2025.3/bin/icpx",
+        "--version"
+      ],
+      "returncode": 0,
+      "stdout": "Intel(R) oneAPI DPC++/C++ Compiler 2025.3.3 (2025.3.3.20260319)\nTarget: x86_64-unknown-linux-gnu\nThread model: posix\nInstalledDir: /opt/intel/oneapi/compiler/2025.3/bin/compiler\nConfiguration file: /opt/intel/oneapi/compiler/2025.3/bin/compiler/../icpx.cfg\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "c++",
+        "--version"
+      ],
+      "returncode": 0,
+      "stdout": "c++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0\nCopyright (C) 2023 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "clang++",
+        "--version"
+      ],
+      "returncode": 0,
+      "stdout": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "cmake",
+        "--version"
+      ],
+      "returncode": 0,
+      "stdout": "cmake version 4.3.2\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "ninja",
+        "--version"
+      ],
+      "returncode": 0,
+      "stdout": "1.13.0.git.kitware.jobserver-pipe-1\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "--version"
+      ],
+      "returncode": 0,
+      "stdout": "Python 3.12.3\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "dpkg-query",
+        "-W",
+        "-f=${binary:Package} ${Version} ${db:Status-Status}\n",
+        "*level-zero*",
+        "*oneapi-dnnl*",
+        "*oneapi-mkl-core*",
+        "*intel-opencl*",
+        "*libze*"
+      ],
+      "returncode": 0,
+      "stdout": "intel-level-zero-gpu  not-installed\nintel-oneapi-dnnl-2025.3 2025.3.0-409 installed\nintel-oneapi-dnnl-2026.0 2026.0.0-688 installed\nintel-oneapi-dnnl-devel-2025.3 2025.3.0-409 installed\nintel-oneapi-dnnl-devel-2026.0 2026.0.0-688 installed\nintel-oneapi-mkl-core-2025.3 2025.3.1-8 installed\nintel-oneapi-mkl-core-2026.0 2026.0.0-908 installed\nintel-oneapi-mkl-core-devel-2025.3 2025.3.1-8 installed\nintel-oneapi-mkl-core-devel-2026.0 2026.0.0-908 installed\nintel-opencl  not-installed\nintel-opencl-icd 26.18.38308.1-0 installed\nlibze-dev:amd64 1.28.2-1~24.04~ppa1 installed\nlibze-intel-gpu1 26.18.38308.1-0 installed\nlibze1:amd64 1.28.2-1~24.04~ppa1 installed\n",
+      "stderr": ""
+    }
+  ],
+  "python_package_metadata": [
+    {
+      "path": "/home/steve/.venvs/minicpm5-baseline-20260912/lib/python3.12/site-packages/oneccl_devel-2022.1.1.dist-info/METADATA",
+      "fields": [
+        "Name: oneccl-devel",
+        "Version: 2022.1.1"
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/minicpm5-baseline-20260912/lib/python3.12/site-packages/oneccl-2022.1.1.dist-info/METADATA",
+      "fields": [
+        "Name: oneccl",
+        "Version: 2022.1.1"
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/minicpm5-baseline-20260912/lib/python3.12/site-packages/triton_xpu-3.8.0.dist-info/METADATA",
+      "fields": [
+        "Name: triton-xpu",
+        "Version: 3.8.0"
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/minicpm5-baseline-20260912/lib/python3.12/site-packages/torch-2.14.0+xpu.dist-info/METADATA",
+      "fields": [
+        "Name: torch",
+        "Version: 2.14.0+xpu"
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/oneccl_devel-2022.1.1.dist-info/METADATA",
+      "fields": [
+        "Name: oneccl-devel",
+        "Version: 2022.1.1"
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/oneccl-2022.1.1.dist-info/METADATA",
+      "fields": [
+        "Name: oneccl",
+        "Version: 2022.1.1"
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/triton_xpu-3.8.0.dist-info/METADATA",
+      "fields": [
+        "Name: triton-xpu",
+        "Version: 3.8.0"
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch-2.14.0+xpu.dist-info/METADATA",
+      "fields": [
+        "Name: torch",
+        "Version: 2.14.0+xpu"
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/deepseek-v4-xpu/lib/python3.12/site-packages/triton_xpu-3.7.1.dist-info/METADATA",
+      "fields": [
+        "Name: triton-xpu",
+        "Version: 3.7.1"
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/deepseek-v4-xpu/lib/python3.12/site-packages/torch-2.12.0+xpu.dist-info/METADATA",
+      "fields": [
+        "Name: torch",
+        "Version: 2.12.0+xpu"
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/deepseek-v4-xpu/lib/python3.12/site-packages/oneccl_devel-2021.17.2.dist-info/METADATA",
+      "fields": [
+        "Name: oneccl-devel",
+        "Version: 2021.17.2"
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/deepseek-v4-xpu/lib/python3.12/site-packages/oneccl-2021.17.2.dist-info/METADATA",
+      "fields": [
+        "Name: oneccl",
+        "Version: 2021.17.2"
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/triton_xpu-3.7.0.dist-info/METADATA",
+      "fields": [
+        "Name: triton-xpu",
+        "Version: 3.7.0"
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch-2.11.0+xpu.dist-info/METADATA",
+      "fields": [
+        "Name: torch",
+        "Version: 2.11.0+xpu"
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/oneccl_devel-2021.17.2.dist-info/METADATA",
+      "fields": [
+        "Name: oneccl-devel",
+        "Version: 2021.17.2"
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/oneccl-2021.17.2.dist-info/METADATA",
+      "fields": [
+        "Name: oneccl",
+        "Version: 2021.17.2"
+      ]
+    }
+  ],
+  "toolkit_directories": {
+    "compiler": [
+      "/opt/intel/oneapi/compiler/2025.3",
+      "/opt/intel/oneapi/compiler/2026.0",
+      "/opt/intel/oneapi/compiler/latest"
+    ],
+    "dnnl": [
+      "/opt/intel/oneapi/dnnl/2025.3",
+      "/opt/intel/oneapi/dnnl/2026.0",
+      "/opt/intel/oneapi/dnnl/latest"
+    ],
+    "mkl": [
+      "/opt/intel/oneapi/mkl/2025.3",
+      "/opt/intel/oneapi/mkl/2026.0",
+      "/opt/intel/oneapi/mkl/latest"
+    ]
+  },
+  "library_version_headers": [
+    {
+      "path": "/opt/intel/oneapi/dnnl/latest/include/oneapi/dnnl/dnnl_version.h",
+      "resolved": "/opt/intel/oneapi/dnnl/2026.0/include/oneapi/dnnl/dnnl_version.h",
+      "sha256": "b7fff196d38f1455032290b81656462a2a37f40c7ead598aa0fbf7b67736bc04",
+      "defines": [
+        "#define ONEAPI_DNNL_DNNL_VERSION_H",
+        "#define DNNL_VERSION_MAJOR 3",
+        "#define DNNL_VERSION_MINOR 11",
+        "#define DNNL_VERSION_PATCH 2"
+      ]
+    },
+    {
+      "path": "/opt/intel/oneapi/mkl/latest/include/mkl_version.h",
+      "resolved": "/opt/intel/oneapi/mkl/2026.0/include/mkl_version.h",
+      "sha256": "e116f2ec0136bc69578c49bbce18833f7d26d9c1162aa60df086087a31843d66",
+      "defines": [
+        "#define __INTEL_MKL_BUILD_DATE 20260401",
+        "#define __INTEL_MKL__          2026",
+        "#define __INTEL_MKL_MINOR__    0",
+        "#define __INTEL_MKL_UPDATE__   0",
+        "#define __INTEL_MKL_PATCH__    0"
+      ]
+    }
+  ]
+}

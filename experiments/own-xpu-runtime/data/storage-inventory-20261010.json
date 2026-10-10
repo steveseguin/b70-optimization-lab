@@ -1,0 +1,70 @@
+{
+  "schema": "own-xpu-runtime.stage0-storage.v1",
+  "observed_utc": "2026-10-10T18:46:00.120888+00:00",
+  "host": "steve-b70s",
+  "scope": "CPU-only metadata; no payload hashing, device access, mount or cleanup",
+  "env": {
+    "OMP_NUM_THREADS": "2",
+    "nice": 19
+  },
+  "commands": [
+    {
+      "argv": [
+        "du",
+        "-B1",
+        "--max-depth=1",
+        "/mnt/fast-ai/llm-models"
+      ],
+      "stdout": "36864\t/mnt/fast-ai/llm-models/.verification\n185565351936\t/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8\n64823296\t/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-hf-tokenizer\n71114977280\t/mnt/fast-ai/llm-models/LTX-2.5-baseline\n256745242624\t/mnt/fast-ai/llm-models\n"
+    },
+    {
+      "argv": [
+        "df",
+        "-B1",
+        "/mnt/fast-ai/llm-models"
+      ],
+      "stdout": "Filesystem        1B-blocks         Used   Available Use% Mounted on\n/dev/nvme0n1p2 982240026624 862340132864 69929377792  93% /\n"
+    },
+    {
+      "argv": [
+        "lsblk",
+        "-b",
+        "-o",
+        "NAME,SIZE,FSTYPE,LABEL,UUID,MOUNTPOINTS"
+      ],
+      "stdout": "NAME                 SIZE FSTYPE   LABEL           UUID                                 MOUNTPOINTS\nloop0                4096 squashfs                                                      /snap/bare/5\nloop1            77586432 squashfs                                                      /snap/core22/2437\nloop2            77574144 squashfs                                                      /snap/core22/2955\nloop3           273973248 squashfs                                                      /snap/firefox/8929\nloop4            70049792 squashfs                                                      /snap/core24/1643\nloop5            70033408 squashfs                                                      /snap/core24/2124\nloop6            13316096 squashfs                                                      /snap/firmware-updater/258\nloop7            17301504 squashfs                                                      /snap/firmware-updater/226\nloop8           557187072 squashfs                                                      /snap/gnome-42-2204/247\nloop9           557309952 squashfs                                                      /snap/gnome-42-2204/263\nloop10          635518976 squashfs                                                      /snap/gnome-46-2404/153\nloop11          414167040 squashfs                                                      /snap/mesa-2404/1165\nloop12          421507072 squashfs                                                      /snap/mesa-2404/1839\nloop13          274960384 squashfs                                                      /snap/firefox/8995\nloop14           96141312 squashfs                                                      /snap/gtk-common-themes/1535\nloop15           12406784 squashfs                                                      /snap/snap-store/1419\nloop16          644382720 squashfs                                                      /snap/gnome-46-2404/164\nloop17           12406784 squashfs                                                      /snap/snap-store/1427\nloop18           52711424 squashfs                                                      /snap/snapd/27738\nloop19           46882816 squashfs                                                      /snap/snapd/28254\nloop20             847872 squashfs                                                      /snap/snapd-desktop-integration/387\nloop21             847872 squashfs                                                      /snap/snapd-desktop-integration/391\nsda         4000787030016                                                               \n\u251c\u2500sda1           16759808                                                               \n\u2514\u2500sda2      4000768327680 ntfs     CorsairExternal 4E0E66ED0E66CD91                     \nnvme0n1     1000204886016                                                               \n\u251c\u2500nvme0n1p1    1127219200 vfat                     9753-FF76                            /boot/efi\n\u2514\u2500nvme0n1p2  999074824192 ext4                     19ad6619-8030-4922-9d5c-ed6e7a6a799f /\n"
+    }
+  ],
+  "available_bytes": 69929377792,
+  "entries": [
+    ".verification",
+    "LTX-2.5-baseline",
+    "Qwen3.8-Flash-Next-FP8",
+    "deepseek-v4-flash-xpu",
+    "gemma3-12b-it-int4-autoround-opea",
+    "gemma4-12b-it-int4-autoround-intel",
+    "gemma4-12b-it-int4-autoround-intel-vllm-compat",
+    "gemma4-12b-it-int4-autoround-vishva007",
+    "gemma4-26b-a4b-it-dflash-hf",
+    "gemma4-26b-a4b-it-eagle3-gguf",
+    "gemma4-26b-a4b-it-hf-tokenizer",
+    "gemma4-26b-a4b-it-q8-gguf",
+    "gemma4-26b-a4b-it-qat-gguf",
+    "gemma4-e4b-it-gguf",
+    "laguna-s-2.1",
+    "minimax-m2.7-int4-autoround",
+    "minimax-m2.7-reap-autoround-w4a16",
+    "muse-glimmer-30b-gguf",
+    "muse-glimmer-dflash-hf",
+    "muse-glimmer-target-meta",
+    "qwen3.6-27b-bf16-qwen",
+    "qwen3.6-27b-fp8-vrfai",
+    "qwen3.6-27b-mtp-gguf",
+    "qwen3.6-35b-a3b-bf16-qwen",
+    "qwen3.6-35b-a3b-fp8-qwen",
+    "qwen3.6-35b-a3b-int4-autoround-abhinand",
+    "qwen3.8-27b-dspark-radixark",
+    "qwen3.8-27b-int4-autoround-devan",
+    "qwen36-27b-awq-int4-cyankiwi-8f269fb"
+  ]
+}

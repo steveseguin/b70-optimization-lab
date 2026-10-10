@@ -1,0 +1,48 @@
+{
+  "created_utc": "2026-10-10T18:51:58.204877+00:00",
+  "scope": "CPU-only Stage 0 documentation and metadata validation; no runtime/GPU validation",
+  "checks": [
+    {
+      "command": [
+        "python3",
+        "tools/check-doc-links.py"
+      ],
+      "exit_code": 0,
+      "stdout": "\nchecked 220 documents, 0 new broken repository-relative link(s) in 0 file(s), 0 known-broken\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "tools/check-doc-links.py",
+        "experiments/own-xpu-runtime/DESIGN.md",
+        "experiments/own-xpu-runtime/IDEAS.md",
+        "experiments/own-xpu-runtime/INVENTORY.md",
+        "experiments/own-xpu-runtime/README.md",
+        "experiments/own-xpu-runtime/STAGE1-PLAN.md",
+        "experiments/own-xpu-runtime/STORAGE.md",
+        "CURRENT.md",
+        "docs/README.md"
+      ],
+      "exit_code": 0,
+      "stdout": "\nchecked 8 documents, 0 new broken repository-relative link(s) in 0 file(s), 0 known-broken\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "tools/check-manifest-paths.py"
+      ],
+      "exit_code": 0,
+      "stdout": "checked 6288 repo-relative paths in 53 manifests; 0 missing\n",
+      "stderr": ""
+    }
+  ],
+  "json_metadata_parses": true,
+  "input_hashes": {
+    "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json": "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac",
+    "experiments/qwen38-27b-b70/data/2026-09-17-fp8-ckpt2/tp1-mtp0-b896-strict-performance.json": "1ee5743c99c1c0057a9dd19ee5d452e48dd282cca893942b7e2c9e2339998283"
+  },
+  "source_survey_scratch_removed": true,
+  "native_work_performed": false
+}
