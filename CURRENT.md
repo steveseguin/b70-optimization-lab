@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**2026-10-10 03:30 UTC, Codex's 119 analysis corrects the attribution; packet 120 (display replica on xpu:2) sealed and queued for the next window; packet 121 (145/169-frame chunks) in design.**
+The 119 loss is **near-floor safety work, not scheduling**: under dg1 the xpu:3 margin is low, so every request-after and
+stage-B snapshot ran the dual walk (+0.08 s request-after, +0.15 s condition-B); the upsampler lives on xpu:0 and was never
+slow; read-ahead runs post-commit on the decode thread, not in the HTTP handler (`notes/2026-10-10-continuation119-results-121.md`,
+commit 7621aa805). Packet 120 (commit 33f30c17f, manifest `9af9330b…328e`, 426 recovery / 403 client / 10 preflight
+CPU checks) adds a decoder-only display instance on xpu:2 (off by default, gated: cross-card display==cone byte check per
+chunk, qualification against the xpu:3 uncached eager display, 4 GiB + 2 GiB floor admission on xpu:2) so the display
+transient leaves xpu:3 and dg1 may regain its margin; predicted 5.10–5.40 s (central 5.22; adverse 5.35–5.70), read-ahead
+dropped from the recommended arm. First launch `launch-120.sh 121 frame 1 cone 1 1 fingerprint 1.0 eager-display 0 full xpu:2`
+is chained behind the controlled stop of the current 118b dg0 session at 60 chunks. Codex is designing packet 121: 145- and
+169-frame chunks (fixed per-chunk costs ≈ 1.3 s amortise over more video; sampler time grew only 7.5 % from 97 to 121 frames).
+
 **2026-10-10, packet 120 prepared on CPU; cross-card display remains off by default.**
 The receipts correct the earlier suspicion: packet 119's extra receipt time came
 from near-floor safety inspections. Read-ahead ran on the decode thread after
