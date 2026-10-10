@@ -524,6 +524,16 @@ Owner decisions that bind one lane:
   and anything else that changes a bit are measured, recorded and left to the
   owner. Publish only after a confirmed significant improvement, and the owner
   reviews first.
+- **Quantized releases are separate models (2026-10-10):** a quantized
+  release such as Unsloth UD-IQ3_XXS of Qwen3.8 Flash-Next is its own model
+  with its own lane, oracle and records. It is held to the full lossless and
+  deterministic standard against its own weights (bit-identical across fresh
+  processes, agreeing with the lab's CPU reference dequantization of the same
+  bytes); no tolerance against FP8 is a gate, and FP8 differences are reported
+  for information only. Label it "quantized compressed version", never as the
+  Flash-Next model, and never beside the FP8 record as comparable. The FP8
+  four-card line stays the Flash-Next authority. Owner: "treat the IQ3 as a
+  model of its own ... lossless relative to what it is, not relative to FP8".
 - **All lanes (2026-10-03): lossless only.** No lossy shortcut is a default or
   a goal: no turbo LoRA, no fp16/bf16 decode, no compressed KV, no pruned model
   as the headline. The lanes to optimize on the two-card host are Qwen 27B FP8
