@@ -1,40 +1,33 @@
-# LTX continuation-stream campaign, 2026-10-09/10: packets 117–131
+# LTX continuation-stream campaign, 2026-10-09/10: packets 117–135
 
-The useful production configuration at this campaign boundary is **packet 129,
-145 frames, eager cone (`dg0`), legacy auxiliaries, serial display on xpu:3,
-idle maintenance, GC60, immutable digest caching and background storage scans**.
-Packets 127/128 supplied the best measured 145-frame periods, approximately
-**5.47–5.53 seconds per six seconds of new video (0.91–0.92 s/s)**. Packet 129
-adds complete atomic publication of evidence read by HTTP routes. Its completed
-609-chunk log gives 599 consecutive periods: median **5.554 seconds (0.926
-s/s)**, mean 5.947 and p90 6.239; its own result remains separate from the
-faster 127/128 measurements. These are
-local continuation-session measurements with their recorded byte gates, not a
-new public recipe or a two-fresh-server speed certification.
+The production configuration at this boundary is **packet 135, 145 frames,
+cone decoder graph on, split36 text placement, legacy auxiliaries, serial eager
+display on xpu:3, idle maintenance, GC60, immutable digest caching and background
+storage scans**. Its clean completed session has **121 chunks / 111 periods:
+5.248 seconds median per six seconds of new video (0.875 s/s)**, mean 5.727
+and p90 5.919. This is the new best clean completed production line. The first
+133b session retains its lower observed 5.225-second median but halted on the
+storage guard after 73 chunks. These are local continuation measurements, not
+a public recipe or a repeated fresh-server speed certification. The storage
+repair alone has not been shown to cause the difference in session medians.
 
 The [results ledger](../results/ltx25-continuation-stream-2026-10-10.md) owns
-recomputed client-log statistics, configuration/run/work-directory identities,
-verdicts, comparison counts and incidents. The [captured summary](../data/ltx25-continuation-stream-2026-10-10.json) and
-[CPU analyzer](../scripts/analyze-ltx-continuation-ledger.py) preserve the input
-hashes, calculation and endpoints. This note preserves why each arm
-was tried and what the evidence changed. Figures attributed below to a timed
-CURRENT entry or a fixed analysis window are historical observations, not
-substitutes for the ledger's complete captured log windows.
-Chronology headings follow CURRENT reporting times, which can lag the logged
-event. For example, the packet-127/169 refusal was logged at 09:05:11 UTC;
-the coordinator reported it in the later 09:10–09:50 sequence.
+recomputed statistics, run identities, verdicts, comparison counts and incidents.
+The original [captured summary](../data/ltx25-continuation-stream-2026-10-10.json)
+and [CPU analyzer](../scripts/analyze-ltx-continuation-ledger.py) retain the first
+ledger's boundary; the extension's source hashes and read-only calculation are
+in the ledger. Historical CURRENT figures and fixed analysis windows remain
+attributed; they do not replace complete captured log windows. Chronology
+headings follow CURRENT reporting times, which can lag the logged event.
 
 This consolidation read evidence only, at nice 19 with OMP_NUM_THREADS=2. It
 performed no GPU/runtime import, server, launch, systemd/unit, port, device,
 process-signal or host-setting operation; existing runs and `/home/steve/ltx-stream`
-were not written. No `/tmp` scratch was created. The main chronology starts at
-2026-10-10 01:20 UTC and includes the preceding October 9 packet-117/118 work
-needed to explain that continuation. The status boundary is CURRENT's October
-10 11:35 UTC entry: packet 129 closed and packet 131 launching, with its native
-result pending.
-The final ledger capture includes 131's client header and first qualification
-request at 11:32:09.449 UTC, with no verdict or streamed chunk. That captured
-prefix is preserved as a pending row rather than a measured result.
+were not written. No `/tmp` scratch was created. The chronology now includes
+CURRENT's October 10 entries through **16:00 UTC**, extending the earlier
+11:35 boundary. The GC10 A/B is **in progress**: its captured log ends at the
+Q04 qualification submission, 16:04:42.247 UTC, with no verdict or streamed
+chunk. This is saved-evidence status, not a live service inspection.
 
 ## Measurement rules that prevent a false history
 
@@ -278,27 +271,133 @@ allocator release followed by fresh admission; CPU work verifies zero
 reclaimed GiB. Its projected 169 range already overlaps the measured 145
 line, so the coordinator did not spend a launch on it.
 
-**11:35 UTC: packet 131 targets the 145-frame cone graph; result pending.**
-The next candidate retains the 129 production options, moves serial eager
-display to xpu:2 and conditionally releases unused allocator blocks before
-cone admission. The cone already captures only its first decoder method in
-its own pool; another soft cap cannot make that first capture smaller.
-The measured 121 growth is 3.195 GiB; 4.506 GiB at 145 is an estimate.
-Qualification still performs full xpu:3 reference decodes, whose allocation
-tail cannot be assumed gone. First capture requires **14.75 GiB physically
-free**, later cones 9.75 GiB. The conditional 5.25–5.35-second target is not
-a measurement. CURRENT records the launch transition, not a qualification or
-speed outcome. See [xpu:3 inventory](../experiments/ltx25-b70/notes/2026-10-10-xpu3-residency-145.md)
-and [131 design](../experiments/ltx25-b70/notes/2026-10-10-continuation131-stream-design.md).
+**11:35–11:45 UTC: packet 131 measures the limit of allocator release.**
+Moving serial eager display to the xpu:2 replica and releasing unused allocator
+storage recovers **zero bytes on xpu:3**. At Q06 (`qgraph-c000000`), card 3
+still has 15,825,240,064 bytes free against 15,837,691,904 required:
+**12,451,840 bytes short**. Reserved memory stays 17,028,874,240 bytes.
+The 5 GiB capture reserve, 9 GiB floor and 0.75 GiB band remain intact.
+Qualification stops at 11:39:30.966 UTC, with no stream or GPU fault; the two
+refusal latches are archived and the coordinator returns to 129 session 2.
+The cone already captures only its first decoder method; a soft cap cannot
+shrink first capture. The 4.506 GiB forecast was not a measured 145 capture.
+See the [131 inventory](../experiments/ltx25-b70/notes/2026-10-10-xpu3-residency-145.md)
+and [132 memory audit](../experiments/ltx25-b70/notes/2026-10-10-continuation132-memory-evidence.md).
+
+**12:20–12:50 UTC: packet 132 fits capture but fails the later floor.**
+Moving only the audio VAE/vocoder to xpu:2 shifts about 0.340 GiB from card 3;
+display remains on its card-2 replica. First cone capture passes, and seven
+qualification decode pairs finish, including graph c0–c2 and repeat c0.
+Repeat c1 then refuses at **conditioning-B-before**: card 3 has 9,103,118,336
+bytes (8.478 GiB), below the unchanged 9 GiB floor. There is no completed
+verdict or streamed chunk. This corrects CURRENT's initial “pre-request”
+wording. The client exits 6 and a session halt record exists, despite that
+summary's “no latch”; no GPU fault is recorded. Retained graph reservation
+grew **3.545 GiB**, not the older 4.506 GiB estimate. Retained growth is not
+an instantaneous peak bound; the capture reserve stays 5 GiB. The coordinator
+returns to 129 session 3. See the
+[133 receipt correction](../experiments/ltx25-b70/notes/2026-10-10-continuation133-memory-evidence.md).
+
+**13:55–14:05 UTC: packet 133 moves text residency, then fails sealed import.**
+Legacy placement holds about 10.15 GiB of text layers on each of cards 2/3,
+plus primary text state on card 2, with 480 captured text graphs. Fresh text
+costs about 0.39 seconds at scene cuts every four chunks; one hash-checked
+conditioning result is reused between cuts. A permanent split avoids host
+transfers and graph-pointer problems at each cut. `split36` moves **layers
+24–35** from card 3 to card 2: resulting placement **0–35 on xpu:2, 36–47 on
+xpu:3**. Timed CURRENT entries saying “36–47 moved” invert that detail.
+The move transfers 5.076 GiB of weights plus estimated 1.078 GiB of graph
+arguments before capture; those estimates are not measured physical-free gains.
+Display/audio return to card 3, with no replica. Every fresh encode must match
+parent conditioning hashes for two qualification prompts and ten kitten scenes;
+unknown prompts refuse. See the
+[ranked design](../experiments/ltx25-b70/notes/2026-10-10-continuation133-stream-design.md).
+
+The rehearsal fails before device work: `cone_memory131.validate_scope` cannot
+import `text_residency133`. The helper is bundled under source/components, but
+neither is the sealed launcher's initial import path. Author-tree tests masked
+the packaging defect. No `s133-live01` client directory exists at this audit;
+CURRENT 14:05 records failure and the return to 129 session 4. Packet 133 is
+**never launched**, not a failed native exactness or memory result.
+
+**14:32–14:55 UTC: packet 133b qualifies the text move and cone graph.**
+The [repair](../experiments/ltx25-b70/notes/2026-10-10-continuation133b-rebuild.md)
+bundles the unchanged helper and pinned oracle beside the launcher and adds
+six sealed-import tests. Qualification `94cd0653ca49` passes exact c0/c1/c2
+replay and the packet-121 reference. The
+[fixed early 145 audit](../experiments/ltx25-b70/notes/2026-10-10-continuation133b-results-145.md)
+compares 31/31 chunks to 129 across stored latent, image, waveform, anchor and
+prompt hashes. The ledger extends its narrower four image/anchor/preview
+manifest-digest comparison to **73/73** shared rows; no new tensors were read.
+The fixed-slice cone takes about 0.748 seconds versus about 0.93 eager.
+Physical-free minima over 31 receipts are **9.27 / 9.83 / 4.91 / 14.60 GiB**
+on cards 0/1/2/3. The smallest snapshot floor margin is now on card 0:
+1,364,230,144 bytes (1.36 GB); all eight dual inspections among 182 snapshots
+agree. Moving text fixes card 3 pressure but consumes card 2's replica space.
+Full snapshots remain enabled.
+
+CURRENT's early 5.213-second median is a historical window. The full ledger
+window gives **5.225 / 5.555 / 5.859 seconds median/mean/p90**, even/odd
+5.186/5.554, 73 committed chunks and 64 periods. The last interval ends at
+submission 73, which subsequently fails; it remains under the established
+submit-to-submit rule. At **14:48:49 UTC**, storage accounting halts that
+request with “Run storage refuses multiply linked files.” This is not a GPU
+fault, exactness failure or demonstrated capacity exhaustion. The path and
+count were not recorded. The old guard rejects `st_nlink != 1`, including
+zero, so its message does not prove a hard link.
+
+**14:55–15:30 UTC: 133b repeats cleanly; 135 repairs storage accounting.**
+Session 2 qualifies as `c6df29bb659a` and stops cleanly at 15:27:09.930 UTC
+for the swap. Its final log has **232 chunks / 222 periods**, not 222 chunks:
+median 5.390, mean 5.865, p90 6.072 seconds, even/odd 5.337/5.697, or
+0.898 s/s. All 215 shared saved manifest rows match 129 session 4. The halted
+session remains separate; no stability claim drops its incident.
+The [135 incident audit](../experiments/ltx25-b70/notes/2026-10-10-continuation135-stream-design.md)
+finds all retained files have one link and reproduces a zero-link case with
+CPU creation/deletion alone. Removal of a consumed preview during the scan is
+plausible; the historical path, count and writer remain unknown. The repair
+records path/link evidence, waits once for 10 ms and rescans, counts owned
+internal links once per inode, and refuses external links. The 50 GiB reserve,
+16 GiB allowance and background write margin stay unchanged, as does the
+145-frame production arm.
+
+**15:40 UTC: packet 134 is sealed; 169 stays a graph-off diagnostic.**
+The [corrected census](../experiments/ltx25-b70/notes/2026-10-10-continuation133b-results-145.md#corrected-169-census)
+charges full reserves at an explicit predecode boundary, not just a reserve's
+increase subtracted from a post-display snapshot. Under split36, graph with
+native display is short **1.843 GiB on card 3**; graph with a replica is short
+**5.122 GiB on card 2**, after floors and band. Only arm C, **graph off,
+split36, native display/audio on card 3**, clears: +4.861 GiB on card 3 at
+admission, +0.905 GiB under the stronger envelope. These are planning margins,
+not native 169 results. Its forecast **6.50–6.95 seconds per seven seconds
+(0.929–0.993 s/s)** does not predict a win over measured 133b at 0.898.
+134 stays sealed and CPU-validated, **not launched**; the graph arms are
+refused, not pending speed points. See the
+[134 design](../experiments/ltx25-b70/notes/2026-10-10-continuation134-stream-design.md).
+
+**16:00 UTC: 135 GC60 is the best clean completed production line; GC10 A/B
+is in progress.** Qualification `7ca7bbdde174` passes; all 121 committed chunks
+report cone equality and match 133b session 2's four saved manifest digests.
+Its **111 periods** give **5.248 / 5.727 / 5.919 seconds**, even/odd
+**5.210 / 5.529**, or **0.875 s/s**. Outliers remain in the mean. The guard
+runs the full session without a halt. The controlled stop at 15:52:11.982 UTC
+is for GC10 A/B, not a client incident. This is faster than the clean 133b
+repeat; the halted 133b window remains lower. No isolated speed benefit is
+attributed to storage repair. GC10 retains every other option, including idle
+maintenance. Its saved prefix contains Q01–Q03 completed and Q04 submitted at
+**16:04:42.247 UTC**, with no verdict or stream. The A/B asks whether GC60 boundary cleanup explains
+the remaining parity gap; no outcome can yet be assigned.
 
 ## Open items at the evidence boundary
 
-- **169-frame memory:** the 127 refusal stands. 130's optional release needs
-  measured reclaimed memory, full qualification and a stable plateau. No
-  lower floor, smaller reserve, skipped comparison or automatic fallback is
-  justified. Even a fit must beat the measured 145 ratio to count as a win.
-- **145-frame cone graph:** await packet 131's native result. CPU validation
-  and the 121 graph saving do not prove its 145 capture will fit or run faster.
+- **169 diagnostic only:** packet 134's graph-off arm C is sealed, not launched.
+  Both graph arms fail the corrected census. Future diagnostic qualification
+  needs native exactness, a memory plateau, display deadline and sustained
+  cadence; the forecast is not a measured result or speed win.
+- **GC10 A/B in progress:** compare the eventual GC10 result with 135 GC60 using
+  the same log window, quality gates and full outlier accounting. GC10 has no
+  verdict or streamed timing at this cutoff. The 145 cone-graph fit is now
+  demonstrated by 133b/135; 131 is no longer pending.
 - **Snapshot schedule, owner's decision:** retain `full`. The
   [schedule audit](../experiments/ltx25-b70/notes/2026-10-10-continuation131-snapshot-schedule.md)
   measures about 121–125 ms for the first three snapshots, but the optional
