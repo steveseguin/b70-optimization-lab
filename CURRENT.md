@@ -1,5 +1,9 @@
 # Current Workspace State
 
+**2026-10-10, own-runtime Unsloth header census:** The [CPU-only census](experiments/own-xpu-runtime/stage2/packet1c/README.md) keeps IQ3 first for two cards, with about 15.18 GB left after packed weights; the real IQ4 files also clear the weight-only calculation, with about 3.61 GB left.
+All three variants lack the extra MTP block, so they cannot provide the certified speculative setup by themselves.
+Only headers were fetched; weights, quality review, storage and a native window remain pending, and the host halt and existing lanes were untouched.
+
 **2026-10-10, own-runtime Flash-Next CPU preparation:** The design now keeps
 Flash-Next's certified BF16 state between rows and keeps 27B's FP32 state.
 The [Stage 2 plan](experiments/own-xpu-runtime/STAGE2-PLAN.md) separates bandwidth

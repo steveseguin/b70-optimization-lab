@@ -13,7 +13,10 @@ from .headers import TYPES
 
 GRID = json.loads(Path(__file__).with_name('iq3-grid.json').read_text())['packed_u32_le']
 IQ4 = (-127,-104,-83,-65,-49,-35,-22,-10,1,13,25,38,53,69,89,113)
-BY_NAME = {v[0]:v[1:] for v in TYPES.values()}
+# Header census admits more formats than this numerical reference implements.
+# Never let a header-only addition fall through to the IQ3_XXS decoder.
+DECODE_TYPES = {'F16', 'BF16', 'Q8_0', 'Q3_K', 'Q4_K', 'Q5_K', 'Q6_K', 'IQ3_XXS', 'IQ4_XS'}
+BY_NAME = {v[0]:v[1:] for v in TYPES.values() if v[0] in DECODE_TYPES}
 
 
 def _f16(b,at=0):

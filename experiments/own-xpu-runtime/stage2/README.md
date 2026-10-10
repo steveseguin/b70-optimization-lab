@@ -10,6 +10,7 @@ separate and pending.
 | --- | --- | --- |
 | 1 — Local identity, tensors, exact oracle and placement arithmetic | **CPU exit gate PASS, 2026-10-10** | [Packet and receipt](packet1/README.md) |
 | 1b — CPU reference math and Stage 2 plan | **37 synthetic checks PASS; device parity UNVERIFIED, 2026-10-10** | [Packet/receipts](packet1b/README.md), [plan and owner decisions](../STAGE2-PLAN.md) |
+| 1c — Actual Unsloth mixed-grid header census | **CPU census PASS; IQ3 first, IQ4 weight-only rejection corrected; MTP absent** | [Census, comparison and fetch receipt](packet1c/README.md) |
 | Later operator, loader, layer, transaction and native qualification packets | Not authorized or executed here | [Required window and checks](packet1/README.md#next-authorized-stage-2-window) |
 
 Packet 1 retains all 152,089 tensors, 131 shard headers and 12 complete A367

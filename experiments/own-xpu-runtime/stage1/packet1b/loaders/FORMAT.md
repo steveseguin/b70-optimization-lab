@@ -42,6 +42,7 @@ not authenticate payload hashes.
 
 | ID | Type | Elements/block | Bytes/block | Stored fields, in byte order |
 | ---: | --- | ---: | ---: | --- |
+| 0 | F32 | 1 | 4 | IEEE binary32 (header census only; added in Stage 2 packet 1c) |
 | 1 | F16 | 1 | 2 | IEEE binary16 |
 | 30 | BF16 | 1 | 2 | upper 16 bits of IEEE binary32 |
 | 8 | Q8_0 | 32 | 34 | F16 scale, 32 signed int8 codes |
@@ -50,10 +51,13 @@ not authenticate payload hashes.
 | 13 | Q5_K | 256 | 176 | Q4_K prefix, 32 high-bit bytes, 128 nibble bytes |
 | 14 | Q6_K | 256 | 210 | 128 low-nibble bytes, 64 high-two-bit bytes, 16 signed scales, F16 scale |
 | 18 | IQ3_XXS | 256 | 98 | F16 scale, 64 grid indices, eight 32-bit sign/scale words |
+| 20 | IQ4_NL | 32 | 18 | F16 scale, 16 nonlinear nibble codes (header census only) |
+| 21 | IQ3_S | 256 | 110 | F16 scale, 64 low grid bytes, 8 high grid bytes, 32 signs, 4 scales (header census only) |
+| 22 | IQ2_S | 256 | 82 | F16 scale, 64 grid/sign bytes, 8 high grid bytes, 8 scales (header census only) |
 | 23 | IQ4_XS | 256 | 136 | F16 scale, 16 high-scale bits, four low-scale bytes, 128 nonlinear nibble codes |
 
 All multi-byte fields are little endian. Version 3 is required; big endian,
-other versions, other types (including F32), nested metadata arrays, zero-size
+other versions, unlisted types, nested metadata arrays, zero-size
 tensors and row widths not divisible by their block size fail closed.
 Container limits are 32 MiB of metadata/tensor info, 1,000,000 metadata/tensor
 entries, rank at most four, positive power-of-two alignment at most 1 MiB,
@@ -61,6 +65,13 @@ and signed-63-bit byte arithmetic. Supported metadata scalars are all twelve
 standard scalar/string types; arrays may contain scalars or strings.
 `split.no`, `split.count`, `split.tensors.count` are validated together and
 across shards. Filenames do not select a decoder.
+
+Stage 2 packet 1c adds F32, IQ4_NL, IQ3_S and IQ2_S tensor-size admission for
+real GGUF norms, small control tensors, PLE and mixed experts; it does not add
+numerical decoders. Optional range
+reader hints give structural lower bounds on remaining header bytes, enabling
+bounded HTTP reads without reading alignment padding or any tensor payload.
+The normal local reader and its 32 MiB admission limit are unchanged.
 
 ## Element equations
 

@@ -145,6 +145,18 @@ class SafeHeaders(unittest.TestCase):
 class GGHeaders(unittest.TestCase):
     def parse(self,b): return gguf_header(io.BytesIO(b),len(b))
 
+    def test_remote_structural_hints_never_cross_header(self):
+        class HintGuard(Guard):
+            def guarantee_header(self, end):
+                if end > self.limit:
+                    raise AssertionError('hint includes padding or payload')
+        metadata = [('strings',9,struct.pack('<IQ',8,3)+string('')+string('abc')+string('x'*800)),
+                    ('numbers',9,struct.pack('<IQddd',12,3,1,2,3)), ('last',7,b'\1')]
+        for tensors in ([], [('x',[1],0,0)], [('a',[256,2],18,0),('b',[1],0,224)]):
+            b = ggfile(tensors,metadata)
+            expected = self.parse(b)
+            self.assertEqual(gguf_header(HintGuard(b,expected['header_bytes_read']),len(b)),expected)
+
     def test_every_type_header_only(self):
         for kind,(name,block,size) in TYPES.items():
             b=ggfile([('w',[block,2],kind,0)])

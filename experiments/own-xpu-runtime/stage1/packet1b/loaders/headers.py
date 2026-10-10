@@ -12,10 +12,11 @@ MAX_HEADER = 32 * 1024 * 1024
 MAX_COUNT = 1000000
 MAX_BYTES = (1 << 63) - 1
 # ggml type ID: (name, elements/block, bytes/block); no filename inference.
-TYPES = {1: ('F16',1,2), 30: ('BF16',1,2), 8: ('Q8_0',32,34),
+TYPES = {0: ('F32',1,4), 1: ('F16',1,2), 30: ('BF16',1,2), 8: ('Q8_0',32,34),
          11: ('Q3_K',256,110), 12: ('Q4_K',256,144),
          13: ('Q5_K',256,176), 14: ('Q6_K',256,210),
-         18: ('IQ3_XXS',256,98), 23: ('IQ4_XS',256,136)}
+         18: ('IQ3_XXS',256,98), 20: ('IQ4_NL',32,18),
+         21: ('IQ3_S',256,110), 22: ('IQ2_S',256,82), 23: ('IQ4_XS',256,136)}
 DTYPES = {'BF16':2, 'F8_E4M3':1}
 
 
@@ -57,6 +58,16 @@ class Reader:
             raise ValueError('truncated header')
         self.pos += n
         return b
+
+    def guarantee(self, n):
+        """Optional range-stream hint: at least n header bytes remain here.
+
+        Only structural lower bounds, never alignment or payload bytes. Normal
+        local streams ignore this; remote streams may batch within this bound.
+        """
+        integer(n)
+        if hasattr(self.stream, 'guarantee_header'):
+            self.stream.guarantee_header(min(self.pos+n, self.size, self.limit))
 
     def number(self,fmt):
         return struct.unpack('<'+fmt,self.read(struct.calcsize('<'+fmt)))[0]
@@ -173,7 +184,12 @@ def _metadata(r,kind,depth=0):
         subtype, count = r.number('I'), integer(r.number('Q'),0,MAX_COUNT)
         if subtype==9 or subtype not in set(scalar)|{8}:
             raise ValueError('unsupported array element type')
-        return [_metadata(r,subtype,1) for _ in range(count)]
+        values = []
+        width = 8 if subtype == 8 else struct.calcsize('<'+scalar[subtype])
+        for i in range(count):
+            r.guarantee((count-i)*width)
+            values.append(_metadata(r,subtype,1))
+        return values
     raise ValueError('unsupported metadata type/nesting')
 
 
@@ -189,7 +205,10 @@ def gguf_header(stream, file_size):
         raise ValueError('only little-endian GGUF v3 supported')
     nt,nm = integer(r.number('Q'),0,MAX_COUNT),integer(r.number('Q'),0,MAX_COUNT)
     meta, meta_types = {}, {}
-    for _ in range(nm):
+    for i in range(nm):
+        # Metadata: string length + type + smallest scalar; tensor: string
+        # length + ndim + at least one dimension + type + offset (32 bytes).
+        r.guarantee((nm-i)*13 + nt*32)
         key,kind = r.string(),r.number('I')
         if not key or key in meta:
             raise ValueError('duplicate/empty metadata key')
@@ -205,7 +224,8 @@ def gguf_header(stream, file_size):
         integer(meta['split.no'],0,count-1)
         integer(meta['split.tensors.count'],nt)
     tensors = {}
-    for _ in range(nt):
+    for i in range(nt):
+        r.guarantee((nt-i)*32)
         name = r.string()
         if not name or name in tensors:
             raise ValueError('duplicate/empty tensor name')
@@ -214,7 +234,7 @@ def gguf_header(stream, file_size):
         count = product(dims)
         kind,off = r.number('I'),integer(r.number('Q'))
         if kind not in TYPES:
-            raise ValueError('unsupported ggml type')
+            raise ValueError(f'unsupported ggml type {kind} in {name}')
         type_name,block,size = TYPES[kind]
         if dims[0]%block or off%alignment:
             raise ValueError('block row/alignment violation')

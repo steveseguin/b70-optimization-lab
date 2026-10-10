@@ -244,3 +244,57 @@ not reasons to manufacture a speed/quality pass.
    if required by the owner's recovery decision. No video-lane interference.
 4. Review the final lossless/quant evidence and any later publication.
    Planning arithmetic and this CPU packet cannot authorize promotion.
+
+## Packet 1c corrections
+
+The [real UD header census](stage2/packet1c/README.md), captured from all nine
+GGUF shards at the pinned revision, supersedes the earlier homogeneous-grid
+rows **as statements about these files**. The old rows remain planning history.
+The [complete comparison](stage2/packet1c/comparison.md) and
+[tensor-by-tensor arithmetic](stage2/packet1c/ud-census.json) retain all types,
+shapes, byte extents, component/layer totals and the assumptions below.
+
+| Variant | Planned resident B | Actual resident B | Actual top10 expert B/token | Actual total B/token | Weight-only headroom B |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| UD-IQ3_XXS | 57,321,436,698 | 53,304,619,520 | 949,760,000 | 4,951,240,940 | 15,179,976,192 |
+| UD-Q3_K_XL | 63,101,711,898 | 61,175,191,040 | 1,090,304,000 | 5,766,504,280 | 7,309,404,672 |
+| UD-IQ4_XS | 75,625,641,498 | 64,871,421,440 | 1,162,496,000 | 5,838,696,280 | 3,613,174,272 |
+
+“Resident” counts packed tensors across both cards after offloading PLE and
+input embeddings, including one extra HC down/up copy. The actual nonexpert
+floor is **4,676,907,520 B for IQ3** and **5,351,626,240 B for Q3/IQ4**, replacing
+the old official 10,115,855,898 B floor. The actual expert banks are respectively
+48,627,712,000 / 55,823,564,800 / 59,519,795,200 B (IQ3 / Q3 / IQ4).
+Capacity remains the historical 68,484,595,712 B scenario. Resident totals do
+not include the 280 bytes of PLE control metadata; after those and the same
+753,139,712 B full-16-bit KV budget, the remaining margins are respectively
+**14,426,836,200 / 6,556,264,680 / 2,860,034,280 B**. Other replicas, padding,
+state, graphs, repacking and scratch still require admission. These are exact
+stored-byte sums under a stated placement model, not measured allocations.
+
+The decode totals count top10 experts in each of 48 target layers, dense
+weights once, one embedding row, sixteen PLE rows and 280 metadata bytes.
+Hypothetical TP2 adds **675,430,400 B/token** for its extra HC copy; KV/state,
+activation traffic and collectives are outside this count. There is no speed
+measurement or PCIe miss estimate. The earlier streaming/cache tables remain
+homogeneous sensitivity scenarios, not measurements of these mixed files.
+
+The files contain **1,224 tensors and no native MTP block** in each variant:
+48 expert banks, not the plan’s 49. They cannot supply the certified MTP1 setup
+by themselves. IQ3’s gate/up banks use IQ2_S (layer 2 uses IQ3_S), and down
+banks use IQ4_NL; none of its tensors uses IQ3_XXS. Q3_K_XL’s gate/up banks
+mostly use IQ3_XXS, not Q3_K; IQ4_XS’s mostly use IQ3_S. The full layer-specific
+mix is retained in the census. Nonexperts are also changed: PLE is IQ4_NL,
+HC and PLE projections Q8_0, output head Q6_K, and dense GDN/QSA/shared weights
+Q6_K/Q8_0; small controls/norms/routers are F32 and indexer projections BF16.
+The census lists every nonexpert name and type. PLE occupies 28,800,138,240 B
+on the host, still more than the 15 GiB host can hold resident.
+
+**The IQ3_XXS-first capacity verdict stands.** It has the largest margin.
+**The IQ4_XS weight-only rejection is withdrawn:** the real target-only file
+fits this arithmetic, though its remaining working-space margin is tight.
+MTP absence, quality changes, host backing/storage and native admission remain
+open; no alternative is deployment-qualified or lossless against official FP8.
+Only headers were fetched (33,073,557 unique bytes; 33,088,596 transferred
+including the discarded discovery prefix). No weight payload, GPU, server,
+systemd, port, device-node or existing-lane operation occurred.

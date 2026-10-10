@@ -1,0 +1,161 @@
+{
+  "schema": "own-xpu-runtime.stage2.packet1c.check-receipt.v1",
+  "utc": "2026-10-10T20:13:52.055326+00:00",
+  "verdict": "PASS: exact header census, offline rebuild and CPU parser/range guards; original discovery-attempt journal incomplete",
+  "census_fresh_process_rebuild": "PASS: census.py --write followed by census.py; same JSON and comparison",
+  "tests": [
+    {
+      "command": [
+        "python3",
+        "-B",
+        "experiments/own-xpu-runtime/stage2/packet1c/test_ranges.py"
+      ],
+      "returncode": 0,
+      "output": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.011s\n\nOK\n"
+    },
+    {
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "experiments/own-xpu-runtime/stage1/packet1b/tests",
+        "-p",
+        "test_headers.py"
+      ],
+      "returncode": 0,
+      "output": "......................................\n----------------------------------------------------------------------\nRan 38 tests in 0.086s\n\nOK\n"
+    }
+  ],
+  "header_tests_passed": 38,
+  "packet_range_and_decoder_guards_passed": 4,
+  "complete_variants": 3,
+  "shards": 9,
+  "tensors_per_variant": 1224,
+  "tensor_payload_bytes_read": 0,
+  "nice": 19,
+  "OMP_NUM_THREADS": "2",
+  "checks": [
+    "Fresh HF revision, allow-list and Content-Range file-size identity",
+    "All saved range SHA256s, full header SHA256s, globally unique split coverage",
+    "Every expected tensor name and shape; unknown or missing rejected",
+    "Packed-row byte sizes; contiguous aligned extents; tensor/header/padding sum equals file size",
+    "Component sums, 48x512 expert banks, top10 reads, PLE metadata and two-card HC replication",
+    "Complete offline deterministic rebuild in a fresh process",
+    "Repository doc links and manifest paths pass; packet-specific doc links pass"
+  ],
+  "limitations": [
+    "No payload authentication, quality, runtime, memory-fit or throughput claim.",
+    "Initial discarded 15039-byte prefix has reconstructed requests/revalidation hashes; original response hashes and redirects were not journaled.",
+    "Broader old arithmetic/dequant test discovery was attempted but torch was absent (two import errors); no torch installed. Header and packet-specific tests pass."
+  ],
+  "files": [
+    {
+      "path": "experiments/own-xpu-runtime/stage1/packet1b/loaders/FORMAT.md",
+      "bytes": 7474,
+      "sha256": "036946d20800f5587518aecf47b17ff2732f44d2e0f153f839a4a56005375e62"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage1/packet1b/loaders/dequant.py",
+      "bytes": 4969,
+      "sha256": "72a7b54c8450c5f3f8c760e1a3b3feecc029c9f8a30fb94c8a9546ea3b31f34e"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage1/packet1b/loaders/headers.py",
+      "bytes": 11655,
+      "sha256": "7503587cb34eb2ed5464ad78d429817e6abc4121c0db81ffc6011da58a54c9fa"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage1/packet1b/tests/test_headers.py",
+      "bytes": 11086,
+      "sha256": "6049e4bead148cba2195251802bce7a327b7ecdb7365512150c60da5eacf7aad"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet1c/README.md",
+      "bytes": 8089,
+      "sha256": "c6d8b18b344e23ea5d08e50989f45765e3022a8165c5ab9a98dc3bf98c5f5367"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet1c/census.py",
+      "bytes": 19396,
+      "sha256": "03a2a577c97113aa91692f47244ac14744a4269d3b8a1a36d61a1170a80b5585"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet1c/comparison.md",
+      "bytes": 6862,
+      "sha256": "947d1a6a325406e495602cfd29af58e22fdb0aa42c5b04bf73ad2340d6d74b04"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet1c/fetch-headers.py",
+      "bytes": 7675,
+      "sha256": "3c507f82873cd6ef5913aa7f8a85f558f9b17c1af913984979e98babec036085"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet1c/fetch-receipt.json",
+      "bytes": 1212608,
+      "sha256": "180e209714d4ca2841051a04d1d7b976a21e307c0281a6b5020e44f509bb116f"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet1c/headers/UD-IQ3_XXS__Qwen3.8-Flash-Next-UD-IQ3_XXS-00001-of-00003.gguf.header.gz",
+      "bytes": 3085544,
+      "sha256": "63a0a2a22c6bdc3a620beaa8edf0817fcdebb74fb857988aa5cb61deed1d99db"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet1c/headers/UD-IQ3_XXS__Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf.header.gz",
+      "bytes": 4353,
+      "sha256": "14eb4814ae266308d16817a44fdd19a6a376408aec1779ff36aa3e322c2abea7"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet1c/headers/UD-IQ3_XXS__Qwen3.8-Flash-Next-UD-IQ3_XXS-00003-of-00003.gguf.header.gz",
+      "bytes": 6589,
+      "sha256": "566654bc786017e3fd54eebdce9f93e04d3cb2dd63ae09509f6d5504a9c1d500"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet1c/headers/UD-IQ4_XS__Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf.header.gz",
+      "bytes": 3085543,
+      "sha256": "fb9d8084d6edacc7641fa7b8e7b3f7aec43e207eb62acef30da7ff2aeb15f0aa"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet1c/headers/UD-IQ4_XS__Qwen3.8-Flash-Next-UD-IQ4_XS-00002-of-00003.gguf.header.gz",
+      "bytes": 3573,
+      "sha256": "6284c3431e2091a094d2c3bd337ac526f05b93e1b94bd0513a765441cbf594d6"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet1c/headers/UD-IQ4_XS__Qwen3.8-Flash-Next-UD-IQ4_XS-00003-of-00003.gguf.header.gz",
+      "bytes": 7371,
+      "sha256": "75b564d0d42909bf29d09f40b6863f94757c3f13ed42137694bbc0110c20bdcb"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet1c/headers/UD-Q3_K_XL__Qwen3.8-Flash-Next-UD-Q3_K_XL-00001-of-00003.gguf.header.gz",
+      "bytes": 3085543,
+      "sha256": "6ba9750b112e480aeac17ba41ae46916c212c3facb86b27f5ca2bc8c57bed10b"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet1c/headers/UD-Q3_K_XL__Qwen3.8-Flash-Next-UD-Q3_K_XL-00002-of-00003.gguf.header.gz",
+      "bytes": 3807,
+      "sha256": "672476c9cfedf8c1098276a0c2f11a323af123c0b638bd454483f748710f6429"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet1c/headers/UD-Q3_K_XL__Qwen3.8-Flash-Next-UD-Q3_K_XL-00003-of-00003.gguf.header.gz",
+      "bytes": 7104,
+      "sha256": "dcd66e13eeb8e5266d8ad180f239a6820a596c4ac6252c7e2aad505ee7c51e14"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet1c/hf-metadata.json.gz",
+      "bytes": 8103,
+      "sha256": "ed96ed5a6a3ee6058615559aaa82f49b514c213141eb13fb61cbdb5d7d3cdd06"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet1c/test_ranges.py",
+      "bytes": 3850,
+      "sha256": "4198ebae116057181b3396731836876f6abec86afaa32ca92a2bb25d8a23af43"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet1c/ud-census.json",
+      "bytes": 2970027,
+      "sha256": "9395cb923e1f8fb19f22d9f7524ae8cf6045c1d3c68697b1b092698cc7257d3d"
+    }
+  ]
+}
