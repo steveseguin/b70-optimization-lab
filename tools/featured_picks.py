@@ -168,10 +168,35 @@ def groups(catalog):
          'Qualified package · separate October check','A 2.6B model. The strict package passed its gates; the October setup failed its quick answer check and concurrent answers differed.'),
     ]:
         small.append(use_profile(pick(pid, name, status, why), profile))
-    return [('one-card', 'One card · largest first', [ornith, nemotron, int4, fp8, gemma]),
-            ('multi-card', 'Two to four cards · larger models and shared chat', [flash, shared, minimax, laguna, muse, deepseek]),
-            ('video-pick', 'Video · a continuing stream', [video]),
-            ('small-quick', 'Small and quick · 9B and below', small)]
+    # One editorial role per featured setup; scores never clear quality gates.
+    featured = [int4, gemma, fp8, laguna, shared, flash, video]
+    roles = ['Everyday assistant', 'Fast single-user replies on one card',
+             'Longer documents with official FP8 weights', 'Dedicated coding setup',
+             'Many people at once', 'Larger model for demanding tasks',
+             'Continuing video with audio']
+    for p, role in zip(featured, roles):
+        p['role'] = role
+    int4['why'] = ('Start here for everyday chat and code on one card. A recent dense 27B model '
+                   'from the widely used Qwen family, with an optimized INT4 recipe. '
+                   'The one-card speed check repeated identically alone and with four users.')
+    gemma['why'] = ('Our fast one-card pick among the larger, quality-gated packages: '
+                   '26B total parameters, about 4B active, and 8-bit weights. '
+                   'Its cold-suite record uses target-verified drafting; the table below uses a different, no-draft setup.')
+    fp8['why'] = ('For longer documents on one card, with official FP8 weights and full 16-bit KV. '
+                 'The package measures real inputs through 16K tokens; its configured 32K limit is not a measured 32K speed.')
+    profile = next(p for p in pkgs[fp8['id']]['performance_profiles']
+                   if p['id'] == 'decode-vs-context-recommended')
+    point = next(p for p in profile['points'] if p['context_tokens'] == 16384)
+    fp8['metrics'].append(dict(value=point['value'], evidence=profile['evidence'],
+        label='After a long prompt', scope='16,384 input tokens; separate context test',
+        digits=2, scale=250, unit='tok/s'))
+    flash['why'] = ('For four-card owners who want a larger model for demanding reasoning and agent tasks. '
+                    'The recent 125B-A6B Qwen has a certified lossless result here; '
+                    'its capability standing comes from publisher evaluations, not our speed test.')
+    return [('task-picks', 'Pick the job you want to do', featured),
+            ('other-picks', 'Other models and research options',
+             [minimax, muse, ornith, nemotron, deepseek] + small[:3]),
+            ('small-quick', 'Small and quick · under 9B', small[3:])]
 
 
 def render_pick(pick, rank):
@@ -194,6 +219,7 @@ def render_pick(pick, rank):
     metrics.append(f'<p class="pick-note">{esc(pick["note"])}</p>')
     return f'''      <li class="pick-row{research}" data-pick-id="{esc(pick['id'])}">
         <div class="pick-head"><span class="pick-rank">{rank}</span><div>
+          <p class="eyebrow">{esc(pick.get('role', 'Alternative setup'))}</p>
           <p class="eyebrow{research}">{esc(pick['status'])}</p>
           <h3><a href="{esc(pick['detail'])}">{esc(pick['name'])}</a> <span class="card-chip">{pick['cards']} card{'s' if pick['cards'] != 1 else ''}</span><small>{esc(pick['setup'])}</small></h3>
           <p class="pick-why">{esc(pick['why'])}</p>
@@ -207,21 +233,21 @@ def render(catalog):
     out = [START, '''<section id="featured">
   <div class="wrap">
     <h2 id="t-featured">What should I run?</h2>
-    <p class="sub"><strong>1 card:</strong> start with Qwen 27B or Gemma 26B; explore the larger candidates below. <strong>2 cards:</strong> Qwen 27B for shared chat. <strong>4 cards:</strong> Flash-Next for a larger chat model, or LTX for video.</p>
-    <p class="sub">For owners of 32 GB Intel Arc Pro B70 cards. One-card choices run largest first; size is not a measured quality ranking. Each result keeps its own test and quality status. A certified result does not mean a clean-host installer is ready.</p>
+    <p class="sub"><strong>1 card:</strong> Qwen 27B for everyday work, Gemma 26B for fast replies. <strong>2 cards:</strong> Qwen 27B shared chat. <strong>3 cards:</strong> use the tested two-card recipe; three-card scaling is not measured here. <strong>4 cards:</strong> Laguna for code, Flash-Next for demanding tasks, LTX for video.</p>
+    <p class="sub">For owners of 32 GB Intel Arc Pro B70 cards. We weigh public interest in the model family, how recent and capable it is, and our optimization and quality evidence, then choose one setup per need. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/notes/2026-10-10-neural-download-featured-ranking.md">Scores, sources and selection reasons</a>. A certified result does not mean a clean-host installer is ready.</p>
     <p class="sub">Writing speed is in tokens per second (tok/s); a token is about three quarters of a word. Bars compare speed, not capability. Use <a href="#uniform">Same test, every model</a> for the shared test conditions.</p>''']
     for group_id, title, picks in groups(catalog):
-        if group_id == 'small-quick':
+        if group_id in ('small-quick', 'other-picks'):
             out.append(f'<details id="{group_id}"><summary>{esc(title)}</summary>')
         else:
             out.append(f'<h3 id="{group_id}">{esc(title)}</h3>')
         out.append('<ol class="pick-list">')
         out.extend(render_pick(p, n) for n, p in enumerate(picks, 1))
         out.append('</ol>')
-        if group_id == 'small-quick':
+        if group_id in ('small-quick', 'other-picks'):
             out.append('</details>')
     out.extend(['''    <p class="pick-scale">Bars use fixed scales: one person 250 tok/s; combined users 1,400 tok/s; prompt reading 4,200 tok/s. User counts and tests differ; every value links to its receipt. Video has its own units and no token-speed bar.</p>
-    <p class="research-links">All recipes and numbers remain in the tables below and the <a href="models/">model library</a>. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/minimax-h3-b70/README.md">MiniMax-H3 video research notes</a>.</p>
+    <p class="research-links">All recipes and numbers remain in the tables below and the <a href="models/">model library</a>. H3 means MiniMax-H3, an audio/video generator. It has <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/minimax-h3-b70/README.md">public lab notes</a>, but no published site package yet.</p>
   </div>
 </section>''', END])
     return '\n'.join(out)

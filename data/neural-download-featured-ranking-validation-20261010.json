@@ -1,0 +1,92 @@
+{
+  "date": "2026-10-10",
+  "baseline": "3b2f01588b1ba76db1172b33e5d40ee0a946fa27",
+  "scope": "CPU-only featured selection; no runtime or measurement promotion",
+  "environment": {
+    "OMP_NUM_THREADS": "2",
+    "nice": 19
+  },
+  "checks": [
+    {
+      "command": "python3 tools/validate-repro-guides.py --write-package-catalog",
+      "passed": true,
+      "result": "41 guides; generated catalog unchanged"
+    },
+    {
+      "command": "python3 tools/build-family-pages.py; python3 tools/build-model-pages.py; python3 tools/sync-public-result-summary.py",
+      "passed": true,
+      "result": "21 family / 29 package pages regenerated; only featured home section changed"
+    },
+    {
+      "command": "python3 -m unittest tools/test_build_model_pages.py tools/test_build_family_pages.py tools/test_measured_opt_contract.py tools/test_validate_repro_guides.py",
+      "passed": true,
+      "tests": 103
+    },
+    {
+      "command": "node --test tools/test_guides_browser.cjs",
+      "passed": true,
+      "tests": 4
+    },
+    {
+      "command": "python3 -m unittest tools/test_validate_recipe_publication.py tools/test_sync_public_result_summary.py",
+      "passed": true,
+      "tests": 12
+    },
+    {
+      "command": "python3 tools/build-family-pages.py --check; python3 tools/sync-public-result-summary.py --check",
+      "passed": true
+    },
+    {
+      "command": "python3 tools/check-doc-links.py",
+      "passed": true,
+      "documents": 219,
+      "broken": 0
+    },
+    {
+      "command": "python3 tools/check-manifest-paths.py",
+      "passed": true,
+      "paths": 6288,
+      "missing": 0
+    },
+    {
+      "command": "python3 tools/validate-recipe-publication.py",
+      "passed": true,
+      "manifests": 2
+    },
+    {
+      "command": "python3 tools/validate-recipe-publication.py --check-remote",
+      "passed": true,
+      "manifests": 2
+    },
+    {
+      "command": "python3 tools/check-pinned-hashes.py",
+      "passed": false,
+      "known_existing_drift": true,
+      "total": 318,
+      "matching": 87,
+      "drifted": 231,
+      "absent": 0,
+      "note": "Matches prior publication; no frozen pin modified."
+    },
+    {
+      "command": "git diff --check",
+      "passed": true
+    }
+  ],
+  "unchanged_comparison_sections_sha256": "54f384d172ad120b6ffba76a00a0a1844248d0ea4e11520c00e61bc3388274ef",
+  "visual_check": {
+    "performed": false,
+    "reason": "bwrap isolation denied (uid-map permission / network namespace setup); no browser launched and no GPU device opened."
+  },
+  "long_context_value_check": {
+    "source": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-32k/tp1-pkg-32k-context-summary.json",
+    "key": "by_length.16384.decode_token_1_to_100_tps",
+    "value": 62.33435164673183,
+    "display": 62.33
+  },
+  "publication": {
+    "method": "GitHub Pages legacy main:/, same as 87c8c71933",
+    "remote_ci_and_live_verification": "Performed after commit/push; GitHub run status and final response are the deployment receipt."
+  },
+  "temporary_files": "Projection TemporaryDirectory contexts removed scratch; no persistent task /tmp scratch."
+}

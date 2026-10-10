@@ -507,88 +507,44 @@ Style genome (duotone-hixffp):
 <section id="featured">
   <div class="wrap">
     <h2 id="t-featured">What should I run?</h2>
-    <p class="sub"><strong>1 card:</strong> start with Qwen 27B or Gemma 26B; explore the larger candidates below. <strong>2 cards:</strong> Qwen 27B for shared chat. <strong>4 cards:</strong> Flash-Next for a larger chat model, or LTX for video.</p>
-    <p class="sub">For owners of 32 GB Intel Arc Pro B70 cards. One-card choices run largest first; size is not a measured quality ranking. Each result keeps its own test and quality status. A certified result does not mean a clean-host installer is ready.</p>
+    <p class="sub"><strong>1 card:</strong> Qwen 27B for everyday work, Gemma 26B for fast replies. <strong>2 cards:</strong> Qwen 27B shared chat. <strong>3 cards:</strong> use the tested two-card recipe; three-card scaling is not measured here. <strong>4 cards:</strong> Laguna for code, Flash-Next for demanding tasks, LTX for video.</p>
+    <p class="sub">For owners of 32 GB Intel Arc Pro B70 cards. We weigh public interest in the model family, how recent and capable it is, and our optimization and quality evidence, then choose one setup per need. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/notes/2026-10-10-neural-download-featured-ranking.md">Scores, sources and selection reasons</a>. A certified result does not mean a clean-host installer is ready.</p>
     <p class="sub">Writing speed is in tokens per second (tok/s); a token is about three quarters of a word. Bars compare speed, not capability. Use <a href="#uniform">Same test, every model</a> for the shared test conditions.</p>
-<h3 id="one-card">One card · largest first</h3>
+<h3 id="task-picks">Pick the job you want to do</h3>
 <ol class="pick-list">
-      <li class="pick-row research" data-pick-id="ornith-15-35b-a3b-q4km-b70">
-        <div class="pick-head"><span class="pick-rank">1</span><div>
-          <p class="eyebrow research">Candidate · strict headline pending</p>
-          <h3><a href="models/ornith-15-35b-a3b-q4km-b70.html">Ornith 1.5 35B-A3B Q4_K_M</a> <span class="card-chip">1 card</span><small>Q4_K_M · llama.cpp SYCL</small></h3>
-          <p class="pick-why">The largest of these measured one-card models; about 3B parameters active per token. The patch matched its control, but fresh servers did not reproduce complete answers.</p>
-        </div></div>
-        <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:52.58%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/ornith-15-b70/data/2026-08-23-ornith35b-shared-gate-residual-rms-summary.json">131.46 tok/s</a><small>two-server observation; not certified</small></span></div><p class="pick-note">Prompt reading: not measured for this exact result.</p><p class="pick-note">Expert recipe; clean-host certification pending.</p></div>
-        <div class="pick-links"><a class="button" href="models/ornith-15-35b-a3b-q4km-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ornith-15-35b-a3b-q4km-b70/README.md">Setup guide and quality status</a></div>
-      </li>
-      <li class="pick-row research" data-pick-id="nemotron-35-lightning-30b-a3b-b70">
-        <div class="pick-head"><span class="pick-rank">2</span><div>
-          <p class="eyebrow research">Candidate · strict headline pending</p>
-          <h3><a href="models/nemotron-35-lightning-30b-a3b-b70.html">Nemotron 3.5 Lightning 30B-A3B</a> <span class="card-chip">1 card</span><small>UD-Q4_K_M · llama.cpp SYCL</small></h3>
-          <p class="pick-why">A 30B model with about 3B parameters active per token. The October test had differing repeats and passed two of three answer checks. Quality work remains.</p>
-        </div></div>
-        <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:28.95%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/profiles/2026-10-10/nemotron-35-lightning-30b-a3b-nd9fee29e-16k-p4.json">72.4 tok/s</a><small>October 10 speed check</small></span></div><div class="pick-bar-row"><span class="pick-bar-label">4 people</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:9.37%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/profiles/2026-10-10/nemotron-35-lightning-30b-a3b-nd9fee29e-16k-p4.json">131 tok/s</a><small>combined, October 10</small></span></div><div class="pick-bar-row"><span class="pick-bar-label">Reads a prompt</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:42.75%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/profiles/2026-10-10/nemotron-35-lightning-30b-a3b-nd9fee29e-16k-p4.json">1,795 tok/s</a><small>2,057 input tokens / first-token wait</small></span></div><p class="pick-note">October 10 speed check: 300-token prompt, 256 output tokens; reading speed is input tokens divided by time to first token. Separate from package certification; clean-host replay pending.</p></div>
-        <div class="pick-links"><a class="button" href="models/nemotron-35-lightning-30b-a3b-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/nemotron-35-lightning-30b-a3b-b70/README.md">Setup guide and quality status</a></div>
-      </li>
       <li class="pick-row" data-pick-id="qwen38-27b-autoround-int4-b70">
-        <div class="pick-head"><span class="pick-rank">3</span><div>
+        <div class="pick-head"><span class="pick-rank">1</span><div>
+          <p class="eyebrow">Everyday assistant</p>
           <p class="eyebrow">Qualified package · one-card speed check</p>
           <h3><a href="models/qwen38-27b-autoround-int4-b70.html">Qwen3.8 27B AutoRound INT4</a> <span class="card-chip">1 card</span><small>AutoRound INT4 W4A16 (group 128, symmetric) · vLLM XPU</small></h3>
-          <p class="pick-why">A dense 27B chat and coding option. The package has exact-output gates; this one-card October test also repeated identically alone and with four users.</p>
+          <p class="pick-why">Start here for everyday chat and code on one card. A recent dense 27B model from the widely used Qwen family, with an optimized INT4 recipe. The one-card speed check repeated identically alone and with four users.</p>
         </div></div>
         <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:36.88%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/profiles/2026-10-10/qwen38-27b-int4-fixed-k-one-gpu-p4.json">92.2 tok/s</a><small>October 10 speed check</small></span></div><div class="pick-bar-row"><span class="pick-bar-label">4 people</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:20.20%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/profiles/2026-10-10/qwen38-27b-int4-fixed-k-one-gpu-p4.json">283 tok/s</a><small>combined, October 10</small></span></div><div class="pick-bar-row"><span class="pick-bar-label">Reads a prompt</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:27.74%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/profiles/2026-10-10/qwen38-27b-int4-fixed-k-one-gpu-p4.json">1,165 tok/s</a><small>2,094 input tokens / first-token wait</small></span></div><p class="pick-note">October 10 speed check: 300-token prompt, 256 output tokens; reading speed is input tokens divided by time to first token. Separate from package certification; clean-host replay pending.</p></div>
         <div class="pick-links"><a class="button" href="models/qwen38-27b-autoround-int4-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-autoround-int4-b70/README.md">Setup guide and quality status</a></div>
       </li>
-      <li class="pick-row" data-pick-id="qwen38-27b-fp8-vllm-tp1-b70">
-        <div class="pick-head"><span class="pick-rank">4</span><div>
-          <p class="eyebrow">Qualified lossless package · one-card speed check</p>
-          <h3><a href="models/qwen38-27b-fp8-vllm-tp1-b70.html">Qwen3.8 27B FP8</a> <span class="card-chip">1 card</span><small>FP8 · vLLM XPU</small></h3>
-          <p class="pick-why">Choose this 27B setup for official FP8 weights and full 16-bit KV. Target-verified drafting passed the package’s exact-output checks. The tested profile serves one request at a time.</p>
-        </div></div>
-        <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:21.84%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/profiles/2026-10-10/qwen38-27b-fp8-tp1-b70-recommended-p1.json">54.6 tok/s</a><small>October 10 speed check</small></span></div><div class="pick-bar-row"><span class="pick-bar-label">Reads a prompt</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:44.55%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/profiles/2026-10-10/qwen38-27b-fp8-tp1-b70-recommended-p1.json">1,871 tok/s</a><small>2,094 input tokens / first-token wait</small></span></div><p class="pick-note">October 10 speed check: 300-token prompt, 256 output tokens; reading speed is input tokens divided by time to first token. Separate from package certification; clean-host replay pending.</p></div>
-        <div class="pick-links"><a class="button" href="models/qwen38-27b-fp8-vllm-tp1-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-fp8-vllm-tp1-b70/README.md">Setup guide and quality status</a></div>
-      </li>
       <li class="pick-row" data-pick-id="gemma4-26b-a4b-q8-b70-125tps-20260701">
-        <div class="pick-head"><span class="pick-rank">5</span><div>
+        <div class="pick-head"><span class="pick-rank">2</span><div>
+          <p class="eyebrow">Fast single-user replies on one card</p>
           <p class="eyebrow">Lab record · target-verified draft</p>
           <h3><a href="models/gemma4-26b-a4b-q8-b70-125tps-20260701.html">Gemma 4 26B-A4B Q8</a> <span class="card-chip">1 card</span><small>UD-Q8_K_XL + Q4_0 MTP · llama.cpp SYCL</small></h3>
-          <p class="pick-why">A 26B model with about 4B parameters active per token, using 8-bit weights. The cold-suite record passed its canaries. The separate shared-server test below uses no draft and can change answers when other users join.</p>
+          <p class="pick-why">Our fast one-card pick among the larger, quality-gated packages: 26B total parameters, about 4B active, and 8-bit weights. Its cold-suite record uses target-verified drafting; the table below uses a different, no-draft setup.</p>
         </div></div>
         <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:48.86%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json">122.16 tok/s</a><small>decode (MTP-assisted)</small></span></div><p class="pick-note">Prompt reading: not measured for this exact result.</p><p class="pick-note">Cold 12-prompt record, 512-token cap, MTP depth 3. Historical binary/draft pins and clean-host replay remain incomplete.</p></div>
         <div class="pick-links"><a class="button" href="models/gemma4-26b-a4b-q8-b70-125tps-20260701.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md">Setup guide and quality status</a></div>
       </li>
-</ol>
-<h3 id="multi-card">Two to four cards · larger models and shared chat</h3>
-<ol class="pick-list">
-      <li class="pick-row" data-pick-id="qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913">
-        <div class="pick-head"><span class="pick-rank">1</span><div>
-          <p class="eyebrow">Certified lossless result · four cards</p>
-          <h3><a href="models/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913.html">Qwen3.8 Flash-Next 125B-A6B</a> <span class="card-chip">4 cards</span><small>FP8 block-128 weights / BF16 KV · vLLM XPU</small></h3>
-          <p class="pick-why">The large FP8 flagship, with about 6B parameters active per token. Accepted draft tokens are verified by the unchanged target. Exact-output and quality evidence are bound to the record.</p>
-        </div></div>
-        <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:18.74%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a367-native-exact-gdn-realistic-suite-v1-result.json">46.854250 tok/s</a><small>class-balanced decode median</small></span></div><p class="pick-note">Prompt reading: not measured for this exact result.</p><p class="pick-note">Cold realistic suite; one user, full BF16 KV. Certified result; expert lab replay, portable installer still incomplete.</p></div>
-        <div class="pick-links"><a class="button" href="models/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md">Setup guide and quality status</a></div>
-      </li>
-      <li class="pick-row" data-pick-id="qwen38-27b-fp8-vllm-tp2-asrock-b70">
-        <div class="pick-head"><span class="pick-rank">2</span><div>
-          <p class="eyebrow">Exact tested outputs · multi-user speed not certified</p>
-          <h3><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Qwen3.8 27B FP8 · shared chat</a> <span class="card-chip">2 cards</span><small>FP8 · vLLM XPU</small></h3>
-          <p class="pick-why">For two cards and many people at once. The 64-user check matched the saved one-user answers on both passes. This is Qwen 27B, a separate model from Flash-Next.</p>
-        </div></div>
-        <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:36.10%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json">90.25 tok/s</a><small>single-user MTP5</small></span></div><div class="pick-bar-row"><span class="pick-bar-label">64 people</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:62.52%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json">875 tok/s</a><small>combined; short prompts, MTP0</small></span></div><p class="pick-note">Prompt reading: not measured for this exact result.</p><p class="pick-note">64-user passes: 875.31 and 875.05 tok/s, 128 output tokens per user, same server. No fresh-server speed certification; not long input for every user.</p></div>
-        <div class="pick-links"><a class="button" href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md">Setup guide and quality status</a></div>
-      </li>
-      <li class="pick-row" data-pick-id="minimax-m27-b70-89tps-20260520">
+      <li class="pick-row" data-pick-id="qwen38-27b-fp8-vllm-tp1-b70">
         <div class="pick-head"><span class="pick-rank">3</span><div>
-          <p class="eyebrow">Historical quality-gated record · four cards</p>
-          <h3><a href="models/minimax-m27-b70-89tps-20260520.html">MiniMax M2.7 · 229B INT4</a> <span class="card-chip">4 cards</span><small>AutoRound W4A16 INT4 · vLLM XPU + llm-scaler</small></h3>
-          <p class="pick-why">A much larger mixture-of-experts model. Exact short-output checks, semantic tasks and arithmetic passed. The displayed speed is the historical short-context record.</p>
+          <p class="eyebrow">Longer documents with official FP8 weights</p>
+          <p class="eyebrow">Qualified lossless package · one-card speed check</p>
+          <h3><a href="models/qwen38-27b-fp8-vllm-tp1-b70.html">Qwen3.8 27B FP8</a> <span class="card-chip">1 card</span><small>FP8 · vLLM XPU</small></h3>
+          <p class="pick-why">For longer documents on one card, with official FP8 weights and full 16-bit KV. The package measures real inputs through 16K tokens; its configured 32K limit is not a measured 32K speed.</p>
         </div></div>
-        <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:35.73%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-89tps-20260520/results/promoted-result-20260519.json">89.31 tok/s</a><small>mean output throughput</small></span></div><p class="pick-note">Prompt reading: not measured for this exact result.</p><p class="pick-note">Historical mean of four warm 512-input / 1,536-output runs at 2K context; not a cold-suite headline. The 32K recipe has a separate slower result.</p></div>
-        <div class="pick-links"><a class="button" href="models/minimax-m27-b70-89tps-20260520.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-89tps-20260520/README.md">Setup guide and quality status</a></div>
+        <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:21.84%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/profiles/2026-10-10/qwen38-27b-fp8-tp1-b70-recommended-p1.json">54.6 tok/s</a><small>October 10 speed check</small></span></div><div class="pick-bar-row"><span class="pick-bar-label">Reads a prompt</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:44.55%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/profiles/2026-10-10/qwen38-27b-fp8-tp1-b70-recommended-p1.json">1,871 tok/s</a><small>2,094 input tokens / first-token wait</small></span></div><div class="pick-bar-row"><span class="pick-bar-label">After a long prompt</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:24.93%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-32k/tp1-pkg-32k-context-summary.json">62.33 tok/s</a><small>16,384 input tokens; separate context test</small></span></div><p class="pick-note">October 10 speed check: 300-token prompt, 256 output tokens; reading speed is input tokens divided by time to first token. Separate from package certification; clean-host replay pending.</p></div>
+        <div class="pick-links"><a class="button" href="models/qwen38-27b-fp8-vllm-tp1-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-fp8-vllm-tp1-b70/README.md">Setup guide and quality status</a></div>
       </li>
       <li class="pick-row" data-pick-id="laguna-s-2.1-int4-b70-125tps-20260731">
         <div class="pick-head"><span class="pick-rank">4</span><div>
+          <p class="eyebrow">Dedicated coding setup</p>
           <p class="eyebrow">Quality-checked lab record · four cards</p>
           <h3><a href="models/laguna-s-2.1-int4-b70-125tps-20260731.html">Laguna S 2.1 INT4</a> <span class="card-chip">4 cards</span><small>INT4 / BF16 KV · vLLM XPU</small></h3>
           <p class="pick-why">A coding model with a target-verified DFlash draft. The record keeps its exactness checks and test conditions in a replay packet.</p>
@@ -596,29 +552,29 @@ Style genome (duotone-hixffp):
         <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:50.18%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/laguna-shared-elementwise-m12-record-20260731.json">125.46 tok/s</a><small>conventional decode median</small></span></div><p class="pick-note">Prompt reading: not measured for this exact result.</p><p class="pick-note">13 cold prompts on one server start; full BF16 KV. Historical lab replay; clean-host certification pending.</p></div>
         <div class="pick-links"><a class="button" href="models/laguna-s-2.1-int4-b70-125tps-20260731.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/laguna-s-2.1-int4-b70-125tps-20260731/README.md">Setup guide and quality status</a></div>
       </li>
-      <li class="pick-row" data-pick-id="muse-glimmer-30b-q8-woq-b70-100tps-20260813">
+      <li class="pick-row" data-pick-id="qwen38-27b-fp8-vllm-tp2-asrock-b70">
         <div class="pick-head"><span class="pick-rank">5</span><div>
-          <p class="eyebrow">Target-verified record · four cards measured</p>
-          <h3><a href="models/muse-glimmer-30b-q8-woq-b70-100tps-20260813.html">Muse Glimmer 30B Q8 WOQ</a> <span class="card-chip">4 cards</span><small>UD-Q8_K_XL / BF16 draft · llama.cpp SYCL</small></h3>
-          <p class="pick-why">The Q8 weights alone exceed one B70’s memory. This measured four-card setup uses a BF16 DFlash assistant; it is not a one-card recipe.</p>
+          <p class="eyebrow">Many people at once</p>
+          <p class="eyebrow">Exact tested outputs · multi-user speed not certified</p>
+          <h3><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Qwen3.8 27B FP8 · shared chat</a> <span class="card-chip">2 cards</span><small>FP8 · vLLM XPU</small></h3>
+          <p class="pick-why">For two cards and many people at once. The 64-user check matched the saved one-user answers on both passes. This is Qwen 27B, a separate model from Flash-Next.</p>
         </div></div>
-        <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:40.15%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/manifests/expected-result.json">100.37 tok/s</a><small>pooled canonical mean</small></span></div><p class="pick-note">Prompt reading: not measured for this exact result.</p><p class="pick-note">Mean across two fresh three-prompt runs, 256 output tokens; not the full varied-suite median. Clean-host certification pending.</p></div>
-        <div class="pick-links"><a class="button" href="models/muse-glimmer-30b-q8-woq-b70-100tps-20260813.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md">Setup guide and quality status</a></div>
+        <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:36.10%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json">90.25 tok/s</a><small>single-user MTP5</small></span></div><div class="pick-bar-row"><span class="pick-bar-label">64 people</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:62.52%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json">875 tok/s</a><small>combined; short prompts, MTP0</small></span></div><p class="pick-note">Prompt reading: not measured for this exact result.</p><p class="pick-note">64-user passes: 875.31 and 875.05 tok/s, 128 output tokens per user, same server. No fresh-server speed certification; not long input for every user.</p></div>
+        <div class="pick-links"><a class="button" href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md">Setup guide and quality status</a></div>
       </li>
-      <li class="pick-row research" data-pick-id="deepseek-v4-research">
+      <li class="pick-row" data-pick-id="qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913">
         <div class="pick-head"><span class="pick-rank">6</span><div>
-          <p class="eyebrow research">Experimental, lossy checkpoint · not a lossless recommendation</p>
-          <h3><a href="models/deepseek-v4.html">DeepSeek V4 Flash · 180B research</a> <span class="card-chip">4 cards</span><small>Community-trimmed FP8 / FP4 experts · FP8 KV · vLLM XPU</small></h3>
-          <p class="pick-why">A separate research option. Exact checks apply only to this trimmed target; they do not prove equality to the original model. It also uses compressed KV.</p>
+          <p class="eyebrow">Larger model for demanding tasks</p>
+          <p class="eyebrow">Certified lossless result · four cards</p>
+          <h3><a href="models/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913.html">Qwen3.8 Flash-Next 125B-A6B</a> <span class="card-chip">4 cards</span><small>FP8 block-128 weights / BF16 KV · vLLM XPU</small></h3>
+          <p class="pick-why">For four-card owners who want a larger model for demanding reasoning and agent tasks. The recent 125B-A6B Qwen has a certified lossless result here; its capability standing comes from publisher evaluations, not our speed test.</p>
         </div></div>
-        <div class="pick-bars"><p class="pick-note"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json">76.90–80.82 tok/s (historical research observations)</a></p><p class="pick-note">Prompt reading: not measured for this exact result.</p><p class="pick-note">Historical 128-token test; not eligible for a current lossless headline. See the full record and provenance limits.</p></div>
-        <div class="pick-links"><a class="button" href="models/deepseek-v4.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md">Setup guide and quality status</a></div>
+        <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:18.74%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a367-native-exact-gdn-realistic-suite-v1-result.json">46.854250 tok/s</a><small>class-balanced decode median</small></span></div><p class="pick-note">Prompt reading: not measured for this exact result.</p><p class="pick-note">Cold realistic suite; one user, full BF16 KV. Certified result; expert lab replay, portable installer still incomplete.</p></div>
+        <div class="pick-links"><a class="button" href="models/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md">Setup guide and quality status</a></div>
       </li>
-</ol>
-<h3 id="video-pick">Video · a continuing stream</h3>
-<ol class="pick-list">
       <li class="pick-row research" data-pick-id="ltx25-continuation-stream-b70-145f-20261010">
-        <div class="pick-head"><span class="pick-rank">1</span><div>
+        <div class="pick-head"><span class="pick-rank">7</span><div>
+          <p class="eyebrow">Continuing video with audio</p>
           <p class="eyebrow research">Byte-exact compared chunks · sustained speed pending</p>
           <h3><a href="models/ltx25-continuation-stream-b70-145f-20261010.html">LTX 2.5 · continuing video stream</a> <span class="card-chip">4 cards</span><small>BF16 distilled weights; F32 output checks · ComfyUI / PyTorch XPU</small></h3>
           <p class="pick-why">A stream of generated video on four cards, designed to keep continuing around the clock. Compared frames, latents and audio match the reference bytes. Seam and audio acceptance remain open.</p>
@@ -627,10 +583,61 @@ Style genome (duotone-hixffp):
         <div class="pick-links"><a class="button" href="models/ltx25-continuation-stream-b70-145f-20261010.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/README.md">Setup guide and quality status</a></div>
       </li>
 </ol>
-<details id="small-quick"><summary>Small and quick · 9B and below</summary>
+<details id="other-picks"><summary>Other models and research options</summary>
 <ol class="pick-list">
-      <li class="pick-row" data-pick-id="qwen35-9b-w4a16-b70">
+      <li class="pick-row" data-pick-id="minimax-m27-b70-89tps-20260520">
         <div class="pick-head"><span class="pick-rank">1</span><div>
+          <p class="eyebrow">Alternative setup</p>
+          <p class="eyebrow">Historical quality-gated record · four cards</p>
+          <h3><a href="models/minimax-m27-b70-89tps-20260520.html">MiniMax M2.7 · 229B INT4</a> <span class="card-chip">4 cards</span><small>AutoRound W4A16 INT4 · vLLM XPU + llm-scaler</small></h3>
+          <p class="pick-why">A much larger mixture-of-experts model. Exact short-output checks, semantic tasks and arithmetic passed. The displayed speed is the historical short-context record.</p>
+        </div></div>
+        <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:35.73%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-89tps-20260520/results/promoted-result-20260519.json">89.31 tok/s</a><small>mean output throughput</small></span></div><p class="pick-note">Prompt reading: not measured for this exact result.</p><p class="pick-note">Historical mean of four warm 512-input / 1,536-output runs at 2K context; not a cold-suite headline. The 32K recipe has a separate slower result.</p></div>
+        <div class="pick-links"><a class="button" href="models/minimax-m27-b70-89tps-20260520.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-89tps-20260520/README.md">Setup guide and quality status</a></div>
+      </li>
+      <li class="pick-row" data-pick-id="muse-glimmer-30b-q8-woq-b70-100tps-20260813">
+        <div class="pick-head"><span class="pick-rank">2</span><div>
+          <p class="eyebrow">Alternative setup</p>
+          <p class="eyebrow">Target-verified record · four cards measured</p>
+          <h3><a href="models/muse-glimmer-30b-q8-woq-b70-100tps-20260813.html">Muse Glimmer 30B Q8 WOQ</a> <span class="card-chip">4 cards</span><small>UD-Q8_K_XL / BF16 draft · llama.cpp SYCL</small></h3>
+          <p class="pick-why">The Q8 weights alone exceed one B70’s memory. This measured four-card setup uses a BF16 DFlash assistant; it is not a one-card recipe.</p>
+        </div></div>
+        <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:40.15%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/manifests/expected-result.json">100.37 tok/s</a><small>pooled canonical mean</small></span></div><p class="pick-note">Prompt reading: not measured for this exact result.</p><p class="pick-note">Mean across two fresh three-prompt runs, 256 output tokens; not the full varied-suite median. Clean-host certification pending.</p></div>
+        <div class="pick-links"><a class="button" href="models/muse-glimmer-30b-q8-woq-b70-100tps-20260813.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md">Setup guide and quality status</a></div>
+      </li>
+      <li class="pick-row research" data-pick-id="ornith-15-35b-a3b-q4km-b70">
+        <div class="pick-head"><span class="pick-rank">3</span><div>
+          <p class="eyebrow">Alternative setup</p>
+          <p class="eyebrow research">Candidate · strict headline pending</p>
+          <h3><a href="models/ornith-15-35b-a3b-q4km-b70.html">Ornith 1.5 35B-A3B Q4_K_M</a> <span class="card-chip">1 card</span><small>Q4_K_M · llama.cpp SYCL</small></h3>
+          <p class="pick-why">The largest of these measured one-card models; about 3B parameters active per token. The patch matched its control, but fresh servers did not reproduce complete answers.</p>
+        </div></div>
+        <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:52.58%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/ornith-15-b70/data/2026-08-23-ornith35b-shared-gate-residual-rms-summary.json">131.46 tok/s</a><small>two-server observation; not certified</small></span></div><p class="pick-note">Prompt reading: not measured for this exact result.</p><p class="pick-note">Expert recipe; clean-host certification pending.</p></div>
+        <div class="pick-links"><a class="button" href="models/ornith-15-35b-a3b-q4km-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ornith-15-35b-a3b-q4km-b70/README.md">Setup guide and quality status</a></div>
+      </li>
+      <li class="pick-row research" data-pick-id="nemotron-35-lightning-30b-a3b-b70">
+        <div class="pick-head"><span class="pick-rank">4</span><div>
+          <p class="eyebrow">Alternative setup</p>
+          <p class="eyebrow research">Candidate · strict headline pending</p>
+          <h3><a href="models/nemotron-35-lightning-30b-a3b-b70.html">Nemotron 3.5 Lightning 30B-A3B</a> <span class="card-chip">1 card</span><small>UD-Q4_K_M · llama.cpp SYCL</small></h3>
+          <p class="pick-why">A 30B model with about 3B parameters active per token. The October test had differing repeats and passed two of three answer checks. Quality work remains.</p>
+        </div></div>
+        <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:28.95%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/profiles/2026-10-10/nemotron-35-lightning-30b-a3b-nd9fee29e-16k-p4.json">72.4 tok/s</a><small>October 10 speed check</small></span></div><div class="pick-bar-row"><span class="pick-bar-label">4 people</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:9.37%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/profiles/2026-10-10/nemotron-35-lightning-30b-a3b-nd9fee29e-16k-p4.json">131 tok/s</a><small>combined, October 10</small></span></div><div class="pick-bar-row"><span class="pick-bar-label">Reads a prompt</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:42.75%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/profiles/2026-10-10/nemotron-35-lightning-30b-a3b-nd9fee29e-16k-p4.json">1,795 tok/s</a><small>2,057 input tokens / first-token wait</small></span></div><p class="pick-note">October 10 speed check: 300-token prompt, 256 output tokens; reading speed is input tokens divided by time to first token. Separate from package certification; clean-host replay pending.</p></div>
+        <div class="pick-links"><a class="button" href="models/nemotron-35-lightning-30b-a3b-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/nemotron-35-lightning-30b-a3b-b70/README.md">Setup guide and quality status</a></div>
+      </li>
+      <li class="pick-row research" data-pick-id="deepseek-v4-research">
+        <div class="pick-head"><span class="pick-rank">5</span><div>
+          <p class="eyebrow">Alternative setup</p>
+          <p class="eyebrow research">Experimental, lossy checkpoint · not a lossless recommendation</p>
+          <h3><a href="models/deepseek-v4.html">DeepSeek V4 Flash · 180B research</a> <span class="card-chip">4 cards</span><small>Community-trimmed FP8 / FP4 experts · FP8 KV · vLLM XPU</small></h3>
+          <p class="pick-why">A separate research option. Exact checks apply only to this trimmed target; they do not prove equality to the original model. It also uses compressed KV.</p>
+        </div></div>
+        <div class="pick-bars"><p class="pick-note"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json">76.90–80.82 tok/s (historical research observations)</a></p><p class="pick-note">Prompt reading: not measured for this exact result.</p><p class="pick-note">Historical 128-token test; not eligible for a current lossless headline. See the full record and provenance limits.</p></div>
+        <div class="pick-links"><a class="button" href="models/deepseek-v4.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md">Setup guide and quality status</a></div>
+      </li>
+      <li class="pick-row" data-pick-id="qwen35-9b-w4a16-b70">
+        <div class="pick-head"><span class="pick-rank">6</span><div>
+          <p class="eyebrow">Alternative setup</p>
           <p class="eyebrow">Qualified package · October speed check</p>
           <h3><a href="models/qwen35-9b-w4a16-b70.html">Qwen3.5 9B INT4</a> <span class="card-chip">1 card</span><small>W4A16 (compressed-tensors INT4 weights, FP16 activations) · vLLM XPU</small></h3>
           <p class="pick-why">A compact chat option. Repeats and concurrent answers matched in this check; package exactness gates are separate.</p>
@@ -639,7 +646,8 @@ Style genome (duotone-hixffp):
         <div class="pick-links"><a class="button" href="models/qwen35-9b-w4a16-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen35-9b-w4a16-b70/README.md">Setup guide and quality status</a></div>
       </li>
       <li class="pick-row" data-pick-id="qwen35-9b-fp8-b70">
-        <div class="pick-head"><span class="pick-rank">2</span><div>
+        <div class="pick-head"><span class="pick-rank">7</span><div>
+          <p class="eyebrow">Alternative setup</p>
           <p class="eyebrow">Qualified package · October speed check</p>
           <h3><a href="models/qwen35-9b-fp8-b70.html">Qwen3.5 9B FP8</a> <span class="card-chip">1 card</span><small>FP8-dynamic (compressed-tensors, per-channel FP8 weights, dynamic activations) · vLLM XPU</small></h3>
           <p class="pick-why">The compact model with FP8 weights. Repeats and concurrent answers matched in this check.</p>
@@ -648,7 +656,8 @@ Style genome (duotone-hixffp):
         <div class="pick-links"><a class="button" href="models/qwen35-9b-fp8-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen35-9b-fp8-b70/README.md">Setup guide and quality status</a></div>
       </li>
       <li class="pick-row" data-pick-id="ornith-15-9b-q8-b70">
-        <div class="pick-head"><span class="pick-rank">3</span><div>
+        <div class="pick-head"><span class="pick-rank">8</span><div>
+          <p class="eyebrow">Alternative setup</p>
           <p class="eyebrow">Strict headline withheld</p>
           <h3><a href="models/ornith-15-9b-q8-b70.html">Ornith 1.5 9B Q8</a> <span class="card-chip">1 card</span><small>Q8_0 · llama.cpp SYCL</small></h3>
           <p class="pick-why">Complete answers differed across fresh servers. The October check also had differing repeats and passed two of three answer checks.</p>
@@ -656,8 +665,13 @@ Style genome (duotone-hixffp):
         <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:19.83%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/profiles/2026-10-10/ornith-15-9b-q8-b70-nd9fee29e-16k-p4.json">49.6 tok/s</a><small>October 10 speed check</small></span></div><div class="pick-bar-row"><span class="pick-bar-label">4 people</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:10.40%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/profiles/2026-10-10/ornith-15-9b-q8-b70-nd9fee29e-16k-p4.json">146 tok/s</a><small>combined, October 10</small></span></div><div class="pick-bar-row"><span class="pick-bar-label">Reads a prompt</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:56.16%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/profiles/2026-10-10/ornith-15-9b-q8-b70-nd9fee29e-16k-p4.json">2,359 tok/s</a><small>2,054 input tokens / first-token wait</small></span></div><p class="pick-note">October 10 speed check: 300-token prompt, 256 output tokens; reading speed is input tokens divided by time to first token. Separate from package certification; clean-host replay pending.</p></div>
         <div class="pick-links"><a class="button" href="models/ornith-15-9b-q8-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ornith-15-9b-q8-b70/README.md">Setup guide and quality status</a></div>
       </li>
+</ol>
+</details>
+<details id="small-quick"><summary>Small and quick · under 9B</summary>
+<ol class="pick-list">
       <li class="pick-row" data-pick-id="qwen35-4b-w4a16-b70">
-        <div class="pick-head"><span class="pick-rank">4</span><div>
+        <div class="pick-head"><span class="pick-rank">1</span><div>
+          <p class="eyebrow">Alternative setup</p>
           <p class="eyebrow">Qualified package · October speed check</p>
           <h3><a href="models/qwen35-4b-w4a16-b70.html">Qwen3.5 4B INT4</a> <span class="card-chip">1 card</span><small>W4A16 (compressed-tensors INT4 weights, FP16 activations) · vLLM XPU</small></h3>
           <p class="pick-why">A small model for lighter tasks. Repeats matched in the October test; answers changed with concurrent users.</p>
@@ -666,7 +680,8 @@ Style genome (duotone-hixffp):
         <div class="pick-links"><a class="button" href="models/qwen35-4b-w4a16-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen35-4b-w4a16-b70/README.md">Setup guide and quality status</a></div>
       </li>
       <li class="pick-row" data-pick-id="lfm25-26b-q8-b70">
-        <div class="pick-head"><span class="pick-rank">5</span><div>
+        <div class="pick-head"><span class="pick-rank">2</span><div>
+          <p class="eyebrow">Alternative setup</p>
           <p class="eyebrow">Qualified package · separate October check</p>
           <h3><a href="models/lfm25-26b-q8-b70.html">LFM2.5 2.6B Q8</a> <span class="card-chip">1 card</span><small>Q8_0 · llama.cpp SYCL</small></h3>
           <p class="pick-why">A 2.6B model. The strict package passed its gates; the October setup failed its quick answer check and concurrent answers differed.</p>
@@ -677,7 +692,7 @@ Style genome (duotone-hixffp):
 </ol>
 </details>
     <p class="pick-scale">Bars use fixed scales: one person 250 tok/s; combined users 1,400 tok/s; prompt reading 4,200 tok/s. User counts and tests differ; every value links to its receipt. Video has its own units and no token-speed bar.</p>
-    <p class="research-links">All recipes and numbers remain in the tables below and the <a href="models/">model library</a>. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/minimax-h3-b70/README.md">MiniMax-H3 video research notes</a>.</p>
+    <p class="research-links">All recipes and numbers remain in the tables below and the <a href="models/">model library</a>. H3 means MiniMax-H3, an audio/video generator. It has <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/minimax-h3-b70/README.md">public lab notes</a>, but no published site package yet.</p>
   </div>
 </section>
 <!-- END GENERATED FEATURED PICKS -->

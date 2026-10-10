@@ -16,19 +16,20 @@ class HumanPages(unittest.TestCase):
         catalog = json.loads((ROOT / 'packages/catalog.json').read_text())
         sections = groups(catalog)
         self.assertEqual([s[0] for s in sections],
-                         ['one-card', 'multi-card', 'video-pick', 'small-quick'])
-        one_card = sections[0][2]
-        self.assertEqual([p['cards'] for p in one_card], [1] * 5)
-        self.assertEqual([p['name'] for p in one_card], [
-            'Ornith 1.5 35B-A3B Q4_K_M', 'Nemotron 3.5 Lightning 30B-A3B',
-            'Qwen3.8 27B AutoRound INT4', 'Qwen3.8 27B FP8', 'Gemma 4 26B-A4B Q8'])
-        self.assertTrue(all('pending' in p['status'] for p in one_card[:2]))
-        flash, shared = sections[1][2][:2]
-        self.assertEqual(flash['cards'], 4)
+                         ['task-picks', 'other-picks', 'small-quick'])
+        featured = sections[0][2]
+        self.assertEqual(len(featured), 7)
+        self.assertEqual(len({p['role'] for p in featured}), 7)
+        self.assertIn('27B AutoRound', featured[0]['name'])
+        self.assertEqual([p['cards'] for p in featured], [1, 1, 1, 4, 2, 4, 4])
+        flash = next(p for p in featured if 'Flash-Next' in p['name'])
+        shared = next(p for p in featured if 'shared chat' in p['name'])
         self.assertAlmostEqual(flash['metrics'][0]['value'], 46.85424994838007)
-        self.assertEqual(shared['cards'], 2)
-        self.assertIn('27B', shared['name'])
         self.assertEqual(shared['metrics'][1]['value'], 875.31)
+        self.assertTrue(all('research' not in p['id'] for p in featured))
+        self.assertEqual([p['name'] for p in sections[-1][2]],
+                         ['Qwen3.5 4B INT4', 'LFM2.5 2.6B Q8'])
+        self.assertFalse(any('9B' in p['name'] for p in sections[-1][2]))
         output = render(catalog)
         self.assertIn('<details id="small-quick">', output)
         self.assertNotIn('<details id="small-quick" open', output)
@@ -44,6 +45,27 @@ class HumanPages(unittest.TestCase):
                     self.assertTrue((ROOT / metric['evidence']).is_file())
                     self.assertIn(MODULE.GITHUB + metric['evidence'], output)
         self.assertIn(output, (ROOT / 'index.html').read_text())
+
+    def test_featured_scorecard_covers_every_family_and_deployment(self):
+        rank = json.loads((ROOT / 'data/neural-download-featured-ranking-20261010.json').read_text())
+        catalog = json.loads((ROOT / 'packages/catalog.json').read_text())
+        families = json.loads((ROOT / 'families/catalog.json').read_text())
+        self.assertEqual({r['family_id'] for r in rank['families']},
+                         {r['id'] for r in families['families']})
+        self.assertEqual({r['package_id'] for r in rank['deployments']},
+                         {r['id'] for r in catalog['packages']})
+        for r in rank['families'] + rank['deployments']:
+            self.assertEqual(r['score'], 5*r['popularity'] + 7*r['recency_capability'] + 8*r['optimization'])
+        self.assertFalse(rank['h3']['site_package_published'])
+        from featured_picks import groups
+        ordered = sorted((r for r in rank['deployments'] if r.get('featured_rank')),
+                         key=lambda r: r['featured_rank'])
+        self.assertEqual([r['package_id'] for r in ordered],
+                         [r['id'] for r in groups(catalog)[0][2]])
+        projections = json.loads((ROOT / 'data/neural-download-featured-projections-20261010.json').read_text())
+        self.assertIn('Projected, not measured', projections['status'])
+        self.assertTrue(all(r['request']['hardware']['template'] == 'Intel Arc Pro B70'
+                            for r in projections['rows']))
 
     def test_video_observation_stays_scoped_and_missing_points_stay_missing(self):
         package = {

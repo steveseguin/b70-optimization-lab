@@ -1,0 +1,1349 @@
+{
+  "version": "0.6.0",
+  "rows": [
+    {
+      "package_id": "gemma4-26b-a4b-q8-b70-125tps-20260701",
+      "request": {
+        "model": "gemma4_26b_a4b",
+        "hardware": {
+          "template": "Intel Arc Pro B70",
+          "count": 1
+        },
+        "quantization": "UD-Q8_K_XL",
+        "runtime": "llama_cpp",
+        "promptTokens": 128,
+        "outputTokens": 128,
+        "speculation": {
+          "method": "mtp",
+          "tokens": 3
+        }
+      },
+      "measured_value": 122.16035656735696,
+      "measurement_evidence": "data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json",
+      "projection": {
+        "fits": true,
+        "strategy": {
+          "key": "pipeline",
+          "label": "pipeline",
+          "reasoning": "Single device: parallelism has no effect",
+          "auto": true
+        },
+        "decode": {
+          "tokensPerSecond": 96.92,
+          "msPerToken": 10.318,
+          "perUserTokensPerSecond": 96.92,
+          "withoutSpeculation": 76.12,
+          "speculationMultiplier": 1.273
+        },
+        "prefill": {
+          "tokensPerSecond": 600.5,
+          "timeToFirstTokenSeconds": 0.213
+        },
+        "ceiling": {
+          "physicalTokensPerSecond": 173.95,
+          "latencyBoundTokensPerSecond": 153.52,
+          "optimizedTokensPerSecond": 130.49,
+          "expectedTokensPerSecond": 96.92,
+          "engineTokensPerSecond": 96.92,
+          "correctionFactor": 1,
+          "confidence": "uncalibrated",
+          "peers": 0,
+          "verifiedPeers": 0
+        },
+        "memory": {
+          "modelSizeGB": 28.35,
+          "residentWeightsGB": 28.35,
+          "kvCacheGB": 0.06,
+          "availableGB": 32
+        },
+        "measured": {
+          "nearest": null,
+          "labTuned": null
+        },
+        "bottleneck": "memory",
+        "power": {
+          "watts": 226,
+          "tdpWatts": 230,
+          "costPerDay": 0.217,
+          "costPer1KTokens": 8e-05
+        },
+        "devices": [
+          {
+            "name": "Intel Arc Pro B70 32GB #1",
+            "template": "Intel Arc Pro B70",
+            "memoryGB": 32,
+            "residentWeightGB": 28.35,
+            "kvCacheGB": 0.06,
+            "memoryUtilization": 94.415,
+            "hasOverflow": false,
+            "overflowMode": null,
+            "decodeTokensPerSecond": 96.92,
+            "prefillTokensPerSecond": 600.5,
+            "rooflineTokensPerSecond": 136.62,
+            "dominant": "memory",
+            "coreBinding": "memory",
+            "decodeBreakdownMs": {
+              "weightRead": 6.043,
+              "kvRead": 0,
+              "compute": 0.054,
+              "attentionCompute": 0.054,
+              "runtime": 1.23,
+              "draft": 2.991,
+              "coordination": 0,
+              "total": 10.318
+            }
+          }
+        ],
+        "warnings": [],
+        "config": {
+          "model": "gemma4_26b_a4b",
+          "quantization": "int8",
+          "quantFormat": "UD-Q8_K_XL",
+          "runtime": "llama_cpp",
+          "batchSize": 1,
+          "promptTokens": 128,
+          "outputTokens": 128,
+          "speculation": {
+            "method": "mtp",
+            "label": "Native MTP head",
+            "tokensPerStep": 3.06
+          }
+        }
+      },
+      "measured_over_projected_ceiling": 0.7022728172886287
+    },
+    {
+      "package_id": "laguna-s-2.1-int4-b70-125tps-20260731",
+      "request": {
+        "model": "laguna_s_2.1",
+        "hardware": {
+          "template": "Intel Arc Pro B70",
+          "count": 4
+        },
+        "quantization": "AutoRound INT4",
+        "runtime": "vllm",
+        "promptTokens": 128,
+        "outputTokens": 128,
+        "speculation": {
+          "method": "dflash",
+          "tokens": 11
+        }
+      },
+      "measured_value": 125.4619731637751,
+      "measurement_evidence": "data/laguna-shared-elementwise-m12-record-20260731.json",
+      "projection": {
+        "fits": true,
+        "strategy": {
+          "key": "tensor",
+          "label": "tensor",
+          "reasoning": "Tensor parallelism optimal for shared inference with high-bandwidth interconnect",
+          "auto": true
+        },
+        "decode": {
+          "tokensPerSecond": 173.9,
+          "msPerToken": 5.75,
+          "perUserTokensPerSecond": 173.9,
+          "withoutSpeculation": 88.73,
+          "speculationMultiplier": 1.96
+        },
+        "prefill": {
+          "tokensPerSecond": 2856.6,
+          "timeToFirstTokenSeconds": 0.045
+        },
+        "ceiling": {
+          "physicalTokensPerSecond": 1098.83,
+          "latencyBoundTokensPerSecond": 379.27,
+          "optimizedTokensPerSecond": 322.38,
+          "expectedTokensPerSecond": 173.9,
+          "engineTokensPerSecond": 173.9,
+          "correctionFactor": 1,
+          "confidence": "uncalibrated",
+          "peers": 0,
+          "verifiedPeers": 0
+        },
+        "memory": {
+          "modelSizeGB": 63.21,
+          "residentWeightsGB": 63.21,
+          "kvCacheGB": 0.05,
+          "availableGB": 128
+        },
+        "measured": {
+          "nearest": null,
+          "labTuned": null
+        },
+        "bottleneck": "memory",
+        "power": {
+          "watts": 863,
+          "tdpWatts": 920,
+          "costPerDay": 0.828,
+          "costPer1KTokens": 0.00017
+        },
+        "devices": [
+          {
+            "name": "Intel Arc Pro B70 32GB #1",
+            "template": "Intel Arc Pro B70",
+            "memoryGB": 32,
+            "residentWeightGB": 15.8,
+            "kvCacheGB": 0.01,
+            "memoryUtilization": 50.485,
+            "hasOverflow": false,
+            "overflowMode": null,
+            "decodeTokensPerSecond": 183.06,
+            "prefillTokensPerSecond": 3007,
+            "rooflineTokensPerSecond": 560.66,
+            "dominant": "memory",
+            "coreBinding": "memory",
+            "decodeBreakdownMs": {
+              "weightRead": 2.859,
+              "kvRead": 0,
+              "compute": 0.069,
+              "attentionCompute": 0.069,
+              "runtime": 1.54,
+              "draft": 0.547,
+              "coordination": 0.448,
+              "total": 5.463
+            }
+          },
+          {
+            "name": "Intel Arc Pro B70 32GB #2",
+            "template": "Intel Arc Pro B70",
+            "memoryGB": 32,
+            "residentWeightGB": 15.8,
+            "kvCacheGB": 0.01,
+            "memoryUtilization": 50.485,
+            "hasOverflow": false,
+            "overflowMode": null,
+            "decodeTokensPerSecond": 183.06,
+            "prefillTokensPerSecond": 3007,
+            "rooflineTokensPerSecond": 560.66,
+            "dominant": "memory",
+            "coreBinding": "memory",
+            "decodeBreakdownMs": {
+              "weightRead": 2.859,
+              "kvRead": 0,
+              "compute": 0.069,
+              "attentionCompute": 0.069,
+              "runtime": 1.54,
+              "draft": 0.547,
+              "coordination": 0.448,
+              "total": 5.463
+            }
+          },
+          {
+            "name": "Intel Arc Pro B70 32GB #3",
+            "template": "Intel Arc Pro B70",
+            "memoryGB": 32,
+            "residentWeightGB": 15.8,
+            "kvCacheGB": 0.01,
+            "memoryUtilization": 50.485,
+            "hasOverflow": false,
+            "overflowMode": null,
+            "decodeTokensPerSecond": 183.06,
+            "prefillTokensPerSecond": 3007,
+            "rooflineTokensPerSecond": 560.66,
+            "dominant": "memory",
+            "coreBinding": "memory",
+            "decodeBreakdownMs": {
+              "weightRead": 2.859,
+              "kvRead": 0,
+              "compute": 0.069,
+              "attentionCompute": 0.069,
+              "runtime": 1.54,
+              "draft": 0.547,
+              "coordination": 0.448,
+              "total": 5.463
+            }
+          },
+          {
+            "name": "Intel Arc Pro B70 32GB #4",
+            "template": "Intel Arc Pro B70",
+            "memoryGB": 32,
+            "residentWeightGB": 15.8,
+            "kvCacheGB": 0.01,
+            "memoryUtilization": 50.485,
+            "hasOverflow": false,
+            "overflowMode": null,
+            "decodeTokensPerSecond": 183.06,
+            "prefillTokensPerSecond": 3007,
+            "rooflineTokensPerSecond": 560.66,
+            "dominant": "memory",
+            "coreBinding": "memory",
+            "decodeBreakdownMs": {
+              "weightRead": 2.859,
+              "kvRead": 0,
+              "compute": 0.069,
+              "attentionCompute": 0.069,
+              "runtime": 1.54,
+              "draft": 0.547,
+              "coordination": 0.448,
+              "total": 5.463
+            }
+          }
+        ],
+        "warnings": [],
+        "config": {
+          "model": "laguna_s_2.1",
+          "quantization": "q4",
+          "quantFormat": "AutoRound INT4",
+          "runtime": "vllm",
+          "batchSize": 1,
+          "promptTokens": 128,
+          "outputTokens": 128,
+          "speculation": {
+            "method": "dflash",
+            "label": "DFlash / DFlash2 block draft",
+            "tokensPerStep": 4.31
+          }
+        }
+      },
+      "measured_over_projected_ceiling": 0.11417778288158778
+    },
+    {
+      "package_id": "lfm25-26b-q8-b70",
+      "request": {
+        "model": "lfm2.5_2.6b",
+        "hardware": {
+          "template": "Intel Arc Pro B70",
+          "count": 1
+        },
+        "quantization": "Q8_0",
+        "runtime": "llama_cpp",
+        "promptTokens": 128,
+        "outputTokens": 128,
+        "speculation": null
+      },
+      "measured_value": 132.13745667864433,
+      "measurement_evidence": "data/2026-08-27-lfm25-q8-tp1-strict-headline-result.json",
+      "projection": {
+        "fits": true,
+        "strategy": {
+          "key": "pipeline",
+          "label": "pipeline",
+          "reasoning": "Single device: parallelism has no effect",
+          "auto": true
+        },
+        "decode": {
+          "tokensPerSecond": 132.39,
+          "msPerToken": 7.554,
+          "perUserTokensPerSecond": 132.39,
+          "withoutSpeculation": null,
+          "speculationMultiplier": null
+        },
+        "prefill": {
+          "tokensPerSecond": 5201.1,
+          "timeToFirstTokenSeconds": 0.025
+        },
+        "ceiling": {
+          "physicalTokensPerSecond": 361.25,
+          "latencyBoundTokensPerSecond": 271.95,
+          "optimizedTokensPerSecond": 231.15,
+          "expectedTokensPerSecond": 132.39,
+          "engineTokensPerSecond": 132.39,
+          "correctionFactor": 1,
+          "confidence": "uncalibrated",
+          "peers": 0,
+          "verifiedPeers": 0
+        },
+        "memory": {
+          "modelSizeGB": 2.76,
+          "residentWeightsGB": 2.76,
+          "kvCacheGB": 0,
+          "availableGB": 32
+        },
+        "measured": {
+          "nearest": null,
+          "labTuned": null
+        },
+        "bottleneck": "runtime",
+        "power": {
+          "watts": 197,
+          "tdpWatts": 230,
+          "costPerDay": 0.189,
+          "costPer1KTokens": 5e-05
+        },
+        "devices": [
+          {
+            "name": "Intel Arc Pro B70 32GB #1",
+            "template": "Intel Arc Pro B70",
+            "memoryGB": 32,
+            "residentWeightGB": 2.76,
+            "kvCacheGB": 0,
+            "memoryUtilization": 8.65,
+            "hasOverflow": false,
+            "overflowMode": null,
+            "decodeTokensPerSecond": 132.39,
+            "prefillTokensPerSecond": 5201.1,
+            "rooflineTokensPerSecond": 361.25,
+            "dominant": "runtime",
+            "coreBinding": "memory",
+            "decodeBreakdownMs": {
+              "weightRead": 3.544,
+              "kvRead": 0.005,
+              "compute": 0,
+              "attentionCompute": 0,
+              "runtime": 4.005,
+              "draft": 0,
+              "coordination": 0,
+              "total": 7.554
+            }
+          }
+        ],
+        "warnings": [],
+        "config": {
+          "model": "lfm2.5_2.6b",
+          "quantization": "int8",
+          "quantFormat": "Q8_0",
+          "runtime": "llama_cpp",
+          "batchSize": 1,
+          "promptTokens": 128,
+          "outputTokens": 128,
+          "speculation": null
+        }
+      },
+      "measured_over_projected_ceiling": 0.36577842679209505
+    },
+    {
+      "package_id": "minimax-m27-b70-89tps-20260520",
+      "request": {
+        "model": "minimax_m2.7",
+        "hardware": {
+          "template": "Intel Arc Pro B70",
+          "count": 4
+        },
+        "quantization": "AutoRound INT4",
+        "runtime": "vllm",
+        "promptTokens": 512,
+        "outputTokens": 1536,
+        "speculation": null
+      },
+      "measured_value": 89.31419538094708,
+      "measurement_evidence": "repro/minimax-m27-b70-89tps-20260520/results/promoted-result-20260519.json",
+      "projection": {
+        "fits": true,
+        "strategy": {
+          "key": "tensor",
+          "label": "tensor",
+          "reasoning": "Tensor parallelism optimal for shared inference with high-bandwidth interconnect",
+          "auto": true
+        },
+        "decode": {
+          "tokensPerSecond": 71.77,
+          "msPerToken": 13.934,
+          "perUserTokensPerSecond": 71.77,
+          "withoutSpeculation": null,
+          "speculationMultiplier": null
+        },
+        "prefill": {
+          "tokensPerSecond": 5135.1,
+          "timeToFirstTokenSeconds": 0.1
+        },
+        "ceiling": {
+          "physicalTokensPerSecond": 426.66,
+          "latencyBoundTokensPerSecond": 151.88,
+          "optimizedTokensPerSecond": 129.1,
+          "expectedTokensPerSecond": 71.77,
+          "engineTokensPerSecond": 71.77,
+          "correctionFactor": 1,
+          "confidence": "uncalibrated",
+          "peers": 0,
+          "verifiedPeers": 0
+        },
+        "memory": {
+          "modelSizeGB": 123.09,
+          "residentWeightsGB": 123.09,
+          "kvCacheGB": 0.52,
+          "availableGB": 128
+        },
+        "measured": {
+          "nearest": null,
+          "labTuned": null
+        },
+        "bottleneck": "runtime",
+        "power": {
+          "watts": 891,
+          "tdpWatts": 920,
+          "costPerDay": 0.855,
+          "costPer1KTokens": 0.00041
+        },
+        "devices": [
+          {
+            "name": "Intel Arc Pro B70 32GB #1",
+            "template": "Intel Arc Pro B70",
+            "memoryGB": 32,
+            "residentWeightGB": 30.77,
+            "kvCacheGB": 0.13,
+            "memoryUtilization": 96.579,
+            "hasOverflow": false,
+            "overflowMode": null,
+            "decodeTokensPerSecond": 75.54,
+            "prefillTokensPerSecond": 5405.4,
+            "rooflineTokensPerSecond": 426.66,
+            "dominant": "runtime",
+            "coreBinding": "memory",
+            "decodeBreakdownMs": {
+              "weightRead": 2.631,
+              "kvRead": 0,
+              "compute": 0.213,
+              "attentionCompute": 0.213,
+              "runtime": 7.896,
+              "draft": 0,
+              "coordination": 2.498,
+              "total": 13.237
+            }
+          },
+          {
+            "name": "Intel Arc Pro B70 32GB #2",
+            "template": "Intel Arc Pro B70",
+            "memoryGB": 32,
+            "residentWeightGB": 30.77,
+            "kvCacheGB": 0.13,
+            "memoryUtilization": 96.579,
+            "hasOverflow": false,
+            "overflowMode": null,
+            "decodeTokensPerSecond": 75.54,
+            "prefillTokensPerSecond": 5405.4,
+            "rooflineTokensPerSecond": 426.66,
+            "dominant": "runtime",
+            "coreBinding": "memory",
+            "decodeBreakdownMs": {
+              "weightRead": 2.631,
+              "kvRead": 0,
+              "compute": 0.213,
+              "attentionCompute": 0.213,
+              "runtime": 7.896,
+              "draft": 0,
+              "coordination": 2.498,
+              "total": 13.237
+            }
+          },
+          {
+            "name": "Intel Arc Pro B70 32GB #3",
+            "template": "Intel Arc Pro B70",
+            "memoryGB": 32,
+            "residentWeightGB": 30.77,
+            "kvCacheGB": 0.13,
+            "memoryUtilization": 96.579,
+            "hasOverflow": false,
+            "overflowMode": null,
+            "decodeTokensPerSecond": 75.54,
+            "prefillTokensPerSecond": 5405.4,
+            "rooflineTokensPerSecond": 426.66,
+            "dominant": "runtime",
+            "coreBinding": "memory",
+            "decodeBreakdownMs": {
+              "weightRead": 2.631,
+              "kvRead": 0,
+              "compute": 0.213,
+              "attentionCompute": 0.213,
+              "runtime": 7.896,
+              "draft": 0,
+              "coordination": 2.498,
+              "total": 13.237
+            }
+          },
+          {
+            "name": "Intel Arc Pro B70 32GB #4",
+            "template": "Intel Arc Pro B70",
+            "memoryGB": 32,
+            "residentWeightGB": 30.77,
+            "kvCacheGB": 0.13,
+            "memoryUtilization": 96.579,
+            "hasOverflow": false,
+            "overflowMode": null,
+            "decodeTokensPerSecond": 75.54,
+            "prefillTokensPerSecond": 5405.4,
+            "rooflineTokensPerSecond": 426.66,
+            "dominant": "runtime",
+            "coreBinding": "memory",
+            "decodeBreakdownMs": {
+              "weightRead": 2.631,
+              "kvRead": 0,
+              "compute": 0.213,
+              "attentionCompute": 0.213,
+              "runtime": 7.896,
+              "draft": 0,
+              "coordination": 2.498,
+              "total": 13.237
+            }
+          }
+        ],
+        "warnings": [],
+        "config": {
+          "model": "minimax_m2.7",
+          "quantization": "q4",
+          "quantFormat": "AutoRound INT4",
+          "runtime": "vllm",
+          "batchSize": 1,
+          "promptTokens": 512,
+          "outputTokens": 1536,
+          "speculation": null
+        }
+      },
+      "measured_over_projected_ceiling": 0.20933341625872376
+    },
+    {
+      "package_id": "muse-glimmer-30b-q8-woq-b70-100tps-20260813",
+      "request": {
+        "model": "muse_glimmer_30b",
+        "hardware": {
+          "template": "Intel Arc Pro B70",
+          "count": 4
+        },
+        "quantization": "UD-Q8_K_XL",
+        "runtime": "llama_cpp",
+        "promptTokens": 128,
+        "outputTokens": 128,
+        "speculation": {
+          "method": "draft_model",
+          "tokens": 15
+        },
+        "strategy": "tensor"
+      },
+      "measured_value": 100.3685,
+      "measurement_evidence": "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/manifests/expected-result.json",
+      "projection": {
+        "fits": true,
+        "strategy": {
+          "key": "tensor",
+          "label": "tensor",
+          "reasoning": null,
+          "auto": false
+        },
+        "decode": {
+          "tokensPerSecond": 24.33,
+          "msPerToken": 41.102,
+          "perUserTokensPerSecond": 24.33,
+          "withoutSpeculation": null,
+          "speculationMultiplier": null
+        },
+        "prefill": {
+          "tokensPerSecond": 2005,
+          "timeToFirstTokenSeconds": 0.064
+        },
+        "ceiling": {
+          "physicalTokensPerSecond": 70.41,
+          "latencyBoundTokensPerSecond": 51.13,
+          "optimizedTokensPerSecond": 43.46,
+          "expectedTokensPerSecond": 24.33,
+          "engineTokensPerSecond": 24.33,
+          "correctionFactor": 1,
+          "confidence": "uncalibrated",
+          "peers": 0,
+          "verifiedPeers": 0
+        },
+        "memory": {
+          "modelSizeGB": 33.53,
+          "residentWeightsGB": 33.53,
+          "kvCacheGB": 0.01,
+          "availableGB": 128
+        },
+        "measured": {
+          "nearest": null,
+          "labTuned": null
+        },
+        "bottleneck": "draft",
+        "power": {
+          "watts": 899,
+          "tdpWatts": 920,
+          "costPerDay": 0.863,
+          "costPer1KTokens": 0.00123
+        },
+        "devices": [
+          {
+            "name": "Intel Arc Pro B70 32GB #1",
+            "template": "Intel Arc Pro B70",
+            "memoryGB": 32,
+            "residentWeightGB": 8.38,
+            "kvCacheGB": 0,
+            "memoryUtilization": 27.913,
+            "hasOverflow": false,
+            "overflowMode": null,
+            "decodeTokensPerSecond": 25.61,
+            "prefillTokensPerSecond": 2110.5,
+            "rooflineTokensPerSecond": 70.41,
+            "dominant": "draft",
+            "coreBinding": "memory",
+            "decodeBreakdownMs": {
+              "weightRead": 6.495,
+              "kvRead": 0,
+              "compute": 0.102,
+              "attentionCompute": 0.102,
+              "runtime": 1.005,
+              "draft": 29.95,
+              "coordination": 1.496,
+              "total": 39.047
+            }
+          },
+          {
+            "name": "Intel Arc Pro B70 32GB #2",
+            "template": "Intel Arc Pro B70",
+            "memoryGB": 32,
+            "residentWeightGB": 8.38,
+            "kvCacheGB": 0,
+            "memoryUtilization": 27.913,
+            "hasOverflow": false,
+            "overflowMode": null,
+            "decodeTokensPerSecond": 25.61,
+            "prefillTokensPerSecond": 2110.5,
+            "rooflineTokensPerSecond": 70.41,
+            "dominant": "draft",
+            "coreBinding": "memory",
+            "decodeBreakdownMs": {
+              "weightRead": 6.495,
+              "kvRead": 0,
+              "compute": 0.102,
+              "attentionCompute": 0.102,
+              "runtime": 1.005,
+              "draft": 29.95,
+              "coordination": 1.496,
+              "total": 39.047
+            }
+          },
+          {
+            "name": "Intel Arc Pro B70 32GB #3",
+            "template": "Intel Arc Pro B70",
+            "memoryGB": 32,
+            "residentWeightGB": 8.38,
+            "kvCacheGB": 0,
+            "memoryUtilization": 27.913,
+            "hasOverflow": false,
+            "overflowMode": null,
+            "decodeTokensPerSecond": 25.61,
+            "prefillTokensPerSecond": 2110.5,
+            "rooflineTokensPerSecond": 70.41,
+            "dominant": "draft",
+            "coreBinding": "memory",
+            "decodeBreakdownMs": {
+              "weightRead": 6.495,
+              "kvRead": 0,
+              "compute": 0.102,
+              "attentionCompute": 0.102,
+              "runtime": 1.005,
+              "draft": 29.95,
+              "coordination": 1.496,
+              "total": 39.047
+            }
+          },
+          {
+            "name": "Intel Arc Pro B70 32GB #4",
+            "template": "Intel Arc Pro B70",
+            "memoryGB": 32,
+            "residentWeightGB": 8.38,
+            "kvCacheGB": 0,
+            "memoryUtilization": 27.913,
+            "hasOverflow": false,
+            "overflowMode": null,
+            "decodeTokensPerSecond": 25.61,
+            "prefillTokensPerSecond": 2110.5,
+            "rooflineTokensPerSecond": 70.41,
+            "dominant": "draft",
+            "coreBinding": "memory",
+            "decodeBreakdownMs": {
+              "weightRead": 6.495,
+              "kvRead": 0,
+              "compute": 0.102,
+              "attentionCompute": 0.102,
+              "runtime": 1.005,
+              "draft": 29.95,
+              "coordination": 1.496,
+              "total": 39.047
+            }
+          }
+        ],
+        "warnings": [],
+        "config": {
+          "model": "muse_glimmer_30b",
+          "quantization": "int8",
+          "quantFormat": "UD-Q8_K_XL",
+          "runtime": "llama_cpp",
+          "batchSize": 1,
+          "promptTokens": 128,
+          "outputTokens": 128,
+          "speculation": {
+            "method": "draft_model",
+            "label": "Separate draft model",
+            "tokensPerStep": 2.8
+          }
+        }
+      },
+      "measured_over_projected_ceiling": 1.4254864365857123
+    },
+    {
+      "package_id": "qwen35-4b-w4a16-b70",
+      "request": {
+        "model": "qwen3.5_4b",
+        "hardware": {
+          "template": "Intel Arc Pro B70",
+          "count": 1
+        },
+        "quantization": "int4",
+        "runtime": "vllm",
+        "promptTokens": 128,
+        "outputTokens": 100,
+        "speculation": {
+          "method": "mtp",
+          "tokens": 3
+        }
+      },
+      "measured_value": 191.72757360955967,
+      "measurement_evidence": "experiments/qwen35-4b-b70/data/qwen35-4b-w4a16-20260912-slu67k-strict-result.json",
+      "projection": {
+        "fits": true,
+        "strategy": {
+          "key": "pipeline",
+          "label": "pipeline",
+          "reasoning": "Single device: parallelism has no effect",
+          "auto": true
+        },
+        "decode": {
+          "tokensPerSecond": 90.97,
+          "msPerToken": 10.992,
+          "perUserTokensPerSecond": 90.97,
+          "withoutSpeculation": null,
+          "speculationMultiplier": null
+        },
+        "prefill": {
+          "tokensPerSecond": 4279.2,
+          "timeToFirstTokenSeconds": 0.03
+        },
+        "ceiling": {
+          "physicalTokensPerSecond": 295.18,
+          "latencyBoundTokensPerSecond": 211.88,
+          "optimizedTokensPerSecond": 180.1,
+          "expectedTokensPerSecond": 90.97,
+          "engineTokensPerSecond": 90.97,
+          "correctionFactor": 1,
+          "confidence": "uncalibrated",
+          "peers": 0,
+          "verifiedPeers": 0
+        },
+        "memory": {
+          "modelSizeGB": 2.5,
+          "residentWeightsGB": 2.5,
+          "kvCacheGB": 0.01,
+          "availableGB": 32
+        },
+        "measured": {
+          "nearest": null,
+          "labTuned": null
+        },
+        "bottleneck": "runtime",
+        "power": {
+          "watts": 183,
+          "tdpWatts": 230,
+          "costPerDay": 0.176,
+          "costPer1KTokens": 7e-05
+        },
+        "devices": [
+          {
+            "name": "Intel Arc Pro B70 32GB #1",
+            "template": "Intel Arc Pro B70",
+            "memoryGB": 32,
+            "residentWeightGB": 2.5,
+            "kvCacheGB": 0.01,
+            "memoryUtilization": 10.969,
+            "hasOverflow": false,
+            "overflowMode": null,
+            "decodeTokensPerSecond": 90.97,
+            "prefillTokensPerSecond": 4279.2,
+            "rooflineTokensPerSecond": 295.18,
+            "dominant": "runtime",
+            "coreBinding": "memory",
+            "decodeBreakdownMs": {
+              "weightRead": 4.022,
+              "kvRead": 0.011,
+              "compute": 0,
+              "attentionCompute": 0,
+              "runtime": 6.96,
+              "draft": 0,
+              "coordination": 0,
+              "total": 10.992
+            }
+          }
+        ],
+        "warnings": [
+          "This model ships no MTP head; modeled without speculation."
+        ],
+        "config": {
+          "model": "qwen3.5_4b",
+          "quantization": "q4",
+          "quantFormat": "int4",
+          "runtime": "vllm",
+          "batchSize": 1,
+          "promptTokens": 128,
+          "outputTokens": 100,
+          "speculation": {
+            "method": "mtp",
+            "label": "Native MTP head",
+            "tokensPerStep": 3.06
+          }
+        }
+      },
+      "measured_over_projected_ceiling": 0.6495276563776667
+    },
+    {
+      "package_id": "qwen35-9b-w4a16-b70",
+      "request": {
+        "model": "qwen3.5_9b",
+        "hardware": {
+          "template": "Intel Arc Pro B70",
+          "count": 1
+        },
+        "quantization": "int4",
+        "runtime": "vllm",
+        "promptTokens": 128,
+        "outputTokens": 100,
+        "speculation": {
+          "method": "mtp",
+          "tokens": 3
+        }
+      },
+      "measured_value": 124.0842546855242,
+      "measurement_evidence": "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-20260912-slu67k-strict-result.json",
+      "projection": {
+        "fits": true,
+        "strategy": {
+          "key": "pipeline",
+          "label": "pipeline",
+          "reasoning": "Single device: parallelism has no effect",
+          "auto": true
+        },
+        "decode": {
+          "tokensPerSecond": 67.85,
+          "msPerToken": 14.738,
+          "perUserTokensPerSecond": 67.85,
+          "withoutSpeculation": null,
+          "speculationMultiplier": null
+        },
+        "prefill": {
+          "tokensPerSecond": 2496.6,
+          "timeToFirstTokenSeconds": 0.051
+        },
+        "ceiling": {
+          "physicalTokensPerSecond": 153.05,
+          "latencyBoundTokensPerSecond": 127.13,
+          "optimizedTokensPerSecond": 108.06,
+          "expectedTokensPerSecond": 67.85,
+          "engineTokensPerSecond": 67.85,
+          "correctionFactor": 1,
+          "confidence": "uncalibrated",
+          "peers": 0,
+          "verifiedPeers": 0
+        },
+        "memory": {
+          "modelSizeGB": 4.84,
+          "residentWeightsGB": 4.84,
+          "kvCacheGB": 0.01,
+          "availableGB": 32
+        },
+        "measured": {
+          "nearest": null,
+          "labTuned": null
+        },
+        "bottleneck": "memory",
+        "power": {
+          "watts": 203,
+          "tdpWatts": 230,
+          "costPerDay": 0.194,
+          "costPer1KTokens": 0.0001
+        },
+        "devices": [
+          {
+            "name": "Intel Arc Pro B70 32GB #1",
+            "template": "Intel Arc Pro B70",
+            "memoryGB": 32,
+            "residentWeightGB": 4.84,
+            "kvCacheGB": 0.01,
+            "memoryUtilization": 18.685,
+            "hasOverflow": false,
+            "overflowMode": null,
+            "decodeTokensPerSecond": 67.85,
+            "prefillTokensPerSecond": 2496.6,
+            "rooflineTokensPerSecond": 153.05,
+            "dominant": "memory",
+            "coreBinding": "memory",
+            "decodeBreakdownMs": {
+              "weightRead": 7.767,
+              "kvRead": 0.011,
+              "compute": 0,
+              "attentionCompute": 0,
+              "runtime": 6.96,
+              "draft": 0,
+              "coordination": 0,
+              "total": 14.738
+            }
+          }
+        ],
+        "warnings": [
+          "This model ships no MTP head; modeled without speculation."
+        ],
+        "config": {
+          "model": "qwen3.5_9b",
+          "quantization": "q4",
+          "quantFormat": "int4",
+          "runtime": "vllm",
+          "batchSize": 1,
+          "promptTokens": 128,
+          "outputTokens": 100,
+          "speculation": {
+            "method": "mtp",
+            "label": "Native MTP head",
+            "tokensPerStep": 3.06
+          }
+        }
+      },
+      "measured_over_projected_ceiling": 0.8107432517838888
+    },
+    {
+      "package_id": "qwen35-9b-fp8-b70",
+      "request": {
+        "model": "qwen3.5_9b",
+        "hardware": {
+          "template": "Intel Arc Pro B70",
+          "count": 1
+        },
+        "quantization": "fp8",
+        "runtime": "vllm",
+        "promptTokens": 128,
+        "outputTokens": 100,
+        "speculation": {
+          "method": "mtp",
+          "tokens": 3
+        }
+      },
+      "measured_value": 98.139,
+      "measurement_evidence": "experiments/qwen35-9b-b70/data/2026-09-07-qwen35-9b-fp8-matrix-result.json",
+      "projection": {
+        "fits": true,
+        "strategy": {
+          "key": "pipeline",
+          "label": "pipeline",
+          "reasoning": "Single device: parallelism has no effect",
+          "auto": true
+        },
+        "decode": {
+          "tokensPerSecond": 45.91,
+          "msPerToken": 21.782,
+          "perUserTokensPerSecond": 45.91,
+          "withoutSpeculation": null,
+          "speculationMultiplier": null
+        },
+        "prefill": {
+          "tokensPerSecond": 2519.6,
+          "timeToFirstTokenSeconds": 0.051
+        },
+        "ceiling": {
+          "physicalTokensPerSecond": 80.31,
+          "latencyBoundTokensPerSecond": 72.55,
+          "optimizedTokensPerSecond": 61.67,
+          "expectedTokensPerSecond": 45.91,
+          "engineTokensPerSecond": 45.91,
+          "correctionFactor": 1,
+          "confidence": "uncalibrated",
+          "peers": 0,
+          "verifiedPeers": 0
+        },
+        "memory": {
+          "modelSizeGB": 9.23,
+          "residentWeightsGB": 9.23,
+          "kvCacheGB": 0.01,
+          "availableGB": 32
+        },
+        "measured": {
+          "nearest": null,
+          "labTuned": null
+        },
+        "bottleneck": "memory",
+        "power": {
+          "watts": 202,
+          "tdpWatts": 230,
+          "costPerDay": 0.194,
+          "costPer1KTokens": 0.00015
+        },
+        "devices": [
+          {
+            "name": "Intel Arc Pro B70 32GB #1",
+            "template": "Intel Arc Pro B70",
+            "memoryGB": 32,
+            "residentWeightGB": 9.23,
+            "kvCacheGB": 0.01,
+            "memoryUtilization": 32.424,
+            "hasOverflow": false,
+            "overflowMode": null,
+            "decodeTokensPerSecond": 45.91,
+            "prefillTokensPerSecond": 2519.6,
+            "rooflineTokensPerSecond": 80.31,
+            "dominant": "memory",
+            "coreBinding": "memory",
+            "decodeBreakdownMs": {
+              "weightRead": 14.811,
+              "kvRead": 0.011,
+              "compute": 0,
+              "attentionCompute": 0,
+              "runtime": 6.96,
+              "draft": 0,
+              "coordination": 0,
+              "total": 21.782
+            }
+          }
+        ],
+        "warnings": [
+          "This model ships no MTP head; modeled without speculation."
+        ],
+        "config": {
+          "model": "qwen3.5_9b",
+          "quantization": "fp8",
+          "quantFormat": null,
+          "runtime": "vllm",
+          "batchSize": 1,
+          "promptTokens": 128,
+          "outputTokens": 100,
+          "speculation": {
+            "method": "mtp",
+            "label": "Native MTP head",
+            "tokensPerStep": 3.06
+          }
+        }
+      },
+      "measured_over_projected_ceiling": 1.2220022413149048
+    },
+    {
+      "package_id": "qwen38-27b-q4km-tp1-b70",
+      "request": {
+        "model": "qwen3.8_27b",
+        "hardware": {
+          "template": "Intel Arc Pro B70",
+          "count": 1
+        },
+        "quantization": "Q4_K_M",
+        "runtime": "llama_cpp",
+        "promptTokens": 128,
+        "outputTokens": 128,
+        "speculation": null
+      },
+      "measured_value": 27.825725650072858,
+      "measurement_evidence": "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-final-j.json",
+      "projection": {
+        "fits": true,
+        "strategy": {
+          "key": "pipeline",
+          "label": "pipeline",
+          "reasoning": "Single device: parallelism has no effect",
+          "auto": true
+        },
+        "decode": {
+          "tokensPerSecond": 23.68,
+          "msPerToken": 42.238,
+          "perUserTokensPerSecond": 23.68,
+          "withoutSpeculation": null,
+          "speculationMultiplier": null
+        },
+        "prefill": {
+          "tokensPerSecond": 551.3,
+          "timeToFirstTokenSeconds": 0.232
+        },
+        "ceiling": {
+          "physicalTokensPerSecond": 42.24,
+          "latencyBoundTokensPerSecond": 38.23,
+          "optimizedTokensPerSecond": 32.49,
+          "expectedTokensPerSecond": 23.68,
+          "engineTokensPerSecond": 23.68,
+          "correctionFactor": 1,
+          "confidence": "uncalibrated",
+          "peers": 0,
+          "verifiedPeers": 0
+        },
+        "memory": {
+          "modelSizeGB": 17.03,
+          "residentWeightsGB": 17.03,
+          "kvCacheGB": 0.02,
+          "availableGB": 32
+        },
+        "measured": {
+          "nearest": null,
+          "labTuned": null
+        },
+        "bottleneck": "memory",
+        "power": {
+          "watts": 220,
+          "tdpWatts": 230,
+          "costPerDay": 0.211,
+          "costPer1KTokens": 0.00031
+        },
+        "devices": [
+          {
+            "name": "Intel Arc Pro B70 32GB #1",
+            "template": "Intel Arc Pro B70",
+            "memoryGB": 32,
+            "residentWeightGB": 17.03,
+            "kvCacheGB": 0.02,
+            "memoryUtilization": 53.274,
+            "hasOverflow": false,
+            "overflowMode": null,
+            "decodeTokensPerSecond": 23.68,
+            "prefillTokensPerSecond": 551.3,
+            "rooflineTokensPerSecond": 42.24,
+            "dominant": "memory",
+            "coreBinding": "memory",
+            "decodeBreakdownMs": {
+              "weightRead": 30.325,
+              "kvRead": 0,
+              "compute": 0.033,
+              "attentionCompute": 0.033,
+              "runtime": 11.88,
+              "draft": 0,
+              "coordination": 0,
+              "total": 42.238
+            }
+          }
+        ],
+        "warnings": [],
+        "config": {
+          "model": "qwen3.8_27b",
+          "quantization": "q4",
+          "quantFormat": "Q4_K_M",
+          "runtime": "llama_cpp",
+          "batchSize": 1,
+          "promptTokens": 128,
+          "outputTokens": 128,
+          "speculation": null
+        }
+      },
+      "measured_over_projected_ceiling": 0.6587529746702855
+    },
+    {
+      "package_id": "qwen38-27b-q4km-tp2-asrock-b70",
+      "request": {
+        "model": "qwen3.8_27b",
+        "hardware": {
+          "template": "Intel Arc Pro B70",
+          "count": 2
+        },
+        "quantization": "Q4_K_M",
+        "runtime": "llama_cpp",
+        "promptTokens": 128,
+        "outputTokens": 128,
+        "speculation": null,
+        "strategy": "tensor"
+      },
+      "measured_value": 49.71750333219927,
+      "measurement_evidence": "experiments/qwen38-27b-b70/data/2026-08-15-q4km-tp2-q4k-glu-summary.json",
+      "projection": {
+        "fits": true,
+        "strategy": {
+          "key": "tensor",
+          "label": "tensor",
+          "reasoning": null,
+          "auto": false
+        },
+        "decode": {
+          "tokensPerSecond": 32.96,
+          "msPerToken": 30.343,
+          "perUserTokensPerSecond": 32.96,
+          "withoutSpeculation": null,
+          "speculationMultiplier": null
+        },
+        "prefill": {
+          "tokensPerSecond": 1045.9,
+          "timeToFirstTokenSeconds": 0.122
+        },
+        "ceiling": {
+          "physicalTokensPerSecond": 84.48,
+          "latencyBoundTokensPerSecond": 51.38,
+          "optimizedTokensPerSecond": 43.68,
+          "expectedTokensPerSecond": 32.96,
+          "engineTokensPerSecond": 32.96,
+          "correctionFactor": 1,
+          "confidence": "uncalibrated",
+          "peers": 0,
+          "verifiedPeers": 0
+        },
+        "memory": {
+          "modelSizeGB": 17.03,
+          "residentWeightsGB": 17.03,
+          "kvCacheGB": 0.02,
+          "availableGB": 64
+        },
+        "measured": {
+          "nearest": null,
+          "labTuned": null
+        },
+        "bottleneck": "memory",
+        "power": {
+          "watts": 439,
+          "tdpWatts": 460,
+          "costPerDay": 0.421,
+          "costPer1KTokens": 0.00044
+        },
+        "devices": [
+          {
+            "name": "Intel Arc Pro B70 32GB #1",
+            "template": "Intel Arc Pro B70",
+            "memoryGB": 32,
+            "residentWeightGB": 8.51,
+            "kvCacheGB": 0.01,
+            "memoryUtilization": 26.637,
+            "hasOverflow": false,
+            "overflowMode": null,
+            "decodeTokensPerSecond": 34.69,
+            "prefillTokensPerSecond": 1101,
+            "rooflineTokensPerSecond": 84.48,
+            "dominant": "memory",
+            "coreBinding": "memory",
+            "decodeBreakdownMs": {
+              "weightRead": 15.163,
+              "kvRead": 0,
+              "compute": 0.016,
+              "attentionCompute": 0.016,
+              "runtime": 8.506,
+              "draft": 0,
+              "coordination": 5.14,
+              "total": 28.825
+            }
+          },
+          {
+            "name": "Intel Arc Pro B70 32GB #2",
+            "template": "Intel Arc Pro B70",
+            "memoryGB": 32,
+            "residentWeightGB": 8.51,
+            "kvCacheGB": 0.01,
+            "memoryUtilization": 26.637,
+            "hasOverflow": false,
+            "overflowMode": null,
+            "decodeTokensPerSecond": 34.69,
+            "prefillTokensPerSecond": 1101,
+            "rooflineTokensPerSecond": 84.48,
+            "dominant": "memory",
+            "coreBinding": "memory",
+            "decodeBreakdownMs": {
+              "weightRead": 15.163,
+              "kvRead": 0,
+              "compute": 0.016,
+              "attentionCompute": 0.016,
+              "runtime": 8.506,
+              "draft": 0,
+              "coordination": 5.14,
+              "total": 28.825
+            }
+          }
+        ],
+        "warnings": [],
+        "config": {
+          "model": "qwen3.8_27b",
+          "quantization": "q4",
+          "quantFormat": "Q4_K_M",
+          "runtime": "llama_cpp",
+          "batchSize": 1,
+          "promptTokens": 128,
+          "outputTokens": 128,
+          "speculation": null
+        }
+      },
+      "measured_over_projected_ceiling": 0.588512113307283
+    }
+  ],
+  "reviewed_at": "2026-10-10",
+  "source_url": "https://mlbottleneck.com/dist/mlbottleneck-engine.umd.js",
+  "source_sha256": "9ac15846af094a2eb495e974dbe5b03fee2627c77f33a5f53e48469f58112cb1",
+  "status": "Projected, not measured. Uncalibrated engine, existing site workload mappings. Approximate model ceiling including modeled drafting, not measured bandwidth utilization. Varied suites do not have one exact shape; no projection is a quality gate or a speed claim."
+}
