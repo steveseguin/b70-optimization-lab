@@ -240,7 +240,7 @@ Style genome (duotone-hixffp):
 
   /* what to run: a vertical list that reads top to bottom, with bars for comparison */
   .pick-list { list-style: none; margin: 0; padding: 0; border-top: 2px solid var(--ink); }
-  .pick-row { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(280px, 1fr) auto; gap: 14px 26px; align-items: start; padding: 18px 0 16px; border-bottom: 2px solid var(--ink); }
+  .pick-row { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(300px, 1fr) 200px; gap: 14px 26px; align-items: start; padding: 18px 0 16px; border-bottom: 2px solid var(--ink); }
   .pick-row.research { background: linear-gradient(90deg, var(--surface2), transparent 70%); }
   .pick-head { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; }
   .pick-rank { font-family: var(--display); font-size: 26px; line-height: 1; color: var(--spot-dark); padding-top: 2px; }
@@ -260,10 +260,22 @@ Style genome (duotone-hixffp):
   .pick-val small { display: block; font-weight: 400; color: var(--muted); font-size: 9.5px; white-space: normal; }
   .pick-val.mut { color: var(--muted); font-weight: 400; }
   .pick-note { margin: 2px 0 0; font-size: 11.5px; color: var(--muted); grid-column: 1 / -1; }
-  .pick-links { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding-top: 2px; }
+  .pick-links { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding-top: 2px; }
   .pick-links a:not(.button) { color: var(--ink); border-bottom: 1px solid currentColor; font-size: 13px; }
   .pick-scale { margin: 8px 0 0; color: var(--muted); font-family: var(--mono); font-size: 10.5px; }
   @media (max-width: 920px) { .pick-row { grid-template-columns: 1fr; gap: 12px; } .pick-links { flex-direction: row; flex-wrap: wrap; } }
+  .card-chip { display: inline-block; vertical-align: 3px; margin-left: 6px; padding: 2px 7px 1px; border: 2px solid var(--ink); background: var(--paper); color: var(--ink); font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+  .card-chip.two { background: var(--ink); color: var(--paper); }
+  .pick-deploy { margin: 4px 0 2px; font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+  .pick-deploy .card-chip { margin: 0 8px 0 0; vertical-align: 0; }
+  .pick-bars-two .pick-deploy + .pick-bar-row { margin-top: 2px; }
+  .pick-links-group { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .pick-links-group .card-chip { margin-left: 0; }
+  .model-picker th.model .card-chip { margin: 0 6px 0 0; vertical-align: 1px; }
+  .model-picker tbody tr { border-bottom: 1px solid rgba(20,18,14,.18); }
+  .model-picker tbody tr:nth-child(even):not(.model-group-row) { background: rgba(20,18,14,.03); }
+  .model-picker th.model { padding-top: 12px; padding-bottom: 12px; }
+  .model-picker thead th { font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid var(--ink); }
   /* the full table: bars drawn under the one-user speed, quiet rows for setups without a passing headline */
   .model-picker td.model-speed .cellbar { display: block; height: 5px; background: var(--ink); margin-top: 4px; max-width: 110px; }
   .model-picker td.model-speed .cellbar.max { background: var(--spot); }
@@ -465,8 +477,8 @@ Style genome (duotone-hixffp):
     <ol class="pick-list">
       <li class="pick-row">
         <div class="pick-head"><span class="pick-rank">1</span><div>
-          <p class="eyebrow">Ready to try &middot; 1 card &middot; also our chat server for a whole network</p>
-          <h3><a href="models/gemma4-26b-a4b-q8-b70-125tps-20260701.html">Gemma 4 26B Q8</a><small>llama.cpp SYCL &middot; 8-bit weights &middot; MTP depth 3 &middot; Google</small></h3>
+          <p class="eyebrow">Ready to try &middot; also our shared chat server</p>
+          <h3><a href="models/gemma4-26b-a4b-q8-b70-125tps-20260701.html">Gemma 4 26B Q8</a> <span class="card-chip">1 card</span><small>llama.cpp SYCL &middot; 8-bit weights &middot; MTP depth 3 &middot; Google</small></h3>
           <p class="pick-why">The fastest all-round chat model on a single card, and the one we run as a shared server: switch it to 8 people per card and everyone keeps a usable speed. Repeating the same question gives the same answer every time.</p>
         </div></div>
         <div class="pick-bars">
@@ -479,36 +491,29 @@ Style genome (duotone-hixffp):
       </li>
       <li class="pick-row">
         <div class="pick-head"><span class="pick-rank">2</span><div>
-          <p class="eyebrow">Ready to try &middot; 2 cards &middot; exact</p>
-          <h3><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Qwen3.8 27B FP8</a><small>vLLM XPU &middot; FP8 weights &middot; MTP depth 5 &middot; Alibaba</small></h3>
-          <p class="pick-why">A smart chat and coding model split across two cards. Every speed-up we kept gives the same answers as running it slowly, on every test we have, alone or with 64 people at once.</p>
+          <p class="eyebrow">Ready to try &middot; exact &middot; pick 1 card or 2 cards</p>
+          <h3><a href="models/qwen-27b.html">Qwen3.8 27B FP8</a><small>vLLM XPU &middot; FP8 weights &middot; MTP depth 5 &middot; Alibaba</small></h3>
+          <p class="pick-why">A smart chat and coding model. Every speed-up we kept gives the same answers as running it slowly, on every test we have, alone or with 64 people at once. The same recipe comes in a two-card and a one-card shape.</p>
         </div></div>
-        <div class="pick-bars">
+        <div class="pick-bars pick-bars-two">
+          <p class="pick-deploy"><span class="card-chip two">2 cards</span> 33K of conversation per person</p>
           <div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track"><div class="pick-fill" style="width:74%"></div></div><span class="pick-val">90 tok/s</span></div>
-          <div class="pick-bar-row"><span class="pick-bar-label">64 people, 2 cards</span><div class="pick-track"><div class="pick-fill spot" style="width:100%"></div></div><span class="pick-val">875 tok/s<small>everyone together, exact</small></span></div>
-          <div class="pick-bar-row"><span class="pick-bar-label">Reads a prompt</span><div class="pick-track"><div class="pick-fill" style="width:0"></div></div><span class="pick-val mut">not measured<small>at 2 cards</small></span></div>
-          <p class="pick-note">Up to 33K of conversation per person. The many-people shape is the package's <code>multi-user</code> profile.</p>
-        </div>
-        <div class="pick-links"><a class="button" href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md">Recipe</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md">Many-user notes</a></div>
-      </li>
-      <li class="pick-row">
-        <div class="pick-head"><span class="pick-rank">3</span><div>
-          <p class="eyebrow">Ready to try &middot; 1 card &middot; exact</p>
-          <h3><a href="models/qwen38-27b-fp8-vllm-tp1-b70.html">Qwen3.8 27B FP8</a><small>vLLM XPU &middot; FP8 weights &middot; MTP depth 5 &middot; Alibaba</small></h3>
-          <p class="pick-why">The same model on one card. Slower, but it still gives the same answers as running it slowly on every test, and it leaves your second card free.</p>
-        </div></div>
-        <div class="pick-bars">
+          <div class="pick-bar-row"><span class="pick-bar-label">64 people</span><div class="pick-track"><div class="pick-fill spot" style="width:100%"></div></div><span class="pick-val">875 tok/s<small>everyone together, exact</small></span></div>
+          <div class="pick-bar-row"><span class="pick-bar-label">Reads a prompt</span><div class="pick-track"><div class="pick-fill" style="width:0"></div></div><span class="pick-val mut">not measured</span></div>
+          <p class="pick-deploy"><span class="card-chip">1 card</span> 32K of conversation per person</p>
           <div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track"><div class="pick-fill" style="width:44%"></div></div><span class="pick-val">54 tok/s</span></div>
           <div class="pick-bar-row"><span class="pick-bar-label">Many people</span><div class="pick-track"><div class="pick-fill spot" style="width:0"></div></div><span class="pick-val mut">not measured</span></div>
           <div class="pick-bar-row"><span class="pick-bar-label">Reads a prompt</span><div class="pick-track"><div class="pick-fill" style="width:67%"></div></div><span class="pick-val">1,370 tok/s<small>512-token prompt</small></span></div>
-          <p class="pick-note">Up to 32K of conversation per person.</p>
         </div>
-        <div class="pick-links"><a class="button" href="models/qwen38-27b-fp8-vllm-tp1-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp1-b70/README.md">Recipe</a></div>
+        <div class="pick-links">
+          <span class="pick-links-group"><span class="card-chip two">2 cards</span><a class="button" href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md">Recipe</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md">Many-user notes</a></span>
+          <span class="pick-links-group"><span class="card-chip">1 card</span><a class="button" href="models/qwen38-27b-fp8-vllm-tp1-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp1-b70/README.md">Recipe</a></span>
+        </div>
       </li>
       <li class="pick-row research">
-        <div class="pick-head"><span class="pick-rank">4</span><div>
-          <p class="eyebrow research">Research &middot; 2 cards &middot; video, not chat</p>
-          <h3>MiniMax-H3 video<small>trimmed community copy so it fits two cards &middot; no install guide yet</small></h3>
+        <div class="pick-head"><span class="pick-rank">3</span><div>
+          <p class="eyebrow research">Research &middot; video, not chat</p>
+          <h3>MiniMax-H3 video <span class="card-chip two">2 cards</span><small>trimmed community copy so it fits two cards &middot; no install guide yet</small></h3>
           <p class="pick-why">Makes short video clips with sound from a written description. Every speed-up we kept leaves the clip exactly the same.</p>
         </div></div>
         <div class="pick-bars">
@@ -518,7 +523,7 @@ Style genome (duotone-hixffp):
         <div class="pick-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/minimax-h3-b70/README.md">Read the lab notes</a></div>
       </li>
     </ol>
-    <p class="pick-scale">Bars: one-person speeds are drawn against 122 tok/s, many-people totals against 875 tok/s, prompt reading against 2,043 tok/s (the fastest we have measured on one B70, Qwen3.8 27B FP8 at a 2K prompt).</p>
+    <p class="pick-scale">Bars: one-person speeds are drawn against 122 tok/s (Gemma 4 on one card), many-people totals against 875 tok/s, prompt reading against 2,043 tok/s (the fastest we have measured on one B70, Qwen3.8 27B FP8 at a 2K prompt).</p>
     <p class="research-links">Everything else we have tested, older setups included, is in the full table below, or <a href="models/">browse every model</a>.</p>
   </div>
 </section>
@@ -1187,6 +1192,15 @@ Style genome (duotone-hixffp):
       });
       var max = Math.max.apply(null, vals.filter(function (v) { return !isNaN(v); }));
       if (!isFinite(max) || max <= 0) return;
+      table.querySelectorAll('th.model small').forEach(function (sm) {
+        var m = sm.innerHTML.match(/^(\d+)(?:&times;|\u00d7) B70 (?:&middot;|\u00b7) /);
+        if (!m) return;
+        sm.innerHTML = sm.innerHTML.replace(/^\d+(?:&times;|\u00d7) B70 (?:&middot;|\u00b7) /, '');
+        var chip = document.createElement('span');
+        chip.className = 'card-chip' + (parseInt(m[1], 10) > 1 ? ' two' : '');
+        chip.textContent = m[1] + (m[1] === '1' ? ' card' : ' cards');
+        sm.insertBefore(chip, sm.firstChild);
+      });
       cells.forEach(function (td, i) {
         var row = td.parentElement;
         if (isNaN(vals[i])) { if (row) row.classList.add('quiet-row'); return; }
