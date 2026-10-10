@@ -1,5 +1,35 @@
 # Current Workspace State
 
+**2026-10-10, packet 128 sealed and CPU-validated; the coordinator retains control of the live server.**
+The saved timestamps identify full Python collection and allocator cleanup as
+the repeated receipt delay: all 119 long packet 126 handoffs overlap that pair.
+Preview and decode-tail work finish earlier. Packet 128's new optional idle
+cleanup waits for a short handoff gap, while keeping mandatory cleanup at the
+minute-age boundary and every byte, memory and fault gate. Default parent mode
+keeps 127's scheduling. The change is CPU prepared, not live qualified.
+
+Recommend 145 frames with idle maintenance, GC10, background storage, digest
+cache1, legacy auxiliaries and serial display3. Forecast 5.50–5.75 seconds per
+six seconds of new video, center 5.60 / 0.933 s/s. Fresh-text chunks remain
+slower, and forced/automatic collection can still pause the process. The 169
+forecast stays conditional: the coordinator's newer 127 memory refusal below
+must be resolved first; 128 does not lower its reserve or bypass its guard.
+Native byte, memory plateau and two fresh-server speed gates remain open.
+
+Parent127; manifest `bd6471f7…9f5ead`; inner plan `d0f849d2…92f3d5`.
+Recursive verification covers 2,171 files with zero Python caches. Validation
+covers 763 recovery cases (761 in the full run plus both corrected fixture
+rechecks: 17-case module and 7-case class), all 3,322 client checks in 31 suites,
+10 mocked preflight checks and 2 complete CPU runtime cases. The actual receipt
+handler passed the synthetic 50 ms timing gate at about 21 ms. All inner-plan pins
+pass. Development failures and exact counts remain in the build receipt.
+CPU only, nice 19, OMP/MKL 2, pinned Python -B; no live operation or protected-tree
+write. The unrelated broad pin audit retains 231 existing Flash-Next drifts.
+[Analysis](experiments/ltx25-b70/notes/2026-10-10-continuation-evenchunk-stall.md),
+[design](experiments/ltx25-b70/notes/2026-10-10-continuation128-stream-design.md),
+[build receipt](experiments/ltx25-b70/data/resume-20261008/continuation128-build.json),
+[future launch](experiments/ltx25-b70/recovery/20261010-continuation128-stream/LAUNCH.md).
+
 **2026-10-10 09:15 UTC, 127 at 169 (display replica on xpu:2, parallel worker, 6.5 GiB reserve) refused by its own memory guard during qualification; no fault. Back to 127 at 145.**
 At qrepeat-c000001 the xpu:2 display replica refused: free 8,465,399,808 B < transient 6.5 GiB + 2 GiB floor (8.5 GiB); the server halted
 (`stream-halt.json`), the client stopped (exit 6), latch `display-replica-120-refused.json` written. Kernel journal clean, health probe

@@ -1,0 +1,32 @@
+{
+  "status": "passed-after-inherited-fixture-recheck",
+  "unique_cases_validated": 763,
+  "full_run": {
+    "count": 763,
+    "passed": 761,
+    "failures": [
+      "test_builder_closes_helper_and_transformed_main (test_gc_scope125.GCScope125.test_builder_closes_helper_and_transformed_main)",
+      "test_walk_mode_is_the_packet117_path_with_timing (test_runtime_flow.Flow118.test_walk_mode_is_the_packet117_path_with_timing)"
+    ],
+    "errors": [],
+    "returncode": 1,
+    "log": "recovery-final.log",
+    "sha256": "7169040c5d52bbf7a5cbe39aa5dbc45edcb81f43ad4bfa5c8b87ca81e353a7f4"
+  },
+  "recheck": {
+    "count": 17,
+    "passed": 17,
+    "returncode": 0,
+    "log": "gc-scope-recheck.log",
+    "sha256": "4290d931fae9f047b2ab03622bf3e52eb72093f39090dea0070075d8c99e5e6d"
+  },
+  "runtime_flow_recheck": {
+    "count": 7,
+    "passed": 7,
+    "returncode": 0,
+    "log": "runtime-flow118-recheck.log",
+    "sha256": "51ba01db54d143848ce90dfca5745b80f7e120e928ed440fed6d58aea1adc6bd"
+  },
+  "counting": "Two inherited fixture assertions corrected: main-copy and explicit parent mode. Whole17-case GC module and7-case snapshot/runtime class pass.763 unique cases, no double counting. Full discovery and development failures retained.",
+  "command": "nice -n 19 env OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/ltx25-baseline/bin/python -B experiments/ltx25-b70/recovery/20261010-continuation128-stream/run_tests_128.py"
+}

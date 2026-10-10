@@ -87,3 +87,9 @@ The selected policy's first 145-frame forecast is conservatively **5.50–5.75 s
 No CPU timing test can prove a sub-50-ms response while an arbitrary other thread continuously owns the GIL; a meaningful timing test must exercise the selected scheduling contract and synthetic work under its actual admission/cleanup rules. No hash, serializer, preview encoder or model arithmetic changes solely on this evidence.
 
 Open: native byte and memory gates, two fresh-server matched speed measurements, the combined 169-frame configuration, exact own-writes scan timings, and any residual automatic-GC pauses remain outside this CPU-only analysis. The packet design records the final selected policy and CPU gate counts.
+
+Coordinator update during preparation (CURRENT,2026-10-10 09:15UTC): the127
+169parallel/display2 qualification refused its memory guard,8,465,399,808bytes
+free below6.5GiB transient+2GiB floor. The169 projection above is therefore
+conditional on recovering headroom;128 scheduling changes do not clear this
+blocker or authorize lowering the reserve.145 remains the first proposed arm.
