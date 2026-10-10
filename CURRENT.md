@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**2026-10-10 09:50 UTC, new best 145-frame line: packet 127 (digest cache + GC 60, serial, xpu:3) measured median 5.467 s = 0.911 s/s (n = 85, exact, verdict cbd91ba8a8cc); 128 (idle maintenance, GC 10) early 5.51 s with the parity gap closed (even 5.49 / odd 5.58, n = 27).**
+Session medians at 145 (chunks ≥ 10): 121 legacy 5.636; 123b 5.770; 126 5.759 (n = 241); **127 5.467** (even 5.44 / odd 5.70, p90 6.04);
+128 5.511 so far. 127's lever was estimated at 0.03–0.07 s; measured against 126 it is −0.29 s, so the digest cache (immutable signature
+digests across the six snapshots) and the 60 s interval together removed most of the per-chunk CPU inspection cost; 128's idle maintenance
+closes the parity gap at GC 10. Next: 128 with both (`LTX_MAINTENANCE_MODE=idle` + `LTX_GC_INTERVAL_SECONDS=60` + digest cache) if the
+launcher scope admits the combination; target ≈ 5.4 s (0.90 s/s).
+
 **2026-10-10 09:40 UTC, packet 128 sealed: the even-chunk stall is a full Python GC (~252 ms) plus allocator cleanup (~56 ms) landing in the receipt handoff; `LTX_MAINTENANCE_MODE=idle` defers it. Swapping to 128 at 145.**
 Codex's overlap analysis (`notes/2026-10-10-continuation-evenchunk-stall.md`, commits 68fe09195, 45f94e8bb): all 119 long handoffs in the
 126 session overlap the GC + allocator-cleanup pair; the preview encode finishes earlier and is not the blocker. 128 (parent 127; manifest
