@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**2026-10-10 04:52 UTC, packet 122 sealed (census refined); no swap: the 145 dg0 line stays live; packet 123 in design (free xpu:0 for 169 frames, fix the preview read race).**
+Codex's 145-frame analysis (`notes/2026-10-10-continuation121-results-145.md`, commit 96a57a5db; 122 manifest `8b576c86…b7fa`,
+489 recovery / 783 client / 10 preflight CPU checks) measured margins above the floors at 145 dg0: xpu:0 1.27 GiB, xpu:1 1.83,
+xpu:2 9.71, xpu:3 1.85. Projections: **145 dg1 + xpu:2 replica → xpu:3 −0.68 to −0.25 GiB** (the graph pool scaled to 145 outweighs
+the display transient it removes), so that arm is not admissible and will not be launched; **169 dg0 → xpu:0 0.69–1.00 GiB against
+the 0.75 GiB required**, missing by ≈ 0.06 GiB, xpu:3 0.49–1.22. 122 adds `LTX_DISPLAY_REPLICA_TRANSIENT_GIB` (explicit reserve,
+may only increase the census). Decision: keep streaming 121 at 145 frames dg0 (0.939 s/s, the best admissible line); Codex is
+designing packet 123: an exactness-preserving residency change that frees ≥ 0.1 GiB on xpu:0 (sampler split rebalance or moving the
+upsampler / text encoder to xpu:2, each as a launch option with its 145 qualification) to admit 169 frames (7.0 s of video per chunk),
+plus atomic preview publication and a bounded identity re-check in the preview route.
+
 **2026-10-10, packet 122 sealed on CPU; 169 frames still held back by memory.**
 The saved 145-frame readings give more sampler room than the previous estimate,
 but 169 still misses the required allowance on two cards. Moving display to the
