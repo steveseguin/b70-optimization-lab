@@ -79,8 +79,19 @@
     if (request.runtime) params.set('runtime', request.runtime);
     if (request.promptTokens) params.set('prompt', String(request.promptTokens));
     if (request.outputTokens) params.set('output', String(request.outputTokens));
+    params.set('batch', String(request.batchSize || 1));
     if (request.speculation) params.set('spec', request.speculation.method + (request.speculation.tokens ? ':' + request.speculation.tokens : ''));
     return PLANNER_URL + '?' + params.toString() + '#plan';
+  }
+
+  // The full planner currently uses a fixed-choice concurrency selector.
+  // Keep arbitrary counts available locally, but never link to a different plan.
+  function miniPlannerLink(request, label) {
+    if (![1, 2, 4, 8, 16, 32, 64].includes(request.batchSize)) {
+      return 'The full planner cannot import ' + esc(request.batchSize) + ' concurrent users. '
+        + 'Choose 1, 2, 4, 8, 16, 32, or 64 users to open a matching plan.';
+    }
+    return '<a href="' + esc(plannerLink(request)) + '" target="_blank" rel="noopener noreferrer">' + esc(label) + '</a>';
   }
 
   // Measured rate versus the model's "tuned-run target" (what strong runs of
@@ -280,7 +291,7 @@
       try {
         engine = await loadEngine();
       } catch (error) {
-        output.innerHTML = '<p class="mini-note">The prediction engine could not be loaded. <a href="' + esc(plannerLink(request)) + '" target="_blank" rel="noopener noreferrer">Open this setup on mlbottleneck.com</a> instead.</p>';
+        output.innerHTML = '<p class="mini-note">The prediction engine could not be loaded. ' + miniPlannerLink(request, 'Open this setup on mlbottleneck.com') + '</p>';
         return;
       }
       let result;
@@ -305,7 +316,7 @@
         + '<p class="mini-note">' + esc(fit) + ' · limiter: ' + esc(limiterText(result))
         + (result.warnings.length ? ' · ' + esc(result.warnings.join(' ')) : '')
         + ' · ' + (result.ceiling && result.ceiling.peers > 0 ? 'calibrated on ' + result.ceiling.peers + ' community run' + (result.ceiling.peers === 1 ? '' : 's') : 'physics only, no matching community runs') + '.</p>'
-        + '<p class="mini-links"><a href="' + esc(plannerLink({ ...request, quantization: request.quantization })) + '" target="_blank" rel="noopener noreferrer">Open the full plan on mlbottleneck.com</a></p>';
+        + '<p class="mini-links">' + miniPlannerLink(request, 'Open the full plan on mlbottleneck.com') + '</p>';
     };
     form.addEventListener('change', update);
     form.addEventListener('submit', event => { event.preventDefault(); update(); });

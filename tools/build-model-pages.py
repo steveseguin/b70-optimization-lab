@@ -41,7 +41,7 @@ def bridge_version():
 
 def stamp_bridge_includes(version):
     """Cache-bust the bridge script on the hand-written pages that load it."""
-    for rel in ("index.html", os.path.join("learn", "hardware.html")):
+    for rel in ("index.html", os.path.join("learn", "hardware.html"), os.path.join("learn", "multi-user.html")):
         path = os.path.join(ROOT, rel)
         with open(path, encoding="utf-8") as handle:
             source = handle.read()
