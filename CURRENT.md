@@ -5,7 +5,7 @@
 inner plan `7750e7b5…58c4`; 1,076 recovery, 6,718 client, 9 sealed-import tests over 67 helpers, 10 preflight). The offending path of the
 session-1 halt is unrecorded (old guard) and every retained file now has one link, so the deletion race (a consumed preview removed by the
 client mid-scan) is the likely cause. Launch (work dir `s135-live01`): the 133b production command with `launch-135.sh`.
-Codex 134 (169 census under split36) is still running; its audit commit fa297c8e88 is in.
+Packet 134 is now sealed and CPU-validated (commit 5b21b4f2fe; census fa297c8e88). Only its graph-off 169 arm clears the memory screen; native qualification remains pending. See the packet 134 entry below.
 
 **2026-10-10, packet 135 sealed and CPU-validated: storage accounting tolerates deletion races and links wholly inside its owned files.**
 The stopped 133b run did not record the offending path or link count, and all
