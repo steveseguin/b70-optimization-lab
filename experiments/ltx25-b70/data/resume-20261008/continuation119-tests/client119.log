@@ -1,0 +1,72 @@
+PASS 119 participates in DECODER_GRAPH_PACKETS
+PASS 119 participates in DECODE_THREAD_PACKETS
+PASS 119 participates in RESET_PACKETS
+PASS 119 participates in LEVER_PACKETS
+PASS 119 participates in SERVER_OPTION_PACKETS
+PASS numeric packet119 parser
+PASS 119 stream directory accepted
+PASS 118b stream directory refused
+PASS valid status sampler-a/0/full
+PASS valid status sampler-a/0/a-xpu3-sync
+PASS valid status sampler-a/1/full
+PASS valid status sampler-a/1/a-xpu3-sync
+PASS valid status sampler-b/0/full
+PASS valid status sampler-b/0/a-xpu3-sync
+PASS valid status sampler-b/1/full
+PASS valid status sampler-b/1/a-xpu3-sync
+PASS valid status eager-display/0/full
+PASS valid status eager-display/0/a-xpu3-sync
+PASS valid status eager-display/1/full
+PASS valid status eager-display/1/a-xpu3-sync
+PASS invalid status display_schedule=None
+PASS invalid status display_schedule=''
+PASS invalid status display_schedule='other'
+PASS invalid status anchor_read_ahead=None
+PASS invalid status anchor_read_ahead=True
+PASS invalid status anchor_read_ahead='1'
+PASS invalid status anchor_read_ahead=2
+PASS invalid status snapshot_schedule=None
+PASS invalid status snapshot_schedule=''
+PASS invalid status snapshot_schedule='other'
+PASS sparse barriers refuse walk snapshot mode
+PASS expected display_schedule mismatch refuses
+PASS expected display_schedule matching accepts
+PASS expected anchor_read_ahead mismatch refuses
+PASS expected anchor_read_ahead matching accepts
+PASS expected snapshot_schedule mismatch refuses
+PASS expected snapshot_schedule matching accepts
+PASS packet type/identity '119' refuses
+PASS packet type/identity '118b' refuses
+PASS packet type/identity 118 refuses
+PASS complete five-field options from status
+PASS 118b preserves its two-field options
+PASS receipt consistent options accepts
+PASS receipt display_schedule drift refused
+PASS receipt anchor_read_ahead drift refused
+PASS receipt snapshot_schedule drift refused
+PASS receipt snapshot_mode drift refused
+PASS receipt decoder_graph_pool_cap_bytes drift refused
+PASS receipt missing snapshot_mode refused
+PASS receipt missing decoder_graph_pool_cap_bytes refused
+PASS receipt missing display_schedule refused
+PASS receipt missing anchor_read_ahead refused
+PASS receipt missing snapshot_schedule refused
+PASS verdict missing snapshot_mode refused before gate
+PASS verdict missing decoder_graph_pool_cap_bytes refused before gate
+PASS verdict missing display_schedule refused before gate
+PASS verdict missing anchor_read_ahead refused before gate
+PASS verdict missing snapshot_schedule refused before gate
+PASS qualification receipt missing snapshot_mode refused
+PASS qualification receipt missing decoder_graph_pool_cap_bytes refused
+PASS qualification receipt missing display_schedule refused
+PASS qualification receipt missing anchor_read_ahead refused
+PASS qualification receipt missing snapshot_schedule refused
+PASS new flag --expect-display-schedule refused for118b
+PASS new flag --expect-anchor-read-ahead refused for118b
+PASS new flag --expect-snapshot-schedule refused for118b
+PASS client wrapper uses fingerprint-pinned bin/python -B
+PASS client wrapper caps OMP
+PASS client wrapper binds all three options
+PASS client wrapper does not reset units
+
+70/70 passed; CPU-only files in /tmp/ltx-client119-cpu-mfmb7q4f

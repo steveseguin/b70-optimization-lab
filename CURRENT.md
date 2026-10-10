@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**2026-10-10, LTX119 built and sealed on CPU; ready for the coordinator's comparison.**
+The packet can keep the faster anchor decode while running display decoding eagerly.
+Verified anchor reading can run ahead too. The optional reduction in stage-A
+synchronization stays off; its saving is uncertain and selecting it is an owner decision.
+All 375 recovery tests, 278 client checks and 10 preflight tests passed. No GPU work,
+launch, live-file write or host change was made. The predicted period is 4.95–5.17 seconds
+at 121 frames; speed and full-model byte equality still need the coordinator's run.
+[Design, sealed packet, checks and launch reference](experiments/ltx25-b70/notes/2026-10-10-continuation119-stream-design.md).
+
 **2026-10-10 02:18 UTC, 118b dg1 cap-1.0 at 121 frames: exact but a loss (5.56 s vs 5.23 dg0); dg0 relaunched as the live line.**
 The capped pool captured only `forward_pre_diffusion`, the floor held, cone decode fell 0.96 → 0.76 s, but the stage-B
 bucket on xpu:3 rose 0.28 → 0.80 s (display-decode graph replay in front of stage B on the single compute queue, to be
