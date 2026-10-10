@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**2026-10-10 17:55 UTC, Flash-Next probe window run with the owner's go-ahead: clean-exit PASSED, exit-after-sleep PASSED (both 0 fault lines, watcher clean); first-forward blocked by a harness path bug before device work (no fault). LTX results published on neural.download. 137 production relaunching.**
+Probes (card 23:00.0, image UMD, owner-acceptance receipt, host watcher per README): `runs/probe-clean-exit-20261010b` passed (stage complete,
+clean exit, gather 1, explicit + cleanup sync); `runs/probe-exit-sleep-20261010b` passed (abrupt exit after 10 s idle, gather 1); both with
+0 kernel fault lines and no FAULT.json. The first attempt (`probe-clean-exit-20261010`) stopped at admission because the host watcher had
+not been started (kept as evidence). `runs/probe-first-forward-20261010b`: admission failed on `path.relative_to(PACKAGE)` for a file mounted
+at /probe (harness bug; watcher 150 s bound → STOP; no GPU work). Codex is fixing the harness and writing the interpretation note.
+neural.download (commit 87c8c71933, publication CI passed, live-verified): LTX reproduction guide
+`repro/ltx25-continuation-stream-b70-145f-20261010/` + details page; Qwen Flash-Next page corrected to the certified 46.854250 tok/s on four
+cards, one/two-card 27B recipes updated, the 875 tok/s 64-user test clarified as separate. Open on the site: public runtime assets for a
+fresh-host replay; the owner's seam/audio acceptance for LTX. Production 137 relaunch chain running (`s137-live02`).
+
 **2026-10-10, CPU-only neural.download publication:** the LTX 145-frame lab
 recipe and video details page now separate the measured 5.24-second early
 window from sustained speed and the unqualified packet137 extension. The
@@ -20,7 +31,7 @@ neural.download publication (LTX recipe/details page + Qwen 3.8 recipe and promo
 docs/recipe-publication-standard.md, docs/details-page-checklist.md, docs/promotion-attestation.md).
 
 **2026-10-10 17:25 UTC, packet 137 sealed (exact bulk F32 finiteness scan, `LTX_F32_SCAN=bulk`; predicted −0.15 s per chunk, 0.076 of it before sampler A); the residual odd-period excess is mostly the fresh text encode every fourth chunk (fresh 5.626 s vs reused 5.195 s), not a defect. Swapping the production arm to 137.**
-135 GC-10 production session closed (747 periods, exact, no stops, the longest clean session of the campaign): the raw median 5.553 s is inflated by the client's 60-s-ahead throttle once production outran the sink; throttle lines 94; unthrottled n = 700, median 5.525 (even 5.33 / odd 5.62, p90 6.02) = 0.921 s/s. 137 (commits 458a3c92c0, 4676194954;
+135 GC-10 production session closed (747 periods, exact, no stops, the longest clean session of the campaign): the raw median 5.553 s is inflated by the client's 60-s-ahead throttle once production outran the sink; throttle lines 94; hold-free diagnostic n = 700, median 5.5255 (even 5.33 / odd 5.62, p90 6.02). Correction from packet 138 measurement review: this is not an unthrottled production rate; the first uninterrupted prefix has 52 periods, median 5.2415 s, and does not establish sustained speed. 137 (commits 458a3c92c0, 4676194954;
 manifest `18c80d25…463e`; inner plan `61e39067…21a5`; 1,096 recovery, 7,780 client, 9 sealed-import over 69 helpers, 10 preflight, 11 matched
 parent/bulk comparisons). Launch (work dir `s137-live01`): the 135 production command with `LTX_F32_SCAN=bulk` and `launch-137.sh`.
 Remaining exact item after this: a scheduled text prefetch for the known scene schedule (≈ 0.38 s on every fourth chunk ≈ 0.1 s per chunk
