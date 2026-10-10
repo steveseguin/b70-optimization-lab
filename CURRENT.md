@@ -1,5 +1,26 @@
 # Current Workspace State
 
+**2026-10-10, packet 133b packaging repair sealed and fully CPU-validated; native qualification remains pending.**
+The launcher could not find a helper already bundled elsewhere in packet 133.
+133b puts the unchanged helper and its pinned oracle beside the launcher and
+uses its own packet identity. Both import modes passed before sealing. The new
+test reproduces the original133 failure without modifying that packet.
+
+All 1,058 recovery tests passed, including six sealed-import tests. All 6,351
+client checks across 43 suites passed, as did 32 inner-plan pin assertions,
+10 mocked preflight checks and 22 CPU output comparisons. Four stale inherited
+identity fixtures were corrected; the first run and the clean rerun are saved.
+Recursive verification covers 2,313 bound files, with zero Python caches.
+Owned scratch is removed. No launcher, check-only, GPU, live port or unit was
+used; packet 133 and existing runs remain untouched. The coordinator retains
+control of live work. Native memory, exactness and speed are still unmeasured.
+
+Manifest `ed908a9031a937801d17264edacfe0807bea543badc412a32eb6118daa214fd3`;
+inner plan `b67b1a8fe9b3457666190267a3ff020cd3708371d89de60952d1e0f60dafab7b`.
+[Rebuild note](experiments/ltx25-b70/notes/2026-10-10-continuation133b-rebuild.md),
+[build receipt](experiments/ltx25-b70/data/resume-20261008/continuation133b-build.json),
+[future command](experiments/ltx25-b70/recovery/20261010-continuation133b-stream/LAUNCH.md).
+
 **2026-10-10 14:05 UTC, 133 rehearsal failed before device work (`ModuleNotFoundError: text_residency133` from `cone_memory131.validate_scope`, a bare import of a helper the sealed launcher loads by path under another module name); 129 production relaunching now (`s129-live04`); Codex rebuilding 133b with a sealed-launcher import test.**
 The CPU suites import from the author tree, so the sealed packet's import path was never exercised; 133b adds a test that imports the sealed
 `launch/serve-encoder.py` chain exactly as the launcher does. Off-air from the 13:53 stop until the 129 relaunch qualifies (≈ 14:15 UTC).

@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "admitted": true,
+  "destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36",
+  "resolved_destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36",
+  "checked_existing_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913",
+  "required_mount": null,
+  "filesystem": {
+    "mount_id": 33,
+    "mount_point": "/",
+    "filesystem_type": "ext4",
+    "source": "/dev/nvme0n1p2"
+  },
+  "available_bytes": 75984592896,
+  "min_free_bytes": 53687091200,
+  "planned_write_bytes": 17179869184,
+  "required_bytes": 70866960384,
+  "remaining_after_planned_write_bytes": 58804723712,
+  "failures": []
+}
+Traceback (most recent call last):
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-133/launch/serve-encoder.py", line 452, in <module>
+    launch(args.packet, args.manifest_sha256, args.run_name, args.check_only, args.health_receipt)
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-133/launch/serve-encoder.py", line 260, in launch
+    manifest, run = prepare_start(packet, digest, run_name)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-133/launch/serve-encoder.py", line 235, in prepare_start
+    common.check_control_environment()
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-133/launch/encoder_runtime_common.py", line 147, in check_control_environment
+    cone_mode = module(cone_path, 'stream133_cone_memory').validate_scope(os.environ)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-133/resolution/components/cone_memory131.py", line 80, in validate_scope
+    import text_residency133
+ModuleNotFoundError: No module named 'text_residency133'

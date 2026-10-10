@@ -1,0 +1,35 @@
+test_deleted_line_does_not_latch_but_creation_does (test_runtime_packet.CoredumpPattern.test_deleted_line_does_not_latch_but_creation_does) ... ok
+test_inventory_and_assembly_fit_build_allowance (test_runtime_packet.Identities.test_inventory_and_assembly_fit_build_allowance) ... ok
+test_no_previous_prefix_outside_provenance (test_runtime_packet.Identities.test_no_previous_prefix_outside_provenance)
+Naming rule 3: the 112/113/114 prefixes appear only in provenance strings and comments. ... ok
+test_plan_file_is_the_reconstructed_plan_and_pins_agree (test_runtime_packet.Identities.test_plan_file_is_the_reconstructed_plan_and_pins_agree) ... ok
+test_check_name_collisions_raises_and_reports (test_runtime_packet.Naming.test_check_name_collisions_raises_and_reports) ... ok
+test_clean_root_and_older_packets_pass (test_runtime_packet.Naming.test_clean_root_and_older_packets_pass) ... ok
+test_each_collision_refuses (test_runtime_packet.Naming.test_each_collision_refuses) ... ok
+test_live_root_is_clean_now (test_runtime_packet.Naming.test_live_root_is_clean_now)
+The real results root holds no 118 names today (read-only listing). (The 117 runs' stream117- ... ok
+test_missing_directories_are_not_collisions (test_runtime_packet.Naming.test_missing_directories_are_not_collisions) ... ok
+test_custom_node_inputs (test_runtime_packet.NodeInputs.test_custom_node_inputs) ... ok
+test_integration_imports_without_torch (test_runtime_packet.NodeInputs.test_integration_imports_without_torch) ... ok
+test_output_node_ranges_admit_all_lengths_and_levers (test_runtime_packet.NodeInputs.test_output_node_ranges_admit_all_lengths_and_levers) ... ok
+test_capture_guard_shapes_at_97 (test_runtime_packet.Transforms.test_capture_guard_shapes_at_97) ... ok
+test_control_environment (test_runtime_packet.Transforms.test_control_environment) ... ok
+test_geometry_follows_launch_frames_and_anchor (test_runtime_packet.Transforms.test_geometry_follows_launch_frames_and_anchor) ... ok
+test_launcher (test_runtime_packet.Transforms.test_launcher) ... FAIL
+
+======================================================================
+FAIL: test_launcher (test_runtime_packet.Transforms.test_launcher)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation133b-stream/test_runtime_packet.py", line 212, in test_launcher
+    self.assertEqual(rp.RUN_NAMES['97/two-way20-28/frame/dg1/ad-cone/bo1/pa1/sm-fingerprint'],
+AssertionError: 'enco[29 chars]m-133-frame-dg1-adcone-bo1-pa1-smfp-two-way20-[26 chars]-f97' != 'enco[29 chars]m-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20[27 chars]-f97'
+- encoder-server-continuation-stream-133-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f97
++ encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f97
+?                                       +
+
+
+----------------------------------------------------------------------
+Ran 16 tests in 22.152s
+
+FAILED (failures=1)
