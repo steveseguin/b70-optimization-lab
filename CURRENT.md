@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**2026-10-10 02:02 UTC, 118b dg0 session closed (1.037 s/s, byte-identical to 117 on 63/63); 118b launch 2 live: 121 frames, dg1, pool cap 1.0.**
+The dg0 run streamed 101 chunks (01:38–01:56 UTC), cone exact 101/101, period median 5.227 s per 5.04 s chunk; its
+timing split puts 0.20 s of the 0.50 s pre-sampler path in three on-chain four-card snapshots (0.059 s each in
+fingerprint mode: the cost is the synchronize, not the walk), 0.12 s in anchor read + text window, 0.055 s in the stage-A
+consume. Note `experiments/ltx25-b70/notes/2026-10-10-continuation118b-results-121-dg0.md`. Controlled stop 01:56:10,
+names archived, fresh health receipt `postflight-pre118b-dg1-20261010T0157Z.json`, `--check-only` passed, launched
+02:01:15 UTC: run `…-118b-frame-dg1-adcone-bo1-pa1-smfp-…-f121`, client `start-client-118b.sh 121 1 cone 1 1 fingerprint 1.0`
+(work dir `s118b-dg1-live01`), sink/relay/preview attached; qualification in progress. Expected: cone decode on the chain
+0.69 s under the graph vs 0.915 eager; if xpu:3 refuses the 9.66 GB floor it latches `precompute-118-refused.json` and the
+dg0 line returns. The Flash-Next probes (admitted via `--owner-acceptance`) are blocked for the coordinator by the
+permission classifier; they need the owner to run them or to approve explicitly.
+
 **2026-10-10 01:47 UTC, one controlled swap 117 → 118b; 118b qualified and streaming at 121 frames (dg0, fingerprint snapshots).**
 117 stopped cleanly at 01:33:24 UTC after 63 live chunks (client then server, one SIGINT each, no fault). In the five-minute
 gap: fresh health probe passed (`postflight-pre118b-20261010T0134Z.json`); the 118b `--check-only` first failed with
