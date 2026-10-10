@@ -32,7 +32,7 @@ if [[ -n "${LTX_DISPLAY_REPLICA_TRANSIENT_GIB:-}" ]]; then
   EXTRA+=(--expect-display-transient-gib "$LTX_DISPLAY_REPLICA_TRANSIENT_GIB")
 fi
 mkdir -p "$W"
-exec systemd-run --user --unit=ltx135-stream-client-20261010 --property=Restart=no --property=KillSignal=SIGINT --property=TimeoutStopSec=960 \
+exec systemd-run --user --unit=ltx135-stream-client-20261010 --property=Restart=no --property=KillSignal=SIGINT --property=SendSIGKILL=no --property=KillMode=control-group --property=TimeoutStopSec=960 \
   --property=WorkingDirectory=/home/steve/llm-optimizations/experiments/ltx25-b70/stream \
   --property="StandardOutput=append:$W/client.log" --property="StandardError=append:$W/client.log" \
   --setenv=OMP_NUM_THREADS=2 --setenv=MKL_NUM_THREADS=2 --setenv=PYTHONDONTWRITEBYTECODE=1 \
