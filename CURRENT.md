@@ -1,7 +1,21 @@
 # Current Workspace State
 
-**2026-10-09, Flash-Next cleanup patch applied on CPU; probe preparation in progress.**
+**2026-10-10 01:20 UTC, halt resolved by the owner; LTX 117 at 121 frames launched as the live stream server.**
+The owner archived `FAULT.json` and accepted continued launches on boot 4aafe57b ("accept"; receipt
+`data/resume-20261008/fault-archive-20261010T011831Z-owner-accept-receipt.json`); no reboot. Fresh four-card health
+probe passed (`postflight-owner-accept-20261010T0119Z.json`, 4 earlier fault lines, none during the probe). The completed
+117 f121 dg0 run dir was renamed `.completed-20261009T0225Z` (receipt committed) and the same run relaunched after a
+passing `--check-only`: unit `ltx117-stream-server-20261008`, 121 frames, frame anchor, dg0, cone/overlap/prep-ahead on.
+Client `ltx117-stream-client-20261008` (work dir `/home/steve/ltx-stream/s117-live01`, 10 kitten scenes, 40 chunks per
+cycle, unbounded) and sink `ltx117-stream-sink` → relay `ltx-relay` (forwarding to the owner's RTMP destination) →
+LAN preview `ltx-mjpeg` on :8090 are running. In parallel on CPU: Codex rebuilds packet 118b from the BLOCK review and
+applies the Flash-Next teardown patch to the overlay. Fault-halt rule unchanged for any further incident.
+
+**2026-10-09, Flash-Next cleanup patch applied; three probes prepared on CPU.**
 The reviewed patch now releases buffers in order and records each worker's cleanup.
+CPU checks passed: 207 lane, 25 existing probe, 49 cleanup and 35 new one-layer
+checks. Seven prohibited checks were skipped. The three receipt folders are
+empty; the commands are prepared, not run. Native cleanup is still unproven.
 The owner accepted continuing this boot without a reboot. No GPU work was done;
 the coordinator owns later probes and keeps them behind LTX. The saved runs are
 unchanged. The old watcher still refuses a boot with two incidents, so its
