@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**2026-10-10, own-runtime Flash-Next CPU preparation:** The design now keeps
+Flash-Next's certified BF16 state between rows and keeps 27B's FP32 state.
+The [Stage 2 plan](experiments/own-xpu-runtime/STAGE2-PLAN.md) separates bandwidth
+arithmetic from measured speed, favors Unsloth IQ3_XXS for the two-card capacity
+trial, and records the storage, quality and native-window decisions still needed.
+The [CPU math packet](experiments/own-xpu-runtime/stage2/packet1b/README.md)
+passes 37 synthetic checks and a fresh-process repeat; device parity remains
+unverified, and no GPU, server or existing lane was touched.
+
+
 **2026-10-10, our own runtime: Flash-Next’s CPU identity packet passed.**
 The [packet and receipt](experiments/own-xpu-runtime/stage2/packet1/README.md) freeze all local tensor descriptions and the twelve certified answers, with file totals matching the official publisher.
 The two-card plan still needs about 65 GB of expert weights kept off the cards, before working space; native work awaits the owner’s window, and this task left the host halt and existing lanes untouched.

@@ -9,6 +9,7 @@ separate and pending.
 | Packet | Status | Evidence |
 | --- | --- | --- |
 | 1 — Local identity, tensors, exact oracle and placement arithmetic | **CPU exit gate PASS, 2026-10-10** | [Packet and receipt](packet1/README.md) |
+| 1b — CPU reference math and Stage 2 plan | **37 synthetic checks PASS; device parity UNVERIFIED, 2026-10-10** | [Packet/receipts](packet1b/README.md), [plan and owner decisions](../STAGE2-PLAN.md) |
 | Later operator, loader, layer, transaction and native qualification packets | Not authorized or executed here | [Required window and checks](packet1/README.md#next-authorized-stage-2-window) |
 
 Packet 1 retains all 152,089 tensors, 131 shard headers and 12 complete A367

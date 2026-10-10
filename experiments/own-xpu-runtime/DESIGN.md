@@ -119,7 +119,7 @@ Do not confuse the release name with the internal architecture name.
 | Decoder | Dense, 64 layers, hidden 5120, FFN 17408 | MoE, 48 layers, hidden 2560 |
 | Layer schedule | 48 GDN + 16 full attention, every fourth full | 36 GDN + 12 full/QSA layers, every fourth full |
 | Full attention | 24 query / 4 KV heads, head dimension 256 | 24 query / 2 KV heads, head dimension 256 |
-| GDN | 16 key / 48 value heads, key/value dimensions 128, convolution width 4, FP32 recurrent state | Same head counts/dimensions/width; FP32 recurrent state |
+| GDN | 16 key / 48 value heads, key/value dimensions 128, convolution width 4, FP32 recurrent state | Same head counts/dimensions/width; certified BF16 inter-row recurrent state |
 | Full-attention output gate | **sigmoid** in the official `Qwen3_5Attention` implementation; publisher `output_gate_type=swish` is unused metadata, preserved verbatim | `output_gate_type=sigmoid`; bind implementation separately |
 | FFN/routing | Dense SiLU gate/up/down; no routed experts | 512 experts, top 10, intermediate 640; shared expert 640; preserve routing order/weights |
 | Additional Flash structure | Not applicable | Hyperconnections: 4 streams, low-rank 320. PLE at layer id 2: 20M vocabulary, ngram 3, 8 heads, split 128, embedding dimension 2560 |
@@ -131,6 +131,12 @@ The [packet 3 preparation source check](stage1/packet3-prep/gate-evidence.json)
 corrects the earlier inference that the 27B config's swish field selected the
 attention gate. GDN gated normalization and the dense FFN still use SiLU;
 certified device arithmetic and cast boundaries remain unverified.
+
+GDN recurrent-state precision is a per-model certified property: the 27B
+profile keeps FP32 state; the certified Flash-Next serial path rounds state
+to BF16 between rows, despite its FP32 config metadata. Preserve the
+[Stage 2 packet 1 evidence](stage2/packet1/README.md#differences-and-boundaries-that-must-survive-implementation)
+and bind fixtures to that profile before changing any cast.
 
 Keep norm epsilon, gating, residual ordering and all exceptions from config
 and tensor census. `modules_to_not_convert` is not a graph definition (the 27B
@@ -215,7 +221,7 @@ inside a claimed single replay, or quietly reduce context to fit.
 
 ## Determinism is an interface
 
-Pin accumulation precision, FP32 GDN state, cast locations, FMA contraction,
+Pin accumulation precision, per-model certified GDN state precision, cast locations, FMA contraction,
 reduction tree, padding, tile geometry and kernel dispatch for every M/N/K.
 KV stays BF16/FP16 per certified lane, never FP8. Batch shape, replay count,
 compile cache and allocation address must not choose a new reduction order.

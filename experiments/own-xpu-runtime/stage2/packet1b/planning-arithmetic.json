@@ -1,0 +1,221 @@
+{
+  "status": "ARITHMETIC ONLY; idealized homogeneous expert grids; actual UD mixtures unknown",
+  "four_card": {
+    "one_target_balanced": {
+      "bytes_per_card": 3699446470.5,
+      "floor_ms_537_to_507": [
+        6.889099572625699,
+        7.296738600591716
+      ],
+      "33_69_ms_over_floor": [
+        4.8903343092716325,
+        4.617131275234112
+      ]
+    },
+    "M2_dense_once_disjoint_experts_balanced": {
+      "bytes_per_card": 4289342470.5,
+      "floor_ms_537_to_507": [
+        7.987602365921788,
+        8.460241559171598
+      ],
+      "33_69_ms_over_floor": [
+        4.217786321429146,
+        3.982155800678914
+      ]
+    },
+    "M2_no_weight_reuse_balanced": {
+      "bytes_per_card": 7398892941.0,
+      "floor_ms_537_to_507": [
+        13.778199145251397,
+        14.593477201183433
+      ],
+      "33_69_ms_over_floor": [
+        2.4451671546358162,
+        2.308565637617056
+      ]
+    },
+    "target_plus_proposal_balanced_bytes_per_card": 4104362274.5
+  },
+  "two_card": {
+    "FP8": {
+      "block": null,
+      "expert_triplet_bytes": 4915800,
+      "target_expert_bytes": 2359584000,
+      "mtp_expert_bytes": 49158000,
+      "expert_bank_49_layers_bytes": 123327590400,
+      "two_card_weight_floor_bytes": 133443446298,
+      "capacity_slack_before_KV_state_graphs": -64958850586,
+      "stream_ceiling_tps_aggregate19_38GBs": [
+        8.052266840256587,
+        16.104533680513175
+      ],
+      "uniform_cache": {
+        "8": {
+          "cache_GB_total_two_cards": 8,
+          "assumed_hit": 0.06486788539411859,
+          "miss_bytes_per_token": 2206522775.5102043,
+          "ceiling_tps_aggregate19_38GBs": [
+            8.610833394006875,
+            17.22166678801375
+          ]
+        },
+        "16": {
+          "cache_GB_total_two_cards": 16,
+          "assumed_hit": 0.12973577078823717,
+          "miss_bytes_per_token": 2053461551.0204082,
+          "ceiling_tps_aggregate19_38GBs": [
+            9.25266898255704,
+            18.50533796511408
+          ]
+        },
+        "24": {
+          "cache_GB_total_two_cards": 24,
+          "assumed_hit": 0.19460365618235576,
+          "miss_bytes_per_token": 1900400326.5306122,
+          "ceiling_tps_aggregate19_38GBs": [
+            9.997893462103624,
+            19.99578692420725
+          ]
+        }
+      }
+    },
+    "UD-IQ4_XS idealized IQ4_XS": {
+      "block": {
+        "type": "IQ4_XS",
+        "elements": 256,
+        "bytes": 136
+      },
+      "expert_triplet_bytes": 2611200,
+      "target_expert_bytes": 1253376000,
+      "mtp_expert_bytes": 26112000,
+      "expert_bank_49_layers_bytes": 65509785600,
+      "two_card_weight_floor_bytes": 75625641498,
+      "capacity_slack_before_KV_state_graphs": -7141045786,
+      "stream_ceiling_tps_aggregate19_38GBs": [
+        15.15905841503268,
+        30.31811683006536
+      ],
+      "uniform_cache": {
+        "8": {
+          "cache_GB_total_two_cards": 8,
+          "assumed_hit": 0.12211916016406563,
+          "miss_bytes_per_token": 1100314775.510204,
+          "ceiling_tps_aggregate19_38GBs": [
+            17.267785930794126,
+            34.53557186158825
+          ]
+        },
+        "16": {
+          "cache_GB_total_two_cards": 16,
+          "assumed_hit": 0.24423832032813125,
+          "miss_bytes_per_token": 947253551.020408,
+          "ceiling_tps_aggregate19_38GBs": [
+            20.05798762066679,
+            40.11597524133358
+          ]
+        },
+        "24": {
+          "cache_GB_total_two_cards": 24,
+          "assumed_hit": 0.36635748049219685,
+          "miss_bytes_per_token": 794192326.5306122,
+          "ceiling_tps_aggregate19_38GBs": [
+            23.923676123893703,
+            47.847352247787406
+          ]
+        }
+      }
+    },
+    "UD-IQ3_XXS idealized IQ3_XXS": {
+      "block": {
+        "type": "IQ3_XXS",
+        "elements": 256,
+        "bytes": 98
+      },
+      "expert_triplet_bytes": 1881600,
+      "target_expert_bytes": 903168000,
+      "mtp_expert_bytes": 18816000,
+      "expert_bank_49_layers_bytes": 47205580800,
+      "two_card_weight_floor_bytes": 57321436698,
+      "capacity_slack_before_KV_state_graphs": 11163159014,
+      "stream_ceiling_tps_aggregate19_38GBs": [
+        21.03706065759637,
+        42.07412131519274
+      ],
+      "uniform_cache": {
+        "8": {
+          "cache_GB_total_two_cards": 8,
+          "assumed_hit": 0.1694714875746217,
+          "miss_bytes_per_token": 750106775.5102041,
+          "ceiling_tps_aggregate19_38GBs": [
+            25.32972720727215,
+            50.6594544145443
+          ]
+        },
+        "16": {
+          "cache_GB_total_two_cards": 16,
+          "assumed_hit": 0.3389429751492434,
+          "miss_bytes_per_token": 597045551.0204082,
+          "ceiling_tps_aggregate19_38GBs": [
+            31.823367526191554,
+            63.64673505238311
+          ]
+        },
+        "24": {
+          "cache_GB_total_two_cards": 24,
+          "assumed_hit": 0.508414462723865,
+          "miss_bytes_per_token": 443984326.5306123,
+          "ceiling_tps_aggregate19_38GBs": [
+            42.79430345766939,
+            85.58860691533879
+          ]
+        }
+      }
+    },
+    "UD-Q3_K_XL idealized Q3_K": {
+      "block": {
+        "type": "Q3_K",
+        "elements": 256,
+        "bytes": 110
+      },
+      "expert_triplet_bytes": 2112000,
+      "target_expert_bytes": 1013760000,
+      "mtp_expert_bytes": 21120000,
+      "expert_bank_49_layers_bytes": 52985856000,
+      "two_card_weight_floor_bytes": 63101711898,
+      "capacity_slack_before_KV_state_graphs": 5382883814,
+      "stream_ceiling_tps_aggregate19_38GBs": [
+        18.742108585858585,
+        37.48421717171717
+      ],
+      "uniform_cache": {
+        "8": {
+          "cache_GB_total_two_cards": 8,
+          "assumed_hit": 0.1509836889301175,
+          "miss_bytes_per_token": 860698775.5102041,
+          "ceiling_tps_aggregate19_38GBs": [
+            22.075086593143112,
+            44.150173186286224
+          ]
+        },
+        "16": {
+          "cache_GB_total_two_cards": 16,
+          "assumed_hit": 0.301967377860235,
+          "miss_bytes_per_token": 707637551.0204082,
+          "ceiling_tps_aggregate19_38GBs": [
+            26.849903559530073,
+            53.69980711906015
+          ]
+        },
+        "24": {
+          "cache_GB_total_two_cards": 24,
+          "assumed_hit": 0.4529510667903525,
+          "miss_bytes_per_token": 554576326.5306122,
+          "ceiling_tps_aggregate19_38GBs": [
+            34.260387779014245,
+            68.52077555802849
+          ]
+        }
+      }
+    }
+  }
+}
