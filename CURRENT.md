@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**2026-10-10 08:22 UTC, packet 126 sealed (request-thread storage walks removed; `LTX_STORAGE_SCAN_MODE=background`); swapping to 126 at 145.**
+Codex's regression analysis (`notes/2026-10-10-continuation123b-regression.md`, commits 78a57ca3a, 2287c2bfb): the 123b own-writes
+accounting ran filesystem walks on the request thread; the CPU plan-check replay saves 0.144 s per chunk with the scan moved to a
+background sampler (the 50 GiB reserve check stays per request); preview fsync was already asynchronous. The claimed +0.15 s aux card-hop
+penalty is not established by matched windows. 126 (parent 125; manifest `fe5ce9e0…0aa4`; inner plan `3858a121…92e8`; 696 recovery /
+2,353 client / 10 preflight CPU checks). The 125 session (≈ 190 chunks, exact) stopped by one controlled stop; launching
+`LTX_STORAGE_SCAN_MODE=background LTX_GC_INTERVAL_SECONDS=10 LTX_AUX_RESIDENCY=legacy LTX_DISPLAY_WORKER=serial LTX_RUN_WRITE_ALLOWANCE_GIB=16
+launch-126.sh 145 frame 0 cone 1 1 fingerprint - sampler-a 0 full xpu:3` (work dir `s126-live01`); predicted 5.55–5.75 s (target 5.61–5.64 =
+the 121 line). Then 169 on 126 with 124's display worker on xpu:2 and the 6.5 GiB reserve.
+
 **2026-10-10 08:12 UTC, packet 126 sealed on CPU; live qualification remains with the coordinator.**
 The saved receipts identify repeated storage walks and larger plan checks as
 extra CPU work. Preview fsync was already on a separate worker. Packet 126's
