@@ -110,6 +110,18 @@ documents permission controls and native journal replay, and warns against
 forcing a dirty volume. It does not establish this drive's performance.
 No filesystem or power setting change is part of this plan.
 
+### Observed 2026-10-10 (read-only mount by the reviewer)
+
+`/dev/sda2` (NTFS, label CorsairExternal, 3.7 TB) was mounted read-only for
+one minute at `/mnt/corsair-ro` and unmounted again. It has **356 GB free**
+(3.3 TB used, 91 %) and already holds lab material next to the owner's own
+files: `archived-fast-ai-bench-results`, `bench-results`, `hf-cache`, `cache`,
+`cache-archive`, 72 top-level entries in all. Nothing was written. Capacity is
+enough for the official 27B FP8 (30.9 GB) and one Unsloth Flash-Next GGUF
+(82–111 GB) together. Using it as the download cache is the owner's decision;
+NTFS mmap and read speed must be measured before any weights are served from
+it rather than copied to the NVMe.
+
 ## Exact allowed Stage 2 GGUF alternatives
 
 The following metadata was fetched from the
