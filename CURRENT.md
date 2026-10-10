@@ -1,5 +1,11 @@
 # Current Workspace State
 
+**2026-10-10 06:35 UTC, 169 frames measured: exact but 0.975 s/s (loss vs 145's 0.94–0.955); back to 123b at 145 (aux xpu:2).**
+169 (verdict 4eeb3b603c94, n = 27 periods): median 6.824 s per 7.0 s of video; cone on the chain 1.73 s (145: 1.02) and the eager display
+decode 3.98 s (over its 3 s bound) share xpu:3, so the cone waits behind the previous display; memory held (min margin 1.93 GB, periodic
+duals only). Note `experiments/ltx25-b70/notes/2026-10-10-continuation123b-results-169-coordinator.md`. Controlled stop 06:33 UTC, names
+archived, 145 aux line relaunching (`s123b-live02`). Next design (packet 124, Codex): 169 with the display decode off xpu:3 within memory.
+
 **2026-10-10 06:12 UTC, 123b at 145 frames with `aux_residency=xpu2` qualified exact (verdict d410928322ba, 32/32 byte-identical to 121); swapping to 169 frames.**
 Measured with the upsampler and audio VAE/vocoder on xpu:2 (chunks ≥ 10, n = 23): period median 5.73 s (legacy 5.76), sampler A/B
 1.91 / 1.62, cone 1.02 (legacy 0.88), display decode 2.75; minimum snapshot margin **1.98 GB** (legacy 1.39), dual snapshots periodic
