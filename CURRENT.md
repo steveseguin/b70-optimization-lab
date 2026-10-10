@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**2026-10-10 04:25 UTC, packet 121 at 145 frames live: 5.61 s per 6.0 s of new video = 0.935 s/s, exact; the stream runs ahead of real time.**
+Launched 04:08:58 UTC (`launch-121.sh 145 frame 0 cone 1 1 fingerprint - sampler-a 0 full xpu:3`), qualification verdict
+356b25be584b at 04:17:28 (exact replay c0/c1/c2, measured geometry matches the sealed formulas: 145 frames, 144 new frames = 6.0 s
+of video per anchored chunk), client `start-client-121.sh 145 0 cone 1 1 fingerprint none sampler-a 0 full xpu:3` (work dir
+`s121-live01`). Steady state (chunks ≥ 10, n = 24): period median **5.612 s** (mean 5.75, p90 6.23) per 6.0 s of video; sampler A 1.91,
+sampler B 1.68, cone on the chain 0.87 (eager), text+A-prep 0.51, upsample+B-prep 0.29, receipt 0.10; display decode off-chain 2.72;
+dual snapshots periodic only (1/22); minimum snapshot margin 1.39 GB; `cone_equal` true on all. The sink's buffer is growing
+(12 s after 29 clips) and holds have stopped. Fixed per-chunk costs amortised as predicted (sampler A+B 3.59 s for +20 % frames vs
+3.11 at 121). Next arms: 145 frames with 120's dg1 cap 1.0 + eager display on the xpu:2 replica (cone −0.2 s → ≈ 0.90 s/s), and a
+169-frame census refined from these receipts (packet 122, Codex).
+
 **2026-10-10 04:06 UTC, packet 121 (145-frame chunks) sealed; swap from 120 to its first arm (145 frames, dg0, display on xpu:3).**
 Codex sealed 121 (commit 11eec57ad; manifest `8f1d4e3b…44dd`; 461 recovery / 571 client / 10 preflight CPU checks; 1,980 files
 verified recursively; design `notes/2026-10-10-continuation121-stream-design.md`). Geometry at 145 frames: 6.04 s of video per
