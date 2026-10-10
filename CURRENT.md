@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**2026-10-10 09:15 UTC, 127 at 169 (display replica on xpu:2, parallel worker, 6.5 GiB reserve) refused by its own memory guard during qualification; no fault. Back to 127 at 145.**
+At qrepeat-c000001 the xpu:2 display replica refused: free 8,465,399,808 B < transient 6.5 GiB + 2 GiB floor (8.5 GiB); the server halted
+(`stream-halt.json`), the client stopped (exit 6), latch `display-replica-120-refused.json` written. Kernel journal clean, health probe
+passed. The 124 census overestimated xpu:2 headroom at 169 by ≈ 0.6 GB; the reserve cannot be lowered below the census by design, so 169
+with the replica is not admissible until xpu:2 memory is found (candidates for a later packet: trim what else sits on xpu:2 — the 123
+auxiliaries are on legacy cards, so xpu:2 holds the replica weights 0.83 GB plus sampler/text workspace ≈ 18 GB allocated at qualification).
+Latch archived with a review receipt (`data/resume-20261008/latch-archive-display-replica-120-…-receipt.json`: memory guard, not exactness;
+the lever stays admitted at 121/145 where it qualified exact). Also: `LTX_GC_INTERVAL_SECONDS=60` and `LTX_SNAPSHOT_DIGEST_CACHE=1` are
+scoped by the 127 launcher to the 145/serial/xpu:3 arm only (first 169 rehearsal refused "GC60 scope"). Relaunching the production line:
+`LTX_SNAPSHOT_DIGEST_CACHE=1 LTX_STORAGE_SCAN_MODE=background LTX_GC_INTERVAL_SECONDS=60 LTX_AUX_RESIDENCY=legacy LTX_DISPLAY_WORKER=serial
+LTX_RUN_WRITE_ALLOWANCE_GIB=16 launch-127.sh 145 frame 0 cone 1 1 fingerprint - sampler-a 0 full xpu:3` (work dir `s127-live01`).
+
 **2026-10-10 09:10 UTC, packet 127 sealed with the 145-frame budget; the 2-cycle is quantified (even chunks: commit → served 0.32 s vs 0.04, text+A-prep 0.68 vs 0.50; whole period 6.10 vs 5.57); launching 127 at 169 with 124's display worker.**
 Budget note `notes/2026-10-10-continuation-budget-145.md` (commits f14b3e4f2, 66f78927a): samplers 62 % of the period, all 48 blocks
 already under graph replay; six snapshots 0.37 s; the parity penalty ≈ 0.53 s on even chunks (≈ 0.27 s per chunk averaged) sits in the
