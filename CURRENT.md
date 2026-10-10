@@ -1,18 +1,18 @@
 # Current Workspace State
 
-**2026-10-10, CPU-only H3 recovery plan:** The [recovery plan](repro/minimax-h3-pruned-bf16-tp2-b70-20261004/RECOVERY-PLAN.md) queues 66.281 GB of official inputs and a separate Comfy set that still needs the owner's source approval; nothing was downloaded beyond metadata or written to the model disks.
-The CPU tool now assembles and hashes complete candidate files, with synthetic tests passing, but the old fit has unrecorded details and has not been recovered.
-The package stays draft unless the exact file is recovered; any new fit needs a new identity, measurements and the owner's decision, and no GPU or service was touched.
+**2026-10-10, H3 source correction:** The denoiser is Comfy-Org's published file, already on turin (two B70 cards, 15 GiB RAM), and the owner's model acceptance also approves that source; the [corrected packet](repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md) records publisher pins and read-only file checks.
+The fit search and re-download queue are superseded; the recipe stays draft because baseline/reference receipts, clean-build/runtime, independent full-suite repeat and portable public-release evidence are still missing.
+This CPU-only correction used no GPU, service, unit or weight download and changed no model files.
 
 **2026-10-10, own-runtime official 27B weights checked:** The weights were already on the USB disk; [CPU packet 2](experiments/own-xpu-runtime/stage1/packet2/README.md) passes all 67 large-file hashes, 14 small publisher files, all 1,606 tensor descriptions and repeated CPU sample checks.
 Text and MTP weights need 29.945 GB with the embedding on the card; scales multiply each 128×128 FP8 block, and the estimated working-memory margin is small enough that actual one-card fit remains unproven.
 No GPU, server, unit, download, protected model/cache write or host setting was used; temporary test files were removed and the host halt remains unchanged.
 
-**2026-10-10, CPU-only H3 fit recovery:** The [fit packet](repro/minimax-h3-pruned-bf16-tp2-b70-20261004/fit/README.md) preserves the history search and a tested CPU comparison tool, but the official and fitted inputs were absent here, so no new weight comparison was possible.
+**SUPERSEDED by the H3 source correction above — 2026-10-10, CPU-only H3 fit recovery:** The [fit packet](repro/minimax-h3-pruned-bf16-tp2-b70-20261004/fit/README.md) preserves the history search and a tested CPU comparison tool, but the official and fitted inputs were absent here, so no new weight comparison was possible.
 The old note's largest coefficient difference is 0.003723 / 1561 ULP; the exact fit is still unrecovered and the package stays draft.
 The owner can choose whether to distribute only the fitted parameters under the documented license conditions; no weights were downloaded or distributed, and GPU work, services and protected download directories were untouched.
 
-**2026-10-10, CPU-only H3 publication:** The owner chose the AdaLN-fitted H3 variant and its scheduling result, and that decision is now in AGENTS.md.
+**Historical entry; provenance and missing gates corrected above — 2026-10-10, CPU-only H3 publication:** The owner chose the AdaLN-fitted H3 variant and its scheduling result, and that decision is now in AGENTS.md.
 The [package and guide](repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md) show the measured eight-clip batch at 396.6 seconds per clip, with 32 matching hash checks; the older baseline is clearly marked as ledger-only.
 H3 is featured beside LTX, with official input metadata pins and the exact historical batch settings.
 The fit checker does not reproduce the original fitted weights, and missing historical receipts and clean-build evidence keep the public rebuild incomplete; no derived weights are distributed.

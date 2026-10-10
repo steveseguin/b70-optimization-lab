@@ -1,5 +1,7 @@
 # MiniMax-H3 on the two-B70 host: lane packet (opened 2026-09-17)
 
+**2026-10-10 provenance correction:** Comfy-Org's published pruned BF16 denoiser (`minimax_h3_fl2va_pruned_bf16.safetensors`): all weights bit-exact with the official checkpoint except the AdaLN tables, which that release replaces with a fitted approximation (lab analysis: below the BF16 noise floor); the 2x result is an exact scheduling speedup against that denoiser's own reference (32 MATCH / 0 DIFFERS, 8 repeat passes). The lab analyzed this published file; it did not produce the fit. The measured run and recipe target turin (`steve-TURIND8-2L2T`), two B70 cards and 15 GiB RAM. The owner approved this exact model and its Comfy-Org source. [Pinned inputs, verification and remaining publication gates](../../repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md).
+
 Status (2026-10-04): **lossless only; 8 clips in 3173 s = 396.6 s/clip (2.02x the baseline), every clip bit-identical
 to the September receipts.** The persistent decode server passed its exact gate. The server
 (`h3_vae_duet.py --serve`) keeps both decode workers loaded across a batch: 41.1 s per clip instead

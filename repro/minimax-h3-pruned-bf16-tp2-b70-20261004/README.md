@@ -7,11 +7,7 @@ with 32 kHz stereo audio. This is whole-batch time divided by eight, not the wai
 for the first clip or an observed delivery cadence.
 [Measured result](featured-observation.json) · [session receipt](../../experiments/minimax-h3-b70/data/2026-10-04-soak8/session.log).
 
-The served denoiser is the **AdaLN-fitted variant (all other weights bit-exact
-with the official checkpoint; the AdaLN tables are a fitted approximation
-measured below the BF16 noise floor)**. The 2x result is an **exact scheduling
-speedup against that denoiser's own reference (32 MATCH / 0 DIFFERS, 8 repeat
-passes)**. The comparison is to an 800.8 s/clip **ledger-recorded baseline, raw
+Comfy-Org's published pruned BF16 denoiser (`minimax_h3_fl2va_pruned_bf16.safetensors`): all weights bit-exact with the official checkpoint except the AdaLN tables, which that release replaces with a fitted approximation (lab analysis: below the BF16 noise floor); the 2x result is an exact scheduling speedup against that denoiser's own reference (32 MATCH / 0 DIFFERS, 8 repeat passes). The comparison is to an 800.8 s/clip **ledger-recorded baseline, raw
 receipts not retained**. The historical ratio is 2.019×; this is not a newly
 matched baseline measurement. The eight repeat passes are eight clip comparisons
 in one batch, not eight independently timed batches.
@@ -29,7 +25,7 @@ official-model parity or all 50 blocks. The
 
 | Item | Status |
 | --- | --- |
-| Cards | Two Intel Arc Pro B70, 32 GiB each; split at block 25 |
+| Cards / host | turin (`steve-TURIND8-2L2T`): two Intel Arc Pro B70, 32 GiB each, 15 GiB host RAM; split at block 25. Both the measured run and recipe target this two-card host. |
 | Runtime | Native Python 3.12.3, PyTorch 2.14.0+xpu, diffusers 0.41.0.dev0 |
 | Schedule | 51 sigma grid points / 50 transformer evaluations, seed 42 per prompt, no LoRA |
 | Decode | FP32 video arithmetic; two persistent decode processes, audio overlap |
@@ -67,59 +63,29 @@ identifies those converted inputs. No derived weights are rehosted here.
 ## Pinned inputs and verification
 
 [model-manifest.json](model-manifest.json) records paths, byte sizes, SHA-256
-and immutable upstream URLs. Weight hashes come from HF LFS metadata; non-LFS
-metadata keeps its Git blob SHA-1 with SHA-256 explicitly null. No weights were fetched during
-publication. These are reconstruction pins; the historical run did not retain
-full-file model hashes, so they are **not verified historical run pins**.
+and immutable upstream URLs. Weight hashes come from revision-pinned HF LFS metadata and are checked against existing turin copies in the [read-only hashing receipt](turin-file-verification.jsonl). Small metadata files are checked against HF Git-blob identities, with local SHA-256 also recorded. No weights were downloaded in this correction. [Provenance and gates](PROVENANCE-CORRECTION.md).
 
 | Source | Revision / file hash |
 | --- | --- |
 | Official `MiniMaxAI/MiniMax-H3` | `42ed227ee7df40d41602854ae760620d6eb651fe`; official transformer shards, VAEs, configs, tokenizer and schedulers in the manifest |
 | `Comfy-Org/MiniMax-H3` | `e5eb578a89295337b8ff433a035929ce0279e0b6` |
-| Fitted BF16 denoiser | `diffusion_models/minimax_h3_fl2va_pruned_bf16.safetensors`, 40,225,724,176 bytes; `a32572fb90b5508b201ec7c2eddcc184b13ddfd3c6f6d2cf06a0b46535d541b4` |
+| Comfy-Org published pruned BF16 denoiser | `diffusion_models/minimax_h3_fl2va_pruned_bf16.safetensors`, 40,225,724,176 bytes; `a32572fb90b5508b201ec7c2eddcc184b13ddfd3c6f6d2cf06a0b46535d541b4` |
 | INT8 encoder | `text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors`, 27,141,342,152 bytes; `bc2ced0fbea64757fa9acddccfc0b3f4819d1dcf1da6c124d690d368be283923` |
 
-For a future reconstruction, download the listed official files at that revision
-into a new, explicitly chosen model directory using the URLs in the manifest.
-Check each size and hash, write a `DOWNLOAD-MANIFEST.txt`, and make verified
-files read-only. An existing historical fitted checkpoint and encoder may be
-verified against the candidate pins, but a match must actually be measured.
-The encoder pin is provenance, not permission to silently substitute a newly
-quantized encoder. Do not download into another lane's active model cache.
+For reproduction, download the pinned Comfy-Org and MiniMaxAI files listed in
+[model-manifest.json](model-manifest.json), using each immutable URL and verifying
+its size and SHA-256 before use. No fitting or newly produced denoiser is needed.
+The existing lab copies are already on turin under `/mnt/fast-ai/llm-models/minimax-h3`
+and `minimax-h3-comfy`; **nothing needs re-downloading for the lab**. The erroneous
+recovery intake entries have been removed. External users obtain the pinned files
+from the publishers under their license terms, in their own chosen model directory.
 
-## AdaLN fit: the exact missing step
-
-The retained [analysis script](../../experiments/minimax-h3-b70/scripts/check-adaln-table.py)
-and [measurement note](../../experiments/minimax-h3-b70/notes/2026-09-17-adaln-table-exactness.md)
-establish the form: sample `S = silu(time_embedder(t))` at `t=i/1024`; subtract
-its mean; keep the top eight SVD coordinates; fold their projection and the
-mean into each AdaLN weight and bias. Runtime lookup linearly interpolates the
-1025-row table. All other denoiser tensors retain the official BF16 values.
-
-**Not reproduced bit-exactly.** The September table reports a worst coefficient
-difference of **0.003723 / 1561 stored-F16 ULP** at block 25, not just the
-roughly 1300 ULP mentioned in its prose. That historical comparison used the
-stored table/bias and is not a new measurement.
-
-The [CPU recovery packet](fit/README.md) now includes the Git-history search,
-refreshed pinned HF metadata, a bounded-memory candidate fit/comparison script,
-and its [attempt receipt](fit/attempt.json). No producer was recovered. The
-receipt-named official and fitted inputs are absent on the four-card host, so
-the new attempt stopped before tensor reads; new differences and tensor hashes
-are null. The synthetic CPU tests do not establish H3 reproduction. The later
-[recovery plan](RECOVERY-PLAN.md) queues the official inputs and separate
-approval-pending Comfy inputs, and adds an automatic independent fit search,
-streamed whole-file assembly and the exact recorded SHA-256 gate; no real search
-has run and no weight payload was downloaded.
-
-**Reproduction step remains missing:** obtain permitted local inputs and run
-the [CPU comparison command](fit/README.md#cpu-comparison-command-when-inputs-become-available),
-recover matching coefficients and then verify the full assembled denoiser.
-Do not install candidate coefficients as the measured target. Alternatively,
-the owner could choose a supplement containing the table and all fitted
-weight/bias pairs (about 83.27 MiB); the [license decision](fit/README.md#owner-option-distribute-only-the-fitted-parameters)
-identifies Section III and the territorial and notice conditions. No derived
-weights are distributed, and that decision remains with the owner.
+The lane's [download script](download-pruned-script.txt) explicitly downloaded the
+Comfy-Org denoiser. The September [AdaLN note](../../experiments/minimax-h3-b70/notes/2026-09-17-adaln-table-exactness.md)
+is an analysis of that published file, not a lab fit procedure. The
+[fit directory](fit/README.md) and [recovery plan](RECOVERY-PLAN.md) are superseded
+history. The owner's October 10 acceptance of this exact model also approves the
+Comfy-Org source under the repository source rule; no extra approval is pending.
 
 ## Runtime and source reconstruction
 
@@ -243,14 +209,16 @@ evidence and use the owning host's recovery procedure if normal completion fails
 
 ## Remaining work
 
-The owner decision is complete. Technical gaps remain: the exact fit producer;
-historical full weight hashes and September reference/baseline receipts; the
-editable runtime's complete source delta; a clean build and runtime smoke;
-independent 50-NFE full-suite repeat evidence; portable path/stop qualification;
-and release assets downloaded and hashed from public URLs. No separate new
-media-review receipt was invented from the owner's acceptance. The recipe
-publication manifest remains `draft`, and the strict metric slot stays null.
-The selected measured batch remains visible as a scoped video result.
+Weight identity and the documented license/source position now pass, with
+revision-pinned metadata and read-only verification of turin's existing files.
+The publication manifest remains **draft**. Remaining gaps are September
+baseline/reference raw receipts; a complete runtime source delta, clean build
+and smoke test; an independent 50-NFE full-suite repeat; portable paths and a
+qualified mid-batch stop; and public native-runtime release assets and clean-host
+replay. The native-video-draft contract requires build/smoke/quality certification
+to remain false until supported by evidence. The strict metric slot stays null.
+See the [gate reassessment](publication-gates.json). The owner-selected measured
+batch remains visible as a scoped video result.
 
 [Detailed evidence audit](../../experiments/minimax-h3-b70/publication-draft/EVIDENCE.md)
 · [results ledger](../../results/minimax-h3-b70/README.md)

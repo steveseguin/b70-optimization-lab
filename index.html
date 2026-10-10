@@ -585,11 +585,11 @@ Style genome (duotone-hixffp):
       <li class="pick-row research" data-pick-id="minimax-h3-pruned-bf16-tp2-b70-20261004">
         <div class="pick-head"><span class="pick-rank">8</span><div>
           <p class="eyebrow">Independent video clips with audio on two cards</p>
-          <p class="eyebrow research">Owner-approved AdaLN-fitted variant · exact scheduling</p>
-          <h3><a href="models/minimax-h3-pruned-bf16-tp2-b70-20261004.html">MiniMax-H3 · video with audio on two cards</a> <span class="card-chip">2 cards</span><small>AdaLN-fitted BF16 denoiser + INT8 ConvRot encoder · Native diffusers / PyTorch XPU</small></h3>
-          <p class="pick-why">Independent clips with stereo sound. The fitted AdaLN tables approximate the official model below the measured BF16 noise floor; all other denoiser weights are bit-exact. The scheduling speedup preserves this variant’s own reference.</p>
+          <p class="eyebrow research">Owner-approved Comfy-Org denoiser · exact scheduling</p>
+          <h3><a href="models/minimax-h3-pruned-bf16-tp2-b70-20261004.html">MiniMax-H3 · video with audio on two cards</a> <span class="card-chip">2 cards</span><small>Comfy-Org pruned BF16 denoiser + INT8 ConvRot encoder · Native diffusers / PyTorch XPU</small></h3>
+          <p class="pick-why">Comfy-Org&#x27;s published pruned BF16 denoiser (minimax_h3_fl2va_pruned_bf16.safetensors): all weights bit-exact with the official checkpoint except the AdaLN tables, which that release replaces with a fitted approximation (lab analysis: below the BF16 noise floor); the 2x result is an exact scheduling speedup against that denoiser&#x27;s own reference (32 MATCH / 0 DIFFERS, 8 repeat passes).</p>
         </div></div>
-        <div class="pick-bars"><p class="pick-note"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-h3-pruned-bf16-tp2-b70-20261004/featured-observation.json">396.6 seconds per clip (eight-clip batch average)</a></p><p class="pick-note">124 frames at 960×544 per clip; 24 fps is playback speed. 32 MATCH / 0 DIFFERS, 8 repeat passes against its own reference. The 2× comparison uses an 800.8 s/clip ledger-recorded baseline, raw receipts not retained. Exact fit reconstruction and public runtime rebuild remain incomplete.</p></div>
+        <div class="pick-bars"><p class="pick-note"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-h3-pruned-bf16-tp2-b70-20261004/featured-observation.json">396.6 seconds per clip (eight-clip batch average)</a></p><p class="pick-note">124 frames at 960×544 per clip; 24 fps is playback speed. 32 MATCH / 0 DIFFERS, 8 repeat passes against its own reference. The 2× comparison uses an 800.8 s/clip ledger-recorded baseline, raw receipts not retained. Measured on turin: two B70 cards, 15 GiB RAM. Baseline raw receipts, clean runtime build, independent full-suite repeat, portable path/stop qualification and public release evidence remain incomplete.</p></div>
         <div class="pick-links"><a class="button" href="models/minimax-h3-pruned-bf16-tp2-b70-20261004.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md">Setup guide and quality status</a></div>
       </li>
 </ol>
@@ -702,7 +702,7 @@ Style genome (duotone-hixffp):
 </ol>
 </details>
     <p class="pick-scale">Bars use fixed scales: one person 250 tok/s; combined users 1,400 tok/s; prompt reading 4,200 tok/s. User counts and tests differ; every value links to its receipt. Video has its own units and no token-speed bar.</p>
-    <p class="research-links">All recipes and numbers remain in the tables below and the <a href="models/">model library</a>. H3 means MiniMax-H3, an audio/video generator. It has <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/minimax-h3-b70/README.md">public lab notes</a>, and an owner-approved AdaLN-fitted package; its public rebuild remains incomplete.</p>
+    <p class="research-links">All recipes and numbers remain in the tables below and the <a href="models/">model library</a>. H3 means MiniMax-H3, an audio/video generator. It has <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/minimax-h3-b70/README.md">public lab notes</a>, and an owner-approved Comfy-Org pruned BF16 package; its public rebuild remains incomplete.</p>
   </div>
 </section>
 <!-- END GENERATED FEATURED PICKS -->

@@ -1,0 +1,42 @@
+{
+  "schema": "neural.download.h3-publication-gate-review.v1",
+  "date": "2026-10-10",
+  "publication_status": "draft",
+  "standard": "docs/recipe-publication-standard.md",
+  "passes": {
+    "weight_identity": {
+      "passed": true,
+      "evidence": [
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/model-manifest.json",
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/turin-file-verification.jsonl",
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/publisher-metadata-verification.json"
+      ]
+    },
+    "source_approval": {
+      "passed": true,
+      "evidence": "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/owner-decision.json"
+    },
+    "license_position_documented": {
+      "passed": true,
+      "scope": "Publisher links and terms documented; no model tensors redistributed; not unrestricted use permission",
+      "links": [
+        "https://huggingface.co/Comfy-Org/MiniMax-H3/blob/e5eb578a89295337b8ff433a035929ce0279e0b6/README.md",
+        "https://huggingface.co/MiniMaxAI/MiniMax-H3/blob/42ed227ee7df40d41602854ae760620d6eb651fe/LICENSE"
+      ]
+    }
+  },
+  "remaining": {
+    "baseline_reference_raw_receipts": false,
+    "clean_source_build": false,
+    "runtime_smoke": false,
+    "independent_full_suite_repeat": false,
+    "portable_paths_and_mid_batch_stop": false,
+    "public_native_release_assets": false,
+    "clean_host_replay": false
+  },
+  "not_required": [
+    "Lab AdaLN fit reconstruction: the target is a published Comfy-Org file",
+    "Lab re-download: the inputs exist on turin"
+  ],
+  "certification_note": "Existing retained session quality evidence unchanged; native-video-draft build/smoke/quality flags stay false."
+}

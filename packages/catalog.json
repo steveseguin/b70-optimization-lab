@@ -1462,11 +1462,11 @@
       "library": {
         "model_family": "MiniMax-H3",
         "publisher": "MiniMaxAI",
-        "variant": "AdaLN-fitted BF16 denoiser; INT8 ConvRot encoder",
-        "summary": "Owner-approved AdaLN-fitted variant; one receipted eight-clip batch: 3173 seconds total, 396.625 seconds per clip. Exact scheduling against its own reference. Reconstruction incomplete.",
-        "public_summary": "Make independent video clips with stereo sound on two cards. Eight clips took 396.6 seconds each on average. Rebuilding the chosen fitted weights from the official download is still unresolved.",
-        "public_caveat": "AdaLN tables are a fitted approximation measured below the BF16 noise floor; all other denoiser weights are bit-exact with the official checkpoint. Exact scheduling against its own reference: 32 MATCH / 0 DIFFERS, 8 repeat passes. The 800.8 s/clip comparison is a ledger-recorded baseline, raw receipts not retained. No official-model parity claim.",
-        "quantization": "AdaLN-fitted BF16 denoiser + INT8 ConvRot encoder",
+        "variant": "Comfy-Org pruned BF16 denoiser; INT8 ConvRot encoder",
+        "summary": "Owner-approved Comfy-Org published denoiser; one receipted eight-clip batch: 3173 seconds total, 396.625 seconds per clip. Exact scheduling against its own reference. Public runtime rebuild incomplete.",
+        "public_summary": "Make independent video clips with stereo sound on turin: two B70 cards and 15 GiB RAM. Eight clips took 396.6 seconds each on average. The published weights are pinned and verified; clean-build and independent full-suite repeat evidence remain missing.",
+        "public_caveat": "Comfy-Org's published pruned BF16 denoiser (minimax_h3_fl2va_pruned_bf16.safetensors): all weights bit-exact with the official checkpoint except the AdaLN tables, which that release replaces with a fitted approximation (lab analysis: below the BF16 noise floor); the 2x result is an exact scheduling speedup against that denoiser's own reference (32 MATCH / 0 DIFFERS, 8 repeat passes). The 800.8 s/clip comparison is a ledger-recorded baseline, raw receipts not retained. No official-model parity claim.",
+        "quantization": "Comfy-Org pruned BF16 denoiser + INT8 ConvRot encoder",
         "runtime_label": "Native diffusers / PyTorch XPU",
         "operating_systems": [
           "Linux"
@@ -1484,13 +1484,14 @@
         ],
         "tags": [
           "two cards",
-          "AdaLN fitted",
+          "Comfy-Org published denoiser",
           "owner approved",
           "eight-clip batch"
         ],
         "published_at": "2026-10-10",
         "featured_metric": null,
-        "benchmark_status": "Owner-approved measured batch; strict headline certification pending: historical input binding and independent full-suite repeats are incomplete."
+        "benchmark_status": "Owner-approved measured batch; strict headline certification pending: baseline raw receipts and independent full-suite repeat are absent.",
+        "public_missing_note": "The weights are pinned and verified. This draft still lacks baseline/reference raw receipts, a clean runtime build and smoke test, an independent full-suite repeat, portable path and stop checks, public runtime release assets, and a clean-host replay."
       },
       "contributors": [
         {
@@ -1508,7 +1509,7 @@
           "name": "Comfy-Org",
           "kind": "external",
           "profile": "https://huggingface.co/Comfy-Org/MiniMax-H3",
-          "contribution": "Source of AdaLN-fitted checkpoint and INT8 ConvRot encoder; fit producer not recovered by the lab.",
+          "contribution": "Publisher of the pruned BF16 denoiser and INT8 ConvRot encoder; lab analysis describes the released AdaLN approximation, not a lab fit procedure.",
           "status": "acknowledged",
           "validated_effect": "Isolated speed effect not measured; no credit for lab scheduling.",
           "evidence": "experiments/minimax-h3-b70/notes/2026-09-17-adaln-table-exactness.md"
@@ -1517,13 +1518,13 @@
       "hardware": {
         "accelerator": "Intel Arc Pro B70 32 GiB",
         "cards": 2,
-        "host_memory": "15 GiB on measured host; portable minimum unqualified"
+        "host_memory": "15 GiB; turin (steve-TURIND8-2L2T), measured run and recipe target; portable minimum unqualified"
       },
       "model": {
-        "repository": "MiniMaxAI/MiniMax-H3",
-        "revision": "42ed227ee7df40d41602854ae760620d6eb651fe",
+        "repository": "Comfy-Org/MiniMax-H3",
+        "revision": "e5eb578a89295337b8ff433a035929ce0279e0b6",
         "manifest": "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/model-manifest.json",
-        "revision_scope": "Official reconstruction pin only; historical run bytes unbound"
+        "revision_scope": "Published denoiser and companion inputs pinned to HF metadata and verified on existing turin copies; official MiniMaxAI companion revision in manifest"
       },
       "runtime": {
         "kind": "native",
@@ -1540,16 +1541,15 @@
       },
       "commands": {
         "preflight": "python3 -B repro/minimax-h3-pruned-bf16-tp2-b70-20261004/verify-evidence.py",
-        "launch": "Read repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md for exact historical batch commands; fit/runtime reconstruction incomplete.",
+        "launch": "Read repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md for exact historical batch commands; clean runtime rebuild incomplete.",
         "health": "Read repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md for mandatory wrapper preflight, watchdog and health requirements.",
         "benchmark": "python3 -B repro/minimax-h3-pruned-bf16-tp2-b70-20261004/verify-evidence.py # CPU audit; future GPU commands are in guide.",
         "stop": "Read repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md: finite batch completion joins workers; mid-batch stop unqualified."
       },
       "missing": [
-        "Exact AdaLN fit producer: CPU recovery tool retained; coefficients not reproduced and local inputs unavailable during recovery",
-        "Historical model full-file hashes and September baseline/reference receipts",
+        "September baseline/reference raw receipts",
         "Complete editable diffusers source delta, clean build and runtime smoke",
-        "Independent fresh-process 50-NFE full-suite repeats",
+        "Independent fresh-process 50-NFE full-suite repeat",
         "Portable model paths and qualified mid-batch graceful stop",
         "Public release assets and native-video published certification",
         "Clean-host installation and replay"
@@ -1558,7 +1558,7 @@
         "Whole-batch wall / eight; not first-clip latency or delivery cadence.",
         "AdaLN approximation and INT8 encoder are accepted choices, not official-model parity.",
         "One retained batch; 800.8 s/clip ledger-recorded baseline, raw receipts not retained.",
-        "Reconstruction revision is not a verified historical run pin.",
+        "Existing turin files verified in October; no new historical execution or independent full-suite repeat is claimed.",
         "Independent clips; no seamless continuation, streaming guarantee or prefill rate."
       ],
       "video_measurements": {
@@ -1622,7 +1622,12 @@
         "model-intake/h3-recovery-20261010-official.json",
         "model-intake/h3-recovery-20261010-comfy-approval-pending.json",
         "scripts/model-intake.py",
-        "scripts/test_model_intake.py"
+        "scripts/test_model_intake.py",
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/turin-file-verification.jsonl",
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/publisher-metadata-verification.json",
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/PROVENANCE-CORRECTION.md",
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/publication-gates.json",
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/download-pruned-script.txt"
       ]
     },
     {

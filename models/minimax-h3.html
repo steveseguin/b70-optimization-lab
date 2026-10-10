@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MiniMax-H3 · video with audio on Intel Arc Pro B70 — neural.download</title>
-<meta name="description" content="Owner-selected AdaLN-fitted video model on two B70 cards, with an INT8 encoder. The receipted eight-clip batch averaged 396.6 seconds per clip. Scheduling preserves its own reference; this is not parity with the official model. Open the packet for the exact scope, license, baseline caveat and incomplete rebuild steps.">
+<meta name="description" content="Comfy-Org&#x27;s published pruned BF16 denoiser (minimax_h3_fl2va_pruned_bf16.safetensors): all weights bit-exact with the official checkpoint except the AdaLN tables, which that release replaces with a fitted approximation (lab analysis: below the BF16 noise floor); the 2x result is an exact scheduling speedup against…">
 <link rel="icon" href="../favicon.ico" sizes="32x32">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
@@ -16,7 +16,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:url" content="https://neural.download/models/minimax-h3.html">
 <meta property="og:title" content="MiniMax-H3 · video with audio on Intel Arc Pro B70 — neural.download">
-<meta property="og:description" content="Owner-selected AdaLN-fitted video model on two B70 cards, with an INT8 encoder. The receipted eight-clip batch averaged 396.6 seconds per clip. Scheduling preserves its own reference; this is not parity with the official model. Open the packet for the exact scope, license, baseline caveat and incomplete rebuild steps.">
+<meta property="og:description" content="Comfy-Org&#x27;s published pruned BF16 denoiser (minimax_h3_fl2va_pruned_bf16.safetensors): all weights bit-exact with the official checkpoint except the AdaLN tables, which that release replaces with a fitted approximation (lab analysis: below the BF16 noise floor); the 2x result is an exact scheduling speedup against…">
 <meta property="og:image" content="https://neural.download/models/cards/minimax-h3.png">
 <meta property="og:image:secure_url" content="https://neural.download/models/cards/minimax-h3.png">
 <meta property="og:image:type" content="image/png">
@@ -28,10 +28,10 @@
 <meta name="twitter:creator" content="@xyster">
 <meta name="twitter:url" content="https://neural.download/models/minimax-h3.html">
 <meta name="twitter:title" content="MiniMax-H3 · video with audio on Intel Arc Pro B70 — neural.download">
-<meta name="twitter:description" content="Owner-selected AdaLN-fitted video model on two B70 cards, with an INT8 encoder. The receipted eight-clip batch averaged 396.6 seconds per clip. Scheduling preserves its own reference; this is not parity with the official model. Open the packet for the exact scope, license, baseline caveat and incomplete rebuild steps.">
+<meta name="twitter:description" content="Comfy-Org&#x27;s published pruned BF16 denoiser (minimax_h3_fl2va_pruned_bf16.safetensors): all weights bit-exact with the official checkpoint except the AdaLN tables, which that release replaces with a fitted approximation (lab analysis: below the BF16 noise floor); the 2x result is an exact scheduling speedup against…">
 <meta name="twitter:image" content="https://neural.download/models/cards/minimax-h3.png">
 <meta name="twitter:image:alt" content="MiniMax-H3 · video with audio measured on Intel Arc Pro B70 — neural.download">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Dataset", "name": "MiniMax-H3 · video with audio", "description": "Owner-selected AdaLN-fitted video model on two B70 cards, with an INT8 encoder. The receipted eight-clip batch averaged 396.6 seconds per clip. Scheduling preserves its own reference; this is not parity with the official model. Open the packet for the exact scope, license, baseline caveat and incomplete rebuild steps.", "url": "https://neural.download/models/minimax-h3.html", "dateModified": "2026-10-10", "creator": {"@type": "Organization", "name": "neural.download lab"}, "isAccessibleForFree": true}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Dataset", "name": "MiniMax-H3 · video with audio", "description": "Comfy-Org's published pruned BF16 denoiser (minimax_h3_fl2va_pruned_bf16.safetensors): all weights bit-exact with the official checkpoint except the AdaLN tables, which that release replaces with a fitted approximation (lab analysis: below the BF16 noise floor); the 2x result is an exact scheduling speedup against that denoiser's own reference (32 MATCH / 0 DIFFERS, 8 repeat passes). Measured on turin: two B70 cards, 15 GiB RAM; 396.6 seconds per clip across one eight-clip batch. Public runtime rebuild incomplete.", "url": "https://neural.download/models/minimax-h3.html", "dateModified": "2026-10-10", "creator": {"@type": "Organization", "name": "neural.download lab"}, "isAccessibleForFree": true}</script>
 <link rel="stylesheet" href="../learn/learn.css">
 <link rel="preconnect" href="https://mlbottleneck.com">
 <style>
@@ -225,8 +225,8 @@
 <header class="hero"><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / MiniMax-H3 · video with audio</p>
   <h1>MiniMax-H3 · video with audio</h1>
-  <p>Owner-selected AdaLN-fitted video model on two B70 cards, with an INT8 encoder. The receipted eight-clip batch averaged 396.6 seconds per clip. Scheduling preserves its own reference; this is not parity with the official model. Open the packet for the exact scope, license, baseline caveat and incomplete rebuild steps.</p>
-  <div class="lineage"><span>Official source reconstruction pin; historical fitted run bytes unbound · reconstruction source, not measured file identity</span></div>
+  <p>Comfy-Org&#x27;s published pruned BF16 denoiser (minimax_h3_fl2va_pruned_bf16.safetensors): all weights bit-exact with the official checkpoint except the AdaLN tables, which that release replaces with a fitted approximation (lab analysis: below the BF16 noise floor); the 2x result is an exact scheduling speedup against that denoiser&#x27;s own reference (32 MATCH / 0 DIFFERS, 8 repeat passes). Measured on turin: two B70 cards, 15 GiB RAM; 396.6 seconds per clip across one eight-clip batch. Public runtime rebuild incomplete.</p>
+  <div class="lineage"><span>Published Comfy-Org pruned BF16 denoiser; existing turin copy hash-verified · measured denoiser source; official companion files pinned in manifest</span></div>
 </div></header>
 <main id="main"><div class="wrap family-main">
 <div class="family-cta"><a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md">Open reproduction guide</a><a class="inline" href="#packets">All packets and recipes</a></div>
@@ -236,18 +236,18 @@
 
   <div class="section-head" id="packets"><div><h2>Packets and recipes</h2><p>The deployment variants of this family, at every maturity.</p></div></div>
   <div class="packet-grid"><a class="packet-card" href="minimax-h3-pruned-bf16-tp2-b70-20261004.html">
-  <div class="packet-top"><span>h3-official-reconstruction</span><span class="packet-badges"><b>Owner-approved scoped batch; public rebuild incomplete</b></span></div>
-  <h3 title="AdaLN-fitted video with audio · two B70 cards">AdaLN-fitted video with audio · two B70 cards</h3>
+  <div class="packet-top"><span>h3-comfy-published</span><span class="packet-badges"><b>Owner-approved scoped batch; public rebuild incomplete</b></span></div>
+  <h3 title="Comfy-Org pruned BF16 video with audio · two B70 cards">Comfy-Org pruned BF16 video with audio · two B70 cards</h3>
   <p class="packet-promise">Evidence packet · candidate package</p>
-  <div class="grade-rail"><span class="curated-grade" tabindex="0" title="Retained one-batch evidence on the two-card host · Fit producer, historical byte bindings, baseline receipts and clean rebuild are incomplete." aria-label="Evidence grade C: Retained one-batch evidence on the two-card host · Fit producer, historical byte bindings, baseline receipts and clean rebuild are incomplete.">Evidence C <small>of A–D</small></span></div>
-  <div class="coverage-rail"><span>eight-clip timing</span><span>own-reference hash report</span><span>input metadata pins</span></div>
+  <div class="grade-rail"><span class="curated-grade" tabindex="0" title="Retained one-batch evidence on the two-card host · Baseline/reference raw receipts, clean rebuild, independent full-suite repeat and public runtime release remain incomplete." aria-label="Evidence grade C: Retained one-batch evidence on the two-card host · Baseline/reference raw receipts, clean rebuild, independent full-suite repeat and public runtime release remain incomplete.">Evidence C <small>of A–D</small></span></div>
+  <div class="coverage-rail"><span>eight-clip timing</span><span>own-reference hash report</span><span>publisher pins verified on turin</span></div>
 </a></div>
 
 
 
   <div class="section-head" id="measured"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="../families/minimax-h3.json">family data</a></div>
   <div class="views-grid"></div>
-  <details class="fine"><summary>Fine print</summary><p>MiniMax-H3 video/audio diffusion model. Chosen AdaLN-fitted variant and its own scheduling reference. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
+  <details class="fine"><summary>Fine print</summary><p>MiniMax-H3 video/audio diffusion model. Chosen Comfy-Org published pruned BF16 denoiser and its own scheduling reference. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
 
   <div class="section-head"><div><h2 id="multi-user">Many people at once <span class="badge todo">Not measured</span></h2></div></div>
   <div class="placeholder"><p>Multi-user (aggregate) throughput has not been measured for this family. The lab’s one measured sweep so far is in <a class="inline" href="../learn/multi-user.html">the multi-user report</a>; the projection block below includes a projected users curve where a projection exists.</p></div>

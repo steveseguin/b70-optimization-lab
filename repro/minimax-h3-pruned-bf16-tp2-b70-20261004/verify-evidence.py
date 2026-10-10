@@ -14,6 +14,24 @@ def verify():
     bindings = json.loads((HERE / 'evidence-manifest.json').read_text())
     for item in bindings['files']:
         assert hashlib.sha256((ROOT / item['path']).read_bytes()).hexdigest() == item['sha256'], item['path']
+    inputs = json.loads((HERE / 'model-manifest.json').read_text())
+    local = {(r['repository'], r['path']): r for r in
+             map(json.loads, (HERE / 'turin-file-verification.jsonl').read_text().splitlines())}
+    upstream = json.loads((HERE / 'publisher-metadata-verification.json').read_text())
+    metadata = {(r['repository'], f['rfilename']): f
+                for r in upstream['repositories'] for f in r['files']}
+    for repo in inputs['repositories']:
+        for item in repo['files']:
+            key = (repo['repository'], item['path'])
+            actual, published = local[key], metadata[key]
+            assert actual['revision'] == repo['revision']
+            assert actual['unchanged_during_hash'] and actual['size'] == item['size'] == published['size'], key
+            assert actual['sha256'] == item['sha256'], key
+            if published.get('lfs'):
+                assert actual['sha256'] == published['lfs']['sha256'], key
+            else:
+                assert actual['git_blob_sha1'] == published['blobId'], key
+    print(f'PASS: {len(local)} existing turin files match pinned publisher identities.')
     runtime = json.loads((HERE / 'runtime-manifest.json').read_text())
     for item in runtime['files']:
         data = subprocess.check_output(['git', '-C', str(ROOT), 'show', runtime['source_commit'] + ':' + item['path']])
@@ -46,4 +64,4 @@ if __name__ == '__main__':
     args = ap.parse_args()
     verify()
     if args.require_runnable:
-        raise SystemExit('INCOMPLETE: exact AdaLN fit producer, historical weight binding and clean runtime rebuild remain unavailable. No launch authorized by this audit.')
+        raise SystemExit('INCOMPLETE: baseline/reference raw receipts, clean runtime rebuild and independent full-suite repeat remain unavailable. No launch authorized by this audit.')

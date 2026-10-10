@@ -1,6 +1,6 @@
 # MiniMax-H3: owner review before publication
 
-Update, 2026-10-10: the owner has reviewed and selected the AdaLN-fitted target and scheduling result. See the [recorded decision](../../../repro/minimax-h3-pruned-bf16-tp2-b70-20261004/owner-decision.json) and [registered guide](../../../repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md). Approval is no longer pending. The exact fit producer and other technical gates were not recovered, so registration uses an honest draft native-video contract rather than asserting the `published` prerequisite in the historical commands below. The old pruned-target editorial text is superseded by AdaLN-fitted wording.
+Update, 2026-10-10: the owner approved Comfy-Org's published pruned BF16 denoiser, its source and the scheduling result. The lab analyzed that release; it did not produce the fit. Published input hashes are now verified on turin (two B70, 15 GiB RAM). See the [corrected guide](../../../repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md) for the remaining baseline/reference, clean-build/runtime, independent full-suite repeat and public-release gaps. The native-video packet remains draft; the historical commands below do not establish publication certification.
 
 Historical preparation follows. Prepared 2026-10-10. **No publication requested or performed by this change.**
 Only this draft directory is in scope. The page, catalogs, generator and family

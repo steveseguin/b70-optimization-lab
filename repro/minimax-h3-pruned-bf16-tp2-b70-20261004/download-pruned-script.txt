@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# The pruned BF16 denoiser (rank-8 AdaLN fit, error below the BF16 noise floor: notes/2026-09-17-adaln-table-exactness.md)
+# is the two-card candidate; one pattern per --include.
+set -u
+ionice -c 3 /home/steve/.local/bin/hf download Comfy-Org/MiniMax-H3 --include "diffusion_models/minimax_h3_fl2va_pruned_bf16.safetensors" --local-dir /mnt/fast-ai/llm-models/minimax-h3-comfy
+echo "$(date -Is) pruned bf16 rc=$?"; du -sh /mnt/fast-ai/llm-models/minimax-h3-comfy

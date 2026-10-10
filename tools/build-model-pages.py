@@ -462,7 +462,8 @@ def page(pkg, all_pkgs, family=None):
         if pkg.get('video_measurements', {}).get('measurement_kind') == 'batch-average':
             metric_explanation = '<p class="scope">Seconds per clip is the total batch time divided by its clip count. It is not the wait for the first clip or the time between deliveries. Playback seconds say how long each finished clip plays.</p>'
     evidence_link = f'<a class="inline" href="{GITHUB}{esc(fm["evidence"])}">Test details on GitHub</a>' if fm.get("evidence") else ""
-    missing_html = ('<p class="missing">This setup still needs installation checks. <a class="inline" href="' + GITHUB + esc(pkg.get("guide", "")) + '">See what remains in the guide.</a></p>') if pkg.get("missing") else ""
+    missing_note = lib.get("public_missing_note", "This setup still needs installation checks.")
+    missing_html = ('<p class="missing">' + esc(missing_note) + ' <a class="inline" href="' + GITHUB + esc(pkg.get("guide", "")) + '">See what remains in the guide.</a></p>') if pkg.get("missing") else ""
     caveats = []
     limitations = " ".join(str(item) for item in pkg.get("known_limitations", [])).lower()
     if re.search(r"exact|determin|quality|identit|diverg|incorrect|mismatch", limitations):

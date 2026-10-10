@@ -1,3 +1,5 @@
+> **SUPERSEDED — 2026-10-10.** The denoiser is Comfy-Org's published `minimax_h3_fl2va_pruned_bf16.safetensors`, already present on turin with the recorded SHA-256. The September AdaLN note analyzes that release; it is not a lab fit procedure. The owner approved this source with the chosen model. No fit recovery or re-download is needed; queued intake entries were removed. This directory/plan is retained as history, not current reproduction instructions. See the [corrected guide](../README.md).
+
 # AdaLN fit recovery, 2026-10-10
 
 **Not reproduced bit-exactly. The new numerical attempt is blocked by absent

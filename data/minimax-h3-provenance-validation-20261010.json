@@ -1,0 +1,275 @@
+{
+  "date": "2026-10-10",
+  "scope": "CPU-only H3 provenance correction; 45 existing turin inputs read-only verified, no GPU/server/systemd/weight download",
+  "workflow": ".github/workflows/guides.yml + .github/workflows/recipe-publication.yml",
+  "steps": [
+    {
+      "command": "python3 tools/validate-repro-guides.py",
+      "exit_code": 0,
+      "seconds": 0.902,
+      "output_sha256": "404f399d0a1ccb5434226d56e0a852634adf942d50e6faf521b3257333b34fcd",
+      "output_tail": "guide catalog valid: 42 guides (archived=1, candidate-portable-repro=16, lab-replay=15, record-capsule=2, research-status=8)\n"
+    },
+    {
+      "command": "node --test tools/test_guides_browser.cjs",
+      "exit_code": 0,
+      "seconds": 0.385,
+      "output_sha256": "acdcb971fd40129cac22e6918c366663827403197e19d3f41d5390be2b39f453",
+      "output_tail": "gside speculation and cards\nok 13 - repeated changes and submit carry the latest count alongside speculation and cards\n  ---\n  duration_ms: 3.399023\n  ...\n# Subtest: SDK load failure fallback carries the same selected concurrent count\nok 14 - SDK load failure fallback carries the same selected concurrent count\n  ---\n  duration_ms: 3.199674\n  ...\n# Subtest: single-user headroom links explicitly reset concurrency to one\nok 15 - single-user headroom links explicitly reset concurrency to one\n  ---\n  duration_ms: 3.355463\n  ...\n# Subtest: unsupported full-plan count 3 keeps its local projection without a misleading link\nok 16 - unsupported full-plan count 3 keeps its local projection without a misleading link\n  ---\n  duration_ms: 3.263212\n  ...\n# Subtest: unsupported full-plan count 5 keeps its local projection without a misleading link\nok 17 - unsupported full-plan count 5 keeps its local projection without a misleading link\n  ---\n  duration_ms: 3.082076\n  ...\n# Subtest: unsupported full-plan count 63 keeps its local projection without a misleading link\nok 18 - unsupported full-plan count 63 keeps its local projection without a misleading link\n  ---\n  duration_ms: 3.010884\n  ...\n# Subtest: SDK failure cannot create a misleading link for unsupported concurrency\nok 19 - SDK failure cannot create a misleading link for unsupported concurrency\n  ---\n  duration_ms: 3.739523\n  ...\n1..19\n# tests 19\n# suites 0\n# pass 19\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 293.857047\n"
+    },
+    {
+      "command": "python3 -m unittest tools/test_validate_repro_guides.py tools/test_sync_depth_sweep_profiles.py",
+      "exit_code": 0,
+      "seconds": 0.978,
+      "output_sha256": "2803508dcd7237830e713cde160c2a292ca32327e8179ae5afc3fdf58e710d4d",
+      "output_tail": ".................\n----------------------------------------------------------------------\nRan 17 tests in 0.905s\n\nOK\n"
+    },
+    {
+      "command": "python3 tools/validate-recipe-publication.py",
+      "exit_code": 0,
+      "seconds": 1.512,
+      "output_sha256": "f6f23050c67a2edac4b91233a3240ccb7d2717f5fc8a650d00b7f19fe3de527f",
+      "output_tail": "RECIPE PUBLICATION PASS manifests=3 remote=False\nDRAFT ONLY: /home/steve/llm-optimizations/repro/minimax-h3-pruned-bf16-tp2-b70-20261004/publication-manifest.json \u2014 not certified published; remote mode does not fill missing assets or gates\nDRAFT ONLY: /home/steve/llm-optimizations/repro/qwen38-27b-autoround-int4-b70/publication-manifest.json \u2014 not certified published; remote mode does not fill missing assets or gates\n"
+    },
+    {
+      "command": "python3 -m unittest tools/test_validate_recipe_publication.py",
+      "exit_code": 0,
+      "seconds": 0.187,
+      "output_sha256": "a1997bca199d13e3e903ceb20a1553adeacc855514ae424c9195f78f6a0df6d4",
+      "output_tail": "...........\n----------------------------------------------------------------------\nRan 11 tests in 0.091s\n\nOK\n"
+    },
+    {
+      "command": "python3 tools/sync-public-result-summary.py --check",
+      "exit_code": 0,
+      "seconds": 0.035,
+      "output_sha256": "677316f98761dbd1d4777f96cccea5c8cd8300a115d148be37af33bb3761cf29",
+      "output_tail": "README public package headlines current\n"
+    },
+    {
+      "command": "python3 -m unittest tools/test_sync_public_result_summary.py",
+      "exit_code": 0,
+      "seconds": 0.05,
+      "output_sha256": "e2566eea86dfa3fe612027680fe53c1ef9cdf374a98cda4f1c021e9672a0b5e6",
+      "output_tail": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.008s\n\nOK\nREADME public package headlines current\n"
+    },
+    {
+      "command": "python3 tools/build-family-pages.py --check",
+      "exit_code": 0,
+      "seconds": 0.359,
+      "output_sha256": "341af3b8233a56110eec53771224af1ad621f3183b6c051e74688458ca50d881",
+      "output_tail": "family pages current: 22; coverage registry: 48 canonical lanes / 93 public artifacts\n"
+    },
+    {
+      "command": "python3 -m unittest tools/test_build_family_pages.py",
+      "exit_code": 0,
+      "seconds": 1.72,
+      "output_sha256": "4c7de04b8a8c57faa26eebcc07e33f986eb8d8a438f060e1d0693e806ccaee22",
+      "output_tail": ".................families/bad.json: id must be a lowercase hyphenated slug\nfamilies/bad.json: family id None does not match catalog id bad\n...................................................\n----------------------------------------------------------------------\nRan 68 tests in 1.644s\n\nOK\n"
+    },
+    {
+      "command": "python3 -m unittest tools/test_measured_opt_contract.py",
+      "exit_code": 0,
+      "seconds": 0.096,
+      "output_sha256": "0a7487dd447ed39892a423a22370611e100bf0b90f72781bde8e794e93941693",
+      "output_tail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.042s\n\nOK\n"
+    },
+    {
+      "command": "python3 tools/sync-short-prefill-profiles.py --check",
+      "exit_code": 0,
+      "seconds": 0.036,
+      "output_sha256": "de730c72db8744031323349bda32eb09c8e3ff1458e4eef7929915f9bbcfbc45",
+      "output_tail": "Verified four short-input prefill profiles and homepage values.\n"
+    },
+    {
+      "command": "python3 experiments/qwen38-27b-b70/scripts/verify-prefill-followup-evidence.py",
+      "exit_code": 0,
+      "seconds": 0.544,
+      "output_sha256": "0e5fb3f57c7677f18d08d94847cf66f78dd293abad2232912ffd79702d492712",
+      "output_tail": "{\"passed\": true, \"archives\": 5, \"receipts\": 692, \"source_files\": 12, \"profiles\": 3, \"summary_sha256\": \"c52d9f4df8c5fd003a3807cac8376478ad712561b61ac28b5be5bdc51e27f3c2\", \"manifest_sha256\": \"b55f1d095c53bdcbf054b55601e900de3382abce0c716907bd4d276661ce3aa8\", \"scope\": \"Offline hash and raw receipt replay; no GPU requests.\"}\n"
+    },
+    {
+      "command": "python3 tools/sync-prefill-followup-profiles.py --check",
+      "exit_code": 0,
+      "seconds": 0.038,
+      "output_sha256": "fd2c91c82ed037c70cebf128806df86177e6f8bf7f05ca4b034c6cf269e35231",
+      "output_tail": "Verified three follow-up prefill profiles.\n"
+    },
+    {
+      "command": "python3 tools/replay_fp8_prefill_source_drift.py",
+      "exit_code": 0,
+      "seconds": 1.207,
+      "output_sha256": "a1bac5f05e4128f325f5071b806b38dcec2173e2f70b3fd582e4398323e6a007",
+      "output_tail": "2435d443ecd3fdff38dcd906985a4d445adfaec69bc\",\n    \"manifest_sha256\": \"1278d1812ef55f1958397aa5b3ca0f38e30b7980d8c2091e3cd9a98b576723e9\",\n    \"scope\": \"Offline hash and raw receipt replay; no GPU requests.\"\n  },\n  \"current_source_acceptance\": \"pending\",\n  \"declared_drift\": [\n    {\n      \"path\": \"repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/model-direct.json\",\n      \"frozen_sha256\": \"61e3df11c49cb0dc2b7fe49ba56fe97a6a95d05732e5a52911343ecca7edc4fb\",\n      \"current_sha256\": \"e603fd7ec4506ce6a1078cfe293c6b37fe574ac01b4535557f6dc07251a56ccd\",\n      \"acceptance\": \"pending\",\n      \"reason\": \"Commit 8a9770b7eea6ff26ee7d1bfa2bf4a64455e1a985 adds pinned tokenizer and runtime metadata at the same revision. All 66 original weights and all original model identity fields remain exact. This does not rerun the archived serving acceptance.\",\n      \"retire_by\": \"A separately authorized fresh acceptance packet with the new exact source identity; do not rewrite this historical packet.\",\n      \"proof\": {\n        \"kind\": \"model_metadata_addition\"\n      },\n      \"frozen_source\": \"experiments/qwen38-27b-b70/data/2026-10-07-source-drift/model-direct-before-tokenizer.json\",\n      \"change\": \"Commit 8a9770b7eea6ff26ee7d1bfa2bf4a64455e1a985 adds pinned tokenizer and runtime metadata at the same revision. All 66 original weights and all original model identity fields remain exact. This does not rerun the archived serving acceptance.\",\n      \"declared\": \"2026-10-07\"\n    }\n  ],\n  \"new_model_execution\": false\n}\n"
+    },
+    {
+      "command": "python3 -m unittest tools/test_source_drift_proofs.py",
+      "exit_code": 0,
+      "seconds": 0.119,
+      "output_sha256": "0c314a0751e1721c46f143c81199712befc47791b3f4e18979cc63fad035eced",
+      "output_tail": "..........\n----------------------------------------------------------------------\nRan 10 tests in 0.055s\n\nOK\n"
+    },
+    {
+      "command": "python3 tools/sync-fp8-prefill-focus-profile.py --check",
+      "exit_code": 0,
+      "seconds": 0.037,
+      "output_sha256": "7f7ce2d6d214eec7b49687731ee2265f6d4042f95ef46cc52dba5d2a9bc7c63b",
+      "output_tail": "Verified FP8 focus prefill profile.\n"
+    },
+    {
+      "command": "python3 tools/sync-amd-transfer-prefill-profile.py --check",
+      "exit_code": 0,
+      "seconds": 0.133,
+      "output_sha256": "a7818084c7abc58db9ed92e7fc32b089e4e8e314dbde7c510e1312e9e4d5b3f9",
+      "output_tail": "Verified recommended FP8 prefill baseline.\n"
+    },
+    {
+      "command": "python3 -m unittest tools/test_sync_fp8_prefill_focus_profile.py",
+      "exit_code": 0,
+      "seconds": 0.08,
+      "output_sha256": "3b805d17722b8f7c5d741d81382b7b0e946d83432bd698e885327e01d8d3974f",
+      "output_tail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.005s\n\nOK\nUpdated FP8 focus prefill profile.\nVerified FP8 focus prefill profile.\n"
+    },
+    {
+      "command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*fp8_prefill*.py\"",
+      "exit_code": 0,
+      "seconds": 3.197,
+      "output_sha256": "e804713b9071e2276aa475654dad5b9aa20f8def21b4feded4833b0be8aac0b3",
+      "output_tail": "..................\n----------------------------------------------------------------------\nRan 18 tests in 3.089s\n\nOK\n"
+    },
+    {
+      "command": "python3 -m unittest tools/test_sync_prefill_followup_profiles.py",
+      "exit_code": 0,
+      "seconds": 0.091,
+      "output_sha256": "78eef06a986d8417523e74a16d2bb14e35ab64ab86924c647f2bc690902433d9",
+      "output_tail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.023s\n\nOK\n"
+    },
+    {
+      "command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*prefill_followup.py\"",
+      "exit_code": 0,
+      "seconds": 1.889,
+      "output_sha256": "b679e3ceac161d2ae6389bfa32ef22a4576985b9fa4c2948d7ed12298952de01",
+      "output_tail": "................\n----------------------------------------------------------------------\nRan 16 tests in 1.791s\n\nOK\n"
+    },
+    {
+      "command": "python3 -m unittest tools/test_build_model_pages.py",
+      "exit_code": 0,
+      "seconds": 0.112,
+      "output_sha256": "bc54fc712ccc753a7e63601e82db714fb263eeeba76a006daaef9567c7228065",
+      "output_tail": "................\n----------------------------------------------------------------------\nRan 16 tests in 0.056s\n\nOK\n"
+    },
+    {
+      "command": "python3 -m unittest tools/test_fp8_serve.py tools/test_fp8_practical_session.py tools/test_fp8_tp2_acceptance_evidence.py tools/test_fp8_tp2_acceptance_session.py",
+      "exit_code": 0,
+      "seconds": 0.642,
+      "output_sha256": "00b53df59c0e30da293229a6f553f85c7f8c2e5f2cf4af73f8698c36126d8cb7",
+      "output_tail": "s.....Starting one server (recommended, 33024 tokens). Logs: /tmp/h3-provenance-ci-xi0j5jwo/tmpkp2l8gql/state/server.log\n.......Starting one server (recommended, 33024 tokens). Logs: /tmp/h3-provenance-ci-xi0j5jwo/tmpmxau4h_i/state/server.log\n........{\"request\": \"1-conversation\", \"passed\": true, \"error\": null}\n{\"request\": \"1-code\", \"passed\": true, \"error\": null}\n{\"request\": \"1-document\", \"passed\": true, \"error\": null}\n{\"request\": \"2-conversation\", \"passed\": true, \"error\": null}\n{\"request\": \"2-code\", \"passed\": true, \"error\": null}\n{\"request\": \"2-document\", \"passed\": true, \"error\": null}\n..{\"request\": \"1-conversation\", \"passed\": true, \"error\": null}\n{\"request\": \"1-code\", \"passed\": false, \"error\": \"ValueError: injected failure\"}\n.{\"request\": \"1-conversation\", \"passed\": true, \"error\": null}\n{\"request\": \"1-code\", \"passed\": true, \"error\": null}\n{\"request\": \"1-document\", \"passed\": true, \"error\": null}\n{\"request\": \"2-conversation\", \"passed\": false, \"error\": \"ValueError: same-process repeat identity failed\"}\n..............s......s.....................\n----------------------------------------------------------------------\nRan 67 tests in 0.532s\n\nOK (skipped=3)\n"
+    },
+    {
+      "command": "python3 experiments/qwen38-27b-b70/scripts/collect-fp8-tp2-acceptance-evidence.py",
+      "exit_code": 0,
+      "seconds": 0.217,
+      "output_sha256": "dd847fa490acb030efead6d8cf52adf5042f20568dda41d8b62ae2c311583f85",
+      "output_tail": "FP8 two-card acceptance evidence verified: 130 files, strict 12/12 vs no-MTP, practical 6/6, owned clean stop\n  multi-user, short prompts: 16 users pass 1 16/16 exact, 414.58 tok/s together; 16 users pass 2 16/16 exact, 416.58 tok/s together; 32 users pass 1 32/32 exact, 653.4 tok/s together; 32 users pass 2 32/32 exact, 652.73 tok/s together; 64 users pass 1 64/64 exact, 875.31 tok/s together; 64 users pass 2 64/64 exact, 875.05 tok/s together\n  multi-user, long prompts: 16 users pass 1 16/16 exact, 50.77 tok/s together; 16 users pass 2 16/16 exact, 50.73 tok/s together; 32 users pass 1 32/32 exact, 60.55 tok/s together; 32 users pass 2 32/32 exact, 60.44 tok/s together; 64 users pass 1 64/64 exact, 66.32 tok/s together; 64 users pass 2 64/64 exact, 65.43 tok/s together\n"
+    },
+    {
+      "command": "python3 tools/build-model-pages.py",
+      "exit_code": 0,
+      "seconds": 0.088,
+      "output_sha256": "cfcf1eb089e067a4df83bfcae5ab1d30861465dbec43d60933297937d31b9690",
+      "output_tail": "packages without an ML Bottleneck mapping (no projection block): ltx25-continuation-stream-b70-145f-20261010, minimax-h3-pruned-bf16-tp2-b70-20261004, qwen38-27b-q4km-mtp2-tp1-b70, qwen38-27b-q8-q4mtp-mtp2-tp1-b70, qwen38-27b-q8-tp1-b70, qwen38-27b-autoround-int4-b70, qwen38-27b-256k-vision-mtp-b70, qwen38-27b-fp8-vllm-tp1-b70, qwen38-27b-fp8-vllm-tp2-asrock-b70, qwen38-27b-q4km-q4mtp-mtp2-tp2-b70, qwen38-27b-q8-tp2-asrock-b70, qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905, qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906, qwen38-flash-next-fp8-tp4-mtp1-qsafused-b70-38tps-20260907, qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913, qwen38-flash-next-fp8-tp4-mtp1-hctriton-b70-37tps-20260907, qwen38-flash-next-fp8-tp4-mtp0-w13n64-b70-34tps-20260908\nwrote 30 package pages + models/index.html\n"
+    },
+    {
+      "command": "git diff --exit-code -- index.html learn/hardware.html models",
+      "exit_code": 0,
+      "seconds": 0.059,
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "output_tail": ""
+    },
+    {
+      "command": "python3 tools/check-doc-links.py",
+      "exit_code": 0,
+      "seconds": 0.07,
+      "output_sha256": "4a1296fb1685bf90f23f89babfa05d731c75ee3b5ea020756cd8699fed248bbd",
+      "output_tail": "\nchecked 226 documents, 0 new broken repository-relative link(s) in 0 file(s), 0 known-broken\n"
+    },
+    {
+      "command": "python3 -m unittest tools/test_xccl_probe.py",
+      "exit_code": 0,
+      "seconds": 0.068,
+      "output_sha256": "d22bdced0d932251dd606f8166dd48d1e9f500fbdd51c544c63764b97a322109",
+      "output_tail": "rank 1 init ok\nrank 1 barrier ok\nrank 1 allreduce ok 2.0\n.rank 1 init ok\nrank 1 barrier ok\nrank 1 init ok\nrank 1 barrier ok\nrank 1 init ok\nrank 1 barrier ok\n.\n----------------------------------------------------------------------\nRan 2 tests in 0.004s\n\nOK\n"
+    },
+    {
+      "command": "python3 -m unittest tools/test_pr45_gpu_review.py",
+      "exit_code": 0,
+      "seconds": 0.106,
+      "output_sha256": "5f05ceb14916c6e9d49da84899d7bde6b2c1502dbe88bc5ca8fabf5ad6d660b6",
+      "output_tail": "ries and probes\nEND candidate: failed\n.START candidate: sha256:4bb40c00826d3adeb577306afe8d7a6836eaef61d33e1e97a99b74ea85081fb4\nREADY candidate; running complete strict workload, canaries and probes\nEND candidate: failed\n.START candidate: sha256:4bb40c00826d3adeb577306afe8d7a6836eaef61d33e1e97a99b74ea85081fb4\nREADY candidate; running complete strict workload, canaries and probes\nEND candidate: failed\n.START candidate: sha256:4bb40c00826d3adeb577306afe8d7a6836eaef61d33e1e97a99b74ea85081fb4\nREADY candidate; running complete strict workload, canaries and probes\nEND candidate: passed\n.START candidate-target-only: sha256:4bb40c00826d3adeb577306afe8d7a6836eaef61d33e1e97a99b74ea85081fb4\nREADY candidate-target-only; running diagnostic probes only\nEND candidate-target-only: passed\n.START gdn-target-strict: sha256:334c353ffc543eaea2de85d25d947ab5a0db36b9cfa043d0ed7d849627662e81\nREADY gdn-target-strict; running complete strict workload, canaries and probes\nEND gdn-target-strict: passed\nSTART gdn-target-strict-repeat: sha256:334c353ffc543eaea2de85d25d947ab5a0db36b9cfa043d0ed7d849627662e81\nREADY gdn-target-strict-repeat; running complete strict workload, canaries and probes\nEND gdn-target-strict-repeat: passed\n.START candidate: sha256:4bb40c00826d3adeb577306afe8d7a6836eaef61d33e1e97a99b74ea85081fb4\nREADY candidate; running complete strict workload, canaries and probes\nEND candidate: failed\n.\n----------------------------------------------------------------------\nRan 10 tests in 0.022s\n\nOK\n"
+    },
+    {
+      "command": "python3 tools/check-manifest-paths.py",
+      "exit_code": 0,
+      "seconds": 0.111,
+      "output_sha256": "44e0feb84f2e3a9bb987a7b1c93b86448523df5836f7a7a45ea7219265975e58",
+      "output_tail": "checked 6454 repo-relative paths in 55 manifests; 0 missing\n"
+    },
+    {
+      "command": "python3 -m unittest tools/test_container_packet_smoke.py",
+      "exit_code": 0,
+      "seconds": 0.602,
+      "output_sha256": "9449fd7ab2517285e742a9a918cabfaae2c9254a1f3c56640231a4979bf056b5",
+      "output_tail": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.553s\n\nOK\n"
+    },
+    {
+      "command": "python3 -c 'import yaml; print(yaml.__version__)'",
+      "exit_code": 0,
+      "seconds": 0.034,
+      "output_sha256": "cf3701cb2416e87a99c0e77dbd0518fc4fc27e390f025c024e6ed1c389c928e0",
+      "output_tail": "6.0.1\n"
+    },
+    {
+      "command": "python3 tools/check-container-packet.py",
+      "exit_code": 0,
+      "seconds": 0.101,
+      "output_sha256": "d3699c0c4fa38a6dcb69cc9ba83c7032c99504b01af86475a8896cb6289302b3",
+      "output_tail": "ok   qwen35-4b-w4a16-b70: container packet consistent with the recipe launcher\nok   qwen35-9b-fp8-b70: container packet consistent with the recipe launcher\nok   qwen35-9b-w4a16-b70: container packet consistent with the recipe launcher\nok   qwen38-27b-fp8-tp2-b70: container packet consistent with the recipe launcher\nok   qwen38-27b-int4-fixed-k-tp2-b70: container packet consistent with the recipe launcher\n"
+    },
+    {
+      "command": "python3 -m unittest tools/test_check_container_packet.py",
+      "exit_code": 0,
+      "seconds": 0.305,
+      "output_sha256": "6c54b650fa7ef48c85cf14815fb7fb4e7330f836662adf957484ec9ed6c7254f",
+      "output_tail": "...........\n----------------------------------------------------------------------\nRan 11 tests in 0.257s\n\nOK\n"
+    },
+    {
+      "command": "python3 -m unittest tools/test_audit_launcher_env_implemented.py tools/test_flash_next_frozen_verifiers.py tools/test_flash_next_replay_cleanup.py",
+      "exit_code": 0,
+      "seconds": 0.236,
+      "output_sha256": "56a25dffd798e607c04ddd0a0c1ce2a25be089452b862b21d87d97da44c346b7",
+      "output_tail": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.156s\n\nOK\n"
+    },
+    {
+      "command": "python3 tools/validate-recipe-publication.py --check-remote",
+      "exit_code": 0,
+      "seconds": 169.171,
+      "output_sha256": "d0d7d6d1467098d7bc1b7e4a0b5f4955db84aac4771f3e9aa7c1482295dbf9f4",
+      "output_tail": "RECIPE PUBLICATION PASS manifests=3 remote=True\nDRAFT ONLY: /home/steve/llm-optimizations/repro/minimax-h3-pruned-bf16-tp2-b70-20261004/publication-manifest.json \u2014 not certified published; remote mode does not fill missing assets or gates\nDRAFT ONLY: /home/steve/llm-optimizations/repro/qwen38-27b-autoround-int4-b70/publication-manifest.json \u2014 not certified published; remote mode does not fill missing assets or gates\n"
+    },
+    {
+      "command": "python3 repro/minimax-h3-pruned-bf16-tp2-b70-20261004/verify-evidence.py",
+      "exit_code": 0,
+      "seconds": 0.079,
+      "output_sha256": "445ad4a4cc66b5a83ae9370533c95acab90f737753aea90d18aa2bbc667359c7",
+      "output_tail": "PASS: 45 existing turin files match pinned publisher identities.\nPASS: retained eight-clip receipts, arithmetic, evidence hashes and historical source pins.\nHistorical reference equality is reported by the session log; missing original receipts are not recreated.\n"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "seconds": 0.022,
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "output_tail": ""
+    }
+  ],
+  "resolved_initial_failure": "README generated headlines were stale; regenerated with tools/sync-public-result-summary.py.",
+  "scratch_removed": true
+}

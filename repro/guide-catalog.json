@@ -1267,26 +1267,28 @@
    "clean_host_tested": false,
    "components": {
     "platform_install": false,
-    "model_download": false,
+    "model_download": true,
     "source_restore": false,
     "build": false,
     "launch": false,
     "validation": true,
     "patch_links": true,
-    "hashes": false
+    "hashes": true
    },
    "dependency_links": [
     "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/model-manifest.json",
     "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/runtime-manifest.json",
     "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/evidence-manifest.json",
     "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/promotion-attestation.json",
-    "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/publication-manifest.json"
+    "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/publication-manifest.json",
+    "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/turin-file-verification.jsonl",
+    "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/PROVENANCE-CORRECTION.md",
+    "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/publication-gates.json"
    ],
    "missing": [
-    "Exact official-to-AdaLN-fitted checkpoint producer and its build receipt",
-    "Historical model full-file hashes and September baseline/reference receipts",
+    "September baseline/reference raw receipts",
     "Complete editable diffusers source delta, clean build and runtime smoke",
-    "Independent fresh-process 50-NFE full-suite repeats",
+    "Independent fresh-process 50-NFE full-suite repeat",
     "Portable model paths and qualified mid-batch graceful stop",
     "Public release assets and native-video published certification",
     "Clean-host installation and replay"

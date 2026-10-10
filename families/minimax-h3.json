@@ -3,10 +3,10 @@
   "id": "minimax-h3",
   "primary_packet_id": "minimax-h3-pruned-bf16-tp2-b70-20261004",
   "name": "MiniMax-H3",
-  "display_name": "MiniMax-H3 \u00b7 video with audio",
+  "display_name": "MiniMax-H3 · video with audio",
   "publisher": "MiniMaxAI",
   "updated_at": "2026-10-10",
-  "summary": "Owner-selected AdaLN-fitted video model on two B70 cards, with an INT8 encoder. The receipted eight-clip batch averaged 396.6 seconds per clip. Scheduling preserves its own reference; this is not parity with the official model. Open the packet for the exact scope, license, baseline caveat and incomplete rebuild steps.",
+  "summary": "Comfy-Org's published pruned BF16 denoiser (minimax_h3_fl2va_pruned_bf16.safetensors): all weights bit-exact with the official checkpoint except the AdaLN tables, which that release replaces with a fitted approximation (lab analysis: below the BF16 noise floor); the 2x result is an exact scheduling speedup against that denoiser's own reference (32 MATCH / 0 DIFFERS, 8 repeat passes). Measured on turin: two B70 cards, 15 GiB RAM; 396.6 seconds per clip across one eight-clip batch. Public runtime rebuild incomplete.",
   "architecture": {
     "class": "MiniMax-H3 video/audio diffusion model",
     "design": "video generation",
@@ -15,17 +15,17 @@
   "dimensions": {},
   "weight_revisions": [
     {
-      "id": "h3-official-reconstruction",
-      "label": "Official source reconstruction pin; historical fitted run bytes unbound",
-      "role": "reconstruction source, not measured file identity",
-      "repository": "MiniMaxAI/MiniMax-H3",
-      "revision": "42ed227ee7df40d41602854ae760620d6eb651fe",
+      "id": "h3-comfy-published",
+      "label": "Published Comfy-Org pruned BF16 denoiser; existing turin copy hash-verified",
+      "role": "measured denoiser source; official companion files pinned in manifest",
+      "repository": "Comfy-Org/MiniMax-H3",
+      "revision": "e5eb578a89295337b8ff433a035929ce0279e0b6",
       "model_manifest": "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/model-manifest.json"
     }
   ],
   "model_variants": [],
   "transfer_scope": {
-    "status": "Chosen AdaLN-fitted variant and its own scheduling reference",
+    "status": "Chosen Comfy-Org published pruned BF16 denoiser and its own scheduling reference",
     "transfers": [
       "Retained eight-clip timings and session hash reports"
     ],
@@ -40,7 +40,7 @@
   "model_signals": {
     "b70_fit": {
       "band": "two-card measured",
-      "scope": "124 frames, 960\u00d7544, 50 NFE, eight-clip batch",
+      "scope": "124 frames, 960×544, 50 NFE, eight-clip batch",
       "basis": "Eight retained receipts and session log",
       "reviewed_at": "2026-10-10"
     },
@@ -62,9 +62,9 @@
   "packets": [
     {
       "id": "minimax-h3-pruned-bf16-tp2-b70-20261004",
-      "label": "AdaLN-fitted video with audio \u00b7 two B70 cards",
-      "revision": "h3-official-reconstruction",
-      "quantization": "AdaLN-fitted BF16 + INT8 encoder",
+      "label": "Comfy-Org pruned BF16 video with audio · two B70 cards",
+      "revision": "h3-comfy-published",
+      "quantization": "Comfy-Org pruned BF16 + INT8 encoder",
       "runtime": "Native diffusers / PyTorch XPU",
       "cards": 2,
       "status": "candidate",
@@ -72,7 +72,7 @@
       "coverage": [
         "eight-clip timing",
         "own-reference hash report",
-        "input metadata pins"
+        "publisher pins verified on turin"
       ],
       "manifest": "packages/minimax-h3-pruned-bf16-tp2-b70-20261004/package.json",
       "guide": "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md",
@@ -80,7 +80,7 @@
         "evidence": {
           "grade": "C",
           "scope": "Retained one-batch evidence on the two-card host",
-          "basis": "Fit producer, historical byte bindings, baseline receipts and clean rebuild are incomplete.",
+          "basis": "Baseline/reference raw receipts, clean rebuild, independent full-suite repeat and public runtime release remain incomplete.",
           "reviewed_at": "2026-10-10",
           "evidence": [
             "results/minimax-h3-b70/README.md"

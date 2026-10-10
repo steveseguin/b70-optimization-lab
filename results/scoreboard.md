@@ -1,6 +1,6 @@
 # Performance Index
 
-MiniMax-H3 video: [396.6 s/clip measured eight-clip batch](minimax-h3-b70/README.md), owner-approved AdaLN-fitted target and exact scheduling against its own reference. The 800.8 s/clip comparison is a ledger-recorded baseline, raw receipts not retained.
+MiniMax-H3 video: [396.6 s/clip measured eight-clip batch](minimax-h3-b70/README.md), Comfy-Org's published pruned BF16 denoiser (`minimax_h3_fl2va_pruned_bf16.safetensors`): all weights bit-exact with the official checkpoint except the AdaLN tables, which that release replaces with a fitted approximation (lab analysis: below the BF16 noise floor); the 2x result is an exact scheduling speedup against that denoiser's own reference (32 MATCH / 0 DIFFERS, 8 repeat passes); measured on turin (two B70, 15 GiB RAM). The 800.8 s/clip comparison is a ledger-recorded baseline, raw receipts not retained.
 
 This is a small, manually maintained index of useful performance expectations.
 It is not the identity of the project, a universal leaderboard, or a replacement

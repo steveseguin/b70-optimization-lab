@@ -1,5 +1,7 @@
 # MiniMax-H3 publication evidence — 2026-10-10
 
+> **2026-10-10 correction:** The owner has accepted the exact Comfy-Org published pruned BF16 denoiser and approved that source. The lab's AdaLN work was analysis of the release, not a fit procedure. Published file identities are pinned and verified on turin (two B70, 15 GiB RAM). The owner-approval and missing-fit findings below are superseded; retained numerical evidence is unchanged. See the [current guide and remaining gates](../../../repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md).
+
 ## Decision supported by the evidence
 
 **No publishable lossless H3 headline exists today under the current rules.**

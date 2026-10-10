@@ -170,10 +170,8 @@ def groups(catalog):
         small.append(use_profile(pick(pid, name, status, why), profile))
     h3 = pick('minimax-h3-pruned-bf16-tp2-b70-20261004',
         'MiniMax-H3 · video with audio on two cards',
-        'Owner-approved AdaLN-fitted variant · exact scheduling',
-        'Independent clips with stereo sound. The fitted AdaLN tables approximate the official '
-        'model below the measured BF16 noise floor; all other denoiser weights are bit-exact. '
-        'The scheduling speedup preserves this variant’s own reference.', research=True)
+        'Owner-approved Comfy-Org denoiser · exact scheduling',
+        "Comfy-Org's published pruned BF16 denoiser (minimax_h3_fl2va_pruned_bf16.safetensors): all weights bit-exact with the official checkpoint except the AdaLN tables, which that release replaces with a fitted approximation (lab analysis: below the BF16 noise floor); the 2x result is an exact scheduling speedup against that denoiser's own reference (32 MATCH / 0 DIFFERS, 8 repeat passes).", research=True)
     h3_path = 'repro/minimax-h3-pruned-bf16-tp2-b70-20261004/featured-observation.json'
     h3_run = read(h3_path)
     assert h3_run['run_name'] == 'duet-20261004T042838Z'
@@ -182,7 +180,7 @@ def groups(catalog):
     h3['note'] = ('124 frames at 960×544 per clip; 24 fps is playback speed. '
                   '32 MATCH / 0 DIFFERS, 8 repeat passes against its own reference. '
                   'The 2× comparison uses an 800.8 s/clip ledger-recorded baseline, raw receipts not retained. '
-                  'Exact fit reconstruction and public runtime rebuild remain incomplete.')
+                  'Measured on turin: two B70 cards, 15 GiB RAM. Baseline raw receipts, clean runtime build, independent full-suite repeat, portable path/stop qualification and public release evidence remain incomplete.')
     # One editorial role per featured setup; scores never clear quality gates.
     featured = [int4, gemma, fp8, laguna, shared, flash, video, h3]
     roles = ['Everyday assistant', 'Fast single-user replies on one card',
@@ -262,7 +260,7 @@ def render(catalog):
         if group_id in ('small-quick', 'other-picks'):
             out.append('</details>')
     out.extend(['''    <p class="pick-scale">Bars use fixed scales: one person 250 tok/s; combined users 1,400 tok/s; prompt reading 4,200 tok/s. User counts and tests differ; every value links to its receipt. Video has its own units and no token-speed bar.</p>
-    <p class="research-links">All recipes and numbers remain in the tables below and the <a href="models/">model library</a>. H3 means MiniMax-H3, an audio/video generator. It has <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/minimax-h3-b70/README.md">public lab notes</a>, and an owner-approved AdaLN-fitted package; its public rebuild remains incomplete.</p>
+    <p class="research-links">All recipes and numbers remain in the tables below and the <a href="models/">model library</a>. H3 means MiniMax-H3, an audio/video generator. It has <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/minimax-h3-b70/README.md">public lab notes</a>, and an owner-approved Comfy-Org pruned BF16 package; its public rebuild remains incomplete.</p>
   </div>
 </section>''', END])
     return '\n'.join(out)

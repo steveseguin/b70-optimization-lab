@@ -121,7 +121,7 @@ Other variants are **not modeled** in this review: the current Qwen FP8 dynamic 
 
 ## H3 and video publication boundary
 
-October 10 owner decision supersedes the original no-package finding below: H3 is now the eighth featured pick, for independent video with audio on two cards. The [chosen AdaLN-fitted target and batch](../repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md) retain their evidence limits. This is an explicit owner selection, not a new numerical interest score. LTX remains the continuing-video pick. Public rebuild closure remains incomplete.
+October 10 owner decision supersedes the original no-package finding below: H3 is now the eighth featured pick, for independent video with audio on two cards. The [chosen Comfy-Org published pruned BF16 target and batch](../repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md) retain their evidence limits. This is an explicit owner selection, not a new numerical interest score. LTX remains the continuing-video pick. Public rebuild closure remains incomplete.
 
 Historical review before that decision:
 
