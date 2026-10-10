@@ -1,5 +1,10 @@
 # Current Workspace State
 
+**2026-10-10, our own runtime: packet 1b adds a CPU reference and file readers.**
+The [reference and test receipt](experiments/own-xpu-runtime/stage1/packet1b/README.md)
+cover synthetic arithmetic, exact CPU repeats and header checks without reading weights or using a GPU.
+Matching the certified runtime still needs the listed packet 4 checks; packets 2 and 3 remain waiting for the owner's storage decision and native-window authorization.
+
 **2026-10-10, our own Intel Xe runtime: the first CPU packet passed.**
 The owner approved the objective and the reviewer accepted Stage 0 for CPU work.
 The [packet and check receipt](experiments/own-xpu-runtime/stage1/packet1/README.md)

@@ -1,0 +1,14 @@
+{
+  "schema": "own-xpu-runtime.packet1b.cpu-safety.v1",
+  "utc": "2026-10-10T19:18:15.193538+00:00",
+  "command": "nice -n 19 env OMP_NUM_THREADS=2 strace -f -e trace=open,openat,connect -o /tmp/packet1b-cpu-trace.log /home/steve/.venvs/vllm-xpu/bin/python -B experiments/own-xpu-runtime/stage1/packet1b/run_tests.py --receipt experiments/own-xpu-runtime/stage1/packet1b/test-receipt.json",
+  "scope": "traced full 93-test process and children; independent source reads used ordinary CPU filesystem/Git tools",
+  "dev_dri_open_attempts": 0,
+  "network_connect_attempts": 0,
+  "trace_sha256": "b0ccbad21f8225b741bb4e0692a766f30d29355f54793352b5dfe4319f2b32c2",
+  "trace_bytes": 484805,
+  "trace_retention": "temporary trace removed after review; summary retained",
+  "test_receipt_sha256": "855907eedbff5c0f9004229b5157b8336573fc267fd8fe14856b5fc7f8919414",
+  "test_output_sha256": "a43e76839cacf0ddb6c5d325ed1846b6dfe979163036d366f0dd6e59e0a7e350",
+  "result": "PASS"
+}

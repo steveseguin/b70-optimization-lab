@@ -1,0 +1,464 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:own-xpu-runtime:packet4:operator-fixture:v1",
+  "title": "Future comparator extraction; schema only, not an extracted fixture",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "own-xpu-runtime.packet4.operator-fixture.v1"
+    },
+    "status": {
+      "enum": [
+        "extracted-unverified",
+        "qualified",
+        "rejected"
+      ]
+    },
+    "fixture_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "packet1_contract_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "packet1b_receipt_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repository": {
+          "const": "Qwen/Qwen3.8-27B-FP8"
+        },
+        "revision": {
+          "const": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a"
+        },
+        "payload_manifest": {
+          "$ref": "#/$defs/artifact"
+        }
+      },
+      "required": [
+        "repository",
+        "revision",
+        "payload_manifest"
+      ]
+    },
+    "comparator": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "runtime_commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "image_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "build_manifest": {
+          "$ref": "#/$defs/artifact"
+        },
+        "overlay_manifest": {
+          "$ref": "#/$defs/artifact"
+        },
+        "kernel_binaries": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/artifact"
+          }
+        },
+        "compiler": {
+          "type": "string",
+          "minLength": 1
+        },
+        "libraries": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "launch_flags": {
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "dispatch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "device_topology": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "runtime_commit",
+        "image_digest",
+        "build_manifest",
+        "overlay_manifest",
+        "kernel_binaries",
+        "compiler",
+        "libraries",
+        "environment",
+        "launch_flags",
+        "dispatch",
+        "device_topology"
+      ]
+    },
+    "authorization_receipt": {
+      "$ref": "#/$defs/artifact"
+    },
+    "operator": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "enum": [
+            "fp8_dequant",
+            "w8a16",
+            "excluded_linear",
+            "rmsnorm",
+            "residual",
+            "conv",
+            "gdn_gates",
+            "gdn_qk_norm",
+            "gdn_recurrence",
+            "gdn_gated_norm",
+            "rope",
+            "kv_append",
+            "attention",
+            "ffn",
+            "target_head",
+            "argmax",
+            "mtp_forward",
+            "decoder_layer"
+          ]
+        },
+        "layer": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "M": {
+          "enum": [
+            1,
+            2,
+            6
+          ]
+        },
+        "N": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "K": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "positions": {
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "valid_rows": {
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "type": "boolean"
+          }
+        },
+        "arithmetic_order": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rounding_points": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "census_items": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "enum": [
+              "U1",
+              "U2",
+              "U3",
+              "U4",
+              "U5",
+              "U6",
+              "U7"
+            ]
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "name",
+        "layer",
+        "M",
+        "N",
+        "K",
+        "positions",
+        "valid_rows",
+        "arithmetic_order",
+        "rounding_points",
+        "census_items"
+      ]
+    },
+    "inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/tensor"
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/tensor"
+      }
+    },
+    "state_before": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "$ref": "#/$defs/tensor"
+      }
+    },
+    "state_after": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "$ref": "#/$defs/tensor"
+      }
+    },
+    "extraction": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/artifact"
+        },
+        "hook_locations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "neutrality": {
+          "$ref": "#/$defs/artifact"
+        },
+        "full_suite_token_oracle_equal": {
+          "type": "boolean"
+        },
+        "prompt_cache_disabled": {
+          "const": true
+        },
+        "full_output_token_hashes": {
+          "type": "array",
+          "minItems": 12,
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "maxItems": 12
+        }
+      },
+      "required": [
+        "code",
+        "hook_locations",
+        "neutrality",
+        "full_suite_token_oracle_equal",
+        "prompt_cache_disabled",
+        "full_output_token_hashes"
+      ]
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "same_process_repeat": {
+          "$ref": "#/$defs/artifact"
+        },
+        "fresh_process_repeat": {
+          "$ref": "#/$defs/artifact"
+        },
+        "cpu_comparison": {
+          "$ref": "#/$defs/artifact"
+        },
+        "all_outputs_bit_identical": {
+          "type": "boolean"
+        },
+        "all_states_bit_identical": {
+          "type": "boolean"
+        },
+        "mismatch_policy": {
+          "const": "retain failure; no quality waiver or speed promotion"
+        }
+      },
+      "required": [
+        "same_process_repeat",
+        "fresh_process_repeat",
+        "cpu_comparison",
+        "all_outputs_bit_identical",
+        "all_states_bit_identical",
+        "mismatch_policy"
+      ]
+    }
+  },
+  "required": [
+    "schema",
+    "status",
+    "fixture_id",
+    "packet1_contract_sha256",
+    "packet1b_receipt_sha256",
+    "model",
+    "comparator",
+    "authorization_receipt",
+    "operator",
+    "inputs",
+    "outputs",
+    "state_before",
+    "state_after",
+    "extraction",
+    "validation"
+  ],
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "path",
+        "sha256"
+      ]
+    },
+    "tensor": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "artifact": {
+          "$ref": "#/$defs/artifact"
+        },
+        "dtype": {
+          "enum": [
+            "F16",
+            "BF16",
+            "F32",
+            "F8_E4M3",
+            "I32",
+            "I64"
+          ]
+        },
+        "shape": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "strides_elements": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "byte_order": {
+          "const": "little"
+        },
+        "storage_offset_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "nbytes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "name",
+        "artifact",
+        "dtype",
+        "shape",
+        "strides_elements",
+        "byte_order",
+        "storage_offset_bytes",
+        "nbytes"
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "qualified"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "extraction": {
+            "properties": {
+              "full_suite_token_oracle_equal": {
+                "const": true
+              }
+            }
+          },
+          "validation": {
+            "properties": {
+              "all_outputs_bit_identical": {
+                "const": true
+              },
+              "all_states_bit_identical": {
+                "const": true
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
