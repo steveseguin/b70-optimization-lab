@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**2026-10-10 05:22 UTC, 145-frame session 2 live (verdict 9a57f69a751f); packet 123 sealed; 123b (storage-allowance fix) in build; then one swap to 145 + residency move, then 169.**
+Codex sealed 123 (commit bbcdbc8ce; manifest `db5ea277…340d`; 570 recovery / 995 client / 10 preflight CPU checks, 2,044 files): atomic
+preview MP4/JSON publication (closes the chunk-154 read race), exit-7 records server status, and `LTX_AUX_RESIDENCY=xpu2` moving
+the upsampler and the audio VAE/vocoder to xpu:2 (default `legacy` = 121/122 placement). Projected margins with the move (GiB above
+floors): 145 → xpu:0 2.20 / xpu:1 1.83 / xpu:2 6.44 / xpu:3 2.19; **169 → 1.62–1.93 / 1.57–1.71 / 6.44 / 0.83–1.56**, so 169 is
+admitted after a 145 qualification of the move; predicted 169 period 5.95–6.65 s per 7.0 s = 0.85–0.95 s/s (display decode forecast
+2.72–3.30 s against the 3 s off-chain bound: watch it). Auxiliary move + xpu:2 display replica is refused by the packet. The
+filesystem-wide storage allowance was not changed in 123; Codex is building 123b (parent 123) with a run-own-writes allowance and a
+`LTX_RUN_WRITE_ALLOWANCE_GIB` option. Plan: keep 121 at 145 live; one swap to 123b at 145 with `LTX_AUX_RESIDENCY=xpu2` (dg0,
+display xpu:3), then 169 on the same packet.
+
 **2026-10-10 05:18 UTC, packet 123 sealed on CPU; live operations remain with the coordinator.**
 Packet 123 makes previews appear only after their files are complete. The client
 now records server status when a preview read stops it. An optional move of the
