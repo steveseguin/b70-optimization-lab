@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**2026-10-10 15:40 UTC, packet 134 sealed: under split36 only the graph-off 169 arm (C) is admissible (xpu:3 +4.86 GiB after floors and band; arms with the cone graph are refused on xpu:3 or xpu:2); predicted 6.50–6.95 s per 7.0 s = 0.93–0.99 s/s, i.e. not better than 145 at 0.898. Decision: 169 not launched.**
+Codex's measured 145 budget under 133b (`notes/2026-10-10-continuation133b-results-145.md`, commits fa297c8e88, 5b21b4f2fe, 3e82e9875e):
+first-capture retained growth 3.545 GiB (estimate 4.506), per-phase minimum free xpu:0 9.27 / xpu:1 9.83 / xpu:2 4.91 / xpu:3 14.60 GiB,
+smallest snapshot margin 1.36 GB on xpu:0, dual snapshots 8/182 all agreeing. 134 (manifest `a46fb116…653c`; inner plan `bc03692e…5a46c`;
+1,178 recovery incl. 76 sealed-import tests, 6,761 client) stays sealed as the 169 diagnostic arm. Next GPU A/B on the production arm (no
+new packet): 135 with `LTX_GC_INTERVAL_SECONDS=10` + idle maintenance (the 128 arm closed the parity gap to 5.49/5.58 at GC 10, while
+GC 60 + idle shows 5.34/5.70 on 133b), to settle whether the 60 s boundary cleanup is now the residual 2-cycle.
+
 **2026-10-10 15:30 UTC, packet 135 sealed (inode-aware storage guard: records path/link counts, retries once, counts internal hard links by inode, refuses only external links; the old guard also refused nlink = 0, a deletion race the CPU tests reproduced); swapping 133b → 135, same arm.**
 133b session 2: n = 222, median 5.390 s (even 5.34 / odd 5.70, p90 6.07) = 0.898 s/s, exact, no stops (the session-1 halt was the guard, not the stream). 135 (commit 1782495369; manifest `4356482e…02c3`;
 inner plan `7750e7b5…58c4`; 1,076 recovery, 6,718 client, 9 sealed-import tests over 67 helpers, 10 preflight). The offending path of the
