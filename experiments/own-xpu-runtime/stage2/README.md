@@ -18,3 +18,10 @@ response arrays. The certified comparison is four-card TP4/EP4, native MTP1,
 46.854250 tok/s; no performance or quality result for our runtime exists yet.
 Two-card residency and expert-streaming byte counts are arithmetic bounds,
 not a measured fit or a substitute benchmark. No existing lane was changed.
+
+The separate [Qwen3.8 Flash-Next UD-IQ3_XXS (Unsloth), quantized compressed
+version lane](../../qwen38-flash-next-ud-iq3xxs-b70/README.md) now has a
+[passing real-weight admission packet](../../qwen38-flash-next-ud-iq3xxs-b70/packet1/README.md):
+all three shard hashes, all 1,224 descriptors and bounded fresh-process CPU
+fixtures pass; no inference result or native fit claim exists. Its own oracle
+and records follow the owner's separate-model decision, with no FP8 tolerance gate.

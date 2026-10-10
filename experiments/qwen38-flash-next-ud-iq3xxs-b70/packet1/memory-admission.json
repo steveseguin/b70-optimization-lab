@@ -1,0 +1,204 @@
+{
+  "component_placement": {
+    "embedding": {
+      "extra_hc_copy_bytes": 0,
+      "offloaded_bytes": 521472000,
+      "resident_bytes": 0,
+      "tensor_bytes": 521472000
+    },
+    "gdn": {
+      "extra_hc_copy_bytes": 0,
+      "offloaded_bytes": 0,
+      "resident_bytes": 1754576384,
+      "tensor_bytes": 1754576384
+    },
+    "hyperconnections": {
+      "extra_hc_copy_bytes": 675430400,
+      "offloaded_bytes": 0,
+      "resident_bytes": 1366589440,
+      "tensor_bytes": 691159040
+    },
+    "norms": {
+      "extra_hc_copy_bytes": 0,
+      "offloaded_bytes": 0,
+      "resident_bytes": 4028416,
+      "tensor_bytes": 4028416
+    },
+    "ple_lookup": {
+      "extra_hc_copy_bytes": 0,
+      "offloaded_bytes": 28800138240,
+      "resident_bytes": 0,
+      "tensor_bytes": 28800138240
+    },
+    "ple_projection": {
+      "extra_hc_copy_bytes": 0,
+      "offloaded_bytes": 0,
+      "resident_bytes": 35102720,
+      "tensor_bytes": 35102720
+    },
+    "qsa_attention": {
+      "extra_hc_copy_bytes": 0,
+      "offloaded_bytes": 0,
+      "resident_bytes": 490291200,
+      "tensor_bytes": 490291200
+    },
+    "qsa_indexer": {
+      "extra_hc_copy_bytes": 0,
+      "offloaded_bytes": 0,
+      "resident_bytes": 39321600,
+      "tensor_bytes": 39321600
+    },
+    "routed_experts": {
+      "extra_hc_copy_bytes": 0,
+      "offloaded_bytes": 0,
+      "resident_bytes": 48627712000,
+      "tensor_bytes": 48627712000
+    },
+    "routers": {
+      "extra_hc_copy_bytes": 0,
+      "offloaded_bytes": 0,
+      "resident_bytes": 252149760,
+      "tensor_bytes": 252149760
+    },
+    "shared_experts": {
+      "extra_hc_copy_bytes": 0,
+      "offloaded_bytes": 0,
+      "resident_bytes": 213376000,
+      "tensor_bytes": 213376000
+    },
+    "target_head": {
+      "extra_hc_copy_bytes": 0,
+      "offloaded_bytes": 0,
+      "resident_bytes": 521472000,
+      "tensor_bytes": 521472000
+    }
+  },
+  "device_fit": "UNMEASURED",
+  "historical_plan_reconciliation": {
+    "balanced_bytes_per_card": 26652309760,
+    "capacity_bytes": 68484595712,
+    "capacity_status": "historical two-card scenario; no device query",
+    "kv_status": "historical 2 x 376569856 budget only, not derived TP2 allocation or a 32K estimate",
+    "mtp_extra_hc_replica_bytes": 39321600,
+    "mtp_margin_after_target_kv_and_metadata_bytes": 11728809704,
+    "mtp_weight_only_margin_bytes": 12481949696,
+    "ple_control_metadata_bytes": 280,
+    "target_full16_kv_budget_bytes": 753139712,
+    "target_margin_after_kv_and_metadata_bytes": 14426836200,
+    "target_plus_mtp_with_extra_hc_bytes": 56041967616,
+    "target_plus_one_stored_mtp_bytes": 56002646016,
+    "target_resident_bytes": 53304619520,
+    "target_weight_only_margin_bytes": 15179976192
+  },
+  "host_placement": "PLE 28800138240 B plus embedding 521472000 B off-device; logical file backing 29321610240 B is not a RAM reservation. Bounded file-backed lookup and I/O validation required on 15 GiB host; no full resident host-table claim.",
+  "offloaded_bytes": 29321610240,
+  "optional_mtp": {
+    "configuration": "separately pinned draft block with quantized target shared embedding/head; mixed checkpoint, every accepted token verified by unchanged quantized target; separate state and rollback required",
+    "extra_hc_replica_bytes": 39321600,
+    "hc_replica_tensors": [
+      "mtp.hyper_connection_mixer.input_mix_weight_down.weight",
+      "mtp.hyper_connection_mixer.input_mix_weight_up.weight",
+      "mtp.layers.0.attn_hyper_connection.input_mix_weight_down.weight",
+      "mtp.layers.0.attn_hyper_connection.input_mix_weight_up.weight",
+      "mtp.layers.0.mlp_hyper_connection.input_mix_weight_down.weight",
+      "mtp.layers.0.mlp_hyper_connection.input_mix_weight_up.weight"
+    ],
+    "payload_admitted_here": false,
+    "repository": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "source": "official retained tensor contract; no official payload read or download",
+    "stored_bytes": 2698026496
+  },
+  "scenario_32k": {
+    "classes": {
+      "allocator_and_driver_reserve": {
+        "estimated_bytes": 2147483648,
+        "formula": "planning allowance 1 GiB/card * 2; replace with native peak measurement",
+        "status": "estimate; not allocated or measured"
+      },
+      "bounded_device_staging": {
+        "estimated_bytes": 536870912,
+        "formula": "planning allowance 256 MiB/card * 2; no full dequantized shadow admitted",
+        "status": "estimate; not allocated or measured"
+      },
+      "graphs_and_static_buffers": {
+        "estimated_bytes": 2147483648,
+        "formula": "planning allowance 1 GiB/card * 2; replace with native peak measurement",
+        "status": "estimate; not allocated or measured"
+      },
+      "one_target_rollback_checkpoint": {
+        "estimated_bytes": 58896384,
+        "formula": "one full GDN+conv+PLE snapshot; append-only KV/index assumed cursor rollback, not proven",
+        "status": "estimate; not allocated or measured"
+      },
+      "operator_scratch": {
+        "estimated_bytes": 2147483648,
+        "formula": "planning allowance 1 GiB/card * 2; replace with native peak measurement",
+        "status": "estimate; not allocated or measured"
+      },
+      "target_bf16_gdn_conv": {
+        "estimated_bytes": 2211840,
+        "formula": "36 layers * 10240 channels * 3 history rows * 2 B; partitioned",
+        "status": "estimate; not allocated or measured"
+      },
+      "target_bf16_gdn_state": {
+        "estimated_bytes": 56623104,
+        "formula": "36 layers * 48 value heads * 128 * 128 * BF16 2 B; heads partitioned",
+        "status": "estimate; not allocated or measured"
+      },
+      "target_bf16_ple_conv": {
+        "estimated_bytes": 61440,
+        "formula": "one 10240-channel convolution * 3 history rows * 2 B; one logical copy",
+        "status": "estimate; not allocated or measured"
+      },
+      "target_full16_kv": {
+        "estimated_bytes": 805306368,
+        "formula": "12 QSA layers * 32768 tokens * K/V * 2 heads * 256 width * 2 B; heads partitioned over TP2",
+        "status": "estimate; not allocated or measured"
+      },
+      "target_qsa_pooled_index": {
+        "estimated_bytes": 25165824,
+        "formula": "12 layers * floor(32768/4) * 128 * 2 B",
+        "status": "estimate; not allocated or measured"
+      },
+      "target_qsa_raw_index": {
+        "estimated_bytes": 100663296,
+        "formula": "12 layers * 32768 tokens * one 128-wide key * 2 B",
+        "status": "estimate; not allocated or measured"
+      },
+      "target_tp2_extra_index_copy": {
+        "estimated_bytes": 125829120,
+        "formula": "one extra copy of raw+pooled single-head index for TP2",
+        "status": "estimate; not allocated or measured"
+      }
+    },
+    "context_tokens": 32768,
+    "estimated_runtime_total_bytes": 8154079512,
+    "mtp_additional_state_formula": "one QSA block: T*K/V*2 heads*256*2 B + 2 TP copies*(T+T/4)*128*2 B",
+    "optional_mtp_additional_kv_and_index_bytes": 88080384,
+    "target_live_state_bytes": 1115860992,
+    "target_mtp_remaining_under_historical_capacity_bytes": 4200468200,
+    "target_mtp_with_estimates_bytes": 64284127512,
+    "target_remaining_under_historical_capacity_bytes": 7025896680,
+    "target_with_estimates_bytes": 61458699032,
+    "users": 1
+  },
+  "schema": "qwen38-ud-iq3xxs.memory-arithmetic.v1",
+  "scope": "exact stored weight sums under stated placement; ALL runtime memory classes are estimates; no native fit verdict",
+  "source_hashes": {
+    "experiments/own-xpu-runtime/STAGE2-PLAN.md": "a15b9d62ca7d78318b35e18ab688cb9b6fa7da78a5682108d5bf2f79da518984",
+    "experiments/own-xpu-runtime/stage2/packet1/tensor-contract.json": "37daac926403b543bd5e1d6db06e70487feebd8ef97880d106e58f91011b5c96",
+    "experiments/own-xpu-runtime/stage2/packet1b/reference.py": "4e36c7c7890e7df428c7e1d10dc1b536d26ba18b8b7066c07f9dbdea2ff4909b",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/summarize.py": "7492895066a10a53f81564e1466beb5a644d4826155e6fdf7097f94f5afdd1e4",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/tensor-census.json": "3312f5a18582788c5c6c84572fd616488b6835b454272c81eec218a58521607c"
+  },
+  "total_tensor_bytes": 81950799360,
+  "uncounted": [
+    "additional router/norm/PLE and other replicas",
+    "native padding/alignment and quant repacks",
+    "scale widening or full/partial dequantization buffers",
+    "prefill activations and attention/indexer score temporaries beyond provisional scratch",
+    "extra MTP HC/hidden transaction snapshots and additional rollback versions",
+    "host driver shadows, mmap/page cache and pinned host staging"
+  ]
+}

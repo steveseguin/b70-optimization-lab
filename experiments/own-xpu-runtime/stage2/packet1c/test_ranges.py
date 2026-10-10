@@ -16,14 +16,16 @@ from test_headers import ggfile, string
 
 
 class Ranges(unittest.TestCase):
-    def test_header_only_types_are_not_numerical_decoders(self):
+    def test_new_mixed_types_reject_bad_lengths_before_tensor_access(self):
         # This gate exits before torch is used; no tensor library is needed.
         spec=importlib.util.spec_from_file_location('loaders.dequant',HERE.parents[1]/'stage1/packet1b/loaders/dequant.py')
         decoder=importlib.util.module_from_spec(spec)
         with patch.dict(sys.modules,{'torch':object()}):spec.loader.exec_module(decoder)
         for kind in ['F32','IQ4_NL','IQ3_S','IQ2_S']:
-            with self.subTest(kind=kind),self.assertRaisesRegex(ValueError,'unsupported quantization'):
+            with self.subTest(kind=kind),self.assertRaisesRegex(ValueError,'wrong block byte length'):
                 decoder.dequant_block(kind,b'')
+        with self.assertRaisesRegex(ValueError,'unsupported quantization'):
+            decoder.dequant_block('UNKNOWN',b'')
 
     def test_exact_header_only_with_real_batching(self):
         data=ggfile([('a',[256,512],22,0),('b',[160,2],20,41984)],

@@ -1,0 +1,160 @@
+{
+  "passed": true,
+  "resident_bytes": 53304619520,
+  "types": {
+    "BF16": {
+      "all_rows_block_aligned": true,
+      "bytes": 39321600,
+      "bytes_per_block": 2,
+      "elements_per_block": 1,
+      "row_widths": [
+        2560
+      ],
+      "tensors": 24
+    },
+    "F32": {
+      "all_rows_block_aligned": true,
+      "bytes": 313495040,
+      "bytes_per_block": 4,
+      "elements_per_block": 1,
+      "row_widths": [
+        4,
+        48,
+        128,
+        256,
+        2560,
+        10240
+      ],
+      "tensors": 557
+    },
+    "IQ2_S": {
+      "all_rows_block_aligned": true,
+      "bytes": 25257574400,
+      "bytes_per_block": 82,
+      "elements_per_block": 256,
+      "row_widths": [
+        2560
+      ],
+      "tensors": 94
+    },
+    "IQ3_S": {
+      "all_rows_block_aligned": true,
+      "bytes": 720896000,
+      "bytes_per_block": 110,
+      "elements_per_block": 256,
+      "row_widths": [
+        2560
+      ],
+      "tensors": 2
+    },
+    "IQ4_NL": {
+      "all_rows_block_aligned": true,
+      "bytes": 51449379840,
+      "bytes_per_block": 18,
+      "elements_per_block": 32,
+      "row_widths": [
+        160,
+        640
+      ],
+      "tensors": 49
+    },
+    "Q6_K": {
+      "all_rows_block_aligned": true,
+      "bytes": 3328281600,
+      "bytes_per_block": 210,
+      "elements_per_block": 256,
+      "row_widths": [
+        2560,
+        6144
+      ],
+      "tensors": 250
+    },
+    "Q8_0": {
+      "all_rows_block_aligned": true,
+      "bytes": 841850880,
+      "bytes_per_block": 34,
+      "elements_per_block": 32,
+      "row_widths": [
+        320,
+        640,
+        2560,
+        10240
+      ],
+      "tensors": 248
+    }
+  },
+  "scenario_32k": {
+    "users": 1,
+    "context_tokens": 32768,
+    "classes": {
+      "target_full16_kv": {
+        "estimated_bytes": 805306368,
+        "formula": "12 QSA layers * 32768 tokens * K/V * 2 heads * 256 width * 2 B; heads partitioned over TP2",
+        "status": "estimate; not allocated or measured"
+      },
+      "target_bf16_gdn_state": {
+        "estimated_bytes": 56623104,
+        "formula": "36 layers * 48 value heads * 128 * 128 * BF16 2 B; heads partitioned",
+        "status": "estimate; not allocated or measured"
+      },
+      "target_bf16_gdn_conv": {
+        "estimated_bytes": 2211840,
+        "formula": "36 layers * 10240 channels * 3 history rows * 2 B; partitioned",
+        "status": "estimate; not allocated or measured"
+      },
+      "target_bf16_ple_conv": {
+        "estimated_bytes": 61440,
+        "formula": "one 10240-channel convolution * 3 history rows * 2 B; one logical copy",
+        "status": "estimate; not allocated or measured"
+      },
+      "target_qsa_raw_index": {
+        "estimated_bytes": 100663296,
+        "formula": "12 layers * 32768 tokens * one 128-wide key * 2 B",
+        "status": "estimate; not allocated or measured"
+      },
+      "target_qsa_pooled_index": {
+        "estimated_bytes": 25165824,
+        "formula": "12 layers * floor(32768/4) * 128 * 2 B",
+        "status": "estimate; not allocated or measured"
+      },
+      "target_tp2_extra_index_copy": {
+        "estimated_bytes": 125829120,
+        "formula": "one extra copy of raw+pooled single-head index for TP2",
+        "status": "estimate; not allocated or measured"
+      },
+      "one_target_rollback_checkpoint": {
+        "estimated_bytes": 58896384,
+        "formula": "one full GDN+conv+PLE snapshot; append-only KV/index assumed cursor rollback, not proven",
+        "status": "estimate; not allocated or measured"
+      },
+      "graphs_and_static_buffers": {
+        "estimated_bytes": 2147483648,
+        "formula": "planning allowance 1 GiB/card * 2; replace with native peak measurement",
+        "status": "estimate; not allocated or measured"
+      },
+      "operator_scratch": {
+        "estimated_bytes": 2147483648,
+        "formula": "planning allowance 1 GiB/card * 2; replace with native peak measurement",
+        "status": "estimate; not allocated or measured"
+      },
+      "allocator_and_driver_reserve": {
+        "estimated_bytes": 2147483648,
+        "formula": "planning allowance 1 GiB/card * 2; replace with native peak measurement",
+        "status": "estimate; not allocated or measured"
+      },
+      "bounded_device_staging": {
+        "estimated_bytes": 536870912,
+        "formula": "planning allowance 256 MiB/card * 2; no full dequantized shadow admitted",
+        "status": "estimate; not allocated or measured"
+      }
+    },
+    "target_live_state_bytes": 1115860992,
+    "estimated_runtime_total_bytes": 8154079512,
+    "target_with_estimates_bytes": 61458699032,
+    "target_remaining_under_historical_capacity_bytes": 7025896680,
+    "optional_mtp_additional_kv_and_index_bytes": 88080384,
+    "mtp_additional_state_formula": "one QSA block: T*K/V*2 heads*256*2 B + 2 TP copies*(T+T/4)*128*2 B",
+    "target_mtp_with_estimates_bytes": 64284127512,
+    "target_mtp_remaining_under_historical_capacity_bytes": 4200468200
+  }
+}

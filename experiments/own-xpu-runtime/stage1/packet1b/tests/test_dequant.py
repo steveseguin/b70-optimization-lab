@@ -14,6 +14,11 @@ def pack_fixture(kind):
     b=bytearray(size)
     expected=[]
     d=0.125
+    if kind=='F32':
+        return struct.pack('<f',-1.5),[-1.5]
+    if kind in ('IQ2_S','IQ3_S','IQ4_NL'):
+        from test_ud_dequant import logical_fixture
+        return logical_fixture(kind)
     if kind in ('F16','BF16'):
         value=-1.5
         return (struct.pack('<e',value) if kind=='F16' else struct.pack('<f',value)[2:]),[value]
@@ -134,7 +139,7 @@ class Dequant(unittest.TestCase):
             self.assertTrue(torch.signbit(dequant_block(kind,b'\0\x80')).item())
 
     def test_unknown_and_shape_reject(self):
-        with self.assertRaises(ValueError): dequant_block('F32',bytes(4))
+        with self.assertRaises(ValueError): dequant_block('UNKNOWN',bytes(4))
         with self.assertRaises(ValueError): dequantize('Q8_0',bytes(34),(2,16))
 
 

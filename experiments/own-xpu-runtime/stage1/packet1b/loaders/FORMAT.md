@@ -1,7 +1,8 @@
 # Packet 1b format arithmetic
 
 These are independent CPU readers/decoders, not a ggml runtime import or a
-translation of its C dequantization functions. No model payload was acquired.
+translation of its C dequantization functions. The original packet 1b acquired
+no model payload; the separate UD-IQ3_XXS packet 1 now records real CPU samples.
 GGUF is a separate future storage lane; packet 1 still rejects GGUF as a
 replacement for the official FP8 target.
 
@@ -11,7 +12,7 @@ The [official GGUF specification](https://github.com/ggml-org/ggml/blob/ffa4e8b8
 defines the container: header, typed metadata, fastest-first tensor dimensions,
 tensor type identifiers, relative offsets and aligned data section. It does
 **not** fully specify the quantization bit layouts or IQ codebooks. Claiming
-all nine numerical decoders come from that document alone would be incorrect.
+all numerical decoders come from that document alone would be incorrect.
 The supplement used here is the pinned upstream format declarations in
 [ggml-common.h](https://github.com/ggml-org/llama.cpp/blob/e3546c7948e3af463d0b401e6421d5a4c2faf565/ggml/src/ggml-common.h),
 [type/size declarations](https://github.com/ggml-org/llama.cpp/blob/e3546c7948e3af463d0b401e6421d5a4c2faf565/gguf-py/gguf/constants.py),
@@ -24,9 +25,20 @@ no ggml dequantization code or runtime tree is copied or imported.
 The 256-entry `iq3xxs_grid` is normative format data, retained as
 [iq3-grid.json](iq3-grid.json), with its source revision and source-file hash.
 Each integer encodes four little-endian magnitude bytes. The 16 IQ4 levels are
-also normative format data. Both tables are credited to ggml/llama.cpp
+also normative format data. The UD-IQ3_XXS lane's packet 1 adds the 1,024-entry
+IQ2_S and 512-entry IQ3_S magnitude grids in [iq2-s-grid.json](iq2-s-grid.json)
+and [iq3-s-grid.json](iq3-s-grid.json). These are decoded **literal format data**
+from `IQ2_S.grid_hex/grid_map` and `IQ3_S.grid_hex/grid_map` in the pinned
+`quants.py`, SHA256
+`2c927a1b3d9f0920dcf4007fb686e1b0999333e9f65ce43dcc689900c0beae8b`
+(64,946 bytes). The local research copy under
+`/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/gguf-py/gguf/`
+matches the pre-existing source receipt exactly; its current `ggml-common.h`
+does not, so that header was not used for these two tables.
+All tables are credited to ggml/llama.cpp
 contributors under their [MIT license](FORMAT-DATA-LICENSE.txt), retained with
-the data. IQ3 signs are derived by even parity, not a copied sign table.
+the data. IQ3_XXS signs are derived by even parity, not a copied sign table;
+IQ2_S and IQ3_S store all sign bits explicitly.
 [Source evidence](../source-evidence.json) pins every inspected source blob.
 No learning/optimization algorithm, generated weights or codebook fitting is
 performed here.
@@ -42,7 +54,7 @@ not authenticate payload hashes.
 
 | ID | Type | Elements/block | Bytes/block | Stored fields, in byte order |
 | ---: | --- | ---: | ---: | --- |
-| 0 | F32 | 1 | 4 | IEEE binary32 (header census only; added in Stage 2 packet 1c) |
+| 0 | F32 | 1 | 4 | IEEE binary32, preserved bit for bit |
 | 1 | F16 | 1 | 2 | IEEE binary16 |
 | 30 | BF16 | 1 | 2 | upper 16 bits of IEEE binary32 |
 | 8 | Q8_0 | 32 | 34 | F16 scale, 32 signed int8 codes |
@@ -51,9 +63,9 @@ not authenticate payload hashes.
 | 13 | Q5_K | 256 | 176 | Q4_K prefix, 32 high-bit bytes, 128 nibble bytes |
 | 14 | Q6_K | 256 | 210 | 128 low-nibble bytes, 64 high-two-bit bytes, 16 signed scales, F16 scale |
 | 18 | IQ3_XXS | 256 | 98 | F16 scale, 64 grid indices, eight 32-bit sign/scale words |
-| 20 | IQ4_NL | 32 | 18 | F16 scale, 16 nonlinear nibble codes (header census only) |
-| 21 | IQ3_S | 256 | 110 | F16 scale, 64 low grid bytes, 8 high grid bytes, 32 signs, 4 scales (header census only) |
-| 22 | IQ2_S | 256 | 82 | F16 scale, 64 grid/sign bytes, 8 high grid bytes, 8 scales (header census only) |
+| 20 | IQ4_NL | 32 | 18 | F16 scale, 16 nonlinear nibble codes |
+| 21 | IQ3_S | 256 | 110 | F16 scale, 64 low grid bytes, 8 high grid bytes, 32 signs, 4 scales |
+| 22 | IQ2_S | 256 | 82 | F16 scale, 32 low grid bytes, 32 signs, 8 high grid bytes, 8 scales |
 | 23 | IQ4_XS | 256 | 136 | F16 scale, 16 high-scale bits, four low-scale bytes, 128 nonlinear nibble codes |
 
 All multi-byte fields are little endian. Version 3 is required; big endian,
@@ -67,8 +79,9 @@ standard scalar/string types; arrays may contain scalars or strings.
 across shards. Filenames do not select a decoder.
 
 Stage 2 packet 1c adds F32, IQ4_NL, IQ3_S and IQ2_S tensor-size admission for
-real GGUF norms, small control tensors, PLE and mixed experts; it does not add
-numerical decoders. Optional range
+real GGUF norms, small control tensors, PLE and mixed experts. At that time
+they were header-only. The separate UD-IQ3_XXS lane's packet 1 now supplies
+their original CPU numerical decoders and synthetic packing tests. Optional range
 reader hints give structural lower bounds on remaining header bytes, enabling
 bounded HTTP reads without reading alignment padding or any tensor payload.
 The normal local reader and its 32 MiB admission limit are unchanged.
@@ -82,6 +95,22 @@ mathematical format values, not a claim that an eventual packed GPU GEMV has
 this reduction order.
 
 - **Q8_0:** `d * signed_code`.
+- **F32:** retain the four little-endian IEEE bits exactly, including signed
+  zero, subnormals, infinity and NaN payloads/signaling bits; no float conversion.
+- **IQ4_NL:** the first 16 codes use low nibbles and the next 16 high nibbles
+  of the 16 code bytes. Value: `d * IQ4[code]`.
+- **IQ2_S:** 32 consecutive octets use 10-bit grid indices. Bytes 2–33 give
+  low eight bits. Byte `66 + octet//4` holds two high bits per index at shift
+  `2*(octet%4)`. Bytes 34–65 supply all eight signs per octet, with bit zero
+  first (set means negative). Each consecutive 16 elements has a four-bit
+  scale; bytes 74–81 hold low nibble first. Value:
+  `((d * (0.5 + scale)) * 0.25) * grid_magnitude * sign`.
+- **IQ3_S:** 64 consecutive quads use 9-bit grid indices. Bytes 2–65 give
+  low eight bits; byte `66 + quad//8`, bit `quad%8` gives the ninth. Bytes
+  74–105 give all eight signs per consecutive octet, bit zero first (set
+  means negative). Each consecutive 32 elements shares a four-bit scale,
+  low nibble first in bytes 106–109. Value:
+  `(d * (1 + 2*scale)) * grid_magnitude * sign`.
 - **Q3_K:** sixteen groups of 16 share signed six-bit scales `s = code - 32`.
   Low scale nibbles occupy bytes 0–7 for groups 0–7 and high nibbles of those
   same bytes for groups 8–15. Bytes 8–11 carry the two high scale bits in four
@@ -113,3 +142,11 @@ They include nonzero scales/minima, signed scales, every bit plane, all 256
 IQ3 indices, all 128 sign codes, literal byte fixtures, multiple blocks, and
 invalid byte counts. This is a round trip through the *representation*, not
 an assertion that lossy quantization recovers arbitrary original FP32 weights.
+The mixed-UD additions test all 1,024 IQ2_S and 512 IQ3_S grid entries, all
+256 explicit sign masks and 16 scale nibbles at every group position, both
+IQ4_NL nibble planes, FP32 special-value bits, signed zeros, and every
+supported type's invalid row widths/payload sizes. The optional
+`tests/compare_pinned_quant_reference.py` checks finite synthetic blocks
+against the separately implemented upstream NumPy equations. It verifies
+source hashes and is test-only; the reader/decoder has no external runtime
+dependency. Neither level of testing is a model-output quality gate.

@@ -12,10 +12,12 @@ import torch
 from .headers import TYPES
 
 GRID = json.loads(Path(__file__).with_name('iq3-grid.json').read_text())['packed_u32_le']
+IQ2_S_GRID = json.loads(Path(__file__).with_name('iq2-s-grid.json').read_text())['packed_u64_le']
+IQ3_S_GRID = json.loads(Path(__file__).with_name('iq3-s-grid.json').read_text())['packed_u32_le']
 IQ4 = (-127,-104,-83,-65,-49,-35,-22,-10,1,13,25,38,53,69,89,113)
-# Header census admits more formats than this numerical reference implements.
-# Never let a header-only addition fall through to the IQ3_XXS decoder.
-DECODE_TYPES = {'F16', 'BF16', 'Q8_0', 'Q3_K', 'Q4_K', 'Q5_K', 'Q6_K', 'IQ3_XXS', 'IQ4_XS'}
+# Explicit numerical admission: future header additions must not fall through.
+DECODE_TYPES = {'F32', 'F16', 'BF16', 'Q8_0', 'Q3_K', 'Q4_K', 'Q5_K', 'Q6_K',
+                'IQ3_XXS', 'IQ4_XS', 'IQ4_NL', 'IQ3_S', 'IQ2_S'}
 BY_NAME = {v[0]:v[1:] for v in TYPES.values() if v[0] in DECODE_TYPES}
 
 
@@ -42,6 +44,12 @@ def dequant_block(kind, data):
     if len(data)!=size:
         raise ValueError('wrong block byte length')
     b = data
+    if kind=='F32':
+        # Integer bits avoid Python float quieting signaling NaNs. The tensor
+        # belongs to CPU and owns its storage; no host-byte-order assumption.
+        bits = int.from_bytes(b, 'little')
+        return torch.tensor([bits if bits < 2**31 else bits-2**32],
+                            dtype=torch.int32,device='cpu').view(torch.float32)
     if kind=='F16':
         return torch.tensor([_f16(b)],dtype=torch.float32,device='cpu')
     if kind=='BF16':
@@ -82,7 +90,26 @@ def dequant_block(kind, data):
             sc = (low_sc|(high_sc<<4))-32
             index = (b[8+group*16+i%16] >> (4*((i%32)//16))) & 15
             value = _f32(_f32(_f16(b)*sc)*IQ4[index])
-        else:  # IQ3_XXS, eight groups of 32; two grid indices per eight.
+        elif kind=='IQ4_NL':
+            index = (b[2+i%16] >> (4*(i//16))) & 15
+            value = _f32(_f16(b)*IQ4[index])
+        elif kind=='IQ3_S':
+            quad = i//4
+            index = b[2+quad] | (((b[66+quad//8] >> (quad%8)) & 1)<<8)
+            magnitude = (IQ3_S_GRID[index] >> (8*(i%4))) & 255
+            sign = -1 if (b[74+i//8] >> (i%8)) & 1 else 1
+            scale_code = (b[106+i//64] >> (4*((i//32)%2))) & 15
+            scale = _f32(_f16(b)*(1+2*scale_code))
+            value = _f32(_f32(scale*magnitude)*sign)
+        elif kind=='IQ2_S':
+            octet = i//8
+            index = b[2+octet] | (((b[66+octet//4] >> (2*(octet%4))) & 3)<<8)
+            magnitude = (IQ2_S_GRID[index] >> (8*(i%8))) & 255
+            sign = -1 if (b[34+octet] >> (i%8)) & 1 else 1
+            scale_code = (b[74+i//32] >> (4*((i//16)%2))) & 15
+            scale = _f32(_f32(_f16(b)*(0.5+scale_code))*0.25)
+            value = _f32(_f32(scale*magnitude)*sign)
+        elif kind=='IQ3_XXS':  # Eight groups of 32; two grid indices per eight.
             group,within = divmod(i,32)
             word = int.from_bytes(b[66+4*group:70+4*group],'little')
             sign_index = (word >> (7*(within//8))) & 127
@@ -92,6 +119,8 @@ def dequant_block(kind, data):
             value_in_grid = (packed >> (8*(i%4))) & 255
             scale = _f32(_f32(_f16(b)*(0.5+(word>>28)))*0.5)
             value = _f32(_f32(scale*value_in_grid)*sign)
+        else:
+            raise ValueError('unsupported quantization')
         result.append(value)
     return torch.tensor(result,dtype=torch.float32,device='cpu')
 

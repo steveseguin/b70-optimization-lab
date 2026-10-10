@@ -1,0 +1,44 @@
+{
+  "schema": "own-xpu-runtime.ud-mixed-dequant.external-crosscheck.v1",
+  "device": "cpu",
+  "weights": "none; deterministic synthetic blocks",
+  "seed": 20261010,
+  "numpy": "2.3.5",
+  "torch": "2.11.0+xpu",
+  "source_dir": "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/gguf-py/gguf",
+  "source_sha256": {
+    "quants.py": "2c927a1b3d9f0920dcf4007fb686e1b0999333e9f65ce43dcc689900c0beae8b",
+    "constants.py": "d314d34803a0b7ed8a4e4a24bceced938dfad6e404136ab38b6e1db2fe98f23b",
+    "lazy.py": "dbc98e3ee9ef8606df34e9d91f98ab29c2697e6824995f1dd8952938c135ad85"
+  },
+  "quants_source_receipt_revision": "e3546c7948e3af463d0b401e6421d5a4c2faf565",
+  "helper_snapshot_revision": "23b0202a189c44a54625aadcb37a946dd1d6278d",
+  "runtime_dependency": false,
+  "passed": true,
+  "checks": [
+    {
+      "type": "IQ2_S",
+      "blocks": 192,
+      "values": 49152,
+      "input_sha256": "daf0831b6fcb81811c309a6865abb205a22e72f0afbfe88f2435cf1d2cc776f1",
+      "f32_le_sha256": "8202aaf8c1387615dd77073ae9b671002e678433e427f8519e520aaa1bcbc28a",
+      "all_bits_equal": true
+    },
+    {
+      "type": "IQ3_S",
+      "blocks": 192,
+      "values": 49152,
+      "input_sha256": "70619af2b49c2cb97c8dc9c1cc507d991796409647983a10ee2302311c4ceccf",
+      "f32_le_sha256": "d208fc893588d128287d2bb4e17b6b04ebfdcad9f5fce6bc808a3f80e9ef250a",
+      "all_bits_equal": true
+    },
+    {
+      "type": "IQ4_NL",
+      "blocks": 192,
+      "values": 6144,
+      "input_sha256": "442bf3486c03aa3cf79ad785de2b4a632728cb406bd084559c1f6a81e67f6ba5",
+      "f32_le_sha256": "ebf21f78195a56842b33226c9129c4e1d7c193c7c7e77ff63ecc7641f2e0c9db",
+      "all_bits_equal": true
+    }
+  ]
+}

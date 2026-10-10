@@ -1,5 +1,9 @@
 # Current Workspace State
 
+**2026-10-10, IQ3 weights admitted on CPU:** The [separate quantized model's first packet](experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/README.md) passes all three file hashes, matches every tensor in the earlier census, and repeats its sampled CPU values exactly in a fresh process.
+Its packed target weights need 53.305 GB across two cards with the large lookup tables off-device; actual fit, full-model answers and speed remain unmeasured, and the next packet prepares its own tokenizer and operator oracle.
+No GPU, server, unit, port, device node, download, model-file write or host setting was used; scratch was removed and the fault halt remains unchanged.
+
 **2026-10-10, IQ3 reference build prepared on CPU:** The [pinned llama.cpp baseline](experiments/qwen38-flash-next-ud-iq3xxs-b70/baseline-llamacpp/README.md) supports the GGUF architecture in source, builds for B70, and passes help/version checks without GPU access.
 Its two-card, target-only window plan uses full 16-bit KV and all twelve fixed prompts twice in fresh processes; load, fit, speed and output equality are still unmeasured, and the incomplete download kept the live GGUF check pending.
 This is a measurement baseline for our own runtime, not its code base; no GPU, server, unit, port, model file or host setting was touched, and the fault halt remains unchanged.
