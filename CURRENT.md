@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**2026-10-10 09:10 UTC, packet 127 sealed with the 145-frame budget; the 2-cycle is quantified (even chunks: commit → served 0.32 s vs 0.04, text+A-prep 0.68 vs 0.50; whole period 6.10 vs 5.57); launching 127 at 169 with 124's display worker.**
+Budget note `notes/2026-10-10-continuation-budget-145.md` (commits f14b3e4f2, 66f78927a): samplers 62 % of the period, all 48 blocks
+already under graph replay; six snapshots 0.37 s; the parity penalty ≈ 0.53 s on even chunks (≈ 0.27 s per chunk averaged) sits in the
+receipt route's commit → served wait and the pre-sampler path, not in GPU work. 127 (parent 126; manifest `c2564507…359e`; inner plan
+`554c8051…cc01`; 720 recovery / 2,807 client / 10 preflight CPU checks) adds `LTX_SNAPSHOT_DIGEST_CACHE=1` (immutable signature digest
+cache, est. 0.03–0.07 s; mutable state/fact caching rejected as unsafe). Ranked remaining levers: 169 with 124's parallel display
+(0.886–0.950 projected), the even-chunk event-loop block (new brief 128), a 145 cone graph (no safe pool bound yet), sampler split
+balance (no profile). The 126 session (≈ 250 chunks, exact, 5.72 s) stopped by one controlled stop; launching
+`LTX_SNAPSHOT_DIGEST_CACHE=1 LTX_STORAGE_SCAN_MODE=background LTX_GC_INTERVAL_SECONDS=60 LTX_AUX_RESIDENCY=legacy LTX_DISPLAY_WORKER=parallel
+LTX_DISPLAY_REPLICA_TRANSIENT_GIB=6.5 LTX_RUN_WRITE_ALLOWANCE_GIB=16 launch-127.sh 169 frame 0 cone 1 1 fingerprint - eager-display 0 full xpu:2`
+(work dir `s127-f169-live01`); fallback is 127 at 145 legacy serial xpu:3.
+
 **2026-10-10 08:53 UTC, packet 127 sealed on CPU; the coordinator keeps control of the live 126 server.**
 The new option reuses only a digest of unchanged immutable graph signatures.
 Every snapshot still reads fresh tensor state, device facts and memory levels;
