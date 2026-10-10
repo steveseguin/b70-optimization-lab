@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**2026-10-10 05:08 UTC, client stop on HTTP 409 "storage allowance exhausted" after 420 chunks; server relaunched for a fresh allowance; check must be fixed in 123.**
+At 04:59:59 UTC the server refused new requests: `storage_check` requires `free_at_install − free ≤ 3 GiB` **over the whole
+filesystem** (`integration.py:795`, `WRITE_ALLOWANCE` sealed in `ltx_duration_guard.py`), so every other writer on the single NVMe
+(Codex packet builds and session logs, journals, test scratch) counted against the run; the run directory itself held 25 MB and each
+chunk's output ≈ 240 KB. No fault, no latch; the first 145-frame session ended at 420 chunks (0.939 s/s). Decision: no deletion of
+user data to satisfy the delta; one controlled server stop and relaunch of the same line (fresh `free_at_install`), names archived
+(`output/archive-stream121-f145-live01-…`), run dir renamed `.completed`. Fix queued for packet 123: count the run's own writes
+(run dir + its `output/stream*` entries) against the allowance, or make the allowance a launch parameter recorded in receipts; the
+50 GiB reserve check stays as is.
+
 **2026-10-10 04:52 UTC, packet 122 sealed (census refined); no swap: the 145 dg0 line stays live; packet 123 in design (free xpu:0 for 169 frames, fix the preview read race).**
 Codex's 145-frame analysis (`notes/2026-10-10-continuation121-results-145.md`, commit 96a57a5db; 122 manifest `8b576c86…b7fa`,
 489 recovery / 783 client / 10 preflight CPU checks) measured margins above the floors at 145 dg0: xpu:0 1.27 GiB, xpu:1 1.83,
