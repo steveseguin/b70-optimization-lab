@@ -1,5 +1,19 @@
 # Current Workspace State
 
+**2026-10-10 11:35 UTC, packet 131 sealed (cone decoder graph at 145 by moving the display to the xpu:2 replica + guarded allocator release before cone admission); launching it; the 129 production session closed (≈ 500 chunks, exact, 36 s buffer, no stops).**
+Codex's xpu:3 inventory (`notes/2026-10-10-xpu3-residency-145.md`, commits d57b669f0, 6dea774ad): text shard 10.15 GiB, video encoder/decoder
+0.59/0.78, audio VAE/vocoder 0.10/0.24; 129's minimum physical free by phase 10.85 / 14.36 / 14.30 / 10.86 / 10.86 / 10.81 GiB; the cone-only
+capture growth measured 3.43 GB at 121 → est. 4.51 GiB at 145; the first capture needs 14.75 GiB physically free (qualification tail needs
+3.3–3.8 GiB reclaimed by the release; unproven), later cones 9.75 GiB; insufficient memory latches (no damage). 131 (manifest `e25d8d62…ed6f`;
+inner plan `526f832c…7514`; 899 recovery / 5,013 client / 10 preflight) adds `LTX_CONE_GRAPH_MEMORY=replica-release`. Launch:
+`LTX_CONE_GRAPH_MEMORY=replica-release LTX_DISPLAY_ALLOCATOR_RELEASE=off LTX_MAINTENANCE_MODE=idle LTX_GC_INTERVAL_SECONDS=60
+LTX_SNAPSHOT_DIGEST_CACHE=1 LTX_STORAGE_SCAN_MODE=background LTX_AUX_RESIDENCY=legacy LTX_DISPLAY_WORKER=serial
+LTX_DISPLAY_REPLICA_TRANSIENT_GIB=5.640625 LTX_RUN_WRITE_ALLOWANCE_GIB=16 launch-131.sh 145 frame 1 cone 1 1 fingerprint - eager-display 0 full xpu:2`
+(work dir `s131-live01`); conditional target 5.25–5.35 s (0.875–0.892 s/s); fallback 129/131 at 145 dg0 serial xpu:3.
+**Owner decision available (not enabled):** `LTX_SNAPSHOT_SCHEDULE=a-xpu3-sync` removes 12 synchronize calls and no checks on eligible chunks;
+the three early on-chain snapshots cost 121–125 ms per chunk today (digest cache on); the measured memory sections are ≈ 1.8 ms, the barrier wait
+is not separately timed, so the saving is bounded above by ≈ 0.12 s per chunk and may be much less.
+
 **2026-10-10, packet 131 sealed and CPU validated; native graph fit at 145 remains unverified.**
 The cone graph already captures just its first decoder method in its own pool.
 Its measured 121-frame growth is 3.195 GiB; the 145 estimate is 4.506 GiB.
