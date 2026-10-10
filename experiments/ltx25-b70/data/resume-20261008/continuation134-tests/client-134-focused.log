@@ -1,0 +1,36 @@
+PASS 134 participates in DECODER_GRAPH_PACKETS
+PASS 134 participates in DECODE_THREAD_PACKETS
+PASS 134 participates in RESET_PACKETS
+PASS 134 participates in LEVER_PACKETS
+PASS 134 participates in SERVER_OPTION_PACKETS
+PASS string134 parser
+PASS 134 stream directory
+PASS 133 stream directory rejected
+PASS legacy134 retains parent132 admission
+PASS off134 equals132 plus explicit residency fields
+PASS split36 exact fixed scope accepted
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation134-stream/run_cpu_suites_134.py", line 207, in <module>
+    suite(sys.argv[1], sys.argv[2:])
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation134-stream/run_cpu_suites_134.py", line 194, in suite
+    _suite(target, arguments)
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation134-stream/run_cpu_suites_134.py", line 176, in _suite
+    exec(compile(source, str(path), 'exec'), {'__name__': '__main__', '__file__': str(path)})
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_tests_134.py", line 262, in <module>
+    raise SystemExit(run_checks())
+                     ^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_tests_134.py", line 122, in run_checks
+    client169().preflight(native169)
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/ltx_continuation_client.py", line 1210, in preflight
+    raise Stop(8, 'preflight refused: ' + '; '.join(problems))
+client134_test.Stop: preflight refused: --packet 134 needs a packet 134 server (status packet=134 anchor='frame' decoder_graph=0 features={'decode_thread': True, 'async_preview': True, 'chain_reset': True, 'chunk_length_choice': True, 'sharpness_diagnostic': True, 'video_first_handoff': True, 'frame_anchor': True, 'decoder_graph': True, 'cone_anchor_decode': True, 'bencode_overlap': True, 'prep_ahead': True, 'chunk_121': True, 'chunk_145': True, 'timing_split': True, 'snapshot_fingerprint': True, 'decoder_graph_pool_cap': False, 'text_residency': True, 'audio_residency': True, 'cone_capture_reserve': True, 'cone_graph_memory': True, 'chunk_169': True, 'atomic_preview': True, 'atomic_evidence_publication': True, 'mixed_anchor': False, 'latent_anchor': False, 'guide_anchor': False, 'chunk_arm': True})
+Exception ignored in atexit callback: <function rmtree at 0x70917915c900>
+Traceback (most recent call last):
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/shutil.py", line 759, in rmtree
+    _rmtree_safe_fd(stack, onexc)
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/shutil.py", line 703, in _rmtree_safe_fd
+    onexc(func, path, err)
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/shutil.py", line 669, in _rmtree_safe_fd
+    orig_st = os.lstat(name, dir_fd=dirfd)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: PosixPath('/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261008/continuation134-tests/client-scratch/ltx-cpu-suite-tql87q64/ltx-client134-cpu-lxk5y4t9')

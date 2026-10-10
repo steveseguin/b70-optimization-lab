@@ -1,0 +1,35 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py", line 199, in <module>
+    suite(sys.argv[1], sys.argv[2:])
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py", line 186, in suite
+    _suite(target, arguments)
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py", line 168, in _suite
+    exec(compile(source, str(path), 'exec'), {'__name__': '__main__', '__file__': str(path)})
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_tests_112.py", line 465, in <module>
+    t()
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_tests_112.py", line 153, in test_qualification
+    e.start_fake('--delay', '0.03')
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_tests_112.py", line 75, in start_fake
+    raise RuntimeError('fake exited: ' + Path(self.fake_log.name).read_text()[-2000:])
+RuntimeError: fake exited: Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py", line 197, in <module>
+    child(sys.argv[2], sys.argv[3], sys.argv[4:])
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py", line 121, in child
+    runpy.run_path(target, run_name='__main__')
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/fake_comfy112.py", line 469, in <module>
+    srv = ThreadingHTTPServer(('127.0.0.1', a.port), H)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/socketserver.py", line 457, in __init__
+    self.server_bind()
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/http/server.py", line 140, in server_bind
+    socketserver.TCPServer.server_bind(self)
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/socketserver.py", line 478, in server_bind
+    self.socket.bind(self.server_address)
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py", line 58, in wrapped
+    return action(sock, address)
+           ^^^^^^^^^^^^^^^^^^^^^
+OSError: [Errno 98] Address already in use
+

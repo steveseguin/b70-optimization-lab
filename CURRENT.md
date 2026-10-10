@@ -34,17 +34,29 @@ inner plan `7750e7b54c885f99a73ab87b17013fc0a850a1af942f0c00422adbae596258c4`.
 [future command](experiments/ltx25-b70/recovery/20261010-continuation135-stream/LAUNCH.md).
 
 
-**2026-10-10, packet 134 census: only the 169-frame graph-off arm clears the full memory screen; CPU validation is running.**
-The 145-frame receipt audit confirms exact outputs on31/31 chunks and measured
-cone graph growth3.545 GiB, below the old4.506 GiB estimate. The1.36 GB minimum
-snapshot margin was on card0. At169, charging both full reserves leaves the
-cone-graph/display3 arm short1.843 GiB on card3; the display replica arm is
-short5.122 GiB on card2 after split36. The graph-off/native-display3 arm clears,
-including0.905 GiB on card3 under the stronger all-phase screen. It is prepared
-for qualification, with expected6.5–6.95 s per7 s of video; this is slower per
-video-second than the current145 line. No live work changed. Full CPU suites
-are in progress; the separate packet135 storage repair remains independent.
-[Measured145 budget and169 census](experiments/ltx25-b70/notes/2026-10-10-continuation133b-results-145.md).
+**2026-10-10, packet 134 sealed and CPU-validated: only the 169-frame graph-off arm clears the memory screen; native qualification is pending.**
+The 145-frame audit confirms exact outputs on 31/31 chunks and measured cone
+graph growth of 3.545 GiB, below the old 4.506 GiB estimate. The 1.36 GB minimum
+snapshot margin was on card 0. At 169, the graph/display-on-card-3 arm is short
+1.843 GiB; the display replica is short 5.122 GiB on card 2 after split36.
+The graph-off arm with native display and audio on card 3 clears every floor
+and screening band, including 0.905 GiB on card 3 under the stronger check.
+Expected period is 6.5–6.95 seconds per 7 seconds of video, so this does not
+predict a speed gain over the current 145 line. The option is default-off.
+
+All 1,178 recovery tests and 6,761 client checks across 45 suites passed,
+including 76 sealed-import tests covering every bundled helper. Also passed:
+36 inner-plan pin assertions, 10 mocked preflight checks, 22 matched CPU
+output comparisons, and recursive verification of 2,336 bound files. Zero
+Python caches; owned scratch removed. No live work changed or launcher ran.
+The separate packet 135 storage repair remains independent.
+
+Manifest `a46fb116f2ce97948c694db870db5a939096814986222fcd0b732e8c025a653c`;
+inner plan `bc03692eb82ae24f67e9c06e11f60b1e1412ee7c02af21bdf93658f37175a46c`.
+[Measured 145 budget and 169 census](experiments/ltx25-b70/notes/2026-10-10-continuation133b-results-145.md),
+[design and validation](experiments/ltx25-b70/notes/2026-10-10-continuation134-stream-design.md),
+[build receipt](experiments/ltx25-b70/data/resume-20261008/continuation134-build.json),
+[future command](experiments/ltx25-b70/recovery/20261010-continuation134-stream/LAUNCH.md).
 
 **2026-10-10 14:55 UTC, 133b session 1 halted by the storage accounting guard after 73 chunks ("Run storage refuses multiply linked files", `run_storage.py:124`); no fault; 133b relaunching (`s133b-live02`); Codex on packet 135 (guard robustness + offending-path evidence).**
 Session 1 figures: median 5.21 s per 6.0 s (0.869 s/s), cone 0.74–0.75 s under the graph, 31/31 byte-identical to 129, exact. The own-writes

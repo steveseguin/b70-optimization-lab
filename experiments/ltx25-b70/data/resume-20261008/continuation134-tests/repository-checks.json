@@ -1,0 +1,72 @@
+{
+  "status": "packet134-checks-passed-existing-pin-drift",
+  "checks": [
+    {
+      "label": "doc-links",
+      "command": [
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "tools/check-doc-links.py"
+      ],
+      "returncode": 0,
+      "log": "experiments/ltx25-b70/data/resume-20261008/continuation134-tests/doc-links-final.log",
+      "sha256": "b2afa2144b99bc7e979cb158f6c3757ad1fe60e2b03905d3e7deb4d90d74fb73"
+    },
+    {
+      "label": "packet-doc-links",
+      "command": [
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "tools/check-doc-links.py",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/notes/2026-10-10-continuation133b-results-145.md",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/notes/2026-10-10-continuation134-stream-design.md",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation134-stream/CONTRACT.md",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation134-stream/LAUNCH.md"
+      ],
+      "returncode": 0,
+      "log": "experiments/ltx25-b70/data/resume-20261008/continuation134-tests/packet-doc-links-final.log",
+      "sha256": "bad7b1249101fb041fd319c4af802adc26238154ec0d14b2dcf620cc1b9b889f"
+    },
+    {
+      "label": "manifest-paths",
+      "command": [
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "tools/check-manifest-paths.py"
+      ],
+      "returncode": 0,
+      "log": "experiments/ltx25-b70/data/resume-20261008/continuation134-tests/manifest-paths-final.log",
+      "sha256": "232ed0aa526b97047df6c75a6b21f71fad7b5fc9d28806de0f022e8496f3be44"
+    },
+    {
+      "label": "launch-shell-syntax",
+      "command": [
+        "bash",
+        "-n",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation134-stream/launch-134.sh"
+      ],
+      "returncode": 0,
+      "log": "experiments/ltx25-b70/data/resume-20261008/continuation134-tests/launch-shell-syntax-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "client-shell-syntax",
+      "command": [
+        "bash",
+        "-n",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/start-client-134.sh"
+      ],
+      "returncode": 0,
+      "log": "experiments/ltx25-b70/data/resume-20261008/continuation134-tests/client-shell-syntax-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "pinned_hashes": {
+    "returncode": 1,
+    "summary": "checked 318 literal file pins: 87 match, 231 drifted, 0 target absent",
+    "scope": "All reported drift belongs to pre-existing Flash-Next pins; no packet134 drift is reported.",
+    "log": "experiments/ltx25-b70/data/resume-20261008/continuation134-tests/check-pinned-hashes.log",
+    "sha256": "30ec0c61959e6c406a56bcf2124cf8c7b954cadf298951dd61b03d97910e6449"
+  },
+  "launchers_executed": false
+}

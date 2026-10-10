@@ -1,0 +1,10 @@
+PASS B1 116b frame/49 dg1: qualification re-derived with the 116 gate, 6 chunks with stream116b names, exit 0 rc=0 rows=6 probs=[] last=['[c112 15:01:40.786] clean stop: 6 chunks this run, next stream_seq 6, next manifest seq 6']
+PASS B2 116a hand-off on 116b: frame receipts commit before their decode records; status packet 116b before_record=6
+PASS B3 --expect-decoder-graph 1 against a 116b decoder_graph 0 server refuses at preflight (exit 8) rc=8
+PASS B4 116b decoder_graph 0 streams 3 chunks with eager decoder lines rc=0 probs=[]
+PASS B5 a 116 client (116b manifest sha) refuses a 116b server at preflight, exit 8, nothing posted rc=8
+PASS B6 a 116b client against a 116 server refuses at preflight (manifest identity), exit 8 rc=8
+PASS B7 a 116b client with the 116 manifest sha still refuses (needs a packet 116b server), exit 8 rc=8
+PASS B8 --packet 116b with the 116 contract module is refused (module pin), exit 8 rc=8
+
+8/8 passed; work in /home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261008/continuation134-tests/scratch/ltx-cpu-suite-tw5pf168/ltx-c116b-test-qtoga4cm

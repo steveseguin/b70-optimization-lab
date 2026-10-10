@@ -1,0 +1,117 @@
+PASS 133 participates in DECODER_GRAPH_PACKETS
+PASS 133 participates in DECODE_THREAD_PACKETS
+PASS 133 participates in RESET_PACKETS
+PASS 133 participates in LEVER_PACKETS
+PASS 133 participates in SERVER_OPTION_PACKETS
+PASS numeric133 parser
+PASS 133 stream directory
+PASS 132 stream directory rejected
+PASS legacy133 retains parent132 admission
+PASS off133 equals132 plus explicit residency fields
+PASS split36 exact fixed scope accepted
+PASS candidate maintenance 10/0/parent
+PASS candidate maintenance 10/0/idle
+PASS candidate maintenance 10/1/parent
+PASS candidate maintenance 10/1/idle
+PASS candidate maintenance 60/0/parent
+PASS candidate maintenance 60/0/idle
+PASS candidate maintenance 60/1/parent
+PASS candidate maintenance 60/1/idle
+PASS split36 rejects scope frames=121
+PASS split36 rejects scope frames=169
+PASS split36 rejects scope placement='two-way'
+PASS split36 rejects scope text_reuse=0
+PASS split36 rejects scope anchor='latent'
+PASS split36 rejects scope decoder_graph=0
+PASS split36 rejects scope anchor_decode='full'
+PASS split36 rejects scope bencode_overlap=0
+PASS split36 rejects scope prep_ahead=0
+PASS split36 rejects scope snapshot_mode='walk'
+PASS split36 rejects scope snapshot_schedule='a-xpu3-sync'
+PASS split36 rejects scope anchor_read_ahead=1
+PASS split36 rejects scope aux_residency='xpu2'
+PASS split36 rejects scope audio_residency='xpu2'
+PASS split36 rejects scope cone_capture_reserve='scaled-476'
+PASS split36 rejects scope display_worker='parallel'
+PASS split36 rejects scope display_device='xpu:2'
+PASS split36 rejects scope display_schedule='sampler-a'
+PASS split36 rejects scope display_schedule='sampler-b'
+PASS split36 rejects scope display_allocator_release='before-admission'
+PASS split36 rejects scope decoder_graph_pool_cap_bytes=1073741824
+PASS split36 rejects scope cone_graph_memory='off'
+PASS split36 rejects scope cone_graph_memory='replica-release'
+PASS candidate rejects text option None
+PASS candidate rejects text option ''
+PASS candidate rejects text option True
+PASS candidate rejects text option 36
+PASS candidate rejects text option 'split24'
+PASS candidate rejects text option 'split36 '
+PASS candidate rejects text option 'legacy'
+PASS candidate rejects text oracle None
+PASS candidate rejects text oracle ''
+PASS candidate rejects text oracle '0000000000000000000000000000000000000000000000000000000000000000'
+PASS candidate rejects text oracle True
+PASS candidate rejects text oracle 1
+PASS missing oracle field rejects
+PASS missing residency feature rejects
+PASS legacy text rejects text-shift admission
+PASS legacy rejects candidate oracle
+PASS historical131 has no text options
+PASS historical131 rejects text flag before network
+PASS historical132 has no text options
+PASS historical132 rejects text flag before network
+PASS packet120 all-pins inner identity
+PASS packet120 all-pins differs from file hash
+PASS packet121 all-pins inner identity
+PASS packet121 all-pins differs from file hash
+PASS packet122 all-pins inner identity
+PASS packet122 all-pins differs from file hash
+PASS packet123 all-pins inner identity
+PASS packet123 all-pins differs from file hash
+PASS packet123b all-pins inner identity
+PASS packet123b all-pins differs from file hash
+PASS packet124 all-pins inner identity
+PASS packet124 all-pins differs from file hash
+PASS packet125 all-pins inner identity
+PASS packet125 all-pins differs from file hash
+PASS packet126 all-pins inner identity
+PASS packet126 all-pins differs from file hash
+PASS packet127 all-pins inner identity
+PASS packet127 all-pins differs from file hash
+PASS packet128 all-pins inner identity
+PASS packet128 all-pins differs from file hash
+PASS packet129 all-pins inner identity
+PASS packet129 all-pins differs from file hash
+PASS packet130 all-pins inner identity
+PASS packet130 all-pins differs from file hash
+PASS packet131 all-pins inner identity
+PASS packet131 all-pins differs from file hash
+PASS packet132 all-pins inner identity
+PASS packet132 all-pins differs from file hash
+PASS packet133 all-pins inner identity
+PASS packet133 all-pins differs from file hash
+PASS packet133b all-pins inner identity
+PASS packet133b all-pins differs from file hash
+PASS packet134 all-pins inner identity
+PASS packet134 all-pins differs from file hash
+PASS packet135 all-pins inner identity
+PASS packet135 all-pins differs from file hash
+PASS 133 sealed text module path
+PASS text helper changed pin refuses before import
+PASS plan file hash cannot substitute inner identity
+PASS wrapper pins bin/python -B
+PASS wrapper caps OMP
+PASS wrapper workdir default133
+PASS wrapper binds text
+PASS wrapper admits text-shift
+PASS wrapper preserves authority
+PASS admission mode bound replica-release/replica-release/firstFalse
+PASS admission mode bound replica-release/text-shift/firstFalse
+PASS admission mode bound text-shift/replica-release/firstFalse
+PASS admission mode bound text-shift/text-shift/firstFalse
+PASS admission mode bound replica-release/replica-release/firstTrue
+PASS admission mode bound replica-release/text-shift/firstTrue
+PASS admission mode bound text-shift/replica-release/firstTrue
+PASS admission mode bound text-shift/text-shift/firstTrue
+
+115/115 passed
