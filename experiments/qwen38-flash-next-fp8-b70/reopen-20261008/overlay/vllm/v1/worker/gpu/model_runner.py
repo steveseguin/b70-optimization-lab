@@ -2284,6 +2284,12 @@ class GPUModelRunner(LoRAModelRunnerMixin):
     def shutdown(self) -> None:
         """Release GPU tensors (model weights, KV caches, workspace) so that
         memory is reclaimable when running in the same process."""
+        from vllm import screen1b_guard as guard
+        if guard.enabled():
+            from vllm.screen1b_teardown import release_runner
+            release_runner(self, guard, torch,
+                           lambda: free_before_shutdown(self.vllm_config))
+            return
         torch.accelerator.synchronize()
         self.cudagraph_manager = None
         self.fast_prefill = None

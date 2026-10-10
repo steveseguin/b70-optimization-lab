@@ -11,6 +11,8 @@ import unittest
 from unittest.mock import patch
 
 import screen
+from memory_watchdog import DeferredStop
+from test_cpu import write_rank_receipts, docker_status
 
 NOW = dt.datetime(2026, 10, 8, 16, tzinfo=dt.timezone.utc)
 BOOT = 'synthetic-boot-id'
@@ -165,7 +167,7 @@ class JournalTests(unittest.TestCase):
                     status = 200
                 def fake_run(command, **kwargs):
                     commands.append(command)
-                    return SimpleNamespace(returncode=0, stdout='false\n', stderr='')
+                    return SimpleNamespace(returncode=0, stdout=docker_status(command, commands), stderr='')
                 text = OLD + DELETED + (line('16:01:00', 'Fault response') if new_fault else '')
                 cutoff = self.admit(OLD, receipt())[1]
                 responses = [Response(b''), Response(b'{"data":[{"id":"qwen38-flash-next-fp8-tp4"}]}'),
@@ -180,7 +182,9 @@ class JournalTests(unittest.TestCase):
                      patch.object(screen, 'journal', return_value=text), patch.object(screen.signal, 'signal'), \
                      patch.object(screen.subprocess, 'Popen', side_effect=[Process(True), Process()]) as popen, \
                      patch.object(screen.subprocess, 'run', side_effect=fake_run), \
+                     patch.object(screen, 'DeferredStop', side_effect=lambda run, name: DeferredStop(run, name, runner=fake_run)), \
                      patch.object(screen.urllib.request, 'urlopen', side_effect=responses):
+                    write_rank_receipts(tmp)
                     watchdog.return_value.check.return_value = None
                     args = SimpleNamespace(mode='mtp1', port=19988)
                     if new_fault:

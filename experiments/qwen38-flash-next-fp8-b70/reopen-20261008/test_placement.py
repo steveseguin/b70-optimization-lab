@@ -80,7 +80,7 @@ class FakeTensor:
 
 class AllocationTests(unittest.TestCase):
     def allocate(self):
-        calls=[]
+        calls=[]; retained=[]
         def empty(shape,**kw):
             calls.append((tuple(shape),kw));return FakeTensor(shape,**kw)
         # dtype is a semantic marker here; fake storage never calls torch/devices.
@@ -89,7 +89,7 @@ class AllocationTests(unittest.TestCase):
         torch=NS(empty=tensor_empty,tensor=tensor,int64='int64',
                  nn=NS(Parameter=lambda x,**kw:x),xpu=NS(device=lambda d:contextlib.nullcontext()))
         from test_overlay_cpu import guard as real_guard
-        guard=NS(pinned_allocation_bytes=real_guard.pinned_allocation_bytes,admission=lambda *a:contextlib.nullcontext(),receipt=lambda *a,**k:None)
+        guard=NS(pinned_allocation_bytes=real_guard.pinned_allocation_bytes,admission=lambda *a:contextlib.nullcontext(),receipt=lambda *a,**k:None,retain_module=retained.append)
         def uva(host):
             view=FakeTensor(host.shape);view.device=device;return view
         device=NS(type='xpu')
@@ -105,6 +105,7 @@ class AllocationTests(unittest.TestCase):
         layer=NS(layer_name='model.layers.0.mlp.experts')
         with patch.dict(sys.modules,modules), patch.object(v5,'layer_rows',return_value=([0,2],[1,3])):
             p=v5.allocate_weight(layer,'w13_weight',(4,256,1),'fp8')
+        self.assertEqual(retained,[layer])
         return layer,p,calls
 
     def test_allocate_only_final_sizes_and_preserve_all_logical_rows(self):

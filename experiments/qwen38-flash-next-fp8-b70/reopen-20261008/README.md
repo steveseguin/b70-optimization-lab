@@ -1,6 +1,26 @@
 # Flash-Next Screen 1b — native FP8 mmap adapter
 
-**Current: attempt 7 prepared on CPU using exact large pinned allocations.**
+**2026-10-09: the reviewed graceful-teardown patch is applied to this repository
+overlay. Native cleanup and model qualification remain open.** The owner
+accepted continuing this boot without rebooting. This task is CPU preparation
+only; GPU work belongs to the coordinator and stays behind LTX.
+
+The applied files exactly match the preserved [patch and copies](overlay-fix-teardown/README.md).
+The manifest now pins all 50 overlay files and 12 support files, including the
+ordered per-rank cleanup and final receipt validator. No model arithmetic,
+placement, full 16-bit KV or memory guard changed. Original saved runs and
+historical hash pins remain evidence of their original configurations.
+
+[Application validation](VALIDATION.md#teardown-application-and-probe-preparation-2026-10-09)
+records CPU checks and exclusions. [Prepared single-card probes](probe/README.md#prepared-for-2026-10-10-written-2026-10-09)
+use empty new receipt directories, the immutable image and fresh-health
+placeholders. No probe was executed. The existing two-incident admission gate
+still needs coordinator reconciliation with the owner's decision; it was not
+bypassed here. A clean CPU check is not proof of native teardown safety.
+
+## Historical attempt-7 preparation (it later faulted)
+
+**Attempt 7 was prepared on CPU using exact large pinned allocations.**
 The torch 2.13 allocator policy removes **24.249 GB** of padding while preserving
 all bytes, dtypes, row mappings and the current placement. The prediction is
 **76.374 GB steady**, **76.643 GB loading**, or **78.790 GB** with another assumed

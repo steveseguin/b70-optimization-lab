@@ -23,7 +23,8 @@ import threading
 
 import calibration
 
-from memory_watchdog import MemoryWatchdog, sample_memory, trip_reason
+from memory_watchdog import DeferredStop, MemoryWatchdog, sample_memory, trip_reason
+from teardown_receipts import validate_rank_receipts
 from memory_plan import (build_prediction, format_table, enforce_prediction,
                          collect_observations, paired_observations)
 from apply_overlay import verify_package
@@ -388,7 +389,7 @@ def launch(args, run):
     cmd = ['docker', 'run', '--name', 'flashnext-screen1-' + run.name,
            '--pull=never', '--restart=no', '--network=host', '--device=/dev/dri',
            '--ipc=host', '--security-opt=seccomp=unconfined', '--stop-signal=SIGINT',
-           '--entrypoint=/bin/bash', '-w', '/opt/venv']
+           '--stop-timeout=-1', '--entrypoint=/bin/bash', '-w', '/opt/venv']
     env = {
         # Per-process NEO allocation policy, not a host setting. See the LTX
         # 2026-10-04-host-ram-shadow-of-vram note; retain peer sharing.
@@ -480,58 +481,20 @@ def supervise_locked(args, run):
     (run / 'launch.json').write_text(json.dumps(cmd, indent=2) + '\n')
     since = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
     (run / 'started-utc.txt').write_text(since + '\n')
-    stopping = False
-    def stop_signal(signum, frame):
-        nonlocal stopping
-        stopping = True
-    signal.signal(signal.SIGTERM, stop_signal)
-    signal.signal(signal.SIGINT, stop_signal)
     server = None
     client = None
     name = 'flashnext-screen1-' + run.name
+    stop = DeferredStop(run, name)
+    previous_handlers = {sig: signal.signal(sig, stop.signal_handler)
+                         for sig in (signal.SIGINT, signal.SIGTERM)}
     base = f'http://127.0.0.1:{args.port}'
     start = time.monotonic()
-    stop_lock = threading.Lock()
-    stop_sent = False
-    def request_stop(reason):
-        nonlocal stopping, stop_sent
-        stopping = True
-        # All workers see the latch before the entry process receives SIGINT.
-        with stop_lock:
-            latch_error = None
-            try:
-                (run / 'STOP').write_text(reason + '\n')
-            except OSError as exc:
-                latch_error = str(exc)
-            if server is None or stop_sent:
-                return
-            if calibrating:
-                # docker run may still be creating the container when the first
-                # sample trips. Keep STOP latched; defer the sole signal until
-                # inspection confirms the owned container is running.
-                try:
-                    state = subprocess.run(['docker', 'inspect', '--format', '{{.State.Running}}', name],
-                                           capture_output=True, text=True, timeout=2)
-                except (OSError, subprocess.TimeoutExpired):
-                    return
-                if state.returncode != 0 or state.stdout.strip() != 'true':
-                    return
-            stop_sent = True  # never retry, including a failed Docker signal
-            try:
-                p = subprocess.run(['docker', 'kill', '--signal=SIGINT', name],
-                                   capture_output=True, text=True, timeout=10)
-                result = {'rc': p.returncode, 'stderr': p.stderr}
-            except (OSError, subprocess.TimeoutExpired) as exc:
-                result = {'rc': None, 'error': str(exc)}
-            (run / 'graceful-stop.json').write_text(json.dumps({
-                'signal': 'SIGINT', **result,
-                'reason': reason, 'monotonic': time.monotonic(),
-                'container_name': name, 'latch_error': latch_error,
-            }, indent=2) + '\n')
+    request_stop = stop.request
     calibrating = args.mode == 'calibrate-load'
     sampler = calibration.Sampler() if calibrating else None
     ready = False
     clean_exit = False
+    container_clean = False
     failure = None
     watchdog = (MemoryWatchdog(run, request_stop, sampler,
                               threshold=calibration.trip_reason, interval=calibration.INTERVAL)
@@ -543,14 +506,15 @@ def supervise_locked(args, run):
             # Start before Popen: no unmonitored first-second allocation window.
             if calibrating:
                 watchdog.start()
-            if stopping:
+            if stop.requested:
                 raise RuntimeError('Watchdog stopped before launch')
             server = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT)
+            stop.armed = True
             if not calibrating:
                 watchdog.start()
             ready = False
             while time.monotonic() - start < 1800:
-                if stopping or server.poll() is not None:
+                if stop.requested or server.poll() is not None:
                     raise RuntimeError('Startup stopped/exited; no retry')
                 check_live(run, journal_cutoff, calibrating=calibrating)
                 if sampler and sampler.container_pid is None:
@@ -581,19 +545,19 @@ def supervise_locked(args, run):
                 watchdog.check()
                 plateau_start = time.monotonic()
                 while time.monotonic() - plateau_start < calibration.PLATEAU_SECONDS:
-                    if stopping or server.poll() is not None:
+                    if stop.requested or server.poll() is not None:
                         raise RuntimeError('Calibration plateau interrupted')
                     check_live(run, journal_cutoff, calibrating=True)
                     time.sleep(.5)
                 watchdog.check()
-                if stopping:
+                if stop.requested:
                     raise RuntimeError('Calibration plateau watchdog trip')
             else:
                 client_cmd = [sys.executable, str(HERE / 'protocol.py'), '--mode', args.mode,
                               '--base-url', base, '--output-dir', str(run / 'client'), '--execute']
                 client = subprocess.Popen(client_cmd, stdout=client_log, stderr=subprocess.STDOUT)
                 while client.poll() is None:
-                    if stopping or server.poll() is not None or time.monotonic() - start > 5400:
+                    if stop.requested or server.poll() is not None or time.monotonic() - start > 5400:
                         raise RuntimeError('Stop/server exit/90 minute experiment bound; no retry')
                     check_live(run, journal_cutoff)
                     time.sleep(2)
@@ -621,16 +585,16 @@ def supervise_locked(args, run):
                 while time.monotonic() < deadline:
                     state = subprocess.run(['docker', 'inspect', '--format', '{{.State.Running}}', name], capture_output=True, text=True, timeout=5)
                     if state.returncode == 0 and state.stdout.strip() == 'false':
-                        if calibrating:
+                        if server:
                             status = subprocess.run(['docker', 'inspect', '--format', '{{json .State}}', name],
                                                     capture_output=True, text=True, timeout=5)
                             if status.returncode == 0:
                                 state_data = json.loads(status.stdout)
-                                clean_exit = (state_data.get('ExitCode') == 0 and
+                                container_clean = (state_data.get('ExitCode') == 0 and
                                               not state_data.get('OOMKilled') and not state_data.get('Error'))
                                 (run / 'container-exit.json').write_text(json.dumps(state_data, indent=2) + '\n')
                         break
-                    if calibrating and not stop_sent:
+                    if not stop.sent:
                         request_stop('deferred stop after container creation')
                     time.sleep(2)
                 else:
@@ -643,11 +607,20 @@ def supervise_locked(args, run):
             idle()
             if new_fault_lines(end, journal_cutoff):
                 raise RuntimeError('Fault recorded; no recovery or second launch is automated')
+            if server:
+                teardown = validate_rank_receipts(run, expected_ranks=range(4))
+                (run / 'teardown-validation.json').write_text(json.dumps(teardown, indent=2) + '\n')
+                require(teardown['passed'], 'Missing or invalid final worker teardown receipts')
+                require(container_clean, 'Container exit was not clean')
+                clean_exit = True  # only after rank receipts AND clean kernel postflight
+
         except BaseException as exc:
             failure = f'{type(exc).__name__}: {exc}'
             raise
         finally:
             watchdog.close()
+            for sig, previous in previous_handlers.items():
+                signal.signal(sig, previous)
             if calibrating:
                 result = write_calibration(run, cmd, ready, clean_exit, watchdog.reason, failure)
         if calibrating and not result['verdict']['passed']:

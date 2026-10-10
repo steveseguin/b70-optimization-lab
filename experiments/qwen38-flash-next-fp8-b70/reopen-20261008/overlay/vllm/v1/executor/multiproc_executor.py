@@ -114,6 +114,8 @@ class MultiprocExecutor(Executor):
 
     def __init__(self, vllm_config: VllmConfig, monitor_workers: bool = True):
         self.monitor_workers = monitor_workers
+        self._screen1b_shutdown_lock = threading.RLock()
+        self._screen1b_shutdown_complete = False
         super().__init__(vllm_config)
 
     def _init_executor(self) -> None:
@@ -258,11 +260,17 @@ class MultiprocExecutor(Executor):
             if not success:
                 # Clean up the worker procs if there was a failure.
                 # Close death_writers first to signal workers to exit
-                for uw in unready_workers:
-                    if uw.death_writer is not None:
-                        uw.death_writer.close()
-                        uw.death_writer = None
-                self._ensure_worker_termination([uw.proc for uw in unready_workers])
+                try:
+                    for uw in unready_workers:
+                        if uw.death_writer is not None:
+                            try:
+                                uw.death_writer.close()
+                            except Exception:
+                                if not _s1b.enabled():
+                                    raise
+                            uw.death_writer = None
+                finally:
+                    self._ensure_worker_termination([uw.proc for uw in unready_workers])
 
         self.output_rank = self._get_output_rank()
 
@@ -506,6 +514,10 @@ class MultiprocExecutor(Executor):
 
     def shutdown(self):
         """Properly shut down the executor and its workers"""
+        if _s1b.enabled():
+            from vllm.screen1b_teardown import shutdown_executor
+            shutdown_executor(self, _s1b)
+            return
         if not getattr(self, "shutting_down", False):
             worker_count = len(getattr(self, "workers", None) or [])
             logger.debug(
@@ -653,6 +665,8 @@ class WorkerProc:
         is_driver_worker: bool,
     ):
         self.rank = rank
+        if _s1b.enabled() and vllm_config.scheduler_config.async_scheduling:
+            raise RuntimeError("Screen 1b teardown requires --no-async-scheduling")
         self.rpc_broadcast_mq = None
         self.worker_response_mq = None
         self.worker = None
@@ -756,8 +770,15 @@ class WorkerProc:
             proc.start()
 
         # Close child ends of pipes here in the parent
-        ready_writer.close()
-        death_reader.close()
+        for pipe in (ready_writer, death_reader):
+            try:
+                pipe.close()
+            except Exception:
+                if not _s1b.enabled():
+                    raise
+                # Publish the started process handle even if a pipe close
+                # fails, so the executor still owns and waits for this child.
+                pass
         # Keep death_writer open in parent - when parent exits,
         # death_reader in child will get EOFError
         return UnreadyWorkerProcHandle(proc, rank, ready_reader, death_writer)
@@ -822,6 +843,11 @@ class WorkerProc:
         return cast(list[WorkerProcHandle], ready_proc_handles)
 
     def shutdown(self):
+        if _s1b.enabled():
+            from vllm.screen1b_teardown import shutdown_rank
+            shutdown_rank(self, _s1b, torch, destroy_model_parallel,
+                          destroy_distributed_environment)
+            return
         if self.rpc_broadcast_mq is not None:
             self.rpc_broadcast_mq.shutdown()
         if self.worker_response_mq is not None:
@@ -873,12 +899,8 @@ class WorkerProc:
         def signal_handler(signum, frame):
             nonlocal shutdown_requested
             if _s1b.enabled():
-                _s1b.request_stop(f"worker signal {signum}")
-                shutdown_requested.set()
-                if initializing or _s1b.loading():
-                    return
-                _s1b.synchronize()
-                raise SystemExit()
+                _s1b.signal_stop(signum, frame)
+                return
             if not shutdown_requested.is_set():
                 shutdown_requested.set()
                 logger.debug(
@@ -933,6 +955,7 @@ class WorkerProc:
                 worker.rpc_broadcast_mq = None
                 worker.worker_response_mq = None
                 worker.worker = None
+                worker.rank = rank
 
                 def early_death_monitor():
                     while True:
@@ -944,7 +967,7 @@ class WorkerProc:
                             dead = True
                         except (OSError, ValueError):
                             return
-                        if dead or (_s1b.root() / "STOP").exists():
+                        if dead or _s1b.stop_requested():
                             _s1b.request_stop("parent exit or controller cancellation")
                             shutdown_requested.set()
                             for key in ("rpc_broadcast_mq", "worker_response_mq"):
@@ -1017,17 +1040,33 @@ class WorkerProc:
                 )
             else:
                 logger.warning("WorkerProc was terminated")
-            # SystemExit must never be ignored
-            raise e
+            # The Screen 1b cleanup runs AFTER this exception scope, so RPC
+            # traceback locals cannot retain device/USM aliases during release.
+            if not _s1b.enabled():
+                raise e
+
+        except BaseException:
+            if not _s1b.enabled():
+                raise
+            _s1b.request_stop("worker interrupted; ordered cleanup required")
+            shutdown_requested.set()
 
         finally:
-            if ready_writer is not None:
-                ready_writer.close()
-            if death_pipe is not None:
-                death_pipe.close()
+            for pipe in (ready_writer, death_pipe):
+                if pipe is not None:
+                    try:
+                        pipe.close()
+                    except Exception:
+                        if not _s1b.enabled():
+                            raise
+                        # Diagnostic pipe errors cannot skip device cleanup.
+                        pass
             # Clean up once worker exits busy loop
-            if worker is not None:
+            if worker is not None and not _s1b.enabled():
                 worker.shutdown()
+
+        if _s1b.enabled() and worker is not None:
+            worker.shutdown()
 
     class ResponseStatus(Enum):
         SUCCESS = auto()
@@ -1084,7 +1123,13 @@ class WorkerProc:
         """Main busy loop for Multiprocessing Workers"""
         assert self.rpc_broadcast_mq is not None
         while True:
-            self._execute_worker_rpc(self.rpc_broadcast_mq.dequeue(indefinite=True))
+            if _s1b.enabled() and _s1b.stop_requested():
+                return
+            request = self.rpc_broadcast_mq.dequeue(indefinite=True)
+            if _s1b.enabled() and _s1b.stop_requested():
+                return
+            self._execute_worker_rpc(request)
+            del request
 
     def _execute_worker_rpc(
         self,

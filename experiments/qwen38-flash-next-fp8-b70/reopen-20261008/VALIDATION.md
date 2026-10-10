@@ -1,5 +1,58 @@
 # Screen 1b CPU validation — native FP8 mmap, 2026-10-08
 
+## Teardown application and probe preparation, 2026-10-09
+
+The reviewed `overlay-fix-teardown/teardown.patch` applied cleanly with
+`git apply --directory=experiments/qwen38-flash-next-fp8-b70/reopen-20261008`.
+All 15 applied files exactly match the review's after-hashes and copies.
+[Source-bound application receipt](evidence/teardown-applied-20261010/application.json).
+The patch, copies, base sources, original review receipts and saved runs are
+unchanged. The live manifest verifies **50 overlay files and 12 support pins**.
+Image: `vllm/vllm-openai-xpu@sha256:e4446310b1d30015e8fdc1a0a2ef1669ac6bef857cbe772487571ed5c1a926a9`.
+Overlay manifest SHA-256:
+`21f4a79c000aa4cf9772082379b486384f5ac8bc1a38210c96c567f555ef7648`.
+Patch SHA-256:
+`3a9ea39d03d5888ed4c05eadd40c083216bfbe58dc6e35caeee2068d1fb71f62`.
+
+Only application-related test fixtures changed: retained-module registration,
+explicit mocked runners for `DeferredStop`, clean container-state JSON and
+synthetic four-rank completion receipts passed through the real validator.
+The frozen patch builder and application test now read their preimage from
+Git `08b6217e8a8a85aede148863e44cd0f4194d1d78`, so applying the reviewed patch
+does not rewrite its provenance. Historical result pins were not relabeled.
+
+| CPU suite | Passed | Skipped | Total | Evidence |
+| --- | ---: | ---: | ---: | --- |
+| Lane | 207 | 6 | 213 | [Receipt](evidence/teardown-applied-20261010/lane.json), [log](evidence/teardown-applied-20261010/lane.log) |
+| Existing slab probes | 25 | 1 | 26 | [Receipt](evidence/teardown-applied-20261010/probe.json), [log](evidence/teardown-applied-20261010/probe.log) |
+| Reviewed teardown | 49 | 0 | 49 | [Receipt](evidence/teardown-applied-20261010/teardown.json), [log](evidence/teardown-applied-20261010/teardown.log) |
+
+The six lane skips are the real-checkpoint boundary test and all five
+worker-init rehearsals (protected storage / `torch.xpu`). The seventh skip
+is `test_guardian_records_native_signal_without_runtime_imports`: it kills
+its child with SIGALRM and violates this task's explicit **never kill processes**
+rule. Thus the earlier 26/26 probe result is preserved as historical evidence;
+this restricted run honestly reports **25 passed, one skipped**. No GPU calls,
+container operations, model server, device access, process kills or host setting
+changes occurred. OMP, MKL and OpenBLAS were each limited to one thread.
+
+```sh
+p=experiments/qwen38-flash-next-fp8-b70/reopen-20261008
+python3 -B "$p/overlay-fix-teardown/build_patch.py" --check
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 /home/steve/.venvs/ltx25-baseline/bin/python -B "$p/overlay-fix-teardown/run_cpu_tests.py" lane
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 python3 -B "$p/overlay-fix-teardown/run_cpu_tests.py" probe
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 python3 -B "$p/overlay-fix-teardown/run_cpu_tests.py" teardown
+```
+
+[Concrete prepared commands and preregistered interpretation table](probe/README.md#prepared-for-2026-10-10-written-2026-10-09).
+The owner has resolved the boot halt by accepting continued operation, with
+GPU work serialized behind LTX. The existing watcher's two-incident gate
+still refuses that boot and needs coordinator reconciliation before execution;
+no fault marker was removed and no admission check was weakened here.
+First fault ends submissions: no retry, second arm, reset or automatic health
+launch. Native queue/mapping release, full-model exact outputs, TP4 behavior
+and clean fresh-runtime repetition remain unqualified.
+
 ## Attempt 7: exact large pinned allocations
 
 **213/213 CPU tests pass, zero skips**, including all four rank rehearsals.

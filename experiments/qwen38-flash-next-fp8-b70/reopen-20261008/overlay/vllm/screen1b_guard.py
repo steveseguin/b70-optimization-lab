@@ -383,6 +383,14 @@ def loading():
 
 
 def wait_processes(procs, *, signal_once=False):
+    try:
+        _wait_processes(procs, signal_once=signal_once)
+    except BaseException as error:
+        from vllm.screen1b_teardown import preserve_failure
+        preserve_failure(sys.modules[__name__], -1, error)
+
+
+def _wait_processes(procs, *, signal_once=False):
     """No timeout-to-kill escalation; retain PID1 until every child has drained.
 
     The receipt after 120 seconds requests owner intervention. Waiting continues
@@ -509,6 +517,25 @@ def release_staging(token):
 
 
 _models = []
+_owned_modules = []
+
+
+def retain_module(module):
+    # Also retain partially constructed modules, before the load snapshot.
+    if enabled() and all(m is not module for m in _owned_modules):
+        _owned_modules.append(module)
+
+
+def signal_stop(signum, frame):
+    # Python signal callbacks only latch intent: no allocator, locks, JSON I/O,
+    # SystemExit, or reentrant synchronization in a signal handler.
+    global _cancelled
+    _cancelled = True
+
+
+def stop_requested():
+    return _cancelled or (root() / 'STOP').exists()
+
 _snapshot_sequence = 0
 
 

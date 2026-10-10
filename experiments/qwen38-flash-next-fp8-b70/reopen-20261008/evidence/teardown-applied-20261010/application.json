@@ -1,0 +1,108 @@
+{
+  "schema": "screen1b.teardown-application-cpu.v1",
+  "date": "2026-10-09",
+  "applied": true,
+  "native_qualified": false,
+  "image": "vllm/vllm-openai-xpu@sha256:e4446310b1d30015e8fdc1a0a2ef1669ac6bef857cbe772487571ed5c1a926a9",
+  "overlay_manifest_sha256": "21f4a79c000aa4cf9772082379b486384f5ac8bc1a38210c96c567f555ef7648",
+  "patch_sha256": "3a9ea39d03d5888ed4c05eadd40c083216bfbe58dc6e35caeee2068d1fb71f62",
+  "review_manifest_sha256": "fcd4b160212fa23a8e2c07ec935b35754b62df8dda33823dd863244add48f413",
+  "files": {
+    "container-entrypoint.sh": "969d6372ac635d3444dea2368686c153cfd0dcae6a6dbdf6c6bc65a076d9692b",
+    "memory_watchdog.py": "f084dd183b57e6340d43bef1c0dcb7194ee2f449469e31195d248ae8129966c7",
+    "overlay-manifest.json": "21f4a79c000aa4cf9772082379b486384f5ac8bc1a38210c96c567f555ef7648",
+    "overlay/vllm/model_executor/offloader/uva.py": "e3602914cf780d5659d45101912d9d9b4718dfe687b88bb87efc7bb94df41125",
+    "overlay/vllm/q38_expert_placement.py": "ffe5c85153c9cbc31cab4798f198161aafc7b31407d7d20dbcfbfd2f9e5fcbe9",
+    "overlay/vllm/screen1b_guard.py": "dd111ba0d8abaf46d629b60bb806ee4f5b545fc779689047972d25b97c91d472",
+    "overlay/vllm/screen1b_ple.py": "ecd36c30c6cafa739f3565b98cb3cb3936c7f1cbc6746d7581c900e610d0cbb2",
+    "overlay/vllm/screen1b_teardown.py": "c37445ab688ff43ff0366698e689af50c5780dc1a4aa5112f2e517059cf04449",
+    "overlay/vllm/v1/engine/core.py": "6067951188f96216840913c00d52ba97846a6ad3b69874da97764a8965db184e",
+    "overlay/vllm/v1/executor/multiproc_executor.py": "a4305b728c5613f6bd3b2c2c9ccb0b3fa2b19e9096594a0b5d653ee53ff44230",
+    "overlay/vllm/v1/worker/gpu/model_runner.py": "8a70ef96ca611702be151cdf3ee7d883f84d90e7657273103d19206aec6e19c3",
+    "overlay/vllm/v1/worker/gpu_worker.py": "1b55f9910bf1569a138e5ab458ea97694afc9d3e3543d9a82bd0a4fc197f57b0",
+    "overlay/vllm/v1/worker/xpu_worker.py": "b976b96b49de5feafc3f750e0087fab62f336a1ec2751cab884edae10662666f",
+    "screen.py": "1f0502aab11d773a9abcf05231c7e60330511b311e9ada731a9f73b910fac8ae",
+    "teardown_receipts.py": "46099d077ec2025d2849ffc4052baee603e15b5f32b811a536a14ebb5727b5a7"
+  },
+  "tests": {
+    "lane": {
+      "suite": "lane",
+      "discovered": 213,
+      "passed": 207,
+      "skipped": 6,
+      "failures": 0,
+      "errors": 0,
+      "exclusions": [
+        "test_ple_mmap.TensorExactnessTests.test_real_checkpoint_boundary_bytes_without_table_allocation",
+        "test_worker_init_rehearsal.WorkerInitRehearsalTests.test_attempt2_guard_fails_real_rope_constructor",
+        "test_worker_init_rehearsal.WorkerInitRehearsalTests.test_rank0",
+        "test_worker_init_rehearsal.WorkerInitRehearsalTests.test_rank1",
+        "test_worker_init_rehearsal.WorkerInitRehearsalTests.test_rank2",
+        "test_worker_init_rehearsal.WorkerInitRehearsalTests.test_rank3"
+      ],
+      "native_cleanup_executed": false
+    },
+    "probe": {
+      "suite": "probe",
+      "discovered": 26,
+      "passed": 25,
+      "skipped": 1,
+      "failures": 0,
+      "errors": 0,
+      "exclusions": [
+        "test_probe.ProbeTests.test_guardian_records_native_signal_without_runtime_imports"
+      ],
+      "native_cleanup_executed": false
+    },
+    "teardown": {
+      "suite": "teardown",
+      "discovered": 49,
+      "passed": 49,
+      "skipped": 0,
+      "failures": 0,
+      "errors": 0,
+      "exclusions": [],
+      "native_cleanup_executed": false
+    }
+  },
+  "validation_hashes": {
+    "teardown.json": "254d37bb8f5bab47a08a6b97560585488570a9880dda66e8930d9135e052ba20",
+    "probe.log": "da65738596734cdb9b470f465ccb212da67a0120d0defd67a2246745f0e5dd8a",
+    "lane.log": "bab3ebfc0735cafa4f6466b203bbd2eb9ec718f6669c82e4e25c79abe4436cc1",
+    "probe.json": "617c0a5361409ba1bcb34dbc5f3b7cf075089007be582c7b804c94875ad3c5a3",
+    "lane.json": "3ea6cf7d818e685d3765f254b149145aa5434ba13d9b181c262e2f284a26b6db",
+    "teardown.log": "f22291c5a5a24dd2c55f8a0a19448dcec0fa4215789a14cad17809c976a30f24"
+  },
+  "test_sources": {
+    "test_journal.py": "f51d029feb4dbc8b4a2685cb51d889636c4600b748c3dfb10cf078e5718b06d6",
+    "test_ple_mmap.py": "e57740543f9c3f023e65445948c3320d9f342269a2598931ac4ad9c012eff1b2",
+    "test_host_budget.py": "3f084c173b35b1f98661d2e1351d15d287db7f92c3b56b8933ddc8d4b8e06fad",
+    "test_worker_init_rehearsal.py": "83fcfca20526c0464c4e42469353f3c165824e255e4611e617c4dafe1f364766",
+    "test_driver_environment.py": "07d2df940cf1cbc4c5deb28c9cc1a1aca707c873d5844899c37869e46b069a35",
+    "test_allocation_receipts.py": "232f8d87632678f0c772f0695e7b51a9c05610918bbdb5c27641cb1f3fa86bc8",
+    "test_loading_guard.py": "8b6742ab6436ea833191fe08d1817c01ece0c2dbdedc0026c8261b39eb3cd68f",
+    "test_memory_plan.py": "4a4874821331c741ceec02675ba7fef54d97d47b48d92630d12d52b940197488",
+    "test_watchdog.py": "71077ed08ee0b06fe76e4f2ed5a474481da8f31e55fcb38fcd6bcafa6d11c740",
+    "test_calibration.py": "da000f80316751d5bf022725fb8503c7a32ce5268314bc88cd28031a713b6651",
+    "test_attempt3_diagnostics.py": "b7778636884e30de8e9e7f8cd9f6e6e76af397ae5153a0ce66c3b010f14aa4f0",
+    "test_placement.py": "79cdf53c3ecab83085ec71f5c73879113b84f2911e2f2c2c1899fd460d5ddfab",
+    "test_pinned_policy.py": "8fd6256cde827b8965bab88282e2d65bd393a27c3879140508037e45ccf8d2e9",
+    "test_cpu.py": "1b7e0960acf03bea749e571a76d5e9f8ec6ab4f19b900d1e77a72b4c550a95f6",
+    "test_overlay_cpu.py": "274b90a7d16ee4088fbc67b5fb7cfbda6238bef826f4d0661dd2e08c11a26f9d",
+    "test_conversion_dispatch.py": "674397b10da7e349d7f9a43e667060e812381921ed054f9213df64b7d64846e1",
+    "test_partial_load.py": "d4312f868bbffb8993ee621fe57f224f3970408c9947b6d7fefc2230f6e2f71d",
+    "test_vram_plan.py": "1059dc977affdebd5c4ddf97fd1852d456fa2924858e90da204402f0dc4be152",
+    "test_copy_dispatch.py": "8b283b56716545038d07f0090b968d75ed175bbc5cb7c16771cbcc692b0d911f"
+  },
+  "validation_tools": {
+    "overlay-fix-teardown/build_patch.py": "1e11da3c2a993233d90ca153b44b64ce73636239d8caf627e515714eb9d4520c",
+    "overlay-fix-teardown/run_cpu_tests.py": "b75e3ed7b4b22b8789510a38eff5da08b6fca556051188638ddea50096067959",
+    "overlay-fix-teardown/tests/test_patch_bundle.py": "edcfccda3665a67f3d659231d12d41551ea68f8fd5570ad8076df8e96cd182e8"
+  },
+  "limits": [
+    "CPU only; no device runtime qualification",
+    "six protected-storage/XPU rehearsal tests skipped",
+    "one child-kill probe test skipped",
+    "historical two-incident admission gate unchanged; coordinator reconciliation required"
+  ]
+}

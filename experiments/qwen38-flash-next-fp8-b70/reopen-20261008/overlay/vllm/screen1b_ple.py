@@ -202,8 +202,13 @@ class ClockCache:
             out[n*width:(n+1)*width] = (self._row(row) if self.store.start <= row < self.store.end else zero)
 
     def close(self):
-        self.buffer.release()
+        # Drop the exported NumPy/slab view before its pinned storage owner.
+        # A failed mmap close stays reachable and can never count as complete.
+        if self.buffer is not None:
+            self.buffer.release()
+            self.buffer = None
         self.store.close()
+        self.row2slot = self.slot2row = self.reference = self.epoch = None
 
 
 def host_ngram_ids(tokens, qsl, context, multipliers, sizes, offsets, eos, heads_per_ngram):

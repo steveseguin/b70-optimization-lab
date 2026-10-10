@@ -10,7 +10,8 @@ from unittest.mock import patch
 
 import calibration as c
 import screen
-from memory_watchdog import MemoryWatchdog
+from memory_watchdog import MemoryWatchdog, DeferredStop
+from test_cpu import write_rank_receipts
 
 
 def sample(t=0, phase='plateau', pressure=70_000_000_000):
@@ -247,10 +248,12 @@ class ControllerTests(unittest.TestCase):
              patch.object(screen,'idle'),patch.object(screen,'journal',return_value='clean'), \
              patch.object(screen.signal,'signal'),patch.object(screen.subprocess,'Popen',side_effect=popen) as launches, \
              patch.object(screen.subprocess,'run',side_effect=run), \
+             patch.object(screen,'DeferredStop',side_effect=lambda path,name:DeferredStop(path,name,runner=run)), \
              patch.object(screen.urllib.request,'urlopen',side_effect=http), \
              patch.object(screen.time,'monotonic',side_effect=lambda:clock[0]), \
              patch.object(screen.time,'sleep',side_effect=sleep), \
              patch.object(screen,'write_calibration',return_value={'verdict':{'passed':True}}) as receipt:
+            write_rank_receipts(d)
             screen.supervise_locked(args,Path(d))
             launch_receipt=json.loads((Path(d)/'launch.json').read_text())
             self.assertEqual(c.loading_guard_bytes(launch_receipt),90_000_000_000)

@@ -91,6 +91,7 @@ class UVAOffloader(BaseOffloader):
 
     def _maybe_offload_to_cpu(self, module: nn.Module, prefix: str = "") -> nn.Module:
         """Offload module parameters to CPU using UVA if budget allows."""
+        _s1b.retain_module(module)
         if (params := next(module.parameters(), None)) is None:
             return module
 

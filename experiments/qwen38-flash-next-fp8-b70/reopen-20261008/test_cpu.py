@@ -10,10 +10,35 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
+from memory_watchdog import DeferredStop
+from teardown_receipts import REQUIRED_PHASES, SCHEMA
+
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('screen', HERE / 'screen.py')
 screen = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(screen)
+
+
+def write_rank_receipts(run):
+    """Write synthetic complete cleanup events; exercise the real receipt validator."""
+    for rank in range(4):
+        pid = 1000 + rank
+        row = dict(event='rank_teardown_complete', schema=SCHEMA,
+                   status='complete', rank=rank, pid=pid,
+                   timestamps={phase: dict(monotonic_ns=i,
+                       unix_ns=1_700_000_000_000_000_000 + i,
+                       utc='2023-11-14T22:13:20+00:00')
+                       for i, phase in enumerate(REQUIRED_PHASES)})
+        (Path(run) / f'loader-{pid}.jsonl').write_text(json.dumps(row) + '\n')
+
+
+def docker_status(command, commands):
+    """Pure fixture: running until the single recorded mocked SIGINT."""
+    if '{{json .State}}' in command:
+        return json.dumps(dict(ExitCode=0, OOMKilled=False, Error=''))
+    if '{{.State.Running}}' in command:
+        return 'false' if any(c[:2] == ['docker', 'kill'] for c in commands) else 'true'
+    return ''
 
 
 class Tests(unittest.TestCase):
@@ -62,7 +87,7 @@ class Tests(unittest.TestCase):
         responses = [Response(b''), Response(b'{"data":[{"id":"qwen38-flash-next-fp8-tp4"}]}'), Response(b'# metrics\n')]
         def fake_run(command, **kwargs):
             commands.append(command)
-            return SimpleNamespace(returncode=0, stdout='false\n', stderr='')
+            return SimpleNamespace(returncode=0, stdout=docker_status(command, commands), stderr='')
         with tempfile.TemporaryDirectory() as tmp, \
              patch.object(screen, 'preflight'), patch.object(screen, 'call'), \
              patch.object(screen, 'MemoryWatchdog') as watchdog, \
@@ -72,12 +97,14 @@ class Tests(unittest.TestCase):
              patch.object(screen.signal, 'signal'), \
              patch.object(screen.subprocess, 'Popen', side_effect=[server, client]), \
              patch.object(screen.subprocess, 'run', side_effect=fake_run), \
+             patch.object(screen, 'DeferredStop', side_effect=lambda run, name: DeferredStop(run, name, runner=fake_run)), \
              patch.object(screen.urllib.request, 'urlopen', side_effect=responses):
+            write_rank_receipts(tmp)
             watchdog.return_value.check.return_value = None
             with self.assertRaisesRegex(RuntimeError, 'Client failed'):
                 screen.supervise(args, Path(tmp))
         self.assertEqual(sum(c[:2] == ['docker', 'kill'] for c in commands), 1)
-        self.assertIn('--signal=SIGINT', commands[0])
+        self.assertIn('--signal=SIGINT', next(c for c in commands if c[:2] == ['docker', 'kill']))
         self.assertFalse(any('SIGKILL' in str(c) or 'restart' in c for c in commands))
 
     def test_watchdog_and_cleanup_share_one_sigint(self):
@@ -93,7 +120,7 @@ class Tests(unittest.TestCase):
             def close(self): pass
         def fake_run(command, **kwargs):
             commands.append(command)
-            return SimpleNamespace(returncode=0, stdout='false\n', stderr='')
+            return SimpleNamespace(returncode=0, stdout=docker_status(command, commands), stderr='')
         with tempfile.TemporaryDirectory() as tmp, \
              patch.object(screen, 'preflight'), patch.object(screen, 'call'), \
              patch.object(screen, 'collect_observations', return_value={}), \
@@ -102,10 +129,12 @@ class Tests(unittest.TestCase):
              patch.object(screen, 'journal', return_value='clean boot\n'), \
              patch.object(screen.signal, 'signal'), \
              patch.object(screen.subprocess, 'Popen', return_value=Process()), \
-             patch.object(screen.subprocess, 'run', side_effect=fake_run):
+             patch.object(screen.subprocess, 'run', side_effect=fake_run), \
+             patch.object(screen, 'DeferredStop', side_effect=lambda run, name: DeferredStop(run, name, runner=fake_run)):
+            write_rank_receipts(tmp)
             with self.assertRaisesRegex(RuntimeError, 'Startup stopped'):
                 screen.supervise(args, Path(tmp))
-            self.assertIn('controller completion', (Path(tmp) / 'STOP').read_text())
+            self.assertEqual((Path(tmp) / 'STOP').read_text(), 'test pressure trip\n')
             stop = json.loads((Path(tmp) / 'graceful-stop.json').read_text())
             self.assertEqual(stop['reason'], 'test pressure trip')
         self.assertEqual(sum(c[:2] == ['docker', 'kill'] for c in commands), 1)

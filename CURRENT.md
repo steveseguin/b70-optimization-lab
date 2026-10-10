@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**2026-10-09, Flash-Next cleanup patch applied on CPU; probe preparation in progress.**
+The reviewed patch now releases buffers in order and records each worker's cleanup.
+The owner accepted continuing this boot without a reboot. No GPU work was done;
+the coordinator owns later probes and keeps them behind LTX. The saved runs are
+unchanged. The old watcher still refuses a boot with two incidents, so its
+admission needs to be reconciled with that decision before any probe can run.
+[Application checks and prepared commands](experiments/qwen38-flash-next-fp8-b70/reopen-20261008/VALIDATION.md#teardown-application-and-probe-preparation-2026-10-09).
+
 **2026-10-09, LTX packet 118 CPU review: BLOCK before first launch.**
 The snapshot comparison misses memory verdicts and can use the wrong chunk's check schedule.
 The launcher can also retain an unwanted pool cap. An unapplied fix is prepared for a 118b rebuild;

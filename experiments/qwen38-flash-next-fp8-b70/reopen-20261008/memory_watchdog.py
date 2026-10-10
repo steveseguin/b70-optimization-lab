@@ -6,6 +6,8 @@ pinned and file pages). A missing sample fails closed. No torch or GPU queries.
 import json
 import os
 from pathlib import Path
+import signal
+import subprocess
 import threading
 import time
 
@@ -109,3 +111,56 @@ class MemoryWatchdog:
         self.done.set()
         if self.thread:
             self.thread.join(timeout=2)
+
+
+class DeferredStop:
+    """Latch before one SIGINT; retry inspection only, never retry a signal.
+
+    Signal callbacks only record intent: no lock or Docker call can interrupt
+    an allocation or deadlock a callback running on the controller thread.
+    The supervision/finally path calls request() to drain that intent.
+    """
+    def __init__(self, run, name, runner=subprocess.run):
+        self.run = Path(run)
+        self.name = name
+        self.runner = runner
+        self.requested = False
+        self.reason = None
+        self.sent = False
+        self.armed = False
+        self.lock = threading.Lock()
+
+    def signal_handler(self, signum, frame):
+        self.requested = True
+        self.reason = self.reason or ('controller received ' + signal.Signals(signum).name)
+
+    def request(self, reason):
+        self.requested = True
+        self.reason = self.reason or reason
+        with self.lock:
+            latch_error = None
+            try:
+                (self.run / 'STOP').write_text(self.reason + '\n')
+            except OSError as exc:
+                latch_error = str(exc)
+            if not self.armed or self.sent:
+                return
+            try:
+                state = self.runner(['docker', 'inspect', '--format', '{{.State.Running}}', self.name],
+                                    capture_output=True, text=True, timeout=2)
+            except (OSError, subprocess.TimeoutExpired):
+                return
+            if state.returncode != 0 or state.stdout.strip() != 'true':
+                return
+            self.sent = True  # ambiguous delivery also must never be retried
+            try:
+                result = self.runner(['docker', 'kill', '--signal=SIGINT', self.name],
+                                     capture_output=True, text=True, timeout=10)
+                receipt = {'rc': result.returncode, 'stderr': result.stderr}
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                receipt = {'rc': None, 'error': str(exc)}
+            (self.run / 'graceful-stop.json').write_text(json.dumps({
+                'signal': 'SIGINT', **receipt, 'reason': self.reason,
+                'monotonic': time.monotonic(), 'container_name': self.name,
+                'latch_error': latch_error,
+            }, indent=2) + '\n')

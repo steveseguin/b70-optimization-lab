@@ -1,9 +1,17 @@
-# Screen 1b graceful teardown — unapplied CPU-reviewed candidate
+# Screen 1b graceful teardown — frozen CPU-reviewed patch
 
-**Not applied, not native-qualified, and not permission to launch. GPU work
-remains halted after the second incident of this boot.** This implements the
-[production cleanup plan](../../notes/2026-10-09-exit-lifecycle-analysis.md).
-The live overlay, installed runtime, loading guard and saved runs are unchanged.
+**2026-10-09: applied to the repository's Screen 1b overlay at the owner's
+request; native qualification remains open.** The owner accepted continued
+operation on this boot without rebooting. This task only changed CPU files:
+no runtime was launched or installed, and no GPU work was performed.
+[Application checks and prepared probes](../VALIDATION.md#teardown-application-and-probe-preparation-2026-10-09).
+
+The patch, `patch-manifest.json`, `copies/`, base sources and original evidence
+remain the frozen *unapplied review record*. The `applied: false` in that old
+manifest describes its preparation, not the current repository overlay.
+`build_patch.py` now reconstructs its preimage from Git commit
+`08b6217e8a8a85aede148863e44cd0f4194d1d78`; applying the patch no longer makes
+its check stale. The temporary-package test uses that same frozen preimage.
 
 ## Review artifact and scope
 
@@ -12,7 +20,7 @@ all modified files and the refreshed overlay manifest. [copies/](copies/)
 contains the resulting module copies; it is not a standalone runnable package.
 [patch-manifest.json](patch-manifest.json) pins every before/after file and the
 image. [build_patch.py](build_patch.py) only seals/verifies this review directory;
-it never applies the patch. A CPU test applies it to a disposable temporary
+it never applies the patch. A CPU test reconstructs its frozen preimage and applies it to a disposable temporary
 package, compares every result to its copy, and checks the package hashes.
 
 The added GPUWorker and XPUWorker files match the pinned v0.30.0 image's files
@@ -92,14 +100,13 @@ native cleanup safety, complete partial-init coverage, correctness/performance,
 or a cure for the four historical incidents.
 
 The probe [production-decision table](../probe/README.md#exit-lifecycle-discrimination--prepared-not-executed)
-controls what each later authorized outcome permits. Before adoption: owner
-resolution of the boot fault, separately admitted matched probe evidence,
+controls what each later authorized outcome permits. Before production qualification: separately admitted matched probe evidence,
 then reviewed native normal/partial-load/SIGINT/SIGTERM/calibrate-load exits
 with all four receipts and kernel evidence, and the lane's unchanged exact
-output and fresh-server gates. Do not replace the frozen runtime with this
-candidate or publish a speed claim from these CPU checks.
+output and fresh-server gates. The applied source remains unqualified; do not publish a speed claim from
+these CPU checks or replace the frozen qualified runtime.
 
-## CPU validation and review
+## Original CPU validation and review (before application)
 
 [Validation receipts and logs](evidence/): lane **207 passed, 6 explicitly
 skipped out of 213**; probe **26 passed**; candidate **49 passed**, no failures

@@ -3,7 +3,6 @@ import ast
 import importlib.util
 import json
 from pathlib import Path
-import shutil
 import subprocess
 import tempfile
 import unittest
@@ -14,14 +13,16 @@ BASE=HERE.parent
 class BundleTests(unittest.TestCase):
     def test_patch_matches_copies_and_closed_package_hashes(self):
         subprocess.run(['python3','-B',str(HERE/'build_patch.py'),'--check'],check=True,capture_output=True)
-        manifest=json.loads((BASE/'overlay-manifest.json').read_text())
+        spec=importlib.util.spec_from_file_location('frozen_builder',HERE/'build_patch.py')
+        builder=importlib.util.module_from_spec(spec);spec.loader.exec_module(builder)
+        manifest=json.loads(builder.before_bytes('overlay-manifest.json'))
         with tempfile.TemporaryDirectory(prefix='flashnext-teardown-apply-') as temp:
             dest=Path(temp)
             files=set(manifest['support_files'])|{'overlay-manifest.json','screen.py','memory_watchdog.py'}
             files.update('overlay/'+p for p in manifest['files'])
             for rel in files:
                 (dest/rel).parent.mkdir(parents=True,exist_ok=True)
-                shutil.copyfile(BASE/rel,dest/rel)
+                (dest/rel).write_bytes(builder.before_bytes(rel))
             subprocess.run(['git','apply','--check',str(HERE/'teardown.patch')],cwd=dest,check=True,capture_output=True)
             subprocess.run(['git','apply',str(HERE/'teardown.patch')],cwd=dest,check=True,capture_output=True)
             for path in (HERE/'copies').rglob('*'):

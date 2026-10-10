@@ -78,6 +78,7 @@ def allocate_weight(layer, name, shape, dtype):
     import torch
     from vllm import screen1b_guard as guard
     from vllm.utils.torch_utils import get_accelerator_view_from_cpu_tensor
+    guard.retain_module(layer)
     resident_rows, host_rows = layer_rows(layer, shape[0])
     if not host_rows:
         return torch.nn.Parameter(torch.empty(shape, dtype=dtype), requires_grad=False)

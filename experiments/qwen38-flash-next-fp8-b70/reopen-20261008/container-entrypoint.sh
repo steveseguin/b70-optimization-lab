@@ -6,6 +6,17 @@ if [[ "${1:-}" != --execute ]]; then
     exit 0
 fi
 shift
+# A background parent may inherit SIGINT ignored. Bash alone cannot undo that.
+if [[ "${SCREEN1B_SIGNAL_DEFAULTS:-}" != 1 ]]; then
+    exec env --default-signal=INT --default-signal=TERM SCREEN1B_SIGNAL_DEFAULTS=1 \
+        /bin/bash "$0" --execute "$@"
+fi
+# Setup is CPU-only. Cancellation before exec must latch and prevent launch.
+setup_cancel() {
+    printf '%s\n' 'entrypoint setup interrupted' > /screen/STOP
+    exit 130
+}
+trap setup_cancel INT TERM
 [[ "${1:-}" == serve && "${2:-}" == /model ]] || exit 2
 # NEO reads these in each process before device initialization. This changes
 # allocation backing only, never host settings or peer-sharing policy.

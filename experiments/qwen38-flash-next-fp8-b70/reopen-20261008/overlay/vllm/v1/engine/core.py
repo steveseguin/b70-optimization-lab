@@ -1290,10 +1290,16 @@ class EngineCoreProc(EngineCore):
         if _s1b.enabled():
             # Engine construction waits for TP workers. Signals must latch the
             # loader cancellation instead of killing their supervising process.
-            def startup_signal(signum, frame):
-                _s1b.request_stop(f"engine startup signal {signum}")
-            signal.signal(signal.SIGTERM, startup_signal)
-            signal.signal(signal.SIGINT, startup_signal)
+            signal.signal(signal.SIGTERM, _s1b.signal_stop)
+            signal.signal(signal.SIGINT, _s1b.signal_stop)
+            # Constructor waits on children; publish signal intent from a CPU
+            # observer, never perform receipt/file I/O inside a signal handler.
+            def publish_startup_stop():
+                while not _s1b.stop_requested():
+                    time.sleep(.05)
+                _s1b.request_stop("engine cancellation")
+            threading.Thread(target=publish_startup_stop, daemon=True,
+                             name="Screen1bEngineStop").start()
 
         engine_core: EngineCoreProc | None = None
         signal_callback: SignalCallback | None = None
@@ -1378,8 +1384,10 @@ class EngineCoreProc(EngineCore):
                 engine_core._send_engine_dead()
             raise e
         finally:
-            signal.signal(signal.SIGTERM, signal.SIG_DFL)
-            signal.signal(signal.SIGINT, signal.SIG_DFL)
+            # Repeated signals must not kill a parent that still owns workers.
+            handler = _s1b.signal_stop if _s1b.enabled() else signal.SIG_DFL
+            signal.signal(signal.SIGTERM, handler)
+            signal.signal(signal.SIGINT, handler)
             if signal_callback is not None:
                 signal_callback.stop()
             if engine_core is not None:

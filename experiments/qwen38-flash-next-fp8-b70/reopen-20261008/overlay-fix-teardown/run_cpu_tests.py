@@ -17,6 +17,11 @@ def restrict(tests):
     for test in tests:
         if isinstance(test,unittest.TestSuite):
             restrict(test)
+        elif test.id().endswith('.test_guardian_records_native_signal_without_runtime_imports'):
+            excluded.append(test.id())
+            setattr(test,test._testMethodName,unittest.skip(
+                'owner hard rule: never kill processes; test sends fatal SIGALRM')(
+                    getattr(test,test._testMethodName)))
         elif (test.id().startswith('test_worker_init_rehearsal.') or
               test.id().endswith('.test_real_checkpoint_boundary_bytes_without_table_allocation')):
             excluded.append(test.id())
