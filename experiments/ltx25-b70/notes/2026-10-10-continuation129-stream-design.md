@@ -123,3 +123,12 @@ Manifest:
 `42e6a7452e11873f33c78a953105754605121f2a96dfca1954b1d55966a4886c`.
 Inner plan:
 `466039fc05fa45169c4e7c054c824b375da4e0a4d4ecbe3f374c6679dbd06536`.
+
+## Git provenance
+
+The shared index was consumed by the coordinator's concurrent CURRENT commit
+`6fd405ffe2949d3a57f467ab3fb97687ab6f9a93`, which therefore also contains the
+packet 129 implementation, tests and initial evidence. All authored bytes still
+match their recorded hashes. Final validation landed in
+`083748b2be29e1132b3839d3a52c02c1fcb6e8ae`; it and this provenance follow-up carry
+`Co-Authored-By: Codex <noreply@openai.com>`. No shared history was rewritten.
