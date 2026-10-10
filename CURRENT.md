@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**2026-10-10 09:40 UTC, packet 128 sealed: the even-chunk stall is a full Python GC (~252 ms) plus allocator cleanup (~56 ms) landing in the receipt handoff; `LTX_MAINTENANCE_MODE=idle` defers it. Swapping to 128 at 145.**
+Codex's overlap analysis (`notes/2026-10-10-continuation-evenchunk-stall.md`, commits 68fe09195, 45f94e8bb): all 119 long handoffs in the
+126 session overlap the GC + allocator-cleanup pair; the preview encode finishes earlier and is not the blocker. 128 (parent 127; manifest
+`bd6471f7…5ead`; inner plan `d0f849d2…f3d5`; 763 recovery / 3,322 client / 10 preflight CPU checks; synthetic receipt timing 21 ms vs
+306 ms) adds `LTX_MAINTENANCE_MODE=idle|parent`: cleanup waits for a 250 ms handoff gap, with mandatory cleanup at the 60 s boundary; no
+memory admission change (169 stays refused). Forecast at 145: 5.50–5.75 s, centre 5.60 (0.933 s/s). The 127 session (≈ 100 chunks, exact,
+one decode-route race resumed) stopped by one controlled stop; launching `LTX_MAINTENANCE_MODE=idle LTX_GC_INTERVAL_SECONDS=10
+LTX_SNAPSHOT_DIGEST_CACHE=1 LTX_STORAGE_SCAN_MODE=background LTX_AUX_RESIDENCY=legacy LTX_DISPLAY_WORKER=serial LTX_RUN_WRITE_ALLOWANCE_GIB=16
+launch-128.sh 145 frame 0 cone 1 1 fingerprint - sampler-a 0 full xpu:3` (work dir `s128-live01`). Codex is on 129 (atomic publication of
+every route-read evidence file).
+
 **2026-10-10 09:30 UTC, 127 at 145 live (verdict cbd91ba8a8cc); one client stop on the decode route's evidence-guard race (chunk 80), client resumed; disk scratch cleaned.**
 At 09:27:44 UTC the decode route answered HTTP 500 ("Evidence changed during read" on the decode record of stream127-s00000080): the same
 writer/reader race class as the 04:32 preview incident; 123 made preview MP4/JSON publication atomic but the decode record (and receipts)
