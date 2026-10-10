@@ -39,6 +39,7 @@ evidence and remaining gates):
 
 | Family | Deployment packet |
 | --- | --- |
+| LTX 2.5 | [145-frame continuation video, four-B70 lab replay](ltx25-continuation-stream-b70-145f-20261010/) |
 | Gemma 4 26B A4B | [Q8 one-B70 reconstruction](gemma4-26b-a4b-q8-b70/) |
 | Laguna S 2.1 | [INT4 four-B70 record replay](laguna-s-2.1-int4-b70-125tps/) |
 | LFM2.5 2.6B | [Q8_0 one-B70](lfm25-26b-q8-b70/) |

@@ -501,7 +501,7 @@ Style genome (duotone-hixffp):
 <section id="featured">
   <div class="wrap">
     <h2 id="t-featured">What should I run?</h2>
-    <p class="sub">One pick per size, from a small quick model to the large ones, all measured the same way on 2026-10-10. Speeds are in <abbr title="tokens per second">tok/s</abbr>: about how many words the AI writes each second (a token is about &frac34; of a word). The bars share one scale per column, so a longer bar is simply faster.</p>
+    <p class="sub">Choose by model size and card count. The one-card comparison uses the October 10 test; other results below link to their own test conditions. Speeds are in <abbr title="tokens per second">tok/s</abbr>: about how many words the AI writes each second (a token is about &frac34; of a word). The bars share one scale per column, so a longer bar is simply faster.</p>
     <ol class="pick-list">
       <li class="pick-row">
         <div class="pick-head"><span class="pick-rank">1</span><div>
@@ -548,13 +548,14 @@ Style genome (duotone-hixffp):
       <li class="pick-row">
         <div class="pick-head"><span class="pick-rank">4</span><div>
           <p class="eyebrow">Ready to try &middot; exact &middot; large &middot; pick 1 card or 2 cards</p>
-          <h3><a href="models/qwen-27b.html">Qwen3.8 27B FP8</a> <span class="card-chip">1 card</span> <span class="card-chip two">2 cards</span><small>vLLM XPU &middot; FP8 weights &middot; MTP depth 5 &middot; Alibaba</small></h3>
-          <p class="pick-why">Our strongest chat and coding model with no 4-bit compression. Every speed-up we kept gives the same answers as running it slowly, alone or with 64 people at once. Slower per person than the models above; that is the price of the size.</p>
+          <h3><a href="models/qwen-27b.html">Qwen3.8 27B FP8</a> <span class="card-chip">1 card</span> <span class="card-chip two">2 cards</span><small>vLLM XPU &middot; FP8 weights &middot; full 16-bit KV &middot; Alibaba</small></h3>
+          <p class="pick-why">A larger chat and coding model with FP8 weights. Choose one card for personal use, or two cards for the tested shared-chat setup. Output checks passed for each setup’s declared tests; the single-user and 64-user results use different settings.</p>
         </div></div>
         <div class="pick-bars">
-          <p class="pick-deploy"><span class="card-chip two">2 cards</span> 33K of conversation per person</p>
+          <p class="pick-deploy"><span class="card-chip two">2 cards</span> Single-user MTP5; shared-chat MTP0</p>
           <div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track"><div class="pick-fill" style="width:39%"></div></div><span class="pick-val">90 tok/s</span></div>
-          <div class="pick-bar-row"><span class="pick-bar-label">64 people</span><div class="pick-track"><div class="pick-fill spot" style="width:67%"></div></div><span class="pick-val">875 tok/s<small>everyone together, exact</small></span></div>
+          <div class="pick-bar-row"><span class="pick-bar-label">64 people</span><div class="pick-track"><div class="pick-fill spot" style="width:67%"></div></div><span class="pick-val">875 tok/s<small>combined, short prompts, MTP0</small></span></div>
+          <p class="pick-note">The 64-user result is two output-exact passes on one server, with short prompts and 128 output tokens; it is not 33K input for every user. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json">Test receipt</a>.</p>
           <p class="pick-deploy"><span class="card-chip">1 card</span> 32K of conversation per person</p>
           <div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track"><div class="pick-fill" style="width:24%"></div></div><span class="pick-val">54 tok/s</span></div>
           <div class="pick-bar-row"><span class="pick-bar-label">Reads a prompt</span><div class="pick-track"><div class="pick-fill" style="width:46%"></div></div><span class="pick-val">1,871 tok/s<small>2,000-token prompt</small></span></div>
@@ -1180,12 +1181,34 @@ Style genome (duotone-hixffp):
   </div>
 </section>
 
+<section id="flash-next-record">
+  <div class="wrap">
+    <h2>Flash-Next: the larger four-card model</h2>
+    <p>Qwen3.8 Flash-Next is a 125B model with about 6B parameters active per token. Its certified single-user FP8 result is <strong>46.854250 tok/s</strong> on four B70s, with one target-verified draft token and full BF16 KV. Lossless here means matching the registered target outputs; the inherited code-task miss remains in the quality report.</p>
+    <div class="pick-bars">
+      <div class="pick-bar-row"><span class="pick-bar-label"><a href="models/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913.html">Current</a></span><div class="pick-track"><div class="pick-fill" style="width:100%"></div></div><span class="pick-val">46.85 tok/s</span></div>
+      <div class="pick-bar-row"><span class="pick-bar-label"><a href="models/qwen38-flash-next-fp8-tp4-mtp1-qsafused-b70-38tps-20260907.html">Previous</a></span><div class="pick-track"><div class="pick-fill" style="width:80.73%"></div></div><span class="pick-val">37.83 tok/s</span></div>
+    </div>
+    <p>Both bars use the fixed cold realistic suite and the median across prompt classes after the first token. One user, four cards; separate scale from the shared-chat results above. Prompt-reading speed at 512 tokens is not measured for this setup.</p>
+    <p><a class="button" href="models/qwen-flash-next.html">Results and comparisons</a> <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md">Expert reproduction guide</a> · Native runtime; clean-host install and portable container still pending.</p>
+  </div>
+</section>
+
+<section id="ltx-video">
+  <div class="wrap">
+    <h2>Continuous video on four B70s</h2>
+    <p><a href="models/ltx25-continuation-stream-b70-145f-20261010.html">LTX 2.5 continuation stream</a> makes six new seconds of 256×256 video per chunk. The measured early window took <strong>5.24 seconds per chunk</strong> (52 intervals before pacing began). This is a scoped timing observation, not a sustained speed guarantee.</p>
+    <p>Saved output hashes matched the reference chain for the compared chunks. The guide shows the progression, exact setup, memory limits and remaining seam/audio checks. The public runtime rebuild is incomplete; this is an expert lab replay.</p>
+    <p><a class="button" href="models/ltx25-continuation-stream-b70-145f-20261010.html">Video results and limits</a> <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/README.md">Reproduction guide and receipts</a></p>
+  </div>
+</section>
+
 <section id="multi-user">
   <div class="wrap">
     <p class="teaser-strip">
-      <span class="key"><span class="dot" aria-hidden="true">&#9679;</span> measured &middot; accepted package profile</span>
-      <strong>875 tok/s combined</strong> &mdash; two Arc Pro B70 cards serving 64 people at once with Qwen3.8-27B FP8, and each person gets exactly the answer they would get alone (short prompts).
-      <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md">Read the research notes</a> &middot; <a href="learn/multi-user.html">How serving many users works</a>
+      <span class="key"><span class="dot" aria-hidden="true">&#9679;</span> measured &middot; scoped multi-user test</span>
+      <strong>875 tok/s combined</strong> &mdash; two Arc Pro B70 cards serving 64 people at once with Qwen3.8-27B FP8, with no speculative decoding and short prompts. All tested token arrays matched their sequential references; two passes used one server, so this is not a fresh-server speed certification.
+      <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json">Read the test receipt</a> &middot; <a href="learn/multi-user.html">How serving many users works</a>
     </p>
   </div>
 </section>

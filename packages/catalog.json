@@ -622,6 +622,288 @@
       ]
     },
     {
+      "manifest": "packages/ltx25-continuation-stream-b70-145f-20261010/package.json",
+      "format": "b70-model-package-v1",
+      "id": "ltx25-continuation-stream-b70-145f-20261010",
+      "name": "LTX 2.5 continuous video on four B70 cards",
+      "status": "candidate",
+      "audience": "expert",
+      "guide": "repro/ltx25-continuation-stream-b70-145f-20261010/README.md",
+      "clean_host_tested": false,
+      "library": {
+        "model_family": "LTX 2.5",
+        "publisher": "Lightricks",
+        "variant": "22B distilled, 145-frame continuation",
+        "summary": "Frame-anchored 256×256 video at 24 fps; four B70 cards, cone decode graph and split36 text placement. Packet135 measured 5.2415 seconds per six new video seconds in a 52-period unthrottled early window. Packet137 bulk F32 scan is a separate unqualified extension.",
+        "public_summary": "Make a continuing video on four cards. An early test window took 5.24 seconds for six seconds of new video. Expert setup; public runtime rebuild still incomplete.",
+        "public_caveat": "The early timing window is not a sustained speed guarantee. Output hashes match the compared reference chunks; seam acceptance and audio alignment remain open. Packet137 has no retained native qualification verdict in this packet.",
+        "quantization": "BF16 distilled weights; F32 output checks",
+        "runtime_label": "ComfyUI / PyTorch XPU",
+        "operating_systems": [
+          "Linux"
+        ],
+        "delivery": [
+          "native"
+        ],
+        "modalities": [
+          "video",
+          "audio"
+        ],
+        "use_cases": [
+          "video generation",
+          "continuation research"
+        ],
+        "tags": [
+          "four cards",
+          "145 frames",
+          "frame anchors",
+          "cone decode",
+          "split36",
+          "lab replay"
+        ],
+        "published_at": "2026-10-10",
+        "featured_metric": null,
+        "benchmark_status": "Strict headline pending: scoped continuation timing only; seam/audio acceptance, sustained performance and independent replay remain open."
+      },
+      "contributors": [
+        {
+          "id": "b70-optimization-lab",
+          "name": "neural.download lab",
+          "kind": "lab",
+          "profile": "https://github.com/steveseguin/b70-optimization-lab",
+          "contribution": "Frame-anchored continuation, exact cone decode, graph and text placement, retained gates and publication evidence.",
+          "status": "acknowledged",
+          "validated_effect": "Recorded early-window cadence only; no matched isolated speed-up or general video-quality claim.",
+          "evidence": "experiments/ltx25-b70/data/resume-20261008/continuation135-build.json"
+        }
+      ],
+      "hardware": {
+        "accelerator": "Intel Arc Pro B70 32 GiB",
+        "cards": 4,
+        "host_memory": "128 GiB installed on measured host; exact admission floors apply"
+      },
+      "model": {
+        "repository": "Lightricks/LTX-2.5",
+        "revision": "5e6e71018ee1756ed329b697a7b4aedc934dfce9",
+        "manifest": "experiments/ltx25-b70/data/model-verification.json"
+      },
+      "runtime": {
+        "kind": "native",
+        "repository": "comfyanonymous/ComfyUI",
+        "revision": "b00c6e95279053474955540ba4f551646722b9aa",
+        "build": "repro/ltx25-continuation-stream-b70-145f-20261010/README.md"
+      },
+      "project_patches": {
+        "required": true,
+        "items": [
+          "experiments/ltx25-b70/recovery/20261010-continuation135-stream",
+          "experiments/ltx25-b70/recovery/20261010-continuation137-stream"
+        ],
+        "reason": "Sealed continuation source overlay; original prepared runtime and venv not yet publicly closed."
+      },
+      "commands": {
+        "preflight": "python3 -B repro/ltx25-continuation-stream-b70-145f-20261010/verify-evidence.py",
+        "launch": "Read repro/ltx25-continuation-stream-b70-145f-20261010/README.md for the pinned lab launch. Public prepared-runtime rebuild remains incomplete; no portable launcher is certified.",
+        "health": "Read repro/ltx25-continuation-stream-b70-145f-20261010/README.md for the fresh health-receipt probe and qualification gates before any authorized GPU experiment.",
+        "benchmark": "python3 -B repro/ltx25-continuation-stream-b70-145f-20261010/verify-evidence.py # CPU evidence audit only; GPU measurement procedure is in the guide.",
+        "stop": "Read repro/ltx25-continuation-stream-b70-145f-20261010/README.md for graceful client, sink and server shutdown; no automatic restart or forced kill."
+      },
+      "dependencies": [
+        "experiments/ltx25-b70/data/environment.txt",
+        "experiments/ltx25-b70/data/model-verification.json",
+        "experiments/ltx25-b70/data/resume-20261008/continuation134-build.json",
+        "experiments/ltx25-b70/data/resume-20261008/continuation135-build.json",
+        "experiments/ltx25-b70/data/resume-20261008/continuation137-build.json",
+        "experiments/ltx25-b70/data/stream/kittens-01.json",
+        "experiments/ltx25-b70/notes/2026-10-10-continuation133b-results-145.md",
+        "experiments/ltx25-b70/recovery/20261010-continuation135-stream",
+        "experiments/ltx25-b70/recovery/20261010-continuation137-stream",
+        "experiments/ltx25-b70/scripts/check-four-card-health.py",
+        "experiments/ltx25-b70/stream/ltx_continuation_client.py",
+        "experiments/ltx25-b70/stream/ltx_rtmp_sink.py",
+        "experiments/ltx25-b70/stream/ops",
+        "experiments/ltx25-b70/stream/relay.sh",
+        "experiments/ltx25-b70/stream/start-client-135.sh",
+        "experiments/ltx25-b70/stream/start-client-137.sh",
+        "experiments/ltx25-b70/stream/start-sink.sh",
+        "notes/2026-10-10-ltx-continuation-campaign.md",
+        "repro/ltx25-continuation-stream-b70-145f-20261010/README.md",
+        "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/135-gc10-server-identity.json",
+        "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/135-gc10-stream-qualification-verdict.json",
+        "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/135-gc60-health.json",
+        "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/135-gc60-server-identity.json",
+        "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/135-gc60-stream-qualification-verdict.json",
+        "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/137-bulk-server-identity.json",
+        "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json",
+        "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/snapshot-provenance.json",
+        "repro/ltx25-continuation-stream-b70-145f-20261010/identity.json",
+        "repro/ltx25-continuation-stream-b70-145f-20261010/manifest.sha256",
+        "repro/ltx25-continuation-stream-b70-145f-20261010/promotion-attestation.json",
+        "repro/ltx25-continuation-stream-b70-145f-20261010/publication-status.json",
+        "repro/ltx25-continuation-stream-b70-145f-20261010/verify-evidence.py",
+        "repro/ltx25-continuation-stream-b70-145f-20261010/video-measurements.json",
+        "results/ltx25-continuation-stream-2026-10-10.md"
+      ],
+      "missing": [
+        "public prepared-runtime and virtual-environment reconstruction",
+        "complete public release assets and validated recipe-publication.v2 manifest",
+        "clean-host installation and replay",
+        "owner acceptance of seams and resolved audio alignment",
+        "sustained unthrottled timing qualification",
+        "packet137 native qualification and independently measured speed"
+      ],
+      "known_limitations": [
+        "Single stream and single-queue B70 execution only; memory floors and reserve checks cannot be lowered.",
+        "145 frames include one carried anchor, giving six new seconds at 24 fps.",
+        "Repeated fixed scene schedule; not a varied-task benchmark. Output exactness covers only retained reference comparisons.",
+        "Early timing windows exclude client throttle by a fixed prefix rule; full-session hold-free diagnostic remains slower.",
+        "Packet137 bulk F32 scan retains CPU evidence only in this publication; do not assign packet135 speed to it."
+      ],
+      "video_measurements": {
+        "evidence": "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json",
+        "headline_row_label": "145 frames, GC 10 — early window",
+        "rows": [
+          {
+            "evidence": "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json",
+            "label": "Initial 97-frame stream (117)",
+            "new_video_seconds": 4.0,
+            "period_seconds": 4.762,
+            "samples": 124,
+            "status": "unthrottled-prefix measurement; qualification passed"
+          },
+          {
+            "evidence": "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json",
+            "label": "121 frames, fingerprint checks (118b)",
+            "new_video_seconds": 5.0,
+            "period_seconds": 5.195,
+            "samples": 91,
+            "status": "unthrottled-prefix measurement; qualification passed"
+          },
+          {
+            "evidence": "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json",
+            "label": "121 frames, decoder graph (119)",
+            "new_video_seconds": 5.0,
+            "period_seconds": 5.435,
+            "samples": 51,
+            "status": "unthrottled-prefix measurement; qualification passed"
+          },
+          {
+            "evidence": "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json",
+            "label": "121 frames, display replica (120)",
+            "new_video_seconds": 5.0,
+            "period_seconds": 5.092,
+            "samples": 125,
+            "status": "unthrottled-prefix measurement; qualification passed"
+          },
+          {
+            "evidence": "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json",
+            "label": "145 frames, eager decoder (121)",
+            "new_video_seconds": 6.0,
+            "period_seconds": 5.666,
+            "samples": 316,
+            "status": "unthrottled-prefix measurement; qualification passed"
+          },
+          {
+            "evidence": "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json",
+            "label": "145 frames, storage accounting (123b)",
+            "new_video_seconds": 6.0,
+            "period_seconds": 5.77,
+            "samples": 51,
+            "status": "unthrottled-prefix measurement; qualification passed"
+          },
+          {
+            "evidence": "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json",
+            "label": "145 frames, parallel display (124)",
+            "new_video_seconds": 6.0,
+            "period_seconds": 5.746,
+            "samples": 35,
+            "status": "unthrottled-prefix measurement; qualification passed"
+          },
+          {
+            "evidence": "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json",
+            "label": "145 frames, GC 60 (125)",
+            "new_video_seconds": 6.0,
+            "period_seconds": 5.785,
+            "samples": 207,
+            "status": "unthrottled-prefix measurement; qualification passed"
+          },
+          {
+            "evidence": "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json",
+            "label": "145 frames, background scan (126)",
+            "new_video_seconds": 6.0,
+            "period_seconds": 5.697,
+            "samples": 202,
+            "status": "unthrottled-prefix measurement; qualification passed"
+          },
+          {
+            "evidence": "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json",
+            "label": "145 frames, digest cache (127)",
+            "new_video_seconds": 6.0,
+            "period_seconds": 5.467,
+            "samples": 85,
+            "status": "unthrottled-prefix measurement; qualification passed"
+          },
+          {
+            "evidence": "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json",
+            "label": "145 frames, idle maintenance (128)",
+            "new_video_seconds": 6.0,
+            "period_seconds": 5.4925,
+            "samples": 60,
+            "status": "unthrottled-prefix measurement; qualification passed"
+          },
+          {
+            "evidence": "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json",
+            "label": "145 frames, atomic evidence (129)",
+            "new_video_seconds": 6.0,
+            "period_seconds": 5.486,
+            "samples": 91,
+            "status": "unthrottled-prefix measurement; qualification passed"
+          },
+          {
+            "evidence": "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json",
+            "label": "145 frames, text split and cone graph (133b)",
+            "new_video_seconds": 6.0,
+            "period_seconds": 5.411,
+            "samples": 71,
+            "status": "unthrottled-prefix measurement; qualification passed"
+          },
+          {
+            "evidence": "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json",
+            "label": "145 frames, GC 60 — early window",
+            "new_video_seconds": 6.0,
+            "period_seconds": 5.2415,
+            "samples": 52,
+            "status": "unthrottled-prefix measurement; qualification passed"
+          },
+          {
+            "evidence": "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json",
+            "label": "145 frames, GC 10 — early window",
+            "new_video_seconds": 6.0,
+            "period_seconds": 5.2415,
+            "samples": 52,
+            "status": "unthrottled-prefix measurement; qualification passed"
+          },
+          {
+            "label": "169 frames, graph off (134)",
+            "period_seconds": null,
+            "new_video_seconds": 7,
+            "samples": 0,
+            "status": "sealed candidate; not launched",
+            "evidence": "experiments/ltx25-b70/data/resume-20261008/continuation134-build.json"
+          },
+          {
+            "evidence": "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/137-bulk-server-identity.json",
+            "label": "145 frames, bulk F32 scan (137)",
+            "new_video_seconds": 6,
+            "period_seconds": null,
+            "samples": 0,
+            "status": "startup identity saved; native qualification and timing not available in snapshot"
+          }
+        ],
+        "scope": "Separate measured continuation configurations, four B70s,256x256,24fps. Each value is the entire pre-throttle prefix after destination sequence9, not a sustained-throughput promise; different frame counts and settings are not matched speedups."
+      }
+    },
+    {
       "manifest": "packages/minimax-m27-int4-autoround-b70/package.json",
       "format": "b70-model-package-v1",
       "id": "minimax-m27-b70-89tps-20260520",
@@ -5560,7 +5842,9 @@
         "experiments/qwen38-27b-b70/data/2026-10-04-fp8-onecard-chunked-upload/tp1-pkg-no-quantization-state.json",
         "experiments/qwen38-27b-b70/overlays/b70-chunked-upload/b70_chunked_upload.py",
         "packages/qwen38-27b-fp8-tp1-b70/overlays/b70_chunked_upload.py",
-        "experiments/qwen38-27b-b70/notes/2026-10-04-gpu-fault-mtp-start.md"
+        "experiments/qwen38-27b-b70/notes/2026-10-04-gpu-fault-mtp-start.md",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight-evidence-20260821.json",
+        "repro/qwen38-27b-autoround-int4-b70/publication-manifest.json"
       ],
       "performance_profiles": [
         {
@@ -5989,7 +6273,7 @@
           "32K input"
         ],
         "published_at": "2026-08-27",
-        "benchmark_status": "September 17 comm-2 campaign on the R310 runtime: depth 5 with the allgather allreduce overlay measured 90.37 and 90.28 tok/s on one fresh server (ring allreduce, September 16: 88.32), 12/12 identical to no MTP on the strict suite, 64/64 on the 64-prompt sequential oracle plus two queued passes, exact after 2K/8K/16K prompts and on the chat quality suite; the no-MTP server under the same overlay reproduced the ring-allreduce outputs 12/12 at 33.86 tok/s. The depth-1 profile (54.90 tok/s, September 16) is unchanged. The public-source acceptance replay through this launcher measured 90.25 tok/s with 12/12 outputs identical to no MTP, six practical requests with exact repeats, and a clean stop (commit 8a46c0cae). Clean-host install and multiple users are untested.",
+        "benchmark_status": "September 17 comm-2 campaign on the R310 runtime: depth 5 with the allgather allreduce overlay measured 90.37 and 90.28 tok/s on one fresh server (ring allreduce, September 16: 88.32), 12/12 identical to no MTP on the strict suite, 64/64 on the 64-prompt sequential oracle plus two queued passes, exact after 2K/8K/16K prompts and on the chat quality suite; the no-MTP server under the same overlay reproduced the ring-allreduce outputs 12/12 at 33.86 tok/s. The depth-1 profile (54.90 tok/s, September 16) is unchanged. The public-source acceptance replay through this launcher measured 90.25 tok/s with 12/12 outputs identical to no MTP, six practical requests with exact repeats, and a clean stop (commit 8a46c0cae). Clean-host installation is untested. The separate October 7 multi-user profile (MTP0) passed token identity at 16/32/64 users on short and 2K–8K prompts, two same-server passes; those batch-wall rates are capacity measurements, not this single-user headline.",
         "featured_metric": {
           "value": 90.30984105545438,
           "unit": "tok/s",
@@ -5997,7 +6281,7 @@
           "scope": "Median of two fresh R310 two-card servers (90.370 / 90.250) at a 33,024-token context on the fixed 12-prompt six-class suite, 512-token answers, class-balanced median of tokens 1-100, cache zero, canaries passed, 12/12 complete outputs identical to no-MTP decoding (33.86 tok/s on the same image), 64/64 on the sequential oracle.",
           "evidence": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-comm2/tp2-ag-mtp5-strict-performance.json"
         },
-        "public_summary": "Official Qwen FP8 weights on two Intel Arc Pro B70 cards. Recommended: one user, MTP depth 5 with a draft-only INT4 shortlist head and the two-rank allreduce done as one allgather plus a fixed-order add, 33,024 total tokens (a 32K input plus 256 for the answer), 90.3 tok/s writing speed; outputs identical to no MTP. A depth-1 profile keeps the September 14 recipe."
+        "public_summary": "Official FP8 Qwen 27B on two B70 cards. Choose recommended for one person: about 90.3 output tokens/s with target-verified MTP5. Choose multi-user for shared requests: 875 tokens/s combined at 64 short requests, or 66 combined with 2K–8K inputs. The multi-user results are two same-server capacity passes with outputs equal to the solo references; clean-host installation is still untested."
       },
       "contributors": [
         {
@@ -7514,6 +7798,66 @@
               "context_tokens": 16384,
               "value": 3305.1376561639677,
               "samples": 6
+            }
+          ]
+        },
+        {
+          "id": "multi-user-oct7-short",
+          "label": "Short prompts · combined writing speed · two cards",
+          "public_label": "Short prompts · all users together",
+          "metric": "aggregate_decode",
+          "unit": "tok/s",
+          "x_metric": "concurrent_sequences",
+          "x_label": "Simultaneous requests",
+          "scope": "Two B70s, official 27B FP8 weights, FP16 KV, MTP0 multi-user profile, R310 image, 33,024 total-token capacity, prefix caching off. Combined HTTP batch-wall rate (generated tokens / batch wall seconds), including prompt processing. Two passes on one configured host/server; every token array equals its solo reference. Capacity diagnostic, not the cold realistic single-user headline or a two-fresh-server speed comparison. 128 output tokens per request.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json",
+          "source_data": "experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json",
+          "promotion_qualified": false,
+          "points": [
+            {
+              "concurrent_sequences": 16,
+              "value": 415.58,
+              "samples": 2
+            },
+            {
+              "concurrent_sequences": 32,
+              "value": 653.065,
+              "samples": 2
+            },
+            {
+              "concurrent_sequences": 64,
+              "value": 875.18,
+              "samples": 2
+            }
+          ]
+        },
+        {
+          "id": "multi-user-oct7-long",
+          "label": "2K–8K-token prompts · combined writing speed · two cards",
+          "public_label": "2K–8K-token prompts · all users together",
+          "metric": "aggregate_decode",
+          "unit": "tok/s",
+          "x_metric": "concurrent_sequences",
+          "x_label": "Simultaneous requests",
+          "scope": "Two B70s, official 27B FP8 weights, FP16 KV, MTP0 multi-user profile, R310 image, 33,024 total-token capacity, prefix caching off. Combined HTTP batch-wall rate (generated tokens / batch wall seconds), including prompt processing. Two passes on one configured host/server; every token array equals its solo reference. Capacity diagnostic, not the cold realistic single-user headline or a two-fresh-server speed comparison. Natural output lengths from the fixed 2K–8K input suite.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json",
+          "source_data": "experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json",
+          "promotion_qualified": false,
+          "points": [
+            {
+              "concurrent_sequences": 16,
+              "value": 50.75,
+              "samples": 2
+            },
+            {
+              "concurrent_sequences": 32,
+              "value": 60.495,
+              "samples": 2
+            },
+            {
+              "concurrent_sequences": 64,
+              "value": 65.875,
+              "samples": 2
             }
           ]
         }
@@ -10011,7 +10355,7 @@
         "model_family": "Qwen3.8 Flash-Next",
         "publisher": "Qwen",
         "variant": "official FP8 export, TP4/EP4, deterministic full-decode graph, lossless MTP1, never-routed experts host-placed, reference Triton kernels restored, exact serial GDN verifier rows in the rebuilt kernel extension",
-        "summary": "Qwen's 125B-A6B hybrid-attention MoE, served from its official FP8 weights across four Arc Pro B70 cards with one lossless speculative token. The line before this one verified the speculative token exactly by running the linear-attention verifier rows through vLLM's Python serial path, 8.7 ms of a 42.7 ms step. The kernel extension already carried an exact per-row mode inside its speculative op, gated to four rows by the served build; rebuilt from the lane's kernel head it accepts two, and the verify step drops to 33.7 ms with every output pin unchanged. Every row class gains 23-24%: short 53.4, exact-2K 48.2, exact-4K 48.5 tok/s on the certification servers, 46.85 tok/s class-balanced on the fixed cold realistic suite.",
+        "summary": "Flash-Next is a 125B model with about 6B parameters active per token. Four B70 cards produced 46.854250 output tokens/s for one user on the fixed cold realistic suite. One target-verified draft token speeds up writing without changing the retained reference outputs. The previous matched line measured 37.825654 tokens/s. This is an expert lab replay: a clean-host installer and a safe portable replay remain incomplete. Prompt-reading throughput has not been measured for this exact setup.",
         "quantization": "FP8 block-128 weights / BF16 KV",
         "runtime_label": "vLLM XPU",
         "operating_systems": [
@@ -10051,7 +10395,7 @@
           "value": 46.85424994838007,
           "unit": "tok/s",
           "label": "class-balanced decode median",
-          "scope": "Median of prompt-class medians over 99 inter-token intervals after TTFT on the fixed cold 12-prompt realistic suite, sent once (A367, 2026-09-13).",
+          "scope": "Four Intel Arc Pro B70 32 GiB cards, TP4/EP4, official FP8 weights, BF16 KV, one user, target-verified MTP1, 4,352 total-token capacity. Median of prompt-class medians over 99 inter-token intervals after TTFT; fixed cold 12-prompt suite, 512-token natural-completion cap, zero cached tokens, sent once (A367, September 13). Independent exactness/quality repeats are linked in the promotion attestation; this is not a new two-server realistic-suite replay.",
           "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a367-native-exact-gdn-realistic-suite-v1-result.json"
         }
       },

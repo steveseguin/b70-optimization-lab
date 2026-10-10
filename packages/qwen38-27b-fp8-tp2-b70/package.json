@@ -37,7 +37,7 @@
       "32K input"
     ],
     "published_at": "2026-08-27",
-    "benchmark_status": "September 17 comm-2 campaign on the R310 runtime: depth 5 with the allgather allreduce overlay measured 90.37 and 90.28 tok/s on one fresh server (ring allreduce, September 16: 88.32), 12/12 identical to no MTP on the strict suite, 64/64 on the 64-prompt sequential oracle plus two queued passes, exact after 2K/8K/16K prompts and on the chat quality suite; the no-MTP server under the same overlay reproduced the ring-allreduce outputs 12/12 at 33.86 tok/s. The depth-1 profile (54.90 tok/s, September 16) is unchanged. The public-source acceptance replay through this launcher measured 90.25 tok/s with 12/12 outputs identical to no MTP, six practical requests with exact repeats, and a clean stop (commit 8a46c0cae). Clean-host install and multiple users are untested.",
+    "benchmark_status": "September 17 comm-2 campaign on the R310 runtime: depth 5 with the allgather allreduce overlay measured 90.37 and 90.28 tok/s on one fresh server (ring allreduce, September 16: 88.32), 12/12 identical to no MTP on the strict suite, 64/64 on the 64-prompt sequential oracle plus two queued passes, exact after 2K/8K/16K prompts and on the chat quality suite; the no-MTP server under the same overlay reproduced the ring-allreduce outputs 12/12 at 33.86 tok/s. The depth-1 profile (54.90 tok/s, September 16) is unchanged. The public-source acceptance replay through this launcher measured 90.25 tok/s with 12/12 outputs identical to no MTP, six practical requests with exact repeats, and a clean stop (commit 8a46c0cae). Clean-host installation is untested. The separate October 7 multi-user profile (MTP0) passed token identity at 16/32/64 users on short and 2K–8K prompts, two same-server passes; those batch-wall rates are capacity measurements, not this single-user headline.",
     "featured_metric": {
       "value": 90.30984105545438,
       "unit": "tok/s",
@@ -45,7 +45,7 @@
       "scope": "Median of two fresh R310 two-card servers (90.370 / 90.250) at a 33,024-token context on the fixed 12-prompt six-class suite, 512-token answers, class-balanced median of tokens 1-100, cache zero, canaries passed, 12/12 complete outputs identical to no-MTP decoding (33.86 tok/s on the same image), 64/64 on the sequential oracle.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-comm2/tp2-ag-mtp5-strict-performance.json"
     },
-    "public_summary": "Official Qwen FP8 weights on two Intel Arc Pro B70 cards. Recommended: one user, MTP depth 5 with a draft-only INT4 shortlist head and the two-rank allreduce done as one allgather plus a fixed-order add, 33,024 total tokens (a 32K input plus 256 for the answer), 90.3 tok/s writing speed; outputs identical to no MTP. A depth-1 profile keeps the September 14 recipe."
+    "public_summary": "Official FP8 Qwen 27B on two B70 cards. Choose recommended for one person: about 90.3 output tokens/s with target-verified MTP5. Choose multi-user for shared requests: 875 tokens/s combined at 64 short requests, or 66 combined with 2K–8K inputs. The multi-user results are two same-server capacity passes with outputs equal to the solo references; clean-host installation is still untested."
   },
   "contributors": [
     {
@@ -1562,6 +1562,66 @@
           "context_tokens": 16384,
           "value": 3305.1376561639677,
           "samples": 6
+        }
+      ]
+    },
+    {
+      "id": "multi-user-oct7-short",
+      "label": "Short prompts · combined writing speed · two cards",
+      "public_label": "Short prompts · all users together",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Simultaneous requests",
+      "scope": "Two B70s, official 27B FP8 weights, FP16 KV, MTP0 multi-user profile, R310 image, 33,024 total-token capacity, prefix caching off. Combined HTTP batch-wall rate (generated tokens / batch wall seconds), including prompt processing. Two passes on one configured host/server; every token array equals its solo reference. Capacity diagnostic, not the cold realistic single-user headline or a two-fresh-server speed comparison. 128 output tokens per request.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json",
+      "source_data": "experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json",
+      "promotion_qualified": false,
+      "points": [
+        {
+          "concurrent_sequences": 16,
+          "value": 415.58,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 32,
+          "value": 653.065,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 64,
+          "value": 875.18,
+          "samples": 2
+        }
+      ]
+    },
+    {
+      "id": "multi-user-oct7-long",
+      "label": "2K–8K-token prompts · combined writing speed · two cards",
+      "public_label": "2K–8K-token prompts · all users together",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Simultaneous requests",
+      "scope": "Two B70s, official 27B FP8 weights, FP16 KV, MTP0 multi-user profile, R310 image, 33,024 total-token capacity, prefix caching off. Combined HTTP batch-wall rate (generated tokens / batch wall seconds), including prompt processing. Two passes on one configured host/server; every token array equals its solo reference. Capacity diagnostic, not the cold realistic single-user headline or a two-fresh-server speed comparison. Natural output lengths from the fixed 2K–8K input suite.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json",
+      "source_data": "experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json",
+      "promotion_qualified": false,
+      "points": [
+        {
+          "concurrent_sequences": 16,
+          "value": 50.75,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 32,
+          "value": 60.495,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 64,
+          "value": 65.875,
+          "samples": 2
         }
       ]
     }

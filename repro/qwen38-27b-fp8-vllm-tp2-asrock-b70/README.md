@@ -1,16 +1,100 @@
 # Reproduce official Qwen3.8 27B FP8 TP2 on two B70s
 
-> **Status: `candidate-portable-repro`.** Built, launched and measured on the lab host from the files below. The
-> September 17 depth-5 recipe below is the recommended setup; since the afternoon of September 17 it also does the
-> two-rank allreduce as one allgather plus a fixed-order add (90.37 / 90.58 tok/s, same outputs; comm-2 campaign in the
-> [findings note](../../experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md)). Its package launcher was
-> replayed from an anonymous download of this repository at commit `e24479d7f` (verified model, pulled image, package
-> scripts only): strict 12/12 identical to no-MTP at 90.58 tok/s, six practical requests with exact repeats, clean stop
-> ([frozen packet](../../experiments/qwen38-27b-b70/data/2026-09-17-fp8-two-card-allgather/); the ring-allreduce replay at
-> `5b494649f`, 88.49 tok/s, is the [earlier packet](../../experiments/qwen38-27b-b70/data/2026-09-17-fp8-two-card-depth5/)), produced by
-> [run-fp8-tp2-acceptance-session.py](../../experiments/qwen38-27b-b70/scripts/run-fp8-tp2-acceptance-session.py)). The launcher has since stopped giving the container a swap allowance (`--memory-swap 12g`, September 19); that launcher was replayed the same way on October 3 at commit `ce0a51d7c` on kernel 7.0.0-38: twelve of twelve gates, strict 12/12 at 90.01 tok/s ([current packet](../../experiments/qwen38-27b-b70/data/2026-10-03-fp8-two-card-noswap/)). A machine without Intel drivers, Docker or the model in place is still untested.
+> **Status: `candidate-portable-repro`.** Use the current digest-pinned R310
+> package below. Single-user MTP5 passed the October 4 acceptance with all
+> 12 reference outputs exact; the separate MTP0 multi-user profile passed
+> short and long-prompt output checks at 16, 32 and 64 users on October 7.
+> Both used the configured lab host. A clean Intel-driver/Docker installation,
+> independent-host replay and prolonged serving remain untested.
 
 Quick start and daily use: [package guide](../../packages/qwen38-27b-fp8-tp2-b70/README.md).
+
+## Choose the current profile (reviewed October 10, 2026)
+
+This is the **27B dense model on two B70s**, not Flash-Next 125B-A6B.
+Use [`recommended`](../../packages/qwen38-27b-fp8-tp2-b70/README.md#start)
+for one request at a time with target-verified MTP5. The current launcher with
+chunked weight upload measured **90.318721 tok/s** in the
+[October 4 acceptance](../../experiments/qwen38-27b-b70/data/2026-10-04-fp8-two-card-chunked-upload/summary.json),
+with 12/12 outputs identical to no MTP. That is one acceptance run, separate
+from the catalog's retained September two-server pair at 90.309841 tok/s.
+
+For shared traffic select `--profile multi-user`: MTP0, full FP16 KV,
+33,024 total-token capacity, at most 64 active sequences and a 4,096-token
+batch budget. Its exclusive-prefill and per-sequence attention overlays preserve
+the tested solo outputs. The [October 7 receipt](../../experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json)
+records two passes at each level:
+
+| Simultaneous requests | Short-prompt combined tok/s, passes 1 / 2 | 2K–8K input combined tok/s, passes 1 / 2 |
+| ---: | ---: | ---: |
+| 16 | 414.58 / 416.58 | 50.77 / 50.73 |
+| 32 | 653.40 / 652.73 | 60.55 / 60.44 |
+| 64 | 875.31 / 875.05 | 66.32 / 65.43 |
+
+Each short request produces 128 tokens. Combined speed is total generated tokens
+divided by HTTP batch wall time, including prompt processing. Both passes used
+one server; the receipt explicitly has `speed_gated: false`. Every response
+had zero cached tokens and exactly matched the frozen solo reference. These
+are capacity/identity measurements, not a fixed-realistic-suite headline or
+proof of fresh-server speed repeatability. The parent summary's top-level
+`configuration` describes the earlier one-user acceptance; the nested
+`multi_user` block and archived launch state identify this separate MTP0 run.
+
+Follow the [package acquisition and launch steps](../../packages/qwen38-27b-fp8-tp2-b70/README.md#start)
+first. They verify the model revision, all file hashes, image digest and runtime
+contract. The exact public image is:
+
+```bash
+docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04
+python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --profile multi-user --model-dir /path/qwen3.8-27b-fp8 --state-dir /path/new-multi-user-session
+python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py status --state-dir /path/new-multi-user-session
+```
+
+Run the fixed short-prompt client once (it creates its own sequential oracle
+before the two concurrent passes):
+
+```bash
+python3 scripts/bench-openai-concurrency-oracle.py --base-url http://127.0.0.1:18124 --model qwen38-27b-fp8 \
+  --api-mode completions --suite experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json \
+  --concurrency 16,32,64 --repeats 2 --max-tokens 128 --seed 42 --return-token-ids \
+  --require-output-identity --out /path/new-short-ladder.json
+python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py stop --state-dir /path/new-multi-user-session
+```
+
+This client proves equality to its own solo oracle. Reproducing the historical
+claim additionally requires comparison to the frozen reference token arrays
+with [compare-ladder-oracles.py](../../experiments/qwen38-27b-b70/scripts/compare-ladder-oracles.py).
+The [acceptance plan](../../experiments/qwen38-27b-b70/notes/2026-10-07-multi-user-profile-acceptance-plan.md),
+[archive manifest](../../experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/manifest.json)
+and [hash-addressed evidence archive](../../experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/evidence.tar.gz)
+retain the exact clients, launch state and reference bytes. To compare the short
+replay against those historical arrays:
+
+```bash
+printf '%s\n' '3b8b867f8919d75e2d416631bb9483113ff1128531ce7065ee7aa29f7ce1cdc4  experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/evidence.tar.gz' | sha256sum -c -
+mkdir /path/new-reference-copy
+tar -xzf experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/evidence.tar.gz \
+  -C /path/new-reference-copy reference/multi-user/short-ladder.json
+python3 experiments/qwen38-27b-b70/scripts/compare-ladder-oracles.py \
+  /path/new-short-ladder.json /path/new-reference-copy/reference/multi-user/short-ladder.json
+```
+
+Require every comparison to pass and inspect the client's cache-zero gates.
+Keep the long-prompt suite separate; do not compare its rate with the
+short-prompt column.
+
+The host driver installation is not supplied by the image. The retained
+October acceptance used kernel 7.0.0-38; older driver inventories below are
+historical, not a tested installer for a fresh host. The
+[current one-card guide's platform and rebuild boundary](../qwen38-27b-fp8-vllm-tp1-b70/README.md#platform-and-rebuild-boundary)
+also explains the R310 source base shared by this two-card image. Do not build
+its later one-card R311/R312 attention stages for this package.
+
+## Historical September one-user measurements
+
+The following table preserves the September measurements. Reading rates on its
+ring-allreduce and no-MTP rows do not fill a missing reading measurement on the
+current allgather/MTP5 profile.
 
 ## Recommended: MTP depth 5 on the R310 runtime (September 2026)
 

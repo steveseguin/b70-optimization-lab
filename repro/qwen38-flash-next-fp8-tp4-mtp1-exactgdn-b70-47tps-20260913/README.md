@@ -8,6 +8,84 @@
 > the open gates. The [container route](CONTAINER-STATUS.md) is copied from the
 > 37.83 tok/s guide and not adapted (it would also need `_xpu_C` rebuilt).
 
+## Choose the right model and evidence
+
+This is **Flash-Next 125B-A6B on four 32 GiB B70 cards**, one user,
+official FP8 weights and full BF16 KV. Its **46.854250 tok/s** result is writing
+speed after the first token. Prompt-reading throughput at 512 tokens is **not
+measured** for this identity. It does not run the 27B model used by the
+[one-card](../../packages/qwen38-27b-fp8-tp1-b70/README.md) and
+[two-card](../../packages/qwen38-27b-fp8-tp2-b70/README.md) packages. The latter's
+875 tok/s is all 64 short requests together with drafting off; it is not a
+Flash-Next or single-user result.
+
+For a new host, the 27B packages have public digest-pinned containers and
+model download helpers. This Flash-Next packet remains an expert **lab replay**.
+There is no validated end-to-end fresh-host launch command or record-compatible
+vLLM image digest to supply: its copied container uses an incompatible Torch
+ABI. Do not substitute that image, silently skip identity checks, or treat the
+old host-control wrapper as a current recipe.
+
+## Acquisition and recovery checklist
+
+The model publisher identity is `Qwen/Qwen3.8-Flash-Next-FP8` at
+`bcd9f01ddc9cff2316eb84281bebcd5b058bddce`, with 131 shards and
+185,563,783,127 root bytes. Obtain that exact revision from the publisher.
+The [model contract](../qwen38-flash-next-fp8-tp4-mtp3-b70/model-contract.json)
+pins config and index hashes plus the historical Hugging Face file-tree
+metadata digest. The verifier also needs the original
+`.cache/huggingface/trees/bcd9f01ddc9cff2316eb84281bebcd5b058bddce.json`;
+that metadata is not supplied by a normal snapshot download and has not been
+published as a standalone input. Publishing it or a complete equivalent
+per-file manifest is an explicit acquisition blocker, not a passed hash gate.
+Once every pinned input is available, full file verification is:
+
+```bash
+python3 repro/qwen38-flash-next-fp8-tp4-mtp3-b70/verify-model.py \
+  --model-root /path/Qwen3.8-Flash-Next-FP8 --receipt /path/new-model-verification.json
+```
+
+The hosted [base runtime assets and exact hashes](../qwen38-flash-next-fp8-tp4-mtp3-b70/RELEASE-NOTES.md)
+can be downloaded from the [runtime release](https://github.com/steveseguin/b70-optimization-lab/releases/tag/qwen38-flash-next-runtime-2f829747-20260827).
+Use its [checked installer](../qwen38-flash-next-fp8-tp4-mtp3-b70/prepare-runtime.py)
+to assemble the two archive parts into a **new** directory:
+
+```bash
+python3 repro/qwen38-flash-next-fp8-tp4-mtp3-b70/prepare-runtime.py \
+  --parts-dir /path/downloaded-parts --kernel-stage /path/new-base-stage \
+  --receipt /path/new-stage-receipt.json --work-dir /path/new-assembly-work
+```
+
+That restores the older stage, not the record's exact-GDN extension. The
+[exact-GDN patch series](../../patches/qwen38-flash-next-fp8-b70/xpu-kernels-gdn-exact-serial-bbae3c5/README.md),
+[extension builder](../../experiments/qwen38-flash-next-fp8-b70/tools/q38-build-xpu-c-gdn-roundstate.sh)
+and [stage assembler](../../experiments/qwen38-flash-next-fp8-b70/tools/q38-assemble-gdn-roundstate-stage.sh)
+record the replacement needed for this line. The
+[oneCCL release receipt](../../patches/qwen38-flash-next-fp8-b70/oneccl-4ceafd1-b70-public/README.md)
+pins its archive and both loaded binaries. Restore the vLLM patch series below
+and verify every stage against `identity.json`; a successful download alone
+qualifies neither the environment nor the model output.
+
+The native environment used Python 3.12, Torch 2.11.0+xpu, Triton 3.7.0 and
+oneAPI 2025.3. The [observed pip inventory](../qwen38-flash-next-fp8-tp4-mtp3-b70/pip-freeze-observed.txt)
+is not an installable hash lock. The retained host description (Ubuntu 24.04,
+Linux 7.0 xe driver) lacks an immutable driver/firmware installation packet.
+Those platform inputs, an installable Python lock, record-stage public closure,
+a compliant launcher and an independent replay are the exact remaining steps.
+They cannot be certified by editing this guide or running CPU validators.
+
+For already retained results, checking the fixed suite requires no GPU:
+
+```bash
+python3 repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/check-replay-result.py /path/replayed-realistic-suite-v1-result.json
+```
+
+It checks the complete prompt/output hash lists and all workload/cache booleans;
+a changed output fails even when faster. The separate hash-bound promotion
+attestation below records quality and deterministic fresh-server repeats. Its
+6/7 semantic score includes the unchanged code-execution miss: “lossless” means
+preserving the registered target, not solving every task correctly.
+
 This is the fastest Flash-Next line the lab has published, and it changes nothing about the
 model's arithmetic. The [37.83 tok/s line](../qwen38-flash-next-fp8-tp4-mtp1-qsafused-b70-38tps-20260907/README.md)
 verified the one speculative token exactly by running the GDN (gated delta net) verifier rows

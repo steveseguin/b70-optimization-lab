@@ -8,6 +8,7 @@ from collections import Counter
 from functools import lru_cache
 from html.parser import HTMLParser
 import json
+import math
 import posixpath
 from pathlib import Path, PurePosixPath
 import re
@@ -403,6 +404,11 @@ def _validate_package(repo: Path, package_path: str, guide_entry: dict[str, Any]
     errors.extend(
         _validate_performance_profiles(repo, label, package.get("performance_profiles"))
     )
+    errors.extend(_validate_video_measurements(repo, label, package.get("video_measurements")))
+    if package.get("video_measurements") is not None and (
+        not isinstance(library, dict) or "video" not in library.get("modalities", [])
+    ):
+        errors.append(f"{label}: video_measurements requires the video modality")
 
     hardware = package.get("hardware")
     if not isinstance(hardware, dict) or not isinstance(hardware.get("cards"), int) or hardware["cards"] < 1:
@@ -491,6 +497,15 @@ def _validate_package(repo: Path, package_path: str, guide_entry: dict[str, Any]
                 for index, profile in enumerate(profiles)
                 if isinstance(profile, dict)
             )
+        video = package.get("video_measurements")
+        if isinstance(video, dict):
+            required_dependencies.append(("video_measurements.evidence", video.get("evidence")))
+            if isinstance(video.get("rows"), list):
+                required_dependencies.extend(
+                    (f"video_measurements.rows[{index}].evidence", row.get("evidence"))
+                    for index, row in enumerate(video["rows"])
+                    if isinstance(row, dict)
+                )
         if isinstance(commands, dict):
             for command_name, command in commands.items():
                 if not isinstance(command, str):
@@ -525,6 +540,54 @@ def _validate_package(repo: Path, package_path: str, guide_entry: dict[str, Any]
         or any(not isinstance(item, str) or not item for item in missing)
     ):
         errors.append(f"{label}: non-starter package must state missing gates")
+    return errors
+
+
+def _validate_video_measurements(repo: Path, label: str, measurements: object) -> list[str]:
+    """Validate scoped video observations separately from promoted metrics."""
+    if measurements is None:
+        return []
+    label += ": video_measurements"
+    if not isinstance(measurements, dict):
+        return [f"{label} must be an object"]
+    errors = []
+    if not isinstance(measurements.get("scope"), str) or not measurements["scope"].strip():
+        errors.append(f"{label}.scope must be a non-empty string")
+    errors.extend(_validate_internal_dependency(repo, label, measurements.get("evidence")))
+    rows = measurements.get("rows")
+    if not isinstance(rows, list) or not rows:
+        return errors + [f"{label}.rows must be a non-empty list"]
+    labels = set()
+    selected = None
+    for index, row in enumerate(rows):
+        row_label = f"{label}.rows[{index}]"
+        if not isinstance(row, dict):
+            errors.append(f"{row_label} must be an object")
+            continue
+        for field in ("label", "status"):
+            if not isinstance(row.get(field), str) or not row[field].strip():
+                errors.append(f"{row_label}.{field} must be a non-empty string")
+        name = row.get("label")
+        if isinstance(name, str):
+            if name in labels:
+                errors.append(f"{row_label}: duplicate label {name!r}")
+            labels.add(name)
+        for field in ("period_seconds", "new_video_seconds"):
+            value = row.get(field)
+            if value is not None and (
+                isinstance(value, bool) or not isinstance(value, (int, float))
+                or not math.isfinite(value) or value <= 0
+            ):
+                errors.append(f"{row_label}.{field} must be a positive finite number or null")
+        samples = row.get("samples")
+        if samples is not None and (type(samples) is not int or samples < 0):
+            errors.append(f"{row_label}.samples must be a non-negative integer or null")
+        errors.extend(_validate_internal_dependency(repo, row_label, row.get("evidence")))
+        if name == measurements.get("headline_row_label"):
+            selected = row
+    if measurements.get("headline_row_label") is not None:
+        if selected is None or selected.get("period_seconds") is None:
+            errors.append(f"{label}.headline_row_label must match a row with measured period_seconds")
     return errors
 
 

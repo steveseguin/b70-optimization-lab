@@ -10,7 +10,7 @@
     "model_family": "Qwen3.8 Flash-Next",
     "publisher": "Qwen",
     "variant": "official FP8 export, TP4/EP4, deterministic full-decode graph, lossless MTP1, never-routed experts host-placed, reference Triton kernels restored, exact serial GDN verifier rows in the rebuilt kernel extension",
-    "summary": "Qwen's 125B-A6B hybrid-attention MoE, served from its official FP8 weights across four Arc Pro B70 cards with one lossless speculative token. The line before this one verified the speculative token exactly by running the linear-attention verifier rows through vLLM's Python serial path, 8.7 ms of a 42.7 ms step. The kernel extension already carried an exact per-row mode inside its speculative op, gated to four rows by the served build; rebuilt from the lane's kernel head it accepts two, and the verify step drops to 33.7 ms with every output pin unchanged. Every row class gains 23-24%: short 53.4, exact-2K 48.2, exact-4K 48.5 tok/s on the certification servers, 46.85 tok/s class-balanced on the fixed cold realistic suite.",
+    "summary": "Flash-Next is a 125B model with about 6B parameters active per token. Four B70 cards produced 46.854250 output tokens/s for one user on the fixed cold realistic suite. One target-verified draft token speeds up writing without changing the retained reference outputs. The previous matched line measured 37.825654 tokens/s. This is an expert lab replay: a clean-host installer and a safe portable replay remain incomplete. Prompt-reading throughput has not been measured for this exact setup.",
     "quantization": "FP8 block-128 weights / BF16 KV",
     "runtime_label": "vLLM XPU",
     "operating_systems": [
@@ -50,7 +50,7 @@
       "value": 46.85424994838007,
       "unit": "tok/s",
       "label": "class-balanced decode median",
-      "scope": "Median of prompt-class medians over 99 inter-token intervals after TTFT on the fixed cold 12-prompt realistic suite, sent once (A367, 2026-09-13).",
+      "scope": "Four Intel Arc Pro B70 32 GiB cards, TP4/EP4, official FP8 weights, BF16 KV, one user, target-verified MTP1, 4,352 total-token capacity. Median of prompt-class medians over 99 inter-token intervals after TTFT; fixed cold 12-prompt suite, 512-token natural-completion cap, zero cached tokens, sent once (A367, September 13). Independent exactness/quality repeats are linked in the promotion attestation; this is not a new two-server realistic-suite replay.",
       "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a367-native-exact-gdn-realistic-suite-v1-result.json"
     }
   },

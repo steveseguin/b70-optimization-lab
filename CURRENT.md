@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**2026-10-10, CPU-only neural.download publication:** the LTX 145-frame lab
+recipe and video details page now separate the measured 5.24-second early
+window from sustained speed and the unqualified packet137 extension. The
+Flash-Next family page now leads with its certified 46.854250 tok/s result on
+four cards. Qwen27B recipes distinguish the one-card setup from the two-card
+875 tok/s short-prompt, many-user test. Public runtime reconstruction and
+independent replay remain open where documented. No model, server, device,
+stream, unit or run directory was changed by this publication task.
+[Publication and remaining steps](notes/2026-10-10-neural-download-ltx-qwen-publication.md).
+
 **2026-10-10 17:40 UTC, owner: "run the probes"; also publish the LTX results and a reproduction recipe on neural.download and improve the Qwen 3.8 Flash-Next recipes/promotion there.**
 137 production is up (server healthy; the client first refused because its expectation variable is `LTX_EXPECT_F32_SCAN`, not the launcher's
 `LTX_F32_SCAN`; restarted with both set; `stream/ops/production-arm.json` updated to packet 137). Probe window armed: after 60 chunks of 137,

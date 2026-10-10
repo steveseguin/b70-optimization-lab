@@ -1,6 +1,6 @@
 {
  "format": "b70-reproduction-guide-catalog-v1",
- "reviewed_at": "2026-09-03",
+ "reviewed_at": "2026-10-10",
  "certification_standard": "docs/reproduction-guide-certification.md",
  "guides": [
   {
@@ -1038,7 +1038,10 @@
     "portable runtime rebuild of _xpu_C from the kernel series",
     "frozen long-context quality battery at 33280 capacity",
     "current-host replay without prohibited power/swap changes or repeated restarts",
-    "independently verified clean shutdown and sustained stability"
+    "independently verified clean shutdown and sustained stability",
+    "public per-file model hashes or the original hash-pinned Hugging Face file-tree metadata required by verify-model.py",
+    "validated launcher without historical power/swap/cache changes; clean shutdown",
+    "recipe-publication.v2 manifest and clean public source/build closure for the exact-GDN stage"
    ],
    "package": "packages/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/package.json"
   },
@@ -1218,7 +1221,41 @@
    ],
    "missing": [
     "a machine without Intel drivers, Docker or the pinned model already present",
-    "multiple simultaneous users"
+    "multiple simultaneous users",
+    "closed R312d-c source rebuild without local parent images or previous build directories; the exact public container is available"
+   ]
+  },
+  {
+   "id": "ltx25-continuation-stream-b70-145f-20261010",
+   "guide": "repro/ltx25-continuation-stream-b70-145f-20261010/README.md",
+   "package": "packages/ltx25-continuation-stream-b70-145f-20261010/package.json",
+   "classification": "lab-replay",
+   "audience": "expert",
+   "clean_host_tested": false,
+   "components": {
+    "platform_install": false,
+    "model_download": true,
+    "source_restore": false,
+    "build": false,
+    "launch": true,
+    "validation": true,
+    "patch_links": true,
+    "hashes": true
+   },
+   "dependency_links": [
+    "repro/ltx25-continuation-stream-b70-145f-20261010/identity.json",
+    "repro/ltx25-continuation-stream-b70-145f-20261010/promotion-attestation.json",
+    "repro/ltx25-continuation-stream-b70-145f-20261010/publication-status.json",
+    "experiments/ltx25-b70/data/model-verification.json",
+    "experiments/ltx25-b70/recovery/20261010-continuation135-stream/LAUNCH.md",
+    "experiments/ltx25-b70/recovery/20261010-continuation137-stream/LAUNCH.md"
+   ],
+   "missing": [
+    "public prepared-runtime and Python environment rebuild",
+    "validated publication-manifest.json and public sealed release assets",
+    "clean-host install and independent replay",
+    "owner acceptance of seams and audio alignment",
+    "sustained unthrottled timing and packet137 native qualification"
    ]
   }
  ]

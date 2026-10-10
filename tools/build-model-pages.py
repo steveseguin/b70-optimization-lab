@@ -297,8 +297,49 @@ def svg_profile(profile):
     )
 
 
+def metric_text(library):
+    metric = library.get("featured_metric")
+    if not metric:
+        return missing_headline_label(library)
+    return f'{fmt(metric["value"])} {metric.get("unit", "tok/s")}'
+
+
+def video_observations(measurements, section="all"):
+    """Render scoped video observations without upgrading them to a headline."""
+    rows = measurements.get("rows") or []
+    selected = next((row for row in rows if row.get("label") == measurements.get("headline_row_label")), None)
+    highlight = ""
+    if selected and isinstance(selected.get("period_seconds"), (int, float)):
+        duration = selected.get("new_video_seconds")
+        duration_text = f' per {duration:g} seconds of new video' if isinstance(duration, (int, float)) else ' per chunk'
+        highlight = (
+            f'<div class="measured"><a class="big inline" href="{GITHUB}{esc(selected["evidence"])}">{selected["period_seconds"]:.2f}</a>'
+            f'<span class="unit">seconds{esc(duration_text)}</span></div>'
+            f'<p class="scope">{esc(selected.get("status", ""))} · {esc(selected.get("samples") if selected.get("samples") is not None else "Not measured")} samples.</p>'
+        )
+    cells = []
+    for row in rows:
+        values = [row.get("period_seconds"), row.get("new_video_seconds"), row.get("samples")]
+        cells.append(
+            f'<tr><th scope="row"><a class="inline" href="{GITHUB}{esc(row["evidence"])}">{esc(row["label"])}</a></th>'
+            + "".join(f'<td>{esc(value) if value is not None else "Not measured"}</td>' for value in values)
+            + f'<td>{esc(row.get("status", ""))}</td></tr>'
+        )
+    summary = (
+        '<h2 id="video-observations">Measured video timing <span class="badge todo">Scoped observation</span></h2>'
+        + highlight
+        + f'<p class="scope">{esc(measurements.get("scope", ""))} <a class="inline" href="{GITHUB}{esc(measurements["evidence"])}">Test details on GitHub</a></p>'
+    )
+    table = (
+        '<h2 id="video-progression">How the video setup progressed</h2><div class="table-scroll"><table><caption>Recorded timings for each setup; settings and measurement windows differ.</caption><thead><tr><th>Setup</th><th>Seconds per chunk</th><th>New video seconds</th><th>Samples</th><th>Evidence scope</th></tr></thead><tbody>'
+        + "".join(cells) + '</tbody></table></div>'
+    )
+    return summary if section == "summary" else table if section == "table" else summary + table
+
+
 def page(pkg, all_pkgs, family=None):
     lib = pkg["library"]
+    is_video = "video" in lib.get("modalities", [])
     fm = lib.get("featured_metric") or {}
     has_featured_metric = isinstance(lib.get("featured_metric"), dict)
     benchmark_status = lib.get("benchmark_status", "Strict benchmark pending")
@@ -316,7 +357,7 @@ def page(pkg, all_pkgs, family=None):
     )
     url = f"{SITE}models/{pid}.html"
     status = STATUS_LABEL.get(pkg.get("status"), pkg.get("status", "").title())
-    ml = PACKAGE_ML.get(pid)
+    ml = None if is_video else PACKAGE_ML.get(pid)
     ml_attrs = ""
     exact_projection_workload = bool(
         has_featured_metric
@@ -408,6 +449,10 @@ def page(pkg, all_pkgs, family=None):
             prefill_highlight += (f'<div class="measured"><span class="big">{esc(fmt(point["value"]))}</span><span class="unit">input tokens/s</span></div>'
                                  f'<p class="scope">512 input tokens · one user · {esc(cards)} GPU(s){esc(draft_note)}{esc(capacity_note)}. Separate prompt-reading test; no saved prompt cache.</p>')
     prefill_section = '<h2 id="prefill">Reading speed (prefill)</h2>' + prefill_highlight + (render_profiles(prefill_profiles) or '<p>Not measured yet for this setup.</p>')
+    metric_explanation = '<p class="scope">Tokens are pieces of words. Higher tokens per second means faster reading or writing; a shorter wait is better. Each test uses its own settings. Drafts are checked by the main model. Open a test to see its graph and exact values.</p>'
+    if is_video:
+        prefill_section = '<h2 id="prefill">Prompt reading</h2><p>Language-model prefill rates do not apply to this video timing. Text-encoding time is not reported separately.</p>'
+        metric_explanation = '<p class="scope">Seconds per chunk measure how long the next piece of video takes to make. Lower is faster. New video seconds measure its playback duration. A timing below playback duration means that measured chunk was ready faster than it plays; a short window does not prove sustained playback.</p>'
     evidence_link = f'<a class="inline" href="{GITHUB}{esc(fm["evidence"])}">Test details on GitHub</a>' if fm.get("evidence") else ""
     missing_html = ('<p class="missing">This setup still needs installation checks. <a class="inline" href="' + GITHUB + esc(pkg.get("guide", "")) + '">See what remains in the guide.</a></p>') if pkg.get("missing") else ""
     caveats = []
@@ -423,7 +468,7 @@ def page(pkg, all_pkgs, family=None):
 
     related = [p for p in all_pkgs if p["id"] != pid and p["library"].get("model_family") == lib.get("model_family")][:4]
     related_html = "".join(
-        f'<a href="{esc(p["id"])}.html"><b>{esc(p["name"])}</b><span>{esc((fmt((p["library"].get("featured_metric") or {}).get("value")) + " tok/s") if p["library"].get("featured_metric") else missing_headline_label(p["library"]))} · {esc(p["library"].get("runtime_label", ""))}</span></a>'
+        f'<a href="{esc(p["id"])}.html"><b>{esc(p["name"])}</b><span>{esc(metric_text(p["library"]))} · {esc(p["library"].get("runtime_label", ""))}</span></a>'
         for p in related
     )
     family_href = f'{esc(family["id"])}.html' if family else ""
@@ -445,7 +490,7 @@ def page(pkg, all_pkgs, family=None):
         "author": {"@type": "Organization", "name": "Unofficial Intel XPU Optimization Lab", "url": SITE},
         "publisher": {"@type": "Organization", "name": "neural.download", "url": SITE},
         "isPartOf": {"@type": "WebSite", "name": "neural.download", "url": SITE},
-        "about": [lib.get("model_family", ""), "Intel Arc Pro B70", "local LLM inference"],
+        "about": [lib.get("model_family", ""), "Intel Arc Pro B70", "local video generation" if is_video else "local LLM inference"],
     }
     crumb_items = [
         {"@type": "ListItem", "position": 1, "name": "neural.download", "item": SITE},
@@ -470,6 +515,9 @@ def page(pkg, all_pkgs, family=None):
     }
     profiles_section = '<h2 id="profiles">Writing speed and waiting time</h2>' + (profiles_html or '<p>Long-input tests are not published yet for this setup.</p>')
     multiuser_section = '<h2 id="multi-user">Many people at once</h2>' + (concurrent_profiles_html or '<p>Multi-user tests are not published yet for this setup.</p>')
+    if is_video:
+        profiles_section = video_observations(pkg["video_measurements"], section="table") if pkg.get("video_measurements") else '<h2 id="video-observations">Measured video timing</h2><p>Not measured yet for this setup.</p>'
+        multiuser_section = '<h2 id="multi-user">Several video streams at once</h2><p>Not measured. The published observations use one stream.</p>'
     projection_html = ""
     if exact_projection_workload:
         projection_html = f"""
@@ -503,6 +551,15 @@ def page(pkg, all_pkgs, family=None):
             '<div class="placeholder"><p>A checked headline speed is not available yet. See the guide for test results and remaining checks.</p></div>'
         )
     )
+    if is_video:
+        measured_html = measured_html.replace(" writing speed</span>", " video timing</span>")
+        if not has_featured_metric:
+            measured_html = (
+                '<h2 id="measured">Public headline <span class="badge todo">Pending</span></h2>'
+                f'<p class="scope">{esc(benchmark_status)}</p>'
+            )
+        if pkg.get("video_measurements"):
+            measured_html += video_observations(pkg["video_measurements"], section="summary")
     seo_title = (
         f"{name} — {fmt(fm.get('value'))} {fm.get('unit', 'tok/s')} measured"
         if has_featured_metric
@@ -625,7 +682,7 @@ def page(pkg, all_pkgs, family=None):
 {missing_html}
 {limitations_html}
 {prefill_section}
-<p class="scope">Tokens are pieces of words. Higher tokens per second means faster reading or writing; a shorter wait is better. Each test uses its own settings. Drafts are checked by the main model. Open a test to see its graph and exact values.</p>
+{metric_explanation}
 {profiles_section}
 {multiuser_section}
 <details class="profile"><summary>Speed estimates</summary>{projection_html}</details>
@@ -634,7 +691,7 @@ def page(pkg, all_pkgs, family=None):
     <h2>Keep going</h2>
     <div class="related-grid">
       {family_related}
-      {related_html}
+{("      " + related_html) if related_html else ""}
       <a href="../learn.html"><b>Learn</b><span>What sets these numbers</span></a>
       <a href="../guides.html"><b>Recipes</b><span>Every package, filterable</span></a>
       <a href="../index.html#contribute"><b>Contribute</b><span>Made it faster? Send it in</span></a>
@@ -686,7 +743,7 @@ def index_page(pkgs, families):
     )
     rows = "".join(
         f'<a class="guide-card" href="{esc(p["id"])}.html"><div class="gc-top"><div class="gc-n">{esc(STATUS_LABEL.get(p.get("status"), p.get("status", "")))} · {esc(p["library"].get("runtime_label", ""))}</div><h3>{esc(p["name"])}</h3></div>'
-        f'<div class="gc-body"><p>{esc(p["library"].get("public_summary") or (p["library"].get("model_family", "") + " " + p["library"].get("variant", "")))}</p><p class="gc-meta"><strong>{esc((fmt((p["library"].get("featured_metric") or {}).get("value")) + " tok/s") if p["library"].get("featured_metric") else missing_headline_label(p["library"]))}</strong>{" measured" if p["library"].get("featured_metric") else ""} · {esc((p.get("hardware") or {}).get("cards", 1))}× B70 · {esc(p["library"].get("quantization", ""))}</p></div></a>'
+        f'<div class="gc-body"><p>{esc(p["library"].get("public_summary") or (p["library"].get("model_family", "") + " " + p["library"].get("variant", "")))}</p><p class="gc-meta"><strong>{esc(metric_text(p["library"]))}</strong>{" measured" if p["library"].get("featured_metric") else ""} · {esc((p.get("hardware") or {}).get("cards", 1))}× B70 · {esc(p["library"].get("quantization", ""))}</p></div></a>'
         for p in display_pkgs
     )
     return f"""<!doctype html>

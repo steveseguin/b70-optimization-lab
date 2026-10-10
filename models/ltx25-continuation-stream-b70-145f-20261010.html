@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LTX 2.5 continuous video on four B70 cards — strict benchmark pending — neural.download</title>
+<meta name="description" content="Frame-anchored 256×256 video at 24 fps; four B70 cards, cone decode graph and split36 text placement. Packet135 measured 5.2415 seconds per six new video seconds in a 52-period unthrottled early window. Packet137 bulk F32 scan is a separate unqualified extension.">
+<link rel="icon" href="../favicon.ico" sizes="32x32">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<link rel="canonical" href="https://neural.download/models/ltx25-continuation-stream-b70-145f-20261010.html">
+<meta name="theme-color" content="#0f62e8">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="neural.download">
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://neural.download/models/ltx25-continuation-stream-b70-145f-20261010.html">
+<meta property="og:title" content="LTX 2.5 continuous video on four B70 cards — strict benchmark pending">
+<meta property="og:description" content="Frame-anchored 256×256 video at 24 fps; four B70 cards, cone decode graph and split36 text placement. Packet135 measured 5.2415 seconds per six new video seconds in a 52-period unthrottled early window. Packet137 bulk F32 scan is a separate unqualified extension.">
+<meta property="og:image" content="https://neural.download/models/cards/ltx25-continuation-stream-b70-145f-20261010.png">
+<meta property="og:image:secure_url" content="https://neural.download/models/cards/ltx25-continuation-stream-b70-145f-20261010.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="LTX 2.5 continuous video on four B70 cards: strict benchmark pending on Intel Arc Pro B70 — neural.download">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@xyster">
+<meta name="twitter:creator" content="@xyster">
+<meta name="twitter:url" content="https://neural.download/models/ltx25-continuation-stream-b70-145f-20261010.html">
+<meta name="twitter:title" content="LTX 2.5 continuous video on four B70 cards — strict benchmark pending">
+<meta name="twitter:description" content="Frame-anchored 256×256 video at 24 fps; four B70 cards, cone decode graph and split36 text placement. Packet135 measured 5.2415 seconds per six new video seconds in a 52-period unthrottled early window. Packet137 bulk F32 scan is a separate unqualified extension.">
+<meta name="twitter:image" content="https://neural.download/models/cards/ltx25-continuation-stream-b70-145f-20261010.png">
+<meta name="twitter:image:alt" content="LTX 2.5 continuous video on four B70 cards: strict benchmark pending on Intel Arc Pro B70 — neural.download">
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "TechArticle", "headline": "LTX 2.5 continuous video on four B70 cards", "description": "Frame-anchored 256×256 video at 24 fps; four B70 cards, cone decode graph and split36 text placement. Packet135 measured 5.2415 seconds per six new video seconds in a 52-period unthrottled early window. Packet137 bulk F32 scan is a separate unqualified extension. Strict headline pending: scoped continuation timing only; seam/audio acceptance, sustained performance and independent replay remain open.. Exact recipe and diagnostic evidence are retained, but no unqualified headline is published.", "url": "https://neural.download/models/ltx25-continuation-stream-b70-145f-20261010.html", "dateModified": "2026-10-10", "inLanguage": "en", "isAccessibleForFree": true, "author": {"@type": "Organization", "name": "Unofficial Intel XPU Optimization Lab", "url": "https://neural.download/"}, "publisher": {"@type": "Organization", "name": "neural.download", "url": "https://neural.download/"}, "isPartOf": {"@type": "WebSite", "name": "neural.download", "url": "https://neural.download/"}, "about": ["LTX 2.5", "Intel Arc Pro B70", "local video generation"]}
+</script>
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "neural.download", "item": "https://neural.download/"}, {"@type": "ListItem", "position": 2, "name": "Models", "item": "https://neural.download/models/"}, {"@type": "ListItem", "position": 3, "name": "LTX 2.5 · continuing video", "item": "https://neural.download/models/ltx-25.html"}, {"@type": "ListItem", "position": 4, "name": "LTX 2.5 continuous video on four B70 cards", "item": "https://neural.download/models/ltx25-continuation-stream-b70-145f-20261010.html"}]}
+</script>
+<link rel="stylesheet" href="../learn/learn.css">
+<link rel="preconnect" href="https://mlbottleneck.com">
+<style>
+  .profile { margin: 10px 0; border: 1px solid var(--line); padding: 10px 14px; }
+  .profile summary { cursor: pointer; font-weight: 700; }
+  .profile small { color: var(--muted); font-weight: 400; }
+  .table-scroll { overflow-x: auto; }
+  .exact-values { margin: 12px 0; }
+  .chart { overflow-x: auto; }
+  .graph-scroll-hint { display: none; }
+  @media (max-width: 600px) {
+    .chart .short-plot text { font-size: 24px; }
+    .chart .dense-plot { min-width: 560px; }
+    .graph-scroll-hint { display: block; font-size: 12px; }
+  }
+  .facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px 16px; margin: 14px 0 22px; padding: 14px 16px; border: 2px solid var(--ink); background: var(--paper); }
+  .facts div { min-width: 0; }
+  .facts dt { font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .facts dd { margin: 2px 0 0; font-size: 13.5px; overflow-wrap: anywhere; }
+  .use-chip { display: inline-block; border: 1px solid var(--ink); padding: 1px 7px 0; font: 700 11px var(--mono); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; margin: 0 4px 4px 0; }
+  .placeholder { margin: 10px 0 22px; padding: 12px 16px; border: 2px solid var(--line); background: var(--surface); color: var(--muted); }
+  .placeholder p { margin: 0; font-size: 13.5px; }
+  .badge.todo { background: var(--surface); color: var(--muted); border-color: var(--muted); }
+  .missing { margin: 0 0 22px; padding: 12px 16px; border: 2px solid var(--ink); background: var(--surface); }
+  .missing-tag { margin: 0 0 6px; font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--warn); }
+  .missing ul { margin: 0; padding-left: 18px; font-size: 13px; }
+  .limitations { margin: 0 0 22px; padding: 12px 16px; border: 2px solid var(--line); background: var(--surface); }
+  .limitations-tag { margin: 0 0 6px; font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ink); }
+  .limitations ul { margin: 0; padding-left: 18px; font-size: 13px; }
+  .measured { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 18px; margin: 8px 0 6px; }
+  .measured .big { font: 900 44px/1 var(--display); color: var(--spot-dark); }
+  .measured .unit { font: 700 13px var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+  .scope { margin: 0 0 6px; color: var(--muted); font-size: 13px; }
+  .scope-gloss { margin: 0 0 12px; color: var(--muted); font-size: 11.5px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 9px 12px; margin: 14px 0 22px; align-items: center; }
+  .actions .button { display: inline-flex; align-items: center; min-height: 36px; padding: 7px 12px; border: 2px solid var(--ink); background: var(--ink); color: var(--paper); font: 700 11px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+  .actions .button:hover { background: var(--spot); border-color: var(--spot); color: #fff; }
+  .actions .button.secondary { background: transparent; color: var(--ink); }
+  .actions .button.secondary:hover { background: var(--ink); color: var(--paper); }
+  .copy-md { appearance: none; border: 2px solid var(--ink); border-radius: 0; background: transparent; color: var(--ink); min-height: 36px; padding: 6px 10px; font: 700 11px var(--mono); letter-spacing: .05em; text-transform: uppercase; cursor: pointer; }
+  .copy-md:hover { background: var(--ink); color: var(--paper); }
+  .copy-md.copied { background: var(--spot); border-color: var(--spot); color: #fff; }
+  .copy-md.failed { border-color: #a12820; color: #a12820; }
+  .hr-card { border: 2px solid var(--ink); background: var(--paper); padding: 13px 14px 11px; margin: 0 0 12px; }
+  .hr-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+  .hr-card h3 { margin: 0; font: 900 15px var(--display); text-transform: uppercase; }
+  .hr-deploy { margin: 3px 0 0; color: var(--muted); font: 10.5px var(--mono); }
+  .hr-grade { flex: 0 0 auto; text-align: right; }
+  .hr-grade-letter { display: block; font: 900 26px/1 var(--display); color: var(--spot-dark); }
+  .hr-grade-note { display: block; margin-top: 3px; color: var(--muted); font: 700 9.5px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+  .hr-bar-row { display: grid; grid-template-columns: 108px 1fr 78px; align-items: center; gap: 8px; margin: 5px 0; font: 10.5px var(--mono); }
+  .hr-bar-label { color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .hr-bar-track { display: block; height: 9px; background: var(--surface); border: 1px solid var(--ink); }
+  .hr-bar { display: block; height: 100%; background: var(--ink); }
+  .hr-bar.is-measured { background: var(--spot); }
+  .hr-bar.is-stock { background: var(--ink); opacity: .45; }
+  .hr-bar.is-physical { background: var(--muted); opacity: .55; }
+  .hr-bar-value { text-align: right; font-weight: 700; white-space: nowrap; }
+  .hr-bar-value small { font-weight: 400; color: var(--muted); }
+  .hr-why { margin: 9px 0 0; color: var(--muted); font-size: 12px; }
+  .hr-links { margin: 7px 0 0; font: 10.5px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+  .hr-links a { border-bottom: 1px solid currentColor; }
+  @media (max-width: 520px) { .hr-bar-row { grid-template-columns: 92px 1fr 70px; } .measured .big { font-size: 36px; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="site-nav"><div class="wrap">
+  <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
+  <nav aria-label="Primary">
+    <a href="index.html" aria-current="page">Models</a>
+    <a href="../learn.html">Learn</a>
+    <a href="../guides.html">Recipes</a>
+    <a href="../index.html#lab-speeds">Benchmarks</a>
+    <a href="../index.html#contribute">Contribute</a>
+    <a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / <a href="ltx-25.html">LTX 2.5 · continuing video</a> / 22B distilled, 145-frame continuation</p>
+  <p class="eyebrow">Candidate package · ComfyUI / PyTorch XPU · 4× Intel Arc Pro B70</p>
+  <h1>LTX 2.5 continuous video on four B70 cards</h1>
+  <p>Make a continuing video on four cards. An early test window took 5.24 seconds for six seconds of new video. Expert setup; public runtime rebuild still incomplete.</p>
+</div></header>
+
+<main id="main"><div class="wrap"><div class="col prose" id="package-page">
+
+  <h2 id="measured">Public headline <span class="badge todo">Pending</span></h2><p class="scope">Strict headline pending: scoped continuation timing only; seam/audio acceptance, sustained performance and independent replay remain open.</p><h2 id="video-observations">Measured video timing <span class="badge todo">Scoped observation</span></h2><div class="measured"><a class="big inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json">5.24</a><span class="unit">seconds per 6 seconds of new video</span></div><p class="scope">unthrottled-prefix measurement; qualification passed · 52 samples.</p><p class="scope">Separate measured continuation configurations, four B70s,256x256,24fps. Each value is the entire pre-throttle prefix after destination sequence9, not a sustained-throughput promise; different frame counts and settings are not matched speedups. <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json">Test details on GitHub</a></p>
+  <div class="actions">
+    <a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/README.md">Open the full guide</a>
+    <button type="button" class="copy-md" data-copy-markdown="../repro/ltx25-continuation-stream-b70-145f-20261010/README.md" aria-label="Copy the guide Markdown" aria-live="polite">Copy Markdown</button>
+    <a class="button secondary" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&title=LTX%202.5%20continuous%20video%20on%20four%20B70%20cards">Submit an improvement</a>
+  </div>
+
+  <dl class="facts"><div><dt>Model</dt><dd>LTX 2.5 22B distilled, 145-frame continuation</dd></div><div><dt>Publisher</dt><dd>Lightricks</dd></div><div><dt>Compression</dt><dd>BF16 distilled weights; F32 output checks</dd></div><div><dt>Software</dt><dd>ComfyUI / PyTorch XPU</dd></div><div><dt>Cards</dt><dd>4× Intel Arc Pro B70 32 GiB</dd></div><div><dt>Model download</dt><dd>—</dd></div><div><dt>Operating systems</dt><dd>Linux</dd></div><div><dt>Delivery</dt><dd>native</dd></div><div><dt>Good for</dt><dd><span class="use-chip">video generation</span> <span class="use-chip">continuation research</span></dd></div><div><dt>Fresh install tested</dt><dd>not yet — follow the guide carefully</dd></div></dl>
+<p class="missing">This setup still needs installation checks. <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/README.md">See what remains in the guide.</a></p>
+<p class="limitations">The early timing window is not a sustained speed guarantee. Output hashes match the compared reference chunks; seam acceptance and audio alignment remain open. Packet137 has no retained native qualification verdict in this packet. <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/README.md">Read the limits before choosing settings.</a></p>
+<h2 id="prefill">Prompt reading</h2><p>Language-model prefill rates do not apply to this video timing. Text-encoding time is not reported separately.</p>
+<p class="scope">Seconds per chunk measure how long the next piece of video takes to make. Lower is faster. New video seconds measure its playback duration. A timing below playback duration means that measured chunk was ready faster than it plays; a short window does not prove sustained playback.</p>
+<h2 id="video-progression">How the video setup progressed</h2><div class="table-scroll"><table><caption>Recorded timings for each setup; settings and measurement windows differ.</caption><thead><tr><th>Setup</th><th>Seconds per chunk</th><th>New video seconds</th><th>Samples</th><th>Evidence scope</th></tr></thead><tbody><tr><th scope="row"><a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json">Initial 97-frame stream (117)</a></th><td>4.762</td><td>4.0</td><td>124</td><td>unthrottled-prefix measurement; qualification passed</td></tr><tr><th scope="row"><a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json">121 frames, fingerprint checks (118b)</a></th><td>5.195</td><td>5.0</td><td>91</td><td>unthrottled-prefix measurement; qualification passed</td></tr><tr><th scope="row"><a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json">121 frames, decoder graph (119)</a></th><td>5.435</td><td>5.0</td><td>51</td><td>unthrottled-prefix measurement; qualification passed</td></tr><tr><th scope="row"><a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json">121 frames, display replica (120)</a></th><td>5.092</td><td>5.0</td><td>125</td><td>unthrottled-prefix measurement; qualification passed</td></tr><tr><th scope="row"><a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json">145 frames, eager decoder (121)</a></th><td>5.666</td><td>6.0</td><td>316</td><td>unthrottled-prefix measurement; qualification passed</td></tr><tr><th scope="row"><a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json">145 frames, storage accounting (123b)</a></th><td>5.77</td><td>6.0</td><td>51</td><td>unthrottled-prefix measurement; qualification passed</td></tr><tr><th scope="row"><a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json">145 frames, parallel display (124)</a></th><td>5.746</td><td>6.0</td><td>35</td><td>unthrottled-prefix measurement; qualification passed</td></tr><tr><th scope="row"><a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json">145 frames, GC 60 (125)</a></th><td>5.785</td><td>6.0</td><td>207</td><td>unthrottled-prefix measurement; qualification passed</td></tr><tr><th scope="row"><a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json">145 frames, background scan (126)</a></th><td>5.697</td><td>6.0</td><td>202</td><td>unthrottled-prefix measurement; qualification passed</td></tr><tr><th scope="row"><a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json">145 frames, digest cache (127)</a></th><td>5.467</td><td>6.0</td><td>85</td><td>unthrottled-prefix measurement; qualification passed</td></tr><tr><th scope="row"><a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json">145 frames, idle maintenance (128)</a></th><td>5.4925</td><td>6.0</td><td>60</td><td>unthrottled-prefix measurement; qualification passed</td></tr><tr><th scope="row"><a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json">145 frames, atomic evidence (129)</a></th><td>5.486</td><td>6.0</td><td>91</td><td>unthrottled-prefix measurement; qualification passed</td></tr><tr><th scope="row"><a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json">145 frames, text split and cone graph (133b)</a></th><td>5.411</td><td>6.0</td><td>71</td><td>unthrottled-prefix measurement; qualification passed</td></tr><tr><th scope="row"><a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json">145 frames, GC 60 — early window</a></th><td>5.2415</td><td>6.0</td><td>52</td><td>unthrottled-prefix measurement; qualification passed</td></tr><tr><th scope="row"><a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json">145 frames, GC 10 — early window</a></th><td>5.2415</td><td>6.0</td><td>52</td><td>unthrottled-prefix measurement; qualification passed</td></tr><tr><th scope="row"><a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/ltx25-b70/data/resume-20261008/continuation134-build.json">169 frames, graph off (134)</a></th><td>Not measured</td><td>7</td><td>0</td><td>sealed candidate; not launched</td></tr><tr><th scope="row"><a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/evidence/137-bulk-server-identity.json">145 frames, bulk F32 scan (137)</a></th><td>Not measured</td><td>6</td><td>0</td><td>startup identity saved; native qualification and timing not available in snapshot</td></tr></tbody></table></div>
+<h2 id="multi-user">Several video streams at once</h2><p>Not measured. The published observations use one stream.</p>
+<details class="profile"><summary>Speed estimates</summary>
+  <h2 id="projection">How much faster could this get? <span class="badge todo">No projection</span></h2>
+  <div class="placeholder"><p>This package's measured workload does not map cleanly onto a single model + compression + card-count shape, so no like-for-like projection is shown. The measured numbers above stand on their own.</p></div></details>
+
+  <div class="related">
+    <h2>Keep going</h2>
+    <div class="related-grid">
+      <a href="ltx-25.html"><b>LTX 2.5 · continuing video coverage</b><span>Variants, evidence, gaps, and recipes</span></a>
+
+      <a href="../learn.html"><b>Learn</b><span>What sets these numbers</span></a>
+      <a href="../guides.html"><b>Recipes</b><span>Every package, filterable</span></a>
+      <a href="../index.html#contribute"><b>Contribute</b><span>Made it faster? Send it in</span></a>
+    </div>
+  </div>
+
+</div></div></main>
+
+<footer><div class="wrap">
+  <span>Unofficial lab, not affiliated with Intel. Measured numbers link to proof; projections are labeled.</span>
+  <span><a href="../learn.html">Learn</a> · <a href="../guides.html">Recipes</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a> · <a href="https://mlbottleneck.com/" title="Physics-based LLM speed and memory planner for any GPU — same author">ML Bottleneck</a> · <a href="https://style-genome.com/" title="Design-system generator used to style this site — same author">Style Genome</a></span>
+</div></footer>
+<script defer src="../learn/assets/mlbottleneck-bridge.js?v=1d7b21a0d3"></script>
+<script>
+(() => {
+  document.querySelectorAll("[data-copy-markdown]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const original = button.textContent; button.disabled = true; button.textContent = "Copying…";
+      try {
+        const response = await fetch(button.dataset.copyMarkdown, { cache: "no-store" });
+        if (!response.ok) throw new Error("fetch failed");
+        await navigator.clipboard.writeText(await response.text());
+        button.textContent = "Copied"; button.classList.add("copied");
+      } catch (error) { button.textContent = "Copy failed"; button.classList.add("failed"); }
+      window.setTimeout(() => { button.textContent = original; button.classList.remove("copied", "failed"); button.disabled = false; }, 1800);
+    });
+  });
+})();
+</script>
+</body>
+</html>

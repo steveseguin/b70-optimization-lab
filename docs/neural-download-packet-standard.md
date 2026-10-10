@@ -110,6 +110,26 @@ Agents creating or updating these surfaces must use the repository-local
 
 ## Integrity rules (inherited from the lab standard)
 
+Video packages may retain scoped observations separately from a promoted
+headline. Set `library.modalities` to include `video`; keep
+`library.featured_metric: null` and explain the pending gates in
+`library.benchmark_status` when the retained receipts do not establish the full
+claim. The optional top-level `video_measurements` object has `scope`,
+repository-relative `evidence`, and a non-empty `rows` list. Each row has a
+unique `label`, a visible `status`, its own repository-relative `evidence`,
+nullable positive `period_seconds` and `new_video_seconds`, and nullable
+non-negative integer `samples`. Missing timings are `null`, never zero or
+interpolated values. Optional `headline_row_label` selects one measured row
+for the **scoped observation** display; it does not promote a headline. Include
+all evidence paths in package `dependencies`. The generated page retains exact
+values and each row's measurement scope, with no language-model token-rate
+curve or inferred sustained-playback guarantee. A video attestation must bind
+the actual frame/latent exactness oracle, measurement window, and independent
+repeat evidence; the language-suite gates in the
+[promotion attestation](promotion-attestation.md) are not satisfied merely by
+a video byte-equality receipt. Unproven gates remain false and the headline
+remains pending.
+
 - Every input pinned by SHA-256; model files sealed 0444 after verification
   with a `DOWNLOAD-MANIFEST.txt` in the model directory.
 - Rates are conventional-median only; no legacy-inclusive accounting on the

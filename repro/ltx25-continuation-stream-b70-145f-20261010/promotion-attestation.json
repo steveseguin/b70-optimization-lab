@@ -1,0 +1,47 @@
+{
+  "schema": "neural.download.promotion-attestation.v1",
+  "status": "blocked; evidence review, not promotion approval",
+  "performance_evidence": {
+    "path": "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json",
+    "sha256": "260358a77df5ce4c2305bf5254acbafc8176b18eb4c8a6cbf7a3068a45431943"
+  },
+  "identity": {
+    "model_revision": "5e6e71018ee1756ed329b697a7b4aedc934dfce9",
+    "runtime_revision": "b00c6e95279053474955540ba4f551646722b9aa",
+    "optimization_identity": "packet135 manifest4356482eae2f1d7ac95b17e6483379ceed0cc90ed488d46765803451980402c3;145/frame/decoder-graph/cone/split36/display3;GC60 and GC10 separately; no packet137 speed claim"
+  },
+  "gates": {
+    "varied_task_quality_passed": false,
+    "exact_or_target_oracle_passed": true,
+    "deterministic_repeats_passed": true,
+    "fresh_server_repeat_passed": false,
+    "target_model_unchanged": true,
+    "no_quality_loss": false
+  },
+  "quality_evidence": [
+    {
+      "path": "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/135-gc60-stream-qualification-verdict.json",
+      "sha256": "7ca7bbdde174c6698c352b80843ba854823c046e96d2280526746f4bc83e2598",
+      "supports": [
+        "exact_or_target_oracle_passed",
+        "deterministic_repeats_passed",
+        "target_model_unchanged"
+      ]
+    },
+    {
+      "path": "repro/ltx25-continuation-stream-b70-145f-20261010/evidence/135-gc10-stream-qualification-verdict.json",
+      "sha256": "1865df5a16adde643153bfa1fbb834a173b0f655993728d1a0554c62a662a134",
+      "supports": [
+        "exact_or_target_oracle_passed",
+        "deterministic_repeats_passed",
+        "target_model_unchanged"
+      ]
+    }
+  ],
+  "decision": {
+    "performance": "5.2415 seconds is a52-period early unthrottled prefix in each packet135 arm; no sustained unthrottled two-server certification.",
+    "quality": "Three-chunk eager/graph/repeat tensor and frame-anchor parity and packet121 reference parity pass. The native verdict explicitly leaves seam quality and audio alignment unaccepted. This is not a varied-task quality or no-quality-loss acceptance.",
+    "fresh_server": "GC60 and GC10 are different maintenance identities. Do not treat them as matched fresh-server repeat proof.",
+    "packet137": "Startup identity exists, but no saved qualification verdict at audit. CPU predicate exactness does not certify native outputs."
+  }
+}

@@ -1,0 +1,911 @@
+{
+  "resolution101_transition": {
+    "audio_residency": {
+      "choices": [
+        "legacy",
+        "xpu2"
+      ],
+      "default": "legacy",
+      "gate": "three same-input native xpu3/xpu2 qualification waveform comparisons and all nine chain output comparisons",
+      "scope": "fixed145 serial replica2; guarded dg1 or isolated dg0 timing control; legacy auxiliary placement",
+      "static_audio_bytes": 364666868,
+      "upsampler": "unchanged xpu:0"
+    },
+    "claims": {
+      "audio_alignment_resolved": false,
+      "cone_exact_on_xpu": false,
+      "decoder_graph_exact_on_xpu": false,
+      "decoder_pool_cap_fits_121_dg1": false,
+      "geometry_121_measured": true,
+      "geometry_145_measured": true,
+      "geometry_169_measured": true,
+      "precompute_exact_on_xpu": false,
+      "quality_adopted": false,
+      "seam_accepted": false,
+      "snapshot_fingerprint_equivalence_on_xpu": false,
+      "speed_improvement": false
+    },
+    "cone_capture_reserve": {
+      "choices": [
+        "parent",
+        "scaled-476"
+      ],
+      "default": "parent",
+      "parent_bytes": 5368709120,
+      "reason": "121 growth repeatability does not prove145 peak bound",
+      "scaled_launch_admitted": false,
+      "scaled_proposed_bytes": 5111011083
+    },
+    "cone_graph_memory": {
+      "capture_reserve_bytes": 5368709120,
+      "choices": [
+        "off",
+        "replica-release",
+        "text-shift"
+      ],
+      "default": "off",
+      "effect": "replica-release permits one allocator release; text-shift never releases; both require fresh physical admission and retain all references and byte gates",
+      "floor_bytes": 9663676416,
+      "reserve_is_measured": false,
+      "scope": "fixed145 dg1 cone serial eager-display/full; replica-release uses display2, text-shift uses split36/native display3",
+      "screen_bytes": 805306368
+    },
+    "control": {
+      "anchor": "LTX_ANCHOR (frame = packet113 decoded-frame anchor at both stages; mixed, latent and guide kept for A/B with the levers off)",
+      "anchor_decode": "LTX_ANCHOR_DECODE (full|cone, set explicitly; frame only): cone = the anchor from a native VAEDecode whose stage-5 step issues only the calls the last pixel frame depends on; the full display decode follows on the decode thread after the successor's sampler A starts and must match the anchor byte for byte (else latch anchor-decode-118-refused.json; the launcher also honours anchor-decode-117-refused.json)",
+      "batch": 1,
+      "bencode_overlap": "LTX_BENCODE_OVERLAP (0|1, set explicitly; frame only): the stage-B anchor encode on the decode thread beside stage A between xpu:3-only safety snapshots; the stage-B node runs the native node with it inside the unchanged four-card guard (graph chain: dual-checked against the native encode; else latch precompute-118-refused.json; the launcher also honours precompute-117-refused.json)",
+      "chain_reset": "stream chunk reset=1 is unanchored (stream_seq 0 form)",
+      "decode": "serial parent worker by default; parallel adds bounded display completion FIFO after early audio on cone worker; serial: anchor decode -> anchor file -> hand-off -> [stage-A encode] -> [wait for the successor sampler A, stage-B encode] -> [display decode + byte check] -> audio, hashes, record, preview; sharpness profile per chunk",
+      "decode_replica_env": "legacy variable unchanged; LTX_DISPLAY_DEVICE=xpu:2 creates one guarded decoder-only instance",
+      "decoder_graph_capture": "LTX_DECODER_GRAPH (set explicitly): forward_pre_diffusion and forward_diff_step graph replay on xpu:3, one shared pool, bounded rope/axis-mask/noise caches; qualified by byte identity against the uncached eager decode; latch file refuses graph mode after a mismatch",
+      "decoder_graph_pool_cap": "LTX_DECODER_GRAPH_POOL_CAP_GB (optional, dg1 only): methods are captured in first-call order while the measured reserved growth of the captures already made is below the cap; a capped method runs eagerly with the same caches (byte-gated)",
+      "encoder_lock": "prompt-thread conditioning-guard calls and the decode thread's encodes never overlap",
+      "environment": {
+        "EnableDeferBacking": "0",
+        "LTX_BUSY_WINDOWS": "0",
+        "LTX_DECODE_REPLICAS": "1",
+        "LTX_DECODE_REPLICA_DEVICE": "xpu:2",
+        "LTX_OUTPUT_SIZE": "256x256",
+        "LTX_SAMPLER_BATCH": "1",
+        "LTX_SAMPLER_SHARED_POOL": "1",
+        "LTX_SAMPLER_WORKERS": "1",
+        "NEOReadDebugKeys": "1"
+      },
+      "fps": 24,
+      "frame_count": "LTX_STREAM_FRAMES (49, 97, 121 or 145; 169 conditional on auxiliary xpu2/dg0/display3 or legacy dg0 display2; qualify145 first)",
+      "full_captures": 9,
+      "graph_replay": "LTXGraphCaptureGate all48 chain1",
+      "layout": "LTX_SAMPLER_PLACEMENT (two-way or two-way20-28; launched two-way20-28)",
+      "mixed_wait": "stage-B condition node waits (bounded 300 s) for the predecessor decode",
+      "na_axis_router": "decoder-graph and cone installers accept the pinned ltx_na_axis_router.AxisRouter (sha 1fe42fe9...) in its no-scope route to the eager na3d",
+      "names": "stream135- prefix; launcher refuses existing names (also --check-only)",
+      "prep_ahead": "LTX_PREP_AHEAD (0|1, set explicitly; frame only): the stage-A anchor encode on the decode thread after the predecessor receipt commits, same guard",
+      "preview": "one bounded FIFO writer thread behind the decode thread",
+      "qualification_requests": 9,
+      "reference_hashes": "resolution/reference-frame-hashes.json",
+      "shared_pool": 1,
+      "size": "256x256",
+      "snapshot_mode": "LTX_SNAPSHOT_MODE (walk|fingerprint, set explicitly; run-name token -sm<walk|fp>-): fingerprint = residence/ownership and sampler placement from fact tuples bound at the placement event to the admitted fingerprints (the walk whenever a fact differs); setup and qualification dual-run every snapshot, streaming every 20th chunk and from any inclusive near-floor reading on; decode-thread P7 always dual; a disagreement latches snapshot-118-refused.json",
+      "stage_overlap_across_cards": "one prompt at a time; display overlap only",
+      "stream_requests": "unbounded, serial, storage-bounded",
+      "text_reuse_env": "LTX_STREAM_TEXT_REUSE (set explicitly)",
+      "timing_split": "always on, measurement only: receipts split submit -> sampler A (stream_receipts.SUBMIT_SPLIT), list the four-card snapshots with their durations, count the authority healthy() calls and split the predecessor receipt -> this submit (TURNAROUND_SPLIT)",
+      "workers": 1
+    },
+    "display_allocator_release": {
+      "choices": [
+        "off",
+        "before-admission"
+      ],
+      "default": "off",
+      "effect": "one process-wide allocator empty_cache when below unchanged admission budget; reread all-card counters; no tensor, graph, precision or floor change",
+      "scope": "169/frame/dg0/cone/bo1/pa1/two-way20-28/legacy/eager-display/xpu2/parallel/fingerprint/full/read-ahead0"
+    },
+    "evidence_publication": {
+      "append_route_files": false,
+      "mode": "immutable-exclusive-atomic",
+      "reader_identity_guard": "unchanged"
+    },
+    "gc_interval_seconds": {
+      "changes": "periodic maintenance cadence only; calls and automatic GC retained",
+      "choices": [
+        10,
+        60
+      ],
+      "default": 10
+    },
+    "input_inventory": {
+      "allocator_release130.py": "406cc3183a5259cc68daa4b3f0a9ee6188a66d188dc817bfe6f77394837951c4",
+      "audio_residency132.py": "3a5d46e19083c6ec7280f57407f2eaf7b33cd761ed1ab9e53597d9130214c85b",
+      "candidate_safety.py": "c17f4bf675dd21f24ac6ef6512f3fbefc3e6523e604b83b3bc4027d9ad62de53",
+      "conditioning_guard.py": "ad20f81395b9a7588531be4a5c6f8e7300885e12e5eb2b19d0e5ea924985b184",
+      "cone_memory131.py": "27d61504639c28ce997835957b0ce8971d9417849c1f03cb97ae55c2c7df0443",
+      "continuation_anchor.py": "89812304ab8471cfafae5156170ccd1f428ed0dac257aa7a41f569be34577264",
+      "derive_from_111.py": "4dd9b6546e22c6bed939f3c08cf69a991c4394e3fdf75d3550846e7a7f726dad",
+      "display_replica.py": "02b7ac0e4a084c67a01795db564a62d492ec53d56a10b203363ccde696b78264",
+      "evidence129.py": "0b2b0724d86be6ab56ecf7a2166ec4ce6bf094bf97ea50ae71fd82db5cf347af",
+      "evidence_publication.py": "a27a4f2b5d35a9ef76e571dc38943f546db7a9f2c405ddc549de25b45a6e7646",
+      "integration.py": "6af950b2d1f6ba8f839fac9181df8ff1a05161eae69353d04319226d9de76729",
+      "latent_anchor.py": "47ff5d0ea8d628387220af61d58f3c32c7c18591263fbcb78c687ac1805938cc",
+      "maintenance125.py": "173d86f3ea0371a2dcd35c341e4492c87d3f1679fe2ce2704f4203c8c2dea8df",
+      "maintenance128.py": "f933dabef4170215fe2da6e5ab78c37a93ab4fa99b4d355337a4cf8ab7f15fc7",
+      "native_bindings.py": "1ce082ecd4c79cc0a3d7a58c3938e13bc84a94c0efbf42bfdb91ef6b92e8cf43",
+      "native_safety.py": "188f6e1f3e42f06843b369906505bd85c7b501b35438c59de146a519bcc54c0b",
+      "plan.py": "a06323ffa7fa01c6e3f36a91640732d29caabe63be3986f62742abf8a0437765",
+      "precompute_guard.py": "972e6e1bc7ae84c2c326f2aec7305541b53d66705b73ff50956e805f9fc3c031",
+      "qualification_gate.py": "542f95be3d77c48a3dd17f09c35595b3f32e49258bdaaad555ae96a9814ef3de",
+      "qualify_client.py": "d9e4301f2dbfa0f8d8c1049d7c350525d6d2bfdb8ce01ac07388b2f2e4ff40a1",
+      "reference-frame-145-provenance.json": "edb30d15c710372b276142f10785b8add27a4dec44ac3fce9cf16f86c134ac06",
+      "reference-frame-qualification-hashes.json": "ae3df94e25813eda97dc449301a5bd7203d60a0568b90e3e2057d66e9a5cbca9",
+      "residency123.py": "8e8398631f27c5bf20815ffc54927c2c1dbc5b63b814f2e0b4bf29d84ab0e081",
+      "run_storage.py": "320b3676d5abbccb4c285b46f41e3f13ed02bc1ff5e336d3e90820896d693bab",
+      "runtime_packet.py": "ecfb769550e8039ed0a85ec45b66f1f06e6fb005fec5160a9dbb0c353356a1db",
+      "sealed_import_cpu.py": "fae5bc9e7a632670c2b525b4596431d3ffcad75ceeea8f9607df3a3b2a1b8cde",
+      "session.py": "a1c0a8d7906d8d3f0c3034c30edb131e84f2af08249654150129d63a40813169",
+      "signature_cache127.py": "2f9f8f51127a83759ef92eb34f439240e672510116500a7926df0e3e46f823f7",
+      "snapshot_fingerprint.py": "a84e206fd6f96563c6e07c064abdcbcc6f8b4d4a975847123c3c14e4f0016b84",
+      "stream-plan.json": "030e111105e53c3aabdeb61e82b95633fc6ab55b193e4c0422c13ce6464bef57",
+      "stream_anchor_decode.py": "7f841723514241c48bce02fb9ed76cbb3fe7fdfc650aa70eae864213c6c505c3",
+      "stream_contract.py": "da8b1a82c3c3dfb4f8e848433bcfec47aef3e728c47874b9f29d6581e3ee2296",
+      "stream_decode.py": "582fe78bdcb113b85f77bda38c1369847556d96df47384c81504ee9a6a8e17d1",
+      "stream_decoder_graph.py": "a9412abb4f304c9b33592ab4bc4fd043ef0b3433a892d8df8cbf7b1e0f0d196e",
+      "stream_preview.py": "f0117a323209a20d4e97437b1c6792a9758461bde1ae324b997c0561def3e011",
+      "stream_receipts.py": "bc3f897d670e337118044c022266525600ce81954b7007f248d3e6e76ff22779",
+      "stream_schedule.py": "e65ee6a8694962c79b81e992e383c31deef306e289a49971ce4e9a037ccef10f",
+      "stream_schedule_gate.py": "d6145ff55f73d5661ecdaa31d4394644bc606f96ccd4844f0b62bda158eb2063",
+      "text-oracle133.json": "125750aa533d91d08aab7c47b416bc15e25a1371078425a4802e3cac762442c2",
+      "text_residency133.py": "658079c5e5d3581b0409952d98c77eb2b39950f12cf5fe5261b1f3dd6b7c7fd0"
+    },
+    "input_inventory_sha256": "2f39540fc2c08ebfa9061aee7b9603dac40dd44bea70cf7352e930b28fb1f859",
+    "maintenance_mode": {
+      "choices": [
+        "parent",
+        "idle"
+      ],
+      "default": "parent",
+      "idle_grace_seconds": 0.25,
+      "maximum_age_seconds": 60,
+      "meaning": "same full collect/cache pair on original prompt thread; idle grace admits receipt and successor first; mandatory60s age bound plus in-flight prompt completion; explicit free/unload unchanged"
+    },
+    "model_requests": 0,
+    "options123": {
+      "anchor_read_ahead": [
+        0,
+        1
+      ],
+      "aux_default": "legacy",
+      "aux_residency": [
+        "legacy",
+        "xpu2"
+      ],
+      "auxiliary_scope": "auxxpu2/display3 unchanged;169 legacy dg0 replica now conditional on measured census",
+      "auxiliary_workspace": "2GiB floor +2GiB work allowance +.75GiB screening before each auxiliary op;2.75GiB after",
+      "cpu_only": true,
+      "defaults": [
+        "sampler-a",
+        0,
+        "full",
+        "xpu:3"
+      ],
+      "display_device": [
+        "xpu:3",
+        "xpu:2"
+      ],
+      "display_schedule": [
+        "sampler-a",
+        "sampler-b",
+        "eager-display"
+      ],
+      "display_worker": [
+        "serial",
+        "parallel"
+      ],
+      "display_worker_default": "serial",
+      "parallel_order": "cone/anchor/A/go/B/early-audio then display+bytegate+CPUtail FIFO; eager+graph inline; repeat exercises parallel",
+      "parallel_scope": "145/169 two-way20-28 frame dg0 cone legacy eager-display xpu2",
+      "replica_gate": "all nine full images vs xpu:3 uncached eager; every stream cone anchor exact",
+      "replica_memory": "actual copied bytes + length census (4/5.640625/6.5GiB at121/145/169) or explicit larger reserve <=8GiB + 2GiB floor;145/169 add0.75GiB screen; observed growth gate retained",
+      "run_write_allowance_gib": {
+        "default": 3,
+        "max": 64,
+        "min": 1
+      },
+      "snapshot_schedule": [
+        "full",
+        "a-xpu3-sync"
+      ],
+      "storage_accounting": "run-owned-st_blocks-v1"
+    },
+    "packet_revision": 135,
+    "parent_manifest_sha256": "ed908a9031a937801d17264edacfe0807bea543badc412a32eb6118daa214fd3",
+    "parent_packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-133b",
+    "plan_sha256": "7750e7b54c885f99a73ab87b17013fc0a850a1af942f0c00422adbae596258c4",
+    "qualification": false,
+    "qualification_ids": {
+      "121/two-way/frame/dg0/ad-cone/bo0/pa0": "618fa86cd694b50a427601030d3d97a937a1a936729b3a3432c22867293f282b",
+      "121/two-way/frame/dg0/ad-cone/bo0/pa1": "43986e09b60c670a61a1cf24be35948daccbe1444b62ca0e2740cc9d7234d4b3",
+      "121/two-way/frame/dg0/ad-cone/bo1/pa0": "ffedc918238e758fb8109f1a47ecd9d4ee99459a4563ecaa4719ea4f0a886f9c",
+      "121/two-way/frame/dg0/ad-cone/bo1/pa1": "8e97ba0c3a5e431161f9e8aa155dfcb1b140b0b44eba33c4cd722cb560604b29",
+      "121/two-way/frame/dg0/ad-full/bo0/pa0": "750e3d24eacedeb1036dcabc99969a3793a51f19a01081b8a83bf2ad57840fd9",
+      "121/two-way/frame/dg0/ad-full/bo0/pa1": "fd20f7283b5cfd4a5fe8711245d283871d2270a4fd4a63853f68413402c5f222",
+      "121/two-way/frame/dg0/ad-full/bo1/pa0": "34fe17161a78b40cf8ad6ef55d43512a866602bbd8e5aabc1d26f6bdabcc8ec7",
+      "121/two-way/frame/dg0/ad-full/bo1/pa1": "dfc55696f9abe34b18db0bb8afa1ad3628187df15d3c7b40d0f02c4472fdfd74",
+      "121/two-way/frame/dg1/ad-cone/bo0/pa0": "2ae1253675338ba411260755e5f034b2dcf11ff9c2b123625d8d35c6d631290e",
+      "121/two-way/frame/dg1/ad-cone/bo0/pa1": "c6b3c72cc833930aea32e6bc0cba80bcf9d6c37c257f752f3affb7c9ad662867",
+      "121/two-way/frame/dg1/ad-cone/bo1/pa0": "e5f91330505d2a2bb1b62faa3f689459bbf33c37ddefd4b7d24debcb7d309b64",
+      "121/two-way/frame/dg1/ad-cone/bo1/pa1": "f3c6fa63f0b19284ca1ed969d752a552451b16e353523814876b8e6bccb0a7a3",
+      "121/two-way/frame/dg1/ad-full/bo0/pa0": "dcd6c8d28af710263968846626a75f7a98e8a4eaeb2673df35ef4df3078ab03d",
+      "121/two-way/frame/dg1/ad-full/bo0/pa1": "9edf76c7614c8395512c9b11edb68f08207c8636eca271809cff7e93ab0a396c",
+      "121/two-way/frame/dg1/ad-full/bo1/pa0": "6fa1e86e309bd44c00be6781d12c47cc8f55ca484472ca3d8dd010a2ed055905",
+      "121/two-way/frame/dg1/ad-full/bo1/pa1": "38549776b9bfd09d3297d78be65555fe6cc6be17d8b02d0be0aab3b25e0198fd",
+      "121/two-way/guide/dg0/ad-full/bo0/pa0": "8cd643d72c3695244f1844608b418f72a17bb6f1d54e7bf6969b421d8bcaafe8",
+      "121/two-way/guide/dg1/ad-full/bo0/pa0": "d638725a3e33aaeca7644c51acefedbb836a7fc63d94f0ed57ff2f0e0df2455b",
+      "121/two-way/latent/dg0/ad-full/bo0/pa0": "5fd5863ceac424daab82ca3017e82d03dff83efaa28d1842fc75003972ae6806",
+      "121/two-way/latent/dg1/ad-full/bo0/pa0": "67dfe8957514de64e58d8fd64f36ffa94be6f1ea5fd1982294b109571f6e796d",
+      "121/two-way/mixed/dg0/ad-full/bo0/pa0": "342cbc6ba3e01ad23188b07f6afaa1cc21879a7e8d7b22194568ac9aee13d147",
+      "121/two-way/mixed/dg1/ad-full/bo0/pa0": "d061d60e920eb01cd450f19c9213c02dc0459300d98dab9e72a00f6776776ff6",
+      "121/two-way20-28/frame/dg0/ad-cone/bo0/pa0": "3182db36377a2c8b1f78b242391831d504bc1f26a30f95aebba9d65cb2eb8d40",
+      "121/two-way20-28/frame/dg0/ad-cone/bo0/pa1": "7ed1aace38ef123f3ff4ebbf9f6005ce8fc288c6daa0d2ef1a545295735e11c3",
+      "121/two-way20-28/frame/dg0/ad-cone/bo1/pa0": "57a94d6117d34ba00162bbe19a57e96dc368380c1a9c8a3bbb3aedaeae86d16e",
+      "121/two-way20-28/frame/dg0/ad-cone/bo1/pa1": "0b138ef0346650ef4bab33fd4979722cdb2e3ba46fb0bf688ff663e9e7925e10",
+      "121/two-way20-28/frame/dg0/ad-full/bo0/pa0": "762316e380d6080db1c117c804ff219fce2ec19dd3e7f0cdab9031e73a44196e",
+      "121/two-way20-28/frame/dg0/ad-full/bo0/pa1": "70a7e7dce2b442d7c89f02fcb61149336dfc9024448c2a31570f214d9c31de79",
+      "121/two-way20-28/frame/dg0/ad-full/bo1/pa0": "d768f62fc40e760094a382eb0aacd9eb027d84a25d7e1111370017e894a1f966",
+      "121/two-way20-28/frame/dg0/ad-full/bo1/pa1": "42d15b733d18c8790d7357db59be779d3389fac7b39766ca9af35da2bfa21031",
+      "121/two-way20-28/frame/dg1/ad-cone/bo0/pa0": "5da653474c39d57b0976b776f019f18151c46be85dcd2bfd0d3308cb656edb7b",
+      "121/two-way20-28/frame/dg1/ad-cone/bo0/pa1": "bfb441c5b09a7b1bd792c442934c8a9e08276dda01c3094c4e5b13e34eccefd9",
+      "121/two-way20-28/frame/dg1/ad-cone/bo1/pa0": "02a9c747dcc1100e18d97d976f81f30e4aa093b8af1c245c3c3a9106e6c47615",
+      "121/two-way20-28/frame/dg1/ad-cone/bo1/pa1": "2d54fb73865ca84b6e2536f1defe45083064a28c9e6c739acba2d69755ecc80a",
+      "121/two-way20-28/frame/dg1/ad-full/bo0/pa0": "4549bb1bdc77456c8956b67d88c5439cd47de3a303c83d25d77604298404aaf9",
+      "121/two-way20-28/frame/dg1/ad-full/bo0/pa1": "683c1a38267ffe91773db669536ba9d7e8f343a18be8c1e468ee2f2b73d59310",
+      "121/two-way20-28/frame/dg1/ad-full/bo1/pa0": "0e09d0a7d1cde813525e0cb4689e1620c25f38da25a08311aa33328062e6e517",
+      "121/two-way20-28/frame/dg1/ad-full/bo1/pa1": "5ff94ca6b593b21af716991566240670c64f3a5c67b58d0a8e18663d1e0d28ef",
+      "121/two-way20-28/guide/dg0/ad-full/bo0/pa0": "69d93acf5aa99c700bfa6562f99e28fec7800a90ead88eac259ed8b4c0fdf228",
+      "121/two-way20-28/guide/dg1/ad-full/bo0/pa0": "56418567390e17427636bc881f710e9430ac055ae90ed76ba47553b096200669",
+      "121/two-way20-28/latent/dg0/ad-full/bo0/pa0": "566b03a3ff68903f9272406a0d1ac3e7f7f0f0de889f583e910bafc9129b6abe",
+      "121/two-way20-28/latent/dg1/ad-full/bo0/pa0": "61bfd391ed75f136cd0d181750f358e06399d853d42c737715b78fe124013679",
+      "121/two-way20-28/mixed/dg0/ad-full/bo0/pa0": "e6653c64eacf9ae450332bef01fa3d9c7fbf91337ebb6f983dc9f2fbcf623d01",
+      "121/two-way20-28/mixed/dg1/ad-full/bo0/pa0": "4e30f27ca470b3ee3b104aa3ef15db66b21b2b7f22358a3530c869634dee38ea",
+      "145/two-way/frame/dg0/ad-cone/bo0/pa0": "c74b5e689b80dc577dccab6d7d1f7da5029a4d16cb3cf6823162c2ebafa6eb46",
+      "145/two-way/frame/dg0/ad-cone/bo0/pa1": "a297000c2423e52b33af3b0f9cab1913c70141c90c0ceeb86603a758504b1afc",
+      "145/two-way/frame/dg0/ad-cone/bo1/pa0": "f8da89487f09a399f64fd6c338dd52ba2f2351c1106e2d05f42f565f0894f1fe",
+      "145/two-way/frame/dg0/ad-cone/bo1/pa1": "74c3a18f4e434b57ac4acde162a623ca57db933a77e41901854ed152e584ea8f",
+      "145/two-way/frame/dg0/ad-full/bo0/pa0": "8cc8ab01ef4a40e1376436c88db0bda4a9105d72c98c6c8e85d9f07db8e6f649",
+      "145/two-way/frame/dg0/ad-full/bo0/pa1": "b6b6868d5b7eb40a1d825b52c1ea4086b863c8e97fdea3bc2a9529700c76f275",
+      "145/two-way/frame/dg0/ad-full/bo1/pa0": "093ffb06cdfd4031e2331f33b0244cdeb135f38c41526bfc0c72ad598c09a8ea",
+      "145/two-way/frame/dg0/ad-full/bo1/pa1": "732000ca0d25bffc4fcb3b2db6463d330da8584be4c8da7ba844c97c9d883c24",
+      "145/two-way/frame/dg1/ad-cone/bo0/pa0": "23e6925889322e85a6a6fd8de7e9520405dc194cfdc7aa8214026f52465c4e15",
+      "145/two-way/frame/dg1/ad-cone/bo0/pa1": "f7cf8b26595c6848d39f30d37f829da7587b41707f55282c293b7c506fdb565d",
+      "145/two-way/frame/dg1/ad-cone/bo1/pa0": "0cc17d83263d86ce86cbe78c962da8ecbfa08982b76fe2d5464b5db78c1142be",
+      "145/two-way/frame/dg1/ad-cone/bo1/pa1": "2ca4d0d0174101ebe4c3ba25ab7b61f6eee04d82c7d419c36c9eed6c2bdf1955",
+      "145/two-way/frame/dg1/ad-full/bo0/pa0": "4564eb45a6c8c0b3f0187cf2662d4aaf632593ba6cdc70cba34c86e3df242f71",
+      "145/two-way/frame/dg1/ad-full/bo0/pa1": "91f4a7ec8112ddcdea302f5e5bb9e1a2e82938308f694b06dd86e6c1b1eb90cc",
+      "145/two-way/frame/dg1/ad-full/bo1/pa0": "5a4e0f993869906263c2778e360be05620a622ac6b54f5a60fcaaccc7cd89fcf",
+      "145/two-way/frame/dg1/ad-full/bo1/pa1": "5026ff49d7696d748eedf8210b5d9faa9b9bea600e2a0b408d0d068494b57def",
+      "145/two-way/guide/dg0/ad-full/bo0/pa0": "cf8cfee63e6090e677231db6ee5ddf6631802fb86ebf113462d7a34e57ac9031",
+      "145/two-way/guide/dg1/ad-full/bo0/pa0": "e47726d55e312b76fdb4b2e2479e63ea71dd2627450ee495084bb2699c455179",
+      "145/two-way/latent/dg0/ad-full/bo0/pa0": "3a9b9d895e6ddbfc80a04bd3464e77071f66ab170303e5ebf109622223d1bd95",
+      "145/two-way/latent/dg1/ad-full/bo0/pa0": "73c8987031ceb6b20427426c8e8769259da0a080d7ce3f95298d5792e265e922",
+      "145/two-way/mixed/dg0/ad-full/bo0/pa0": "3fb140b64aa52cc1619fa4044cdf76715885ff2e3284ba33e68443542a97c40b",
+      "145/two-way/mixed/dg1/ad-full/bo0/pa0": "fd8aa3b8ac4fbc9e46fe71b38a5d2c11226df407a235956ebdc25d52a6f36462",
+      "145/two-way20-28/frame/dg0/ad-cone/bo0/pa0": "e67ede502ab7422bac02bc0b12988a8c2f08d70e01075e7f3508808353698c76",
+      "145/two-way20-28/frame/dg0/ad-cone/bo0/pa1": "2ed0799529809759f81c3a4544514b66844952a906614034efc70297a76ff2c6",
+      "145/two-way20-28/frame/dg0/ad-cone/bo1/pa0": "da7cde2babccad729bb92bb7cab32998cf49c9a050f94378c2d1a667dfd2538c",
+      "145/two-way20-28/frame/dg0/ad-cone/bo1/pa1": "b74a0272889dd0f05ab934e091af9b6c6ed6a699669fa9918de505bf9ba174d9",
+      "145/two-way20-28/frame/dg0/ad-full/bo0/pa0": "33c591e6ee01722b38882781afe27bbc10faba458f4338b4cc54c3660568e7c2",
+      "145/two-way20-28/frame/dg0/ad-full/bo0/pa1": "f982d15dcc49f0e0dc09855488a71b876bfe577300898bfbdf2d36767b57e674",
+      "145/two-way20-28/frame/dg0/ad-full/bo1/pa0": "72c175bcb3d86843bb7c09a56e605d5540639947eaebdeb116bf675d2b98be5a",
+      "145/two-way20-28/frame/dg0/ad-full/bo1/pa1": "8972fa9a0f74a8e4a434563e86bf0994d86445ec3f8570bdd13156515a47e80b",
+      "145/two-way20-28/frame/dg1/ad-cone/bo0/pa0": "2c9ea31dfcc31b1480b37dd04e231c932c4b268c98313ca32db1c92f7b5b51d5",
+      "145/two-way20-28/frame/dg1/ad-cone/bo0/pa1": "d1e73ff85cca2f3122d4c21d85ae95247d99347682d9c4e7bbe7d824784eae2c",
+      "145/two-way20-28/frame/dg1/ad-cone/bo1/pa0": "22c11ccf9ff0a4e213bcaf778ce5a7b8cd3b57e8bbfd743fa02cb7c0f46d9a4a",
+      "145/two-way20-28/frame/dg1/ad-cone/bo1/pa1": "ba6efc388ad6de3178c39074374b8467dd7fcb8d9d1c9b3720bf5681865770c6",
+      "145/two-way20-28/frame/dg1/ad-full/bo0/pa0": "726c3f48f8a24eee999d7cd9564a4e2aeffa9736572bc49033a38c993ee3c929",
+      "145/two-way20-28/frame/dg1/ad-full/bo0/pa1": "503f03f71113fba8f3a00a62d0249b6d91aec77f2234bc0ad9e292375f86f3f3",
+      "145/two-way20-28/frame/dg1/ad-full/bo1/pa0": "7d3f66fd78999cb672c0df65413914907d90929da6df18c662ca0a1389c9e241",
+      "145/two-way20-28/frame/dg1/ad-full/bo1/pa1": "8c1ad2fbb1401ae4c7e4ff5d6bf0a95fc73f47b4492635f81b02070ec2a042cd",
+      "145/two-way20-28/guide/dg0/ad-full/bo0/pa0": "4f596be98d0caa019d80be8adc89f4669386799cc9803b8195f5005646f0ce15",
+      "145/two-way20-28/guide/dg1/ad-full/bo0/pa0": "724c6b894f80ebf97c3fdb2d17a09e24373f1bd1e1f8391d1e71a01ef103e624",
+      "145/two-way20-28/latent/dg0/ad-full/bo0/pa0": "71446fa611adb6e112d87a25647bcff3c9a3bf089e6eed094dd2287a46e85d2c",
+      "145/two-way20-28/latent/dg1/ad-full/bo0/pa0": "c39105290bb6682f4ccb79315caf20eec88a4dfd5c6cb90b4b40de7a03bde7af",
+      "145/two-way20-28/mixed/dg0/ad-full/bo0/pa0": "8e96e35af37296f072bf36a1e9106bac7f6bb1b6f30085d00293e4da8aa427c6",
+      "145/two-way20-28/mixed/dg1/ad-full/bo0/pa0": "02884bd27c49ad2fa8311927def6cb3c31c5f25dbcb88f141470431ac3a0b873",
+      "169/two-way/frame/dg0/ad-cone/bo0/pa0": "b8be40606d4db87e231bf1b477e46fe344b88315570fe1effd7f478e1234ff9b",
+      "169/two-way/frame/dg0/ad-cone/bo0/pa1": "eea62d4ee2534dae80248e93e6b1ff512623727e66934c4c771f3d417d0bea36",
+      "169/two-way/frame/dg0/ad-cone/bo1/pa0": "9743b0d5f31280d9c2747230fe0508b615540d2ee3e67f38966dcfafccb8cfc2",
+      "169/two-way/frame/dg0/ad-cone/bo1/pa1": "9f32447e2e3eda79e8f47bfb1fd1538bbb0ba7aaadd791de5cb12aeae026060e",
+      "169/two-way/frame/dg0/ad-full/bo0/pa0": "0292cc2bd9d3983685e55aebbe2905bc0d1e943621f70c33e075e203364be37a",
+      "169/two-way/frame/dg0/ad-full/bo0/pa1": "c320b8a85eacf63a71980f08581dd9d869c1f2855908b4bfc377b30153337443",
+      "169/two-way/frame/dg0/ad-full/bo1/pa0": "9277f6fc21d340cad3ec7d0b6c59dd56b216a6d96c6746c2b58d11e1d2c19ef7",
+      "169/two-way/frame/dg0/ad-full/bo1/pa1": "3a0a379794c73bd3228987eed09373b89499768418a4cb2f0afc7086e3bf5999",
+      "169/two-way/frame/dg1/ad-cone/bo0/pa0": "e802bb94fe95107f7bcdc98fc38a69db88f0c2b5b9612488fd7f7cc540ea5956",
+      "169/two-way/frame/dg1/ad-cone/bo0/pa1": "3ffd50b13fed1f6201f041cfd70a18ec7a667ddc105d4b5761a81b0d7b215ef5",
+      "169/two-way/frame/dg1/ad-cone/bo1/pa0": "eaa8a7f54816de67fdd04e986714226147845d0ba84b34a03e74846a895e2a17",
+      "169/two-way/frame/dg1/ad-cone/bo1/pa1": "da2f1b975d9bb3ac75959a6fc6b6ed59ff4814f7c5a2a348f52a65fb888df8d0",
+      "169/two-way/frame/dg1/ad-full/bo0/pa0": "3ebd34a7569d82674b0d03398fedc960d2a15b0655cf60aae1b00cb3a9625e74",
+      "169/two-way/frame/dg1/ad-full/bo0/pa1": "a8f4f647739c7cee040315a115dd4288f78545c2d72dd9a26d6029eea4a5d354",
+      "169/two-way/frame/dg1/ad-full/bo1/pa0": "256075990f942d7323b8862d2d32c233c32005c779146c7de70595f9a5a0fa14",
+      "169/two-way/frame/dg1/ad-full/bo1/pa1": "925d7fe263e829d2dfba6fc54b2fc3b197caa74a5b81ef7d96e1c8d57bbb8064",
+      "169/two-way/guide/dg0/ad-full/bo0/pa0": "78020ff559354fc8dd2acb0d6d750b572590533b3d017e68cae2573f88544d00",
+      "169/two-way/guide/dg1/ad-full/bo0/pa0": "5e7baa8611bf04c2dd0a65efd400ee2365d69b228c06aaa54317eabb6b611f3c",
+      "169/two-way/latent/dg0/ad-full/bo0/pa0": "03f3212ccd4c2449adcb38a586f122af4956aefdb8e574caca10f62506970847",
+      "169/two-way/latent/dg1/ad-full/bo0/pa0": "bc0da20d6e9ad7b5b2e563b2695a590b4875abb89341321628f34a7f4959d71b",
+      "169/two-way/mixed/dg0/ad-full/bo0/pa0": "8d26f14411b3a988de07f675a0dddd1d74ce5bcb114aa7401f37c6e976d28eb8",
+      "169/two-way/mixed/dg1/ad-full/bo0/pa0": "a86eb295932c2db6d1b124ea61be791eaec25a2265d6193317863c58f2f3126e",
+      "169/two-way20-28/frame/dg0/ad-cone/bo0/pa0": "7f76d273ea6c02ee849351c36695d24aa9a3a2f8d8d221b8e72fbc0bb8ebe434",
+      "169/two-way20-28/frame/dg0/ad-cone/bo0/pa1": "122c971f94174be7b50e39ae026c90c92037fe86a8e4bdf0598423bec2386da5",
+      "169/two-way20-28/frame/dg0/ad-cone/bo1/pa0": "29e2fc8934a05c83e43eca2372550b3f9e8af2de94d39ec5985081d302c3a140",
+      "169/two-way20-28/frame/dg0/ad-cone/bo1/pa1": "437e81b689c4a71da980f4358366bfb2bf6c463061e30365038f84132661c1e0",
+      "169/two-way20-28/frame/dg0/ad-full/bo0/pa0": "63907d637e30afb16da66a7cdce8ea496ab529e28aefa0af2a4b50f2e7f0c791",
+      "169/two-way20-28/frame/dg0/ad-full/bo0/pa1": "4d178e26f8c166f8f4801a6ef911b95c816e096c6d633c870313fc1418ec08b3",
+      "169/two-way20-28/frame/dg0/ad-full/bo1/pa0": "691db32096220cfb671e9a75acdd168428db7e2298da7df4ac3c431d8ea29a4d",
+      "169/two-way20-28/frame/dg0/ad-full/bo1/pa1": "110f1b29445144d4637fa2a02658948dd7bec4810fd805fbea5dc9829bfcbece",
+      "169/two-way20-28/frame/dg1/ad-cone/bo0/pa0": "4bfc27f205601bf0d85f3a76b5a3d66b75decb593c30221f45696d9368fc4ddb",
+      "169/two-way20-28/frame/dg1/ad-cone/bo0/pa1": "f6a5504e05c0a513e3eada9a51201b41c457fcb5a9dda6251c37fb13a69f35bc",
+      "169/two-way20-28/frame/dg1/ad-cone/bo1/pa0": "e004f54f58853e7a051b8a70c24028db3e30581e53e726937de567c4b483161d",
+      "169/two-way20-28/frame/dg1/ad-cone/bo1/pa1": "099ce07c3f465561c900e7709d0f71e94019495bdf80bc854296080473e6d63b",
+      "169/two-way20-28/frame/dg1/ad-full/bo0/pa0": "45f439ff994aeec05b23124a8e4c0f2bb55c6ea0fe158a5c4f110a2576c9e5dc",
+      "169/two-way20-28/frame/dg1/ad-full/bo0/pa1": "8693aacf710b733c60306f43d7a7d4e8681fd86865a7a509e3e8664533c9d8a2",
+      "169/two-way20-28/frame/dg1/ad-full/bo1/pa0": "f3fbd657a9e66f0348244c4ecab4eff71b2aef87eedaf3aa584e5bca1e562833",
+      "169/two-way20-28/frame/dg1/ad-full/bo1/pa1": "35358bbbb9b564dd203746b7e095d2be452db8f289ea6e0759cbebd590e21979",
+      "169/two-way20-28/guide/dg0/ad-full/bo0/pa0": "1e2f10ad6e13f8e144444f40d111a2f5799472a2bb7340973f6d6540014661ed",
+      "169/two-way20-28/guide/dg1/ad-full/bo0/pa0": "0730a4160ba910bc3b1ad844fc8b6c2126ac613db94fc18e04e876f1632b4e58",
+      "169/two-way20-28/latent/dg0/ad-full/bo0/pa0": "0fe34ced00f043d6cc57474a65fd41bc58adf51c94565de7743a0e7b7128b694",
+      "169/two-way20-28/latent/dg1/ad-full/bo0/pa0": "1a9fee38b82a272c923d0a4923de02199f8af45afd6ac3c4c6bb07b132c9eed7",
+      "169/two-way20-28/mixed/dg0/ad-full/bo0/pa0": "a219221c9beeb436603662175402b5aa978fcf8872376c9c74ecd9319735adc2",
+      "169/two-way20-28/mixed/dg1/ad-full/bo0/pa0": "1be69935e5204314d2ae5d225ffeafa62b05bc1dbc644b520391e34fdfd9f35a",
+      "49/two-way/frame/dg0/ad-cone/bo0/pa0": "04af58992cbb26edee01c09849012a469c34a666e4121565f9f32f8b05b47e29",
+      "49/two-way/frame/dg0/ad-cone/bo0/pa1": "56d46b5eb03a2227540533fd78c50f53201a5a047d5fdec46df94eb35f49f079",
+      "49/two-way/frame/dg0/ad-cone/bo1/pa0": "3381fdcaaecce38707b297d4c10d5b6c6da6757693469c64f28c0f9d5338ac77",
+      "49/two-way/frame/dg0/ad-cone/bo1/pa1": "8546a15edd98787222645a6c9231714b97647a33137851a7b2f244fc3938ef77",
+      "49/two-way/frame/dg0/ad-full/bo0/pa0": "bbcca11df814043f4fa42d70fc7649d510cb7f5f2951e808ba7ac29f86bcd729",
+      "49/two-way/frame/dg0/ad-full/bo0/pa1": "a0d73c964be0c6830aa42567d544f419ad95b7d4499b271373b13886bd5e2d78",
+      "49/two-way/frame/dg0/ad-full/bo1/pa0": "b372277f798ad94d956478745c5ff8b115b35d03dc8011ac75db0d7a0bafd09e",
+      "49/two-way/frame/dg0/ad-full/bo1/pa1": "147b83e41855c1651420717c6bbd9bc477b3609a6785950b64a7b55706683af8",
+      "49/two-way/frame/dg1/ad-cone/bo0/pa0": "6835139f7b31f687503f7ad375b59f600d7cf6cff47d5663a8ded64330f90b42",
+      "49/two-way/frame/dg1/ad-cone/bo0/pa1": "4c68b865a2f1c9afa9c7c72bdab7ea48a2c10544dfedb09c0536fccf5a13667c",
+      "49/two-way/frame/dg1/ad-cone/bo1/pa0": "ece459657d2b42dd96ba4cd8e83f1872e4564753221643454be3e5d5b918142d",
+      "49/two-way/frame/dg1/ad-cone/bo1/pa1": "0f69c88323ed4ea18a47e92b36a7c146dabbd48a33fc48ed4689af67ce238a66",
+      "49/two-way/frame/dg1/ad-full/bo0/pa0": "c872675971acf8edc979d20a359bec54cd6de73095de46463b80dcb214cbe365",
+      "49/two-way/frame/dg1/ad-full/bo0/pa1": "2c97ca364fdc64a0a055bf4544e1cf5485033b897f299f3f37d06bdd8838539e",
+      "49/two-way/frame/dg1/ad-full/bo1/pa0": "81834fa93ed8a785e3bbd27dca9144349d67fad3a27d65a0d0560817e5b6057f",
+      "49/two-way/frame/dg1/ad-full/bo1/pa1": "ee2ce609cca36ee712fc17c009f4828a240d1c54dface95c3a8afab82f05142e",
+      "49/two-way/guide/dg0/ad-full/bo0/pa0": "7502bccbc275cef53f4b6ff619edafe2200e116fc97b21eea7b4b111196436c2",
+      "49/two-way/guide/dg1/ad-full/bo0/pa0": "c377150df3bce80ed667e78741123ff5b33ddfdb662c06ea7e57399a3640d42a",
+      "49/two-way/latent/dg0/ad-full/bo0/pa0": "cd0c5d06bb683a0b09b93a2ca9b01a0f8af60729e6b8b6b99f9c8234f5039493",
+      "49/two-way/latent/dg1/ad-full/bo0/pa0": "4a5a84b8c29b5db9cde14c9be418bfba8130c5de49bae682183737c92c0a913a",
+      "49/two-way/mixed/dg0/ad-full/bo0/pa0": "795437e51b0fe46c7e9d9473028ebcb9f47c4ef4e8c5035697f4f6b22453139c",
+      "49/two-way/mixed/dg1/ad-full/bo0/pa0": "d3374a47470ec590831d2562bb735906c81e97bf229d0b3b21180a2d33d9b7bb",
+      "49/two-way20-28/frame/dg0/ad-cone/bo0/pa0": "fef405fdde7c905bd76b79aa38f7924184eeb7d4bbb6574552e61899ed8cf398",
+      "49/two-way20-28/frame/dg0/ad-cone/bo0/pa1": "9b821597834897600c98ab4a5a70459ac3e16f40e7a795cdc9891c736421076d",
+      "49/two-way20-28/frame/dg0/ad-cone/bo1/pa0": "756bbb730f4c930f51182b1593706e164844822ee70147d74d3879b05d89a69c",
+      "49/two-way20-28/frame/dg0/ad-cone/bo1/pa1": "1bea6b9444b6eb2acf7ece41d4b3c28ea5710533476fa3d56d0532fdb79aaa2d",
+      "49/two-way20-28/frame/dg0/ad-full/bo0/pa0": "eb2199ed369c6af3857db46cbab870b450db82000c7411669dd0c09af4da99b4",
+      "49/two-way20-28/frame/dg0/ad-full/bo0/pa1": "238b39a78aaaa130be0a7ba4ef8d1e64d26bb170ac0aa4f8d65e3ad6b7be0f47",
+      "49/two-way20-28/frame/dg0/ad-full/bo1/pa0": "f0f4d18d5b3c78d1e36ae3764afb89c22643216b31f2818fc30f7c584a08b725",
+      "49/two-way20-28/frame/dg0/ad-full/bo1/pa1": "39a38adbfb9f8d5ac55bfb330404ad75f651a67db127e570956771c5dead5938",
+      "49/two-way20-28/frame/dg1/ad-cone/bo0/pa0": "5857cfde4dea801f7280c05ca4965eb2d69def5311d5c90e1e42a7813edeeea5",
+      "49/two-way20-28/frame/dg1/ad-cone/bo0/pa1": "8f35f1f6e374be15c2f7fa6b87faa6fda7603ea25e921022034092e08c89e09d",
+      "49/two-way20-28/frame/dg1/ad-cone/bo1/pa0": "e1bd751481e258d9210f164c15a25baca41fd5fc31921d369d1fa413e6721865",
+      "49/two-way20-28/frame/dg1/ad-cone/bo1/pa1": "d845c0a468ff0b3c559421eb1f35938f58b2fda98bb49675a7ff967eafeebb8b",
+      "49/two-way20-28/frame/dg1/ad-full/bo0/pa0": "3fcad6530ed3c73ec19f21e6b7cabd6438f6c65a9fa855b2d26735f4612a0b40",
+      "49/two-way20-28/frame/dg1/ad-full/bo0/pa1": "3f905df243947e7ed073bcfc775ff228662a12c5417cfa4f7918ea4af99ce33b",
+      "49/two-way20-28/frame/dg1/ad-full/bo1/pa0": "ec29ece06291036f217e3f8f6c18aa0c7de6381c1c8846678b1638bf3eca3802",
+      "49/two-way20-28/frame/dg1/ad-full/bo1/pa1": "4b0c54e854e7cc35c2bfd4fd4971d0e6a7cffb69fb7842febf44bb48d0400561",
+      "49/two-way20-28/guide/dg0/ad-full/bo0/pa0": "6b4f435d24893190c94563b450283d25acdc61f52725df258a4480014747eb1d",
+      "49/two-way20-28/guide/dg1/ad-full/bo0/pa0": "bd6b7d53e4c58beb695bf0b1bb174dc396daa927c5a6633107397fed54d87696",
+      "49/two-way20-28/latent/dg0/ad-full/bo0/pa0": "52452a1c6de02df3faf248156515fcefdcf1c21fd9eac23731674e30a7aac0a4",
+      "49/two-way20-28/latent/dg1/ad-full/bo0/pa0": "25ae116d1500f95e896ce82e44146bdd8d1e53d6b65a26f049e0d1123e580b5c",
+      "49/two-way20-28/mixed/dg0/ad-full/bo0/pa0": "91231a220d406295480c3d154bddc579b1d1314ac335e96f2899a3383f96c11f",
+      "49/two-way20-28/mixed/dg1/ad-full/bo0/pa0": "75c4f0becb168d41ca53d6dd11c1d8a43d4379ab4d5d3d543b5252072e2e4765",
+      "97/two-way/frame/dg0/ad-cone/bo0/pa0": "87a17a3f3172e9eee08ad561d86772e0d45f7c1b23dbc88e9d39ba492a92346d",
+      "97/two-way/frame/dg0/ad-cone/bo0/pa1": "1777da7138cde2352d7b467b1f7a0726fcc58ac2401d2c7dc3faa2e8a270f4b6",
+      "97/two-way/frame/dg0/ad-cone/bo1/pa0": "9945443f66cc5a2a62d71928c103ade495803298968684ac7599f35c24d9d25f",
+      "97/two-way/frame/dg0/ad-cone/bo1/pa1": "193e9001da87310f0ce2ad00e262f141eb54b8366af3ae61df2daaf48ec9d1b1",
+      "97/two-way/frame/dg0/ad-full/bo0/pa0": "a228581d176343248ff942955cca7f5c4b4b3338b73a0a47cecc8c1ebc3cb3e2",
+      "97/two-way/frame/dg0/ad-full/bo0/pa1": "6847b022bcd7d44585dca4eb3f3bb755741673c3b01914a83efa6c39fad5656b",
+      "97/two-way/frame/dg0/ad-full/bo1/pa0": "460aaf418fc1e5464303286b67d04b1cc428d4ab7eb307e684054caf8f17e4a8",
+      "97/two-way/frame/dg0/ad-full/bo1/pa1": "9ed641b7873e1b96c2384ea0f2a9a3d2a257c9196ec245c6d6303554ae337646",
+      "97/two-way/frame/dg1/ad-cone/bo0/pa0": "3f99eefe4db63117ab7bdc8806ca1f449086c530357fade9e088de68881a3dc7",
+      "97/two-way/frame/dg1/ad-cone/bo0/pa1": "d6140c1b630ac6825208eb8bf8fcceddf3a9d43dcbfdd490cf238541feef9bcf",
+      "97/two-way/frame/dg1/ad-cone/bo1/pa0": "a5d854017d1beb4e353f29822fe7ae832d80d16cd21d8ac2905fdc5fa9632515",
+      "97/two-way/frame/dg1/ad-cone/bo1/pa1": "f5cb28340e9b4600a6922f79b0c6d2e65cf859acc159fe43059e6b3a47a06d59",
+      "97/two-way/frame/dg1/ad-full/bo0/pa0": "b2e7ea66468446a82f5c5d2ecccc4420fd7896d66d84cd051009bea6e4b52a04",
+      "97/two-way/frame/dg1/ad-full/bo0/pa1": "6afdeb41ed712ad6ee59fb2e68b6db43d93905d77555d6e76febf36bd5d76ed8",
+      "97/two-way/frame/dg1/ad-full/bo1/pa0": "ce069a25d0d50d2af8adb67b16fb0a2024fbfdae1e54e09585742249e8d26e77",
+      "97/two-way/frame/dg1/ad-full/bo1/pa1": "a91049ff1409f56aa9ea1aa033565cfb411af78aff272f0aec50c91b2d37f82f",
+      "97/two-way/guide/dg0/ad-full/bo0/pa0": "00567bb5a2d8a4acc8397489b6b9f81e02c9c979c19010535ca49f883ab47c9b",
+      "97/two-way/guide/dg1/ad-full/bo0/pa0": "4941027ae43b72d9ea2fde20756fbedf47cb6d82dd8b7d486f744b5e508f3204",
+      "97/two-way/latent/dg0/ad-full/bo0/pa0": "fe66af8ee1c0878db53eb7ef4f077bbd2db8ae2e0fff9fd950dcd1a18f43fbb3",
+      "97/two-way/latent/dg1/ad-full/bo0/pa0": "9f349db2388ccee3a6cb99b5e8502c0fb8cfadb97b9e8e4af3f326a188e47d28",
+      "97/two-way/mixed/dg0/ad-full/bo0/pa0": "7223db8a42f907b619924b16e1fbcc711b4fbc35c5a893bfac11926a5bd32f3e",
+      "97/two-way/mixed/dg1/ad-full/bo0/pa0": "41c0be490ec266d87878d1b165549f5a660e449d40b6fa3f64f37da38f7f8f10",
+      "97/two-way20-28/frame/dg0/ad-cone/bo0/pa0": "b8ca87ab748c70d497679425a1854063a4b967a80d4a86ea5a9e8b8bcfdc4fce",
+      "97/two-way20-28/frame/dg0/ad-cone/bo0/pa1": "2b3685d4f205f02da091c03391f54d5a31a00d71709ef689b2828e036a64ff71",
+      "97/two-way20-28/frame/dg0/ad-cone/bo1/pa0": "55ef1d5b56028bcf4d7dfeaaa368b410257e2d93007da28620c677de7b51cedf",
+      "97/two-way20-28/frame/dg0/ad-cone/bo1/pa1": "de2ccee56b1f5e30bdab7daf9c94fa323572687e94fbbd84a43f431acd468324",
+      "97/two-way20-28/frame/dg0/ad-full/bo0/pa0": "86f50af437b154399fc674ea2972ba4aed99ebd2ac03b7ad4a3fc63ded39d398",
+      "97/two-way20-28/frame/dg0/ad-full/bo0/pa1": "2ce8c6a5c8b96b8939fad58da46d021c591a4d8131f77eae67eb5fb9180a24dd",
+      "97/two-way20-28/frame/dg0/ad-full/bo1/pa0": "24a9756302a2026e863f4af3a24a37f58a1752b33b6e5c10ffd975e049470271",
+      "97/two-way20-28/frame/dg0/ad-full/bo1/pa1": "0adf9d5e6078d399bb0493d21dbe90a02de10638c3871be9a105c700117df96e",
+      "97/two-way20-28/frame/dg1/ad-cone/bo0/pa0": "446aa56eab050faa20d71c23eb55cab35a51e1ea142dab8551254d7a7cd5bfd6",
+      "97/two-way20-28/frame/dg1/ad-cone/bo0/pa1": "aa911183870d579aa0c062276e6fb480347400a460d9783c947d06b2bbea215a",
+      "97/two-way20-28/frame/dg1/ad-cone/bo1/pa0": "9d9213410c6468ebbe692b61565d3f650508c76d6486dd292e0fe69df45a8f17",
+      "97/two-way20-28/frame/dg1/ad-cone/bo1/pa1": "5f5f8f7da5beeab7a119d67878e845972da58e509b695452447937d2c8bf265d",
+      "97/two-way20-28/frame/dg1/ad-full/bo0/pa0": "220465c3ab354d76ed3267ef6acb589753d7528e8144313c79262ca20cbe0e64",
+      "97/two-way20-28/frame/dg1/ad-full/bo0/pa1": "ea8c2532adc17e30421fe72a62e27fd4ec9f58b2576cf79e420784e9dab871a5",
+      "97/two-way20-28/frame/dg1/ad-full/bo1/pa0": "3d54c9ff88cc69aba2b900d28c57c18e96f957a2bc888ac14c90fc47c63f9851",
+      "97/two-way20-28/frame/dg1/ad-full/bo1/pa1": "2de25c5fcda67b9208b1a759e7f397265ca78310856ad5bef6d2ae44b18e6c50",
+      "97/two-way20-28/guide/dg0/ad-full/bo0/pa0": "0bc0a8bf0812f368aa9923c7432e8a66b19b861dc583a98bd0d1fcc67332bff8",
+      "97/two-way20-28/guide/dg1/ad-full/bo0/pa0": "1d6695b6f6c37b3b7663e20f90abc755c27a948d5e0d07922b539b5cad0fba9d",
+      "97/two-way20-28/latent/dg0/ad-full/bo0/pa0": "4b964aaa2ec8ad0c004000f1c80686d21cc4f750a558558f3cddf6c1be7cdb11",
+      "97/two-way20-28/latent/dg1/ad-full/bo0/pa0": "5f88c2c523ea88ad039b537968f71467a23f7d085f9f6cd5151c20a977272cec",
+      "97/two-way20-28/mixed/dg0/ad-full/bo0/pa0": "3bdcc8031039f70307485280e23d2bd4da0caa685f12fbc2dd30c3b46dad07fb",
+      "97/two-way20-28/mixed/dg1/ad-full/bo0/pa0": "1f9331cd919a3762c9ce77c7312b9ec845d07da5fedae5ccae7967b32f477c93"
+    },
+    "schema": "ltx.stream133.transition.v1",
+    "snapshot_digest_cache": {
+      "choices": [
+        0,
+        1
+      ],
+      "default": 0,
+      "meaning": "fresh immutable signature keys checked each call; memoized pure digest only; all state/fact/memory checks retained",
+      "scope": "145 fixed fingerprint path"
+    },
+    "source_delta": {
+      "launch/encoder_runtime_common.py": {
+        "after_sha256": "ecfb769550e8039ed0a85ec45b66f1f06e6fb005fec5160a9dbb0c353356a1db",
+        "before_sha256": "b7575880e7bc542b4a5098c3deb4e19f8417ac0f83784ca2e316f84c2da82309"
+      },
+      "launch/serve-encoder.py": {
+        "after_sha256": "09b9555947dbf23cb3d7e5e37e016a3aae069b43314b374b65399a96a67316df",
+        "before_sha256": "5d59baf2ef4619744a65967b3e9ca6e362f18f94beed026fc90f1decf4c8d6d5"
+      },
+      "provenance/packet133b-manifest.json": {
+        "after_sha256": "ed908a9031a937801d17264edacfe0807bea543badc412a32eb6118daa214fd3",
+        "before_sha256": null
+      },
+      "resolution/components/plan.py": {
+        "after_sha256": "a06323ffa7fa01c6e3f36a91640732d29caabe63be3986f62742abf8a0437765",
+        "before_sha256": "279f8a605dfa8a22c044376445b59c974a698a6bb67a575598648e83446eb68b"
+      },
+      "resolution/components/run_storage.py": {
+        "after_sha256": "320b3676d5abbccb4c285b46f41e3f13ed02bc1ff5e336d3e90820896d693bab",
+        "before_sha256": "9fc3e659627f205afcf7654552c3e7c97d2036f6dd5d6fb45def3f98d0a29574"
+      },
+      "resolution/components/runtime_packet.py": {
+        "after_sha256": "ecfb769550e8039ed0a85ec45b66f1f06e6fb005fec5160a9dbb0c353356a1db",
+        "before_sha256": "b7575880e7bc542b4a5098c3deb4e19f8417ac0f83784ca2e316f84c2da82309"
+      },
+      "resolution/components/sealed_import_cpu.py": {
+        "after_sha256": "fae5bc9e7a632670c2b525b4596431d3ffcad75ceeea8f9607df3a3b2a1b8cde",
+        "before_sha256": "af2d9c115d6a3f60a84ebc31a2534527a11cdafd85e7af53c6c6319f1bb77744"
+      },
+      "resolution/components/session.py": {
+        "after_sha256": "a1c0a8d7906d8d3f0c3034c30edb131e84f2af08249654150129d63a40813169",
+        "before_sha256": "7891b387dfdf9768973dfa06fd23d952ac8e63eee7310b8873638ca9310c2c7d"
+      },
+      "resolution/components/stream_contract.py": {
+        "after_sha256": "da8b1a82c3c3dfb4f8e848433bcfec47aef3e728c47874b9f29d6581e3ee2296",
+        "before_sha256": "378f3e0ef90b4686a72ef75b979aff2bfd914eb7ab25c2209843366a27ceb87a"
+      },
+      "resolution/stream-plan.json": {
+        "after_sha256": "030e111105e53c3aabdeb61e82b95633fc6ab55b193e4c0422c13ce6464bef57",
+        "before_sha256": "4dd294bee5788537816f3e9856301c009f65ef889ab868ca5d36731055f259db"
+      },
+      "source/scripts/ltx_output_size_98.py": {
+        "after_sha256": "eeaac9cf4c0d747019ccdabfc90cd3e9882959f5bd613f4e8bd38c214de5d784",
+        "before_sha256": "e2c3d32b740109bf1d1a50fce7a8f60dfb0f5c280b35bc08d178b7a3bc2b3be1"
+      },
+      "source/scripts/ltx_resolution_session.py": {
+        "after_sha256": "a1c0a8d7906d8d3f0c3034c30edb131e84f2af08249654150129d63a40813169",
+        "before_sha256": "7891b387dfdf9768973dfa06fd23d952ac8e63eee7310b8873638ca9310c2c7d"
+      },
+      "source/scripts/run_storage.py": {
+        "after_sha256": "320b3676d5abbccb4c285b46f41e3f13ed02bc1ff5e336d3e90820896d693bab",
+        "before_sha256": "9fc3e659627f205afcf7654552c3e7c97d2036f6dd5d6fb45def3f98d0a29574"
+      },
+      "source/scripts/stream_contract.py": {
+        "after_sha256": "da8b1a82c3c3dfb4f8e848433bcfec47aef3e728c47874b9f29d6581e3ee2296",
+        "before_sha256": "378f3e0ef90b4686a72ef75b979aff2bfd914eb7ab25c2209843366a27ceb87a"
+      }
+    },
+    "storage_admission": {
+      "admitted": true,
+      "available_bytes": 73543409664,
+      "checked_existing_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913",
+      "destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-135",
+      "failures": [],
+      "filesystem": {
+        "filesystem_type": "ext4",
+        "mount_id": 33,
+        "mount_point": "/",
+        "source": "/dev/nvme0n1p2"
+      },
+      "min_free_bytes": 56908316672,
+      "planned_write_bytes": 201326592,
+      "remaining_after_planned_write_bytes": 73342083072,
+      "required_bytes": 57109643264,
+      "required_mount": null,
+      "resolved_destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-135",
+      "schema_version": 1
+    },
+    "storage_links135": {
+      "count": "one allocated-block charge per device/inode",
+      "external_links": "refused with full path, nlink, owned entries, device and inode",
+      "nlink_zero": "deletion race; refresh membership once",
+      "recheck_seconds": 0.01,
+      "rechecks": 1,
+      "reserve_and_allowance": "unchanged",
+      "scope": "run tree plus prefix-selected output, validation and requests"
+    },
+    "storage_scan_mode": {
+      "background": "stream-only helper refresh interval0.25s and after request/preview; sample age<=1s; latest publication wait<=2s; reserve per request; stale/error fail closed;256MiB pending margin; exact full typed plan guard marshalv2 with canonical fallback",
+      "choices": [
+        "request",
+        "background"
+      ],
+      "default": "request"
+    },
+    "supersedes": {
+      "manifest_sha256": "cb68515a1e770697ad0ac2d0c2abd9709780043e9d1579cba81706bb53f482f6",
+      "packet": 118,
+      "status": "withdrawn-never-launched"
+    },
+    "text_residency": {
+      "choices": [
+        "legacy",
+        "split36"
+      ],
+      "default": "legacy",
+      "oracle_sha256": "125750aa533d91d08aab7c47b416bc15e25a1371078425a4802e3cac762442c2",
+      "scope": "fixed145 native display3; startup only; full parent text and output gates"
+    }
+  },
+  "runtime99b_transition": {
+    "campaign_bindings": {
+      "memory_helper": {
+        "packet_path": "campaign/worker-headroom-98.py",
+        "sha256": "8dee8c4748a026ce1f4d1125ca50b67431a1d44921d33121addf6a4aa7d37944",
+        "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/worker-headroom-98.py"
+      },
+      "runner": {
+        "packet_path": "campaign/run-campaign-99b.sh",
+        "sha256": "3e2f8e3780997f0fa8e44c712bda8374b67011c045de110844fb93c13df38140",
+        "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-campaign-99b.sh"
+      }
+    },
+    "control": {
+      "batch": 1,
+      "blocks": [
+        23,
+        25
+      ],
+      "decode_replica": "xpu:2",
+      "layout": "two-way",
+      "references": "w93c",
+      "shared_pool": 1,
+      "size": "256x256",
+      "workers": 2
+    },
+    "installer": {
+      "activation": "after-preflight-and-normal-quant-ops-import-before-identity-and-main",
+      "files": {
+        "README.md": "99c888bb9650ca6d60b4cc507baf74c876deeda8e2980e3c849db19d5e78633f",
+        "cpu-controls.log": "add31358cfb4f069401a4dffba291687ddcf790e3fd26bf5b800ba688105ee74",
+        "cpu-validation.json": "6b5d97488ed101dda926af1ed900d0f7a1875ccd052064137dc51e9760a57bea",
+        "install_rope_compat.py": "99e6bc916789b8d4443a869000af524462ce66eef4757f000280b8a80366c570",
+        "source-evidence/LICENSE": "cd1c9ea1573c9047e9b5a3676ecc1c8f755e56f249ac1ebd8b5ceda7899037da",
+        "source-evidence/NOTICE": "35c43127ad3acbd6bc94ff63c56684a7c26eedf07795e596c8105a0476dae2ea",
+        "source-evidence/apply_rope_split_half1-0.2.33.py": "a53cbeb1e3ef955f058c2eb8bd9642dd53b5c2fc7b843596264a52fb8e66eb3f",
+        "source-evidence/apply_rope_split_half1-0.2.37.py": "367baee35496439634c9f6acd9f752a9ce270a891511cfb94d7e10e61af77022",
+        "source-evidence/provenance.json": "e90ac6ea6245929ea2d7560df0c8f2bcdaf17121cc3529983af75a9070408c8c",
+        "source-evidence/rope-0.2.33.py": "aee33a18bb5fe75ce24ebad389b830c9d5775d52723fc7df4864598547b2257c",
+        "source-evidence/rope-0.2.37.py": "630a3d287bf602046935086f9d43eb6db2ec4971913a1cb3fb35bae6ea4ac9ee",
+        "test_rope_compat.py": "31957485c4c39812dbb068005ac02fd16d14871e6fb6994075167df86f2a14e6"
+      },
+      "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-rope-compat"
+    },
+    "model_requests": 0,
+    "parent_manifest_sha256": "e7b268d2e54e9010e88e325681a5d7af43052d7affdf803ca9b6c7ee54ed8736",
+    "parent_packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99",
+    "qualification": false,
+    "schema": "ltx.rope99b.transition.v1",
+    "storage_admission": {
+      "admitted": true,
+      "available_bytes": 69149999104,
+      "checked_existing_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913",
+      "destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b",
+      "failures": [],
+      "filesystem": {
+        "filesystem_type": "ext4",
+        "mount_id": 33,
+        "mount_point": "/",
+        "source": "/dev/nvme0n1p2"
+      },
+      "min_free_bytes": 53687091200,
+      "planned_write_bytes": 402653184,
+      "remaining_after_planned_write_bytes": 68747345920,
+      "required_bytes": 54089744384,
+      "required_mount": null,
+      "resolved_destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b",
+      "schema_version": 1
+    }
+  },
+  "runtime99_transition": {
+    "campaign_bindings": {
+      "memory_helper": {
+        "packet_path": "campaign/worker-headroom-98.py",
+        "sha256": "8dee8c4748a026ce1f4d1125ca50b67431a1d44921d33121addf6a4aa7d37944",
+        "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/worker-headroom-98.py"
+      },
+      "runner": {
+        "packet_path": "campaign/run-campaign-99.sh",
+        "sha256": "1f9f405b75fc7212ec742af36198e4eeffcc894babf788d89ae822a333fa41bf",
+        "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-campaign-99.sh"
+      }
+    },
+    "control": {
+      "batch": 1,
+      "blocks": [
+        23,
+        25
+      ],
+      "decode_replica": "xpu:2",
+      "layout": "two-way",
+      "references": "w93c",
+      "shared_pool": 1,
+      "size": "256x256",
+      "workers": 2
+    },
+    "dependencies": {
+      "overlay_root": "/home/steve/ltx25-upstream99-dependencies/site-packages",
+      "receipt_sha256": "626dd5e9d840c6bfa56f6da23f326e2a434aae46c73b3662c5a08a3d50970e09",
+      "receipt_source": "/home/steve/ltx25-upstream99-dependencies/receipt.json",
+      "state": "matched"
+    },
+    "historical_contract_sections": "Retained as historical behavior contracts; upstream source changes explicitly recorded separately",
+    "historical_manifest_sha256": "918b47a5530b4dc97fe8fc8f4ec77fd64521ec6846217c54f5fba589e0e8377f",
+    "model_requests": 0,
+    "progress_overlay": {
+      "candidate_refresh_sha256": "1dc1fb8c669aed183eb45ac67a579838e45389c3d5d77cb59ff44b4c7c8ffd56",
+      "original_refresh_sha256": "331cd792515f2f7f1b1b283a725f278c2e37c647011d1c5afc724d58f016f03d",
+      "sha256": "f834a5f4a5a55c23e999c0958cfa91ad6641c5d290b6f5d1477730513433d862",
+      "source": "launch/progress_lock.py"
+    },
+    "qualification": false,
+    "schema": "ltx.upstream99.runtime-transition.v1",
+    "source_input": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99-source",
+    "source_plan_sha256": "97e77c7c88df6e8d9915a5efb39e53ab8e4aad2f820f7950ffa0671f9c929503",
+    "source_runtime_overlays": {
+      "custom_nodes/ltx_host_embedding_lab/__init__.py": {
+        "after_sha256": "ec82f8da5c5e301d314beafeb7fbdbaeef4aa4f856e0c9f58f8e4c990476de44",
+        "before_sha256": "07dab8b80c3ddfe69f70b0fca9d69a93cfa487ec7c88f1ad664afb4842eb8750",
+        "diff": "--- source99/custom_nodes/ltx_host_embedding_lab/__init__.py\n+++ runtime99/custom_nodes/ltx_host_embedding_lab/__init__.py\n@@ -164,6 +164,12 @@\n                 phase = 'load-diffusion'\n                 model = nodes.UNETLoader().load_unet('ltx-2.5-22b-distilled-transformer-bf16.safetensors', 'default')[0]\n                 _pending.append(model)\n+                # Packet99: preserve native BF16 attention; reject checkpoint-selected backends.\n+                from comfy.ldm.modules.attention import ComfyAttention\n+                attention_modules = [m for m in model.model.diffusion_model.modules()\n+                                     if isinstance(m, ComfyAttention)]\n+                require(attention_modules and all(m.config is None and m.function is None\n+                        for m in attention_modules), 'Packet99 requires unconfigured native attention')\n             else:\n                 model, video, audio, upscaler = _shared\n                 vaes = [video, audio]\n"
+      },
+      "custom_nodes/ltx_na_axis_decode_lab/__init__.py": {
+        "after_sha256": "05a99e8cef5bed07aadee45459633b148090fb754f9489fcabf0ea31b58316ba",
+        "before_sha256": "363fe377ae8170ec9c22d28b927f280c3a995f8493cd41f0f17fedbdbcb44d91",
+        "diff": "--- source99/custom_nodes/ltx_na_axis_decode_lab/__init__.py\n+++ runtime99/custom_nodes/ltx_na_axis_decode_lab/__init__.py\n@@ -14,8 +14,8 @@\n \n ROUTER_SHA = '1fe42fe9cc52fc957ef9bb3d8de070f2aefb3cb320b12d090146ad04f420b2a7'\n CANDIDATE_SHA = 'd2907c1ee764fbb344db08851e19a67f0fd2144256d5451f0d15a9382dc08b6a'\n-NODES_SHA = 'dddf275f6dbcbd1a9cbdc02ebee2bad86bf022cc968c58a3f14cb26a2d08926e'\n-SD_SHA = '41cbf195657cc81a60173f13f192966c4276bf7931a6c10f75870a66c59546b0'\n+NODES_SHA = 'e498f0dfe9146d56ddeff184ade4b402edd6e6c4eaca136ae112c8be3914bc96'\n+SD_SHA = '2917a7982d08640ebe297ebc5cb5ad873567099c2e66688dcaff3650464dc694'\n DECODER_SHA = '7356bfcaedc545e8af1f4820e7466bbde0a56ccd2e8b2941902af83f16657f21'\n NODE_CLASS_MAPPINGS = {}\n \n"
+      },
+      "scripts/host_embedding_resident_node.py": {
+        "after_sha256": "ec82f8da5c5e301d314beafeb7fbdbaeef4aa4f856e0c9f58f8e4c990476de44",
+        "before_sha256": "07dab8b80c3ddfe69f70b0fca9d69a93cfa487ec7c88f1ad664afb4842eb8750",
+        "diff": "--- source99/scripts/host_embedding_resident_node.py\n+++ runtime99/scripts/host_embedding_resident_node.py\n@@ -164,6 +164,12 @@\n                 phase = 'load-diffusion'\n                 model = nodes.UNETLoader().load_unet('ltx-2.5-22b-distilled-transformer-bf16.safetensors', 'default')[0]\n                 _pending.append(model)\n+                # Packet99: preserve native BF16 attention; reject checkpoint-selected backends.\n+                from comfy.ldm.modules.attention import ComfyAttention\n+                attention_modules = [m for m in model.model.diffusion_model.modules()\n+                                     if isinstance(m, ComfyAttention)]\n+                require(attention_modules and all(m.config is None and m.function is None\n+                        for m in attention_modules), 'Packet99 requires unconfigured native attention')\n             else:\n                 model, video, audio, upscaler = _shared\n                 vaes = [video, audio]\n"
+      },
+      "scripts/ltx_graph_text_encoder.py": {
+        "after_sha256": "079d2965d3849acf83a351bb459fc5a079e727d7a976940f7e76ce8a58a3ca10",
+        "before_sha256": "b488e89d16053eb517e99cec8922a6e97af3c8bed6a65943191f2fbc2e153e6d",
+        "diff": "--- source99/scripts/ltx_graph_text_encoder.py\n+++ runtime99/scripts/ltx_graph_text_encoder.py\n@@ -85,7 +85,7 @@\n     if stream is None:\n         stream = _STREAMS[key] = torch.xpu.Stream(device=device)\n     return stream\n-GEMMA_SOURCE_SHA256 = 'a0bec322e45e94e5c938c2b8bde0112d23805166a533612077915d594d18dbbc'\n+GEMMA_SOURCE_SHA256 = '6fc1b06e42e33bed5e69c208808551af839265ad319f4eb9a0aa40ecc62d179a'\n LAYER_CLASS = 'TransformerBlockGemma4'\n STACK_CLASS = 'Gemma4Transformer'\n LAYERS = 48\n"
+      },
+      "scripts/na_axis_decode_node.py": {
+        "after_sha256": "05a99e8cef5bed07aadee45459633b148090fb754f9489fcabf0ea31b58316ba",
+        "before_sha256": "363fe377ae8170ec9c22d28b927f280c3a995f8493cd41f0f17fedbdbcb44d91",
+        "diff": "--- source99/scripts/na_axis_decode_node.py\n+++ runtime99/scripts/na_axis_decode_node.py\n@@ -14,8 +14,8 @@\n \n ROUTER_SHA = '1fe42fe9cc52fc957ef9bb3d8de070f2aefb3cb320b12d090146ad04f420b2a7'\n CANDIDATE_SHA = 'd2907c1ee764fbb344db08851e19a67f0fd2144256d5451f0d15a9382dc08b6a'\n-NODES_SHA = 'dddf275f6dbcbd1a9cbdc02ebee2bad86bf022cc968c58a3f14cb26a2d08926e'\n-SD_SHA = '41cbf195657cc81a60173f13f192966c4276bf7931a6c10f75870a66c59546b0'\n+NODES_SHA = 'e498f0dfe9146d56ddeff184ade4b402edd6e6c4eaca136ae112c8be3914bc96'\n+SD_SHA = '2917a7982d08640ebe297ebc5cb5ad873567099c2e66688dcaff3650464dc694'\n DECODER_SHA = '7356bfcaedc545e8af1f4820e7466bbde0a56ccd2e8b2941902af83f16657f21'\n NODE_CLASS_MAPPINGS = {}\n \n"
+      }
+    },
+    "storage_admission": {
+      "admitted": true,
+      "available_bytes": 69319917568,
+      "checked_existing_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913",
+      "destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99",
+      "failures": [],
+      "filesystem": {
+        "filesystem_type": "ext4",
+        "mount_id": 33,
+        "mount_point": "/",
+        "source": "/dev/nvme0n1p2"
+      },
+      "min_free_bytes": 53687091200,
+      "planned_write_bytes": 402653184,
+      "remaining_after_planned_write_bytes": 68917264384,
+      "required_bytes": 54089744384,
+      "required_mount": null,
+      "resolved_destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99",
+      "schema_version": 1
+    }
+  },
+  "process_file_limits": {
+    "soft": 65536,
+    "hard": 1048576,
+    "changed_by_launcher": false
+  },
+  "progress_lock": {
+    "distribution": "tqdm",
+    "version": "4.70.1",
+    "source_path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/tqdm/std.py",
+    "source_sha256": "dd76d965de52c590819dec376644220cb35dc4831e40efb4c30944884fc57d86",
+    "original_refresh_sha256": "331cd792515f2f7f1b1b283a725f278c2e37c647011d1c5afc724d58f016f03d",
+    "candidate_refresh_sha256": "1dc1fb8c669aed183eb45ac67a579838e45389c3d5d77cb59ff44b4c7c8ffd56",
+    "loaded_refresh_filename": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-135/launch/refresh.candidate.py"
+  },
+  "pid": 842066,
+  "proc_start_ticks": "13873014",
+  "boot_id": "4aafe57b-a54f-4bfd-b4ed-9f1cbb8830c7",
+  "start_utc": "2026-10-10 15:32:39 UTC",
+  "devices": [
+    {
+      "ordinal": 0,
+      "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-2300-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+      "copy_compute": "passed"
+    },
+    {
+      "ordinal": 1,
+      "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-2700-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+      "copy_compute": "passed"
+    },
+    {
+      "ordinal": 2,
+      "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-4300-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+      "copy_compute": "passed"
+    },
+    {
+      "ordinal": 3,
+      "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-4700-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+      "copy_compute": "passed"
+    }
+  ],
+  "torch": "2.14.0+xpu",
+  "runtime": {
+    "files": {
+      "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/bin/python3.12": "202c17d1671602a4ef1d43e9b2fdbef0769443f37bf5e51f6b603e0b2c27d9d8",
+      "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/safetensors/_safetensors_rust.abi3.so": "e6f17a9e9846bc2bc4ad94cc5431746b59785de3d2681ef2666e8890ae192dfb",
+      "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/safetensors/torch.py": "f3f476d1f8c04fe65fa3797426556a0b7afa43f8c4db9db6b799c7cf84748f3d",
+      "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/__init__.py": "bd4a10ff16357ed78f45aaf4b46ce5b771fdc0e8549402206e324d0eb792c672",
+      "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/config.py": "9171c2ed249e13a19a2ae22dba0db14f3c4fe11762108f87c8a4e85f96945b0a"
+    },
+    "python": "3.12.13",
+    "python_executable": "/home/steve/.venvs/ltx25-baseline/bin/python",
+    "torch": "2.14.0+xpu"
+  },
+  "source_commit": "b00c6e95279053474955540ba4f551646722b9aa",
+  "source_packet_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-135",
+  "source_packet_manifest_sha256": "4356482eae2f1d7ac95b17e6483379ceed0cc90ed488d46765803451980402c3",
+  "encoder_run_dir": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36",
+  "extension_sha256s": {
+    "allocator_release130.py": "406cc3183a5259cc68daa4b3f0a9ee6188a66d188dc817bfe6f77394837951c4",
+    "audio_residency132.py": "3a5d46e19083c6ec7280f57407f2eaf7b33cd761ed1ab9e53597d9130214c85b",
+    "av_model.py": "e880b29b1d6e2cefe807c53c26cf4733d90aaae13126d8652f5989de15d1f213",
+    "block_compile_node.py": "f1c5441ec25bdb093d939598d319ecea769fa15879b425f22cba7694938435a7",
+    "candidate_gate.py": "f4bc50ebbae4f2e12f19a7f7740fb0140dff5514c4b189f2732ba43caaf47848",
+    "candidate_safety.py": "c17f4bf675dd21f24ac6ef6512f3fbefc3e6523e604b83b3bc4027d9ad62de53",
+    "capture_node.py": "586384e267512ed7f3d9f67af9cc451a0aa14cadbb6a35c364e1a1f222a60495",
+    "concurrent_cfg_node.py": "48d2b4dd1d95c6729a3b7dbc7a767f60efe70f2af723a0833e6561153dcdd96e",
+    "conditioning_guard.py": "ad20f81395b9a7588531be4a5c6f8e7300885e12e5eb2b19d0e5ea924985b184",
+    "cone_memory131.py": "27d61504639c28ce997835957b0ce8971d9417849c1f03cb97ae55c2c7df0443",
+    "continuation_anchor.py": "89812304ab8471cfafae5156170ccd1f428ed0dac257aa7a41f569be34577264",
+    "display_replica.py": "02b7ac0e4a084c67a01795db564a62d492ec53d56a10b203363ccde696b78264",
+    "encoder_diagnostics.py": "f16d8cefa02dd7557c13348a95e6c0ce07a42c4d0f46b36329ab1c4f182a439a",
+    "encoder_identity_node.py": "e7bcadcd5987920a5ab5b6e81b13075b19bf2b4af0f2436b17f89e35285ec26b",
+    "evidence129.py": "0b2b0724d86be6ab56ecf7a2166ec4ce6bf094bf97ea50ae71fd82db5cf347af",
+    "evidence_publication.py": "a27a4f2b5d35a9ef76e571dc38943f546db7a9f2c405ddc549de25b45a6e7646",
+    "executor_guard.py": "1a2ec2ec7a08321c0cacd9625952658df04e07b861a0091a98ebc688c3fb947d",
+    "graph_capture_node.py": "775456c2d20b692dbe17d37819fb0364fdedf44681eae5b54b39ffc692a677c3",
+    "graph_fusion_node.py": "12899f9972369971d3e3a4f81ea215ab2915915bcbc9d2f33134b906d0d7caca",
+    "graph_text_encoder_node.py": "298595fb0c5d5333d6da6fab779dc7dc0c169ca773726e779b61a36a4a18e9c9",
+    "graph_upsampler_node.py": "6abf7e4958c4d6c4d9a4aff8bc3145c1a5f81ace50ee733366a1a6a8dd9b9151",
+    "graph_vae_node.py": "1e61796a4a6ea5c6f2d5c9645c2045e122836565514725831fe7ed40f1e31c10",
+    "host_embedding_clip.py": "61b04906cb1520362a60138a4ac31f14fa13f22fe08bd7c6b03cfb1040d2caec",
+    "host_embedding_placement_node.py": "4ab92f1580f8f54ecc6631acd4fb74603d06bc8cf6c3760ede7638c655f5753b",
+    "host_embedding_resident_node.py": "7e0eae1b139df2ab12d9ab47c21112708dcbacfe03b611278f0be02b8ccbe313",
+    "host_embedding_transition_memory.py": "707de7176a47a26063b7282fc7368818d3362b1bd917c76141d58ed00dfcdb86",
+    "integration.py": "6af950b2d1f6ba8f839fac9181df8ff1a05161eae69353d04319226d9de76729",
+    "latent_anchor.py": "47ff5d0ea8d628387220af61d58f3c32c7c18591263fbcb78c687ac1805938cc",
+    "ltx_block_compile.py": "e439b052e8bf72375d280c0a078fc0030a84f4ed521b149f80cf5e67537b2a41",
+    "ltx_decode_child.py": "d149793333d091989773e63ca4fd0bbc5aa0aa4cd05a8a25bf5c3d6b7709708d",
+    "ltx_decode_replica.py": "55906d615c76def6d4794bab7d262e24699f495f481c20ebbb3b2d82275a6304",
+    "ltx_duration_guard.py": "a4063dffab2db578e8bd3027f29495b69e0ecab54dd163350ee690309af0f1e5",
+    "ltx_gil_probe.py": "12377616151fc2c3d94ce082c3f9dd78803e1a3f27e38db25d93a278ebc7550c",
+    "ltx_graph_capture.py": "fc691e4ff4fdbeba0724a8946dbb58dbf3b4cbd9ccdaf325c307f2d86981d7e5",
+    "ltx_graph_text_encoder.py": "079d2965d3849acf83a351bb459fc5a079e727d7a976940f7e76ce8a58a3ca10",
+    "ltx_graph_upsampler.py": "03d828654bb8a3a10c93bcd3b95c9582e4ad01f2cd7c62fc0009e619fd54de58",
+    "ltx_graph_vae.py": "02199884f583dd4c0cfce795599d5d32d0aff91d9fa9e414b7f068f313e8055c",
+    "ltx_host_embedding_candidate.py": "b58bf0bbfc084ea89f2673f3c10d9520b5f6ac1993517c79e346ea2c573ca7e9",
+    "ltx_layer_shard.py": "a000ccd309e70b2f41167c84b73aae01caf50f9cd38d1256a21f6cc7b0dd2ef3",
+    "ltx_lean_conditioning.py": "6740d6665c7dea622fc859287cf075bc01a5e521a7154e6138afaf6afbad7d99",
+    "ltx_multiblock_compile.py": "f3e1401aa9898587ff67f9727ac3fe44099003ac71a74d02ee7f07fb362854b9",
+    "ltx_na_axis_candidate.py": "d2907c1ee764fbb344db08851e19a67f0fd2144256d5451f0d15a9382dc08b6a",
+    "ltx_na_axis_router.py": "1fe42fe9cc52fc957ef9bb3d8de070f2aefb3cb320b12d090146ad04f420b2a7",
+    "ltx_native_activations_backend.py": "62b78186fdfc6d9a22cb8cb10423869ecc37cc09c9c0994a7ccebe2eafd41c2a",
+    "ltx_native_rms_backend.py": "09defae7340dc3d7f33e16ab80c76f22b6a2ae733617704f2e7b69086108d9fb",
+    "ltx_output_size_98.py": "eeaac9cf4c0d747019ccdabfc90cd3e9882959f5bd613f4e8bd38c214de5d784",
+    "ltx_pipeline.py": "5c2b36efa1ef3fcc9f865e841063ac15da9a1db765fc9d8e2d608fd1a622db58",
+    "ltx_qkv_fusion.py": "e32e18f260ba8593f47f55c3897a57e41d69675efc12da295348d635f1062c1b",
+    "ltx_resolution_session.py": "a1c0a8d7906d8d3f0c3034c30edb131e84f2af08249654150129d63a40813169",
+    "ltx_sampler_batch.py": "a1c7e6e05be201dc5b26d77051b213158fa3443229386ece05726b0346662aa3",
+    "ltx_text_shard.py": "0a2e085b2d6f51a1ba754c2355e601ae15022f8a25e828ab43490ef6412ec047",
+    "ltx_text_window.py": "70bb7be90cc458a7e0940759650a7cc438ff4d8f713c5163df1ae0358c4ac611",
+    "maintenance125.py": "173d86f3ea0371a2dcd35c341e4492c87d3f1679fe2ce2704f4203c8c2dea8df",
+    "maintenance128.py": "f933dabef4170215fe2da6e5ab78c37a93ab4fa99b4d355337a4cf8ab7f15fc7",
+    "multiblock_compile_node.py": "e1fc1e6f8e42344c1e23582c9d284c89eda8ca1b058ea242948db1388650d743",
+    "na_axis_decode_node.py": "21774a7a2fcb8cd853347a401ad79754792e26d472c44ce80a7eab18a5363392",
+    "native_adapter.py": "f39420afe2907dab4075d05419be1cd1740cfd8e12732c558fae9b2dc91666e8",
+    "native_bindings.py": "1ce082ecd4c79cc0a3d7a58c3938e13bc84a94c0efbf42bfdb91ef6b92e8cf43",
+    "native_safety.py": "188f6e1f3e42f06843b369906505bd85c7b501b35438c59de146a519bcc54c0b",
+    "phase_timed_upsampler_node.py": "262dfbae0cbd0b5f43ca308b259fe33e1743c83c3fbc41eb42475eed82557895",
+    "pipeline_decode_node.py": "e7bdab34f213bb879192316ce6523f66758f88bde72c66d8bab6cc163eb8c825",
+    "pipeline_node.py": "26df83e9e63b58fe4b56ca937dee5e723b5a0b154e1f1e33cc79ada71b3c7be7",
+    "pipeline_sampler_node.py": "3dcaa3186c4230fce65536e5a6b3737a3979eced12f33e84576529b06cb03701",
+    "precompute_guard.py": "972e6e1bc7ae84c2c326f2aec7305541b53d66705b73ff50956e805f9fc3c031",
+    "proof.py": "d2fe47e841c298eb3e019e6c612df9f7c96bff02f38efff7fcec24b8b250a0be",
+    "qualification_gate.py": "542f95be3d77c48a3dd17f09c35595b3f32e49258bdaaad555ae96a9814ef3de",
+    "reference_gate.py": "376dc6e75f1004a1fb964b3b4297f15de62e34f1895d1fba1d3e5e7af89affb2",
+    "residency123.py": "8e8398631f27c5bf20815ffc54927c2c1dbc5b63b814f2e0b4bf29d84ab0e081",
+    "resident_fastpath_node.py": "92ee944474fc7f2bd865b5ec08479441f031dbad24364d3eddeac20ca653ddbc",
+    "resident_node.py": "3523c95ab0a250a56ff9ce16251d16f6d5ffa76e03c0addf927e638d0b724951",
+    "run_storage.py": "320b3676d5abbccb4c285b46f41e3f13ed02bc1ff5e336d3e90820896d693bab",
+    "runtime_observer.py": "475ede8de04d5cd45fc3bc0e550d6c7f4d9d00da1bd129095d6736c8fd6ff0b8",
+    "schedule.py": "d76166d11fe05ebaa1f0f493283e0f16981a6161f63268679c9434dcee2f846e",
+    "setup_gates.py": "8fe64b1fe5fb713f3a80c1fe0415759eb43d9591b22af51e4718b0151961f2bc",
+    "signature_cache127.py": "2f9f8f51127a83759ef92eb34f439240e672510116500a7926df0e3e46f823f7",
+    "snapshot_fingerprint.py": "a84e206fd6f96563c6e07c064abdcbcc6f8b4d4a975847123c3c14e4f0016b84",
+    "stream_anchor_decode.py": "7f841723514241c48bce02fb9ed76cbb3fe7fdfc650aa70eae864213c6c505c3",
+    "stream_contract.py": "da8b1a82c3c3dfb4f8e848433bcfec47aef3e728c47874b9f29d6581e3ee2296",
+    "stream_decode.py": "582fe78bdcb113b85f77bda38c1369847556d96df47384c81504ee9a6a8e17d1",
+    "stream_decoder_graph.py": "a9412abb4f304c9b33592ab4bc4fd043ef0b3433a892d8df8cbf7b1e0f0d196e",
+    "stream_preview.py": "f0117a323209a20d4e97437b1c6792a9758461bde1ae324b997c0561def3e011",
+    "stream_receipts.py": "bc3f897d670e337118044c022266525600ce81954b7007f248d3e6e76ff22779",
+    "stream_schedule.py": "e65ee6a8694962c79b81e992e383c31deef306e289a49971ce4e9a037ccef10f",
+    "stream_schedule_gate.py": "d6145ff55f73d5661ecdaa31d4394644bc606f96ccd4844f0b62bda158eb2063",
+    "text_residency133.py": "658079c5e5d3581b0409952d98c77eb2b39950f12cf5fe5261b1f3dd6b7c7fd0"
+  },
+  "compiler_environment": {
+    "TORCHINDUCTOR_COMPILE_THREADS": "1",
+    "TORCHINDUCTOR_CACHE_DIR": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36/inductor-cache",
+    "TRITON_CACHE_DIR": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36/triton-cache"
+  },
+  "launcher_sha256": "09b9555947dbf23cb3d7e5e37e016a3aae069b43314b374b65399a96a67316df",
+  "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+  "server_args_sha256": "ecc354e6ff761aec3b3216f691bd660f9bd41c3fbf80057c1a326f8057bf1260",
+  "health_admission": {
+    "path": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261008/postflight-pre135-20261010T152726Z.json",
+    "sha256": "99911034508d0a31b44c78f1f44b193f3e17e6673699a30907e6e195218f602f",
+    "end_utc": "2026-10-10 15:27:31 UTC",
+    "boot_id": "4aafe57b-a54f-4bfd-b4ed-9f1cbb8830c7",
+    "admitted_fault_lines": 4,
+    "watch_since": "2026-10-10 15:32:39 UTC"
+  },
+  "rope_compatibility": {
+    "schema": "ltx.rope-arithmetic-compat.v1",
+    "status": "installed-unqualified",
+    "installer_sha256": "99e6bc916789b8d4443a869000af524462ce66eef4757f000280b8a80366c570",
+    "source_path": "/home/steve/ltx25-upstream99-dependencies/site-packages/comfy_kitchen/backends/eager/rope.py",
+    "original_source_sha256": "630a3d287bf602046935086f9d43eb6db2ec4971913a1cb3fb35bae6ea4ac9ee",
+    "restored_source_sha256": "aee33a18bb5fe75ce24ebad389b830c9d5775d52723fc7df4864598547b2257c",
+    "function": "apply_rope_split_half1",
+    "before_code_sha256": "eb01825368fd62ed8e50df0bf47c342211e056aa6016471417a9e9484279ae56",
+    "after_code_sha256": "23f9f6e80fe2fed667eb8f1916c691e367d74f2030f54b3dcc6a42abcb7fa6fb",
+    "backend": "eager",
+    "aliases_preserved": [
+      "apply_rope_split_half1",
+      "apply_rope_split_half",
+      "apply_rope_split_half1_",
+      "apply_rope_split_half_"
+    ],
+    "package_files_changed": false,
+    "scope": "one process-local function code replacement; no exception interception",
+    "gpu_parity_qualified": false
+  }
+}

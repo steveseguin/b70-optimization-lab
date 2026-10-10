@@ -7,16 +7,20 @@ answers.
 
 | Profile | Context | Writing speed | Prompt reading (2K / 8K / 16K input) |
 | --- | ---: | ---: | --- |
-| `recommended` (MTP depth 5, draft shortlist, allgather allreduce) | 33,024 tokens | **90.2 tok/s** | 3,642 / 3,436 / 3,282 tok/s |
-| `depth-1` (the September 14 recipe) | 33,024 tokens | 54.9 tok/s | 3,763 / 3,535 / 3,384 tok/s |
+| `recommended` (MTP depth 5, draft shortlist, allgather allreduce) | 33,024 tokens | **90.3 tok/s** | Not measured on this exact overlay |
+| `depth-1` (the September 14 recipe) | 33,024 tokens | 54.9 tok/s | Not measured on this exact profile |
 
 Graphs and every measured point are on the
 [details page](https://neural.download/models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html). LocalMaxxing:
 [`cmu5qk0kz07zglq01eh1opkhx`](https://www.localmaxxing.com/runs/cmu5qk0kz07zglq01eh1opkhx) (90.48 tok/s, approved September 17, measured on the earlier launcher that still allowed the container 4 GiB of swap; the
-October 3 re-acceptance of the current no-swap launcher measured 90.01, so the table shows the pair's median 90.2;
+October 3 re-acceptance of the no-swap launcher measured 90.01; the current chunked-upload launcher measured 90.3187 on October 4, which the table rounds to 90.3;
 the ring-allreduce recipe's [`cmu4zwfht07nzlq01tyj03f17`](https://www.localmaxxing.com/runs/cmu4zwfht07nzlq01tyj03f17), 88.41 tok/s, stands as history).
 How it was built and tested: [recipe](../../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md),
 [review campaign](../../experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md).
+
+The current [single-user receipt](../../experiments/qwen38-27b-b70/data/2026-10-04-fp8-two-card-chunked-upload/summary.json) is one acceptance run. The catalog retains its separately identified two-server September pair (90.309841 tok/s). The older 3,642 / 3,436 / 3,282 prompt-reading rates used ring allreduce; the 3,763 / 3,535 / 3,384 rates used no MTP. Neither is a measurement of today's recommended overlay. See the recipe for the separate measured reading profiles.
+
+This is the **27B dense model**, distinct from [Flash-Next 125B-A6B on four cards](../qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md).
 
 ## What you need
 
@@ -42,17 +46,18 @@ refuses competing GPU work, and never restarts the server on its own.
 ## Many users at once
 
 The `multi-user` profile serves up to 64 people at the same time on the same two cards, image and 33,024-token
-context. Every user gets exactly the answer they would get using the server alone: the profile turns drafting off
+context. The tested requests returned exactly their solo answers: the profile turns drafting off
 and adds two small overlays that keep each request's arithmetic the same whoever else is being served (each step
-either reads prompts or writes answers, never both, and long conversations get their own attention call). It is
-exact by construction, not by luck, and it was checked: 64 of 64 answers matched each user's solo answer on short
+either reads prompts or writes answers, never both, and long conversations get their own attention call). The retained tests checked this directly: 64 of 64 answers matched each user's solo answer on short
 and long prompts, and matched the frozen single-user reference, twice each.
 
 | Users at once | Short prompts | Long prompts (2K to 8K tokens) |
 | ---: | ---: | ---: |
-| 16 | 415 tok/s all users together | 51 tok/s all users together |
+| 16 | 416 tok/s all users together | 51 tok/s all users together |
 | 32 | 653 tok/s all users together | 60 tok/s all users together |
 | 64 | **875 tok/s** all users together | 66 tok/s all users together |
+
+These are combined HTTP batch rates: generated tokens divided by batch wall time, including prompt processing. The 64-user short batches each generated 8,192 tokens (128 per request) in 9.359 / 9.362 seconds, or 875.31 / 875.05 tok/s. Both passes used the same server, with zero cached tokens. This is an output-exact capacity test, not the cold 512-token realistic headline or a fresh-server speed comparison. The long-prompt pair measured 66.32 / 65.43 tok/s; use that separate result when choosing for longer inputs. [Exact rows and gates](../../experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json).
 
 One person waits a little longer per answer than on `recommended` (no drafting), so use it when several people or
 programs share the server.
@@ -77,7 +82,7 @@ python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py status --state-dir /pat
 python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py stop --state-dir /path/fp8-session
 ```
 
-Send one request at a time. The context limit covers the prompt, chat history and the answer. Stop verifies the
+Use one request at a time with `recommended` or `depth-1`; use `multi-user` for simultaneous requests. The context limit covers the prompt, chat history and the answer. Stop verifies the
 recorded container identity before acting; logs and status stay in the state directory. A GPU fault ends the
 session and is recorded; nothing is retried.
 

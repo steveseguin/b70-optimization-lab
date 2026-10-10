@@ -11,6 +11,54 @@ SPEC.loader.exec_module(MODULE)
 
 
 class HumanPages(unittest.TestCase):
+    def test_video_observation_stays_scoped_and_missing_points_stay_missing(self):
+        package = {
+            'id': 'video-example', 'name': 'Video example', 'status': 'candidate',
+            'guide': 'repro/video-example/README.md', 'hardware': {'cards': 4},
+            'library': {'model_family': 'Example', 'modalities': ['video'],
+                        'featured_metric': None, 'benchmark_status': 'Strict headline pending: full-window repeat needed.'},
+            'video_measurements': {
+                'scope': 'Early window only; 52 chunks, before maintenance.',
+                'evidence': 'results/video.md', 'headline_row_label': '145 frames',
+                'rows': [
+                    {'label': 'Earlier setup', 'period_seconds': None, 'new_video_seconds': 6,
+                     'samples': None, 'status': 'No retained timing', 'evidence': 'results/earlier.md'},
+                    {'label': '145 frames', 'period_seconds': 5.2415, 'new_video_seconds': 6,
+                     'samples': 52, 'status': 'Early-window observation', 'evidence': 'data/video.json'},
+                ],
+            },
+        }
+        output = MODULE.page(package, [package])
+        self.assertIn('Strict headline pending: full-window repeat needed.', output)
+        self.assertIn('>5.24</a>', output)
+        self.assertIn('seconds per 6 seconds of new video', output)
+        self.assertIn('Early window only; 52 chunks, before maintenance.', output)
+        self.assertIn('<td>5.2415</td>', output)
+        self.assertIn('<td>Not measured</td><td>6</td><td>Not measured</td>', output)
+        self.assertIn('href="' + MODULE.GITHUB + 'data/video.json"', output)
+        self.assertIn('No projection', output)
+        self.assertNotIn('data-ml-measured=', output)
+        self.assertNotIn('Tokens are pieces of words', output)
+        self.assertNotIn('writing speed', output)
+        self.assertNotIn('Writing speed and waiting time', output)
+        self.assertIn('Several video streams at once', output)
+        self.assertLess(output.index('>5.24</a>'), output.index('<div class="actions">'))
+        self.assertEqual(output.count('id="video-observations"'), 1)
+        self.assertIn('a short window does not prove sustained playback', output)
+
+    def test_video_highlight_requires_explicit_measured_row(self):
+        measurements = {'scope': 'Test scope', 'evidence': 'results/video.md',
+                        'rows': [{'label': 'Unmeasured', 'period_seconds': None,
+                                  'status': 'Pending', 'evidence': 'results/video.md'}],
+                        'headline_row_label': 'Unmeasured'}
+        output = MODULE.video_observations(measurements)
+        self.assertNotIn('class="big', output)
+        self.assertIn('Not measured', output)
+
+    def test_metric_label_uses_declared_unit(self):
+        library = {'featured_metric': {'value': 5.24, 'unit': 's/chunk'}}
+        self.assertEqual(MODULE.metric_text(library), '5.2 s/chunk')
+
     def test_internal_run_names_are_not_public_labels(self):
         profile = {'label': 'R187 FP8 TP2 MTP0 HTTP decode over exact active context', 'metric': 'decode'}
         self.assertEqual(MODULE.public_profile_label(profile), 'Writing speed · 2 GPUs · no draft')

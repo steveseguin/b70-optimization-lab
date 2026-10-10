@@ -1,13 +1,107 @@
 # Qwen3.8 27B official FP8 on one Intel Arc Pro B70: recipe
 
-> **Status: `candidate-portable-repro`.** Built, launched and measured on the lab
-> host from the files below, and replayed on September 16 from a fresh anonymous
-> download of this repository (verified model, pulled image, package scripts
-> only): strict 12/12 at 53.497 tok/s and a clean stop
-> ([receipts](../../experiments/qwen38-27b-b70/data/2026-09-16-fp8-tp1-clean-install/)).
-> A machine without Intel drivers, Docker or the model in place is still untested.
+> **Status: `candidate-portable-repro`.** The current R312d-c package was
+> accepted on the configured lab host on October 4: 12/12 strict outputs equal
+> to no MTP, exact sequential/context/quality checks and a clean stop.
+> [Receipts](../../experiments/qwen38-27b-b70/data/2026-10-04-fp8-onecard-chunked-upload/).
+> A machine without Intel drivers, Docker or the model in place is untested.
+> Public container availability does not certify a clean source rebuild.
 
 Quick start and daily use: [package guide](../../packages/qwen38-27b-fp8-tp1-b70/README.md).
+
+## Current recipe (reviewed October 10, 2026)
+
+Use the [package quickstart](../../packages/qwen38-27b-fp8-tp1-b70/README.md#start)
+for acquisition, hash verification, launch, health and graceful stop. It runs the
+27B dense model on **one** B70. Flash-Next's 46.854250 tok/s record is a different
+125B-A6B model on **four** B70s; the 875 tok/s result is the 27B model on **two**
+cards with many short requests, not one person's writing speed.
+
+The current runtime is **R312d-c**, not the R310 build documented in the
+historical section below. Pull its exact public image:
+
+```bash
+docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:ea61e69834d02b4abfe435eaaf56b2eda7b7b7c5ac78fffa3740779d8f27353a
+```
+
+The registry name says INT4 because packages share a runtime. The model remains
+`Qwen/Qwen3.8-27B-FP8`, revision
+`017b9c7af6b5689d5dd426a76e0bc077eb5ca20a`, with FP16 activations and full
+16-bit KV. The package's download and verify helpers use the shared
+[complete model hash manifest](../qwen38-27b-fp8-vllm-tp2-asrock-b70/model-direct.json).
+Run them before launch; a file's size alone is not verification.
+
+| Current profile | Total context | Strict writing tok/s | Reading tok/s at 2K / 8K / 16K |
+| --- | ---: | ---: | --- |
+| `recommended`, target-verified MTP5 | 32,768 | 54.036484 | 2,031 / 2,023 / 1,939 |
+| `max-context`, target-verified MTP5 | 40,960 | 54.02 | 2,028 / 2,018 / 1,936 |
+| `no-quantization`, FP16 draft shortlist | 28,672 | 52.19 | 2,019 / 2,014 / 1,932 |
+
+These are the [October 4 package acceptance receipts](../../experiments/qwen38-27b-b70/data/2026-10-04-fp8-onecard-chunked-upload/).
+The recommended figure is the median of two strict passes on one fresh package
+server, 54.047 / 54.026; the independent research-server pair is separately
+retained in the package manifest. Each strict attempt sends the fixed 12 varied
+prompts once, with a 512-token natural-completion cap and no prompt reuse.
+Writing speed uses class-balanced medians across 99 intervals after TTFT.
+Reading speed divides input tokens by server prefill time; it is not HTTP TTFT.
+512-token reading speed on this exact current profile is **not measured**.
+
+On a prepared host, run the package's start command, then this client once into
+a new output directory:
+
+```bash
+OUT_DIR=/path/new-strict-attempt BASE_URL=http://127.0.0.1:18130 MODEL_NAME=qwen38-27b-fp8 \
+  bash repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh
+python3 packages/qwen38-27b-fp8-tp1-b70/scripts/serve.py status --state-dir /path/fp8-one-card-session
+python3 packages/qwen38-27b-fp8-tp1-b70/scripts/serve.py stop --state-dir /path/fp8-one-card-session
+```
+
+Use the same state directory as the quickstart. A speed-suite pass alone does
+not prove losslessness: compare all token arrays with the retained no-MTP
+references using the [acceptance campaign](../../experiments/qwen38-27b-b70/scripts/run-20260918-fp8-onecard-r312d-campaign.py),
+which documents the sequential oracle, context, chat and logprob checks.
+Its historical host paths need adapting; do not silently substitute a new
+oracle or reduce its quality gates. The source and exact binary pins are in the
+[package manifest](../../packages/qwen38-27b-fp8-tp1-b70/package.json).
+
+## Platform and rebuild boundary
+
+A new user needs Linux with Intel B70 driver support, Docker, Python 3, curl,
+one free 32 GiB B70, roughly 16 GiB host RAM and 60 GiB disk. The retained
+October 4 host used kernel `7.0.0-38`; the older
+[platform inventory](../qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight-evidence-20260821.json)
+is historical and does not certify current driver installation. The container
+pins user-space dependencies; it does not pin or install the host kernel.
+A tested clean-OS driver/Docker installation and independent-host replay remain
+open. No driver, power, swap or page-cache change is part of this recipe.
+
+The current rebuild chain is R310 → R311 checkpoint kernels → R312c host glue
+→ R312d variant **c** device attention library. Source entrypoints:
+
+- [R310 builder](../../experiments/qwen38-27b-b70/docker/rebase-v0290/build-kernels-0.1.14.1-r310-gdn-barriers.sh)
+  and [Dockerfile](../../experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r310-gdn-barriers).
+- [R311 builder](../../experiments/qwen38-27b-b70/docker/rebase-v0290/build-kernels-0.1.14.1-r311-gdn-checkpoint.sh)
+  and [Dockerfile](../../experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r311-gdn-checkpoint).
+- [R312c builder](../../experiments/qwen38-27b-b70/docker/rebase-v0290/build-kernels-0.1.14.1-r312c-multiq.sh)
+  and [Dockerfile](../../experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r312c-multiq).
+- [R312d builder](../../experiments/qwen38-27b-b70/docker/rebase-v0290/build-kernels-0.1.14.1-r312d-multiq-toolchain.sh),
+  [builder image](../../experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r312d-builder-b)
+  and [runtime Dockerfile](../../experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r312d-multiq).
+
+The final attention build requires DPC++ 2026.0.0, IGC 2.34.4, ocloc 26.18 and
+the kernel CMake's pinned sycl-tla commit `87f6850`; another revision changed
+output bits in the retained census. The builders still assume earlier build
+trees and local image tags. They are source recovery evidence, not a closed
+fresh-host build script. Their historical swap allowances are not current
+instructions: any authorized future build must set equal memory and memory-swap
+limits and use a suitable host. Use the digest-pinned public image for the
+current replay. The [source publication manifest](../qwen38-27b-autoround-int4-b70/publication-manifest.json)
+remains draft; this guide does not upgrade it to published source closure.
+
+## Historical results and R310 build
+
+The rest of this guide preserves the earlier R310/R311b measurements and build
+route. Its images, context limits and numbers do not replace the current package.
 
 ## Results
 

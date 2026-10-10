@@ -23,7 +23,68 @@ class ReproGuideValidationTest(unittest.TestCase):
         repo = Path(__file__).resolve().parents[1]
         errors, counts = MODULE.validate(repo)
         self.assertEqual(errors, [])
-        self.assertEqual(sum(counts.values()), 40)
+        self.assertEqual(sum(counts.values()), 41)
+
+    def test_video_observations_require_real_evidence_and_valid_timing(self):
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw)
+            (repo / 'timing.json').write_text('{}')
+            observation = {
+                'scope': 'Early window, not a full-run median', 'evidence': 'timing.json',
+                'headline_row_label': 'Measured setup', 'rows': [
+                    {'label': 'Measured setup', 'status': 'Early window', 'period_seconds': 5.2415,
+                     'new_video_seconds': 6, 'samples': 52, 'evidence': 'timing.json'},
+                    {'label': 'Unmeasured setup', 'status': 'No timing retained', 'period_seconds': None,
+                     'new_video_seconds': 6, 'samples': None, 'evidence': 'timing.json'},
+                ],
+            }
+            self.assertEqual(MODULE._validate_video_measurements(repo, 'example', observation), [])
+            observation['headline_row_label'] = 'Unmeasured setup'
+            self.assertTrue(any('headline_row_label' in error for error in MODULE._validate_video_measurements(repo, 'example', observation)))
+            observation['headline_row_label'] = 'Measured setup'
+            for invalid in (0, -1, True, float('nan'), float('inf')):
+                observation['rows'][0]['period_seconds'] = invalid
+                self.assertTrue(any('positive finite' in error for error in MODULE._validate_video_measurements(repo, 'example', observation)))
+            observation['rows'][0]['period_seconds'] = 5.2415
+            observation['rows'][0]['evidence'] = 'missing.json'
+            self.assertTrue(any('does not resolve' in error for error in MODULE._validate_video_measurements(repo, 'example', observation)))
+
+    def test_video_row_receipts_must_be_declared_dependencies(self):
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw)
+            guide = 'repro/example/README.md'
+            (repo / 'repro/example').mkdir(parents=True)
+            (repo / guide).write_text('# Example')
+            (repo / 'model.json').write_text('{}')
+            (repo / 'timing.json').write_text('{}')
+            (repo / 'row.json').write_text('{}')
+            package = {
+                'format': MODULE.PACKAGE_FORMAT, 'id': 'example', 'guide': guide,
+                'audience': 'expert', 'clean_host_tested': False, 'status': 'candidate',
+                'hardware': {'cards': 4}, 'model': {'revision': '0' * 40, 'manifest': 'model.json'},
+                'runtime': {'kind': 'native'}, 'project_patches': {'required': False, 'items': []},
+                'commands': {name: 'true' for name in MODULE.PACKAGE_COMMANDS},
+                'dependencies': [guide, 'model.json', 'timing.json'], 'missing': ['clean host replay'],
+                'library': {
+                    **{name: 'Example' for name in ('model_family', 'publisher', 'variant', 'summary', 'quantization', 'runtime_label')},
+                    'operating_systems': ['Linux'], 'delivery': ['native'], 'modalities': ['video'],
+                    'use_cases': ['video'], 'tags': ['video'], 'published_at': '2026-10-10',
+                    'featured_metric': None, 'benchmark_status': 'Pending',
+                },
+                'contributors': [{'id': 'lab', 'name': 'Lab', 'contribution': 'Timing', 'validated_effect': 'Scoped timing',
+                                  'kind': 'lab', 'status': 'credited', 'profile': 'https://example.org', 'evidence': 'timing.json'}],
+                'video_measurements': {'scope': 'Early window', 'evidence': 'timing.json', 'rows': [
+                    {'label': 'Measured setup', 'status': 'Early window', 'period_seconds': 5.24,
+                     'samples': 52, 'evidence': 'row.json'}]},
+            }
+            path = repo / 'package.json'
+            path.write_text(json.dumps(package))
+            errors = MODULE._validate_package(repo, 'package.json', self._entry(guide))
+            self.assertEqual(len(errors), 1, errors)
+            self.assertIn('video_measurements.rows[0].evidence must be declared in dependencies', errors[0])
+            package['dependencies'].append('row.json')
+            path.write_text(json.dumps(package))
+            self.assertEqual(MODULE._validate_package(repo, 'package.json', self._entry(guide)), [])
 
     def test_rejects_uncertified_read_guide_promotion(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

@@ -6,16 +6,16 @@
   "name": "Qwen Flash-Next",
   "display_name": "Qwen3.8 Flash-Next · 125B-A6B",
   "publisher": "Qwen",
-  "updated_at": "2026-09-13",
-  "summary": "Qwen's 125B-A6B official-FP8 hybrid-attention MoE on four B70s. The A340-A394 campaign is closed: exact serial GDN MTP1 delivers the approved 46.854250 tok/s class-balanced cold-suite record, +23.87% over the preceding 37.825654 line with all 12 output pins unchanged. A separate 33,280-capacity profile reproduces output hashes at 2K/8K/16K/32K across A382/A394, equal to MTP0 A381; the 32K four-row decode median is 44.052 tok/s. These are lab depth measurements, not a new realistic-suite record or completed long-context quality battery. MTP2, larger-prefill and multi-user trials were not promoted. Clean-host, sustained-stability and clean-shutdown qualification remain open. The older eager screens below are historical, not the current performance frontier. Historical coverage still classifies all 25 practical TP4 eager-text MTP/context cells through 8K; those outcomes remain preserved below.",
+  "updated_at": "2026-10-10",
+  "summary": "Flash-Next is Qwen’s 125B model with about 6B parameters active per token. On four B70 cards it writes 46.854250 tokens/s for one person, using official FP8 weights, BF16 KV and one target-verified draft token. The fixed cold realistic suite kept all 12 reference outputs unchanged. The previous matched line measured 37.825654 tokens/s. A separate 32K-input test measured 44.052 tokens/s; it is a depth diagnostic, not the same benchmark. Prompt-reading throughput is not measured for the headline setup. The recipe is an expert lab replay; a clean-host install, portable safe replay and sustained-use qualification remain open. The 875 tokens/s shared-user result belongs to the separate Qwen 27B two-card package. Historical coverage classifies all 25 practical TP4 eager-text MTP/context cells through 8K; those screens remain separate from the approved record.",
   "featured_results": [
     {
       "role": "hero",
-      "label": "Qwen3.8 Flash-Next FP8 · TP4 lossless MTP1, exact-4K, never-routed experts host-placed, reference kernels, exact serial GDN rows in the extension",
-      "measurement_id": "qwen38-flash-next-fp8-tp4-mtp1-placement-hctriton-qsafused-exactgdn-context4k-a365",
+      "label": "Four B70 cards · official FP8 · BF16 KV · one user · target-verified MTP1",
+      "measurement_id": "qwen38-flash-next-fp8-tp4-mtp1-exactgdn-realistic-a367",
       "metric": "decode_tok_s",
       "sample_index": 0,
-      "quality_label": "Same deterministic authority as the fused-QSA line on four servers; quality profile equal to the certified rows; lossless MTP1; LocalMaxxing cmtzask41000nlq011f16bpbc approved 2026-09-13 on the fixed realistic suite (46.854250 tok/s class-balanced)"
+      "quality_label": "Target-verified MTP1; all 12 outputs unchanged from the certified line. Separate quality and fresh-server repeats passed; the inherited code-execution canary miss remains. Expert lab replay, clean-host installation pending."
     },
     {
       "role": "support",
@@ -283,6 +283,38 @@
     }
   },
   "run_measurements": [
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp1-exactgdn-realistic-a367",
+      "state": "lab-measured",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "variant": "official FP8 block-128",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 6d872457 (fused-QSA overlay) + kernel stage v2 (_xpu_C rebuilt from bbae3c5 over e421889; other files the served 2f829747 stage)",
+      "runtime_family": "vLLM XPU",
+      "config": {
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "mtp": 1,
+        "active_context_tokens": 0,
+        "configured_max_context_tokens": 4352,
+        "graph_mode": "FULL_DECODE_ONLY",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "profile_id": "flash-next-tp4-mtp1-exactgdn-realistic-v1",
+      "measurement_class": "fixed cold realistic suite; class-balanced 99-interval decode",
+      "promotion_status": "certified 2026-09-13 (A364 battery, A365 fresh server, A366 third server: all gates passed; exact-2K afffd211 and exact-4K 1d833e5f equal to the fused-QSA line); LocalMaxxing cmtzask41000nlq011f16bpbc approved 2026-09-13 on the fixed realistic suite (46.854250 tok/s class-balanced), the fastest Flash-Next row",
+      "quality_scope": "6/7 semantic (sole miss code_execution), all seven exact-case outputs byte-identical to the certified battery, 16/16 repeat one hash, exact needle; exact-2K afffd211 and exact-4K 1d833e5f reproduced with MTP1 on three servers",
+      "workload": "One user; twelve varied prompts, each once, natural completions capped at 512 tokens, cached_tokens=0. Median within each prompt class, then median across classes; 99 inter-token intervals between timestamps 1 and 100 after TTFT. Model residency and compiled kernels permitted; prompt/KV/response reuse disabled. One complete speed suite on A367; independent quality and determinism repeats on A364/A365/A366.",
+      "metrics": {
+        "decode_tok_s": [
+          46.85424994838007
+        ]
+      },
+      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a367-native-exact-gdn-realistic-suite-v1-result.json"
+    },
     {
       "id": "qwen38-flash-next-fp8-tp4-attempt19",
       "state": "lab-screened",

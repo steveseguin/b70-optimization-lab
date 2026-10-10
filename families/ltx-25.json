@@ -1,0 +1,97 @@
+{
+  "format": "neural-download-model-family-v1",
+  "id": "ltx-25",
+  "primary_packet_id": "ltx25-continuation-stream-b70-145f-20261010",
+  "name": "LTX 2.5",
+  "display_name": "LTX 2.5 · continuing video",
+  "publisher": "Lightricks",
+  "updated_at": "2026-10-10",
+  "summary": "Generate a continuing video on four Intel Arc Pro B70 cards. This research recipe uses frame anchors and checks the compared chunks against a certified reference. Open the packet for measured chunk times, the progression table and exact setup. The sustained speed headline, seam and audio acceptance, independent replay and public runtime rebuild remain pending. Video generation is measured in seconds per chunk, not language-model tokens per second.",
+  "architecture": {
+    "class": "LTX 2.5 distilled video model",
+    "design": "video generation",
+    "evidence": "results/ltx25-continuation-stream-2026-10-10.md"
+  },
+  "dimensions": {},
+  "weight_revisions": [
+    {
+      "id": "ltx25-distilled-5e6e7101",
+      "label": "LTX 2.5 distilled",
+      "role": "measured weights",
+      "repository": "Lightricks/LTX-2.5",
+      "revision": "5e6e71018ee1756ed329b697a7b4aedc934dfce9",
+      "model_manifest": "experiments/ltx25-b70/data/model-verification.json"
+    }
+  ],
+  "model_variants": [],
+  "transfer_scope": {
+    "status": "Scoped to the sealed 145-frame continuation recipe on four B70 cards",
+    "transfers": [
+      "retained setup, source recovery and exactness checks for this packet"
+    ],
+    "does_not_transfer": [
+      "short-window cadence to sustained performance",
+      "compared chunk hashes to seamless video or aligned audio",
+      "packet 135 qualification to packet 137",
+      "video chunk times to language-model decode or prefill rates"
+    ],
+    "evidence": "results/ltx25-continuation-stream-2026-10-10.md"
+  },
+  "model_signals": {
+    "b70_fit": {
+      "band": "four-card measured",
+      "scope": "145-frame continuation recipe, 256×256 at 24 fps",
+      "basis": "Retained production and qualification receipts on the four-card lab host; mandatory memory floors remain part of admission.",
+      "reviewed_at": "2026-10-10"
+    },
+    "quality_evidence": {
+      "band": "scoped chunk exactness",
+      "scope": "Compared chunks match retained references; seamless continuation, audio acceptance and independent replay remain open.",
+      "evidence": [
+        "results/ltx25-continuation-stream-2026-10-10.md"
+      ]
+    },
+    "popularity": {
+      "state": "not-scored",
+      "reason": "No dated popularity snapshot is stored."
+    }
+  },
+  "run_measurements": [],
+  "series_measurements": [],
+  "estimates": [],
+  "packets": [
+    {
+      "id": "ltx25-continuation-stream-b70-145f-20261010",
+      "label": "145-frame continuation video · four B70 cards",
+      "revision": "ltx25-distilled-5e6e7101",
+      "quantization": "BF16 distilled weights; F32 output checks",
+      "runtime": "ComfyUI / PyTorch XPU",
+      "cards": 4,
+      "status": "candidate",
+      "evidence_level": "Scoped lab continuation evidence; headline pending",
+      "coverage": [
+        "video continuation",
+        "chunk exactness",
+        "source recovery",
+        "measurement procedure"
+      ],
+      "manifest": "packages/ltx25-continuation-stream-b70-145f-20261010/package.json",
+      "guide": "repro/ltx25-continuation-stream-b70-145f-20261010/README.md",
+      "grades": {
+        "evidence": {
+          "grade": "C",
+          "scope": "Sealed continuation recipes and retained chunk/cadence receipts on one configured lab host",
+          "basis": "Bounded exactness and timing evidence is retained; sustained performance, seam/audio acceptance, portable runtime closure and independent-host replay are incomplete.",
+          "reviewed_at": "2026-10-10",
+          "evidence": [
+            "results/ltx25-continuation-stream-2026-10-10.md"
+          ]
+        }
+      }
+    }
+  ],
+  "views": [],
+  "coverage_views": [],
+  "coverage_contracts": [],
+  "family_closures": []
+}
