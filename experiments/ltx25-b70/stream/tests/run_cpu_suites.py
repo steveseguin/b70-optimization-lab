@@ -121,10 +121,11 @@ def child(control, target, arguments):
     runpy.run_path(target, run_name='__main__')
 
 
-def suite(target, arguments):
+def _suite(target, arguments):
     guard_sockets()
     control_root = Path(tempfile.mkdtemp(prefix='ltx-cpu-control-'))
     base_popen = subprocess.Popen
+    children = []
     class CooperativePopen(base_popen):
         def __init__(self, cmd, *args, **kwargs):
             self.control = control_root / ('child-%d.jsonl' % time.time_ns())
@@ -136,6 +137,7 @@ def suite(target, arguments):
             child_env.update(OMP_NUM_THREADS='2', MKL_NUM_THREADS='2', PYTHONDONTWRITEBYTECODE='1')
             kwargs['env'] = child_env
             super().__init__(cmd, *args, **kwargs)
+            children.append(self)
         def command(self, value):
             if self.poll() is None:
                 with self.control.open('a') as out:
@@ -162,7 +164,32 @@ def suite(target, arguments):
         '/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261009-continuation118-stream',
         '/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-118/resolution/components')
     sys.argv = [str(path)] + arguments
-    exec(compile(source, str(path), 'exec'), {'__name__': '__main__', '__file__': str(path)})
+    try:
+        exec(compile(source, str(path), 'exec'), {'__name__': '__main__', '__file__': str(path)})
+    finally:
+        for process in children:
+            process.cooperative_exit()
+        for process in children:
+            process.wait(timeout=30)
+        subprocess.Popen = base_popen
+
+
+def suite(target, arguments):
+    # Every historical suite and its child packet copy lives inside this owned
+    # root. Remove it on success or failure once cooperative children have exited.
+    old_tempdir = tempfile.tempdir
+    old_tmpdir = os.environ.get('TMPDIR')
+    with tempfile.TemporaryDirectory(prefix='ltx-cpu-suite-') as scratch:
+        tempfile.tempdir = scratch
+        os.environ['TMPDIR'] = scratch
+        try:
+            _suite(target, arguments)
+        finally:
+            tempfile.tempdir = old_tempdir
+            if old_tmpdir is None:
+                os.environ.pop('TMPDIR', None)
+            else:
+                os.environ['TMPDIR'] = old_tmpdir
 
 
 if __name__ == '__main__':

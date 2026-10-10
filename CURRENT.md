@@ -1,7 +1,7 @@
 # Current Workspace State
 
 **2026-10-10 09:57 UTC, 128 idle-maintenance (GC 10) session closed at 70 chunks (verdict 86134e704d4f, exact); launched the combined arm: 128 with idle maintenance + GC 60 + digest cache (`s128-gc60-live01`).**
-The GC-10 idle session's final median is in the line below; the combined arm's command:
+The GC-10 idle session's final figures (n = 60): median 5.493 s = 0.915 s/s, even 5.45 / odd 5.79, p90 5.97. The combined arm's command:
 `LTX_MAINTENANCE_MODE=idle LTX_GC_INTERVAL_SECONDS=60 LTX_SNAPSHOT_DIGEST_CACHE=1 LTX_STORAGE_SCAN_MODE=background LTX_AUX_RESIDENCY=legacy
 LTX_DISPLAY_WORKER=serial LTX_RUN_WRITE_ALLOWANCE_GIB=16 launch-128.sh 145 frame 0 cone 1 1 fingerprint - sampler-a 0 full xpu:3`. Target ≈ 5.4 s.
 

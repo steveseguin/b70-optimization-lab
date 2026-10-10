@@ -25,8 +25,16 @@ report = {'revision': model['revision'], 'source': str(source), 'target': str(ta
 
 def save():
     temp = receipt.with_suffix('.tmp')
-    temp.write_text(json.dumps(report, indent=2) + '\n')
+    with temp.open('w') as stream:
+        stream.write(json.dumps(report, indent=2) + '\n')
+        stream.flush()
+        os.fsync(stream.fileno())
     temp.replace(receipt)
+    directory = os.open(receipt.parent, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(directory)
+    finally:
+        os.close(directory)
 
 save()
 for entry in selected:
