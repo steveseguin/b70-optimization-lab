@@ -1,0 +1,77 @@
+PASS 122 f121 replica qualifies and streams three chunks rc=0 last=['[c112 04:29:13.426] clean stop: 3 chunks this run, next stream_seq 3, next manifest seq 3']
+PASS 122 f121 replica records exact server options and names 
+PASS 122 f121 replica exact manifest delivery geometry 
+PASS 122 f121 replica wrong --expect-display-device refused rc=8
+PASS 122 f121 replica wrong --expect-display-schedule refused rc=8
+PASS 122 f121 replica wrong --expect-anchor-read-ahead refused rc=8
+PASS 122 f121 replica wrong --expect-snapshot-schedule refused rc=8
+FAIL 122 f121 replica-budget qualifies and streams three chunks rc=99 last=['[c112 04:29:15.895] Q03 stream122-qeager-c000000 submitted (graph sha256 e44419425a7a)']
+FAIL 122 f121 replica-budget records exact server options and names 
+FAIL 122 f121 replica-budget exact manifest delivery geometry 
+PASS 122 f121 explicit budget missing/wrong expectation None refuses rc=8
+PASS 122 f121 explicit budget missing/wrong expectation '7' refuses rc=8
+PASS 122 f121 replica-budget wrong --expect-display-device refused rc=8
+PASS 122 f121 replica-budget wrong --expect-display-schedule refused rc=8
+PASS 122 f121 replica-budget wrong --expect-anchor-read-ahead refused rc=8
+PASS 122 f121 replica-budget wrong --expect-snapshot-schedule refused rc=8
+PASS 122 f121 off qualifies and streams three chunks rc=0 last=['[c112 04:30:18.831] clean stop: 3 chunks this run, next stream_seq 3, next manifest seq 3']
+PASS 122 f121 off records exact server options and names 
+PASS 122 f121 off exact manifest delivery geometry 
+PASS 122 f121 off wrong --expect-display-device refused rc=8
+PASS 122 f121 off wrong --expect-display-schedule refused rc=8
+PASS 122 f121 off wrong --expect-anchor-read-ahead refused rc=8
+PASS 122 f121 off wrong --expect-snapshot-schedule refused rc=8
+PASS 122 f121 eager-display qualifies and streams three chunks rc=0 last=['[c112 04:30:23.064] clean stop: 3 chunks this run, next stream_seq 3, next manifest seq 3']
+PASS 122 f121 eager-display records exact server options and names 
+PASS 122 f121 eager-display exact manifest delivery geometry 
+PASS 122 f121 eager-display wrong --expect-display-device refused rc=8
+PASS 122 f121 eager-display wrong --expect-display-schedule refused rc=8
+PASS 122 f121 eager-display wrong --expect-anchor-read-ahead refused rc=8
+PASS 122 f121 eager-display wrong --expect-snapshot-schedule refused rc=8
+PASS 122 f121 delayed qualifies and streams three chunks rc=0 last=['[c112 04:30:27.335] clean stop: 3 chunks this run, next stream_seq 3, next manifest seq 3']
+PASS 122 f121 delayed records exact server options and names 
+PASS 122 f121 delayed exact manifest delivery geometry 
+PASS 122 f121 delayed wrong --expect-display-device refused rc=8
+PASS 122 f121 delayed wrong --expect-display-schedule refused rc=8
+PASS 122 f121 delayed wrong --expect-anchor-read-ahead refused rc=8
+PASS 122 f121 delayed wrong --expect-snapshot-schedule refused rc=8
+PASS 122 f145 replica qualifies and streams three chunks rc=0 last=['[c112 04:30:31.662] clean stop: 3 chunks this run, next stream_seq 3, next manifest seq 3']
+PASS 122 f145 replica records exact server options and names 
+PASS 122 f145 replica exact manifest delivery geometry 
+PASS 122 f145 replica wrong --expect-display-device refused rc=8
+PASS 122 f145 replica wrong --expect-display-schedule refused rc=8
+PASS 122 f145 replica wrong --expect-anchor-read-ahead refused rc=8
+PASS 122 f145 replica wrong --expect-snapshot-schedule refused rc=8
+FAIL 122 f145 replica-budget qualifies and streams three chunks rc=99 last=['[c112 04:30:34.159] Q03 stream122-qeager-c000000 submitted (graph sha256 86a9ce535b18)']
+FAIL 122 f145 replica-budget records exact server options and names 
+FAIL 122 f145 replica-budget exact manifest delivery geometry 
+PASS 122 f145 explicit budget missing/wrong expectation None refuses rc=8
+PASS 122 f145 explicit budget missing/wrong expectation '7' refuses rc=8
+PASS 122 f145 replica-budget wrong --expect-display-device refused rc=8
+PASS 122 f145 replica-budget wrong --expect-display-schedule refused rc=8
+PASS 122 f145 replica-budget wrong --expect-anchor-read-ahead refused rc=8
+PASS 122 f145 replica-budget wrong --expect-snapshot-schedule refused rc=8
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py", line 166, in <module>
+    suite(sys.argv[1], sys.argv[2:])
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py", line 159, in suite
+    exec(compile(source, str(path), 'exec'), {'__name__': '__main__', '__file__': str(path)})
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_tests_122_integration.py", line 32, in <module>
+    e.start_fake('--frames', str(frames), '--decode-delay', '0.02', '--audio-delay', '0.02', '--preview-delay', '0.02', *extra)
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_tests_118b.py", line 77, in start_fake
+    raise RuntimeError('fake exited: ' + Path(self.fake_log.name).read_text()[-2000:])
+RuntimeError: fake exited: Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py", line 164, in <module>
+    child(sys.argv[2], sys.argv[3], sys.argv[4:])
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py", line 118, in child
+    runpy.run_path(target, run_name='__main__')
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/fake_comfy122.py", line 18, in <module>
+    exec(compile(source, str(Path(__file__).with_name('fake_comfy118.py')), 'exec'))
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/fake_comfy118.py", line 73, in <module>
+    SERVER_OPTIONS = {'snapshot_mode': a.snapshot_mode, 'decoder_graph_pool_cap_bytes': POOL_CAP}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'stream_contract'
+

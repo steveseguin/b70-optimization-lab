@@ -1,0 +1,159 @@
+test_145_request_cannot_reuse_121_identity (test_long_runtime.LongerRuntime.test_145_request_cannot_reuse_121_identity) ... ok
+test_dg0_three_chains_geometry_and_live_anchor (test_long_runtime.LongerRuntime.test_dg0_three_chains_geometry_and_live_anchor) ... FAIL
+test_dg1_cap_one_xpu2_three_chains_and_live_anchor (test_long_runtime.LongerRuntime.test_dg1_cap_one_xpu2_three_chains_and_live_anchor) ... FAIL
+test_new_length_measured_geometry_mismatch_halts (test_long_runtime.LongerRuntime.test_new_length_measured_geometry_mismatch_halts) ... FAIL
+test_new_length_repeat_chain_cone_mismatch_halts (test_long_runtime.LongerRuntime.test_new_length_repeat_chain_cone_mismatch_halts) ... FAIL
+test_replica_length_scope (test_long_runtime.LongerRuntime.test_replica_length_scope) ... ok
+
+======================================================================
+FAIL: test_dg0_three_chains_geometry_and_live_anchor (test_long_runtime.LongerRuntime.test_dg0_three_chains_geometry_and_live_anchor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/test_long_runtime.py", line 23, in test_dg0_three_chains_geometry_and_live_anchor
+    self.check145(self.run145('--decoder-graph','0'))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/test_long_runtime.py", line 9, in run145
+    return harness('--frames','145','--anchor','frame','--stream-chunks','2',
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/test_runtime_flow.py", line 43, in harness
+    raise AssertionError('harness produced no summary: ' + out.stderr[-3000:])
+AssertionError: harness produced no summary: Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/run_tests_122.py", line 55, in <module>
+    runpy.run_path(target, run_name='__main__')
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/harness_runtime.py", line 780, in <module>
+    rt = integration.Runtime(PACKET, manifest, MANIFEST_SHA, RUN)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/integration.py", line 262, in __init__
+    self.authority = session.configure(self.packet / 'resolution/stream-plan.json', manifest_sha,
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/session.py", line 544, in configure
+    _authority = StreamAuthority(*args, **kwargs)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/session.py", line 167, in __init__
+    self.plan = load_plan(plan_path)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/session.py", line 154, in load_plan
+    require(type(envelope) is dict and set(envelope) == {'plan', 'plan_sha256'} and
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/session.py", line 60, in require
+    raise RuntimeError(message)
+RuntimeError: Not the reviewed packet122 stream plan
+
+
+======================================================================
+FAIL: test_dg1_cap_one_xpu2_three_chains_and_live_anchor (test_long_runtime.LongerRuntime.test_dg1_cap_one_xpu2_three_chains_and_live_anchor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/test_long_runtime.py", line 26, in test_dg1_cap_one_xpu2_three_chains_and_live_anchor
+    data=self.run145('--decoder-graph','1','--pool-cap','1.0',
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/test_long_runtime.py", line 9, in run145
+    return harness('--frames','145','--anchor','frame','--stream-chunks','2',
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/test_runtime_flow.py", line 43, in harness
+    raise AssertionError('harness produced no summary: ' + out.stderr[-3000:])
+AssertionError: harness produced no summary: Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/run_tests_122.py", line 55, in <module>
+    runpy.run_path(target, run_name='__main__')
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/harness_runtime.py", line 780, in <module>
+    rt = integration.Runtime(PACKET, manifest, MANIFEST_SHA, RUN)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/integration.py", line 262, in __init__
+    self.authority = session.configure(self.packet / 'resolution/stream-plan.json', manifest_sha,
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/session.py", line 544, in configure
+    _authority = StreamAuthority(*args, **kwargs)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/session.py", line 167, in __init__
+    self.plan = load_plan(plan_path)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/session.py", line 154, in load_plan
+    require(type(envelope) is dict and set(envelope) == {'plan', 'plan_sha256'} and
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/session.py", line 60, in require
+    raise RuntimeError(message)
+RuntimeError: Not the reviewed packet122 stream plan
+
+
+======================================================================
+FAIL: test_new_length_measured_geometry_mismatch_halts (test_long_runtime.LongerRuntime.test_new_length_measured_geometry_mismatch_halts)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/test_long_runtime.py", line 33, in test_new_length_measured_geometry_mismatch_halts
+    data=self.run145('--decoder-graph','0','--inject','geometry')
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/test_long_runtime.py", line 9, in run145
+    return harness('--frames','145','--anchor','frame','--stream-chunks','2',
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/test_runtime_flow.py", line 43, in harness
+    raise AssertionError('harness produced no summary: ' + out.stderr[-3000:])
+AssertionError: harness produced no summary: Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/run_tests_122.py", line 55, in <module>
+    runpy.run_path(target, run_name='__main__')
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/harness_runtime.py", line 780, in <module>
+    rt = integration.Runtime(PACKET, manifest, MANIFEST_SHA, RUN)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/integration.py", line 262, in __init__
+    self.authority = session.configure(self.packet / 'resolution/stream-plan.json', manifest_sha,
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/session.py", line 544, in configure
+    _authority = StreamAuthority(*args, **kwargs)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/session.py", line 167, in __init__
+    self.plan = load_plan(plan_path)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/session.py", line 154, in load_plan
+    require(type(envelope) is dict and set(envelope) == {'plan', 'plan_sha256'} and
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/session.py", line 60, in require
+    raise RuntimeError(message)
+RuntimeError: Not the reviewed packet122 stream plan
+
+
+======================================================================
+FAIL: test_new_length_repeat_chain_cone_mismatch_halts (test_long_runtime.LongerRuntime.test_new_length_repeat_chain_cone_mismatch_halts)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/test_long_runtime.py", line 38, in test_new_length_repeat_chain_cone_mismatch_halts
+    data=self.run145('--decoder-graph','0','--inject','cone-repeat-diff')
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/test_long_runtime.py", line 9, in run145
+    return harness('--frames','145','--anchor','frame','--stream-chunks','2',
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/test_runtime_flow.py", line 43, in harness
+    raise AssertionError('harness produced no summary: ' + out.stderr[-3000:])
+AssertionError: harness produced no summary: Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/run_tests_122.py", line 55, in <module>
+    runpy.run_path(target, run_name='__main__')
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/harness_runtime.py", line 780, in <module>
+    rt = integration.Runtime(PACKET, manifest, MANIFEST_SHA, RUN)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/integration.py", line 262, in __init__
+    self.authority = session.configure(self.packet / 'resolution/stream-plan.json', manifest_sha,
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/session.py", line 544, in configure
+    _authority = StreamAuthority(*args, **kwargs)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/session.py", line 167, in __init__
+    self.plan = load_plan(plan_path)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/session.py", line 154, in load_plan
+    require(type(envelope) is dict and set(envelope) == {'plan', 'plan_sha256'} and
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/session.py", line 60, in require
+    raise RuntimeError(message)
+RuntimeError: Not the reviewed packet122 stream plan
+
+
+----------------------------------------------------------------------
+Ran 6 tests in 6.518s
+
+FAILED (failures=4)

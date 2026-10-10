@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ltx_continuation_client.py - the stream client for the packet 112 / 113 / 114 / 115 / 116 / 116b / 117 / 118 / 118b / 119 / 120 / 121 continuation servers.
+"""ltx_continuation_client.py - the stream client for the packet 112 / 113 / 114 / 115 / 116 / 116b / 117 / 118 / 118b / 119 / 120 / 121 / 122 continuation servers.
 
     /home/steve/.venvs/ltx25-baseline/bin/python -B ltx_continuation_client.py --work-dir DIR [options]
 
@@ -81,6 +81,11 @@ snapshot_schedule to status, every qualification/stream receipt and the verdict.
 --expect-* flags refuse a different launch configuration before any request is sent. The
 sampler-a / 0 / full combination preserves 118b's scheduling and safety checks.
 
+Packet122 keeps the145-frame ceiling. --expect-display-transient-gib binds an explicit
+xpu:2 replica reserve in GiB; without the flag, an explicit server override refuses.
+The census default remains implicit. Status, verdict, receipts and decode residency
+must agree; no reserve option relaxes a floor or enables169-frame chunks.
+
 Never retries a refused request, never restarts or signals anything. Halts:
 exit 0 clean stop; 2 server halted / execution error; 4 FAULT.json; 5 HTTP failure (> --http-fail-
 seconds, or a POST whose outcome is unknown); 6 failed-job receipt (stream-failure-<run>.json);
@@ -95,6 +100,7 @@ SIGINT/SIGTERM: stop submitting, wait for the in-flight chunk, write state, exit
 """
 import argparse
 import datetime as dt
+from decimal import Decimal, DecimalException
 import hashlib
 import importlib.util
 import json
@@ -212,11 +218,19 @@ PACKETS[121] = {'dir': R / 'prepared-continuation-stream-121',
                             'stream_receipts': '6706125e85c03c6211dd813bac50a84205a7018255dfdabdde89e4b524cc5867',
                             'qualification_gate': '8061560455a2e08cfe690b0cf7c55e4de7ced7f349011a0e2d164e7d7f244a98'},
                 'reference_sha256': '47040972fdcbb7f5837086d067122afd5130441bc5396f7b562a028e7faf5bb7'}
-DECODER_GRAPH_PACKETS = (116, '116b', 117, 118, '118b', 119, 120, 121)            # decoder_graph field, 116 preflight, 116 gate and references
-DECODE_THREAD_PACKETS = (114, 115, 116, '116b', 117, 118, '118b', 119, 120, 121)  # anchor mode, decode thread, decode records
-RESET_PACKETS = (113, 114, 115, 116, '116b', 117, 118, '118b', 119, 120, 121)     # chain resets, preview after receipt
-LEVER_PACKETS = (117, 118, '118b', 119, 120, 121)                                 # anchor_decode / bencode_overlap / prep_ahead, 121 frames
-SERVER_OPTION_PACKETS = (118, '118b', 119, 120, 121)                             # snapshot_mode, decoder-graph pool cap, timing split
+# Packet 122: refined memory census and optional upward-only display transient reserve.
+PACKETS[122] = {'dir': R / 'prepared-continuation-stream-122',
+                'manifest_sha256': '8b576c863ec5896fe356e5a264728ddafe368ef2fe90608c9b5bc164687cb7fa',
+                'plan_sha256': '0ef91a395112bd7d1ffecbbc2d74bf5ccc89267751447be9b21a4b4ec107c060',
+                'modules': {'stream_contract': 'bae6d07fbf6737abed1d60d57f5ccb9087d6d00bba6b721008122fb293e71cdb',
+                            'stream_receipts': '2c94962905ddeb93fa85c32c907eccc0d11b02c5954a6ff1df1c74360a0b8105',
+                            'qualification_gate': '25f766505ddcaf2a15680440d7972c4549ef6f9c8f1eff4e039b5734b0dd2d78'},
+                'reference_sha256': '47040972fdcbb7f5837086d067122afd5130441bc5396f7b562a028e7faf5bb7'}
+DECODER_GRAPH_PACKETS = (116, '116b', 117, 118, '118b', 119, 120, 121, 122)            # decoder_graph field, 116 preflight, 116 gate and references
+DECODE_THREAD_PACKETS = (114, 115, 116, '116b', 117, 118, '118b', 119, 120, 121, 122)  # anchor mode, decode thread, decode records
+RESET_PACKETS = (113, 114, 115, 116, '116b', 117, 118, '118b', 119, 120, 121, 122)     # chain resets, preview after receipt
+LEVER_PACKETS = (117, 118, '118b', 119, 120, 121, 122)                                 # anchor_decode / bencode_overlap / prep_ahead, 121 frames
+SERVER_OPTION_PACKETS = (118, '118b', 119, 120, 121, 122)                             # snapshot_mode, decoder-graph pool cap, timing split
 # ----------------------------------------------------------------------------------------------
 PACKET = PACKETS[112]['dir']                     # packet 112 defaults (unchanged)
 CONTRACT_DIR = PACKET / 'resolution/components'
@@ -233,6 +247,7 @@ STREAM_DIR_RE_116 = re.compile(r'stream116-s[0-9]{8}')   # packet 116
 STREAM_DIR_RE_116B = re.compile(r'stream116b-s[0-9]{8}')  # packet 116b
 STREAM_DIR_RE_117 = re.compile(r'stream117-s[0-9]{8}')    # packet 117
 STREAM_DIR_RE_118 = re.compile(r'stream118-s[0-9]{8}')    # packet 118
+STREAM_DIR_RE_122 = re.compile(r'stream122-s[0-9]{8}')
 STREAM_DIR_RE_121 = re.compile(r'stream121-s[0-9]{8}')
 STREAM_DIR_RE_120 = re.compile(r'stream120-s[0-9]{8}')
 STREAM_DIR_RE_119 = re.compile(r'stream119-s[0-9]{8}')
@@ -490,7 +505,7 @@ class Api:
 
 
 def packet_id(text):
-    """--packet: an int for digit strings (112-121), the string itself otherwise ('116b', '118b')."""
+    """--packet: an int for digit strings (112-122), the string itself otherwise ('116b', '118b')."""
     return int(text) if str(text).isdigit() else str(text)
 
 
@@ -515,11 +530,11 @@ class Client:
         self.api = Api('http://%s:%d' % (a.host, a.port), a.http_fail_seconds)
         self.client_id = ({114: 'stream114-client-', 115: 'stream115-client-',
                            116: 'stream116-client-', '116b': 'stream116b-client-',
-                           117: 'stream117-client-', 118: 'stream118-client-', '118b': 'stream118b-client-', 119: 'stream119-client-', 120: 'stream120-client-', 121: 'stream121-client-'}.get(a.packet, 'stream112-client-') +
+                           117: 'stream117-client-', 118: 'stream118-client-', '118b': 'stream118b-client-', 119: 'stream119-client-', 120: 'stream120-client-', 121: 'stream121-client-', 122: 'stream122-client-'}.get(a.packet, 'stream112-client-') +
                           uuid.uuid4().hex[:12])
         self.stream_dir_re = {114: STREAM_DIR_RE_114, 115: STREAM_DIR_RE_115,
                               116: STREAM_DIR_RE_116, '116b': STREAM_DIR_RE_116B,
-                              117: STREAM_DIR_RE_117, 118: STREAM_DIR_RE_118, '118b': STREAM_DIR_RE_118B, 119: STREAM_DIR_RE_119, 120: STREAM_DIR_RE_120, 121: STREAM_DIR_RE_121}.get(a.packet, STREAM_DIR_RE)
+                              117: STREAM_DIR_RE_117, 118: STREAM_DIR_RE_118, '118b': STREAM_DIR_RE_118B, 119: STREAM_DIR_RE_119, 120: STREAM_DIR_RE_120, 121: STREAM_DIR_RE_121, 122: STREAM_DIR_RE_122}.get(a.packet, STREAM_DIR_RE)
         self.decoder_graph = None           # packet 116: the server's LTX_DECODER_GRAPH
         self.levers = None                  # packet 117: (anchor_decode, bencode_overlap, prep_ahead)
         self.server_options = None          # packet 118: {snapshot_mode, decoder_graph_pool_cap_bytes}
@@ -543,11 +558,13 @@ class Client:
     def status_server_options(self, st):
         options = {'snapshot_mode': st.get('snapshot_mode'),
                    'decoder_graph_pool_cap_bytes': st.get('decoder_graph_pool_cap_bytes')}
-        if self.a.packet in (119, 120, 121):
+        if self.a.packet in (119, 120, 121, 122):
             options.update({key: st.get(key) for key in
                             ('display_schedule', 'anchor_read_ahead', 'snapshot_schedule')})
-        if self.a.packet in (120, 121):
+        if self.a.packet in (120, 121, 122):
             options['display_device'] = st.get('display_device')
+        if self.a.packet == 122 and 'display_replica_transient_budget_bytes' in st:
+            options['display_replica_transient_budget_bytes'] = st['display_replica_transient_budget_bytes']
         return options
 
     # ---- state ---------------------------------------------------------------------------
@@ -627,6 +644,7 @@ class Client:
                           ('snapshot_mode', self.a.expect_snapshot_mode),
                           ('display_schedule', getattr(self.a, 'expect_display_schedule', None)),
                           ('display_device', getattr(self.a, 'expect_display_device', None)),
+                          ('display_replica_transient_budget_bytes', getattr(self.a, 'expect_display_transient_bytes', None)),
                           ('anchor_read_ahead', getattr(self.a, 'expect_anchor_read_ahead', None)),
                           ('snapshot_schedule', getattr(self.a, 'expect_snapshot_schedule', None)),
                           ('decoder_graph_pool_cap_bytes', self.a.expect_pool_cap_bytes)):
@@ -696,13 +714,13 @@ class Client:
                     not (cap is None or (type(cap) is int and cap > 0 and st.get('decoder_graph') == 1)):
                 problems.append('--packet %s needs a packet %s server with valid server options (snapshot_mode=%r '
                                 'pool cap=%r features=%r)' % (self.a.packet, self.a.packet, st.get('snapshot_mode'), cap, feats))
-        if self.a.packet in (119, 120, 121):
+        if self.a.packet in (119, 120, 121, 122):
             if st.get('display_schedule') not in ('sampler-a', 'sampler-b', 'eager-display') or \
                     type(st.get('anchor_read_ahead')) is not int or st.get('anchor_read_ahead') not in (0, 1) or \
                     st.get('snapshot_schedule') not in ('full', 'a-xpu3-sync') or \
                     (st.get('snapshot_schedule') == 'a-xpu3-sync' and st.get('snapshot_mode') != 'fingerprint'):
                 problems.append('packet %s scheduling options invalid: %r' % (self.a.packet, self.status_server_options(st)))
-        if self.a.packet in (120, 121):
+        if self.a.packet in (120, 121, 122):
             if st.get('plan_sha256') != PACKETS[self.a.packet]['plan_sha256']:
                 problems.append('packet %s plan differs from the pinned plan' % self.a.packet)
             if st.get('display_device') not in ('xpu:3', 'xpu:2') or (
@@ -710,8 +728,17 @@ class Client:
                     (st.get('frames') not in ((121,) if self.a.packet == 120 else (121, 145)) or st.get('anchor') != 'frame' or st.get('anchor_decode') != 'cone' or
                      st.get('display_schedule') != 'eager-display')):
                 problems.append('packet %s display device requires its supported long length/frame/cone/eager-display' % self.a.packet)
-        if self.a.packet == 121 and feats.get('chunk_145') is not True:
-            problems.append('packet 121 requires chunk_145 feature')
+        if self.a.packet in (121, 122) and feats.get('chunk_145') is not True:
+            problems.append('packet %s requires chunk_145 feature' % self.a.packet)
+        if self.a.packet == 122:
+            budget = st.get('display_replica_transient_budget_bytes')
+            if 'display_replica_transient_budget_bytes' in st:
+                if (st.get('display_device') != 'xpu:2' or type(budget) is not int or
+                        st.get('frames') not in self.c.FRAME_CHOICES or
+                        not self.c.display_transient_bytes(st['frames']) <= budget <= 8 * 2**30):
+                    problems.append('packet 122 display transient budget invalid or below its census')
+                if getattr(self.a, 'expect_display_transient_bytes', None) is None:
+                    problems.append('packet 122 explicit display transient budget needs a client expectation')
         if problems:
             raise Stop(8, 'preflight refused: ' + '; '.join(problems))
         self.bind_dirs(st)
@@ -842,7 +869,7 @@ class Client:
             raise Stop(13, 'verdict file is not a pass: passed=%r failures=%r' % (v.get('passed'), v.get('failures')))
         if v.get('plan_sha256') != st.get('plan_sha256'):
             raise Stop(13, 'verdict plan_sha256 differs from the server plan')
-        if self.a.packet in (119, 120, 121) and v.get('server_options') != self.status_server_options(st):
+        if self.a.packet in (119, 120, 121, 122) and v.get('server_options') != self.status_server_options(st):
             raise Stop(13, 'verdict server_options differ from the server status')
         # Independent re-derivation: the nine committed receipts from the receipt route, the server's
         # own capture re-reads from the verdict file, and the sealed decision function.
@@ -859,7 +886,7 @@ class Client:
                 self.rc.validate_receipt(rec)
             except ValueError as e:
                 raise Stop(13, 'qualification receipt %s fails the receipt schema: %s' % (name, e))
-            if self.a.packet in (119, 120, 121) and rec.get('server_options') != self.status_server_options(st):
+            if self.a.packet in (119, 120, 121, 122) and rec.get('server_options') != self.status_server_options(st):
                 raise Stop(13, 'qualification receipt %s server_options differ from the server status' % name)
             receipts.append(rec)
             if self.a.packet in DECODE_THREAD_PACKETS:
@@ -1145,7 +1172,7 @@ class Client:
             raise Stop(12, 'decode record of %s fails its schema / receipt binding: %s' % (name, e))
 
     def validate_decode_identity(self, record, receipt):
-        if self.a.packet in (120, 121):
+        if self.a.packet in (120, 121, 122):
             options = receipt.get('server_options') or {}
             expected = 'xpu:3' if receipt.get('kind') == 'qualify-eager' else options.get('display_device')
             if expected not in ('xpu:3', 'xpu:2') or record.get('display_device') != expected:
@@ -1246,7 +1273,7 @@ class Client:
                             decoder_mode=(drec.get('decoder') or {}).get('mode'),
                             video_decode_s=(drec.get('decoder') or {}).get('video_decode_s'),
                             decode_in_chain=timing.get('decode_in_chain'))
-            if self.a.packet in (120, 121):
+            if self.a.packet in (120, 121, 122):
                 line.update(display_device=drec['display_device'], display_replica=drec.get('display_replica'))
             if self.a.packet in LEVER_PACKETS:         # packet 117: the levers that produced this chunk
                 ad = drec.get('anchor_decode') or {}
@@ -1271,7 +1298,7 @@ class Client:
                             turnaround=(r.get('turnaround') or {}).get('split'),
                             client_turnaround_s=marks.get(r['run_name'], {}).get('turnaround_s'),
                             client_post_s=marks.get(r['run_name'], {}).get('post_s'))
-                if self.a.packet in (119, 120, 121):
+                if self.a.packet in (119, 120, 121, 122):
                     line['anchor_read_source'] = r.get('anchor_read_source')
                     line['snapshots']['synchronized'] = [s.get('synchronized') for s in snaps]
                     line['snapshots']['memory_cards'] = [s.get('memory_cards') for s in snaps]
@@ -1657,7 +1684,7 @@ def main(argv=None):
                          'or 118b (reviewed rebuild of 118; stream118b- names) '
                          'or 119 (display schedule, anchor read-ahead, optional snapshot schedule) '
                          'or 120 (isolated display decoder with cross-card byte gate) '
-                         'or 121 (145-frame chunks)')
+                         'or 121 (145-frame chunks) or 122 (refined memory census)')
     ap.add_argument('--manifest-sha256', help='expected runtime_manifest_sha256 (default: the --packet build)')
     ap.add_argument('--contract-dir', type=Path, help='sealed stream_contract.py location (default: the --packet build)')
     ap.add_argument('--reset-every-chunks', type=int, default=0,
@@ -1665,27 +1692,29 @@ def main(argv=None):
     ap.add_argument('--reset-on-scene-change', action='store_true',
                     help='113-116 only: submit a chain reset whenever the scene (or its prompt) changes')
     ap.add_argument('--expect-frames', type=int, choices=(49, 25, 97, 121, 145),
-                    help='145 requires packet121; 169 is withheld by the memory census')
+                    help='145 requires packet121/122; 169 is withheld by the memory census')
     ap.add_argument('--expect-anchor', choices=('mixed', 'latent', 'frame', 'guide'),
                     help='114/115 only: the server anchor mode (114: latent or frame)')
     ap.add_argument('--expect-decoder-graph', type=int, choices=(0, 1),
                     help='116 only: the server LTX_DECODER_GRAPH')
-    ap.add_argument('--expect-anchor-decode', choices=('full', 'cone'), help='117/118/118b/119/120/121 only: the server LTX_ANCHOR_DECODE')
+    ap.add_argument('--expect-anchor-decode', choices=('full', 'cone'), help='117/118/118b/119/120/121/122 only: the server LTX_ANCHOR_DECODE')
     ap.add_argument('--expect-bencode-overlap', type=int, choices=(0, 1),
-                    help='117/118/118b/119/120/121 only: the server LTX_BENCODE_OVERLAP')
-    ap.add_argument('--expect-prep-ahead', type=int, choices=(0, 1), help='117/118/118b/119/120/121 only: the server LTX_PREP_AHEAD')
+                    help='117/118/118b/119/120/121/122 only: the server LTX_BENCODE_OVERLAP')
+    ap.add_argument('--expect-prep-ahead', type=int, choices=(0, 1), help='117/118/118b/119/120/121/122 only: the server LTX_PREP_AHEAD')
     ap.add_argument('--expect-snapshot-mode', choices=('walk', 'fingerprint'),
-                    help='118/118b/119/120/121 only: the server LTX_SNAPSHOT_MODE')
+                    help='118/118b/119/120/121/122 only: the server LTX_SNAPSHOT_MODE')
     ap.add_argument('--expect-pool-cap-gb', default=None,
-                    help="118/118b/119/120/121 only: the server LTX_DECODER_GRAPH_POOL_CAP_GB ('none' = unset)")
+                    help="118/118b/119/120/121/122 only: the server LTX_DECODER_GRAPH_POOL_CAP_GB ('none' = unset)")
+    ap.add_argument('--expect-display-transient-gib',
+                    help='122 only: explicit replica transient budget in GiB; unset expects the census default')
     ap.add_argument('--expect-display-device', choices=('xpu:3', 'xpu:2'),
-                    help='120/121 only: display video decoder device')
+                    help='120/121/122 only: display video decoder device')
     ap.add_argument('--expect-display-schedule', choices=('sampler-a', 'sampler-b', 'eager-display'),
-                    help='119/120/121 only: the server display decode schedule')
+                    help='119/120/121/122 only: the server display decode schedule')
     ap.add_argument('--expect-anchor-read-ahead', type=int, choices=(0, 1),
-                    help='119/120/121 only: the server CPU anchor read-ahead option')
+                    help='119/120/121/122 only: the server CPU anchor read-ahead option')
     ap.add_argument('--expect-snapshot-schedule', choices=('full', 'a-xpu3-sync'),
-                    help='119/120/121 only: full safety snapshots or owner-authorized A xpu:3-only synchronization')
+                    help='119/120/121/122 only: full safety snapshots or owner-authorized A xpu:3-only synchronization')
     ap.add_argument('--reference-hashes', type=Path,
                     help='116 only: cross-packet reference document for the gate (default: the sealed packet\'s, '
                          'SHA-256 checked); refused on the live port')
@@ -1722,21 +1751,32 @@ def main(argv=None):
     if a.expect_anchor is not None and a.packet not in DECODE_THREAD_PACKETS:
         raise SystemExit('--expect-anchor needs --packet 114, 115 or 116')
     if (a.expect_decoder_graph is not None or a.reference_hashes is not None) and a.packet not in DECODER_GRAPH_PACKETS:
-        raise SystemExit('--expect-decoder-graph / --reference-hashes need --packet 116, 116b, 117, 118, 118b or 119 or 120 or 121')
+        raise SystemExit('--expect-decoder-graph / --reference-hashes need --packet 116, 116b, 117, 118, 118b or 119 or 120 or 121 or 122')
     if (a.expect_anchor_decode is not None or a.expect_bencode_overlap is not None or
             a.expect_prep_ahead is not None) and a.packet not in LEVER_PACKETS:
-        raise SystemExit('--expect-anchor-decode / --expect-bencode-overlap / --expect-prep-ahead need --packet 117, 118, 118b or 119 or 120 or 121')
-    if a.expect_frames == 145 and a.packet != 121:
-        raise SystemExit('--expect-frames 145 needs --packet 121')
+        raise SystemExit('--expect-anchor-decode / --expect-bencode-overlap / --expect-prep-ahead need --packet 117, 118, 118b or 119 or 120 or 121 or 122')
+    if a.expect_frames == 145 and a.packet not in (121, 122):
+        raise SystemExit('--expect-frames 145 needs --packet 121 or 122')
     if a.expect_frames == 121 and a.packet not in LEVER_PACKETS:
-        raise SystemExit('--expect-frames 121 needs --packet 117, 118, 118b or 119 or 120 or 121')
+        raise SystemExit('--expect-frames 121 needs --packet 117, 118, 118b or 119 or 120 or 121 or 122')
     if (a.expect_snapshot_mode is not None or a.expect_pool_cap_gb is not None) and a.packet not in SERVER_OPTION_PACKETS:
-        raise SystemExit('--expect-snapshot-mode / --expect-pool-cap-gb need --packet 118, 118b or 119 or 120 or 121')
-    if a.packet not in (119, 120, 121) and any(value is not None for value in
+        raise SystemExit('--expect-snapshot-mode / --expect-pool-cap-gb need --packet 118, 118b or 119 or 120 or 121 or 122')
+    if a.packet not in (119, 120, 121, 122) and any(value is not None for value in
                               (a.expect_display_schedule, a.expect_anchor_read_ahead, a.expect_snapshot_schedule)):
-        raise SystemExit('--expect-display-schedule / --expect-anchor-read-ahead / --expect-snapshot-schedule need --packet 119 or 120 or 121')
-    if a.packet not in (120, 121) and a.expect_display_device is not None:
-        raise SystemExit('--expect-display-device needs --packet 120 or 121')
+        raise SystemExit('--expect-display-schedule / --expect-anchor-read-ahead / --expect-snapshot-schedule need --packet 119 or 120 or 121 or 122')
+    if a.packet not in (120, 121, 122) and a.expect_display_device is not None:
+        raise SystemExit('--expect-display-device needs --packet 120 or 121 or 122')
+    a.expect_display_transient_bytes = None
+    if a.expect_display_transient_gib is not None:
+        if a.packet != 122:
+            raise SystemExit('--expect-display-transient-gib needs --packet 122')
+        try:
+            budget = Decimal(a.expect_display_transient_gib) * 2**30
+            if not budget.is_finite() or budget != budget.to_integral_value() or not 0 < budget <= 8 * 2**30:
+                raise ValueError('budget outside range or fractional bytes')
+            a.expect_display_transient_bytes = int(budget)
+        except (DecimalException, ValueError):
+            raise SystemExit('--expect-display-transient-gib must be finite, exact integer bytes and at most 8 GiB')
     a.expect_pool_cap_bytes = None
     if a.expect_pool_cap_gb is not None and a.expect_pool_cap_gb != 'none':
         m = re.fullmatch(r'(0|[1-9][0-9]?)(\.([0-9]{1,2}))?', a.expect_pool_cap_gb)

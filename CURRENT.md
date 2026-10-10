@@ -1,5 +1,22 @@
 # Current Workspace State
 
+**2026-10-10, packet 122 sealed on CPU; 169 frames still held back by memory.**
+The saved 145-frame readings give more sampler room than the previous estimate,
+but 169 still misses the required allowance on two cards. Moving display to the
+spare card does not fix that. The next coordinator comparison is 145 frames with
+the graph cone and display copy on xpu:2: predicted 5.35–5.90 seconds for six
+seconds of new video, conditional on memory and exact-output checks. Retained
+storage on xpu:3 may still refuse it. The display copy keeps its 5.640625 GiB
+allowance; a new checked launch option can increase it, never reduce it.
+The packet has 2,005 recursively verified files, no Python caches, 489 unique
+recovery checks validated (full discovery plus corrected/added modules), 783
+passing client checks and 10 mocked preflight checks. Final manifest is
+`8b576c86…87cb7fa`. No GPU, launch, live preflight, port, unit, process signal,
+existing-run write or host change was made. The coordinator's newer preview
+read race below is inherited and remains open; the live-work entries are theirs.
+[Analysis, margins and checks](experiments/ltx25-b70/notes/2026-10-10-continuation121-results-145.md)
+and [launch reference](experiments/ltx25-b70/recovery/20261010-continuation122-stream/LAUNCH.md).
+
 **2026-10-10 04:34 UTC, client stop on an HTTP 500 from the preview route (chunk 154); server healthy; client resumed.**
 At 04:32:30 UTC the 121 client stopped itself (exit 7, no retry by design): the preview route answered HTTP 500 because the packet's
 evidence guard (`read_regular`: size/inode/mtime/ctime identical before and after the read) saw `preview_00001_.mp4` of

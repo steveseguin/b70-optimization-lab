@@ -1,0 +1,23 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/run_tests_122.py", line 55, in <module>
+    runpy.run_path(target, run_name='__main__')
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "experiments/ltx25-b70/recovery/20261010-continuation122-stream/harness_runtime.py", line 780, in <module>
+    rt = integration.Runtime(PACKET, manifest, MANIFEST_SHA, RUN)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/integration.py", line 262, in __init__
+    self.authority = session.configure(self.packet / 'resolution/stream-plan.json', manifest_sha,
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/session.py", line 544, in configure
+    _authority = StreamAuthority(*args, **kwargs)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/session.py", line 167, in __init__
+    self.plan = load_plan(plan_path)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/session.py", line 154, in load_plan
+    require(type(envelope) is dict and set(envelope) == {'plan', 'plan_sha256'} and
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation122-stream/session.py", line 60, in require
+    raise RuntimeError(message)
+RuntimeError: Not the reviewed packet122 stream plan
