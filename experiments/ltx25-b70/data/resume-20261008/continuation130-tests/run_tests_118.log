@@ -1,0 +1,17 @@
+PASS D1 118 frame/97 fingerprint: qualification re-derived with the 118 gate (snapshot rows), 5 stream118 chunks with the split, the snapshots and the turnaround, exit 0 rc=0 rows=5 probs=[] last=['[c112 10:12:31.401] clean stop: 5 chunks this run, next stream_seq 5, next manifest seq 5']
+PASS D2 every line but the last carries the client turnaround (receipt verified -> next POST) and POST time [0.000481, 0.000467, 0.000599, 0.000479, None]
+PASS D3 status packet 118 with the server options and features {'latent_anchor': False, 'mixed_anchor': False, 'guide_anchor': False, 'frame_anchor': True, 'decode_thread': True, 'async_preview': True, 'chain_reset': True, 'anchor_diagnostics': True, 'sharpness_diagnostic': True, 'chunk_length_choice': True, 'text_reuse_default_on': True, 'video_first_handoff': True, 'decoder_graph': True, 'cone_anchor_decode': True, 'bencode_overlap': True, 'prep_ahead': True, 'chunk_121': True, 'timing_split': True, 'snapshot_fingerprint': True, 'decoder_graph_pool_cap': False}
+PASS D4 a walk-mode server: the gate passes with no dual snapshots; 3 chunks, exit 0 rc=0 probs=[] last=['[c112 10:12:35.261] clean stop: 3 chunks this run, next stream_seq 3, next manifest seq 3']
+PASS D5 a 121-frame dg1 server with a 1.0 GB pool cap: the gate accepts one capture; 3 chunks, exit 0 rc=0 probs=[] last=['[c112 10:12:38.968] clean stop: 3 chunks this run, next stream_seq 3, next manifest seq 3']
+PASS D6 --expect-pool-cap-gb none against a fingerprint/1.0 GB server refuses at preflight (exit 8), nothing new posted rc=8
+PASS D6 --expect-pool-cap-gb 2.0 against a fingerprint/1.0 GB server refuses at preflight (exit 8), nothing new posted rc=8
+PASS D6 --expect-snapshot-mode walk against a fingerprint/1.0 GB server refuses at preflight (exit 8), nothing new posted rc=8
+PASS D7 qualification snapshots without the dual walk fail the 118 gate; client exit 13 rc=13 last=['[c112 10:12:42.541] no retry, no restart: inspect the evidence before running again']
+PASS D8 a server that claims a pass over those snapshot rows is refused by the re-derivation (exit 13) rc=13 last=['[c112 10:12:45.416] no retry, no restart: inspect the evidence before running again']
+PASS D9 a 117 client (118 manifest sha) refuses a 118 server at preflight, exit 8, nothing posted rc=8 last=['[c112 10:12:46.796] no retry, no restart: inspect the evidence before running again']
+PASS D10 a 118 client against a 117 server refuses at preflight (no server options / packet), exit 8 rc=8 last=['[c112 10:12:48.200] no retry, no restart: inspect the evidence before running again']
+PASS D11 --expect-snapshot-mode is refused for --packet 117 (argument check) rc=1
+PASS D12 --expect-pool-cap-gb outside 0.25..16 is refused (argument check) rc=1
+PASS D13 --packet 118 with the 117 contract module is refused (module pin), exit 8 rc=8
+
+15/15 passed; work in /tmp/ltx-cpu-suite-uepwywmz/ltx-c118-test-dn12kl25

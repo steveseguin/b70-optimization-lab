@@ -1,5 +1,42 @@
 # Current Workspace State
 
+**2026-10-10, packet 130 sealed for CPU-only review; live 169-frame admission remains unverified.**
+The saved 169 refusal needs more memory than its message says: it is short
+0.616 GiB for the reserve and floor, or **1.366 GiB including the existing
+screening margin**. Recovering 0.8 GiB would still fail. Card 2 holds the first
+text shard (14.278 GiB), the display copy (0.777 GiB), and live graph/workspace
+allocations. Its adjacent snapshots show 2.400–3.856 GiB reserved but unused;
+that is a candidate pool, not a promise that those bytes can be released.
+
+The new optional allocator release runs once before an otherwise failing
+display admission, then checks physical free memory again. Default off keeps
+129's behavior. The operation can release unused allocator blocks across all
+cards; it leaves live tensors, graphs, arithmetic and every memory/byte gate
+intact. The transient reserve remains 6.5 GiB. No GPU operation, model launch,
+unit operation or live request was performed, and existing runs were untouched.
+The coordinator still controls the live server.
+
+With a hypothetical 1.5 GiB release, saved card margins become
+1.231 / 1.773 / 0.884 / 1.555 GiB after the relevant floors/reserve. Card 2
+would clear its screening margin by 0.134 GiB. Forecast for the documented
+169-frame parallel-display setup is 6.20–6.65 seconds per seven seconds of
+video (0.886–0.950 s/s), plus unknown release cost. Actual reclaimed bytes,
+full native equality, sustained memory headroom and repeated speed remain
+for coordinator qualification; this preparation verifies no reclaimed GiB.
+
+Parent 129; manifest `14aa145e…0980ed`; inner plan `0d24d0ff…af82ba`.
+All **842 recovery tests**, **4,419 client checks in 35 suites**, **10 mocked
+preflight tests**, and both final CPU runtime cases pass. All 24 inner-plan pin
+assertions pass. Recursive verification covers 2,219 bound files (2,221 total),
+with zero Python caches. All 35 client scratch roots and recovery scratch are
+removed. Work used nice19, OMP/MKL2 and the pinned bin/python -B.
+Links and manifest paths pass; the broad hash audit retains the same 231
+existing Flash-Next drifts reported for129.
+[Verified inventory and alternatives](experiments/ltx25-b70/notes/2026-10-10-xpu2-residency-169.md),
+[design](experiments/ltx25-b70/notes/2026-10-10-continuation130-stream-design.md),
+[build receipt](experiments/ltx25-b70/data/resume-20261008/continuation130-build.json),
+[future launch and matching client](experiments/ltx25-b70/recovery/20261010-continuation130-stream/LAUNCH.md).
+
 **2026-10-10 10:18 UTC, combined 128 arm (idle + GC 60 + digest cache) measured: n = 61, median 5.528 s (even 5.50 / odd 5.84, p90 6.01) = 0.921 s/s (verdict 0d1d0d811ce2, exact); the two levers overlap rather than add. Packet 129 launched at 145 with the same production configuration (`s129-live01`).**
 145-frame line summary (chunks ≥ 10): 121 legacy 5.636 · 123b 5.770 · 126 5.759 · **127 5.467** · 128 (idle, GC 10) 5.493 · 128 (idle + GC 60 + digest) as above.
 The production line is therefore ≈ 5.47–5.50 s per 6.0 s of video = **0.91–0.92 s/s**, all configurations byte-exact at the gates. 129 adds
