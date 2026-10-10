@@ -1,5 +1,31 @@
 # Current Workspace State
 
+**2026-10-10, packet 135 sealed and CPU-validated: storage accounting tolerates deletion races and links wholly inside its owned files.**
+The stopped 133b run did not record the offending path or link count, and all
+retained files now have one link. Its guard also rejected zero links; a CPU
+creation/deletion test reproduced that case without making any hard links.
+The historical path and writer remain unknown. Packet 135 waits once for 10 ms and scans
+again, charges internal links once by inode, and refuses external links with
+path/link-count evidence. The 50 GiB reserve, allowance and background write
+margin remain unchanged. The production arm remains 133b's 145-frame split36,
+cone graph and display on card 3; the coordinator retains control of live work.
+
+All 1,076 recovery checks passed, including 15 storage cases and 9 sealed-import
+checks covering 67 helper copies. All 6,718 client checks across 45 suites passed,
+with 36 inner-plan assertions. The 135-only client commit also passed 113 contract
+and 208 integration checks, with 34 pins; concurrent 134 changes remain untouched
+in the shared working file. Ten mocked preflight checks and 22 CPU output
+comparisons passed. Recursive verification covers 2,327 bound files; Python
+caches are zero and owned scratch is removed. No GPU, launcher, check-only,
+live-port, unit, existing-run write or ltx-stream operation occurred. Native
+qualification is still pending.
+
+Manifest `4356482eae2f1d7ac95b17e6483379ceed0cc90ed488d46765803451980402c3`;
+inner plan `7750e7b54c885f99a73ab87b17013fc0a850a1af942f0c00422adbae596258c4`.
+[Design and incident evidence](experiments/ltx25-b70/notes/2026-10-10-continuation135-stream-design.md),
+[build receipt](experiments/ltx25-b70/data/resume-20261008/continuation135-build.json),
+[future command](experiments/ltx25-b70/recovery/20261010-continuation135-stream/LAUNCH.md).
+
 
 **2026-10-10, packet 134 census: only the 169-frame graph-off arm clears the full memory screen; CPU validation is running.**
 The 145-frame receipt audit confirms exact outputs on31/31 chunks and measured

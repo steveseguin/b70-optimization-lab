@@ -1,0 +1,180 @@
+{
+  "schema": "ltx.continuation135.storage-incident-audit.v1",
+  "parent_packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-133b",
+  "parent_manifest_sha256": "ed908a9031a937801d17264edacfe0807bea543badc412a32eb6118daa214fd3",
+  "halted_run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z",
+  "evidence": [
+    {
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/stream-halt.json",
+      "sha256": "4411612c74bb69762ba938fef11ad483c024f7ef738693cf3c907ea00b7ffd62"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/stream-failure-stream133b-s00000073.json",
+      "sha256": "749e8a2ec1c5eb1941375afab4c2d2250728b0cba7a9a4d946f16e4443999abd"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000072.json",
+      "sha256": "85ce38e601016672d295be9e3411de70d788e5c291511dad50a03ccd16b54313"
+    }
+  ],
+  "halt": {
+    "reason": "Stream storage accounting failed: RuntimeError('Run storage refuses multiply linked files')",
+    "time_ns": 1791643729880111916,
+    "stream_completed": 73,
+    "active_request": "stream133b-s00000073"
+  },
+  "attribution": {
+    "offending_path": null,
+    "linker": null,
+    "observed_nlink_at_failure": null,
+    "status": "unknown: retained halt and failure records omit path, inode and nlink; no current linked inode survives",
+    "hardlink_creation_proven": false,
+    "zero_link_unlink_race_proven_for_historical_incident": false
+  },
+  "retained_run_census": {
+    "method": "os.walk(followlinks=False), lstat each named file; read-only",
+    "regular_files": 348,
+    "regular_files_with_nlink_not_one": [],
+    "limitations": "Historical shared outputs/requests are not preserved under these original names; current absence cannot identify historical offending path."
+  },
+  "shared_scope_observation": {
+    "directories": [
+      "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output",
+      "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/requests",
+      "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation"
+    ],
+    "selection": "immediate child name starts stream133b-; recurse selected directories",
+    "regular_files_at_initial_audit": 0,
+    "live_scope_not_modified": true
+  },
+  "last_successful_storage_sample": {
+    "accounting": "run-owned-st_blocks-v1",
+    "allowance_bytes": 17179869184,
+    "check_seconds": 2.255200524814427e-05,
+    "completed_write_epoch": 153,
+    "consumed_bytes": 1086050304,
+    "free_bytes": 73568780288,
+    "pending_write_reserve_bytes": 268435456,
+    "reserve_bytes": 53687091200,
+    "run_write_allowance_bytes": 17179869184,
+    "sample_age_s": 0.08077761699678376,
+    "sample_generation": 1588,
+    "sample_wait_seconds": 5.409994628280401e-06,
+    "scan_mode": "background",
+    "scan_seconds": 0.0320952009933535
+  },
+  "source_audit": {
+    "scope": "Executable source (.py, .sh, .c, .cpp, .h) under sealed source, launch, resolution; source includes ComfyUI core",
+    "hardlink_call_search": [
+      "os.link(",
+      "hardlink_to(",
+      "libc.link",
+      "linkat("
+    ],
+    "hardlink_creation_calls_found": [],
+    "false_positive_excluded": "comfy_api/latest/_input_impl/video_types.py link_to calls connect AV filter graph nodes, not filesystem hardlinks",
+    "parent_guard": {
+      "file": {
+        "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-133b/source/scripts/run_storage.py",
+        "sha256": "9fc3e659627f205afcf7654552c3e7c97d2036f6dd5d6fb45def3f98d0a29574"
+      },
+      "line": 123,
+      "predicate": "child.st_nlink != 1",
+      "message": "Run storage refuses multiply linked files",
+      "implication": "The error also covers nlink=0 after concurrent unlink; it does not prove nlink>1."
+    },
+    "publication": [
+      {
+        "file": {
+          "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-133b/source/scripts/evidence_publication.py",
+          "sha256": "a27a4f2b5d35a9ef76e571dc38943f546db7a9f2c405ddc549de25b45a6e7646"
+        },
+        "mechanism": "same-directory temporary file; fsync; libc.renameat2(RENAME_NOREPLACE); no link/unlink fallback"
+      },
+      {
+        "file": {
+          "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-133b/source/scripts/stream_preview.py",
+          "sha256": "f0117a323209a20d4e97437b1c6792a9758461bde1ae324b997c0561def3e011"
+        },
+        "mechanism": "same-directory temporary file; fsync; libc.renameat2(RENAME_NOREPLACE); no link/unlink fallback"
+      },
+      {
+        "file": {
+          "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-133b/source/custom_nodes/ltx_graph_capture_lab/__init__.py",
+          "sha256": "775456c2d20b692dbe17d37819fb0364fdedf44681eae5b54b39ffc692a677c3"
+        },
+        "mechanism": "write_json opens exclusive x and writes JSON; no hardlink call"
+      }
+    ],
+    "deletion_paths": [
+      {
+        "file": {
+          "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-133b/resolution/components/session.py",
+          "sha256": "7891b387dfdf9768973dfa06fd23d952ac8e63eee7310b8873638ca9310c2c7d"
+        },
+        "line": 495,
+        "operation": "_safe_path(stale).unlink()",
+        "purpose": "delete stale stream anchor"
+      },
+      {
+        "file": {
+          "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-133b/resolution/components/integration.py",
+          "sha256": "6af950b2d1f6ba8f839fac9181df8ff1a05161eae69353d04319226d9de76729"
+        },
+        "line": 1673,
+        "operation": "Path(path).unlink()",
+        "purpose": "prune old frame anchors"
+      },
+      {
+        "file": {
+          "path": "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/ltx_continuation_client.py",
+          "sha256": "0b55737565463ed1f80cf5ffac33d31d7ad7890c1d258137ac998691dcf42ed6"
+        },
+        "line_at_audit": 1506,
+        "operation": "p.unlink()",
+        "purpose": "dispose consumed previews; current repository client source, not a separately frozen running-process identity"
+      }
+    ],
+    "sink": {
+      "file": {
+        "path": "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/ltx_rtmp_sink.py",
+        "sha256": "303b9a1fde702146023e8d0b0181c04afeaf05e54576111876446c6c9645932f"
+      },
+      "operation": "av.open(entry[path]) reads previews; no hardlink call found",
+      "qualification": "current repository source, not separately frozen running-process identity"
+    }
+  },
+  "client_log_observations": {
+    "path": "/home/steve/ltx-stream/s133b-live01/client.log",
+    "last_preview": "14:48:49.751 seq72",
+    "halt": "14:48:49.900 STOPPED exit6; no retry, no restart"
+  },
+  "sink_log_observations": {
+    "path": "/home/steve/ltx-stream/s133b-live01/sink.log",
+    "at_failure": "14:48:49.571 play seq66",
+    "drain": "seq72 at14:49:25.571; clean shutdown at14:50:13.553"
+  },
+  "cpu_unlink_race_reproduction": {
+    "kind": "bounded exploratory real-filesystem reproduction, not a historical cause attribution",
+    "duration_seconds": 2,
+    "method": "One thread repeatedly Path.write_bytes(b'x') then Path.unlink(); main thread Path.stat() until monotonic deadline. No hardlinks created. tempfile.TemporaryDirectory under /tmp cleaned on exit.",
+    "observed_nlink_counts": {
+      "1": 284579,
+      "0": 26055
+    },
+    "file_not_found_count": 227672,
+    "scratch_removed": true,
+    "runtime": "nice19; OMP_NUM_THREADS=2; python3 -B",
+    "conclusion": "Successful stat(path) may observe nlink=0 concurrently with unlink; parent generic refusal can falsely suggest a hardlink."
+  },
+  "safety": {
+    "cpu_only": true,
+    "gpu_device_open": false,
+    "server_or_check_only_launched": false,
+    "systemd_or_live_port_used": false,
+    "existing_run_or_ltx_stream_writes": false,
+    "shared_source_edits": false,
+    "scratch_retained": false
+  },
+  "recommendation": "Packet135 must name anomalous path/nlink; preserve reserve and allowance; retry one bounded scan; inode-deduplicate links contained in owned scope; reject remaining external links; also cover nlink0 deletion races."
+}
