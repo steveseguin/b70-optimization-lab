@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation137-stream/run_tests_137.py", line 60, in <module>
+    runpy.run_path(target, run_name='__main__')
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation137-stream/harness_runtime.py", line 846, in <module>
+    rt = integration.Runtime(PACKET, manifest, MANIFEST_SHA, RUN)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation137-stream/integration.py", line 210, in __init__
+    self.server_options = {'f32_scan': stream_receipts._F32_SCAN, 'run_write_allowance_bytes': self.run_write_allowance, 'snapshot_mode': self.snapshot_mode, 'decoder_graph_pool_cap_bytes': self.pool_cap}
+                                       ^^^^^^^^^^^^^^^
+NameError: name 'stream_receipts' is not defined

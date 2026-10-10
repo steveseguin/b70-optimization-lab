@@ -1,11 +1,18 @@
 # Current Workspace State
 
-**2026-10-10, CPU audit: the remaining odd-period gap on135 is mainly fresh text every fourth chunk;137 preparation is under CPU validation.**
-The saved GC10 timeline covers120 consecutive chunks. Reused-text groups all
-take about5.195seconds; the fresh-text group takes5.626seconds. The next exact
-candidate makes repeated F32 checks faster while keeping every check, hash and
-snapshot. Its estimated CPU saving is0.15seconds per chunk, not a measured
-stream gain. Live work is unchanged. [Attribution and timelines](notes/2026-10-10-continuation-residual-cycle.md).
+**2026-10-10, packet 137 is sealed and CPU-tested; live work is unchanged.**
+The remaining pooled odd-period gap on 135 is mainly fresh text every fourth
+source chunk. Reused-text groups take about 5.195 seconds; fresh-text chunks
+take 5.626 seconds. Packet 137 offers a faster exact F32 check, with every
+check, hash and snapshot retained. The estimated saving is 0.15 seconds per
+chunk, including 0.076 seconds before sampling; this is not a measured stream
+gain. Parent behavior remains the default; the candidate uses `LTX_F32_SCAN=bulk`.
+All 1,096 recovery tests and 7,780 client checks pass, plus the full sealed
+helper import and recursive verification. No GPU or model launch was used.
+Native qualification and matched speed measurements remain pending with the
+coordinator. [Attribution and timelines](notes/2026-10-10-continuation-residual-cycle.md),
+[design and commands](notes/2026-10-10-continuation137-stream-design.md),
+[build receipt](experiments/ltx25-b70/data/resume-20261008/continuation137-build.json).
 
 **2026-10-10 16:30 UTC, GC-interval A/B on the 135 production arm: GC 60: n = 111, median 5.248, mean 5.727, even 5.21 / odd 5.53, p90 5.92 = 0.875 s/s; GC 10: n = 116, median 5.242, mean 5.757, even 5.20 / odd 5.46, p90 6.00 = 0.874 s/s. Decision: the two intervals are equal within noise (medians 5.248 vs 5.242; means and p90 cross over as n grows); GC 10 is kept as the production setting (the parent cadence, one fewer special case) and `stream/ops/production-arm.json` says so; the residual odd-parity gap (≈ 0.25 s) is not the maintenance interval.**
 
