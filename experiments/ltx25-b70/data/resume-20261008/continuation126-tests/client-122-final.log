@@ -1,0 +1,140 @@
+PASS 122 participates in DECODER_GRAPH_PACKETS
+PASS 122 participates in DECODE_THREAD_PACKETS
+PASS 122 participates in RESET_PACKETS
+PASS 122 participates in LEVER_PACKETS
+PASS 122 participates in SERVER_OPTION_PACKETS
+PASS numeric packet122 parser
+PASS 122 stream directory accepted
+PASS 118b stream directory refused
+PASS valid status sampler-a/0/full
+PASS valid status sampler-a/0/a-xpu3-sync
+PASS valid status sampler-a/1/full
+PASS valid status sampler-a/1/a-xpu3-sync
+PASS valid status sampler-b/0/full
+PASS valid status sampler-b/0/a-xpu3-sync
+PASS valid status sampler-b/1/full
+PASS valid status sampler-b/1/a-xpu3-sync
+PASS valid status eager-display/0/full
+PASS valid status eager-display/0/a-xpu3-sync
+PASS valid status eager-display/1/full
+PASS valid status eager-display/1/a-xpu3-sync
+PASS invalid status display_schedule=None
+PASS invalid status display_schedule=''
+PASS invalid status display_schedule='other'
+PASS invalid status anchor_read_ahead=None
+PASS invalid status anchor_read_ahead=True
+PASS invalid status anchor_read_ahead='1'
+PASS invalid status anchor_read_ahead=2
+PASS invalid status snapshot_schedule=None
+PASS invalid status snapshot_schedule=''
+PASS invalid status snapshot_schedule='other'
+PASS sparse barriers refuse walk snapshot mode
+PASS expected display_schedule mismatch refuses
+PASS expected display_schedule matching accepts
+PASS expected anchor_read_ahead mismatch refuses
+PASS expected anchor_read_ahead matching accepts
+PASS expected snapshot_schedule mismatch refuses
+PASS expected snapshot_schedule matching accepts
+PASS expected display_device mismatch refuses
+PASS expected display_device matching accepts
+PASS packet type/identity '122' refuses
+PASS packet type/identity '118b' refuses
+PASS packet type/identity 118 refuses
+PASS complete six-field options from status
+PASS 118b preserves its two-field options
+PASS receipt consistent options accepts
+PASS receipt display_schedule drift refused
+PASS receipt anchor_read_ahead drift refused
+PASS receipt snapshot_schedule drift refused
+PASS receipt display_device drift refused
+PASS receipt snapshot_mode drift refused
+PASS receipt decoder_graph_pool_cap_bytes drift refused
+PASS receipt missing snapshot_mode refused
+PASS receipt missing decoder_graph_pool_cap_bytes refused
+PASS receipt missing display_schedule refused
+PASS receipt missing anchor_read_ahead refused
+PASS receipt missing snapshot_schedule refused
+PASS receipt missing display_device refused
+PASS verdict missing snapshot_mode refused before gate
+PASS verdict missing decoder_graph_pool_cap_bytes refused before gate
+PASS verdict missing display_schedule refused before gate
+PASS verdict missing anchor_read_ahead refused before gate
+PASS verdict missing snapshot_schedule refused before gate
+PASS verdict missing display_device refused before gate
+PASS qualification receipt missing snapshot_mode refused
+PASS qualification receipt missing decoder_graph_pool_cap_bytes refused
+PASS qualification receipt missing display_schedule refused
+PASS qualification receipt missing anchor_read_ahead refused
+PASS qualification receipt missing snapshot_schedule refused
+PASS qualification receipt missing display_device refused
+PASS new flag --expect-display-schedule refused for118b
+PASS new flag --expect-anchor-read-ahead refused for118b
+PASS new flag --expect-snapshot-schedule refused for118b
+PASS invalid display device None refused
+PASS invalid display device '' refused
+PASS invalid display device 'cpu' refused
+PASS invalid display device 'xpu:0' refused
+PASS invalid display device 2 refused
+PASS replica invalid combination frames refused
+PASS replica invalid combination anchor refused
+PASS replica invalid combination anchor_decode refused
+PASS replica invalid combination display_schedule refused
+PASS unrecognized plan refuses
+PASS decode device binding stream/xpu:3/xpu:3
+PASS decode device binding stream/xpu:2/xpu:2
+PASS decode device binding stream/xpu:2/xpu:3
+PASS decode device binding stream/xpu:3/None
+PASS decode device binding qualify-eager/xpu:2/xpu:3
+PASS decode device binding qualify-eager/xpu:2/xpu:2
+PASS decode device binding qualify-graph/xpu:2/xpu:2
+PASS decode device binding qualify-repeat/xpu:2/xpu:3
+PASS 119 option identity remains five fields
+PASS 119 decode records do not gain a required122 field
+PASS 119 refuses122 display device flag
+PASS CPU runner blocks synthetic device-open audit '/dev/dri/renderD128'
+PASS CPU runner blocks synthetic device-open audit '/dev/dri'
+PASS CPU runner blocks synthetic device-open audit b'/dev/dri/card0'
+PASS client wrapper uses fingerprint-pinned bin/python -B
+PASS client wrapper caps OMP
+PASS client wrapper binds all three options
+PASS client wrapper workdir uses122 default
+PASS client wrapper clears only its own failed state and never restarts automatically
+PASS length 121 display xpu:3 admitted
+PASS length 121 display xpu:2 admitted
+PASS length 145 display xpu:3 admitted
+PASS length 145 display xpu:2 admitted
+PASS missing long-chunk feature chunk_145 refuses
+PASS old packet 117 refuses frames145 before network
+PASS old packet 118b refuses frames145 before network
+PASS old packet 119 refuses frames145 before network
+PASS old packet 120 refuses frames145 before network
+PASS 169-frame runtime admission disabled by census
+PASS packet120 still refuses long replica configuration
+PASS explicit budget 4 GiB at121 accepts and binds
+PASS explicit budget 6 GiB at145 accepts and binds
+PASS explicit budget 8 GiB at145 accepts and binds
+PASS invalid145 transient budget None refuses
+PASS invalid145 transient budget True refuses
+PASS invalid145 transient budget '6442450944' refuses
+PASS invalid145 transient budget 4294967296 refuses
+PASS invalid145 transient budget 8589934593 refuses
+PASS explicit budget on xpu3 refuses
+PASS unrequested override refuses
+PASS override expectation mismatch refuses
+PASS required override absent refuses
+PASS default options omit budget field
+PASS historical120 options ignore new field
+PASS historical121 options ignore new field
+PASS CLI invalid transient budget NaN refuses before network
+PASS CLI invalid transient budget Infinity refuses before network
+PASS CLI invalid transient budget -1 refuses before network
+PASS CLI invalid transient budget 0 refuses before network
+PASS CLI invalid transient budget 9 refuses before network
+PASS CLI invalid transient budget 0.00000000001 refuses before network
+PASS old packet refuses explicit transient flag before network
+PASS wrapper binds explicit transient environment option
+PASS receipt explicit budget agrees
+PASS receipt budget drift refuses
+PASS receipt budget missing refuses
+
+138/138 passed; CPU-only files in /tmp/ltx-client122-cpu-ooq4172q

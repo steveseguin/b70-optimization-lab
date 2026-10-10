@@ -1,5 +1,33 @@
 # Current Workspace State
 
+**2026-10-10 08:12 UTC, packet 126 sealed on CPU; live qualification remains with the coordinator.**
+The saved receipts identify repeated storage walks and larger plan checks as
+extra CPU work. Preview fsync was already on a separate worker. Packet 126's
+explicit `LTX_STORAGE_SCAN_MODE=background` moves the walks to a helper and
+checks the full plan more cheaply, while retaining refusal and mutation checks.
+The paired CPU replay saves about 0.144 seconds per chunk's plan checks alone;
+it is not a measured model speed. The default `request` mode keeps parent paths.
+Use legacy auxiliaries, serial display on xpu:3 and GC 10 for the first 145-frame
+comparison: forecast 5.55–5.75 seconds per six seconds of video (0.925–0.958 s/s),
+target 5.61–5.64 (0.935–0.940 s/s). Native bytes, memory and speed on two fresh
+qualified servers remain open. Matched old windows do not establish a further
+0.15-second auxiliary card-hop penalty; exact historical scan/lock/fsync times
+were not recorded. The coordinator's GC60-neutral finding below is preserved.
+
+Parent 125; manifest `fe5ce9e0…b60aa4`; inner plan `3858a121…2092e8`.
+Recursive verification passed for 2,128 files with zero Python caches. Full
+recovery discovery plus its documented fixture recheck validates 696 unique
+cases; all 2,353 client checks in 27 suites and 10 mocked preflight tests pass.
+Client pins are checked against the sealed inner plan. Both inherited fixture
+failures and successful whole-suite/module rechecks remain recorded. Work used
+nice 19, OMP/MKL 2 and the pinned Python with `-B`; no GPU, live endpoint, launch,
+unit, signal, existing-run/client-tree write or host-setting operation occurred.
+The live server and launch sequence remain under the coordinator's control.
+[Regression analysis](experiments/ltx25-b70/notes/2026-10-10-continuation123b-regression.md),
+[design](experiments/ltx25-b70/notes/2026-10-10-continuation126-stream-design.md),
+[build receipt](experiments/ltx25-b70/data/resume-20261008/continuation126-build.json),
+[future launch](experiments/ltx25-b70/recovery/20261010-continuation126-stream/LAUNCH.md).
+
 **2026-10-10 08:02 UTC, 125 at 145 (GC interval 60 s) measured: exact (verdict 7c1e8a6ef3b2), neutral; 124 at 145 also neutral; 126 (regression hunt) about to seal.**
 125 GC 60, legacy, serial, display xpu:3 (n = 56 periods): median 5.780 s, even 5.73 / odd 6.07 (123b legacy baseline: 5.770, 5.70 / 6.12).
 The maintenance interval was not the 2-cycle's main cost; the parity gap and the median are unchanged within noise. 124 at 145 (display

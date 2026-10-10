@@ -191,7 +191,7 @@ for kind, configured, actual, passes in (
 c = client()
 c.a.packet = 119
 check('119 option identity remains five fields', c.status_server_options(STATUS) ==
-      {key: value for key, value in OPTIONS.items() if key not in ('display_device', 'aux_residency', 'residency_qualification_id', 'run_write_allowance_bytes', 'display_worker', 'gc_interval_seconds')})
+      {key: value for key, value in OPTIONS.items() if key not in ('display_device', 'aux_residency', 'residency_qualification_id', 'run_write_allowance_bytes', 'display_worker', 'gc_interval_seconds', 'storage_scan_mode')})
 check('119 decode records do not gain a required123 field', c.validate_decode_identity({}, {}) == {})
 with contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.StringIO()):
     try:

@@ -99,9 +99,14 @@ The submit split and inner snapshot endpoints narrow the candidates:
 
 The inner four-card request snapshot changes by approximately 8 ms before and
 13 ms after. It cannot by itself explain the regression. The slow-parity
-commit-to-serve gap remains the older ten-second GC/allocator phenomenon
-analyzed for [packet 125](2026-10-10-continuation-2cycle-analysis.md). No new
-per-card timestamp exists to label snapshot residuals as a specific GPU sync.
+commit-to-serve gap is the older parity effect considered as a possible
+ten-second GC/allocator delay in the [packet 125 analysis](2026-10-10-continuation-2cycle-analysis.md).
+Those receipts did not measure cleanup itself. The coordinator's later
+2026-10-10 08:02 UTC `CURRENT.md` entry (commit `caed9a9d8`) reports a neutral
+GC60 run: 5.780 s versus the quoted 5.770 s baseline, with the parity gap still
+present. That weakens the earlier cleanup explanation; packet126 does not depend
+on it and keeps GC10 for its first comparison. No new per-card timestamp exists
+to label snapshot residuals as a specific GPU sync.
 
 ### Own-writes accounting: four request walks and additional status walks
 
@@ -241,7 +246,7 @@ For repeated plan checks, the proposed full-tree typed marshal-v2 comparison
 uses the initial canonically verified plan as its baseline. It traverses the
 current tree on each check; any binary difference runs the original canonical
 JSON/SHA256 gate. This is not a cached hash of a mutable object. The
-[CPU timing artifact](../data/resume-20261008/continuation126-cpu-timing.json)
+[CPU timing artifact](../data/resume-20261008/continuation126-cpu-timing-sealed.json)
 records the final implementation's benchmark; that diagnostic isolates Python
 work and is not a measured model period. The parent request-mode path remains
 unchanged. Atomic preview publication was already asynchronous and stays intact,

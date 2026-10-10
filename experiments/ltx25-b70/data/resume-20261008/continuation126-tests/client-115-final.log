@@ -1,0 +1,22 @@
+PASS M1 115 mixed/49 (default anchor): client qualification re-derived with the 115 gate, 8 chunks, exit 0, manifest labels, chain and sharpness intact rc=0 rows=8 probs=[] refusals={}
+PASS M2 text reuse on by default; the next chunk is submitted before the previous decode record exists reuse=[0, 1, 1, 0, 1, 1, 1, 1] before_decode=7
+PASS M3 every anchored mixed chunk used its predecessor's decoded frame; stage B waited for it (the decode overlapped text + stage A) ok=True waits=[0.000163, 0.000171, 0.000159, 0.000202, 0.412742, 0.201353, 0.201394, 0.020353]
+PASS G1 guide/49: qualification + 5 chunks, every chunk delivers all 49 frames with no skip, 81,920-byte guide anchors, guide pins rc=0 rows=5 probs=[]
+PASS G2 guide/97: qualification + 5 chunks, every chunk delivers all 97 frames with no skip, 81,920-byte guide anchors, guide pins rc=0 rows=5 probs=[]
+PASS N1 mixed/97: 97 then 96 new frames, skip_first_frames 1, sharpness of 8 frames rc=0 rows=4 probs=[]
+PASS N2 A/B anchor latent on a 115 server streams 4 chunks with 115 manifest labels rc=0 rows=4 probs=[]
+PASS N3 --expect-anchor mixed against a latent server refuses at preflight (exit 8) rc=8
+PASS N2 A/B anchor frame on a 115 server streams 4 chunks with 115 manifest labels rc=0 rows=4 probs=[]
+PASS N3 --expect-anchor mixed against a frame server refuses at preflight (exit 8) rc=8
+PASS Q1 qualification fail -> exit 13, nothing streamed rc=13 last=['[c112 08:00:01.885] STOPPED (exit 13): QUALIFICATION DID NOT PASS (HTTP 200): ["Eager/graph/repeat tensors differ at chunk 1: [\'anchor_file\', \'audio_latent\', \'images\', \'stage_a_latent\', \'video_latent\', \'waveform\']", "Eager/graph/repeat tensors differ at chunk 2: [\'frame_anchor_in\']"]', '[c112 08:00:01.885] no retry, no restart: inspect the evidence before running again']
+PASS Q2 qualification lie (server says passed) -> client re-derivation fails, exit 13 rc=13 last=["[c112 08:00:04.687] STOPPED (exit 13): client-side re-derivation of the verdict FAILED: Eager/graph/repeat tensors differ at chunk 1: ['anchor_file', 'audio_latent', 'images', 'stage_a_latent', 'video_latent', 'waveform']; Eager/graph/repeat tensors differ at chunk 2: ['frame_anchor_in']", '[c112 08:00:04.687] no retry, no restart: inspect the evidence before running again']
+PASS D1 mixed: a decode record that never appears -> client exit 7 within the --save-wait bound, or the server halts the next chunk (its stage B never gets the frame); chunk 2 not manifested rc=7 rows=2
+PASS D2 decode thread failure (chunk 3) latches the server -> client exit 2 or 6, chunk 3 never manifested rc=2 rows=3
+PASS R1 --reset-every-chunks 3 on 115 mixed: resets at 3, 6, 9 (no frame wait, no skip), chain continues rc=0 resets=[3, 6, 9] skips=[0, 1, 1, 0, 1, 1, 0, 1, 1, 0]
+PASS A1 a corrupt (stale) anchor -> the server refuses stale-anchor, client exit 10, no retry rc=10 refusals={'stale-anchor': 1} order=[0, 1, 2]
+PASS X1 a 114 client with the 115 manifest sha refuses a 115 server at preflight, exit 8 rc=8
+PASS X2 a 115 client against a 114 server refuses at preflight (manifest identity), exit 8 rc=8
+PASS X3 a 115 client with the 114 manifest sha still refuses (needs a packet 115 server), exit 8 rc=8
+PASS X4 --packet 114 --expect-anchor guide is refused before contacting a server rc=1
+
+20/20 passed; work in /tmp/ltx-c115-test-lqnzn6ns
