@@ -27,12 +27,13 @@ on cards 0–3. These are projections; native bytes, memory and timing remain op
 The final seal is `897442d0…9926a5`; 2,087 files verified recursively, zero Python
 caches. The first unlaunched build is preserved as rejected after a CPU test
 caught a receipt-reader error. Full recovery discovery and documented rechecks
-validate 623 cases. Client pins use each sealed plan's inner hash, with a
-regression covering every plan pin. Exact client counts and logs are in the
+validate 623 cases; all 1,550 client checks and 10 mocked preflight checks pass.
+Client pins use each sealed plan's inner hash, with a regression covering every
+plan pin. Exact counts and logs are in the
 [build receipt](experiments/ltx25-b70/data/resume-20261008/continuation124-build.json).
 No live operation, GPU work, launch, check-only, port/unit access, process signal,
-existing-run/client-tree write or host change was performed. This preparation
-does not change the coordinator's recorded 123b/145 auxiliary-xpu2 live lane.
+existing-run/client-tree write or host change was performed by this CPU task.
+Live placement and operations follow the coordinator's newer entries above.
 [Analysis](experiments/ltx25-b70/notes/2026-10-10-continuation123b-results-169.md),
 [design and open gates](experiments/ltx25-b70/notes/2026-10-10-continuation124-stream-design.md),
 [future launch order](experiments/ltx25-b70/recovery/20261010-continuation124-stream/LAUNCH.md).

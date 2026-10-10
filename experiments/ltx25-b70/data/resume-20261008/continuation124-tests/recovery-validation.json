@@ -1,0 +1,195 @@
+{
+  "schema": "ltx.continuation124.recovery-cpu-validation.v1",
+  "created_utc": "2026-10-10T06:58:39.465118+00:00",
+  "method": "complete development discovery plus corrected and added case rechecks; not a single clean 623-case invocation",
+  "passed": true,
+  "unique_test_cases_validated": 623,
+  "development_discovery": {
+    "cases_executed": 616,
+    "passed": 605,
+    "failed": 3,
+    "errors": 8,
+    "seconds": 861.815,
+    "evidence": {
+      "path": "experiments/ltx25-b70/data/resume-20261008/continuation124-tests/recovery-development.log",
+      "sha256": "e2014c55e39156c6d86cb89d859e5039751d44793e9fa60b711dd3164ca684f8",
+      "bytes": 86216
+    }
+  },
+  "corrected_rechecks": {
+    "cases_executed": 166,
+    "passed": 166,
+    "failed": 0,
+    "errors": 0,
+    "seconds": 118.053,
+    "selection": [
+      "test_contract",
+      "test_display_replica",
+      "test_runtime_packet",
+      "test_schedule_gate",
+      "test_timing_split",
+      "test_transient_budget123",
+      "test_split_display124",
+      "test_runtime_flow.Flow118.test_walk_mode_is_the_packet117_path_with_timing"
+    ],
+    "evidence": {
+      "path": "experiments/ltx25-b70/data/resume-20261008/continuation124-tests/recovery-corrected-rechecks.log",
+      "sha256": "da281c1113405225ea4154bf432d210f192dabac5f48bebc63a5df5cfa5ea7dd",
+      "bytes": 20027
+    }
+  },
+  "final_discovery": {
+    "cases": 623,
+    "unique_cases": 623,
+    "evidence": {
+      "path": "experiments/ltx25-b70/data/resume-20261008/continuation124-tests/recovery-final-discovery.json",
+      "sha256": "fbb25b5feb754a19723b88e683a0ed6ff80fd060f40c06cdb6554346e187f5b8",
+      "bytes": 48158
+    }
+  },
+  "coverage": {
+    "retained_development_passes": 605,
+    "unique_cases_in_union": 623,
+    "all_initial_failures_rechecked": true,
+    "missing_test_ids": [],
+    "removed_test_ids": [],
+    "added_test_ids": [
+      "test_schedule_gate.GateTests.test_read_run_parses_worker_options_without_checker_local_state",
+      "test_split_display124.EarlyAudio.test_early_audio_calls_native_once_on_same_private_latent",
+      "test_split_display124.EarlyAudio.test_early_audio_failure_guard_precedes_any_native_work",
+      "test_split_display124.EarlyAudio.test_early_audio_refuses_outside_parallel_legacy_scope",
+      "test_split_display124.ParallelRuntimeFlow.test_parallel145_three_chains_early_audio_and_live_bytes",
+      "test_split_display124.ParallelRuntimeFlow.test_parallel169_three_chains_early_audio_and_live_bytes",
+      "test_split_display124.ParallelRuntimeFlow.test_parallel_live_byte_difference_latches_without_fallback"
+    ]
+  },
+  "resolved_development_failures": [
+    {
+      "test_id": "test_contract.Rules.test_run_names_carry_the_117_prefix",
+      "development_outcome": "FAIL",
+      "cause": "Historical fixture expected string 124; packet identity is integer 124.",
+      "resolution": "Expected identity corrected; runtime unchanged.",
+      "corrected_outcome": "passed",
+      "recheck_log": "recovery-corrected-rechecks.log"
+    },
+    {
+      "test_id": "test_display_replica.NativeCopy.test_allocator_growth_over_reservation_refuses",
+      "development_outcome": "ERROR",
+      "cause": "CPU __new__ fixture omitted the new screening_bytes field.",
+      "resolution": "Initialized screening_bytes=0 for historical 121-frame fake; runtime unchanged.",
+      "corrected_outcome": "passed",
+      "recheck_log": "recovery-corrected-rechecks.log"
+    },
+    {
+      "test_id": "test_display_replica.NativeCopy.test_native_output_copy_normalization_and_layout",
+      "development_outcome": "ERROR",
+      "cause": "CPU __new__ fixture omitted the new screening_bytes field.",
+      "resolution": "Initialized screening_bytes=0 for historical 121-frame fake; runtime unchanged.",
+      "corrected_outcome": "passed",
+      "recheck_log": "recovery-corrected-rechecks.log"
+    },
+    {
+      "test_id": "test_display_replica.NativeCopy.test_post_decode_floor_failure",
+      "development_outcome": "ERROR",
+      "cause": "CPU __new__ fixture omitted the new screening_bytes field.",
+      "resolution": "Initialized screening_bytes=0 for historical 121-frame fake; runtime unchanged.",
+      "corrected_outcome": "passed",
+      "recheck_log": "recovery-corrected-rechecks.log"
+    },
+    {
+      "test_id": "test_runtime_flow.Flow118.test_walk_mode_is_the_packet117_path_with_timing",
+      "development_outcome": "FAIL",
+      "cause": "Historical walk fixture omitted the new serial display_worker option.",
+      "resolution": "Expected option set updated; full failed runtime case rerun.",
+      "corrected_outcome": "passed",
+      "recheck_log": "recovery-corrected-rechecks.log"
+    },
+    {
+      "test_id": "test_runtime_packet.Identities.test_inventory_and_assembly_fit_build_allowance",
+      "development_outcome": "ERROR",
+      "cause": "Discovery imported plan constants while author plan and pins were still being finalized.",
+      "resolution": "Fresh process reran the full runtime_packet module with final source and plan identity.",
+      "corrected_outcome": "passed",
+      "recheck_log": "recovery-corrected-rechecks.log"
+    },
+    {
+      "test_id": "test_runtime_packet.Identities.test_plan_file_is_the_reconstructed_plan_and_pins_agree",
+      "development_outcome": "FAIL",
+      "cause": "Discovery imported plan constants while author plan and pins were still being finalized.",
+      "resolution": "Fresh process reran the full runtime_packet module with final source and plan identity.",
+      "corrected_outcome": "passed",
+      "recheck_log": "recovery-corrected-rechecks.log"
+    },
+    {
+      "test_id": "test_schedule_gate.GateTests.test_cli_reads_files_and_hashes",
+      "development_outcome": "ERROR",
+      "cause": "An accidentally duplicated scope block in read_run referenced check-local variables.",
+      "resolution": "Removed duplicate reader block; retained check() scope gate; added direct serial/parallel reader coverage; packet rebuilt by parent.",
+      "corrected_outcome": "passed",
+      "recheck_log": "recovery-corrected-rechecks.log"
+    },
+    {
+      "test_id": "test_timing_split.Validation.test_valid_and_invalid",
+      "development_outcome": "ERROR",
+      "cause": "Measurement fixture omitted geometry/placement/lever identity now checked by receipt validation.",
+      "resolution": "Added real 49-frame identity fields to the fixture; runtime unchanged.",
+      "corrected_outcome": "passed",
+      "recheck_log": "recovery-corrected-rechecks.log"
+    },
+    {
+      "test_id": "test_transient_budget123.RealStatusBudget.test_default_route_and_client_omit_explicit_budget",
+      "development_outcome": "ERROR",
+      "cause": "Status MagicMock lacked a concrete display_worker attribute.",
+      "resolution": "Set serial on fake context; historical 123 client extraction remains tested unchanged.",
+      "corrected_outcome": "passed",
+      "recheck_log": "recovery-corrected-rechecks.log"
+    },
+    {
+      "test_id": "test_transient_budget123.RealStatusBudget.test_explicit_budget_reaches_real_route_and_client_options",
+      "development_outcome": "ERROR",
+      "cause": "Status MagicMock lacked a concrete display_worker attribute.",
+      "resolution": "Set serial on fake context; historical 123 client extraction remains tested unchanged.",
+      "corrected_outcome": "passed",
+      "recheck_log": "recovery-corrected-rechecks.log"
+    }
+  ],
+  "cpu_safety": {
+    "interpreter": "/home/steve/.venvs/ltx25-baseline/bin/python",
+    "bytecode_disabled": true,
+    "runner": "run_tests_124.py",
+    "omp_num_threads": 4,
+    "mkl_num_threads": 4,
+    "audit_refuses_render_device_opens": true,
+    "audit_refuses_live_sockets_including8188": true,
+    "audit_refuses_process_signals": true,
+    "native_gpu_claim": false
+  },
+  "final_changed_runtime_sources": {
+    "integration.py": "e7ad5d81ee9b357448ca7c7f416026b661a04eea4ed7dd2b41c6fb835d3010ba",
+    "stream_decode.py": "582fe78bdcb113b85f77bda38c1369847556d96df47384c81504ee9a6a8e17d1",
+    "stream_schedule_gate.py": "6e87b31e47c148808b5c05ced240bb9dd00018cbeeba0ee28d707676eb82fe38",
+    "stream_receipts.py": "a56b98bda9aee713f261a1e38f507bd3957af8acbe472f50617ec216a033967d"
+  },
+  "related_focused_logs": [
+    {
+      "path": "experiments/ltx25-b70/data/resume-20261008/continuation124-tests/parallel-runtime-development.log",
+      "sha256": "abc9a456635e555d77c44a9dc0fe344a5f1533b90079bbbac02f8a8bc1959e34",
+      "bytes": 600
+    },
+    {
+      "path": "experiments/ltx25-b70/data/resume-20261008/continuation124-tests/parallel-unit-development.log",
+      "sha256": "3a67be873d27627f63f53c120ce2cd73aca5b9fced9694a031d0adc334d9241e",
+      "bytes": 2987
+    },
+    {
+      "path": "experiments/ltx25-b70/data/resume-20261008/continuation124-tests/timing-fixture-recheck.log",
+      "sha256": "19682174248f759ecff8b8b6644ed53c173cb959071d6f8cb12a4203e59b6c1a",
+      "bytes": 1861
+    }
+  ],
+  "notes": [
+    "All 623 final test IDs are covered by a passing result; no old failure is counted as passed without a fresh successful recheck.",
+    "Eager/graph controls and repeat/live candidate CPU harness at 145 and 169 preserve image and waveform hashes.",
+    "These are CPU safety/wiring/identity tests. Device memory, native byte equivalence and production timing remain coordinator qualification work."
+  ]
+}
