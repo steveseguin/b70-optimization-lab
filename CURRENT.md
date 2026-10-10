@@ -1,5 +1,29 @@
 # Current Workspace State
 
+**2026-10-10 03:58 UTC, packet 120 live at 121 frames: 5.029 s per 5.042 s chunk = 0.997 s of work per second of video (real time reached), exact.**
+Run `encoder-server-continuation-stream-120-frame-dg1-adcone-bo1-pa1-smfp-…-f121` (dg1 cap 1.0, eager display on a decoder-only
+replica on xpu:2, read-ahead 0, snapshots full), launched 03:43:18 UTC after the controlled stop of 118b dg0 session 3 (167 chunks,
+5.263 s median). Qualification verdict 0d3305d1a160 at 03:52:06: exact replay c0/c1/c2, xpu:2 display equal to the xpu:3 uncached
+eager display, replica weight copy bitwise equal. Steady state (chunks ≥ 10, n = 28 so far): **period median 5.029 s** (118b dg0
+tonight 5.263), cone on the chain 0.77 (0.98), upsample+B-prep 0.28 (0.28), receipt 0.10 (0.09), dual snapshots back to the
+periodic 1/15, xpu:2 margin ≈ 5.4 GB above its 2 GiB floor with a 4 GiB transient budget (observed growth 3.2 GB per decode).
+Byte identity vs 118b: images/last frame/preview **36/36**; `cone_equal` true on all. Work dir `/home/steve/ltx-stream/s120-live01`;
+client `start-client-120.sh 121 1 cone 1 1 fingerprint 1.0 eager-display 0 full xpu:2`. Next: results note at ≥ 100 chunks;
+packet 121 (145/169-frame chunks) in CPU design, which with the xpu:3 headroom now freed is the route below 1.0 s/s with margin.
+
+**2026-10-10, packet 121 sealed on CPU: 145 frames prepared; 169 held back by memory.**
+Longer chunks spread the fixed work over more video. The receipts also show that
+adding all earlier timing buckets would count some work twice. The safer first
+comparison is 145 frames with the decoder graph off and display on xpu:3.
+Predicted time is 5.55–6.10 seconds for six seconds of new video; this is not a
+measured speed. The conservative 169-frame estimate crosses xpu:0's existing
+memory floor, so that length stays disabled. The optional display copy on xpu:2
+has a larger checked allowance at 145 frames, but its memory and exact output
+remain unmeasured. The packet is sealed; final CPU recovery checks are running.
+No GPU, launch, preflight, port, unit, signal, existing-run write or host change
+was made. The coordinator's live-work record below remains theirs.
+[Design, memory estimates, packet and future launch](experiments/ltx25-b70/notes/2026-10-10-continuation121-stream-design.md).
+
 **2026-10-10 03:30 UTC, Codex's 119 analysis corrects the attribution; packet 120 (display replica on xpu:2) sealed and queued for the next window; packet 121 (145/169-frame chunks) in design.**
 The 119 loss is **near-floor safety work, not scheduling**: under dg1 the xpu:3 margin is low, so every request-after and
 stage-B snapshot ran the dual walk (+0.08 s request-after, +0.15 s condition-B); the upsampler lives on xpu:0 and was never
