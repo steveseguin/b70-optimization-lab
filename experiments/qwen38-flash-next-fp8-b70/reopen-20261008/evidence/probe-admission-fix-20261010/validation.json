@@ -1,0 +1,82 @@
+{
+  "schema": "neural.download.flashnext-cpu-validation.v1",
+  "recorded_utc": "2026-10-10T17:56:20.815682+00:00",
+  "scope": "mount-independent first-forward admission and explicit pre-worker refusal handshake",
+  "nice": 19,
+  "environment": {
+    "OMP_NUM_THREADS": "2",
+    "MKL_NUM_THREADS": "2",
+    "OPENBLAS_NUM_THREADS": "2",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "source_sha256": {
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/probe/single_rank_first_forward_probe.py": "ff9af15de9ed21e028f847ffd48f1e10b59565030957fdc89939f23801dbc4ea",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/probe/single_rank_slab_probe.py": "a5bec8bb47799547bd814789b3b0b9395327768f317c99e341002ffa527e1558",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/probe/watch_kernel.py": "6e04346d89585f2285e0a3aa0c137ccbe4f4a03ffe6d654b20cb43ef602fd459",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/probe/test_first_forward_probe.py": "990f21309e52305d010b5482155505a883bfaa4b4a48eb2d62514ce0c4c7231d",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/probe/test_watcher_admission.py": "1b81a1199ce62944d5e87a024fb1ce00598d229d4056c5b70cd9822f58f18c00",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/probe/test_probe.py": "ab34649715493857fefef30d9ae7187665e6bf8c3437bb5b18847343c6348fbb",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/probe/test_owner_plumbing.py": "80fdac5db347b8f434bd363b096d05f76ee1daceb3695ba95e02a4626dacc54f",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-manifest.json": "e00bb55d8378ecd0065e82a8c3b6fdd59268bd33aae6e0f356ca48f067926f2d",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-fix-teardown/run_cpu_tests.py": "3b52c869a182f55c45eea5ded4ed28417b2cf98a30edd1d7ef35b5f64921886d"
+  },
+  "suites": {
+    "lane": {
+      "suite": "lane",
+      "discovered": 233,
+      "passed": 227,
+      "skipped": 6,
+      "failures": 0,
+      "errors": 0,
+      "exclusions": [
+        "test_ple_mmap.TensorExactnessTests.test_real_checkpoint_boundary_bytes_without_table_allocation",
+        "test_worker_init_rehearsal.WorkerInitRehearsalTests.test_attempt2_guard_fails_real_rope_constructor",
+        "test_worker_init_rehearsal.WorkerInitRehearsalTests.test_rank0",
+        "test_worker_init_rehearsal.WorkerInitRehearsalTests.test_rank1",
+        "test_worker_init_rehearsal.WorkerInitRehearsalTests.test_rank2",
+        "test_worker_init_rehearsal.WorkerInitRehearsalTests.test_rank3"
+      ],
+      "native_cleanup_executed": false
+    },
+    "probe": {
+      "suite": "probe",
+      "discovered": 85,
+      "passed": 84,
+      "skipped": 1,
+      "failures": 0,
+      "errors": 0,
+      "exclusions": [
+        "test_probe.ProbeTests.test_guardian_records_native_signal_without_runtime_imports"
+      ],
+      "native_cleanup_executed": false
+    },
+    "teardown": {
+      "suite": "teardown",
+      "discovered": 49,
+      "passed": 49,
+      "skipped": 0,
+      "failures": 0,
+      "errors": 0,
+      "exclusions": [],
+      "native_cleanup_executed": false
+    },
+    "first-forward": {
+      "suite": "first-forward",
+      "discovered": 37,
+      "passed": 37,
+      "skipped": 0,
+      "failures": 0,
+      "errors": 0,
+      "exclusions": [],
+      "native_cleanup_executed": false
+    }
+  },
+  "unique_passed": 360,
+  "unique_skipped": 7,
+  "executions": 404,
+  "passed_with_first_forward_rerun": 397,
+  "container_executed": false,
+  "device_work_executed": false,
+  "existing_runs_modified": false,
+  "scratch_removed": true
+}

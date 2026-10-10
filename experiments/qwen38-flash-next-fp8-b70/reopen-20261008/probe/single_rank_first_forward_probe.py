@@ -477,31 +477,41 @@ def main(argv=None):
         # any runtime import. Direct --worker cannot bypass admission.
         return worker(args)
     harness.require(args.receipt_dir.is_dir(), 'create a new empty receipt directory first')
-    with (args.receipt_dir / 'receipt.json').open('x') as out:
-        json.dump({'passed': False, 'stage': 'admission', 'journal_admission': harness.lane().admission_audit()}, out)
     receipt = dict(schema='neural.download.flashnext-first-forward.v1', passed=False,
-                   stage='admission', bytes_equal=False, teardown_complete=False,
-                   overlay_sha256=args.overlay_sha256, source_sha256=harness.digest(Path(__file__).read_bytes()),
-                   diagnostic_only=True, native_queue_destruction_verified=False,
-                   image=json.loads((PACKAGE / 'image-plan.json').read_text())['image'],
-                   image_plan_sha256=harness.digest((PACKAGE / 'image-plan.json').read_bytes()),
-                   support_source_sha256={str(path.relative_to(PACKAGE)): harness.digest(path.read_bytes())
-                        for path in (PACKAGE / 'placement-attempt6-v5.json',
-                            PACKAGE / 'teardown_receipts.py', HERE / 'single_rank_slab_probe.py',
-                            HERE / 'watch_kernel.py', HERE / 'container_command.py',
-                            HERE / 'first_forward_command.py', HERE / 'run-first-forward-in-container.sh')},
-                   environment={key: value for key, value in os.environ.items()
-                                if key.startswith('FLASHNEXT_PROBE_') or key in harness.ALIASES})
-    receipt['journal_admission'] = harness.lane().admission_audit()
+                   stage='admission', worker_started=False, bytes_equal=False,
+                   teardown_complete=False, overlay_sha256=args.overlay_sha256,
+                   diagnostic_only=True, native_queue_destruction_verified=False)
+    with (args.receipt_dir / 'receipt.json').open('x') as out:
+        json.dump(receipt, out)
     try:
+        receipt['journal_admission'] = harness.lane().admission_audit()
+        receipt.update(source_sha256=harness.digest(Path(__file__).read_bytes()),
+                       image=json.loads((PACKAGE / 'image-plan.json').read_text())['image'],
+                       image_plan_sha256=harness.digest((PACKAGE / 'image-plan.json').read_bytes()),
+                       support_source_sha256={
+                           **{name: harness.digest((PACKAGE / name).read_bytes())
+                              for name in ('placement-attempt6-v5.json', 'teardown_receipts.py')},
+                           **{'probe/' + name: harness.digest((HERE / name).read_bytes())
+                              for name in ('single_rank_slab_probe.py', 'watch_kernel.py',
+                                           'container_command.py', 'first_forward_command.py',
+                                           'run-first-forward-in-container.sh')}},
+                       environment={key: value for key, value in os.environ.items()
+                                    if key.startswith('FLASHNEXT_PROBE_') or key in harness.ALIASES})
+        # Logical source keys are stable when /probe and /repo are separate
+        # mounts. Hash the actual mounted bytes; overlay pins are still checked.
         receipt.update(harness.admission(args.health_receipt, args.owner_acceptance, receipt['journal_admission']))
         harness.check_receipt_watcher(args.receipt_dir, receipt)
         verify_overlay(args.overlay_sha256)
         geometry()
     except BaseException as exc:
-        receipt['exception'] = {'type': type(exc).__name__, 'message': str(exc)}
+        receipt.update(stage='admission_refused',
+                       status='harness refused before device work',
+                       admission_refused_unix=time.time(),
+                       exception={'type': type(exc).__name__, 'message': str(exc)})
+        stop(args.receipt_dir, 'harness refused before device work: ' + str(exc))
         harness.atomic_json(args.receipt_dir / 'receipt.json', receipt)
         return 2
+    receipt.update(stage='admitted', worker_started=True)
     harness.atomic_json(args.receipt_dir / 'receipt.json', receipt)
     return guardian(args, receipt)
 

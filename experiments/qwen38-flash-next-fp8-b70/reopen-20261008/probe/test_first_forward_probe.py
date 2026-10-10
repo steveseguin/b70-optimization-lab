@@ -4,6 +4,7 @@ import ast
 import importlib.util
 import json
 import os
+import shutil
 from pathlib import Path
 import subprocess
 import sys
@@ -243,6 +244,117 @@ class FirstForwardTests(unittest.TestCase):
         receipt = json.loads((self.directory / 'receipt.json').read_text())
         self.assertFalse(receipt['passed'])
         self.assertIn('ADMIT', receipt['exception']['message'])
+
+    def test_container_mount_layout_admits_without_runtime_or_worker(self):
+        # Mirror the mounts below a temporary root, never mount a container or
+        # touch host /probe, /repo, /receipts, /health.json (or any device).
+        root = self.directory
+        package = root / 'repo/experiments/qwen38-flash-next-fp8-b70/reopen-20261008'
+        mounted_probe = root / 'probe'
+        receipts = root / 'receipts'
+        for directory in (package, mounted_probe, receipts):
+            directory.mkdir(parents=True)
+        manifest = json.loads((probe.PACKAGE / 'overlay-manifest.json').read_text())
+        files = set(manifest['support_files']) | {'overlay-manifest.json', 'image-plan.json'}
+        files.update(path.name for path in probe.PACKAGE.glob('*.py'))
+        files.update(manifest['source'] + '/' + name for name in manifest['files'])
+        for name in files:
+            destination = package / name
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(probe.PACKAGE / name, destination)
+        for path in HERE.iterdir():
+            if path.suffix in ('.py', '.sh'):
+                shutil.copyfile(path, mounted_probe / path.name)
+        lane = probe.harness.lane()
+        acceptance = root / 'repo' / lane.OWNER_ACCEPTANCE_RELATIVE
+        acceptance.parent.mkdir(parents=True)
+        shutil.copyfile(lane.REPO / lane.OWNER_ACCEPTANCE_RELATIVE, acceptance)
+        script = r"""
+import builtins
+import datetime as dt
+import json
+import os
+from pathlib import Path
+import sys
+from unittest.mock import Mock, patch
+root = Path(sys.argv[1])
+sys.path.insert(0, str(root / 'probe'))
+def deny_device(event, args):
+    if event == 'open' and isinstance(args[0], (str, bytes)):
+        path = os.fsdecode(args[0])
+        if path == '/dev/dri' or path.startswith('/dev/dri/'):
+            raise AssertionError('device open forbidden')
+sys.addaudithook(deny_device)
+original_import = builtins.__import__
+def cpu_import(name, *args, **kwargs):
+    if name.split('.')[0] in ('torch', 'triton', 'vllm'):
+        raise AssertionError('runtime import forbidden: ' + name)
+    return original_import(name, *args, **kwargs)
+builtins.__import__ = cpu_import
+import single_rank_first_forward_probe as mounted
+assert mounted.HERE == root / 'probe'
+assert not mounted.HERE.is_relative_to(mounted.PACKAGE)
+lane = mounted.harness.lane()
+acceptance = root / 'repo' / lane.OWNER_ACCEPTANCE_RELATIVE
+boot = json.loads(acceptance.read_text())['boot_id']
+now = dt.datetime(2026, 10, 10, 18, tzinfo=dt.timezone.utc)
+class Clock(dt.datetime):
+    @classmethod
+    def now(cls, tz=None):
+        return now
+stamp = now.strftime('%Y-%m-%d %H:%M:%S UTC')
+health = dict(schema='ltx.four-card-health.v1', passed=True, kernel='fixture', torch='fixture',
+    boot_id=boot, start_utc=stamp, end_utc=stamp, journal_fault_lines_during_probe=[], device_count=4,
+    cards=[dict(device=f'xpu:{i}', name='fixture', **{'pass': True},
+                copy_roundtrip_exact=True, gemm_repeat_exact=True, gemm_fp32_max_abs_err=0.,
+                gemm_bf16_max_abs_err=0., staged_from_previous_exact=True) for i in range(4)])
+health_path = root / 'health.json'
+health_path.write_text(json.dumps(health))
+receipts = root / 'receipts'
+mounted.harness.atomic_json(receipts / 'watcher.json', dict(passed=True, boot_id=boot,
+    health_sha256=mounted.harness.digest(health_path.read_bytes()), updated_unix=now.timestamp(),
+    journal_admission={'owner_acceptance_sha256': lane.OWNER_ACCEPTANCE_SHA256}))
+read_text = Path.read_text
+def fixture_read(path, *args, **kwargs):
+    if path == Path('/proc/sys/kernel/random/boot_id'):
+        return boot
+    return read_text(path, *args, **kwargs)
+guardian = Mock(return_value=0)
+with patch.object(Path, 'read_text', fixture_read), patch.object(dt, 'datetime', Clock), \
+     patch.object(mounted, 'guardian', guardian):
+    code = mounted.main(['--health-receipt', str(health_path), '--receipt-dir', str(receipts),
+                         '--overlay-sha256', sys.argv[2], '--owner-acceptance', str(acceptance)])
+assert code == 0, (receipts / 'receipt.json').read_text()
+guardian.assert_called_once()
+receipt = json.loads((receipts / 'receipt.json').read_text())
+assert receipt['stage'] == 'admitted'
+assert receipt['owner_acceptance_sha256'] == lane.OWNER_ACCEPTANCE_SHA256
+for name, digest in receipt['support_source_sha256'].items():
+    source = root / name if name.startswith('probe/') else mounted.PACKAGE / name
+    assert mounted.harness.digest(source.read_bytes()) == digest
+assert len(receipt['support_source_sha256']) == 7
+assert not any(name in sys.modules for name in ('torch', 'triton', 'vllm'))
+"""
+        env = dict(os.environ, FLASHNEXT_PROBE_PACKAGE=str(package), FLASHNEXT_PROBE_ADMIT='1',
+                   NEOReadDebugKeys='1', EnableDeferBacking='0', PYTHONDONTWRITEBYTECODE='1',
+                   **{name: probe.harness.CONF for name in probe.harness.ALIASES})
+        result = subprocess.run([sys.executable, '-B', '-c', script, str(root), self.pin],
+                                env=env, capture_output=True, text=True, timeout=20)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_source_hash_failure_is_terminal_before_spawn(self):
+        with patch.object(probe, 'HERE', self.directory / 'missing-probe'), \
+             patch.object(probe, 'guardian') as guardian:
+            code = probe.main(['--health-receipt', '/missing', '--receipt-dir', str(self.directory),
+                               '--overlay-sha256', self.pin])
+        self.assertEqual(code, 2)
+        guardian.assert_not_called()
+        receipt = json.loads((self.directory / 'receipt.json').read_text())
+        self.assertEqual(receipt['stage'], 'admission_refused')
+        self.assertFalse(receipt['worker_started'])
+        self.assertEqual(receipt['exception']['type'], 'FileNotFoundError')
+        self.assertGreater(receipt['admission_refused_unix'], 0)
+        self.assertIn('harness refused before device work', (self.directory / 'STOP').read_text())
 
     def test_existing_receipt_is_never_overwritten(self):
         path = self.directory / 'receipt.json'
