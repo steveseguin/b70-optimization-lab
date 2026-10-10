@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**2026-10-10 09:30 UTC, 127 at 145 live (verdict cbd91ba8a8cc); one client stop on the decode route's evidence-guard race (chunk 80), client resumed; disk scratch cleaned.**
+At 09:27:44 UTC the decode route answered HTTP 500 ("Evidence changed during read" on the decode record of stream127-s00000080): the same
+writer/reader race class as the 04:32 preview incident; 123 made preview MP4/JSON publication atomic but the decode record (and receipts)
+are still read while being written. Server healthy (phase stream, no fault, worker 91/91, journal clean); the client's new exit-7 status
+capture confirms it. One client restart resumed the chain. Fix queued for the next packet: publish every route-read evidence file by
+temp + fsync + rename (decode records, receipts), or re-check identity once after a bounded wait. Also: Codex test scratch under /tmp
+(7 GB of packet copies from finished suites) deleted; free space 72 → 79 GB; briefs now require Codex to remove its own scratch.
+
 **2026-10-10, packet 128 sealed and CPU-validated; the coordinator retains control of the live server.**
 The saved timestamps identify full Python collection and allocator cleanup as
 the repeated receipt delay: all 119 long packet 126 handoffs overlap that pair.
