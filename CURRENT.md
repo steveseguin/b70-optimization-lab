@@ -1,5 +1,30 @@
 # Current Workspace State
 
+**2026-10-10, packet 131 prepared on CPU: guarded cone graph at145; native fit remains unverified.**
+The cone graph already captures just its first decoder method in its own pool.
+Its measured121-frame growth is3.195GiB; the145 estimate is4.506GiB. Moving
+display to card2 has room, but qualification still performs full card3 reference
+decodes. A new default-off option checks actual memory, releases unused allocator
+blocks once if needed, and refuses if the capture allowance and original floor
+are not covered. It keeps every native reference and per-chunk byte check.
+First capture requires14.75GiB free; later cones9.75GiB. No freed memory or speed
+was measured. The conditional target is5.25–5.35s per6s (0.875–0.892s/s).
+
+The three early snapshots now cost about122ms. The optional reduced-barrier
+schedule drops no checks and targets memory sections totaling about1.8ms;
+its full saving cannot be measured from these receipts. Keep full snapshots.
+The coordinator still owns the live129 server. No GPU, launch, live-port, unit,
+process-signal, host-setting, existing-run or ltx-stream operation occurred.
+Packet131 is sealed; complete CPU regression suites are running. Two full CPU
+runtime cases and their11 output comparisons,25 client integration checks and
+10 mocked preflight checks pass. Native qualification is still the next step
+for the coordinator, not an operation performed by this preparation.
+[Inventory](experiments/ltx25-b70/notes/2026-10-10-xpu3-residency-145.md),
+[snapshot costs](experiments/ltx25-b70/notes/2026-10-10-continuation131-snapshot-schedule.md),
+[design](experiments/ltx25-b70/notes/2026-10-10-continuation131-stream-design.md),
+[build receipt](experiments/ltx25-b70/data/resume-20261008/continuation131-build.json),
+[future launch](experiments/ltx25-b70/recovery/20261010-continuation131-stream/LAUNCH.md).
+
 **2026-10-10 10:50 UTC, packet 130 sealed (xpu:2 inventory + guarded allocator release); 169 not launched: the reclaim is unverified and the upside over the 145 line is nil.**
 Codex's inventory (`notes/2026-10-10-xpu2-residency-169.md`, commits 380fdfe03, d5471ed43): xpu:2 holds text layers 0–23 (10.15 GiB) and other
 text state (4.13), the replica weights (0.78), live allocations 3.0–4.4, and 2.4–3.9 GiB reserved-but-unused allocator memory; physical free
