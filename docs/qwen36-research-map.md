@@ -7,6 +7,8 @@ research lanes, not interchangeable benchmark rows.
 
 Live service and active-lane authority remains [`CURRENT.md`](../CURRENT.md).
 
+Related larger-model research: [Flash-Next Strata quant inventory and ranked plan](../notes/2026-10-10-strata-flash-next-quants.md) (2026-10-10, CPU-only; separate quant/runtime identities, no weight download or B70 qualification).
+
 ## Current Decision
 
 Qwen3.6 27B AutoRound INT4 TP2 is paused after the final approved gate. The

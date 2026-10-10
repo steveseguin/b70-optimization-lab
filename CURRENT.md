@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**2026-10-10, CPU-only Flash-Next quant research is complete.**
+Strata links to smaller published models, but they use a different runtime and
+must earn their own quality result. The first proposed trial is the full
+IQ3_S model on two cards: its download is 83.62 GB, and the plan asks for
+100 GB of working space while keeping the existing free-space reserve.
+The pending cleanup alone would not provide enough room, so storage and the
+GPU trial await the owner; the current host halt still applies.
+No weights were downloaded and no running work was changed.
+[Inventory, runtime checks and ranked plan](notes/2026-10-10-strata-flash-next-quants.md).
+
 **2026-10-10, Flash-Next exit fault reproduced; the four-card host remains halted.**
 The worker finished its calculation correctly, then the card faulted just after
 it exited abruptly. Clean shutdown and waiting ten seconds before abrupt exit
