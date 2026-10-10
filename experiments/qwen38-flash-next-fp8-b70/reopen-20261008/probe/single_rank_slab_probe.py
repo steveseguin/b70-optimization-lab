@@ -57,7 +57,7 @@ def idle_before_exit(args, receipt, save):
     mark(receipt, save, 'idle_begin')
     deadline = time.monotonic() + args.exit_after_sleep
     while True:
-        check_watcher(args.receipt_dir, receipt['boot_id'], receipt['health_sha256'])
+        check_receipt_watcher(args.receipt_dir, receipt)
         remaining = deadline - time.monotonic()
         if remaining <= 0:
             break
@@ -99,36 +99,55 @@ def production_placement():
     return module
 
 
-def admission(health_path, *, env=None, boot_id=None, now=None):
+def admission(health_path, owner_acceptance=None, audit=None, *, env=None, boot_id=None, now=None):
+    boot = boot_id or Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+    now = now or dt.datetime.now(dt.timezone.utc)
+    audit = lane().admission_audit() if audit is None else audit
+    accepted = (lane().verify_owner_acceptance(owner_acceptance, boot, now, audit)
+                if owner_acceptance is not None else None)
     env = os.environ if env is None else env
     require(env.get('FLASHNEXT_PROBE_ADMIT') == '1', 'FLASHNEXT_PROBE_ADMIT=1 required')
     require(all(env.get(k) == CONF for k in ALIASES), 'all exact-size allocator aliases required before Torch import')
     require(env.get('NEOReadDebugKeys') == '1' and env.get('EnableDeferBacking') == '0',
             'lane per-process driver aliases required')
-    boot = boot_id or Path('/proc/sys/kernel/random/boot_id').read_text().strip()
     require(not boot.startswith(FAILED_BOOT), 'attempt-7 fault boot is forbidden')
     raw = Path(health_path).read_bytes()
-    now = now or dt.datetime.now(dt.timezone.utc)
-    end = lane().verify_health_receipt(json.loads(raw), boot, now)
-    return {'boot_id': boot, 'health_sha256': digest(raw), 'health_end_unix': end.timestamp()}
+    health = json.loads(raw)
+    end = lane().verify_health_receipt(health, boot, now)
+    if accepted is not None:
+        require(lane().parse_utc(health['start_utc']) >= accepted,
+                'Health receipt must start at/after owner acceptance')
+    return {'boot_id': boot, 'health_sha256': digest(raw), 'health_end_unix': end.timestamp(),
+            'owner_acceptance_sha256': audit.get('owner_acceptance_sha256')}
 
 
-def check_watcher(directory, boot, health_sha256=None):
+def check_watcher(directory, boot, health_sha256=None, owner_acceptance_sha256=None, *, status=None):
     require(not (directory / 'STOP').exists(), 'fault watcher STOP latched; no submissions')
-    status = json.loads((directory / 'watcher.json').read_text())
+    if status is None:
+        status = json.loads((directory / 'watcher.json').read_text())
     require(status.get('boot_id') == boot and status.get('passed') is True,
             'fault watcher is not clean on this boot')
     if health_sha256 is not None:
         require(status.get('health_sha256') == health_sha256, 'watcher used a different health receipt')
+    require(status.get('journal_admission', {}).get('owner_acceptance_sha256') == owner_acceptance_sha256,
+            'watcher used a different owner acceptance receipt')
     age = dt.datetime.now(dt.timezone.utc).timestamp() - status['updated_unix']
     require(0 <= age < 5, 'fault watcher receipt is stale or future-dated')
     return status
 
 
+def check_receipt_watcher(directory, receipt):
+    # Retain journal accounting even when STOP or another watcher check refuses.
+    status = json.loads((directory / 'watcher.json').read_text())
+    receipt['journal_admission'] = status.get('journal_admission', lane().admission_audit())
+    return check_watcher(directory, receipt['boot_id'], receipt['health_sha256'],
+                         receipt.get('owner_acceptance_sha256'), status=status)
+
+
 def wait_postflight(directory, receipt, requested_unix, timeout=5):
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
-        status = check_watcher(directory, receipt['boot_id'], receipt['health_sha256'])
+        status = check_receipt_watcher(directory, receipt)
         if status.get('read_started_unix', 0) >= requested_unix:
             return status
         time.sleep(.05)
@@ -181,7 +200,7 @@ def run_device(args, receipt, save):
     import triton
     from vllm.utils.torch_utils import get_accelerator_view_from_cpu_tensor
     from slab_kernels import indirect_gather, direct_gather
-    check = lambda: check_watcher(args.receipt_dir, receipt['boot_id'], receipt['health_sha256'])
+    check = lambda: check_receipt_watcher(args.receipt_dir, receipt)
     check()
     require(torch.xpu.device_count() == 1, 'exactly one visible XPU required')
     torch.xpu.set_device(0)
@@ -325,6 +344,7 @@ def run_device(args, receipt, save):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--owner-acceptance', type=Path)
     parser.add_argument('--health-receipt', type=Path, required=True)
     parser.add_argument('--receipt-dir', type=Path, required=True)
     parser.add_argument('--direct-host-pointer', action='store_true')
@@ -334,12 +354,13 @@ def main(argv=None):
     path = args.receipt_dir / 'receipt.json'
     # Preserve every prior attempt, including a refusal. Never auto-retry.
     with path.open('x') as out:
-        json.dump({'passed': False, 'stage': 'admission'}, out)
+        json.dump({'passed': False, 'stage': 'admission', 'journal_admission': lane().admission_audit()}, out)
     receipt = {'schema': 'neural.download.flashnext-slab-probe.v1', 'passed': False,
                'variant': 'direct' if args.direct_host_pointer else 'indirect',
                'stage': 'admission', 'exception': None, 'triton_ir': {},
                'gather_launches': 0, 'explicit_synchronizations': 0,
                'timeout_seconds': 120, 'source_sha256': digest(Path(__file__).read_bytes())}
+    receipt['journal_admission'] = lane().admission_audit()
     receipt.update(exit_mode='clean' if args.clean_exit else 'abrupt',
                    exit_after_sleep_seconds=args.exit_after_sleep,
                    cleanup_synchronizations=0, lifecycle={})
@@ -350,8 +371,8 @@ def main(argv=None):
     }
     save = lambda: atomic_json(path, receipt)
     try:
-        receipt.update(admission(args.health_receipt))
-        check_watcher(args.receipt_dir, receipt['boot_id'], receipt['health_sha256'])
+        receipt.update(admission(args.health_receipt, args.owner_acceptance, receipt['journal_admission']))
+        check_receipt_watcher(args.receipt_dir, receipt)
         production_placement()
         save()
     except BaseException as exc:

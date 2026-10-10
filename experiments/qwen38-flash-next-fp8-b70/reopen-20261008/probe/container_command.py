@@ -7,7 +7,7 @@ from pathlib import Path
 import os
 import re
 import shlex
-from single_rank_slab_probe import add_exit_arguments, idle_seconds
+from single_rank_slab_probe import add_exit_arguments, idle_seconds, lane
 
 HERE = Path(__file__).resolve().parent
 PACKAGE = HERE.parent
@@ -71,7 +71,7 @@ def host_umd_mounts():
 
 
 def command(render_node, health, receipt_dir, direct=False, host_umd_overlay=False,
-            clean_exit=False, exit_after_sleep=None):
+            clean_exit=False, exit_after_sleep=None, owner_acceptance=None):
     if clean_exit and exit_after_sleep is not None:
         raise ValueError('--clean-exit and --exit-after-sleep are mutually exclusive')
     if exit_after_sleep is not None:
@@ -112,10 +112,26 @@ def command(render_node, health, receipt_dir, direct=False, host_umd_overlay=Fal
     for source, target, readonly in ((HERE, '/probe', True), (PACKAGE, '/repo/experiments/qwen38-flash-next-fp8-b70/reopen-20261008', True),
                                     (health, '/health.json', True), (receipt_dir, '/receipts', False)):
         cmd += ['--mount', f'type=bind,src={source},dst={target}' + (',readonly' if readonly else '')]
+    acceptance_target = None
+    if owner_acceptance is not None:
+        # Do not consult the journal or admit execution in this print-only tool.
+        # Use the canonical repository-relative location in the container too.
+        source = Path(owner_acceptance).resolve()
+        screen = lane()
+        if source != (screen.REPO / screen.OWNER_ACCEPTANCE_RELATIVE).resolve():
+            raise ValueError('owner acceptance must be the committed receipt path')
+        if not source.is_file():
+            raise ValueError('owner acceptance must be a regular receipt file')
+        if hashlib.sha256(source.read_bytes()).hexdigest() != screen.OWNER_ACCEPTANCE_SHA256:
+            raise ValueError('owner acceptance SHA256 mismatch')
+        acceptance_target = '/repo/' + str(screen.OWNER_ACCEPTANCE_RELATIVE)
+        cmd += ['--mount', f'type=bind,src={source},dst={acceptance_target},readonly']
     cmd += overlay_mounts
     image = json.loads((PACKAGE / 'image-plan.json').read_text())['image']
     cmd += [image, '-B', '/probe/single_rank_slab_probe.py', '--health-receipt', '/health.json',
             '--receipt-dir', '/receipts']
+    if acceptance_target is not None:
+        cmd += ['--owner-acceptance', acceptance_target]
     if direct:
         cmd += ['--direct-host-pointer']
     if clean_exit:
@@ -128,6 +144,7 @@ def command(render_node, health, receipt_dir, direct=False, host_umd_overlay=Fal
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--render-node', required=True)
+    parser.add_argument('--owner-acceptance')
     parser.add_argument('--health-receipt', required=True)
     parser.add_argument('--receipt-dir', required=True)
     parser.add_argument('--direct-host-pointer', action='store_true')
@@ -137,7 +154,7 @@ def main():
     args = parser.parse_args()
     print(shlex.join(command(args.render_node, args.health_receipt, args.receipt_dir,
                              args.direct_host_pointer, args.host_umd_overlay,
-                             args.clean_exit, args.exit_after_sleep)))
+                             args.clean_exit, args.exit_after_sleep, args.owner_acceptance)))
 
 
 if __name__ == '__main__':

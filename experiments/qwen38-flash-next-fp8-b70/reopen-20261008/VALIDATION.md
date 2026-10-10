@@ -1,5 +1,76 @@
 # Screen 1b CPU validation — native FP8 mmap, 2026-10-08
 
+## Owner acceptance admission, 2026-10-10
+
+The explicit option validates the exact committed owner receipt at its canonical
+repository path, SHA-256 `7c67c88aee396774ae8c2b29e23dd8366de9ab2375acdafec7b6254f23bbd5b1`,
+full boot ID, decision text and `20261010T011831Z` time. With the option,
+pre-acceptance faults are excluded from incident counting but retained in the
+audit. A classified fault at or after acceptance refuses even if health later
+passes. Missing/modified/wrong-boot receipts, absent decision/time, future
+acceptance, missing/stale/pre-acceptance health and untimestamped faults refuse.
+Without the option, the original clean-boot and two-incident behavior remains.
+
+The watcher and both probe workers bind the same acceptance hash. The direct
+first-forward worker independently revalidates and compares its admission to
+the saved receipt. Initial and postflight refusals retain counted/excluded lines;
+when journal evidence is unavailable, the audit says so. Screen 1b forwards the
+option to its worker and prints/saves `journal-admission.json`. Stop rules,
+model code, GPU configuration and live work were not changed.
+
+The live `overlay-manifest.json` refreshes only the `screen.py` support hash.
+Its new SHA-256 is `e00bb55d8378ecd0065e82a8c3b6fdd59268bd33aae6e0f356ca48f067926f2d`.
+The previous `21f4a79c000aa4cf9772082379b486384f5ac8bc1a38210c96c567f555ef7648`
+manifest and application receipts below remain historical evidence, not claims
+that today's controller still matches the frozen patch byte for byte.
+
+| CPU suite | Passed | Skipped | Discovered | Evidence |
+| --- | ---: | ---: | ---: | --- |
+| Lane (includes 20 new admission tests) | 227 | 6 | 233 | [Receipt](evidence/owner-acceptance-20261010/lane.json), [log](evidence/owner-acceptance-20261010/lane.log) |
+| Combined probes (includes 10 new plumbing tests) | 70 | 1 | 71 | [Receipt](evidence/owner-acceptance-20261010/probe.json), [log](evidence/owner-acceptance-20261010/probe.log) |
+| Teardown | 49 | 0 | 49 | [Receipt](evidence/owner-acceptance-20261010/teardown.json), [log](evidence/owner-acceptance-20261010/teardown.log) |
+| First-forward, separately rerun (also in combined probes) | 35 | 0 | 35 | [Receipt](evidence/owner-acceptance-20261010/first-forward.json), [log](evidence/owner-acceptance-20261010/first-forward.log) |
+
+**346 unique passes, seven skips, zero failures/errors**; including the separately
+rerun first-forward suite, 381 passes across 388 test executions. The six lane
+skips avoid the real checkpoint and XPU worker rehearsals; the probe skip avoids
+its fatal SIGALRM test. Thread limits: OMP, MKL and OpenBLAS each one.
+
+```sh
+p=experiments/qwen38-flash-next-fp8-b70/reopen-20261008
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 /home/steve/.venvs/ltx25-baseline/bin/python -B "$p/overlay-fix-teardown/run_cpu_tests.py" lane
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 python3 -B "$p/overlay-fix-teardown/run_cpu_tests.py" probe
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 python3 -B "$p/overlay-fix-teardown/run_cpu_tests.py" teardown
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 python3 -B "$p/overlay-fix-teardown/run_cpu_tests.py" first-forward
+```
+
+### Preparation incident and remaining boundary
+
+An initial new printer test mocked `os.path.realpath` globally, accidentally
+redirecting the acceptance receipt's `Path.resolve()` to `/dev/dri/renderD128`.
+The test process (PID 899526) opened that device and blocked in `drm_read`,
+verified through its `/proc` wait channel and file descriptor 3. This violated
+the intended CPU-only boundary; no model, container or device workload was
+launched. The user was informed immediately and asked to authorize SIGINT to
+that PID only. No signal was sent by this task. Process resolution is pending
+that decision. The [incomplete log](evidence/owner-acceptance-20261010/interrupted-probe.log)
+and [source-bound validation receipt](evidence/owner-acceptance-20261010/validation.json)
+retain this preparation incident.
+
+The fixture now resolves only its synthetic render-node argument; other paths
+use the real resolver. Receipt hashing requires a regular file. The restricted
+CPU runner now installs an audit hook that refuses `/dev/dri` opens before the
+system call, and its new `first-forward` selector puts that suite behind the
+same guard. The completed test results above are from the corrected, guarded
+runs. This is not a claim that the initial preparation avoided all device access.
+
+The three [exact commands](probe/README.md#prepared-for-2026-10-10-written-2026-10-09)
+remain text only. Actual admission still needs current health and an exclusive
+idle window; the supplied health receipt expires at 2026-10-10 07:34:03 UTC.
+No GPU probes, health probes, containers, servers, systemd operations, LTX
+endpoint/unit actions, settings changes, reboot or process kills were performed.
+Native teardown and first-forward behavior remain unqualified.
+
 ## Teardown application and probe preparation, 2026-10-09
 
 The reviewed `overlay-fix-teardown/teardown.patch` applied cleanly with

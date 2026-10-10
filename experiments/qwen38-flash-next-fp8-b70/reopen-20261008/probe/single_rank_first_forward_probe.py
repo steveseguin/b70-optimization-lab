@@ -299,7 +299,7 @@ def device_work(args, receipt, save):
     teardown.mark = cleanup_mark
     def check():
         guard.check_cancel()
-        harness.check_watcher(args.receipt_dir, receipt['boot_id'], receipt['health_sha256'])
+        harness.check_receipt_watcher(args.receipt_dir, receipt)
     error = None
     try:
         check()
@@ -393,7 +393,12 @@ def worker(args):
     event(args.receipt_dir, 'worker.start')
     save()
     try:
-        harness.check_watcher(args.receipt_dir, receipt['boot_id'], receipt['health_sha256'])
+        receipt['worker_admission'] = harness.lane().admission_audit()
+        identity = harness.admission(args.health_receipt, args.owner_acceptance, receipt['worker_admission'])
+        for key in ('boot_id', 'health_sha256', 'owner_acceptance_sha256'):
+            harness.require(identity.get(key) == receipt.get(key), 'worker admission differs: ' + key)
+        verify_overlay(args.overlay_sha256)
+        harness.check_receipt_watcher(args.receipt_dir, receipt)
         device_work(args, receipt, save)
         event(args.receipt_dir, 'worker.before_normal_exit')
         return 0
@@ -418,7 +423,9 @@ def guardian(args, receipt):
     with (directory / 'worker.log').open('x') as log:
         child = subprocess.Popen([sys.executable, '-u', '-B', str(Path(__file__).resolve()),
             '--worker', '--health-receipt', str(args.health_receipt), '--receipt-dir', str(directory),
-            '--overlay-sha256', args.overlay_sha256], stdout=log, stderr=subprocess.STDOUT)
+            '--overlay-sha256', args.overlay_sha256,
+            *(['--owner-acceptance', str(args.owner_acceptance)]
+              if getattr(args, 'owner_acceptance', None) else [])], stdout=log, stderr=subprocess.STDOUT)
         event(directory, 'guardian.spawn', child_pid=child.pid)
         bounded = False
         while child.poll() is None:
@@ -459,6 +466,7 @@ def guardian(args, receipt):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--owner-acceptance', type=Path)
     parser.add_argument('--health-receipt', type=Path, required=True)
     parser.add_argument('--receipt-dir', type=Path, required=True)
     parser.add_argument('--overlay-sha256', required=True)
@@ -467,12 +475,10 @@ def main(argv=None):
     if args.worker:
         # The child independently rechecks health, journal and overlay before
         # any runtime import. Direct --worker cannot bypass admission.
-        harness.admission(args.health_receipt)
-        verify_overlay(args.overlay_sha256)
         return worker(args)
     harness.require(args.receipt_dir.is_dir(), 'create a new empty receipt directory first')
     with (args.receipt_dir / 'receipt.json').open('x') as out:
-        json.dump({'passed': False, 'stage': 'admission'}, out)
+        json.dump({'passed': False, 'stage': 'admission', 'journal_admission': harness.lane().admission_audit()}, out)
     receipt = dict(schema='neural.download.flashnext-first-forward.v1', passed=False,
                    stage='admission', bytes_equal=False, teardown_complete=False,
                    overlay_sha256=args.overlay_sha256, source_sha256=harness.digest(Path(__file__).read_bytes()),
@@ -486,9 +492,10 @@ def main(argv=None):
                             HERE / 'first_forward_command.py', HERE / 'run-first-forward-in-container.sh')},
                    environment={key: value for key, value in os.environ.items()
                                 if key.startswith('FLASHNEXT_PROBE_') or key in harness.ALIASES})
+    receipt['journal_admission'] = harness.lane().admission_audit()
     try:
-        receipt.update(harness.admission(args.health_receipt))
-        harness.check_watcher(args.receipt_dir, receipt['boot_id'], receipt['health_sha256'])
+        receipt.update(harness.admission(args.health_receipt, args.owner_acceptance, receipt['journal_admission']))
+        harness.check_receipt_watcher(args.receipt_dir, receipt)
         verify_overlay(args.overlay_sha256)
         geometry()
     except BaseException as exc:

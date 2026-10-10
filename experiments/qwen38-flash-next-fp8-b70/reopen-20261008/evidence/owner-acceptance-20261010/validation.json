@@ -1,0 +1,84 @@
+{
+  "schema": "neural.download.flashnext-owner-acceptance-cpu.v1",
+  "sources_sha256": {
+    "screen.py": "be03277068e898ae7d277ffaf58275d9cfedcaece5c526112c1ad7349cd081cf",
+    "overlay-manifest.json": "e00bb55d8378ecd0065e82a8c3b6fdd59268bd33aae6e0f356ca48f067926f2d",
+    "test_owner_acceptance.py": "f420421f51e03d4b9c5efa0ac2c9127ab87b546cefba37c9303fbc21161e2513",
+    "overlay-fix-teardown/run_cpu_tests.py": "3b52c869a182f55c45eea5ded4ed28417b2cf98a30edd1d7ef35b5f64921886d",
+    "probe/container_command.py": "9021c9063d68183e95b6851436f73e75e6cb1c43c8a268e978d32b932ed02cec",
+    "probe/first_forward_command.py": "f5f2973411f48706209117fdd77cfd7387356e5f09de5349cf4790d5931cd27b",
+    "probe/single_rank_slab_probe.py": "a5bec8bb47799547bd814789b3b0b9395327768f317c99e341002ffa527e1558",
+    "probe/single_rank_first_forward_probe.py": "0f81a432829fcf9c5fecd0b81c12b94072971ca4f62ba4afc4a7e8972b92373a",
+    "probe/watch_kernel.py": "6eb201c9a5710af90bb11d811a24177e18110dd3b30e35bf24fe6caafa18094d",
+    "probe/test_probe.py": "ab34649715493857fefef30d9ae7187665e6bf8c3437bb5b18847343c6348fbb",
+    "probe/test_owner_plumbing.py": "80fdac5db347b8f434bd363b096d05f76ee1daceb3695ba95e02a4626dacc54f",
+    "probe/test_first_forward_probe.py": "0101c0a4180c4ba601c5edf0a244e216428590e1c36f8d5f276dd96330d217f3"
+  },
+  "suites": {
+    "lane": {
+      "suite": "lane",
+      "discovered": 233,
+      "passed": 227,
+      "skipped": 6,
+      "failures": 0,
+      "errors": 0,
+      "exclusions": [
+        "test_ple_mmap.TensorExactnessTests.test_real_checkpoint_boundary_bytes_without_table_allocation",
+        "test_worker_init_rehearsal.WorkerInitRehearsalTests.test_attempt2_guard_fails_real_rope_constructor",
+        "test_worker_init_rehearsal.WorkerInitRehearsalTests.test_rank0",
+        "test_worker_init_rehearsal.WorkerInitRehearsalTests.test_rank1",
+        "test_worker_init_rehearsal.WorkerInitRehearsalTests.test_rank2",
+        "test_worker_init_rehearsal.WorkerInitRehearsalTests.test_rank3"
+      ],
+      "native_cleanup_executed": false
+    },
+    "probe": {
+      "suite": "probe",
+      "discovered": 71,
+      "passed": 70,
+      "skipped": 1,
+      "failures": 0,
+      "errors": 0,
+      "exclusions": [
+        "test_probe.ProbeTests.test_guardian_records_native_signal_without_runtime_imports"
+      ],
+      "native_cleanup_executed": false
+    },
+    "teardown": {
+      "suite": "teardown",
+      "discovered": 49,
+      "passed": 49,
+      "skipped": 0,
+      "failures": 0,
+      "errors": 0,
+      "exclusions": [],
+      "native_cleanup_executed": false
+    },
+    "first-forward": {
+      "suite": "first-forward",
+      "discovered": 35,
+      "passed": 35,
+      "skipped": 0,
+      "failures": 0,
+      "errors": 0,
+      "exclusions": [],
+      "native_cleanup_executed": false
+    }
+  },
+  "unique_passes": 346,
+  "unique_skips": 7,
+  "first_forward_also_in_probe_suite": true,
+  "commands_prepared_not_executed": true,
+  "runs_directory_written": false,
+  "initial_test_incident": {
+    "pid": 899526,
+    "device_opened": "/dev/dri/renderD128",
+    "observed_wait_channel": "drm_read",
+    "reason": "Global realpath mock redirected acceptance receipt hashing to a device path.",
+    "cpu_only_boundary_violated": true,
+    "process_signal_sent_by_agent": false,
+    "status": "Awaiting owner decision on SIGINT to this PID only; no signal sent.",
+    "fix": "Scope resolver mock to render-node argument, require regular receipt file, guard /dev/dri opens in CPU runner.",
+    "log": "interrupted-probe.log"
+  }
+}

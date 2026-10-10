@@ -4,14 +4,27 @@ import argparse
 import json
 from pathlib import Path
 import unittest
+import os
+import sys
+
+
+def forbid_device_open(event, args):
+    # CPU fixtures must never open a render device, even if a path mock is wrong.
+    if event == "open" and isinstance(args[0], (str, bytes)):
+        path = os.fsdecode(args[0])
+        if path == "/dev/dri" or path.startswith("/dev/dri/"):
+            raise RuntimeError("CPU suite forbids opening /dev/dri: " + path)
+
+
+sys.addaudithook(forbid_device_open)
 
 HERE = Path(__file__).resolve().parent
 parser=argparse.ArgumentParser()
-parser.add_argument('suite', choices=('lane','probe','teardown'))
+parser.add_argument('suite', choices=('lane','probe','teardown','first-forward'))
 parser.add_argument('--receipt',type=Path)
 args=parser.parse_args()
-paths={'lane':HERE.parent,'probe':HERE.parent/'probe','teardown':HERE/'tests'}
-suite=unittest.defaultTestLoader.discover(str(paths[args.suite]),pattern='test_*.py')
+paths={'lane':HERE.parent,'probe':HERE.parent/'probe','teardown':HERE/'tests','first-forward':HERE.parent/'probe'}
+suite=unittest.defaultTestLoader.discover(str(paths[args.suite]),pattern='test_first_forward_probe.py' if args.suite=='first-forward' else 'test_*.py')
 excluded=[]
 def restrict(tests):
     for test in tests:

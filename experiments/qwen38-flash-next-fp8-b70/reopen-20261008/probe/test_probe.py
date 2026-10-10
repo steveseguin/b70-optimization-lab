@@ -166,7 +166,7 @@ class ProbeTests(unittest.TestCase):
     def test_idle_watcher_stop_prevents_exit_marker(self):
         args = types.SimpleNamespace(exit_after_sleep=10, receipt_dir=self.root)
         receipt = dict(boot_id='test-boot', health_sha256='hash')
-        with patch.object(probe, 'check_watcher', side_effect=RuntimeError('STOP')):
+        with patch.object(probe, 'check_receipt_watcher', side_effect=RuntimeError('STOP')):
             with self.assertRaisesRegex(RuntimeError, 'STOP'):
                 probe.idle_before_exit(args, receipt, lambda: None)
         self.assertIn('idle_begin', receipt['lifecycle'])
@@ -184,7 +184,7 @@ from pathlib import Path
 sys.path.insert(0, {str(HERE)!r})
 import single_rank_slab_probe as p
 p.admission = lambda *a: dict(boot_id='cpu', health_sha256='hash')
-p.check_watcher = lambda *a: dict(passed=True)
+p.check_receipt_watcher = lambda *a: dict(passed=True)
 p.wait_postflight = lambda *a: dict(passed=True)
 p.production_placement = lambda: None
 def fake_device(args, receipt, save):
@@ -298,9 +298,9 @@ raise SystemExit(p.main({['--health-receipt', str(self.path), '--receipt-dir', s
         receipt = dict(boot_id='test-boot', health_sha256='hash')
         old = dict(passed=True, read_started_unix=9)
         new = dict(passed=True, read_started_unix=11)
-        with patch.object(probe, 'check_watcher', side_effect=[old, new]):
+        with patch.object(probe, 'check_receipt_watcher', side_effect=[old, new]):
             self.assertEqual(probe.wait_postflight(self.root, receipt, 10), new)
-        with patch.object(probe, 'check_watcher', return_value=old):
+        with patch.object(probe, 'check_receipt_watcher', return_value=old):
             with self.assertRaisesRegex(RuntimeError, 'after worker exit'):
                 probe.wait_postflight(self.root, receipt, 10, timeout=.01)
 

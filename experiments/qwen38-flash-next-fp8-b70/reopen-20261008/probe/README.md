@@ -16,22 +16,24 @@ model quality or performance evidence. The separate
 
 The three directories below were created **empty**. Git does not track empty
 directories; another checkout must create them before coordinator admission.
-Saved runs are unchanged. Replace the literal `<FRESH-HEALTH>` with a newly
-provided complete health receipt, then review the printed command. These
-wrappers **print only**; their output is not executed by this task.
+Saved runs are unchanged. The commands below name the committed owner decision
+and the provided post-118b health receipt. These wrappers **print only**;
+neither the wrappers nor their output were run by this task. Health still
+expires six hours after its end time (2026-10-10 07:34:03 UTC); printing a
+command does not admit execution or extend that lifetime.
 Use the image UMD for both exit comparisons. Run clean exit first, and consider
 the sleep arm only after a clean result and a separately admitted idle window.
 
 ```sh
 p=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008
-bash "$p/probe/run-probe-in-container.sh" --render-node /dev/dri/by-path/pci-0000:23:00.0-render --health-receipt '<FRESH-HEALTH>' --receipt-dir "$p/runs/probe-clean-exit-20261010" --clean-exit
-bash "$p/probe/run-probe-in-container.sh" --render-node /dev/dri/by-path/pci-0000:23:00.0-render --health-receipt '<FRESH-HEALTH>' --receipt-dir "$p/runs/probe-exit-sleep-20261010" --exit-after-sleep 10
+bash "$p/probe/run-probe-in-container.sh" --render-node /dev/dri/by-path/pci-0000:23:00.0-render --health-receipt experiments/ltx25-b70/data/resume-20261008/postflight-pre118b-20261010T0134Z.json --owner-acceptance experiments/ltx25-b70/data/resume-20261008/fault-archive-20261010T011831Z-owner-accept-receipt.json --receipt-dir "$p/runs/probe-clean-exit-20261010" --clean-exit
+bash "$p/probe/run-probe-in-container.sh" --render-node /dev/dri/by-path/pci-0000:23:00.0-render --health-receipt experiments/ltx25-b70/data/resume-20261008/postflight-pre118b-20261010T0134Z.json --owner-acceptance experiments/ltx25-b70/data/resume-20261008/fault-archive-20261010T011831Z-owner-accept-receipt.json --receipt-dir "$p/runs/probe-exit-sleep-20261010" --exit-after-sleep 10
 ```
 
 Pinned image (already selected; no pull or build):
 `vllm/vllm-openai-xpu@sha256:e4446310b1d30015e8fdc1a0a2ef1669ac6bef857cbe772487571ed5c1a926a9`.
 The applied `overlay-manifest.json` SHA-256 is
-`21f4a79c000aa4cf9772082379b486384f5ac8bc1a38210c96c567f555ef7648`.
+`e00bb55d8378ecd0065e82a8c3b6fdd59268bd33aae6e0f356ca48f067926f2d`.
 The preserved `teardown.patch` SHA-256 is
 `3a9ea39d03d5888ed4c05eadd40c083216bfbe58dc6e35caeee2068d1fb71f62`.
 The tiny exit probes read the package's pinned placement helper; they do not
@@ -45,14 +47,31 @@ The old tiny-probe guardian still has its documented fatal 120-second alarm;
 that existing timeout behavior is not native-safe cleanup and must be treated
 as a fault/inconclusive result, not a successful test.
 
-The owner's boot decision is resolved. A separate **implementation limitation**
-remains: the shared `watch_kernel.py` calls `screen.admit_journal`, whose
-existing two-incident gate refuses this boot even with a fresh passing health
-receipt. This CPU application did not remove fault markers or weaken that
-gate. The coordinator must reconcile that recorded authorization with the
-admission mechanism before execution; these print-only commands do not bypass
-it. Exclusive idle cards, the five-minute stop gap and fresh health remain
-required. No LTX process or endpoint is operated by this preparation.
+The admission mismatch is resolved by explicit `--owner-acceptance` on
+Screen 1b, both probe printers/workers, and the shared watcher. Only
+[`fault-archive-20261010T011831Z-owner-accept-receipt.json`](../../../ltx25-b70/data/resume-20261008/fault-archive-20261010T011831Z-owner-accept-receipt.json)
+at its canonical repository path is accepted, pinned to SHA-256
+`7c67c88aee396774ae8c2b29e23dd8366de9ab2375acdafec7b6254f23bbd5b1`
+(committed in `317309759`). Its full boot ID, decision text and UTC time are
+validated. The baseline is **2026-10-10 01:18:31 UTC**, the receipt time,
+not the approximate conversation/archive filename time. Earlier faults remain
+visible as excluded evidence; **any classified fault at or after that time
+refuses**, even with a later passing health receipt. Unparseable fault times
+also refuse. Without this option the original two-incident gate is unchanged.
+
+The coordinator must pass **the same `--owner-acceptance experiments/ltx25-b70/data/resume-20261008/fault-archive-20261010T011831Z-owner-accept-receipt.json`**
+to `watch_kernel.py`, alongside the same health path and each probe's receipt
+directory. Watcher and worker acceptance hashes must match. Every probe receipt
+and watcher output carries `journal_admission` with receipt SHA-256,
+`counted_fault_lines`, `excluded_fault_lines`, and counted GPU incidents;
+Screen prints and saves that same audit, including refusals. If the journal
+was not read, `journal_evidence_available=false` makes that limitation explicit.
+
+Exclusive idle cards, the five-minute stop gap and fresh passing health that
+starts after acceptance remain required. No LTX process or endpoint is operated
+by these commands' preparation. The current manifest changes only the
+`screen.py` support pin; the frozen teardown patch and its original manifest
+stay unchanged. [CPU results and preparation incident](../VALIDATION.md#owner-acceptance-admission-2026-10-10).
 
 ### Preregistered interpretation
 
@@ -74,7 +93,7 @@ repository does not qualify it for production.
 
 ```sh
 p=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008
-bash "$p/probe/run-first-forward-in-container.sh" --render-node /dev/dri/by-path/pci-0000:23:00.0-render --health-receipt '<FRESH-HEALTH>' --receipt-dir "$p/runs/probe-first-forward-20261010" --overlay-sha256 21f4a79c000aa4cf9772082379b486384f5ac8bc1a38210c96c567f555ef7648
+bash "$p/probe/run-first-forward-in-container.sh" --render-node /dev/dri/by-path/pci-0000:23:00.0-render --health-receipt experiments/ltx25-b70/data/resume-20261008/postflight-pre118b-20261010T0134Z.json --owner-acceptance experiments/ltx25-b70/data/resume-20261008/fault-archive-20261010T011831Z-owner-accept-receipt.json --receipt-dir "$p/runs/probe-first-forward-20261010" --overlay-sha256 e00bb55d8378ecd0065e82a8c3b6fdd59268bd33aae6e0f356ca48f067926f2d
 ```
 
 [Worker](single_rank_first_forward_probe.py), [command printer](first_forward_command.py),
@@ -191,8 +210,9 @@ process, and requires one final journal read begun after the worker exits.
 **Stop on any error, mismatch, timeout, missing evidence, new fault/CAT/reset/dump
 or stale watcher. No automatic retry, direct follow-up, four-rank load or recovery.**
 Preserve receipts, logs and dumps; the coordinator applies the host recovery rule.
-The watcher keeps the whole-boot journal and latches STOP. A second incident on
-the boot refuses regardless of a passing health receipt. Nothing deletes FAULT.
+The watcher keeps the whole-boot journal and latches STOP. Without explicit pinned owner acceptance, a second incident on
+the boot refuses regardless of a passing health receipt. With acceptance, every
+classified fault at or after its timestamp refuses. Nothing deletes FAULT.
 
 A separately approved direct test uses a **new** receipt directory and the same
 sequence, adding `--direct-host-pointer` to the printer command. The standalone

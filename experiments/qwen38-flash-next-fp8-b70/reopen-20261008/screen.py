@@ -201,23 +201,96 @@ def new_fault_lines(whole_boot, cutoff):
     return later
 
 
-def admit_journal(whole_boot, receipt=None, *, boot_id=None, now=None):
-    """Validate recovery and return (admitted lines, monitoring cutoff)."""
+# Explicit owner decision committed in 317309759. Pin bytes as well as location:
+# a later edit or an arbitrary lookalike receipt cannot authorize this exception.
+OWNER_ACCEPTANCE_RELATIVE = Path('experiments/ltx25-b70/data/resume-20261008/'
+    'fault-archive-20261010T011831Z-owner-accept-receipt.json')
+OWNER_ACCEPTANCE_SHA256 = '7c67c88aee396774ae8c2b29e23dd8366de9ab2375acdafec7b6254f23bbd5b1'
+
+
+def verify_owner_acceptance(path, boot_id, now, audit=None):
+    """Validate the one recorded decision; never infer acceptance from health."""
+    audit = {} if audit is None else audit
+    path = Path(path)
+    audit['owner_acceptance_path'] = str(path)
+    require(path.resolve() == (REPO / OWNER_ACCEPTANCE_RELATIVE).resolve(),
+            'Owner acceptance must be the committed receipt at ' + str(OWNER_ACCEPTANCE_RELATIVE))
+    try:
+        require(path.is_file(), 'Cannot read owner acceptance receipt: not a regular file')
+        raw = path.read_bytes()
+    except OSError as exc:
+        raise RuntimeError(f'Cannot read owner acceptance receipt: {exc}') from exc
+    audit['owner_acceptance_sha256'] = hashlib.sha256(raw).hexdigest()
+    require(audit['owner_acceptance_sha256'] == OWNER_ACCEPTANCE_SHA256,
+            'Owner acceptance receipt SHA256 mismatch; modified/uncommitted receipt refused')
+    receipt = json.loads(raw)
+    require(isinstance(receipt, dict) and receipt.get('schema') == 'ltx.fault-archive-receipt.v1',
+            'Owner acceptance receipt schema invalid')
+    require(receipt.get('boot_id') == boot_id, 'Owner acceptance receipt is from another boot')
+    require(isinstance(receipt.get('decision'), str) and receipt['decision'].strip(),
+            'Owner acceptance receipt lacks decision text')
+    try:
+        accepted = datetime.datetime.strptime(receipt['time_utc'], '%Y%m%dT%H%M%SZ').replace(
+            tzinfo=datetime.timezone.utc)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise RuntimeError('Owner acceptance receipt lacks a readable UTC time') from exc
+    require(accepted <= now, 'Owner acceptance time is in the future')
+    audit.update(owner_acceptance=receipt, owner_acceptance_verified=True,
+                 incident_baseline_unix=accepted.timestamp())
+    return accepted
+
+
+def admission_audit():
+    return dict(passed=False, owner_acceptance_sha256=None, owner_acceptance_verified=False,
+                counted_fault_lines=[], excluded_fault_lines=[], counted_gpu_incidents=None,
+                journal_evidence_available=False)
+
+
+def admit_journal(whole_boot, receipt=None, *, boot_id=None, now=None,
+                  owner_acceptance=None, audit=None):
+    """Return (historical lines, monitoring cutoff); fill audit even on refusal."""
+    audit = {} if audit is None else audit
+    audit.update(admission_audit())
     now = now or datetime.datetime.now(datetime.timezone.utc)
     verdict = classify_journal(whole_boot)
-    incidents = fault_incidents(verdict['gpu_faults'])
-    require(incidents < 2,
-            f'{incidents} GPU fault incidents this boot; owner must decide (reboot). No launch')
     lines = verdict['gpu_faults'] + verdict['unexplained_host']
-    require(not lines or receipt is not None,
-            'Fault signature in this boot; --health-receipt PATH required after one bounded '
-            'four-card health probe; no launch')
-    cutoff = (verify_health_receipt(receipt, boot_id, now).timestamp()
-              if receipt is not None else now.timestamp())
-    later = new_fault_lines(whole_boot, cutoff)
-    require(not later, 'Kernel device or host fault after the health receipt: ' +
-            (later[:1] or [''])[0][:200])
-    return lines, cutoff
+    audit['journal_evidence_available'] = True
+    audit['counted_fault_lines'] = lines
+    try:
+        accepted = None
+        counted_gpu = verdict['gpu_faults']
+        if owner_acceptance is not None:
+            accepted = verify_owner_acceptance(owner_acceptance, boot_id, now, audit)
+            counted = new_fault_lines(whole_boot, accepted.timestamp())
+            audit['counted_fault_lines'] = counted
+            audit['excluded_fault_lines'] = [line for line in lines if line not in counted]
+            counted_gpu = [line for line in verdict['gpu_faults'] if line in counted]
+        incidents = fault_incidents(counted_gpu)
+        audit['counted_gpu_incidents'] = incidents
+        if accepted is not None:
+            require(not audit['counted_fault_lines'],
+                    'Kernel device or host fault at/after owner acceptance: ' +
+                    (audit['counted_fault_lines'][:1] or [''])[0][:200])
+            require(receipt is not None, 'Owner acceptance still requires --health-receipt')
+        require(incidents < 2,
+                f'{incidents} GPU fault incidents this boot; owner must decide (reboot). No launch')
+        require(not lines or receipt is not None,
+                'Fault signature in this boot; --health-receipt PATH required after one bounded '
+                'four-card health probe; no launch')
+        cutoff = (verify_health_receipt(receipt, boot_id, now).timestamp()
+                  if receipt is not None else now.timestamp())
+        if accepted is not None:
+            require(parse_utc(receipt['start_utc']) >= accepted,
+                    'Health receipt must start at/after owner acceptance')
+            cutoff = accepted.timestamp()
+        later = new_fault_lines(whole_boot, cutoff)
+        require(not later, 'Kernel device or host fault after the health receipt: ' +
+                (later[:1] or [''])[0][:200])
+        audit.update(passed=True, monitoring_cutoff_unix=cutoff)
+        return lines, cutoff
+    except Exception as exc:
+        audit['exception'] = f'{type(exc).__name__}: {exc}'
+        raise
 
 
 def journal_admission(args):
@@ -225,25 +298,39 @@ def journal_admission(args):
     # unmonitored gap between admission and server startup.
     now = datetime.datetime.now(datetime.timezone.utc)
     receipt_path = getattr(args, 'health_receipt', None)
+    owner_path = getattr(args, 'owner_acceptance', None)
     receipt, receipt_bytes = None, None
-    if receipt_path is not None:
-        try:
-            receipt_bytes = Path(receipt_path).read_bytes()
-            receipt = json.loads(receipt_bytes)
-        except (OSError, ValueError) as exc:
-            raise RuntimeError(f'Cannot read health receipt: {exc}') from exc
-        require(isinstance(receipt, dict), 'Health receipt must be a JSON object')
-    whole_boot = journal()
-    admitted, cutoff = admit_journal(
-        whole_boot, receipt, boot_id=Path('/proc/sys/kernel/random/boot_id').read_text().strip(), now=now)
+    audit = admission_audit()
     run = getattr(args, 'run_dir', None)
-    if run is not None and run.is_dir():
-        (run / 'kernel-preflight.log').write_text(whole_boot)
-        (run / 'journal-admitted-faults.txt').write_text(''.join(line + '\n' for line in admitted))
-        if receipt_bytes is not None:
-            (run / 'health-receipt.json').write_bytes(receipt_bytes)
-            (run / 'health-receipt.sha256').write_text(
-                hashlib.sha256(receipt_bytes).hexdigest() + '  health-receipt.json\n')
+    try:
+        boot = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+        if owner_path is not None:
+            verify_owner_acceptance(owner_path, boot, now, audit)
+        if receipt_path is not None:
+            try:
+                receipt_bytes = Path(receipt_path).read_bytes()
+                receipt = json.loads(receipt_bytes)
+            except (OSError, ValueError) as exc:
+                raise RuntimeError(f'Cannot read health receipt: {exc}') from exc
+            require(isinstance(receipt, dict), 'Health receipt must be a JSON object')
+        whole_boot = journal()
+        admitted, cutoff = admit_journal(whole_boot, receipt, boot_id=boot, now=now,
+                                        owner_acceptance=owner_path, audit=audit)
+        if run is not None and run.is_dir():
+            (run / 'kernel-preflight.log').write_text(whole_boot)
+            (run / 'journal-admitted-faults.txt').write_text(''.join(line + '\n' for line in admitted))
+            if receipt_bytes is not None:
+                (run / 'health-receipt.json').write_bytes(receipt_bytes)
+                (run / 'health-receipt.sha256').write_text(
+                    hashlib.sha256(receipt_bytes).hexdigest() + '  health-receipt.json\n')
+    except Exception as exc:
+        audit.update(passed=False, exception=f'{type(exc).__name__}: {exc}')
+        raise
+    finally:
+        print(json.dumps({'journal_admission': audit}, ensure_ascii=False), flush=True)
+        if run is not None and run.is_dir():
+            (run / 'journal-admission.json').write_text(json.dumps(audit, indent=2, ensure_ascii=False) + '\n')
+
     return cutoff
 
 
@@ -662,6 +749,7 @@ def main():
     p.add_argument('--mode', choices=['mtp0', 'mtp1', 'mtp3', 'calibrate-load'], default='mtp1')
     p.add_argument('--health-receipt', type=Path,
                    help='Same-boot four-card health receipt (<6 h); required after a boot fault')
+    p.add_argument('--owner-acceptance', type=Path, help='Explicit pinned owner boot decision; no default')
     p.add_argument('--calibration', type=Path, help='Qualified calibration-load.json for MTP1')
     p.add_argument('--loading-ram-guard-gb', type=int,
                    help='Calibrate-load only: host-use ceiling in decimal GB (default 90, maximum 96)')
@@ -681,6 +769,8 @@ def main():
         args.calibration = args.calibration.resolve()
     if args.health_receipt:
         args.health_receipt = args.health_receipt.resolve()
+    if args.owner_acceptance:
+        args.owner_acceptance = args.owner_acceptance.resolve()
     if args.mode == 'calibrate-load' and args.action not in ('run', '_worker', 'preflight'):
         p.error('calibrate-load uses the already-present image; prepare is not a calibration action')
     args.run_dir = run
@@ -731,6 +821,8 @@ def main():
             command += ['--loading-ram-guard-gb', str(args.loading_ram_guard_gb)]
         if args.health_receipt:
             command += ['--health-receipt', str(args.health_receipt)]
+        if args.owner_acceptance:
+            command += ['--owner-acceptance', str(args.owner_acceptance)]
         (run / 'unit.txt').write_text(unit + '\n')
         call(command)
         print(f'Follow: journalctl --user -fu {unit}; stop gracefully: systemctl --user stop {unit}')

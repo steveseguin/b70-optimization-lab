@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**2026-10-10, Flash-Next admission reconciled with the owner's boot decision.**
+The gate now accepts the exact saved decision only when explicitly requested.
+It keeps earlier fault lines in the record and refuses every new fault. CPU
+checks passed: 227 lane, 70 combined probe and 49 cleanup checks; the 35
+first-forward checks also passed separately. Seven prohibited tests were skipped.
+The three commands are prepared, not run. A faulty new test mock accidentally
+opened a render device and blocked CPU test PID 899526; the owner was informed,
+and permission to interrupt that PID is pending. No signal was sent. The mock
+is fixed and the CPU runner now blocks device opens. LTX was not operated.
+[Checks, incident and limits](experiments/qwen38-flash-next-fp8-b70/reopen-20261008/VALIDATION.md#owner-acceptance-admission-2026-10-10).
+
 **2026-10-09, LTX 118b rebuilt and checked on CPU.**
 The four review problems are fixed in a new sealed packet. All 299 recovery tests,
 193 client checks and 10 preflight tests pass. Packet 118 is withdrawn and was never

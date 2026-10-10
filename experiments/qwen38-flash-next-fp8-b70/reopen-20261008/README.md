@@ -1,24 +1,24 @@
 # Flash-Next Screen 1b — native FP8 mmap adapter
 
-**2026-10-09: the reviewed graceful-teardown patch is applied to this repository
-overlay. Native cleanup and model qualification remain open.** The owner
-accepted continuing this boot without rebooting. This task is CPU preparation
-only; GPU work belongs to the coordinator and stays behind LTX.
+**2026-10-10: admission now supports the owner's recorded boot decision.**
+`--owner-acceptance` explicitly selects the committed, SHA-256-pinned receipt.
+It must match the full boot ID and contain the decision and timestamp. Faults
+before 01:18:31 UTC are retained as excluded evidence; every later fault,
+including the boundary second, still refuses. The usual health and stop rules
+remain. Without the option, the original two-incident refusal is unchanged.
 
-The applied files exactly match the preserved [patch and copies](overlay-fix-teardown/README.md).
-The manifest now pins all 50 overlay files and 12 support files, including the
-ordered per-rank cleanup and final receipt validator. No model arithmetic,
-placement, full 16-bit KV or memory guard changed. Original saved runs and
-historical hash pins remain evidence of their original configurations.
+The watcher, probe workers and Screen 1b launcher retain receipt hashes and
+counted/excluded fault lines. Workers require the same acceptance as the watcher.
+The current overlay manifest refreshes only the `screen.py` support pin;
+the [frozen teardown patch and copies](overlay-fix-teardown/README.md) retain
+their original hashes. Native cleanup and model qualification remain open.
 
-[Application validation](VALIDATION.md#teardown-application-and-probe-preparation-2026-10-09)
-records **316 passing CPU checks and seven prohibited skips**. The one-layer
-first-forward script shares the probe admission, kernel watch and receipts,
-uses the applied teardown path, and has 35 new passing checks. [Prepared single-card probes](probe/README.md#prepared-for-2026-10-10-written-2026-10-09)
-use empty new receipt directories, the immutable image and fresh-health
-placeholders. No probe was executed. The existing two-incident admission gate
-still needs coordinator reconciliation with the owner's decision; it was not
-bypassed here. A clean CPU check is not proof of native teardown safety.
+[Exact print-only commands](probe/README.md#prepared-for-2026-10-10-written-2026-10-09)
+name the supplied health receipt and owner acceptance. None were run. LTX stays
+with the coordinator; saved runs were not modified.
+[CPU validation](VALIDATION.md#owner-acceptance-admission-2026-10-10) records
+346 unique passing checks and seven prohibited skips. It also records an
+unintended device open by a faulty test mock and the added CPU-runner guard.
 
 ## Historical attempt-7 preparation (it later faulted)
 
