@@ -28,6 +28,7 @@ Docs should point to those artifacts instead of duplicating every script.
 - [Model Intake Queue](../model-intake/README.md): revision-pinned candidate
   downloads, USB safety checks, popularity snapshot, and already-covered
   families that should not be duplicated.
+- [long-horizon-context-program.md](long-horizon-context-program.md) — the long-horizon context problem (weeks-long agents, 1M-10M histories, live cap 200K): every idea tried, proposed and seen, engine constraints (hybrid GDN / SWA state), and the benchmark design to compare solutions (2026-10-10).
 - [Own Model-Specific Runtimes For Intel Xe](own-xpu-runtime-objective.md):
   the 2026-10-10 long-running objective, its rules (own project, official or
   Unsloth weights, B70 only), design pillars and staged gates.
