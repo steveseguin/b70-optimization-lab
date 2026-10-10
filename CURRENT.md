@@ -1,5 +1,10 @@
 # Current Workspace State
 
+**2026-10-10 10:18 UTC, combined 128 arm (idle + GC 60 + digest cache) measured: n = 61, median 5.528 s (even 5.50 / odd 5.84, p90 6.01) = 0.921 s/s (verdict 0d1d0d811ce2, exact); the two levers overlap rather than add. Packet 129 launched at 145 with the same production configuration (`s129-live01`).**
+145-frame line summary (chunks ≥ 10): 121 legacy 5.636 · 123b 5.770 · 126 5.759 · **127 5.467** · 128 (idle, GC 10) 5.493 · 128 (idle + GC 60 + digest) as above.
+The production line is therefore ≈ 5.47–5.50 s per 6.0 s of video = **0.91–0.92 s/s**, all configurations byte-exact at the gates. 129 adds
+atomic publication for every route-read evidence file (reliability; speed expected equal). Codex is on 130 (xpu:2 headroom for 169).
+
 **2026-10-10 10:10 UTC, packet 129 sealed: every HTTP-route-read evidence file (receipts, decode records, /view captures, identity/halt files) is now published by temp + fsync + rename; the route guard is unchanged.**
 Codex (commits 083748b2b, fd3b22b9e; manifest `42e6a745…886c`; inner plan `466039fc…6536`; 796/796 recovery incl. 33 publication tests,
 3,850/3,850 client, 10/10 preflight; inventory `recovery/20261010-continuation129-stream/inventory129.md`; its /tmp scratch deleted).
