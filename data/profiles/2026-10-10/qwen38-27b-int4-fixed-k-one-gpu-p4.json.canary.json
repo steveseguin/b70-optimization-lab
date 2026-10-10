@@ -1,0 +1,42 @@
+{
+  "rows": [
+    {
+      "case": "json",
+      "elapsed_s": 0.3910147949354723,
+      "normalized": "We need to respond to user: \"Return exactly this JSON object and nothing else, with a numeric answer: {\"answer\":42,\"unit\":\"widgets\"}",
+      "ok": true,
+      "repeat": 0,
+      "text": "We need to respond to user: \"Return exactly this JSON object and nothing else, with a numeric answer: {\"answer\":42,\"unit\":\"widgets\"}"
+    },
+    {
+      "case": "sort",
+      "elapsed_s": 0.387861315975897,
+      "normalized": "We need answer user's request: \"Sort these colors alphabetically. Reply only with the comma-separated list: orange, blue, red, green Answer:\"",
+      "ok": false,
+      "repeat": 0,
+      "text": "We need answer user's request: \"Sort these colors alphabetically. Reply only with the comma-separated list: orange, blue, red, green\nAnswer:\""
+    }
+  ],
+  "summary": {
+    "failures": [
+      {
+        "case": "sort",
+        "elapsed_s": 0.387861315975897,
+        "normalized": "We need answer user's request: \"Sort these colors alphabetically. Reply only with the comma-separated list: orange, blue, red, green Answer:\"",
+        "ok": false,
+        "repeat": 0,
+        "text": "We need answer user's request: \"Sort these colors alphabetically. Reply only with the comma-separated list: orange, blue, red, green\nAnswer:\""
+      }
+    ],
+    "pass_all": false,
+    "repeats_requested": 4,
+    "rows_completed": 2,
+    "run_identity": {
+      "api_mode": "chat",
+      "base_url": "http://127.0.0.1:19350",
+      "created_at_utc": "2026-10-10T05:19:55.531903+00:00",
+      "model": "qwen38-27b-int4",
+      "seed": 1
+    }
+  }
+}

@@ -1,0 +1,85 @@
+{
+ "label": "qwen38-27b-q4km-gguf-nd9fee29e-p2",
+ "base": "http://127.0.0.1:19350",
+ "model": "qwen38-27b-q4km",
+ "started_utc": "2026-10-10T05:00:01Z",
+ "users": 2,
+ "decode_1user": {
+  "median_tps": 23.80656568596909,
+  "runs": [
+   {
+    "decode_tps": 23.40004895179635,
+    "ttft": 0.7676336765289307,
+    "completion_tokens": 71,
+    "sha": "1328e66b4868"
+   },
+   {
+    "decode_tps": 23.80656568596909,
+    "ttft": 0.7340891361236572,
+    "completion_tokens": 71,
+    "sha": "1328e66b4868"
+   },
+   {
+    "decode_tps": 23.847860452789284,
+    "ttft": 0.7444899082183838,
+    "completion_tokens": 63,
+    "sha": "6b940365e18e"
+   }
+  ]
+ },
+ "prefill": {
+  "512": {
+   "ttft_s": 0.877,
+   "prompt_tokens": 518,
+   "prompt_tps": 590.4
+  },
+  "2048": {
+   "ttft_s": 2.247,
+   "prompt_tokens": 2054,
+   "prompt_tps": 914.0
+  },
+  "8192": {
+   "ttft_s": 8.298,
+   "prompt_tokens": 8198,
+   "prompt_tps": 988.0
+  }
+ },
+ "repeat_identical": {
+  "distinct": 2,
+  "shas": [
+   "d44ea13adc43",
+   "d44ea13adc43",
+   "a27d38d8b28d"
+  ]
+ },
+ "batch_identical": {
+  "alone_sha": "d44ea13adc43",
+  "batch_shas": [
+   "84e7c369394e",
+   "8288043b0342"
+  ],
+  "distinct_incl_alone": 3
+ },
+ "decode_nusers": {
+  "per_stream_median_tps": 17.94703222958986,
+  "aggregate_tps": 35.9
+ },
+ "multi_user": {
+  "users": 2,
+  "seconds": 43.3,
+  "requests": 17,
+  "req_per_s": 0.39,
+  "prompt_tok_s": 123.7,
+  "completion_tok_s": 29.6,
+  "total_tok_s": 153.3,
+  "mean_latency_s": 5.55,
+  "errors": 0
+ },
+ "canary": {
+  "rows": 3,
+  "ok": 2
+ },
+ "finished_utc": "2026-10-10T05:01:58Z",
+ "card_memory_used_mib_after_load": 20505,
+ "server_log": "/home/steve/b70-optimization-lab/data/profiles/2026-10-10/qwen38-27b-q4km-gguf-nd9fee29e-p2.server.log"
+}

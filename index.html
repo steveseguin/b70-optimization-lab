@@ -276,6 +276,24 @@ Style genome (duotone-hixffp):
   .model-picker tbody tr:nth-child(even):not(.model-group-row) { background: rgba(20,18,14,.03); }
   .model-picker th.model { padding-top: 12px; padding-bottom: 12px; }
   .model-picker thead th { font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid var(--ink); }
+  /* same test, every model: uniform profiling table */
+  .uniform-table { table-layout: auto; width: 100%; }
+  .uniform-table th.model { max-width: 360px; white-space: normal; }
+  .uniform-table td.num { min-width: 84px; }
+  .uniform-table td .ubar { display: block; height: 5px; background: var(--ink); margin-top: 4px; max-width: 120px; }
+  .uniform-table td .ubar.max { background: var(--spot); }
+  .uniform-table td .ubar.spot { background: var(--spot); }
+  .uniform-table td .ubar.empty { background: transparent; border-bottom: 1px dashed rgba(20,18,14,.35); }
+  .uniform-table td small.plain { font-family: inherit; font-size: 11.5px; max-width: 26ch; }
+  .uniform-table td small { display: block; font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 2px; white-space: normal; }
+  .uniform-table th.model small { display: block; font-weight: 400; color: var(--muted); font-size: 11.5px; margin-top: 3px; }
+  .uniform-table th.model .card-chip { margin: 0 6px 0 0; vertical-align: 1px; }
+  .utag { display: inline-block; padding: 1px 7px 0; border: 1px solid var(--ink); font-family: var(--mono); font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+  .utag.ok { background: var(--ink); color: var(--paper); }
+  .utag.warn { color: var(--muted); border-style: dashed; }
+  .uniform-table tbody tr { border-bottom: 1px solid rgba(20,18,14,.18); }
+  .uniform-table tbody tr:nth-child(even) { background: rgba(20,18,14,.03); }
+  .uniform-table thead th { font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid var(--ink); }
   /* the full table: bars drawn under the one-user speed, quiet rows for setups without a passing headline */
   .model-picker td.model-speed .cellbar { display: block; height: 5px; background: var(--ink); margin-top: 4px; max-width: 110px; }
   .model-picker td.model-speed .cellbar.max { background: var(--spot); }
@@ -360,6 +378,16 @@ Style genome (duotone-hixffp):
   footer .right a { display: inline-block; padding: 4px 0; }
   footer span a { border-bottom: 1px solid currentColor; }
 
+  @media (max-width: 1020px) {
+    .uniform-table { display: block; min-width: 0; border: 0; }
+    .uniform-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .uniform-table tbody { display: grid; gap: 12px; }
+    .uniform-table tr { display: grid; grid-template-columns: 1fr 1fr; gap: 9px 14px; padding: 14px; border: 2px solid var(--ink); background: var(--paper); }
+    .uniform-table th.model { grid-column: 1 / -1; padding: 0; white-space: normal; font-size: 15px; }
+    .uniform-table td { display: block; padding: 0; min-width: 0; text-align: left; white-space: normal; }
+    .uniform-table td::before { content: attr(data-label); display: block; margin-bottom: 2px; color: var(--muted); font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: .06em; }
+    .uniform-table td .ubar { max-width: none; }
+  }
   @media (max-width: 1020px) {
     .model-scroller { overflow: visible; }
     .model-picker { display: block; min-width: 0; border: 0; }
@@ -473,45 +501,69 @@ Style genome (duotone-hixffp):
 <section id="featured">
   <div class="wrap">
     <h2 id="t-featured">What should I run?</h2>
-    <p class="sub">The setups we work on most, in the order we would try them. Speeds are in <abbr title="tokens per second">tok/s</abbr>: about how many words the AI writes each second (a token is about &frac34; of a word). The bars share one scale per column, so a longer bar is simply faster.</p>
+    <p class="sub">One pick per size, from a small quick model to the large ones, all measured the same way on 2026-10-10. Speeds are in <abbr title="tokens per second">tok/s</abbr>: about how many words the AI writes each second (a token is about &frac34; of a word). The bars share one scale per column, so a longer bar is simply faster.</p>
     <ol class="pick-list">
       <li class="pick-row">
         <div class="pick-head"><span class="pick-rank">1</span><div>
-          <p class="eyebrow">Ready to try &middot; also our shared chat server</p>
-          <h3><a href="models/gemma4-26b-a4b-q8-b70-125tps-20260701.html">Gemma 4 26B Q8</a> <span class="card-chip">1 card</span><small>llama.cpp SYCL &middot; 8-bit weights &middot; MTP depth 3 &middot; Google</small></h3>
-          <p class="pick-why">The fastest all-round chat model on a single card, and the one we run as a shared server: switch it to 8 people per card and everyone keeps a usable speed. Repeating the same question gives the same answer every time.</p>
+          <p class="eyebrow">Ready to try &middot; exact &middot; small and quick</p>
+          <h3><a href="models/qwen35-4b-w4a16-b70.html">Qwen3.5-4B INT4</a> <span class="card-chip">1 card</span><small>vLLM XPU &middot; INT4 weights &middot; MTP depth 3 &middot; Alibaba</small></h3>
+          <p class="pick-why">The fastest thing we have measured on one card, and it stays fast with a room full of people. A small model, so keep it to everyday questions, drafts and simple code. Same answers as running it slowly on every check in its package.</p>
         </div></div>
         <div class="pick-bars">
-          <div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track"><div class="pick-fill" style="width:100%"></div></div><span class="pick-val">122 tok/s</span></div>
-          <div class="pick-bar-row"><span class="pick-bar-label">8 people, 1 card</span><div class="pick-track"><div class="pick-fill spot" style="width:31%"></div></div><span class="pick-val">270 tok/s<small>everyone together</small></span></div>
-          <div class="pick-bar-row"><span class="pick-bar-label">Reads a prompt</span><div class="pick-track"><div class="pick-fill" style="width:72%"></div></div><span class="pick-val">1,470 tok/s<small>8,000-token prompt</small></span></div>
-          <p class="pick-note">Up to 16K of conversation per person; 4K each in the 8-people shape. The many-people figure is a throughput measurement, not checked exact against the one-person answers.</p>
+          <div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track"><div class="pick-fill" style="width:100%"></div></div><span class="pick-val">228 tok/s</span></div>
+          <div class="pick-bar-row"><span class="pick-bar-label">8 people</span><div class="pick-track"><div class="pick-fill spot" style="width:100%"></div></div><span class="pick-val">1,312 tok/s<small>everyone together</small></span></div>
+          <div class="pick-bar-row"><span class="pick-bar-label">Reads a prompt</span><div class="pick-track"><div class="pick-fill" style="width:100%"></div></div><span class="pick-val">4,066 tok/s<small>2,000-token prompt</small></span></div>
+          <p class="pick-note">Up to 32K of conversation per person. Measured in the same-test pass below.</p>
+        </div>
+        <div class="pick-links"><a class="button" href="models/qwen35-4b-w4a16-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen35-4b-w4a16-b70/README.md">Recipe</a></div>
+      </li>
+      <li class="pick-row">
+        <div class="pick-head"><span class="pick-rank">2</span><div>
+          <p class="eyebrow">Ready to try &middot; exact &middot; mid-size</p>
+          <h3><a href="models/qwen35-9b-w4a16-b70.html">Qwen3.5-9B INT4</a> <span class="card-chip">1 card</span><small>vLLM XPU &middot; INT4 weights &middot; MTP depth 3 &middot; Alibaba &middot; also as <a href="models/qwen35-9b-fp8-b70.html">FP8</a> (117 tok/s, no 4-bit compression)</small></h3>
+          <p class="pick-why">A noticeably smarter model than the 4B that is still quick alone and serves eight people well. Our pick for a home or small-office assistant on one card.</p>
+        </div></div>
+        <div class="pick-bars">
+          <div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track"><div class="pick-fill" style="width:69%"></div></div><span class="pick-val">157 tok/s</span></div>
+          <div class="pick-bar-row"><span class="pick-bar-label">8 people</span><div class="pick-track"><div class="pick-fill spot" style="width:75%"></div></div><span class="pick-val">988 tok/s<small>everyone together</small></span></div>
+          <div class="pick-bar-row"><span class="pick-bar-label">Reads a prompt</span><div class="pick-track"><div class="pick-fill" style="width:60%"></div></div><span class="pick-val">2,452 tok/s<small>2,000-token prompt</small></span></div>
+          <p class="pick-note">Up to 32K of conversation per person. The FP8 version: 117 tok/s alone, 827 tok/s for 8 people, reads 2,891 tok/s.</p>
+        </div>
+        <div class="pick-links"><a class="button" href="models/qwen35-9b-w4a16-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen35-9b-w4a16-b70/README.md">Recipe</a><a href="models/qwen35-9b-fp8-b70.html">FP8 details</a></div>
+      </li>
+      <li class="pick-row">
+        <div class="pick-head"><span class="pick-rank">3</span><div>
+          <p class="eyebrow">Ready to try &middot; large &middot; also our shared chat server</p>
+          <h3><a href="models/gemma4-26b-a4b-q8-b70-125tps-20260701.html">Gemma 4 26B Q8</a> <span class="card-chip">1 card</span><small>llama.cpp SYCL &middot; 8-bit weights &middot; Google</small></h3>
+          <p class="pick-why">The best large model that fits one card with 8-bit weights. Fast for one person with its draft model on, and the shape we run as a shared server for a whole network (draft off, 8 people per card). Repeating a question gives the same answer every time; answers can still differ when the server is busy with others.</p>
+        </div></div>
+        <div class="pick-bars">
+          <div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track"><div class="pick-fill" style="width:54%"></div></div><span class="pick-val">122 tok/s<small>with draft model</small></span></div>
+          <div class="pick-bar-row"><span class="pick-bar-label">8 people</span><div class="pick-track"><div class="pick-fill spot" style="width:20%"></div></div><span class="pick-val">268 tok/s<small>everyone together, draft off</small></span></div>
+          <div class="pick-bar-row"><span class="pick-bar-label">Reads a prompt</span><div class="pick-track"><div class="pick-fill" style="width:36%"></div></div><span class="pick-val">1,453 tok/s<small>2,000-token prompt</small></span></div>
+          <p class="pick-note">Up to 16K of conversation per person; 4K each in the 8-people shape.</p>
         </div>
         <div class="pick-links"><a class="button" href="models/gemma4-26b-a4b-q8-b70-125tps-20260701.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/docs/gemma4-26b-q8-service-runbook.md">Server recipe</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/notes/2026-10-09-gemma4-26b-two-b70-16k-lan-service.md">How we tuned it</a></div>
       </li>
       <li class="pick-row">
-        <div class="pick-head"><span class="pick-rank">2</span><div>
-          <p class="eyebrow">Ready to try &middot; exact &middot; pick 1 card or 2 cards</p>
-          <h3><a href="models/qwen-27b.html">Qwen3.8 27B FP8</a><small>vLLM XPU &middot; FP8 weights &middot; MTP depth 5 &middot; Alibaba</small></h3>
-          <p class="pick-why">A smart chat and coding model. Every speed-up we kept gives the same answers as running it slowly, on every test we have, alone or with 64 people at once. The same recipe comes in a two-card and a one-card shape.</p>
+        <div class="pick-head"><span class="pick-rank">4</span><div>
+          <p class="eyebrow">Ready to try &middot; exact &middot; large &middot; pick 1 card or 2 cards</p>
+          <h3><a href="models/qwen-27b.html">Qwen3.8 27B FP8</a> <span class="card-chip">1 card</span> <span class="card-chip two">2 cards</span><small>vLLM XPU &middot; FP8 weights &middot; MTP depth 5 &middot; Alibaba</small></h3>
+          <p class="pick-why">Our strongest chat and coding model with no 4-bit compression. Every speed-up we kept gives the same answers as running it slowly, alone or with 64 people at once. Slower per person than the models above; that is the price of the size.</p>
         </div></div>
-        <div class="pick-bars pick-bars-two">
+        <div class="pick-bars">
           <p class="pick-deploy"><span class="card-chip two">2 cards</span> 33K of conversation per person</p>
-          <div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track"><div class="pick-fill" style="width:74%"></div></div><span class="pick-val">90 tok/s</span></div>
-          <div class="pick-bar-row"><span class="pick-bar-label">64 people</span><div class="pick-track"><div class="pick-fill spot" style="width:100%"></div></div><span class="pick-val">875 tok/s<small>everyone together, exact</small></span></div>
-          <div class="pick-bar-row"><span class="pick-bar-label">Reads a prompt</span><div class="pick-track"><div class="pick-fill" style="width:0"></div></div><span class="pick-val mut">not measured</span></div>
+          <div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track"><div class="pick-fill" style="width:39%"></div></div><span class="pick-val">90 tok/s</span></div>
+          <div class="pick-bar-row"><span class="pick-bar-label">64 people</span><div class="pick-track"><div class="pick-fill spot" style="width:67%"></div></div><span class="pick-val">875 tok/s<small>everyone together, exact</small></span></div>
           <p class="pick-deploy"><span class="card-chip">1 card</span> 32K of conversation per person</p>
-          <div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track"><div class="pick-fill" style="width:44%"></div></div><span class="pick-val">54 tok/s</span></div>
-          <div class="pick-bar-row"><span class="pick-bar-label">Many people</span><div class="pick-track"><div class="pick-fill spot" style="width:0"></div></div><span class="pick-val mut">not measured</span></div>
-          <div class="pick-bar-row"><span class="pick-bar-label">Reads a prompt</span><div class="pick-track"><div class="pick-fill" style="width:67%"></div></div><span class="pick-val">1,370 tok/s<small>512-token prompt</small></span></div>
+          <div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track"><div class="pick-fill" style="width:24%"></div></div><span class="pick-val">54 tok/s</span></div>
+          <div class="pick-bar-row"><span class="pick-bar-label">Reads a prompt</span><div class="pick-track"><div class="pick-fill" style="width:46%"></div></div><span class="pick-val">1,871 tok/s<small>2,000-token prompt</small></span></div>
+          <p class="pick-note">Want it faster on one card? The <a href="models/qwen38-27b-autoround-int4-b70.html">INT4 version</a> does 92 tok/s alone and 283 tok/s for 4 people, with 4-bit weights.</p>
         </div>
-        <div class="pick-links">
-          <span class="pick-links-group"><span class="card-chip two">2 cards</span><a class="button" href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md">Recipe</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md">Many-user notes</a></span>
-          <span class="pick-links-group"><span class="card-chip">1 card</span><a class="button" href="models/qwen38-27b-fp8-vllm-tp1-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp1-b70/README.md">Recipe</a></span>
-        </div>
+        <div class="pick-links"><span class="pick-links-group"><span class="card-chip two">2 cards</span><a class="button" href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md">Recipe</a></span><span class="pick-links-group"><span class="card-chip">1 card</span><a class="button" href="models/qwen38-27b-fp8-vllm-tp1-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp1-b70/README.md">Recipe</a></span></div>
       </li>
       <li class="pick-row research">
-        <div class="pick-head"><span class="pick-rank">3</span><div>
+        <div class="pick-head"><span class="pick-rank">5</span><div>
           <p class="eyebrow research">Research &middot; video, not chat</p>
           <h3>MiniMax-H3 video <span class="card-chip two">2 cards</span><small>trimmed community copy so it fits two cards &middot; no install guide yet</small></h3>
           <p class="pick-why">Makes short video clips with sound from a written description. Every speed-up we kept leaves the clip exactly the same.</p>
@@ -523,10 +575,130 @@ Style genome (duotone-hixffp):
         <div class="pick-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/minimax-h3-b70/README.md">Read the lab notes</a></div>
       </li>
     </ol>
-    <p class="pick-scale">Bars: one-person speeds are drawn against 122 tok/s (Gemma 4 on one card), many-people totals against 875 tok/s, prompt reading against 2,043 tok/s (the fastest we have measured on one B70, Qwen3.8 27B FP8 at a 2K prompt).</p>
+    <p class="pick-scale">Bars: one-person speeds are drawn against 228 tok/s, many-people totals against 1,312 tok/s, prompt reading against 4,066 tok/s (the best of each in the same-test pass below). Ranked by what we would reach for at each size, not by raw speed.</p>
     <p class="research-links">Everything else we have tested, older setups included, is in the full table below, or <a href="models/">browse every model</a>.</p>
   </div>
 </section>
+
+<!-- BEGIN GENERATED UNIFORM PROFILES -->
+<section id="uniform">
+  <div class="wrap">
+    <h2 id="t-uniform">Same test, every model <span class="key"><span class="dot">&#9679;</span> one card, one harness, 2026-10-10</span></h2>
+    <p class="sub">Every model we could put on one B70 that day, run through the same script back to back. One person: 256 tokens written after a 300-token prompt. Reads: a 2,000-token prompt. Together: 1/2/4/8 people at once. Temperature 0 everywhere.</p>
+    <p class="sub"><b>Repeats</b>: the same long question three times gave the same answer. <b>Together</b>: still the same while others were being served. Packages keep their own tuned numbers elsewhere on this page; this table is the fair side-by-side.</p>
+    <div class="scroller"><table class="uniform-table" aria-labelledby="t-uniform">
+      <thead><tr><th scope="col">Model and setup</th><th scope="col" class="r">One person</th><th scope="col" class="r">Reads 2K prompt</th><th scope="col" class="r">Together</th><th scope="col">Repeats</th><th scope="col">Answers</th></tr></thead>
+      <tbody>
+        <tr>
+          <th scope="row" class="model"><a href="models/qwen35-4b-w4a16-b70.html">Qwen3.5-4B INT4</a><small><span class="card-chip">1 card</span>vLLM XPU package, MTP depth 3 · Alibaba &middot; 28.5 GB on the card</small></th>
+          <td class="num r" data-label="One person">227.7 tok/s<span class="ubar max" style="width:100%" aria-hidden="true"></span></td>
+          <td class="num r" data-label="Reads 2K prompt">4,066 tok/s<span class="ubar" style="width:100%" aria-hidden="true"></span></td>
+          <td class="num r" data-label="Together">1,312 tok/s<small>8 people total</small><span class="ubar spot" style="width:100%" aria-hidden="true"></span></td>
+          <td data-label="Repeats"><span class="utag ok">identical</span><small>together: differs</small></td>
+          <td data-label="Answers"><span class="utag warn" title="This endpoint replies with its thinking text, so the quick canary does not apply; the package has its own strict checks.">package suite</span></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><a href="models/qwen35-9b-w4a16-b70.html">Qwen3.5-9B INT4</a><small><span class="card-chip">1 card</span>vLLM XPU package, MTP depth 3 · Alibaba &middot; 27.7 GB on the card</small></th>
+          <td class="num r" data-label="One person">156.6 tok/s<span class="ubar" style="width:69%" aria-hidden="true"></span></td>
+          <td class="num r" data-label="Reads 2K prompt">2,452 tok/s<span class="ubar" style="width:60%" aria-hidden="true"></span></td>
+          <td class="num r" data-label="Together">988 tok/s<small>8 people total</small><span class="ubar spot" style="width:75%" aria-hidden="true"></span></td>
+          <td data-label="Repeats"><span class="utag ok">identical</span><small>together: identical</small></td>
+          <td data-label="Answers"><span class="utag warn" title="This endpoint replies with its thinking text, so the quick canary does not apply; the package has its own strict checks.">package suite</span></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><a href="models/lfm25-26b-q8-b70.html">LFM2.5 2.6B</a><small><span class="card-chip">1 card</span>llama.cpp 9fee29e, Q8_0 · Liquid AI &middot; 4.1 GB on the card</small></th>
+          <td class="num r" data-label="One person">132.0 tok/s<span class="ubar" style="width:58%" aria-hidden="true"></span></td>
+          <td class="num r" data-label="Reads 2K prompt">2,014 tok/s<span class="ubar" style="width:50%" aria-hidden="true"></span></td>
+          <td class="num r" data-label="Together">346 tok/s<small>4 people total</small><span class="ubar spot" style="width:26%" aria-hidden="true"></span></td>
+          <td data-label="Repeats"><span class="utag ok">identical</span><small>together: differs</small></td>
+          <td data-label="Answers"><span class="utag warn">0 of 1 checks</span></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><a href="models/qwen35-9b-fp8-b70.html">Qwen3.5-9B FP8</a><small><span class="card-chip">1 card</span>vLLM XPU package, MTP depth 3 · Alibaba &middot; 28.2 GB on the card</small></th>
+          <td class="num r" data-label="One person">117.5 tok/s<span class="ubar" style="width:52%" aria-hidden="true"></span></td>
+          <td class="num r" data-label="Reads 2K prompt">2,891 tok/s<span class="ubar" style="width:71%" aria-hidden="true"></span></td>
+          <td class="num r" data-label="Together">827 tok/s<small>8 people total</small><span class="ubar spot" style="width:63%" aria-hidden="true"></span></td>
+          <td data-label="Repeats"><span class="utag ok">identical</span><small>together: identical</small></td>
+          <td data-label="Answers"><span class="utag warn" title="This endpoint replies with its thinking text, so the quick canary does not apply; the package has its own strict checks.">package suite</span></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><a href="models/qwen38-27b-autoround-int4-b70.html">Qwen3.8-27B INT4</a><small><span class="card-chip">1 card</span>vLLM XPU package, one-card shape, MTP depth 4 · Alibaba &middot; 27.1 GB on the card</small></th>
+          <td class="num r" data-label="One person">92.2 tok/s<span class="ubar" style="width:40%" aria-hidden="true"></span></td>
+          <td class="num r" data-label="Reads 2K prompt">1,165 tok/s<span class="ubar" style="width:29%" aria-hidden="true"></span></td>
+          <td class="num r" data-label="Together">283 tok/s<small>4 people total</small><span class="ubar spot" style="width:22%" aria-hidden="true"></span></td>
+          <td data-label="Repeats"><span class="utag ok">identical</span><small>together: identical</small></td>
+          <td data-label="Answers"><span class="utag warn" title="This endpoint replies with its thinking text, so the quick canary does not apply; the package has its own strict checks.">package suite</span></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><a href="models/gemma4-26b-a4b-q8-b70-125tps-20260701.html">Gemma 4 26B Q8</a><small><span class="card-chip">1 card</span>llama.cpp, shared-server shape (8 slots, no draft) · Google &middot; 29.9 GB on the card</small></th>
+          <td class="num r" data-label="One person">77.6 tok/s<span class="ubar" style="width:34%" aria-hidden="true"></span></td>
+          <td class="num r" data-label="Reads 2K prompt">1,453 tok/s<span class="ubar" style="width:36%" aria-hidden="true"></span></td>
+          <td class="num r" data-label="Together">268 tok/s<small>8 people total</small><span class="ubar spot" style="width:20%" aria-hidden="true"></span></td>
+          <td data-label="Repeats"><span class="utag ok">identical</span><small>together: differs</small></td>
+          <td data-label="Answers"><span class="utag ok">16 of 16 checks</span></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><a href="models/nemotron-35-lightning-30b-a3b-b70.html">Nemotron 3.5 Lightning 30B-A3B</a><small><span class="card-chip">1 card</span>llama.cpp 9fee29e, UD-Q4_K_M · NVIDIA &middot; 23.3 GB on the card</small></th>
+          <td class="num r" data-label="One person">72.4 tok/s<span class="ubar" style="width:32%" aria-hidden="true"></span></td>
+          <td class="num r" data-label="Reads 2K prompt">1,795 tok/s<span class="ubar" style="width:44%" aria-hidden="true"></span></td>
+          <td class="num r" data-label="Together">131 tok/s<small>4 people total</small><span class="ubar spot" style="width:10%" aria-hidden="true"></span></td>
+          <td data-label="Repeats"><span class="utag warn">3 of 3 differ</span><small>together: differs</small></td>
+          <td data-label="Answers"><span class="utag warn">2 of 3 checks</span></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><a href="models/qwen38-27b-fp8-vllm-tp1-b70.html">Qwen3.8-27B FP8</a><small><span class="card-chip">1 card</span>vLLM XPU package, MTP depth 5, one request at a time · Alibaba &middot; 30.4 GB on the card</small></th>
+          <td class="num r" data-label="One person">54.6 tok/s<span class="ubar" style="width:24%" aria-hidden="true"></span></td>
+          <td class="num r" data-label="Reads 2K prompt">1,871 tok/s<span class="ubar" style="width:46%" aria-hidden="true"></span></td>
+          <td class="num r" data-label="Together">56 tok/s<small>1 people total</small><span class="ubar spot" style="width:4%" aria-hidden="true"></span></td>
+          <td data-label="Repeats"><span class="utag ok">identical</span><small>together: identical</small></td>
+          <td data-label="Answers"><span class="utag warn" title="This endpoint replies with its thinking text, so the quick canary does not apply; the package has its own strict checks.">package suite</span></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><a href="models/ornith-15-9b-q8-b70.html">Ornith 1.5 9B</a><small><span class="card-chip">1 card</span>llama.cpp 9fee29e, Q8_0 · Ornith AI &middot; 10.7 GB on the card</small></th>
+          <td class="num r" data-label="One person">49.6 tok/s<span class="ubar" style="width:22%" aria-hidden="true"></span></td>
+          <td class="num r" data-label="Reads 2K prompt">2,359 tok/s<span class="ubar" style="width:58%" aria-hidden="true"></span></td>
+          <td class="num r" data-label="Together">146 tok/s<small>4 people total</small><span class="ubar spot" style="width:11%" aria-hidden="true"></span></td>
+          <td data-label="Repeats"><span class="utag warn">2 of 3 differ</span><small>together: differs</small></td>
+          <td data-label="Answers"><span class="utag warn">2 of 3 checks</span></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model">Qwen3.5-9B Q8 GGUF<small><span class="card-chip">1 card</span>llama.cpp 9fee29e, no package yet · Alibaba &middot; 10.7 GB on the card</small></th>
+          <td class="num r" data-label="One person">49.3 tok/s<span class="ubar" style="width:22%" aria-hidden="true"></span></td>
+          <td class="num r" data-label="Reads 2K prompt">2,353 tok/s<span class="ubar" style="width:58%" aria-hidden="true"></span></td>
+          <td class="num r" data-label="Together">147 tok/s<small>4 people total</small><span class="ubar spot" style="width:11%" aria-hidden="true"></span></td>
+          <td data-label="Repeats"><span class="utag ok">identical</span><small>together: identical</small></td>
+          <td data-label="Answers"><span class="utag warn">2 of 3 checks</span></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><a href="models/qwen38-27b-q4km-tp1-b70.html">Qwen3.8-27B Q4_K_M GGUF</a><small><span class="card-chip">1 card</span>stock llama.cpp 9fee29e (the package uses a patched build) · Alibaba &middot; 20.0 GB on the card</small></th>
+          <td class="num r" data-label="One person">23.8 tok/s<span class="ubar" style="width:10%" aria-hidden="true"></span></td>
+          <td class="num r" data-label="Reads 2K prompt">916 tok/s<span class="ubar" style="width:23%" aria-hidden="true"></span></td>
+          <td class="num r" data-label="Together">36 tok/s<small>2 people total</small><span class="ubar spot" style="width:3%" aria-hidden="true"></span></td>
+          <td data-label="Repeats"><span class="utag warn">2 of 3 differ</span><small>together: differs</small></td>
+          <td data-label="Answers"><span class="utag warn">2 of 3 checks</span></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model">Qwen3.6-27B Q8 GGUF<small><span class="card-chip">1 card</span>llama.cpp 9fee29e, plain (no draft), no package yet · Alibaba &middot; 28.4 GB on the card</small></th>
+          <td class="num r" data-label="One person">15.9 tok/s<span class="ubar" style="width:7%" aria-hidden="true"></span></td>
+          <td class="num r" data-label="Reads 2K prompt">733 tok/s<span class="ubar" style="width:18%" aria-hidden="true"></span></td>
+          <td class="num r" data-label="Together">28 tok/s<small>2 people total</small><span class="ubar spot" style="width:2%" aria-hidden="true"></span></td>
+          <td data-label="Repeats"><span class="utag warn">2 of 3 differ</span><small>together: differs</small></td>
+          <td data-label="Answers"><span class="utag warn">2 of 3 checks</span></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><a href="models/qwen38-27b-q8-tp1-b70.html">Qwen3.8-27B Q8 GGUF</a><small><span class="card-chip">1 card</span>stock llama.cpp 9fee29e (the package uses a patched build) · Alibaba &middot; 28.4 GB on the card</small></th>
+          <td class="num r" data-label="One person">15.7 tok/s<span class="ubar" style="width:7%" aria-hidden="true"></span></td>
+          <td class="num r" data-label="Reads 2K prompt">733 tok/s<span class="ubar" style="width:18%" aria-hidden="true"></span></td>
+          <td class="num r" data-label="Together">28 tok/s<small>2 people total</small><span class="ubar spot" style="width:2%" aria-hidden="true"></span></td>
+          <td data-label="Repeats"><span class="utag warn">2 of 3 differ</span><small>together: identical</small></td>
+          <td data-label="Answers"><span class="utag warn">2 of 3 checks</span></td>
+        </tr>
+      </tbody>
+    </table></div>
+    <p class="research-links">Raw results for every row: <a href="https://github.com/steveseguin/b70-optimization-lab/tree/main/data/profiles/2026-10-10">data/profiles/2026-10-10</a> (one JSON per run, plus the server log). Harness: <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/tools/profile-openai-endpoint.py">tools/profile-openai-endpoint.py</a>.</p>
+  </div>
+</section>
+<!-- END GENERATED UNIFORM PROFILES -->
 
 <section id="pick">
   <div class="wrap">
