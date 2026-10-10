@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**2026-10-10, CPU audit: the remaining odd-period gap on135 is mainly fresh text every fourth chunk;137 preparation is under CPU validation.**
+The saved GC10 timeline covers120 consecutive chunks. Reused-text groups all
+take about5.195seconds; the fresh-text group takes5.626seconds. The next exact
+candidate makes repeated F32 checks faster while keeping every check, hash and
+snapshot. Its estimated CPU saving is0.15seconds per chunk, not a measured
+stream gain. Live work is unchanged. [Attribution and timelines](notes/2026-10-10-continuation-residual-cycle.md).
+
 **2026-10-10 16:30 UTC, GC-interval A/B on the 135 production arm: GC 60: n = 111, median 5.248, mean 5.727, even 5.21 / odd 5.53, p90 5.92 = 0.875 s/s; GC 10: n = 116, median 5.242, mean 5.757, even 5.20 / odd 5.46, p90 6.00 = 0.874 s/s. Decision: the two intervals are equal within noise (medians 5.248 vs 5.242; means and p90 cross over as n grows); GC 10 is kept as the production setting (the parent cadence, one fewer special case) and `stream/ops/production-arm.json` says so; the residual odd-parity gap (≈ 0.25 s) is not the maintenance interval.**
 
 **2026-10-10, CPU-only sampler study: keep the current sampler; no packet 136 built.**
