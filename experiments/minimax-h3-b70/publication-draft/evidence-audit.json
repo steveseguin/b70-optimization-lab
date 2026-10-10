@@ -1,0 +1,3403 @@
+{
+  "schema": "minimax-h3.publication-draft-audit.v1",
+  "date": "2026-10-10",
+  "repository_commit": "f88313e655f53fb6f10d2610cd43113baabf71aa",
+  "method": "CPU standard-library receipt parsing and hashing; no tensor, model, GPU or server execution. Not a promotion attestation.",
+  "publishable": false,
+  "official_model_revision_bound_to_run": false,
+  "publisher_metadata_observation": {
+    "url": "https://huggingface.co/api/models/MiniMaxAI/MiniMax-H3",
+    "sha": "42ed227ee7df40d41602854ae760620d6eb651fe",
+    "lastModified": "2026-08-13T01:46:29.000Z",
+    "scope": "API read on 2026-10-10; not proven to identify historical downloaded bytes"
+  },
+  "comfy_metadata_observation": {
+    "url": "https://huggingface.co/api/models/Comfy-Org/MiniMax-H3",
+    "sha": "e5eb578a89295337b8ff433a035929ce0279e0b6",
+    "lastModified": "2026-09-29T11:11:09.000Z",
+    "scope": "API read only, no weights downloaded; not a historical run pin"
+  },
+  "measurement": {
+    "run_name": "duet-20261004T042838Z",
+    "wall_seconds": 3173,
+    "wall_source": "experiments/minimax-h3-b70/data/2026-10-04-soak8/session.log",
+    "batches": 1,
+    "clips": 8,
+    "frames_per_clip": 124,
+    "playback_fps": 24,
+    "seconds_per_clip": 396.625,
+    "seconds_per_video_second": 76.76612903225806,
+    "effective_generation_fps": 0.3126378821304759,
+    "historical_base_seconds_per_clip": 800.8,
+    "baseline_source": "experiments/minimax-h3-b70/notes/2026-09-20-realtime-goal.md",
+    "baseline_raw_receipts_tracked": false,
+    "historical_ratio": 2.019035612984557,
+    "elapsed_time_reduction_percent": 50.47140359640358,
+    "decode_video_seconds": [
+      52.413,
+      41.073,
+      41.065,
+      41.042,
+      41.07,
+      41.093,
+      41.113,
+      41.042
+    ],
+    "reported_reference_hash_matches": 32,
+    "scope": "Batch wall divided by clips; baseline number from ledger only. Not matched fresh-process speed certification or isolated kernel speedup."
+  },
+  "soak_settings_and_prompt_order_checked": true,
+  "piecewise_receipt_comparisons": [
+    {
+      "candidate": "experiments/minimax-h3-b70/data/2026-10-04-piecewise-transfers/gate2-clip-00-receipt.json",
+      "reference": "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-00-receipt.json",
+      "four_tensor_hashes_equal": true,
+      "mp4_hash_equal": true
+    },
+    {
+      "candidate": "experiments/minimax-h3-b70/data/2026-10-04-piecewise-transfers/gate2-clip-01-receipt.json",
+      "reference": "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-01-receipt.json",
+      "four_tensor_hashes_equal": true,
+      "mp4_hash_equal": true
+    }
+  ],
+  "eight_nfe_determinism_comparisons": [
+    {
+      "paths": [
+        "experiments/minimax-h3-b70/data/2026-10-03-gates/determinism/duet-20261004T034605Z-clip-00-receipt.json",
+        "experiments/minimax-h3-b70/data/2026-10-03-gates/determinism/duet-20261004T035024Z-clip-00-receipt.json",
+        "experiments/minimax-h3-b70/data/2026-10-03-gates/determinism/duet-20261004T035545Z-clip-00-receipt.json"
+      ],
+      "four_tensor_hashes_equal": true,
+      "mp4_hash_equal": true,
+      "nfe": [
+        8,
+        8,
+        8
+      ],
+      "lora": [
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "paths": [
+        "experiments/minimax-h3-b70/data/2026-10-03-gates/determinism/duet-20261004T034605Z-clip-01-receipt.json",
+        "experiments/minimax-h3-b70/data/2026-10-03-gates/determinism/duet-20261004T035024Z-clip-01-receipt.json",
+        "experiments/minimax-h3-b70/data/2026-10-03-gates/determinism/duet-20261004T035545Z-clip-01-receipt.json"
+      ],
+      "four_tensor_hashes_equal": true,
+      "mp4_hash_equal": true,
+      "nfe": [
+        8,
+        8,
+        8
+      ],
+      "lora": [
+        null,
+        null,
+        null
+      ]
+    }
+  ],
+  "all_lane_json_files_parsed": 45,
+  "receipt_index": [
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-canvas-ladder/receipt-smoke-20260919T224743Z-pruned-576x320.json",
+      "run_name": "smoke-20260919T224743Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 320,
+        "lora": "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-576x320",
+        "plan_memory": false,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "run_name": "smoke-20260919T224743Z",
+        "save_tensors": true,
+        "seed": 42,
+        "split_index": null,
+        "steps": 9,
+        "te_rotation": "hadamard256",
+        "vae_card": null,
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 576
+      },
+      "nfe": 8,
+      "batch": null,
+      "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.16,
+        "encode.load": 12.832,
+        "encode.forward": 0.693,
+        "load.skeleton": 0.027,
+        "load.stream": 34.295,
+        "sample.build_pipeline": 0.001,
+        "sample": 29.176,
+        "decode.load_vae": 3.201,
+        "decode.video": 31.893,
+        "decode.load_audio_vae": 0.4,
+        "decode.audio": 2.923,
+        "write": 0.709
+      },
+      "hashes": {
+        "video_tensor_sha256": "0fb778df4e4051f10caf9b305647eb8c8f36a6f8730dc7c3adc7709d3dfd1ae0",
+        "audio_tensor_sha256": "605f1b28979f6b60558a1c971e2c158a0803b9e895478783afa449c5c9db6c91",
+        "video_latents_sha256": "73465e11dd56f35820f0dd342c9f92be2fe2821a6c49c4cd6c71e138dfc582a6",
+        "audio_latents_sha256": "a2f928f245e0a28dbbdb56d529ba0d2458a8bfffd2554519924be2646549a811"
+      },
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-canvas-ladder/receipt-smoke-20260919T224948Z-pruned-960x544.json",
+      "run_name": "smoke-20260919T224948Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 544,
+        "lora": "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-960x544",
+        "plan_memory": false,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "run_name": "smoke-20260919T224948Z",
+        "save_tensors": true,
+        "seed": 42,
+        "split_index": null,
+        "steps": 9,
+        "te_rotation": "hadamard256",
+        "vae_card": null,
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 960
+      },
+      "nfe": 8,
+      "batch": null,
+      "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.159,
+        "encode.load": 12.798,
+        "encode.forward": 0.665,
+        "load.skeleton": 0.027,
+        "load.stream": 33.08,
+        "sample.build_pipeline": 0.001,
+        "sample": 109.101,
+        "decode.load_vae": 3.084,
+        "decode.video": 79.964,
+        "decode.load_audio_vae": 0.407,
+        "decode.audio": 2.934,
+        "write": 1.561
+      },
+      "hashes": {
+        "video_tensor_sha256": "ac730503b4380001566532ca6e03fb9752250f44488b0dee7c9baff244a35280",
+        "audio_tensor_sha256": "73c26c2a08d4725193f81f36ef6255437f2dbc3f48dc044275e7d17633beea5d",
+        "video_latents_sha256": "e71774eb412865039e3e6983197f6d75ca1e31ce3830c179d37d0e6500a5e8dd",
+        "audio_latents_sha256": "a81fb24708d5ea601cfd41fab14276c547c6cdcd9e68b771b1727a0c250acc90"
+      },
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-canvas-ladder/receipt-smoke-20260919T225400Z-int8-960x544.json",
+      "run_name": "smoke-20260919T225400Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "denoiser": "int8",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 544,
+        "lora": "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/int8-960x544",
+        "plan_memory": false,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "run_name": "smoke-20260919T225400Z",
+        "save_tensors": true,
+        "seed": 42,
+        "split_index": null,
+        "steps": 9,
+        "te_rotation": "hadamard256",
+        "vae_card": null,
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 960
+      },
+      "nfe": 8,
+      "batch": null,
+      "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.157,
+        "encode.load": 12.772,
+        "encode.forward": 0.698,
+        "load.skeleton": 0.024,
+        "load.stream": 19.079,
+        "sample.build_pipeline": 0.001,
+        "sample": 152.873,
+        "decode.load_vae": 3.067,
+        "decode.video": 80.016,
+        "decode.load_audio_vae": 0.483,
+        "decode.audio": 2.981,
+        "write": 1.526
+      },
+      "hashes": {
+        "video_tensor_sha256": "a88884eee4ce3120e38fc76f9fa503b34554b2e800f00a11e175e04877ac439d",
+        "audio_tensor_sha256": "0189a96ab694a49ec06a26ec5cac3e509b52e102d9c1bab4e6a0d088e72c2e31",
+        "video_latents_sha256": "0c2c2a5f611a072c9a34eac00b8a6e13ef567f508c329cc8eee5cbf09de7e180",
+        "audio_latents_sha256": "357faf19e1ed24665dfd72c75ad00a1df03ed181f4be19827ff2be234987c96a"
+      },
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-decode-experiments/probe-e1-20260919T233947Z.json",
+      "run_name": null,
+      "settings": null,
+      "nfe": null,
+      "batch": null,
+      "prompt": null,
+      "seed": null,
+      "timings_seconds": {
+        "probe.load_latents": 0.008,
+        "decode.load_vae": 3.031,
+        "decode.replicate_vae": 2.851,
+        "probe.pass0": 5.188,
+        "probe.pass1": 4.498
+      },
+      "hashes": null,
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-decode-experiments/receipt-control-single-off-20260919T233947Z.json",
+      "run_name": "control-single-off-20260919T233947Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": true,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 256,
+        "int8_share_rotation": true,
+        "latents_from": "/mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-960x544/smoke-20260919T224948Z/tensors.safetensors",
+        "lora": "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3-decode-20260919",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "run_name": "control-single-off-20260919T233947Z",
+        "save_tensors": true,
+        "seed": 42,
+        "split_index": null,
+        "steps": 9,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "off",
+        "vae_card": null,
+        "vae_decode": "single",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 448
+      },
+      "nfe": 8,
+      "batch": null,
+      "prompt": null,
+      "seed": 42,
+      "timings_seconds": {
+        "decode_only.load_latents": 0.002,
+        "decode.load_vae": 1.194,
+        "decode.video": 79.308,
+        "decode.load_audio_vae": 0.4,
+        "decode.audio": 3.027,
+        "write": 1.543
+      },
+      "hashes": {
+        "video_tensor_sha256": "ac730503b4380001566532ca6e03fb9752250f44488b0dee7c9baff244a35280",
+        "audio_tensor_sha256": "73c26c2a08d4725193f81f36ef6255437f2dbc3f48dc044275e7d17633beea5d",
+        "video_latents_sha256": "e71774eb412865039e3e6983197f6d75ca1e31ce3830c179d37d0e6500a5e8dd",
+        "audio_latents_sha256": "a81fb24708d5ea601cfd41fab14276c547c6cdcd9e68b771b1727a0c250acc90"
+      },
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-decode-experiments/receipt-fp16-a-20260919T233947Z.json",
+      "run_name": "fp16-a-20260919T233947Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": true,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 256,
+        "int8_share_rotation": true,
+        "latents_from": "/mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-960x544/smoke-20260919T224948Z/tensors.safetensors",
+        "lora": "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3-decode-20260919",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "run_name": "fp16-a-20260919T233947Z",
+        "save_tensors": true,
+        "seed": 42,
+        "split_index": null,
+        "steps": 9,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "fp16",
+        "vae_card": null,
+        "vae_decode": "single",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 448
+      },
+      "nfe": 8,
+      "batch": null,
+      "prompt": null,
+      "seed": 42,
+      "timings_seconds": {
+        "decode_only.load_latents": 0.002,
+        "decode.load_vae": 1.987,
+        "decode.video": 15.929,
+        "decode.load_audio_vae": 0.391,
+        "decode.audio": 3.007,
+        "write": 1.481
+      },
+      "hashes": {
+        "video_tensor_sha256": "cb8148518de106e87c2cb145197bfa552539436eeb03f53191d0c5502e95b2fc",
+        "audio_tensor_sha256": "73c26c2a08d4725193f81f36ef6255437f2dbc3f48dc044275e7d17633beea5d",
+        "video_latents_sha256": "e71774eb412865039e3e6983197f6d75ca1e31ce3830c179d37d0e6500a5e8dd",
+        "audio_latents_sha256": "a81fb24708d5ea601cfd41fab14276c547c6cdcd9e68b771b1727a0c250acc90"
+      },
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-decode-experiments/receipt-fp16-b-20260919T233947Z.json",
+      "run_name": "fp16-b-20260919T233947Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": true,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 256,
+        "int8_share_rotation": true,
+        "latents_from": "/mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-960x544/smoke-20260919T224948Z/tensors.safetensors",
+        "lora": "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3-decode-20260919",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "run_name": "fp16-b-20260919T233947Z",
+        "save_tensors": true,
+        "seed": 42,
+        "split_index": null,
+        "steps": 9,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "fp16",
+        "vae_card": null,
+        "vae_decode": "single",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 448
+      },
+      "nfe": 8,
+      "batch": null,
+      "prompt": null,
+      "seed": 42,
+      "timings_seconds": {
+        "decode_only.load_latents": 0.003,
+        "decode.load_vae": 2.618,
+        "decode.video": 15.339,
+        "decode.load_audio_vae": 0.224,
+        "decode.audio": 2.996,
+        "write": 1.541
+      },
+      "hashes": {
+        "video_tensor_sha256": "cb8148518de106e87c2cb145197bfa552539436eeb03f53191d0c5502e95b2fc",
+        "audio_tensor_sha256": "73c26c2a08d4725193f81f36ef6255437f2dbc3f48dc044275e7d17633beea5d",
+        "video_latents_sha256": "e71774eb412865039e3e6983197f6d75ca1e31ce3830c179d37d0e6500a5e8dd",
+        "audio_latents_sha256": "a81fb24708d5ea601cfd41fab14276c547c6cdcd9e68b771b1727a0c250acc90"
+      },
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-decode-experiments/receipt-two-card-fp16-20260919T233947Z.json",
+      "run_name": "two-card-fp16-20260919T233947Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": true,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 256,
+        "int8_share_rotation": true,
+        "latents_from": "/mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-960x544/smoke-20260919T224948Z/tensors.safetensors",
+        "lora": "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3-decode-20260919",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "run_name": "two-card-fp16-20260919T233947Z",
+        "save_tensors": true,
+        "seed": 42,
+        "split_index": null,
+        "steps": 9,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "fp16",
+        "vae_card": null,
+        "vae_decode": "two-card",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 448
+      },
+      "nfe": 8,
+      "batch": null,
+      "prompt": null,
+      "seed": 42,
+      "timings_seconds": {
+        "decode_only.load_latents": 0.003,
+        "decode.load_vae": 3.046,
+        "decode.replicate_vae": 2.852,
+        "decode.video": 16.814,
+        "decode.load_audio_vae": 0.412,
+        "decode.audio": 3.029,
+        "write": 1.575
+      },
+      "hashes": {
+        "video_tensor_sha256": "cb8148518de106e87c2cb145197bfa552539436eeb03f53191d0c5502e95b2fc",
+        "audio_tensor_sha256": "73c26c2a08d4725193f81f36ef6255437f2dbc3f48dc044275e7d17633beea5d",
+        "video_latents_sha256": "e71774eb412865039e3e6983197f6d75ca1e31ce3830c179d37d0e6500a5e8dd",
+        "audio_latents_sha256": "a81fb24708d5ea601cfd41fab14276c547c6cdcd9e68b771b1727a0c250acc90"
+      },
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-decode-experiments/receipt-two-card-off-20260919T233947Z.json",
+      "run_name": "two-card-off-20260919T233947Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": true,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 256,
+        "int8_share_rotation": true,
+        "latents_from": "/mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-960x544/smoke-20260919T224948Z/tensors.safetensors",
+        "lora": "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3-decode-20260919",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "run_name": "two-card-off-20260919T233947Z",
+        "save_tensors": true,
+        "seed": 42,
+        "split_index": null,
+        "steps": 9,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "off",
+        "vae_card": null,
+        "vae_decode": "two-card",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 448
+      },
+      "nfe": 8,
+      "batch": null,
+      "prompt": null,
+      "seed": 42,
+      "timings_seconds": {
+        "decode_only.load_latents": 0.003,
+        "decode.load_vae": 2.486,
+        "decode.replicate_vae": 2.576,
+        "decode.video": 78.274,
+        "decode.load_audio_vae": 0.299,
+        "decode.audio": 3.036,
+        "write": 1.561
+      },
+      "hashes": {
+        "video_tensor_sha256": "ac730503b4380001566532ca6e03fb9752250f44488b0dee7c9baff244a35280",
+        "audio_tensor_sha256": "73c26c2a08d4725193f81f36ef6255437f2dbc3f48dc044275e7d17633beea5d",
+        "video_latents_sha256": "e71774eb412865039e3e6983197f6d75ca1e31ce3830c179d37d0e6500a5e8dd",
+        "audio_latents_sha256": "a81fb24708d5ea601cfd41fab14276c547c6cdcd9e68b771b1727a0c250acc90"
+      },
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-decode-experiments/vs-control-fp16-a-20260919T233947Z.json",
+      "run_name": null,
+      "settings": {
+        "a": {
+          "denoiser": "pruned",
+          "lora": "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+          "seed": 42,
+          "steps": 9,
+          "height": 256,
+          "width": 448,
+          "frames": 124,
+          "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+          "denoiser_rotation": "hadamard",
+          "te_rotation": "hadamard256"
+        },
+        "b": {
+          "denoiser": "pruned",
+          "lora": "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+          "seed": 42,
+          "steps": 9,
+          "height": 256,
+          "width": 448,
+          "frames": 124,
+          "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+          "denoiser_rotation": "hadamard",
+          "te_rotation": "hadamard256"
+        },
+        "differ": []
+      },
+      "nfe": null,
+      "batch": null,
+      "prompt": null,
+      "seed": null,
+      "timings_seconds": null,
+      "hashes": null,
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-first-light/int8-vs-pruned.json",
+      "run_name": null,
+      "settings": {
+        "a": {
+          "denoiser": "pruned",
+          "lora": "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+          "seed": 42,
+          "steps": 9,
+          "height": 256,
+          "width": 448,
+          "frames": 124,
+          "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+          "denoiser_rotation": "hadamard",
+          "te_rotation": "hadamard256"
+        },
+        "b": {
+          "denoiser": "int8",
+          "lora": "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+          "seed": 42,
+          "steps": 9,
+          "height": 256,
+          "width": 448,
+          "frames": 124,
+          "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+          "denoiser_rotation": "hadamard",
+          "te_rotation": "hadamard256"
+        },
+        "differ": [
+          "denoiser"
+        ]
+      },
+      "nfe": null,
+      "batch": null,
+      "prompt": null,
+      "seed": null,
+      "timings_seconds": null,
+      "hashes": null,
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-first-light/receipt-repeat-20260919T221840Z-a.json",
+      "run_name": "repeat-20260919T221840Z-a",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 256,
+        "lora": "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+        "out_dir": "/mnt/fast-ai/bench-results/resume-20260919d/minimax",
+        "plan_memory": false,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "run_name": "repeat-20260919T221840Z-a",
+        "save_tensors": true,
+        "seed": 42,
+        "split_index": null,
+        "steps": 9,
+        "te_rotation": "hadamard256",
+        "vae_card": null,
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 448
+      },
+      "nfe": 8,
+      "batch": null,
+      "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.157,
+        "encode.load": 12.855,
+        "encode.forward": 0.66,
+        "load.skeleton": 0.027,
+        "load.stream": 33.821,
+        "sample.build_pipeline": 0.001,
+        "sample": 17.716,
+        "decode.load_vae": 3.044,
+        "decode.video": 10.788,
+        "decode.load_audio_vae": 0.401,
+        "decode.audio": 2.918,
+        "write": 0.606
+      },
+      "hashes": {
+        "video_tensor_sha256": "a476d723b12bfbae68dd069d6ebf7c99df3d09a2deefd5bbc2b710a76d73ef13",
+        "audio_tensor_sha256": "9a66aa977ae881068129679f55213846cd13ebd2f95ae0b8730432d5691ff847",
+        "video_latents_sha256": "a40845e80b76a9087c9dced3c7fd0a4d3833cdc0f58ad5dd63b5c43379f82405",
+        "audio_latents_sha256": "22b5c54994bbe94d9a92b049ce7a1348df5a8d9a07e0638338e7d6163a6765bd"
+      },
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-first-light/receipt-repeat-20260919T221840Z-b.json",
+      "run_name": "repeat-20260919T221840Z-b",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 256,
+        "lora": "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+        "out_dir": "/mnt/fast-ai/bench-results/resume-20260919d/minimax",
+        "plan_memory": false,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "run_name": "repeat-20260919T221840Z-b",
+        "save_tensors": true,
+        "seed": 42,
+        "split_index": null,
+        "steps": 9,
+        "te_rotation": "hadamard256",
+        "vae_card": null,
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 448
+      },
+      "nfe": 8,
+      "batch": null,
+      "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.149,
+        "encode.load": 13.264,
+        "encode.forward": 0.681,
+        "load.skeleton": 0.027,
+        "load.stream": 35.043,
+        "sample.build_pipeline": 0.001,
+        "sample": 17.712,
+        "decode.load_vae": 3.01,
+        "decode.video": 10.796,
+        "decode.load_audio_vae": 0.456,
+        "decode.audio": 2.932,
+        "write": 0.638
+      },
+      "hashes": {
+        "video_tensor_sha256": "a476d723b12bfbae68dd069d6ebf7c99df3d09a2deefd5bbc2b710a76d73ef13",
+        "audio_tensor_sha256": "9a66aa977ae881068129679f55213846cd13ebd2f95ae0b8730432d5691ff847",
+        "video_latents_sha256": "a40845e80b76a9087c9dced3c7fd0a4d3833cdc0f58ad5dd63b5c43379f82405",
+        "audio_latents_sha256": "22b5c54994bbe94d9a92b049ce7a1348df5a8d9a07e0638338e7d6163a6765bd"
+      },
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-first-light/receipt-smoke-20260919T221709Z-pruned.json",
+      "run_name": "smoke-20260919T221709Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 256,
+        "lora": "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+        "out_dir": "/mnt/fast-ai/bench-results/resume-20260919d/minimax",
+        "plan_memory": false,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "run_name": "smoke-20260919T221709Z",
+        "save_tensors": true,
+        "seed": 42,
+        "split_index": null,
+        "steps": 9,
+        "te_rotation": "hadamard256",
+        "vae_card": null,
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 448
+      },
+      "nfe": 8,
+      "batch": null,
+      "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.155,
+        "encode.load": 12.656,
+        "encode.forward": 0.695,
+        "load.skeleton": 0.027,
+        "load.stream": 33.602,
+        "sample.build_pipeline": 0.001,
+        "sample": 17.681,
+        "decode.load_vae": 3.296,
+        "decode.video": 11.117,
+        "decode.load_audio_vae": 0.405,
+        "decode.audio": 2.939,
+        "write": 0.64
+      },
+      "hashes": {
+        "video_tensor_sha256": "a476d723b12bfbae68dd069d6ebf7c99df3d09a2deefd5bbc2b710a76d73ef13",
+        "audio_tensor_sha256": "9a66aa977ae881068129679f55213846cd13ebd2f95ae0b8730432d5691ff847",
+        "video_latents_sha256": "a40845e80b76a9087c9dced3c7fd0a4d3833cdc0f58ad5dd63b5c43379f82405",
+        "audio_latents_sha256": "22b5c54994bbe94d9a92b049ce7a1348df5a8d9a07e0638338e7d6163a6765bd"
+      },
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-first-light/receipt-smoke-20260919T222143Z-int8.json",
+      "run_name": "smoke-20260919T222143Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "denoiser": "int8",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 256,
+        "lora": "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+        "out_dir": "/mnt/fast-ai/bench-results/resume-20260919d/minimax",
+        "plan_memory": false,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "run_name": "smoke-20260919T222143Z",
+        "save_tensors": true,
+        "seed": 42,
+        "split_index": null,
+        "steps": 9,
+        "te_rotation": "hadamard256",
+        "vae_card": null,
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 448
+      },
+      "nfe": 8,
+      "batch": null,
+      "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.167,
+        "encode.load": 13.075,
+        "encode.forward": 0.703,
+        "load.skeleton": 0.024,
+        "load.stream": 18.953,
+        "sample.build_pipeline": 0.001,
+        "sample": 30.797,
+        "decode.load_vae": 2.926,
+        "decode.video": 11.419,
+        "decode.load_audio_vae": 0.485,
+        "decode.audio": 2.945,
+        "write": 0.664
+      },
+      "hashes": {
+        "video_tensor_sha256": "eee90bb39c82f0d7cdcd098a26c3ca56ac0238fbb1d1343fd02677ceb0c0b208",
+        "audio_tensor_sha256": "0f88f17bb37ae93f04bfa6eff53795f7ac195cb0c92cfa1a168da14936871a0c",
+        "video_latents_sha256": "88551203ed540de74453f41f47a2068939b13b7a7a39db57e86e7950615bf80a",
+        "audio_latents_sha256": "13560b3f1233853d21ce1b75a4b95d0baed9cc07dc9865907bd2f0c9d30f93f7"
+      },
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/determinism/duet-20261004T034605Z-clip-00-receipt.json",
+      "run_name": "duet-20261004T034605Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": false,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 544,
+        "int8_share_rotation": true,
+        "latents_from": null,
+        "lora": null,
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "prompts_file": "/home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts/../notes/h3-gate-prompts.txt",
+        "run_name": "duet-20261004T034605Z",
+        "save_tensors": false,
+        "seed": 42,
+        "split_index": 25,
+        "steps": 9,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "off",
+        "vae_card": null,
+        "vae_decode": "two-proc",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 960
+      },
+      "nfe": 8,
+      "batch": {
+        "index": 0,
+        "count": 2,
+        "note": "encoder, denoiser and VAEs loaded once for the batch; this clip's arithmetic is the single-run path's, and the repeat gate checks the hashes match it"
+      },
+      "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.159,
+        "encode.load": 12.841,
+        "encode.forward.0": 0.709,
+        "encode.forward.1": 0.391,
+        "encode": 17.002,
+        "sample.build_pipeline": 0.001,
+        "sample.0": 110.527,
+        "sample.1": 117.422,
+        "decode.video.0": 52.363,
+        "decode.audio.0": 0.0
+      },
+      "hashes": {
+        "video_tensor_sha256": "3737bdc71491efb6c3c960748fc7b8ad7752221a44f997731768dfd75d14e72e",
+        "audio_tensor_sha256": "2d4cc5164b183b4eb34c5748ac67dbb42a3ac74c2bb7ce5905dc6304870395de",
+        "video_latents_sha256": "b1d5af6748e38b87c853732766f3cd01e8e00a36afda4b4c05cfa22fb212af9a",
+        "audio_latents_sha256": "0755439d7c0299fd5511f7e3ac8c6661d95f63df3688d57fc07e6cc65b9426d8"
+      },
+      "clip_mp4_sha256": "6bb53e00ab01c245bbfb6a775bf5cf61f9fc3aa6cf039b23d346425d44f9944a"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/determinism/duet-20261004T034605Z-clip-01-receipt.json",
+      "run_name": "duet-20261004T034605Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": false,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 544,
+        "int8_share_rotation": true,
+        "latents_from": null,
+        "lora": null,
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "prompts_file": "/home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts/../notes/h3-gate-prompts.txt",
+        "run_name": "duet-20261004T034605Z",
+        "save_tensors": false,
+        "seed": 42,
+        "split_index": 25,
+        "steps": 9,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "off",
+        "vae_card": null,
+        "vae_decode": "two-proc",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 960
+      },
+      "nfe": 8,
+      "batch": {
+        "index": 1,
+        "count": 2,
+        "note": "encoder, denoiser and VAEs loaded once for the batch; this clip's arithmetic is the single-run path's, and the repeat gate checks the hashes match it"
+      },
+      "prompt": "Sunrise over a quiet harbor; small fishing boats bob on gentle swells while gulls cross the frame. Water lapping, distant engine putter, soft wind.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.159,
+        "encode.load": 12.841,
+        "encode.forward.0": 0.709,
+        "encode.forward.1": 0.391,
+        "encode": 17.002,
+        "sample.build_pipeline": 0.001,
+        "sample.0": 110.527,
+        "sample.1": 117.422,
+        "decode.video.1": 41.096,
+        "decode.audio.1": 0.0
+      },
+      "hashes": {
+        "video_tensor_sha256": "0d4701dbfa15d532f9bef6fe7df028f82cdb23fa237a44d279972d89fd6035c4",
+        "audio_tensor_sha256": "eb1cb8e08cbdedc42fc81125184994a57b22aa67461b4295be66474a424eb7f6",
+        "video_latents_sha256": "0d94951a2d21e3d7cc4fafdf366cf378d48d6fc24245740ba4aa176ab7392a0d",
+        "audio_latents_sha256": "94c144ef101f61a834dac19c2b6d7010535aee530e11f76568f25604d9b54e6f"
+      },
+      "clip_mp4_sha256": "466f727392542a88c779649e9a12898a9845d8b998f10e75643023814811c225"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/determinism/duet-20261004T035024Z-clip-00-receipt.json",
+      "run_name": "duet-20261004T035024Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": false,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 544,
+        "int8_share_rotation": true,
+        "latents_from": null,
+        "lora": null,
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "prompts_file": "/home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts/../notes/h3-gate-prompts.txt",
+        "run_name": "duet-20261004T035024Z",
+        "save_tensors": false,
+        "seed": 42,
+        "split_index": 25,
+        "steps": 9,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "off",
+        "vae_card": null,
+        "vae_decode": "two-proc",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 960
+      },
+      "nfe": 8,
+      "batch": {
+        "index": 0,
+        "count": 2,
+        "note": "encoder, denoiser and VAEs loaded once for the batch; this clip's arithmetic is the single-run path's, and the repeat gate checks the hashes match it"
+      },
+      "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.159,
+        "encode.load": 12.844,
+        "encode.forward.0": 0.67,
+        "encode.forward.1": 0.393,
+        "encode": 17.046,
+        "sample.build_pipeline": 0.001,
+        "sample.0": 111.016,
+        "sample.1": 117.909,
+        "decode.video.0": 51.664,
+        "decode.audio.0": 0.0
+      },
+      "hashes": {
+        "video_tensor_sha256": "3737bdc71491efb6c3c960748fc7b8ad7752221a44f997731768dfd75d14e72e",
+        "audio_tensor_sha256": "2d4cc5164b183b4eb34c5748ac67dbb42a3ac74c2bb7ce5905dc6304870395de",
+        "video_latents_sha256": "b1d5af6748e38b87c853732766f3cd01e8e00a36afda4b4c05cfa22fb212af9a",
+        "audio_latents_sha256": "0755439d7c0299fd5511f7e3ac8c6661d95f63df3688d57fc07e6cc65b9426d8"
+      },
+      "clip_mp4_sha256": "6bb53e00ab01c245bbfb6a775bf5cf61f9fc3aa6cf039b23d346425d44f9944a"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/determinism/duet-20261004T035024Z-clip-01-receipt.json",
+      "run_name": "duet-20261004T035024Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": false,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 544,
+        "int8_share_rotation": true,
+        "latents_from": null,
+        "lora": null,
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "prompts_file": "/home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts/../notes/h3-gate-prompts.txt",
+        "run_name": "duet-20261004T035024Z",
+        "save_tensors": false,
+        "seed": 42,
+        "split_index": 25,
+        "steps": 9,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "off",
+        "vae_card": null,
+        "vae_decode": "two-proc",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 960
+      },
+      "nfe": 8,
+      "batch": {
+        "index": 1,
+        "count": 2,
+        "note": "encoder, denoiser and VAEs loaded once for the batch; this clip's arithmetic is the single-run path's, and the repeat gate checks the hashes match it"
+      },
+      "prompt": "Sunrise over a quiet harbor; small fishing boats bob on gentle swells while gulls cross the frame. Water lapping, distant engine putter, soft wind.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.159,
+        "encode.load": 12.844,
+        "encode.forward.0": 0.67,
+        "encode.forward.1": 0.393,
+        "encode": 17.046,
+        "sample.build_pipeline": 0.001,
+        "sample.0": 111.016,
+        "sample.1": 117.909,
+        "decode.video.1": 41.153,
+        "decode.audio.1": 0.0
+      },
+      "hashes": {
+        "video_tensor_sha256": "0d4701dbfa15d532f9bef6fe7df028f82cdb23fa237a44d279972d89fd6035c4",
+        "audio_tensor_sha256": "eb1cb8e08cbdedc42fc81125184994a57b22aa67461b4295be66474a424eb7f6",
+        "video_latents_sha256": "0d94951a2d21e3d7cc4fafdf366cf378d48d6fc24245740ba4aa176ab7392a0d",
+        "audio_latents_sha256": "94c144ef101f61a834dac19c2b6d7010535aee530e11f76568f25604d9b54e6f"
+      },
+      "clip_mp4_sha256": "466f727392542a88c779649e9a12898a9845d8b998f10e75643023814811c225"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/determinism/duet-20261004T035545Z-clip-00-receipt.json",
+      "run_name": "duet-20261004T035545Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": false,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 544,
+        "int8_share_rotation": true,
+        "latents_from": null,
+        "lora": null,
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "prompts_file": "/home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts/../notes/h3-gate-prompts.txt",
+        "run_name": "duet-20261004T035545Z",
+        "save_tensors": false,
+        "seed": 42,
+        "split_index": 25,
+        "steps": 9,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "off",
+        "vae_card": null,
+        "vae_decode": "two-proc",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 960
+      },
+      "nfe": 8,
+      "batch": {
+        "index": 0,
+        "count": 2,
+        "note": "encoder, denoiser and VAEs loaded once for the batch; this clip's arithmetic is the single-run path's, and the repeat gate checks the hashes match it"
+      },
+      "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.154,
+        "encode.load": 12.799,
+        "encode.forward.0": 0.663,
+        "encode.forward.1": 0.394,
+        "encode": 16.553,
+        "sample.build_pipeline": 0.001,
+        "sample.0": 110.875,
+        "sample.1": 117.768,
+        "decode.video.0": 51.014,
+        "decode.audio.0": 0.0
+      },
+      "hashes": {
+        "video_tensor_sha256": "3737bdc71491efb6c3c960748fc7b8ad7752221a44f997731768dfd75d14e72e",
+        "audio_tensor_sha256": "2d4cc5164b183b4eb34c5748ac67dbb42a3ac74c2bb7ce5905dc6304870395de",
+        "video_latents_sha256": "b1d5af6748e38b87c853732766f3cd01e8e00a36afda4b4c05cfa22fb212af9a",
+        "audio_latents_sha256": "0755439d7c0299fd5511f7e3ac8c6661d95f63df3688d57fc07e6cc65b9426d8"
+      },
+      "clip_mp4_sha256": "6bb53e00ab01c245bbfb6a775bf5cf61f9fc3aa6cf039b23d346425d44f9944a"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/determinism/duet-20261004T035545Z-clip-01-receipt.json",
+      "run_name": "duet-20261004T035545Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": false,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 544,
+        "int8_share_rotation": true,
+        "latents_from": null,
+        "lora": null,
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "prompts_file": "/home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts/../notes/h3-gate-prompts.txt",
+        "run_name": "duet-20261004T035545Z",
+        "save_tensors": false,
+        "seed": 42,
+        "split_index": 25,
+        "steps": 9,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "off",
+        "vae_card": null,
+        "vae_decode": "two-proc",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 960
+      },
+      "nfe": 8,
+      "batch": {
+        "index": 1,
+        "count": 2,
+        "note": "encoder, denoiser and VAEs loaded once for the batch; this clip's arithmetic is the single-run path's, and the repeat gate checks the hashes match it"
+      },
+      "prompt": "Sunrise over a quiet harbor; small fishing boats bob on gentle swells while gulls cross the frame. Water lapping, distant engine putter, soft wind.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.154,
+        "encode.load": 12.799,
+        "encode.forward.0": 0.663,
+        "encode.forward.1": 0.394,
+        "encode": 16.553,
+        "sample.build_pipeline": 0.001,
+        "sample.0": 110.875,
+        "sample.1": 117.768,
+        "decode.video.1": 41.116,
+        "decode.audio.1": 0.0
+      },
+      "hashes": {
+        "video_tensor_sha256": "0d4701dbfa15d532f9bef6fe7df028f82cdb23fa237a44d279972d89fd6035c4",
+        "audio_tensor_sha256": "eb1cb8e08cbdedc42fc81125184994a57b22aa67461b4295be66474a424eb7f6",
+        "video_latents_sha256": "0d94951a2d21e3d7cc4fafdf366cf378d48d6fc24245740ba4aa176ab7392a0d",
+        "audio_latents_sha256": "94c144ef101f61a834dac19c2b6d7010535aee530e11f76568f25604d9b54e6f"
+      },
+      "clip_mp4_sha256": "466f727392542a88c779649e9a12898a9845d8b998f10e75643023814811c225"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/fp16-single-repeat/receipt-a.json",
+      "run_name": "fp16-single-a",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": true,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 256,
+        "int8_share_rotation": true,
+        "latents_from": "/mnt/fast-ai/bench-results/minimax-h3/repeat-20260920T023257Z-a/tensors.safetensors",
+        "lora": "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3-fp16-repeat-20261003",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "prompts_file": null,
+        "run_name": "fp16-single-a",
+        "save_tensors": true,
+        "seed": 42,
+        "split_index": null,
+        "steps": 9,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "fp16",
+        "vae_card": null,
+        "vae_decode": "single",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 448
+      },
+      "nfe": 8,
+      "batch": null,
+      "prompt": null,
+      "seed": 42,
+      "timings_seconds": {
+        "decode_only.load_latents": 0.003,
+        "decode.load_vae": 2.494,
+        "decode.video": 15.279,
+        "decode.load_audio_vae": 0.395,
+        "decode.audio": 2.995,
+        "write": 1.528
+      },
+      "hashes": {
+        "video_tensor_sha256": "153937b40825dc3de095b1f94874b93ecbdd30cc099fff308408c936200597e2",
+        "audio_tensor_sha256": "cc05c40ff568f96f7fee5c62e08d01058da6fd7ada5e1188cf72f0991d58dac1",
+        "video_latents_sha256": "5eeac672ae981777354916aacb86df7f30b35dd687d2e7ade394acd5bcf0b71a",
+        "audio_latents_sha256": "becd2674e044e3475bcd5e770ef058d2df995da2de3766b8dfbb26d547ad7384"
+      },
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/fp16-single-repeat/receipt-b.json",
+      "run_name": "fp16-single-b",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": true,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 256,
+        "int8_share_rotation": true,
+        "latents_from": "/mnt/fast-ai/bench-results/minimax-h3/repeat-20260920T023257Z-a/tensors.safetensors",
+        "lora": "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3-fp16-repeat-20261003",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "prompts_file": null,
+        "run_name": "fp16-single-b",
+        "save_tensors": true,
+        "seed": 42,
+        "split_index": null,
+        "steps": 9,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "fp16",
+        "vae_card": null,
+        "vae_decode": "single",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 448
+      },
+      "nfe": 8,
+      "batch": null,
+      "prompt": null,
+      "seed": 42,
+      "timings_seconds": {
+        "decode_only.load_latents": 0.002,
+        "decode.load_vae": 2.294,
+        "decode.video": 15.32,
+        "decode.load_audio_vae": 0.247,
+        "decode.audio": 3.018,
+        "write": 1.524
+      },
+      "hashes": {
+        "video_tensor_sha256": "153937b40825dc3de095b1f94874b93ecbdd30cc099fff308408c936200597e2",
+        "audio_tensor_sha256": "cc05c40ff568f96f7fee5c62e08d01058da6fd7ada5e1188cf72f0991d58dac1",
+        "video_latents_sha256": "5eeac672ae981777354916aacb86df7f30b35dd687d2e7ade394acd5bcf0b71a",
+        "audio_latents_sha256": "becd2674e044e3475bcd5e770ef058d2df995da2de3766b8dfbb26d547ad7384"
+      },
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/mp4-fp16-twoproc-run1-vs-run2.json",
+      "run_name": null,
+      "settings": null,
+      "nfe": null,
+      "batch": null,
+      "prompt": null,
+      "seed": null,
+      "timings_seconds": null,
+      "hashes": null,
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/mp4-fp32-vs-fp16-twoproc.json",
+      "run_name": null,
+      "settings": null,
+      "nfe": null,
+      "batch": null,
+      "prompt": null,
+      "seed": null,
+      "timings_seconds": null,
+      "hashes": null,
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/mp4-fp32-vs-fp32-identical-tensors.json",
+      "run_name": null,
+      "settings": null,
+      "nfe": null,
+      "batch": null,
+      "prompt": null,
+      "seed": null,
+      "timings_seconds": null,
+      "hashes": null,
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/receipts/duet-20261003T224727Z/clip-00-receipt.json",
+      "run_name": "duet-20261003T224727Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": false,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 544,
+        "int8_share_rotation": true,
+        "latents_from": null,
+        "lora": null,
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "prompts_file": "/home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts/../notes/h3-gate-prompts.txt",
+        "run_name": "duet-20261003T224727Z",
+        "save_tensors": false,
+        "seed": 42,
+        "split_index": 25,
+        "steps": 51,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "off",
+        "vae_card": null,
+        "vae_decode": "two-proc",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 960
+      },
+      "nfe": 50,
+      "batch": {
+        "index": 0,
+        "count": 2,
+        "note": "encoder, denoiser and VAEs loaded once for the batch; this clip's arithmetic is the single-run path's, and the repeat gate checks the hashes match it"
+      },
+      "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.162,
+        "encode.load": 12.985,
+        "encode.forward.0": 0.71,
+        "encode.forward.1": 0.391,
+        "encode": 17.213,
+        "sample.build_pipeline": 0.001,
+        "sample.0": 691.818,
+        "sample.1": 698.707,
+        "decode.video.0": 52.734,
+        "decode.audio.0": 0.0
+      },
+      "hashes": {
+        "video_tensor_sha256": "0c2ea7aec7b6a38a81b09539947d94c9e05c512e73675a380e4a71f8bd624444",
+        "audio_tensor_sha256": "cc05c40ff568f96f7fee5c62e08d01058da6fd7ada5e1188cf72f0991d58dac1",
+        "video_latents_sha256": "5eeac672ae981777354916aacb86df7f30b35dd687d2e7ade394acd5bcf0b71a",
+        "audio_latents_sha256": "becd2674e044e3475bcd5e770ef058d2df995da2de3766b8dfbb26d547ad7384"
+      },
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/receipts/duet-20261003T233113Z/clip-00-receipt.json",
+      "run_name": "duet-20261003T233113Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": false,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 544,
+        "int8_share_rotation": true,
+        "latents_from": null,
+        "lora": null,
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "prompts_file": "/home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts/../notes/h3-gate-prompts.txt",
+        "run_name": "duet-20261003T233113Z",
+        "save_tensors": false,
+        "seed": 42,
+        "split_index": 25,
+        "steps": 9,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "off",
+        "vae_card": null,
+        "vae_decode": "two-proc",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 960
+      },
+      "nfe": 8,
+      "batch": {
+        "index": 0,
+        "count": 2,
+        "note": "encoder, denoiser and VAEs loaded once for the batch; this clip's arithmetic is the single-run path's, and the repeat gate checks the hashes match it"
+      },
+      "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.162,
+        "encode.load": 12.992,
+        "encode.forward.0": 0.662,
+        "encode.forward.1": 0.393,
+        "encode": 16.691,
+        "sample.build_pipeline": 0.001,
+        "sample.1": 110.819,
+        "sample.0": 117.74,
+        "decode.video.0": 50.969,
+        "decode.audio.0": 0.0
+      },
+      "hashes": {
+        "video_tensor_sha256": "3737bdc71491efb6c3c960748fc7b8ad7752221a44f997731768dfd75d14e72e",
+        "audio_tensor_sha256": "2d4cc5164b183b4eb34c5748ac67dbb42a3ac74c2bb7ce5905dc6304870395de",
+        "video_latents_sha256": "b1d5af6748e38b87c853732766f3cd01e8e00a36afda4b4c05cfa22fb212af9a",
+        "audio_latents_sha256": "0755439d7c0299fd5511f7e3ac8c6661d95f63df3688d57fc07e6cc65b9426d8"
+      },
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/receipts/duet-20261003T233113Z/clip-01-receipt.json",
+      "run_name": "duet-20261003T233113Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": false,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 544,
+        "int8_share_rotation": true,
+        "latents_from": null,
+        "lora": null,
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "prompts_file": "/home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts/../notes/h3-gate-prompts.txt",
+        "run_name": "duet-20261003T233113Z",
+        "save_tensors": false,
+        "seed": 42,
+        "split_index": 25,
+        "steps": 9,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "off",
+        "vae_card": null,
+        "vae_decode": "two-proc",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 960
+      },
+      "nfe": 8,
+      "batch": {
+        "index": 1,
+        "count": 2,
+        "note": "encoder, denoiser and VAEs loaded once for the batch; this clip's arithmetic is the single-run path's, and the repeat gate checks the hashes match it"
+      },
+      "prompt": "Sunrise over a quiet harbor; small fishing boats bob on gentle swells while gulls cross the frame. Water lapping, distant engine putter, soft wind.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.162,
+        "encode.load": 12.992,
+        "encode.forward.0": 0.662,
+        "encode.forward.1": 0.393,
+        "encode": 16.691,
+        "sample.build_pipeline": 0.001,
+        "sample.1": 110.819,
+        "sample.0": 117.74,
+        "decode.video.1": 41.149,
+        "decode.audio.1": 0.0
+      },
+      "hashes": {
+        "video_tensor_sha256": "0d4701dbfa15d532f9bef6fe7df028f82cdb23fa237a44d279972d89fd6035c4",
+        "audio_tensor_sha256": "eb1cb8e08cbdedc42fc81125184994a57b22aa67461b4295be66474a424eb7f6",
+        "video_latents_sha256": "0d94951a2d21e3d7cc4fafdf366cf378d48d6fc24245740ba4aa176ab7392a0d",
+        "audio_latents_sha256": "94c144ef101f61a834dac19c2b6d7010535aee530e11f76568f25604d9b54e6f"
+      },
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/receipts/duet-20261003T233530Z/clip-00-receipt.json",
+      "run_name": "duet-20261003T233530Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": false,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 544,
+        "int8_share_rotation": true,
+        "latents_from": null,
+        "lora": null,
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "prompts_file": "/home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts/../notes/h3-gate-prompts.txt",
+        "run_name": "duet-20261003T233530Z",
+        "save_tensors": false,
+        "seed": 42,
+        "split_index": 25,
+        "steps": 9,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "fp16",
+        "vae_card": null,
+        "vae_decode": "two-proc",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 960
+      },
+      "nfe": 8,
+      "batch": {
+        "index": 0,
+        "count": 2,
+        "note": "encoder, denoiser and VAEs loaded once for the batch; this clip's arithmetic is the single-run path's, and the repeat gate checks the hashes match it"
+      },
+      "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.158,
+        "encode.load": 12.987,
+        "encode.forward.0": 0.674,
+        "encode.forward.1": 0.392,
+        "encode": 17.079,
+        "sample.build_pipeline": 0.001,
+        "sample.1": 110.988,
+        "sample.0": 117.896,
+        "decode.video.0": 20.135,
+        "decode.audio.0": 0.0
+      },
+      "hashes": {
+        "video_tensor_sha256": "116b9378ab9b41838869970053a4415391e0a2e83c8ce178226ba69085b5c0e5",
+        "audio_tensor_sha256": "2d4cc5164b183b4eb34c5748ac67dbb42a3ac74c2bb7ce5905dc6304870395de",
+        "video_latents_sha256": "b1d5af6748e38b87c853732766f3cd01e8e00a36afda4b4c05cfa22fb212af9a",
+        "audio_latents_sha256": "0755439d7c0299fd5511f7e3ac8c6661d95f63df3688d57fc07e6cc65b9426d8"
+      },
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/receipts/duet-20261003T233530Z/clip-01-receipt.json",
+      "run_name": "duet-20261003T233530Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": false,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 544,
+        "int8_share_rotation": true,
+        "latents_from": null,
+        "lora": null,
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "prompts_file": "/home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts/../notes/h3-gate-prompts.txt",
+        "run_name": "duet-20261003T233530Z",
+        "save_tensors": false,
+        "seed": 42,
+        "split_index": 25,
+        "steps": 9,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "fp16",
+        "vae_card": null,
+        "vae_decode": "two-proc",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 960
+      },
+      "nfe": 8,
+      "batch": {
+        "index": 1,
+        "count": 2,
+        "note": "encoder, denoiser and VAEs loaded once for the batch; this clip's arithmetic is the single-run path's, and the repeat gate checks the hashes match it"
+      },
+      "prompt": "Sunrise over a quiet harbor; small fishing boats bob on gentle swells while gulls cross the frame. Water lapping, distant engine putter, soft wind.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.158,
+        "encode.load": 12.987,
+        "encode.forward.0": 0.674,
+        "encode.forward.1": 0.392,
+        "encode": 17.079,
+        "sample.build_pipeline": 0.001,
+        "sample.1": 110.988,
+        "sample.0": 117.896,
+        "decode.video.1": 8.996,
+        "decode.audio.1": 0.0
+      },
+      "hashes": {
+        "video_tensor_sha256": "64567b70ef6b4be001130d8a53871edea1623908307aa635c31884a7f3d0ab80",
+        "audio_tensor_sha256": "eb1cb8e08cbdedc42fc81125184994a57b22aa67461b4295be66474a424eb7f6",
+        "video_latents_sha256": "0d94951a2d21e3d7cc4fafdf366cf378d48d6fc24245740ba4aa176ab7392a0d",
+        "audio_latents_sha256": "94c144ef101f61a834dac19c2b6d7010535aee530e11f76568f25604d9b54e6f"
+      },
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/receipts/duet-20261003T233845Z/clip-00-receipt.json",
+      "run_name": "duet-20261003T233845Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": false,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 544,
+        "int8_share_rotation": true,
+        "latents_from": null,
+        "lora": null,
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "prompts_file": "/home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts/../notes/h3-gate-prompts.txt",
+        "run_name": "duet-20261003T233845Z",
+        "save_tensors": false,
+        "seed": 42,
+        "split_index": 25,
+        "steps": 9,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "fp16",
+        "vae_card": null,
+        "vae_decode": "two-proc",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 960
+      },
+      "nfe": 8,
+      "batch": {
+        "index": 0,
+        "count": 2,
+        "note": "encoder, denoiser and VAEs loaded once for the batch; this clip's arithmetic is the single-run path's, and the repeat gate checks the hashes match it"
+      },
+      "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.164,
+        "encode.load": 13.232,
+        "encode.forward.0": 0.673,
+        "encode.forward.1": 0.393,
+        "encode": 16.883,
+        "sample.build_pipeline": 0.001,
+        "sample.1": 110.932,
+        "sample.0": 117.843,
+        "decode.video.0": 19.644,
+        "decode.audio.0": 0.0
+      },
+      "hashes": {
+        "video_tensor_sha256": "605aaa21147d222b1d61eaa4d6175dc33296b7c9840d5aaf1146408431f7a372",
+        "audio_tensor_sha256": "2d4cc5164b183b4eb34c5748ac67dbb42a3ac74c2bb7ce5905dc6304870395de",
+        "video_latents_sha256": "b1d5af6748e38b87c853732766f3cd01e8e00a36afda4b4c05cfa22fb212af9a",
+        "audio_latents_sha256": "0755439d7c0299fd5511f7e3ac8c6661d95f63df3688d57fc07e6cc65b9426d8"
+      },
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/receipts/duet-20261003T233845Z/clip-01-receipt.json",
+      "run_name": "duet-20261003T233845Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": false,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 544,
+        "int8_share_rotation": true,
+        "latents_from": null,
+        "lora": null,
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "prompts_file": "/home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts/../notes/h3-gate-prompts.txt",
+        "run_name": "duet-20261003T233845Z",
+        "save_tensors": false,
+        "seed": 42,
+        "split_index": 25,
+        "steps": 9,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "fp16",
+        "vae_card": null,
+        "vae_decode": "two-proc",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 960
+      },
+      "nfe": 8,
+      "batch": {
+        "index": 1,
+        "count": 2,
+        "note": "encoder, denoiser and VAEs loaded once for the batch; this clip's arithmetic is the single-run path's, and the repeat gate checks the hashes match it"
+      },
+      "prompt": "Sunrise over a quiet harbor; small fishing boats bob on gentle swells while gulls cross the frame. Water lapping, distant engine putter, soft wind.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.164,
+        "encode.load": 13.232,
+        "encode.forward.0": 0.673,
+        "encode.forward.1": 0.393,
+        "encode": 16.883,
+        "sample.build_pipeline": 0.001,
+        "sample.1": 110.932,
+        "sample.0": 117.843,
+        "decode.video.1": 9.01,
+        "decode.audio.1": 0.0
+      },
+      "hashes": {
+        "video_tensor_sha256": "dbfba18fe11b24c725b6706945c7ca3388d94f29cb2e58ed53d0f3e25f630388",
+        "audio_tensor_sha256": "eb1cb8e08cbdedc42fc81125184994a57b22aa67461b4295be66474a424eb7f6",
+        "video_latents_sha256": "0d94951a2d21e3d7cc4fafdf366cf378d48d6fc24245740ba4aa176ab7392a0d",
+        "audio_latents_sha256": "94c144ef101f61a834dac19c2b6d7010535aee530e11f76568f25604d9b54e6f"
+      },
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/run2/gateB.json",
+      "run_name": null,
+      "settings": null,
+      "nfe": null,
+      "batch": null,
+      "prompt": null,
+      "seed": null,
+      "timings_seconds": null,
+      "hashes": null,
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/run3/gateB.json",
+      "run_name": null,
+      "settings": null,
+      "nfe": null,
+      "batch": null,
+      "prompt": null,
+      "seed": null,
+      "timings_seconds": null,
+      "hashes": null,
+      "clip_mp4_sha256": null
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-04-piecewise-transfers/gate2-clip-00-receipt.json",
+      "run_name": "duet-20261004T160259Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": false,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 544,
+        "int8_share_rotation": true,
+        "latents_from": null,
+        "lora": null,
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "prompts_file": "/mnt/fast-ai/bench-results/minimax-h3/h3-piecewise-2prompts.txt",
+        "run_name": "duet-20261004T160259Z",
+        "save_tensors": false,
+        "seed": 42,
+        "split_index": 25,
+        "steps": 51,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "off",
+        "vae_card": null,
+        "vae_decode": "two-proc",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 960
+      },
+      "nfe": 50,
+      "batch": {
+        "index": 0,
+        "count": 2,
+        "note": "encoder, denoiser and VAEs loaded once for the batch; this clip's arithmetic is the single-run path's, and the repeat gate checks the hashes match it"
+      },
+      "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.158,
+        "encode.load": 12.857,
+        "encode.forward.0": 0.674,
+        "encode.forward.1": 0.405,
+        "encode": 16.965,
+        "sample.build_pipeline": 0.001,
+        "sample.1": 692.183,
+        "sample.0": 699.099,
+        "decode.video.0": 51.297,
+        "decode.audio.0": 0.0
+      },
+      "hashes": {
+        "video_tensor_sha256": "0c2ea7aec7b6a38a81b09539947d94c9e05c512e73675a380e4a71f8bd624444",
+        "audio_tensor_sha256": "cc05c40ff568f96f7fee5c62e08d01058da6fd7ada5e1188cf72f0991d58dac1",
+        "video_latents_sha256": "5eeac672ae981777354916aacb86df7f30b35dd687d2e7ade394acd5bcf0b71a",
+        "audio_latents_sha256": "becd2674e044e3475bcd5e770ef058d2df995da2de3766b8dfbb26d547ad7384"
+      },
+      "clip_mp4_sha256": "611c22e839f1d81c94fe5ba300ae28b754dd0ec9438b3c3df642a3867fff4f24"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-04-piecewise-transfers/gate2-clip-01-receipt.json",
+      "run_name": "duet-20261004T160259Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": false,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 544,
+        "int8_share_rotation": true,
+        "latents_from": null,
+        "lora": null,
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "prompts_file": "/mnt/fast-ai/bench-results/minimax-h3/h3-piecewise-2prompts.txt",
+        "run_name": "duet-20261004T160259Z",
+        "save_tensors": false,
+        "seed": 42,
+        "split_index": 25,
+        "steps": 51,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "off",
+        "vae_card": null,
+        "vae_decode": "two-proc",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 960
+      },
+      "nfe": 50,
+      "batch": {
+        "index": 1,
+        "count": 2,
+        "note": "encoder, denoiser and VAEs loaded once for the batch; this clip's arithmetic is the single-run path's, and the repeat gate checks the hashes match it"
+      },
+      "prompt": "A golden-hour meadow with tall grass waving in the wind; a red fox trots across the frame. Birdsong, a gentle breeze.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.158,
+        "encode.load": 12.857,
+        "encode.forward.0": 0.674,
+        "encode.forward.1": 0.405,
+        "encode": 16.965,
+        "sample.build_pipeline": 0.001,
+        "sample.1": 692.183,
+        "sample.0": 699.099,
+        "decode.video.1": 40.884,
+        "decode.audio.1": 0.0
+      },
+      "hashes": {
+        "video_tensor_sha256": "b9cd64f74635ab8b8f28c095bc92d57ee1a3c49cdeb9f9407130012294f2b21a",
+        "audio_tensor_sha256": "ccdf063930449c1bf51d6c76016baeee4e32e3555a480f73ab9a1e2d36e1a355",
+        "video_latents_sha256": "d954508af62ce6d7cb71c145ff88ea65aca259263c4ac79a1749f152b21b8a7c",
+        "audio_latents_sha256": "9f1523e02dd9588cf4bdeeceb32d7e6dfbbec6fed6c62c6ca2acbaa674585142"
+      },
+      "clip_mp4_sha256": "a88b02db749643b7722229535e2b9911bc36732e5f8c47a926c611e764faf27d"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-00-receipt.json",
+      "run_name": "duet-20261004T042838Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": false,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 544,
+        "int8_share_rotation": true,
+        "latents_from": null,
+        "lora": null,
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "prompts_file": "/home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts/../notes/h3-soak8-prompts.txt",
+        "run_name": "duet-20261004T042838Z",
+        "save_tensors": false,
+        "seed": 42,
+        "split_index": 25,
+        "steps": 51,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "off",
+        "vae_card": null,
+        "vae_decode": "two-proc",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 960
+      },
+      "nfe": 50,
+      "batch": {
+        "index": 0,
+        "count": 8,
+        "note": "encoder, denoiser and VAEs loaded once for the batch; this clip's arithmetic is the single-run path's, and the repeat gate checks the hashes match it"
+      },
+      "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.16,
+        "encode.load": 12.976,
+        "encode.forward.0": 0.721,
+        "encode.forward.1": 0.403,
+        "encode.forward.2": 0.364,
+        "encode.forward.3": 0.378,
+        "encode.forward.4": 0.392,
+        "encode.forward.5": 0.365,
+        "encode.forward.6": 0.363,
+        "encode.forward.7": 0.379,
+        "encode": 19.556,
+        "sample.build_pipeline": 0.002,
+        "sample.3": 2723.335,
+        "sample.2": 2730.222,
+        "sample.4": 2737.129,
+        "sample.1": 2744.026,
+        "sample.6": 2750.912,
+        "sample.5": 2757.804,
+        "sample.7": 2764.7,
+        "sample.0": 2771.623,
+        "decode.video.0": 52.413,
+        "decode.audio.0": 0.0
+      },
+      "hashes": {
+        "video_tensor_sha256": "0c2ea7aec7b6a38a81b09539947d94c9e05c512e73675a380e4a71f8bd624444",
+        "audio_tensor_sha256": "cc05c40ff568f96f7fee5c62e08d01058da6fd7ada5e1188cf72f0991d58dac1",
+        "video_latents_sha256": "5eeac672ae981777354916aacb86df7f30b35dd687d2e7ade394acd5bcf0b71a",
+        "audio_latents_sha256": "becd2674e044e3475bcd5e770ef058d2df995da2de3766b8dfbb26d547ad7384"
+      },
+      "clip_mp4_sha256": "611c22e839f1d81c94fe5ba300ae28b754dd0ec9438b3c3df642a3867fff4f24"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-01-receipt.json",
+      "run_name": "duet-20261004T042838Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": false,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 544,
+        "int8_share_rotation": true,
+        "latents_from": null,
+        "lora": null,
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "prompts_file": "/home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts/../notes/h3-soak8-prompts.txt",
+        "run_name": "duet-20261004T042838Z",
+        "save_tensors": false,
+        "seed": 42,
+        "split_index": 25,
+        "steps": 51,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "off",
+        "vae_card": null,
+        "vae_decode": "two-proc",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 960
+      },
+      "nfe": 50,
+      "batch": {
+        "index": 1,
+        "count": 8,
+        "note": "encoder, denoiser and VAEs loaded once for the batch; this clip's arithmetic is the single-run path's, and the repeat gate checks the hashes match it"
+      },
+      "prompt": "A golden-hour meadow with tall grass waving in the wind; a red fox trots across the frame. Birdsong, a gentle breeze.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.16,
+        "encode.load": 12.976,
+        "encode.forward.0": 0.721,
+        "encode.forward.1": 0.403,
+        "encode.forward.2": 0.364,
+        "encode.forward.3": 0.378,
+        "encode.forward.4": 0.392,
+        "encode.forward.5": 0.365,
+        "encode.forward.6": 0.363,
+        "encode.forward.7": 0.379,
+        "encode": 19.556,
+        "sample.build_pipeline": 0.002,
+        "sample.3": 2723.335,
+        "sample.2": 2730.222,
+        "sample.4": 2737.129,
+        "sample.1": 2744.026,
+        "sample.6": 2750.912,
+        "sample.5": 2757.804,
+        "sample.7": 2764.7,
+        "sample.0": 2771.623,
+        "decode.video.1": 41.073,
+        "decode.audio.1": 0.0
+      },
+      "hashes": {
+        "video_tensor_sha256": "b9cd64f74635ab8b8f28c095bc92d57ee1a3c49cdeb9f9407130012294f2b21a",
+        "audio_tensor_sha256": "ccdf063930449c1bf51d6c76016baeee4e32e3555a480f73ab9a1e2d36e1a355",
+        "video_latents_sha256": "d954508af62ce6d7cb71c145ff88ea65aca259263c4ac79a1749f152b21b8a7c",
+        "audio_latents_sha256": "9f1523e02dd9588cf4bdeeceb32d7e6dfbbec6fed6c62c6ca2acbaa674585142"
+      },
+      "clip_mp4_sha256": "a88b02db749643b7722229535e2b9911bc36732e5f8c47a926c611e764faf27d"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-02-receipt.json",
+      "run_name": "duet-20261004T042838Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": false,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 544,
+        "int8_share_rotation": true,
+        "latents_from": null,
+        "lora": null,
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "prompts_file": "/home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts/../notes/h3-soak8-prompts.txt",
+        "run_name": "duet-20261004T042838Z",
+        "save_tensors": false,
+        "seed": 42,
+        "split_index": 25,
+        "steps": 51,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "off",
+        "vae_card": null,
+        "vae_decode": "two-proc",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 960
+      },
+      "nfe": 50,
+      "batch": {
+        "index": 2,
+        "count": 8,
+        "note": "encoder, denoiser and VAEs loaded once for the batch; this clip's arithmetic is the single-run path's, and the repeat gate checks the hashes match it"
+      },
+      "prompt": "Waves breaking on a basalt shore at dawn, spray catching the first light; a lighthouse sweeps its beam in the background. Surf, gulls, a foghorn.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.16,
+        "encode.load": 12.976,
+        "encode.forward.0": 0.721,
+        "encode.forward.1": 0.403,
+        "encode.forward.2": 0.364,
+        "encode.forward.3": 0.378,
+        "encode.forward.4": 0.392,
+        "encode.forward.5": 0.365,
+        "encode.forward.6": 0.363,
+        "encode.forward.7": 0.379,
+        "encode": 19.556,
+        "sample.build_pipeline": 0.002,
+        "sample.3": 2723.335,
+        "sample.2": 2730.222,
+        "sample.4": 2737.129,
+        "sample.1": 2744.026,
+        "sample.6": 2750.912,
+        "sample.5": 2757.804,
+        "sample.7": 2764.7,
+        "sample.0": 2771.623,
+        "decode.video.2": 41.065,
+        "decode.audio.2": 0.0
+      },
+      "hashes": {
+        "video_tensor_sha256": "b85f19bdcd1fecad066440eeee1b0729c770c6b39c94be0d0bf5b078cf8531f6",
+        "audio_tensor_sha256": "cce4ed12767ca287952449868b06ac8fe135c13dffefe0ac24a7da9c2e30be66",
+        "video_latents_sha256": "398f6fe681bf1b8c1083beaa3c0ced87424e741cf6e343c6fd6b5a9853d9b93c",
+        "audio_latents_sha256": "0f70140987f5468d5bf0ce90dcfd820ec7452d265c849a52de125ded576e71f1"
+      },
+      "clip_mp4_sha256": "175cac254fdd69b0f12ec249b93b5cb00f6fcd4177456b1aba2321e620e8767f"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-03-receipt.json",
+      "run_name": "duet-20261004T042838Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": false,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 544,
+        "int8_share_rotation": true,
+        "latents_from": null,
+        "lora": null,
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "prompts_file": "/home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts/../notes/h3-soak8-prompts.txt",
+        "run_name": "duet-20261004T042838Z",
+        "save_tensors": false,
+        "seed": 42,
+        "split_index": 25,
+        "steps": 51,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "off",
+        "vae_card": null,
+        "vae_decode": "two-proc",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 960
+      },
+      "nfe": 50,
+      "batch": {
+        "index": 3,
+        "count": 8,
+        "note": "encoder, denoiser and VAEs loaded once for the batch; this clip's arithmetic is the single-run path's, and the repeat gate checks the hashes match it"
+      },
+      "prompt": "Inside a quiet library, dust motes drift through a shaft of afternoon light between tall bookshelves; a page turns on its own. Soft room tone, a distant clock.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.16,
+        "encode.load": 12.976,
+        "encode.forward.0": 0.721,
+        "encode.forward.1": 0.403,
+        "encode.forward.2": 0.364,
+        "encode.forward.3": 0.378,
+        "encode.forward.4": 0.392,
+        "encode.forward.5": 0.365,
+        "encode.forward.6": 0.363,
+        "encode.forward.7": 0.379,
+        "encode": 19.556,
+        "sample.build_pipeline": 0.002,
+        "sample.3": 2723.335,
+        "sample.2": 2730.222,
+        "sample.4": 2737.129,
+        "sample.1": 2744.026,
+        "sample.6": 2750.912,
+        "sample.5": 2757.804,
+        "sample.7": 2764.7,
+        "sample.0": 2771.623,
+        "decode.video.3": 41.042,
+        "decode.audio.3": 0.0
+      },
+      "hashes": {
+        "video_tensor_sha256": "a160e58d97a03d3758cb292c5d0dac20516a4531b7c8d3180e6067a45eaff8ba",
+        "audio_tensor_sha256": "e1c176d24386d10855773781beea91b1b5785017118b8c8a5e992b532f560e5c",
+        "video_latents_sha256": "c2965fc662d3f80d333606e66e57542ab97d865f7a0b0e754975609945216f92",
+        "audio_latents_sha256": "a7e2ca8c0c3d92135af6df80457b898be715b19224235524b4e708a53bcf9ddb"
+      },
+      "clip_mp4_sha256": "ace16580cdf3e1df860b951323339df7240cb0856ffcc9a773b5323376144422"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-04-receipt.json",
+      "run_name": "duet-20261004T042838Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": false,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 544,
+        "int8_share_rotation": true,
+        "latents_from": null,
+        "lora": null,
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "prompts_file": "/home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts/../notes/h3-soak8-prompts.txt",
+        "run_name": "duet-20261004T042838Z",
+        "save_tensors": false,
+        "seed": 42,
+        "split_index": 25,
+        "steps": 51,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "off",
+        "vae_card": null,
+        "vae_decode": "two-proc",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 960
+      },
+      "nfe": 50,
+      "batch": {
+        "index": 4,
+        "count": 8,
+        "note": "encoder, denoiser and VAEs loaded once for the batch; this clip's arithmetic is the single-run path's, and the repeat gate checks the hashes match it"
+      },
+      "prompt": "A night market alley lit by paper lanterns; steam rises from a food stall as the vendor flips skewers. Sizzling, chatter, a distant radio.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.16,
+        "encode.load": 12.976,
+        "encode.forward.0": 0.721,
+        "encode.forward.1": 0.403,
+        "encode.forward.2": 0.364,
+        "encode.forward.3": 0.378,
+        "encode.forward.4": 0.392,
+        "encode.forward.5": 0.365,
+        "encode.forward.6": 0.363,
+        "encode.forward.7": 0.379,
+        "encode": 19.556,
+        "sample.build_pipeline": 0.002,
+        "sample.3": 2723.335,
+        "sample.2": 2730.222,
+        "sample.4": 2737.129,
+        "sample.1": 2744.026,
+        "sample.6": 2750.912,
+        "sample.5": 2757.804,
+        "sample.7": 2764.7,
+        "sample.0": 2771.623,
+        "decode.video.4": 41.07,
+        "decode.audio.4": 0.0
+      },
+      "hashes": {
+        "video_tensor_sha256": "a6a48d2453d42ab906e0c55b8b400e653bd5f448eefbd1fd20fb7d4f9ff345fc",
+        "audio_tensor_sha256": "6c90e55c88372b41fa439d070f2476ad720611de4cb7fa4405fd49ee98d12579",
+        "video_latents_sha256": "5128c4427947d4c8229158bfa97c9c286f668b5bd2aa8a6ee08804a504c780fe",
+        "audio_latents_sha256": "c25c72d35fd7dc9c1af569b04bdba27374f74ce0b4886e3ab3ddaf7bb40b570e"
+      },
+      "clip_mp4_sha256": "69edd92463979686d18fce1744558d6252b0925fa4327b550b57c206a238cc1c"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-05-receipt.json",
+      "run_name": "duet-20261004T042838Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": false,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 544,
+        "int8_share_rotation": true,
+        "latents_from": null,
+        "lora": null,
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "prompts_file": "/home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts/../notes/h3-soak8-prompts.txt",
+        "run_name": "duet-20261004T042838Z",
+        "save_tensors": false,
+        "seed": 42,
+        "split_index": 25,
+        "steps": 51,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "off",
+        "vae_card": null,
+        "vae_decode": "two-proc",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 960
+      },
+      "nfe": 50,
+      "batch": {
+        "index": 5,
+        "count": 8,
+        "note": "encoder, denoiser and VAEs loaded once for the batch; this clip's arithmetic is the single-run path's, and the repeat gate checks the hashes match it"
+      },
+      "prompt": "Waves rolling onto black volcanic sand at dusk; foam patterns race up the beach. Surf, wind, a single gull.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.16,
+        "encode.load": 12.976,
+        "encode.forward.0": 0.721,
+        "encode.forward.1": 0.403,
+        "encode.forward.2": 0.364,
+        "encode.forward.3": 0.378,
+        "encode.forward.4": 0.392,
+        "encode.forward.5": 0.365,
+        "encode.forward.6": 0.363,
+        "encode.forward.7": 0.379,
+        "encode": 19.556,
+        "sample.build_pipeline": 0.002,
+        "sample.3": 2723.335,
+        "sample.2": 2730.222,
+        "sample.4": 2737.129,
+        "sample.1": 2744.026,
+        "sample.6": 2750.912,
+        "sample.5": 2757.804,
+        "sample.7": 2764.7,
+        "sample.0": 2771.623,
+        "decode.video.5": 41.093,
+        "decode.audio.5": 0.0
+      },
+      "hashes": {
+        "video_tensor_sha256": "4c27bdb52141e43816a3a1d34707e041a49e16346e1a3ce08596646760ef9196",
+        "audio_tensor_sha256": "72c5bb37f61e2cdc0cdf849e8d4b0967b64d285c9661c50aaf5cb06de3e4afd8",
+        "video_latents_sha256": "4de11bb01835532f3a872480d0f7c3b20a8522eba023eb893a49972059497246",
+        "audio_latents_sha256": "7620a4970a562ea1525346965f0083a540b69b873eb6406325719ec64f7dfa51"
+      },
+      "clip_mp4_sha256": "265415a42bae9aeb0a890f70208774797be6edd212c3ea1514ac9726f3718d52"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-06-receipt.json",
+      "run_name": "duet-20261004T042838Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": false,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 544,
+        "int8_share_rotation": true,
+        "latents_from": null,
+        "lora": null,
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "prompts_file": "/home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts/../notes/h3-soak8-prompts.txt",
+        "run_name": "duet-20261004T042838Z",
+        "save_tensors": false,
+        "seed": 42,
+        "split_index": 25,
+        "steps": 51,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "off",
+        "vae_card": null,
+        "vae_decode": "two-proc",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 960
+      },
+      "nfe": 50,
+      "batch": {
+        "index": 6,
+        "count": 8,
+        "note": "encoder, denoiser and VAEs loaded once for the batch; this clip's arithmetic is the single-run path's, and the repeat gate checks the hashes match it"
+      },
+      "prompt": "A freight train crossing a steel trestle bridge over a foggy river valley at dawn; the headlight sweeps the mist. Diesel rumble, wheels on rails.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.16,
+        "encode.load": 12.976,
+        "encode.forward.0": 0.721,
+        "encode.forward.1": 0.403,
+        "encode.forward.2": 0.364,
+        "encode.forward.3": 0.378,
+        "encode.forward.4": 0.392,
+        "encode.forward.5": 0.365,
+        "encode.forward.6": 0.363,
+        "encode.forward.7": 0.379,
+        "encode": 19.556,
+        "sample.build_pipeline": 0.002,
+        "sample.3": 2723.335,
+        "sample.2": 2730.222,
+        "sample.4": 2737.129,
+        "sample.1": 2744.026,
+        "sample.6": 2750.912,
+        "sample.5": 2757.804,
+        "sample.7": 2764.7,
+        "sample.0": 2771.623,
+        "decode.video.6": 41.113,
+        "decode.audio.6": 0.0
+      },
+      "hashes": {
+        "video_tensor_sha256": "691a059716ee1449bafe396c9531df063baad43b2a0fce9f657fdb33dd5a8d10",
+        "audio_tensor_sha256": "bd7461b79b5ac8742271917642a872260e04e31a2a798937ff35ccb30b78e873",
+        "video_latents_sha256": "020e36d4e9da93e51774f94647c91b981836ab281756acb04ccee952ee7b995f",
+        "audio_latents_sha256": "4c59cacf94077d03c34c4810674dea9408143740f082153d00aae417f12f45e9"
+      },
+      "clip_mp4_sha256": "dfb7eff2dce1ff0387953d42294aa7aee92cae0a1863143624167f51ce277855"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-07-receipt.json",
+      "run_name": "duet-20261004T042838Z",
+      "settings": {
+        "adaln_dtype": "fp32",
+        "adaln_out_dtype": "bf16",
+        "audio_shift": null,
+        "cards": [
+          0,
+          1
+        ],
+        "crf": 16,
+        "decode_only": false,
+        "denoiser": "pruned",
+        "denoiser_rotation": "hadamard",
+        "deterministic": false,
+        "dry_run": false,
+        "encoder_card": 0,
+        "frames": 124,
+        "height": 544,
+        "int8_share_rotation": true,
+        "latents_from": null,
+        "lora": null,
+        "out_dir": "/mnt/fast-ai/bench-results/minimax-h3",
+        "plan_memory": false,
+        "probe_tile_identity": null,
+        "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+        "prompt_embeds": null,
+        "prompts_file": "/home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts/../notes/h3-soak8-prompts.txt",
+        "run_name": "duet-20261004T042838Z",
+        "save_tensors": false,
+        "seed": 42,
+        "split_index": 25,
+        "steps": 51,
+        "te_rotation": "hadamard256",
+        "vae_autocast": "off",
+        "vae_card": null,
+        "vae_decode": "two-proc",
+        "vae_tiling": "auto",
+        "verbose": false,
+        "verify_remap": false,
+        "video_shift": null,
+        "width": 960
+      },
+      "nfe": 50,
+      "batch": {
+        "index": 7,
+        "count": 8,
+        "note": "encoder, denoiser and VAEs loaded once for the batch; this clip's arithmetic is the single-run path's, and the repeat gate checks the hashes match it"
+      },
+      "prompt": "Snow falling inside an empty glass conservatory at night; flakes drift past the panes and settle on ferns. Muffled wind, a radiator tick.",
+      "seed": 42,
+      "timings_seconds": {
+        "encode.tokenize": 0.16,
+        "encode.load": 12.976,
+        "encode.forward.0": 0.721,
+        "encode.forward.1": 0.403,
+        "encode.forward.2": 0.364,
+        "encode.forward.3": 0.378,
+        "encode.forward.4": 0.392,
+        "encode.forward.5": 0.365,
+        "encode.forward.6": 0.363,
+        "encode.forward.7": 0.379,
+        "encode": 19.556,
+        "sample.build_pipeline": 0.002,
+        "sample.3": 2723.335,
+        "sample.2": 2730.222,
+        "sample.4": 2737.129,
+        "sample.1": 2744.026,
+        "sample.6": 2750.912,
+        "sample.5": 2757.804,
+        "sample.7": 2764.7,
+        "sample.0": 2771.623,
+        "decode.video.7": 41.042,
+        "decode.audio.7": 0.0
+      },
+      "hashes": {
+        "video_tensor_sha256": "3baf3a5274ba3fb916a502441ce97c4182c9e10854a3a5fef4f77c687f891e65",
+        "audio_tensor_sha256": "7ba4d187961c9980b07dffcfeff4a3acaf5ce0343be8052887fab6db955af139",
+        "video_latents_sha256": "b51f6778f6d1cf521726f4c51261840ab438c2576f6c931abaccf53d5328b124",
+        "audio_latents_sha256": "9e2ccd7b24dcb38ea577141f056aa7ab7b2ca7205c0d18199c6900540afd2ddc"
+      },
+      "clip_mp4_sha256": "2d98f310285bd82c9c637b493fbee8f0e9705148ea49d673d3e35128594a413b"
+    }
+  ],
+  "lane_tracked_file_inventory": [
+    {
+      "path": "experiments/minimax-h3-b70/README.md",
+      "bytes": 20576,
+      "sha256": "5f729fa48b9f56a17e17fec5327d770a2bb82000e2e1ae93e2194c1050b8b688"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-canvas-ladder/README.md",
+      "bytes": 4043,
+      "sha256": "841de5e090e5a29a6d7b5c98bd1171c77174cf23b83a384e0d34510840f5461a"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-canvas-ladder/batch3-session-20260919.log",
+      "bytes": 33310,
+      "sha256": "b6a03bae498918ef1894ae9642df87028301c63a570dd0447b9b4f05cd1bf7ed"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-canvas-ladder/receipt-smoke-20260919T224743Z-pruned-576x320.json",
+      "bytes": 7916,
+      "sha256": "11e3079639e4562d48dab30ad71c342aad9da100772fdebce315f15eb4b77c34"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-canvas-ladder/receipt-smoke-20260919T224948Z-pruned-960x544.json",
+      "bytes": 7919,
+      "sha256": "b64da4417bb014f20964dd57ff84af7a157c87eeffb64476e631442657621798"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-canvas-ladder/receipt-smoke-20260919T225400Z-int8-960x544.json",
+      "bytes": 7945,
+      "sha256": "db2ccbc9f1a1fc726e84325fe6d17d6ecd553bea2cd519be5535cac0e77fb838"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-decode-experiments/README.md",
+      "bytes": 7069,
+      "sha256": "b22607051610a640a3b30a7b05502dc1f666671c6e611eec1cda111c0a3a0617"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-decode-experiments/batch4-session-20260919.log",
+      "bytes": 41782,
+      "sha256": "504e78d2ad40e76442f91e96be92b001de5213d960db12aaba30b4aa55861a98"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-decode-experiments/probe-e1-20260919T233947Z.json",
+      "bytes": 5398,
+      "sha256": "1a69dd783907126bbaf101d728a895a83cb8b7f1a2cd4bc2b68232990eab38f2"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-decode-experiments/receipt-control-single-off-20260919T233947Z.json",
+      "bytes": 8802,
+      "sha256": "fc0a4a8e6b13bc0e3159a9337f0a1bea3e940d98435a516c0b33f584135ad851"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-decode-experiments/receipt-fp16-a-20260919T233947Z.json",
+      "bytes": 8771,
+      "sha256": "4f2839d0288a2f0d15779f6079fabfc415f9911a76da61be0c6e480b93c8f179"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-decode-experiments/receipt-fp16-b-20260919T233947Z.json",
+      "bytes": 8771,
+      "sha256": "7671e6adae144cc1e6b5d27fc4e25cb58814458e09958c974667ef49dffd85a7"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-decode-experiments/receipt-two-card-fp16-20260919T233947Z.json",
+      "bytes": 10061,
+      "sha256": "1215bb1f79e3844100fffcde43795789c467628a0953ef91773b204d5c5cb924"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-decode-experiments/receipt-two-card-off-20260919T233947Z.json",
+      "bytes": 10055,
+      "sha256": "d547b08ab863b6929c26e93ca08092aae90e3e61d7c0302a2b9ccc8b6cfb3466"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-decode-experiments/vs-control-fp16-a-20260919T233947Z.json",
+      "bytes": 51744,
+      "sha256": "450d22baaeb9679148b221703746a4a59820aa3a7d0267119fd90e09906dd9d9"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-first-light/README.md",
+      "bytes": 3141,
+      "sha256": "aa2bf0a6ecefd82749cadbca0a2961cc25c42a9ecc977adc6027f8b3d90455d1"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-first-light/int8-vs-pruned.json",
+      "bytes": 48976,
+      "sha256": "a4f57686be0a155bf8b116ad642a02e6716c29b99616f3e183a118e8ffbbca8b"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-first-light/receipt-repeat-20260919T221840Z-a.json",
+      "bytes": 7893,
+      "sha256": "44ce49a4a3d48ec98dcece4a0db61c8bec75982ba17d1c09f7e52eab72f1dc17"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-first-light/receipt-repeat-20260919T221840Z-b.json",
+      "bytes": 7893,
+      "sha256": "792ffdeededaaa8ac6dfe730ff0fa2b46a8d5f7e9f99ef50d3a1c73374151509"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-first-light/receipt-smoke-20260919T221709Z-pruned.json",
+      "bytes": 7884,
+      "sha256": "cd31cb905ef1c99e1152487171eb9951ce7fc5bef417d674ab9418b63b3125e2"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-first-light/receipt-smoke-20260919T222143Z-int8.json",
+      "bytes": 7915,
+      "sha256": "347a9132a40c60f9eba9c7082b3a0051ad00a9389cf36bb0659719f0b7598e52"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-09-19-first-light/session.log",
+      "bytes": 51119,
+      "sha256": "cff919692b5be3b0ca356ecde00c372491fbce3342312543c88c2cc002e07c7f"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/README.md",
+      "bytes": 1167,
+      "sha256": "0b8aef30e150ba9a192e8411b81bc4e17bfba1290b52a69d9553520ad4d5a0f5"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/determinism/duet-20261004T034605Z-clip-00-receipt.json",
+      "bytes": 7781,
+      "sha256": "01308e276f7667fe027caad91369315b237c4b0b70c1afcd00b71213efcc2db4"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/determinism/duet-20261004T034605Z-clip-01-receipt.json",
+      "bytes": 7733,
+      "sha256": "b00186c0eb31c006a6c6a7046e5729a2f48ed6648fdf0340e9c15dac706a23be"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/determinism/duet-20261004T035024Z-clip-00-receipt.json",
+      "bytes": 7780,
+      "sha256": "c00e1c31e474ab6a505aa70432df5d3fe9eb924cc7fd3fe77807a22ee96e1587"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/determinism/duet-20261004T035024Z-clip-01-receipt.json",
+      "bytes": 7732,
+      "sha256": "64e3939af7dad0418a9b4ba15eed520f0824c133e4e59e453635461b58815231"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/determinism/duet-20261004T035545Z-clip-00-receipt.json",
+      "bytes": 7781,
+      "sha256": "7a3679bf85aa0eeea706f2ef69009e1977bcb383557c2f6df498450651636b58"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/determinism/duet-20261004T035545Z-clip-01-receipt.json",
+      "bytes": 7733,
+      "sha256": "3ec8b3537a39c532280f188814cbc4ac09dadf1246ea9825ca0762ef3d0c8e3b"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/determinism/session.log",
+      "bytes": 1719,
+      "sha256": "a985363c7aeeb6e662fd427bfd7b1b4b5cc87d2d4b5b29da9c835755f734ba26"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/fp16-single-repeat/receipt-a.json",
+      "bytes": 8626,
+      "sha256": "a3d399bc2e40b7c149bc8301024fa9e42addce5b770c1758b9d22b1a2892e74e"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/fp16-single-repeat/receipt-b.json",
+      "bytes": 8626,
+      "sha256": "c76f5a3c889e841f8b65783a1d10fbdbea8e72190e46376f55877d5b0c9fc697"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/mp4-fp16-twoproc-run1-vs-run2.json",
+      "bytes": 220,
+      "sha256": "3023aae583534c79e31bd087cf8dd9a37fc5657935f0f596f7e66ec57b4bcafe"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/mp4-fp32-vs-fp16-twoproc.json",
+      "bytes": 218,
+      "sha256": "4d8723f4826d728ae98d761975065e43f9e0ed3849c51f5f2bcafb416c6866f0"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/mp4-fp32-vs-fp32-identical-tensors.json",
+      "bytes": 218,
+      "sha256": "6860812b00bfd1b16ff1a36f4b7dc4c97809bd6614986ff71cdcd2fa47bc2ff8"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/receipts/duet-20261003T224727Z/clip-00-receipt.json",
+      "bytes": 7565,
+      "sha256": "e1221a5134308c8202ac85754de36f6ed51bc33e6e36ee750d9b70105ddbdf13"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/receipts/duet-20261003T233113Z/clip-00-receipt.json",
+      "bytes": 7561,
+      "sha256": "3ce32702474dc60563bbfd74507bc43d0fb6cc95c0aa672c62bf8027b4304faf"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/receipts/duet-20261003T233113Z/clip-01-receipt.json",
+      "bytes": 7513,
+      "sha256": "2b2f2ac12545341f829a4fbfa45eb1da1e94005e00783fdd064ef595f2fa9ecf"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/receipts/duet-20261003T233530Z/clip-00-receipt.json",
+      "bytes": 7566,
+      "sha256": "63eac6f79dfff68950b8b2c594c0328fa2fbd291021de8627835c80b9d7295e4"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/receipts/duet-20261003T233530Z/clip-01-receipt.json",
+      "bytes": 7517,
+      "sha256": "785f08457daaf1b5f636ded88e2928dec9e198238822e685811e4bf02e68b26c"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/receipts/duet-20261003T233845Z/clip-00-receipt.json",
+      "bytes": 7566,
+      "sha256": "3240bbf59960ee57f907ce2daf124e7ab499a3ea6421e3c8f6ffa2319b232e54"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/receipts/duet-20261003T233845Z/clip-01-receipt.json",
+      "bytes": 7515,
+      "sha256": "38291e9c71a117437e9c27530350970d7ebb40009aefeeb2fe0afcd1964a643b"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/run1/session.log",
+      "bytes": 447,
+      "sha256": "f339d9625fd425e507cc981363fa0205993e3c9c63c2d33d29be7aa678b58feb"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/run2/gateB.json",
+      "bytes": 535,
+      "sha256": "749c6a33f17e5632b707a145afe28c6341407307a48e4d8fbb4be54bc77db19e"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/run2/session.log",
+      "bytes": 4871,
+      "sha256": "62530420bf6c9f427093cad70463e591b51078627c27cdea20a86033250409f9"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/run3/gateB.json",
+      "bytes": 565,
+      "sha256": "74fd5527ed7c94de931296a894177cb3bbd653c4f723f8cfebf9525b6bd2b3b6"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-03-gates/run3/session.log",
+      "bytes": 4656,
+      "sha256": "88547fdebff887b12dfc4dc2ed517a5ab87ce21980d0bb8420a5b08c792b6f77"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-04-piecewise-transfers/gate2-clip-00-receipt.json",
+      "bytes": 7719,
+      "sha256": "187ab8bc390150ad0fce1f02dc89a2a0c1ebc7faf68edd8bcb2db8c318bd3258"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-04-piecewise-transfers/gate2-clip-01-receipt.json",
+      "bytes": 7642,
+      "sha256": "d6477bc181052670efbdf4c69be3429edd10fad46701523a693e206009f6aa3a"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-04-piecewise-transfers/piecewise-gate-20261004-summary.txt",
+      "bytes": 1161,
+      "sha256": "2b5f73e4df749c35c9aea2d07779b85ff15ecbd1388adc0ef3097f3b8a5eadd5"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-04-piecewise-transfers/piecewise-gate2-20261004-summary.txt",
+      "bytes": 1696,
+      "sha256": "89a618be0213ad4496c26f19bbe96726579de477065d47e33b07ce0a7595042d"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-04-piecewise-transfers/size-probe-h3-venv.txt",
+      "bytes": 256,
+      "sha256": "cfba898bfc98544d4efc426062845ad897e0b4628dcf29dc7fd79bfa96dd54d9"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-04-piecewise-transfers/sizes2.py",
+      "bytes": 494,
+      "sha256": "7083876f9ab60d95d0c2a36e03fa6e6eae343070600e16c3722ca45b81f293cd"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-00-receipt.json",
+      "bytes": 8134,
+      "sha256": "ab93fa4ca1067004c73dab568de63b6443570492d1109d828d33308925e80a12"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-01-receipt.json",
+      "bytes": 8056,
+      "sha256": "14f19d0cfae2b9bb45dbe0a3f4be1753bfcb1d270efa8c221d378327bb6a9dbb"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-02-receipt.json",
+      "bytes": 8084,
+      "sha256": "5f851cf43631c15970b43c5246cfd3076c708b459453108a4e690594a1adde9e"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-03-receipt.json",
+      "bytes": 8098,
+      "sha256": "f663d0ecac616004a427de304ce2f14dada7e79bcf8285b4eb599a0bcaa3917e"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-04-receipt.json",
+      "bytes": 8076,
+      "sha256": "0d5d3ee7c700a165d184324894e3fc2d38a9a8c90defe3ad5f85c10c414bef11"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-05-receipt.json",
+      "bytes": 8046,
+      "sha256": "89ea77ba921fcfee6bc2cdc28e210b595e9f817d477c35aa283935230f6270f4"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-06-receipt.json",
+      "bytes": 8084,
+      "sha256": "3179e6ea735b2ea7bda425a584fb4d7fcf4a9cdc0bcd88d9f5fbc76effac6af7"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-07-receipt.json",
+      "bytes": 8076,
+      "sha256": "95c6f1806381892f33f92156a2d4292f26716369bb09d0cd539542e026aa092f"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/2026-10-04-soak8/session.log",
+      "bytes": 494,
+      "sha256": "20580361df00b146b39149faa0d8fd7844b7f6dee08a9b31f665ae5a0b12f9bd"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/environment.txt",
+      "bytes": 1402,
+      "sha256": "27324f182ad29ca1dc1497405ca7185475e3744ead086ed18566fdf0ecef1fde"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/data/live-prompts.txt",
+      "bytes": 1236,
+      "sha256": "dfdc9a68d1cf8dcfed71e62975bc4f3812efa4f8d4b512436807e56a893d2d40"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/notes/2026-09-17-adaln-table-exactness.md",
+      "bytes": 9831,
+      "sha256": "ea61df2bebad76052a294ca5bd58588e2cfa96eebb9c96909deb8a42fc76882a"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/notes/2026-09-17-pipeline-plan.md",
+      "bytes": 33297,
+      "sha256": "9d44bad7d56f47e5a9e300e850e098f2c8d29a47ff1782ce381eafd5ceeee8b8"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/notes/2026-09-18-disk-audit.md",
+      "bytes": 11597,
+      "sha256": "d35467b446fbf99e0ea6ca192d52ca91227e5149d7f1082a899ad6b2f8179631"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/notes/2026-09-18-first-light-plan.md",
+      "bytes": 37581,
+      "sha256": "cbb600853dba458c0f4f83ef31236c9ba2b4c794eee6678638a889cffe7284fe"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/notes/2026-09-18-gpu-fault-first-light.md",
+      "bytes": 20585,
+      "sha256": "a1668e638d0ab8bc19b0bf79e6d2cf5205c5f9ed24f575cc96719e2bc5ad197d"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/notes/2026-09-18-standup-prep.md",
+      "bytes": 40806,
+      "sha256": "8ba8196ecfadc430742f077142a62b73829fe86ec0ce477cb425941025ef25ba"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/notes/2026-09-18-steps-and-lora.md",
+      "bytes": 15880,
+      "sha256": "47dfaee2cc01db63d0034a0a6124cab93fe060f963c4bde52e5b8e1ea69a09f6"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/notes/2026-09-19-first-light.md",
+      "bytes": 43041,
+      "sha256": "536316fcf17b2dd6f2da47a458fc7cd79febe7f9f257e9a13d7e1a16febf0131"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/notes/2026-09-19-speed-plan.md",
+      "bytes": 44025,
+      "sha256": "50a39baf88c58660d7becd6056d24339aa5a07c1d791cfd8ff7ed9124b88cf37"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/notes/2026-09-20-publication-draft.md",
+      "bytes": 3564,
+      "sha256": "938e34a7e76db8dc08da496737cf3fd4df6b1137718c1919d4fd752a002738c6"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/notes/2026-09-20-realtime-goal.md",
+      "bytes": 15263,
+      "sha256": "a85adf3396e838ca84903ed2031598c054b6ad4eb1cb482eb3df232dbba47884"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/notes/2026-10-04-piecewise-transfers.md",
+      "bytes": 1938,
+      "sha256": "11390e50085e94c1b18c1595da6ebed62fb5bfe6cc2faf12e8aa27e5c9aae46e"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/notes/h3-gate-prompts.txt",
+      "bytes": 344,
+      "sha256": "716f296feaf56daced17bb72d94d7b05ef4f6dc50193127c8ec77ccb9e25c7a9"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/notes/h3-soak8-prompts.txt",
+      "bytes": 1151,
+      "sha256": "9526637a7a50c3b143bed217330cff0ebcf160a2b91ca58904c2fb473763d8d7"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/scripts/check-adaln-table.py",
+      "bytes": 16194,
+      "sha256": "144a131401849d2bd997d4615f21c581a647c5e77e967951f63d6da8b62da588"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/scripts/compare-h3-mp4.py",
+      "bytes": 1961,
+      "sha256": "701dc2b9a560ac266df0f9b89d9c22d9c9fb75160175b5bd68f56c34fc65d953"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/scripts/compare-h3-runs.py",
+      "bytes": 9778,
+      "sha256": "72908be4fd2c2c58ef3e19d09beb6d88cd657646086830b7506981ca93222078"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/scripts/decode-experiments-session.sh",
+      "bytes": 12711,
+      "sha256": "bcd40a1ea08f7f28f3907b53001ea0507993bd3c1201d3ca32c593b7fdf76e5b"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/scripts/gate-session-20261003.sh",
+      "bytes": 7166,
+      "sha256": "405e5df685a3bf9fca8475944fb32ce6c21f285bafe88d3ef7ae8c3e949b3521"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/scripts/h3_audio_proc.py",
+      "bytes": 3303,
+      "sha256": "858c37e3aa96737d17bf14349623d7cae2711f6e033902c922f32ac50dedb6b6"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/scripts/h3_duet.py",
+      "bytes": 19045,
+      "sha256": "5916d38b29784000a01d40210e76502deee45f86bd14d5a3e6aaece166ecf6a1"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/scripts/h3_live_loop.sh",
+      "bytes": 2665,
+      "sha256": "501ff8e9c0dd9073419bcabbe31a41b7f16720793f6d86fcce2178b300480b39"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/scripts/h3_stream.py",
+      "bytes": 28519,
+      "sha256": "0069a9d3275bd2981d1784c029c640757cdb9a493294d5c10122ad3d3573d67b"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/scripts/h3_vae_duet.py",
+      "bytes": 19146,
+      "sha256": "0552ac35589cdb5696461217f945dd2d73b7c0e1533f887487ce8533b7a806fe"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/scripts/mem-watchdog.sh",
+      "bytes": 11250,
+      "sha256": "457c7dcbd99fc0c1cd44dadc585b9046b7faa777f05024098d8216455fb24b6f"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/scripts/profile-encoder-load.py",
+      "bytes": 24777,
+      "sha256": "08ca35efd1815b20c7c2bb1b685d42a96fe6dd887e476af083614cd96209e244"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/scripts/recover-convrot-rotation.py",
+      "bytes": 6391,
+      "sha256": "a5bdf9f4f6f05d79db446fad357c334eeb9859f5c9e3cad1bb494244d6f9413e"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/scripts/resume-after-fault-20260918.sh",
+      "bytes": 23741,
+      "sha256": "a4a572e7fd36e2adf36a17fba4de6d7acb1289366bf3c8c7edafac52fe47b2f4"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/scripts/run_h3_t2v.py",
+      "bytes": 244895,
+      "sha256": "9d50f4e7c0a46f23c7cde0e41d124518e838161645eae3e2148640e007be7f30"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/scripts/setup-venv.sh",
+      "bytes": 4352,
+      "sha256": "0976b38abd9032a177bc7f84f29ec408c8cf577ff5f24413867ae66ee8b47442"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/scripts/smoke_h3.sh",
+      "bytes": 24338,
+      "sha256": "5dcad20cedd9ec9e88cac9ed29bf2462065370755bba43c3f083a702ce31feb2"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/scripts/test_convrot_linear.py",
+      "bytes": 19726,
+      "sha256": "30e771fa6c63d027331dc25f9debb26553bad947f914cc38c4898acc06f76e3f"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/scripts/test_lora.py",
+      "bytes": 21100,
+      "sha256": "6ba04a88b9683241c4f001668e8f89fee52309f78724e8874b5db3177cb0a73d"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/scripts/test_tensor_reader.py",
+      "bytes": 8313,
+      "sha256": "ade80e21867c326b73e10b1e276ce3a07104e70279ef6fe6c3be9150f0fd8d71"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/scripts/test_vae_tile_loop.py",
+      "bytes": 13113,
+      "sha256": "e1abbb962ff39e7ed480eb79a0ae9f1a3105b95e4f487a05a2eca9f6c5ea3dfa"
+    },
+    {
+      "path": "experiments/minimax-h3-b70/scripts/xpu-host-memory-probe.py",
+      "bytes": 3172,
+      "sha256": "2d8e091ab3b512cbec81b922b91ce2ebe44aa56d189afc6fa6bf46ca19cbc771"
+    }
+  ]
+}

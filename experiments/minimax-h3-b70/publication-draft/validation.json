@@ -1,0 +1,94 @@
+{
+  "date": "2026-10-10",
+  "constraints": "CPU only, nice 19 inherited, OMP_NUM_THREADS=2, Python standard library; no GPU, server, systemd, device-node or endpoint access",
+  "guide_validator_scope": "Minimal synthetic non-Git root, one research-status guide, all tracked lane dependencies copied. README links relocated for repro depth. Tests classification/presence/enums, not content completeness or package validity. No package/catalog generated in real checkout.",
+  "publication_validator_scope": "Validator accepts manifest paths, not Markdown. Explicit expected manifest path fails because publication closure is absent. Remote mode not run: no release assets. Not an all-pass publication result.",
+  "results": [
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "/home/steve/llm-optimizations/tools/validate-repro-guides.py",
+        "--repo",
+        "<deleted-scratch>",
+        "--catalog",
+        "<deleted-scratch>/repro/guide-catalog.json"
+      ],
+      "exit_code": 0,
+      "stdout": "guide catalog valid: 1 guides (research-status=1)\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "/home/steve/llm-optimizations/tools/validate-recipe-publication.py",
+        "--repo",
+        "<deleted-scratch>",
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/publication-manifest.json"
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "ERROR: cannot read publication manifest <deleted-scratch>/repro/minimax-h3-pruned-bf16-tp2-b70-20261004/publication-manifest.json: [Errno 2] No such file or directory: '<deleted-scratch>/repro/minimax-h3-pruned-bf16-tp2-b70-20261004/publication-manifest.json'\n"
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "-c",
+        "from pathlib import Path\np = Path('tools/featured_picks.py')\ns = p.read_text()\nanchor = '    # One editorial role per featured setup; scores never clear quality gates.\\n'\naddition = \"\"\"    h3 = pick('minimax-h3-pruned-bf16-tp2-b70-20261004',\n        'MiniMax-H3 \u00b7 video with audio on two cards',\n        'Research observation \u00b7 pruned target; strict headline withheld',\n        'Independent clips with stereo sound. Scheduling changes preserve the tested '\n        'local reference; equality to the full official model is not established.', research=True)\n    h3_path = 'repro/minimax-h3-pruned-bf16-tp2-b70-20261004/featured-observation.json'\n    h3_run = read(h3_path)\n    assert h3_run['run_name'] == 'duet-20261004T042838Z'\n    assert h3_run['wall_seconds'] == 3173 and h3_run['clips'] == 8\n    h3['observation'] = (f\"{h3_run['wall_seconds']/h3_run['clips']:.1f} seconds per clip (batch average)\",\n                         h3_run['evidence'])\n    h3['note'] = ('One eight-clip batch; 124 frames at 960\u00d7544 per clip. '\n                  '24 fps is playback speed, not generation speed. '\n                  'Pruned BF16 denoiser and INT8 encoder; full official-target parity remains unproven.')\n\"\"\"\nreplacements = {\n anchor: addition + anchor,\n 'featured = [int4, gemma, fp8, laguna, shared, flash, video]':\n 'featured = [int4, gemma, fp8, laguna, shared, flash, video, h3]',\n \"'Continuing video with audio']\":\n \"'Continuing video with audio', 'Independent video clips with audio on two cards']\",\n \"and pick['id'] != 'ltx25-continuation-stream-b70-145f-20261010':\":\n \"and pick['id'] not in {'ltx25-continuation-stream-b70-145f-20261010', 'minimax-h3-pruned-bf16-tp2-b70-20261004'}:\",\n '<strong>2 cards:</strong> Qwen 27B shared chat.':\n '<strong>2 cards:</strong> Qwen 27B shared chat; MiniMax-H3 video research.',\n 'but no published site package yet.':\n 'and an owner-reviewed research package; its strict headline remains withheld.',\n}\nfor old, new in replacements.items():\n    assert s.count(old) == 1, ('Generator changed; review the edit again', old)\n    s = s.replace(old, new, 1)\np.write_text(s)"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "check": "future registration block syntax and featured editor scratch application / resulting Python syntax",
+      "passed": true
+    },
+    {
+      "check": "scratch directory removed",
+      "passed": true
+    },
+    {
+      "check": "All retained lane inventory hashes unchanged; October 3 base clip 00 matches four soak hashes",
+      "passed": true
+    },
+    {
+      "check": "bash -n on every bash block in three draft documents",
+      "passed": true
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "tools/check-doc-links.py",
+        "experiments/minimax-h3-b70/publication-draft/DRAFT-GUIDE.md",
+        "experiments/minimax-h3-b70/publication-draft/EVIDENCE.md",
+        "experiments/minimax-h3-b70/publication-draft/OWNER-REVIEW.md"
+      ],
+      "exit_code": 0,
+      "stdout": "checked 3 documents, 0 new broken repository-relative links, 0 known-broken"
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "tools/validate-repro-guides.py"
+      ],
+      "exit_code": 0,
+      "stdout": "guide catalog valid: 41 guides (archived=1, candidate-portable-repro=16, lab-replay=15, record-capsule=2, research-status=7)"
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "tools/check-manifest-paths.py"
+      ],
+      "exit_code": 0,
+      "stdout": "checked 6288 repo-relative paths in 53 manifests; 0 missing"
+    }
+  ],
+  "scratch_removed": true,
+  "guide_sha256": "e6187849870ec11355d50d58d4d7d632faf363a3e08c7118bac47edd531ba557"
+}
