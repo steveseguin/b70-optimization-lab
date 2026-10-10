@@ -1,0 +1,136 @@
+{
+  "all_payload_bytes": 30866663264,
+  "cpu_disk_host_admitted": true,
+  "cpu_packet_budget": {
+    "anonymous_allowance_bytes": 2147483648,
+    "future_native_host_classes": "file-backed pages, optional UVA embedding, pinned staging, driver shadows, graphs and repacking remain unmeasured",
+    "measured_hash_max_rss_kib": 29900,
+    "measured_sample_max_rss_kib": 781976,
+    "mem_available_bytes": 117293776896,
+    "mem_total_bytes": 124179124224,
+    "model_page_cache_upper_bytes": 30890059557,
+    "passed": true,
+    "reserve_bytes": 8589934592,
+    "total_bytes": 33037543205
+  },
+  "disk_budget": {
+    "model_copy_bytes": 0,
+    "model_filesystem": {
+      "available_bytes": 378040393728,
+      "fragment_bytes": 4096,
+      "path": "/mnt/usb-models/llm-models/qwen3.8-27b-fp8-official-017b9c7"
+    },
+    "model_free_space_sensitivity_passed": true,
+    "model_write_bytes": 0,
+    "note": "Read-only existing checkpoint. External free bytes change with the owner download; no space is reserved or modified.",
+    "other_download_full_size_allowance_bytes": 82000000000,
+    "packet_artifact_allowance_bytes": 16777216,
+    "repository": {
+      "available_bytes": 69712764928,
+      "fragment_bytes": 4096,
+      "path": "/home/steve/llm-optimizations"
+    },
+    "repository_passed": true,
+    "root_reserve_bytes": 53687091200
+  },
+  "embedding_host_uva_alternative_bytes": 2542796800,
+  "estimated_runtime_classes": [
+    {
+      "basis": "K+V \u00d7 16 layers \u00d7 4 heads \u00d7 D256 \u00d7 2B \u00d7 T32768",
+      "bytes": 2147483648,
+      "class": "target_fp16_kv",
+      "status": "ESTIMATED; not allocated or measured"
+    },
+    {
+      "basis": "one full-attention MTP layer; full T32768 conservatively retained",
+      "bytes": 134217728,
+      "class": "mtp_fp16_kv",
+      "status": "ESTIMATED; not allocated or measured"
+    },
+    {
+      "basis": "48 layers \u00d7 48 value heads \u00d7 V128 \u00d7 K128 \u00d7 4B",
+      "bytes": 150994944,
+      "class": "gdn_fp32_state",
+      "status": "ESTIMATED; not allocated or measured"
+    },
+    {
+      "basis": "48 layers \u00d7 10240 channels \u00d7 3 prior taps \u00d7 2B",
+      "bytes": 2949120,
+      "class": "gdn_conv_fp16_state",
+      "status": "ESTIMATED; not allocated or measured"
+    },
+    {
+      "basis": "one full recurrent+conv checkpoint; actual replay allocation unmeasured",
+      "bytes": 153944064,
+      "class": "gdn_rollback_checkpoint",
+      "status": "ESTIMATED; not allocated or measured"
+    },
+    {
+      "basis": "provisional 256 MiB allowance, not an allocation measurement",
+      "bytes": 268435456,
+      "class": "graph_static_and_activations",
+      "status": "ESTIMATED; not allocated or measured"
+    },
+    {
+      "basis": "provisional 512 MiB allowance; no full dequantized checkpoint",
+      "bytes": 536870912,
+      "class": "kernel_workspace",
+      "status": "ESTIMATED; not allocated or measured"
+    },
+    {
+      "basis": "provisional one 128 MiB slab",
+      "bytes": 134217728,
+      "class": "bounded_device_upload_staging",
+      "status": "ESTIMATED; not allocated or measured"
+    },
+    {
+      "basis": "provisional 512 MiB allowance; device capacity/overhead unqueried",
+      "bytes": 536870912,
+      "class": "allocator_driver_overhead",
+      "status": "ESTIMATED; not allocated or measured"
+    }
+  ],
+  "estimated_runtime_total_bytes": 4065984512,
+  "native_admission": "NOT ESTABLISHED: actual usable device capacity, graph/workspace/driver peaks, checkpoint counts, host shadows and embedding placement must be measured later. No launch authorization.",
+  "nominal_capacity_scenarios": [
+    {
+      "all_resident_estimated_total_bytes": 34011187584,
+      "all_resident_remaining_bytes": 348550784,
+      "capacity_bytes": 34359738368,
+      "embedding_uva_estimated_total_bytes": 31468390784,
+      "embedding_uva_remaining_bytes": 2891347584,
+      "label": "32 GiB planning only"
+    },
+    {
+      "all_resident_estimated_total_bytes": 34011187584,
+      "all_resident_remaining_bytes": -2011187584,
+      "capacity_bytes": 32000000000,
+      "embedding_uva_estimated_total_bytes": 31468390784,
+      "embedding_uva_remaining_bytes": 531609216,
+      "label": "32 GB decimal sensitivity only"
+    }
+  ],
+  "one_card_text_plus_mtp_all_weights_bytes": 29945203072,
+  "one_card_text_plus_mtp_excluding_embedding_bytes": 27402406272,
+  "resident_weight_bytes_by_component": {
+    "dense_ffn": 17114849280,
+    "embedding": 2542796800,
+    "final_norm": 10240,
+    "full_attention": 1677942784,
+    "gdn": 5588296704,
+    "layer_norms": 1310720,
+    "native_mtp": 477199744,
+    "target_head": 2542796800,
+    "vision_unsupported": 921460192
+  },
+  "settings": {
+    "OMP_NUM_THREADS": "2",
+    "ionice": "idle",
+    "nice": 19
+  },
+  "source_census_sha256": "bbffa78c354bf1a44e4de0d1aa6fca319a6a7308556a3233c8d2ba20b5f16d39",
+  "stored_bf16_scale_bytes": 3015040,
+  "utc": "2026-10-10T21:38:06.454270+00:00",
+  "vision_not_admitted_bytes": 921460192,
+  "weight_note": "Exact stored bytes; no BF16/F16 size change, no full FP8 dequant expansion or second packed copy. Shared embedding/head counted once. UVA is an alternative, not an implemented placement."
+}

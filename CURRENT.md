@@ -1,5 +1,9 @@
 # Current Workspace State
 
+**2026-10-10, own-runtime official 27B weights checked:** The weights were already on the USB disk; [CPU packet 2](experiments/own-xpu-runtime/stage1/packet2/README.md) passes all 67 large-file hashes, 14 small publisher files, all 1,606 tensor descriptions and repeated CPU sample checks.
+Text and MTP weights need 29.945 GB with the embedding on the card; scales multiply each 128×128 FP8 block, and the estimated working-memory margin is small enough that actual one-card fit remains unproven.
+No GPU, server, unit, download, protected model/cache write or host setting was used; temporary test files were removed and the host halt remains unchanged.
+
 **2026-10-10, CPU-only H3 fit recovery:** The [fit packet](repro/minimax-h3-pruned-bf16-tp2-b70-20261004/fit/README.md) preserves the history search and a tested CPU comparison tool, but the official and fitted inputs were absent here, so no new weight comparison was possible.
 The old note's largest coefficient difference is 0.003723 / 1561 ULP; the exact fit is still unrecovered and the package stays draft.
 The owner can choose whether to distribute only the fitted parameters under the documented license conditions; no weights were downloaded or distributed, and GPU work, services and protected download directories were untouched.

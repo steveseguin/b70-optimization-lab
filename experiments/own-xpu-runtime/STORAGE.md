@@ -1,5 +1,15 @@
 # Weight storage plan — Stage 0, 2026-10-10
 
+**Correction, 2026-10-10 (Stage 1 packet 2):** The USB disk was unmounted
+during the earlier census; the missing-27B claim below is superseded. Official
+`Qwen/Qwen3.8-27B-FP8` revision `017b9c7af6b5689d5dd426a76e0bc077eb5ca20a`
+is already at `/mnt/usb-models/llm-models/qwen3.8-27b-fp8-official-017b9c7`,
+with `/mnt/fast-ai/llm-models` aliases into that disk: 164 files,
+30,890,059,557 bytes. [Packet 2](stage1/packet2/README.md) verifies all 67 LFS
+hashes, 14 publisher small files and 1,606 tensor descriptions with no mismatch;
+its CPU disk/host budget passes. No download, mount, model/cache write or GPU
+work was needed; native memory admission remains separate.
+
 No weights were downloaded, moved or deleted. This is a capacity plan and a
 metadata inventory. Only the official publisher, Unsloth, or a lab-produced
 quant from an official source is admitted by default. Older ISTA, Intel or

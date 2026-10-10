@@ -1,0 +1,28 @@
+{
+  "excerpts": [
+    {
+      "first_line": 29,
+      "last_line": 36,
+      "text": "  // block quant: m2_sc is 2D with size(0) > 1, i.e. [k/group_size,\n  // n/group_size] Per-channel scale [1, N] has size(0)==1 and must NOT enter\n  // this branch.\n  bool is_block_quant = (m2_sc.dim() == 2) && (m2_sc.size(0) > 1);\n  int64_t blk_group_size = -1;\n  if (is_block_quant) {\n    blk_group_size = k / m2_sc.size(0);\n  }"
+    },
+    {
+      "first_line": 80,
+      "last_line": 88,
+      "text": "  auto f_attr = [&](dnnl::primitive_attr& pattr) {\n    pattr.set_scratchpad_mode(dnnl::scratchpad_mode::user);\n    if (is_block_quant) {\n      pattr.set_scales(\n          DNNL_ARG_WEIGHTS,\n          /* mask */ (1 << 0) + (1 << 1),\n          {blk_group_size, blk_group_size},\n          get_onednn_dtype(m2_sc));\n      /* per block quant */"
+    },
+    {
+      "first_line": 119,
+      "last_line": 126,
+      "text": "  matmul_ext.set_attribute(\n      arg_off++,\n      DNNL_ARG_ATTR_SCALES | DNNL_ARG_WEIGHTS,\n      m2_sc.data_ptr(),\n      [&]() {\n        return make_onednn_memory(\n            get_onednn_md(m2_sc), engine, m2_sc.data_ptr());\n      });"
+    }
+  ],
+  "interpretation": "Wrapper passes the stored scale directly as oneDNN weight scale, on both block axes; no reciprocal. Real shape ratios establish N,K 128x128 addressing. CPU scalar fixtures establish the declared multiplication/cast implementation, not fused oneDNN parity.",
+  "source": {
+    "bytes": 4826,
+    "commit": "e421889999bc1e5a5f11044d14548b9afdba644d",
+    "label": "S2 oneDNN wrapper",
+    "path": "csrc/xpu/onednn/fp8_gemm_w8a16.h",
+    "repository_local_read_only": "/home/steve/src/vllm-xpu-kernels",
+    "sha256": "958ac3e8b5c9710fd5c82b89bebeb1643b77fa7942a0fc5083d7467f3585ceaa"
+  }
+}

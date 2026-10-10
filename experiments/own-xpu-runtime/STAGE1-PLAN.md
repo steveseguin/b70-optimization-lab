@@ -1,5 +1,16 @@
 # Stage 1 — one-card Qwen3.8 27B decode core
 
+**Correction, 2026-10-10 (packet 2):** The missing-weight premise below came
+from an unmounted USB disk. The pinned official checkpoint already exists at
+`/mnt/usb-models/llm-models/qwen3.8-27b-fp8-official-017b9c7` (164 files,
+30,890,059,557 bytes); the fast-ai aliases point into that disk. The
+[CPU packet 2 receipt](stage1/packet2/README.md) passes hashes, all tensor
+descriptions, BF16 block-scale known values, M1/M2/M6 shapes and disk/host
+admission without acquisition. Text/MTP weights are 29,945,203,072 bytes with
+embedding resident; native state/workspace/graph peaks and timing remain
+unmeasured. This satisfies the CPU packet's storage step, not native-window
+authorization; the halt remains in force.
+
 This is a work plan. Stage 0 ends with owner review; no native implementation,
 compilation, launch or weight acquisition is authorized by this document.
 The current host halt remains in force. CPU packets can prepare contracts and
