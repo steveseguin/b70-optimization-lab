@@ -1,11 +1,36 @@
 # First native window — conditional preregistration, not launch authorization
 
-**DO NOT LAUNCH from this packet yet.** The CPU transport is tested; the
-certified environment and native bindings are not ready. The requested
+**DO NOT LAUNCH from this packet yet.** The CPU transport and 44 source-bound
+callable hooks are tested; the certified environment, native worker session
+and complete internal-state coverage are not ready. The requested
 “certified vLLM XPU image used by the 46.854250 line” does not exist in its
 retained identity: A367 used a host venv and its guide calls the container
 route unbuilt. No command below supplies a missing certification. The host
 halt also remains in force. Resolve these before booking GPU time.
+
+## CPU adapter result and remaining gaps
+
+The [source extraction receipt](adapters/source-extraction.json) confirms the
+reopen image was present; stopped-container copies and extension hashes were
+checked without starting it. A367 has no certified image, the reopen extension
+is different, and the 27B package image is absent. Nothing was pulled. All
+copied source/binaries were deleted after the CPU tests; recover them into new
+scratch with the receipt's `docker create`/`docker cp`/`docker rm` procedure.
+Recover A367 by `git archive` of `6d872457` from a source tree containing its
+sealed history, with no checkout, branch or worktree change.
+
+**NOT READY.** The [packet's exact missing list](README.md#exact-remaining-work)
+and machine-readable `names.json.missing` are the admission checklist. In
+particular, 44 mapped methods do not supply the native worker driver, touched
+cache addressing, fused every-row GDN state, complete post-load casts, MTP
+transactions or CPU reference-call normalization. Current raw hook output is
+UNTESTED by CPU replay. The original environment audit predates these hooks;
+its generic adapter-absent item is superseded by this precise list.
+
+Stage 1 U1–U7 memberships are **4 / 4 / 9 / 6 / 12 / 5 / 5** (overlap).
+Flash's own census IDs are separate fields, not interchangeable labels.
+Tests verify source existence/hashes and synthetic transport, not device
+arithmetic, native dispatch reachability or a certified new image.
 
 ## Identities that must not be mixed
 
@@ -41,10 +66,12 @@ diff, kernel binaries and source overlay must be admitted separately. Use
    qualified container receipt. Do not relabel the reopen image. Its full-model
    memory fit, output parity and teardown are still open, even though its
    single-layer probe passed. Resolve storage and current host halt separately.
-2. Implement and review the native `driver-27b.py` / `driver-flash-next.py`
-   adapters. They are **not delivered in this packet**. Bind every module,
-   function alias and native argument layout to a source SHA256, original
-   dispatch, layer/rank and touched state indices. Inventory all production
+2. Integrate the delivered [source adapter](adapters/vllm_xpu_certified.py)
+   and [44-symbol manifest](adapters/names.json) into native `driver-27b.py` /
+   `driver-flash-next.py` worker sessions. Those session drivers remain missing;
+   the adapter CLI deliberately refuses to construct a model. Supply actual
+   CPU scheduling metadata and bounded touched-state views; enter its eager
+   guard and install hooks before model construction, including Torch-op aliases. Inventory all production
    projection shapes from packet 1, rather than treating a visited subset as
    complete. Do not execute external model code during this CPU review.
 3. Supply the driver protocol described below, plus the identity/authorization,

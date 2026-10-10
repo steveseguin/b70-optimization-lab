@@ -1,14 +1,91 @@
 # Packet 4 preparation: eager fixture transport and CPU replay
 
-2026-10-10. **CPU mock tests pass; native extraction is not ready.** This
-packet supplies working read-only hooks, streamed tensor storage, reference
-replay and failure classification. It does **not** supply a source-bound vLLM
-operator/state adapter. In particular, it cannot yet extract all U1–U7 from a
-real model. That is an outstanding part of the requested deliverable, not a
-passed gate. No device, server, systemd unit, model payload or port was used.
+2026-10-10. **NOT READY for native extraction: source-bound boundary hooks
+are implemented and CPU-tested; complete U-row extraction is still blocked.**
+The [adapter](adapters/vllm_xpu_certified.py) maps 44 callable symbols with
+exact input/output selectors, state locations, dtype expectations, source
+lines and SHA256s in [names.json](adapters/names.json). It observes the original
+call once, preserves its result object, and restores methods in `finally`.
+This is comparator instrumentation, not code for our inference runtime.
 
-[Tests and source hashes](test-receipt.json), [environment audit](comparator-identity-audit.json),
-[window commands and remaining admission work](WINDOW-RUNBOOK.md).
+The [source receipt](adapters/source-extraction.json) records stopped-container
+copies of the locally present reopen image, its installed package and extension.
+Neither container was started; both were removed. The image has no baked A367
+patch set; its extension hash differs from the rebuilt A367 extension. All 75
+tracked A367 seal members matched. Flash mappings therefore use a scratch
+`git archive` of certified host commit `6d872457`; image file hashes are
+reported separately. The 27B package image was absent and was not pulled;
+its 16 mappings describe the reopen image's 27B graph, **not a certified 27B
+comparator**. No extracted runtime source or binary is committed.
+
+| Stage 1 census row | Symbols mapped |
+| --- | ---: |
+| U1 FP8/linear | 4 |
+| U2 parameter/embedding boundaries | 4 |
+| U3 norm/activation/HC | 9 |
+| U4 recurrence/conv state | 6 |
+| U5 attention/RoPE/QSA | 12 |
+| U6 logits/router/tie dispatch | 5 |
+| U7 MTP boundaries | 5 |
+
+Counts overlap: 45 row memberships across 44 symbols. `stage2_u_rows` keeps
+Flash's differently numbered census separate. These counts describe source
+coverage, not observed native fixtures or passed quality gates.
+
+**66 CPU tests pass: 27 adapter checks plus 39 existing transport checks, zero skips.**
+All 44 source symbols passed the AST/hash check without importing vLLM.
+[Adapter CPU receipt](test-receipt-adapter.json),
+[original transport receipt](test-receipt.json),
+[historical environment audit](comparator-identity-audit.json),
+[remaining work and conditional window](WINDOW-RUNBOOK.md).
+
+### Exact remaining work
+
+1. Admit the A367 host environment or separately qualify a container; obtain
+   the 27B certified source/overlay binding. The reopen image is not either
+   certified comparator, despite sharing many names.
+2. Supply the native worker session with actual CPU scheduler row positions,
+   valid masks, layer/rank/M/N/K, bounded touched state/KV and PLE row views,
+   per-rank writers, final token collection and cooperative teardown. The
+   adapter's `run(args, Recorder)` intentionally refuses until that session
+   driver exists. `install()` is a working in-process hook registration API,
+   not a completed CLI model runner.
+3. U1 needs fused oneDNN and Flash FP8 quantization evidence; U2 needs the
+   complete post-load parameter/cast census. U3/U5 need fused norm/gate and
+   QSA pre-indexer intermediate evidence. Python boundary hooks cannot expose
+   values a fused operator does not materialize.
+4. U4 needs every internal serial GDN row state/checkpoint and accepted-prefix
+   replay; U7 needs acceptance/rollback state bindings. Before/after snapshots
+   of an outer call do not replace these. Keep Flash inter-row state BF16 and
+   27B state FP32. Never split or replace a fused op to manufacture fixtures.
+5. Bind native layouts to independent CPU reference calls. The current adapter
+   deliberately writes raw boundaries with `reference=null`; comparison stays
+   UNTESTED. Execute U6 tie/NaN, full vocabulary, MoE top10/EP and PLE-row gates,
+   eager neutrality and full same/fresh-process token repeats. Natural M6
+   availability and the current host halt/window authorization remain gates.
+
+### CPU source validation and worker interface
+
+The standalone AST checker imports neither torch nor vLLM. Its roots are
+scratch directories containing `vllm/`, never an active runtime checkout:
+
+```bash
+nice -n 19 env OMP_NUM_THREADS=2 python3 -B experiments/own-xpu-runtime/stage1/packet4-prep/adapters/check_sources.py --a367-root "$A367_SOURCE" --image-root "$IMAGE_SOURCE"
+nice -n 19 env OMP_NUM_THREADS=2 PACKET4_A367_SOURCE="$A367_SOURCE" PACKET4_IMAGE_SOURCE="$IMAGE_SOURCE" /home/steve/.venvs/vllm-xpu/bin/python -B experiments/own-xpu-runtime/stage1/packet4-prep/run_tests.py
+```
+
+A future worker must enter `eager_guard` before constructing any model or
+caching `CustomOp` bound methods, then enter `install` with exact resolved
+owners and source roots. The guard blocks Torch XPU/CUDA graph entry and the
+vLLM graph wrapper without querying a device. The hook checks eager/compile
+configuration before metadata callbacks or tensor reads. Previously captured
+graphs or cached capture aliases are outside this contract: use a fresh worker.
+No hooks may be installed into a running compiled model. Registered custom
+operators are intercepted at their exact `torch.ops.vllm` alias, with their
+schema checked; patching their original Python function would miss dispatch.
+`install` validates all selected symbols before installation and rolls back on
+failure. Stateful observations refuse absent touched-state bindings. Hook
+selection and unvisited symbols must be reported; a subset is diagnostic only.
 
 ## The comparator identity discrepancy
 
@@ -51,8 +128,8 @@ active torch compilation. The driver must derive that configuration from the
 actual engine and install `forbid_graph_entrypoints` on the pinned torch/vLLM
 capture entry points **before constructing the engine**. A supplied config
 dictionary alone is not proof that an arbitrary native runtime obeys it.
-The dummy entry-point refusal and restoration are CPU-tested; real capture
-entry-point bindings have not been supplied or tested.
+The dummy entry-point refusal and restoration are CPU-tested; source adapter blocks the graph wrapper and Torch capture APIs in CPU tests;
+fresh-worker native integration remains pending.
 
 Tensor storage is raw little-endian, with SHA256, dtype, shape, stored strides,
 offset and byte count. Original view layout is retained separately. Scalars
@@ -113,8 +190,7 @@ the graph output; its twelve-row synthetic oracle is marked mock and never
 accepted by the native CLI. Full attention/QSA, full FFN/MoE/HC mixers, full
 MTP, every intermediate row state, transactional rollback, distributed
 collectives, real model weights and real prompts are **not** covered by this
-mock. The replay API supports existing full reference functions, but their
-native normalization bindings remain absent. Neither reference implements
+mock. The replay API supports existing full reference functions, but native-to-reference normalization is still missing from this adapter. Neither reference implements
 every U-row behavior (notably Flash Triton FP8 quantization and PLE injection).
 
 Tests also alter a recorded output with a correctly refreshed SHA to prove

@@ -1,5 +1,10 @@
 # Current Workspace State
 
+**2026-10-10, own-runtime source hooks:** The [CPU adapter packet](experiments/own-xpu-runtime/stage1/packet4-prep/README.md) now maps 44 source boundaries and tests read-only capture, but native extraction still needs its worker driver and the listed internal-state bindings.
+The reopen image was present; A367 used a host environment, and its extension does not match that image, so no new certification is claimed.
+Only stopped-container file copies and CPU checks were used; scratch was removed and the host halt and existing lanes were untouched.
+
+
 **2026-10-10, own-runtime Unsloth header census:** The [CPU-only census](experiments/own-xpu-runtime/stage2/packet1c/README.md) keeps IQ3 first for two cards, with about 15.18 GB left after packed weights; the real IQ4 files also clear the weight-only calculation, with about 3.61 GB left.
 All three variants lack the extra MTP block, so they cannot provide the certified speculative setup by themselves.
 Only headers were fetched; weights, quality review, storage and a native window remain pending, and the host halt and existing lanes were untouched.

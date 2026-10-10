@@ -298,3 +298,34 @@ open; no alternative is deployment-qualified or lossless against official FP8.
 Only headers were fetched (33,073,557 unique bytes; 33,088,596 transferred
 including the discarded discovery prefix). No weight payload, GPU, server,
 systemd, port, device-node or existing-lane operation occurred.
+
+## MTP source for the two-card line
+
+The [packet 1c census](stage2/packet1c/README.md) finds no MTP block in the
+Unsloth GGUFs. The two-card quantized line therefore runs target-only, or
+loads the native MTP block from the official `Qwen/Qwen3.8-Flash-Next-FP8`
+checkpoint at revision `bcd9f01ddc9cff2316eb84281bebcd5b058bddce` alongside
+the Unsloth target experts. This is an allowed official source; it does not
+authorize a download in this CPU-only task. The [official tensor census](stage2/packet1/tensor-contract.json)
+counts **2,698,026,496 bytes** under `native_mtp`, including its own expert
+bank, merge projections, QSA/indexer, HC and norms.
+
+Our loader must support two separately pinned sources: the complete Unsloth
+target tensor map and the official `mtp.*` safetensors entries with their
+FP8/BF16 scales and casts. It must authenticate each payload, reject missing
+MTP entries, preserve the shared target embedding/head interfaces and track
+MTP state and rollback separately. The MTP subtotal excludes those shared
+embedding/head tensors; binding them to the quantized target is an explicit
+mixed-checkpoint configuration, not the certified FP8 MTP1 configuration.
+
+IQ3's **15,179,976,192 B (15.2 decimal GB)** weight-only headroom becomes
+`15,179,976,192 - 2,698,026,496 = 12,481,949,696 B` with one stored MTP copy;
+resident weights become **56,002,646,016 B**. Subtracting the existing
+753,139,712 B full-16-bit KV scenario and 280 B metadata leaves
+**11,728,809,704 B**. Additional MTP KV/state, TP replicas (including HC),
+scale widening, repacks, padding and scratch are still uncounted; this is
+capacity arithmetic, not a fit measurement. MTP acceptance and output quality
+under the quantized target require the owner's tolerances and that line's
+independent quality oracle. Every accepted proposal must be verified by the
+unchanged declared quantized target; the official FP8 quality result cannot
+be inherited by this combination.

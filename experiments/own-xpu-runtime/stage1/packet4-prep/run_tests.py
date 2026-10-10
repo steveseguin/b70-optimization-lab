@@ -37,6 +37,10 @@ if a.receipt:
         'passed':r.wasSuccessful(),'elapsed_seconds':time.monotonic()-start,'max_rss_kib':resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
         'hashes':{os.path.relpath(f,HERE):file_hash(f) for f in sorted(files)},
         'failure_details':[(str(t),msg) for t,msg in r.failures+r.errors],
-        'native_adapter_tested':False,'scratch':'TemporaryDirectory contexts cleaned at suite exit'}
-    a.receipt.write_text(json.dumps(receipt,indent=2)+'\n')
+        'native_adapter_tested':False,
+        'adapter_cpu_tests':sum(t.startswith('test_adapter.') for t in r.ids),
+        'source_ast_roots':{k:os.environ.get(k) for k in ('PACKET4_A367_SOURCE','PACKET4_IMAGE_SOURCE')},
+        'source_ast_symbols':len(json.loads((HERE/'adapters/names.json').read_text())['symbols']) if all(os.environ.get(k) for k in ('PACKET4_A367_SOURCE','PACKET4_IMAGE_SOURCE')) else 0,
+        'native_extraction_ready':False,'scratch':'TemporaryDirectory contexts cleaned at suite exit'}
+    a.receipt.write_text(json.dumps(receipt,indent=2,ensure_ascii=False)+'\n')
 sys.exit(not r.wasSuccessful())

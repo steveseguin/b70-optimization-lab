@@ -1,0 +1,2419 @@
+{
+  "schema": "own-xpu-runtime.packet4.names.v1",
+  "native_extraction_ready": false,
+  "u_row_namespace": "stage1/packet1b; stage2_u_rows separately uses stage2/packet1b",
+  "sources": {
+    "a367": {
+      "kind": "git archive, exact certified host source; not image",
+      "commit": "6d8724577dabbee5fa0bbc70c4d927c6174c8d8a",
+      "image_digest": null,
+      "tree": "3e8dfc5937087d186cd4a99a6bf15213be732462"
+    },
+    "reopen-image": {
+      "kind": "docker cp, stopped container, installed package",
+      "image": "vllm/vllm-openai-xpu@sha256:e4446310b1d30015e8fdc1a0a2ef1669ac6bef857cbe772487571ed5c1a926a9",
+      "package_path": "/opt/venv/lib/python3.12/site-packages/vllm",
+      "certified_as_A367": false,
+      "certified_as_27b": false
+    }
+  },
+  "symbols": [
+    {
+      "id": "flash.QwenGatedDeltaNetAttention.forward_xpu",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U4"
+      ],
+      "stage2_u_rows": [
+        "U1"
+      ],
+      "module": "vllm.model_executor.layers.mamba.gdn.qwen_gdn_linear_attn",
+      "method": "forward_xpu",
+      "source_end_line": 1018,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "b80f8e6f3fff442fb880aebb3209c52f814f66490009f4ac4003de603576d10a",
+      "image_source_matches": false,
+      "inputs": [
+        "arg.hidden_states",
+        "arg.self.conv1d.weight",
+        "arg.self.conv1d.bias",
+        "arg.self.A_log",
+        "arg.self.dt_bias"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state_paths": [
+        "self.kv_cache"
+      ],
+      "dtype_expectations": {
+        "activation": "BF16 unless selector is token/index metadata",
+        "recurrent_state": "BF16 inter-row commit; never widen persisted state",
+        "indices": "declared INT32/INT64; preserve dtype",
+        "weights": "preserve FP8/BF16 source bytes and scales"
+      },
+      "notes": "Outer module only. Native torch.ops._xpu_C.gdn_attention exposes output and caches, but internal conv/Q/K/gate and every serial-row state are fused and unavailable here. Requires touched-slot metadata and native-op boundary adapter.",
+      "source_id": "a367",
+      "file": "vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py",
+      "line": 953,
+      "sha256": "83cabb5ed4ffa66ca68d9dd07be01db75b9431c74220fdce791393247a503011",
+      "class": "QwenGatedDeltaNetAttention",
+      "requires_state_views": true,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "gdn_recurrence",
+      "arguments": [
+        "self",
+        "hidden_states"
+      ],
+      "dtypes": {
+        "arg.hidden_states": [
+          "BF16"
+        ],
+        "arg.self.A_log": [
+          "F32",
+          "BF16",
+          "F16"
+        ],
+        "arg.self.dt_bias": [
+          "F32",
+          "BF16",
+          "F16"
+        ]
+      }
+    },
+    {
+      "id": "flash.Qwen4ExpQSAAttention.forward",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U5"
+      ],
+      "stage2_u_rows": [
+        "U3"
+      ],
+      "module": "vllm.models.qwen4_exp.amd.qsa",
+      "method": "forward",
+      "source_end_line": 433,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "5c1291609f9f7f8d1145c8b97439bfd3d1305278c258f1aa0ea1c1ac0a3b5ac8",
+      "image_source_matches": false,
+      "inputs": [
+        "arg.positions",
+        "arg.hidden_states"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state_paths": [
+        "self.kv_cache",
+        "self.topk_indices_buffer"
+      ],
+      "dtype_expectations": {
+        "activation": "BF16 unless selector is token/index metadata",
+        "recurrent_state": "BF16 inter-row commit; never widen persisted state",
+        "indices": "declared INT32/INT64; preserve dtype",
+        "weights": "preserve FP8/BF16 source bytes and scales"
+      },
+      "notes": "Capture output gate multiplication through o_proj input hook, not a forward-local variable.",
+      "source_id": "a367",
+      "file": "vllm/models/qwen4_exp/amd/qsa.py",
+      "line": 380,
+      "sha256": "d211e733966b576d9c84b4af69c2a4ef33ba96967e59d2abfde07e885238a650",
+      "class": "Qwen4ExpQSAAttention",
+      "requires_state_views": true,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "qsa",
+      "arguments": [
+        "self",
+        "positions",
+        "hidden_states"
+      ],
+      "dtypes": {
+        "arg.positions": [
+          "I32",
+          "I64"
+        ],
+        "arg.hidden_states": [
+          "BF16"
+        ]
+      }
+    },
+    {
+      "id": "flash.Qwen4ExpQSAAttention._run_qsa",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U5"
+      ],
+      "stage2_u_rows": [
+        "U3"
+      ],
+      "module": "vllm.models.qwen4_exp.amd.qsa",
+      "method": "_run_qsa",
+      "source_end_line": 378,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "5c1291609f9f7f8d1145c8b97439bfd3d1305278c258f1aa0ea1c1ac0a3b5ac8",
+      "image_source_matches": false,
+      "inputs": [
+        "arg.hidden_states",
+        "arg.positions",
+        "arg.query",
+        "arg.key",
+        "arg.value"
+      ],
+      "outputs": [
+        "arg.output"
+      ],
+      "state_paths": [
+        "self.kv_cache",
+        "self.topk_indices_buffer"
+      ],
+      "dtype_expectations": {
+        "activation": "BF16 unless selector is token/index metadata",
+        "recurrent_state": "BF16 inter-row commit; never widen persisted state",
+        "indices": "declared INT32/INT64; preserve dtype",
+        "weights": "preserve FP8/BF16 source bytes and scales"
+      },
+      "notes": "output is mutated in-place; requires main metadata slot_mapping/block_table to restrict cache snapshots to touched slots.",
+      "source_id": "a367",
+      "file": "vllm/models/qwen4_exp/amd/qsa.py",
+      "line": 322,
+      "sha256": "d211e733966b576d9c84b4af69c2a4ef33ba96967e59d2abfde07e885238a650",
+      "class": "Qwen4ExpQSAAttention",
+      "requires_state_views": true,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "qsa",
+      "arguments": [
+        "self",
+        "hidden_states",
+        "positions",
+        "query",
+        "key",
+        "value",
+        "output"
+      ],
+      "dtypes": {
+        "arg.hidden_states": [
+          "BF16"
+        ],
+        "arg.positions": [
+          "I32",
+          "I64"
+        ]
+      }
+    },
+    {
+      "id": "flash.Qwen3NextAttention._project_qkv_gate",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U5"
+      ],
+      "stage2_u_rows": [
+        "U3"
+      ],
+      "module": "vllm.model_executor.models.qwen3_next",
+      "method": "_project_qkv_gate",
+      "source_end_line": 385,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "4fa5112ac2bf7886d41d9e1f6c3da8793620d1ec49c961b31e9609459a6a7f7a",
+      "image_source_matches": false,
+      "inputs": [
+        "arg.qkv",
+        "arg.positions"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state_paths": [],
+      "dtype_expectations": {
+        "activation": "BF16 unless selector is token/index metadata",
+        "recurrent_state": "BF16 inter-row commit; never widen persisted state",
+        "indices": "declared INT32/INT64; preserve dtype",
+        "weights": "preserve FP8/BF16 source bytes and scales"
+      },
+      "notes": "Inherited by Qwen4ExpQSAAttention; result tuple is q,k,v,gate.",
+      "source_id": "a367",
+      "file": "vllm/model_executor/models/qwen3_next.py",
+      "line": 325,
+      "sha256": "83443032ab61e107a3f2245a0b91cb96c5be8c0c7d12f4717946caf5bb7c2cf5",
+      "class": "Qwen3NextAttention",
+      "requires_state_views": false,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "qsa",
+      "arguments": [
+        "self",
+        "qkv",
+        "positions"
+      ],
+      "dtypes": {
+        "arg.positions": [
+          "I32",
+          "I64"
+        ]
+      }
+    },
+    {
+      "id": "flash.QSAIndexer.project_qk",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U5"
+      ],
+      "stage2_u_rows": [
+        "U3"
+      ],
+      "module": "vllm.models.qwen4_exp.amd.indexer_qsa",
+      "method": "project_qk",
+      "source_end_line": 194,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "3429bec22e9d1045b3651fd28757384f527efcd071b4f7e35c95476996ef671e",
+      "image_source_matches": false,
+      "inputs": [
+        "arg.hidden_states",
+        "arg.positions"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state_paths": [],
+      "dtype_expectations": {
+        "activation": "BF16 unless selector is token/index metadata",
+        "recurrent_state": "BF16 inter-row commit; never widen persisted state",
+        "indices": "declared INT32/INT64; preserve dtype",
+        "weights": "preserve FP8/BF16 source bytes and scales"
+      },
+      "notes": "result=(normalized/rotated q, raw token_k); fused branch later recomputes projections.",
+      "source_id": "a367",
+      "file": "vllm/models/qwen4_exp/amd/indexer_qsa.py",
+      "line": 173,
+      "sha256": "75fac3c7b915865fc387f78f8047aec74e7ecbf1450d39890e097f626eaaa10f",
+      "class": "QSAIndexer",
+      "requires_state_views": false,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "qsa",
+      "arguments": [
+        "self",
+        "hidden_states",
+        "positions"
+      ],
+      "dtypes": {
+        "arg.hidden_states": [
+          "BF16"
+        ],
+        "arg.positions": [
+          "I32",
+          "I64"
+        ]
+      }
+    },
+    {
+      "id": "flash.QSAIndexer.normalize_compressed_keys",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U5"
+      ],
+      "stage2_u_rows": [
+        "U3"
+      ],
+      "module": "vllm.models.qwen4_exp.amd.indexer_qsa",
+      "method": "normalize_compressed_keys",
+      "source_end_line": 211,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "3429bec22e9d1045b3651fd28757384f527efcd071b4f7e35c95476996ef671e",
+      "image_source_matches": false,
+      "inputs": [
+        "arg.compressed_keys",
+        "arg.first_rope_positions"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state_paths": [],
+      "dtype_expectations": {
+        "activation": "BF16 unless selector is token/index metadata",
+        "recurrent_state": "BF16 inter-row commit; never widen persisted state",
+        "indices": "declared INT32/INT64; preserve dtype",
+        "weights": "preserve FP8/BF16 source bytes and scales"
+      },
+      "notes": "Only unfused/serial branch reaches this method; fused M1 branch bypasses it.",
+      "source_id": "a367",
+      "file": "vllm/models/qwen4_exp/amd/indexer_qsa.py",
+      "line": 196,
+      "sha256": "75fac3c7b915865fc387f78f8047aec74e7ecbf1450d39890e097f626eaaa10f",
+      "class": "QSAIndexer",
+      "requires_state_views": false,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "qsa",
+      "arguments": [
+        "self",
+        "compressed_keys",
+        "first_rope_positions"
+      ],
+      "dtypes": {}
+    },
+    {
+      "id": "flash.QSAIndexer._update_and_compress",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U5"
+      ],
+      "stage2_u_rows": [
+        "U3"
+      ],
+      "module": "vllm.models.qwen4_exp.amd.indexer_qsa",
+      "method": "_update_and_compress",
+      "source_end_line": 281,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "3429bec22e9d1045b3651fd28757384f527efcd071b4f7e35c95476996ef671e",
+      "image_source_matches": false,
+      "inputs": [
+        "arg.token_k",
+        "arg.positions"
+      ],
+      "outputs": [],
+      "state_paths": [
+        "self.raw_key_cache.key_cache",
+        "self.raw_key_cache.rope_position_cache",
+        "self.compressed_key_cache.kv_cache"
+      ],
+      "dtype_expectations": {
+        "activation": "BF16 unless selector is token/index metadata",
+        "recurrent_state": "BF16 inter-row commit; never widen persisted state",
+        "indices": "declared INT32/INT64; preserve dtype",
+        "weights": "preserve FP8/BF16 source bytes and scales"
+      },
+      "notes": "raw_metadata and compressed_metadata contain slot_mapping/block_table/logical_positions; no return; state-only fixture.",
+      "source_id": "a367",
+      "file": "vllm/models/qwen4_exp/amd/indexer_qsa.py",
+      "line": 233,
+      "sha256": "75fac3c7b915865fc387f78f8047aec74e7ecbf1450d39890e097f626eaaa10f",
+      "class": "QSAIndexer",
+      "requires_state_views": true,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "qsa",
+      "arguments": [
+        "self",
+        "token_k",
+        "positions",
+        "raw_metadata",
+        "compressed_metadata"
+      ],
+      "dtypes": {
+        "arg.positions": [
+          "I32",
+          "I64"
+        ]
+      }
+    },
+    {
+      "id": "flash.QSAIndexer._select",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U5"
+      ],
+      "stage2_u_rows": [
+        "U3"
+      ],
+      "module": "vllm.models.qwen4_exp.amd.indexer_qsa",
+      "method": "_select",
+      "source_end_line": 301,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "3429bec22e9d1045b3651fd28757384f527efcd071b4f7e35c95476996ef671e",
+      "image_source_matches": false,
+      "inputs": [
+        "arg.q"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state_paths": [
+        "self.compressed_key_cache.kv_cache"
+      ],
+      "dtype_expectations": {
+        "activation": "BF16 unless selector is token/index metadata",
+        "recurrent_state": "BF16 inter-row commit; never widen persisted state",
+        "indices": "declared INT32/INT64; preserve dtype",
+        "weights": "preserve FP8/BF16 source bytes and scales"
+      },
+      "notes": "result includes selected request-relative IDs padded -1; metadata argument owns positions/lengths.",
+      "source_id": "a367",
+      "file": "vllm/models/qwen4_exp/amd/indexer_qsa.py",
+      "line": 283,
+      "sha256": "75fac3c7b915865fc387f78f8047aec74e7ecbf1450d39890e097f626eaaa10f",
+      "class": "QSAIndexer",
+      "requires_state_views": true,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "qsa",
+      "arguments": [
+        "self",
+        "q",
+        "metadata",
+        "out"
+      ],
+      "dtypes": {}
+    },
+    {
+      "id": "flash.QSAIndexer._forward_serial_rows",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U5"
+      ],
+      "stage2_u_rows": [
+        "U3"
+      ],
+      "module": "vllm.models.qwen4_exp.amd.indexer_qsa",
+      "method": "_forward_serial_rows",
+      "source_end_line": 356,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "3429bec22e9d1045b3651fd28757384f527efcd071b4f7e35c95476996ef671e",
+      "image_source_matches": false,
+      "inputs": [
+        "arg.q",
+        "arg.token_k",
+        "arg.positions"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state_paths": [
+        "self.raw_key_cache.key_cache",
+        "self.compressed_key_cache.kv_cache"
+      ],
+      "dtype_expectations": {
+        "activation": "BF16 unless selector is token/index metadata",
+        "recurrent_state": "BF16 inter-row commit; never widen persisted state",
+        "indices": "declared INT32/INT64; preserve dtype",
+        "weights": "preserve FP8/BF16 source bytes and scales"
+      },
+      "notes": "Serial branch invokes _update_and_compress and _select once per row.",
+      "source_id": "a367",
+      "file": "vllm/models/qwen4_exp/amd/indexer_qsa.py",
+      "line": 303,
+      "sha256": "75fac3c7b915865fc387f78f8047aec74e7ecbf1450d39890e097f626eaaa10f",
+      "class": "QSAIndexer",
+      "requires_state_views": true,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "qsa",
+      "arguments": [
+        "self",
+        "q",
+        "token_k",
+        "positions",
+        "raw_metadata",
+        "compressed_metadata",
+        "out"
+      ],
+      "dtypes": {
+        "arg.positions": [
+          "I32",
+          "I64"
+        ]
+      }
+    },
+    {
+      "id": "flash.QSAIndexer.forward",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U5"
+      ],
+      "stage2_u_rows": [
+        "U3"
+      ],
+      "module": "vllm.models.qwen4_exp.amd.indexer_qsa",
+      "method": "forward",
+      "source_end_line": 448,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "3429bec22e9d1045b3651fd28757384f527efcd071b4f7e35c95476996ef671e",
+      "image_source_matches": false,
+      "inputs": [
+        "arg.hidden_states",
+        "arg.positions"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state_paths": [
+        "self.raw_key_cache.key_cache",
+        "self.raw_key_cache.rope_position_cache",
+        "self.compressed_key_cache.kv_cache"
+      ],
+      "dtype_expectations": {
+        "activation": "BF16 unless selector is token/index metadata",
+        "recurrent_state": "BF16 inter-row commit; never widen persisted state",
+        "indices": "declared INT32/INT64; preserve dtype",
+        "weights": "preserve FP8/BF16 source bytes and scales"
+      },
+      "notes": "M1 fused qsa_pre_indexer bypasses normalize_compressed_keys and _update_and_compress; fused pooled intermediate unavailable.",
+      "source_id": "a367",
+      "file": "vllm/models/qwen4_exp/amd/indexer_qsa.py",
+      "line": 358,
+      "sha256": "75fac3c7b915865fc387f78f8047aec74e7ecbf1450d39890e097f626eaaa10f",
+      "class": "QSAIndexer",
+      "requires_state_views": true,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "qsa",
+      "arguments": [
+        "self",
+        "hidden_states",
+        "positions",
+        "out"
+      ],
+      "dtypes": {
+        "arg.hidden_states": [
+          "BF16"
+        ],
+        "arg.positions": [
+          "I32",
+          "I64"
+        ]
+      }
+    },
+    {
+      "id": "flash.GatedResidual.mix",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U3"
+      ],
+      "stage2_u_rows": [
+        "U5"
+      ],
+      "module": "vllm.models.qwen4_exp.amd.hyperconnection",
+      "method": "mix",
+      "source_end_line": 150,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "29e15a7a9ba9d6f186a0b5613d388605b6680ef4bdaf37228057925e44de479c",
+      "image_source_matches": true,
+      "inputs": [
+        "arg.hidden_states",
+        "arg.self.hc_norm.weight"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state_paths": [],
+      "dtype_expectations": {
+        "activation": "BF16 unless selector is token/index metadata",
+        "recurrent_state": "BF16 inter-row commit; never widen persisted state",
+        "indices": "declared INT32/INT64; preserve dtype",
+        "weights": "preserve FP8/BF16 source bytes and scales"
+      },
+      "notes": "mix/combine_and_mix result=(rounded multi-stream hidden, block_input, injection or None). Projection submodule hooks capture low-rank/down/up boundaries; fused normalized intermediate requires ops.hc function boundary.",
+      "source_id": "a367",
+      "file": "vllm/models/qwen4_exp/amd/hyperconnection.py",
+      "line": 127,
+      "sha256": "29e15a7a9ba9d6f186a0b5613d388605b6680ef4bdaf37228057925e44de479c",
+      "class": "GatedResidual",
+      "requires_state_views": false,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "hc_mix",
+      "arguments": [
+        "self",
+        "hidden_states"
+      ],
+      "dtypes": {
+        "arg.hidden_states": [
+          "BF16"
+        ]
+      }
+    },
+    {
+      "id": "flash.GatedResidual.combine_and_mix",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U3"
+      ],
+      "stage2_u_rows": [
+        "U5"
+      ],
+      "module": "vllm.models.qwen4_exp.amd.hyperconnection",
+      "method": "combine_and_mix",
+      "source_end_line": 186,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "29e15a7a9ba9d6f186a0b5613d388605b6680ef4bdaf37228057925e44de479c",
+      "image_source_matches": true,
+      "inputs": [
+        "arg.hidden_states",
+        "arg.prev_block_output",
+        "arg.prev_injection",
+        "arg.self.hc_norm.weight"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state_paths": [],
+      "dtype_expectations": {
+        "activation": "BF16 unless selector is token/index metadata",
+        "recurrent_state": "BF16 inter-row commit; never widen persisted state",
+        "indices": "declared INT32/INT64; preserve dtype",
+        "weights": "preserve FP8/BF16 source bytes and scales"
+      },
+      "notes": "mix/combine_and_mix result=(rounded multi-stream hidden, block_input, injection or None). Projection submodule hooks capture low-rank/down/up boundaries; fused normalized intermediate requires ops.hc function boundary.",
+      "source_id": "a367",
+      "file": "vllm/models/qwen4_exp/amd/hyperconnection.py",
+      "line": 152,
+      "sha256": "29e15a7a9ba9d6f186a0b5613d388605b6680ef4bdaf37228057925e44de479c",
+      "class": "GatedResidual",
+      "requires_state_views": false,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "hc_mix",
+      "arguments": [
+        "self",
+        "hidden_states",
+        "prev_block_output",
+        "prev_injection"
+      ],
+      "dtypes": {
+        "arg.hidden_states": [
+          "BF16"
+        ]
+      }
+    },
+    {
+      "id": "flash.GatedResidual.combine",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U3"
+      ],
+      "stage2_u_rows": [
+        "U5"
+      ],
+      "module": "vllm.models.qwen4_exp.amd.hyperconnection",
+      "method": "combine",
+      "source_end_line": 194,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "29e15a7a9ba9d6f186a0b5613d388605b6680ef4bdaf37228057925e44de479c",
+      "image_source_matches": true,
+      "inputs": [
+        "arg.hidden_states",
+        "arg.block_output",
+        "arg.injection",
+        "arg.self.hc_norm.weight"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state_paths": [],
+      "dtype_expectations": {
+        "activation": "BF16 unless selector is token/index metadata",
+        "recurrent_state": "BF16 inter-row commit; never widen persisted state",
+        "indices": "declared INT32/INT64; preserve dtype",
+        "weights": "preserve FP8/BF16 source bytes and scales"
+      },
+      "notes": "mix/combine_and_mix result=(rounded multi-stream hidden, block_input, injection or None). Projection submodule hooks capture low-rank/down/up boundaries; fused normalized intermediate requires ops.hc function boundary.",
+      "source_id": "a367",
+      "file": "vllm/models/qwen4_exp/amd/hyperconnection.py",
+      "line": 188,
+      "sha256": "29e15a7a9ba9d6f186a0b5613d388605b6680ef4bdaf37228057925e44de479c",
+      "class": "GatedResidual",
+      "requires_state_views": false,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "hc_combine",
+      "arguments": [
+        "self",
+        "hidden_states",
+        "block_output",
+        "injection"
+      ],
+      "dtypes": {
+        "arg.hidden_states": [
+          "BF16"
+        ]
+      }
+    },
+    {
+      "id": "flash.Qwen4ExpNGramEmbedding.forward",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U2"
+      ],
+      "stage2_u_rows": [
+        "U6"
+      ],
+      "module": "vllm.models.qwen4_exp.amd.ple_layer",
+      "method": "forward",
+      "source_end_line": 324,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "8bb2e441dad2e9f3c8686bc48aa95001e5adc81b91199cc68b2e4bbe9eb69292",
+      "image_source_matches": false,
+      "inputs": [
+        "arg.input_ids",
+        "arg.query_start_loc",
+        "arg.ngram_context",
+        "arg.self.layer_multipliers",
+        "arg.self.ngram_heads_vocab_sizes",
+        "arg.self.ngram_heads_offsets"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state_paths": [],
+      "dtype_expectations": {
+        "activation": "BF16 unless selector is token/index metadata",
+        "recurrent_state": "BF16 inter-row commit; never widen persisted state",
+        "indices": "declared INT32/INT64; preserve dtype",
+        "weights": "preserve FP8/BF16 source bytes and scales"
+      },
+      "notes": "Huge embedding table must not be snapshotted wholesale. ngram_ids is a local, requiring qwen4_exp_amd_ple_ngram_embedding custom-op boundary hook to capture physical lookup IDs and requested rows.",
+      "source_id": "a367",
+      "file": "vllm/models/qwen4_exp/amd/ple_layer.py",
+      "line": 251,
+      "sha256": "f728ec31ab628e48d1910d3cdb97ab96faa8e8831707069a4fcdb39bd98fd06a",
+      "class": "Qwen4ExpNGramEmbedding",
+      "requires_state_views": false,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "ple_lookup",
+      "arguments": [
+        "self",
+        "input_ids",
+        "query_start_loc",
+        "ngram_context"
+      ],
+      "dtypes": {
+        "arg.input_ids": [
+          "I32",
+          "I64"
+        ]
+      }
+    },
+    {
+      "id": "flash.Qwen4ExpPLELayer.forward",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U3"
+      ],
+      "stage2_u_rows": [
+        "U6"
+      ],
+      "module": "vllm.models.qwen4_exp.amd.ple_layer",
+      "method": "forward",
+      "source_end_line": 1038,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "8bb2e441dad2e9f3c8686bc48aa95001e5adc81b91199cc68b2e4bbe9eb69292",
+      "image_source_matches": false,
+      "inputs": [
+        "arg.hidden_states",
+        "arg.input_ids",
+        "arg.query_start_loc",
+        "arg.ngram_context"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state_paths": [
+        "self.kv_cache"
+      ],
+      "dtype_expectations": {
+        "activation": "BF16 unless selector is token/index metadata",
+        "recurrent_state": "BF16 inter-row commit; never widen persisted state",
+        "indices": "declared INT32/INT64; preserve dtype",
+        "weights": "preserve FP8/BF16 source bytes and scales"
+      },
+      "notes": "Full injection output; key_proj/value_proj/norm child hooks expose branch boundaries. Gate is local; normalized pre-conv input available through _short_conv.",
+      "source_id": "a367",
+      "file": "vllm/models/qwen4_exp/amd/ple_layer.py",
+      "line": 1006,
+      "sha256": "f728ec31ab628e48d1910d3cdb97ab96faa8e8831707069a4fcdb39bd98fd06a",
+      "class": "Qwen4ExpPLELayer",
+      "requires_state_views": true,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "ple_injection",
+      "arguments": [
+        "self",
+        "hidden_states",
+        "input_ids",
+        "query_start_loc",
+        "ngram_context"
+      ],
+      "dtypes": {
+        "arg.hidden_states": [
+          "BF16"
+        ],
+        "arg.input_ids": [
+          "I32",
+          "I64"
+        ]
+      }
+    },
+    {
+      "id": "flash.Qwen4ExpPLELayer._short_conv",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U4"
+      ],
+      "stage2_u_rows": [
+        "U6"
+      ],
+      "module": "vllm.models.qwen4_exp.amd.ple_layer",
+      "method": "_short_conv",
+      "source_end_line": 1004,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "8bb2e441dad2e9f3c8686bc48aa95001e5adc81b91199cc68b2e4bbe9eb69292",
+      "image_source_matches": false,
+      "inputs": [
+        "arg.inputs",
+        "arg.self.conv1d.weight"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state_paths": [
+        "self.kv_cache"
+      ],
+      "dtype_expectations": {
+        "activation": "BF16 unless selector is token/index metadata",
+        "recurrent_state": "BF16 inter-row commit; never widen persisted state",
+        "indices": "declared INT32/INT64; preserve dtype",
+        "weights": "preserve FP8/BF16 source bytes and scales"
+      },
+      "notes": "Requires metadata-selected cache slots. _short_conv_dilated_dispatch supplies explicit conv_state and conv_weights.",
+      "source_id": "a367",
+      "file": "vllm/models/qwen4_exp/amd/ple_layer.py",
+      "line": 960,
+      "sha256": "f728ec31ab628e48d1910d3cdb97ab96faa8e8831707069a4fcdb39bd98fd06a",
+      "class": "Qwen4ExpPLELayer",
+      "requires_state_views": true,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "conv",
+      "arguments": [
+        "self",
+        "inputs"
+      ],
+      "dtypes": {}
+    },
+    {
+      "id": "flash.Qwen4ExpPLELayer._short_conv_dilated_dispatch",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U4"
+      ],
+      "stage2_u_rows": [
+        "U6"
+      ],
+      "module": "vllm.models.qwen4_exp.amd.ple_layer",
+      "method": "_short_conv_dilated_dispatch",
+      "source_end_line": 958,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "8bb2e441dad2e9f3c8686bc48aa95001e5adc81b91199cc68b2e4bbe9eb69292",
+      "image_source_matches": false,
+      "inputs": [
+        "arg.inputs",
+        "arg.conv_state",
+        "arg.conv_weights"
+      ],
+      "outputs": [
+        "result",
+        "arg.conv_state"
+      ],
+      "state_paths": [],
+      "dtype_expectations": {
+        "activation": "BF16 unless selector is token/index metadata",
+        "recurrent_state": "BF16 inter-row commit; never widen persisted state",
+        "indices": "declared INT32/INT64; preserve dtype",
+        "weights": "preserve FP8/BF16 source bytes and scales"
+      },
+      "notes": "metadata contains accepted-token/state-slot mapping; capture accepted-prefix fixtures separately.",
+      "source_id": "a367",
+      "file": "vllm/models/qwen4_exp/amd/ple_layer.py",
+      "line": 847,
+      "sha256": "f728ec31ab628e48d1910d3cdb97ab96faa8e8831707069a4fcdb39bd98fd06a",
+      "class": "Qwen4ExpPLELayer",
+      "requires_state_views": false,
+      "state": [
+        "arg.conv_state"
+      ],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "conv",
+      "arguments": [
+        "self",
+        "inputs",
+        "metadata",
+        "conv_state",
+        "conv_weights"
+      ],
+      "dtypes": {}
+    },
+    {
+      "id": "flash.Qwen4ExpPLEGroupedNorm.forward",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U3"
+      ],
+      "stage2_u_rows": [
+        "U6"
+      ],
+      "module": "vllm.models.qwen4_exp.amd.ple_layer",
+      "method": "forward",
+      "source_end_line": 123,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "8bb2e441dad2e9f3c8686bc48aa95001e5adc81b91199cc68b2e4bbe9eb69292",
+      "image_source_matches": false,
+      "inputs": [
+        "arg.hidden_states",
+        "arg.self.weight"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state_paths": [],
+      "dtype_expectations": {
+        "activation": "BF16 unless selector is token/index metadata",
+        "recurrent_state": "BF16 inter-row commit; never widen persisted state",
+        "indices": "declared INT32/INT64; preserve dtype",
+        "weights": "preserve FP8/BF16 source bytes and scales"
+      },
+      "notes": "",
+      "source_id": "a367",
+      "file": "vllm/models/qwen4_exp/amd/ple_layer.py",
+      "line": 111,
+      "sha256": "f728ec31ab628e48d1910d3cdb97ab96faa8e8831707069a4fcdb39bd98fd06a",
+      "class": "Qwen4ExpPLEGroupedNorm",
+      "requires_state_views": false,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "rmsnorm",
+      "arguments": [
+        "self",
+        "hidden_states"
+      ],
+      "dtypes": {
+        "arg.hidden_states": [
+          "BF16"
+        ]
+      }
+    },
+    {
+      "id": "flash.Qwen4ExpMultiTokenPredictor.forward",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U7"
+      ],
+      "stage2_u_rows": [
+        "U7"
+      ],
+      "module": "vllm.models.qwen4_exp.amd.mtp",
+      "method": "forward",
+      "source_end_line": 329,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "de357e48ad48aeaa19179c3fbf66fa0456e0d96612b4aed3a2ceee81a2ad0c41",
+      "image_source_matches": false,
+      "inputs": [
+        "arg.input_ids",
+        "arg.positions",
+        "arg.hidden_states",
+        "arg.inputs_embeds",
+        "arg.self.pre_fc_norm_embedding.weight",
+        "arg.self.pre_fc_norm_hidden.weight",
+        "arg.self.fc_embedding.weight",
+        "arg.self.fc_hidden.weight"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state_paths": [],
+      "dtype_expectations": {
+        "activation": "BF16 unless selector is token/index metadata",
+        "recurrent_state": "BF16 inter-row commit; never widen persisted state",
+        "indices": "declared INT32/INT64; preserve dtype",
+        "weights": "preserve FP8/BF16 source bytes and scales"
+      },
+      "notes": "Result=(sample_hidden_states,multi_hidden) on final PP rank; merge is BF16 projected embedding broadcast-add to projected HC hidden, not concatenation. Child projection hooks and decoder input capture merge boundary.",
+      "source_id": "a367",
+      "file": "vllm/models/qwen4_exp/amd/mtp.py",
+      "line": 262,
+      "sha256": "6cf6feab74788c3e7bb3a6813a102c310113538da6e723af50a9ec32301dba03",
+      "class": "Qwen4ExpMultiTokenPredictor",
+      "requires_state_views": true,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "mtp_forward",
+      "arguments": [
+        "self",
+        "input_ids",
+        "positions",
+        "hidden_states",
+        "intermediate_tensors",
+        "inputs_embeds",
+        "spec_step_idx"
+      ],
+      "dtypes": {
+        "arg.input_ids": [
+          "I32",
+          "I64"
+        ],
+        "arg.positions": [
+          "I32",
+          "I64"
+        ],
+        "arg.hidden_states": [
+          "BF16"
+        ]
+      }
+    },
+    {
+      "id": "flash.Qwen4ExpMTP.compute_logits",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U6",
+        "U7"
+      ],
+      "stage2_u_rows": [
+        "U7"
+      ],
+      "module": "vllm.models.qwen4_exp.amd.mtp",
+      "method": "compute_logits",
+      "source_end_line": 432,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "de357e48ad48aeaa19179c3fbf66fa0456e0d96612b4aed3a2ceee81a2ad0c41",
+      "image_source_matches": false,
+      "inputs": [
+        "arg.hidden_states",
+        "arg.self.lm_head.weight"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state_paths": [],
+      "dtype_expectations": {
+        "activation": "BF16 unless selector is token/index metadata",
+        "recurrent_state": "BF16 inter-row commit; never widen persisted state",
+        "indices": "declared INT32/INT64; preserve dtype",
+        "weights": "preserve FP8/BF16 source bytes and scales"
+      },
+      "notes": "Full proposal head only; top-k shortlist, acceptance and rollback belong to separate proposer/worker hooks.",
+      "source_id": "a367",
+      "file": "vllm/models/qwen4_exp/amd/mtp.py",
+      "line": 429,
+      "sha256": "6cf6feab74788c3e7bb3a6813a102c310113538da6e723af50a9ec32301dba03",
+      "class": "Qwen4ExpMTP",
+      "requires_state_views": true,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "target_head",
+      "arguments": [
+        "self",
+        "hidden_states",
+        "spec_step_idx"
+      ],
+      "dtypes": {
+        "arg.hidden_states": [
+          "BF16"
+        ]
+      }
+    },
+    {
+      "id": "flash.Qwen4ExpForCausalLM.compute_logits",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U6"
+      ],
+      "stage2_u_rows": [
+        "U7"
+      ],
+      "module": "vllm.models.qwen4_exp.amd.model",
+      "method": "compute_logits",
+      "source_end_line": 1030,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "e9ee63d7921d1fba937a3674320225a1f914e668d5a2f91dbde11dfc70e2214e",
+      "image_source_matches": false,
+      "inputs": [
+        "arg.hidden_states",
+        "arg.self.lm_head.weight"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state_paths": [],
+      "dtype_expectations": {
+        "activation": "BF16 unless selector is token/index metadata",
+        "recurrent_state": "BF16 inter-row commit; never widen persisted state",
+        "indices": "declared INT32/INT64; preserve dtype",
+        "weights": "preserve FP8/BF16 source bytes and scales"
+      },
+      "notes": "Target full vocabulary logits. Sampler tie/NaN dispatch must be mapped separately.",
+      "source_id": "a367",
+      "file": "vllm/models/qwen4_exp/amd/model.py",
+      "line": 1029,
+      "sha256": "f7691bbd16bbddb39fc093ff19bfd3e7cabfe3289ae6c6ba18ca9afb918becc8",
+      "class": "Qwen4ExpForCausalLM",
+      "requires_state_views": false,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "target_head",
+      "arguments": [
+        "self",
+        "hidden_states"
+      ],
+      "dtypes": {
+        "arg.hidden_states": [
+          "BF16"
+        ]
+      }
+    },
+    {
+      "id": "flash.Qwen4ExpDecoderLayer.forward",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U7"
+      ],
+      "stage2_u_rows": [
+        "U5",
+        "U7"
+      ],
+      "module": "vllm.models.qwen4_exp.amd.model",
+      "method": "forward",
+      "source_end_line": 458,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "e9ee63d7921d1fba937a3674320225a1f914e668d5a2f91dbde11dfc70e2214e",
+      "image_source_matches": false,
+      "inputs": [
+        "arg.hidden_states",
+        "arg.prev_block_output",
+        "arg.prev_injection",
+        "arg.positions",
+        "arg.input_ids",
+        "arg.query_start_loc",
+        "arg.ngram_context"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state_paths": [],
+      "dtype_expectations": {
+        "activation": "BF16 unless selector is token/index metadata",
+        "recurrent_state": "BF16 inter-row commit; never widen persisted state",
+        "indices": "declared INT32/INT64; preserve dtype",
+        "weights": "preserve FP8/BF16 source bytes and scales"
+      },
+      "notes": "MTP input captures merged hidden; result=(hidden_states,mlp_out,injection) delayed HC state.",
+      "source_id": "a367",
+      "file": "vllm/models/qwen4_exp/amd/model.py",
+      "line": 313,
+      "sha256": "f7691bbd16bbddb39fc093ff19bfd3e7cabfe3289ae6c6ba18ca9afb918becc8",
+      "class": "Qwen4ExpDecoderLayer",
+      "requires_state_views": false,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "decoder_layer",
+      "arguments": [
+        "self",
+        "hidden_states",
+        "prev_block_output",
+        "prev_injection",
+        "positions",
+        "input_ids",
+        "query_start_loc",
+        "ngram_context",
+        "repeatability_trace"
+      ],
+      "dtypes": {
+        "arg.hidden_states": [
+          "BF16"
+        ],
+        "arg.positions": [
+          "I32",
+          "I64"
+        ],
+        "arg.input_ids": [
+          "I32",
+          "I64"
+        ]
+      }
+    },
+    {
+      "id": "flash.FusedTopKRouter._compute_routing",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U6"
+      ],
+      "stage2_u_rows": [
+        "U4"
+      ],
+      "module": "vllm.model_executor.layers.fused_moe.router.fused_topk_router",
+      "method": "_compute_routing",
+      "source_end_line": 174,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "1c80f4af4d781fd66b12aa6a7a0fd30082bc521df40f1252987a8ac4c0bef51c",
+      "image_source_matches": true,
+      "inputs": [
+        "arg.hidden_states",
+        "arg.router_logits",
+        "arg.input_ids"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state_paths": [],
+      "dtype_expectations": {
+        "activation": "BF16 unless selector is token/index metadata",
+        "recurrent_state": "BF16 inter-row commit; never widen persisted state",
+        "indices": "declared INT32/INT64; preserve dtype",
+        "weights": "preserve FP8/BF16 source bytes and scales"
+      },
+      "notes": "Result=(topk_weights,topk_ids); top_k=10 and renormalize=True must be asserted from runtime configuration. No CPU stable-tie rule substituted.",
+      "source_id": "a367",
+      "file": "vllm/model_executor/layers/fused_moe/router/fused_topk_router.py",
+      "line": 156,
+      "sha256": "1c80f4af4d781fd66b12aa6a7a0fd30082bc521df40f1252987a8ac4c0bef51c",
+      "class": "FusedTopKRouter",
+      "requires_state_views": false,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "router",
+      "arguments": [
+        "self",
+        "hidden_states",
+        "router_logits",
+        "indices_type",
+        "input_ids"
+      ],
+      "dtypes": {
+        "arg.hidden_states": [
+          "BF16"
+        ],
+        "arg.input_ids": [
+          "I32",
+          "I64"
+        ]
+      }
+    },
+    {
+      "id": "flash.Fp8MoEMethod.apply",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U1"
+      ],
+      "stage2_u_rows": [
+        "U2",
+        "U4"
+      ],
+      "module": "vllm.model_executor.layers.quantization.fp8",
+      "method": "apply",
+      "source_end_line": 876,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "947540b443c15e9e5b4c08ff07f7a7c0e8d8f0d8494f3964c0172a772a779fe5",
+      "image_source_matches": false,
+      "inputs": [
+        "arg.x",
+        "arg.topk_weights",
+        "arg.topk_ids",
+        "arg.shared_experts_input",
+        "arg.layer.w13_weight",
+        "arg.layer.w2_weight"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state_paths": [],
+      "dtype_expectations": {
+        "activation": "BF16 unless selector is token/index metadata",
+        "recurrent_state": "BF16 inter-row commit; never widen persisted state",
+        "indices": "declared INT32/INT64; preserve dtype",
+        "weights": "preserve FP8/BF16 source bytes and scales"
+      },
+      "notes": "Fused MoE wrapper; activation quantization, gate/up/down accumulators and per-expert intermediate products remain inside kernel. FP8 block scales live on layer/kernel quant config; must use concrete backend-specific scale selectors.",
+      "source_id": "a367",
+      "file": "vllm/model_executor/layers/quantization/fp8.py",
+      "line": 853,
+      "sha256": "e234f6f3a85056d3c33012c4b31f456d7d9c87107bc30157cb0f601971f5db58",
+      "class": "Fp8MoEMethod",
+      "requires_state_views": false,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "moe",
+      "arguments": [
+        "self",
+        "layer",
+        "x",
+        "topk_weights",
+        "topk_ids",
+        "shared_experts",
+        "shared_experts_input"
+      ],
+      "dtypes": {
+        "arg.x": [
+          "BF16"
+        ],
+        "arg.topk_ids": [
+          "I32",
+          "I64"
+        ]
+      }
+    },
+    {
+      "id": "flash.Qwen3NextSparseMoeBlock.forward",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U1"
+      ],
+      "stage2_u_rows": [
+        "U2",
+        "U4"
+      ],
+      "module": "vllm.model_executor.models.qwen3_next",
+      "method": "forward",
+      "source_end_line": 208,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "4fa5112ac2bf7886d41d9e1f6c3da8793620d1ec49c961b31e9609459a6a7f7a",
+      "image_source_matches": false,
+      "inputs": [
+        "arg.hidden_states"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state_paths": [],
+      "dtype_expectations": {
+        "activation": "BF16 unless selector is token/index metadata",
+        "recurrent_state": "BF16 inter-row commit; never widen persisted state",
+        "indices": "declared INT32/INT64; preserve dtype",
+        "weights": "preserve FP8/BF16 source bytes and scales"
+      },
+      "notes": "Inherited by Qwen4ExpSparseMoeBlock; routed/shared result after collective. Capture routing separately, not router_logits local assumptions.",
+      "source_id": "a367",
+      "file": "vllm/model_executor/models/qwen3_next.py",
+      "line": 185,
+      "sha256": "83443032ab61e107a3f2245a0b91cb96c5be8c0c7d12f4717946caf5bb7c2cf5",
+      "class": "Qwen3NextSparseMoeBlock",
+      "requires_state_views": false,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "moe",
+      "arguments": [
+        "self",
+        "hidden_states",
+        "already_sequence_parallel"
+      ],
+      "dtypes": {
+        "arg.hidden_states": [
+          "BF16"
+        ]
+      }
+    },
+    {
+      "id": "flash._gdn_attention_core_xpu_impl",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U4"
+      ],
+      "stage2_u_rows": [
+        "U1"
+      ],
+      "module": "vllm._xpu_ops",
+      "method": "_gdn_attention_core_xpu_impl",
+      "runtime_owner": "torch.ops.vllm",
+      "runtime_attribute": "gdn_attention_core_xpu",
+      "source_end_line": 430,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "4db00df212d772601fe59272cf8d4d0822ec8ef7bad219100c978943a7daf37b",
+      "image_source_matches": false,
+      "inputs": [
+        "arg.projected_states_qkvz",
+        "arg.projected_states_ba"
+      ],
+      "outputs": [
+        "arg.core_attn_out",
+        "arg.z"
+      ],
+      "state_paths": [],
+      "dtype_expectations": {
+        "activation": "BF16",
+        "ngram_ids": "INT64 physical table IDs; preserve dtype",
+        "cache": "BF16 GDN/PLE state"
+      },
+      "notes": "MUST intercept torch.ops.vllm.gdn_attention_core_xpu, not merely reassign Python impl registered earlier. Model/cache owner is get_forward_context().no_compile_layers[layer_name]; boundary yields packed projections and core outputs but fused every-row state remains unresolved.",
+      "source_id": "a367",
+      "file": "vllm/_xpu_ops.py",
+      "line": 245,
+      "sha256": "dab85dc434fc2574c8aa9756203a9ca4fe51a5543c99c8b94dabc1ecbcfc380b",
+      "class": null,
+      "requires_state_views": true,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "gdn_recurrence",
+      "arguments": [
+        "core_attn_out",
+        "z",
+        "projected_states_qkvz",
+        "projected_states_ba",
+        "layer_name"
+      ],
+      "dtypes": {}
+    },
+    {
+      "id": "flash.qwen4_exp_amd_ple_ngram_embedding",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U2"
+      ],
+      "stage2_u_rows": [
+        "U6"
+      ],
+      "module": "vllm.models.qwen4_exp.amd.ple_layer",
+      "method": "qwen4_exp_amd_ple_ngram_embedding",
+      "runtime_owner": "torch.ops.vllm",
+      "runtime_attribute": "qwen4_exp_amd_ple_ngram_embedding",
+      "source_end_line": 1055,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "8bb2e441dad2e9f3c8686bc48aa95001e5adc81b91199cc68b2e4bbe9eb69292",
+      "image_source_matches": false,
+      "inputs": [
+        "arg.ngram_ids"
+      ],
+      "outputs": [
+        "arg.output"
+      ],
+      "state_paths": [],
+      "dtype_expectations": {
+        "activation": "BF16",
+        "ngram_ids": "INT64 physical table IDs; preserve dtype",
+        "cache": "BF16 GDN/PLE state"
+      },
+      "notes": "Physical lookup ID tensor at custom-op boundary; owner in forward context. To capture raw FP8 rows/scales requires backend-specific row lookup implementation and bounded touched-row extraction.",
+      "source_id": "a367",
+      "file": "vllm/models/qwen4_exp/amd/ple_layer.py",
+      "line": 1041,
+      "sha256": "f728ec31ab628e48d1910d3cdb97ab96faa8e8831707069a4fcdb39bd98fd06a",
+      "class": null,
+      "requires_state_views": true,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "ple_lookup",
+      "arguments": [
+        "ngram_ids",
+        "output",
+        "layer_name"
+      ],
+      "dtypes": {
+        "arg.ngram_ids": [
+          "I32",
+          "I64"
+        ]
+      }
+    },
+    {
+      "id": "flash.qwen4_exp_ple_short_conv",
+      "models": [
+        "flash-next"
+      ],
+      "u_rows": [
+        "U4"
+      ],
+      "stage2_u_rows": [
+        "U6"
+      ],
+      "module": "vllm.models.qwen4_exp.amd.ple_layer",
+      "method": "qwen4_exp_ple_short_conv",
+      "runtime_owner": "torch.ops.vllm",
+      "runtime_attribute": "qwen4_exp_ple_short_conv",
+      "source_end_line": 1073,
+      "source_identity": "A367 archive 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a; not certified-image extraction",
+      "image_file_sha256": "8bb2e441dad2e9f3c8686bc48aa95001e5adc81b91199cc68b2e4bbe9eb69292",
+      "image_source_matches": false,
+      "inputs": [
+        "arg.inputs"
+      ],
+      "outputs": [
+        "arg.output"
+      ],
+      "state_paths": [],
+      "dtype_expectations": {
+        "activation": "BF16",
+        "ngram_ids": "INT64 physical table IDs; preserve dtype",
+        "cache": "BF16 GDN/PLE state"
+      },
+      "notes": "Custom-op alias intercept invokes mapped owner._short_conv; state owner selected by layer_name in forward context.",
+      "source_id": "a367",
+      "file": "vllm/models/qwen4_exp/amd/ple_layer.py",
+      "line": 1066,
+      "sha256": "f728ec31ab628e48d1910d3cdb97ab96faa8e8831707069a4fcdb39bd98fd06a",
+      "class": null,
+      "requires_state_views": true,
+      "state": [],
+      "rounding": "BF16 activations/KV and BF16 inter-row recurrent state; preserve original casts",
+      "operator": "ple_lookup",
+      "arguments": [
+        "inputs",
+        "output",
+        "layer_name"
+      ],
+      "dtypes": {}
+    },
+    {
+      "id": "image.XPUW8A16FP8LinearKernel.apply_weights",
+      "source_id": "reopen-image",
+      "models": [
+        "27b"
+      ],
+      "u_rows": [
+        "U1"
+      ],
+      "stage2_u_rows": [],
+      "module": "vllm.model_executor.kernels.linear.scaled_mm.xpu",
+      "class": "XPUW8A16FP8LinearKernel",
+      "method": "apply_weights",
+      "file": "vllm/model_executor/kernels/linear/scaled_mm/xpu.py",
+      "line": 168,
+      "sha256": "ba123182e4f9505f553227e06c8adeb68a0307800dea69f6e6614e25cd7541d1",
+      "image_file_sha256": "ba123182e4f9505f553227e06c8adeb68a0307800dea69f6e6614e25cd7541d1",
+      "inputs": [
+        "arg.x",
+        "arg.layer.weight",
+        "arg.layer.weight_scale",
+        "arg.bias"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state": [],
+      "requires_state_views": false,
+      "state_paths": [],
+      "operator": "linear",
+      "arguments": [
+        "self",
+        "layer",
+        "x",
+        "bias"
+      ],
+      "rounding": "27B required: F16 activations/KV, F32 recurrent state; stored BF16 parameters/scales. This image has not certified that profile.",
+      "dtype_expectations": {
+        "activation": "F16",
+        "recurrent_state": "F32",
+        "stored_parameter": "BF16; execution cast recorded, not assumed",
+        "fp8_weight": "F8_E4M3"
+      },
+      "notes": "Reopen image source mapping only; missing 27B package image and overlay identity must be resolved before native admission.",
+      "dtypes": {
+        "arg.x": [
+          "F16"
+        ]
+      }
+    },
+    {
+      "id": "image.XPUFp8BlockScaledMMKernel.apply_block_scaled_mm",
+      "source_id": "reopen-image",
+      "models": [
+        "27b"
+      ],
+      "u_rows": [
+        "U1"
+      ],
+      "stage2_u_rows": [],
+      "module": "vllm.model_executor.kernels.linear.scaled_mm.xpu",
+      "class": "XPUFp8BlockScaledMMKernel",
+      "method": "apply_block_scaled_mm",
+      "file": "vllm/model_executor/kernels/linear/scaled_mm/xpu.py",
+      "line": 267,
+      "sha256": "ba123182e4f9505f553227e06c8adeb68a0307800dea69f6e6614e25cd7541d1",
+      "image_file_sha256": "ba123182e4f9505f553227e06c8adeb68a0307800dea69f6e6614e25cd7541d1",
+      "inputs": [
+        "arg.A",
+        "arg.B",
+        "arg.As",
+        "arg.Bs"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state": [],
+      "requires_state_views": false,
+      "state_paths": [],
+      "operator": "linear",
+      "arguments": [
+        "self",
+        "A",
+        "B",
+        "As",
+        "Bs"
+      ],
+      "rounding": "27B required: F16 activations/KV, F32 recurrent state; stored BF16 parameters/scales. This image has not certified that profile.",
+      "dtype_expectations": {
+        "activation": "F16",
+        "recurrent_state": "F32",
+        "stored_parameter": "BF16; execution cast recorded, not assumed",
+        "fp8_weight": "F8_E4M3"
+      },
+      "notes": "Reopen image source mapping only; missing 27B package image and overlay identity must be resolved before native admission.",
+      "dtypes": {}
+    },
+    {
+      "id": "image.UnquantizedLinearMethod.apply",
+      "source_id": "reopen-image",
+      "models": [
+        "27b"
+      ],
+      "u_rows": [
+        "U2"
+      ],
+      "stage2_u_rows": [],
+      "module": "vllm.model_executor.layers.linear",
+      "class": "UnquantizedLinearMethod",
+      "method": "apply",
+      "file": "vllm/model_executor/layers/linear.py",
+      "line": 228,
+      "sha256": "094fdf956c35bcfcb44b924a4ff60bb1768285963e4e1ae27f3022dd7e1e852d",
+      "image_file_sha256": "094fdf956c35bcfcb44b924a4ff60bb1768285963e4e1ae27f3022dd7e1e852d",
+      "inputs": [
+        "arg.x",
+        "arg.layer.weight",
+        "arg.bias"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state": [],
+      "requires_state_views": false,
+      "state_paths": [],
+      "operator": "linear",
+      "arguments": [
+        "self",
+        "layer",
+        "x",
+        "bias"
+      ],
+      "rounding": "27B required: F16 activations/KV, F32 recurrent state; stored BF16 parameters/scales. This image has not certified that profile.",
+      "dtype_expectations": {
+        "activation": "F16",
+        "recurrent_state": "F32",
+        "stored_parameter": "BF16; execution cast recorded, not assumed",
+        "fp8_weight": "F8_E4M3"
+      },
+      "notes": "Reopen image source mapping only; missing 27B package image and overlay identity must be resolved before native admission.",
+      "dtypes": {
+        "arg.x": [
+          "F16"
+        ]
+      }
+    },
+    {
+      "id": "image.VocabParallelEmbedding.forward",
+      "source_id": "reopen-image",
+      "models": [
+        "27b"
+      ],
+      "u_rows": [
+        "U2"
+      ],
+      "stage2_u_rows": [],
+      "module": "vllm.model_executor.layers.vocab_parallel_embedding",
+      "class": "VocabParallelEmbedding",
+      "method": "forward",
+      "file": "vllm/model_executor/layers/vocab_parallel_embedding.py",
+      "line": 510,
+      "sha256": "d42574ac79bd7d7847548784d2272c7c40cbd93fe6cdadb15e8c2db79d2074d7",
+      "image_file_sha256": "d42574ac79bd7d7847548784d2272c7c40cbd93fe6cdadb15e8c2db79d2074d7",
+      "inputs": [
+        "arg.input_"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state": [],
+      "requires_state_views": false,
+      "state_paths": [],
+      "operator": "linear",
+      "arguments": [
+        "self",
+        "input_"
+      ],
+      "rounding": "27B required: F16 activations/KV, F32 recurrent state; stored BF16 parameters/scales. This image has not certified that profile.",
+      "dtype_expectations": {
+        "activation": "F16",
+        "recurrent_state": "F32",
+        "stored_parameter": "BF16; execution cast recorded, not assumed",
+        "fp8_weight": "F8_E4M3"
+      },
+      "notes": "Reopen image source mapping only; missing 27B package image and overlay identity must be resolved before native admission.",
+      "dtypes": {
+        "arg.input_": [
+          "I32",
+          "I64"
+        ]
+      }
+    },
+    {
+      "id": "image.RMSNorm.forward_xpu",
+      "source_id": "reopen-image",
+      "models": [
+        "27b"
+      ],
+      "u_rows": [
+        "U3"
+      ],
+      "stage2_u_rows": [],
+      "module": "vllm.model_executor.layers.layernorm",
+      "class": "RMSNorm",
+      "method": "forward_xpu",
+      "file": "vllm/model_executor/layers/layernorm.py",
+      "line": 117,
+      "sha256": "4126258bf85aa3af54c78cfbf2a0f32000491e42be37661f2d1ac9f0beea00f3",
+      "image_file_sha256": "4126258bf85aa3af54c78cfbf2a0f32000491e42be37661f2d1ac9f0beea00f3",
+      "inputs": [
+        "arg.x",
+        "arg.residual",
+        "arg.self.weight"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state": [],
+      "requires_state_views": false,
+      "state_paths": [],
+      "operator": "rmsnorm",
+      "arguments": [
+        "self",
+        "x",
+        "residual"
+      ],
+      "rounding": "27B required: F16 activations/KV, F32 recurrent state; stored BF16 parameters/scales. This image has not certified that profile.",
+      "dtype_expectations": {
+        "activation": "F16",
+        "recurrent_state": "F32",
+        "stored_parameter": "BF16; execution cast recorded, not assumed",
+        "fp8_weight": "F8_E4M3"
+      },
+      "notes": "Reopen image source mapping only; missing 27B package image and overlay identity must be resolved before native admission.",
+      "dtypes": {
+        "arg.x": [
+          "F16"
+        ]
+      }
+    },
+    {
+      "id": "image.GemmaRMSNorm.forward_native",
+      "source_id": "reopen-image",
+      "models": [
+        "27b"
+      ],
+      "u_rows": [
+        "U3"
+      ],
+      "stage2_u_rows": [],
+      "module": "vllm.model_executor.layers.layernorm",
+      "class": "GemmaRMSNorm",
+      "method": "forward_native",
+      "file": "vllm/model_executor/layers/layernorm.py",
+      "line": 151,
+      "sha256": "4126258bf85aa3af54c78cfbf2a0f32000491e42be37661f2d1ac9f0beea00f3",
+      "image_file_sha256": "4126258bf85aa3af54c78cfbf2a0f32000491e42be37661f2d1ac9f0beea00f3",
+      "inputs": [
+        "arg.x",
+        "arg.residual",
+        "arg.self.weight"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state": [],
+      "requires_state_views": false,
+      "state_paths": [],
+      "operator": "rmsnorm",
+      "arguments": [
+        "self",
+        "x",
+        "residual"
+      ],
+      "rounding": "27B required: F16 activations/KV, F32 recurrent state; stored BF16 parameters/scales. This image has not certified that profile.",
+      "dtype_expectations": {
+        "activation": "F16",
+        "recurrent_state": "F32",
+        "stored_parameter": "BF16; execution cast recorded, not assumed",
+        "fp8_weight": "F8_E4M3"
+      },
+      "notes": "Reopen image source mapping only; missing 27B package image and overlay identity must be resolved before native admission.",
+      "dtypes": {
+        "arg.x": [
+          "F16"
+        ]
+      }
+    },
+    {
+      "id": "image.RMSNormGated.forward_xpu",
+      "source_id": "reopen-image",
+      "models": [
+        "27b"
+      ],
+      "u_rows": [
+        "U3"
+      ],
+      "stage2_u_rows": [],
+      "module": "vllm.model_executor.layers.layernorm",
+      "class": "RMSNormGated",
+      "method": "forward_xpu",
+      "file": "vllm/model_executor/layers/layernorm.py",
+      "line": 331,
+      "sha256": "4126258bf85aa3af54c78cfbf2a0f32000491e42be37661f2d1ac9f0beea00f3",
+      "image_file_sha256": "4126258bf85aa3af54c78cfbf2a0f32000491e42be37661f2d1ac9f0beea00f3",
+      "inputs": [
+        "arg.x",
+        "arg.z",
+        "arg.self.weight"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state": [],
+      "requires_state_views": false,
+      "state_paths": [],
+      "operator": "rmsnorm",
+      "arguments": [
+        "self",
+        "x",
+        "z"
+      ],
+      "rounding": "27B required: F16 activations/KV, F32 recurrent state; stored BF16 parameters/scales. This image has not certified that profile.",
+      "dtype_expectations": {
+        "activation": "F16",
+        "recurrent_state": "F32",
+        "stored_parameter": "BF16; execution cast recorded, not assumed",
+        "fp8_weight": "F8_E4M3"
+      },
+      "notes": "Reopen image source mapping only; missing 27B package image and overlay identity must be resolved before native admission.",
+      "dtypes": {
+        "arg.x": [
+          "F16"
+        ]
+      }
+    },
+    {
+      "id": "image.SiluAndMul.forward_xpu",
+      "source_id": "reopen-image",
+      "models": [
+        "27b"
+      ],
+      "u_rows": [
+        "U3"
+      ],
+      "stage2_u_rows": [],
+      "module": "vllm.model_executor.layers.activation",
+      "class": "SiluAndMul",
+      "method": "forward_xpu",
+      "file": "vllm/model_executor/layers/activation.py",
+      "line": 150,
+      "sha256": "3cbefe5f03c7f5223327ce1f18d3f5a1782964a07d64d7994a1e9e64c0e345d8",
+      "image_file_sha256": "3cbefe5f03c7f5223327ce1f18d3f5a1782964a07d64d7994a1e9e64c0e345d8",
+      "inputs": [
+        "arg.x"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state": [],
+      "requires_state_views": false,
+      "state_paths": [],
+      "operator": "silu",
+      "arguments": [
+        "self",
+        "x"
+      ],
+      "rounding": "27B required: F16 activations/KV, F32 recurrent state; stored BF16 parameters/scales. This image has not certified that profile.",
+      "dtype_expectations": {
+        "activation": "F16",
+        "recurrent_state": "F32",
+        "stored_parameter": "BF16; execution cast recorded, not assumed",
+        "fp8_weight": "F8_E4M3"
+      },
+      "notes": "Reopen image source mapping only; missing 27B package image and overlay identity must be resolved before native admission.",
+      "dtypes": {
+        "arg.x": [
+          "F16"
+        ]
+      }
+    },
+    {
+      "id": "image.QwenGatedDeltaNetAttention.forward_xpu",
+      "source_id": "reopen-image",
+      "models": [
+        "27b"
+      ],
+      "u_rows": [
+        "U4"
+      ],
+      "stage2_u_rows": [],
+      "module": "vllm.model_executor.layers.mamba.gdn.qwen_gdn_linear_attn",
+      "class": "QwenGatedDeltaNetAttention",
+      "method": "forward_xpu",
+      "file": "vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py",
+      "line": 976,
+      "sha256": "b80f8e6f3fff442fb880aebb3209c52f814f66490009f4ac4003de603576d10a",
+      "image_file_sha256": "b80f8e6f3fff442fb880aebb3209c52f814f66490009f4ac4003de603576d10a",
+      "inputs": [
+        "arg.hidden_states",
+        "arg.self.A_log",
+        "arg.self.dt_bias",
+        "arg.self.conv1d.weight"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state": [],
+      "requires_state_views": true,
+      "state_paths": [],
+      "operator": "gdn_recurrence",
+      "arguments": [
+        "self",
+        "hidden_states"
+      ],
+      "rounding": "27B required: F16 activations/KV, F32 recurrent state; stored BF16 parameters/scales. This image has not certified that profile.",
+      "dtype_expectations": {
+        "activation": "F16",
+        "recurrent_state": "F32",
+        "stored_parameter": "BF16; execution cast recorded, not assumed",
+        "fp8_weight": "F8_E4M3"
+      },
+      "notes": "Reopen image source mapping only; missing 27B package image and overlay identity must be resolved before native admission.",
+      "dtypes": {
+        "arg.hidden_states": [
+          "F16"
+        ],
+        "arg.self.A_log": [
+          "F32",
+          "BF16",
+          "F16"
+        ],
+        "arg.self.dt_bias": [
+          "F32",
+          "BF16",
+          "F16"
+        ]
+      }
+    },
+    {
+      "id": "image.Qwen3NextAttention._project_qkv_gate",
+      "source_id": "reopen-image",
+      "models": [
+        "27b"
+      ],
+      "u_rows": [
+        "U5"
+      ],
+      "stage2_u_rows": [],
+      "module": "vllm.model_executor.models.qwen3_next",
+      "class": "Qwen3NextAttention",
+      "method": "_project_qkv_gate",
+      "file": "vllm/model_executor/models/qwen3_next.py",
+      "line": 386,
+      "sha256": "4fa5112ac2bf7886d41d9e1f6c3da8793620d1ec49c961b31e9609459a6a7f7a",
+      "image_file_sha256": "4fa5112ac2bf7886d41d9e1f6c3da8793620d1ec49c961b31e9609459a6a7f7a",
+      "inputs": [
+        "arg.qkv",
+        "arg.positions"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state": [],
+      "requires_state_views": false,
+      "state_paths": [],
+      "operator": "attention",
+      "arguments": [
+        "self",
+        "qkv",
+        "positions"
+      ],
+      "rounding": "27B required: F16 activations/KV, F32 recurrent state; stored BF16 parameters/scales. This image has not certified that profile.",
+      "dtype_expectations": {
+        "activation": "F16",
+        "recurrent_state": "F32",
+        "stored_parameter": "BF16; execution cast recorded, not assumed",
+        "fp8_weight": "F8_E4M3"
+      },
+      "notes": "Reopen image source mapping only; missing 27B package image and overlay identity must be resolved before native admission.",
+      "dtypes": {
+        "arg.positions": [
+          "I32",
+          "I64"
+        ]
+      }
+    },
+    {
+      "id": "image.Qwen3NextAttention.forward",
+      "source_id": "reopen-image",
+      "models": [
+        "27b"
+      ],
+      "u_rows": [
+        "U5"
+      ],
+      "stage2_u_rows": [],
+      "module": "vllm.model_executor.models.qwen3_next",
+      "class": "Qwen3NextAttention",
+      "method": "forward",
+      "file": "vllm/model_executor/models/qwen3_next.py",
+      "line": 448,
+      "sha256": "4fa5112ac2bf7886d41d9e1f6c3da8793620d1ec49c961b31e9609459a6a7f7a",
+      "image_file_sha256": "4fa5112ac2bf7886d41d9e1f6c3da8793620d1ec49c961b31e9609459a6a7f7a",
+      "inputs": [
+        "arg.positions",
+        "arg.hidden_states"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state": [],
+      "requires_state_views": true,
+      "state_paths": [],
+      "operator": "attention",
+      "arguments": [
+        "self",
+        "positions",
+        "hidden_states"
+      ],
+      "rounding": "27B required: F16 activations/KV, F32 recurrent state; stored BF16 parameters/scales. This image has not certified that profile.",
+      "dtype_expectations": {
+        "activation": "F16",
+        "recurrent_state": "F32",
+        "stored_parameter": "BF16; execution cast recorded, not assumed",
+        "fp8_weight": "F8_E4M3"
+      },
+      "notes": "Reopen image source mapping only; missing 27B package image and overlay identity must be resolved before native admission.",
+      "dtypes": {
+        "arg.positions": [
+          "I32",
+          "I64"
+        ],
+        "arg.hidden_states": [
+          "F16"
+        ]
+      }
+    },
+    {
+      "id": "image.RotaryEmbedding.forward_xpu",
+      "source_id": "reopen-image",
+      "models": [
+        "27b"
+      ],
+      "u_rows": [
+        "U5"
+      ],
+      "stage2_u_rows": [],
+      "module": "vllm.model_executor.layers.rotary_embedding.base",
+      "class": "RotaryEmbedding",
+      "method": "forward_xpu",
+      "file": "vllm/model_executor/layers/rotary_embedding/base.py",
+      "line": 273,
+      "sha256": "c81804498f08f072356a26b41967f211475df2694dabf5da9f488c074d1fdef5",
+      "image_file_sha256": "c81804498f08f072356a26b41967f211475df2694dabf5da9f488c074d1fdef5",
+      "inputs": [
+        "arg.positions",
+        "arg.query",
+        "arg.key",
+        "arg.self.cos_sin_cache"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state": [],
+      "requires_state_views": false,
+      "state_paths": [],
+      "operator": "rope",
+      "arguments": [
+        "self",
+        "positions",
+        "query",
+        "key"
+      ],
+      "rounding": "27B required: F16 activations/KV, F32 recurrent state; stored BF16 parameters/scales. This image has not certified that profile.",
+      "dtype_expectations": {
+        "activation": "F16",
+        "recurrent_state": "F32",
+        "stored_parameter": "BF16; execution cast recorded, not assumed",
+        "fp8_weight": "F8_E4M3"
+      },
+      "notes": "Reopen image source mapping only; missing 27B package image and overlay identity must be resolved before native admission.",
+      "dtypes": {
+        "arg.positions": [
+          "I32",
+          "I64"
+        ]
+      }
+    },
+    {
+      "id": "image.LogitsProcessor._get_logits",
+      "source_id": "reopen-image",
+      "models": [
+        "27b"
+      ],
+      "u_rows": [
+        "U6"
+      ],
+      "stage2_u_rows": [],
+      "module": "vllm.model_executor.layers.logits_processor",
+      "class": "LogitsProcessor",
+      "method": "_get_logits",
+      "file": "vllm/model_executor/layers/logits_processor.py",
+      "line": 180,
+      "sha256": "6b0603d67b0c756253c2fdc882a3896d2e873a16e9aa2ef877aabca8d36bdb5f",
+      "image_file_sha256": "6b0603d67b0c756253c2fdc882a3896d2e873a16e9aa2ef877aabca8d36bdb5f",
+      "inputs": [
+        "arg.hidden_states",
+        "arg.embedding_bias"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state": [],
+      "requires_state_views": false,
+      "state_paths": [],
+      "operator": "linear",
+      "arguments": [
+        "self",
+        "hidden_states",
+        "lm_head",
+        "embedding_bias",
+        "skip_gather"
+      ],
+      "rounding": "27B required: F16 activations/KV, F32 recurrent state; stored BF16 parameters/scales. This image has not certified that profile.",
+      "dtype_expectations": {
+        "activation": "F16",
+        "recurrent_state": "F32",
+        "stored_parameter": "BF16; execution cast recorded, not assumed",
+        "fp8_weight": "F8_E4M3"
+      },
+      "notes": "Reopen image source mapping only; missing 27B package image and overlay identity must be resolved before native admission.",
+      "dtypes": {
+        "arg.hidden_states": [
+          "F16"
+        ]
+      }
+    },
+    {
+      "id": "image.Sampler.greedy_sample",
+      "source_id": "reopen-image",
+      "models": [
+        "27b"
+      ],
+      "u_rows": [
+        "U6"
+      ],
+      "stage2_u_rows": [],
+      "module": "vllm.v1.sample.sampler",
+      "class": "Sampler",
+      "method": "greedy_sample",
+      "file": "vllm/v1/sample/sampler.py",
+      "line": 241,
+      "sha256": "f95805b2c6d06218c724826aa5f881a606e8d0a534a566aee7c85948520dd216",
+      "image_file_sha256": "f95805b2c6d06218c724826aa5f881a606e8d0a534a566aee7c85948520dd216",
+      "inputs": [
+        "arg.logits"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state": [],
+      "requires_state_views": false,
+      "state_paths": [],
+      "operator": "argmax",
+      "arguments": [
+        "logits"
+      ],
+      "rounding": "27B required: F16 activations/KV, F32 recurrent state; stored BF16 parameters/scales. This image has not certified that profile.",
+      "dtype_expectations": {
+        "activation": "F16",
+        "recurrent_state": "F32",
+        "stored_parameter": "BF16; execution cast recorded, not assumed",
+        "fp8_weight": "F8_E4M3"
+      },
+      "notes": "Reopen image source mapping only; missing 27B package image and overlay identity must be resolved before native admission.",
+      "dtypes": {
+        "result": [
+          "I64"
+        ]
+      }
+    },
+    {
+      "id": "image.Qwen3_5MultiTokenPredictor.forward",
+      "source_id": "reopen-image",
+      "models": [
+        "27b"
+      ],
+      "u_rows": [
+        "U7"
+      ],
+      "stage2_u_rows": [],
+      "module": "vllm.model_executor.models.qwen3_5_mtp",
+      "class": "Qwen3_5MultiTokenPredictor",
+      "method": "forward",
+      "file": "vllm/model_executor/models/qwen3_5_mtp.py",
+      "line": 147,
+      "sha256": "a7550c4954899b38cecc536633c0fffd04820ed802610fb28cd4d79971b4f1f1",
+      "image_file_sha256": "a7550c4954899b38cecc536633c0fffd04820ed802610fb28cd4d79971b4f1f1",
+      "inputs": [
+        "arg.input_ids",
+        "arg.positions",
+        "arg.hidden_states",
+        "arg.inputs_embeds"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state": [],
+      "requires_state_views": true,
+      "state_paths": [],
+      "operator": "mtp_forward",
+      "arguments": [
+        "self",
+        "input_ids",
+        "positions",
+        "hidden_states",
+        "intermediate_tensors",
+        "inputs_embeds",
+        "spec_step_idx"
+      ],
+      "rounding": "27B required: F16 activations/KV, F32 recurrent state; stored BF16 parameters/scales. This image has not certified that profile.",
+      "dtype_expectations": {
+        "activation": "F16",
+        "recurrent_state": "F32",
+        "stored_parameter": "BF16; execution cast recorded, not assumed",
+        "fp8_weight": "F8_E4M3"
+      },
+      "notes": "Reopen image source mapping only; missing 27B package image and overlay identity must be resolved before native admission.",
+      "dtypes": {
+        "arg.input_ids": [
+          "I32",
+          "I64"
+        ],
+        "arg.positions": [
+          "I32",
+          "I64"
+        ],
+        "arg.hidden_states": [
+          "F16"
+        ]
+      }
+    },
+    {
+      "id": "image.Qwen3_5MTP.compute_logits",
+      "source_id": "reopen-image",
+      "models": [
+        "27b"
+      ],
+      "u_rows": [
+        "U7"
+      ],
+      "stage2_u_rows": [],
+      "module": "vllm.model_executor.models.qwen3_5_mtp",
+      "class": "Qwen3_5MTP",
+      "method": "compute_logits",
+      "file": "vllm/model_executor/models/qwen3_5_mtp.py",
+      "line": 303,
+      "sha256": "a7550c4954899b38cecc536633c0fffd04820ed802610fb28cd4d79971b4f1f1",
+      "image_file_sha256": "a7550c4954899b38cecc536633c0fffd04820ed802610fb28cd4d79971b4f1f1",
+      "inputs": [
+        "arg.hidden_states"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "state": [],
+      "requires_state_views": true,
+      "state_paths": [],
+      "operator": "linear",
+      "arguments": [
+        "self",
+        "hidden_states",
+        "spec_step_idx"
+      ],
+      "rounding": "27B required: F16 activations/KV, F32 recurrent state; stored BF16 parameters/scales. This image has not certified that profile.",
+      "dtype_expectations": {
+        "activation": "F16",
+        "recurrent_state": "F32",
+        "stored_parameter": "BF16; execution cast recorded, not assumed",
+        "fp8_weight": "F8_E4M3"
+      },
+      "notes": "Reopen image source mapping only; missing 27B package image and overlay identity must be resolved before native admission.",
+      "dtypes": {
+        "arg.hidden_states": [
+          "F16"
+        ]
+      }
+    }
+  ],
+  "missing": [
+    "A367 has no certified image digest. Reopen image and extension are different; 27B package image absent locally (not pulled).",
+    "Native worker session: actual CPU positions/valid rows/layer/rank/MNK; bounded cache slots and PLE table rows; before-construction eager guards; per-rank token collection and graceful teardown. run() refuses until this exists.",
+    "U1 fused oneDNN dequant/reduction and Flash FP8 activation-quant intermediates are not materialized by Python; native fixture/reference coverage remains absent.",
+    "U2 post-load parameter census/cast history is not complete; boundary snapshots do not observe prior loads.",
+    "U3/U5 fused norm/gate, QSA pre-indexer pooled intermediates and output-gate intermediate require additional kernel evidence; outer module outputs do not expose them.",
+    "U4 every serial GDN row state/checkpoint and accepted-prefix replay are internal to the rebuilt extension; outer before/after hooks cannot extract each row without an observation-neutral native mechanism.",
+    "U6 tie/NaN fixtures and full-vocabulary/rank collection, MoE top10/EP and PLE real-row coverage remain to be executed.",
+    "U7 target verification/acceptance/rollback state bindings and full proposal schedule are not supplied by MTP forward hooks.",
+    "Independent CPU reference-call normalization per native layout remains pending; raw boundary captures deliberately set reference=null and replay UNTESTED.",
+    "Eager neutrality, same/fresh-process full-token repeats and naturally missing M6 require separate native gates; host halt and owner window remain in force."
+  ],
+  "symbol_counts": {
+    "U1": 4,
+    "U2": 4,
+    "U3": 9,
+    "U4": 6,
+    "U5": 12,
+    "U6": 5,
+    "U7": 5
+  }
+}
