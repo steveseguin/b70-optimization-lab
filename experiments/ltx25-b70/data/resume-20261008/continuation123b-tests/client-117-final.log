@@ -1,0 +1,23 @@
+PASS C1 117 frame/97 cone+overlap+prep: qualification re-derived with the 117 gate, 5 stream117 chunks, exit 0 rc=0 rows=5 probs=[] last=['[c112 05:36:43.142] clean stop: 5 chunks this run, next stream_seq 5, next manifest seq 5']
+PASS C2 stage buckets show anchor-decode(chain), the off-chain display decode, precompute waits and the go wait ['[c112 05:36:42.210] seq 0 stream_seq 0 scene boata seed 11400000 submit->preview 0.330 s submit->anchor 0.108 s [queue 0.00 text+A-prep 0.00 samplerA 0.00 upsample+B-prep 0.00 samplerB 0.00 anchor-decode(chain) 0.05 anchor-handoff 0.00 receipt 0.00 go-wait(off-chain) 0.02 display-decode(off-chain) 0.05 decode-tail(off-chain) 0.10 preview(off-chain) 0.00] anchor 299696c849ae']
+PASS C3 receipts carry the levers; status packet 117 with the lever features {'latent_anchor': False, 'mixed_anchor': False, 'guide_anchor': False, 'frame_anchor': True, 'decode_thread': True, 'async_preview': True, 'chain_reset': True, 'anchor_diagnostics': True, 'sharpness_diagnostic': True, 'chunk_length_choice': True, 'text_reuse_default_on': True, 'video_first_handoff': True, 'decoder_graph': True, 'cone_anchor_decode': True, 'bencode_overlap': True, 'prep_ahead': True, 'chunk_121': True}
+PASS C4 117 frame/121: qualification + 4 chunks; anchored lines deliver 120 new frames (5.0 s), exit 0 rc=0 probs=[] last=['[c112 05:36:47.490] clean stop: 4 chunks this run, next stream_seq 4, next manifest seq 4']
+PASS C5.0 levers full/0/0: qualification re-derived with these levers, 3 chunks, exit 0 rc=0 probs=[] last=['[c112 05:36:51.404] clean stop: 3 chunks this run, next stream_seq 3, next manifest seq 3']
+PASS C5.1 levers cone/0/0: qualification re-derived with these levers, 3 chunks, exit 0 rc=0 probs=[] last=['[c112 05:36:55.183] clean stop: 3 chunks this run, next stream_seq 3, next manifest seq 3']
+PASS C5.2 levers full/1/0: qualification re-derived with these levers, 3 chunks, exit 0 rc=0 probs=[] last=['[c112 05:36:58.918] clean stop: 3 chunks this run, next stream_seq 3, next manifest seq 3']
+PASS C5.3 levers full/0/1: qualification re-derived with these levers, 3 chunks, exit 0 rc=0 probs=[] last=['[c112 05:37:02.742] clean stop: 3 chunks this run, next stream_seq 3, next manifest seq 3']
+PASS C5.4 levers cone/1/0: qualification re-derived with these levers, 3 chunks, exit 0 rc=0 probs=[] last=['[c112 05:37:06.571] clean stop: 3 chunks this run, next stream_seq 3, next manifest seq 3']
+PASS C6 --expect-anchor-decode cone against a full/1/1 f49 server refuses at preflight (exit 8), nothing posted rc=8
+PASS C6 --expect-bencode-overlap 0 against a full/1/1 f49 server refuses at preflight (exit 8), nothing posted rc=8
+PASS C6 --expect-prep-ahead 0 against a full/1/1 f49 server refuses at preflight (exit 8), nothing posted rc=8
+PASS C6 --expect-frames 121 against a full/1/1 f49 server refuses at preflight (exit 8), nothing posted rc=8
+PASS C7 decoder_graph 0 / anchor_decode full streams 2 chunks with eager full-decode lines rc=0 probs=[]
+PASS C8 the lever flags are refused for --packet 116b (argument check, exit 1-2) rc=1
+PASS C9 a verdict whose repeat-chain stage B did not use the precomputed encode fails; client exit 13 rc=13 last=['[c112 05:37:13.241] no retry, no restart: inspect the evidence before running again']
+PASS C10 a server that claims a pass over that lever failure is refused by the re-derivation (exit 13) rc=13 last=['[c112 05:37:16.221] no retry, no restart: inspect the evidence before running again']
+PASS C11 a 116b client (117 manifest sha) refuses a 117 server at preflight, exit 8, nothing posted rc=8
+PASS C12 a 117 client against a 116b server refuses at preflight (manifest identity), exit 8 rc=8
+PASS C13 a 117 client with the 116b manifest sha still refuses (no lever status / needs a packet 117 server), exit 8 rc=8
+PASS C14 --packet 117 with the 116b contract module is refused (module pin), exit 8 rc=8
+
+21/21 passed; work in /tmp/ltx-c117-test-vt5n4tra

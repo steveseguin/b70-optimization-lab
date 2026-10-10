@@ -1,17 +1,22 @@
 # Current Workspace State
 
-**2026-10-10, packet 123b built on CPU; full regression checks still running.**
-The new packet counts only this run's disk use. Other builds and logs no longer
-spend its allowance; the separate 50 GiB free-space floor stays unchanged.
-The default allowance is still 3 GiB. A new launch option accepts 1–64 GiB,
-and the client must expect the same value. Packet 123 remains its sealed parent;
-its residency option, atomic previews and preview-failure status are preserved.
-The first seal verified 2,064 files recursively with no Python caches. Focused
-storage, client and synthetic HTTP checks pass; full inherited suites are still
-running. No model server, GPU, launch, real preflight, port 8188, unit, signal,
-existing-run or live-client write was performed. Live operations remain with
-the coordinator. [Design and launch details](experiments/ltx25-b70/notes/2026-10-10-continuation123b-storage.md)
-and [build receipt](experiments/ltx25-b70/data/resume-20261008/continuation123b-build.json).
+**2026-10-10, packet 123b sealed on CPU; live operations remain with the coordinator.**
+The packet now counts this run's own disk use, so other builds and logs cannot
+spend its allowance. The separate 50 GiB free-space floor stays unchanged.
+The allowance defaults to 3 GiB; `LTX_RUN_WRITE_ALLOWANCE_GIB` accepts 1–64 GiB,
+and the client must expect the same value. Packet 123 remains the unchanged
+parent. Its residency option, atomic previews and exit-7 status are preserved;
+storage refusal still returns HTTP 409 and stops the client with exit 15.
+The seal is `5bdc0956…a74d433`: 2,064 files verified recursively, no Python
+caches. Validated: 592 recovery cases (full discovery plus three corrected
+fixture rechecks), 1,238 client checks and 10 mocked preflight tests. Historical
+client-wrapper assertions were updated to match the coordinator's existing
+reset-failed lines; no wrapper or unit was operated.
+No GPU work, model server, launch, real preflight, port 8188, unit, signal,
+existing-run write, live-client write or host change was performed. Device
+qualification and the planned swap remain the coordinator's work.
+[Design and launch details](experiments/ltx25-b70/notes/2026-10-10-continuation123b-storage.md)
+and [sealed build receipt](experiments/ltx25-b70/data/resume-20261008/continuation123b-build.json).
 
 **2026-10-10 05:22 UTC, 145-frame session 2 live (verdict 9a57f69a751f); packet 123 sealed; 123b (storage-allowance fix) in build; then one swap to 145 + residency move, then 169.**
 Codex sealed 123 (commit bbcdbc8ce; manifest `db5ea277…340d`; 570 recovery / 995 client / 10 preflight CPU checks, 2,044 files): atomic

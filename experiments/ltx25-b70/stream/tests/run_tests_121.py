@@ -213,7 +213,10 @@ check('client wrapper caps OMP', '--setenv=OMP_NUM_THREADS=4' in launcher)
 check('client wrapper binds all three options', all(flag in launcher for flag in (
     '--expect-display-schedule', '--expect-anchor-read-ahead', '--expect-snapshot-schedule', '--expect-display-device')))
 check('client wrapper workdir uses121 default', 'LTX_STREAM_WORKDIR:-/home/steve/ltx-stream/s121-live01' in launcher)
-check('client wrapper does not reset units', 'reset-failed' not in launcher)
+check('client wrapper clears only its own failed state and never restarts automatically',
+      'systemctl --user reset-failed ltx121-stream-client-20261010 2>/dev/null' in launcher
+      and '--property=Restart=no' in launcher
+      and 'systemctl --user restart ' not in launcher and 'systemctl --user stop ' not in launcher)
 for frames in (121, 145):
     for device in ('xpu:3', 'xpu:2'):
         st = dict(STATUS, frames=frames, display_device=device)

@@ -1,0 +1,13 @@
+PASS A1 113 qualification + 8 chunks: exit 0, previews verified against their records, chain intact rc=0 rows=8 probs=[]
+PASS A2 the next chunk is submitted before the previous preview is written (preview off the chain) submitted_before_prev_preview=7
+PASS A3 previews written in order ['stream112-s00000000', 'stream112-s00000001', 'stream112-s00000002', 'stream112-s00000003', 'stream112-s00000004', 'stream112-s00000005', 'stream112-s00000006', 'stream112-s00000007']
+PASS A4 resume on the same 113 server continues the chain rc=0
+PASS R1 --reset-every-chunks 3: resets at 3, 6, 9; unanchored; no skip_first_frames on resets rc=0 resets=[3, 6, 9] skips=[0, 1, 1, 0, 1, 1, 0, 1, 1, 0]
+PASS R2 after a reset the chain continues from the reset chunk's anchor 
+PASS R3 --reset-on-scene-change: resets exactly at the scene boundaries 3, 8, 10 rc=0 resets=[3, 8, 10]
+PASS R4 reset flags with --packet 112 are refused before any request rc=1
+PASS P1 a preview record that never appears -> exit 7 within the --save-wait bound; chunk 2 not manifested rc=7 rows=2 3.4s
+PASS P2 a preview write failure latches the server -> client exit 6 (failure file) or 2, rows stop at 3 rc=2 rows=3
+PASS P3 a 112 client against a 113 server refuses at preflight (manifest identity) rc=8
+
+11/11 passed; work in /tmp/ltx-c113-test-ml2o4m17

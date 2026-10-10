@@ -64,3 +64,48 @@ device opens. Their shutdown is cooperative, with no process signals. No model
 server, GPU work, launch, real preflight, systemd/unit operation, port 8188
 connection, render-device open, existing-run write, live-client write or host
 setting change was performed. No device qualification or speed claim follows.
+
+## CPU validation
+
+Validated **592 recovery cases, 1,238 client checks and 10 mocked preflight
+cases**. Counts exclude duplicate rechecks. The complete recovery discovery
+ran all 592 cases: 589 passed immediately. Three copied fixtures needed changes:
+the parent expectation still said 122, the walk-mode options dictionary lacked
+the new allowance, and a mock deployed directory omitted `run_storage.py`.
+The corrected parent module passed 5/5, the walk-mode case passed 1/1, and the
+entire transient-budget module passed 28/28. No sealed production source changed
+for these corrections. Earlier pre-seal development failures are retained too.
+
+All 21 historical/new client suites were run. Four old wrapper assertions
+(119–122) predated coordinator commit `e564dfe12`, which added client
+`reset-failed` lines. Tests now recognize that existing own-client line and
+still require `Restart=no` and no stop/restart command. The four full corrected
+modules pass 70/70, 101/101, 112/112 and 138/138. No wrapper was changed or run.
+The new 123b client suites pass 205 contract checks and 38 synthetic HTTP checks,
+including a nondefault 8 GiB allowance, expectation refusal, HTTP409/exit15 and
+preview500/exit7. The real integration class also passed a separate CPU harness
+with 8 GiB recorded in nine qualification and two stream receipts.
+
+The source commit is `af43e4e73`; the follow-up validation commit binds the logs,
+fixture corrections and final receipt. Recursive verification covers 2,064 files
+and their parent chain. Parent 123's manifest and author tree are unchanged;
+11 selected residency, native-arithmetic and atomic-preview files are identical.
+There are no `__pycache__` directories or `.pyc` files in the new author or packet
+trees. Both shell wrappers pass syntax checking without execution.
+
+Commands used (CPU only, output redirected to the build receipt's logs):
+
+```text
+/home/steve/.venvs/ltx25-baseline/bin/python -B recovery/20261010-continuation123b-stream/run_tests_123b.py
+/home/steve/.venvs/ltx25-baseline/bin/python -B recovery/20261010-continuation123b-stream/run_client_suites_123b.py
+/home/steve/.venvs/ltx25-baseline/bin/python -B recovery/20261010-continuation123b-stream/runtime_packet.py --inspect-assembly
+/home/steve/.venvs/ltx25-baseline/bin/python -B recovery/20261010-continuation123b-stream/runtime_packet.py --build --input-inventory-sha256 ab9c909e58bf10c7b77d67902c740190fcf770c8e5b0ad63a5891b8e8dffd1a1
+/home/steve/.venvs/ltx25-baseline/bin/python -B recovery/20261010-continuation123b-stream/runtime_packet.py --verify-manifest-sha256 5bdc0956f69259a99ca82849280e73b8bd2a80e28ff421ce5d61122e8a74d433
+```
+
+Paths in this command list are relative to `experiments/ltx25-b70`.
+Build/verification invoked the same builder functions directly with these
+arguments; they never executed the launcher's live `--check-only` mode.
+The client batch writer uses exclusive log creation and refuses to overwrite
+an earlier suite log. The immutable packet builder likewise requires a new
+destination; do not rebuild over this seal.

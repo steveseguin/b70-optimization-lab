@@ -1,0 +1,31 @@
+test_145_request_cannot_reuse_121_identity (test_long_runtime.LongerRuntime.test_145_request_cannot_reuse_121_identity) ... ok
+test_dg0_three_chains_geometry_and_live_anchor (test_long_runtime.LongerRuntime.test_dg0_three_chains_geometry_and_live_anchor) ... FAIL
+test_dg0_xpu2_three_chains_and_live_anchor (test_long_runtime.LongerRuntime.test_dg0_xpu2_three_chains_and_live_anchor) ... FAIL
+test_new_length_measured_geometry_mismatch_halts (test_long_runtime.LongerRuntime.test_new_length_measured_geometry_mismatch_halts) ... ok
+test_new_length_repeat_chain_cone_mismatch_halts (test_long_runtime.LongerRuntime.test_new_length_repeat_chain_cone_mismatch_halts) ... ok
+test_replica_length_scope (test_long_runtime.LongerRuntime.test_replica_length_scope) ... ok
+
+======================================================================
+FAIL: test_dg0_three_chains_geometry_and_live_anchor (test_long_runtime.LongerRuntime.test_dg0_three_chains_geometry_and_live_anchor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation123b-stream/test_long_runtime.py", line 23, in test_dg0_three_chains_geometry_and_live_anchor
+    self.check145(self.run145('--decoder-graph','0'))
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation123b-stream/test_long_runtime.py", line 14, in check145
+    self.assertTrue(data['verdict']['passed'], data['verdict'])
+AssertionError: False is not true : {'passed': False, 'failures': ['Invalid packet123 server options'], 'verdict_sha256': 'bdbc8df569734afe67be603b66f345ea2ad212d4dfaefa823021fec10dec0f44'}
+
+======================================================================
+FAIL: test_dg0_xpu2_three_chains_and_live_anchor (test_long_runtime.LongerRuntime.test_dg0_xpu2_three_chains_and_live_anchor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation123b-stream/test_long_runtime.py", line 28, in test_dg0_xpu2_three_chains_and_live_anchor
+    self.check145(data)
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation123b-stream/test_long_runtime.py", line 14, in check145
+    self.assertTrue(data['verdict']['passed'], data['verdict'])
+AssertionError: False is not true : {'passed': False, 'failures': ['Invalid packet123 server options'], 'verdict_sha256': 'f8e3e499be316fe18314cb2f62335760e31fc78390f25bc6c737578eabf137fe'}
+
+----------------------------------------------------------------------
+Ran 6 tests in 41.241s
+
+FAILED (failures=2)

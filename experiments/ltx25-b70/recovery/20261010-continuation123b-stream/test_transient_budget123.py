@@ -115,6 +115,7 @@ class PrelaunchBudget(unittest.TestCase):
             component = packet / 'resolution/components/stream_contract.py'
             component.parent.mkdir(parents=True)
             component.write_bytes(Path(c.__file__).read_bytes())
+            component.with_name('run_storage.py').write_bytes(Path(rp.__file__).with_name('run_storage.py').read_bytes())
             deployed = packet / 'launch/encoder_runtime_common.py'
             deployed.parent.mkdir()
             with patch.object(rp, '__file__', str(deployed)):

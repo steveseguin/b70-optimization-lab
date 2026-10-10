@@ -213,7 +213,10 @@ check('client wrapper caps OMP', '--setenv=OMP_NUM_THREADS=4' in launcher)
 check('client wrapper binds all three options', all(flag in launcher for flag in (
     '--expect-display-schedule', '--expect-anchor-read-ahead', '--expect-snapshot-schedule', '--expect-display-device')))
 check('client wrapper workdir uses120 default', 'LTX_STREAM_WORKDIR:-/home/steve/ltx-stream/s120-live01' in launcher)
-check('client wrapper does not reset units', 'reset-failed' not in launcher)
+check('client wrapper clears only its own failed state and never restarts automatically',
+      'systemctl --user reset-failed ltx120-stream-client-20261010 2>/dev/null' in launcher
+      and '--property=Restart=no' in launcher
+      and 'systemctl --user restart ' not in launcher and 'systemctl --user stop ' not in launcher)
 bad = [name for name, ok in RESULTS if not ok]
 print('\n%d/%d passed; CPU-only files in %s' % (len(RESULTS)-len(bad), len(RESULTS), TMP))
 raise SystemExit(1 if bad else 0)
