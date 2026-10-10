@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**2026-10-10 04:06 UTC, packet 121 (145-frame chunks) sealed; swap from 120 to its first arm (145 frames, dg0, display on xpu:3).**
+Codex sealed 121 (commit 11eec57ad; manifest `8f1d4e3b…44dd`; 461 recovery / 571 client / 10 preflight CPU checks; 1,980 files
+verified recursively; design `notes/2026-10-10-continuation121-stream-design.md`). Geometry at 145 frames: 6.04 s of video per
+anchored chunk, audio latent `[1,8,151,16]`, waveform `[1,2,288480]`; 169 frames stays disabled (conservative xpu:0 margin crosses
+its floor). Predicted period at 145: 5.55–6.10 s = 0.92–1.01 s/s. Estimated dg0/xpu:3 margins above floors: xpu:0 0.68–1.04 GiB,
+xpu:1 1.6–1.8, xpu:3 1.6–2.2 GiB. The 120 session (1.008 s/s over 100 periods, 121 chunks) is stopped by one controlled stop; the
+chain then archives names, probes health, rehearses and launches `launch-121.sh 145 frame 0 cone 1 1 fingerprint - sampler-a 0 full xpu:3`
+after the five-minute gap, client `start-client-121.sh 145 0 cone 1 1 fingerprint none sampler-a 0 full xpu:3` (work dir `s121-live01`).
+Qualification at 145 frames has no earlier reference: the three-chain identity is the gate. Second arm (next window): 145 frames
+with 120's dg1 cap 1.0 + eager display on the xpu:2 replica.
+
 **2026-10-10 03:58 UTC, packet 120 live at 121 frames: 5.029 s per 5.042 s chunk = 0.997 s/s on the first 28 periods; over 100 periods 5.082 s = 1.008 s/s (0.8 % above real time), exact.**
 Run `encoder-server-continuation-stream-120-frame-dg1-adcone-bo1-pa1-smfp-…-f121` (dg1 cap 1.0, eager display on a decoder-only
 replica on xpu:2, read-ahead 0, snapshots full), launched 03:43:18 UTC after the controlled stop of 118b dg0 session 3 (167 chunks,
