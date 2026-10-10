@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**2026-10-10 14:32 UTC, packet 133b sealed (helper and text oracle bundled under `launch/`; six sealed-import tests added); launching 133b at 145 with split36 + cone graph; 129 session 4 (≈ 250 chunks, exact) stopped by one controlled stop.**
+133b (commit f44f55a215; manifest `ed908a90…4fd3`; inner plan `b67b1a8f…ab7b`; 1,058 recovery incl. 6 sealed-import tests, 6,351 client,
+10 preflight, 22 output comparisons). Root cause of the 133 failure: the helper existed under `resolution/components/` and `source/scripts/`
+but neither was on the launcher's initial import path; the author-tree suites masked it. Launch (work dir `s133b-live01`):
+`LTX_TEXT_RESIDENCY=split36 LTX_CONE_GRAPH_MEMORY=text-shift LTX_AUDIO_RESIDENCY=legacy LTX_CONE_CAPTURE_RESERVE=parent LTX_DISPLAY_ALLOCATOR_RELEASE=off
+LTX_AUX_RESIDENCY=legacy LTX_DISPLAY_WORKER=serial LTX_MAINTENANCE_MODE=idle LTX_GC_INTERVAL_SECONDS=60 LTX_SNAPSHOT_DIGEST_CACHE=1
+LTX_STORAGE_SCAN_MODE=background LTX_RUN_WRITE_ALLOWANCE_GIB=16 launch-133b.sh 145 frame 1 cone 1 1 fingerprint - eager-display 0 full xpu:3`.
+
 **2026-10-10, packet 133b packaging repair sealed and fully CPU-validated; native qualification remains pending.**
 The launcher could not find a helper already bundled elsewhere in packet 133.
 133b puts the unchanged helper and its pinned oracle beside the launcher and
