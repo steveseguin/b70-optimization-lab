@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**2026-10-10 12:50 UTC, 132 at 145: the cone-graph capture was admitted for the first time, but the streaming floor then refused (xpu:3 9.10 GB free < 9.66 GB floor at qrepeat-c000001); no fault, no latch. The cone graph at 145 is closed as a lever under the current residency; 129 production relaunching (`s129-live03`).**
+With the display on the xpu:2 replica and the audio VAE/vocoder on xpu:2, the first cone capture fit (graph chunks 0–2 and repeat chunk 0 ran),
+but the captured pool (~4.5 GiB reserved) left xpu:3 at 9.10 GB before the next request against the 9 GiB (9.66 GB) pre-request floor
+(`native_safety.SafetyRefusal`, exactly the floor the owner set; not lowered). Codex's "1.05 GiB above the floor after growth" estimate was
+≈ 1.6 GB optimistic. xpu:3 carries a 10.15 GiB text shard; without moving text layers off the decode card the graph pool and the floor cannot
+coexist at 145. Decision: no further dg1 attempts at 145 with this residency; the production line stays 129 at 145 dg0 (0.92 s/s). Next design
+question (packet 133, Codex): text-encoder residency — text is only encoded on scene cuts (text reuse on), so a host-resident or xpu:2-only text
+encoder with an exact reload per cut could free 10 GiB on xpu:3 (cone graph, 169 frames) at a per-cut cost to be quantified.
+
 **2026-10-10 12:20 UTC, launching 132 at 145: audio VAE + vocoder moved to xpu:2 (+0.34 GiB on xpu:3), cone decoder graph, display on the xpu:2 replica; projected first-capture margin +0.33 GiB incl. the screening band.**
 Codex's 131 audit (commits cebbf51fd, 61e6b16bf): the allocator release reclaimed 0 bytes on xpu:3 (reserved stayed 17.03 GB); the two 121-frame
 captures give 4.506 GiB estimated growth at 145 (0.49 GiB under the inherited 5 GiB reserve, which stays because no 145 peak bound exists);
