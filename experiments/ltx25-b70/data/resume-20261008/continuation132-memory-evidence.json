@@ -1,0 +1,277 @@
+{
+  "schema": "ltx.continuation132.memory-evidence.v1",
+  "scope": "CPU regular files only; no GPU imports, device access, live operations or existing-run writes",
+  "sources": [
+    {
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-131-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ddxpu2-gc60-ssbackground-sdc1-mi-cmreplica-release/stream-halt.json",
+      "sha256": "491049fbd8c9b1de0f848f1a42c9ca2a05b7fe061617d944cdf193b3a59e2831"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-131-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ddxpu2-gc60-ssbackground-sdc1-mi-cmreplica-release/stream-decode-failure-stream131-qgraph-c000000.json",
+      "sha256": "de21c3fe59fb56af0761b9464bbbb0ec1da4d3e9c9ffc25df675dc77d7d3817b"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-119-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f121-dseager-display-ra1-ssfull/stream-freeze.json",
+      "sha256": "4f511776c3b94392e2fe4c19e10dd194fbf8f247240b63cb36f204a2c89a9afe"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-120-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f121-dseager-display-ra0-ssfull-ddxpu2/stream-freeze.json",
+      "sha256": "82d01d0c4cd3d44f4b190e81a02e2cc78f4019e33ec4a7b3b4cb01c2ab555e1d"
+    },
+    {
+      "path": "experiments/ltx25-b70/data/resume-20261008/continuation131-memory-analysis.json",
+      "sha256": "dc9ade002d2b318ec1073c1537aaa2f9ed64e5ce8da6d6062fa562488964872b"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-131/launch/serve-encoder.py",
+      "sha256": "a1b033dfe09e7c5cabc45cb8a43333bf6ee80f5ba837f3e961cdff22915168fb"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-131/source/comfy/model_management.py",
+      "sha256": "045ab96003386a43e647c8ab96f22fbf3be6c577e2fc578ea31c6faa22facbd5"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-131/source/comfy/sd.py",
+      "sha256": "b9cb73714681f787090deb0afdb18cc66549994efab32e236228bf981cfbe5f2"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-131/source/comfy/ldm/lightricks/vae/causal_video_autoencoder.py",
+      "sha256": "42010d800e6e49bdc69ae24587910b55b2418e26a1140bec7159a873276c45c2"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-131/source/comfy/ldm/lightricks/vae/na_diffusion_decoder.py",
+      "sha256": "7356bfcaedc545e8af1f4820e7466bbde0a56ccd2e8b2941902af83f16657f21"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-131/resolution/components/precompute_guard.py",
+      "sha256": "972e6e1bc7ae84c2c326f2aec7305541b53d66705b73ff50956e805f9fc3c031"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-131/resolution/components/integration.py",
+      "sha256": "d31ca0c1c573f1ede7b531ff6d2032bb6067d681831cdca3e19e102bc63fb228"
+    }
+  ],
+  "refusal131": {
+    "free_before_and_after_bytes": 15825240064,
+    "allocated_before_and_after_bytes": 15219862016,
+    "reserved_before_and_after_bytes": 17028874240,
+    "reserved_unused_before_and_after_bytes": 1809012224,
+    "xpu3_reserved_reclaimed_bytes": 0,
+    "xpu3_physical_free_delta_bytes": 0,
+    "release_seconds": 0.016944877,
+    "other_cards_reserved_reclaimed_bytes": {
+      "xpu:0": 52428800,
+      "xpu:1": 106954752,
+      "xpu:2": 0
+    },
+    "capture_reserve_bytes": 5368709120,
+    "floor_bytes": 9663676416,
+    "screening_bytes": 805306368,
+    "required_bytes": 15837691904,
+    "margin_bytes": -12451840,
+    "gap_includes_screening": true
+  },
+  "capture121": [
+    {
+      "packet": 119,
+      "run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-119-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f121-dseager-display-ra1-ssfull",
+      "pool": {
+        "cap_bytes": 1000000000,
+        "capped": [],
+        "capped_calls": {
+          "forward_diff_step": 0,
+          "forward_pre_diffusion": 0
+        },
+        "captured": [
+          "forward_pre_diffusion"
+        ],
+        "growth_bytes": 3430940672,
+        "rule": "methods are captured in first-call order while the reserved growth of the captures already made is below the cap; a capped method runs eagerly with the same caches for good"
+      },
+      "signatures": {
+        "forward_diff_step": 0,
+        "forward_pre_diffusion": 1
+      },
+      "captures": [
+        {
+          "memory_after": {
+            "allocated_bytes": 16271590400,
+            "reserved_bytes": 20459814912
+          },
+          "memory_before": {
+            "allocated_bytes": 15220386304,
+            "reserved_bytes": 17028874240
+          },
+          "method": "forward_pre_diffusion",
+          "mirrored_tensors": 1,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            1,
+            121,
+            64,
+            64,
+            256
+          ],
+          "seconds": 1.235949,
+          "sensitivity": [
+            {
+              "dtype": "torch.bfloat16",
+              "input": 0,
+              "moved": true,
+              "shape": [
+                1,
+                128,
+                16,
+                8,
+                8
+              ]
+            }
+          ],
+          "signature_sha256": "aa71033013c696a22ac76512fa865141d0fb44c15c30ec700e4f572241193cb4"
+        }
+      ]
+    },
+    {
+      "packet": 120,
+      "run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-120-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f121-dseager-display-ra0-ssfull-ddxpu2",
+      "pool": {
+        "cap_bytes": 1000000000,
+        "capped": [],
+        "capped_calls": {
+          "forward_diff_step": 0,
+          "forward_pre_diffusion": 0
+        },
+        "captured": [
+          "forward_pre_diffusion"
+        ],
+        "growth_bytes": 3430940672,
+        "rule": "methods are captured in first-call order while the reserved growth of the captures already made is below the cap; a capped method runs eagerly with the same caches for good"
+      },
+      "signatures": {
+        "forward_diff_step": 0,
+        "forward_pre_diffusion": 1
+      },
+      "captures": [
+        {
+          "memory_after": {
+            "allocated_bytes": 16518136832,
+            "reserved_bytes": 20648558592
+          },
+          "memory_before": {
+            "allocated_bytes": 15466932736,
+            "reserved_bytes": 17217617920
+          },
+          "method": "forward_pre_diffusion",
+          "mirrored_tensors": 1,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            1,
+            121,
+            64,
+            64,
+            256
+          ],
+          "seconds": 1.256148,
+          "sensitivity": [
+            {
+              "dtype": "torch.bfloat16",
+              "input": 0,
+              "moved": true,
+              "shape": [
+                1,
+                128,
+                16,
+                8,
+                8
+              ]
+            }
+          ],
+          "signature_sha256": "aa71033013c696a22ac76512fa865141d0fb44c15c30ec700e4f572241193cb4"
+        }
+      ]
+    }
+  ],
+  "estimate145": {
+    "measured121_reserved_growth_bytes": 3430940672,
+    "scale_numerator": 361,
+    "scale_denominator": 256,
+    "estimate_bytes": 4838162432,
+    "estimate_gib": 4.505889892578125,
+    "old_reserve_excess_bytes": 530546688,
+    "candidate_reserve_gib": 4.76,
+    "candidate_reserve_bytes_ceil": 5111011083,
+    "candidate_reserve_margin_over_estimate_bytes": 272848651,
+    "candidate_reduction_bytes": 257698037,
+    "measured145": false,
+    "scaling_rule_proven": false,
+    "status": "Two 121-frame observations establish the base; temporal-squared scaling and 0.25 GiB padding remain engineering assumptions, not a measured 145-frame upper bound.",
+    "launch_admitted": false,
+    "selector": "scaled-476",
+    "refusal_reason": "No measured145 bound establishes the scaled allowance; fail closed pending measured145 evidence."
+  },
+  "remedies": {
+    "audio": {
+      "checkpoint_bytes": 364666868,
+      "gib": 0.33962248638272285,
+      "projected_screen_margin_parent_reserve_bytes": 352215028,
+      "isolated_timing_measured": false
+    },
+    "encoder": {
+      "checkpoint_bytes": 637873794,
+      "gib": 0.5940662641078234,
+      "projected_screen_margin_parent_reserve_bytes": 625421954,
+      "implemented_recommendation": false,
+      "reason": "Split VAE requires separate device guards and same-latent cross-card encoder byte oracle; native qualification unavailable."
+    },
+    "reserve_only": {
+      "freed_physical_bytes": 0,
+      "budget_reduction_bytes": 257698037,
+      "projected_screen_margin_bytes": 245246197
+    },
+    "audio_and_reserve": {
+      "projected_screen_margin_bytes": 609913065,
+      "projected_screen_margin_gib": 0.5680258059874177
+    },
+    "allocator": {
+      "verified_xpu3_reclaim_bytes": 0,
+      "reserved_unused_remaining_upper_bound_bytes": 1809012224,
+      "further_guaranteed_reclaim_bytes": 0
+    }
+  },
+  "encoder_copy": {
+    "stage_A_cpu_input_shape": [
+      1,
+      128,
+      128,
+      3
+    ],
+    "stage_B_cpu_input_shape": [
+      1,
+      256,
+      256,
+      3
+    ],
+    "bf16_input_h2d_A_bytes": 98304,
+    "bf16_input_h2d_B_bytes": 393216,
+    "bf16_encode_d2h_A_bytes": 4096,
+    "bf16_encode_d2h_B_bytes": 16384,
+    "cpu_float32_encode_A_bytes": 8192,
+    "cpu_float32_encode_B_bytes": 32768,
+    "new_full_frame_peer_copy_bytes_if_directly_routed": 0,
+    "peer_means_bytes_if_normalization_left_on_xpu3": 20480,
+    "stats_to_xpu2_bytes_per_encode": 512,
+    "status": "Static source-derived byte accounting, not transfer timing."
+  },
+  "forecast": {
+    "period_seconds": [
+      5.25,
+      5.35
+    ],
+    "seconds_per_second": [
+      0.875,
+      0.8916666666666666
+    ],
+    "status": "Conditional inherited cone gain; add unknown isolated audio move timing cost. Not measured132."
+  },
+  "audio_dtype_evidence": "sealed131 launch/serve-encoder.py explicitly passes --bf16-vae; model_management.vae_dtype checks that flag before working_dtypes. Keep BF16 native identity; no FP32 conversion or precision change."
+}
