@@ -1,5 +1,24 @@
 # Current Workspace State
 
+**2026-10-10 05:18 UTC, packet 123 sealed on CPU; live operations remain with the coordinator.**
+Packet 123 makes previews appear only after their files are complete. The client
+now records server status when a preview read stops it. An optional move of the
+upsampler and audio decoder to xpu:2 makes 169 frames a candidate: about 6.2
+seconds for seven seconds of new video is the forecast, not a measurement.
+First compare 145 frames with the preview fix, then qualify the move at 145
+against saved output bytes, then consider 169. The tightest projected margin at
+169 is 0.825 GiB above the unchanged xpu:3 floor; real memory and byte checks
+still decide. No graph/replica fallback is recommended.
+The seal is `db5ea277…8b340d`: 2,044 files verified recursively, no Python caches,
+570 recovery cases validated by full discovery and corrected assertion rechecks,
+995 passing client checks and 10 mocked preflight checks. No GPU work, launch,
+live preflight, port/unit operation, signal, existing-run write or host change
+was performed. Native memory savings, exactness and display timing remain open.
+The coordinator's new whole-filesystem storage-allowance issue below is inherited
+and remains a follow-up; this packet does not fix or weaken that guard.
+[Design and launch order](experiments/ltx25-b70/notes/2026-10-10-continuation123-stream-design.md)
+and [sealed build receipt](experiments/ltx25-b70/data/resume-20261008/continuation123-build.json).
+
 **2026-10-10 05:08 UTC, client stop on HTTP 409 "storage allowance exhausted" after 420 chunks; server relaunched for a fresh allowance; check must be fixed in 123.**
 At 04:59:59 UTC the server refused new requests: `storage_check` requires `free_at_install − free ≤ 3 GiB` **over the whole
 filesystem** (`integration.py:795`, `WRITE_ALLOWANCE` sealed in `ltx_duration_guard.py`), so every other writer on the single NVMe

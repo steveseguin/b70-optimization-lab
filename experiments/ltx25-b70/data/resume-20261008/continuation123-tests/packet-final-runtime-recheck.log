@@ -1,0 +1,37 @@
+test_deleted_line_does_not_latch_but_creation_does (test_runtime_packet.CoredumpPattern.test_deleted_line_does_not_latch_but_creation_does) ... ok
+test_inventory_and_assembly_fit_build_allowance (test_runtime_packet.Identities.test_inventory_and_assembly_fit_build_allowance) ... ok
+test_no_previous_prefix_outside_provenance (test_runtime_packet.Identities.test_no_previous_prefix_outside_provenance)
+Naming rule 3: the 112/113/114 prefixes appear only in provenance strings and comments. ... ok
+test_plan_file_is_the_reconstructed_plan_and_pins_agree (test_runtime_packet.Identities.test_plan_file_is_the_reconstructed_plan_and_pins_agree) ... ok
+test_check_name_collisions_raises_and_reports (test_runtime_packet.Naming.test_check_name_collisions_raises_and_reports) ... ok
+test_clean_root_and_older_packets_pass (test_runtime_packet.Naming.test_clean_root_and_older_packets_pass) ... ok
+test_each_collision_refuses (test_runtime_packet.Naming.test_each_collision_refuses) ... ok
+test_live_root_is_clean_now (test_runtime_packet.Naming.test_live_root_is_clean_now)
+The real results root holds no 118 names today (read-only listing). (The 117 runs' stream117- ... ok
+test_missing_directories_are_not_collisions (test_runtime_packet.Naming.test_missing_directories_are_not_collisions) ... ok
+test_custom_node_inputs (test_runtime_packet.NodeInputs.test_custom_node_inputs) ... ok
+test_integration_imports_without_torch (test_runtime_packet.NodeInputs.test_integration_imports_without_torch) ... ok
+test_output_node_ranges_admit_all_lengths_and_levers (test_runtime_packet.NodeInputs.test_output_node_ranges_admit_all_lengths_and_levers) ... ok
+test_capture_guard_shapes_at_97 (test_runtime_packet.Transforms.test_capture_guard_shapes_at_97) ... ok
+test_control_environment (test_runtime_packet.Transforms.test_control_environment) ... ERROR
+test_geometry_follows_launch_frames_and_anchor (test_runtime_packet.Transforms.test_geometry_follows_launch_frames_and_anchor) ... ok
+test_launcher (test_runtime_packet.Transforms.test_launcher) ... ok
+
+======================================================================
+ERROR: test_control_environment (test_runtime_packet.Transforms.test_control_environment)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation123-stream/test_runtime_packet.py", line 249, in test_control_environment
+    rp.check_control_environment(root)
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation123-stream/runtime_packet.py", line 188, in check_control_environment
+    c.check_residency_scope(int(env('LTX_STREAM_FRAMES')), env('LTX_SAMPLER_PLACEMENT'),
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation123-stream/stream_contract.py", line 882, in check_residency_scope
+    require(frames != 169 or mode == 'xpu2', '169 requires xpu2 auxiliary residency')
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation123-stream/stream_contract.py", line 200, in require
+    raise ValueError(why)
+ValueError: 169 requires xpu2 auxiliary residency
+
+----------------------------------------------------------------------
+Ran 16 tests in 14.589s
+
+FAILED (errors=1)

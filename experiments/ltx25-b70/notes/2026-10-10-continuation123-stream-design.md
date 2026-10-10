@@ -95,7 +95,15 @@ admitted by 123. Tighter measured non-overlap would be a later packet.
 
 Final packet, manifest, exact CPU counts and verification records are recorded
 in [continuation123-build.json](../data/resume-20261008/continuation123-build.json).
-The seal and test summary will be completed after the full CPU suites finish.
+The sealed manifest is
+`db5ea277d381c8a77c1bae94cc4e25b1e22035a084a7e3a33b7d10e5d68b340d`.
+Recursive verification covers all 2,044 manifest files; packet and authoring
+trees contain no Python bytecode caches. The validation record gives exact
+counts and preserves development failures and corrected assertion rechecks.
+Validated: **570 recovery cases, 995 client checks and 10 mocked preflight
+checks**. Full recovery discovery passed 568/570; its two preloaded stale
+assertions passed in the corrected 16-case assembly module and one walk-options
+case. No cases were skipped or reruns double-counted.
 
 Open device-dependent work: actual allocator savings, isolated/colocated peaks,
 full-model cross-device byte equality at 145, all 169 measurements and the
