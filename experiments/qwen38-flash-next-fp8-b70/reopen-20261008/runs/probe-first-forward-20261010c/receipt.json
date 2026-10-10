@@ -1,0 +1,369 @@
+{
+  "boot_id": "4aafe57b-a54f-4bfd-b4ed-9f1cbb8830c7",
+  "bytes_equal": true,
+  "context_identity": {
+    "reason": "opaque queue handle is not a queried native context",
+    "status": "unavailable"
+  },
+  "control_sha256": "b81ca57210a8451892d470c260ac0ec663346690b41e86a550608cecf0c592ab",
+  "diagnostic_only": true,
+  "environment": {
+    "FLASHNEXT_PROBE_ADMIT": "1",
+    "FLASHNEXT_PROBE_PACKAGE": "/repo/experiments/qwen38-flash-next-fp8-b70/reopen-20261008",
+    "FLASHNEXT_PROBE_RENDER_BYPATH": "/dev/dri/by-path/pci-0000:23:00.0-render",
+    "FLASHNEXT_PROBE_RENDER_NODE": "/dev/dri/renderD130",
+    "PYTORCH_ALLOC_CONF": "pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1",
+    "PYTORCH_CUDA_ALLOC_CONF": "pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1",
+    "PYTORCH_HIP_ALLOC_CONF": "pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1"
+  },
+  "geometry": {
+    "host_rows": [
+      5,
+      6,
+      11,
+      17,
+      22,
+      25,
+      26,
+      29,
+      38,
+      41,
+      47,
+      51,
+      55,
+      56,
+      60,
+      72,
+      77,
+      78,
+      82,
+      85,
+      86,
+      87,
+      90,
+      115,
+      122,
+      124,
+      127
+    ],
+    "host_w13_bytes": 88473600,
+    "host_w2_bytes": 44236800,
+    "layer": 0,
+    "rank": 0,
+    "resident_rows": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      7,
+      8,
+      9,
+      10,
+      12,
+      13,
+      14,
+      15,
+      16,
+      18,
+      19,
+      20,
+      21,
+      23,
+      24,
+      27,
+      28,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      39,
+      40,
+      42,
+      43,
+      44,
+      45,
+      46,
+      48,
+      49,
+      50,
+      52,
+      53,
+      54,
+      57,
+      58,
+      59,
+      61,
+      62,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71,
+      73,
+      74,
+      75,
+      76,
+      79,
+      80,
+      81,
+      83,
+      84,
+      88,
+      89,
+      91,
+      92,
+      93,
+      94,
+      95,
+      96,
+      97,
+      98,
+      99,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110,
+      111,
+      112,
+      113,
+      114,
+      116,
+      117,
+      118,
+      119,
+      120,
+      121,
+      123,
+      125,
+      126
+    ],
+    "shapes": {
+      "w13_weight": [
+        128,
+        1280,
+        2560
+      ],
+      "w2_weight": [
+        128,
+        2560,
+        640
+      ]
+    },
+    "tokens": 64,
+    "topk": 10
+  },
+  "guardian_timeout": false,
+  "health_end_unix": 1791655538.0,
+  "health_sha256": "3163845ae9a9001f70f765ff6175449ec5681990a83844f2361f76db73c0f4ba",
+  "image": "vllm/vllm-openai-xpu@sha256:e4446310b1d30015e8fdc1a0a2ef1669ac6bef857cbe772487571ed5c1a926a9",
+  "image_plan_sha256": "08bf4e83bff6fb77dc6d4bb0d11e53edd63a59ebfd9bfb9a36e7197806469cee",
+  "journal_admission": {
+    "counted_fault_lines": [],
+    "counted_gpu_incidents": 0,
+    "excluded_fault_lines": [
+      "2026-10-08T21:39:27.868476-04:00 steve-b70s kernel: xe 0000:23:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+      "2026-10-08T21:39:27.868648-04:00 steve-b70s kernel: xe 0000:23:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=6, state=0x289",
+      "2026-10-08T22:27:32.185435-04:00 steve-b70s kernel: xe 0000:23:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+      "2026-10-08T22:27:32.185617-04:00 steve-b70s kernel: xe 0000:23:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=6, state=0x289"
+    ],
+    "incident_baseline_unix": 1791595111.0,
+    "journal_evidence_available": true,
+    "monitoring_cutoff_unix": 1791595111.0,
+    "owner_acceptance": {
+      "action": "FAULT.json archived by the owner; GPU launches re-admitted on boot 4aafe57b",
+      "archived_to": "fault-archive/FAULT-20261010T0130Z-boot4aafe57b-owner-accepted-continue.json",
+      "boot_id": "4aafe57b-a54f-4bfd-b4ed-9f1cbb8830c7",
+      "conditions": "Fault-halt rule unchanged for any further incident: record, halt new requests, one controlled application stop; no restart loop, no reboot, no reset, no settings change. Flash-Next probes only in idle windows after a controlled LTX stop.",
+      "decision": "Owner, 2026-10-09 evening local, after being asked 'reboot the host, or accept continuing LTX launches on this boot': ran the archive command and replied 'i ran it. accept'.",
+      "incidents_on_boot": 2,
+      "kernel_fault_class_lines_on_boot": 4,
+      "last_fault_line_utc": "2026-10-09T02:27:32Z",
+      "schema": "ltx.fault-archive-receipt.v1",
+      "time_utc": "20261010T011831Z",
+      "written_by": "coordinator (Claude)"
+    },
+    "owner_acceptance_path": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261008/fault-archive-20261010T011831Z-owner-accept-receipt.json",
+    "owner_acceptance_sha256": "7c67c88aee396774ae8c2b29e23dd8366de9ab2375acdafec7b6254f23bbd5b1",
+    "owner_acceptance_verified": true,
+    "passed": true
+  },
+  "native_queue_destruction_verified": false,
+  "native_trace": {
+    "causal_separation_complete": false,
+    "reason": "no validated retained fatal-signal/VM-close trace",
+    "settings": {
+      "current_tracer": {
+        "unavailable": "FileNotFoundError"
+      },
+      "events/sched/sched_process_exit/enable": {
+        "unavailable": "FileNotFoundError"
+      },
+      "events/signal/signal_deliver/enable": {
+        "unavailable": "FileNotFoundError"
+      },
+      "events/xe/xe_vm_close/enable": {
+        "unavailable": "FileNotFoundError"
+      },
+      "tracing_on": {
+        "unavailable": "FileNotFoundError"
+      }
+    },
+    "status": "unavailable"
+  },
+  "output_sha256": "b81ca57210a8451892d470c260ac0ec663346690b41e86a550608cecf0c592ab",
+  "overlay_application": {
+    "base_commit": "ced6857afa0ea7b2e3f0846a62e1394e90f15607",
+    "changed": 50,
+    "check_only": false,
+    "files": 50,
+    "manifest_sha256": "e00bb55d8378ecd0065e82a8c3b6fdd59268bd33aae6e0f356ca48f067926f2d",
+    "root": "/opt/venv/lib/python3.12/site-packages",
+    "schema": "neural.download.screen1b-overlay.v1"
+  },
+  "overlay_sha256": "e00bb55d8378ecd0065e82a8c3b6fdd59268bd33aae6e0f356ca48f067926f2d",
+  "owner_acceptance_sha256": "7c67c88aee396774ae8c2b29e23dd8366de9ab2375acdafec7b6254f23bbd5b1",
+  "passed": true,
+  "postflight_requested_unix": 1791655607.1138618,
+  "queue_handle": 1149386928,
+  "schema": "neural.download.flashnext-first-forward.v1",
+  "source_sha256": "ff9af15de9ed21e028f847ffd48f1e10b59565030957fdc89939f23801dbc4ea",
+  "stage": "complete",
+  "support_source_sha256": {
+    "placement-attempt6-v5.json": "b64cf1c9cf732d9093ed55a90cc59e1d52b5be5a755914fc04d860aecf384ce6",
+    "probe/container_command.py": "9021c9063d68183e95b6851436f73e75e6cb1c43c8a268e978d32b932ed02cec",
+    "probe/first_forward_command.py": "f5f2973411f48706209117fdd77cfd7387356e5f09de5349cf4790d5931cd27b",
+    "probe/run-first-forward-in-container.sh": "91ff02af77101317242b1d1aa8f56205eb4a063e021e5a9ce7e249690350a134",
+    "probe/single_rank_slab_probe.py": "a5bec8bb47799547bd814789b3b0b9395327768f317c99e341002ffa527e1558",
+    "probe/watch_kernel.py": "6e04346d89585f2285e0a3aa0c137ccbe4f4a03ffe6d654b20cb43ef602fd459",
+    "teardown_receipts.py": "46099d077ec2025d2849ffc4052baee603e15b5f32b811a536a14ebb5727b5a7"
+  },
+  "teardown_complete": true,
+  "teardown_validation": {
+    "errors": [],
+    "expected_ranks": [
+      0
+    ],
+    "passed": true,
+    "received_ranks": [
+      0
+    ],
+    "schema": "screen1b.teardown-validation.v1"
+  },
+  "usm_queries": {
+    "w13_weight": {
+      "inspected": [
+        "launch stream.get_context"
+      ],
+      "kinds": null,
+      "pointers": [
+        133225374547968,
+        133225374547968
+      ],
+      "queue_handle": 1149386928,
+      "reason": "no read-only pointer-kind query in launch queue context",
+      "status": "unavailable"
+    },
+    "w2_weight": {
+      "inspected": [
+        "launch stream.get_context"
+      ],
+      "kinds": null,
+      "pointers": [
+        133225326313472,
+        133225326313472
+      ],
+      "queue_handle": 1149386928,
+      "reason": "no read-only pointer-kind query in launch queue context",
+      "status": "unavailable"
+    }
+  },
+  "versions": {
+    "torch": "2.13.0+xpu",
+    "transformers": "5.16.1",
+    "triton": "3.7.2+xpu",
+    "vllm": "0.30.0+xpu",
+    "vllm-xpu-kernels": "0.1.14.1"
+  },
+  "watcher_after_worker": {
+    "boot_id": "4aafe57b-a54f-4bfd-b4ed-9f1cbb8830c7",
+    "health_sha256": "3163845ae9a9001f70f765ff6175449ec5681990a83844f2361f76db73c0f4ba",
+    "journal_admission": {
+      "counted_fault_lines": [],
+      "counted_gpu_incidents": 0,
+      "excluded_fault_lines": [
+        "2026-10-08T21:39:27.868476-04:00 steve-b70s kernel: xe 0000:23:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+        "2026-10-08T21:39:27.868648-04:00 steve-b70s kernel: xe 0000:23:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=6, state=0x289",
+        "2026-10-08T22:27:32.185435-04:00 steve-b70s kernel: xe 0000:23:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+        "2026-10-08T22:27:32.185617-04:00 steve-b70s kernel: xe 0000:23:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=6, state=0x289"
+      ],
+      "incident_baseline_unix": 1791595111.0,
+      "journal_evidence_available": true,
+      "monitoring_cutoff_unix": 1791595111.0,
+      "owner_acceptance": {
+        "action": "FAULT.json archived by the owner; GPU launches re-admitted on boot 4aafe57b",
+        "archived_to": "fault-archive/FAULT-20261010T0130Z-boot4aafe57b-owner-accepted-continue.json",
+        "boot_id": "4aafe57b-a54f-4bfd-b4ed-9f1cbb8830c7",
+        "conditions": "Fault-halt rule unchanged for any further incident: record, halt new requests, one controlled application stop; no restart loop, no reboot, no reset, no settings change. Flash-Next probes only in idle windows after a controlled LTX stop.",
+        "decision": "Owner, 2026-10-09 evening local, after being asked 'reboot the host, or accept continuing LTX launches on this boot': ran the archive command and replied 'i ran it. accept'.",
+        "incidents_on_boot": 2,
+        "kernel_fault_class_lines_on_boot": 4,
+        "last_fault_line_utc": "2026-10-09T02:27:32Z",
+        "schema": "ltx.fault-archive-receipt.v1",
+        "time_utc": "20261010T011831Z",
+        "written_by": "coordinator (Claude)"
+      },
+      "owner_acceptance_path": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261008/fault-archive-20261010T011831Z-owner-accept-receipt.json",
+      "owner_acceptance_sha256": "7c67c88aee396774ae8c2b29e23dd8366de9ab2375acdafec7b6254f23bbd5b1",
+      "owner_acceptance_verified": true,
+      "passed": true
+    },
+    "new_fault_lines": [],
+    "passed": true,
+    "read_started_unix": 1791655607.7735028,
+    "updated_unix": 1791655608.030656
+  },
+  "worker_admission": {
+    "counted_fault_lines": [],
+    "counted_gpu_incidents": null,
+    "excluded_fault_lines": [],
+    "incident_baseline_unix": 1791595111.0,
+    "journal_evidence_available": false,
+    "owner_acceptance": {
+      "action": "FAULT.json archived by the owner; GPU launches re-admitted on boot 4aafe57b",
+      "archived_to": "fault-archive/FAULT-20261010T0130Z-boot4aafe57b-owner-accepted-continue.json",
+      "boot_id": "4aafe57b-a54f-4bfd-b4ed-9f1cbb8830c7",
+      "conditions": "Fault-halt rule unchanged for any further incident: record, halt new requests, one controlled application stop; no restart loop, no reboot, no reset, no settings change. Flash-Next probes only in idle windows after a controlled LTX stop.",
+      "decision": "Owner, 2026-10-09 evening local, after being asked 'reboot the host, or accept continuing LTX launches on this boot': ran the archive command and replied 'i ran it. accept'.",
+      "incidents_on_boot": 2,
+      "kernel_fault_class_lines_on_boot": 4,
+      "last_fault_line_utc": "2026-10-09T02:27:32Z",
+      "schema": "ltx.fault-archive-receipt.v1",
+      "time_utc": "20261010T011831Z",
+      "written_by": "coordinator (Claude)"
+    },
+    "owner_acceptance_path": "/repo/experiments/ltx25-b70/data/resume-20261008/fault-archive-20261010T011831Z-owner-accept-receipt.json",
+    "owner_acceptance_sha256": "7c67c88aee396774ae8c2b29e23dd8366de9ab2375acdafec7b6254f23bbd5b1",
+    "owner_acceptance_verified": true,
+    "passed": false
+  },
+  "worker_pid": 7,
+  "worker_returncode": 0,
+  "worker_started": true,
+  "worker_wait_status": 0
+}
