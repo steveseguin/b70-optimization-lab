@@ -1,0 +1,118 @@
+{
+  "searched_head": "f3086d140d2c5e7e90f4cd94c2231810842a11de",
+  "queries": [
+    {
+      "command": [
+        "git",
+        "log",
+        "--all",
+        "--format=%H %s",
+        "-S",
+        "AdaLN",
+        "--",
+        "experiments/minimax-h3-b70"
+      ],
+      "exit_code": 0,
+      "output": "9b830117778a48fc67d87b33752d1ee433240d36 Publish owner-selected H3 fitted-denoiser result and featured video package\nd19eb1c65328af98571eb2315517aa94d00fb5a0 Prepare MiniMax-H3 publication draft and evidence audit\n9b9819c6fe4855272ea0c2247e8d4b52e172313e H3 duet: process-per-card staggered sampling, 1.72x throughput, bit-identical\n731fcbdbc4955be81e3f398d62d682fa151dd9fe MiniMax-H3 speed plan: bit-identical two-card VAE decode, and the INT8 arithmetic\nd2dbd737fe1885312a3283d8649de346c6fa816a MiniMax-H3 first light, and the no-swap fix passes validation start 1\n474ec0c64e1e8e357c7d64125586b3522785a1b6 MiniMax-H3: host-staged control passed; fix the decode OOM\nd3b4268601e2bb302ec206c7fb1976f78430c984 Resume script for the fault halt, the stock-vs-lab GDN runner, and the end-of-day status\n83bf075df9b9a21d45d102315fce21ae945e22d5 MiniMax-H3: a second denoiser load path for the full INT8 ConvRot checkpoint\nb13fed669bbfef62853953d58eaae8f785a6ad08 MiniMax-H3: disk audit, host-RAM watchdog, CPU loader profile, first-light plan\ncf02767cde5aa78c71f2c5dbf1b1ec77610d44e2 MiniMax-H3 stand-up prep (Opus): two-card generation script, smoke runner, venv setup, ConvRot rotation recovery, notes\n0ce1614e67e4c6480fcc6fe2d5ffabf95207c31b MiniMax-H3: pipeline plan (Opus memo), pruned = AdaLN table re-parameterisation (exactness to verify), INT8 ConvRot facts\n"
+    },
+    {
+      "command": [
+        "git",
+        "log",
+        "--all",
+        "--format=%H %s",
+        "-S",
+        "fit",
+        "--",
+        "experiments/minimax-h3-b70"
+      ],
+      "exit_code": 0,
+      "output": "9b830117778a48fc67d87b33752d1ee433240d36 Publish owner-selected H3 fitted-denoiser result and featured video package\n7a7dd248da1a8919499b4d18a7a2a1db50c34844 MiniMax-H3: h3_stream.py, a live RTMP/WHIP feed of finished lossless clips\ndabeea53ef04f436f784e0ee23d62d54552d2b9d H3: audio decode overlap - persistent worker on the spare card, exact\n9b9819c6fe4855272ea0c2247e8d4b52e172313e H3 duet: process-per-card staggered sampling, 1.72x throughput, bit-identical\n3e425c5497ae67aaccb868b5e59802de1894d0c4 H3: batch mode (--prompts-file) + realtime-goal ledger\n38d8a29e5181aedb395c1a4c40ec3f1df3730036 minimax-h3: window 4 decode results -- fp16 is 5x, the two-card decode is exact and 1.01x\n731fcbdbc4955be81e3f398d62d682fa151dd9fe MiniMax-H3 speed plan: bit-identical two-card VAE decode, and the INT8 arithmetic\n1db55da138e27606772a0f5694ba2fc33ba29825 MiniMax-H3 reaches the trained 960x544 canvas, and the no-swap fix passes validation start 2\nd2dbd737fe1885312a3283d8649de346c6fa816a MiniMax-H3 first light, and the no-swap fix passes validation start 1\n970543d00b4abf8c8131ab4e82afc11f67c49244 Fifth GPU fault written up; stock-vs-lab GDN verdict corrected; swap sampler\n474ec0c64e1e8e357c7d64125586b3522785a1b6 MiniMax-H3: host-staged control passed; fix the decode OOM\n5943723c015662aec55b834b1fbb8684271c2821 minimax-h3: settle the step count, and wire the 8-step turbo LoRA\n83bf075df9b9a21d45d102315fce21ae945e22d5 MiniMax-H3: a second denoiser load path for the full INT8 ConvRot checkpoint\nb13fed669bbfef62853953d58eaae8f785a6ad08 MiniMax-H3: disk audit, host-RAM watchdog, CPU loader profile, first-light plan\ncf02767cde5aa78c71f2c5dbf1b1ec77610d44e2 MiniMax-H3 stand-up prep (Opus): two-card generation script, smoke runner, venv setup, ConvRot rotation recovery, notes\n965065e1b33f3147f205eff18e8918e1da1e88b2 MiniMax-H3: AdaLN table is a rank-8 fit below the BF16 noise floor (measured); pruned BF16 denoiser is the two-card candidate\n0ce1614e67e4c6480fcc6fe2d5ffabf95207c31b MiniMax-H3: pipeline plan (Opus memo), pruned = AdaLN table re-parameterisation (exactness to verify), INT8 ConvRot facts\n55c1b434a36d04bca94cd7b043ab60c4155987a2 MiniMax-H3 lane packet: what the model is, what fits two cards, download plan\n"
+    },
+    {
+      "command": [
+        "git",
+        "log",
+        "--all",
+        "--format=%H %s",
+        "-S",
+        "table",
+        "--",
+        "experiments/minimax-h3-b70"
+      ],
+      "exit_code": 0,
+      "output": "d19eb1c65328af98571eb2315517aa94d00fb5a0 Prepare MiniMax-H3 publication draft and evidence audit\n7a7dd248da1a8919499b4d18a7a2a1db50c34844 MiniMax-H3: h3_stream.py, a live RTMP/WHIP feed of finished lossless clips\n52c802a4fa7f0a351b155fb21c5f3df8f213f265 MiniMax-H3: large host/card transfers go in 128 MiB pieces; clips bit-identical\n34ec68887431c9d64a5688aa35a5e220ddaa5e69 H3: 8-clip lossless soak on the current stack, 396.6 s/clip (was 410), all 8 clips bit-identical to the September receipts\nb84037056e89ece098876cc74d7e5761eec29b64 H3: clip files are byte-repeatable (x264 mbtree off, bitexact mux), decode server fails fast and cleans /dev/shm\n3478e77413182803d3ee2b22a87af95b246c9e19 H3: persistent decode server passes its exact gate (41.1 s/clip); fp16 default limited to the single-card decode\n61309ec36ef7efd084a9fa183bbb2c9fa9f2c52d H3: fp16 picture decode is the default for clip-making modes (user decision 2026-10-03); EXACT=1 restores fp32\n9bbcf08839b275643daf4a255932b277f12db04b H3: persistent VAE decode serve mode + audio overlap (GATE PENDING - devcoredump)\ndabeea53ef04f436f784e0ee23d62d54552d2b9d H3: audio decode overlap - persistent worker on the spare card, exact\n4904e51e8644b4f33019f0940b930f7454798ec8 H3: two-proc decode integrated into batch/duet paths; combined stack 1.82x\n6ddd562f380a382d6435f613e7093b0e1da45bd8 H3 VAE duet: two-process tiled decode, 2.0x, bytewise-equal\n9b9819c6fe4855272ea0c2247e8d4b52e172313e H3 duet: process-per-card staggered sampling, 1.72x throughput, bit-identical\n38d8a29e5181aedb395c1a4c40ec3f1df3730036 minimax-h3: window 4 decode results -- fp16 is 5x, the two-card decode is exact and 1.01x\nb68ecf0c15f8d808a1be8efd2fbeae4fc87b1370 MiniMax-H3: a two-card tiled VAE decode, the fp16 autocast A/B, and decode-only runs\n731fcbdbc4955be81e3f398d62d682fa151dd9fe MiniMax-H3 speed plan: bit-identical two-card VAE decode, and the INT8 arithmetic\n1db55da138e27606772a0f5694ba2fc33ba29825 MiniMax-H3 reaches the trained 960x544 canvas, and the no-swap fix passes validation start 2\nd2dbd737fe1885312a3283d8649de346c6fa816a MiniMax-H3 first light, and the no-swap fix passes validation start 1\n970543d00b4abf8c8131ab4e82afc11f67c49244 Fifth GPU fault written up; stock-vs-lab GDN verdict corrected; swap sampler\n474ec0c64e1e8e357c7d64125586b3522785a1b6 MiniMax-H3: host-staged control passed; fix the decode OOM\nd3b4268601e2bb302ec206c7fb1976f78430c984 Resume script for the fault halt, the stock-vs-lab GDN runner, and the end-of-day status\n5943723c015662aec55b834b1fbb8684271c2821 minimax-h3: settle the step count, and wire the 8-step turbo LoRA\n83bf075df9b9a21d45d102315fce21ae945e22d5 MiniMax-H3: a second denoiser load path for the full INT8 ConvRot checkpoint\n128996e2dd21c5b68f1162efd029f698e811f3bb MiniMax-H3: host-staged cross-card transfers and the session-10 GPU fault\n3dede0d4f23ee9f96d453cc1fe3d24b860040b04 MiniMax-H3: a pread tensor reader so the loaders stop mapping the whole checkpoint\nb13fed669bbfef62853953d58eaae8f785a6ad08 MiniMax-H3: disk audit, host-RAM watchdog, CPU loader profile, first-light plan\nfc1bcae810dbfcc77663c66c24e633b0d88c8c4e Write up lc-2 and the r312c build sessions; refresh the workspace status\ncf02767cde5aa78c71f2c5dbf1b1ec77610d44e2 MiniMax-H3 stand-up prep (Opus): two-card generation script, smoke runner, venv setup, ConvRot rotation recovery, notes\n965065e1b33f3147f205eff18e8918e1da1e88b2 MiniMax-H3: AdaLN table is a rank-8 fit below the BF16 noise floor (measured); pruned BF16 denoiser is the two-card candidate\n0ce1614e67e4c6480fcc6fe2d5ffabf95207c31b MiniMax-H3: pipeline plan (Opus memo), pruned = AdaLN table re-parameterisation (exactness to verify), INT8 ConvRot facts\n55c1b434a36d04bca94cd7b043ab60c4155987a2 MiniMax-H3 lane packet: what the model is, what fits two cards, download plan\n"
+    },
+    {
+      "command": [
+        "git",
+        "log",
+        "--all",
+        "--format=%H %s",
+        "-S",
+        "adaln_t_table",
+        "--",
+        "experiments/minimax-h3-b70"
+      ],
+      "exit_code": 0,
+      "output": "83bf075df9b9a21d45d102315fce21ae945e22d5 MiniMax-H3: a second denoiser load path for the full INT8 ConvRot checkpoint\n3dede0d4f23ee9f96d453cc1fe3d24b860040b04 MiniMax-H3: a pread tensor reader so the loaders stop mapping the whole checkpoint\nb13fed669bbfef62853953d58eaae8f785a6ad08 MiniMax-H3: disk audit, host-RAM watchdog, CPU loader profile, first-light plan\ncf02767cde5aa78c71f2c5dbf1b1ec77610d44e2 MiniMax-H3 stand-up prep (Opus): two-card generation script, smoke runner, venv setup, ConvRot rotation recovery, notes\n965065e1b33f3147f205eff18e8918e1da1e88b2 MiniMax-H3: AdaLN table is a rank-8 fit below the BF16 noise floor (measured); pruned BF16 denoiser is the two-card candidate\n0ce1614e67e4c6480fcc6fe2d5ffabf95207c31b MiniMax-H3: pipeline plan (Opus memo), pruned = AdaLN table re-parameterisation (exactness to verify), INT8 ConvRot facts\n"
+    },
+    {
+      "command": [
+        "git",
+        "log",
+        "--all",
+        "--name-status",
+        "--format=%H %ad %s",
+        "--date=short",
+        "--since=2026-09-16",
+        "--until=2026-09-20",
+        "--",
+        "experiments/minimax-h3-b70"
+      ],
+      "exit_code": 0,
+      "output": "38d8a29e5181aedb395c1a4c40ec3f1df3730036 2026-09-19 minimax-h3: window 4 decode results -- fp16 is 5x, the two-card decode is exact and 1.01x\n\nM\texperiments/minimax-h3-b70/README.md\nA\texperiments/minimax-h3-b70/data/2026-09-19-decode-experiments/README.md\nA\texperiments/minimax-h3-b70/data/2026-09-19-decode-experiments/batch4-session-20260919.log\nA\texperiments/minimax-h3-b70/data/2026-09-19-decode-experiments/probe-e1-20260919T233947Z.json\nA\texperiments/minimax-h3-b70/data/2026-09-19-decode-experiments/receipt-control-single-off-20260919T233947Z.json\nA\texperiments/minimax-h3-b70/data/2026-09-19-decode-experiments/receipt-fp16-a-20260919T233947Z.json\nA\texperiments/minimax-h3-b70/data/2026-09-19-decode-experiments/receipt-fp16-b-20260919T233947Z.json\nA\texperiments/minimax-h3-b70/data/2026-09-19-decode-experiments/receipt-two-card-fp16-20260919T233947Z.json\nA\texperiments/minimax-h3-b70/data/2026-09-19-decode-experiments/receipt-two-card-off-20260919T233947Z.json\nA\texperiments/minimax-h3-b70/data/2026-09-19-decode-experiments/vs-control-fp16-a-20260919T233947Z.json\nM\texperiments/minimax-h3-b70/notes/2026-09-19-first-light.md\nM\texperiments/minimax-h3-b70/notes/2026-09-19-speed-plan.md\nb68ecf0c15f8d808a1be8efd2fbeae4fc87b1370 2026-09-19 MiniMax-H3: a two-card tiled VAE decode, the fp16 autocast A/B, and decode-only runs\n\nM\texperiments/minimax-h3-b70/notes/2026-09-19-speed-plan.md\nM\texperiments/minimax-h3-b70/scripts/compare-h3-runs.py\nA\texperiments/minimax-h3-b70/scripts/decode-experiments-session.sh\nM\texperiments/minimax-h3-b70/scripts/run_h3_t2v.py\nM\texperiments/minimax-h3-b70/scripts/smoke_h3.sh\nM\texperiments/minimax-h3-b70/scripts/test_convrot_linear.py\nA\texperiments/minimax-h3-b70/scripts/test_vae_tile_loop.py\n731fcbdbc4955be81e3f398d62d682fa151dd9fe 2026-09-19 MiniMax-H3 speed plan: bit-identical two-card VAE decode, and the INT8 arithmetic\n\nA\texperiments/minimax-h3-b70/notes/2026-09-19-speed-plan.md\n1db55da138e27606772a0f5694ba2fc33ba29825 2026-09-19 MiniMax-H3 reaches the trained 960x544 canvas, and the no-swap fix passes validation start 2\n\nM\texperiments/minimax-h3-b70/README.md\nA\texperiments/minimax-h3-b70/data/2026-09-19-canvas-ladder/README.md\nA\texperiments/minimax-h3-b70/data/2026-09-19-canvas-ladder/batch3-session-20260919.log\nA\texperiments/minimax-h3-b70/data/2026-09-19-canvas-ladder/receipt-smoke-20260919T224743Z-pruned-576x320.json\nA\texperiments/minimax-h3-b70/data/2026-09-19-canvas-ladder/receipt-smoke-20260919T224948Z-pruned-960x544.json\nA\texperiments/minimax-h3-b70/data/2026-09-19-canvas-ladder/receipt-smoke-20260919T225400Z-int8-960x544.json\nM\texperiments/minimax-h3-b70/notes/2026-09-18-first-light-plan.md\nM\texperiments/minimax-h3-b70/notes/2026-09-19-first-light.md\nd2dbd737fe1885312a3283d8649de346c6fa816a 2026-09-19 MiniMax-H3 first light, and the no-swap fix passes validation start 1\n\nM\texperiments/minimax-h3-b70/README.md\nA\texperiments/minimax-h3-b70/data/2026-09-19-first-light/README.md\nA\texperiments/minimax-h3-b70/data/2026-09-19-first-light/int8-vs-pruned.json\nA\texperiments/minimax-h3-b70/data/2026-09-19-first-light/receipt-repeat-20260919T221840Z-a.json\nA\texperiments/minimax-h3-b70/data/2026-09-19-first-light/receipt-repeat-20260919T221840Z-b.json\nA\texperiments/minimax-h3-b70/data/2026-09-19-first-light/receipt-smoke-20260919T221709Z-pruned.json\nA\texperiments/minimax-h3-b70/data/2026-09-19-first-light/receipt-smoke-20260919T222143Z-int8.json\nA\texperiments/minimax-h3-b70/data/2026-09-19-first-light/session.log\nM\texperiments/minimax-h3-b70/notes/2026-09-18-first-light-plan.md\nM\texperiments/minimax-h3-b70/notes/2026-09-18-standup-prep.md\nA\texperiments/minimax-h3-b70/notes/2026-09-19-first-light.md\n970543d00b4abf8c8131ab4e82afc11f67c49244 2026-09-19 Fifth GPU fault written up; stock-vs-lab GDN verdict corrected; swap sampler\n\nM\texperiments/minimax-h3-b70/notes/2026-09-18-first-light-plan.md\nM\texperiments/minimax-h3-b70/notes/2026-09-18-standup-prep.md\nfeeecf5c16850490b7008ccdf4cebdb0ee46bf4a 2026-09-19 MiniMax-H3 runner: disable gradient tracking (the VAE decode retained 21 GiB of activations and OOMed)\n\nM\texperiments/minimax-h3-b70/scripts/run_h3_t2v.py\n8de1c6ad1f68c5761412c3a3891f3d4cebf09e6e 2026-09-19 resume script: --no-service for batched GPU sessions\n\nM\texperiments/minimax-h3-b70/scripts/resume-after-fault-20260918.sh\n474ec0c64e1e8e357c7d64125586b3522785a1b6 2026-09-19 MiniMax-H3: host-staged control passed; fix the decode OOM\n\nM\texperiments/minimax-h3-b70/notes/2026-09-18-first-light-plan.md\nM\texperiments/minimax-h3-b70/notes/2026-09-18-gpu-fault-first-light.md\nM\texperiments/minimax-h3-b70/notes/2026-09-18-standup-prep.md\nM\texperiments/minimax-h3-b70/scripts/run_h3_t2v.py\nM\texperiments/minimax-h3-b70/scripts/smoke_h3.sh\nd3b4268601e2bb302ec206c7fb1976f78430c984 2026-09-18 Resume script for the fault halt, the stock-vs-lab GDN runner, and the end-of-day status\n\nM\texperiments/minimax-h3-b70/notes/2026-09-18-gpu-fault-first-light.md\nA\texperiments/minimax-h3-b70/scripts/compare-h3-runs.py\nA\texperiments/minimax-h3-b70/scripts/resume-after-fault-20260918.sh\n5943723c015662aec55b834b1fbb8684271c2821 2026-09-18 minimax-h3: settle the step count, and wire the 8-step turbo LoRA\n\nM\texperiments/minimax-h3-b70/README.md\nM\texperiments/minimax-h3-b70/notes/2026-09-18-first-light-plan.md\nM\texperiments/minimax-h3-b70/notes/2026-09-18-standup-prep.md\nA\texperiments/minimax-h3-b70/notes/2026-09-18-steps-and-lora.md\nM\texperiments/minimax-h3-b70/scripts/run_h3_t2v.py\nM\texperiments/minimax-h3-b70/scripts/smoke_h3.sh\nA\texperiments/minimax-h3-b70/scripts/test_lora.py\n83bf075df9b9a21d45d102315fce21ae945e22d5 2026-09-18 MiniMax-H3: a second denoiser load path for the full INT8 ConvRot checkpoint\n\nM\texperiments/minimax-h3-b70/README.md\nM\texperiments/minimax-h3-b70/notes/2026-09-18-disk-audit.md\nM\texperiments/minimax-h3-b70/notes/2026-09-18-first-light-plan.md\nM\texperiments/minimax-h3-b70/notes/2026-09-18-standup-prep.md\nM\texperiments/minimax-h3-b70/scripts/run_h3_t2v.py\nM\texperiments/minimax-h3-b70/scripts/smoke_h3.sh\nA\texperiments/minimax-h3-b70/scripts/test_convrot_linear.py\n128996e2dd21c5b68f1162efd029f698e811f3bb 2026-09-18 MiniMax-H3: host-staged cross-card transfers and the session-10 GPU fault\n\nM\texperiments/minimax-h3-b70/notes/2026-09-18-first-light-plan.md\nA\texperiments/minimax-h3-b70/notes/2026-09-18-gpu-fault-first-light.md\nM\texperiments/minimax-h3-b70/scripts/run_h3_t2v.py\nM\texperiments/minimax-h3-b70/scripts/smoke_h3.sh\nA\texperiments/minimax-h3-b70/scripts/xpu-host-memory-probe.py\n3dede0d4f23ee9f96d453cc1fe3d24b860040b04 2026-09-18 MiniMax-H3: a pread tensor reader so the loaders stop mapping the whole checkpoint\n\nM\texperiments/minimax-h3-b70/README.md\nM\texperiments/minimax-h3-b70/notes/2026-09-18-first-light-plan.md\nM\texperiments/minimax-h3-b70/notes/2026-09-18-standup-prep.md\nM\texperiments/minimax-h3-b70/scripts/profile-encoder-load.py\nM\texperiments/minimax-h3-b70/scripts/run_h3_t2v.py\nA\texperiments/minimax-h3-b70/scripts/test_tensor_reader.py\nb13fed669bbfef62853953d58eaae8f785a6ad08 2026-09-18 MiniMax-H3: disk audit, host-RAM watchdog, CPU loader profile, first-light plan\n\nM\texperiments/minimax-h3-b70/README.md\nA\texperiments/minimax-h3-b70/notes/2026-09-18-disk-audit.md\nA\texperiments/minimax-h3-b70/notes/2026-09-18-first-light-plan.md\nA\texperiments/minimax-h3-b70/scripts/mem-watchdog.sh\nA\texperiments/minimax-h3-b70/scripts/profile-encoder-load.py\nM\texperiments/minimax-h3-b70/scripts/run_h3_t2v.py\nM\texperiments/minimax-h3-b70/scripts/smoke_h3.sh\n2b26b537a321d94193bc3591888b2e5a30c340dc 2026-09-17 Status: user authorized restarts; session 8 rebuilds variants b/c; MiniMax smoke runner drops its cgroup memory ceiling\n\nM\texperiments/minimax-h3-b70/scripts/smoke_h3.sh\n4aac3ecba3f41f12e48d31577e57ade35a29bb7f 2026-09-17 Record the September 18 host OOM: oomd killed the user session, everything halted\n\nM\texperiments/minimax-h3-b70/notes/2026-09-18-standup-prep.md\na726a1a0f16010d132f0054057fe09df8ab8a040 2026-09-17 r312d: rebuild only the multiq device library with the upstream toolchain; MiniMax runner lazy-init fix\n\nM\texperiments/minimax-h3-b70/scripts/run_h3_t2v.py\nfc1bcae810dbfcc77663c66c24e633b0d88c8c4e 2026-09-17 Write up lc-2 and the r312c build sessions; refresh the workspace status\n\nM\texperiments/minimax-h3-b70/notes/2026-09-18-standup-prep.md\na00ba16dcdf1bc5d15ffb943c622cfd85a827ff4 2026-09-17 MiniMax-H3 venv: install diffusers' runtime deps, import CoreDenoiseStep from its module; record the environment\n\nA\texperiments/minimax-h3-b70/data/environment.txt\nM\texperiments/minimax-h3-b70/scripts/run_h3_t2v.py\nM\texperiments/minimax-h3-b70/scripts/setup-venv.sh\ncf02767cde5aa78c71f2c5dbf1b1ec77610d44e2 2026-09-17 MiniMax-H3 stand-up prep (Opus): two-card generation script, smoke runner, venv setup, ConvRot rotation recovery, notes\n\nA\texperiments/minimax-h3-b70/notes/2026-09-18-standup-prep.md\nA\texperiments/minimax-h3-b70/scripts/recover-convrot-rotation.py\nA\texperiments/minimax-h3-b70/scripts/run_h3_t2v.py\nA\texperiments/minimax-h3-b70/scripts/setup-venv.sh\nA\texperiments/minimax-h3-b70/scripts/smoke_h3.sh\n17ff1ec4c41615f9000444ba1b2e64856e675a10 2026-09-17 On main: autostash\n965065e1b33f3147f205eff18e8918e1da1e88b2 2026-09-17 MiniMax-H3: AdaLN table is a rank-8 fit below the BF16 noise floor (measured); pruned BF16 denoiser is the two-card candidate\n\nM\texperiments/minimax-h3-b70/README.md\nA\texperiments/minimax-h3-b70/notes/2026-09-17-adaln-table-exactness.md\nA\texperiments/minimax-h3-b70/scripts/check-adaln-table.py\n0ce1614e67e4c6480fcc6fe2d5ffabf95207c31b 2026-09-17 MiniMax-H3: pipeline plan (Opus memo), pruned = AdaLN table re-parameterisation (exactness to verify), INT8 ConvRot facts\n\nM\texperiments/minimax-h3-b70/README.md\nA\texperiments/minimax-h3-b70/notes/2026-09-17-pipeline-plan.md\n55c1b434a36d04bca94cd7b043ab60c4155987a2 2026-09-17 MiniMax-H3 lane packet: what the model is, what fits two cards, download plan\n\nA\texperiments/minimax-h3-b70/README.md\n"
+    },
+    {
+      "command": [
+        "git",
+        "log",
+        "--all",
+        "--diff-filter=D",
+        "--summary",
+        "--",
+        "experiments/minimax-h3-b70"
+      ],
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "command": [
+        "git",
+        "log",
+        "--all",
+        "--format=%H %s",
+        "--",
+        "experiments/minimax-h3-b70/scripts/check-adaln-table.py",
+        "experiments/minimax-h3-b70/scripts/recover-convrot-rotation.py"
+      ],
+      "exit_code": 0,
+      "output": "cf02767cde5aa78c71f2c5dbf1b1ec77610d44e2 MiniMax-H3 stand-up prep (Opus): two-card generation script, smoke runner, venv setup, ConvRot rotation recovery, notes\n965065e1b33f3147f205eff18e8918e1da1e88b2 MiniMax-H3: AdaLN table is a rank-8 fit below the BF16 noise floor (measured); pruned BF16 denoiser is the two-card candidate\n"
+    },
+    {
+      "command": [
+        "git",
+        "log",
+        "--all",
+        "--format=%H %s",
+        "-S",
+        "adaln_t_table",
+        "--",
+        ".",
+        ":!CURRENT.md"
+      ],
+      "exit_code": 0,
+      "output": "83bf075df9b9a21d45d102315fce21ae945e22d5 MiniMax-H3: a second denoiser load path for the full INT8 ConvRot checkpoint\n3dede0d4f23ee9f96d453cc1fe3d24b860040b04 MiniMax-H3: a pread tensor reader so the loaders stop mapping the whole checkpoint\nb13fed669bbfef62853953d58eaae8f785a6ad08 MiniMax-H3: disk audit, host-RAM watchdog, CPU loader profile, first-light plan\ncf02767cde5aa78c71f2c5dbf1b1ec77610d44e2 MiniMax-H3 stand-up prep (Opus): two-card generation script, smoke runner, venv setup, ConvRot rotation recovery, notes\n965065e1b33f3147f205eff18e8918e1da1e88b2 MiniMax-H3: AdaLN table is a rank-8 fit below the BF16 noise floor (measured); pruned BF16 denoiser is the two-card candidate\n0ce1614e67e4c6480fcc6fe2d5ffabf95207c31b MiniMax-H3: pipeline plan (Opus memo), pruned = AdaLN table re-parameterisation (exactness to verify), INT8 ConvRot facts\n"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "schema": "neural.download.h3-fit-attempt.v1",
+  "verdict": "blocked",
+  "attempted_at": "2026-10-10T21:32:24.007501+00:00",
+  "whole_denoiser_bit_exact": false,
+  "adaln_bit_exact": null,
+  "max_abs": null,
+  "max_reference_ulp": null,
+  "inputs": [],
+  "outputs": [],
+  "script_sha256": "beb7fd147f16d1c89e54e5c3d1c15704072eb68800ce878e40db50751f1880d0",
+  "arguments": {
+    "full_dir": "/mnt/fast-ai/llm-models/minimax-h3/transformer",
+    "fitted": "/mnt/fast-ai/llm-models/minimax-h3-comfy/diffusion_models/minimax_h3_fl2va_pruned_bf16.safetensors",
+    "receipt": "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/fit/attempt.json",
+    "blocks": "0,25,final",
+    "chunk": 1024,
+    "precisions": "f32,f64,bf16-io",
+    "solvers": "svd,normal,lstsq",
+    "reverse_grid": false
+  },
+  "environment": {
+    "host": "steve-b70s",
+    "python": "3.12.3",
+    "threads": 2,
+    "nice": 19
+  },
+  "official_revision": "42ed227ee7df40d41602854ae760620d6eb651fe",
+  "official_file_hashes_verified": false,
+  "missing_inputs": [
+    "/mnt/fast-ai/llm-models/minimax-h3/transformer",
+    "/mnt/fast-ai/llm-models/minimax-h3-comfy/diffusion_models/minimax_h3_fl2va_pruned_bf16.safetensors"
+  ],
+  "peak_rss_kib": 313504
+}

@@ -11,7 +11,7 @@
     "publisher": "MiniMaxAI",
     "variant": "AdaLN-fitted BF16 denoiser; INT8 ConvRot encoder",
     "summary": "Owner-approved AdaLN-fitted variant; one receipted eight-clip batch: 3173 seconds total, 396.625 seconds per clip. Exact scheduling against its own reference. Reconstruction incomplete.",
-    "public_summary": "Make independent video clips with stereo sound on two cards. Eight clips took 396.6 seconds each on average. The owner chose this AdaLN-fitted version; the rebuild recipe still has missing inputs.",
+    "public_summary": "Make independent video clips with stereo sound on two cards. Eight clips took 396.6 seconds each on average. Rebuilding the chosen fitted weights from the official download is still unresolved.",
     "public_caveat": "AdaLN tables are a fitted approximation measured below the BF16 noise floor; all other denoiser weights are bit-exact with the official checkpoint. Exact scheduling against its own reference: 32 MATCH / 0 DIFFERS, 8 repeat passes. The 800.8 s/clip comparison is a ledger-recorded baseline, raw receipts not retained. No official-model parity claim.",
     "quantization": "AdaLN-fitted BF16 denoiser + INT8 ConvRot encoder",
     "runtime_label": "Native diffusers / PyTorch XPU",
@@ -93,7 +93,7 @@
     "stop": "Read repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md: finite batch completion joins workers; mid-batch stop unqualified."
   },
   "missing": [
-    "Exact official-to-AdaLN-fitted checkpoint producer and its build receipt",
+    "Exact AdaLN fit producer: CPU recovery tool retained; coefficients not reproduced and local inputs unavailable during recovery",
     "Historical model full-file hashes and September baseline/reference receipts",
     "Complete editable diffusers source delta, clean build and runtime smoke",
     "Independent fresh-process 50-NFE full-suite repeats",
@@ -149,6 +149,14 @@
     "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/publication-manifest.json",
     "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/runtime-manifest.json",
     "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/verify-evidence.py",
-    "results/minimax-h3-b70/README.md"
+    "results/minimax-h3-b70/README.md",
+    "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/fit/README.md",
+    "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/fit/attempt.json",
+    "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/fit/discovery.json",
+    "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/fit/history-search.json",
+    "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/fit/recover.py",
+    "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/fit/test_recover.py",
+    "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/fit/upstream-metadata.json",
+    "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/fit/validation.json"
   ]
 }

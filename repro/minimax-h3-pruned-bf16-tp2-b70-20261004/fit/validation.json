@@ -1,0 +1,63 @@
+{
+  "schema": "neural.download.h3-fit-validation.v1",
+  "date": "2026-10-10",
+  "host": "steve-b70s",
+  "cpu_only": true,
+  "gpu_server_systemd_used": false,
+  "numpy_synthetic_test_version": "2.2.6",
+  "checks": [
+    {
+      "command": "fit/test_recover.py (nice 19, ionice -c 3, OMP/BLAS/MKL 2, Python -B)",
+      "exit_code": 0,
+      "tests": 8,
+      "scope": "Synthetic CPU inputs only; no real H3 fit qualification"
+    },
+    {
+      "command": "python3 -B -m unittest tools/test_validate_repro_guides.py tools/test_validate_recipe_publication.py tools/test_build_model_pages.py",
+      "exit_code": 0,
+      "tests": 42
+    },
+    {
+      "command": "python3 -B tools/validate-repro-guides.py",
+      "exit_code": 0,
+      "guides": 42
+    },
+    {
+      "command": "python3 -B tools/validate-recipe-publication.py repro/minimax-h3-pruned-bf16-tp2-b70-20261004/publication-manifest.json",
+      "exit_code": 0,
+      "scope": "draft only"
+    },
+    {
+      "command": "python3 -B tools/validate-recipe-publication.py repro/minimax-h3-pruned-bf16-tp2-b70-20261004/publication-manifest.json --check-remote",
+      "exit_code": 0,
+      "scope": "hash-bound draft; no release assets exist, no published certification"
+    },
+    {
+      "command": "python3 -B repro/minimax-h3-pruned-bf16-tp2-b70-20261004/verify-evidence.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B tools/check-doc-links.py",
+      "exit_code": 0,
+      "documents": 223,
+      "broken_links": 0
+    },
+    {
+      "command": "python3 -B tools/build-family-pages.py --check",
+      "exit_code": 0
+    }
+  ],
+  "metadata_check": {
+    "pinned_weight_hashes_match": 15,
+    "source": "upstream-metadata.json",
+    "weight_bytes_downloaded": 0
+  },
+  "visual_review": {
+    "browser_launched": false,
+    "static_review": true,
+    "scope": "Generated summary, guide link, accessible measured table and pending installation state; unchanged responsive CSS"
+  },
+  "real_fit_verdict": "blocked_missing_inputs",
+  "publication_status": "draft",
+  "script_sha256": "beb7fd147f16d1c89e54e5c3d1c15704072eb68800ce878e40db50751f1880d0"
+}

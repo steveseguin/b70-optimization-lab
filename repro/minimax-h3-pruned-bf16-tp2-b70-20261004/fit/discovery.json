@@ -1,0 +1,57 @@
+{
+  "schema": "neural.download.h3-fit-discovery.v1",
+  "date": "2026-10-10",
+  "host": "steve-b70s",
+  "official_local_available": false,
+  "fitted_local_available": false,
+  "local_tensor_comparison_performed": false,
+  "model_weight_bytes_downloaded": 0,
+  "search_depth_limit": 5,
+  "follow_directory_symlinks": false,
+  "forbidden_roots_not_searched": [
+    "/mnt/usb-models/llm-models",
+    "/mnt/usb-models/hf-cache"
+  ],
+  "allowed_search_roots": [
+    "/mnt/fast-ai/llm-models",
+    "/mnt/fast-ai/home-llm-models",
+    "/mnt/fast-ai/model-staging",
+    "/mnt/fast-ai/bench-results",
+    "/mnt/fast-ai/home-src-archive",
+    "/home/steve/llm-models",
+    "/home/steve/.cache/huggingface",
+    "/mnt/usb-models/models",
+    "/mnt/usb-models/model-packs",
+    "/mnt/raid-models",
+    "/mnt/corsair-ro",
+    "/mnt/extended-ssd"
+  ],
+  "search_result": "No H3 checkpoint or adaln_t_table.bin found. Some unrelated Comfy source copies contain H3 node code. No claim about unsearched roots or the two-card host.",
+  "historical_header_sha256": "59916d0f1ea260e0d9e0ce7a3cb2ceb4d59ecbb08a9f2e466de009cbc6fe26c0",
+  "historical_reference": "experiments/minimax-h3-b70/data/2026-10-04-soak8/clip-00-receipt.json",
+  "historical_fit_metrics": {
+    "source": "experiments/minimax-h3-b70/notes/2026-09-17-adaln-table-exactness.md",
+    "new_measurement": false,
+    "definition": "abs(float32 least-squares coefficient - stored F16 coefficient); divided by stored F16 spacing toward +inf",
+    "block_0": {
+      "max_abs": 0.002846,
+      "max_reference_ulp": 1276,
+      "rounded_equal_fraction": 0.665
+    },
+    "block_25": {
+      "max_abs": 0.003723,
+      "max_reference_ulp": 1561,
+      "rounded_equal_fraction": 0.662
+    },
+    "final": {
+      "max_abs": 0.002613,
+      "max_reference_ulp": 500,
+      "rounded_equal_fraction": 0.663
+    }
+  },
+  "new_max_abs": null,
+  "new_max_reference_ulp": null,
+  "new_input_tensor_sha256": null,
+  "new_output_tensor_sha256": null,
+  "bit_exact_reproduction_verified": false
+}

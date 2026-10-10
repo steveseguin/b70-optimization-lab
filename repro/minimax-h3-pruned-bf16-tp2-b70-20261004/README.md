@@ -96,15 +96,26 @@ its mean; keep the top eight SVD coordinates; fold their projection and the
 mean into each AdaLN weight and bias. Runtime lookup linearly interpolates the
 1025-row table. All other denoiser tensors retain the official BF16 values.
 
-**This is an identified factorization, not an exact producer for the measured
-file.** The analysis found that a reconstructed least-squares fit differs from
-the stored coefficients by up to roughly 1300 ULP. It explicitly says the
-original fitting arithmetic/solver was not recovered. A repository-wide tracked
-file search found the checker and ConvRot recovery script, not a fit producer
-or build receipt. Inventing an SVD exporter would produce a new target and would
-not reproduce this result. Exact official-to-fitted conversion remains blocked
-on that original procedure or a separately validated reconstruction. This
-packet does not redistribute derived weights to bypass the gap.
+**Not reproduced bit-exactly.** The September table reports a worst coefficient
+difference of **0.003723 / 1561 stored-F16 ULP** at block 25, not just the
+roughly 1300 ULP mentioned in its prose. That historical comparison used the
+stored table/bias and is not a new measurement.
+
+The [CPU recovery packet](fit/README.md) now includes the Git-history search,
+refreshed pinned HF metadata, a bounded-memory candidate fit/comparison script,
+and its [attempt receipt](fit/attempt.json). No producer was recovered. The
+receipt-named official and fitted inputs are absent on the four-card host, so
+the new attempt stopped before tensor reads; new differences and tensor hashes
+are null. The script's eight synthetic tests do not establish H3 reproduction.
+
+**Reproduction step remains missing:** obtain permitted local inputs and run
+the [CPU comparison command](fit/README.md#cpu-comparison-command-when-inputs-become-available),
+recover matching coefficients and then verify the full assembled denoiser.
+Do not install candidate coefficients as the measured target. Alternatively,
+the owner could choose a supplement containing the table and all fitted
+weight/bias pairs (about 83.27 MiB); the [license decision](fit/README.md#owner-option-distribute-only-the-fitted-parameters)
+identifies Section III and the territorial and notice conditions. No derived
+weights are distributed, and that decision remains with the owner.
 
 ## Runtime and source reconstruction
 

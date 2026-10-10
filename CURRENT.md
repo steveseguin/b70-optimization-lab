@@ -1,5 +1,9 @@
 # Current Workspace State
 
+**2026-10-10, CPU-only H3 fit recovery:** The [fit packet](repro/minimax-h3-pruned-bf16-tp2-b70-20261004/fit/README.md) preserves the history search and a tested CPU comparison tool, but the official and fitted inputs were absent here, so no new weight comparison was possible.
+The old note's largest coefficient difference is 0.003723 / 1561 ULP; the exact fit is still unrecovered and the package stays draft.
+The owner can choose whether to distribute only the fitted parameters under the documented license conditions; no weights were downloaded or distributed, and GPU work, services and protected download directories were untouched.
+
 **2026-10-10, CPU-only H3 publication:** The owner chose the AdaLN-fitted H3 variant and its scheduling result, and that decision is now in AGENTS.md.
 The [package and guide](repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md) show the measured eight-clip batch at 396.6 seconds per clip, with 32 matching hash checks; the older baseline is clearly marked as ledger-only.
 H3 is featured beside LTX, with official input metadata pins and the exact historical batch settings.
