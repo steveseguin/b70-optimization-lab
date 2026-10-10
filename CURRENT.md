@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**2026-10-10 12:20 UTC, launching 132 at 145: audio VAE + vocoder moved to xpu:2 (+0.34 GiB on xpu:3), cone decoder graph, display on the xpu:2 replica; projected first-capture margin +0.33 GiB incl. the screening band.**
+Codex's 131 audit (commits cebbf51fd, 61e6b16bf): the allocator release reclaimed 0 bytes on xpu:3 (reserved stayed 17.03 GB); the two 121-frame
+captures give 4.506 GiB estimated growth at 145 (0.49 GiB under the inherited 5 GiB reserve, which stays because no 145 peak bound exists);
+the video encoder move (0.59 GiB) is deferred (shared decoder owner). 132 (manifest `67ec59a5…91ad`; inner plan `fbb1d04b…1e8f`; 960/960
+recovery, 5,677/5,677 client, 10/10 preflight) adds `LTX_AUDIO_RESIDENCY=xpu2` with three cross-card waveform byte gates. 129 production
+session 2 (≈ 250 chunks, exact, no stops) stopped by one controlled stop. Launch:
+`LTX_AUDIO_RESIDENCY=xpu2 LTX_CONE_CAPTURE_RESERVE=parent LTX_CONE_GRAPH_MEMORY=replica-release LTX_DISPLAY_ALLOCATOR_RELEASE=off
+LTX_MAINTENANCE_MODE=idle LTX_GC_INTERVAL_SECONDS=60 LTX_SNAPSHOT_DIGEST_CACHE=1 LTX_STORAGE_SCAN_MODE=background LTX_AUX_RESIDENCY=legacy
+LTX_DISPLAY_WORKER=serial LTX_DISPLAY_REPLICA_TRANSIENT_GIB=5.640625 LTX_RUN_WRITE_ALLOWANCE_GIB=16 launch-132.sh 145 frame 1 cone 1 1 fingerprint - eager-display 0 full xpu:2`
+(work dir `s132-live01`); predicted 5.25–5.35 s (0.875–0.892 s/s) plus the unmeasured audio-placement cost; a memory refusal latches and the
+129 line returns.
+
 **2026-10-10, packet 132 sealed; audio-only move prepared for the 145-frame cone graph, native qualification still pending.**
 Packet 131's allocator release freed nothing on card 3. Its admission was short
 12,451,840 bytes, already including the full screening band. Moving only the
