@@ -1,0 +1,2127 @@
+{
+  "schema": "ltx.continuation130.residency-inventory.v1",
+  "scope": "CPU regular-file and safetensors-header reads only; no device/runtime import, operation, or model payload read",
+  "run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-127-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f169-dseager-display-ra0-ssfull-ddxpu2-dwparallel-ssbackground",
+  "sources": {
+    "experiments/ltx25-b70/data/resume-20261008/continuation123-residency-analysis.json": {
+      "sha256": "b7545c8dc697511d6758368d0ff7adab28e8679568e4d5c0e9b05bd88eea4647",
+      "bytes": 18332
+    },
+    "experiments/ltx25-b70/data/resume-20261008/continuation124-evidence.json": {
+      "sha256": "5d707d15434c73eaf38cf5e9c8e650f05d480c74f8cdaf657ab7bb113e3e7eef",
+      "bytes": 503294
+    },
+    "experiments/ltx25-b70/data/resume-20261008/continuation122-evidence.json": {
+      "sha256": "cb3afc8a5fcee184a82b4c2280e75140fd8213bf9c3f1c634b526f0fe4ed3f60",
+      "bytes": 471211
+    },
+    "/mnt/fast-ai/llm-models/LTX-2.5-baseline/diffusion_models/ltx-2.5-22b-distilled-transformer-bf16.safetensors": {
+      "header_with_length_sha256": "e0558e1aff461dedc507377213969ead72c1be73e0a0ebaea839f5e73942d747",
+      "header_bytes": 677624,
+      "file_bytes": 42018190584,
+      "payload_read": false,
+      "reverified_header": true
+    },
+    "/mnt/fast-ai/llm-models/LTX-2.5-baseline/latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors": {
+      "header_with_length_sha256": "151942c58b50575224753f720c11fbee2b85c1fe735459d67315a2dbf4105de7",
+      "header_bytes": 42944,
+      "file_bytes": 995778752,
+      "payload_read": false,
+      "reverified_header": true
+    },
+    "/mnt/fast-ai/llm-models/LTX-2.5-baseline/vae/ltx-2.5-audio-vae-bf16.safetensors": {
+      "header_with_length_sha256": "059888df211d13e6bd810e44c4cf06f302ddebbae67ce7596bfcf440d5d4c6a6",
+      "header_bytes": 199672,
+      "file_bytes": 364866540,
+      "payload_read": false,
+      "reverified_header": true
+    },
+    "/mnt/fast-ai/llm-models/LTX-2.5-baseline/vae/ltx-2.5-video-vae-bf16.safetensors": {
+      "header_with_length_sha256": "bc4f0a9f8d1f436c6317e92ab057feeb746cdad6ab3d0e9c76df6b57b290602a",
+      "header_bytes": 81552,
+      "file_bytes": 1472223346,
+      "payload_read": false,
+      "reverified_header": true
+    },
+    "/mnt/fast-ai/llm-models/LTX-2.5-baseline/text_encoders/gemma4-12b-with-proj-ltx-2.5-bf16.safetensors": {
+      "header_with_length_sha256": "90754d93b4110f39a0a06dfdd41d8a8f22a1a413f7333e703dde4c5b4ce200ac",
+      "header_bytes": 83888,
+      "file_bytes": 26263858182,
+      "payload_read": false,
+      "reverified_header": true
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-127-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f169-dseager-display-ra0-ssfull-ddxpu2-dwparallel-ssbackground/host-components-01-control-result.json": {
+      "sha256": "f98f7aedf4b52ea594a057006ee711a25fa0467c7a83331ba09963dcfa41384b",
+      "bytes": 203003
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-127-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f169-dseager-display-ra0-ssfull-ddxpu2-dwparallel-ssbackground/stream-display-replica-install.json": {
+      "sha256": "88b58a5a4050a914bfd75f144c6afdb0e3f1a3487a5f6f6694afe61195ca9c6f",
+      "bytes": 1137
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-127-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f169-dseager-display-ra0-ssfull-ddxpu2-dwparallel-ssbackground/stream-preparation.json": {
+      "sha256": "f126300d844bd1da0b581aeb5e32b2ea20cc953590909755dfc40ec0f064e4db",
+      "bytes": 10300
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-127-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f169-dseager-display-ra0-ssfull-ddxpu2-dwparallel-ssbackground/stream-failure-stream127-qrepeat-c000002.json": {
+      "sha256": "10eae2b7d7eee086e09f178f9349b9eac120c2cabde8501d039a6901d635c68d",
+      "bytes": 27274
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-127-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f169-dseager-display-ra0-ssfull-ddxpu2-dwparallel-ssbackground/stream-halt.json": {
+      "sha256": "da9183d51d535f1b913cc8ae0c820f633cc14b542358176b2f271e358029f374",
+      "bytes": 1048
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-127-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f169-dseager-display-ra0-ssfull-ddxpu2-dwparallel-ssbackground/stream-decode-failure-stream127-qrepeat-c000001.json": {
+      "sha256": "9d21bc875e30372eae91e8ca395deb9ae79b8a9bebeef10e402d6d89c516d897",
+      "bytes": 545
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-127-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f169-dseager-display-ra0-ssfull-ddxpu2-dwparallel-ssbackground/safety-stream127-qeager-c000000.json": {
+      "sha256": "9a51004e96cd1ed52eb4e7ddf33e8bd256fecb2a34ff4e0920ecc96271b013e4",
+      "bytes": 5473
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-127-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f169-dseager-display-ra0-ssfull-ddxpu2-dwparallel-ssbackground/safety-stream127-qeager-c000001.json": {
+      "sha256": "4d7ad757fce7b88df6a4710bc5b38b575e25e36e3279426c2c09edb7bd40ab5f",
+      "bytes": 31602
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-127-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f169-dseager-display-ra0-ssfull-ddxpu2-dwparallel-ssbackground/safety-stream127-qeager-c000002.json": {
+      "sha256": "7ff9cfcb0a69569aaa60035f50702941ecc8f4c890db3f881770416f8fb5b12f",
+      "bytes": 31602
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-127-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f169-dseager-display-ra0-ssfull-ddxpu2-dwparallel-ssbackground/safety-stream127-qgraph-c000000.json": {
+      "sha256": "fa73920b8629ac6f899a4f665146705a5abc4f93c90d072e605ab85392850fb2",
+      "bytes": 5588
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-127-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f169-dseager-display-ra0-ssfull-ddxpu2-dwparallel-ssbackground/safety-stream127-qgraph-c000001.json": {
+      "sha256": "a75f6088161dc29f747eef7a76a149f89ffce6d2468864ff9554416bf32dc920",
+      "bytes": 32752
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-127-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f169-dseager-display-ra0-ssfull-ddxpu2-dwparallel-ssbackground/safety-stream127-qgraph-c000002.json": {
+      "sha256": "4bbec618436f573c12f1e974769193fd6af57c1f2b6460a425d5d587826cbe32",
+      "bytes": 32748
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-127-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f169-dseager-display-ra0-ssfull-ddxpu2-dwparallel-ssbackground/safety-stream127-qrepeat-c000000.json": {
+      "sha256": "f2945ee869c067b46692158e48a524754016cc64aca26e2cd68eda117220162d",
+      "bytes": 5704
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-127-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f169-dseager-display-ra0-ssfull-ddxpu2-dwparallel-ssbackground/safety-stream127-qrepeat-c000001.json": {
+      "sha256": "ab5a3a64ad6452dd09875e72420f7a50d596b4f30b5aef203dc22f411eb82157",
+      "bytes": 32760
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-127-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f169-dseager-display-ra0-ssfull-ddxpu2-dwparallel-ssbackground/receipts/decode-stream127-qeager-c000000.json": {
+      "sha256": "28034139ada53edca7268c09b4d87f1e2eccfe4e8ce563e0469d1216e1953cd8",
+      "bytes": 6816
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-127-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f169-dseager-display-ra0-ssfull-ddxpu2-dwparallel-ssbackground/receipts/decode-stream127-qeager-c000001.json": {
+      "sha256": "2d0c26bcaf05e7efe3af756b8daf13b35e35598575c71ecd3f66c63aa87ac4bf",
+      "bytes": 6809
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-127-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f169-dseager-display-ra0-ssfull-ddxpu2-dwparallel-ssbackground/receipts/decode-stream127-qeager-c000002.json": {
+      "sha256": "78533bc8c261160261c72fcafb9969653864e63b8ecec1eac1cab26dbd7b0a7a",
+      "bytes": 6810
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-127-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f169-dseager-display-ra0-ssfull-ddxpu2-dwparallel-ssbackground/receipts/decode-stream127-qgraph-c000000.json": {
+      "sha256": "aa5a8928a0f5c4c5ba011b3714aab1c0526c26a4777b0d9a742e98a57ecd0c08",
+      "bytes": 10165
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-127-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f169-dseager-display-ra0-ssfull-ddxpu2-dwparallel-ssbackground/receipts/decode-stream127-qgraph-c000001.json": {
+      "sha256": "08714a51df90ff7cd60d6d8e25d0d60e84d9becbd6e9cec1f5773aeccec8ec1f",
+      "bytes": 10161
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-127-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f169-dseager-display-ra0-ssfull-ddxpu2-dwparallel-ssbackground/receipts/decode-stream127-qgraph-c000002.json": {
+      "sha256": "53f279a5edb378cfa0d281f91b16d89c8cb264a27bef5eac0d491ae9952f8483",
+      "bytes": 10164
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-127-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f169-dseager-display-ra0-ssfull-ddxpu2-dwparallel-ssbackground/receipts/decode-stream127-qrepeat-c000000.json": {
+      "sha256": "c2b0614dcc6de39fc23af35982fc5e0c4c31987e0623090cd9348a8eba128f1b",
+      "bytes": 10275
+    },
+    "/home/steve/ltx-stream/s120-live01/manifest.jsonl": {
+      "sha256": "cb68acfdca44b3378d188629f115c6480a400561103fa014ce6429a36c3c4852",
+      "bytes": 701158
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-129/source/scripts/ltx_text_shard.py": {
+      "sha256": "0a2e085b2d6f51a1ba754c2355e601ae15022f8a25e828ab43490ef6412ec047",
+      "bytes": 4994
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-129/source/scripts/ltx_graph_text_encoder.py": {
+      "sha256": "079d2965d3849acf83a351bb459fc5a079e727d7a976940f7e76ce8a58a3ca10",
+      "bytes": 23359
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-129/source/scripts/ltx_graph_capture.py": {
+      "sha256": "fc691e4ff4fdbeba0724a8946dbb58dbf3b4cbd9ccdaf325c307f2d86981d7e5",
+      "bytes": 79761
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-129/source/scripts/display_replica.py": {
+      "sha256": "d92b4a6cf4881d3c407a076f1d4c05b1d65717377301fa4629b96ad67249d66e",
+      "bytes": 11242
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-129/source/scripts/stream_contract.py": {
+      "sha256": "53f24804355a8bedfd7aa49ac58b8cbc8e6a0bbc696f29d7845de24edc01093e",
+      "bytes": 60696
+    },
+    "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/xpu/memory.py": {
+      "sha256": "de467fbfa38979dc5aa63c2bd0d3b1f7abf290168dde6b2422edb16f20d51ede",
+      "bytes": 28260
+    }
+  },
+  "header_checks": 5,
+  "text_primary_bytes": 15330870852,
+  "text_secondary_bytes": 10900713520,
+  "text_layer_bytes": {
+    "0": 448297986,
+    "1": 448297986,
+    "2": 448297986,
+    "3": 448297986,
+    "4": 448297986,
+    "5": 483688450,
+    "6": 448297986,
+    "7": 448297986,
+    "8": 448297986,
+    "9": 448297986,
+    "10": 448297986,
+    "11": 483688450,
+    "12": 448297986,
+    "13": 448297986,
+    "14": 448297986,
+    "15": 448297986,
+    "16": 448297986,
+    "17": 483688450,
+    "18": 448297986,
+    "19": 448297986,
+    "20": 448297986,
+    "21": 448297986,
+    "22": 448297986,
+    "23": 483688450,
+    "24": 448297986,
+    "25": 448297986,
+    "26": 448297986,
+    "27": 448297986,
+    "28": 448297986,
+    "29": 483688450,
+    "30": 448297986,
+    "31": 448297986,
+    "32": 448297986,
+    "33": 448297986,
+    "34": 448297986,
+    "35": 483688450,
+    "36": 448297986,
+    "37": 448297986,
+    "38": 448297986,
+    "39": 448297986,
+    "40": 448297986,
+    "41": 483688450,
+    "42": 448297986,
+    "43": 448297986,
+    "44": 448297986,
+    "45": 448297986,
+    "46": 448297986,
+    "47": 483688450
+  },
+  "text_nonlayer_bytes": {
+    "gemma3_12b.logit_scale": 4,
+    "gemma3_12b.transformer.model.embed_tokens.weight": 2013265920,
+    "gemma3_12b.transformer.model.norm.weight": 7680,
+    "gemma3_12b.transformer.vision_model.pos_embedding": 17203200,
+    "gemma3_12b.transformer.vision_model.patch_ln1.weight": 13824,
+    "gemma3_12b.transformer.vision_model.patch_ln1.bias": 13824,
+    "gemma3_12b.transformer.vision_model.patch_dense.weight": 53084160,
+    "gemma3_12b.transformer.vision_model.patch_dense.bias": 7680,
+    "gemma3_12b.transformer.vision_model.patch_ln2.weight": 7680,
+    "gemma3_12b.transformer.vision_model.patch_ln2.bias": 7680,
+    "gemma3_12b.transformer.vision_model.pos_norm.weight": 7680,
+    "gemma3_12b.transformer.vision_model.pos_norm.bias": 7680,
+    "gemma3_12b.transformer.multi_modal_projector.embedding_projection.weight": 29491200,
+    "gemma3_12b.transformer.audio_projector.embedding_projection.weight": 4915200,
+    "text_embedding_projection.audio_aggregate_embed.weight": 770703360,
+    "text_embedding_projection.audio_aggregate_embed.bias": 4096,
+    "text_embedding_projection.video_aggregate_embed.weight": 1541406720,
+    "text_embedding_projection.video_aggregate_embed.bias": 8192,
+    "gemma3_12b.transformer.model._global_inv_freq": 1024,
+    "gemma3_12b.transformer.model._sliding_inv_freq": 512,
+    "gemma3_12b.transformer.model._suppress_tokens": 16
+  },
+  "parent_static_inventory": {
+    "xpu:0": {
+      "sampler_blocks": [
+        0,
+        19
+      ],
+      "sampler_bf16_header_bytes": 20354257920,
+      "sampler_actual_inventory_bytes": 20354297920,
+      "sampler_constructor_extra_bytes": 40000,
+      "sampler_nonblock_bf16_header_bytes": 4887262720,
+      "upsampler_bytes": 995735808,
+      "static_inventory_bytes": 21350033728,
+      "preparation_allocated_beyond_inventory_bytes": 62144,
+      "preparation_allocator_reserved_bytes": 21940404224
+    },
+    "xpu:1": {
+      "sampler_blocks": [
+        20,
+        47
+      ],
+      "sampler_bf16_header_bytes": 21653793280,
+      "sampler_actual_inventory_bytes": 21653793280,
+      "static_inventory_bytes": 21653793280,
+      "preparation_allocated_beyond_inventory_bytes": 75264,
+      "preparation_allocator_reserved_bytes": 22359834624
+    },
+    "xpu:2": {
+      "text_layers": [
+        0,
+        23
+      ],
+      "text_actual_inventory_bytes": 15330870852,
+      "static_inventory_bytes": 15330870852,
+      "preparation_allocated_beyond_inventory_bytes": 2442344380,
+      "preparation_allocator_reserved_bytes": 20252196864
+    },
+    "xpu:3": {
+      "text_layers": [
+        24,
+        47
+      ],
+      "text_actual_inventory_bytes": 10900713520,
+      "video_encoder_header_bytes": 637873794,
+      "video_decoder_header_bytes": 834267488,
+      "video_statistics_header_bytes": 512,
+      "audio_vae_header_bytes": 106496804,
+      "vocoder_header_bytes": 258170064,
+      "video_plus_audio_actual_inventory_bytes": 1836874030,
+      "video_plus_audio_constructor_extra_bytes": 65368,
+      "static_inventory_bytes": 12737587550,
+      "preparation_allocated_beyond_inventory_bytes": 2975367330,
+      "preparation_allocator_reserved_bytes": 17423138816
+    }
+  },
+  "replica_install": {
+    "after_install": {
+      "floor_bytes": 2147483648,
+      "free_bytes": 11860217856,
+      "margin_bytes": 2733412352,
+      "new_resident_bytes": 0,
+      "transient_budget_bytes": 6979321856
+    },
+    "before_install": {
+      "floor_bytes": 2147483648,
+      "free_bytes": 12709572608,
+      "margin_bytes": 2748499358,
+      "new_resident_bytes": 834267746,
+      "transient_budget_bytes": 6979321856
+    },
+    "calls": 0,
+    "device": "xpu:2",
+    "dtype": "torch.bfloat16",
+    "encoder_bytes": 0,
+    "floor_bytes": 2147483648,
+    "graph_pool_bytes": 0,
+    "last_decode": null,
+    "na3d_route": {
+      "route": "axis-router-original",
+      "router_candidate_sha256": "d2907c1ee764fbb344db08851e19a67f0fd2144256d5451f0d15a9382dc08b6a",
+      "router_module": "ltx_na_axis_router",
+      "router_original": "comfy_kitchen.backends.eager.na.na3d",
+      "router_sha256": "1fe42fe9cc52fc957ef9bb3d8de070f2aefb3cb320b12d090146ad04f420b2a7",
+      "rule": "every graph-mode decode requires the router scope unset and router.validate(); the router then calls the pinned eager na3d (the cached _group_mask path); the axis-cache candidate is never reached",
+      "scope_at_install": null
+    },
+    "native_seed": 0,
+    "resident_bytes": 834267746,
+    "single_decode_thread": true,
+    "transient_budget_bytes": 6979321856,
+    "weight_copy_bitwise_equal": true
+  },
+  "replica121_observations": {
+    "count": 135,
+    "resident_bytes": [
+      834267746
+    ],
+    "max_growth_bytes": 3202351104,
+    "before_free_min_bytes": 11500101632,
+    "after_free_min_bytes": 8297738240
+  },
+  "replica169_completed_decodes": [
+    {
+      "file": "decode-stream127-qeager-c000000.json",
+      "equal": true,
+      "after_free_bytes": 7024680960,
+      "allocator_after": {
+        "allocated": 18598475776,
+        "peak_allocated": 21279389696,
+        "reserved": 25734152192
+      },
+      "allocator_before": {
+        "allocated": 18598475776,
+        "peak_allocated": 19405864448,
+        "reserved": 21258829824
+      },
+      "before": {
+        "floor_bytes": 2147483648,
+        "free_bytes": 11711291392,
+        "margin_bytes": 2584485888,
+        "new_resident_bytes": 0,
+        "transient_budget_bytes": 6979321856
+      },
+      "observed_peak_or_reservation_growth_bytes": 4475322368,
+      "peak_is_device_global_not_reset": true,
+      "seconds": 4.232068464
+    },
+    {
+      "file": "decode-stream127-qeager-c000001.json",
+      "equal": true,
+      "after_free_bytes": 7026778112,
+      "allocator_after": {
+        "allocated": 18587351040,
+        "peak_allocated": 21279389696,
+        "reserved": 25732055040
+      },
+      "allocator_before": {
+        "allocated": 18587351040,
+        "peak_allocated": 21279389696,
+        "reserved": 21256732672
+      },
+      "before": {
+        "floor_bytes": 2147483648,
+        "free_bytes": 11502116864,
+        "margin_bytes": 2375311360,
+        "new_resident_bytes": 0,
+        "transient_budget_bytes": 6979321856
+      },
+      "observed_peak_or_reservation_growth_bytes": 4475322368,
+      "peak_is_device_global_not_reset": true,
+      "seconds": 3.711784228
+    },
+    {
+      "file": "decode-stream127-qeager-c000002.json",
+      "equal": true,
+      "after_free_bytes": 7024672768,
+      "allocator_after": {
+        "allocated": 18587351040,
+        "peak_allocated": 21279389696,
+        "reserved": 25734152192
+      },
+      "allocator_before": {
+        "allocated": 18587351040,
+        "peak_allocated": 21279389696,
+        "reserved": 21258829824
+      },
+      "before": {
+        "floor_bytes": 2147483648,
+        "free_bytes": 11500011520,
+        "margin_bytes": 2373206016,
+        "new_resident_bytes": 0,
+        "transient_budget_bytes": 6979321856
+      },
+      "observed_peak_or_reservation_growth_bytes": 4475322368,
+      "peak_is_device_global_not_reset": true,
+      "seconds": 3.835217765
+    },
+    {
+      "file": "decode-stream127-qgraph-c000000.json",
+      "equal": true,
+      "after_free_bytes": 7169376256,
+      "allocator_after": {
+        "allocated": 18587351040,
+        "peak_allocated": 21279389696,
+        "reserved": 25585254400
+      },
+      "allocator_before": {
+        "allocated": 18587351040,
+        "peak_allocated": 21279389696,
+        "reserved": 21109932032
+      },
+      "before": {
+        "floor_bytes": 2147483648,
+        "free_bytes": 11640524800,
+        "margin_bytes": 2513719296,
+        "new_resident_bytes": 0,
+        "transient_budget_bytes": 6979321856
+      },
+      "observed_peak_or_reservation_growth_bytes": 4475322368,
+      "peak_is_device_global_not_reset": true,
+      "seconds": 3.744208343
+    },
+    {
+      "file": "decode-stream127-qgraph-c000001.json",
+      "equal": true,
+      "after_free_bytes": 7169359872,
+      "allocator_after": {
+        "allocated": 18587351040,
+        "peak_allocated": 21279389696,
+        "reserved": 25585254400
+      },
+      "allocator_before": {
+        "allocated": 18587351040,
+        "peak_allocated": 21279389696,
+        "reserved": 21109932032
+      },
+      "before": {
+        "floor_bytes": 2147483648,
+        "free_bytes": 11640508416,
+        "margin_bytes": 2513702912,
+        "new_resident_bytes": 0,
+        "transient_budget_bytes": 6979321856
+      },
+      "observed_peak_or_reservation_growth_bytes": 4475322368,
+      "peak_is_device_global_not_reset": true,
+      "seconds": 3.771885095
+    },
+    {
+      "file": "decode-stream127-qgraph-c000002.json",
+      "equal": true,
+      "after_free_bytes": 7169359872,
+      "allocator_after": {
+        "allocated": 18587351040,
+        "peak_allocated": 21279389696,
+        "reserved": 25585254400
+      },
+      "allocator_before": {
+        "allocated": 18587351040,
+        "peak_allocated": 21279389696,
+        "reserved": 21109932032
+      },
+      "before": {
+        "floor_bytes": 2147483648,
+        "free_bytes": 11640508416,
+        "margin_bytes": 2513702912,
+        "new_resident_bytes": 0,
+        "transient_budget_bytes": 6979321856
+      },
+      "observed_peak_or_reservation_growth_bytes": 4475322368,
+      "peak_is_device_global_not_reset": true,
+      "seconds": 3.664018133
+    },
+    {
+      "file": "decode-stream127-qrepeat-c000000.json",
+      "equal": true,
+      "after_free_bytes": 8561885184,
+      "allocator_after": {
+        "allocated": 18636520448,
+        "peak_allocated": 21279389696,
+        "reserved": 24196939776
+      },
+      "allocator_before": {
+        "allocated": 18587351040,
+        "peak_allocated": 21279389696,
+        "reserved": 21109932032
+      },
+      "before": {
+        "floor_bytes": 2147483648,
+        "free_bytes": 11640508416,
+        "margin_bytes": 2513702912,
+        "new_resident_bytes": 0,
+        "transient_budget_bytes": 6979321856
+      },
+      "observed_peak_or_reservation_growth_bytes": 3087007744,
+      "peak_is_device_global_not_reset": true,
+      "seconds": 5.541502589
+    }
+  ],
+  "failure_snapshots": [
+    {
+      "event": "before",
+      "timestamp_ns": 1791623105165296289,
+      "free_bytes": 9241370624,
+      "allocated": 20935839232,
+      "peak": 21279389696,
+      "reserved": 23513268224,
+      "reserved_minus_allocated_bytes": 2577428992,
+      "allocated_beyond_text_and_replica_bytes": 4770700634
+    },
+    {
+      "event": "conditioning-A-before",
+      "timestamp_ns": 1791623105498329050,
+      "free_bytes": 9214103552,
+      "allocated": 19399677440,
+      "peak": 21279389696,
+      "reserved": 23540531200,
+      "reserved_minus_allocated_bytes": 4140853760,
+      "allocated_beyond_text_and_replica_bytes": 3234538842
+    },
+    {
+      "event": "conditioning-A-after",
+      "timestamp_ns": 1791623105701671786,
+      "free_bytes": 8610119680,
+      "allocated": 20930499072,
+      "peak": 21279389696,
+      "reserved": 24144510976,
+      "reserved_minus_allocated_bytes": 3214011904,
+      "allocated_beyond_text_and_replica_bytes": 4765360474
+    }
+  ],
+  "qualification_snapshot_count": 40,
+  "qualification_snapshots": [
+    {
+      "path": "stream-preparation.json/snapshot",
+      "free_bytes": {
+        "xpu:0": 11773636608,
+        "xpu:1": 11354202112,
+        "xpu:2": 12709572608,
+        "xpu:3": 15947759616
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21350095872,
+          "peak": 21350095872,
+          "reserved": 21940404224
+        },
+        "xpu:1": {
+          "allocated": 21653868544,
+          "peak": 21653868544,
+          "reserved": 22359834624
+        },
+        "xpu:2": {
+          "allocated": 17773215232,
+          "peak": 19405864448,
+          "reserved": 20252196864
+        },
+        "xpu:3": {
+          "allocated": 15712954880,
+          "peak": 15712954880,
+          "reserved": 17423138816
+        }
+      }
+    },
+    {
+      "path": "stream-failure-stream127-qrepeat-c000002.json/controller_receipts/2/snapshot",
+      "free_bytes": {
+        "xpu:0": 10144808960,
+        "xpu:1": 10520559616,
+        "xpu:2": 8610119680,
+        "xpu:3": 15745241088
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21783982080,
+          "peak": 22135203328,
+          "reserved": 22670213120
+        },
+        "xpu:1": {
+          "allocated": 22041359360,
+          "peak": 22352508928,
+          "reserved": 22942842880
+        },
+        "xpu:2": {
+          "allocated": 20930499072,
+          "peak": 21279389696,
+          "reserved": 24144510976
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17110663168
+        }
+      }
+    },
+    {
+      "path": "stream-failure-stream127-qrepeat-c000002.json/controller_receipts/1/snapshot",
+      "free_bytes": {
+        "xpu:0": 10144813056,
+        "xpu:1": 10520563712,
+        "xpu:2": 9214103552,
+        "xpu:3": 15745245184
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21783982080,
+          "peak": 22135203328,
+          "reserved": 22670213120
+        },
+        "xpu:1": {
+          "allocated": 22041359360,
+          "peak": 22352508928,
+          "reserved": 22942842880
+        },
+        "xpu:2": {
+          "allocated": 19399677440,
+          "peak": 21279389696,
+          "reserved": 23540531200
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17110663168
+        }
+      }
+    },
+    {
+      "path": "stream-failure-stream127-qrepeat-c000002.json/current/memory_before/snapshot",
+      "free_bytes": {
+        "xpu:0": 10144817152,
+        "xpu:1": 10520567808,
+        "xpu:2": 9241370624,
+        "xpu:3": 15824941056
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21783982080,
+          "peak": 22135203328,
+          "reserved": 22670213120
+        },
+        "xpu:1": {
+          "allocated": 22041359360,
+          "peak": 22352508928,
+          "reserved": 22942842880
+        },
+        "xpu:2": {
+          "allocated": 20935839232,
+          "peak": 21279389696,
+          "reserved": 23513268224
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17028874240
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qeager-c000000.json/controller_receipts/0/snapshot",
+      "free_bytes": {
+        "xpu:0": 11773632512,
+        "xpu:1": 11354198016,
+        "xpu:2": 11860217856,
+        "xpu:3": 15947743232
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21350095872,
+          "peak": 21350095872,
+          "reserved": 21940404224
+        },
+        "xpu:1": {
+          "allocated": 21653868544,
+          "peak": 21653868544,
+          "reserved": 22359834624
+        },
+        "xpu:2": {
+          "allocated": 18610649088,
+          "peak": 19405864448,
+          "reserved": 21109932032
+        },
+        "xpu:3": {
+          "allocated": 15712954880,
+          "peak": 15712955904,
+          "reserved": 17423138816
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qeager-c000000.json/controller_receipts/1/snapshot",
+      "free_bytes": {
+        "xpu:0": 11120218112,
+        "xpu:1": 11323150336,
+        "xpu:2": 11640549376,
+        "xpu:3": 15332941824
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21350095872,
+          "peak": 21564399104,
+          "reserved": 21940404224
+        },
+        "xpu:1": {
+          "allocated": 21653868544,
+          "peak": 21835928576,
+          "reserved": 22359834624
+        },
+        "xpu:2": {
+          "allocated": 18598475776,
+          "peak": 21279389696,
+          "reserved": 21109932032
+        },
+        "xpu:3": {
+          "allocated": 15466408448,
+          "peak": 18147322368,
+          "reserved": 17525899264
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qeager-c000001.json/controller_receipts/0/snapshot",
+      "free_bytes": {
+        "xpu:0": 11120226304,
+        "xpu:1": 11323158528,
+        "xpu:2": 11640557568,
+        "xpu:3": 15637028864
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21350095872,
+          "peak": 21564399104,
+          "reserved": 21940404224
+        },
+        "xpu:1": {
+          "allocated": 21653868544,
+          "peak": 21835928576,
+          "reserved": 22359834624
+        },
+        "xpu:2": {
+          "allocated": 18598475776,
+          "peak": 21279389696,
+          "reserved": 21109932032
+        },
+        "xpu:3": {
+          "allocated": 15466408448,
+          "peak": 18147322368,
+          "reserved": 17217617920
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qeager-c000001.json/guard_receipts/1/before/snapshot",
+      "free_bytes": {
+        "xpu:0": 11120226304,
+        "xpu:1": 11323158528,
+        "xpu:2": 11640557568,
+        "xpu:3": 15637028864
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21350095872,
+          "peak": 21564399104,
+          "reserved": 21940404224
+        },
+        "xpu:1": {
+          "allocated": 21653868544,
+          "peak": 21835928576,
+          "reserved": 22359834624
+        },
+        "xpu:2": {
+          "allocated": 18598475776,
+          "peak": 21279389696,
+          "reserved": 21109932032
+        },
+        "xpu:3": {
+          "allocated": 15466408448,
+          "peak": 18147322368,
+          "reserved": 17217617920
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qeager-c000001.json/guard_receipts/1/after/snapshot",
+      "free_bytes": {
+        "xpu:0": 11120222208,
+        "xpu:1": 11323154432,
+        "xpu:2": 11640553472,
+        "xpu:3": 15557074944
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21350095872,
+          "peak": 21564399104,
+          "reserved": 21940404224
+        },
+        "xpu:1": {
+          "allocated": 21653868544,
+          "peak": 21835928576,
+          "reserved": 22359834624
+        },
+        "xpu:2": {
+          "allocated": 18598475776,
+          "peak": 21279389696,
+          "reserved": 21109932032
+        },
+        "xpu:3": {
+          "allocated": 15466408448,
+          "peak": 18147322368,
+          "reserved": 17299406848
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qeager-c000001.json/guard_receipts/2/before/snapshot",
+      "free_bytes": {
+        "xpu:0": 10710065152,
+        "xpu:1": 11258130432,
+        "xpu:2": 11502133248,
+        "xpu:3": 15557062656
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21350095872,
+          "peak": 21564399104,
+          "reserved": 22288531456
+        },
+        "xpu:1": {
+          "allocated": 21653868544,
+          "peak": 21835928576,
+          "reserved": 22433234944
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21256732672
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17299406848
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qeager-c000001.json/guard_receipts/2/after/snapshot",
+      "free_bytes": {
+        "xpu:0": 10710065152,
+        "xpu:1": 11258130432,
+        "xpu:2": 11502133248,
+        "xpu:3": 15557062656
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21350095872,
+          "peak": 21564399104,
+          "reserved": 22288531456
+        },
+        "xpu:1": {
+          "allocated": 21653868544,
+          "peak": 21835928576,
+          "reserved": 22433234944
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21256732672
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17301504000
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qeager-c000001.json/controller_receipts/5/snapshot",
+      "free_bytes": {
+        "xpu:0": 11049811968,
+        "xpu:1": 11322695680,
+        "xpu:2": 11640553472,
+        "xpu:3": 15520960512
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21350095872,
+          "peak": 21582282240,
+          "reserved": 21940404224
+        },
+        "xpu:1": {
+          "allocated": 21653868544,
+          "peak": 21847323648,
+          "reserved": 22359834624
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21109932032
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17337155584
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qeager-c000002.json/controller_receipts/0/snapshot",
+      "free_bytes": {
+        "xpu:0": 11049816064,
+        "xpu:1": 11322699776,
+        "xpu:2": 11640557568,
+        "xpu:3": 15825051648
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21350095872,
+          "peak": 21582282240,
+          "reserved": 21940404224
+        },
+        "xpu:1": {
+          "allocated": 21653868544,
+          "peak": 21847323648,
+          "reserved": 22359834624
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21109932032
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17028874240
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qeager-c000002.json/guard_receipts/1/before/snapshot",
+      "free_bytes": {
+        "xpu:0": 11049816064,
+        "xpu:1": 11322699776,
+        "xpu:2": 11640557568,
+        "xpu:3": 15825051648
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21350095872,
+          "peak": 21582282240,
+          "reserved": 21940404224
+        },
+        "xpu:1": {
+          "allocated": 21653868544,
+          "peak": 21847323648,
+          "reserved": 22359834624
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21109932032
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17028874240
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qeager-c000002.json/guard_receipts/1/after/snapshot",
+      "free_bytes": {
+        "xpu:0": 11049811968,
+        "xpu:1": 11322695680,
+        "xpu:2": 11640553472,
+        "xpu:3": 15745355776
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21350095872,
+          "peak": 21582282240,
+          "reserved": 21940404224
+        },
+        "xpu:1": {
+          "allocated": 21653868544,
+          "peak": 21847323648,
+          "reserved": 22359834624
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21109932032
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17110663168
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qeager-c000002.json/guard_receipts/2/before/snapshot",
+      "free_bytes": {
+        "xpu:0": 10710061056,
+        "xpu:1": 11257667584,
+        "xpu:2": 11500027904,
+        "xpu:3": 15745339392
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21350095872,
+          "peak": 21582282240,
+          "reserved": 22288531456
+        },
+        "xpu:1": {
+          "allocated": 21653868544,
+          "peak": 21847323648,
+          "reserved": 22433234944
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21258829824
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17110663168
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qeager-c000002.json/guard_receipts/2/after/snapshot",
+      "free_bytes": {
+        "xpu:0": 10710061056,
+        "xpu:1": 11257667584,
+        "xpu:2": 11500027904,
+        "xpu:3": 15745339392
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21350095872,
+          "peak": 21582282240,
+          "reserved": 22288531456
+        },
+        "xpu:1": {
+          "allocated": 21653868544,
+          "peak": 21847323648,
+          "reserved": 22433234944
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21258829824
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17112760320
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qeager-c000002.json/controller_receipts/5/snapshot",
+      "free_bytes": {
+        "xpu:0": 11049807872,
+        "xpu:1": 11322691584,
+        "xpu:2": 11640549376,
+        "xpu:3": 15520890880
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21350095872,
+          "peak": 21582282240,
+          "reserved": 21940404224
+        },
+        "xpu:1": {
+          "allocated": 21653868544,
+          "peak": 21847323648,
+          "reserved": 22359834624
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21109932032
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17337155584
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qgraph-c000000.json/controller_receipts/0/snapshot",
+      "free_bytes": {
+        "xpu:0": 11049816064,
+        "xpu:1": 11322699776,
+        "xpu:2": 11640557568,
+        "xpu:3": 15824986112
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21350095872,
+          "peak": 21582282240,
+          "reserved": 21940404224
+        },
+        "xpu:1": {
+          "allocated": 21653868544,
+          "peak": 21847323648,
+          "reserved": 22359834624
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21109932032
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17028874240
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qgraph-c000000.json/controller_receipts/1/snapshot",
+      "free_bytes": {
+        "xpu:0": 10461085696,
+        "xpu:1": 10772979712,
+        "xpu:2": 11640541184,
+        "xpu:3": 15520882688
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21541310464,
+          "peak": 21860623872,
+          "reserved": 22403874816
+        },
+        "xpu:1": {
+          "allocated": 21823087616,
+          "peak": 22108628992,
+          "reserved": 22758293504
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21109932032
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17337155584
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qgraph-c000001.json/controller_receipts/0/snapshot",
+      "free_bytes": {
+        "xpu:0": 10461089792,
+        "xpu:1": 10772983808,
+        "xpu:2": 11640545280,
+        "xpu:3": 15824973824
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21541310464,
+          "peak": 21860623872,
+          "reserved": 22403874816
+        },
+        "xpu:1": {
+          "allocated": 21823087616,
+          "peak": 22108628992,
+          "reserved": 22758293504
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21109932032
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17028874240
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qgraph-c000001.json/guard_receipts/1/before/snapshot",
+      "free_bytes": {
+        "xpu:0": 10461089792,
+        "xpu:1": 10772983808,
+        "xpu:2": 11640545280,
+        "xpu:3": 15824973824
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21541310464,
+          "peak": 21860623872,
+          "reserved": 22403874816
+        },
+        "xpu:1": {
+          "allocated": 21823087616,
+          "peak": 22108628992,
+          "reserved": 22758293504
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21109932032
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17028874240
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qgraph-c000001.json/guard_receipts/1/after/snapshot",
+      "free_bytes": {
+        "xpu:0": 10461085696,
+        "xpu:1": 10772979712,
+        "xpu:2": 11640541184,
+        "xpu:3": 15745277952
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21541310464,
+          "peak": 21860623872,
+          "reserved": 22403874816
+        },
+        "xpu:1": {
+          "allocated": 21823087616,
+          "peak": 22108628992,
+          "reserved": 22758293504
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21109932032
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17110663168
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qgraph-c000001.json/guard_receipts/2/before/snapshot",
+      "free_bytes": {
+        "xpu:0": 10224316416,
+        "xpu:1": 10662477824,
+        "xpu:2": 11640537088,
+        "xpu:3": 15824965632
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21633193984,
+          "peak": 21860623872,
+          "reserved": 22621978624
+        },
+        "xpu:1": {
+          "allocated": 21900864512,
+          "peak": 22108628992,
+          "reserved": 22833790976
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21109932032
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17028874240
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qgraph-c000001.json/guard_receipts/2/after/snapshot",
+      "free_bytes": {
+        "xpu:0": 10224312320,
+        "xpu:1": 10662473728,
+        "xpu:2": 11640532992,
+        "xpu:3": 15745269760
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21633193984,
+          "peak": 21860623872,
+          "reserved": 22621978624
+        },
+        "xpu:1": {
+          "allocated": 21900864512,
+          "peak": 22108628992,
+          "reserved": 22833790976
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21109932032
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17112760320
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qgraph-c000001.json/controller_receipts/5/snapshot",
+      "free_bytes": {
+        "xpu:0": 10140635136,
+        "xpu:1": 10558394368,
+        "xpu:2": 11640524800,
+        "xpu:3": 15520866304
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21784850432,
+          "peak": 22135203328,
+          "reserved": 22674407424
+        },
+        "xpu:1": {
+          "allocated": 22041031680,
+          "peak": 22352508928,
+          "reserved": 22902996992
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21109932032
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17337155584
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qgraph-c000002.json/controller_receipts/0/snapshot",
+      "free_bytes": {
+        "xpu:0": 10140639232,
+        "xpu:1": 10558398464,
+        "xpu:2": 11640528896,
+        "xpu:3": 15824957440
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21784850432,
+          "peak": 22135203328,
+          "reserved": 22674407424
+        },
+        "xpu:1": {
+          "allocated": 22041031680,
+          "peak": 22352508928,
+          "reserved": 22902996992
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21109932032
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17028874240
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qgraph-c000002.json/guard_receipts/1/before/snapshot",
+      "free_bytes": {
+        "xpu:0": 10140639232,
+        "xpu:1": 10558398464,
+        "xpu:2": 11640528896,
+        "xpu:3": 15824957440
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21784850432,
+          "peak": 22135203328,
+          "reserved": 22674407424
+        },
+        "xpu:1": {
+          "allocated": 22041031680,
+          "peak": 22352508928,
+          "reserved": 22902996992
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21109932032
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17028874240
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qgraph-c000002.json/guard_receipts/1/after/snapshot",
+      "free_bytes": {
+        "xpu:0": 10140635136,
+        "xpu:1": 10558394368,
+        "xpu:2": 11640524800,
+        "xpu:3": 15745261568
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21784850432,
+          "peak": 22135203328,
+          "reserved": 22674407424
+        },
+        "xpu:1": {
+          "allocated": 22041031680,
+          "peak": 22352508928,
+          "reserved": 22902996992
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21109932032
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17110663168
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qgraph-c000002.json/guard_receipts/2/before/snapshot",
+      "free_bytes": {
+        "xpu:0": 9912037376,
+        "xpu:1": 10537349120,
+        "xpu:2": 11502104576,
+        "xpu:3": 15745253376
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21784850432,
+          "peak": 22135203328,
+          "reserved": 22902996992
+        },
+        "xpu:1": {
+          "allocated": 22041031680,
+          "peak": 22352508928,
+          "reserved": 22926065664
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21256732672
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17110663168
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qgraph-c000002.json/guard_receipts/2/after/snapshot",
+      "free_bytes": {
+        "xpu:0": 9912037376,
+        "xpu:1": 10537349120,
+        "xpu:2": 11502104576,
+        "xpu:3": 15745253376
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21784850432,
+          "peak": 22135203328,
+          "reserved": 22902996992
+        },
+        "xpu:1": {
+          "allocated": 22041031680,
+          "peak": 22352508928,
+          "reserved": 22926065664
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21256732672
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17112760320
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qgraph-c000002.json/controller_receipts/5/snapshot",
+      "free_bytes": {
+        "xpu:0": 10134343680,
+        "xpu:1": 10528968704,
+        "xpu:2": 11640524800,
+        "xpu:3": 15520866304
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21784363008,
+          "peak": 22135203328,
+          "reserved": 22680698880
+        },
+        "xpu:1": {
+          "allocated": 22041031680,
+          "peak": 22352508928,
+          "reserved": 22932357120
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21109932032
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17337155584
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qrepeat-c000000.json/controller_receipts/0/snapshot",
+      "free_bytes": {
+        "xpu:0": 10134347776,
+        "xpu:1": 10528972800,
+        "xpu:2": 11640528896,
+        "xpu:3": 15824957440
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21784363008,
+          "peak": 22135203328,
+          "reserved": 22680698880
+        },
+        "xpu:1": {
+          "allocated": 22041031680,
+          "peak": 22352508928,
+          "reserved": 22932357120
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21109932032
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17028874240
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qrepeat-c000000.json/controller_receipts/1/snapshot",
+      "free_bytes": {
+        "xpu:0": 9926705152,
+        "xpu:1": 10493296640,
+        "xpu:2": 11502092288,
+        "xpu:3": 11332833280
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21784113152,
+          "peak": 22135203328,
+          "reserved": 22894608384
+        },
+        "xpu:1": {
+          "allocated": 22041359360,
+          "peak": 22352508928,
+          "reserved": 22968008704
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21256732672
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 21523070976
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qrepeat-c000001.json/controller_receipts/0/snapshot",
+      "free_bytes": {
+        "xpu:0": 9926705152,
+        "xpu:1": 10493296640,
+        "xpu:2": 11502092288,
+        "xpu:3": 11332833280
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21784113152,
+          "peak": 22135203328,
+          "reserved": 22894608384
+        },
+        "xpu:1": {
+          "allocated": 22041359360,
+          "peak": 22352508928,
+          "reserved": 22968008704
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21256732672
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 21523070976
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qrepeat-c000001.json/guard_receipts/1/before/snapshot",
+      "free_bytes": {
+        "xpu:0": 10146926592,
+        "xpu:1": 10541551616,
+        "xpu:2": 11640524800,
+        "xpu:3": 15745261568
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21784113152,
+          "peak": 22135203328,
+          "reserved": 22668115968
+        },
+        "xpu:1": {
+          "allocated": 22041359360,
+          "peak": 22352508928,
+          "reserved": 22919774208
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21109932032
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17110663168
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qrepeat-c000001.json/guard_receipts/1/after/snapshot",
+      "free_bytes": {
+        "xpu:0": 10146926592,
+        "xpu:1": 10541551616,
+        "xpu:2": 11640524800,
+        "xpu:3": 15745261568
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21784113152,
+          "peak": 22135203328,
+          "reserved": 22668115968
+        },
+        "xpu:1": {
+          "allocated": 22041359360,
+          "peak": 22352508928,
+          "reserved": 22919774208
+        },
+        "xpu:2": {
+          "allocated": 18587351040,
+          "peak": 21279389696,
+          "reserved": 21109932032
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 17110663168
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qrepeat-c000001.json/guard_receipts/2/before/snapshot",
+      "free_bytes": {
+        "xpu:0": 9918316544,
+        "xpu:1": 10541531136,
+        "xpu:2": 11479023616,
+        "xpu:3": 11395747840
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21784113152,
+          "peak": 22135203328,
+          "reserved": 22896705536
+        },
+        "xpu:1": {
+          "allocated": 22041359360,
+          "peak": 22352508928,
+          "reserved": 22921871360
+        },
+        "xpu:2": {
+          "allocated": 18632505344,
+          "peak": 21279389696,
+          "reserved": 21273509888
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 21462253568
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qrepeat-c000001.json/guard_receipts/2/after/snapshot",
+      "free_bytes": {
+        "xpu:0": 9918316544,
+        "xpu:1": 10541531136,
+        "xpu:2": 11269308416,
+        "xpu:3": 11395747840
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21784113152,
+          "peak": 22135203328,
+          "reserved": 22896705536
+        },
+        "xpu:1": {
+          "allocated": 22041359360,
+          "peak": 22352508928,
+          "reserved": 22921871360
+        },
+        "xpu:2": {
+          "allocated": 18752248320,
+          "peak": 21279389696,
+          "reserved": 21483225088
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 21462253568
+        }
+      }
+    },
+    {
+      "path": "safety-stream127-qrepeat-c000001.json/controller_receipts/5/snapshot",
+      "free_bytes": {
+        "xpu:0": 10144788480,
+        "xpu:1": 10520539136,
+        "xpu:2": 8614293504,
+        "xpu:3": 11332812800
+      },
+      "allocator": {
+        "xpu:0": {
+          "allocated": 21783982080,
+          "peak": 22135203328,
+          "reserved": 22670213120
+        },
+        "xpu:1": {
+          "allocated": 22041359360,
+          "peak": 22352508928,
+          "reserved": 22942842880
+        },
+        "xpu:2": {
+          "allocated": 20951352320,
+          "peak": 21279389696,
+          "reserved": 24140316672
+        },
+        "xpu:3": {
+          "allocated": 15219862016,
+          "peak": 18147322368,
+          "reserved": 21523070976
+        }
+      }
+    }
+  ],
+  "qualification_phase_minimum_free_bytes": {
+    "xpu:0": 9912037376,
+    "xpu:1": 10493296640,
+    "xpu:2": 8610119680,
+    "xpu:3": 11332812800
+  },
+  "qualification_phase_margin_above_8_8_2_9_floor_gib": {
+    "xpu:0": 1.2313041687011719,
+    "xpu:1": 1.77264404296875,
+    "xpu:2": 6.018798828125,
+    "xpu:3": 1.55450439453125
+  },
+  "shortfall": {
+    "refusal_free_bytes": 8465399808,
+    "refusal_free_gib": 7.8840179443359375,
+    "transient_bytes": 6979321856,
+    "floor_bytes": 2147483648,
+    "floor_plus_transient_bytes": 9126805504,
+    "base_deficit_bytes": 661405696,
+    "base_deficit_gib": 0.6159820556640625,
+    "near_floor_band_bytes": 536870912,
+    "deficit_including_near_floor_band_bytes": 1198276608,
+    "unchanged_screening_bytes": 805306368,
+    "actual_required_free_bytes": 9932111872,
+    "actual_deficit_bytes": 1466712064,
+    "actual_deficit_gib": 1.3659820556640625,
+    "0_8_gib_reclaim_is_sufficient": false
+  },
+  "reclaim_scenarios": [
+    {
+      "reclaimed_gib": 0,
+      "post_reclaim_free_gib": 7.8840179443359375,
+      "margin_over_transient_and_floor_gib": -0.6159820556640625,
+      "clears_075_screen": false,
+      "measured": false
+    },
+    {
+      "reclaimed_gib": 0.8,
+      "post_reclaim_free_gib": 8.684017944335938,
+      "margin_over_transient_and_floor_gib": 0.1840179443359382,
+      "clears_075_screen": false,
+      "measured": false
+    },
+    {
+      "reclaimed_gib": 1.3659820556640625,
+      "post_reclaim_free_gib": 9.25,
+      "margin_over_transient_and_floor_gib": 0.75,
+      "clears_075_screen": true,
+      "measured": false
+    },
+    {
+      "reclaimed_gib": 1.5,
+      "post_reclaim_free_gib": 9.384017944335938,
+      "margin_over_transient_and_floor_gib": 0.8840179443359375,
+      "clears_075_screen": true,
+      "measured": false
+    },
+    {
+      "reclaimed_gib": 2.0,
+      "post_reclaim_free_gib": 9.884017944335938,
+      "margin_over_transient_and_floor_gib": 1.3840179443359375,
+      "clears_075_screen": true,
+      "measured": false
+    }
+  ],
+  "prior145_legacy_phase_minima": {
+    "before": {
+      "xpu:0": {
+        "min_free_bytes": 10117566464,
+        "min_seq": 16
+      },
+      "xpu:1": {
+        "min_free_bytes": 10553069568,
+        "min_seq": 16
+      },
+      "xpu:2": {
+        "min_free_bytes": 12709535744,
+        "min_seq": 16
+      },
+      "xpu:3": {
+        "min_free_bytes": 11649736704,
+        "min_seq": 16
+      }
+    },
+    "A": {
+      "xpu:0": {
+        "min_free_bytes": 10151133184,
+        "min_seq": 26
+      },
+      "xpu:1": {
+        "min_free_bytes": 10574053376,
+        "min_seq": 26
+      },
+      "xpu:2": {
+        "min_free_bytes": 12709548032,
+        "min_seq": 26
+      },
+      "xpu:3": {
+        "min_free_bytes": 15745486848,
+        "min_seq": 26
+      }
+    },
+    "B": {
+      "xpu:0": {
+        "min_free_bytes": 9953996800,
+        "min_seq": 3
+      },
+      "xpu:1": {
+        "min_free_bytes": 10574041088,
+        "min_seq": 10
+      },
+      "xpu:2": {
+        "min_free_bytes": 12569026560,
+        "min_seq": 12
+      },
+      "xpu:3": {
+        "min_free_bytes": 11660222464,
+        "min_seq": 10
+      }
+    },
+    "after": {
+      "xpu:0": {
+        "min_free_bytes": 9987551232,
+        "min_seq": 0
+      },
+      "xpu:1": {
+        "min_free_bytes": 10553069568,
+        "min_seq": 9
+      },
+      "xpu:2": {
+        "min_free_bytes": 12569034752,
+        "min_seq": 0
+      },
+      "xpu:3": {
+        "min_free_bytes": 11649736704,
+        "min_seq": 9
+      }
+    }
+  },
+  "prior145_aux_phase_minima": {
+    "before": {
+      "xpu:0": {
+        "min_free_bytes": 11235536896,
+        "min_free_gib": 10.463909149169922,
+        "min_seq": 31
+      },
+      "xpu:1": {
+        "min_free_bytes": 10574352384,
+        "min_free_gib": 9.848133087158203,
+        "min_seq": 0
+      },
+      "xpu:2": {
+        "min_free_bytes": 10935422976,
+        "min_free_gib": 10.184406280517578,
+        "min_seq": 0
+      },
+      "xpu:3": {
+        "min_free_bytes": 12220678144,
+        "min_free_gib": 11.381393432617188,
+        "min_seq": 0
+      }
+    },
+    "A": {
+      "xpu:0": {
+        "min_free_bytes": 11235532800,
+        "min_free_gib": 10.463905334472656,
+        "min_seq": 33
+      },
+      "xpu:1": {
+        "min_free_bytes": 10574356480,
+        "min_free_gib": 9.848136901855469,
+        "min_seq": 28
+      },
+      "xpu:2": {
+        "min_free_bytes": 11155623936,
+        "min_free_gib": 10.389484405517578,
+        "min_seq": 28
+      },
+      "xpu:3": {
+        "min_free_bytes": 16366751744,
+        "min_free_gib": 15.242725372314453,
+        "min_seq": 28
+      }
+    },
+    "B": {
+      "xpu:0": {
+        "min_free_bytes": 11126460416,
+        "min_free_gib": 10.362323760986328,
+        "min_seq": 14
+      },
+      "xpu:1": {
+        "min_free_bytes": 10574336000,
+        "min_free_gib": 9.84811782836914,
+        "min_seq": 14
+      },
+      "xpu:2": {
+        "min_free_bytes": 10851516416,
+        "min_free_gib": 10.10626220703125,
+        "min_seq": 24
+      },
+      "xpu:3": {
+        "min_free_bytes": 12281479168,
+        "min_free_gib": 11.438018798828125,
+        "min_seq": 14
+      }
+    },
+    "after": {
+      "xpu:0": {
+        "min_free_bytes": 11235516416,
+        "min_free_gib": 10.463890075683594,
+        "min_seq": 34
+      },
+      "xpu:1": {
+        "min_free_bytes": 10574340096,
+        "min_free_gib": 9.848121643066406,
+        "min_seq": 34
+      },
+      "xpu:2": {
+        "min_free_bytes": 11155607552,
+        "min_free_gib": 10.389469146728516,
+        "min_seq": 34
+      },
+      "xpu:3": {
+        "min_free_bytes": 12220665856,
+        "min_free_gib": 11.38138198852539,
+        "min_seq": 34
+      }
+    }
+  },
+  "prior169_aux_phase_minima": {
+    "before": {
+      "xpu:0": {
+        "min_free_bytes": 11148484608,
+        "min_free_gib": 10.382835388183594,
+        "min_seq": 0
+      },
+      "xpu:1": {
+        "min_free_bytes": 10520555520,
+        "min_free_gib": 9.798030853271484,
+        "min_seq": 18
+      },
+      "xpu:2": {
+        "min_free_bytes": 10850926592,
+        "min_free_gib": 10.105712890625,
+        "min_seq": 0
+      },
+      "xpu:3": {
+        "min_free_bytes": 11971100672,
+        "min_free_gib": 11.148956298828125,
+        "min_seq": 0
+      }
+    },
+    "A": {
+      "xpu:0": {
+        "min_free_bytes": 11148509184,
+        "min_free_gib": 10.382858276367188,
+        "min_seq": 1
+      },
+      "xpu:1": {
+        "min_free_bytes": 10520555520,
+        "min_free_gib": 9.798030853271484,
+        "min_seq": 10
+      },
+      "xpu:2": {
+        "min_free_bytes": 11155017728,
+        "min_free_gib": 10.388919830322266,
+        "min_seq": 29
+      },
+      "xpu:3": {
+        "min_free_bytes": 16366739456,
+        "min_free_gib": 15.242713928222656,
+        "min_seq": 29
+      }
+    },
+    "B": {
+      "xpu:0": {
+        "min_free_bytes": 11024740352,
+        "min_free_gib": 10.267589569091797,
+        "min_seq": 35
+      },
+      "xpu:1": {
+        "min_free_bytes": 10520530944,
+        "min_free_gib": 9.79800796508789,
+        "min_seq": 14
+      },
+      "xpu:2": {
+        "min_free_bytes": 10848813056,
+        "min_free_gib": 10.103744506835938,
+        "min_seq": 16
+      },
+      "xpu:3": {
+        "min_free_bytes": 12019322880,
+        "min_free_gib": 11.193866729736328,
+        "min_seq": 14
+      }
+    },
+    "after": {
+      "xpu:0": {
+        "min_free_bytes": 11148492800,
+        "min_free_gib": 10.382843017578125,
+        "min_seq": 0
+      },
+      "xpu:1": {
+        "min_free_bytes": 10520535040,
+        "min_free_gib": 9.798011779785156,
+        "min_seq": 35
+      },
+      "xpu:2": {
+        "min_free_bytes": 11155001344,
+        "min_free_gib": 10.388904571533203,
+        "min_seq": 28
+      },
+      "xpu:3": {
+        "min_free_bytes": 11971092480,
+        "min_free_gib": 11.148948669433594,
+        "min_seq": 28
+      }
+    }
+  },
+  "prior124_conservative_margins_gib": {
+    "xpu:0": 1.340238332748413,
+    "xpu:1": 1.7980079650878906,
+    "xpu:2": 2.2103042602539062,
+    "xpu:3": 1.809326183050871
+  },
+  "known_limits": [
+    "Reserved-minus-allocated is a candidate envelope, not a proof of releasable bytes; private graph pools, in-flight blocks and partially used segments cannot be credited.",
+    "No allocator counters were sampled at the exact refusal instant; its physical free is exact, adjacent counters are explicitly separate timestamps.",
+    "No native release executed; measured freed bytes unknown; guaranteed reclaim lower bound zero.",
+    "2.274610GiB preparation allocation beyond primary text tensors and later live residuals mix graph pools/static buffers/workspaces/cache and cannot be decomposed from existing receipts.",
+    "The xpu empty_cache public API has no device parameter: release scope may be process-wide, device context alone is not proof of target-card-only release.",
+    "All 7 completed169 cross-card images match but the 9-decode qualification did not finish."
+  ]
+}
