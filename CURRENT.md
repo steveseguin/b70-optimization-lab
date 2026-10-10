@@ -1,5 +1,11 @@
 # Current Workspace State
 
+**2026-10-10 14:55 UTC, 133b session 1 halted by the storage accounting guard after 73 chunks ("Run storage refuses multiply linked files", `run_storage.py:124`); no fault; 133b relaunching (`s133b-live02`); Codex on packet 135 (guard robustness + offending-path evidence).**
+Session 1 figures: median 5.21 s per 6.0 s (0.869 s/s), cone 0.74–0.75 s under the graph, 31/31 byte-identical to 129, exact. The own-writes
+scan (123b/126) refuses any regular file with nlink > 1; no packet code calls os.link; 126–129 ran 600-chunk sessions on the same scan, so the
+new linked file is specific to 133b's files (capture receipts, text oracle) or transient. One controlled stop; relaunch of the same arm.
+Codex 134 (169 census under split36) is also running.
+
 **2026-10-10 14:48 UTC, new best line: 133b at 145 (text layers 36–47 on xpu:2, cone decoder graph, display xpu:3, idle maintenance, GC 60, digest cache): early median 5.213 s per 6.0 s = 0.869 s/s (n = 23), byte-identical to 129 on 31/31 chunks, cone exact, even 5.17 / odd 5.25.**
 Qualification verdict 94cd0653ca49 (exact replay c0/c1/c2; first cone capture admitted at Q06 in 21 s; floors held through the repeat chain).
 Against the 129 production session 4 (5.522 median, n = 205) the cone graph saves ≈ 0.3 s per chunk (cone 0.74 vs 0.93) and the 2-cycle is
