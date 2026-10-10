@@ -1,6 +1,6 @@
 # Current Workspace State
 
-**2026-10-10 16:30 UTC, GC-interval A/B on the 135 production arm: GC 60: n = 111, median 5.248, mean 5.727, even 5.21 / odd 5.53, p90 5.92 = 0.875 s/s; GC 10: n = 116, median 5.242, mean 5.757, even 5.20 / odd 5.46, p90 6.00 = 0.874 s/s. Decision: GC 10 is the production setting (same median, lower mean and tail); `stream/ops/production-arm.json` updated; the GC-10 session continues as production.**
+**2026-10-10 16:30 UTC, GC-interval A/B on the 135 production arm: GC 60: n = 111, median 5.248, mean 5.727, even 5.21 / odd 5.53, p90 5.92 = 0.875 s/s; GC 10: n = 116, median 5.242, mean 5.757, even 5.20 / odd 5.46, p90 6.00 = 0.874 s/s. Decision: the two intervals are equal within noise (medians 5.248 vs 5.242; means and p90 cross over as n grows); GC 10 is kept as the production setting (the parent cadence, one fewer special case) and `stream/ops/production-arm.json` says so; the residual odd-parity gap (≈ 0.25 s) is not the maintenance interval.**
 
 **2026-10-10, CPU-only sampler study: keep the current sampler; no packet 136 built.**
 Moving to an equal block split would not shorten the serial chain and would put card 0 below its memory floor; the two sampling stages also depend on each other, so they cannot be batched or overlapped across continuing chunks. No sampler saving is supported by the saved evidence; using tensor parallelism that changes the answer would need the owner's acceptance of a new reference, and live work is unchanged. [Feasibility study](notes/2026-10-10-sampler-feasibility.md).
