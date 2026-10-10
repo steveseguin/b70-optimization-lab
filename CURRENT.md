@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**2026-10-10, stream swap and production-resume commands prepared and reviewed; 62 CPU tests pass.**
+The coordinator now has one command for a packet swap and one for a production
+relaunch, with archive and failure receipts, a five-minute gap, and no restart
+loops. Tests used temporary mock programs only; live state was not changed.
+Before adoption, client and sink units need reviewed settings that disable
+forced killing; the commands refuse unsafe stop settings. Live use is still
+unqualified. [Usage and setup](docs/local-ops.md#ltx-stream-operations),
+[validation receipt](experiments/ltx25-b70/data/resume-20261008/stream-ops-cpu-validation-20261010.json).
+
 **2026-10-10 15:40 UTC, packet 134 sealed: under split36 only the graph-off 169 arm (C) is admissible (xpu:3 +4.86 GiB after floors and band; arms with the cone graph are refused on xpu:3 or xpu:2); predicted 6.50–6.95 s per 7.0 s = 0.93–0.99 s/s, i.e. not better than 145 at 0.898. Decision: 169 not launched.**
 Codex's measured 145 budget under 133b (`notes/2026-10-10-continuation133b-results-145.md`, commits fa297c8e88, 5b21b4f2fe, 3e82e9875e):
 first-capture retained growth 3.545 GiB (estimate 4.506), per-phase minimum free xpu:0 9.27 / xpu:1 9.83 / xpu:2 4.91 / xpu:3 14.60 GiB,

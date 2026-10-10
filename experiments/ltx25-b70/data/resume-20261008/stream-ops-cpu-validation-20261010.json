@@ -1,0 +1,26 @@
+{
+  "schema": "ltx.stream-ops-cpu-validation.v1",
+  "date": "2026-10-10",
+  "tests": {
+    "passed": 62,
+    "failed": 0,
+    "command": "nice -n 19 env OMP_NUM_THREADS=2 python3 -B -m unittest discover -s experiments/ltx25-b70/stream/ops -p test_stream_ops.py -q"
+  },
+  "review": "Independent read-only agent review; reported naming, path, stale-unit, process-drain, readiness identity and timeout issues corrected. Final review found no remaining safety blockers. Sink-only halted-packet archive regression added afterward.",
+  "scope": "CPU only. Actual systemctl, journalctl, curl, health probe, launchers, client and sink were never invoked. Tests substitute temporary executables and an injected clock. Shell wrappers exercised only with bash -n and --help; CLI dispatch also tested with injected mock paths.",
+  "checks": {
+    "doc_links": "216 documents, 0 broken",
+    "manifest_paths": "6148 paths in 51 manifests, 0 missing",
+    "shell_syntax": "both wrappers passed",
+    "live_qualification": "not performed"
+  },
+  "operational_prerequisite": "Coordinator-reviewed units must have KillSignal=SIGINT, KillMode=control-group, SendSIGKILL=no. Frozen client/sink launchers currently omit SendSIGKILL=no. No live settings changed.",
+  "files": {
+    "experiments/ltx25-b70/stream/ops/swap-to-packet.sh": "06e4cd9ce45b557c0c968e9b1599e558edebdd2c8d3a634566e820fc6119ceb0",
+    "experiments/ltx25-b70/stream/ops/resume-production.sh": "c6b40259ed43bb8fabea409575e4f8df4122b9d4b9f56c7e4b2ad8d0381a8921",
+    "experiments/ltx25-b70/stream/ops/stream_ops.py": "3662036909a5012e07ea8dec11994dd773c98d4e19dd49a0531b9237038442f0",
+    "experiments/ltx25-b70/stream/ops/test_stream_ops.py": "22bdba843089fbe352c99c8f3b172fe3d5f185d2cdc61c8606837844a14a646b",
+    "experiments/ltx25-b70/stream/ops/production-arm.example.json": "b5f64575fcde9a3e9e51d8d7ccaa7c89309a0a6620ab26e4923c98d2cb4c58d7"
+  },
+  "scratch_cleanup": "All test TemporaryDirectory contexts cleaned their owned ltx-ops-cpu-* scratch; no Python bytecode written."
+}
