@@ -1,5 +1,18 @@
 # Current Workspace State
 
+**2026-10-10, packet 123b built on CPU; full regression checks still running.**
+The new packet counts only this run's disk use. Other builds and logs no longer
+spend its allowance; the separate 50 GiB free-space floor stays unchanged.
+The default allowance is still 3 GiB. A new launch option accepts 1–64 GiB,
+and the client must expect the same value. Packet 123 remains its sealed parent;
+its residency option, atomic previews and preview-failure status are preserved.
+The first seal verified 2,064 files recursively with no Python caches. Focused
+storage, client and synthetic HTTP checks pass; full inherited suites are still
+running. No model server, GPU, launch, real preflight, port 8188, unit, signal,
+existing-run or live-client write was performed. Live operations remain with
+the coordinator. [Design and launch details](experiments/ltx25-b70/notes/2026-10-10-continuation123b-storage.md)
+and [build receipt](experiments/ltx25-b70/data/resume-20261008/continuation123b-build.json).
+
 **2026-10-10 05:22 UTC, 145-frame session 2 live (verdict 9a57f69a751f); packet 123 sealed; 123b (storage-allowance fix) in build; then one swap to 145 + residency move, then 169.**
 Codex sealed 123 (commit bbcdbc8ce; manifest `db5ea277…340d`; 570 recovery / 995 client / 10 preflight CPU checks, 2,044 files): atomic
 preview MP4/JSON publication (closes the chunk-154 read race), exit-7 records server status, and `LTX_AUX_RESIDENCY=xpu2` moving
