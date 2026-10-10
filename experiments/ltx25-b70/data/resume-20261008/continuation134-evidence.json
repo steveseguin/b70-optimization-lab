@@ -1,0 +1,1579 @@
+{
+  "boundaries": {
+    "buckets": "chunks7..29 inclusive; bucket medians are not additive",
+    "memory_and_parity": "stream chunks0..30 inclusive, plus separate nine qualification rows",
+    "periods": "23 differences: chunk7\u21928 through29\u219230; commit and submit measured separately"
+  },
+  "buckets": {
+    "anchor_decode_in_chain": {
+      "max": 0.833658,
+      "mean": 0.7518199565217392,
+      "median": 0.748339,
+      "min": 0.74273,
+      "n": 23
+    },
+    "anchor_ready_to_receipt_staged": {
+      "max": 0.298633,
+      "mean": 0.08312134782608696,
+      "median": 0.071859,
+      "min": 0.062578,
+      "n": 23
+    },
+    "sampler_a_bucket": {
+      "max": 2.320895,
+      "mean": 2.1895841739130435,
+      "median": 2.185039,
+      "min": 2.13876,
+      "n": 23
+    },
+    "sampler_a_kernel": {
+      "max": 1.93655,
+      "mean": 1.9168883043478262,
+      "median": 1.91674,
+      "min": 1.888987,
+      "n": 23
+    },
+    "sampler_b": {
+      "max": 1.709798,
+      "mean": 1.6757528260869565,
+      "median": 1.668075,
+      "min": 1.660002,
+      "n": 23
+    },
+    "submit_to_sampler_start": {
+      "max": 0.965327,
+      "mean": 0.5427957391304348,
+      "median": 0.444503,
+      "min": 0.368162,
+      "n": 23
+    },
+    "video_done_to_anchor_ready": {
+      "max": 0.044477,
+      "mean": 0.03312486956521739,
+      "median": 0.030038,
+      "min": 0.02847,
+      "n": 23
+    }
+  },
+  "capture": {
+    "admission": {
+      "allocator_release": null,
+      "capture_reserve_bytes": 5368709120,
+      "first_capture": true,
+      "floor_bytes": 9663676416,
+      "free_bytes": 22745403392,
+      "margin_bytes": 6907711488,
+      "mode": "text-shift",
+      "required_bytes": 15837691904,
+      "reserve_is_measured": false,
+      "schema": "ltx.stream131.cone-memory.v1",
+      "screening_bytes": 805306368
+    },
+    "growth_bytes": 3806330880,
+    "growth_gib": 3.544921875,
+    "old_estimate_gib": 4.505889892578125
+  },
+  "census": {
+    "arms": {
+      "a": {
+        "admitted_for_cpu_preparation": false,
+        "margins_above_floor_and_band_gib": {
+          "xpu:0": 0.42580413818359375,
+          "xpu:1": 1.0286712646484375,
+          "xpu:2": 2.155303955078125,
+          "xpu:3": -1.8429579781368375
+        },
+        "period_forecast_s": [
+          6.25,
+          6.7
+        ],
+        "ratio_forecast": [
+          0.8928571428571429,
+          0.9571428571428572
+        ]
+      },
+      "b": {
+        "admitted_for_cpu_preparation": false,
+        "card3_qualification_margin_if_full_original_display_overlaps_gib": -1.8429579781368375,
+        "margins_above_floor_and_band_gib": {
+          "xpu:0": 0.42580413818359375,
+          "xpu:1": 1.0286712646484375,
+          "xpu:2": -5.121668430045247,
+          "xpu:3": 4.6570420218631625
+        },
+        "period_forecast_s": [
+          6.0,
+          6.5
+        ],
+        "ratio_forecast": [
+          0.8571428571428571,
+          0.9285714285714286
+        ]
+      },
+      "c": {
+        "admitted_for_cpu_preparation": true,
+        "margins_above_floor_and_band_gib": {
+          "xpu:0": 0.42580413818359375,
+          "xpu:1": 1.0286712646484375,
+          "xpu:2": 2.155303955078125,
+          "xpu:3": 4.861042022705078
+        },
+        "period_forecast_s": [
+          6.5,
+          6.95
+        ],
+        "ratio_forecast": [
+          0.9285714285714286,
+          0.9928571428571429
+        ]
+      }
+    },
+    "baseline_sources": [
+      "stream133b-qeager-c000000",
+      "stream133b-qeager-c000001",
+      "stream133b-qeager-c000002"
+    ],
+    "c_double_conservative_margin_gib": 0.9045600891113281,
+    "dg0_all_phase_minimum_bytes": 18419568640,
+    "dg0_predecode_admission_baseline_bytes": 22667808768,
+    "floors_gib": {
+      "xpu:0": 8,
+      "xpu:1": 8,
+      "xpu:2": 2,
+      "xpu:3": 9
+    },
+    "full_169_display_reserve_bytes": 6979321856,
+    "full_169_graph_reserve_bytes": 7198365189,
+    "limitations": [
+      "Physical samples and extrapolated reserves are not isolated peak bounds.",
+      "No saving from allocator release or inactive graph storage is credited.",
+      "Adding only the display reserve increment to a sampled145 tail undercharges the full reserve.",
+      "Full original card3 display qualification remains charged for the replica arm."
+    ],
+    "observed_145_to_169_losses_gib": {
+      "xpu:0": 0.09473419189453125,
+      "xpu:1": 0.05010986328125,
+      "xpu:2": 0.0025177001953125,
+      "xpu:3": 0.23243331909179688
+    },
+    "replica_weights_gib": 0.7769723851233721,
+    "screening_gib": 0.75
+  },
+  "coordinator_early": {
+    "n": 23,
+    "period_s": 5.213,
+    "ratio": 0.8688333333333333,
+    "source": "owner brief; original interval selection unspecified"
+  },
+  "decode_buckets": {
+    "anchor_ready_to_decode_done": {
+      "max": 4.937495,
+      "mean": 4.371787043478261,
+      "median": 4.239983,
+      "min": 4.157459,
+      "n": 23
+    },
+    "anchor_ready_to_go": {
+      "max": 1.125766,
+      "mean": 0.7036781304347826,
+      "median": 0.576252,
+      "min": 0.519752,
+      "n": 23
+    },
+    "audio_decode": {
+      "max": 0.824575,
+      "mean": 0.6995139130434782,
+      "median": 0.68988,
+      "min": 0.643686,
+      "n": 23
+    },
+    "display_decode": {
+      "max": 2.943057,
+      "mean": 2.811702956521739,
+      "median": 2.814691,
+      "min": 2.700454,
+      "n": 23
+    },
+    "hash_and_diagnostics": {
+      "max": 0.130832,
+      "mean": 0.1188804347826087,
+      "median": 0.117823,
+      "min": 0.111747,
+      "n": 23
+    },
+    "precompute_b": {
+      "max": 0.170274,
+      "mean": 0.15687073913043478,
+      "median": 0.15943,
+      "min": 0.139749,
+      "n": 23
+    },
+    "queue_wait": {
+      "max": 0.002444,
+      "mean": 0.000263,
+      "median": 4.4e-05,
+      "min": 2.9e-05,
+      "n": 23
+    }
+  },
+  "parent_run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi",
+  "parity": [
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 0
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 1
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 2
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 3
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 4
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 5
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 6
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 7
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 8
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 9
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 10
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 11
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 12
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 13
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 14
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 15
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 16
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 17
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 18
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 19
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 20
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 21
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 22
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 23
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 24
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 25
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 26
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 27
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 28
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 29
+    },
+    {
+      "comparisons": {
+        "anchor": true,
+        "audio_latent": true,
+        "cone": true,
+        "images": true,
+        "prompt": true,
+        "stage_a_latent": true,
+        "video_latent": true,
+        "waveform": true
+      },
+      "index": 30
+    }
+  ],
+  "periods": {
+    "commit_ns": {
+      "max": 5.95205237,
+      "mean": 5.3576448455652175,
+      "median": 5.213306108,
+      "min": 5.133805062,
+      "n": 23,
+      "values": [
+        5.595087669,
+        5.198892133,
+        5.213306108,
+        5.425585353,
+        5.605238986,
+        5.195862348,
+        5.184778624,
+        5.133805062,
+        5.535813626,
+        5.455905462,
+        5.210946487,
+        5.210700922,
+        5.95205237,
+        5.285461844,
+        5.195855587,
+        5.135550742,
+        5.635210331,
+        5.187594283,
+        5.212765976,
+        5.386857299,
+        5.586262716,
+        5.496317439,
+        5.185980081
+      ]
+    },
+    "submit_ns": {
+      "max": 5.921346769,
+      "mean": 5.36010457426087,
+      "median": 5.248349716,
+      "min": 5.10688587,
+      "n": 23,
+      "values": [
+        5.266824125,
+        5.573416864,
+        5.158409409,
+        5.252363392,
+        5.384914305,
+        5.673475842,
+        5.140614783,
+        5.184585211,
+        5.13033086,
+        5.815932533,
+        5.180212236,
+        5.195313325,
+        5.248349716,
+        5.921346769,
+        5.366657525,
+        5.10688587,
+        5.138179574,
+        5.679878925,
+        5.14336738,
+        5.212859752,
+        5.394717527,
+        5.867598458,
+        5.246170827
+      ]
+    }
+  },
+  "qualification": {
+    "passed": true,
+    "verdict_sha256": "94cd0653ca495c9ee047fb77e42c3c680912593d94105e6e9af5dbbbd2c105e6"
+  },
+  "qualification_memory": {
+    "margin_above_floor_and_band_gib": {
+      "xpu:0": 0.5322532653808594,
+      "xpu:1": 1.0787887573242188,
+      "xpu:2": 2.1578292846679688,
+      "xpu:3": 4.846614837646484
+    },
+    "minimum_bytes": {
+      "xpu:0": 9966743552,
+      "xpu:1": 10553581568,
+      "xpu:2": 5269741568,
+      "xpu:3": 15672995840
+    },
+    "phases": {
+      "A-after": {
+        "xpu:0": {
+          "bytes": 10195353600,
+          "gib": 9.495162963867188,
+          "run_name": "stream133b-qrepeat-c000001"
+        },
+        "xpu:1": {
+          "bytes": 10574569472,
+          "gib": 9.848335266113281,
+          "run_name": "stream133b-qrepeat-c000002"
+        },
+        "xpu:2": {
+          "bytes": 5269774336,
+          "gib": 4.907859802246094,
+          "run_name": "stream133b-qeager-c000002"
+        },
+        "xpu:3": {
+          "bytes": 18582544384,
+          "gib": 17.30634307861328,
+          "run_name": "stream133b-qeager-c000002"
+        }
+      },
+      "A-before": {
+        "xpu:0": {
+          "bytes": 10195353600,
+          "gib": 9.495162963867188,
+          "run_name": "stream133b-qrepeat-c000001"
+        },
+        "xpu:1": {
+          "bytes": 10574569472,
+          "gib": 9.848335266113281,
+          "run_name": "stream133b-qrepeat-c000002"
+        },
+        "xpu:2": {
+          "bytes": 5269774336,
+          "gib": 4.907859802246094,
+          "run_name": "stream133b-qeager-c000002"
+        },
+        "xpu:3": {
+          "bytes": 18582544384,
+          "gib": 17.30634307861328,
+          "run_name": "stream133b-qeager-c000002"
+        }
+      },
+      "B-after": {
+        "xpu:0": {
+          "bytes": 9966743552,
+          "gib": 9.28225326538086,
+          "run_name": "stream133b-qrepeat-c000001"
+        },
+        "xpu:1": {
+          "bytes": 10574548992,
+          "gib": 9.848316192626953,
+          "run_name": "stream133b-qrepeat-c000001"
+        },
+        "xpu:2": {
+          "bytes": 5269741568,
+          "gib": 4.907829284667969,
+          "run_name": "stream133b-qrepeat-c000002"
+        },
+        "xpu:3": {
+          "bytes": 15672995840,
+          "gib": 14.596614837646484,
+          "run_name": "stream133b-qrepeat-c000001"
+        }
+      },
+      "B-before": {
+        "xpu:0": {
+          "bytes": 9966743552,
+          "gib": 9.28225326538086,
+          "run_name": "stream133b-qrepeat-c000001"
+        },
+        "xpu:1": {
+          "bytes": 10574548992,
+          "gib": 9.848316192626953,
+          "run_name": "stream133b-qrepeat-c000001"
+        },
+        "xpu:2": {
+          "bytes": 5269741568,
+          "gib": 4.907829284667969,
+          "run_name": "stream133b-qrepeat-c000002"
+        },
+        "xpu:3": {
+          "bytes": 15672995840,
+          "gib": 14.596614837646484,
+          "run_name": "stream133b-qrepeat-c000001"
+        }
+      },
+      "after": {
+        "xpu:0": {
+          "bytes": 9970946048,
+          "gib": 9.28616714477539,
+          "run_name": "stream133b-qrepeat-c000000"
+        },
+        "xpu:1": {
+          "bytes": 10553581568,
+          "gib": 9.828788757324219,
+          "run_name": "stream133b-qrepeat-c000001"
+        },
+        "xpu:2": {
+          "bytes": 5269749760,
+          "gib": 4.9078369140625,
+          "run_name": "stream133b-qrepeat-c000000"
+        },
+        "xpu:3": {
+          "bytes": 16939679744,
+          "gib": 15.77630615234375,
+          "run_name": "stream133b-qrepeat-c000001"
+        }
+      },
+      "before": {
+        "xpu:0": {
+          "bytes": 10195353600,
+          "gib": 9.495162963867188,
+          "run_name": "stream133b-qrepeat-c000001"
+        },
+        "xpu:1": {
+          "bytes": 10574569472,
+          "gib": 9.848335266113281,
+          "run_name": "stream133b-qrepeat-c000002"
+        },
+        "xpu:2": {
+          "bytes": 5269774336,
+          "gib": 4.907859802246094,
+          "run_name": "stream133b-qeager-c000002"
+        },
+        "xpu:3": {
+          "bytes": 18582540288,
+          "gib": 17.306339263916016,
+          "run_name": "stream133b-qgraph-c000000"
+        }
+      }
+    }
+  },
+  "run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z",
+  "schema": "ltx.continuation134.evidence.v1",
+  "snapshots": {
+    "all_dual_agree": true,
+    "count": 182,
+    "dual": 8,
+    "minimum_margin_bytes": 1364230144,
+    "minimum_margin_card": "xpu:0",
+    "minimum_margin_phase": "B-before/B-after"
+  },
+  "sources": {
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261008/continuation124-evidence.json": {
+      "bytes": 503294,
+      "sha256": "5d707d15434c73eaf38cf5e9c8e650f05d480c74f8cdaf657ab7bb113e3e7eef"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000000.json": {
+      "bytes": 8219,
+      "sha256": "82b66b45fe5d8e01dfd785cfd90a74e8f11c77435e3266e5e42ff554254dac9f"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000001.json": {
+      "bytes": 8214,
+      "sha256": "e8f7a66d93ddf5c37e7c9560186f052e8954dd2293107bf872c5740d0c00587b"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000002.json": {
+      "bytes": 8212,
+      "sha256": "8d65b736012fc1462ccbe3ead7163654cdd12b4492b41cd512d770ebdf9547a6"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000003.json": {
+      "bytes": 8213,
+      "sha256": "82a6b99412acba82ed0717542f1ebfda8722582d3a56621e74c0506ad1a499d8"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000004.json": {
+      "bytes": 8216,
+      "sha256": "cffcddcd05ba7faea7e82150dd1e309fb5712694b708d13cca34ff4cc7f2ce94"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000005.json": {
+      "bytes": 8210,
+      "sha256": "463ed58865d00857f491a42ac77b14739a1dd99524ade83bd20d7be401cea72c"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000006.json": {
+      "bytes": 8211,
+      "sha256": "1e421c13b7867cdf5088a9ae778b1a41e9823da96829f25793e7c812aec7e077"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000007.json": {
+      "bytes": 8214,
+      "sha256": "3c941a9b00e65a36bbb1c374c77a0aeaff5d68f18b7d3c76d1454325dacd7254"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000008.json": {
+      "bytes": 8215,
+      "sha256": "72ec319b91e5ef45665f6f7a1890b3383ef538c87efe4d62d62401f6328617b8"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000009.json": {
+      "bytes": 8218,
+      "sha256": "35c7eacc9a3d2174720057bc3e0dca8508fee99caeb752de9b97e42bf10a9334"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000010.json": {
+      "bytes": 8217,
+      "sha256": "5d80f740e858c4c16701a6f7fc12eadc016d8950df742fa5285387aaaad6d856"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000011.json": {
+      "bytes": 8221,
+      "sha256": "372b23555ffb716c58222041b91ab9a0e56218f0aaa62c800d9c962393613711"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000012.json": {
+      "bytes": 8221,
+      "sha256": "2e0bd1fba297bc7adb211b5575044acf0227b5860c4c7cb8b78a09f4dfbd4c8c"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000013.json": {
+      "bytes": 8217,
+      "sha256": "a0bbe370557cafb2301f4fc11ab15253e27c15197f1e867fa2784309422c3206"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000014.json": {
+      "bytes": 8217,
+      "sha256": "9ec514161006437ad409d1df305e24e8a4ea940ccc10bd6d06cb73bd566539c6"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000015.json": {
+      "bytes": 8216,
+      "sha256": "5a78d0bd47b6b190d765b7328fca12337775a0083af2412a863a41cf5bccdcae"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000016.json": {
+      "bytes": 8216,
+      "sha256": "f1228c6ea2b46c605e09404f0258263c09debca2ecdfbc88ebb3aab39f37f560"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000017.json": {
+      "bytes": 8219,
+      "sha256": "9784cee9d867a0b65126005ac6b8c6eb47fc1943ca8726c309ee150282f3f1a3"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000018.json": {
+      "bytes": 8219,
+      "sha256": "8f5bad9b834dd572e90c52b48a10be68f978c002783ac4e67bc5ccb65f1a75da"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000019.json": {
+      "bytes": 8218,
+      "sha256": "aa8c41a053b3a82206aa5dc22fe2c83fe895d13f876cbd1e5a9cc5cb8685a06c"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000020.json": {
+      "bytes": 8218,
+      "sha256": "dd3d5e865866ee52e82638b8488f1e44fd85226a9b1403f6e4d191a0507bab98"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000021.json": {
+      "bytes": 8218,
+      "sha256": "9b957e1fec816312100a867f9cdffb86307998f6e47ab9d4649ab04caf32a319"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000022.json": {
+      "bytes": 8222,
+      "sha256": "e91943805a1c5762bc803ba38ceaa9d60ac36b3281742092ace530f048b32ae8"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000023.json": {
+      "bytes": 8219,
+      "sha256": "2f092278dbc7c6172e9a171a150eb6fb89ad63d249b5b074da3cba1460c28826"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000024.json": {
+      "bytes": 8215,
+      "sha256": "a1c887b9365fc0bb16c7acface2e0df9324f39c5da0a2e5242611440fb1c39e0"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000025.json": {
+      "bytes": 8213,
+      "sha256": "a7563af649703ead32945a7b160a333ae01936c8672317aada48c75aafc57a1d"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000026.json": {
+      "bytes": 8210,
+      "sha256": "89cd4e0505eb0dff2db59afeb383520723bf7938a0d29486bc7c3872e7a03df7"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000027.json": {
+      "bytes": 8209,
+      "sha256": "51876d4d28d1adea2c2ba93f0dcb04c275d2904cccd08d3b3fd6798e8cfc0821"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000028.json": {
+      "bytes": 8217,
+      "sha256": "322eb495fdba83f3ebe9fca161db6ee4010abca5b9090a0e7c9d6a2772f0765e"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000029.json": {
+      "bytes": 8218,
+      "sha256": "403b783a97fafbd22e31b0cf21f1a8390aaedb90833b823581abc0ee74fffc6c"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/decode-stream129-s00000030.json": {
+      "bytes": 8214,
+      "sha256": "e3ea20b2066aff1e5d7dc707a220c206d9fc296a639d313aaedc29740014abe6"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000000.json": {
+      "bytes": 10706,
+      "sha256": "2b463b1035e91ce327890877b63f451da3d6a9b85f164fe9391b3371850a26c2"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000001.json": {
+      "bytes": 17826,
+      "sha256": "c74cb4e2fe2b5c9dcae263df784de60eac92fb24f30f85b0cfa91ba8faf0099f"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000002.json": {
+      "bytes": 17827,
+      "sha256": "a9c9171353e29d7a6c61919990ba5d30f6fd83b559f21fcccec8795f02981f9a"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000003.json": {
+      "bytes": 17830,
+      "sha256": "575d937e42d2f80afb6993e0c30408696c2af03edde8b100dd3d888fea055e8f"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000004.json": {
+      "bytes": 17832,
+      "sha256": "ed4c81a023ca7d8eeef53f9ec3e602115f4eb229c4ea325458da3ad49bdcbe8d"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000005.json": {
+      "bytes": 17822,
+      "sha256": "c4bb42aae7ab3809ac4ebf1e295ae651f39adf05be89fc55f7bd43235a9240ad"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000006.json": {
+      "bytes": 17828,
+      "sha256": "b8569538421aa2456d9ad3652b5973c88330f32b84702d3253bda5815913b687"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000007.json": {
+      "bytes": 17829,
+      "sha256": "fed3f9c774aca37953eb7e1d8ed5ac4e8eb0a67b56f753d4858a95df6c080574"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000008.json": {
+      "bytes": 17833,
+      "sha256": "6de4bcb9e14fc9cc7423905be58ccdc0a96d8ea38ed338849f1894240027ccbf"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000009.json": {
+      "bytes": 17834,
+      "sha256": "d74fdf2821b2f4127a769fe12b0159dd10f2330ced627f8a437910397532a16b"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000010.json": {
+      "bytes": 17832,
+      "sha256": "6010f3325528826bf9ff1130320679c9690a472e7d309c7fea46cf0b54692886"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000011.json": {
+      "bytes": 17830,
+      "sha256": "04a76b1a0324eab1e23f0a64638b6e95d041184ffdb9168664eaf9fd0b23ee18"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000012.json": {
+      "bytes": 18220,
+      "sha256": "baecb26fbc7b0a276c32bce04d6f1af01d6a8fe154ddc15d069bade9e81e58be"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000013.json": {
+      "bytes": 18230,
+      "sha256": "081f7dd33ed8c02c254bdb4d356c0c1a9ce432ca0e81ba4976016e6d51e94b33"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000014.json": {
+      "bytes": 18220,
+      "sha256": "f7586d38bb755ee6cecd069e7c6398dbc52804de11f0ce10576c0d32026ffc0a"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000015.json": {
+      "bytes": 18221,
+      "sha256": "d85c5f6f725fb22331bb2c25c0b2f08272113a68837cfaa2e45424650b73be04"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000016.json": {
+      "bytes": 18210,
+      "sha256": "37d1ddbbc94dbe22fda87655208721e1d2d37ec9f090a232251fbd89cf39c343"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000017.json": {
+      "bytes": 18218,
+      "sha256": "14665c20448fbf501d531503ea3ef6fe8832bf71b85b05bbdd47ffe33e4f5eb7"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000018.json": {
+      "bytes": 18222,
+      "sha256": "7cbc7e409d76c50fb7926cadb436b1d6fc5a085608b2be855f85c9549343b0de"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000019.json": {
+      "bytes": 18220,
+      "sha256": "90e08acbd53a0c12fd83893146f6c38d97fac1bbbbef306318824e3f5ec0a11a"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000020.json": {
+      "bytes": 18079,
+      "sha256": "0ce4cf768241fe4dd267598cc5e3c4e1b916d6b2d0c0a833bc8507f0c12bab43"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000021.json": {
+      "bytes": 18224,
+      "sha256": "46550194199382f3fad6c1c0641794187443c75090fc77de74ac248fa92f200b"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000022.json": {
+      "bytes": 18224,
+      "sha256": "38135cf7c6f021a9271cfb4fba24a0c180537d520b1f61087c754532e02439c9"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000023.json": {
+      "bytes": 18610,
+      "sha256": "91b1a5896689cbe7b2c7984c8222e7a0b15e001665a1958f7885e8bdc8cb5386"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000024.json": {
+      "bytes": 18608,
+      "sha256": "8353eee9d910feee6f50cf9227ed9d25282cab52d5e806afc7396074a42b6efe"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000025.json": {
+      "bytes": 18610,
+      "sha256": "cf47c5428fafbcd7f092458ca846a8fedbec120ca958d45023e985bc0b4b8f7a"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000026.json": {
+      "bytes": 18616,
+      "sha256": "a92458bdae0ff59a2b658a1cdbb8af8c9fc93e2b9d72a1d2b99f2e9c6bf66242"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000027.json": {
+      "bytes": 18599,
+      "sha256": "e85e45bc2b59717224132e7d7ea2cd4b3fa70817a6e9041ed0fbb7164b7bd85c"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000028.json": {
+      "bytes": 18611,
+      "sha256": "eceb3193fdf7d78d4aa9c7b4c0485780a33d3a8d02a369f3abb8b77a86148a05"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000029.json": {
+      "bytes": 18613,
+      "sha256": "36b9deb15adaa04da8b2c221908da5ad0e6231467a6d87fdf815c48a70991b36"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-129-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-gc60-ssbackground-sdc1-mi/receipts/receipt-stream129-s00000030.json": {
+      "bytes": 18611,
+      "sha256": "af4ea162b56714610ff9ca859b59937a2f7429132386aa4c4c659a1c594d2390"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-qeager-c000000.json": {
+      "bytes": 6102,
+      "sha256": "e56a8d87f931ac3cb6f347eb32f19c03dfa3a811529193b747ec003a0f2a249f"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-qeager-c000001.json": {
+      "bytes": 6101,
+      "sha256": "6e3531a1d732f134172ef07bdc80bafa73fdcf343ee8f16fb8498a2210898a8a"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-qeager-c000002.json": {
+      "bytes": 6094,
+      "sha256": "462a254c3b8d9149ddd021cc09c64c84fec42f2b468de36d3248aa56c23953e3"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-qgraph-c000000.json": {
+      "bytes": 9912,
+      "sha256": "d10412dcc08b1569cedd6253629d470e15800c8b11d75df2fc4c7d1abd8b61eb"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-qgraph-c000001.json": {
+      "bytes": 9908,
+      "sha256": "bdecb39e5392c041ffbd60911e533b2c9c8ddc5f6bd9b741288664962581a8a2"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-qgraph-c000002.json": {
+      "bytes": 9901,
+      "sha256": "7794c530829abc2880937c26c0d0560726e2f4e48772915e13c447db982c1f07"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-qrepeat-c000000.json": {
+      "bytes": 9802,
+      "sha256": "fea17c46e2d73ab169693c7bdde65fbaefcd71096730119a38cb0afecff8e8cb"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-qrepeat-c000001.json": {
+      "bytes": 9806,
+      "sha256": "392361ed77ecd90ce5d60d506be2b37ee8c44929b586e2066dff70909c85941a"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-qrepeat-c000002.json": {
+      "bytes": 8845,
+      "sha256": "f789362ef4abe454f1d1d9c54edd731f34896d9d477462fb7d8c58ea09cdeb57"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000000.json": {
+      "bytes": 9269,
+      "sha256": "3f2efd945f594244032ade2af2aa5f3a18d6f0bb48fda37f881caf3e8712df6a"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000001.json": {
+      "bytes": 9266,
+      "sha256": "a24de6f1680497beb23233b53b033f542f6babd4d460b07a0c663f6b4cacc32a"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000002.json": {
+      "bytes": 9264,
+      "sha256": "adeb8a819a7db3b934dc7118e56843a1d380ba33c069bc0be91af6e9b40b9e18"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000003.json": {
+      "bytes": 9267,
+      "sha256": "7e3bd6dd5f93388e944e0da00c8d7b3f9bde322da3e97c126af682c61be5d06c"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000004.json": {
+      "bytes": 9268,
+      "sha256": "ffbc1ceb6619dc541cdf406984fc8db56e7c9a8a80f448788d7894b08f980593"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000005.json": {
+      "bytes": 9259,
+      "sha256": "d2864710da5afba1e03a86d22d5de49bca6ff46adae9af090b393417e161cf8f"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000006.json": {
+      "bytes": 9261,
+      "sha256": "0ddc9f7d5fdfa6dfa6859b7eb87f903094b72bd7c16b13a85d85d8692895f141"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000007.json": {
+      "bytes": 9265,
+      "sha256": "7024138727e1e49b42b760be915b0c94669c64256296ba0e8b03dd03c88ef2f3"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000008.json": {
+      "bytes": 9268,
+      "sha256": "ff289dc345f9198c03943df2f9845071f31ff10578e734b50cc56b358afdfd61"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000009.json": {
+      "bytes": 9272,
+      "sha256": "4c6932024c1b542423a0192cacf0ff58a8365f190daafa56958684515a8ab128"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000010.json": {
+      "bytes": 9270,
+      "sha256": "7a928e0731727723fc0f09c108246ac9b1d44dfe9e5182159ee9afd87ec7afcb"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000011.json": {
+      "bytes": 9273,
+      "sha256": "39da37362ba95f8bf597fa873b63eab3c1a2990aa8c4451b8045d24de65b3836"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000012.json": {
+      "bytes": 9272,
+      "sha256": "9ef3cb27a3bab210b3f8e6c70b7017762c29401746dd4cbe2ee90ffdfca00c98"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000013.json": {
+      "bytes": 9271,
+      "sha256": "455ef3c077ea8cfd1922ac5a71dc04557f474beb8201a557ab79258e61ddda27"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000014.json": {
+      "bytes": 9273,
+      "sha256": "bc4351d977248c9926b2cfa096537f9542d8abbb9c8e5201c4096737275055c7"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000015.json": {
+      "bytes": 9271,
+      "sha256": "426bc9ce9f5127510690cb5eb396e7ddaa979d12543438bd2dbb7ee0db0703bb"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000016.json": {
+      "bytes": 9274,
+      "sha256": "291e6f579f95f6524e4e29766536e7f38b5414f56193e37b793cb29e7e1d931f"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000017.json": {
+      "bytes": 9272,
+      "sha256": "fe008e1c05d405cbfc960578c6bbf93b5049cea0f83353e15a019bfff46d84b9"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000018.json": {
+      "bytes": 9271,
+      "sha256": "4665b94f6e6a8cbc796dcc243fc9c362a5ac8046e494c16a6c39729831282296"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000019.json": {
+      "bytes": 9270,
+      "sha256": "4a3a8b9767346684e51f9df84b9245df7cf21704cccf90cd452e37300d7622ac"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000020.json": {
+      "bytes": 9273,
+      "sha256": "91928d9c0e0a61e5069f70ba57cb342bcbafc01327910785549833bef61d9f05"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000021.json": {
+      "bytes": 9274,
+      "sha256": "1b3e7c6334c031135b4321491feaf23068f28a71d8329d632f3d4a69ff28f6e3"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000022.json": {
+      "bytes": 9272,
+      "sha256": "06924ef0eb9724f935a177751cd829f578decb903fa2e0574ddf1c612b561171"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000023.json": {
+      "bytes": 9272,
+      "sha256": "e1a255d61fb6a1fdb8b63e12455da98de0c0280fc835f3d862afd16cf669c292"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000024.json": {
+      "bytes": 9275,
+      "sha256": "564b484ce4fdd7855adcb95fb370eeb143f24ee21db36c38f7c442c1c111f6af"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000025.json": {
+      "bytes": 9264,
+      "sha256": "c7d02036ad4d1c7dddb429011e279b924e79552040279beb557e3d7f5ca66513"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000026.json": {
+      "bytes": 9265,
+      "sha256": "1c8584e38c507d28360c06fac63b990e690f187f084d76658d352829c2c44a40"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000027.json": {
+      "bytes": 9264,
+      "sha256": "680cbc7cf4d5d0f128aa6ab727d1da210fc8d90f7064d71b6f8d61c79a13b018"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000028.json": {
+      "bytes": 9271,
+      "sha256": "edabba763091909f3482572297d482ed58bc84537228eb9be72011e9ac0a87ea"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000029.json": {
+      "bytes": 9272,
+      "sha256": "5321eb7b5ce448c08cceb56cb4a18231b749b5839645a9b8f3fd3165c94e07e8"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/decode-stream133b-s00000030.json": {
+      "bytes": 9267,
+      "sha256": "716af9ab906f7f827b57a429df1ad2702ec6d7b33d28353821108cc67c3ed032"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-qeager-c000000.json": {
+      "bytes": 10953,
+      "sha256": "5abb11fbc955a4944f9b8deced15cfe56a944195546677905381ddcd29f8fcde"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-qeager-c000001.json": {
+      "bytes": 15476,
+      "sha256": "dec207807fa5f7a337c0de5b926ce111fcb520dc5f3be797be759a5660a409ef"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-qeager-c000002.json": {
+      "bytes": 15466,
+      "sha256": "60ef862cfa3b4011829c9c112d4bbf372a77457eaecd1d3bb931faa3b564ec54"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-qgraph-c000000.json": {
+      "bytes": 11339,
+      "sha256": "dbcc8f3ac5b3409d98aab963740f64a385b0195a14d0f9acd33d403f48ccb78a"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-qgraph-c000001.json": {
+      "bytes": 18369,
+      "sha256": "e5b50bade76f165ceead5dfd404429922f66d2e3b4d87a68939b98a249e4dd3c"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-qgraph-c000002.json": {
+      "bytes": 18770,
+      "sha256": "8fce2c2030fda5500f848e047403635b16bb7ff20e66427f9df513c72eff0447"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-qrepeat-c000000.json": {
+      "bytes": 11654,
+      "sha256": "a98af3735a5698fc0cfd6dbe02ba6c999d8b68b83a81ce2f8a788e2e657c5838"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-qrepeat-c000001.json": {
+      "bytes": 18058,
+      "sha256": "83edc4b80c8dc34bbfef86d7251ef3b039b39720c6c57e74e3a2fd19b6425387"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-qrepeat-c000002.json": {
+      "bytes": 18056,
+      "sha256": "9cb9cb70bf576d8f4937ba99d784ce34556c92c9a5a1baef3ea1ddd6283a703b"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000000.json": {
+      "bytes": 11503,
+      "sha256": "5c06b28512e1429df507ab53a2b0c6e70fa29c03ac3f1c4d000729be60b98fc9"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000001.json": {
+      "bytes": 18301,
+      "sha256": "61a3e225f98e35e00c04ab85711bfbb8b5277049d7e08c5f4ad04da6a6bffac9"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000002.json": {
+      "bytes": 18301,
+      "sha256": "e7c6b01e48e84305735e1dcf83468a52c9bde38e16fb4ef1fd69f6d20857fee1"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000003.json": {
+      "bytes": 18304,
+      "sha256": "b7f9ef5b9c38e136cdd9ebee4997661c2ab68fdeec67fb12c730610c1596c1ff"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000004.json": {
+      "bytes": 18301,
+      "sha256": "c4f1471be5e9fed8724962ce2621c9a17a75615c24f4fbec5c7f0d20a1d50bc6"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000005.json": {
+      "bytes": 18688,
+      "sha256": "2caf9b5b9ff90dbdc50eeee72adb0bacf02d5d11b3b91eceefd2f73876ef64fe"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000006.json": {
+      "bytes": 18687,
+      "sha256": "8b8d6472a6d7c691c3c255429fa1778eb00c74ad2ba94f0d52731e76f2380d53"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000007.json": {
+      "bytes": 18677,
+      "sha256": "2c0872a0c09ec9ae8c7fb06016eeb628dbf7b1e9f57cc653121c41fa3ad568cd"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000008.json": {
+      "bytes": 18686,
+      "sha256": "fba8f2733658f67190c68178678b206be3a3fcb7d1dcc17f6fb03adbb994aac0"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000009.json": {
+      "bytes": 18686,
+      "sha256": "e844bdb5fed0acd3a476a55a63ba37f496339cda4a8054474505d9aa96b38a46"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000010.json": {
+      "bytes": 18686,
+      "sha256": "d059ac022b967c36c4e274cbd5a4fdf2f7334cce84c2d1c8ccff86eb4462bd10"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000011.json": {
+      "bytes": 18695,
+      "sha256": "6414081e06d2c9814c4f8a8ee63df9acf9fb417f883b699e91bc50e8912e3864"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000012.json": {
+      "bytes": 18692,
+      "sha256": "2112da8937cf51d8ff79ea7b14f1296c94bd248595f9eadc6624e874d9f49edc"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000013.json": {
+      "bytes": 18694,
+      "sha256": "029a181f9beed61303f1d9a26ab581d8ea2f2078e732ff090cfcf2a82cb3a9eb"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000014.json": {
+      "bytes": 18691,
+      "sha256": "f050a72713428fd5b68479af59382e9ea303e64f41c1a924cf49a1b8f873f59b"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000015.json": {
+      "bytes": 18697,
+      "sha256": "03b8d3bdcfbf413d7e9171f6356416dc9c24499c42588af2ec1197bab92ebc35"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000016.json": {
+      "bytes": 18685,
+      "sha256": "dd2e09e5fb590d4a4e81b6a3ea12923d0c4989ff2b00e027a33da65515b7d5b8"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000017.json": {
+      "bytes": 19086,
+      "sha256": "e3ac346208c8a48aa098eb268e9f107feeeb660dc8b7bb8b8696b72c4d7c8e09"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000018.json": {
+      "bytes": 19071,
+      "sha256": "5f50a708cf131dc3064e31d71951c624a3a0c8858de783e4c476c2be532cb831"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000019.json": {
+      "bytes": 19080,
+      "sha256": "e30e41ec826ee09d641dab410bf0336f9aeeaf3e5ebd478a7f09f97c0e072d55"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000020.json": {
+      "bytes": 18937,
+      "sha256": "a03df2b761f4a4ff79724ff278d9cfcd982c58e3a489d02d0ea10468ca1a6327"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000021.json": {
+      "bytes": 18783,
+      "sha256": "f4d26daf46630e34bd720fa467374d3bc84f4b58c5f69a777a04d65fa0b3b783"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000022.json": {
+      "bytes": 19082,
+      "sha256": "63c51659df934fa2efb67be597fc6d2cd5bfbc1bfe4ac7bbd2c0c0e51fbe38ce"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000023.json": {
+      "bytes": 19091,
+      "sha256": "1469613b01e8f6dfae9b4f79c501dde9f3d63f381776125b1bbb9e5f04092568"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000024.json": {
+      "bytes": 19068,
+      "sha256": "ce177399a96109f614dd90c326abdd09fa7fc3e0540261dd57b4166218853e2f"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000025.json": {
+      "bytes": 19072,
+      "sha256": "72747659b5d944d0d55ef737c55ca9ad2d636676b7af57d89e7a9ea717073d1a"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000026.json": {
+      "bytes": 19079,
+      "sha256": "510b0fa6f8f8e73a07d98791d04e82ba498da2f1fcbfce1559f7ba58339b4f20"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000027.json": {
+      "bytes": 19078,
+      "sha256": "5caaff6550c3ba0ddcae27c8b9d8c8a5ecf103836d6de7401c9deefd5df49859"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000028.json": {
+      "bytes": 19083,
+      "sha256": "23407c43b62b4f0f6415799a55be3f9c504e9430c808dc04e2295075a14ff1c3"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000029.json": {
+      "bytes": 19468,
+      "sha256": "aa89791377036c386b4c1b55640328017691539d76f397bed4817b4819726e17"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/receipts/receipt-stream133b-s00000030.json": {
+      "bytes": 19466,
+      "sha256": "b72f413de341b45a28d818da53fae0cd769fec3114ed5171e2bb3118ff8f34b8"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-133b-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-gc60-ssbackground-sdc1-mi-cmtext-shift-textsplit36.completed-20261010T145013Z/stream-qualification-verdict.json": {
+      "bytes": 32571,
+      "sha256": "94cd0653ca495c9ee047fb77e42c3c680912593d94105e6e9af5dbbbd2c105e6"
+    }
+  },
+  "stream_memory": {
+    "margin_above_floor_and_band_gib": {
+      "xpu:0": 0.520538330078125,
+      "xpu:1": 1.0787811279296875,
+      "xpu:2": 2.1578216552734375,
+      "xpu:3": 4.8464813232421875
+    },
+    "minimum_bytes": {
+      "xpu:0": 9954164736,
+      "xpu:1": 10553573376,
+      "xpu:2": 5269733376,
+      "xpu:3": 15672852480
+    },
+    "phases": {
+      "A-after": {
+        "xpu:0": {
+          "bytes": 10151309312,
+          "gib": 9.454143524169922,
+          "run_name": "stream133b-s00000010"
+        },
+        "xpu:1": {
+          "bytes": 10574565376,
+          "gib": 9.848331451416016,
+          "run_name": "stream133b-s00000010"
+        },
+        "xpu:2": {
+          "bytes": 5410267136,
+          "gib": 5.038703918457031,
+          "run_name": "stream133b-s00000010"
+        },
+        "xpu:3": {
+          "bytes": 19540025344,
+          "gib": 18.19806671142578,
+          "run_name": "stream133b-s00000011"
+        }
+      },
+      "A-before": {
+        "xpu:0": {
+          "bytes": 10151309312,
+          "gib": 9.454143524169922,
+          "run_name": "stream133b-s00000010"
+        },
+        "xpu:1": {
+          "bytes": 10574565376,
+          "gib": 9.848331451416016,
+          "run_name": "stream133b-s00000010"
+        },
+        "xpu:2": {
+          "bytes": 5410267136,
+          "gib": 5.038703918457031,
+          "run_name": "stream133b-s00000010"
+        },
+        "xpu:3": {
+          "bytes": 19540025344,
+          "gib": 18.19806671142578,
+          "run_name": "stream133b-s00000011"
+        }
+      },
+      "B-after": {
+        "xpu:0": {
+          "bytes": 9954164736,
+          "gib": 9.270538330078125,
+          "run_name": "stream133b-s00000003"
+        },
+        "xpu:1": {
+          "bytes": 10574540800,
+          "gib": 9.848308563232422,
+          "run_name": "stream133b-s00000022"
+        },
+        "xpu:2": {
+          "bytes": 5269733376,
+          "gib": 4.9078216552734375,
+          "run_name": "stream133b-s00000024"
+        },
+        "xpu:3": {
+          "bytes": 15672852480,
+          "gib": 14.596481323242188,
+          "run_name": "stream133b-s00000022"
+        }
+      },
+      "B-before": {
+        "xpu:0": {
+          "bytes": 9954164736,
+          "gib": 9.270538330078125,
+          "run_name": "stream133b-s00000003"
+        },
+        "xpu:1": {
+          "bytes": 10574540800,
+          "gib": 9.848308563232422,
+          "run_name": "stream133b-s00000022"
+        },
+        "xpu:2": {
+          "bytes": 5269733376,
+          "gib": 4.9078216552734375,
+          "run_name": "stream133b-s00000024"
+        },
+        "xpu:3": {
+          "bytes": 15672852480,
+          "gib": 14.596481323242188,
+          "run_name": "stream133b-s00000022"
+        }
+      },
+      "after": {
+        "xpu:0": {
+          "bytes": 9987719168,
+          "gib": 9.301788330078125,
+          "run_name": "stream133b-s00000000"
+        },
+        "xpu:1": {
+          "bytes": 10553573376,
+          "gib": 9.828781127929688,
+          "run_name": "stream133b-s00000023"
+        },
+        "xpu:2": {
+          "bytes": 5269745664,
+          "gib": 4.907833099365234,
+          "run_name": "stream133b-s00000000"
+        },
+        "xpu:3": {
+          "bytes": 16939536384,
+          "gib": 15.776172637939453,
+          "run_name": "stream133b-s00000023"
+        }
+      },
+      "before": {
+        "xpu:0": {
+          "bytes": 10117734400,
+          "gib": 9.422874450683594,
+          "run_name": "stream133b-s00000024"
+        },
+        "xpu:1": {
+          "bytes": 10553573376,
+          "gib": 9.828781127929688,
+          "run_name": "stream133b-s00000024"
+        },
+        "xpu:2": {
+          "bytes": 5410246656,
+          "gib": 5.038684844970703,
+          "run_name": "stream133b-s00000024"
+        },
+        "xpu:3": {
+          "bytes": 16939536384,
+          "gib": 15.776172637939453,
+          "run_name": "stream133b-s00000024"
+        }
+      }
+    }
+  }
+}

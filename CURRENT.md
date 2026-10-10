@@ -1,5 +1,18 @@
 # Current Workspace State
 
+
+**2026-10-10, packet 134 census: only the 169-frame graph-off arm clears the full memory screen; CPU validation is running.**
+The 145-frame receipt audit confirms exact outputs on31/31 chunks and measured
+cone graph growth3.545 GiB, below the old4.506 GiB estimate. The1.36 GB minimum
+snapshot margin was on card0. At169, charging both full reserves leaves the
+cone-graph/display3 arm short1.843 GiB on card3; the display replica arm is
+short5.122 GiB on card2 after split36. The graph-off/native-display3 arm clears,
+including0.905 GiB on card3 under the stronger all-phase screen. It is prepared
+for qualification, with expected6.5–6.95 s per7 s of video; this is slower per
+video-second than the current145 line. No live work changed. Full CPU suites
+are in progress; the separate packet135 storage repair remains independent.
+[Measured145 budget and169 census](experiments/ltx25-b70/notes/2026-10-10-continuation133b-results-145.md).
+
 **2026-10-10 14:55 UTC, 133b session 1 halted by the storage accounting guard after 73 chunks ("Run storage refuses multiply linked files", `run_storage.py:124`); no fault; 133b relaunching (`s133b-live02`); Codex on packet 135 (guard robustness + offending-path evidence).**
 Session 1 figures: median 5.21 s per 6.0 s (0.869 s/s), cone 0.74–0.75 s under the graph, 31/31 byte-identical to 129, exact. The own-writes
 scan (123b/126) refuses any regular file with nlink > 1; no packet code calls os.link; 126–129 ran 600-chunk sessions on the same scan, so the
