@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**2026-10-10 03:10 UTC, packet 119 (graph cone + eager display + read-ahead) measured: exact, but a loss; 118b dg0 relaunched.**
+119 qualified (verdict 9dac6eb450ba) and streamed 61 chunks (02:56–03:09 UTC), byte-identical to 118b on 37/37 compared
+chunks. Steady state (chunks ≥ 10, medians): period **5.42 s** vs 5.28 on 118b dg0; cone on the chain 0.79 (−0.19), but
+upsample+B-prep 0.43 (+0.14) and receipt 0.18 (+0.09; the anchor read-ahead appears to read inside the receipt path);
+text+A-prep unchanged at 0.50. Controlled stop 03:09:33, no fault; names archived; 118b dg0 (best line, 5.28 s = 1.047 s/s
+tonight) relaunches at 03:14:38 UTC as `s118b-live03`. Codex is analysing the 119 receipts (xpu:3 timeline per
+configuration) and building packet 120: display decode on a second decoder instance on xpu:2, read-ahead strictly
+off the chain, and any ordering lever the timeline shows.
+
 **2026-10-10 02:56 UTC, swap to packet 119 (graph cone + eager display + anchor read-ahead) at 121 frames.**
 The second 118b dg0 session streamed 271 chunks (02:18–02:50 UTC, verdict 08301c03a083, period median 5.28 s, no fault,
 no slip). Codex sealed 119 on CPU (commit 01aa9a790; manifest `d4b99d33…6890`; 375/375 recovery, 278/278 client, 10/10
