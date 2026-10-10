@@ -1,5 +1,21 @@
 # Current Workspace State
 
+**2026-10-10 01:47 UTC, one controlled swap 117 → 118b; 118b qualified and streaming at 121 frames (dg0, fingerprint snapshots).**
+117 stopped cleanly at 01:33:24 UTC after 63 live chunks (client then server, one SIGINT each, no fault). In the five-minute
+gap: fresh health probe passed (`postflight-pre118b-20261010T0134Z.json`); the 118b `--check-only` first failed with
+"Runtime files/version differ" because `launch-118b.sh` called the venv as `bin/python3` while the runtime fingerprint pins
+`bin/python` (one-line fix, commit 207df4d81), then passed. Launched 01:38:30 UTC, unit `ltx118b-stream-server-20261009`,
+run `…-118b-frame-dg0-adcone-bo1-pa1-smfp-…-f121`; qualification verdict 6824dd4a6fae at 01:46:57 UTC: exact replay
+c0/c1/c2 identical, every dual snapshot (fingerprint vs walk) agreed, no latch. Client `ltx118b-stream-client-20261009`
+(work dir `/home/steve/ltx-stream/s118b-live01`), sink/relay/preview re-attached. Codex 118b rebuild: 299/299 recovery,
+193/193 client, 10/10 preflight (commit f79cd9a2e; note `notes/2026-10-09-continuation118b-rebuild.md`). Codex also
+landed the Flash-Next teardown patch (6813e2e05, 4a08bbfaf) and an explicit `--owner-acceptance` admission path for the
+probe journal gate (d05cabc14; 346 CPU passes): earlier faults stay recorded, any fault at or after the acceptance time
+still refuses. Preparation incident: a Codex test mock briefly opened `/dev/dri/renderD128` (card 43:00.0) and blocked in
+`drm_read`; the process had exited by 01:48 UTC, no fault line, only the LTX server holds render nodes (VALIDATION.md
+"Preparation incident"). The clean-exit / sleep-exit / first-forward probes are admitted on paper and wait for the next
+controlled idle window.
+
 **2026-10-10, Flash-Next admission reconciled with the owner's boot decision.**
 The gate now accepts the exact saved decision only when explicitly requested.
 It keeps earlier fault lines in the record and refuses every new fault. CPU
