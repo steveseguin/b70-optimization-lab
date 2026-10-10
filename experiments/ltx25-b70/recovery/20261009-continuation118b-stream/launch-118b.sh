@@ -11,7 +11,7 @@ MAN=248e762de49d21b02a4f95d3791dbd9da7504b731f1a88cb5a930a78448db1f1
 case "$SM" in walk) SMT=walk ;; fingerprint) SMT=fp ;; *) echo "REFUSE: sm must be walk or fingerprint"; exit 2 ;; esac
 NAME=encoder-server-continuation-stream-118b-${AN}-dg${DG}-ad${AD}-bo${BO}-pa${PA}-sm${SMT}-two-way20-28-w1-b1-p1-dxpu2-s256x256-f${FR}
 UNIT=ltx118b-stream-server-20261009
-PY=/home/steve/.venvs/ltx25-baseline/bin/python3
+PY=/home/steve/.venvs/ltx25-baseline/bin/python
 [ -e $R/FAULT.json ] && { echo "REFUSE: FAULT.json present"; exit 2; }
 # Latches (the server's check_control_environment repeats these per lever, also in --check-only).
 [ "$DG" = 1 ] && [ -e $R/decoder-graph-116-refused.json ] && { echo "REFUSE: latch decoder-graph-116-refused.json"; exit 2; }

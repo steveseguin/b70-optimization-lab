@@ -2,7 +2,7 @@
 # Start the packet-118b continuation client as a user unit.
 # Usage: start-client-118b.sh <frames> <dg> <ad> <bo> <pa> <sm walk|fingerprint> <cap GB|none> [extra client args]
 FR=${1:?frames}; DG=${2:?dg 0|1}; AD=${3:?ad}; BO=${4:?bo}; PA=${5:?pa}; SM=${6:?sm walk|fingerprint}; CAP=${7:?cap GB or none}; shift 7
-W=/home/steve/ltx-stream/s118b-stream01; mkdir -p $W
+W=${LTX_STREAM_WORKDIR:-/home/steve/ltx-stream/s118b-live01}; mkdir -p $W
 systemctl --user reset-failed ltx118b-stream-client-20261009 2>/dev/null
 exec systemd-run --user --unit=ltx118b-stream-client-20261009 --property=Restart=no --property=KillSignal=SIGINT --property=TimeoutStopSec=960 \
   --property=WorkingDirectory=/home/steve/llm-optimizations/experiments/ltx25-b70/stream \
