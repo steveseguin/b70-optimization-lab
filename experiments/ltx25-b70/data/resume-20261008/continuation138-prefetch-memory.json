@@ -1,0 +1,570 @@
+{
+  "conditioning": {
+    "device_reason": "sd1_clip returns intermediate_device; model_management returns cpu without gpu_only; sealed server_args does not select gpu_only; lt.py remembers that out_device and returns projected float32 conditioning there",
+    "graph_buffer_caveat": "GraphedLayer static inputs/output are per thread, output aliases static hidden input; a new decode-thread graph owner or copying all graph state is not included in the one-conditioning-buffer budget",
+    "max_one_buffer_logical_bytes": 1376256,
+    "max_one_buffer_mib": 1.3125,
+    "new_graph_pool_budget": "none admitted; dispatch must reuse an already-qualified encode worker and its existing graph entries",
+    "one_buffer_allocation_device": "cpu (source-derived; oracle rows omit device)",
+    "prompts": [
+      {
+        "logical_bytes": 1204224,
+        "prompt_sha256": "165c7ee206cd70d62d190701aa39eaffaed8212574136d651de45dadaa80e38c",
+        "tensors": [
+          {
+            "dtype": "torch.float32",
+            "path": "conditioning[0][0]",
+            "sha256": "f16d0a870da82f93c5bfec9bfead29040722a38908f551c7c0b75c1feaea28b4",
+            "shape": [
+              1,
+              49,
+              6144
+            ]
+          }
+        ]
+      },
+      {
+        "logical_bytes": 1155072,
+        "prompt_sha256": "2b06dc506218ef2a01361402b0fc3b0cfc5a077d7bb90fbd9c82142b24fc901e",
+        "tensors": [
+          {
+            "dtype": "torch.float32",
+            "path": "conditioning[0][0]",
+            "sha256": "8d6a642f43567a86dcf43227724b4efc5fc833a28128e9b5d358b09569a3a302",
+            "shape": [
+              1,
+              47,
+              6144
+            ]
+          }
+        ]
+      },
+      {
+        "logical_bytes": 1155072,
+        "prompt_sha256": "3255e9ea629e2b631680363b27007682745483ff4ca6b72e1dfea6b4777f79fe",
+        "tensors": [
+          {
+            "dtype": "torch.float32",
+            "path": "conditioning[0][0]",
+            "sha256": "a3f409c5dfd93083db6d1c05c5c4acd7c9cd9778b974690ae11d34db7404b429",
+            "shape": [
+              1,
+              47,
+              6144
+            ]
+          }
+        ]
+      },
+      {
+        "logical_bytes": 1105920,
+        "prompt_sha256": "3460c0750f6a5d94d33fe923ede8156377583f3269a4e881fc625cdc3b73417d",
+        "tensors": [
+          {
+            "dtype": "torch.float32",
+            "path": "conditioning[0][0]",
+            "sha256": "cfc374fb723b1a4857fcb609f33fb737e75063678b8ae9199ea3e4d719b4764a",
+            "shape": [
+              1,
+              45,
+              6144
+            ]
+          }
+        ]
+      },
+      {
+        "logical_bytes": 1204224,
+        "prompt_sha256": "359b53cf62d1fa00ad29b8faf70261d788192128ff80ee0558803c9253c80703",
+        "tensors": [
+          {
+            "dtype": "torch.float32",
+            "path": "conditioning[0][0]",
+            "sha256": "4665ecaa12ba647ffe356268cb1785317031017468492fa9b518109799e8a491",
+            "shape": [
+              1,
+              49,
+              6144
+            ]
+          }
+        ]
+      },
+      {
+        "logical_bytes": 1253376,
+        "prompt_sha256": "35d040bb28e666e964fca6ad611fdf3ccd7091d913bf9d376d3540545c9ad509",
+        "tensors": [
+          {
+            "dtype": "torch.float32",
+            "path": "conditioning[0][0]",
+            "sha256": "0b585e802a87f47df5c87d2ee81f18784e15ab5de9e533bcc87445970d0894a6",
+            "shape": [
+              1,
+              51,
+              6144
+            ]
+          }
+        ]
+      },
+      {
+        "logical_bytes": 1376256,
+        "prompt_sha256": "666d0d68193d5b09b8e35bd8762be946ca398db1ec436eea4438f73ffa555a99",
+        "tensors": [
+          {
+            "dtype": "torch.float32",
+            "path": "conditioning[0][0]",
+            "sha256": "6d60fdc7e72f29827ea2de63e3e2800561467a2433cef3c9fa459949586a1064",
+            "shape": [
+              1,
+              56,
+              6144
+            ]
+          }
+        ]
+      },
+      {
+        "logical_bytes": 1155072,
+        "prompt_sha256": "8b08b42b329ac6b84111b747bc8394b5140949693aa2030f462f0bc80dab8a12",
+        "tensors": [
+          {
+            "dtype": "torch.float32",
+            "path": "conditioning[0][0]",
+            "sha256": "4190f41af53e236445ecc27ccb163d91ac1ba435554a13025a13da1014c08e69",
+            "shape": [
+              1,
+              47,
+              6144
+            ]
+          }
+        ]
+      },
+      {
+        "logical_bytes": 1228800,
+        "prompt_sha256": "b7231cf2621f03d86f77077caeffe389fc92d58d85eabb762feb809ebecf429e",
+        "tensors": [
+          {
+            "dtype": "torch.float32",
+            "path": "conditioning[0][0]",
+            "sha256": "a44adc037724c32725a679e15bb0513b30322753641f68ff4cf22dcaaee7620a",
+            "shape": [
+              1,
+              50,
+              6144
+            ]
+          }
+        ]
+      },
+      {
+        "logical_bytes": 1204224,
+        "prompt_sha256": "e2e2f9288e9ae109e422c919d8fb51a93ae2bf01a7be619a40c808f590e2556d",
+        "tensors": [
+          {
+            "dtype": "torch.float32",
+            "path": "conditioning[0][0]",
+            "sha256": "05caa8bce19e1ef85cd9dd8d6419c84388e6600bf8697f43a98044dfd49af46b",
+            "shape": [
+              1,
+              49,
+              6144
+            ]
+          }
+        ]
+      },
+      {
+        "logical_bytes": 1179648,
+        "prompt_sha256": "e3084519bedf9cff6b53bccb355b0624250be52a0e9be9b666d556890b66d0ae",
+        "tensors": [
+          {
+            "dtype": "torch.float32",
+            "path": "conditioning[0][0]",
+            "sha256": "2de053f17dffc6868b5e4128fda9f4f766b0d150fec0998e4e8b9902ac2d194c",
+            "shape": [
+              1,
+              48,
+              6144
+            ]
+          }
+        ]
+      },
+      {
+        "logical_bytes": 1253376,
+        "prompt_sha256": "f642bbb88dc2e16b318722b545f7f94c648d78751b02f03b1ab29f7857da8105",
+        "tensors": [
+          {
+            "dtype": "torch.float32",
+            "path": "conditioning[0][0]",
+            "sha256": "904cfbb903174b39017e5174fdaf9b1fc0f6b19d3b6f2a66606a28daa7574a42",
+            "shape": [
+              1,
+              51,
+              6144
+            ]
+          }
+        ]
+      }
+    ],
+    "resident_increment": "one additional retained conditioning value, at most max_one_buffer_logical_bytes; no ten-scene cache",
+    "text_computation_devices": "xpu:2 primary layers0..35/embedding/projection; xpu:3 secondary layers36..47",
+    "transient_clone_budget": {
+      "reason": "deepcopy at reuse/cache handoff can temporarily coexist with prefetch and active value; these are logical payload totals, not measured allocator peaks or necessarily incremental bytes",
+      "three_live_conditioning_values_logical_bytes": 4128768,
+      "two_live_conditioning_values_logical_bytes": 2752512
+    }
+  },
+  "limits": [
+    "Sampled minima are not simultaneous and do not bound overlap peaks.",
+    "The additional retained conditioning is CPU; overlapping a fresh encoder pass still uses XPU temporary buffers.",
+    "No candidate graph-static-state clone or new graph pool has been measured or admitted.",
+    "Floors8/8/2/9GiB, cone allowances and existing runtime fresh-memory checks remain unchanged."
+  ],
+  "parent_manifest_sha256": "18c80d25c2ba4992d8c6dff24779737a056a325389a84486d24da674ef7e463e",
+  "saved133b_stream31": {
+    "margin_above_floor_and_band_gib": {
+      "xpu:0": 0.520538330078125,
+      "xpu:1": 1.0787811279296875,
+      "xpu:2": 2.1578216552734375,
+      "xpu:3": 4.8464813232421875
+    },
+    "minimum_bytes": {
+      "xpu:0": 9954164736,
+      "xpu:1": 10553573376,
+      "xpu:2": 5269733376,
+      "xpu:3": 15672852480
+    },
+    "phases": {
+      "A-after": {
+        "xpu:0": {
+          "bytes": 10151309312,
+          "gib": 9.454143524169922,
+          "run_name": "stream133b-s00000010"
+        },
+        "xpu:1": {
+          "bytes": 10574565376,
+          "gib": 9.848331451416016,
+          "run_name": "stream133b-s00000010"
+        },
+        "xpu:2": {
+          "bytes": 5410267136,
+          "gib": 5.038703918457031,
+          "run_name": "stream133b-s00000010"
+        },
+        "xpu:3": {
+          "bytes": 19540025344,
+          "gib": 18.19806671142578,
+          "run_name": "stream133b-s00000011"
+        }
+      },
+      "A-before": {
+        "xpu:0": {
+          "bytes": 10151309312,
+          "gib": 9.454143524169922,
+          "run_name": "stream133b-s00000010"
+        },
+        "xpu:1": {
+          "bytes": 10574565376,
+          "gib": 9.848331451416016,
+          "run_name": "stream133b-s00000010"
+        },
+        "xpu:2": {
+          "bytes": 5410267136,
+          "gib": 5.038703918457031,
+          "run_name": "stream133b-s00000010"
+        },
+        "xpu:3": {
+          "bytes": 19540025344,
+          "gib": 18.19806671142578,
+          "run_name": "stream133b-s00000011"
+        }
+      },
+      "B-after": {
+        "xpu:0": {
+          "bytes": 9954164736,
+          "gib": 9.270538330078125,
+          "run_name": "stream133b-s00000003"
+        },
+        "xpu:1": {
+          "bytes": 10574540800,
+          "gib": 9.848308563232422,
+          "run_name": "stream133b-s00000022"
+        },
+        "xpu:2": {
+          "bytes": 5269733376,
+          "gib": 4.9078216552734375,
+          "run_name": "stream133b-s00000024"
+        },
+        "xpu:3": {
+          "bytes": 15672852480,
+          "gib": 14.596481323242188,
+          "run_name": "stream133b-s00000022"
+        }
+      },
+      "B-before": {
+        "xpu:0": {
+          "bytes": 9954164736,
+          "gib": 9.270538330078125,
+          "run_name": "stream133b-s00000003"
+        },
+        "xpu:1": {
+          "bytes": 10574540800,
+          "gib": 9.848308563232422,
+          "run_name": "stream133b-s00000022"
+        },
+        "xpu:2": {
+          "bytes": 5269733376,
+          "gib": 4.9078216552734375,
+          "run_name": "stream133b-s00000024"
+        },
+        "xpu:3": {
+          "bytes": 15672852480,
+          "gib": 14.596481323242188,
+          "run_name": "stream133b-s00000022"
+        }
+      },
+      "after": {
+        "xpu:0": {
+          "bytes": 9987719168,
+          "gib": 9.301788330078125,
+          "run_name": "stream133b-s00000000"
+        },
+        "xpu:1": {
+          "bytes": 10553573376,
+          "gib": 9.828781127929688,
+          "run_name": "stream133b-s00000023"
+        },
+        "xpu:2": {
+          "bytes": 5269745664,
+          "gib": 4.907833099365234,
+          "run_name": "stream133b-s00000000"
+        },
+        "xpu:3": {
+          "bytes": 16939536384,
+          "gib": 15.776172637939453,
+          "run_name": "stream133b-s00000023"
+        }
+      },
+      "before": {
+        "xpu:0": {
+          "bytes": 10117734400,
+          "gib": 9.422874450683594,
+          "run_name": "stream133b-s00000024"
+        },
+        "xpu:1": {
+          "bytes": 10553573376,
+          "gib": 9.828781127929688,
+          "run_name": "stream133b-s00000024"
+        },
+        "xpu:2": {
+          "bytes": 5410246656,
+          "gib": 5.038684844970703,
+          "run_name": "stream133b-s00000024"
+        },
+        "xpu:3": {
+          "bytes": 16939536384,
+          "gib": 15.776172637939453,
+          "run_name": "stream133b-s00000024"
+        }
+      }
+    }
+  },
+  "saved135_gc10_stream31": {
+    "independent_sampled_minima": {
+      "xpu:0": {
+        "bytes": 9954168832,
+        "margin_over_floor_and_screen_gib": 0.5205421447753906,
+        "margin_over_floor_gib": 1.2705421447753906,
+        "phase": "memory.conditioning[1].free_before",
+        "stream_seq": 3
+      },
+      "xpu:1": {
+        "bytes": 10553593856,
+        "margin_over_floor_and_screen_gib": 1.0788002014160156,
+        "margin_over_floor_gib": 1.8288002014160156,
+        "phase": "memory.after.free",
+        "stream_seq": 23
+      },
+      "xpu:2": {
+        "bytes": 5269729280,
+        "margin_over_floor_and_screen_gib": 2.157817840576172,
+        "margin_over_floor_gib": 2.907817840576172,
+        "phase": "memory.conditioning[1].free_before",
+        "stream_seq": 24
+      },
+      "xpu:3": {
+        "bytes": 15672856576,
+        "margin_over_floor_and_screen_gib": 4.846485137939453,
+        "margin_over_floor_gib": 5.596485137939453,
+        "phase": "memory.conditioning[1].free_before",
+        "stream_seq": 22
+      }
+    },
+    "sequence_inclusive": [
+      0,
+      30
+    ]
+  },
+  "schema": "ltx.continuation138.prefetch-memory.v1",
+  "scope": "CPU-only logical-buffer census and saved sampled minima; no candidate native peak or memory-fit claim",
+  "source_files": {
+    "/home/steve/llm-optimizations/data/ltx25-continuation-stream-2026-10-10-pacing-v2.json": {
+      "bytes": 1080481,
+      "sha256": "97885ba9132ca250e38749577e59b6dd42fc2433c80d27eabec579491c3bc045"
+    },
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261008/continuation133-text-oracle.json": {
+      "bytes": 464516,
+      "sha256": "125750aa533d91d08aab7c47b416bc15e25a1371078425a4802e3cac762442c2"
+    },
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261008/continuation134-evidence.json": {
+      "bytes": 81552,
+      "sha256": "bb8f14cdb34a97e5ba257fd3a92e0f93b36f3ffd6feb803ada41bd107023dab9"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000000.json": {
+      "bytes": 13150,
+      "sha256": "a590466837c29e9223319bbd15b4a9ad00018b8b61df9d51e137df7a4685e0e0"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000001.json": {
+      "bytes": 20090,
+      "sha256": "1d65cc117074ad43a87f2b2b2a10a678f6f9fd0ddf47a66434dfae8cd4dfa7e7"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000002.json": {
+      "bytes": 20245,
+      "sha256": "7c4f86c39ad74f68b2fab27b2754827cad86a41591b0ee8f733be1cef2d7a2f2"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000003.json": {
+      "bytes": 20416,
+      "sha256": "436d7abc59bf9a9f36854905b15b325490111180411bffb6a664627d25f7ac3e"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000004.json": {
+      "bytes": 20579,
+      "sha256": "9bb1684b6a6eb5857c80b157ee0defbee6af2ec0b3a6b8414591758a03d0be5e"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000005.json": {
+      "bytes": 20740,
+      "sha256": "cd85fb79109e648ec0856c5dab53d62e9c9d436a2a40d96a0929b5b899eba637"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000006.json": {
+      "bytes": 20894,
+      "sha256": "47c3e271e7866d07b948e646b3c10d37ed34cab23acd255f28c1ab622bc966fd"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000007.json": {
+      "bytes": 21056,
+      "sha256": "5165160236172434010bc3df315023f29efef18809f258131769ea2b8b787a7c"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000008.json": {
+      "bytes": 21209,
+      "sha256": "a042bf02420d582fa3ff46ba02ff51700a31a4f400a8fce4c2b3fe0afa3337ab"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000009.json": {
+      "bytes": 21377,
+      "sha256": "c211c3fd0ceab5af6c62cc9c5992f5c1bad7a761c7e46147b953dcf6a8900333"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000010.json": {
+      "bytes": 21774,
+      "sha256": "374482e8bee4402f39e6f156d18188b8343d29b43c26a7e663b475865ba16dd2"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000011.json": {
+      "bytes": 21768,
+      "sha256": "e18c622b01607bd23b8d0af94f6713a3f61b3dbea38101f76fc3941e559394ec"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000012.json": {
+      "bytes": 21931,
+      "sha256": "c2cf1b68a2a0597b1a041b74539cbcb1dcbe9f07ba3112e246732a798ad7449f"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000013.json": {
+      "bytes": 22099,
+      "sha256": "7549564f7e4385e0ad86161e746f4b12c04ccc64e9989b4d6afa26eb5a7b42bc"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000014.json": {
+      "bytes": 21955,
+      "sha256": "28f172e39ce5444a4e4fae9501587efdff768f0e8b0b7dbf903003631bcad4b6"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000015.json": {
+      "bytes": 22422,
+      "sha256": "abc7c41c6e3fc1621b561e31ed3e7d5171d6d5d997cc33a1e230492908310128"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000016.json": {
+      "bytes": 22575,
+      "sha256": "17ee524e5714a62f328082777cfc8cc5b922feac99c365eb2fe8f3e61dc10e61"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000017.json": {
+      "bytes": 22733,
+      "sha256": "8739d733faeeb1da936590aa7416793e233f839ffc3d1a8139367ee2731a2239"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000018.json": {
+      "bytes": 22894,
+      "sha256": "eeae0a3265bf616c2d6f74b2596c62981d419c5b8d4da1604910a6fcc0d63406"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000019.json": {
+      "bytes": 23058,
+      "sha256": "46f7acf98bb8f57e3f50eae1b55ecb64320ce8fe7d3db10c24cdfa42f545d7a2"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000020.json": {
+      "bytes": 23071,
+      "sha256": "8e6395a5a4ee15009272f8639f4d8b5e4b3a9229ad8412ce3a33d5682fd3c7be"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000021.json": {
+      "bytes": 23383,
+      "sha256": "4ac616b5b126394787959952bab5967a46effa5b2d5d0811a2146951a9f5f626"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000022.json": {
+      "bytes": 23622,
+      "sha256": "9ddc0390c2def0b06b7a0dadea105ffcbee2033514e06aef37759b108fd5f5d1"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000023.json": {
+      "bytes": 23619,
+      "sha256": "6f46b085708c0eaed9ee0c17b1e4fda1d75acb179390665bc86e81f58dd1ce54"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000024.json": {
+      "bytes": 23623,
+      "sha256": "c03a21eb0cfdacc42c6df7efdbe90b4e3d860eaae27db4fa395c1df1685d2e9b"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000025.json": {
+      "bytes": 23633,
+      "sha256": "14bdf0637d873d71afcec320d95f9615f7609fbc607628b36db33bfbe1c7f39f"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000026.json": {
+      "bytes": 23636,
+      "sha256": "4304e28d2ca8a36f4c232f06e1d6ef77e077cf8d46c3a1d343f6cb01b9ad3c59"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000027.json": {
+      "bytes": 23329,
+      "sha256": "354f7476de832df99e2a236895ce5c62e827a0ec381883ba324a956f309dc832"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000028.json": {
+      "bytes": 23869,
+      "sha256": "539f92b7e218269ab21dbfd49823f603d8ef5c56543cae2d9838191fd507f0ec"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000029.json": {
+      "bytes": 23867,
+      "sha256": "6e7fc7b5864bcff9f6e6bacbea005216b999c6c0e2e2b1bde70152a975a240c0"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-135-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145-dseager-display-ra0-ssfull-ssbackground-sdc1-mi-cmtext-shift-textsplit36/receipts/receipt-stream135-s00000030.json": {
+      "bytes": 23868,
+      "sha256": "054fab70ab977663e5fb7ceb13b394788fddeff911cba47af9fe3422e5b78d3b"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-137/launch/serve-encoder.py": {
+      "bytes": 24998,
+      "sha256": "a27ede03488898bbc65d8cb1953d6c5ebf7116d32f5f3f09218d30f63e5bad2d"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-137/resolution/components/integration.py": {
+      "bytes": 165354,
+      "sha256": "92651f06d24b83494f851b79abfd1f81f34374973dd715cdbf11789b0f7df7c9"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-137/source/comfy/model_management.py": {
+      "bytes": 74607,
+      "sha256": "045ab96003386a43e647c8ab96f22fbf3be6c577e2fc578ea31c6faa22facbd5"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-137/source/comfy/sd1_clip.py": {
+      "bytes": 31550,
+      "sha256": "4b7f08bea2028e73c8f68dc9a26f5cc2981ddf27f12c303a467bd8aa9939dcfa"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-137/source/comfy/text_encoders/lt.py": {
+      "bytes": 17258,
+      "sha256": "0e58019c5ae8755d03654238c78ce5d39aa606eac7ffce568332feac0342952a"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-137/source/scripts/ltx_graph_text_encoder.py": {
+      "bytes": 23359,
+      "sha256": "079d2965d3849acf83a351bb459fc5a079e727d7a976940f7e76ce8a58a3ca10"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-137/source/scripts/pipeline_node.py": {
+      "bytes": 19405,
+      "sha256": "26df83e9e63b58fe4b56ca937dee5e723b5a0b154e1f1e33cc79ada71b3c7be7"
+    }
+  }
+}

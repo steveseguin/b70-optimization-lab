@@ -1,15 +1,45 @@
 # LTX 2.5 continuation-stream campaign ledger — 2026-10-09/10
 
-**Production configuration and best clean completed line: packet 135, 145 frames, cone decoder graph on, split36 text placement, legacy auxiliaries, serial eager display on xpu:3, idle maintenance, GC60, immutable digest cache and background storage scan.** Its 121-chunk session measured **5.248 s median / 5.727 s mean / 5.919 s p90**, or **0.875 seconds of work per second of new video** by the median. “Production” names the coordinator-selected campaign configuration, not a claim that this audit checked a running service. The GC10 A/B is **in progress**, with qualification through Q04 submission in the captured log and no verdict or streamed chunk.
+**Packet 138 measurement correction:** client pacing is now separated in the
+[regenerated ledger](ltx25-continuation-stream-pacing-2026-10-10.md) and
+[v2 evidence snapshot](../data/ltx25-continuation-stream-2026-10-10-pacing-v2.json).
+Packet 135 GC10 completed 757 chunks: the raw 747-period median is 5.553 s,
+including 47 client holds. Its uninterrupted early window, destination 10–61,
+has 52 periods and a **5.2415 s median / 5.3642 s mean / 5.7640 s p90**.
+GC60's same 52-period early window has a **5.2415 s median / 5.3864 s mean
+/ 5.8150 s p90**. Both supply 6 s of new video per continuation.
 
-The halted first 133b session retains a lower observed median, **5.225 s (0.871 s/s)**, but stopped on the storage guard after 73 committed chunks. It is not a clean completed production result. The clean 133b repeat measured 5.390 s. Keep these windows separate from CURRENT's early 5.213 s observation and from 135; the storage repair alone has not been isolated as a speed improvement. These observations do not establish a repeated fresh-server speed record.
+The full-session hold-free GC10 diagnostic is still 5.5255 s over 700 periods;
+removing the 47 held intervals does not recover the early median. Later drift
+or pacing effects remain unisolated. Do not describe the whole 0.3115 s raw-to-early
+gap as removable sleep, or either early window as sustained unthrottled speed.
+This correction changes measurement accounting and does not establish a new
+speed record. The measured configuration is packet 135, 145 frames, cone
+decoder graph, split36 text, native serial eager display on card 3 and legacy auxiliaries.
 
-This extends the original packets 117–131 ledger through CURRENT's **2026-10-10 16:00 UTC** entry: 131/132 refusals, the unlaunched 133 rehearsal failure, two 133b sessions, sealed/unlaunched 134, completed 135 GC60 and the in-progress GC10 arm. The earlier 129 fallback sessions are chronology context, not new rows in this requested extension. Evidence was read only, with CPU work at nice19 and OMP_NUM_THREADS=2. No device, service, endpoint, unit, live-client or existing-run write occurred. No /tmp scratch was created.
+The table below is retained as the historical **raw client delivery-cadence**
+snapshot, including holds. Its “best”, work/video and speed dispositions are
+historical labels, superseded for measurement interpretation by the v2 ledger.
+The halted 133b session's raw 5.225 s and repeat's 5.390 s also include pacing; the
+regenerated early medians are 5.2210 s and 5.4110 s. Keep source windows separate;
+the storage repair alone has not been isolated as a speed improvement.
 
-The [chronological campaign note](../notes/2026-10-10-ltx-continuation-campaign.md) explains the changes and corrected diagnoses. The original [machine-readable snapshot](../data/ltx25-continuation-stream-2026-10-10.json) remains frozen at the first ledger's 11:35 UTC boundary; it does **not** contain this extension. The [original analyzer](../scripts/analyze-ltx-continuation-ledger.py) and the supplemental read-only calculation below document the same timing method. New source hashes, run identities and evidence links are recorded here without rewriting any evidence packet.
+The historical table extends 117–131 through the 16:00 UTC snapshot, where GC10
+was still qualifying. The v2 regeneration includes its completed saved log and
+all 33 discovered run identities, with later 129 sessions included. Evidence was
+read only at nice 19 and OMP_NUM_THREADS=2. Existing runs and client files were
+unchanged; the measurement tests used automatically removed owned scratch.
+
+The [chronological campaign note](../notes/2026-10-10-ltx-continuation-campaign.md)
+explains the history. The [original JSON](../data/ltx25-continuation-stream-2026-10-10.json)
+remains frozen. The [updated analyzer](../scripts/analyze-ltx-continuation-ledger.py)
+retains raw periods, records holds, and computes the complete unthrottled prefix
+of each invocation. The supplemental command below reproduces only the old raw
+method and must not be used as an unthrottled production-speed calculation.
 
 ## Measurement and evidence boundary
 
+- **Current primary procedure:** within each client invocation retain every consecutive submit interval with destination `stream_seq >=10` ending before its first `throttle:` line. Never bridge invocations, remove a slow prefix interval, subtract rounded historic holds, or choose a prefix by observed speed. Report raw and hold-free diagnostics beside the primary prefix; absence of a sufficiently long prefix means no sustained unthrottled claim. A resume gets its own clearly retained prefix, not a bridge over downtime. The v2 JSON preserves exact period lists, hold lines and source hashes. The following bullets describe the older raw snapshot.
 - Period is the difference between consecutive `submitted stream…-sNNNNNNNN` timestamps in `client.log`, for destination `stream_seq >= 10`. Thus 9→10 is included. Time resolution is one millisecond. Even/odd labels refer to the **destination** sequence; source-parity analyses in the lane notes reverse them.
 - Each client invocation is a separate timing segment. The 121 and 127 resume intervals are listed as incidents, not bridged into steady-state periods. All other observed intervals remain, including pauses above 12 seconds. No selected slow prompt or maintenance interval is removed. Including the resume gaps gives 121 first-session mean 6.069 s (410 intervals) and 127 mean 6.536 s (86 intervals); the primary means are 5.841 and 5.585 respectively.
 - Median and arithmetic mean use the full saved session after that cutoff. P90 uses nearest rank `ceil(0.9*n)` without interpolation. This deliberately differs from interim/fixed-window notes and source-parity interior windows. Three-decimal display rounds halves upward.

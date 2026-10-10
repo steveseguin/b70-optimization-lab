@@ -1,0 +1,18 @@
+PASS D0 recommended first launch121 frame dg0 cone/1/1 fingerprint no cap qualifies and streams rc=0 rows=3 probs=[] last=['[c112 17:47:46.645] clean stop: 3 chunks this run, next stream_seq 3, next manifest seq 3']
+PASS D1 118b frame/97 fingerprint: qualification re-derived with the 118b gate (snapshot rows), 5 stream118b chunks with the split, the snapshots and the turnaround, exit 0 rc=0 rows=5 probs=[] last=['[c112 17:47:51.884] clean stop: 5 chunks this run, next stream_seq 5, next manifest seq 5']
+PASS D2 every line but the last carries the client turnaround (receipt verified -> next POST) and POST time [0.0005, 0.000444, 0.000749, 0.000478, None]
+PASS D3 status packet 118b with the server options and features {'latent_anchor': False, 'mixed_anchor': False, 'guide_anchor': False, 'frame_anchor': True, 'decode_thread': True, 'async_preview': True, 'chain_reset': True, 'anchor_diagnostics': True, 'sharpness_diagnostic': True, 'chunk_length_choice': True, 'text_reuse_default_on': True, 'video_first_handoff': True, 'decoder_graph': True, 'cone_anchor_decode': True, 'bencode_overlap': True, 'prep_ahead': True, 'chunk_121': True, 'timing_split': True, 'snapshot_fingerprint': True, 'decoder_graph_pool_cap': False}
+PASS D4 a walk-mode server: the gate passes with no dual snapshots; 3 chunks, exit 0 rc=0 probs=[] last=['[c112 17:47:55.752] clean stop: 3 chunks this run, next stream_seq 3, next manifest seq 3']
+PASS D5 a 121-frame dg1 server with a 1.0 GB pool cap: the gate accepts one capture; 3 chunks, exit 0 rc=0 probs=[] last=['[c112 17:47:59.510] clean stop: 3 chunks this run, next stream_seq 3, next manifest seq 3']
+PASS D6 --expect-pool-cap-gb none against a fingerprint/1.0 GB server refuses at preflight (exit 8), nothing new posted rc=8
+PASS D6 --expect-pool-cap-gb 2.0 against a fingerprint/1.0 GB server refuses at preflight (exit 8), nothing new posted rc=8
+PASS D6 --expect-snapshot-mode walk against a fingerprint/1.0 GB server refuses at preflight (exit 8), nothing new posted rc=8
+PASS D7 qualification snapshots without the dual walk fail the 118b gate; client exit 13 rc=13 last=['[c112 17:48:03.138] no retry, no restart: inspect the evidence before running again']
+PASS D8 a server that claims a pass over those snapshot rows is refused by the re-derivation (exit 13) rc=13 last=['[c112 17:48:06.038] no retry, no restart: inspect the evidence before running again']
+PASS D9 a 118 client (118b manifest sha) refuses a 118b server at preflight, exit 8, nothing posted rc=8 last=['[c112 17:48:07.478] no retry, no restart: inspect the evidence before running again']
+PASS D10 a 118b client with the 118 manifest refuses the 118 server packet identity, exit 8 rc=8 last=['[c112 17:48:08.896] no retry, no restart: inspect the evidence before running again']
+PASS D11 a 118b client default fake118b manifest refuses the old118 manifest, nothing posted rc=8
+PASS D12 --expect-pool-cap-gb outside 0.25..16 is refused (argument check) rc=1
+PASS D13 --packet 118b with the 118 contract module is refused (module pin), exit 8 rc=8
+
+16/16 passed; work in /tmp/ltx-cpu-suite-ahv6j7x_/ltx-c118b-test-q89fal5h

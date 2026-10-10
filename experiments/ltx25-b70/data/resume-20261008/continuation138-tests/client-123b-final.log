@@ -1,0 +1,207 @@
+PASS 123 participates in DECODER_GRAPH_PACKETS
+PASS 123 participates in DECODE_THREAD_PACKETS
+PASS 123 participates in RESET_PACKETS
+PASS 123 participates in LEVER_PACKETS
+PASS 123 participates in SERVER_OPTION_PACKETS
+PASS numeric packet123 parser
+PASS 123 stream directory accepted
+PASS 118b stream directory refused
+PASS valid status sampler-a/0/full
+PASS valid status sampler-a/0/a-xpu3-sync
+PASS valid status sampler-a/1/full
+PASS valid status sampler-a/1/a-xpu3-sync
+PASS valid status sampler-b/0/full
+PASS valid status sampler-b/0/a-xpu3-sync
+PASS valid status sampler-b/1/full
+PASS valid status sampler-b/1/a-xpu3-sync
+PASS valid status eager-display/0/full
+PASS valid status eager-display/0/a-xpu3-sync
+PASS valid status eager-display/1/full
+PASS valid status eager-display/1/a-xpu3-sync
+PASS invalid status display_schedule=None
+PASS invalid status display_schedule=''
+PASS invalid status display_schedule='other'
+PASS invalid status anchor_read_ahead=None
+PASS invalid status anchor_read_ahead=True
+PASS invalid status anchor_read_ahead='1'
+PASS invalid status anchor_read_ahead=2
+PASS invalid status snapshot_schedule=None
+PASS invalid status snapshot_schedule=''
+PASS invalid status snapshot_schedule='other'
+PASS sparse barriers refuse walk snapshot mode
+PASS expected display_schedule mismatch refuses
+PASS expected display_schedule matching accepts
+PASS expected anchor_read_ahead mismatch refuses
+PASS expected anchor_read_ahead matching accepts
+PASS expected snapshot_schedule mismatch refuses
+PASS expected snapshot_schedule matching accepts
+PASS expected display_device mismatch refuses
+PASS expected display_device matching accepts
+PASS packet type/identity '123' refuses
+PASS packet type/identity '118b' refuses
+PASS packet type/identity 118 refuses
+PASS complete six-field options from status
+PASS 118b preserves its two-field options
+PASS receipt consistent options accepts
+PASS receipt display_schedule drift refused
+PASS receipt anchor_read_ahead drift refused
+PASS receipt snapshot_schedule drift refused
+PASS receipt display_device drift refused
+PASS receipt snapshot_mode drift refused
+PASS receipt decoder_graph_pool_cap_bytes drift refused
+PASS receipt missing run_write_allowance_bytes refused
+PASS receipt missing snapshot_mode refused
+PASS receipt missing decoder_graph_pool_cap_bytes refused
+PASS receipt missing aux_residency refused
+PASS receipt missing residency_qualification_id refused
+PASS receipt missing display_schedule refused
+PASS receipt missing anchor_read_ahead refused
+PASS receipt missing snapshot_schedule refused
+PASS receipt missing display_device refused
+PASS verdict missing run_write_allowance_bytes refused before gate
+PASS verdict missing snapshot_mode refused before gate
+PASS verdict missing decoder_graph_pool_cap_bytes refused before gate
+PASS verdict missing aux_residency refused before gate
+PASS verdict missing residency_qualification_id refused before gate
+PASS verdict missing display_schedule refused before gate
+PASS verdict missing anchor_read_ahead refused before gate
+PASS verdict missing snapshot_schedule refused before gate
+PASS verdict missing display_device refused before gate
+PASS qualification receipt missing run_write_allowance_bytes refused
+PASS qualification receipt missing snapshot_mode refused
+PASS qualification receipt missing decoder_graph_pool_cap_bytes refused
+PASS qualification receipt missing aux_residency refused
+PASS qualification receipt missing residency_qualification_id refused
+PASS qualification receipt missing display_schedule refused
+PASS qualification receipt missing anchor_read_ahead refused
+PASS qualification receipt missing snapshot_schedule refused
+PASS qualification receipt missing display_device refused
+PASS new flag --expect-display-schedule refused for118b
+PASS new flag --expect-anchor-read-ahead refused for118b
+PASS new flag --expect-snapshot-schedule refused for118b
+PASS invalid display device None refused
+PASS invalid display device '' refused
+PASS invalid display device 'cpu' refused
+PASS invalid display device 'xpu:0' refused
+PASS invalid display device 2 refused
+PASS replica invalid combination frames refused
+PASS replica invalid combination anchor refused
+PASS replica invalid combination anchor_decode refused
+PASS replica invalid combination display_schedule refused
+PASS unrecognized plan refuses
+PASS decode device binding stream/xpu:3/xpu:3
+PASS decode device binding stream/xpu:2/xpu:2
+PASS decode device binding stream/xpu:2/xpu:3
+PASS decode device binding stream/xpu:3/None
+PASS decode device binding qualify-eager/xpu:2/xpu:3
+PASS decode device binding qualify-eager/xpu:2/xpu:2
+PASS decode device binding qualify-graph/xpu:2/xpu:2
+PASS decode device binding qualify-repeat/xpu:2/xpu:3
+PASS 119 option identity remains five fields
+PASS 119 decode records do not gain a required123 field
+PASS 119 refuses123 display device flag
+PASS CPU runner blocks synthetic device-open audit '/dev/dri/renderD128'
+PASS CPU runner blocks synthetic device-open audit '/dev/dri'
+PASS CPU runner blocks synthetic device-open audit b'/dev/dri/card0'
+PASS client wrapper uses fingerprint-pinned bin/python -B
+PASS client wrapper caps OMP
+PASS client wrapper binds all three options
+PASS client wrapper workdir uses123 default
+PASS client wrapper does not reset units
+PASS length 121 display xpu:3 admitted
+PASS length 121 display xpu:2 admitted
+PASS length 145 display xpu:3 admitted
+PASS length 145 display xpu:2 admitted
+PASS missing long-chunk feature chunk_145 refuses
+PASS old packet 117 refuses frames145 before network
+PASS old packet 118b refuses frames145 before network
+PASS old packet 119 refuses frames145 before network
+PASS old packet 120 refuses frames145 before network
+PASS packet120 still refuses long replica configuration
+PASS explicit budget 4 GiB at121 accepts and binds
+PASS explicit budget 6 GiB at145 accepts and binds
+PASS explicit budget 8 GiB at145 accepts and binds
+PASS invalid145 transient budget None refuses
+PASS invalid145 transient budget True refuses
+PASS invalid145 transient budget '6442450944' refuses
+PASS invalid145 transient budget 4294967296 refuses
+PASS invalid145 transient budget 8589934593 refuses
+PASS explicit budget on xpu3 refuses
+PASS unrequested override refuses
+PASS override expectation mismatch refuses
+PASS required override absent refuses
+PASS default options omit budget field
+PASS historical120 options ignore new field
+PASS historical121 options ignore new field
+PASS CLI invalid transient budget NaN refuses before network
+PASS CLI invalid transient budget Infinity refuses before network
+PASS CLI invalid transient budget -1 refuses before network
+PASS CLI invalid transient budget 0 refuses before network
+PASS CLI invalid transient budget 9 refuses before network
+PASS CLI invalid transient budget 0.00000000001 refuses before network
+PASS old packet refuses explicit transient flag before network
+PASS wrapper binds explicit transient environment option
+PASS receipt explicit budget agrees
+PASS receipt budget drift refuses
+PASS receipt budget missing refuses
+PASS auxiliary residency legacy accepts its identity
+PASS auxiliary residency legacy rejects drifted identity
+PASS auxiliary residency xpu2 accepts its identity
+PASS auxiliary residency xpu2 rejects drifted identity
+PASS invalid auxiliary residency None refuses
+PASS invalid auxiliary residency '' refuses
+PASS invalid auxiliary residency 'cpu' refuses
+PASS invalid auxiliary residency 'xpu:2' refuses
+PASS invalid auxiliary residency 1 refuses
+PASS 169 xpu2 dg0 accepts
+PASS 169 refuses unsafe aux_residency
+PASS 169 refuses unsafe decoder_graph
+PASS 169 refuses unsafe placement
+PASS 169 refuses unsafe anchor
+PASS 169 refuses unsafe anchor_decode
+PASS 169 refuses unsafe display_device
+PASS 123 refuses missing chunk_169 feature
+PASS 123 refuses missing atomic_preview feature
+PASS long dg1 replica f145 refuses
+PASS long dg1 replica f169 refuses
+PASS expected auxiliary residency mismatch refuses
+PASS client wrapper binds residency environment
+PASS exit7 healthy makes exactly one bounded status observation
+PASS exit7 healthy is logged
+PASS exit7 healthy preserves fault and health evidence
+PASS exit7 fault makes exactly one bounded status observation
+PASS exit7 fault is logged
+PASS exit7 fault preserves fault and health evidence
+PASS exit7 unavailable makes exactly one bounded status observation
+PASS exit7 unavailable is logged
+PASS exit7 unavailable records unavailable without throwing
+PASS exit7 status500 makes exactly one bounded status observation
+PASS exit7 status500 is logged
+PASS exit7 status500 records unavailable without throwing
+PASS sealed123 imports hash-pinned residency helper before receipt and gate modules
+PASS sealed123 reference pin verifies and includes145 legacy qualification
+PASS changed residency helper pin refuses before import
+PASS allowance 1 GiB accepts and binds
+PASS allowance 3 GiB accepts and binds
+PASS allowance 8 GiB accepts and binds
+PASS allowance 64 GiB accepts and binds
+PASS invalid or unrequested allowance None refuses
+PASS invalid or unrequested allowance True refuses
+PASS invalid or unrequested allowance '3221225472' refuses
+PASS invalid or unrequested allowance 0 refuses
+PASS invalid or unrequested allowance 1073741825 refuses
+PASS invalid or unrequested allowance 69793218560 refuses
+PASS invalid or unrequested allowance 8589934592 refuses
+PASS invalid allowance CLI '' refuses before network
+PASS invalid allowance CLI '0' refuses before network
+PASS invalid allowance CLI '65' refuses before network
+PASS invalid allowance CLI '3.0' refuses before network
+PASS invalid allowance CLI '-1' refuses before network
+PASS invalid allowance CLI '03' refuses before network
+PASS invalid allowance CLI ' 3' refuses before network
+PASS invalid allowance CLI '+3' refuses before network
+PASS receipt allowance drift refuses exit12
+PASS missing receipt allowance refuses exit12
+PASS client launcher binds write allowance
+
+205/205 passed; CPU-only files in /tmp/ltx-cpu-suite-rso2ban0/ltx-client123-cpu-o20p1r4l

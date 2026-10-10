@@ -1,0 +1,48 @@
+PASS Q1 qualification pass -> streams (11 serial requests, verdict, 5 chunks) rc=0 qual_posts=11 order=[0, 1, 2, 3, 4] refusals={}
+PASS Q2 qualification log has the LAUNCH.md order and a passed verdict 
+PASS Q3 second run on a qualified server verifies, does not re-qualify rc=0
+PASS Q4 qualification fail -> exit 13, nothing streamed rc=13 order=[] last=[c112 17:40:39.299] STOPPED (exit 13): QUALIFICATION DID NOT PASS (HTTP 200): ["Eager/graph/repeat tensors differ at chunk 1: ['audio_latent', 'images', 'video_
+PASS Q4 qualification lie -> exit 13, nothing streamed rc=13 order=[] last=[c112 17:40:41.638] STOPPED (exit 13): client-side re-derivation of the verdict FAILED: Eager/graph/repeat tensors differ at chunk 1: ['audio_latent', 'images',
+PASS Q5 --skip-qualification on an unqualified server -> exit 13, no request rc=13
+PASS Q6 --qualification-only -> exit 0, qualified, no stream chunk rc=0
+PASS S1 40 chunks, exit 0, server order 0..39, never >1 in server, no refusals rc=0 n=40 max=1 refusals={}
+PASS S2 manifest: seq, anchor chain, skip_first_frames, scene schedule, seeds []
+PASS S3 prompts follow the schedule; cuts exactly at scene boundaries (anchor chain continues through) cuts [3, 8, 10, 13, 18, 20, 23, 28]
+PASS S4 next chunk submitted within one poll of the previous receipt (poll 0.05 s) max 0.047 s median 0.044 s
+PASS S5 state: no pending, last stream_seq 39, next manifest seq 40 
+PASS R1 restart on the same server continues the chain (13 chunks, one chain, seq 0..12) rc=0/0 []
+PASS R2 crash with a chunk in flight: restart adopts/recovers it, then continues without gap or duplicate rc=0 before=3 submitted_before=4 after=6 []
+PASS R3 new server: stream_seq restarts at 0, manifest seq continues, next scene starts, fresh preview path rc=0 [] first path /tmp/ltx-cpu-suite-osd22p3c/ltx-c112-test-ctgecu8z/restart/root/output/stream112-s00000000/preview_00002_.mp4
+PASS T1 throttle holds with the sink at seq -1 (limit 9 s at 2 s per chunk) chunks 4 then 4
+PASS T2 throttle releases as the sink advances 4 -> 8
+PASS T3 SIGINT while throttled: exit 0 rc=0
+PASS D1 disposal regex: only <output>/stream112-sNNNNNNNN/preview_NNNNN_.mp4, no symlinked dirs []
+PASS D2 consumed previews deleted only past last_played_seq - margin (seq <= 5) deleted seqs [0, 1, 2, 3, 4, 5]
+PASS D3 a preview dir with other content keeps that content (only the MP4 goes) 
+PASS D4 disposal is off by default 
+PASS G1 SIGINT: exit 0 after the in-flight chunk completes and is recorded; state written rc=0 rows=2 submitted=2 after 0.2 s
+PASS G2 resume after SIGINT: no gap rc=0
+PASS H server halt                  -> exit 2 rc=2 rows=3 [c112 17:41:40.799] STOPPED (exit 2): server halted: RuntimeError: injected halt at stream112-s00000003
+PASS H failed-job receipt           -> exit 6 rc=6 rows=3 [c112 17:41:43.226] STOPPED (exit 6): FAILED JOB: /tmp/ltx-cpu-suite-osd22p3c/ltx-c112-test-ctgecu8z/halt-failed-job receipt/root/encoder-server-continuation-stream-112-t
+PASS H FAULT.json                   -> exit 4 rc=4 rows=3 [c112 17:41:45.607] STOPPED (exit 4): FAULT.json present (/tmp/ltx-cpu-suite-osd22p3c/ltx-c112-test-ctgecu8z/halt-FAULT.json/root/FAULT.json): device fault latched; halti
+PASS H preview missing              -> exit 7 rc=7 rows=2 [c112 17:41:57.828] STOPPED (exit 7): preview /tmp/ltx-cpu-suite-osd22p3c/ltx-c112-test-ctgecu8z/halt-preview missing/root/output/stream112-s00000002/preview_00001_.mp4 m
+PASS H chunk stalls                 -> exit 16 rc=16 rows=2 [c112 17:42:03.147] STOPPED (exit 16): chunk stream112-s00000002 not committed after 3 s; no retry (inspect the server run dir)
+PASS H stale anchor (409)           -> exit 10 rc=10 rows=2 [c112 17:42:05.495] STOPPED (exit 10): request refused (HTTP 409, code stale-anchor): predecessor_anchor_sha256 is not the anchor of stream112-s00000002
+PASS H order (409)                  -> exit 10 rc=10 rows=3 [c112 17:42:07.860] STOPPED (exit 10): request refused (HTTP 409, code order): injected refusal
+PASS H receipt anchor mismatch      -> exit 12 rc=12 rows=2 [c112 17:42:10.189] STOPPED (exit 12): status chain stream112-s00000002/35d6ec459af3775c1ad2a0d35fb7220d5f164e3971c5a95feaf24d6fa92bc8ff differs from receipt stream112-s0
+PASS H another client advanced      -> exit 12 rc=12 rows=2 [c112 17:42:12.454] STOPPED (exit 12): server next_stream_seq 4 jumped past 3: another client is submitting
+PASS H contract (400)               -> exit 11 rc=11 rows=0 [c112 17:42:14.611] STOPPED (exit 11): request refused (HTTP 400, code contract): injected refusal
+PASS H text-reuse-rule (409)        -> exit 14 rc=14 rows=0 [c112 17:42:16.841] STOPPED (exit 14): request refused (HTTP 409, code text-reuse-rule): injected refusal
+PASS H busy (409)                   -> exit 15 rc=15 rows=1 [c112 17:42:19.198] STOPPED (exit 15): request refused (HTTP 409, code busy): injected refusal
+PASS H halted (503 on POST)         -> exit 2 rc=2 rows=1 [c112 17:42:21.496] STOPPED (exit 2): server halted (HTTP 503): injected refusal
+PASS H over-long prompt (server)    -> exit 14 rc=14 rows=2 [c112 17:42:22.874] STOPPED (exit 14): request refused (HTTP 409, code window-not-qualified): Prompt uses text window 128; this server qualified [64]
+PASS H over-long prompt (client)    -> exit 8 rc=8 rows=0 [c112 17:42:24.866] STOPPED (exit 8): scene schedule refused: toolong: 80 tokens (BOS included) needs the 128-row window; qualified windows [64] (the 64-row window holds 
+PASS H   over-long prompt refused before any request 
+PASS H disk below --min-free-gib    -> exit 9 rc=9 rows=0 [c112 17:42:27.084] STOPPED (exit 9): only 66.6 GiB free under /tmp/ltx-cpu-suite-osd22p3c/ltx-c112-test-ctgecu8z/halt-disk below --min-free-gib/root (limit 1000000.0); s
+PASS H wrong runtime manifest       -> exit 8 rc=8 rows=0 [c112 17:42:28.165] STOPPED (exit 8): preflight refused: runtime_manifest_sha256 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff is not the packet 112 bu
+PASS H HTTP: server not answering   -> exit 5 rc=5 after 6.3 s
+PASS H HTTP: server gone            -> exit 5 rc=5 after 4.2 s
+PASS X1 text_reuse=1 server: reuse_text 1 on continuous chunks, 0 at cuts and chunk 0 rc=0 [0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1]
+PASS X2 kittens-01 fixtures format: each fixture a scene of --default-chunks 4, ids sanitised to [a-z0-9] rc=0 ['kittenyawn', 'kittenyawn', 'kittenyawn', 'kittenyawn', 'kittenbox', 'kittenbox', 'kittenbox', 'kittenbox', 'kittenyarn']
+
+46/46 passed; work in /tmp/ltx-cpu-suite-osd22p3c/ltx-c112-test-ctgecu8z

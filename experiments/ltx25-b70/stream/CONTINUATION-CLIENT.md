@@ -193,6 +193,7 @@ the first 12 characters of the anchor hash.
 | `--expect-frames/-placement/-text-reuse` | unset | refuse (exit 8) if the server differs |
 | `--token-check` | `exact` | `exact` counts Gemma tokens; `off` leaves the check to the server |
 | `--sink-stats`, `--max-ahead-seconds` | unset, 60 | throttle on the sink's `last_played_seq` |
+| `--pacing-log` | `legacy` | `precise` logs monotonic nanosecond start/end/duration of every hold, including interrupted holds; packet138 selects this form |
 | `--delete-consumed-previews`, `--dispose-margin` | off, 50 | delete a chunk's MP4 once the sink has played 50 manifest seqs past it |
 | `--min-free-gib` | 52 | free space below this under the results root means exit 9 |
 | `--http-fail-seconds` | 120 | how long HTTP may fail before exit 5 |

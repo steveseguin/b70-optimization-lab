@@ -1,0 +1,35 @@
+{
+  "schema": "ltx.stream138.recovery-fixture-correction.v1",
+  "initial": {
+    "log": "experiments/ltx25-b70/data/resume-20261008/continuation138-tests/recovery-before-fixture-fix.log",
+    "sha256": "d27549b82a1bbe7057cacc51dbb3b599f20b5b602bf3401a56f03117f93f4bae",
+    "tests": 1138,
+    "seconds": 1126.989,
+    "passed": false
+  },
+  "initial_failures": 1,
+  "initial_errors": 0,
+  "failure_test": "test_f32_binding137.F32Binding137.test_bulk_run_name_suffix_and_complete_inventory",
+  "cause": "Inherited F32 suffix fixture used production_environment, which now enables scheduled prefetch. It appended f32bulk after tpscheduled although the packet correctly appends tpscheduled last.",
+  "correction": "Set env['LTX_TEXT_PREFETCH'] = 'off' in the inherited F32-only fixture.",
+  "fixture": "experiments/ltx25-b70/recovery/20261010-continuation138-stream/test_f32_binding137.py",
+  "fixture_sha256_before": "78b976aeddbcd38a33f16a298d1ef24403b92f1a2e473d1a0c37834ebfe20f96",
+  "fixture_sha256_after": "64e47d3c0590568d1aa0a8023bd9281856353101fdf7d9c415a252763b1e407b",
+  "focused": {
+    "log": "experiments/ltx25-b70/data/resume-20261008/continuation138-tests/f32-binding-static2.log",
+    "sha256": "f4d20eaf0ed2eb7b042c8ca52dcc3f0ca235aa14ba92a0b98e0b2680c42b02fd",
+    "tests": 9,
+    "seconds": 0.087,
+    "passed": true
+  },
+  "final": {
+    "log": "experiments/ltx25-b70/data/resume-20261008/continuation138-tests/recovery-final.log",
+    "sha256": "f4432c1ae336f1876ca160ad961a0d2b90c62616ab16a08cf367aeefa3c5d3aa",
+    "tests": 1138,
+    "seconds": 1112.54,
+    "passed": true
+  },
+  "bundled_runtime_changed": false,
+  "manifest_sha256": "85781225aad084faf676268cbe693df5649aa77cad76373306243a688fb23fc5",
+  "inner_plan_sha256": "38ba6ca1e54d34acd0e27a438c6978436cbd5ecbb268946587c9e13f7f3cab2a"
+}

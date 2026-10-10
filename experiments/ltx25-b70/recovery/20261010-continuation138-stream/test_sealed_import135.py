@@ -1,0 +1,102 @@
+"""Fresh-process sealed startup import regressions; no launcher execution."""
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import unittest
+
+HERE = Path(__file__).resolve().parent
+ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
+PACKET = ROOT / 'prepared-continuation-stream-138'
+PARENT = ROOT / 'prepared-continuation-stream-133'
+
+
+class SealedImport135(unittest.TestCase):
+    def invoke(self, packet=PACKET, *options):
+        env = dict(os.environ, OMP_NUM_THREADS='2', MKL_NUM_THREADS='2', PYTHONDONTWRITEBYTECODE='1')
+        env.pop('PYTHONPATH', None)
+        result = subprocess.run([sys.executable, '-B', str(HERE / 'sealed_import_cpu.py'),
+            '--packet', str(packet), *options], env=env, cwd='/home/steve/llm-optimizations',
+            text=True, capture_output=True)
+        self.assertTrue(result.stdout.strip(), result.stderr)
+        return result, json.loads(result.stdout)
+
+    def test_split36_sealed_launcher_lazy_imports(self):
+        result, value = self.invoke()
+        self.assertEqual(result.returncode, 0, value)
+        self.assertTrue(value['passed'])
+        self.assertIn(str(PACKET / 'launch/text_residency133.py'), value['module_origins'])
+        self.assertEqual(value['sys_path'][0], str(PACKET / 'launch'))
+        self.assertNotIn(str(PACKET / 'source/scripts'), value['sys_path'])
+        self.assertEqual(value['cwd'], '/home/steve/llm-optimizations')
+        self.assertEqual(value['dont_write_bytecode'], 1)
+        self.assertFalse(value['prepare_start_called'])
+        self.assertFalse(value['launch_called'])
+        self.assertFalse(value['health_receipt_read'])
+
+    def test_legacy_sealed_launcher_imports(self):
+        result, value = self.invoke(PACKET, '--mode', 'legacy')
+        self.assertEqual(result.returncode, 0, value)
+        self.assertEqual(value['mode'], 'legacy')
+
+    def test_cached_launch_helper_finds_exact_oracle(self):
+        result, value = self.invoke()
+        self.assertEqual(result.returncode, 0, value)
+        self.assertEqual(value['oracle_prompts'], 12)
+        self.assertEqual(value['oracle_window_rows'], 40)
+        self.assertEqual(value['oracle_sha256'], '125750aa533d91d08aab7c47b416bc15e25a1371078425a4802e3cac762442c2')
+
+    def test_unchanged_parent_reproduces_missing_module(self):
+        result, value = self.invoke(PARENT)
+        self.assertEqual(result.returncode, 1, value)
+        self.assertEqual(value['error_type'], 'ModuleNotFoundError')
+        self.assertIn('text_residency133', value['error'])
+
+    def test_missing_helper_fails_without_author_fallback(self):
+        result, value = self.invoke(PACKET, '--block-helper')
+        self.assertEqual(result.returncode, 1, value)
+        self.assertEqual(value['error_type'], 'ModuleNotFoundError')
+        self.assertIn('fault injection', value['error'])
+
+    def test_missing_oracle_fails_without_packet_mutation(self):
+        result, value = self.invoke(PACKET, '--block-oracle')
+        self.assertEqual(result.returncode, 1, value)
+        self.assertEqual(value['error_type'], 'FileNotFoundError')
+        self.assertIn('fault injection', value['error'])
+
+
+    def test_every_bundled_component_and_runtime_copy_imports(self):
+        from sealed_import_cpu import helper_inventory
+        result, value = self.invoke(PACKET, '--all-helpers')
+        self.assertEqual(result.returncode, 0, value)
+        self.assertTrue(value['all_helpers'])
+        self.assertEqual(value['helper_import_count'], 71)
+        self.assertEqual(value['component_import_count'], 38)
+        self.assertEqual(value['runtime_helper_import_count'], 33)
+        self.assertEqual(value['helper_imports'], helper_inventory(PACKET))
+        self.assertEqual(len(set(value['helper_imports'])), 71)
+        for relative in value['helper_imports']:
+            self.assertIn(str(PACKET / relative), value['module_origins'])
+        self.assertFalse(value['launch_called'])
+        self.assertFalse(value['prepare_start_called'])
+
+    def test_missing_nonstartup_storage_helper_fails_inventory_gate(self):
+        result, value = self.invoke(PACKET, '--all-helpers', '--block-bundled-helper',
+                                   'source/scripts/run_storage.py')
+        self.assertEqual(result.returncode, 1, value)
+        self.assertEqual(value['error_type'], 'ModuleNotFoundError')
+        self.assertIn('source/scripts/run_storage.py', value['error'])
+
+    def test_builder_preseal_gate_includes_complete_helper_inventory(self):
+        from sealed_import_cpu import validate_packet
+        value = validate_packet(PACKET)
+        self.assertTrue(value['passed'])
+        self.assertEqual(value['checks'], 3)
+        self.assertEqual(value['helper_import_count'], 71)
+        self.assertEqual(set(value['modes']), {'split36', 'legacy', 'all_helpers'})
+        self.assertEqual(value['modes']['all_helpers']['helper_import_count'], 71)
+
+
+if __name__ == '__main__':
+    unittest.main()

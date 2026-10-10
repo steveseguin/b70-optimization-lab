@@ -1,5 +1,32 @@
 # Current Workspace State
 
+**2026-10-10, packet 138 sealed and CPU-tested; native validation is pending.**
+The server can prepare the next scene's text while the current chunk is being
+sampled. The client supplies its pinned schedule position. The result must
+match the unchanged conditioning oracle when produced and when consumed;
+a different request discards it and uses fresh encoding. The default is off,
+which retains packet 137's computation. The predicted saving is about 0.38
+seconds per scene cut, or 0.095 seconds per chunk averaged across four chunks;
+no native speed gain is claimed. One extra conditioning value is retained on
+CPU, at most 1.3125 MiB. Native overlap and memory peaks remain unmeasured.
+
+All 1,138 recovery tests and 8,897 client checks across 51 suites pass, plus
+nine sealed-import tests over all 71 helper copies, 14 pacing tests and ten
+preflight checks. Every packet pin and recursive verification passes, with no
+bytecode caches. The inherited full runtime tests use prefetch off; 26 separate
+CPU tests exercise the scheduled producer and consumer. The fixture-only first
+recovery failure and corrected full rerun are preserved. No GPU, model launch,
+check-only, live endpoint or unit operation was used for this preparation.
+
+The pacing correction records exact client hold durations and separates the
+raw delivery rate from the uninterrupted early window. For 135 GC-10, the
+747-period raw median is 5.553 seconds; the first 52 unthrottled periods have a
+5.2415-second median. The later hold-free diagnostic is not sustained
+unthrottled speed. [Design, seal and evidence](notes/2026-10-10-continuation138-stream-design.md),
+[build receipt](experiments/ltx25-b70/data/resume-20261008/continuation138-build.json),
+[launch commands for the coordinator](experiments/ltx25-b70/recovery/20261010-continuation138-stream/LAUNCH.md),
+[corrected ledger](results/ltx25-continuation-stream-pacing-2026-10-10.md).
+
 **2026-10-10, Flash-Next first-forward admission repaired and exit results recorded; CPU only.**
 The container mounted the probe beside the package, but its receipt treated
 both as one directory. Support hashes now work with that layout. A refusal
