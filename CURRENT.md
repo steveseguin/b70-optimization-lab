@@ -1,5 +1,34 @@
 # Current Workspace State
 
+**2026-10-10 08:53 UTC, packet 127 sealed on CPU; the coordinator keeps control of the live 126 server.**
+The new option reuses only a digest of unchanged immutable graph signatures.
+Every snapshot still reads fresh tensor state, device facts and memory levels;
+the default-off path keeps packet 126 behavior. Later receipts directly link
+all 64 long packet 126 handoffs to maintenance. GC60 removes that recurring
+handoff delay in packet 125, but fresh-text work remains and its earlier whole
+window was neutral. The measured 126 parent gives a revised first-launch
+estimate of 5.45–5.70 seconds per six seconds of video (0.908–0.950 s/s), central
+5.55 / 0.925. This is a forecast; the 0.90 goal is still open.
+
+Recommend the new digest option with background accounting, GC60, 145 frames,
+legacy auxiliaries and serial display on xpu:3. All live byte, memory and
+fresh-server speed gates remain with the coordinator. No live operation was
+performed. The 169-frame parallel-display combination and a safe 145-frame
+cone graph remain unmeasured; the first graph capture is not bounded by a
+smaller positive pool cap. Sampler blocks are already graphed.
+
+Parent 126; manifest `c2564507…1dc359e`; inner plan `554c8051…abcc01`.
+Recursive verification covers 2,151 files with zero Python caches. Recovery
+validation covers 720 unique cases: 718 passed the full run, then all 16 tests
+in the corrected parent-fixture module passed, including both failures.
+All 2,807 client checks in 29 suites and 10 mocked preflight tests pass.
+Client pins use the inner plan hash. Full development failures and rechecks
+are preserved. CPU work used nice 19, OMP/MKL 2 and the pinned Python with -B.
+[Budget](experiments/ltx25-b70/notes/2026-10-10-continuation-budget-145.md),
+[design](experiments/ltx25-b70/notes/2026-10-10-continuation127-stream-design.md),
+[build receipt](experiments/ltx25-b70/data/resume-20261008/continuation127-build.json),
+[future launch](experiments/ltx25-b70/recovery/20261010-continuation127-stream/LAUNCH.md).
+
 **2026-10-10 08:40 UTC, 126 at 145 measured (verdict a4b739676c5a, exact): median 5.72 s = 0.954 s/s; half of the 122–125 regression recovered; 126 stays live (it keeps the storage and preview fixes).**
 n = 56 periods: median 5.722 (123b legacy 5.770; 121 legacy 5.636), even 5.59 / odd 6.10, p90 6.38. The background storage scan removed
 ≈ 0.05 s; ≈ 0.08 s of the 121→123b difference remains unattributed (candidates left: exit-7 status plumbing, aux plumbing, the 122
