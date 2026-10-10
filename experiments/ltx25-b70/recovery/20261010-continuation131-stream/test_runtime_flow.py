@@ -406,7 +406,7 @@ class Flow118(unittest.TestCase):
         for ch in d['chunks']:
             self.assertEqual({s['mode'] for s in ch['snapshots']}, {'walk'})
             self.assertFalse(any(s['dual'] for s in ch['snapshots']))
-            self.assertEqual(ch['server_options'], {'display_allocator_release': 'off', 'maintenance_mode': 'parent', 'storage_scan_mode': 'request', 'snapshot_digest_cache': 0, 'gc_interval_seconds': 10, 'display_worker': 'serial', 'run_write_allowance_bytes': 3 * 2**30, 'display_schedule': 'sampler-a', 'anchor_read_ahead': 0, 'snapshot_schedule': 'full', 'display_device': 'xpu:3', 'snapshot_mode': 'walk', 'decoder_graph_pool_cap_bytes': None, 'aux_residency': 'legacy', 'residency_qualification_id': '692796408498da76c250fe324d8f52b1557493438a8bf927751313dace53c9c2'})
+            self.assertEqual(ch['server_options'], {'cone_graph_memory': 'off', 'display_allocator_release': 'off', 'maintenance_mode': 'parent', 'storage_scan_mode': 'request', 'snapshot_digest_cache': 0, 'gc_interval_seconds': 10, 'display_worker': 'serial', 'run_write_allowance_bytes': 3 * 2**30, 'display_schedule': 'sampler-a', 'anchor_read_ahead': 0, 'snapshot_schedule': 'full', 'display_device': 'xpu:3', 'snapshot_mode': 'walk', 'decoder_graph_pool_cap_bytes': None, 'aux_residency': 'legacy', 'residency_qualification_id': '692796408498da76c250fe324d8f52b1557493438a8bf927751313dace53c9c2'})
         self.assertIsNone(d['snapshot_state']['ledger'])
         self.assertEqual(d['verdict_file']['snapshot_failures'], [])
 

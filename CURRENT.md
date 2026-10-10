@@ -1,24 +1,31 @@
 # Current Workspace State
 
-**2026-10-10, packet 131 prepared on CPU: guarded cone graph at145; native fit remains unverified.**
+**2026-10-10, packet 131 sealed and CPU validated; native graph fit at 145 remains unverified.**
 The cone graph already captures just its first decoder method in its own pool.
-Its measured121-frame growth is3.195GiB; the145 estimate is4.506GiB. Moving
-display to card2 has room, but qualification still performs full card3 reference
-decodes. A new default-off option checks actual memory, releases unused allocator
-blocks once if needed, and refuses if the capture allowance and original floor
-are not covered. It keeps every native reference and per-chunk byte check.
-First capture requires14.75GiB free; later cones9.75GiB. No freed memory or speed
-was measured. The conditional target is5.25–5.35s per6s (0.875–0.892s/s).
+Its measured 121-frame growth is 3.195 GiB; the 145 estimate is 4.506 GiB.
+Moving display to card 2 has room, but qualification still performs full card 3
+reference decodes. A new default-off option checks actual memory, releases
+unused allocator blocks once if needed, and refuses if the capture allowance
+and original floor are not covered. Every native reference and per-chunk byte
+check remains. First capture requires 14.75 GiB free; later cones 9.75 GiB.
+No freed memory or speed was measured. The conditional target is 5.25–5.35 s
+per 6 s (0.875–0.892 s/s).
 
-The three early snapshots now cost about122ms. The optional reduced-barrier
-schedule drops no checks and targets memory sections totaling about1.8ms;
+The three early snapshots now cost about 122 ms. The optional reduced-barrier
+schedule drops no checks and targets memory sections totaling about 1.8 ms;
 its full saving cannot be measured from these receipts. Keep full snapshots.
-The coordinator still owns the live129 server. No GPU, launch, live-port, unit,
-process-signal, host-setting, existing-run or ltx-stream operation occurred.
-Packet131 is sealed; complete CPU regression suites are running. Two full CPU
-runtime cases and their11 output comparisons,25 client integration checks and
-10 mocked preflight checks pass. Native qualification is still the next step
-for the coordinator, not an operation performed by this preparation.
+The coordinator still owns the live 129 server. No GPU, launch, live-port,
+unit, process-signal, host-setting, existing-run or ltx-stream operation occurred.
+
+CPU recovery coverage is 899 cases: 898 passed in the full run, and one stale
+options fixture passed after correction in an isolated rerun. There are no
+unresolved failures. All 5,013 client checks across 37 suites passed, including
+26 inner-plan pin assertions. Two CPU runtime cases produced 11 matching output
+hashes; 10 mocked preflight checks passed. Recursive verification covers 2,242
+bound files, with zero Python caches; owned test scratch is removed. The broad
+literal-pin audit retains 231 unrelated pre-existing Flash-Next drifts.
+Native qualification remains for the coordinator. Packet and inner-plan hashes,
+logs and exact counts are in the build receipt.
 [Inventory](experiments/ltx25-b70/notes/2026-10-10-xpu3-residency-145.md),
 [snapshot costs](experiments/ltx25-b70/notes/2026-10-10-continuation131-snapshot-schedule.md),
 [design](experiments/ltx25-b70/notes/2026-10-10-continuation131-stream-design.md),

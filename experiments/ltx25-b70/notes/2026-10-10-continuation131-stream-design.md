@@ -59,3 +59,14 @@ malformed evidence, three-chain runtime flow and client checks. They establish
 CPU behavior only. All Python uses pinned bin/python -B, nice19 and OMP/MKL2.
 No GPU/model server/check-only, port8188 or unit operations, process signals,
 host setting changes, existing-run writes or ltx-stream writes occurred.
+Final recovery coverage is 899 cases: the complete run passed 898, with one
+copied options-dictionary fixture missing the new default-off field. That
+fixture was corrected and its isolated rerun passed; runtime source did not
+change for the correction. The failed full-run log and passing recheck are
+both retained, with zero unresolved failures. Two CPU runtime cases produced
+11 matching output hashes; 10 mocked preflight cases passed. The recursive
+seal covers 2,242 bound files and 2,244 physical files with no Python caches.
+All 5,013 client checks across 37 suites passed, including 26 inner-plan pin
+assertions. Exact suite counts are recorded in the build receipt. The repository-wide literal-pin audit still reports 231
+pre-existing Flash-Next drifts (87 matches, no absent targets); those unrelated
+frozen records were not rewritten.

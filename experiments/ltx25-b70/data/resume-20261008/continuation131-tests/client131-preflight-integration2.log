@@ -1,0 +1,82 @@
+PASS 131 off-10-0-parent qualifies and streams three chunks ['[c112 10:58:16.928] clean stop: 3 chunks this run, next stream_seq 3, next manifest seq 3']
+PASS 131 off-10-0-parent binds cone option in every delivered receipt 
+PASS 131 off-10-0-parent binds all decode and preview identities 
+PASS 131 off-10-0-parent carries admission precisely on cone paths 
+PASS 131 off-10-0-parent retains control-card and replica routes 
+PASS 131 off-10-0-parent refuses expectation mismatch before requests ['[c112 10:58:17.166] no retry, no restart: inspect the evidence before running again']
+PASS 131 off-60-1-idle qualifies and streams three chunks ['[c112 10:58:20.937] clean stop: 3 chunks this run, next stream_seq 3, next manifest seq 3']
+PASS 131 off-60-1-idle binds cone option in every delivered receipt 
+PASS 131 off-60-1-idle binds all decode and preview identities 
+PASS 131 off-60-1-idle carries admission precisely on cone paths 
+PASS 131 off-60-1-idle retains control-card and replica routes 
+PASS 131 off-60-1-idle refuses expectation mismatch before requests ['[c112 10:58:21.222] no retry, no restart: inspect the evidence before running again']
+[c112 10:58:22.055] server encoder-server-continuation-stream-131-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145 identity ccc2205ab720 phase stream_setup frames 145 placement two-way20-28 text_reuse 1 next_stream_seq 0 anchor frame packet 131
+[c112 10:58:22.989] scenes: 2 from /tmp/ltx-cpu-suite-bos4hrjv/ltx-c118b-test-snmy8cis/131-replica-release-10-0-parent/scenes.json, 8 chunks per cycle; tokens boata=18, boatb=16
+[c112 10:58:22.993] Q01 stream131-window-probe submitted (graph sha256 937b3d052609)
+[c112 10:58:23.049] Q01 stream131-window-probe completed in 0.1 s
+[c112 10:58:23.050] Q02 stream131-prepare submitted (graph sha256 73cfcaa72b9b)
+[c112 10:58:23.103] Q02 stream131-prepare completed in 0.1 s
+[c112 10:58:23.105] Q03 stream131-qeager-c000000 submitted (graph sha256 5362982b6557)
+[c112 10:58:23.213] Q03 stream131-qeager-c000000 completed in 0.1 s
+[c112 10:58:23.215] Q04 stream131-qeager-c000001 submitted (graph sha256 a850bf3bc937)
+[c112 10:58:23.322] Q04 stream131-qeager-c000001 completed in 0.1 s
+[c112 10:58:23.323] Q05 stream131-qeager-c000002 submitted (graph sha256 e05f2e155f66)
+[c112 10:58:23.430] Q05 stream131-qeager-c000002 completed in 0.1 s
+[c112 10:58:23.432] Q06 stream131-qgraph-c000000 submitted (graph sha256 40c658b0241c)
+[c112 10:58:23.590] Q06 stream131-qgraph-c000000 completed in 0.2 s
+[c112 10:58:23.592] Q07 stream131-qgraph-c000001 submitted (graph sha256 764e7a6147ea)
+[c112 10:58:23.750] Q07 stream131-qgraph-c000001 completed in 0.2 s
+[c112 10:58:23.753] Q08 stream131-qgraph-c000002 submitted (graph sha256 339c5862101b)
+[c112 10:58:23.911] Q08 stream131-qgraph-c000002 completed in 0.2 s
+[c112 10:58:23.912] Q09 stream131-qrepeat-c000000 submitted (graph sha256 210fe5608b64)
+[c112 10:58:24.019] Q09 stream131-qrepeat-c000000 completed in 0.1 s
+[c112 10:58:24.021] Q10 stream131-qrepeat-c000001 submitted (graph sha256 acd97cf95837)
+[c112 10:58:24.127] Q10 stream131-qrepeat-c000001 completed in 0.1 s
+[c112 10:58:24.129] Q11 stream131-qrepeat-c000002 submitted (graph sha256 9f5643f45a38)
+[c112 10:58:24.234] Q11 stream131-qrepeat-c000002 completed in 0.1 s
+[c112 10:58:24.234] all 11 qualification requests completed; requesting the qualify-verdict action (runs once)
+[c112 10:58:24.458] STOPPED (exit 13): QUALIFICATION DID NOT PASS (HTTP 200): ["145/169 dg1 display replica is memory-inadmissible"]
+[c112 10:58:24.458] no retry, no restart: inspect the evidence before running again
+
+FAIL 131 replica-release-10-0-parent qualifies and streams three chunks ['[c112 10:58:24.458] no retry, no restart: inspect the evidence before running again']
+FAIL 131 replica-release-10-0-parent binds cone option in every delivered receipt 
+FAIL 131 replica-release-10-0-parent binds all decode and preview identities 
+FAIL 131 replica-release-10-0-parent carries admission precisely on cone paths 
+FAIL 131 replica-release-10-0-parent retains control-card and replica routes 
+PASS 131 replica-release-10-0-parent refuses expectation mismatch before requests ['[c112 10:58:24.690] no retry, no restart: inspect the evidence before running again']
+[c112 10:58:25.503] server encoder-server-continuation-stream-131-frame-dg1-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145 identity 98363b32643d phase stream_setup frames 145 placement two-way20-28 text_reuse 1 next_stream_seq 0 anchor frame packet 131
+[c112 10:58:26.443] scenes: 2 from /tmp/ltx-cpu-suite-bos4hrjv/ltx-c118b-test-snmy8cis/131-replica-release-60-1-idle/scenes.json, 8 chunks per cycle; tokens boata=18, boatb=16
+[c112 10:58:26.452] Q01 stream131-window-probe submitted (graph sha256 937b3d052609)
+[c112 10:58:26.512] Q01 stream131-window-probe completed in 0.1 s
+[c112 10:58:26.514] Q02 stream131-prepare submitted (graph sha256 73cfcaa72b9b)
+[c112 10:58:26.569] Q02 stream131-prepare completed in 0.1 s
+[c112 10:58:26.578] Q03 stream131-qeager-c000000 submitted (graph sha256 5362982b6557)
+[c112 10:58:26.686] Q03 stream131-qeager-c000000 completed in 0.1 s
+[c112 10:58:26.688] Q04 stream131-qeager-c000001 submitted (graph sha256 a850bf3bc937)
+[c112 10:58:26.795] Q04 stream131-qeager-c000001 completed in 0.1 s
+[c112 10:58:26.798] Q05 stream131-qeager-c000002 submitted (graph sha256 e05f2e155f66)
+[c112 10:58:26.904] Q05 stream131-qeager-c000002 completed in 0.1 s
+[c112 10:58:26.905] Q06 stream131-qgraph-c000000 submitted (graph sha256 40c658b0241c)
+[c112 10:58:27.064] Q06 stream131-qgraph-c000000 completed in 0.2 s
+[c112 10:58:27.066] Q07 stream131-qgraph-c000001 submitted (graph sha256 764e7a6147ea)
+[c112 10:58:27.223] Q07 stream131-qgraph-c000001 completed in 0.2 s
+[c112 10:58:27.225] Q08 stream131-qgraph-c000002 submitted (graph sha256 339c5862101b)
+[c112 10:58:27.382] Q08 stream131-qgraph-c000002 completed in 0.2 s
+[c112 10:58:27.383] Q09 stream131-qrepeat-c000000 submitted (graph sha256 210fe5608b64)
+[c112 10:58:27.488] Q09 stream131-qrepeat-c000000 completed in 0.1 s
+[c112 10:58:27.490] Q10 stream131-qrepeat-c000001 submitted (graph sha256 acd97cf95837)
+[c112 10:58:27.596] Q10 stream131-qrepeat-c000001 completed in 0.1 s
+[c112 10:58:27.598] Q11 stream131-qrepeat-c000002 submitted (graph sha256 9f5643f45a38)
+[c112 10:58:27.704] Q11 stream131-qrepeat-c000002 completed in 0.1 s
+[c112 10:58:27.704] all 11 qualification requests completed; requesting the qualify-verdict action (runs once)
+[c112 10:58:27.928] STOPPED (exit 13): QUALIFICATION DID NOT PASS (HTTP 200): ["145/169 dg1 display replica is memory-inadmissible"]
+[c112 10:58:27.928] no retry, no restart: inspect the evidence before running again
+
+FAIL 131 replica-release-60-1-idle qualifies and streams three chunks ['[c112 10:58:27.928] no retry, no restart: inspect the evidence before running again']
+FAIL 131 replica-release-60-1-idle binds cone option in every delivered receipt 
+FAIL 131 replica-release-60-1-idle binds all decode and preview identities 
+FAIL 131 replica-release-60-1-idle carries admission precisely on cone paths 
+FAIL 131 replica-release-60-1-idle retains control-card and replica routes 
+PASS 131 replica-release-60-1-idle refuses expectation mismatch before requests ['[c112 10:58:28.173] no retry, no restart: inspect the evidence before running again']
+
+14/24 passed; work in /tmp/ltx-cpu-suite-bos4hrjv/ltx-c118b-test-snmy8cis
