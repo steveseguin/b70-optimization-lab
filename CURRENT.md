@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**2026-10-10 02:18 UTC, 118b dg1 cap-1.0 at 121 frames: exact but a loss (5.56 s vs 5.23 dg0); dg0 relaunched as the live line.**
+The capped pool captured only `forward_pre_diffusion`, the floor held, cone decode fell 0.96 → 0.76 s, but the stage-B
+bucket on xpu:3 rose 0.28 → 0.80 s (display-decode graph replay in front of stage B on the single compute queue, to be
+verified). Note `experiments/ltx25-b70/notes/2026-10-10-continuation118b-results-121-dg1-cap1.md`. Controlled stop
+02:12:41 UTC after 37 chunks, names archived, dg0 run dir renamed `.completed-20261010T0156Z`, fresh health receipt
+`postflight-pre118b-dg0-relaunch-20261010T021306Z.json`, `--check-only` passed; the dg0 line (`… 121 frame 0 cone 1 1
+fingerprint -`, 1.037 s/s) relaunches at 02:17:46 UTC. Codex is designing/building packet 119 on CPU from this evidence.
+
 **2026-10-10 02:02 UTC, 118b dg0 session closed (1.037 s/s, byte-identical to 117 on 63/63); 118b launch 2 live: 121 frames, dg1, pool cap 1.0.**
 The dg0 run streamed 101 chunks (01:38–01:56 UTC), cone exact 101/101, period median 5.227 s per 5.04 s chunk; its
 timing split puts 0.20 s of the 0.50 s pre-sampler path in three on-chain four-card snapshots (0.059 s each in
