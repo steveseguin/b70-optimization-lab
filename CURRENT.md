@@ -1,5 +1,11 @@
 # Current Workspace State
 
+**2026-10-09, LTX packet 118 CPU review: BLOCK before first launch.**
+The snapshot comparison misses memory verdicts and can use the wrong chunk's check schedule.
+The launcher can also retain an unwanted pool cap. An unapplied fix is prepared for a 118b rebuild;
+sealed packet 118 is unchanged and the GPU fault halt remains in force.
+[Independent review and fix](experiments/ltx25-b70/notes/2026-10-09-continuation118-review.md).
+
 **2026-10-09, Flash-Next attempt 7 ordering reviewed on CPU; GPU halt unchanged.**
 The first GPU fault came before the controller stop and all recorded crash reports.
 Free memory stayed well above the stop threshold. The failing operation is still

@@ -1,0 +1,268 @@
+--- a/experiments/ltx25-b70/recovery/20261009-continuation118-stream/snapshot_fingerprint.py
++++ b/experiments/ltx25-b70/recovery/20261009-continuation118-stream/snapshot_fingerprint.py
+@@ -229,14 +229,14 @@
+             snap, parts = self._timed_walk(objects, observation)
+             dual = agree = False
+         elif self.chunk_dual or self.near_floor:
+-            snap, parts = self._dual(objects, observation, None)
++            snap, parts = self._dual(objects, observation, None, label)
+             dual = agree = True
+         else:
+             snap, parts = self._fingerprint(objects, observation)
+             dual = agree = False
+             if self._near(snap):
+                 self.near_floor = True
+-                snap, walk_parts = self._dual(objects, observation, snap)
++                snap, walk_parts = self._dual(objects, observation, snap, label)
+                 parts.update(walk_parts)
+                 dual = agree = True
+         end = self.clock()
+@@ -256,7 +256,7 @@
+ 
+     def _near(self, snap):
+         margin = self._margin(snap)
+-        return margin is not None and margin < NEAR_FLOOR_BYTES
++        return margin is not None and margin <= NEAR_FLOOR_BYTES
+ 
+     def _timed_walk(self, objects, observation):
+         t0 = time.perf_counter()
+@@ -295,7 +295,7 @@
+                  'physical_free_bytes': free, 'peaks': peaks,
+                  'observed_state': state, 'timestamp_ns': time.time_ns(), 'residence_mode': 'fingerprint'}, parts)
+ 
+-    def _dual(self, objects, observation, fingerprint_snap):
++    def _dual(self, objects, observation, fingerprint_snap, label=None):
+         """Walk and fingerprint on the same objects; the walk's snapshot is the one the controller admits."""
+         ledger = self.ledger
+         ledger.bump('dual_walks')
+@@ -321,9 +321,40 @@
+         differ = sorted(k for k in VERDICT_KEYS if walk.get(k) != fp.get(k))
+         if differ:
+             self._disagree('verdict fields differ: %s' % differ, None)
++        # Compare admission verdicts, not changing allocator byte counts. The six labeled
++        # sites use PRE_BYTES before and 2 GiB after, as the sealed controller does.
++        required = ({c: 2 ** 31 for c in self.cards} if label and label.endswith('-after')
++                    else self.pre_floors)
++        if self._memory_admitted(walk, required) != self._memory_admitted(fp, required):
++            self._disagree('memory admission verdicts differ', None)
++        if self._near(walk) or self._near(fp):
++            self.near_floor = True
+         ledger.bump('agreements')
+         walk = dict(walk, residence_mode='walk+fingerprint')
+         return walk, {'dual_walk': t1 - t0, 'dual_fingerprint': t2 - t1}
++
++    def _memory_admitted(self, snap, required):
++        # CandidateSafety._snapshot's free/allocator checks, without mutating the controller.
++        valid_bytes = lambda v: isinstance(v, int) and not isinstance(v, bool) and v >= 0
++        free, peaks = snap.get('physical_free_bytes'), snap.get('peaks')
++        if not isinstance(free, dict) or set(free) != set(self.cards):
++            return False
++        if not isinstance(peaks, dict) or set(peaks) != set(self.cards):
++            return False
++        for card in self.cards:
++            if not valid_bytes(free[card]) or free[card] < required[card]:
++                return False
++            row = peaks[card]
++            if (not isinstance(row, dict) or set(row) != {'allocated', 'reserved', 'peak'} or
++                    not all(valid_bytes(v) for v in row.values()) or
++                    row['reserved'] < row['allocated'] or row['peak'] < row['allocated']):
++                return False
++        return True
++
++    def observe_xpu3_free(self, free, floor):
++        # Use the actual P5 reading, including on the post-encode snapshot.
++        if type(free) is int and free <= floor + NEAR_FLOOR_BYTES:
++            self.near_floor = True
+ 
+     def _disagree(self, why, error):
+         self.ledger.bump('disagreements')
+@@ -335,7 +366,7 @@
+             raise SnapshotDisagreement(reason)
+ 
+     # -- the decode thread's xpu:3 snapshot (P7) -----------------------------------------------------
+-    def xpu3_callbacks(self, xpu3_free, xpu3_floor):
++    def xpu3_callbacks(self, xpu3_free, xpu3_floor, *, always_dual=False):
+         """(rows, fingerprint) callables for precompute_guard.Xpu3Snapshot: rows(role) -> role; fingerprint(role)
+         -> the role's residence SHA-256 (fingerprint, or dual with the walk under the same policy)."""
+         ledger = self.ledger
+@@ -344,8 +375,11 @@
+         def fingerprint(role):
+             if not ledger.ready:
+                 return ledger.walk_ownership(role)
+-            dual = (self.phase() != 'stream' or self.chunk_dual or self.near_floor or
+-                    xpu3_free() < xpu3_floor + NEAR_FLOOR_BYTES)
++            # Runtime always dual-checks P7: decode jobs overlap successor requests,
++            # so their policy cannot safely use the prompt thread's mutable chunk number.
++            if not always_dual:
++                self.observe_xpu3_free(xpu3_free(), xpu3_floor)
++            dual = always_dual or self.phase() != 'stream' or self.chunk_dual or self.near_floor
+             value = None
+             error = None
+             try:
+--- a/experiments/ltx25-b70/recovery/20261009-continuation118-stream/precompute_guard.py
++++ b/experiments/ltx25-b70/recovery/20261009-continuation118-stream/precompute_guard.py
+@@ -87,12 +87,14 @@
+ class Xpu3Snapshot:
+     """The xpu:3-only safety snapshot of the decode thread's encode (checks P1-P8 of the module doc)."""
+ 
+-    def __init__(self, *, controller, phase_ok, fault, synchronize, free_bytes, counters, rows, fingerprint):
++    def __init__(self, *, controller, phase_ok, fault, synchronize, free_bytes, counters, rows, fingerprint,
++                 observe_free=None):
+         for fn in (phase_ok, fault, synchronize, free_bytes, counters, rows, fingerprint):
+             require(callable(fn), 'Trusted snapshot callbacks required')
+         self.controller = controller
+         self.phase_ok, self.fault, self.synchronize = phase_ok, fault, synchronize
+         self.free_bytes, self.counters, self.rows, self.fingerprint = free_bytes, counters, rows, fingerprint
++        self.observe_free = observe_free
+         self.synchronized = []           # every card this guard synchronised (tests: only ever xpu:3)
+ 
+     @staticmethod
+@@ -107,6 +109,8 @@
+         self.synchronize(XPU3)                                                                    # P4
+         self.synchronized.append(XPU3)
+         free = self.free_bytes(XPU3)
++        if self.observe_free is not None:
++            self.observe_free(free)
+         require(self._bytes(free) and free >= floor,                                              # P5
+                 'P5: xpu:3 physical free %r below the %d-byte floor (%s)' % (free, floor, event))
+         counters = self.counters(XPU3)
+--- a/experiments/ltx25-b70/recovery/20261009-continuation118-stream/integration.py
++++ b/experiments/ltx25-b70/recovery/20261009-continuation118-stream/integration.py
+@@ -1632,7 +1632,7 @@
+         if self.snapshot_mode == 'fingerprint':
+             # Packet118: P7 from the residence ledger, dual with the walk under the inspector's policy.
+             rows, fingerprint = self.inspector.xpu3_callbacks(lambda: torch.xpu.mem_get_info('xpu:3')[0],
+-                                                              pg.PRE_FLOOR)
++                                                              pg.PRE_FLOOR, always_dual=True)
+         return pg.Xpu3Snapshot(
+             controller=controller,
+             phase_ok=lambda: (self.authority.failed is None and
+@@ -1643,7 +1643,9 @@
+             counters=lambda card: {'allocated': int(torch.xpu.memory_allocated(card)),
+                                    'reserved': int(torch.xpu.memory_reserved(card)),
+                                    'peak': int(torch.xpu.max_memory_allocated(card))},
+-            rows=rows, fingerprint=fingerprint)
++            rows=rows, fingerprint=fingerprint,
++            observe_free=(lambda free: self.inspector.observe_xpu3_free(free, pg.PRE_FLOOR))
++            if self.snapshot_mode == 'fingerprint' else None)
+ 
+     # -- admission (middleware) --------------------------------------------------
+     def precheck(self, graph):
+--- a/experiments/ltx25-b70/recovery/20261009-continuation118-stream/test_snapshot_fingerprint.py
++++ b/experiments/ltx25-b70/recovery/20261009-continuation118-stream/test_snapshot_fingerprint.py
+@@ -568,6 +568,7 @@
+         free['value'] = 9 * GIB + 1                            # near the 9 GiB floor: dual
+         self.assertEqual(fingerprint('audio_vae'), ctl.expected_residence['audio_vae'])
+         self.assertEqual(inspector.ledger.stats['xpu3_dual'], before['xpu3_dual'] + 1)
++        self.assertTrue(inspector.near_floor)
+         free['value'] = 13 * GIB
+         inspector.begin_request(20, 'stream')                  # every 20th chunk: dual
+         fingerprint('video_vae')
+@@ -579,6 +580,85 @@
+         w2, ctl2, inspector2, _, _ = self.build('walk')
+         with self.assertRaises(sf.LedgerRefusal):              # walk mode keeps packet 117's P7 callables
+             inspector2.xpu3_callbacks(lambda: 13 * GIB, 9 * GIB)
++
++
++    def test_review_decode_policy_survives_successor_request(self):
++        _, ctl, inspector, _, _ = self.build('fingerprint')
++        inspector.begin_request(20, 'stream')
++        rows, fingerprint = inspector.xpu3_callbacks(lambda: 13 * GIB, 9 * GIB, always_dual=True)
++        inspector.begin_request(21, 'stream')
++        before = inspector.ledger.stats['xpu3_dual']
++        for role in ('text_secondary', 'video_vae', 'audio_vae'):
++            self.assertEqual(fingerprint(rows(role)), ctl.expected_residence[role])
++        self.assertEqual(inspector.ledger.stats['xpu3_dual'] - before, 3)
++
++    def test_review_actual_p5_reading_inclusive_boundary_is_sticky(self):
++        import precompute_guard as pg
++        w, ctl, inspector, _, _ = self.build('fingerprint')
++        inspector.begin_request(21, 'stream')
++        # No extra memory read is allowed to replace P5's observed near-floor reading.
++        def reread():
++            self.fail('P7 must not reread memory to choose its runtime policy')
++        rows, fingerprint = inspector.xpu3_callbacks(reread, pg.PRE_FLOOR, always_dual=True)
++        synced = []
++        guard = pg.Xpu3Snapshot(
++            controller=ctl, phase_ok=lambda: True, fault=lambda: False, synchronize=synced.append,
++            free_bytes=lambda card: pg.PRE_FLOOR + sf.NEAR_FLOOR_BYTES,
++            counters=lambda card: {'allocated': 1, 'reserved': 2, 'peak': 3},
++            rows=rows, fingerprint=fingerprint,
++            observe_free=lambda free: inspector.observe_xpu3_free(free, pg.PRE_FLOOR))
++        before = inspector.ledger.stats['xpu3_dual']
++        guard.take('precompute-A-before', pg.PRE_FLOOR)
++        self.assertEqual(synced, ['xpu:3'])
++        self.assertTrue(inspector.near_floor)
++        self.assertEqual(inspector.ledger.stats['xpu3_dual'] - before, 3)
++        inspector.expect('request-before')
++        ctl.before('successor')
++        self.assertTrue(inspector.records[-1]['dual'])
++
++    def test_review_dual_checks_floor_and_counter_verdicts(self):
++        for mutate in (lambda s: s['physical_free_bytes'].__setitem__('xpu:3', 0),
++                       lambda s: s['peaks']['xpu:3'].__setitem__('reserved', 0)):
++            w, _, inspector, _, latches = self.build('fingerprint')
++            original = inspector._fingerprint
++            def changed(objects, observation=False):
++                snap, parts = original(objects, observation)
++                mutate(snap)
++                return snap, parts
++            inspector._fingerprint = changed
++            with self.assertRaises(sf.SnapshotDisagreement):
++                inspector._dual(w.objects, False, None, 'request-before')
++            self.assertEqual(len(latches), 1)
++
++    def test_review_dual_compares_admission_not_exact_bytes_or_wrong_floor(self):
++        w, _, inspector, _, latches = self.build('fingerprint')
++        original = inspector._fingerprint
++        def changed(objects, observation=False):
++            snap, parts = original(objects, observation)
++            snap['physical_free_bytes']['xpu:3'] = 3 * GIB
++            return snap, parts
++        inspector._fingerprint = changed
++        inspector._dual(w.objects, False, None, 'B-after')
++        self.assertEqual(latches, [])
++        self.assertTrue(inspector.near_floor)
++
++    def test_review_near_floor_equality_and_dual_walk_reading(self):
++        w, _, inspector, _, _ = self.build('fingerprint')
++        inspector.begin_request(21, 'stream')
++        w.free['xpu:3'] = 9 * GIB + sf.NEAR_FLOOR_BYTES
++        inspector.expect('request-before')
++        inspector(w.objects)
++        self.assertTrue(inspector.records[-1]['dual'])
++        self.assertTrue(inspector.near_floor)
++        inspector.begin_request(40, 'stream')
++        original = inspector._fingerprint
++        def high(objects, observation=False):
++            snap, parts = original(objects, observation)
++            snap['physical_free_bytes']['xpu:3'] = 13 * GIB
++            return snap, parts
++        inspector._fingerprint = high
++        inspector._dual(w.objects, False, None, 'request-before')
++        self.assertTrue(inspector.near_floor)
+ 
+ 
+ class Wiring(unittest.TestCase):
+--- a/experiments/ltx25-b70/recovery/20261009-continuation118-stream/launch-118.sh
++++ b/experiments/ltx25-b70/recovery/20261009-continuation118-stream/launch-118.sh
+@@ -4,6 +4,7 @@
+ set -euo pipefail
+ FR=${1:?frames}; AN=${2:?anchor}; DG=${3:?dg}; AD=${4:?ad full|cone}; BO=${5:?bo}; PA=${6:?pa}
+ SM=${7:?sm walk|fingerprint}; CAP=${8:?pool cap GB or -}; REC=${9:?health receipt}; MODE=${10:-launch}
++case "$MODE" in launch|--check-only) ;; *) echo "REFUSE: mode must be launch or --check-only"; exit 2 ;; esac
+ R=/mnt/fast-ai/bench-results/ltx25-baseline-20260913
+ P=$R/prepared-continuation-stream-118
+ MAN=cb68515a1e770697ad0ac2d0c2abd9709780043e9d1579cba81706bb53f482f6
+@@ -33,9 +34,9 @@
+ ARGS=(-B $P/launch/serve-encoder.py --packet $P --manifest-sha256 $MAN --run-name $NAME --health-receipt "$REC")
+ if [ "$MODE" = --check-only ]; then
+   ulimit -Sn 65536
+-  cd /home/steve/llm-optimizations && exec env "${ENVS[@]}" $PY "${ARGS[@]}" --check-only
++  cd /home/steve/llm-optimizations && exec env -u LTX_DECODER_GRAPH_POOL_CAP_GB "${ENVS[@]}" $PY "${ARGS[@]}" --check-only
+ fi
+ systemctl --user reset-failed $UNIT 2>/dev/null || true
+ exec systemd-run --user --unit=$UNIT --property=Restart=no --property=SendSIGKILL=no --property=KillSignal=SIGINT \
+   --property=TimeoutStopSec=180 --property=LimitNOFILE=65536:1048576 --property=WorkingDirectory=/home/steve/llm-optimizations \
+-  /usr/bin/env --default-signal=INT "${ENVS[@]}" $PY "${ARGS[@]}"
++  /usr/bin/env --default-signal=INT -u LTX_DECODER_GRAPH_POOL_CAP_GB "${ENVS[@]}" $PY "${ARGS[@]}"
