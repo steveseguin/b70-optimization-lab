@@ -1,0 +1,86 @@
+{
+ "label": "gemma4-26b-a4b-q8-b70-throughput-card1",
+ "base": "http://127.0.0.1:19351",
+ "model": "gemma4-26b-a4b-q8",
+ "started_utc": "2026-10-10T05:07:34Z",
+ "users": 8,
+ "decode_1user": {
+  "median_tps": 77.55388621684305,
+  "runs": [
+   {
+    "decode_tps": 77.94512644544407,
+    "ttft": 0.7130367755889893,
+    "completion_tokens": 66,
+    "sha": "35297ff1f398"
+   },
+   {
+    "decode_tps": 76.45229267071755,
+    "ttft": 0.5910348892211914,
+    "completion_tokens": 68,
+    "sha": "b045ea6bb264"
+   },
+   {
+    "decode_tps": 77.55388621684305,
+    "ttft": 0.5365920066833496,
+    "completion_tokens": 68,
+    "sha": "e19e5f0540a7"
+   }
+  ]
+ },
+ "prefill": {
+  "512": {
+   "ttft_s": 0.524,
+   "prompt_tokens": 519,
+   "prompt_tps": 989.9
+  },
+  "2048": {
+   "ttft_s": 1.414,
+   "prompt_tokens": 2055,
+   "prompt_tps": 1453.2
+  }
+ },
+ "repeat_identical": {
+  "distinct": 1,
+  "shas": [
+   "41c2e81b146f",
+   "41c2e81b146f",
+   "41c2e81b146f"
+  ]
+ },
+ "batch_identical": {
+  "alone_sha": "41c2e81b146f",
+  "batch_shas": [
+   "41c2e81b146f",
+   "ecca6b08f733",
+   "41c2e81b146f",
+   "a8558020d9b1",
+   "41c2e81b146f",
+   "b7ff17016193",
+   "9fbfd8e7805a",
+   "b4663d762f11"
+  ],
+  "distinct_incl_alone": 6
+ },
+ "decode_nusers": {
+  "per_stream_median_tps": 33.189238429839975,
+  "aggregate_tps": 268.5
+ },
+ "multi_user": {
+  "users": 8,
+  "seconds": 42.8,
+  "requests": 65,
+  "req_per_s": 1.52,
+  "prompt_tok_s": 482.0,
+  "completion_tok_s": 139.2,
+  "total_tok_s": 621.2,
+  "mean_latency_s": 5.57,
+  "errors": 0
+ },
+ "canary": {
+  "rows": 16,
+  "ok": 16
+ },
+ "finished_utc": "2026-10-10T05:09:15Z",
+ "card_memory_used_mib_after_load": 30579,
+ "note": "live LAN service backend on card 1 (recipe throughput-card1) while card 0 ran the campaign"
+}

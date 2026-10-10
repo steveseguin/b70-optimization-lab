@@ -55,7 +55,8 @@ class Client:
                 except Exception: continue
                 if j.get("usage"): usage = j["usage"]
                 for ch_ in j.get("choices", []):
-                    d = ch_.get("delta", {}).get("content")
+                    delta = ch_.get("delta", {}) or {}
+                    d = delta.get("content") or delta.get("reasoning_content") or delta.get("reasoning")
                     if d:
                         if ttft is None: t_first = time.time(); ttft = t_first - t0
                         text.append(d); n += 1; tl = time.time()
@@ -71,7 +72,7 @@ class Client:
         if self.cache_field: body["cache_prompt"] = cache
         t0 = time.time(); c.request("POST", "/v1/chat/completions", body=json.dumps(body), headers={"Content-Type": "application/json"})
         r = c.getresponse(); d = json.loads(r.read()); u = d["usage"]
-        txt = d["choices"][0]["message"]["content"]
+        msg = d["choices"][0]["message"]; txt = msg.get("content") or msg.get("reasoning_content") or msg.get("reasoning") or ""
         return {"wall": time.time() - t0, "prompt_tokens": u["prompt_tokens"], "completion_tokens": u["completion_tokens"],
                 "sha": hashlib.sha256(txt.encode()).hexdigest()[:12]}
 
@@ -81,6 +82,7 @@ def main():
     ap.add_argument("--users", type=int, default=4); ap.add_argument("--out", required=True)
     ap.add_argument("--canary", action="store_true"); ap.add_argument("--no-cache-field", action="store_true")
     ap.add_argument("--load-seconds", type=float, default=40); ap.add_argument("--skip-8k", action="store_true")
+    ap.add_argument("--repeat-only", action="store_true", help="only decode_1user and repeat_identical")
     a = ap.parse_args()
     cl = Client(a.base, a.model, cache_field=not a.no_cache_field)
     res = {"label": a.label, "base": a.base, "model": a.model, "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "users": a.users}
@@ -88,8 +90,16 @@ def main():
     cl.stream(prompt_chat(100, 999), 16, cache=False)
     # decode, 1 user
     runs = [cl.stream(prompt_chat(300, 1000 + i), 256, cache=False) for i in range(3)]
-    res["decode_1user"] = {"median_tps": statistics.median([r["decode_tps"] for r in runs if r["decode_tps"]]),
+    dvals = [r["decode_tps"] for r in runs if r["decode_tps"]]
+    res["decode_1user"] = {"median_tps": statistics.median(dvals) if dvals else None,
                            "runs": [{k: r[k] for k in ("decode_tps", "ttft", "completion_tokens", "sha")} for r in runs]}
+    if a.repeat_only:
+        p = prompt_chat(3000, 4, "summ")
+        reps = [cl.plain(p, 120, cache=False) for _ in range(4)]
+        res["repeat_identical"] = {"distinct": len({r["sha"] for r in reps}), "shas": [r["sha"] for r in reps]}
+        res["finished_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True); json.dump(res, open(a.out, "w"), indent=1)
+        print(json.dumps({k: res[k] for k in ("label", "decode_1user", "repeat_identical")})); return
     # prefill ladder
     res["prefill"] = {}
     for n in ([512, 2048] if a.skip_8k else [512, 2048, 8192]):

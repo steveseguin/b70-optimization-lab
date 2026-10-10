@@ -1,0 +1,91 @@
+{
+ "label": "qwen35-9b-w4a16-b70-one-gpu-p8",
+ "base": "http://127.0.0.1:19350",
+ "model": "qwen35-9b-w4a16",
+ "started_utc": "2026-10-10T05:11:48Z",
+ "users": 8,
+ "decode_1user": {
+  "median_tps": 156.57476768089035,
+  "runs": [
+   {
+    "decode_tps": 154.2953394635175,
+    "ttft": 0.15407299995422363,
+    "completion_tokens": 256,
+    "sha": "9408e59789aa"
+   },
+   {
+    "decode_tps": 156.57476768089035,
+    "ttft": 0.15410661697387695,
+    "completion_tokens": 256,
+    "sha": "3e8f5d5e47fe"
+   },
+   {
+    "decode_tps": 162.44024681922866,
+    "ttft": 0.14249801635742188,
+    "completion_tokens": 256,
+    "sha": "153ab17ee881"
+   }
+  ]
+ },
+ "prefill": {
+  "512": {
+   "ttft_s": 0.235,
+   "prompt_tokens": 516,
+   "prompt_tps": 2192.6
+  },
+  "2048": {
+   "ttft_s": 0.837,
+   "prompt_tokens": 2052,
+   "prompt_tps": 2451.5
+  },
+  "8192": {
+   "ttft_s": null,
+   "prompt_tokens": null,
+   "prompt_tps": null
+  }
+ },
+ "repeat_identical": {
+  "distinct": 1,
+  "shas": [
+   "2826f9ff424c",
+   "2826f9ff424c",
+   "2826f9ff424c"
+  ]
+ },
+ "batch_identical": {
+  "alone_sha": "2826f9ff424c",
+  "batch_shas": [
+   "2826f9ff424c",
+   "2826f9ff424c",
+   "2826f9ff424c",
+   "2826f9ff424c",
+   "2826f9ff424c",
+   "2826f9ff424c",
+   "2826f9ff424c",
+   "2826f9ff424c"
+  ],
+  "distinct_incl_alone": 1
+ },
+ "decode_nusers": {
+  "per_stream_median_tps": 124.05603020709569,
+  "aggregate_tps": 988.1
+ },
+ "multi_user": {
+  "users": 8,
+  "seconds": 40.6,
+  "requests": 145,
+  "req_per_s": 3.58,
+  "prompt_tok_s": 1119.1,
+  "completion_tok_s": 536.3,
+  "total_tok_s": 1655.4,
+  "mean_latency_s": 2.26,
+  "errors": 0
+ },
+ "canary": {
+  "rows": 1,
+  "ok": 0
+ },
+ "finished_utc": "2026-10-10T05:13:02Z",
+ "card_memory_used_mib_after_load": 28385,
+ "server_log": "/home/steve/b70-optimization-lab/data/profiles/2026-10-10/qwen35-9b-w4a16-b70-one-gpu-p8.server.log"
+}

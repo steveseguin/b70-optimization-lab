@@ -1,0 +1,87 @@
+{
+ "label": "nemotron-35-lightning-30b-a3b-nd9fee29e-16k-p4",
+ "base": "http://127.0.0.1:19350",
+ "model": "nemotron-35-lightning-30b-a3b",
+ "started_utc": "2026-10-10T05:33:27Z",
+ "users": 4,
+ "decode_1user": {
+  "median_tps": 72.3645330395891,
+  "runs": [
+   {
+    "decode_tps": 72.07079402718354,
+    "ttft": 0.5841176509857178,
+    "completion_tokens": 45,
+    "sha": "c0e2f32a9650"
+   },
+   {
+    "decode_tps": 72.3645330395891,
+    "ttft": 0.5016257762908936,
+    "completion_tokens": 53,
+    "sha": "8ad5aa363a84"
+   },
+   {
+    "decode_tps": 72.44184354290648,
+    "ttft": 0.4979126453399658,
+    "completion_tokens": 47,
+    "sha": "6d68d3ede1bd"
+   }
+  ]
+ },
+ "prefill": {
+  "512": {
+   "ttft_s": 0.612,
+   "prompt_tokens": 521,
+   "prompt_tps": 851.9
+  },
+  "2048": {
+   "ttft_s": 1.146,
+   "prompt_tokens": 2057,
+   "prompt_tps": 1795.4
+  },
+  "8192": {
+   "ttft_s": 3.698,
+   "prompt_tokens": 8201,
+   "prompt_tps": 2217.7
+  }
+ },
+ "repeat_identical": {
+  "distinct": 3,
+  "shas": [
+   "f58909c8a853",
+   "63076a13d554",
+   "59568c365d24"
+  ]
+ },
+ "batch_identical": {
+  "alone_sha": "44452685cd36",
+  "batch_shas": [
+   "a81d5dbed7a0",
+   "e360a9476f3d",
+   "255135eb9e65",
+   "e8ea740654ce"
+  ],
+  "distinct_incl_alone": 5
+ },
+ "decode_nusers": {
+  "per_stream_median_tps": 32.800802762224876,
+  "aggregate_tps": 131.2
+ },
+ "multi_user": {
+  "users": 4,
+  "seconds": 43.2,
+  "requests": 27,
+  "req_per_s": 0.62,
+  "prompt_tok_s": 198.7,
+  "completion_tok_s": 66.2,
+  "total_tok_s": 264.8,
+  "mean_latency_s": 6.86,
+  "errors": 0
+ },
+ "canary": {
+  "rows": 3,
+  "ok": 2
+ },
+ "finished_utc": "2026-10-10T05:34:52Z",
+ "card_memory_used_mib_after_load": 23839,
+ "server_log": "/home/steve/b70-optimization-lab/data/profiles/2026-10-10/nemotron-35-lightning-30b-a3b-nd9fee29e-16k-p4.server.log"
+}
