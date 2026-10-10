@@ -1,5 +1,9 @@
 # Current Workspace State
 
+**2026-10-10 14:05 UTC, 133 rehearsal failed before device work (`ModuleNotFoundError: text_residency133` from `cone_memory131.validate_scope`, a bare import of a helper the sealed launcher loads by path under another module name); 129 production relaunching now (`s129-live04`); Codex rebuilding 133b with a sealed-launcher import test.**
+The CPU suites import from the author tree, so the sealed packet's import path was never exercised; 133b adds a test that imports the sealed
+`launch/serve-encoder.py` chain exactly as the launcher does. Off-air from the 13:53 stop until the 129 relaunch qualifies (≈ 14:15 UTC).
+
 **2026-10-10 13:55 UTC, launching 133 at 145: text layers 36–47 (5.08 GiB) moved from xpu:3 to xpu:2 before capture (`LTX_TEXT_RESIDENCY=split36`), no display replica, legacy audio, cone decoder graph (`LTX_CONE_GRAPH_MEMORY=text-shift`).**
 Codex's text inventory (`notes/2026-10-10-continuation133-stream-design.md`, commits 983eb2608, 30031ad55): text layers 0–23 on xpu:2
 (10.15 GiB) and 24–47 on xpu:3 (10.15 GiB), 480 pinned text graphs, no text state kept between cuts beyond one hash-checked conditioning
