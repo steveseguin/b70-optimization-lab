@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ltx_continuation_client.py - the stream client for the packet 112 / 113 / 114 / 115 / 116 / 116b / 117 / 118 continuation servers.
+"""ltx_continuation_client.py - the stream client for the packet 112 / 113 / 114 / 115 / 116 / 116b / 117 / 118 / 118b continuation servers.
 
     /home/steve/.venvs/ltx25-baseline/bin/python -B ltx_continuation_client.py --work-dir DIR [options]
 
@@ -73,6 +73,9 @@ launch options returned by the status route and recorded in every receipt as 'se
 a snapshot summary, the server turnaround split and the client's own client_turnaround_s (receipt verified -> next
 POST) and client_post_s. stream118- names.
 
+Packet 118b (--packet 118b): the reviewed rebuild of 118, with the string packet id '118b',
+stream118b- names and separately pinned sealed modules. Client options and receipt schemas stay as 118.
+
 Never retries a refused request, never restarts or signals anything. Halts:
 exit 0 clean stop; 2 server halted / execution error; 4 FAULT.json; 5 HTTP failure (> --http-fail-
 seconds, or a POST whose outcome is unknown); 6 failed-job receipt (stream-failure-<run>.json);
@@ -119,10 +122,8 @@ PACKETS = {
                       'stream_receipts': '878b02037fa8fdc8520b058c5186034f48e12c0381bb6a5a13a6ec2348130613',
                       'qualification_gate': '828ac51d2b071621b7492f3e1016edd62d7a5ff692e501e11f3fc3a854b2aec1'}},
 }
-# ---- PACKET 114: NOT SEALED YET. Fill these after the 114 build (manifest.json of
-# prepared-continuation-stream-114 and its files['resolution/components/<name>'] hashes). ----------
-# The module hashes below were computed on 2026-10-08 from the author's working files in
-# experiments/ltx25-b70/recovery/20261008-continuation114-stream/; re-sync them after the final build.
+# Packet 114 (sealed 2026-10-08): manifest.json and its
+# files['resolution/components/<name>.py'] hashes.
 PACKET114_MANIFEST_SHA256 = '3e8b7abeb21fff903869907fd67c41128dd6179fa17fa441abdd5544468c97f3'
 PACKET114_MODULE_SHA256 = {
     'stream_contract': '1efc6f71c1984822a9389c2fa3b1c7dbfd21d88260c8ac18e0faefdde4a0272c',
@@ -176,11 +177,18 @@ PACKETS[118] = {'dir': R / 'prepared-continuation-stream-118',
                 'manifest_sha256': PACKET118_MANIFEST_SHA256,
                 'modules': PACKET118_MODULE_SHAS,
                 'reference_sha256': '47040972fdcbb7f5837086d067122afd5130441bc5396f7b562a028e7faf5bb7'}
-DECODER_GRAPH_PACKETS = (116, '116b', 117, 118)            # decoder_graph field, 116 preflight, 116 gate and references
-DECODE_THREAD_PACKETS = (114, 115, 116, '116b', 117, 118)  # anchor mode, decode thread, decode records
-RESET_PACKETS = (113, 114, 115, 116, '116b', 117, 118)     # chain resets, preview after receipt
-LEVER_PACKETS = (117, 118)                                 # anchor_decode / bencode_overlap / prep_ahead, 121 frames
-SERVER_OPTION_PACKETS = (118,)                             # snapshot_mode, decoder-graph pool cap, timing split
+# Packet 118b: independently reviewed rebuild; sealed 118 remains withdrawn, never launched.
+PACKETS['118b'] = {'dir': R / 'prepared-continuation-stream-118b',
+                   'manifest_sha256': '248e762de49d21b02a4f95d3791dbd9da7504b731f1a88cb5a930a78448db1f1',
+                   'modules': {'stream_contract': 'aadd3b782e318f71faa773629c8565cadcddbfa709731a0b9f8a5e4fbe40375d',
+                               'stream_receipts': 'eb04b961f01e1fc01b70f10a2512da7fd8af037054a1d4508633d24e5868edb8',
+                               'qualification_gate': '8a9eb7d5419ed4acd863ae75f3906c38fdfc4ed1f516eb06a3fd7a0c3b28d9a3'},
+                   'reference_sha256': '47040972fdcbb7f5837086d067122afd5130441bc5396f7b562a028e7faf5bb7'}
+DECODER_GRAPH_PACKETS = (116, '116b', 117, 118, '118b')            # decoder_graph field, 116 preflight, 116 gate and references
+DECODE_THREAD_PACKETS = (114, 115, 116, '116b', 117, 118, '118b')  # anchor mode, decode thread, decode records
+RESET_PACKETS = (113, 114, 115, 116, '116b', 117, 118, '118b')     # chain resets, preview after receipt
+LEVER_PACKETS = (117, 118, '118b')                                 # anchor_decode / bencode_overlap / prep_ahead, 121 frames
+SERVER_OPTION_PACKETS = (118, '118b')                             # snapshot_mode, decoder-graph pool cap, timing split
 # ----------------------------------------------------------------------------------------------
 PACKET = PACKETS[112]['dir']                     # packet 112 defaults (unchanged)
 CONTRACT_DIR = PACKET / 'resolution/components'
@@ -197,6 +205,7 @@ STREAM_DIR_RE_116 = re.compile(r'stream116-s[0-9]{8}')   # packet 116
 STREAM_DIR_RE_116B = re.compile(r'stream116b-s[0-9]{8}')  # packet 116b
 STREAM_DIR_RE_117 = re.compile(r'stream117-s[0-9]{8}')    # packet 117
 STREAM_DIR_RE_118 = re.compile(r'stream118-s[0-9]{8}')    # packet 118
+STREAM_DIR_RE_118B = re.compile(r'stream118b-s[0-9]{8}')  # packet 118b
 PREVIEW_RE = re.compile(r'preview_[0-9]{5}_\.mp4')
 SETUP_TIMEOUT_S = 1800                          # qualify_client.py bounds
 QUAL_CHUNK_TIMEOUT_S = 900
@@ -450,7 +459,7 @@ class Api:
 
 
 def packet_id(text):
-    """--packet: an int for digit strings (112-116), the string itself otherwise ('116b')."""
+    """--packet: an int for digit strings (112-118), the string itself otherwise ('116b', '118b')."""
     return int(text) if str(text).isdigit() else str(text)
 
 
@@ -475,11 +484,11 @@ class Client:
         self.api = Api('http://%s:%d' % (a.host, a.port), a.http_fail_seconds)
         self.client_id = ({114: 'stream114-client-', 115: 'stream115-client-',
                            116: 'stream116-client-', '116b': 'stream116b-client-',
-                           117: 'stream117-client-', 118: 'stream118-client-'}.get(a.packet, 'stream112-client-') +
+                           117: 'stream117-client-', 118: 'stream118-client-', '118b': 'stream118b-client-'}.get(a.packet, 'stream112-client-') +
                           uuid.uuid4().hex[:12])
         self.stream_dir_re = {114: STREAM_DIR_RE_114, 115: STREAM_DIR_RE_115,
                               116: STREAM_DIR_RE_116, '116b': STREAM_DIR_RE_116B,
-                              117: STREAM_DIR_RE_117, 118: STREAM_DIR_RE_118}.get(a.packet, STREAM_DIR_RE)
+                              117: STREAM_DIR_RE_117, 118: STREAM_DIR_RE_118, '118b': STREAM_DIR_RE_118B}.get(a.packet, STREAM_DIR_RE)
         self.decoder_graph = None           # packet 116: the server's LTX_DECODER_GRAPH
         self.levers = None                  # packet 117: (anchor_decode, bencode_overlap, prep_ahead)
         self.server_options = None          # packet 118: {snapshot_mode, decoder_graph_pool_cap_bytes}
@@ -640,8 +649,8 @@ class Client:
                     feats.get('snapshot_fingerprint') is not (st.get('snapshot_mode') == 'fingerprint') or \
                     feats.get('decoder_graph_pool_cap') is not (cap is not None) or \
                     not (cap is None or (type(cap) is int and cap > 0 and st.get('decoder_graph') == 1)):
-                problems.append('--packet 118 needs a packet 118 server with valid server options (snapshot_mode=%r '
-                                'pool cap=%r features=%r)' % (st.get('snapshot_mode'), cap, feats))
+                problems.append('--packet %s needs a packet %s server with valid server options (snapshot_mode=%r '
+                                'pool cap=%r features=%r)' % (self.a.packet, self.a.packet, st.get('snapshot_mode'), cap, feats))
         if problems:
             raise Stop(8, 'preflight refused: ' + '; '.join(problems))
         self.bind_dirs(st)
@@ -1567,7 +1576,8 @@ def main(argv=None):
                          'or 116 (frame anchor by default, video-first hand-off, decoder graph) '
                          'or 116b (116 with the NA axis-router acceptance; stream116b- names) '
                          'or 117 (116b plus the cone anchor decode, stage-B encode overlap, prep-ahead, 121 frames) '
-                         'or 118 (117 plus the timing split, fingerprint safety snapshots, the decoder-graph pool cap)')
+                         'or 118 (117 plus the timing split, fingerprint safety snapshots, the decoder-graph pool cap) '
+                         'or 118b (reviewed rebuild of 118; stream118b- names)')
     ap.add_argument('--manifest-sha256', help='expected runtime_manifest_sha256 (default: the --packet build)')
     ap.add_argument('--contract-dir', type=Path, help='sealed stream_contract.py location (default: the --packet build)')
     ap.add_argument('--reset-every-chunks', type=int, default=0,
@@ -1579,14 +1589,14 @@ def main(argv=None):
                     help='114/115 only: the server anchor mode (114: latent or frame)')
     ap.add_argument('--expect-decoder-graph', type=int, choices=(0, 1),
                     help='116 only: the server LTX_DECODER_GRAPH')
-    ap.add_argument('--expect-anchor-decode', choices=('full', 'cone'), help='117 only: the server LTX_ANCHOR_DECODE')
+    ap.add_argument('--expect-anchor-decode', choices=('full', 'cone'), help='117/118/118b only: the server LTX_ANCHOR_DECODE')
     ap.add_argument('--expect-bencode-overlap', type=int, choices=(0, 1),
-                    help='117 only: the server LTX_BENCODE_OVERLAP')
-    ap.add_argument('--expect-prep-ahead', type=int, choices=(0, 1), help='117 only: the server LTX_PREP_AHEAD')
+                    help='117/118/118b only: the server LTX_BENCODE_OVERLAP')
+    ap.add_argument('--expect-prep-ahead', type=int, choices=(0, 1), help='117/118/118b only: the server LTX_PREP_AHEAD')
     ap.add_argument('--expect-snapshot-mode', choices=('walk', 'fingerprint'),
-                    help='118 only: the server LTX_SNAPSHOT_MODE')
+                    help='118/118b only: the server LTX_SNAPSHOT_MODE')
     ap.add_argument('--expect-pool-cap-gb', default=None,
-                    help="118 only: the server LTX_DECODER_GRAPH_POOL_CAP_GB ('none' = unset)")
+                    help="118/118b only: the server LTX_DECODER_GRAPH_POOL_CAP_GB ('none' = unset)")
     ap.add_argument('--reference-hashes', type=Path,
                     help='116 only: cross-packet reference document for the gate (default: the sealed packet\'s, '
                          'SHA-256 checked); refused on the live port')
@@ -1623,14 +1633,14 @@ def main(argv=None):
     if a.expect_anchor is not None and a.packet not in DECODE_THREAD_PACKETS:
         raise SystemExit('--expect-anchor needs --packet 114, 115 or 116')
     if (a.expect_decoder_graph is not None or a.reference_hashes is not None) and a.packet not in DECODER_GRAPH_PACKETS:
-        raise SystemExit('--expect-decoder-graph / --reference-hashes need --packet 116, 116b or 117')
+        raise SystemExit('--expect-decoder-graph / --reference-hashes need --packet 116, 116b, 117, 118 or 118b')
     if (a.expect_anchor_decode is not None or a.expect_bencode_overlap is not None or
             a.expect_prep_ahead is not None) and a.packet not in LEVER_PACKETS:
-        raise SystemExit('--expect-anchor-decode / --expect-bencode-overlap / --expect-prep-ahead need --packet 117 or 118')
+        raise SystemExit('--expect-anchor-decode / --expect-bencode-overlap / --expect-prep-ahead need --packet 117, 118 or 118b')
     if a.expect_frames == 121 and a.packet not in LEVER_PACKETS:
-        raise SystemExit('--expect-frames 121 needs --packet 117 or 118')
+        raise SystemExit('--expect-frames 121 needs --packet 117, 118 or 118b')
     if (a.expect_snapshot_mode is not None or a.expect_pool_cap_gb is not None) and a.packet not in SERVER_OPTION_PACKETS:
-        raise SystemExit('--expect-snapshot-mode / --expect-pool-cap-gb need --packet 118')
+        raise SystemExit('--expect-snapshot-mode / --expect-pool-cap-gb need --packet 118 or 118b')
     a.expect_pool_cap_bytes = None
     if a.expect_pool_cap_gb is not None and a.expect_pool_cap_gb != 'none':
         m = re.fullmatch(r'(0|[1-9][0-9]?)(\.([0-9]{1,2}))?', a.expect_pool_cap_gb)

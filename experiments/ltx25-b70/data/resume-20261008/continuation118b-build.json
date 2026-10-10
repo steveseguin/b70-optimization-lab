@@ -1,0 +1,658 @@
+{
+  "auxiliary_files_not_in_packet": {
+    "CONTRACT.md": "c2b62abb0a2d6dd6cfe8cf2863e2713d80d5d15037f3fb9075c42ee38798ead7",
+    "LAUNCH.md": "5667e6610f9d08305490385c814230510a7aaae2e96292bfc8499f0b6d45ff79",
+    "cpu_decoder.py": "700984ae38d8118bac5666cd9c21a206dad5cee69199805aaa7490858d4f0ee2",
+    "cpu_native_lt.py": "b1737d2845988bda68fcebab23c1a9aac52dc568bd00ab8fd4c4454b8b606ba7",
+    "harness_runtime.py": "111e9f7185cc129db46d9b40d408b742add0f13191f4aec48b942fcd8c22db43",
+    "launch-118b.sh": "ded9909a4e14c6e7ac83b2eec76490eb47060b0f8645dba1ef32a435c6789336",
+    "owner_seam_view.py": "5e48b4a61f65a190eb75d12c6b3e6623134c5a0b0b18f8411bbdada2c9ac6596",
+    "test_anchor_decode.py": "3d1e37f797d9563aa364182869b8fe2219ae6a4a237dd07cb0ccb4fca0ce9e1a",
+    "test_candidate_safety.py": "3753e44811905913aa3d585d6efa2dea32512897ac1aebbc4085900cde0724d5",
+    "test_contract.py": "7a74befed9d986507f3234b6edbdccdb4c8f4fe56d06e30f05e17ff16bdd56b5",
+    "test_decode.py": "b8348237df33e0198542eda474d28791f632105517e211d2cb2cefbf8cf360b7",
+    "test_decoder_graph.py": "984b3ae0e01fd8e59a2951d147e7af73e77091e2e14d0f9f31b43c3fb5fec925",
+    "test_gate_receipts.py": "8e088a14b5552bfb2abe17037743e1863993be49871dd4c813bbcb6e2b5671be",
+    "test_guide_anchor.py": "1e2b3488888992e1a3b03a4bbbf63def194f208ec986042fe797dd71fd17081d",
+    "test_latent_anchor.py": "bb93f02fbc243866cd2412f7055a7c134cfa718f179e476f8c440251b03ea270",
+    "test_pool_cap.py": "d4509708f76cef967de25aa2e1fbc055d5728aa99c87f9065c7d1a83db27cd66",
+    "test_precompute_guard.py": "5d65b436e6485751752c0f04b1eb35997128e2885ae4ab58ca03463f1b47e17b",
+    "test_preview.py": "709e390a2aab46ac6e311fa0c3c035f8a4883884518fdee9efe3d08959427398",
+    "test_reset.py": "8701560ace525188a709b6cc0ed0974ffcd5ed9e7a40108d51f45b78dbab1258",
+    "test_runtime_flow.py": "7a639f5c055548d892926d154f79828c821b0a293b473f37f399f4ef59019192",
+    "test_runtime_packet.py": "f1b1773d2079965d821f1a2017059f90555c5118888799b062d0eddda3548c4f",
+    "test_session.py": "38f25d0be81ec3f035ad1c22255686fa8b9ac0e528901e605fd835c6a2f4576d",
+    "test_snapshot_fingerprint.py": "bf24950b1aad3b05cfb9e046aacf26df63520fac4a0b517c69d88eb9ec388acf",
+    "test_timing_split.py": "bda8460db980a762270deb4f4562d0261de4bbca95a7831e3d27c58b26d83974"
+  },
+  "builder": "recovery/20261009-continuation118b-stream/runtime_packet.py",
+  "check_only_executed": false,
+  "claims": {
+    "audio_alignment_resolved": false,
+    "cone_exact_on_xpu": false,
+    "decoder_graph_exact_on_xpu": false,
+    "decoder_pool_cap_fits_121_dg1": false,
+    "geometry_121_measured": true,
+    "gpu_qualified": false,
+    "precompute_exact_on_xpu": false,
+    "quality_adopted": false,
+    "seam_accepted": false,
+    "snapshot_fingerprint_equivalence_on_xpu": false,
+    "speed_improvement": false
+  },
+  "client": {
+    "adaptations": [
+      "run_cpu_suites.py transforms historical .kill() calls in memory into file-based cooperative child exit; no OS process signals sent.",
+      "Fake HTTP workers pause request handling or call HTTPServer.shutdown(). Client interrupted-state test exits its own main thread at next traced Python event, preserving incomplete state. This tests interrupted-state recovery, not OS SIGKILL behavior.",
+      "All children use the same venv Python3 with -B. Socket bind/connect is guarded to loopback and refuses port8188. The116 live-port test parses8188 but refuses arguments before networking; the socket guard stays active.",
+      "Legacy118 suites read sealed118 modules, because reviewed author-source modules no longer match the old immutable client pins. No sealed packet was written."
+    ],
+    "client_total_passed": 193,
+    "client_total_tests": 193,
+    "console_summary": "/tmp/continuation118b-client-summaries.txt",
+    "cwd": "/home/steve/llm-optimizations",
+    "file": "stream/ltx_continuation_client.py",
+    "initial_failed_attempt": {
+      "cause": "Legacy118 client rejected newly patched author modules against its old sealed pins. Corrected test adapter to read unchanged sealed118 modules; final complete rerun15/15.",
+      "logs": "/tmp/ltx-c118-test-wvdm5r0i",
+      "passed": 10,
+      "suite": "118",
+      "tests": 15
+    },
+    "limitations": [
+      "Fake CPU receipts/arrays establish client protocol and safety behavior, not XPU parity, timings, capture memory, stability or quality.",
+      "Complete raw console transcripts were returned via tool output, not redirected to files. The summary file reproduces exact observed final suite counts; per-client and fake logs remain in each listed temporary work directory."
+    ],
+    "modules": {
+      "qualification_gate": "8a9eb7d5419ed4acd863ae75f3906c38fdfc4ed1f516eb06a3fd7a0c3b28d9a3",
+      "stream_contract": "aadd3b782e318f71faa773629c8565cadcddbfa709731a0b9f8a5e4fbe40375d",
+      "stream_receipts": "eb04b961f01e1fc01b70f10a2512da7fd8af037054a1d4508633d24e5868edb8"
+    },
+    "post_suite_change": "help/argument-error text only: describe 118/118b lever support; pure preflight rerun 10/10",
+    "preflight": {
+      "command": "/home/steve/.venvs/ltx25-baseline/bin/python3 -B experiments/ltx25-b70/stream/tests/test_client_preflight_118b.py",
+      "devices": "none",
+      "network": "none",
+      "passed": 10,
+      "tests": 10
+    },
+    "schema": "ltx.continuation118b.cpu-client-results.v1",
+    "sha256": "56d0bf4928270391d29797aa96a712be6452030f54bf4c140a86708fe4e9d15b",
+    "stale_test_fixed": "114 X5 assumed packet114 was unsealed. It now checks that the sealed default manifest refuses a fake manifest before posting; all26 checks pass.",
+    "suites": [
+      {
+        "command": "/home/steve/.venvs/ltx25-baseline/bin/python3 -B experiments/ltx25-b70/stream/tests/run_cpu_suites.py run_tests_112.py",
+        "logs": [
+          "**/fake-*.log",
+          "**/work/client-*.log"
+        ],
+        "packet": "112",
+        "passed": 46,
+        "returncode": 0,
+        "summary": "46/46 passed; work in /tmp/ltx-c112-test-mvhv5pn_",
+        "tests": 46,
+        "work_dir": "/tmp/ltx-c112-test-mvhv5pn_"
+      },
+      {
+        "command": "/home/steve/.venvs/ltx25-baseline/bin/python3 -B experiments/ltx25-b70/stream/tests/run_cpu_suites.py run_tests_113.py --port 18203",
+        "logs": [
+          "**/fake-*.log",
+          "**/work/client-*.log"
+        ],
+        "packet": "113",
+        "passed": 11,
+        "returncode": 0,
+        "summary": "11/11 passed; work in /tmp/ltx-c113-test-_czfdpx9",
+        "tests": 11,
+        "work_dir": "/tmp/ltx-c113-test-_czfdpx9"
+      },
+      {
+        "command": "/home/steve/.venvs/ltx25-baseline/bin/python3 -B experiments/ltx25-b70/stream/tests/run_cpu_suites.py run_tests_114.py --port 18204",
+        "logs": [
+          "**/fake-*.log",
+          "**/work/client-*.log"
+        ],
+        "packet": "114",
+        "passed": 26,
+        "returncode": 0,
+        "summary": "26/26 passed; work in /tmp/ltx-c114-test-8npf1n9p",
+        "tests": 26,
+        "work_dir": "/tmp/ltx-c114-test-8npf1n9p"
+      },
+      {
+        "command": "/home/steve/.venvs/ltx25-baseline/bin/python3 -B experiments/ltx25-b70/stream/tests/run_cpu_suites.py run_tests_115.py --port 18205",
+        "logs": [
+          "**/fake-*.log",
+          "**/work/client-*.log"
+        ],
+        "packet": "115",
+        "passed": 20,
+        "returncode": 0,
+        "summary": "20/20 passed; work in /tmp/ltx-c115-test-vf4xi8yx",
+        "tests": 20,
+        "work_dir": "/tmp/ltx-c115-test-vf4xi8yx"
+      },
+      {
+        "command": "/home/steve/.venvs/ltx25-baseline/bin/python3 -B experiments/ltx25-b70/stream/tests/run_cpu_suites.py run_tests_116.py --port 18206",
+        "logs": [
+          "**/fake-*.log",
+          "**/work/client-*.log"
+        ],
+        "packet": "116",
+        "passed": 30,
+        "returncode": 0,
+        "summary": "30/30 passed; work in /tmp/ltx-c116-test-25_n74_h",
+        "tests": 30,
+        "work_dir": "/tmp/ltx-c116-test-25_n74_h"
+      },
+      {
+        "command": "/home/steve/.venvs/ltx25-baseline/bin/python3 -B experiments/ltx25-b70/stream/tests/run_cpu_suites.py run_tests_116b.py --port 18207",
+        "logs": [
+          "**/fake-*.log",
+          "**/work/client-*.log"
+        ],
+        "packet": "116b",
+        "passed": 8,
+        "returncode": 0,
+        "summary": "8/8 passed; work in /tmp/ltx-c116b-test-o_byz35x",
+        "tests": 8,
+        "work_dir": "/tmp/ltx-c116b-test-o_byz35x"
+      },
+      {
+        "command": "/home/steve/.venvs/ltx25-baseline/bin/python3 -B experiments/ltx25-b70/stream/tests/run_cpu_suites.py run_tests_117.py --port 18208",
+        "logs": [
+          "**/fake-*.log",
+          "**/work/client-*.log"
+        ],
+        "packet": "117",
+        "passed": 21,
+        "returncode": 0,
+        "summary": "21/21 passed; work in /tmp/ltx-c117-test-fsxdzos2",
+        "tests": 21,
+        "work_dir": "/tmp/ltx-c117-test-fsxdzos2"
+      },
+      {
+        "command": "/home/steve/.venvs/ltx25-baseline/bin/python3 -B experiments/ltx25-b70/stream/tests/run_cpu_suites.py run_tests_118.py --port 18209",
+        "logs": [
+          "**/fake-*.log",
+          "**/work/client-*.log"
+        ],
+        "packet": "118",
+        "passed": 15,
+        "returncode": 0,
+        "summary": "15/15 passed; work in /tmp/ltx-c118-test-52aphh_8",
+        "tests": 15,
+        "work_dir": "/tmp/ltx-c118-test-52aphh_8"
+      },
+      {
+        "command": "/home/steve/.venvs/ltx25-baseline/bin/python3 -B experiments/ltx25-b70/stream/tests/run_cpu_suites.py run_tests_118b.py --port 18210",
+        "logs": [
+          "**/fake-*.log",
+          "**/work/client-*.log"
+        ],
+        "packet": "118b",
+        "passed": 16,
+        "returncode": 0,
+        "summary": "16/16 passed; work in /tmp/ltx-c118b-test-yhdqkuqe",
+        "tests": 16,
+        "work_dir": "/tmp/ltx-c118b-test-yhdqkuqe"
+      }
+    ]
+  },
+  "command": [
+    "/home/steve/.venvs/ltx25-baseline/bin/python3",
+    "-B",
+    "experiments/ltx25-b70/recovery/20261009-continuation118b-stream/runtime_packet.py",
+    "--build",
+    "--input-inventory-sha256",
+    "9fb042c3e2bf5a4d0fb910b317a7db5d7362b5b70c41d0178da40ce2bf625f9a"
+  ],
+  "cpu_tests": {
+    "initial_development_run": {
+      "cause": "in-memory old comparison/plan identities disagreed with completed on-disk 118b identity; final complete inventory-matched rerun passed",
+      "errors": 1,
+      "failure_tests": [
+        "test_contract.Rules.test_run_names_carry_the_117_prefix",
+        "test_runtime_packet.Identities.test_plan_file_is_the_reconstructed_plan_and_pins_agree",
+        "test_runtime_packet.Identities.test_inventory_and_assembly_fit_build_allowance"
+      ],
+      "failures": 2,
+      "log": "/tmp/continuation118b-recovery-tests.log",
+      "passed": 296,
+      "qualification_evidence": false,
+      "seconds": 764.711,
+      "source_state": "started during re-identification, before final source inventory",
+      "tests": 299
+    },
+    "launcher_fragment_checks": {
+      "launcher_executed": false,
+      "passed": 6,
+      "tests": 6
+    },
+    "patched_author_focused": {
+      "overlaps_recovery": true,
+      "passed": 44,
+      "tests": 44
+    },
+    "recovery": {
+      "baseline_tests_preserved": 289,
+      "command": "PYTHONDONTWRITEBYTECODE=1 OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/ltx25-baseline/bin/python3 -B -m unittest discover -s experiments/ltx25-b70/recovery/20261009-continuation118b-stream -p test_*.py",
+      "log": "data/resume-20261008/continuation118b-cpu-tests.log",
+      "log_sha256": "794fb2d688db04c39ce918c71150fe7a5df99b44ae26fc3807f8932dd94cb1b8",
+      "passed": 299,
+      "returncode": 0,
+      "review_patch_regressions_added": 5,
+      "seconds": 626.273,
+      "skipped": 0,
+      "tests": 299,
+      "timing_regressions_added": 5
+    },
+    "shell_syntax": "launch-118b.sh and start-client-118b.sh passed"
+  },
+  "date_utc": "2026-10-10T01:22:27.402572+00:00",
+  "devices_touched": false,
+  "existing_packets_or_runs_modified": false,
+  "first_launch_text_only": "experiments/ltx25-b70/recovery/20261009-continuation118b-stream/launch-118b.sh 121 frame 0 cone 1 1 fingerprint - \"$FRESH_HEALTH_RECEIPT\"",
+  "host_settings_changed": false,
+  "identity_comparison": {
+    "model_requests": 0,
+    "normalization": [
+      "stream118b -> stream118",
+      "stream-candidate-118b-v1 -> stream-candidate-118-v1",
+      "clip_index minus 20000"
+    ],
+    "normalized_graphs_equal": 2378,
+    "numerical_contracts_equal": 132,
+    "qualification_ids_equal": 132,
+    "schema": "ltx.stream118b.identity-comparison.v1",
+    "sealed_118_to_118b_files": {
+      "added": [],
+      "changed": [
+        "STATUS.txt",
+        "launch/encoder_runtime_common.py",
+        "launch/serve-encoder.py",
+        "manifest.json",
+        "resolution/components/integration.py",
+        "resolution/components/plan.py",
+        "resolution/components/precompute_guard.py",
+        "resolution/components/qualification_gate.py",
+        "resolution/components/qualify_client.py",
+        "resolution/components/runtime_packet.py",
+        "resolution/components/session.py",
+        "resolution/components/snapshot_fingerprint.py",
+        "resolution/components/stream_anchor_decode.py",
+        "resolution/components/stream_contract.py",
+        "resolution/components/stream_decoder_graph.py",
+        "resolution/components/stream_receipts.py",
+        "resolution/stream-plan.json",
+        "source/scripts/integration.py",
+        "source/scripts/ltx_duration_guard.py",
+        "source/scripts/ltx_output_size_98.py",
+        "source/scripts/ltx_resolution_session.py",
+        "source/scripts/precompute_guard.py",
+        "source/scripts/qualification_gate.py",
+        "source/scripts/snapshot_fingerprint.py",
+        "source/scripts/stream_anchor_decode.py",
+        "source/scripts/stream_contract.py",
+        "source/scripts/stream_decoder_graph.py",
+        "source/scripts/stream_receipts.py"
+      ],
+      "deleted": [],
+      "identical": 1873
+    }
+  },
+  "input_inventory": {
+    "candidate_safety.py": "087772db88cbd26d8ddb4c9905f0d27cf583f57a9cdff56a932ba6de8ab7e510",
+    "conditioning_guard.py": "e7063937bec3e5e874bcc28b5199bde205fa68635ca9a0aebb313d333915deeb",
+    "continuation_anchor.py": "89812304ab8471cfafae5156170ccd1f428ed0dac257aa7a41f569be34577264",
+    "derive_from_111.py": "01c3cbbc2d29dc9b0ee9d827c8fcb22f72fb7cffac69e06d48898cdc69f4c1fe",
+    "integration.py": "3a777ca7e671114bf13a4d464c60692ac329c01b62671b0df925fbec788a9cf8",
+    "latent_anchor.py": "eda5b4fa4859032e8d904443532b7ea6258107b1582b959ce4cb73f0c24d1e90",
+    "native_bindings.py": "1ce082ecd4c79cc0a3d7a58c3938e13bc84a94c0efbf42bfdb91ef6b92e8cf43",
+    "plan.py": "eb567b67675c2c0cffe7d6228a180b1bec9ad49c7b2b641dc984078c9f98f023",
+    "precompute_guard.py": "2171b3a2cab696c6d0bf8d068bb6e1e1e15c3e928525ced4bb80572d6ae7e88d",
+    "qualification_gate.py": "8a9eb7d5419ed4acd863ae75f3906c38fdfc4ed1f516eb06a3fd7a0c3b28d9a3",
+    "qualify_client.py": "24feb32c22168e7ecc537e4c9fbe8a38983c7edf0f5184da355889bb575b5496",
+    "reference-frame-qualification-hashes.json": "47040972fdcbb7f5837086d067122afd5130441bc5396f7b562a028e7faf5bb7",
+    "runtime_packet.py": "e33fd78752e6a0ec70995e6d6f56f41384a6595b6e42ec03b907e061f21ca5bd",
+    "session.py": "ff6e4e1ffdec01bd82a6fb1feb38850b90b9ec2b22bd770e481fccf92dc419a4",
+    "snapshot_fingerprint.py": "41c139646f9372da5a2831a0fe2349a56510355e2492ee7c05f5931c096e54b7",
+    "stream-plan.json": "370526de8e3de86a7a16ac594e7235a5edcdc5ef26903d44078f6ffbf946e06f",
+    "stream_anchor_decode.py": "7dd453d6dabb895d8a4fb99e93dabafe19318d38e8b46fcf4008cd9249f8dfdf",
+    "stream_contract.py": "aadd3b782e318f71faa773629c8565cadcddbfa709731a0b9f8a5e4fbe40375d",
+    "stream_decode.py": "1122ac091edeb4a6cf571127c823e2d7795e1a43dd8e4dbe43f4f8cefcc6672e",
+    "stream_decoder_graph.py": "0023a2c80ebaa6cceedb872d4575d5241da11ebd64222df477dfdd138b5e97ab",
+    "stream_preview.py": "3ebae293cd265a7ea1b1d2bf8ca53c6eec7ce6aeb51f073c5ad11f15a9a2ed33",
+    "stream_receipts.py": "eb04b961f01e1fc01b70f10a2512da7fd8af037054a1d4508633d24e5868edb8"
+  },
+  "input_inventory_sha256": "9fb042c3e2bf5a4d0fb910b317a7db5d7362b5b70c41d0178da40ce2bf625f9a",
+  "integrity_checks": {
+    "check-doc-links.py": "passed",
+    "check-manifest-paths.py": "passed",
+    "git_diff_check": "passed"
+  },
+  "manifest_file_count": 1899,
+  "manifest_sha256": "248e762de49d21b02a4f95d3791dbd9da7504b731f1a88cb5a930a78448db1f1",
+  "model_requests": 0,
+  "model_servers_launched": false,
+  "packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-118b",
+  "parent": {
+    "manifest_sha256": "5826174ee3a3965d033758de006552742878f624800dadb90423879b3f0802c9",
+    "packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-117"
+  },
+  "payload_regular_file_bytes": 121147755,
+  "plan_sha256": "d36c188d695c36b2a8849da687d7fe004859888d22af606d94e2ec48afa47b30",
+  "port_8188_accessed": false,
+  "process_signals_sent": false,
+  "qualification_ids": {
+    "121/two-way/frame/dg0/ad-cone/bo0/pa0": "618fa86cd694b50a427601030d3d97a937a1a936729b3a3432c22867293f282b",
+    "121/two-way/frame/dg0/ad-cone/bo0/pa1": "43986e09b60c670a61a1cf24be35948daccbe1444b62ca0e2740cc9d7234d4b3",
+    "121/two-way/frame/dg0/ad-cone/bo1/pa0": "ffedc918238e758fb8109f1a47ecd9d4ee99459a4563ecaa4719ea4f0a886f9c",
+    "121/two-way/frame/dg0/ad-cone/bo1/pa1": "8e97ba0c3a5e431161f9e8aa155dfcb1b140b0b44eba33c4cd722cb560604b29",
+    "121/two-way/frame/dg0/ad-full/bo0/pa0": "750e3d24eacedeb1036dcabc99969a3793a51f19a01081b8a83bf2ad57840fd9",
+    "121/two-way/frame/dg0/ad-full/bo0/pa1": "fd20f7283b5cfd4a5fe8711245d283871d2270a4fd4a63853f68413402c5f222",
+    "121/two-way/frame/dg0/ad-full/bo1/pa0": "34fe17161a78b40cf8ad6ef55d43512a866602bbd8e5aabc1d26f6bdabcc8ec7",
+    "121/two-way/frame/dg0/ad-full/bo1/pa1": "dfc55696f9abe34b18db0bb8afa1ad3628187df15d3c7b40d0f02c4472fdfd74",
+    "121/two-way/frame/dg1/ad-cone/bo0/pa0": "2ae1253675338ba411260755e5f034b2dcf11ff9c2b123625d8d35c6d631290e",
+    "121/two-way/frame/dg1/ad-cone/bo0/pa1": "c6b3c72cc833930aea32e6bc0cba80bcf9d6c37c257f752f3affb7c9ad662867",
+    "121/two-way/frame/dg1/ad-cone/bo1/pa0": "e5f91330505d2a2bb1b62faa3f689459bbf33c37ddefd4b7d24debcb7d309b64",
+    "121/two-way/frame/dg1/ad-cone/bo1/pa1": "f3c6fa63f0b19284ca1ed969d752a552451b16e353523814876b8e6bccb0a7a3",
+    "121/two-way/frame/dg1/ad-full/bo0/pa0": "dcd6c8d28af710263968846626a75f7a98e8a4eaeb2673df35ef4df3078ab03d",
+    "121/two-way/frame/dg1/ad-full/bo0/pa1": "9edf76c7614c8395512c9b11edb68f08207c8636eca271809cff7e93ab0a396c",
+    "121/two-way/frame/dg1/ad-full/bo1/pa0": "6fa1e86e309bd44c00be6781d12c47cc8f55ca484472ca3d8dd010a2ed055905",
+    "121/two-way/frame/dg1/ad-full/bo1/pa1": "38549776b9bfd09d3297d78be65555fe6cc6be17d8b02d0be0aab3b25e0198fd",
+    "121/two-way/guide/dg0/ad-full/bo0/pa0": "8cd643d72c3695244f1844608b418f72a17bb6f1d54e7bf6969b421d8bcaafe8",
+    "121/two-way/guide/dg1/ad-full/bo0/pa0": "d638725a3e33aaeca7644c51acefedbb836a7fc63d94f0ed57ff2f0e0df2455b",
+    "121/two-way/latent/dg0/ad-full/bo0/pa0": "5fd5863ceac424daab82ca3017e82d03dff83efaa28d1842fc75003972ae6806",
+    "121/two-way/latent/dg1/ad-full/bo0/pa0": "67dfe8957514de64e58d8fd64f36ffa94be6f1ea5fd1982294b109571f6e796d",
+    "121/two-way/mixed/dg0/ad-full/bo0/pa0": "342cbc6ba3e01ad23188b07f6afaa1cc21879a7e8d7b22194568ac9aee13d147",
+    "121/two-way/mixed/dg1/ad-full/bo0/pa0": "d061d60e920eb01cd450f19c9213c02dc0459300d98dab9e72a00f6776776ff6",
+    "121/two-way20-28/frame/dg0/ad-cone/bo0/pa0": "3182db36377a2c8b1f78b242391831d504bc1f26a30f95aebba9d65cb2eb8d40",
+    "121/two-way20-28/frame/dg0/ad-cone/bo0/pa1": "7ed1aace38ef123f3ff4ebbf9f6005ce8fc288c6daa0d2ef1a545295735e11c3",
+    "121/two-way20-28/frame/dg0/ad-cone/bo1/pa0": "57a94d6117d34ba00162bbe19a57e96dc368380c1a9c8a3bbb3aedaeae86d16e",
+    "121/two-way20-28/frame/dg0/ad-cone/bo1/pa1": "0b138ef0346650ef4bab33fd4979722cdb2e3ba46fb0bf688ff663e9e7925e10",
+    "121/two-way20-28/frame/dg0/ad-full/bo0/pa0": "762316e380d6080db1c117c804ff219fce2ec19dd3e7f0cdab9031e73a44196e",
+    "121/two-way20-28/frame/dg0/ad-full/bo0/pa1": "70a7e7dce2b442d7c89f02fcb61149336dfc9024448c2a31570f214d9c31de79",
+    "121/two-way20-28/frame/dg0/ad-full/bo1/pa0": "d768f62fc40e760094a382eb0aacd9eb027d84a25d7e1111370017e894a1f966",
+    "121/two-way20-28/frame/dg0/ad-full/bo1/pa1": "42d15b733d18c8790d7357db59be779d3389fac7b39766ca9af35da2bfa21031",
+    "121/two-way20-28/frame/dg1/ad-cone/bo0/pa0": "5da653474c39d57b0976b776f019f18151c46be85dcd2bfd0d3308cb656edb7b",
+    "121/two-way20-28/frame/dg1/ad-cone/bo0/pa1": "bfb441c5b09a7b1bd792c442934c8a9e08276dda01c3094c4e5b13e34eccefd9",
+    "121/two-way20-28/frame/dg1/ad-cone/bo1/pa0": "02a9c747dcc1100e18d97d976f81f30e4aa093b8af1c245c3c3a9106e6c47615",
+    "121/two-way20-28/frame/dg1/ad-cone/bo1/pa1": "2d54fb73865ca84b6e2536f1defe45083064a28c9e6c739acba2d69755ecc80a",
+    "121/two-way20-28/frame/dg1/ad-full/bo0/pa0": "4549bb1bdc77456c8956b67d88c5439cd47de3a303c83d25d77604298404aaf9",
+    "121/two-way20-28/frame/dg1/ad-full/bo0/pa1": "683c1a38267ffe91773db669536ba9d7e8f343a18be8c1e468ee2f2b73d59310",
+    "121/two-way20-28/frame/dg1/ad-full/bo1/pa0": "0e09d0a7d1cde813525e0cb4689e1620c25f38da25a08311aa33328062e6e517",
+    "121/two-way20-28/frame/dg1/ad-full/bo1/pa1": "5ff94ca6b593b21af716991566240670c64f3a5c67b58d0a8e18663d1e0d28ef",
+    "121/two-way20-28/guide/dg0/ad-full/bo0/pa0": "69d93acf5aa99c700bfa6562f99e28fec7800a90ead88eac259ed8b4c0fdf228",
+    "121/two-way20-28/guide/dg1/ad-full/bo0/pa0": "56418567390e17427636bc881f710e9430ac055ae90ed76ba47553b096200669",
+    "121/two-way20-28/latent/dg0/ad-full/bo0/pa0": "566b03a3ff68903f9272406a0d1ac3e7f7f0f0de889f583e910bafc9129b6abe",
+    "121/two-way20-28/latent/dg1/ad-full/bo0/pa0": "61bfd391ed75f136cd0d181750f358e06399d853d42c737715b78fe124013679",
+    "121/two-way20-28/mixed/dg0/ad-full/bo0/pa0": "e6653c64eacf9ae450332bef01fa3d9c7fbf91337ebb6f983dc9f2fbcf623d01",
+    "121/two-way20-28/mixed/dg1/ad-full/bo0/pa0": "4e30f27ca470b3ee3b104aa3ef15db66b21b2b7f22358a3530c869634dee38ea",
+    "49/two-way/frame/dg0/ad-cone/bo0/pa0": "04af58992cbb26edee01c09849012a469c34a666e4121565f9f32f8b05b47e29",
+    "49/two-way/frame/dg0/ad-cone/bo0/pa1": "56d46b5eb03a2227540533fd78c50f53201a5a047d5fdec46df94eb35f49f079",
+    "49/two-way/frame/dg0/ad-cone/bo1/pa0": "3381fdcaaecce38707b297d4c10d5b6c6da6757693469c64f28c0f9d5338ac77",
+    "49/two-way/frame/dg0/ad-cone/bo1/pa1": "8546a15edd98787222645a6c9231714b97647a33137851a7b2f244fc3938ef77",
+    "49/two-way/frame/dg0/ad-full/bo0/pa0": "bbcca11df814043f4fa42d70fc7649d510cb7f5f2951e808ba7ac29f86bcd729",
+    "49/two-way/frame/dg0/ad-full/bo0/pa1": "a0d73c964be0c6830aa42567d544f419ad95b7d4499b271373b13886bd5e2d78",
+    "49/two-way/frame/dg0/ad-full/bo1/pa0": "b372277f798ad94d956478745c5ff8b115b35d03dc8011ac75db0d7a0bafd09e",
+    "49/two-way/frame/dg0/ad-full/bo1/pa1": "147b83e41855c1651420717c6bbd9bc477b3609a6785950b64a7b55706683af8",
+    "49/two-way/frame/dg1/ad-cone/bo0/pa0": "6835139f7b31f687503f7ad375b59f600d7cf6cff47d5663a8ded64330f90b42",
+    "49/two-way/frame/dg1/ad-cone/bo0/pa1": "4c68b865a2f1c9afa9c7c72bdab7ea48a2c10544dfedb09c0536fccf5a13667c",
+    "49/two-way/frame/dg1/ad-cone/bo1/pa0": "ece459657d2b42dd96ba4cd8e83f1872e4564753221643454be3e5d5b918142d",
+    "49/two-way/frame/dg1/ad-cone/bo1/pa1": "0f69c88323ed4ea18a47e92b36a7c146dabbd48a33fc48ed4689af67ce238a66",
+    "49/two-way/frame/dg1/ad-full/bo0/pa0": "c872675971acf8edc979d20a359bec54cd6de73095de46463b80dcb214cbe365",
+    "49/two-way/frame/dg1/ad-full/bo0/pa1": "2c97ca364fdc64a0a055bf4544e1cf5485033b897f299f3f37d06bdd8838539e",
+    "49/two-way/frame/dg1/ad-full/bo1/pa0": "81834fa93ed8a785e3bbd27dca9144349d67fad3a27d65a0d0560817e5b6057f",
+    "49/two-way/frame/dg1/ad-full/bo1/pa1": "ee2ce609cca36ee712fc17c009f4828a240d1c54dface95c3a8afab82f05142e",
+    "49/two-way/guide/dg0/ad-full/bo0/pa0": "7502bccbc275cef53f4b6ff619edafe2200e116fc97b21eea7b4b111196436c2",
+    "49/two-way/guide/dg1/ad-full/bo0/pa0": "c377150df3bce80ed667e78741123ff5b33ddfdb662c06ea7e57399a3640d42a",
+    "49/two-way/latent/dg0/ad-full/bo0/pa0": "cd0c5d06bb683a0b09b93a2ca9b01a0f8af60729e6b8b6b99f9c8234f5039493",
+    "49/two-way/latent/dg1/ad-full/bo0/pa0": "4a5a84b8c29b5db9cde14c9be418bfba8130c5de49bae682183737c92c0a913a",
+    "49/two-way/mixed/dg0/ad-full/bo0/pa0": "795437e51b0fe46c7e9d9473028ebcb9f47c4ef4e8c5035697f4f6b22453139c",
+    "49/two-way/mixed/dg1/ad-full/bo0/pa0": "d3374a47470ec590831d2562bb735906c81e97bf229d0b3b21180a2d33d9b7bb",
+    "49/two-way20-28/frame/dg0/ad-cone/bo0/pa0": "fef405fdde7c905bd76b79aa38f7924184eeb7d4bbb6574552e61899ed8cf398",
+    "49/two-way20-28/frame/dg0/ad-cone/bo0/pa1": "9b821597834897600c98ab4a5a70459ac3e16f40e7a795cdc9891c736421076d",
+    "49/two-way20-28/frame/dg0/ad-cone/bo1/pa0": "756bbb730f4c930f51182b1593706e164844822ee70147d74d3879b05d89a69c",
+    "49/two-way20-28/frame/dg0/ad-cone/bo1/pa1": "1bea6b9444b6eb2acf7ece41d4b3c28ea5710533476fa3d56d0532fdb79aaa2d",
+    "49/two-way20-28/frame/dg0/ad-full/bo0/pa0": "eb2199ed369c6af3857db46cbab870b450db82000c7411669dd0c09af4da99b4",
+    "49/two-way20-28/frame/dg0/ad-full/bo0/pa1": "238b39a78aaaa130be0a7ba4ef8d1e64d26bb170ac0aa4f8d65e3ad6b7be0f47",
+    "49/two-way20-28/frame/dg0/ad-full/bo1/pa0": "f0f4d18d5b3c78d1e36ae3764afb89c22643216b31f2818fc30f7c584a08b725",
+    "49/two-way20-28/frame/dg0/ad-full/bo1/pa1": "39a38adbfb9f8d5ac55bfb330404ad75f651a67db127e570956771c5dead5938",
+    "49/two-way20-28/frame/dg1/ad-cone/bo0/pa0": "5857cfde4dea801f7280c05ca4965eb2d69def5311d5c90e1e42a7813edeeea5",
+    "49/two-way20-28/frame/dg1/ad-cone/bo0/pa1": "8f35f1f6e374be15c2f7fa6b87faa6fda7603ea25e921022034092e08c89e09d",
+    "49/two-way20-28/frame/dg1/ad-cone/bo1/pa0": "e1bd751481e258d9210f164c15a25baca41fd5fc31921d369d1fa413e6721865",
+    "49/two-way20-28/frame/dg1/ad-cone/bo1/pa1": "d845c0a468ff0b3c559421eb1f35938f58b2fda98bb49675a7ff967eafeebb8b",
+    "49/two-way20-28/frame/dg1/ad-full/bo0/pa0": "3fcad6530ed3c73ec19f21e6b7cabd6438f6c65a9fa855b2d26735f4612a0b40",
+    "49/two-way20-28/frame/dg1/ad-full/bo0/pa1": "3f905df243947e7ed073bcfc775ff228662a12c5417cfa4f7918ea4af99ce33b",
+    "49/two-way20-28/frame/dg1/ad-full/bo1/pa0": "ec29ece06291036f217e3f8f6c18aa0c7de6381c1c8846678b1638bf3eca3802",
+    "49/two-way20-28/frame/dg1/ad-full/bo1/pa1": "4b0c54e854e7cc35c2bfd4fd4971d0e6a7cffb69fb7842febf44bb48d0400561",
+    "49/two-way20-28/guide/dg0/ad-full/bo0/pa0": "6b4f435d24893190c94563b450283d25acdc61f52725df258a4480014747eb1d",
+    "49/two-way20-28/guide/dg1/ad-full/bo0/pa0": "bd6b7d53e4c58beb695bf0b1bb174dc396daa927c5a6633107397fed54d87696",
+    "49/two-way20-28/latent/dg0/ad-full/bo0/pa0": "52452a1c6de02df3faf248156515fcefdcf1c21fd9eac23731674e30a7aac0a4",
+    "49/two-way20-28/latent/dg1/ad-full/bo0/pa0": "25ae116d1500f95e896ce82e44146bdd8d1e53d6b65a26f049e0d1123e580b5c",
+    "49/two-way20-28/mixed/dg0/ad-full/bo0/pa0": "91231a220d406295480c3d154bddc579b1d1314ac335e96f2899a3383f96c11f",
+    "49/two-way20-28/mixed/dg1/ad-full/bo0/pa0": "75c4f0becb168d41ca53d6dd11c1d8a43d4379ab4d5d3d543b5252072e2e4765",
+    "97/two-way/frame/dg0/ad-cone/bo0/pa0": "87a17a3f3172e9eee08ad561d86772e0d45f7c1b23dbc88e9d39ba492a92346d",
+    "97/two-way/frame/dg0/ad-cone/bo0/pa1": "1777da7138cde2352d7b467b1f7a0726fcc58ac2401d2c7dc3faa2e8a270f4b6",
+    "97/two-way/frame/dg0/ad-cone/bo1/pa0": "9945443f66cc5a2a62d71928c103ade495803298968684ac7599f35c24d9d25f",
+    "97/two-way/frame/dg0/ad-cone/bo1/pa1": "193e9001da87310f0ce2ad00e262f141eb54b8366af3ae61df2daaf48ec9d1b1",
+    "97/two-way/frame/dg0/ad-full/bo0/pa0": "a228581d176343248ff942955cca7f5c4b4b3338b73a0a47cecc8c1ebc3cb3e2",
+    "97/two-way/frame/dg0/ad-full/bo0/pa1": "6847b022bcd7d44585dca4eb3f3bb755741673c3b01914a83efa6c39fad5656b",
+    "97/two-way/frame/dg0/ad-full/bo1/pa0": "460aaf418fc1e5464303286b67d04b1cc428d4ab7eb307e684054caf8f17e4a8",
+    "97/two-way/frame/dg0/ad-full/bo1/pa1": "9ed641b7873e1b96c2384ea0f2a9a3d2a257c9196ec245c6d6303554ae337646",
+    "97/two-way/frame/dg1/ad-cone/bo0/pa0": "3f99eefe4db63117ab7bdc8806ca1f449086c530357fade9e088de68881a3dc7",
+    "97/two-way/frame/dg1/ad-cone/bo0/pa1": "d6140c1b630ac6825208eb8bf8fcceddf3a9d43dcbfdd490cf238541feef9bcf",
+    "97/two-way/frame/dg1/ad-cone/bo1/pa0": "a5d854017d1beb4e353f29822fe7ae832d80d16cd21d8ac2905fdc5fa9632515",
+    "97/two-way/frame/dg1/ad-cone/bo1/pa1": "f5cb28340e9b4600a6922f79b0c6d2e65cf859acc159fe43059e6b3a47a06d59",
+    "97/two-way/frame/dg1/ad-full/bo0/pa0": "b2e7ea66468446a82f5c5d2ecccc4420fd7896d66d84cd051009bea6e4b52a04",
+    "97/two-way/frame/dg1/ad-full/bo0/pa1": "6afdeb41ed712ad6ee59fb2e68b6db43d93905d77555d6e76febf36bd5d76ed8",
+    "97/two-way/frame/dg1/ad-full/bo1/pa0": "ce069a25d0d50d2af8adb67b16fb0a2024fbfdae1e54e09585742249e8d26e77",
+    "97/two-way/frame/dg1/ad-full/bo1/pa1": "a91049ff1409f56aa9ea1aa033565cfb411af78aff272f0aec50c91b2d37f82f",
+    "97/two-way/guide/dg0/ad-full/bo0/pa0": "00567bb5a2d8a4acc8397489b6b9f81e02c9c979c19010535ca49f883ab47c9b",
+    "97/two-way/guide/dg1/ad-full/bo0/pa0": "4941027ae43b72d9ea2fde20756fbedf47cb6d82dd8b7d486f744b5e508f3204",
+    "97/two-way/latent/dg0/ad-full/bo0/pa0": "fe66af8ee1c0878db53eb7ef4f077bbd2db8ae2e0fff9fd950dcd1a18f43fbb3",
+    "97/two-way/latent/dg1/ad-full/bo0/pa0": "9f349db2388ccee3a6cb99b5e8502c0fb8cfadb97b9e8e4af3f326a188e47d28",
+    "97/two-way/mixed/dg0/ad-full/bo0/pa0": "7223db8a42f907b619924b16e1fbcc711b4fbc35c5a893bfac11926a5bd32f3e",
+    "97/two-way/mixed/dg1/ad-full/bo0/pa0": "41c0be490ec266d87878d1b165549f5a660e449d40b6fa3f64f37da38f7f8f10",
+    "97/two-way20-28/frame/dg0/ad-cone/bo0/pa0": "b8ca87ab748c70d497679425a1854063a4b967a80d4a86ea5a9e8b8bcfdc4fce",
+    "97/two-way20-28/frame/dg0/ad-cone/bo0/pa1": "2b3685d4f205f02da091c03391f54d5a31a00d71709ef689b2828e036a64ff71",
+    "97/two-way20-28/frame/dg0/ad-cone/bo1/pa0": "55ef1d5b56028bcf4d7dfeaaa368b410257e2d93007da28620c677de7b51cedf",
+    "97/two-way20-28/frame/dg0/ad-cone/bo1/pa1": "de2ccee56b1f5e30bdab7daf9c94fa323572687e94fbbd84a43f431acd468324",
+    "97/two-way20-28/frame/dg0/ad-full/bo0/pa0": "86f50af437b154399fc674ea2972ba4aed99ebd2ac03b7ad4a3fc63ded39d398",
+    "97/two-way20-28/frame/dg0/ad-full/bo0/pa1": "2ce8c6a5c8b96b8939fad58da46d021c591a4d8131f77eae67eb5fb9180a24dd",
+    "97/two-way20-28/frame/dg0/ad-full/bo1/pa0": "24a9756302a2026e863f4af3a24a37f58a1752b33b6e5c10ffd975e049470271",
+    "97/two-way20-28/frame/dg0/ad-full/bo1/pa1": "0adf9d5e6078d399bb0493d21dbe90a02de10638c3871be9a105c700117df96e",
+    "97/two-way20-28/frame/dg1/ad-cone/bo0/pa0": "446aa56eab050faa20d71c23eb55cab35a51e1ea142dab8551254d7a7cd5bfd6",
+    "97/two-way20-28/frame/dg1/ad-cone/bo0/pa1": "aa911183870d579aa0c062276e6fb480347400a460d9783c947d06b2bbea215a",
+    "97/two-way20-28/frame/dg1/ad-cone/bo1/pa0": "9d9213410c6468ebbe692b61565d3f650508c76d6486dd292e0fe69df45a8f17",
+    "97/two-way20-28/frame/dg1/ad-cone/bo1/pa1": "5f5f8f7da5beeab7a119d67878e845972da58e509b695452447937d2c8bf265d",
+    "97/two-way20-28/frame/dg1/ad-full/bo0/pa0": "220465c3ab354d76ed3267ef6acb589753d7528e8144313c79262ca20cbe0e64",
+    "97/two-way20-28/frame/dg1/ad-full/bo0/pa1": "ea8c2532adc17e30421fe72a62e27fd4ec9f58b2576cf79e420784e9dab871a5",
+    "97/two-way20-28/frame/dg1/ad-full/bo1/pa0": "3d54c9ff88cc69aba2b900d28c57c18e96f957a2bc888ac14c90fc47c63f9851",
+    "97/two-way20-28/frame/dg1/ad-full/bo1/pa1": "2de25c5fcda67b9208b1a759e7f397265ca78310856ad5bef6d2ae44b18e6c50",
+    "97/two-way20-28/guide/dg0/ad-full/bo0/pa0": "0bc0a8bf0812f368aa9923c7432e8a66b19b861dc583a98bd0d1fcc67332bff8",
+    "97/two-way20-28/guide/dg1/ad-full/bo0/pa0": "1d6695b6f6c37b3b7663e20f90abc755c27a948d5e0d07922b539b5cad0fba9d",
+    "97/two-way20-28/latent/dg0/ad-full/bo0/pa0": "4b964aaa2ec8ad0c004000f1c80686d21cc4f750a558558f3cddf6c1be7cdb11",
+    "97/two-way20-28/latent/dg1/ad-full/bo0/pa0": "5f88c2c523ea88ad039b537968f71467a23f7d085f9f6cd5151c20a977272cec",
+    "97/two-way20-28/mixed/dg0/ad-full/bo0/pa0": "3bdcc8031039f70307485280e23d2bd4da0caa685f12fbc2dd30c3b46dad07fb",
+    "97/two-way20-28/mixed/dg1/ad-full/bo0/pa0": "1f9331cd919a3762c9ce77c7312b9ec845d07da5fedae5ccae7967b32f477c93"
+  },
+  "result": {
+    "input_inventory_sha256": "9fb042c3e2bf5a4d0fb910b317a7db5d7362b5b70c41d0178da40ce2bf625f9a",
+    "manifest_sha256": "248e762de49d21b02a4f95d3791dbd9da7504b731f1a88cb5a930a78448db1f1",
+    "model_requests": 0,
+    "packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-118b",
+    "status": "prepared-not-GPU-qualified",
+    "storage_admission": {
+      "admitted": true,
+      "available_bytes": 110223253504,
+      "checked_existing_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913",
+      "destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-118b",
+      "failures": [],
+      "filesystem": {
+        "filesystem_type": "ext4",
+        "mount_id": 33,
+        "mount_point": "/",
+        "source": "/dev/nvme0n1p2"
+      },
+      "min_free_bytes": 56908316672,
+      "planned_write_bytes": 167772160,
+      "remaining_after_planned_write_bytes": 110055481344,
+      "required_bytes": 57076088832,
+      "required_mount": null,
+      "resolved_destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-118b",
+      "schema_version": 1
+    }
+  },
+  "returncode": 0,
+  "review_patch": {
+    "applied_to_author_sources": true,
+    "extra_fix": "finding 4: shared late queued marks, response-construction semantics, missing/negative intervals, no extra route stat",
+    "path": "recovery/20261009-continuation118-stream/review-fixes.patch",
+    "sha256": "0957e52d1ac22596a075e8d5cc84d5987c2dfaf5aa3f91251a43baaa698a69da"
+  },
+  "schema": "ltx.stream118b.build-receipt.v1",
+  "source_delta": {
+    "launch/encoder_runtime_common.py": {
+      "after_sha256": "e33fd78752e6a0ec70995e6d6f56f41384a6595b6e42ec03b907e061f21ca5bd",
+      "before_sha256": "d937987d1870390d88e98a544d4ee33032b6823bd82ecfff254ee67c65f59cc0"
+    },
+    "launch/serve-encoder.py": {
+      "after_sha256": "2817545470a606323da61ce364308cc00601fe548dbd9d35165d18a49739c16b",
+      "before_sha256": "f51ec32d69642b2688f21a38da366fc1040c860aac6b9d906d095d6785cd5034"
+    },
+    "provenance/packet117-manifest.json": {
+      "after_sha256": "5826174ee3a3965d033758de006552742878f624800dadb90423879b3f0802c9",
+      "before_sha256": null
+    },
+    "resolution/components/integration.py": {
+      "after_sha256": "3a777ca7e671114bf13a4d464c60692ac329c01b62671b0df925fbec788a9cf8",
+      "before_sha256": "a24dc20cd6f0cf640d7100c00e0cd7087d907b521f1ed3d31903c9088c8eaf84"
+    },
+    "resolution/components/plan.py": {
+      "after_sha256": "eb567b67675c2c0cffe7d6228a180b1bec9ad49c7b2b641dc984078c9f98f023",
+      "before_sha256": "4fbc92f815edcb5781bd4fb3d090520d99670d83370d9aae73ed7e6ad3ada376"
+    },
+    "resolution/components/precompute_guard.py": {
+      "after_sha256": "2171b3a2cab696c6d0bf8d068bb6e1e1e15c3e928525ced4bb80572d6ae7e88d",
+      "before_sha256": "861d59d8dad4d2b6880cf761315d191967344f587b56f8e3a5f33807d86c2716"
+    },
+    "resolution/components/qualification_gate.py": {
+      "after_sha256": "8a9eb7d5419ed4acd863ae75f3906c38fdfc4ed1f516eb06a3fd7a0c3b28d9a3",
+      "before_sha256": "90385af6e91ccf940d009d33c9cd957b1730ad3f8b91f15906773171545142ad"
+    },
+    "resolution/components/qualify_client.py": {
+      "after_sha256": "24feb32c22168e7ecc537e4c9fbe8a38983c7edf0f5184da355889bb575b5496",
+      "before_sha256": "a9f2944a2f53b16e11eef21da5aaa7b7da9fe59f36962ba6b86827f4fe47d2a4"
+    },
+    "resolution/components/runtime_packet.py": {
+      "after_sha256": "e33fd78752e6a0ec70995e6d6f56f41384a6595b6e42ec03b907e061f21ca5bd",
+      "before_sha256": "d937987d1870390d88e98a544d4ee33032b6823bd82ecfff254ee67c65f59cc0"
+    },
+    "resolution/components/session.py": {
+      "after_sha256": "ff6e4e1ffdec01bd82a6fb1feb38850b90b9ec2b22bd770e481fccf92dc419a4",
+      "before_sha256": "aadc68d95c4495acd25c1b4b5d4f6798d5ca352efc0814add60381cd93396501"
+    },
+    "resolution/components/snapshot_fingerprint.py": {
+      "after_sha256": "41c139646f9372da5a2831a0fe2349a56510355e2492ee7c05f5931c096e54b7",
+      "before_sha256": null
+    },
+    "resolution/components/stream_anchor_decode.py": {
+      "after_sha256": "7dd453d6dabb895d8a4fb99e93dabafe19318d38e8b46fcf4008cd9249f8dfdf",
+      "before_sha256": "8588c717e76fa4065a78376426cedd8f9f7da83c26f17bef3d19b93ceadc757d"
+    },
+    "resolution/components/stream_contract.py": {
+      "after_sha256": "aadd3b782e318f71faa773629c8565cadcddbfa709731a0b9f8a5e4fbe40375d",
+      "before_sha256": "1e4a3d15a80b04d9fd81efe5ae5ab7940975b20beebe3a880cef619f4b0014be"
+    },
+    "resolution/components/stream_decoder_graph.py": {
+      "after_sha256": "0023a2c80ebaa6cceedb872d4575d5241da11ebd64222df477dfdd138b5e97ab",
+      "before_sha256": "08576eb035e4870d3bceea15a6fb46830e18ba610adb42a1a45fe74ee9ac0666"
+    },
+    "resolution/components/stream_receipts.py": {
+      "after_sha256": "eb04b961f01e1fc01b70f10a2512da7fd8af037054a1d4508633d24e5868edb8",
+      "before_sha256": "001e50aa8581e4e165acd3fee2aeb503c08ac34c9be6e4408cfda858d009b4dc"
+    },
+    "resolution/stream-plan.json": {
+      "after_sha256": "370526de8e3de86a7a16ac594e7235a5edcdc5ef26903d44078f6ffbf946e06f",
+      "before_sha256": "0370f7b2315f636e1019e146becf2bc28c0e8afa4f55f32a2649ef3784539164"
+    },
+    "source/scripts/integration.py": {
+      "after_sha256": "3a777ca7e671114bf13a4d464c60692ac329c01b62671b0df925fbec788a9cf8",
+      "before_sha256": "a24dc20cd6f0cf640d7100c00e0cd7087d907b521f1ed3d31903c9088c8eaf84"
+    },
+    "source/scripts/ltx_duration_guard.py": {
+      "after_sha256": "b6758fbba640332249e54cdf57cf9132c86acd51058948592409285cc1d94602",
+      "before_sha256": "9113910f2d5d22729024052c1573c5b698ab3f9b3da310709e21c35b6f5bfa6e"
+    },
+    "source/scripts/ltx_output_size_98.py": {
+      "after_sha256": "7cad80b4dace39800bd1ef75b7a487636e158eed27ca4d4e27dd43ff1742c25d",
+      "before_sha256": "204fc5abce07c3eae7809838301997d4bceadcdc06712c4ad1620a86dd74858c"
+    },
+    "source/scripts/ltx_resolution_session.py": {
+      "after_sha256": "ff6e4e1ffdec01bd82a6fb1feb38850b90b9ec2b22bd770e481fccf92dc419a4",
+      "before_sha256": "aadc68d95c4495acd25c1b4b5d4f6798d5ca352efc0814add60381cd93396501"
+    },
+    "source/scripts/precompute_guard.py": {
+      "after_sha256": "2171b3a2cab696c6d0bf8d068bb6e1e1e15c3e928525ced4bb80572d6ae7e88d",
+      "before_sha256": "861d59d8dad4d2b6880cf761315d191967344f587b56f8e3a5f33807d86c2716"
+    },
+    "source/scripts/qualification_gate.py": {
+      "after_sha256": "8a9eb7d5419ed4acd863ae75f3906c38fdfc4ed1f516eb06a3fd7a0c3b28d9a3",
+      "before_sha256": "90385af6e91ccf940d009d33c9cd957b1730ad3f8b91f15906773171545142ad"
+    },
+    "source/scripts/snapshot_fingerprint.py": {
+      "after_sha256": "41c139646f9372da5a2831a0fe2349a56510355e2492ee7c05f5931c096e54b7",
+      "before_sha256": null
+    },
+    "source/scripts/stream_anchor_decode.py": {
+      "after_sha256": "7dd453d6dabb895d8a4fb99e93dabafe19318d38e8b46fcf4008cd9249f8dfdf",
+      "before_sha256": "8588c717e76fa4065a78376426cedd8f9f7da83c26f17bef3d19b93ceadc757d"
+    },
+    "source/scripts/stream_contract.py": {
+      "after_sha256": "aadd3b782e318f71faa773629c8565cadcddbfa709731a0b9f8a5e4fbe40375d",
+      "before_sha256": "1e4a3d15a80b04d9fd81efe5ae5ab7940975b20beebe3a880cef619f4b0014be"
+    },
+    "source/scripts/stream_decoder_graph.py": {
+      "after_sha256": "0023a2c80ebaa6cceedb872d4575d5241da11ebd64222df477dfdd138b5e97ab",
+      "before_sha256": "08576eb035e4870d3bceea15a6fb46830e18ba610adb42a1a45fe74ee9ac0666"
+    },
+    "source/scripts/stream_receipts.py": {
+      "after_sha256": "eb04b961f01e1fc01b70f10a2512da7fd8af037054a1d4508633d24e5868edb8",
+      "before_sha256": "001e50aa8581e4e165acd3fee2aeb503c08ac34c9be6e4408cfda858d009b4dc"
+    }
+  },
+  "supersedes": {
+    "manifest_sha256": "cb68515a1e770697ad0ac2d0c2abd9709780043e9d1579cba81706bb53f482f6",
+    "packet": 118,
+    "status": "withdrawn-never-launched"
+  },
+  "systemd_operations": false,
+  "verification": {
+    "author_inventory_matches_sealed": true,
+    "parent_chain": [
+      "118b",
+      "117",
+      "116b",
+      "116",
+      "115",
+      "114",
+      "113",
+      "112",
+      "111"
+    ],
+    "pycache_in_packet": 0,
+    "recursive_command": [
+      "/home/steve/.venvs/ltx25-baseline/bin/python3",
+      "-B",
+      "experiments/ltx25-b70/recovery/20261009-continuation118b-stream/runtime_packet.py",
+      "--verify-manifest-sha256",
+      "248e762de49d21b02a4f95d3791dbd9da7504b731f1a88cb5a930a78448db1f1"
+    ],
+    "result": {
+      "model_requests": 0,
+      "status": "source-closure-verified"
+    }
+  }
+}

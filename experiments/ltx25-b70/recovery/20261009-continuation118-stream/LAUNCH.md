@@ -1,3 +1,7 @@
+**Withdrawn 2026-10-09; sealed packet 118 was never launched.**
+The author fixes are applied, but do not alter sealed 118. Use the separately built
+[118b rebuild](../20261009-continuation118b-stream/LAUNCH.md). The procedure below is historical.
+
 # Packet 118 launch procedure (for the coordinator; the authoring agent never launches)
 
 **118 = 117 + three server-side levers, each launch-selectable, exact by construction, with an off form that is

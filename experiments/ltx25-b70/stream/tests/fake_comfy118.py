@@ -68,7 +68,7 @@ sys.path.insert(0, str(a.contract_dir))
 import stream_contract as c          # noqa: E402
 import stream_receipts as sr         # noqa: E402
 import qualification_gate as qg      # noqa: E402
-assert c.PACKET == 118, 'fake_comfy118 needs the packet 118 contract modules'
+assert c.PACKET in (118, '118b'), 'fake_comfy118 needs the packet 118 or 118b contract modules'
 POOL_CAP = c.parse_pool_cap(a.pool_cap)
 SERVER_OPTIONS = {'snapshot_mode': a.snapshot_mode, 'decoder_graph_pool_cap_bytes': POOL_CAP}
 _d = c.default_levers(a.anchor)

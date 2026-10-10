@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**2026-10-09, LTX 118b rebuilt and checked on CPU.**
+The four review problems are fixed in a new sealed packet. All 299 recovery tests,
+193 client checks and 10 preflight tests pass. Packet 118 is withdrawn and was never
+launched. This rebuild did not touch live work or devices. The first future comparison
+is 121 frames with the decoder graph off, matching 117's 5.40 seconds per chunk.
+[Packet, checks and launch reference](experiments/ltx25-b70/notes/2026-10-09-continuation118b-rebuild.md).
+
 **2026-10-10 01:20 UTC, halt resolved by the owner; LTX 117 at 121 frames launched as the live stream server.**
 The owner archived `FAULT.json` and accepted continued launches on boot 4aafe57b ("accept"; receipt
 `data/resume-20261008/fault-archive-20261010T011831Z-owner-accept-receipt.json`); no reboot. Fresh four-card health

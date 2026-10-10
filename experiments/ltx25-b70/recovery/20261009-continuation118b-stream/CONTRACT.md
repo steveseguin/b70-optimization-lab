@@ -1,21 +1,40 @@
-**Withdrawn 2026-10-09; sealed packet 118 was never launched.**
-The author fixes are applied, but do not alter sealed 118. Use the separately built
-[118b rebuild](../20261009-continuation118b-stream/LAUNCH.md). The procedure below is historical.
+# Packet 118b rebuild note (read first)
 
-# Packet 118 stream client contract
+118b supersedes withdrawn, never-launched sealed packet 118. Its parent is sealed 117,
+manifest `5826174ee3a3965d033758de006552742878f624800dadb90423879b3f0802c9`.
+As for 116b, wire schemas and node classes stay at the preceding packet's revision:
+`ltx.stream118.*` and node classes ending in `118`. Packet id is the string `"118b"`;
+names use `stream118b-`, comparison mode `stream-candidate-118b-v1`, and clip bases
+11820000 / 11821000. Numerical contracts and qualification ids are unchanged from 118;
+the new plan binds the renamed graphs. Request topology and tensor operations are unchanged.
 
-Packet 118 is packet 117 (frame anchor by default, the decoder graph, the cone anchor decode, the stage-A/B encodes
+Review corrections: P7 on the decode thread always compares the walk and fingerprint,
+independent of successor requests; P5's actual free reading is observed. Near-floor uses
+an inclusive 0.5 GiB boundary. Dual four-card checks compare each sample's memory admission
+verdict using the site's before/after floor, plus the existing identity fields.
+A disagreement still writes `snapshot-118-refused.json`; inherited decoder-116,
+anchor-decode-117/118 and precompute-117/118 latches remain binding.
+
+`queued` means POST-handler return and is refreshed at receipt staging. `first_served`
+means successful read and construction of an HTTP 200 response, not delivery or completed
+fsync. Missing and negative values remain visible. Split sums are accounting checks,
+not proof of causal accuracy. Instrumentation adds unmeasured CPU overhead.
+No XPU correctness or speed claim follows from this CPU rebuild.
+
+# Packet 118b stream client contract
+
+Packet 118b is packet 117 (frame anchor by default, the decoder graph, the cone anchor decode, the stage-A/B encodes
 on the decode thread, 49/97/121-frame chunks) plus three server-side levers that do not change a request graph or
 an output byte, and its own names. Everything in the packet-117 contract below still holds, with these changes.
-Client: `ltx_continuation_client.py --packet 118 [--expect-anchor frame] [--expect-decoder-graph 0|1]
+Client: `ltx_continuation_client.py --packet 118b [--expect-anchor frame] [--expect-decoder-graph 0|1]
 [--expect-anchor-decode full|cone] [--expect-bencode-overlap 0|1] [--expect-prep-ahead 0|1]
 [--expect-snapshot-mode walk|fingerprint] [--expect-pool-cap-gb GB]`.
 
 ## What changed from packet 117 (read this first)
 
-1. **Identity.** `packet` is the integer `118`; names carry `stream118-` (`stream118-s%08d`,
-   `stream118-q{eager,graph,repeat}-c00000k`); clip index bases `11800000` (qualification) and `11801000`
-   (stream); comparison mode `stream-candidate-118-v1`; schemas `ltx.stream118.chunk-receipt.v1`,
+1. **Identity.** `packet` is the string `"118b"`; names carry `stream118b-` (`stream118b-s%08d`,
+   `stream118b-q{eager,graph,repeat}-c00000k`); clip index bases `11820000` (qualification) and `11821000`
+   (stream); comparison mode `stream-candidate-118b-v1`; schemas `ltx.stream118.chunk-receipt.v1`,
    `ltx.stream118.decode-record.v1`, `ltx.stream118.preview-record.v1`, `ltx.stream118.qualification-verdict.v1`.
    The 132 qualification ids are new values over the same 132 keys (`frames/placement/anchor/dg/ad/bo/pa`).
 2. **The request graph is packet 117's form.** `stream_params(...)` and `build_chunk_graph(params)` take the same
@@ -35,7 +54,7 @@ Client: `ltx_continuation_client.py --packet 118 [--expect-anchor frame] [--expe
    agreements, disagreements).
 4. **Receipts** (`ltx.stream118.chunk-receipt.v1`) add, all measurement only:
    - `timing_ns` marks `admission_received` (the POST reached the server), `precheck_done`, `queued` (ComfyUI
-     validated and queued it), `executor_entry`, `request_snapshot_start/done`, `before_request_done`, the node
+     handler returned; refreshed at receipt staging), `executor_entry`, `request_snapshot_start/done`, `before_request_done`, the node
      starts `stream_text_start`, `anchor_start`, `condition_a_start`, `concat_a_start`, and
      `condition_a_lookup_done`, `condition_a_done`, `condition_b_lookup_done`, `condition_b_done`;
    - `node_starts_ns`: every node's first `executing` event of the request;
@@ -53,7 +72,7 @@ Client: `ltx_continuation_client.py --packet 118 [--expect-anchor frame] [--expe
    - `authority_checks`: `healthy_calls`, `healthy_s`, `plan_digest_s` (the authority's plan-identity check),
      `status_route_calls`, `status_route_s` (the status route's own cost) during the request;
    - `turnaround` (anchored chunks): the predecessor's receipt -> this submit: `marks_ns` (`receipt_staged`,
-     `commit`, `commit_written`, `executor_exit`, `first_served` = first HTTP 200 of the predecessor's receipt
+     `commit`, `commit_written`, `executor_exit`, `first_served` = first successfully constructed HTTP 200 response for the predecessor's receipt
      route, `admission_received`, `submit`), `split` (`receipt_staged_to_commit`, `commit_write`,
      `commit_to_first_served`, `served_to_admission`, `admission_parse`, `other`, `total`),
      `receipt_polls_before_served` (404s of the receipt route) and `commit_to_executor_exit_s`.
@@ -66,25 +85,25 @@ Client: `ltx_continuation_client.py --packet 118 [--expect-anchor frame] [--expe
    The cone and precompute latches are now `anchor-decode-118-refused.json` and `precompute-118-refused.json`; the
    launcher refuses those levers while either the 118 or the 117 latch exists. `decoder-graph-116-refused.json` stays
    shared. A moved or replaced tensor is refused the same way in both snapshot modes (the walk decides).
-8. **Client turnaround.** `--packet 118` manifest lines add `submit_split`, the snapshot summary, `authority_checks`,
+8. **Client turnaround.** `--packet 118b` manifest lines add `submit_split`, the snapshot summary, `authority_checks`,
    the server's `turnaround` split and the client's own `client_turnaround_s` (receipt verified -> next POST) and
    `client_post_s`.
 
 ---
 
-# The packet 117 contract (with 118 names)
+# The packet 117 contract (with 118b names)
 
 Packet 117 is packet 116b (frame anchor by default, 116a scheduling, the decoder graph, the packet-113/114
 frame references, the NA axis-router acceptance) plus four launch-selectable levers for the frame anchor,
 121-frame chunks, and its own names. Everything in the packet-116 contract below still holds, with these
-changes. Client: `ltx_continuation_client.py --packet 118 (or 117) [--expect-anchor frame] [--expect-decoder-graph 0|1]
+changes. Client: `ltx_continuation_client.py --packet 118b (or 117) [--expect-anchor frame] [--expect-decoder-graph 0|1]
 [--expect-anchor-decode full|cone] [--expect-bencode-overlap 0|1] [--expect-prep-ahead 0|1]`.
 
 ## What changed from packet 116b (read this first)
 
-1. **Identity** (packet 118's values; 117 had its own). Names carry `stream118-` (`stream118-s%08d`,
-   `stream118-q{eager,graph,repeat}-c00000k`); clip index bases `11800000` (qualification) and `11801000`
-   (stream); comparison mode `stream-candidate-118-v1`; schemas `ltx.stream118.chunk-receipt.v1`,
+1. **Identity** (packet 118's values; 117 had its own). Names carry `stream118b-` (`stream118b-s%08d`,
+   `stream118b-q{eager,graph,repeat}-c00000k`); clip index bases `11820000` (qualification) and `11821000`
+   (stream); comparison mode `stream-candidate-118b-v1`; schemas `ltx.stream118.chunk-receipt.v1`,
    `ltx.stream118.decode-record.v1`, `ltx.stream118.preview-record.v1`,
    `ltx.stream118.qualification-verdict.v1`.
 2. **Chunk length 121** (`LTX_STREAM_FRAMES=121`, 5.04 s): 16 latent frames, 256 stage-A and 1024 stage-B
@@ -147,12 +166,12 @@ changes. Client: `ltx_continuation_client.py --packet 118 (or 117) [--expect-anc
    exists and `LTX_BENCODE_OVERLAP=1` or `LTX_PREP_AHEAD=1` while the second exists. The decoder-graph latch
    stays `decoder-graph-116-refused.json`.
 
-The packet-116 contract follows unchanged except for the names (`stream118-…` everywhere `stream116b-…`
+The packet-116 contract follows unchanged except for the names (`stream118b-…` everywhere `stream116b-…`
 appears, `packet: 118`, the clip bases and comparison mode above) and the additions listed here.
 
 ---
 
-# The packet 116 stream client contract (with 118 names)
+# The packet 116 stream client contract (with 118b names)
 
 ## What changed from packet 115 (read this first)
 
@@ -191,13 +210,13 @@ floors and the latches). What changes for a client:
    (§6a); `frame_anchor.path` for the frame anchor too. **Preview records**
    (`ltx.stream116.preview-record.v1`) add `video_done`, `anchor_ready`, `audio_done`, `hashed`,
    `record_written`.
-6. **Names**: `stream118-…`; node classes `…116`; clip index base `11801000`. A 115 graph builder
+6. **Names**: `stream118b-…`; node classes `…116`; clip index base `11821000`. A 115 graph builder
    does not produce valid 116 requests.
 7. **Qualification** adds the decoder-graph rows and, for the frame anchor at
    49/two-way20-28 and 97/two-way20-28, a cross-packet check: the eager chain must equal the
    live packet-113 (49) / packet-114 frame (97) qualification byte for byte
    (`resolution/reference-frame-hashes.json`).
-8. **Client:** `ltx_continuation_client.py --packet 118 (or 117) [--expect-anchor frame|mixed|latent|guide]
+8. **Client:** `ltx_continuation_client.py --packet 118b (or 117) [--expect-anchor frame|mixed|latent|guide]
    [--expect-decoder-graph 0|1] [--expect-anchor-decode full|cone] [--expect-bencode-overlap 0|1]
    [--expect-prep-ahead 0|1]` (packet 117: the levers are request fields, see the top of this file).
 
@@ -222,7 +241,7 @@ admission layer in front of it and five extra routes.
 The server accepts exactly one graph per parameter set. The reference builder is
 `stream_contract.py`. It is stdlib-only, so import it rather than
 hand-assembling JSON. The sealed copy is at
-`/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-118/resolution/components/stream_contract.py`.
+`/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-118b/resolution/components/stream_contract.py`.
 
 ```python
 import stream_contract as c
@@ -313,7 +332,7 @@ uses for timing when a client id is present.
   "348": {"class_type": "LTXVLatentUpsampler", "inputs": {"samples": ["367", 0], "upscale_model": ["420", 4], "vae": ["420", 2]}},
   "352": {"class_type": "KSamplerSelect", "inputs": {"sampler_name": "euler_ancestral"}},
   "356": {"class_type": "EmptyLTXVLatentVideo", "inputs": {"batch_size": 1, "height": 128, "length": 97, "width": 128}},
-  "364": {"class_type": "LTXPipelineTextEncode", "inputs": {"clip": ["420", 1], "clip_index": 11801001, "comparison_mode": "stream-candidate-118-v1", "depth": 2, "mode": "pipeline-window", "output_size": "256x256", "qualification_id": "<frames/placement/anchor/dgN id from the plan>", "run_name": "stream118-s00000001", "speed_only": false, "text": "A small red wooden toy boat drifts on calm water at sunset."}},
+  "364": {"class_type": "LTXPipelineTextEncode", "inputs": {"clip": ["420", 1], "clip_index": 11801001, "comparison_mode": "stream-candidate-118b-v1", "depth": 2, "mode": "pipeline-window", "output_size": "256x256", "qualification_id": "<frames/placement/anchor/dgN id from the plan>", "run_name": "stream118b-s00000001", "speed_only": false, "text": "A small red wooden toy boat drifts on calm water at sunset."}},
   "365": {"class_type": "LTXVConditioning", "inputs": {"frame_rate": 24.0, "negative": ["stream_text", 0], "positive": ["stream_text", 0]}},
   "366": {"class_type": "LTXVEmptyLatentAudio", "inputs": {"audio_vae": ["420", 3], "batch_size": 1, "frame_rate": 24.0, "frames_number": 97}},
   "367": {"class_type": "LTXVSeparateAVLatent", "inputs": {"av_latent": ["344", 0]}},
@@ -325,18 +344,18 @@ uses for timing when a client id is present.
   "395": {"class_type": "ManualSigmas", "inputs": {"sigmas": "0.85, 0.7250, 0.4219, 0.0"}},
   "404": {"class_type": "ManualSigmas", "inputs": {"sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"}},
   "420": {"class_type": "LTXHostEmbeddingComponents", "inputs": {"encoder_mode": "control", "placement": "split"}},
-  "stream_anchor": {"class_type": "LTXStreamLatentAnchor116", "inputs": {"predecessor_anchor_sha256": "ffff…(64 hex)", "run_name": "stream118-s00000001"}},
-  "stream_condition_a": {"class_type": "LTXStreamLatentCondition116", "inputs": {"anchor": ["stream_anchor", 0], "latent": ["356", 0], "run_name": "stream118-s00000001", "stage": "A", "strength": 1.0}},
-  "stream_condition_b": {"class_type": "LTXStreamLatentCondition116", "inputs": {"anchor": ["stream_anchor", 1], "latent": ["348", 0], "run_name": "stream118-s00000001", "stage": "B", "strength": 1.0}},
-  "stream_output": {"class_type": "LTXStreamChunk116", "inputs": {"anchor": "latent", "audio_latent": ["369", 1], "audio_vae": ["420", 3], "chunk_index": 1, "anchor_decode": "full", "bencode_overlap": 0, "decoder_graph": 1, "frames": 97, "kind": "stream", "placement": "two-way20-28", "predecessor_anchor_sha256": "ffff…(64 hex)", "prep_ahead": 0, "reuse_text": 0, "run_name": "stream118-s00000001", "scene_id": "boat", "seed": 1001, "stage_a_latent": ["367", 0], "stream_seq": 1, "vae": ["420", 2], "video_latent": ["369", 0]}},
-  "stream_text": {"class_type": "LTXStreamText116", "inputs": {"conditioning": ["364", 0], "run_name": "stream118-s00000001", "text": "A small red wooden toy boat drifts on calm water at sunset."}}
+  "stream_anchor": {"class_type": "LTXStreamLatentAnchor116", "inputs": {"predecessor_anchor_sha256": "ffff…(64 hex)", "run_name": "stream118b-s00000001"}},
+  "stream_condition_a": {"class_type": "LTXStreamLatentCondition116", "inputs": {"anchor": ["stream_anchor", 0], "latent": ["356", 0], "run_name": "stream118b-s00000001", "stage": "A", "strength": 1.0}},
+  "stream_condition_b": {"class_type": "LTXStreamLatentCondition116", "inputs": {"anchor": ["stream_anchor", 1], "latent": ["348", 0], "run_name": "stream118b-s00000001", "stage": "B", "strength": 1.0}},
+  "stream_output": {"class_type": "LTXStreamChunk116", "inputs": {"anchor": "latent", "audio_latent": ["369", 1], "audio_vae": ["420", 3], "chunk_index": 1, "anchor_decode": "full", "bencode_overlap": 0, "decoder_graph": 1, "frames": 97, "kind": "stream", "placement": "two-way20-28", "predecessor_anchor_sha256": "ffff…(64 hex)", "prep_ahead": 0, "reuse_text": 0, "run_name": "stream118b-s00000001", "scene_id": "boat", "seed": 1001, "stage_a_latent": ["367", 0], "stream_seq": 1, "vae": ["420", 2], "video_latent": ["369", 0]}},
+  "stream_text": {"class_type": "LTXStreamText116", "inputs": {"conditioning": ["364", 0], "run_name": "stream118b-s00000001", "text": "A small red wooden toy boat drifts on calm water at sunset."}}
 }
 ```
 
 Values that vary per chunk:
 
-- `run_name` is `stream118-s%08d` of `stream_seq`, identical on every node that has one.
-- `338/339.noise_seed` is `seed`; `364.clip_index` is `11801000 + stream_seq`.
+- `run_name` is `stream118b-s%08d` of `stream_seq`, identical on every node that has one.
+- `338/339.noise_seed` is `seed`; `364.clip_index` is `11821000 + stream_seq`.
 - `364.text` and `stream_text.text` are both the prompt.
 - `364.qualification_id` depends on `frames`, `placement`, `anchor` and `decoder_graph`;
   the status route returns it. The 32 values are in `stream-plan.json` → `qualification_ids`
@@ -395,7 +414,7 @@ graph qualification chains.
   until committed). `execution_error` means the server halted.
 - **Receipt file:** `<server run dir>/receipts/receipt-<run_name>.json`, written
   once (exclusive create plus fsync) at **anchor ready**. The run dir is
-  `/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-118-<anchor>-dg<0|1>-ad<full|cone>-bo<0|1>-pa<0|1>-sm<walk|fp>-<placement>-w1-b1-p1-dxpu2-s256x256-f<frames>`
+  `/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-118b-<anchor>-dg<0|1>-ad<full|cone>-bo<0|1>-pa<0|1>-sm<walk|fp>-<placement>-w1-b1-p1-dxpu2-s256x256-f<frames>`
   (status → `receipt_dir`).
 
 Receipt fields (schema `ltx.stream116.chunk-receipt.v1`):

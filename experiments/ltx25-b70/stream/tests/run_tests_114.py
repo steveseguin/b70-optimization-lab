@@ -343,10 +343,13 @@ def test_cross_packet():
     check('X4 a 114 client with the 113 manifest sha still refuses (needs a packet 114 server), exit 8',
           cp.returncode == 8 and 'needs a packet 114 server' in cp.stdout, 'rc=%d' % cp.returncode)
     e.stop_fake()
-    e = Env('unsealed')
+    e = Env('sealed-default')
+    e.start_fake('--phase', 'stream')
     cp = e.client('--max-chunks', '1', manifest=None)
-    check('X5 --packet 114 without --manifest-sha256 refuses while the build is pending (exit 8, nothing sent)',
-          cp.returncode == 8 and 'not sealed yet' in cp.stdout, 'rc=%d' % cp.returncode)
+    check('X5 sealed packet 114 default manifest refuses a fake manifest (exit 8, nothing posted)',
+          cp.returncode == 8 and 'runtime_manifest_sha256' in cp.stdout and e.stats()['posts'] == 0,
+          'rc=%d' % cp.returncode)
+    e.stop_fake()
 
 
 for t in (test_latent49, test_latent97, test_frame_anchor, test_text_reuse_off, test_qualification,
