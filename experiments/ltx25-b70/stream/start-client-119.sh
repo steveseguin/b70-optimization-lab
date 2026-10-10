@@ -6,6 +6,7 @@ FR=${1:?frames}; DG=${2:?dg 0|1}; AD=${3:?ad}; BO=${4:?bo}; PA=${5:?pa}; SM=${6:
 DS=${8:?sampler-a|sampler-b|eager-display}; AR=${9:?anchor read-ahead 0|1}; SS=${10:?full|a-xpu3-sync}; shift 10
 W=${LTX_STREAM_WORKDIR:-/home/steve/ltx-stream/s119-live01}
 mkdir -p "$W"
+systemctl --user reset-failed ltx119-stream-client-20261010 2>/dev/null
 exec systemd-run --user --unit=ltx119-stream-client-20261010 --property=Restart=no --property=KillSignal=SIGINT --property=TimeoutStopSec=960 \
   --property=WorkingDirectory=/home/steve/llm-optimizations/experiments/ltx25-b70/stream \
   --property="StandardOutput=append:$W/client.log" --property="StandardError=append:$W/client.log" \

@@ -10,6 +10,7 @@ if [[ -n "${LTX_DISPLAY_REPLICA_TRANSIENT_GIB:-}" ]]; then
   EXTRA+=(--expect-display-transient-gib "$LTX_DISPLAY_REPLICA_TRANSIENT_GIB")
 fi
 mkdir -p "$W"
+systemctl --user reset-failed ltx122-stream-client-20261010 2>/dev/null
 exec systemd-run --user --unit=ltx122-stream-client-20261010 --property=Restart=no --property=KillSignal=SIGINT --property=TimeoutStopSec=960 \
   --property=WorkingDirectory=/home/steve/llm-optimizations/experiments/ltx25-b70/stream \
   --property="StandardOutput=append:$W/client.log" --property="StandardError=append:$W/client.log" \
