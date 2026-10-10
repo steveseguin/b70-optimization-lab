@@ -131,10 +131,37 @@ package and a neural.download recipe per model.
 Each stage is run as packets with receipts, notes under `notes/`, results
 under `results/`, and promotion through the existing publication standards.
 
+## Quantized lines are separate models (owner decision, 2026-10-10)
+
+The owner's words: "We will maintain the FP8 model and its optimizations, and
+treat the IQ3 as a model of its own. The goal will be to keep IQ3 lossless
+relative to what it is, not relative to FP8. ... the FP8 is for me, while the
+IQ3 will be for others, but we will maintain our quality and determinism and
+lossless standard at the same level, even if the model itself is naturally
+quantized already. We will treat it as a different model, given the quality
+difference, and not consider it a proper Flash Qwen Next model, but a quantized
+compressed version."
+
+Rules that follow:
+
+- A quantized release (for example Unsloth UD-IQ3_XXS of Qwen3.8 Flash-Next) is
+  a separate model with its own lane, its own oracle and its own records. Its
+  oracle is the exact arithmetic of its own published weights: the certified
+  output is bit-identical across fresh processes and agrees with the lab's CPU
+  reference dequantization of the same bytes. No tolerance against FP8 is used
+  as a gate; differences from FP8 may be reported for information only.
+- The lossless, deterministic, no-cheating standard applies to it in full. The
+  speed number counts only when the output is what the unchanged quantized
+  model produces.
+- Naming and publication label it as what it is: "Qwen3.8 Flash-Next
+  UD-IQ3_XXS (Unsloth), quantized compressed version", never as the Flash-Next
+  model, and never next to the FP8 record as if comparable.
+- The FP8 four-card line remains the authority for Flash-Next itself and keeps
+  being optimized.
+
 ## Owner decisions still open for this objective
 
 - Storage destination for allowed weights (cleanup of 83 GB, or mounting the
   external disk as a download cache).
-- Quality tolerances for quantized lines (they are not lossless versus FP8).
 - The project's name.
 - Any weight source outside official/Unsloth, case by case.

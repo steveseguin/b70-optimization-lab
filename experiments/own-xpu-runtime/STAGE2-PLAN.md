@@ -329,3 +329,17 @@ under the quantized target require the owner's tolerances and that line's
 independent quality oracle. Every accepted proposal must be verified by the
 unchanged declared quantized target; the official FP8 quality result cannot
 be inherited by this combination.
+
+## Owner decision on the quantized line (2026-10-10)
+
+The IQ3 line is a separate model, not a Flash-Next variant with tolerances.
+Its gate is the lab's full lossless standard against its own weights:
+bit-identical outputs across fresh processes on the fixed suite, agreement with
+the CPU reference dequantization of the same bytes (stage1/packet1b loaders),
+determinism receipts, and no cheating. Differences from FP8 are reported for
+information, never used as a pass/fail tolerance. Owner decision 1 above
+("set quant quality tolerances") is therefore closed: there are none; the
+remaining choice is the grid (IQ3_XXS first, per packet 1c). Publication label:
+"Qwen3.8 Flash-Next UD-IQ3_XXS (Unsloth), quantized compressed version". The
+FP8 four-card line remains the Flash-Next authority. Full text:
+[docs/own-xpu-runtime-objective.md](../../docs/own-xpu-runtime-objective.md).
