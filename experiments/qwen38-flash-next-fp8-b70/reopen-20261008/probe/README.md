@@ -1,18 +1,41 @@
 # Single-card probes — CPU prepared, coordinator execution only
 
-**2026-10-09: the owner accepted continued operation on this boot, without a
-reboot.** The reviewed teardown patch is applied to the repository overlay.
-Native cleanup remains unqualified. No probe was run during this task; GPU
-work stays serialized behind LTX and belongs to the coordinator.
+**2026-10-10: host fault halt after the third incident; owner decision pending.**
+Do not execute the historical commands below or remove the host FAULT marker.
+The earlier acceptance does not cover this new fault.
 
-The two earlier tiny probes returned exact bytes, then faulted near worker
-exit. The image-versus-host UMD comparison did not discriminate; see the
-[exit lifecycle analysis](../../notes/2026-10-09-exit-lifecycle-analysis.md).
-The indirect/direct gathers and new first-forward test are diagnostics, not
-model quality or performance evidence. The separate
-[host-pointer proposal](../overlay-fix-hostptr/README.md) remains unapplied.
+## Exit fault reproduced, second window, 2026-10-10
+
+On card `23:00.0`, image UMD, `probe-first-forward-20261010c` passed with exact
+bytes, ordered rank-0 teardown and zero new faults. Then
+`probe-abrupt-immediate-20261010c` completed one gather/one explicit sync and
+exact readback, returned from local-reference release at 18:07:18.963156 UTC,
+and recorded before-exit at 18:07:18.963453. The first BCS `-ENOENT` line was
+18:07:19.034122; CAT/reset and another response made four new fault-class lines.
+The watcher failed and the coordinator recorded the third incident in FAULT.
+Saved bounded health subsequently passed; that does not clear the halt.
+
+The [preregistered interpretation](#preregistered-interpretation) is now
+**clean exit clean; immediate abrupt exit faults**, superseding the first
+window's “Both clean”. The ten-second-idle pass points to time available for
+native command completion/deferred release, but no native USM-unmap or queue
+lifetime was measured. Python locals were released in both abrupt variants.
+The existing teardown overlay is the required cooperative exit path, still
+awaiting full four-rank qualification. Another direct-pointer or retained-owner
+abrupt arm adds no needed production decision now that the fault is reproduced.
+
+[Verdict, exact timestamps, receipt hashes and limits](../../notes/2026-10-10-exit-fault-reproduced.md).
+After owner resolution, the next step is one attempt-8 calibrate-load under
+that overlay, with the 96 GB loading guard and unchanged stop rules, not a
+probe chain. [Text-only command and preconditions](../../notes/2026-10-10-exit-fault-reproduced.md#halt-and-next-step-attempt-8-text-only)
+include the old owner receipt's refusal after the third fault. No new run or
+marker was changed by this CPU documentation task.
 
 ## Results and corrected commands, 2026-10-10
+
+**Historical first window and preparation.** Superseded by the second-window
+verdict above; the `20261010c` first-forward/immediate paths below now contain
+evidence and must never be reused. The old acceptance cannot admit another run.
 
 The coordinator ran the exit probes on card `23:00.0` with image UMD:
 clean-exit `20261010b` passed (gather 1, explicit sync 1, cleanup sync 1), and
@@ -387,9 +410,11 @@ arm requires a separately admitted state under the same guardian/watcher rule.
 
 Use the [dated preregistered interpretation table](#prepared-for-2026-10-10-written-2026-10-09) above.
 
-The owner has resolved the prior boot halt; every new fault ends this probe
-sequence. The [applied teardown patch](../overlay-fix-teardown/README.md) has
-CPU ordering tests only; no row turns a probe result into production approval.
+The owner resolved the earlier halt only; the third incident has now halted
+this sequence again. Every new fault ends submissions. The
+[applied teardown patch](../overlay-fix-teardown/README.md) has CPU ordering
+coverage and the one-rank native result recorded above; full four-rank native
+qualification remains open. No row turns a probe result into production approval.
 
 A missing marker, timeout, stale watcher, unavailable required evidence or
 exception is inconclusive. Compare fault timestamps to release/exit markers;

@@ -1,27 +1,33 @@
 # Flash-Next Screen 1b — native FP8 mmap adapter
 
-**2026-10-10: both exit probes passed; first-forward admission is repaired on CPU.**
-The clean and ten-second-idle abrupt arms returned exact bytes with clean
-post-worker watchers on the image UMD. Both released local references before
-exit, as did the October 9 tiny probes. The earlier faults remain unexplained;
-native cleanup and TP4 remain unqualified. First-forward failed before device
-work because `/probe` support files were treated as children of `/repo/...`.
-The fixed receipt hashes the mounts independently and reports pre-worker
-refusal promptly without weakening fault admission or clearing STOP.
+**2026-10-10, second probe window: immediate abrupt exit reproduced the fault;
+first-forward passed under the teardown overlay. The host is halted awaiting
+the owner's decision after its third incident.** Clean exit and abrupt exit
+after ten seconds had passed earlier. The immediate arm completed the gather
+and exact readback, then logged BCS `-ENOENT`/CAT/reset 70.669 ms after its
+before-exit marker. This supports an exit/lifetime timing problem; the particular
+native mapping remains unidentified, and attempt 7's startup fault remains
+unresolved. Every cooperative worker exit must use the applied graceful path.
 
-[Results, evidence and next arms](../notes/2026-10-10-exit-probes-result.md),
-[fixed text-only commands](probe/README.md#results-and-corrected-commands-2026-10-10),
-[CPU validation](VALIDATION.md#probe-mount-admission-repair-2026-10-10):
-360 unique passes, seven prohibited skips; first-forward separately passes 37.
-No device/container/server/unit work occurred during this repair. Saved runs
-are unchanged. The coordinator owns future windows and LTX operations.
+[Verdict, receipt timestamps, limits and exact next command](../notes/2026-10-10-exit-fault-reproduced.md),
+[validation status](VALIDATION.md#exit-fault-reproduction-2026-10-10),
+[probe results](probe/README.md#exit-fault-reproduced-second-window-2026-10-10).
+The single-rank first-forward returned exact bytes and all teardown phases with
+zero new faults. It does not qualify full TP4, PLE, partial-load/signal exits or
+model outputs. Another retained-reference abrupt arm is not the next step.
 
-The explicit `--owner-acceptance` gate remains bound to the committed owner
-receipt, full boot ID and decision time, 01:18:31 UTC. Earlier faults remain
-excluded evidence; every later classified fault refuses. The overlay manifest
-is unchanged at `e00bb55d8378ecd0065e82a8c3b6fdd59268bd33aae6e0f356ca48f067926f2d`.
-[Earlier admission validation](VALIDATION.md#owner-acceptance-admission-2026-10-10)
-and the [frozen teardown patch](overlay-fix-teardown/README.md) remain historical.
+After owner resolution, fresh health, an exclusive idle window, the five-minute
+gap and FAULT absence, recommend one **attempt-8 calibrate-load** with the
+96 GB loading guard and the teardown overlay. The old owner receipt does not
+admit work after this fault. Same-boot continuation needs a new reviewed/pinned
+decision and admission update; on an authorized fresh clean boot omit the old
+boot-specific flag. The linked command is text only, not a queued launch.
+The overlay manifest remains
+`e00bb55d8378ecd0065e82a8c3b6fdd59268bd33aae6e0f356ca48f067926f2d`.
+Evidence and FAULT remain untouched; this analysis operated no device, container,
+server, systemd unit or LTX endpoint. Earlier
+[CPU admission repair](VALIDATION.md#probe-mount-admission-repair-2026-10-10)
+and [first-window results](../notes/2026-10-10-exit-probes-result.md) remain history.
 
 ## Historical attempt-7 preparation (it later faulted)
 

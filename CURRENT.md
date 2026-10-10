@@ -1,5 +1,23 @@
 # Current Workspace State
 
+**2026-10-10, Flash-Next exit fault reproduced; the four-card host remains halted.**
+The worker finished its calculation correctly, then the card faulted just after
+it exited abruptly. Clean shutdown and waiting ten seconds before abrupt exit
+both passed. The larger one-layer test also passed with graceful cleanup.
+This supports a shutdown timing problem, but does not prove which driver
+resource was still active or explain attempt 7's earlier startup fault.
+
+The third incident on boot `4aafe57b` is awaiting the owner's decision. The
+saved health check passed afterward; the halt still applies and its FAULT file
+is untouched. No new work was launched by this CPU-only review. Every worker
+must use graceful cleanup wherever the process can still cooperate. After the
+owner resolves the halt, the next Flash-Next step is one full loading check
+with that cleanup and the 96 GB guard, in an idle window after the five-minute
+gap. The old acceptance does not cover this fault; continuing on the same boot
+needs a newly recorded decision and matching admission support. Another abrupt
+exit test is not needed now. [Verdict, evidence and next command](experiments/qwen38-flash-next-fp8-b70/notes/2026-10-10-exit-fault-reproduced.md).
+
+
 **2026-10-10 18:10 UTC, HALT: third GPU fault incident of boot 4aafe57b, reproduced on purpose by the immediate-abrupt-exit probe; owner decision needed (reply "continue" to resume LTX on this boot, or reboot).**
 Probe window 2 (card 23:00.0, image UMD, owner-acceptance receipt, host watcher; LTX stopped 18:05:13 after 62 chunks of 137 session 2):
 `runs/probe-first-forward-20261010c` **PASSED** (one-layer single-rank first forward with production-size pinned slabs under the teardown

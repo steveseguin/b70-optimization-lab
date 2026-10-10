@@ -1,5 +1,32 @@
 # Screen 1b CPU validation — native FP8 mmap, 2026-10-08
 
+## Exit fault reproduction, 2026-10-10
+
+The coordinator's second native window supplied two new results; this update
+only analyzed saved files on CPU and did not rerun any test or launch:
+
+| Run | Result | Qualification boundary |
+| --- | --- | --- |
+| `probe-first-forward-20261010c` | Passed: exact bytes, rank-0 teardown complete, post-worker watcher passed, zero new faults | One layer/rank and production-size host allocations; TP4/full PLE/model output and signal paths remain open |
+| `probe-abrupt-immediate-20261010c` | Failed as intended by fault detection: exact gather/readback, worker status 0, then four fault-class lines at 18:07:19 UTC | Immediate post-release abrupt exit reproduces the fault; no production qualification |
+
+Earlier clean-exit and ten-second-idle abrupt runs passed. The preregistered
+clean-pass/abrupt-fault row now supports teardown/lifetime timing. Native
+queue/mapping destruction remains unmeasured; first-forward explicitly reports
+`native_queue_destruction_verified=false`. Attempt 7's pre-stop startup fault
+is not thereby explained. [Full verdict and timestamp/hash evidence](../notes/2026-10-10-exit-fault-reproduced.md).
+
+The third-incident halt remains even though saved bounded health passed.
+The old pinned owner receipt refuses the new fault. After authorized resolution,
+attempt 8 is calibrate-load under the existing teardown overlay and 96 GB load
+guard, with four native rank receipts and every memory/postflight gate retained;
+[preconditions, admission caveat, exact text-only command and stop rules](../notes/2026-10-10-exit-fault-reproduced.md#halt-and-next-step-attempt-8-text-only).
+No evidence, run directory, FAULT marker, runtime source or overlay pin changed.
+Checks for this documentation update cover evidence JSON/hash/timestamp
+consistency, command/source review, local links and `git diff --check`; previous
+CPU test counts below are historical and were not rerun for prose changes.
+
+
 ## Probe mount admission repair, 2026-10-10
 
 First-forward admission now hashes package support files relative to the package
