@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**2026-10-10 10:50 UTC, packet 130 sealed (xpu:2 inventory + guarded allocator release); 169 not launched: the reclaim is unverified and the upside over the 145 line is nil.**
+Codex's inventory (`notes/2026-10-10-xpu2-residency-169.md`, commits 380fdfe03, d5471ed43): xpu:2 holds text layers 0–23 (10.15 GiB) and other
+text state (4.13), the replica weights (0.78), live allocations 3.0–4.4, and 2.4–3.9 GiB reserved-but-unused allocator memory; physical free
+at the refusal 7.88 GiB; the 169 replica screen needs 1.37 GiB reclaimed. 130 adds `LTX_DISPLAY_ALLOCATOR_RELEASE=before-admission`
+(one cache release before an otherwise failing admission, then a fresh free check; default off; 842/842 recovery, 4,419/4,419 client,
+10/10 preflight). Verified freed memory: 0 (CPU-only). Even if 1.5 GiB returns, card 2 clears by 0.13 GiB and the forecast is 0.886–0.950 s/s
+against the measured 0.91–0.92 at 145: expected gain ≈ 0 for a 15-minute outage and a likely second latch. Decision: keep 129 at 145 as the
+production line; 169 stays a diagnostic option. Next CPU design (131): the xpu:3 residency inventory and whether the cone decode's graph pool
+can fit at 145 (cone 0.9 s eager vs ≈ 0.7 graphed), plus the on-chain snapshot schedule option's cost now that digests are cached.
+
 **2026-10-10, packet 130 sealed for CPU-only review; live 169-frame admission remains unverified.**
 The saved 169 refusal needs more memory than its message says: it is short
 0.616 GiB for the reserve and floor, or **1.366 GiB including the existing
