@@ -1,5 +1,18 @@
 # Current Workspace State
 
+**2026-10-10 02:56 UTC, swap to packet 119 (graph cone + eager display + anchor read-ahead) at 121 frames.**
+The second 118b dg0 session streamed 271 chunks (02:18–02:50 UTC, verdict 08301c03a083, period median 5.28 s, no fault,
+no slip). Codex sealed 119 on CPU (commit 01aa9a790; manifest `d4b99d33…6890`; 375/375 recovery, 278/278 client, 10/10
+preflight; design `notes/2026-10-10-continuation119-stream-design.md`). Its receipt analysis corrects the dg1 reading:
+the +0.5 s sits in the native upsampler blocking on the shared device before stage B (display replay 2.12 s finishing
+1 ms before condition-B starts), and a snapshot's 0.057 s is mostly CPU state/fact work (sync ≈ 0.9 ms), so the snapshot
+option (lever C, off) is unlikely to pay. Levers: `LTX_DISPLAY_SCHEDULE=sampler-a|eager-display|sampler-b` (eager-display
+= graph cone, uncached eager full display, per-chunk display==cone byte check kept), `LTX_ANCHOR_READ_AHEAD=0|1`
+(verified cached anchor bytes, native reader on any miss), `LTX_SNAPSHOT_SCHEDULE=full|a-xpu3-sync` (off). Controlled
+stop 02:50:54, names archived, fresh receipt `postflight-pre119-20261010T025118Z.json`, `--check-only` passed; launch
+at 02:55:59 UTC: `launch-119.sh 121 frame 1 cone 1 1 fingerprint 1.0 eager-display 1 full`, predicted period
+4.95–5.17 s (central 5.04 = real time). Client `start-client-119.sh 121 1 cone 1 1 fingerprint 1.0 eager-display 1 full`.
+
 **2026-10-10, LTX119 built and sealed on CPU; ready for the coordinator's comparison.**
 The packet can keep the faster anchor decode while running display decoding eagerly.
 Verified anchor reading can run ahead too. The optional reduction in stage-A
