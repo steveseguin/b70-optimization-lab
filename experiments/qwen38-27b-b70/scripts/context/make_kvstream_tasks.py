@@ -290,7 +290,7 @@ else:
         if isinstance(x, str) and re.fullmatch(r"\s*[+-]?\d+\s*", x):
             return int(x)
         return None
-    DELETED = {"", "null", "none", "deleted", "del"}
+    DELETED = {"null", "none", "deleted", "del"}
     def text_norm(x):
         t = " ".join(str(x).lower().replace(".", " ").split())
         for art in ("the ", "a ", "an "):
@@ -306,7 +306,8 @@ else:
                          "correct" if text_norm(a) == text_norm(v) else "wrong")
             continue
         if v is None:
-            status[k] = "correct" if (present and is_del) else ("blank" if not present else "wrong")
+            status[k] = ("blank" if not present or (isinstance(a, str) and a.strip() == "")
+                         else "correct" if is_del else "wrong")
         elif not present or (isinstance(a, str) and a.strip() == ""):
             status[k] = "blank"
         elif as_int(a) == v:
