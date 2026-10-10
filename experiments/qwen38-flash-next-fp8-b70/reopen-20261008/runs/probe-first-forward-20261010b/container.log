@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/probe/single_rank_first_forward_probe.py", line 510, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/probe/single_rank_first_forward_probe.py", line 488, in main
+    support_source_sha256={str(path.relative_to(PACKAGE)): harness.digest(path.read_bytes())
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 682, in relative_to
+    raise ValueError(f"{str(self)!r} is not in the subpath of {str(other)!r}")
+ValueError: '/probe/single_rank_slab_probe.py' is not in the subpath of '/repo/experiments/qwen38-flash-next-fp8-b70/reopen-20261008'

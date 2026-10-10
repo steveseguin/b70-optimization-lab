@@ -1,0 +1,38 @@
+{
+  "boot_id": "4aafe57b-a54f-4bfd-b4ed-9f1cbb8830c7",
+  "health_sha256": "afd56b99ed63a8797823c9c9a2c40f74ee93a67623be76339bcb478d37be308c",
+  "journal_admission": {
+    "counted_fault_lines": [],
+    "counted_gpu_incidents": 0,
+    "excluded_fault_lines": [
+      "2026-10-08T21:39:27.868476-04:00 steve-b70s kernel: xe 0000:23:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+      "2026-10-08T21:39:27.868648-04:00 steve-b70s kernel: xe 0000:23:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=6, state=0x289",
+      "2026-10-08T22:27:32.185435-04:00 steve-b70s kernel: xe 0000:23:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+      "2026-10-08T22:27:32.185617-04:00 steve-b70s kernel: xe 0000:23:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=6, state=0x289"
+    ],
+    "incident_baseline_unix": 1791595111.0,
+    "journal_evidence_available": true,
+    "monitoring_cutoff_unix": 1791595111.0,
+    "owner_acceptance": {
+      "action": "FAULT.json archived by the owner; GPU launches re-admitted on boot 4aafe57b",
+      "archived_to": "fault-archive/FAULT-20261010T0130Z-boot4aafe57b-owner-accepted-continue.json",
+      "boot_id": "4aafe57b-a54f-4bfd-b4ed-9f1cbb8830c7",
+      "conditions": "Fault-halt rule unchanged for any further incident: record, halt new requests, one controlled application stop; no restart loop, no reboot, no reset, no settings change. Flash-Next probes only in idle windows after a controlled LTX stop.",
+      "decision": "Owner, 2026-10-09 evening local, after being asked 'reboot the host, or accept continuing LTX launches on this boot': ran the archive command and replied 'i ran it. accept'.",
+      "incidents_on_boot": 2,
+      "kernel_fault_class_lines_on_boot": 4,
+      "last_fault_line_utc": "2026-10-09T02:27:32Z",
+      "schema": "ltx.fault-archive-receipt.v1",
+      "time_utc": "20261010T011831Z",
+      "written_by": "coordinator (Claude)"
+    },
+    "owner_acceptance_path": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261008/fault-archive-20261010T011831Z-owner-accept-receipt.json",
+    "owner_acceptance_sha256": "7c67c88aee396774ae8c2b29e23dd8366de9ab2375acdafec7b6254f23bbd5b1",
+    "owner_acceptance_verified": true,
+    "passed": true
+  },
+  "new_fault_lines": [],
+  "passed": true,
+  "read_started_unix": 1791654349.3881636,
+  "updated_unix": 1791654349.6261442
+}
