@@ -1,0 +1,207 @@
+{
+ "label": "single-16k-draft4",
+ "shape": "1 slot x 16K",
+ "draft_n_max": 4,
+ "slots": 1,
+ "ctx_per_slot": 16384,
+ "ubatch": 2048,
+ "launcher": "/home/steve/llm-optimizations/scripts/serve-gemma4-26b-q8-production.sh",
+ "launcher_env": {
+  "GEMMA4_26B_PROFILE": "service",
+  "CTX_SIZE": "16384",
+  "PARALLEL": "1",
+  "BATCH_SIZE": "2048",
+  "UBATCH_SIZE": "2048",
+  "LLAMA_PREFILL_UBATCH_SIZE": "2048",
+  "CACHE_RAM_MIB": "512",
+  "GGML_SYCL_DNNL_DETERMINISTIC": "1",
+  "LLAMA_SERVER": "/home/steve/src/llama.cpp-gemma-c926-oneapi2026.1-compat/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server",
+  "EXTRA_LLAMA_ARGS": "--parallel 1 --cache-ram 512 --ctx-checkpoints 8 --spec-type draft-mtp --spec-draft-model /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf --spec-draft-n-max 4 --spec-draft-n-min 2 --spec-draft-device SYCL0 --spec-draft-ngl all --spec-draft-type-k f16 --spec-draft-type-v f16 --spec-draft-p-min 0.0475 --no-spec-draft-backend-sampling --spec-draft-threads 32 --spec-draft-threads-batch 32"
+ },
+ "gpu": 1,
+ "deterministic_onednn": true,
+ "build": "/home/steve/src/llama.cpp-gemma-c926-oneapi2026.1-compat/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server",
+ "out_tokens": 256,
+ "load_s": 25,
+ "card_memory_used_mib_after_load": 28601,
+ "single": {
+  "300": {
+   "prompt_n": 292,
+   "prefill_tps": 935.4,
+   "decode_tps": 114.6,
+   "ttft_s": 0.31,
+   "draft_accept_rate": 0.526,
+   "runs": [
+    {
+     "wall_s": 1.972,
+     "prompt_n": 292,
+     "prompt_ms": 429.89,
+     "prompt_tps": 679.2435274139897,
+     "predicted_n": 176,
+     "predicted_ms": 1535.489,
+     "decode_tps": 114.62146586527159,
+     "draft_n": 224,
+     "draft_n_accepted": 119,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 1.911,
+     "prompt_n": 292,
+     "prompt_ms": 311.931,
+     "prompt_tps": 936.1044589989453,
+     "predicted_n": 177,
+     "predicted_ms": 1552.614,
+     "decode_tps": 114.00129072647805,
+     "draft_n": 232,
+     "draft_n_accepted": 120,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 1.831,
+     "prompt_n": 292,
+     "prompt_ms": 312.17900000000003,
+     "prompt_tps": 935.3608026164475,
+     "predicted_n": 176,
+     "predicted_ms": 1482.596,
+     "decode_tps": 118.71069394494522,
+     "draft_n": 224,
+     "draft_n_accepted": 119,
+     "cache_n": 0
+    }
+   ]
+  },
+  "2048": {
+   "prompt_n": 2042,
+   "prefill_tps": 2065.4,
+   "decode_tps": 108.3,
+   "ttft_s": 0.97,
+   "draft_accept_rate": 0.582,
+   "runs": [
+    {
+     "wall_s": 2.804,
+     "prompt_n": 2042,
+     "prompt_ms": 1080.548,
+     "prompt_tps": 1889.7818514309406,
+     "predicted_n": 181,
+     "predicted_ms": 1670.52,
+     "decode_tps": 108.34949596532816,
+     "draft_n": 216,
+     "draft_n_accepted": 126,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 2.596,
+     "prompt_n": 2042,
+     "prompt_ms": 988.69,
+     "prompt_tps": 2065.359212695587,
+     "predicted_n": 150,
+     "predicted_ms": 1515.538,
+     "decode_tps": 98.97475351987215,
+     "draft_n": 196,
+     "draft_n_accepted": 102,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 2.611,
+     "prompt_n": 2042,
+     "prompt_ms": 970.669,
+     "prompt_tps": 2103.703734228661,
+     "predicted_n": 179,
+     "predicted_ms": 1538.664,
+     "decode_tps": 116.33469035474931,
+     "draft_n": 200,
+     "draft_n_accepted": 128,
+     "cache_n": 0
+    }
+   ]
+  },
+  "8192": {
+   "prompt_n": 8185,
+   "prefill_tps": 1699.5,
+   "decode_tps": 95.6,
+   "ttft_s": 4.81,
+   "draft_accept_rate": 0.526,
+   "runs": [
+    {
+     "wall_s": 6.737,
+     "prompt_n": 8185,
+     "prompt_ms": 4817.9130000000005,
+     "prompt_tps": 1698.8683689389989,
+     "predicted_n": 176,
+     "predicted_ms": 1789.483,
+     "decode_tps": 98.35242916529523,
+     "draft_n": 220,
+     "draft_n_accepted": 120,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 6.918,
+     "prompt_n": 8185,
+     "prompt_ms": 4814.113,
+     "prompt_tps": 1700.2093635940826,
+     "predicted_n": 180,
+     "predicted_ms": 1937.377,
+     "decode_tps": 92.90912403729372,
+     "draft_n": 236,
+     "draft_n_accepted": 120,
+     "cache_n": 0
+    }
+   ]
+  },
+  "15800": {
+   "prompt_n": 15793,
+   "prefill_tps": 1489.7,
+   "decode_tps": 88.4,
+   "ttft_s": 10.59,
+   "draft_accept_rate": 0.511,
+   "runs": [
+    {
+     "wall_s": 12.991,
+     "prompt_n": 15793,
+     "prompt_ms": 10588.076000000001,
+     "prompt_tps": 1491.5835511569805,
+     "predicted_n": 189,
+     "predicted_ms": 2199.145,
+     "decode_tps": 85.9424912863863,
+     "draft_n": 256,
+     "draft_n_accepted": 126,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 12.573,
+     "prompt_n": 15793,
+     "prompt_ms": 10615.474,
+     "prompt_tps": 1487.733849661353,
+     "predicted_n": 150,
+     "predicted_ms": 1651.5720000000001,
+     "decode_tps": 90.82256177750652,
+     "draft_n": 192,
+     "draft_n_accepted": 103,
+     "cache_n": 0
+    }
+   ]
+  }
+ },
+ "repeat_identical": {
+  "distinct": 1,
+  "runs": 3
+ },
+ "users": [],
+ "users_8k": [],
+ "ok": true,
+ "log": [
+  "start single-16k-draft4 (1 slot x 16K, draft 4)",
+  "  ready in 25 s, card memory 28601 MiB",
+  "  ctx 300: prompt_n=292 prefill 679 tok/s, decode 114.6 tok/s, draft acc 119/224",
+  "  ctx 300: prompt_n=292 prefill 936 tok/s, decode 114.0 tok/s, draft acc 120/232",
+  "  ctx 300: prompt_n=292 prefill 935 tok/s, decode 118.7 tok/s, draft acc 119/224",
+  "  ctx 2048: prompt_n=2042 prefill 1890 tok/s, decode 108.3 tok/s, draft acc 126/216",
+  "  ctx 2048: prompt_n=2042 prefill 2065 tok/s, decode 99.0 tok/s, draft acc 102/196",
+  "  ctx 2048: prompt_n=2042 prefill 2104 tok/s, decode 116.3 tok/s, draft acc 128/200",
+  "  ctx 8192: prompt_n=8185 prefill 1699 tok/s, decode 98.4 tok/s, draft acc 120/220",
+  "  ctx 8192: prompt_n=8185 prefill 1700 tok/s, decode 92.9 tok/s, draft acc 120/236",
+  "  ctx 15800: prompt_n=15793 prefill 1492 tok/s, decode 85.9 tok/s, draft acc 126/256",
+  "  ctx 15800: prompt_n=15793 prefill 1488 tok/s, decode 90.8 tok/s, draft acc 103/192",
+  "  repeat identity: 1 distinct of 3"
+ ]
+}

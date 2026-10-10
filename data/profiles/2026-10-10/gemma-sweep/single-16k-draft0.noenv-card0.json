@@ -1,0 +1,230 @@
+{
+ "label": "single-16k-draft0",
+ "shape": "1 slot x 16K",
+ "draft_n_max": 0,
+ "slots": 1,
+ "ctx_per_slot": 16384,
+ "server_args": [
+  "-m",
+  "/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf",
+  "--alias",
+  "gemma4-26b-a4b-q8",
+  "--host",
+  "127.0.0.1",
+  "-dev",
+  "SYCL0",
+  "-ngl",
+  "99",
+  "-b",
+  "2048",
+  "-t",
+  "8",
+  "--poll",
+  "100",
+  "-ctk",
+  "f16",
+  "-ctv",
+  "f16",
+  "-fa",
+  "on",
+  "--reasoning",
+  "off",
+  "--jinja",
+  "--cache-ram",
+  "512",
+  "--ctx-checkpoints",
+  "8",
+  "-c",
+  "16384",
+  "--parallel",
+  "1",
+  "-ub",
+  "2048"
+ ],
+ "gpu": 0,
+ "deterministic_onednn": true,
+ "build": "/home/steve/src/llama.cpp-gemma-c926-oneapi2026.1-compat/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server",
+ "out_tokens": 256,
+ "load_s": 25,
+ "card_memory_used_mib_after_load": 28069,
+ "single": {
+  "300": {
+   "prompt_n": 292,
+   "prefill_tps": 818.0,
+   "decode_tps": 43.2,
+   "ttft_s": 0.35,
+   "draft_accept_rate": null,
+   "runs": [
+    {
+     "wall_s": 4.641,
+     "prompt_n": 292,
+     "prompt_ms": 489.17900000000003,
+     "prompt_tps": 596.9185104021227,
+     "predicted_n": 176,
+     "predicted_ms": 4144.262,
+     "decode_tps": 42.468357454234315,
+     "draft_n": null,
+     "draft_n_accepted": null,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 4.475,
+     "prompt_n": 292,
+     "prompt_ms": 354.827,
+     "prompt_tps": 822.9362478052685,
+     "predicted_n": 176,
+     "predicted_ms": 4074.349,
+     "decode_tps": 43.19708498216525,
+     "draft_n": null,
+     "draft_n_accepted": null,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 4.451,
+     "prompt_n": 292,
+     "prompt_ms": 356.949,
+     "prompt_tps": 818.044034301819,
+     "predicted_n": 176,
+     "predicted_ms": 4058.12,
+     "decode_tps": 43.36983627886805,
+     "draft_n": null,
+     "draft_n_accepted": null,
+     "cache_n": 0
+    }
+   ]
+  },
+  "2048": {
+   "prompt_n": 2042,
+   "prefill_tps": 1885.0,
+   "decode_tps": 37.6,
+   "ttft_s": 1.06,
+   "draft_accept_rate": null,
+   "runs": [
+    {
+     "wall_s": 5.477,
+     "prompt_n": 2042,
+     "prompt_ms": 1189.546,
+     "prompt_tps": 1716.621299218357,
+     "predicted_n": 159,
+     "predicted_ms": 4235.484,
+     "decode_tps": 37.53998362406752,
+     "draft_n": null,
+     "draft_n_accepted": null,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 5.027,
+     "prompt_n": 2042,
+     "prompt_ms": 1083.263,
+     "prompt_tps": 1885.045459874472,
+     "predicted_n": 145,
+     "predicted_ms": 3853.917,
+     "decode_tps": 37.624058847141754,
+     "draft_n": null,
+     "draft_n_accepted": null,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 5.956,
+     "prompt_n": 2042,
+     "prompt_ms": 1061.78,
+     "prompt_tps": 1923.185594002524,
+     "predicted_n": 181,
+     "predicted_ms": 4800.562,
+     "decode_tps": 37.703918832836656,
+     "draft_n": null,
+     "draft_n_accepted": null,
+     "cache_n": 0
+    }
+   ]
+  },
+  "8192": {
+   "prompt_n": 8185,
+   "prefill_tps": 1450.2,
+   "decode_tps": 35.1,
+   "ttft_s": 5.64,
+   "draft_accept_rate": null,
+   "runs": [
+    {
+     "wall_s": 9.953,
+     "prompt_n": 8185,
+     "prompt_ms": 5650.792,
+     "prompt_tps": 1448.4695242719959,
+     "predicted_n": 147,
+     "predicted_ms": 4173.67,
+     "decode_tps": 35.22080087788445,
+     "draft_n": null,
+     "draft_n_accepted": null,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 11.005,
+     "prompt_n": 8185,
+     "prompt_ms": 5637.352,
+     "prompt_tps": 1451.9228176633285,
+     "predicted_n": 182,
+     "predicted_ms": 5202.644,
+     "decode_tps": 34.98221289021505,
+     "draft_n": null,
+     "draft_n_accepted": null,
+     "cache_n": 0
+    }
+   ]
+  },
+  "15800": {
+   "prompt_n": 15793,
+   "prefill_tps": 1115.0,
+   "decode_tps": 33.3,
+   "ttft_s": 14.16,
+   "draft_accept_rate": null,
+   "runs": [
+    {
+     "wall_s": 19.737,
+     "prompt_n": 15793,
+     "prompt_ms": 14157.484,
+     "prompt_tps": 1115.5230689294792,
+     "predicted_n": 179,
+     "predicted_ms": 5377.722,
+     "decode_tps": 33.28546920052766,
+     "draft_n": null,
+     "draft_n_accepted": null,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 19.742,
+     "prompt_n": 15793,
+     "prompt_ms": 14171.194,
+     "prompt_tps": 1114.4438499677585,
+     "predicted_n": 175,
+     "predicted_ms": 5258.88,
+     "decode_tps": 33.2770475842765,
+     "draft_n": null,
+     "draft_n_accepted": null,
+     "cache_n": 0
+    }
+   ]
+  }
+ },
+ "repeat_identical": {
+  "distinct": 1,
+  "runs": 3
+ },
+ "users": [],
+ "users_8k": [],
+ "ok": true,
+ "log": [
+  "start single-16k-draft0 (1 slot x 16K, draft 0)",
+  "  ready in 25 s, card memory 28069 MiB",
+  "  ctx 300: prompt_n=292 prefill 597 tok/s, decode 42.5 tok/s",
+  "  ctx 300: prompt_n=292 prefill 823 tok/s, decode 43.2 tok/s",
+  "  ctx 300: prompt_n=292 prefill 818 tok/s, decode 43.4 tok/s",
+  "  ctx 2048: prompt_n=2042 prefill 1717 tok/s, decode 37.5 tok/s",
+  "  ctx 2048: prompt_n=2042 prefill 1885 tok/s, decode 37.6 tok/s",
+  "  ctx 2048: prompt_n=2042 prefill 1923 tok/s, decode 37.7 tok/s",
+  "  ctx 8192: prompt_n=8185 prefill 1448 tok/s, decode 35.2 tok/s",
+  "  ctx 8192: prompt_n=8185 prefill 1452 tok/s, decode 35.0 tok/s",
+  "  ctx 15800: prompt_n=15793 prefill 1116 tok/s, decode 33.3 tok/s",
+  "  ctx 15800: prompt_n=15793 prefill 1114 tok/s, decode 33.3 tok/s",
+  "  repeat identity: 1 distinct of 3"
+ ]
+}

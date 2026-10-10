@@ -344,8 +344,8 @@ is an explicit resource-contention experiment.
 ## Two-B70 Host Recipes (2026-10-10)
 
 The two-card lab host (192.168.2.45) runs the same units with host drop-ins chosen by
-`scripts/gemma4-26b-two-b70-recipe.sh {throughput|balanced|single|status}` (files in
-`deploy/systemd/two-b70-host/`). All three use the deterministic oneDNN switch
+`scripts/gemma4-26b-two-b70-recipe.sh {throughput|throughput-card1|throughput-card0|balanced|single|status}` (files in
+`deploy/systemd/two-b70-host/`; the `-card1` / `-card0` variants serve from one card so the other is free for experiments). All use the deterministic oneDNN switch
 (`GGML_SYCL_DNNL_DETERMINISTIC=1`, see `notes/2026-10-09-gemma4-26b-two-b70-16k-lan-service.md`).
 
 | recipe | per card | concurrent | context | draft | measured |
@@ -353,6 +353,12 @@ The two-card lab host (192.168.2.45) runs the same units with host drop-ins chos
 | throughput | 8 slots | 16 | 4K | none | 1,230-1,310 total tok/s on two cards (300-token prompts, 150-token answers, 16 clients) |
 | balanced | 4 slots | 8 | 16K | MTP depth 1 | 56 tok/s per stream with 4 active, 105 alone |
 | single | 1 slot | 2 | 16K | MTP depth 3 | fastest one-person decode (record shape) |
+
+Measured one-card curves for every draft length, prompt length and user count (the matrix the Qwen packages publish) are in
+`notes/2026-10-10-gemma4-26b-metric-sweep.md`; the package page shows them as graphs. Headlines: draft 3 alone 122 tok/s
+(110 after a 2K prompt, 92 at 16K); 8 people on one card 160 tok/s total with no draft; 4 people 166-169 total with draft 1.
+Always start experiment servers through `serve-gemma4-26b-q8-production.sh` (or `tools/gemma4-26b-sweep.py`): the compat
+build's fast kernels are enabled by environment variables that launcher sets, and the bare binary runs at 43 tok/s.
 
 Why 8 slots means no draft: the fast MoE kernels take at most 8 tokens per step, and each draft token adds one per
 sequence. Clients should put shared instructions in the `system` message (reused from the prompt cache) and send up to

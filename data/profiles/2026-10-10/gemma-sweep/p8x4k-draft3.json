@@ -1,0 +1,190 @@
+{
+ "label": "p8x4k-draft3",
+ "shape": "8 slots x 4K",
+ "draft_n_max": 3,
+ "slots": 8,
+ "ctx_per_slot": 4096,
+ "ubatch": 1024,
+ "launcher": "/home/steve/llm-optimizations/scripts/serve-gemma4-26b-q8-production.sh",
+ "launcher_env": {
+  "GEMMA4_26B_PROFILE": "service",
+  "CTX_SIZE": "32768",
+  "PARALLEL": "8",
+  "BATCH_SIZE": "2048",
+  "UBATCH_SIZE": "1024",
+  "LLAMA_PREFILL_UBATCH_SIZE": "1024",
+  "CACHE_RAM_MIB": "512",
+  "GGML_SYCL_DNNL_DETERMINISTIC": "1",
+  "LLAMA_SERVER": "/home/steve/src/llama.cpp-gemma-c926-oneapi2026.1-compat/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server",
+  "EXTRA_LLAMA_ARGS": "--parallel 8 --cache-ram 512 --ctx-checkpoints 8 --spec-type draft-mtp --spec-draft-model /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf --spec-draft-n-max 3 --spec-draft-n-min 2 --spec-draft-device SYCL0 --spec-draft-ngl all --spec-draft-type-k f16 --spec-draft-type-v f16 --spec-draft-p-min 0.0475 --no-spec-draft-backend-sampling --spec-draft-threads 32 --spec-draft-threads-batch 32"
+ },
+ "gpu": 1,
+ "deterministic_onednn": true,
+ "build": "/home/steve/src/llama.cpp-gemma-c926-oneapi2026.1-compat/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server",
+ "out_tokens": 256,
+ "load_s": 30,
+ "card_memory_used_mib_after_load": 31067,
+ "single": {
+  "300": {
+   "prompt_n": 292,
+   "prefill_tps": 938.0,
+   "decode_tps": 119.6,
+   "ttft_s": 0.31,
+   "draft_accept_rate": 0.625,
+   "runs": [
+    {
+     "wall_s": 1.903,
+     "prompt_n": 292,
+     "prompt_ms": 424.694,
+     "prompt_tps": 687.5538623102751,
+     "predicted_n": 176,
+     "predicted_ms": 1470.974,
+     "decode_tps": 119.64861377563439,
+     "draft_n": 183,
+     "draft_n_accepted": 116,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 1.854,
+     "prompt_n": 292,
+     "prompt_ms": 310.968,
+     "prompt_tps": 939.0033701216845,
+     "predicted_n": 177,
+     "predicted_ms": 1496.597,
+     "decode_tps": 118.2683113757411,
+     "draft_n": 189,
+     "draft_n_accepted": 115,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 1.779,
+     "prompt_n": 292,
+     "prompt_ms": 311.285,
+     "prompt_tps": 938.0471272306728,
+     "predicted_n": 176,
+     "predicted_ms": 1429.9370000000001,
+     "decode_tps": 123.08234558585447,
+     "draft_n": 183,
+     "draft_n_accepted": 116,
+     "cache_n": 0
+    }
+   ]
+  },
+  "2048": {
+   "prompt_n": 2042,
+   "prefill_tps": 1711.4,
+   "decode_tps": 111.6,
+   "ttft_s": 1.19,
+   "draft_accept_rate": 0.651,
+   "runs": [
+    {
+     "wall_s": 3.048,
+     "prompt_n": 2042,
+     "prompt_ms": 1263.513,
+     "prompt_tps": 1616.1289990684704,
+     "predicted_n": 185,
+     "predicted_ms": 1730.885,
+     "decode_tps": 106.88173968807864,
+     "draft_n": 195,
+     "draft_n_accepted": 121,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 3.027,
+     "prompt_n": 2042,
+     "prompt_ms": 1193.16,
+     "prompt_tps": 1711.4217707599985,
+     "predicted_n": 190,
+     "predicted_ms": 1702.678,
+     "decode_tps": 111.58892051227537,
+     "draft_n": 192,
+     "draft_n_accepted": 126,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 3.059,
+     "prompt_n": 2042,
+     "prompt_ms": 1188.051,
+     "prompt_tps": 1718.7814327836095,
+     "predicted_n": 178,
+     "predicted_ms": 1570.685,
+     "decode_tps": 113.32635124165571,
+     "draft_n": 177,
+     "draft_n_accepted": 120,
+     "cache_n": 0
+    }
+   ]
+  }
+ },
+ "repeat_identical": {
+  "distinct": 1,
+  "runs": 3
+ },
+ "users": [
+  {
+   "users": 1,
+   "prompt_tokens": 2048,
+   "per_stream_decode_tps": 119.9,
+   "per_stream_min": 119.9,
+   "aggregate_decode_tps": 119.9,
+   "wall_s": 3.22,
+   "total_tok_s_incl_prefill": 692.0,
+   "completion_tok_s_wall": 57.5,
+   "ttft_max_s": 1.2,
+   "draft_accept_rate": 0.718
+  },
+  {
+   "users": 2,
+   "prompt_tokens": 2048,
+   "per_stream_decode_tps": 72.9,
+   "per_stream_min": 72.5,
+   "aggregate_decode_tps": 145.8,
+   "wall_s": 5.7,
+   "total_tok_s_incl_prefill": 780.2,
+   "completion_tok_s_wall": 63.5,
+   "ttft_max_s": 2.23,
+   "draft_accept_rate": 0.637
+  },
+  {
+   "users": 4,
+   "prompt_tokens": 2048,
+   "per_stream_decode_tps": 24.8,
+   "per_stream_min": 19.5,
+   "aggregate_decode_tps": 96.5,
+   "wall_s": 13.72,
+   "total_tok_s_incl_prefill": 647.5,
+   "completion_tok_s_wall": 52.0,
+   "ttft_max_s": 5.02,
+   "draft_accept_rate": 0.656
+  },
+  {
+   "users": 8,
+   "prompt_tokens": 2048,
+   "per_stream_decode_tps": 16.3,
+   "per_stream_min": 11.4,
+   "aggregate_decode_tps": 130.0,
+   "wall_s": 21.66,
+   "total_tok_s_incl_prefill": 818.6,
+   "completion_tok_s_wall": 64.5,
+   "ttft_max_s": 10.7,
+   "draft_accept_rate": 0.667
+  }
+ ],
+ "users_8k": [],
+ "ok": true,
+ "log": [
+  "start p8x4k-draft3 (8 slots x 4K, draft 3)",
+  "  ready in 30 s, card memory 31067 MiB",
+  "  ctx 300: prompt_n=292 prefill 688 tok/s, decode 119.6 tok/s, draft acc 116/183",
+  "  ctx 300: prompt_n=292 prefill 939 tok/s, decode 118.3 tok/s, draft acc 115/189",
+  "  ctx 300: prompt_n=292 prefill 938 tok/s, decode 123.1 tok/s, draft acc 116/183",
+  "  ctx 2048: prompt_n=2042 prefill 1616 tok/s, decode 106.9 tok/s, draft acc 121/195",
+  "  ctx 2048: prompt_n=2042 prefill 1711 tok/s, decode 111.6 tok/s, draft acc 126/192",
+  "  ctx 2048: prompt_n=2042 prefill 1719 tok/s, decode 113.3 tok/s, draft acc 120/177",
+  "  repeat identity: 1 distinct of 3",
+  "  1 users @ 2048: per-stream 119.9 (min 119.9), aggregate 119.9 tok/s, wall total 692.0 tok/s",
+  "  2 users @ 2048: per-stream 72.9 (min 72.5), aggregate 145.8 tok/s, wall total 780.2 tok/s",
+  "  4 users @ 2048: per-stream 24.8 (min 19.5), aggregate 96.5 tok/s, wall total 647.5 tok/s",
+  "  8 users @ 2048: per-stream 16.3 (min 11.4), aggregate 130.0 tok/s, wall total 818.6 tok/s"
+ ]
+}

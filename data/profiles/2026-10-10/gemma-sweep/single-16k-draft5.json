@@ -1,0 +1,207 @@
+{
+ "label": "single-16k-draft5",
+ "shape": "1 slot x 16K",
+ "draft_n_max": 5,
+ "slots": 1,
+ "ctx_per_slot": 16384,
+ "ubatch": 2048,
+ "launcher": "/home/steve/llm-optimizations/scripts/serve-gemma4-26b-q8-production.sh",
+ "launcher_env": {
+  "GEMMA4_26B_PROFILE": "service",
+  "CTX_SIZE": "16384",
+  "PARALLEL": "1",
+  "BATCH_SIZE": "2048",
+  "UBATCH_SIZE": "2048",
+  "LLAMA_PREFILL_UBATCH_SIZE": "2048",
+  "CACHE_RAM_MIB": "512",
+  "GGML_SYCL_DNNL_DETERMINISTIC": "1",
+  "LLAMA_SERVER": "/home/steve/src/llama.cpp-gemma-c926-oneapi2026.1-compat/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server",
+  "EXTRA_LLAMA_ARGS": "--parallel 1 --cache-ram 512 --ctx-checkpoints 8 --spec-type draft-mtp --spec-draft-model /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf --spec-draft-n-max 5 --spec-draft-n-min 2 --spec-draft-device SYCL0 --spec-draft-ngl all --spec-draft-type-k f16 --spec-draft-type-v f16 --spec-draft-p-min 0.0475 --no-spec-draft-backend-sampling --spec-draft-threads 32 --spec-draft-threads-batch 32"
+ },
+ "gpu": 1,
+ "deterministic_onednn": true,
+ "build": "/home/steve/src/llama.cpp-gemma-c926-oneapi2026.1-compat/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server",
+ "out_tokens": 256,
+ "load_s": 25,
+ "card_memory_used_mib_after_load": 28601,
+ "single": {
+  "300": {
+   "prompt_n": 292,
+   "prefill_tps": 935.5,
+   "decode_tps": 112.5,
+   "ttft_s": 0.31,
+   "draft_accept_rate": 0.475,
+   "runs": [
+    {
+     "wall_s": 2.003,
+     "prompt_n": 292,
+     "prompt_ms": 426.962,
+     "prompt_tps": 683.9016118530454,
+     "predicted_n": 176,
+     "predicted_ms": 1563.852,
+     "decode_tps": 112.54261912252565,
+     "draft_n": 255,
+     "draft_n_accepted": 125,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 1.989,
+     "prompt_n": 292,
+     "prompt_ms": 312.028,
+     "prompt_tps": 935.8134526388657,
+     "predicted_n": 177,
+     "predicted_ms": 1633.017,
+     "decode_tps": 108.38833888440843,
+     "draft_n": 270,
+     "draft_n_accepted": 124,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 1.911,
+     "prompt_n": 292,
+     "prompt_ms": 312.142,
+     "prompt_tps": 935.4716763524293,
+     "predicted_n": 176,
+     "predicted_ms": 1555.713,
+     "decode_tps": 113.1314066283434,
+     "draft_n": 260,
+     "draft_n_accepted": 124,
+     "cache_n": 0
+    }
+   ]
+  },
+  "2048": {
+   "prompt_n": 2042,
+   "prefill_tps": 2059.4,
+   "decode_tps": 104.5,
+   "ttft_s": 0.97,
+   "draft_accept_rate": 0.506,
+   "runs": [
+    {
+     "wall_s": 2.864,
+     "prompt_n": 2042,
+     "prompt_ms": 1080.457,
+     "prompt_tps": 1889.9410156998379,
+     "predicted_n": 181,
+     "predicted_ms": 1732.839,
+     "decode_tps": 104.4528660769985,
+     "draft_n": 250,
+     "draft_n_accepted": 132,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 2.753,
+     "prompt_n": 2042,
+     "prompt_ms": 991.565,
+     "prompt_tps": 2059.3707926358834,
+     "predicted_n": 150,
+     "predicted_ms": 1664.499,
+     "decode_tps": 90.11720643869417,
+     "draft_n": 240,
+     "draft_n_accepted": 103,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 2.7,
+     "prompt_n": 2042,
+     "prompt_ms": 970.839,
+     "prompt_tps": 2103.3353625060386,
+     "predicted_n": 179,
+     "predicted_ms": 1629.339,
+     "decode_tps": 109.86050171265771,
+     "draft_n": 235,
+     "draft_n_accepted": 132,
+     "cache_n": 0
+    }
+   ]
+  },
+  "8192": {
+   "prompt_n": 8185,
+   "prefill_tps": 1701.1,
+   "decode_tps": 85.7,
+   "ttft_s": 4.81,
+   "draft_accept_rate": 0.43,
+   "runs": [
+    {
+     "wall_s": 6.96,
+     "prompt_n": 8185,
+     "prompt_ms": 4811.935,
+     "prompt_tps": 1700.9789201225701,
+     "predicted_n": 176,
+     "predicted_ms": 2017.6380000000001,
+     "decode_tps": 87.2307123478047,
+     "draft_n": 275,
+     "draft_n_accepted": 121,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 7.123,
+     "prompt_n": 8185,
+     "prompt_ms": 4811.309,
+     "prompt_tps": 1701.200234697044,
+     "predicted_n": 180,
+     "predicted_ms": 2139.158,
+     "decode_tps": 84.1452571525806,
+     "draft_n": 290,
+     "draft_n_accepted": 122,
+     "cache_n": 0
+    }
+   ]
+  },
+  "15800": {
+   "prompt_n": 15793,
+   "prefill_tps": 1491.0,
+   "decode_tps": 83.4,
+   "ttft_s": 10.58,
+   "draft_accept_rate": 0.437,
+   "runs": [
+    {
+     "wall_s": 13.209,
+     "prompt_n": 15793,
+     "prompt_ms": 10581.179,
+     "prompt_tps": 1492.555791750617,
+     "predicted_n": 189,
+     "predicted_ms": 2421.332,
+     "decode_tps": 78.05621038337577,
+     "draft_n": 315,
+     "draft_n_accepted": 127,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 12.594,
+     "prompt_n": 15793,
+     "prompt_ms": 10602.725,
+     "prompt_tps": 1489.5227406162094,
+     "predicted_n": 150,
+     "predicted_ms": 1689.823,
+     "decode_tps": 88.76669331640059,
+     "draft_n": 220,
+     "draft_n_accepted": 107,
+     "cache_n": 0
+    }
+   ]
+  }
+ },
+ "repeat_identical": {
+  "distinct": 1,
+  "runs": 3
+ },
+ "users": [],
+ "users_8k": [],
+ "ok": true,
+ "log": [
+  "start single-16k-draft5 (1 slot x 16K, draft 5)",
+  "  ready in 25 s, card memory 28601 MiB",
+  "  ctx 300: prompt_n=292 prefill 684 tok/s, decode 112.5 tok/s, draft acc 125/255",
+  "  ctx 300: prompt_n=292 prefill 936 tok/s, decode 108.4 tok/s, draft acc 124/270",
+  "  ctx 300: prompt_n=292 prefill 935 tok/s, decode 113.1 tok/s, draft acc 124/260",
+  "  ctx 2048: prompt_n=2042 prefill 1890 tok/s, decode 104.5 tok/s, draft acc 132/250",
+  "  ctx 2048: prompt_n=2042 prefill 2059 tok/s, decode 90.1 tok/s, draft acc 103/240",
+  "  ctx 2048: prompt_n=2042 prefill 2103 tok/s, decode 109.9 tok/s, draft acc 132/235",
+  "  ctx 8192: prompt_n=8185 prefill 1701 tok/s, decode 87.2 tok/s, draft acc 121/275",
+  "  ctx 8192: prompt_n=8185 prefill 1701 tok/s, decode 84.1 tok/s, draft acc 122/290",
+  "  ctx 15800: prompt_n=15793 prefill 1493 tok/s, decode 78.1 tok/s, draft acc 127/315",
+  "  ctx 15800: prompt_n=15793 prefill 1490 tok/s, decode 88.8 tok/s, draft acc 107/220",
+  "  repeat identity: 1 distinct of 3"
+ ]
+}

@@ -1,0 +1,255 @@
+{
+ "label": "single-16k-draft0",
+ "shape": "1 slot x 16K",
+ "draft_n_max": 0,
+ "slots": 1,
+ "ctx_per_slot": 16384,
+ "ubatch": 2048,
+ "launcher": "/home/steve/llm-optimizations/scripts/serve-gemma4-26b-q8-production.sh",
+ "launcher_env": {
+  "GEMMA4_26B_PROFILE": "service",
+  "CTX_SIZE": "16384",
+  "PARALLEL": "1",
+  "BATCH_SIZE": "2048",
+  "UBATCH_SIZE": "2048",
+  "LLAMA_PREFILL_UBATCH_SIZE": "2048",
+  "CACHE_RAM_MIB": "512",
+  "GGML_SYCL_DNNL_DETERMINISTIC": "1",
+  "LLAMA_SERVER": "/home/steve/src/llama.cpp-gemma-c926-oneapi2026.1-compat/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server",
+  "EXTRA_LLAMA_ARGS": "--parallel 1 --cache-ram 512 --ctx-checkpoints 8"
+ },
+ "gpu": 1,
+ "deterministic_onednn": true,
+ "build": "/home/steve/src/llama.cpp-gemma-c926-oneapi2026.1-compat/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server",
+ "out_tokens": 256,
+ "load_s": 25,
+ "card_memory_used_mib_after_load": 27991,
+ "single": {
+  "300": {
+   "prompt_n": 292,
+   "prefill_tps": 937.4,
+   "decode_tps": 77.9,
+   "ttft_s": 0.31,
+   "draft_accept_rate": null,
+   "runs": [
+    {
+     "wall_s": 2.734,
+     "prompt_n": 292,
+     "prompt_ms": 427.904,
+     "prompt_tps": 682.3960514507927,
+     "predicted_n": 176,
+     "predicted_ms": 2293.958,
+     "decode_tps": 76.72328787187908,
+     "draft_n": null,
+     "draft_n_accepted": null,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 2.608,
+     "prompt_n": 292,
+     "prompt_ms": 310.826,
+     "prompt_tps": 939.4323512190099,
+     "predicted_n": 176,
+     "predicted_ms": 2260.53,
+     "decode_tps": 77.85784749594121,
+     "draft_n": null,
+     "draft_n_accepted": null,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 2.693,
+     "prompt_n": 292,
+     "prompt_ms": 311.495,
+     "prompt_tps": 937.4147257580379,
+     "predicted_n": 184,
+     "predicted_ms": 2345.587,
+     "decode_tps": 78.44518237865404,
+     "draft_n": null,
+     "draft_n_accepted": null,
+     "cache_n": 0
+    }
+   ]
+  },
+  "512": {
+   "prompt_n": 509,
+   "prefill_tps": 1327.8,
+   "decode_tps": 74.3,
+   "ttft_s": 0.38,
+   "draft_accept_rate": null,
+   "runs": [
+    {
+     "wall_s": 2.822,
+     "prompt_n": 509,
+     "prompt_ms": 429.825,
+     "prompt_tps": 1184.2028732623742,
+     "predicted_n": 175,
+     "predicted_ms": 2355.342,
+     "decode_tps": 74.29918882268477,
+     "draft_n": null,
+     "draft_n_accepted": null,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 2.911,
+     "prompt_n": 509,
+     "prompt_ms": 383.34000000000003,
+     "prompt_tps": 1327.8029947305263,
+     "predicted_n": 184,
+     "predicted_ms": 2477.175,
+     "decode_tps": 74.27815959712171,
+     "draft_n": null,
+     "draft_n_accepted": null,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 2.996,
+     "prompt_n": 509,
+     "prompt_ms": 379.943,
+     "prompt_tps": 1339.6746354058373,
+     "predicted_n": 188,
+     "predicted_ms": 2553.723,
+     "decode_tps": 73.6180079045378,
+     "draft_n": null,
+     "draft_n_accepted": null,
+     "cache_n": 0
+    }
+   ]
+  },
+  "2048": {
+   "prompt_n": 2042,
+   "prefill_tps": 2050.1,
+   "decode_tps": 62.7,
+   "ttft_s": 0.97,
+   "draft_accept_rate": null,
+   "runs": [
+    {
+     "wall_s": 3.436,
+     "prompt_n": 2042,
+     "prompt_ms": 1058.596,
+     "prompt_tps": 1928.9700697905528,
+     "predicted_n": 145,
+     "predicted_ms": 2314.163,
+     "decode_tps": 62.65764338985629,
+     "draft_n": null,
+     "draft_n_accepted": null,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 3.491,
+     "prompt_n": 2042,
+     "prompt_ms": 996.052,
+     "prompt_tps": 2050.0937702047686,
+     "predicted_n": 150,
+     "predicted_ms": 2401.28,
+     "decode_tps": 62.46668443496801,
+     "draft_n": null,
+     "draft_n_accepted": null,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 3.936,
+     "prompt_n": 2042,
+     "prompt_ms": 968.442,
+     "prompt_tps": 2108.541347855628,
+     "predicted_n": 181,
+     "predicted_ms": 2877.739,
+     "decode_tps": 62.896600421372476,
+     "draft_n": null,
+     "draft_n_accepted": null,
+     "cache_n": 0
+    }
+   ]
+  },
+  "8192": {
+   "prompt_n": 8185,
+   "prefill_tps": 1705.1,
+   "decode_tps": 57.8,
+   "ttft_s": 4.8,
+   "draft_accept_rate": null,
+   "runs": [
+    {
+     "wall_s": 8.028,
+     "prompt_n": 8185,
+     "prompt_ms": 4797.91,
+     "prompt_tps": 1705.9511328891122,
+     "predicted_n": 180,
+     "predicted_ms": 3111.152,
+     "decode_tps": 57.85638245897339,
+     "draft_n": null,
+     "draft_n_accepted": null,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 8.09,
+     "prompt_n": 8185,
+     "prompt_ms": 4802.6050000000005,
+     "prompt_tps": 1704.2834045273344,
+     "predicted_n": 180,
+     "predicted_ms": 3117.56,
+     "decode_tps": 57.737461347977266,
+     "draft_n": null,
+     "draft_n_accepted": null,
+     "cache_n": 0
+    }
+   ]
+  },
+  "15800": {
+   "prompt_n": 15793,
+   "prefill_tps": 1495.2,
+   "decode_tps": 56.2,
+   "ttft_s": 10.55,
+   "draft_accept_rate": null,
+   "runs": [
+    {
+     "wall_s": 13.937,
+     "prompt_n": 15793,
+     "prompt_ms": 10549.949,
+     "prompt_tps": 1496.9740612016228,
+     "predicted_n": 179,
+     "predicted_ms": 3185.85,
+     "decode_tps": 56.18594723543168,
+     "draft_n": null,
+     "draft_n_accepted": null,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 13.949,
+     "prompt_n": 15793,
+     "prompt_ms": 10574.486,
+     "prompt_tps": 1493.5004878724128,
+     "predicted_n": 173,
+     "predicted_ms": 3078.986,
+     "decode_tps": 56.18732920513442,
+     "draft_n": null,
+     "draft_n_accepted": null,
+     "cache_n": 0
+    }
+   ]
+  }
+ },
+ "repeat_identical": {
+  "distinct": 1,
+  "runs": 3
+ },
+ "users": [],
+ "users_8k": [],
+ "ok": true,
+ "log": [
+  "start single-16k-draft0 (1 slot x 16K, draft 0)",
+  "  ready in 25 s, card memory 27991 MiB",
+  "  ctx 300: prompt_n=292 prefill 682 tok/s, decode 76.7 tok/s",
+  "  ctx 300: prompt_n=292 prefill 939 tok/s, decode 77.9 tok/s",
+  "  ctx 300: prompt_n=292 prefill 937 tok/s, decode 78.4 tok/s",
+  "  ctx 512: prompt_n=509 prefill 1184 tok/s, decode 74.3 tok/s",
+  "  ctx 512: prompt_n=509 prefill 1328 tok/s, decode 74.3 tok/s",
+  "  ctx 512: prompt_n=509 prefill 1340 tok/s, decode 73.6 tok/s",
+  "  ctx 2048: prompt_n=2042 prefill 1929 tok/s, decode 62.7 tok/s",
+  "  ctx 2048: prompt_n=2042 prefill 2050 tok/s, decode 62.5 tok/s",
+  "  ctx 2048: prompt_n=2042 prefill 2109 tok/s, decode 62.9 tok/s",
+  "  ctx 8192: prompt_n=8185 prefill 1706 tok/s, decode 57.9 tok/s",
+  "  ctx 8192: prompt_n=8185 prefill 1704 tok/s, decode 57.7 tok/s",
+  "  ctx 15800: prompt_n=15793 prefill 1497 tok/s, decode 56.2 tok/s",
+  "  ctx 15800: prompt_n=15793 prefill 1494 tok/s, decode 56.2 tok/s",
+  "  repeat identity: 1 distinct of 3"
+ ]
+}

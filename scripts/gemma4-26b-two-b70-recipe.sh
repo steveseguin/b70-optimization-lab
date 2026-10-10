@@ -2,6 +2,7 @@
 # Switch the Gemma 4 26B Q8 LAN service on the two-B70 host between recipes.
 #   scripts/gemma4-26b-two-b70-recipe.sh throughput   # 8 x 4K per card, no draft: 16 concurrent, max total tokens/s (<=4K ctx)
 #   scripts/gemma4-26b-two-b70-recipe.sh throughput-card1   # throughput shape on card 1 only (card 0 free for experiments)
+#   scripts/gemma4-26b-two-b70-recipe.sh throughput-card0   # throughput shape on card 0 only (card 1 free for experiments)
 #   scripts/gemma4-26b-two-b70-recipe.sh balanced     # 4 x 16K per card, draft 1: 8 concurrent, up to 16K context (default)
 #   scripts/gemma4-26b-two-b70-recipe.sh single       # 1 x 16K per card, draft 3: fastest single session, 2 concurrent
 #   scripts/gemma4-26b-two-b70-recipe.sh status
@@ -31,8 +32,8 @@ status() {
 
 case "$cmd" in
   status) status; exit 0 ;;
-  throughput|throughput-card1|balanced|single) ;;
-  *) echo "usage: $0 {throughput|throughput-card1|balanced|single|status}" >&2; exit 2 ;;
+  throughput|throughput-card1|throughput-card0|balanced|single) ;;
+  *) echo "usage: $0 {throughput|throughput-card1|throughput-card0|balanced|single|status}" >&2; exit 2 ;;
 esac
 
 b="$recipes_dir/$cmd-backends.conf"; f="$recipes_dir/$cmd-frontdoor.conf"

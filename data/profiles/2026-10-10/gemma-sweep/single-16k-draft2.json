@@ -1,0 +1,207 @@
+{
+ "label": "single-16k-draft2",
+ "shape": "1 slot x 16K",
+ "draft_n_max": 2,
+ "slots": 1,
+ "ctx_per_slot": 16384,
+ "ubatch": 2048,
+ "launcher": "/home/steve/llm-optimizations/scripts/serve-gemma4-26b-q8-production.sh",
+ "launcher_env": {
+  "GEMMA4_26B_PROFILE": "service",
+  "CTX_SIZE": "16384",
+  "PARALLEL": "1",
+  "BATCH_SIZE": "2048",
+  "UBATCH_SIZE": "2048",
+  "LLAMA_PREFILL_UBATCH_SIZE": "2048",
+  "CACHE_RAM_MIB": "512",
+  "GGML_SYCL_DNNL_DETERMINISTIC": "1",
+  "LLAMA_SERVER": "/home/steve/src/llama.cpp-gemma-c926-oneapi2026.1-compat/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server",
+  "EXTRA_LLAMA_ARGS": "--parallel 1 --cache-ram 512 --ctx-checkpoints 8 --spec-type draft-mtp --spec-draft-model /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf --spec-draft-n-max 2 --spec-draft-n-min 2 --spec-draft-device SYCL0 --spec-draft-ngl all --spec-draft-type-k f16 --spec-draft-type-v f16 --spec-draft-p-min 0.0475 --no-spec-draft-backend-sampling --spec-draft-threads 32 --spec-draft-threads-batch 32"
+ },
+ "gpu": 1,
+ "deterministic_onednn": true,
+ "build": "/home/steve/src/llama.cpp-gemma-c926-oneapi2026.1-compat/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server",
+ "out_tokens": 256,
+ "load_s": 25,
+ "card_memory_used_mib_after_load": 28601,
+ "single": {
+  "300": {
+   "prompt_n": 292,
+   "prefill_tps": 935.9,
+   "decode_tps": 118.6,
+   "ttft_s": 0.31,
+   "draft_accept_rate": 0.705,
+   "runs": [
+    {
+     "wall_s": 1.919,
+     "prompt_n": 292,
+     "prompt_ms": 425.842,
+     "prompt_tps": 685.7003301694056,
+     "predicted_n": 176,
+     "predicted_ms": 1483.42,
+     "decode_tps": 118.64475334025427,
+     "draft_n": 146,
+     "draft_n_accepted": 103,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 1.854,
+     "prompt_n": 292,
+     "prompt_ms": 311.94,
+     "prompt_tps": 936.0774507918189,
+     "predicted_n": 177,
+     "predicted_ms": 1505.276,
+     "decode_tps": 117.58640940266103,
+     "draft_n": 150,
+     "draft_n_accepted": 103,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 1.777,
+     "prompt_n": 292,
+     "prompt_ms": 311.986,
+     "prompt_tps": 935.939433179694,
+     "predicted_n": 176,
+     "predicted_ms": 1421.568,
+     "decode_tps": 123.80695119755087,
+     "draft_n": 144,
+     "draft_n_accepted": 104,
+     "cache_n": 0
+    }
+   ]
+  },
+  "2048": {
+   "prompt_n": 2042,
+   "prefill_tps": 2058.2,
+   "decode_tps": 108.5,
+   "ttft_s": 0.98,
+   "draft_accept_rate": 0.769,
+   "runs": [
+    {
+     "wall_s": 2.885,
+     "prompt_n": 2042,
+     "prompt_ms": 1081.267,
+     "prompt_tps": 1888.52522087514,
+     "predicted_n": 191,
+     "predicted_ms": 1759.827,
+     "decode_tps": 108.53339561218233,
+     "draft_n": 150,
+     "draft_n_accepted": 115,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 2.648,
+     "prompt_n": 2042,
+     "prompt_ms": 992.111,
+     "prompt_tps": 2058.2374351257067,
+     "predicted_n": 163,
+     "predicted_ms": 1563.488,
+     "decode_tps": 104.25407806136023,
+     "draft_n": 134,
+     "draft_n_accepted": 97,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 2.56,
+     "prompt_n": 2042,
+     "prompt_ms": 981.447,
+     "prompt_tps": 2080.601397732124,
+     "predicted_n": 168,
+     "predicted_ms": 1475.467,
+     "decode_tps": 113.86225513684819,
+     "draft_n": 128,
+     "draft_n_accepted": 105,
+     "cache_n": 0
+    }
+   ]
+  },
+  "8192": {
+   "prompt_n": 8185,
+   "prefill_tps": 1702.0,
+   "decode_tps": 93.2,
+   "ttft_s": 4.81,
+   "draft_accept_rate": 0.668,
+   "runs": [
+    {
+     "wall_s": 6.794,
+     "prompt_n": 8185,
+     "prompt_ms": 4810.479,
+     "prompt_tps": 1701.4937597690375,
+     "predicted_n": 175,
+     "predicted_ms": 1846.507,
+     "decode_tps": 94.7735372787647,
+     "draft_n": 148,
+     "draft_n_accepted": 101,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 6.945,
+     "prompt_n": 8185,
+     "prompt_ms": 4807.415,
+     "prompt_tps": 1702.5782047108478,
+     "predicted_n": 180,
+     "predicted_ms": 1962.972,
+     "decode_tps": 91.6976910521393,
+     "draft_n": 156,
+     "draft_n_accepted": 102,
+     "cache_n": 0
+    }
+   ]
+  },
+  "15800": {
+   "prompt_n": 15793,
+   "prefill_tps": 1491.5,
+   "decode_tps": 91.0,
+   "ttft_s": 10.58,
+   "draft_accept_rate": 0.704,
+   "runs": [
+    {
+     "wall_s": 12.83,
+     "prompt_n": 15793,
+     "prompt_ms": 10575.399,
+     "prompt_tps": 1493.3715503311034,
+     "predicted_n": 181,
+     "predicted_ms": 2044.803,
+     "decode_tps": 88.51708453088145,
+     "draft_n": 154,
+     "draft_n_accepted": 104,
+     "cache_n": 0
+    },
+    {
+     "wall_s": 12.758,
+     "prompt_n": 15793,
+     "prompt_ms": 10602.418,
+     "prompt_tps": 1489.565870728734,
+     "predicted_n": 173,
+     "predicted_ms": 1851.284,
+     "decode_tps": 93.44865509559851,
+     "draft_n": 140,
+     "draft_n_accepted": 103,
+     "cache_n": 0
+    }
+   ]
+  }
+ },
+ "repeat_identical": {
+  "distinct": 1,
+  "runs": 3
+ },
+ "users": [],
+ "users_8k": [],
+ "ok": true,
+ "log": [
+  "start single-16k-draft2 (1 slot x 16K, draft 2)",
+  "  ready in 25 s, card memory 28601 MiB",
+  "  ctx 300: prompt_n=292 prefill 686 tok/s, decode 118.6 tok/s, draft acc 103/146",
+  "  ctx 300: prompt_n=292 prefill 936 tok/s, decode 117.6 tok/s, draft acc 103/150",
+  "  ctx 300: prompt_n=292 prefill 936 tok/s, decode 123.8 tok/s, draft acc 104/144",
+  "  ctx 2048: prompt_n=2042 prefill 1889 tok/s, decode 108.5 tok/s, draft acc 115/150",
+  "  ctx 2048: prompt_n=2042 prefill 2058 tok/s, decode 104.3 tok/s, draft acc 97/134",
+  "  ctx 2048: prompt_n=2042 prefill 2081 tok/s, decode 113.9 tok/s, draft acc 105/128",
+  "  ctx 8192: prompt_n=8185 prefill 1701 tok/s, decode 94.8 tok/s, draft acc 101/148",
+  "  ctx 8192: prompt_n=8185 prefill 1703 tok/s, decode 91.7 tok/s, draft acc 102/156",
+  "  ctx 15800: prompt_n=15793 prefill 1493 tok/s, decode 88.5 tok/s, draft acc 104/154",
+  "  ctx 15800: prompt_n=15793 prefill 1490 tok/s, decode 93.4 tok/s, draft acc 103/140",
+  "  repeat identity: 1 distinct of 3"
+ ]
+}

@@ -108,7 +108,8 @@
               "value": 114.8486529751413,
               "samples": 4
             }
-          ]
+          ],
+          "public_label": "Writing speed · one user · 3-token draft · July 2026 service sweep, up to 32K tokens"
         },
         {
           "id": "prefill-vs-context",
@@ -159,7 +160,8 @@
               "value": 1001.687171893108,
               "samples": 4
             }
-          ]
+          ],
+          "public_label": "Reading speed (prefill) · estimated from first-token wait · July 2026 service sweep"
         },
         {
           "id": "ttft-vs-context",
@@ -209,6 +211,543 @@
               "context_tokens": 32571,
               "value": 32517.333841737127,
               "samples": 4
+            }
+          ],
+          "public_label": "Wait for the first token · July 2026 service sweep, up to 32K tokens"
+        },
+        {
+          "id": "sweep-decode-vs-draft-length-2048",
+          "label": "Writing speed by MTP draft length · after a 2,000-token prompt",
+          "public_label": "Writing speed · different draft lengths · one user · after a 2,000-token prompt",
+          "public_scope": "The built-in draft head guesses several next tokens and the main model checks them. Zero is plain decoding. Three is the single-user recipe; longer drafts get rejected more often and gain nothing.",
+          "metric": "decode",
+          "unit": "tok/s",
+          "x_metric": "speculative_tokens",
+          "x_label": "MTP draft tokens per step",
+          "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, 2,000-token prompt; draft 0 is plain decoding, the others use the Q4_0 MTP draft head (draft-n-min 1 for draft 1, else 2; p-min 0.0475). Every draft length repeated the same long question identically three times.",
+          "evidence": "data/profiles/2026-10-10/gemma-sweep/single-16k-draft3.json",
+          "points": [
+            {
+              "speculative_tokens": 0,
+              "value": 62.7,
+              "samples": 3,
+              "accept_rate": null
+            },
+            {
+              "speculative_tokens": 1,
+              "value": 96.1,
+              "samples": 3,
+              "accept_rate": 0.81
+            },
+            {
+              "speculative_tokens": 2,
+              "value": 108.5,
+              "samples": 3,
+              "accept_rate": 0.769
+            },
+            {
+              "speculative_tokens": 3,
+              "value": 109.0,
+              "samples": 3,
+              "accept_rate": 0.667
+            },
+            {
+              "speculative_tokens": 4,
+              "value": 108.3,
+              "samples": 3,
+              "accept_rate": 0.582
+            },
+            {
+              "speculative_tokens": 5,
+              "value": 104.5,
+              "samples": 3,
+              "accept_rate": 0.506
+            }
+          ]
+        },
+        {
+          "id": "sweep-decode-vs-draft-length-300",
+          "label": "Writing speed by MTP draft length · after a 300-token prompt",
+          "public_label": "Writing speed · different draft lengths · one user · after a 300-token prompt",
+          "public_scope": "The built-in draft head guesses several next tokens and the main model checks them. Zero is plain decoding. Three is the single-user recipe; longer drafts get rejected more often and gain nothing.",
+          "metric": "decode",
+          "unit": "tok/s",
+          "x_metric": "speculative_tokens",
+          "x_label": "MTP draft tokens per step",
+          "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, 300-token prompt; draft 0 is plain decoding, the others use the Q4_0 MTP draft head (draft-n-min 1 for draft 1, else 2; p-min 0.0475). Every draft length repeated the same long question identically three times.",
+          "evidence": "data/profiles/2026-10-10/gemma-sweep/single-16k-draft3.json",
+          "points": [
+            {
+              "speculative_tokens": 0,
+              "value": 77.9,
+              "samples": 3,
+              "accept_rate": null
+            },
+            {
+              "speculative_tokens": 1,
+              "value": 113.3,
+              "samples": 3,
+              "accept_rate": 0.826
+            },
+            {
+              "speculative_tokens": 2,
+              "value": 118.6,
+              "samples": 3,
+              "accept_rate": 0.705
+            },
+            {
+              "speculative_tokens": 3,
+              "value": 121.9,
+              "samples": 3,
+              "accept_rate": 0.625
+            },
+            {
+              "speculative_tokens": 4,
+              "value": 114.6,
+              "samples": 3,
+              "accept_rate": 0.526
+            },
+            {
+              "speculative_tokens": 5,
+              "value": 112.5,
+              "samples": 3,
+              "accept_rate": 0.475
+            }
+          ]
+        },
+        {
+          "id": "sweep-decode-vs-context-draft3",
+          "label": "Writing speed after the prompt · MTP draft 3",
+          "metric": "decode",
+          "unit": "tok/s",
+          "public_label": "Writing speed · one user · 3-token draft (single-user recipe)",
+          "public_scope": "Writing speed after the answer starts, for prompts from 300 to 16,000 tokens. Longer prompts slow writing because every new token looks back over the whole prompt.",
+          "x_metric": "context_tokens",
+          "x_label": "Input tokens",
+          "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, MTP draft 3; prompts of about 300, 2K, 8K and 16K tokens of filler text, median of the runs at each length.",
+          "evidence": "data/profiles/2026-10-10/gemma-sweep/single-16k-draft3.json",
+          "points": [
+            {
+              "context_tokens": 300,
+              "value": 121.9,
+              "samples": 3,
+              "measured_prompt_tokens": 292
+            },
+            {
+              "context_tokens": 512,
+              "value": 117.4,
+              "samples": 3,
+              "measured_prompt_tokens": 509
+            },
+            {
+              "context_tokens": 2048,
+              "value": 109.0,
+              "samples": 3,
+              "measured_prompt_tokens": 2042
+            },
+            {
+              "context_tokens": 8192,
+              "value": 91.8,
+              "samples": 2,
+              "measured_prompt_tokens": 8185
+            },
+            {
+              "context_tokens": 15800,
+              "value": 91.9,
+              "samples": 2,
+              "measured_prompt_tokens": 15793
+            }
+          ]
+        },
+        {
+          "id": "sweep-prefill-vs-context-draft3",
+          "label": "Prompt reading speed · MTP draft 3",
+          "metric": "prefill",
+          "unit": "tok/s",
+          "public_label": "Reading speed (prefill) · one user · 3-token draft (single-user recipe)",
+          "public_scope": "How fast the server reads the prompt before the answer starts, measured by the server's own counters with no saved prompt cache. The draft does not change reading speed.",
+          "x_metric": "context_tokens",
+          "x_label": "Input tokens",
+          "measurement_kind": "server_prefill",
+          "operating_profile": {
+            "speculative_tokens": 3,
+            "max_model_len": 16384,
+            "tensor_parallel_size": 1
+          },
+          "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, MTP draft 3; prompts of about 300, 2K, 8K and 16K tokens of filler text, median of the runs at each length. Reading speed is prompt tokens divided by the server's prompt time, with no saved prompt cache.",
+          "evidence": "data/profiles/2026-10-10/gemma-sweep/single-16k-draft3.json",
+          "points": [
+            {
+              "context_tokens": 300,
+              "value": 933.9,
+              "samples": 3,
+              "measured_prompt_tokens": 292
+            },
+            {
+              "context_tokens": 512,
+              "value": 1323.8,
+              "samples": 3,
+              "measured_prompt_tokens": 509
+            },
+            {
+              "context_tokens": 2048,
+              "value": 2061.5,
+              "samples": 3,
+              "measured_prompt_tokens": 2042
+            },
+            {
+              "context_tokens": 8192,
+              "value": 1697.7,
+              "samples": 2,
+              "measured_prompt_tokens": 8185
+            },
+            {
+              "context_tokens": 15800,
+              "value": 1488.3,
+              "samples": 2,
+              "measured_prompt_tokens": 15793
+            }
+          ]
+        },
+        {
+          "id": "sweep-decode-vs-context-no-draft",
+          "label": "Writing speed after the prompt · no draft",
+          "metric": "decode",
+          "unit": "tok/s",
+          "public_label": "Writing speed · one user · no draft (shared-server recipe)",
+          "public_scope": "Writing speed after the answer starts, for prompts from 300 to 16,000 tokens. Longer prompts slow writing because every new token looks back over the whole prompt.",
+          "x_metric": "context_tokens",
+          "x_label": "Input tokens",
+          "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, no draft; prompts of about 300, 2K, 8K and 16K tokens of filler text, median of the runs at each length.",
+          "evidence": "data/profiles/2026-10-10/gemma-sweep/single-16k-draft0.json",
+          "points": [
+            {
+              "context_tokens": 300,
+              "value": 77.9,
+              "samples": 3,
+              "measured_prompt_tokens": 292
+            },
+            {
+              "context_tokens": 512,
+              "value": 74.3,
+              "samples": 3,
+              "measured_prompt_tokens": 509
+            },
+            {
+              "context_tokens": 2048,
+              "value": 62.7,
+              "samples": 3,
+              "measured_prompt_tokens": 2042
+            },
+            {
+              "context_tokens": 8192,
+              "value": 57.8,
+              "samples": 2,
+              "measured_prompt_tokens": 8185
+            },
+            {
+              "context_tokens": 15800,
+              "value": 56.2,
+              "samples": 2,
+              "measured_prompt_tokens": 15793
+            }
+          ]
+        },
+        {
+          "id": "sweep-prefill-vs-context-no-draft",
+          "label": "Prompt reading speed · no draft",
+          "metric": "prefill",
+          "unit": "tok/s",
+          "public_label": "Reading speed (prefill) · one user · no draft (shared-server recipe)",
+          "public_scope": "How fast the server reads the prompt before the answer starts, measured by the server's own counters with no saved prompt cache. The draft does not change reading speed.",
+          "x_metric": "context_tokens",
+          "x_label": "Input tokens",
+          "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, no draft; prompts of about 300, 2K, 8K and 16K tokens of filler text, median of the runs at each length. Reading speed is prompt tokens divided by the server's prompt time, with no saved prompt cache.",
+          "evidence": "data/profiles/2026-10-10/gemma-sweep/single-16k-draft0.json",
+          "points": [
+            {
+              "context_tokens": 300,
+              "value": 937.4,
+              "samples": 3,
+              "measured_prompt_tokens": 292
+            },
+            {
+              "context_tokens": 512,
+              "value": 1327.8,
+              "samples": 3,
+              "measured_prompt_tokens": 509
+            },
+            {
+              "context_tokens": 2048,
+              "value": 2050.1,
+              "samples": 3,
+              "measured_prompt_tokens": 2042
+            },
+            {
+              "context_tokens": 8192,
+              "value": 1705.1,
+              "samples": 2,
+              "measured_prompt_tokens": 8185
+            },
+            {
+              "context_tokens": 15800,
+              "value": 1495.2,
+              "samples": 2,
+              "measured_prompt_tokens": 15793
+            }
+          ]
+        },
+        {
+          "id": "sweep-ttft-vs-context-no-draft",
+          "label": "Wait for the first token · no draft",
+          "metric": "ttft",
+          "unit": "ms",
+          "public_label": "Wait for the first token · one user · cold prompt",
+          "public_scope": "How long the user waits for the answer to start when nothing about the prompt is cached. With a shared system prompt cached, only the new part counts.",
+          "x_metric": "context_tokens",
+          "x_label": "Input tokens",
+          "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, no draft; prompts of about 300, 2K, 8K and 16K tokens of filler text, median of the runs at each length. Wait is the server's prompt time for a cold prompt.",
+          "evidence": "data/profiles/2026-10-10/gemma-sweep/single-16k-draft0.json",
+          "points": [
+            {
+              "context_tokens": 300,
+              "value": 310.0,
+              "samples": 3,
+              "measured_prompt_tokens": 292
+            },
+            {
+              "context_tokens": 512,
+              "value": 380.0,
+              "samples": 3,
+              "measured_prompt_tokens": 509
+            },
+            {
+              "context_tokens": 2048,
+              "value": 970.0,
+              "samples": 3,
+              "measured_prompt_tokens": 2042
+            },
+            {
+              "context_tokens": 8192,
+              "value": 4800.0,
+              "samples": 2,
+              "measured_prompt_tokens": 8185
+            },
+            {
+              "context_tokens": 15800,
+              "value": 10550.0,
+              "samples": 2,
+              "measured_prompt_tokens": 15793
+            }
+          ]
+        },
+        {
+          "id": "sweep-aggregate-decode-vs-users-p8x4k-draft0",
+          "label": "Total writing speed by people served at once · 8 slots of 4K · no draft (the shared-server recipe)",
+          "public_label": "Total writing speed · 8 slots of 4K · no draft (the shared-server recipe)",
+          "public_scope": "Everyone sends a different 2,000-token prompt at the same moment. The speed is the combined total; divide by the user count for each person's share.",
+          "metric": "aggregate_decode",
+          "unit": "tok/s",
+          "x_metric": "concurrent_sequences",
+          "x_label": "People writing at once",
+          "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. Each person sends a different 2K-token prompt at the same moment and gets 256 tokens; total is the sum of the per-person server decode rates while all are writing.",
+          "evidence": "data/profiles/2026-10-10/gemma-sweep/p8x4k-draft0.json",
+          "points": [
+            {
+              "concurrent_sequences": 1,
+              "value": 65.9,
+              "per_user_value": 65.9,
+              "samples": 1
+            },
+            {
+              "concurrent_sequences": 2,
+              "value": 98.1,
+              "per_user_value": 49.1,
+              "samples": 1
+            },
+            {
+              "concurrent_sequences": 4,
+              "value": 129.3,
+              "per_user_value": 32.1,
+              "samples": 1
+            },
+            {
+              "concurrent_sequences": 8,
+              "value": 160.0,
+              "per_user_value": 19.9,
+              "samples": 1
+            }
+          ]
+        },
+        {
+          "id": "sweep-aggregate-decode-vs-users-p8x4k-draft1",
+          "label": "Total writing speed by people served at once · 8 slots of 4K · MTP draft 1",
+          "public_label": "Total writing speed · 8 slots of 4K · MTP draft 1",
+          "public_scope": "Everyone sends a different 2,000-token prompt at the same moment. The speed is the combined total; divide by the user count for each person's share.",
+          "metric": "aggregate_decode",
+          "unit": "tok/s",
+          "x_metric": "concurrent_sequences",
+          "x_label": "People writing at once",
+          "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. Each person sends a different 2K-token prompt at the same moment and gets 256 tokens; total is the sum of the per-person server decode rates while all are writing.",
+          "evidence": "data/profiles/2026-10-10/gemma-sweep/p8x4k-draft1.json",
+          "points": [
+            {
+              "concurrent_sequences": 1,
+              "value": 95.7,
+              "per_user_value": 95.7,
+              "samples": 1
+            },
+            {
+              "concurrent_sequences": 2,
+              "value": 138.5,
+              "per_user_value": 69.2,
+              "samples": 1
+            },
+            {
+              "concurrent_sequences": 4,
+              "value": 165.6,
+              "per_user_value": 41.7,
+              "samples": 1
+            },
+            {
+              "concurrent_sequences": 8,
+              "value": 105.6,
+              "per_user_value": 13.7,
+              "samples": 1
+            }
+          ]
+        },
+        {
+          "id": "sweep-aggregate-decode-vs-users-p8x4k-draft3",
+          "label": "Total writing speed by people served at once · 8 slots of 4K · MTP draft 3",
+          "public_label": "Total writing speed · 8 slots of 4K · MTP draft 3",
+          "public_scope": "Everyone sends a different 2,000-token prompt at the same moment. The speed is the combined total; divide by the user count for each person's share.",
+          "metric": "aggregate_decode",
+          "unit": "tok/s",
+          "x_metric": "concurrent_sequences",
+          "x_label": "People writing at once",
+          "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. Each person sends a different 2K-token prompt at the same moment and gets 256 tokens; total is the sum of the per-person server decode rates while all are writing.",
+          "evidence": "data/profiles/2026-10-10/gemma-sweep/p8x4k-draft3.json",
+          "points": [
+            {
+              "concurrent_sequences": 1,
+              "value": 119.9,
+              "per_user_value": 119.9,
+              "samples": 1
+            },
+            {
+              "concurrent_sequences": 2,
+              "value": 145.8,
+              "per_user_value": 72.9,
+              "samples": 1
+            },
+            {
+              "concurrent_sequences": 4,
+              "value": 96.5,
+              "per_user_value": 24.8,
+              "samples": 1
+            },
+            {
+              "concurrent_sequences": 8,
+              "value": 130.0,
+              "per_user_value": 16.3,
+              "samples": 1
+            }
+          ]
+        },
+        {
+          "id": "sweep-aggregate-decode-vs-users-p4x16k-draft0",
+          "label": "Total writing speed by people served at once · 4 slots of 16K · no draft",
+          "public_label": "Total writing speed · 4 slots of 16K · no draft",
+          "public_scope": "Everyone sends a different 2,000-token prompt at the same moment. The speed is the combined total; divide by the user count for each person's share. With 4 people each sending an 8K-token prompt: 79 tok/s total, 18 each.",
+          "metric": "aggregate_decode",
+          "unit": "tok/s",
+          "x_metric": "concurrent_sequences",
+          "x_label": "People writing at once",
+          "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. Each person sends a different 2K-token prompt at the same moment and gets 256 tokens; total is the sum of the per-person server decode rates while all are writing. With 4 people each sending an 8K-token prompt: 79 tok/s total, 18 each.",
+          "evidence": "data/profiles/2026-10-10/gemma-sweep/p4x16k-draft0.json",
+          "points": [
+            {
+              "concurrent_sequences": 1,
+              "value": 65.7,
+              "per_user_value": 65.7,
+              "samples": 1
+            },
+            {
+              "concurrent_sequences": 2,
+              "value": 98.1,
+              "per_user_value": 49.0,
+              "samples": 1
+            },
+            {
+              "concurrent_sequences": 4,
+              "value": 135.9,
+              "per_user_value": 34.0,
+              "samples": 1
+            }
+          ]
+        },
+        {
+          "id": "sweep-aggregate-decode-vs-users-p4x16k-draft1",
+          "label": "Total writing speed by people served at once · 4 slots of 16K · MTP draft 1 (the balanced recipe)",
+          "public_label": "Total writing speed · 4 slots of 16K · MTP draft 1 (the balanced recipe)",
+          "public_scope": "Everyone sends a different 2,000-token prompt at the same moment. The speed is the combined total; divide by the user count for each person's share. With 4 people each sending an 8K-token prompt: 94 tok/s total, 20 each.",
+          "metric": "aggregate_decode",
+          "unit": "tok/s",
+          "x_metric": "concurrent_sequences",
+          "x_label": "People writing at once",
+          "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. Each person sends a different 2K-token prompt at the same moment and gets 256 tokens; total is the sum of the per-person server decode rates while all are writing. With 4 people each sending an 8K-token prompt: 94 tok/s total, 20 each.",
+          "evidence": "data/profiles/2026-10-10/gemma-sweep/p4x16k-draft1.json",
+          "points": [
+            {
+              "concurrent_sequences": 1,
+              "value": 95.8,
+              "per_user_value": 95.8,
+              "samples": 1
+            },
+            {
+              "concurrent_sequences": 2,
+              "value": 138.1,
+              "per_user_value": 69.1,
+              "samples": 1
+            },
+            {
+              "concurrent_sequences": 4,
+              "value": 169.2,
+              "per_user_value": 42.0,
+              "samples": 1
+            }
+          ]
+        },
+        {
+          "id": "sweep-aggregate-decode-vs-users-p4x16k-draft3",
+          "label": "Total writing speed by people served at once · 4 slots of 16K · MTP draft 3",
+          "public_label": "Total writing speed · 4 slots of 16K · MTP draft 3",
+          "public_scope": "Everyone sends a different 2,000-token prompt at the same moment. The speed is the combined total; divide by the user count for each person's share. With 4 people each sending an 8K-token prompt: 62 tok/s total, 14 each.",
+          "metric": "aggregate_decode",
+          "unit": "tok/s",
+          "x_metric": "concurrent_sequences",
+          "x_label": "People writing at once",
+          "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. Each person sends a different 2K-token prompt at the same moment and gets 256 tokens; total is the sum of the per-person server decode rates while all are writing. With 4 people each sending an 8K-token prompt: 62 tok/s total, 14 each.",
+          "evidence": "data/profiles/2026-10-10/gemma-sweep/p4x16k-draft3.json",
+          "points": [
+            {
+              "concurrent_sequences": 1,
+              "value": 118.5,
+              "per_user_value": 118.5,
+              "samples": 1
+            },
+            {
+              "concurrent_sequences": 2,
+              "value": 146.7,
+              "per_user_value": 73.3,
+              "samples": 1
+            },
+            {
+              "concurrent_sequences": 4,
+              "value": 96.6,
+              "per_user_value": 23.5,
+              "samples": 1
             }
           ]
         }
@@ -265,7 +804,15 @@
         "data/gemma4-26b-a4b-q8-b70-context-performance-profile-20260702.json",
         "data/gemma4-long-context-service-gate-20260702Tservice-ladder-current-rep4.json",
         "data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json",
-        "patches/gemma4-26b-a4b-q8-b70/llama-cpp-c926ad098-gemma4-q8-record-source-20260701.diff.gz.b64"
+        "patches/gemma4-26b-a4b-q8-b70/llama-cpp-c926ad098-gemma4-q8-record-source-20260701.diff.gz.b64",
+        "data/profiles/2026-10-10/gemma-sweep/p4x16k-draft0.json",
+        "data/profiles/2026-10-10/gemma-sweep/p4x16k-draft1.json",
+        "data/profiles/2026-10-10/gemma-sweep/p4x16k-draft3.json",
+        "data/profiles/2026-10-10/gemma-sweep/p8x4k-draft0.json",
+        "data/profiles/2026-10-10/gemma-sweep/p8x4k-draft1.json",
+        "data/profiles/2026-10-10/gemma-sweep/p8x4k-draft3.json",
+        "data/profiles/2026-10-10/gemma-sweep/single-16k-draft0.json",
+        "data/profiles/2026-10-10/gemma-sweep/single-16k-draft3.json"
       ],
       "evidence": [
         "patches/gemma4-26b-a4b-q8-b70/record-source-verification-20260822.json",
