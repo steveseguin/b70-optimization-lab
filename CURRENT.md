@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**2026-10-10 17:40 UTC, owner: "run the probes"; also publish the LTX results and a reproduction recipe on neural.download and improve the Qwen 3.8 Flash-Next recipes/promotion there.**
+137 production is up (server healthy; the client first refused because its expectation variable is `LTX_EXPECT_F32_SCAN`, not the launcher's
+`LTX_F32_SCAN`; restarted with both set; `stream/ops/production-arm.json` updated to packet 137). Probe window armed: after 60 chunks of 137,
+one controlled LTX stop, then on card 23:00.0 with the owner-acceptance receipt: clean-exit probe → exit-after-sleep 10 → one-layer
+first-forward (each bounded; the chain stops at the first fault line or FAULT.json; no retry, no second arm after a fault), then a
+health receipt and the 137 relaunch after the gap. Codex jobs: 138 (scheduled text prefetch + pacing-aware period metric) and the
+neural.download publication (LTX recipe/details page + Qwen 3.8 recipe and promotion review, per docs/neural-download-packet-standard.md,
+docs/recipe-publication-standard.md, docs/details-page-checklist.md, docs/promotion-attestation.md).
+
 **2026-10-10 17:25 UTC, packet 137 sealed (exact bulk F32 finiteness scan, `LTX_F32_SCAN=bulk`; predicted −0.15 s per chunk, 0.076 of it before sampler A); the residual odd-period excess is mostly the fresh text encode every fourth chunk (fresh 5.626 s vs reused 5.195 s), not a defect. Swapping the production arm to 137.**
 135 GC-10 production session closed (747 periods, exact, no stops, the longest clean session of the campaign): the raw median 5.553 s is inflated by the client's 60-s-ahead throttle once production outran the sink; throttle lines 94; unthrottled n = 700, median 5.525 (even 5.33 / odd 5.62, p90 6.02) = 0.921 s/s. 137 (commits 458a3c92c0, 4676194954;
 manifest `18c80d25…463e`; inner plan `61e39067…21a5`; 1,096 recovery, 7,780 client, 9 sealed-import over 69 helpers, 10 preflight, 11 matched
