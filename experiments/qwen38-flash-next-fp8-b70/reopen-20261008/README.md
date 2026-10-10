@@ -12,7 +12,9 @@ placement, full 16-bit KV or memory guard changed. Original saved runs and
 historical hash pins remain evidence of their original configurations.
 
 [Application validation](VALIDATION.md#teardown-application-and-probe-preparation-2026-10-09)
-records CPU checks and exclusions. [Prepared single-card probes](probe/README.md#prepared-for-2026-10-10-written-2026-10-09)
+records **316 passing CPU checks and seven prohibited skips**. The one-layer
+first-forward script shares the probe admission, kernel watch and receipts,
+uses the applied teardown path, and has 35 new passing checks. [Prepared single-card probes](probe/README.md#prepared-for-2026-10-10-written-2026-10-09)
 use empty new receipt directories, the immutable image and fresh-health
 placeholders. No probe was executed. The existing two-incident admission gate
 still needs coordinator reconciliation with the owner's decision; it was not

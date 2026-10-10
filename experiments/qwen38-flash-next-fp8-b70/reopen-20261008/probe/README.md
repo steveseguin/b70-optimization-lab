@@ -1,23 +1,141 @@
-# Single-card slab probe — exit variants prepared, launches halted
+# Single-card probes — CPU prepared, coordinator execution only
 
-**2026-10-09: both image NEO 26.27 and host-overlay NEO 26.18 returned exact
-bytes, then faulted at the worker exit/postflight boundary. This boot has two
-incidents; all GPU launches remain halted pending the owner's decision.**
-The UMD version did not discriminate. See the
+**2026-10-09: the owner accepted continued operation on this boot, without a
+reboot.** The reviewed teardown patch is applied to the repository overlay.
+Native cleanup remains unqualified. No probe was run during this task; GPU
+work stays serialized behind LTX and belongs to the coordinator.
+
+The two earlier tiny probes returned exact bytes, then faulted near worker
+exit. The image-versus-host UMD comparison did not discriminate; see the
 [exit lifecycle analysis](../../notes/2026-10-09-exit-lifecycle-analysis.md).
-The commands below are prepared procedures, not current launch authorization.
-This tests the [attempt-7 hypothesis](../../notes/2026-10-08-attempt7-gpu-fault-analysis.md), not model output or performance.
-The indirect variant hides the host allocation behind the production signed table.
-The direct variant passes and uses the host pointer, local row and selector.
-Both use the same 3 MiB pinned allocation, 4096-byte interior view, bytes and row order.
-The active overlay and its manifest are unchanged; the [proposed fix](../overlay-fix-hostptr/README.md) is separate.
+The indirect/direct gathers and new first-forward test are diagnostics, not
+model quality or performance evidence. The separate
+[host-pointer proposal](../overlay-fix-hostptr/README.md) remains unapplied.
+
+## Prepared for 2026-10-10 (written 2026-10-09)
+
+The three directories below were created **empty**. Git does not track empty
+directories; another checkout must create them before coordinator admission.
+Saved runs are unchanged. Replace the literal `<FRESH-HEALTH>` with a newly
+provided complete health receipt, then review the printed command. These
+wrappers **print only**; their output is not executed by this task.
+Use the image UMD for both exit comparisons. Run clean exit first, and consider
+the sleep arm only after a clean result and a separately admitted idle window.
+
+```sh
+p=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008
+bash "$p/probe/run-probe-in-container.sh" --render-node /dev/dri/by-path/pci-0000:23:00.0-render --health-receipt '<FRESH-HEALTH>' --receipt-dir "$p/runs/probe-clean-exit-20261010" --clean-exit
+bash "$p/probe/run-probe-in-container.sh" --render-node /dev/dri/by-path/pci-0000:23:00.0-render --health-receipt '<FRESH-HEALTH>' --receipt-dir "$p/runs/probe-exit-sleep-20261010" --exit-after-sleep 10
+```
+
+Pinned image (already selected; no pull or build):
+`vllm/vllm-openai-xpu@sha256:e4446310b1d30015e8fdc1a0a2ef1669ac6bef857cbe772487571ed5c1a926a9`.
+The applied `overlay-manifest.json` SHA-256 is
+`21f4a79c000aa4cf9772082379b486384f5ac8bc1a38210c96c567f555ef7648`.
+The preserved `teardown.patch` SHA-256 is
+`3a9ea39d03d5888ed4c05eadd40c083216bfbe58dc6e35caeee2068d1fb71f62`.
+The tiny exit probes read the package's pinned placement helper; they do not
+install the overlay. Their existing lifecycle variants remain unchanged.
+
+**Stop rule: the first fault ends submissions. No retry, no second arm after
+a fault, no reset.** Also stop on a native crash, failed comparison, stale or
+missing watcher, missing evidence or bounded lack of progress. Preserve
+receipts and any hung worker; no forced kill or automatic health launch.
+The old tiny-probe guardian still has its documented fatal 120-second alarm;
+that existing timeout behavior is not native-safe cleanup and must be treated
+as a fault/inconclusive result, not a successful test.
+
+The owner's boot decision is resolved. A separate **implementation limitation**
+remains: the shared `watch_kernel.py` calls `screen.admit_journal`, whose
+existing two-incident gate refuses this boot even with a fresh passing health
+receipt. This CPU application did not remove fault markers or weaken that
+gate. The coordinator must reconcile that recorded authorization with the
+admission mechanism before execution; these print-only commands do not bypass
+it. Exclusive idle cards, the five-minute stop gap and fresh health remain
+required. No LTX process or endpoint is operated by this preparation.
+
+### Preregistered interpretation
+
+Compare only matched, separately admitted runs. The table does not authorize
+executing a second arm after a fault in this sequence. Applying source to the
+repository does not qualify it for production.
+
+| Matched result | Preregistered interpretation | Exact production decision |
+|---|---|---|
+| Clean exit clean; abrupt exit faults | Supports teardown class; does not uniquely identify slab versus internal queue/ring mapping. | Keep the applied source unqualified. The teardown candidate may proceed to separately authorized native validation: normal, partial-load, SIGINT/SIGTERM and calibrate-load exits, four rank receipts, clean kernel evidence and unchanged output/fresh-server gates. A single clean probe does not authorize adoption. |
+| Both fault | Allocation/mapping/runtime class remains; cleanup did not cure it. A fault during clean finalization can still be teardown. | Do not launch full production with this applied candidate. Preserve the halt and investigate native release/queue ownership and mapping faults; revise the candidate before another separately admitted test. |
+| Both clean | Flaky/other or changed state; historical faults remain unexplained. | No production change or safety certification. Preserve the candidate as unqualified; require a separately admitted matched repeat before choosing a production remedy. |
+| Clean exit faults; abrupt exit clean | Cleanup-specific failure or flakiness; no fix established. | Reject adoption of this candidate. Inspect the release phase that failed and revise/test that mechanism before any production run. Do not adopt abrupt exit as a workaround. |
+| Sleep remains clean until abrupt exit, then faults | Exit boundary is stronger than elapsed-time explanation; it does not establish live pinned slabs. | Keep the applied source unqualified. Prioritize the ordered-release/native-finalization candidate for separately authorized validation; this outcome alone does not qualify it. |
+| Fault during sleep, before exit | Release/idle/asynchronous fault; abrupt interpreter exit is not necessary. | Do not treat graceful interpreter exit as a sufficient remedy or resume production. Investigate release-time mapping/queue behavior and pending runtime work before revising the candidate. |
+| Missing marker, timeout, stale watcher, exception or missing evidence | Comparison is inconclusive. | No production decision, patch adoption, automatic retry or full-load launch. Preserve evidence and obtain a separately admitted valid comparison. |
+
+### One-layer single-rank first forward — prepared, not run
+
+```sh
+p=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008
+bash "$p/probe/run-first-forward-in-container.sh" --render-node /dev/dri/by-path/pci-0000:23:00.0-render --health-receipt '<FRESH-HEALTH>' --receipt-dir "$p/runs/probe-first-forward-20261010" --overlay-sha256 21f4a79c000aa4cf9772082379b486384f5ac8bc1a38210c96c567f555ef7648
+```
+
+[Worker](single_rank_first_forward_probe.py), [command printer](first_forward_command.py),
+[wrapper](run-first-forward-in-container.sh), [original design](../../notes/2026-10-09-attempt7-ordering.md).
+This shares the slab probe's health admission, kernel watcher, atomic receipts,
+post-worker journal handshake and immutable single-device container command.
+The coordinator starts the same watcher described below; this command only
+prints and never starts it. The worker applies the hash-verified overlay only
+inside its disposable container, before importing the runtime.
+
+One fresh Python child uses rank-0/layer-0 geometry: 64 tokens, 128 experts,
+27 host and 101 resident, w13 `[1280,2560]`, w2 `[2560,640]`, and exact pinned
+host payloads **88,473,600 / 44,236,800 bytes**. Synthetic FP8 bytes vary by
+logical expert and coordinate; deterministic routes use both host and resident
+experts. The all-device table control runs first; the mixed-host table arm runs
+only after control completion and a fresh clean journal read. Their FP8 math,
+block scales, BF16 inputs and routing match, and outputs must match byte for
+byte. No checkpoint, PLE, collective, full-model load or model server is used.
+
+Stage receipts, tensor/table addresses, table readbacks, output bytes/hashes,
+IR hashes when exposed, worker state/memory, native stderr and cleanup phases
+are retained. Synchronization localizes high-level production stages, some of
+which contain several native kernels; this is not an instruction-level trace
+or a speed measurement. Native context/USM queries and fatal-signal/VM-close
+traces can be unavailable and must be labeled as such. Causal separation stays
+incomplete without those observations.
+
+The first-forward worker uses the applied ordered rank teardown before normal
+exit and validates the rank-0 completion receipt. On a watcher fault or a stuck
+native call it preserves ownership and waits for the coordinator. Its 120-second
+bound latches STOP rather than killing the worker; this differs from the old
+slab probe's fatal alarm. A missing or stale watcher, exception, native crash,
+comparison failure or bound prevents further arms. No retry or reset is built in.
+
+| Observation | Interpretation and next boundary |
+| --- | --- |
+| All-device control fails | Shared compute/dispatch remains implicated; do not submit mixed work. |
+| Control clean, only mixed fails | Raises host-table/residency/native-codegen hypothesis; does not identify the exact allocation or instruction. |
+| Both outputs exact, failure only during cleanup/exit | Raises lifecycle hypothesis; no safe-teardown claim. |
+| Both exact and clean exit/postflight | Clears this one layer/rank only, not 96 allocations, TP4, PLE or model output. |
+| Fatal-signal/VM-close trace unavailable | Event ordering remains partial; do not claim no native crash preceded a GPU fault. |
+
+CPU verification after application: **35/35 new first-forward checks passed**
+([source-bound receipt](../evidence/teardown-applied-20261010/first-forward.json),
+[log](../evidence/teardown-applied-20261010/first-forward.log)). Combined probe
+suite: **60 passed, one prohibited child-kill test skipped** out of 61.
+Independent source review checked production signatures, geometry, release
+ordering and the real rank-receipt gate; native behavior remains untested.
+Use the restricted runner to retain the explicit no-kill exclusion:
+
+```sh
+p=experiments/qwen38-flash-next-fp8-b70/reopen-20261008
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 python3 -B "$p/overlay-fix-teardown/run_cpu_tests.py" probe
+```
 
 ## Coordinator sequence
 
-First obtain the owner's cleared boot and an exclusive idle-card window; do not
+The owner's decision permits continuing this boot. Arrange an exclusive idle-card window; do not
 stop/displace LTX for this probe. Keep the lane's five-minute stop gap. Retain
 all fault markers and evidence. The old attempt-7 boot is explicitly refused.
-Use the existing matching image; no pull, install, production overlay application or build.
+Use the existing matching image; no pull, install, runtime installation or build.
 Provide a complete `ltx.four-card-health.v1` receipt from this boot, less than
 six hours old. No health probe is run by these scripts.
 
@@ -121,6 +239,8 @@ are separate experiments; the default arm still uses abrupt exit.
 
 ## Exit lifecycle discrimination — prepared, not executed
 
+This preregistered table also governs the dated 2026-10-10 commands above.
+
 The default returns from `run_device` (dropping its local references), then
 calls `os._exit(0)`. It does **not** deliberately keep the slab tensor live at
 exit. Native allocation caches, Triton modules and runtime queues/context can
@@ -155,7 +275,7 @@ operations returned, not a native mapping census. The guardian still requires
 a new kernel read begun after worker death; clean bytes alone never pass.
 
 Prepared **print-only** commands from repo root (distinct NEW directories; do
-not execute their output while launches are halted):
+not execute their output without coordinator admission):
 
 ```sh
 probe=experiments/qwen38-flash-next-fp8-b70/reopen-20261008/probe
@@ -168,19 +288,11 @@ select the image UMD. Host UMD requires `--host-umd-overlay` on both compared
 arms. No sequential campaign is authorized: a fault stops work, and another
 arm requires a separately admitted state under the same guardian/watcher rule.
 
-| Matched result | Preregistered interpretation | Exact production decision |
-|---|---|---|
-| Clean exit clean; abrupt exit faults | Supports teardown class; does not uniquely identify slab versus internal queue/ring mapping. | Keep the production overlay unchanged. The unapplied teardown candidate may proceed to separately authorized native validation: normal, partial-load, SIGINT/SIGTERM and calibrate-load exits, four rank receipts, clean kernel evidence and unchanged output/fresh-server gates. A single clean probe does not authorize adoption. |
-| Both fault | Allocation/mapping/runtime class remains; cleanup did not cure it. A fault during clean finalization can still be teardown. | Do not apply or launch full production with this candidate. Preserve the halt and investigate native release/queue ownership and mapping faults; revise the candidate before another separately admitted test. |
-| Both clean | Flaky/other or changed state; historical faults remain unexplained. | No production change or safety certification. Preserve the candidate as unqualified; require a separately admitted matched repeat before choosing a production remedy. |
-| Clean exit faults; abrupt exit clean | Cleanup-specific failure or flakiness; no fix established. | Reject adoption of this candidate. Inspect the release phase that failed and revise/test that mechanism before any production run. Do not adopt abrupt exit as a workaround. |
-| Sleep remains clean until abrupt exit, then faults | Exit boundary is stronger than elapsed-time explanation; it does not establish live pinned slabs. | Keep production unchanged. Prioritize the ordered-release/native-finalization candidate for separately authorized validation; this outcome alone does not qualify it. |
-| Fault during sleep, before exit | Release/idle/asynchronous fault; abrupt interpreter exit is not necessary. | Do not treat graceful interpreter exit as a sufficient remedy or resume production. Investigate release-time mapping/queue behavior and pending runtime work before revising the candidate. |
-| Missing marker, timeout, stale watcher, exception or missing evidence | Comparison is inconclusive. | No production decision, patch adoption, automatic retry or full-load launch. Preserve evidence and obtain a separately admitted valid comparison. |
+Use the [dated preregistered interpretation table](#prepared-for-2026-10-10-written-2026-10-09) above.
 
-All rows keep the current boot halt in force until the owner resolves it.
-The [unapplied teardown patch](../overlay-fix-teardown/README.md) has CPU ordering
-tests only; no row turns a probe result into production approval.
+The owner has resolved the prior boot halt; every new fault ends this probe
+sequence. The [applied teardown patch](../overlay-fix-teardown/README.md) has
+CPU ordering tests only; no row turns a probe result into production approval.
 
 A missing marker, timeout, stale watcher, unavailable required evidence or
 exception is inconclusive. Compare fault timestamps to release/exit markers;
@@ -217,13 +329,9 @@ unverified. No speed or lossless-model claim follows.
 [probe log](cpu-probe-tests.log), [addressing log](cpu-hostptr-tests.log).
 The independent review checked both the math and the post-worker journal handshake.
 
-Reproduce with the existing venv, without installation:
-
-```sh
-/home/steve/.venvs/ltx25-baseline/bin/python -B -m unittest discover -s "$probe" -p 'test_*.py' -v
-/home/steve/.venvs/ltx25-baseline/bin/python -B -m unittest discover -s "$probe/../overlay-fix-hostptr" -p 'test_*.py' -v
-SCREEN1B_CPU_EVIDENCE_DIR="$probe/cpu-rehearsal" OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 /home/steve/.venvs/ltx25-baseline/bin/python -B -m unittest discover -s "$probe/.." -p 'test_*.py' -v
-```
+The unrestricted commands from the original preparation are superseded by
+the restricted runner above and the [current application validation](../VALIDATION.md#teardown-application-and-probe-preparation-2026-10-09).
+Historical evidence below is retained under its original scope.
 
 **Host UMD preparation, 2026-10-09: 21 probe tests passed; lane suite discovered
 213 tests, with 207 passed and 6 explicitly skipped, zero failures/errors.**
@@ -237,7 +345,7 @@ printer output, including both coordinator fixes.
 Reproduce this restricted validation from the repository root:
 
 ```sh
-python3 -B -m unittest discover -s experiments/qwen38-flash-next-fp8-b70/reopen-20261008/probe -p 'test_probe.py'
+OMP_NUM_THREADS=1 python3 -B experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-fix-teardown/run_cpu_tests.py probe
 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 /home/steve/.venvs/ltx25-baseline/bin/python -B - <<'PY'
 import unittest
 suite = unittest.defaultTestLoader.discover(

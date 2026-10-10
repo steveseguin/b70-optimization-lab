@@ -26,6 +26,18 @@ does not rewrite its provenance. Historical result pins were not relabeled.
 | Lane | 207 | 6 | 213 | [Receipt](evidence/teardown-applied-20261010/lane.json), [log](evidence/teardown-applied-20261010/lane.log) |
 | Existing slab probes | 25 | 1 | 26 | [Receipt](evidence/teardown-applied-20261010/probe.json), [log](evidence/teardown-applied-20261010/probe.log) |
 | Reviewed teardown | 49 | 0 | 49 | [Receipt](evidence/teardown-applied-20261010/teardown.json), [log](evidence/teardown-applied-20261010/teardown.log) |
+| New first-forward probe | 35 | 0 | 35 | [Receipt](evidence/teardown-applied-20261010/first-forward.json), [log](evidence/teardown-applied-20261010/first-forward.log) |
+
+The combined probe discovery also passes: **60 passed, one prohibited skip,
+61 total**, including the 35 new tests ([receipt](evidence/teardown-applied-20261010/probe-combined.json),
+[log](evidence/teardown-applied-20261010/probe-combined.log)). Across the four
+suite components above: **316 passed, seven skipped**, zero failures/errors.
+The new tests use fake device/kernel objects and mocked child supervision;
+they do not import Torch or allocate production-sized buffers. Coverage includes
+geometry/routes, source pins, stage instrumentation, control-to-mixed refusal,
+ordered teardown, valid rank receipt requirements, native-exit classification,
+and no-kill timeout preservation. Independent source review found and corrected
+cleanup timestamp order and retained exception tracebacks before these results.
 
 The six lane skips are the real-checkpoint boundary test and all five
 worker-init rehearsals (protected storage / `torch.xpu`). The seventh skip
@@ -40,8 +52,9 @@ changes occurred. OMP, MKL and OpenBLAS were each limited to one thread.
 p=experiments/qwen38-flash-next-fp8-b70/reopen-20261008
 python3 -B "$p/overlay-fix-teardown/build_patch.py" --check
 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 /home/steve/.venvs/ltx25-baseline/bin/python -B "$p/overlay-fix-teardown/run_cpu_tests.py" lane
-OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 python3 -B "$p/overlay-fix-teardown/run_cpu_tests.py" probe
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 python3 -B "$p/overlay-fix-teardown/run_cpu_tests.py" probe # existing + first-forward
 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 python3 -B "$p/overlay-fix-teardown/run_cpu_tests.py" teardown
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 python3 -B -m unittest discover -s "$p/probe" -p test_first_forward_probe.py -v
 ```
 
 [Concrete prepared commands and preregistered interpretation table](probe/README.md#prepared-for-2026-10-10-written-2026-10-09).
