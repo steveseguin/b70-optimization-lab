@@ -78,6 +78,12 @@ FRONTDOOR_STICKY_JSON_FIELDS = [
     ).split(",")
     if item.strip()
 ]
+# Gemma Q8 llama.cpp backends: a logprobs request dequantizes the full output head and OOMs the card, killing the backend.
+FRONTDOOR_REJECT_JSON_FIELDS = [
+    item.strip()
+    for item in os.environ.get("FRONTDOOR_REJECT_JSON_FIELDS", "").split(",")
+    if item.strip()
+]
 MODEL_SLOT_NAME = os.environ.get("MODEL_SLOT_NAME", "")
 MODEL_SLOT_API_MODEL = os.environ.get("MODEL_SLOT_API_MODEL", MODEL_SLOT_NAME)
 MODEL_SLOT_TITLE = os.environ.get("MODEL_SLOT_TITLE", "")
@@ -714,6 +720,7 @@ def status_payload() -> dict[str, Any]:
                 ),
                 "send_sticky_identifier": FRONTDOOR_STICKY_ROUTING,
             },
+            "rejected_request_fields": FRONTDOOR_REJECT_JSON_FIELDS,
             "limits": {
                 "context_tokens_per_request": (
                     FRONTDOOR_CONTEXT_TOKENS_PER_REQUEST or None
@@ -1010,6 +1017,31 @@ class FrontdoorHandler(BaseHTTPRequestHandler):
             if generation
             else False
         )
+        rejected_field = next(
+            (f for f in FRONTDOOR_REJECT_JSON_FIELDS if payload and payload.get(f)),
+            None,
+        )
+        if rejected_field:
+            log_event(
+                {
+                    "event": "rejected_request_field",
+                    "client": self.client_address[0],
+                    "path": path,
+                    "field": rejected_field,
+                }
+            )
+            self.write_json(
+                400,
+                {
+                    "error": {
+                        "message": f"field '{rejected_field}' is not supported by this endpoint",
+                        "type": "invalid_request_error",
+                        "param": rejected_field,
+                        "code": "unsupported_field",
+                    }
+                },
+            )
+            return
         if generation:
             route_info = request_route_info(self.headers, payload, sticky_key)
             if (

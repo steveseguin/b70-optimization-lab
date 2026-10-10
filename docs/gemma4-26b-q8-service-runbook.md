@@ -340,3 +340,21 @@ scripts/switch-vllm-model-slot.sh switch gemma4-12b-it-int4-autoround-c8
 
 Do not leave two large model services active on the same GPUs unless the goal
 is an explicit resource-contention experiment.
+
+## Two-B70 Host Recipes (2026-10-10)
+
+The two-card lab host (192.168.2.45) runs the same units with host drop-ins chosen by
+`scripts/gemma4-26b-two-b70-recipe.sh {throughput|balanced|single|status}` (files in
+`deploy/systemd/two-b70-host/`). All three use the deterministic oneDNN switch
+(`GGML_SYCL_DNNL_DETERMINISTIC=1`, see `notes/2026-10-09-gemma4-26b-two-b70-16k-lan-service.md`).
+
+| recipe | per card | concurrent | context | draft | measured |
+| --- | --- | ---: | ---: | --- | --- |
+| throughput | 8 slots | 16 | 4K | none | 1,230-1,310 total tok/s on two cards (300-token prompts, 150-token answers, 16 clients) |
+| balanced | 4 slots | 8 | 16K | MTP depth 1 | 56 tok/s per stream with 4 active, 105 alone |
+| single | 1 slot | 2 | 16K | MTP depth 3 | fastest one-person decode (record shape) |
+
+Why 8 slots means no draft: the fast MoE kernels take at most 8 tokens per step, and each draft token adds one per
+sequence. Clients should put shared instructions in the `system` message (reused from the prompt cache) and send up to
+16 requests at a time; `logprobs` requests are rejected by the frontdoor (`FRONTDOOR_REJECT_JSON_FIELDS`) because they
+run the card out of memory.
