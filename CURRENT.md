@@ -1,5 +1,10 @@
 # Current Workspace State
 
+**2026-10-10 07:28 UTC, 123b legacy baseline done (61 chunks, exact, verdict b6bcdae18297); packet 124 launched at 145 frames (display replica on xpu:2, parallel display worker, early audio).**
+Launch `LTX_AUX_RESIDENCY=legacy LTX_DISPLAY_WORKER=parallel LTX_RUN_WRITE_ALLOWANCE_GIB=16 launch-124.sh 145 frame 0 cone 1 1 fingerprint - eager-display 0 full xpu:2`
+at 07:27 UTC after the gap; client `start-client-124.sh 145 0 cone 1 1 fingerprint none eager-display 0 full xpu:2` with the same variables
+(work dir `s124-live01`); qualification running. Next: 124 at 169 with `LTX_DISPLAY_REPLICA_TRANSIENT_GIB=6.5` (predicted 0.886–0.950 s/s).
+
 **2026-10-10 07:15 UTC, packet 124 sealed (display on xpu:2 with legacy auxiliaries; early audio; optional parallel display worker); plan: 123b legacy at 145 live → 124 at 145 (parallel + early audio) → 124 at 169.**
 Codex's 169 timeline (`notes/2026-10-10-continuation123b-results-169.md`, commit 58a22e4b9) corrects the coordinator's reading: the display
 decode usually finished before the next cone was queued; the cone's extra ≈ 0.6 s was the decode worker queueing behind audio decode and
