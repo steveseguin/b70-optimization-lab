@@ -19,9 +19,11 @@ Predicted time is 5.55–6.10 seconds for six seconds of new video; this is not 
 measured speed. The conservative 169-frame estimate crosses xpu:0's existing
 memory floor, so that length stays disabled. The optional display copy on xpu:2
 has a larger checked allowance at 145 frames, but its memory and exact output
-remain unmeasured. The packet is sealed; final CPU recovery checks are running.
+remain unmeasured. CPU validation covers 461 recovery checks, 571 client checks
+and 10 mocked preflight tests; corrected test modules were rerun in full. The
+sealed packet has 1,980 verified files and no Python bytecode caches.
 No GPU, launch, preflight, port, unit, signal, existing-run write or host change
-was made. The coordinator's live-work record below remains theirs.
+was made. The coordinator's live-work records remain theirs.
 [Design, memory estimates, packet and future launch](experiments/ltx25-b70/notes/2026-10-10-continuation121-stream-design.md).
 
 **2026-10-10 03:30 UTC, Codex's 119 analysis corrects the attribution; packet 120 (display replica on xpu:2) sealed and queued for the next window; packet 121 (145/169-frame chunks) in design.**

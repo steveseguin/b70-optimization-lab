@@ -1,0 +1,14 @@
+PASS 121 f121 replica qualifies and streams three chunks rc=0 last=['[c112 03:41:41.813] clean stop: 3 chunks this run, next stream_seq 3, next manifest seq 3']
+PASS 121 f121 replica records exact server options and names 
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py", line 166, in <module>
+    suite(sys.argv[1], sys.argv[2:])
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_cpu_suites.py", line 159, in suite
+    exec(compile(source, str(path), 'exec'), {'__name__': '__main__', '__file__': str(path)})
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_tests_121_integration.py", line 40, in <module>
+    check('121 f%d ' % frames + label + ' exact manifest delivery geometry', len(rows) == 3 and all(
+                                                                                                ^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/stream/tests/run_tests_121_integration.py", line 42, in <genexpr>
+    and row['skip_first_frames'] == (0 if i == 0 else 1)
+        ~~~^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'skip_first_frames'

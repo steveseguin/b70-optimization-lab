@@ -1,0 +1,316 @@
+{
+  "MKL_NUM_THREADS": 4,
+  "OMP_NUM_THREADS": 4,
+  "auxiliary_files_not_in_packet": {
+    "CONTRACT.md": "21a6efcd4ffd3f903776438504f9225a67c2564d4d90f090f21b11435f3fed70",
+    "LAUNCH.md": "aa1eed002112c9718f17724931d2c23fd8eea57c81a31aa1b6656b8210dec7bf",
+    "cpu_decoder.py": "700984ae38d8118bac5666cd9c21a206dad5cee69199805aaa7490858d4f0ee2",
+    "cpu_native_lt.py": "b1737d2845988bda68fcebab23c1a9aac52dc568bd00ab8fd4c4454b8b606ba7",
+    "harness_runtime.py": "d53d179b28823dd4ad1f750746394539a0794e587f1d8b5a06673677ee241d26",
+    "launch-121.sh": "fe9f0dcc14757ffea18ce05ea454be1f94d284cb989674697daa448baf511e39",
+    "owner_seam_view.py": "5e48b4a61f65a190eb75d12c6b3e6623134c5a0b0b18f8411bbdada2c9ac6596",
+    "run_tests_121.py": "2042b80f76a3d457eb83320f1470e03abd505b5423720eba04eb23bb146a1b5e",
+    "test_anchor_decode.py": "3d1e37f797d9563aa364182869b8fe2219ae6a4a237dd07cb0ccb4fca0ce9e1a",
+    "test_candidate_safety.py": "3753e44811905913aa3d585d6efa2dea32512897ac1aebbc4085900cde0724d5",
+    "test_contract.py": "082d77f6296ebdaa5e6707db860ad784c2a4b3361d79b32a83e2279c163f465c",
+    "test_decode.py": "160d9d7d567eeba70a9c2d9f0384b2a5ad8a13e03da0cabc0f5a4e11fe4f7946",
+    "test_decoder_graph.py": "6c5e744104437cbd8199d24b59d07e10fa5e56f5c61d6dee6cefcef75f9f9292",
+    "test_display_replica.py": "d67622b6065337f68c00e630f4179d933386cd899ce5ede95af2b72222add002",
+    "test_gate_receipts.py": "aee27aac3e2352fb179a37429c76186bcc7cacc5df5eef4cc65c52a0556a9793",
+    "test_guide_anchor.py": "1e2b3488888992e1a3b03a4bbbf63def194f208ec986042fe797dd71fd17081d",
+    "test_identity_121.py": "e96e93d19267e85dff5bc457ca754b7e3a9e8ba1ca4b322c0b6de43221dde6cc",
+    "test_latent_anchor.py": "bb93f02fbc243866cd2412f7055a7c134cfa718f179e476f8c440251b03ea270",
+    "test_live_replica_gate.py": "3427ba1dded3655cfc1d261b4cdf5949c5f8fdf2e605d43f13bd9f426830351e",
+    "test_long_budget.py": "31f2baae936a4a65310770eafc6e18b556a7ca131084a54e57d26dd86bd16ba0",
+    "test_long_preview_sink.py": "2a868949b001b5ce15ca88766e2d9256c7b7d0b5679dd5d238e56253ba7d306f",
+    "test_long_runtime.py": "7877f3f44a1d3faa0812185ec2c435e61cd27a6d317b21e58dadbd67db2dfc2a",
+    "test_packet121_admission.py": "029f2af04d04dc08b33753aa02c77850fa9d62f712194fe8e6030a2c95b060e2",
+    "test_pool_cap.py": "a8d94794d051898d95867289bee6f84a562d5e134a10ce1ed9ae2b69f678289a",
+    "test_precompute_guard.py": "ffbae07cdbeaa1224212f29be0ae6df4a6d802a4955521744bc56f09718fa2ff",
+    "test_preview.py": "a6222727c16ef88c22c7bd52a0932200859cbd7847ae56198b1899036d6c2ecb",
+    "test_reset.py": "9e00045e4e989b732d135d7b9ca51ea52cb47772053015a9df344989f01e3cd6",
+    "test_runtime_flow.py": "088e5a9506060dfc696de642a83da9eff01625126d9ebbef27c6e970f56dc1df",
+    "test_runtime_packet.py": "5f18e2200d3936d3503099993d2808537a4b90ebbf015ec977708e5329f37e4e",
+    "test_runtime_replica.py": "70f3d14762b7c51cc5f8a3517f340379dd0a8b8349857a41192c85fbe0634f6a",
+    "test_schedule_gate.py": "a0fd5733cf4b5bd82d7dfaec5dd4c20b952c49cc5c0684513de481c89370ed69",
+    "test_session.py": "87ced08c27112997e047bc4f256f8a5d3ebad2e888294c970462e8ab1e54c774",
+    "test_snapshot_fingerprint.py": "65b39048136d9e6c32d88cce1bb9f4dc71ab2857742ccc66c1efd9e1c9cb20d9",
+    "test_snapshot_schedule.py": "d28e16c017adce193a2b396206adb03ce4d570f25330525c5a7ab5092479d08a",
+    "test_stream_schedule.py": "ff84c7c5aa06855e14b18a0fdee846c7e7e011e79894b985f70d65a95e07ff53",
+    "test_timing_split.py": "46cb744226dce5a86d5c81a9c2149fcb36fc7620dc9088a37375a28f2a76fbad"
+  },
+  "builder": "experiments/ltx25-b70/recovery/20261010-continuation121-stream/runtime_packet.py",
+  "built_utc": "2026-10-10T04:00:03.091562+00:00",
+  "check_only_executed": false,
+  "claims": {
+    "cross_card_exact": false,
+    "geometry145_measured": false,
+    "gpu_qualified": false,
+    "quality_adopted": false,
+    "speed_improvement_measured": false
+  },
+  "client_files": {
+    "experiments/ltx25-b70/stream/ltx_continuation_client.py": "5da98e05448bc9e300eb5931eaf34020e8f3760bcbec581592eabbb142943737",
+    "experiments/ltx25-b70/stream/ltx_rtmp_sink.py": "303b9a1fde702146023e8d0b0181c04afeaf05e54576111876446c6c9645932f",
+    "experiments/ltx25-b70/stream/start-client-121.sh": "d3798f5ce947fe739dcf61507a82199ec68a1685375a7685b7aee4894f42b005",
+    "experiments/ltx25-b70/stream/tests/fake_comfy121.py": "e6f944db23e8731f91ad0ef1d3d845a3391b47ce3bf3b62385db7870090c45a9",
+    "experiments/ltx25-b70/stream/tests/run_cpu_suites.py": "737e85410b784dfd892bbee93ff09594c98cf2311e8ba911bf01f71052b11fe7",
+    "experiments/ltx25-b70/stream/tests/run_tests_121.py": "8b273cc19750824556d4648afee7281ba3565d952ee8dd328f43f7ed99eeb3f7",
+    "experiments/ltx25-b70/stream/tests/run_tests_121_integration.py": "b2b0710303326f6d6a4318ce27a2527ec39c9bde9bc2dcbebb13def3ed76f801"
+  },
+  "cpu_tests": {
+    "client": {
+      "119_http": 15,
+      "119_unit": 70,
+      "120_http": 24,
+      "120_unit": 101,
+      "121_http": 56,
+      "121_unit": 112,
+      "final121_used_sealed_components": true,
+      "historical112_to118b": 193,
+      "passed": 571,
+      "total": 571
+    },
+    "development_runs_excluded": [
+      "Early copied fixture expected packet120 and parent119, counts132; corrected.",
+      "Replica mock needed selected frames and transient allowance; corrected.",
+      "Long request rejection fixture initially used positional reset and then unanchored text reuse; corrected.",
+      "New gate dependency on display_replica was replaced with pure pinned contract helper after fresh client import failed.",
+      "Initial client fake manifest skip0 omission corrected in assertion; final sealed suites pass.",
+      "Development recovery ran while plan/helper sources changed, producing stale imported-module and plan-pin failures; excluded from final validation."
+    ],
+    "preflight": {
+      "mocked_only": true,
+      "passed": 10,
+      "total": 10
+    },
+    "recovery": {
+      "additional_suite": {
+        "test_long_budget.py": 6
+      },
+      "corrected_complete_modules": {
+        "test_contract.py": 28,
+        "test_long_runtime.py": 6,
+        "test_packet121_admission.py": 5
+      },
+      "coverage": "Full discovery plus complete corrected fixture modules and six additional length-budget rejection tests; reruns not added to unique count.",
+      "full_discovery": {
+        "errors": 1,
+        "failures": 2,
+        "log": "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/recovery-final.log",
+        "passed": 452,
+        "seconds": 796.768,
+        "total": 455
+      },
+      "passed_unique": 461,
+      "skipped": 0,
+      "total_unique": 461
+    },
+    "shell_syntax": {
+      "files": [
+        "experiments/ltx25-b70/recovery/20261010-continuation121-stream/launch-121.sh",
+        "experiments/ltx25-b70/stream/start-client-121.sh"
+      ],
+      "passed": true
+    }
+  },
+  "design": {
+    "path": "experiments/ltx25-b70/notes/2026-10-10-continuation121-stream-design.md",
+    "sha256": "c40bcb4e9e0dc1dc68df4fdc916b711c154f3d49dc40ed77317441a6c458f3ae"
+  },
+  "evidence": {
+    "path": "experiments/ltx25-b70/data/resume-20261008/continuation121-evidence.json",
+    "sha256": "73da798eed31019f6accef0d3277e7b9c77ba01617ec14fc9e596ab15589cd9f"
+  },
+  "existing_run_writes": false,
+  "gpu_work": false,
+  "host_changes": false,
+  "identity": {
+    "full_model_reference_at145": false,
+    "inherited_numerical_contracts": 132,
+    "native_arithmetic_sources_inherited": true,
+    "new145_numerical_contracts": 44,
+    "normalized_parent_graphs_identical": 2376,
+    "qualification_graphs": 3168
+  },
+  "input_inventory": {
+    "candidate_safety.py": "087772db88cbd26d8ddb4c9905f0d27cf583f57a9cdff56a932ba6de8ab7e510",
+    "conditioning_guard.py": "e7063937bec3e5e874bcc28b5199bde205fa68635ca9a0aebb313d333915deeb",
+    "continuation_anchor.py": "89812304ab8471cfafae5156170ccd1f428ed0dac257aa7a41f569be34577264",
+    "derive_from_111.py": "01c3cbbc2d29dc9b0ee9d827c8fcb22f72fb7cffac69e06d48898cdc69f4c1fe",
+    "display_replica.py": "efeed83ff1276d67912dcc3f5e7da96a99dd339741887c231d7c354c6e7721c3",
+    "integration.py": "3b3d09cd084fb56dd4151d9aff78316b39ada397bb00771a15e518eb84506b10",
+    "latent_anchor.py": "eda5b4fa4859032e8d904443532b7ea6258107b1582b959ce4cb73f0c24d1e90",
+    "native_bindings.py": "1ce082ecd4c79cc0a3d7a58c3938e13bc84a94c0efbf42bfdb91ef6b92e8cf43",
+    "plan.py": "2464b60e716a9722aafec706315ce88236a2e5206a89ec599a202e975a7249dd",
+    "precompute_guard.py": "972e6e1bc7ae84c2c326f2aec7305541b53d66705b73ff50956e805f9fc3c031",
+    "qualification_gate.py": "8061560455a2e08cfe690b0cf7c55e4de7ced7f349011a0e2d164e7d7f244a98",
+    "qualify_client.py": "3f98928221ff3211597e7b135798d592bb4fb49d7635d7c2ef2cf8c4456512cc",
+    "reference-frame-qualification-hashes.json": "47040972fdcbb7f5837086d067122afd5130441bc5396f7b562a028e7faf5bb7",
+    "runtime_packet.py": "f520b6ef422de4f20e6ea9fe20137a49e5921de6f00ff398fd79edaf2d3220b8",
+    "session.py": "bc802c0a50003ae7883ec47d7e9228786835560483699920ed0450f1246172b2",
+    "snapshot_fingerprint.py": "a84e206fd6f96563c6e07c064abdcbcc6f8b4d4a975847123c3c14e4f0016b84",
+    "stream-plan.json": "bd2b7c60bfadc97313ce733bf6b079cd9b8674bea070a21c09d2f51f468c2b19",
+    "stream_anchor_decode.py": "7f841723514241c48bce02fb9ed76cbb3fe7fdfc650aa70eae864213c6c505c3",
+    "stream_contract.py": "44b0c1c42395522f1fbec6cf1c5d076392c36b27d71dfbd40553fa49b2a94e02",
+    "stream_decode.py": "1122ac091edeb4a6cf571127c823e2d7795e1a43dd8e4dbe43f4f8cefcc6672e",
+    "stream_decoder_graph.py": "b45ff73930b8b631be4dd6d101ec5a72b095e8162a76a1494771401368153522",
+    "stream_preview.py": "3ebae293cd265a7ea1b1d2bf8ca53c6eec7ce6aeb51f073c5ad11f15a9a2ed33",
+    "stream_receipts.py": "6706125e85c03c6211dd813bac50a84205a7018255dfdabdde89e4b524cc5867",
+    "stream_schedule.py": "064cc48f8547106db8116f7865eb301b2caf1734f48cc3ec25d672e6a5b8e781",
+    "stream_schedule_gate.py": "e17981bf8917c65402630305a07af62fa0f1dedb5928cedb104797f2eee0e330"
+  },
+  "input_inventory_sha256": "602c0139cda095a3cd5feac8e5dee48aa0689af5fe5959e19383c1b26a8b54c0",
+  "integrity_checks": {
+    "check_doc_links_passed": true,
+    "check_manifest_paths_passed": true,
+    "git_diff_check_passed": true,
+    "new_document_relative_links": {
+      "documents": 4,
+      "links": 10,
+      "missing": 0
+    }
+  },
+  "launch_executed": false,
+  "logs": {
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/admission-final.log": "24503f425945049622eac85642bc9c64f508797a3e99fca9caa090196e44c722",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/build-seal.json": "0f2d24acd1fbea9e3a1a0038e181e675e8bb790553f2fa7cc8d2f736b92decd0",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/builder-development.log": "1f051a223378d64056295155c46a490079624957774e96e289e16b60278b63e2",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/client121-integration-budget.log": "cdcd04bc1335b97eff611007194f7acfd5edf023a8c594b20fb934ed8f47610c",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/client121-integration-closure.log": "ce325da1c8662f0998a5572c47c24c1189423ced1d4978500922139de78c45f3",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/client121-integration-rerun.log": "d4ee4aeaa9982cf6a97d40829b8105a7d66b0f16747d768aa0bb805baeb1171c",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/client121-integration-stable.log": "67b6a384db8017b3879f024d6ced9c24a3b3c8757553aeab7eceafa8dc916f56",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/client121-integration.log": "580f29ed35f60fe6d2288c811017cdf4806d58128f64ac9a08c890c928e71e13",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/client121-unit-rerun.log": "6da8e581321638cc4ad131454ce1c3d51d328e9906af3e58b436a81afd53925f",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/client121-unit.log": "ae48421641730dc62bed26c518ae650541bc33688526683f9abb966313a5bb1e",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/contract-final.log": "e297d0d68d6aab2b23fdc1e05d5d7a890325b4746d5e1fcb75b21c7d583a99e7",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/historical-112.log": "1001e2119d67c37a2f1729b647fbc3a81f61b09c799835192f2a71bee9ef4b81",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/historical-113.log": "e5ab47f528a129087623aa8208418e5c23de027e9bb5fe936dbee5c04c458f10",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/historical-114.log": "bc191972f5a0ac13665a5ed287b48f680672e44d325e1a858cdcbe2f242e65a0",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/historical-115.log": "b217a8d62258ffac97e0cf200357d4d50b6df21a2e463d3ca4530ecd0aaf42d4",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/historical-116.log": "c557373033a3c9d78b56ffd02709d33c8851774330f1829cbe619680f9c182f4",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/historical-116b.log": "b7da23570e90e8abc736bec5d6b5eccda9954c08c03ef24291195d699043b9f7",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/historical-117.log": "76ceaa7c54dba5a0c6f5d37a334cb773cdeb5bbc8400d2a1fd14fd7f4c494abd",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/historical-118.log": "a2c9dceaacea4ac91434a1509d4827dadbd79c58bde4544c5c1d0057d17407cb",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/historical-118b.log": "72bbd7965b838f0255579d1457b13a31ed8b2089631a00117943e5647934e490",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/historical-119.log": "68c08964e63ae9612cd6915c33111b7266608528f3669288c13ace070b27b296",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/historical-119_integration.log": "6d2de69bd8cf4b87ab8ed9fc56cedbb9efbec8d9e5cf2b2f1b46a3c9ba2b3892",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/historical-120.log": "8892b123447c97a5982cb35e1c4c41fa4ddbe7c2a1e3f94bc506680060a01256",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/historical-120_integration.log": "19537b91326d45fccb70cf05ce0d6bb6d7d05ed975d5bc54e8b4ce1381bc9860",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/long-budget.log": "1bfc5eb5e9787b6ab3d02022635963437c3d25a46e5a3cbce7e42b37fcd0abc5",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/long-runtime-corrected.log": "02546f2e4137e2f60e4684ca57841ec14a4789494a2b556d5828f0efc6487790",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/long-runtime-development.log": "9db07e914ac0947f266771b0ade7ef59f889eb9a4b1d702918d0778d70eb8897",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/long-runtime-final.log": "64a26d5e81e786de2f9942dd86b879884c1b96dd2dfe4ae7d52ec2dac143836e",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/preflight.log": "cf8d3a2572a7898fcf32a4c2dd1445509b3d59e66061853243c4627f80695068",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/recovery-development.log": "7456b966806ede736cd967ea71e48007290b638b90a9a1fb4b70c47a280a246d",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/recovery-final.log": "36b33ad53b70b80ac6743b215e7a650039686efa00902266656ee3038ec08c86",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/recursive-verification.log": "5b0c7e29aab3a8e95053f8122f94f893ef3fcb7a4dc50138707fecb870a0a591",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/run_tests_121-sealed.log": "8fb058cf7fc6c721a11094f9c68af795d674b4fcc2305b9a942c32fde772556d",
+    "experiments/ltx25-b70/data/resume-20261008/continuation121-tests/run_tests_121_integration-sealed.log": "8987e06e3132a3822a8059d3bc34c1e64abacff3afd3d45cbd76b1554329ca0b"
+  },
+  "manifest_files": 1980,
+  "manifest_sha256": "8f1d4e3b5b8ca79f79a43b9a6f0acec252e58fdde72b92ffb5ea0743f71444dd",
+  "model_requests": 0,
+  "open": [
+    "145 native peak/free memory",
+    "Three-chain full-model identity and measured geometry",
+    "Cone/display and optional full cross-card bytes",
+    "Actual codec/preview/sink timing",
+    "Owner seam/audio review",
+    "Matched100-interior-period and fresh-run repeat",
+    "169 admission blocked by conservative xpu:0 floor deficit"
+  ],
+  "options": {
+    "deferred_frames": [
+      169
+    ],
+    "display_replica_frames": [
+      121,
+      145
+    ],
+    "display_transient_bytes": {
+      "121": 4294967296,
+      "145": 6056574976
+    },
+    "frames": [
+      49,
+      97,
+      121,
+      145
+    ],
+    "recommended_first_arm": "145 frame 0 cone 1 1 fingerprint - sampler-a 0 full xpu:3"
+  },
+  "packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-121",
+  "parent_manifest_sha256": "9af9330b7b9f08ad5c3b88d38b5c3f66186fab583d3b810afad7f0d61c5c328e",
+  "parent_packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-120",
+  "plan_sha256": "5c3aa526275b2e64e754b7c871cb4ce00f36d49888950df5f84d560b7727fd28",
+  "port8188_operations": false,
+  "predictions": {
+    "145": {
+      "anchored_s_per_s": [
+        0.9249999999999999,
+        1.0166666666666666
+      ],
+      "central": 5.75,
+      "nominal_s_per_s": [
+        0.9186206896551723,
+        1.009655172413793
+      ],
+      "period_seconds": [
+        5.55,
+        6.1
+      ]
+    },
+    "169": {
+      "admitted": false,
+      "anchored_s_per_s": [
+        0.8571428571428571,
+        0.9642857142857143
+      ],
+      "central": 6.3,
+      "nominal_s_per_s": [
+        0.8520710059171597,
+        0.9585798816568047
+      ],
+      "period_seconds": [
+        6,
+        6.75
+      ]
+    },
+    "measured": false
+  },
+  "pyc_files": [],
+  "pycache_directories": [],
+  "python": "/home/steve/.venvs/ltx25-baseline/bin/python -B",
+  "recursive_verification": {
+    "files": 1980,
+    "model_requests": 0,
+    "status": "source-closure-verified"
+  },
+  "schema": "ltx.continuation121.cpu-build.v1",
+  "signals_sent": false,
+  "status": "prepared-not-GPU-qualified",
+  "storage_admission": {
+    "admitted": true,
+    "available_bytes": 102686781440,
+    "checked_existing_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913",
+    "destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-121",
+    "failures": [],
+    "filesystem": {
+      "filesystem_type": "ext4",
+      "mount_id": 33,
+      "mount_point": "/",
+      "source": "/dev/nvme0n1p2"
+    },
+    "min_free_bytes": 56908316672,
+    "planned_write_bytes": 167772160,
+    "remaining_after_planned_write_bytes": 102519009280,
+    "required_bytes": 57076088832,
+    "required_mount": null,
+    "resolved_destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-121",
+    "schema_version": 1
+  },
+  "systemd_operations": false,
+  "temporary_fixture_note": "Only top-level test logs are tracked; new synthetic fixture directories under continuation121-tests are excluded from Git.",
+  "total_regular_bytes": 128349564
+}

@@ -1,0 +1,27 @@
+test_145_request_cannot_reuse_121_identity (test_long_runtime.LongerRuntime.test_145_request_cannot_reuse_121_identity) ... ERROR
+test_dg0_three_chains_geometry_and_live_anchor (test_long_runtime.LongerRuntime.test_dg0_three_chains_geometry_and_live_anchor) ... ok
+test_dg1_cap_one_xpu2_three_chains_and_live_anchor (test_long_runtime.LongerRuntime.test_dg1_cap_one_xpu2_three_chains_and_live_anchor) ... ok
+test_new_length_measured_geometry_mismatch_halts (test_long_runtime.LongerRuntime.test_new_length_measured_geometry_mismatch_halts) ... ok
+test_new_length_repeat_chain_cone_mismatch_halts (test_long_runtime.LongerRuntime.test_new_length_repeat_chain_cone_mismatch_halts) ... ok
+test_replica_length_scope (test_long_runtime.LongerRuntime.test_replica_length_scope) ... ok
+
+======================================================================
+ERROR: test_145_request_cannot_reuse_121_identity (test_long_runtime.LongerRuntime.test_145_request_cannot_reuse_121_identity)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation121-stream/test_long_runtime.py", line 51, in test_145_request_cannot_reuse_121_identity
+    g=c.build_chunk_graph(c.stream_params(145,0,'boat',42,'','boat',1,placement='two-way20-28',anchor='frame',decoder_graph=0))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation121-stream/stream_contract.py", line 816, in stream_params
+    return validate_params({'kind': 'stream', 'frames': frames, 'placement': placement, 'anchor': anchor,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation121-stream/stream_contract.py", line 584, in validate_params
+    require(not params['reuse_text'] or (anchored(params) and params['kind'] != 'qualify-eager'),
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation121-stream/stream_contract.py", line 199, in require
+    raise ValueError(why)
+ValueError: Text reuse needs an anchored, non-eager chunk
+
+----------------------------------------------------------------------
+Ran 6 tests in 49.262s
+
+FAILED (errors=1)
