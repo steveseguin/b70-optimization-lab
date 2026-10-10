@@ -238,18 +238,37 @@ Style genome (duotone-hixffp):
   }
   .research-links a { color: var(--ink); border-bottom: 1px solid currentColor; }
 
-  /* featured picks */
-  .feat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-  .feat-card { border: 2px solid var(--ink); padding: 16px; background: var(--paper); display: flex; flex-direction: column; }
-  .feat-card.soon { background: var(--surface2); }
-  .feat-card .eyebrow { margin: 0 0 6px; color: var(--spot-dark); font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
-  .feat-card h3 { margin: 0 0 6px; font-family: var(--display); font-size: 16px; text-transform: uppercase; }
-  .feat-card p { margin: 0 0 10px; color: var(--muted); font-size: 13px; }
-  .feat-card p.feat-num { color: var(--ink); font-family: var(--mono); font-size: 12px; }
-  .feat-card .big { font-family: var(--display); font-size: 28px; line-height: 1.1; color: var(--ink); }
-  .feat-card .feat-for { display: block; color: var(--muted); }
-  .feat-card .feat-links { margin: auto 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
-  .feat-card .feat-links a:not(.button) { color: var(--ink); border-bottom: 1px solid currentColor; }
+  /* what to run: a vertical list that reads top to bottom, with bars for comparison */
+  .pick-list { list-style: none; margin: 0; padding: 0; border-top: 2px solid var(--ink); }
+  .pick-row { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(280px, 1fr) auto; gap: 14px 26px; align-items: start; padding: 18px 0 16px; border-bottom: 2px solid var(--ink); }
+  .pick-row.research { background: linear-gradient(90deg, var(--surface2), transparent 70%); }
+  .pick-head { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; }
+  .pick-rank { font-family: var(--display); font-size: 26px; line-height: 1; color: var(--spot-dark); padding-top: 2px; }
+  .pick-head h3 { margin: 0 0 4px; font-family: var(--display); font-size: 17px; text-transform: uppercase; }
+  .pick-head h3 small { display: block; margin-top: 3px; font-family: var(--mono); font-size: 10.5px; font-weight: 400; text-transform: none; color: var(--muted); }
+  .pick-head .eyebrow { margin: 0 0 6px; color: var(--spot-dark); font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+  .pick-head .eyebrow.research { color: var(--muted); }
+  .pick-why { margin: 0; color: var(--muted); font-size: 13.5px; max-width: 52ch; }
+  .pick-bars { display: grid; gap: 7px; align-self: center; }
+  .pick-bar-row { display: grid; grid-template-columns: 118px 1fr 112px; align-items: center; gap: 8px; font-family: var(--mono); font-size: 10.5px; }
+  .pick-bar-label { color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .pick-track { height: 10px; background: var(--surface2); border: 1px solid var(--ink); }
+  .pick-fill { height: 100%; background: var(--ink); }
+  .pick-fill.spot { background: var(--spot); }
+  .pick-row.research .pick-fill { background: var(--muted); }
+  .pick-val { text-align: right; font-weight: 700; color: var(--ink); font-size: 12px; white-space: nowrap; }
+  .pick-val small { display: block; font-weight: 400; color: var(--muted); font-size: 9.5px; white-space: normal; }
+  .pick-val.mut { color: var(--muted); font-weight: 400; }
+  .pick-note { margin: 2px 0 0; font-size: 11.5px; color: var(--muted); grid-column: 1 / -1; }
+  .pick-links { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding-top: 2px; }
+  .pick-links a:not(.button) { color: var(--ink); border-bottom: 1px solid currentColor; font-size: 13px; }
+  .pick-scale { margin: 8px 0 0; color: var(--muted); font-family: var(--mono); font-size: 10.5px; }
+  @media (max-width: 920px) { .pick-row { grid-template-columns: 1fr; gap: 12px; } .pick-links { flex-direction: row; flex-wrap: wrap; } }
+  /* the full table: bars drawn under the one-user speed, quiet rows for setups without a passing headline */
+  .model-picker td.model-speed .cellbar { display: block; height: 5px; background: var(--ink); margin-top: 4px; max-width: 110px; }
+  .model-picker td.model-speed .cellbar.max { background: var(--spot); }
+  .model-picker tr.quiet-row th, .model-picker tr.quiet-row td { color: var(--muted); }
+  .model-picker tr.quiet-row th.model a { color: var(--muted); }
   details.all-models > summary { cursor: pointer; list-style: none; padding: 12px 14px; border: 2px solid var(--ink); background: var(--surface2); }
   details.all-models > summary::-webkit-details-marker { display: none; }
   details.all-models > summary h2 { margin: 0 0 4px; }
@@ -441,46 +460,73 @@ Style genome (duotone-hixffp):
 
 <section id="featured">
   <div class="wrap">
-    <h2 id="t-featured">Our top picks</h2>
-    <p class="sub">The models we work on most right now. Speeds are in <abbr title="tokens per second">tok/s</abbr>: about how many words the AI writes each second (a token is about &frac34; of a word).</p>
-    <div class="feat-grid">
-      <article class="feat-card">
-        <p class="eyebrow">Ready to try &middot; 2 cards</p>
-        <h3><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Qwen3.8 27B FP8</a></h3>
-        <p class="feat-num"><span class="big">90.31</span> tok/s <span class="feat-for">for one person</span></p>
-        <p>A smart all-round chat and coding AI, split across two B70 cards. Our fastest setup that gives the same answers as running it slowly, on every test we have.</p>
-        <p class="feat-links"><a class="button" href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Details</a> <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md">Recipe</a></p>
-      </article>
-      <article class="feat-card">
-        <p class="eyebrow">Ready to try &middot; 1 card</p>
-        <h3><a href="models/qwen38-27b-fp8-vllm-tp1-b70.html">Qwen3.8 27B FP8</a></h3>
-        <p class="feat-num"><span class="big">54.04</span> tok/s <span class="feat-for">for one person</span></p>
-        <p>The same model on a single B70 card. A bit slower, and it still gives the same answers as running it slowly on every test.</p>
-        <p class="feat-links"><a class="button" href="models/qwen38-27b-fp8-vllm-tp1-b70.html">Details</a> <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp1-b70/README.md">Recipe</a></p>
-      </article>
-      <article class="feat-card soon">
-        <p class="eyebrow">Ready to try &middot; 2 cards</p>
-        <h3>Many users at once, exact</h3>
-        <p class="feat-num"><span class="big">875</span> tok/s <span class="feat-for">for 64 people together</span></p>
-        <p>The same 27B model serving many people at the same time, where each person gets exactly the answer they would get alone. Start it with the two-card package's <code>multi-user</code> profile; accepted October 7, 2026 at 16, 32 and 64 users.</p>
-        <p class="feat-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md">Read the research notes</a></p>
-      </article>
-      <article class="feat-card soon">
-        <p class="eyebrow">Research &middot; 2 cards</p>
-        <h3>MiniMax-H3 video</h3>
-        <p class="feat-num"><span class="big">~400</span> s <span class="feat-for">per 5-second clip</span></p>
-        <p>Makes short video clips with sound from a written description. Every speed-up we kept leaves the clip exactly the same. Uses a trimmed community copy of the model so it fits two cards. No install package yet.</p>
-        <p class="feat-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/minimax-h3-b70/README.md">Read the lab notes</a></p>
-      </article>
-    </div>
-    <p class="research-links">Looking for something else? Older and smaller models are still here: open <a href="#all-models">All models and setups</a> below, or <a href="models/">browse every model</a>.</p>
+    <h2 id="t-featured">What should I run?</h2>
+    <p class="sub">The setups we work on most, in the order we would try them. Speeds are in <abbr title="tokens per second">tok/s</abbr>: about how many words the AI writes each second (a token is about &frac34; of a word). The bars share one scale per column, so a longer bar is simply faster.</p>
+    <ol class="pick-list">
+      <li class="pick-row">
+        <div class="pick-head"><span class="pick-rank">1</span><div>
+          <p class="eyebrow">Ready to try &middot; 1 card &middot; also our chat server for a whole network</p>
+          <h3><a href="models/gemma4-26b-a4b-q8-b70-125tps-20260701.html">Gemma 4 26B Q8</a><small>llama.cpp SYCL &middot; 8-bit weights &middot; MTP depth 3 &middot; Google</small></h3>
+          <p class="pick-why">The fastest all-round chat model on a single card, and the one we run as a shared server: switch it to 8 people per card and everyone keeps a usable speed. Repeating the same question gives the same answer every time.</p>
+        </div></div>
+        <div class="pick-bars">
+          <div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track"><div class="pick-fill" style="width:100%"></div></div><span class="pick-val">122 tok/s</span></div>
+          <div class="pick-bar-row"><span class="pick-bar-label">8 people, 1 card</span><div class="pick-track"><div class="pick-fill spot" style="width:31%"></div></div><span class="pick-val">270 tok/s<small>everyone together</small></span></div>
+          <div class="pick-bar-row"><span class="pick-bar-label">Reads a prompt</span><div class="pick-track"><div class="pick-fill" style="width:72%"></div></div><span class="pick-val">1,470 tok/s<small>8,000-token prompt</small></span></div>
+          <p class="pick-note">Up to 16K of conversation per person; 4K each in the 8-people shape. The many-people figure is a throughput measurement, not checked exact against the one-person answers.</p>
+        </div>
+        <div class="pick-links"><a class="button" href="models/gemma4-26b-a4b-q8-b70-125tps-20260701.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/docs/gemma4-26b-q8-service-runbook.md">Server recipe</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/notes/2026-10-09-gemma4-26b-two-b70-16k-lan-service.md">How we tuned it</a></div>
+      </li>
+      <li class="pick-row">
+        <div class="pick-head"><span class="pick-rank">2</span><div>
+          <p class="eyebrow">Ready to try &middot; 2 cards &middot; exact</p>
+          <h3><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Qwen3.8 27B FP8</a><small>vLLM XPU &middot; FP8 weights &middot; MTP depth 5 &middot; Alibaba</small></h3>
+          <p class="pick-why">A smart chat and coding model split across two cards. Every speed-up we kept gives the same answers as running it slowly, on every test we have, alone or with 64 people at once.</p>
+        </div></div>
+        <div class="pick-bars">
+          <div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track"><div class="pick-fill" style="width:74%"></div></div><span class="pick-val">90 tok/s</span></div>
+          <div class="pick-bar-row"><span class="pick-bar-label">64 people, 2 cards</span><div class="pick-track"><div class="pick-fill spot" style="width:100%"></div></div><span class="pick-val">875 tok/s<small>everyone together, exact</small></span></div>
+          <div class="pick-bar-row"><span class="pick-bar-label">Reads a prompt</span><div class="pick-track"><div class="pick-fill" style="width:0"></div></div><span class="pick-val mut">not measured<small>at 2 cards</small></span></div>
+          <p class="pick-note">Up to 33K of conversation per person. The many-people shape is the package's <code>multi-user</code> profile.</p>
+        </div>
+        <div class="pick-links"><a class="button" href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md">Recipe</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md">Many-user notes</a></div>
+      </li>
+      <li class="pick-row">
+        <div class="pick-head"><span class="pick-rank">3</span><div>
+          <p class="eyebrow">Ready to try &middot; 1 card &middot; exact</p>
+          <h3><a href="models/qwen38-27b-fp8-vllm-tp1-b70.html">Qwen3.8 27B FP8</a><small>vLLM XPU &middot; FP8 weights &middot; MTP depth 5 &middot; Alibaba</small></h3>
+          <p class="pick-why">The same model on one card. Slower, but it still gives the same answers as running it slowly on every test, and it leaves your second card free.</p>
+        </div></div>
+        <div class="pick-bars">
+          <div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track"><div class="pick-fill" style="width:44%"></div></div><span class="pick-val">54 tok/s</span></div>
+          <div class="pick-bar-row"><span class="pick-bar-label">Many people</span><div class="pick-track"><div class="pick-fill spot" style="width:0"></div></div><span class="pick-val mut">not measured</span></div>
+          <div class="pick-bar-row"><span class="pick-bar-label">Reads a prompt</span><div class="pick-track"><div class="pick-fill" style="width:67%"></div></div><span class="pick-val">1,370 tok/s<small>512-token prompt</small></span></div>
+          <p class="pick-note">Up to 32K of conversation per person.</p>
+        </div>
+        <div class="pick-links"><a class="button" href="models/qwen38-27b-fp8-vllm-tp1-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp1-b70/README.md">Recipe</a></div>
+      </li>
+      <li class="pick-row research">
+        <div class="pick-head"><span class="pick-rank">4</span><div>
+          <p class="eyebrow research">Research &middot; 2 cards &middot; video, not chat</p>
+          <h3>MiniMax-H3 video<small>trimmed community copy so it fits two cards &middot; no install guide yet</small></h3>
+          <p class="pick-why">Makes short video clips with sound from a written description. Every speed-up we kept leaves the clip exactly the same.</p>
+        </div></div>
+        <div class="pick-bars">
+          <div class="pick-bar-row"><span class="pick-bar-label">One clip</span><div class="pick-track"><div class="pick-fill" style="width:100%"></div></div><span class="pick-val">~400 s<small>per 5-second clip</small></span></div>
+          <p class="pick-note">Not a tok/s number: this bar is on its own scale.</p>
+        </div>
+        <div class="pick-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/minimax-h3-b70/README.md">Read the lab notes</a></div>
+      </li>
+    </ol>
+    <p class="pick-scale">Bars: one-person speeds are drawn against 122 tok/s, many-people totals against 875 tok/s, prompt reading against 2,043 tok/s (the fastest we have measured on one B70, Qwen3.8 27B FP8 at a 2K prompt).</p>
+    <p class="research-links">Everything else we have tested, older setups included, is in the full table below, or <a href="models/">browse every model</a>.</p>
   </div>
 </section>
 
 <section id="pick">
   <div class="wrap">
-    <details class="all-models" id="all-models">
-    <summary><h2 id="t0">All models and setups</h2><span class="all-hint">Every model we have tested, older ones included, with speeds and guides. Click to open.</span></summary>
+    <details class="all-models" id="all-models" open>
+    <summary><h2 id="t0">All models and setups</h2><span class="all-hint">Every model we have tested, older ones included, with speeds and guides. Rows in grey have no passing one-person headline yet.</span></summary>
     <p class="sub">
       Speeds are in <abbr title="tokens per second">tok/s</abbr>: a token is about &frac34; of a
       word, so 100 tok/s is roughly 75 words a second.
@@ -527,8 +573,8 @@ Style genome (duotone-hixffp):
           <td class="model-use" data-label="Best for"><span class="use-chip">General</span></td>
           <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup.">122.16</td>
           <td class="num r model-32k" data-label="32K input" title="Writing speed after about 32,000 input tokens.">114.85&dagger;</td>
-          <td class="num r model-agg mut" data-label="Many users" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="num r model-agg" data-label="Many users" title="Total writing speed for 8 users on one card with speculation off (the shared-server shape). Throughput measurement; repeats are identical but the answers were not checked exact against the one-user answers."><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/notes/2026-10-09-gemma4-26b-two-b70-16k-lan-service.md">270</a><small>no MTP &middot; 8 users &middot; throughput, not exact</small></td>
+          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup. An 8,000-token prompt reads at about 1,470 tok/s on one card (see the server notes).">&mdash;<span class="visually-hidden">not measured</span></td>
           <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/gemma4-26b-a4b-q8-b70-125tps-20260701.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/gemma4-26b-a4b-q8-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="results/gemma4-26b-a4b-q8-b70/README.md" aria-label="Copy the setup guide Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
         </tr>
         <tr>
@@ -1130,6 +1176,29 @@ Style genome (duotone-hixffp):
   })();
 </script>
 
+<script>
+  // Draw a bar under every one-user speed in the full table (one scale per table) and quieten rows without a headline.
+  (function () {
+    document.querySelectorAll('table.model-picker').forEach(function (table) {
+      var cells = Array.prototype.slice.call(table.querySelectorAll('td.model-speed'));
+      var vals = cells.map(function (td) {
+        var t = (td.textContent || '').replace(/[^0-9.]/g, '');
+        return td.classList.contains('mut') ? NaN : parseFloat(t);
+      });
+      var max = Math.max.apply(null, vals.filter(function (v) { return !isNaN(v); }));
+      if (!isFinite(max) || max <= 0) return;
+      cells.forEach(function (td, i) {
+        var row = td.parentElement;
+        if (isNaN(vals[i])) { if (row) row.classList.add('quiet-row'); return; }
+        var bar = document.createElement('span');
+        bar.className = 'cellbar' + (vals[i] === max ? ' max' : '');
+        bar.style.width = Math.max(2, Math.round(100 * vals[i] / max)) + '%';
+        bar.setAttribute('aria-hidden', 'true');
+        td.appendChild(bar);
+      });
+    });
+  })();
+</script>
 <script defer src="learn/assets/mlbottleneck-bridge.js?v=1d7b21a0d3"></script>
 </body>
 </html>
