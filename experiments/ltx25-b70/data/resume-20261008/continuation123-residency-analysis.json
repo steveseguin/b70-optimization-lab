@@ -1,0 +1,678 @@
+{
+  "schema": "ltx.continuation123.residency-analysis.v1",
+  "scope": "CPU regular-file/header reads only; projections are not measurements or peak proofs",
+  "resident": {
+    "xpu:0": {
+      "sampler_blocks": [
+        0,
+        19
+      ],
+      "sampler_bf16_header_bytes": 20354257920,
+      "sampler_actual_inventory_bytes": 20354297920,
+      "sampler_constructor_extra_bytes": 40000,
+      "sampler_nonblock_bf16_header_bytes": 4887262720,
+      "upsampler_bytes": 995735808,
+      "static_inventory_bytes": 21350033728,
+      "preparation_allocated_beyond_inventory_bytes": 62144,
+      "preparation_allocator_reserved_bytes": 21940404224
+    },
+    "xpu:1": {
+      "sampler_blocks": [
+        20,
+        47
+      ],
+      "sampler_bf16_header_bytes": 21653793280,
+      "sampler_actual_inventory_bytes": 21653793280,
+      "static_inventory_bytes": 21653793280,
+      "preparation_allocated_beyond_inventory_bytes": 75264,
+      "preparation_allocator_reserved_bytes": 22359834624
+    },
+    "xpu:2": {
+      "text_layers": [
+        0,
+        23
+      ],
+      "text_actual_inventory_bytes": 15330870852,
+      "static_inventory_bytes": 15330870852,
+      "preparation_allocated_beyond_inventory_bytes": 2442344380,
+      "preparation_allocator_reserved_bytes": 20252196864
+    },
+    "xpu:3": {
+      "text_layers": [
+        24,
+        47
+      ],
+      "text_actual_inventory_bytes": 10900713520,
+      "video_encoder_header_bytes": 637873794,
+      "video_decoder_header_bytes": 834267488,
+      "video_statistics_header_bytes": 512,
+      "audio_vae_header_bytes": 106496804,
+      "vocoder_header_bytes": 258170064,
+      "video_plus_audio_actual_inventory_bytes": 1836874030,
+      "video_plus_audio_constructor_extra_bytes": 65368,
+      "static_inventory_bytes": 12737587550,
+      "preparation_allocated_beyond_inventory_bytes": 2975367330,
+      "preparation_allocator_reserved_bytes": 17423138816
+    }
+  },
+  "sampler_runtime_block_bytes": 773349760,
+  "sampler_checkpoint_header_block_bytes": 773546368,
+  "all_model_header_tensors": {
+    "sampler": 4349,
+    "text": 686,
+    "upsampler": 72,
+    "video": 396,
+    "audio": 1329
+  },
+  "145_phase_minima": {
+    "before": {
+      "xpu:0": {
+        "min_free_bytes": 10117566464,
+        "min_seq": 16
+      },
+      "xpu:1": {
+        "min_free_bytes": 10553069568,
+        "min_seq": 16
+      },
+      "xpu:2": {
+        "min_free_bytes": 12709535744,
+        "min_seq": 16
+      },
+      "xpu:3": {
+        "min_free_bytes": 11649736704,
+        "min_seq": 16
+      }
+    },
+    "A": {
+      "xpu:0": {
+        "min_free_bytes": 10151133184,
+        "min_seq": 26
+      },
+      "xpu:1": {
+        "min_free_bytes": 10574053376,
+        "min_seq": 26
+      },
+      "xpu:2": {
+        "min_free_bytes": 12709548032,
+        "min_seq": 26
+      },
+      "xpu:3": {
+        "min_free_bytes": 15745486848,
+        "min_seq": 26
+      }
+    },
+    "B": {
+      "xpu:0": {
+        "min_free_bytes": 9953996800,
+        "min_seq": 3
+      },
+      "xpu:1": {
+        "min_free_bytes": 10574041088,
+        "min_seq": 10
+      },
+      "xpu:2": {
+        "min_free_bytes": 12569026560,
+        "min_seq": 12
+      },
+      "xpu:3": {
+        "min_free_bytes": 11660222464,
+        "min_seq": 10
+      }
+    },
+    "after": {
+      "xpu:0": {
+        "min_free_bytes": 9987551232,
+        "min_seq": 0
+      },
+      "xpu:1": {
+        "min_free_bytes": 10553069568,
+        "min_seq": 9
+      },
+      "xpu:2": {
+        "min_free_bytes": 12569034752,
+        "min_seq": 0
+      },
+      "xpu:3": {
+        "min_free_bytes": 11649736704,
+        "min_seq": 9
+      }
+    }
+  },
+  "145_allocator_high_water": {
+    "xpu:0": {
+      "allocated": 21754331136,
+      "peak": 22075180032,
+      "reserved": 22823305216
+    },
+    "xpu:1": {
+      "allocated": 22009783296,
+      "peak": 22294964736,
+      "reserved": 22898802688
+    },
+    "xpu:2": {
+      "allocated": 17749917184,
+      "peak": 19405864448,
+      "reserved": 20401094656
+    },
+    "xpu:3": {
+      "allocated": 15222155776,
+      "peak": 17885472256,
+      "reserved": 21208498176
+    }
+  },
+  "145_preparation_free_bytes": {
+    "xpu:0": 11773644800,
+    "xpu:1": 11354202112,
+    "xpu:2": 12709576704,
+    "xpu:3": 15947771904
+  },
+  "145_minimum_before_cone_free_bytes": 15604977664,
+  "options": {
+    "legacy": {
+      "static_freed_bytes_by_card": {},
+      "dg0_margin_gib": {
+        "145": {
+          "xpu:0": [
+            1.2703819274902344,
+            1.2703819274902344
+          ],
+          "xpu:1": [
+            1.8283119201660156,
+            1.8283119201660156
+          ],
+          "xpu:3": [
+            1.8496627807617188,
+            1.8496627807617188
+          ],
+          "xpu:2": [
+            9.705818176269531,
+            9.705818176269531
+          ]
+        },
+        "169": {
+          "xpu:0": [
+            0.6929704343843319,
+            1.0028009916606706
+          ],
+          "xpu:1": [
+            1.5740961936041913,
+            1.7105046322471225
+          ],
+          "xpu:3": [
+            0.48580838570634377,
+            1.217632695248252
+          ],
+          "xpu:2": [
+            9.705818176269531,
+            9.705818176269531
+          ]
+        }
+      },
+      "169_static_scenario_clears_all_075": false,
+      "credit_for_removed_workspace_bytes": 0
+    },
+    "two-way18-30": {
+      "static_freed_bytes_by_card": {
+        "xpu:0": 1546699520,
+        "xpu:1": -1546699520
+      },
+      "dg0_margin_gib": {
+        "145": {
+          "xpu:0": [
+            2.710858106613159,
+            2.710858106613159
+          ],
+          "xpu:1": [
+            0.3878357410430908,
+            0.3878357410430908
+          ],
+          "xpu:3": [
+            1.8496627807617188,
+            1.8496627807617188
+          ],
+          "xpu:2": [
+            9.705818176269531,
+            9.705818176269531
+          ]
+        },
+        "169": {
+          "xpu:0": [
+            2.1334466135072567,
+            2.4432771707835954
+          ],
+          "xpu:1": [
+            0.13362001448126648,
+            0.27002845312419765
+          ],
+          "xpu:3": [
+            0.48580838570634377,
+            1.217632695248252
+          ],
+          "xpu:2": [
+            9.705818176269531,
+            9.705818176269531
+          ]
+        }
+      },
+      "169_static_scenario_clears_all_075": false,
+      "credit_for_removed_workspace_bytes": 0
+    },
+    "two-way16-32": {
+      "static_freed_bytes_by_card": {
+        "xpu:0": 3093399040,
+        "xpu:1": -3093399040
+      },
+      "dg0_margin_gib": {
+        "145": {
+          "xpu:0": [
+            4.151334285736084,
+            4.151334285736084
+          ],
+          "xpu:1": [
+            -1.052640438079834,
+            -1.052640438079834
+          ],
+          "xpu:3": [
+            1.8496627807617188,
+            1.8496627807617188
+          ],
+          "xpu:2": [
+            9.705818176269531,
+            9.705818176269531
+          ]
+        },
+        "169": {
+          "xpu:0": [
+            3.5739227926301815,
+            3.88375334990652
+          ],
+          "xpu:1": [
+            -1.3068561646416583,
+            -1.1704477259987272
+          ],
+          "xpu:3": [
+            0.48580838570634377,
+            1.217632695248252
+          ],
+          "xpu:2": [
+            9.705818176269531,
+            9.705818176269531
+          ]
+        }
+      },
+      "169_static_scenario_clears_all_075": false,
+      "credit_for_removed_workspace_bytes": 0
+    },
+    "upsampler-only-xpu2": {
+      "static_freed_bytes_by_card": {
+        "xpu:0": 995735808,
+        "xpu:2": -995735808
+      },
+      "dg0_margin_gib": {
+        "145": {
+          "xpu:0": [
+            2.197733163833618,
+            2.197733163833618
+          ],
+          "xpu:1": [
+            1.8283119201660156,
+            1.8283119201660156
+          ],
+          "xpu:3": [
+            1.8496627807617188,
+            1.8496627807617188
+          ],
+          "xpu:2": [
+            8.778466939926147,
+            8.778466939926147
+          ]
+        },
+        "169": {
+          "xpu:0": [
+            1.6203216707277157,
+            1.9301522280040544
+          ],
+          "xpu:1": [
+            1.5740961936041913,
+            1.7105046322471225
+          ],
+          "xpu:3": [
+            0.48580838570634377,
+            1.217632695248252
+          ],
+          "xpu:2": [
+            8.778466939926147,
+            8.778466939926147
+          ]
+        }
+      },
+      "169_static_scenario_clears_all_075": false,
+      "credit_for_removed_workspace_bytes": 0
+    },
+    "audio-only-xpu2": {
+      "static_freed_bytes_by_card": {
+        "xpu:3": 364666868,
+        "xpu:2": -364666868
+      },
+      "dg0_margin_gib": {
+        "145": {
+          "xpu:0": [
+            1.2703819274902344,
+            1.2703819274902344
+          ],
+          "xpu:1": [
+            1.8283119201660156,
+            1.8283119201660156
+          ],
+          "xpu:3": [
+            2.1892852671444416,
+            2.1892852671444416
+          ],
+          "xpu:2": [
+            9.366195689886808,
+            9.366195689886808
+          ]
+        },
+        "169": {
+          "xpu:0": [
+            0.6929704343843319,
+            1.0028009916606706
+          ],
+          "xpu:1": [
+            1.5740961936041913,
+            1.7105046322471225
+          ],
+          "xpu:3": [
+            0.8254308720890666,
+            1.5572551816309748
+          ],
+          "xpu:2": [
+            9.366195689886808,
+            9.366195689886808
+          ]
+        }
+      },
+      "169_static_scenario_clears_all_075": false,
+      "credit_for_removed_workspace_bytes": 0
+    },
+    "upsampler-and-audio-xpu2": {
+      "static_freed_bytes_by_card": {
+        "xpu:0": 995735808,
+        "xpu:3": 364666868,
+        "xpu:2": -1360402676
+      },
+      "dg0_margin_gib": {
+        "145": {
+          "xpu:0": [
+            2.197733163833618,
+            2.197733163833618
+          ],
+          "xpu:1": [
+            1.8283119201660156,
+            1.8283119201660156
+          ],
+          "xpu:3": [
+            2.1892852671444416,
+            2.1892852671444416
+          ],
+          "xpu:2": [
+            8.438844453543425,
+            8.438844453543425
+          ]
+        },
+        "169": {
+          "xpu:0": [
+            1.6203216707277157,
+            1.9301522280040544
+          ],
+          "xpu:1": [
+            1.5740961936041913,
+            1.7105046322471225
+          ],
+          "xpu:3": [
+            0.8254308720890666,
+            1.5572551816309748
+          ],
+          "xpu:2": [
+            8.438844453543425,
+            8.438844453543425
+          ]
+        }
+      },
+      "169_static_scenario_clears_all_075": true,
+      "credit_for_removed_workspace_bytes": 0,
+      "destination_extra_workspace_reserve_gib": 2.0,
+      "margin_after_workspace_reserve_gib": {
+        "145": {
+          "xpu:0": [
+            2.197733163833618,
+            2.197733163833618
+          ],
+          "xpu:1": [
+            1.8283119201660156,
+            1.8283119201660156
+          ],
+          "xpu:3": [
+            2.1892852671444416,
+            2.1892852671444416
+          ],
+          "xpu:2": [
+            6.438844453543425,
+            6.438844453543425
+          ]
+        },
+        "169": {
+          "xpu:0": [
+            1.6203216707277157,
+            1.9301522280040544
+          ],
+          "xpu:1": [
+            1.5740961936041913,
+            1.7105046322471225
+          ],
+          "xpu:3": [
+            0.8254308720890666,
+            1.5572551816309748
+          ],
+          "xpu:2": [
+            6.438844453543425,
+            6.438844453543425
+          ]
+        }
+      }
+    },
+    "upsampler-and-video-encoder-xpu2": {
+      "static_freed_bytes_by_card": {
+        "xpu:0": 995735808,
+        "xpu:3": 637873794,
+        "xpu:2": -1633609602
+      },
+      "dg0_margin_gib": {
+        "145": {
+          "xpu:0": [
+            2.197733163833618,
+            2.197733163833618
+          ],
+          "xpu:1": [
+            1.8283119201660156,
+            1.8283119201660156
+          ],
+          "xpu:3": [
+            2.443729044869542,
+            2.443729044869542
+          ],
+          "xpu:2": [
+            8.184400675818324,
+            8.184400675818324
+          ]
+        },
+        "169": {
+          "xpu:0": [
+            1.6203216707277157,
+            1.9301522280040544
+          ],
+          "xpu:1": [
+            1.5740961936041913,
+            1.7105046322471225
+          ],
+          "xpu:3": [
+            1.0798746498141671,
+            1.8116989593560753
+          ],
+          "xpu:2": [
+            8.184400675818324,
+            8.184400675818324
+          ]
+        }
+      },
+      "169_static_scenario_clears_all_075": true,
+      "credit_for_removed_workspace_bytes": 0
+    },
+    "upsampler-and-text-layer24-xpu2": {
+      "static_freed_bytes_by_card": {
+        "xpu:0": 995735808,
+        "xpu:3": 448297986,
+        "xpu:2": -1444033794
+      },
+      "dg0_margin_gib": {
+        "145": {
+          "xpu:0": [
+            2.197733163833618,
+            2.197733163833618
+          ],
+          "xpu:1": [
+            1.8283119201660156,
+            1.8283119201660156
+          ],
+          "xpu:3": [
+            2.2671728152781725,
+            2.2671728152781725
+          ],
+          "xpu:2": [
+            8.360956905409694,
+            8.360956905409694
+          ]
+        },
+        "169": {
+          "xpu:0": [
+            1.6203216707277157,
+            1.9301522280040544
+          ],
+          "xpu:1": [
+            1.5740961936041913,
+            1.7105046322471225
+          ],
+          "xpu:3": [
+            0.9033184202227975,
+            1.6351427297647056
+          ],
+          "xpu:2": [
+            8.360956905409694,
+            8.360956905409694
+          ]
+        }
+      },
+      "169_static_scenario_clears_all_075": true,
+      "credit_for_removed_workspace_bytes": 0
+    }
+  },
+  "169_copy_volumes": {
+    "stage_a_f32_latent_bytes": 180224,
+    "stage_b_f32_latent_bytes": 720896,
+    "audio_f32_latent_bytes": 90112,
+    "audio_f32_waveform_bytes": 2691840,
+    "new_video_seconds": 7.0,
+    "note": "native paths already stage CPU->device and device->CPU; destination changes do not add a direct peer hop"
+  },
+  "169_prediction": {
+    "sampler_a_s": [
+      1.95,
+      2.15
+    ],
+    "sampler_b_s": [
+      1.85,
+      2.05
+    ],
+    "cone_s": [
+      0.85,
+      1.1
+    ],
+    "other_chain_s": [
+      1.1,
+      1.3
+    ],
+    "period_s": [
+      5.95,
+      6.65
+    ],
+    "period_per_new_video_second": [
+      0.85,
+      0.9500000000000001
+    ],
+    "display_s": [
+      2.72,
+      3.3
+    ],
+    "display_linear_frames_s": 3.1695274,
+    "offchain_3s_proven": false,
+    "replica_transient_gib": [
+      4.100830078125,
+      5.638641357421875
+    ],
+    "replica_budget_gib": 6.5,
+    "replica_plus_aux_margin_xpu2_before_extra_workspace_reserve_gib": 0.9433305375277996,
+    "replica_plus_aux_margin_xpu2_after_2gib_workspace_reserve_gib": -1.0566694624722004,
+    "replica_recommendation": "not admitted before measured auxiliary workspace overlap; does not prove display <3s"
+  },
+  "limits": [
+    "Allocator preparation residuals mix graph pools, static buffers, workspace and allocator overhead; receipts cannot split them exactly.",
+    "Header bytes are static payload; physical-free benefit of moving weights must be measured after new qualification.",
+    "No isolated audio/upsampler workspace peak exists; 2GiB reserve is an explicit planning assumption, not a measured bound.",
+    "169 xpu3 low margin .825GiB leaves only .075GiB over screening target, so all phase checks and retained-tail observations remain required.",
+    "145 dg1 replica remains inadmissible and is not a launch recommendation."
+  ],
+  "sources": {
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261008/continuation122-evidence.json": {
+      "sha256": "cb3afc8a5fcee184a82b4c2280e75140fd8213bf9c3f1c634b526f0fe4ed3f60",
+      "bytes": 471211
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-121-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145/stream-preparation.json": {
+      "sha256": "6223cac170b390ce088514c82b7ae46263339a66a06282e8f0e9abea6bc144dc",
+      "bytes": 10300
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-121-frame-dg0-adcone-bo1-pa1-smfp-two-way20-28-w1-b1-p1-dxpu2-s256x256-f145/host-components-01-control-result.json": {
+      "sha256": "93f561c686591ce21279ad808c67cd92cbfc2df19034ef41391fecb520687e27",
+      "bytes": 202925
+    },
+    "/mnt/fast-ai/llm-models/LTX-2.5-baseline/diffusion_models/ltx-2.5-22b-distilled-transformer-bf16.safetensors": {
+      "header_with_length_sha256": "e0558e1aff461dedc507377213969ead72c1be73e0a0ebaea839f5e73942d747",
+      "header_bytes": 677624,
+      "file_bytes": 42018190584,
+      "payload_read": false
+    },
+    "/mnt/fast-ai/llm-models/LTX-2.5-baseline/latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors": {
+      "header_with_length_sha256": "151942c58b50575224753f720c11fbee2b85c1fe735459d67315a2dbf4105de7",
+      "header_bytes": 42944,
+      "file_bytes": 995778752,
+      "payload_read": false
+    },
+    "/mnt/fast-ai/llm-models/LTX-2.5-baseline/vae/ltx-2.5-audio-vae-bf16.safetensors": {
+      "header_with_length_sha256": "059888df211d13e6bd810e44c4cf06f302ddebbae67ce7596bfcf440d5d4c6a6",
+      "header_bytes": 199672,
+      "file_bytes": 364866540,
+      "payload_read": false
+    },
+    "/mnt/fast-ai/llm-models/LTX-2.5-baseline/vae/ltx-2.5-video-vae-bf16.safetensors": {
+      "header_with_length_sha256": "bc4f0a9f8d1f436c6317e92ab057feeb746cdad6ab3d0e9c76df6b57b290602a",
+      "header_bytes": 81552,
+      "file_bytes": 1472223346,
+      "payload_read": false
+    },
+    "/mnt/fast-ai/llm-models/LTX-2.5-baseline/text_encoders/gemma4-12b-with-proj-ltx-2.5-bf16.safetensors": {
+      "header_with_length_sha256": "90754d93b4110f39a0a06dfdd41d8a8f22a1a413f7333e703dde4c5b4ce200ac",
+      "header_bytes": 83888,
+      "file_bytes": 26263858182,
+      "payload_read": false
+    }
+  }
+}

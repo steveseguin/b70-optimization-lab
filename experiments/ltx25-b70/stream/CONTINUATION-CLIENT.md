@@ -378,3 +378,35 @@ submit -> sampler A), `snapshots` (labels, seconds, total, dual count, smallest 
 `client_turnaround_s` (receipt verified -> next POST) and `client_post_s`. Names `stream118-`. Start script:
 `start-client-118.sh <frames> <dg> <ad> <bo> <pa> <walk|fingerprint> <cap GB|none>`. Tests:
 `tests/run_tests_118.py` against `tests/fake_comfy118.py` (port 18193).
+
+
+## Packet 123 (`--packet 123`)
+
+`start-client-123.sh` keeps packet 122's eleven positional arguments. Its default
+work directory is `/home/steve/ltx-stream/s123-live01`; `LTX_STREAM_WORKDIR` can
+select a fresh coordinator-owned directory. `LTX_AUX_RESIDENCY=legacy|xpu2`
+(default `legacy`) becomes `--expect-aux-residency`. Use the same value as the
+server. The upward-only `LTX_DISPLAY_REPLICA_TRANSIENT_GIB` option is inherited.
+
+The client binds `aux_residency` and `residency_qualification_id` across status,
+all three qualification chains, the qualification verdict, and stream receipts.
+The residency identity is separate from the unchanged numerical graph identity.
+169-frame chunks require `xpu2`, decoder graph off, `two-way20-28`, and frame/cone
+anchoring, with display on xpu:3. Auxiliary xpu2 residency cannot share xpu:2
+with a display replica. A 145- or 169-frame dg1 display replica is refused. These CPU protocol
+checks establish no GPU exactness or speed claim; the coordinator must qualify
+the new residency and compare every chunk's bytes.
+
+An exit 7 retains the original preview/decode error and makes exactly one status
+GET with a two-second socket timeout. It logs the returned phase, fault, halt,
+worker state and server identity, or the observation failure. The same snapshot
+is saved under `client-state.json` → `last_stop.server_status`. It does not retry
+the failed request, wait through the ordinary status loop, or restart anything.
+This distinguishes a preview-route HTTP 500 while the server is healthy from a
+fault or an unavailable status route.
+
+CPU tests use `tests/run_cpu_suites.py run_tests_123.py` and
+`tests/run_cpu_suites.py run_tests_123_integration.py` with the baseline
+`bin/python -B`, `OMP_NUM_THREADS=4`. The integration wrapper permits only local
+fake HTTP endpoints, refuses port 8188 and `/dev/dri`, and stops its children
+cooperatively without process signals.
