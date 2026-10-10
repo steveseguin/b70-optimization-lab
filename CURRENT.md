@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**2026-10-10 17:25 UTC, packet 137 sealed (exact bulk F32 finiteness scan, `LTX_F32_SCAN=bulk`; predicted −0.15 s per chunk, 0.076 of it before sampler A); the residual odd-period excess is mostly the fresh text encode every fourth chunk (fresh 5.626 s vs reused 5.195 s), not a defect. Swapping the production arm to 137.**
+135 GC-10 production session closed: n = 747, median 5.553 s (even 5.39 / odd 5.64, p90 6.29) = 0.925 s/s, exact, no stops (the longest clean session of the campaign). 137 (commits 458a3c92c0, 4676194954;
+manifest `18c80d25…463e`; inner plan `61e39067…21a5`; 1,096 recovery, 7,780 client, 9 sealed-import over 69 helpers, 10 preflight, 11 matched
+parent/bulk comparisons). Launch (work dir `s137-live01`): the 135 production command with `LTX_F32_SCAN=bulk` and `launch-137.sh`.
+Remaining exact item after this: a scheduled text prefetch for the known scene schedule (≈ 0.38 s on every fourth chunk ≈ 0.1 s per chunk
+averaged), which the 133 study ranked as needing chain/reset/prompt checks and a qualified encode worker.
+
 **2026-10-10, packet 137 is sealed and CPU-tested; live work is unchanged.**
 The remaining pooled odd-period gap on 135 is mainly fresh text every fourth
 source chunk. Reused-text groups take about 5.195 seconds; fresh-text chunks
