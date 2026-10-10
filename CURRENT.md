@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**2026-10-10 04:34 UTC, client stop on an HTTP 500 from the preview route (chunk 154); server healthy; client resumed.**
+At 04:32:30 UTC the 121 client stopped itself (exit 7, no retry by design): the preview route answered HTTP 500 because the packet's
+evidence guard (`read_regular`: size/inode/mtime/ctime identical before and after the read) saw `preview_00001_.mp4` of
+`stream121-s00000154` change during the read, i.e. the preview writer was still finalising the larger 145-frame file when the
+client fetched it. Server status: phase stream, no fault, decode worker 165/165, no latch; kernel journal clean; the preview file is
+complete (252,936 B). One client restart (an application action; the server was not touched) resumed the chain at seq 156; the
+server's own chain never broke. Follow-up for packet 122/123: make the preview route tolerate or wait out the writer (publish by
+atomic rename, or retry the identity check once), since the window grows with chunk length.
+
 **2026-10-10 04:25 UTC, packet 121 at 145 frames live: 5.61 s per 6.0 s of new video = 0.935 s/s, exact; the stream runs ahead of real time.**
 Launched 04:08:58 UTC (`launch-121.sh 145 frame 0 cone 1 1 fingerprint - sampler-a 0 full xpu:3`), qualification verdict
 356b25be584b at 04:17:28 (exact replay c0/c1/c2, measured geometry matches the sealed formulas: 145 frames, 144 new frames = 6.0 s
