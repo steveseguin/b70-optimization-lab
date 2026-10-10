@@ -1,0 +1,113 @@
+test_deleted_line_does_not_latch_but_creation_does (test_runtime_packet.CoredumpPattern.test_deleted_line_does_not_latch_but_creation_does) ... ok
+test_inventory_and_assembly_fit_build_allowance (test_runtime_packet.Identities.test_inventory_and_assembly_fit_build_allowance) ... ERROR
+test_no_previous_prefix_outside_provenance (test_runtime_packet.Identities.test_no_previous_prefix_outside_provenance)
+Naming rule 3: the 112/113/114 prefixes appear only in provenance strings and comments. ... ok
+test_plan_file_is_the_reconstructed_plan_and_pins_agree (test_runtime_packet.Identities.test_plan_file_is_the_reconstructed_plan_and_pins_agree) ... ok
+test_check_name_collisions_raises_and_reports (test_runtime_packet.Naming.test_check_name_collisions_raises_and_reports) ... ok
+test_clean_root_and_older_packets_pass (test_runtime_packet.Naming.test_clean_root_and_older_packets_pass) ... ok
+test_each_collision_refuses (test_runtime_packet.Naming.test_each_collision_refuses) ... ok
+test_live_root_is_clean_now (test_runtime_packet.Naming.test_live_root_is_clean_now)
+The real results root holds no 118 names today (read-only listing). (The 117 runs' stream117- ... ok
+test_missing_directories_are_not_collisions (test_runtime_packet.Naming.test_missing_directories_are_not_collisions) ... ok
+test_custom_node_inputs (test_runtime_packet.NodeInputs.test_custom_node_inputs) ... ok
+test_integration_imports_without_torch (test_runtime_packet.NodeInputs.test_integration_imports_without_torch) ... ok
+test_output_node_ranges_admit_all_lengths_and_levers (test_runtime_packet.NodeInputs.test_output_node_ranges_admit_all_lengths_and_levers) ... ok
+test_capture_guard_shapes_at_97 (test_runtime_packet.Transforms.test_capture_guard_shapes_at_97) ... ok
+test_control_environment (test_runtime_packet.Transforms.test_control_environment) ... ok
+test_geometry_follows_launch_frames_and_anchor (test_runtime_packet.Transforms.test_geometry_follows_launch_frames_and_anchor) ... ERROR
+test_launcher (test_runtime_packet.Transforms.test_launcher) ... ok
+
+======================================================================
+ERROR: test_inventory_and_assembly_fit_build_allowance (test_runtime_packet.Identities.test_inventory_and_assembly_fit_build_allowance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation120-stream/test_runtime_packet.py", line 58, in test_inventory_and_assembly_fit_build_allowance
+    result = rp.inspect_assembly()
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation120-stream/runtime_packet.py", line 750, in inspect_assembly
+    parent = BASE.verify_packet(PARENT, PARENT_SHA)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-119/launch/encoder_runtime_common.py", line 711, in verify_packet
+    parent = BASE.verify_packet(PARENT, PARENT_SHA)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-118b/launch/encoder_runtime_common.py", line 702, in verify_packet
+    parent = BASE.verify_packet(PARENT, PARENT_SHA)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-117/launch/encoder_runtime_common.py", line 575, in verify_packet
+    parent = BASE.verify_packet(PARENT, PARENT_SHA)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-116b/launch/encoder_runtime_common.py", line 413, in verify_packet
+    parent = BASE.verify_packet(PARENT, PARENT_SHA)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-116/launch/encoder_runtime_common.py", line 402, in verify_packet
+    parent = BASE.verify_packet(PARENT, PARENT_SHA)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-115/launch/encoder_runtime_common.py", line 347, in verify_packet
+    parent = BASE.verify_packet(PARENT, PARENT_SHA)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-114/launch/encoder_runtime_common.py", line 328, in verify_packet
+    parent = BASE.verify_packet(PARENT, PARENT_SHA)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-113/launch/encoder_runtime_common.py", line 245, in verify_packet
+    parent = BASE.verify_packet(PARENT, PARENT_SHA)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-112/launch/encoder_runtime_common.py", line 298, in verify_packet
+    parent = BASE.verify_packet(PARENT, PARENT_SHA)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-native-111/launch/encoder_runtime_common.py", line 211, in verify_packet
+    parent = BASE.verify_packet(PARENT, PARENT_SHA)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-full-110/launch/encoder_runtime_common.py", line 270, in verify_packet
+    parent = BASE.verify_packet(PARENT, PARENT_SHA)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b/launch/encoder_runtime_common.py", line 123, in verify_packet
+    parent = BASE.verify_packet(PARENT, PARENT_SHA)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99/launch/encoder_runtime_common.py", line 343, in verify_packet
+    plan = load_json(regular(plan_path)); upstream, _ = source_checker.validate_plan(plan)
+                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99/provenance/source99/check-upstream-source-99.py", line 119, in validate_plan
+    old, new = git_tree(repo, OLD), git_tree(repo, NEW)
+               ^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99/provenance/source99/check-upstream-source-99.py", line 83, in git_tree
+    require(git(repo, 'rev-parse', '--verify', commit + '^{commit}').decode().strip() == commit,
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99/provenance/source99/check-upstream-source-99.py", line 79, in git
+    return subprocess.check_output(['git', '--no-replace-objects', '-C', str(repo), *args], timeout=120)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/subprocess.py", line 466, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/subprocess.py", line 548, in run
+    with Popen(*popenargs, **kwargs) as process:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation120-stream/run_tests_120.py", line 33, in __init__
+    raise RuntimeError('CPU runner refuses unaudited child command')
+RuntimeError: CPU runner refuses unaudited child command
+
+======================================================================
+ERROR: test_geometry_follows_launch_frames_and_anchor (test_runtime_packet.Transforms.test_geometry_follows_launch_frames_and_anchor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation120-stream/test_runtime_packet.py", line 126, in test_geometry_follows_launch_frames_and_anchor
+    raw = transformed('source/scripts/ltx_output_size_98.py', lambda r: rp.geometry_source(r, rp.PLAN_SHA, rp.QIDS))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation120-stream/test_runtime_packet.py", line 34, in transformed
+    return fn(rp.regular(rp.PARENT / path))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation120-stream/test_runtime_packet.py", line 126, in <lambda>
+    raw = transformed('source/scripts/ltx_output_size_98.py', lambda r: rp.geometry_source(r, rp.PLAN_SHA, rp.QIDS))
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation120-stream/runtime_packet.py", line 511, in geometry_source
+    t = replace(t, "_RESOLUTION_QUALIFICATION_ID = " + repr(PARENT_QIDS) + tail,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation120-stream/runtime_packet.py", line 382, in replace
+    require(text.count(old) == count, 'Source anchor count differs: ' + repr(old[:90]))
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261010-continuation120-stream/runtime_packet.py", line 348, in require
+    raise RuntimeError(why)
+RuntimeError: Source anchor count differs: "_RESOLUTION_QUALIFICATION_ID = {'121/two-way/frame/dg0/ad-cone/bo0/pa0': '618fa86cd694b50a"
+
+----------------------------------------------------------------------
+Ran 16 tests in 4.084s
+
+FAILED (errors=2)

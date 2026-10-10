@@ -9,9 +9,10 @@ All sockets are restricted to loopback test ports; port 8188 is blocked even in
 argument-only tests. Every child uses this interpreter with -B. Outputs and IPC
 stay in a newly created temporary directory.
 
-Usage: /home/steve/.venvs/ltx25-baseline/bin/python3 -B run_cpu_suites.py run_tests_118b.py
+Usage: /home/steve/.venvs/ltx25-baseline/bin/python -B run_cpu_suites.py run_tests_118b.py
 """
 import http.server
+import os
 from pathlib import Path
 import runpy
 import signal
@@ -24,6 +25,22 @@ import time
 
 sys.dont_write_bytecode = True
 HERE = Path(__file__).resolve().parent
+
+
+def guard_device_opens():
+    """Refuse render-device access before mocks or imported test code can open it."""
+    def audit(event, args):
+        if event != 'open' or not args:
+            return
+        path = args[0]
+        if isinstance(path, (str, bytes, os.PathLike)):
+            real = os.path.realpath(os.fsdecode(path))
+            if real == '/dev/dri' or real.startswith('/dev/dri/'):
+                raise RuntimeError('CPU suite refused device open: ' + real)
+    sys.addaudithook(audit)
+
+
+guard_device_opens()
 
 
 def guard_sockets():

@@ -1,5 +1,24 @@
 # Current Workspace State
 
+**2026-10-10, packet 120 prepared on CPU; cross-card display remains off by default.**
+The receipts correct the earlier suspicion: packet 119's extra receipt time came
+from near-floor safety inspections. Read-ahead ran on the decode thread after
+receipt commit, not inside the HTTP handler. The native upsampler stayed fast;
+extra safety inspections also explain the larger B-preparation bucket. Packet 119
+remains a loss against 118b dg0, despite matching all 37 compared chunks.
+Packet 120 adds a separate display decoder on xpu:2, with full-frame comparisons
+against xpu:3 during qualification and the existing per-chunk anchor byte check.
+The proposed comparison turns read-ahead off and retains every safety inspection.
+CPU validation covers 426 recovery tests, 403 client checks and 10 preflight tests;
+one stale test assertion was corrected and its complete 23-test module reran.
+Predicted period is 5.10–5.40 seconds at 121 frames, conditional on exact output
+and recovered memory margin; an adverse result could be 5.35–5.70 seconds.
+Cross-card bytes, peak memory and actual speed remain unmeasured. No GPU, launch,
+port, unit, signal, existing-run write or host-setting action was taken. The
+coordinator's recorded live line below is unchanged by this CPU task.
+[119 analysis](experiments/ltx25-b70/notes/2026-10-10-continuation119-results-121.md)
+and [120 design, seal and checks](experiments/ltx25-b70/notes/2026-10-10-continuation120-stream-design.md).
+
 **2026-10-10 03:10 UTC, packet 119 (graph cone + eager display + read-ahead) measured: exact, but a loss; 118b dg0 relaunched.**
 119 qualified (verdict 9dac6eb450ba) and streamed 61 chunks (02:56–03:09 UTC), byte-identical to 118b on 37/37 compared
 chunks. Steady state (chunks ≥ 10, medians): period **5.42 s** vs 5.28 on 118b dg0; cone on the chain 0.79 (−0.19), but
