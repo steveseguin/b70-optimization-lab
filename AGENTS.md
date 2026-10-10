@@ -120,6 +120,20 @@ around it.
   is closed quickly or skipped, not turned into a campaign. That is a reason
   to pick a bigger lever, never a reason to stop.
 
+### 5. Build our own model-specific runtimes for Intel Xe (2026-10-10)
+
+- A long-running objective: our own inference runtimes, one per model
+  family, for Intel XPU/Xe and mainly the B70. Our own project: other
+  projects (Strata, llama.cpp, vLLM, SGLang and the rest) are read for ideas
+  and credited, never used as the base of our code. Intel platform libraries
+  are ordinary dependencies.
+- Weights come from the official publisher or Unsloth. Any other source
+  needs a written justification and the owner's approval before download.
+  Quantizations we produce from an official release are our own work.
+- The current certified lanes keep running and publishing; the runtime earns
+  its place stage by stage against them. Full text and plan:
+  `docs/own-xpu-runtime-objective.md`.
+
 ## First Read
 
 Read these in order before changing runtime behavior:

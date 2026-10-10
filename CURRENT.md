@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**2026-10-10, new long-running objective: our own model-specific inference runtimes for Intel Xe (B70).**
+The owner decided it after the Strata review. It is our own project; other
+projects are mined for ideas and credited, not used as a base. Weights come
+from the official publisher or Unsloth; any other source needs a justification
+and the owner's approval, so the ISTA IQ3_S trial below is withdrawn for now.
+The existing lanes keep running. Stage 0 (design spec, inventory of what we
+already own, idea survey, storage plan) is CPU-only and starts now; the GPU
+halt still stands. [Objective, rules and staged plan](docs/own-xpu-runtime-objective.md).
+
 **2026-10-10, CPU-only Flash-Next quant research is complete.**
 Strata links to smaller published models, but they use a different runtime and
 must earn their own quality result. The first proposed trial is the full

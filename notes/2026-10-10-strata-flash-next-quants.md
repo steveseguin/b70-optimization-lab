@@ -1,5 +1,14 @@
 # Strata and Flash-Next quantization candidates — 2026-10-10
 
+> **Owner decision after this note (2026-10-10):** weights must come from the
+> official publisher or Unsloth; other sources need a written justification and
+> the owner's approval. The ISTA GSQ IQ3_S first trial below is therefore
+> withdrawn for now. Allowed Flash-Next candidates from this inventory:
+> Unsloth UD-IQ3_XXS (81.96 GB), UD-Q3_K_XL (89.99 GB), UD-IQ4_XS (93.68 GB),
+> UD-Q4_K_XL (111.34 GB), or our own AutoRound INT4 from the official FP8.
+> Strata itself is not used; its ideas may be. See
+> [docs/own-xpu-runtime-objective.md](../docs/own-xpu-runtime-objective.md).
+
 **Recommendation: first evaluate the full, unpruned GSQ-RCO IQ3_S on two B70s,
 as a separate Strata/SYCL quantized lane.** Its two files total **83,617,662,656
 bytes (83.618 GB / 77.875 GiB)**. The transformer shard is 54.818 GB, which

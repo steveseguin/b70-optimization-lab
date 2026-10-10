@@ -28,6 +28,9 @@ Docs should point to those artifacts instead of duplicating every script.
 - [Model Intake Queue](../model-intake/README.md): revision-pinned candidate
   downloads, USB safety checks, popularity snapshot, and already-covered
   families that should not be duplicated.
+- [Own Model-Specific Runtimes For Intel Xe](own-xpu-runtime-objective.md):
+  the 2026-10-10 long-running objective, its rules (own project, official or
+  Unsloth weights, B70 only), design pillars and staged gates.
 - [Model Distribution And Packaging Roadmap](model-distribution-and-packaging-roadmap.md):
   novice one/two-GPU packets, contributor recognition, digest-pinned Docker
   packaging, and the bounded Windows path.
