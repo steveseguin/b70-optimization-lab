@@ -106,7 +106,11 @@ refreshed pinned HF metadata, a bounded-memory candidate fit/comparison script,
 and its [attempt receipt](fit/attempt.json). No producer was recovered. The
 receipt-named official and fitted inputs are absent on the four-card host, so
 the new attempt stopped before tensor reads; new differences and tensor hashes
-are null. The script's eight synthetic tests do not establish H3 reproduction.
+are null. The synthetic CPU tests do not establish H3 reproduction. The later
+[recovery plan](RECOVERY-PLAN.md) queues the official inputs and separate
+approval-pending Comfy inputs, and adds an automatic independent fit search,
+streamed whole-file assembly and the exact recorded SHA-256 gate; no real search
+has run and no weight payload was downloaded.
 
 **Reproduction step remains missing:** obtain permitted local inputs and run
 the [CPU comparison command](fit/README.md#cpu-comparison-command-when-inputs-become-available),

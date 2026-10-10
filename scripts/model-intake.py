@@ -401,6 +401,11 @@ def command_download(
     catalog: dict[str, Any], root: Path, entries: list[dict[str, Any]], reserve_gib: int,
     token_file: Path, allow_non_usb: bool, ordinary_only: bool,
 ) -> int:
+    if catalog.get("execution_authorized") is False:
+        raise IntakeError("catalog is queued planning only; execution is not authorized")
+    if any(entry.get("execution_authorized") is False or
+           entry.get("owner_source_approval") == "pending" for entry in entries):
+        raise IntakeError("selected artifact awaits execution/source approval")
     validate_store(root, require_marker=True, allow_non_usb=allow_non_usb)
     missing_bytes = sum(
         entry["artifact"]["size_bytes"]
@@ -425,7 +430,7 @@ def command_download(
             print(f"download: {entry['id']} -> {part}")
             if not (part.is_file() and part.stat().st_size == entry["artifact"]["size_bytes"]):
                 curl_download(entry, part, token_file)
-            ordinary_verify(root, {**entry, "artifact": {**entry["artifact"], "filename": part.name}})
+            ordinary_verify(root, {**entry, "artifact": {**entry["artifact"], "filename": str(Path(entry["artifact"]["filename"]).with_name(part.name))}})
             os.replace(part, final)
         if ordinary_only:
             ordinary_verify(root, entry)

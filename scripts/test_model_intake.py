@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import hashlib
+from unittest.mock import patch
 import tempfile
 import unittest
 from pathlib import Path
@@ -84,6 +86,42 @@ class ModelIntakeTests(unittest.TestCase):
         )[0]
         expected = Path("/models") / entry["destination"] / entry["artifact"]["filename"]
         self.assertEqual(MODEL_INTAKE.local_path(Path("/models"), entry), expected)
+
+    def test_recovery_catalogs_are_pinned_but_not_authorized(self):
+        for filename in ('h3-recovery-20261010-official.json', 'h3-recovery-20261010-comfy-approval-pending.json'):
+            c = MODEL_INTAKE.load_catalog(MODEL_INTAKE.REPO_ROOT / 'model-intake' / filename)
+            entries = MODEL_INTAKE.selected_entries(c, [], True)
+            self.assertTrue(entries)
+            self.assertTrue(all(e['status'] == 'queued' for e in entries))
+            with patch.object(MODEL_INTAKE, 'validate_store') as store:
+                with self.assertRaisesRegex(MODEL_INTAKE.IntakeError, 'not authorized'):
+                    MODEL_INTAKE.command_download(c, Path('/unused'), entries, 100, Path('/no-token'), False, False)
+                store.assert_not_called()
+
+    def test_pending_source_blocks_even_with_catalog_execution_enabled(self):
+        e = dict(self.catalog['entries'][0], owner_source_approval='pending')
+        with patch.object(MODEL_INTAKE, 'validate_store') as store:
+            with self.assertRaisesRegex(MODEL_INTAKE.IntakeError, 'source approval'):
+                MODEL_INTAKE.command_download({}, Path('/unused'), [e], 100, Path('/no-token'), False, False)
+            store.assert_not_called()
+
+    def test_nested_partial_verifies_before_rename_without_network(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            raw = b'nested synthetic model bytes'
+            e = dict(id='nested', repo_id='official/model', revision='a'*40,
+                     destination='models/intake-date/official--model',
+                     artifact=dict(filename='transformer/shard.safetensors',
+                                   size_bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest()))
+            final = MODEL_INTAKE.local_path(root,e)
+            final.parent.mkdir(parents=True)
+            final.with_name(final.name+'.part').write_bytes(raw)
+            with patch.object(MODEL_INTAKE,'validate_store'), patch.object(MODEL_INTAKE,'curl_download') as network, patch.object(MODEL_INTAKE,'direct_verify') as direct:
+                MODEL_INTAKE.command_download({},root,[e],0,root/'no-token',False,False)
+                network.assert_not_called()
+                direct.assert_called_once_with(root,e)
+            self.assertEqual(final.read_bytes(),raw)
+            self.assertFalse(final.with_name(final.name+'.part').exists())
 
 
 if __name__ == "__main__":

@@ -1,5 +1,9 @@
 # Current Workspace State
 
+**2026-10-10, CPU-only H3 recovery plan:** The [recovery plan](repro/minimax-h3-pruned-bf16-tp2-b70-20261004/RECOVERY-PLAN.md) queues 66.281 GB of official inputs and a separate Comfy set that still needs the owner's source approval; nothing was downloaded beyond metadata or written to the model disks.
+The CPU tool now assembles and hashes complete candidate files, with synthetic tests passing, but the old fit has unrecorded details and has not been recovered.
+The package stays draft unless the exact file is recovered; any new fit needs a new identity, measurements and the owner's decision, and no GPU or service was touched.
+
 **2026-10-10, own-runtime official 27B weights checked:** The weights were already on the USB disk; [CPU packet 2](experiments/own-xpu-runtime/stage1/packet2/README.md) passes all 67 large-file hashes, 14 small publisher files, all 1,606 tensor descriptions and repeated CPU sample checks.
 Text and MTP weights need 29.945 GB with the embedding on the card; scales multiply each 128×128 FP8 block, and the estimated working-memory margin is small enough that actual one-card fit remains unproven.
 No GPU, server, unit, download, protected model/cache write or host setting was used; temporary test files were removed and the host halt remains unchanged.

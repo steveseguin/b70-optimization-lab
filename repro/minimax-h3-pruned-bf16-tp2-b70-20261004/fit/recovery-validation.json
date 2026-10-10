@@ -1,0 +1,59 @@
+{
+  "schema": "neural.download.h3-recovery-validation.v1",
+  "date": "2026-10-10",
+  "cpu_only": true,
+  "numpy": "2.5.3",
+  "threads": 2,
+  "nice": 19,
+  "ionice": "idle class 3",
+  "real_fit_search": "not-run-inputs-absent; no model payload download authorized",
+  "weight_payload_bytes_downloaded": 0,
+  "gpu_server_systemd_used": false,
+  "protected_model_store_writes": false,
+  "scratch_removed": true,
+  "checks": [
+    {
+      "command": "python -B -m unittest discover -s repro/minimax-h3-pruned-bf16-tp2-b70-20261004/fit -p test_*.py",
+      "tests": 19,
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B -m unittest scripts/test_model_intake.py",
+      "tests": 11,
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B -m unittest tools/test_validate_repro_guides.py",
+      "tests": 15,
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B tools/validate-repro-guides.py --write-package-catalog",
+      "guides": 42,
+      "exit_code": 0
+    },
+    {
+      "command": "verify-evidence.py; validate-recipe-publication.py (local and remote modes)",
+      "exit_code": 0,
+      "scope": "Draft evidence only; no published certification"
+    },
+    {
+      "command": "python3 -B tools/build-model-pages.py",
+      "exit_code": 0,
+      "scope": "Generated pages unchanged; package dependency catalog refreshed"
+    }
+  ],
+  "script_sha256": "a85d16034e30174e124fe64409f9a78ea9d99c37a8a3cbaabbe175eddcd35fb7",
+  "default_variant_count": 72,
+  "independent_synthetic_fixture_sha256": "d25e2dee3db4f85047c8721f2895d636ed3643fde776fdb044ec06c58dc9ad0f",
+  "metadata_only_checks": {
+    "official_tensors": 638,
+    "unchanged_source_tensors": 532,
+    "copied_target_tensors": 428,
+    "copied_bf16_sources": 524,
+    "copied_f32_sources": 8,
+    "fitted_pairs": 51,
+    "official_safetensors_header_bytes_fetched": 74136,
+    "target_safetensors_header_bytes_fetched": 55984
+  }
+}

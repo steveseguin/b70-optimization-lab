@@ -7,6 +7,19 @@ The [attempt receipt](attempt.json) records the actual preflight. The
 tensor bytes, but is **not an exact producer or a replacement target**.
 No model weights, fitted coefficients or numerical target outputs are included.
 
+## Independent assembly search added later on October 10
+
+The [recovery plan](../RECOVERY-PLAN.md) records the exact 66.281 GB official
+intake, separate approval-pending Comfy intake, CPU budget, unknowns and no-match
+policy. `recover.py --assemble` now derives its own fit, streams the BF16 copies
+and assembles the exact saved 532-tensor header layout, then records a complete
+file hash for each of 72 default variants. It keeps only a match to the pinned
+40,225,724,176-byte denoiser and removes candidate scratch. The real search has
+**not run**: no model payload was downloaded. Synthetic assembly and source-header
+coverage tests are in [test_assemble.py](test_assemble.py); results are in
+[recovery-validation.json](recovery-validation.json). The previous attempt and
+validation receipts below remain historical evidence for the comparison tool.
+
 ## What was recovered
 
 The [Git search receipt](history-search.json) covers all available refs with
@@ -53,7 +66,8 @@ the fitted file's LFS hash, and the license content hash. These are upstream
 identities, **not local content verification or per-tensor hashes**. The fitted
 candidate file SHA-256 is
 `a32572fb90b5508b201ec7c2eddcc184b13ddfd3c6f6d2cf06a0b46535d541b4`;
-the historical receipt records header SHA-256
+the historical receipt labels this as a header SHA-256, but the runner actually
+hashes the first 1 MiB (including payload), not just the JSON header:
 `59916d0f1ea260e0d9e0ce7a3cb2ceb4d59ecbb08a9f2e466de009cbc6fe26c0`.
 
 The following is **historical evidence**, not a new local tensor comparison:
@@ -70,7 +84,7 @@ The following is **historical evidence**, not a new local tensor comparison:
 
 Other weights are reported unchanged under the lane's name mapping, QKV splits
 and SwiGLU row reorder. This task could not re-check that claim or any real
-tensor hash. The comparison script scopes its verdict to AdaLN only; even an
+tensor hash. Comparison mode scopes its verdict to AdaLN only; even an
 AdaLN match would still require verifying the remaining tensors, official
 whole-file pins and the complete output serialization.
 
@@ -96,7 +110,8 @@ not retained in Git.
 Use an existing permitted copy of each checkpoint; do not use a directory with
 active downloads. Install NumPy `2.2.6` in an isolated CPU environment. The tool
 does not download anything, import torch, map entire files, open devices, create
-services or write model files. It streams at most 128 MiB per read (1024-row
+services. Comparison mode does not write model files; the new assembly mode
+writes only into an explicitly supplied output location. It streams at most 128 MiB per read (1024-row
 default), caps address space at 2 GiB, and forces BLAS/OpenMP to two threads.
 
 ```bash
