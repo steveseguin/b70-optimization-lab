@@ -198,6 +198,135 @@ class AdmissionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'output binding'): self.admit()
 
 
+class MemoryRevisionTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(prefix='packet4-memory-test-')
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.path = self.root / 'approval.json'
+        self.boot = 'synthetic-test-boot'
+        self.floor = 133542784
+        self.digest = w.sha(w.REVISION_DOC)
+        self.receipt = {'schema': 'own-xpu-runtime.packet4.admission-revision.v1',
+            'approved': True, 'approved_by': 'owner', 'host': 'steve-b70s', 'boot_id': self.boot,
+            'revision_document_sha256': self.digest, 'minimum_mem_available_kib': self.floor,
+            'owner_approval_text': w.approval_text(self.floor, self.digest)}
+    def verify(self):
+        w.write(self.path, self.receipt)
+        with patch('socket.gethostname', return_value='steve-b70s'):
+            return w.verify_memory_revision(self.path, self.boot)
+    def test_approved_exact_document_and_floor(self):
+        r = self.verify()
+        self.assertEqual(r['minimum_mem_available_bytes'], self.floor * 1024)
+        self.assertEqual(r['delta_from_a367_bytes'], 13542784 * 1024)
+        self.assertEqual(r['receipt']['sha256'], w.sha(self.path))
+    def test_default_stays_a367(self):
+        self.assertIsNone(w.verify_memory_revision(None, self.boot))
+        p = w.read(w.PREREG)
+        m = w.memory_admission(p, None, 'MemAvailable: 119999999 kB')
+        self.assertEqual(m['minimum_mem_available_bytes'], 120000000 * 1024)
+        self.assertFalse(m['memory_floor_met'])
+    def test_memory_boundary_and_insufficient_capacity(self):
+        r = self.verify()
+        for kib, passed in [(self.floor-1, False), (self.floor, True), (self.floor+1, True), (116384560, False)]:
+            with self.subTest(kib=kib):
+                self.assertEqual(w.memory_admission(w.read(w.PREREG), r,
+                    f'MemAvailable: {kib} kB')['memory_floor_met'], passed)
+    def test_unapproved_and_wrong_owner(self):
+        for key, value in [('approved', False), ('approved', 'true'), ('approved', 1), ('approved_by', 'agent')]:
+            with self.subTest(key=key, value=value):
+                old = self.receipt[key]; self.receipt[key] = value
+                with self.assertRaisesRegex(ValueError, 'approval'): self.verify()
+                self.receipt[key] = old
+    def test_missing_each_field(self):
+        for key in list(self.receipt):
+            with self.subTest(key=key):
+                value = self.receipt.pop(key)
+                with self.assertRaisesRegex(ValueError, 'fields'): self.verify()
+                self.receipt[key] = value
+    def test_extra_field(self):
+        self.receipt['force'] = True
+        with self.assertRaisesRegex(ValueError, 'fields'): self.verify()
+    def test_wrong_schema(self):
+        self.receipt['schema'] = 'unrelated'
+        with self.assertRaisesRegex(ValueError, 'approval'): self.verify()
+    def test_stale_hash(self):
+        self.receipt['revision_document_sha256'] = '0' * 64
+        with self.assertRaisesRegex(ValueError, 'hash'): self.verify()
+    def test_wrong_host_or_boot(self):
+        for key in ('host', 'boot_id'):
+            old = self.receipt[key]; self.receipt[key] = 'other'
+            with self.assertRaisesRegex(ValueError, 'host/boot'): self.verify()
+            self.receipt[key] = old
+    def test_arbitrary_or_mistyped_floor(self):
+        for value in (True, False, 0, -1, '133542784', 133542784.0, 110000000, 133542785):
+            with self.subTest(value=value):
+                self.receipt['minimum_mem_available_kib'] = value
+                with self.assertRaisesRegex(ValueError, 'floor'): self.verify()
+    def test_approval_text_must_bind_floor_and_hash(self):
+        for text in ('', 'approved', 'PENDING OWNER APPROVAL', w.approval_text(110000000, self.digest)):
+            self.receipt['owner_approval_text'] = text
+            with self.assertRaisesRegex(ValueError, 'approval text'): self.verify()
+    def test_malformed_missing_or_duplicate_receipt(self):
+        with self.assertRaises(FileNotFoundError): w.verify_memory_revision(self.path, self.boot)
+        for text in ('{', 'null', '[]', '{"approved":true,"approved":false}'):
+            self.path.write_text(text)
+            with self.assertRaises((ValueError, TypeError)):
+                w.verify_memory_revision(self.path, self.boot)
+    def test_document_tampering(self):
+        doc = self.root / 'revision.md'
+        doc.write_bytes(w.REVISION_DOC.read_bytes() + b'changed')
+        with patch.object(w, 'REVISION_DOC', doc):
+            with self.assertRaisesRegex(ValueError, 'hash'): self.verify()
+    def test_ambiguous_document_refused(self):
+        doc = self.root / 'revision.md'
+        doc.write_text('proposed_minimum_mem_available_kib: 133542784\n' * 2)
+        self.receipt['revision_document_sha256'] = w.sha(doc)
+        with patch.object(w, 'REVISION_DOC', doc):
+            with self.assertRaisesRegex(ValueError, 'one floor'): self.verify()
+    def test_pending_template_refused(self):
+        with self.assertRaisesRegex(ValueError, 'approval'):
+            w.verify_memory_revision(w.HERE / 'admission-revision.pending.json', self.boot)
+    def test_identity_keeps_approval_and_delta(self):
+        r = self.verify()
+        self.path.write_text(self.path.read_text() + '  \n')
+        r = w.verify_memory_revision(self.path, self.boot)
+        paths = {k:Path(v) for k,v in w.read(w.PREREG)['defaults'].items()}
+        args = types.SimpleNamespace(owner_window=self.path, health_receipt=self.path, payload_receipt=self.path)
+        audit = {'versions': {}, 'memory_admission': w.memory_admission(w.read(w.PREREG), r,
+                 f'MemAvailable: {self.floor} kB')}
+        w.write(self.root/'environment.json', audit)
+        w.make_identity(self.root, args, paths, {}, [], audit,
+            {'host':'steve-b70s', 'boot_id':self.boot, 'firmware':'mock', 'pci_ids':[]},
+            {'kernel':'mock'}, r)
+        identity = w.read(self.root/'identity.json')
+        self.assertEqual(identity['admission_revision'], r)
+        self.assertEqual(identity['deltas'][-1]['to_bytes'], self.floor*1024)
+        self.assertEqual(w.read(self.root/'admission-revision.json'), self.receipt)
+        self.assertEqual(w.sha(self.root/'admission-revision.json'), r['receipt']['sha256'])
+    def test_owner_pin_and_cli_must_agree(self):
+        r = self.verify()
+        owner = {'admission_revision_sha256': r['receipt']['sha256']}
+        w.verify_revision_binding(owner, r)
+        w.verify_revision_binding({}, None)
+        for flag, revision in ((owner, None), ({}, r), ({'admission_revision_sha256': 'bad'}, r)):
+            with self.assertRaisesRegex(ValueError, 'owner revision'):
+                w.verify_revision_binding(flag, revision)
+    def test_cli_plan_accepts_receipt_without_runtime_actions(self):
+        self.receipt['boot_id'] = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+        w.write(self.path, self.receipt)
+        with patch.object(w.subprocess, 'Popen', side_effect=AssertionError('native launch')), \
+             patch.object(w, 'verify_environment', side_effect=AssertionError('audit in plan')), \
+             patch('builtins.print') as output:
+            self.assertEqual(w.main(['--plan','--admission-revision',str(self.path),
+                                   '--output',str(self.root/'unused')]), 0)
+        import json
+        plan = json.loads(output.call_args.args[0])
+        self.assertFalse(plan['native_executed'])
+        self.assertEqual(plan['memory_admission']['minimum_mem_available_bytes'], self.floor*1024)
+        self.assertFalse((self.root/'unused').exists())
+
+
 class OracleTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix='packet4-oracle-test-')
@@ -282,6 +411,19 @@ class ControlTests(unittest.TestCase):
         p=w.read(w.PREREG)
         with self.assertRaises(FileNotFoundError):
             w.verify_environment({k:Path('/nonexistent-packet4') for k in p['defaults']},p)
+    def test_audit_keeps_stage_pass_when_later_check_refuses(self):
+        import json
+        def fail(paths, prereg, audit):
+            audit['kernel_stage_passed'] = True
+            raise ValueError('full model verification receipt absent/changed')
+        with patch.object(w, 'verify_repo', return_value=w.read(w.PREREG)), \
+             patch.object(w, 'verify_environment', side_effect=fail), \
+             patch('builtins.print') as output:
+            self.assertEqual(w.main(['--audit', '--output', '/tmp/packet4-test-no-create']), 2)
+        audit = json.loads(output.call_args.args[0])
+        self.assertTrue(audit['kernel_stage_passed'])
+        self.assertFalse(audit['passed'])
+        self.assertIn('receipt', audit['error'])
     def test_command_identity(self):
         paths={k:Path(v) for k,v in w.read(w.PREREG)['defaults'].items()}
         cmd=w.build_command(paths)

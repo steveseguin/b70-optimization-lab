@@ -1,6 +1,6 @@
 # A367 extraction worker driver
 
-CPU preparation only, 2026-10-10. **40 tests pass, zero failures/errors/skips.**
+CPU preparation only, 2026-10-10. **59 tests pass, zero failures/errors/skips.**
 [Test receipt](test-receipt.json), [read-only environment audit](environment-audit.json),
 [printed launch plan](launch-plan.json), [conditional window and 45-minute budget](../WINDOW-RUNBOOK.md).
 No GPU, vLLM runtime import, server, container, systemd unit, device node,
@@ -131,6 +131,35 @@ Kernel/library/source versions and model metadata may be audited on CPU with
 `run_extraction_window.sh --audit`; the script defaults to no action unless one
 of `--plan`, `--audit` or `--execute` is supplied. See the runbook for the exact
 health and launch commands and the current remaining admission list.
+
+## Memory admission revision
+
+`--admission-revision <receipt.json>` accepts only an owner-approved receipt
+matching the schema, exact approval text, host/current boot, declared floor
+and SHA256 of [the revision document](../MEMORY-ADMISSION-REVISION.md).
+The separate owner-window flag must pin `admission_revision_sha256`.
+[The runbook](../WINDOW-RUNBOOK.md#exact-owner-approval-step-pending) gives the
+exact owner action. [The template](admission-revision.pending.json) is pending
+and must be refused. It is not authorization.
+
+Without the option, the default remains 120,000,000 KiB. The proposal is
+133,542,784 KiB; recovered A367 pressure does not justify a lower floor on
+this boot. Approval never overrides an insufficient MemAvailable sample or
+the existing halt, health, source, payload and ownership gates. Validation
+reads receipt bytes once, rejects duplicate or extra fields, binds the parsed
+content to that byte hash, and retains it with the run identity and numeric
+delta from A367. Mutation or revocation is rechecked before launch and during
+the run. This checks a declaration supplied by the owner/coordinator; it is
+not cryptographic proof of who wrote a local file.
+
+[The new stage audit](environment-stage-audit.json) verifies all 18 kernel
+members on the existing read-only mount. The wider environment audit refuses
+a historical model-verification receipt hash mismatch; its expected and actual
+hashes are retained, and the gate was not relaxed. [Memory observation](memory-observation.json)
+records the five offline blocks without changing them. The CPU suite adds
+18 revision checks (including subcases for all missing fields, incorrect types,
+ambiguous JSON, mutated documentation, default preservation, memory boundaries,
+CLI planning and identity retention); mock approvals are removed with scratch.
 
 ## Receipts and checks
 

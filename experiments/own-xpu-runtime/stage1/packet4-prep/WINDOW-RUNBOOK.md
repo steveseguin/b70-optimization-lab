@@ -2,10 +2,11 @@
 
 **NOT READY to launch on the current host.** The [worker driver](driver/README.md)
 is implemented and CPU-tested. The [read-only environment audit](driver/environment-audit.json)
-found three concrete admission blockers: the default A367 kernel stage is absent,
-`MemAvailable` is below A367’s 120,000,000 KiB floor, and the current host has a
-`FAULT.json` halt. Nothing in this packet resolves those conditions or authorizes
-GPU work. No GPU, model server, container or systemd unit was used in preparation.
+now verifies all 18 A367 stage members on the existing read-only external mount.
+Memory admission still needs an owner decision on the [revision](MEMORY-ADMISSION-REVISION.md),
+and the current host's `FAULT.json` halt remains. The evidence-derived proposal
+is above current capacity, so approving it alone cannot admit this boot.
+No GPU, model server, container or systemd unit was used in preparation.
 
 This runbook supersedes the earlier “worker driver missing” item for **one
 Flash-Next diagnostic screen only**. The older adapter manifest’s internal-state,
@@ -14,20 +15,32 @@ for the deliberately selected layer-0 outer boundary, and are not claimed fixed.
 
 ## Exact pending admission
 
-1. Locate and admit all **18 A367 loadable kernel-stage files**, including the
-   rebuilt `_xpu_C.abi3.so` with SHA256
+1. **Satisfied, read-only audit:** all **18 A367 loadable kernel-stage files**
+   match at `/mnt/usb-models/qwen38-build/runtime-gdn-roundstate-bbae3c5-b70`.
+   This includes `_xpu_C.abi3.so` SHA256
    `6b95dc90c25bb0f9c2503805e4184648ddcac089ec54ec65fe7eeb13ab2b097b`.
-   The default `/mnt/usb-models/qwen38-build/runtime-gdn-roundstate-bbae3c5-b70`
-   is absent. `--stage` may name an existing byte-identical copy. Do not download,
-   mount, rebuild, edit the venv or substitute the reopen extension in this task.
-2. Meet the original **120,000,000 KiB MemAvailable** admission floor. The audit
-   records the observed lower value. Do not lower the floor or change swap,
-   page cache, memory offlining or power settings. A revised memory admission
-   would need its own justified packet; this code does not accept one silently.
+   The external volume was already mounted read-only; this task did not mount
+   it. [Full stage audit](driver/environment-stage-audit.json) also passes the
+   source, library and metadata checks, then refuses the historical payload
+   receipt hash mismatch listed in item 4. Recheck before a later window.
+2. **Owner approval of the revision receipt** is pending. The original
+   **120,000,000 KiB MemAvailable** default is preserved; only
+   `--admission-revision /absolute/receipt.json` can supply the approved change.
+   The [need-plus-margin proposal](MEMORY-ADMISSION-REVISION.md) is
+   **133,542,784 KiB**, not a lower passing threshold: recovered A367 demand
+   already exceeds this boot's usable budget once reserve is included.
+   **Approval does not waive the actual capacity check.** A lower passing
+   floor would need new matched need evidence and a new approved document.
+   Do not change swap, page cache, offlining or power settings.
 3. The owner resolves the halt. All known `FAULT.json` files must be absent;
    this strict driver also refuses any earlier fault-class line on the boot.
    It never clears evidence, archives a halt, resets a driver or reboots.
-4. Supply the owner-window flag, a fresh passing four-card health receipt,
+4. Resolve the **historical model-verification receipt mismatch** without
+   silently repinning it: expected `6ae22291119e8c8a01597bda9fe4b1fb5850912655ec188e363a88eb6de58470`,
+   actual `f7a9a494428f022f2943fd50bac984203c9d00749833bb4d8188606473c72e45` at
+   `/mnt/fast-ai/llm-models/.verification/Qwen3.8-Flash-Next-FP8-20260827.json`.
+   The wider audit remains refused even though the kernel stage passes.
+   Supply the owner-window flag, a fresh passing four-card health receipt,
    fresh full-payload verification receipt, and at least **305 seconds since
    all previous native owners completed teardown**. The owner flag binds these
    receipts, the boot, output directory and preregistration hash. No ltx*,
@@ -42,6 +55,42 @@ the frozen four-script packet, 2,305 source Python files, the tuned map and
 placement, model metadata, runtime versions and collective-library hashes.
 The venv’s ordinary editable vLLM mapping points elsewhere; every spawned
 process checks the actual import location. No historical launcher is executed.
+
+## Exact owner approval step (pending)
+
+The owner first reviews [MEMORY-ADMISSION-REVISION.md](MEMORY-ADMISSION-REVISION.md),
+including the finding that the proposed floor still cannot fit this boot.
+Print its hash on CPU:
+
+```bash
+nice -n 19 env OMP_NUM_THREADS=2 sha256sum experiments/own-xpu-runtime/stage1/packet4-prep/MEMORY-ADMISSION-REVISION.md
+```
+
+If the owner chooses to approve this proposal, their exact statement is:
+
+> I approve the packet-4 MemAvailable admission revision to 133542784 KiB for steve-b70s, documented in MEMORY-ADMISSION-REVISION.md SHA256 DIGEST. This does not authorize a launch, resolve the halt, or waive the capacity check.
+
+Replace `DIGEST` with the full 64-character hash just printed. Only after that
+actual decision, the coordinator copies
+[admission-revision.pending.json](driver/admission-revision.pending.json) to an
+owner receipt outside the packet, sets `approved` to JSON `true`, replaces
+`owner_approval_text` with the owner's exact statement, and verifies the
+current `boot_id`, `host`, document hash and `minimum_mem_available_kib`.
+Keep `approved_by: "owner"`; no extra fields are accepted. An agent must never
+turn the pending template into approval without that decision. This file is
+an accountable declaration, not an authenticated electronic signature.
+
+The separate fresh owner-window JSON must include `admission_revision_sha256`
+(the SHA256 of that exact receipt). Pass its absolute path with
+`--admission-revision "$ADMISSION_REVISION"` to plan/audit/execute. CPU plan
+and audit validate supplied receipt files too. Missing/malformed approval,
+wrong host/boot, changed document, or a different floor is refused. Omitting
+the option retains A367's default floor. The run identity and a retained copy
+record the approved floor, both hashes and the numeric byte delta from A367.
+The driver rechecks the receipt before launch and during the run; changing
+or removing it requests graceful shutdown. No approval receipt was created
+in this preparation. The checked-in template deliberately fails validation.
+
 
 ## Registered run
 
@@ -114,7 +163,7 @@ halt by itself. The coordinator then supplies the reviewed owner flag and
 payload receipt described in [driver/README.md](driver/README.md), and runs:
 
 ```bash
-bash experiments/own-xpu-runtime/stage1/packet4-prep/driver/run_extraction_window.sh --execute --owner-window "$OWNER_WINDOW" --health-receipt "$HEALTH_RECEIPT" --payload-receipt "$PAYLOAD_RECEIPT" --stage "$A367_STAGE" --output "$WINDOW"
+bash experiments/own-xpu-runtime/stage1/packet4-prep/driver/run_extraction_window.sh --execute --owner-window "$OWNER_WINDOW" --health-receipt "$HEALTH_RECEIPT" --payload-receipt "$PAYLOAD_RECEIPT" --admission-revision "$ADMISSION_REVISION" --stage "$A367_STAGE" --output "$WINDOW"
 ```
 
 No automatic unit is created. The coordinator must keep this authorized run

@@ -1,34 +1,51 @@
 {
   "schema": "own-xpu-runtime.packet4.driver-environment-audit.v1",
-  "unix": 1791664780.1209357,
+  "utc": "2026-10-10T20:54:47.020040+00:00",
   "host": "steve-b70s",
   "nice": 19,
   "OMP_NUM_THREADS": "2",
   "source_files_checked": 2305,
   "source_files_match": true,
   "patch_seal_members_match": 75,
+  "default_kernel_stage_present": true,
+  "kernel_stage_passed": true,
+  "kernel_members_verified": 18,
+  "stage_audit": {
+    "path": "experiments/own-xpu-runtime/stage1/packet4-prep/driver/environment-stage-audit.json",
+    "sha256": "29674fba6c5e14f2566e32917ac4f4eb73eb7c0edc8d09f36cceb20deb9c4fd8"
+  },
+  "mountinfo": [
+    "4876 33 8:2 / /mnt/usb-models ro,nosuid,nodev,relatime shared:505 - fuseblk /dev/sda2 ro,user_id=0,group_id=0,allow_other,blksize=4096"
+  ],
   "installed_versions": {
     "torch": "2.11.0+xpu",
-    "triton-xpu": "3.7.0",
+    "triton": "3.7.0",
     "vllm": "0.20.2rc1.dev2+gc51df4300.d20260523.xpu"
   },
-  "default_kernel_stage_present": false,
-  "default_model_config_present": true,
-  "model_weights_read": false,
-  "mem_available_bytes": 119053426688,
+  "mem_available_bytes": 118500634624,
   "a367_admission_memory_floor_bytes": 122880000000,
   "memory_floor_met": false,
+  "proposed_minimum_mem_available_kib": 133542784,
+  "revision_document_sha256": "64a1ef4bd279b50871e4928d15d4b3074bfadefcc95c95befd9e5aa2ca8ec51a",
+  "owner_revision_approved": false,
+  "historical_payload_receipt": {
+    "receipt_path_on_origin_host": "/mnt/fast-ai/llm-models/.verification/Qwen3.8-Flash-Next-FP8-20260827.json",
+    "receipt_sha256": "6ae22291119e8c8a01597bda9fe4b1fb5850912655ec188e363a88eb6de58470",
+    "actual_sha256": "f7a9a494428f022f2943fd50bac984203c9d00749833bb4d8188606473c72e45",
+    "passed": false
+  },
   "fault_file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/FAULT.json",
   "fault_present": true,
   "ready": false,
   "remaining": [
-    "Locate/admit all18 loadable A367 kernel-stage members, including rebuilt _xpu_C SHA6b95dc90; historical default path is absent. No alternate searched binary is assumed certified.",
-    "A367 MemAvailable floor120000000KiB was not met; do not lower it or change host memory settings within this packet.",
-    "Owner must resolve current halt; FAULT.json must be absent; current code also refuses earlier fault lines on boot. It performs no reboot/archive/driver reset.",
-    "Owner supplies exclusive window flag, fresh four-card health, previous completed teardown time, exact PCI/firmware facts, and fresh full-payload verification receipt."
+    "Owner approval of revision receipt; proposal133542784KiB exceeds current MemTotal. No justified lower passing floor or capacity waiver.",
+    "Owner must resolve halt; all existing fault/health/boot checks remain.",
+    "Historical payload-verification receipt hash mismatch; recover reviewed evidence before full environment admission.",
+    "Owner supplies exclusive window flag bound to revision, fresh health, previous teardown time, PCI/firmware facts and fresh full-payload receipt."
   ],
   "native_imported": false,
   "device_access": false,
+  "model_weights_read": false,
   "servers_launched": 0,
   "containers_started": 0,
   "units_touched": false,

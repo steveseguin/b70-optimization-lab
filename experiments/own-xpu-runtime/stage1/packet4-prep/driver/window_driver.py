@@ -42,6 +42,7 @@ DELETED = re.compile(r'coredump has been deleted', re.I)
 PROMPT_ID = 'incident-retrospective'
 CAP = 64
 PORT = 19980
+REVISION_DOC = PREP / 'MEMORY-ADMISSION-REVISION.md'
 
 
 def require(ok, message):
@@ -74,6 +75,60 @@ def write(path, value):
 
 def artifact(path):
     return {'path': str(Path(path).resolve()), 'sha256': sha(path)}
+
+
+def approval_text(floor, digest):
+    return (f'I approve the packet-4 MemAvailable admission revision to {floor} KiB '
+            f'for steve-b70s, documented in MEMORY-ADMISSION-REVISION.md SHA256 {digest}. '
+            'This does not authorize a launch, resolve the halt, or waive the capacity check.')
+
+
+def verify_memory_revision(path, boot):
+    """Owner-supplied declaration only; never infer approval from a proposal."""
+    if path is None:
+        return None
+    raw = Path(path).read_bytes()
+    def unique_object(pairs):
+        result = {}
+        for key, value in pairs:
+            require(key not in result, 'duplicate revision receipt field')
+            result[key] = value
+        return result
+    r = json.loads(raw, object_pairs_hook=unique_object)
+    fields = {'schema', 'approved', 'approved_by', 'owner_approval_text',
+              'revision_document_sha256', 'minimum_mem_available_kib', 'host', 'boot_id'}
+    require(type(r) is dict and set(r) == fields, 'revision receipt fields')
+    require(r['schema'] == 'own-xpu-runtime.packet4.admission-revision.v1'
+            and r['approved'] is True and r['approved_by'] == 'owner', 'revision owner approval absent')
+    require(r['host'] == socket.gethostname() == 'steve-b70s' and r['boot_id'] == boot,
+            'revision host/boot')
+    doc = REVISION_DOC.read_bytes()
+    digest = hashlib.sha256(doc).hexdigest()
+    require(r['revision_document_sha256'] == digest, 'revision document hash')
+    proposals = re.findall(rb'^proposed_minimum_mem_available_kib: ([0-9]+)$', doc, re.M)
+    require(len(proposals) == 1, 'revision document must declare one floor')
+    floor = r['minimum_mem_available_kib']
+    require(type(floor) is int and floor > 0 and floor == int(proposals[0]), 'revision floor differs from document')
+    require(r['owner_approval_text'] == approval_text(floor, digest), 'revision approval text')
+    return {'receipt': {'path': str(Path(path).resolve()), 'sha256': hashlib.sha256(raw).hexdigest()},
+            'owner_receipt': r, 'receipt_text': raw.decode('utf-8'), 'revision_document': {'path': str(REVISION_DOC), 'sha256': digest},
+            'a367_minimum_mem_available_bytes': read(PREREG)['minimum_mem_available_bytes'],
+            'minimum_mem_available_bytes': floor * 1024,
+            'delta_from_a367_bytes': floor * 1024 - read(PREREG)['minimum_mem_available_bytes']}
+
+
+def verify_revision_binding(owner, revision):
+    expected = revision['receipt']['sha256'] if revision else None
+    require(owner.get('admission_revision_sha256') == expected, 'owner revision pin or CLI option missing')
+
+
+def memory_admission(prereg, revision, meminfo=None):
+    mem = dict(line.split(':', 1) for line in
+               (Path('/proc/meminfo').read_text() if meminfo is None else meminfo).splitlines())
+    available = int(mem['MemAvailable'].split()[0]) * 1024
+    floor = (revision['minimum_mem_available_bytes'] if revision else prereg['minimum_mem_available_bytes'])
+    return {'mem_available_bytes': available, 'minimum_mem_available_bytes': floor,
+            'memory_floor_met': available >= floor, 'admission_revision': revision}
 
 
 def timestamp(value):
@@ -163,13 +218,15 @@ def verify_repo(p= None):
     return p
 
 
-def verify_environment(paths, p):
+def verify_environment(paths, p, audit=None):
     """Read bytes/metadata only. No torch/vLLM imports, weight loads or changes."""
+    audit = {} if audit is None else audit
     source, stage, model = (paths[k] for k in ('source', 'stage', 'model'))
     for relative, expected in p['source_pins'].items():
         require(sha(source / relative) == expected, 'source differs: ' + relative)
     actual = {str(f.relative_to(source)) for f in (source / 'vllm').rglob('*.py')}
     require(actual == set(p['source_pins']), 'source Python file set differs')
+    audit.update(source_files_verified=len(p['source_pins']), source_files_match=True)
     manifest = LANE / 'data/runtime-stage-gdn-roundstate-v2-loadable.sha256'
     binaries = []
     for line in manifest.read_text().splitlines():
@@ -178,22 +235,29 @@ def verify_environment(paths, p):
         require(sha(target) == expected, 'A367 kernel stage differs: ' + str(target))
         binaries.append(artifact(target))
     require(len(binaries) == 18, '18 kernel members required')
+    audit.update(kernel_stage_passed=True, kernel_files=binaries)
     for target, expected in [
         (paths['oneccl'] / 'lib/libccl.so.1.0', '43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700'),
         (paths['python'].parent.parent / 'lib/ccl/kernels/kernels.spv', '0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9')]:
         require(sha(target) == expected, 'collective library differs')
+    audit['collective_libraries_passed'] = True
     site = paths['python'].parent.parent / 'lib/python3.12/site-packages'
     versions = {d.metadata['Name'].lower(): d.version for d in importlib.metadata.distributions(path=[str(site)])}
     # Intel's wheel distribution is triton-xpu; its import package is triton.
     versions['triton'] = versions.get('triton-xpu', versions.get('triton'))
     for name, expected in p['versions'].items():
         require(versions.get(name) == expected, 'venv version differs: ' + name)
+    audit['versions'] = {k: versions[k] for k in p['versions']}
     contract = read(REPO / 'repro/qwen38-flash-next-fp8-tp4-mtp3-b70/model-contract.json')
     c = contract['contract']
     for name, key in [('config.json', 'config_sha256'), ('model.safetensors.index.json', 'index_sha256')]:
         require(sha(model / name) == c[key], 'model identity differs: ' + name)
+    audit['model_metadata_passed'] = True
     verification = contract['historical_full_verification']
-    require(sha(verification['receipt_path_on_origin_host']) == verification['receipt_sha256'], 'full model verification receipt absent/changed')
+    actual_sha = sha(verification['receipt_path_on_origin_host'])
+    audit['historical_payload_receipt'] = {**verification, 'actual_sha256': actual_sha,
+                                          'passed': actual_sha == verification['receipt_sha256']}
+    require(audit['historical_payload_receipt']['passed'], 'full model verification receipt absent/changed')
     require(len(list(model.glob('model-*.safetensors'))) == 131, 'model shards missing')
     # Headers/metadata and local publisher LFS SHA256s are frozen by packet1.
     # Actual payload hashing is supplied as a separate fresh admission receipt.
@@ -328,7 +392,7 @@ class Watch:
             self.stop.wait(.5)
 
 
-def make_identity(root, args, paths, env, command, audit, owner, health):
+def make_identity(root, args, paths, env, command, audit, owner, health, revision=None):
     comparator = {'image_digest': None, 'runtime_commit': read(PREREG)['certified_source_commit'],
                   'build_manifest': artifact(PREREG), 'overlay_manifest': artifact(PREP / 'comparator-identity-audit.json'),
                   # Hash receipts, not copies of the large binaries, travel with each writer.
@@ -353,6 +417,17 @@ def make_identity(root, args, paths, env, command, audit, owner, health):
                 'sampler': {'temperature': 0, 'seed': 20260609, 'top_p': 1.0}, 'mtp': 1,
                 'environment': env, 'flags': command, 'execution': read(PREREG)['execution'],
                 'deltas': read(PREREG)['deltas'], 'preregistration': artifact(PREREG)}
+    identity['memory_admission'] = audit['memory_admission']
+    if revision is not None:
+        (root / 'admission-revision.json').write_bytes(revision['receipt_text'].encode('utf-8'))
+        identity['admission_revision'] = revision
+        identity['deltas'] = [*identity['deltas'], {
+            'name': 'owner-approved MemAvailable floor revision from A367',
+            'from_bytes': revision['a367_minimum_mem_available_bytes'],
+            'to_bytes': revision['minimum_mem_available_bytes'],
+            'delta_bytes': revision['delta_from_a367_bytes'],
+            'receipt_sha256': revision['receipt']['sha256'],
+            'revision_document_sha256': revision['revision_document']['sha256']}]
     write(root / 'identity.json', identity)
     return request
 
@@ -363,6 +438,7 @@ def main(argv=None):
     mode.add_argument('--plan', action='store_true')
     mode.add_argument('--audit', action='store_true')
     mode.add_argument('--execute', action='store_true')
+    p.add_argument('--admission-revision', type=Path, help='owner-approved, document-hash-bound memory receipt')
     p.add_argument('--owner-window', type=Path)
     p.add_argument('--health-receipt', type=Path)
     p.add_argument('--payload-receipt', type=Path)
@@ -374,14 +450,23 @@ def main(argv=None):
     paths = {k: getattr(a, k).absolute() for k in read(PREREG)['defaults']}
     root = a.output.absolute()
     command, env = build_command(paths), build_environment(paths, root)
+    revision = verify_memory_revision(a.admission_revision, Path('/proc/sys/kernel/random/boot_id').read_text().strip())
     if a.plan:
         print(json.dumps({'command': command, 'environment': env, 'deltas': read(PREREG)['deltas'],
-                          'native_executed': False}, indent=2))
+                          'native_executed': False, 'memory_admission': memory_admission(read(PREREG), revision)}, indent=2))
         return 0
     prereg = verify_repo()
     if a.audit:
-        print(json.dumps(verify_environment(paths, prereg), indent=2))
-        return 0
+        audit = {'unix': time.time(), 'host': socket.gethostname(), 'nice': 19,
+                 'OMP_NUM_THREADS': '2', 'native_imported': False, 'device_access': False,
+                 'servers_launched': 0, 'units_touched': False, 'model_weights_read': False}
+        try:
+            audit.update(verify_environment(paths, prereg, audit))
+        except (ValueError, OSError) as exc:
+            audit.update(passed=False, error=str(exc))
+        audit['memory_admission'] = memory_admission(prereg, revision)
+        print(json.dumps(audit, indent=2))
+        return 0 if audit['passed'] else 2
     require(all((a.owner_window, a.health_receipt, a.payload_receipt)), 'owner, health and payload receipts required')
     # Lock file remains as a rendezvous, never unlinked while another owner may wait.
     with (PREP / 'extraction-window.lock').open('a') as lock:
@@ -389,6 +474,7 @@ def main(argv=None):
         boot = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
         owner, health = read(a.owner_window), read(a.health_receipt)
         owner_hash = sha(a.owner_window)
+        verify_revision_binding(owner, revision)
         require(Path(owner['health_path']).resolve() == a.health_receipt.resolve(), 'different health file')
         verify_admission(owner, health, boot, time.time(), root, processes(),
                          [p / 'FAULT.json' for p in (*FAULT_ROOTS, root)])
@@ -400,8 +486,8 @@ def main(argv=None):
                 and 0 <= time.time() - payload['verified_unix'] <= 3600
                 and sha(a.payload_receipt) == owner['payload_sha256'], 'fresh full payload verification required')
         require(shutil.disk_usage(root.parent).free >= prereg['minimum_disk_free_bytes'], 'disk reserve')
-        mem = dict(line.split(':', 1) for line in Path('/proc/meminfo').read_text().splitlines())
-        require(int(mem['MemAvailable'].split()[0]) * 1024 >= prereg['minimum_mem_available_bytes'], 'A367 memory floor not met; no host changes allowed')
+        audit['memory_admission'] = memory_admission(prereg, revision)
+        require(audit['memory_admission']['memory_floor_met'], 'approved memory floor not met; no host changes allowed')
         with socket.socket() as port:
             port.bind(('127.0.0.1', PORT))  # no HTTP contact with somebody else's server
         baseline = journal()
@@ -409,11 +495,14 @@ def main(argv=None):
         # Recheck freshness, owners and latches after the potentially slow source audit.
         verify_admission(owner, health, boot, time.time(), root, processes(),
                          [p / 'FAULT.json' for p in (*FAULT_ROOTS, root)])
+        require(verify_memory_revision(a.admission_revision, boot) == revision, 'revision changed before launch')
+        audit['memory_admission'] = memory_admission(prereg, revision)
+        require(audit['memory_admission']['memory_floor_met'], 'memory floor no longer met')
         root.mkdir()
         (root / 'scratch/rpc').mkdir(parents=True)
         write(root / 'environment.json', audit)
         (root / 'kernel-before.log').write_text(baseline)
-        request = make_identity(root, a, paths, env, command, audit, owner, health)
+        request = make_identity(root, a, paths, env, command, audit, owner, health, revision)
         watch = Watch(root, baseline, boot)
         watch.poll()
         watch.thread.start()
@@ -431,6 +520,8 @@ def main(argv=None):
             require(a.owner_window.exists() and sha(a.owner_window) == owner_hash
                     and time.time() < owner['expires_unix'], 'owner window changed/revoked/expired')
             require(time.monotonic() < deadline, 'load/request budget exceeded')
+            if revision is not None:
+                require(verify_memory_revision(a.admission_revision, boot) == revision, 'revision changed/revoked')
             require(child.poll() is None, 'server exited before request completed')
         try:
             with (root / 'server.log').open('xb') as log:

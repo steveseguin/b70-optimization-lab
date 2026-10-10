@@ -1,8 +1,8 @@
 # Current Workspace State
 
-**2026-10-10, own-runtime extraction driver prepared on CPU:** The [worker driver](experiments/own-xpu-runtime/stage1/packet4-prep/driver/README.md) passes 40 CPU checks and registers observations separately in all four mock workers, with changed answers rejected.
-The 45-minute Flash-only window is still blocked by the missing certified kernel stage, the original memory floor and the existing fault halt; owner authorization and fresh receipts remain required.
-No GPU, server, container, unit or existing venv was touched, and all test scratch was removed.
+**2026-10-10, own-runtime memory admission review (owner decision pending):** The [CPU review](experiments/own-xpu-runtime/stage1/packet4-prep/MEMORY-ADMISSION-REVISION.md) derives a 133,542,784 KiB floor from A367's measured need, its reserve and the fixture budget; this exceeds current capacity, so a lower passing floor is not justified.
+All 18 certified kernel files now pass on the read-only mount, but the fault halt and a historical model-receipt hash mismatch still block the window.
+The driver requires a document-bound owner receipt for any revision and passes 59 CPU tests; no GPU, server, unit or host setting was touched, and test scratch was removed.
 
 
 **2026-10-10, own-runtime source hooks:** The [CPU adapter packet](experiments/own-xpu-runtime/stage1/packet4-prep/README.md) now maps 44 source boundaries and tests read-only capture, but native extraction still needs its worker driver and the listed internal-state bindings.
