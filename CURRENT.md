@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**2026-10-10 05:58 UTC, packet 123b sealed (run-own-writes storage allowance); swap to 123b at 145 frames with `LTX_AUX_RESIDENCY=xpu2`.**
+Codex sealed 123b (commits af43e4e73, 9fbe0645b; manifest `5bdc0956…d433`; 592 recovery / 1,238 client / 10 preflight CPU checks,
+2,064 files): the 3 GiB run allowance now counts the run's own writes (run dir + its output/validation/request entries), with
+`LTX_RUN_WRITE_ALLOWANCE_GIB=N` (1–64, default 3) recorded in server options and receipts and checked by the client; the 50 GiB
+whole-filesystem reserve stays. 145-frame session 2 (packet 121) stopped by one controlled stop after ≈ 250 chunks, names archived.
+Launching `LTX_AUX_RESIDENCY=xpu2 LTX_RUN_WRITE_ALLOWANCE_GIB=16 launch-123b.sh 145 frame 0 cone 1 1 fingerprint - sampler-a 0 full xpu:3`
+(upsampler + audio VAE/vocoder on xpu:2; dg0; display xpu:3), client `start-client-123b.sh 145 0 cone 1 1 fingerprint none sampler-a 0 full xpu:3`
+with the same two variables (work dir `s123b-live01`). This is the 145-frame qualification of the residency move that the 169-frame
+launch requires; predicted period unchanged (5.45–6.20 s), margins xpu:0 2.20 / xpu:3 2.19 GiB projected.
+
 **2026-10-10, packet 123b sealed on CPU; live operations remain with the coordinator.**
 The packet now counts this run's own disk use, so other builds and logs cannot
 spend its allowance. The separate 50 GiB free-space floor stays unchanged.
