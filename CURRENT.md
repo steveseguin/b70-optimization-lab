@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**2026-10-10 11:45 UTC, 131 cone-graph arm refused by its memory guard by 12 MB (no fault); both latches archived with a receipt; 129 production relaunching (`s129-live02`).**
+At qgraph-c000000 the cone-graph admission required 15,837,691,904 B free on xpu:3 (5 GiB capture reserve + 9 GiB floor + 0.75 GiB screening)
+and found 15,825,240,064 B (margin −12.45 MB) after the display moved to the xpu:2 replica and the allocator release ran. Kernel journal
+clean, health unaffected; latches `decoder-graph-116-refused.json` and `display-replica-120-refused.json` archived
+(`data/resume-20261008/latch-archive-131-cone-memory-…-receipt.json`: memory guard, not exactness). The 4.5 GiB growth estimate was
+right within 0.3 GiB; the gap is the conservative 5 GiB reserve + the screening band. Next (packet 132, Codex): close ≈ 0.4–0.6 GiB on
+xpu:3 exactly — relocate the audio VAE/vocoder (0.34 GiB) and any other small xpu:3 resident to xpu:2 (isolating the timing cost that the 123
+aux move did not separate), and tighten the capture reserve only to a measured value, never the floor or band.
+
 **2026-10-10 11:35 UTC, packet 131 sealed (cone decoder graph at 145 by moving the display to the xpu:2 replica + guarded allocator release before cone admission); launching it; the 129 production session closed (≈ 500 chunks, exact, 36 s buffer, no stops).**
 Codex's xpu:3 inventory (`notes/2026-10-10-xpu3-residency-145.md`, commits d57b669f0, 6dea774ad): text shard 10.15 GiB, video encoder/decoder
 0.59/0.78, audio VAE/vocoder 0.10/0.24; 129's minimum physical free by phase 10.85 / 14.36 / 14.30 / 10.86 / 10.86 / 10.81 GiB; the cone-only
