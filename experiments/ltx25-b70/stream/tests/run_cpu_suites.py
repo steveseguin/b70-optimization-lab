@@ -24,6 +24,9 @@ import threading
 import time
 
 sys.dont_write_bytecode = True
+# Keep CPU fixtures within the coordinator's current two-thread budget.
+os.environ['OMP_NUM_THREADS'] = '2'
+os.environ['MKL_NUM_THREADS'] = '2'
 HERE = Path(__file__).resolve().parent
 
 
@@ -129,6 +132,9 @@ def suite(target, arguments):
                 cmd = [sys.executable, '-B', str(Path(__file__).resolve()), '--child', str(self.control)] + cmd[2:]
             else:
                 raise RuntimeError('CPU suite refused an unaudited child command: %r' % (cmd,))
+            child_env = dict(kwargs.get('env') or os.environ)
+            child_env.update(OMP_NUM_THREADS='2', MKL_NUM_THREADS='2', PYTHONDONTWRITEBYTECODE='1')
+            kwargs['env'] = child_env
             super().__init__(cmd, *args, **kwargs)
         def command(self, value):
             if self.poll() is None:

@@ -1,15 +1,17 @@
 # Packet 125 — future coordinator launch only
 
 Packet `/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-125`.
-Final manifest and inner plan SHA256 are recorded below after sealing and in the
+Manifest SHA256: `3c2ed91975343ceb1acd2c4fe06e0fe1d7b768e0fff594865a8ec3bbbb565421`.
+Inner plan SHA256: `238695df0c8d4bbdc0571498fd2e75aba72a4b79acb66611fa5017a641149cd2`.
+Validation is recorded in the
 [build receipt](../../data/resume-20261008/continuation125-build.json).
 Nothing in this file was executed during CPU preparation. The coordinator owns
 all health receipts, server/client operations, name admission and live work.
 
-The first candidate keeps145 frames, legacy auxiliary placement, dg0, cone,
+The first candidate keeps 145 frames, legacy auxiliary placement, dg0, cone,
 B overlap1/A prep1, sampler-a display on xpu:3, read-ahead0, full snapshots and
 serial completion. It changes the inherited ten-second maintenance threshold
-to60 seconds. It neither moves cache cleanup into active sampling nor removes it.
+to 60 seconds. It neither moves cache cleanup into active sampling nor removes it.
 A full collection/cache cleanup still occurs about once per eleven chunks.
 
 From this directory, with the coordinator's fresh health receipt:
@@ -32,16 +34,16 @@ LTX_RUN_WRITE_ALLOWANCE_GIB=16 \
 The launchers use `/home/steve/.venvs/ltx25-baseline/bin/python -B` and OMP/MKL2.
 For the parent scheduling control set `LTX_GC_INTERVAL_SECONDS=10` on both,
 using a fresh client directory chosen by the coordinator. No automatic fallback
-or retry is provided. The60 run name ends `-gc60`; the10 run keeps the parent
-form within packet125's new namespace.
+or retry is provided. The 60 run name ends `-gc60`; the 10 run keeps the parent
+form within packet 125's new namespace.
 
-Forecast at legacy145: median5.45–5.75 s per6.0 s of new video
+Forecast at legacy 145: median 5.45–5.75 s per 6.0 s of new video
 (0.908–0.958 s/s); target **5.55 s /0.925 s/s**. A simple amortized model leaves
-about5.58 s /0.930 s/s with minute maintenance retained. Adverse5.75–6.10 s.
-These are predictions, not measured125 speeds, and fresh-text costs remain.
+about 5.58 s /0.930 s/s with minute maintenance retained. Adverse 5.75–6.10 s.
+These are predictions, not measured 125 speeds, and fresh-text costs remain.
 
-Require three-chain exact identity and the saved145 reference, every
-cone==display byte check and each preview hash. Observe multiple60-second
+Require three-chain exact identity and the saved 145 reference, every
+cone==display byte check and each preview hash. Observe multiple 60-second
 maintenance windows, bind events to prompt IDs and report GC/cache durations,
 commit-to-serve delay, period within matching text classes, all-chunk mean/p90,
 FIFO completion and host RSS/card memory trends. Keep maintenance chunks in the

@@ -38,4 +38,4 @@ class Admission(unittest.TestCase):
             rp.check_control_environment(Path(d))
     def test_parent_is_the_requested_123(self):
         self.assertEqual(rp.PARENT.name,'prepared-continuation-stream-124')
-        self.assertEqual(rp.PARENT_SHA,'5bdc0956f69259a99ca82849280e73b8bd2a80e28ff421ce5d61122e8a74d433')
+        self.assertEqual(rp.PARENT_SHA,'897442d035728c35a923840046c51c1bd43cad5097e4807c59e6d786699926a5')

@@ -10,7 +10,7 @@ WA=${LTX_RUN_WRITE_ALLOWANCE_GIB-3}
 [[ "$WA" =~ ^([1-9]|[1-5][0-9]|6[0-4])$ ]] || { echo 'REFUSE: LTX_RUN_WRITE_ALLOWANCE_GIB must be integer GiB 1..64'; exit 2; }
 R=/mnt/fast-ai/bench-results/ltx25-baseline-20260913
 P=$R/prepared-continuation-stream-125
-MAN=897442d035728c35a923840046c51c1bd43cad5097e4807c59e6d786699926a5
+MAN=3c2ed91975343ceb1acd2c4fe06e0fe1d7b768e0fff594865a8ec3bbbb565421
 case "$FR" in 49|97|121|145|169) ;; *) echo "REFUSE: frames must be 49,97,121,145,169"; exit 2 ;; esac
 case "$SM" in walk) SMT=walk ;; fingerprint) SMT=fp ;; *) echo "REFUSE: sm must be walk or fingerprint"; exit 2 ;; esac
 NAME=encoder-server-continuation-stream-125-${AN}-dg${DG}-ad${AD}-bo${BO}-pa${PA}-sm${SMT}-two-way20-28-w1-b1-p1-dxpu2-s256x256-f${FR}
