@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**2026-10-10 06:12 UTC, 123b at 145 frames with `aux_residency=xpu2` qualified exact (verdict d410928322ba, 32/32 byte-identical to 121); swapping to 169 frames.**
+Measured with the upsampler and audio VAE/vocoder on xpu:2 (chunks ≥ 10, n = 23): period median 5.73 s (legacy 5.76), sampler A/B
+1.91 / 1.62, cone 1.02 (legacy 0.88), display decode 2.75; minimum snapshot margin **1.98 GB** (legacy 1.39), dual snapshots periodic
+only. The 145-frame gate for the residency move is met. Launching the first 169-frame arm:
+`LTX_AUX_RESIDENCY=xpu2 LTX_RUN_WRITE_ALLOWANCE_GIB=16 launch-123b.sh 169 frame 0 cone 1 1 fingerprint - sampler-a 0 full xpu:3`
+(7.0 s of video per chunk; predicted 5.95–6.65 s = 0.85–0.95 s/s; projected margins xpu:0 1.62–1.93, xpu:3 0.83–1.56 GiB; display
+decode forecast 2.72–3.30 s against the 3 s off-chain bound — the quantity to watch). Client `start-client-123b.sh 169 0 cone 1 1
+fingerprint none sampler-a 0 full xpu:3` (work dir `s123b-f169-live01`). No earlier reference at 169: three-chain identity is the gate.
+
 **2026-10-10 05:58 UTC, 123b server live at 145 frames with `aux_residency=xpu2`; client preflight pin bug fixed; qualification running.**
 Server ready 05:55:17 UTC (status reports frames 145, aux xpu2). The 123b client refused at preflight (exit 8, "plan differs from the
 pinned plan"): Codex had pinned the plan file's byte hash (`0537b39f…`) while the server reports the inner `plan_sha256`
