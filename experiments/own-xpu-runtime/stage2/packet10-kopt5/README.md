@@ -297,3 +297,21 @@ build and latch with its recovery receipt, then recreate the default build
 using `validate.py --keep-build` and admit card 3. The fresh output names avoid
 overwriting the failed window. Timing requires the new exactness pass; the
 old failure remains part of this packet's record.
+
+## Device results — card 3, 2026-10-11 06:0x UTC (boot 13858eef), after the NaN-sign repair
+
+Exactness: all expanded-format cases PASS (expanded_sg32, expanded_split4) and the
+head GEMV; zero kernel fault lines. Receipts: [receipts-card3-20261011/](receipts-card3-20261011/)
+(first run's failure evidence in receipts-card3-20261011-run1/).
+
+| GEMV-only projection, two-card sequential | GDN ms | QSA ms | head+final HC ms | ms/token | tok/s |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| round 4 (packed, fused experts) | 1.14 | 1.07 | 5.47 | 60.4 | 16.5 |
+| round 5 expanded_sg32 | 0.89 | 0.77 | **2.19** | 43.3 | 23.1 |
+| round 5 expanded_split4 | **0.78** | 0.77 | 3.27 | 41.0 | **24.4** |
+| reference llama.cpp (two cards) | | | | 35.1 | 28.49 |
+| 590 GB/s ceiling | | | | 8.4 | 119 |
+
+Dense-only exact expansion (1.035x bytes, fits two cards) plus the fast head
+cut the projection from 60.4 to about 41 ms/token. Mixing the best of both
+variants (split4 layers, sg32 head) would be ~39.9 ms = ~25 tok/s GEMV-only.

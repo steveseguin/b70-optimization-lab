@@ -209,3 +209,17 @@ unsafe drains. Neither command starts a server. [Closeout](CLOSEOUT.md) and
 Code is our own extension of packets 6–9. Normative grids retain ggml/llama.cpp
 format-data attribution and MIT license in FORMAT.md; Intel compilers/SYCL
 are platform dependencies. No external runtime kernel was copied.
+
+## Device results — card 3, 2026-10-11 06:1x UTC (boot 13858eef): NEGATIVE
+
+All variants bit-exact, zero kernel fault lines. Fused MoE block (19.7 MB):
+experts_sg32 **0.298 ms (66 GB/s)**; register_grid 1.45 ms (13.6 GB/s; the
+IQ2 variant spills 6 KB of registers); slm_pair 2.34 ms (8.4 GB/s);
+packed_pipeline 2.60 ms (7.6 GB/s). The instruction-count predictions
+(67-125 GB/s) were wrong by an order of magnitude for the SLM/pipeline
+variants: on this device the subgroup-broadcast and SLM lookup paths cost far
+more than the straightforward per-lane decode. Keep experts_sg32. Receipts:
+[receipts-card3-20261011/](receipts-card3-20261011/). The expert class stays
+at ~66 GB/s; the remaining levers for it are structural (two-card tensor
+parallel doubling the streaming rate, and routing-aware placement), not
+decode micro-optimisation.
