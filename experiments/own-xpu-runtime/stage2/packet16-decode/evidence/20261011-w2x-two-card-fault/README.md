@@ -49,3 +49,23 @@ memory traces. The full run directory stays in the ignored build tree
 
 The runtime's "cards 2+3" are PCI `0000:47:00.0` and `0000:43:00.0`. The one-card
 windows on "card 3" therefore ran on one of these two.
+
+## Correction and audit result (09:57 UTC)
+
+The CPU audit in [packet 19](../../../packet19-depcheck/ROOT-CAUSE.md) corrects two
+statements above. This command does not write per-site progress, so the empty
+`sites.jsonl` shows only that no token completed, not that the fault came at the very
+first kernel. And the two cards faulted on two different addresses
+(`0x0000d556a9ed0000` on 43:00.0, `0x0000caac549d0000` on 47:00.0), 0.3 ms apart.
+
+The audit found no missing dependency, wrong-card binding or premature release in the
+application code (it built a sanitizer that runs the plan in randomized
+dependency-consistent order to check this). It ranks first something the CPU cannot
+show: packet 16 passes events of one card's queue as dependencies to the other card's
+queue and copies between cards without draining both on the host, which packet 14's
+passing two-card run never did. The NEO key added for this run cannot be judged from
+code and stays a suspect. Nothing here is proven until a device run.
+
+Consequence: packet 18 gets host fences at every card crossing (packet 14's proven
+pattern), index guards, and a required few-KiB two-card canary window before any
+weights are loaded; its windows refuse to start with NEO debug keys in the environment.

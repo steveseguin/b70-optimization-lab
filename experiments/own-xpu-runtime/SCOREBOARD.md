@@ -113,19 +113,19 @@ keep experts packed and qualify dense-only expansion separately.
 
 **Next, in order (device steps need the reboot first):**
 
-1. **[Packet 17][p17] W-B** on one card: 72 fixtures, host versus card, two fresh owners.
-2. **[Packet 18][p18] W1:** one card, gated directly against the v2 CPU oracle. First
-   true exactness gate of the lane.
-3. **[Packet 19][p19]:** root cause of the two-card fault, a CPU sanitizer that runs
-   the chained plan in randomized dependency order with ownership tracking, and the
-   fix. Then the smallest two-card smoke, then packet 18 W2: first measured decode
-   tok/s.
-4. **Launch count:** 3,619 launches per token to a few hundred, by fusing each layer's
-   non-GEMV work into a handful of kernels and replaying a recorded command graph.
-   This is the largest speed lever now; route+gather (0.230 ms per layer in one
-   work-group) goes with it.
-5. **R5 GEMV dispatch** (41 ms projected versus 71–92 ms measured with the frozen one).
-6. **Merge packet 14's exchanges** (41 per layer to a few), then repeat its gate.
+1. **[Packet 20][p20] launch micro-benchmark:** 20–50 s on one card with 87 KB of
+   device memory. Times every way of issuing kernels, including command-graph replay.
+2. **[Packet 17][p17] W-B** on one card: 72 fixtures, host versus card, two fresh owners.
+3. **[Packet 18][p18] W1:** one card, gated directly against the v2 CPU oracle. First
+   true exactness gate of the lane. CPU gate already passes 64/64 tokens, 384/384 layers.
+4. **Packet 18 W0, then W2:** a few-KiB two-card canary, then the 64-token two-card
+   decode: first measured decode tok/s. [Packet 19][p19] found no application defect
+   behind the fault; packet 18 now drains both cards on the host at every crossing.
+5. **Launch count:** fusion takes 2,445 launches per token to 926 (CPU-exact kernels
+   exist); at about 30 µs each that is still 27 ms, so replay of a recorded command
+   graph is probably needed as well. The micro-benchmark decides.
+6. **R5 GEMV dispatch** (41 ms projected versus 71–92 ms measured with the frozen one).
+7. **Merge packet 14's exchanges** (41 per layer to a few), then repeat its gate.
 
 [r1]: stage2/packet6-kopt/receipts-card3-20261011/timing/timing.json
 [r2]: stage2/packet7-kopt2/receipts-card3-20261011/timing.json
@@ -170,3 +170,4 @@ keep experts packed and qualify dense-only expansion separately.
 [p16w1]: stage2/packet16-decode/receipts-card3-20261011-w1/window.json
 [p18]: stage2/packet18-decode-v2/README.md
 [p19]: stage2/packet19-depcheck/README.md
+[p20]: stage2/packet20-launch/README.md
