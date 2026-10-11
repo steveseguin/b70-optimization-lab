@@ -89,3 +89,38 @@ three minutes.
 GPU time per token by kind of kernel was then measured on cards 0+1 (same file, run
 r5e): the largest items are the router softmax/rank (9.8 ms), expert gate/up (8.5 ms),
 the two combine+norm steps (7.5 and 7.4 ms), expert down (6.2 ms) and gather (3.8 ms).
+
+## Evening: 12.08, then 17.85 tok/s, and a line that had to be abandoned (18:30–22:30 UTC)
+
+- **The fused line was wrong.** Packets 21, 23 and 24 replaced the per-format GEMV
+  kernels by one generic kernel that reads descriptor and pointer tables on the card and
+  switches on the format at run time, to cut launches from 2,181 to 876. On the cards it
+  is bit-exact (packet 23: 64/64 tokens, 384/384 layers) and 50–100 times slower per
+  launch: gdn.qkv 8.8 ms against 0.10 ms, logits 129 ms against 2.1 ms; two-card decode
+  4,445 ms per token. I first blamed a per-launch parameter copy, then the timing run on
+  the card showed the kernels themselves
+  ([measurement](../experiments/own-xpu-runtime/stage2/packet24-kernels/evidence/20261011-k2-c0-generic-kernels-slow/README.md)).
+  The design rested on my "30 µs per launch"; a launch costs 3.4–5 µs.
+- **Packet 26, the corrected line:** packet 18's specialised kernels, the ordered
+  lookup and a leaner host path, new specialised non-GEMV kernels behind a per-class
+  dispatch table, and a timing run on the card that picks the faster exact kernel per
+  class. Sealed control (packet 18 kernels): 12.08 tok/s, host issue 10.4 ms, 70.6 ms
+  waiting on the cards. With the measured selection: **17.85 tok/s** (55.4 ms per token),
+  exact, repeated on the other card pair at 17.81 with identical tokens and layer hashes
+  ([receipts](../experiments/own-xpu-runtime/stage2/packet26-specialised/receipts-cards01-20261011-native-w2m/README.md)).
+  The winners: route+gather 286 → 67 µs per launch, the two combine+norm steps 179 → 17,
+  gather 82 → 23, norms 25 → 8. Six new kernels were slower than the old ones and were
+  not adopted.
+- **Large GEMV candidates (packet 25)** are exact but only 5–20% faster than the
+  runtime's own kernels; the harness baseline that made them look 2–4× faster was a
+  slower kernel than the one the runtime uses.
+- **Where the time is now:** 53.5 ms of GPU work per token: routed experts 14.8 ms,
+  about 11 ms in 720 small GEMV launches, gdn.qkv 3.6, route 3.3, attention projections
+  3.2, QSA attention 3.2. The reference needs 35 ms. Packet 27 goes after the small
+  GEMVs, route, QSA attention and the per-weight work in the large GEMVs.
+
+Process notes for the evening: the packet 23/24/26 device programs each failed once on
+something the CPU gates could not see (a kernel-argument limit of 2,048 bytes on the
+card, a missing success return in renamed entry functions, an argument check that only
+existed in device-only code, a priority rule that contradicted itself). Each was a clean
+exit or an idle parked process; none logged a GPU fault. Kernel log clean since 14:26.

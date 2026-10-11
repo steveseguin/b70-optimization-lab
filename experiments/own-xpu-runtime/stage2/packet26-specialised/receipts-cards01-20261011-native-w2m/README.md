@@ -24,3 +24,9 @@ route+gather 286 → 67; attn.combine+norm and ffn.combine+norm 179 → 17; gath
 hc.combine_norm 65 → 18; norm 25 → 8; argmax 267 → 191. Not faster and left on the
 packet 18 kernels: gdn.recurrence (53 versus 156), qsa.pool, qsa.prepare, gdn.norm,
 qsa.select, qsa.attention.
+
+## Fresh-process repeat on the other card pair (22:25 UTC, cards 2+3)
+
+17.81 tok/s (55.6 ms per token: 11.7 ms host issue, 43.5 ms waiting on the cards),
+exact against the oracle, and all 64 tokens and all 384 layer hashes identical to the
+cards 0+1 run above (`repeat-cards23-run-c/`).
