@@ -33,7 +33,7 @@ def main():
      workloads={r['workload'] for r in rows};assert len(workloads)==17
      for workload in workloads:
       arm=[r for r in rows if r['workload']==workload];expert=arm[0]['count']>1
-      expected={'r5','p25.rows4','p27.fp32_input'}|({'p25.wg32','p25.private_decode'}|({'p25.wide8','p27.packed64','p27.rows2sg'} if workload=='expsdown' else {'p25.paired_input'}) if expert else {'p25.scale8','p25.wide8','p27.packed64'})
+      expected={'r5','p25.rows4','p27.fp32_input'}|({'p25.wg32','p25.private_decode'}|({'p25.wide8','p27.packed64','p27.rows2sg'} if workload=='expsdown' else {'p25.paired_input','p25.half_table'}) if expert else {'p25.scale8','p25.wide8','p27.packed64'})
       assert {r['candidate'] for r in arm}==expected,(workload,arm)
       assert {r['mode'] for r in arm}==({0} if entry=='k2-fixtures' else {0,1,2,3})
       assert all(r['rows']==8 for r in arm) if entry=='nongemv-fixtures' else all(r['rows']>=320 for r in arm)

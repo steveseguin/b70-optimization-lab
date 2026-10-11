@@ -7,14 +7,21 @@
   "tests": 77,
   "new_admission_regressions": 13,
   "files": {
-    "k2_summary.py": "8a53406ddd35759d1c1f16319cf74801dd513aedb8852541e95e24e805795836",
-    "k2-class-registry.json": "714a56ebb02097642b6ea4e2c9ab24b924c08b3dd92e273af7a875986f407a8c",
+    "k2_summary.py": "8a18202a075946169451a396f9ac535858faf22aecd03663a1a8624b5d1096dc",
+    "k2-class-registry.json": "692588e27e18a6975eb6727ee5ba4168c1c8b48d30ccb5c4cb7c2b1025e5c889",
     "window.py": "2c019f21214e8ef77ac513681ff743ec6ae49409784facf86a119bd3b14d56be",
     "test_window.py": "38266c4cb5c00675d52fed70033d4a2de9578c21a75f63503d716ae76b1d89d0"
   },
-  "test_receipt_sha256": "600e71781300b781c24dcc79ee56f45d802deb3acd1d22c6b1e0a66a1accebd1",
+  "test_receipt_sha256": "8169cd6b4f78c7d5848b7ef7fc2a23835af680ca3bc54de734cd8bee18eb786f",
   "additional_review": [
     "native observed/requested priority equals wrapper receipt",
-    "all emitted stage counts cover complete measured arms"
-  ]
+    "all emitted stage counts cover complete measured arms",
+    "p25.half_table required for both IQ2/IQ3 expert-gate workloads; two-stage timing includes scale preparation; workspace negative guards",
+    "console incumbent_p90_us reads existing execution_sum.p90_us; reporting-only, selection unchanged;77tests pass"
+  ],
+  "coverage_sources_sha256": {
+    "p25_bridge.cpp": "b6bbeedea17c3d52e32f1a9adcc9d9be0876d300f55ab1756b2a481fbb874905",
+    "gemv_timing.cpp": "136d57c5c69c3752d713f8af53d32cf5a799d8c6e4b0945fa6f6051caf8c1884",
+    "validation_gate.py": "ad556bee22e3ac38f8a18ca6bf41661a92b70f40fd9ad01bad3b3e733a8f1cb0"
+  }
 }

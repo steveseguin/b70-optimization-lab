@@ -10,19 +10,21 @@
     "CPU-only two-thread GEMV row scheduling",
     "CPU-only two-thread GDN row scheduling delta authored by GEMV agent",
     "GEMV timing first/last readback and stage-count receipts",
-    "FP32-cache per-card memory accounting"
+    "FP32-cache per-card memory accounting",
+    "p25.half_table routed IQ2/IQ3 scale preparation, indexing, guards, runtime and K1/K2 registration"
   ],
   "device_executed": false,
   "review_kind": "source bit-identity, write-race, interpreter audit",
   "passed": true,
   "source_sha256": {
     "p25_candidates.hpp": "98d34f0ac7ce729410780c61016e88f6789baf5e2ec5510c79142ea33888df57",
-    "p25_bridge.cpp": "b160521c6e26646fc7a3ea55894b67793026e28f6d26f4ec3e0d061b1fc57ad5",
+    "p25_bridge.cpp": "b6bbeedea17c3d52e32f1a9adcc9d9be0876d300f55ab1756b2a481fbb874905",
     "p25_bridge.hpp": "c5d1765997de414df8df8df3a0c19de29f5d0250fbe387e5dc303762ef0bff80",
-    "gemv_timing.cpp": "74de6d30ca7f5d55a9a7255ae07c80bced7f52c6a4a5b5effc987a4648386fa7",
+    "gemv_timing.cpp": "136d57c5c69c3752d713f8af53d32cf5a799d8c6e4b0945fa6f6051caf8c1884",
     "main.cpp": "35eb9a3ed162a2acb8567153bf509cee93fb4439b6f2388fad08df6ac11809d7",
     "round2.hpp": "5b3ddd9ba04b8a9b8fc6953ef6d47ac275a97af0bf8f7b95e8d95a89a6203f83",
-    "cpu-row-parallelism.md": "ac846e8e53cbf52f0672826c5a1f5524a57ab366838f4ffe793f704050974686"
+    "cpu-row-parallelism.md": "ac846e8e53cbf52f0672826c5a1f5524a57ab366838f4ffe793f704050974686",
+    "owner.cpp": "141d0de1056beb70b6fcc615a42b52a8e766839b4e79295b74ec2ffa18dab002"
   },
   "findings": [
     {
@@ -31,6 +33,13 @@
       "scope": "main.cpp folded non-GEMV dispatch, outside GEMV kernels",
       "description": "prepare_site forced implementation=1 for folded route+gather, blocking round2 dispatch",
       "resolution": "Fixed by owning smallgemv agent: folded route uses dispatch.fusion_choice(route+gather), round2 maps to implementation 2; combined normalization retains 1."
+    },
+    {
+      "id": "F2",
+      "severity": "required-fix",
+      "scope": "half_table peer scale pointer",
+      "description": "An earlier work-in-progress formed a second-projection table pointer for unpaired matrices, beyond the single-projection allocation even though unused.",
+      "resolution": "Verified final host and device call sites guard the peer table pointer with d.scales && d.paired; null is passed for unpaired matrices. Author had independently fixed this before reviewer feedback arrived."
     }
   ],
   "identity_arguments": {
@@ -38,7 +47,8 @@
     "packed64": "IQ4 owner lane & ~2 shares the same eight packed bytes between lower and upper nibble lanes; each lane uses its original scale and nibble shift; expanded formats reinterpret the same eight signed codes without reordering products",
     "rows2sg": "each physical half subgroup emulates all original 32 logical lanes using two accumulators; widths 1,2,4,8 reduce each virtual half and width16 is the final addition; skipping the absent third tile of high lanes removes no products/additions",
     "runtime_lifetime": "prepare-cache key is allocation plus element count; scheduled output writes and token lookup invalidate it; Device::compute orders preparation before consumers; scratch lives in arena until teardown",
-    "cpu_row_scheduling": "OpenMP distributes whole independent rows only; every row retains its own complete products, reduction tree and BF16 conversion. GDN retains serial token recurrence inside each state row. Both pragmas are in OWN_RT_HOST_ONLY code."
+    "cpu_row_scheduling": "OpenMP distributes whole independent rows only; every row retains its own complete products, reduction tree and BF16 conversion. GDN retains serial token recurrence inside each state row. Both pragmas are in OWN_RT_HOST_ONLY code.",
+    "half_table": "Preparation converts only each selected packed block FP16 scale using the same iq3::half(u16(...)) function. The consumer uses the same format-specific scale expressions and parentheses, signed grid integer, product order, lane sums and tree as the R5 decoder. Table layout [projection][slot][row][block] matches routed source addresses for both paired projections. Only scale conversion is hoisted; complete weights are not staged."
   },
   "race_arguments": [
     "one output writer per matrix row/projection",
@@ -47,7 +57,10 @@
     "routing status has exactly row-zero leader per slot; alias validation rejects overlapping writable bindings",
     "FP32 preparation has one work item per float; no device-host copy per kernel",
     "GEMV CPU route/status writes precede the parallel row loop; immutable shared weights/input and unique (slot,row,projection) output offsets prevent row races. Each region joins before the next route slot.",
-    "GDN CPU row g exclusively owns state [128*g,128*g+128) and outputs r*6144+g; query/key/gates/weights are read-only and guards precede the region. All arrays and accumulators are iteration-local."
+    "GDN CPU row g exclusively owns state [128*g,128*g+128) and outputs r*6144+g; query/key/gates/weights are read-only and guards precede the region. All arrays and accumulators are iteration-local.",
+    "Half-table preparation writes each flat table index once; duplicated expert routes occupy separate route-slot slices. Invalid or inactive rows produce zero scales without dereferencing an invalid weight row.",
+    "Device::compute appends the previous event dependency: preparation completes before GEMV reads workspace; the next layer cannot overwrite this per-card workspace before the consumer finishes. Workspace alias validation rejects overlap with weights, inputs, outputs, routes or status.",
+    "CPU half-table preparation is an at-most-two-thread independent-index loop with an implicit join before the GEMV consumes the table."
   ],
   "interpreter_audit": "format and candidate dispatch happen on host; device T/Variant are compile-time; by-value pointer/geometry struct does not interpret descriptors or type-switch within row loops",
   "limits": [
@@ -65,5 +78,15 @@
     "preparation_cost": "FP32 preparation first event is included with GEMV events and stage_count; it is not removed from timing",
     "limits": "Unchecked middle K2 repeats are not individually byte-validated; first/last exactness plus separate K1 are the documented boundary."
   },
-  "memory_accounting_review": "174080 * sizeof(float) = 696320 bytes added to each card base, matching the per-card prepared-fp32-input allocation; no cross-card undercount."
+  "memory_accounting_review": "174080 * sizeof(float) = 696320 bytes added to each card base, matching the per-card prepared-fp32-input allocation; no cross-card undercount.",
+  "half_table_review": {
+    "qualification": "finite IQ2_S/IQ3_S model gate/up workloads; generic IQ3_XXS template is also registered but no model-shape claim is made for it",
+    "scale_table_bytes_model_gate_up": 512000,
+    "scale_table_layout": "2 projections * 10 route slots * 640 output rows * 10 blocks * 4 bytes",
+    "workspace": "fits existing 4 MiB runtime workspace; fixture workspace enlarged to exact required extent",
+    "guards": "missing, undersized and aliased workspace are rejected before submission and exercised by three negative fixture cases per mode",
+    "event_accounting": "Launch.first is the scale-preparation event, Launch.last is the GEMV event, passes=2; K2 includes both events in its summed candidate duration",
+    "single_projection_safety": "peer scale pointer formed only when paired",
+    "review_result": "no remaining bit-identity, write-race or descriptor-interpreter finding; device qualification remains pending"
+  }
 }

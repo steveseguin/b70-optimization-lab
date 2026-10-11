@@ -63,3 +63,33 @@ The plan now accounts for 174,080 FP32 elements, or 696,320 bytes, on each card,
 matching the actual prepared-input allocation. No new numerical, write-race or
 interpreter defect was found in these final changes. Retained rebuilt CPU gates
 remain the execution evidence; no device executable was run for this review.
+
+## Routed half-table candidate
+
+Independently reviewed the final `p25.half_table` registration, preparation,
+consumer addressing, guards and K1/K2 integration. The temporary table stores
+only the FP16 block scales converted through the same `iq3::half` routine. It
+does not stage decoded weights. IQ2/IQ3 scale expressions keep their parentheses,
+then multiply the same signed grid integers and input values in the original
+lane order and reduction tree.
+
+The table is `[projection][route slot][output row][quantization block]`. Both
+preparation and GEMV map route slots through the same validated expert ID and
+row offset. Paired gate/up consumes two disjoint projection slices. The model
+workload needs 512,000 bytes, within the existing 4 MiB workspace. Repeated expert
+IDs still have distinct slot slices. Invalid rows write zero table entries
+without accessing invalid source rows; the GEMV retains its original invalid-row
+and status behavior.
+
+Each preparation item writes one float. The owner orders that event before the
+GEMV consumer and orders later workspace reuse after the consumer. The CPU
+preparation distributes independent indices over at most two threads and joins
+before consumption. Extent and alias guards run before either kernel; K1/K2
+exercise missing, undersized and aliased workspace rejection. The preparation
+is included in the two-event candidate timing.
+
+A work-in-progress pointer issue was identified during review: an unpaired call
+formed an unused pointer into a nonexistent second projection. The author had
+independently fixed it, and final host/device call sites now form the peer table
+pointer only when paired. No remaining arithmetic, race or interpreter defect
+was found. Fresh device-owner exactness and card timing remain required.

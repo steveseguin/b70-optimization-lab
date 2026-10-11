@@ -28,3 +28,17 @@ Revisit each candidate only with its sealed K1/K2 receipt. Preserve the packet26
 incumbent when a candidate is inexact, aliases it, or fails the 0.9× median gate.
 The small-GEMV target remains a hypothesis; these schedule-legal groups alone
 are not evidence of 11 ms becoming 5 ms. See `DO-NOT-REPEAT.md`.
+
+CPU preparation passed: 5 unit suites; 156 integration cases; four fresh
+fixture processes (GNU and Intel, two each), each with 111 non-GEMV checks,
+736 GEMV checks, 196 merged-GEMV checks and 51 adapter checks; 32 sanitizer
+runs over four random seeds; 77 window tests; 1,056 symbolic tree checks;
+10 argument-validation process checks; actual nice-0/nice-19 priority checks;
+and 215 captured kernel types (maximum 744 bytes). The final one-card streaming
+all-new run matches all 8 generated tokens and all 384 layer fixtures against
+the v2 oracle. Every native window remains pending.
+
+Disposable scratch has been removed. `scratch-cleanup.json` maps retained
+logs and validation traces to `evidence/preparation-logs.json.gz`; the sealed
+fixture receipts remain in `evidence/fixture-gates-full.json.gz`. Ignored build
+binaries and required prepared inputs remain for the coordinator commands.

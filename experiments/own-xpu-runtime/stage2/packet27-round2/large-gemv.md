@@ -14,18 +14,18 @@ candidate column that silently calls R5. `same_kernel=false` means a distinct
 submission/kernel body, not an assertion that the compiler emitted different ISA.
 
 The retained packet 25 alternatives are rows4 for every supported class; wg32,
-private_decode and paired_input for packed expert gate/up; wg32, private_decode,
+private_decode, paired_input and half_table for packed expert gate/up; wg32, private_decode,
 wide8 for packed IQ4 down; scale8 and wide8 for expanded dense matrices. The old
-staged decode-then-GEMV arm is deliberately absent as instructed. The historical
-half_table arm requires a separate persistent scale-table representation that
-this runtime does not have, and is not a registered runtime alternative. Its
-source helper remains preserved as provenance rather than being relabeled as a
-working candidate.
+staged decode-then-GEMV arm is deliberately absent as instructed. The `half_table`
+alternative is implemented with a fresh scale-only preparation of selected
+routed rows inside existing workspace, followed by its GEMV. Both submissions
+are timed. No decoded weight array is produced.
 
 | Class and model shape | Old microseconds | Named candidate | Hypothesis, microseconds |
 | --- | ---: | --- | ---: |
 | expsgate IQ2/IQ3, paired 10 x 640 x 2560 | 178 | p25.wg32 | 165–175 |
 | expsgate same | 178 | p27.fp32_input | 140–165 including preparation |
+| expsgate same | 178 | p25.half_table | 150–190 including selected-scale preparation |
 | expsdown IQ4, 10 x 2560 x 640 | 130 | p25.private_decode | 115–125 |
 | expsdown same | 130 | p27.rows2sg | 90–115 |
 | expsdown same | 130 | p27.packed64 | 100–120 |
@@ -37,7 +37,66 @@ working candidate.
 | qsa.qgate Q6, 12288 x 2560 | 118 | p25.rows4 | 100–110 |
 | qsa.qgate same | 118 | p27.fp32_input / p27.packed64 | 95–110 |
 | attention Q6, 2560 x 6144 | 67 | p27.fp32_input / p27.packed64 | 55–65 |
+| qsa.k Q6, 512 x 2560 | not supplied separately | p25.rows4 / scale8 / wide8; p27.fp32_input / packed64 | 15–30 |
+| qsa.v Q6, 512 x 2560 | not supplied separately | p25.rows4 / scale8 / wide8; p27.fp32_input / packed64 | 15–30 |
+| ple.key Q8, 10240 x 2560 | not supplied separately | p25.rows4 / scale8 / wide8; p27.fp32_input / packed64 | 75–120 |
+| ple.value Q8, 2560 x 2560 | not supplied separately | p25.rows4 / scale8 / wide8; p27.fp32_input / packed64 | 25–50 |
+| hc.a/hc.f gate Q8, 10240 x 320 (`hc.gate`) | about 29.5 per member | p25.rows4 / scale8 / wide8; p27.fp32_input / packed64 | 20–30 |
+| hc.a/hc.f low Q8, 320 x 10240 (`hc.low`) | about 19 per member | p25.rows4 / scale8 / wide8; p27.fp32_input / packed64 | 15–25 |
 | logits Q6, 248320 x 2560 | 2140 | all dense alternatives | 1900–2300 |
+
+The additional dense-class ranges are hypotheses for each class independently,
+not inferred measurements or a sum of predicted gains. Every slash-separated
+name above is its complete `p25.*` or `p27.*` dispatch family as indicated.
+QSA k/v have 512 output rows: useful work per launch is much smaller than qgate,
+so occupancy and the extra input-preparation launch may determine the winner.
+PLE key has 10,240 rows that can reuse the same 2,560-element input; PLE value
+has 2,560 rows and correspondingly less work to amortize preparation. Packed64
+and wide8 change code access, whereas rows4 changes group geometry; none changes
+the original row arithmetic. There was no separately supplied PLE or QSA k/v
+class timing, and their table cells deliberately say so.
+
+HC gate has 10,240 short 320-column rows. Row grouping and packed eight-code
+loads target useful occupancy and code-load overhead. HC low has only 320 rows
+of 10,240 columns and retains its existing split tree; preparation overhead can
+erase a gain at this scale. Its standalone bridge comparison is distinct from
+the low+inject fusion measurement and the two hypotheses must not be added.
+Both HC streams use the registered `hc.gate`/`hc.low` bridge class aliases, with
+separate schedule sites. HC gate stays after low and activation; shared expert
+down stays after gate/up and their activation product. These dependencies still
+prevent including either operation in the earlier sibling tuples.
+
+## FP16 block-scale table
+
+`p25.half_table` is a real bridge alternative for IQ2_S, IQ3_S and IQ3_XXS
+expert gate/up arithmetic. Production K1/K2 fixtures exercise the actual IQ2_S
+and IQ3_S gate formats. Before the GEMV, one kernel reads the FP16 block scale
+from each selected expert row and stores its exact FP32 value using the same
+`half(u16(...))` function as the original decoder. The table order is
+`[projection][route slot][output row][quantization block]`. Only selected routes
+are converted; a paired 10 x 640 x 2560 gate/up uses 128,000 float entries,
+512,000 bytes, inside the existing 4-MiB runtime workspace. Repeated expert IDs
+occupy separate route-slot slices, so no two work items write the same address.
+Invalid or inactive route rows write zero table entries without reading weights;
+the subsequent GEMV retains original invalid-route output/status behavior.
+
+The original packet25 half decoder reads this table in place of repeating the
+FP16-to-FP32 conversion. Per-format scale expressions, signed quant values,
+weight/input products, lane assignment, per-lane summation and reduction trees
+are unchanged. An FP16 value is exactly representable in FP32; storing that
+already-converted value adds no new rounding point. Nonfinite scales retain the
+existing scalar-decoder fallback. Gate and up have disjoint table slices; the
+peer pointer is only formed when there is a second projection.
+
+The returned launch covers preparation and GEMV, so K2's execution sum and
+stage count include both. This is not the prohibited staged weight-decode
+experiment: quantized code words remain packed and are decoded directly by the
+GEMV; only one existing FP16 scale per 256 weights is prepared. There is no
+persistent weight-scale cache to invalidate across layers. Device-entry guards
+check full scratch extent, lifetime, alignment and read/write aliases before
+preparation. K1/K2 exercise missing, undersized and aliased scratch rejections.
+The 150–190-microsecond range is a hypothesis including preparation, not an
+expected win or a measured result.
 
 ## FP32 input vector
 

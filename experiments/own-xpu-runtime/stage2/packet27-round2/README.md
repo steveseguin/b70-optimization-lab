@@ -26,8 +26,9 @@ Every viable packet 25 GEMV alternative is now an actual bridge kernel compared
 with the runtime's own R5 kernel at the same decode shape and format, rather than
 two columns pointing to R5. Output-byte equality, implementation identity,
 median/p90 microseconds and comparison-candidate identity are explicit. The
-historical staged weight-decoding arm is excluded as requested; the unused
-half-table source remains evidence, not an unimplemented runtime dispatch entry.
+historical staged weight-decoding arm is excluded as requested. The packet 25
+half-table alternative now prepares only the FP16 block scales of the selected
+expert rows in existing scratch; its preparation launch is included in K2 timing.
 
 The native priority guard accepts exactly the priority requested by its wrapper
 and records it. W2/W2m/W2c run at nice 0 from a nice-0 coordinator; CPU preparation
@@ -38,22 +39,37 @@ and helper work stay at nice 19. No priority escalation is attempted.
 | HC low + inject, each attention/FFN pair | 37–39 | compile-time two-member tuple, common ready normalized input | 22–27 |
 | GDN a + b | about 19 | two concrete F32 members, one launch | 8–12 |
 | router + shared expert gate/up + shared scalar gate | about 61 | four-member tuple, ready FFN normalized input | 34–42 |
-| HC gate | 29.5 | original single GEMV; depends on low/activation | unchanged |
+| HC attention/FFN gate, Q8 10240 x 320 | 29.5 | dense bridge alternatives; remains after low/activation | 20–30 |
 | shared expert down | about 16 | original single GEMV; depends on shared activation | unchanged |
 | route / folded route+gather | about 68 | cooperative softmax, distributed early-out rank, selected normalization | 20–25 |
 | QSA attention | about 264 | subgroup-sized score/value groups, one head maximum | 100–120 |
 | GDN recurrence | about 53 | original state-row ownership with register values and identical shuffle tree | 30–35 |
 | QSA select | about 68 | parallel block scores, stable ranks, disjoint suffix writers | 25–30 |
 | argmax | about 297 in full decode | parallel chunk winners, exact tie order | 40–60 |
-| expert gate/up | about 178 | packet25 wg32; reusable exact FP32 input | 140–175 |
+| expert gate/up | about 178 | packet25 wg32/half_table; reusable exact FP32 input | 140–190, including preparation when needed |
 | expert down | about 130 | private decoder; two short rows/subgroup; shared packed64 words | 90–125 |
 | GDN qkv | about 101 | packet25 rows4; FP32 input or packed64 | 75–95 |
 | GDN z | about 62 | packet25 wide8; FP32 input or packed64 | 45–58 |
 | QSA qgate | about 118 | packet25 rows4; FP32 input or packed64 | 95–110 |
 | attention output | about 67 | FP32 input or packed64 | 55–65 |
+| QSA k, Q6 512 x 2560 | not supplied separately | rows4, scale8, wide8, FP32 input, packed64 | 15–30 |
+| QSA v, Q6 512 x 2560 | not supplied separately | rows4, scale8, wide8, FP32 input, packed64 | 15–30 |
+| PLE key, Q8 10240 x 2560 | not supplied separately | rows4, scale8, wide8, FP32 input, packed64 | 75–120 |
+| PLE value, Q8 2560 x 2560 | not supplied separately | rows4, scale8, wide8, FP32 input, packed64 | 25–50 |
+| HC attention/FFN low, Q8 320 x 10240 | about 19 per member | dense bridge alternatives; measured separately from low+inject tuple | 15–25 |
 | logits | about 2,140 | every dense bridge alternative competes with actual R5 | 1,900–2,300 |
 
 These ranges are design hypotheses, not measured improvements or projected totals.
+The bridge-only classes use concrete model shapes: QSA k/v have few output rows
+and can be limited by launch overhead and occupancy; PLE key offers many rows
+sharing one input, while PLE value has fewer rows over the same input width.
+HC gate has many short rows, so row grouping and eight-code loads are candidates;
+HC low has few long rows, where the existing split tree and launch cost matter.
+FP32-input hypotheses include a conversion when the vector is not already ready.
+Each named bridge must win its own K2 comparison; these ranges do not borrow a
+measured baseline from another class. HC gate still depends on low/activation,
+and shared expert down still depends on shared activation, so neither is folded
+into an upstream tuple.
 The small tuples alone plausibly remove about 2–3 ms/token, so they do not claim
 the requested 11-to-5-ms goal. Some small GEMVs remain separated by real data
 dependencies. The card measurements must determine the next useful changes.
@@ -104,3 +120,17 @@ safety limits are in [DEADLINES.md](DEADLINES.md). The coordinator supplies shar
 library paths and owns all device execution. Every launch is explicit; no server,
 retry loop, driver discovery from CPU preparation, or host-setting change is
 part of this packet.
+
+CPU preparation passed: 5 unit suites; 156 integration cases; four fresh
+fixture processes (GNU and Intel, two each), each with 111 non-GEMV checks,
+736 GEMV checks, 196 merged-GEMV checks and 51 adapter checks; 32 sanitizer
+runs over four random seeds; 77 window tests; 1,056 symbolic tree checks;
+10 argument-validation process checks; actual nice-0/nice-19 priority checks;
+and 215 captured kernel types (maximum 744 bytes). The final one-card streaming
+all-new run matches all 8 generated tokens and all 384 layer fixtures against
+the v2 oracle. Every native window remains pending.
+
+Disposable scratch has been removed. `scratch-cleanup.json` maps retained
+logs and validation traces to `evidence/preparation-logs.json.gz`; the sealed
+fixture receipts remain in `evidence/fixture-gates-full.json.gz`. Ignored build
+binaries and required prepared inputs remain for the coordinator commands.

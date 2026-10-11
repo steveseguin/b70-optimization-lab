@@ -66,3 +66,22 @@ Final review also checked the native priority receipt. The wrapper records its
 requested native nice level and compare_run requires both native_nice and
 observed_nice to equal it. Priority metadata does not affect arithmetic or K2
 kernel selection. The latest77-test window suite passed after this addition.
+
+## Packet25 half-table coverage amendment
+
+The final registry now requires `p25.half_table` for both expsgate.iq2 and
+expsgate.iq3, matching the bridge alternatives list and the device-entry
+validation gate's expected candidate set. K1 and K2 both enumerate that list;
+K1 therefore compares it with the real R5 control and the unchanged CPU oracle
+in every finite-input mode. K2 records the scale-preparation event and the
+following GEMV event as one two-stage candidate sequence, so preparation cost
+cannot disappear from the comparison. Missing half-table coverage fails the
+registered candidate/workload gates. Missing, undersized and aliased scale
+workspace mutations are also exercised before submission.
+
+Dense packet25 alternatives remain rows4, scale8 and wide8. Routed IQ4 keeps
+rows4, wg32, private_decode and wide8. Routed gate/up keeps rows4, wg32,
+private_decode, paired_input and half_table. The unchanged real R5 kernel is
+the control. The explicitly forbidden staged full-weight decode candidate
+remains excluded. The77-test window suite passed again after the registry
+amendment; no native binary or device entry was launched for this review.

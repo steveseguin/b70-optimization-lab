@@ -153,6 +153,7 @@ def summarize(root,identity=None,classes=None):
     if best is None or score<best[0]:best=(score,implementation,candidate)
    print(name,candidate,'same_kernel='+str(same),'bytes_equal='+str(part['bytes_equal']),
     'incumbent_us='+str(part['variants']['packet18']['execution_sum']['median_us']),
+    'incumbent_p90_us='+str(part['variants']['packet18']['execution_sum']['p90_us']),
     'candidate_us='+str(part['variants']['specialised']['execution_sum']['median_us']),
     'candidate_p90_us='+str(part['variants']['specialised']['execution_sum']['p90_us']))
   selected=best[1] if best else incumbent;selection[name]=selected
