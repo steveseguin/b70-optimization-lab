@@ -60,10 +60,12 @@ RECALL_TOOL = {
         "description": ("Search the archive of earlier conversation that was moved out of view (it is kept verbatim). "
                         "Give `pattern` (text or a regular expression, case-insensitive) to list matching sentences "
                         "with their message numbers; narrow with `before` / `after` (message numbers) and take the "
-                        "newest with `last`. Give `message` alone to print one archived message in full."),
+                        "newest with `last`. Give `message` alone to print one archived message in full. Give "
+                        "`notes_at` alone (a message number) to see the NOTES as they stood at the last save at or "
+                        "before that message: what was true then, not now."),
         "parameters": {"type": "object", "properties": {
             "pattern": {"type": "string"}, "before": {"type": "integer"}, "after": {"type": "integer"},
-            "last": {"type": "integer"}, "message": {"type": "integer"}}},
+            "last": {"type": "integer"}, "message": {"type": "integer"}, "notes_at": {"type": "integer"}}},
     },
 }
 # The instruction comes AFTER the turns: asked first, the model reads its own turns last and writes one more of them.
@@ -267,9 +269,29 @@ class Session:
         if f.exists():
             self.state.update(json.loads(f.read_text()))
 
+    def log_notes(self, upto: int) -> None:
+        """Every accepted NOTES version is kept with the number of the last message it covers."""
+        with (self.dir / "notes-history.jsonl").open("a") as f:
+            f.write(json.dumps({"upto": upto, "at": round(time.time(), 1), "notes": self.state["notes"]}) + "\n")
+
+    def notes_at(self, n: int) -> str:
+        f = self.dir / "notes-history.jsonl"
+        rows = [json.loads(l) for l in f.read_text().splitlines() if l.strip()] if f.exists() else []
+        older = [r for r in rows if r["upto"] <= n]
+        if not older:
+            return (f"recall: no NOTES were saved at or before message {n}"
+                    + (f" (the first save covers messages up to {rows[0]['upto']})" if rows else " (none saved yet)"))
+        r = older[-1]
+        later = "" if r["upto"] == n else (f" Anything said in messages {r['upto'] + 1}-{n} is not in them: "
+                                           f"search those with `pattern`, `after` {r['upto'] + 1} and `before` {n}.")
+        return f"NOTES as saved after message {r['upto']}.{later}\n{r['notes']}"
+
     def restart(self) -> None:
+        stamp = f"{time.strftime('%Y%m%dT%H%M%S')}-{self.state['cuts']}"
+        if (self.dir / "notes-history.jsonl").exists():
+            (self.dir / "notes-history.jsonl").rename(self.dir / f"notes-history-until-{stamp}.jsonl")
         if self.archive.path.exists():
-            self.archive.path.rename(self.dir / f"archive-until-{time.strftime('%Y%m%dT%H%M%S')}-{self.state['cuts']}.jsonl")
+            self.archive.path.rename(self.dir / f"archive-until-{stamp}.jsonl")
         self.state.update(cut=0, notes="", boundary="", cuts=0, largest_turn=0, restarts=self.state.get("restarts", 0) + 1)
         self.save()
 
@@ -335,7 +357,7 @@ class Keeper:
             return list(messages)
         return messages[:h] + [self.pin(s)] + messages[h + s.state["cut"]:]
 
-    def notes_call(self, s: Session, model: Any, head: list[dict[str, Any]], gone: list[dict[str, Any]]) -> None:
+    def notes_call(self, s: Session, model: Any, head: list[dict[str, Any]], gone: list[dict[str, Any]], upto: int = 0) -> None:
         req = head + [{"role": "user", "content": NOTES_REQUEST.format(
             cap=self.notes_cap, notes=s.state["notes"] or "(none yet)", turns=render_turns(gone))}]
         for _ in (1, 2):
@@ -351,6 +373,7 @@ class Keeper:
                 text, lost = keep_rules(s.state["notes"], text)
                 s.state["rules_put_back"] += len(lost)
                 s.state["notes"] = text
+                s.log_notes(upto)
                 return
             req = req + [{"role": "assistant", "content": text}, {"role": "user", "content": LAYOUT_RETRY}]
         s.state["notes_failed"] += 1                 # the cut still happens: the turns are in the archive
@@ -374,7 +397,7 @@ class Keeper:
             return
         gone = body[:n]
         s.archive.add(h + s.state["cut"] + 1, gone)
-        self.notes_call(s, model, messages[:h], gone)
+        self.notes_call(s, model, messages[:h], gone, upto=h + s.state["cut"] + n)
         s.state["cut"] += n
         s.state["boundary"] = fingerprint(gone[-1:])
         s.state["cuts"] += 1
@@ -422,7 +445,10 @@ class Keeper:
                 for c in mine:
                     try:
                         args = json.loads((c.get("function") or {}).get("arguments") or "{}")
-                        text = s.archive.recall(**{k: args[k] for k in ("pattern", "before", "after", "last", "message") if args.get(k) is not None})
+                        if args.get("notes_at") is not None:
+                            text = s.notes_at(int(args["notes_at"]))
+                        else:
+                            text = s.archive.recall(**{k: args[k] for k in ("pattern", "before", "after", "last", "message") if args.get(k) is not None})
                     except Exception as exc:
                         text = f"recall: bad arguments ({exc})"
                     s.state["recalls"] += 1

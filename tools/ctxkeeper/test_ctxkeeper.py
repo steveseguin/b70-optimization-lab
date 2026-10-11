@@ -114,6 +114,22 @@ class Policy(unittest.TestCase):
         self.assertIn("counter abcd03 to 21", second[-1]["content"])
         self.assertGreaterEqual(len(self.model.requests) - before, 2)
 
+    def test_notes_history_answers_what_was_true_then(self):
+        s = self.run_conversation(30)
+        rows = [json.loads(l) for l in (s.dir / "notes-history.jsonl").read_text().splitlines()]
+        self.assertEqual(len(rows), s.state["cuts"])
+        self.assertEqual(rows[-1]["upto"], 2 + s.state["cut"])                    # head of 2, then the archived messages
+        first, second = rows[0]["upto"], rows[1]["upto"]
+        out = s.notes_at(second - 1)
+        self.assertTrue(out.startswith(f"NOTES as saved after message {first}."))
+        self.assertIn(f"`after` {first + 1} and `before` {second - 1}", out)
+        self.assertIn("notes call number 1", out)
+        self.assertNotIn("is not in them", s.notes_at(second))
+        self.assertIn("no NOTES were saved at or before message 1", s.notes_at(1))
+        self.model.recall_once = {"notes_at": second}
+        self.keeper.complete({"model": "m", "messages": conversation(30) + [{"role": "user", "content": "What did we know back then?"}]})
+        self.assertIn("notes call number 2", self.model.requests[-1]["messages"][-1]["content"])
+
     def test_rules_are_recited_after_a_new_user_message(self):
         self.run_conversation(30)
         self.keeper.complete({"model": "m", "messages": conversation(30) + [{"role": "user", "content": "And in item 3?"}]})

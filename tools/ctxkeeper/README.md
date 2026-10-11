@@ -54,6 +54,12 @@ python3 tools/ctxkeeper/ctxkeeper.py --upstream http://127.0.0.1:18196 --port 18
 - `GET /ctxkeeper/status` shows cuts, recalls, rules put back and the token ratio learned from the server.
 - `--notes-thinking on|off|unset` sets `chat_template_kwargs.enable_thinking` for the notes call (a vLLM/Qwen
   field; `unset` sends nothing). Thinking notes were the measured setting.
+- The proxy adds a short Memory paragraph to the system message (always the same text) so the model knows about
+  NOTES and `recall`; `--no-memory-note` leaves the system message alone.
+- Two optional settings for tasks where questions arrive in tool results rather than from the user, or where thinking
+  on every call is too slow: `--recite-when REGEX` also repeats the RULES when the newest message matches, and
+  `--think-when REGEX` turns thinking on only for a user message or a matching newest message (with `--effort medium`
+  on Qwen, so that switching thinking does not change the system message and the prefix cache survives).
 - Streaming clients get the finished reply as one server-sent event (the proxy has to see whether the model called
   `recall` before anything is sent on).
 
@@ -64,7 +70,8 @@ python3 tools/ctxkeeper/ctxkeeper.py --upstream http://127.0.0.1:18196 --port 18
   server is the next step.
 - Token counts are characters over a ratio learned from the server's `usage.prompt_tokens`, with margins. A server
   that reports no usage keeps the starting guess of 3.6 characters per token.
-- `recall` is a text and regular-expression search over archived sentences with message numbers. It answers "what
-  was said"; "what was true at step N" still means reading the matches in order.
+- `recall` is a text and regular-expression search over archived sentences with message numbers: it answers "what
+  was said". For "what was true at message N" every saved version of NOTES is kept, and `recall` with `notes_at`
+  returns the one saved at or before N; what happened between that save and N still has to be read from the archive.
 - If the model answers with `recall` and one of the client's tools in the same turn, the client's call is passed on
   and the recall is dropped.
