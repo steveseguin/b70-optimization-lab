@@ -169,3 +169,20 @@ and journal evidence. A timeout, mismatch, refusal or new fault fails the
 window; retain evidence and do not retry, hard-kill, reset or reboot
 automatically. Full packet 3 still needs separately admitted native coverage
 of every release category; this tiny first smoke cannot qualify a model.
+
+## First native execution — PASS, 2026-10-11 01:53 UTC (boot 13858eef)
+
+Run inside the owner-authorized engine window on the fresh boot after the
+fourth-incident reboot, with the four-card health receipt passing minutes
+before. Command as preregistered above, run under `source /opt/intel/oneapi/setvars.sh`
+(without it the SYCL runtime finds no platforms: the Level Zero adapter needs
+`libumf.so.1` from `/opt/intel/oneapi/umf/<ver>/lib`, which plain
+`LD_LIBRARY_PATH=compiler/2026.0/lib` does not provide). Result: four
+`Intel(R) Arc(TM) Pro B70 Graphics` devices enumerated; one owned in-order
+queue on card 0; allocate and free of the three smoke arenas in the declared
+order; idle marker complete; events, queue and context released;
+`safe_to_exit=true`, `in_flight=0`, `live_bytes=0`, exit code 0; zero kernel
+fault-class lines during the run. Receipt:
+[first-native-receipt-20261011.json](first-native-receipt-20261011.json).
+This closes packet 3's native smoke gate; it is not a model, speed or
+teardown-under-load result.
