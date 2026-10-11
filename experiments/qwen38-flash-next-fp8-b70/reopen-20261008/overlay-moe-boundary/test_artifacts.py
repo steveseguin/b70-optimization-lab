@@ -18,11 +18,17 @@ class Artifacts(unittest.TestCase):
     def test_seals_match(self):
         builder.check()
 
-    def test_production_overlay_is_unchanged(self):
-        baseline = json.loads(builder.before("overlay-manifest.json"))
-        self.assertEqual((builder.LANE / "overlay-manifest.json").read_bytes(), builder.before("overlay-manifest.json"))
-        for rel, digest in baseline["files"].items():
+    def test_production_overlay_matches_sealed_router_fix(self):
+        fix = builder.LANE / "overlay-fix-router-padding"
+        self.assertEqual((builder.LANE / "overlay-manifest.json").read_bytes(),
+                         (fix / "copies/overlay-manifest.json").read_bytes())
+        manifest = json.loads((builder.LANE / "overlay-manifest.json").read_text())
+        for rel, digest in manifest["files"].items():
             self.assertEqual(builder.sha((builder.LANE / "overlay" / rel).read_bytes()), digest, rel)
+        for path in (fix / "copies/overlay").rglob("*.py"):
+            rel = path.relative_to(fix / "copies")
+            self.assertEqual(path.read_bytes(), (builder.COPIES / rel).read_bytes())
+            self.assertEqual(path.read_bytes(), (builder.LANE / rel).read_bytes())
 
     def test_stage_requires_explicit_enable_and_fresh_external_path(self):
         with patch.dict(os.environ, {"SCREEN1B_MOE_BOUNDARY":"0"}):

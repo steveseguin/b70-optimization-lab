@@ -43,6 +43,8 @@ The **October 11 [MoE boundary diagnostic](notes/2026-10-11-moe-boundary-diagnos
 
 **October 11, CPU-only boundary cancellation audit:** The [first diagnostic run](notes/2026-10-11-moe-boundary-run1-cancelled.md) on boot `13858eef` was cancelled by its controller before the first expert computation; no memory-guard refusal or new kernel fault was recorded, and cleanup erased the original exception. The resealed packet now saves that first error before stopping and keeps cleanup errors separate, with CPU regression coverage; the initiating check remains unknown. No GPU work ran in this repair; the coordinator has fresh stage/run commands for the next admitted window.
 
+**October 11, CPU-only router repair:** The [fourth boundary window](notes/2026-10-11-moe-boundary-caught-router-ids.md) caught the same padding value, minus one, in every router slot on all four ranks and stopped before alignment, with no new kernel faults. The production router fix now sends padded rows through ordinary routing because this native alignment code cannot safely handle negative IDs. Both packages are resealed and all 143 CPU tests pass; no GPU or server ran in this repair. The coordinator's next step is the fresh boundary-on proof command, with current admission; native startup and full-model output checks remain open.
+
 The certified FP8 result remains **46.854250 tok/s**, with its exact identity and gates in the [closeout](results/qwen38-flash-next-fp8-b70/CLOSEOUT-20260913.md), [handoff](results/qwen38-flash-next-fp8-b70/HANDOFF.md) and [reproduction
 guide](repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md). Reopening diagnostics and CPU preparation do not replace that record.
 

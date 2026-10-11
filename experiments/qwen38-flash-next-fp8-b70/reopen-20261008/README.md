@@ -1,5 +1,19 @@
 # Flash-Next Screen 1b — native FP8 mmap adapter
 
+**October 11, current CPU follow-up:** the fourth MoE boundary window stopped
+before alignment because every rank's raw router tensor contained 640 signed
+`-1` padding IDs. The V2 padding mask reaches a native aligner without a
+negative-ID guard. [Evidence and root cause](../../../notes/2026-10-11-moe-boundary-caught-router-ids.md).
+The [production router fix](overlay-fix-router-padding/README.md) is applied
+and the boundary package is resealed; 143 CPU tests pass. The
+[next stage/run commands](overlay-moe-boundary/README.md#future-authorized-window-command--not-run-by-this-task)
+keep the strict boundary ON for a separately admitted native proof. Native
+startup and output qualification remain pending; no GPU ran in this repair.
+[Do-not-repeat entry](DO-NOT-REPEAT.md) and [diagnosis closeout](overlay-fix-router-padding/root-cause-closeout.md).
+
+## Historical attempt-8 assessment
+
+
 **2026-10-11: attempt 8 loaded all four ranks, then faulted on all four cards
 during startup's KV-memory profile/dummy forward. This is the fourth incident
 on boot `4aafe57b`; the engine window is halted for the owner.** The controller

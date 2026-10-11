@@ -1,5 +1,14 @@
 # Flash-Next attempt 8: fourth incident — 2026-10-11
 
+**October 11 follow-up:** the later boundary window on boot `13858eef`
+caught all-minus-one raw router IDs on all four ranks before alignment, with
+no new kernel faults. [The producer/consumer trace and production fix](2026-10-11-moe-boundary-caught-router-ids.md)
+identify a padding-sentinel contract defect and a native invalid-write path.
+That is strong mechanism evidence for this incident, but this historical run
+still has no captured faulting instruction/address-to-allocation match. The
+chronology and original causal limits below are preserved.
+
+
 **Weights loaded on all four ranks. Startup failed during the profile/dummy
 forward inside KV-memory initialization, before graph capture or readiness.
 Fault-class verdict: unknown.** The recorded ordering does not establish the

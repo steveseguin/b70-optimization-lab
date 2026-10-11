@@ -1,14 +1,18 @@
-# Default-off MoE boundary diagnostic — run 1 cancelled, CPU repair
+# MoE boundary proof with the production router-padding fix
 
-This separately sealed variant investigates sketch A of the
-[attempt-8 audit](../../../../notes/2026-10-11-attempt8-moe-first-forward-audit.md).
-It does not replace the production overlay. Run 1 on boot `13858eef` stopped
-before the first MoE forward; [the audit](../../../../notes/2026-10-11-moe-boundary-run1-cancelled.md)
-identifies the controller as the first STOP writer, but its original exception
-was overwritten during cleanup. This repair retains that cause on the next
-attempt; it does **not** claim the initiating refusal is fixed. The coordinator
-must supply current admission for a fresh four-card window. Historical owner
-acceptance from the earlier boot does not authorize a new launch.
+**October 11, v4 result:** all four raw `[64,10]` router tensors contained
+signed int32 `-1` in all 640 slots. The strict boundary stopped before native
+alignment; rank 3 won the STOP-file race. The source trace identifies V2 dummy
+padding reaching a native aligner that lacks a negative-ID guard. This is a
+padding-contract defect, not a rank-3 placement defect.
+[Evidence, root cause and limits](../../../../notes/2026-10-11-moe-boundary-caught-router-ids.md).
+
+The repository's [production compatibility fix](../overlay-fix-router-padding/README.md)
+is included byte-for-byte in this v5 diagnostic package. Screen 1b XPU routers
+now route padded rows normally. The boundary's `[0,512)` check is unchanged;
+all other boundary/watchdog/admission checks remain enabled. Production native
+qualification and full-model output gates are still pending. No GPU ran in
+this repair. Earlier v1–v4 stages and run evidence remain immutable.
 
 ## Preregistered single-window plan
 
@@ -83,23 +87,23 @@ below already exists, choose a new unique suffix in both commands.
 ```sh
 nice -n 19 env OMP_NUM_THREADS=2 PYTHONDONTWRITEBYTECODE=1 SCREEN1B_MOE_BOUNDARY=1 \
   python3 -B /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/build_patch.py \
-  --stage /mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-first-cause-v4
+  --stage /mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-router-padding-v5
 
 nice -n 19 env OMP_NUM_THREADS=2 PYTHONDONTWRITEBYTECODE=1 \
   SCREEN1B_SOURCE_REPO=/home/steve/llm-optimizations \
   SCREEN1B_MOE_BOUNDARY=1 SCREEN_PRIVILEGED_FD_SCAN=1 \
-  python3 -B /mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-first-cause-v4/screen.py \
+  python3 -B /mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-router-padding-v5/screen.py \
   run --mode calibrate-load --loading-ram-guard-gb 96 \
   --health-receipt "${HEALTH_RECEIPT:?set fresh health receipt path}" \
   --previous-stop-utc "${PREVIOUS_STOP_UTC:?set verified previous stop UTC}" \
-  --run-dir /mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-first-cause-v4 --execute
+  --run-dir /mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-router-padding-v5 --execute
 ```
 
 The controller creates one owned user unit using Nice=19 and OMP_NUM_THREADS=2.
 Its entrypoint refuses this staged overlay unless the enable variable is 1.
 Container receipt paths are `/screen/moe-boundary/` and `/screen/watcher.json`,
 which map to the new run directory. STOP and FAULT are siblings of those paths.
-Existing production files, prior evidence and latches are never modified.
+The stage includes the sealed production router fix; prior stages, evidence and latches are never modified.
 
 Historical CPU validation after the source-path repair: **128 passed, zero failures/errors/skips**;
 [source-bound receipt](../evidence/moe-boundary-paths-cpu-20261011/validation.json).
@@ -177,9 +181,9 @@ nice -n 19 env OMP_NUM_THREADS=2 python3 -B experiments/qwen38-flash-next-fp8-b7
 nice -n 19 env OMP_NUM_THREADS=2 python3 -B experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/build_patch.py --check
 ```
 
-Diagnostic overlay manifest SHA256: `22d919835678571d7e7b05bc05dd53f2f8f53924b2890575b5024f2162d6c5f9`.
+Diagnostic overlay manifest SHA256: `2879f61968e86a79d13cbfdf3e14fdc951805cb87482878832c8a97937a510cb`.
 
-Patch manifest SHA256: `ef423848f2bb0a61a9805be8a9e9c613b48c118b45a6e411d18fd06dea2beef7`.
+Patch manifest SHA256: `cb3d7f54f404ae4076998139547f0b3d5ca704a19328f2228400ff5022713dfb`.
 
 
 ## Source-path repair and staged-command audit, October 11
@@ -217,7 +221,7 @@ thresholds are unchanged; the diagnostic seal includes the new support files.
 `vram_plan.generate` also resolves routing inputs through the source repo;
 its output stays in the supplied package and it is not invoked by the screen.
 Never regenerate files in an existing sealed coordinator stage. Use the fresh
-first-cause-v4 stage/run commands above with current coordinator admission.
+router-padding-v5 stage/run commands above with current coordinator admission.
 
 
 ## Run 1 cancellation and cause retention, October 11
@@ -267,3 +271,25 @@ first, then `controller-cleanup-failure.json`, calibration and rank receipts.
 If file writing failed, use the unit journal's `controller_failure` record.
 No unchanged source-paths-v3 rerun: retain that stage and use the fresh v4 pair
 above. Native first-forward localization remains pending.
+
+## Router-padding repair and proof identity, October 11
+
+The only production behavior change is in the two router `_get_padding_mask`
+helpers: with `B70_SCREEN1B=1` on XPU, return `None` to the existing native
+router. No sentinel is clamped, remapped to expert zero, or accepted by the
+boundary. No routing formula, weight, map, alignment size, PLE buffer, GEMM,
+KV precision, compilation flag or admission threshold changes. Compared to
+v4, profile padding now performs ordinary expert computation, so its runtime
+and memory plateau must be measured anew under the existing limits.
+
+`test_router_padding.py` reproduces v4's exact all-minus-one hash with CPU
+operator doubles, exercises the actual production helpers and wrappers,
+checks mixed/valid/tied routes and unchanged active-row weighted output,
+and passes the unchanged router boundary on all four rank maps. It verifies
+that only the intended helper/import AST changed and replays the production
+patch exactly. Native kernels and whole-model parity remain untested here.
+Current CPU result: **143 passed, zero failures/errors/skips**;
+[source-bound receipt](../evidence/moe-boundary-router-ids-20261011/cpu-validation.json).
+The staged-command test still runs the complete CPU admission/prediction
+path and stops before Docker. Reseal with `build_patch.py`, then `--check`,
+and run the restricted CPU suite before using the two fresh commands above.

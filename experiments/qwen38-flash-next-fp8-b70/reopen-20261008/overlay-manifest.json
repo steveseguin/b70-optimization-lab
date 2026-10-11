@@ -52,7 +52,9 @@
     "vllm/screen1b_ple.py": "ecd36c30c6cafa739f3565b98cb3cb3936c7f1cbc6746d7581c900e610d0cbb2",
     "vllm/screen1b_teardown.py": "c37445ab688ff43ff0366698e689af50c5780dc1a4aa5112f2e517059cf04449",
     "vllm/v1/worker/gpu_worker.py": "1b55f9910bf1569a138e5ab458ea97694afc9d3e3543d9a82bd0a4fc197f57b0",
-    "vllm/v1/worker/xpu_worker.py": "b976b96b49de5feafc3f750e0087fab62f336a1ec2751cab884edae10662666f"
+    "vllm/v1/worker/xpu_worker.py": "b976b96b49de5feafc3f750e0087fab62f336a1ec2751cab884edae10662666f",
+    "vllm/model_executor/layers/fused_moe/router/fused_topk_bias_router.py": "38ea8e6bde1b1095135859ef198464486b73d9c75b58a27db2af2940c1d5e72f",
+    "vllm/model_executor/layers/fused_moe/router/fused_topk_router.py": "5036e5742bf3b44f1bf12b137aa192986391c46906df86032e8ea629c50fb2f9"
   },
   "schema": "neural.download.screen1b-overlay.v1",
   "source_tree": "/home/steve/src/lumnus-20261008/vllm",
@@ -257,6 +259,14 @@
     "vllm/v1/worker/xpu_worker.py": {
       "base_sha256": "711b56432506b58041cd86e71320c3960413f7bd61061990b66488421d81cfc3",
       "sha256": "b976b96b49de5feafc3f750e0087fab62f336a1ec2751cab884edae10662666f"
+    },
+    "vllm/model_executor/layers/fused_moe/router/fused_topk_bias_router.py": {
+      "base_sha256": "8fdc28cc248180ad4f11bb4bcda3df47926ec12665a0d84bb712fe83fc6b9376",
+      "sha256": "38ea8e6bde1b1095135859ef198464486b73d9c75b58a27db2af2940c1d5e72f"
+    },
+    "vllm/model_executor/layers/fused_moe/router/fused_topk_router.py": {
+      "base_sha256": "1c80f4af4d781fd66b12aa6a7a0fd30082bc521df40f1252987a8ac4c0bef51c",
+      "sha256": "5036e5742bf3b44f1bf12b137aa192986391c46906df86032e8ea629c50fb2f9"
     }
   },
   "support_files": {
@@ -282,6 +292,7 @@
     "exact_gdn_native_kernel": "not ported; fused official kernel unchanged",
     "embedding": "certified input embedding selected for generic UVA, shared MTP alias counted once",
     "driver_allocation": "NEOReadDebugKeys=1 EnableDeferBacking=0 retained; Flash-Next shadow-saving claim withdrawn after attempt 6; pinned host reservation remains.",
-    "pinned_allocator": "Torch 2.13: all allocator environment aliases set pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1 before import; exact large pins, small cached pins; source-derived sizes, runtime fit unqualified"
+    "pinned_allocator": "Torch 2.13: all allocator environment aliases set pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1 before import; exact large pins, small cached pins; source-derived sizes, runtime fit unqualified",
+    "router_padding": "UNQUALIFIED CPU-tested Screen 1b XPU compatibility fix: route padding normally before native alignment; active-row arithmetic unchanged; boundary remains strict"
   }
 }

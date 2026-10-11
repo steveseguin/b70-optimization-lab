@@ -1,5 +1,16 @@
 # Qwen3.8 Flash-Next FP8 B70 handoff
 
+**October 11 reopening handoff:** the fourth boundary window caught signed
+`-1` in all 640 raw router slots on every rank, before native alignment.
+The [source trace and fix](../../notes/2026-10-11-moe-boundary-caught-router-ids.md)
+identify V2 dummy padding combined with the official wheel's missing
+negative-ID alignment guard. The repository production routers now route
+padding normally in Screen 1b XPU; 143 CPU tests pass and both packages are
+sealed. Use the [fresh boundary-on stage/run commands](../../experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/README.md#future-authorized-window-command--not-run-by-this-task)
+for the next admitted coordinator window. Native proof/output gates are open;
+this CPU task launched nothing and does not replace the certified record.
+
+
 ## Current handoff: campaign closed, 2026-09-13
 
 Fable's A340-A394 effort is closed and documented in the

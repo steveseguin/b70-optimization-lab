@@ -84,7 +84,7 @@
              if not self.armed or self.sent:
 --- a/overlay-manifest.json
 +++ b/overlay-manifest.json
-@@ -37,22 +37,24 @@
+@@ -37,22 +37,26 @@
      "vllm/v1/kv_offload/tiering/manager.py": "1bb9af3d334fc322911aaffa6e21d2f15c19ae1b2bb6a5be425e31143172bcc6",
      "vllm/v1/utils.py": "ddedc85392c3f3f782bec31b6e2b671639cca41f3f7aabcb8b518cea05e4606c",
      "vllm/v1/worker/gpu/attn_utils.py": "d5ef338178e824f0d2fb9447cdebda1e8f4e7ec9cd7791994083007ff1ad77c8",
@@ -112,11 +112,13 @@
 +    "vllm/v1/worker/gpu_worker.py": "60b24532e657e4c67602890ba909ad8bf95db5e9a094804781d97aba4e40347b",
 +    "vllm/v1/worker/xpu_worker.py": "b976b96b49de5feafc3f750e0087fab62f336a1ec2751cab884edae10662666f",
 +    "vllm/model_executor/layers/fused_moe/moe_align_block_size.py": "ebb51d990d55f6ccec68c422e82b2bd34c40b166220907f224c427cce0647fea",
++    "vllm/model_executor/layers/fused_moe/router/fused_topk_bias_router.py": "38ea8e6bde1b1095135859ef198464486b73d9c75b58a27db2af2940c1d5e72f",
++    "vllm/model_executor/layers/fused_moe/router/fused_topk_router.py": "5036e5742bf3b44f1bf12b137aa192986391c46906df86032e8ea629c50fb2f9",
 +    "vllm/screen1b_moe_boundary.py": "1e31ffb9927c49cdcbea91c729ad94cad40237b4d46a1e8396b7b81b19379e7b"
    },
    "schema": "neural.download.screen1b-overlay.v1",
    "source_tree": "/home/steve/src/lumnus-20261008/vllm",
-@@ -196,7 +198,7 @@
+@@ -196,7 +200,7 @@
      },
      "vllm/v1/worker/gpu/model_runner.py": {
        "base_sha256": "174c93db921c23cf0396eee4764be25b2bd2d4b6a06e9fa41ce3598b884ce8ce",
@@ -125,7 +127,7 @@
      },
      "vllm/v1/worker/gpu/model_states/mamba_hybrid.py": {
        "base_sha256": "573e130ac5587d4822fabf97adad1ad0fda02ff83c5e70df879a5bb175ae845c",
-@@ -220,15 +222,15 @@
+@@ -220,15 +224,15 @@
      },
      "vllm/model_executor/layers/fused_moe/experts/triton_moe.py": {
        "base_sha256": "806fbccfe30f5fbd578acf773add99bdf022b12d617958bd6281aef6de369701",
@@ -144,7 +146,7 @@
      },
      "vllm/model_executor/layers/fused_moe/routed_experts.py": {
        "base_sha256": "68c48e5df0ea4a7cc1f04436b7b9153eb53802ecd9bb55d38db8738508daac6d",
-@@ -240,7 +242,7 @@
+@@ -240,7 +244,7 @@
      },
      "vllm/q38_expert_placement.py": {
        "base_sha256": null,
@@ -153,7 +155,7 @@
      },
      "vllm/screen1b_ple.py": {
        "base_sha256": null,
-@@ -252,26 +254,72 @@
+@@ -252,26 +256,80 @@
      },
      "vllm/v1/worker/gpu_worker.py": {
        "base_sha256": "6994436e4547c0996ab555b3e814e8ccea26b650dfc1b378b97d640745309347",
@@ -167,6 +169,14 @@
 +    "vllm/model_executor/layers/fused_moe/moe_align_block_size.py": {
 +      "base_sha256": "c3f7fc2087836f0160a32ab99ceb1d8f6e87c793679da34dd672e225cb7fa31b",
 +      "sha256": "ebb51d990d55f6ccec68c422e82b2bd34c40b166220907f224c427cce0647fea"
++    },
++    "vllm/model_executor/layers/fused_moe/router/fused_topk_bias_router.py": {
++      "base_sha256": "8fdc28cc248180ad4f11bb4bcda3df47926ec12665a0d84bb712fe83fc6b9376",
++      "sha256": "38ea8e6bde1b1095135859ef198464486b73d9c75b58a27db2af2940c1d5e72f"
++    },
++    "vllm/model_executor/layers/fused_moe/router/fused_topk_router.py": {
++      "base_sha256": "1c80f4af4d781fd66b12aa6a7a0fd30082bc521df40f1252987a8ac4c0bef51c",
++      "sha256": "5036e5742bf3b44f1bf12b137aa192986391c46906df86032e8ea629c50fb2f9"
 +    },
 +    "vllm/screen1b_moe_boundary.py": {
 +      "base_sha256": null,
@@ -234,12 +244,13 @@
    },
    "semantics": {
      "PLE": "native FP8 shard mmap; fixed 1 GiB pinned clock cache/rank; original hash, raw int8 owner reduction and unchanged dequantization; synchronous pre-forward staging",
-@@ -282,6 +330,7 @@
+@@ -282,6 +340,8 @@
      "exact_gdn_native_kernel": "not ported; fused official kernel unchanged",
      "embedding": "certified input embedding selected for generic UVA, shared MTP alias counted once",
      "driver_allocation": "NEOReadDebugKeys=1 EnableDeferBacking=0 retained; Flash-Next shadow-saving claim withdrawn after attempt 6; pinned host reservation remains.",
 -    "pinned_allocator": "Torch 2.13: all allocator environment aliases set pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1 before import; exact large pins, small cached pins; source-derived sizes, runtime fit unqualified"
 +    "pinned_allocator": "Torch 2.13: all allocator environment aliases set pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1 before import; exact large pins, small cached pins; source-derived sizes, runtime fit unqualified",
++    "router_padding": "UNQUALIFIED CPU-tested Screen 1b XPU compatibility fix: route padding normally before native alignment; active-row arithmetic unchanged; boundary remains strict",
 +    "moe_boundary": "UNQUALIFIED default-off SCREEN1B_MOE_BOUNDARY=1 diagnostic; TP4/EP4 profile only; watcher-gated queue drains, raw/remapped routing, owned rows/workspaces and eleven pointer receipts; nonlocal zero-return precedes table access only when enabled; native USM/context unknown"
    }
  }
@@ -571,6 +582,648 @@
 +    )
 +
 +    return sorted_ids, expert_ids, num_tokens_post_pad
+--- /dev/null
++++ b/overlay/vllm/model_executor/layers/fused_moe/router/fused_topk_bias_router.py
+@@ -0,0 +1,452 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++import functools
++
++import os
++
++import torch
++
++import vllm._custom_ops as ops
++import vllm.envs as envs
++from vllm.platforms import current_platform
++from vllm._aiter_ops import rocm_aiter_ops
++from vllm.distributed.eplb.eplb_state import EplbLayerState
++from vllm.forward_context import get_forward_context, is_forward_context_available
++from vllm.model_executor.layers.fused_moe.config import (
++    RoutingMethodType,
++    get_routing_method_type,
++)
++from vllm.model_executor.layers.fused_moe.router.base_router import BaseRouter
++from vllm.model_executor.layers.fused_moe.router.dsv4_topk import (
++    can_use_dsv4_topk,
++    dsv4_topk,
++)
++
++
++def _get_padding_mask(num_tokens: int) -> torch.Tensor | None:
++    # Screen 1b pins XPU kernels 0.1.14.1: its alignment kernels do not
++    # reject negative router IDs. V2 marks every profile row as padding,
++    # which otherwise makes native top-k emit -1 for every expert slot.
++    # Route these rows normally; real rows retain the same native arithmetic.
++    # This also covers graph padding and MTP, independent of diagnostics.
++    if os.environ.get("B70_SCREEN1B") == "1" and current_platform.is_xpu():
++        return None
++    if envs.VLLM_MOE_SKIP_PADDING and is_forward_context_available():
++        is_padding = get_forward_context().is_padding
++        return is_padding[:num_tokens] if is_padding is not None else None
++    return None
++
++
++def vllm_topk_softmax(
++    topk_weights: torch.Tensor,
++    topk_indices: torch.Tensor,
++    token_expert_indices: torch.Tensor,
++    gating_output: torch.Tensor,
++    renormalize: bool = False,
++    e_score_correction_bias: torch.Tensor | None = None,
++) -> tuple[torch.Tensor, ...]:
++    ops.topk_softmax(
++        topk_weights,
++        topk_indices,
++        token_expert_indices,
++        gating_output,
++        renormalize,
++        e_score_correction_bias,
++        is_padding=_get_padding_mask(topk_indices.shape[0]),
++    )
++
++    return topk_weights, topk_indices
++
++
++def vllm_topk_sigmoid(
++    topk_weights: torch.Tensor,
++    topk_indices: torch.Tensor,
++    token_expert_indices: torch.Tensor,
++    gating_output: torch.Tensor,
++    renormalize: bool = False,
++    e_score_correction_bias: torch.Tensor | None = None,
++    routed_scaling_factor: float = 1.0,
++) -> tuple[torch.Tensor, ...]:
++    ops.topk_sigmoid(
++        topk_weights,
++        topk_indices,
++        token_expert_indices,
++        gating_output,
++        renormalize,
++        e_score_correction_bias,
++        routed_scaling_factor,
++        is_padding=_get_padding_mask(topk_indices.shape[0]),
++    )
++
++    return topk_weights, topk_indices
++
++
++def vllm_topk_softplus_sqrt(
++    topk_weights: torch.Tensor,
++    topk_indices: torch.Tensor,
++    token_expert_indices: torch.Tensor,
++    gating_output: torch.Tensor,
++    renormalize: bool = False,
++    e_score_correction_bias: torch.Tensor | None = None,
++    input_tokens: torch.Tensor | None = None,
++    hash_indices_table: torch.Tensor | None = None,
++    routed_scaling_factor: float = 1.0,
++    bias_vl: torch.Tensor | None = None,
++    image_sentinel_lo: int = 0,
++) -> tuple[torch.Tensor, ...]:
++    ops.topk_hash_softplus_sqrt(
++        topk_weights,
++        topk_indices,
++        token_expert_indices,
++        gating_output,
++        renormalize,
++        routed_scaling_factor,
++        e_score_correction_bias,
++        input_tokens,
++        hash_indices_table,
++        is_padding=_get_padding_mask(topk_indices.shape[0]),
++        bias_vl=bias_vl,
++        image_sentinel_lo=image_sentinel_lo,
++    )
++
++    return topk_weights, topk_indices
++
++
++@functools.lru_cache(maxsize=8)
++def _aiter_get_num_expert_group(num_experts: int) -> int:
++    _AITER_MAX_EXPERTS_PER_GROUP = 32
++    g = max(1, -(-num_experts // _AITER_MAX_EXPERTS_PER_GROUP))
++    while num_experts % g != 0:
++        g += 1
++    assert num_experts % g == 0, f"{num_experts=} not divisible by {g=}"
++    assert num_experts // g <= _AITER_MAX_EXPERTS_PER_GROUP, (
++        f"group size {num_experts // g} exceeds limit {_AITER_MAX_EXPERTS_PER_GROUP}"
++    )
++    return g
++
++
++def fused_topk_bias(
++    hidden_states: torch.Tensor,
++    gating_output: torch.Tensor,
++    scoring_func: str,
++    e_score_correction_bias: torch.Tensor,
++    topk: int,
++    renormalize: bool,
++    indices_type: torch.dtype | None = None,
++    input_tokens: torch.Tensor | None = None,
++    hash_indices_table: torch.Tensor | None = None,
++    routed_scaling_factor: float = 1.0,
++    bias_vl: torch.Tensor | None = None,
++    image_sentinel_lo: int = 0,
++):
++    if (
++        input_tokens is not None
++        and hash_indices_table is not None
++        and input_tokens.dtype != hash_indices_table.dtype
++    ):
++        input_tokens = input_tokens.to(dtype=hash_indices_table.dtype)
++
++    if bias_vl is not None:
++        # Image tokens carry five consecutive in-vocab sentinel ids starting
++        # at image_sentinel_lo and select experts with bias_vl instead of the
++        # regular routing path. image_sentinel_lo == 0 disables this.
++        assert input_tokens is not None, "bias_vl routing requires input_tokens"
++
++    if not rocm_aiter_ops.is_fused_moe_enabled():
++        assert hidden_states.size(0) == gating_output.size(0), (
++            "Number of tokens mismatch"
++        )
++
++        output_indices_dtype = torch.int32 if indices_type is None else indices_type
++        if (
++            scoring_func == "sqrtsoftplus"
++            and hash_indices_table is None
++            and can_use_dsv4_topk(
++                gating_output,
++                e_score_correction_bias,
++                topk,
++                renormalize,
++                output_indices_dtype,
++            )
++        ):
++            assert e_score_correction_bias is not None
++            return dsv4_topk(
++                gating_output,
++                e_score_correction_bias,
++                output_indices_dtype,
++                routed_scaling_factor,
++                input_ids=input_tokens,
++                bias_vl=bias_vl,
++                image_sentinel_lo=image_sentinel_lo,
++            )
++
++        M, _ = hidden_states.size()
++
++        topk_weights = torch.empty(
++            M, topk, dtype=torch.float32, device=hidden_states.device
++        )
++        topk_ids = torch.empty(
++            M,
++            topk,
++            dtype=torch.int32 if indices_type is None else indices_type,
++            device=hidden_states.device,
++        )
++        token_expert_indices = torch.empty(
++            M, topk, dtype=torch.int32, device=hidden_states.device
++        )
++
++        if scoring_func == "softmax":
++            topk_weights, topk_ids = vllm_topk_softmax(
++                topk_weights,
++                topk_ids,
++                token_expert_indices,
++                gating_output,
++                renormalize,
++                e_score_correction_bias,
++            )
++            if routed_scaling_factor != 1.0:
++                topk_weights *= routed_scaling_factor
++            return topk_weights, topk_ids
++        elif scoring_func == "sigmoid":
++            topk_weights, topk_ids = vllm_topk_sigmoid(
++                topk_weights,
++                topk_ids,
++                token_expert_indices,
++                gating_output,
++                renormalize,
++                e_score_correction_bias,
++                routed_scaling_factor,
++            )
++            return topk_weights, topk_ids
++        elif scoring_func == "sqrtsoftplus":
++            return vllm_topk_softplus_sqrt(
++                topk_weights,
++                topk_ids,
++                token_expert_indices,
++                gating_output,
++                renormalize,
++                e_score_correction_bias,
++                input_tokens,
++                hash_indices_table,
++                routed_scaling_factor,
++                bias_vl=bias_vl,
++                image_sentinel_lo=image_sentinel_lo,
++            )
++        else:
++            raise ValueError(f"Unsupported scoring function: {scoring_func}")
++
++    elif rocm_aiter_ops.is_fused_moe_enabled() and scoring_func == "sigmoid":
++        M = hidden_states.size(0)
++        num_experts = gating_output.shape[-1]
++        num_expert_group = _aiter_get_num_expert_group(num_experts)
++        if topk >= num_expert_group:
++            topk_weights = torch.empty(
++                M, topk, dtype=torch.float32, device=hidden_states.device
++            )
++            topk_ids = torch.empty(
++                M,
++                topk,
++                dtype=torch.int32 if indices_type is None else indices_type,
++                device=hidden_states.device,
++            )
++            rocm_aiter_ops.biased_grouped_topk(
++                gating_output,
++                e_score_correction_bias,
++                topk_weights,
++                topk_ids,
++                num_expert_group=num_expert_group,
++                topk_group=num_expert_group,
++                need_renorm=renormalize,
++            )
++            if routed_scaling_factor != 1.0:
++                topk_weights *= routed_scaling_factor
++            return topk_weights, topk_ids
++
++    if scoring_func == "sqrtsoftplus":
++        M = hidden_states.size(0)
++        topk_weights = torch.empty(
++            M, topk, dtype=torch.float32, device=hidden_states.device
++        )
++        topk_ids = torch.empty(
++            M,
++            topk,
++            dtype=torch.int32 if indices_type is None else indices_type,
++            device=hidden_states.device,
++        )
++        token_expert_indices = torch.empty(
++            M, topk, dtype=torch.int32, device=hidden_states.device
++        )
++        return vllm_topk_softplus_sqrt(
++            topk_weights,
++            topk_ids,
++            token_expert_indices,
++            gating_output,
++            renormalize,
++            e_score_correction_bias,
++            input_tokens,
++            hash_indices_table,
++            routed_scaling_factor,
++            bias_vl=bias_vl,
++            image_sentinel_lo=image_sentinel_lo,
++        )
++
++    n_routed_experts = gating_output.shape[-1]
++    if scoring_func == "softmax":
++        scores = gating_output.softmax(dim=-1)
++    elif scoring_func == "sigmoid":
++        scores = gating_output.sigmoid()
++    else:
++        raise ValueError(f"Unsupported scoring function: {scoring_func}")
++    if e_score_correction_bias is not None:
++        scores_for_choice = scores.view(
++            -1, n_routed_experts
++        ) + e_score_correction_bias.unsqueeze(0)
++    else:
++        scores_for_choice = scores.view(-1, n_routed_experts)
++    image_mask = None
++    if bias_vl is not None and image_sentinel_lo > 0:
++        # Image tokens (five consecutive sentinel ids starting at
++        # image_sentinel_lo) select experts with bias_vl instead of
++        # e_score_correction_bias / the hash table. Ids above the sentinel
++        # block are regular special tokens and must not match.
++        assert input_tokens is not None, "bias_vl routing requires input_tokens"
++        image_mask = (
++            (input_tokens >= image_sentinel_lo) & (input_tokens < image_sentinel_lo + 5)
++        ).unsqueeze(-1)
++        text_bias = (
++            e_score_correction_bias
++            if e_score_correction_bias is not None
++            else torch.zeros_like(bias_vl)
++        )
++        row_bias = torch.where(image_mask, bias_vl, text_bias)
++        scores_for_choice = scores.view(-1, n_routed_experts) + row_bias
++    # For batch invariance, use sorted=True to ensure deterministic expert selection
++    if hash_indices_table is not None:
++        assert input_tokens is not None
++        if image_mask is None:
++            topk_indices = hash_indices_table[input_tokens]
++        else:
++            # Clamp sentinel rows (overwritten below) to keep the table
++            # lookup well-defined.
++            safe_ids = torch.where(image_mask.squeeze(-1), 0, input_tokens).to(
++                hash_indices_table.dtype
++            )
++            topk_indices = hash_indices_table[safe_ids]
++            vl_indices = torch.topk(scores_for_choice, k=topk, dim=-1)[1]
++            topk_indices = torch.where(
++                image_mask, vl_indices.to(topk_indices.dtype), topk_indices
++            )
++    else:
++        use_sorted = envs.VLLM_BATCH_INVARIANT
++        topk_indices = torch.topk(scores_for_choice, k=topk, dim=-1, sorted=use_sorted)[
++            1
++        ]
++    topk_weights = scores.gather(1, topk_indices)
++    if renormalize:
++        topk_weights = topk_weights / topk_weights.sum(dim=-1, keepdim=True)
++    topk_weights = topk_weights.to(torch.float32)
++    if routed_scaling_factor != 1.0:
++        topk_weights *= routed_scaling_factor
++    return topk_weights, topk_indices.to(
++        torch.int32 if indices_type is None else indices_type
++    )
++
++
++class FusedTopKBiasRouter(BaseRouter):
++    """Router using fused top-k with e_score_correction_bias."""
++
++    def __init__(
++        self,
++        top_k: int,
++        global_num_experts: int,
++        e_score_correction_bias: torch.Tensor | None = None,
++        renormalize: bool = True,
++        routed_scaling_factor: float = 1.0,
++        eplb_state: EplbLayerState | None = None,
++        *,
++        scoring_func: str = "sigmoid",
++        hash_indices_table: torch.Tensor | None = None,
++        num_fused_shared_experts: int = 0,
++        shared_expert_weight: float = 1.0,
++        bias_vl: torch.Tensor | None = None,
++        image_sentinel_lo: int = 0,
++    ):
++        super().__init__(
++            top_k=top_k,
++            global_num_experts=global_num_experts,
++            eplb_state=eplb_state,
++        )
++        self.e_score_correction_bias = e_score_correction_bias
++        self.renormalize = renormalize
++        self.scoring_func = scoring_func
++        self.routed_scaling_factor = routed_scaling_factor
++        self.scoring_func = scoring_func
++        self._hash_indices_table = hash_indices_table
++        # Vision bias: image sentinel tokens (five consecutive in-vocab ids
++        # starting at image_sentinel_lo) select experts with bias_vl instead
++        # of e_score_correction_bias / the hash table.
++        self.bias_vl = bias_vl
++        self.image_sentinel_lo = image_sentinel_lo
++        # Fused shared experts: append constant slots (ids immediately after
++        # the routed experts, [global, global+n)) routed to by every token at
++        # ``shared_expert_weight``, AFTER the routed top-k is renormalized.
++        self.num_fused_shared_experts = num_fused_shared_experts
++        self.shared_expert_weight = shared_expert_weight
++
++    @property
++    def routing_method_type(self) -> RoutingMethodType:
++        return get_routing_method_type(
++            scoring_func=self.scoring_func,
++            top_k=self.top_k,
++            renormalize=self.renormalize,
++            num_expert_group=None,
++            has_e_score_bias=True,
++            routed_scaling_factor=self.routed_scaling_factor,
++        )
++
++    def _compute_routing(
++        self,
++        hidden_states: torch.Tensor,
++        router_logits: torch.Tensor,
++        indices_type: torch.dtype | None,
++        *,
++        input_ids: torch.Tensor | None = None,
++    ) -> tuple[torch.Tensor, torch.Tensor]:
++        """Compute routing using fused top-k with bias."""
++        topk_weights, topk_ids = fused_topk_bias(
++            hidden_states=hidden_states,
++            gating_output=router_logits,
++            scoring_func=self.scoring_func,
++            e_score_correction_bias=self.e_score_correction_bias.data
++            if self.e_score_correction_bias is not None
++            else None,
++            topk=self.top_k,
++            renormalize=self.renormalize,
++            indices_type=indices_type,
++            input_tokens=input_ids,
++            hash_indices_table=self._hash_indices_table,
++            routed_scaling_factor=self.routed_scaling_factor,
++            bias_vl=self.bias_vl.data if self.bias_vl is not None else None,
++            image_sentinel_lo=self.image_sentinel_lo,
++        )
++
++        if self.num_fused_shared_experts > 0:
++            m = topk_ids.shape[0]
++            n = self.num_fused_shared_experts
++            # global_num_experts counts only the routed experts; the fused
++            # shared experts occupy the slots immediately after them, i.e. ids
++            # [global_num_experts, global_num_experts + n).
++            base = self.global_num_experts
++            shared_ids = torch.arange(
++                base, base + n, dtype=topk_ids.dtype, device=topk_ids.device
++            ).expand(m, n)
++            shared_w = torch.full(
++                (m, n),
++                self.shared_expert_weight,
++                dtype=topk_weights.dtype,
++                device=topk_weights.device,
++            )
++            topk_ids = torch.cat([topk_ids, shared_ids], dim=-1)
++            topk_weights = torch.cat([topk_weights, shared_w], dim=-1)
++
++        return topk_weights, topk_ids
+--- /dev/null
++++ b/overlay/vllm/model_executor/layers/fused_moe/router/fused_topk_router.py
+@@ -0,0 +1,184 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++from collections.abc import Callable
++
++import os
++
++import torch
++
++import vllm._custom_ops as ops
++import vllm.envs as envs
++from vllm.platforms import current_platform
++from vllm._aiter_ops import rocm_aiter_ops
++from vllm.distributed.eplb.eplb_state import EplbLayerState
++from vllm.forward_context import get_forward_context, is_forward_context_available
++from vllm.model_executor.layers.fused_moe.config import (
++    RoutingMethodType,
++    get_routing_method_type,
++)
++from vllm.model_executor.layers.fused_moe.router.base_router import BaseRouter
++
++
++def _get_padding_mask(num_tokens: int) -> torch.Tensor | None:
++    # Screen 1b pins XPU kernels 0.1.14.1: its alignment kernels do not
++    # reject negative router IDs. V2 marks every profile row as padding,
++    # which otherwise makes native top-k emit -1 for every expert slot.
++    # Route these rows normally; real rows retain the same native arithmetic.
++    # This also covers graph padding and MTP, independent of diagnostics.
++    if os.environ.get("B70_SCREEN1B") == "1" and current_platform.is_xpu():
++        return None
++    if envs.VLLM_MOE_SKIP_PADDING and is_forward_context_available():
++        is_padding = get_forward_context().is_padding
++        return is_padding[:num_tokens] if is_padding is not None else None
++    return None
++
++
++def vllm_topk_softmax(
++    topk_weights: torch.Tensor,
++    topk_indices: torch.Tensor,
++    token_expert_indices: torch.Tensor,
++    gating_output: torch.Tensor,
++    renormalize: bool = False,
++) -> tuple[torch.Tensor, ...]:
++    ops.topk_softmax(
++        topk_weights,
++        topk_indices,
++        token_expert_indices,
++        gating_output,
++        renormalize,
++        is_padding=_get_padding_mask(topk_indices.shape[0]),
++    )
++
++    return topk_weights, topk_indices
++
++
++def vllm_topk_sigmoid(
++    topk_weights: torch.Tensor,
++    topk_indices: torch.Tensor,
++    token_expert_indices: torch.Tensor,
++    gating_output: torch.Tensor,
++    renormalize: bool = False,
++) -> tuple[torch.Tensor, ...]:
++    ops.topk_sigmoid(
++        topk_weights,
++        topk_indices,
++        token_expert_indices,
++        gating_output,
++        renormalize,
++        is_padding=_get_padding_mask(topk_indices.shape[0]),
++    )
++
++    return topk_weights, topk_indices
++
++
++def dispatch_topk_softmax_func(
++    use_rocm_aiter: bool = False,
++) -> Callable[..., tuple[torch.Tensor, ...]]:
++    if use_rocm_aiter:
++        return rocm_aiter_ops.topk_softmax
++    return vllm_topk_softmax
++
++
++def dispatch_topk_sigmoid_func(
++    use_rocm_aiter: bool = False,
++) -> Callable[..., tuple[torch.Tensor, ...]]:
++    if use_rocm_aiter:
++        return rocm_aiter_ops.topk_sigmoid
++    return vllm_topk_sigmoid
++
++
++def fused_topk(
++    hidden_states: torch.Tensor,
++    gating_output: torch.Tensor,
++    topk: int,
++    renormalize: bool,
++    indices_type: torch.dtype | None = None,
++    scoring_func: str = "softmax",
++) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
++    assert hidden_states.size(0) == gating_output.size(0), "Number of tokens mismatch"
++
++    M, _ = hidden_states.size()
++
++    topk_weights = torch.empty(
++        M, topk, dtype=torch.float32, device=hidden_states.device
++    )
++    topk_ids = torch.empty(
++        M,
++        topk,
++        dtype=torch.int32 if indices_type is None else indices_type,
++        device=hidden_states.device,
++    )
++    token_expert_indices = torch.empty(
++        M, topk, dtype=torch.int32, device=hidden_states.device
++    )
++
++    if scoring_func == "softmax":
++        topk_func = dispatch_topk_softmax_func(
++            use_rocm_aiter=rocm_aiter_ops.is_fused_moe_enabled()
++        )
++        topk_weights, topk_ids = topk_func(
++            topk_weights, topk_ids, token_expert_indices, gating_output, renormalize
++        )
++
++        return topk_weights, topk_ids, token_expert_indices
++    elif scoring_func == "sigmoid":
++        topk_func = dispatch_topk_sigmoid_func(
++            use_rocm_aiter=rocm_aiter_ops.is_fused_moe_enabled()
++        )
++        topk_weights, topk_ids = topk_func(
++            topk_weights, topk_ids, token_expert_indices, gating_output, renormalize
++        )
++
++        return topk_weights, topk_ids, token_expert_indices
++    else:
++        raise ValueError(f"Unsupported scoring function: {scoring_func}")
++
++
++class FusedTopKRouter(BaseRouter):
++    """Default router using standard fused top-k routing."""
++
++    def __init__(
++        self,
++        top_k: int,
++        global_num_experts: int,
++        scoring_func: str = "softmax",
++        renormalize: bool = True,
++        eplb_state: EplbLayerState | None = None,
++    ):
++        super().__init__(
++            top_k=top_k,
++            global_num_experts=global_num_experts,
++            eplb_state=eplb_state,
++        )
++        self.renormalize = renormalize
++        self.scoring_func = scoring_func
++
++    @property
++    def routing_method_type(self) -> RoutingMethodType:
++        return get_routing_method_type(
++            scoring_func=self.scoring_func,
++            top_k=self.top_k,
++            renormalize=self.renormalize,
++            num_expert_group=None,
++            has_e_score_bias=False,
++        )
++
++    def _compute_routing(
++        self,
++        hidden_states: torch.Tensor,
++        router_logits: torch.Tensor,
++        indices_type: torch.dtype | None,
++        *,
++        input_ids: torch.Tensor | None = None,
++    ) -> tuple[torch.Tensor, torch.Tensor]:
++        """Compute routing using standard fused top-k."""
++        topk_weights, topk_ids, token_expert_indices = fused_topk(
++            hidden_states=hidden_states,
++            gating_output=router_logits,
++            topk=self.top_k,
++            renormalize=self.renormalize,
++            indices_type=indices_type,
++            scoring_func=self.scoring_func,
++        )
++
++        return topk_weights, topk_ids
 --- a/overlay/vllm/q38_expert_placement.py
 +++ b/overlay/vllm/q38_expert_placement.py
 @@ -110,6 +110,8 @@

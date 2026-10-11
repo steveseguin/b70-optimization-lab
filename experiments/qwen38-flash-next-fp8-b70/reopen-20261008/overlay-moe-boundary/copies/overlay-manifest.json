@@ -54,6 +54,8 @@
     "vllm/v1/worker/gpu_worker.py": "60b24532e657e4c67602890ba909ad8bf95db5e9a094804781d97aba4e40347b",
     "vllm/v1/worker/xpu_worker.py": "b976b96b49de5feafc3f750e0087fab62f336a1ec2751cab884edae10662666f",
     "vllm/model_executor/layers/fused_moe/moe_align_block_size.py": "ebb51d990d55f6ccec68c422e82b2bd34c40b166220907f224c427cce0647fea",
+    "vllm/model_executor/layers/fused_moe/router/fused_topk_bias_router.py": "38ea8e6bde1b1095135859ef198464486b73d9c75b58a27db2af2940c1d5e72f",
+    "vllm/model_executor/layers/fused_moe/router/fused_topk_router.py": "5036e5742bf3b44f1bf12b137aa192986391c46906df86032e8ea629c50fb2f9",
     "vllm/screen1b_moe_boundary.py": "1e31ffb9927c49cdcbea91c729ad94cad40237b4d46a1e8396b7b81b19379e7b"
   },
   "schema": "neural.download.screen1b-overlay.v1",
@@ -264,6 +266,14 @@
       "base_sha256": "c3f7fc2087836f0160a32ab99ceb1d8f6e87c793679da34dd672e225cb7fa31b",
       "sha256": "ebb51d990d55f6ccec68c422e82b2bd34c40b166220907f224c427cce0647fea"
     },
+    "vllm/model_executor/layers/fused_moe/router/fused_topk_bias_router.py": {
+      "base_sha256": "8fdc28cc248180ad4f11bb4bcda3df47926ec12665a0d84bb712fe83fc6b9376",
+      "sha256": "38ea8e6bde1b1095135859ef198464486b73d9c75b58a27db2af2940c1d5e72f"
+    },
+    "vllm/model_executor/layers/fused_moe/router/fused_topk_router.py": {
+      "base_sha256": "1c80f4af4d781fd66b12aa6a7a0fd30082bc521df40f1252987a8ac4c0bef51c",
+      "sha256": "5036e5742bf3b44f1bf12b137aa192986391c46906df86032e8ea629c50fb2f9"
+    },
     "vllm/screen1b_moe_boundary.py": {
       "base_sha256": null,
       "sha256": "1e31ffb9927c49cdcbea91c729ad94cad40237b4d46a1e8396b7b81b19379e7b"
@@ -331,6 +341,7 @@
     "embedding": "certified input embedding selected for generic UVA, shared MTP alias counted once",
     "driver_allocation": "NEOReadDebugKeys=1 EnableDeferBacking=0 retained; Flash-Next shadow-saving claim withdrawn after attempt 6; pinned host reservation remains.",
     "pinned_allocator": "Torch 2.13: all allocator environment aliases set pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1 before import; exact large pins, small cached pins; source-derived sizes, runtime fit unqualified",
+    "router_padding": "UNQUALIFIED CPU-tested Screen 1b XPU compatibility fix: route padding normally before native alignment; active-row arithmetic unchanged; boundary remains strict",
     "moe_boundary": "UNQUALIFIED default-off SCREEN1B_MOE_BOUNDARY=1 diagnostic; TP4/EP4 profile only; watcher-gated queue drains, raw/remapped routing, owned rows/workspaces and eleven pointer receipts; nonlocal zero-return precedes table access only when enabled; native USM/context unknown"
   }
 }

@@ -20,7 +20,7 @@
     },
     "overlay-manifest.json": {
       "before_sha256": "daf50d2391549a9fb5c03ee2cf3a69e763cc44e621fdaf35e4b06529c7142b69",
-      "after_sha256": "22d919835678571d7e7b05bc05dd53f2f8f53924b2890575b5024f2162d6c5f9"
+      "after_sha256": "2879f61968e86a79d13cbfdf3e14fdc951805cb87482878832c8a97937a510cb"
     },
     "overlay/vllm/model_executor/layers/fused_moe/experts/triton_moe.py": {
       "before_sha256": "855829b35cf8d230e8e7401a0df1cc54c5adc6adcfde27fd415f8f595fc0623f",
@@ -37,6 +37,14 @@
     "overlay/vllm/model_executor/layers/fused_moe/moe_align_block_size.py": {
       "before_sha256": null,
       "after_sha256": "ebb51d990d55f6ccec68c422e82b2bd34c40b166220907f224c427cce0647fea"
+    },
+    "overlay/vllm/model_executor/layers/fused_moe/router/fused_topk_bias_router.py": {
+      "before_sha256": null,
+      "after_sha256": "38ea8e6bde1b1095135859ef198464486b73d9c75b58a27db2af2940c1d5e72f"
+    },
+    "overlay/vllm/model_executor/layers/fused_moe/router/fused_topk_router.py": {
+      "before_sha256": null,
+      "after_sha256": "5036e5742bf3b44f1bf12b137aa192986391c46906df86032e8ea629c50fb2f9"
     },
     "overlay/vllm/q38_expert_placement.py": {
       "before_sha256": "ffe5c85153c9cbc31cab4798f198161aafc7b31407d7d20dbcfbfd2f9e5fcbe9",
@@ -182,6 +190,8 @@
     "worker_init_rehearsal.py": "c1730006398eb1457b5afdd0bd1f93c9996ed09fca8473cac295c24e09cb39ce"
   },
   "native_base_sources": {
-    "vllm/model_executor/layers/fused_moe/moe_align_block_size.py": "c3f7fc2087836f0160a32ab99ceb1d8f6e87c793679da34dd672e225cb7fa31b"
+    "vllm/model_executor/layers/fused_moe/moe_align_block_size.py": "c3f7fc2087836f0160a32ab99ceb1d8f6e87c793679da34dd672e225cb7fa31b",
+    "vllm/model_executor/layers/fused_moe/router/fused_topk_bias_router.py": "8fdc28cc248180ad4f11bb4bcda3df47926ec12665a0d84bb712fe83fc6b9376",
+    "vllm/model_executor/layers/fused_moe/router/fused_topk_router.py": "1c80f4af4d781fd66b12aa6a7a0fd30082bc521df40f1252987a8ac4c0bef51c"
   }
 }

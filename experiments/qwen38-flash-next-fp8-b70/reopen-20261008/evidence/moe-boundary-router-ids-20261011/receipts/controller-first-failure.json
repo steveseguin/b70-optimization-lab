@@ -1,0 +1,21 @@
+{
+  "schema": "screen1b.controller-failure.v1",
+  "component": "controller",
+  "phase": "startup live checks",
+  "failure": "RuntimeError: MoE boundary STOP/FAULT latched",
+  "secondary": false,
+  "unix": 1791695477.524408,
+  "monotonic": 12624.341966275,
+  "pid": 87579,
+  "traceback": "Traceback (most recent call last):\n  File \"/mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-first-cause-v4/screen.py\", line 719, in supervise_locked\n    check_live(run, journal_cutoff, calibrating=calibrating)\n  File \"/mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-first-cause-v4/screen.py\", line 887, in check_live\n    boundary_watcher_clear(run)\n  File \"/mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-first-cause-v4/screen.py\", line 383, in boundary_watcher_clear\n    require(not (run / \"FAULT\").exists() and not (run / \"STOP\").exists(),\n  File \"/mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-first-cause-v4/screen.py\", line 177, in require\n    raise RuntimeError(message)\nRuntimeError: MoE boundary STOP/FAULT latched\n",
+  "stop_requested": false,
+  "stop_reason": null,
+  "signal_sent": false,
+  "watchdog_reason": null,
+  "watcher_observation": {
+    "checked_unix": 1791695477.5146065
+  },
+  "STOP": "MoE boundary rank=3 pid=127: router IDs outside [0,512)\n",
+  "FAULT": null,
+  "watcher.json": "{\"boot_id\": \"13858eef-ec68-44ea-a67c-9444933b7100\", \"journal_readable\": true, \"monitoring_cutoff_unix\": 1791694641.0, \"new_fault_lines\": [], \"passed\": true, \"read_started_unix\": 1791695477.0909545, \"updated_unix\": 1791695477.282609}\n"
+}

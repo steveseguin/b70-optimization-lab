@@ -68,6 +68,7 @@ def artifacts():
     for rel, raw in base.items():
         if not rel.startswith("overlay/") and rel != "overlay-manifest.json":
             manifest["support_files"][rel] = sha(payload.get(rel, raw))
+    manifest["semantics"]["router_padding"] = "UNQUALIFIED CPU-tested Screen 1b XPU compatibility fix: route padding normally before native alignment; active-row arithmetic unchanged; boundary remains strict"
     manifest["semantics"]["moe_boundary"] = (
         "UNQUALIFIED default-off SCREEN1B_MOE_BOUNDARY=1 diagnostic; TP4/EP4 profile only; "
         "watcher-gated queue drains, raw/remapped routing, owned rows/workspaces and eleven pointer receipts; "

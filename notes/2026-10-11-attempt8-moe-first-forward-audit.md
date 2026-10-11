@@ -1,5 +1,18 @@
 # Attempt 8: first MoE forward, memory ownership and repair plan
 
+**October 11, boundary-window verdict update:** all four raw router tensors
+were 640 signed `-1` padding IDs; native alignment/remapping had not run.
+The V2 dummy batch intentionally marks every row as padding, and the pinned
+native aligner lacks the negative-ID guard already present in the older lab
+runtime. Hypothesis 1 now has an observed input and a specific unsafe-write
+mechanism; rank-specific/global-local/table versions of hypothesis 4 are not
+supported by this refusal. The production router compatibility fix is applied
+and passes 143 CPU tests; its next native proof retains the strict boundary.
+[Evidence, exact source lines, identity argument and commands](2026-10-11-moe-boundary-caught-router-ids.md).
+The original audit below is preserved as the pre-boundary assessment; its
+“unknown” verdict and “no patch applied” statements describe that earlier state.
+
+
 **The cause is still unknown. The first investigation should isolate a bad
 device write in the production routing/alignment/workspace path, with native
 dispatch failure and VM closure as a close competing explanation. An
