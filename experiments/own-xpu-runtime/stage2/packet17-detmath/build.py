@@ -1,19 +1,59 @@
 """Reproduce host gates and compile device windows; never execute device code.
 The v1 fixture binary only writes under this packet's build tree.
 """
-import argparse,gzip,hashlib,json,os,shutil,subprocess,sys,time
+import argparse,gzip,hashlib,json,os,shutil,subprocess,sys,time,shlex
 from pathlib import Path
 P=Path(__file__).resolve().parent;ROOT=P.parents[3];B=P/'build'
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def run(args,timeout=1800):
  print(' '.join(map(str,args)),flush=True)
  subprocess.run(list(map(str,args)),check=True,timeout=timeout)
+def assert_device_link_options(native):
+ required={'-fsycl','-foffload-fp32-prec-div','-foffload-fp32-prec-sqrt'}
+ commands={}
+ for path in sorted((native/'CMakeFiles').glob('*/link.txt')):
+  tokens=shlex.split(path.read_text())
+  target=path.parent.name.removesuffix('.dir')
+  if '-fsycl' in tokens or target in ('device-test','census-device'):
+   missing=required-set(tokens)
+   if missing:raise ValueError(f'{target} link command missing {sorted(missing)}')
+   commands[target]=tokens
+ if not {'device-test','census-device'} <= commands.keys():
+  raise ValueError('missing device target link commands')
+ return commands
+
+def verify_reusable_host_hashes():
+ r=json.loads((P/'host-hashes-receipt.json').read_text())
+ for path,key in [(B/'host-hashes.txt','hashes_sha256'),(P/'detmath.hpp','detmath_sha256'),(B/'host-hashes-generator','binary_sha256')]:
+  if sha(path)!=r[key]:raise ValueError(f'host hash input changed: {path}')
+ snapshot=P/r.get('source_snapshot','census.cpp')
+ if sha(snapshot)!=r['source_sha256']:raise ValueError('host hash source snapshot changed')
+
+def reusable_oracle():
+ path=P/'oracle-build-receipt.json'
+ if not path.exists() or not (B/'oracle/oracle').exists():return False
+ r=json.loads(path.read_text())
+ return sha(B/'oracle/oracle')==r['binaries']['oracle'] and all(sha(ROOT/name)==digest for name,digest in r['sources'].items())
+
 def main():
- ap=argparse.ArgumentParser();ap.add_argument('--hashes',action='store_true',help='compute all2^32 exp/log CPU hashes');ap.add_argument('--jobs',type=int,default=2);a=ap.parse_args()
+ ap=argparse.ArgumentParser();ap.add_argument('--hashes',action='store_true',help='compute all2^32 exp/log CPU hashes');ap.add_argument('--native-only',action='store_true',help='rebuild native targets, reuse sealed host gates and oracle');ap.add_argument('--jobs',type=int,default=2);a=ap.parse_args()
  assert os.getpriority(os.PRIO_PROCESS,0)==19 and os.environ.get('OMP_NUM_THREADS')=='2'
  assert 1<=a.jobs<=2 and not B.is_symlink()
  assert not (B/'device-fault-latch.json').exists() and not list(B.glob('card*-W-*')),'preserve admitted device evidence'
  B.mkdir(exist_ok=True)
+ if a.native_only:
+  previous=json.loads((P/'build-receipt.json').read_text())
+  # Link repair may change the builder/CMake/tests, but not qualified host code.
+  for name,digest in previous['hashes'].items():
+   if Path(name).suffix in ('.cpp','.hpp') and sha(ROOT/name)!=digest:
+    raise ValueError('native-only requires unchanged host sources: '+name)
+  verify_reusable_host_hashes()
+  if not reusable_oracle():raise ValueError('CPU oracle changed')
+  run(['cmake','-S',P,'-B',B/'native','-DCMAKE_CXX_COMPILER=/opt/intel/oneapi/compiler/2026.0/bin/icpx','-DNATIVE=ON'])
+  assert_device_link_options(B/'native')
+  run(['cmake','--build',B/'native','-j'+str(a.jobs)])
+  run([sys.executable,'-B',P/'seal.py'])
+  return
  run([sys.executable,'-B',P/'generate_rope.py'])
  if not (B/'fixtures').exists():
   run([sys.executable,'-B',P.parent/'packet15-nongemv/fixtures.py','--output',B/'fixtures'])
@@ -27,7 +67,8 @@ def main():
  run(['g++','-std=c++20','-O2','-fno-fast-math','-ffp-contract=off','-DHOST_ONLY',P.parent/'packet15-nongemv/runner.cpp','-o',B/'v1-host'])
  run([B/'v1-host',v1,B/'v1-host.json','--generate-core'])
  for compiler,folder in [('g++','gnu'),('/opt/intel/oneapi/compiler/2026.0/bin/icpx','native')]:
-  run(['cmake','-S',P,'-B',B/folder,'-DCMAKE_CXX_COMPILER='+compiler]+(['-DNATIVE=ON'] if folder=='native' else []))
+  run(['cmake','-S',P,'-B',B/folder,'-DCMAKE_CXX_COMPILER='+str(Path(shutil.which(compiler)).resolve())]+(['-DNATIVE=ON'] if folder=='native' else []))
+  if folder=='native':assert_device_link_options(B/folder)
   run(['cmake','--build',B/folder,'-j'+str(a.jobs)])
   tag='gnu' if folder=='gnu' else 'icpx'
   run([B/folder/'host-test',B/'fixtures',P/(tag+'-host.json'),'--generate-core'])
@@ -41,6 +82,8 @@ def main():
   shutil.copyfile(B/'gnu/census-host',B/'host-hashes-generator')
   r['sanity']=json.loads((B/'host-hashes.txt.sanity.json').read_text())
   (P/'host-hashes-receipt.json').write_text(json.dumps(r,indent=2)+'\n')
- run([sys.executable,'-B',P/'build_oracle.py'])
+ if not a.hashes:verify_reusable_host_hashes()
+ if not reusable_oracle():run([sys.executable,'-B',P/'build_oracle.py'])
+ else:print('Reusing hash-verified CPU oracle; no oracle execution',flush=True)
  run([sys.executable,'-B',P/'seal.py'])
 if __name__=='__main__':main()

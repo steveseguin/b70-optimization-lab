@@ -6,3 +6,5 @@
 
 Packet17 v2 is a candidate arithmetic identity. Neither a successful native
 compile nor matching host fixtures closes its pending device proof obligations.
+
+| offload precision options only on the compile line | [Same-object link A/B](evidence/20261011-wb-a-link-flags/README.md): plain link differs for log-v2 at 0x3f7ffffe; precise link matches all 2^32 inputs for exp-v2 and log-v2. | Both options must be on compile and link commands; generated-link assertion and fresh device gates required. |

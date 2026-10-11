@@ -46,3 +46,11 @@ run, so it is evidence that the graph retired correctly, not temporary scratch.
 | `incident-retrospective/progress.jsonl.gz` | 1712886 | `2cde3378959d5f78b4585f398d5c5883b5c7dd8d79cb165ad9d5e0140f94a3f3` |
 | `incident-retrospective/teardown.json` | 8808288 | `14171f0e51bfbedfe4c1cd96513aa986e5910141840cbd0193eacb224b247fa0` |
 | `incident-retrospective/timings.jsonl.gz` | 2774144 | `d55761cce785db2527bc9e94f17e1901c03adad654b897305a39363dbf817c19` |
+
+## Link repair attempt-a archive
+
+`evidence/20261011-wb-a-link-flags/` retains the coordinator forensic sources,
+link comparisons, and the original failed window and latch. The full census
+JSONL (over 1 MiB) is required to locate the first mismatching chunk and retain
+all preceding successes; restore its exact bytes from Git. These are preserved
+evidence, not scratch. No original was deleted during the move out of build/.

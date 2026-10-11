@@ -78,3 +78,13 @@ identity, with exhaustive exp/log hashes, all three fixture gates and two fresh
 owners. Preserve any failure as evidence, latch it and do not retry. Then use
 the frozen v2 CPU oracle for real-model device layer/state comparisons before
 integration or promotion. The broader runtime lane remains open.
+
+## October 11 link precision repair (CPU only)
+
+The coordinator's [attempt-a evidence](evidence/20261011-wb-a-link-flags/README.md)
+shows that both precise divide and precise sqrt flags must also be on the link
+command. Both device targets now have them, and the builder checks every
+generated SYCL link command before compiling. The existing exhaustive host
+hashes and CPU oracle are hash-verified and reused. Attempt-a originals are
+preserved under that evidence folder. No device ran in this repair task.
+W-B is the next coordinator window; W-A host-work relocation follows separately.

@@ -7,6 +7,7 @@ import subprocess
 import tempfile
 import unittest
 from unittest.mock import Mock, patch
+import build as packet_build
 import device_window as w
 import summarize_census as census_summary
 
@@ -39,6 +40,27 @@ class WindowTests(unittest.TestCase):
         for p in reversed(self.patches):
             p.stop()
         self.temp.cleanup()
+
+    def test_device_link_options_required_on_every_device_target(self):
+        native = self.root / 'native'
+        paths = []
+        flags = '-fsycl -foffload-fp32-prec-div -foffload-fp32-prec-sqrt'
+        for target in ('device-test', 'census-device', 'future-device'):
+            path = native / 'CMakeFiles' / (target + '.dir') / 'link.txt'
+            path.parent.mkdir(parents=True)
+            path.write_text('icpx ' + flags + ' object.o -o ' + target)
+            paths.append(path)
+        self.assertEqual(len(packet_build.assert_device_link_options(native)), 3)
+        for path in paths:
+            original = path.read_text()
+            for flag in ('-foffload-fp32-prec-div', '-foffload-fp32-prec-sqrt'):
+                path.write_text(original.replace(flag, ''))
+                with self.assertRaisesRegex(ValueError, 'link command missing'):
+                    packet_build.assert_device_link_options(native)
+            path.write_text(original)
+        paths[0].unlink()
+        with self.assertRaisesRegex(ValueError, 'missing device target'):
+            packet_build.assert_device_link_options(native)
 
     def test_missing_libraries_fail_before_latch_or_output(self):
         missing = subprocess.CompletedProcess([], 0, 'libsycl.so => not found\n', '')

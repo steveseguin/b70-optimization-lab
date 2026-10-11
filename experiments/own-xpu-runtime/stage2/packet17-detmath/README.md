@@ -1,6 +1,6 @@
 # Packet 17 — arithmetic identity v2
 
-CPU-only preparation. **No device ran in this packet.** The identity is
+CPU-only preparation. **No device ran in this preparation task.** The identity is
 `iq3-p17-detmath-v2`. Host agreement is evidence, not device qualification.
 The declared GEMV order remains `r234-sg32-split4-bf16`. The model is the
 Unsloth Qwen3.8 Flash-Next UD-IQ3_XXS quantized compressed version, with its
@@ -170,3 +170,13 @@ including steps 11 and 12, agree. Therefore v2 is an **output-changing arithmeti
 revision relative to v1**, not a lossless replacement for v1. It remains a
 candidate identity requiring the owner's quality judgement before adoption;
 none of the host or prepared device gates overrides this difference.
+
+## October 11 link precision repair (CPU only)
+
+The coordinator's [attempt-a evidence](evidence/20261011-wb-a-link-flags/README.md)
+shows that both precise divide and precise sqrt flags must also be on the link
+command. Both device targets now have them, and the builder checks every
+generated SYCL link command before compiling. The existing exhaustive host
+hashes and CPU oracle are hash-verified and reused. Attempt-a originals are
+preserved under that evidence folder. No device ran in this repair task.
+W-B is the next coordinator window; W-A host-work relocation follows separately.

@@ -13,10 +13,8 @@ From the repository root, after the coordinator has sourced
 `/opt/intel/oneapi/setvars.sh`:
 
 ```sh
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B experiments/own-xpu-runtime/stage2/packet17-detmath/device_window.py --check --mode W-A --card 3 --output experiments/own-xpu-runtime/stage2/packet17-detmath/build/card3-wa-a
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B experiments/own-xpu-runtime/stage2/packet17-detmath/device_window.py --authorized-device-window --mode W-A --card 3 --seconds 14400 --output experiments/own-xpu-runtime/stage2/packet17-detmath/build/card3-wa-a
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B experiments/own-xpu-runtime/stage2/packet17-detmath/device_window.py --check --mode W-B --card 3 --output experiments/own-xpu-runtime/stage2/packet17-detmath/build/card3-wb-a
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B experiments/own-xpu-runtime/stage2/packet17-detmath/device_window.py --authorized-device-window --mode W-B --card 3 --seconds 7200 --output experiments/own-xpu-runtime/stage2/packet17-detmath/build/card3-wb-a
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B experiments/own-xpu-runtime/stage2/packet17-detmath/device_window.py --check --mode W-B --card 3 --output experiments/own-xpu-runtime/stage2/packet17-detmath/build/card3-wb-b
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B experiments/own-xpu-runtime/stage2/packet17-detmath/device_window.py --authorized-device-window --mode W-B --card 3 --seconds 600 --output experiments/own-xpu-runtime/stage2/packet17-detmath/build/card3-wb-b
 ```
 
 These are diagnostic device jobs, not model servers. Launch the wrapper through
@@ -133,3 +131,5 @@ This packet does not source it or execute a device program. A missing `ldd`
 library fails before output/latch creation; supply the required environment and
 rerun the read-only `--check` before admission. Do not reset a fault latch merely
 to run the next window. An existing fault needs coordinator disposition.
+
+Run W-B first (planning allowance: a few minutes, 600-second ceiling). W-A is being rebuilt to prepare host references before card admission; its final commands follow in the next packet update. No device ran in this repair task.

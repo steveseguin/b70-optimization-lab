@@ -1,0 +1,174 @@
+// Original packet17 census. HOST_ONLY builds cannot discover or open a device.
+#include "detmath.hpp"
+#include <bit>
+#include <chrono>
+#include <cmath>
+#include <csignal>
+#include <cstdint>
+#include <ctime>
+#include <fstream>
+#include <iostream>
+#include <iomanip>
+#include <limits>
+#include <stdexcept>
+#include <string>
+#include <thread>
+#include <vector>
+#ifndef HOST_ONLY
+#include <sycl/sycl.hpp>
+#endif
+namespace census {
+volatile std::sig_atomic_t stop_requested=0;
+void stop(int){stop_requested=1;}
+uint64_t mix(uint64_t x){x^=x>>30;x*=0xbf58476d1ce4e5b9ULL;x^=x>>27;x*=0x94d049bb133111ebULL;return x^(x>>31);}
+float value(uint32_t u){return std::bit_cast<float>(u);}
+uint32_t bits(float x){return std::bit_cast<uint32_t>(x);}
+enum Op {exp_native,log_native,sqrt_native,rsqrt_native,recip_native,sin_native,cos_native,pow_rope,rsqrt_barrier,rsqrt_corrected,division,mul_add,fused,separate,exp_v2,log_v2};
+const char* names[]={"expf","logf","sqrtf","rsqrt-plain","reciprocal","sinf","cosf","pow-rope","rsqrt-barrier","rsqrt-corrected","division","mul-add","fma","separate","exp-v2","log-v2"};
+// A volatile integer round-trip makes the alternate spelling visible in source.
+// Only the W-A result can decide whether the compiler also respects its intent.
+float barrier(float x){volatile uint32_t u=bits(x);return value(u);}
+float evaluate(int op,float a,float b=1.f,float c=0.f){
+ switch(op){
+ case exp_native:return std::exp(a);case log_native:return std::log(a);
+ case sqrt_native:return std::sqrt(a);case rsqrt_native:return 1.f/std::sqrt(a);
+ case recip_native:return 1.f/a;case sin_native:return std::sin(a);case cos_native:return std::cos(a);
+ case pow_rope:return std::pow(1.e7f,a);
+ case rsqrt_barrier:return 1.f/barrier(std::sqrt(a));
+ case rsqrt_corrected:return detmath::rsqrt_corrected(a);
+ case division:return a/b;case mul_add:return a*b+c;case fused:return std::fma(a,b,c);
+ case separate:return barrier(a*b)+c;case exp_v2:return detmath::exp(a);case log_v2:return detmath::log(a);
+ }return value(0x7fc00000u);
+}
+uint32_t input(uint64_t i,unsigned domain_bits){
+ if(domain_bits==32)return uint32_t(i);
+ // One input from each 16-adjacent-bit-pattern stratum at the required 2^28.
+ unsigned shift=32-domain_bits;uint32_t mask=uint32_t((uint64_t(1)<<shift)-1);
+ return uint32_t(i<<shift)|(uint32_t(mix(i))&mask);
+}
+void triple(uint64_t i,float& a,float& b,float& c){
+ a=value(uint32_t(mix(3*i+0x31415926)));b=value(uint32_t(mix(3*i+0x27182818)));c=value(uint32_t(mix(3*i+0x16180339)));
+ if((i&3)==0){a=value((bits(a)&0x807fffffu)|0x3f000000u);b=value((bits(b)&0x807fffffu)|0x3f000000u);c=-barrier(a*b);}
+ if((i&3)==1){a=value((bits(a)&0x807fffffu)|0x3f000000u);b=value((bits(b)&0x807fffffu)|0x3f000000u);c=value(bits(-barrier(a*b))+1);}
+}
+uint64_t distance(uint32_t a,uint32_t b){auto key=[](uint32_t u){return (u&0x80000000u)?~u:(u^0x80000000u);};uint64_t x=key(a),y=key(b);return x>y?x-y:y-x;}
+struct Stats {uint64_t sum=0,xor_hash=0,different=0,both_nan_different=0,device_vs_separate=0,device_vs_fma=0,hist[34]{};};
+void add(Stats& s,uint32_t out,uint32_t expected,uint64_t index){uint64_t h=mix((uint64_t(out)<<32)^index);s.sum+=h;s.xor_hash^=h;s.different+=out!=expected;s.both_nan_different+=(out!=expected)&&((out&0x7fffffff)>0x7f800000u&&(expected&0x7fffffff)>0x7f800000u);uint64_t d=distance(out,expected);unsigned bin=0;while(d){++bin;d>>=1;}++s.hist[bin];}
+void merge(Stats& a,const Stats& b){a.sum+=b.sum;a.xor_hash^=b.xor_hash;a.different+=b.different;a.both_nan_different+=b.both_nan_different;a.device_vs_separate+=b.device_vs_separate;a.device_vs_fma+=b.device_vs_fma;for(int j=0;j<34;++j)a.hist[j]+=b.hist[j];}
+struct Trace {uint32_t op,a,b,c;};
+static_assert(sizeof(Trace)==16);
+std::vector<Trace> traces(const std::string& path){std::ifstream f(path,std::ios::binary|std::ios::ate);if(!f)throw std::runtime_error("fixture trace missing");auto size=f.tellg();if(size<=0||size%16||size>1024LL*1024*1024)throw std::runtime_error("trace size");std::vector<Trace> t(size/16);f.seekg(0);f.read(reinterpret_cast<char*>(t.data()),size);if(!f)throw std::runtime_error("trace short");return t;}
+void row(std::ostream& out,int op,uint64_t start,uint64_t count,const Stats&s,const char* kind,double seconds){
+ const char* function=std::string(kind)=="rope-arguments"?"pow-sin-cos-rope":names[op];
+ out<<"{\"kind\":\""<<kind<<"\",\"function\":\""<<function<<"\",\"start\":"<<start<<",\"count\":"<<count<<",\"sum64\":"<<s.sum<<",\"xor64\":"<<s.xor_hash<<",\"seconds\":"<<seconds;
+ if(std::string(kind)=="v2-exhaustive")out<<",\"comparison\":\"dual-chunk-hash-only\"";
+ else {out<<",\"different\":"<<s.different<<",\"both_nan_different\":"<<s.both_nan_different<<",\"device_vs_separate\":"<<s.device_vs_separate<<",\"device_vs_fma\":"<<s.device_vs_fma<<",\"ulp_histogram\":[";for(int j=0;j<34;++j)out<<(j?",":"")<<s.hist[j];out<<"]";}
+ out<<"}\n";
+}
+}
+int main(int argc,char**argv){using namespace census;std::signal(SIGTERM,stop);std::signal(SIGINT,stop);
+ try{
+ if(argc<6)throw std::runtime_error("usage: census MODE BITS CHUNK OUTPUT EXTRA [CARD]; host-hashes EXTRA unused; native EXTRA fixture-inputs.bin; verify EXTRA hashes.txt");
+ std::string mode=argv[1];unsigned domain_bits=std::stoul(argv[2]);uint64_t chunk=std::stoull(argv[3]);std::string extra=argv[5];
+ if(domain_bits<8||domain_bits>32||chunk<64||chunk>262144||chunk%64)throw std::runtime_error("invalid bounds");
+ std::ofstream out(argv[4]);if(!out)throw std::runtime_error("output open");
+ if(mode=="host-hashes"){
+  if(domain_bits!=32)throw std::runtime_error("W-B requires every binary32 bit pattern");
+  unsigned workers=extra=="2"?2:1;
+  std::ofstream sanity(std::string(argv[4])+".sanity.json");
+  sanity<<"{\"authority\":\"glibc sanity only; not true-value authority\",\"threads\":"<<workers<<",\"inputs_per_function\":4294967296,\"functions\":[";
+  for(int op: {int(exp_v2),int(log_v2)}){
+   struct Accuracy {uint64_t finite_differences=0,nan_differences=0,special_differences=0,max_ulp=0,monotonic_failures=0;uint32_t worst=0;};
+   uint64_t count=((1ULL<<32)+chunk-1)/chunk;std::vector<Stats> hashes(count);Accuracy accuracy[2];
+   auto began=std::chrono::steady_clock::now();
+   auto worker=[&](unsigned id){auto& acc=accuracy[id];for(uint64_t block=id;block<count;block+=workers){if(stop_requested)return;uint64_t begin=block*chunk,n=std::min<uint64_t>(chunk,(1ULL<<32)-begin);Stats h;uint32_t prior=bits(evaluate(op,value(uint32_t(begin?begin-1:0))));for(uint64_t j=0;j<n;++j){uint32_t u=uint32_t(begin+j);float x=value(u);uint32_t v=bits(evaluate(op,x));uint32_t ref=bits(op==exp_v2?std::exp(x):std::log(x));uint64_t fingerprint=mix((uint64_t(v)<<32)^(begin+j));h.sum+=fingerprint;h.xor_hash^=fingerprint;
+    uint32_t av=v&0x7fffffff,ar=ref&0x7fffffff;
+    if(v!=ref){if(av>0x7f800000u||ar>0x7f800000u)++acc.nan_differences;else if(av==0x7f800000u||ar==0x7f800000u)++acc.special_differences;else {++acc.finite_differences;uint64_t ulp=distance(v,ref);if(ulp>acc.max_ulp){acc.max_ulp=ulp;acc.worst=u;}}}
+    if(u!=0&&u!=0x80000000u){if(u<0x7f800000u&&value(v)<value(prior))++acc.monotonic_failures;if(op==exp_v2&&u>0x80000000u&&u<0xff800000u&&value(v)>value(prior))++acc.monotonic_failures;}
+    prior=v;
+   }hashes[block]=h;}};
+   if(workers==1)worker(0);else {std::thread a(worker,0),b(worker,1);a.join();b.join();}
+   if(stop_requested)throw std::runtime_error("stopped before complete host hashes");
+   for(uint64_t block=0;block<count;++block){uint64_t begin=block*chunk,n=std::min<uint64_t>(chunk,(1ULL<<32)-begin);auto h=hashes[block];out<<op<<' '<<begin<<' '<<n<<' '<<h.sum<<' '<<h.xor_hash<<'\n';}out.flush();
+   Accuracy total=accuracy[0];for(unsigned id=1;id<workers;++id){auto a=accuracy[id];total.finite_differences+=a.finite_differences;total.nan_differences+=a.nan_differences;total.special_differences+=a.special_differences;total.monotonic_failures+=a.monotonic_failures;if(a.max_ulp>total.max_ulp){total.max_ulp=a.max_ulp;total.worst=a.worst;}}
+   sanity<<(op==log_v2?",":"")<<"{\"function\":\""<<names[op]<<"\",\"finite_differences\":"<<total.finite_differences<<",\"nan_encoding_differences\":"<<total.nan_differences<<",\"special_differences\":"<<total.special_differences<<",\"max_glibc_ulp_distance\":"<<total.max_ulp<<",\"worst_input_bits\":"<<total.worst<<",\"monotonic_failures\":"<<total.monotonic_failures<<",\"seconds\":"<<std::chrono::duration<double>(std::chrono::steady_clock::now()-began).count()<<"}";sanity.flush();
+  }sanity<<"],\"complete\":true}\n";return 0;
+ }
+#ifdef HOST_ONLY
+ throw std::runtime_error("host binary supports host-hashes only; no device code compiled");
+#else
+ if(argc!=7||(mode!="native"&&mode!="verify"&&mode!="diff"))throw std::runtime_error("native mode/card missing");
+ if(mode=="native"&&domain_bits!=32)throw std::runtime_error("native census starts exhaustive; pilot selects bounded alternative");
+ if(mode=="verify"&&domain_bits!=32)throw std::runtime_error("v2 equality requires all 2^32 patterns");
+ int card=std::stoi(argv[6]);std::vector<sycl::device> devices;
+ // Match ownrt::cards() exactly: Level Zero platforms, then each GPU in order.
+ for(const auto& platform:sycl::platform::get_platforms())if(platform.get_backend()==sycl::backend::ext_oneapi_level_zero)for(const auto& device:platform.get_devices(sycl::info::device_type::gpu))devices.push_back(device);
+ if(card<0||size_t(card)>=devices.size())throw std::runtime_error("Level Zero card index");
+ sycl::queue q(devices[card],sycl::property::queue::enable_profiling{});
+ out<<"{\"device_executed\":true,\"card\":"<<card<<",\"backend\":\"ext_oneapi_level_zero\",\"selector_policy\":\"ownrt-cards-order\",\"device_name\":"<<std::quoted(devices[card].get_info<sycl::info::device::name>())<<",\"platform_name\":"<<std::quoted(devices[card].get_platform().get_info<sycl::info::platform::name>())<<"}\n";out.flush();
+ uint32_t* reference=sycl::malloc_shared<uint32_t>(chunk,q);Trace* arguments=sycl::malloc_shared<Trace>(chunk,q);Stats* partial=sycl::malloc_shared<Stats>((chunk+63)/64,q);if(!reference||!arguments||!partial)throw std::runtime_error("allocation");
+ unsigned active_bits=domain_bits;
+ auto submit=[&](int op,uint64_t start,uint64_t n,bool explicit_args){if(stop_requested)throw std::runtime_error("cooperative stop");auto event=q.parallel_for(sycl::range<1>((n+63)/64),[=](sycl::id<1> item){Stats s;uint64_t first=item[0]*64;for(uint64_t j=first;j<std::min<uint64_t>(first+64,n);++j){float a,b=1,c=0;int selected=op;if(explicit_args){auto t=arguments[j];selected=int(t.op);a=value(t.a);b=value(t.b);c=value(t.c);}else a=value(input(start+j,active_bits));uint32_t v=bits(evaluate(selected,a,b,c));add(s,v,reference[j],start+j);if(selected>=mul_add&&selected<=separate){s.device_vs_separate+=v!=bits(evaluate(separate,a,b,c));s.device_vs_fma+=v!=bits(evaluate(fused,a,b,c));}}partial[item[0]]=s;});
+  auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(2);while(event.get_info<sycl::info::event::command_execution_status>()!=sycl::info::event_command_status::complete){if(std::chrono::steady_clock::now()>deadline)throw std::runtime_error("submission exceeded 2 second deadline");std::this_thread::sleep_for(std::chrono::milliseconds(1));}event.wait_and_throw();double seconds=(event.get_profiling_info<sycl::info::event_profiling::command_end>()-event.get_profiling_info<sycl::info::event_profiling::command_start>())*1.e-9;if(seconds>=.5)throw std::runtime_error("submission >=0.5 seconds; stop and preregister smaller chunk");Stats s;for(uint64_t j=0;j<(n+63)/64;++j)merge(s,partial[j]);return std::pair(s,seconds);
+ };
+ if(mode=="diff"){
+  // Coordinator diagnostic: the kernel lambda above is unchanged; only the host
+  // reference slab is filled so the in-kernel difference counters localize inputs.
+  int op=log_v2;uint64_t start0=std::stoull(extra,nullptr,0);
+  auto run=[&](uint64_t start,uint64_t n,int64_t delta){for(uint64_t j=0;j<n;++j)reference[j]=bits(evaluate(op,value(uint32_t(start+j))))+uint32_t(delta);return submit(op,start,n,false).first;};
+  Stats whole=run(start0,chunk,0);row(out,op,start0,chunk,whole,"diff-chunk",0);
+  uint64_t listed=0,bad_blocks=0,bad_inputs=0;
+  for(uint64_t b=0;b<chunk;b+=64){Stats t=run(start0+b,64,0);if(!t.different)continue;++bad_blocks;
+   for(uint64_t k=0;k<64;++k){Stats u=run(start0+b+k,1,0);if(!u.different)continue;++bad_inputs;if(listed>=40)continue;++listed;
+    uint32_t x=uint32_t(start0+b+k),host=bits(evaluate(op,value(x)));long found=0;bool ok=false;
+    for(long d=1;d<=4096&&!ok;++d)for(long sgn: {1L,-1L}){Stats w=run(x,1,sgn*d);if(!w.different){found=sgn*d;ok=true;break;}}
+    out<<"{\"kind\":\"diff-input\",\"x_bits\":"<<x<<",\"host_bits\":"<<host<<",\"device_minus_host_bits\":"<<(ok?std::to_string(found):std::string("\"beyond-4096\""))<<"}\n";out.flush();}}
+  // Variations on the single known input 0x3f7ffffe: reference contents, block size, position.
+  {uint32_t bad=0x3f7ffffeu,hostv=bits(evaluate(op,value(bad)));
+   auto hash1=[&](uint32_t v,uint64_t idx){return mix((uint64_t(v)<<32)^idx);};
+   auto probe=[&](const char* label,uint64_t start,uint64_t n,int fill){ // fill 0: zeros, 1: host values, 2: all ones
+    uint64_t hs=0,hx=0;for(uint64_t j=0;j<n;++j){uint32_t hv=bits(evaluate(op,value(uint32_t(start+j))));reference[j]=fill==0?0u:fill==1?hv:0xffffffffu;uint64_t h=hash1(hv,start+j);hs+=h;hx^=h;}
+    Stats t=submit(op,start,n,false).first;
+    out<<"{\"kind\":\"probe\",\"label\":\""<<label<<"\",\"start\":"<<start<<",\"n\":"<<n<<",\"reference_fill\":"<<fill<<",\"device_matches_host_hash\":"<<((t.sum==hs&&t.xor_hash==hx)?"true":"false")<<"}\n";out.flush();};
+   for(int fill: {1,0,2}){
+    probe("whole-chunk",0x3f7c0000u,chunk,fill);
+    probe("last-64",bad-62,64,fill);
+    probe("alone",bad,1,fill);
+    probe("pair",bad,2,fill);
+    probe("first-of-64",bad,64,fill);
+    probe("last-4096",0x3f7ff000u,4096,fill);
+   }
+   (void)hostv;
+  }
+  out<<"{\"kind\":\"diff-summary\",\"bad_blocks\":"<<bad_blocks<<",\"bad_inputs\":"<<bad_inputs<<"}\n";
+  // Same single inputs evaluated alone at chunk granularity 1 may compile identically; also report the full-chunk counter above.
+ }else if(mode=="verify"){
+  std::ifstream hashes(extra);if(!hashes)throw std::runtime_error("host hashes missing");uint64_t rows=0;for(int op: {int(exp_v2),int(log_v2)})for(uint64_t start=0;start<(1ULL<<32);start+=chunk){uint64_t n=std::min<uint64_t>(chunk,(1ULL<<32)-start),expected_start,expected_n,sum,xor_hash;int expected_op;if(!(hashes>>expected_op>>expected_start>>expected_n>>sum>>xor_hash)||expected_op!=op||expected_start!=start||expected_n!=n)throw std::runtime_error("hash coverage/order");for(uint64_t j=0;j<n;++j)reference[j]=0;auto [s,seconds]=submit(op,start,n,false);row(out,op,start,n,s,"v2-exhaustive",seconds);if(s.sum!=sum||s.xor_hash!=xor_hash)throw std::runtime_error("v2 host/device hash mismatch");++rows;}std::string trailing;if(hashes>>trailing)throw std::runtime_error("trailing host hashes");out<<"{\"complete\":true,\"rows\":"<<rows<<",\"inputs_per_function\":4294967296}\n";
+ }else{
+  // Pilot every function on 2^20 stratified encodings. Full 2^32 is required
+  // unless its measured host cost projects beyond the ten-CPU-minute budget.
+  for(int op=exp_native;op<=rsqrt_corrected;++op){if(op==pow_rope)continue;
+   int host_op=op>=rsqrt_barrier?rsqrt_native:op;
+   uint32_t pilot_hash=0;std::clock_t pilot_begin=std::clock();
+   for(uint64_t i=0;i<(1ULL<<20);++i)pilot_hash^=bits(evaluate(host_op,value(input(i,20))));
+   double pilot_cpu=double(std::clock()-pilot_begin)/CLOCKS_PER_SEC,predicted_cpu=pilot_cpu*4096;
+   active_bits=predicted_cpu>550?28:32;
+   out<<"{\"kind\":\"coverage-selection\",\"function\":\""<<names[op]<<"\",\"pilot_inputs\":1048576,\"pilot_cpu_seconds\":"<<pilot_cpu<<",\"predicted_full_cpu_seconds\":"<<predicted_cpu<<",\"selected_bits\":"<<active_bits<<",\"pilot_hash\":"<<pilot_hash<<",\"reason\":\""<<(active_bits==32?"full enumeration fits projected host budget":"projected full enumeration exceeds 550 CPU seconds; reserve budget for fixture operands")<<"\"}\n";
+   auto cpu_start=std::chrono::steady_clock::now();double host_seconds=pilot_cpu;
+   for(uint64_t start=0;start<(1ULL<<active_bits);start+=chunk){uint64_t n=std::min<uint64_t>(chunk,(1ULL<<active_bits)-start);std::clock_t t=std::clock();for(uint64_t j=0;j<n;++j){float a=value(input(start+j,active_bits));reference[j]=bits(evaluate(host_op,a));}host_seconds+=double(std::clock()-t)/CLOCKS_PER_SEC;if(host_seconds>600)throw std::runtime_error("host elementary budget exceeded before required coverage; no completed census");auto [s,seconds]=submit(op,start,n,false);row(out,op,start,n,s,active_bits==32?"native-exhaustive":"native-stratified",seconds);}
+   out<<"{\"function\":\""<<names[op]<<"\",\"host_cpu_seconds\":"<<host_seconds<<",\"wall_seconds\":"<<std::chrono::duration<double>(std::chrono::steady_clock::now()-cpu_start).count()<<"}\n";
+  }
+  // All 32 frequencies, 151 incident-window positions, and corresponding trig
+  // arguments. Fixture traces additionally cover every actual fixture operand.
+  uint64_t rope_n=3*32*151;for(uint64_t start=0;start<rope_n;start+=chunk){uint64_t n=std::min<uint64_t>(chunk,rope_n-start);for(uint64_t j=0;j<n;++j){uint64_t k=start+j;int op=(k%3)==0?pow_rope:((k%3)==1?sin_native:cos_native);uint64_t point=k/3;float y=-float(2*(point%32))/64.f;float a=op==pow_rope?y:float(point/32)*std::pow(1.e7f,y);arguments[j]={uint32_t(op),bits(a),0,0};reference[j]=bits(evaluate(op,a));}auto [rope,seconds]=submit(pow_rope,start,n,true);row(out,pow_rope,start,n,rope,"rope-arguments",seconds);}
+  for(int op=division;op<=separate;++op)for(uint64_t start=0;start<(1ULL<<26);start+=chunk){uint64_t n=std::min<uint64_t>(chunk,(1ULL<<26)-start);for(uint64_t j=0;j<n;++j){float a,b,c;triple(start+j,a,b,c);arguments[j]={uint32_t(op),bits(a),bits(b),bits(c)};reference[j]=bits(evaluate(op,a,b,c));}auto [s,seconds]=submit(op,start,n,true);row(out,op,start,n,s,"triples",seconds);}
+  auto trace=traces(extra);for(const auto& t:trace)if(t.op>separate)throw std::runtime_error("fixture trace opcode");
+  for(int op=exp_native;op<=separate;++op){std::vector<Trace> selected;for(const auto& t:trace)if(t.op==uint32_t(op))selected.push_back(t);
+   for(uint64_t start=0;start<selected.size();start+=chunk){uint64_t n=std::min<uint64_t>(chunk,selected.size()-start);for(uint64_t j=0;j<n;++j){arguments[j]=selected[start+j];auto t=arguments[j];int host_op=(t.op==rsqrt_barrier||t.op==rsqrt_corrected)?rsqrt_native:int(t.op);reference[j]=bits(evaluate(host_op,value(t.a),value(t.b),value(t.c)));}auto [s,seconds]=submit(op,start,n,true);row(out,op,start,n,s,"actual-fixture-inputs",seconds);}
+  }
+  out<<"{\"complete\":true,\"requested_unary_encodings\":"<<(1ULL<<domain_bits)<<",\"triples_per_operation\":67108864,\"fixture_calls\":"<<trace.size()<<"}\n";
+ }
+ sycl::free(partial,q);sycl::free(arguments,q);sycl::free(reference,q);return 0;
+#endif
+ }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
+}
