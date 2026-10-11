@@ -55,3 +55,33 @@ the "near its bound" stated in reading 3 above, which came from the 4-bit stand-
 
 Summed over the classes, kernels that do only this per-weight work would take the
 large GEMVs from about 27 ms to about 15 ms per token.
+
+## Correction, 23:40 UTC: the dense numbers above are warm-cache numbers
+
+Three in-model checks with a scratch copy of the runtime's expanded dense kernel
+(`in-model-scratch/`, patch included; two-card decode on cards 2+3, exact against the
+v2 oracle each time, per-class GPU time):
+
+| Change to the expanded dense kernel | gdn.qkv | gdn.z | qsa.qgate | logits |
+| --- | ---: | ---: | ---: | ---: |
+| as in the runtime | 100.6 µs | 61.9 | 118.2 | 2,137 |
+| block scale read once per 8 weights (run r5i) | 92.2 | 56.7 | 108.1 | 1,892 |
+| plus a kernel body with no barrier and no local memory (run r5m) | 87.3 | 53.3 | 102.5 | 1,828 |
+| four-part arithmetic in one sub-group, for the split-4 classes (run r5k) | slower: attention 62 → 81, hc.low 18 → 57 | | | |
+
+So hoisting the scale and removing the barrier are exact and worth about 13% on the big
+dense classes, not the factor of two the table at the top suggests. The reason is the
+benchmark, not the kernels: it reads the same 26–33 MB of weights 15 times, so they
+stay cached, and it finishes below the card's streaming-read time for that many bytes
+(32.7 MB at 590 GB/s is 55 µs; the benchmark reports 48). In the model every layer
+reads different memory once per token. For the expanded dense classes the honest bound
+is the streaming roofline: about 55 µs for gdn.qkv (now 87), 33 for gdn.z (now 53), 67
+for qsa.qgate (now 102), 1,350 for logits (now 1,830), about 2 ms per token in total.
+
+The expert results stand better: a routed launch reads only 9–10.5 MB, so those kernels
+are bound by per-weight work, where the benchmark's 71 µs (4-bit + table) against 130
+and 126 µs (grid) against 178 are meaningful, though still measured on cached data.
+
+Rule for timing harnesses: a class whose payload is large must be timed on full-size
+buffers that are not re-read between repetitions (rotate across several layers' worth
+of memory), or its result is an upper bound on speed, not a prediction.

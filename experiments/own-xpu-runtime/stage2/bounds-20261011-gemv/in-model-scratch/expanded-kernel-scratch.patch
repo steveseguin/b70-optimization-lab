@@ -1,0 +1,71 @@
+--- experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp	2026-10-11 01:00:40.500108202 -0400
++++ experiments/own-xpu-runtime/stage2/scratch-p18-notiming/p10x-kernels.cpp	2026-10-11 19:34:10.758939388 -0400
+@@ -1,6 +1,7 @@
+-#include "kernels.hpp"
++#include "../packet10-kopt5/kernels.hpp"
+ #include "sycl_operation.hpp"
+ #include <array>
++#include <cstdlib>
+ namespace iq3::expanded {
+ namespace {
+ struct Decode:ownrt::SyclOperation {
+@@ -10,16 +11,58 @@
+   return q.submit([&](sycl::handler& h){h.depends_on(deps);h.parallel_for(sycl::range<1>(size_t(n)*cols),[=](sycl::id<1> id){size_t i=id[0];out[i]=value(t,w+(i/cols)*stride,cols,i%cols);});});
+  }
+ };
++// Coordinator scratch experiment (2026-10-11): the block scale is read once for the lane's eight
++// consecutive weights instead of once per weight. Same value expression s*float(code), same product,
++// same per-lane order. Only for the expanded Q6/Q8 formats, whose scale group (16 or 32 weights)
++// always contains a lane-tile (start index is a multiple of 8, split boundaries are multiples of 32).
++template<Type T> inline float lane_h(const uint8_t* w,const uint16_t* x,Type a,size_t k,size_t begin,size_t end,unsigned l){
++ if constexpr(T==Type::Q6_K || T==Type::Q8_0){
++  float sum=0;const size_t cs=codes_size(T,k);const unsigned gs=group_size(T);
++  for(size_t tile=begin+size_t(l)*8;tile<end;tile+=256){
++   float s=bits_float(u32(w+cs+4*(tile/gs)));
++   for(unsigned j=0;j<8 && tile+j<end;++j){size_t i=tile+j;
++    float input=a==Type::BF16?bits_float(uint32_t(x[i])<<16):half(x[i]);float v=s*float(signed8(w[i]));float prod=v*input;sum=sum+prod;}
++  }
++  return sum;
++ } else return lane(T,w,x,a,k,begin,end,l);
++}
+ struct Multiply:ownrt::SyclOperation {
+  Type t,a,o;size_t rows,k,rb;unsigned split;bool diagnostic;
+  template<Type T> sycl::event run(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps)const {
+   auto w=static_cast<const uint8_t*>(p[0]);auto x=static_cast<const uint16_t*>(p[1]);auto y=static_cast<uint16_t*>(p[2]);auto fp=static_cast<float*>(p[3]);
+   auto n=rows,cols=k,stride=rb;auto s=split;auto at=a,ot=o;auto diag=diagnostic;
++  // Coordinator scratch experiment (2026-10-11): split4 arithmetic computed by ONE sub-group per row.
++  // Each lane accumulates its four quarter sums in the original per-quarter order, each quarter gets
++  // its own 32-lane tree, and the four partials are combined as (p0+p1)+(p2+p3): the same operands in
++  // the same order as the four-sub-group version, without the barrier and the local partial array.
++  // Coordinator scratch experiment (2026-10-11): the single-sub-group (split 1) classes compiled as
++  // their own kernel with no barrier and no local memory anywhere in the kernel body. Same lanes,
++  // same per-lane order, same 32-lane tree.
++  if(s==1 && std::getenv("SCRATCH_SG32_NO_BARRIER")!=nullptr) return q.submit([&](sycl::handler& h){h.depends_on(deps);
++   h.parallel_for(sycl::nd_range<1>(((n+3)/4)*128,128),[=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
++    auto sg=it.get_sub_group();unsigned l=sg.get_local_linear_id(),sub=sg.get_group_linear_id();size_t r=it.get_group_linear_id()*4+sub;
++    float sum=0;
++    if(r<n)sum=lane_h<T>(w+r*stride,x,at,cols,size_t(0),cols,l);
++    for(unsigned width=1;width<32;width*=2){float other=sycl::select_from_group(sg,sum,(l+width)%32);if(l%(2*width)==0)sum=sum+other;}
++    if(r<n && l==0){y[r]=output_bits(sum,ot);if(diag)fp[r]=sum;}
++   });
++  });
++  if(s==4 && std::getenv("SCRATCH_SPLIT4_ONE_SUBGROUP")!=nullptr) return q.submit([&](sycl::handler& h){h.depends_on(deps);
++   h.parallel_for(sycl::nd_range<1>(((n+3)/4)*128,128),[=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
++    auto sg=it.get_sub_group();unsigned l=sg.get_local_linear_id(),sub=sg.get_group_linear_id();size_t r=it.get_group_linear_id()*4+sub;
++    float part_sum[4]={0,0,0,0};
++    if(r<n)for(unsigned part=0;part<4;++part){auto bounds=kopt2::bounds(cols,part,4);part_sum[part]=lane_h<T>(w+r*stride,x,at,cols,bounds.first,bounds.second,l);}
++    for(unsigned part=0;part<4;++part){float sum=part_sum[part];
++     for(unsigned width=1;width<32;width*=2){float other=sycl::select_from_group(sg,sum,(l+width)%32);if(l%(2*width)==0)sum=sum+other;}
++     part_sum[part]=sum;}
++    if(r<n && l==0){float sum=(part_sum[0]+part_sum[1])+(part_sum[2]+part_sum[3]);y[r]=output_bits(sum,ot);if(diag)fp[r]=sum;}
++   });
++  });
+   return q.submit([&](sycl::handler& h){h.depends_on(deps);sycl::local_accessor<float,1> partial(4,h);
+    h.parallel_for(sycl::nd_range<1>(((n*s+3)/4)*128,128),[=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
+     auto sg=it.get_sub_group();unsigned l=sg.get_local_linear_id(),sub=sg.get_group_linear_id();size_t r=it.get_group_linear_id()*(4/s)+sub/s;unsigned part=sub%s;
+     float sum=0;
+-    if(r<n){auto bounds=kopt2::bounds(cols,part,s);sum=lane(T,w+r*stride,x,at,cols,bounds.first,bounds.second,l);}
++    if(r<n){auto bounds=kopt2::bounds(cols,part,s);sum=lane_h<T>(w+r*stride,x,at,cols,bounds.first,bounds.second,l);}
+     for(unsigned width=1;width<32;width*=2){float other=sycl::select_from_group(sg,sum,(l+width)%32);if(l%(2*width)==0)sum=sum+other;}
+     if(s==4){if(l==0)partial[sub]=sum;it.barrier(sycl::access::fence_space::local_space);if(sub==0 && l==0)sum=(partial[0]+partial[1])+(partial[2]+partial[3]);}
+     if(r<n && l==0 && part==0){y[r]=output_bits(sum,ot);if(diag)fp[r]=sum;}
