@@ -84,7 +84,7 @@ several CPU builds shared the host; an uncontended exploratory run measured
 These are uncertified reference figures for our own runtime to beat.
 
 Uncontended repeat of the one-card plan (card 2 alone, 03:23-03:55 UTC): decode
-median **15.96 tok/s**, 12/12 byte-equal
+median **15.94 tok/s**, 12/12 byte-equal
 ([table](reference-baseline-onecard-uncontended-20261011.md)). Identical to the
 contended run, so the earlier exploratory 21.6 tok/s came from giving the CPU
 side 8 threads instead of the plan's 2: the one-card reference is bound by the
