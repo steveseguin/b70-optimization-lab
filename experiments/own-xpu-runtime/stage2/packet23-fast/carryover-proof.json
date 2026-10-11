@@ -1,0 +1,148 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "arithmetic": "iq3-p17-detmath-v2",
+  "original_build_sha256": "4045889dfca38a76397d107a3bcbcf3fb4a8f0f5d3ab1ea1b33b6e6c345d6ab5",
+  "byte_identical_files": {
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/mock_device.hpp": "e5e68fd9aa3c9baaa34811b74c58f6ff8311f6bd18fae787fe80ccef2d6e3a32",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.hpp": "94db5f67e518d4b4940811c9f381f3e1add47c403fca134cad11d84d4d2e626b",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp": "7e10dbe50d9c73a154e079f9aa9b36139d43f4bb1e3ac65f544ea5b5df7ea125",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_operation.hpp": "296eeb3fdf685b698cb7bb35da86157fbb12f97ff215f61ab7ad90f207364c9b",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp": "6e96276d9eee2564aa74d2f90b6802d04709f78d2b866b394c6fca2fe818dee3",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp": "f3b311c18744091930ed4a038db8acb4fd4b30d8e348a62a0c25d377d309f1fc",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.hpp": "b5a6c3b39d051853e49761491aaf69f55e7ad882cffef34ea8300a68c608176d",
+    "experiments/own-xpu-runtime/stage2/packet17-detmath/detmath.hpp": "fbc845e5327579447fed4a6fb3d2638b6b5a389330ea712c45f9d8f2bf043cfc",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp": "021766a26c108dbdb830070bfb8c13c00934ca5a7df3f472aa3f10335309bb33",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/device.hpp": "1044e1a57d101d35a1d02e7fd911c3db9e5faed41248255ac61af52528f98f74",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4",
+    "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp": "d2560c5530d56ca62b0ec43bcbd1668cd7c637d1743f51abfebfb96de56ee480",
+    "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.hpp": "80647a747f697dd8131019ee2041ab42b1f6b772f735abdf116fa6e2036323f1",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp": "13b9eb6e6ce46d9de7848c1ff2dcbcaa73811cf89dabf5f51066f11143b560f9",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/adapter.hpp": "c7033edb992496ceb3db55e630cadda8742f4ee7882bf958e6438db573f32a00",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/adapter_fixture.cpp": "2e847ae1d3e4f59b234a0fdeade409393940287bf1e3fdcc54025ba90e91fc83",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/adapter_fixture.hpp": "58908c5f54b49c0ae5eedee461b29a5af478ff43c0936ec69a0e81dd4f8fb1fa",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/arithmetic.hpp": "4eea12510e598964cd901860bc0375e96918fc3eaefdaea009edefb20bcd6999",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/authority_test.cpp": "d15d1e01a7b27fce68c5ca6ed03574aff3d2db05a638c7070496e27723d18fe1",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/build/fusion-rope.hpp": "f78b2d65388f5d8a7df1bcca1085655b57476bef64b12b6c2885d600862c80d1",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/chain_test.cpp": "ad003ecd4336f09a643950894bada31c76fece436a0f7c5d2d72bddda5f670d4",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/core_v2.hpp": "c3c265894d5041e0d6e026d53094b67f9b58bb86bd1aa1c8fea06ab4d8692ffd",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/detmath.hpp": "eba96cc4599d21ab24fe97276bda0c954c60878d3b696a77393abbfa2a4e049c",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/gemv_batch.cpp": "500bceed93571cc1e2604ec9f26dcc4b3e14552815f2c0249957897f4d6391bc",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/gemv_batch.hpp": "4b963550897488c6c4edf41925000814282e7bfde6f35210ad036217b7b5bbf6",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/gemv_fixture.cpp": "5b82e9aca2069a4c5bbb2c6209d00314b8690aa644f043f7e735d851fa3a640b",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/instrument21.hpp": "b834aac76930b619f807dc7457fbb7489d3428ad3f8b5544cb85778217d1909d",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp": "24e24e660203c959db09d30dc633490906508b749cf4e2838e2df50d4013d43a",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/math_bridge.cpp": "f8ee94baa5c748dd3f2cdbe974435b89d9b26094a0063b7d0655313bfba82c1f",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/native.cpp": "4e8f5683b6ad8fe2a8a9b44fd1a0cba7dfc6c90616eb06cd583bc0d7ba087b8d",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/native.hpp": "c0b710b43748dfeb23bb317254053106d68fc967d9ecdfe43f17f56a80d372b4",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/nongemv_fixture.cpp": "df13ab1624931efea830448c6e4b2aadd93b87d181f9ba8498750190357646f5",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/owner.hpp": "3ae945e401c217a7705e43f5b1f5b63eaf1e635d32c983ffad7dec771ff28a4e",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/owner_retire.cpp": "e35c366f640d8909b519891fa814aa80228b01ce69bd19ccdf00a8d13cae0da2",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/performance.cpp": "ac444f56fa2b98e1e9874e50dfe1cb04eabfa43f52fcf6acd56e963f0143c0d3",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/performance.hpp": "97048551886ee82850180ef9a7981259d80569fb82981c16e8473793739b2137",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/prototype/fused.hpp": "f4a4393c3e30d7d40d513c9892ba55a46d56c48a1d25921c8fb49d9e994d4664",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/prototype/gate.cpp": "fe8f07c62aa362cdc03d33e5a333dfeedbf31c30f92d161751cc7f9828aabed9",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/prototype/snapshot/core_v2.hpp": "279a51b16593f1a8432205ea65422b037a533783bdbd79152f17e2b4a9d8b6bb",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/prototype/snapshot/detmath.hpp": "fbc845e5327579447fed4a6fb3d2638b6b5a389330ea712c45f9d8f2bf043cfc",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/prototype/snapshot/kernels.hpp": "22bf27fc4d3175c88549e8ccb4cc25d4c2626754660b1038bfceafd48ff15155",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/prototype/snapshot/reference.hpp": "9dbd20b4d8b210be469e1a8dc31c1592b18d352f15c3bee7058c18bf9aa924bc",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/prototype/snapshot/rope.hpp": "1cef648de09ac4b115f1966033f2e341c870203a7415a39d58a8bbe2adb6c643",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/queue_test.cpp": "92864c3a1ab28b9432f9fea437698259f9286fe7fde818573ab2975488906a1b",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/rope.hpp": "93d877610f8db3ebcd7b4d7d16c2e3968d78ee291e3609ba460f1dc325cbb885",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/runtime_kernels.cpp": "ff95284fda68e0097c35e7ee0b03851563b77cf935602b4e2ea0d5ba526f37f0",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/runtime_kernels.hpp": "c55508d9afa7868e2669af73b6d9bdbb94a7d0dfa34876e77508a43ceadafbef",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/synthetic.hpp": "0f3285642055d61ff84790f668b7e19fdf347b2c7875aed804a88db5f9c06f35",
+    "experiments/own-xpu-runtime/stage2/packet3/kernels/api.hpp": "7d33644438281bcc5a1ab2fbbde2310cbff3a55b683312eab3d52178d4fdbe33",
+    "experiments/own-xpu-runtime/stage2/packet3/model/directory.hpp": "535eea979a14d3a5eb9f4768edffb6e47c7d0aa61cfeeaf27e9dade75d19759f",
+    "experiments/own-xpu-runtime/stage2/packet3/step/plan.hpp": "e8da06cfc064ef9dd5f154d4b313b0dfeb95244fb6e7cb1a073591e6e8497cfa",
+    "experiments/own-xpu-runtime/stage2/packet4/owner_test.cpp": "90b62340aff81aaa2c8bee620b6ddfea13d9d9231b1f64e94140139181d498b1",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp": "5391274d85d8f62e0398e80297744bcd85f23a16ac8c252a9a925bacbd630e8f",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.hpp": "78f15ee1abaace582eff11e876e9f76a3e69d78159156655e1133dc2ed3aa8c0",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp": "2ec2a1defe33d873b87a121c37bee62d45b8ad0b1b4bc93e7ceb0ba3ca59dc3f",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp": "2ea8d49225e539b31db9884b86c46bb80769935d9f6a4e23e78375e8d3178403",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.hpp": "a4c24610451981c3d0d19289919e7b16521ed652605ba557f44c234bc413d54e",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/reference.hpp": "7532f67c6d9a0be2a9187ce149b2004d9f1ea045705327d0ce542a283ad5ed72",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/decode.hpp": "7db4f3b62f899f8d5f245d193ba5e5a39007f8512e4e378f312ed8391b44332c",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/dispatch.hpp": "efd7bb4c4dcdc0ee2afa24a7c1146e19a993f4f3cebd73cf025c84bc209053ed",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp": "1094da5f48201e42fec563a0ea91018cd3d706d5ae5f80bcef17d28b002f4f64",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.hpp": "218ec7d39db6272038f05453c84e7823220f6e3d97f7272a17efa1cd9593c706",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/reference.hpp": "f744a148509ed091d69a708262d0fcbc94c179da8ca5ed364791e8ba77a328af",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/dispatch.hpp": "8f1895c0209b88057253b44a9aee82c4cd1e73cd207e4c1d3d233da1cc8d6495",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.cpp": "ff0852ed39e4a33fb4002440a8bae301ca3003c4a391bcfce2feb946d589aa72",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.hpp": "5122c8e7115d94e0546d7b40fcd9a9a795c45717394a636ac3c806ad6d37dd6e",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/reference.hpp": "95bdc549c66d5cb72fd54cc73696187dae08568f15b19d206cc954ca290c85f4"
+  },
+  "byte_identical_main_regions": {
+    "static flash::Plan plan(": "57901fa8c917e8e590f3082344091419f96bbf48f137b3261dca15261903d4a9",
+    "unsigned variant(": "bccf272645369684ddf13069b42393c2620b73acedb8554a1d9a9110ea9febfc",
+    "unsigned weight_variant(": "d6496f85e44dfd6b98459ee4cb5a70f0595518b78396c5855831d2640b7a51e8",
+    "Matrix matrix(": "6a5bb749c4454b64db861e7a1d69faab1687d6837f149b4c822b86dbf8641adf",
+    "void linear(": "c70cfee0b00ecfd86b6ea8cea8db968fe570588621f84c171b88345fe83ac99a",
+    "void make_schedule(": "e0cd01235205ed23f5a4515f9ab16b13832e628e5f387029f6f52d6c06b980aa",
+    "void fused_batch(": "37188f8a0ea4884ef84759419e5eef268b85316d2a2c7c0108975931a63b0857",
+    "void fused_non_gemv(": "6f34aab391826048a6fcac99eb515cb7bbfd85225dd60d04853ad182646fa6c1",
+    "bind_site minus memoization": "f4130651939068fe7bf518412894b3b12f0142cfb8f87379bf98e395cddde0d9"
+  },
+  "changed_host_and_canary_files": {
+    "backend.hpp": {
+      "before": "9f469d41d9ff2b626500125d96e83d6f95497f7d88864aa3536c9ed596ba00f7",
+      "after": "3a75bf97168d66c4ac97c656c114ccf10eb692f14b6b224754290bad065839cb"
+    },
+    "canary.hpp": {
+      "before": "7695412dacd6f0fe89c0e3ed2616ed2ff33190d4046e0870a3ef49967d8dc5a3",
+      "after": "f935960a7c01433fbc1333abc68587fe437b73e7b27616c85e7070abd46a7854"
+    },
+    "main.cpp": {
+      "before": "4235b087d95d04fc9579dc83a4433404c12871bdaec77d9d721b9ab9a8cace29",
+      "after": "2991f12d590a79ea64d5938f2cbe32f39310becc22fc53a7e94914312a352a90"
+    },
+    "owner.cpp": {
+      "before": "76b016f25af1be94df839081bd23b75c44195d930d2bf35a5de6e19299bfe906",
+      "after": "05a92e51bf179a4e757b3b7cab91b3fbd4caeb3188586e0cccc1b54a34af6b80"
+    }
+  },
+  "carried_receipts": {
+    "experiments/own-xpu-runtime/stage2/packet21-fused/cpu-real-frozen.json": {
+      "sha256": "548865c458ad3b49d37460433c43ff4056f89a3a32409a3cb1960016d914a6a8",
+      "binary_sha256": "a40227010dd934ab0fa8a07e3b9bd40cc9c46ab82c53b3044601015ddae02d7e",
+      "passed": true
+    },
+    "experiments/own-xpu-runtime/stage2/packet21-fused/cpu-real-r5.json": {
+      "sha256": "308f533c852dada4f4c100ae89460f3ad155fa8560c430d7625967da88bca281",
+      "binary_sha256": "a40227010dd934ab0fa8a07e3b9bd40cc9c46ab82c53b3044601015ddae02d7e",
+      "passed": true
+    },
+    "experiments/own-xpu-runtime/stage2/packet21-fused/sanitizer-real-short.json": {
+      "sha256": "c18af28579186bfdda8bcfa0ab619bc64db56796d6c61f364357786b7adcfad6",
+      "binary_sha256": null,
+      "passed": true
+    },
+    "experiments/own-xpu-runtime/stage2/packet21-fused/sanitizer-real-full.json": {
+      "sha256": "0036846de160f07b763c6ab74a63b88bbe1968a182321f63ad4f8e5438f07578",
+      "binary_sha256": "d561dbbf1df15494a1dae6ac69c0466880f5abf70bc26b0a481900705b55a8ce",
+      "passed": true
+    },
+    "experiments/own-xpu-runtime/stage2/packet21-fused/sanitizer-real-short-0.json": {
+      "sha256": "98f5aacb0c44776cb3c5203a7ba9b301826f77d1212983ac8c676903ab059f7f",
+      "binary_sha256": "d561dbbf1df15494a1dae6ac69c0466880f5abf70bc26b0a481900705b55a8ce",
+      "passed": true
+    },
+    "experiments/own-xpu-runtime/stage2/packet21-fused/sanitizer-real-short-1.json": {
+      "sha256": "fac96babd8aaf71a6c25c8c3ffc68504781ce8f002d7a48e645c7d8741a6c6c1",
+      "binary_sha256": "d561dbbf1df15494a1dae6ac69c0466880f5abf70bc26b0a481900705b55a8ce",
+      "passed": true
+    },
+    "experiments/own-xpu-runtime/stage2/packet21-fused/sanitizer-real-short-17.json": {
+      "sha256": "bbe8a4af46d550099225ca86b63eaf6f1fe009a56f1611a266a7ca3a64e6cc13",
+      "binary_sha256": "d561dbbf1df15494a1dae6ac69c0466880f5abf70bc26b0a481900705b55a8ce",
+      "passed": true
+    },
+    "experiments/own-xpu-runtime/stage2/packet21-fused/sanitizer-real-short-73.json": {
+      "sha256": "c78fb0bc875afb2d40ea464fe5e7562c3863cf89a908c434784f95f027e4d99a",
+      "binary_sha256": "d561dbbf1df15494a1dae6ac69c0466880f5abf70bc26b0a481900705b55a8ce",
+      "passed": true
+    }
+  },
+  "scope": "Frozen 64 tokens/384 layers, R5 8 tokens/384 layers, four-seed real short dependency sanitizer and full 87-position sanitizer. Original binary identities retained; no new long/resident run. Entire main.cpp is NOT byte-identical; numerical/schedule bodies are."
+}

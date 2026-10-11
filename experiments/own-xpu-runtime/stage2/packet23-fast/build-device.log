@@ -1,0 +1,187 @@
+[  2%] Building CXX object CMakeFiles/fused-fixtures.dir/gemv_fixture.cpp.o
+{
+  "passed": true,
+  "grep_argv": [
+    "rg",
+    "-n",
+    "(std::|sycl::(native::|half_precision::)?|__builtin_)(exp|log|pow|sin|cos)(2|10|1p|m1)?f?\\s*\\("
+  ],
+  "translation_units": 19,
+  "files": [
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/mock_device.hpp",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.hpp",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_operation.hpp",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet17-detmath/detmath.hpp",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/device.hpp",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp",
+    "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp",
+    "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/adapter.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/adapter_fixture.cpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/adapter_fixture.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/arithmetic.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/backend.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/build/fusion-rope.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/canary.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/core_v2.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/detmath.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/gemv_batch.cpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/gemv_batch.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/gemv_fixture.cpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/lifetime_mock.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/native.cpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/native.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/nongemv_fixture.cpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/owner.cpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/owner.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/owner_retire.cpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/performance.cpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/performance.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/prototype/fused.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/prototype/gate.cpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/prototype/snapshot/core_v2.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/prototype/snapshot/detmath.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/prototype/snapshot/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/prototype/snapshot/reference.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/prototype/snapshot/rope.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/rope.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/runtime_kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/runtime_kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/synthetic.hpp",
+    "experiments/own-xpu-runtime/stage2/packet3/kernels/api.hpp",
+    "experiments/own-xpu-runtime/stage2/packet3/model/directory.hpp",
+    "experiments/own-xpu-runtime/stage2/packet3/step/plan.hpp",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/reference.hpp",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/decode.hpp",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/dispatch.hpp",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/reference.hpp",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/dispatch.hpp",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/reference.hpp"
+  ]
+}
+{
+  "passed": true,
+  "checks": [
+    "owner compute dependency assertion",
+    "owner queue rejection",
+    "peer requires drained queues",
+    "shutdown marker has no dependencies",
+    "every native entry checks target queue",
+    "native same-queue event filter",
+    "queue switches fence",
+    "all peer copies fence",
+    "final Q1 commit before Q0 readback fences",
+    "retirement drains queues before deleting IDs"
+  ],
+  "sources": {
+    "main.cpp": "16010a2dfb74e3bc65289ad6d473f36590d2619fca1ddc905d54baa3fe39c4a9",
+    "owner.cpp": "05a92e51bf179a4e757b3b7cab91b3fbd4caeb3188586e0cccc1b54a34af6b80",
+    "backend.hpp": "efc653b18a443edf80495de41a334b12867251d2c2a6d1787875073827284a3e",
+    "owner_retire.cpp": "e35c366f640d8909b519891fa814aa80228b01ce69bd19ccdf00a8d13cae0da2"
+  },
+  "limit": "Source structure guard plus owner runtime assertion; no native execution proof"
+}
+[  2%] Built target math-gate
+[  5%] Building CXX object CMakeFiles/nongemv-fixtures.dir/nongemv_fixture.cpp.o
+[  7%] Building CXX object CMakeFiles/fused-fixtures.dir/gemv_batch.cpp.o
+[ 10%] Building CXX object CMakeFiles/nongemv-fixtures.dir/adapter_fixture.cpp.o
+[ 12%] Building CXX object CMakeFiles/fused-fixtures.dir/performance.cpp.o
+[ 15%] Building CXX object CMakeFiles/fused-fixtures.dir/owner.cpp.o
+[ 17%] Building CXX object CMakeFiles/nongemv-fixtures.dir/adapter.cpp.o
+[ 20%] Building CXX object CMakeFiles/fused-fixtures.dir/owner_retire.cpp.o
+[ 23%] Building CXX object CMakeFiles/fused-fixtures.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp.o
+[ 25%] Building CXX object CMakeFiles/nongemv-fixtures.dir/runtime_kernels.cpp.o
+[ 28%] Building CXX object CMakeFiles/fused-fixtures.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp.o
+[ 30%] Building CXX object CMakeFiles/fused-fixtures.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o
+[ 33%] Building CXX object CMakeFiles/nongemv-fixtures.dir/owner.cpp.o
+[ 35%] Building CXX object CMakeFiles/nongemv-fixtures.dir/owner_retire.cpp.o
+[ 38%] Building CXX object CMakeFiles/fused-fixtures.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o
+[ 41%] Building CXX object CMakeFiles/nongemv-fixtures.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp.o
+[ 43%] Building CXX object CMakeFiles/nongemv-fixtures.dir/native.cpp.o
+[ 46%] Building CXX object CMakeFiles/fused-fixtures.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o
+[ 48%] Linking CXX executable nongemv-fixtures
+[ 51%] Building CXX object CMakeFiles/fused-fixtures.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.cpp.o
+[ 51%] Built target nongemv-fixtures
+[ 53%] Building CXX object CMakeFiles/fused-fixtures.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp.o
+[ 56%] Building CXX object CMakeFiles/own-rt-iq3.dir/main.cpp.o
+[ 58%] Linking CXX executable fused-fixtures
+[ 58%] Built target fused-fixtures
+[ 61%] Building CXX object CMakeFiles/own-rt-iq3.dir/gemv_batch.cpp.o
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp:8:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/backend.hpp:23:12: warning: private field 'cross_card_fences' is not used [-Wunused-private-field]
+   23 |   uint64_t cross_card_fences=0;
+      |            ^
+1 warning generated.
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp:8:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/backend.hpp:23:12: warning: private field 'cross_card_fences' is not used [-Wunused-private-field]
+   23 |   uint64_t cross_card_fences=0;
+      |            ^
+[ 64%] Building CXX object CMakeFiles/own-rt-iq3.dir/performance.cpp.o
+[ 66%] Building CXX object CMakeFiles/own-rt-iq3.dir/adapter.cpp.o
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp:106:75: warning: unused variable 'rotary' [-Wunused-variable]
+  106 |  t.each(width,[&](int j){float v=t.x[j];if(j<64){int k=j%32;constexpr int rotary=64;float c=rope_constants::cos(static_cast<const uint16_t*>(a.p[16]),position,k),z=rope_constants::sin(static_cast<const uint16_t*>(a.p[16]),position,k);v=j<32?t.x[k]*c-t.x[k+32]*z:t.x[k+32]*c+t.x[k]*z;}put(j,v);});t.barrier();
+      |                                                                           ^~~~~~
+1 warning generated.
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp:106:75: warning: unused variable 'rotary' [-Wunused-variable]
+  106 |  t.each(width,[&](int j){float v=t.x[j];if(j<64){int k=j%32;constexpr int rotary=64;float c=rope_constants::cos(static_cast<const uint16_t*>(a.p[16]),position,k),z=rope_constants::sin(static_cast<const uint16_t*>(a.p[16]),position,k);v=j<32?t.x[k]*c-t.x[k+32]*z:t.x[k+32]*c+t.x[k]*z;}put(j,v);});t.barrier();
+      |                                                                           ^~~~~~
+1 warning generated.
+[ 69%] Building CXX object CMakeFiles/own-rt-iq3.dir/runtime_kernels.cpp.o
+1 warning generated.
+[ 71%] Building CXX object CMakeFiles/own-rt-iq3.dir/owner_retire.cpp.o
+[ 74%] Building CXX object CMakeFiles/own-rt-iq3.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp.o
+[ 76%] Building CXX object CMakeFiles/own-rt-iq3.dir/owner.cpp.o
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/owner.cpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/owner.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../../stage1/packet3-prep/src/owner.hpp:92:29: warning: private field 'depth_' is not used [-Wunused-private-field]
+   92 |   const std::size_t limit_, depth_;
+      |                             ^
+1 warning generated.
+[ 79%] Building CXX object CMakeFiles/own-rt-iq3.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp.o
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/owner.cpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/owner.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../../stage1/packet3-prep/src/owner.hpp:92:29: warning: private field 'depth_' is not used [-Wunused-private-field]
+   92 |   const std::size_t limit_, depth_;
+      |                             ^
+1 warning generated.
+[ 82%] Building CXX object CMakeFiles/own-rt-iq3.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp.o
+[ 84%] Building CXX object CMakeFiles/own-rt-iq3.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o
+[ 87%] Building CXX object CMakeFiles/own-rt-iq3.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o
+[ 89%] Building CXX object CMakeFiles/own-rt-iq3.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o
+[ 92%] Building CXX object CMakeFiles/own-rt-iq3.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.cpp.o
+[ 94%] Building CXX object CMakeFiles/own-rt-iq3.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp.o
+[ 97%] Building CXX object CMakeFiles/own-rt-iq3.dir/native.cpp.o
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/native.cpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/native.hpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp:106:75: warning: unused variable 'rotary' [-Wunused-variable]
+  106 |  t.each(width,[&](int j){float v=t.x[j];if(j<64){int k=j%32;constexpr int rotary=64;float c=rope_constants::cos(static_cast<const uint16_t*>(a.p[16]),position,k),z=rope_constants::sin(static_cast<const uint16_t*>(a.p[16]),position,k);v=j<32?t.x[k]*c-t.x[k+32]*z:t.x[k+32]*c+t.x[k]*z;}put(j,v);});t.barrier();
+      |                                                                           ^~~~~~
+1 warning generated.
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/native.cpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/native.hpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp:106:75: warning: unused variable 'rotary' [-Wunused-variable]
+  106 |  t.each(width,[&](int j){float v=t.x[j];if(j<64){int k=j%32;constexpr int rotary=64;float c=rope_constants::cos(static_cast<const uint16_t*>(a.p[16]),position,k),z=rope_constants::sin(static_cast<const uint16_t*>(a.p[16]),position,k);v=j<32?t.x[k]*c-t.x[k+32]*z:t.x[k+32]*c+t.x[k]*z;}put(j,v);});t.barrier();
+      |                                                                           ^~~~~~
+1 warning generated.
+[100%] Linking CXX executable own-rt-iq3
+[100%] Built target own-rt-iq3

@@ -1,0 +1,456 @@
+--- packet21/backend.hpp
++++ packet23/backend.hpp
+@@ -25,7 +25,8 @@
+   std::map<void*,Location> locations;
+   int location(const void* ptr,size_t bytes)const {
+     auto address=reinterpret_cast<uintptr_t>(ptr);
+-    for(const auto& [base,l]:locations) {auto lo=reinterpret_cast<uintptr_t>(base);
++    auto it=locations.upper_bound(const_cast<void*>(ptr));
++    if(it!=locations.begin()) {--it;const auto& [base,l]=*it;auto lo=reinterpret_cast<uintptr_t>(base);
+       if(address>=lo && address-lo<=l.bytes && bytes<=l.bytes-(address-lo))return l.card;
+     }
+     throw std::invalid_argument("copy outside shared-context allocation");
+@@ -34,10 +35,10 @@
+   std::exception_ptr error;
+   std::string label;
+   void check() { std::lock_guard lock(mutex); if(error) std::rethrow_exception(error); }
+-  std::vector<sycl::event> dependencies(std::span<const ownrt::Event> deps,int target) {
+-    std::vector<sycl::event> r;
+-    std::set<ownrt::Event> unique(deps.begin(),deps.end());
+-    for(auto e:unique) {
++  std::vector<sycl::event> dependency_storage;
++  const std::vector<sycl::event>& dependencies(std::span<const ownrt::Event> deps,int target) {
++    auto& r=dependency_storage;r.clear();
++    for(auto e:deps) {
+       if(event_cards.at(e)==target)r.push_back(events.at(e));
+       else throw std::logic_error("foreign-queue native dependency rejected");
+     }
+@@ -51,7 +52,7 @@
+   }
+   bool access_ab=false,access_ba=false;
+   int allocation_card=0;
+-  Context(int a,int b) {
++  Context(int a,int b,bool profiling=true) {
+     std::vector<sycl::device> cards;
+     for(auto p:sycl::platform::get_platforms())
+       if(p.get_backend()==sycl::backend::ext_oneapi_level_zero)
+@@ -86,7 +87,7 @@
+       context=std::make_unique<sycl::context>(sycl::make_context<sycl::backend::ext_oneapi_level_zero>(
+           {native,{da,db},sycl::ext::oneapi::level_zero::ownership::keep},handler));
+       for(int i=0;i<2;++i)queues[i]=std::make_unique<sycl::queue>(*context,i?db:da,handler,
+-          sycl::property_list{sycl::property::queue::in_order{},sycl::property::queue::enable_profiling{}});
++          profiling?sycl::property_list{sycl::property::queue::in_order{},sycl::property::queue::enable_profiling{}}:sycl::property_list{sycl::property::queue::in_order{}});
+     } catch(...) {queues={};context.reset();zeContextDestroy(native);native=nullptr;throw;}
+   }
+   ~Context() override {
+@@ -111,19 +112,19 @@
+     check();int d=location(dst,n),s=location(src,n);
+     if(d>=0&&s>=0&&d!=s&&!(access_ab&&access_ba))throw std::logic_error("peer path without bidirectional access");
+     int target=d>=0?d:s>=0?s:0;
+-    auto wait=dependencies(deps,target);auto e=ownrt::next_handle();auto [it,ok]=events.try_emplace(e);(void)ok;event_cards[e]=target;
++    const auto& wait=dependencies(deps,target);auto e=ownrt::next_handle();auto [it,ok]=events.try_emplace(e);(void)ok;event_cards[e]=target;
+     it->second=queues[target]->submit([&](sycl::handler& h){h.depends_on(wait);h.memcpy(dst,src,n);});return e;
+   }
+   ownrt::Event compute(const ownrt::Operation& base,std::span<void* const> p,std::span<const ownrt::Event> deps) override {
+     check();const auto& op=dynamic_cast<const ownrt::SyclOperation&>(base);
+     for(auto ptr:p)if(location(ptr,1)!=allocation_card)throw std::logic_error("foreign compute binding");
+-    auto wait=dependencies(deps,allocation_card);auto e=ownrt::next_handle();event_cards[e]=allocation_card;
++    const auto& wait=dependencies(deps,allocation_card);auto e=ownrt::next_handle();event_cards[e]=allocation_card;
+     auto [it,ok]=events.try_emplace(e);(void)ok;
+     it->second=op.submit(*queues[allocation_card],p,wait);return e;
+   }
+ 
+   ownrt::Event marker(std::span<const ownrt::Event> deps) override {
+-    check();auto wait=dependencies(deps,allocation_card);auto e=ownrt::next_handle();event_cards[e]=allocation_card;auto [it,ok]=events.try_emplace(e);(void)ok;
++    check();const auto& wait=dependencies(deps,allocation_card);auto e=ownrt::next_handle();event_cards[e]=allocation_card;auto [it,ok]=events.try_emplace(e);(void)ok;
+     it->second=queues[allocation_card]->submit([&](sycl::handler& h){h.depends_on(wait);h.single_task([]{});});return e;
+   }
+   bool complete(ownrt::Event e) override {check();return events.at(e).get_info<sycl::info::event::command_execution_status>()==sycl::info::event_command_status::complete;}
+@@ -139,7 +140,7 @@
+   void synchronize() override {for(auto& q:queues)q->wait_and_throw();check();}
+   void forget(ownrt::Event e){events.erase(e);event_cards.erase(e);}
+   int closed_ranks=0;
+-  void clear_events() override {events.clear();event_cards.clear();}
++  void clear_events() override {dependency_storage.clear();events.clear();event_cards.clear();}
+   void close_queue() override {queues={};}
+   void close_context() override {context.reset();if(zeContextDestroy(native)!=ZE_RESULT_SUCCESS)throw std::runtime_error("context destroy failed");native=nullptr;}
+ };
+--- packet21/canary.hpp
++++ packet23/canary.hpp
+@@ -15,16 +15,20 @@
+  require(a.cards==2 && a.seconds>=300 && a.seconds<=1800,"canary: two cards and watchdog 300..1800 seconds");
+  auto start=std::chrono::steady_clock::now();
+ #ifdef OWN_RT_HOST_ONLY
+- auto backend=std::make_unique<Host>();auto select=[](int){};
++ auto backend=std::make_unique<Host>();auto raw=backend.get();auto select=[](int){};
+ #else
+  auto backend=std::make_unique<tp2::Context>(a.card,a.card+1);auto raw=backend.get();
+  auto select=[&](int c){raw->allocation_card=c;};
+- auto compiled=raw->canary_bundle(); // Hold the compiled bundle through teardown.
+ #endif
+- double startup_jit_ms=Engine::ms(start);auto work_start=std::chrono::steady_clock::now();
+- ownrt::Device d(std::move(backend));ownrt::CopyEngine copy(d,4096,1);
++ ownrt::Device d(std::move(backend));
++ double startup_jit_ms=0,work_wall_ms=0,max_ns=0,device_ns=0;
++ bool submission_budget_passed=true;unsigned waits=0;size_t bytes=0;
++ { // All context borrowers unwind before the owner, including on exceptions.
++ auto compiled=raw->canary_bundle();
++ startup_jit_ms=Engine::ms(start);auto work_start=std::chrono::steady_clock::now();
++ ownrt::CopyEngine copy(d,4096,1);
+  std::array<std::map<std::string,Allocation>,2> b;
+- std::vector<ownrt::Event> segment;ownrt::Event tail=0;double max_ns=0,device_ns=0;bool submission_budget_passed=true;unsigned waits=0;
++ std::vector<ownrt::Event> segment;ownrt::Event tail=0;
+  auto guard=[&]{require(!stopped,"canary cooperative stop");};
+  auto drain=[&]{if(!tail)return;guard();++waits;require(d.wait(tail,std::chrono::seconds(5)),"canary five-second drain timeout");
+ #ifndef OWN_RT_HOST_ONLY
+@@ -61,8 +65,10 @@
+  verify(0,"position",1,1);verify(1,"position",1,1);
+  verify(0,"next_token",7,1);verify(0,"error",0,1);verify(1,"error",0,1);verify(1,"streams",7,64);
+  for(int c=0;c<2;++c){for(int i=0;i<1000;++i)increment(c);drain();verify(c,"data",1200,64);}
+- auto bytes=d.arena.total(Memory::device);require(bytes<16*1024*1024,"canary allocation bound");
+- double work_wall_ms=Engine::ms(work_start);auto teardown_start=std::chrono::steady_clock::now();
++ bytes=d.arena.total(Memory::device);require(bytes<16*1024*1024,"canary allocation bound");
++ work_wall_ms=Engine::ms(work_start);
++ } // compiled bundle, copy wrapper and submission captures are now destroyed.
++ auto teardown_start=std::chrono::steady_clock::now();
+  auto receipt=d.shutdown(std::chrono::seconds(5));require(receipt.safe_to_exit,"canary unsafe teardown");
+  double elapsed=Engine::ms(start),teardown_ms=Engine::ms(teardown_start);
+  std::ostringstream out;out<<"{\"schema\":\"own-runtime.iq3.packet18.canary.v2\",\"passed\":"<<(submission_budget_passed?"true":"false")<<",\"owner_cards\":2,\"device_executed\":"
+--- packet21/main.cpp
++++ packet23/main.cpp
+@@ -8,7 +8,7 @@
+ #include "backend.hpp"
+ #endif
+ #ifdef OWN_RT_HOST_ONLY
+-#include "mock_device.hpp"
++#include "lifetime_mock.hpp"
+ #endif
+ #include <csignal>
+ #include <filesystem>
+@@ -67,11 +67,11 @@
+   return s.ends_with(suffix);
+ }
+ #ifdef OWN_RT_HOST_ONLY
+-class Host final : public ownrt::MockDevice {
++class Host final : public packet18::LifetimeMock {
+ public:
+   ownrt::Event copy(void *a, const void *b, size_t n,
+                     std::span<const ownrt::Event> d) override {
+-    auto e = MockDevice::copy(a, b, n, d);
++    auto e = LifetimeMock::copy(a, b, n, d);
+     finish(e);
+     return e;
+   }
+@@ -84,7 +84,7 @@
+ #endif
+ struct Options {
+   bool canary = false, mini = false, first = false, record = false, authorized = false, checked = false;
+-  std::string fusion = "on";
++  std::string fusion = "on", timing = "token";
+   std::string nongemv = "parallel", gemv = "frozen", stage = "first-token";
+   int cards = 1, card = 3, tokens = 8, context = 128, seconds = 10800;
+   std::string memory = "layer-streaming";
+@@ -101,6 +101,7 @@
+     };
+     if (k == "--canary") a.canary = true;
+     else if (k == "--checked") a.checked = true;
++    else if (k == "--timing") a.timing=value();
+     else if (k == "--fusion") a.fusion=value();
+     else if (k == "--nongemv") a.nongemv = value();
+     else if (k == "--gemv") a.gemv = value();
+@@ -146,6 +147,7 @@
+   require(a.tokens > 0 && a.tokens <= 64 && a.context >= 8 &&
+               a.context <= 1024 && a.seconds > 0 && a.seconds <= 10800,
+           "bounded generation/context/deadline");
++  require(a.timing=="token"||a.timing=="drain"||a.timing=="launch","timing mode");
+   require(a.fusion=="on"||a.fusion=="off","fusion mode");
+   require(a.nongemv=="core" || a.nongemv=="parallel", "nongemv mode");
+   require(a.gemv=="frozen" || a.gemv=="r5", "gemv mode");
+@@ -416,7 +418,7 @@
+   std::vector<Allocation> slab, scratch, workspace, compact_routes, mixture_out, one;
+   std::vector<std::vector<uint32_t>> selected;
+   std::vector<int> loaded_layer;
+-  std::ofstream timings, prefill_timings, site_timings;
++  std::ofstream timings, prefill_timings, site_timings, drain_timings;
+   double gemv_ms=0, nongemv_ms=0, transfer_ms=0;
+   uint64_t submitted=0;
+   size_t peak_device_bytes=0;
+@@ -425,11 +427,13 @@
+   }
+   void finish(int, Launch l, bool gemv) {
+     // Submission only. Owner::compute appends the preceding owned event.
+-    pending.push_back({l,gemv}); tail=l.last; submitted+=l.passes;
++    if(a.timing=="launch")pending.push_back({l,gemv}); tail=l.last; submitted+=l.passes;
+   }
+   void finish(int c, ownrt::Event event) { finish(c,{event,event,1},false); }
+   void drain() {
+     if(!tail && pending.empty())return;
++    auto drain_start=std::chrono::steady_clock::time_point{};
++    if(a.timing=="drain")drain_start=std::chrono::steady_clock::now();
+     if(tail)wait(0,tail);
+ #ifndef OWN_RT_HOST_ONLY
+     for(auto item:pending) {
+@@ -440,6 +444,7 @@
+ #endif
+     pending.clear();tail=0;
+     if(!devices.empty())dev(0).retire_completed_events();
++    if(a.timing=="drain")drain_timings << "{\"wall_ms\":" << ms(drain_start) << "}\n";
+   }
+ 
+   std::ofstream progress;
+@@ -448,7 +453,7 @@
+   std::chrono::steady_clock::time_point deadline;
+   Engine(Weights &source, const Options &args, flash::Plan q)
+       : w(source), a(args), p(std::move(q)),
+-        timings(a.output / "timings.jsonl"), prefill_timings(a.output/"prefill-timings.jsonl"), site_timings(a.output/"sites.jsonl"), progress(a.output / "progress.jsonl"),
++        timings(a.output / "timings.jsonl"), prefill_timings(a.output/"prefill-timings.jsonl"), site_timings(a.output/"sites.jsonl"), drain_timings(a.output/"drains.jsonl"), progress(a.output / "progress.jsonl"),
+         deadline(std::chrono::steady_clock::now() +
+                  std::chrono::seconds(a.seconds)) {if(a.fusion=="on")make_schedule();}
+   void guard() {
+@@ -569,7 +574,7 @@
+     devices.push_back(std::make_unique<ownrt::Device>(std::make_unique<Host>()));
+ #else
+     if(a.cards==2) {
+-      peer_context=std::make_shared<tp2::Context>(a.card,a.card+1);
++      peer_context=std::make_shared<tp2::Context>(a.card,a.card+1,a.timing=="launch");
+       // Device owns a forwarding backend; shared context outlives shutdown.
+       struct Forward final:ownrt::Backend {
+         std::shared_ptr<tp2::Context> p;
+@@ -589,7 +594,7 @@
+         void close_context()override{p->close_context();}
+       };
+       devices.push_back(std::make_unique<ownrt::Device>(std::make_unique<Forward>(peer_context)));
+-    } else devices.push_back(std::make_unique<ownrt::Device>(ownrt::make_sycl_device(a.card,true)));
++    } else devices.push_back(std::make_unique<ownrt::Device>(ownrt::make_sycl_device(a.card,a.timing=="launch")));
+ #endif
+     std::ifstream rope_file(fs::path(__FILE__).parent_path()/"rope.bf16",std::ios::binary);
+     require(bool(rope_file),"RoPE model constant missing");
+@@ -768,7 +773,9 @@
+   std::set<std::string> removed;
+   struct CachedBatch {packet21::PreparedBatch plan;Allocation table;int card;};
+   std::map<std::string,CachedBatch> batches;
++  std::map<std::string,std::pair<Spec,std::vector<Allocation>>> bound_sites;
+   std::pair<Spec,std::vector<Allocation>> bind_site(const flash::Launch& l){
++      if(a.cards==2){auto found=bound_sites.find(l.label);if(found!=bound_sites.end())return found->second;}
+       Spec s; int c=l.card;
+       s.g = p.g;
+       s.packed_heads = !a.mini;
+@@ -839,6 +846,7 @@
+       for (auto name : {"error", "position", "active"})
+         bindings.push_back(buffers[c].at(name).id);
+       bindings.push_back(ropes[c]);
++      if(a.cards==2)bound_sites.emplace(l.label,std::make_pair(s,bindings));
+       return {s,bindings};
+   }
+   void make_schedule(){
+@@ -953,76 +961,7 @@
+     } else {
+       if(l.op=="moe_combine")finish(c,mixture(dev(c),buffers[c].at(l.inputs[0]).id,
+           buffers[c].at(l.inputs[1]).id,mixture_out[c],p.g.h),false);
+-      Spec s;
+-      s.g = p.g;
+-      s.packed_heads = !a.mini;
+-      s.site.parameter = l.parameter;
+-      std::copy(l.shape.begin(), l.shape.end(), s.site.shape);
+-      if(l.op=="moe_combine")s.site.shape[0]=1;
+-      static const std::map<std::string, Op> ops = {
+-#define OP(n) {#n, Op::n}
+-          OP(norm),
+-          OP(silu_div4),
+-          OP(silu_product),
+-          OP(hc_mix),
+-          OP(hc_combine),
+-          OP(conv),
+-          OP(gdn),
+-          OP(gdn_norm_gate),
+-          OP(route),
+-          OP(expert_gather),
+-          OP(moe_combine),
+-          OP(qsa_prepare),
+-          OP(qsa_append_pool),
+-          OP(qsa_select),
+-          OP(qsa_attention),
+-          OP(ple_gate),
+-          OP(ple_add),
+-          OP(argmax)
+-#undef OP
+-      };
+-      if (l.op == "begin")
+-        s.special = Special::begin;
+-      else if (l.op == "commit")
+-        s.special = Special::commit;
+-      else if (l.op == "broadcast")
+-        s.special = Special::broadcast;
+-      else if (l.op == "ple_hash")
+-        s.special = Special::ple_hash;
+-      else if (l.op == "check_status")
+-        s.special = Special::check_status;
+-      else
+-        s.op = ops.at(l.op);
+-      std::vector<Allocation> bindings;
+-      int k = 0;
+-      for (auto &name : l.inputs) {
+-        auto b = buffers[c].at(name);
+-        if(l.op=="moe_combine" && k==0)b={mixture_out[c],size_t(p.g.h),Scalar::bf16};
+-        if(l.op=="moe_combine" && k==1)b={one[c],1,Scalar::f32};
+-        s.sizes[k] = b.n;
+-        s.types[k++] = b.type;
+-        bindings.push_back(b.id);
+-        ++s.ni;
+-      }
+-      for (auto &name : l.outputs) {
+-        auto b = buffers[c].at(name);
+-        s.sizes[k] = b.n;
+-        s.types[k++] = b.type;
+-        bindings.push_back(b.id);
+-        ++s.no;
+-      }
+-      for (auto &name : l.weights) {
+-        load(c, name);
+-        auto &t = w.directory.at(name);
+-        s.grids[s.nw] = flash::grid_type(t.grid);
+-        s.weight_elements[s.nw] = count(t.shape);
+-        ++s.nw;
+-        bindings.push_back(weights[c].at(name));
+-      }
+-      bindings.push_back(scratch[c]);
+-      for (auto name : {"error", "position", "active"})
+-        bindings.push_back(buffers[c].at(name).id);
+-      bindings.push_back(ropes[c]);
++      auto [s,bindings]=bind_site(l);
+       if(a.nongemv=="parallel")finish(c,packet18::submit_parallel(dev(c),s,bindings,controls[c],scores[c],probabilities[c],{}),false);
+       else finish(c, iq3::step_operator(dev(c), s, bindings));
+       if(l.op=="route" && a.cards==1) {
+@@ -1283,11 +1222,12 @@
+       if(fixture_step==1)first_generated_ms=elapsed;
+       (fixture_step>0?e->timings:e->prefill_timings)<<"{\"kind\":"<<ownrt::quote(fixture_step>0?"generated_token":"prefill_token")
+         <<",\"token_index\":"<<token_index++<<",\"generated_index\":"<<fixture_step
++        <<",\"timing\":"<<ownrt::quote(a.timing)<<",\"distorted\":"<<(a.timing=="launch"?"true":"false")
+         <<",\"input_token\":"<<token<<",\"token_id\":"<<result<<",\"wall_ms\":"<<elapsed
+-        <<",\"gemv_device_ms\":"<<device_ms(e->gemv_ms-token_g)<<",\"non_gemv_device_ms\":"<<device_ms(e->nongemv_ms-token_n)
++        <<",\"gemv_device_ms\":"<<(a.timing=="launch"?device_ms(e->gemv_ms-token_g):"null")<<",\"non_gemv_device_ms\":"<<(a.timing=="launch"?device_ms(e->nongemv_ms-token_n):"null")
+         <<",\"transfer_wall_ms\":"<<e->transfer_ms-token_t<<",\"kernel_submissions\":"<<e->submitted-token_sub
+         <<",\"host_waits\":"<<e->host_waits-token_wait<<"}\n";
+-      e->timings.flush();e->prefill_timings.flush();return a.first?-1:result;
++      if(token_index%16==0){e->timings.flush();e->prefill_timings.flush();}return a.first?-1:result;
+     };
+     int next=-1;auto prefill_start=std::chrono::steady_clock::now();
+     for(size_t i=0;i<input.size();++i)next=step(input[i],i+1==input.size()?1:0);
+@@ -1367,6 +1307,7 @@
+ #endif
+   r << ",\"owner_cards\":"<<a.cards<<",\"nongemv\":"<<ownrt::quote(a.nongemv)<<",\"gemv\":"<<ownrt::quote(a.gemv)
+     <<",\"fusion\":"<<ownrt::quote(a.fusion)<<",\"context\":"<<a.context<<",\"prefill_ms\":"<<prefill_ms<<",\"first_generated_token_ms\":"<<first_token_ms
++    <<",\"timing\":"<<ownrt::quote(a.timing)<<",\"timing_distorted\":"<<(a.timing=="launch"?"true":"false")
+     <<",\"decode_wall_ms\":"<<decode_ms<<",\"decode_tokens\":"<<(generated.empty()?0:generated.size()-1)
+     <<",\"decode_tok_s\":"<<(generated.size()>1 && decode_ms>0 ? std::to_string((generated.size()-1)*1000./decode_ms):"null");
+   r << ",\"oracle_compared\":" << (did_compare ? "true" : "false")
+--- packet21/owner.cpp
++++ packet23/owner.cpp
+@@ -1,5 +1,6 @@
+ #include "owner.hpp"
+ #include <algorithm>
++#include <array>
+ #include <atomic>
+ #include <condition_variable>
+ #include <cstdio>
+@@ -12,6 +13,7 @@
+ namespace ownrt {
+ namespace {
+ std::map<Event,int> event_queue;
++std::map<const Device*,Event> completed_tail;
+ int queue_of(const Row& r) {
+   if(r.memory!=Memory::device)return -1;
+   return r.label.starts_with("card1:")?1:0;
+@@ -86,6 +88,7 @@
+ }
+ void forget_event_queues(std::span<const Event> events) {for(auto e:events)event_queue.erase(e);}
+ Device::~Device() {
++  completed_tail.erase(this);
+   if(closed_) return;
+   try { if(shutdown(std::chrono::seconds(60)).safe_to_exit) return; }
+   catch(...) {}
+@@ -97,15 +100,18 @@
+   if(events_.size() >= 16384) throw std::length_error("event ledger full; end this bounded smoke");
+ }
+ void Device::validate(std::span<const Event> deps) const {
+-  for(auto e:deps) if(std::find(events_.begin(),events_.end(),e)==events_.end())
++  for(auto e:deps) if(!std::binary_search(events_.begin(),events_.end(),e))
+     throw std::invalid_argument("foreign dependency");
+ }
+ std::size_t Device::in_flight() {
++  if(events_.empty() || completed_tail[this]==events_.back())return 0;
+   return std::count_if(events_.begin(),events_.end(),[&](auto e){return !backend_->complete(e);});
+ }
+ bool Device::wait(Event e,std::chrono::milliseconds timeout) {
+   validate(std::span(&e,1));
+-  return backend_->wait(e,std::chrono::steady_clock::now()+timeout);
++  bool ok=backend_->wait(e,std::chrono::steady_clock::now()+timeout);
++  if(ok && !events_.empty() && e==events_.back())completed_tail[this]=e;
++  return ok;
+ }
+ EventTiming Device::timing(Event e) {
+   validate(std::span(&e,1));
+@@ -115,18 +121,27 @@
+ Event Device::compute(const Operation& op, std::span<const Allocation> buffers, std::span<const Event> deps) {
+   admit(); validate(deps);
+   if(buffers.empty()) throw std::invalid_argument("empty compute bindings");
+-  std::vector<void*> pointers;
++  std::array<void*,64> pointer_array;
++  std::vector<void*> large_pointers;
++  if(buffers.size()>pointer_array.size())large_pointers.resize(buffers.size());
++  std::span<void*> pointers(buffers.size()>pointer_array.size()?large_pointers.data():pointer_array.data(),buffers.size());
++  size_t pointer_index=0;
+   int queue=queue_of(arena.row(buffers.front()));
+   for(auto id:buffers) {
+     const auto& r=arena.row(id);
+     if(!r.live || r.memory!=Memory::device) throw std::logic_error("compute requires live device allocation");
+     if(queue_of(r)!=queue)throw std::logic_error("foreign compute allocation");
+-    pointers.push_back(r.pointer);
+-  }
+-  std::vector<Event> chain(deps.begin(),deps.end());
+-  if(!events_.empty()) chain.push_back(events_.back());
++    pointers[pointer_index++]=r.pointer;
++  }
++  std::array<Event,16> local_chain;
++  std::vector<Event> large_chain;
++  size_t n=deps.size()+(!events_.empty());
++  if(n>local_chain.size())large_chain.resize(n);
++  std::span<Event> chain(n>local_chain.size()?large_chain.data():local_chain.data(),n);
++  std::copy(deps.begin(),deps.end(),chain.begin());
++  if(!events_.empty())chain.back()=events_.back();
+   assert_local_dependencies(chain,queue);
+-  events_.reserve(events_.size()+1);
++  if(events_.size()==events_.capacity())events_.reserve(std::max(size_t(64),events_.size()*2));
+   try {
+     auto e=backend_->compute(op,pointers,chain); event_queue[e]=queue; events_.push_back(e); return e;
+   } catch(const std::exception& e) {fault_=e.what(); throw;}
+@@ -168,7 +183,7 @@
+     }
+     sequence_.push_back("graphs-released");
+     for(int g=0;g<4;++g) arena.release_group(g);
+-    if(!final_marker_) { events_.reserve(events_.size()+1); final_marker_=backend_->marker({}); events_.push_back(final_marker_); }
++    if(!final_marker_) { if(events_.size()==events_.capacity())events_.reserve(std::max(size_t(64),events_.size()*2)); final_marker_=backend_->marker({}); events_.push_back(final_marker_); }
+     if(!backend_->wait(final_marker_,end)) return receipt("final idle marker pending; queue/context retained");
+     backend_->synchronize(); idle_=true; sequence_.push_back("idle-marker-complete");
+     backend_->clear_events(); forget_event_queues(events_); events_.clear(); sequence_.push_back("events-released");
+@@ -191,8 +206,9 @@
+   rows_.push_back({id,std::move(label),c,l,m,bytes,ptr,true}); return id;
+ }
+ const Row& Arena::row(Allocation id) const {
+-  for(const auto& r:rows_) if(r.id==id) return r;
+-  throw std::out_of_range("foreign allocation id");
++  auto it=std::lower_bound(rows_.begin(),rows_.end(),id,[](const Row& r,Allocation x){return r.id<x;});
++  if(it==rows_.end() || it->id!=id)throw std::out_of_range("foreign allocation id");
++  return *it;
+ }
+ void Arena::release(Allocation id) {
+   const auto& r=row(id); if(!r.live) throw std::logic_error("double release");
+@@ -239,7 +255,7 @@
+   std::vector<Event> chain(deps.begin(),deps.end());
+   if(!owner_.events_.empty()) chain.push_back(owner_.events_.back());
+   assert_local_dependencies(chain,queue);
+-  owner_.events_.reserve(owner_.events_.size()+1);
++  if(owner_.events_.size()==owner_.events_.capacity())owner_.events_.reserve(std::max(size_t(64),owner_.events_.size()*2));
+   try {
+     auto e=owner_.backend_->copy(static_cast<std::byte*>(d.pointer)+off,static_cast<const std::byte*>(s.pointer)+soff,n,chain);
+     event_queue[e]=queue; owner_.events_.push_back(e); return e;

@@ -1,0 +1,530 @@
+[  2%] Building CXX object CMakeFiles/authority-tests.dir/authority_test.cpp.o
+{
+  "passed": true,
+  "grep_argv": [
+    "rg",
+    "-n",
+    "(std::|sycl::(native::|half_precision::)?|__builtin_)(exp|log|pow|sin|cos)(2|10|1p|m1)?f?\\s*\\("
+  ],
+  "translation_units": 19,
+  "files": [
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/mock_device.hpp",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.hpp",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_operation.hpp",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet17-detmath/detmath.hpp",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/device.hpp",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp",
+    "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp",
+    "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/adapter.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/adapter_fixture.cpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/adapter_fixture.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/arithmetic.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/backend.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/build/fusion-rope.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/canary.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/core_v2.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/detmath.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/gemv_batch.cpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/gemv_batch.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/gemv_fixture.cpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/lifetime_mock.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/native.cpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/native.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/nongemv_fixture.cpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/owner.cpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/owner.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/owner_retire.cpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/performance.cpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/performance.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/prototype/fused.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/prototype/gate.cpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/prototype/snapshot/core_v2.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/prototype/snapshot/detmath.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/prototype/snapshot/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/prototype/snapshot/reference.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/prototype/snapshot/rope.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/rope.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/runtime_kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/runtime_kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/synthetic.hpp",
+    "experiments/own-xpu-runtime/stage2/packet3/kernels/api.hpp",
+    "experiments/own-xpu-runtime/stage2/packet3/model/directory.hpp",
+    "experiments/own-xpu-runtime/stage2/packet3/step/plan.hpp",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/reference.hpp",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/decode.hpp",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/dispatch.hpp",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/reference.hpp",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/dispatch.hpp",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/reference.hpp"
+  ]
+}
+{
+  "passed": true,
+  "checks": [
+    "owner compute dependency assertion",
+    "owner queue rejection",
+    "peer requires drained queues",
+    "shutdown marker has no dependencies",
+    "every native entry checks target queue",
+    "native same-queue event filter",
+    "queue switches fence",
+    "all peer copies fence",
+    "final Q1 commit before Q0 readback fences",
+    "retirement drains queues before deleting IDs"
+  ],
+  "sources": {
+    "main.cpp": "16010a2dfb74e3bc65289ad6d473f36590d2619fca1ddc905d54baa3fe39c4a9",
+    "owner.cpp": "05a92e51bf179a4e757b3b7cab91b3fbd4caeb3188586e0cccc1b54a34af6b80",
+    "backend.hpp": "f2e8fee714f9c102b79c8a3226988d5b74be7e5d9531af810e85a37de0bcd2fa",
+    "owner_retire.cpp": "e35c366f640d8909b519891fa814aa80228b01ce69bd19ccdf00a8d13cae0da2"
+  },
+  "limit": "Source structure guard plus owner runtime assertion; no native execution proof"
+}
+[  2%] Built target math-gate
+[  5%] Building CXX object CMakeFiles/owner-retirement-tests.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/owner_test.cpp.o
+[  7%] Building CXX object CMakeFiles/owner-retirement-tests.dir/owner_retire.cpp.o
+[ 10%] Linking CXX executable authority-tests
+[ 10%] Built target authority-tests
+[ 12%] Building CXX object CMakeFiles/chain-tests.dir/chain_test.cpp.o
+[ 15%] Building CXX object CMakeFiles/owner-retirement-tests.dir/owner.cpp.o
+[ 17%] Building CXX object CMakeFiles/chain-tests.dir/owner_retire.cpp.o
+[ 20%] Linking CXX executable owner-retirement-tests
+[ 20%] Built target owner-retirement-tests
+[ 22%] Building CXX object CMakeFiles/math_bridge.dir/math_bridge.cpp.o
+[ 25%] Building CXX object CMakeFiles/chain-tests.dir/owner.cpp.o
+[ 27%] Linking CXX shared library libmath_bridge.so
+[ 27%] Built target math_bridge
+[ 30%] Building CXX object CMakeFiles/queue-tests.dir/queue_test.cpp.o
+[ 32%] Building CXX object CMakeFiles/queue-tests.dir/owner_retire.cpp.o
+[ 35%] Linking CXX executable chain-tests
+[ 35%] Built target chain-tests
+[ 37%] Building CXX object CMakeFiles/fused-fixtures.dir/gemv_fixture.cpp.o
+[ 40%] Building CXX object CMakeFiles/queue-tests.dir/owner.cpp.o
+[ 42%] Linking CXX executable queue-tests
+[ 42%] Built target queue-tests
+[ 45%] Building CXX object CMakeFiles/nongemv-fixtures.dir/nongemv_fixture.cpp.o
+[ 47%] Building CXX object CMakeFiles/fused-fixtures.dir/gemv_batch.cpp.o
+[ 50%] Building CXX object CMakeFiles/nongemv-fixtures.dir/adapter_fixture.cpp.o
+[ 52%] Building CXX object CMakeFiles/fused-fixtures.dir/performance.cpp.o
+[ 55%] Building CXX object CMakeFiles/nongemv-fixtures.dir/adapter.cpp.o
+[ 57%] Building CXX object CMakeFiles/fused-fixtures.dir/owner.cpp.o
+[ 60%] Building CXX object CMakeFiles/fused-fixtures.dir/owner_retire.cpp.o
+[ 62%] Linking CXX executable fused-fixtures
+[ 62%] Built target fused-fixtures
+[ 65%] Building CXX object CMakeFiles/lifetime-tests.dir/lifetime_test.cpp.o
+[ 67%] Building CXX object CMakeFiles/nongemv-fixtures.dir/runtime_kernels.cpp.o
+[ 70%] Linking CXX executable lifetime-tests
+[ 70%] Built target lifetime-tests
+[ 72%] Building CXX object CMakeFiles/nongemv-fixtures.dir/owner.cpp.o
+[ 75%] Building CXX object CMakeFiles/nongemv-fixtures.dir/owner_retire.cpp.o
+[ 77%] Building CXX object CMakeFiles/own-rt-iq3.dir/main.cpp.o
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/kernels.hpp:3,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/kernels.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/kernels.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/performance.hpp:3,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp:4:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:25: warning: ignoring ‘#pragma unroll ’ [-Wunknown-pragmas]
+   25 |     #pragma unroll
+      | 
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/reference.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/kernels.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/decode.hpp:53: warning: ignoring ‘#pragma unroll ’ [-Wunknown-pragmas]
+   53 |     #pragma unroll
+      | 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/decode.hpp:90: warning: ignoring ‘#pragma unroll ’ [-Wunknown-pragmas]
+   90 |     #pragma unroll
+      | 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/decode.hpp:99: warning: ignoring ‘#pragma unroll ’ [-Wunknown-pragmas]
+   99 |     #pragma unroll
+      | 
+[ 80%] Linking CXX executable nongemv-fixtures
+[ 80%] Built target nongemv-fixtures
+[ 82%] Building CXX object CMakeFiles/own-rt-iq3.dir/gemv_batch.cpp.o
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/kernels.hpp:3,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/kernels.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/kernels.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/performance.hpp:3,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/gemv_batch.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/gemv_batch.cpp:1:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:25: warning: ignoring ‘#pragma unroll ’ [-Wunknown-pragmas]
+   25 |     #pragma unroll
+      | 
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/reference.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/kernels.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/decode.hpp:53: warning: ignoring ‘#pragma unroll ’ [-Wunknown-pragmas]
+   53 |     #pragma unroll
+      | 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/decode.hpp:90: warning: ignoring ‘#pragma unroll ’ [-Wunknown-pragmas]
+   90 |     #pragma unroll
+      | 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/decode.hpp:99: warning: ignoring ‘#pragma unroll ’ [-Wunknown-pragmas]
+   99 |     #pragma unroll
+      | 
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/kernels.hpp:4:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/dispatch.hpp: In function ‘bool iq3::kopt3::dispatch_split4(unsigned int, unsigned int, unsigned int, unsigned int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/dispatch.hpp:36:3: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+   36 |   if(match)throw std::invalid_argument("ambiguous dispatch");match=&r;
+      |   ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/dispatch.hpp:36:62: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   36 |   if(match)throw std::invalid_argument("ambiguous dispatch");match=&r;
+      |                                                              ^~~~~
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/kernels.hpp:4:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/dispatch.hpp: In function ‘unsigned int iq3::kopt4::dispatch_variant(unsigned int, unsigned int, unsigned int, unsigned int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/dispatch.hpp:36:3: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+   36 |   if(match)throw std::invalid_argument("ambiguous dispatch");match=&r;
+      |   ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/dispatch.hpp:36:62: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   36 |   if(match)throw std::invalid_argument("ambiguous dispatch");match=&r;
+      |                                                              ^~~~~
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/arithmetic.hpp:6,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/performance.hpp:4:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet10-kopt5/expanded.hpp: In function ‘float iq3::expanded::row(iq3::Type, const uint8_t*, const uint16_t*, iq3::Type, size_t, unsigned int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet10-kopt5/expanded.hpp:90:2: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+   90 |  if(split!=1 && split!=4)throw std::invalid_argument("split");float part[4]{};
+      |  ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet10-kopt5/expanded.hpp:90:63: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   90 |  if(split!=1 && split!=4)throw std::invalid_argument("split");float part[4]{};
+      |                                                               ^~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp: In member function ‘void Engine::finish(int, integrated::Launch, bool)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp:430:5: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+  430 |     if(a.timing=="launch")pending.push_back({l,gemv}); tail=l.last; submitted+=l.passes;
+      |     ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp:430:56: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  430 |     if(a.timing=="launch")pending.push_back({l,gemv}); tail=l.last; submitted+=l.passes;
+      |                                                        ^~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp: In lambda function:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp:857:7: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+  857 |       if(sites.empty())return;tasks[sites[0].label]={kind,sites};
+      |       ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp:857:31: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  857 |       if(sites.empty())return;tasks[sites[0].label]={kind,sites};
+      |                               ^~~~~
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/kernels.hpp:4:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/dispatch.hpp: In function ‘bool iq3::kopt3::dispatch_split4(unsigned int, unsigned int, unsigned int, unsigned int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/dispatch.hpp:36:3: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+   36 |   if(match)throw std::invalid_argument("ambiguous dispatch");match=&r;
+      |   ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/dispatch.hpp:36:62: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   36 |   if(match)throw std::invalid_argument("ambiguous dispatch");match=&r;
+      |                                                              ^~~~~
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/kernels.hpp:4:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/dispatch.hpp: In function ‘unsigned int iq3::kopt4::dispatch_variant(unsigned int, unsigned int, unsigned int, unsigned int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/dispatch.hpp:36:3: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+   36 |   if(match)throw std::invalid_argument("ambiguous dispatch");match=&r;
+      |   ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/dispatch.hpp:36:62: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   36 |   if(match)throw std::invalid_argument("ambiguous dispatch");match=&r;
+      |                                                              ^~~~~
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/arithmetic.hpp:6,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/performance.hpp:4:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet10-kopt5/expanded.hpp: In function ‘float iq3::expanded::row(iq3::Type, const uint8_t*, const uint16_t*, iq3::Type, size_t, unsigned int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet10-kopt5/expanded.hpp:90:2: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+   90 |  if(split!=1 && split!=4)throw std::invalid_argument("split");float part[4]{};
+      |  ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet10-kopt5/expanded.hpp:90:63: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   90 |  if(split!=1 && split!=4)throw std::invalid_argument("split");float part[4]{};
+      |                                                               ^~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/gemv_batch.cpp: In function ‘void packet21::{anonymous}::normalize(const Desc&, void* const*)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/gemv_batch.cpp:28:2: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+   28 |  if(d.route_prob==absent)return;auto prob=static_cast<float*>(p[d.route_prob]);float sum[32]{};for(unsigned i=0;i<d.route_top;++i)sum[i]=prob[i];
+      |  ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/gemv_batch.cpp:28:33: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   28 |  if(d.route_prob==absent)return;auto prob=static_cast<float*>(p[d.route_prob]);float sum[32]{};for(unsigned i=0;i<d.route_top;++i)sum[i]=prob[i];
+      |                                 ^~~~
+[ 85%] Building CXX object CMakeFiles/own-rt-iq3.dir/performance.cpp.o
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/kernels.hpp:3,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/kernels.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/kernels.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/performance.hpp:3,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/performance.cpp:1:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:25: warning: ignoring ‘#pragma unroll ’ [-Wunknown-pragmas]
+   25 |     #pragma unroll
+      | 
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/reference.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/kernels.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/decode.hpp:53: warning: ignoring ‘#pragma unroll ’ [-Wunknown-pragmas]
+   53 |     #pragma unroll
+      | 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/decode.hpp:90: warning: ignoring ‘#pragma unroll ’ [-Wunknown-pragmas]
+   90 |     #pragma unroll
+      | 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/decode.hpp:99: warning: ignoring ‘#pragma unroll ’ [-Wunknown-pragmas]
+   99 |     #pragma unroll
+      | 
+In file included from /usr/include/c++/13/string:49,
+                 from /usr/include/c++/13/bits/locale_classes.h:40,
+                 from /usr/include/c++/13/bits/ios_base.h:41,
+                 from /usr/include/c++/13/ios:44,
+                 from /usr/include/c++/13/istream:40,
+                 from /usr/include/c++/13/sstream:40,
+                 from /usr/include/c++/13/chrono:45,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../../stage1/packet3-prep/src/owner.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/owner.hpp:3,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet2/loader/gguf.hpp:3,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp:1:
+In member function ‘constexpr bool std::less<_Tp*>::operator()(_Tp*, _Tp*) const [with _Tp = void]’,
+    inlined from ‘std::pair<std::_Rb_tree_iterator<_Val>, std::_Rb_tree_iterator<_Val> > std::_Rb_tree<_Key, _Val, _KeyOfValue, _Compare, _Alloc>::equal_range(const _Key&) [with _Key = void*; _Val = std::pair<void* const, ownrt::Memory>; _KeyOfValue = std::_Select1st<std::pair<void* const, ownrt::Memory> >; _Compare = std::less<void*>; _Alloc = std::allocator<std::pair<void* const, ownrt::Memory> >]’ at /usr/include/c++/13/bits/stl_tree.h:2020:30,
+    inlined from ‘std::_Rb_tree<_Key, _Val, _KeyOfValue, _Compare, _Alloc>::size_type std::_Rb_tree<_Key, _Val, _KeyOfValue, _Compare, _Alloc>::erase(const _Key&) [with _Key = void*; _Val = std::pair<void* const, ownrt::Memory>; _KeyOfValue = std::_Select1st<std::pair<void* const, ownrt::Memory> >; _Compare = std::less<void*>; _Alloc = std::allocator<std::pair<void* const, ownrt::Memory> >]’ at /usr/include/c++/13/bits/stl_tree.h:2519:49,
+    inlined from ‘std::map<_Key, _Tp, _Compare, _Alloc>::size_type std::map<_Key, _Tp, _Compare, _Alloc>::erase(const key_type&) [with _Key = void*; _Tp = ownrt::Memory; _Compare = std::less<void*>; _Alloc = std::allocator<std::pair<void* const, ownrt::Memory> >]’ at /usr/include/c++/13/bits/stl_map.h:1119:26,
+    inlined from ‘virtual void ownrt::MockDevice::release(void*, ownrt::Memory)’ at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../../stage1/packet3-prep/src/mock_device.hpp:22:45:
+/usr/include/c++/13/bits/stl_function.h:457:38: warning: pointer ‘p’ may be used after ‘void operator delete(void*)’ [-Wuse-after-free]
+  457 |         return (__UINTPTR_TYPE__)__x < (__UINTPTR_TYPE__)__y;
+      |                ~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/lifetime_mock.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp:11:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../../stage1/packet3-prep/src/mock_device.hpp: In member function ‘virtual void ownrt::MockDevice::release(void*, ownrt::Memory)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../../stage1/packet3-prep/src/mock_device.hpp:22:22: note: call to ‘void operator delete(void*)’ here
+   22 |     ::operator delete(p); allocations_.erase(p); calls.push_back("free");
+      |     ~~~~~~~~~~~~~~~~~^~~
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/kernels.hpp:4:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/dispatch.hpp: In function ‘bool iq3::kopt3::dispatch_split4(unsigned int, unsigned int, unsigned int, unsigned int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/dispatch.hpp:36:3: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+   36 |   if(match)throw std::invalid_argument("ambiguous dispatch");match=&r;
+      |   ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/dispatch.hpp:36:62: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   36 |   if(match)throw std::invalid_argument("ambiguous dispatch");match=&r;
+      |                                                              ^~~~~
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/kernels.hpp:4:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/dispatch.hpp: In function ‘unsigned int iq3::kopt4::dispatch_variant(unsigned int, unsigned int, unsigned int, unsigned int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/dispatch.hpp:36:3: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+   36 |   if(match)throw std::invalid_argument("ambiguous dispatch");match=&r;
+      |   ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/dispatch.hpp:36:62: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   36 |   if(match)throw std::invalid_argument("ambiguous dispatch");match=&r;
+      |                                                              ^~~~~
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/arithmetic.hpp:6,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/performance.hpp:4:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet10-kopt5/expanded.hpp: In function ‘float iq3::expanded::row(iq3::Type, const uint8_t*, const uint16_t*, iq3::Type, size_t, unsigned int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet10-kopt5/expanded.hpp:90:2: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+   90 |  if(split!=1 && split!=4)throw std::invalid_argument("split");float part[4]{};
+      |  ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet10-kopt5/expanded.hpp:90:63: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   90 |  if(split!=1 && split!=4)throw std::invalid_argument("split");float part[4]{};
+      |                                                               ^~~~~
+In function ‘float iq3::kopt2::lane_range(const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int) [with iq3::Type T = iq3::Type::F32]’,
+    inlined from ‘float iq3::kopt2::lane(iq3::Type, const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int)’ at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:35:13:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:28:29: warning: ‘values’ may be used uninitialized [-Wmaybe-uninitialized]
+   28 |       float product=values[j]*input;acc=acc+product;
+      |                     ~~~~~~~~^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp: In function ‘float iq3::kopt2::lane(iq3::Type, const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:22:11: note: ‘values’ declared here
+   22 |     float values[8];
+      |           ^~~~~~
+In function ‘float iq3::kopt2::lane_range(const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int) [with iq3::Type T = iq3::Type::F16]’,
+    inlined from ‘float iq3::kopt2::lane(iq3::Type, const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int)’ at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:35:23:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:28:29: warning: ‘values’ may be used uninitialized [-Wmaybe-uninitialized]
+   28 |       float product=values[j]*input;acc=acc+product;
+      |                     ~~~~~~~~^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp: In function ‘float iq3::kopt2::lane(iq3::Type, const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:22:11: note: ‘values’ declared here
+   22 |     float values[8];
+      |           ^~~~~~
+In function ‘float iq3::kopt2::lane_range(const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int) [with iq3::Type T = iq3::Type::Q8_0]’,
+    inlined from ‘float iq3::kopt2::lane(iq3::Type, const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int)’ at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:35:44:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:28:29: warning: ‘values’ may be used uninitialized [-Wmaybe-uninitialized]
+   28 |       float product=values[j]*input;acc=acc+product;
+      |                     ~~~~~~~~^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp: In function ‘float iq3::kopt2::lane(iq3::Type, const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:22:11: note: ‘values’ declared here
+   22 |     float values[8];
+      |           ^~~~~~
+In function ‘float iq3::kopt2::lane_range(const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int) [with iq3::Type T = iq3::Type::Q3_K]’,
+    inlined from ‘float iq3::kopt2::lane(iq3::Type, const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int)’ at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:35:66:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:28:29: warning: ‘values’ may be used uninitialized [-Wmaybe-uninitialized]
+   28 |       float product=values[j]*input;acc=acc+product;
+      |                     ~~~~~~~~^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp: In function ‘float iq3::kopt2::lane(iq3::Type, const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:22:11: note: ‘values’ declared here
+   22 |     float values[8];
+      |           ^~~~~~
+In function ‘float iq3::kopt2::lane_range(const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int) [with iq3::Type T = iq3::Type::Q6_K]’,
+    inlined from ‘float iq3::kopt2::lane(iq3::Type, const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int)’ at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:35:55:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:28:29: warning: ‘values’ may be used uninitialized [-Wmaybe-uninitialized]
+   28 |       float product=values[j]*input;acc=acc+product;
+      |                     ~~~~~~~~^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp: In function ‘float iq3::kopt2::lane(iq3::Type, const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:22:11: note: ‘values’ declared here
+   22 |     float values[8];
+      |           ^~~~~~
+In function ‘float iq3::kopt2::lane_range(const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int) [with iq3::Type T = iq3::Type::IQ3_XXS]’,
+    inlined from ‘float iq3::kopt2::lane(iq3::Type, const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int)’ at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:35:77:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:28:29: warning: ‘values’ may be used uninitialized [-Wmaybe-uninitialized]
+   28 |       float product=values[j]*input;acc=acc+product;
+      |                     ~~~~~~~~^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp: In function ‘float iq3::kopt2::lane(iq3::Type, const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:22:11: note: ‘values’ declared here
+   22 |     float values[8];
+      |           ^~~~~~
+In function ‘float iq3::kopt2::lane_range(const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int) [with iq3::Type T = iq3::Type::IQ4_NL]’,
+    inlined from ‘float iq3::kopt2::lane(iq3::Type, const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int)’ at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:35:115:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:28:29: warning: ‘values’ may be used uninitialized [-Wmaybe-uninitialized]
+   28 |       float product=values[j]*input;acc=acc+product;
+      |                     ~~~~~~~~^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp: In function ‘float iq3::kopt2::lane(iq3::Type, const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:22:11: note: ‘values’ declared here
+   22 |     float values[8];
+      |           ^~~~~~
+In function ‘float iq3::kopt2::lane_range(const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int) [with iq3::Type T = iq3::Type::IQ3_S]’,
+    inlined from ‘float iq3::kopt2::lane(iq3::Type, const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int)’ at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:35:103:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:28:29: warning: ‘values’ may be used uninitialized [-Wmaybe-uninitialized]
+   28 |       float product=values[j]*input;acc=acc+product;
+      |                     ~~~~~~~~^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp: In function ‘float iq3::kopt2::lane(iq3::Type, const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:22:11: note: ‘values’ declared here
+   22 |     float values[8];
+      |           ^~~~~~
+In function ‘float iq3::kopt2::lane_range(const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int) [with iq3::Type T = iq3::Type::IQ2_S]’,
+    inlined from ‘float iq3::kopt2::lane(iq3::Type, const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int)’ at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:35:91:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:28:29: warning: ‘values’ may be used uninitialized [-Wmaybe-uninitialized]
+   28 |       float product=values[j]*input;acc=acc+product;
+      |                     ~~~~~~~~^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp: In function ‘float iq3::kopt2::lane(iq3::Type, const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:22:11: note: ‘values’ declared here
+   22 |     float values[8];
+      |           ^~~~~~
+In function ‘float iq3::kopt2::lane_range(const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int) [with iq3::Type T = iq3::Type::BF16]’,
+    inlined from ‘float iq3::kopt2::lane(iq3::Type, const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int)’ at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:35:33:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:28:29: warning: ‘values’ may be used uninitialized [-Wmaybe-uninitialized]
+   28 |       float product=values[j]*input;acc=acc+product;
+      |                     ~~~~~~~~^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp: In function ‘float iq3::kopt2::lane(iq3::Type, const uint8_t*, const uint16_t*, iq3::Type, size_t, size_t, unsigned int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:22:11: note: ‘values’ declared here
+   22 |     float values[8];
+      |           ^~~~~~
+[ 87%] Building CXX object CMakeFiles/own-rt-iq3.dir/adapter.cpp.o
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/kernels.hpp:3,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/kernels.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/kernels.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/performance.hpp:3,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:1:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:25: warning: ignoring ‘#pragma unroll ’ [-Wunknown-pragmas]
+   25 |     #pragma unroll
+      | 
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/reference.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/kernels.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/decode.hpp:53: warning: ignoring ‘#pragma unroll ’ [-Wunknown-pragmas]
+   53 |     #pragma unroll
+      | 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/decode.hpp:90: warning: ignoring ‘#pragma unroll ’ [-Wunknown-pragmas]
+   90 |     #pragma unroll
+      | 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/decode.hpp:99: warning: ignoring ‘#pragma unroll ’ [-Wunknown-pragmas]
+   99 |     #pragma unroll
+      | 
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/kernels.hpp:4:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/dispatch.hpp: In function ‘bool iq3::kopt3::dispatch_split4(unsigned int, unsigned int, unsigned int, unsigned int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/dispatch.hpp:36:3: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+   36 |   if(match)throw std::invalid_argument("ambiguous dispatch");match=&r;
+      |   ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/dispatch.hpp:36:62: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   36 |   if(match)throw std::invalid_argument("ambiguous dispatch");match=&r;
+      |                                                              ^~~~~
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/kernels.hpp:4:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/dispatch.hpp: In function ‘unsigned int iq3::kopt4::dispatch_variant(unsigned int, unsigned int, unsigned int, unsigned int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/dispatch.hpp:36:3: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+   36 |   if(match)throw std::invalid_argument("ambiguous dispatch");match=&r;
+      |   ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/dispatch.hpp:36:62: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   36 |   if(match)throw std::invalid_argument("ambiguous dispatch");match=&r;
+      |                                                              ^~~~~
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/arithmetic.hpp:6,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/performance.hpp:4:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet10-kopt5/expanded.hpp: In function ‘float iq3::expanded::row(iq3::Type, const uint8_t*, const uint16_t*, iq3::Type, size_t, unsigned int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet10-kopt5/expanded.hpp:90:2: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+   90 |  if(split!=1 && split!=4)throw std::invalid_argument("split");float part[4]{};
+      |  ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet10-kopt5/expanded.hpp:90:63: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   90 |  if(split!=1 && split!=4)throw std::invalid_argument("split");float part[4]{};
+      |                                                               ^~~~~
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp: In function ‘void ng::group(Shape, Args, int, Team)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp:200:3: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+  200 |   if(!n)return;float m=-INFINITY;for(int k=0;k<n;++k)m=std::max(m,a.f(6)[group*slots+k]);
+      |   ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp:200:16: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  200 |   if(!n)return;float m=-INFINITY;for(int k=0;k<n;++k)m=std::max(m,a.f(6)[group*slots+k]);
+      |                ^~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp:210:3: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+  210 |   if(!n)return;float value=tree(t,n,[&](int j){int id=safe_id(j);return a.f(7)[(r*24+h)*slots+j]*a.b(3,(id*2+h/12)*256+k);});t.barrier();
+      |   ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp:210:16: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  210 |   if(!n)return;float value=tree(t,n,[&](int j){int id=safe_id(j);return a.f(7)[(r*24+h)*slots+j]*a.b(3,(id*2+h/12)*256+k);});t.barrier();
+      |                ^~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp: In function ‘void packet18::{anonymous}::tiny(Bound, int, Team)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:51:2: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+   51 |  if(t.x[0])return;t.barrier();
+      |  ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:51:19: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   51 |  if(t.x[0])return;t.barrier();
+      |                   ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp: In function ‘void packet18::{anonymous}::simple(Bound, int, Team)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:108:2: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+  108 |  if(t.x[0])return;t.barrier();
+      |  ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:108:19: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  108 |  if(t.x[0])return;t.barrier();
+      |                   ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:111:2: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+  111 |  if(t.x[0])return;t.barrier();
+      |  ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:111:19: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  111 |  if(t.x[0])return;t.barrier();
+      |                   ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp: In lambda function:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:220:3: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+  220 |   if(!first)first=last;++count;};
+      |   ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:220:24: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  220 |   if(!first)first=last;++count;};
+      |                        ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp: In instantiation of ‘void ng::norm_rope(Team, Get, Put, const Args&, int, int, int, int) [with Team = HostTeam; Get = group<HostTeam>(Shape, Args, int, HostTeam)::<lambda(int)>; Put = group<HostTeam>(Shape, Args, int, HostTeam)::<lambda(int, float)>]’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp:167:21:   required from ‘void ng::group(Shape, Args, int, Team) [with Team = HostTeam]’
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp:214:122:   required from here
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp:106:75: warning: unused variable ‘rotary’ [-Wunused-variable]
+  106 |  t.each(width,[&](int j){float v=t.x[j];if(j<64){int k=j%32;constexpr int rotary=64;float c=rope_constants::cos(static_cast<const uint16_t*>(a.p[16]),position,k),z=rope_constants::sin(static_cast<const uint16_t*>(a.p[16]),position,k);v=j<32?t.x[k]*c-t.x[k+32]*z:t.x[k+32]*c+t.x[k]*z;}put(j,v);});t.barrier();
+      |                                                                           ^~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp: In instantiation of ‘void ng::norm_rope(Team, Get, Put, const Args&, int, int, int, int) [with Team = HostTeam; Get = group<HostTeam>(Shape, Args, int, HostTeam)::<lambda(int)>; Put = group<HostTeam>(Shape, Args, int, HostTeam)::<lambda(int, float)>]’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp:168:32:   required from ‘void ng::group(Shape, Args, int, Team) [with Team = HostTeam]’
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp:214:122:   required from here
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp:106:75: warning: unused variable ‘rotary’ [-Wunused-variable]
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp: In instantiation of ‘void ng::norm_rope(Team, Get, Put, const Args&, int, int, int, int) [with Team = HostTeam; Get = group<HostTeam>(Shape, Args, int, HostTeam)::<lambda(int)>; Put = group<HostTeam>(Shape, Args, int, HostTeam)::<lambda(int, float)>]’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp:169:23:   required from ‘void ng::group(Shape, Args, int, Team) [with Team = HostTeam]’
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp:214:122:   required from here
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp:106:75: warning: unused variable ‘rotary’ [-Wunused-variable]
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp: In instantiation of ‘void ng::norm_rope(Team, Get, Put, const Args&, int, int, int, int) [with Team = HostTeam; Get = group<HostTeam>(Shape, Args, int, HostTeam)::<lambda(int)>; Put = group<HostTeam>(Shape, Args, int, HostTeam)::<lambda(int, float)>]’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp:175:13:   required from ‘void ng::group(Shape, Args, int, Team) [with Team = HostTeam]’
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp:214:122:   required from here
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp:106:75: warning: unused variable ‘rotary’ [-Wunused-variable]
+[ 90%] Building CXX object CMakeFiles/own-rt-iq3.dir/runtime_kernels.cpp.o
+[ 92%] Building CXX object CMakeFiles/own-rt-iq3.dir/owner_retire.cpp.o
+[ 95%] Building CXX object CMakeFiles/own-rt-iq3.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp.o
+[ 97%] Building CXX object CMakeFiles/own-rt-iq3.dir/owner.cpp.o
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp: In constructor ‘iq3::Model::Model(const std::vector<std::filesystem::__cxx11::path>&, std::vector<iq3::Planned>)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp:200:3: warning: this ‘for’ clause does not guard... [-Wmisleading-indentation]
+  200 |   for(auto& path:paths)shards.emplace_back(path);validate_splits(shards);
+      |   ^~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp:200:50: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘for’
+  200 |   for(auto& path:paths)shards.emplace_back(path);validate_splits(shards);
+      |                                                  ^~~~~~~~~~~~~~~
+[100%] Linking CXX executable own-rt-iq3
+[100%] Built target own-rt-iq3
