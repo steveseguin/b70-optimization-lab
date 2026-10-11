@@ -1,0 +1,20 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 15K of event 'cpu/cycles/P'
+# Event count (approx.): 85593793962
+#
+# Overhead  Shared Object                          Symbol                                                                                                                                                                   
+# ........  .....................................  .........................................................................................................................................................................
+#
+    44.04%  libstdc++.so.6.0.33                    [.] std::_Rb_tree_increment(std::_Rb_tree_node_base const*)                                                                                                              
+    36.22%  own-rt-iq3                             [.] tp2::Context::location(void const*, unsigned long) const                                                                                                             
+     4.25%  own-rt-iq3                             [.] ownrt::Device::compute(ownrt::Operation const&, std::span<unsigned long const, 18446744073709551615ul>, std::span<unsigned long const, 18446744073709551615ul>)      
+     3.18%  own-rt-iq3                             [.] ownrt::Arena::row(unsigned long) const                                                                                                                               
+     2.72%  own-rt-iq3                             [.] std::_Rb_tree_increment(std::_Rb_tree_node_base const*)@plt                                                                                                          
+     0.49%  libc.so.6                              [.] __memcmp_avx2_movbe                                                                                                                                                  
+#
+# (Cannot load tips.txt file, please install perf!)
+#

@@ -1,0 +1,14 @@
+--- packet18-decode-v2/backend.hpp	2026-10-11 07:05:12.326985293 -0400
++++ scratch-p18-notiming/backend.hpp	2026-10-11 13:06:02.224268041 -0400
+@@ -25,7 +25,10 @@
+   std::map<void*,Location> locations;
+   int location(const void* ptr,size_t bytes)const {
+     auto address=reinterpret_cast<uintptr_t>(ptr);
+-    for(const auto& [base,l]:locations) {auto lo=reinterpret_cast<uintptr_t>(base);
++    // Coordinator scratch variant (2026-10-11): ordered lookup instead of a scan of
++    // every allocation. Allocations are disjoint, so the last base <= ptr is the only candidate.
++    auto it=locations.upper_bound(const_cast<void*>(ptr));
++    if(it!=locations.begin()) {--it;auto lo=reinterpret_cast<uintptr_t>(it->first);const auto& l=it->second;
+       if(address>=lo && address-lo<=l.bytes && bytes<=l.bytes-(address-lo))return l.card;
+     }
+     throw std::invalid_argument("copy outside shared-context allocation");

@@ -1,0 +1,58 @@
+--- packet18-decode-v2/main.cpp	2026-10-11 11:18:26.249463049 -0400
++++ scratch-p18-notiming/main.cpp	2026-10-11 12:51:39.680646378 -0400
+@@ -428,11 +428,8 @@
+     if(!tail && pending.empty())return;
+     if(tail)wait(0,tail);
+ #ifndef OWN_RT_HOST_ONLY
+-    for(auto item:pending) {
+-      auto first=dev(0).timing(item.launch.first), last=dev(0).timing(item.launch.last);
+-      require(first.start_ns && last.end_ns>=first.start_ns,"invalid profiling interval");
+-      (item.gemv?gemv_ms:nongemv_ms)+=double(last.end_ns-first.start_ns)/1e6;
+-    }
++    // Coordinator scratch variant (2026-10-11): per-launch profiling queries removed;
++    // gemv/non-gemv device spans stay zero, wall time per token is unaffected.
+ #endif
+     pending.clear();tail=0;
+     if(!devices.empty())dev(0).retire_completed_events();
+@@ -461,10 +458,13 @@
+ #endif
+     return *devices.at(0);
+   }
++  double wait_ms=0, prepare_ms=0, enqueue_ms=0;
+   void wait(int c, ownrt::Event e) {
+     ++host_waits;
++    auto t0=std::chrono::steady_clock::now();
+     require(dev(c).wait(e, std::chrono::seconds(60)),
+             "operation drain timeout; retain owner");
++    wait_ms+=ms(t0);
+   }
+   Allocation allocate(int c, std::string name, size_t bytes, Category cat,
+                       Lifetime life, Memory m = Memory::device) {
+@@ -1060,7 +1060,9 @@
+       if(capture)fs::create_directories(fixture_dir);
+       std::vector<std::pair<int,int>> captured;
+       for (int c=0;c<a.cards;++c)if(e->buffers[c].count("token"))e->put(c,"token",&token,4);
+-      e->prepare_token(token);
++      double tok_wait=e->wait_ms;
++      {auto t0=std::chrono::steady_clock::now();e->prepare_token(token);e->prepare_ms=Engine::ms(t0);}
++      auto enqueue_start=std::chrono::steady_clock::now();
+       for(auto& l:p.launches) {
+         if(fixture_step==0 && (l.label.starts_with("final.") || l.label=="logits" || l.label=="argmax"))continue;
+         e->enqueue(l,e->logical);
+@@ -1076,6 +1078,7 @@
+         }
+       }
+       // One token-boundary readback contains sticky error and greedy output.
++      e->enqueue_ms=Engine::ms(enqueue_start);
+       e->drain(); // commit.final is Q1; readback is Q0
+       auto& owner=e->dev(0);ownrt::CopyEngine copy(owner);
+       auto start_transfer=std::chrono::steady_clock::now();
+@@ -1113,7 +1116,7 @@
+         <<",\"input_token\":"<<token<<",\"token_id\":"<<result<<",\"wall_ms\":"<<elapsed
+         <<",\"gemv_device_ms\":"<<device_ms(e->gemv_ms-token_g)<<",\"non_gemv_device_ms\":"<<device_ms(e->nongemv_ms-token_n)
+         <<",\"transfer_wall_ms\":"<<e->transfer_ms-token_t<<",\"kernel_submissions\":"<<e->submitted-token_sub
+-        <<",\"host_waits\":"<<e->host_waits-token_wait<<"}\n";
++        <<",\"host_waits\":"<<e->host_waits-token_wait<<",\"prepare_ms\":"<<e->prepare_ms<<",\"enqueue_loop_ms\":"<<e->enqueue_ms<<",\"wait_ms\":"<<e->wait_ms-tok_wait<<"}\n";
+       e->timings.flush();e->prefill_timings.flush();return a.first?-1:result;
+     };
+     int next=-1;auto prefill_start=std::chrono::steady_clock::now();
