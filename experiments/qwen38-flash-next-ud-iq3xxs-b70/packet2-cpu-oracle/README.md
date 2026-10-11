@@ -92,17 +92,33 @@ the owner's 40 GB RSS ceiling. Run at nice 19, eight numeric threads, one
 interop thread; all preparation uses two threads. No GPU, server, Docker,
 systemd, device node, port 8188, LTX unit or host setting was accessed.
 
-**Measured runtime cost and coverage:** the three-hour run is saved under
-[`runs/official-sigmoid-20261011/`](runs/official-sigmoid-20261011/receipt.json).
-The completed incident row has **87 prompt tokens + 64 generated tokens**.
-Its prompt pass, including the first vocabulary prediction, took
-**1,985.579 seconds**; the subsequent 63 forward calls averaged
-**43.331 seconds/token**. The first eight-token pilot averaged
-**43.582 seconds/token** over its seven decode calls, passing the 600-second
-extension threshold. These are measured CPU reference costs, not device speeds.
-Further suite coverage is still being collected within the same three-hour
-limit. The earlier [operator screen](operator-timing.json) remains a separate
-diagnostic; it is not used to estimate complete-model speed.
+**Measured runtime cost and coverage:** the [run receipt](runs/official-sigmoid-20261011/receipt.json)
+and [coverage/hash validation](runs/official-sigmoid-20261011/validation.json)
+record a clean wall-limit stop after **10,800.047 seconds**. Peak RSS was
+**1,057,406,976 bytes (1.06 GB)**, under the 40 GB limit. Two of twelve prompts
+completed, with **177 input tokens and 128 generated tokens** in total.
+
+| Prompt | Input tokens | Generated tokens | Prompt pass, seconds | Mean decode, seconds/token | Step-1 layer files |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| incident-retrospective | 87 | 64 | 1,985.579 | 43.331 | 48/48 |
+| code-review | 90 | 64 | 1,972.712 | 46.184 | 48/48 |
+| customer-email | 77, partial pass | 0 | incomplete | not measured | 32/48, partial |
+
+The other nine prompts were not started. Prompt-pass time includes the first
+vocabulary prediction; decode averages the subsequent 63 completed forward
+calls for each completed row. The eight-token incident pilot averaged
+**43.582 seconds/token** over seven decode calls, passing the 600-second
+extension threshold; the code-review pilot was 52.678 seconds/token.
+These are measured CPU reference costs, not device speeds. The earlier
+[operator screen](operator-timing.json) remains a separate diagnostic, never
+an estimate of complete-model speed.
+
+The run's 23 source hashes all match snapshot commit `3ebd0d2b15`; its
+`git_head` records the HEAD before those then-uncommitted edits were committed.
+After the run, comparison reporting was corrected to exclude zero-token
+prefills and identify immediate EOS divergence. The comparison artifact binds
+its own updated producer SHA256 and the unchanged final oracle receipt; this
+reporting correction changes no numeric source, token, logit or hidden fixture.
 
 [Baseline comparison](runs/official-sigmoid-20261011/baseline-comparison.json):
 the incident output shares **68 characters** with both the two-card and
@@ -113,6 +129,15 @@ character prefixes are primary because stdout cannot recover exact token
 framing. The two llama.cpp setups themselves share 180 characters, then differ
 at **error rates** (one card) versus **request failure** (two cards). Neither
 baseline is our arithmetic authority; these differences are informational.
+
+For **code-review**, the completed two-card baseline contains an immediate
+end-of-text marker and no visible text. The CPU emits `# Code Review...`:
+**0 characters agree**, with a termination divergence at character 0 (the
+stdout marker cannot establish the exact EOS token ID). Of the nine completed
+two-card baseline rows, two have completed CPU comparisons; the other seven
+lack a generated CPU oracle. The customer-email row is explicitly
+`oracle-prefill-incomplete`, never a vacuous prefix pass.
+
 
 Rerun qualification before starting the three-hour timer. The arithmetic
 identity is `iq3-cpu-fp32-m1-bf16-state-sigmoid-v1`. From repository root:
@@ -144,7 +169,16 @@ For generated step 1 (the prediction at the final prompt position), the run
 writes `PROMPT/step1/layer-00.bf16` through `layer-47.bf16`, each 20,480 bytes
 with shape `[1,4,2560]`, plus `layers.jsonl` with hashes. Each prompt also gets
 `input.json`, `progress.jsonl`, `tokens.jsonl` and `result.json`; the run gets
-`receipt.json` and `baseline-comparison.json`. The baseline comparator strips
+`receipt.json` and `baseline-comparison.json`. The completed fixture manifests are
+[incident-retrospective/step1/layers.jsonl](runs/official-sigmoid-20261011/incident-retrospective/step1/layers.jsonl)
+and [code-review/step1/layers.jsonl](runs/official-sigmoid-20261011/code-review/step1/layers.jsonl).
+Their `layer-00.bf16` through `layer-47.bf16` files are retained alongside them.
+The [customer-email manifest](runs/official-sigmoid-20261011/customer-email/step1/layers.jsonl)
+contains **only layers 00–31**; it is partial prefill evidence, not a complete
+step-1 prediction. All **128** files (2,621,440 bytes) were checked against
+their per-layer SHA256s. The entire run is below 50 MB and is retained in Git.
+
+The baseline comparator strips
 only the CLI's documented trailing framing and re-tokenizes visible text;
 it reports token and character agreement and first divergence. Detokenized
 output cannot recover the precise EOS ID and can merge a truncated last token,
@@ -157,3 +191,6 @@ same-process and fresh-process deterministic repeats. No CPU full-model repeat
 has run yet, and these preparation tests do not pass that gate. A changed
 arithmetic identity requires a newly named oracle and receipts; baseline
 agreement or speed cannot substitute for those checks.
+
+[Bounded run closeout](CLOSEOUT-20261011.md) records the remaining coverage and
+repeat gates, plus receipt-reporting limitations. No scratch was retained.

@@ -55,3 +55,5 @@ are prepared and CPU-tested; GPU execution remains the coordinator's work.
 production shape/operator contract and complete CPU oracle preparation.
 
 [Packet 2 CPU oracle preparation](packet2-cpu-oracle/README.md) passes bounded real-weight decoding and all twelve tokenizer checks; the coordinator resolved the GDN gate to sigmoid using the pinned official Flash-Next modeling code. The packet records the bounded CPU run, its actual coverage and informational baseline comparisons.
+
+[CPU oracle closeout](packet2-cpu-oracle/CLOSEOUT-20261011.md) · [Closed choices](DO-NOT-REPEAT.md).

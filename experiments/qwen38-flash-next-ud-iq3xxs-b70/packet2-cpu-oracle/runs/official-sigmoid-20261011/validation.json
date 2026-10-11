@@ -1,0 +1,85 @@
+{
+  "schema": "iq3-cpu-oracle.coverage.v1",
+  "status": "wall-limit-or-stop",
+  "requested": {
+    "prompts": 12,
+    "generated_tokens_per_prompt": 64,
+    "hours": 3
+  },
+  "source_snapshot_commit": "3ebd0d2b1504648be50c122fb7899005d999be4a",
+  "run_sources_verified_at_snapshot": 23,
+  "numeric_sources_unchanged": true,
+  "comparison_updated_after_run": true,
+  "comparison_sha256": "ccecff63e69748f44f876eb6e3b69a2b8054679b7fb6d9104bf52157aea2d5f6",
+  "receipt_sha256": "edc89043be556c01cc024a6c7320f63908e1f223c323d4f4ba775e664c56aa50",
+  "rows": [
+    {
+      "id": "incident-retrospective",
+      "prompt_tokens": 87,
+      "generated_tokens": 64,
+      "completed_prompt_forward": true,
+      "status": "token-cap",
+      "step1_layers": 48,
+      "prefill_seconds": 1985.578947899,
+      "decode_seconds_per_token": 43.331175516126955,
+      "pilot_decode_seconds_per_token": 43.58244982099976
+    },
+    {
+      "id": "code-review",
+      "prompt_tokens": 90,
+      "generated_tokens": 64,
+      "completed_prompt_forward": true,
+      "status": "token-cap",
+      "step1_layers": 48,
+      "prefill_seconds": 1972.7119499,
+      "decode_seconds_per_token": 46.18382485453973,
+      "pilot_decode_seconds_per_token": 52.67839209628541
+    },
+    {
+      "id": "customer-email",
+      "prompt_tokens": 77,
+      "generated_tokens": 0,
+      "completed_prompt_forward": false,
+      "status": "wall-limit-or-stop",
+      "step1_layers": 32,
+      "prefill_seconds": null,
+      "decode_seconds_per_token": null,
+      "pilot_decode_seconds_per_token": null
+    }
+  ],
+  "completed_prompts": 2,
+  "started_prompts": 3,
+  "generated_tokens": 128,
+  "full_prompt_input_tokens": 177,
+  "partial_prompt_input_tokens": 77,
+  "unstarted_prompt_ids": [
+    "sql-debugging",
+    "release-plan",
+    "benchmark-analysis",
+    "architecture-tradeoff",
+    "bug-report-synthesis",
+    "technical-guide",
+    "risk-register",
+    "performance-hypotheses",
+    "decision-memo"
+  ],
+  "step1_fixture_files": 128,
+  "step1_fixture_bytes": 2621440,
+  "elapsed_seconds": 10800.046894027,
+  "max_rss_bytes": 1057406976,
+  "model_metadata_unchanged": true,
+  "full_model_same_process_repeat": false,
+  "full_model_fresh_process_repeat": false,
+  "device_qualification": false,
+  "comparison_regression_tests": {
+    "passed": true,
+    "tests": 2,
+    "source_sha256": "d36660721dc8baa43f35ab970e773f65cd2b6a0f3bef9cdb684b6a517c3542a2"
+  },
+  "limitations": [
+    "One CPU run; no full-model deterministic repeats.",
+    "Partial customer-email prefill is not a token oracle.",
+    "Live receipt is updated at first token; partial layer evidence lives in progress.jsonl until finalization.",
+    "The unchanged runner can fail to save its final receipt if its final model-metadata check raises; that did not occur in this run."
+  ]
+}
