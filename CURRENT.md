@@ -111,6 +111,8 @@ owner approval. The earlier ISTA IQ3_S proposal is withdrawn. These CPU packets 
 
 **October 11, CPU-only IQ3 integration:** [Stage 2 packet 4](experiments/own-xpu-runtime/stage2/packet4/README.md) builds one runnable program and its SYCL target; the two-layer mini-model matches Python exactly. The real first layer completed all 87 prompt tokens but differs from the CPU oracle in 2,293 of 10,240 BF16 values, so its quality gate remains failed. No GPU was used; the coordinator’s first card-3 layer comparison is prepared, and full-step checks must wait for exact agreement.
 
+**October 11, CPU-only expert-path preparation:** [Round 4 packet9](experiments/own-xpu-runtime/stage2/packet9-kopt4/README.md) adds one gate/up launch, one down launch and an ordered weighted-sum launch, plus whole-layer GEMV timing. CPU checks and the SYCL build pass; no device program ran. The census corrects the planning inputs to 36 GDN + 12 QSA layers and 19.712 MB per ordinary expert block. The coordinator can next run the packet's card-3 exactness and paired timing commands after admission. Full-model output checks and actual speed remain pending.
+
 ## Two-Card Lanes And Context Work
 
 **Qwen 27B FP8:** optimize the official FP8 model with native MTP and full 16-bit KV; DFlash stays excluded by the September 14 owner decision. Read the [multi-host handoff](experiments/qwen38-27b-b70/MULTI-HOST-HANDOFF.md), [closed

@@ -1,0 +1,126 @@
+{
+  "bandwidth_590_ceiling_tok_s": 119.16204586884838,
+  "bandwidth_590_floor_ms": 8.39193379661017,
+  "corrections": {
+    "down": "IQ4_NL, rows=2560, K=640",
+    "down_bytes": 9216000,
+    "gate_up": "IQ2_S, rows=640, K=2560",
+    "gate_up_each_bytes": 5248000,
+    "gdn_layers": 36,
+    "ordinary_block_bytes": 19712000,
+    "qsa_layers": 12,
+    "round3_constant_fused_stage_ms": {
+      "expert_down": 0.20401049999999998,
+      "expert_gate_up": 0.18291649999999998,
+      "small": 0.053646
+    },
+    "round3_grouped_results_present": true,
+    "selected_expert_bytes_per_token": 949760000,
+    "total_layers": 48
+  },
+  "measured": false,
+  "reference_ms": 35.1000351000351,
+  "reference_tok_s": 28.49,
+  "round3_receipt_sha256": "5d1129d38ce49722ecc3cf99884d49b93c074401611d50e225307e79a772b72a",
+  "scenarios": [
+    {
+      "assumptions": "100\u2013160 GB/s payload rate plus three conservative 17 us issue floors; hypothesis, not fitted or measured",
+      "bandwidth_only_590_floor_ms": 0.03341016949152542,
+      "kind": "ordinary_gdn",
+      "layer": 0,
+      "native_layer_launches": 30,
+      "packed_bytes": 19712000,
+      "predicted_ms_range": [
+        0.17420000000000002,
+        0.24812
+      ],
+      "work_groups": {
+        "experts_sg32": [
+          3200,
+          6400,
+          20
+        ],
+        "experts_split4": [
+          12800,
+          6400,
+          20
+        ]
+      }
+    },
+    {
+      "assumptions": "100\u2013160 GB/s payload rate plus three conservative 17 us issue floors; hypothesis, not fitted or measured",
+      "bandwidth_only_590_floor_ms": 0.03341016949152542,
+      "kind": "ple_gdn",
+      "layer": 1,
+      "native_layer_launches": 33,
+      "packed_bytes": 19712000,
+      "predicted_ms_range": [
+        0.17420000000000002,
+        0.24812
+      ],
+      "work_groups": {
+        "experts_sg32": [
+          3200,
+          6400,
+          20
+        ],
+        "experts_split4": [
+          12800,
+          6400,
+          20
+        ]
+      }
+    },
+    {
+      "assumptions": "100\u2013160 GB/s payload rate plus three conservative 17 us issue floors; hypothesis, not fitted or measured",
+      "bandwidth_only_590_floor_ms": 0.03948474576271187,
+      "kind": "upgraded_gdn",
+      "layer": 2,
+      "native_layer_launches": 28,
+      "packed_bytes": 23296000,
+      "predicted_ms_range": [
+        0.1966,
+        0.28396
+      ],
+      "work_groups": {
+        "experts_sg32": [
+          3200,
+          6400,
+          20
+        ],
+        "experts_split4": [
+          12800,
+          6400,
+          20
+        ]
+      }
+    },
+    {
+      "assumptions": "100\u2013160 GB/s payload rate plus three conservative 17 us issue floors; hypothesis, not fitted or measured",
+      "bandwidth_only_590_floor_ms": 0.03341016949152542,
+      "kind": "qsa",
+      "layer": 3,
+      "native_layer_launches": 33,
+      "packed_bytes": 19712000,
+      "predicted_ms_range": [
+        0.17420000000000002,
+        0.24812
+      ],
+      "work_groups": {
+        "experts_sg32": [
+          3200,
+          6400,
+          20
+        ],
+        "experts_split4": [
+          12800,
+          6400,
+          20
+        ]
+      }
+    }
+  ],
+  "schema": "own-runtime.iq3.packet9.analysis.v1",
+  "scope": "CPU preparation only; no device execution or full-model quality claim",
+  "total_payload_bytes": 4951240940
+}
