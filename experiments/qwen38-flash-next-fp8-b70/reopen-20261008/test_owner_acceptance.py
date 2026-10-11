@@ -13,11 +13,11 @@ from unittest.mock import patch
 import screen
 
 
-NOW = dt.datetime(2026, 10, 10, 2, tzinfo=dt.timezone.utc)
+NOW = dt.datetime(2026, 10, 11, 1, tzinfo=dt.timezone.utc)
 BOOT = '4aafe57b-a54f-4bfd-b4ed-9f1cbb8830c7'
 ACCEPTANCE = screen.REPO / screen.OWNER_ACCEPTANCE_RELATIVE
 HEALTH = screen.REPO / 'experiments/ltx25-b70/data/resume-20261008/postflight-pre118b-20261010T0134Z.json'
-ACCEPTED = dt.datetime(2026, 10, 10, 1, 18, 31, tzinfo=dt.timezone.utc)
+ACCEPTED = dt.datetime(2026, 10, 11, 0, 36, 14, tzinfo=dt.timezone.utc)
 
 
 def line(timestamp, message='xe Fault response'):
@@ -30,7 +30,10 @@ OLD = (line('2026-10-08T21:11:00') + line('2026-10-08T21:11:02', 'CAT error') +
 
 class OwnerAcceptanceTests(unittest.TestCase):
     def setUp(self):
-        self.health = json.loads(HEALTH.read_bytes())
+        # Synthetic health timing; the historical receipt on disk stays untouched.
+        self.health = dict(json.loads(HEALTH.read_bytes()),
+                           start_utc='2026-10-11 00:40:00 UTC',
+                           end_utc='2026-10-11 00:40:05 UTC')
         self.audit = screen.admission_audit()
 
     def admit(self, journal=OLD, **kwargs):
@@ -110,7 +113,7 @@ class OwnerAcceptanceTests(unittest.TestCase):
                     self.admit(owner_acceptance=path)
 
     def test_missing_or_invalid_time_refused(self):
-        for value in (None, '', '2026-10-10', 1):
+        for value in (None, '', '2026-10-11', 1):
             with self.subTest(value=value), self.fixture({'time_utc': value}) as path:
                 with self.assertRaisesRegex(RuntimeError, 'readable UTC time'):
                     self.admit(owner_acceptance=path)
@@ -132,12 +135,12 @@ class OwnerAcceptanceTests(unittest.TestCase):
             self.admit(now=screen.parse_utc(self.health['end_utc'])+dt.timedelta(hours=6))
 
     def test_health_before_acceptance_refused(self):
-        health = dict(self.health, start_utc='2026-10-10 01:18:30 UTC')
+        health = dict(self.health, start_utc='2026-10-11 00:36:13 UTC')
         with self.assertRaisesRegex(RuntimeError, 'start at/after owner acceptance'):
             self.admit(receipt=health)
 
     def test_new_fault_before_passing_health_still_refused(self):
-        later = line('2026-10-10T01:20:00')
+        later = line('2026-10-11T00:38:00')
         with self.assertRaisesRegex(RuntimeError, 'fault at/after owner acceptance'):
             self.admit(OLD+later)
         self.assertFalse(self.audit['passed'])
@@ -149,11 +152,11 @@ class OwnerAcceptanceTests(unittest.TestCase):
 
     def test_fault_at_acceptance_boundary_refused(self):
         with self.assertRaisesRegex(RuntimeError, 'fault at/after owner acceptance'):
-            self.admit(OLD+line('2026-10-10T01:18:31'))
+            self.admit(OLD+line('2026-10-11T00:36:14'))
 
     def test_new_unexplained_host_fault_refused(self):
         with self.assertRaisesRegex(RuntimeError, 'fault at/after owner acceptance'):
-            self.admit(OLD+line('2026-10-10T01:20:00', 'BUG: soft lockup - CPU#21 stuck for 22s!'))
+            self.admit(OLD+line('2026-10-11T00:38:00', 'BUG: soft lockup - CPU#21 stuck for 22s!'))
 
     def test_untimestamped_fault_refused(self):
         with self.assertRaisesRegex(RuntimeError, 'Cannot timestamp fault'):

@@ -20,10 +20,10 @@ screen = probe.lane()
 ACCEPTANCE = screen.REPO / screen.OWNER_ACCEPTANCE_RELATIVE
 HEALTH = screen.REPO / 'experiments/ltx25-b70/data/resume-20261008/postflight-pre118b-20261010T0134Z.json'
 BOOT = json.loads(ACCEPTANCE.read_text())['boot_id']
-NOW = dt.datetime(2026, 10, 10, 2, tzinfo=dt.timezone.utc)
+NOW = dt.datetime(2026, 10, 11, 1, tzinfo=dt.timezone.utc)
 OLD = ('2026-10-09T02:20:00+00:00 kernel: Fault response\n'
        '2026-10-09T02:27:32+00:00 kernel: CAT error\n')
-NEW = '2026-10-10T01:20:00+00:00 kernel: Fault response\n'
+NEW = '2026-10-11T00:38:00+00:00 kernel: Fault response\n'
 
 
 class FrozenDatetime(dt.datetime):
@@ -37,6 +37,10 @@ class OwnerPlumbingTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
+        # Synthetic health timing, never a replacement for a native receipt.
+        self.health = self.root / 'health.json'
+        self.health.write_text(json.dumps(dict(json.loads(HEALTH.read_bytes()),
+            start_utc='2026-10-11 00:40:00 UTC', end_utc='2026-10-11 00:40:05 UTC')))
 
     def status(self, sha=screen.OWNER_ACCEPTANCE_SHA256, passed=True):
         audit = screen.admission_audit()
@@ -97,7 +101,8 @@ class OwnerPlumbingTests(unittest.TestCase):
             probe.wait_postflight(self.root, receipt, 0)
         self.assertEqual(receipt['journal_admission']['counted_fault_lines'], NEW.splitlines())
 
-    def watcher(self, text, health=HEALTH):
+    def watcher(self, text, health=None):
+        health = self.health if health is None else health
         argv = ['watch_kernel.py', '--health-receipt', str(health), '--receipt-dir', str(self.root),
                 '--owner-acceptance', str(ACCEPTANCE)]
         (self.root / 'receipt.json').write_text(json.dumps(dict(worker_wait_status=0, postflight_requested_unix=0)))

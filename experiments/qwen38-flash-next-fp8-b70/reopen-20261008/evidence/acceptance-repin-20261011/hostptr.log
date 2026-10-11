@@ -1,0 +1,23 @@
+test_all_bytes_match_with_nonzero_host_slab_offset (test_addressing.AddressingTests.test_all_bytes_match_with_nonzero_host_slab_offset) ... ok
+test_empty_host_and_empty_resident_math (test_addressing.AddressingTests.test_empty_host_and_empty_resident_math) ... ok
+test_every_registered_rank_layer_expert_and_matrix_row (test_addressing.AddressingTests.test_every_registered_rank_layer_expert_and_matrix_row) ... ok
+test_kernel_kn_and_fp8_arithmetic_unchanged (test_addressing.AddressingTests.test_kernel_kn_and_fp8_arithmetic_unchanged) ... ok
+test_reject_invalid_partition_and_alignment (test_addressing.AddressingTests.test_reject_invalid_partition_and_alignment) ... ok
+test_restore_preserves_new_tables_and_snapshot (test_addressing.AddressingTests.test_restore_preserves_new_tables_and_snapshot) ... ok
+test_signed_positive_negative_and_wrap_offsets (test_addressing.AddressingTests.test_signed_positive_negative_and_wrap_offsets) ... ok
+test_source_pins_and_exact_patch (test_addressing.AddressingTests.test_source_pins_and_exact_patch) ... FAIL
+test_storage_snapshot_detects_mutable_alias_drift (test_addressing.AddressingTests.test_storage_snapshot_detects_mutable_alias_drift) ... ok
+
+======================================================================
+FAIL: test_source_pins_and_exact_patch (test_addressing.AddressingTests.test_source_pins_and_exact_patch)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-fix-hostptr/test_addressing.py", line 147, in test_source_pins_and_exact_patch
+    self.assertEqual((HERE / 'explicit-host-pointer.patch').read_text(), ''.join(expected))
+AssertionError: '--- [3622 chars] -74,6 +74,32 @@\n     return table\n \n \n+\n[3806 chars]))\n' != '--- [3622 chars] -74,11 +74,36 @@\n     return table\n \n \n+\[4093 chars]))\n'
+Diff is 8031 characters long. Set self.maxDiff to None to see it.
+
+----------------------------------------------------------------------
+Ran 9 tests in 1.120s
+
+FAILED (failures=1)

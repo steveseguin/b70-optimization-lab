@@ -13,6 +13,22 @@ manifest describes its preparation, not the current repository overlay.
 `08b6217e8a8a85aede148863e44cd0f4194d1d78`; applying the patch no longer makes
 its check stale. The temporary-package test uses that same frozen preimage.
 
+## October 11 acceptance repin
+
+The controller copy and generated bundle were refreshed for the third-incident
+owner acceptance. The preimage remains commit `08b6217e8a8a85aede148863e44cd0f4194d1d78`;
+the original review and native receipts above remain historical evidence for
+their original hashes. This revision adds the current controller admission
+code to the bundle without changing teardown payloads or qualifying native
+execution. [Change and CPU checks](../../../../notes/2026-10-11-third-incident-acceptance-repin.md).
+
+To reproduce this revision from the lane root, copy `screen.py` to
+`overlay-fix-teardown/copies/screen.py`, run
+`python3 -B overlay-fix-teardown/build_patch.py`, then copy its generated
+`copies/overlay-manifest.json` to `overlay-manifest.json`. Verify that the live
+manifest changes only the `support_files.screen.py` pin, then run the builder
+with `--check` and the restricted suites documented in `../VALIDATION.md`.
+
 ## Review artifact and scope
 
 [teardown.patch](teardown.patch) is relative to `reopen-20261008/` and includes

@@ -297,7 +297,7 @@ assert not mounted.HERE.is_relative_to(mounted.PACKAGE)
 lane = mounted.harness.lane()
 acceptance = root / 'repo' / lane.OWNER_ACCEPTANCE_RELATIVE
 boot = json.loads(acceptance.read_text())['boot_id']
-now = dt.datetime(2026, 10, 10, 18, tzinfo=dt.timezone.utc)
+now = dt.datetime(2026, 10, 11, 1, tzinfo=dt.timezone.utc)
 class Clock(dt.datetime):
     @classmethod
     def now(cls, tz=None):
