@@ -301,6 +301,11 @@ class Session:
         if f.exists():
             self.state.update(json.loads(f.read_text()))
 
+    def log_event(self, record: dict[str, Any]) -> None:
+        """Things worth finding later (a rejected notes call, a restart) go to events.jsonl in the session folder."""
+        with (self.dir / "events.jsonl").open("a") as f:
+            f.write(json.dumps(dict(record, at=round(time.time(), 1))) + "\n")
+
     def log_notes(self, upto: int) -> None:
         """Every accepted NOTES version is kept with the number of the last message it covers."""
         with (self.dir / "notes-history.jsonl").open("a") as f:
@@ -324,6 +329,7 @@ class Session:
             (self.dir / "notes-history.jsonl").rename(self.dir / f"notes-history-until-{stamp}.jsonl")
         if self.archive.path.exists():
             self.archive.path.rename(self.dir / f"archive-until-{stamp}.jsonl")
+        self.log_event({"event": "new conversation: the history no longer contains what was archived", "set_aside": stamp})
         self.state.update(cut=0, notes="", boundary="", cuts=0, largest_turn=0, restarts=self.state.get("restarts", 0) + 1)
         self.save()
 
@@ -341,7 +347,7 @@ class Keeper:
     """The policy. `ask(body) -> response dict` talks to the model server."""
 
     def __init__(self, ask, state_dir: Path, budget: int = 32768, target_ratio: float = 0.6, headroom: int = 2048,
-                 notes_cap: int = 2048, notes_max_tokens: int = 4096, notes_thinking: bool | None = True,
+                 notes_cap: int = 2048, notes_max_tokens: int = 8192, notes_thinking: bool | None = True,
                  recite: bool = True, max_recalls: int = 6, reply_reserve: int = 4096,
                  recite_when: str | None = None, think_when: str | None = None, effort: str | None = None,
                  memory_note: bool = True, think_until: str | None = None, repeat_limit: int = 3) -> None:
@@ -398,22 +404,37 @@ class Keeper:
     def notes_call(self, s: Session, model: Any, head: list[dict[str, Any]], gone: list[dict[str, Any]], upto: int = 0) -> None:
         req = head + [{"role": "user", "content": NOTES_REQUEST.format(
             cap=self.notes_cap, notes=s.state["notes"] or "(none yet)", turns=render_turns(gone))}]
-        for _ in (1, 2):
+        thinking = self.notes_thinking
+        for attempt in (1, 2):
             body: dict[str, Any] = {"model": model, "messages": req, "max_tokens": self.notes_max_tokens, "temperature": 0}
-            if self.notes_thinking is not None:
-                body["chat_template_kwargs"] = {"enable_thinking": bool(self.notes_thinking)}
+            if thinking is not None:
+                body["chat_template_kwargs"] = {"enable_thinking": bool(thinking)}
+            why, text, finish = "", "", None
             try:
                 resp = self.ask(body)
-                text = from_rules(str(((resp.get("choices") or [{}])[0].get("message") or {}).get("content") or "").strip())
-            except Exception:
-                continue
-            if text and has_layout(text) and self.tokens(s, [{"role": "user", "content": text}]) <= 2 * self.notes_cap:
+                choice = (resp.get("choices") or [{}])[0]
+                finish = choice.get("finish_reason")
+                text = from_rules(str((choice.get("message") or {}).get("content") or "").strip())
+            except Exception as exc:
+                why = f"{type(exc).__name__}: {exc}"
+            size = self.tokens(s, [{"role": "user", "content": text}]) if text else 0
+            if not why:
+                why = ("empty reply" if not text else "no RULES / STATE layout" if not has_layout(text)
+                       else f"{size} tokens, over twice the cap" if size > 2 * self.notes_cap else "")
+            if not why:
                 text, lost = keep_rules(s.state["notes"], text)
                 s.state["rules_put_back"] += len(lost)
                 s.state["notes"] = text
                 s.log_notes(upto)
                 return
-            req = req + [{"role": "assistant", "content": text}, {"role": "user", "content": LAYOUT_RETRY}]
+            s.log_event({"event": "notes call rejected", "attempt": attempt, "why": why, "finish_reason": finish,
+                         "thinking": thinking, "upto": upto, "reply_start": text[:160]})
+            # ask once more: with the model's own reply and a correction if it wrote something, and without thinking
+            # (a reply cut off or emptied by a long think is the usual reason for nothing usable coming back)
+            if text:
+                req = req + [{"role": "assistant", "content": text}, {"role": "user", "content": LAYOUT_RETRY}]
+            if thinking:
+                thinking = False
         s.state["notes_failed"] += 1                 # the cut still happens: the turns are in the archive
 
     def keep(self, s: Session, model: Any, messages: list[dict[str, Any]]) -> None:

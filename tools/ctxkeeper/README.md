@@ -51,7 +51,9 @@ python3 tools/ctxkeeper/ctxkeeper.py --upstream http://127.0.0.1:18196 --port 18
   what the proxy archived is treated as a new conversation (notes start over; the old archive is set aside).
 - One conversation is recognised by its model name, system messages and first user message, or by the header
   `X-Ctx-Session`. State is under `--state-dir` (default `~/.cache/ctxkeeper/<key>/`): `archive.jsonl`, `state.json`.
-- `GET /ctxkeeper/status` shows cuts, recalls, rules put back and the token ratio learned from the server.
+- `GET /ctxkeeper/status` shows cuts, recalls, rules put back and the token ratio learned from the server. A notes
+  call whose reply is empty, too long or not in the RULES / STATE layout is asked for once more (without thinking, and
+  with the correction); each rejection and its reason is written to `events.jsonl` in the conversation's folder.
 - `--notes-thinking on|off|unset` sets `chat_template_kwargs.enable_thinking` for the notes call (a vLLM/Qwen
   field; `unset` sends nothing). Thinking notes were the measured setting.
 - The proxy adds a short Memory paragraph to the system message (always the same text) so the model knows about

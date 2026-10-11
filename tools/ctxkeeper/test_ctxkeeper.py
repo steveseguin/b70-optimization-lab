@@ -130,6 +130,29 @@ class Policy(unittest.TestCase):
         self.keeper.complete({"model": "m", "messages": conversation(30) + [{"role": "user", "content": "What did we know back then?"}]})
         self.assertIn("notes call number 2", self.model.requests[-1]["messages"][-1]["content"])
 
+    def test_a_rejected_notes_call_is_logged_and_retried_without_thinking(self):
+        calls = []
+
+        def model(body):
+            if "=== TURNS BEING MOVED OUT ===" in str(body["messages"][1].get("content")) or any(
+                    "=== TURNS BEING MOVED OUT ===" in str(m.get("content")) for m in body["messages"]):
+                calls.append(body)
+                thinking = (body.get("chat_template_kwargs") or {}).get("enable_thinking")
+                return reply("" if thinking else "RULES\n- Keep it short.\nSTATE\n- fine\nOPEN")
+            return reply("ok")
+
+        k = ck.Keeper(model, Path(self.dir.name) / "r", budget=2400, reply_reserve=400, headroom=100, target_ratio=0.5,
+                      notes_cap=400, memory_note=False)
+        for n in range(1, 16):
+            k.complete({"model": "m", "messages": conversation(n)})
+        s = next(iter(k.sessions.values()))
+        self.assertGreater(s.state["cuts"], 0)
+        self.assertEqual(s.state["notes_failed"], 0)                              # every cut got its notes on the retry
+        self.assertEqual(ck.rule_lines(s.state["notes"]), ["Keep it short."])
+        self.assertEqual([c["chat_template_kwargs"]["enable_thinking"] for c in calls[:2]], [True, False])
+        events = [json.loads(l) for l in (s.dir / "events.jsonl").read_text().splitlines()]
+        self.assertEqual((events[0]["event"], events[0]["why"], events[0]["attempt"]), ("notes call rejected", "empty reply", 1))
+
     def test_rules_are_recited_after_a_new_user_message(self):
         self.run_conversation(30)
         self.keeper.complete({"model": "m", "messages": conversation(30) + [{"role": "user", "content": "And in item 3?"}]})
