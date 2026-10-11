@@ -1,0 +1,72 @@
+### round2 start 2026-10-10 23:18:12 MemAvailable 2695 MiB
+### [W16 s1] start 23:18
+### [W16 s1] done rc=0 in 22 min 23:41
+   rc=0 ledger score 0.7222 raw 0.7222 ({'correct': 26, 'blank': 6, 'wrong': 4, 'stale': 0}) void=False
+### [D16 s1] start 23:41
+### [D16 s1] done rc=0 in 20 min 00:01
+   rc=0 ledger score 0.8333 raw 0.8333 ({'correct': 30, 'blank': 3, 'wrong': 3, 'stale': 0}) void=False
+### [B16ir s1] start 00:01
+### [B16ir s1] done rc=0 in 14 min 00:16
+   rc=0 ledger score 0.7222 raw 0.7222 ({'correct': 26, 'blank': 6, 'wrong': 4, 'stale': 0}) void=False
+### [B16ira s1] start 00:16
+### [B16ira s1] done rc=1 in 25 min 00:42
+   rc=0 ledger score 0.0000 raw 0.5278 ({'correct': 19, 'blank': 12, 'wrong': 5, 'stale': 0}) void=True
+!!! B16ira__sparse-memory-t240k-s1: a cap, timeout, server refusal or the storage rule ended this run; it does not count:
+### [W32 s0] start 00:42
+### [W32 s0] done rc=0 in 20 min 01:02
+   rc=0 ledger score 0.8621 raw 0.8621 ({'correct': 25, 'blank': 1, 'wrong': 3, 'stale': 0}) void=False
+!!! B16ira__sparse-memory-t240k-s1/sparse-memory-t240k-s1__M83mAXC: ended_by=CAP:max_steps rule=VOID+archive violations=[{'path': '/app/answers.json', 'reason':
+### [P32 s0] start 01:02
+### [P32 s0] done rc=0 in 13 min 01:16
+   rc=0 ledger score 0.5862 raw 0.5862 ({'correct': 17, 'blank': 0, 'wrong': 6, 'stale': 6}) void=False
+!!! B16ira__sparse-memory-t240k-s1/sparse-memory-t240k-s1__M83mAXC: ended_by=CAP:max_steps rule=VOID+archive violations=[{'path': '/app/answers.json', 'reason':
+### [B32ir s0] start 01:16
+### [B32ir s0] done rc=0 in 16 min 01:33
+   rc=0 ledger score 0.7586 raw 0.7586 ({'correct': 22, 'blank': 4, 'wrong': 3, 'stale': 0}) void=False
+!!! B16ira__sparse-memory-t240k-s1/sparse-memory-t240k-s1__M83mAXC: ended_by=CAP:max_steps rule=VOID+archive violations=[{'path': '/app/answers.json', 'reason':
+### [B32ira s0] start 01:33
+### [B32ira s0] done rc=0 in 15 min 01:48
+   rc=0 ledger score 0.9310 raw 0.9310 ({'correct': 27, 'blank': 0, 'wrong': 2, 'stale': 0}) void=False
+!!! B16ira__sparse-memory-t240k-s1/sparse-memory-t240k-s1__M83mAXC: ended_by=CAP:max_steps rule=VOID+archive violations=[{'path': '/app/answers.json', 'reason':
+### [analysis] 01:48
+# 1. probe accuracy (correct/n=acc, pooled over trials; distance in items)
+arm	trials	probes	d1-4	d5-24	d25-99	d100-399	d400+	t:current	t:old_value	t:who	final_query	total_correct
+B16ir	2	9/30=0.30	5/11=0.45	4/14=0.29	0/5=0.00	n/a	n/a	8/10=0.80	1/10=0.10	0/10=0.00	35/35	44/65
+B16ira	1	12/15=0.80	7/8=0.88	4/5=0.80	1/2=0.50	n/a	n/a	3/5=0.60	4/5=0.80	5/5=1.00	8/14	20/29
+B32ir	1	8/15=0.53	4/8=0.50	3/5=0.60	1/2=0.50	n/a	n/a	5/5=1.00	3/5=0.60	0/5=0.00	14/14	22/29
+B32ira	1	13/15=0.87	7/8=0.88	4/5=0.80	2/2=1.00	n/a	n/a	5/5=1.00	4/5=0.80	4/5=0.80	14/14	27/29
+D16	2	19/30=0.63	8/11=0.73	9/14=0.64	2/5=0.40	n/a	n/a	10/10=1.00	8/10=0.80	1/10=0.10	35/35	54/65
+P32	1	13/15=0.87	7/8=0.88	4/5=0.80	2/2=1.00	n/a	n/a	5/5=1.00	5/5=1.00	3/5=0.60	4/14	17/29
+W16	2	16/30=0.53	11/11=1.00	5/14=0.36	0/5=0.00	n/a	n/a	9/10=0.90	3/10=0.30	4/10=0.40	34/35	50/65
+W32	1	11/15=0.73	8/8=1.00	3/5=0.60	0/2=0.00	n/a	n/a	5/5=1.00	2/5=0.40	4/5=0.80	14/14	25/29
+
+# 2a. speed: cumulative minutes when the history reached N tokens (mean over trials reaching it)
+arm	source	coverage	100K	200K
+B16ir	timing+ctx	0.902	7.14	13.77
+B16ira	timing+ctx	0.942	17.7	24.91
+B32ir	timing+ctx	0.896	4.39	12.09
+B32ira	timing+ctx	0.886	7.07	11.26
+D16	timing+ctx	1.0	7.85	16.08
+P32	timing+ctx	0.997	4.02	7.97
+W16	timing+ctx	1.0	7.67	18.58
+W32	timing+ctx	0.997	6.6	16.53
+
+# 2b. speed: minutes per 100K tokens of history in each segment (rises if the method slows down)
+arm	0-100K	100-200K
+B16ir	7.14	6.63
+B16ira	17.7	7.21
+B32ir	4.39	7.7
+B32ira	7.07	4.19
+D16	7.85	8.23
+P32	4.02	3.95
+W16	7.67	10.91
+W32	6.6	9.93
+
+# 3. totals (mean per trial; peak_ctx_max = max over trials)
+arm	trials	tokens_written	lm_calls	peak_ctx	wall_s	real_edits	summaries	summary_failed	ctxfold_calls	fold_batches	truncations	compactions	recalls	rollbacks	window_refusals	peak_ctx_max
+B16ir	2	42802	361	9860	1064	160	n/a	n/a	156	1	n/a	n/a	0	1	n/a	10354
+B16ira	1	80290	466	11648	2175	175	n/a	n/a	175	1	n/a	n/a	24	3	n/a	11648
+B32ir	1	55160	346	23887	1010	148	n/a	n/a	166	1	n/a	n/a	0	0	n/a	23887
+B32ira	1	37577	360	27179	910	157	n/a	n/a	147	1	n/a	n/a	20	1	n/a	27179
+D16	2	66238	154	10918	1192	0	n/a	n/a	n/a	n/a	n/a	138	n/a	0	n/a	11945
+### round2 complete 2026-10-11 01:48:42
