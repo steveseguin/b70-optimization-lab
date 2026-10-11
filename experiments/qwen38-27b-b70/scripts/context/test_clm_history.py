@@ -25,7 +25,13 @@ class StateAt(unittest.TestCase):
     def test_exact_and_earlier_item(self):
         self.assertEqual(NS["state_at"](self.H, 3, ["abcd12"]), "STATE at the end of item 3:\nabcd12 5")
         self.assertEqual(NS["state_at"](self.H, 9, ["efgh34", "ijkl56"]),
-                         "STATE at the end of item 9 (unchanged since item 4):\nefgh34 removed\nijkl56 1")
+                         "STATE at the end of item 9 (last saved after item 4):\nefgh34 removed\nijkl56 1")
+
+    def test_gap_between_saved_state_and_item_is_said(self):
+        out = NS["state_at"](self.H, 9, ["abcd12"], {2, 6, 7, 12})
+        self.assertIn("no separate state was saved for item(s) 6, 7;", out)
+        self.assertTrue(out.endswith("abcd12 9"))
+        self.assertNotIn("no separate state", NS["state_at"](self.H, 4, ["abcd12"], {2, 6}))
 
     def test_all_lines_without_rules(self):
         self.assertEqual(NS["state_at"](self.H, 3, []), "STATE at the end of item 3:\nabcd12 5\nefgh34 -7")

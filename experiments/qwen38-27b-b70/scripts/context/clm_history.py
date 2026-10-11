@@ -37,8 +37,10 @@ HISTORY_NOTE = """- A question about the value a counter held at the end of an E
 """
 
 
-def state_at(history: dict[int, str], n: int, names: list[str]) -> str:
-    """The reply to `recall --state-at N [NAME ...]` from {item: STATE.txt text after that item was folded}."""
+def state_at(history: dict[int, str], n: int, names: list[str], gaps: set[int] | None = None) -> str:
+    """The reply to `recall --state-at N [NAME ...]` from {item: STATE.txt text after that item was folded}. `gaps`
+    are items with no state of their own (folded together with a later item, or their update was rejected); the
+    reply says so when one lies between the saved state it uses and item N."""
     keys = [k for k in history if k <= n]
     if not keys:
         first = min(history) if history else None
@@ -51,7 +53,11 @@ def state_at(history: dict[int, str], n: int, names: list[str]) -> str:
         got = [ln for ln in lines if ln.split()[0].lower() in want]
         missing = sorted(want - {ln.split()[0].lower() for ln in got})
         lines = got + [f"{m}: no line at that time (not yet opened)" for m in missing]
-    head = f"STATE at the end of item {n}" + ("" if k == n else f" (unchanged since item {k})") + ":"
+    missed = sorted(g for g in (gaps or ()) if k < g <= n)
+    head = f"STATE at the end of item {n}" + ("" if k == n else f" (last saved after item {k})") + ":"
+    if missed:
+        head += (f"\n[no separate state was saved for item(s) {', '.join(map(str, missed))}; changes made there are "
+                 f"not in these lines. Check them with `recall NAME --max-lines 40` if it matters.]")
     return head + "\n" + "\n".join(lines)
 
 
@@ -63,7 +69,7 @@ class _HistoryEnv(_ci._ImprovedEnv):
         m = STATE_AT.match(command or "")
         if m:
             a.n_state_at += 1
-            text = state_at(a.state_history, int(m.group(1)), m.group(2).split())
+            text = state_at(a.state_history, int(m.group(1)), m.group(2).split(), a.state_gaps)
             res = types.SimpleNamespace(stdout=text, stderr="", return_code=0)
             return StepResult(result=res, ctx_changed=False, stdout_block=text + "\n\n(exit_code=0)",
                               readout="", notes="", exec_time=0.0, touched_ctx=False)
@@ -84,11 +90,16 @@ class _HistoryGuard:
         return getattr(self._inner, name)
 
     async def maybe(self, environment: Any, messages: list[dict[str, Any]]) -> bool:
-        r = await self._inner.maybe(environment, messages)
         a = self._agent
+        rejected_before = a.n_state_rejected
+        r = await self._inner.maybe(environment, messages)
         if a._folded_now:
-            for n in a._folded_now:
-                a.state_history[n] = a._last_state
+            last = max(a._folded_now)
+            if a.n_state_rejected > rejected_before:
+                a.state_gaps.update(a._folded_now)      # the update that went with this drop was rejected and undone
+            else:
+                a.state_history[last] = a._last_state   # one state per drop: it is the state after the LAST item folded
+                a.state_gaps.update(n for n in a._folded_now if n != last)
             a._folded_now = []
         return r
 
@@ -103,6 +114,7 @@ class ClmHistoryAgent(ClmRulesAgent):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.state_history: dict[int, str] = {}
+        self.state_gaps: set[int] = set()
         self._folded_now: list[int] = []
         self.n_state_at = 0
         self._ctx.__class__ = _HistoryEnv
@@ -117,6 +129,7 @@ class ClmHistoryAgent(ClmRulesAgent):
             _cr.RULES_NOTE = saved
             try:
                 (self.logs_dir / "history_stats.json").write_text(__import__("json").dumps(
-                    {"states_saved": len(self.state_history), "state_at_calls": self.n_state_at}, indent=1) + "\n")
+                    {"states_saved": len(self.state_history), "state_at_calls": self.n_state_at,
+                     "items_without_own_state": sorted(self.state_gaps)}, indent=1) + "\n")
             except Exception:
                 pass

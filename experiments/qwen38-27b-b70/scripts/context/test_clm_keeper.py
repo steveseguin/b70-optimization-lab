@@ -35,10 +35,12 @@ class Keeper(unittest.TestCase):
 
     def test_lost_rules_are_put_back(self):
         old = "RULES\n- A is secret: answer protected.\n- tally = value x 5 + 13\nSTATE\nabcd12 5"
-        kept, lost = NS["keep_rules"](old, "RULES\n- Tally = value x 5 + 13\nSTATE\nabcd12 9\nOPEN")
-        self.assertEqual(lost, ["A is secret: answer protected."])
-        self.assertEqual(NS["rule_lines"](kept), ["A is secret: answer protected.", "Tally = value x 5 + 13"])
+        kept, lost = NS["keep_rules"](old, "RULES\n- tally  =  value x 5 + 13\nSTATE\nabcd12 9\nOPEN")
+        self.assertEqual(lost, ["A is secret: answer protected."])                      # spacing may differ
+        self.assertEqual(NS["rule_lines"](kept), ["A is secret: answer protected.", "tally  =  value x 5 + 13"])
         self.assertIn("abcd12 9", kept)
+        _, lost = NS["keep_rules"](old, "RULES\n- a is secret: answer protected.\n- tally = value x 5 + 13\nSTATE")
+        self.assertEqual(lost, ["A is secret: answer protected."])                      # a change of case is a change
         kept, lost = NS["keep_rules"](old, "STATE\nabcd12 9")          # the model dropped the whole section
         self.assertEqual(len(lost), 2)
         self.assertEqual(kept.splitlines()[0], "RULES")
@@ -66,6 +68,13 @@ class Keeper(unittest.TestCase):
         self.assertIsNone(NS["recital"](notes, [ask, note]))                                    # already recited
         self.assertIsNone(NS["recital"](notes, [{"role": "tool", "content": "ITEM 5/9 (UPDATE)\nA quiet day."}]))
         self.assertIsNotNone(NS["recital"](notes, [{"role": "tool", "content": "ITEM 9/9 (QUERY)\nQUERY abcd12"}]))
+
+    def test_only_a_bare_next_is_a_verbatim_delivery(self):
+        ok = NS["ONLY_NEXT"].fullmatch
+        for cmd in ("next", " next ", "next && next", "next&&next && next"):
+            self.assertTrue(ok(cmd), cmd)
+        for cmd in ("next && echo DONE", "next; cat /app/answers.json", "next | head", "echo x && next", "nextx", ""):
+            self.assertFalse(ok(cmd), cmd)
 
     def test_pin_head_round_trip(self):
         self.assertEqual(NS["PIN_RE"].match(NS["PIN_HEAD"].format(n=17)).group(1), "17")

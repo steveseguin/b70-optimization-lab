@@ -55,6 +55,7 @@ RECALL_SRC = Path(__file__).with_name("recall.py")
 PIN_HEAD = "[[NOTES kept by the harness: {n} earlier turns are in the archive (search it with `recall`)]]"
 PIN_RE = re.compile(r"\[\[NOTES kept by the harness: (\d+) earlier turns")
 ITEMS = re.compile(r"(?m)^ITEM (\d+)/(\d+) \((\w+)\)\n")
+ONLY_NEXT = re.compile(r"\s*next(?:\s*&&\s*next)*\s*")   # a delivery whose output is the items and nothing else
 FINAL_KINDS = ("QUERY", "GET")
 
 MEMORY_NOTE = """
@@ -68,6 +69,7 @@ MEMORY_NOTE = """
   sentences that match (as `item N: ...`); `recall --item N` prints item N. Use it whenever a question is about
   something no longer in view: an earlier item, a value something held earlier, who did something. Its output enters
   your context, so search narrowly.
+- Fetch each item with `next` as a command of its own (nothing chained to it), so it can be archived word for word.
 """
 
 NOTES_REQUEST = """\
@@ -153,7 +155,7 @@ def rule_lines(notes: str) -> list[str]:
 
 def keep_rules(old: str, new: str) -> tuple[str, list[str]]:
     """`new` with every RULES line of `old` that it lost put back at the top of its RULES section."""
-    norm = lambda s: " ".join(s.split()).lower()
+    norm = lambda s: " ".join(s.split())            # exact words and case; only spacing may differ
     have = {norm(r) for r in rule_lines(new)}
     lost = [r for r in rule_lines(old) if norm(r) not in have]
     if not lost:
@@ -211,7 +213,10 @@ class _KeeperEnv(_cb._NoMirrorEnv):
         got = split_items(getattr(res.result, "stdout", "") or "")
         if got:
             a = self.agent
-            a._delivered.update(got)
+            if ONLY_NEXT.fullmatch(command or ""):
+                a._delivered.update(got)
+            else:   # `next && something`: the last item's text would run on into the other command's output
+                a._mixed.update(got)
             a._largest_delivery = max(a._largest_delivery, self.budget.count([{"role": "tool", "content": res.stdout_block}]))
         return res
 
@@ -255,6 +260,8 @@ class KeeperAgent(TruncateAgent):
         # not fit, which is how W32 loses text near its limit); instead the cut is made early enough to leave room
         # for the largest delivery seen plus keep_headroom, and the archive is written from what `next` printed.
         self.keep_headroom, self._largest_delivery, self._delivered = int(keep_headroom), 0, {}
+        self._mixed: dict[int, str] = {}              # items delivered by a command that printed something else too
+        self.n_archive_failed = self.n_not_archived_mixed = 0
         self._ctx.__class__ = _KeeperEnv
         self._ctx.agent = self
         orig_cap, is_delivery = self._budget.cap_newest_output, self._guard_out
@@ -281,7 +288,7 @@ class KeeperAgent(TruncateAgent):
             _ci._install_extra_body_hook()
             _ci._CTK_EXTRA["reasoning_effort"] = "medium"
         self.notes = ""
-        self.n_notes_calls = self.n_items_archived = self.n_rules_put_back = 0
+        self.n_notes_calls = self.n_items_archived = self.n_rules_put_back = self.n_notes_failed = 0
         self._ckpt = _KeeperGuard(self._ckpt, self)   # TruncateAgent's own guard stays inside; its _manage is a no-op here
 
     def _manage(self, messages: list[dict[str, Any]]) -> None:
@@ -318,20 +325,34 @@ class KeeperAgent(TruncateAgent):
         return i, 0
 
     async def _archive(self, environment: Any, turns: list[dict[str, Any]]) -> int:
+        """Write the items of the cut turns to the archive from what `next` printed. An item the harness did not see
+        arrive as the whole output of a `next` command is not archived (its text could not be verbatim, and a file
+        that is not a verbatim item voids a memory-only run); a failed write is counted, and the text is kept for
+        the next cut."""
         n = 0
         for m in turns:
             if m.get("role") != "tool":
                 continue
-            for num, text in split_items(str(m.get("content") or "")).items():
-                text = self._delivered.pop(num, text)          # what `next` printed, if the harness saw the delivery
+            for num in split_items(str(m.get("content") or "")):
+                text = self._delivered.get(num)
+                if text is None:
+                    self.n_not_archived_mixed += num in self._mixed
+                    self._mixed.pop(num, None)
+                    continue
                 blob = base64.b64encode((text + "\n").encode()).decode()
                 f = f"{ARCH}/item-{num:03d}.txt"
                 try:
-                    await environment.exec(
+                    r = await environment.exec(
                         command=f"[ -e {f} ] || {{ echo {blob} | base64 -d > {f} && chmod 444 {f}; }}", timeout_sec=60)
-                    n += 1
-                except Exception as exc:   # the cut still happens; the record shows the miss
+                    ok = getattr(r, "return_code", 0) in (0, None)
+                except Exception as exc:
                     logger.warning("keeper: archiving item %d failed: %s", num, exc)
+                    ok = False
+                if ok:
+                    self._delivered.pop(num, None)
+                    n += 1
+                else:
+                    self.n_archive_failed += 1
         return n
 
     def _notes_call(self, req: list[dict[str, Any]]):
@@ -380,24 +401,32 @@ class KeeperAgent(TruncateAgent):
         req = head + [{"role": "user", "content": NOTES_REQUEST.format(
             cap=self.notes_max_tokens, notes=self.notes or "(none yet)", turns=render_turns(gone))}]
         self._snap(req, "keeper")
-        resp = await asyncio.to_thread(self._notes_call, req)
-        if isinstance(resp, Exception):
-            rec["notes_error"] = f"{type(resp).__name__}: {resp}"
-        else:
+        rec.update(notes_prompt_tokens=0, notes_completion_tokens=0, notes_attempts=0)
+        for attempt in (1, 2):                        # an empty, failed or oversized reply is asked for once more
+            rec["notes_attempts"] = attempt
+            resp = await asyncio.to_thread(self._notes_call, req)
+            if isinstance(resp, Exception):
+                rec["notes_error"] = f"{type(resp).__name__}: {resp}"
+                continue
             usage, text = getattr(resp, "usage", None), (resp.choices[0].message.content or "").strip()
-            rec.update(notes_prompt_tokens=getattr(usage, "prompt_tokens", 0) or 0,
-                       notes_completion_tokens=getattr(usage, "completion_tokens", 0) or 0,
-                       notes_finish=resp.choices[0].finish_reason)
+            rec["notes_prompt_tokens"] += getattr(usage, "prompt_tokens", 0) or 0
+            rec["notes_completion_tokens"] += getattr(usage, "completion_tokens", 0) or 0
+            rec["notes_finish"] = resp.choices[0].finish_reason
             size = self._budget.count([{"role": "user", "content": text}]) if text else 0
             if not text:
                 rec["notes_error"] = "empty reply"
             elif size > 2 * self.notes_max_tokens:
-                rec["notes_error"] = f"reply of {size} tokens is over twice the cap; previous notes kept"
+                rec["notes_error"] = f"reply of {size} tokens is over twice the cap"
             else:
                 text, lost = keep_rules(self.notes, text)
                 self.n_rules_put_back += len(lost)
+                rec.pop("notes_error", None)
                 rec.update(notes_tokens=size, rules=len(rule_lines(text)), rules_put_back=lost)
                 self.notes = text
+                break
+        if "notes_error" in rec:                      # the cut still happens (the items are in the archive); the record
+            self.n_notes_failed += 1                  # says the NOTES are one cut behind
+            rec["notes_error"] += "; previous notes kept"
         messages[:] = head + [self._pin(prev + n)] + keep
         rec["after"] = self._budget.count(messages)
         self._record(rec)
@@ -419,6 +448,8 @@ class KeeperAgent(TruncateAgent):
                     "notes_thinking": self.notes_thinking, "items_archived": self.n_items_archived,
                     "rules_put_back": self.n_rules_put_back, "rules": rule_lines(self.notes),
                     "recite_rules": self.recite_rules, "recitals": self.n_recitals,
+                    "notes_failed": self.n_notes_failed, "archive_writes_failed": self.n_archive_failed,
+                    "items_not_archived_mixed_output": self.n_not_archived_mixed,
                     "notes_max_tokens": self.notes_max_tokens, "target_ratio": self.target_ratio,
                     "largest_delivery_tokens": self._largest_delivery, "keep_headroom": self.keep_headroom}, indent=1) + "\n")
             except Exception:
