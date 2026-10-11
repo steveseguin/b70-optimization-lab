@@ -1,20 +1,53 @@
---- packet18-decode-v2/main.cpp	2026-10-11 11:18:26.249463049 -0400
-+++ scratch-p18-notiming/main.cpp	2026-10-11 12:51:39.680646378 -0400
-@@ -428,11 +428,8 @@
+--- experiments/own-xpu-runtime/stage2/packet18-decode-v2/main.cpp	2026-10-11 11:18:26.249463049 -0400
++++ experiments/own-xpu-runtime/stage2/scratch-p18-notiming/main.cpp	2026-10-11 14:14:35.649061200 -0400
+@@ -399,7 +399,23 @@
+   std::vector<size_t> owned_bytes;
+   std::map<Allocation,std::pair<int,size_t>> allocations;
+   std::vector<Allocation> ropes, controls, scores, probabilities, snapshots;
+-  struct Pending { Launch launch; bool gemv; };
++  struct Pending { Launch launch; bool gemv; int cls; };
++  // Coordinator scratch diagnostic: device execution time per site class
++  // (span from first start to last end of each launch group, from GPU timestamps).
++  std::map<std::string,int> class_ids; std::vector<std::string> class_names;
++  std::vector<double> class_ms; std::vector<uint64_t> class_launches, class_groups; int current_cls=0;
++  void set_class(const std::string& label) {
++    std::string name=label;
++    if(name.starts_with("blk.")){auto dot=name.find('.',4);if(dot!=std::string::npos)name=name.substr(dot+1);}
++    auto [it,added]=class_ids.try_emplace(name,int(class_names.size()));
++    if(added){class_names.push_back(name);class_ms.push_back(0);class_launches.push_back(0);class_groups.push_back(0);}
++    current_cls=it->second;
++  }
++  void dump_classes(const fs::path& path,int tokens) {
++    std::ofstream o(path);o<<"{\"tokens\":"<<tokens<<",\"classes\":[";
++    for(size_t i=0;i<class_names.size();++i)o<<(i?",":"")<<"{\"class\":\""<<class_names[i]<<"\",\"device_ms\":"<<class_ms[i]<<",\"launches\":"<<class_launches[i]<<",\"groups\":"<<class_groups[i]<<"}";
++    o<<"]}\n";
++  }
+   std::vector<Pending> pending;
+   ownrt::Event tail=0;
+   int submission_card=-1;
+@@ -421,17 +437,18 @@
+   }
+   void finish(int, Launch l, bool gemv) {
+     // Submission only. Owner::compute appends the preceding owned event.
+-    pending.push_back({l,gemv}); tail=l.last; submitted+=l.passes;
++    pending.push_back({l,gemv,current_cls}); tail=l.last; submitted+=l.passes;
+   }
+   void finish(int c, ownrt::Event event) { finish(c,{event,event,1},false); }
+   void drain() {
      if(!tail && pending.empty())return;
      if(tail)wait(0,tail);
  #ifndef OWN_RT_HOST_ONLY
--    for(auto item:pending) {
--      auto first=dev(0).timing(item.launch.first), last=dev(0).timing(item.launch.last);
++    if(class_names.empty()){class_names.push_back("unlabelled");class_ms.push_back(0);class_launches.push_back(0);class_groups.push_back(0);}
+     for(auto item:pending) {
+       auto first=dev(0).timing(item.launch.first), last=dev(0).timing(item.launch.last);
 -      require(first.start_ns && last.end_ns>=first.start_ns,"invalid profiling interval");
 -      (item.gemv?gemv_ms:nongemv_ms)+=double(last.end_ns-first.start_ns)/1e6;
--    }
-+    // Coordinator scratch variant (2026-10-11): per-launch profiling queries removed;
-+    // gemv/non-gemv device spans stay zero, wall time per token is unaffected.
++      double d=double(last.end_ns-first.start_ns)/1e6;
++      (item.gemv?gemv_ms:nongemv_ms)+=d;class_ms[item.cls]+=d;class_launches[item.cls]+=item.launch.passes;class_groups[item.cls]+=1;
+     }
  #endif
      pending.clear();tail=0;
-     if(!devices.empty())dev(0).retire_completed_events();
-@@ -461,10 +458,13 @@
+@@ -461,10 +478,13 @@
  #endif
      return *devices.at(0);
    }
@@ -28,7 +61,15 @@
    }
    Allocation allocate(int c, std::string name, size_t bytes, Category cat,
                        Lifetime life, Memory m = Memory::device) {
-@@ -1060,7 +1060,9 @@
+@@ -763,6 +783,7 @@
+     require(dep == logical, "step event order");
+     int c = l.card;
+     if(submission_card!=c)drain(); // both queues drained and events retired on host
++    set_class(l.label);
+     submission_card=c;
+     if(l.label.starts_with("blk."))stage_layer(c,std::stoi(l.label.substr(4)));
+     auto site_start=std::chrono::steady_clock::now();
+@@ -1060,7 +1081,9 @@
        if(capture)fs::create_directories(fixture_dir);
        std::vector<std::pair<int,int>> captured;
        for (int c=0;c<a.cards;++c)if(e->buffers[c].count("token"))e->put(c,"token",&token,4);
@@ -39,7 +80,7 @@
        for(auto& l:p.launches) {
          if(fixture_step==0 && (l.label.starts_with("final.") || l.label=="logits" || l.label=="argmax"))continue;
          e->enqueue(l,e->logical);
-@@ -1076,6 +1078,7 @@
+@@ -1076,6 +1099,7 @@
          }
        }
        // One token-boundary readback contains sticky error and greedy output.
@@ -47,7 +88,7 @@
        e->drain(); // commit.final is Q1; readback is Q0
        auto& owner=e->dev(0);ownrt::CopyEngine copy(owner);
        auto start_transfer=std::chrono::steady_clock::now();
-@@ -1113,7 +1116,7 @@
+@@ -1113,12 +1137,13 @@
          <<",\"input_token\":"<<token<<",\"token_id\":"<<result<<",\"wall_ms\":"<<elapsed
          <<",\"gemv_device_ms\":"<<device_ms(e->gemv_ms-token_g)<<",\"non_gemv_device_ms\":"<<device_ms(e->nongemv_ms-token_n)
          <<",\"transfer_wall_ms\":"<<e->transfer_ms-token_t<<",\"kernel_submissions\":"<<e->submitted-token_sub
@@ -56,3 +97,17 @@
        e->timings.flush();e->prefill_timings.flush();return a.first?-1:result;
      };
      int next=-1;auto prefill_start=std::chrono::steady_clock::now();
+     for(size_t i=0;i<input.size();++i)next=step(input[i],i+1==input.size()?1:0);
+     prefill_ms=Engine::ms(prefill_start);first_token_ms=first_generated_ms;
++    for(auto& v:e->class_ms)v=0; for(auto& v:e->class_launches)v=0; for(auto& v:e->class_groups)v=0;
+     auto decode_start=std::chrono::steady_clock::now();
+     if(!a.first)for(int i=0;i<a.tokens;++i){
+       generated.push_back(next);text+=a.mini?"<"+std::to_string(next)+">":vocab.at(next);
+@@ -1127,6 +1152,7 @@
+       if(i+1<a.tokens)next=step(next,i+2);
+     }
+     decode_ms=Engine::ms(decode_start);
++    e->dump_classes(output/"class-times.json",generated.empty()?0:int(generated.size())-1);
+     std::cout << "text " << text << '\n';
+     if (a.mini) {
+       std::ostringstream dump;

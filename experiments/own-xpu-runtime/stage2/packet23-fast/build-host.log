@@ -1,5 +1,6 @@
 [  4%] Built target authority-tests
-[  6%] Building CXX object CMakeFiles/owner-retirement-tests.dir/owner.cpp.o
+[ 13%] Built target owner-retirement-tests
+[ 22%] Built target chain-tests
 {
   "passed": true,
   "grep_argv": [
@@ -80,6 +81,8 @@
     "experiments/own-xpu-runtime/stage2/packet9-kopt4/reference.hpp"
   ]
 }
+[ 27%] Built target math_bridge
+[ 36%] Built target queue-tests
 {
   "passed": true,
   "checks": [
@@ -100,113 +103,18 @@
   "sources": {
     "main.cpp": "8e12d25cf290d2b7e046db2690350f562584a160336032618f87cce68ef8eb37",
     "owner.cpp": "c434e71ae596a718b35a9dada519efa5aa3b4579d852fea3e99fc336fb5303a0",
-    "backend.hpp": "4f60da4fbf9122abee260812812a2df5217a84d31ce6369fe3f040caff01c3de",
+    "backend.hpp": "4457586a7ce7123757a50579a5fc1e670bd4ce9745ea65d78a033542c48fc9fe",
     "owner_retire.cpp": "e35c366f640d8909b519891fa814aa80228b01ce69bd19ccdf00a8d13cae0da2"
   },
   "limit": "Source structure guard plus owner runtime assertion; no native execution proof"
 }
-[  6%] Built target math-gate
-[  9%] Building CXX object CMakeFiles/chain-tests.dir/owner.cpp.o
-[ 11%] Linking CXX executable owner-retirement-tests
-[ 15%] Built target owner-retirement-tests
-[ 20%] Built target math_bridge
-[ 22%] Building CXX object CMakeFiles/queue-tests.dir/owner.cpp.o
-[ 25%] Linking CXX executable chain-tests
-[ 29%] Built target chain-tests
-[ 31%] Building CXX object CMakeFiles/fused-fixtures.dir/owner.cpp.o
-[ 34%] Linking CXX executable queue-tests
-[ 38%] Built target queue-tests
-[ 40%] Building CXX object CMakeFiles/nongemv-fixtures.dir/owner.cpp.o
-In file included from /usr/include/c++/13/string:51,
-                 from /usr/include/c++/13/bits/locale_classes.h:40,
-                 from /usr/include/c++/13/bits/ios_base.h:41,
-                 from /usr/include/c++/13/ios:44,
-                 from /usr/include/c++/13/istream:40,
-                 from /usr/include/c++/13/sstream:40,
-                 from /usr/include/c++/13/chrono:45,
-                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../../stage1/packet3-prep/src/owner.hpp:2,
-                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/owner.hpp:2,
-                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/owner.cpp:1:
-In function ‘constexpr decltype (__comp((* __first1), (* __first2))) std::lexicographical_compare_three_way(_InputIter1, _InputIter1, _InputIter2, _InputIter2, _Comp) [with _InputIter1 = __gnu_cxx::__normal_iterator<const unsigned char*, vector<unsigned char> >; _InputIter2 = __gnu_cxx::__normal_iterator<const unsigned char*, vector<unsigned char> >; _Comp = __detail::_Synth3way]’,
-    inlined from ‘constexpr std::__detail::__synth3way_t<_Iterator> std::operator<=>(const vector<_Tp, _Alloc>&, const vector<_Tp, _Alloc>&) [with _Tp = unsigned char; _Alloc = allocator<unsigned char>]’ at /usr/include/c++/13/bits/stl_vector.h:2061:52,
-    inlined from ‘constexpr bool std::less<_Tp>::operator()(const _Tp&, const _Tp&) const [with _Tp = std::vector<unsigned char>]’ at /usr/include/c++/13/bits/stl_function.h:408:20,
-    inlined from ‘std::pair<std::_Rb_tree_node_base*, std::_Rb_tree_node_base*> std::_Rb_tree<_Key, _Val, _KeyOfValue, _Compare, _Alloc>::_M_get_insert_unique_pos(const key_type&) [with _Key = std::vector<unsigned char>; _Val = std::pair<const std::vector<unsigned char>, long unsigned int>; _KeyOfValue = std::_Select1st<std::pair<const std::vector<unsigned char>, long unsigned int> >; _Compare = std::less<std::vector<unsigned char> >; _Alloc = std::allocator<std::pair<const std::vector<unsigned char>, long unsigned int> >]’ at /usr/include/c++/13/bits/stl_tree.h:2118:35:
-/usr/include/c++/13/bits/stl_algobase.h:1848:39: warning: ‘int __builtin_memcmp(const void*, const void*, long unsigned int)’ specified bound [9223372036854775808, 18446744073709551615] exceeds maximum object size 9223372036854775807 [-Wstringop-overread]
- 1848 |                     = __builtin_memcmp(&*__first1, &*__first2, __blen) <=> 0;
-      |                       ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In function ‘constexpr decltype (__comp((* __first1), (* __first2))) std::lexicographical_compare_three_way(_InputIter1, _InputIter1, _InputIter2, _InputIter2, _Comp) [with _InputIter1 = __gnu_cxx::__normal_iterator<const unsigned char*, vector<unsigned char> >; _InputIter2 = __gnu_cxx::__normal_iterator<const unsigned char*, vector<unsigned char> >; _Comp = __detail::_Synth3way]’,
-    inlined from ‘constexpr std::__detail::__synth3way_t<_Iterator> std::operator<=>(const vector<_Tp, _Alloc>&, const vector<_Tp, _Alloc>&) [with _Tp = unsigned char; _Alloc = allocator<unsigned char>]’ at /usr/include/c++/13/bits/stl_vector.h:2061:52,
-    inlined from ‘constexpr bool std::less<_Tp>::operator()(const _Tp&, const _Tp&) const [with _Tp = std::vector<unsigned char>]’ at /usr/include/c++/13/bits/stl_function.h:408:20,
-    inlined from ‘std::_Rb_tree<_Key, _Val, _KeyOfValue, _Compare, _Alloc>::iterator std::_Rb_tree<_Key, _Val, _KeyOfValue, _Compare, _Alloc>::_M_lower_bound(_Link_type, _Base_ptr, const _Key&) [with _Key = std::vector<unsigned char>; _Val = std::pair<const std::vector<unsigned char>, long unsigned int>; _KeyOfValue = std::_Select1st<std::pair<const std::vector<unsigned char>, long unsigned int> >; _Compare = std::less<std::vector<unsigned char> >; _Alloc = std::allocator<std::pair<const std::vector<unsigned char>, long unsigned int> >]’ at /usr/include/c++/13/bits/stl_tree.h:1952:29,
-    inlined from ‘std::_Rb_tree<_Key, _Val, _KeyOfValue, _Compare, _Alloc>::iterator std::_Rb_tree<_Key, _Val, _KeyOfValue, _Compare, _Alloc>::find(const _Key&) [with _Key = std::vector<unsigned char>; _Val = std::pair<const std::vector<unsigned char>, long unsigned int>; _KeyOfValue = std::_Select1st<std::pair<const std::vector<unsigned char>, long unsigned int> >; _Compare = std::less<std::vector<unsigned char> >; _Alloc = std::allocator<std::pair<const std::vector<unsigned char>, long unsigned int> >]’ at /usr/include/c++/13/bits/stl_tree.h:2532:36,
-    inlined from ‘std::map<_Key, _Tp, _Compare, _Alloc>::iterator std::map<_Key, _Tp, _Compare, _Alloc>::find(const key_type&) [with _Key = std::vector<unsigned char>; _Tp = long unsigned int; _Compare = std::less<std::vector<unsigned char> >; _Alloc = std::allocator<std::pair<const std::vector<unsigned char>, long unsigned int> >]’ at /usr/include/c++/13/bits/stl_map.h:1220:25,
-    inlined from ‘ownrt::Allocation ownrt::parameters(Device&, const void*, size_t, int)’ at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/owner.cpp:293:29:
-/usr/include/c++/13/bits/stl_algobase.h:1848:39: warning: ‘int __builtin_memcmp(const void*, const void*, long unsigned int)’ specified bound [9223372036854775808, 18446744073709551615] exceeds maximum object size 9223372036854775807 [-Wstringop-overread]
- 1848 |                     = __builtin_memcmp(&*__first1, &*__first2, __blen) <=> 0;
-      |                       ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[ 36%] Built target math-gate
+[ 38%] Building CXX object CMakeFiles/fused-fixtures.dir/gemv_fixture.cpp.o
+[ 40%] Building CXX object CMakeFiles/nongemv-fixtures.dir/nongemv_fixture.cpp.o
 [ 43%] Linking CXX executable fused-fixtures
-[ 52%] Built target fused-fixtures
-[ 56%] Built target lifetime-tests
-[ 59%] Building CXX object CMakeFiles/failure-tests.dir/failure_test.cpp.o
-In file included from /usr/include/c++/13/string:51,
-                 from /usr/include/c++/13/bits/locale_classes.h:40,
-                 from /usr/include/c++/13/bits/ios_base.h:41,
-                 from /usr/include/c++/13/ios:44,
-                 from /usr/include/c++/13/istream:40,
-                 from /usr/include/c++/13/sstream:40,
-                 from /usr/include/c++/13/chrono:45,
-                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../../stage1/packet3-prep/src/owner.hpp:2,
-                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/owner.hpp:2,
-                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/owner.cpp:1:
-In function ‘constexpr decltype (__comp((* __first1), (* __first2))) std::lexicographical_compare_three_way(_InputIter1, _InputIter1, _InputIter2, _InputIter2, _Comp) [with _InputIter1 = __gnu_cxx::__normal_iterator<const unsigned char*, vector<unsigned char> >; _InputIter2 = __gnu_cxx::__normal_iterator<const unsigned char*, vector<unsigned char> >; _Comp = __detail::_Synth3way]’,
-    inlined from ‘constexpr std::__detail::__synth3way_t<_Iterator> std::operator<=>(const vector<_Tp, _Alloc>&, const vector<_Tp, _Alloc>&) [with _Tp = unsigned char; _Alloc = allocator<unsigned char>]’ at /usr/include/c++/13/bits/stl_vector.h:2061:52,
-    inlined from ‘constexpr bool std::less<_Tp>::operator()(const _Tp&, const _Tp&) const [with _Tp = std::vector<unsigned char>]’ at /usr/include/c++/13/bits/stl_function.h:408:20,
-    inlined from ‘std::pair<std::_Rb_tree_node_base*, std::_Rb_tree_node_base*> std::_Rb_tree<_Key, _Val, _KeyOfValue, _Compare, _Alloc>::_M_get_insert_unique_pos(const key_type&) [with _Key = std::vector<unsigned char>; _Val = std::pair<const std::vector<unsigned char>, long unsigned int>; _KeyOfValue = std::_Select1st<std::pair<const std::vector<unsigned char>, long unsigned int> >; _Compare = std::less<std::vector<unsigned char> >; _Alloc = std::allocator<std::pair<const std::vector<unsigned char>, long unsigned int> >]’ at /usr/include/c++/13/bits/stl_tree.h:2118:35:
-/usr/include/c++/13/bits/stl_algobase.h:1848:39: warning: ‘int __builtin_memcmp(const void*, const void*, long unsigned int)’ specified bound [9223372036854775808, 18446744073709551615] exceeds maximum object size 9223372036854775807 [-Wstringop-overread]
- 1848 |                     = __builtin_memcmp(&*__first1, &*__first2, __blen) <=> 0;
-      |                       ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[ 61%] Building CXX object CMakeFiles/failure-tests.dir/owner.cpp.o
-In function ‘constexpr decltype (__comp((* __first1), (* __first2))) std::lexicographical_compare_three_way(_InputIter1, _InputIter1, _InputIter2, _InputIter2, _Comp) [with _InputIter1 = __gnu_cxx::__normal_iterator<const unsigned char*, vector<unsigned char> >; _InputIter2 = __gnu_cxx::__normal_iterator<const unsigned char*, vector<unsigned char> >; _Comp = __detail::_Synth3way]’,
-    inlined from ‘constexpr std::__detail::__synth3way_t<_Iterator> std::operator<=>(const vector<_Tp, _Alloc>&, const vector<_Tp, _Alloc>&) [with _Tp = unsigned char; _Alloc = allocator<unsigned char>]’ at /usr/include/c++/13/bits/stl_vector.h:2061:52,
-    inlined from ‘constexpr bool std::less<_Tp>::operator()(const _Tp&, const _Tp&) const [with _Tp = std::vector<unsigned char>]’ at /usr/include/c++/13/bits/stl_function.h:408:20,
-    inlined from ‘std::_Rb_tree<_Key, _Val, _KeyOfValue, _Compare, _Alloc>::iterator std::_Rb_tree<_Key, _Val, _KeyOfValue, _Compare, _Alloc>::_M_lower_bound(_Link_type, _Base_ptr, const _Key&) [with _Key = std::vector<unsigned char>; _Val = std::pair<const std::vector<unsigned char>, long unsigned int>; _KeyOfValue = std::_Select1st<std::pair<const std::vector<unsigned char>, long unsigned int> >; _Compare = std::less<std::vector<unsigned char> >; _Alloc = std::allocator<std::pair<const std::vector<unsigned char>, long unsigned int> >]’ at /usr/include/c++/13/bits/stl_tree.h:1952:29,
-    inlined from ‘std::_Rb_tree<_Key, _Val, _KeyOfValue, _Compare, _Alloc>::iterator std::_Rb_tree<_Key, _Val, _KeyOfValue, _Compare, _Alloc>::find(const _Key&) [with _Key = std::vector<unsigned char>; _Val = std::pair<const std::vector<unsigned char>, long unsigned int>; _KeyOfValue = std::_Select1st<std::pair<const std::vector<unsigned char>, long unsigned int> >; _Compare = std::less<std::vector<unsigned char> >; _Alloc = std::allocator<std::pair<const std::vector<unsigned char>, long unsigned int> >]’ at /usr/include/c++/13/bits/stl_tree.h:2532:36,
-    inlined from ‘std::map<_Key, _Tp, _Compare, _Alloc>::iterator std::map<_Key, _Tp, _Compare, _Alloc>::find(const key_type&) [with _Key = std::vector<unsigned char>; _Tp = long unsigned int; _Compare = std::less<std::vector<unsigned char> >; _Alloc = std::allocator<std::pair<const std::vector<unsigned char>, long unsigned int> >]’ at /usr/include/c++/13/bits/stl_map.h:1220:25,
-    inlined from ‘ownrt::Allocation ownrt::parameters(Device&, const void*, size_t, int)’ at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/owner.cpp:293:29:
-/usr/include/c++/13/bits/stl_algobase.h:1848:39: warning: ‘int __builtin_memcmp(const void*, const void*, long unsigned int)’ specified bound [9223372036854775808, 18446744073709551615] exceeds maximum object size 9223372036854775807 [-Wstringop-overread]
- 1848 |                     = __builtin_memcmp(&*__first1, &*__first2, __blen) <=> 0;
-      |                       ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[ 63%] Linking CXX executable nongemv-fixtures
-[ 75%] Built target nongemv-fixtures
-[ 77%] Building CXX object CMakeFiles/own-rt-iq3.dir/owner.cpp.o
-[ 79%] Linking CXX executable failure-tests
-[ 81%] Built target failure-tests
-In file included from /usr/include/c++/13/string:51,
-                 from /usr/include/c++/13/bits/locale_classes.h:40,
-                 from /usr/include/c++/13/bits/ios_base.h:41,
-                 from /usr/include/c++/13/ios:44,
-                 from /usr/include/c++/13/istream:40,
-                 from /usr/include/c++/13/sstream:40,
-                 from /usr/include/c++/13/chrono:45,
-                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../../stage1/packet3-prep/src/owner.hpp:2,
-                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/owner.hpp:2,
-                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/owner.cpp:1:
-In function ‘constexpr decltype (__comp((* __first1), (* __first2))) std::lexicographical_compare_three_way(_InputIter1, _InputIter1, _InputIter2, _InputIter2, _Comp) [with _InputIter1 = __gnu_cxx::__normal_iterator<const unsigned char*, vector<unsigned char> >; _InputIter2 = __gnu_cxx::__normal_iterator<const unsigned char*, vector<unsigned char> >; _Comp = __detail::_Synth3way]’,
-    inlined from ‘constexpr std::__detail::__synth3way_t<_Iterator> std::operator<=>(const vector<_Tp, _Alloc>&, const vector<_Tp, _Alloc>&) [with _Tp = unsigned char; _Alloc = allocator<unsigned char>]’ at /usr/include/c++/13/bits/stl_vector.h:2061:52,
-    inlined from ‘constexpr bool std::less<_Tp>::operator()(const _Tp&, const _Tp&) const [with _Tp = std::vector<unsigned char>]’ at /usr/include/c++/13/bits/stl_function.h:408:20,
-    inlined from ‘std::pair<std::_Rb_tree_node_base*, std::_Rb_tree_node_base*> std::_Rb_tree<_Key, _Val, _KeyOfValue, _Compare, _Alloc>::_M_get_insert_unique_pos(const key_type&) [with _Key = std::vector<unsigned char>; _Val = std::pair<const std::vector<unsigned char>, long unsigned int>; _KeyOfValue = std::_Select1st<std::pair<const std::vector<unsigned char>, long unsigned int> >; _Compare = std::less<std::vector<unsigned char> >; _Alloc = std::allocator<std::pair<const std::vector<unsigned char>, long unsigned int> >]’ at /usr/include/c++/13/bits/stl_tree.h:2118:35:
-/usr/include/c++/13/bits/stl_algobase.h:1848:39: warning: ‘int __builtin_memcmp(const void*, const void*, long unsigned int)’ specified bound [9223372036854775808, 18446744073709551615] exceeds maximum object size 9223372036854775807 [-Wstringop-overread]
- 1848 |                     = __builtin_memcmp(&*__first1, &*__first2, __blen) <=> 0;
-      |                       ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In function ‘constexpr decltype (__comp((* __first1), (* __first2))) std::lexicographical_compare_three_way(_InputIter1, _InputIter1, _InputIter2, _InputIter2, _Comp) [with _InputIter1 = __gnu_cxx::__normal_iterator<const unsigned char*, vector<unsigned char> >; _InputIter2 = __gnu_cxx::__normal_iterator<const unsigned char*, vector<unsigned char> >; _Comp = __detail::_Synth3way]’,
-    inlined from ‘constexpr std::__detail::__synth3way_t<_Iterator> std::operator<=>(const vector<_Tp, _Alloc>&, const vector<_Tp, _Alloc>&) [with _Tp = unsigned char; _Alloc = allocator<unsigned char>]’ at /usr/include/c++/13/bits/stl_vector.h:2061:52,
-    inlined from ‘constexpr bool std::less<_Tp>::operator()(const _Tp&, const _Tp&) const [with _Tp = std::vector<unsigned char>]’ at /usr/include/c++/13/bits/stl_function.h:408:20,
-    inlined from ‘std::_Rb_tree<_Key, _Val, _KeyOfValue, _Compare, _Alloc>::iterator std::_Rb_tree<_Key, _Val, _KeyOfValue, _Compare, _Alloc>::_M_lower_bound(_Link_type, _Base_ptr, const _Key&) [with _Key = std::vector<unsigned char>; _Val = std::pair<const std::vector<unsigned char>, long unsigned int>; _KeyOfValue = std::_Select1st<std::pair<const std::vector<unsigned char>, long unsigned int> >; _Compare = std::less<std::vector<unsigned char> >; _Alloc = std::allocator<std::pair<const std::vector<unsigned char>, long unsigned int> >]’ at /usr/include/c++/13/bits/stl_tree.h:1952:29,
-    inlined from ‘std::_Rb_tree<_Key, _Val, _KeyOfValue, _Compare, _Alloc>::iterator std::_Rb_tree<_Key, _Val, _KeyOfValue, _Compare, _Alloc>::find(const _Key&) [with _Key = std::vector<unsigned char>; _Val = std::pair<const std::vector<unsigned char>, long unsigned int>; _KeyOfValue = std::_Select1st<std::pair<const std::vector<unsigned char>, long unsigned int> >; _Compare = std::less<std::vector<unsigned char> >; _Alloc = std::allocator<std::pair<const std::vector<unsigned char>, long unsigned int> >]’ at /usr/include/c++/13/bits/stl_tree.h:2532:36,
-    inlined from ‘std::map<_Key, _Tp, _Compare, _Alloc>::iterator std::map<_Key, _Tp, _Compare, _Alloc>::find(const key_type&) [with _Key = std::vector<unsigned char>; _Tp = long unsigned int; _Compare = std::less<std::vector<unsigned char> >; _Alloc = std::allocator<std::pair<const std::vector<unsigned char>, long unsigned int> >]’ at /usr/include/c++/13/bits/stl_map.h:1220:25,
-    inlined from ‘ownrt::Allocation ownrt::parameters(Device&, const void*, size_t, int)’ at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/owner.cpp:293:29:
-/usr/include/c++/13/bits/stl_algobase.h:1848:39: warning: ‘int __builtin_memcmp(const void*, const void*, long unsigned int)’ specified bound [9223372036854775808, 18446744073709551615] exceeds maximum object size 9223372036854775807 [-Wstringop-overread]
- 1848 |                     = __builtin_memcmp(&*__first1, &*__first2, __blen) <=> 0;
-      |                       ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[ 84%] Linking CXX executable own-rt-iq3
+[ 45%] Linking CXX executable nongemv-fixtures
+[ 54%] Built target fused-fixtures
+[ 59%] Built target lifetime-tests
+[ 70%] Built target nongemv-fixtures
+[ 79%] Built target failure-tests
 [100%] Built target own-rt-iq3

@@ -98,34 +98,24 @@
   "sources": {
     "main.cpp": "8e12d25cf290d2b7e046db2690350f562584a160336032618f87cce68ef8eb37",
     "owner.cpp": "c434e71ae596a718b35a9dada519efa5aa3b4579d852fea3e99fc336fb5303a0",
-    "backend.hpp": "4f60da4fbf9122abee260812812a2df5217a84d31ce6369fe3f040caff01c3de",
+    "backend.hpp": "4457586a7ce7123757a50579a5fc1e670bd4ce9745ea65d78a033542c48fc9fe",
     "owner_retire.cpp": "e35c366f640d8909b519891fa814aa80228b01ce69bd19ccdf00a8d13cae0da2"
   },
   "limit": "Source structure guard plus owner runtime assertion; no native execution proof"
 }
-[  0%] Built target kernel-gate
 [  0%] Built target math-gate
-[  3%] Building CXX object CMakeFiles/packet23-programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet23-fast/owner.cpp.o
-[  7%] Building CXX object CMakeFiles/packet23-programs.dir/build/jit-main.cpp.o
-[ 11%] Building CXX object CMakeFiles/packet23-programs.dir/build/checked/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp.o
-[ 14%] Building CXX object CMakeFiles/packet23-programs.dir/build/jit-gemv_fixture.cpp.o
-[ 18%] Building CXX object CMakeFiles/packet23-programs.dir/build/jit-nongemv_fixture.cpp.o
-/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/gemv_fixture.cpp:177:458: warning: non-void function does not return a value in all control paths [-Wreturn-type]
-  177 |  }catch(const std::exception& e){std::cerr<<e.what()<<'\n';if(!failure_output.empty()){std::filesystem::create_directories(failure_output);if(!std::filesystem::exists(failure_output/"failure.json"))std::ofstream(failure_output/"failure.json")<<"{\"passed\":false,\"error\":"<<ownrt::quote(e.what())<<",\"teardown\":{\"status\":\"owner not constructed\",\"in_flight\":0,\"live_bytes\":0,\"in_flight_event_ids\":[],\"registered_borrowers\":[]}}\n";}return 1;}}
-      |                                                                                                                                                                                                                                                                                                                                                                                                                                                                          ^
-1 warning generated.
-/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/nongemv_fixture.cpp:117:458: warning: non-void function does not return a value in all control paths [-Wreturn-type]
-  117 |  }catch(const std::exception& e){std::cerr<<e.what()<<'\n';if(!failure_output.empty()){std::filesystem::create_directories(failure_output);if(!std::filesystem::exists(failure_output/"failure.json"))std::ofstream(failure_output/"failure.json")<<"{\"passed\":false,\"error\":"<<ownrt::quote(e.what())<<",\"teardown\":{\"status\":\"owner not constructed\",\"in_flight\":0,\"live_bytes\":0,\"in_flight_event_ids\":[],\"registered_borrowers\":[]}}\n";}return 1;}}
-      |                                                                                                                                                                                                                                                                                                                                                                                                                                                                          ^
-1 warning generated.
+[  0%] Built target kernel-gate
+[  3%] Building CXX object CMakeFiles/packet23-programs.dir/build/jit-main.cpp.o
+[  7%] Building CXX object CMakeFiles/packet23-programs.dir/build/jit-gemv_fixture.cpp.o
+[ 11%] Building CXX object CMakeFiles/packet23-programs.dir/build/jit-nongemv_fixture.cpp.o
 [ 70%] Built target packet23-programs
-[ 77%] Building CXX object CMakeFiles/fused-fixtures.dir/build/fused-fixtures-entry.cpp.o
+[ 74%] Building CXX object CMakeFiles/fused-fixtures.dir/build/fused-fixtures-entry.cpp.o
 [ 77%] Building CXX object CMakeFiles/own-rt-iq3.dir/build/own-rt-iq3-entry.cpp.o
-[ 81%] Linking CXX executable fused-fixtures
-[ 85%] Linking CXX executable own-rt-iq3
-[ 85%] Built target fused-fixtures
+[ 81%] Linking CXX executable own-rt-iq3
+[ 85%] Linking CXX executable fused-fixtures
 [ 85%] Built target own-rt-iq3
 [ 88%] Building CXX object CMakeFiles/nongemv-fixtures.dir/build/nongemv-fixtures-entry.cpp.o
+[ 88%] Built target fused-fixtures
 [ 92%] Linking CXX executable jit-smoke
 [ 96%] Linking CXX executable nongemv-fixtures
 [100%] Built target jit-smoke

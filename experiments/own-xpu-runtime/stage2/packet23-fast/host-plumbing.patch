@@ -390,7 +390,7 @@
   std::cout<<"{\"gate\":\"GEMV mixed-grid row bundles\",\"cases\":"<<cases<<",\"values\":"<<values<<",\"dense_paired_fnv64\":\""<<std::hex<<hash<<"\",\"passed\":true}\n";
 - }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
 + }catch(const std::exception& e){packet23::failure(d,output,e.what());return 1;}
-+ }catch(const std::exception& e){std::cerr<<e.what()<<'\n';if(!failure_output.empty()){std::filesystem::create_directories(failure_output);if(!std::filesystem::exists(failure_output/"failure.json"))std::ofstream(failure_output/"failure.json")<<"{\"passed\":false,\"error\":"<<ownrt::quote(e.what())<<",\"teardown\":{\"status\":\"owner not constructed\",\"in_flight\":0,\"live_bytes\":0,\"in_flight_event_ids\":[],\"registered_borrowers\":[]}}\n";}return 1;}}
++ }catch(const std::exception& e){std::cerr<<e.what()<<'\n';if(!failure_output.empty()){std::filesystem::create_directories(failure_output);if(!std::filesystem::exists(failure_output/"failure.json"))std::ofstream(failure_output/"failure.json")<<"{\"passed\":false,\"error\":"<<ownrt::quote(e.what())<<",\"teardown\":{\"status\":\"owner not constructed\",\"in_flight\":0,\"live_bytes\":0,\"in_flight_event_ids\":[],\"registered_borrowers\":[]}}\n";}return 1;}return 0;}
 --- packet21/main.cpp
 +++ packet23/main.cpp
 @@ -1,3 +1,4 @@
@@ -732,7 +732,7 @@
   std::ofstream receipt(out/"receipt.json");receipt<<"{\"schema\":\"own-runtime.iq3.packet21.fixtures.v1\",\"passed\":true,\"device_executed\":"<<(authorized?"true":"false")<<",\"fused_unfused_exact\":true,\"host_exact\":true,\"arithmetic\":\"iq3-p17-detmath-v2\",\"owner_cards\":1,\"fixture_output_sha256\":\""<<hex.str()<<"\",\"max_submission_ns\":"<<maximum<<",\"sequential_owners\":"<<(authorized?2:1)<<",\"safe_to_exit\":true,\"teardown\":"<<teardown<<",\"fixtures\":72,\"integrated_chains\":6,\"control_checks\":8,\"device_checks\":"<<checked<<",\"actual_adapter_checks\":"<<adapter.checks<<"}\n";
   std::cout<<"non-GEMV 72 fixtures + 6 chains + 8 controls + actual adapter M1/3 PASS\n";
 - }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
-+ }catch(const std::exception& e){std::cerr<<e.what()<<'\n';if(!failure_output.empty()){std::filesystem::create_directories(failure_output);if(!std::filesystem::exists(failure_output/"failure.json"))std::ofstream(failure_output/"failure.json")<<"{\"passed\":false,\"error\":"<<ownrt::quote(e.what())<<",\"teardown\":{\"status\":\"owner not constructed\",\"in_flight\":0,\"live_bytes\":0,\"in_flight_event_ids\":[],\"registered_borrowers\":[]}}\n";}return 1;}}
++ }catch(const std::exception& e){std::cerr<<e.what()<<'\n';if(!failure_output.empty()){std::filesystem::create_directories(failure_output);if(!std::filesystem::exists(failure_output/"failure.json"))std::ofstream(failure_output/"failure.json")<<"{\"passed\":false,\"error\":"<<ownrt::quote(e.what())<<",\"teardown\":{\"status\":\"owner not constructed\",\"in_flight\":0,\"live_bytes\":0,\"in_flight_event_ids\":[],\"registered_borrowers\":[]}}\n";}return 1;}return 0;}
 --- packet21/owner.cpp
 +++ packet23/owner.cpp
 @@ -1,8 +1,10 @@
