@@ -640,3 +640,16 @@ How the results will be read (fixed now):
 accepted and none rejected (10 rejected before), 18 searches (68 before), 0 rules put back. Both preregistered
 conditions for "fixed" are met (no notes call rejected for good, under 30 minutes), and the score bar with them.
 The two misses are "who did it" questions, one of them 2 items back.
+
+**X32b, seed 0: 39 of 39 in 17 minutes** (X32 before the fixes: 37/39 in 21). Every probe, every final, the
+confidential counter; not void. 22 cuts, 22 notes calls accepted, 7 searches. The fixes cost nothing where nothing
+had been wrong, and the run is four minutes quicker.
+
+| the keeper policy, 240K rules streams, 32K live window | seed 0 (39) | seed 1 (46) | both |
+| --- | ---: | ---: | ---: |
+| in the harness (N32j) | 39 in 15 min | 46 in 16 min | 85 / 85 |
+| as the proxy after its fixes (X32b) | 39 in 17 min | 44 in 18 min | 83 / 85 |
+| as the proxy before them (X32) | 37 in 21 min | 42 in 47 min | 79 / 85 |
+
+The proxy now carries the policy at about the harness's score and time, with an agent that manages nothing and
+sends its whole history on every call.
