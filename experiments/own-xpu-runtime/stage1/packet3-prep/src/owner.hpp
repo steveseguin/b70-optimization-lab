@@ -125,6 +125,9 @@ class Device {
   EventTiming timing(Event); // completed, owned event only; profiling is opt-in
   // Device-only bindings; host/UVA pointers require a separate admission path.
   Event compute(const Operation&, std::span<const Allocation>, std::span<const Event>);
+  // Packet4 eager segments only: retire completed events, preserving allocations.
+  // Implementation lives with that integration; graph leases forbid retirement.
+  void retire_completed_events();
   void graph(std::string, std::vector<Allocation>, std::function<void()>);
   Receipt shutdown(std::chrono::milliseconds timeout);
 };

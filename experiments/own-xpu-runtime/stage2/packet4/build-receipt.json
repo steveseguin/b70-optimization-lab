@@ -1,0 +1,189 @@
+{
+  "schema": "own-runtime.iq3.packet4.build.v1",
+  "passed": true,
+  "device_executed": false,
+  "nice": 19,
+  "OMP_NUM_THREADS": "2",
+  "max_build_jobs": 2,
+  "commands": [
+    {
+      "argv": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "--version"
+      ],
+      "returncode": 0,
+      "stdout": "Intel(R) oneAPI DPC++/C++ Compiler 2026.0.0 (2026.0.0.20260331)\nTarget: x86_64-unknown-linux-gnu\nThread model: posix\nInstalledDir: /opt/intel/oneapi/compiler/2026.0/bin/compiler\nConfiguration file: /opt/intel/oneapi/compiler/2026.0/bin/compiler/../icpx.cfg\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "cmake",
+        "-S",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/build/host",
+        "-DCMAKE_CXX_COMPILER=/usr/bin/g++",
+        "-DOWN_RT_HOST_ONLY=ON"
+      ],
+      "returncode": 0,
+      "stdout": "-- Configuring done (0.0s)\n-- Generating done (0.0s)\n-- Build files have been written to: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/build/host\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "cmake",
+        "--build",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/build/host",
+        "-j2"
+      ],
+      "returncode": 0,
+      "stdout": "[ 40%] Built target owner-retirement-tests\n[ 50%] Building CXX object CMakeFiles/own-rt-iq3.dir/main.cpp.o\n[ 60%] Building CXX object CMakeFiles/own-rt-iq3.dir/kernels.cpp.o\n[ 70%] Linking CXX executable own-rt-iq3\n[100%] Built target own-rt-iq3\n",
+      "stderr": "In file included from /usr/include/c++/13/string:49,\n                 from /usr/include/c++/13/bits/locale_classes.h:40,\n                 from /usr/include/c++/13/bits/ios_base.h:41,\n                 from /usr/include/c++/13/ios:44,\n                 from /usr/include/c++/13/istream:40,\n                 from /usr/include/c++/13/sstream:40,\n                 from /usr/include/c++/13/chrono:45,\n                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/../../stage1/packet3-prep/src/owner.hpp:2,\n                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/../packet2/loader/gguf.hpp:3,\n                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/main.cpp:1:\nIn member function \u2018constexpr bool std::less<_Tp*>::operator()(_Tp*, _Tp*) const [with _Tp = void]\u2019,\n    inlined from \u2018std::pair<std::_Rb_tree_iterator<_Val>, std::_Rb_tree_iterator<_Val> > std::_Rb_tree<_Key, _Val, _KeyOfValue, _Compare, _Alloc>::equal_range(const _Key&) [with _Key = void*; _Val = std::pair<void* const, ownrt::Memory>; _KeyOfValue = std::_Select1st<std::pair<void* const, ownrt::Memory> >; _Compare = std::less<void*>; _Alloc = std::allocator<std::pair<void* const, ownrt::Memory> >]\u2019 at /usr/include/c++/13/bits/stl_tree.h:2020:30,\n    inlined from \u2018std::_Rb_tree<_Key, _Val, _KeyOfValue, _Compare, _Alloc>::size_type std::_Rb_tree<_Key, _Val, _KeyOfValue, _Compare, _Alloc>::erase(const _Key&) [with _Key = void*; _Val = std::pair<void* const, ownrt::Memory>; _KeyOfValue = std::_Select1st<std::pair<void* const, ownrt::Memory> >; _Compare = std::less<void*>; _Alloc = std::allocator<std::pair<void* const, ownrt::Memory> >]\u2019 at /usr/include/c++/13/bits/stl_tree.h:2519:49,\n    inlined from \u2018std::map<_Key, _Tp, _Compare, _Alloc>::size_type std::map<_Key, _Tp, _Compare, _Alloc>::erase(const key_type&) [with _Key = void*; _Tp = ownrt::Memory; _Compare = std::less<void*>; _Alloc = std::allocator<std::pair<void* const, ownrt::Memory> >]\u2019 at /usr/include/c++/13/bits/stl_map.h:1119:26,\n    inlined from \u2018virtual void ownrt::MockDevice::release(void*, ownrt::Memory)\u2019 at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/../../stage1/packet3-prep/src/mock_device.hpp:22:45:\n/usr/include/c++/13/bits/stl_function.h:457:38: warning: pointer \u2018p\u2019 may be used after \u2018void operator delete(void*)\u2019 [-Wuse-after-free]\n  457 |         return (__UINTPTR_TYPE__)__x < (__UINTPTR_TYPE__)__y;\n      |                ~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~\nIn file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/main.cpp:6:\n/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/../../stage1/packet3-prep/src/mock_device.hpp: In member function \u2018virtual void ownrt::MockDevice::release(void*, ownrt::Memory)\u2019:\n/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/../../stage1/packet3-prep/src/mock_device.hpp:22:22: note: call to \u2018void operator delete(void*)\u2019 here\n   22 |     ::operator delete(p); allocations_.erase(p); calls.push_back(\"free\");\n      |     ~~~~~~~~~~~~~~~~~^~~\n"
+    },
+    {
+      "argv": [
+        "cmake",
+        "-S",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/build/device",
+        "-DCMAKE_CXX_COMPILER=/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-DOWN_RT_HOST_ONLY=OFF"
+      ],
+      "returncode": 0,
+      "stdout": "-- Configuring done (0.0s)\n-- Generating done (0.0s)\n-- Build files have been written to: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/build/device\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "cmake",
+        "--build",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/build/device",
+        "-j2"
+      ],
+      "returncode": 0,
+      "stdout": "[ 12%] Building CXX object CMakeFiles/own-rt-iq3.dir/main.cpp.o\n[ 25%] Building CXX object CMakeFiles/own-rt-iq3.dir/kernels.cpp.o\n[ 37%] Linking CXX executable own-rt-iq3\n[100%] Built target own-rt-iq3\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/build/host/owner-retirement-tests"
+      ],
+      "returncode": 0,
+      "stdout": "4 owner retirement cases PASS\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/steve/.venvs/vllm-xpu/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/test.py",
+        "--binary",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/build/host/own-rt-iq3",
+        "--scratch",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/build/tests-1791688391062843180",
+        "--input",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/build/input",
+        "--receipt",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/cpu-tests.json"
+      ],
+      "returncode": 0,
+      "stdout": "{\n  \"schema\": \"own-runtime.iq3.packet4.cpu-tests.v1\",\n  \"passed\": true,\n  \"device_executed\": false,\n  \"tests\": [\n    {\n      \"name\": \"mini-1-1\",\n      \"returncode\": 0,\n      \"exact\": true,\n      \"buffers\": 113,\n      \"values\": 3873,\n      \"tokens\": [\n        1\n      ]\n    },\n    {\n      \"name\": \"mini-1-3\",\n      \"returncode\": 0,\n      \"exact\": true,\n      \"buffers\": 113,\n      \"values\": 3873,\n      \"tokens\": [\n        1,\n        1,\n        1\n      ]\n    },\n    {\n      \"name\": \"mini-2-1\",\n      \"returncode\": 0,\n      \"exact\": true,\n      \"buffers\": 113,\n      \"values\": 3873,\n      \"tokens\": [\n        1\n      ]\n    },\n    {\n      \"name\": \"mini-2-3\",\n      \"returncode\": 0,\n      \"exact\": true,\n      \"buffers\": 113,\n      \"values\": 3873,\n      \"tokens\": [\n        1,\n        1,\n        1\n      ]\n    },\n    {\n      \"name\": \"repeat\",\n      \"returncode\": 0\n    },\n    {\n      \"name\": \"context-rejection\",\n      \"returncode\": 1\n    },\n    {\n      \"name\": \"bad-cards\",\n      \"returncode\": 1\n    },\n    {\n      \"name\": \"host-native-refusal\",\n      \"returncode\": 1\n    },\n    {\n      \"name\": \"real-plan-1\",\n      \"returncode\": 0,\n      \"tensors\": 1224,\n      \"resident_bytes\": [\n        52629189120\n      ]\n    },\n    {\n      \"name\": \"real-plan-2\",\n      \"returncode\": 0,\n      \"tensors\": 1224,\n      \"resident_bytes\": [\n        26165134080,\n        26464055040\n      ]\n    }\n  ],\n  \"binary_sha256\": \"eac9cf2be4dfe7ebc2ddbf50fce0115d03eb9bd7963a64ddff02120479ae2bce\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/build/host/own-rt-iq3",
+        "--first-layer",
+        "--input",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/build/input/tokens.txt",
+        "--plan",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/build/input/plan.tsv",
+        "--identity",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/build/input/identity.tsv",
+        "--model-dir",
+        "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/build/real-1791688392956086377",
+        "--oracle",
+        "/home/steve/llm-optimizations/experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/runs/official-sigmoid-20261011/incident-retrospective/step1"
+      ],
+      "returncode": 1,
+      "stdout": "text \n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/steve/.venvs/vllm-xpu/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/test_window.py"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.015s\n\nOK\n"
+    }
+  ],
+  "real_layer_exact": false,
+  "artifacts_sha256": {
+    "host/own-rt-iq3": "eac9cf2be4dfe7ebc2ddbf50fce0115d03eb9bd7963a64ddff02120479ae2bce",
+    "device/own-rt-iq3": "448bf4b025319dcb3706c6eae5bdce9dca9173b7099f1cddbbe25202cc4637aa"
+  },
+  "cpu_tests_sha256": "762bb163f54ec6ed259c258ea54f493688245b49626bed3a38a72c597a36a61c",
+  "real_model_qualified": false,
+  "sources": {
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/mock_device.hpp": "e5e68fd9aa3c9baaa34811b74c58f6ff8311f6bd18fae787fe80ccef2d6e3a32",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp": "5039a86f032727b0219e4d4ef07b158ff715ee542bb949023ad2306b4225e842",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.hpp": "94db5f67e518d4b4940811c9f381f3e1add47c403fca134cad11d84d4d2e626b",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/smoke.cpp": "e79654dc1500c13e868dbc9456870784eff83d1f4e2064db1ca850a6fba1a790",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp": "7e10dbe50d9c73a154e079f9aa9b36139d43f4bb1e3ac65f544ea5b5df7ea125",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_operation.hpp": "296eeb3fdf685b698cb7bb35da86157fbb12f97ff215f61ab7ad90f207364c9b",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp": "021766a26c108dbdb830070bfb8c13c00934ca5a7df3f472aa3f10335309bb33",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/device.hpp": "1044e1a57d101d35a1d02e7fd911c3db9e5faed41248255ac61af52528f98f74",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/generate_grids.py": "4ae0212006862c298ffee544f4d3df89d61ed5bbd448cd714a803fb0e56ea9ff",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4",
+    "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp": "d2560c5530d56ca62b0ec43bcbd1668cd7c637d1743f51abfebfb96de56ee480",
+    "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.hpp": "80647a747f697dd8131019ee2041ab42b1f6b772f735abdf116fa6e2036323f1",
+    "experiments/own-xpu-runtime/stage2/packet2/roofline.py": "61b8ca33917a71ba91aaee129fa298663b5c566507737878a7d5f49db7d4c441",
+    "experiments/own-xpu-runtime/stage2/packet2/tests/device.cpp": "7c34ac4558bbeda2b16ce9c9661269ceedf51b9ec01f1e8052cb2974ae8f6c43",
+    "experiments/own-xpu-runtime/stage2/packet2/tests/device_timing.py": "20bf7b029b769d9422656cabe931f6d15abc23775746254a83f118829f094f09",
+    "experiments/own-xpu-runtime/stage2/packet2/tests/device_window.py": "a26998d3bd062b78c8ffb8825e8daf9adb50cd866552b3c23bfacdafb0189e5f",
+    "experiments/own-xpu-runtime/stage2/packet2/tests/fixture.hpp": "aec94f0301d5871805292a349a73ebb06bf95a2c51d9db0df97aeeaaf660ff89",
+    "experiments/own-xpu-runtime/stage2/packet2/tests/host.cpp": "9520e1c8b1ccb89cea183e5eb1b0ea84c8294f9119161cfb2998fd2127da4a07",
+    "experiments/own-xpu-runtime/stage2/packet2/tests/run_cpu.py": "09fbeedd3ba67172a76343400f1e1dcb71165085694a2b8e83b47f6d4e27d88b",
+    "experiments/own-xpu-runtime/stage2/packet2/tests/test_timing.py": "fe9afcf7a63a24cc0ce6c554cd18c673525f7460e7414a31c9841dcbe91ea520",
+    "experiments/own-xpu-runtime/stage2/packet2/tests/test_window.py": "a23626e3084068244e2cc928f5058086c2cb2115b822376632b046ff1831f999",
+    "experiments/own-xpu-runtime/stage2/packet2/tests/timing.cpp": "870f971da6530cf5811913d08063ec186b2c7ccfaf8591a3627f0e07aaf93476",
+    "experiments/own-xpu-runtime/stage2/packet2/tests/timing_owner.cpp": "f4b6c6a23868e21303a397f86343c996498c9cab4f3ec4d2c5f9a07a447333b9",
+    "experiments/own-xpu-runtime/stage2/packet2/tests/timing_plan.py": "0796abac61f0c1de69253feccc2171790bb6b650eadfb38af7117d51a0dc6e7e",
+    "experiments/own-xpu-runtime/stage2/packet2/validate.py": "a73d677ca43dfef45457d328f66d26eb8344bfa51259bc584514f5376329ff77",
+    "experiments/own-xpu-runtime/stage2/packet3/kernels/api.hpp": "7d33644438281bcc5a1ab2fbbde2310cbff3a55b683312eab3d52178d4fdbe33",
+    "experiments/own-xpu-runtime/stage2/packet3/kernels/mock.hpp": "86bad02ec52f4131f47f556933cfcedeb1d00614747c37a55728da9fb8ead8ff",
+    "experiments/own-xpu-runtime/stage2/packet3/model/directory.hpp": "535eea979a14d3a5eb9f4768edffb6e47c7d0aa61cfeeaf27e9dade75d19759f",
+    "experiments/own-xpu-runtime/stage2/packet3/model/plan.py": "ac0b5f30e9cbad06e26af6c38dff5f36873c695a3af1eaed677201b809a9014a",
+    "experiments/own-xpu-runtime/stage2/packet3/run_tests.py": "37c5907bb17dd55488a5832c16ef811a9948a6867991b81f3bea6f54acd68333",
+    "experiments/own-xpu-runtime/stage2/packet3/step/main.cpp": "60f75e845e040f22db5bc08afc9a1846c2179fe20b94f7a39f02fd6afbe8aacc",
+    "experiments/own-xpu-runtime/stage2/packet3/step/plan.hpp": "e8da06cfc064ef9dd5f154d4b313b0dfeb95244fb6e7cb1a073591e6e8497cfa",
+    "experiments/own-xpu-runtime/stage2/packet3/tests/host.cpp": "576f05272cca3a649f6e86620f3b3fefefb9a24f59586e38c4cbc7faaf28564b",
+    "experiments/own-xpu-runtime/stage2/packet3/tests/reference.py": "148e99de6d5a01bb391cfd7d0bb92c250d8d4c01654ad9d3e4d11fb36b248bfa",
+    "experiments/own-xpu-runtime/stage2/packet3/tests/test_execution.py": "7b10cbf9e5c2b5181a4e98f756b4e36d58a002479775424ecc546b1b05e3d8e4",
+    "experiments/own-xpu-runtime/stage2/packet3/tests/test_plan.py": "e64e8bb5c9f3eff75396af8d8676e24d4b775d483a3531d19a4f308a10865229",
+    "experiments/own-xpu-runtime/stage2/packet4/CMakeLists.txt": "baa95d1bbaaeaa9ea8bcbf4445f6726545fd86a93c1b485527c8544cc17d4e4c",
+    "experiments/own-xpu-runtime/stage2/packet4/build.py": "06ea2b46507a31fb341472e4ed518274e54a90f4b3a101e5cafa51ff3d1dada1",
+    "experiments/own-xpu-runtime/stage2/packet4/core.hpp": "8e7f81cf2c2f5e64fea00dbbc085f60e8f199dc54e9aba28d3d254eb0ade461e",
+    "experiments/own-xpu-runtime/stage2/packet4/kernels.cpp": "590281ec3eb7a80787f6a97e99a88d7aaf7524cabe9d24540fe2a4f21201bfcc",
+    "experiments/own-xpu-runtime/stage2/packet4/kernels.hpp": "e8d8dbc1bacdbdec34f2bd85eaf72c253f3751f091698821a9e1b09ea96c753f",
+    "experiments/own-xpu-runtime/stage2/packet4/main.cpp": "a6b0897e805a0cd1b48da6bc01aa19bb3520180a822e5c0c1d6fa9fe7dce3c50",
+    "experiments/own-xpu-runtime/stage2/packet4/owner_retire.cpp": "07dad00e773223ea342d4c4ce92c5e1cd3d5255c9d8acfc712bb5539cf3f84df",
+    "experiments/own-xpu-runtime/stage2/packet4/owner_test.cpp": "90b62340aff81aaa2c8bee620b6ddfea13d9d9231b1f64e94140139181d498b1",
+    "experiments/own-xpu-runtime/stage2/packet4/prepare.py": "d50d63c07e7eb287db195030cb89a8fdb18721f13f87697a207eb5908e0a829a",
+    "experiments/own-xpu-runtime/stage2/packet4/real_check.py": "ee935cb8555dd9915d3a428f6804abf953986fc2c1e4bd4493671086318be333",
+    "experiments/own-xpu-runtime/stage2/packet4/receipt.schema.json": "db27f9a42c1c199bbf30a36f395b9e3284a6cdd2e2b50ddef89632c7cbe80483",
+    "experiments/own-xpu-runtime/stage2/packet4/test.py": "16d5de8c692b49d52b78d86679077859ce85c8b996ef0725067e4455cda7218b",
+    "experiments/own-xpu-runtime/stage2/packet4/test_window.py": "c8c69805e3255bad7db4ecb408727dd14a19b60f01637733ebe019a66bce9618",
+    "experiments/own-xpu-runtime/stage2/packet4/window.py": "b483dd5c6836c11c1c17a4072e53065dfec28f8772b329e13d93907e259522e7",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/admission-receipt.json": "a5807f19898d09af66bbd2c9616392483ccf0f4fd74550999776c69aeec3506e",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/tensor-census.json": "3312f5a18582788c5c6c84572fd616488b6835b454272c81eec218a58521607c"
+  },
+  "build_directory_removed": true
+}

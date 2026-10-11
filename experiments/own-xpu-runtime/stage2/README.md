@@ -13,6 +13,7 @@ separate and pending.
 | 1c — Actual Unsloth mixed-grid header census | **CPU census PASS; IQ3 first, IQ4 weight-only rejection corrected; MTP absent** | [Census, comparison and fetch receipt](packet1c/README.md) |
 | 2 — IQ3 GGUF loader and packed dequant/GEMV kernels | **CPU exactness PASS; SYCL compiled/linked only; IQ3 on two B70s is now the first real-model target** | [Implementation, receipts and bandwidth floors](packet2/README.md), [first device window](packet2/WINDOW.md) |
 | 3 — IQ3 host decode step | **23 Python tests + 18 C++ cases PASS; synthetic CPU parity only** | [Step, placement, launch plan and first device gate](packet3/README.md) |
+| 4 — Integrated IQ3 CLI | **Host mini-model exact; SYCL compile/link PASS; real layer-0 oracle hash FAILS, device unrun** | [Program, CPU evidence and limits](packet4/README.md), [card-3 window](packet4/WINDOW.md) |
 | Later operator, loader, layer, transaction and native qualification packets | Not authorized or executed here | [Required window and checks](packet1/README.md#next-authorized-stage-2-window) |
 
 Packet 1 retains all 152,089 tensors, 131 shard headers and 12 complete A367
