@@ -389,10 +389,12 @@ class Keeper:
         return int(chars_of(messages) / s.state["ratio"]) + 1
 
     def learn(self, s: Session, sent: list[dict[str, Any]], response: dict[str, Any]) -> None:
+        """Characters per token, from the server's own count. Only sizeable prompts teach (on a short one the tool
+        schemas and the chat template dominate), a step moves the ratio by a fifth, and it stays between 2.5 and 6."""
         pt = ((response.get("usage") or {}).get("prompt_tokens")) or 0
-        if pt > 200:
-            r = chars_of(sent) / pt
-            s.state["ratio"] = round(0.7 * s.state["ratio"] + 0.3 * min(max(r, 1.5), 8.0), 4)
+        if pt > 2000:
+            r = min(max(chars_of(sent) / pt, 2.5), 6.0)
+            s.state["ratio"] = round(0.8 * s.state["ratio"] + 0.2 * r, 4)
 
     def pin(self, s: Session) -> dict[str, Any]:
         return {"role": "user", "content": PIN_HEAD.format(n=s.state["cut"]) + "\n" + (s.state["notes"] or "(no notes yet)")}
@@ -411,6 +413,8 @@ class Keeper:
             body: dict[str, Any] = {"model": model, "messages": req, "max_tokens": self.notes_max_tokens, "temperature": 0}
             if thinking is not None:
                 body["chat_template_kwargs"] = {"enable_thinking": bool(thinking)}
+            if self.effort:                           # the same effort as every other call: without it a Qwen notes
+                body.setdefault("chat_template_kwargs", {})["reasoning_effort"] = self.effort   # call thinks at full effort
             why, text, finish = "", "", None
             try:
                 resp = self.ask(body)
