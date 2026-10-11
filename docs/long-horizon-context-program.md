@@ -103,7 +103,30 @@ and folds for lack of room, old state stuck: final 8/14). In-window self-editing
 | **B32ira + archive and recall** | **13/15** | 2/2 | 4/5 | **14/14** | **27** | **15** |
 
 At 32K the archive method is above the lossy floor on every axis at once and among the quickest (only compaction finished sooner, with far worse final answers); 32K is the fast-scale
-cap from here. Compaction that keeps old state visible reports stale values as current (4/14 finals).
+cap from here. Compaction that keeps old state visible reported stale values as current on seed 0 (4/14 finals) but not on seed 1 (21/21): a one-seed observation.
+
+**Second seed and the rule / method axes (2026-10-11, campaign 4; note section "Campaign 4 results"):**
+
+| arm (32K, two seeds, plain stream) | probes | 25-99 back | old value | who | final | all 65 | minutes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| **B32ira archive + recall** | **28/30** | 5/5 | 9/10 | 9/10 | 35/35 | **63** | 15-16 |
+| W32 window-drop | 21/30 | 0/5 | 4/10 | 7/10 | 35/35 | 56 | 20-30 |
+| P32 compaction | 23/30 | 3/5 | 9/10 | 4/10 | 25/35 | 48 | 13-23 |
+| B32ir self-edit read | 16/30 | 2/5 | 6/10 | 0/10 | 35/35 | 51 | 15-16 |
+
+| arm (32K, seed 0, `--rules` stream) | values, old values, who | **standing rule** | **house method** | final | all 39 | minutes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| B32ira archive + recall | 15/15 | **0/5** | 5/5 | 13/14 | 33 | 20 |
+| W32 window-drop | 10/15 | **0/5** | 0/5 | 13/14 | 23 | 26 |
+| P32 compaction | 6/15 | **0/5** | 3/5 | 11/14 | 20 | 14 |
+| B32ir self-edit read | 6/15 | **0/5** | 0/5 | 12/14 | 18 | 33 |
+
+The archive method holds on the second seed (36/36). **No method kept a rule stated in item 1**: not one of 20 rule
+questions was answered as the rule requires, and every arm missed the confidential counter in the final query. The
+archive arm saw the rule and had nowhere to keep it (its pinned state takes only `name value` lines); it kept the
+method only because the question names it, which sends the model to the archive. Axis 4 is therefore the open
+problem for the leading method, and a pinned place for rules is the first fix to test (campaign 5: B32iraR,
+B32ira-free), followed by the same arm at a 1M history.
 
 ### 4b. Proposed here, not yet run
 
@@ -195,8 +218,13 @@ management tokens. Lossy arms stay in the comparison as the floor.
 43 questions), ledger and kv-stream generators, LongMemEval_S, `second-comparison.sh` arm matrix, `probe_analysis.py`,
 the W48/D48 curves above as the first baseline, the fixed checkers (PR #73, #74).
 
-**Missing and to build:** axis 4 (constraint probes), axis 5 (procedure reuse), axis 6 (artefact task), a
-compaction-count dimension (force k compactions and plot accuracy vs k), and a "management overhead" ledger per arm.
+**Built 2026-10-11:** axis 4 and axis 5 (`make_sparse_prose_tasks.py --rules`: a standing rule in item 1, a house
+method in item 2, one question of each per PROBE item and a confidential counter in the final query);
+`partial_grade.py` grades the probes a cut run reached, so a slow arm can be stopped once the gap is clear.
+
+**Missing and to build:** axis 6 (artefact task), a compaction-count dimension (force k compactions and plot accuracy
+vs k), and a "management overhead" ledger per arm (the campaign runner now logs server prompt, cached and generated
+token totals per arm).
 
 ## 6. Plan
 

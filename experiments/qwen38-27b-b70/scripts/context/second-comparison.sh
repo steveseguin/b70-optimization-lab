@@ -34,6 +34,9 @@
 #   PROSE_BATCH_TOKENS  prose batch size at generation [6400] (use a new OUT_DIR when changing it)
 #   W16 D16 C16 B16ir B16ira B16ira-free   live-cap study at budget 16,384 (16K, fast scale; same arms as 48)
 #   W32 P32                                 32K lossy floors (window-drop, compaction) beside B32ir / B32ira / C32
+#   B32ira-free                             B32ira with free-text notes (clm_freenotes, cap STATE_MAX_TOKENS) instead of name-value lines
+#   B32iraR                                 B32ira + permanent `RULE: ...` lines in STATE.txt for standing rules and methods (clm_rules)
+#   B32iraR4                                B32iraR with FOLD_BATCHES=4 (fetch and fold four items per command)
 #   W48 D48 C48 B48ir B48ira B48ira-free   live-cap study at budget 49,152 (48K): W = truncate (clm_baselines
 #          TruncateAgent: drop oldest turns once over the limit, down to 75 %), D = compact (CompactAgent: at 75 %
 #          stub all but the newest 3 tool outputs and strip earlier thinking, then drop oldest if still over),
@@ -136,6 +139,9 @@ for cap, b in (("16", 16384), ("48", 49152), ("200", 204800)):  # live-cap study
                  "C" + cap: ("summary", "memory", b), "B" + cap + "ir": ("improved", "memory", b),
                  "B" + cap + "ira": ("improved", "memory", b), "B" + cap + "ira-free": ("improved", "memory", b)})
 ARMS.update({"W32": ("truncate", "memory", 32768), "P32": ("compact", "memory", 32768)})  # 32K lossy floors beside B32ir/B32ira/C32 (D32 is taken)
+ARMS["B32ira-free"] = ("improved", "memory", 32768)   # free-text notes + archive at 32K (general form of B32ira; 2026-10-11)
+ARMS["B32iraR"] = ("improved", "memory", 32768)       # B32ira + permanent RULE lines in STATE.txt (clm_rules; 2026-10-11)
+ARMS["B32iraR4"] = ("improved", "memory", 32768)      # B32iraR fetching and folding 4 items per command (speed lever)
 for a in ("A", "B32", "C32", "E32"):  # same arm with earlier thinking dropped from every call
     ARMS[a + "t"] = ARMS[a]
 bad = [a for a in arms if a not in ARMS]
@@ -242,7 +248,7 @@ run_one() {  # arm agent budget task_dir job_name drop_old_thinking
   [[ "$arm" == B32iq ]] && ar=1 && qt=1            # B32iq: + quoted events (`ctxfold --events`)
   [[ "$arm" == Ar ]] && sw=1                       # Ar: keep everything + window line (reading task baseline)
   local xa=() extra=""
-  if [[ "$arm" =~ ^B(16|48|200)(ir|ira|ira-free)$ ]]; then   # live-cap arms: as B32ir / B32ira / longmemeval B32ira-free
+  if [[ "$arm" =~ ^B(16|48|200)(ir|ira|ira-free)$ || "$arm" == B32ira-free ]]; then   # live-cap arms: as B32ir / B32ira / longmemeval B32ira-free
     fm=read; tp=judgement; tc=${THINK_CAP_R:-4096}
     [[ "$arm" == *ira* ]] && ar=1
     if [[ "$arm" == *-free ]]; then
@@ -250,8 +256,14 @@ run_one() {  # arm agent budget task_dir job_name drop_old_thinking
       xa=(-a clm_freenotes:ClmFreeNotesAgent)      # harbor: the last --agent wins; run-context-job.sh passes "$@" last
     fi
   fi
-  echo "arm=$arm agent_class=${xa[1]:-run-context-job.sh default for $agent} extra_kwargs=$extra" > "$RUNS/$job.arm.txt"
-  TASKS="$td" JOB_NAME="$job" CONTEXT_BUDGET="$budget" DROP_OLD_THINKING="$drop" THINK_CAP="$tc" ENABLE_THINKING="$et" THINKING_POLICY="$tp" SHOW_WINDOW="$sw" FOLD_MODE="$fm" ARCHIVE="$ar" QUOTED="$qt" EXTRA_KWARGS="${EXTRA_KWARGS:-} $extra" "$D/run-context-job.sh" "$agent" "$RUNS" "${xa[@]}" > "$RUNS/$job.out" 2>&1
+  local fb=${FOLD_BATCHES:-}
+  if [[ "$arm" == B32iraR || "$arm" == B32iraR4 ]]; then   # B32ira + pinned RULE lines (standing rules and methods stay in view)
+    fm=read; tp=judgement; tc=${THINK_CAP_R:-4096}; ar=1
+    xa=(-a clm_rules:ClmRulesAgent)
+    [[ "$arm" == B32iraR4 ]] && fb=4               # four items per command: half the calls per item become an eighth
+  fi
+  echo "arm=$arm agent_class=${xa[1]:-run-context-job.sh default for $agent} extra_kwargs=$extra fold_batches=${fb:-1}" > "$RUNS/$job.arm.txt"
+  TASKS="$td" JOB_NAME="$job" CONTEXT_BUDGET="$budget" DROP_OLD_THINKING="$drop" THINK_CAP="$tc" ENABLE_THINKING="$et" THINKING_POLICY="$tp" SHOW_WINDOW="$sw" FOLD_MODE="$fm" ARCHIVE="$ar" QUOTED="$qt" FOLD_BATCHES="$fb" EXTRA_KWARGS="${EXTRA_KWARGS:-} $extra" "$D/run-context-job.sh" "$agent" "$RUNS" "${xa[@]}" > "$RUNS/$job.out" 2>&1
   local rc=$?
   if (( rc != 0 )); then
     echo "!!! $job: launcher exited with status $rc; this run does not count"

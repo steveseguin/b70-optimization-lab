@@ -163,3 +163,99 @@ How the results will be read (fixed now):
   window-drop is expected to lose both once item 1 leaves the window; the question is whether the editing and archive
   arms carry them, since nothing tells them a rule is more important than a counter.
 - S3: C32 is compared with B32ira on the same seed for accuracy and minutes; a run cut at 100 min is "did not finish".
+
+## Campaign 4 results (2026-10-11 03:27-05:28)
+
+Ran S1 and S2; S3 (C32) was moved to campaign 5 so the rule fix and the 1M run come first. Host memory beside the
+server never went below 2.10 GiB with the 1.6 GiB floor (round 3 died at 1.95 under the 2.0 default). No GPU fault
+line; server stopped idle; Gemma put back. Evidence: [`../data/2026-10-11-context-campaign4/`](../data/2026-10-11-context-campaign4/).
+
+### S1: the archive arm's second seed at 32K
+
+B32ira, seed 1: **36/36** (15/15 probes, 21/21 finals) in 16 minutes, against 31/36 for both lossy floors on the same
+seed (30 and 23 minutes). The preregistered bar (above both floors on probes, 21/21 finals) is met.
+
+Plain 240K stream, 32K cap, two seeds pooled:
+
+| arm | probes | 1-4 | 5-24 | 25-99 | current | old value | who | final | all 65 | min per run |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| **B32ira archive + recall** | **28/30** | 10/11 | 13/14 | 5/5 | 10/10 | 9/10 | 9/10 | 35/35 | **63** | 15-16 |
+| W32 window-drop | 21/30 | 11/11 | 10/14 | 0/5 | 10/10 | 4/10 | 7/10 | 35/35 | 56 | 20-30 |
+| P32 compaction | 23/30 | 10/11 | 10/14 | 3/5 | 10/10 | 9/10 | 4/10 | 25/35 | 48 | 13-23 |
+| B32ir self-edit read | 16/30 | 6/11 | 8/14 | 2/5 | 10/10 | 6/10 | 0/10 | 35/35 | 51 | 15-16 |
+
+Cost per run: B32ira reads 5.3M prompt tokens of which 81-82 % come from the prefix cache (about 1.0M read fresh, four
+times the stream) and writes 38-49K; W32 reads 4.0M (70 % cached) and writes about 100K; P32 2.8M (75 %), 52-69K.
+
+### S2: a standing rule and a house method (charter axes 4 and 5), seed 0
+
+Item 1 states a rule (three counters are confidential: answer `protected`), item 2 a method (tally = value x 5 + 13).
+Each of five PROBE items asks one question of each kind, 24 to 129 items after they were stated; the final query
+includes one confidential counter. 39 questions per run.
+
+| arm | current | old value | who | **rule** | **method** | final (confidential one) | all 39 | minutes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| B32ira archive + recall | 5/5 | 5/5 | 5/5 | **0/5** | 5/5 | 13/14 (blank) | 33 | 20 |
+| W32 window-drop | 5/5 | 3/5 | 2/5 | **0/5** | 0/5 | 13/14 (blank) | 23 | 26 |
+| P32 compaction | 3/5 | 3/5 | 0/5 | **0/5** | 3/5 | 11/14 (blank) | 20 | 14 |
+| B32ir self-edit read | 3/5 | 3/5 | 0/5 | **0/5** | 0/5 | 12/14 (wrong) | 18 | 33 |
+
+**No method kept the rule. Not one rule question was answered `protected` in any run, at any distance, and the
+confidential counter in the final query was left blank by all of them.** By the preregistered reading every arm "lost
+the rule"; only the archive arm "kept the method". B32ir also had a bad run on this stream (694 model calls against its usual
+336; its context sat at the 75 % nudge with edits that matched nothing), which is why it took 33 minutes.
+
+Why, for the archive arm (transcript checked): the model noticed the rule (its thinking at item 1 reads "Standing rule
+... confidential -> answer protected") and then had nowhere to put it. STATE.txt accepts only `name value` lines,
+earlier thinking is dropped by design, and item 1 goes to the archive. It never tried to write the rule into the state
+(the 44 rejected state edits are all other things). A question about a confidential counter looks like any value
+question, so nothing prompts a search; it answered `null`. The method survived because its questions name it ("using
+the house method"), which sends the model to `recall`. Window-drop simply no longer had items 1-2 by the first probe
+(a 32K window holds about 15 items).
+
+This is the charter's "cheapest and most damning test" doing its job: the method that is best on recall (63/65) fails
+adherence completely, for a reason that is about where instructions live, not about memory capacity. The fix to test
+is a pinned place for rules: campaign 5, arms B32iraR (permanent `RULE:` lines) and B32ira-free (free-text notes).
+
+Speed on the rules stream (minutes per 100K of history, first and second 100K): B32ira 8.5 / 7.9, W32 7.9 / 12.6,
+P32 6.7 / 4.5. B32ira made 20 recalls (12.7K tokens of output) and 424 calls; W32 34 truncations; P32 54 compactions.
+
+## Campaign 5 (2026-10-11, preregistered before any result)
+
+Runner: `longrun-campaign5.sh` in `/mnt/fast-ai/bench-results/context-longrun-20261011/`. One two-card server
+(the same recipe at `--max-model-len 262144`, guard floor 1.6 GiB), started once; stopped only when no request is
+running; Gemma stopped first and put back at the end.
+
+**Why.** Campaign 4 showed the archive arm loses a standing rule (see above), and the 32K result has not been
+tried at the owner's numbers. Campaign 4's S3 (C32) was moved here so the rule fix and the 1M run come first.
+
+| phase | arm(s) | stream | question |
+| --- | --- | --- | --- |
+| 1 | B32iraR, B32ira-free | rules, 240K, seed 0 (campaign 4's task) | does a pinned place for rules bring the rule back without costing anything else? |
+| 1 | B32iraR4 | the same | speed lever: four items fetched and folded per command instead of one; does accuracy hold with a quarter of the calls? |
+| 2 | the better of phase 1 (B32ira if neither beats its 33/39) | rules, 1M, seed 0, probes every 20 batches x (5 + rule + method), 32K live budget | does the method stay accurate and as fast per 100K at 31x its live budget, with questions up to 400+ items back? |
+| 2 | B32iraR4, only if it lost at most one question to B32iraR in phase 1 | the same 1M stream | the fast variant at the owner's scale |
+| 3 | C32, cut at 80 min | plain, 240K, seed 0 | the production-style summary method in the 32K table |
+| 4 | W200, cut at 90 min | the 1M stream | the plain alternative at the owner's cap: fill a 200K window, drop the oldest |
+
+New arms (both leave B32ira's counter lines, guards, archive and `recall` unchanged):
+- **B32iraR** (`clm_rules.py`): STATE.txt may also hold up to 12 permanent `RULE: ...` lines of at most 400
+  characters; an edit that removes or rewords one is rejected; the protocol says to add a rule or method when an item
+  states one and to read the RULE lines before answering.
+- **B32ira-free** (`clm_freenotes.py`, built 10-07 for LongMemEval, never run on this stream): free-text notes up to
+  6,144 tokens instead of counter lines. Its protocol is unchanged, so it says nothing about rules; this is the test
+  of whether free notes carry a rule without being told to.
+
+How the results will be read (fixed now):
+- B32iraR4 is a speed lever only if it is within one question of B32iraR at 240K; its gain is the ratio of minutes
+  per 100K. One call then carries four reports, so a mistake costs more; more than one question lost closes it at 4
+  (2 would be the next size to try).
+- Phase 1: an arm "fixes the rule" at 5/5 rule probes plus the confidential final; it "costs nothing" if the other
+  34 questions stay within one of B32ira's 33/34. The arm with more questions right goes to 1M; B32iraR on a tie.
+- Phase 2: "flat" means the far bins (100-399 and 400+ items back) are within two questions of the near bins per
+  ten asked, and minutes per 100K in the last 200K are within 25 % of the first 200K. Rule and method are judged as
+  in phase 1. One seed: a result, not yet a replication.
+- Phase 4: W200 is expected to be right inside its window and wrong beyond it, and to decode two to three times
+  slower once the window is full (41 tok/s at 137K, 26 at 246K, measured 10-05). If it is cut, the probes it reached
+  are graded from the last copy of its answers file (`partial_grade.py`) and reported as a cut run.
+- Phase 3: C32 against B32ira on the same seed, accuracy and minutes; a cut run is "did not finish in 80 min".

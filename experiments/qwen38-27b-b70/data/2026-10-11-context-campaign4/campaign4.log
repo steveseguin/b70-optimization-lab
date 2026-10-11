@@ -1,0 +1,51 @@
+### 03:27:39 campaign 4 start; stages: S1 S2 S3; MemAvailable 13474 MiB
+### 03:27:39 stopping the Gemma service (front door state: 0 0)
+### 03:27:45 cards free; MemAvailable 13796 MiB
+Running as unit: ctx-fp8-tp2-server.service; invocation ID: 62fd06dc4b4c40a49f966aaf36291f4e
+### 03:30:15 server ready after ~165 s; MemAvailable 2850 MiB
+### 03:30:15 [B32ira s1 -> client] start; MemAvailable 2846 MiB
+### 03:47:14 [B32ira s1] done rc=0 in 16 min; MemAvailable 2585 MiB
+   rc=0 ledger score 1.0000 raw 1.0000 ({'correct': 36, 'blank': 0, 'wrong': 0, 'stale': 0}) void=False
+### 03:47:14 [B32ira s0 -> client-rules] start; MemAvailable 2577 MiB
+### 04:07:46 [B32ira s0] done rc=0 in 20 min; MemAvailable 2521 MiB
+   rc=0 ledger score 0.8462 raw 0.8462 ({'correct': 33, 'blank': 5, 'wrong': 1, 'stale': 0}) void=False
+### 04:07:46 [W32 s0 -> client-rules] start; MemAvailable 2519 MiB
+### 04:34:44 [W32 s0] done rc=0 in 26 min; MemAvailable 2461 MiB
+   rc=0 ledger score 0.5897 raw 0.5897 ({'correct': 23, 'blank': 11, 'wrong': 5, 'stale': 0}) void=False
+### 04:34:44 [P32 s0 -> client-rules] start; MemAvailable 2458 MiB
+### 04:49:35 [P32 s0] done rc=0 in 14 min; MemAvailable 2390 MiB
+   rc=0 ledger score 0.5128 raw 0.5128 ({'correct': 20, 'blank': 8, 'wrong': 10, 'stale': 1}) void=False
+### 04:49:35 [B32ir s0 -> client-rules] start; MemAvailable 2389 MiB
+### 05:23:01 [B32ir s0] done rc=0 in 33 min; MemAvailable 2390 MiB
+   rc=0 ledger score 0.4615 raw 0.4615 ({'correct': 18, 'blank': 12, 'wrong': 9, 'stale': 0}) void=False
+### 05:23:01 stopped by STOP-CAMPAIGN
+### 05:23:01 stopping the server; MemAvailable 2391 MiB
+server state: stopped None stop_confirmed True
+host memory available while the server ran: min 2.03  1% 2.14  median 2.24 GiB  (13835 samples)
+### 05:23:19 plain stream, all rounds pooled
+# 1. probe accuracy (correct/n=acc, pooled over trials; distance in items)
+arm	trials	probes	d1-4	d5-24	d25-99	d100-399	d400+	t:current	t:old_value	t:who	final_query	total_correct
+B16ir	2	9/30=0.30	5/11=0.45	4/14=0.29	0/5=0.00	n/a	n/a	8/10=0.80	1/10=0.10	0/10=0.00	35/35	44/65
+B16ira	1	12/15=0.80	7/8=0.88	4/5=0.80	1/2=0.50	n/a	n/a	3/5=0.60	4/5=0.80	5/5=1.00	8/14	20/29
+B32ir	2	16/30=0.53	6/11=0.55	8/14=0.57	2/5=0.40	n/a	n/a	10/10=1.00	6/10=0.60	0/10=0.00	35/35	51/65
+B32ira	2	28/30=0.93	10/11=0.91	13/14=0.93	5/5=1.00	n/a	n/a	10/10=1.00	9/10=0.90	9/10=0.90	35/35	63/65
+D16	2	19/30=0.63	8/11=0.73	9/14=0.64	2/5=0.40	n/a	n/a	10/10=1.00	8/10=0.80	1/10=0.10	35/35	54/65
+P32	2	23/30=0.77	10/11=0.91	10/14=0.71	3/5=0.60	n/a	n/a	10/10=1.00	9/10=0.90	4/10=0.40	25/35	48/65
+W16	2	16/30=0.53	11/11=1.00	5/14=0.36	0/5=0.00	n/a	n/a	9/10=0.90	3/10=0.30	4/10=0.40	34/35	50/65
+W32	2	21/30=0.70	11/11=1.00	10/14=0.71	0/5=0.00	n/a	n/a	10/10=1.00	4/10=0.40	7/10=0.70	35/35	56/65
+
+# 2a. speed: cumulative minutes when the history reached N tokens (mean over trials reaching it)
+### 05:23:19 rule / procedure stream
+# 1. probe accuracy (correct/n=acc, pooled over trials; distance in items)
+arm	trials	probes	d1-4	d5-24	d25-99	d100-399	d400+	t:current	t:old_value	t:procedure	t:rule	t:who	final_query	total_correct
+B32ir	1	6/25=0.24	4/5=0.80	2/9=0.22	0/6=0.00	0/5=0.00	n/a	3/5=0.60	3/5=0.60	0/5=0.00	0/5=0.00	0/5=0.00	12/14	18/39
+B32ira	1	20/25=0.80	5/5=1.00	9/9=1.00	3/6=0.50	3/5=0.60	n/a	5/5=1.00	5/5=1.00	5/5=1.00	0/5=0.00	5/5=1.00	13/14	33/39
+P32	1	9/25=0.36	1/5=0.20	5/9=0.56	1/6=0.17	2/5=0.40	n/a	3/5=0.60	3/5=0.60	3/5=0.60	0/5=0.00	0/5=0.00	11/14	20/39
+W32	1	10/25=0.40	5/5=1.00	5/9=0.56	0/6=0.00	0/5=0.00	n/a	5/5=1.00	3/5=0.60	0/5=0.00	0/5=0.00	2/5=0.40	13/14	23/39
+
+# 2a. speed: cumulative minutes when the history reached N tokens (mean over trials reaching it)
+### 05:23:19 kernel log clean since 2026-10-11 03:27:39; restoring Gemma (throughput)
+backend 19350: slots 8 x 4096 tokens
+backend 19351: slots 8 x 4096 tokens
+frontdoor: throughput-ctx32768-parallel8-4k-slots-nospec-2gpu active 0 queued 0
+### 05:27:50 campaign 4 complete

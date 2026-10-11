@@ -1,0 +1,45 @@
+# 1. probe accuracy (correct/n=acc, pooled over trials; distance in items)
+arm	trials	probes	d1-4	d5-24	d25-99	d100-399	d400+	t:current	t:old_value	t:who	final_query	total_correct
+B16ir	2	9/30=0.30	5/11=0.45	4/14=0.29	0/5=0.00	n/a	n/a	8/10=0.80	1/10=0.10	0/10=0.00	35/35	44/65
+B16ira	1	12/15=0.80	7/8=0.88	4/5=0.80	1/2=0.50	n/a	n/a	3/5=0.60	4/5=0.80	5/5=1.00	8/14	20/29
+B32ir	2	16/30=0.53	6/11=0.55	8/14=0.57	2/5=0.40	n/a	n/a	10/10=1.00	6/10=0.60	0/10=0.00	35/35	51/65
+B32ira	2	28/30=0.93	10/11=0.91	13/14=0.93	5/5=1.00	n/a	n/a	10/10=1.00	9/10=0.90	9/10=0.90	35/35	63/65
+D16	2	19/30=0.63	8/11=0.73	9/14=0.64	2/5=0.40	n/a	n/a	10/10=1.00	8/10=0.80	1/10=0.10	35/35	54/65
+P32	2	23/30=0.77	10/11=0.91	10/14=0.71	3/5=0.60	n/a	n/a	10/10=1.00	9/10=0.90	4/10=0.40	25/35	48/65
+W16	2	16/30=0.53	11/11=1.00	5/14=0.36	0/5=0.00	n/a	n/a	9/10=0.90	3/10=0.30	4/10=0.40	34/35	50/65
+W32	2	21/30=0.70	11/11=1.00	10/14=0.71	0/5=0.00	n/a	n/a	10/10=1.00	4/10=0.40	7/10=0.70	35/35	56/65
+
+# 2a. speed: cumulative minutes when the history reached N tokens (mean over trials reaching it)
+arm	source	coverage	100K	200K
+B16ir	timing+ctx	0.902	7.14	13.77
+B16ira	timing+ctx	0.942	17.7	24.91
+B32ir	timing+ctx	0.893	3.97	10.32
+B32ira	timing+ctx	0.893	5.46	12.38
+D16	timing+ctx	1.0	7.85	16.08
+P32	timing+ctx	0.997	6.19	13.47
+W16	timing+ctx	1.0	7.67	18.58
+W32	timing+ctx	0.998	8.43	20.24
+
+# 2b. speed: minutes per 100K tokens of history in each segment (rises if the method slows down)
+arm	0-100K	100-200K
+B16ir	7.14	6.63
+B16ira	17.7	7.21
+B32ir	3.97	6.35
+B32ira	5.46	6.92
+D16	7.85	8.23
+P32	6.19	7.28
+W16	7.67	10.91
+W32	8.43	11.8
+
+# 3. totals (mean per trial; peak_ctx_max = max over trials)
+arm	trials	tokens_written	lm_calls	peak_ctx	wall_s	real_edits	summaries	summary_failed	ctxfold_calls	fold_batches	truncations	compactions	recalls	rollbacks	window_refusals	peak_ctx_max
+B16ir	2	42802	361	9860	1064	160	n/a	n/a	156	1	n/a	n/a	0	1	n/a	10354
+B16ira	1	80290	466	11648	2175	175	n/a	n/a	175	1	n/a	n/a	24	3	n/a	11648
+B32ir	2	49238	336	23740	957	148	n/a	n/a	162	1	n/a	n/a	0	0	n/a	23887
+B32ira	2	43440	346	25573	962	154	n/a	n/a	148	1	n/a	n/a	17	0	n/a	27179
+D16	2	66238	154	10918	1192	0	n/a	n/a	n/a	n/a	n/a	138	n/a	0	n/a	11945
+P32	2	69091	156	22714	1119	0	n/a	n/a	n/a	n/a	n/a	80	n/a	0	n/a	24299
+W16	2	78294	160	13166	1365	0	n/a	n/a	n/a	n/a	57	n/a	n/a	0	n/a	13538
+W32	2	97113	160	27970	1537	0	n/a	n/a	n/a	n/a	33	n/a	n/a	0	n/a	27990
+# skipped B16ira__sparse-memory-t240k-s1/sparse-memory-t240k-s1__M83mAXC: void=True ended_by=CAP:max_steps rule=VOID+archive
+# trials used=15 skipped=1
