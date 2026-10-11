@@ -1,4 +1,4 @@
-# What bounds a GEMV on a B70: a bounding study (coordinator, 2026-10-11 23:00–23:10 UTC, card 0)
+# What bounds a GEMV on a B70: a bounding study (coordinator, 2026-10-11 22:59–23:02 UTC, card 0)
 
 Small SYCL programs, not part of the runtime and not an exactness gate. They run the
 runtime's row structure (one sub-group of 32 lanes per row, 8 consecutive weights per
