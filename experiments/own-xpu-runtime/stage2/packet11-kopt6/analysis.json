@@ -1,0 +1,335 @@
+{
+  "schema": "own-runtime.iq3.packet11.issue-forecast.v1",
+  "measured": false,
+  "assembly_receipt_sha256": "c71b19d8975822d49528324ad6202376f631b5f35bc06275cd6da3658e67cf9d",
+  "assumptions": {
+    "verified": false,
+    "vector_engines": 256,
+    "simd_lanes": 16,
+    "issue_instructions_per_engine_cycle": 1,
+    "clock_GHz": 1.5,
+    "max_GB_s": 590,
+    "constant_lookup_latency_cycles": [
+      40,
+      200
+    ],
+    "slm_lookup_latency_cycles": [
+      20,
+      40
+    ],
+    "register_shuffle_latency_cycles": [
+      4,
+      12
+    ],
+    "latency_note": "Hypotheses only: native send/dependency annotations do not encode elapsed latency. Cache hits, conflicts and occupancy unmeasured."
+  },
+  "formula": "issue GB/s = 256 engines * 1.5 GHz * packed block bytes / SIMD16 issue slots per SG32 block; multiply explicit utilization scenario; cap590",
+  "limitation": "Native region counts are static ISA counts. Outside-region costs, schedule, latency, utilization and GHz are unverified. No end-to-end or model-speed verdict.",
+  "native_regions": [
+    {
+      "type": "IQ2_S",
+      "blocks": [
+        "B141",
+        "B142"
+      ],
+      "scope": "one octet/lane: grid-index/address/lookup and finite signed decode; excludes activation, block/subscale, loop and reduction",
+      "native_instructions": 145,
+      "simd16_issue_equivalents": 225.0,
+      "opcode_counts": {
+        "add": 14,
+        "and": 15,
+        "bfn.(s0&s1|s2)": 1,
+        "cmp": 1,
+        "goto": 2,
+        "join": 1,
+        "load.ugm.d64.a64": 1,
+        "load.ugm.d8u32.a64": 3,
+        "mov": 73,
+        "mul": 8,
+        "sel": 7,
+        "shl": 4,
+        "shr": 15
+      },
+      "integer_to_float": 8,
+      "byte_extracts_semantic": 8,
+      "sign_applications_semantic": 8,
+      "weight_scale_mul": 8,
+      "table_loads": 1,
+      "representative_native_lines": [
+        "load.ugm.d8u32.a64 (32|M0)  r28:2       [r18:4]            {I@1,$2} // ex_desc:0x0; desc:0x8200980 // $1211",
+        "load.ugm.d8u32.a64 (32|M0)  r12:2       [r36:4]            {I@1,$3} // ex_desc:0x0; desc:0x8200980 // $1207",
+        "mov (16|M0)              r2.0<1>:ud    r[a0.0]<1,0>:ud                  {F@1}                //  ALU pipe: int; $1198",
+        "mov (16|M16)             r3.0<1>:ud    r[a0.0]<1,0>:ud                                       //  ALU pipe: int; $1201",
+        "load.ugm.d8u32.a64 (32|M0)  r14:2       [r8:4]             {I@2,$4} // ex_desc:0x0; desc:0x8200980 // $1223",
+        "load.ugm.d64.a64 (32|M0)  r45:4         [r41:4]            {I@1,$5} // ex_desc:0x0; desc:0x8400780 // $1220"
+      ],
+      "excerpt_sha256": "edde0265c901cb47f9b4a89ef8d8812ef8a3c4ca87c2ed792b82b54bc9e10ea8"
+    },
+    {
+      "type": "IQ3_S",
+      "blocks": [
+        "B141",
+        "B142"
+      ],
+      "scope": "one octet/lane: grid-index/address/lookup and finite signed decode; excludes activation, block/subscale, loop and reduction",
+      "native_instructions": 138,
+      "simd16_issue_equivalents": 237.0,
+      "opcode_counts": {
+        "add": 21,
+        "and": 14,
+        "bfn.(s0&s1|s2)": 2,
+        "cmp": 1,
+        "goto": 2,
+        "join": 1,
+        "load.ugm.d16u32.a64": 1,
+        "load.ugm.d32.a64": 2,
+        "load.ugm.d8u32.a64": 3,
+        "mov": 58,
+        "mul": 8,
+        "sel": 8,
+        "shl": 5,
+        "shr": 12
+      },
+      "integer_to_float": 8,
+      "byte_extracts_semantic": 8,
+      "sign_applications_semantic": 8,
+      "weight_scale_mul": 8,
+      "table_loads": 2,
+      "representative_native_lines": [
+        "load.ugm.d16u32.a64 (32|M0)  r40:2      [r28:4]            {I@4,$4} // ex_desc:0x0; desc:0x8200B80 // $1210",
+        "load.ugm.d8u32.a64 (32|M0)  r42:2       [r32:4]            {I@2,$5} // ex_desc:0x0; desc:0x8200980 // $1217",
+        "load.ugm.d8u32.a64 (32|M0)  r18:2       [r44:4]            {I@1,$6} // ex_desc:0x0; desc:0x8200980 // $1234",
+        "load.ugm.d8u32.a64 (32|M0)  r28:2       [r20:4]            {I@1,$8} // ex_desc:0x0; desc:0x8200980 // $1202",
+        "load.ugm.d32.a64 (32|M0)  r32:2         [r40:4]            {I@1,$10} // ex_desc:0x0; desc:0x8200580 // $1228",
+        "load.ugm.d32.a64 (32|M0)  r30:2         [r8:4]             {I@1,$3} // ex_desc:0x0; desc:0x8200580 // $1243",
+        "mov (16|M0)              r28.0<1>:ud   r[a0.0]<1,0>:ud                                       //  ALU pipe: int; $1247",
+        "mov (16|M16)             r29.0<1>:ud   r[a0.0]<1,0>:ud                                       //  ALU pipe: int; $1250"
+      ],
+      "excerpt_sha256": "c28e3af30f9e8883e75cb785a57527b6a80c9ae195ce8f1f6b65ff8dbed44f14"
+    }
+  ],
+  "predictions": [
+    {
+      "type": "IQ2_S",
+      "variant": "experts_sg32",
+      "simd16_issue_slots_per_256_weight_block": 353.0,
+      "native_blocks": [
+        141,
+        142
+      ],
+      "native_region_instructions": 145,
+      "native_region_simd16_slots": 225.0,
+      "common_accumulation_tail_slots": 32,
+      "outside_region_issue_assumption": 96,
+      "setup_amortized": 0,
+      "issue_only_GB_s": 89.20113314447592,
+      "utilization_assumption": [
+        0.55,
+        0.85
+      ],
+      "predicted_GB_s": [
+        49.06062322946176,
+        75.82096317280453
+      ],
+      "configured_grf": 128,
+      "spill_metadata": [
+        "//.spill flag store 36",
+        "//.spill flag load 43"
+      ]
+    },
+    {
+      "type": "IQ2_S",
+      "variant": "register_grid",
+      "simd16_issue_slots_per_256_weight_block": 1978.0,
+      "native_blocks": [
+        141,
+        142
+      ],
+      "native_region_instructions": 1591,
+      "native_region_simd16_slots": 1786.0,
+      "common_accumulation_tail_slots": 32,
+      "outside_region_issue_assumption": 96,
+      "setup_amortized": 64,
+      "issue_only_GB_s": 15.919110212335692,
+      "utilization_assumption": [
+        0.2,
+        0.45
+      ],
+      "predicted_GB_s": [
+        3.1838220424671384,
+        7.163599595551061
+      ],
+      "configured_grf": 128,
+      "spill_metadata": [
+        "//.spill size 6016",
+        "//.spill GRF est. ref count 2167",
+        "//.spill flag store 20",
+        "//.spill flag load 27"
+      ]
+    },
+    {
+      "type": "IQ2_S",
+      "variant": "slm_pair",
+      "simd16_issue_slots_per_256_weight_block": 332.0,
+      "native_blocks": [
+        199
+      ],
+      "native_region_instructions": 68,
+      "native_region_simd16_slots": 136.0,
+      "common_accumulation_tail_slots": 4,
+      "outside_region_issue_assumption": 160,
+      "setup_amortized": 32,
+      "issue_only_GB_s": 94.8433734939759,
+      "utilization_assumption": [
+        0.55,
+        0.85
+      ],
+      "predicted_GB_s": [
+        52.16385542168675,
+        80.61686746987952
+      ],
+      "configured_grf": 128,
+      "spill_metadata": [
+        "//.spill flag store 2",
+        "//.spill flag load 4"
+      ]
+    },
+    {
+      "type": "IQ2_S",
+      "variant": "packed_pipeline",
+      "simd16_issue_slots_per_256_weight_block": 304.0,
+      "native_blocks": [
+        283
+      ],
+      "native_region_instructions": 70,
+      "native_region_simd16_slots": 140.0,
+      "common_accumulation_tail_slots": 4,
+      "outside_region_issue_assumption": 160,
+      "setup_amortized": 0,
+      "issue_only_GB_s": 103.57894736842105,
+      "utilization_assumption": [
+        0.65,
+        0.9
+      ],
+      "predicted_GB_s": [
+        67.32631578947368,
+        93.22105263157896
+      ],
+      "configured_grf": 128,
+      "spill_metadata": [
+        "//.spill flag store 1",
+        "//.spill flag load 2"
+      ]
+    },
+    {
+      "type": "IQ3_S",
+      "variant": "experts_sg32",
+      "simd16_issue_slots_per_256_weight_block": 365.0,
+      "native_blocks": [
+        141,
+        142
+      ],
+      "native_region_instructions": 138,
+      "native_region_simd16_slots": 237.0,
+      "common_accumulation_tail_slots": 32,
+      "outside_region_issue_assumption": 96,
+      "setup_amortized": 0,
+      "issue_only_GB_s": 115.72602739726027,
+      "utilization_assumption": [
+        0.55,
+        0.85
+      ],
+      "predicted_GB_s": [
+        63.64931506849315,
+        98.36712328767122
+      ],
+      "configured_grf": 128,
+      "spill_metadata": [
+        "//.spill flag store 26",
+        "//.spill flag load 33"
+      ]
+    },
+    {
+      "type": "IQ3_S",
+      "variant": "register_grid",
+      "simd16_issue_slots_per_256_weight_block": 706.0,
+      "native_blocks": [
+        141,
+        142
+      ],
+      "native_region_instructions": 391,
+      "native_region_simd16_slots": 562.0,
+      "common_accumulation_tail_slots": 32,
+      "outside_region_issue_assumption": 96,
+      "setup_amortized": 16,
+      "issue_only_GB_s": 59.830028328611895,
+      "utilization_assumption": [
+        0.45,
+        0.75
+      ],
+      "predicted_GB_s": [
+        26.923512747875353,
+        44.87252124645892
+      ],
+      "configured_grf": 128,
+      "spill_metadata": [
+        "//.spill flag store 20",
+        "//.spill flag load 27"
+      ]
+    },
+    {
+      "type": "IQ3_S",
+      "variant": "slm_pair",
+      "simd16_issue_slots_per_256_weight_block": 308.0,
+      "native_blocks": [
+        200
+      ],
+      "native_region_instructions": 68,
+      "native_region_simd16_slots": 136.0,
+      "common_accumulation_tail_slots": 4,
+      "outside_region_issue_assumption": 160,
+      "setup_amortized": 8,
+      "issue_only_GB_s": 137.14285714285714,
+      "utilization_assumption": [
+        0.55,
+        0.85
+      ],
+      "predicted_GB_s": [
+        75.42857142857143,
+        116.57142857142857
+      ],
+      "configured_grf": 128,
+      "spill_metadata": [
+        "//.spill flag store 2",
+        "//.spill flag load 4"
+      ]
+    },
+    {
+      "type": "IQ3_S",
+      "variant": "packed_pipeline",
+      "simd16_issue_slots_per_256_weight_block": 304.0,
+      "native_blocks": [
+        283
+      ],
+      "native_region_instructions": 70,
+      "native_region_simd16_slots": 140.0,
+      "common_accumulation_tail_slots": 4,
+      "outside_region_issue_assumption": 160,
+      "setup_amortized": 0,
+      "issue_only_GB_s": 138.94736842105263,
+      "utilization_assumption": [
+        0.65,
+        0.9
+      ],
+      "predicted_GB_s": [
+        90.31578947368422,
+        125.05263157894737
+      ],
+      "configured_grf": 128,
+      "spill_metadata": [
+        "//.spill flag store 1",
+        "//.spill flag load 2"
+      ]
+    }
+  ]
+}

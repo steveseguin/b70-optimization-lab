@@ -121,6 +121,8 @@ owner approval. The earlier ISTA IQ3_S proposal is withdrawn. These CPU packets 
 
 **October 11, CPU-only exact weight expansion:** [Round 5 packet10](experiments/own-xpu-runtime/stage2/packet10-kopt5/README.md) prepares expanded dense weights and two output-head kernels. The budget is 55.194 GB of weights, or 63.348 GB with the existing reserve; routed experts remain packed. CPU bit checks and device-program compilation are complete, but no GPU program ran. The speed estimates remain below the reference, and native fit and full-model quality are untested. The coordinator's next step is the packet's card-3 exactness and paired timing commands after admission.
 
+**October 11, CPU-only packed expert decode:** [Round 6 packet11](experiments/own-xpu-runtime/stage2/packet11-kopt6/README.md) reads native Xe2 assembly and prepares three exact decode alternatives. Integer unpacking and sign handling take most of the visible instructions; the full IQ2 register table spills, while the packed pipeline has a smaller arithmetic body. All CPU checks and device-program builds pass. No GPU program ran, and speed predictions remain unverified. The packet gives the two card-3 commands for the coordinator after separate admission; the existing host halt remains in force.
+
 ## Two-Card Lanes And Context Work
 
 **Qwen 27B FP8:** optimize the official FP8 model with native MTP and full 16-bit KV; DFlash stays excluded by the September 14 owner decision. Read the [multi-host handoff](experiments/qwen38-27b-b70/MULTI-HOST-HANDOFF.md), [closed
