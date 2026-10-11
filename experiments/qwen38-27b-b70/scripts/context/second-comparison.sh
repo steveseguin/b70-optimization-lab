@@ -45,6 +45,8 @@
 #   N32j                                    N32 with thinking only where a question, refusal or error is in view; the notes call thinks
 #   N32f                                    N32j whose notes call does not think and whose cut goes down to 50 % (fewer, cheaper notes calls)
 #   N200j                                   N32j at the 200K cap
+#   X32b                                    X32 with tools/ctxkeeper as of commit c16585171 (notes call effort and retry, search limit,
+#                                           stable history fingerprint); a separate name so the first runs stay on record
 #   X32                                     the plain agent with no context budget (it sends its whole history), served through the
 #                                           tools/ctxkeeper proxy at CTXKEEPER_BASE: the keeper policy as a product, not as a harness
 #   W48 D48 C48 B48ir B48ira B48ira-free   live-cap study at budget 49,152 (48K): W = truncate (clm_baselines
@@ -159,6 +161,7 @@ ARMS["N32j"] = ("truncate", "memory", 32768)          # N32 thinking only on cal
 ARMS["N32f"] = ("truncate", "memory", 32768)          # N32j with a notes call that does not think and a deeper cut (to 50 %): the fast setting
 ARMS["N200j"] = ("truncate", "memory", 204800)        # N32j at the 200K cap
 ARMS["X32"] = ("plain", "memory", 0)                  # the plain agent with no budget of its own, served through tools/ctxkeeper
+ARMS["X32b"] = ("plain", "memory", 0)                 # X32 again after the proxy fixes of 2026-10-11 (same arm; a new name keeps both results)
 for a in ("A", "B32", "C32", "E32"):  # same arm with earlier thinking dropped from every call
     ARMS[a + "t"] = ARMS[a]
 bad = [a for a in arms if a not in ARMS]
@@ -275,7 +278,7 @@ run_one() {  # arm agent budget task_dir job_name drop_old_thinking
   fi
   local fb=${FOLD_BATCHES:-}
   local api=$API_BASE
-  if [[ "$arm" == X32 ]]; then                     # the keeper policy as a proxy: the agent sends everything, the proxy keeps the window
+  if [[ "$arm" == X32 || "$arm" == X32b ]]; then   # the keeper policy as a proxy: the agent sends everything, the proxy keeps the window
     api=${CTXKEEPER_BASE:?arm X32 needs CTXKEEPER_BASE, the URL of a running tools/ctxkeeper proxy (http://host:port/v1)}
   fi
   if [[ "$arm" == B32iraR || "$arm" == B32iraR4 || "$arm" == B32iraRH ]]; then   # B32ira + pinned RULE lines (standing rules and methods stay in view)
