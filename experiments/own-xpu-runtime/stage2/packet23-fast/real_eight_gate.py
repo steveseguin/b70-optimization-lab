@@ -1,5 +1,5 @@
 """CPU-only eight-token v2 oracle check; streaming, two threads, <=8 GiB AS."""
-import hashlib,json,os,resource,subprocess,time
+import hashlib,json,os,resource,subprocess,time,fcntl
 from pathlib import Path
 P=Path(__file__).resolve().parent;B=P/'build'
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
@@ -7,6 +7,15 @@ def main():
  assert os.getpriority(os.PRIO_PROCESS,0)==19 and os.environ['OMP_NUM_THREADS']=='2'
  resource.setrlimit(resource.RLIMIT_AS,(8*1024**3,8*1024**3))
  binary=B/'host/own-rt-iq3';before=sha(binary)
+ lock=(B/'real-eight.lock').open('a')
+ try:fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+ except BlockingIOError:
+  print('Waiting for the existing final-binary CPU oracle check',flush=True)
+  fcntl.flock(lock,fcntl.LOCK_EX)
+  r=json.loads((P/'real-eight.json').read_text())
+  assert r['passed'] and r['binary_sha256']==before and sha(binary)==before and r['layer_matches']==384
+  print('Shared final-binary check: 8/8 tokens and 384/384 layers exact');return
+
  elf=subprocess.check_output(['readelf','-d',str(binary)],text=True)
  assert not any(s in elf.lower() for s in ('libsycl','libze_loader','libur_loader','libopencl'))
  out=B/('real-eight-'+str(time.time_ns()));oracle=P.parents[2]/'qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261011/incident-retrospective'

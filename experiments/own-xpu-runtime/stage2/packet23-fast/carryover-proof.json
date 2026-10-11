@@ -27,7 +27,6 @@
     "experiments/own-xpu-runtime/stage2/packet23-fast/core_v2.hpp": "c3c265894d5041e0d6e026d53094b67f9b58bb86bd1aa1c8fea06ab4d8692ffd",
     "experiments/own-xpu-runtime/stage2/packet23-fast/detmath.hpp": "eba96cc4599d21ab24fe97276bda0c954c60878d3b696a77393abbfa2a4e049c",
     "experiments/own-xpu-runtime/stage2/packet23-fast/gemv_batch.hpp": "4b963550897488c6c4edf41925000814282e7bfde6f35210ad036217b7b5bbf6",
-    "experiments/own-xpu-runtime/stage2/packet23-fast/instrument21.hpp": "b834aac76930b619f807dc7457fbb7489d3428ad3f8b5544cb85778217d1909d",
     "experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp": "24e24e660203c959db09d30dc633490906508b749cf4e2838e2df50d4013d43a",
     "experiments/own-xpu-runtime/stage2/packet23-fast/math_bridge.cpp": "f8ee94baa5c748dd3f2cdbe974435b89d9b26094a0063b7d0655313bfba82c1f",
     "experiments/own-xpu-runtime/stage2/packet23-fast/native.cpp": "4e8f5683b6ad8fe2a8a9b44fd1a0cba7dfc6c90616eb06cd583bc0d7ba087b8d",
@@ -44,7 +43,6 @@
     "experiments/own-xpu-runtime/stage2/packet23-fast/prototype/snapshot/rope.hpp": "1cef648de09ac4b115f1966033f2e341c870203a7415a39d58a8bbe2adb6c643",
     "experiments/own-xpu-runtime/stage2/packet23-fast/queue_test.cpp": "92864c3a1ab28b9432f9fea437698259f9286fe7fde818573ab2975488906a1b",
     "experiments/own-xpu-runtime/stage2/packet23-fast/rope.hpp": "93d877610f8db3ebcd7b4d7d16c2e3968d78ee291e3609ba460f1dc325cbb885",
-    "experiments/own-xpu-runtime/stage2/packet23-fast/runtime_kernels.hpp": "c55508d9afa7868e2669af73b6d9bdbb94a7d0dfa34876e77508a43ceadafbef",
     "experiments/own-xpu-runtime/stage2/packet23-fast/synthetic.hpp": "0f3285642055d61ff84790f668b7e19fdf347b2c7875aed804a88db5f9c06f35",
     "experiments/own-xpu-runtime/stage2/packet3/kernels/api.hpp": "7d33644438281bcc5a1ab2fbbde2310cbff3a55b683312eab3d52178d4fdbe33",
     "experiments/own-xpu-runtime/stage2/packet3/model/directory.hpp": "535eea979a14d3a5eb9f4768edffb6e47c7d0aa61cfeeaf27e9dade75d19759f",
@@ -85,7 +83,7 @@
   "changed_host_and_canary_files": {
     "adapter.cpp": {
       "before": "13b9eb6e6ce46d9de7848c1ff2dcbcaa73811cf89dabf5f51066f11143b560f9",
-      "after": "78e57e45258135b37df8a199327e5469f396fa9c37c06f52c5b9bfa1c43b5da3"
+      "after": "ff98c2541f9b05631f3944eaa660620b331f2ded07ecd9bc64ab131e6ce1cba8"
     },
     "adapter_fixture.cpp": {
       "before": "2e847ae1d3e4f59b234a0fdeade409393940287bf1e3fdcc54025ba90e91fc83",
@@ -93,7 +91,7 @@
     },
     "backend.hpp": {
       "before": "9f469d41d9ff2b626500125d96e83d6f95497f7d88864aa3536c9ed596ba00f7",
-      "after": "4457586a7ce7123757a50579a5fc1e670bd4ce9745ea65d78a033542c48fc9fe"
+      "after": "2a5ae893a73663efb19f3abbf35b45ef44f9bc21d6062bc093bbe5196c8584bc"
     },
     "canary.hpp": {
       "before": "7695412dacd6f0fe89c0e3ed2616ed2ff33190d4046e0870a3ef49967d8dc5a3",
@@ -101,15 +99,19 @@
     },
     "gemv_batch.cpp": {
       "before": "500bceed93571cc1e2604ec9f26dcc4b3e14552815f2c0249957897f4d6391bc",
-      "after": "ed12ba769d6fa58c0605f35830903917115df885b89d070d4ce53ae1fb59f507"
+      "after": "9a30bff85e7b1627d7a0998412164041c55fea958051fe33e1039ff513552764"
     },
     "gemv_fixture.cpp": {
       "before": "5b82e9aca2069a4c5bbb2c6209d00314b8690aa644f043f7e735d851fa3a640b",
       "after": "ecb8ca7a4f3e5e0b6049a33cd1b6a8a63e269fe2cb2f3d769575ff5463ed3084"
     },
+    "instrument21.hpp": {
+      "before": "b834aac76930b619f807dc7457fbb7489d3428ad3f8b5544cb85778217d1909d",
+      "after": "302ed8617c04486b74545e7e20c2f6658588371b2557b0e96d15d3c353e95718"
+    },
     "main.cpp": {
       "before": "4235b087d95d04fc9579dc83a4433404c12871bdaec77d9d721b9ab9a8cace29",
-      "after": "8e12d25cf290d2b7e046db2690350f562584a160336032618f87cce68ef8eb37"
+      "after": "9303e2ee120125370fc09a528fd2167c0a1c5690e83db2b3ad8c2aab6da033ee"
     },
     "nongemv_fixture.cpp": {
       "before": "df13ab1624931efea830448c6e4b2aadd93b87d181f9ba8498750190357646f5",
@@ -117,15 +119,19 @@
     },
     "owner.cpp": {
       "before": "76b016f25af1be94df839081bd23b75c44195d930d2bf35a5de6e19299bfe906",
-      "after": "c434e71ae596a718b35a9dada519efa5aa3b4579d852fea3e99fc336fb5303a0"
+      "after": "582f1d4841e66e6293e7fe6608be38aafbffe2747fbecc161aa81b4c26f7c39b"
     },
     "owner.hpp": {
       "before": "3ae945e401c217a7705e43f5b1f5b63eaf1e635d32c983ffad7dec771ff28a4e",
-      "after": "77415619893278bf54c75c205a7cf90d6fdbd004016ca503766311dc1be6a775"
+      "after": "d7db6047913e92e0ce3be37e183905e44deaff3b5693ff129b3bfe7d64126bc6"
     },
     "runtime_kernels.cpp": {
       "before": "ff95284fda68e0097c35e7ee0b03851563b77cf935602b4e2ea0d5ba526f37f0",
       "after": "8e314f4f57606df4307a0b97af686985445be924ec285b64c5cd17ccc6d77e15"
+    },
+    "runtime_kernels.hpp": {
+      "before": "c55508d9afa7868e2669af73b6d9bdbb94a7d0dfa34876e77508a43ceadafbef",
+      "after": "23c48ac46dbdc82436aeef25767792c1e6b2a4aa949617963d58ce00562ce72e"
     }
   },
   "carried_receipts": {
@@ -170,6 +176,6 @@
       "passed": true
     }
   },
-  "parameter_storage_delta": "Only descriptors and pointer arrays move from functor members to immutable owner-tracked USM blocks. Kernel arithmetic bodies, within-kernel phase order, barriers, BF16 stores and rounding expressions hash-identical. First-use metadata uploads add ordered completed copies, not model arithmetic. Imported packet6/7/8 overlays are exact string replacements in kernel_overlay.py. New real-eight.json is additional CPU oracle evidence; device equality remains K1/model gates.",
+  "parameter_storage_delta": "Only descriptors and pointer arrays move from functor members to immutable owner-tracked USM blocks. Kernel arithmetic bodies, within-kernel phase order, barriers, BF16 stores and rounding expressions hash-identical. The resident preparation pass uploads immutable metadata before token execution. Frozen cache misses fail before copying; CPU tables compare the constructed bytes. Explicit initialized padding preserves natural alignment. Imported packet6/7/8 overlays are exact string replacements in kernel_overlay.py. New real-eight.json is additional CPU oracle evidence; device equality remains K1/model gates.",
   "scope": "Frozen 64 tokens/384 layers, R5 8 tokens/384 layers, four-seed real short dependency sanitizer and full 87-position sanitizer. Original binary identities retained; no new long/resident run. Entire main.cpp is NOT byte-identical; numerical/schedule bodies are."
 }

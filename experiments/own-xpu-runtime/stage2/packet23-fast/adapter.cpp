@@ -255,6 +255,8 @@ Lowered lower(ownrt::Device& d,const Spec& s,std::span<const ownrt::Allocation> 
  return Lowered{s,4,shape,{a.begin(),a.end()}};
 }
 struct ChainItem { Spec spec{};ng::Shape shape{};int mode=0,offset=0,count=0;int group_counts[3]{}; };
+static_assert(sizeof(ChainItem)==496);
+static_assert(sizeof(Bound)==696);
 template<class Team> void chain_body(const ChainItem* items,int count,void*const* ptr,Team t){
  for(int j=0;j<count;++j){auto item=items[j];
   if(item.mode==4){ng::Args args;for(int k=0;k<19;++k)args.p[k]=ptr[item.offset+k];
@@ -270,6 +272,7 @@ template<class Team> void chain_body(const ChainItem* items,int count,void*const
 #ifdef OWN_RT_HOST_ONLY
 struct Chain final:HostOperation {
  std::vector<ChainItem> chain_items;
+ const void* parameters=nullptr;
  void run(std::span<void*const> p)const override{std::vector<float>x(8192);chain_body(chain_items.data(),int(chain_items.size()),p.data(),ng::HostTeam{x.data()});}
 };
 #else
@@ -297,12 +300,10 @@ Launch submit_chain(ownrt::Device& d,const std::vector<Spec>& specs,const std::v
   if(l.mode==4){item.group_counts[0]=ng::groups(l.shape);if(l.shape.op==ng::attention_score){auto sh=l.shape;sh.op=ng::attention_softmax;item.group_counts[1]=ng::groups(sh);sh.op=ng::attention_value;item.group_counts[2]=ng::groups(sh);}}
   op.chain_items.push_back(item);ids.insert(ids.end(),l.bindings.begin(),l.bindings.end());}
  if(ids.size()>256)throw std::invalid_argument("fusion chain bindings");
-#ifndef OWN_RT_HOST_ONLY
  struct Parameters {std::array<ChainItem,8> items{};std::array<void*,256> pointers{};} block{};
  std::copy(op.chain_items.begin(),op.chain_items.end(),block.items.begin());
  for(size_t i=0;i<ids.size();++i)block.pointers[i]=d.arena.row(ids[i]).pointer;
  auto table=ownrt::parameters(d,&block,sizeof block,d.arena.row(ids[0]).label.starts_with("card1:")?1:0);op.parameters=d.arena.row(table).pointer;ids.push_back(table);
-#endif
  auto e=d.compute(op,ids,{});return {e,e,1};
 }
 

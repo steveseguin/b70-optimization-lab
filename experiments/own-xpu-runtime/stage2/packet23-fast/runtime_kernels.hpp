@@ -55,7 +55,9 @@ struct Spec {
   iq3::Type grids[4]{};
   size_t weight_elements[4]{};
   bool packed_heads = false;
+  uint8_t parameter_padding[7]{};
 };
+static_assert(sizeof(Spec)==440);
 // Bind inputs, outputs, weights, scratch, error, position, active, RoPE in that
 // order.
 inline void evaluate(Spec spec, void *const *p) {

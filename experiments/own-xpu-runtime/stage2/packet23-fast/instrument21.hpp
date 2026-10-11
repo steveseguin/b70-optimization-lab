@@ -111,6 +111,7 @@ template<class Chain> std::vector<Access> describe_chain(ownrt::Device& d,const 
  return sequential_contract(phases);
 }
 template<class Op> ownrt::Event submit(ownrt::Device& d,const Op& op,std::span<const ownrt::Allocation> ids,std::span<const Event> deps){
+ if(ownrt::preparing_parameters)return d.compute(op,ids,deps);
  std::vector<Access> a;
  auto add=[&](int i,bool r,bool w,bool idx=false){auto& row=d.arena.row(ids[i]);a.push_back({row.pointer,row.bytes,r,w,idx});};
  if constexpr(requires{op.chain_items;})a=describe_chain(d,op,ids);

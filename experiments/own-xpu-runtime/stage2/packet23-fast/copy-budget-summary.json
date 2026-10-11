@@ -1,0 +1,56 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "before_binary_sha256": "8ba516fcb9b2344cbce48bbcdf2add86946d75eb8b2869ce397462526dea91fe",
+  "after_binary_sha256": "268c53129f31fc9cf0ceb7136992997dba2801d86e6776bde28ee9f532f7e7f3",
+  "rows": [
+    {
+      "kind": "mini-arithmetic",
+      "generated_index": 2,
+      "before": {
+        "device_copies": 17,
+        "host_waits": 18,
+        "launches": 48
+      },
+      "after": {
+        "device_copies": 4,
+        "host_waits": 19,
+        "launches": 66
+      }
+    },
+    {
+      "kind": "real-plan-metadata-only",
+      "generated_index": 2,
+      "before": {
+        "device_copies": 63,
+        "host_waits": 18,
+        "launches": 876
+      },
+      "after": {
+        "device_copies": 4,
+        "host_waits": 19,
+        "launches": 940
+      }
+    },
+    {
+      "kind": "real-plan-metadata-only",
+      "generated_index": 9,
+      "before": {
+        "device_copies": 13,
+        "host_waits": 16,
+        "launches": 876
+      },
+      "after": {
+        "device_copies": 4,
+        "host_waits": 19,
+        "launches": 890
+      }
+    }
+  ],
+  "parameter_cache_test": {
+    "launches": 876,
+    "device_copies": 0,
+    "host_waits": 0
+  },
+  "scope": "Mock counts, not speed. Before excludes native-only r2 parameter uploads absent from its mock. After is two queue copies per card; byte-move kernels count as launches. Explicit event waits only; completed-queue synchronizes excluded."
+}

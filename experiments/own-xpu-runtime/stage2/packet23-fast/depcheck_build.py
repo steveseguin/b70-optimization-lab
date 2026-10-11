@@ -52,6 +52,9 @@ def main():
     if p.is_relative_to(STAGE):p=stage(p)
     return "#include "+json.dumps(str(p))
    return m.group(0)
+  if target.name=="depcheck.hpp":
+   text="namespace ownrt { extern thread_local bool preparing_parameters; }\n"+text
+   text=text.replace('Event compute(const ownrt::Operation&,std::span<void*const> p,std::span<const Event> deps)override{', 'Event compute(const ownrt::Operation&,std::span<void*const> p,std::span<const Event> deps)override{if(ownrt::preparing_parameters)return 0;')
   return re.sub(r'#include "([^"]+)"',inc,text)
  texts={n:read(source/n) for n in ("main.cpp","performance.cpp","adapter.cpp","gemv_batch.cpp")}
  # Replace only the host mock, preserving Engine, plan, arithmetic and owner.
@@ -78,8 +81,8 @@ def main():
    if not (t.count("d.compute(")+t.count("device.compute(")):raise RuntimeError("compute interception missing: "+name)
    t=t.replace("d.compute(","depcheck::submit(d, ").replace("device.compute(","depcheck::submit(device, ")
   (build/name).write_text("#include "+json.dumps(str(build/"instrument.hpp"))+"\n"+t)
- owner=build/"owner.cpp";owner.write_text(cpu_owner_overlay(read(source/"owner.cpp")));src=[build/n for n in texts]+[owner,source/"owner_retire.cpp",STAGE/"packet2/loader/gguf.cpp"]
- flags=["-std=c++20","-MMD","-O3","-march=native","-fopenmp","-fno-fast-math","-ffp-contract=off","-DOWN_RT_HOST_ONLY","-I"+str(STAGE.parent/"stage1/packet3-prep/src"),"-I"+str(source),"-I"+str(STAGE/"packet2/kernels"),"-I"+str(STAGE/"packet2/loader")]
+ owner=build/"owner.cpp";owner_text=read(source/"owner.cpp").replace(" std::memcpy(arena.row(host).pointer,data,n);", " depcheck::checker.host_write(arena.row(host).pointer,n);std::memcpy(arena.row(host).pointer,data,n);");owner.write_text(cpu_owner_overlay(owner_text));src=[build/n for n in texts]+[owner,source/"owner_retire.cpp",STAGE/"packet2/loader/gguf.cpp"]
+ flags=["-std=c++20","-ftrivial-auto-var-init=zero","-MMD","-O3","-march=native","-fopenmp","-fno-fast-math","-ffp-contract=off","-DOWN_RT_HOST_ONLY","-I"+str(STAGE.parent/"stage1/packet3-prep/src"),"-I"+str(source),"-I"+str(STAGE/"packet2/kernels"),"-I"+str(STAGE/"packet2/loader")]
  if (source/"runtime_kernels.cpp").exists():flags.append("-DDEPCHECK_PACKET18")
  # Two compile processes maximum; caller inherits nice/ionice/thread limit.
  import concurrent.futures

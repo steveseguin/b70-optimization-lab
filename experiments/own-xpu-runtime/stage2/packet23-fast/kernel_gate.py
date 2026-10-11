@@ -17,7 +17,10 @@ def mirror(before=False):
   if before and src.is_relative_to(HERE):
    old=subprocess.run(['git','show',BASELINE+':'+str(src.relative_to(ROOT))],capture_output=True,text=True)
    if old.returncode==0:text=old.stdout
-  if not before:text=apply(src,text)
+  if not before:
+   text=apply(src,text)
+   if src.name not in ("backend.hpp","sycl_device.cpp","jit_smoke.cpp"):
+    text=re.sub(r"\bq\.submit\(","packet23::submit(q,",text)
   edits=[]
   for m in re.finditer(r'\.\s*(parallel_for|single_task)(?:<[^;]*?>)?\s*\(',text):
    a=re.search(r'\[(?:=|&)?\]\s*(?:\([^;]*?\))?\s*(?:\[\[.*?\]\])?\s*\{',text[m.end():],re.S)

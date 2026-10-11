@@ -1,7 +1,8 @@
-[  5%] Built target authority-tests
-[ 15%] Built target owner-retirement-tests
-[ 25%] Built target chain-tests
-[ 30%] Built target math_bridge
+[  4%] Built target authority-tests
+[ 13%] Built target owner-retirement-tests
+[ 22%] Built target chain-tests
+[ 27%] Built target math_bridge
+[ 36%] Built target queue-tests
 {
   "passed": true,
   "grep_argv": [
@@ -9,7 +10,7 @@
     "-n",
     "(std::|sycl::(native::|half_precision::)?|__builtin_)(exp|log|pow|sin|cos)(2|10|1p|m1)?f?\\s*\\("
   ],
-  "translation_units": 19,
+  "translation_units": 20,
   "files": [
     "experiments/own-xpu-runtime/stage1/packet3-prep/src/mock_device.hpp",
     "experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.hpp",
@@ -35,9 +36,11 @@
     "experiments/own-xpu-runtime/stage2/packet23-fast/canary.hpp",
     "experiments/own-xpu-runtime/stage2/packet23-fast/core_v2.hpp",
     "experiments/own-xpu-runtime/stage2/packet23-fast/detmath.hpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/failure.hpp",
     "experiments/own-xpu-runtime/stage2/packet23-fast/gemv_batch.cpp",
     "experiments/own-xpu-runtime/stage2/packet23-fast/gemv_batch.hpp",
     "experiments/own-xpu-runtime/stage2/packet23-fast/gemv_fixture.cpp",
+    "experiments/own-xpu-runtime/stage2/packet23-fast/jit_smoke.cpp",
     "experiments/own-xpu-runtime/stage2/packet23-fast/kernels.hpp",
     "experiments/own-xpu-runtime/stage2/packet23-fast/lifetime_mock.hpp",
     "experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp",
@@ -80,10 +83,13 @@
     "experiments/own-xpu-runtime/stage2/packet9-kopt4/reference.hpp"
   ]
 }
-[ 40%] Built target queue-tests
+[ 50%] Built target fused-fixtures
 {
   "passed": true,
   "checks": [
+    "one-card event ID follows parameter planning/submission",
+    "two-card event ID follows parameter planning/submission",
+    "cached native dependencies released before context",
     "owner compute dependency assertion",
     "owner queue rejection",
     "peer requires drained queues",
@@ -96,23 +102,23 @@
     "retirement drains queues before deleting IDs"
   ],
   "sources": {
-    "main.cpp": "2991f12d590a79ea64d5938f2cbe32f39310becc22fc53a7e94914312a352a90",
-    "owner.cpp": "05a92e51bf179a4e757b3b7cab91b3fbd4caeb3188586e0cccc1b54a34af6b80",
-    "backend.hpp": "3a75bf97168d66c4ac97c656c114ccf10eb692f14b6b224754290bad065839cb",
+    "main.cpp": "9303e2ee120125370fc09a528fd2167c0a1c5690e83db2b3ad8c2aab6da033ee",
+    "owner.cpp": "582f1d4841e66e6293e7fe6608be38aafbffe2747fbecc161aa81b4c26f7c39b",
+    "backend.hpp": "2a5ae893a73663efb19f3abbf35b45ef44f9bc21d6062bc093bbe5196c8584bc",
     "owner_retire.cpp": "e35c366f640d8909b519891fa814aa80228b01ce69bd19ccdf00a8d13cae0da2"
   },
   "limit": "Source structure guard plus owner runtime assertion; no native execution proof"
 }
-[ 40%] Built target math-gate
-[ 55%] Built target fused-fixtures
-[ 60%] Built target lifetime-tests
-[ 77%] Built target nongemv-fixtures
-[ 80%] Building CXX object CMakeFiles/own-rt-iq3.dir/main.cpp.o
+[ 65%] Built target nongemv-fixtures
+[ 65%] Built target math-gate
+[ 70%] Built target lifetime-tests
+[ 79%] Built target failure-tests
+[ 81%] Building CXX object CMakeFiles/own-rt-iq3.dir/main.cpp.o
 In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/kernels.hpp:3,
                  from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/kernels.hpp:2,
                  from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/kernels.hpp:2,
                  from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/performance.hpp:3,
-                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp:4:
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp:5:
 /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:25: warning: ignoring ‘#pragma unroll ’ [-Wunknown-pragmas]
    25 |     #pragma unroll
       | 
@@ -153,18 +159,18 @@ In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/
    90 |  if(split!=1 && split!=4)throw std::invalid_argument("split");float part[4]{};
       |                                                               ^~~~~
 /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp: In member function ‘void Engine::finish(int, integrated::Launch, bool)’:
-/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp:430:5: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
-  430 |     if(a.timing=="launch")pending.push_back({l,gemv}); tail=l.last; submitted+=l.passes;
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp:451:5: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+  451 |     if(a.timing=="launch")pending.push_back({l,gemv}); tail=l.last; submitted+=l.passes;
       |     ^~
-/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp:430:56: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
-  430 |     if(a.timing=="launch")pending.push_back({l,gemv}); tail=l.last; submitted+=l.passes;
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp:451:56: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  451 |     if(a.timing=="launch")pending.push_back({l,gemv}); tail=l.last; submitted+=l.passes;
       |                                                        ^~~~
 /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp: In lambda function:
-/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp:857:7: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
-  857 |       if(sites.empty())return;tasks[sites[0].label]={kind,sites};
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp:896:7: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+  896 |       if(sites.empty())return;tasks[sites[0].label]={kind,sites};
       |       ^~
-/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp:857:31: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
-  857 |       if(sites.empty())return;tasks[sites[0].label]={kind,sites};
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp:896:31: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  896 |       if(sites.empty())return;tasks[sites[0].label]={kind,sites};
       |                               ^~~~~
 In file included from /usr/include/c++/13/string:49,
                  from /usr/include/c++/13/bits/locale_classes.h:40,
@@ -174,8 +180,8 @@ In file included from /usr/include/c++/13/string:49,
                  from /usr/include/c++/13/sstream:40,
                  from /usr/include/c++/13/chrono:45,
                  from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../../stage1/packet3-prep/src/owner.hpp:2,
-                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/owner.hpp:3,
-                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../packet2/loader/gguf.hpp:3,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/owner.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/failure.hpp:2,
                  from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp:1:
 In member function ‘constexpr bool std::less<_Tp*>::operator()(_Tp*, _Tp*) const [with _Tp = void]’,
     inlined from ‘std::pair<std::_Rb_tree_iterator<_Val>, std::_Rb_tree_iterator<_Val> > std::_Rb_tree<_Key, _Val, _KeyOfValue, _Compare, _Alloc>::equal_range(const _Key&) [with _Key = void*; _Val = std::pair<void* const, ownrt::Memory>; _KeyOfValue = std::_Select1st<std::pair<void* const, ownrt::Memory> >; _Compare = std::less<void*>; _Alloc = std::allocator<std::pair<void* const, ownrt::Memory> >]’ at /usr/include/c++/13/bits/stl_tree.h:2020:30,
@@ -186,10 +192,10 @@ In member function ‘constexpr bool std::less<_Tp*>::operator()(_Tp*, _Tp*) con
   457 |         return (__UINTPTR_TYPE__)__x < (__UINTPTR_TYPE__)__y;
       |                ~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~
 In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/lifetime_mock.hpp:2,
-                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp:11:
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/main.cpp:12:
 /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../../stage1/packet3-prep/src/mock_device.hpp: In member function ‘virtual void ownrt::MockDevice::release(void*, ownrt::Memory)’:
 /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/../../stage1/packet3-prep/src/mock_device.hpp:22:22: note: call to ‘void operator delete(void*)’ here
    22 |     ::operator delete(p); allocations_.erase(p); calls.push_back("free");
       |     ~~~~~~~~~~~~~~~~~^~~
-[ 82%] Linking CXX executable own-rt-iq3
+[ 84%] Linking CXX executable own-rt-iq3
 [100%] Built target own-rt-iq3

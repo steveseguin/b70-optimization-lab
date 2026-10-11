@@ -68,16 +68,25 @@ static bool ends(const std::string &s, const std::string &suffix) {
   return s.ends_with(suffix);
 }
 #ifdef OWN_RT_HOST_ONLY
+static bool count_only=false;
+#else
+static constexpr bool count_only=false;
+#endif
+#ifdef OWN_RT_HOST_ONLY
 class Host final : public packet18::LifetimeMock {
 public:
+  void* allocate(size_t n,ownrt::Memory m)override{return LifetimeMock::allocate(count_only && m==ownrt::Memory::device && n>65536?1:n,m);}
   ownrt::Event copy(void *a, const void *b, size_t n,
                     std::span<const ownrt::Event> d) override {
+    if(count_only)return marker(d);
     auto e = LifetimeMock::copy(a, b, n, d);
     finish(e);
     return e;
   }
   ownrt::Event compute(const ownrt::Operation &o, std::span<void *const> p,
                        std::span<const ownrt::Event> d) override {
+    if(ownrt::preparing_parameters)return 0;
+    if(count_only)return marker(d);
     dynamic_cast<const HostOperation &>(o).run(p);
     return marker(d);
   }
@@ -100,6 +109,9 @@ static Options parse(int argc, char **argv) {
       require(i + 1 < argc, "missing " + k);
       return std::string(argv[++i]);
     };
+#ifdef OWN_RT_HOST_ONLY
+    if(k=="--count-submissions"){count_only=true;continue;}
+#endif
     if (k == "--canary") a.canary = true;
     else if (k == "--checked") a.checked = true;
     else if (k == "--timing") a.timing=value();
@@ -406,6 +418,10 @@ public:
   std::vector<size_t> owned_bytes;
   std::map<Allocation,std::pair<int,size_t>> allocations;
   std::vector<Allocation> ropes, controls, scores, probabilities, snapshots;
+  std::vector<Allocation> token_packets, result_packets;
+  std::vector<std::map<std::string,size_t>> token_offsets;
+  std::vector<std::vector<uint8_t>> token_payloads;
+  bool collecting_token=false;
   struct Pending { Launch launch; bool gemv; };
   std::vector<Pending> pending;
   ownrt::Event tail=0;
@@ -428,6 +444,10 @@ public:
   }
   void finish(int, Launch l, bool gemv) {
     // Submission only. Owner::compute appends the preceding owned event.
+#ifndef OWN_RT_HOST_ONLY
+    // Preparation has parameter-copy events, not profiled compute events.
+    if(ownrt::preparing_parameters){tail=l.last;submitted+=l.passes;return;}
+#endif
     if(a.timing=="launch")pending.push_back({l,gemv}); tail=l.last; submitted+=l.passes;
   }
   void finish(int c, ownrt::Event event) { finish(c,{event,event,1},false); }
@@ -487,6 +507,7 @@ public:
     return id;
   }
   void upload(int c, Allocation dst, size_t offset, const void *src, size_t n) {
+    if(count_only && dev(c).arena.row(dst).label.find("token-packet")==std::string::npos)return;
     drain();
     auto started=std::chrono::steady_clock::now();
     for (size_t i = 0; i < n; i += 4 * 1024 * 1024) {
@@ -509,7 +530,7 @@ public:
       ownrt::CopyEngine copy(dev(c));
       wait(c, copy.copy(slab[c], 0, src, i, k, {}));
       dev(c).retire_completed_events();
-      std::memcpy(b.data() + i, dev(c).arena.row(slab[c]).pointer, k);
+      if(!count_only)std::memcpy(b.data() + i, dev(c).arena.row(slab[c]).pointer, k);
     }
     transfer_ms+=ms(started);
     return b;
@@ -517,6 +538,7 @@ public:
   void put(int c, const std::string &name, const void *b, size_t n) {
     auto s = buffers[c].at(name);
     require(n == s.n * flash::scalar_bytes(s.type), "control extent");
+    if(collecting_token){auto off=token_offsets.at(c).at(name);std::memcpy(token_payloads[c].data()+off,b,n);return;}
     upload(c, s.id, 0, b, n);
   }
   int integer(int c, const std::string &name) {
@@ -546,6 +568,7 @@ public:
     auto id = allocate(c, "weight:" + name, expanded_bytes, Category::weights,
                        Lifetime::process);
     weights[c][name] = id;
+    if(count_only)return;
     if(arithmetic::is_expanded(v)) {
       auto fmt=iq3::layout(type);size_t rb=t.shape[1]/fmt.elements*fmt.bytes;
       size_t er=arithmetic::row_bytes(type,t.shape[1],v);
@@ -660,6 +683,15 @@ public:
         put(c, "ple_metadata", meta.data(), meta.size() * 8);
       }
     }
+    for(int c=0;c<a.cards;++c){
+      std::map<std::string,size_t> offsets;size_t bytes=0;
+      if(buffers[c].count("token")){offsets["token"]=bytes;bytes+=4;}
+      for(const auto& l:p.launches)if(l.op=="lookup" && l.card==c){const auto& b=buffers[c].at(l.outputs[0]);offsets[l.outputs[0]]=bytes;bytes+=b.n*flash::scalar_bytes(b.type);}
+      token_offsets.push_back(offsets);token_payloads.emplace_back(bytes);
+      token_packets.push_back(allocate(c,"token-packet",std::max(bytes,size_t(1)),Category::scratch,Lifetime::transaction));
+      result_packets.push_back(allocate(c,"result-packet",8+48*4*p.g.h*2,Category::scratch,Lifetime::transaction));
+      if(c==1){uint64_t zero_header=0;upload(c,result_packets[c],0,&zero_header,sizeof zero_header);}
+    }
     if (a.cards == 2) {
       for (auto &l : p.launches)
         if (l.op != "lookup")
@@ -689,6 +721,12 @@ public:
       lookup_ids[l.label]=std::move(raw);lookup(l);
     }
     history0=history1;history1=token;
+    collecting_token=false;
+    for(int c=0;c<a.cards;++c)if(!token_payloads[c].empty()){
+      upload(c,token_packets[c],0,token_payloads[c].data(),token_payloads[c].size());
+      for(const auto& [name,off]:token_offsets[c]){auto b=buffers[c].at(name);ownrt::CopyEngine copy(dev(c));tail=copy.copy(b.id,0,token_packets[c],off,b.n*flash::scalar_bytes(b.type),{});}
+      drain();
+    }
   }
   void lookup(const flash::Launch &l) {
     int c = l.card;
@@ -709,7 +747,7 @@ public:
         id = v;
       }
       require(id >= 0 && id < t.shape[0], "lookup bounds");
-      auto row = w.read(t.name, id * rb, rb);
+      auto row = count_only?std::vector<uint8_t>(rb):w.read(t.name, id * rb, rb);
       for (int k = 0; k < t.shape.back(); ++k)
         values.push_back(iq3::bf16_bits(iq3::element(type, row.data(), k)));
     }
@@ -978,7 +1016,7 @@ public:
     // poisons the request; there is no retry or checkpoint reuse after failure.
     if(a.checked && ends(l.label,".ffn.combine") && integer(c,"error"))
       throw std::runtime_error("device sticky error at layer end " + l.label);
-    if(a.mini || a.checked)site_timings << "{\"kind\":\"site\",\"label\":" << ownrt::quote(l.label)
+    if(!ownrt::preparing_parameters && (a.mini || a.checked))site_timings << "{\"kind\":\"site\",\"label\":" << ownrt::quote(l.label)
             << ",\"wall_ms\":" << ms(site_start) << ",\"gemv_device_ms\":" << device_ms(gemv_ms-old_g)
             << ",\"non_gemv_device_ms\":" << device_ms(nongemv_ms-old_n)
             << ",\"transfer_wall_ms\":" << transfer_ms-old_t
@@ -1159,6 +1197,12 @@ int main(int argc, char **argv) {
     e = std::make_unique<Engine>(*w, a, p);
     record_host_memory(output,"before_load");
     e->initialize();
+    if(a.cards==2){
+      ownrt::preparing_parameters=true;
+      for(const auto& l:p.launches)if(l.op!="handoff" && l.op!="handoff_result")e->enqueue(l,e->logical);
+      ownrt::preparing_parameters=false;
+      e->drain();e->submitted=0;ownrt::freeze_parameters(e->dev(0),true);
+    }
     record_host_memory(output,"after_load");
     fs::create_directory(output / "step1");
 
@@ -1167,11 +1211,12 @@ int main(int argc, char **argv) {
     auto step = [&](int token, int fixture_step) {
       auto token_start=std::chrono::steady_clock::now();
       double token_g=e->gemv_ms,token_n=e->nongemv_ms,token_t=e->transfer_ms;
-      auto token_sub=e->submitted,token_wait=e->host_waits;
+      auto token_sub=e->submitted;auto token_counts=ownrt::submission_counts(e->dev(0));
       bool capture=fixture_step>0 && fixture_step<=8;
       fs::path fixture_dir=output/("step"+std::to_string(fixture_step));
       if(capture)fs::create_directories(fixture_dir);
       std::vector<std::pair<int,int>> captured;
+      e->collecting_token=true;
       for (int c=0;c<a.cards;++c)if(e->buffers[c].count("token"))e->put(c,"token",&token,4);
       e->prepare_token(token);
       for(auto& l:p.launches) {
@@ -1190,18 +1235,22 @@ int main(int argc, char **argv) {
       }
       // One token-boundary readback contains sticky error and greedy output.
       e->drain(); // commit.final is Q1; readback is Q0
-      auto& owner=e->dev(0);ownrt::CopyEngine copy(owner);
       auto start_transfer=std::chrono::steady_clock::now();
-      e->tail=copy.copy(e->slab[0],0,e->buffers[0].at("error").id,0,4,{});
-      e->tail=copy.copy(e->slab[0],4,e->buffers[0].at("next_token").id,0,4,{});
-      e->drain();
-      int status=0,result=-1;auto ptr=owner.arena.row(e->slab[0]).pointer;
-      std::memcpy(&status,ptr,4);std::memcpy(&result,static_cast<char*>(ptr)+4,4);
+      std::vector<std::vector<uint8_t>> raw(a.cards);
+      int status=0,result=-1;
+      for(int c=0;c<a.cards;++c){
+        ownrt::CopyEngine copy(e->dev(c));
+        e->tail=copy.copy(e->result_packets[c],0,e->buffers[c].at("error").id,0,4,{});
+        if(c==0)e->tail=copy.copy(e->result_packets[c],4,e->buffers[c].at("next_token").id,0,4,{});
+        if(capture)e->tail=copy.copy(e->result_packets[c],8,e->snapshots[c],0,48*4*p.g.h*2,{});
+        auto packed=e->readback(c,e->result_packets[c],8+(capture?48*4*p.g.h*2:0));
+        int card_status=0;std::memcpy(&card_status,packed.data(),4);status|=card_status;
+        if(c==0)std::memcpy(&result,packed.data()+4,4);
+        if(capture)raw[c].assign(packed.begin()+8,packed.end());
+      }
       e->transfer_ms+=Engine::ms(start_transfer);
       require(!status,"sticky device error at token "+std::to_string(token_index)+"; rerun --checked for layer localization");
       if(capture) {
-        std::vector<std::vector<uint8_t>> raw(a.cards);
-        for(int c=0;c<a.cards;++c)raw[c]=e->readback(c,e->snapshots[c],48*4*p.g.h*2);
         std::ofstream hashes(fixture_dir/"layers.jsonl");
         for(auto [layer,c]:captured){size_t size=4*p.g.h*2,off=size*layer;
           std::vector<uint8_t> b(raw[c].begin()+off,raw[c].begin()+off+size);
@@ -1220,14 +1269,19 @@ int main(int argc, char **argv) {
       }
       if(a.cards==1 && !a.first)e->release_layer(0);
       auto elapsed=Engine::ms(token_start);
+      if(a.cards==2 && !a.checked)for(int c=0;c<a.cards;++c)require(ownrt::submission_counts(e->dev(0)).device_copies_by_card[c]-token_counts.device_copies_by_card[c]<=2,"per-card token copy budget exceeded");
       if(fixture_step==1)first_generated_ms=elapsed;
       (fixture_step>0?e->timings:e->prefill_timings)<<"{\"kind\":"<<ownrt::quote(fixture_step>0?"generated_token":"prefill_token")
         <<",\"token_index\":"<<token_index++<<",\"generated_index\":"<<fixture_step
         <<",\"timing\":"<<ownrt::quote(a.timing)<<",\"distorted\":"<<(a.timing=="launch"?"true":"false")
-        <<",\"input_token\":"<<token<<",\"token_id\":"<<result<<",\"wall_ms\":"<<elapsed
+        <<",\"submission_count_only\":"<<(count_only?"true":"false")<<",\"input_token\":"<<token<<",\"token_id\":"<<result<<",\"wall_ms\":"<<elapsed
         <<",\"gemv_device_ms\":"<<(a.timing=="launch"?device_ms(e->gemv_ms-token_g):"null")<<",\"non_gemv_device_ms\":"<<(a.timing=="launch"?device_ms(e->nongemv_ms-token_n):"null")
         <<",\"transfer_wall_ms\":"<<e->transfer_ms-token_t<<",\"kernel_submissions\":"<<e->submitted-token_sub
-        <<",\"host_waits\":"<<e->host_waits-token_wait<<"}\n";
+        <<",\"launches\":"<<ownrt::submission_counts(e->dev(0)).launches-token_counts.launches
+        <<",\"device_copies\":"<<ownrt::submission_counts(e->dev(0)).device_copies-token_counts.device_copies
+        <<",\"byte_move_launches\":"<<ownrt::submission_counts(e->dev(0)).byte_move_launches-token_counts.byte_move_launches
+        <<",\"device_copies_by_card\":["<<ownrt::submission_counts(e->dev(0)).device_copies_by_card[0]-token_counts.device_copies_by_card[0]<<","<<ownrt::submission_counts(e->dev(0)).device_copies_by_card[1]-token_counts.device_copies_by_card[1]<<"]"
+        <<",\"host_waits\":"<<ownrt::submission_counts(e->dev(0)).host_waits-token_counts.host_waits<<"}\n";
       if(token_index%16==0){e->timings.flush();e->prefill_timings.flush();}return a.first?-1:result;
     };
     int next=-1;auto prefill_start=std::chrono::steady_clock::now();
@@ -1294,7 +1348,7 @@ int main(int argc, char **argv) {
     return 1;
   record_host_memory(output,"end");
   std::ostringstream r;
-  r << "{\"schema\":\"own-runtime.iq3.packet18.run.v1\",\"passed\":"
+  r << "{\"submission_count_only\":"<<(count_only?"true":"false")<<",\"schema\":\"own-runtime.iq3.packet18.run.v1\",\"passed\":"
     << (error.empty() && comparison ? "true" : "false")
     << ",\"error\":" << ownrt::quote(error) << ",\"mode\":"
     << ownrt::quote(a.mini    ? "mini"

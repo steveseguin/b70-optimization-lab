@@ -71,6 +71,12 @@ static int group(Category c) {
 struct Diagnostics {std::vector<Event> events;std::vector<std::string> borrowers;};
 static std::map<std::string,Diagnostics> diagnostics;
 static std::map<const Device*,Receipt> retained_receipts;
+thread_local bool preparing_parameters=false;
+thread_local bool copy_is_device_to_device=false;
+static std::map<Device*,bool> frozen_parameters;
+static std::map<Device*,SubmissionCounts> counters;
+SubmissionCounts submission_counts(Device& d){return counters[&d];}
+void freeze_parameters(Device& d,bool value){frozen_parameters[&d]=value;}
 static thread_local Device* submitting_owner=nullptr;
 static thread_local int submitting_card=0;
 void* submission_parameters(const void* data,size_t n){if(!submitting_owner)throw std::logic_error("parameters outside owned submission");auto id=parameters(*submitting_owner,data,n,submitting_card);return submitting_owner->arena.row(id).pointer;}
@@ -104,7 +110,7 @@ Device::Device(std::unique_ptr<Backend> b):backend_(std::move(b)),arena(*this) {
 }
 void forget_event_queues(std::span<const Event> events) {for(auto e:events)event_queue.erase(e);}
 Device::~Device() {
-  completed_tail.erase(this);parameter_tables.erase(this);
+  completed_tail.erase(this);parameter_tables.erase(this);frozen_parameters.erase(this);counters.erase(this);
   if(closed_) return;
   try { auto r=shutdown(std::chrono::seconds(60));if(r.safe_to_exit)return;std::fputs(r.json().c_str(),stderr);if(!r.in_flight){backend_.release();return;} }
   catch(...) {}
@@ -128,6 +134,7 @@ std::size_t Device::in_flight() {
 }
 bool Device::wait(Event e,std::chrono::milliseconds timeout) {
   validate(std::span(&e,1));
+  ++counters[this].host_waits;
   bool ok=backend_->wait(e,std::chrono::steady_clock::now()+timeout);
   if(ok && !events_.empty() && e==events_.back())completed_tail[this]=e;
   return ok;
@@ -163,7 +170,7 @@ Event Device::compute(const Operation& op, std::span<const Allocation> buffers, 
   if(events_.size()==events_.capacity())events_.reserve(std::max(size_t(64),events_.size()*2));
   try {
     submitting_owner=this;submitting_card=queue;
-    auto e=backend_->compute(op,pointers,chain); event_queue[e]=queue; events_.push_back(e); return e;
+    auto e=backend_->compute(op,pointers,chain); if(preparing_parameters)return events_.empty()?0:events_.back(); ++counters[this].launches; event_queue[e]=queue; events_.push_back(e); return e;
   } catch(const std::exception& e) {fault_=e.what(); throw;}
 }
 bool Device::drain(Deadline end) {
@@ -280,6 +287,8 @@ Event CopyEngine::copy(Allocation dst,std::size_t off,Allocation src,std::size_t
   assert_local_dependencies(chain,queue);
   if(owner_.events_.size()==owner_.events_.capacity())owner_.events_.reserve(std::max(size_t(64),owner_.events_.size()*2));
   try {
+    copy_is_device_to_device=dq>=0&&sq>=0;
+    if(dq>=0&&sq>=0){++counters[&owner_].launches;++counters[&owner_].byte_move_launches;}else {++counters[&owner_].device_copies;++counters[&owner_].device_copies_by_card[queue];}
     auto e=owner_.backend_->copy(static_cast<std::byte*>(d.pointer)+off,static_cast<const std::byte*>(s.pointer)+soff,n,chain);
     event_queue[e]=queue; owner_.events_.push_back(e); return e;
   } catch(const std::exception& e) {owner_.fault_=e.what(); throw;}
@@ -290,7 +299,9 @@ namespace ownrt {
 Allocation parameters(Device& d,const void* data,size_t n,int card) {
  auto& parameters_=parameter_tables[&d];auto& arena=d.arena;
  std::vector<unsigned char> key(static_cast<const unsigned char*>(data),static_cast<const unsigned char*>(data)+n);
+ key.push_back(static_cast<unsigned char>(card));
  if(auto it=parameters_.find(key);it!=parameters_.end())return it->second;
+ if(frozen_parameters[&d])throw std::logic_error("unprepared or changed kernel parameter block in token");
  auto label="card"+std::to_string(card)+":kernel-parameters-"+std::to_string(next_handle());
  auto host=arena.allocate(label+"-host",n,Memory::pinned,Category::pinned_slab,Lifetime::transfer);
  auto device=arena.allocate(label,n,Memory::device,Category::weights,Lifetime::process);

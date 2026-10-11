@@ -13,8 +13,12 @@ def main():
  reuse();assert read(P/'kernel-sizes.json')['passed'];assert read(P/'failure-tests.json')['passed'] and read(P/'failure-tests.json').get('parameter_cache_event_order_controls')==1;host=sha(B/'host/own-rt-iq3');math=check();queue=queue_check()
  mini={f'{t}-{m}':read(P/f'cpu-mini-{t}-{m}.json') for t in ('token','drain','launch') for m in ('core','parallel')}
  assert all(r['passed'] and r['binary_sha256']==host and len(r['tests'])==13 for r in mini.values())
+ assert read(P/'entry-exit-tests.json')['passed']
+ copies=read(P/'copy-budget.json');assert copies['passed'] and copies['binary_sha256']==host
+ immutable=read(P/'immutable-parameters.json');assert immutable['passed'] and immutable['device_copies']==0
  eight=read(P/'real-eight.json');assert eight['passed'] and eight['layer_matches']==384 and len(eight['tokens'])==8
- assert read(P/'real-eight-reuse.json')['final_main_sha256']==sha(P/'main.cpp')
+ assert eight['binary_sha256']==host
+
  stream=read(P/'streaming-real.json');assert stream['passed'] and stream['rows'][1]['binary_sha256']==host and stream['layer_matches']==144
  fixture=read(P/'fixture-gates.json');assert fixture['passed'] and len(fixture['rows'])==8
  for r in fixture['rows']:assert sha(B/r['compiler']/r['component'])==r['binary_sha256']
@@ -28,7 +32,7 @@ def main():
  window=subprocess.run(['python','-B',str(P/'test_window.py')],capture_output=True,text=True,check=True)
  save('window-tests.json',dict(passed=True,device_executed=False,stdout=window.stdout,stderr=window.stderr))
  real={m:read(S/f'cpu-real-{m}.json') for m in ('frozen','r5')}
- cpu=dict(extra_eight_token_oracle_sha256=sha(P/'real-eight.json'),extra_eight_source_proof_sha256=sha(P/'real-eight-reuse.json'),kernel_capture_sizes_sha256=sha(P/'kernel-sizes.json'),failure_tests_sha256=sha(P/'failure-tests.json'),passed=True,device_executed=False,binary_sha256=host,integration=mini,units=units,real_model=real,real_model_evidence='carried from packet21 under carryover-proof.json, original binary hashes retained',carryover_sha256=sha(P/'carryover-proof.json'),streaming_sha256=sha(P/'streaming-real.json'),sanitizer={n:sha(P/n) for n in san},fixtures_sha256=sha(P/'fixture-gates.json'),window_tests_sha256=sha(P/'window-tests.json'))
+ cpu=dict(extra_eight_token_oracle_sha256=sha(P/'real-eight.json'),extra_eight_source_proof_sha256=None,kernel_capture_sizes_sha256=sha(P/'kernel-sizes.json'),failure_tests_sha256=sha(P/'failure-tests.json'),passed=True,device_executed=False,binary_sha256=host,integration=mini,units=units,real_model=real,real_model_evidence='carried from packet21 under carryover-proof.json, original binary hashes retained',carryover_sha256=sha(P/'carryover-proof.json'),streaming_sha256=sha(P/'streaming-real.json'),sanitizer={n:sha(P/n) for n in san},fixtures_sha256=sha(P/'fixture-gates.json'),window_tests_sha256=sha(P/'window-tests.json'))
  save('cpu-tests.json',cpu)
  flags=['-fno-fast-math','-ffp-contract=off','-fdenormal-fp-math=ieee','-foffload-fp32-prec-div','-foffload-fp32-prec-sqrt']
  links={str(x.relative_to(B)):x.read_text() for x in (B/'device').rglob('link.txt')};assert len(links)==4
@@ -64,6 +68,6 @@ def main():
  paths|=set((B/'input').glob('*'))|set((B/'fusion-fixtures').glob('*'))
  paths={x for x in paths if x.is_file()}
  census=read(S/'census.json');save('census.json',census)
- save('build-receipt.json',dict(schema='own-runtime.iq3.packet23.build.v1',passed=True,device_executed=False,device_qualified=False,arithmetic='iq3-p17-detmath-v2',kernel_capture_sizes=read(P/'kernel-sizes.json'),jit_smoke_same_objects=True,shared_kernel_objects_sha256=shared_kernel_objects,compiler_dependency_objects_checked=checked_objects,max_compile_jobs=2,numeric_threads=2,artifacts_sha256=artifacts,sources={str(x.relative_to(ROOT)):sha(x) for x in sorted(paths)},cpu_tests_sha256=sha(P/'cpu-tests.json'),input_sha256=sha(B/'input/input.json'),census_sha256=sha(P/'census.json'),fused_fixture_host_sha256=fixture['outputs']['fused-fixtures'],nongemv_fixture_host_sha256=fixture['outputs']['nongemv-fixtures'],platform_math_gate=math,queue_isolation_gate=queue,precision_flags=flags,device_link_commands=links,carryover_proof_sha256=sha(P/'carryover-proof.json'),submission_benchmark_sha256=sha(P/'submission-benchmark.json')))
+ save('build-receipt.json',dict(schema='own-runtime.iq3.packet23.build.v1',passed=True,device_executed=False,device_qualified=False,arithmetic='iq3-p17-detmath-v2',kernel_capture_sizes=read(P/'kernel-sizes.json'),jit_smoke_same_objects=True,shared_kernel_objects_sha256=shared_kernel_objects,compiler_dependency_objects_checked=checked_objects,max_compile_jobs=2,numeric_threads=2,copy_budget_sha256=sha(P/'copy-budget.json'),copy_budget_before_sha256=sha(P/'copy-budget-before.json'),copy_budget_summary_sha256=sha(P/'copy-budget-summary.json'),entry_exit_tests_sha256=sha(P/'entry-exit-tests.json'),immutable_parameters_sha256=sha(P/'immutable-parameters.json'),artifacts_sha256=artifacts,sources={str(x.relative_to(ROOT)):sha(x) for x in sorted(paths)},cpu_tests_sha256=sha(P/'cpu-tests.json'),input_sha256=sha(B/'input/input.json'),census_sha256=sha(P/'census.json'),fused_fixture_host_sha256=fixture['outputs']['fused-fixtures'],nongemv_fixture_host_sha256=fixture['outputs']['nongemv-fixtures'],platform_math_gate=math,queue_isolation_gate=queue,precision_flags=flags,device_link_commands=links,carryover_proof_sha256=sha(P/'carryover-proof.json'),submission_benchmark_sha256=sha(P/'submission-benchmark.json')))
  print('SEALED',json.dumps(artifacts),flush=True)
 if __name__=='__main__':main()

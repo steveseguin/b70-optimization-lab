@@ -57,7 +57,7 @@ class Windows(unittest.TestCase):
                        teardown=[dict(safe_to_exit=True, live_bytes=0, in_flight=0)])
         self.write(run / 'receipt.json', receipt)
         fields = ('wall_ms', 'gemv_device_ms', 'non_gemv_device_ms', 'transfer_wall_ms', 'kernel_submissions', 'host_waits')
-        (run / 'timings.jsonl').write_text('\n'.join(json.dumps(dict(dict.fromkeys(fields, 1), kind='generated_token', generated_index=i+1, token_id=332)) for i in range(count)))
+        (run / 'timings.jsonl').write_text('\n'.join(json.dumps(dict(dict.fromkeys(fields, 1), kind='generated_token', generated_index=i+1, token_id=332, device_copies=4, device_copies_by_card=[2,2], launches=1, byte_move_launches=0)) for i in range(count)))
         return w.fixtures(run, steps)
     def watch(self, child, clock, seconds=1, journal=lambda _: ('', 'cursor')):
         requested, latched = [], []
@@ -157,6 +157,25 @@ class Windows(unittest.TestCase):
         self.assertTrue(w.safe_teardown(run, 2))
         del run['owner_cards']
         self.assertFalse(w.safe_teardown(run, 2))
+    def test_copy_budget_refused(self):
+        hashes=self.fake_run(64,8,2)
+        path=self.root/'run/timings.jsonl';rows=[json.loads(x) for x in path.read_text().splitlines()]
+        rows[0]['device_copies_by_card']=[3,1]
+        path.write_text('\n'.join(json.dumps(x) for x in rows))
+        with self.assertRaisesRegex(ValueError,'copy budget'):
+            w.compare_run(self.root,w.CONFIG['W2'],hashes,[332]*64)
+    def test_launch_accounting_refused(self):
+        hashes=self.fake_run(64,8,2)
+        path=self.root/'run/timings.jsonl';rows=[json.loads(x) for x in path.read_text().splitlines()]
+        rows[0]['byte_move_launches']=1
+        path.write_text('\n'.join(json.dumps(x) for x in rows))
+        with self.assertRaisesRegex(ValueError,'launch counters'):
+            w.compare_run(self.root,w.CONFIG['W2'],hashes,[332]*64)
+    def test_metadata_run_refused(self):
+        hashes=self.fake_run(64,8,2)
+        path=self.root/'run/receipt.json';r=w.read(path);r['submission_count_only']=True;self.write(path,r)
+        with self.assertRaisesRegex(ValueError,'metadata-only'):
+            w.compare_run(self.root,w.CONFIG['W2'],hashes,[332]*64)
     def test_timing_count_refused(self):
         hashes = self.fake_run()
         (self.root / 'run/timings.jsonl').write_text('')
@@ -516,5 +535,38 @@ class Windows(unittest.TestCase):
         for forbidden in ('sycl::queue ', 'sycl::malloc_', '.submit(', '.parallel_for(', '.single_task('):self.assertNotIn(forbidden,source)
         self.assertEqual(w.watchdog_seconds('K0'),600)
 
+
+class NativePriorityTests(unittest.TestCase):
+    def test_priority_trampoline_receipts_actual_cpu_priority(self):
+        import os,subprocess,sys
+        with tempfile.TemporaryDirectory(dir=HERE/'build') as tmp:
+            receipt=Path(tmp)/'priority.json';actual=os.getpriority(os.PRIO_PROCESS,0)
+            r=subprocess.run([sys.executable,'-B',str(HERE/'native_exec.py'),str(actual),str(receipt),'/usr/bin/true'],capture_output=True,text=True)
+            self.assertEqual(r.returncode,0);self.assertTrue(w.read(receipt)['passed'])
+            self.assertEqual(w.read(receipt)['actual_nice'],actual)
+    def test_priority_mismatch_refuses_exec(self):
+        import os,subprocess,sys
+        with tempfile.TemporaryDirectory(dir=HERE/'build') as tmp:
+            receipt=Path(tmp)/'priority.json';actual=os.getpriority(os.PRIO_PROCESS,0)
+            wrong=0 if actual!=0 else 19
+            r=subprocess.run([sys.executable,'-B',str(HERE/'native_exec.py'),str(wrong),str(receipt),'/usr/bin/true'],capture_output=True,text=True)
+            self.assertNotEqual(r.returncode,0);self.assertFalse(w.read(receipt)['passed'])
+            self.assertIn('refusing measurement',r.stderr)
+    def test_service_priority_and_closed_environment(self):
+        from unittest.mock import patch, MagicMock
+        with patch.object(w.subprocess,'Popen',return_value=MagicMock(pid=123)) as popen:
+            child=w.NativeChild(['/fake/native'],stdout=None,stderr=None,env={'OMP_NUM_THREADS':'2'},native_nice=0,receipt=Path('/fake/receipt'))
+            args=popen.call_args.args[0]
+            self.assertIn('--property=Nice=0',args)
+            self.assertIn('--property=Restart=no',args)
+            self.assertIn('-i',args)
+            self.assertIn('OMP_NUM_THREADS=2',args)
+            self.assertIn('-B',args)
+    def test_signal_targets_native_main_only(self):
+        from unittest.mock import patch, MagicMock
+        with patch.object(w.subprocess,'Popen',return_value=MagicMock(pid=123)),patch.object(w.subprocess,'run') as run:
+            child=w.NativeChild(['/fake/native'],stdout=None,stderr=None,env={},native_nice=19,receipt=Path('/fake/receipt'))
+            child.send_signal(signal.SIGTERM)
+            self.assertEqual(run.call_args.args[0],['systemctl','--user','kill','--kill-whom=main','--signal=15',child.unit])
 
 if __name__ == '__main__': unittest.main()

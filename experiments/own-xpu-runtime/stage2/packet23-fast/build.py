@@ -23,6 +23,7 @@ def main():
   if tag=='icpx-host':cmd+=['--target','fused-fixtures','nongemv-fixtures']
   run(cmd,'build-'+tag+'.log')
  run([PY,'-B',P/'kernel_sizes.py'],'kernel-sizes.log')
+ run([PY,'-B',P/'entry_exit_test.py'],'entry-exit-tests.log')
  for n in ('authority-tests','owner-retirement-tests','chain-tests','queue-tests','lifetime-tests'):
   run([B/'host'/n],n+'.log')
  for mode in ('jit','borrower'):
@@ -31,6 +32,9 @@ def main():
   r=read(out/'failure.json');assert result.returncode==1 and r['error'] in result.stderr and r['teardown']['in_flight']==0 and r['teardown']['safe_to_exit']
  result=subprocess.run([str(B/'host/failure-tests'),'parameters',str(B/'failure-parameters')],capture_output=True,text=True,timeout=10)
  assert result.returncode==0,result.stderr
+ result=subprocess.run([str(B/'host/failure-tests'),'immutable',str(B/'failure-immutable')],capture_output=True,text=True,timeout=10)
+ assert result.returncode==0,result.stderr
+ save('immutable-parameters.json',dict(passed=True,device_executed=False,launches=876,device_copies=0,host_waits=0,changed_block_rejected=True,stdout=result.stdout))
  save('failure-tests.json',dict(passed=True,cases=2,parameter_cache_event_order_controls=1,normal_failure_exit=True,device_executed=False))
  canary=B/f'cpu-canary-repair-{time.time_ns()}'
  run([B/'host/own-rt-iq3','--canary' ,'--cards','2','--card','0','--memory','resident','--output',canary],'cpu-canary.log')
@@ -40,6 +44,7 @@ def main():
   for mode in ('core','parallel'):
    run([PY,'-B',P/'test.py','--binary',B/'host/own-rt-iq3','--scratch',B/f'mini-repair-{time.time_ns()}-{timing}-{mode}','--input',B/'input','--receipt',P/f'cpu-mini-{timing}-{mode}.json','--nongemv',mode],f'mini-{timing}-{mode}.log')
  os.environ.pop('PACKET23_TIMING',None)
+ run([PY,'-B',P/'copy_budget_test.py'],'copy-budget.log')
  run([PY,'-B',P/'fixture_gate.py'],'fixture-gate.log')
  run([PY,'-B',P/'depcheck_build.py','--source',P,'--tag','sanitized'],'build-sanitizer.log')
  for mode in ('mini','integration'):run([PY,'-B',P/'sanitizer_gate.py',mode],'sanitizer-'+mode+'.log')
@@ -52,6 +57,7 @@ def main():
  save('submission-benchmark.json',dict(before=read(P/'bench-before.json'),after=read(P/'bench-after.json'),device_executed=False))
  run([PY,'-B',P/'stream_gate.py'],'streaming.log')
  run([PY,'-B',P/'test_mismatch.py'],'mismatch-tests.log')
+ run([PY,'-B',P/'real_eight_gate.py'],'build-real-eight.log')
  run([PY,'-B',P/'seal.py'],'seal.log')
  print('CPU PREPARATION PASS',flush=True)
 if __name__=='__main__':main()

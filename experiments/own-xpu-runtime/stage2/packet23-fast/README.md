@@ -1,5 +1,73 @@
 # Packet 23: fused exact decode with cheap timing
 
+## October 11 r3: immutable resident parameters
+
+The coordinator's r2 device run was exact (64/64 tokens, 384/384 layers) but
+spent 4,445 ms per token. Its profile identifies queue memcpy waiting by yielding;
+see [the retained device evidence](evidence/20261011-w2-exact-but-slow-param-memcpy/README.md).
+No device ran during this r3 repair. New speed and device exactness remain pending.
+
+Resident preparation now traverses the dispatch without running arithmetic,
+uploads parameter blocks once, and freezes the table. A new or changed parameter
+block during decode fails before a copy can occur. CPU byte comparisons bind the
+resident block to the metadata the old per-launch path would construct. Explicit
+zero padding removes indeterminate bytes from large metadata structures; v2 arithmetic,
+fused numerical functions, order, guards, K0 and exactness gates remain intact.
+
+Each card uploads one token packet and reads one result packet per token.
+Token IDs and bounded embedding/PLE lookup rows share the upload. Position,
+routing, admitted attention slots and active flags remain device state. Snapshot,
+scatter/gather and cross-card moves use ordered byte kernels with the existing
+fences. `device_copies` means host/device queue copy commands; byte moves are
+reported separately and included in `launches`. These are not free operations.
+The resident runtime asserts the two-copy-per-card budget. Explicit event waits
+are counted; already-completed queue retirement synchronizes are excluded.
+
+[Copy-budget tests](copy-budget.json) cover real mini arithmetic and real plan
+metadata. The real plan retains 876 arithmetic launches: with layer capture the
+total is 940 including byte moves. [Immutable-table control](immutable-parameters.json)
+checks 876 submissions with zero parameter copies and zero waits, and rejects
+changed metadata before copying. CPU-only one-card streaming and checked layer
+localization retain their additional diagnostic transfers; they are not speed rows.
+
+W2/W3 native children now default to normal priority (`--native-nice 0`), with
+the wrapper and CPU jobs at nice 19. The actual child priority is checked and
+recorded before exec. [WINDOW.md](WINDOW.md) contains the fresh `-r3` commands;
+[PORT.md](PORT.md) names the packet 24 functions and files. Packet 24 was untouched.
+
+[Before/after mock counts](copy-budget-before.json) retain the r2 host-visible
+copy path. The old CPU mock did not implement native-only parameter uploads;
+its count must not be mistaken for the full r2 device copy count.
+
+Fresh r3 gates: **78/78** integration cases, **16/16** randomized mini runs,
+**104/104** randomized integration cases, **8/8** GNU/Intel fixture processes,
+**79/79** sanitizer controls, **7/7** lifetime controls, **2/2** injected failure
+exits plus the metadata-order control, **3/3** entry-exit checks, **63/63** window
+tests, and **2/2** deliberate layer mismatch rejections. All **44** kernel classes
+are at most **224 bytes**; the oversized negative control is rejected. The fresh
+one-card CPU streaming checks match **3/3 tokens and 144/144 layers**, then the
+full-prompt v2 check matches **8/8 tokens and 384/384 layers** on the exact final
+host binary. The latter used 1.02 GiB peak RSS under an 8 GiB address-space cap.
+See [build-receipt.json](build-receipt.json) and [real-eight.json](real-eight.json).
+
+[Mock before/after counts](copy-budget-summary.json), summed over both cards:
+
+| Workload/token | Before copies / waits / launches | After copies / waits / launches |
+| --- | --- | --- |
+| Mini, token 2 | 17 / 18 / 48 | 4 / 19 / 66 |
+| Real metadata, capture token 2 | 63 / 18 / 876 | 4 / 19 / 940 |
+| Real metadata, ordinary token 9 | 13 / 16 / 876 | 4 / 19 / 890 |
+
+The old CPU mock excludes native-only parameter uploads (876/token in the
+coordinator's r2 account). The new immutable-table control separately proves
+876 cached launches cause **zero parameter copies and zero waits**. Counts are
+not timing measurements. `host_waits` means explicit event waits; byte transport
+kernels are included in launches. All after rows use two queue copies per card.
+
+The material below describes the earlier packet construction and r2 repair;
+current binary identities are in `build-receipt.json`.
+
+
 CPU preparation only. No device binary, Level Zero discovery or /dev/dri access
 ran in this task. K0/K1/W0/W2/W3 remain coordinator gates; no new GPU speed is claimed.
 All work is confined to this packet, with two compile jobs and two numeric threads.
@@ -70,7 +138,7 @@ Build outputs and sealed fixture inputs remain ignored; test scratch is removed
 once compact receipts and hashes are saved. build-receipt.json binds binaries,
 inputs, compiler flags and the source closure.
 
-## Sealed native binaries
+## Historical r2 native binaries
 
 | Binary | SHA256 |
 | --- | --- |
@@ -133,3 +201,12 @@ owner's event ledger sorted when preparation adds tracked copy events. One CPU
 control checks metadata upload/cache reuse and the resulting event handle; the
 queue source gate binds the check to both native backends. Earlier packets are
 unchanged; the one-card backend change lives in the asserted local overlay.
+
+## r3 compiled native binaries (device gates pending)
+
+| Binary | SHA256 |
+| --- | --- |
+| `jit-smoke` | `605f977ee851c9ef01057e6032bd491dcf6cffe305933583495b51d4ce9d5081` |
+| `own-rt-iq3` | `8971fd171b3f5a5b1f6e6f12e4ff2faa98a2333d8f4564d5318afa8ac979c581` |
+| `fused-fixtures` | `a36291c88ca854d98d82827edfcaa0233e47b9f95c01c12fc26a724b342b597b` |
+| `nongemv-fixtures` | `d256cc043d3dc1f38291331a7c43294b85be212d802da9b0f9301230cc0719cc` |

@@ -21,7 +21,7 @@ for source,name,sanitize in (('tests.cpp','checker-tests',False),('test_bounds.c
     staged=BUILD/source;staged.write_text(text);binary=BUILD/name
     flags=['-std=c++20','-O1' if sanitize else '-O2','-g','-DOWN_RT_HOST_ONLY','-fno-fast-math','-ffp-contract=off','-I'+str(HERE),
            '-I'+str(HERE.parent.parent/'stage1/packet3-prep/src')]
-    if sanitize:flags+=['-fsanitize=address,undefined,float-cast-overflow','-fno-omit-frame-pointer']
+    if sanitize:flags+=['-fsanitize=address,undefined,float-cast-overflow','-fno-omit-frame-pointer','-fno-sanitize-recover=all']
     inputs=[str(staged)]
     if name=='bounds':inputs += [str(HERE/'owner.cpp'),str(HERE/'owner_retire.cpp')]
     cmd=['g++',*flags,*inputs,'-o',str(binary)]
@@ -34,4 +34,4 @@ for source,name,sanitize in (('tests.cpp','checker-tests',False),('test_bounds.c
     rows.append(row)
     (HERE/'sanitizer-unit.json').write_text(json.dumps(dict(passed=result.returncode==0,device_executed=False,tests=rows),indent=2)+'\n')
     print(name,result.stdout,result.stderr,flush=True)
-    assert result.returncode==0
+    assert result.returncode==0 and "runtime error:" not in result.stderr and "ERROR: AddressSanitizer" not in result.stderr

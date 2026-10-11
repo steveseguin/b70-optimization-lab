@@ -52,3 +52,37 @@ owner's event ledger sorted when preparation adds tracked copy events. One CPU
 control checks metadata upload/cache reuse and the resulting event handle; the
 queue source gate binds the check to both native backends. Earlier packets are
 unchanged; the one-card backend change lives in the asserted local overlay.
+
+
+## r3 copy-per-launch closure (CPU only)
+
+Question: can the fused, exact schedule submit without a queue copy at each
+kernel? Identity: v2 arithmetic, unchanged weights, resident two-card plan and
+frozen/R5 dispatch; this change is parameter storage and byte transport only.
+
+The r2 run's exact output and 4,445 ms/token are preserved in
+[evidence](evidence/20261011-w2-exact-but-slow-param-memcpy/README.md). Its profile
+shows `appendUSMMemcpy` yielding while prior queue work finishes. r3 performs a
+preparation pass, uploads immutable parameter tables, and rejects cache misses
+inside resident decode. Token and lookup inputs are batched, and device byte
+moves use kernels. The mock enforces two queue copies per card/token. The
+arithmetic schedule remains 876 launches; capture byte moves add 64.
+
+Retained mechanisms: pointer-only large captures, parameter CPU byte verification,
+per-card copy assertions, the static copy-source check, explicit byte-move counts,
+K0 guard, unchanged arithmetic bodies, and actual native-priority receipts.
+[PORT.md](PORT.md) is the handoff for packet 24, which this task did not modify.
+
+No r3 device code ran and no speed claim follows from CPU counts. The coordinator
+must rerun the seven fresh `-r3` windows. GPU correctness, adapter behavior and
+native-child priority on a real window remain unmeasured here. One-card CPU
+weight-streaming and checked localization are outside the resident copy budget.
+
+Fresh r3 CPU closure: 78 integration cases, 16 randomized mini runs, 104 randomized
+integration cases, eight GNU/Intel fixture processes, 79 sanitizer controls, seven
+lifetime controls, three entry-exit checks and 63 window tests passed. The exact
+final host binary passed the full-prompt eight-token v2 oracle: 8/8 tokens and
+384/384 layer hashes. Copy counts and their old-mock limitation are retained in
+[copy-budget-summary.json](copy-budget-summary.json); all final identities and
+source hashes are in [build-receipt.json](build-receipt.json). New device windows
+are the revisit condition; no performance verdict is inferred from these gates.

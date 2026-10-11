@@ -239,9 +239,15 @@ def compare_run(out, cfg, expected_hashes, expected_tokens, oracle_root=None, di
     require(run.get('passed') is True and safe_teardown(run, cfg['cards']), 'native failure or unsafe teardown')
     rows = [json.loads(s) for s in (out / 'run/timings.jsonl').read_text().splitlines() if s.strip()]
     require(len(rows) == cfg['count'], 'timing row coverage differs from generated token count')
-    fields = ('wall_ms', 'transfer_wall_ms', 'kernel_submissions', 'host_waits')
+    fields = ('wall_ms', 'transfer_wall_ms', 'kernel_submissions', 'host_waits', 'device_copies', 'launches', 'byte_move_launches')
     if cfg.get('timing')=='launch':fields += ('gemv_device_ms','non_gemv_device_ms')
     require(all(all(isinstance(r.get(k), (int, float)) and math.isfinite(r[k]) and r[k] >= 0 for k in fields) for r in rows), 'invalid or missing token timing fields')
+    require(not run.get('submission_count_only'), 'metadata-only mock cannot qualify a model window')
+    require(all(r['launches']==r['kernel_submissions']+r['byte_move_launches'] for r in rows), 'launch counters disagree')
+    if cfg['cards']==2:
+        require(all(isinstance(r.get('device_copies_by_card'),list) and len(r['device_copies_by_card'])==2 and
+                    all(type(x) is int and 0<=x<=2 for x in r['device_copies_by_card']) and
+                    sum(r['device_copies_by_card'])==r['device_copies'] for r in rows), 'per-card token copy budget exceeded or missing')
     require(all(r.get('kind') == 'generated_token' and r.get('generated_index') == i+1 and
                 r.get('token_id') == expected_tokens[i] for i, r in enumerate(rows)), 'timing tokens omitted/reordered or misidentified')
     if cfg['count'] > 1:
@@ -332,8 +338,8 @@ def run_w0(a, cfg, binary, boot, out, latch, bindings, dependency_preflight, env
     persist()
     with (out / 'stdout.txt').open('w') as log, (out / 'kernel-window.txt').open('w') as kernel:
         require(not requested, 'watcher stopped before child launch')
-        child = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT, env=environment['native'])
-        record.update(pid=child.pid, device_executed=True)
+        child = NativeChild(cmd, stdout=log, stderr=subprocess.STDOUT, env=environment['native'], native_nice=a.native_nice, receipt=out/'native-priority.json')
+        record.update(pid=child.pid, launcher_pid=child.launcher_pid, native_unit=child.unit, native_nice=a.native_nice, device_executed=True)
         persist()
         record.update(supervise(child, a.seconds, cursor, kernel, latch_fault, persist, requested))
     try:
@@ -453,8 +459,8 @@ def run_k1(a, cfg, binary, boot, out, latch, bindings, environment, build_receip
             remaining = a.seconds-(time.monotonic()-start)
             require(not requested and remaining > 0, 'K1 stopped before component launch')
             with (out / (name+'-stdout.txt')).open('w') as log, (out / (name+'-kernel-window.txt')).open('w') as kernel:
-                child = subprocess.Popen(component['command'], stdout=log, stderr=subprocess.STDOUT, env=environment['native'])
-                record.update(pid=child.pid, device_executed=True)
+                child = NativeChild(component['command'], stdout=log, stderr=subprocess.STDOUT, env=environment['native'], native_nice=a.native_nice, receipt=out/(name+'-native-priority.json'))
+                record.update(pid=child.pid, launcher_pid=child.launcher_pid, native_unit=child.unit, native_nice=a.native_nice, device_executed=True)
                 component['pid'] = child.pid
                 persist()
                 component.update(supervise(child, remaining, cursor, kernel, latch_fault, persist, requested))
@@ -484,15 +490,52 @@ def k0_gate(path, boot, native_hashes, environment, cfg):
     return k0
 
 
+class NativeChild:
+    """User service starts at the requested priority; wrapper stays nice 19.
+    Signals target the native service, never the systemd-run client PID.
+    No restart policy or timeout/group kill is installed.
+    """
+    def __init__(self, command, *, stdout, stderr, env, native_nice, receipt):
+        import uuid
+        self.unit='packet23-native-'+uuid.uuid4().hex
+        self.process=subprocess.Popen([
+            'systemd-run','--user','--quiet','--wait','--pipe','--collect',
+            '--unit='+self.unit,'--property=Nice='+str(native_nice),
+            '--property=IOSchedulingClass=idle','--property=Restart=no',
+            '/usr/bin/env','-i',*[k+'='+v for k,v in env.items()],
+            '/usr/bin/python3','-B',str(HERE/'native_exec.py'),str(native_nice),str(receipt),
+            *map(str,command)],stdout=stdout,stderr=stderr)
+        self.priority_receipt=Path(receipt)
+        self.launcher_pid=self.process.pid
+        # Bound only the priority handshake, never kernel execution. If startup
+        # has not reached exec, supervision still owns the named service.
+        end=time.monotonic()+10
+        while self.process.poll() is None and self.pid is None and time.monotonic()<end:
+            time.sleep(0.01)
+    @property
+    def pid(self):
+        try:return read(self.priority_receipt)['pid']
+        except (FileNotFoundError,KeyError,json.JSONDecodeError):return None
+    def poll(self): return self.process.poll()
+    @property
+    def returncode(self): return self.process.returncode
+    def send_signal(self, sig):
+        subprocess.run(['systemctl','--user','kill','--kill-whom=main',
+                        '--signal='+str(int(sig)),self.unit],check=True)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--authorized-device-window', action='store_true', required=True)
     parser.add_argument('--window', choices=CONFIG, required=True)
     for key in ('input', 'output', 'oracle', 'w0', 'w1', 'k1', 'k0', 'repeat-of'):
         parser.add_argument('--' + key, type=Path, required=key == 'output')
+    parser.add_argument('--native-nice',type=int,default=None,help='native child only; W2/W3 default 0, other windows 19')
     parser.add_argument('--card', type=int, help='first physical card; W2/W3 use this and the next card')
     parser.add_argument('--seconds', type=int, help='watchdog only; expected duration never signals; minimum is max(300,4*(estimate+17))')
     a = parser.parse_args()
+    a.native_nice=(0 if a.window in ("W2","W3") else 19) if a.native_nice is None else a.native_nice
+    require(0<=a.native_nice<=19,"native nice must be 0..19")
     environment = environment_gate()
     a.seconds = 600 if a.window=='K0' else watchdog_seconds(a.window, a.seconds)
     require(os.environ.get('OMP_NUM_THREADS') == '2' and os.getpriority(os.PRIO_PROCESS, 0) == 19, 'nice19 OMP_NUM_THREADS=2 required')
@@ -528,9 +571,10 @@ def main():
         def persist():(out/'window.json').write_text(json.dumps(record,indent=2)+'\n')
         def fault(reason):latch.write_text(json.dumps(dict(boot_id=boot,reason=reason)))
         cmd=[str(jit),'--authorized-device-window','--card',str(cfg['card']),'--cards',str(cfg['cards']),'--output',str(out/'run')]
-        record['command']=cmd;persist()
+        record['command']=cmd;record['native_nice']=a.native_nice;persist()
         with (out/'stdout.txt').open('w') as log,(out/'kernel-window.txt').open('w') as kernel:
-            child=subprocess.Popen(cmd,stdout=log,stderr=subprocess.STDOUT,env=environment['native'])
+            child=NativeChild(cmd,stdout=log,stderr=subprocess.STDOUT,env=environment['native'],native_nice=a.native_nice,receipt=out/'native-priority.json')
+            record.update(pid=child.pid,launcher_pid=child.launcher_pid,native_unit=child.unit);persist()
             record.update(supervise(child,600,cursor,kernel,fault,persist,requested))
         record['passed']=record['returncode']==0 and not requested and read(out/'run/receipt.json').get('passed') is True
         if (out/'run/receipt.json').is_file():record['native_receipt_sha256']=sha(out/'run/receipt.json')
@@ -598,8 +642,8 @@ def main():
     persist()
     with (out / 'stdout.txt').open('w') as log, (out / 'kernel-window.txt').open('w') as kernel:
         require(not requested, 'watcher stopped before child launch')
-        child = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT, env=environment['native'])
-        record.update(pid=child.pid, device_executed=True)
+        child = NativeChild(cmd, stdout=log, stderr=subprocess.STDOUT, env=environment['native'], native_nice=a.native_nice, receipt=out/'native-priority.json')
+        record.update(pid=child.pid, launcher_pid=child.launcher_pid, native_unit=child.unit, native_nice=a.native_nice, device_executed=True)
         persist()
         record.update(supervise(child, a.seconds, cursor, kernel, latch_fault, persist, requested))
     record['memory_end'] = memory_snapshot()

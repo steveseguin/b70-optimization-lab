@@ -16,15 +16,15 @@
     "--max-new",
     "3",
     "--output",
-    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/build/sanitizer-1791743331950722711/mini-core-1-0",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/build/sanitizer-1791748418077070265/mini-core-1-0",
     "--mini"
   ],
   "returncode": 0,
-  "seconds": 0.11576127300213557,
+  "seconds": 0.1153644760051975,
   "sanitizer": {
     "device_executed": false,
-    "submissions": 1573,
-    "executed": 1573,
+    "submissions": 1739,
+    "executed": 1739,
     "max_ready": 1,
     "violations": []
   },
@@ -41,8 +41,8 @@
     "step3/layer-00.bf16": "0020e9a55b8ced12de2e07a370fb94c7e3611fbb727a753614ea580a5bcc3207",
     "step3/layer-01.bf16": "27a43cb92662505a64718cf7f44d6e6bf27bd04575d02272f8510c176a34e5b2"
   },
-  "binary_sha256": "84edaf58c4d488eb844f1a6fbfb75259b3c7549b5459e4993cf860fd4f8c0eda",
-  "source_manifest_sha256": "d4373145e2f742457b6d4b0335eff50d643716cc4a8cc7770d9535bcdd5186d7",
+  "binary_sha256": "276c38f12a14e335fb9af0b414b28f3266633fe1d87fbae32291ddd408530726",
+  "source_manifest_sha256": "a184cc4cd419045dc8bfa63a3f70a8ed63a83eaf5ef3a75b581aa9adf1911b6e",
   "buffers_sha256": "4e51affaddabcc0be4dbf7937babe9b8998a79261c92a5ad93be4a8efd3d1108",
   "timings": [
     {
@@ -51,14 +51,22 @@
       "generated_index": 1,
       "timing": "token",
       "distorted": false,
+      "submission_count_only": false,
       "input_token": 1,
       "token_id": 1,
-      "wall_ms": 8.12766,
+      "wall_ms": 10.7117,
       "gemv_device_ms": null,
       "non_gemv_device_ms": null,
-      "transfer_wall_ms": 4.69916,
+      "transfer_wall_ms": 5.75904,
       "kernel_submissions": 46,
-      "host_waits": 179
+      "launches": 54,
+      "device_copies": 170,
+      "byte_move_launches": 8,
+      "device_copies_by_card": [
+        170,
+        0
+      ],
+      "host_waits": 200
     },
     {
       "kind": "generated_token",
@@ -66,14 +74,22 @@
       "generated_index": 2,
       "timing": "token",
       "distorted": false,
+      "submission_count_only": false,
       "input_token": 1,
       "token_id": 1,
-      "wall_ms": 9.93607,
+      "wall_ms": 12.7766,
       "gemv_device_ms": null,
       "non_gemv_device_ms": null,
-      "transfer_wall_ms": 6.12514,
+      "transfer_wall_ms": 7.68108,
       "kernel_submissions": 46,
-      "host_waits": 179
+      "launches": 54,
+      "device_copies": 169,
+      "byte_move_launches": 8,
+      "device_copies_by_card": [
+        169,
+        0
+      ],
+      "host_waits": 199
     },
     {
       "kind": "generated_token",
@@ -81,14 +97,22 @@
       "generated_index": 3,
       "timing": "token",
       "distorted": false,
+      "submission_count_only": false,
       "input_token": 1,
       "token_id": 1,
-      "wall_ms": 11.4482,
+      "wall_ms": 14.9775,
       "gemv_device_ms": null,
       "non_gemv_device_ms": null,
-      "transfer_wall_ms": 7.34041,
+      "transfer_wall_ms": 9.52795,
       "kernel_submissions": 46,
-      "host_waits": 179
+      "launches": 54,
+      "device_copies": 171,
+      "byte_move_launches": 8,
+      "device_copies_by_card": [
+        171,
+        0
+      ],
+      "host_waits": 201
     }
   ],
   "passed": true,

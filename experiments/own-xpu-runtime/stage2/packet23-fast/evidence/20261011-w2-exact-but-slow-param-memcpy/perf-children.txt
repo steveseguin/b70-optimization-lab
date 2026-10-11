@@ -1,0 +1,37 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 298K of event 'cpu/cycles/P'
+# Event count (approx.): 1342131175559
+#
+# Children      Self  Symbol                                                                                                                                                                                                
+# ........  ........  ......................................................................................................................................................................................................
+#
+    73.39%     0.00%  [.] 0000000000000000                                                                                                                                                                                  
+    73.31%     0.00%  [.] ur::level_zero::urAdapterRelease(ur_adapter_handle_t_*)                                                                                                                                           
+    73.31%     0.00%  [k] 0x8949d38948505356                                                                                                                                                                                
+    73.31%     0.00%  [.] ur_command_list_manager::appendUSMMemcpy(bool, void*, void const*, unsigned long, wait_list_view&, ur_event_handle_t_*)                                                                           
+    73.31%     0.00%  [.] 0x00007171f11d0c69                                                                                                                                                                                
+    73.26%     0.00%  [.] 0x00007171f12ddbe4                                                                                                                                                                                
+    72.93%     0.00%  [.] 0x00007171f12d7375                                                                                                                                                                                
+    59.22%    59.21%  [k] entry_SYSCALL_64                                                                                                                                                                                  
+    15.51%     0.90%  [.] do_syscall_64                                                                                                                                                                                     
+    15.28%     0.64%  [.] entry_SYSCALL_64_after_hwframe                                                                                                                                                                    
+    15.03%     0.73%  [.] __sched_yield                                                                                                                                                                                     
+    14.70%     0.33%  [.] x64_sys_call                                                                                                                                                                                      
+    12.74%     0.29%  [.] __x64_sys_sched_yield                                                                                                                                                                             
+    11.46%     1.35%  [.] do_sched_yield                                                                                                                                                                                    
+     8.14%     7.45%  [k] entry_SYSRETQ_unsafe_stack                                                                                                                                                                        
+     6.58%     0.16%  [.] ur::level_zero::urEventGetInfo(ur_event_handle_t_*, ur_event_info_t, unsigned long, void*, unsigned long*)                                                                                        
+     6.36%     0.00%  [.] 0x00007171f1237aca                                                                                                                                                                                
+     6.16%     0.00%  [.] 0x00007171f1233016                                                                                                                                                                                
+     4.44%     3.80%  [k] update_curr                                                                                                                                                                                       
+     4.30%     1.80%  [.] __schedule                                                                                                                                                                                        
+     3.66%     0.86%  [.] yield_task_fair                                                                                                                                                                                   
+     3.39%     2.05%  [.] pick_task_fair                                                                                                                                                                                    
+     3.13%     0.32%  [.] schedule                                                                                                                                                                                          
+#
+# (Cannot load tips.txt file, please install perf!)
+#

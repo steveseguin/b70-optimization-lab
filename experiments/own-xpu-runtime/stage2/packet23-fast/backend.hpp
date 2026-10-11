@@ -113,11 +113,12 @@ class Context final : public ownrt::Backend {
     if(d>=0&&s>=0&&d!=s&&!(access_ab&&access_ba))throw std::logic_error("peer path without bidirectional access");
     int target=d>=0?d:s>=0?s:0;
     const auto& wait=dependencies(deps,target);auto e=ownrt::next_handle();auto [it,ok]=events.try_emplace(e);(void)ok;event_cards[e]=target;
-    it->second=queues[target]->submit([&](sycl::handler& h){h.depends_on(wait);h.memcpy(dst,src,n);});return e;
+    it->second=queues[target]->submit([&](sycl::handler& h){h.depends_on(wait);if(d>=0&&s>=0)h.parallel_for(sycl::range<1>(n),[=](sycl::id<1> i){static_cast<unsigned char*>(dst)[i]=static_cast<const unsigned char*>(src)[i];});else h.memcpy(dst,src,n);});return e;
   }
   ownrt::Event compute(const ownrt::Operation& base,std::span<void* const> p,std::span<const ownrt::Event> deps) override {
     check();const auto& op=dynamic_cast<const ownrt::SyclOperation&>(base);
     for(auto ptr:p)if(location(ptr,1)!=allocation_card)throw std::logic_error("foreign compute binding");
+    if(ownrt::preparing_parameters){op.submit(*queues[allocation_card],p,{});return 0;}
     const auto& wait=dependencies(deps,allocation_card);
     // Reserve map nodes before submission; key zero is never an owned event.
     events.try_emplace(0);try {event_cards.emplace(0,allocation_card);}catch(...){events.erase(0);throw;}

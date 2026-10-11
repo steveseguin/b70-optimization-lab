@@ -185,8 +185,10 @@ integrated::Launch gemv_batch(ownrt::Device& device,const PreparedBatch& plan,ow
  #endif
  #ifndef OWN_RT_HOST_ONLY
  op.local_columns=plan.local_columns;
+ #endif
  std::array<void*,128> pointers{};for(size_t i=0;i<plan.bindings.size();++i)pointers[i]=device.arena.row(plan.bindings[i]).pointer;
  auto params=ownrt::parameters(device,pointers.data(),sizeof pointers,device.arena.row(plan.bindings[0]).label.starts_with("card1:")?1:0);
+ #ifndef OWN_RT_HOST_ONLY
  op.parameters=static_cast<void*const*>(device.arena.row(params).pointer);
  #endif
  auto ids=plan.bindings;ids.insert(ids.begin(),table);auto event=device.compute(op,ids,{});return {event,event,1};

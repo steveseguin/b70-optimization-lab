@@ -22,3 +22,17 @@ K1 attempt a's triggering exception remains a hypothesis. The original output
 contains no exception text. Its GEMV component passed 553/553. No retained
 external SYCL borrower was found in the non-GEMV fixture: CopyEngine contains an
 owner reference only; Ref/Fused/adapter operations hold scalar metadata/pointers.
+
+| r3 arm | Outcome | Revisit condition |
+| --- | --- | --- |
+| device copy per launch; a copy call on this adapter waits by yielding | Closed for resident decode. Prepare and freeze metadata; two host/device queue copies per card/token. Keep byte-move kernels visible in launch counts. r2 was exact but 4,445 ms/token. | A changed descriptor must be prepared before decode, never quietly copied in a submission. Fresh K0/K1/W0/W2/W3 still required. |
+
+The original r2 device evidence and all existing `build/*-r2` windows are retained.
+
+| CPU preparation arm | Outcome | Revisit condition |
+| --- | --- | --- |
+| packed metadata containing std::array pointers | Rejected: UBSan found misaligned array member calls. Use natural alignment and explicit initialized padding; Spec/Bound/ChainItem sizes are asserted. | Never pack pointer arrays to normalize padding. |
+| sanitizer exit code alone accepted | Rejected: UBSan recovery returned 0 despite errors. The runner now uses `-fno-sanitize-recover=all` and rejects error output. | Preserve the fail-fast gate and inspect stderr. |
+| readback includes unused uninitialized bytes | Randomized checker caught four bytes in card 1’s result header. Zero the header at initialization. | Every byte of a transfer must be initialized, including unused bytes. |
+
+[Retained CPU correction evidence](evidence/r3-cpu-preparation-corrections/README.md).

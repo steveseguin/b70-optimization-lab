@@ -1,0 +1,795 @@
+checker-tests PASS missing RAW includes exact writer
+PASS missing WAW
+PASS retain every outstanding reader for WAR
+PASS transitive diamond satisfies both readers
+PASS cross queue transitive dependency
+PASS cross queue missing dependency
+PASS same queue alone grants no implicit edge
+PASS executed event is not a host fence
+PASS explicit host fence establishes order
+PASS host fence does not expose unrelated executed work
+PASS foreign owning device
+PASS foreign context even with matching device
+PASS partial byte poison in device index
+PASS disjoint ranges do not conflict
+PASS partial overlapping ranges conflict
+PASS copy source and destination offset contract
+PASS host slab overwrite catches pending reader
+PASS release pending allocation is diagnosed
+PASS released allocation use diagnosed
+PASS reused allocation loses old initialization
+PASS retire cannot erase merely executed hazard history
+PASS overlapping allocation registration rejected
+PASS release pending retains allocation lifetime
+PASS double release fails closed
+PASS host write after release fails closed
+PASS index poison cannot execute arbitrary addressing closure
+PASS unused foreign compute binding still rejected
+PASS copy propagates partial poison into device index
+PASS copy cannot erase poison through a second transfer
+PASS read-write alias does not create self hazard
+PASS deep ancestors across bitset word boundaries
+PASS adversarial order exposes absent edge
+PASS adversarial declared DAG keeps exact results
+RESULT 33/33 passed; device_executed=false
+ 
+bounds {"cpu_only":true,"malformed_and_valid_index_cases":27,"passed":true}
+ /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/build/guard-tests/test_bounds.cpp:20:42: runtime error: member call on misaligned address 0x70f83d301611 for type 'struct array', which requires 8 byte alignment
+0x70f83d301611: note: pointer points here
+ 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00
+              ^ 
+/usr/include/c++/13/array:203:17: runtime error: member access within misaligned address 0x70f83d301611 for type 'struct array', which requires 8 byte alignment
+0x70f83d301611: note: pointer points here
+ 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00
+              ^ 
+/usr/include/c++/13/array:203:17: runtime error: reference binding to misaligned address 0x70f83d301611 for type 'void *', which requires 8 byte alignment
+0x70f83d301611: note: pointer points here
+ 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/build/guard-tests/test_bounds.cpp:20:43: runtime error: store to misaligned address 0x70f83d301611 for type 'void *', which requires 8 byte alignment
+0x70f83d301611: note: pointer points here
+ 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/build/guard-tests/test_bounds.cpp:21:15: runtime error: member call on misaligned address 0x70f83d301611 for type 'struct array', which requires 8 byte alignment
+0x70f83d301611: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:203:17: runtime error: member access within misaligned address 0x70f83d301611 for type 'struct array', which requires 8 byte alignment
+0x70f83d301611: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:203:17: runtime error: reference binding to misaligned address 0x70f83d301641 for type 'void *', which requires 8 byte alignment
+0x70f83d301641: note: pointer points here
+ 60 50 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/build/guard-tests/test_bounds.cpp:21:16: runtime error: store to misaligned address 0x70f83d301641 for type 'void *', which requires 8 byte alignment
+0x70f83d301641: note: pointer points here
+ 60 50 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/build/guard-tests/test_bounds.cpp:21:46: runtime error: member call on misaligned address 0x70f83d301611 for type 'struct array', which requires 8 byte alignment
+0x70f83d301611: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:203:17: runtime error: member access within misaligned address 0x70f83d301611 for type 'struct array', which requires 8 byte alignment
+0x70f83d301611: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:203:17: runtime error: reference binding to misaligned address 0x70f83d301649 for type 'void *', which requires 8 byte alignment
+0x70f83d301649: note: pointer points here
+ d0 52 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/build/guard-tests/test_bounds.cpp:21:47: runtime error: store to misaligned address 0x70f83d301649 for type 'void *', which requires 8 byte alignment
+0x70f83d301649: note: pointer points here
+ d0 52 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/build/guard-tests/test_bounds.cpp:21:69: runtime error: member call on misaligned address 0x70f83d301611 for type 'struct array', which requires 8 byte alignment
+0x70f83d301611: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:203:17: runtime error: member access within misaligned address 0x70f83d301611 for type 'struct array', which requires 8 byte alignment
+0x70f83d301611: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:203:17: runtime error: reference binding to misaligned address 0x70f83d301651 for type 'void *', which requires 8 byte alignment
+0x70f83d301651: note: pointer points here
+ f8 70 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/build/guard-tests/test_bounds.cpp:21:70: runtime error: store to misaligned address 0x70f83d301651 for type 'void *', which requires 8 byte alignment
+0x70f83d301651: note: pointer points here
+ f8 70 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/build/guard-tests/test_bounds.cpp:21:95: runtime error: member call on misaligned address 0x70f83d301611 for type 'struct array', which requires 8 byte alignment
+0x70f83d301611: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:203:17: runtime error: member access within misaligned address 0x70f83d301611 for type 'struct array', which requires 8 byte alignment
+0x70f83d301611: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:203:17: runtime error: reference binding to misaligned address 0x70f83d301659 for type 'void *', which requires 8 byte alignment
+0x70f83d301659: note: pointer points here
+ f8 70 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/build/guard-tests/test_bounds.cpp:21:96: runtime error: store to misaligned address 0x70f83d301659 for type 'void *', which requires 8 byte alignment
+0x70f83d301659: note: pointer points here
+ f8 70 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:18:66: runtime error: member call on misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2014d9 for type 'void *', which requires 8 byte alignment
+0x70f83d2014d9: note: pointer points here
+ f8 70 00  00 98 1e 30 3d f8 70 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:18:67: runtime error: load of misaligned address 0x70f83d2014d9 for type 'void *', which requires 8 byte alignment
+0x70f83d2014d9: note: pointer points here
+ f8 70 00  00 98 1e 30 3d f8 70 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:16:65: runtime error: member call on misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2014c9 for type 'void *', which requires 8 byte alignment
+0x70f83d2014c9: note: pointer points here
+ d0 52 00  00 90 1e 30 3d f8 70 00  00 94 1e 30 3d f8 70 00  00 98 1e 30 3d f8 70 00  00 00 00 00 00
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:16:66: runtime error: load of misaligned address 0x70f83d2014c9 for type 'void *', which requires 8 byte alignment
+0x70f83d2014c9: note: pointer points here
+ d0 52 00  00 90 1e 30 3d f8 70 00  00 94 1e 30 3d f8 70 00  00 98 1e 30 3d f8 70 00  00 00 00 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:17:68: runtime error: member call on misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2014d1 for type 'void *', which requires 8 byte alignment
+0x70f83d2014d1: note: pointer points here
+ f8 70 00  00 94 1e 30 3d f8 70 00  00 98 1e 30 3d f8 70 00  00 00 00 00 00 00 00 00  00 00 00 00 00
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:17:69: runtime error: load of misaligned address 0x70f83d2014d1 for type 'void *', which requires 8 byte alignment
+0x70f83d2014d1: note: pointer points here
+ f8 70 00  00 94 1e 30 3d f8 70 00  00 98 1e 30 3d f8 70 00  00 00 00 00 00 00 00 00  00 00 00 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:33: runtime error: member call on misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2014b1 for type 'void *', which requires 8 byte alignment
+0x70f83d2014b1: note: pointer points here
+ c0 50 00  00 10 00 00 00 40 50 00  00 e0 00 00 00 60 50 00  00 00 04 00 00 d0 52 00  00 90 1e 30 3d
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:56: runtime error: load of misaligned address 0x70f83d2014b1 for type 'void *', which requires 8 byte alignment
+0x70f83d2014b1: note: pointer points here
+ c0 50 00  00 10 00 00 00 40 50 00  00 e0 00 00 00 60 50 00  00 00 04 00 00 d0 52 00  00 90 1e 30 3d
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:33: runtime error: member call on misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2014b1 for type 'void *', which requires 8 byte alignment
+0x70f83d2014b1: note: pointer points here
+ c0 50 00  00 10 00 00 00 40 50 00  00 e0 00 00 00 60 50 00  00 00 04 00 00 d0 52 00  00 90 1e 30 3d
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:56: runtime error: load of misaligned address 0x70f83d2014b1 for type 'void *', which requires 8 byte alignment
+0x70f83d2014b1: note: pointer points here
+ c0 50 00  00 10 00 00 00 40 50 00  00 e0 00 00 00 60 50 00  00 00 04 00 00 d0 52 00  00 90 1e 30 3d
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:16:65: runtime error: member call on misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2014c9 for type 'void *', which requires 8 byte alignment
+0x70f83d2014c9: note: pointer points here
+ d0 52 00  00 90 1e 30 3d f8 70 00  00 94 1e 30 3d f8 70 00  00 98 1e 30 3d f8 70 00  00 00 00 00 00
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:16:66: runtime error: load of misaligned address 0x70f83d2014c9 for type 'void *', which requires 8 byte alignment
+0x70f83d2014c9: note: pointer points here
+ d0 52 00  00 90 1e 30 3d f8 70 00  00 94 1e 30 3d f8 70 00  00 98 1e 30 3d f8 70 00  00 00 00 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:33: runtime error: member call on misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2014b1 for type 'void *', which requires 8 byte alignment
+0x70f83d2014b1: note: pointer points here
+ c0 50 00  00 10 00 00 00 40 50 00  00 e0 00 00 00 60 50 00  00 00 04 00 00 d0 52 00  00 90 1e 30 3d
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:56: runtime error: load of misaligned address 0x70f83d2014b1 for type 'void *', which requires 8 byte alignment
+0x70f83d2014b1: note: pointer points here
+ c0 50 00  00 10 00 00 00 40 50 00  00 e0 00 00 00 60 50 00  00 00 04 00 00 d0 52 00  00 90 1e 30 3d
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:33: runtime error: member call on misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2014b1 for type 'void *', which requires 8 byte alignment
+0x70f83d2014b1: note: pointer points here
+ c0 50 00  00 10 00 00 00 40 50 00  00 e0 00 00 00 60 50 00  00 00 04 00 00 d0 52 00  00 90 1e 30 3d
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:56: runtime error: load of misaligned address 0x70f83d2014b1 for type 'void *', which requires 8 byte alignment
+0x70f83d2014b1: note: pointer points here
+ c0 50 00  00 10 00 00 00 40 50 00  00 e0 00 00 00 60 50 00  00 00 04 00 00 d0 52 00  00 90 1e 30 3d
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:16:65: runtime error: member call on misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2014c9 for type 'void *', which requires 8 byte alignment
+0x70f83d2014c9: note: pointer points here
+ d0 52 00  00 90 1e 30 3d f8 70 00  00 94 1e 30 3d f8 70 00  00 98 1e 30 3d f8 70 00  00 00 00 00 00
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:16:66: runtime error: load of misaligned address 0x70f83d2014c9 for type 'void *', which requires 8 byte alignment
+0x70f83d2014c9: note: pointer points here
+ d0 52 00  00 90 1e 30 3d f8 70 00  00 94 1e 30 3d f8 70 00  00 98 1e 30 3d f8 70 00  00 00 00 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:33: runtime error: member call on misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2014a1 for type 'void *', which requires 8 byte alignment
+0x70f83d2014a1: note: pointer points here
+ 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00 c0 50 00  00 10 00 00 00 40 50 00  00 e0 00 00 00
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:56: runtime error: load of misaligned address 0x70f83d2014a1 for type 'void *', which requires 8 byte alignment
+0x70f83d2014a1: note: pointer points here
+ 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00 c0 50 00  00 10 00 00 00 40 50 00  00 e0 00 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:33: runtime error: member call on misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:56: runtime error: load of misaligned address 0x70f83d201491 for type 'void *', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:33: runtime error: member call on misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2014b1 for type 'void *', which requires 8 byte alignment
+0x70f83d2014b1: note: pointer points here
+ c0 50 00  00 10 00 00 00 40 50 00  00 e0 00 00 00 60 50 00  00 00 04 00 00 d0 52 00  00 90 1e 30 3d
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:56: runtime error: load of misaligned address 0x70f83d2014b1 for type 'void *', which requires 8 byte alignment
+0x70f83d2014b1: note: pointer points here
+ c0 50 00  00 10 00 00 00 40 50 00  00 e0 00 00 00 60 50 00  00 00 04 00 00 d0 52 00  00 90 1e 30 3d
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:16:65: runtime error: member call on misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2014c9 for type 'void *', which requires 8 byte alignment
+0x70f83d2014c9: note: pointer points here
+ d0 52 00  00 90 1e 30 3d f8 70 00  00 94 1e 30 3d f8 70 00  00 98 1e 30 3d f8 70 00  00 00 00 00 00
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:16:66: runtime error: load of misaligned address 0x70f83d2014c9 for type 'void *', which requires 8 byte alignment
+0x70f83d2014c9: note: pointer points here
+ d0 52 00  00 90 1e 30 3d f8 70 00  00 94 1e 30 3d f8 70 00  00 98 1e 30 3d f8 70 00  00 00 00 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:33: runtime error: member call on misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2014a9 for type 'void *', which requires 8 byte alignment
+0x70f83d2014a9: note: pointer points here
+ c0 50 00  00 00 01 00 00 c0 50 00  00 10 00 00 00 40 50 00  00 e0 00 00 00 60 50 00  00 00 04 00 00
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:56: runtime error: load of misaligned address 0x70f83d2014a9 for type 'void *', which requires 8 byte alignment
+0x70f83d2014a9: note: pointer points here
+ c0 50 00  00 00 01 00 00 c0 50 00  00 10 00 00 00 40 50 00  00 e0 00 00 00 60 50 00  00 00 04 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:14:47: runtime error: member call on misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2014b9 for type 'void *', which requires 8 byte alignment
+0x70f83d2014b9: note: pointer points here
+ 40 50 00  00 e0 00 00 00 60 50 00  00 00 04 00 00 d0 52 00  00 90 1e 30 3d f8 70 00  00 94 1e 30 3d
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:14:70: runtime error: load of misaligned address 0x70f83d2014b9 for type 'void *', which requires 8 byte alignment
+0x70f83d2014b9: note: pointer points here
+ 40 50 00  00 e0 00 00 00 60 50 00  00 00 04 00 00 d0 52 00  00 90 1e 30 3d f8 70 00  00 94 1e 30 3d
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:33: runtime error: member call on misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d201499 for type 'void *', which requires 8 byte alignment
+0x70f83d201499: note: pointer points here
+ 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00 c0 50 00  00 10 00 00 00
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d201491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d201491: note: pointer points here
+ 00 00 00  00 20 00 00 00 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:56: runtime error: load of misaligned address 0x70f83d201499 for type 'void *', which requires 8 byte alignment
+0x70f83d201499: note: pointer points here
+ 60 50 00  00 80 00 00 00 60 50 00  00 40 00 00 00 c0 50 00  00 00 01 00 00 c0 50 00  00 10 00 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:17:68: runtime error: member call on misaligned address 0x70f83d211491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d211491: note: pointer points here
+ 00 00 00  00 20 09 00 00 60 50 00  00 40 00 00 00 30 50 00  00 10 02 00 00 40 50 00  00 00 04 05 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d211491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d211491: note: pointer points here
+ 00 00 00  00 20 09 00 00 60 50 00  00 40 00 00 00 30 50 00  00 10 02 00 00 40 50 00  00 00 04 05 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2114b9 for type 'void *', which requires 8 byte alignment
+0x70f83d2114b9: note: pointer points here
+ f8 70 00  00 14 27 30 3d f8 70 00  00 18 27 30 3d f8 70 00  00 00 00 00 00 00 00 00  00 00 00 00 00
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d211491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d211491: note: pointer points here
+ 00 00 00  00 20 09 00 00 60 50 00  00 40 00 00 00 30 50 00  00 10 02 00 00 40 50 00  00 00 04 05 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:17:69: runtime error: load of misaligned address 0x70f83d2114b9 for type 'void *', which requires 8 byte alignment
+0x70f83d2114b9: note: pointer points here
+ f8 70 00  00 14 27 30 3d f8 70 00  00 18 27 30 3d f8 70 00  00 00 00 00 00 00 00 00  00 00 00 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:16:65: runtime error: member call on misaligned address 0x70f83d211491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d211491: note: pointer points here
+ 00 00 00  00 20 09 00 00 60 50 00  00 40 00 00 00 30 50 00  00 10 02 00 00 40 50 00  00 00 04 05 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d211491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d211491: note: pointer points here
+ 00 00 00  00 20 09 00 00 60 50 00  00 40 00 00 00 30 50 00  00 10 02 00 00 40 50 00  00 00 04 05 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2114b1 for type 'void *', which requires 8 byte alignment
+0x70f83d2114b1: note: pointer points here
+ d0 52 00  00 10 27 30 3d f8 70 00  00 14 27 30 3d f8 70 00  00 18 27 30 3d f8 70 00  00 00 00 00 00
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d211491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d211491: note: pointer points here
+ 00 00 00  00 20 09 00 00 60 50 00  00 40 00 00 00 30 50 00  00 10 02 00 00 40 50 00  00 00 04 05 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:16:66: runtime error: load of misaligned address 0x70f83d2114b1 for type 'void *', which requires 8 byte alignment
+0x70f83d2114b1: note: pointer points here
+ d0 52 00  00 10 27 30 3d f8 70 00  00 14 27 30 3d f8 70 00  00 18 27 30 3d f8 70 00  00 00 00 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:14:47: runtime error: member call on misaligned address 0x70f83d211491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d211491: note: pointer points here
+ 00 00 00  00 20 09 00 00 60 50 00  00 40 00 00 00 30 50 00  00 10 02 00 00 40 50 00  00 00 04 05 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d211491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d211491: note: pointer points here
+ 00 00 00  00 20 09 00 00 60 50 00  00 40 00 00 00 30 50 00  00 10 02 00 00 40 50 00  00 00 04 05 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2114a1 for type 'void *', which requires 8 byte alignment
+0x70f83d2114a1: note: pointer points here
+ 30 50 00  00 10 02 00 00 40 50 00  00 00 04 05 00 d0 52 00  00 10 27 30 3d f8 70 00  00 14 27 30 3d
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d211491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d211491: note: pointer points here
+ 00 00 00  00 20 09 00 00 60 50 00  00 40 00 00 00 30 50 00  00 10 02 00 00 40 50 00  00 00 04 05 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:14:70: runtime error: load of misaligned address 0x70f83d2114a1 for type 'void *', which requires 8 byte alignment
+0x70f83d2114a1: note: pointer points here
+ 30 50 00  00 10 02 00 00 40 50 00  00 00 04 05 00 d0 52 00  00 10 27 30 3d f8 70 00  00 14 27 30 3d
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:14:47: runtime error: member call on misaligned address 0x70f83d211491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d211491: note: pointer points here
+ 00 00 00  00 20 09 00 00 60 50 00  00 40 00 00 00 30 50 00  00 10 02 00 00 40 50 00  00 00 04 05 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d211491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d211491: note: pointer points here
+ 00 00 00  00 20 09 00 00 60 50 00  00 40 00 00 00 30 50 00  00 10 02 00 00 40 50 00  00 00 04 05 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2114a1 for type 'void *', which requires 8 byte alignment
+0x70f83d2114a1: note: pointer points here
+ 30 50 00  00 10 02 00 00 40 50 00  00 00 04 05 00 d0 52 00  00 10 27 30 3d f8 70 00  00 14 27 30 3d
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d211491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d211491: note: pointer points here
+ 00 00 00  00 20 09 00 00 60 50 00  00 40 00 00 00 30 50 00  00 10 02 00 00 40 50 00  00 00 04 05 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:14:70: runtime error: load of misaligned address 0x70f83d2114a1 for type 'void *', which requires 8 byte alignment
+0x70f83d2114a1: note: pointer points here
+ 30 50 00  00 10 02 00 00 40 50 00  00 00 04 05 00 d0 52 00  00 10 27 30 3d f8 70 00  00 14 27 30 3d
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:33: runtime error: member call on misaligned address 0x70f83d213491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d213491: note: pointer points here
+ 00 00 00  00 80 09 00 00 60 50 00  00 70 00 00 00 30 50 00  00 50 02 00 00 40 50 00  00 00 a4 05 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d213491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d213491: note: pointer points here
+ 00 00 00  00 80 09 00 00 60 50 00  00 70 00 00 00 30 50 00  00 50 02 00 00 40 50 00  00 00 a4 05 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d213491 for type 'void *', which requires 8 byte alignment
+0x70f83d213491: note: pointer points here
+ 00 00 00  00 80 09 00 00 60 50 00  00 70 00 00 00 30 50 00  00 50 02 00 00 40 50 00  00 00 a4 05 00
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d213491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d213491: note: pointer points here
+ 00 00 00  00 80 09 00 00 60 50 00  00 70 00 00 00 30 50 00  00 50 02 00 00 40 50 00  00 00 a4 05 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:56: runtime error: load of misaligned address 0x70f83d213491 for type 'void *', which requires 8 byte alignment
+0x70f83d213491: note: pointer points here
+ 00 00 00  00 80 09 00 00 60 50 00  00 70 00 00 00 30 50 00  00 50 02 00 00 40 50 00  00 00 a4 05 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:33: runtime error: member call on misaligned address 0x70f83d213491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d213491: note: pointer points here
+ 00 00 00  00 80 09 00 00 60 50 00  00 70 00 00 00 30 50 00  00 50 02 00 00 40 50 00  00 00 a4 05 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d213491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d213491: note: pointer points here
+ 00 00 00  00 80 09 00 00 60 50 00  00 70 00 00 00 30 50 00  00 50 02 00 00 40 50 00  00 00 a4 05 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d213499 for type 'void *', which requires 8 byte alignment
+0x70f83d213499: note: pointer points here
+ 60 50 00  00 70 00 00 00 30 50 00  00 50 02 00 00 40 50 00  00 00 a4 05 00 d0 52 00  00 50 2b 30 3d
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d213491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d213491: note: pointer points here
+ 00 00 00  00 80 09 00 00 60 50 00  00 70 00 00 00 30 50 00  00 50 02 00 00 40 50 00  00 00 a4 05 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:56: runtime error: load of misaligned address 0x70f83d213499 for type 'void *', which requires 8 byte alignment
+0x70f83d213499: note: pointer points here
+ 60 50 00  00 70 00 00 00 30 50 00  00 50 02 00 00 40 50 00  00 00 a4 05 00 d0 52 00  00 50 2b 30 3d
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:14:47: runtime error: member call on misaligned address 0x70f83d213491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d213491: note: pointer points here
+ 00 00 00  00 80 09 00 00 60 50 00  00 70 00 00 00 30 50 00  00 50 02 00 00 40 50 00  00 00 a4 05 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d213491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d213491: note: pointer points here
+ 00 00 00  00 80 09 00 00 60 50 00  00 70 00 00 00 30 50 00  00 50 02 00 00 40 50 00  00 00 a4 05 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2134a1 for type 'void *', which requires 8 byte alignment
+0x70f83d2134a1: note: pointer points here
+ 30 50 00  00 50 02 00 00 40 50 00  00 00 a4 05 00 d0 52 00  00 50 2b 30 3d f8 70 00  00 54 2b 30 3d
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d213491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d213491: note: pointer points here
+ 00 00 00  00 80 09 00 00 60 50 00  00 70 00 00 00 30 50 00  00 50 02 00 00 40 50 00  00 00 a4 05 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:14:70: runtime error: load of misaligned address 0x70f83d2134a1 for type 'void *', which requires 8 byte alignment
+0x70f83d2134a1: note: pointer points here
+ 30 50 00  00 50 02 00 00 40 50 00  00 00 a4 05 00 d0 52 00  00 50 2b 30 3d f8 70 00  00 54 2b 30 3d
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:16:65: runtime error: member call on misaligned address 0x70f83d213491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d213491: note: pointer points here
+ 00 00 00  00 80 09 00 00 60 50 00  00 70 00 00 00 30 50 00  00 50 02 00 00 40 50 00  00 00 a4 05 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d213491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d213491: note: pointer points here
+ 00 00 00  00 80 09 00 00 60 50 00  00 70 00 00 00 30 50 00  00 50 02 00 00 40 50 00  00 00 a4 05 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2134b1 for type 'void *', which requires 8 byte alignment
+0x70f83d2134b1: note: pointer points here
+ d0 52 00  00 50 2b 30 3d f8 70 00  00 54 2b 30 3d f8 70 00  00 58 2b 30 3d f8 70 00  00 00 00 00 00
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d213491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d213491: note: pointer points here
+ 00 00 00  00 80 09 00 00 60 50 00  00 70 00 00 00 30 50 00  00 50 02 00 00 40 50 00  00 00 a4 05 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:16:66: runtime error: load of misaligned address 0x70f83d2134b1 for type 'void *', which requires 8 byte alignment
+0x70f83d2134b1: note: pointer points here
+ d0 52 00  00 50 2b 30 3d f8 70 00  00 54 2b 30 3d f8 70 00  00 58 2b 30 3d f8 70 00  00 00 00 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:18:66: runtime error: member call on misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2154d1 for type 'void *', which requires 8 byte alignment
+0x70f83d2154d1: note: pointer points here
+ f8 70 00  00 98 2f 30 3d f8 70 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:18:67: runtime error: load of misaligned address 0x70f83d2154d1 for type 'void *', which requires 8 byte alignment
+0x70f83d2154d1: note: pointer points here
+ f8 70 00  00 98 2f 30 3d f8 70 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:16:65: runtime error: member call on misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2154c1 for type 'void *', which requires 8 byte alignment
+0x70f83d2154c1: note: pointer points here
+ d0 52 00  00 90 2f 30 3d f8 70 00  00 94 2f 30 3d f8 70 00  00 98 2f 30 3d f8 70 00  00 00 00 00 00
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:16:66: runtime error: load of misaligned address 0x70f83d2154c1 for type 'void *', which requires 8 byte alignment
+0x70f83d2154c1: note: pointer points here
+ d0 52 00  00 90 2f 30 3d f8 70 00  00 94 2f 30 3d f8 70 00  00 98 2f 30 3d f8 70 00  00 00 00 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:33: runtime error: member call on misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d215491 for type 'void *', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:56: runtime error: load of misaligned address 0x70f83d215491 for type 'void *', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:14:47: runtime error: member call on misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2154a1 for type 'void *', which requires 8 byte alignment
+0x70f83d2154a1: note: pointer points here
+ 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00 c0 50 00  00 80 00 00 00 60 51 00  00 00 44 06 00
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:14:70: runtime error: load of misaligned address 0x70f83d2154a1 for type 'void *', which requires 8 byte alignment
+0x70f83d2154a1: note: pointer points here
+ 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00 c0 50 00  00 80 00 00 00 60 51 00  00 00 44 06 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:14:47: runtime error: member call on misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2154a9 for type 'void *', which requires 8 byte alignment
+0x70f83d2154a9: note: pointer points here
+ c0 50 00  00 00 0d 00 00 c0 50 00  00 80 00 00 00 60 51 00  00 00 44 06 00 d0 52 00  00 90 2f 30 3d
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:14:70: runtime error: load of misaligned address 0x70f83d2154a9 for type 'void *', which requires 8 byte alignment
+0x70f83d2154a9: note: pointer points here
+ c0 50 00  00 00 0d 00 00 c0 50 00  00 80 00 00 00 60 51 00  00 00 44 06 00 d0 52 00  00 90 2f 30 3d
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:16:65: runtime error: member call on misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2154c1 for type 'void *', which requires 8 byte alignment
+0x70f83d2154c1: note: pointer points here
+ d0 52 00  00 90 2f 30 3d f8 70 00  00 94 2f 30 3d f8 70 00  00 98 2f 30 3d f8 70 00  00 00 00 00 00
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:16:66: runtime error: load of misaligned address 0x70f83d2154c1 for type 'void *', which requires 8 byte alignment
+0x70f83d2154c1: note: pointer points here
+ d0 52 00  00 90 2f 30 3d f8 70 00  00 94 2f 30 3d f8 70 00  00 98 2f 30 3d f8 70 00  00 00 00 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:14:47: runtime error: member call on misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2154b1 for type 'void *', which requires 8 byte alignment
+0x70f83d2154b1: note: pointer points here
+ c0 50 00  00 80 00 00 00 60 51 00  00 00 44 06 00 d0 52 00  00 90 2f 30 3d f8 70 00  00 94 2f 30 3d
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:14:70: runtime error: load of misaligned address 0x70f83d2154b1 for type 'void *', which requires 8 byte alignment
+0x70f83d2154b1: note: pointer points here
+ c0 50 00  00 80 00 00 00 60 51 00  00 00 44 06 00 d0 52 00  00 90 2f 30 3d f8 70 00  00 94 2f 30 3d
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:14:47: runtime error: member call on misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d2154b1 for type 'void *', which requires 8 byte alignment
+0x70f83d2154b1: note: pointer points here
+ c0 50 00  00 80 00 00 00 60 51 00  00 00 44 06 00 d0 52 00  00 90 2f 30 3d f8 70 00  00 94 2f 30 3d
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:14:70: runtime error: load of misaligned address 0x70f83d2154b1 for type 'void *', which requires 8 byte alignment
+0x70f83d2154b1: note: pointer points here
+ c0 50 00  00 80 00 00 00 60 51 00  00 00 44 06 00 d0 52 00  00 90 2f 30 3d f8 70 00  00 94 2f 30 3d
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:33: runtime error: member call on misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d215499 for type 'void *', which requires 8 byte alignment
+0x70f83d215499: note: pointer points here
+ 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00 c0 50 00  00 80 00 00 00
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:56: runtime error: load of misaligned address 0x70f83d215499 for type 'void *', which requires 8 byte alignment
+0x70f83d215499: note: pointer points here
+ 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00 c0 50 00  00 80 00 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:33: runtime error: member call on misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: member access within misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/usr/include/c++/13/array:213:17: runtime error: reference binding to misaligned address 0x70f83d215499 for type 'void *', which requires 8 byte alignment
+0x70f83d215499: note: pointer points here
+ 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00 c0 50 00  00 80 00 00 00
+              ^ 
+/usr/include/c++/13/array:213:21: runtime error: member access within misaligned address 0x70f83d215491 for type 'const struct array', which requires 8 byte alignment
+0x70f83d215491: note: pointer points here
+ 00 00 00  00 90 02 00 00 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00
+              ^ 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet23-fast/adapter.cpp:13:56: runtime error: load of misaligned address 0x70f83d215499 for type 'void *', which requires 8 byte alignment
+0x70f83d215499: note: pointer points here
+ 40 50 00  00 e0 09 00 00 60 50 00  00 40 0c 00 00 c0 50 00  00 00 0d 00 00 c0 50 00  00 80 00 00 00
+              ^ 
+
+core-bounds {"cpu_only":true,"serial_core_index_cases":19,"passed":true}
+ 
