@@ -542,3 +542,17 @@ preregistered bar for "carries the policy" (35 with rule and method at 4/5, not 
 current value three items back at the last probe, and that counter in the final query. Slower than the harness
 keeper (21 against 15 minutes): thinking now stays on while a question is open, and each `recall` is one more
 round trip inside a client call.
+
+**X32, seed 1: 42 of 46, not void, but 47 minutes and a defect.** Rule 5/5, method 5/5, old value 5/5, current 4/5,
+who 3/5, finals 20/21. The bar for "carries the policy" on this seed (41 with rule and method at 4/5) is met, the
+speed is not acceptable, and the cause is the proxy's, not the policy's: 10 of its 24 notes calls were rejected, all
+of them after the 14th cut. The proxy's notes call did not send the reasoning effort the other calls use, so it
+thought at the template's full effort inside a 4,096-token cap; once one reply came back empty or cut, the notes
+were a cut behind, the next call had more to reconcile, and every later one failed too. With stale notes the model
+stopped trusting its state and checked the final answers one counter at a time through `recall` (68 searches); the
+proxy allowed six per turn and then handed the seventh `recall` call to the client, which does not know that tool.
+Fixed in `tools/ctxkeeper` after this run, each with a test: the notes call sends the same effort and has 8,192
+tokens; a rejected notes reply is logged with its reason and asked for again without thinking; when a turn's
+searches are used up the model is asked once more without the tool and the client never receives a `recall` call.
+Seed 0 had none of this (22 cuts, 22 notes, 12 searches, 21 minutes). The proxy's numbers so far are therefore
+37/39 and 42/46 with a known defect in the second; it is rerun after the fixes.
