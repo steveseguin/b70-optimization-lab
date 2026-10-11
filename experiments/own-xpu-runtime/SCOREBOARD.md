@@ -1,13 +1,14 @@
-# Our Intel Xe runtime — measured state, 2026-10-11 08:15 UTC
+# Our Intel Xe runtime — measured state, 2026-10-11 09:20 UTC
 
-**The runtime answers correctly on a card, slowly, and not yet bit-exactly.** This page
-covers Unsloth UD-IQ3_XXS, the **quantized compressed version**, with full 16-bit KV.
-The first real-model run on card 3 produced the oracle's first eight tokens at about
-59 s per position; its hidden states differ from the CPU oracle in low bits because the
-card's `exp`/`log`/`1/sqrt` are not glibc's. Parallel non-GEMV kernels now cost about
-**23 ms per token** instead of 52 s. Best planning rate: **about 14–16 tok/s** (41 ms
-GEMV + 23–31 ms non-GEMV, sequential two-card, unmeasured as a whole); reference
-runtime: **28.49 tok/s**. Receipts follow below.
+**Device work is halted: second GPU fault on this boot (09:10 UTC), reboot is the
+owner's decision** ([incident][fault]). State at the halt, for Unsloth UD-IQ3_XXS, the
+**quantized compressed version**, full 16-bit KV: the runtime answers correctly on a
+card; one-card decode with the parallel kernels costs about **0.2 s of device time per
+token plus weight streaming**; no two-card decode has been measured. The bit-exactness
+gap is explained: our device builds linked without Intel's correctly-rounded
+divide/sqrt options, and the card's own `exp`/`log` are not glibc's. With the link
+fixed, our deterministic `exp`/`log` match the host on the card for all 2^32 inputs.
+Reference runtime: **28.49 tok/s**. Receipts follow below.
 
 **Kernel progress.** Effective GB/s means payload bytes divided by device time,
 not measured memory-bus traffic. These are warm, fixed-input operator diagnostics
@@ -70,8 +71,15 @@ fixtures** ([comparison][devcmp]), although all eight generated tokens agree. Ca
 measured by [packet 15's window][p15exact]: the packet 4 core on the card equals the
 same core on the host in only 50/72 fixtures, and every differing case contains
 `exp`, `log`, a `1/sqrt` chain or trig. The parallel kernels equal the core on the
-same card 72/72 in two fresh owners. Identity v2 ([packet 17][p17], deterministic
-`exp`/`log`, host RoPE table) is in preparation; [decision note][v2note].
+same card 72/72 in two fresh owners. A second cause was found at 08:52 UTC: the
+correctly-rounded divide/sqrt options were only on the compile line; they take effect
+at link ([forensics][linkflags]), so every device binary through packet 16 had
+approximate divide and sqrt. Identity v2 ([packet 17][p17]: deterministic `exp`/`log`
+within 0.50000005 ULP, host RoPE table) passes the exhaustive host-versus-card check
+for both functions when linked correctly; its 72-fixture device gates and the
+full-model gate ([packet 18][p18]) wait for the reboot. The v2 CPU oracle agrees with
+v1 on 41 of 64 tokens and departs at token 42, where two logits tie exactly at 22.0;
+both answers read correctly ([decision note][v2note]).
 
 **First real-model device run.** [Packet 13][p13] streamed layers through card 3:
 87 prompt positions, then tokens **332, 37947, 1653, 10082, 3508, 8812, 25, 23288**
@@ -81,10 +89,17 @@ interpreter, 0.10 s GEMV, 3.9 s weight streaming**. This is a correctness diagno
 not a speed configuration.
 
 **Non-GEMV after packet 15 (card 3, [timing][p15time]).** One new token through one
-layer: GDN **0.461 ms** device (0.612 wall, 14 launches), QSA **0.555 ms** (0.763
-wall, 17 launches); before, about 1,220 and 660 ms. Per token: about 23 ms device,
-31 ms wall. Largest kernels: route+gather **0.230 ms per layer (11 ms per token)**,
-GDN recurrence 0.109 ms, QSA attention 0.144 ms. Synthetic one-row sequences.
+layer in a synthetic sequence: GDN **0.461 ms** device (14 launches), QSA **0.555 ms**
+(17 launches); before, about 1,220 and 660 ms.
+
+**Integrated one-card run with those kernels ([packet 16 W1][p16w1], card 3).** All 48
+layer hashes and the token equal packet 13's device result; 485 s for the 87-position
+prompt instead of 5,247 s. Per position: **71–92 ms GEMV and 81–112 ms non-GEMV device
+time across 3,619 kernel launches**, plus 3.4–3.8 s of weight streaming and 3,463 host
+waits (one-card streaming only). The non-GEMV time is about 3.5 times the synthetic
+figure because the integrated layer issues about 50 non-GEMV launches, not 14–17: at
+roughly 30 µs per launch, **launch count is now the main cost**. Planning value for
+two-card resident decode is therefore about 5–6 tok/s as built, not 14–16.
 
 **Two cards inside a layer ([packet 14][p14dev], cards 2+3).** Layer 0 over all 87
 positions is bit-identical to the one-card device result. GEMV drops to about 0.5 ms
@@ -96,18 +111,21 @@ expert decoders][r6] reached only **13.6 / 8.4 / 7.6 GB/s** versus the retained
 **66 GB/s** path. [Expanding all experts does not fit two cards][expansion];
 keep experts packed and qualify dense-only expansion separately.
 
-**Next, in order:**
+**Next, in order (device steps need the reboot first):**
 
-1. **[Packet 16][p16], two-card resident decode** with the parallel kernels and
-   chained events: the first measured decode tok/s. Planning value 14–16 tok/s.
-2. **[Packet 17][p17], identity v2:** device census, deterministic-math equality on
-   host and card, then the full-model v2 oracle gate. Needed before any result can be
-   called exact.
-3. **Route+gather kernel and launch merging:** 11 ms per token in one kernel; 14–17
-   launches per layer at about 30 µs each.
-4. **Merge packet 14's exchanges** (41 per layer to a few), then repeat its gate.
-   Projected up to 1.5× on the GEMV part only.
-5. **[Whole-step capture][capture]:** remove remaining host submission gaps.
+1. **[Packet 17][p17] W-B** on one card: 72 fixtures, host versus card, two fresh owners.
+2. **[Packet 18][p18] W1:** one card, gated directly against the v2 CPU oracle. First
+   true exactness gate of the lane.
+3. **[Packet 19][p19]:** root cause of the two-card fault, a CPU sanitizer that runs
+   the chained plan in randomized dependency order with ownership tracking, and the
+   fix. Then the smallest two-card smoke, then packet 18 W2: first measured decode
+   tok/s.
+4. **Launch count:** 3,619 launches per token to a few hundred, by fusing each layer's
+   non-GEMV work into a handful of kernels and replaying a recorded command graph.
+   This is the largest speed lever now; route+gather (0.230 ms per layer in one
+   work-group) goes with it.
+5. **R5 GEMV dispatch** (41 ms projected versus 71–92 ms measured with the frozen one).
+6. **Merge packet 14's exchanges** (41 per layer to a few), then repeat its gate.
 
 [r1]: stage2/packet6-kopt/receipts-card3-20261011/timing/timing.json
 [r2]: stage2/packet7-kopt2/receipts-card3-20261011/timing.json
@@ -147,3 +165,8 @@ keep experts packed and qualify dense-only expansion separately.
 [p16]: stage2/packet16-decode/README.md
 [p17]: stage2/packet17-detmath/README.md
 [v2note]: ../../notes/2026-10-11-first-device-answer-and-arithmetic-v2.md
+[fault]: stage2/packet16-decode/evidence/20261011-w2x-two-card-fault/README.md
+[linkflags]: stage2/packet17-detmath/evidence/20261011-wb-a-link-flags/README.md
+[p16w1]: stage2/packet16-decode/receipts-card3-20261011-w1/window.json
+[p18]: stage2/packet18-decode-v2/README.md
+[p19]: stage2/packet19-depcheck/README.md

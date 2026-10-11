@@ -94,3 +94,29 @@ row, not a decode measurement
    v2 oracle gate on the full model.
 3. Route+gather kernel (11 ms per token) and merging adjacent non-GEMV launches.
 4. Merge packet 14's 41 exchanges per layer into a few, then repeat its gate.
+
+## Addendum, 09:20 UTC: link-line flags, packet 16 one-card pass, and a fault halt
+
+- **The exactness gap has a second, larger cause.** Packet 17's W-B stopped on one
+  input (`log(1 − 2^-23)`, one unit in the last place). Rebuilding the same source one
+  step at a time showed that `-foffload-fp32-prec-div -foffload-fp32-prec-sqrt` must be
+  on the link command; on the compile line alone they do nothing. Linked correctly,
+  `exp-v2` and `log-v2` equal the host on the card for all 2^32 inputs each
+  ([forensics](../experiments/own-xpu-runtime/stage2/packet17-detmath/evidence/20261011-wb-a-link-flags/README.md)).
+  Every device binary through packet 16 therefore also had approximate divide and sqrt.
+- **v2 oracle.** `exp`/`log` within 0.50000005 ULP of the true value, identical under
+  both host compilers. Against the v1 oracle: 41 of 64 tokens equal, first difference at
+  token 42 where v2's two leading logits tie exactly at 22.0 (v1: 22.0 versus 21.875).
+  Both texts are coherent. This is the output change recorded for the owner.
+- **Packet 16 W1 (card 3):** the chained runtime with parallel kernels reproduces packet
+  13's device result (48/48 layers, token 332) in 485 s. Per position 71–92 ms GEMV and
+  81–112 ms non-GEMV device time over 3,619 launches: launch count, not arithmetic, is
+  now the main cost.
+- **Fault halt, 09:09:45 UTC.** My two-card resident speed run (W2's command without
+  the oracle argument, plus a NEO host-memory key) page-faulted and engine-reset both
+  cards at first compute. Second fault on this boot, so device launches are stopped and
+  the reboot is the owner's decision
+  ([incident](../experiments/own-xpu-runtime/stage2/packet16-decode/evidence/20261011-w2x-two-card-fault/README.md)).
+  My error: the chained path had only ever run under a synchronous CPU mock, and I
+  started it at full size and changed two things relative to the prepared window.
+  Packet 19 builds the CPU sanitizer that closes that hole.
