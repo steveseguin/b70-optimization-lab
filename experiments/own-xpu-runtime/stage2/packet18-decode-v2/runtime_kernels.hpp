@@ -130,7 +130,10 @@ inline void evaluate(Spec spec, void *const *p) {
   c.op = spec.op;
   c.l = spec.site;
   c.s = c.l.shape;
-  c.position = *pos;
+  // The serial control path must guard standalone QSA submissions too.
+  // Never narrow a poisoned unsigned position before checking its range.
+  if (*pos >= unsigned(spec.g.context)) { *error = 1; c.position = 0; }
+  else c.position = int(*pos);
   c.packed_heads = spec.packed_heads;
   for (int i = 0; i < spec.ni; ++i) {
     c.inputs[i] = c.make(in[i].n);

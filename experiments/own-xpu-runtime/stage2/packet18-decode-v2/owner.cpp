@@ -5,10 +5,23 @@
 #include <cstdio>
 #include <limits>
 #include <mutex>
+#include <map>
 #include <sstream>
 #include <stdexcept>
 
 namespace ownrt {
+namespace {
+std::map<Event,int> event_queue;
+int queue_of(const Row& r) {
+  if(r.memory!=Memory::device)return -1;
+  return r.label.starts_with("card1:")?1:0;
+}
+void assert_local_dependencies(std::span<const Event> deps,int queue) {
+  for(auto e:deps)if(event_queue.at(e)!=queue)
+    throw std::logic_error("foreign-queue dependency rejected by owner");
+}
+}
+
 std::uint64_t next_handle() {static std::atomic<std::uint64_t> n{1}; return n.fetch_add(1);}
 std::string quote(const std::string& value) {
   std::ostringstream out; out << '"';
@@ -71,6 +84,7 @@ Device::Device(std::unique_ptr<Backend> b):backend_(std::move(b)),arena(*this) {
   std::mutex m; std::unique_lock lock(m); std::condition_variable cv;
   cv.wait(lock, []{return false;}); std::abort(); // unreachable
 }
+void forget_event_queues(std::span<const Event> events) {for(auto e:events)event_queue.erase(e);}
 Device::~Device() {
   if(closed_) return;
   try { if(shutdown(std::chrono::seconds(60)).safe_to_exit) return; }
@@ -102,16 +116,19 @@ Event Device::compute(const Operation& op, std::span<const Allocation> buffers, 
   admit(); validate(deps);
   if(buffers.empty()) throw std::invalid_argument("empty compute bindings");
   std::vector<void*> pointers;
+  int queue=queue_of(arena.row(buffers.front()));
   for(auto id:buffers) {
     const auto& r=arena.row(id);
     if(!r.live || r.memory!=Memory::device) throw std::logic_error("compute requires live device allocation");
+    if(queue_of(r)!=queue)throw std::logic_error("foreign compute allocation");
     pointers.push_back(r.pointer);
   }
   std::vector<Event> chain(deps.begin(),deps.end());
   if(!events_.empty()) chain.push_back(events_.back());
+  assert_local_dependencies(chain,queue);
   events_.reserve(events_.size()+1);
   try {
-    auto e=backend_->compute(op,pointers,chain); events_.push_back(e); return e;
+    auto e=backend_->compute(op,pointers,chain); event_queue[e]=queue; events_.push_back(e); return e;
   } catch(const std::exception& e) {fault_=e.what(); throw;}
 }
 bool Device::drain(Deadline end) {
@@ -151,10 +168,10 @@ Receipt Device::shutdown(std::chrono::milliseconds timeout) {
     }
     sequence_.push_back("graphs-released");
     for(int g=0;g<4;++g) arena.release_group(g);
-    if(!final_marker_) { events_.reserve(events_.size()+1); final_marker_=backend_->marker(events_); events_.push_back(final_marker_); }
+    if(!final_marker_) { events_.reserve(events_.size()+1); final_marker_=backend_->marker({}); events_.push_back(final_marker_); }
     if(!backend_->wait(final_marker_,end)) return receipt("final idle marker pending; queue/context retained");
     backend_->synchronize(); idle_=true; sequence_.push_back("idle-marker-complete");
-    backend_->clear_events(); events_.clear(); sequence_.push_back("events-released");
+    backend_->clear_events(); forget_event_queues(events_); events_.clear(); sequence_.push_back("events-released");
     backend_->close_queue(); sequence_.push_back("queue-released");
     backend_->close_context(); sequence_.push_back("context-released"); closed_=true;
     return receipt();
@@ -215,13 +232,17 @@ Event CopyEngine::copy(Allocation dst,std::size_t off,Allocation src,std::size_t
   if(!n || n>limit_ || !d.live || !s.live || off>d.bytes || n>d.bytes-off || soff>s.bytes || n>s.bytes-soff)
     throw std::out_of_range("copy extent/lifetime");
   if(dst==src) throw std::invalid_argument("aliased copy unsupported");
+  int dq=queue_of(d),sq=queue_of(s),queue=dq>=0?dq:sq>=0?sq:0;
+  if(dq>=0&&sq>=0&&dq!=sq&&owner_.in_flight())
+    throw std::logic_error("peer copy requires both queues drained on host");
   // All submissions on this card are serialized with explicit dependencies.
   std::vector<Event> chain(deps.begin(),deps.end());
   if(!owner_.events_.empty()) chain.push_back(owner_.events_.back());
+  assert_local_dependencies(chain,queue);
   owner_.events_.reserve(owner_.events_.size()+1);
   try {
     auto e=owner_.backend_->copy(static_cast<std::byte*>(d.pointer)+off,static_cast<const std::byte*>(s.pointer)+soff,n,chain);
-    owner_.events_.push_back(e); return e;
+    event_queue[e]=queue; owner_.events_.push_back(e); return e;
   } catch(const std::exception& e) {owner_.fault_=e.what(); throw;}
 }
 }

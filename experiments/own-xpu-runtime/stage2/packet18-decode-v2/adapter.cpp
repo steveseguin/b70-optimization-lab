@@ -15,17 +15,45 @@ struct Bound {
  uint32_t* error()const{return static_cast<uint32_t*>(p[tail()+1]);}
  uint32_t* position()const{return static_cast<uint32_t*>(p[tail()+2]);}
  uint32_t* active()const{return static_cast<uint32_t*>(p[tail()+3]);}
+ uint32_t failed()const {
+#ifdef OWN_RT_HOST_ONLY
+  return *error();
+#else
+  return sycl::atomic_ref<uint32_t,sycl::memory_order::relaxed,sycl::memory_scope::device,sycl::access::address_space::global_space>(*error()).load();
+#endif
+ }
+ void fail()const {
+#ifdef OWN_RT_HOST_ONLY
+  *error()=1;
+#else
+  sycl::atomic_ref<uint32_t,sycl::memory_order::relaxed,sycl::memory_scope::device,sycl::access::address_space::global_space>(*error()).store(1);
+#endif
+ }
+ // Validate before conversion: View::get can expose poisoned integer bytes as
+ // a floating value outside int range. Invalid values never form an address.
+ int safe_id(float value,int limit,int upper)const {
+  if(!std::isfinite(value)||value<0||value>=float(limit)||value>float(upper)||std::floor(value)!=value){fail();return 0;}
+  return int(value);
+ }
+ int safe_position()const {
+  auto value=*position();if(value>=unsigned(s.g.context)){fail();return 0;}
+  return int(value);
+ }
 };
 // Tiny geometry has the same equations, with dimensions taken from its plan.
 // Keep these parallel as well: synthetic integration tests do not silently
 // select the single_task exactness control.
 template<class Team> void tiny(Bound b,int group,Team t) {
- const auto s=b.s;const auto g=s.g;if(!*b.active()||*b.error())return;
+ const auto s=b.s;const auto g=s.g;
+ // Snapshot the guard once per workgroup so another group's fail cannot make
+ // lanes diverge around a barrier. The error itself is atomic across groups.
+ t.each(1,[&](int){t.x[0]=float(!*b.active()||b.failed());});t.barrier();
+ if(t.x[0])return;t.barrier();
  auto bf=[](float x){return ng::Args::bf(x);};
  auto weight=[&](int w,int k){return iq3::element(s.grids[w],static_cast<const uint8_t*>(b.p[s.ni+s.no+w]),k);};
  auto tree=[&](int n,auto value){return ng::tree(t,n,value);};
  auto rope=[&](auto value,auto store,int width,int w,int pos){
-  if(g.rotary<=0 || g.rotary%2 || 64%g.rotary || g.rotary>width || pos<0 || pos>=rope_constants::positions){t.each(1,[&](int){*b.error()=1;});return;}
+  if(g.rotary<=0 || g.rotary%2 || 64%g.rotary || g.rotary>width || pos<0 || pos>=rope_constants::positions){t.each(1,[&](int){b.fail();});return;}
   float inv=detmath::rsqrt(tree(width,[&](int k){float v=value(k);return v*v;})/float(width)+1e-6f);t.barrier();
   t.each(width,[&](int k){t.x[k]=bf((value(k)*inv)*weight(w,k));});t.barrier();
   t.each(width,[&](int k){float v=t.x[k];if(k<g.rotary){int j=k%(g.rotary/2);auto table=static_cast<const uint16_t*>(b.p[b.tail()+4]);float c=rope_constants::cos(table,pos,j*64/g.rotary),z=rope_constants::sin(table,pos,j*64/g.rotary);v=k<g.rotary/2?t.x[j]*c-t.x[j+g.rotary/2]*z:t.x[j+g.rotary/2]*c+t.x[j]*z;}store(k,v);});t.barrier();
@@ -44,24 +72,31 @@ template<class Team> void tiny(Bound b,int group,Team t) {
   int base=group*g.d;float inv=detmath::rsqrt(tree(g.d,[&](int k){float x=b.in(0).get(base+k);return x*x;})/float(g.d)+1e-6f);t.barrier();
   t.each(g.d,[&](int k){b.out(0).put(base+k,((b.in(0).get(base+k)*inv)*weight(0,k))*ng::sigmoid(b.in(1).get(base+k)));});
  }else if(s.op==Op::qsa_prepare){
-  int pos=*b.position();if(group<g.qh){int base=group*2*g.ad;rope([&](int k){return b.in(0).get(base+k);},[&](int k,float v){b.out(0).put(group*g.ad+k,v);b.out(1).put(group*g.ad+k,b.in(0).get(base+g.ad+k));},g.ad,0,pos);}
+  int pos=b.safe_position();if(group<g.qh){int base=group*2*g.ad;rope([&](int k){return b.in(0).get(base+k);},[&](int k,float v){b.out(0).put(group*g.ad+k,v);b.out(1).put(group*g.ad+k,b.in(0).get(base+g.ad+k));},g.ad,0,pos);}
   else if(group<g.qh+g.kvh){int h=group-g.qh;rope([&](int k){return b.in(1).get(h*g.ad+k);},[&](int k,float v){b.out(2).put(h*g.ad+k,v);},g.ad,1,pos);}
   else {int h=group-g.qh-g.kvh;rope([&](int k){return b.in(2).get(h*g.id+k);},[&](int k,float v){b.out(3).put(h*g.id+k,v);},g.id,2,pos);}
  }else if(s.op==Op::qsa_append_pool){
-  int pos=*b.position(),pools=(g.context+3)/4;
+  int pos=b.safe_position(),pools=(g.context+3)/4;
   if(group==pools){t.each(g.kvh*g.ad,[&](int k){b.out(0).put(pos*g.kvh*g.ad+k,b.in(0).get(k));b.out(1).put(pos*g.kvh*g.ad+k,b.in(1).get(k));});t.each(g.id,[&](int k){b.out(2).put(pos*g.id+k,b.in(2).get(k));});}
   else if(group==(pos/4)&&(pos+1)%4==0){auto pooled=[&](int k){float x=0;for(int j=0;j<4;++j){int r=group*4+j;x=x+(r<pos?b.out(2).get(r*g.id+k):b.in(2).get(k));}return bf(x/4.f);};rope(pooled,[&](int k,float v){b.out(3).put(group*g.id+k,v);},g.id,0,group*4);}
  }else if(s.op==Op::qsa_select){
-  int pos=*b.position(),n=(pos+1)/4,base=2*((g.context+3)/4);
+  int pos=b.safe_position(),n=(pos+1)/4,base=2*((g.context+3)/4);
   for(int h=0;h<g.ih;++h)for(int block=0;block<n;++block){float score=ng::tree(t,g.id,[&](int k){return b.in(0).get(h*g.id+k)*b.in(1).get(block*g.id+k);},base);t.barrier();t.each(1,[&](int){t.x[block]=(h?t.x[block]:0.f)+std::max(0.f,score);});t.barrier();}
   t.each(n,[&](int k){t.x[k]=t.x[k]/detmath::sqrt(float(g.id));});t.barrier();int count=std::min(n,g.budget/4);
+  bool finite=true;for(int j=0;j<n;++j)finite=finite&&std::isfinite(t.x[j]);
+  if(!finite){t.each(g.budget+3,[&](int j){b.out(0).put(j,-1);});t.each(1,[&](int){b.fail();});return;}
   t.each(g.budget+3,[&](int j){b.out(0).put(j,-1);});t.barrier();t.each(n,[&](int block){int rank=0;for(int k=0;k<n;++k)rank+=t.x[k]>t.x[block]||(t.x[k]==t.x[block]&&k<block);if(rank<count)for(int j=0;j<4;++j)b.out(0).put(rank*4+j,block*4+j);});
   t.each(pos+1-n*4,[&](int j){b.out(0).put(count*4+j,n*4+j);});
  }else if(s.op==Op::qsa_attention){
-  int h=group,kh=h/(g.qh/g.kvh),n=0;while(n<int(b.in(4).n)&&b.in(4).get(n)>=0)++n;int base=g.budget+3;
-  for(int j=0;j<n;++j){int id=int(b.in(4).get(j));float score=ng::tree(t,g.ad,[&](int k){return b.in(2).get((id*g.kvh+kh)*g.ad+k)*b.in(0).get(h*g.ad+k);},base)/detmath::sqrt(float(g.ad));t.barrier();t.each(1,[&](int){t.x[j]=score;});t.barrier();}
+  int h=group,kh=h/(g.qh/g.kvh),n=0,pos=b.safe_position();
+  while(n<int(b.in(4).n)) {float value=b.in(4).get(n);if(value==-1)break;
+   // Validate before any int conversion, including a NaN sentinel.
+   (void)b.safe_id(value,g.context,pos);++n;}
+  int base=g.budget+3;
+  if(!n){t.each(1,[&](int){b.fail();});return;}
+  for(int j=0;j<n;++j){int id=b.safe_id(b.in(4).get(j),g.context,pos);float score=ng::tree(t,g.ad,[&](int k){return b.in(2).get((id*g.kvh+kh)*g.ad+k)*b.in(0).get(h*g.ad+k);},base)/detmath::sqrt(float(g.ad));t.barrier();t.each(1,[&](int){t.x[j]=score;});t.barrier();}
   float maximum=-INFINITY;for(int j=0;j<n;++j)maximum=std::max(maximum,t.x[j]);t.each(n,[&](int j){t.x[j]=detmath::exp(t.x[j]-maximum);t.x[base+j]=t.x[j];});t.barrier();float den=t.sum(n,base);t.barrier();t.each(n,[&](int j){t.x[j]=t.x[j]/den;});t.barrier();
-  for(int k=0;k<g.ad;++k){float value=ng::tree(t,n,[&](int j){int id=int(b.in(4).get(j));return t.x[j]*b.in(3).get((id*g.kvh+kh)*g.ad+k);},base);t.barrier();t.each(1,[&](int){b.out(0).put(h*g.ad+k,bf(value)*ng::sigmoid(b.in(1).get(h*g.ad+k)));});t.barrier();}
+  for(int k=0;k<g.ad;++k){float value=ng::tree(t,n,[&](int j){int id=b.safe_id(b.in(4).get(j),g.context,pos);return t.x[j]*b.in(3).get((id*g.kvh+kh)*g.ad+k);},base);t.barrier();t.each(1,[&](int){b.out(0).put(h*g.ad+k,bf(value)*ng::sigmoid(b.in(1).get(h*g.ad+k)));});t.barrier();}
  }
 }
 int tiny_groups(const Spec& s){switch(s.op){case Op::gdn:return s.g.vh*s.g.d;case Op::gdn_norm_gate:return s.g.vh;case Op::qsa_prepare:return s.g.qh+s.g.kvh+s.g.ih;case Op::qsa_append_pool:return (s.g.context+3)/4+1;case Op::qsa_attention:return s.g.qh;default:return 1;}}
@@ -69,32 +104,37 @@ int tiny_groups(const Spec& s){switch(s.op){case Op::gdn:return s.g.vh*s.g.d;cas
 // Reduction order is the same adjacent binary tree, including odd zero padding.
 template<class Team> void simple(Bound b,int group,Team t) {
  auto s=b.s;auto bf=[](float x){return ng::Args::bf(x);};
- if(!*b.active())return;
- if(s.special==Special::begin){t.each(1,[&](int){if(*b.position()>=unsigned(s.g.context))*b.error()=1;});return;}
- if(*b.error())return;
+ t.each(1,[&](int){t.x[0]=float(!*b.active());});t.barrier();
+ if(t.x[0])return;t.barrier();
+ if(s.special==Special::begin){t.each(1,[&](int){if(*b.position()>=unsigned(s.g.context))b.fail();});return;}
+ t.each(1,[&](int){t.x[0]=float(b.failed());});t.barrier();
+ if(t.x[0])return;t.barrier();
  if(s.special==Special::commit){t.each(1,[&](int){++*b.position();});return;}
  if(s.special==Special::broadcast){t.each(int(b.out(0).n),[&](int j){b.out(0).put(j,b.in(0).get(j%b.in(0).n));});return;}
  if(s.special==Special::check_status){
   float failed=ng::tree(t,int(b.in(0).n),[&](int j){return float(b.in(0).get(j)!=0);});t.barrier();
-  t.each(1,[&](int){if(failed)*b.error()=1;});return;
+  t.each(1,[&](int){if(failed)b.fail();});return;
  }
  if(s.special==Special::ple_hash){t.each(1,[&](int){
   auto history=static_cast<int64_t*>(b.in(1).p),meta=static_cast<int64_t*>(b.in(2).p),ids=static_cast<int64_t*>(b.out(0).p);
   int64_t token=static_cast<int32_t*>(b.in(0).p)[0],old0=history[0],old1=history[1];if(old1==s.g.eos)old0=s.g.eos;
   for(int n=2;n<=3;++n){uint64_t hash=uint64_t(token)*uint64_t(meta[0]);hash^=uint64_t(old1)*uint64_t(meta[1]);if(n==3)hash^=uint64_t(old0)*uint64_t(meta[2]);auto v=std::bit_cast<int64_t>(hash);
-   for(int h=0;h<8;++h){int j=(n-2)*8+h;auto size=meta[3+j];if(size<=0){*b.error()=1;return;}ids[j]=(v%size+size)%size+meta[19+j];}}
+   for(int h=0;h<8;++h){int j=(n-2)*8+h;auto size=meta[3+j];if(size<=0){b.fail();return;}ids[j]=(v%size+size)%size+meta[19+j];}}
   history[0]=old1;history[1]=token;
  });return;}
  if(s.op==Op::hc_combine){t.each(int(b.out(0).n),[&](int j){b.out(0).put(j,b.in(0).get(j)+b.in(1).get(j%s.site.shape[1])*(2.f*ng::sigmoid(b.in(2).get(j/s.site.shape[1])/4.f)));});}
  else if(s.op==Op::expert_gather){
-  t.each(s.g.top,[&](int j){int id=int(b.in(0).get(j));if(id<0||id>=s.g.experts){t.x[j]=1;return;}t.x[j]=0;
+  t.each(s.g.top,[&](int j){float value=b.in(0).get(j);
+   bool valid=std::isfinite(value)&&value>=0&&value<float(s.g.experts)&&std::floor(value)==value;
+   int id=valid?int(value):0;t.x[j]=valid?0:1;
    for(int k=0;k<3;++k){b.out(0).put(j*3+k,k==0?id:k==1?0:s.g.mid);b.out(1).put(j*3+k,k==0?id:k==1?0:s.g.h);}});t.barrier();
-  float bad=t.sum(s.g.top);t.barrier();t.each(1,[&](int){if(bad)*b.error()=1;});
-  if(bad)return;t.each(int(b.out(2).n),[&](int j){b.out(2).put(j,b.in(1).get(j%b.in(1).n));});
+  float bad=t.sum(s.g.top);t.barrier();t.each(1,[&](int){if(bad)b.fail();});
+  // Even invalid routes have initialized, in-range downstream inputs.
+  t.each(int(b.out(2).n),[&](int j){b.out(2).put(j,b.in(1).get(j%b.in(1).n));});
  }else if(s.op==Op::route){
   int n=int(b.in(0).n),top=s.site.shape[1];float maximum=-INFINITY;bool finite=true;
   for(int j=0;j<n;++j){float v=b.in(0).get(j);finite=finite&&std::isfinite(v);maximum=std::max(maximum,v);}
-  if(!finite){t.each(1,[&](int){*b.error()=1;});return;}
+  if(!finite){t.each(1,[&](int){b.fail();});return;}
   t.each(n,[&](int j){t.x[j]=detmath::exp(b.in(0).get(j)-maximum);t.x[n+j]=t.x[j];});t.barrier();float den=t.sum(n);t.barrier();
   t.each(n,[&](int j){t.x[n+j]=t.x[n+j]/den;});t.barrier();
   t.each(n,[&](int j){int rank=0;float v=t.x[n+j];for(int k=0;k<n;++k)rank+=t.x[n+k]>v||(t.x[n+k]==v&&k<j);if(rank<top){b.out(0).put(rank,j);t.x[2*n+rank]=v;t.x[2*n+top+rank]=v;}});t.barrier();
@@ -106,7 +146,7 @@ template<class Team> void simple(Bound b,int group,Team t) {
  }else if(s.op==Op::ple_add){t.each(int(b.out(0).n),[&](int j){b.out(0).put(j,b.in(0).get(j)+bf(b.in(1).get(j)+b.in(2).get(j)));});}
  else if(s.op==Op::argmax){
   t.each(128,[&](int lane){int best=lane;bool finite=true;for(int j=lane;j<int(b.in(0).n);j+=128){float v=b.in(0).get(j);finite=finite&&std::isfinite(v);if(v>b.in(0).get(best))best=j;}t.x[lane]=lane<int(b.in(0).n)?float(best):-1.f;t.x[128+lane]=float(finite);});t.barrier();
-  t.each(1,[&](int){int best=0;bool finite=true;for(int lane=0;lane<128;++lane){int j=int(t.x[lane]);finite=finite&&bool(t.x[128+lane]);if(j>=0&&(b.in(0).get(j)>b.in(0).get(best)||(b.in(0).get(j)==b.in(0).get(best)&&j<best)))best=j;}b.out(0).put(0,best);if(!finite)*b.error()=1;});
+  t.each(1,[&](int){int best=0;bool finite=true;for(int lane=0;lane<128;++lane){int j=int(t.x[lane]);finite=finite&&bool(t.x[128+lane]);if(j>=0&&(b.in(0).get(j)>b.in(0).get(best)||(b.in(0).get(j)==b.in(0).get(best)&&j<best)))best=j;}b.out(0).put(0,best);if(!finite)b.fail();});
  }
 }
 #ifdef OWN_RT_HOST_ONLY
@@ -115,8 +155,8 @@ struct Glue final:HostOperation {
  Spec s;int mode;Glue(Spec v,int m):s(v),mode(m){}
  void run(std::span<void*const> p)const override{
   Bound b{s,{}};std::copy(p.begin(),p.end(),b.p.begin());auto ctrl=static_cast<int32_t*>(p.back());
-  if(mode==1){ctrl[0]=*b.position();ctrl[1]=*b.active();ctrl[2]=*b.error();}
-  else if(mode==2){if(ctrl[2])*b.error()=1;}
+  if(mode==1){ctrl[0]=*b.position();ctrl[1]=*b.active();ctrl[2]=b.failed();}
+  else if(mode==2){if(ctrl[2])b.fail();}
   else if(mode==3){std::vector<float> scratch(std::max(8192,s.g.h));for(int g=0;g<tiny_groups(s);++g)tiny(b,g,ng::HostTeam{scratch.data()});}
   else {std::vector<float> scratch(std::max(4096,s.g.h));int groups=s.special==Special::normal&&s.op==Op::ple_gate?4:1;for(int g=0;g<groups;++g)simple(b,g,ng::HostTeam{scratch.data()});}
  }
@@ -132,7 +172,7 @@ struct Glue final:ownrt::SyclOperation {
  Spec s;int mode;Glue(Spec v,int m):s(v),mode(m){}
  sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override{
   Bound b{s,{}};std::copy(p.begin(),p.end(),b.p.begin());auto ctrl=static_cast<int32_t*>(p.back());auto mode_=mode;
-  if(mode==1||mode==2)return q.submit([&](sycl::handler& h){h.depends_on(deps);h.single_task([=]{if(mode_==1){ctrl[0]=*b.position();ctrl[1]=*b.active();ctrl[2]=*b.error();}else if(mode_==2){if(ctrl[2])*b.error()=1;}});});
+  if(mode==1||mode==2)return q.submit([&](sycl::handler& h){h.depends_on(deps);h.single_task([=]{if(mode_==1){ctrl[0]=*b.position();ctrl[1]=*b.active();ctrl[2]=b.failed();}else if(mode_==2){if(ctrl[2])b.fail();}});});
   int groups=mode==3?tiny_groups(s):s.special==Special::normal&&s.op==Op::ple_gate?4:1,local=std::max(8192,s.g.h);
   return q.submit([&](sycl::handler& h){h.depends_on(deps);sycl::local_accessor<float,1> scratch(local,h);h.parallel_for(sycl::nd_range<1>(groups*128,128),[=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{auto t=Team{it,scratch.get_multi_ptr<sycl::access::decorated::no>().get()};if(mode_==3)tiny(b,it.get_group_linear_id(),t);else simple(b,it.get_group_linear_id(),t);});});
  }

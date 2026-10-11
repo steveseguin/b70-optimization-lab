@@ -131,6 +131,17 @@ struct Core {
     failed = 1;
     return 0;
   }
+  int safe_position() {
+    if (position < 0 || position >= g.context) { failed = 1; return 0; }
+    return position;
+  }
+  int safe_id(float value, int limit, int upper) {
+    if (!std::isfinite(value) || value < 0 || value >= float(limit) ||
+        value > float(upper) || std::floor(value) != value) {
+      failed = 1; return 0;
+    }
+    return int(value);
+  }
   float gain(int w, int i) {
     if (w < 0 || w >= 4 || i < 0 || size_t(i) >= weights[w].elements)
       return bad();
@@ -343,12 +354,9 @@ struct Core {
       out(1) = prob;
     } else if (op == Op::expert_gather) {
       V routes = make();
-      for (float id : in(0)) {
-        if (id < 0 || id >= g.experts) {
-          failed = 1;
-          return;
-        };
-        routes.insert(routes.end(), {id, 0, float(g.mid)});
+      for (float value : in(0)) {
+        int id = safe_id(value, g.experts, g.experts - 1);
+        routes.insert(routes.end(), {float(id), 0, float(g.mid)});
       }
       out(0) = clone(routes);
       for (size_t i = 2; i < routes.size(); i += 3)
@@ -373,7 +381,7 @@ struct Core {
         q.insert(q.end(), b, b + g.ad);
         gate.insert(gate.end(), b + g.ad, b + 2 * g.ad);
       }
-      int pos = position;
+      int pos = safe_position();
       out(0) =
           rope(head_norm(q, g.ad, l.weights[0]), g.qh, g.ad, g.rotary, pos);
       out(1) = gate;
@@ -382,7 +390,7 @@ struct Core {
       out(3) =
           rope(head_norm(in(2), g.id, l.weights[2]), g.ih, g.id, g.rotary, pos);
     } else if (op == Op::qsa_append_pool) {
-      int pos = position;
+      int pos = safe_position();
       std::copy(in(0).begin(), in(0).end(),
                 out(0).begin() + pos * g.kvh * g.ad);
       std::copy(in(1).begin(), in(1).end(),
@@ -401,7 +409,7 @@ struct Core {
         std::copy(row.begin(), row.end(), out(3).begin() + b * g.id);
       }
     } else if (op == Op::qsa_select) {
-      int pos = position, n = (pos + 1) / 4;
+      int pos = safe_position(), n = (pos + 1) / 4;
       V scores = make(n, 0);
       for (int h = 0; h < g.ih; ++h)
         for (int b = 0; b < n; ++b)
@@ -410,6 +418,8 @@ struct Core {
                                         in(1).span().subspan(b * g.id, g.id)));
       for (auto &v : scores)
         v = v / detmath::sqrt(float(g.id));
+      for (float v : scores)
+        if (!std::isfinite(v)) { failed = 1; return; }
       V ids = make(n);
       for (size_t i = 0; i < ids.size(); ++i)
         ids[i] = float(i);
@@ -426,9 +436,11 @@ struct Core {
     } else if (op == Op::qsa_attention) {
       V y = make(g.qh * g.ad);
       V ids = make();
+      int pos = safe_position();
       for (float v : in(4))
-        if (v >= 0)
-          ids.push_back(int(v));
+        if (v != -1)
+          ids.push_back(float(safe_id(v, g.context, pos)));
+      if (ids.empty()) { failed = 1; return; }
       for (int h = 0; h < g.qh; ++h) {
         int kh = h / (g.qh / g.kvh);
         V scores = make();

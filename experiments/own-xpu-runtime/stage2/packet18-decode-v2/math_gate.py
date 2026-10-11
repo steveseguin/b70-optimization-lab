@@ -5,7 +5,7 @@ HERE=Path(__file__).resolve().parent
 ROOT=HERE.parents[3]
 OWNER=HERE.parents[1]/'stage1/packet3-prep/src'
 SOURCES=['main.cpp','performance.cpp','adapter.cpp','runtime_kernels.cpp','owner.cpp','native.cpp',
- '../packet4/owner_retire.cpp','../packet2/loader/gguf.cpp','../packet2/kernels/device.cpp',
+ 'owner_retire.cpp','../packet2/loader/gguf.cpp','../packet2/kernels/device.cpp',
  '../packet6-kopt/kernels.cpp','../packet7-kopt2/kernels.cpp','../packet8-kopt3/kernels.cpp',
  '../packet9-kopt4/kernels.cpp','../packet10-kopt5/kernels.cpp']
 def closure():

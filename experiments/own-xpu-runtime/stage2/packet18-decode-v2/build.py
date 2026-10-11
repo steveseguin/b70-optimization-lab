@@ -9,15 +9,15 @@ PY='/home/steve/.venvs/vllm-xpu/bin/python'
 COMPILER='/opt/intel/oneapi/compiler/2026.0/bin/icpx'
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def source_hashes():
-  folders=[HERE,*[HERE.parent/n for n in ('packet2','packet3','packet4','packet6-kopt','packet7-kopt2','packet8-kopt3','packet9-kopt4','packet10-kopt5')],HERE.parents[1]/'stage1/packet3-prep/src']
+  folders=[HERE,*[HERE.parent/n for n in ('packet2','packet3','packet4','packet6-kopt','packet7-kopt2','packet8-kopt3','packet9-kopt4','packet10-kopt5','packet19-depcheck')],HERE.parents[1]/'stage1/packet3-prep/src']
   paths=[]
   for folder in folders:
    paths.extend(p for p in folder.rglob('*') if p.is_file() and 'build' not in p.relative_to(folder).parts and p.suffix in ('.cpp','.hpp','.py'))
-  paths.extend([HERE/'rope.bf16',HERE/'source-provenance.json',HERE.parent/'packet17-detmath/detmath.hpp',HERE.parent/'packet17-detmath/arithmetic.json',HERE/'CMakeLists.txt',HERE/'receipt.schema.json',ROOT/'experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/tokenizer.py',ROOT/'experiments/own-xpu-runtime/stage1/packet1b/loaders/headers.py',ROOT/'experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/admission-receipt.json',ROOT/'experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/tensor-census.json'])
+  paths.extend([HERE/'rope.bf16',HERE/'source-provenance.json',HERE/'integration-provenance.json',HERE.parent/'packet17-detmath/detmath.hpp',HERE.parent/'packet17-detmath/arithmetic.json',HERE/'CMakeLists.txt',HERE/'receipt.schema.json',ROOT/'experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/tokenizer.py',ROOT/'experiments/own-xpu-runtime/stage1/packet1b/loaders/headers.py',ROOT/'experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/admission-receipt.json',ROOT/'experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/tensor-census.json'])
   return {str(p.relative_to(ROOT)):sha(p) for p in sorted(set(paths))}
 
 def main():
- p=argparse.ArgumentParser();p.add_argument('--keep-build',action='store_true');p.add_argument('--reuse-real-gates',action='store_true');a=p.parse_args()
+ p=argparse.ArgumentParser();p.add_argument('--keep-build',action='store_true');p.add_argument('--reuse-real-gates',action='store_true');p.add_argument('--reuse-sanitizer-gates',action='store_true');a=p.parse_args()
  assert os.getpriority(os.PRIO_PROCESS,0)==19 and os.environ.get('OMP_NUM_THREADS')=='2'
  assert 'idle' in subprocess.check_output(['ionice','-p',str(os.getpid())],text=True,timeout=2)
  assert not BUILD.is_symlink()
@@ -35,6 +35,8 @@ def main():
  r['sources_before_build']=before_sources
  from math_gate import check
  r['platform_math_gate']=check()
+ from queue_gate import check as queue_check
+ r['queue_isolation_gate']=queue_check()
  provenance=json.loads((HERE/'source-provenance.json').read_text())
  assert all(sha(ROOT/name)==digest for name,digest in provenance.items()), 'read-only source provenance changed'
  r['original_source_hashes_verified']=provenance
@@ -56,14 +58,22 @@ def main():
   assert 'not found' not in r['device_ldd'], 'device shared library missing (loader-only check)'
   dynamic=run(['readelf','-d',BUILD/'host/own-rt-iq3'])
   assert not any(x in dynamic.lower() for x in ('libsycl','libze_loader','libur_loader','libopencl'))
-  units={name:run([BUILD/'host'/name]) for name in ('authority-tests','owner-retirement-tests','chain-tests')}
+  units={name:run([BUILD/'host'/name]) for name in ('authority-tests','owner-retirement-tests','chain-tests','queue-tests')}
   inp=BUILD/'input'
   if not inp.exists():run([PY,'-B',HERE/'prepare.py','--output',inp])
   for mode in ('core','parallel'):
    run([PY,'-B',HERE/'test.py','--binary',BUILD/'host/own-rt-iq3','--scratch',BUILD/f'tests-{mode}-{time.time_ns()}','--input',inp,'--receipt',HERE/f'cpu-mini-{mode}.json','--nongemv',mode])
+  canary_path=BUILD/f'canary-cpu-{time.time_ns()}'
+  run([BUILD/'host/own-rt-iq3','--canary','--cards','2','--card','0','--memory','resident','--seconds','30','--output',canary_path])
+  r['canary_cpu_mock']=json.loads((canary_path/'receipt.json').read_text())
+  assert r['canary_cpu_mock']['passed'] and not r['canary_cpu_mock']['device_executed']
   run([PY,'-B',HERE/'test_mismatch.py'])
   run([PY,'-B',HERE/'test_window.py'])
   run([PY,'-B',HERE/'census.py'])
+  if not a.reuse_sanitizer_gates:
+   run([PY,'-B',HERE/'depcheck_build.py','--source',HERE,'--tag','sanitized'])
+   run([PY,'-B',HERE/'guard_tests.py'])
+   run([PY,'-B',HERE/'sanitizer_gate.py','all'],10950)
   for dispatch in ('frozen','r5'):
    gate=HERE/f'cpu-real-{dispatch}.json'
    if a.reuse_real_gates:
@@ -76,10 +86,26 @@ def main():
    else:
     run([PY,'-B',HERE/'cpu_gate.py','--gemv',dispatch,'--max-new',str(64 if dispatch=='frozen' else 8),'--output',BUILD/f'real-{dispatch}-{time.time_ns()}'],10950)
   gates={mode:json.loads((HERE/f'cpu-real-{mode}.json').read_text()) for mode in ('frozen','r5')}
-  cpu=dict(schema='own-runtime.iq3.packet18.cpu-tests.v1',passed=True,device_executed=False,binary_sha256=sha(BUILD/'host/own-rt-iq3'),integration={mode:json.loads((HERE/f'cpu-mini-{mode}.json').read_text()) for mode in ('core','parallel')},units=units,window_protocol_tests=28,mismatch_rejections=json.loads((HERE/'cpu-mismatch-rejection.json').read_text()),real_model={m:{k:gates[m][k] for k in ('passed','layer_matches','layer_total','token_matches','tokens','first_differing_layer','missing_fixtures','wall_seconds')} for m in gates})
+  sanitizer_names=['sanitizer-mini.json','sanitizer-integration.json','sanitizer-real-short.json','sanitizer-real-full.json','sanitizer-unit.json']
+  sanitizer={name:json.loads((HERE/name).read_text()) for name in sanitizer_names}
+  assert all(row['passed'] and row['device_executed'] is False for row in sanitizer.values()), 'sanitizer gate missing/failed'
+  assert sanitizer['sanitizer-mini.json']['runs']==16 and sanitizer['sanitizer-mini.json']['seeds']==[0,1,17,73]
+  assert len(sanitizer['sanitizer-integration.json']['runs'])==8 and all(len(row['result']['tests'])==13 for row in sanitizer['sanitizer-integration.json']['runs'])
+  assert sanitizer['sanitizer-real-short.json']['seeds']==[0,1,17,73] and sanitizer['sanitizer-real-short.json']['fixtures']==96
+  assert sanitizer['sanitizer-real-full.json']['positions']==87 and sanitizer['sanitizer-real-full.json']['layer_matches']==48
+  tests=sanitizer['sanitizer-unit.json']['tests']
+  assert len(tests)==3 and all(row['returncode']==0 for row in tests) and '33/33' in tests[0]['stdout']
+
+  sb=json.loads((BUILD/'sanitized/build.json').read_text())
+  assert sha(Path(sb['binary']))==sb['sha256'], 'sanitizer binary changed'
+  assert all(sha(Path(name))==digest for name,digest in sb['sources'].items()), 'sanitizer source manifest changed'
+  assert all(json.loads((HERE/f'sanitizer-real-short-{seed}.json').read_text())['binary_sha256']==sb['sha256'] for seed in (0,1,17,73))
+  assert json.loads((HERE/'sanitizer-real-full.json').read_text())['positions']==87
+  r['sanitizer']={'receipts':{name:sha(HERE/name) for name in sanitizer_names},'binary_sha256':sb['sha256'],'build_manifest_sha256':sha(BUILD/'sanitized/build.json'),'violations':0}
+  cpu=dict(schema='own-runtime.iq3.packet18.cpu-tests.v1',passed=True,device_executed=False,binary_sha256=sha(BUILD/'host/own-rt-iq3'),integration={mode:json.loads((HERE/f'cpu-mini-{mode}.json').read_text()) for mode in ('core','parallel')},units=units,window_protocol_tests=36,mismatch_rejections=json.loads((HERE/'cpu-mismatch-rejection.json').read_text()),real_model={m:{k:gates[m][k] for k in ('passed','layer_matches','layer_total','token_matches','tokens','first_differing_layer','missing_fixtures','wall_seconds')} for m in gates})
   (HERE/'cpu-tests.json').write_text(json.dumps(cpu,indent=2)+'\n')
   assert source_hashes()==before_sources, 'source changed during build/gates'
-  r.update(passed=True,real_model_qualified=False,artifacts_sha256={str(p.relative_to(BUILD)):sha(p) for p in (BUILD/'host/own-rt-iq3',BUILD/'device/own-rt-iq3')},cpu_tests_sha256=sha(HERE/'cpu-tests.json'),input_sha256=sha(inp/'input.json'))
+  r.update(passed=True,real_model_qualified=False,artifacts_sha256={str(p.relative_to(BUILD)):sha(p) for p in (BUILD/'host/own-rt-iq3',BUILD/'device/own-rt-iq3')},cpu_tests_sha256=sha(HERE/'cpu-tests.json'),census_sha256=sha(HERE/'census.json'),input_sha256=sha(inp/'input.json'))
   shutil.copyfile(inp/'input.json',HERE/'input-receipt.json')
  finally:
   r['sources']=source_hashes()

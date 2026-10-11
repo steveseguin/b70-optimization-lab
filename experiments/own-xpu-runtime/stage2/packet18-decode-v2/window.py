@@ -10,6 +10,7 @@ import signal
 import struct
 import subprocess
 import time
+from window_safety import environment_gate, memory_snapshot, memory_admission
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[3]
@@ -19,6 +20,7 @@ spec.loader.exec_module(p2)
 sha = p2.sha
 AUTHORITY = 'iq3-p17-detmath-v2'
 CONFIG = {
+    'W0': dict(card=2, cards=2, memory='resident', stage='canary', gemv='frozen', count=0, steps=0, context=8),
     'W1': dict(card=3, cards=1, memory='layer-streaming', stage='first-token', gemv='frozen', count=8, steps=8, context=256),
     'W2': dict(card=2, cards=2, memory='resident', stage='decode', gemv='frozen', count=64, steps=8, context=256),
     'W3': dict(card=2, cards=2, memory='resident', stage='decode', gemv='r5', count=64, steps=8, context=256),
@@ -246,15 +248,83 @@ def compare_run(out, cfg, expected_hashes, expected_tokens, oracle_root=None, di
     return run, actual
 
 
+
+def canary_receipt_gate(run):
+    require(run.get('schema') == 'own-runtime.iq3.packet18.canary.v1' and
+            run.get('passed') is True and run.get('device_executed') is True and
+            run.get('round_trips') == 100 and run.get('kernels_per_card') == 1000 and
+            run.get('token_sequence') is True and safe_teardown(run, 2),
+            'W0 canary coverage/teardown incomplete')
+    require(0 < run.get('owned_device_bytes', 0) < 16*1024**2 and
+            0 < run.get('wall_ms', 0) < 30000 and
+            0 < run.get('max_submission_ns', 0) < 100000000,
+            'W0 canary memory/time bounds failed')
+
+def w0_gate(path, binary_hash, boot, card, environment):
+    require(path is not None, 'W2/W3 require --w0 passing two-card canary receipt')
+    row = read(path)
+    require(row.get('schema') == 'own-runtime.iq3.packet18.window.v1' and
+            row.get('window') == 'W0' and row.get('passed') is True and
+            row.get('boot_id') == boot and row.get('binary_sha256') == binary_hash and
+            row.get('card') == card and row.get('cards') == 2 and
+            row.get('environment') == environment, 'W0 boot/binary/cards/environment changed')
+    native = path.parent / 'run/receipt.json'
+    require(sha(native) == row.get('native_receipt_sha256'), 'W0 native receipt changed')
+    canary_receipt_gate(read(native))
+    return row
+
+def run_w0(a, cfg, binary, boot, out, latch, bindings, dependency_preflight, environment):
+    require(a.seconds <= 30, 'W0 deadline must be <=30 seconds')
+    require(a.repeat_of is None, 'W0 is a single canary; no automatic repeat')
+    cmd = [str(binary), '--authorized-device-window', '--canary', '--cards', '2',
+           '--card', str(cfg['card']), '--memory', 'resident', '--seconds', str(a.seconds),
+           '--output', str(out / 'run')]
+    record = dict(schema='own-runtime.iq3.packet18.window.v1', window='W0', boot_id=boot,
+                  card=cfg['card'], cards=2, binary_sha256=sha(binary),
+                  command=cmd, environment=environment, ldd_preflight=dependency_preflight,
+                  passed=False, device_executed=False,
+                  bindings={str(k): v for k, v in bindings.items()})
+    pre, cursor = p2.journal()
+    out.mkdir(parents=True)
+    (out / 'preflight-kernel.txt').write_text(pre)
+    requested = []
+    def persist():
+        if requested: record['stop_reason'] = requested[0]
+        (out / 'window.json').write_text(json.dumps(record, indent=2)+'\n')
+    def latch_fault(reason):
+        latch.write_text(json.dumps(dict(boot_id=boot, window=str(out), reason=reason, pid=record.get('pid')))+'\n')
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        signal.signal(sig, lambda s, f: requested.append('watcher signal '+str(s)))
+    persist()
+    with (out / 'stdout.txt').open('w') as log, (out / 'kernel-window.txt').open('w') as kernel:
+        require(not requested, 'watcher stopped before child launch')
+        child = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT, env=environment['native'])
+        record.update(pid=child.pid, device_executed=True)
+        persist()
+        record.update(supervise(child, a.seconds, cursor, kernel, latch_fault, persist, requested))
+    try:
+        require(record['returncode'] == 0 and not requested, 'W0 child failed/stopped')
+        for path, digest in bindings.items():
+            require(sha(path) == digest, 'W0 binding changed: '+str(path))
+        native = out / 'run/receipt.json'
+        canary_receipt_gate(read(native))
+        record.update(passed=True, native_receipt_sha256=sha(native), canary=read(native))
+    except (OSError, ValueError, KeyError) as error:
+        requested.append(str(error)); latch_fault(requested[0])
+    persist()
+    return 0 if record['passed'] else 1
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--authorized-device-window', action='store_true', required=True)
     parser.add_argument('--window', choices=CONFIG, required=True)
-    for key in ('input', 'output', 'oracle', 'w1', 'repeat-of'):
-        parser.add_argument('--' + key, type=Path, required=key in ('input', 'output', 'oracle'))
+    for key in ('input', 'output', 'oracle', 'w0', 'w1', 'repeat-of'):
+        parser.add_argument('--' + key, type=Path, required=key == 'output')
     parser.add_argument('--card', type=int, help='first physical card; W2/W3 use this and the next card')
     parser.add_argument('--seconds', type=int, default=10800)
     a = parser.parse_args()
+    environment = environment_gate()
     require(1 <= a.seconds <= 10800, 'deadline must be 1..10800 seconds')
     require(os.environ.get('OMP_NUM_THREADS') == '2' and os.getpriority(os.PRIO_PROCESS, 0) == 19, 'nice19 OMP_NUM_THREADS=2 required')
     require('idle' in subprocess.check_output(['ionice', '-p', str(os.getpid())], text=True, timeout=2), 'ionice -c3 required')
@@ -279,6 +349,18 @@ def main():
     bindings[HERE / 'cpu-tests.json'] = b['cpu_tests_sha256']
     bindings[binary] = sha(binary)
     bindings[HERE / 'build-receipt.json'] = sha(HERE / 'build-receipt.json')
+    for path, digest in bindings.items():
+        require(sha(path) == digest, 'source changed: '+str(path))
+    if a.window == 'W0':
+        return run_w0(a, cfg, binary, boot, out, latch, bindings, dependency_preflight, environment)
+    require(a.input is not None and a.oracle is not None, 'model windows require --input and --oracle')
+    memory_before = memory_snapshot()
+    memory_budget = None
+    if a.window in ('W2', 'W3'):
+        require(sha(HERE / 'census.json') == b.get('census_sha256'), 'memory census changed since seal')
+        memory_budget = memory_admission(read(HERE / 'census.json'), cfg['gemv'], memory_before)
+        w0_gate(a.w0, sha(binary), boot, cfg['card'], environment)
+        bindings[HERE / 'census.json'] = sha(HERE / 'census.json')
     manifest = a.input / 'input.json'
     require(sha(manifest) == b['input_sha256'], 'input manifest changed')
     inp = read(manifest)
@@ -294,19 +376,20 @@ def main():
         require(anchor.get('oracle_hashes') == expected_hashes and anchor.get('layer_hashes') == expected_hashes and
                 anchor.get('tokens') == expected_tokens[:8] and anchor.get('expected_tokens') == expected_tokens[:8],
                 'W1 is not exact against the current v2 oracle')
+        require(anchor.get('environment') == environment, 'W1 environment differs from admitted window')
         require(anchor.get('card') in range(cfg['card'], cfg['card'] + cfg['cards']), 'W1 card is not in admitted two-card topology')
     for name in ('arithmetic.json', 'input.json', 'result.json'):
         bindings[a.oracle / name] = sha(a.oracle / name)
     for name, digest in expected_hashes.items():
         bindings[a.oracle / name] = digest
-    for path in (a.w1, a.repeat_of):
+    for path in (a.w0, a.w1, a.repeat_of):
         if path:
             bindings[path] = sha(path)
     cmd = native_command(binary, cfg, a.input, inp['model_dir'], a.oracle, out, a.seconds)
     record = dict(schema='own-runtime.iq3.packet18.window.v1', window=a.window, boot_id=boot, **cfg,
                   nongemv='parallel', arithmetic=AUTHORITY, binary_sha256=sha(binary), input_sha256=input_hash,
                   input_manifest_sha256=sha(manifest), oracle_hashes=expected_hashes, expected_tokens=expected_tokens,
-                  ldd_preflight=dependency_preflight, oracle_path=str(a.oracle.resolve()), command=cmd, passed=False, oracle_exact=False, device_executed=False, external_idle_health_still_required=True,
+                  environment=environment, memory_before_load=memory_before, memory_admission=memory_budget, ldd_preflight=dependency_preflight, oracle_path=str(a.oracle.resolve()), command=cmd, passed=False, oracle_exact=False, device_executed=False, external_idle_health_still_required=True,
                   bindings={str(k): v for k, v in bindings.items()}, real_model_qualified=False)
     prior = repeat_gate(a.repeat_of, record)
     pre, cursor = p2.journal()
@@ -324,11 +407,16 @@ def main():
     persist()
     with (out / 'stdout.txt').open('w') as log, (out / 'kernel-window.txt').open('w') as kernel:
         require(not requested, 'watcher stopped before child launch')
-        child = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT)
+        child = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT, env=environment['native'])
         record.update(pid=child.pid, device_executed=True)
         persist()
         record.update(supervise(child, a.seconds, cursor, kernel, latch_fault, persist, requested))
+    record['memory_end'] = memory_snapshot()
+    memory_log = out / 'run/host-memory.jsonl'
+    record['native_memory_samples'] = [json.loads(line) for line in memory_log.read_text().splitlines()] if memory_log.exists() else []
     try:
+        if a.window in ('W2','W3'):
+            require({r['phase'] for r in record['native_memory_samples']} >= {'before_load','after_load','end'}, 'load memory samples incomplete')
         record.update(compare_layers(out / 'run', a.oracle, expected_hashes))
         native_path = out / 'run/receipt.json'
         observed = read(native_path).get('tokens', []) if native_path.exists() else []

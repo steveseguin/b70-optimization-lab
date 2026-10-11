@@ -181,6 +181,8 @@ template<class Team> void group(Shape s,Args a,int group,Team t){
    t.each(n,[&](int b){float v[128];for(int k=0;k<128;++k)v[k]=a.b(0,(r*4+h)*128+k)*a.b(1,b*128+k);for(int stride=1;stride<128;stride*=2)for(int k=0;k<128;k+=2*stride)v[k]=v[k]+v[k+stride];t.x[b]=(h?t.x[b]:0.f)+std::max(0.f,v[0]);});t.barrier();
   }
   (void)base;t.each(n,[&](int b){t.x[b]=t.x[b]/detmath::sqrt(float(128));});t.barrier();
+  bool finite=true;for(int j=0;j<n;++j)finite=finite&&std::isfinite(t.x[j]);
+  if(!finite){t.each(s.budget+3,[&](int j){a.i(2)[r*(s.budget+3)+j]=-1;});t.each(1,[&](int){t.fail(a);});return;}
   int count=std::min(n,s.budget/4),slots=s.budget+3;
   t.each(slots,[&](int j){a.i(2)[r*slots+j]=-1;});t.barrier();
   t.each(n,[&](int b){int rank=0;for(int k=0;k<n;++k)rank+=t.x[k]>t.x[b]||(t.x[k]==t.x[b]&&k<b);if(rank<count)for(int j=0;j<4;++j)a.i(2)[r*slots+rank*4+j]=b*4+j;});
@@ -188,17 +190,24 @@ template<class Team> void group(Shape s,Args a,int group,Team t){
  }else if(s.op==attention_score){
   int slots=s.budget+3,launch_slots=std::min(s.capacity,slots),slot=group%launch_slots,h=(group/launch_slots)%24,r=group/(launch_slots*24),id=a.i(4)[r*slots+slot];
   int offset=(r*24+h)*slots+slot;
-  if(id>=s.capacity||id>pos+r){t.each(1,[&](int){t.fail(a);});return;}
+  if(id < -1||id>=s.capacity||id>pos+r){t.each(1,[&](int){t.fail(a);});return;}
   if(id<0){t.each(1,[&](int){a.f(6)[offset]=-INFINITY;});return;}
   float score=tree(t,256,[&](int k){return a.b(2,(id*2+h/12)*256+k)*a.b(0,(r*24+h)*256+k);})/detmath::sqrt(float(256));t.barrier();t.each(1,[&](int){a.f(6)[offset]=score;});
  }else if(s.op==attention_softmax){
-  int slots=s.budget+3,r=group/24,n=0;while(n<slots&&a.i(4)[r*slots+n]>=0)++n;
+  int slots=s.budget+3,r=group/24,n=0;
+  while(n<slots&&a.i(4)[r*slots+n]!=-1){int id=a.i(4)[r*slots+n];
+   if(id<0||id>=s.capacity||id>pos+r||n>=std::min(s.capacity,slots)){t.each(1,[&](int){t.fail(a);});return;}++n;}
   if(!n)return;float m=-INFINITY;for(int k=0;k<n;++k)m=std::max(m,a.f(6)[group*slots+k]);
   t.each(n,[&](int k){float v=detmath::exp(a.f(6)[group*slots+k]-m);t.x[k]=v;a.f(7)[group*slots+k]=v;});t.barrier();float den=t.sum(n);t.barrier();
   t.each(n,[&](int k){a.f(7)[group*slots+k]=a.f(7)[group*slots+k]/den;});
  }else if(s.op==attention_value){
-  int k=group%256,h=(group/256)%24,r=group/(256*24),slots=s.budget+3,n=0;while(n<slots&&a.i(4)[r*slots+n]>=0)++n;
-  if(!n)return;float value=tree(t,n,[&](int j){int id=a.i(4)[r*slots+j];return a.f(7)[(r*24+h)*slots+j]*a.b(3,(id*2+h/12)*256+k);});t.barrier();
+  int k=group%256,h=(group/256)%24,r=group/(256*24),slots=s.budget+3,n=0;
+  while(n<slots&&a.i(4)[r*slots+n]!=-1)++n;
+  // This consumer validates independently of the score kernel. Clamp before
+  // address arithmetic even when called directly with poisoned selection IDs.
+  auto safe_id=[&](int j){int id=a.i(4)[r*slots+j];if(id<0||id>=s.capacity||id>pos+r){t.fail(a);return 0;}return id;};
+  if(n>std::min(s.capacity,slots)){t.each(1,[&](int){t.fail(a);});return;}
+  if(!n)return;float value=tree(t,n,[&](int j){int id=safe_id(j);return a.f(7)[(r*24+h)*slots+j]*a.b(3,(id*2+h/12)*256+k);});t.barrier();
   t.each(1,[&](int){a.put(5,group,Args::bf(value)*sigmoid(a.b(1,group)));});
  }
 }

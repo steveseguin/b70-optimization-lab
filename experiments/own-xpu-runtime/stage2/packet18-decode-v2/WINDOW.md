@@ -17,6 +17,41 @@ PY=/home/steve/.venvs/vllm-xpu/bin/python
 ORACLE=experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261011/incident-retrospective
 ```
 
+## W0: cards 2+3, weight-free two-card canary
+
+```bash
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 "$PY" -B "$P/window.py" \
+  --authorized-device-window --window W0 --card 2 --seconds 30 \
+  --output "$P/build/w0-cards23-a"
+```
+
+Run W0, W1, W2, then W3, each separately admitted. W0 uses the same sealed
+`own-rt-iq3` binary as the model windows. It never opens model weights or RoPE
+tables. It requests **672 device bytes per card, 1,344 bytes total**, and a
+256-byte pinned host buffer. It performs 100 verified round trips:
+Q0 kernel, host drain, Q0-to-Q1 peer copy, host drain, Q1 kernel, host drain,
+Q1-to-Q0 peer copy, then host byte comparison. Each peer copy starts after
+both queues are drained and their events retired.
+
+It next exercises the real owner and adapter begin/broadcast/boundary/return/
+commit paths with tiny buffers, including all five outward and two return
+copies. It checks result, error, streams and both committed positions. Finally
+it chains 1,000 kernels on each card, with one completion wait at the end of
+each chain; neither chain shares an event with the other card. Host readbacks
+verify the results. A native profiling check requires every recorded submission
+below 100 ms, well below one second. The binary must complete within 30 seconds;
+there is no retry if initialization, JIT, a submission, or teardown misses a bound.
+The clean watcher adds five seconds of postflight (up to two more for a journal
+read). Driver-internal allocations are not measurable from the requested-byte
+census and remain a device-qualification risk; no measured device-memory claim
+is made from this CPU preparation.
+
+W2 and W3 require `--w0` with a passing receipt on the same boot, binary, card
+pair and recorded environment. They re-hash W0's native receipt and recheck its
+coverage, memory/time bounds and safe teardown. W0 does not substitute for W1.
+`ldd` and environment checks run before any output directory or fault latch is
+created. A device window still requires coordinator admission after FAULT HALT.
+
 ## W1: card 3, one card, streamed layers, eight generated tokens
 
 ```bash
@@ -25,6 +60,9 @@ nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 "$PY" -B "$P/window.py" \
   --input "$P/build/input" --oracle "$ORACLE" \
   --output "$P/build/w1-card3-a"
 ```
+
+Expected W1 duration: roughly 10–20 minutes, an unmeasured planning estimate;
+the explicit deadline remains three hours.
 
 The native arguments are `--card 3 --cards 1 --memory layer-streaming
 --stage first-token --max-new 8 --context 256 --nongemv parallel --gemv frozen`.
@@ -47,9 +85,12 @@ is required if that gate fails. Missing output files are also listed.
 nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 "$PY" -B "$P/window.py" \
   --authorized-device-window --window W2 --card 2 --seconds 10800 \
   --input "$P/build/input" --oracle "$ORACLE" \
+  --w0 "$P/build/w0-cards23-a/window.json" \
   --w1 "$P/build/w1-card3-a/window.json" \
   --output "$P/build/w2-cards23-a"
 ```
+
+Expected W2 duration: roughly 5–20 minutes, unmeasured; three-hour deadline.
 
 Native arguments: `--card 2 --cards 2 --memory resident --stage decode
 --max-new 64 --context 256 --nongemv parallel --gemv frozen`. All 64 tokens
@@ -63,13 +104,46 @@ same v2 oracle. W1's native safe teardown and every fixture hash are rechecked.
 nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 "$PY" -B "$P/window.py" \
   --authorized-device-window --window W3 --card 2 --seconds 10800 \
   --input "$P/build/input" --oracle "$ORACLE" \
+  --w0 "$P/build/w0-cards23-a/window.json" \
   --w1 "$P/build/w1-card3-a/window.json" \
   --output "$P/build/w3-cards23-a"
 ```
 
+Expected W3 duration: roughly 5–20 minutes, unmeasured; three-hour deadline.
+
 This has W2's coverage and admission rules with `--gemv r5`. The reduction
 order is unchanged. Native per-card allocation census and the 30 GiB cap
 remain binding; the wrapper never changes precision or placement to fit.
+
+## Fixed environment and host-memory admission
+
+All four windows refuse if **any NEO debug key is present**, even with an empty
+value or zero. `NEOReadDebugKeys` and `EnableDeferBacking` are forbidden. The
+policy is closed: unknown environment names are refused, so a future NEO key
+cannot slip through an incomplete denylist. Ordinary shell/agent metadata is
+allowed at the wrapper but not forwarded to the child. Every receipt contains
+the full native environment and all admitted runtime-related values; credentials
+and unrelated agent metadata are excluded. W2/W3 require W0 and W1 environment
+identity. Testing a NEO debug key is a **separately preregistered experiment**
+and is not part of this packet. Never add keys to make a prepared window fit.
+
+Without the NEO key, device buffers can acquire a host-RAM shadow. This can be
+as large as owned VRAM and appear as `GPUActive` in `/proc/meminfo`, not RSS.
+W2/W3 print all admission numbers and refuse before launch if `MemAvailable`
+is below the sum of both cards' owned device bytes, the 29,321,610,240-byte
+host-backed embedding/PLE tables, and a 12 GiB reserve:
+
+| Window | Both cards' owned device bytes | Tables | Reserve | Required MemAvailable |
+| --- | ---: | ---: | ---: | ---: |
+| W2 frozen | 53,261,285,328 | 29,321,610,240 | 12,884,901,888 | 95,467,797,456 |
+| W3 R5 | 55,071,143,888 | 29,321,610,240 | 12,884,901,888 | 97,277,656,016 |
+
+The wrapper records memory before launch and at the end; the native program
+records `MemAvailable` and `GPUActive` immediately before load, after load, and
+at the end in `run/host-memory.jsonl`. W2/W3 require those three samples to pass.
+An unavailable `GPUActive` field is explicitly null. A child parked on a fault
+cannot produce a native end sample; the wrapper retains its own end observation
+and fails the window. No memory, swap, cache, power or driver setting is changed.
 
 ## Fresh-process repeats
 
@@ -94,7 +168,10 @@ ignored `build/` is mandatory. Existing evidence is never overwritten.
 
 `run/timings.jsonl` has one row per generated token, including the first:
 `wall_ms`, `gemv_device_ms`, `non_gemv_device_ms`, `transfer_wall_ms`,
-`kernel_submissions`, and `host_waits`. Decode tok/s is 63 divided by the
+`kernel_submissions`, and `host_waits`. Resident tokens have 16 counted event
+waits, or 18 with snapshots. Retirement also calls both queue waits after each
+completed batch: 32 or 36 additional calls, normally already complete. See
+README for each boundary. Decode tok/s is 63 divided by the
 whole wall-clock span of tokens 2–64 for W2/W3. Device kernel times do not
 form the denominator. The receipt records first-token/prefill timing
 separately. Fixture capture stays inside measured wall time. This is one

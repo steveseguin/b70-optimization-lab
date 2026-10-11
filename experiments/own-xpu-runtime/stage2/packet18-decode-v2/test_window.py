@@ -237,10 +237,74 @@ class Windows(unittest.TestCase):
 
 
     def test_native_oracle_is_required_for_every_window(self):
-        for cfg in w.CONFIG.values():
+        for name, cfg in w.CONFIG.items():
+            if name == "W0": continue
             oracle = Path('/oracle/v2')
             cmd = w.native_command(Path('/never/run/device'), cfg, Path('/input'), '/weights', oracle, Path('/output'), 100)
             self.assertEqual(cmd[cmd.index('--oracle')+1], str(oracle))
+
+    def test_debug_keys_present_even_empty_refused(self):
+        for key in ('NEOReadDebugKeys','EnableDeferBacking','ForceUnknownFutureNeoOption'):
+            for value in ('','0','1'):
+                with self.assertRaisesRegex(ValueError,'before latch'):
+                    w.environment_gate({'OMP_NUM_THREADS':'2',key:value})
+
+    def test_environment_is_closed_and_recorded(self):
+        e=w.environment_gate({'OMP_NUM_THREADS':'2','PATH':'/bin','CLAUDE_CODE_MESSAGING_TOKEN':'secret'})
+        self.assertEqual(e['native'],{'OMP_NUM_THREADS':'2','PATH':'/bin'})
+        self.assertNotIn('secret',json.dumps(e))
+
+    def test_memory_floor_exact_boundary(self):
+        census={'frozen':{'owned_peak_bytes_per_card':[10,20]}}
+        floor=30+29321610240+12*1024**3
+        self.assertEqual(w.memory_admission(census,'frozen',{'MemAvailable':floor,'GPUActive':99})['required_MemAvailable'],floor)
+        with self.assertRaisesRegex(ValueError,'below'):
+            w.memory_admission(census,'frozen',{'MemAvailable':floor-1,'GPUActive':99})
+
+    def test_w0_requires_same_boot_binary_cards_environment(self):
+        native=dict(schema='own-runtime.iq3.packet18.canary.v1',passed=True,device_executed=True,
+                    owner_cards=2,round_trips=100,kernels_per_card=1000,token_sequence=True,
+                    owned_device_bytes=1344,wall_ms=500,max_submission_ns=1000,
+                    teardown=[dict(safe_to_exit=True,live_bytes=0,in_flight=0)])
+        self.write(self.root/'run/receipt.json',native)
+        row=dict(schema='own-runtime.iq3.packet18.window.v1',window='W0',passed=True,
+                 boot_id='boot',binary_sha256='bin',card=2,cards=2,environment={},
+                 native_receipt_sha256=w.sha(self.root/'run/receipt.json'))
+        path=self.root/'window.json';self.write(path,row)
+        w.w0_gate(path,'bin','boot',2,{})
+        for args in [('bad','boot',2,{}),('bin','old',2,{}),('bin','boot',1,{}),('bin','boot',2,{'changed':True})]:
+            with self.assertRaisesRegex(ValueError,'changed'):w.w0_gate(path,*args)
+        native['round_trips']=99;self.write(self.root/'run/receipt.json',native)
+        with self.assertRaisesRegex(ValueError,'changed'):w.w0_gate(path,'bin','boot',2,{})
+
+    def test_w0_receipt_missing_refused(self):
+        with self.assertRaisesRegex(ValueError,'require --w0'):w.w0_gate(None,'','',2,{})
+
+    def test_real_wrapper_rejects_neo_before_output_or_latch(self):
+        import os, subprocess, sys
+        for key in ('NEOReadDebugKeys','EnableDeferBacking','UnlistedNeoDebugOption'):
+            out=self.root/key
+            env=dict(os.environ,**{key:''})
+            latch=HERE/'build/FAULT.json'
+            before=latch.read_bytes() if latch.exists() else None
+            result=subprocess.run([sys.executable,'-B',str(HERE/'window.py'),
+                '--authorized-device-window','--window','W0','--seconds','30','--output',str(out)],
+                env=env,capture_output=True,text=True)
+            self.assertNotEqual(result.returncode,0)
+            self.assertIn('before latch',result.stderr)
+            self.assertFalse(out.exists())
+            self.assertEqual(latch.read_bytes() if latch.exists() else None,before)
+
+    def test_memory_samples_keep_gpuactive_separate_from_rss(self):
+        path=self.root/'meminfo';path.write_text('MemAvailable: 100 kB\nGPUActive: 20 kB\n')
+        self.assertEqual(w.memory_snapshot(path),dict(MemAvailable=102400,GPUActive=20480,GPUActive_available=True))
+
+    def test_pre_latch_environment_order(self):
+        import inspect
+        src=inspect.getsource(w.main)
+        self.assertLess(src.index('environment_gate()'),src.index('ldd_preflight(binary)'))
+        self.assertLess(src.index('ldd_preflight(binary)'),src.index('run_w0(a,'))
+        self.assertLess(src.index('ldd_preflight(binary)'),src.index('out.mkdir('))
 
     def test_token_mismatch_receipt_survives_exception(self):
         hashes = self.fake_run()

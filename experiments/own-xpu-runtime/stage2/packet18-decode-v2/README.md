@@ -2,8 +2,39 @@
 
 CPU-only preparation of our own runtime for the Unsloth Flash-Next UD-IQ3_XXS
 **quantized compressed version**. No device binary ran. No speed is claimed.
-The coordinator owns the separately admitted [W1/W2/W3 windows](WINDOW.md).
+The coordinator owns the separately admitted [W0/W1/W2/W3 windows](WINDOW.md).
 Packet16 and historical packets13/14/15 are unchanged.
+
+## Packet19 fault containment, CPU only
+
+All snapshot bytes are initialized before capture. Device-computed indices are
+checked before conversion and address calculation; invalid values set sticky
+error and use a safe index or return before addressing. V2 math and table-based
+RoPE are preserved in both the parallel adapter and serial Core.
+
+The owner now rejects any dependency from another queue. Native pointer/event
+registries independently enforce the same rule. Queue switches and every peer
+copy drain both queues on the host and retire their events first, including
+begin0/begin1/broadcast, all boundary/return fields and the final card1 commit.
+The shutdown marker has an empty dependency list after host drain. Local
+retirement clears the event-to-queue ledger. `queue_gate.py` runs at build time;
+`queue-tests` exercises pending peer-copy and foreign-dependency rejection.
+The [independent source review](review-queue-isolation.md) found cross-queue
+event edges **[]**. This is conservative containment, not a proven repair of
+the packet16 driver fault.
+
+[Sanitizer mini](sanitizer-mini.json), [integration](sanitizer-integration.json),
+[short real](sanitizer-real-short.json), [full real](sanitizer-real-full.json),
+and [checker/index tests](sanitizer-unit.json) bind the CPU gates. Mini runs cover
+both card counts and both non-GEMV modes under seeds 0, 1, 17 and 73; all buffers,
+tokens and fixtures must match. The short real run covers positions 0 and 1 plus
+a generated-token input at position 2 on two resident CPU owners, under all four
+seeds. The full 87-position run compares the first token and 48 fixtures directly
+to the v2 oracle. Native kernel internals and driver backing are not simulated.
+
+The prepared W0 is weight-free and precedes the model windows. All windows refuse
+NEO debug keys; W2/W3 add explicit host-shadow RAM admission and memory samples.
+No device ran, and FAULT HALT remains in force.
 
 ## Arithmetic and construction
 
@@ -58,7 +89,7 @@ inner site is never invented. Step1 means the final prompt position predicting
 the first answer. Final CPU gates pass: **64/64 frozen tokens + 384/384 fixtures; 8/8 R5 tokens
 + 384/384 fixtures; 13/13 integration cases per non-GEMV mode; 150/150 GEMV
 arithmetic comparisons; 4/4 owner-retirement checks; 7/7 deferred-chain checks;
-28/28 window protocol tests; 2/2 deliberate wrong-fixture rejections**.
+36/36 window protocol tests; 2/2 deliberate wrong-fixture rejections**.
 No device ran. CPU-only receipts and final counts are in `cpu-tests.json`,
 `cpu-real-frozen.json`, `cpu-real-r5.json` and `build-receipt.json`.
 
@@ -70,6 +101,27 @@ nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 \
  experiments/own-xpu-runtime/stage2/packet18-decode-v2/build.py --keep-build
 ```
 
+The builder runs the sanitizer gates before the full CPU oracle gates. To run
+them separately after the host build and input preparation:
+
+```bash
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B "$P/depcheck_build.py" --source "$P" --tag sanitized
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B "$P/guard_tests.py"
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B "$P/sanitizer_gate.py" all
+```
+
+Here `P=experiments/own-xpu-runtime/stage2/packet18-decode-v2`. The sanitized
+builder is packet19's builder with an explicit packet18-local output root,
+local retirement implementation and the reviewed CPU fatal-helper anchor.
+It reads packet19 without writing there. Each sanitizer invocation chooses a fresh output root under build/; an explicit
+`--run-root` must also be new. Existing evidence is preserved.
+`build.py` refuses to seal without passing sanitizer receipts and an unchanged
+instrumented binary/source manifest. Build the host prerequisites first with
+`cmake -S "$P" -B "$P/build/host" -DOWN_RT_HOST_ONLY=ON` then
+`cmake --build "$P/build/host" -j2`, using the same nice/ionice/OMP wrapper. If input is absent, run
+`python -B "$P/prepare.py" --output "$P/build/input"` with that wrapper.
+`--reuse-sanitizer-gates` is allowed only with the current instrumented binary
+and its unchanged dependency manifest.
 The default full CPU checks run frozen 64 and R5 eight.
 The initial R5 streaming attempt was stopped cooperatively before fixtures to
 avoid repeated dense-weight expansion; its interrupted receipt is retained. `--reuse-real-gates`
@@ -98,10 +150,17 @@ Frozen parallel was 3,635 in packet16; R5 parallel was 3,371. The three QSA
 attention kernels remain separate, accounting for parallel's 24 extra launches
 across 12 QSA layers. CPU mocks collapse multi-pass GEMVs into one host
 operation, so their submission counts differ from this native census.
-All GEMV kernels and trees are unchanged. Five explicit
-host completion waits remain per resident token (seven while steps 1–8 snapshots
-are captured). No per-site host wait or error readback was added. One-card
-streaming has many weight-copy waits and is a correctness vehicle.
+All GEMV kernels and trees are unchanged. Resident tokens now have **16 counted
+host event waits**, or **18 while steps 1–8 snapshots are captured**. Four waits
+upload the two token controls and embedding/PLE inputs. Twelve are schedule waits:
+begin0 to begin1; begin1 to card0; card0 to the layer-23 boundary; four waits
+between that boundary's five peer copies; card1 to the return; one wait between
+the two return copies; commit0 to commit1; commit1 to card0 readback; and readback
+completion. Snapshot readbacks add two. After each counted wait, event retirement
+also calls `wait_and_throw` on both queues: 32 or 36 more native queue waits,
+usually already complete. Total explicit native wait calls are therefore 48 or
+54 per resident token, excluding load and shutdown. One-card streaming has
+many weight-copy waits and is a correctness vehicle.
 
 Context 256 includes the full prompt plus 63 continuation inputs. Calculated
 bytes from [census.json](census.json), excluding unmeasured driver/JIT memory:
@@ -155,7 +214,7 @@ not implemented here. Two cards still compute their half-models sequentially.
 ## Remaining device gates
 
 W1 is this lane's first direct device-v2 exactness gate: eight tokens and 384
-layer fixtures. W2/W3 require that W1 on the same boot and binary, then 64 tokens
+layer fixtures. W2/W3 require W0 and W1 on the same boot and binary, then 64 tokens
 and 384 fixtures on two resident cards, with per-token timing and whole-wall-clock
 decode over tokens 2–64. `--repeat-of` binds a fresh-process repeat; none is
 queued automatically. Fixture overhead remains in timing. `ldd` checks loader

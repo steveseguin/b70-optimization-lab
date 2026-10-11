@@ -1,0 +1,23 @@
+{
+  "device_executed": false,
+  "upstream_review": {
+    "../packet19-depcheck/INTEGRATE.md": "540909a57156371e815cb476052ee74aa3c8cc9197e589843843962cd0d074cd",
+    "../packet19-depcheck/ROOT-CAUSE.md": "870e02c90513f144a02adb8a18e4c689af228f0744867e97e300915e81793d6c",
+    "../packet19-depcheck/VIOLATIONS.md": "d576f8784335996929008a11d7c6deff785dcb85355f03d4c45c171032763f25",
+    "../packet19-depcheck/fixes/series": "ff3aabfa85545a9fcc4145aa757447271ff368139a0d05fbc5718a7d691d81ee",
+    "../packet19-depcheck/fixes/0001-define-fixture-snapshot-bytes.patch": "c7e82048f830a3b75262a32990d4838a59b910ae63cc57846c4a0ce2e3be2078",
+    "../packet19-depcheck/fixes/0002-guard-device-computed-indices.patch": "2f8467d71e52cb60256cbb5a75bb541ab28902e4c8b2e968dcf022e064336164",
+    "../packet19-depcheck/fixes/0003-contain-cross-card-native-event-waits.patch": "15acf46ee32b94477fdd46c35d2fa7745f58d0e801120249c0b21d39b118ea6d"
+  },
+  "ports": {
+    "0001": "main.cpp snapshot zero before active skip",
+    "0002": "adapter.cpp, kernels.hpp, core_v2.hpp, runtime_kernels.hpp; preserve detmath and RoPE table arithmetic",
+    "0003": "Conservative strengthened containment: Engine fences and retires both queues; owner and backend reject any remaining foreign dependency. Local owner_retire.cpp clears queue metadata."
+  },
+  "checker": "depcheck_build.py reads packet19 source and writes only packet18/build; original packet19 files unchanged",
+  "limitations": [
+    "CPU declared-access checking does not simulate native split-kernel workgroup internals or driver backing.",
+    "Native fault root cause remains unproven.",
+    "No device run performed."
+  ]
+}

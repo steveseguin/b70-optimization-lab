@@ -82,7 +82,7 @@ public:
 };
 #endif
 struct Options {
-  bool mini = false, first = false, record = false, authorized = false, checked = false;
+  bool canary = false, mini = false, first = false, record = false, authorized = false, checked = false;
   std::string nongemv = "parallel", gemv = "frozen", stage = "first-token";
   int cards = 1, card = 3, tokens = 8, context = 128, seconds = 10800;
   std::string memory = "layer-streaming";
@@ -96,7 +96,8 @@ static Options parse(int argc, char **argv) {
       require(i + 1 < argc, "missing " + k);
       return std::string(argv[++i]);
     };
-    if (k == "--checked") a.checked = true;
+    if (k == "--canary") a.canary = true;
+    else if (k == "--checked") a.checked = true;
     else if (k == "--nongemv") a.nongemv = value();
     else if (k == "--gemv") a.gemv = value();
     else if (k == "--stage") a.stage = value();
@@ -399,6 +400,7 @@ public:
   struct Pending { Launch launch; bool gemv; };
   std::vector<Pending> pending;
   ownrt::Event tail=0;
+  int submission_card=-1;
   uint64_t host_waits=0;
   int64_t history0=0,history1=0;
   std::vector<int64_t> metadata;
@@ -632,6 +634,8 @@ public:
             upload(c, id, off, zero.data(), std::min(zero.size(), bytes - off));
         }
     for (int c = 0; c < a.cards; ++c) {
+      std::vector<uint8_t> snapshot_zero(48*4*p.g.h*2,0);
+      upload(c,snapshots[c],0,snapshot_zero.data(),snapshot_zero.size());
       if (!buffers[c].count("active"))
         continue;
       float unit=1; upload(c,one[c],0,&unit,4);
@@ -756,6 +760,8 @@ public:
     guard();
     require(dep == logical, "step event order");
     int c = l.card;
+    if(submission_card!=c)drain(); // both queues drained and events retired on host
+    submission_card=c;
     if(l.label.starts_with("blk."))stage_layer(c,std::stoi(l.label.substr(4)));
     auto site_start=std::chrono::steady_clock::now();
     double old_g=gemv_ms,old_n=nongemv_ms,old_t=transfer_ms;
@@ -763,6 +769,7 @@ public:
     if (l.op == "lookup") { /* Prepared once at token boundary from known input/history. */ }
     else if (l.op == "handoff" || l.op == "handoff_result") {
       for (auto &name : l.outputs) {
+        drain(); // every peer copy starts with both owners drained
         auto source=buffers[l.source_card].at(name), dest=buffers[c].at(name);
         ownrt::CopyEngine copy(dev(c));
         tail=copy.copy(dest.id,0,source.id,0,source.n*flash::scalar_bytes(source.type),{});
@@ -963,6 +970,18 @@ static void write_plan(const fs::path &path, const flash::Plan &p,
     require(peak_bytes<=30ull*1024*1024*1024,"planned card exceeds 30 GiB");
   }
 }
+static void record_host_memory(const fs::path& output,const char* phase) {
+  std::ifstream input("/proc/meminfo");std::string line;uint64_t available=0,active=0;bool has_active=false;
+  while(std::getline(input,line)){std::istringstream row(line);std::string key;uint64_t kb=0;row>>key>>kb;
+    if(key=="MemAvailable:")available=kb*1024;
+    if(key=="GPUActive:"){active=kb*1024;has_active=true;}
+  }
+  std::ofstream out(output/"host-memory.jsonl",std::ios::app);
+  out<<"{\"phase\":"<<ownrt::quote(phase)<<",\"MemAvailable\":"<<available<<",\"GPUActive\":"
+     <<(has_active?std::to_string(active):"null")<<"}\n";out.flush();
+}
+
+#include "canary.hpp"
 int main(int argc, char **argv) {
   std::unique_ptr<Engine> e;
   std::unique_ptr<Weights> w;
@@ -984,6 +1003,7 @@ int main(int argc, char **argv) {
     fs::create_directories(output);
     std::signal(SIGTERM, stop);
     std::signal(SIGINT, stop);
+    if(a.canary)return run_canary(a);
     w = std::make_unique<Weights>(a);
     auto p = plan(*w, a);
     write_plan(output / "plan.json", p, *w, a.cards,a);
@@ -1022,7 +1042,9 @@ int main(int argc, char **argv) {
       }
     }
     e = std::make_unique<Engine>(*w, a, p);
+    record_host_memory(output,"before_load");
     e->initialize();
+    record_host_memory(output,"after_load");
     fs::create_directory(output / "step1");
 
     size_t token_index=0;
@@ -1052,6 +1074,7 @@ int main(int argc, char **argv) {
         }
       }
       // One token-boundary readback contains sticky error and greedy output.
+      e->drain(); // commit.final is Q1; readback is Q0
       auto& owner=e->dev(0);ownrt::CopyEngine copy(owner);
       auto start_transfer=std::chrono::steady_clock::now();
       e->tail=copy.copy(e->slab[0],0,e->buffers[0].at("error").id,0,4,{});
@@ -1151,6 +1174,7 @@ int main(int argc, char **argv) {
   }
   if (output.empty() || !fs::is_directory(output))
     return 1;
+  record_host_memory(output,"end");
   std::ostringstream r;
   r << "{\"schema\":\"own-runtime.iq3.packet18.run.v1\",\"passed\":"
     << (error.empty() && comparison ? "true" : "false")
