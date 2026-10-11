@@ -182,8 +182,16 @@ def rule_lines(notes: str) -> list[str]:
     return [ln for ln in lines if ln and ln.lower().strip("().") != "none"]
 
 
+def same_rule(a: str, b: str) -> bool:
+    """Two wordings of one rule: most of the words of the shorter are in the longer."""
+    wa, wb = set(re.findall(r"\w+", a.lower())), set(re.findall(r"\w+", b.lower()))
+    return bool(wa and wb) and len(wa & wb) >= 0.8 * min(len(wa), len(wb))
+
+
 def keep_rules(old: str, new: str) -> tuple[str, list[str]]:
-    """`new` with every RULES line of `old` that it lost put back at the top of its RULES section."""
+    """`new` with every RULES line of `old` that it lost put back at the top of its RULES section. A rule the model
+    reworded comes back in its original wording and the rewording is removed, so the section cannot fill up with
+    variants of one rule (the proxy saw 95 put-backs over a 1M stream; this arm saw none, and now cannot)."""
     norm = lambda s: " ".join(s.split())            # exact words and case; only spacing may differ
     have = {norm(r) for r in rule_lines(new)}
     lost = [r for r in rule_lines(old) if norm(r) not in have]
@@ -193,8 +201,15 @@ def keep_rules(old: str, new: str) -> tuple[str, list[str]]:
     at = next((i for i, ln in enumerate(lines) if section_of(ln) == "RULES"), None)
     if at is None:
         lines, at = ["RULES"] + lines, 0
-    lines[at + 1:at + 1] = lost
-    return "\n".join(lines), lost
+    kept, in_rules = lines[:at + 1], True
+    for ln in lines[at + 1:]:
+        if section_of(ln):
+            in_rules = section_of(ln) == "RULES"
+        elif in_rules and ln.strip() and any(same_rule(ln.strip().lstrip("-* ").strip(), r) for r in lost):
+            continue                                 # a rewording of a rule that is being put back
+        kept.append(ln)
+    kept[at + 1:at + 1] = lost
+    return "\n".join(kept), lost
 
 
 ASKS = re.compile(r"(?m)^(?:ASK \S+?:|QUERY \S+|GET \S+)")

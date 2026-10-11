@@ -116,6 +116,15 @@ class Keeper(unittest.TestCase):
         self.assertIn("NOT RUN", NS["REPEAT_NOTE"])                                 # the words that turn thinking on
         self.assertTrue(NS["QUESTION"].search(NS["REPEAT_NOTE"] + "\n\n(exit_code=75)"))
 
+    def test_a_reworded_rule_comes_back_in_its_own_words_once(self):
+        old = "RULES\n- Storage rule: stream contents only in my context; never redirect or tee next. Mirror file is context.\n- A is secret: answer protected.\nSTATE\nx"
+        new = "RULES\n- Storage rule: stream contents only in my context; never redirect or tee next.\n- A is secret: answer protected.\n- Dates day first.\nSTATE\ny"
+        kept, lost = NS["keep_rules"](old, new)
+        self.assertEqual(len(lost), 1)
+        self.assertEqual(NS["rule_lines"](kept), ["Storage rule: stream contents only in my context; never redirect or tee next. Mirror file is context.",
+                                                   "A is secret: answer protected.", "Dates day first."])
+        self.assertEqual(NS["keep_rules"](kept, kept), (kept, []))
+
     def test_pin_head_round_trip(self):
         self.assertEqual(NS["PIN_RE"].match(NS["PIN_HEAD"].format(n=17)).group(1), "17")
 
