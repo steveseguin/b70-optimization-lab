@@ -1,0 +1,2018 @@
+{
+  "schema": "packet26.k2.summary.v1",
+  "passed": false,
+  "diagnostic": true,
+  "device_speed_claim": false,
+  "repetitions": 200,
+  "event_rows": 22003,
+  "invalid_duration_rows": 0,
+  "invalid_duration_fraction": 0.0,
+  "invalid_rule": "exclude invalid rows and their whole sequence repetition; fail only above 1 percent invalid rows",
+  "selection_rule": "specialised only when exact and median execution sum is strictly below 0.9 times packet18",
+  "classes": {
+    "activation": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 4688.0,
+            "p90_ns": 7188.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 4688.0,
+            "p90_ns": 7188.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 4583.0,
+            "p90_ns": 7187.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 4583.0,
+            "p90_ns": 7187.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {},
+      "selected": "packet18",
+      "candidate_available": false,
+      "ratio": 0.9776023890784983
+    },
+    "argmax": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 266563.0,
+            "p90_ns": 270750.7
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 266563.0,
+            "p90_ns": 270750.7
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 190572.5,
+            "p90_ns": 193229.0
+          },
+          "event": {
+            "count": 400,
+            "median_ns": 94322.5,
+            "p90_ns": 145209.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {},
+      "selected": "specialised",
+      "candidate_available": true,
+      "ratio": 0.714924802016784
+    },
+    "attn.combine": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 158229.0,
+            "p90_ns": 158750.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 158229.0,
+            "p90_ns": 158750.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 11770.0,
+            "p90_ns": 11990.3
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 11770.0,
+            "p90_ns": 11990.3
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {},
+      "selected": "specialised",
+      "candidate_available": true,
+      "ratio": 0.07438585847095033
+    },
+    "attn.combine+norm": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 178646.0,
+            "p90_ns": 179478.1
+          },
+          "event": {
+            "count": 400,
+            "median_ns": 90104.0,
+            "p90_ns": 158240.3
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 17292.0,
+            "p90_ns": 17500.0
+          },
+          "event": {
+            "count": 400,
+            "median_ns": 9583.0,
+            "p90_ns": 9896.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {},
+      "selected": "specialised",
+      "candidate_available": true,
+      "ratio": 0.0967947785004982
+    },
+    "conv": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 5521.0,
+            "p90_ns": 8333.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 5521.0,
+            "p90_ns": 8333.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 5521.0,
+            "p90_ns": 8333.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 5521.0,
+            "p90_ns": 8333.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {},
+      "selected": "packet18",
+      "candidate_available": false,
+      "ratio": 1.0
+    },
+    "ffn.combine": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 158229.0,
+            "p90_ns": 158646.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 158229.0,
+            "p90_ns": 158646.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 11771.0,
+            "p90_ns": 11979.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 11771.0,
+            "p90_ns": 11979.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {},
+      "selected": "specialised",
+      "candidate_available": true,
+      "ratio": 0.07439217842494107
+    },
+    "ffn.combine+norm": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 178489.5,
+            "p90_ns": 179062.0
+          },
+          "event": {
+            "count": 400,
+            "median_ns": 89062.5,
+            "p90_ns": 158135.4
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 17291.0,
+            "p90_ns": 17396.0
+          },
+          "event": {
+            "count": 400,
+            "median_ns": 8698.0,
+            "p90_ns": 9896.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {},
+      "selected": "specialised",
+      "candidate_available": true,
+      "ratio": 0.09687404581221865
+    },
+    "gather": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 81979.0,
+            "p90_ns": 82396.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 81979.0,
+            "p90_ns": 82396.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 22604.0,
+            "p90_ns": 22811.0
+          },
+          "event": {
+            "count": 400,
+            "median_ns": 11146.0,
+            "p90_ns": 21042.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {},
+      "selected": "specialised",
+      "candidate_available": true,
+      "ratio": 0.2757291501482087
+    },
+    "gdn.norm": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 9375.0,
+            "p90_ns": 9584.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 9375.0,
+            "p90_ns": 9584.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 13334.0,
+            "p90_ns": 13541.1
+          },
+          "event": {
+            "count": 400,
+            "median_ns": 7604.0,
+            "p90_ns": 9271.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {},
+      "selected": "packet18",
+      "candidate_available": true,
+      "ratio": 1.4222933333333334
+    },
+    "gdn.recurrence": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 53333.0,
+            "p90_ns": 56459.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 53333.0,
+            "p90_ns": 56459.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 155521.0,
+            "p90_ns": 157500.0
+          },
+          "event": {
+            "count": 400,
+            "median_ns": 77709.0,
+            "p90_ns": 139480.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {},
+      "selected": "packet18",
+      "candidate_available": true,
+      "ratio": 2.916036975231095
+    },
+    "gemv:attention": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 119271.0,
+            "p90_ns": 119791.0
+          },
+          "event": {
+            "count": 400,
+            "median_ns": 59687.0,
+            "p90_ns": 60000.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 119271.0,
+            "p90_ns": 119792.0
+          },
+          "event": {
+            "count": 400,
+            "median_ns": 59687.0,
+            "p90_ns": 60000.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {
+        "attention.gdn": {
+          "variants": {
+            "packet18": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 59688.0,
+                "p90_ns": 60000.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 59688.0,
+                "p90_ns": 60000.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            },
+            "specialised": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 59687.0,
+                "p90_ns": 60000.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 59687.0,
+                "p90_ns": 60000.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            }
+          },
+          "workloads": {},
+          "selected": "packet18",
+          "candidate_available": false,
+          "ratio": 0.9999832462136443
+        },
+        "attention.qsa": {
+          "variants": {
+            "packet18": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 59584.0,
+                "p90_ns": 60000.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 59584.0,
+                "p90_ns": 60000.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            },
+            "specialised": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 59687.0,
+                "p90_ns": 60000.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 59687.0,
+                "p90_ns": 60000.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            }
+          },
+          "workloads": {},
+          "selected": "packet18",
+          "candidate_available": false,
+          "ratio": 1.0017286519871107
+        }
+      },
+      "selected": "packet18",
+      "candidate_available": false,
+      "ratio": 1.0
+    },
+    "gemv:expsdown": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 125521.0,
+            "p90_ns": 125730.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 125521.0,
+            "p90_ns": 125730.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 125520.0,
+            "p90_ns": 125833.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 125520.0,
+            "p90_ns": 125833.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {
+        "expsdown": {
+          "variants": {
+            "packet18": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 125521.0,
+                "p90_ns": 125730.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 125521.0,
+                "p90_ns": 125730.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            },
+            "specialised": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 125520.0,
+                "p90_ns": 125833.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 125520.0,
+                "p90_ns": 125833.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            }
+          },
+          "workloads": {},
+          "selected": "packet18",
+          "candidate_available": false,
+          "ratio": 0.999992033205599
+        }
+      },
+      "selected": "packet18",
+      "candidate_available": false,
+      "ratio": 0.999992033205599
+    },
+    "gemv:expsgate": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 344479.0,
+            "p90_ns": 345313.0
+          },
+          "event": {
+            "count": 400,
+            "median_ns": 172187.0,
+            "p90_ns": 173229.1
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 344375.5,
+            "p90_ns": 345208.1
+          },
+          "event": {
+            "count": 400,
+            "median_ns": 172188.0,
+            "p90_ns": 173229.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {
+        "expsgate.iq2": {
+          "variants": {
+            "packet18": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 172813.0,
+                "p90_ns": 173448.3
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 172813.0,
+                "p90_ns": 173448.3
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            },
+            "specialised": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 172917.0,
+                "p90_ns": 173334.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 172917.0,
+                "p90_ns": 173334.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            }
+          },
+          "workloads": {},
+          "selected": "packet18",
+          "candidate_available": false,
+          "ratio": 1.0006018065770514
+        },
+        "expsgate.iq3": {
+          "variants": {
+            "packet18": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 171563.0,
+                "p90_ns": 172188.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 171563.0,
+                "p90_ns": 172188.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            },
+            "specialised": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 171562.5,
+                "p90_ns": 172187.1
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 171562.5,
+                "p90_ns": 172187.1
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            }
+          },
+          "workloads": {},
+          "selected": "packet18",
+          "candidate_available": false,
+          "ratio": 0.999997085618694
+        }
+      },
+      "selected": "packet18",
+      "candidate_available": false,
+      "ratio": 0.9996995462713257
+    },
+    "gemv:gdn.qkv": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 187605.0,
+            "p90_ns": 188437.1
+          },
+          "event": {
+            "count": 400,
+            "median_ns": 95156.0,
+            "p90_ns": 96354.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 187605.0,
+            "p90_ns": 188437.0
+          },
+          "event": {
+            "count": 400,
+            "median_ns": 94062.5,
+            "p90_ns": 96250.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {
+        "gdn.qkv.q6": {
+          "variants": {
+            "packet18": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 95937.0,
+                "p90_ns": 96573.3
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 95937.0,
+                "p90_ns": 96573.3
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            },
+            "specialised": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 95937.0,
+                "p90_ns": 96563.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 95937.0,
+                "p90_ns": 96563.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            }
+          },
+          "workloads": {},
+          "selected": "packet18",
+          "candidate_available": false,
+          "ratio": 1.0
+        },
+        "gdn.qkv.q8": {
+          "variants": {
+            "packet18": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 91667.0,
+                "p90_ns": 92292.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 91667.0,
+                "p90_ns": 92292.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            },
+            "specialised": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 91667.0,
+                "p90_ns": 92198.3
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 91667.0,
+                "p90_ns": 92198.3
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            }
+          },
+          "workloads": {},
+          "selected": "packet18",
+          "candidate_available": false,
+          "ratio": 1.0
+        }
+      },
+      "selected": "packet18",
+      "candidate_available": false,
+      "ratio": 1.0
+    },
+    "gemv:gdn.z": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 114375.0,
+            "p90_ns": 114906.3
+          },
+          "event": {
+            "count": 400,
+            "median_ns": 57188.0,
+            "p90_ns": 57708.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 114375.0,
+            "p90_ns": 114896.0
+          },
+          "event": {
+            "count": 400,
+            "median_ns": 57187.0,
+            "p90_ns": 57708.1
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {
+        "gdn.z.q6": {
+          "variants": {
+            "packet18": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 56979.0,
+                "p90_ns": 57292.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 56979.0,
+                "p90_ns": 57292.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            },
+            "specialised": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 56875.0,
+                "p90_ns": 57291.1
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 56875.0,
+                "p90_ns": 57291.1
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            }
+          },
+          "workloads": {},
+          "selected": "packet18",
+          "candidate_available": false,
+          "ratio": 0.9981747661419119
+        },
+        "gdn.z.q8": {
+          "variants": {
+            "packet18": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 57396.0,
+                "p90_ns": 57813.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 57396.0,
+                "p90_ns": 57813.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            },
+            "specialised": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 57396.0,
+                "p90_ns": 57916.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 57396.0,
+                "p90_ns": 57916.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            }
+          },
+          "workloads": {},
+          "selected": "packet18",
+          "candidate_available": false,
+          "ratio": 1.0
+        }
+      },
+      "selected": "packet18",
+      "candidate_available": false,
+      "ratio": 1.0
+    },
+    "gemv:hc.gate": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 26875.0,
+            "p90_ns": 27187.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 26875.0,
+            "p90_ns": 27187.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 26875.0,
+            "p90_ns": 27083.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 26875.0,
+            "p90_ns": 27083.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {
+        "hc.gate": {
+          "variants": {
+            "packet18": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 26875.0,
+                "p90_ns": 27187.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 26875.0,
+                "p90_ns": 27187.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            },
+            "specialised": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 26875.0,
+                "p90_ns": 27083.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 26875.0,
+                "p90_ns": 27083.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            }
+          },
+          "workloads": {},
+          "selected": "packet18",
+          "candidate_available": false,
+          "ratio": 1.0
+        }
+      },
+      "selected": "packet18",
+      "candidate_available": false,
+      "ratio": 1.0
+    },
+    "gemv:hc.low": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 16041.0,
+            "p90_ns": 16146.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 16041.0,
+            "p90_ns": 16146.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 16041.0,
+            "p90_ns": 16146.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 16041.0,
+            "p90_ns": 16146.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {
+        "hc.low": {
+          "variants": {
+            "packet18": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 16041.0,
+                "p90_ns": 16146.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 16041.0,
+                "p90_ns": 16146.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            },
+            "specialised": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 16041.0,
+                "p90_ns": 16146.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 16041.0,
+                "p90_ns": 16146.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            }
+          },
+          "workloads": {},
+          "selected": "packet18",
+          "candidate_available": false,
+          "ratio": 1.0
+        }
+      },
+      "selected": "packet18",
+      "candidate_available": false,
+      "ratio": 1.0
+    },
+    "gemv:logits": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 2234011.0,
+            "p90_ns": 2238229.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 2234011.0,
+            "p90_ns": 2238229.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 2234375.0,
+            "p90_ns": 2236698.2
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 2234375.0,
+            "p90_ns": 2236698.2
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {
+        "logits": {
+          "variants": {
+            "packet18": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 2234011.0,
+                "p90_ns": 2238229.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 2234011.0,
+                "p90_ns": 2238229.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            },
+            "specialised": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 2234375.0,
+                "p90_ns": 2236698.2
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 2234375.0,
+                "p90_ns": 2236698.2
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            }
+          },
+          "workloads": {},
+          "selected": "packet18",
+          "candidate_available": false,
+          "ratio": 1.0001629356346051
+        }
+      },
+      "selected": "packet18",
+      "candidate_available": false,
+      "ratio": 1.0001629356346051
+    },
+    "gemv:ple.key": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 90937.0,
+            "p90_ns": 91250.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 90937.0,
+            "p90_ns": 91250.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 90938.0,
+            "p90_ns": 91250.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 90938.0,
+            "p90_ns": 91250.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {
+        "ple.key": {
+          "variants": {
+            "packet18": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 90937.0,
+                "p90_ns": 91250.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 90937.0,
+                "p90_ns": 91250.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            },
+            "specialised": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 90938.0,
+                "p90_ns": 91250.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 90938.0,
+                "p90_ns": 91250.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            }
+          },
+          "workloads": {},
+          "selected": "packet18",
+          "candidate_available": false,
+          "ratio": 1.0000109966240365
+        }
+      },
+      "selected": "packet18",
+      "candidate_available": false,
+      "ratio": 1.0000109966240365
+    },
+    "gemv:ple.value": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 35729.0,
+            "p90_ns": 36042.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 35729.0,
+            "p90_ns": 36042.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 35729.0,
+            "p90_ns": 36042.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 35729.0,
+            "p90_ns": 36042.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {
+        "ple.value": {
+          "variants": {
+            "packet18": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 35729.0,
+                "p90_ns": 36042.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 35729.0,
+                "p90_ns": 36042.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            },
+            "specialised": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 35729.0,
+                "p90_ns": 36042.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 35729.0,
+                "p90_ns": 36042.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            }
+          },
+          "workloads": {},
+          "selected": "packet18",
+          "candidate_available": false,
+          "ratio": 1.0
+        }
+      },
+      "selected": "packet18",
+      "candidate_available": false,
+      "ratio": 1.0
+    },
+    "gemv:qsa.k": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 9583.0,
+            "p90_ns": 9688.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 9583.0,
+            "p90_ns": 9688.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 9584.0,
+            "p90_ns": 9791.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 9584.0,
+            "p90_ns": 9791.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {
+        "qsa.k": {
+          "variants": {
+            "packet18": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 9583.0,
+                "p90_ns": 9688.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 9583.0,
+                "p90_ns": 9688.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            },
+            "specialised": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 9584.0,
+                "p90_ns": 9791.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 9584.0,
+                "p90_ns": 9791.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            }
+          },
+          "workloads": {},
+          "selected": "packet18",
+          "candidate_available": false,
+          "ratio": 1.0001043514557029
+        }
+      },
+      "selected": "packet18",
+      "candidate_available": false,
+      "ratio": 1.0001043514557029
+    },
+    "gemv:qsa.qgate": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 114271.0,
+            "p90_ns": 114896.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 114271.0,
+            "p90_ns": 114896.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 114375.0,
+            "p90_ns": 115000.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 114375.0,
+            "p90_ns": 115000.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {
+        "qsa.qgate": {
+          "variants": {
+            "packet18": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 114271.0,
+                "p90_ns": 114896.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 114271.0,
+                "p90_ns": 114896.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            },
+            "specialised": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 114375.0,
+                "p90_ns": 115000.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 114375.0,
+                "p90_ns": 115000.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            }
+          },
+          "workloads": {},
+          "selected": "packet18",
+          "candidate_available": false,
+          "ratio": 1.0009101171775867
+        }
+      },
+      "selected": "packet18",
+      "candidate_available": false,
+      "ratio": 1.0009101171775867
+    },
+    "gemv:qsa.v": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 9583.0,
+            "p90_ns": 9688.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 9583.0,
+            "p90_ns": 9688.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 9584.0,
+            "p90_ns": 9688.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 9584.0,
+            "p90_ns": 9688.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {
+        "qsa.v": {
+          "variants": {
+            "packet18": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 9583.0,
+                "p90_ns": 9688.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 9583.0,
+                "p90_ns": 9688.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            },
+            "specialised": {
+              "execution_sum": {
+                "count": 200,
+                "median_ns": 9584.0,
+                "p90_ns": 9688.0
+              },
+              "event": {
+                "count": 200,
+                "median_ns": 9584.0,
+                "p90_ns": 9688.0
+              },
+              "invalid_repetitions": 0,
+              "repetitions": 200
+            }
+          },
+          "workloads": {},
+          "selected": "packet18",
+          "candidate_available": false,
+          "ratio": 1.0001043514557029
+        }
+      },
+      "selected": "packet18",
+      "candidate_available": false,
+      "ratio": 1.0001043514557029
+    },
+    "hc.combine_norm": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 64583.0,
+            "p90_ns": 65000.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 64583.0,
+            "p90_ns": 65000.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 17499.0,
+            "p90_ns": 17708.0
+          },
+          "event": {
+            "count": 400,
+            "median_ns": 9531.0,
+            "p90_ns": 10000.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {},
+      "selected": "specialised",
+      "candidate_available": true,
+      "ratio": 0.2709536565350015
+    },
+    "hc.mix": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 12188.0,
+            "p90_ns": 12396.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 12188.0,
+            "p90_ns": 12396.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 12188.0,
+            "p90_ns": 12396.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 12188.0,
+            "p90_ns": 12396.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {},
+      "selected": "packet18",
+      "candidate_available": false,
+      "ratio": 1.0
+    },
+    "moe": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 7708.0,
+            "p90_ns": 7813.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 7708.0,
+            "p90_ns": 7813.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 7708.0,
+            "p90_ns": 7813.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 7708.0,
+            "p90_ns": 7813.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {},
+      "selected": "packet18",
+      "candidate_available": false,
+      "ratio": 1.0
+    },
+    "norm": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 25208.0,
+            "p90_ns": 25521.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 25208.0,
+            "p90_ns": 25521.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 7917.0,
+            "p90_ns": 8124.0
+          },
+          "event": {
+            "count": 400,
+            "median_ns": 4843.5,
+            "p90_ns": 5313.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {},
+      "selected": "specialised",
+      "candidate_available": true,
+      "ratio": 0.3140669628689305
+    },
+    "ple.add": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 97605.0,
+            "p90_ns": 98541.1
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 97605.0,
+            "p90_ns": 98541.1
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 10730.0,
+            "p90_ns": 11042.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 10730.0,
+            "p90_ns": 11042.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {},
+      "selected": "specialised",
+      "candidate_available": true,
+      "ratio": 0.10993289278213206
+    },
+    "qsa.attention": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 175313.0,
+            "p90_ns": 175730.1
+          },
+          "event": {
+            "count": 600,
+            "median_ns": 21042.0,
+            "p90_ns": 140105.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 171769.5,
+            "p90_ns": 172188.0
+          },
+          "event": {
+            "count": 1200,
+            "median_ns": 25468.5,
+            "p90_ns": 50729.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {},
+      "selected": "packet18",
+      "candidate_available": true,
+      "ratio": 0.9797875799284708
+    },
+    "qsa.pool": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 1,
+            "median_ns": 14062,
+            "p90_ns": 14062.0
+          },
+          "event": {
+            "count": 1,
+            "median_ns": 14062,
+            "p90_ns": 14062.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 1
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 1,
+            "median_ns": 32916,
+            "p90_ns": 32916.0
+          },
+          "event": {
+            "count": 2,
+            "median_ns": 16458.0,
+            "p90_ns": 18624.4
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 1
+        }
+      },
+      "workloads": {},
+      "selected": "packet18",
+      "candidate_available": true,
+      "ratio": 2.340776560944389,
+      "candidate_failures": [
+        {
+          "class": "qsa.pool",
+          "variant": "packet18",
+          "implementation": "packet18",
+          "workload": "qsa-pool-1.fixture",
+          "error": "qsa-pool-1.fixture mismatch slot 7"
+        },
+        {
+          "class": "qsa.pool",
+          "variant": "specialised",
+          "implementation": "specialised",
+          "workload": "qsa-pool-1.fixture",
+          "error": "qsa-pool-1.fixture mismatch slot 7"
+        }
+      ]
+    },
+    "qsa.prepare": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 12291.0,
+            "p90_ns": 12614.4
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 12291.0,
+            "p90_ns": 12614.4
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 20625.0,
+            "p90_ns": 20834.0
+          },
+          "event": {
+            "count": 400,
+            "median_ns": 10521.0,
+            "p90_ns": 11250.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {},
+      "selected": "packet18",
+      "candidate_available": true,
+      "ratio": 1.6780571149621675
+    },
+    "qsa.select": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 64427.0,
+            "p90_ns": 65208.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 64427.0,
+            "p90_ns": 65208.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 67396.0,
+            "p90_ns": 67615.3
+          },
+          "event": {
+            "count": 400,
+            "median_ns": 33958.5,
+            "p90_ns": 62812.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {},
+      "selected": "packet18",
+      "candidate_available": true,
+      "ratio": 1.0460831638909154
+    },
+    "route": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 204583.0,
+            "p90_ns": 204688.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 204583.0,
+            "p90_ns": 204688.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 67395.5,
+            "p90_ns": 67916.0
+          },
+          "event": {
+            "count": 1000,
+            "median_ns": 3958.0,
+            "p90_ns": 37500.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {},
+      "selected": "specialised",
+      "candidate_available": true,
+      "ratio": 0.3294286426535929
+    },
+    "route+gather": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 286146.0,
+            "p90_ns": 286562.0
+          },
+          "event": {
+            "count": 400,
+            "median_ns": 143177.0,
+            "p90_ns": 204792.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 67396.0,
+            "p90_ns": 67916.1
+          },
+          "event": {
+            "count": 1000,
+            "median_ns": 3958.0,
+            "p90_ns": 37500.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {},
+      "selected": "specialised",
+      "candidate_available": true,
+      "ratio": 0.2355301139977494
+    },
+    "route_gather": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 249062.0,
+            "p90_ns": 249271.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 249062.0,
+            "p90_ns": 249271.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 103542.0,
+            "p90_ns": 103748.1
+          },
+          "event": {
+            "count": 1000,
+            "median_ns": 21145.0,
+            "p90_ns": 39271.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {},
+      "selected": "specialised",
+      "candidate_available": true,
+      "ratio": 0.4157278107459187
+    },
+    "streams": {
+      "variants": {
+        "packet18": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 34583.0,
+            "p90_ns": 34896.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 34583.0,
+            "p90_ns": 34896.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        },
+        "specialised": {
+          "execution_sum": {
+            "count": 200,
+            "median_ns": 9896.0,
+            "p90_ns": 10104.0
+          },
+          "event": {
+            "count": 200,
+            "median_ns": 9896.0,
+            "p90_ns": 10104.0
+          },
+          "invalid_repetitions": 0,
+          "repetitions": 200
+        }
+      },
+      "workloads": {},
+      "selected": "specialised",
+      "candidate_available": true,
+      "ratio": 0.2861521556834283
+    }
+  },
+  "selection": {
+    "activation": "packet18",
+    "argmax": "specialised",
+    "attn.combine": "specialised",
+    "attn.combine+norm": "specialised",
+    "conv": "packet18",
+    "ffn.combine": "specialised",
+    "ffn.combine+norm": "specialised",
+    "gather": "specialised",
+    "gdn.norm": "packet18",
+    "gdn.recurrence": "packet18",
+    "gemv:attention": "packet18",
+    "gemv:expsdown": "packet18",
+    "gemv:expsgate": "packet18",
+    "gemv:gdn.qkv": "packet18",
+    "gemv:gdn.z": "packet18",
+    "gemv:hc.gate": "packet18",
+    "gemv:hc.low": "packet18",
+    "gemv:logits": "packet18",
+    "gemv:ple.key": "packet18",
+    "gemv:ple.value": "packet18",
+    "gemv:qsa.k": "packet18",
+    "gemv:qsa.qgate": "packet18",
+    "gemv:qsa.v": "packet18",
+    "hc.combine_norm": "specialised",
+    "hc.mix": "packet18",
+    "moe": "packet18",
+    "norm": "specialised",
+    "ple.add": "specialised",
+    "qsa.attention": "packet18",
+    "qsa.pool": "packet18",
+    "qsa.prepare": "packet18",
+    "qsa.select": "packet18",
+    "route": "specialised",
+    "route+gather": "specialised",
+    "route_gather": "specialised",
+    "streams": "specialised"
+  },
+  "failures": [
+    "missing repetitions: qsa.pool/packet18",
+    "missing repetitions: qsa.pool/specialised",
+    "reference arm failed: qsa.pool"
+  ],
+  "candidate_failures": [
+    {
+      "class": "qsa.pool",
+      "variant": "packet18",
+      "implementation": "packet18",
+      "workload": "qsa-pool-1.fixture",
+      "error": "qsa-pool-1.fixture mismatch slot 7"
+    },
+    {
+      "class": "qsa.pool",
+      "variant": "specialised",
+      "implementation": "specialised",
+      "workload": "qsa-pool-1.fixture",
+      "error": "qsa-pool-1.fixture mismatch slot 7"
+    }
+  ],
+  "excluded_classes": [
+    "qsa.pool"
+  ],
+  "excluded_arm_diagnostics": [
+    "missing repetitions: qsa.pool/packet18",
+    "missing repetitions: qsa.pool/specialised"
+  ],
+  "events_sha256": "6e2c434a417077a9e73f73a0c6639ef0148f2be4cc7943bc0223cb0b413857ea"
+}
