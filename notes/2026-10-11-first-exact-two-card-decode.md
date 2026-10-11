@@ -73,3 +73,19 @@ measured.
   with the oneAPI library path alone, not under `setvars`.
 - I started W3 96 s after W2 ended instead of waiting the usual five minutes. Nothing
   happened; noted so the gap is not read as optional.
+
+## Correction, 17:11 UTC: the slow part was a linear scan, not the timing queries
+
+The "neither" column above is not the timing instrumentation. Removing the per-launch
+profiling queries in a scratch build changed 315 ms to 300 ms. Phase timers then showed
+320 ms per token inside the host's submission loop and 3.4 ms waiting on the cards; a
+sampling profile put 83% of the host time in `tp2::Context::location`, which found the
+owning card of every kernel pointer by walking all allocations from the start. With an
+ordered lookup the same run takes **83.1 ms per token, 11.89 tok/s**, still exact
+([evidence](../experiments/own-xpu-runtime/stage2/packet18-decode-v2/evidence/20261011-host-bottleneck-location-scan/README.md)).
+I had stated the timing-query explanation as a finding without testing it; the A/B took
+three minutes.
+
+GPU time per token by kind of kernel was then measured on cards 0+1 (same file, run
+r5e): the largest items are the router softmax/rank (9.8 ms), expert gate/up (8.5 ms),
+the two combine+norm steps (7.5 and 7.4 ms), expert down (6.2 ms) and gather (3.8 ms).

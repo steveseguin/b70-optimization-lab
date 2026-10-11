@@ -1,13 +1,15 @@
-# Our Intel Xe runtime — measured state, 2026-10-11 16:10 UTC
+# Our Intel Xe runtime — measured state, 2026-10-11 18:50 UTC
 
-**Bit-exact on one card and on two; 3.15 tok/s measured; most of that time is our
-own stopwatch.** For Unsloth UD-IQ3_XXS, the **quantized compressed version**, full
-16-bit KV: the runtime reproduces its CPU oracle exactly on the cards (64/64 tokens,
-384/384 layer fixtures, two cards, two GEMV dispatches). Measured two-card decode:
-**2.46 tok/s** with the frozen GEMV variants, **3.15 tok/s** with R5; reference
-**28.49 tok/s**. About two thirds of each token is per-launch timing queries, not GPU
-work. GPU work continues on this boot on the owner's instruction after the 09:10 UTC
-fault ([incident][fault]); the fault has not recurred. [Receipts and reading][w2note].
+**Bit-exact on one card and on two; 11.89 tok/s measured on two cards.** For Unsloth
+UD-IQ3_XXS, the **quantized compressed version**, full 16-bit KV: the runtime reproduces
+its CPU oracle exactly on the cards (64/64 tokens, 384/384 layer fixtures). Two-card
+decode measured **2.46 tok/s** (frozen GEMV variants) and **3.15 tok/s** (R5) as first
+sealed, then **11.89 tok/s** (83 ms per token, still exact) in a scratch build once a
+linear allocation scan in the two-card backend was replaced by an ordered lookup
+([evidence][locscan]). Reference **28.49 tok/s**. After that fix a token is about half
+host issuing (2,181 launches) and half GPU work. An earlier statement on this page that
+per-launch timing queries were two thirds of the token was wrong: removing them changed
+315 ms to 300 ms. [Receipts and reading][w2note].
 
 **Kernel progress.** Effective GB/s means payload bytes divided by device time,
 not measured memory-bus traffic. These are warm, fixed-input operator diagnostics
@@ -112,12 +114,17 @@ keep experts packed and qualify dense-only expansion separately.
 
 **Next, in order:**
 
-1. **[Packet 23][p23]:** fused schedule (876 launches) with timing reduced to one wall
-   reading per token and profiling off. First run that measures the runtime itself.
-2. **Device time after that:** GEMV 61 ms span (R5) and non-GEMV 47 ms span are upper
-   bounds that include gaps. Expert GEMV is at 11% of the memory roofline.
-3. **Two cards inside a layer:** merge packet 14's 41 exchanges per layer first.
-4. **Replay ([packet 22][p22])** only if issuing still matters; a launch costs 3.4–5 µs.
+1. **[Packet 23][p23]:** fused schedule (876 launches), cheap submission path with the
+   ordered lookup, wall-clock timing only. Its fused kernels passed on the card (K1);
+   the two-card decode is next.
+2. **[Packet 24][p24], kernel efficiency:** GPU time per token by kind of kernel
+   ([measured][locscan]): route 9.8 ms, expert gate/up 8.5, the two combine+norm steps
+   7.5 and 7.4, expert down 6.2, gather 3.8. The small non-GEMV kernels take 150–200 µs
+   per launch for work that should take about 10.
+3. **Large GEMV kernels** (experts, GDN projections, head): at 11–55% of the memory
+   roofline; decode of the packed grids is the bound.
+4. **Two cards inside a layer:** only one card works at a time today; merge packet 14's
+   41 exchanges per layer first.
 
 [r1]: stage2/packet6-kopt/receipts-card3-20261011/timing/timing.json
 [r2]: stage2/packet7-kopt2/receipts-card3-20261011/timing.json
@@ -167,3 +174,5 @@ keep experts packed and qualify dense-only expansion separately.
 [w2note]: ../../notes/2026-10-11-first-exact-two-card-decode.md
 [p23]: stage2/packet23-fast/README.md
 [p22]: stage2/packet22-replay/README.md
+[locscan]: stage2/packet18-decode-v2/evidence/20261011-host-bottleneck-location-scan/README.md
+[p24]: stage2/packet24-kernels/README.md
