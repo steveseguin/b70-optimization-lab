@@ -69,3 +69,27 @@ code and stays a suspect. Nothing here is proven until a device run.
 Consequence: packet 18 gets host fences at every card crossing (packet 14's proven
 pattern), index guards, and a required few-KiB two-card canary window before any
 weights are loaded; its windows refuse to start with NEO debug keys in the environment.
+
+## Owner decision and recovery on the same boot (14:24–14:32 UTC)
+
+The owner's instruction (14:24 UTC): if the cause is our code, continue using the GPU
+after fixing it. The two leading suspects are on our side and both are removed in the
+runtimes that follow (cross-card event chaining; the added NEO key).
+
+- 14:26:24 UTC: targeted termination of the parked process only (`kill -KILL 183867`,
+  by PID). Its own teardown had refused: 1,823 submissions in flight, 53,268,625,360
+  live bytes ([retained-owner.json](retained-owner.json)); it handles SIGTERM/SIGINT as
+  a stop flag and waits forever by design, so no gentler exit existed. The process was
+  gone within 2 s. The kernel logged one line, an engine reset of the copy engine on
+  `0000:47:00.0` ([kernel-after-kill.txt](kernel-after-kill.txt)); no GT reset, no
+  lockup, host responsive, GPUActive back to 112 kB.
+- 14:31:35 UTC, after a 5-minute quiet gap: the one bounded four-card health probe
+  passed on all four cards (copy round trip, FP32 and BF16 GEMM against the CPU,
+  staged card-to-card copy) with no fault line during the probe
+  ([receipt](../../../../data/health-probe-20261011T1432Z.json)). The probe's Python
+  process crashed while exiting, after it had written the passing receipt (an
+  instruction fetch from an unloaded library; I had sourced the oneAPI 2026.0
+  environment around a torch 2.14 venv, which was unnecessary). No GPU fault line
+  accompanies it.
+
+Device work resumes with the smallest steps first.

@@ -1,0 +1,38 @@
+{
+  "schema": "own-runtime.packet20.window.v1",
+  "card": 3,
+  "passed": false,
+  "device_executed": true,
+  "watchdog_seconds": 600,
+  "prepared_sha256": "6379e928e54a435da3e1b4714f89f44637669e715329b5becb7bccba14bccf5a",
+  "ldd": {
+    "returncode": 0,
+    "stdout": "\tlinux-vdso.so.1 (0x00007ef151ba4000)\n\tlibze_loader.so.1 => /lib/x86_64-linux-gnu/libze_loader.so.1 (0x00007ef151a03000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007ef151600000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007ef15191a000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007ef1518ec000)\n\tlibsycl.so.9 => /opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9 (0x00007ef151200000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007ef150e00000)\n\t/lib64/ld-linux-x86-64.so.2 (0x00007ef151ba6000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007ef1518e5000)\n\tlibur_loader.so.0 => /opt/intel/oneapi/compiler/2026.0/lib/libur_loader.so.0 (0x00007ef150000000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007ef1518e0000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x00007ef1518d9000)\n\tlibimf.so => /opt/intel/oneapi/compiler/2026.0/lib/libimf.so (0x00007ef14fa00000)\n\tlibz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x00007ef1518bd000)\n\tlibsvml.so => /opt/intel/oneapi/compiler/2026.0/lib/libsvml.so (0x00007ef14e200000)\n\tlibirng.so => /opt/intel/oneapi/compiler/2026.0/lib/libirng.so (0x00007ef151107000)\n\tlibintlc.so.5 => /opt/intel/oneapi/compiler/2026.0/lib/libintlc.so.5 (0x00007ef1510a4000)\n",
+    "stderr": ""
+  },
+  "external_idle_health_still_required": true,
+  "command": [
+    "nice",
+    "-n",
+    "19",
+    "ionice",
+    "-c",
+    "3",
+    "env",
+    "OMP_NUM_THREADS=2",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet20-launch/build/issuing/launch-bench",
+    "--authorized-device-window",
+    "--card",
+    "3",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet20-launch/build/window-card3-a",
+    "--seconds",
+    "600"
+  ],
+  "pid": 230654,
+  "stop_reason": null,
+  "returncode": -9,
+  "child_still_running": false,
+  "elapsed_seconds": 397.66755770099553,
+  "error": "native child failed/stopped"
+}
