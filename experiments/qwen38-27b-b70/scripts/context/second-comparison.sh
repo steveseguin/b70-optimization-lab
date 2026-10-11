@@ -50,10 +50,21 @@
 #   N32d                                    N32j with changes-only notes: the notes call writes only the lines that changed, with the
 #                                           working on the line and no thinking; the harness applies them and checks the sums (campaign 10)
 #   N32dth                                  N32d with a notes call that thinks;  N32d35: N32d cutting down to 35 %
+#   N32e N32e35 N32e25                      N32d after its first run (39/39, but 8 of 23 cuts fell back to the full rewrite): working may
+#                                           start from a number the turns being cut state (a set followed by a change, written on one
+#                                           line), and OPEN is at most three short lines; ..35 / ..25: the cut goes down to 35 / 25 %
+#   N32c35 N32c25 N32c15                    N32e with the deeper cut noted in pieces of at most 11,000 tokens of turns (about six items),
+#                                           one no-thinking call each: N32e35 lost 3 of 39 reading eleven items in one call
+#   N32x N32x8                              N32e with in-place notes: every six items (N32x8: eight) the notes call is the live conversation
+#                                           plus one message (already read by the server), and every turn in view is then moved out,
+#                                           so nothing is read twice; the ordinary cut stays as the safety net
+#   N32er                                   N32e plus the retrieved sentences (store holds every item)
 #   R32                                     retrieval only ("RAG"): the plain window agent, cut items go to a store, and at each question
 #                                           the 20 best-matching stored sentences per question are shown, each with the sentence
 #                                           after it (BM25 over sentences indexed with their item number, rag_retrieve.py);
 #                                           no notes, no pinned rules, no search tool
+#   R32a N32ra                              R32 / N32r whose store holds every item from the moment it arrives (the items still in view
+#                                           are searched too), so the retrieved list for a question is complete on its own
 #   N32r                                    rules-only notes + retrieval: only new rules are noted at a cut (no thinking), values are
 #                                           worked out from the retrieved sentences and `recall`
 #   N32jr N32dr                             N32j / N32d plus the retrieved sentences at each question
@@ -173,7 +184,7 @@ ARMS["N32j"] = ("truncate", "memory", 32768)          # N32 thinking only on cal
 ARMS["N32f"] = ("truncate", "memory", 32768)          # N32j with a notes call that does not think and a deeper cut (to 50 %): the fast setting
 ARMS["N200j"] = ("truncate", "memory", 204800)        # N32j at the 200K cap
 ARMS["N64j"] = ("truncate", "memory", 65536)          # N32j at a 64K live window
-for a in ("N32j35", "N32d", "N32dth", "N32d35", "R32", "N32r", "N32jr", "N32dr"):   # campaign 10 (see the header)
+for a in ("N32j35", "N32d", "N32dth", "N32d35", "N32e", "N32e35", "N32e25", "N32c35", "N32c25", "N32c15", "N32x", "N32x8", "R32", "R32a", "N32r", "N32ra", "N32jr", "N32dr", "N32er"):   # campaign 10 (see the header)
     ARMS[a] = ("truncate", "memory", 32768)
 ARMS["X32"] = ("plain", "memory", 0)                  # the plain agent with no budget of its own, served through tools/ctxkeeper
 ARMS["X32b"] = ("plain", "memory", 0)                 # X32 again after the proxy fixes of 2026-10-11 (same arm; a new name keeps both results)
@@ -311,11 +322,21 @@ run_one() {  # arm agent budget task_dir job_name drop_old_thinking
   case "$arm" in                                   # campaign 10: cheaper notes, and retrieval ("RAG") alone and added
     N64j)   xa=(-a clm_keeper:KeeperAgent); extra="$jt" ;;
     N32j35) xa=(-a clm_keeper:KeeperAgent); extra="$jt truncate_target_ratio=0.35" ;;
-    N32d)   xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=delta" ;;
+    N32d|N32e) xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=delta" ;;   # N32e: after the two fixes of 18:30 (see the header)
+    N32e35) xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=delta truncate_target_ratio=0.35" ;;
+    N32e25) xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=delta truncate_target_ratio=0.25" ;;
+    N32c35) xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=delta truncate_target_ratio=0.35 notes_chunk_tokens=11000" ;;
+    N32c25) xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=delta truncate_target_ratio=0.25 notes_chunk_tokens=11000" ;;
+    N32c15) xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=delta truncate_target_ratio=0.15 notes_chunk_tokens=11000" ;;
+    N32x)   xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=delta notes_inplace=true notes_chunk_tokens=11000" ;;
+    N32x8)  xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=delta notes_inplace=true notes_chunk_tokens=11000 inplace_turn_tokens=13000" ;;
+    N32er)  xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=delta auto_retrieve=20 retrieve_scope=all" ;;
     N32dth) xa=(-a clm_keeper:KeeperAgent); extra="$jt notes_mode=delta" ;;
     N32d35) xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=delta truncate_target_ratio=0.35" ;;
     R32)    xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=none auto_retrieve=20 recall_tool=false" ;;
+    R32a)   xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=none auto_retrieve=20 recall_tool=false retrieve_scope=all" ;;
     N32r)   xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=rules auto_retrieve=20" ;;
+    N32ra)  xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=rules auto_retrieve=20 retrieve_scope=all" ;;
     N32jr)  xa=(-a clm_keeper:KeeperAgent); extra="$jt auto_retrieve=20" ;;
     N32dr)  xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=delta auto_retrieve=20" ;;
   esac

@@ -50,6 +50,8 @@ class Keeper(unittest.TestCase):
         w = NS["wants_thinking"]
         tool = lambda text, code=0: {"role": "tool", "content": f"{text}\n\n(exit_code={code})"}
         self.assertTrue(w([{"role": "user", "content": "task"}]))                         # nothing delivered yet
+        pin = {"role": "user", "content": NS["PIN_HEAD"].format(n=12) + "\nRULES\n(none)\nSTATE\nabcd12: 5\nOPEN"}
+        self.assertFalse(w([{"role": "user", "content": "task"}, pin]))                   # after a whole-context cut: routine
         self.assertFalse(w([tool("ITEM 3/9 (UPDATE)\nA quiet day. abcd12 went up by four.")]))
         self.assertTrue(w([tool("ITEM 4/9 (PROBE)\nPROBE: answer these questions now.\nASK p1_1: What value?")]))
         self.assertTrue(w([tool("ITEM 9/9 (QUERY)\nThe auditors ask.\nQUERY abcd12")]))
@@ -125,6 +127,42 @@ class Keeper(unittest.TestCase):
                                                    "A is secret: answer protected.", "Dates day first."])
         self.assertEqual(NS["keep_rules"](kept, kept), (kept, []))
 
+    def test_numbers_in(self):
+        n = NS["numbers_in"]("abcd12 was set to four hundred and two, then lost forty-nine. efgh34 came at -106; 1,200 more. "
+                             "The bus was nine minutes late and one thousand two hundred and thirty-four gulls sat there.")
+        for want in (402, 49, 106, -106, 1200, 9, 1234, -402):
+            self.assertIn(want, n)
+        self.assertNotIn(400, n)
+        self.assertNotIn(2, n)
+        self.assertEqual(NS["numbers_in"]("nothing here and there"), set())
+
+    def test_working_may_start_from_a_value_the_turns_set(self):
+        notes = "RULES\n(none)\nSTATE\nabcd12: -31\nefgh34: removed\nOPEN"
+        seen = NS["numbers_in"]("abcd12 was set to two hundred and ninety-four. It went up by twelve. efgh34 was opened at 75 and gained five.")
+        new, info = NS["apply_delta"](notes, {"changes": [("abcd12", "294 + 12 = 306"), ("efgh34", "75 + 5 = 80")]}, seen)
+        self.assertEqual(info["mismatch"], [])
+        self.assertEqual(info["set_in_turns"], 2)
+        self.assertIn("abcd12: 306", new)
+        _, info = NS["apply_delta"](notes, {"changes": [("abcd12", "-13 + 12 = -1")]}, seen)       # from nowhere
+        self.assertEqual(info["mismatch"], ["abcd12: working starts from -13, NOTES hold -31"])
+        _, info = NS["apply_delta"](notes, {"changes": [("abcd12", "-31 + 12 = -19")]}, seen)
+        self.assertEqual((info["mismatch"], info.get("set_in_turns", 0)), ([], 0))
+
+    def test_split_turns(self):
+        turn = lambda i, n: [{"role": "assistant", "content": f"a{i}"}, {"role": "tool", "content": "x" * n}]
+        count = lambda msgs: sum(len(str(m["content"])) for m in msgs)
+        turns = [m for i in range(11) for m in turn(i, 100)]                       # 11 turns of about 102
+        self.assertEqual(NS["split_turns"](turns, count, 0), [turns])
+        pieces = NS["split_turns"](turns, count, 650)
+        self.assertEqual([len(p) // 2 for p in pieces], [6, 5])                    # two pieces of about equal size
+        self.assertEqual([m for p in pieces for m in p], turns)                    # nothing lost, order kept
+        self.assertTrue(all(p[0]["role"] == "assistant" for p in pieces))          # whole turns
+        self.assertEqual(len(NS["split_turns"](turns, count, 5000)), 1)
+        self.assertEqual([len(p) // 2 for p in NS["split_turns"](turns, count, 250)], [2, 2, 2, 2, 2, 1])
+        lead = [{"role": "user", "content": "note"}] + turns[:4]
+        self.assertEqual(NS["split_turns"](lead, count, 150)[0][0]["content"], "note")
+        self.assertEqual(NS["split_turns"]([], count, 100), [[]])
+
     def test_same_rule_needs_the_same_names(self):
         same = NS["same_rule"]
         self.assertFalse(same("abcd12 is secret: answer protected", "efgh34 is secret: answer protected"))
@@ -133,6 +171,12 @@ class Keeper(unittest.TestCase):
         old = "RULES\n- abcd12 is secret: answer protected\nSTATE\nx"
         kept, lost = NS["keep_rules"](old, "RULES\n- efgh34 is secret: answer protected\nSTATE\ny")
         self.assertEqual(NS["rule_lines"](kept), ["abcd12 is secret: answer protected", "efgh34 is secret: answer protected"])
+
+    def test_inplace_texts(self):
+        self.assertIn("first line of your reply is the words NEW RULES", NS["INPLACE_REQUEST"].format(start="message that holds the NOTES"))
+        tail = NS["PIN_TAIL"].format(last="ITEM 37/147 (UPDATE)")
+        self.assertIn("'ITEM 37/147 (UPDATE)'", tail)
+        self.assertEqual(NS["PIN_RE"].match(NS["PIN_HEAD"].format(n=3) + "\nRULES\n" + tail).group(1), "3")
 
     def test_pin_head_round_trip(self):
         self.assertEqual(NS["PIN_RE"].match(NS["PIN_HEAD"].format(n=17)).group(1), "17")

@@ -82,6 +82,11 @@ MEMORY_RETRIEVAL = """\
   sentences right after the item (as `item N: ...`). They may not be everything that matters: use `recall` when you
   need more.
 """
+MEMORY_RETRIEVAL_ALL = """\
+- When an item asks questions, the harness also searches every item received so far (those still in view included)
+  for each question and shows the best-matching sentences right after the item (as `item N: ...`, in item order).
+  They may not be everything that matters: use `recall` when you need more.
+"""
 # notes_mode=rules (arm N32r): NOTES holds the rules only; values are worked out from the archive when asked.
 MEMORY_RULES_ONLY = """\
 - NOTES holds no current values. When a question needs a value, work it out from what is still in view and from the
@@ -96,6 +101,16 @@ MEMORY_RAG = """
   for each question and shows the best-matching sentences right after the item (as `item N: ...`). They are all you
   will see of the turns that were moved out: combine them with what is still in view, in item order, to work out
   each answer.
+- Fetch each item with `next` as a command of its own (nothing chained to it), so it can be stored word for word.
+"""
+MEMORY_RAG_ALL = """
+## Memory (read carefully)
+
+- This task is long. Older turns are moved out of view automatically; you do not manage that.
+- Every item is kept in a store from the moment it arrives. Whenever an item asks questions, the harness searches
+  the whole store for each question, the items still in view included, and shows the best-matching sentences right
+  after the item (as `item N: ...`, in item order). Work out each answer from that list, applying the changes in
+  item order.
 - Fetch each item with `next` as a command of its own (nothing chained to it), so it can be stored word for word.
 """
 
@@ -170,7 +185,8 @@ opened again after it was removed, first gets a line with its opening value. Wri
 something is removed. Go through the turns from the first to the last and leave no change out. If the turns \
 change nothing, write (none).
 OPEN
-anything unfinished or to watch for, complete (this replaces the old OPEN section; may be empty).
+at most three short lines: what is unfinished right now and what to watch for (this replaces the old OPEN \
+section; may be empty). Do not list what has been received or answers already given.
 
 Output only these three sections.
 """
@@ -198,12 +214,82 @@ anything unfinished or to watch for, complete (this replaces the old OPEN sectio
 
 Output only these two sections. Values and other facts are not noted: they stay in the archive.
 """
+# In-place notes (notes_inplace, arm N32x; campaign 10). Server counters of campaign 10 after 1,170 requests: 54 % of
+# the server's time is reading (6.3M new prompt tokens at 2,640 tokens/s), 46 % writing. In arm N32e every stream
+# token is read about four times: on arrival, again when the turns kept by a cut are read back at their new place
+# (391K tokens over 23 cuts), and again when the cut turns are shown to the notes call as text (312K). Here the
+# notes call is the live conversation itself with one more message at its end, so the server has already read all
+# of it; and the cut then takes every turn in view, so nothing is read back. The cut is made every few items (not
+# when the window is full), because a notes call that does not think reads about six items reliably.
+INPLACE_REQUEST = """\
+[[Message from the harness, not part of the task]] Every turn above, from the {start} on, is about to be moved \
+out of view. It all stays in a searchable archive, but you will no longer see it. Do not continue the task and do \
+not call any tool. Write only what those turns change in the NOTES; the harness applies it and keeps every line \
+you do not mention. Use exactly this layout; the first line of your reply is the words NEW RULES:
+
+NEW RULES
+one line per standing rule, method or definition that those turns state and that applies from then on, complete \
+and in its original words. The rules already in the NOTES stay; do not repeat them, and do not repeat the task \
+statement at the top of the conversation. If the turns state no new rule, write (none).
+CHANGES
+one line `name: value` per fact of STATE that those turns set or change, in the order in which the turns give the \
+changes (so a thing changed twice has two lines). The harness replaces the STATE line of that name, or adds one. \
+When the new value follows from the old one, write the working and put the result last, like \
+`stock: 120 + 49 = 169`, starting from the value in the NOTES or in your earlier line. A thing that is new, or \
+opened again after it was removed, first gets a line with its opening value. Write `name: removed` when \
+something is removed. Go through the turns from the first to the last and leave no change out. If the turns \
+change nothing, write (none).
+OPEN
+at most three short lines: what is unfinished right now and what to watch for (this replaces the old OPEN \
+section; may be empty). Do not list what has been received or answers already given.
+
+Output only these three sections.
+"""
+PIN_TAIL = ("[[Everything received so far is in the NOTES above or in the archive. The last output moved out began: "
+            "{last!r}. It is already counted in the NOTES. Continue the task from there.]]")
 DELTA_RETRY = ("Your reply did not use the layout. Reply with the sections only: first line NEW RULES, then the new "
                "rules or (none), then a line CHANGES, then one `name: value` line per change or (none), then a line OPEN.")
 RULES_RETRY = ("Your reply did not use the layout. Reply with the sections only: first line NEW RULES, then the new "
                "rules or (none), then a line OPEN.")
 DELTA_HEADS = ("NEW RULES", "CHANGES", "OPEN")
 RESULT = re.compile(r"\s*(-?\d+)\.?(?:\s*\(.*\))?\s*$")        # the last part of working: `= 169`, `= 169 (item 4)`
+
+
+_UNITS = {w: i for i, w in enumerate("zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen "
+                                     "fifteen sixteen seventeen eighteen nineteen".split())}
+_TENS = {w: 10 * (i + 2) for i, w in enumerate("twenty thirty forty fifty sixty seventy eighty ninety".split())}
+
+
+def numbers_in(text: str) -> set[int]:
+    """Every whole number the text states, in digits or in English words ("four hundred and two", "forty-nine"),
+    each with both signs (a "minus" or "lost" before it is not parsed)."""
+    out: set[int] = set()
+    total = part = 0
+    open_ = False
+    def close() -> None:
+        nonlocal total, part, open_
+        if open_:
+            out.update((total + part, -(total + part)))
+        total, part, open_ = 0, 0, False
+    for tok in re.findall(r"[a-z]+|\d[\d,]*", text.lower()):
+        if tok[0].isdigit():
+            close()
+            n = int(tok.replace(",", "") or 0)
+            out.update((n, -n))
+        elif tok in _UNITS:
+            part, open_ = part + _UNITS[tok], True
+        elif tok in _TENS:
+            part, open_ = part + _TENS[tok], True
+        elif tok == "hundred" and open_:
+            part *= 100
+        elif tok == "thousand" and open_:
+            total, part = total + part * 1000, 0
+        elif tok == "and" and open_:
+            continue
+        else:
+            close()
+    close()
+    return out
 
 
 def _plain(line: str) -> str:
@@ -304,11 +390,14 @@ def parse_delta(reply: str, need_changes: bool = True) -> dict | None:
             "open": [ln for ln in out["OPEN"] if not _is_none(ln)] if "OPEN" in seen else None}
 
 
-def apply_delta(notes: str, delta: dict) -> tuple[str, dict]:
+def apply_delta(notes: str, delta: dict, seen: set[int] | None = None) -> tuple[str, dict]:
     """The NOTES after the changes, and what happened: lines changed and added, sums corrected, and `mismatch`:
     working that cannot be trusted (it starts from a value the NOTES do not hold, it starts from a number although
     the NOTES say the thing was removed, or it is arithmetic without a whole-number value); the caller then falls
-    back to a full rewrite. RULES lines are never removed; a new rule that rewords an existing one is not added.
+    back to a full rewrite. `seen` is every number the turns being moved out state (numbers_in): working may start
+    from one of those instead of the NOTES value, because the turns can set a thing and then change it and the
+    model writes both on one line (`abcd12: 294 + 12 = 306`). The first run of arm N32d (rules stream, seed 0) sent
+    8 of 23 cuts to the full rewrite for exactly that; all eight were such lines. RULES lines are never removed; a new rule that rewords an existing one is not added.
     A STATE line keeps its place; a value given as working is stored as its result. The OPEN section is replaced
     when the reply has one and kept otherwise."""
     rules, state, opened, sec = [], [], [], ""
@@ -339,6 +428,8 @@ def apply_delta(notes: str, delta: dict) -> tuple[str, dict]:
             if total is None:
                 info["mismatch"].append(f"{name}: `{value}` has no whole-number value")
                 total = stated
+            elif start is not None and seen is not None and start in seen:
+                info["set_in_turns"] = info.get("set_in_turns", 0) + (held != start)
             elif start is not None and held is not None and held != start:
                 info["mismatch"].append(f"{name}: working starts from {start}, NOTES hold {held}")
             elif start is not None and old is not None and re.match(r"(removed|closed|struck|deleted|gone)\b", old.lower()):
@@ -418,6 +509,32 @@ def render_turns(turns: list[dict[str, Any]]) -> str:
     return "\n".join(out)
 
 
+def split_turns(turns: list[dict[str, Any]], count: Any, max_tokens: int) -> list[list[dict[str, Any]]]:
+    """The messages of the cut turns in as few pieces as fit `max_tokens` each (as `count(messages)` measures them),
+    whole turns only and of about equal size; one piece when max_tokens is 0. A changes-only notes call that does not
+    think reads about six items reliably (39/39 twice) and eleven not (36/39), so a deeper cut is noted in pieces."""
+    if not max_tokens or not turns:
+        return [turns]
+    groups: list[list[dict[str, Any]]] = []
+    for m in turns:
+        if m.get("role") == "assistant" or not groups:
+            groups.append([])
+        groups[-1].append(m)
+    sizes = [count(g) for g in groups]
+    pieces_wanted = max(1, -(-sum(sizes) // max_tokens))
+    target = sum(sizes) / pieces_wanted
+    pieces, piece, size = [], [], 0
+    for g, n in zip(groups, sizes):
+        if piece and (size + n > max_tokens or (size + n / 2 > target and len(pieces) < pieces_wanted - 1)):
+            pieces.append(piece)
+            piece, size = [], 0
+        piece = piece + g
+        size += n
+    if piece:
+        pieces.append(piece)
+    return pieces
+
+
 def rule_lines(notes: str) -> list[str]:
     """Lines of the RULES section (between the line RULES and the line STATE), bullets stripped."""
     lines, on = [], False
@@ -491,8 +608,8 @@ def wants_thinking(messages: list[dict[str, Any]]) -> bool:
     (Until 2026-10-11 thinking went off again right after the question item itself; on the 1M stream the model then
     worked on a probe with thinking off and repeated one recall command 790 times.)"""
     last_tool = next((i for i in range(len(messages) - 1, -1, -1) if messages[i].get("role") == "tool"), -1)
-    if last_tool < 0:
-        return True
+    if last_tool < 0:            # nothing delivered yet: think, unless a NOTES message shows the task is under way
+        return not any(m.get("role") == "user" and PIN_RE.match(str(m.get("content") or "")) for m in messages)
     tail = [str(m.get("content") or "") for m in messages[last_tool:]]
     if any(QUESTION.search(t) for t in tail):
         return True
@@ -552,6 +669,10 @@ class _KeeperEnv(_cb._NoMirrorEnv):
             else:   # `next && something`: the last item's text would run on into the other command's output
                 a._mixed.update(got)
             a._largest_delivery = max(a._largest_delivery, self.budget.count([{"role": "tool", "content": res.stdout_block}]))
+            if a.auto_retrieve and a.retrieve_scope == "all":       # the store holds every item from the moment it arrives
+                for num, text in got.items():
+                    if not ASKS.search(text):
+                        a._index.add(num, text)
         if "answers.json" in (command or ""):
             try:
                 await self._keep_answers(environment, res)
@@ -622,7 +743,9 @@ class KeeperAgent(TruncateAgent):
                  notes_thinking: Any = False, thinking_policy: str = "always", recite_rules: Any = True,
                  keep_headroom: int | str = 1024, repeat_guard: Any = True, notes_mode: str = "full",
                  auto_retrieve: int | str = 0, retrieve_floor: float | str = 0.0, recall_tool: Any = True,
-                 retrieve_max_chars: int | str = 30000, retrieve_window: int | str = 1, **kwargs: Any) -> None:
+                 retrieve_max_chars: int | str = 30000, retrieve_window: int | str = 1, retrieve_scope: str = "archive",
+                 notes_chunk_tokens: int | str = 0, notes_inplace: Any = False, inplace_turn_tokens: int | str = 9500,
+                 **kwargs: Any) -> None:
         kwargs.setdefault("truncate_target_ratio", 0.6)   # cut deeper than W32 (0.75): fewer cuts, fewer notes calls
         super().__init__(*args, **kwargs)
         # A delivered item is never cut on arrival (the budget's newest-output cap head/tail-truncates whatever does
@@ -668,12 +791,32 @@ class KeeperAgent(TruncateAgent):
         if self.notes_mode not in ("full", "delta", "rules", "none"):
             raise ValueError(f"notes_mode must be full|delta|rules|none, not {notes_mode!r}")
         self.n_delta_fallbacks = self.n_sums_corrected = 0
+        # notes_chunk_tokens (delta and rules modes): the turns of one cut go to the notes call in pieces of at most
+        # this many tokens, one call each, in order (0 = one call per cut). See split_turns.
+        self.notes_chunk_tokens = int(notes_chunk_tokens)
+        # notes_inplace (delta mode): once the turns in view hold more than inplace_turn_tokens, and the newest one
+        # is an ordinary delivery (no question open), the notes call is the live conversation plus one message, and
+        # every turn is then moved out (see INPLACE_REQUEST). The ordinary cut stays as the safety net.
+        self.notes_inplace, self.inplace_turn_tokens = _cb._as_bool(notes_inplace), int(inplace_turn_tokens)
+        if self.notes_inplace and self.notes_mode != "delta":
+            raise ValueError("notes_inplace needs notes_mode=delta")
+        self.n_inplace = self.n_inplace_failed = self.inplace_cached = self.inplace_prompt = 0
+        self._pin_tail = ""
+        self.inplace_failures: list[dict[str, Any]] = []
+        self.inplace_turn_hold = 0                    # after a failed in-place call: no new attempt on the same turns
         # auto_retrieve=K: when a delivered item asks questions, the K best-matching archived sentences per question
         # (BM25, rag_retrieve.py) are shown right after it, each with the retrieve_window sentences that follow it
         # (a rule's subject and what to do about it, or "X. It went up by ...", sit in neighbouring sentences).
         # recall_tool=false leaves the search tool out (R32).
         self.auto_retrieve, self.retrieve_floor = int(auto_retrieve), float(retrieve_floor)
         self.retrieve_max_chars, self.retrieve_window = int(retrieve_max_chars), int(retrieve_window)
+        # retrieve_scope: archive = only the items already moved out of view are searched (what is in view is not
+        # repeated); all = every delivered item is searched, so the retrieved list for a question is complete on its
+        # own (R32 seed 0 answered 7 of 14 final queries although every needed sentence was in its context: the
+        # older changes were in the retrieved list and the newer ones in the window, and it took stale values).
+        self.retrieve_scope = str(retrieve_scope or "archive").strip().lower()
+        if self.retrieve_scope not in ("archive", "all"):
+            raise ValueError(f"retrieve_scope must be archive|all, not {retrieve_scope!r}")
         self.recall_tool = _cb._as_bool(recall_tool)
         self._index, self.n_retrievals, self.retrieved_chars, self.n_retrievals_skipped = _rag.Index(), 0, 0, 0
         self._ckpt = _KeeperGuard(self._ckpt, self)   # TruncateAgent's own guard stays inside; its _manage is a no-op here
@@ -702,7 +845,8 @@ class KeeperAgent(TruncateAgent):
     def _pin(self, n: int) -> dict[str, Any]:
         if self.notes_mode == "none":
             return {"role": "user", "content": PIN_PLAIN.format(n=n)}
-        return {"role": "user", "content": PIN_HEAD.format(n=n) + "\n" + (self.notes or "(no notes yet)")}
+        tail = ("\n" + self._pin_tail) if self._pin_tail else ""
+        return {"role": "user", "content": PIN_HEAD.format(n=n) + "\n" + (self.notes or "(no notes yet)") + tail}
 
     def _asked(self, messages: list[dict[str, Any]]) -> str:
         """The newest message, if it is a delivered item that asks questions (else '')."""
@@ -787,11 +931,13 @@ class KeeperAgent(TruncateAgent):
                     self.n_archive_failed += 1
         return n
 
-    def _notes_call(self, req: list[dict[str, Any]], thinking: bool | None = None):
+    def _notes_call(self, req: list[dict[str, Any]], thinking: bool | None = None, live: bool = False):
         model = self.model_name or ""
         kw: dict[str, Any] = {"model": model, "messages": req, token_cap_key(model): self.notes_call_max_tokens,
                               "api_base": self.api_base, "timeout": _h._LLM_TIMEOUT_SECONDS, "num_retries": 2,
                               "drop_params": True}
+        if live:      # the same tool list as the main loop, so the prompt is the one the server has already read
+            kw.update(tools=[_h.BASH_TOOL], tool_choice="none")
         if self.temperature is not None:
             kw["temperature"] = self.temperature
         if self.top_p is not None:
@@ -814,6 +960,8 @@ class KeeperAgent(TruncateAgent):
         if not limit:
             return
         before = self._budget.count(messages)
+        if self.notes_inplace and await self._keep_inplace(environment, messages, before):
+            return
         if before + reserve <= min(self.trigger_ratio * limit, limit - self._largest_delivery - self.keep_headroom):
             return
         start, prev = self._head(messages)
@@ -831,23 +979,90 @@ class KeeperAgent(TruncateAgent):
         if not n:
             return
         gone = body[:len(body) - len(keep)]
+        self._pin_tail = ""
         rec: dict[str, Any] = {"reason": "keep", "turns_dropped": n, "before": before,
                                "items_archived": await self._archive(environment, gone)}
         self.n_items_archived += rec["items_archived"]
         if self.notes_mode != "none":
-            await self._take_notes(head, render_turns(gone), rec)
+            chunk = self.notes_chunk_tokens if self.notes_mode in ("delta", "rules") else 0
+            pieces = split_turns(gone, self._budget.count, chunk)
+            rec.update(notes_prompt_tokens=0, notes_completion_tokens=0, notes_attempts=0, notes_mode=self.notes_mode,
+                       notes_pieces=len(pieces))
+            for piece in pieces:
+                await self._take_notes(head, render_turns(piece), rec)
         messages[:] = head + [self._pin(prev + n)] + keep
         rec["after"] = self._budget.count(messages)
         self._record(rec)
 
+    async def _keep_inplace(self, environment: Any, messages: list[dict[str, Any]], before: int) -> bool:
+        """The in-place cut (see INPLACE_REQUEST). True when it was made; False leaves everything as it was."""
+        start, prev = self._head(messages)
+        head, body = messages[:self._protect], messages[start:]
+        last = str(body[-1].get("content") or "") if body and body[-1].get("role") == "tool" else ""
+        if not last or not ITEMS.search(last) or ASKS.search(last) or QUESTION.search(last):
+            return False                              # not an ordinary delivery: a question may be open
+        size = self._budget.count(body)
+        if size <= self.inplace_turn_tokens or (self.inplace_turn_hold and size >= self.inplace_turn_hold):
+            return False                              # too little to note, or these turns already failed once
+        self.inplace_turn_hold = 0
+        n = sum(1 for m in body if m.get("role") == "assistant") or 1
+        rec: dict[str, Any] = {"reason": "keep-inplace", "turns_dropped": n, "before": before, "notes_mode": "delta",
+                               "notes_prompt_tokens": 0, "notes_completion_tokens": 0, "notes_attempts": 0, "cached": 0}
+        req = messages + [{"role": "user", "content": INPLACE_REQUEST.format(
+            start="message that holds the NOTES" if start > self._protect else "first turn after the task statement")}]
+        self._snap(req, "keeper")
+        seen, why = numbers_in(render_turns(body)), "no reply"
+        for _attempt in (1, 2):
+            rec["notes_attempts"] += 1
+            resp = await asyncio.to_thread(self._notes_call, req, False, True)
+            if isinstance(resp, Exception):
+                why = f"{type(resp).__name__}: {resp}"
+                continue
+            text = self._tally(rec, resp)
+            details = getattr(getattr(resp, "usage", None), "prompt_tokens_details", None)
+            rec["cached"] += getattr(details, "cached_tokens", 0) or 0
+            delta = parse_delta(text) if rec["notes_finish"] != "length" else None
+            if delta is None:
+                why = "reply without the NEW RULES layout" if rec["notes_finish"] != "length" else "reply cut at the token cap"
+                rec["notes_bad_layout"] = text[:200]
+                req = req + [{"role": "assistant", "content": text}, {"role": "user", "content": DELTA_RETRY}]
+                continue
+            new, info = apply_delta(self.notes, delta, seen)
+            size = self._budget.count([{"role": "user", "content": new}])
+            if info["mismatch"]:
+                why = "working starts from a value the NOTES do not hold: " + "; ".join(info["mismatch"][:3])
+            elif size > 2 * self.notes_max_tokens:
+                why = f"NOTES of {size} tokens after the changes, over twice the cap"
+            else:
+                why = ""
+                rec["items_archived"] = await self._archive(environment, body)
+                self.n_items_archived += rec["items_archived"]
+                self.n_sums_corrected += len(info["sums_corrected"])
+                self.notes, self._pin_tail = new, PIN_TAIL.format(last=last.split("\n", 1)[0][:80])
+                rec.update(notes_tokens=size, rules=len(rule_lines(new)), rules_put_back=[], delta=info)
+                messages[:] = head + [self._pin(prev + n)]
+                rec["after"] = self._budget.count(messages)
+                self.n_inplace += 1
+                self.inplace_cached += rec["cached"]
+                self.inplace_prompt += rec["notes_prompt_tokens"]
+                self._record(rec)
+                return True
+            break
+        self.n_inplace_failed += 1                    # nothing was changed; the ordinary cut will handle these turns
+        logger.warning("keeper: in-place notes not applied: %s", why)
+        self.inplace_failures.append({"step": self.n_lm_calls, "why": why, "prompt": rec["notes_prompt_tokens"],
+                                      "written": rec["notes_completion_tokens"]})
+        self.inplace_turn_hold = self._budget.count(body)
+        return False
+
     async def _take_notes(self, head: list[dict[str, Any]], turns: str, rec: dict[str, Any]) -> None:
-        rec.update(notes_prompt_tokens=0, notes_completion_tokens=0, notes_attempts=0, notes_mode=self.notes_mode)
         thinking = None
         if self.notes_mode in ("delta", "rules"):
             why = await self._notes_delta(head, turns, rec)
             if not why:
                 return
-            rec["delta_fallback"] = why
+            rec.setdefault("delta_fallback", why)     # the first reason of this cut; the count is in delta_fallbacks_n
+            rec["delta_fallbacks_n"] = rec.get("delta_fallbacks_n", 0) + 1
             self.n_delta_fallbacks += 1
             if self.notes_mode == "rules":            # nothing to fall back to: the rules of this cut are one cut behind
                 self.n_notes_failed += 1
@@ -888,13 +1103,15 @@ class KeeperAgent(TruncateAgent):
                 continue
             if not delta_mode:
                 delta["changes"] = []
-            new, info = apply_delta(self.notes, delta)
+            new, info = apply_delta(self.notes, delta, numbers_in(turns))
             if info["mismatch"]:
                 return "working starts from a value the NOTES do not hold: " + "; ".join(info["mismatch"][:3])
             size = self._budget.count([{"role": "user", "content": new}])
             if size > 2 * self.notes_max_tokens:
                 return f"NOTES of {size} tokens after the changes, over twice the cap"
             self.n_sums_corrected += len(info["sums_corrected"])
+            was = rec.get("delta") or {}
+            info = {k: (was.get(k, [] if isinstance(v, list) else 0) + v) for k, v in info.items()}   # summed over pieces
             rec.update(notes_tokens=size, rules=len(rule_lines(new)), rules_put_back=[], delta=info)
             self.notes = new
             return ""
@@ -934,10 +1151,10 @@ class KeeperAgent(TruncateAgent):
 
     def _memory_note(self) -> str:
         if self.notes_mode == "none" and not self.recall_tool:
-            return MEMORY_RAG
+            return MEMORY_RAG_ALL if self.retrieve_scope == "all" else MEMORY_RAG
         note = MEMORY_NOTE
         if self.auto_retrieve:
-            note += MEMORY_RETRIEVAL
+            note += MEMORY_RETRIEVAL_ALL if self.retrieve_scope == "all" else MEMORY_RETRIEVAL
         if self.notes_mode == "rules":
             note += MEMORY_RULES_ONLY
         return note
@@ -963,9 +1180,14 @@ class KeeperAgent(TruncateAgent):
                     "answers_put_back": self.n_answers_put_back, "repeats_refused": self.n_repeats_refused,
                     "items_not_archived_mixed_output": self.n_not_archived_mixed,
                     "notes_mode": self.notes_mode, "delta_fallbacks": self.n_delta_fallbacks,
+                    "notes_chunk_tokens": self.notes_chunk_tokens, "notes_inplace": self.notes_inplace,
+                    "inplace_cuts": self.n_inplace, "inplace_failed": self.n_inplace_failed,
+                    "inplace_failures": self.inplace_failures[:20], "inplace_prompt_tokens": self.inplace_prompt,
+                    "inplace_cached_tokens": self.inplace_cached, "inplace_turn_tokens": self.inplace_turn_tokens,
                     "sums_corrected": self.n_sums_corrected, "auto_retrieve": self.auto_retrieve,
                     "retrievals": self.n_retrievals, "retrieved_chars": self.retrieved_chars,
                     "retrievals_skipped": self.n_retrievals_skipped, "retrieve_window": self.retrieve_window,
+                    "retrieve_scope": self.retrieve_scope,
                     "passages_indexed": len(self._index.docs), "recall_tool": self.recall_tool,
                     "notes_max_tokens": self.notes_max_tokens, "target_ratio": self.target_ratio,
                     "largest_delivery_tokens": self._largest_delivery, "keep_headroom": self.keep_headroom}, indent=1) + "\n")
