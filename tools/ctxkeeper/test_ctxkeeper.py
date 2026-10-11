@@ -186,6 +186,39 @@ class Policy(unittest.TestCase):
         self.assertEqual((t.state["cut"], t.state["notes"]), (s.state["cut"], s.state["notes"]))
 
 
+class Loops(unittest.TestCase):
+    def step(self, cmd, out):
+        return [{"role": "assistant", "content": None, "tool_calls": [{"id": "x", "type": "function", "function": {"name": "bash", "arguments": json.dumps({"command": cmd})}}]},
+                {"role": "tool", "tool_call_id": "x", "content": out}]
+
+    def test_repeats(self):
+        base = [{"role": "system", "content": "s"}, {"role": "user", "content": "task"}]
+        self.assertEqual(ck.repeats(base), 0)
+        self.assertEqual(ck.repeats(base + self.step("next", "ITEM 1")), 1)
+        same = self.step('recall "p13_3"', "item 273: ASK p13_3: who?")
+        self.assertEqual(ck.repeats(base + self.step("next", "ITEM 1") + same * 4), 4)
+        self.assertEqual(ck.repeats(base + same * 2 + self.step('recall "p13_3"', "something else")), 1)
+
+    def test_a_stuck_model_is_told_and_made_to_think(self):
+        with tempfile.TemporaryDirectory() as d:
+            model = Model()
+            k = ck.Keeper(model, Path(d), budget=100000, think_when=r"(?m)^ASK ", think_until=r"(?m)^ITEM \d+ ", effort="medium", memory_note=False)
+            base = [{"role": "system", "content": "s"}, {"role": "user", "content": "task"}] + self.step("next", "ITEM 1 (UPDATE) a quiet day")
+            k.complete({"model": "m", "messages": base + self.step("next", "ITEM 2 (UPDATE) more of it")})
+            self.assertFalse(model.requests[-1]["chat_template_kwargs"]["enable_thinking"])          # routine
+            probe = base + self.step("next", "PROBE\nASK p1_1: who did it?")
+            same = self.step('recall "p13_3"', "message 9 (tool): ASK p13_3: who?")
+            k.complete({"model": "m", "messages": probe + same})
+            self.assertTrue(model.requests[-1]["chat_template_kwargs"]["enable_thinking"])           # the question is still open
+            self.assertEqual(model.requests[-1]["messages"][-1]["role"], "tool")
+            k.complete({"model": "m", "messages": probe + same * 3})
+            last = model.requests[-1]
+            self.assertIn("same tool call 3 times", last["messages"][-1]["content"])
+            self.assertTrue(last["chat_template_kwargs"]["enable_thinking"])
+            k.complete({"model": "m", "messages": probe + same + self.step("next", "ITEM 3 (UPDATE) on it goes")})
+            self.assertFalse(model.requests[-1]["chat_template_kwargs"]["enable_thinking"])          # closed by the next item
+
+
 class Pure(unittest.TestCase):
     def test_cut_points_never_start_at_a_tool_result(self):
         body = conversation(4)[2:]

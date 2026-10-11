@@ -39,11 +39,13 @@ import json
 import logging
 from pathlib import Path
 import re
+import types
 from typing import Any
 
 import litellm
 
 from clm_harness.clm_agent import harness as _h
+from clm_harness.context_env.types import StepResult
 from clm_harness.utils.lm_compat import token_cap_key
 
 import clm_baselines as _cb
@@ -217,8 +219,11 @@ QUESTION = re.compile(r"(?m)^(?:ASK \S+?:|QUERY \S+|GET \S+)|^PROBE:|STREAM END|
 
 def wants_thinking(messages: list[dict[str, Any]]) -> bool:
     """Judgement policy: think when the newest tool output (or a harness message after it) holds a question, the end
-    of the stream, a refusal or an error, when the last command failed, or before any tool output exists. A routine
-    fetch of the next item is answered without thinking."""
+    of the stream, a refusal or an error, when the last command failed, before any tool output exists, and for as
+    long as a question is open: the newest DELIVERED item asks questions and no later item has arrived. A routine
+    fetch of the next item is answered without thinking.
+    (Until 2026-10-11 thinking went off again right after the question item itself; on the 1M stream the model then
+    worked on a probe with thinking off and repeated one recall command 790 times.)"""
     last_tool = next((i for i in range(len(messages) - 1, -1, -1) if messages[i].get("role") == "tool"), -1)
     if last_tool < 0:
         return True
@@ -226,10 +231,24 @@ def wants_thinking(messages: list[dict[str, Any]]) -> bool:
     if any(QUESTION.search(t) for t in tail):
         return True
     codes = re.findall(r"\(exit_code=(-?\d+)\)", tail[0])
-    return bool(codes and codes[-1] != "0")
+    if codes and codes[-1] != "0":
+        return True
+    for m in reversed(messages):                     # the newest delivery: is it a question item?
+        text = str(m.get("content") or "") if m.get("role") == "tool" else ""
+        if ITEMS.search(text):
+            return bool(ASKS.search(text) or QUESTION.search(text))
+    return False
 
 
 ANSWERS = "/app/answers.json"
+REPEAT_NOTE = ("NOT RUN: this is exactly the command you just ran, and nothing has changed since, so its result would be "
+               "the same. Use the result you already have and decide the next step.")
+
+
+def is_repeat(cmd: str, last: str, fetches: bool) -> bool:
+    """A command identical to the previous one, unless it fetches the next item (each fetch delivers something new)."""
+    return bool(cmd) and cmd == last and not fetches
+
 
 
 def lost_answers(before: dict, now: Any) -> dict:
@@ -248,10 +267,20 @@ class _KeeperEnv(_cb._NoMirrorEnv):
     agent: "KeeperAgent"
 
     async def step(self, command, messages, *, environment, pending=None):
+        a = self.agent
+        # Repeat guard. On the 1M stream (campaign 7) the agent, with thinking off, issued `recall "p13_3"` several
+        # hundred times in a row, each with the same result, until the run had to be stopped. A command identical to
+        # the one just run is not run again unless it is a fetch; the refusal says so, and "NOT RUN" turns thinking on.
+        cmd = (command or "").strip()
+        if a.repeat_guard and is_repeat(cmd, a._last_cmd, bool(a._guard_cmd.search(cmd))):
+            a.n_repeats_refused += 1
+            res = types.SimpleNamespace(stdout=REPEAT_NOTE, stderr="", return_code=75)
+            return StepResult(result=res, ctx_changed=False, stdout_block=REPEAT_NOTE + "\n\n(exit_code=75)",
+                              readout="", notes="", exec_time=0.0, touched_ctx=False)
+        a._last_cmd = cmd
         res = await super().step(command, messages, environment=environment, pending=pending)
         got = split_items(getattr(res.result, "stdout", "") or "")
         if got:
-            a = self.agent
             if ONLY_NEXT.fullmatch(command or ""):
                 a._delivered.update(got)
             else:   # `next && something`: the last item's text would run on into the other command's output
@@ -318,7 +347,7 @@ class KeeperAgent(TruncateAgent):
 
     def __init__(self, *args: Any, notes_max_tokens: int | str = 2048, notes_call_max_tokens: int | str = 4096,
                  notes_thinking: Any = False, thinking_policy: str = "always", recite_rules: Any = True,
-                 keep_headroom: int | str = 1024, **kwargs: Any) -> None:
+                 keep_headroom: int | str = 1024, repeat_guard: Any = True, **kwargs: Any) -> None:
         kwargs.setdefault("truncate_target_ratio", 0.6)   # cut deeper than W32 (0.75): fewer cuts, fewer notes calls
         super().__init__(*args, **kwargs)
         # A delivered item is never cut on arrival (the budget's newest-output cap head/tail-truncates whatever does
@@ -326,6 +355,7 @@ class KeeperAgent(TruncateAgent):
         # for the largest delivery seen plus keep_headroom, and the archive is written from what `next` printed.
         self.keep_headroom, self._largest_delivery, self._delivered = int(keep_headroom), 0, {}
         self._mixed: dict[int, str] = {}              # items delivered by a command that printed something else too
+        self.repeat_guard, self._last_cmd, self.n_repeats_refused = _cb._as_bool(repeat_guard), "", 0
         self._answers: dict = {}                      # the answers file as last seen; earlier keys are never lost
         self.n_answers_put_back = 0
         self.n_archive_failed = self.n_not_archived_mixed = 0
@@ -520,7 +550,7 @@ class KeeperAgent(TruncateAgent):
                     "rules_put_back": self.n_rules_put_back, "rules": rule_lines(self.notes),
                     "recite_rules": self.recite_rules, "recitals": self.n_recitals,
                     "notes_failed": self.n_notes_failed, "archive_writes_failed": self.n_archive_failed,
-                    "answers_put_back": self.n_answers_put_back,
+                    "answers_put_back": self.n_answers_put_back, "repeats_refused": self.n_repeats_refused,
                     "items_not_archived_mixed_output": self.n_not_archived_mixed,
                     "notes_max_tokens": self.notes_max_tokens, "target_ratio": self.target_ratio,
                     "largest_delivery_tokens": self._largest_delivery, "keep_headroom": self.keep_headroom}, indent=1) + "\n")

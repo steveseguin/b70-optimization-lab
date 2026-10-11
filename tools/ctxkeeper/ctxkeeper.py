@@ -98,6 +98,8 @@ what is unfinished or should be watched for (may be empty).
 
 Keep the whole NOTES under about {cap} tokens. Output only the NOTES.
 """
+REPEAT_NOTE = ("[[You have made the same tool call {n} times in a row with the same result. Calling it again will not "
+               "change anything: use the result you have and decide the next step.]]")
 LAYOUT_RETRY = ("Your reply did not use the layout. Reply with the NOTES only: first line RULES, then the rules, "
                 "then a line STATE, then the state, then a line OPEN.")
 
@@ -191,6 +193,36 @@ def cut_points(body: list[dict[str, Any]]) -> list[int]:
     """Indices where the kept part may start: at a user or assistant message, never at a tool result (its call would
     be gone). The last of them is the start of the newest turn, which therefore always stays."""
     return [i for i in range(1, len(body)) if body[i].get("role") in ("user", "assistant")]
+
+
+def repeats(messages: list[dict[str, Any]]) -> int:
+    """How many times in a row the conversation ends with the same step: an assistant message with the same tool
+    calls, followed by the same tool results. 1 for an ordinary ending, 0 if it does not end on a tool result."""
+    steps, i = [], len(messages)
+    while i > 0 and messages[i - 1].get("role") == "tool":
+        j = i - 1
+        while j > 0 and messages[j - 1].get("role") == "tool":
+            j -= 1
+        if j == 0 or messages[j - 1].get("role") != "assistant":
+            break
+        call = [(c.get("function") or {}) for c in messages[j - 1].get("tool_calls") or [] if isinstance(c, dict)]
+        steps.append(json.dumps([[f.get("name"), f.get("arguments")] for f in call] + [text_of(m) for m in messages[j:i]]))
+        i = j - 1
+        if len(steps) > 1 and steps[-1] != steps[0]:
+            return len(steps) - 1
+    return len(steps)
+
+
+def question_open(messages: list[dict[str, Any]], opens, closes) -> bool:
+    """True if the newest message that opens a question (a user message, or one matching `opens`) comes after the
+    newest message matching `closes`: the model is still working on something that was asked."""
+    for m in reversed(messages):
+        text = text_of(m)
+        if m.get("role") == "user" or (opens is not None and m.get("role") != "assistant" and opens.search(text)):
+            return True
+        if closes is not None and m.get("role") != "assistant" and closes.search(text):
+            return False
+    return False
 
 
 def render_turns(turns: list[dict[str, Any]]) -> str:
@@ -312,7 +344,7 @@ class Keeper:
                  notes_cap: int = 2048, notes_max_tokens: int = 4096, notes_thinking: bool | None = True,
                  recite: bool = True, max_recalls: int = 6, reply_reserve: int = 4096,
                  recite_when: str | None = None, think_when: str | None = None, effort: str | None = None,
-                 memory_note: bool = True) -> None:
+                 memory_note: bool = True, think_until: str | None = None, repeat_limit: int = 3) -> None:
         self.ask, self.root = ask, Path(state_dir)
         self.budget, self.target_ratio, self.headroom = budget, target_ratio, headroom
         self.notes_cap, self.notes_max_tokens, self.notes_thinking = notes_cap, notes_max_tokens, notes_thinking
@@ -326,6 +358,12 @@ class Keeper:
         self.think_when = re.compile(think_when) if think_when else None
         self.effort = effort
         self.memory_note = memory_note
+        # think_until: with think_when, thinking stays on from a question until a later message matches this pattern
+        # (a question often takes several tool calls; with thinking off in between, a model can repeat one call forever).
+        # repeat_limit: after this many identical tool calls in a row with identical results the model is told so and
+        # thinks on that call, whatever else is set (0 turns the check off).
+        self.think_until = re.compile(think_until) if think_until else None
+        self.repeat_limit = repeat_limit
         self.sessions: dict[str, Session] = {}
         self.lock = threading.Lock()
 
@@ -419,11 +457,19 @@ class Keeper:
             asked = from_user or bool(self.recite_when and self.recite_when.search(newest))
             if self.recite and asked and rule_lines(s.state["notes"]):
                 view.append({"role": "user", "content": RECITE_HEAD + "\n" + "\n".join("- " + r for r in rule_lines(s.state["notes"]))})
+            stuck = self.repeat_limit and repeats(messages) >= self.repeat_limit
+            if stuck:
+                view.append({"role": "user", "content": REPEAT_NOTE.format(n=repeats(messages))})
+                s.state["repeats_broken"] = s.state.get("repeats_broken", 0) + 1
             out = dict(body, messages=view, stream=False)
-            if self.think_when is not None or self.effort:
+            if self.think_when is not None or self.effort or stuck:
                 ctk = dict(body.get("chat_template_kwargs") or {})
                 if self.think_when is not None:
-                    ctk["enable_thinking"] = from_user or bool(self.think_when.search(newest))
+                    h = head_length(messages)
+                    ctk["enable_thinking"] = (from_user or bool(self.think_when.search(newest)) or bool(stuck) or (
+                        self.think_until is not None and question_open(messages[h + s.state["cut"]:], self.think_when, self.think_until)))
+                elif stuck:
+                    ctk["enable_thinking"] = True
                 if self.effort:
                     ctk["reasoning_effort"] = self.effort
                 out["chat_template_kwargs"] = ctk
@@ -552,6 +598,10 @@ def main() -> None:
     ap.add_argument("--recite-when", help="also repeat the RULES when the newest message matches this regular expression")
     ap.add_argument("--think-when", help="set enable_thinking per call: on for a user message or a newest message "
                                          "matching this regular expression, off otherwise (default: leave the client's setting)")
+    ap.add_argument("--think-until", help="with --think-when: thinking stays on from a matching message until a later "
+                                          "message matches this regular expression (the question has been dealt with)")
+    ap.add_argument("--repeat-limit", type=int, default=3, help="tell the model, and make it think, after this many "
+                                                                 "identical tool calls in a row with identical results (0: off)")
     ap.add_argument("--effort", help="send this chat_template_kwargs.reasoning_effort on every call (with --think-when "
                                      "on Qwen: medium keeps the system message the same whether thinking is on or off)")
     ap.add_argument("--no-memory-note", action="store_true",
@@ -564,7 +614,8 @@ def main() -> None:
                     budget=a.budget, target_ratio=a.target_ratio, headroom=a.headroom, notes_cap=a.notes_cap,
                     notes_thinking={"on": True, "off": False, "unset": None}[a.notes_thinking],
                     recite=not a.no_recite, reply_reserve=a.reply_reserve, recite_when=a.recite_when,
-                    think_when=a.think_when, effort=a.effort, memory_note=not a.no_memory_note)
+                    think_when=a.think_when, effort=a.effort, memory_note=not a.no_memory_note,
+                    think_until=a.think_until, repeat_limit=a.repeat_limit)
     server = ThreadingHTTPServer((a.host, a.port), make_handler(keeper, upstream, a.timeout))
     print(f"ctxkeeper: http://{a.host}:{a.port}/v1 -> {upstream}/v1, live window {a.budget} tokens, state in {a.state_dir}", flush=True)
     try:

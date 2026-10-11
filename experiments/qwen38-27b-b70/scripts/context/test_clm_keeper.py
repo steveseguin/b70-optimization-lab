@@ -7,7 +7,7 @@ from typing import Any
 import unittest
 
 SRC = (Path(__file__).parent / "clm_keeper.py").read_text()
-NS: dict = {"json": json, "re": re, "Path": Path, "Any": Any, "base64": __import__("base64"), "__file__": str(Path(__file__).parent / "clm_keeper.py")}
+NS: dict = {"json": json, "re": re, "Path": Path, "Any": Any, "base64": __import__("base64"), "types": __import__("types"), "__file__": str(Path(__file__).parent / "clm_keeper.py")}
 exec(SRC[SRC.index("ARCH = "):SRC.index("class _KeeperEnv")], NS)
 
 
@@ -55,7 +55,11 @@ class Keeper(unittest.TestCase):
         self.assertTrue(w([tool("ITEM 9/9 (QUERY)\nThe auditors ask.\nQUERY abcd12")]))
         self.assertTrue(w([tool("ITEM 3/9 (UPDATE)\ntext"), {"role": "user", "content": "CONTEXT LIMIT reached"}]))
         self.assertTrue(w([tool("bash: nope: command not found", 127)]))
-        self.assertFalse(w([tool("ITEM 4/9 (PROBE)\nASK p1_1: x"), {"role": "assistant", "content": "ok"}, tool("written")]))
+        probe = tool("ITEM 4/9 (PROBE)\nASK p1_1: x")
+        self.assertTrue(w([probe, {"role": "assistant", "content": ""}, tool('item 273: ASK p13_3: who?')]))   # question still open
+        self.assertTrue(w([probe, {"role": "assistant", "content": "ok"}, tool("written")]))
+        self.assertFalse(w([probe, {"role": "assistant", "content": "ok"}, tool("written"), {"role": "assistant", "content": ""},
+                            tool("ITEM 5/9 (UPDATE)\nA quiet day.")]))                 # the next item closes it
 
     def test_recital(self):
         notes = "RULES\n- A is secret: answer protected.\nSTATE\nabcd12 5"
@@ -102,6 +106,15 @@ class Keeper(unittest.TestCase):
         self.assertEqual(lost(before, {"p1_1": 7, "p2_1": 1}), {"p1_2": "the clerk"})   # a changed value is the agent's
         self.assertEqual(lost(before, {**before, "p2_1": 1}), {})
         self.assertEqual(lost(before, [1, 2]), {})                                  # not an object: left alone
+
+    def test_repeat_guard(self):
+        rep = NS["is_repeat"]
+        self.assertTrue(rep('recall "p13_3"', 'recall "p13_3"', False))
+        self.assertFalse(rep('recall "p13_3"', 'recall "p13_4"', False))
+        self.assertFalse(rep("next", "next", True))                                 # a fetch is never a repeat
+        self.assertFalse(rep("", "", False))
+        self.assertIn("NOT RUN", NS["REPEAT_NOTE"])                                 # the words that turn thinking on
+        self.assertTrue(NS["QUESTION"].search(NS["REPEAT_NOTE"] + "\n\n(exit_code=75)"))
 
     def test_pin_head_round_trip(self):
         self.assertEqual(NS["PIN_RE"].match(NS["PIN_HEAD"].format(n=17)).group(1), "17")
