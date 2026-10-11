@@ -814,6 +814,7 @@ class KeeperAgent(TruncateAgent):
         self.n_inplace = self.n_inplace_failed = self.inplace_cached = self.inplace_prompt = 0
         self._pin_tail = ""
         self.inplace_failures: list[dict[str, Any]] = []
+        self.n_inplace_redone = 0
         self.inplace_turn_hold = 0                    # after a failed in-place call: no new attempt on the same turns
         # auto_retrieve=K: when a delivered item asks questions, the K best-matching archived sentences per question
         # (BM25, rag_retrieve.py) are shown right after it, each with the retrieve_window sentences that follow it
@@ -990,7 +991,7 @@ class KeeperAgent(TruncateAgent):
         if not n:
             return
         gone = body[:len(body) - len(keep)]
-        self._pin_tail = ""
+        self._pin_tail, self.inplace_turn_hold = "", 0     # the turns that an in-place call could not note are going now
         rec: dict[str, Any] = {"reason": "keep", "turns_dropped": n, "before": before,
                                "items_archived": await self._archive(environment, gone)}
         self.n_items_archived += rec["items_archived"]
@@ -1022,10 +1023,13 @@ class KeeperAgent(TruncateAgent):
         req = messages + [{"role": "user", "content": INPLACE_REQUEST.format(
             start="message that holds the NOTES" if start > self._protect else "first turn after the task statement")}]
         self._snap(req, "keeper")
-        seen, why = numbers_in(render_turns(body)), "no reply"
-        for _attempt in (1, 2):
+        base, seen, why = req, numbers_in(render_turns(body)), "no reply"
+        thinking = self.notes_thinking
+        for _attempt in (1, 2, 3):
+            # a reply without the layout is asked for once more; working that cannot be trusted is asked for again
+            # from the start with thinking on (first run of N32x: one such reply ended the in-place cuts for good)
             rec["notes_attempts"] += 1
-            resp = await asyncio.to_thread(self._notes_call, req, self.notes_thinking, True)
+            resp = await asyncio.to_thread(self._notes_call, req, thinking, True)
             if isinstance(resp, Exception):
                 why = f"{type(resp).__name__}: {resp}"
                 continue
@@ -1042,6 +1046,10 @@ class KeeperAgent(TruncateAgent):
             size = self._budget.count([{"role": "user", "content": new}])
             if info["mismatch"]:
                 why = "working starts from a value the NOTES do not hold: " + "; ".join(info["mismatch"][:3])
+                rec.setdefault("inplace_redo", why)
+                if not thinking:
+                    req, thinking = base, True
+                    continue
             elif size > 2 * self.notes_max_tokens:
                 why = f"NOTES of {size} tokens after the changes, over twice the cap"
             else:
@@ -1054,6 +1062,7 @@ class KeeperAgent(TruncateAgent):
                 messages[:] = head + [self._pin(prev + n)]
                 rec["after"] = self._budget.count(messages)
                 self.n_inplace += 1
+                self.n_inplace_redone += "inplace_redo" in rec
                 self.inplace_cached += rec["cached"]
                 self.inplace_prompt += rec["notes_prompt_tokens"]
                 self._record(rec)
@@ -1193,6 +1202,7 @@ class KeeperAgent(TruncateAgent):
                     "notes_mode": self.notes_mode, "delta_fallbacks": self.n_delta_fallbacks,
                     "notes_chunk_tokens": self.notes_chunk_tokens, "notes_inplace": self.notes_inplace,
                     "inplace_cuts": self.n_inplace, "inplace_failed": self.n_inplace_failed,
+                    "inplace_redone_with_thinking": self.n_inplace_redone,
                     "inplace_failures": self.inplace_failures[:20], "inplace_prompt_tokens": self.inplace_prompt,
                     "inplace_cached_tokens": self.inplace_cached, "inplace_turn_tokens": self.inplace_turn_tokens,
                     "sums_corrected": self.n_sums_corrected, "auto_retrieve": self.auto_retrieve,
