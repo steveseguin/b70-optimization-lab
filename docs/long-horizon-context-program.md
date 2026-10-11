@@ -102,7 +102,7 @@ and folds for lack of room, old state stuck: final 8/14). In-window self-editing
 | B32ir self-edit read | 8/15 | 1/2 | 0/5 | 14/14 | 22 | 16 |
 | **B32ira + archive and recall** | **13/15** | 2/2 | 4/5 | **14/14** | **27** | **15** |
 
-At 32K the archive method is above the lossy floor on every axis at once and is also the fastest; 32K is the fast-scale
+At 32K the archive method is above the lossy floor on every axis at once and among the quickest (only compaction finished sooner, with far worse final answers); 32K is the fast-scale
 cap from here. Compaction that keeps old state visible reports stale values as current (4/14 finals).
 
 ### 4b. Proposed here, not yet run
