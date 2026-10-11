@@ -1,0 +1,14 @@
+{
+  "source": "experiments/own-xpu-runtime/stage2/packet19-depcheck/instrument18.hpp",
+  "source_sha256": "d35bba0330289f5b8cee412460abaa05644e3efca38566640c213f196d5f291f",
+  "adapted_copy": "instrument21.hpp",
+  "changes": [
+    "Ordered chain external read/write contract; internal intermediate reads discharged only by preceding phases",
+    "Attention chain expanded into score, softmax, value access phases",
+    "Unknown chain modes and unknown operations fail closed",
+    "Rank operation access contract",
+    "GEMV descriptor read/index and explicit binding access flags",
+    "Frozen split4 partial/final submissions with precise workspace ranges"
+  ],
+  "device_executed": false
+}

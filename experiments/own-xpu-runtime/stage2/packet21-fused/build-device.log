@@ -1,0 +1,94 @@
+{
+  "passed": true,
+  "grep_argv": [
+    "rg",
+    "-n",
+    "(std::|sycl::(native::|half_precision::)?|__builtin_)(exp|log|pow|sin|cos)(2|10|1p|m1)?f?\\s*\\("
+  ],
+  "translation_units": 16,
+  "files": [
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/mock_device.hpp",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.hpp",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_operation.hpp",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet17-detmath/detmath.hpp",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/device.hpp",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp",
+    "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp",
+    "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/adapter.cpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/adapter.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/arithmetic.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/backend.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/canary.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/core_v2.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/detmath.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/gemv_batch.cpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/gemv_batch.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/main.cpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/native.cpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/native.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/owner.cpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/owner.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/owner_retire.cpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/performance.cpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/performance.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/rope.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/runtime_kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/runtime_kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/synthetic.hpp",
+    "experiments/own-xpu-runtime/stage2/packet3/kernels/api.hpp",
+    "experiments/own-xpu-runtime/stage2/packet3/model/directory.hpp",
+    "experiments/own-xpu-runtime/stage2/packet3/step/plan.hpp",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/reference.hpp",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/decode.hpp",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/dispatch.hpp",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/reference.hpp",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/dispatch.hpp",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/reference.hpp"
+  ]
+}
+[  2%] Building CXX object CMakeFiles/fused-fixtures.dir/gemv_fixture.cpp.o
+{
+  "passed": true,
+  "checks": [
+    "owner compute dependency assertion",
+    "owner queue rejection",
+    "peer requires drained queues",
+    "shutdown marker has no dependencies",
+    "every native entry checks target queue",
+    "native same-queue event filter",
+    "queue switches fence",
+    "all peer copies fence",
+    "final Q1 commit before Q0 readback fences",
+    "retirement drains queues before deleting IDs"
+  ],
+  "sources": {
+    "main.cpp": "4235b087d95d04fc9579dc83a4433404c12871bdaec77d9d721b9ab9a8cace29",
+    "owner.cpp": "76b016f25af1be94df839081bd23b75c44195d930d2bf35a5de6e19299bfe906",
+    "backend.hpp": "9f469d41d9ff2b626500125d96e83d6f95497f7d88864aa3536c9ed596ba00f7",
+    "owner_retire.cpp": "e35c366f640d8909b519891fa814aa80228b01ce69bd19ccdf00a8d13cae0da2"
+  },
+  "limit": "Source structure guard plus owner runtime assertion; no native execution proof"
+}
+[  2%] Built target math-gate
+[ 17%] Built target nongemv-fixtures
+[ 20%] Building CXX object CMakeFiles/fused-fixtures.dir/gemv_batch.cpp.o
+[ 68%] Built target own-rt-iq3
+[ 71%] Linking CXX executable fused-fixtures
+[100%] Built target fused-fixtures

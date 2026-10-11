@@ -1,0 +1,218 @@
+{
+  "schema": "own-runtime.iq3.packet18.cpu-tests.v1",
+  "passed": true,
+  "device_executed": false,
+  "tests": [
+    {
+      "name": "mini-1-1",
+      "returncode": 0,
+      "exact": true,
+      "buffers": 113,
+      "values": 3873,
+      "tokens": [
+        1
+      ]
+    },
+    {
+      "name": "mini-1-3",
+      "returncode": 0,
+      "exact": true,
+      "buffers": 113,
+      "values": 3873,
+      "tokens": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "name": "mini-1-8",
+      "returncode": 0,
+      "exact": true,
+      "buffers": 113,
+      "values": 3873,
+      "tokens": [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ]
+    },
+    {
+      "name": "mini-2-1",
+      "returncode": 0,
+      "exact": true,
+      "buffers": 113,
+      "values": 3873,
+      "tokens": [
+        1
+      ]
+    },
+    {
+      "name": "mini-2-3",
+      "returncode": 0,
+      "exact": true,
+      "buffers": 113,
+      "values": 3873,
+      "tokens": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "name": "mini-2-8",
+      "returncode": 0,
+      "exact": true,
+      "buffers": 113,
+      "values": 3873,
+      "tokens": [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ]
+    },
+    {
+      "name": "repeat",
+      "returncode": 0
+    },
+    {
+      "name": "context-rejection",
+      "returncode": 1
+    },
+    {
+      "name": "bad-memory-mode",
+      "returncode": 1
+    },
+    {
+      "name": "bad-cards",
+      "returncode": 1
+    },
+    {
+      "name": "host-native-refusal",
+      "returncode": 1
+    },
+    {
+      "name": "real-plan-1",
+      "returncode": 0,
+      "tensors": 1224,
+      "owned_weight_bytes": [
+        52629189120
+      ],
+      "dispatch_sites": 1821
+    },
+    {
+      "name": "real-plan-2",
+      "returncode": 0,
+      "tensors": 1224,
+      "owned_weight_bytes": [
+        26165134080,
+        26464055040
+      ],
+      "dispatch_sites": 1825
+    }
+  ],
+  "binary_sha256": "a40227010dd934ab0fa8a07e3b9bd40cc9c46ab82c53b3044601015ddae02d7e",
+  "baseline_sha256": "89276452001c948ad96c3aa8269a40ee3bb994e3402469942007ffedf3896da7",
+  "control_comparisons": [
+    {
+      "cards": 1,
+      "tokens": 1,
+      "buffers_sha256": "ad0a6f7304552ca8eeb7c6f7aa7c7cd1e95249c343060aa3341d18b34efdd9f4",
+      "fixture_hashes": {
+        "step1/layer-00.bf16": "0efb359cf9c3579ecf0ad348b5ae15af560970c7d699f171c831f1a60e365464",
+        "step1/layer-01.bf16": "9c12ba3f8c6253b14ad745db742212b174637bd044a4dacd80978888976c0f1d"
+      }
+    },
+    {
+      "cards": 1,
+      "tokens": 3,
+      "buffers_sha256": "a521c5b7fae14a1c9e99e303bc7f9d352c4e75a39c6feb3fd18ec8e933b27235",
+      "fixture_hashes": {
+        "step1/layer-00.bf16": "0efb359cf9c3579ecf0ad348b5ae15af560970c7d699f171c831f1a60e365464",
+        "step1/layer-01.bf16": "9c12ba3f8c6253b14ad745db742212b174637bd044a4dacd80978888976c0f1d",
+        "step3/layer-00.bf16": "0020e9a55b8ced12de2e07a370fb94c7e3611fbb727a753614ea580a5bcc3207",
+        "step3/layer-01.bf16": "27a43cb92662505a64718cf7f44d6e6bf27bd04575d02272f8510c176a34e5b2",
+        "step2/layer-00.bf16": "bbab177dd2f4d9ff13dc0910bc54e0b5bc5275de35a1b8f0771e7a571e99a076",
+        "step2/layer-01.bf16": "c28e7521e3a18b29deb9714fb88edc7d41b12bb52a82337763d736637e786ce7"
+      }
+    },
+    {
+      "cards": 1,
+      "tokens": 8,
+      "buffers_sha256": "c801428007b75449a624ee86c9657b232fe3d7752526722c05a6375e4d418061",
+      "fixture_hashes": {
+        "step8/layer-00.bf16": "eb0a304857ba389ab7395d3bb593dc3b534ff663c167688ebf159ffadefd42cf",
+        "step8/layer-01.bf16": "c3a52f2b87a93446deae4c210a6e5df63a82ae4cac7c1c9697b6c52e895a2743",
+        "step4/layer-00.bf16": "2491ea96f31d52ccc8cdfe57d2e28cfc1b31df40f033f69ced60fe028dec31a5",
+        "step4/layer-01.bf16": "c7ca120fdce969f898d252642684da49010703f41a5c82612ae1192eed2a6e9f",
+        "step1/layer-00.bf16": "a0c98956d79f02dd0c8092e042d2a3bb43a80bc0eb1fe4053a9ddff8208bb177",
+        "step1/layer-01.bf16": "5ef11ab248d511a8bf92a0093dcb1a5e967ebf97a92d704137c5d0e1d25d8e8e",
+        "step6/layer-00.bf16": "15466e353cfb39da7d36ba52db5675a5a12ac3a3a898c5be4cb6751969d9a6da",
+        "step6/layer-01.bf16": "d3926be6f1cfbad58194a7285d4f36ade51cffaeb6312ed2a943927983cf4d43",
+        "step7/layer-00.bf16": "46185c2cf9eb26553ca9a3d36e331cc744b0d07d0ed7503a33c078b49afeb160",
+        "step7/layer-01.bf16": "9cf45b920f7402f1d5a2e5d1401c420246614a9d8d029fbbc94e636532bf2eba",
+        "step3/layer-00.bf16": "55de85c7bc0145d967102690b6774305e2f3b1e58652fc1c5a7965fe00ade1ab",
+        "step3/layer-01.bf16": "988f6d0b583188842e23f88e0a5d0dd463de01692567ea2108a32c01ea705245",
+        "step5/layer-00.bf16": "db8678031de22dd9051fdbfb58a4c06d6c3d1515049609d837c9d1637047c62d",
+        "step5/layer-01.bf16": "c3aa8b321c746e3c09606ff353db0c6aa3dde614736b3c0ffde8004a0d4ea7da",
+        "step2/layer-00.bf16": "77586293f1fecaf929353176cde78343616fecf0f1ebe13c7826ce4949f0b8c7",
+        "step2/layer-01.bf16": "34584591d4fcb74de59e6b53a32e9261d148d31604fe52e3f01eba04adf05015"
+      }
+    },
+    {
+      "cards": 2,
+      "tokens": 1,
+      "buffers_sha256": "ad0a6f7304552ca8eeb7c6f7aa7c7cd1e95249c343060aa3341d18b34efdd9f4",
+      "fixture_hashes": {
+        "step1/layer-00.bf16": "0efb359cf9c3579ecf0ad348b5ae15af560970c7d699f171c831f1a60e365464",
+        "step1/layer-01.bf16": "9c12ba3f8c6253b14ad745db742212b174637bd044a4dacd80978888976c0f1d"
+      }
+    },
+    {
+      "cards": 2,
+      "tokens": 3,
+      "buffers_sha256": "a521c5b7fae14a1c9e99e303bc7f9d352c4e75a39c6feb3fd18ec8e933b27235",
+      "fixture_hashes": {
+        "step1/layer-00.bf16": "0efb359cf9c3579ecf0ad348b5ae15af560970c7d699f171c831f1a60e365464",
+        "step1/layer-01.bf16": "9c12ba3f8c6253b14ad745db742212b174637bd044a4dacd80978888976c0f1d",
+        "step3/layer-00.bf16": "0020e9a55b8ced12de2e07a370fb94c7e3611fbb727a753614ea580a5bcc3207",
+        "step3/layer-01.bf16": "27a43cb92662505a64718cf7f44d6e6bf27bd04575d02272f8510c176a34e5b2",
+        "step2/layer-00.bf16": "bbab177dd2f4d9ff13dc0910bc54e0b5bc5275de35a1b8f0771e7a571e99a076",
+        "step2/layer-01.bf16": "c28e7521e3a18b29deb9714fb88edc7d41b12bb52a82337763d736637e786ce7"
+      }
+    },
+    {
+      "cards": 2,
+      "tokens": 8,
+      "buffers_sha256": "c801428007b75449a624ee86c9657b232fe3d7752526722c05a6375e4d418061",
+      "fixture_hashes": {
+        "step8/layer-00.bf16": "eb0a304857ba389ab7395d3bb593dc3b534ff663c167688ebf159ffadefd42cf",
+        "step8/layer-01.bf16": "c3a52f2b87a93446deae4c210a6e5df63a82ae4cac7c1c9697b6c52e895a2743",
+        "step4/layer-00.bf16": "2491ea96f31d52ccc8cdfe57d2e28cfc1b31df40f033f69ced60fe028dec31a5",
+        "step4/layer-01.bf16": "c7ca120fdce969f898d252642684da49010703f41a5c82612ae1192eed2a6e9f",
+        "step1/layer-00.bf16": "a0c98956d79f02dd0c8092e042d2a3bb43a80bc0eb1fe4053a9ddff8208bb177",
+        "step1/layer-01.bf16": "5ef11ab248d511a8bf92a0093dcb1a5e967ebf97a92d704137c5d0e1d25d8e8e",
+        "step6/layer-00.bf16": "15466e353cfb39da7d36ba52db5675a5a12ac3a3a898c5be4cb6751969d9a6da",
+        "step6/layer-01.bf16": "d3926be6f1cfbad58194a7285d4f36ade51cffaeb6312ed2a943927983cf4d43",
+        "step7/layer-00.bf16": "46185c2cf9eb26553ca9a3d36e331cc744b0d07d0ed7503a33c078b49afeb160",
+        "step7/layer-01.bf16": "9cf45b920f7402f1d5a2e5d1401c420246614a9d8d029fbbc94e636532bf2eba",
+        "step3/layer-00.bf16": "55de85c7bc0145d967102690b6774305e2f3b1e58652fc1c5a7965fe00ade1ab",
+        "step3/layer-01.bf16": "988f6d0b583188842e23f88e0a5d0dd463de01692567ea2108a32c01ea705245",
+        "step5/layer-00.bf16": "db8678031de22dd9051fdbfb58a4c06d6c3d1515049609d837c9d1637047c62d",
+        "step5/layer-01.bf16": "c3aa8b321c746e3c09606ff353db0c6aa3dde614736b3c0ffde8004a0d4ea7da",
+        "step2/layer-00.bf16": "77586293f1fecaf929353176cde78343616fecf0f1ebe13c7826ce4949f0b8c7",
+        "step2/layer-01.bf16": "34584591d4fcb74de59e6b53a32e9261d148d31604fe52e3f01eba04adf05015"
+      }
+    }
+  ]
+}

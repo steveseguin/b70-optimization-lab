@@ -1,0 +1,34 @@
+In file included from /usr/include/c++/13/bits/char_traits.h:57,
+                 from /usr/include/c++/13/ios:42,
+                 from /usr/include/c++/13/istream:40,
+                 from /usr/include/c++/13/sstream:40,
+                 from /usr/include/c++/13/chrono:45,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/build/sanitized/packet19-depcheck__depcheck.hpp:3,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/build/sanitized/instrument.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/build/sanitized/core.cpp:1:
+In function ‘constexpr decltype (::new(void*(0)) _Tp) std::construct_at(_Tp*, _Args&& ...) [with _Tp = depcheck::Access; _Args = {depcheck::Access}]’,
+    inlined from ‘static constexpr void std::allocator_traits<std::allocator<_CharT> >::construct(allocator_type&, _Up*, _Args&& ...) [with _Up = depcheck::Access; _Args = {depcheck::Access}; _Tp = depcheck::Access]’ at /usr/include/c++/13/bits/alloc_traits.h:540:21,
+    inlined from ‘constexpr void std::vector<_Tp, _Alloc>::_M_realloc_insert(iterator, _Args&& ...) [with _Args = {depcheck::Access}; _Tp = depcheck::Access; _Alloc = std::allocator<depcheck::Access>]’ at /usr/include/c++/13/bits/vector.tcc:468:28,
+    inlined from ‘constexpr std::vector<_Tp, _Alloc>::reference std::vector<_Tp, _Alloc>::emplace_back(_Args&& ...) [with _Args = {depcheck::Access}; _Tp = depcheck::Access; _Alloc = std::allocator<depcheck::Access>]’ at /usr/include/c++/13/bits/vector.tcc:123:21,
+    inlined from ‘constexpr void std::vector<_Tp, _Alloc>::push_back(value_type&&) [with _Tp = depcheck::Access; _Alloc = std::allocator<depcheck::Access>]’ at /usr/include/c++/13/bits/stl_vector.h:1299:21,
+    inlined from ‘depcheck::describe_spec(ownrt::Device&, const integrated::Spec&, std::span<const long unsigned int>, int)::<lambda(int, bool, bool, bool, size_t, size_t)>’ at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/build/sanitized/instrument.hpp:9:120,
+    inlined from ‘std::vector<depcheck::Access> depcheck::describe_spec(ownrt::Device&, const integrated::Spec&, std::span<const long unsigned int>, int)’ at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/build/sanitized/instrument.hpp:16:5,
+    inlined from ‘ownrt::Event depcheck::submit(ownrt::Device&, const Op&, std::span<const long unsigned int>, std::span<const long unsigned int>) [with Op = iq3::Step]’ at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/build/sanitized/instrument.hpp:124:40:
+/usr/include/c++/13/bits/stl_construct.h:97:14: warning: writing 2 bytes into a region of size 0 [-Wstringop-overflow=]
+   97 |     { return ::new((void*)__location) _Tp(std::forward<_Args>(__args)...); }
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In function ‘ownrt::Event depcheck::submit(ownrt::Device&, const Op&, std::span<const long unsigned int>, std::span<const long unsigned int>) [with Op = iq3::Step]’:
+cc1plus: note: destination object is likely at address zero
+In function ‘constexpr decltype (::new(void*(0)) _Tp) std::construct_at(_Tp*, _Args&& ...) [with _Tp = depcheck::Access; _Args = {depcheck::Access}]’,
+    inlined from ‘static constexpr void std::allocator_traits<std::allocator<_CharT> >::construct(allocator_type&, _Up*, _Args&& ...) [with _Up = depcheck::Access; _Args = {depcheck::Access}; _Tp = depcheck::Access]’ at /usr/include/c++/13/bits/alloc_traits.h:540:21,
+    inlined from ‘constexpr void std::vector<_Tp, _Alloc>::_M_realloc_insert(iterator, _Args&& ...) [with _Args = {depcheck::Access}; _Tp = depcheck::Access; _Alloc = std::allocator<depcheck::Access>]’ at /usr/include/c++/13/bits/vector.tcc:468:28,
+    inlined from ‘constexpr std::vector<_Tp, _Alloc>::reference std::vector<_Tp, _Alloc>::emplace_back(_Args&& ...) [with _Args = {depcheck::Access}; _Tp = depcheck::Access; _Alloc = std::allocator<depcheck::Access>]’ at /usr/include/c++/13/bits/vector.tcc:123:21,
+    inlined from ‘constexpr void std::vector<_Tp, _Alloc>::push_back(value_type&&) [with _Tp = depcheck::Access; _Alloc = std::allocator<depcheck::Access>]’ at /usr/include/c++/13/bits/stl_vector.h:1299:21,
+    inlined from ‘depcheck::describe_spec(ownrt::Device&, const integrated::Spec&, std::span<const long unsigned int>, int)::<lambda(int, bool, bool, bool, size_t, size_t)>’ at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/build/sanitized/instrument.hpp:9:120,
+    inlined from ‘std::vector<depcheck::Access> depcheck::describe_spec(ownrt::Device&, const integrated::Spec&, std::span<const long unsigned int>, int)’ at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/build/sanitized/instrument.hpp:16:5,
+    inlined from ‘ownrt::Event depcheck::submit(ownrt::Device&, const Op&, std::span<const long unsigned int>, std::span<const long unsigned int>) [with Op = iq3::Step]’ at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/build/sanitized/instrument.hpp:124:40:
+/usr/include/c++/13/bits/stl_construct.h:97:14: warning: writing 1 byte into a region of size 0 [-Wstringop-overflow=]
+In function ‘ownrt::Event depcheck::submit(ownrt::Device&, const Op&, std::span<const long unsigned int>, std::span<const long unsigned int>) [with Op = iq3::Step]’:
+cc1plus: note: destination object is likely at address zero
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/build/sanitized/depcheck-runtime

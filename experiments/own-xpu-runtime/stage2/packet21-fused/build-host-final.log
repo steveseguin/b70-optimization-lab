@@ -1,0 +1,143 @@
+{
+  "passed": true,
+  "grep_argv": [
+    "rg",
+    "-n",
+    "(std::|sycl::(native::|half_precision::)?|__builtin_)(exp|log|pow|sin|cos)(2|10|1p|m1)?f?\\s*\\("
+  ],
+  "translation_units": 16,
+  "files": [
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/mock_device.hpp",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.hpp",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_operation.hpp",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet17-detmath/detmath.hpp",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/device.hpp",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp",
+    "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp",
+    "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/adapter.cpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/adapter.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/arithmetic.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/backend.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/canary.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/core_v2.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/detmath.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/gemv_batch.cpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/gemv_batch.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/main.cpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/native.cpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/native.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/owner.cpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/owner.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/owner_retire.cpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/performance.cpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/performance.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/rope.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/runtime_kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/runtime_kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet21-fused/synthetic.hpp",
+    "experiments/own-xpu-runtime/stage2/packet3/kernels/api.hpp",
+    "experiments/own-xpu-runtime/stage2/packet3/model/directory.hpp",
+    "experiments/own-xpu-runtime/stage2/packet3/step/plan.hpp",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/reference.hpp",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/decode.hpp",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/dispatch.hpp",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/reference.hpp",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/dispatch.hpp",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/reference.hpp"
+  ]
+}
+{
+  "passed": true,
+  "checks": [
+    "owner compute dependency assertion",
+    "owner queue rejection",
+    "peer requires drained queues",
+    "shutdown marker has no dependencies",
+    "every native entry checks target queue",
+    "native same-queue event filter",
+    "queue switches fence",
+    "all peer copies fence",
+    "final Q1 commit before Q0 readback fences",
+    "retirement drains queues before deleting IDs"
+  ],
+  "sources": {
+    "main.cpp": "4235b087d95d04fc9579dc83a4433404c12871bdaec77d9d721b9ab9a8cace29",
+    "owner.cpp": "76b016f25af1be94df839081bd23b75c44195d930d2bf35a5de6e19299bfe906",
+    "backend.hpp": "9f469d41d9ff2b626500125d96e83d6f95497f7d88864aa3536c9ed596ba00f7",
+    "owner_retire.cpp": "e35c366f640d8909b519891fa814aa80228b01ce69bd19ccdf00a8d13cae0da2"
+  },
+  "limit": "Source structure guard plus owner runtime assertion; no native execution proof"
+}
+[  0%] Built target math-gate
+[ 11%] Building CXX object CMakeFiles/own-rt-iq3.dir/gemv_batch.cpp.o
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/kernels.hpp:3,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/../packet9-kopt4/../packet8-kopt3/kernels.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/../packet9-kopt4/kernels.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/performance.hpp:3,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/gemv_batch.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/gemv_batch.cpp:1:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:25: warning: ignoring ‘#pragma unroll ’ [-Wunknown-pragmas]
+   25 |     #pragma unroll
+      | 
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/../packet9-kopt4/../packet8-kopt3/reference.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/../packet9-kopt4/../packet8-kopt3/kernels.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/../packet9-kopt4/../packet8-kopt3/decode.hpp:53: warning: ignoring ‘#pragma unroll ’ [-Wunknown-pragmas]
+   53 |     #pragma unroll
+      | 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/../packet9-kopt4/../packet8-kopt3/decode.hpp:90: warning: ignoring ‘#pragma unroll ’ [-Wunknown-pragmas]
+   90 |     #pragma unroll
+      | 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/../packet9-kopt4/../packet8-kopt3/decode.hpp:99: warning: ignoring ‘#pragma unroll ’ [-Wunknown-pragmas]
+   99 |     #pragma unroll
+      | 
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/../packet9-kopt4/../packet8-kopt3/kernels.hpp:4:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/../packet9-kopt4/../packet8-kopt3/dispatch.hpp: In function ‘bool iq3::kopt3::dispatch_split4(unsigned int, unsigned int, unsigned int, unsigned int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/../packet9-kopt4/../packet8-kopt3/dispatch.hpp:36:3: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+   36 |   if(match)throw std::invalid_argument("ambiguous dispatch");match=&r;
+      |   ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/../packet9-kopt4/../packet8-kopt3/dispatch.hpp:36:62: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   36 |   if(match)throw std::invalid_argument("ambiguous dispatch");match=&r;
+      |                                                              ^~~~~
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/../packet9-kopt4/kernels.hpp:4:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/../packet9-kopt4/dispatch.hpp: In function ‘unsigned int iq3::kopt4::dispatch_variant(unsigned int, unsigned int, unsigned int, unsigned int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/../packet9-kopt4/dispatch.hpp:36:3: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+   36 |   if(match)throw std::invalid_argument("ambiguous dispatch");match=&r;
+      |   ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/../packet9-kopt4/dispatch.hpp:36:62: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   36 |   if(match)throw std::invalid_argument("ambiguous dispatch");match=&r;
+      |                                                              ^~~~~
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/arithmetic.hpp:6,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/performance.hpp:4:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/../packet10-kopt5/expanded.hpp: In function ‘float iq3::expanded::row(iq3::Type, const uint8_t*, const uint16_t*, iq3::Type, size_t, unsigned int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/../packet10-kopt5/expanded.hpp:90:2: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+   90 |  if(split!=1 && split!=4)throw std::invalid_argument("split");float part[4]{};
+      |  ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/../packet10-kopt5/expanded.hpp:90:63: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   90 |  if(split!=1 && split!=4)throw std::invalid_argument("split");float part[4]{};
+      |                                                               ^~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/gemv_batch.cpp: In function ‘void packet21::{anonymous}::normalize(const Desc&, void* const*)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/gemv_batch.cpp:28:2: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+   28 |  if(d.route_prob==absent)return;auto prob=static_cast<float*>(p[d.route_prob]);float sum[32]{};for(unsigned i=0;i<d.route_top;++i)sum[i]=prob[i];
+      |  ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/gemv_batch.cpp:28:33: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   28 |  if(d.route_prob==absent)return;auto prob=static_cast<float*>(p[d.route_prob]);float sum[32]{};for(unsigned i=0;i<d.route_top;++i)sum[i]=prob[i];
+      |                                 ^~~~
+[ 22%] Linking CXX executable own-rt-iq3
+[100%] Built target own-rt-iq3

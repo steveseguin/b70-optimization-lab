@@ -1,0 +1,90 @@
+{
+  "name": "mini-core-2-17",
+  "seed": 17,
+  "cards": 2,
+  "mode": "core",
+  "argv": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/build/sanitized/depcheck-runtime",
+    "--card",
+    "0",
+    "--cards",
+    "2",
+    "--memory",
+    "resident",
+    "--nongemv",
+    "core",
+    "--max-new",
+    "3",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet21-fused/build/sanitizer-1791719048811972352/mini-core-2-17",
+    "--mini"
+  ],
+  "returncode": 0,
+  "seconds": 0.03265412199834827,
+  "sanitizer": {
+    "device_executed": false,
+    "submissions": 745,
+    "executed": 745,
+    "max_ready": 1,
+    "violations": []
+  },
+  "tokens": [
+    1,
+    1,
+    1
+  ],
+  "fixtures": {
+    "step1/layer-00.bf16": "0efb359cf9c3579ecf0ad348b5ae15af560970c7d699f171c831f1a60e365464",
+    "step1/layer-01.bf16": "9c12ba3f8c6253b14ad745db742212b174637bd044a4dacd80978888976c0f1d",
+    "step2/layer-00.bf16": "bbab177dd2f4d9ff13dc0910bc54e0b5bc5275de35a1b8f0771e7a571e99a076",
+    "step2/layer-01.bf16": "c28e7521e3a18b29deb9714fb88edc7d41b12bb52a82337763d736637e786ce7",
+    "step3/layer-00.bf16": "0020e9a55b8ced12de2e07a370fb94c7e3611fbb727a753614ea580a5bcc3207",
+    "step3/layer-01.bf16": "27a43cb92662505a64718cf7f44d6e6bf27bd04575d02272f8510c176a34e5b2"
+  },
+  "binary_sha256": "d561dbbf1df15494a1dae6ac69c0466880f5abf70bc26b0a481900705b55a8ce",
+  "source_manifest_sha256": "447fa67ef793da7d8120b7715a3380ce37e05d71a0b7e15a758043afdb63bb6f",
+  "buffers_sha256": "4e51affaddabcc0be4dbf7937babe9b8998a79261c92a5ad93be4a8efd3d1108",
+  "timings": [
+    {
+      "kind": "generated_token",
+      "token_index": 4,
+      "generated_index": 1,
+      "input_token": 1,
+      "token_id": 1,
+      "wall_ms": 2.09652,
+      "gemv_device_ms": null,
+      "non_gemv_device_ms": null,
+      "transfer_wall_ms": 0.14868,
+      "kernel_submissions": 48,
+      "host_waits": 24
+    },
+    {
+      "kind": "generated_token",
+      "token_index": 5,
+      "generated_index": 2,
+      "input_token": 1,
+      "token_id": 1,
+      "wall_ms": 1.96943,
+      "gemv_device_ms": null,
+      "non_gemv_device_ms": null,
+      "transfer_wall_ms": 0.119838,
+      "kernel_submissions": 48,
+      "host_waits": 18
+    },
+    {
+      "kind": "generated_token",
+      "token_index": 6,
+      "generated_index": 3,
+      "input_token": 1,
+      "token_id": 1,
+      "wall_ms": 1.85034,
+      "gemv_device_ms": null,
+      "non_gemv_device_ms": null,
+      "transfer_wall_ms": 0.114556,
+      "kernel_submissions": 48,
+      "host_waits": 18
+    }
+  ],
+  "passed": true,
+  "device_executed": false
+}
