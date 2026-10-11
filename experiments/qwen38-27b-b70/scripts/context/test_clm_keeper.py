@@ -7,7 +7,7 @@ from typing import Any
 import unittest
 
 SRC = (Path(__file__).parent / "clm_keeper.py").read_text()
-NS: dict = {"json": json, "re": re, "Path": Path, "Any": Any, "__file__": str(Path(__file__).parent / "clm_keeper.py")}
+NS: dict = {"json": json, "re": re, "Path": Path, "Any": Any, "base64": __import__("base64"), "__file__": str(Path(__file__).parent / "clm_keeper.py")}
 exec(SRC[SRC.index("ARCH = "):SRC.index("class _KeeperEnv")], NS)
 
 
@@ -94,6 +94,14 @@ class Keeper(unittest.TestCase):
         text = NS["NOTES_REQUEST"].format(cap=2048, notes="(none yet)", turns="OUTPUT: ITEM 1/9 (UPDATE)\nx")
         self.assertLess(text.index("=== TURNS BEING MOVED OUT ==="), text.index("Write the new NOTES now"))
         self.assertTrue(text.rstrip().endswith("Output only the NOTES."))
+
+    def test_lost_answers(self):
+        lost = NS["lost_answers"]
+        before = {"p1_1": 5, "p1_2": "the clerk"}
+        self.assertEqual(lost(before, {"abcd12": 4}), before)                       # rewritten from scratch
+        self.assertEqual(lost(before, {"p1_1": 7, "p2_1": 1}), {"p1_2": "the clerk"})   # a changed value is the agent's
+        self.assertEqual(lost(before, {**before, "p2_1": 1}), {})
+        self.assertEqual(lost(before, [1, 2]), {})                                  # not an object: left alone
 
     def test_pin_head_round_trip(self):
         self.assertEqual(NS["PIN_RE"].match(NS["PIN_HEAD"].format(n=17)).group(1), "17")

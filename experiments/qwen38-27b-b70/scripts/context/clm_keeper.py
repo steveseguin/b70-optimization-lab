@@ -15,7 +15,8 @@ things the HARNESS does when the context goes over the limit, right before it cu
   3. the cut turns are replaced by one pinned user message holding the NOTES, right after the task statement, so
      everything before the recent turns is byte-identical between cuts and the server's prefix cache keeps working.
 The cut is made as soon as there is no longer room for the largest item seen so far (plus a margin) and goes down to
-60 % of the limit, so an arriving item is never head/tail-truncated to fit, as it can be in W32.
+60 % of the limit, so an arriving item is never head/tail-truncated to fit, as it can be in W32. Answers already
+written to /app/answers.json are never lost: if a later write drops earlier keys the harness puts them back and says so.
 The system prompt gains a short Memory section (NOTES, `recall`). When a delivered item asks questions and NOTES holds
 rules, the harness also appends the RULES lines as a reminder right after that item (recite_rules, on by default).
 Nothing else differs from W32.
@@ -228,6 +229,18 @@ def wants_thinking(messages: list[dict[str, Any]]) -> bool:
     return bool(codes and codes[-1] != "0")
 
 
+ANSWERS = "/app/answers.json"
+
+
+def lost_answers(before: dict, now: Any) -> dict:
+    """Keys of `before` that a later write dropped from the answers file ({} if `now` is not a JSON object: an
+    unreadable file is left to the agent). On the 1M stream an agent rewrote the file at the final item with the
+    final counters only, and 196 probe answers were gone."""
+    if not isinstance(now, dict):
+        return {}
+    return {k: v for k, v in before.items() if k not in now}
+
+
 class _KeeperEnv(_cb._NoMirrorEnv):
     """Keeps the verbatim text of every delivered item as `next` printed it (for the archive) and the size of the
     largest delivery (so the cut can leave room for the next one)."""
@@ -244,7 +257,33 @@ class _KeeperEnv(_cb._NoMirrorEnv):
             else:   # `next && something`: the last item's text would run on into the other command's output
                 a._mixed.update(got)
             a._largest_delivery = max(a._largest_delivery, self.budget.count([{"role": "tool", "content": res.stdout_block}]))
+        if "answers.json" in (command or ""):
+            try:
+                await self._keep_answers(environment, res)
+            except Exception as exc:              # the guard must never be the reason a step fails
+                logger.warning("keeper: answers guard skipped: %s", exc)
         return res
+
+    async def _keep_answers(self, environment: Any, res: Any) -> None:
+        """Answers already given are never lost: keys a write dropped are put back (values the agent wrote stay)."""
+        a = self.agent
+        r = await environment.exec(command=f"cat {ANSWERS} 2>/dev/null", timeout_sec=30)
+        try:
+            now = json.loads(getattr(r, "stdout", "") or "")
+        except ValueError:
+            return
+        lost = lost_answers(a._answers, now)
+        if lost:
+            merged = {**lost, **now}
+            blob = base64.b64encode(json.dumps(merged, indent=1).encode()).decode()
+            await environment.exec(command=f"echo {blob} | base64 -d > {ANSWERS}", timeout_sec=30)
+            a.n_answers_put_back += len(lost)
+            res.stdout_block += (f"\n[harness: that write dropped {len(lost)} answers given earlier "
+                                 f"({' '.join(list(lost)[:5])}{' ...' if len(lost) > 5 else ''}); they were put back. "
+                                 f"Add or change keys, never rewrite the file from scratch.]")
+            now = merged
+        if isinstance(now, dict):
+            a._answers = dict(now)
 
 
 class _KeeperGuard:
@@ -287,6 +326,8 @@ class KeeperAgent(TruncateAgent):
         # for the largest delivery seen plus keep_headroom, and the archive is written from what `next` printed.
         self.keep_headroom, self._largest_delivery, self._delivered = int(keep_headroom), 0, {}
         self._mixed: dict[int, str] = {}              # items delivered by a command that printed something else too
+        self._answers: dict = {}                      # the answers file as last seen; earlier keys are never lost
+        self.n_answers_put_back = 0
         self.n_archive_failed = self.n_not_archived_mixed = 0
         self._ctx.__class__ = _KeeperEnv
         self._ctx.agent = self
@@ -479,6 +520,7 @@ class KeeperAgent(TruncateAgent):
                     "rules_put_back": self.n_rules_put_back, "rules": rule_lines(self.notes),
                     "recite_rules": self.recite_rules, "recitals": self.n_recitals,
                     "notes_failed": self.n_notes_failed, "archive_writes_failed": self.n_archive_failed,
+                    "answers_put_back": self.n_answers_put_back,
                     "items_not_archived_mixed_output": self.n_not_archived_mixed,
                     "notes_max_tokens": self.notes_max_tokens, "target_ratio": self.target_ratio,
                     "largest_delivery_tokens": self._largest_delivery, "keep_headroom": self.keep_headroom}, indent=1) + "\n")

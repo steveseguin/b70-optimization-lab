@@ -43,6 +43,8 @@
 #                                           STATE / OPEN) rewritten by one tool-less model call at each cut and `recall` (clm_keeper):
 #                                           no per-item protocol, the policy a serving-side proxy could apply to any agent
 #   N32j                                    N32 with thinking only where a question, refusal or error is in view; the notes call thinks
+#   N32f                                    N32j whose notes call does not think and whose cut goes down to 50 % (fewer, cheaper notes calls)
+#   N200j                                   N32j at the 200K cap
 #   W48 D48 C48 B48ir B48ira B48ira-free   live-cap study at budget 49,152 (48K): W = truncate (clm_baselines
 #          TruncateAgent: drop oldest turns once over the limit, down to 75 %), D = compact (CompactAgent: at 75 %
 #          stub all but the newest 3 tool outputs and strip earlier thinking, then drop oldest if still over),
@@ -152,6 +154,8 @@ ARMS["B32iraRH"] = ("improved", "memory", 32768)      # B32iraR + state history 
 ARMS["N32"] = ("truncate", "memory", 32768)           # sliding window + archive of the cut items + NOTES at each cut + recall (clm_keeper)
 ARMS["N200"] = ("truncate", "memory", 204800)         # the same at the 200K cap
 ARMS["N32j"] = ("truncate", "memory", 32768)          # N32 thinking only on calls that hold a question or an error; the notes call thinks
+ARMS["N32f"] = ("truncate", "memory", 32768)          # N32j with a notes call that does not think and a deeper cut (to 50 %): the fast setting
+ARMS["N200j"] = ("truncate", "memory", 204800)        # N32j at the 200K cap
 for a in ("A", "B32", "C32", "E32"):  # same arm with earlier thinking dropped from every call
     ARMS[a + "t"] = ARMS[a]
 bad = [a for a in arms if a not in ARMS]
@@ -273,9 +277,10 @@ run_one() {  # arm agent budget task_dir job_name drop_old_thinking
     [[ "$arm" == B32iraRH ]] && xa=(-a clm_history:ClmHistoryAgent)   # + every accepted STATE.txt version, read with `recall --state-at N`
     [[ "$arm" == B32iraR4 ]] && fb=4               # four items per command: half the calls per item become an eighth
   fi
-  if [[ "$arm" == N32 || "$arm" == N200 || "$arm" == N32j ]]; then   # sliding window that archives what it cuts, keeps NOTES, offers recall
+  if [[ "$arm" == N32 || "$arm" == N200 || "$arm" == N32j || "$arm" == N32f || "$arm" == N200j ]]; then   # sliding window that archives what it cuts, keeps NOTES, offers recall
     xa=(-a clm_keeper:KeeperAgent)
-    [[ "$arm" == N32j ]] && extra="thinking_policy=judgement notes_thinking=true"
+    [[ "$arm" == N32j || "$arm" == N200j ]] && extra="thinking_policy=judgement notes_thinking=true"
+    [[ "$arm" == N32f ]] && extra="thinking_policy=judgement notes_thinking=false truncate_target_ratio=0.5"
   fi
   echo "arm=$arm agent_class=${xa[1]:-run-context-job.sh default for $agent} extra_kwargs=$extra fold_batches=${fb:-1}" > "$RUNS/$job.arm.txt"
   TASKS="$td" JOB_NAME="$job" CONTEXT_BUDGET="$budget" DROP_OLD_THINKING="$drop" THINK_CAP="$tc" ENABLE_THINKING="$et" THINKING_POLICY="$tp" SHOW_WINDOW="$sw" FOLD_MODE="$fm" ARCHIVE="$ar" QUOTED="$qt" FOLD_BATCHES="$fb" EXTRA_KWARGS="${EXTRA_KWARGS:-} $extra" "$D/run-context-job.sh" "$agent" "$RUNS" "${xa[@]}" > "$RUNS/$job.out" 2>&1
