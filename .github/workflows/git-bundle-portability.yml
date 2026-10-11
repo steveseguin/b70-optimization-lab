@@ -8,6 +8,10 @@ on:
       - "data/git-bundle-portability-inventory-v1.json"
       - "patches/**/*.bundle"
       - "patches/**/*.provenance.json"
+      - "patches/**/*.tar.xz"
+      - "patches/**/source-archive-manifest.json"
+      - "tools/restore-source-archives.py"
+      - "tools/test-restore-source-archives.py"
       - "tools/validate-git-bundle-inventory.py"
       - "tools/test_validate_git_bundle_inventory.py"
       - "tools/test_tracked_bundle_chain.py"
@@ -18,6 +22,10 @@ on:
       - "data/git-bundle-portability-inventory-v1.json"
       - "patches/**/*.bundle"
       - "patches/**/*.provenance.json"
+      - "patches/**/*.tar.xz"
+      - "patches/**/source-archive-manifest.json"
+      - "tools/restore-source-archives.py"
+      - "tools/test-restore-source-archives.py"
       - "tools/validate-git-bundle-inventory.py"
       - "tools/test_validate_git_bundle_inventory.py"
       - "tools/test_tracked_bundle_chain.py"
@@ -28,10 +36,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run offline inventory policy regressions
-        run: python3 -m unittest tools/test_validate_git_bundle_inventory.py tools/test_tracked_bundle_chain.py
+        run: |
+          python3 -B tools/test-restore-source-archives.py
+          python3 -B -m unittest tools/test_validate_git_bundle_inventory.py tools/test_tracked_bundle_chain.py
       - name: Prove public prerequisites and disposable restoration
         run: >-
-          python3 tools/validate-git-bundle-inventory.py
+          python3 -B tools/validate-git-bundle-inventory.py
           --inventory data/git-bundle-portability-inventory-v1.json
           --repo-root .
           --verify-public-remotes

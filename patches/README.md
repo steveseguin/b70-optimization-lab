@@ -42,6 +42,8 @@ an overlay for a new run.
   and [Q4 TP2](qwen38-27b-q4km-tp2-asrock-b70/README.md)
 - [Qwen3.8 MTP FC INT4](qwen38-27b-mtp-fc-int4-b70/README.md)
 - [Qwen3.8 Flash-Next FP8](qwen38-flash-next-fp8-b70/README.md)
+  — [October 10 source-recovery gap](../audits/repository-cleanup/2026-10-10/bundle-portability-gap.md)
+  for the exact-GDN kernel bundle; its required commit is not yet recovered.
 - [Laguna S 2.1](laguna-s-2.1-xpu-b70/README.md)
   and [separate FP8-KV research](laguna-s-2.1-fp8-kv-xpu-b70/README.md)
 - [DeepSeek V4 Flash REAP](deepseek-v4-flash-reap-xpu-b70/README.md)

@@ -40,6 +40,20 @@ workflow commands, preservation checks, review coverage and separately measured
 checkout/Git storage. The [first-pass receipt](2026-10-10/validation.json) remains
 unchanged.
 
+The final CI check exposed one more archive consumer: the Git-bundle inventory
+validator. It now streams archived bundle bytes and checks their original sizes,
+hashes and headers against the unchanged inventory. Restored loose copies must
+also match. The archive format grants no portability exception.
+
+The strict bundle gate still fails for a **pre-existing Flash-Next recovery gap**:
+one small bundle was omitted from the old inventory, and its required commit
+cannot be recovered from the tracked kernel bundles or fetched from its recorded
+public fork. The [gap audit](2026-10-10/bundle-portability-gap.md) preserves its
+identity, attempted recovery and the exact evidence needed to resolve it.
+No missing source, commit identity or passing portability result was invented.
+The [final integration receipt](2026-10-10/integration-validation.json) separates
+passing cleanup checks from this remaining failure.
+
 All 42 guide/package workflow commands and both hygiene commands passed on
 the combined tree. The check covered 4,761 documents with no new broken paths
 and 6,454 paths in 55 manifests with none missing. The one large-artifact warning

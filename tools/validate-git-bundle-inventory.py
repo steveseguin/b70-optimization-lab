@@ -7,6 +7,13 @@ outside that frozen set must be backed by a provenance manifest.  The base
 guard is offline: it verifies the complete repository census, exact hashes,
 bundle headers, and the manifest's prerequisite/recovery contract.
 
+The declared inventory is ``data/git-bundle-portability-inventory-v1.json``;
+validation fails if any live or archived bundle is omitted. Coverage includes both loose
+``*.bundle`` files and original bundle paths in verified source archives.
+Archived legacy bytes, sizes and headers are streamed and checked against the
+same frozen inventory pins without extraction. A restored loose copy must
+also match; archives do not bypass provenance or public restoration rules.
+
 Self-contained manifest-backed bundles are restored into an empty disposable
 bare repository.  ``--verify-public-remotes`` makes the publication CI gate
 fetch every declared thin prerequisite, prove its ancestry and tree, restore
@@ -18,13 +25,17 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
+import io
 import json
+import lzma
 from pathlib import Path
 import re
 import subprocess
 import sys
+import tarfile
 import tempfile
-from typing import Any
+from typing import Any, BinaryIO
 
 
 SCHEMA = "neural.download.git-bundle-inventory.v1"
@@ -44,6 +55,12 @@ MANIFEST_CLASSIFICATIONS = {
     "manifest-backed-thin-public-prerequisite": "thin-public-prerequisite",
     "manifest-backed-tracked-chain": "tracked-chain",
 }
+HEADER_LIMIT = 1024 * 1024
+_ARCHIVE_SPEC = importlib.util.spec_from_file_location(
+    "source_archive_restore", Path(__file__).with_name("restore-source-archives.py")
+)
+_SOURCE_ARCHIVES = importlib.util.module_from_spec(_ARCHIVE_SPEC)
+_ARCHIVE_SPEC.loader.exec_module(_SOURCE_ARCHIVES)
 
 
 class ValidationError(RuntimeError):
@@ -99,20 +116,28 @@ def _safe_relative(value: object, label: str) -> Path:
 
 def _bundle_header(path: Path) -> tuple[str, list[str], list[dict[str, str]]]:
     with path.open("rb") as handle:
-        header = bytearray()
-        while len(header) <= 1024 * 1024:
-            line = handle.readline()
-            if not line:
-                raise ValidationError(f"{path}: bundle header has no terminating blank line")
-            if line in {b"\n", b"\r\n"}:
-                break
-            header.extend(line)
+        return _bundle_header_stream(handle, str(path))
+
+
+def _bundle_header_stream(
+    handle: BinaryIO, label: str
+) -> tuple[str, list[str], list[dict[str, str]]]:
+    header = bytearray()
+    while True:
+        line = handle.readline(HEADER_LIMIT - len(header) + 1)
+        if not line:
+            raise ValidationError(f"{label}: bundle header has no terminating blank line")
+        if line in {b"\n", b"\r\n"}:
+            break
+        header.extend(line)
+        if len(header) > HEADER_LIMIT:
+            raise ValidationError(f"{label}: bundle header exceeds {HEADER_LIMIT} bytes")
     try:
         lines = header.decode("utf-8").splitlines()
     except UnicodeDecodeError as exc:
-        raise ValidationError(f"{path}: non-UTF-8 bundle header: {exc}") from exc
+        raise ValidationError(f"{label}: non-UTF-8 bundle header: {exc}") from exc
     if not lines or lines[0] not in {"# v2 git bundle", "# v3 git bundle"}:
-        raise ValidationError(f"{path}: unsupported bundle signature")
+        raise ValidationError(f"{label}: unsupported bundle signature")
 
     prerequisites: list[str] = []
     refs: list[dict[str, str]] = []
@@ -125,14 +150,75 @@ def _bundle_header(path: Path) -> tuple[str, list[str], list[dict[str, str]]]:
             continue
         tip, separator, ref = line.partition(" ")
         if not separator or (ref != "HEAD" and not ref.startswith("refs/")):
-            raise ValidationError(f"{path}: invalid bundle header line: {line!r}")
+            raise ValidationError(f"{label}: invalid bundle header line: {line!r}")
         if ref in seen_refs:
-            raise ValidationError(f"{path}: duplicate advertised ref {ref}")
+            raise ValidationError(f"{label}: duplicate advertised ref {ref}")
         seen_refs.add(ref)
         refs.append({"ref": ref, "tip": _require_oid(tip, f"bundle ref {ref}")})
     if not refs:
-        raise ValidationError(f"{path}: bundle advertises no refs")
+        raise ValidationError(f"{label}: bundle advertises no refs")
     return lines[0], prerequisites, refs
+
+
+def _archived_bundle_metadata(repo_root: Path, root_paths: list[Path]) -> dict[str, dict[str, Any]]:
+    """Verify archives and read logical bundle bytes without extracting files.
+
+    The frozen inventory remains the authority for each original bundle's hash,
+    size and header. Archive manifests supply storage locations, never exemptions
+    from that contract. Manifest-backed public restoration still requires its
+    ordinary bundle path; these archive members retain their legacy status.
+    """
+    archived: dict[str, dict[str, Any]] = {}
+    manifests = sorted({path for root in root_paths
+                        for path in root.rglob("source-archive-manifest.json")})
+    for manifest_path in manifests:
+        try:
+            if not manifest_path.resolve().is_relative_to(repo_root):
+                raise ValueError("source archive manifest is outside the repository")
+            manifest, members = _SOURCE_ARCHIVES.load_manifest(manifest_path)
+            archive_path = manifest_path.parent / manifest["archive"]["file"]
+            if not archive_path.resolve().is_relative_to(repo_root):
+                raise ValueError("source archive is outside the repository")
+            _SOURCE_ARCHIVES.verify_archive(archive_path, manifest, members)
+            expected = {name for name in members if name.endswith(".bundle")}
+            if not expected:
+                continue
+            seen = set()
+            with tarfile.open(archive_path, "r|xz") as archive:
+                for item in archive:
+                    if (item.name not in members or item.name in seen or not item.isfile()
+                            or item.size != members[item.name]["size"]):
+                        raise ValueError(f"archive member changed while reading: {item.name}")
+                    seen.add(item.name)
+                    if item.name not in expected:
+                        continue
+                    relative = _safe_relative(item.name, "archived bundle path")
+                    logical = repo_root / relative
+                    if not any(logical.is_relative_to(root) for root in root_paths):
+                        raise ValueError(f"archived bundle is outside bundle_roots: {item.name}")
+                    if item.name in archived:
+                        raise ValueError(f"bundle occurs in more than one source archive: {item.name}")
+                    stream = archive.extractfile(item)
+                    prefix = stream.read(min(item.size, HEADER_LIMIT + 1))
+                    digest = hashlib.sha256(prefix)
+                    size = len(prefix)
+                    for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                        digest.update(chunk)
+                        size += len(chunk)
+                    if (size != members[item.name]["size"]
+                            or digest.hexdigest() != members[item.name]["sha256"]):
+                        raise ValueError(f"archived bundle changed while reading: {item.name}")
+                    signature, prerequisites, refs = _bundle_header_stream(io.BytesIO(prefix), item.name)
+                    archived[item.name] = {
+                        "size": size, "sha256": digest.hexdigest(), "signature": signature,
+                        "prerequisites": prerequisites, "advertised_refs": refs,
+                        "archive_manifest": manifest_path.relative_to(repo_root).as_posix(),
+                    }
+            if seen != set(members):
+                raise ValueError("archive members disappeared while reading")
+        except (OSError, ValueError, KeyError, TypeError, tarfile.TarError, lzma.LZMAError) as exc:
+            raise ValidationError(f"invalid source archive {manifest_path}: {exc}") from exc
+    return archived
 
 
 def _canonical_legacy(entries: list[dict[str, Any]]) -> str:
@@ -526,12 +612,14 @@ def validate_inventory(
     if paths != sorted(paths) or len(paths) != len(set(paths)):
         raise ValidationError("bundle inventory paths must be unique and sorted")
 
-    actual_paths = sorted(
+    live_paths = {
         path.relative_to(repo_root).as_posix()
         for root in root_paths
         for path in root.rglob("*.bundle")
         if path.is_file()
-    )
+    }
+    archived = _archived_bundle_metadata(repo_root, root_paths)
+    actual_paths = sorted(live_paths | set(archived))
     if paths != actual_paths:
         missing = sorted(set(actual_paths) - set(paths))
         stale = sorted(set(paths) - set(actual_paths))
@@ -552,9 +640,28 @@ def validate_inventory(
         size = entry.get("size")
         if not isinstance(size, int) or size <= 0:
             raise ValidationError(f"{relative}.size must be a positive integer")
-        if bundle.stat().st_size != size or _sha256(bundle) != sha:
-            raise ValidationError(f"{relative}: bundle bytes changed")
-        signature, prerequisites, refs = _bundle_header(bundle)
+        archived_entry = archived.get(relative.as_posix())
+        if archived_entry is not None:
+            if archived_entry["size"] != size or archived_entry["sha256"] != sha:
+                raise ValidationError(f"{relative}: archived bundle bytes changed")
+            for field in ("signature", "prerequisites", "advertised_refs"):
+                if archived_entry[field] != entry.get(field):
+                    raise ValidationError(f"{relative}: archived bundle {field} mismatch")
+        if bundle.is_file():
+            # A locally restored copy must agree too; it cannot shadow an archive.
+            if bundle.stat().st_size != size or _sha256(bundle) != sha:
+                raise ValidationError(f"{relative}: bundle bytes changed")
+            signature, prerequisites, refs = _bundle_header(bundle)
+        else:
+            if archived_entry is None:
+                raise ValidationError(f"{relative}: bundle is neither present nor archived")
+            if classification not in LEGACY_CLASSIFICATIONS:
+                raise ValidationError(
+                    f"{relative}: archived manifest-backed bundle must be restored before portability proof"
+                )
+            signature = archived_entry["signature"]
+            prerequisites = archived_entry["prerequisites"]
+            refs = archived_entry["advertised_refs"]
         if entry.get("signature") != signature:
             raise ValidationError(f"{relative}: bundle signature mismatch")
         if entry.get("prerequisites") != prerequisites:
@@ -594,6 +701,7 @@ def validate_inventory(
         "status": "PASS",
         "inventory": str(inventory_path),
         "bundle_count": len(entries),
+        "archived_bundle_count": len(archived),
         "legacy_frozen_count": len(legacy),
         "manifest_backed_count": manifest_backed,
         "public_remote_proofs": public_remote_proofs,

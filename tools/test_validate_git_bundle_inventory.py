@@ -5,11 +5,13 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
 import shutil
 import subprocess
+import tarfile
 import tempfile
 import unittest
 from unittest import mock
@@ -23,17 +25,53 @@ SPEC.loader.exec_module(MODULE)
 
 
 class BundleInventoryRepositoryTest(unittest.TestCase):
-    def test_checked_in_inventory_covers_all_published_bundles_offline(self) -> None:
+    def test_repository_census_still_rejects_preexisting_uninventoried_gdn_bundle(self) -> None:
         repo = Path(__file__).resolve().parents[1]
-        result = MODULE.validate_inventory(
-            repo / "data/git-bundle-portability-inventory-v1.json",
-            repo_root=repo,
-        )
-        self.assertEqual(result["bundle_count"], 58)
-        self.assertEqual(result["legacy_frozen_count"], 53)
-        self.assertEqual(result["manifest_backed_count"], 5)
-        self.assertEqual(result["public_remote_proofs"], 0)
-        self.assertFalse(result["network_used"])
+        # This is an expected rejection, not an allowlist. The workflow's actual
+        # validator command must still fail until legitimate provenance and a
+        # complete inventory close the preexisting exact-GDN gap.
+        omitted = ("patches/qwen38-flash-next-fp8-b70/xpu-kernels-gdn-exact-serial-bbae3c5/"
+                   "vllm-xpu-kernels-q38-gdn-exact-serial-bbae3c5-20260913.bundle")
+        with self.assertRaises(MODULE.ValidationError) as raised:
+            MODULE.validate_inventory(
+                repo / "data/git-bundle-portability-inventory-v1.json", repo_root=repo)
+        self.assertEqual(str(raised.exception),
+                         f"bundle census mismatch; untracked={[omitted]}, absent=[]")
+
+    def test_all_four_archived_bundles_match_unchanged_frozen_inventory(self) -> None:
+        repo = Path(__file__).resolve().parents[1]
+        inventory = json.loads((repo / "data/git-bundle-portability-inventory-v1.json").read_text())
+        entries = {entry["path"]: entry for entry in inventory["bundles"]}
+        archived = MODULE._archived_bundle_metadata(repo, [repo / "patches"])
+        self.assertEqual(len(archived), 4)
+        for path, actual in archived.items():
+            with self.subTest(bundle=path):
+                expected = entries[path]
+                self.assertIn(expected["classification"], MODULE.LEGACY_CLASSIFICATIONS)
+                for field in ("size", "sha256", "signature", "prerequisites", "advertised_refs"):
+                    self.assertEqual(actual[field], expected[field])
+        legacy = [entry for entry in inventory["bundles"]
+                  if entry["classification"] in MODULE.LEGACY_CLASSIFICATIONS]
+        self.assertEqual(len(legacy), 53)
+        self.assertEqual(MODULE._canonical_legacy(legacy), MODULE.FROZEN_LEGACY_ALLOWLIST_SHA256)
+        self.assertEqual(inventory["legacy_allowlist_sha256"], MODULE.FROZEN_LEGACY_ALLOWLIST_SHA256)
+
+    def test_existing_manifest_backed_contracts_still_pass_offline(self) -> None:
+        # The strict census fails before this phase; keep direct coverage of all
+        # five already-inventoried provenance contracts without exempting the gap.
+        repo = Path(__file__).resolve().parents[1]
+        inventory = json.loads((repo / "data/git-bundle-portability-inventory-v1.json").read_text())
+        entries = [entry for entry in inventory["bundles"]
+                   if entry["classification"] in MODULE.MANIFEST_CLASSIFICATIONS]
+        self.assertEqual(len(entries), 5)
+        for entry in entries:
+            with self.subTest(bundle=entry["path"]):
+                bundle = repo / entry["path"]
+                self.assertEqual(bundle.stat().st_size, entry["size"])
+                self.assertEqual(MODULE._sha256(bundle), entry["sha256"])
+                self.assertEqual(MODULE._bundle_header(bundle),
+                                 (entry["signature"], entry["prerequisites"], entry["advertised_refs"]))
+                MODULE._validate_manifest_contract(repo, entry, bundle)
 
 
 class BundleInventoryPolicyTest(unittest.TestCase):
@@ -202,6 +240,101 @@ class BundleInventoryPolicyTest(unittest.TestCase):
         }
         self._write_json(self.inventory_path, value)
 
+    def _archive_bundles(self, bundles: list[Path], *, directory: Path | None = None) -> tuple[Path, Path]:
+        directory = directory or self.patches
+        directory.mkdir(parents=True, exist_ok=True)
+        archive = directory / "source-history.tar.xz"
+        members = []
+        with tarfile.open(archive, "w:xz") as output:
+            for bundle in bundles:
+                name = bundle.relative_to(self.root).as_posix()
+                data = bundle.read_bytes()
+                member = tarfile.TarInfo(name)
+                member.size = len(data)
+                output.addfile(member, io.BytesIO(data))
+                members.append({"path": name, "size": len(data),
+                                "sha256": hashlib.sha256(data).hexdigest()})
+        manifest = directory / "source-archive-manifest.json"
+        self._write_json(manifest, {
+            "schema": "b70-source-archive-v1",
+            "archive": {"file": archive.name, "size": archive.stat().st_size,
+                        "sha256": self._sha256(archive)},
+            "members": members,
+        })
+        for bundle in bundles:
+            bundle.unlink()
+        return archive, manifest
+
+    def test_archived_legacy_preserves_frozen_inventory_without_extraction(self) -> None:
+        self._archive_bundles([self.legacy])
+        frozen_inventory = self.inventory_path.read_bytes()
+        files_before = sorted(p.relative_to(self.root) for p in self.root.rglob("*") if p.is_file())
+        # Archived legacy verification must neither materialize a bundle nor need
+        # a temporary disk budget (CI runners may have less than 50 GiB free).
+        with mock.patch.object(MODULE.tempfile, "TemporaryDirectory", side_effect=AssertionError("no extraction")):
+            result = MODULE.validate_inventory(self.inventory_path, repo_root=self.root)
+        self.assertEqual(result["bundle_count"], 2)
+        self.assertEqual(result["archived_bundle_count"], 1)
+        self.assertFalse(self.legacy.exists())
+        self.assertEqual(frozen_inventory, self.inventory_path.read_bytes())
+        self.assertEqual(files_before, sorted(p.relative_to(self.root) for p in self.root.rglob("*") if p.is_file()))
+
+    def test_matching_restored_copy_is_counted_once_and_corruption_cannot_shadow_archive(self) -> None:
+        original = self.legacy.read_bytes()
+        self._archive_bundles([self.legacy])
+        self.legacy.write_bytes(original)
+        result = MODULE.validate_inventory(self.inventory_path, repo_root=self.root)
+        self.assertEqual(result["bundle_count"], 2)
+        self.assertEqual(result["archived_bundle_count"], 1)
+        self.legacy.write_bytes(original + b"changed local copy")
+        with self.assertRaisesRegex(MODULE.ValidationError, "bundle bytes changed"):
+            MODULE.validate_inventory(self.inventory_path, repo_root=self.root)
+
+    def test_corrupt_archive_or_member_pin_fails_even_without_live_bundle(self) -> None:
+        archive, manifest = self._archive_bundles([self.legacy])
+        original = archive.read_bytes()
+        archive.write_bytes(original + b"changed archive")
+        with self.assertRaisesRegex(MODULE.ValidationError, "archive size/hash mismatch"):
+            MODULE.validate_inventory(self.inventory_path, repo_root=self.root)
+        archive.write_bytes(original)
+        value = json.loads(manifest.read_text())
+        value["members"][0]["sha256"] = "0" * 64
+        self._write_json(manifest, value)
+        with self.assertRaisesRegex(MODULE.ValidationError, "member hash mismatch"):
+            MODULE.validate_inventory(self.inventory_path, repo_root=self.root)
+
+    def test_uninventoried_archived_bundle_still_fails_census(self) -> None:
+        extra = self.patches / "untracked.bundle"
+        shutil.copyfile(self.legacy, extra)
+        self._archive_bundles([self.legacy, extra])
+        with self.assertRaisesRegex(MODULE.ValidationError, "bundle census mismatch.*untracked.bundle"):
+            MODULE.validate_inventory(self.inventory_path, repo_root=self.root)
+
+    def test_archive_metadata_cannot_replace_inventory_header_or_hash_pins(self) -> None:
+        self._archive_bundles([self.legacy])
+        for field, value, error in (("sha256", "0" * 64, "archived bundle bytes changed"),
+                                    ("signature", "# v3 git bundle", "archived bundle signature mismatch")):
+            with self.subTest(field=field):
+                entries = json.loads(json.dumps(self.entries))
+                legacy = next(e for e in entries if e["path"] == "patches/legacy.bundle")
+                legacy[field] = value
+                self._write_inventory(entries)
+                with self.assertRaisesRegex(MODULE.ValidationError, error):
+                    MODULE.validate_inventory(self.inventory_path, repo_root=self.root)
+
+    def test_duplicate_archive_member_location_is_rejected(self) -> None:
+        original = self.legacy.read_bytes()
+        self._archive_bundles([self.legacy])
+        self.legacy.write_bytes(original)
+        self._archive_bundles([self.legacy], directory=self.patches / "duplicate")
+        with self.assertRaisesRegex(MODULE.ValidationError, "more than one source archive"):
+            MODULE.validate_inventory(self.inventory_path, repo_root=self.root)
+
+    def test_archiving_manifest_backed_input_does_not_skip_public_restore_contract(self) -> None:
+        self._archive_bundles([self.thin])
+        with self.assertRaisesRegex(MODULE.ValidationError, "must be restored before portability proof"):
+            MODULE.validate_inventory(self.inventory_path, repo_root=self.root)
+
     def test_offline_contract_validation_accepts_declared_thin_bundle(self) -> None:
         result = MODULE.validate_inventory(self.inventory_path, repo_root=self.root)
         self.assertEqual(result["status"], "PASS")
@@ -266,6 +399,7 @@ class BundleInventoryPolicyTest(unittest.TestCase):
                 )
 
     def test_public_verification_restores_thin_bundle_with_synthetic_remote(self) -> None:
+        self._archive_bundles([self.legacy])
         original_run = MODULE._run
 
         def redirect_public_remote(
