@@ -41,14 +41,15 @@ checkout/Git storage. The [first-pass receipt](2026-10-10/validation.json) remai
 unchanged.
 
 All 42 guide/package workflow commands and both hygiene commands passed on
-the combined tree. The check covered 4,760 documents with no new broken paths
+the combined tree. The check covered 4,761 documents with no new broken paths
 and 6,454 paths in 55 manifests with none missing. The one large-artifact warning
-is the reviewed Laguna archive. The measured net tracked-checkout reduction is
+is the reviewed Laguna archive. The measured net tracked-checkout reduction at commit `3634a5470` is
 about **173.5 MiB**, including the added review/tooling files; retained Git
 history and the new archive increased local Git storage, recorded separately.
 
 A concurrent [owner acceptance receipt](../../experiments/ltx25-b70/data/resume-20261008/fault-archive-20261011T003614Z-owner-accept-receipt.json)
-and its screen update were merged intact before final validation. Those later
+and its screen update, followed by the other host’s fixture/overlay repair,
+were merged intact before final validation. Those later
 operational decisions are separate from the review's source-commit snapshot.
 
 The archive review found an inherited missing Git ancestor in the Laguna
