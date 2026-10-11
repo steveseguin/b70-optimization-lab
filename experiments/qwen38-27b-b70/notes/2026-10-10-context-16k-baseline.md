@@ -35,8 +35,10 @@ Speed (minutes per 100K tokens of history): W16 8.2 then 10.0; D16 7.3 then 7.6;
 
 - **Archive + recall is the only arm that beats the lossy floor on the probes** (12/15 vs 10/15) and it is the only one
   that answers every "who did X" question, because the verbatim text is still there to search. It is also the slowest
-  (36 min vs 19-22) and it got the *final* questions wrong (8/14, two stale answers): after recalling old batches it
-  wrote stale values back into its state. Searching the past must not be allowed to overwrite the present.
+  (36 min vs 19-22) and it got the *final* questions wrong (8/14, two stale answers). Post-mortem (context snapshots):
+  this was budget starvation, not recall write-back. At 16K the harness refused `next` 121 times for lack of room
+  and refused the fold 35 times because STATE.txt lacked a line for a counter the items mentioned, so the agent spun
+  and old state values stuck. Recall itself (24 calls, 41.9K tokens of output) ate the room that was left.
 - **The self-editing read mode collapses at 16K** (4/15; it was 23/24 at 1M tokens with a 32K budget last week). With a
   2K batch, the state lines, the instructions and a 4K thinking cap inside 16K there is no working room. So the cap is not
   a free test knob for in-window editors: 16K changes the answer, 32K did not. Fast-scale tests need a cap that leaves
@@ -53,8 +55,8 @@ Speed (minutes per 100K tokens of history): W16 8.2 then 10.0; D16 7.3 then 7.6;
 
 1. Seed 1 of the same four arms, and the 32K cap for B32ir / B32ira / W32 / D32 on the same stream, so the "16K is too
    small for in-window editing" claim rests on more than one seed. About 2 h each on one card.
-2. Fix the archive arm's stale write-back (recall results must be marked as history, never copied into current state
-   without a newer-value check) and rerun; that is the first real contender.
+2. Give the archive arm room (32K cap; see round 2) and harden it for small windows as described below; it is the
+   first real contender.
 3. Add the two probe families the charter calls for and no arm has yet: a constraint stated at the start that must still
    hold at the end, and a procedure learned early that must be reused late.
 4. Engine side (with the other host's runtime): the KV park/restore on NVMe measurement, since the archive arm's cost is
@@ -84,6 +86,10 @@ rollback; W32 74.0K / 159 / 27.9K; P32 51.9K / 157 / 21.1K; B32ir 55.2K / 346 / 
 (4-10 min per 100K of history in both halves).
 
 The seed-1 B16ira run is void: it hit the step cap and wrote 24 keys beyond the queried ones into its answer file.
+Post-mortem: the same starvation, worse (292 `next` refusals, 151 recalls, 4,405 refused steps of 628); at the end it
+answered every counter it had rather than the ones asked. The harness already notes extra keys on write (clm_improved
+answers guard) but does not refuse them; a refusal would only add another refused step under starvation. The cure is
+room, i.e. the 32K cap, where neither failure appeared.
 
 ### Reading, after two rounds
 
@@ -103,8 +109,9 @@ The seed-1 B16ira run is void: it hit the step cap and wrote 24 keys beyond the 
 ### Next
 
 1. Seed 1 at 32K for W32 / P32 / B32ir / B32ira (about 1 h on two cards).
-2. Harden the archive arm: recalled text must never be copied into current state without a newer-value check; a step
-   budget that degrades to "answer what you have" instead of a cap void.
+2. Harden the archive arm for small windows: cap recall output per call relative to the budget, and when `next` is
+   refused for room twice in a row, tell the model the one action that frees room (drop the oldest folded batch)
+   instead of refusing again; a step budget that degrades to "answer what you have" instead of a cap void.
 3. Add the constraint-adherence and procedure-reuse probe families.
 4. Engine lever: measure KV park/restore on NVMe for recalled batches (the archive arm's remaining cost is re-reading
    recalled text through prefill).

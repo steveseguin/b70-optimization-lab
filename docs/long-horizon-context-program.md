@@ -90,8 +90,8 @@ W48/D48 are from `/mnt/fast-ai/bench-results/context-longrun-20261008/campaign/`
 | B16ir self-edit read mode | 4/15 | 3/8 | 1/5 | 0/2 | 0/5 | 14/14 | 20 |
 | B16ira + archive and recall | 12/15 | 7/8 | 4/5 | 1/2 | 5/5 | 8/14 | 36 |
 
-Archive + recall is the first method above the lossy floor on probes; at 16K it wrote stale recalled values back into
-its state (final 8/14). In-window self-editing collapses at 16K (needs 32K of working room).
+Archive + recall is the first method above the lossy floor on probes; at 16K it starved (the harness refused `next`
+and folds for lack of room, old state stuck: final 8/14). In-window self-editing collapses at 16K (needs 32K of working room).
 
 **Round 2 (32K cap, seed 0; 16K seed 1 agrees with the 16K ranking above):**
 
