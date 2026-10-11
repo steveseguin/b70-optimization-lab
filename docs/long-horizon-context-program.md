@@ -128,6 +128,38 @@ method only because the question names it, which sends the model to the archive.
 problem for the leading method, and a pinned place for rules is the first fix to test (campaign 5: B32iraR,
 B32ira-free), followed by the same arm at a 1M history.
 
+**The rule fix and one million tokens (2026-10-11, campaign 5; note sections "Campaign 5, phase 1" and "phase 2"):**
+
+| arm (32K, seed 0, `--rules` stream, 240K) | values, old values, who | standing rule | house method | final | all 39 | minutes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| B32ira (from above) | 15/15 | 0/5 | 5/5 | 13/14 | 33 | 20 |
+| **B32iraR**: permanent `RULE:` lines in the pinned state | 13/15 | **5/5** | 4/5 | 13/14 (confidential one right) | **35** | 18 |
+| B32ira-free: free-text notes | 12/15 | 4/5 | 3/5 | 9/14 | 28 | 23 |
+| B32iraR4: four items per command | starved for room at 32K, stopped | | | | | |
+
+| B32iraR on a 1M-token history, 32K live budget (a stopped run, see the note) | right / asked |
+| --- | ---: |
+| all probes | 163/203 (80 %) |
+| 1-4 / 5-24 / 25-99 / 100-399 / 400+ items back | 45/50, 40/50, 23/30, 35/48, 20/25 |
+| current / who / method / rule / old value | 54/58, 25/29, 25/29, 22/29, 37/58 |
+| first / middle / last third of the run | 56/70, 52/70, 55/63 |
+| final query | 24/25 |
+| minutes per 100K of history | 8.7 on average; 5.2-12.0 by segment, 5.4 at the end |
+
+What this settles and what it opens:
+- A pinned place for rules, plus one line telling the model to read it before answering, fixes rule adherence at
+  240K (5/5). Free notes keep a rule unprompted but apply it unreliably and keep books worse.
+- At 1M tokens (31 times the live budget) the method's accuracy is flat with distance and with history length,
+  and its speed is flat. This is the first run at the owner's history scale.
+- Three weak spots at scale: old values (64 %, a replay problem: fix under test is a version history of the pinned
+  state, arm B32iraRH), the rule lapsing in use although pinned (76 %, five of six lapses late: fix under test is
+  reciting rules at the question), and an answers file the final write can wipe (runner and harness guards).
+- The method is still a per-item protocol the model must follow (3.5 calls per item at 1M, about one of them a
+  made-up update the harness rejects). The keeper arm (N32, `clm_keeper.py`) asks nothing of the agent: a sliding
+  window whose cut turns go to the archive, with NOTES (RULES / STATE / OPEN) rewritten by one tool-less call per
+  cut and rules recited at each question. It is the policy a serving-side proxy could apply to any agent, and the
+  candidate for P3. Campaign 6 tests it.
+
 ### 4b. Proposed here, not yet run
 
 - Per-batch commit proof with atomic staging; file I/O cost vs decode cost; **exact KV park-and-restore on NVMe**;
