@@ -606,6 +606,6 @@ Thirteen summaries, none failed (361K tokens read and 87K written for them, on t
 the agent). It is the slowest arm at this size and below the plain sliding window in questions right: a summary
 keeps old values (4/5) and loses the incidental detail nobody knew to keep (who 2/5). Not void. One seed.
 
-Campaign 8 ended here (14:06): server stopped idle, no GPU fault line, host memory never under 1.84 GiB with the
+Campaign 8 ended here (14:06): server stopped idle, no GPU fault line, host memory never under 1.96 GiB with the
 1.6 GiB floor, Gemma put back. Not run: X32 on the 1M stream, W200, the seed-1 protocol arms, and X32 seed 1 again
 with the fixed proxy.
