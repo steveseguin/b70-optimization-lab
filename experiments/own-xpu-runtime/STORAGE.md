@@ -202,3 +202,19 @@ FP8 checkpoint available at an approved destination. A third-party weight
 source requires its own written justification and approval; none is requested
 as a prerequisite here. Storage approval does not authorize GPU work: the
 existing fault halt and a separate experiment window remain binding.
+
+### Owner-approved exception: Intel W4A16 AutoRound (2026-10-11 ~04:10 UTC)
+
+Owner: "https://huggingface.co/Intel/Qwen3.8-Flash-Next-W4A16-AutoRound ---- can
+you download this variant in the background? -- its an official intel int4
+version of the model. When we have gotten good results with the gguf q3 unsloth
+model, we can try seeing what results we can get with the int4 results -- if
+things are faster / better at all." Intel is not the model author, so this is
+the written justification and approval the source rule requires. Pinned
+revision `4c67bf686b7f7fd386bae6b07ab59e8ff1d5b897`, 29 files, 181.2 GB (one
+102.4 GB shard holds the BF16 lookup table), license "other" (review before any
+redistribution). Destination: `/mnt/usb-models/llm-models/Intel-Qwen3.8-Flash-Next-W4A16-AutoRound-4c67bf68`
+(external disk, 280 GB free before the download). File manifest with
+publisher hashes: `experiments/qwen38-flash-next-fp8-b70/data/intel-w4a16-autoround-manifest-4c67bf68.json`.
+Order of work stays: IQ3 line first; the INT4 line is tried after good IQ3
+results, as its own separate model under the quantized-line rule.
