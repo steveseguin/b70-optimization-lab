@@ -394,3 +394,55 @@ How the results will be read (fixed now):
 - Added after the 1M run and before any keeper result: the keeper appends the RULES lines as a reminder after every
   item that asks questions (`recite_rules`, on in N32 and N32j). So stage 1 tests pinned notes and recitation
   together; if it works, a run without recitation is the ablation.
+
+## Campaign 6, stage 1 (2026-10-11 08:39-09:01): the keeper
+
+Campaign 6 ran its first stage and was then stopped, so that the keeper's second seed and its 1M run would not wait
+behind three hours of other arms (campaign 7 has the rest, keeper first). No GPU fault line; server stopped idle.
+
+**N32, first attempt: stopped after two minutes, a prompt defect.** The notes request gave the instruction first and
+then about 8K tokens of the agent's own turns. The model read its own turns last and wrote one more of them (a
+running state, no RULES section), so the rule of item 1 was gone after the first cut. Fixed before the next arm:
+the instruction now comes after the turns, the reply must have the RULES / STATE layout or it is asked for once
+more, text before the RULES heading is dropped, and RULES is for rules the stream states, not the task statement.
+A Codex read-only review before the run had also found six defects in the two new arms and two in the runner
+(an item fetched by a chained command could have made an archive file non-verbatim and voided a run; archive writes
+were not confirmed; snapshots of different seeds shared a name); all fixed before any keeper result.
+
+**N32j: 39 of 39.** Rules stream, 240K, seed 0, 32K live budget; the same task as campaigns 4 and 5.
+
+| arm | current | old value | who | rule | method | final | all 39 | minutes | model calls |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| **N32j keeper** | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 | 14/14 | **39** | **15** | **197** |
+| B32iraR pinned RULE lines | 4/5 | 4/5 | 5/5 | 5/5 | 4/5 | 13/14 | 35 | 18 | 400 |
+| B32ira archive + recall | 5/5 | 5/5 | 5/5 | 0/5 | 5/5 | 13/14 | 33 | 20 | 424 |
+| W32 window-drop | 5/5 | 3/5 | 2/5 | 0/5 | 0/5 | 13/14 | 23 | 26 | 162 |
+
+Not void; 138 items archived, all 138 verbatim. Against the preregistered bars: it "works" (needed 29 with rule and
+method at 4/5) and "matches the protocol arms" (needed 33). It is the first perfect score on this task.
+
+What it did: 174 main-loop calls, 167 of them without thinking (9.5K tokens written in the main loop), plus 23 notes
+calls, one per cut of six items (about 12.3K prompt tokens and 1.9K written each, thinking on). NOTES stayed between
+450 and 860 tokens: two RULES lines in the stream's own words from the first cut to the end, never dropped by the
+model, and a state table of 48 lines. The rules were recited at each of the six question items. Time splits about
+evenly: 7 minutes in the main loop, about 8 in the notes calls. That is the next speed lever (arm N32f: a notes call
+that does not think, and a deeper cut).
+
+Why this matters beyond the score: nothing in this arm asks the agent to do anything. The agent runs `next` and
+answers questions; the harness archives, takes notes and reminds. That is what a serving-side proxy can do for any
+tool-calling agent. One seed, one stream of 240K: campaign 7 runs seed 1 and the 1M stream next.
+
+## Campaign 7 (2026-10-11 09:08, preregistered before any result)
+
+Runner `longrun-campaign7.sh`, same server recipe. Order: N32j on the rules stream seed 1; N32j on the 1M stream
+(cut at 130 min); N32f on seed 0; B32iraRH on the 1M stream (cut at 60 min); C32 (cut at 80 min); B32iraR and
+B32ira on seed 1; W200 on the 1M stream (cut at 90 min). The reading rules of campaign 6 stand, with these additions:
+
+- Seed 1 replicates the keeper result at 35/39 or more with rule and method each at 4/5 or better.
+- At 1M the keeper is compared with B32iraR's stopped run on the same stream: probes by distance and by type,
+  minutes per 100K, and whether NOTES stays under its 2,048-token cap. "As good at scale" is within 3 points of
+  B32iraR's 80 % overall with the rule at 90 % or better; old values are reported separately (B32iraR 64 %).
+- One change to the arm since its 39/39, made before any campaign 7 result: answers already in `/app/answers.json`
+  are put back by the harness if a later write drops them (the defect that cost B32iraR its 1M score). It changes
+  nothing unless a write drops keys; the count is recorded.
+- N32f is the fast setting if it is within one question of N32j at 240K; its gain is the ratio of minutes.
