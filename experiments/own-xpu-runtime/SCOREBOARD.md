@@ -1,4 +1,4 @@
-# Our Intel Xe runtime — measured state, 2026-10-11 09:20 UTC
+# Our Intel Xe runtime — measured state, 2026-10-11 13:05 UTC
 
 **Device work is halted: second GPU fault on this boot (09:10 UTC), reboot is the
 owner's decision** ([incident][fault]). State at the halt, for Unsloth UD-IQ3_XXS, the
@@ -121,9 +121,11 @@ keep experts packed and qualify dense-only expansion separately.
 4. **Packet 18 W0, then W2:** a few-KiB two-card canary, then the 64-token two-card
    decode: first measured decode tok/s. [Packet 19][p19] found no application defect
    behind the fault; packet 18 now drains both cards on the host at every crossing.
-5. **Launch count:** fusion takes 2,445 launches per token to 926 (CPU-exact kernels
-   exist); at about 30 µs each that is still 27 ms, so replay of a recorded command
-   graph is probably needed as well. The micro-benchmark decides.
+5. **[Packet 21][p21], fused launch schedule:** measured on CPU at **876 launches per
+   token** (2,445 before), bit-identical to the v2 oracle (64/64 tokens, 384/384
+   layers), sanitizer clean. At about 30 µs each that is still 26 ms of issuing cost,
+   so replay of a recorded command graph is the next step; the micro-benchmark decides
+   which replay method. Its device windows (K1, W0, W1, W2) follow packet 18's.
 6. **R5 GEMV dispatch** (41 ms projected versus 71–92 ms measured with the frozen one).
 7. **Merge packet 14's exchanges** (41 per layer to a few), then repeat its gate.
 
@@ -171,3 +173,4 @@ keep experts packed and qualify dense-only expansion separately.
 [p18]: stage2/packet18-decode-v2/README.md
 [p19]: stage2/packet19-depcheck/README.md
 [p20]: stage2/packet20-launch/README.md
+[p21]: stage2/packet21-fused/README.md
