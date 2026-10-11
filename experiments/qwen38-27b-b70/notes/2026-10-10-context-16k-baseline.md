@@ -521,3 +521,24 @@ How the results will be read (fixed now):
   with the repeat guard and thinking kept on while a question is open. It is read like the first attempt: probes by
   distance and type against B32iraR, minutes per 100K, NOTES size, and whether it reaches the final item this time.
   The proxy has the same two protections (`--think-until`, `--repeat-limit`).
+
+## Campaign 8 results (2026-10-11 10:56-): the keeper as a proxy
+
+**X32, seed 0: 37 of 39, first run of `tools/ctxkeeper` against the real server.** The plain agent sent its whole
+history on every call (154 calls); the proxy kept the live window at 32K.
+
+| arm | current | old value | who | rule | method | final | all 39 | minutes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| **X32 proxy** | 4/5 | 5/5 | 5/5 | 5/5 | 5/5 | 13/14 | **37** | 21 |
+| N32j harness keeper | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 | 14/14 | 39 | 15 |
+| B32iraR | 4/5 | 4/5 | 5/5 | 5/5 | 4/5 | 13/14 | 35 | 18 |
+| W32 | 5/5 | 3/5 | 2/5 | 0/5 | 0/5 | 13/14 | 23 | 26 |
+
+Not void; nothing was written in the sandbox (the archive is in the proxy's state directory). Proxy counters: 22
+cuts, 276 messages archived, 12 `recall` calls answered without the client seeing them, 0 failed notes calls, 0
+rules put back, 4.2 characters per token learned from the server's usage numbers; 25 MiB of host memory. The
+preregistered bar for "carries the policy" (35 with rule and method at 4/5, not void) is met. The model did call
+`recall` although the agent's system prompt names `bash` as the only tool. The two misses are one counter: a
+current value three items back at the last probe, and that counter in the final query. Slower than the harness
+keeper (21 against 15 minutes): thinking now stays on while a question is open, and each `recall` is one more
+round trip inside a client call.
