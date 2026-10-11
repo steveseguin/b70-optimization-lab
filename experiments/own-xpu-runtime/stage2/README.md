@@ -16,6 +16,7 @@ separate and pending.
 | 4 — Integrated IQ3 CLI | **Host mini-model exact; SYCL compile/link PASS; real layer-0 oracle hash FAILS, device unrun** | [Program, CPU evidence and limits](packet4/README.md), [card-3 window](packet4/WINDOW.md) |
 | 12 — Two-card TP design and peer exchange preparation | **CPU mocks/tests PASS; SYCL compile/link only; no peer measurement or model parity claim** | [Design and packet ladder](TWO-CARD-TP.md), [transport harness and cards-2/3 command](packet12-peer/README.md) |
 | 13 — IQ3 performance integration and first-token capture | **CPU mini-model exact; real layer-0 frozen-order hash recorded; SYCL compile/link PASS; device unrun** | [Measured kernel dispatch, streaming/resident placement and tests](packet13-integrate/README.md), [card-3 full-model command](packet13-integrate/WINDOW.md) |
+| 14 — Within-layer two-card decode | **CPU single-card/TP2/reference equality and SYCL compile checks pass; device parity and speed pending** | [Split rules, ownership and exchange census](packet14-tp2/README.md), [gated cards-2+3 commands](packet14-tp2/WINDOW.md) |
 | Later operator, loader, layer, transaction and native qualification packets | Not authorized or executed here | [Required window and checks](packet1/README.md#next-authorized-stage-2-window) |
 
 Packet 1 retains all 152,089 tensors, 131 shard headers and 12 complete A367
