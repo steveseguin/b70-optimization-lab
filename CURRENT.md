@@ -85,6 +85,8 @@ owner approval. The earlier ISTA IQ3_S proposal is withdrawn. These CPU packets 
   header census](experiments/own-xpu-runtime/stage2/packet1c/README.md) finds no extra MTP block in the three checked variants; packed-weight arithmetic alone does not establish runtime fit. Other variant acquisition, quality and device work remain
   separately gated.
 
+**IQ3 CPU oracle, owner decision pending October 11:** [Packet 2](experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/README.md) prepares the streaming forward and passes real-weight decoder and twelve-prompt tokenizer checks. The requested frozen math uses a SiLU output gate, but the pinned model configuration says sigmoid, so the full-model run waits for the owner's arithmetic choice. No oracle tokens, full-model CPU speed or baseline agreement have been measured; this work used only the CPU and did not touch GPU work.
+
 ## Two-Card Lanes And Context Work
 
 **Qwen 27B FP8:** optimize the official FP8 model with native MTP and full 16-bit KV; DFlash stays excluded by the September 14 owner decision. Read the [multi-host handoff](experiments/qwen38-27b-b70/MULTI-HOST-HANDOFF.md), [closed

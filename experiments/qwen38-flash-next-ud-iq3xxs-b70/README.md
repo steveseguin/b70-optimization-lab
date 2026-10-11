@@ -43,3 +43,5 @@ and unadmitted here.
 [Admission note](notes/2026-10-10-packet1-weight-admission.md) ·
 [Results status](results/README.md). Next is packet 2: quantized tokenizer,
 production shape/operator contract and complete CPU oracle preparation.
+
+[Packet 2 CPU oracle preparation](packet2-cpu-oracle/README.md) passes bounded real-weight decoding and all twelve tokenizer checks; full-model execution awaits the documented SiLU-versus-sigmoid arithmetic decision, with no token oracle or CPU speed claimed yet.

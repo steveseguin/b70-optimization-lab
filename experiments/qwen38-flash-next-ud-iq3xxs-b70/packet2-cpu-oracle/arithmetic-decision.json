@@ -1,0 +1,15 @@
+{
+  "status": "pending-owner-choice",
+  "issue": "packet1b SiLU output gate contradicts pinned Flash-Next config output_gate_type=sigmoid",
+  "changes": [
+    "Use stored GGUF norm gains directly",
+    "Use stored negative exp(A_log) directly without inverse logarithm",
+    "Keep F32 stored GDN controls exact",
+    "Require explicit output-gate choice"
+  ],
+  "hashes": {
+    "experiments/own-xpu-runtime/stage2/packet1b/reference.py": "4e36c7c7890e7df428c7e1d10dc1b536d26ba18b8b7066c07f9dbdea2ff4909b",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/reference_gguf.py": "98acadb91b269a0961fadd77a1ae8e91747d7804ca8bc3cf6c04402bdce19c31",
+    "experiments/own-xpu-runtime/stage2/packet1/metadata/config.json": "99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e70a15a90a8d"
+  }
+}
