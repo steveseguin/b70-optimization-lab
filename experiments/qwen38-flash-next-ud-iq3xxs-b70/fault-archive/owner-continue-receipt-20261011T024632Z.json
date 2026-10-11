@@ -1,0 +1,11 @@
+{
+  "schema": "ltx.fault-archive-receipt.v1",
+  "time_utc": "20261011T024632Z",
+  "boot_id": "13858eef-ec68-44ea-a67c-9444933b7100",
+  "action": "FAULT.json (fifth incident: engine reset on 0000:43:00.0 after the coordinator SIGTERM-killed a loading one-card probe, 2026-10-11 02:34 UTC) archived; GPU launches re-admitted",
+  "decision": "Owner, 2026-10-11 ~03:05 UTC, after the coordinator reported the incident and its cause: 'continue'. Earlier the same night: 'we have lots of ram and lots of gpus so we can do multiple runs at a time' and 'please be proactive and move swiftly'.",
+  "archived_to": "fault-archive/FAULT-fifth-incident-20261011-owner-continue.json",
+  "incidents_on_boot": 1,
+  "conditions": "Fault-halt rule unchanged: record, halt new requests, one controlled stop; no restart loop, no reboot, no reset. Never SIGTERM a loading GPU process. Concurrent runs on disjoint cards allowed; one kernel fault watch per run.",
+  "written_by": "coordinator (Claude)"
+}
