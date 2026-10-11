@@ -1,10 +1,14 @@
-# Default-off MoE boundary diagnostic — CPU prepared, not executed
+# Default-off MoE boundary diagnostic — run 1 cancelled, CPU repair
 
 This separately sealed variant investigates sketch A of the
 [attempt-8 audit](../../../../notes/2026-10-11-attempt8-moe-first-forward-audit.md).
-It does not replace the production overlay. The fourth-incident halt remains;
-an owner-authorized four-card window and valid existing admission are required.
-The old owner acceptance does not authorize a launch after the fourth incident.
+It does not replace the production overlay. Run 1 on boot `13858eef` stopped
+before the first MoE forward; [the audit](../../../../notes/2026-10-11-moe-boundary-run1-cancelled.md)
+identifies the controller as the first STOP writer, but its original exception
+was overwritten during cleanup. This repair retains that cause on the next
+attempt; it does **not** claim the initiating refusal is fixed. The coordinator
+must supply current admission for a fresh four-card window. Historical owner
+acceptance from the earlier boot does not authorize a new launch.
 
 ## Preregistered single-window plan
 
@@ -72,22 +76,23 @@ to bypass the fourth-incident halt.
 **Both stage and run directories must be fresh.** Never edit or reuse the
 failed `/mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011T04`
 or `/mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-compilation-v2`;
-their bytes and failed-window evidence remain preserved. If either destination
+also preserve both `flashnext-moe-boundary-*-20261011-source-paths-v3` directories.
+Their bytes and failed-window evidence remain preserved. If either destination
 below already exists, choose a new unique suffix in both commands.
 
 ```sh
 nice -n 19 env OMP_NUM_THREADS=2 PYTHONDONTWRITEBYTECODE=1 SCREEN1B_MOE_BOUNDARY=1 \
   python3 -B /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/build_patch.py \
-  --stage /mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-source-paths-v3
+  --stage /mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-first-cause-v4
 
 nice -n 19 env OMP_NUM_THREADS=2 PYTHONDONTWRITEBYTECODE=1 \
   SCREEN1B_SOURCE_REPO=/home/steve/llm-optimizations \
   SCREEN1B_MOE_BOUNDARY=1 SCREEN_PRIVILEGED_FD_SCAN=1 \
-  python3 -B /mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-source-paths-v3/screen.py \
+  python3 -B /mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-first-cause-v4/screen.py \
   run --mode calibrate-load --loading-ram-guard-gb 96 \
   --health-receipt "${HEALTH_RECEIPT:?set fresh health receipt path}" \
   --previous-stop-utc "${PREVIOUS_STOP_UTC:?set verified previous stop UTC}" \
-  --run-dir /mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3 --execute
+  --run-dir /mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-first-cause-v4 --execute
 ```
 
 The controller creates one owned user unit using Nice=19 and OMP_NUM_THREADS=2.
@@ -96,7 +101,7 @@ Container receipt paths are `/screen/moe-boundary/` and `/screen/watcher.json`,
 which map to the new run directory. STOP and FAULT are siblings of those paths.
 Existing production files, prior evidence and latches are never modified.
 
-CPU validation after the source-path repair: **128 passed, zero failures/errors/skips**;
+Historical CPU validation after the source-path repair: **128 passed, zero failures/errors/skips**;
 [source-bound receipt](../evidence/moe-boundary-paths-cpu-20261011/validation.json).
 The [124-test compilation receipt](../evidence/moe-boundary-compilation-cpu-20261011/validation.json)
 remains historical evidence; its predictor test stopped before the failing census read.
@@ -172,9 +177,9 @@ nice -n 19 env OMP_NUM_THREADS=2 python3 -B experiments/qwen38-flash-next-fp8-b7
 nice -n 19 env OMP_NUM_THREADS=2 python3 -B experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/build_patch.py --check
 ```
 
-Diagnostic overlay manifest SHA256: `6c9dafd3e265f5adc528408325e2824a5acc64882e51ac1234f348109963062b`.
+Diagnostic overlay manifest SHA256: `22d919835678571d7e7b05bc05dd53f2f8f53924b2890575b5024f2162d6c5f9`.
 
-Patch manifest SHA256: `f5e6301cc9310d7108f75d5fefac84101ec16f6ce0f19b7de37325ee58621511`.
+Patch manifest SHA256: `ef423848f2bb0a61a9805be8a9e9c613b48c118b45a6e411d18fd06dea2beef7`.
 
 
 ## Source-path repair and staged-command audit, October 11
@@ -212,4 +217,53 @@ thresholds are unchanged; the diagnostic seal includes the new support files.
 `vram_plan.generate` also resolves routing inputs through the source repo;
 its output stays in the supplied package and it is not invoked by the screen.
 Never regenerate files in an existing sealed coordinator stage. Use the fresh
-source-paths-v3 stage/run commands above with current coordinator admission.
+first-cause-v4 stage/run commands above with current coordinator admission.
+
+
+## Run 1 cancellation and cause retention, October 11
+
+The [run-1 audit and memory comparison](../../../../notes/2026-10-11-moe-boundary-run1-cancelled.md)
+cover 04:27–04:38 UTC. The controller wrote STOP at 04:32:32.809 UTC;
+all 1,101 boundary rows passed, and no MoE forward was reached. Host pressure
+peaked at 65.615 GB, available RAM stayed above 58.564 GB, no allocation refusal
+or memory-watchdog event was saved, and the independent watcher stayed clear
+through the post-exit gap. The benign `delayed_fput hogged CPU` messages begin
+after STOP and do not match the fault classifier.
+
+The original controller exception is **not recoverable** from these receipts.
+`supervise_locked` held it only in memory, then its `finally` block sent the
+generic completion/failure stop and replaced it with the nonzero-exit error.
+A transient stale heartbeat, journal/read failure or another controller check
+cannot be distinguished. Do not raise a timeout, memory ceiling or watchdog
+age based on this run, or label the root-owned receipt directory as the cause.
+
+The v4 packet changes only controller evidence/stop handling:
+
+- Before cleanup, write and fsync `controller-first-failure.json` and print the
+  same record to the unit journal. It includes phase, timestamps, traceback,
+  watchdog/stop state and snapshots of STOP, FAULT and the heartbeat. A rejected
+  heartbeat also carries the **exact evaluated** receipt and evaluation time.
+- Put the actual exception in a new controller STOP. Preserve an existing
+  worker/watcher STOP with exclusive creation; never overwrite its first cause.
+- Keep `calibration-load.json.failure` and the raised exception tied to the
+  first failure. Record a cleanup error separately in `cleanup_failure` and
+  `controller-cleanup-failure.json`. Receipt-write failure still reaches the
+  one-shot graceful stop and the original exception remains visible.
+
+The 96 GB load ceiling, 24 GiB available-RAM watchdog, three-second heartbeat,
+30-minute load bound, five-minute shutdown bound, 305-second gap, model,
+placement and all native hooks are unchanged. The repair can expose a recurring
+refusal; it does not establish that a fresh native load will pass it.
+
+**136 CPU tests pass, zero failures/errors/skips.** The CPU suite additionally drives the complete staged supervision/finally path
+with process, clock, HTTP, memory and host-state doubles. It covers the original
+exception plus an unclean exit, command timeout, failed evidence writes,
+cleanup-only failure, first-writer STOP retention, stale heartbeat evidence and
+benign-kernel-line classification. No Docker, systemd, server, HTTP or device
+operation is executed by those doubles. See the [validation receipt](../evidence/moe-boundary-run1-cancelled-20261011/validation.json).
+
+After the coordinator's next admitted run, inspect `controller-first-failure.json`
+first, then `controller-cleanup-failure.json`, calibration and rank receipts.
+If file writing failed, use the unit journal's `controller_failure` record.
+No unchanged source-paths-v3 rerun: retain that stage and use the fresh v4 pair
+above. Native first-forward localization remains pending.

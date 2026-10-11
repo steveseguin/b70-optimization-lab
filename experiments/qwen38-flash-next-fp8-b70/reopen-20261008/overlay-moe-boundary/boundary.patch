@@ -60,6 +60,28 @@
      print(format_table(plan))
      if args.output:
          args.output.write_text(json.dumps(plan, indent=2) + '\n')
+--- a/memory_watchdog.py
++++ b/memory_watchdog.py
+@@ -140,7 +140,18 @@
+         with self.lock:
+             latch_error = None
+             try:
+-                (self.run / 'STOP').write_text(self.reason + '\n')
++                with (self.run / 'STOP').open('x') as stream:
++                    stream.write(self.reason + '\n')
++                    stream.flush()
++                    os.fsync(stream.fileno())
++            except FileExistsError:
++                # A worker or watcher may have won. Preserve its first cause,
++                # even when the controller has an independent failure to report.
++                try:
++                    with (self.run / 'STOP').open() as stream:
++                        self.reason = stream.read(4096).strip() or self.reason
++                except OSError as exc:
++                    latch_error = str(exc)
+             except OSError as exc:
+                 latch_error = str(exc)
+             if not self.armed or self.sent:
 --- a/overlay-manifest.json
 +++ b/overlay-manifest.json
 @@ -37,22 +37,24 @@
@@ -163,12 +185,13 @@
      "placement-attempt6-v5.json": "b64cf1c9cf732d9093ed55a90cc59e1d52b5be5a755914fc04d860aecf384ce6",
 -    "vram_plan.py": "75b1c1e5671ab5a34d6375df137eec8a3f62f108432eb31c05d87cb56b784955",
 -    "placement_plan.py": "eb9953f4f09ae6da682dc1701bedade66680a597f0509203102bfacd47cbd8e5",
-+    "vram_plan.py": "3589e4c1506252e65dc85b72b3cdecbb2c0b210a3070bf25e731ec1ed3af0c9f",
-+    "placement_plan.py": "47007bf611bab7e1481e0b0804a98c9fdd68cc9a76cbd845200c347ee2a183c5",
-     "memory_watchdog.py": "f084dd183b57e6340d43bef1c0dcb7194ee2f449469e31195d248ae8129966c7",
+-    "memory_watchdog.py": "f084dd183b57e6340d43bef1c0dcb7194ee2f449469e31195d248ae8129966c7",
 -    "screen.py": "fdb57ed3241aeb29e3d1060671fe0e8ae0feebf2d06a80e316039d975d3f1428",
 -    "teardown_receipts.py": "46099d077ec2025d2849ffc4052baee603e15b5f32b811a536a14ebb5727b5a7"
-+    "screen.py": "88921a802b8fc9230ee4fb38580fe67a6ae6d3299b801b1f861f8d35334083a6",
++    "vram_plan.py": "3589e4c1506252e65dc85b72b3cdecbb2c0b210a3070bf25e731ec1ed3af0c9f",
++    "placement_plan.py": "47007bf611bab7e1481e0b0804a98c9fdd68cc9a76cbd845200c347ee2a183c5",
++    "memory_watchdog.py": "cb87622c7a03a8fedb134cd6ddaa17d5539f07372f0de2307554afb4fe58d03a",
++    "screen.py": "e86a64fe9d2a7edb74c6e1ea42d2e15ac71e0a087b86ab329965b1ff2e5bcae0",
 +    "teardown_receipts.py": "46099d077ec2025d2849ffc4052baee603e15b5f32b811a536a14ebb5727b5a7",
 +    "probe/watch_kernel.py": "945d3bd83250b5ba8b29fd5675bccdf893e9a51e0d506d0bf4cee4995b7745cd",
 +    "protocol.py": "e388a9c8365b1b5c849277c8d981b32113db39c24694078dcc582f6cdac6325d",
@@ -1226,15 +1249,18 @@
  REALISTIC = ROOT / "scripts/bench-openai-realistic-suite.py"
 --- a/screen.py
 +++ b/screen.py
-@@ -22,6 +22,7 @@
+@@ -20,8 +20,10 @@
+ import sys
+ import time
  import threading
++import traceback
 
  import calibration
 +from source_paths import REPO, repo_input
 
  from memory_watchdog import DeferredStop, MemoryWatchdog, sample_memory, trip_reason
  from teardown_receipts import validate_rank_receipts
-@@ -31,7 +32,6 @@
+@@ -31,7 +33,6 @@
  import urllib.request
 
  HERE = Path(__file__).resolve().parent
@@ -1242,7 +1268,7 @@
  PLAN = json.loads((HERE / 'image-plan.json').read_text())
  OVERLAY = json.loads((HERE / 'overlay-manifest.json').read_text())
  MODEL = Path('/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8')
-@@ -347,7 +347,7 @@
+@@ -347,7 +348,7 @@
      args = ['journalctl', '-k', '-b', '--no-pager', '-o', 'short-iso-precise']
      if since:
          args += ['--since', since]
@@ -1251,7 +1277,7 @@
      if 'permission' in p.stderr.lower() or 'not seeing messages' in p.stderr.lower():
          raise RuntimeError('Cannot verify the complete kernel journal without existing read access')
      if not p.stdout.strip():
-@@ -355,8 +355,49 @@
+@@ -355,8 +356,91 @@
      return p.stdout
 
 
@@ -1275,17 +1301,59 @@
 +
 +
 +def boundary_watcher_clear(run):
-+    require(not (run / "FAULT").exists() and not (run / "STOP").exists(),
-+            "MoE boundary STOP/FAULT latched")
-+    receipt = json.loads((run / "watcher.json").read_text())
-+    now = time.time()
-+    require(receipt.get("passed") is True and receipt.get("new_fault_lines") == [],
-+            "MoE boundary watcher is not clear")
-+    require(receipt.get("boot_id") == Path("/proc/sys/kernel/random/boot_id").read_text().strip(),
-+            "MoE boundary watcher boot mismatch")
-+    for field in ("read_started_unix", "updated_unix"):
-+        require(isinstance(receipt.get(field), (int, float)) and 0 <= now - receipt[field] <= 3,
-+                "MoE boundary watcher stale: " + field)
++    # Keep the exact evaluated heartbeat: the watcher's later healthy update
++    # cannot reconstruct why this read failed its unchanged three-second gate.
++    observation = {"checked_unix": time.time()}
++    try:
++        require(not (run / "FAULT").exists() and not (run / "STOP").exists(),
++                "MoE boundary STOP/FAULT latched")
++        receipt = json.loads((run / "watcher.json").read_text())
++        now = time.time()
++        observation.update(receipt=receipt, checked_unix=now)
++        require(receipt.get("passed") is True and receipt.get("new_fault_lines") == [],
++                "MoE boundary watcher is not clear")
++        require(receipt.get("boot_id") == Path("/proc/sys/kernel/random/boot_id").read_text().strip(),
++                "MoE boundary watcher boot mismatch")
++        for field in ("read_started_unix", "updated_unix"):
++            require(isinstance(receipt.get(field), (int, float)) and 0 <= now - receipt[field] <= 3,
++                    "MoE boundary watcher stale: " + field)
++    except Exception as exc:
++        exc.boundary_watcher_observation = observation
++        raise
++
++
++def record_controller_failure(run, exc, phase, stop, watchdog, *, secondary=False):
++    """Retain cause before cleanup; evidence I/O must never prevent shutdown."""
++    failure = f'{type(exc).__name__}: {exc}'
++    row = dict(schema='screen1b.controller-failure.v1', component='controller',
++               phase=phase, failure=failure, secondary=secondary,
++               unix=time.time(), monotonic=time.monotonic(), pid=os.getpid(),
++               traceback=''.join(traceback.format_exception(type(exc), exc, exc.__traceback__)),
++               stop_requested=stop.requested, stop_reason=stop.reason, signal_sent=stop.sent,
++               watchdog_reason=watchdog.reason,
++               watcher_observation=getattr(exc, 'boundary_watcher_observation', None))
++    for name in ('STOP', 'FAULT', 'watcher.json'):
++        try:
++            with (run / name).open() as stream:
++                row[name] = stream.read(16384)
++        except FileNotFoundError:
++            row[name] = None
++        except OSError as error:
++            row[name] = {'read_error': str(error)}
++    # Journal fallback comes before file I/O and before the single stop signal.
++    print(json.dumps({'controller_failure': row}), file=sys.stderr, flush=True)
++    name = 'controller-cleanup-failure.json' if secondary else 'controller-first-failure.json'
++    try:
++        with (run / name).open('x') as stream:
++            json.dump(row, stream, indent=2)
++            stream.write('\n')
++            stream.flush()
++            os.fsync(stream.fileno())
++    except FileExistsError:
++        pass  # Never replace the earliest cause with a later observation.
++    except OSError as error:
++        print(f'Controller failure receipt unavailable: {error}', file=sys.stderr, flush=True)
++    return failure
 +
 +
 +def boundary_window_admission(args):
@@ -1301,7 +1369,7 @@
 
 
  SCAN_SNIPPET = r'''
-@@ -444,6 +485,7 @@
+@@ -444,6 +528,7 @@
 
 
  def preflight(args, image_present=False, observations=None):
@@ -1309,7 +1377,7 @@
      if socket.gethostname() != 'steve-b70s':
          raise RuntimeError('Wrong host')
      if call(['git', '-C', REPO, 'branch', '--show-current'], capture_output=True).stdout.strip() != 'main':
-@@ -473,6 +515,8 @@
+@@ -473,6 +558,8 @@
 
 
  def launch(args, run):
@@ -1318,7 +1386,7 @@
      mode = 'mtp1' if args.mode == 'calibrate-load' else args.mode
      cmd = ['docker', 'run', '--name', 'flashnext-screen1-' + run.name,
             '--pull=never', '--restart=no', '--network=host', '--device=/dev/dri',
-@@ -498,6 +542,10 @@
+@@ -498,6 +585,10 @@
          'TRITON_CACHE_DIR': '/screen/cache/triton', 'VLLM_CACHE_ROOT': '/screen/cache/vllm',
          'XDG_CACHE_HOME': '/screen/cache/xdg', 'TMPDIR': '/screen/cache/tmp',
          'PYTHONDONTWRITEBYTECODE': '1',
@@ -1329,7 +1397,7 @@
      }
      if args.mode == 'calibrate-load':
          limit = getattr(args, 'loading_ram_guard_gb', None)
-@@ -510,6 +558,8 @@
+@@ -510,6 +601,8 @@
              '-v', f'{HERE / "container-entrypoint.sh"}:/screen-entrypoint.sh:ro']
      # Apply hash-checked Python files inside the disposable container layer.
      cmd += ['-v', f'{HERE}:/screen-package:ro']
@@ -1338,7 +1406,7 @@
      cmd += [PLAN['image'], '/screen-entrypoint.sh', '--execute', 'serve', '/model',
              '--host', '127.0.0.1', '--port', str(args.port),
              '--served-model-name', 'qwen38-flash-next-fp8-tp4',
-@@ -570,6 +620,8 @@
+@@ -570,6 +663,8 @@
      since = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
      (run / 'started-utc.txt').write_text(since + '\n')
      server = None
@@ -1347,10 +1415,19 @@
      client = None
      name = 'flashnext-screen1-' + run.name
      stop = DeferredStop(run, name)
-@@ -590,12 +642,23 @@
+@@ -584,38 +679,58 @@
+     clean_exit = False
+     container_clean = False
+     failure = None
++    cleanup_failure = None
++    phase = 'prelaunch watchdog'
+     watchdog = (MemoryWatchdog(run, request_stop, sampler,
+                               threshold=calibration.trip_reason, interval=calibration.INTERVAL)
+                 if calibrating else MemoryWatchdog(run, request_stop))
      try:
          if watchdog.check():
              raise RuntimeError('Memory watchdog refused allocation before launch')
++        phase = 'watcher startup'
 +        watcher_log = open(run / 'watcher.log', 'w')
 +        watcher = subprocess.Popen([sys.executable, str(HERE / 'probe/watch_kernel.py'),
 +                                    '--receipt-dir', str(run), '--cutoff', str(journal_cutoff)],
@@ -1368,10 +1445,67 @@
              if stop.requested:
                  raise RuntimeError('Watchdog stopped before launch')
 +            boundary_watcher_clear(run)
++            phase = 'container launch'
              server = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT)
              stop.armed = True
              if not calibrating:
-@@ -681,6 +744,10 @@
+                 watchdog.start()
+             ready = False
+             while time.monotonic() - start < 1800:
++                phase = 'startup process status'
+                 if stop.requested or server.poll() is not None:
+                     raise RuntimeError('Startup stopped/exited; no retry')
++                phase = 'startup live checks'
+                 check_live(run, journal_cutoff, calibrating=calibrating)
+                 if sampler and sampler.container_pid is None:
++                    phase = 'container PID inspection'
+                     info = subprocess.run(['docker', 'inspect', '--format', '{{.State.Pid}}', name],
+                                           capture_output=True, text=True, timeout=2)
+                     if info.returncode == 0 and info.stdout.strip().isdigit() and int(info.stdout) > 0:
+                         sampler.container_pid = int(info.stdout)
++                phase = 'readiness HTTP'
+                 try:
+                     with urllib.request.urlopen(base + '/health', timeout=2) as res:
+                         ready = res.status == 200
+                 except OSError:
+                     pass
+                 if ready:
++                    phase = 'served model identity'
+                     with urllib.request.urlopen(base + '/v1/models', timeout=5) as res:
+                         models = json.load(res)
+                     (run / 'models.json').write_text(json.dumps(models, indent=2))
+@@ -629,6 +744,7 @@
+             if not ready:
+                 raise RuntimeError('30 minute readiness bound exceeded')
+             if calibrating:
++                phase = 'calibration plateau'
+                 sampler.phase = 'plateau'
+                 watchdog.check()
+                 plateau_start = time.monotonic()
+@@ -654,7 +770,7 @@
+                 with urllib.request.urlopen(base + '/metrics', timeout=5) as res:
+                     (run / 'metrics-after.txt').write_bytes(res.read())
+     except BaseException as exc:
+-        failure = f'{type(exc).__name__}: {exc}'
++        failure = record_controller_failure(run, exc, phase, stop, watchdog)
+         raise
+     finally:
+         if client and client.poll() is None:
+@@ -664,11 +780,12 @@
+             except (subprocess.TimeoutExpired, ProcessLookupError):
+                 (run / 'client-stop-timeout.txt').write_text('Client did not drain in 30s; continue mandatory GPU shutdown.\n')
+         try:
++            phase = 'graceful shutdown'
+             if sampler:
+                 sampler.phase = 'shutdown'
+             if server:
+                 # docker stop with a timeout escalates to SIGKILL: deliberately avoid it.
+-                request_stop('controller completion or failure')
++                request_stop(failure or 'controller completion')
+                 deadline = time.monotonic() + 300
+                 while time.monotonic() < deadline:
+                     state = subprocess.run(['docker', 'inspect', '--format', '{{.State.Running}}', name], capture_output=True, text=True, timeout=5)
+@@ -681,6 +798,10 @@
                                  container_clean = (state_data.get('ExitCode') == 0 and
                                                not state_data.get('OOMKilled') and not state_data.get('Error'))
                                  (run / 'container-exit.json').write_text(json.dumps(state_data, indent=2) + '\n')
@@ -1382,10 +1516,11 @@
                          break
                      if not stop.sent:
                          request_stop('deferred stop after container creation')
-@@ -690,6 +757,19 @@
+@@ -690,12 +811,28 @@
                  if server.poll() is None:
                      server.wait(timeout=15)
              watchdog.close()
++            phase = 'watcher post-exit gap'
 +            if watcher is not None and server is not None:
 +                # Watch through a full quiet gap; never turn this wait into a kill.
 +                watcher_deadline = time.monotonic() + 315
@@ -1399,11 +1534,30 @@
 +                # No server was spawned; still terminate the CPU watcher gracefully.
 +                watcher.terminate()
 +                watcher.wait(timeout=5)
++            phase = 'kernel and idle postflight'
              end = journal()
              (run / 'kernel-postflight.log').write_text(end)
              idle()
-@@ -707,6 +787,8 @@
-             raise
+             if new_fault_lines(end, journal_cutoff):
+                 raise RuntimeError('Fault recorded; no recovery or second launch is automated')
+             if server:
++                phase = 'teardown validation'
+                 teardown = validate_rank_receipts(run, expected_ranks=range(4))
+                 (run / 'teardown-validation.json').write_text(json.dumps(teardown, indent=2) + '\n')
+                 require(teardown['passed'], 'Missing or invalid final worker teardown receipts')
+@@ -703,19 +840,33 @@
+                 clean_exit = True  # only after rank receipts AND clean kernel postflight
+
+         except BaseException as exc:
+-            failure = f'{type(exc).__name__}: {exc}'
+-            raise
++            cleanup_failure = record_controller_failure(
++                run, exc, phase, stop, watchdog, secondary=failure is not None)
++            if failure is None:
++                failure = cleanup_failure
++                raise
++            # The pending original exception resumes after finally. Cleanup
++            # failure is separate evidence, never a replacement for its cause.
          finally:
              watchdog.close()
 +            if watcher_log is not None:
@@ -1411,7 +1565,34 @@
              for sig, previous in previous_handlers.items():
                  signal.signal(sig, previous)
              if calibrating:
-@@ -732,6 +814,7 @@
+-                result = write_calibration(run, cmd, ready, clean_exit, watchdog.reason, failure)
+-        if calibrating and not result['verdict']['passed']:
++                try:
++                    result = write_calibration(run, cmd, ready, clean_exit, watchdog.reason,
++                                               failure, cleanup_failure=cleanup_failure)
++                except BaseException as exc:
++                    record_controller_failure(run, exc, 'calibration receipt', stop, watchdog,
++                                              secondary=failure is not None)
++                    if failure is None:
++                        raise
++        if calibrating and failure is None and not result['verdict']['passed']:
+             raise RuntimeError('Load measured; MTP1 still refused: ' + '; '.join(result['verdict']['refusal_reasons']))
+
+
+-def write_calibration(run, cmd, ready, clean_exit, watchdog_reason, failure):
++def write_calibration(run, cmd, ready, clean_exit, watchdog_reason, failure, *, cleanup_failure=None):
+     samples_path = run / 'host-memory-samples.jsonl'
+     samples = ([json.loads(line) for line in samples_path.read_text().splitlines()]
+                if samples_path.exists() else [])
+@@ -724,6 +875,7 @@
+               'loading_ram_guard_bytes': calibration.loading_guard_bytes(cmd),
+               'generation_requests': 0, 'ready': ready, 'clean_exit': clean_exit,
+               'watchdog_reason': watchdog_reason, 'failure': failure,
++              'cleanup_failure': cleanup_failure,
+               'samples_sha256': calibration.file_hash(samples_path) if samples_path.exists() else None,
+               'verdict': calibration.verdict(samples, ready=ready, clean_exit=clean_exit,
+                                              watchdog_reason=watchdog_reason, failure=failure)}
+@@ -732,6 +884,7 @@
 
 
  def check_live(run, journal_cutoff, *, calibrating=False):
@@ -1419,7 +1600,7 @@
      text = journal()  # whole current boot avoids empty --since false negatives
      (run / 'kernel-latest.log').write_text(text)
      if new_fault_lines(text, journal_cutoff):
-@@ -754,6 +837,7 @@
+@@ -754,6 +907,7 @@
      p.add_argument('--calibration', type=Path, help='Qualified calibration-load.json for MTP1')
      p.add_argument('--loading-ram-guard-gb', type=int,
                     help='Calibrate-load only: host-use ceiling in decimal GB (default 90, maximum 96)')
@@ -1427,7 +1608,7 @@
      p.add_argument('--port', type=int, default=19988)
      p.add_argument('--run-dir', type=Path, default=None)
      x = p.add_mutually_exclusive_group()
-@@ -767,11 +851,11 @@
+@@ -767,11 +921,11 @@
          args.loading_ram_guard_gb = 90
      run = (args.run_dir or HERE / 'runs' / ('screen1b-' + args.mode)).resolve()
      if args.calibration:
@@ -1442,7 +1623,7 @@
      if args.mode == 'calibrate-load' and args.action not in ('run', '_worker', 'preflight'):
          p.error('calibrate-load uses the already-present image; prepare is not a calibration action')
      args.run_dir = run
-@@ -811,11 +895,13 @@
+@@ -811,11 +965,13 @@
          for d in ['tmp', 'hf', 'triton', 'vllm', 'xdg']:
              (run / 'cache' / d).mkdir(parents=True)
          unit = 'flashnext-screen1-' + datetime.datetime.now().strftime('%Y%m%dT%H%M%S')

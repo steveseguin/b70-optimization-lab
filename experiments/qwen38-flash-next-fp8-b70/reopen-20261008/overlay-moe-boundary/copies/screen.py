@@ -20,6 +20,7 @@ import subprocess
 import sys
 import time
 import threading
+import traceback
 
 import calibration
 from source_paths import REPO, repo_input
@@ -375,17 +376,59 @@ def overlay_check():
 
 
 def boundary_watcher_clear(run):
-    require(not (run / "FAULT").exists() and not (run / "STOP").exists(),
-            "MoE boundary STOP/FAULT latched")
-    receipt = json.loads((run / "watcher.json").read_text())
-    now = time.time()
-    require(receipt.get("passed") is True and receipt.get("new_fault_lines") == [],
-            "MoE boundary watcher is not clear")
-    require(receipt.get("boot_id") == Path("/proc/sys/kernel/random/boot_id").read_text().strip(),
-            "MoE boundary watcher boot mismatch")
-    for field in ("read_started_unix", "updated_unix"):
-        require(isinstance(receipt.get(field), (int, float)) and 0 <= now - receipt[field] <= 3,
-                "MoE boundary watcher stale: " + field)
+    # Keep the exact evaluated heartbeat: the watcher's later healthy update
+    # cannot reconstruct why this read failed its unchanged three-second gate.
+    observation = {"checked_unix": time.time()}
+    try:
+        require(not (run / "FAULT").exists() and not (run / "STOP").exists(),
+                "MoE boundary STOP/FAULT latched")
+        receipt = json.loads((run / "watcher.json").read_text())
+        now = time.time()
+        observation.update(receipt=receipt, checked_unix=now)
+        require(receipt.get("passed") is True and receipt.get("new_fault_lines") == [],
+                "MoE boundary watcher is not clear")
+        require(receipt.get("boot_id") == Path("/proc/sys/kernel/random/boot_id").read_text().strip(),
+                "MoE boundary watcher boot mismatch")
+        for field in ("read_started_unix", "updated_unix"):
+            require(isinstance(receipt.get(field), (int, float)) and 0 <= now - receipt[field] <= 3,
+                    "MoE boundary watcher stale: " + field)
+    except Exception as exc:
+        exc.boundary_watcher_observation = observation
+        raise
+
+
+def record_controller_failure(run, exc, phase, stop, watchdog, *, secondary=False):
+    """Retain cause before cleanup; evidence I/O must never prevent shutdown."""
+    failure = f'{type(exc).__name__}: {exc}'
+    row = dict(schema='screen1b.controller-failure.v1', component='controller',
+               phase=phase, failure=failure, secondary=secondary,
+               unix=time.time(), monotonic=time.monotonic(), pid=os.getpid(),
+               traceback=''.join(traceback.format_exception(type(exc), exc, exc.__traceback__)),
+               stop_requested=stop.requested, stop_reason=stop.reason, signal_sent=stop.sent,
+               watchdog_reason=watchdog.reason,
+               watcher_observation=getattr(exc, 'boundary_watcher_observation', None))
+    for name in ('STOP', 'FAULT', 'watcher.json'):
+        try:
+            with (run / name).open() as stream:
+                row[name] = stream.read(16384)
+        except FileNotFoundError:
+            row[name] = None
+        except OSError as error:
+            row[name] = {'read_error': str(error)}
+    # Journal fallback comes before file I/O and before the single stop signal.
+    print(json.dumps({'controller_failure': row}), file=sys.stderr, flush=True)
+    name = 'controller-cleanup-failure.json' if secondary else 'controller-first-failure.json'
+    try:
+        with (run / name).open('x') as stream:
+            json.dump(row, stream, indent=2)
+            stream.write('\n')
+            stream.flush()
+            os.fsync(stream.fileno())
+    except FileExistsError:
+        pass  # Never replace the earliest cause with a later observation.
+    except OSError as error:
+        print(f'Controller failure receipt unavailable: {error}', file=sys.stderr, flush=True)
+    return failure
 
 
 def boundary_window_admission(args):
@@ -636,12 +679,15 @@ def supervise_locked(args, run):
     clean_exit = False
     container_clean = False
     failure = None
+    cleanup_failure = None
+    phase = 'prelaunch watchdog'
     watchdog = (MemoryWatchdog(run, request_stop, sampler,
                               threshold=calibration.trip_reason, interval=calibration.INTERVAL)
                 if calibrating else MemoryWatchdog(run, request_stop))
     try:
         if watchdog.check():
             raise RuntimeError('Memory watchdog refused allocation before launch')
+        phase = 'watcher startup'
         watcher_log = open(run / 'watcher.log', 'w')
         watcher = subprocess.Popen([sys.executable, str(HERE / 'probe/watch_kernel.py'),
                                     '--receipt-dir', str(run), '--cutoff', str(journal_cutoff)],
@@ -659,26 +705,32 @@ def supervise_locked(args, run):
             if stop.requested:
                 raise RuntimeError('Watchdog stopped before launch')
             boundary_watcher_clear(run)
+            phase = 'container launch'
             server = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT)
             stop.armed = True
             if not calibrating:
                 watchdog.start()
             ready = False
             while time.monotonic() - start < 1800:
+                phase = 'startup process status'
                 if stop.requested or server.poll() is not None:
                     raise RuntimeError('Startup stopped/exited; no retry')
+                phase = 'startup live checks'
                 check_live(run, journal_cutoff, calibrating=calibrating)
                 if sampler and sampler.container_pid is None:
+                    phase = 'container PID inspection'
                     info = subprocess.run(['docker', 'inspect', '--format', '{{.State.Pid}}', name],
                                           capture_output=True, text=True, timeout=2)
                     if info.returncode == 0 and info.stdout.strip().isdigit() and int(info.stdout) > 0:
                         sampler.container_pid = int(info.stdout)
+                phase = 'readiness HTTP'
                 try:
                     with urllib.request.urlopen(base + '/health', timeout=2) as res:
                         ready = res.status == 200
                 except OSError:
                     pass
                 if ready:
+                    phase = 'served model identity'
                     with urllib.request.urlopen(base + '/v1/models', timeout=5) as res:
                         models = json.load(res)
                     (run / 'models.json').write_text(json.dumps(models, indent=2))
@@ -692,6 +744,7 @@ def supervise_locked(args, run):
             if not ready:
                 raise RuntimeError('30 minute readiness bound exceeded')
             if calibrating:
+                phase = 'calibration plateau'
                 sampler.phase = 'plateau'
                 watchdog.check()
                 plateau_start = time.monotonic()
@@ -717,7 +770,7 @@ def supervise_locked(args, run):
                 with urllib.request.urlopen(base + '/metrics', timeout=5) as res:
                     (run / 'metrics-after.txt').write_bytes(res.read())
     except BaseException as exc:
-        failure = f'{type(exc).__name__}: {exc}'
+        failure = record_controller_failure(run, exc, phase, stop, watchdog)
         raise
     finally:
         if client and client.poll() is None:
@@ -727,11 +780,12 @@ def supervise_locked(args, run):
             except (subprocess.TimeoutExpired, ProcessLookupError):
                 (run / 'client-stop-timeout.txt').write_text('Client did not drain in 30s; continue mandatory GPU shutdown.\n')
         try:
+            phase = 'graceful shutdown'
             if sampler:
                 sampler.phase = 'shutdown'
             if server:
                 # docker stop with a timeout escalates to SIGKILL: deliberately avoid it.
-                request_stop('controller completion or failure')
+                request_stop(failure or 'controller completion')
                 deadline = time.monotonic() + 300
                 while time.monotonic() < deadline:
                     state = subprocess.run(['docker', 'inspect', '--format', '{{.State.Running}}', name], capture_output=True, text=True, timeout=5)
@@ -757,6 +811,7 @@ def supervise_locked(args, run):
                 if server.poll() is None:
                     server.wait(timeout=15)
             watchdog.close()
+            phase = 'watcher post-exit gap'
             if watcher is not None and server is not None:
                 # Watch through a full quiet gap; never turn this wait into a kill.
                 watcher_deadline = time.monotonic() + 315
@@ -770,12 +825,14 @@ def supervise_locked(args, run):
                 # No server was spawned; still terminate the CPU watcher gracefully.
                 watcher.terminate()
                 watcher.wait(timeout=5)
+            phase = 'kernel and idle postflight'
             end = journal()
             (run / 'kernel-postflight.log').write_text(end)
             idle()
             if new_fault_lines(end, journal_cutoff):
                 raise RuntimeError('Fault recorded; no recovery or second launch is automated')
             if server:
+                phase = 'teardown validation'
                 teardown = validate_rank_receipts(run, expected_ranks=range(4))
                 (run / 'teardown-validation.json').write_text(json.dumps(teardown, indent=2) + '\n')
                 require(teardown['passed'], 'Missing or invalid final worker teardown receipts')
@@ -783,8 +840,13 @@ def supervise_locked(args, run):
                 clean_exit = True  # only after rank receipts AND clean kernel postflight
 
         except BaseException as exc:
-            failure = f'{type(exc).__name__}: {exc}'
-            raise
+            cleanup_failure = record_controller_failure(
+                run, exc, phase, stop, watchdog, secondary=failure is not None)
+            if failure is None:
+                failure = cleanup_failure
+                raise
+            # The pending original exception resumes after finally. Cleanup
+            # failure is separate evidence, never a replacement for its cause.
         finally:
             watchdog.close()
             if watcher_log is not None:
@@ -792,12 +854,19 @@ def supervise_locked(args, run):
             for sig, previous in previous_handlers.items():
                 signal.signal(sig, previous)
             if calibrating:
-                result = write_calibration(run, cmd, ready, clean_exit, watchdog.reason, failure)
-        if calibrating and not result['verdict']['passed']:
+                try:
+                    result = write_calibration(run, cmd, ready, clean_exit, watchdog.reason,
+                                               failure, cleanup_failure=cleanup_failure)
+                except BaseException as exc:
+                    record_controller_failure(run, exc, 'calibration receipt', stop, watchdog,
+                                              secondary=failure is not None)
+                    if failure is None:
+                        raise
+        if calibrating and failure is None and not result['verdict']['passed']:
             raise RuntimeError('Load measured; MTP1 still refused: ' + '; '.join(result['verdict']['refusal_reasons']))
 
 
-def write_calibration(run, cmd, ready, clean_exit, watchdog_reason, failure):
+def write_calibration(run, cmd, ready, clean_exit, watchdog_reason, failure, *, cleanup_failure=None):
     samples_path = run / 'host-memory-samples.jsonl'
     samples = ([json.loads(line) for line in samples_path.read_text().splitlines()]
                if samples_path.exists() else [])
@@ -806,6 +875,7 @@ def write_calibration(run, cmd, ready, clean_exit, watchdog_reason, failure):
               'loading_ram_guard_bytes': calibration.loading_guard_bytes(cmd),
               'generation_requests': 0, 'ready': ready, 'clean_exit': clean_exit,
               'watchdog_reason': watchdog_reason, 'failure': failure,
+              'cleanup_failure': cleanup_failure,
               'samples_sha256': calibration.file_hash(samples_path) if samples_path.exists() else None,
               'verdict': calibration.verdict(samples, ready=ready, clean_exit=clean_exit,
                                              watchdog_reason=watchdog_reason, failure=failure)}

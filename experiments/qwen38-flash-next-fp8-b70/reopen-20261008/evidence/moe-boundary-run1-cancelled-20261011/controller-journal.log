@@ -1,0 +1,116 @@
+2026-10-11T00:27:09.952772-04:00 steve-b70s systemd[3288]: Started flashnext-screen1-20261011T002709.service - /usr/bin/python3 /mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-source-paths-v3/screen.py _worker --mode calibrate-load --port 19988 --run-dir /mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3 --execute --previous-stop-utc "2026-10-11 04:21:45 UTC" --loading-ram-guard-gb 96 --health-receipt /home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261008/health-boundary-20261011T042701Z.json.
+2026-10-11T00:27:10.039432-04:00 steve-b70s python3[73974]: {
+2026-10-11T00:27:10.039432-04:00 steve-b70s python3[73974]:   "mode": "calibrate-load",
+2026-10-11T00:27:10.039432-04:00 steve-b70s python3[73974]:   "image": "vllm/vllm-openai-xpu@sha256:e4446310b1d30015e8fdc1a0a2ef1669ac6bef857cbe772487571ed5c1a926a9",
+2026-10-11T00:27:10.039432-04:00 steve-b70s python3[73974]:   "disk_before_pull_gib": 89,
+2026-10-11T00:27:10.039432-04:00 steve-b70s python3[73974]:   "requests": 0,
+2026-10-11T00:27:10.039432-04:00 steve-b70s python3[73974]:   "launches": 1,
+2026-10-11T00:27:10.039432-04:00 steve-b70s python3[73974]:   "promotion_eligible": false
+2026-10-11T00:27:10.039432-04:00 steve-b70s python3[73974]: }
+2026-10-11T00:27:10.039432-04:00 steve-b70s python3[73974]: /var/lib/docker: 62.09 GiB free; require 60 GiB
+2026-10-11T00:27:10.039432-04:00 steve-b70s python3[73974]: /mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-source-paths-v3: 62.09 GiB free; require 60 GiB
+2026-10-11T00:27:11.926261-04:00 steve-b70s python3[73974]: Screen 1b host-RAM prediction (GB=10^9; GiB=2^30; not measured):
+2026-10-11T00:27:11.926261-04:00 steve-b70s python3[73974]: Component                                              bytes         GB        GiB
+2026-10-11T00:27:11.926261-04:00 steve-b70s python3[73974]: pins                                          56,685,101,056  56.685101  52.792114
+2026-10-11T00:27:11.926261-04:00 steve-b70s python3[73974]: historical_unattributed_residual_bytes                     0   0.000000   0.000000
+2026-10-11T00:27:11.926261-04:00 steve-b70s python3[73974]: cache_metadata_bytes                           1,736,346,392   1.736346   1.617099
+2026-10-11T00:27:11.926261-04:00 steve-b70s python3[73974]: active_files_bytes                             4,294,967,296   4.294967   4.000000
+2026-10-11T00:27:11.926261-04:00 steve-b70s python3[73974]: host_baseline_bytes                            4,969,857,024   4.969857   4.628540
+2026-10-11T00:27:11.926261-04:00 steve-b70s python3[73974]: runtime_difference_contingency_bytes          13,000,000,000  13.000000  12.107193
+2026-10-11T00:27:11.926261-04:00 steve-b70s python3[73974]: pinned_allocator_rounding_bytes                      393,216   0.000393   0.000366
+2026-10-11T00:27:11.926261-04:00 steve-b70s python3[73974]: concurrent_staging_bytes                         268,435,456   0.268435   0.250000
+2026-10-11T00:27:11.926261-04:00 steve-b70s python3[73974]: Sensitivity peak (unqualified allowances)     80,955,100,440  80.955100  75.395313
+2026-10-11T00:27:11.926261-04:00 steve-b70s python3[73974]: Qualified Hpred: None; status: REFUSED
+2026-10-11T00:27:11.926261-04:00 steve-b70s python3[73974]: Rescued A367: measured host-pressure increase 115.869876 GB (historical whole-host peak lower bound, not a V30 bound).
+2026-10-11T00:27:11.926261-04:00 steve-b70s python3[73974]: Rank 0: static VRAM LOWER bound 20.334464 GiB; complete Vpeak/reserve UNKNOWN
+2026-10-11T00:27:11.926261-04:00 steve-b70s python3[73974]: Rank 1: static VRAM LOWER bound 20.334464 GiB; complete Vpeak/reserve UNKNOWN
+2026-10-11T00:27:11.926261-04:00 steve-b70s python3[73974]: Rank 2: static VRAM LOWER bound 20.334464 GiB; complete Vpeak/reserve UNKNOWN
+2026-10-11T00:27:11.926261-04:00 steve-b70s python3[73974]: Rank 3: static VRAM LOWER bound 20.334464 GiB; complete Vpeak/reserve UNKNOWN
+2026-10-11T00:27:11.926261-04:00 steve-b70s python3[73974]: Rank 0: planned engine peak 23.334464 GiB; free 4.310536 GiB; unmeasured allowances, NOT admission
+2026-10-11T00:27:11.926261-04:00 steve-b70s python3[73974]: Rank 1: planned engine peak 23.334464 GiB; free 4.530536 GiB; unmeasured allowances, NOT admission
+2026-10-11T00:27:11.926261-04:00 steve-b70s python3[73974]: Rank 2: planned engine peak 23.334464 GiB; free 4.530536 GiB; unmeasured allowances, NOT admission
+2026-10-11T00:27:11.926261-04:00 steve-b70s python3[73974]: Rank 3: planned engine peak 23.334464 GiB; free 4.530536 GiB; unmeasured allowances, NOT admission
+2026-10-11T00:27:11.926261-04:00 steve-b70s python3[73974]: Historical full-PLE candidates (NOT mmap adapter): KV 376569856, FULL_DECODE_ONLY; no calibrated peak available.
+2026-10-11T00:27:11.926261-04:00 steve-b70s python3[73974]: Candidate             Mode    Pins GB   Nonpin room to 85 GB   Static reserve UPPER bound GiB (r0..r3)
+2026-10-11T00:27:11.935726-04:00 steve-b70s python3[73974]: certified-v5          MTP1     63.609                21.391   2.140/2.342/2.172/2.337
+2026-10-11T00:27:11.935726-04:00 steve-b70s python3[73974]: certified-v5          MTP0     63.609                21.391   2.796/2.997/2.828/2.993
+2026-10-11T00:27:11.935726-04:00 steve-b70s python3[73974]: long-context-v5       MTP1     68.731                16.269   3.225/3.381/3.623/3.532
+2026-10-11T00:27:11.935726-04:00 steve-b70s python3[73974]: long-context-v5       MTP0     68.731                16.269   3.881/4.036/4.279/4.187
+2026-10-11T00:27:11.935726-04:00 steve-b70s python3[73974]: v5-1000-rows          MTP1     72.132                12.868   4.232/4.232/4.232/4.232
+2026-10-11T00:27:11.935726-04:00 steve-b70s python3[73974]: v5-1000-rows          MTP0     72.132                12.868   4.888/4.888/4.888/4.888
+2026-10-11T00:27:11.935726-04:00 steve-b70s python3[73974]: v5-1100-rows          MTP1     74.099                10.901   4.690/4.690/4.690/4.690
+2026-10-11T00:27:11.935726-04:00 steve-b70s python3[73974]: v5-1100-rows          MTP0     74.099                10.901   5.345/5.345/5.345/5.345
+2026-10-11T00:27:11.935726-04:00 steve-b70s python3[73974]: v5-1200-rows          MTP1     76.065                 8.935   5.148/5.148/5.148/5.148
+2026-10-11T00:27:11.935726-04:00 steve-b70s python3[73974]: v5-1200-rows          MTP0     76.065                 8.935   5.803/5.803/5.803/5.803
+2026-10-11T00:27:11.935726-04:00 steve-b70s python3[73974]: All complete peaks UNKNOWN; none qualifies. Capacity assumption: 34242297856 bytes each, historical rank0 only.
+2026-10-11T00:27:11.935726-04:00 steve-b70s python3[73974]: REFUSE: required host phase bound unknown
+2026-10-11T00:27:11.935726-04:00 steve-b70s python3[73974]: REFUSE: rank 0: required VRAM phase/capacity bound unknown
+2026-10-11T00:27:11.935726-04:00 steve-b70s python3[73974]: REFUSE: rank 1: required VRAM phase/capacity bound unknown
+2026-10-11T00:27:11.935726-04:00 steve-b70s python3[73974]: REFUSE: rank 2: required VRAM phase/capacity bound unknown
+2026-10-11T00:27:11.935726-04:00 steve-b70s python3[73974]: REFUSE: rank 3: required VRAM phase/capacity bound unknown
+2026-10-11T00:27:11.935726-04:00 steve-b70s python3[73974]: REFUSE: post-hash MemAvailable/remaining committed growth unknown
+2026-10-11T00:27:11.935726-04:00 steve-b70s python3[73974]: REFUSE: runtime retention/workspace/lifetime bounds are unqualified; scenario is not admission evidence
+2026-10-11T00:27:11.935726-04:00 steve-b70s python3[73974]: REFUSE: required pre/post-hash, cgroup and process observations absent/incomplete
+2026-10-11T00:27:11.940495-04:00 steve-b70s sudo[73997]:    steve : PWD=/home/steve ; USER=root ; COMMAND=/usr/bin/python3 -c '#012import json, os, sys#012from pathlib import Path#012targets = set(sys.argv[1:])#012held, unreadable = [], []#012for proc in Path(\'/proc\').glob(\'[0-9]*\'):#012    try:#012        fds = list((proc / \'fd\').iterdir())#012    except FileNotFoundError:#012        continue#012    except PermissionError:#012        unreadable.append(proc.name)#012        continue#012    for fd in fds:#012        try:#012            target = os.readlink(fd)#012        except FileNotFoundError:#012            continue#012        except PermissionError:#012            unreadable.append(proc.name)#012            break#012        if target in targets:#012            held.append({\'pid\': proc.name, \'node\': target})#012print(json.dumps({\'held\': held, \'unreadable\': sorted(set(unreadable))}))#012' /dev/dri/renderD128 /dev/dri/renderD129 /dev/dri/renderD130 /dev/dri/renderD131
+2026-10-11T00:27:11.940983-04:00 steve-b70s sudo[73997]: pam_unix(sudo:session): session opened for user root(uid=0) by steve(uid=1000)
+2026-10-11T00:27:11.985944-04:00 steve-b70s sudo[73997]: pam_unix(sudo:session): session closed for user root
+2026-10-11T00:27:12.201016-04:00 steve-b70s python3[73974]: Load-only admission: prediction is diagnostic; the watchdog controls measurement.
+2026-10-11T00:27:12.201016-04:00 steve-b70s python3[73974]: {"journal_admission": {"passed": true, "owner_acceptance_sha256": null, "owner_acceptance_verified": false, "counted_fault_lines": ["2026-10-10T22:34:46.576467-04:00 steve-b70s kernel: xe 0000:43:00.0: [drm] Tile0: GT0: Engine reset: engine_class=ccs, logical_mask: 0x1, guc_id=8, state=0x289", "2026-10-10T22:34:51.866944-04:00 steve-b70s kernel: Workqueue: gt-ordered-wq drm_sched_job_timedout [gpu_sched]", "2026-10-10T22:34:51.867633-04:00 steve-b70s kernel:  drm_sched_job_timedout+0x8b/0x1c0 [gpu_sched]", "2026-10-10T22:34:52.497462-04:00 steve-b70s kernel: xe 0000:43:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x2, guc_id=0, state=0x209", "2026-10-10T22:34:52.497866-04:00 steve-b70s kernel: xe 0000:43:00.0: [drm] Tile0: GT0: Timedout job: seqno=1123099, lrc_seqno=1123099, guc_id=0, flags=0x73 in no process [-1]", "2026-10-10T22:34:52.545508-04:00 steve-b70s kernel: xe 0000:43:00.0: [drm] Xe device coredump has been created", "2026-10-10T22:34:52.545716-04:00 steve-b70s kernel: xe 0000:43:00.0: [drm] Check your /sys/class/drm/card0/device/devcoredump/data"], "excluded_fault_lines": [], "counted_gpu_incidents": 1, "journal_evidence_available": true, "monitoring_cutoff_unix": 1791692827.0}}
+2026-10-11T00:29:19.176496-04:00 steve-b70s python3[74015]: {"receipt": "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/model-verification.json", "status": "pass"}
+2026-10-11T00:29:19.191420-04:00 steve-b70s python3[73974]: Passive admission passed. Full 185.6 GB model hashing remains required before launch.
+2026-10-11T00:29:19.191420-04:00 steve-b70s python3[73974]: /var/lib/docker: 62.09 GiB free; require 60 GiB
+2026-10-11T00:29:19.191420-04:00 steve-b70s python3[73974]: /mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-source-paths-v3: 62.09 GiB free; require 60 GiB
+2026-10-11T00:29:21.027405-04:00 steve-b70s python3[73974]: Screen 1b host-RAM prediction (GB=10^9; GiB=2^30; not measured):
+2026-10-11T00:29:21.027405-04:00 steve-b70s python3[73974]: Component                                              bytes         GB        GiB
+2026-10-11T00:29:21.027405-04:00 steve-b70s python3[73974]: pins                                          56,685,101,056  56.685101  52.792114
+2026-10-11T00:29:21.027405-04:00 steve-b70s python3[73974]: historical_unattributed_residual_bytes                     0   0.000000   0.000000
+2026-10-11T00:29:21.027405-04:00 steve-b70s python3[73974]: cache_metadata_bytes                           1,736,346,392   1.736346   1.617099
+2026-10-11T00:29:21.027405-04:00 steve-b70s python3[73974]: active_files_bytes                             4,294,967,296   4.294967   4.000000
+2026-10-11T00:29:21.027405-04:00 steve-b70s python3[73974]: host_baseline_bytes                            4,969,857,024   4.969857   4.628540
+2026-10-11T00:29:21.027405-04:00 steve-b70s python3[73974]: runtime_difference_contingency_bytes          13,000,000,000  13.000000  12.107193
+2026-10-11T00:29:21.027405-04:00 steve-b70s python3[73974]: pinned_allocator_rounding_bytes                      393,216   0.000393   0.000366
+2026-10-11T00:29:21.027405-04:00 steve-b70s python3[73974]: concurrent_staging_bytes                         268,435,456   0.268435   0.250000
+2026-10-11T00:29:21.027405-04:00 steve-b70s python3[73974]: Sensitivity peak (unqualified allowances)     80,955,100,440  80.955100  75.395313
+2026-10-11T00:29:21.027405-04:00 steve-b70s python3[73974]: Qualified Hpred: None; status: REFUSED
+2026-10-11T00:29:21.027405-04:00 steve-b70s python3[73974]: Rescued A367: measured host-pressure increase 115.869876 GB (historical whole-host peak lower bound, not a V30 bound).
+2026-10-11T00:29:21.027405-04:00 steve-b70s python3[73974]: Rank 0: static VRAM LOWER bound 20.334464 GiB; complete Vpeak/reserve UNKNOWN
+2026-10-11T00:29:21.027405-04:00 steve-b70s python3[73974]: Rank 1: static VRAM LOWER bound 20.334464 GiB; complete Vpeak/reserve UNKNOWN
+2026-10-11T00:29:21.027405-04:00 steve-b70s python3[73974]: Rank 2: static VRAM LOWER bound 20.334464 GiB; complete Vpeak/reserve UNKNOWN
+2026-10-11T00:29:21.027405-04:00 steve-b70s python3[73974]: Rank 3: static VRAM LOWER bound 20.334464 GiB; complete Vpeak/reserve UNKNOWN
+2026-10-11T00:29:21.027405-04:00 steve-b70s python3[73974]: Rank 0: planned engine peak 23.334464 GiB; free 4.310536 GiB; unmeasured allowances, NOT admission
+2026-10-11T00:29:21.027405-04:00 steve-b70s python3[73974]: Rank 1: planned engine peak 23.334464 GiB; free 4.530536 GiB; unmeasured allowances, NOT admission
+2026-10-11T00:29:21.027405-04:00 steve-b70s python3[73974]: Rank 2: planned engine peak 23.334464 GiB; free 4.530536 GiB; unmeasured allowances, NOT admission
+2026-10-11T00:29:21.027405-04:00 steve-b70s python3[73974]: Rank 3: planned engine peak 23.334464 GiB; free 4.530536 GiB; unmeasured allowances, NOT admission
+2026-10-11T00:29:21.027405-04:00 steve-b70s python3[73974]: Historical full-PLE candidates (NOT mmap adapter): KV 376569856, FULL_DECODE_ONLY; no calibrated peak available.
+2026-10-11T00:29:21.027405-04:00 steve-b70s python3[73974]: Candidate             Mode    Pins GB   Nonpin room to 85 GB   Static reserve UPPER bound GiB (r0..r3)
+2026-10-11T00:29:21.028352-04:00 steve-b70s python3[73974]: certified-v5          MTP1     63.609                21.391   2.140/2.342/2.172/2.337
+2026-10-11T00:29:21.028352-04:00 steve-b70s python3[73974]: certified-v5          MTP0     63.609                21.391   2.796/2.997/2.828/2.993
+2026-10-11T00:29:21.028352-04:00 steve-b70s python3[73974]: long-context-v5       MTP1     68.731                16.269   3.225/3.381/3.623/3.532
+2026-10-11T00:29:21.028352-04:00 steve-b70s python3[73974]: long-context-v5       MTP0     68.731                16.269   3.881/4.036/4.279/4.187
+2026-10-11T00:29:21.028352-04:00 steve-b70s python3[73974]: v5-1000-rows          MTP1     72.132                12.868   4.232/4.232/4.232/4.232
+2026-10-11T00:29:21.028352-04:00 steve-b70s python3[73974]: v5-1000-rows          MTP0     72.132                12.868   4.888/4.888/4.888/4.888
+2026-10-11T00:29:21.028352-04:00 steve-b70s python3[73974]: v5-1100-rows          MTP1     74.099                10.901   4.690/4.690/4.690/4.690
+2026-10-11T00:29:21.028352-04:00 steve-b70s python3[73974]: v5-1100-rows          MTP0     74.099                10.901   5.345/5.345/5.345/5.345
+2026-10-11T00:29:21.028352-04:00 steve-b70s python3[73974]: v5-1200-rows          MTP1     76.065                 8.935   5.148/5.148/5.148/5.148
+2026-10-11T00:29:21.028352-04:00 steve-b70s python3[73974]: v5-1200-rows          MTP0     76.065                 8.935   5.803/5.803/5.803/5.803
+2026-10-11T00:29:21.028352-04:00 steve-b70s python3[73974]: All complete peaks UNKNOWN; none qualifies. Capacity assumption: 34242297856 bytes each, historical rank0 only.
+2026-10-11T00:29:21.028352-04:00 steve-b70s python3[73974]: REFUSE: required host phase bound unknown
+2026-10-11T00:29:21.028352-04:00 steve-b70s python3[73974]: REFUSE: rank 0: required VRAM phase/capacity bound unknown
+2026-10-11T00:29:21.028352-04:00 steve-b70s python3[73974]: REFUSE: rank 1: required VRAM phase/capacity bound unknown
+2026-10-11T00:29:21.028352-04:00 steve-b70s python3[73974]: REFUSE: rank 2: required VRAM phase/capacity bound unknown
+2026-10-11T00:29:21.028352-04:00 steve-b70s python3[73974]: REFUSE: rank 3: required VRAM phase/capacity bound unknown
+2026-10-11T00:29:21.028352-04:00 steve-b70s python3[73974]: REFUSE: post-hash MemAvailable/remaining committed growth unknown
+2026-10-11T00:29:21.028352-04:00 steve-b70s python3[73974]: REFUSE: runtime retention/workspace/lifetime bounds are unqualified; scenario is not admission evidence
+2026-10-11T00:29:21.042711-04:00 steve-b70s sudo[74173]:    steve : PWD=/home/steve ; USER=root ; COMMAND=/usr/bin/python3 -c '#012import json, os, sys#012from pathlib import Path#012targets = set(sys.argv[1:])#012held, unreadable = [], []#012for proc in Path(\'/proc\').glob(\'[0-9]*\'):#012    try:#012        fds = list((proc / \'fd\').iterdir())#012    except FileNotFoundError:#012        continue#012    except PermissionError:#012        unreadable.append(proc.name)#012        continue#012    for fd in fds:#012        try:#012            target = os.readlink(fd)#012        except FileNotFoundError:#012            continue#012        except PermissionError:#012            unreadable.append(proc.name)#012            break#012        if target in targets:#012            held.append({\'pid\': proc.name, \'node\': target})#012print(json.dumps({\'held\': held, \'unreadable\': sorted(set(unreadable))}))#012' /dev/dri/renderD128 /dev/dri/renderD129 /dev/dri/renderD130 /dev/dri/renderD131
+2026-10-11T00:29:21.043590-04:00 steve-b70s sudo[74173]: pam_unix(sudo:session): session opened for user root(uid=0) by steve(uid=1000)
+2026-10-11T00:29:21.085869-04:00 steve-b70s sudo[74173]: pam_unix(sudo:session): session closed for user root
+2026-10-11T00:29:21.303776-04:00 steve-b70s python3[73974]: Load-only admission: prediction is diagnostic; the watchdog controls measurement.
+2026-10-11T00:29:21.303776-04:00 steve-b70s python3[73974]: {"journal_admission": {"passed": true, "owner_acceptance_sha256": null, "owner_acceptance_verified": false, "counted_fault_lines": ["2026-10-10T22:34:46.576467-04:00 steve-b70s kernel: xe 0000:43:00.0: [drm] Tile0: GT0: Engine reset: engine_class=ccs, logical_mask: 0x1, guc_id=8, state=0x289", "2026-10-10T22:34:51.866944-04:00 steve-b70s kernel: Workqueue: gt-ordered-wq drm_sched_job_timedout [gpu_sched]", "2026-10-10T22:34:51.867633-04:00 steve-b70s kernel:  drm_sched_job_timedout+0x8b/0x1c0 [gpu_sched]", "2026-10-10T22:34:52.497462-04:00 steve-b70s kernel: xe 0000:43:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x2, guc_id=0, state=0x209", "2026-10-10T22:34:52.497866-04:00 steve-b70s kernel: xe 0000:43:00.0: [drm] Tile0: GT0: Timedout job: seqno=1123099, lrc_seqno=1123099, guc_id=0, flags=0x73 in no process [-1]", "2026-10-10T22:34:52.545508-04:00 steve-b70s kernel: xe 0000:43:00.0: [drm] Xe device coredump has been created", "2026-10-10T22:34:52.545716-04:00 steve-b70s kernel: xe 0000:43:00.0: [drm] Check your /sys/class/drm/card0/device/devcoredump/data"], "excluded_fault_lines": [], "counted_gpu_incidents": 1, "journal_evidence_available": true, "monitoring_cutoff_unix": 1791692827.0}}
+2026-10-11T00:38:11.043834-04:00 steve-b70s sudo[77928]:    steve : PWD=/home/steve ; USER=root ; COMMAND=/usr/bin/python3 -c '#012import json, os, sys#012from pathlib import Path#012targets = set(sys.argv[1:])#012held, unreadable = [], []#012for proc in Path(\'/proc\').glob(\'[0-9]*\'):#012    try:#012        fds = list((proc / \'fd\').iterdir())#012    except FileNotFoundError:#012        continue#012    except PermissionError:#012        unreadable.append(proc.name)#012        continue#012    for fd in fds:#012        try:#012            target = os.readlink(fd)#012        except FileNotFoundError:#012            continue#012        except PermissionError:#012            unreadable.append(proc.name)#012            break#012        if target in targets:#012            held.append({\'pid\': proc.name, \'node\': target})#012print(json.dumps({\'held\': held, \'unreadable\': sorted(set(unreadable))}))#012' /dev/dri/renderD128 /dev/dri/renderD129 /dev/dri/renderD130 /dev/dri/renderD131
+2026-10-11T00:38:11.044658-04:00 steve-b70s sudo[77928]: pam_unix(sudo:session): session opened for user root(uid=0) by steve(uid=1000)
+2026-10-11T00:38:11.089876-04:00 steve-b70s sudo[77928]: pam_unix(sudo:session): session closed for user root
+2026-10-11T00:38:11.195116-04:00 steve-b70s python3[73974]: REFUSED/STOPPED: Container exit was not clean
+2026-10-11T00:38:11.215170-04:00 steve-b70s python3[73974]: Passive admission passed. Full 185.6 GB model hashing remains required before launch.
+2026-10-11T00:38:11.282482-04:00 steve-b70s systemd[3288]: flashnext-screen1-20261011T002709.service: Main process exited, code=exited, status=2/INVALIDARGUMENT
+2026-10-11T00:38:11.282496-04:00 steve-b70s systemd[3288]: flashnext-screen1-20261011T002709.service: Failed with result 'exit-code'.
+2026-10-11T00:38:11.282957-04:00 steve-b70s systemd[3288]: flashnext-screen1-20261011T002709.service: Consumed 4min 46.189s CPU time.

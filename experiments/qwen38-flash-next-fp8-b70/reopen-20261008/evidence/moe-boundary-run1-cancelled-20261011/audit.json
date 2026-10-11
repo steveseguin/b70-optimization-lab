@@ -1,0 +1,1883 @@
+{
+  "schema": "screen1b.moe-boundary-run1-audit.v1",
+  "recorded_utc": "2026-10-11T04:45:58.463498+00:00",
+  "run": "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3",
+  "attempt8": {
+    "samples": 1578,
+    "loading_samples": 1343,
+    "loading_duration_seconds": 670.756345072994,
+    "loading_pressure_peak_bytes": 75447590912,
+    "loading_available_min_bytes": 48731533312,
+    "cgroup_peak_bytes": 59570315264,
+    "peak_sample": {
+      "monotonic": 172173.05134162,
+      "mem_total_bytes": 124179124224,
+      "mem_available_bytes": 48731533312,
+      "accounted_pressure_bytes": 75447590912,
+      "committed_as_bytes": 160018178048,
+      "mlocked_bytes": 278528,
+      "unevictable_bytes": 3424256,
+      "meminfo_bytes": {
+        "MemTotal": 124179124224,
+        "MemFree": 19759067136,
+        "MemAvailable": 48731533312,
+        "Buffers": 746897408,
+        "Cached": 29847425024,
+        "SwapCached": 29425664,
+        "Active": 35013910528,
+        "Inactive": 6112432128,
+        "Active(anon)": 8880947200,
+        "Inactive(anon)": 2450739200,
+        "Active(file)": 26132963328,
+        "Inactive(file)": 3661692928,
+        "Unevictable": 3424256,
+        "Mlocked": 278528,
+        "SwapTotal": 8589930496,
+        "SwapFree": 5998891008,
+        "Zswap": 0,
+        "Zswapped": 0,
+        "Dirty": 1699840,
+        "Writeback": 0,
+        "AnonPages": 10525696000,
+        "Mapped": 1365233664,
+        "Shmem": 797863936,
+        "KReclaimable": 1255727104,
+        "Slab": 3214618624,
+        "SReclaimable": 1255727104,
+        "SUnreclaim": 1958891520,
+        "KernelStack": 24117248,
+        "PageTables": 121851904,
+        "SecPageTables": 2392064,
+        "NFS_Unstable": 0,
+        "Bounce": 0,
+        "WritebackTmp": 0,
+        "CommitLimit": 70679490560,
+        "Committed_AS": 160018178048,
+        "VmallocTotal": 35184372087808,
+        "VmallocUsed": 166297600,
+        "VmallocChunk": 0,
+        "Percpu": 29360128,
+        "HardwareCorrupted": 0,
+        "AnonHugePages": 0,
+        "ShmemHugePages": 0,
+        "ShmemPmdMapped": 0,
+        "FileHugePages": 54525952,
+        "FilePmdMapped": 0,
+        "CmaTotal": 0,
+        "CmaFree": 1592832000,
+        "Unaccepted": 0,
+        "Balloon": 0,
+        "GPUActive": 57356943360,
+        "GPUReclaim": 0,
+        "Hugepagesize": 2097152,
+        "Hugetlb": 0,
+        "DirectMap4k": 355385344,
+        "DirectMap2M": 12389974016,
+        "DirectMap1G": 124554051584
+      },
+      "phase": "loading",
+      "worker_rss_bytes": [
+        2294636544,
+        2802774016,
+        3072159744,
+        2838208512
+      ],
+      "worker_pids": [
+        1280780,
+        1280817,
+        1280911,
+        1281001
+      ],
+      "cgroup_memory_current_bytes": 36219150336,
+      "cgroup_memory_peak_bytes": 36219224064,
+      "cgroup_memory_stat": {
+        "anon": 10023145472,
+        "file": 25971937280,
+        "kernel": 212340736,
+        "kernel_stack": 7389184,
+        "pagetables": 107028480,
+        "sec_pagetables": 0,
+        "percpu": 3808,
+        "sock": 0,
+        "vmalloc": 0,
+        "shmem": 20480,
+        "zswap": 0,
+        "zswapped": 0,
+        "file_mapped": 946298880,
+        "file_dirty": 380928,
+        "file_writeback": 0,
+        "swapcached": 10825728,
+        "anon_thp": 0,
+        "file_thp": 0,
+        "shmem_thp": 0,
+        "inactive_anon": 2359984128,
+        "active_anon": 7669841920,
+        "inactive_file": 18022400,
+        "active_file": 25952509952,
+        "unevictable": 98304,
+        "slab_reclaimable": 78770104,
+        "slab_unreclaimable": 18952504,
+        "slab": 97722608,
+        "workingset_refault_anon": 1178,
+        "workingset_refault_file": 3153,
+        "workingset_activate_anon": 1178,
+        "workingset_activate_file": 3074,
+        "workingset_restore_anon": 0,
+        "workingset_restore_file": 2834,
+        "workingset_nodereclaim": 0,
+        "pgdemote_kswapd": 0,
+        "pgdemote_direct": 0,
+        "pgdemote_khugepaged": 0,
+        "pgdemote_proactive": 0,
+        "pgpromote_success": 0,
+        "pgscan": 1175595,
+        "pgsteal": 723796,
+        "pswpin": 1178,
+        "pswpout": 450964,
+        "pgscan_kswapd": 1174955,
+        "pgscan_direct": 640,
+        "pgscan_khugepaged": 0,
+        "pgscan_proactive": 0,
+        "pgsteal_kswapd": 723568,
+        "pgsteal_direct": 228,
+        "pgsteal_khugepaged": 0,
+        "pgsteal_proactive": 0,
+        "pgfault": 6145210,
+        "pgmajfault": 73338,
+        "pgrefill": 177590,
+        "pgactivate": 3024,
+        "pgdeactivate": 0,
+        "pglazyfree": 0,
+        "pglazyfreed": 0,
+        "swpin_zero": 0,
+        "swpout_zero": 4025,
+        "zswpin": 0,
+        "zswpout": 0,
+        "zswpwb": 0,
+        "thp_fault_alloc": 0,
+        "thp_collapse_alloc": 0,
+        "thp_swpout": 0,
+        "thp_swpout_fallback": 0,
+        "numa_pages_migrated": 0,
+        "numa_pte_updates": 0,
+        "numa_hint_faults": 0
+      },
+      "attribution_errors": [],
+      "accounting_errors": [],
+      "cgroup_path": "/sys/fs/cgroup/system.slice/docker-0d61788598dda06f9e7b0998496f02caab0b2d8c2612e8b2cdc727d509b526b4.scope",
+      "vram_free_bytes_per_rank": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "cards": [
+        {
+          "pci_bdf": "0000:23:00.0",
+          "free_bytes": null,
+          "total_bytes": null,
+          "unavailable": "[Errno 2] No such file or directory: '/sys/class/drm/card3/device/mem_info_vram_total'"
+        },
+        {
+          "pci_bdf": "0000:27:00.0",
+          "free_bytes": null,
+          "total_bytes": null,
+          "unavailable": "[Errno 2] No such file or directory: '/sys/class/drm/card4/device/mem_info_vram_total'"
+        },
+        {
+          "pci_bdf": "0000:43:00.0",
+          "free_bytes": null,
+          "total_bytes": null,
+          "unavailable": "[Errno 2] No such file or directory: '/sys/class/drm/card0/device/mem_info_vram_total'"
+        },
+        {
+          "pci_bdf": "0000:47:00.0",
+          "free_bytes": null,
+          "total_bytes": null,
+          "unavailable": "[Errno 2] No such file or directory: '/sys/class/drm/card2/device/mem_info_vram_total'"
+        }
+      ]
+    },
+    "before_hash": {
+      "errors": [],
+      "process": {
+        "status": "Name:\tpython3\nUmask:\t0002\nState:\tR (running)\nTgid:\t1279917\nNgid:\t0\nPid:\t1279917\nPPid:\t3216\nTracerPid:\t0\nUid:\t1000\t1000\t1000\t1000\nGid:\t1000\t1000\t1000\t1000\nFDSize:\t128\nGroups:\t4 24 27 30 44 46 100 114 984 992 1000 \nNStgid:\t1279917\nNSpid:\t1279917\nNSpgid:\t1279917\nNSsid:\t1279917\nKthread:\t0\nVmPeak:\t  169824 kB\nVmSize:\t  103264 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t  156232 kB\nVmRSS:\t   91572 kB\nRssAnon:\t   80172 kB\nRssFile:\t   11400 kB\nRssShmem:\t       0 kB\nVmData:\t   80832 kB\nVmStk:\t     132 kB\nVmExe:\t    2956 kB\nVmLib:\t    6712 kB\nVmPTE:\t     248 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t       0 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nuntag_mask:\t0xffffffffffffffff\nThreads:\t1\nSigQ:\t1/477915\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000001001000\nSigCgt:\t0000000000000002\nCapInh:\t0000000000000000\nCapPrm:\t0000000000000000\nCapEff:\t0000000000000000\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nSpeculationIndirectBranch:\tconditional enabled\nCpus_allowed:\tffffffff\nCpus_allowed_list:\t0-31\nMems_allowed:\t00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000001\nMems_allowed_list:\t0\nvoluntary_ctxt_switches:\t81\nnonvoluntary_ctxt_switches:\t21\nx86_Thread_features:\t\nx86_Thread_features_locked:\t\n",
+        "smaps_rollup": "00400000-7ffc97a6b000 ---p 00000000 00:00 0                              [rollup]\nRss:               91572 kB\nPss:               83414 kB\nPss_Dirty:         80172 kB\nPss_Anon:          80172 kB\nPss_File:           3242 kB\nPss_Shmem:             0 kB\nShared_Clean:      10488 kB\nShared_Dirty:          0 kB\nPrivate_Clean:       912 kB\nPrivate_Dirty:     80172 kB\nReferenced:        91572 kB\nAnonymous:         80172 kB\nKSM:                   0 kB\nLazyFree:              0 kB\nAnonHugePages:         0 kB\nShmemPmdMapped:        0 kB\nFilePmdMapped:         0 kB\nShared_Hugetlb:        0 kB\nPrivate_Hugetlb:       0 kB\nSwap:                  0 kB\nSwapPss:               0 kB\nLocked:                0 kB\n",
+        "stat": "1279917 (python3) R 3216 1279917 1279917 0 -1 4194304 45978 6240 0 0 158 27 11 12 20 0 1 0 17179994 105742336 22550 18446744073709551615 4325376 7352253 140722852765616 0 0 0 0 16781312 2 0 0 0 17 14 0 0 0 0 0 10653128 12216448 27283456 140722852768331 140722852768949 140722852768949 140722852769767 0\n"
+      },
+      "cgroup": {
+        "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/flashnext-screen1-20261010T204330.service",
+        "memory.current": "87175168\n",
+        "memory.peak": "155926528\n",
+        "memory.stat": "anon 82096128\nfile 442368\nkernel 839680\nkernel_stack 0\npagetables 573440\nsec_pagetables 0\npercpu 1088\nsock 0\nvmalloc 0\nshmem 0\nzswap 0\nzswapped 0\nfile_mapped 0\nfile_dirty 438272\nfile_writeback 0\nswapcached 0\nanon_thp 0\nfile_thp 0\nshmem_thp 0\ninactive_anon 0\nactive_anon 82071552\ninactive_file 438272\nactive_file 0\nunevictable 0\nslab_reclaimable 37552\nslab_unreclaimable 213968\nslab 251520\nworkingset_refault_anon 0\nworkingset_refault_file 0\nworkingset_activate_anon 0\nworkingset_activate_file 0\nworkingset_restore_anon 0\nworkingset_restore_file 0\nworkingset_nodereclaim 0\npgdemote_kswapd 0\npgdemote_direct 0\npgdemote_khugepaged 0\npgdemote_proactive 0\npgpromote_success 0\npgscan 0\npgsteal 0\npswpin 0\npswpout 0\npgscan_kswapd 0\npgscan_direct 0\npgscan_khugepaged 0\npgscan_proactive 0\npgsteal_kswapd 0\npgsteal_direct 0\npgsteal_khugepaged 0\npgsteal_proactive 0\npgfault 51739\npgmajfault 0\npgrefill 0\npgactivate 0\npgdeactivate 0\npglazyfree 0\npglazyfreed 0\nswpin_zero 0\nswpout_zero 0\nzswpin 0\nzswpout 0\nzswpwb 0\nthp_fault_alloc 0\nthp_collapse_alloc 0\nthp_swpout 0\nthp_swpout_fallback 0\nnuma_pages_migrated 0\nnuma_pte_updates 0\nnuma_hint_faults 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0\n"
+      },
+      "meminfo": "MemTotal:       121268676 kB\nMemFree:         6639776 kB\nMemAvailable:   116155096 kB\nBuffers:        51077276 kB\nCached:         57713292 kB\nSwapCached:        14452 kB\nActive:          3148572 kB\nInactive:       106378548 kB\nActive(anon):     660500 kB\nInactive(anon):    81040 kB\nActive(file):    2488072 kB\nInactive(file): 106297508 kB\nUnevictable:        3248 kB\nMlocked:             176 kB\nSwapTotal:       8388604 kB\nSwapFree:        8244924 kB\nZswap:                 0 kB\nZswapped:              0 kB\nDirty:              2424 kB\nWriteback:             0 kB\nAnonPages:        731376 kB\nMapped:           417048 kB\nShmem:              4996 kB\nKReclaimable:    1895272 kB\nSlab:            2533316 kB\nSReclaimable:    1895272 kB\nSUnreclaim:       638044 kB\nKernelStack:       12768 kB\nPageTables:        14456 kB\nSecPageTables:      2336 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    69022940 kB\nCommitted_AS:    3744688 kB\nVmallocTotal:   34359738367 kB\nVmallocUsed:      115740 kB\nVmallocChunk:          0 kB\nPercpu:            28672 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:         0 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:    126976 kB\nFilePmdMapped:         0 kB\nCmaTotal:              0 kB\nCmaFree:          405472 kB\nUnaccepted:            0 kB\nBalloon:               0 kB\nGPUActive:           112 kB\nGPUReclaim:            0 kB\nHugePages_Total:       0\nHugePages_Free:        0\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:               0 kB\nDirectMap4k:      334768 kB\nDirectMap2M:     7917568 kB\nDirectMap1G:    125829120 kB\n",
+      "mem_total_bytes": 124179124224,
+      "mem_available_bytes": 118942818304,
+      "accounted_pressure_bytes": 5236305920,
+      "snapshot_complete": true
+    },
+    "after_hash": {
+      "errors": [],
+      "process": {
+        "status": "Name:\tpython3\nUmask:\t0002\nState:\tR (running)\nTgid:\t1279917\nNgid:\t0\nPid:\t1279917\nPPid:\t3216\nTracerPid:\t0\nUid:\t1000\t1000\t1000\t1000\nGid:\t1000\t1000\t1000\t1000\nFDSize:\t128\nGroups:\t4 24 27 30 44 46 100 114 984 992 1000 \nNStgid:\t1279917\nNSpid:\t1279917\nNSpgid:\t1279917\nNSsid:\t1279917\nKthread:\t0\nVmPeak:\t  169824 kB\nVmSize:\t  103264 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t  156232 kB\nVmRSS:\t   91572 kB\nRssAnon:\t   80172 kB\nRssFile:\t   11400 kB\nRssShmem:\t       0 kB\nVmData:\t   80832 kB\nVmStk:\t     132 kB\nVmExe:\t    2956 kB\nVmLib:\t    6712 kB\nVmPTE:\t     248 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t       0 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nuntag_mask:\t0xffffffffffffffff\nThreads:\t1\nSigQ:\t0/477915\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000001001000\nSigCgt:\t0000000000000002\nCapInh:\t0000000000000000\nCapPrm:\t0000000000000000\nCapEff:\t0000000000000000\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nSpeculationIndirectBranch:\tconditional enabled\nCpus_allowed:\tffffffff\nCpus_allowed_list:\t0-31\nMems_allowed:\t00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000001\nMems_allowed_list:\t0\nvoluntary_ctxt_switches:\t83\nnonvoluntary_ctxt_switches:\t21\nx86_Thread_features:\t\nx86_Thread_features_locked:\t\n",
+        "smaps_rollup": "00400000-7ffc97a6b000 ---p 00000000 00:00 0                              [rollup]\nRss:               91572 kB\nPss:               83414 kB\nPss_Dirty:         80172 kB\nPss_Anon:          80172 kB\nPss_File:           3242 kB\nPss_Shmem:             0 kB\nShared_Clean:      10488 kB\nShared_Dirty:          0 kB\nPrivate_Clean:       912 kB\nPrivate_Dirty:     80172 kB\nReferenced:        91572 kB\nAnonymous:         80172 kB\nKSM:                   0 kB\nLazyFree:              0 kB\nAnonHugePages:         0 kB\nShmemPmdMapped:        0 kB\nFilePmdMapped:         0 kB\nShared_Hugetlb:        0 kB\nPrivate_Hugetlb:       0 kB\nSwap:                  0 kB\nSwapPss:               0 kB\nLocked:                0 kB\n",
+        "stat": "1279917 (python3) R 3216 1279917 1279917 0 -1 4194304 45978 1107832 0 0 158 27 8510 2354 20 0 1 0 17179994 105742336 22550 18446744073709551615 4325376 7352253 140722852765616 0 0 0 0 16781312 2 0 0 0 17 15 0 0 0 0 0 10653128 12216448 27283456 140722852768331 140722852768949 140722852768949 140722852769767 0\n"
+      },
+      "cgroup": {
+        "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/flashnext-screen1-20261010T204330.service",
+        "memory.current": "41608232960\n",
+        "memory.peak": "41807351808\n",
+        "memory.stat": "anon 82096128\nfile 41508413440\nkernel 13942784\nkernel_stack 0\npagetables 393216\nsec_pagetables 0\npercpu 1088\nsock 0\nvmalloc 0\nshmem 0\nzswap 0\nzswapped 0\nfile_mapped 0\nfile_dirty 4096\nfile_writeback 0\nswapcached 0\nanon_thp 0\nfile_thp 0\nshmem_thp 0\ninactive_anon 0\nactive_anon 82096128\ninactive_file 41508380672\nactive_file 32768\nunevictable 0\nslab_reclaimable 13469280\nslab_unreclaimable 59208\nslab 13528488\nworkingset_refault_anon 0\nworkingset_refault_file 0\nworkingset_activate_anon 0\nworkingset_activate_file 0\nworkingset_restore_anon 0\nworkingset_restore_file 0\nworkingset_nodereclaim 0\npgdemote_kswapd 0\npgdemote_direct 0\npgdemote_khugepaged 0\npgdemote_proactive 0\npgpromote_success 0\npgscan 35154392\npgsteal 35154284\npswpin 0\npswpout 0\npgscan_kswapd 34998574\npgscan_direct 155818\npgscan_khugepaged 0\npgscan_proactive 0\npgsteal_kswapd 34998466\npgsteal_direct 155818\npgsteal_khugepaged 0\npgsteal_proactive 0\npgfault 1153331\npgmajfault 0\npgrefill 0\npgactivate 108\npgdeactivate 0\npglazyfree 0\npglazyfreed 0\nswpin_zero 0\nswpout_zero 0\nzswpin 0\nzswpout 0\nzswpwb 0\nthp_fault_alloc 0\nthp_collapse_alloc 0\nthp_swpout 0\nthp_swpout_fallback 0\nnuma_pages_migrated 0\nnuma_pte_updates 0\nnuma_hint_faults 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0\n"
+      },
+      "meminfo": "MemTotal:       121268676 kB\nMemFree:        67164376 kB\nMemAvailable:   116255896 kB\nBuffers:         1604428 kB\nCached:         47312516 kB\nSwapCached:        14188 kB\nActive:           800260 kB\nInactive:       48857148 kB\nActive(anon):     186680 kB\nInactive(anon):   558788 kB\nActive(file):     613580 kB\nInactive(file): 48298360 kB\nUnevictable:        3248 kB\nMlocked:             176 kB\nSwapTotal:       8388604 kB\nSwapFree:        8244460 kB\nZswap:                 0 kB\nZswapped:              0 kB\nDirty:               600 kB\nWriteback:            32 kB\nAnonPages:        735464 kB\nMapped:           417336 kB\nShmem:              4996 kB\nKReclaimable:    1345112 kB\nSlab:            1932776 kB\nSReclaimable:    1345112 kB\nSUnreclaim:       587664 kB\nKernelStack:       12512 kB\nPageTables:        14296 kB\nSecPageTables:      2336 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    69022940 kB\nCommitted_AS:    3761124 kB\nVmallocTotal:   34359738367 kB\nVmallocUsed:      115500 kB\nVmallocChunk:          0 kB\nPercpu:            28672 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:         0 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:     92160 kB\nFilePmdMapped:         0 kB\nCmaTotal:              0 kB\nCmaFree:         6508040 kB\nUnaccepted:            0 kB\nBalloon:               0 kB\nGPUActive:           112 kB\nGPUReclaim:            0 kB\nHugePages_Total:       0\nHugePages_Free:        0\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:               0 kB\nDirectMap4k:      334768 kB\nDirectMap2M:     7917568 kB\nDirectMap1G:    125829120 kB\n",
+      "mem_total_bytes": 124179124224,
+      "mem_available_bytes": 119046037504,
+      "accounted_pressure_bytes": 5133086720,
+      "snapshot_complete": true
+    },
+    "max_sampling_gap_seconds": 0.5257352649932727
+  },
+  "stage": "/mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-source-paths-v3",
+  "gpu_executed_by_audit": false,
+  "first_writer": "controller DeferredStop.request from supervise_locked finally",
+  "original_exception_recoverable": false,
+  "reason_not_recoverable": "Generic STOP; cleanup replaced failure; main caught final RuntimeError without traceback. No saved heartbeat history at cancellation.",
+  "run1": {
+    "samples": 447,
+    "loading_samples": 381,
+    "loading_duration_seconds": 189.85923718400045,
+    "loading_pressure_peak_bytes": 65614659584,
+    "loading_available_min_bytes": 58564485120,
+    "cgroup_peak_bytes": 11580276736,
+    "peak_sample": {
+      "monotonic": 10297.985742843,
+      "mem_total_bytes": 124179144704,
+      "mem_available_bytes": 58564485120,
+      "accounted_pressure_bytes": 65614659584,
+      "committed_as_bytes": 128452665344,
+      "mlocked_bytes": 131072,
+      "unevictable_bytes": 3276800,
+      "meminfo_bytes": {
+        "MemTotal": 124179144704,
+        "MemFree": 4168413184,
+        "MemAvailable": 58564485120,
+        "Buffers": 352354304,
+        "Cached": 55867109376,
+        "SwapCached": 34344960,
+        "Active": 1637978112,
+        "Inactive": 60900442112,
+        "Active(anon)": 1620701184,
+        "Inactive(anon)": 5741973504,
+        "Active(file)": 17276928,
+        "Inactive(file)": 55158468608,
+        "Unevictable": 3276800,
+        "Mlocked": 131072,
+        "SwapTotal": 8589930496,
+        "SwapFree": 790528,
+        "Zswap": 0,
+        "Zswapped": 0,
+        "Dirty": 1323008,
+        "Writeback": 0,
+        "AnonPages": 6288441344,
+        "Mapped": 887070720,
+        "Shmem": 1043066880,
+        "KReclaimable": 1343295488,
+        "Slab": 2858221568,
+        "SReclaimable": 1343295488,
+        "SUnreclaim": 1514926080,
+        "KernelStack": 22593536,
+        "PageTables": 81575936,
+        "SecPageTables": 2392064,
+        "NFS_Unstable": 0,
+        "Bounce": 0,
+        "WritebackTmp": 0,
+        "CommitLimit": 70679502848,
+        "Committed_AS": 128452665344,
+        "VmallocTotal": 35184372087808,
+        "VmallocUsed": 328359936,
+        "VmallocChunk": 0,
+        "Percpu": 23068672,
+        "HardwareCorrupted": 0,
+        "AnonHugePages": 37748736,
+        "ShmemHugePages": 0,
+        "ShmemPmdMapped": 0,
+        "FileHugePages": 6291456,
+        "FilePmdMapped": 0,
+        "CmaTotal": 0,
+        "CmaFree": 3151609856,
+        "Unaccepted": 0,
+        "Balloon": 0,
+        "GPUActive": 51808903168,
+        "GPUReclaim": 0,
+        "Hugepagesize": 2097152,
+        "Hugetlb": 0,
+        "DirectMap4k": 309248000,
+        "DirectMap2M": 12436111360,
+        "DirectMap1G": 124554051584
+      },
+      "phase": "loading",
+      "worker_rss_bytes": [
+        1238401024,
+        1391276032,
+        496087040,
+        915079168
+      ],
+      "worker_pids": [
+        74805,
+        74875,
+        74981,
+        75083
+      ],
+      "cgroup_memory_current_bytes": 4334305280,
+      "cgroup_memory_peak_bytes": 11580276736,
+      "cgroup_memory_stat": {
+        "anon": 4200460288,
+        "file": 22433792,
+        "kernel": 91557888,
+        "kernel_stack": 2703360,
+        "pagetables": 52572160,
+        "sec_pagetables": 0,
+        "percpu": 3808,
+        "sock": 0,
+        "vmalloc": 0,
+        "shmem": 8192,
+        "zswap": 0,
+        "zswapped": 0,
+        "file_mapped": 22073344,
+        "file_dirty": 45056,
+        "file_writeback": 0,
+        "swapcached": 16211968,
+        "anon_thp": 0,
+        "file_thp": 0,
+        "shmem_thp": 0,
+        "inactive_anon": 3921793024,
+        "active_anon": 294785024,
+        "inactive_file": 19369984,
+        "active_file": 3002368,
+        "unevictable": 98304,
+        "slab_reclaimable": 20803672,
+        "slab_unreclaimable": 15355792,
+        "slab": 36159464,
+        "workingset_refault_anon": 6578,
+        "workingset_refault_file": 7729,
+        "workingset_activate_anon": 6483,
+        "workingset_activate_file": 208,
+        "workingset_restore_anon": 0,
+        "workingset_restore_file": 36,
+        "workingset_nodereclaim": 0,
+        "pgdemote_kswapd": 0,
+        "pgdemote_direct": 0,
+        "pgdemote_khugepaged": 0,
+        "pgdemote_proactive": 0,
+        "pgpromote_success": 0,
+        "pgscan": 4090210,
+        "pgsteal": 1957465,
+        "pswpin": 6574,
+        "pswpout": 1530074,
+        "pgscan_kswapd": 4031502,
+        "pgscan_direct": 58708,
+        "pgscan_khugepaged": 0,
+        "pgscan_proactive": 0,
+        "pgsteal_kswapd": 1915251,
+        "pgsteal_direct": 42214,
+        "pgsteal_khugepaged": 0,
+        "pgsteal_proactive": 0,
+        "pgfault": 4872438,
+        "pgmajfault": 16001,
+        "pgrefill": 1155298,
+        "pgactivate": 370603,
+        "pgdeactivate": 0,
+        "pglazyfree": 0,
+        "pglazyfreed": 0,
+        "swpin_zero": 4,
+        "swpout_zero": 15333,
+        "zswpin": 0,
+        "zswpout": 0,
+        "zswpwb": 0,
+        "thp_fault_alloc": 0,
+        "thp_collapse_alloc": 0,
+        "thp_swpout": 0,
+        "thp_swpout_fallback": 0,
+        "numa_pages_migrated": 0,
+        "numa_pte_updates": 0,
+        "numa_hint_faults": 0
+      },
+      "attribution_errors": [],
+      "accounting_errors": [],
+      "cgroup_path": "/sys/fs/cgroup/system.slice/docker-58158a36a73684995d8651b9f6006bdb04aef3bfa3c639b8090daa6ea87c17af.scope",
+      "vram_free_bytes_per_rank": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "cards": [
+        {
+          "pci_bdf": "0000:23:00.0",
+          "free_bytes": null,
+          "total_bytes": null,
+          "unavailable": "[Errno 2] No such file or directory: '/sys/class/drm/card3/device/mem_info_vram_total'"
+        },
+        {
+          "pci_bdf": "0000:27:00.0",
+          "free_bytes": null,
+          "total_bytes": null,
+          "unavailable": "[Errno 2] No such file or directory: '/sys/class/drm/card4/device/mem_info_vram_total'"
+        },
+        {
+          "pci_bdf": "0000:43:00.0",
+          "free_bytes": null,
+          "total_bytes": null,
+          "unavailable": "[Errno 2] No such file or directory: '/sys/class/drm/card0/device/mem_info_vram_total'"
+        },
+        {
+          "pci_bdf": "0000:47:00.0",
+          "free_bytes": null,
+          "total_bytes": null,
+          "unavailable": "[Errno 2] No such file or directory: '/sys/class/drm/card2/device/mem_info_vram_total'"
+        }
+      ]
+    },
+    "before_hash": {
+      "errors": [],
+      "process": {
+        "status": "Name:\tpython3\nUmask:\t0002\nState:\tR (running)\nTgid:\t73974\nNgid:\t0\nPid:\t73974\nPPid:\t3288\nTracerPid:\t0\nUid:\t1000\t1000\t1000\t1000\nGid:\t1000\t1000\t1000\t1000\nFDSize:\t128\nGroups:\t4 24 27 30 44 46 100 114 984 992 1000 \nNStgid:\t73974\nNSpid:\t73974\nNSpgid:\t73974\nNSsid:\t73974\nKthread:\t0\nVmPeak:\t  172324 kB\nVmSize:\t  104740 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t  156660 kB\nVmRSS:\t   91904 kB\nRssAnon:\t   80508 kB\nRssFile:\t   11396 kB\nRssShmem:\t       0 kB\nVmData:\t   82308 kB\nVmStk:\t     132 kB\nVmExe:\t    2956 kB\nVmLib:\t    6712 kB\nVmPTE:\t     260 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t       0 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nuntag_mask:\t0xffffffffffffffff\nThreads:\t1\nSigQ:\t0/477915\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000001001000\nSigCgt:\t0000000000000002\nCapInh:\t0000000000000000\nCapPrm:\t0000000000000000\nCapEff:\t0000000000000000\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nSpeculationIndirectBranch:\tconditional enabled\nCpus_allowed:\tffffffff\nCpus_allowed_list:\t0-31\nMems_allowed:\t00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000001\nMems_allowed_list:\t0\nvoluntary_ctxt_switches:\t80\nnonvoluntary_ctxt_switches:\t29\nx86_Thread_features:\t\nx86_Thread_features_locked:\t\n",
+        "smaps_rollup": "00400000-7fff29fab000 ---p 00000000 00:00 0                              [rollup]\nRss:               91904 kB\nPss:               84531 kB\nPss_Dirty:         80508 kB\nPss_Anon:          80508 kB\nPss_File:           4023 kB\nPss_Shmem:             0 kB\nShared_Clean:      10236 kB\nShared_Dirty:          0 kB\nPrivate_Clean:      1160 kB\nPrivate_Dirty:     80508 kB\nReferenced:        91904 kB\nAnonymous:         80508 kB\nKSM:                   0 kB\nLazyFree:              0 kB\nAnonHugePages:         0 kB\nShmemPmdMapped:        0 kB\nFilePmdMapped:         0 kB\nShared_Hugetlb:        0 kB\nPrivate_Hugetlb:       0 kB\nSwap:                  0 kB\nSwapPss:               0 kB\nLocked:                0 kB\n",
+        "stat": "73974 (python3) R 3288 73974 73974 0 -1 4194304 46007 6208 0 0 175 28 11 12 39 19 1 0 997675 107253760 22572 18446744073709551615 4325376 7352253 140733897673472 0 0 0 0 16781312 2 0 0 0 17 13 0 0 0 0 0 10653128 12216448 814837760 140733897681559 140733897682012 140733897682012 140733897682919 0\n"
+      },
+      "cgroup": {
+        "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/flashnext-screen1-20261011T002709.service",
+        "memory.current": "87097344\n",
+        "memory.peak": "156475392\n",
+        "memory.stat": "anon 82440192\nfile 569344\nkernel 1134592\nkernel_stack 0\npagetables 585728\nsec_pagetables 0\npercpu 1088\nsock 0\nvmalloc 0\nshmem 0\nzswap 0\nzswapped 0\nfile_mapped 0\nfile_dirty 425984\nfile_writeback 0\nswapcached 0\nanon_thp 0\nfile_thp 0\nshmem_thp 0\ninactive_anon 54423552\nactive_anon 28016640\ninactive_file 544768\nactive_file 0\nunevictable 0\nslab_reclaimable 306880\nslab_unreclaimable 213400\nslab 520280\nworkingset_refault_anon 0\nworkingset_refault_file 0\nworkingset_activate_anon 0\nworkingset_activate_file 0\nworkingset_restore_anon 0\nworkingset_restore_file 0\nworkingset_nodereclaim 0\npgdemote_kswapd 0\npgdemote_direct 0\npgdemote_khugepaged 0\npgdemote_proactive 0\npgpromote_success 0\npgscan 34\npgsteal 0\npswpin 0\npswpout 0\npgscan_kswapd 34\npgscan_direct 0\npgscan_khugepaged 0\npgscan_proactive 0\npgsteal_kswapd 0\npgsteal_direct 0\npgsteal_khugepaged 0\npgsteal_proactive 0\npgfault 51738\npgmajfault 0\npgrefill 0\npgactivate 34\npgdeactivate 0\npglazyfree 0\npglazyfreed 0\nswpin_zero 0\nswpout_zero 0\nzswpin 0\nzswpout 0\nzswpwb 0\nthp_fault_alloc 0\nthp_collapse_alloc 0\nthp_swpout 0\nthp_swpout_fallback 0\nnuma_pages_migrated 0\nnuma_pte_updates 0\nnuma_hint_faults 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0\n"
+      },
+      "meminfo": "MemTotal:       121268696 kB\nMemFree:         1908072 kB\nMemAvailable:   113663440 kB\nBuffers:        13878496 kB\nCached:         97377204 kB\nSwapCached:       143356 kB\nActive:         88885148 kB\nInactive:       25514476 kB\nActive(anon):    3035532 kB\nInactive(anon):   111840 kB\nActive(file):   85849616 kB\nInactive(file): 25402636 kB\nUnevictable:        3104 kB\nMlocked:              32 kB\nSwapTotal:       8388604 kB\nSwapFree:        8133928 kB\nZswap:                 0 kB\nZswapped:              0 kB\nDirty:           1360472 kB\nWriteback:          1800 kB\nAnonPages:       3136752 kB\nMapped:           877972 kB\nShmem:              3416 kB\nKReclaimable:    1680936 kB\nSlab:            2124620 kB\nSReclaimable:    1680936 kB\nSUnreclaim:       443684 kB\nKernelStack:       15808 kB\nPageTables:        24428 kB\nSecPageTables:      2336 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    69022952 kB\nCommitted_AS:    8259388 kB\nVmallocTotal:   34359738367 kB\nVmallocUsed:      117364 kB\nVmallocChunk:          0 kB\nPercpu:            22528 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:     36864 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:      8192 kB\nFilePmdMapped:         0 kB\nCmaTotal:              0 kB\nCmaFree:          330928 kB\nUnaccepted:            0 kB\nBalloon:               0 kB\nGPUActive:           112 kB\nGPUReclaim:            0 kB\nHugePages_Total:       0\nHugePages_Free:        0\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:               0 kB\nDirectMap4k:      291760 kB\nDirectMap2M:     6912000 kB\nDirectMap1G:    126877696 kB\n",
+      "mem_total_bytes": 124179144704,
+      "mem_available_bytes": 116391362560,
+      "accounted_pressure_bytes": 7787782144,
+      "snapshot_complete": true
+    },
+    "after_hash": {
+      "errors": [],
+      "process": {
+        "status": "Name:\tpython3\nUmask:\t0002\nState:\tR (running)\nTgid:\t73974\nNgid:\t0\nPid:\t73974\nPPid:\t3288\nTracerPid:\t0\nUid:\t1000\t1000\t1000\t1000\nGid:\t1000\t1000\t1000\t1000\nFDSize:\t128\nGroups:\t4 24 27 30 44 46 100 114 984 992 1000 \nNStgid:\t73974\nNSpid:\t73974\nNSpgid:\t73974\nNSsid:\t73974\nKthread:\t0\nVmPeak:\t  172324 kB\nVmSize:\t  104740 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t  156660 kB\nVmRSS:\t   91904 kB\nRssAnon:\t   80508 kB\nRssFile:\t   11396 kB\nRssShmem:\t       0 kB\nVmData:\t   82308 kB\nVmStk:\t     132 kB\nVmExe:\t    2956 kB\nVmLib:\t    6712 kB\nVmPTE:\t     260 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t       0 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nuntag_mask:\t0xffffffffffffffff\nThreads:\t1\nSigQ:\t0/477915\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000001001000\nSigCgt:\t0000000000000002\nCapInh:\t0000000000000000\nCapPrm:\t0000000000000000\nCapEff:\t0000000000000000\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nSpeculationIndirectBranch:\tconditional enabled\nCpus_allowed:\tffffffff\nCpus_allowed_list:\t0-31\nMems_allowed:\t00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000001\nMems_allowed_list:\t0\nvoluntary_ctxt_switches:\t82\nnonvoluntary_ctxt_switches:\t29\nx86_Thread_features:\t\nx86_Thread_features_locked:\t\n",
+        "smaps_rollup": "00400000-7fff29fab000 ---p 00000000 00:00 0                              [rollup]\nRss:               91904 kB\nPss:               84531 kB\nPss_Dirty:         80508 kB\nPss_Anon:          80508 kB\nPss_File:           4023 kB\nPss_Shmem:             0 kB\nShared_Clean:      10236 kB\nShared_Dirty:          0 kB\nPrivate_Clean:      1160 kB\nPrivate_Dirty:     80508 kB\nReferenced:        91904 kB\nAnonymous:         80508 kB\nKSM:                   0 kB\nLazyFree:              0 kB\nAnonHugePages:         0 kB\nShmemPmdMapped:        0 kB\nFilePmdMapped:         0 kB\nShared_Hugetlb:        0 kB\nPrivate_Hugetlb:       0 kB\nSwap:                  0 kB\nSwapPss:               0 kB\nLocked:                0 kB\n",
+        "stat": "73974 (python3) R 3288 73974 73974 0 -1 4194304 46007 1107797 0 0 175 28 8584 2760 39 19 1 0 997675 107253760 22572 18446744073709551615 4325376 7352253 140733897673472 0 0 0 0 16781312 2 0 0 0 17 13 0 0 0 0 0 10653128 12216448 814837760 140733897681559 140733897682012 140733897682012 140733897682919 0\n"
+      },
+      "cgroup": {
+        "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/flashnext-screen1-20261011T002709.service",
+        "memory.current": "32309870592\n",
+        "memory.peak": "32485036032\n",
+        "memory.stat": "anon 82440192\nfile 32217178112\nkernel 6336512\nkernel_stack 0\npagetables 409600\nsec_pagetables 0\npercpu 1088\nsock 0\nvmalloc 0\nshmem 0\nzswap 0\nzswapped 0\nfile_mapped 0\nfile_dirty 4096\nfile_writeback 0\nswapcached 0\nanon_thp 0\nfile_thp 0\nshmem_thp 0\ninactive_anon 40157184\nactive_anon 42283008\ninactive_file 32217178112\nactive_file 0\nunevictable 0\nslab_reclaimable 5846936\nslab_unreclaimable 55808\nslab 5902744\nworkingset_refault_anon 0\nworkingset_refault_file 0\nworkingset_activate_anon 0\nworkingset_activate_file 0\nworkingset_restore_anon 0\nworkingset_restore_file 0\nworkingset_nodereclaim 0\npgdemote_kswapd 0\npgdemote_direct 0\npgdemote_khugepaged 0\npgdemote_proactive 0\npgpromote_success 0\npgscan 37427185\npgsteal 37427045\npswpin 0\npswpout 0\npgscan_kswapd 37402011\npgscan_direct 25174\npgscan_khugepaged 0\npgscan_proactive 0\npgsteal_kswapd 37401967\npgsteal_direct 25078\npgsteal_khugepaged 0\npgsteal_proactive 0\npgfault 1153327\npgmajfault 0\npgrefill 1\npgactivate 140\npgdeactivate 0\npglazyfree 0\npglazyfreed 0\nswpin_zero 0\nswpout_zero 0\nzswpin 0\nzswpout 0\nzswpwb 0\nthp_fault_alloc 0\nthp_collapse_alloc 0\nthp_swpout 0\nthp_swpout_fallback 0\nnuma_pages_migrated 0\nnuma_pte_updates 0\nnuma_hint_faults 0\n",
+        "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0\n"
+      },
+      "meminfo": "MemTotal:       121268696 kB\nMemFree:        10122160 kB\nMemAvailable:   112098852 kB\nBuffers:         7841492 kB\nCached:         93730784 kB\nSwapCached:       142456 kB\nActive:         56190580 kB\nInactive:       50373048 kB\nActive(anon):    2388996 kB\nInactive(anon):  2605776 kB\nActive(file):   53801584 kB\nInactive(file): 47767272 kB\nUnevictable:        3104 kB\nMlocked:              32 kB\nSwapTotal:       8388604 kB\nSwapFree:        8133916 kB\nZswap:                 0 kB\nZswapped:              0 kB\nDirty:               788 kB\nWriteback:            32 kB\nAnonPages:       4981984 kB\nMapped:           854972 kB\nShmem:              3416 kB\nKReclaimable:    1573368 kB\nSlab:            2016720 kB\nSReclaimable:    1573368 kB\nSUnreclaim:       443352 kB\nKernelStack:       15296 kB\nPageTables:        27792 kB\nSecPageTables:      2336 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    69022952 kB\nCommitted_AS:    9111540 kB\nVmallocTotal:   34359738367 kB\nVmallocUsed:      117092 kB\nVmallocChunk:          0 kB\nPercpu:            22528 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:     45056 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:      6144 kB\nFilePmdMapped:         0 kB\nCmaTotal:              0 kB\nCmaFree:         1025648 kB\nUnaccepted:            0 kB\nBalloon:               0 kB\nGPUActive:           112 kB\nGPUReclaim:            0 kB\nHugePages_Total:       0\nHugePages_Free:        0\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:               0 kB\nDirectMap4k:      291760 kB\nDirectMap2M:     6912000 kB\nDirectMap1G:    126877696 kB\n",
+      "mem_total_bytes": 124179144704,
+      "mem_available_bytes": 114789224448,
+      "accounted_pressure_bytes": 9389920256,
+      "snapshot_complete": true
+    },
+    "max_sampling_gap_seconds": 1.6436430899993866
+  },
+  "samples_near_stop": [
+    {
+      "monotonic": 10295.485311218,
+      "phase": "loading",
+      "mem_available_bytes": 59381313536,
+      "accounted_pressure_bytes": 64797831168,
+      "accounting_errors": []
+    },
+    {
+      "monotonic": 10295.98537227,
+      "phase": "loading",
+      "mem_available_bytes": 59109363712,
+      "accounted_pressure_bytes": 65069780992,
+      "accounting_errors": []
+    },
+    {
+      "monotonic": 10296.485453248,
+      "phase": "loading",
+      "mem_available_bytes": 59134758912,
+      "accounted_pressure_bytes": 65044385792,
+      "accounting_errors": []
+    },
+    {
+      "monotonic": 10296.985537644,
+      "phase": "loading",
+      "mem_available_bytes": 59131879424,
+      "accounted_pressure_bytes": 65047265280,
+      "accounting_errors": []
+    },
+    {
+      "monotonic": 10297.485636617,
+      "phase": "loading",
+      "mem_available_bytes": 58864521216,
+      "accounted_pressure_bytes": 65314623488,
+      "accounting_errors": []
+    },
+    {
+      "monotonic": 10297.985742843,
+      "phase": "loading",
+      "mem_available_bytes": 58564485120,
+      "accounted_pressure_bytes": 65614659584,
+      "accounting_errors": []
+    },
+    {
+      "monotonic": 10299.629385933,
+      "phase": "shutdown",
+      "mem_available_bytes": 58571173888,
+      "accounted_pressure_bytes": 65607970816,
+      "accounting_errors": []
+    },
+    {
+      "monotonic": 10300.129618135,
+      "phase": "shutdown",
+      "mem_available_bytes": 59576135680,
+      "accounted_pressure_bytes": 64603009024,
+      "accounting_errors": []
+    },
+    {
+      "monotonic": 10300.629716186,
+      "phase": "shutdown",
+      "mem_available_bytes": 59246288896,
+      "accounted_pressure_bytes": 64932855808,
+      "accounting_errors": []
+    },
+    {
+      "monotonic": 10301.1297949,
+      "phase": "shutdown",
+      "mem_available_bytes": 58986688512,
+      "accounted_pressure_bytes": 65192456192,
+      "accounting_errors": []
+    },
+    {
+      "monotonic": 10301.629910664,
+      "phase": "shutdown",
+      "mem_available_bytes": 58831630336,
+      "accounted_pressure_bytes": 65347514368,
+      "accounting_errors": []
+    },
+    {
+      "monotonic": 10302.129982114,
+      "phase": "shutdown",
+      "mem_available_bytes": 71793508352,
+      "accounted_pressure_bytes": 52385636352,
+      "accounting_errors": []
+    },
+    {
+      "monotonic": 10302.630137512,
+      "phase": "shutdown",
+      "mem_available_bytes": 83460337664,
+      "accounted_pressure_bytes": 40718807040,
+      "accounting_errors": []
+    },
+    {
+      "monotonic": 10303.130118342,
+      "phase": "shutdown",
+      "mem_available_bytes": 84129693696,
+      "accounted_pressure_bytes": 40049451008,
+      "accounting_errors": []
+    },
+    {
+      "monotonic": 10303.630230749,
+      "phase": "shutdown",
+      "mem_available_bytes": 83975114752,
+      "accounted_pressure_bytes": 40204029952,
+      "accounting_errors": []
+    }
+  ],
+  "loaders": [
+    {
+      "path": "loader-1.jsonl",
+      "events": {
+        "cancel_requested": 1,
+        "children_drained": 1
+      },
+      "last_admitted": null,
+      "failures_and_cancellations": [
+        {
+          "line": 1,
+          "event": "cancel_requested",
+          "monotonic": 10319.295394714,
+          "pid": 1,
+          "reason": "runtime shutdown"
+        }
+      ],
+      "teardown": []
+    },
+    {
+      "path": "loader-110.jsonl",
+      "events": {
+        "load_begin": 1,
+        "admitted": 142,
+        "staging_reserved": 142,
+        "staging_released": 142,
+        "v5_allocated": 92,
+        "load_failed": 1,
+        "cancel_requested": 3,
+        "load_drained": 1,
+        "rank_teardown_complete": 1
+      },
+      "last_admitted": {
+        "MemAvailable": 59247624192,
+        "MemTotal": 124179144704,
+        "available_floor_bytes": 28179144704,
+        "calibrate_load": true,
+        "event": "admitted",
+        "label": "v5_final_host_rows",
+        "monotonic": 10297.205557462,
+        "next_bytes": 98304000,
+        "pid": 110,
+        "pressure_limit_bytes": 96000000000
+      },
+      "failures_and_cancellations": [
+        {
+          "line": 520,
+          "error": "Screen 1b cancellation latched; no new allocations/copies; first stop: controller completion or failure",
+          "error_type": "LoadCancelled",
+          "event": "load_failed",
+          "monotonic": 10299.663194943,
+          "pid": 110
+        },
+        {
+          "line": 521,
+          "event": "cancel_requested",
+          "monotonic": 10299.6637361,
+          "pid": 110,
+          "reason": "parent exit or controller cancellation"
+        },
+        {
+          "line": 522,
+          "event": "cancel_requested",
+          "monotonic": 10299.664160638,
+          "pid": 110,
+          "reason": "loader failed or cancelled"
+        },
+        {
+          "line": 524,
+          "event": "cancel_requested",
+          "monotonic": 10303.948508863,
+          "pid": 110,
+          "reason": "ordered rank release"
+        }
+      ],
+      "teardown": [
+        {
+          "event": "rank_teardown_complete",
+          "monotonic": 10307.16128789,
+          "native_queue_destruction_verified": false,
+          "pid": 110,
+          "rank": 2,
+          "schema": "screen1b.teardown.v1",
+          "status": "complete",
+          "timestamps": {
+            "async_output_drained": {
+              "monotonic_ns": 10303948651692,
+              "unix_ns": 1791693157131095209,
+              "utc": "2026-10-11T04:32:37.131092+00:00"
+            },
+            "complete": {
+              "monotonic_ns": 10307161267732,
+              "unix_ns": 1791693160343711330,
+              "utc": "2026-10-11T04:32:40.343708+00:00"
+            },
+            "device_cache_empty": {
+              "monotonic_ns": 10307160848534,
+              "unix_ns": 1791693160343291020,
+              "utc": "2026-10-11T04:32:40.343265+00:00"
+            },
+            "distributed_released": {
+              "monotonic_ns": 10306758261467,
+              "unix_ns": 1791693159940704223,
+              "utc": "2026-10-11T04:32:39.940681+00:00"
+            },
+            "drained": {
+              "monotonic_ns": 10303949008723,
+              "unix_ns": 1791693157131451990,
+              "utc": "2026-10-11T04:32:37.131438+00:00"
+            },
+            "expert_tables_released": {
+              "monotonic_ns": 10304687563234,
+              "unix_ns": 1791693157870005900,
+              "utc": "2026-10-11T04:32:37.869986+00:00"
+            },
+            "final_sync": {
+              "monotonic_ns": 10306758400838,
+              "unix_ns": 1791693159940844416,
+              "utc": "2026-10-11T04:32:39.940841+00:00"
+            },
+            "graphs_released": {
+              "monotonic_ns": 10304316202854,
+              "unix_ns": 1791693157498645670,
+              "utc": "2026-10-11T04:32:37.498628+00:00"
+            },
+            "host_cache_empty": {
+              "monotonic_ns": 10307161136526,
+              "unix_ns": 1791693160343579973,
+              "utc": "2026-10-11T04:32:40.343573+00:00"
+            },
+            "pinned_released": {
+              "monotonic_ns": 10305546792175,
+              "unix_ns": 1791693158729234750,
+              "utc": "2026-10-11T04:32:38.729212+00:00"
+            },
+            "ple_closed": {
+              "monotonic_ns": 10305068215996,
+              "unix_ns": 1791693158250659083,
+              "utc": "2026-10-11T04:32:38.250648+00:00"
+            },
+            "post_cache_sync": {
+              "monotonic_ns": 10307161263925,
+              "unix_ns": 1791693160343707433,
+              "utc": "2026-10-11T04:32:40.343703+00:00"
+            },
+            "queues_closed": {
+              "monotonic_ns": 10303948657302,
+              "unix_ns": 1791693157131100820,
+              "utc": "2026-10-11T04:32:37.131097+00:00"
+            },
+            "registries_cleared": {
+              "monotonic_ns": 10305933331307,
+              "unix_ns": 1791693159115774164,
+              "utc": "2026-10-11T04:32:39.115756+00:00"
+            },
+            "submissions_stopped": {
+              "monotonic_ns": 10303948645620,
+              "unix_ns": 1791693157131088477,
+              "utc": "2026-10-11T04:32:37.131072+00:00"
+            },
+            "uva_released": {
+              "monotonic_ns": 10305065715297,
+              "unix_ns": 1791693158248158143,
+              "utc": "2026-10-11T04:32:38.248139+00:00"
+            },
+            "worker_released": {
+              "monotonic_ns": 10306320928257,
+              "unix_ns": 1791693159503370903,
+              "utc": "2026-10-11T04:32:39.503351+00:00"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "path": "loader-127.jsonl",
+      "events": {
+        "load_begin": 1,
+        "admitted": 188,
+        "staging_reserved": 187,
+        "staging_released": 187,
+        "v5_allocated": 96,
+        "PLE_mmap_bound": 1,
+        "PLE_index_complete": 1,
+        "load_failed": 1,
+        "cancel_requested": 3,
+        "load_drained": 1,
+        "rank_teardown_complete": 1
+      },
+      "last_admitted": {
+        "MemAvailable": 58571198464,
+        "MemTotal": 124179144704,
+        "available_floor_bytes": 28179144704,
+        "calibrate_load": true,
+        "event": "admitted",
+        "label": "copy_sequence",
+        "monotonic": 10297.813763608,
+        "next_bytes": 0,
+        "pid": 127,
+        "pressure_limit_bytes": 96000000000
+      },
+      "failures_and_cancellations": [
+        {
+          "line": 662,
+          "error": "Screen 1b cancellation latched; no new allocations/copies; first stop: controller completion or failure",
+          "error_type": "LoadCancelled",
+          "event": "load_failed",
+          "monotonic": 10299.637313339,
+          "pid": 127
+        },
+        {
+          "line": 663,
+          "event": "cancel_requested",
+          "monotonic": 10299.638023784,
+          "pid": 127,
+          "reason": "loader failed or cancelled"
+        },
+        {
+          "line": 665,
+          "event": "cancel_requested",
+          "monotonic": 10304.031082136,
+          "pid": 127,
+          "reason": "parent exit or controller cancellation"
+        },
+        {
+          "line": 666,
+          "event": "cancel_requested",
+          "monotonic": 10304.42962764,
+          "pid": 127,
+          "reason": "ordered rank release"
+        }
+      ],
+      "teardown": [
+        {
+          "event": "rank_teardown_complete",
+          "monotonic": 10307.716833331,
+          "native_queue_destruction_verified": false,
+          "pid": 127,
+          "rank": 3,
+          "schema": "screen1b.teardown.v1",
+          "status": "complete",
+          "timestamps": {
+            "async_output_drained": {
+              "monotonic_ns": 10304429772652,
+              "unix_ns": 1791693157612216170,
+              "utc": "2026-10-11T04:32:37.612213+00:00"
+            },
+            "complete": {
+              "monotonic_ns": 10307716813093,
+              "unix_ns": 1791693160899256721,
+              "utc": "2026-10-11T04:32:40.899253+00:00"
+            },
+            "device_cache_empty": {
+              "monotonic_ns": 10307716423791,
+              "unix_ns": 1791693160898866437,
+              "utc": "2026-10-11T04:32:40.898845+00:00"
+            },
+            "distributed_released": {
+              "monotonic_ns": 10307289479163,
+              "unix_ns": 1791693160471922060,
+              "utc": "2026-10-11T04:32:40.471904+00:00"
+            },
+            "drained": {
+              "monotonic_ns": 10304430140413,
+              "unix_ns": 1791693157612583901,
+              "utc": "2026-10-11T04:32:37.612578+00:00"
+            },
+            "expert_tables_released": {
+              "monotonic_ns": 10305193334315,
+              "unix_ns": 1791693158375776921,
+              "utc": "2026-10-11T04:32:38.375757+00:00"
+            },
+            "final_sync": {
+              "monotonic_ns": 10307289604559,
+              "unix_ns": 1791693160472048107,
+              "utc": "2026-10-11T04:32:40.472044+00:00"
+            },
+            "graphs_released": {
+              "monotonic_ns": 10304806206386,
+              "unix_ns": 1791693157988649152,
+              "utc": "2026-10-11T04:32:37.988623+00:00"
+            },
+            "host_cache_empty": {
+              "monotonic_ns": 10307716646369,
+              "unix_ns": 1791693160899089727,
+              "utc": "2026-10-11T04:32:40.899080+00:00"
+            },
+            "pinned_released": {
+              "monotonic_ns": 10305999519491,
+              "unix_ns": 1791693159181962207,
+              "utc": "2026-10-11T04:32:39.181941+00:00"
+            },
+            "ple_closed": {
+              "monotonic_ns": 10305614144285,
+              "unix_ns": 1791693158796587062,
+              "utc": "2026-10-11T04:32:38.796569+00:00"
+            },
+            "post_cache_sync": {
+              "monotonic_ns": 10307716807552,
+              "unix_ns": 1791693160899251020,
+              "utc": "2026-10-11T04:32:40.899245+00:00"
+            },
+            "queues_closed": {
+              "monotonic_ns": 10304429777030,
+              "unix_ns": 1791693157612220618,
+              "utc": "2026-10-11T04:32:37.612218+00:00"
+            },
+            "registries_cleared": {
+              "monotonic_ns": 10306478329118,
+              "unix_ns": 1791693159660771904,
+              "utc": "2026-10-11T04:32:39.660751+00:00"
+            },
+            "submissions_stopped": {
+              "monotonic_ns": 10304429766631,
+              "unix_ns": 1791693157612209407,
+              "utc": "2026-10-11T04:32:37.612192+00:00"
+            },
+            "uva_released": {
+              "monotonic_ns": 10305574178917,
+              "unix_ns": 1791693158756621643,
+              "utc": "2026-10-11T04:32:38.756602+00:00"
+            },
+            "worker_released": {
+              "monotonic_ns": 10306871473512,
+              "unix_ns": 1791693160053916239,
+              "utc": "2026-10-11T04:32:40.053893+00:00"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "path": "loader-69.jsonl",
+      "events": {
+        "cancel_requested": 4,
+        "children_drained": 2
+      },
+      "last_admitted": null,
+      "failures_and_cancellations": [
+        {
+          "line": 1,
+          "event": "cancel_requested",
+          "monotonic": 10299.66302338,
+          "pid": 69,
+          "reason": "engine cancellation"
+        },
+        {
+          "line": 2,
+          "event": "cancel_requested",
+          "monotonic": 10300.487751601,
+          "pid": 69,
+          "reason": "runtime shutdown"
+        },
+        {
+          "line": 4,
+          "event": "cancel_requested",
+          "monotonic": 10312.48265723,
+          "pid": 69,
+          "reason": "executor shutdown"
+        },
+        {
+          "line": 5,
+          "event": "cancel_requested",
+          "monotonic": 10312.482813564,
+          "pid": 69,
+          "reason": "runtime shutdown"
+        }
+      ],
+      "teardown": []
+    },
+    {
+      "path": "loader-84.jsonl",
+      "events": {
+        "load_begin": 1,
+        "admitted": 144,
+        "staging_reserved": 144,
+        "staging_released": 144,
+        "v5_allocated": 93,
+        "load_failed": 1,
+        "cancel_requested": 3,
+        "load_drained": 1,
+        "rank_teardown_complete": 1
+      },
+      "last_admitted": {
+        "MemAvailable": 59160727552,
+        "MemTotal": 124179144704,
+        "available_floor_bytes": 28179144704,
+        "calibrate_load": true,
+        "event": "admitted",
+        "label": "v5_final_host_rows",
+        "monotonic": 10297.335616455,
+        "next_bytes": 216268800,
+        "pid": 84,
+        "pressure_limit_bytes": 96000000000
+      },
+      "failures_and_cancellations": [
+        {
+          "line": 527,
+          "error": "Screen 1b cancellation latched; no new allocations/copies; first stop: controller completion or failure",
+          "error_type": "LoadCancelled",
+          "event": "load_failed",
+          "monotonic": 10299.654664594,
+          "pid": 84
+        },
+        {
+          "line": 528,
+          "event": "cancel_requested",
+          "monotonic": 10299.654931726,
+          "pid": 84,
+          "reason": "loader failed or cancelled"
+        },
+        {
+          "line": 530,
+          "event": "cancel_requested",
+          "monotonic": 10300.469547234,
+          "pid": 84,
+          "reason": "parent exit or controller cancellation"
+        },
+        {
+          "line": 531,
+          "event": "cancel_requested",
+          "monotonic": 10300.487515528,
+          "pid": 84,
+          "reason": "ordered rank release"
+        }
+      ],
+      "teardown": [
+        {
+          "event": "rank_teardown_complete",
+          "monotonic": 10307.687096493,
+          "native_queue_destruction_verified": false,
+          "pid": 84,
+          "rank": 0,
+          "schema": "screen1b.teardown.v1",
+          "status": "complete",
+          "timestamps": {
+            "async_output_drained": {
+              "monotonic_ns": 10300488121917,
+              "unix_ns": 1791693153670565445,
+              "utc": "2026-10-11T04:32:33.670562+00:00"
+            },
+            "complete": {
+              "monotonic_ns": 10307687077657,
+              "unix_ns": 1791693160869521275,
+              "utc": "2026-10-11T04:32:40.869518+00:00"
+            },
+            "device_cache_empty": {
+              "monotonic_ns": 10307686890245,
+              "unix_ns": 1791693160869332871,
+              "utc": "2026-10-11T04:32:40.869309+00:00"
+            },
+            "distributed_released": {
+              "monotonic_ns": 10307283080269,
+              "unix_ns": 1791693160465523146,
+              "utc": "2026-10-11T04:32:40.465504+00:00"
+            },
+            "drained": {
+              "monotonic_ns": 10300488580028,
+              "unix_ns": 1791693153671023335,
+              "utc": "2026-10-11T04:32:33.671017+00:00"
+            },
+            "expert_tables_released": {
+              "monotonic_ns": 10301244686782,
+              "unix_ns": 1791693154427129448,
+              "utc": "2026-10-11T04:32:34.427110+00:00"
+            },
+            "final_sync": {
+              "monotonic_ns": 10307283209252,
+              "unix_ns": 1791693160465652789,
+              "utc": "2026-10-11T04:32:40.465648+00:00"
+            },
+            "graphs_released": {
+              "monotonic_ns": 10300864147784,
+              "unix_ns": 1791693154046590691,
+              "utc": "2026-10-11T04:32:34.046570+00:00"
+            },
+            "host_cache_empty": {
+              "monotonic_ns": 10307686950789,
+              "unix_ns": 1791693160869394357,
+              "utc": "2026-10-11T04:32:40.869390+00:00"
+            },
+            "pinned_released": {
+              "monotonic_ns": 10302074075931,
+              "unix_ns": 1791693155256518657,
+              "utc": "2026-10-11T04:32:35.256497+00:00"
+            },
+            "ple_closed": {
+              "monotonic_ns": 10301629649062,
+              "unix_ns": 1791693154812092319,
+              "utc": "2026-10-11T04:32:34.812084+00:00"
+            },
+            "post_cache_sync": {
+              "monotonic_ns": 10307687073159,
+              "unix_ns": 1791693160869516647,
+              "utc": "2026-10-11T04:32:40.869512+00:00"
+            },
+            "queues_closed": {
+              "monotonic_ns": 10300488126245,
+              "unix_ns": 1791693153670569833,
+              "utc": "2026-10-11T04:32:33.670567+00:00"
+            },
+            "registries_cleared": {
+              "monotonic_ns": 10302438167773,
+              "unix_ns": 1791693155620610580,
+              "utc": "2026-10-11T04:32:35.620594+00:00"
+            },
+            "submissions_stopped": {
+              "monotonic_ns": 10300488114143,
+              "unix_ns": 1791693153670557159,
+              "utc": "2026-10-11T04:32:33.670222+00:00"
+            },
+            "uva_released": {
+              "monotonic_ns": 10301627353388,
+              "unix_ns": 1791693154809796114,
+              "utc": "2026-10-11T04:32:34.809778+00:00"
+            },
+            "worker_released": {
+              "monotonic_ns": 10302866670850,
+              "unix_ns": 1791693156049113496,
+              "utc": "2026-10-11T04:32:36.049087+00:00"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "path": "loader-93.jsonl",
+      "events": {
+        "load_begin": 1,
+        "admitted": 133,
+        "staging_reserved": 133,
+        "staging_released": 133,
+        "v5_allocated": 86,
+        "load_failed": 1,
+        "cancel_requested": 3,
+        "load_drained": 1,
+        "rank_teardown_complete": 1
+      },
+      "last_admitted": {
+        "MemAvailable": 58737967104,
+        "MemTotal": 124179144704,
+        "available_floor_bytes": 28179144704,
+        "calibrate_load": true,
+        "event": "admitted",
+        "label": "v5_final_host_rows",
+        "monotonic": 10297.599932339,
+        "next_bytes": 85196800,
+        "pid": 93,
+        "pressure_limit_bytes": 96000000000
+      },
+      "failures_and_cancellations": [
+        {
+          "line": 487,
+          "error": "Screen 1b cancellation latched; no new allocations/copies; first stop: controller completion or failure",
+          "error_type": "LoadCancelled",
+          "event": "load_failed",
+          "monotonic": 10299.642714749,
+          "pid": 93
+        },
+        {
+          "line": 488,
+          "event": "cancel_requested",
+          "monotonic": 10299.642990767,
+          "pid": 93,
+          "reason": "loader failed or cancelled"
+        },
+        {
+          "line": 490,
+          "event": "cancel_requested",
+          "monotonic": 10300.68401082,
+          "pid": 93,
+          "reason": "parent exit or controller cancellation"
+        },
+        {
+          "line": 491,
+          "event": "cancel_requested",
+          "monotonic": 10301.0703675,
+          "pid": 93,
+          "reason": "ordered rank release"
+        }
+      ],
+      "teardown": [
+        {
+          "event": "rank_teardown_complete",
+          "monotonic": 10304.240135266,
+          "native_queue_destruction_verified": false,
+          "pid": 93,
+          "rank": 1,
+          "schema": "screen1b.teardown.v1",
+          "status": "complete",
+          "timestamps": {
+            "async_output_drained": {
+              "monotonic_ns": 10301070479541,
+              "unix_ns": 1791693154252923099,
+              "utc": "2026-10-11T04:32:34.252920+00:00"
+            },
+            "complete": {
+              "monotonic_ns": 10304240115539,
+              "unix_ns": 1791693157422559157,
+              "utc": "2026-10-11T04:32:37.422556+00:00"
+            },
+            "device_cache_empty": {
+              "monotonic_ns": 10304239760141,
+              "unix_ns": 1791693157422202917,
+              "utc": "2026-10-11T04:32:37.422178+00:00"
+            },
+            "distributed_released": {
+              "monotonic_ns": 10303876790297,
+              "unix_ns": 1791693157059232923,
+              "utc": "2026-10-11T04:32:37.059214+00:00"
+            },
+            "drained": {
+              "monotonic_ns": 10301070738618,
+              "unix_ns": 1791693154253182115,
+              "utc": "2026-10-11T04:32:34.253176+00:00"
+            },
+            "expert_tables_released": {
+              "monotonic_ns": 10301843795743,
+              "unix_ns": 1791693155026238500,
+              "utc": "2026-10-11T04:32:35.026220+00:00"
+            },
+            "final_sync": {
+              "monotonic_ns": 10303876954656,
+              "unix_ns": 1791693157059397933,
+              "utc": "2026-10-11T04:32:37.059392+00:00"
+            },
+            "graphs_released": {
+              "monotonic_ns": 10301441027625,
+              "unix_ns": 1791693154623470411,
+              "utc": "2026-10-11T04:32:34.623443+00:00"
+            },
+            "host_cache_empty": {
+              "monotonic_ns": 10304239963132,
+              "unix_ns": 1791693157422406650,
+              "utc": "2026-10-11T04:32:37.422401+00:00"
+            },
+            "pinned_released": {
+              "monotonic_ns": 10302657742264,
+              "unix_ns": 1791693155840184689,
+              "utc": "2026-10-11T04:32:35.840161+00:00"
+            },
+            "ple_closed": {
+              "monotonic_ns": 10302210343851,
+              "unix_ns": 1791693155392787168,
+              "utc": "2026-10-11T04:32:35.392776+00:00"
+            },
+            "post_cache_sync": {
+              "monotonic_ns": 10304240111762,
+              "unix_ns": 1791693157422555309,
+              "utc": "2026-10-11T04:32:37.422550+00:00"
+            },
+            "queues_closed": {
+              "monotonic_ns": 10301070483037,
+              "unix_ns": 1791693154252926645,
+              "utc": "2026-10-11T04:32:34.252924+00:00"
+            },
+            "registries_cleared": {
+              "monotonic_ns": 10303039949376,
+              "unix_ns": 1791693156222392202,
+              "utc": "2026-10-11T04:32:36.222373+00:00"
+            },
+            "submissions_stopped": {
+              "monotonic_ns": 10301070474511,
+              "unix_ns": 1791693154252917348,
+              "utc": "2026-10-11T04:32:34.252900+00:00"
+            },
+            "uva_released": {
+              "monotonic_ns": 10302208070890,
+              "unix_ns": 1791693155390513486,
+              "utc": "2026-10-11T04:32:35.390494+00:00"
+            },
+            "worker_released": {
+              "monotonic_ns": 10303402219776,
+              "unix_ns": 1791693156584662071,
+              "utc": "2026-10-11T04:32:36.584641+00:00"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "boundary": [
+    {
+      "path": "rank0-pid84.jsonl",
+      "count": 279,
+      "passed": 279,
+      "labels": {
+        "placement.allocation": 279
+      },
+      "first": {
+        "actual": "xpu:0",
+        "boot_id": "13858eef-ec68-44ea-a67c-9444933b7100",
+        "check": "pointer device/owner mismatch",
+        "device": "xpu:0",
+        "expected": "xpu:0",
+        "label": "placement.allocation",
+        "monotonic": 10264.891191423,
+        "passed": true,
+        "phase": "check",
+        "pid": 84,
+        "rank": 0,
+        "sequence": 1,
+        "unix": 1791693118.0736344
+      },
+      "last": {
+        "boot_id": "13858eef-ec68-44ea-a67c-9444933b7100",
+        "check": "tensor span within allocation",
+        "device": "xpu:0",
+        "label": "placement.allocation",
+        "monotonic": 10297.48459501,
+        "passed": true,
+        "phase": "check",
+        "pid": 84,
+        "rank": 0,
+        "sequence": 279,
+        "span": {
+          "bytes": 203161600,
+          "device": "xpu:0",
+          "dtype": "torch.float8_e4m3fn",
+          "end": 18446697189462507520,
+          "pointer": 18446697189259345920,
+          "shape": [
+            62,
+            1280,
+            2560
+          ],
+          "storage_base": 18446697189259345920,
+          "storage_end": 18446697189462507520,
+          "storage_offset": 0,
+          "stride": [
+            3276800,
+            2560,
+            1
+          ]
+        },
+        "unix": 1791693150.667038
+      }
+    },
+    {
+      "path": "rank1-pid93.jsonl",
+      "count": 258,
+      "passed": 258,
+      "labels": {
+        "placement.allocation": 258
+      },
+      "first": {
+        "actual": "xpu:1",
+        "boot_id": "13858eef-ec68-44ea-a67c-9444933b7100",
+        "check": "pointer device/owner mismatch",
+        "device": "xpu:1",
+        "expected": "xpu:1",
+        "label": "placement.allocation",
+        "monotonic": 10264.718601469,
+        "passed": true,
+        "phase": "check",
+        "pid": 93,
+        "rank": 1,
+        "sequence": 1,
+        "unix": 1791693117.9010448
+      },
+      "last": {
+        "boot_id": "13858eef-ec68-44ea-a67c-9444933b7100",
+        "check": "tensor span within allocation",
+        "device": "xpu:1",
+        "label": "placement.allocation",
+        "monotonic": 10297.796188523,
+        "passed": true,
+        "phase": "check",
+        "pid": 93,
+        "rank": 1,
+        "sequence": 258,
+        "span": {
+          "bytes": 124518400,
+          "device": "xpu:1",
+          "dtype": "torch.float8_e4m3fn",
+          "end": 18446708914644582400,
+          "pointer": 18446708914520064000,
+          "shape": [
+            76,
+            2560,
+            640
+          ],
+          "storage_base": 18446708914520064000,
+          "storage_end": 18446708914644582400,
+          "storage_offset": 0,
+          "stride": [
+            1638400,
+            640,
+            1
+          ]
+        },
+        "unix": 1791693150.978632
+      }
+    },
+    {
+      "path": "rank2-pid110.jsonl",
+      "count": 276,
+      "passed": 276,
+      "labels": {
+        "placement.allocation": 276
+      },
+      "first": {
+        "actual": "xpu:2",
+        "boot_id": "13858eef-ec68-44ea-a67c-9444933b7100",
+        "check": "pointer device/owner mismatch",
+        "device": "xpu:2",
+        "expected": "xpu:2",
+        "label": "placement.allocation",
+        "monotonic": 10264.800922969,
+        "passed": true,
+        "phase": "check",
+        "pid": 110,
+        "rank": 2,
+        "sequence": 1,
+        "unix": 1791693117.9833665
+      },
+      "last": {
+        "boot_id": "13858eef-ec68-44ea-a67c-9444933b7100",
+        "check": "tensor span within allocation",
+        "device": "xpu:2",
+        "label": "placement.allocation",
+        "monotonic": 10297.304163833,
+        "passed": true,
+        "phase": "check",
+        "pid": 110,
+        "rank": 2,
+        "sequence": 276,
+        "span": {
+          "bytes": 111411200,
+          "device": "xpu:2",
+          "dtype": "torch.float8_e4m3fn",
+          "end": 18446720642528313344,
+          "pointer": 18446720642416902144,
+          "shape": [
+            68,
+            2560,
+            640
+          ],
+          "storage_base": 18446720642416902144,
+          "storage_end": 18446720642528313344,
+          "storage_offset": 0,
+          "stride": [
+            1638400,
+            640,
+            1
+          ]
+        },
+        "unix": 1791693150.4866068
+      }
+    },
+    {
+      "path": "rank3-pid127.jsonl",
+      "count": 288,
+      "passed": 288,
+      "labels": {
+        "placement.allocation": 288
+      },
+      "first": {
+        "actual": "xpu:3",
+        "boot_id": "13858eef-ec68-44ea-a67c-9444933b7100",
+        "check": "pointer device/owner mismatch",
+        "device": "xpu:3",
+        "expected": "xpu:3",
+        "label": "placement.allocation",
+        "monotonic": 10264.639125747,
+        "passed": true,
+        "phase": "check",
+        "pid": 127,
+        "rank": 3,
+        "sequence": 1,
+        "unix": 1791693117.821569
+      },
+      "last": {
+        "boot_id": "13858eef-ec68-44ea-a67c-9444933b7100",
+        "check": "tensor span within allocation",
+        "device": "xpu:3",
+        "label": "placement.allocation",
+        "monotonic": 10283.901242911,
+        "passed": true,
+        "phase": "check",
+        "pid": 127,
+        "rank": 3,
+        "sequence": 288,
+        "span": {
+          "bytes": 116326400,
+          "device": "xpu:3",
+          "dtype": "torch.float8_e4m3fn",
+          "end": 18446732370058870784,
+          "pointer": 18446732369942544384,
+          "shape": [
+            71,
+            2560,
+            640
+          ],
+          "storage_base": 18446732369942544384,
+          "storage_end": 18446732370058870784,
+          "storage_offset": 0,
+          "stride": [
+            1638400,
+            640,
+            1
+          ]
+        },
+        "unix": 1791693137.083686
+      }
+    }
+  ],
+  "kernel-latest.log": {
+    "new_fault_lines": [],
+    "lines_after_admission": []
+  },
+  "kernel-watcher.log": {
+    "new_fault_lines": [],
+    "lines_after_admission": [
+      "2026-10-11T00:32:34.898468-04:00 steve-b70s kernel: workqueue: delayed_fput hogged CPU for >10000us 4 times, consider switching to WQ_UNBOUND",
+      "2026-10-11T00:32:35.421465-04:00 steve-b70s kernel: workqueue: delayed_fput hogged CPU for >10000us 5 times, consider switching to WQ_UNBOUND",
+      "2026-10-11T00:32:38.272470-04:00 steve-b70s kernel: workqueue: delayed_fput hogged CPU for >10000us 7 times, consider switching to WQ_UNBOUND"
+    ]
+  },
+  "kernel-postflight.log": {
+    "new_fault_lines": [],
+    "lines_after_admission": [
+      "2026-10-11T00:32:34.898468-04:00 steve-b70s kernel: workqueue: delayed_fput hogged CPU for >10000us 4 times, consider switching to WQ_UNBOUND",
+      "2026-10-11T00:32:35.421465-04:00 steve-b70s kernel: workqueue: delayed_fput hogged CPU for >10000us 5 times, consider switching to WQ_UNBOUND",
+      "2026-10-11T00:32:38.272470-04:00 steve-b70s kernel: workqueue: delayed_fput hogged CPU for >10000us 7 times, consider switching to WQ_UNBOUND"
+    ]
+  },
+  "kernel-preflight.log": {
+    "new_fault_lines": [],
+    "lines_after_admission": []
+  },
+  "inputs": {
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/STOP": {
+      "sha256": "889729cd1faa401741bb70fe7441b80651cde2c0b57b936ae448878539862d88",
+      "bytes": 33,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791693152809247218,
+      "mtime_utc": "2026-10-11T04:32:32.809247+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/launch.json": {
+      "sha256": "3bc23cd1e9c3a86b62c97ccf6ddbb4cc13ac5968a63e59fe4018c54023908c97",
+      "bytes": 3888,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791692961308684399,
+      "mtime_utc": "2026-10-11T04:29:21.308684+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/graceful-stop.json": {
+      "sha256": "118b27538a7d087b8aa42276f6046b845b8c4099958eff992236eb4d04b346eb",
+      "bytes": 251,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791693153015307071,
+      "mtime_utc": "2026-10-11T04:32:33.015307+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/controller-exit.json": {
+      "sha256": "8b05e25e23eefd9e866a5ddfadec66c898c744271aed319dff54188ac67b0781",
+      "bytes": 162,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791693185315122224,
+      "mtime_utc": "2026-10-11T04:33:05.315122+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/container-exit.json": {
+      "sha256": "fc9428ffa6420baad699bc1bcbdda49065a1b3a76728f275a82410cca3c262dd",
+      "bytes": 269,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791693185314757309,
+      "mtime_utc": "2026-10-11T04:33:05.314757+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/watcher.json": {
+      "sha256": "08a7849e9a0c5d2949a46e043a9a385f512792f3be40efcf8cb479fb8711cf94",
+      "bytes": 300,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791693490618052869,
+      "mtime_utc": "2026-10-11T04:38:10.618053+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/calibration-load.json": {
+      "sha256": "229fba5006973987a45c4193a5aca1210aca9bdb15af4be003a446508e1d36c1",
+      "bytes": 7480,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791693491193256536,
+      "mtime_utc": "2026-10-11T04:38:11.193257+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/journal-admission.json": {
+      "sha256": "6fb694b36c66d9ca8bf071b5bef17576bc849efbf3b3b1e0f321488be1e0e2c8",
+      "bytes": 1262,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791692961303811462,
+      "mtime_utc": "2026-10-11T04:29:21.303812+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/teardown-validation.json": {
+      "sha256": "3398c0a2a393596a052f74fdd9b4d97a18dc0125387b0b58e3a723890c52ceb3",
+      "bytes": 192,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791693491131426934,
+      "mtime_utc": "2026-10-11T04:38:11.131427+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/started-utc.txt": {
+      "sha256": "6fb47d93e72dacd85a77c3b03a957ca2e5fd4a1a6c8b548e8c5026b95185b472",
+      "bytes": 24,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791692961308758919,
+      "mtime_utc": "2026-10-11T04:29:21.308759+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/model-verification.json": {
+      "sha256": "36860d59ecf2efceb65b33297f81990f084a540e80437de51cbd10ed4205d156",
+      "bytes": 30341,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791692959150312031,
+      "mtime_utc": "2026-10-11T04:29:19.150312+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/overlay-application.json": {
+      "sha256": "7b0419b49380d9d1c4c25f9733b7f8b15a162781bd305637246cd15925c7af59",
+      "bytes": 311,
+      "uid": 0,
+      "gid": 0,
+      "mtime_ns": 1791692962561762805,
+      "mtime_utc": "2026-10-11T04:29:22.561763+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/host-memory-samples.jsonl": {
+      "sha256": "a7e121e3ab81efcb29ad3d03238a4820ff50e4affeb314d62f9b2cd9d6be911a",
+      "bytes": 1869915,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791693185318399016,
+      "mtime_utc": "2026-10-11T04:33:05.318399+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/memory-before-hash.json": {
+      "sha256": "740d8993f1652bb96a2edca3bd7d5c20031632f4141c354af6c8d57225b5a98a",
+      "bytes": 6246,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791692832247814438,
+      "mtime_utc": "2026-10-11T04:27:12.247814+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/memory-after-hash.json": {
+      "sha256": "5875562c80f1ab15265be96cba35d5f96161f8fba461f53d48623ab8405cdebb",
+      "bytes": 6304,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791692959188695829,
+      "mtime_utc": "2026-10-11T04:29:19.188696+00:00"
+    },
+    "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261011-attempt8/host-memory-samples.jsonl": {
+      "sha256": "bac96e20b0ed4b0473ab8a9e5867a87ac92e29bfe7ee713aa0f6f6dace710411",
+      "bytes": 6712754,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791680329034017426,
+      "mtime_utc": "2026-10-11T00:58:49.034017+00:00"
+    },
+    "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261011-attempt8/memory-before-hash.json": {
+      "sha256": "9f31e56c021ca9705fe6922c7894bf3a87bc66cb5cf46bc0465ab6f622f3a353",
+      "bytes": 6254,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791679412849199787,
+      "mtime_utc": "2026-10-11T00:43:32.849200+00:00"
+    },
+    "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261011-attempt8/memory-after-hash.json": {
+      "sha256": "b0ade714ee7c7e2b782d9b509ca7ba95a9f50f600058fab4dd7dc9234be62591",
+      "bytes": 6324,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791679538548048391,
+      "mtime_utc": "2026-10-11T00:45:38.548048+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/loader-1.jsonl": {
+      "sha256": "32231dcd005b2f8b29ffb81ec34266aa8219ae12d8319e29f291d0d62a91e443",
+      "bytes": 170,
+      "uid": 0,
+      "gid": 0,
+      "mtime_ns": 1791693172485362500,
+      "mtime_utc": "2026-10-11T04:32:52.485363+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/loader-110.jsonl": {
+      "sha256": "7b37c921da4ebc16602e15bfb0cbbc8627f23ff0719abc355f5736d7d130fb7e",
+      "bytes": 130531,
+      "uid": 0,
+      "gid": 0,
+      "mtime_ns": 1791693160344327940,
+      "mtime_utc": "2026-10-11T04:32:40.344328+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/loader-127.jsonl": {
+      "sha256": "8937c5d3f87a58d09392a7a670f5c105148b51d3b8feeb7cd43b528d2e65d8fc",
+      "bytes": 162323,
+      "uid": 0,
+      "gid": 0,
+      "mtime_ns": 1791693160900329523,
+      "mtime_utc": "2026-10-11T04:32:40.900330+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/loader-69.jsonl": {
+      "sha256": "cefbf65a31528b3e442954ca83d2a647ed38f2baf42f428ee5cdcb5a6eddc11f",
+      "bytes": 548,
+      "uid": 0,
+      "gid": 0,
+      "mtime_ns": 1791693165665371837,
+      "mtime_utc": "2026-10-11T04:32:45.665372+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/loader-84.jsonl": {
+      "sha256": "d01b560a7a870e0de1aebe7f0e2e31339b7a06f5820ef9f84a7d6067ee41df6f",
+      "bytes": 131352,
+      "uid": 0,
+      "gid": 0,
+      "mtime_ns": 1791693160870329438,
+      "mtime_utc": "2026-10-11T04:32:40.870329+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/loader-93.jsonl": {
+      "sha256": "0844d1133a5f107853c0e07b49bcc25c56621ea816453eae9237c643079f07f9",
+      "bytes": 121587,
+      "uid": 0,
+      "gid": 0,
+      "mtime_ns": 1791693157422319620,
+      "mtime_utc": "2026-10-11T04:32:37.422320+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/moe-boundary/rank0-pid84.jsonl": {
+      "sha256": "433247c2eb9852e3577c4488326a6a83cb6bc73f4ecc95a7f5add11976734036",
+      "bytes": 108124,
+      "uid": 0,
+      "gid": 0,
+      "mtime_ns": 1791693150666300379,
+      "mtime_utc": "2026-10-11T04:32:30.666300+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/moe-boundary/rank1-pid93.jsonl": {
+      "sha256": "d6aabc0e4284e66308cd0ee3efcf5babd01e33d7de5ece8d4319883ee471463f",
+      "bytes": 99977,
+      "uid": 0,
+      "gid": 0,
+      "mtime_ns": 1791693150978301268,
+      "mtime_utc": "2026-10-11T04:32:30.978301+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/moe-boundary/rank2-pid110.jsonl": {
+      "sha256": "b19c23b6e31331fa014e0055b3337dd813563376a4b62f04c37188061477c3cb",
+      "bytes": 107254,
+      "uid": 0,
+      "gid": 0,
+      "mtime_ns": 1791693150486299867,
+      "mtime_utc": "2026-10-11T04:32:30.486300+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/moe-boundary/rank3-pid127.jsonl": {
+      "sha256": "0075a1d61a45d8da23bf02bfd82682d3f65550a01720a053b194ac09ad7a3afb",
+      "bytes": 111908,
+      "uid": 0,
+      "gid": 0,
+      "mtime_ns": 1791693137083261683,
+      "mtime_utc": "2026-10-11T04:32:17.083262+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/kernel-latest.log": {
+      "sha256": "064c7689ffac166c9f1de4b491542d56f8f0d304dfe35ff593db82dbba152eaa",
+      "bytes": 270752,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791693150613181836,
+      "mtime_utc": "2026-10-11T04:32:30.613182+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/kernel-watcher.log": {
+      "sha256": "a9be42b412bceb95e1f1505ea083cb09f22534e392758eb96db1f6ed87211eb0",
+      "bytes": 271178,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791693490590256718,
+      "mtime_utc": "2026-10-11T04:38:10.590257+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/kernel-postflight.log": {
+      "sha256": "a9be42b412bceb95e1f1505ea083cb09f22534e392758eb96db1f6ed87211eb0",
+      "bytes": 271178,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791693491023720196,
+      "mtime_utc": "2026-10-11T04:38:11.023720+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/kernel-preflight.log": {
+      "sha256": "064c7689ffac166c9f1de4b491542d56f8f0d304dfe35ff593db82dbba152eaa",
+      "bytes": 270752,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791692961303338002,
+      "mtime_utc": "2026-10-11T04:29:21.303338+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-source-paths-v3/screen.py": {
+      "sha256": "88921a802b8fc9230ee4fb38580fe67a6ae6d3299b801b1f861f8d35334083a6",
+      "bytes": 48640,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791692506463614330,
+      "mtime_utc": "2026-10-11T04:21:46.463614+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-source-paths-v3/memory_watchdog.py": {
+      "sha256": "f084dd183b57e6340d43bef1c0dcb7194ee2f449469e31195d248ae8129966c7",
+      "bytes": 6441,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791692506456047491,
+      "mtime_utc": "2026-10-11T04:21:46.456048+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-source-paths-v3/calibration.py": {
+      "sha256": "6ec6dbf7be651ee3cee07bf47d683c97a0a1ab452b2da1aaf654653ebd0cf31e",
+      "bytes": 12235,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791692506454836004,
+      "mtime_utc": "2026-10-11T04:21:46.454836+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-source-paths-v3/probe/watch_kernel.py": {
+      "sha256": "945d3bd83250b5ba8b29fd5675bccdf893e9a51e0d506d0bf4cee4995b7745cd",
+      "bytes": 4462,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791692506463257820,
+      "mtime_utc": "2026-10-11T04:21:46.463258+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-source-paths-v3/overlay/vllm/screen1b_guard.py": {
+      "sha256": "dd111ba0d8abaf46d629b60bb806ee4f5b545fc779689047972d25b97c91d472",
+      "bytes": 28259,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791692506459613612,
+      "mtime_utc": "2026-10-11T04:21:46.459614+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-source-paths-v3/overlay/vllm/screen1b_moe_boundary.py": {
+      "sha256": "1e31ffb9927c49cdcbea91c729ad94cad40237b4d46a1e8396b7b81b19379e7b",
+      "bytes": 21578,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791692506465835875,
+      "mtime_utc": "2026-10-11T04:21:46.465836+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-source-paths-v3/overlay-manifest.json": {
+      "sha256": "6c9dafd3e265f5adc528408325e2824a5acc64882e51ac1234f348109963062b",
+      "bytes": 24041,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791692506456136939,
+      "mtime_utc": "2026-10-11T04:21:46.456137+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-source-paths-v3/diagnostic-stage.json": {
+      "sha256": "3da777d1ee8d30bec7860d42f51376de500f82293d79a392b4e7dee7bdea845f",
+      "bytes": 308,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791692506477034980,
+      "mtime_utc": "2026-10-11T04:21:46.477035+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/host-memory-prediction.json": {
+      "sha256": "88a6160ddc5765bcd0733f63f4f76ea756c4c4f61c280376aeccb6f2acba478f",
+      "bytes": 141845,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791692961030114164,
+      "mtime_utc": "2026-10-11T04:29:21.030114+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/client.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791692961609760073,
+      "mtime_utc": "2026-10-11T04:29:21.609760+00:00"
+    },
+    "/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3/server.log": {
+      "sha256": "6fb53cfe095ed7fa6716859b092ad13a81c0a3b90791bdbf643be6af39b0b30e",
+      "bytes": 98630,
+      "uid": 1000,
+      "gid": 1000,
+      "mtime_ns": 1791693172550362685,
+      "mtime_utc": "2026-10-11T04:32:52.550363+00:00"
+    }
+  },
+  "captured_logs": {
+    "controller-journal.log": {
+      "sha256": "21bb2c6540df035aa868eee7f7707cff3feea0d8c1d8bda7fd702164f3accca1",
+      "bytes": 21334
+    },
+    "container.log": {
+      "sha256": "b28a3cd9bd7af044acbbf3efdd8e5df0bf9545d33cd33b19aee45519f4f997b2",
+      "bytes": 117929,
+      "raw_export_sha256": "17a62c11ac61ed4a9e1df857b89ddbe72bd6146a69f27303a110a90d74c3701b",
+      "raw_export_bytes": 118346,
+      "normalization": "Trailing whitespace removed from exported lines for tracked text. Existing Docker log and original run/server.log remain untouched; raw export hash retained."
+    }
+  }
+}
