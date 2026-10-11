@@ -1,0 +1,37 @@
+# 1. probe accuracy (correct/n=acc, pooled over trials; distance in items)
+arm	trials	probes	d1-4	d5-24	d25-99	d100-399	d400+	t:current	t:old_value	t:procedure	t:rule	t:who	final_query	total_correct
+B32ir	1	6/25=0.24	4/5=0.80	2/9=0.22	0/6=0.00	0/5=0.00	n/a	3/5=0.60	3/5=0.60	0/5=0.00	0/5=0.00	0/5=0.00	12/14	18/39
+B32ira	1	20/25=0.80	5/5=1.00	9/9=1.00	3/6=0.50	3/5=0.60	n/a	5/5=1.00	5/5=1.00	5/5=1.00	0/5=0.00	5/5=1.00	13/14	33/39
+B32ira-free	1	19/25=0.76	3/5=0.60	8/9=0.89	4/6=0.67	4/5=0.80	n/a	3/5=0.60	5/5=1.00	3/5=0.60	4/5=0.80	4/5=0.80	9/14	28/39
+B32iraR	1	22/25=0.88	5/5=1.00	8/9=0.89	6/6=1.00	3/5=0.60	n/a	4/5=0.80	4/5=0.80	4/5=0.80	5/5=1.00	5/5=1.00	13/14	35/39
+P32	1	9/25=0.36	1/5=0.20	5/9=0.56	1/6=0.17	2/5=0.40	n/a	3/5=0.60	3/5=0.60	3/5=0.60	0/5=0.00	0/5=0.00	11/14	20/39
+W32	1	10/25=0.40	5/5=1.00	5/9=0.56	0/6=0.00	0/5=0.00	n/a	5/5=1.00	3/5=0.60	0/5=0.00	0/5=0.00	2/5=0.40	13/14	23/39
+
+# 2a. speed: cumulative minutes when the history reached N tokens (mean over trials reaching it)
+arm	source	coverage	100K	200K
+B32ir	timing+ctx	0.902	25.25	n/a
+B32ira	timing+ctx	0.896	8.54	16.39
+B32ira-free	timing+ctx	0.907	6.07	16.39
+B32iraR	timing+ctx	0.885	6.8	12.25
+P32	timing+ctx	0.997	6.65	11.17
+W32	timing+ctx	0.998	7.86	20.5
+
+# 2b. speed: minutes per 100K tokens of history in each segment (rises if the method slows down)
+arm	0-100K	100-200K
+B32ir	25.25	n/a
+B32ira	8.54	7.85
+B32ira-free	6.07	10.32
+B32iraR	6.8	5.45
+P32	6.65	4.52
+W32	7.86	12.64
+
+# 3. totals (mean per trial; peak_ctx_max = max over trials)
+arm	trials	tokens_written	lm_calls	peak_ctx	wall_s	real_edits	summaries	summary_failed	ctxfold_calls	fold_batches	truncations	compactions	recalls	rollbacks	window_refusals	peak_ctx_max
+B32ir	1	102870	694	24780	2002	185	n/a	n/a	150	1	n/a	n/a	0	0	n/a	24780
+B32ira	1	62276	424	23739	1228	157	n/a	n/a	183	1	n/a	n/a	20	0	n/a	23739
+B32ira-free	1	46349	413	21343	1399	152	n/a	n/a	237	1	n/a	n/a	7	0	n/a	21343
+B32iraR	1	49342	400	21586	1086	150	n/a	n/a	162	1	n/a	n/a	10	0	n/a	21586
+P32	1	56198	156	20203	888	0	n/a	n/a	n/a	n/a	n/a	54	n/a	0	n/a	20203
+W32	1	101831	162	27732	1615	0	n/a	n/a	n/a	n/a	34	n/a	n/a	0	n/a	27732
+# skipped B32iraR4__sparse-memory-t240k-s0/sparse-memory-t240k-s0__EDvRLkb: void=False ended_by=EXC:CancelledError rule=ok
+# trials used=6 skipped=1

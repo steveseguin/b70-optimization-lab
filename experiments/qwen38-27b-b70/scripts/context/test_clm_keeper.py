@@ -55,6 +55,18 @@ class Keeper(unittest.TestCase):
         self.assertTrue(w([tool("bash: nope: command not found", 127)]))
         self.assertFalse(w([tool("ITEM 4/9 (PROBE)\nASK p1_1: x"), {"role": "assistant", "content": "ok"}, tool("written")]))
 
+    def test_recital(self):
+        notes = "RULES\n- A is secret: answer protected.\nSTATE\nabcd12 5"
+        ask = {"role": "tool", "content": "ITEM 4/9 (PROBE)\nPROBE: answer now.\nASK p1_1: What value does abcd12 hold?\n\n(exit_code=0)"}
+        note = NS["recital"](notes, [{"role": "assistant", "content": ""}, ask])
+        self.assertEqual(note["role"], "user")
+        self.assertTrue(note["content"].startswith(NS["RECITE_HEAD"]))
+        self.assertTrue(note["content"].endswith("- A is secret: answer protected."))
+        self.assertIsNone(NS["recital"]("STATE\nabcd12 5", [ask]))                           # no rules to recite
+        self.assertIsNone(NS["recital"](notes, [ask, note]))                                    # already recited
+        self.assertIsNone(NS["recital"](notes, [{"role": "tool", "content": "ITEM 5/9 (UPDATE)\nA quiet day."}]))
+        self.assertIsNotNone(NS["recital"](notes, [{"role": "tool", "content": "ITEM 9/9 (QUERY)\nQUERY abcd12"}]))
+
     def test_pin_head_round_trip(self):
         self.assertEqual(NS["PIN_RE"].match(NS["PIN_HEAD"].format(n=17)).group(1), "17")
 

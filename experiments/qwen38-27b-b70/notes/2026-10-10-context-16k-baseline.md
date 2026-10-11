@@ -295,3 +295,102 @@ Read against the preregistered rules:
   command turns, which is the keeper arm's design (`clm_keeper.py`, not yet run).
 
 B32iraR (35) went to the 1M stream at 06:34.
+
+## Campaign 5, phase 2 (2026-10-11 06:34-08:12): one million tokens through a 32K live budget
+
+B32iraR on the 1M rules stream (999,460 tokens, 617 items, seed 0; 29 PROBE items of seven questions; 25 final
+counters), server window 262,144, live budget 32K. Evidence:
+[`../data/2026-10-11-context-campaign5/`](../data/2026-10-11-context-campaign5/).
+
+**This is a stopped run, reported as one.** The agent read all 617 items and answered 28 of the 29 PROBE items as
+they arrived. At the final item it rewrote `/app/answers.json` with the 25 final counters only, which wiped its 196
+probe answers; the harness told it keys were missing and it began to re-derive them from the archive one question
+at a time (a question about "now" would then be answered with the value at the end). I stopped the client at 08:12.
+The verifier never ran, so there is no official score and no storage-rule verdict. What is reported:
+
+- probe answers **as the agent wrote them during the run**, rebuilt from the 30 write commands in its saved context
+  snapshots by `replay_answers.py` (literal values only, nothing executed; the two "unread" notices are comments);
+  the same counts came from a live copy of the file at 08:01, through probe 28: 157/196;
+- final answers as they stood in the file when the run was stopped.
+
+| | right / asked |
+| --- | ---: |
+| all probe questions | **163 / 203 (80 %)** (one PROBE item, the 14th, was never answered: 7 blanks) |
+| by distance: 1-4 / 5-24 / 25-99 / 100-399 / 400+ items back | 45/50, 40/50, 23/30, 35/48, **20/25** |
+| by type: current / who / house method / standing rule / old value | 54/58, 25/29, 25/29, 22/29, **37/58** |
+| by third of the run (probe items 1-10 / 11-20 / 21-29) | 56/70, 52/70, **55/63** |
+| final query | 24 / 25 (the confidential counter was answered `null`) |
+
+Cost: 87 minutes for the stream, **8.7 minutes per 100K on average and no slower at the end** (per 100K: 5.2, 11.5,
+8.3, 8.0, 12.0, 8.5, 8.6, 5.4, 5.4). 2,170 model calls (3.5 per item), 289K tokens written, 30.6M prompt tokens of
+which 82 % came from the prefix cache (5.5M read fresh, 5.5 times the stream), 470 recalls returning 148K tokens,
+191 rejected state edits. Live context stayed under 30.7K throughout.
+
+Read against the preregistered rules:
+
+- **Flat with distance: yes, narrowly.** Per ten asked, the near bins are 9.0 and 8.0; 100-399 back is 7.3 and
+  400+ back is 8.0, within the two-question margin. Accuracy did not fall as the history grew: the last third of
+  the run was the best.
+- **Speed flat: yes.** The last 200K took 10.8 minutes, the first 200K 16.7.
+- **Rule and method: kept, not perfectly.** 22/29 and 25/29. The rule line was pinned the whole time, yet six rule
+  questions were answered with a number or `removed` and the final confidential counter with `null`; five of the
+  six lapses are in the last ten PROBE items. A pinned rule decays in use even when it never leaves view.
+- **Old values are the weak spot**: 37/58. The model has to replay every archived sentence about a counter up to
+  item N. Everything else is at 76-93 %.
+
+Three defects this run exposed, each with a fix to test:
+
+1. **The answers file can be wiped by the final write.** The task text says to keep earlier keys; at 240K the model
+   did, at 1M it did not. The runner now needs snapshots that are kept, not overwritten (the copy that would have
+   saved this was replaced two minutes later), and the harness should refuse a write that drops answered keys.
+2. **With thinking off the model often issues a made-up second update right after a fold** (the harness rejects it:
+   that is most of the 191 rejections). About one wasted call per item; saying "now run `next`" in the fold's reply
+   is the cheap thing to try.
+3. **"What was true at item N" needs a history, not a replay**: arm B32iraRH keeps every accepted version of the
+   pinned state and answers `recall --state-at N` (`clm_history.py`, campaign 6).
+
+And one for the rule: a reminder at the moment of use. The keeper arm appends the RULES lines right after any item
+that asks questions.
+
+## Campaign 6 (2026-10-11, preregistered before any result)
+
+Runner: `longrun-campaign6.sh` beside campaign 5's. Same server recipe (window 262,144, guard floor 1.6 GiB), started
+once. C32 and W200 were taken out of campaign 5 after its 1M arm started, so that the keeper arm could be tested as
+soon as the cards were free; both run here.
+
+**The keeper arm (`clm_keeper.py`).** Every method so far that beats the lossy floors asks the model to run a
+protocol: fold each item into a state file, then drop it. That is two or more model calls per item, it is specific
+to this stream, and it is what a real agent will not do. The keeper asks nothing of the agent. It is the plain
+sliding-window agent (W32); when the context goes over the limit the harness, before cutting the oldest turns down
+to 75 %, (1) writes every delivered item in those turns verbatim to the archive, (2) asks the model once, with no
+tools, to rewrite a NOTES block (RULES / STATE / OPEN) from the old notes and the turns being cut, and puts back any
+RULES line the model dropped, (3) replaces the cut turns with one pinned NOTES message after the task statement. The
+system prompt gains a Memory section: read RULES before answering, use `recall` for anything out of view. This is the
+policy a serving-side proxy could apply to any tool-calling agent.
+
+| stage | arm(s) | stream | question |
+| --- | --- | --- | --- |
+| 1 | N32 | rules, 240K, seed 0 | does the keeper lift the sliding window (W32 23/39: rule 0/5, method 0/5, who 2/5) toward the protocol arms (B32iraR 35, B32ira 33) with no per-item protocol? |
+| 1 | N32j | the same | N32 thinking only when a question, refusal or error is in view (the notes call thinks instead): how much faster, at what cost? |
+| 1b | B32iraRH, cut at 60 min | rules, 1M, seed 0 | B32iraR's weak spot at 1M was "what did X hold at the end of item N" (about half right, against nine in ten on everything else). Does a version history of its own pinned state (`recall --state-at N`) fix that? Own rule class: archive plus state history |
+| 2 | C32, cut at 80 min | plain, 240K, seed 0 | the production-style summary method in the 32K table |
+| 3 | B32iraR, B32ira, the better keeper | rules, 240K, seed 1 (new stream) | second seed for "no rule without a pinned place", for the bookkeeping cost of RULE lines, and for the keeper |
+| 4 | the better keeper, only if it scored at least 33/39 in stage 1, cut at 100 min | rules, 1M, seed 0 | the general method at the owner's scale |
+| 4 | W200, cut at 90 min | the same 1M stream | the plain alternative at the owner's cap |
+
+How the results will be read (fixed now):
+- N32 "works" if it is at least 6 questions above W32 (29/39 or more) with rule and method each at 4/5 or better;
+  it "matches the protocol arms" at 33/39 or more. Its minutes are compared with W32 (26) and B32iraR (18).
+- N32j is the better keeper if it is not below N32 in questions right (a tie goes to the quicker one). If it loses
+  more than two questions to N32, thinking-off costs bookkeeping and N32 stays the keeper.
+- Stage 1b: compared with B32iraR on the probe items both reached. The history "fixes old values" at 80 % or more of
+  those questions with the other types unchanged (within two questions). It is a cut run by design and is reported
+  as one; its results are never pooled with the archive-only arms.
+- Stage 3: the rule result replicates if B32ira is at most 1/5 and B32iraR at least 4/5 on rule questions; the
+  bookkeeping cost of RULE lines replicates if B32iraR is again more than one below B32ira on the other questions.
+- Stage 4 as campaign 5: accuracy by distance, minutes per 100K by segment; a cut run is reported as cut.
+- Known risk, stated now: the keeper's STATE is rewritten by a model call without tools, so sums are done in the
+  model's head; N32 leans on the agent's own running table (W32's final answers were 35/35), N32j cannot.
+- Added after the 1M run and before any keeper result: the keeper appends the RULES lines as a reminder after every
+  item that asks questions (`recite_rules`, on in N32 and N32j). So stage 1 tests pinned notes and recitation
+  together; if it works, a run without recitation is the ablation.

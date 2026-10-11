@@ -14,7 +14,9 @@ things the HARNESS does when the context goes over the limit, right before it cu
      a RULES line can never disappear: one the model leaves out is put back by the harness;
   3. the cut turns are replaced by one pinned user message holding the NOTES, right after the task statement, so
      everything before the recent turns is byte-identical between cuts and the server's prefix cache keeps working.
-The system prompt gains a short Memory section (NOTES, `recall`). Nothing else differs from W32.
+The system prompt gains a short Memory section (NOTES, `recall`). When a delivered item asks questions and NOTES holds
+rules, the harness also appends the RULES lines as a reminder right after that item (recite_rules, on by default).
+Nothing else differs from W32.
 
 This is the policy a serving-side proxy could apply to any tool-calling agent: the agent keeps sending its history,
 the proxy archives, keeps notes at each cut and offers `recall`. Cost over W32: one extra model call per cut (about
@@ -162,6 +164,22 @@ def keep_rules(old: str, new: str) -> tuple[str, list[str]]:
     return "\n".join(lines), lost
 
 
+ASKS = re.compile(r"(?m)^(?:ASK \S+?:|QUERY \S+|GET \S+)")
+RECITE_HEAD = "[[RULES in force (from NOTES); apply every one that covers a question before you answer it]]"
+
+
+def recital(notes: str, messages: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """The reminder to append when the newest message is a tool output that asks questions and NOTES holds rules
+    (None otherwise). On the 1M stream a pinned rule was applied 22 times in 29; it slipped more often late, with the
+    rule far above the question. This puts the rules next to the question at the moment they are needed."""
+    rules = rule_lines(notes)
+    if not rules or not messages or messages[-1].get("role") != "tool":
+        return None
+    if not ASKS.search(str(messages[-1].get("content") or "")):
+        return None
+    return {"role": "user", "content": RECITE_HEAD + "\n" + "\n".join("- " + r for r in rules)}
+
+
 QUESTION = re.compile(r"(?m)^(?:ASK \S+?:|QUERY \S+|GET \S+)|^PROBE:|STREAM END|NOT RUN|Traceback|No tool call in your last turn"
                       r"|CONTEXT LIMIT|FINAL turn")
 
@@ -193,6 +211,11 @@ class _KeeperGuard:
     async def maybe(self, environment: Any, messages: list[dict[str, Any]]) -> bool:
         r = await self._inner.maybe(environment, messages)
         await self._agent._keep(environment, messages)
+        if self._agent.recite_rules:
+            note = recital(self._agent.notes, messages)
+            if note:
+                messages.append(note)
+                self._agent.n_recitals += 1
         return r
 
 
@@ -206,10 +229,12 @@ class KeeperAgent(TruncateAgent):
         return "keeper"
 
     def __init__(self, *args: Any, notes_max_tokens: int | str = 2048, notes_call_max_tokens: int | str = 4096,
-                 notes_thinking: Any = False, thinking_policy: str = "always", **kwargs: Any) -> None:
+                 notes_thinking: Any = False, thinking_policy: str = "always", recite_rules: Any = True,
+                 **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.notes_max_tokens, self.notes_call_max_tokens = int(notes_max_tokens), int(notes_call_max_tokens)
         self.notes_thinking = _cb._as_bool(notes_thinking)
+        self.recite_rules, self.n_recitals = _cb._as_bool(recite_rules), 0
         # thinking_policy (arm N32j): always = the agent's enable_thinking on every call (as W32); judgement = thinking
         # only on calls that hold a question, a refusal or an error (see _wants_thinking). The running state then no
         # longer sits in the agent's thinking, so the notes call does the bookkeeping: pair it with notes_thinking=true.
@@ -361,6 +386,7 @@ class KeeperAgent(TruncateAgent):
                     "thinking_off_calls": self.n_thinking_off, "notes_calls": self.n_notes_calls,
                     "notes_thinking": self.notes_thinking, "items_archived": self.n_items_archived,
                     "rules_put_back": self.n_rules_put_back, "rules": rule_lines(self.notes),
+                    "recite_rules": self.recite_rules, "recitals": self.n_recitals,
                     "notes_max_tokens": self.notes_max_tokens}, indent=1) + "\n")
             except Exception:
                 pass
