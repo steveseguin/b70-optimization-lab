@@ -33,6 +33,7 @@
 #   KINDS=sparse  sparse prose (make_sparse_prose_tasks.py), options from SPARSE_ARGS (e.g. "--density 6 --words")
 #   PROSE_BATCH_TOKENS  prose batch size at generation [6400] (use a new OUT_DIR when changing it)
 #   W16 D16 C16 B16ir B16ira B16ira-free   live-cap study at budget 16,384 (16K, fast scale; same arms as 48)
+#   W32 P32                                 32K lossy floors (window-drop, compaction) beside B32ir / B32ira / C32
 #   W48 D48 C48 B48ir B48ira B48ira-free   live-cap study at budget 49,152 (48K): W = truncate (clm_baselines
 #          TruncateAgent: drop oldest turns once over the limit, down to 75 %), D = compact (CompactAgent: at 75 %
 #          stub all but the newest 3 tool outputs and strip earlier thinking, then drop oldest if still over),
@@ -134,6 +135,7 @@ for cap, b in (("16", 16384), ("48", 49152), ("200", 204800)):  # live-cap study
     ARMS.update({"W" + cap: ("truncate", "memory", b), "D" + cap: ("compact", "memory", b),
                  "C" + cap: ("summary", "memory", b), "B" + cap + "ir": ("improved", "memory", b),
                  "B" + cap + "ira": ("improved", "memory", b), "B" + cap + "ira-free": ("improved", "memory", b)})
+ARMS.update({"W32": ("truncate", "memory", 32768), "P32": ("compact", "memory", 32768)})  # 32K lossy floors beside B32ir/B32ira/C32 (D32 is taken)
 for a in ("A", "B32", "C32", "E32"):  # same arm with earlier thinking dropped from every call
     ARMS[a + "t"] = ARMS[a]
 bad = [a for a in arms if a not in ARMS]
