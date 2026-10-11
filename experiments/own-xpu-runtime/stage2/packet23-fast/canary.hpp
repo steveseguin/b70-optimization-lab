@@ -1,3 +1,4 @@
+#include "failure.hpp"
 #pragma once
 // Weight-free gate using the real owner, shared context, adapter and copy paths.
 struct CanaryIncrement final
@@ -20,10 +21,11 @@ static int run_canary(const Options& a) {
  auto backend=std::make_unique<tp2::Context>(a.card,a.card+1);auto raw=backend.get();
  auto select=[&](int c){raw->allocation_card=c;};
 #endif
- ownrt::Device d(std::move(backend));
+ ownrt::Device d(std::move(backend));try {
  double startup_jit_ms=0,work_wall_ms=0,max_ns=0,device_ns=0;
  bool submission_budget_passed=true;unsigned waits=0;size_t bytes=0;
  { // All context borrowers unwind before the owner, including on exceptions.
+ packet23::Borrower bundle_borrower(d,"canary executable kernel bundle");
  auto compiled=raw->canary_bundle();
  startup_jit_ms=Engine::ms(start);auto work_start=std::chrono::steady_clock::now();
  ownrt::CopyEngine copy(d,4096,1);
@@ -68,8 +70,9 @@ static int run_canary(const Options& a) {
  bytes=d.arena.total(Memory::device);require(bytes<16*1024*1024,"canary allocation bound");
  work_wall_ms=Engine::ms(work_start);
  } // compiled bundle, copy wrapper and submission captures are now destroyed.
+ packet23::row(a.output,"canary completed checks",&waits,sizeof waits,submission_budget_passed);
  auto teardown_start=std::chrono::steady_clock::now();
- auto receipt=d.shutdown(std::chrono::seconds(5));require(receipt.safe_to_exit,"canary unsafe teardown");
+ auto receipt=d.shutdown(std::chrono::seconds(5));require(receipt.safe_to_exit && receipt.exit_code==0,"canary unsafe teardown");
  double elapsed=Engine::ms(start),teardown_ms=Engine::ms(teardown_start);
  std::ostringstream out;out<<"{\"schema\":\"own-runtime.iq3.packet18.canary.v2\",\"passed\":"<<(submission_budget_passed?"true":"false")<<",\"owner_cards\":2,\"device_executed\":"
 #ifdef OWN_RT_HOST_ONLY
@@ -81,4 +84,5 @@ static int run_canary(const Options& a) {
  <<",\"submission_budget_passed\":"<<(submission_budget_passed?"true":"false")<<",\"total_expectation_ms\":30000,\"total_expectation_exceeded\":"<<(elapsed>=30000?"true":"false")
  <<",\"round_trips\":100,\"kernels_per_card\":1000,\"token_sequence\":true,\"owned_device_bytes\":"<<bytes<<",\"wall_ms\":"<<elapsed<<",\"max_submission_ns\":"<<max_ns<<",\"host_waits\":"<<waits<<",\"teardown\":["<<receipt.json()<<"]}";
  save(a.output/"receipt.json",out.str());return 0;
+ }catch(const std::exception& e){packet23::failure(d,a.output,e.what());throw;}
 }

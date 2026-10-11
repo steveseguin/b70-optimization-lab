@@ -100,16 +100,16 @@ float dot(iq3::Type t,const uint8_t* w,const uint16_t* x,size_t k,unsigned varia
  return iq3::bits_float(0x7fc00000);
 }
 struct Batch final:ownrt::SyclOperation {
- unsigned count,local_columns;size_t groups;
+ unsigned count,local_columns;size_t groups;void* const* parameters=nullptr;
  sycl::event submit(sycl::queue& q,std::span<void* const> pointers,const std::vector<sycl::event>& dependencies)const override {
   if(pointers.size()>128)throw std::invalid_argument("batch pointer count");
-  std::array<void*,128> ptr{};std::copy(pointers.begin()+1,pointers.end(),ptr.begin());
+  auto ptr=parameters;
   auto ds=static_cast<const Desc*>(pointers[0]);auto n=count;auto ng=groups;auto cols=local_columns;
   return q.submit([&](sycl::handler& h){h.depends_on(dependencies);
    sycl::local_accessor<uint16_t,1> local(cols,h);sycl::local_accessor<float,1> partial(8,h);
    h.parallel_for(sycl::nd_range<1>(ng*128,128),[=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
     size_t group=it.get_group_linear_id();unsigned which=0;for(unsigned i=1;i<n;++i)if(group>=ds[i].first)which=i;
-    auto d=ds[which];size_t logical=group-d.first;if(logical==d.rows*d.count*d.input_rows){if(it.get_local_linear_id()==0)normalize(d,ptr.data());return;}
+    auto d=ds[which];size_t logical=group-d.first;if(logical==d.rows*d.count*d.input_rows){if(it.get_local_linear_id()==0)normalize(d,ptr);return;}
     size_t row=logical%d.rows,slot=(logical/d.rows)%d.count,mi=logical/(d.rows*d.count);
     auto sg=it.get_sub_group();unsigned lane=sg.get_local_linear_id(),sub=sg.get_group_linear_id(),wi=it.get_local_linear_id();
     iq3::Route route{0,0,uint32_t(d.rows)};if(d.routed)route=static_cast<const iq3::Route*>(ptr[d.route])[slot];
@@ -132,7 +132,7 @@ struct Batch final:ownrt::SyclOperation {
     if(wi==0){float values[2]{};for(unsigned peer=0;peer<(d.paired?2u:1u);++peer){unsigned v=peer?d.peer_variant:d.variant;
       values[peer]=v==1||v==4||v==7?(partial[peer*4]+partial[peer*4+1])+(partial[peer*4+2]+partial[peer*4+3]):partial[peer*4];
       if(!active)values[peer]=iq3::bits_float(0x7fc00000);}
-     stores(d,ptr.data(),logical,values[0],values[1]);}
+     stores(d,ptr,logical,values[0],values[1]);}
    });
   });
  }
@@ -185,6 +185,9 @@ integrated::Launch gemv_batch(ownrt::Device& device,const PreparedBatch& plan,ow
  #endif
  #ifndef OWN_RT_HOST_ONLY
  op.local_columns=plan.local_columns;
+ std::array<void*,128> pointers{};for(size_t i=0;i<plan.bindings.size();++i)pointers[i]=device.arena.row(plan.bindings[i]).pointer;
+ auto params=ownrt::parameters(device,pointers.data(),sizeof pointers,device.arena.row(plan.bindings[0]).label.starts_with("card1:")?1:0);
+ op.parameters=static_cast<void*const*>(device.arena.row(params).pointer);
  #endif
  auto ids=plan.bindings;ids.insert(ids.begin(),table);auto event=device.compute(op,ids,{});return {event,event,1};
 }

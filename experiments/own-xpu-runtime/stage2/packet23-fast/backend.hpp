@@ -118,9 +118,14 @@ class Context final : public ownrt::Backend {
   ownrt::Event compute(const ownrt::Operation& base,std::span<void* const> p,std::span<const ownrt::Event> deps) override {
     check();const auto& op=dynamic_cast<const ownrt::SyclOperation&>(base);
     for(auto ptr:p)if(location(ptr,1)!=allocation_card)throw std::logic_error("foreign compute binding");
-    const auto& wait=dependencies(deps,allocation_card);auto e=ownrt::next_handle();event_cards[e]=allocation_card;
-    auto [it,ok]=events.try_emplace(e);(void)ok;
-    it->second=op.submit(*queues[allocation_card],p,wait);return e;
+    const auto& wait=dependencies(deps,allocation_card);
+    // Reserve map nodes before submission; key zero is never an owned event.
+    events.try_emplace(0);try {event_cards.emplace(0,allocation_card);}catch(...){events.erase(0);throw;}
+    try {
+    auto submitted=op.submit(*queues[allocation_card],p,wait);
+    auto e=ownrt::next_handle();auto node=events.extract(0);node.key()=e;node.mapped()=std::move(submitted);events.insert(std::move(node));
+    auto rank=event_cards.extract(0);rank.key()=e;event_cards.insert(std::move(rank));return e;
+    }catch(...){events.erase(0);event_cards.erase(0);throw;}
   }
 
   ownrt::Event marker(std::span<const ownrt::Event> deps) override {

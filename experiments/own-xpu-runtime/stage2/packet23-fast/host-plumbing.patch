@@ -1,3 +1,98 @@
+--- packet21/adapter.cpp
++++ packet23/adapter.cpp
+@@ -173,10 +173,10 @@
+ struct Glue final:ownrt::SyclOperation {
+  Spec s;int mode;Glue(Spec v,int m):s(v),mode(m){}
+  sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override{
+-  Bound b{s,{}};std::copy(p.begin(),p.end(),b.p.begin());auto ctrl=static_cast<int32_t*>(p.back());auto mode_=mode;
+-  if(mode==1||mode==2)return q.submit([&](sycl::handler& h){h.depends_on(deps);h.single_task([=]{if(mode_==1){ctrl[0]=*b.position();ctrl[1]=*b.active();ctrl[2]=b.failed();}else if(mode_==2){if(ctrl[2])b.fail();}});});
++  Bound b{s,{}};std::copy(p.begin(),p.end(),b.p.begin());auto ctrl=static_cast<int32_t*>(p.back());auto mode_=mode;auto bp=packet23::parameters(b);
++  if(mode==1||mode==2)return q.submit([&](sycl::handler& h){h.depends_on(deps);h.single_task([=]{if(mode_==1){ctrl[0]=*bp->position();ctrl[1]=*bp->active();ctrl[2]=bp->failed();}else if(mode_==2){if(ctrl[2])bp->fail();}});});
+   int groups=mode==3?tiny_groups(s):s.special==Special::normal&&s.op==Op::ple_gate?4:1,local=std::max(8192,s.g.h);
+-  return q.submit([&](sycl::handler& h){h.depends_on(deps);sycl::local_accessor<float,1> scratch(local,h);h.parallel_for(sycl::nd_range<1>(groups*128,128),[=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{auto t=Team{it,scratch.get_multi_ptr<sycl::access::decorated::no>().get()};if(mode_==3)tiny(b,it.get_group_linear_id(),t);else simple(b,it.get_group_linear_id(),t);});});
++  return q.submit([&](sycl::handler& h){h.depends_on(deps);sycl::local_accessor<float,1> scratch(local,h);h.parallel_for(sycl::nd_range<1>(groups*128,128),[=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{auto t=Team{it,scratch.get_multi_ptr<sycl::access::decorated::no>().get()};if(mode_==3)tiny(*bp,it.get_group_linear_id(),t);else simple(*bp,it.get_group_linear_id(),t);});});
+  }
+ };
+ #endif
+@@ -277,12 +277,13 @@
+ // Do not increase groups: work-group barriers are not device-wide barriers.
+ struct Chain final:ownrt::SyclOperation {
+  std::vector<ChainItem> chain_items;
++ const void* parameters=nullptr;
+  sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
+-  std::array<ChainItem,8> items{};std::copy(chain_items.begin(),chain_items.end(),items.begin());
+-  std::array<void*,256> ptr{};std::copy(p.begin(),p.end(),ptr.begin());int count=chain_items.size();
++  auto items=static_cast<const ChainItem*>(parameters);
++  auto ptr=reinterpret_cast<void* const*>(items+8);int count=chain_items.size();
+   return q.submit([&](sycl::handler& h){h.depends_on(deps);sycl::local_accessor<float,1>x(8192,h);
+    h.parallel_for(sycl::nd_range<1>(128,128),[=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
+-    auto t=Team{it,x.get_multi_ptr<sycl::access::decorated::no>().get()};chain_body(items.data(),count,ptr.data(),t);
++    auto t=Team{it,x.get_multi_ptr<sycl::access::decorated::no>().get()};chain_body(items,count,ptr,t);
+    });});
+  }
+ };
+@@ -296,6 +297,12 @@
+   if(l.mode==4){item.group_counts[0]=ng::groups(l.shape);if(l.shape.op==ng::attention_score){auto sh=l.shape;sh.op=ng::attention_softmax;item.group_counts[1]=ng::groups(sh);sh.op=ng::attention_value;item.group_counts[2]=ng::groups(sh);}}
+   op.chain_items.push_back(item);ids.insert(ids.end(),l.bindings.begin(),l.bindings.end());}
+  if(ids.size()>256)throw std::invalid_argument("fusion chain bindings");
++#ifndef OWN_RT_HOST_ONLY
++ struct Parameters {std::array<ChainItem,8> items{};std::array<void*,256> pointers{};} block{};
++ std::copy(op.chain_items.begin(),op.chain_items.end(),block.items.begin());
++ for(size_t i=0;i<ids.size();++i)block.pointers[i]=d.arena.row(ids[i]).pointer;
++ auto table=ownrt::parameters(d,&block,sizeof block,d.arena.row(ids[0]).label.starts_with("card1:")?1:0);op.parameters=d.arena.row(table).pointer;ids.push_back(table);
++#endif
+  auto e=d.compute(op,ids,{});return {e,e,1};
+ }
+ 
+@@ -316,7 +323,7 @@
+ #ifdef OWN_RT_HOST_ONLY
+ struct Rank final:HostOperation{Spec rank_spec;explicit Rank(Spec s):rank_spec(s){}void run(std::span<void*const> p)const override{Bound b{rank_spec,{}};std::copy(p.begin(),p.end(),b.p.begin());std::vector<float>x(2048);for(int g=0;g<4;++g)rank_body(b,g,ng::HostTeam{x.data()});}};
+ #else
+-struct Rank final:ownrt::SyclOperation{Spec rank_spec;explicit Rank(Spec s):rank_spec(s){}sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override{Bound b{rank_spec,{}};std::copy(p.begin(),p.end(),b.p.begin());return q.submit([&](sycl::handler& h){h.depends_on(deps);sycl::local_accessor<float,1>x(2048,h);h.parallel_for(sycl::nd_range<1>(512,128),[=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{rank_body(b,it.get_group_linear_id(),Team{it,x.get_multi_ptr<sycl::access::decorated::no>().get()});});});}};
++struct Rank final:ownrt::SyclOperation{Spec rank_spec;explicit Rank(Spec s):rank_spec(s){}sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override{Bound b{rank_spec,{}};std::copy(p.begin(),p.end(),b.p.begin());auto bp=packet23::parameters(b);return q.submit([&](sycl::handler& h){h.depends_on(deps);sycl::local_accessor<float,1>x(2048,h);h.parallel_for(sycl::nd_range<1>(512,128),[=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{rank_body(*bp,it.get_group_linear_id(),Team{it,x.get_multi_ptr<sycl::access::decorated::no>().get()});});});}};
+ #endif
+ }
+ Launch submit_rank(ownrt::Device& d,const Spec& s,const std::vector<ownrt::Allocation>& bindings){Rank op(s);auto e=d.compute(op,bindings,{});return {e,e,1};}
+--- packet21/adapter_fixture.cpp
++++ packet23/adapter_fixture.cpp
+@@ -1,3 +1,4 @@
++#include "failure.hpp"
+ #include "adapter_fixture.hpp"
+ #include "adapter.hpp"
+ #include <fstream>
+@@ -59,7 +60,8 @@
+  return make_sycl_device(card,true);
+  #endif
+  }
+- explicit Runner(unsigned card):d(backend(card)),copy(d){scratch=alloc(64ull*1024*1024*4);control=alloc(12);score=alloc(24*2051*4);probability=alloc(24*2051*4);}
++ explicit Runner(unsigned card):d(backend(card)),copy(d){}
++ void initialize(){scratch=alloc(64ull*1024*1024*4);control=alloc(12);score=alloc(24*2051*4);probability=alloc(24*2051*4);}
+  Allocation alloc(size_t n,Memory mem=Memory::device){auto id=d.arena.allocate("actual-adapter-fixture-"+std::to_string(allocation_serial++),n,mem,Category::scratch,Lifetime::transaction);owned.push_back(id);return id;}
+  Allocation upload(const std::vector<uint8_t>& data){auto h=alloc(data.size(),Memory::pinned),v=alloc(data.size());std::memcpy(d.arena.row(h).pointer,data.data(),data.size());auto e=copy.copy(v,0,h,0,data.size(),{});if(!d.wait(e,std::chrono::minutes(20)))throw std::runtime_error("adapter fixture upload incomplete");return v;}
+  void put(Allocation id,uint32_t v){std::vector<uint8_t>b(4);std::memcpy(b.data(),&v,4);auto h=alloc(4,Memory::pinned);std::memcpy(d.arena.row(h).pointer,b.data(),4);auto e=copy.copy(id,0,h,0,4,{});if(!d.wait(e,std::chrono::minutes(20)))throw std::runtime_error("adapter fixture control upload incomplete");}
+@@ -69,7 +71,7 @@
+ };
+ }
+ AdapterFixtureReceipt adapter_fixture_gate(unsigned card,const std::filesystem::path& output){
+- Runner runner(card);std::ofstream bytes(output,std::ios::binary|std::ios::app);std::vector<float> host_scratch(64ull*1024*1024);unsigned checks=0;
++ Runner runner(card);try { runner.initialize();std::ofstream bytes(output,std::ios::binary|std::ios::app);std::vector<float> host_scratch(64ull*1024*1024);unsigned checks=0;
+  for(unsigned m:{1u,3u})for(unsigned kind=0;kind<4;++kind){auto c=make_case(kind);auto host=c.buffers;std::vector<ownrt::Allocation> reference,candidate;for(auto& b:c.buffers){reference.push_back(runner.upload(b.data));candidate.push_back(runner.upload(b.data));}
+   for(unsigned step=0;step<m;++step){uint32_t position=3+step;std::memcpy(host[c.position].data.data(),&position,4);runner.put(reference[c.position],position);runner.put(candidate[c.position],position);
+    for(const auto& site:c.sites){std::vector<void*> p;for(auto id:site.ids)p.push_back(host[id].data.data());p.insert(p.end(),{host_scratch.data(),host[c.error].data.data(),host[c.position].data.data(),host[c.active].data.data(),host[c.rope].data.data()});integrated::evaluate(site.spec,p.data());
+@@ -80,9 +82,11 @@
+     Finish finish;finish.count=10;std::array b{candidate[c.rank_prob]};auto done=runner.d.compute(finish,b,{});runner.finish({done,done,1});
+ 
+    }else{std::vector<Spec> specs;std::vector<std::vector<Allocation>> bindings;for(auto& site:c.sites){specs.push_back(site.spec);bindings.push_back(runner.binding(site,c,candidate));}runner.finish(packet18::submit_chain(runner.d,specs,bindings,runner.control,runner.score,runner.probability));}
+-   for(int id:c.outputs){auto actual=runner.get(candidate[id],host[id].data.size());if(actual!=host[id].data)throw std::runtime_error("actual adapter host parity kind="+std::to_string(kind)+" M="+std::to_string(m)+" step="+std::to_string(step)+" buffer="+std::to_string(id));auto original=runner.get(reference[id],host[id].data.size());if(original!=host[id].data)throw std::runtime_error("actual adapter original device reference parity");bytes.write(reinterpret_cast<const char*>(actual.data()),actual.size());}
++   for(int id:c.outputs){auto actual=runner.get(candidate[id],host[id].data.size());packet23::row(output.parent_path(),"adapter kind="+std::to_string(kind)+" step="+std::to_string(step)+" buffer="+std::to_string(id),actual.data(),actual.size(),actual==host[id].data);if(actual!=host[id].data)throw std::runtime_error("actual adapter host parity kind="+std::to_string(kind)+" M="+std::to_string(m)+" step="+std::to_string(step)+" buffer="+std::to_string(id));auto original=runner.get(reference[id],host[id].data.size());if(original!=host[id].data)throw std::runtime_error("actual adapter original device reference parity");bytes.write(reinterpret_cast<const char*>(actual.data()),actual.size());}
+    ++checks;runner.d.retire_completed_events();
+   }
+  }
+- auto receipt=runner.d.shutdown(std::chrono::minutes(20));if(!receipt.safe_to_exit)throw std::runtime_error("actual adapter fixture teardown");return {checks,runner.max,receipt.json()};
++ bytes.flush();
++ auto receipt=runner.d.shutdown(std::chrono::seconds(60));if(!receipt.safe_to_exit || receipt.exit_code)throw std::runtime_error("actual adapter fixture teardown");return {checks,runner.max,receipt.json()};
++ }catch(const std::exception& e){packet23::failure(runner.d,output.parent_path(),e.what());throw;}
+ }
 --- packet21/backend.hpp
 +++ packet23/backend.hpp
 @@ -25,7 +25,8 @@
@@ -43,7 +138,7 @@
      } catch(...) {queues={};context.reset();zeContextDestroy(native);native=nullptr;throw;}
    }
    ~Context() override {
-@@ -111,19 +112,19 @@
+@@ -111,19 +112,24 @@
      check();int d=location(dst,n),s=location(src,n);
      if(d>=0&&s>=0&&d!=s&&!(access_ab&&access_ba))throw std::logic_error("peer path without bidirectional access");
      int target=d>=0?d:s>=0?s:0;
@@ -55,9 +150,16 @@
      check();const auto& op=dynamic_cast<const ownrt::SyclOperation&>(base);
      for(auto ptr:p)if(location(ptr,1)!=allocation_card)throw std::logic_error("foreign compute binding");
 -    auto wait=dependencies(deps,allocation_card);auto e=ownrt::next_handle();event_cards[e]=allocation_card;
-+    const auto& wait=dependencies(deps,allocation_card);auto e=ownrt::next_handle();event_cards[e]=allocation_card;
-     auto [it,ok]=events.try_emplace(e);(void)ok;
-     it->second=op.submit(*queues[allocation_card],p,wait);return e;
+-    auto [it,ok]=events.try_emplace(e);(void)ok;
+-    it->second=op.submit(*queues[allocation_card],p,wait);return e;
++    const auto& wait=dependencies(deps,allocation_card);
++    // Reserve map nodes before submission; key zero is never an owned event.
++    events.try_emplace(0);try {event_cards.emplace(0,allocation_card);}catch(...){events.erase(0);throw;}
++    try {
++    auto submitted=op.submit(*queues[allocation_card],p,wait);
++    auto e=ownrt::next_handle();auto node=events.extract(0);node.key()=e;node.mapped()=std::move(submitted);events.insert(std::move(node));
++    auto rank=event_cards.extract(0);rank.key()=e;event_cards.insert(std::move(rank));return e;
++    }catch(...){events.erase(0);event_cards.erase(0);throw;}
    }
  
    ownrt::Event marker(std::span<const ownrt::Event> deps) override {
@@ -66,7 +168,7 @@
      it->second=queues[allocation_card]->submit([&](sycl::handler& h){h.depends_on(wait);h.single_task([]{});});return e;
    }
    bool complete(ownrt::Event e) override {check();return events.at(e).get_info<sycl::info::event::command_execution_status>()==sycl::info::event_command_status::complete;}
-@@ -139,7 +140,7 @@
+@@ -139,7 +145,7 @@
    void synchronize() override {for(auto& q:queues)q->wait_and_throw();check();}
    void forget(ownrt::Event e){events.erase(e);event_cards.erase(e);}
    int closed_ranks=0;
@@ -77,7 +179,12 @@
  };
 --- packet21/canary.hpp
 +++ packet23/canary.hpp
-@@ -15,16 +15,20 @@
+@@ -1,3 +1,4 @@
++#include "failure.hpp"
+ #pragma once
+ // Weight-free gate using the real owner, shared context, adapter and copy paths.
+ struct CanaryIncrement final
+@@ -15,16 +16,21 @@
   require(a.cards==2 && a.seconds>=300 && a.seconds<=1800,"canary: two cards and watchdog 300..1800 seconds");
   auto start=std::chrono::steady_clock::now();
  #ifdef OWN_RT_HOST_ONLY
@@ -90,10 +197,11 @@
  #endif
 - double startup_jit_ms=Engine::ms(start);auto work_start=std::chrono::steady_clock::now();
 - ownrt::Device d(std::move(backend));ownrt::CopyEngine copy(d,4096,1);
-+ ownrt::Device d(std::move(backend));
++ ownrt::Device d(std::move(backend));try {
 + double startup_jit_ms=0,work_wall_ms=0,max_ns=0,device_ns=0;
 + bool submission_budget_passed=true;unsigned waits=0;size_t bytes=0;
 + { // All context borrowers unwind before the owner, including on exceptions.
++ packet23::Borrower bundle_borrower(d,"canary executable kernel bundle");
 + auto compiled=raw->canary_bundle();
 + startup_jit_ms=Engine::ms(start);auto work_start=std::chrono::steady_clock::now();
 + ownrt::CopyEngine copy(d,4096,1);
@@ -103,22 +211,194 @@
   auto guard=[&]{require(!stopped,"canary cooperative stop");};
   auto drain=[&]{if(!tail)return;guard();++waits;require(d.wait(tail,std::chrono::seconds(5)),"canary five-second drain timeout");
  #ifndef OWN_RT_HOST_ONLY
-@@ -61,8 +65,10 @@
+@@ -61,9 +67,12 @@
   verify(0,"position",1,1);verify(1,"position",1,1);
   verify(0,"next_token",7,1);verify(0,"error",0,1);verify(1,"error",0,1);verify(1,"streams",7,64);
   for(int c=0;c<2;++c){for(int i=0;i<1000;++i)increment(c);drain();verify(c,"data",1200,64);}
 - auto bytes=d.arena.total(Memory::device);require(bytes<16*1024*1024,"canary allocation bound");
 - double work_wall_ms=Engine::ms(work_start);auto teardown_start=std::chrono::steady_clock::now();
+- auto receipt=d.shutdown(std::chrono::seconds(5));require(receipt.safe_to_exit,"canary unsafe teardown");
 + bytes=d.arena.total(Memory::device);require(bytes<16*1024*1024,"canary allocation bound");
 + work_wall_ms=Engine::ms(work_start);
 + } // compiled bundle, copy wrapper and submission captures are now destroyed.
++ packet23::row(a.output,"canary completed checks",&waits,sizeof waits,submission_budget_passed);
 + auto teardown_start=std::chrono::steady_clock::now();
-  auto receipt=d.shutdown(std::chrono::seconds(5));require(receipt.safe_to_exit,"canary unsafe teardown");
++ auto receipt=d.shutdown(std::chrono::seconds(5));require(receipt.safe_to_exit && receipt.exit_code==0,"canary unsafe teardown");
   double elapsed=Engine::ms(start),teardown_ms=Engine::ms(teardown_start);
   std::ostringstream out;out<<"{\"schema\":\"own-runtime.iq3.packet18.canary.v2\",\"passed\":"<<(submission_budget_passed?"true":"false")<<",\"owner_cards\":2,\"device_executed\":"
+ #ifdef OWN_RT_HOST_ONLY
+@@ -75,4 +84,5 @@
+  <<",\"submission_budget_passed\":"<<(submission_budget_passed?"true":"false")<<",\"total_expectation_ms\":30000,\"total_expectation_exceeded\":"<<(elapsed>=30000?"true":"false")
+  <<",\"round_trips\":100,\"kernels_per_card\":1000,\"token_sequence\":true,\"owned_device_bytes\":"<<bytes<<",\"wall_ms\":"<<elapsed<<",\"max_submission_ns\":"<<max_ns<<",\"host_waits\":"<<waits<<",\"teardown\":["<<receipt.json()<<"]}";
+  save(a.output/"receipt.json",out.str());return 0;
++ }catch(const std::exception& e){packet23::failure(d,a.output,e.what());throw;}
+ }
+--- packet21/gemv_batch.cpp
++++ packet23/gemv_batch.cpp
+@@ -100,16 +100,16 @@
+  return iq3::bits_float(0x7fc00000);
+ }
+ struct Batch final:ownrt::SyclOperation {
+- unsigned count,local_columns;size_t groups;
++ unsigned count,local_columns;size_t groups;void* const* parameters=nullptr;
+  sycl::event submit(sycl::queue& q,std::span<void* const> pointers,const std::vector<sycl::event>& dependencies)const override {
+   if(pointers.size()>128)throw std::invalid_argument("batch pointer count");
+-  std::array<void*,128> ptr{};std::copy(pointers.begin()+1,pointers.end(),ptr.begin());
++  auto ptr=parameters;
+   auto ds=static_cast<const Desc*>(pointers[0]);auto n=count;auto ng=groups;auto cols=local_columns;
+   return q.submit([&](sycl::handler& h){h.depends_on(dependencies);
+    sycl::local_accessor<uint16_t,1> local(cols,h);sycl::local_accessor<float,1> partial(8,h);
+    h.parallel_for(sycl::nd_range<1>(ng*128,128),[=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
+     size_t group=it.get_group_linear_id();unsigned which=0;for(unsigned i=1;i<n;++i)if(group>=ds[i].first)which=i;
+-    auto d=ds[which];size_t logical=group-d.first;if(logical==d.rows*d.count*d.input_rows){if(it.get_local_linear_id()==0)normalize(d,ptr.data());return;}
++    auto d=ds[which];size_t logical=group-d.first;if(logical==d.rows*d.count*d.input_rows){if(it.get_local_linear_id()==0)normalize(d,ptr);return;}
+     size_t row=logical%d.rows,slot=(logical/d.rows)%d.count,mi=logical/(d.rows*d.count);
+     auto sg=it.get_sub_group();unsigned lane=sg.get_local_linear_id(),sub=sg.get_group_linear_id(),wi=it.get_local_linear_id();
+     iq3::Route route{0,0,uint32_t(d.rows)};if(d.routed)route=static_cast<const iq3::Route*>(ptr[d.route])[slot];
+@@ -132,7 +132,7 @@
+     if(wi==0){float values[2]{};for(unsigned peer=0;peer<(d.paired?2u:1u);++peer){unsigned v=peer?d.peer_variant:d.variant;
+       values[peer]=v==1||v==4||v==7?(partial[peer*4]+partial[peer*4+1])+(partial[peer*4+2]+partial[peer*4+3]):partial[peer*4];
+       if(!active)values[peer]=iq3::bits_float(0x7fc00000);}
+-     stores(d,ptr.data(),logical,values[0],values[1]);}
++     stores(d,ptr,logical,values[0],values[1]);}
+    });
+   });
+  }
+@@ -185,6 +185,9 @@
+  #endif
+  #ifndef OWN_RT_HOST_ONLY
+  op.local_columns=plan.local_columns;
++ std::array<void*,128> pointers{};for(size_t i=0;i<plan.bindings.size();++i)pointers[i]=device.arena.row(plan.bindings[i]).pointer;
++ auto params=ownrt::parameters(device,pointers.data(),sizeof pointers,device.arena.row(plan.bindings[0]).label.starts_with("card1:")?1:0);
++ op.parameters=static_cast<void*const*>(device.arena.row(params).pointer);
+  #endif
+  auto ids=plan.bindings;ids.insert(ids.begin(),table);auto event=device.compute(op,ids,{});return {event,event,1};
+ }
+--- packet21/gemv_fixture.cpp
++++ packet23/gemv_fixture.cpp
+@@ -1,3 +1,4 @@
++#include "failure.hpp"
+ #include "gemv_batch.hpp"
+ #include <iostream>
+ #include <set>
+@@ -54,11 +55,11 @@
+  }
+  return data;
+ }
+-int main(int argc,char** argv){try{
++int main(int argc,char** argv){std::filesystem::path failure_output;for(int i=1;i+1<argc;++i)if(std::string(argv[i])=="--output")failure_output=argv[i+1];try{
+  std::unique_ptr<Backend> backend;std::filesystem::path output;unsigned card=0;bool authorized=false;
+  for(int i=1;i<argc;++i){std::string a=argv[i];if(a=="--authorized-device-window")authorized=true;else if(a=="--card"&&i+1<argc)card=std::stoul(argv[++i]);else if(a=="--output"&&i+1<argc)output=argv[++i];else throw std::invalid_argument("fixture arguments");}
+  std::vector<uint8_t> output_bytes;uint64_t max_submission_ns=0;
+- auto record=[&](const std::vector<uint16_t>& data){auto ptr=reinterpret_cast<const uint8_t*>(data.data());output_bytes.insert(output_bytes.end(),ptr,ptr+data.size()*2);};
++ auto record=[&](const std::vector<uint16_t>& data){auto ptr=reinterpret_cast<const uint8_t*>(data.data());packet23::row(output,"GEMV output "+std::to_string(output_bytes.size()),ptr,data.size()*2);if(!output.empty()){std::ofstream f(output/"output.bin",std::ios::binary|std::ios::app);f.write(reinterpret_cast<const char*>(ptr),data.size()*2);f.flush();}output_bytes.insert(output_bytes.end(),ptr,ptr+data.size()*2);};
+  #ifdef OWN_RT_HOST_ONLY
+  if(authorized)throw std::invalid_argument("host binary cannot authorize device");backend=std::make_unique<Cpu>();
+  #else
+@@ -66,7 +67,7 @@
+  for(char** p=environ;*p;++p)if(std::string(*p).starts_with("NEO"))throw std::invalid_argument("NEO debug key refused");
+  backend=make_sycl_device(card,true);
+  #endif
+- Device d(std::move(backend));CopyEngine copy(d);
++ Device d(std::move(backend));try { CopyEngine copy(d);
+  auto timing=[&](integrated::Launch launch){for(auto e:{launch.first,launch.last}){auto t=d.timing(e);max_submission_ns=std::max(max_submission_ns,t.end_ns-t.start_ns);}};
+  #ifndef OWN_RT_HOST_ONLY
+  auto elementwise=[&](unsigned kind,unsigned n,std::vector<Allocation> ids){ReferenceElementwise op;op.op=kind;op.n=n;auto event=d.compute(op,ids,{});if(!d.wait(event,std::chrono::minutes(20)))throw std::runtime_error("unfused elementwise deadline");timing({event,event,1});};
+@@ -75,6 +76,7 @@
+  size_t allocation_serial=0;auto alloc=[&](size_t n,Memory m=Memory::device){return d.arena.allocate("fixture-"+std::to_string(allocation_serial++),n,m,Category::scratch,Lifetime::transaction);};
+  auto upload=[&](const void* data,size_t n){auto staging=alloc(n,Memory::pinned),device=alloc(n);std::memcpy(d.arena.row(staging).pointer,data,n);copy.copy(device,0,staging,0,n,{});return device;};
+  auto read=[&](Allocation id,size_t n){auto staging=alloc(n,Memory::pinned);auto e=copy.copy(staging,0,id,0,n,{});if(!d.wait(e,std::chrono::minutes(20)))throw std::runtime_error("fixture read deadline");std::vector<uint16_t> out(n/2);std::memcpy(out.data(),d.arena.row(staging).pointer,n);return out;};
++ auto verify=[&](const std::vector<uint16_t>& actual,const std::vector<uint16_t>& expected,const std::string& label){packet23::row(output,label,actual.data(),actual.size()*2,actual==expected);if(actual!=expected)throw std::runtime_error(label);};
+  std::array types{iq3::Type::F32,iq3::Type::F16,iq3::Type::BF16,iq3::Type::Q8_0,iq3::Type::Q6_K,iq3::Type::Q3_K,iq3::Type::IQ3_XXS,iq3::Type::IQ2_S,iq3::Type::IQ3_S,iq3::Type::IQ4_NL};
+  for(unsigned k:{512u,1280u,2560u})for(unsigned m:{1u,3u,87u})for(unsigned variant:{0u,1u,2u,4u,6u,7u})for(unsigned ti=0;ti<types.size();ti+=2){
+   std::vector<uint16_t> input(m*k);for(size_t i=0;i<input.size();++i)input[i]=iq3::bf16_bits(float(int((i*17)%67)-33)/32.f);
+@@ -85,12 +87,12 @@
+    for(unsigned mi=0;mi<m;++mi)for(unsigned r=0;r<rows;++r)wanted[mi*rows+r]=iq3::bf16_bits(integrated::arithmetic::row(type,data.data()+r*rb,input.data()+mi*k,k,variant));
+    #ifndef OWN_RT_HOST_ONLY
+    // Same-card unfused original kernels, with distinct per-input allocations.
+-   for(unsigned mi=0;mi<m;++mi){auto single=matrix;single.x=upload(input.data()+mi*k,k*2);single.y=alloc(rows*2);single.workspace=alloc(rows*16);auto event=integrated::dense(d,single,variant);if(!d.wait(event.last,std::chrono::minutes(20)))throw std::runtime_error("unfused deadline");timing(event);auto got=read(single.y,rows*2);for(unsigned r=0;r<rows;++r)if(got[r]!=wanted[mi*rows+r])throw std::runtime_error("unfused device != host");}
++   for(unsigned mi=0;mi<m;++mi){auto single=matrix;single.x=upload(input.data()+mi*k,k*2);single.y=alloc(rows*2);single.workspace=alloc(rows*16);auto event=integrated::dense(d,single,variant);if(!d.wait(event.last,std::chrono::minutes(20)))throw std::runtime_error("unfused deadline");timing(event);auto got=read(single.y,rows*2);verify(got,std::vector<uint16_t>(wanted.begin()+mi*rows,wanted.begin()+(mi+1)*rows),"unfused device != host");}
+    #endif
+    expected.push_back(std::move(wanted));
+   }
+   auto plan=packet21::prepare_batch(d,specs,m);auto table=upload(plan.descriptor_bytes.data(),plan.descriptor_bytes.size());auto event=packet21::gemv_batch(d,plan,table);if(event.passes!=1||!d.wait(event.last,std::chrono::minutes(20)))throw std::runtime_error("bundle launch");timing(event);
+-  for(unsigned b=0;b<2;++b){auto got=read(specs[b].matrix.y,expected[b].size()*2);if(got!=expected[b])throw std::runtime_error("bundle output mismatch type="+std::to_string(unsigned(types[ti+b]))+" variant="+std::to_string(variant)+" M="+std::to_string(m));record(got);for(auto v:got){hash=(hash^(v&255))*1099511628211ull;hash=(hash^(v>>8))*1099511628211ull;}values+=got.size();++cases;}
++  for(unsigned b=0;b<2;++b){auto got=read(specs[b].matrix.y,expected[b].size()*2);verify(got,expected[b],"bundle output mismatch type="+std::to_string(unsigned(types[ti+b]))+" variant="+std::to_string(variant)+" M="+std::to_string(m));record(got);for(auto v:got){hash=(hash^(v&255))*1099511628211ull;hash=(hash^(v>>8))*1099511628211ull;}values+=got.size();++cases;}
+   d.retire_completed_events();
+  }
+ 
+@@ -108,24 +110,24 @@
+   #ifndef OWN_RT_HOST_ONLY
+   auto reference_input=alloc(k*2);if(input_transform==packet21::InputTransform::none){auto e=copy.copy(reference_input,0,x,0,k*2,{});if(!d.wait(e,std::chrono::minutes(20)))throw std::runtime_error("reference input copy");}
+   else if(input_transform==packet21::InputTransform::silu_div4)elementwise(0,k,{x,reference_input});else elementwise(1,k,{x,auxid,reference_input});
+-  if(read(reference_input,k*2)!=material)throw std::runtime_error("unfused prologue host parity");std::array<Allocation,2> reference_y{};
++  verify(read(reference_input,k*2),material,"unfused prologue host parity");std::array<Allocation,2> reference_y{};
+   #endif
+ 
+   for(unsigned p=0;p<2;++p){auto& matrix=p?spec.peer:spec.matrix;matrix.type=p?iq3::Type::IQ3_S:iq3::Type::Q6_K;matrix.rows=rows;matrix.columns=k;matrix.x=x;matrix.y=alloc(rows*2);auto data=weights(matrix.type,rows,k,123+p);matrix.w=upload(data.data(),data.size());auto rb=integrated::arithmetic::row_bytes(matrix.type,k,p?2:1);
+    for(unsigned r=0;r<rows;++r)wanted[p][r]=iq3::bf16_bits(integrated::arithmetic::row(matrix.type,data.data()+r*rb,material.data(),k,p?2:1));
+    #ifndef OWN_RT_HOST_ONLY
+-   auto baseline=matrix;baseline.x=reference_input;baseline.y=reference_y[p]=alloc(rows*2);baseline.workspace=alloc(rows*16);auto event=integrated::dense(d,baseline,p?2:1);if(!d.wait(event.last,std::chrono::minutes(20)))throw std::runtime_error("paired unfused deadline");timing(event);if(read(baseline.y,rows*2)!=wanted[p])throw std::runtime_error("paired unfused host parity");
++   auto baseline=matrix;baseline.x=reference_input;baseline.y=reference_y[p]=alloc(rows*2);baseline.workspace=alloc(rows*16);auto event=integrated::dense(d,baseline,p?2:1);if(!d.wait(event.last,std::chrono::minutes(20)))throw std::runtime_error("paired unfused deadline");timing(event);verify(read(baseline.y,rows*2),wanted[p],"paired unfused host parity");
+    #endif
+ 
+   }
+   for(unsigned r=0;r<rows;++r){float gate=iq3::bits_float(uint32_t(wanted[0][r])<<16),up=iq3::bits_float(uint32_t(wanted[1][r])<<16);wanted[2][r]=iq3::bf16_bits((gate*(1.f/(1.f+detmath::exp(-gate))))*up);}
+ 
+   #ifndef OWN_RT_HOST_ONLY
+-  auto activated=alloc(rows*2);elementwise(2,rows,{reference_y[0],reference_y[1],activated});if(read(activated,rows*2)!=wanted[2])throw std::runtime_error("unfused activation host parity");
++  auto activated=alloc(rows*2);elementwise(2,rows,{reference_y[0],reference_y[1],activated});verify(read(activated,rows*2),wanted[2],"unfused activation host parity");
+   #endif
+   if(input_transform!=packet21::InputTransform::none)spec.materialized_input=alloc(k*2);
+   auto plan=packet21::prepare_batch(d,{spec});auto table=upload(plan.descriptor_bytes.data(),plan.descriptor_bytes.size());auto event=packet21::gemv_batch(d,plan,table);if(!d.wait(event.last,std::chrono::minutes(20)))throw std::runtime_error("transform deadline");timing(event);
+-  for(unsigned p=0;p<3;++p){auto got=read(p==0?spec.matrix.y:p==1?spec.peer.y:spec.other,rows*2);if(got!=wanted[p])throw std::runtime_error("nonlinear GEMV rounding mismatch");record(got);for(auto v:got){hash=(hash^(v&255))*1099511628211ull;hash=(hash^(v>>8))*1099511628211ull;}values+=got.size();++cases;}
++  for(unsigned p=0;p<3;++p){auto got=read(p==0?spec.matrix.y:p==1?spec.peer.y:spec.other,rows*2);verify(got,wanted[p],"nonlinear GEMV rounding mismatch");record(got);for(auto v:got){hash=(hash^(v&255))*1099511628211ull;hash=(hash^(v>>8))*1099511628211ull;}values+=got.size();++cases;}
+   if(spec.materialized_input && read(spec.materialized_input,k*2)!=material)throw std::runtime_error("prologue materialization mismatch");
+   // Safety counterexample: output that a sibling reads must be rejected.
+   auto unsafe=spec;unsafe.matrix.y=spec.matrix.x;bool refused=false;try{packet21::prepare_batch(d,{spec,unsafe});}catch(const std::invalid_argument&){refused=true;}if(!refused)throw std::runtime_error("sibling dependency alias accepted");
+@@ -143,9 +145,9 @@
+   for(unsigned r=0;r<rows;++r){auto dot=iq3::bf16_bits(integrated::arithmetic::row(m.type,data.data()+r*rb,x.data(),k,4));float v=iq3::bits_float(uint32_t(dot)<<16);for(unsigned st=0;st<4;++st){float old=iq3::bits_float(uint32_t(stream[st*rows+r])<<16),inj=iq3::bits_float(uint32_t(inject[st])<<16);wanted[st*rows+r]=iq3::bf16_bits(old+v*(2.f*(1.f/(1.f+detmath::exp(-(inj/4.f))))));}}
+ 
+   #ifndef OWN_RT_HOST_ONLY
+-  auto baseline=m;baseline.y=alloc(rows*2);baseline.workspace=alloc(rows*16);auto e=integrated::dense(d,baseline,4);if(!d.wait(e.last,std::chrono::minutes(20)))throw std::runtime_error("unfused residual dot deadline");timing(e);auto residual=alloc(wanted.size()*2);elementwise(3,rows,{spec.other,baseline.y,spec.auxiliary,residual});if(read(residual,wanted.size()*2)!=wanted)throw std::runtime_error("unfused HC residual host parity");
++  auto baseline=m;baseline.y=alloc(rows*2);baseline.workspace=alloc(rows*16);auto e=integrated::dense(d,baseline,4);if(!d.wait(e.last,std::chrono::minutes(20)))throw std::runtime_error("unfused residual dot deadline");timing(e);auto residual=alloc(wanted.size()*2);elementwise(3,rows,{spec.other,baseline.y,spec.auxiliary,residual});verify(read(residual,wanted.size()*2),wanted,"unfused HC residual host parity");
+   #endif
+-  auto plan=packet21::prepare_batch(d,{spec});auto table=upload(plan.descriptor_bytes.data(),plan.descriptor_bytes.size());auto event=packet21::gemv_batch(d,plan,table);if(!d.wait(event.last,std::chrono::minutes(20)))throw std::runtime_error("residual deadline");timing(event);auto got=read(spec.destination,wanted.size()*2);if(got!=wanted)throw std::runtime_error("coordinate residual exactness");record(got);values+=got.size();++cases;d.retire_completed_events();
++  auto plan=packet21::prepare_batch(d,{spec});auto table=upload(plan.descriptor_bytes.data(),plan.descriptor_bytes.size());auto event=packet21::gemv_batch(d,plan,table);if(!d.wait(event.last,std::chrono::minutes(20)))throw std::runtime_error("residual deadline");timing(event);auto got=read(spec.destination,wanted.size()*2);verify(got,wanted,"coordinate residual exactness");record(got);values+=got.size();++cases;d.retire_completed_events();
+  }
+  // Routed shared input, distinct status outputs, invalid-index safe substitute,
+  // and the independent same-launch top-probability normalization work-group.
+@@ -158,16 +160,18 @@
+ 
+   #ifndef OWN_RT_HOST_ONLY
+   std::vector<uint16_t> repeated=x;repeated.insert(repeated.end(),x.begin(),x.end());auto replicated=upload(repeated.data(),repeated.size()*2);
+-  for(unsigned peer=0;peer<2;++peer){auto baseline=peer?spec.peer:spec.matrix;baseline.x=replicated;baseline.y=alloc(count*rows*2);baseline.status=upload(zero,sizeof zero);auto e=iq3::kopt3::multiply(d,{baseline},iq3::kopt3::Variant::constant);if(!d.wait(e.last,std::chrono::minutes(20)))throw std::runtime_error("unfused routed deadline");timing(e);if(read(baseline.y,count*rows*2)!=wanted[peer])throw std::runtime_error("unfused routed host parity");auto status=read(baseline.status,sizeof zero);uint32_t words[2];std::memcpy(words,status.data(),sizeof words);if(words[0]!=0||words[1]!=1)throw std::runtime_error("unfused route guards");}
++  for(unsigned peer=0;peer<2;++peer){auto baseline=peer?spec.peer:spec.matrix;baseline.x=replicated;baseline.y=alloc(count*rows*2);baseline.status=upload(zero,sizeof zero);auto e=iq3::kopt3::multiply(d,{baseline},iq3::kopt3::Variant::constant);if(!d.wait(e.last,std::chrono::minutes(20)))throw std::runtime_error("unfused routed deadline");timing(e);verify(read(baseline.y,count*rows*2),wanted[peer],"unfused routed host parity");auto status=read(baseline.status,sizeof zero);uint32_t words[2];std::memcpy(words,status.data(),sizeof words);if(words[0]!=0||words[1]!=1)throw std::runtime_error("unfused route guards");}
+   auto normalized=alloc(sizeof prob);elementwise(4,count,{spec.route_prob,normalized});auto raw=read(normalized,sizeof prob);float outputs[2];std::memcpy(outputs,raw.data(),sizeof outputs);float total=prob[0]+prob[1];for(unsigned j=0;j<count;++j)if(std::bit_cast<uint32_t>(outputs[j])!=std::bit_cast<uint32_t>(prob[j]/total))throw std::runtime_error("unfused probability parity");
+   #endif
+   auto plan=packet21::prepare_batch(d,{spec});auto table=upload(plan.descriptor_bytes.data(),plan.descriptor_bytes.size());auto event=packet21::gemv_batch(d,plan,table);if(!d.wait(event.last,std::chrono::minutes(20)))throw std::runtime_error("route deadline");timing(event);
+-  for(unsigned peer=0;peer<2;++peer){auto m=peer?spec.peer:spec.matrix;auto got=read(m.y,count*rows*2);if(got!=wanted[peer])throw std::runtime_error("guarded routed exactness");auto status=read(m.status,sizeof zero);uint32_t words[2];std::memcpy(words,status.data(),sizeof words);if(words[0]!=0||words[1]!=1)throw std::runtime_error("distinct routed status guard");record(got);record(status);values+=got.size();++cases;}
++  for(unsigned peer=0;peer<2;++peer){auto m=peer?spec.peer:spec.matrix;auto got=read(m.y,count*rows*2);verify(got,wanted[peer],"guarded routed exactness");auto status=read(m.status,sizeof zero);uint32_t words[2];std::memcpy(words,status.data(),sizeof words);if(words[0]!=0||words[1]!=1)throw std::runtime_error("distinct routed status guard");record(got);record(status);values+=got.size();++cases;}
+   auto probabilities=read(spec.route_prob,sizeof prob);float observed[2];std::memcpy(observed,probabilities.data(),sizeof observed);float sum=prob[0]+prob[1];for(unsigned i=0;i<2;++i)if(std::bit_cast<uint32_t>(observed[i])!=std::bit_cast<uint32_t>(prob[i]/sum))throw std::runtime_error("route probability exactness");record(probabilities);++cases;d.retire_completed_events();
+  }
+- auto receipt=d.shutdown(std::chrono::minutes(20));if(!receipt.safe_to_exit)throw std::runtime_error("fixture shutdown");
++ if(!output.empty()){std::filesystem::create_directories(output);std::ofstream f(output/"output.bin",std::ios::binary);f.write(reinterpret_cast<const char*>(output_bytes.data()),output_bytes.size());}
++ auto receipt=d.shutdown(std::chrono::seconds(60));if(!receipt.safe_to_exit || receipt.exit_code)throw std::runtime_error("fixture shutdown");
+  if(!output.empty()){std::filesystem::create_directories(output);std::ofstream binary(output/"output.bin",std::ios::binary);binary.write(reinterpret_cast<const char*>(output_bytes.data()),output_bytes.size());binary.close();
+  unsigned char digest[SHA256_DIGEST_LENGTH];SHA256(output_bytes.data(),output_bytes.size(),digest);std::ostringstream hex;for(auto b:digest)hex<<std::hex<<std::setw(2)<<std::setfill('0')<<unsigned(b);
+  std::ofstream json(output/"receipt.json");json<<"{\"schema\":\"own-runtime.iq3.packet21.fixtures.v1\",\"passed\":true,\"device_executed\":"<<(authorized?"true":"false")<<",\"fused_unfused_exact\":true,\"host_exact\":true,\"arithmetic\":\"iq3-p17-detmath-v2\",\"owner_cards\":1,\"fixture_output_sha256\":\""<<hex.str()<<"\",\"max_submission_ns\":"<<max_submission_ns<<",\"sequential_owners\":1,\"safe_to_exit\":true,\"teardown\":["<<receipt.json()<<"],\"fixtures\":"<<cases<<",\"values\":"<<values<<"}\n";}
+  std::cout<<"{\"gate\":\"GEMV mixed-grid row bundles\",\"cases\":"<<cases<<",\"values\":"<<values<<",\"dense_paired_fnv64\":\""<<std::hex<<hash<<"\",\"passed\":true}\n";
+- }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
++ }catch(const std::exception& e){packet23::failure(d,output,e.what());return 1;}
++ }catch(const std::exception& e){std::cerr<<e.what()<<'\n';if(!failure_output.empty()){std::filesystem::create_directories(failure_output);if(!std::filesystem::exists(failure_output/"failure.json"))std::ofstream(failure_output/"failure.json")<<"{\"passed\":false,\"error\":"<<ownrt::quote(e.what())<<",\"teardown\":{\"status\":\"owner not constructed\",\"in_flight\":0,\"live_bytes\":0,\"in_flight_event_ids\":[],\"registered_borrowers\":[]}}\n";}return 1;}}
 --- packet21/main.cpp
 +++ packet23/main.cpp
-@@ -8,7 +8,7 @@
+@@ -1,3 +1,4 @@
++#include "failure.hpp"
+ #include "../packet2/loader/gguf.hpp"
+ #include "synthetic.hpp"
+ #include "../packet3/step/plan.hpp"
+@@ -8,7 +9,7 @@
  #include "backend.hpp"
  #endif
  #ifdef OWN_RT_HOST_ONLY
@@ -127,7 +407,7 @@
  #endif
  #include <csignal>
  #include <filesystem>
-@@ -67,11 +67,11 @@
+@@ -67,11 +68,11 @@
    return s.ends_with(suffix);
  }
  #ifdef OWN_RT_HOST_ONLY
@@ -141,7 +421,7 @@
      finish(e);
      return e;
    }
-@@ -84,7 +84,7 @@
+@@ -84,7 +85,7 @@
  #endif
  struct Options {
    bool canary = false, mini = false, first = false, record = false, authorized = false, checked = false;
@@ -150,7 +430,7 @@
    std::string nongemv = "parallel", gemv = "frozen", stage = "first-token";
    int cards = 1, card = 3, tokens = 8, context = 128, seconds = 10800;
    std::string memory = "layer-streaming";
-@@ -101,6 +101,7 @@
+@@ -101,6 +102,7 @@
      };
      if (k == "--canary") a.canary = true;
      else if (k == "--checked") a.checked = true;
@@ -158,7 +438,7 @@
      else if (k == "--fusion") a.fusion=value();
      else if (k == "--nongemv") a.nongemv = value();
      else if (k == "--gemv") a.gemv = value();
-@@ -146,6 +147,7 @@
+@@ -146,6 +148,7 @@
    require(a.tokens > 0 && a.tokens <= 64 && a.context >= 8 &&
                a.context <= 1024 && a.seconds > 0 && a.seconds <= 10800,
            "bounded generation/context/deadline");
@@ -166,7 +446,7 @@
    require(a.fusion=="on"||a.fusion=="off","fusion mode");
    require(a.nongemv=="core" || a.nongemv=="parallel", "nongemv mode");
    require(a.gemv=="frozen" || a.gemv=="r5", "gemv mode");
-@@ -416,7 +418,7 @@
+@@ -416,7 +419,7 @@
    std::vector<Allocation> slab, scratch, workspace, compact_routes, mixture_out, one;
    std::vector<std::vector<uint32_t>> selected;
    std::vector<int> loaded_layer;
@@ -175,7 +455,7 @@
    double gemv_ms=0, nongemv_ms=0, transfer_ms=0;
    uint64_t submitted=0;
    size_t peak_device_bytes=0;
-@@ -425,11 +427,13 @@
+@@ -425,11 +428,13 @@
    }
    void finish(int, Launch l, bool gemv) {
      // Submission only. Owner::compute appends the preceding owned event.
@@ -190,7 +470,7 @@
      if(tail)wait(0,tail);
  #ifndef OWN_RT_HOST_ONLY
      for(auto item:pending) {
-@@ -440,6 +444,7 @@
+@@ -440,6 +445,7 @@
  #endif
      pending.clear();tail=0;
      if(!devices.empty())dev(0).retire_completed_events();
@@ -198,7 +478,7 @@
    }
  
    std::ofstream progress;
-@@ -448,7 +453,7 @@
+@@ -448,7 +454,7 @@
    std::chrono::steady_clock::time_point deadline;
    Engine(Weights &source, const Options &args, flash::Plan q)
        : w(source), a(args), p(std::move(q)),
@@ -207,7 +487,7 @@
          deadline(std::chrono::steady_clock::now() +
                   std::chrono::seconds(a.seconds)) {if(a.fusion=="on")make_schedule();}
    void guard() {
-@@ -569,7 +574,7 @@
+@@ -569,7 +575,7 @@
      devices.push_back(std::make_unique<ownrt::Device>(std::make_unique<Host>()));
  #else
      if(a.cards==2) {
@@ -216,7 +496,7 @@
        // Device owns a forwarding backend; shared context outlives shutdown.
        struct Forward final:ownrt::Backend {
          std::shared_ptr<tp2::Context> p;
-@@ -589,7 +594,7 @@
+@@ -589,7 +595,7 @@
          void close_context()override{p->close_context();}
        };
        devices.push_back(std::make_unique<ownrt::Device>(std::make_unique<Forward>(peer_context)));
@@ -225,7 +505,7 @@
  #endif
      std::ifstream rope_file(fs::path(__FILE__).parent_path()/"rope.bf16",std::ios::binary);
      require(bool(rope_file),"RoPE model constant missing");
-@@ -768,7 +773,9 @@
+@@ -768,7 +774,9 @@
    std::set<std::string> removed;
    struct CachedBatch {packet21::PreparedBatch plan;Allocation table;int card;};
    std::map<std::string,CachedBatch> batches;
@@ -235,7 +515,7 @@
        Spec s; int c=l.card;
        s.g = p.g;
        s.packed_heads = !a.mini;
-@@ -839,6 +846,7 @@
+@@ -839,6 +847,7 @@
        for (auto name : {"error", "position", "active"})
          bindings.push_back(buffers[c].at(name).id);
        bindings.push_back(ropes[c]);
@@ -243,7 +523,7 @@
        return {s,bindings};
    }
    void make_schedule(){
-@@ -953,76 +961,7 @@
+@@ -953,76 +962,7 @@
      } else {
        if(l.op=="moe_combine")finish(c,mixture(dev(c),buffers[c].at(l.inputs[0]).id,
            buffers[c].at(l.inputs[1]).id,mixture_out[c],p.g.h),false);
@@ -321,7 +601,20 @@
        if(a.nongemv=="parallel")finish(c,packet18::submit_parallel(dev(c),s,bindings,controls[c],scores[c],probabilities[c],{}),false);
        else finish(c, iq3::step_operator(dev(c), s, bindings));
        if(l.op=="route" && a.cards==1) {
-@@ -1283,11 +1222,12 @@
+@@ -1055,9 +995,9 @@
+     for (auto &d : devices) {
+       auto r = d->shutdown(std::chrono::seconds(60));
+       receipts.push_back(r.json());
+-      if (!r.safe_to_exit) {
+-        save(a.output / "retained-owner.json", r.json());
+-        ownrt::hold_for_supervisor();
++      if (!r.safe_to_exit || r.exit_code) {
++        packet23::failure(*d,a.output,r.error.empty()?"owner teardown incomplete":r.error);
++        throw std::runtime_error("owner teardown failed after drain");
+       }
+     }
+     return receipts;
+@@ -1283,11 +1223,12 @@
        if(fixture_step==1)first_generated_ms=elapsed;
        (fixture_step>0?e->timings:e->prefill_timings)<<"{\"kind\":"<<ownrt::quote(fixture_step>0?"generated_token":"prefill_token")
          <<",\"token_index\":"<<token_index++<<",\"generated_index\":"<<fixture_step
@@ -336,7 +629,26 @@
      };
      int next=-1;auto prefill_start=std::chrono::steady_clock::now();
      for(size_t i=0;i<input.size();++i)next=step(input[i],i+1==input.size()?1:0);
-@@ -1367,6 +1307,7 @@
+@@ -1331,6 +1272,7 @@
+       ",\"pinned_bytes_per_owner\":4194304,\"mode\":"+ownrt::quote(a.memory)+"}\n");
+     read_bytes = w->read_bytes;
+     max_read = w->max_read;
++    e->timings.flush();
+     teardown = e->shutdown();
+     e.reset();
+     w.reset();
+@@ -1342,8 +1284,9 @@
+     }
+     std::cerr << error << '\n';
+     if (e) {
++      e->timings.flush();e->prefill_timings.flush();e->site_timings.flush();
++      for(auto& d:e->devices)packet23::failure(*d,output,error);
+       e->poisoned = true;
+-      teardown = e->shutdown();
+       e.reset();
+     }
+   }
+@@ -1367,6 +1310,7 @@
  #endif
    r << ",\"owner_cards\":"<<a.cards<<",\"nongemv\":"<<ownrt::quote(a.nongemv)<<",\"gemv\":"<<ownrt::quote(a.gemv)
      <<",\"fusion\":"<<ownrt::quote(a.fusion)<<",\"context\":"<<a.context<<",\"prefill_ms\":"<<prefill_ms<<",\"first_generated_token_ms\":"<<first_token_ms
@@ -344,16 +656,97 @@
      <<",\"decode_wall_ms\":"<<decode_ms<<",\"decode_tokens\":"<<(generated.empty()?0:generated.size()-1)
      <<",\"decode_tok_s\":"<<(generated.size()>1 && decode_ms>0 ? std::to_string((generated.size()-1)*1000./decode_ms):"null");
    r << ",\"oracle_compared\":" << (did_compare ? "true" : "false")
+--- packet21/nongemv_fixture.cpp
++++ packet23/nongemv_fixture.cpp
+@@ -1,3 +1,4 @@
++#include "failure.hpp"
+ // Packet20's retained CPU fixture gate plus supervised same-card comparison.
+ // Snapshot ABI has 16-slot Args; runtime ABI has 19. Isolate every snapshot
+ // namespace before linking the actual runtime adapter in another translation unit.
+@@ -42,20 +43,19 @@
+  }
+ };
+ struct Fused:ownrt::SyclOperation {
+- std::vector<ng::Shape> shapes;int mode=0;
++ std::vector<ng::Shape> shapes;int mode=0;const fusion::Site* device_sites=nullptr;
+  sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps)const override {
+   std::array<ng::Shape,6> ss{};std::array<ng::Args,6> aa{};int count=shapes.size(),local=2048;for(int j=0;j<count;++j){ss[j]=shapes[j];for(int i=0;i<16;++i)aa[j].p[i]=p[j*16+i];local=std::max(local,ng::local_floats(ss[j]));}
+   auto s=ss[0];auto a=aa[0];auto selected=(mode==1||mode==2)?static_cast<float*>(p[16]):nullptr;int which=mode;
+   size_t groups=which==1?s.tokens*4:which==2?s.tokens:which==3?s.tokens*24:which==5?ng::groups(s):1;
+-  std::array<fusion::Site,8> sites={fusion::Site{s,a},fusion::Site{s,a},fusion::Site{s,a},fusion::Site{s,a},fusion::Site{s,a},fusion::Site{s,a},fusion::Site{s,a},fusion::Site{s,a}};int n=0;
+-  for(int j=0;j<count;++j){sites[n++]=fusion::Site{ss[j],aa[j]};if(ss[j].op==ng::attention_score){auto next=ss[j];next.op=ng::attention_softmax;sites[n++]=fusion::Site{next,aa[j]};next.op=ng::attention_value;sites[n++]=fusion::Site{next,aa[j]};}}
++  auto sites=device_sites;int n=0;for(auto sh:shapes)n+=sh.op==ng::attention_score?3:1;
+   return q.submit([&](sycl::handler& h){h.depends_on(deps);sycl::local_accessor<float,1> scratch(local,h);
+    h.parallel_for(sycl::nd_range<1>(groups*128,128),[=](sycl::nd_item<1> it){Team team{it,scratch.get_multi_ptr<sycl::access::decorated::no>().get()};
+     if(which==1)fusion::route_rank(s,a,selected,it.get_group_linear_id(),team);
+     else if(which==2)fusion::route_finish(s,a,selected,it.get_group_linear_id(),team);
+     else if(which==3)fusion::attention(s,a,it.get_group_linear_id(),team);
+     else if(which==5)ng::group(s,a,it.get_group_linear_id(),team);
+-    else fusion::chain(sites.data(),n,team);
++    else fusion::chain(sites,n,team);
+    });});
+  }
+ };
+@@ -74,6 +74,9 @@
+   if(chain==3)ids[1][0]=ids[0][2];
+   if(!fused){auto scratch=allocate(ng::reference::scratch_floats*4);for(size_t j=0;j<fixtures.size();++j)for(int row=0;row<fixtures[j].s.tokens;++row){Ref op;op.shape=fixtures[j].s;op.row=row;std::vector<ownrt::Allocation> binding(ids[j].begin(),ids[j].end());binding.push_back(scratch);finish(device.compute(op,binding,{}));}}
+   else {Fused op;std::vector<ownrt::Allocation> binding;for(size_t j=0;j<fixtures.size();++j){op.shapes.push_back(fixtures[j].s);binding.insert(binding.end(),ids[j].begin(),ids[j].end());}
++   std::vector<fusion::Site> table(8,fusion::Site{ng::Shape{},ng::Args{}});int n=0;
++   for(size_t j=0;j<fixtures.size();++j){ng::Args a;for(int k=0;k<16;++k)a.p[k]=device.arena.row(ids[j][k]).pointer;auto s=fixtures[j].s;table[n++]={s,a};if(s.op==ng::attention_score){s.op=ng::attention_softmax;table[n++]={s,a};s.op=ng::attention_value;table[n++]={s,a};}}
++   auto params=ownrt::parameters(device,table.data(),table.size()*sizeof(fusion::Site));op.device_sites=static_cast<const fusion::Site*>(device.arena.row(params).pointer);
+    if(fixtures.size()==1&&fixtures[0].s.op==ng::route_gather){binding.push_back(allocate(fixtures[0].s.tokens*fixtures[0].s.extra*4));op.mode=1;finish(device.compute(op,binding,{}));op.mode=2;finish(device.compute(op,binding,{}));}
+    else {op.mode=fixtures.size()==1?(fixtures[0].s.op==ng::attention_score?3:5):0;finish(device.compute(op,binding,{}));}
+   }
+@@ -81,11 +84,12 @@
+   device.retire_completed_events();for(auto id:owned)device.arena.release(id);owned.clear();++checked;
+  }
+ };
+-void compare(const std::vector<Fixture>& a,const std::vector<Fixture>& b,const std::string& label){for(size_t j=0;j<a.size();++j)for(int i=0;i<16;++i)if(a[j].out[i]&&!(a[j].s.op==ng::route_gather&&i==4))need(a[j].d[i]==b[j].d[i],label+" stage="+std::to_string(j)+" slot="+std::to_string(i));}
++std::filesystem::path diagnostic_output;
++void compare(const std::vector<Fixture>& a,const std::vector<Fixture>& b,const std::string& label){for(size_t j=0;j<a.size();++j)for(int i=0;i<16;++i)if(a[j].out[i]&&!(a[j].s.op==ng::route_gather&&i==4)){auto name=label+" stage="+std::to_string(j)+" slot="+std::to_string(i);packet23::row(diagnostic_output,name,b[j].d[i].data(),b[j].d[i].size(),a[j].d[i]==b[j].d[i]);need(a[j].d[i]==b[j].d[i],name);}}
+ void host_chain(std::vector<Fixture>& f,int kind){std::vector<ng::Args>a;for(auto& v:f)a.push_back(v.a());if(kind==0)a[1].p[0]=a[0].p[5];if(kind==1){a[1].p[0]=a[0].p[3];a[2].p[0]=a[1].p[6];}if(kind==2){a[1].p[0]=a[0].p[8];a[2].p[0]=a[0].p[9];a[2].p[1]=a[1].p[7];a[3].p[0]=a[0].p[6];a[3].p[1]=a[0].p[7];a[3].p[2]=a[1].p[4];a[3].p[3]=a[1].p[5];a[3].p[4]=a[2].p[2];}if(kind==3)a[1].p[0]=a[0].p[2];for(size_t j=0;j<f.size();++j)ng::reference::cpu(f[j].s,a[j]);}
+ }
+ #endif
+-int main(int argc,char** argv){try{
++int main(int argc,char** argv){std::filesystem::path failure_output;for(int i=1;i+1<argc;++i)if(std::string(argv[i])=="--output")failure_output=argv[i+1];try{
+  fs::path out,fixtures=fs::path(__FILE__).parent_path()/"build/fusion-fixtures";unsigned card=0;bool authorized=false;
+  for(int i=1;i<argc;++i){std::string a=argv[i];if(a=="--authorized-device-window")authorized=true;else if(a=="--output"&&i+1<argc)out=argv[++i];else if(a=="--card"&&i+1<argc)card=std::stoul(argv[++i]);else if(a=="--fixtures"&&i+1<argc)fixtures=argv[++i];else throw std::invalid_argument("nongemv fixture arguments");}
+  need(!out.empty(),"--output required");
+@@ -97,16 +101,17 @@
+  fs::create_directories(out);std::string args[]{"host-reference",fixtures.string(),(out/"cpu-gate.json").string(),(out/"output.bin").string()};char* cp[]{args[0].data(),args[1].data(),args[2].data(),args[3].data()};need(packet20_host_gate(4,cp)==0,"CPU v2 fixture gate");
+  uint64_t maximum=0;size_t checked=0;bool safe=true;std::string teardown="[]";
+  #ifndef OWN_RT_HOST_ONLY
+- Runner runner(card);std::ifstream list(fixtures/"cases.txt");std::string name;
++ diagnostic_output=out;Runner runner(card);try { std::ifstream list(fixtures/"cases.txt");std::string name;
+  while(list>>name){std::vector<Fixture> source{Fixture(fixtures/name)},host=source,reference=source,fused=source;ng::reference::cpu(host[0].s,host[0].a());runner.run(reference,false);runner.run(fused,true);compare(host,reference,name+" host/unfused");compare(host,fused,name+" host/fused");++checked;
+   if(source[0].s.op==ng::norm){auto second=source[0];second.s.op=ng::activation;second.s.width=source[0].s.heads*source[0].s.width;second.s.heads=1;second.s.extra=0;std::vector<Fixture> chain{source[0],second};auto h=chain,r=chain,c=chain;host_chain(h,3);runner.run(r,false,3);runner.run(c,true,3);compare(h,r,"norm activation host/unfused");compare(h,c,"norm activation host/fused");++checked;}
+  }
+  for(int tokens:{1,3})for(int kind=0;kind<3;++kind){std::vector<std::string> names=kind==0?std::vector<std::string>{"combine-norm-","mix-"}:kind==1?std::vector<std::string>{"conv-10240-","gdn-","gdn-gated-"}:std::vector<std::string>{"qsa-prepare-","qsa-pool-","qsa-select-","qsa-attention-"};std::vector<Fixture> source;for(auto& n:names)source.emplace_back(fixtures/(n+std::to_string(tokens)+".fixture"));auto host=source,ref=source,fused=source;host_chain(host,kind);runner.run(ref,false,kind);runner.run(fused,true,kind);compare(host,ref,"chain host/unfused");compare(host,fused,"chain host/fused");++checked;}
+  for(auto name:{"route-varied.fixture","qsa-attention-3.fixture"})for(int mode=0;mode<4;++mode){std::vector<Fixture> source{Fixture(fixtures/name)};auto& f=source[0];if(mode==0)f.a().i(15)[1]=0;if(mode==1)f.a().i(15)[2]=1;if(mode==2)f.a().i(15)[0]=-1;if(mode==3&&f.s.op==ng::attention_score)f.a().i(4)[(f.s.tokens-1)*(f.s.budget+3)]=f.s.capacity;auto host=source,ref=source,fused=source;ng::reference::cpu(host[0].s,host[0].a());runner.run(ref,false);runner.run(fused,true);need(host[0].d[15]==fused[0].d[15]&&host[0].d[15]==ref[0].d[15],"sticky control device parity");if(mode<3){compare(host,ref,"control host/unfused");compare(host,fused,"control host/fused");}++checked;}
+- maximum=runner.maximum;auto shutdown=runner.device.shutdown(std::chrono::minutes(20));safe=shutdown.safe_to_exit;teardown="["+shutdown.json()+"]";need(safe,"owner teardown");
++ maximum=runner.maximum;auto shutdown=runner.device.shutdown(std::chrono::seconds(60));safe=shutdown.safe_to_exit && shutdown.exit_code==0;teardown="["+shutdown.json()+"]";need(safe,"owner teardown");
++ }catch(const std::exception& e){packet23::failure(runner.device,out,e.what());return 1;}
+  #endif
+  auto adapter=adapter_fixture_gate(card,out/"output.bin");maximum=std::max(maximum,adapter.max_submission_ns);if(teardown=="[]")teardown="["+adapter.teardown+"]";else teardown.insert(teardown.size()-1,","+adapter.teardown);
+  std::ifstream input(out/"output.bin",std::ios::binary);std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(input)),{});unsigned char hash[SHA256_DIGEST_LENGTH];SHA256(bytes.data(),bytes.size(),hash);std::ostringstream hex;for(auto b:hash)hex<<std::hex<<std::setw(2)<<std::setfill('0')<<unsigned(b);
+  std::ofstream receipt(out/"receipt.json");receipt<<"{\"schema\":\"own-runtime.iq3.packet21.fixtures.v1\",\"passed\":true,\"device_executed\":"<<(authorized?"true":"false")<<",\"fused_unfused_exact\":true,\"host_exact\":true,\"arithmetic\":\"iq3-p17-detmath-v2\",\"owner_cards\":1,\"fixture_output_sha256\":\""<<hex.str()<<"\",\"max_submission_ns\":"<<maximum<<",\"sequential_owners\":"<<(authorized?2:1)<<",\"safe_to_exit\":true,\"teardown\":"<<teardown<<",\"fixtures\":72,\"integrated_chains\":6,\"control_checks\":8,\"device_checks\":"<<checked<<",\"actual_adapter_checks\":"<<adapter.checks<<"}\n";
+  std::cout<<"non-GEMV 72 fixtures + 6 chains + 8 controls + actual adapter M1/3 PASS\n";
+- }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
++ }catch(const std::exception& e){std::cerr<<e.what()<<'\n';if(!failure_output.empty()){std::filesystem::create_directories(failure_output);if(!std::filesystem::exists(failure_output/"failure.json"))std::ofstream(failure_output/"failure.json")<<"{\"passed\":false,\"error\":"<<ownrt::quote(e.what())<<",\"teardown\":{\"status\":\"owner not constructed\",\"in_flight\":0,\"live_bytes\":0,\"in_flight_event_ids\":[],\"registered_borrowers\":[]}}\n";}return 1;}}
 --- packet21/owner.cpp
 +++ packet23/owner.cpp
-@@ -1,5 +1,6 @@
+@@ -1,8 +1,10 @@
  #include "owner.hpp"
  #include <algorithm>
 +#include <array>
  #include <atomic>
  #include <condition_variable>
  #include <cstdio>
-@@ -12,6 +13,7 @@
++#include <cstring>
+ #include <limits>
+ #include <mutex>
+ #include <map>
+@@ -12,6 +14,7 @@
  namespace ownrt {
  namespace {
  std::map<Event,int> event_queue;
@@ -361,15 +754,50 @@
  int queue_of(const Row& r) {
    if(r.memory!=Memory::device)return -1;
    return r.label.starts_with("card1:")?1:0;
-@@ -86,6 +88,7 @@
+@@ -65,6 +68,16 @@
+   if(c == Category::pinned_slab || c == Category::loader_staging || c == Category::host_shadow) return 3;
+   return 0;
+ }
++struct Diagnostics {std::vector<Event> events;std::vector<std::string> borrowers;};
++static std::map<std::string,Diagnostics> diagnostics;
++static std::map<const Device*,Receipt> retained_receipts;
++static thread_local Device* submitting_owner=nullptr;
++static thread_local int submitting_card=0;
++void* submission_parameters(const void* data,size_t n){if(!submitting_owner)throw std::logic_error("parameters outside owned submission");auto id=parameters(*submitting_owner,data,n,submitting_card);return submitting_owner->arena.row(id).pointer;}
++static std::map<Device*,std::map<std::vector<unsigned char>,Allocation>> parameter_tables;
++void unregister_borrower(Device& d,const std::string& name){auto& b=diagnostics[d.identity()].borrowers;auto it=std::find(b.begin(),b.end(),name);if(it!=b.end())b.erase(it);}
++void register_borrower(Device& d,std::string name){diagnostics[d.identity()].borrowers.push_back(std::move(name));}
++Receipt snapshot(Device& d,std::string error){if(auto it=retained_receipts.find(&d);it!=retained_receipts.end()){auto r=it->second;r.error=error;return r;}Receipt r;r.backend=d.identity();r.error=error;r.in_flight=d.in_flight();for(auto m:{Memory::device,Memory::pinned,Memory::shadow})r.live_bytes+=d.arena.total(m);return r;}
+ std::string Receipt::json() const {
+   std::ostringstream o;
+   o << "{\"schema\":\"own-xpu-runtime.teardown.v1\",\"backend\":" << quote(backend)
+@@ -74,6 +87,11 @@
+     << ",\"in_flight\":" << in_flight << ",\"live_bytes\":" << live_bytes
+     << ",\"error\":" << quote(error) << ",\"sequence\":[";
+   for(std::size_t i=0;i<sequence.size();++i) o << (i?",":"") << quote(sequence[i]);
++  const auto& in_flight_event_ids=diagnostics[backend].events;const auto& registered_borrowers=diagnostics[backend].borrowers;
++  o << "],\"in_flight_event_ids\":[";
++  for(size_t i=0;i<in_flight_event_ids.size();++i)o<<(i?",":"")<<in_flight_event_ids[i];
++  o << "],\"registered_borrowers\":[";
++  for(size_t i=0;i<registered_borrowers.size();++i)o<<(i?",":"")<<quote(registered_borrowers[i]);
+   return o.str()+"]}";
+ }
+ Device::Device(std::unique_ptr<Backend> b):backend_(std::move(b)),arena(*this) {
+@@ -86,26 +104,33 @@
  }
  void forget_event_queues(std::span<const Event> events) {for(auto e:events)event_queue.erase(e);}
  Device::~Device() {
-+  completed_tail.erase(this);
++  completed_tail.erase(this);parameter_tables.erase(this);
    if(closed_) return;
-   try { if(shutdown(std::chrono::seconds(60)).safe_to_exit) return; }
+-  try { if(shutdown(std::chrono::seconds(60)).safe_to_exit) return; }
++  try { auto r=shutdown(std::chrono::seconds(60));if(r.safe_to_exit)return;std::fputs(r.json().c_str(),stderr);if(!r.in_flight){backend_.release();return;} }
    catch(...) {}
-@@ -97,15 +100,18 @@
+   hold_for_supervisor();
+ }
+-std::string Device::identity() const {return backend_->identity();}
++std::string Device::identity() const {return backend_?backend_->identity():retained_receipts.at(this).backend;}
+ void Device::admit() const {
+   if(quiescing_ || !fault_.empty()) throw std::logic_error("admission closed");
    if(events_.size() >= 16384) throw std::length_error("event ledger full; end this bounded smoke");
  }
  void Device::validate(std::span<const Event> deps) const {
@@ -378,8 +806,12 @@
      throw std::invalid_argument("foreign dependency");
  }
  std::size_t Device::in_flight() {
+-  return std::count_if(events_.begin(),events_.end(),[&](auto e){return !backend_->complete(e);});
++  if(closed_ && !backend_)return 0;
++  auto& pending=diagnostics[identity()].events;pending.clear();
 +  if(events_.empty() || completed_tail[this]==events_.back())return 0;
-   return std::count_if(events_.begin(),events_.end(),[&](auto e){return !backend_->complete(e);});
++  for(auto e:events_){try{if(!backend_->complete(e))pending.push_back(e);}catch(...){pending.push_back(e);}}
++  return pending.size();
  }
  bool Device::wait(Event e,std::chrono::milliseconds timeout) {
    validate(std::span(&e,1));
@@ -390,7 +822,7 @@
  }
  EventTiming Device::timing(Event e) {
    validate(std::span(&e,1));
-@@ -115,18 +121,27 @@
+@@ -115,19 +140,29 @@
  Event Device::compute(const Operation& op, std::span<const Allocation> buffers, std::span<const Event> deps) {
    admit(); validate(deps);
    if(buffers.empty()) throw std::invalid_argument("empty compute bindings");
@@ -422,9 +854,34 @@
 -  events_.reserve(events_.size()+1);
 +  if(events_.size()==events_.capacity())events_.reserve(std::max(size_t(64),events_.size()*2));
    try {
++    submitting_owner=this;submitting_card=queue;
      auto e=backend_->compute(op,pointers,chain); event_queue[e]=queue; events_.push_back(e); return e;
    } catch(const std::exception& e) {fault_=e.what(); throw;}
-@@ -168,7 +183,7 @@
+ }
+@@ -151,31 +186,34 @@
+   Receipt r; r.backend=identity(); r.safe_to_exit=closed_; r.idle_marker_complete=idle_;
+   r.status=closed_?"complete":"refused"; r.exit_code=closed_?0:75;
+   try {r.in_flight=in_flight();} catch(...) {r.in_flight=events_.size();}
+-  r.sequence=sequence_; r.error=std::move(error);
++  r.sequence=sequence_; r.error=std::move(error);diagnostics[r.backend].events.clear();
++  if(r.in_flight)for(auto e:events_) {try {if(!backend_->complete(e))diagnostics[r.backend].events.push_back(e);}catch(...){diagnostics[r.backend].events.push_back(e);}}
+   for(auto m:{Memory::device,Memory::pinned,Memory::shadow}) r.live_bytes+=arena.total(m);
+   return r;
+ }
+ Receipt Device::shutdown(std::chrono::milliseconds timeout) {
+-  if(closed_) return receipt();
+-  if(!fault_.empty()) return receipt(fault_); // native error: no cleanup retry
++  if(closed_) {auto it=retained_receipts.find(this);return it==retained_receipts.end()?receipt():it->second;}
++  // A synchronous build error with no submitted work must permit normal cleanup.
++
+   if(!quiescing_) { quiescing_=true; sequence_.push_back("quiesce"); }
+   auto end=timeout==std::chrono::milliseconds::max()?Deadline::max():std::chrono::steady_clock::now()+timeout;
+   try {
+     if(!drain(end)) return receipt("in-flight work; no release or exit allowed");
+     sequence_.push_back("drain");
++    if(!diagnostics[identity()].borrowers.empty()) {auto r=receipt("registered borrowers remain; drained backend retained until process exit");r.safe_to_exit=true;r.exit_code=1;closed_=true;retained_receipts[this]=r;backend_.release();return r;}
+     while(!graphs_.empty()) {
+       graphs_.back().destroy(); sequence_.push_back("graph:"+graphs_.back().label); graphs_.pop_back();
      }
      sequence_.push_back("graphs-released");
      for(int g=0;g<4;++g) arena.release_group(g);
@@ -433,7 +890,16 @@
      if(!backend_->wait(final_marker_,end)) return receipt("final idle marker pending; queue/context retained");
      backend_->synchronize(); idle_=true; sequence_.push_back("idle-marker-complete");
      backend_->clear_events(); forget_event_queues(events_); events_.clear(); sequence_.push_back("events-released");
-@@ -191,8 +206,9 @@
+     backend_->close_queue(); sequence_.push_back("queue-released");
+     backend_->close_context(); sequence_.push_back("context-released"); closed_=true;
+-    return receipt();
+-  } catch(const std::exception& e) {fault_=e.what(); return receipt(fault_);}
++    auto r=receipt(fault_);if(!fault_.empty()){r.status="failed-drained";r.exit_code=1;}return r;
++  } catch(const std::exception& e) {fault_=e.what(); auto r=receipt(fault_);if(!r.in_flight){r.safe_to_exit=true;r.exit_code=1;closed_=true;retained_receipts[this]=r;backend_.release();}return r;}
+ }
+ Allocation Arena::allocate(std::string label,std::size_t bytes,Memory m,Category c,Lifetime l) {
+   owner_.admit(); name(m); name(c); name(l);
+@@ -191,8 +229,9 @@
    rows_.push_back({id,std::move(label),c,l,m,bytes,ptr,true}); return id;
  }
  const Row& Arena::row(Allocation id) const {
@@ -445,7 +911,7 @@
  }
  void Arena::release(Allocation id) {
    const auto& r=row(id); if(!r.live) throw std::logic_error("double release");
-@@ -239,7 +255,7 @@
+@@ -239,10 +278,24 @@
    std::vector<Event> chain(deps.begin(),deps.end());
    if(!owner_.events_.empty()) chain.push_back(owner_.events_.back());
    assert_local_dependencies(chain,queue);
@@ -454,3 +920,49 @@
    try {
      auto e=owner_.backend_->copy(static_cast<std::byte*>(d.pointer)+off,static_cast<const std::byte*>(s.pointer)+soff,n,chain);
      event_queue[e]=queue; owner_.events_.push_back(e); return e;
+   } catch(const std::exception& e) {owner_.fault_=e.what(); throw;}
+ }
+ }
++
++namespace ownrt {
++Allocation parameters(Device& d,const void* data,size_t n,int card) {
++ auto& parameters_=parameter_tables[&d];auto& arena=d.arena;
++ std::vector<unsigned char> key(static_cast<const unsigned char*>(data),static_cast<const unsigned char*>(data)+n);
++ if(auto it=parameters_.find(key);it!=parameters_.end())return it->second;
++ auto label="card"+std::to_string(card)+":kernel-parameters-"+std::to_string(next_handle());
++ auto host=arena.allocate(label+"-host",n,Memory::pinned,Category::pinned_slab,Lifetime::transfer);
++ auto device=arena.allocate(label,n,Memory::device,Category::weights,Lifetime::process);
++ std::memcpy(arena.row(host).pointer,data,n);CopyEngine copy(d);auto e=copy.copy(device,0,host,0,n,{});
++ if(!d.wait(e,std::chrono::seconds(60)))throw std::runtime_error("parameter upload incomplete");
++ arena.release(host);parameters_.emplace(std::move(key),device);return device;
++}
++}
+--- packet21/owner.hpp
++++ packet23/owner.hpp
+@@ -1,3 +1,9 @@
+ #pragma once
+-// API unchanged; packet-local owner.cpp supplies chained execution policy.
+ #include "../../stage1/packet3-prep/src/owner.hpp"
++namespace ownrt {
++Allocation parameters(Device&,const void*,size_t,int card=0);
++void* submission_parameters(const void*,size_t);
++Receipt snapshot(Device&,std::string error = {});
++void unregister_borrower(Device&,const std::string&);
++void register_borrower(Device&,std::string);
++}
+--- packet21/runtime_kernels.cpp
++++ packet23/runtime_kernels.cpp
+@@ -19,10 +19,11 @@
+                      const std::vector<sycl::event> &deps) const override {
+     std::array<void *, 32> ptr{};
+     std::copy(p.begin(), p.end(), ptr.begin());
+-    auto s = spec;
++    auto sp = packet23::parameters(spec);
++    auto pp = packet23::parameters(ptr);
+     return q.submit([&](sycl::handler &h) {
+       h.depends_on(deps);
+-      h.single_task([=] { integrated::evaluate(s, ptr.data()); });
++      h.single_task([=] { integrated::evaluate(*sp, pp->data()); });
+     });
+   }
+ };

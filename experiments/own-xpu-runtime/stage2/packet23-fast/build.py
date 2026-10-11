@@ -14,6 +14,7 @@ def main():
  assert os.getpriority(os.PRIO_PROCESS,0)==19 and os.environ['OMP_NUM_THREADS']=='2'
  assert 'idle' in subprocess.check_output(['ionice','-p',str(os.getpid())],text=True)
  os.environ['OPENBLAS_NUM_THREADS']='2';os.environ['TMPDIR']=str(B/'tmp');(B/'tmp').mkdir(exist_ok=True)
+ run([PY,'-B',P/'kernel_gate.py'],'kernel-gate.log')
  # Per-process address space bound protects coordinator device windows.
  resource.setrlimit(resource.RLIMIT_AS,(8*1024**3,resource.RLIM_INFINITY))
  for tag,compiler,host in [('host','g++','ON'),('icpx-host',IC,'ON'),('device',IC,'OFF')]:
@@ -21,14 +22,23 @@ def main():
   cmd=['cmake','--build',B/tag,'-j2']
   if tag=='icpx-host':cmd+=['--target','fused-fixtures','nongemv-fixtures']
   run(cmd,'build-'+tag+'.log')
+ run([PY,'-B',P/'kernel_sizes.py'],'kernel-sizes.log')
  for n in ('authority-tests','owner-retirement-tests','chain-tests','queue-tests','lifetime-tests'):
   run([B/'host'/n],n+'.log')
- run([B/'host/own-rt-iq3','--canary','--cards','2','--card','0','--memory','resident','--output',B/'cpu-canary'],'cpu-canary.log')
- save('cpu-canary.json',read(B/'cpu-canary/receipt.json'))
+ for mode in ('jit','borrower'):
+  out=B/('failure-'+mode)
+  result=subprocess.run([str(B/'host/failure-tests'),mode,str(out)],capture_output=True,text=True,timeout=10)
+  r=read(out/'failure.json');assert result.returncode==1 and r['error'] in result.stderr and r['teardown']['in_flight']==0 and r['teardown']['safe_to_exit']
+ result=subprocess.run([str(B/'host/failure-tests'),'parameters',str(B/'failure-parameters')],capture_output=True,text=True,timeout=10)
+ assert result.returncode==0,result.stderr
+ save('failure-tests.json',dict(passed=True,cases=2,parameter_cache_event_order_controls=1,normal_failure_exit=True,device_executed=False))
+ canary=B/f'cpu-canary-repair-{time.time_ns()}'
+ run([B/'host/own-rt-iq3','--canary' ,'--cards','2','--card','0','--memory','resident','--output',canary],'cpu-canary.log')
+ save('cpu-canary.json',read(canary/'receipt.json'))
  for timing in ('token','drain','launch'):
   os.environ['PACKET23_TIMING']=timing
   for mode in ('core','parallel'):
-   run([PY,'-B',P/'test.py','--binary',B/'host/own-rt-iq3','--scratch',B/f'mini-{timing}-{mode}','--input',B/'input','--receipt',P/f'cpu-mini-{timing}-{mode}.json','--nongemv',mode],f'mini-{timing}-{mode}.log')
+   run([PY,'-B',P/'test.py','--binary',B/'host/own-rt-iq3','--scratch',B/f'mini-repair-{time.time_ns()}-{timing}-{mode}','--input',B/'input','--receipt',P/f'cpu-mini-{timing}-{mode}.json','--nongemv',mode],f'mini-{timing}-{mode}.log')
  os.environ.pop('PACKET23_TIMING',None)
  run([PY,'-B',P/'fixture_gate.py'],'fixture-gate.log')
  run([PY,'-B',P/'depcheck_build.py','--source',P,'--tag','sanitized'],'build-sanitizer.log')

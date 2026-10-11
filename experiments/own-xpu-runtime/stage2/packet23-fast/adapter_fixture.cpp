@@ -1,3 +1,4 @@
+#include "failure.hpp"
 #include "adapter_fixture.hpp"
 #include "adapter.hpp"
 #include <fstream>
@@ -59,7 +60,8 @@ struct Runner {
  return make_sycl_device(card,true);
  #endif
  }
- explicit Runner(unsigned card):d(backend(card)),copy(d){scratch=alloc(64ull*1024*1024*4);control=alloc(12);score=alloc(24*2051*4);probability=alloc(24*2051*4);}
+ explicit Runner(unsigned card):d(backend(card)),copy(d){}
+ void initialize(){scratch=alloc(64ull*1024*1024*4);control=alloc(12);score=alloc(24*2051*4);probability=alloc(24*2051*4);}
  Allocation alloc(size_t n,Memory mem=Memory::device){auto id=d.arena.allocate("actual-adapter-fixture-"+std::to_string(allocation_serial++),n,mem,Category::scratch,Lifetime::transaction);owned.push_back(id);return id;}
  Allocation upload(const std::vector<uint8_t>& data){auto h=alloc(data.size(),Memory::pinned),v=alloc(data.size());std::memcpy(d.arena.row(h).pointer,data.data(),data.size());auto e=copy.copy(v,0,h,0,data.size(),{});if(!d.wait(e,std::chrono::minutes(20)))throw std::runtime_error("adapter fixture upload incomplete");return v;}
  void put(Allocation id,uint32_t v){std::vector<uint8_t>b(4);std::memcpy(b.data(),&v,4);auto h=alloc(4,Memory::pinned);std::memcpy(d.arena.row(h).pointer,b.data(),4);auto e=copy.copy(id,0,h,0,4,{});if(!d.wait(e,std::chrono::minutes(20)))throw std::runtime_error("adapter fixture control upload incomplete");}
@@ -69,7 +71,7 @@ struct Runner {
 };
 }
 AdapterFixtureReceipt adapter_fixture_gate(unsigned card,const std::filesystem::path& output){
- Runner runner(card);std::ofstream bytes(output,std::ios::binary|std::ios::app);std::vector<float> host_scratch(64ull*1024*1024);unsigned checks=0;
+ Runner runner(card);try { runner.initialize();std::ofstream bytes(output,std::ios::binary|std::ios::app);std::vector<float> host_scratch(64ull*1024*1024);unsigned checks=0;
  for(unsigned m:{1u,3u})for(unsigned kind=0;kind<4;++kind){auto c=make_case(kind);auto host=c.buffers;std::vector<ownrt::Allocation> reference,candidate;for(auto& b:c.buffers){reference.push_back(runner.upload(b.data));candidate.push_back(runner.upload(b.data));}
   for(unsigned step=0;step<m;++step){uint32_t position=3+step;std::memcpy(host[c.position].data.data(),&position,4);runner.put(reference[c.position],position);runner.put(candidate[c.position],position);
    for(const auto& site:c.sites){std::vector<void*> p;for(auto id:site.ids)p.push_back(host[id].data.data());p.insert(p.end(),{host_scratch.data(),host[c.error].data.data(),host[c.position].data.data(),host[c.active].data.data(),host[c.rope].data.data()});integrated::evaluate(site.spec,p.data());
@@ -80,9 +82,11 @@ AdapterFixtureReceipt adapter_fixture_gate(unsigned card,const std::filesystem::
     Finish finish;finish.count=10;std::array b{candidate[c.rank_prob]};auto done=runner.d.compute(finish,b,{});runner.finish({done,done,1});
 
    }else{std::vector<Spec> specs;std::vector<std::vector<Allocation>> bindings;for(auto& site:c.sites){specs.push_back(site.spec);bindings.push_back(runner.binding(site,c,candidate));}runner.finish(packet18::submit_chain(runner.d,specs,bindings,runner.control,runner.score,runner.probability));}
-   for(int id:c.outputs){auto actual=runner.get(candidate[id],host[id].data.size());if(actual!=host[id].data)throw std::runtime_error("actual adapter host parity kind="+std::to_string(kind)+" M="+std::to_string(m)+" step="+std::to_string(step)+" buffer="+std::to_string(id));auto original=runner.get(reference[id],host[id].data.size());if(original!=host[id].data)throw std::runtime_error("actual adapter original device reference parity");bytes.write(reinterpret_cast<const char*>(actual.data()),actual.size());}
+   for(int id:c.outputs){auto actual=runner.get(candidate[id],host[id].data.size());packet23::row(output.parent_path(),"adapter kind="+std::to_string(kind)+" step="+std::to_string(step)+" buffer="+std::to_string(id),actual.data(),actual.size(),actual==host[id].data);if(actual!=host[id].data)throw std::runtime_error("actual adapter host parity kind="+std::to_string(kind)+" M="+std::to_string(m)+" step="+std::to_string(step)+" buffer="+std::to_string(id));auto original=runner.get(reference[id],host[id].data.size());if(original!=host[id].data)throw std::runtime_error("actual adapter original device reference parity");bytes.write(reinterpret_cast<const char*>(actual.data()),actual.size());}
    ++checks;runner.d.retire_completed_events();
   }
  }
- auto receipt=runner.d.shutdown(std::chrono::minutes(20));if(!receipt.safe_to_exit)throw std::runtime_error("actual adapter fixture teardown");return {checks,runner.max,receipt.json()};
+ bytes.flush();
+ auto receipt=runner.d.shutdown(std::chrono::seconds(60));if(!receipt.safe_to_exit || receipt.exit_code)throw std::runtime_error("actual adapter fixture teardown");return {checks,runner.max,receipt.json()};
+ }catch(const std::exception& e){packet23::failure(runner.d,output.parent_path(),e.what());throw;}
 }

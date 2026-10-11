@@ -173,10 +173,10 @@ struct Team {
 struct Glue final:ownrt::SyclOperation {
  Spec s;int mode;Glue(Spec v,int m):s(v),mode(m){}
  sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override{
-  Bound b{s,{}};std::copy(p.begin(),p.end(),b.p.begin());auto ctrl=static_cast<int32_t*>(p.back());auto mode_=mode;
-  if(mode==1||mode==2)return q.submit([&](sycl::handler& h){h.depends_on(deps);h.single_task([=]{if(mode_==1){ctrl[0]=*b.position();ctrl[1]=*b.active();ctrl[2]=b.failed();}else if(mode_==2){if(ctrl[2])b.fail();}});});
+  Bound b{s,{}};std::copy(p.begin(),p.end(),b.p.begin());auto ctrl=static_cast<int32_t*>(p.back());auto mode_=mode;auto bp=packet23::parameters(b);
+  if(mode==1||mode==2)return q.submit([&](sycl::handler& h){h.depends_on(deps);h.single_task([=]{if(mode_==1){ctrl[0]=*bp->position();ctrl[1]=*bp->active();ctrl[2]=bp->failed();}else if(mode_==2){if(ctrl[2])bp->fail();}});});
   int groups=mode==3?tiny_groups(s):s.special==Special::normal&&s.op==Op::ple_gate?4:1,local=std::max(8192,s.g.h);
-  return q.submit([&](sycl::handler& h){h.depends_on(deps);sycl::local_accessor<float,1> scratch(local,h);h.parallel_for(sycl::nd_range<1>(groups*128,128),[=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{auto t=Team{it,scratch.get_multi_ptr<sycl::access::decorated::no>().get()};if(mode_==3)tiny(b,it.get_group_linear_id(),t);else simple(b,it.get_group_linear_id(),t);});});
+  return q.submit([&](sycl::handler& h){h.depends_on(deps);sycl::local_accessor<float,1> scratch(local,h);h.parallel_for(sycl::nd_range<1>(groups*128,128),[=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{auto t=Team{it,scratch.get_multi_ptr<sycl::access::decorated::no>().get()};if(mode_==3)tiny(*bp,it.get_group_linear_id(),t);else simple(*bp,it.get_group_linear_id(),t);});});
  }
 };
 #endif
@@ -277,12 +277,13 @@ struct Chain final:HostOperation {
 // Do not increase groups: work-group barriers are not device-wide barriers.
 struct Chain final:ownrt::SyclOperation {
  std::vector<ChainItem> chain_items;
+ const void* parameters=nullptr;
  sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
-  std::array<ChainItem,8> items{};std::copy(chain_items.begin(),chain_items.end(),items.begin());
-  std::array<void*,256> ptr{};std::copy(p.begin(),p.end(),ptr.begin());int count=chain_items.size();
+  auto items=static_cast<const ChainItem*>(parameters);
+  auto ptr=reinterpret_cast<void* const*>(items+8);int count=chain_items.size();
   return q.submit([&](sycl::handler& h){h.depends_on(deps);sycl::local_accessor<float,1>x(8192,h);
    h.parallel_for(sycl::nd_range<1>(128,128),[=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
-    auto t=Team{it,x.get_multi_ptr<sycl::access::decorated::no>().get()};chain_body(items.data(),count,ptr.data(),t);
+    auto t=Team{it,x.get_multi_ptr<sycl::access::decorated::no>().get()};chain_body(items,count,ptr,t);
    });});
  }
 };
@@ -296,6 +297,12 @@ Launch submit_chain(ownrt::Device& d,const std::vector<Spec>& specs,const std::v
   if(l.mode==4){item.group_counts[0]=ng::groups(l.shape);if(l.shape.op==ng::attention_score){auto sh=l.shape;sh.op=ng::attention_softmax;item.group_counts[1]=ng::groups(sh);sh.op=ng::attention_value;item.group_counts[2]=ng::groups(sh);}}
   op.chain_items.push_back(item);ids.insert(ids.end(),l.bindings.begin(),l.bindings.end());}
  if(ids.size()>256)throw std::invalid_argument("fusion chain bindings");
+#ifndef OWN_RT_HOST_ONLY
+ struct Parameters {std::array<ChainItem,8> items{};std::array<void*,256> pointers{};} block{};
+ std::copy(op.chain_items.begin(),op.chain_items.end(),block.items.begin());
+ for(size_t i=0;i<ids.size();++i)block.pointers[i]=d.arena.row(ids[i]).pointer;
+ auto table=ownrt::parameters(d,&block,sizeof block,d.arena.row(ids[0]).label.starts_with("card1:")?1:0);op.parameters=d.arena.row(table).pointer;ids.push_back(table);
+#endif
  auto e=d.compute(op,ids,{});return {e,e,1};
 }
 
@@ -316,7 +323,7 @@ template<class Team> void rank_body(Bound b,int shard,Team t){
 #ifdef OWN_RT_HOST_ONLY
 struct Rank final:HostOperation{Spec rank_spec;explicit Rank(Spec s):rank_spec(s){}void run(std::span<void*const> p)const override{Bound b{rank_spec,{}};std::copy(p.begin(),p.end(),b.p.begin());std::vector<float>x(2048);for(int g=0;g<4;++g)rank_body(b,g,ng::HostTeam{x.data()});}};
 #else
-struct Rank final:ownrt::SyclOperation{Spec rank_spec;explicit Rank(Spec s):rank_spec(s){}sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override{Bound b{rank_spec,{}};std::copy(p.begin(),p.end(),b.p.begin());return q.submit([&](sycl::handler& h){h.depends_on(deps);sycl::local_accessor<float,1>x(2048,h);h.parallel_for(sycl::nd_range<1>(512,128),[=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{rank_body(b,it.get_group_linear_id(),Team{it,x.get_multi_ptr<sycl::access::decorated::no>().get()});});});}};
+struct Rank final:ownrt::SyclOperation{Spec rank_spec;explicit Rank(Spec s):rank_spec(s){}sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override{Bound b{rank_spec,{}};std::copy(p.begin(),p.end(),b.p.begin());auto bp=packet23::parameters(b);return q.submit([&](sycl::handler& h){h.depends_on(deps);sycl::local_accessor<float,1>x(2048,h);h.parallel_for(sycl::nd_range<1>(512,128),[=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{rank_body(*bp,it.get_group_linear_id(),Team{it,x.get_multi_ptr<sycl::access::decorated::no>().get()});});});}};
 #endif
 }
 Launch submit_rank(ownrt::Device& d,const Spec& s,const std::vector<ownrt::Allocation>& bindings){Rank op(s);auto e=d.compute(op,bindings,{});return {e,e,1};}

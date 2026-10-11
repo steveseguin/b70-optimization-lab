@@ -19,10 +19,11 @@ struct Step final : ownrt::SyclOperation {
                      const std::vector<sycl::event> &deps) const override {
     std::array<void *, 32> ptr{};
     std::copy(p.begin(), p.end(), ptr.begin());
-    auto s = spec;
+    auto sp = packet23::parameters(spec);
+    auto pp = packet23::parameters(ptr);
     return q.submit([&](sycl::handler &h) {
       h.depends_on(deps);
-      h.single_task([=] { integrated::evaluate(s, ptr.data()); });
+      h.single_task([=] { integrated::evaluate(*sp, pp->data()); });
     });
   }
 };

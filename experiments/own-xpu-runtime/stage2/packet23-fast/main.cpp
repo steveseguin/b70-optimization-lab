@@ -1,3 +1,4 @@
+#include "failure.hpp"
 #include "../packet2/loader/gguf.hpp"
 #include "synthetic.hpp"
 #include "../packet3/step/plan.hpp"
@@ -994,9 +995,9 @@ public:
     for (auto &d : devices) {
       auto r = d->shutdown(std::chrono::seconds(60));
       receipts.push_back(r.json());
-      if (!r.safe_to_exit) {
-        save(a.output / "retained-owner.json", r.json());
-        ownrt::hold_for_supervisor();
+      if (!r.safe_to_exit || r.exit_code) {
+        packet23::failure(*d,a.output,r.error.empty()?"owner teardown incomplete":r.error);
+        throw std::runtime_error("owner teardown failed after drain");
       }
     }
     return receipts;
@@ -1271,6 +1272,7 @@ int main(int argc, char **argv) {
       ",\"pinned_bytes_per_owner\":4194304,\"mode\":"+ownrt::quote(a.memory)+"}\n");
     read_bytes = w->read_bytes;
     max_read = w->max_read;
+    e->timings.flush();
     teardown = e->shutdown();
     e.reset();
     w.reset();
@@ -1282,8 +1284,9 @@ int main(int argc, char **argv) {
     }
     std::cerr << error << '\n';
     if (e) {
+      e->timings.flush();e->prefill_timings.flush();e->site_timings.flush();
+      for(auto& d:e->devices)packet23::failure(*d,output,error);
       e->poisoned = true;
-      teardown = e->shutdown();
       e.reset();
     }
   }

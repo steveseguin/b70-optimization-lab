@@ -4,6 +4,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <cstdio>
+#include <cstring>
 #include <limits>
 #include <mutex>
 #include <map>
@@ -67,6 +68,16 @@ static int group(Category c) {
   if(c == Category::pinned_slab || c == Category::loader_staging || c == Category::host_shadow) return 3;
   return 0;
 }
+struct Diagnostics {std::vector<Event> events;std::vector<std::string> borrowers;};
+static std::map<std::string,Diagnostics> diagnostics;
+static std::map<const Device*,Receipt> retained_receipts;
+static thread_local Device* submitting_owner=nullptr;
+static thread_local int submitting_card=0;
+void* submission_parameters(const void* data,size_t n){if(!submitting_owner)throw std::logic_error("parameters outside owned submission");auto id=parameters(*submitting_owner,data,n,submitting_card);return submitting_owner->arena.row(id).pointer;}
+static std::map<Device*,std::map<std::vector<unsigned char>,Allocation>> parameter_tables;
+void unregister_borrower(Device& d,const std::string& name){auto& b=diagnostics[d.identity()].borrowers;auto it=std::find(b.begin(),b.end(),name);if(it!=b.end())b.erase(it);}
+void register_borrower(Device& d,std::string name){diagnostics[d.identity()].borrowers.push_back(std::move(name));}
+Receipt snapshot(Device& d,std::string error){if(auto it=retained_receipts.find(&d);it!=retained_receipts.end()){auto r=it->second;r.error=error;return r;}Receipt r;r.backend=d.identity();r.error=error;r.in_flight=d.in_flight();for(auto m:{Memory::device,Memory::pinned,Memory::shadow})r.live_bytes+=d.arena.total(m);return r;}
 std::string Receipt::json() const {
   std::ostringstream o;
   o << "{\"schema\":\"own-xpu-runtime.teardown.v1\",\"backend\":" << quote(backend)
@@ -76,6 +87,11 @@ std::string Receipt::json() const {
     << ",\"in_flight\":" << in_flight << ",\"live_bytes\":" << live_bytes
     << ",\"error\":" << quote(error) << ",\"sequence\":[";
   for(std::size_t i=0;i<sequence.size();++i) o << (i?",":"") << quote(sequence[i]);
+  const auto& in_flight_event_ids=diagnostics[backend].events;const auto& registered_borrowers=diagnostics[backend].borrowers;
+  o << "],\"in_flight_event_ids\":[";
+  for(size_t i=0;i<in_flight_event_ids.size();++i)o<<(i?",":"")<<in_flight_event_ids[i];
+  o << "],\"registered_borrowers\":[";
+  for(size_t i=0;i<registered_borrowers.size();++i)o<<(i?",":"")<<quote(registered_borrowers[i]);
   return o.str()+"]}";
 }
 Device::Device(std::unique_ptr<Backend> b):backend_(std::move(b)),arena(*this) {
@@ -88,13 +104,13 @@ Device::Device(std::unique_ptr<Backend> b):backend_(std::move(b)),arena(*this) {
 }
 void forget_event_queues(std::span<const Event> events) {for(auto e:events)event_queue.erase(e);}
 Device::~Device() {
-  completed_tail.erase(this);
+  completed_tail.erase(this);parameter_tables.erase(this);
   if(closed_) return;
-  try { if(shutdown(std::chrono::seconds(60)).safe_to_exit) return; }
+  try { auto r=shutdown(std::chrono::seconds(60));if(r.safe_to_exit)return;std::fputs(r.json().c_str(),stderr);if(!r.in_flight){backend_.release();return;} }
   catch(...) {}
   hold_for_supervisor();
 }
-std::string Device::identity() const {return backend_->identity();}
+std::string Device::identity() const {return backend_?backend_->identity():retained_receipts.at(this).backend;}
 void Device::admit() const {
   if(quiescing_ || !fault_.empty()) throw std::logic_error("admission closed");
   if(events_.size() >= 16384) throw std::length_error("event ledger full; end this bounded smoke");
@@ -104,8 +120,11 @@ void Device::validate(std::span<const Event> deps) const {
     throw std::invalid_argument("foreign dependency");
 }
 std::size_t Device::in_flight() {
+  if(closed_ && !backend_)return 0;
+  auto& pending=diagnostics[identity()].events;pending.clear();
   if(events_.empty() || completed_tail[this]==events_.back())return 0;
-  return std::count_if(events_.begin(),events_.end(),[&](auto e){return !backend_->complete(e);});
+  for(auto e:events_){try{if(!backend_->complete(e))pending.push_back(e);}catch(...){pending.push_back(e);}}
+  return pending.size();
 }
 bool Device::wait(Event e,std::chrono::milliseconds timeout) {
   validate(std::span(&e,1));
@@ -143,6 +162,7 @@ Event Device::compute(const Operation& op, std::span<const Allocation> buffers, 
   assert_local_dependencies(chain,queue);
   if(events_.size()==events_.capacity())events_.reserve(std::max(size_t(64),events_.size()*2));
   try {
+    submitting_owner=this;submitting_card=queue;
     auto e=backend_->compute(op,pointers,chain); event_queue[e]=queue; events_.push_back(e); return e;
   } catch(const std::exception& e) {fault_=e.what(); throw;}
 }
@@ -166,18 +186,21 @@ Receipt Device::receipt(std::string error) {
   Receipt r; r.backend=identity(); r.safe_to_exit=closed_; r.idle_marker_complete=idle_;
   r.status=closed_?"complete":"refused"; r.exit_code=closed_?0:75;
   try {r.in_flight=in_flight();} catch(...) {r.in_flight=events_.size();}
-  r.sequence=sequence_; r.error=std::move(error);
+  r.sequence=sequence_; r.error=std::move(error);diagnostics[r.backend].events.clear();
+  if(r.in_flight)for(auto e:events_) {try {if(!backend_->complete(e))diagnostics[r.backend].events.push_back(e);}catch(...){diagnostics[r.backend].events.push_back(e);}}
   for(auto m:{Memory::device,Memory::pinned,Memory::shadow}) r.live_bytes+=arena.total(m);
   return r;
 }
 Receipt Device::shutdown(std::chrono::milliseconds timeout) {
-  if(closed_) return receipt();
-  if(!fault_.empty()) return receipt(fault_); // native error: no cleanup retry
+  if(closed_) {auto it=retained_receipts.find(this);return it==retained_receipts.end()?receipt():it->second;}
+  // A synchronous build error with no submitted work must permit normal cleanup.
+
   if(!quiescing_) { quiescing_=true; sequence_.push_back("quiesce"); }
   auto end=timeout==std::chrono::milliseconds::max()?Deadline::max():std::chrono::steady_clock::now()+timeout;
   try {
     if(!drain(end)) return receipt("in-flight work; no release or exit allowed");
     sequence_.push_back("drain");
+    if(!diagnostics[identity()].borrowers.empty()) {auto r=receipt("registered borrowers remain; drained backend retained until process exit");r.safe_to_exit=true;r.exit_code=1;closed_=true;retained_receipts[this]=r;backend_.release();return r;}
     while(!graphs_.empty()) {
       graphs_.back().destroy(); sequence_.push_back("graph:"+graphs_.back().label); graphs_.pop_back();
     }
@@ -189,8 +212,8 @@ Receipt Device::shutdown(std::chrono::milliseconds timeout) {
     backend_->clear_events(); forget_event_queues(events_); events_.clear(); sequence_.push_back("events-released");
     backend_->close_queue(); sequence_.push_back("queue-released");
     backend_->close_context(); sequence_.push_back("context-released"); closed_=true;
-    return receipt();
-  } catch(const std::exception& e) {fault_=e.what(); return receipt(fault_);}
+    auto r=receipt(fault_);if(!fault_.empty()){r.status="failed-drained";r.exit_code=1;}return r;
+  } catch(const std::exception& e) {fault_=e.what(); auto r=receipt(fault_);if(!r.in_flight){r.safe_to_exit=true;r.exit_code=1;closed_=true;retained_receipts[this]=r;backend_.release();}return r;}
 }
 Allocation Arena::allocate(std::string label,std::size_t bytes,Memory m,Category c,Lifetime l) {
   owner_.admit(); name(m); name(c); name(l);
@@ -260,5 +283,19 @@ Event CopyEngine::copy(Allocation dst,std::size_t off,Allocation src,std::size_t
     auto e=owner_.backend_->copy(static_cast<std::byte*>(d.pointer)+off,static_cast<const std::byte*>(s.pointer)+soff,n,chain);
     event_queue[e]=queue; owner_.events_.push_back(e); return e;
   } catch(const std::exception& e) {owner_.fault_=e.what(); throw;}
+}
+}
+
+namespace ownrt {
+Allocation parameters(Device& d,const void* data,size_t n,int card) {
+ auto& parameters_=parameter_tables[&d];auto& arena=d.arena;
+ std::vector<unsigned char> key(static_cast<const unsigned char*>(data),static_cast<const unsigned char*>(data)+n);
+ if(auto it=parameters_.find(key);it!=parameters_.end())return it->second;
+ auto label="card"+std::to_string(card)+":kernel-parameters-"+std::to_string(next_handle());
+ auto host=arena.allocate(label+"-host",n,Memory::pinned,Category::pinned_slab,Lifetime::transfer);
+ auto device=arena.allocate(label,n,Memory::device,Category::weights,Lifetime::process);
+ std::memcpy(arena.row(host).pointer,data,n);CopyEngine copy(d);auto e=copy.copy(device,0,host,0,n,{});
+ if(!d.wait(e,std::chrono::seconds(60)))throw std::runtime_error("parameter upload incomplete");
+ arena.release(host);parameters_.emplace(std::move(key),device);return device;
 }
 }

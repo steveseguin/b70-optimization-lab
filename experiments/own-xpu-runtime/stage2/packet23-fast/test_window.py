@@ -497,5 +497,24 @@ class Windows(unittest.TestCase):
         cmd=w.native_command(Path('/binary'),w.CONFIG['W2'],Path('/input'),'/model',Path('/oracle'),Path('/out'),10800)
         self.assertEqual(cmd[cmd.index('--timing')+1],'token')
 
+    def test_k0_identity_and_native_receipt(self):
+        root=self.root/'k0';(root/'run').mkdir(parents=True)
+        native=root/'run/receipt.json';native.write_text('{"passed":true}')
+        path=root/'window.json';hashes={'device/jit-smoke':'a','device/own-rt-iq3':'b'}
+        record=dict(window='K0',passed=True,boot_id='boot',artifacts_sha256=hashes,environment={},card=2,cards=2,native_receipt_sha256=w.sha(native))
+        path.write_text(json.dumps(record));cfg=dict(card=3,cards=1)
+        self.assertTrue(w.k0_gate(path,'boot',hashes,{},cfg)['passed'])
+        for boot,h,env,c in [('other',hashes,{},cfg),('boot',{}, {},cfg),('boot',hashes,{'changed':1},cfg),('boot',hashes,{},dict(card=1,cards=1))]:
+            with self.assertRaises(ValueError):w.k0_gate(path,boot,h,env,c)
+        with self.assertRaises(ValueError):w.k0_gate(None,'boot',hashes,{},cfg)
+        native.write_text('{"passed":true,"changed":true}')
+        with self.assertRaises(ValueError):w.k0_gate(path,'boot',hashes,{},cfg)
+
+    def test_k0_build_only_source_and_deadline(self):
+        source=(HERE/'jit_smoke.cpp').read_text()
+        self.assertIn('sycl::build(input,{d})',source)
+        for forbidden in ('sycl::queue ', 'sycl::malloc_', '.submit(', '.parallel_for(', '.single_task('):self.assertNotIn(forbidden,source)
+        self.assertEqual(w.watchdog_seconds('K0'),600)
+
 
 if __name__ == '__main__': unittest.main()

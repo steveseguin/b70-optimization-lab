@@ -20,6 +20,7 @@ spec.loader.exec_module(p2)
 sha = p2.sha
 AUTHORITY = 'iq3-p17-detmath-v2'
 CONFIG = {
+    'K0': dict(card=2, cards=2, memory='jit', stage='jit', gemv='both', count=0, steps=0, context=0),
     'K1': dict(card=3, cards=1, memory='fixtures', stage='fixtures', gemv='both', count=0, steps=0, context=0),
     'W0': dict(card=2, cards=2, memory='resident', stage='canary', gemv='frozen', count=0, steps=0, context=8),
     'W1': dict(card=3, cards=1, memory='layer-streaming', stage='first-token', gemv='frozen', count=8, steps=8, context=256),
@@ -256,7 +257,7 @@ def compare_run(out, cfg, expected_hashes, expected_tokens, oracle_root=None, di
 
 # References are conservative planning proxies, never device speed measurements.
 # Every watchdog includes first-run JIT and is at least four times its proxy.
-EXPECTED_SECONDS = {'K1': 1800., 'W0': 30., 'W1': 1897.718, 'W2': 1897.718, 'W3': 1200.}
+EXPECTED_SECONDS = {'K0': 30., 'K1': 1800., 'W0': 30., 'W1': 1897.718, 'W2': 1897.718, 'W3': 1200.}
 EXPECTED_SECONDS.update(W2d=EXPECTED_SECONDS['W2'],W3d=EXPECTED_SECONDS['W3'])
 JIT_SECONDS = 17.
 
@@ -270,9 +271,9 @@ def deadline_record(window, seconds):
                 driver_job_timeout_seconds=5., fused_kernel_device_durations_known=False)
 
 def watchdog_seconds(window, seconds=None):
-    default = 600 if window == 'W0' else 10800
+    default = 600 if window in ('W0','K0') else 10800
     lower = max(7300 if window == 'K1' else 300, math.ceil(4*(EXPECTED_SECONDS[window]+JIT_SECONDS)))
-    upper = 1800 if window == 'W0' else 10800
+    upper = 1800 if window in ('W0','K0') else 10800
     seconds = default if seconds is None else seconds
     require(lower <= seconds <= upper, f'{window} watchdog must be {lower}..{upper} seconds')
     return seconds
@@ -474,17 +475,26 @@ def run_k1(a, cfg, binary, boot, out, latch, bindings, environment, build_receip
     return 0 if record['passed'] else 1
 
 
+def k0_gate(path, boot, native_hashes, environment, cfg):
+    require(path is not None,'K0 JIT build receipt required before every window')
+    k0=read(path)
+    require(k0.get('window')=='K0' and k0.get('passed') is True and k0.get('boot_id')==boot and k0.get('artifacts_sha256')==native_hashes and k0.get('environment')==environment,'K0 boot/binaries/environment mismatch')
+    require(set(range(cfg['card'],cfg['card']+cfg['cards']))<=set(range(k0['card'],k0['card']+k0['cards'])),'K0 missing admitted card')
+    require(sha(path.parent/'run/receipt.json')==k0.get('native_receipt_sha256') and read(path.parent/'run/receipt.json').get('passed') is True,'K0 native receipt failed or changed')
+    return k0
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--authorized-device-window', action='store_true', required=True)
     parser.add_argument('--window', choices=CONFIG, required=True)
-    for key in ('input', 'output', 'oracle', 'w0', 'w1', 'k1', 'repeat-of'):
+    for key in ('input', 'output', 'oracle', 'w0', 'w1', 'k1', 'k0', 'repeat-of'):
         parser.add_argument('--' + key, type=Path, required=key == 'output')
     parser.add_argument('--card', type=int, help='first physical card; W2/W3 use this and the next card')
     parser.add_argument('--seconds', type=int, help='watchdog only; expected duration never signals; minimum is max(300,4*(estimate+17))')
     a = parser.parse_args()
     environment = environment_gate()
-    a.seconds = watchdog_seconds(a.window, a.seconds)
+    a.seconds = 600 if a.window=='K0' else watchdog_seconds(a.window, a.seconds)
     require(os.environ.get('OMP_NUM_THREADS') == '2' and os.getpriority(os.PRIO_PROCESS, 0) == 19, 'nice19 OMP_NUM_THREADS=2 required')
     require('idle' in subprocess.check_output(['ionice', '-p', str(os.getpid())], text=True, timeout=2), 'ionice -c3 required')
     for variable in ('ONEAPI_DEVICE_SELECTOR','SYCL_DEVICE_FILTER','ZE_AFFINITY_MASK'):
@@ -510,6 +520,23 @@ def main():
     bindings[HERE / 'build-receipt.json'] = sha(HERE / 'build-receipt.json')
     for path, digest in bindings.items():
         require(sha(path) == digest, 'source changed: '+str(path))
+    native_hashes={k:v for k,v in b['artifacts_sha256'].items() if k.startswith('device/')}
+    if a.window=='K0':
+        jit=build/'device/jit-smoke';require(sha(jit)==native_hashes['device/jit-smoke'],'K0 binary changed');ldd_preflight(jit)
+        out.mkdir(parents=True);requested=[];pre,cursor=p2.journal()
+        record=dict(window='K0',passed=False,boot_id=boot,artifacts_sha256=native_hashes,environment=environment,card=cfg['card'],cards=cfg['cards'])
+        def persist():(out/'window.json').write_text(json.dumps(record,indent=2)+'\n')
+        def fault(reason):latch.write_text(json.dumps(dict(boot_id=boot,reason=reason)))
+        cmd=[str(jit),'--authorized-device-window','--card',str(cfg['card']),'--cards',str(cfg['cards']),'--output',str(out/'run')]
+        record['command']=cmd;persist()
+        with (out/'stdout.txt').open('w') as log,(out/'kernel-window.txt').open('w') as kernel:
+            child=subprocess.Popen(cmd,stdout=log,stderr=subprocess.STDOUT,env=environment['native'])
+            record.update(supervise(child,600,cursor,kernel,fault,persist,requested))
+        record['passed']=record['returncode']==0 and not requested and read(out/'run/receipt.json').get('passed') is True
+        if (out/'run/receipt.json').is_file():record['native_receipt_sha256']=sha(out/'run/receipt.json')
+        persist();return 0 if record['passed'] else 1
+    k0_gate(a.k0,boot,native_hashes,environment,cfg)
+    bindings[a.k0]=sha(a.k0)
     if a.window == 'K1':
         return run_k1(a, cfg, binary, boot, out, latch, bindings, environment, b)
     if a.window == 'W0':

@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 """Static admission check: changing the fenced submission sites requires review."""
 from pathlib import Path
+from kernel_overlay import apply
 import hashlib
 HERE=Path(__file__).resolve().parent
 def check():
     owner=(HERE/'owner.cpp').read_text();main=(HERE/'main.cpp').read_text()
     backend=(HERE/'backend.hpp').read_text();retire=(HERE/'owner_retire.cpp').read_text()
+    one=HERE.parents[1]/'stage1/packet3-prep/src/sycl_device.cpp'
+    one=apply(one,one.read_text())
     requirements = [
+      ('one-card event ID follows parameter planning/submission', 'auto submitted=native.submit(*queue_,bindings,wait);\n    auto id=next_handle();' in one),
+      ('two-card event ID follows parameter planning/submission', 'auto submitted=op.submit(*queues[allocation_card],p,wait);\n    auto e=ownrt::next_handle();' in backend),
       ("cached native dependencies released before context", "void clear_events() override {dependency_storage.clear();events.clear();event_cards.clear();}" in backend),
       ('owner compute dependency assertion', 'assert_local_dependencies(chain,queue);' in owner and owner.count('assert_local_dependencies(chain,queue);') == 2),
       ('owner queue rejection', 'event_queue.at(e)!=queue' in owner),
