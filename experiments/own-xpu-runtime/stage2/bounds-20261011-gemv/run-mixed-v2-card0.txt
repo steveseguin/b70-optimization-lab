@@ -1,0 +1,37 @@
+device Intel(R) Arc(TM) Pro B70 Graphics card 0
+--- expert gate/up shape 12800 x 2560 (32768000 weights)
+  int8 codes, byte loads                           median     87.2 us    375.8 G weights/s
+  int8 codes, one 64-bit code load                 median    138.2 us    237.1 G weights/s
+  IQ4_NL nibbles, byte loads + memory table        median    159.6 us    205.3 G weights/s
+  IQ4_NL nibbles, 64-bit load + register table     median    251.6 us    130.3 G weights/s
+  float32 weights                                  median    253.8 us    129.1 G weights/s
+  int8 codes + x as two 64-bit loads               median    145.5 us    225.2 G weights/s
+  int8 codes x FP32 block scale, scale loaded once per lane-tile median     93.0 us    352.3 G weights/s
+  int8 codes x FP32 block scale, scale assembled from 4 bytes per weight median    156.7 us    209.2 G weights/s
+  same + exceptional-scale test per weight         median    139.6 us    234.8 G weights/s
+  outputs: int8 naive==wide 1, ==wide_x64 1, ==float32 1, nibble naive==regtable 1, nibble==int8 1
+  outputs: scale per tile==per weight 1, ==with check 1
+--- expert down shape 25600 x 640 (16384000 weights)
+  int8 codes, byte loads                           median     32.6 us    502.5 G weights/s
+  int8 codes, one 64-bit code load                 median     45.1 us    363.2 G weights/s
+  IQ4_NL nibbles, byte loads + memory table        median     51.0 us    321.0 G weights/s
+  IQ4_NL nibbles, 64-bit load + register table     median     71.0 us    230.6 G weights/s
+  float32 weights                                  median    112.5 us    145.6 G weights/s
+  int8 codes + x as two 64-bit loads               median     46.5 us    352.7 G weights/s
+  int8 codes x FP32 block scale, scale loaded once per lane-tile median     34.9 us    469.5 G weights/s
+  int8 codes x FP32 block scale, scale assembled from 4 bytes per weight median     51.4 us    319.0 G weights/s
+  same + exceptional-scale test per weight         median     51.4 us    319.0 G weights/s
+  outputs: int8 naive==wide 1, ==wide_x64 1, ==float32 1, nibble naive==regtable 1, nibble==int8 1
+  outputs: scale per tile==per weight 1, ==with check 1
+--- gdn.qkv shape 10240 x 2560 (26214400 weights)
+  int8 codes, byte loads                           median     37.7 us    695.2 G weights/s
+  int8 codes, one 64-bit code load                 median     60.8 us    430.9 G weights/s
+  IQ4_NL nibbles, byte loads + memory table        median     72.7 us    360.5 G weights/s
+  IQ4_NL nibbles, 64-bit load + register table     median    108.8 us    241.1 G weights/s
+  float32 weights                                  median    190.4 us    137.7 G weights/s
+  int8 codes + x as two 64-bit loads               median     64.0 us    409.9 G weights/s
+  int8 codes x FP32 block scale, scale loaded once per lane-tile median     49.1 us    534.3 G weights/s
+  int8 codes x FP32 block scale, scale assembled from 4 bytes per weight median     72.6 us    361.1 G weights/s
+  same + exceptional-scale test per weight         median     72.5 us    361.6 G weights/s
+  outputs: int8 naive==wide 1, ==wide_x64 1, ==float32 1, nibble naive==regtable 1, nibble==int8 1
+  outputs: scale per tile==per weight 1, ==with check 1

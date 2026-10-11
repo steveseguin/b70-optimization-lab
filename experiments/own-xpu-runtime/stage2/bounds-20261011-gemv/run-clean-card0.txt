@@ -1,0 +1,41 @@
+device Intel(R) Arc(TM) Pro B70 Graphics card 0
+--- expert gate/up shape 12800 x 2560 (32768000 weights); the runtime's IQ2_S kernel measures 178 us in the model
+  int8 codes, no scale                                           91.5 us    358.3 G weights/s
+  int8 codes x FP32 scale (scale read once per 8 weights)        99.2 us    330.4 G weights/s
+  int8 codes x FP32 scale (scale read per weight)               479.8 us     68.3 G weights/s
+  4-bit codes + 16-entry table x scale (scale once per 8)       190.5 us    172.0 G weights/s
+  4-bit codes + 16-entry table x scale (scale per weight)       245.9 us    133.2 G weights/s
+  float32 weights                                               251.5 us    130.3 G weights/s
+  int8 x scale once per 8, four rows per work-group              87.8 us    373.2 G weights/s
+  4-bit + table x scale once per 8, four rows per work-group    164.3 us    199.5 G weights/s
+  identical outputs: int8 scale once==per weight 1; 4-bit once==per weight 1; 4-bit==int8 1
+--- expert down shape 25600 x 640 (16384000 weights); the runtime's IQ4_NL kernel measures 130 us in the model
+  int8 codes, no scale                                           40.3 us    406.4 G weights/s
+  int8 codes x FP32 scale (scale read once per 8 weights)        43.8 us    374.5 G weights/s
+  int8 codes x FP32 scale (scale read per weight)               124.7 us    131.4 G weights/s
+  4-bit codes + 16-entry table x scale (scale once per 8)        71.2 us    230.0 G weights/s
+  4-bit codes + 16-entry table x scale (scale per weight)        86.8 us    188.8 G weights/s
+  float32 weights                                               113.6 us    144.2 G weights/s
+  int8 x scale once per 8, four rows per work-group              44.1 us    371.8 G weights/s
+  4-bit + table x scale once per 8, four rows per work-group     71.9 us    228.0 G weights/s
+  identical outputs: int8 scale once==per weight 1; 4-bit once==per weight 1; 4-bit==int8 1
+--- gdn.qkv shape 10240 x 2560 (26214400 weights); the runtime's expanded Q6 kernel measures 101 us in the model
+  int8 codes, no scale                                           35.8 us    731.6 G weights/s
+  int8 codes x FP32 scale (scale read once per 8 weights)        48.1 us    544.7 G weights/s
+  int8 codes x FP32 scale (scale read per weight)               209.0 us    125.5 G weights/s
+  4-bit codes + 16-entry table x scale (scale once per 8)        79.2 us    331.1 G weights/s
+  4-bit codes + 16-entry table x scale (scale per weight)        99.9 us    262.4 G weights/s
+  float32 weights                                               190.0 us    138.0 G weights/s
+  int8 x scale once per 8, four rows per work-group              46.4 us    565.5 G weights/s
+  4-bit + table x scale once per 8, four rows per work-group     72.7 us    360.5 G weights/s
+  identical outputs: int8 scale once==per weight 1; 4-bit once==per weight 1; 4-bit==int8 1
+--- gdn.z shape 6144 x 2560 (15728640 weights); the runtime's expanded Q6 kernel measures 62 us in the model
+  int8 codes, no scale                                           18.5 us    848.3 G weights/s
+  int8 codes x FP32 scale (scale read once per 8 weights)        21.9 us    719.0 G weights/s
+  int8 codes x FP32 scale (scale read per weight)                96.5 us    163.1 G weights/s
+  4-bit codes + 16-entry table x scale (scale once per 8)        38.3 us    410.3 G weights/s
+  4-bit codes + 16-entry table x scale (scale per weight)        48.3 us    325.4 G weights/s
+  float32 weights                                               115.4 us    136.3 G weights/s
+  int8 x scale once per 8, four rows per work-group              22.0 us    715.6 G weights/s
+  4-bit + table x scale once per 8, four rows per work-group     38.4 us    409.2 G weights/s
+  identical outputs: int8 scale once==per weight 1; 4-bit once==per weight 1; 4-bit==int8 1

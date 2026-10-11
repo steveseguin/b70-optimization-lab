@@ -1,35 +1,44 @@
-# What bounds a GEMV on a B70: a small bounding study (coordinator, 2026-10-11 22:59 UTC, card 0)
+# What bounds a GEMV on a B70: a bounding study (coordinator, 2026-10-11 23:00–23:10 UTC, card 0)
 
-One SYCL program ([bound.cpp](bound.cpp)), not part of the runtime and not an exactness
-gate. It runs the runtime's row structure (one sub-group of 32 lanes per row, 8
-consecutive weights per lane per 256-weight tile, sequential per-lane accumulation,
-tree over 32 lanes) with deliberately simple weight encodings, at three of the model's
-shapes. GPU execution time from event timestamps, median of 12; variants that must agree
-produce identical bytes ([output](run-card0.txt)).
+Small SYCL programs, not part of the runtime and not an exactness gate. They run the
+runtime's row structure (one sub-group of 32 lanes per row, 8 consecutive weights per
+lane per 256-weight tile, sequential per-lane accumulation of `(scale*code)*x`, tree
+over 32 lanes) with simple weight encodings at four of the model's shapes. GPU
+execution time from event timestamps, median of 15. Variants that must agree produce
+identical bytes.
 
-| Encoding and load style | 12,800 × 2,560 (expert gate/up) | 25,600 × 640 (expert down) | 10,240 × 2,560 (gdn.qkv) |
-| --- | ---: | ---: | ---: |
-| int8 codes, byte loads | 84.7 µs | 69.2 µs | 57.8 µs |
-| int8 codes, one 64-bit load per 8 codes | 137.2 | 97.7 | 99.4 |
-| int8 codes, 64-bit loads for codes and inputs | 146.1 | 102.5 | 106.2 |
-| 4-bit codes, byte loads, 16-entry table in memory | 159.8 | 113.5 | 120.6 |
-| 4-bit codes, 64-bit load, table in registers | 254.3 | 157.6 | 183.8 |
-| float32 weights | 254.2 | 123.5 | 201.8 |
-| the runtime's kernel at this shape, measured in the model | 178 (IQ2_S) | 130 (IQ4_NL) | 101 (expanded Q6) |
+**Use [bound-clean.cpp](bound-clean.cpp) and [its output](run-clean-card0.txt).** In the
+first two programs (`bound.cpp`, `bound-mixed-v2.cpp`) the variant was a run-time value
+inside one kernel, which let variants slow each other (the same variant measured 69 µs
+in one build and 33 µs in the other); their absolute numbers are not to be quoted. In
+the clean program every variant is its own compiled kernel.
+
+| µs per launch | expert gate/up 12,800 × 2,560 | expert down 25,600 × 640 | gdn.qkv 10,240 × 2,560 | gdn.z 6,144 × 2,560 |
+| --- | ---: | ---: | ---: | ---: |
+| int8 codes × FP32 block scale, scale read once per 8 weights | 99.2 | 43.8 | **48.1** | **21.9** |
+| the same, scale read for every weight | 479.8 | 124.7 | 209.0 | 96.5 |
+| 4-bit codes + 16-entry table × scale, scale once per 8 | 190.5 | **71.2** | 79.2 | 38.3 |
+| the same, scale per weight | 245.9 | 86.8 | 99.9 | 48.3 |
+| float32 weights | 251.5 | 113.6 | 190.0 | 115.4 |
+| **the runtime's kernel, measured in the model** | 178 (IQ2_S) | **130** (IQ4_NL) | **101** (expanded Q6) | **62** (expanded Q6) |
+
+Four rows per work-group instead of one changes little (±10%).
 
 Readings:
 
-1. **64-bit integer work is slow on this GPU; byte loads are cheap.** Loading eight
-   codes as one 64-bit word and shifting is 1.4–1.7 times slower than eight byte loads.
-   "Wide loads" and register-held tables are the wrong direction here.
-2. **The expanded dense kernels have about 1.75× of removable overhead.** A minimal int8
-   kernel does the gdn.qkv shape in 57.8 µs; the runtime's expanded Q6 kernel takes 101
-   (best packet 25 candidate 85). The difference is per-weight work that is not the
-   product itself: the block scale fetched and assembled for every weight, the
-   exceptional-scale test per weight, format branches.
-3. **The packed expert kernels are close to what their formats allow.** A 4-bit code with
-   a 16-entry table costs 113.5 µs at the expert-down shape (the runtime's IQ4_NL kernel:
-   130) and 160 µs at the gate/up shape (the runtime's IQ2_S kernel: 178). Only an int8
-   expansion would be about twice as fast (69 and 85 µs), and that needs 3.2 times the
-   bytes for gate/up and 1.8 times for down, which two cards do not have.
-4. float32 weights are memory-bound (about 520 GB/s) and slower than int8 codes.
+1. **The expanded dense kernels can be about twice as fast with the same arithmetic.**
+   The runtime's expanded Q6 format is exactly "int8 code × FP32 scale per 16 weights".
+   Reading the scale once for the lane's 8 weights instead of per weight gives 48 µs at
+   the gdn.qkv shape and 22 µs at gdn.z, against 101 and 62 in the model, with
+   bit-identical results between the two spellings. Worth about 7 ms per token across
+   gdn.qkv, gdn.z, qsa.qgate, the attention projections and logits.
+2. **The IQ4_NL expert-down kernel has the same headroom:** a 4-bit code with a
+   16-entry table and the block scale read once per 8 weights takes 71 µs at that shape
+   against 130. About 2.8 ms per token.
+3. **IQ2_S expert gate/up is near its bound** as a packed format (a 4-bit-plus-table
+   stand-in costs 164–190 µs; the runtime's kernel 178). Only an int8 expansion would
+   halve it (99 µs), and that needs 3.2 times the bytes.
+4. **Per-weight work that is not the product dominates:** fetching a scale per weight
+   costs 2–5 times the whole kernel. 64-bit integer loads and shifts are slower than
+   byte loads on this GPU (first program), so wide loads and register-held tables are
+   the wrong direction. float32 weights are memory-bound and slow.
