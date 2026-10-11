@@ -1,0 +1,245 @@
+{
+  "artifacts_sha256": {
+    "build/device-gemv": "bb52923895683c87619383d43245c8af09f161455f2804d31a028636ee224809",
+    "build/host-gcc": "4eb7939737c7437846351f790f4a358b885eb2e43762210def60bc666c3750e5",
+    "build/host-icpx": "a95dc71b6860f2c05ca6ef6130332edc5d5046715e20a83400d3b7ac490d31bb"
+  },
+  "commands": [
+    {
+      "argv": [
+        "g++",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-DHOST_ONLY",
+        "-fno-tree-vectorize",
+        "-c",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet25-gemv/host.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet25-gemv/build/compile-scratch/host-gcc.o"
+      ],
+      "log": "build/host-gcc-compile.log",
+      "returncode": 0
+    },
+    {
+      "argv": [
+        "g++",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-DHOST_ONLY",
+        "-fno-tree-vectorize",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet25-gemv/build/compile-scratch/host-gcc.o",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet25-gemv/build/host-gcc"
+      ],
+      "log": "build/host-gcc-link.log",
+      "returncode": 0
+    },
+    {
+      "argv": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-DHOST_ONLY",
+        "-fdenormal-fp-math=ieee",
+        "-fno-vectorize",
+        "-fno-slp-vectorize",
+        "-c",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet25-gemv/host.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet25-gemv/build/compile-scratch/host-icpx.o"
+      ],
+      "log": "build/host-icpx-compile.log",
+      "returncode": 0
+    },
+    {
+      "argv": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-DHOST_ONLY",
+        "-fdenormal-fp-math=ieee",
+        "-fno-vectorize",
+        "-fno-slp-vectorize",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet25-gemv/build/compile-scratch/host-icpx.o",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet25-gemv/build/host-icpx"
+      ],
+      "log": "build/host-icpx-link.log",
+      "returncode": 0
+    },
+    {
+      "argv": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fsycl",
+        "-fdenormal-fp-math=ieee",
+        "-foffload-fp32-prec-div",
+        "-foffload-fp32-prec-sqrt",
+        "-c",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet25-gemv/native.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet25-gemv/build/compile-scratch/device-gemv.o"
+      ],
+      "log": "build/device-gemv-compile.log",
+      "returncode": 0
+    },
+    {
+      "argv": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fsycl",
+        "-fdenormal-fp-math=ieee",
+        "-foffload-fp32-prec-div",
+        "-foffload-fp32-prec-sqrt",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet25-gemv/build/compile-scratch/device-gemv.o",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet25-gemv/build/device-gemv"
+      ],
+      "log": "build/device-gemv-link.log",
+      "returncode": 0
+    },
+    {
+      "argv": [
+        "readelf",
+        "-d",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet25-gemv/build/host-gcc"
+      ],
+      "log": "build/host-gcc-dependencies.log",
+      "returncode": 0
+    },
+    {
+      "argv": [
+        "readelf",
+        "-d",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet25-gemv/build/host-icpx"
+      ],
+      "log": "build/host-icpx-dependencies.log",
+      "returncode": 0
+    },
+    {
+      "argv": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet25-gemv/build/host-gcc",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet25-gemv/build/host-gcc-repeat1.json"
+      ],
+      "log": "build/host-gcc-repeat1.log",
+      "returncode": 0
+    },
+    {
+      "argv": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet25-gemv/build/host-gcc",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet25-gemv/build/host-gcc-repeat2.json"
+      ],
+      "log": "build/host-gcc-repeat2.log",
+      "returncode": 0
+    },
+    {
+      "argv": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet25-gemv/build/host-icpx",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet25-gemv/build/host-icpx-repeat1.json"
+      ],
+      "log": "build/host-icpx-repeat1.log",
+      "returncode": 0
+    },
+    {
+      "argv": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet25-gemv/build/host-icpx",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet25-gemv/build/host-icpx-repeat2.json"
+      ],
+      "log": "build/host-icpx-repeat2.log",
+      "returncode": 0
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet25-gemv/test_window.py"
+      ],
+      "log": "build/window-tests.log",
+      "returncode": 0
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet25-gemv/test_summary.py"
+      ],
+      "log": "build/summary-tests.log",
+      "returncode": 0
+    },
+    {
+      "argv": [
+        "nm",
+        "-S",
+        "-C",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet25-gemv/build/device-gemv"
+      ],
+      "log": "build/captures.log",
+      "returncode": 0
+    },
+    {
+      "argv": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-fsycl",
+        "-fsyntax-only",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet25-gemv/build/compile-scratch/oversized.cpp"
+      ],
+      "log": "build/oversized-rejected.log",
+      "returncode": 1
+    }
+  ],
+  "compile_scratch_removed": true,
+  "cpu_receipt_sha256": "79689cbed9736dd2e8d63065929c199999ec00bd69c5ab344b50d20d4f69ea83",
+  "device_executed": false,
+  "external_sources_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp": "6e96276d9eee2564aa74d2f90b6802d04709f78d2b866b394c6fca2fe818dee3",
+    "experiments/own-xpu-runtime/stage2/packet18-decode-v2/evidence/20261011-host-bottleneck-location-scan/run-r5e-class-times-cards01/class-times.json": "c992d4ae7976b45c4f5de52773754aaad3424184ea4be80762b7079c673bba47",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp": "2ec2a1defe33d873b87a121c37bee62d45b8ad0b1b4bc93e7ceb0ba3ca59dc3f",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/reference.hpp": "7532f67c6d9a0be2a9187ce149b2004d9f1ea045705327d0ce542a283ad5ed72",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/decode.hpp": "7db4f3b62f899f8d5f245d193ba5e5a39007f8512e4e378f312ed8391b44332c",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/reference.hpp": "f744a148509ed091d69a708262d0fcbc94c179da8ca5ed364791e8ba77a328af",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/dispatch.hpp": "8f1895c0209b88057253b44a9aee82c4cd1e73cd207e4c1d3d233da1cc8d6495",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/reference.hpp": "95bdc549c66d5cb72fd54cc73696187dae08568f15b19d206cc954ca290c85f4",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/tensor-census.json": "3312f5a18582788c5c6c84572fd616488b6835b454272c81eec218a58521607c"
+  },
+  "git_head": "dcd6124df7f147b3c0b64ee5a51ffce95b7e74d9",
+  "max_compile_jobs": 1,
+  "memory_limit_bytes": 8589934592,
+  "passed": true,
+  "peak_child_rss_kib": 386816,
+  "schema": "packet25.build.v1",
+  "sources_sha256": {
+    "arithmetic.hpp": "4eea12510e598964cd901860bc0375e96918fc3eaefdaea009edefb20bcd6999",
+    "build.py": "fcccd8e967e336f66c198a387f2f7d275b7069f4dd54060797483df4f3c4b9b3",
+    "candidates.hpp": "e9f29f761bb2a5679a04335c5b18e74599be0569d43bb0afb41811bbc7e02dbf",
+    "device.hpp": "cd100bc98bae35b7923221b486de172587a1f884ce2e61069ea852effa8e136f",
+    "fixtures.hpp": "5a02c053f69a0a615da3ac70c7afd845cab5d2b3aa2fe47471b3706cf8322706",
+    "frozen-gemv.txt": "ed12ba769d6fa58c0605f35830903917115df885b89d070d4ce53ae1fb59f507",
+    "host.cpp": "ba2e90cee3d927e5f010a137b429ab5e01e065c2f992a5b2fb997e84c8d851d5",
+    "native.cpp": "69dfc5b4c6c1382abc94e068daf35dc1b3e09c81bf56fb85a0ab4e2ea3c91882",
+    "review_gates.hpp": "66f6de59743934cc25d163267eb1415902c29ab8d5e8fb8d37249b2df27c5e2c",
+    "summary.py": "63872a0225beedd157bc4559871465f21984ba249739143b4a250982f027226e",
+    "test_summary.py": "650a86ab8a1a57722f49888b626e4f678b87a61d9529a2d9058e702941b0fda5",
+    "test_window.py": "5b7f938e0734108550be1305930660caba190517e2497a05ec65da3dbe4cb22d",
+    "timing-plan.json": "165e5e2008d6e0b8e01a44ce77585501c38a4e6ec61b635aee943f022c48eadc",
+    "timing_loop.hpp": "b409c721913dfbfa5483113b3c42352d2ade1f5692185129f0eca6787fecb3bd",
+    "window.py": "043fc073f6c4105e508c723a44566ee2dfb30b2e4f519d9bc05d40c4a666b4f4",
+    "window_safety.py": "760e3635b1f1882f04d648f40e2a1e653dcb487f16924f2ce9a8a4110f588361"
+  }
+}

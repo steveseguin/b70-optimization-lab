@@ -1,0 +1,41 @@
+{
+  "device_executed": false,
+  "independent_reviews": [
+    "expert bit identity",
+    "dense bit identity",
+    "work-group races and ownership"
+  ],
+  "status": "static review clear; CPU execution and native gates remain separate",
+  "source_hashes": {
+    "candidates.hpp": "e9f29f761bb2a5679a04335c5b18e74599be0569d43bb0afb41811bbc7e02dbf",
+    "device.hpp": "cd100bc98bae35b7923221b486de172587a1f884ce2e61069ea852effa8e136f",
+    "fixtures.hpp": "5a02c053f69a0a615da3ac70c7afd845cab5d2b3aa2fe47471b3706cf8322706",
+    "native.cpp": "69dfc5b4c6c1382abc94e068daf35dc1b3e09c81bf56fb85a0ab4e2ea3c91882",
+    "review_gates.hpp": "66f6de59743934cc25d163267eb1415902c29ab8d5e8fb8d37249b2df27c5e2c",
+    "timing_loop.hpp": "b409c721913dfbfa5483113b3c42352d2ade1f5692185129f0eca6787fecb3bd"
+  },
+  "findings": [
+    {
+      "issue": "exceptional NaN operand propagation differs for duplicated source",
+      "resolution": "guarded dispatch to the same frozen current implementation; retained failures; both compilers and native current still gated"
+    },
+    {
+      "issue": "unused dense half-table pointer formed outside allocation",
+      "resolution": "offset only in half_table specialization"
+    },
+    {
+      "issue": "partial staged enqueue could outlive recorded tail",
+      "resolution": "queue-wide wait before any allocation release"
+    },
+    {
+      "issue": "full sequence evidence not bound or coverage checked",
+      "resolution": "wrapper hashes full wall/plan; summary checks seven tiers x 200 sequences,48 layers,one wait,253 groups"
+    },
+    {
+      "issue": "source-only NaN row comparisons could mask later values",
+      "resolution": "24576 isolated decoded values plus finite scalar and routed tests"
+    }
+  ],
+  "gemv_scope": "FP32 row sums and separate BF16 outputs; all original input fixtures",
+  "nonlinear_epilogue_portability": "failed optional diagnostic retained; required before fused integration"
+}

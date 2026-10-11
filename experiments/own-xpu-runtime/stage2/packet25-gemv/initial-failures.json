@@ -1,0 +1,9 @@
+{
+  "device_executed": false,
+  "failures": [
+    {"compiler":"GCC", "case":"IQ2_S K256 finite weights, mixed NaN inputs, peer", "candidate":"duplicated current arithmetic", "actual":"ffc10000", "scalar_reference":"7fc00000"},
+    {"compiler":"GCC", "case":"IQ2_S K768 mixed special scales, finite inputs", "issue":"scalar reference differs from normative frozen row"},
+    {"compiler":"GCC no-vectorize", "case":"IQ2_S K768 mixed special scales and NaN inputs", "candidate":"duplicated current arithmetic", "actual":"7fc00000", "frozen_reference":"ffc00000"}
+  ],
+  "resolution":"Preserve normative frozen row as reference; exceptional operation falls back to that same current implementation. Native baseline/fallback must still pass device vs host. Additional independent scalar equation check is finite-domain only."
+}

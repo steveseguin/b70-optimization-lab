@@ -1,0 +1,74 @@
+{
+  "device_executed": false,
+  "source": "experiments/own-xpu-runtime/stage2/packet18-decode-v2/evidence/20261011-host-bottleneck-location-scan/run-r5e-class-times-cards01/class-times.json",
+  "sha256": "c992d4ae7976b45c4f5de52773754aaad3424184ea4be80762b7079c673bba47",
+  "source_metric": "historical first-start to last-end span; used only for frequencies/deadline sizing",
+  "new_metric": "sum of command_end-command_start for every stage in group",
+  "repetitions": 200,
+  "fresh_owners": 2,
+  "classes": [
+    {
+      "klass": "gdn.qkv",
+      "groups_per_token": 36,
+      "trace_span_us_per_group": 100.57275132275132,
+      "submission_budget_us": 2000,
+      "margin": 19.88610208725159
+    },
+    {
+      "klass": "gdn.z",
+      "groups_per_token": 36,
+      "trace_span_us_per_group": 61.908289241622576,
+      "submission_budget_us": 2000,
+      "margin": 32.305851518432
+    },
+    {
+      "klass": "attention",
+      "groups_per_token": 48,
+      "trace_span_us_per_group": 67.68088624338624,
+      "submission_budget_us": 2000,
+      "margin": 29.550440471595323
+    },
+    {
+      "klass": "expsgate",
+      "groups_per_token": 48,
+      "trace_span_us_per_group": 177.73776455026456,
+      "submission_budget_us": 2000,
+      "margin": 11.252532657089859
+    },
+    {
+      "klass": "expsdown",
+      "groups_per_token": 48,
+      "trace_span_us_per_group": 130.19345238095238,
+      "submission_budget_us": 2000,
+      "margin": 15.361755629214768
+    },
+    {
+      "klass": "qsa.qgate",
+      "groups_per_token": 12,
+      "trace_span_us_per_group": 118.16137566137566,
+      "submission_budget_us": 2000,
+      "margin": 16.926004701667974
+    },
+    {
+      "klass": "qsa.k",
+      "groups_per_token": 12,
+      "trace_span_us_per_group": 10.784140211640212,
+      "submission_budget_us": 2000,
+      "margin": 185.45752936717523
+    },
+    {
+      "klass": "qsa.v",
+      "groups_per_token": 12,
+      "trace_span_us_per_group": 10.553624338624338,
+      "submission_budget_us": 2000,
+      "margin": 189.50835616541372
+    },
+    {
+      "klass": "logits",
+      "groups_per_token": 1,
+      "trace_span_us_per_group": 2136.7936507936506,
+      "submission_budget_us": 10000,
+      "margin": 4.679909076052237
+    }
+  ]
+}
