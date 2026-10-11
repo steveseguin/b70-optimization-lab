@@ -63,6 +63,8 @@ Approved duplicate retirements are recorded in lane notes; a later full proof mu
 
 ## Our Own Intel Xe Runtimes
 
+**October 11, CPU-only one-card plan:** The [IQ3 one-card design](experiments/own-xpu-runtime/stage2/ONE-CARD-PLAN.md) follows the two-card target and recommends keeping dense weights and a cache of experts on the card, copying missing experts from host RAM. A 24 GB cache has a calculated transfer-only ceiling of 39.50 tokens/s at the assumed 19 GB/s rate; this is not a measured runtime speed, and actual memory fit remains to be checked. First measure our copy speed on this host and collect the CPU oracle's expert choices; this documentation work used no GPU or model payload.
+
 **October 11, CPU-only:** the owner's first real-model target for our own engine is now the IQ3 quantized compressed version on two B70s; the 27B FP8 work remains documented. [Stage 2 packet 2](experiments/own-xpu-runtime/stage2/packet2/README.md) adds the GGUF loader and packed kernels, with exact CPU checks and a successful SYCL build. Nothing ran on a GPU in this task; the next step is the [bounded one-card device comparison](experiments/own-xpu-runtime/stage2/packet2/WINDOW.md) in a separately authorized window.
 
 The October 10 [objective](docs/own-xpu-runtime-objective.md) is our own model-specific code. Other projects supply credited ideas, not a code base. Official-publisher or Unsloth weights are permitted; another source needs written justification and

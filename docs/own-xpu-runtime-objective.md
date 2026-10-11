@@ -100,6 +100,17 @@ running and keep publishing while this is built.
 4. Video: LTX 2.5 and MiniMax-H3 share the capture, placement and teardown
    layers; their samplers stay model-specific.
 
+### One-card target
+
+**Owner direction, 2026-10-11:** two B70s are the primary target for the
+Unsloth UD-IQ3_XXS quantized compressed version; one 32 GB B70 is also a
+target after the two-card line works. The [one-card plan](../experiments/own-xpu-runtime/stage2/ONE-CARD-PLAN.md)
+keeps dense weights resident and compares expert streaming, a device cache
+and CPU expert computation, with full 16-bit KV and the same lossless,
+deterministic IQ3 oracle. Its capacity and speed ceilings are arithmetic,
+not measured results; host RAM, actual H2D rate and expert-hit statistics
+must be measured before qualification.
+
 ## Staged plan and gates
 
 **Stage 0 (now; CPU-only while the GPU halt stands).** Written design spec;
