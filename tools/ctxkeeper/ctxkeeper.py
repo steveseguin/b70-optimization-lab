@@ -44,6 +44,15 @@ from typing import Any
 
 PIN_HEAD = "[[NOTES kept by the context keeper: {n} earlier messages are in the archive (search it with the `recall` tool)]]"
 RECITE_HEAD = "[[RULES in force (from NOTES); apply every one that covers this before you answer]]"
+MEMORY_NOTE = """
+
+## Memory
+
+- This conversation may be long. Older turns are moved out of view automatically; you do not manage that.
+- When that has happened, a NOTES message near the top holds the standing RULES stated so far and the current STATE.
+  Read the RULES before you answer or act, and apply every one that covers what you are doing.
+- Everything moved out of view is kept verbatim in an archive. The `recall` tool searches it; you may call it in
+  addition to any other tool whenever something you need is no longer in view."""
 RECALL_TOOL = {
     "type": "function",
     "function": {
@@ -137,6 +146,16 @@ def keep_rules(old: str, new: str) -> tuple[str, list[str]]:
 
 
 # ------------------------------------------------------------------ messages (pure)
+def with_memory_note(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The conversation with the Memory paragraph at the end of its system message (added once, always the same
+    text, so the start of the prompt never changes). A conversation without a system message gets one."""
+    if messages and messages[0].get("role") in ("system", "developer") and isinstance(messages[0].get("content"), str):
+        if MEMORY_NOTE.strip() in messages[0]["content"]:
+            return messages
+        return [dict(messages[0], content=messages[0]["content"] + MEMORY_NOTE)] + messages[1:]
+    return [{"role": "system", "content": MEMORY_NOTE.strip()}] + messages
+
+
 def text_of(message: dict[str, Any]) -> str:
     """Everything in a message that the model reads, as text (for counting, the archive and the notes call)."""
     c = message.get("content")
@@ -269,11 +288,22 @@ class Keeper:
 
     def __init__(self, ask, state_dir: Path, budget: int = 32768, target_ratio: float = 0.6, headroom: int = 2048,
                  notes_cap: int = 2048, notes_max_tokens: int = 4096, notes_thinking: bool | None = True,
-                 recite: bool = True, max_recalls: int = 6, reply_reserve: int = 4096) -> None:
+                 recite: bool = True, max_recalls: int = 6, reply_reserve: int = 4096,
+                 recite_when: str | None = None, think_when: str | None = None, effort: str | None = None,
+                 memory_note: bool = True) -> None:
         self.ask, self.root = ask, Path(state_dir)
         self.budget, self.target_ratio, self.headroom = budget, target_ratio, headroom
         self.notes_cap, self.notes_max_tokens, self.notes_thinking = notes_cap, notes_max_tokens, notes_thinking
         self.recite, self.max_recalls, self.reply_reserve = recite, max_recalls, reply_reserve
+        # Optional, for servers and tasks that need them (see README): recite_when = also repeat the RULES when the
+        # newest message matches this pattern (questions that arrive in a tool result, not from the user);
+        # think_when = set chat_template_kwargs.enable_thinking per call, on when the newest message is from the user
+        # or matches this pattern, off otherwise; effort = a fixed chat_template_kwargs.reasoning_effort, so that
+        # switching thinking does not change the system message (Qwen template) and the prefix cache survives.
+        self.recite_when = re.compile(recite_when) if recite_when else None
+        self.think_when = re.compile(think_when) if think_when else None
+        self.effort = effort
+        self.memory_note = memory_note
         self.sessions: dict[str, Session] = {}
         self.lock = threading.Lock()
 
@@ -355,14 +385,26 @@ class Keeper:
         s = self.session(body, header)
         with s.lock:
             messages = list(body.get("messages") or [])
+            if self.memory_note:
+                messages = with_memory_note(messages)
             if messages:
                 s.state["largest_turn"] = max(s.state["largest_turn"], self.tokens(s, messages[-1:]))
             self.keep(s, body.get("model"), messages)
             view = self.view(s, messages)
-            if self.recite and messages and messages[-1].get("role") == "user" and rule_lines(s.state["notes"]):
+            newest = text_of(messages[-1]) if messages else ""
+            from_user = bool(messages) and messages[-1].get("role") == "user"
+            asked = from_user or bool(self.recite_when and self.recite_when.search(newest))
+            if self.recite and asked and rule_lines(s.state["notes"]):
                 view.append({"role": "user", "content": RECITE_HEAD + "\n" + "\n".join("- " + r for r in rule_lines(s.state["notes"]))})
             out = dict(body, messages=view, stream=False)
-            if s.state["cut"]:
+            if self.think_when is not None or self.effort:
+                ctk = dict(body.get("chat_template_kwargs") or {})
+                if self.think_when is not None:
+                    ctk["enable_thinking"] = from_user or bool(self.think_when.search(newest))
+                if self.effort:
+                    ctk["reasoning_effort"] = self.effort
+                out["chat_template_kwargs"] = ctk
+            if s.state["cut"] or self.memory_note:   # with the note the tool is there from the start (a stable prompt)
                 out["tools"] = list(body.get("tools") or []) + [RECALL_TOOL]
             resp: dict[str, Any] = {}
             for _ in range(self.max_recalls + 1):
@@ -481,6 +523,13 @@ def main() -> None:
     ap.add_argument("--notes-thinking", choices=("on", "off", "unset"), default="on",
                     help="chat_template_kwargs.enable_thinking for the notes call (unset: do not send the field)")
     ap.add_argument("--no-recite", action="store_true", help="do not repeat the RULES after a new user message")
+    ap.add_argument("--recite-when", help="also repeat the RULES when the newest message matches this regular expression")
+    ap.add_argument("--think-when", help="set enable_thinking per call: on for a user message or a newest message "
+                                         "matching this regular expression, off otherwise (default: leave the client's setting)")
+    ap.add_argument("--effort", help="send this chat_template_kwargs.reasoning_effort on every call (with --think-when "
+                                     "on Qwen: medium keeps the system message the same whether thinking is on or off)")
+    ap.add_argument("--no-memory-note", action="store_true",
+                    help="do not add the Memory paragraph to the system message (the recall tool then appears after the first cut)")
     ap.add_argument("--state-dir", type=Path, default=Path.home() / ".cache" / "ctxkeeper")
     ap.add_argument("--timeout", type=float, default=1800)
     a = ap.parse_args()
@@ -488,7 +537,8 @@ def main() -> None:
     keeper = Keeper(lambda body: post_json(upstream + "/v1/chat/completions", body, a.timeout), a.state_dir,
                     budget=a.budget, target_ratio=a.target_ratio, headroom=a.headroom, notes_cap=a.notes_cap,
                     notes_thinking={"on": True, "off": False, "unset": None}[a.notes_thinking],
-                    recite=not a.no_recite, reply_reserve=a.reply_reserve)
+                    recite=not a.no_recite, reply_reserve=a.reply_reserve, recite_when=a.recite_when,
+                    think_when=a.think_when, effort=a.effort, memory_note=not a.no_memory_note)
     server = ThreadingHTTPServer((a.host, a.port), make_handler(keeper, upstream, a.timeout))
     print(f"ctxkeeper: http://{a.host}:{a.port}/v1 -> {upstream}/v1, live window {a.budget} tokens, state in {a.state_dir}", flush=True)
     try:

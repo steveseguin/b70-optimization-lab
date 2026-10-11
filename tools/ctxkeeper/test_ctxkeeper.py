@@ -50,7 +50,7 @@ class Policy(unittest.TestCase):
         self.dir = tempfile.TemporaryDirectory()
         self.model = Model()
         self.keeper = ck.Keeper(self.model, Path(self.dir.name), budget=2400, reply_reserve=400, headroom=100,
-                                target_ratio=0.5, notes_cap=400)
+                                target_ratio=0.5, notes_cap=400, memory_note=False)
 
     def tearDown(self):
         self.dir.cleanup()
@@ -122,6 +122,36 @@ class Policy(unittest.TestCase):
         self.assertIn("Always answer in French.", view[-1]["content"])
         self.assertEqual(view[-2]["content"], "And in item 3?")
 
+    def test_questions_in_a_tool_result_can_trigger_recital_and_thinking(self):
+        k = ck.Keeper(self.model, Path(self.dir.name) / "q", budget=2400, reply_reserve=400, headroom=100, target_ratio=0.5,
+                      notes_cap=400, recite_when=r"(?m)^ASK ", think_when=r"(?m)^ASK |Traceback", effort="medium")
+        for n in range(1, 31):
+            k.complete({"model": "m", "messages": conversation(n), "chat_template_kwargs": {"enable_thinking": True}})
+        routine = self.model.requests[-1]
+        self.assertEqual(routine["chat_template_kwargs"], {"enable_thinking": False, "reasoning_effort": "medium"})
+        self.assertFalse(routine["messages"][-1]["content"].startswith(ck.RECITE_HEAD))
+        asked = conversation(30)
+        asked[-1] = dict(asked[-1], content="PROBE: answer now.\nASK p1_1: What value does abcd03 hold?")
+        k.complete({"model": "m", "messages": asked})
+        probe = self.model.requests[-1]
+        self.assertTrue(probe["chat_template_kwargs"]["enable_thinking"])
+        self.assertTrue(probe["messages"][-1]["content"].startswith(ck.RECITE_HEAD))
+        self.assertEqual(probe["messages"][-2]["role"], "tool")
+
+    def test_memory_note_is_added_once_and_recall_is_there_from_the_start(self):
+        k = ck.Keeper(self.model, Path(self.dir.name) / "n", budget=2400, reply_reserve=400, headroom=100, target_ratio=0.5, notes_cap=400)
+        for n in (1, 2, 30):
+            k.complete({"model": "m", "messages": conversation(n)})
+        first = [r for r in self.model.requests if len(r["messages"]) == 4][0]
+        self.assertTrue(first["messages"][0]["content"].endswith(ck.MEMORY_NOTE))
+        self.assertEqual(first["messages"][0]["content"].count("## Memory"), 1)
+        self.assertEqual(first["tools"][-1]["function"]["name"], "recall")
+        last = self.model.requests[-1]["messages"]
+        self.assertEqual(last[0], first["messages"][0])                           # the start of the prompt never changes
+        bare = ck.with_memory_note([{"role": "user", "content": "hi"}])
+        self.assertEqual([m["role"] for m in bare], ["system", "user"])
+        self.assertEqual(ck.with_memory_note(bare), bare)
+
     def test_a_rewritten_history_is_a_new_conversation(self):
         s = self.run_conversation(30)
         changed = conversation(30)
@@ -134,7 +164,8 @@ class Policy(unittest.TestCase):
 
     def test_state_survives_a_restart(self):
         s = self.run_conversation(30)
-        again = ck.Keeper(self.model, Path(self.dir.name), budget=2400, reply_reserve=400, headroom=100, target_ratio=0.5, notes_cap=400)
+        again = ck.Keeper(self.model, Path(self.dir.name), budget=2400, reply_reserve=400, headroom=100, target_ratio=0.5,
+                          notes_cap=400, memory_note=False)
         t = again.session({"model": "m", "messages": conversation(30)}, None)
         self.assertEqual((t.state["cut"], t.state["notes"]), (s.state["cut"], s.state["notes"]))
 
