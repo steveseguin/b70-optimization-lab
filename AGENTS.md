@@ -399,6 +399,17 @@ from one host once zeroed 302 files).
 - Preserve experiment patches and their results, including failed patches, so
   future agents do not rediscover the same dead ends. Promote successful
   patches only after verification, while keeping the experiment record linked.
+- When a campaign or lever closes, write a short, evidence-linked closeout using
+  `experiments/CLOSEOUT-TEMPLATE.md`, and link it from the lane's README/handoff
+  or negative-result index. Record the question and identity, outcome, useful
+  mechanisms, failures/uncertainty, retained evidence/patches and revisit conditions.
+  Use a `closeout`/`closure` Markdown filename or the template's marker so CI can
+  check the new record. Historical frozen closeouts keep their original bytes.
+- Keep generated caches out of Git. Repository hygiene CI flags new or changed
+  artifacts of at least 1 MiB for retention review. Record why a large artifact
+  is needed and how to restore it; size or duplicate content alone never grants
+  permission to discard evidence. Archive consolidation must verify each member's
+  original bytes and update its consumers before removing originals.
 - Check the lane's `DO-NOT-REPEAT.md` before opening an experiment arm, and add
   a row when an arm closes.
 - A `package.json` dependency and the file it points at land in the same

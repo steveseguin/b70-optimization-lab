@@ -1,0 +1,21 @@
+name: repository-hygiene
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Test staged artifact and closeout checks
+        run: python3 -B -m unittest tools/test_repository_hygiene.py
+      - name: Flag large artifacts and reject generated caches or incomplete closeouts
+        run: python3 -B tools/check-repository-hygiene.py --event-json "$GITHUB_EVENT_PATH"

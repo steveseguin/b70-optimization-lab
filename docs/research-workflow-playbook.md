@@ -213,6 +213,14 @@ and invalidated comparisons when they explain why a tempting number cannot be
 used. The [Qwen3.5 classification correction](../experiments/qwen35-4b-b70/notes/2026-09-09-divergence-classification-retrospective.md)
 is an example of a useful retraction that must remain discoverable.
 
+Use the [closeout template](../experiments/CLOSEOUT-TEMPLATE.md) for each completed
+campaign or lever, then link that note from its lane's navigation. Repository
+hygiene CI checks newly added closeout notes and explicitly marked existing
+notes for substantive sections and tracked evidence links. It cannot judge
+scientific validity or infer that an unmarked campaign has ended; that remains
+part of the review. New or changed artifacts of at least 1 MiB are flagged for
+retention review, and tracked generated caches fail the check.
+
 Before moving, compressing or deleting evidence, record its original path and
 hash, every dependent recipe/manifest/script, the replacement location and a
 verified restoration. Exact duplicate bytes can have distinct provenance roles.

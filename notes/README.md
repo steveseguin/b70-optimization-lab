@@ -57,6 +57,10 @@ handoff or service command does not describe what is running now;
 - When an investigation ends, put its conclusion, limits and source links in
   the lane handoff or negative-result ledger. Add reusable lessons to the
   workflow playbook; keep the raw history available through those links.
+- Use the [campaign closeout template](../experiments/CLOSEOUT-TEMPLATE.md)
+  when a campaign or lever ends. Keep its failed attempts and revisit conditions
+  visible. New closeout notes must link tracked evidence and pass repository
+  hygiene CI; an existing historical note keeps its original format.
 
 ## Promotion Path
 
