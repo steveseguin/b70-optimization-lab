@@ -8,6 +8,7 @@
 | Expand all experts | Packet10 capacity exceeds two cards | A different measured memory budget; not proposed |
 | Claim scale hoisting is new | R3/R6 already share metadata scales | Half-table arm only removes exact half conversion; measure its extra reads |
 | Treat mathematical equality as NaN bit equality | initial-failures.json records payload/sign changes | Shared current fallback plus CPU/native gates; no canonicalization |
+| Abort the whole GEMV census on host/card NaN encoding | G1-a stopped at IQ2_S element 14 before timing; GCC/icpx reproduce opposite quiet-NaN signs | G1-b accepts host/card NaN class only, preserves exact same-card candidates and all finite/infinity bits; record first eight mismatch rows and finish eligible classes |
 | Scalar dot alone is the universal oracle | Mixed nonfinite operands can differ from the frozen compiler path | Frozen row remains authority; scalar oracle is additionally checked in the finite domain |
 | Pack rows by changing lanes or split4 | Changes the declared reduction | Forbidden in this identity |
 | Time only expanded consumer | Omits per-token scratch decode | Both GPU events plus sequence wall must be counted |

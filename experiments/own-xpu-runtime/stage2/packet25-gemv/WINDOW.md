@@ -19,17 +19,26 @@ K0 receipt, the same boot/card/environment/build, and launches two fresh owners.
 Use new output paths; there are no retries or resident services.
 
 ```bash
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B experiments/own-xpu-runtime/stage2/packet25-gemv/window.py --authorized-device-window --window K0 --card N --output experiments/own-xpu-runtime/stage2/packet25-gemv/build/K0 --seconds 300
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B experiments/own-xpu-runtime/stage2/packet25-gemv/window.py --authorized-device-window --window G1 --card N --k0 experiments/own-xpu-runtime/stage2/packet25-gemv/build/K0/window.json --output experiments/own-xpu-runtime/stage2/packet25-gemv/build/G1 --seconds 1200
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B experiments/own-xpu-runtime/stage2/packet25-gemv/window.py --authorized-device-window --window K0 --card N --output experiments/own-xpu-runtime/stage2/packet25-gemv/build/K0-b --seconds 300
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B experiments/own-xpu-runtime/stage2/packet25-gemv/window.py --authorized-device-window --window G1 --card N --k0 experiments/own-xpu-runtime/stage2/packet25-gemv/build/K0-b/window.json --output experiments/own-xpu-runtime/stage2/packet25-gemv/build/G1-b --seconds 1200
 ```
 
-G1 first compares every current result with the host frozen reference, then
-candidate with both. Candidate failures are reported/excluded across all shapes
-of that format; current/reference failure stops the window. Only passing arms
-receive timings. Both owners must agree on exactness/exclusions. All outputs
-include FP32 row bits, final BF16 gate/up/down bits ; nonlinear postprocessing is outside this diagnostic.
+G1 compares current with the frozen host reference: finite values (including
+signed zeros and denormals) and infinities must match exactly; host NaN requires
+card NaN with any encoding. Candidates must match current-card bits everywhere.
+NaN encoding differences versus host are counted separately; the model's sticky
+error rejects all nonfinite values, which are not model outputs. First-eight
+mismatch records include full input bits and host/current/candidate output bits.
 
-`ranked.md` and `ranked.json` are produced automatically after both owners pass;
+A failure excludes the candidate across its format; a current failure excludes
+the whole format. Remaining fixtures, classes, timings and both fresh owners
+continue. A full sequence requiring an excluded current format is skipped and
+labeled. Finite gate failures make the final exit nonzero; other numerical gate
+failures still exclude arms and set all_gates_passed=false. Safety faults/budgets
+still abort. Both owners must agree on exactness/exclusions. All outputs include
+FP32 and BF16 gate/up/down bits; nonlinear postprocessing is outside this diagnostic.
+
+`ranked.md` and `ranked.json` are produced automatically after both owners complete, including completed finite-gate failures;
 raw execution/sequence records stay under `run/owner1` and `run/owner2`.
 An excluded candidate never appears as a timing winner. The full sequence's
 candidate selections are in `full-sequence-plan.jsonl`.
@@ -45,3 +54,6 @@ wait/free. This packet never changes machine settings or performs recovery.
 A passing G1 is not production admission. The coordinator must still check the
 real model against its v2 oracle and repeat on a fresh owner, with actual input
 classification, memory residency, input/output epilogues and all dependencies.
+
+The old `build/K0` and `build/G1` receipts are preserved as evidence.
+K0-b must bind the rebuilt binary; the old K0 cannot authorize G1-b.

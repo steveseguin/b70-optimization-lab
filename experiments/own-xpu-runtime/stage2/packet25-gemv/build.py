@@ -54,13 +54,19 @@ def main():
         for label in ('host-gcc','host-icpx'):
             elf=run(['readelf','-d',B/label],label+'-dependencies').stdout
             assert not any(x in elf.lower() for x in ('libsycl','libze_loader','libur_loader','libopencl'))
-        receipts=[]
+        receipts=[]; exceptional_host_bits={}
         for label in ('host-gcc','host-icpx'):
             for repeat in (1,2):
                 out=B/(label+'-repeat'+str(repeat)+'.json');run([B/label,out],out.stem)
-                data=json.loads(out.read_text());assert data['passed'] and not data['device_executed'];receipts.append(data)
+                data=json.loads(out.read_text());assert data['passed'] and not data['device_executed']
+                bits=data.pop('g1_a_element14_host_bits')
+                for field,mask,inf in (('fp32',0x7fffffff,0x7f800000),('bf16',0x7fff,0x7f80)):
+                    assert all((int(v,16)&mask)>inf for v in bits[field]), 'reproduced host element must be NaN'
+                if label in exceptional_host_bits:assert exceptional_host_bits[label]==bits, 'host diagnostic fresh-process drift'
+                exceptional_host_bits[label]=bits
+                receipts.append(data)
         assert all(r==receipts[0] for r in receipts),'cross-compiler/fresh-process bytes differ'
-        cpu=dict(receipts[0],compilers=['g++',IC],fresh_processes=4,binary_hashes={k:v for k,v in artifacts.items() if 'host-' in k},arithmetic='iq3-p17-detmath-v2',real_model_qualified=False)
+        cpu=dict(receipts[0],g1_a_element14_host_bits_by_compiler=exceptional_host_bits,gate_policy='finite including signed zero/denormals and infinity exact; host NaN requires card NaN; candidate exact current-card bits',compilers=['g++',IC],fresh_processes=4,binary_hashes={k:v for k,v in artifacts.items() if 'host-' in k},arithmetic='iq3-p17-detmath-v2',real_model_qualified=False)
         save(HERE/'cpu-tests.json',cpu)
         tests=run([sys.executable,'-B',HERE/'test_window.py'],'window-tests')
         summary=run([sys.executable,'-B',HERE/'test_summary.py'],'summary-tests')

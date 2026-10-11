@@ -1,5 +1,6 @@
 #include "device.hpp"
 #include "timing_loop.hpp"
+#include "exactness.hpp"
 #include <chrono>
 #include <csignal>
 #include <filesystem>
@@ -24,9 +25,9 @@ struct Owner {
  void release(){finish();for(auto p:allocations)sycl::free(p,q);allocations.clear();live=0;return;}
 };
 struct Case {
- Shape shape;Params host{};Params* params;std::vector<Result> oracle;std::vector<Result> actual;
+ Shape shape;Params host{};Params* params;std::vector<Result> oracle;std::vector<Result> actual;std::vector<uint16_t> input;
  Case(Owner&o,Shape s,unsigned special=0,unsigned mode=0):shape(s){
- auto a=seed_weights(s.type,s.k,0,special),b=seed_weights(s.type,s.k,937,special);auto x=inputs(s.k,s.count,mode);oracle=expected(s,a,b,x);actual.resize(oracle.size());
+ auto a=seed_weights(s.type,s.k,0,special),b=seed_weights(s.type,s.k,937,special);auto x=inputs(s.k,s.count,mode);input=x;oracle=expected(s,a,b,x);actual.resize(oracle.size());
  auto f=layout(s.type);size_t prb=s.k/f.elements*f.bytes,rb=expert(s.type)?prb:expanded::row_bytes(s.type,s.k);
  auto wa=expert(s.type)?a:expanded::expand(s.type,a.data(),a.size(),s.k),wb=expert(s.type)?b:expanded::expand(s.type,b.data(),b.size(),s.k);
  size_t n=size_t(s.rows)*s.count;std::vector<uint8_t> tiled(n*rb);for(size_t r=0;r<n;++r)std::memcpy(tiled.data()+r*rb,wa.data()+(r%8)*rb,rb);host.w=o.upload(tiled);
@@ -50,11 +51,23 @@ uint64_t check_events(const Events& events,const Shape&s){uint64_t largest=0;for
  duration(begin,end,budget(s));
  require(end-begin<=budget(s),"submission exceeded budget: "+std::string(s.label)+" elapsed_ns="+std::to_string(end-begin));largest=std::max(largest,end-begin);
  }return largest;}
-std::vector<C> exact(Owner&o,Case& c,std::ofstream&log,const std::string&fixture){
- std::vector<C> accepted;auto first=c.run(o,C::current);c.read(o);check_events(first,c.shape);auto control=c.actual;auto at=mismatch(control,c.oracle);
- log<<"{\"fixture\":"<<quote(fixture)<<",\"shape\":"<<quote(c.shape.label)<<",\"candidate\":\"current\",\"passed\":"<<(at==control.size()?"true":"false")<<",\"first_mismatch\":"<<at<<"}\n";log.flush();require(at==control.size(),"current != host reference; failure recorded before teardown");accepted.push_back(C::current);
- for(auto v:candidates(c.shape.type)){if(v==C::current)continue;auto submitted=c.run(o,v);c.read(o);check_events(submitted,c.shape);auto a=mismatch(c.actual,control),b=mismatch(c.actual,c.oracle);bool ok=a==control.size()&&b==control.size();
- log<<"{\"fixture\":"<<quote(fixture)<<",\"shape\":"<<quote(c.shape.label)<<",\"candidate\":"<<quote(name(v))<<",\"passed\":"<<(ok?"true":"false")<<",\"fallback_current\":"<<(c.host.exceptional?"true":"false")<<",\"excluded\":"<<(ok?"false":"true")<<",\"first_mismatch\":"<<std::min(a,b)<<"}\n";log.flush();if(ok)accepted.push_back(v);
+std::vector<C> exact(Owner&o,Case& c,std::ofstream&log,const std::string&fixture,Gate& total){
+ std::vector<C> accepted;std::vector<Result> control;bool control_ok=false;
+ for(auto v:candidates(c.shape.type)){
+ auto submitted=c.run(o,v);c.read(o);check_events(submitted,c.shape);
+ if(v==C::current)control=c.actual;
+ Gate gate;size_t first=c.actual.size(),raw_first=first;
+ for(size_t i=0;i<c.actual.size();++i){auto g=compare(c.oracle[i],c.actual[i],v==C::current?nullptr:&control[i]);accumulate(gate,g);if(!g.passed())first=std::min(first,i);if(!equal(c.oracle[i],c.actual[i])||!equal(control[i],c.actual[i]))raw_first=std::min(raw_first,i);}
+ if(v==C::current)control_ok=gate.passed();
+ bool ok=control_ok&&gate.passed();if(ok)accepted.push_back(v);accumulate(total,gate);
+ log<<"{\"fixture\":"<<quote(fixture)<<",\"shape\":"<<quote(c.shape.label)<<",\"type\":"<<unsigned(c.shape.type)<<",\"candidate\":"<<quote(name(v))<<",\"passed\":"<<(ok?"true":"false")<<",\"fallback_current\":"<<(c.host.exceptional?"true":"false")<<",\"excluded\":"<<(ok?"false":"true")<<",\"current_host_gate_passed\":"<<(control_ok?"true":"false")<<",\"first_mismatch\":"<<first<<",\"first_encoding_difference\":"<<raw_first<<",";gate_fields(log,gate);
+ log<<",\"mismatches\":[";unsigned saved=0;
+ for(size_t i=0;i<c.actual.size()&&saved<8;++i){if(equal(c.oracle[i],c.actual[i])&&equal(control[i],c.actual[i]))continue;
+ auto slot=i/c.shape.rows,row=i%c.shape.rows;
+ log<<(saved++?",":"")<<"{\"element\":"<<i<<",\"slot\":"<<slot<<",\"seed_row\":"<<source_row(c.shape,slot,row)%8<<",\"host_output_bits\":";result_bits(log,c.oracle[i]);log<<",\"device_output_bits\":";result_bits(log,c.actual[i]);log<<",\"current_device_output_bits\":";result_bits(log,control[i]);
+ log<<",\"input_bf16_bits\":[";for(unsigned k=0;k<c.shape.k;++k)log<<(k?",":"")<<hex_bits(c.input[slot*c.shape.k+k],4);log<<"]}";
+ }
+ log<<"]}\n";log.flush();
  }
  return accepted;
 }
@@ -93,7 +106,7 @@ void whole_sequences(Owner&o,const std::map<std::pair<unsigned,C>,bool>& allowed
   }log.flush();plan.flush();
  }o.release();return;
 }
-int main(int argc,char**argv){fs::path output;std::unique_ptr<Owner> owner;try{
+int main(int argc,char**argv){fs::path output;Gate total;bool full_allowed=true;std::unique_ptr<Owner> owner;try{
  unsigned card=0;std::string mode;for(int i=1;i<argc;++i){std::string a=argv[i];require(i+1<argc,"missing argument value");std::string v=argv[++i];if(a=="--mode")mode=v;else if(a=="--card")card=std::stoul(v);else if(a=="--output")output=v;else throw std::runtime_error("unknown argument");}
  require(!output.empty()&&(mode=="K0"||mode=="G1"),"mode/card/output required");fs::create_directories(output);std::signal(SIGINT,stop);std::signal(SIGTERM,stop);verify_dispatch();owner=std::make_unique<Owner>(card);auto&o=*owner;
  std::ofstream(output/"device.json")<<"{\"name\":"<<quote(o.q.get_device().get_info<sycl::info::device::name>())<<",\"driver\":"<<quote(o.q.get_device().get_info<sycl::info::device::driver_version>())<<",\"in_order\":true,\"profiling\":true}\n";
@@ -105,13 +118,15 @@ int main(int argc,char**argv){fs::path output;std::unique_ptr<Owner> owner;try{
  // upgraded Q8, nonfinite scales, BF16 zero/denormal/NaN, both trees and ties.
  for(Type t:{Type::IQ2_S,Type::IQ3_S,Type::IQ3_XXS,Type::IQ4_NL,Type::Q6_K,Type::Q8_0})
  for(unsigned k:{32u,96u,256u,640u,768u,2560u,6144u,10240u}){if(k%layout(t).elements)continue;for(unsigned special=0;special<2;++special)for(unsigned mode_input=0;mode_input<4;++mode_input)for(unsigned split:{1u,4u}){
- Shape s{"boundary","fixture",t,5,k,expert(t)?10u:1u,split,1,expert(t)&&t!=Type::IQ4_NL};Case test(o,s,special,mode_input);auto keep=exact(o,test,gates,"k"+std::to_string(k)+"/special"+std::to_string(special)+"/input"+std::to_string(mode_input)+"/split"+std::to_string(split));for(auto c:candidates(t))if(std::find(keep.begin(),keep.end(),c)==keep.end())allowed[{unsigned(t),c}]=false;o.release();}}
- for(auto s:shapes){Case test(o,s);auto keep=exact(o,test,gates,"full-real-shape");for(auto c:candidates(s.type))if(std::find(keep.begin(),keep.end(),c)==keep.end())allowed[{unsigned(s.type),c}]=false;o.release();}
+ Shape s{"boundary","fixture",t,5,k,expert(t)?10u:1u,split,1,expert(t)&&t!=Type::IQ4_NL};Case test(o,s,special,mode_input);auto keep=exact(o,test,gates,"k"+std::to_string(k)+"/special"+std::to_string(special)+"/input"+std::to_string(mode_input)+"/split"+std::to_string(split),total);for(auto c:candidates(t))if(std::find(keep.begin(),keep.end(),c)==keep.end())allowed[{unsigned(t),c}]=false;o.release();}}
+ for(auto s:shapes){Case test(o,s);auto keep=exact(o,test,gates,"full-real-shape",total);for(auto c:candidates(s.type))if(std::find(keep.begin(),keep.end(),c)==keep.end())allowed[{unsigned(s.type),c}]=false;o.release();}
  // Every timed candidate passed every applicable boundary and real-shape gate.
  for(auto s:shapes){Case test(o,s);for(auto c:candidates(s.type))if(allowed[{unsigned(s.type),c}]){timing(o,test,c,times);sequences(o,test,c,walls);}o.release();}
- whole_sequences(o,allowed,output);
+ for(auto s:shapes)full_allowed=full_allowed&&allowed.at({unsigned(s.type),C::current});
+ if(full_allowed)whole_sequences(o,allowed,output);
+ std::ofstream summary(output/"gate-summary.json");summary<<"{\"policy\":"<<quote(gate_policy)<<",\"all_gates_passed\":"<<(total.passed()?"true":"false")<<",\"full_sequence_skipped\":"<<(full_allowed?"false":"true")<<",\"full_sequence_skip_reason\":"<<quote(full_allowed?"":"current failed: full sequence would include an excluded format")<<",\"counts\":{";gate_fields(summary,total);summary<<"},\"eligibility\":[";bool comma=false;for(auto [key,ok]:allowed){summary<<(comma?",":"")<<"{\"type\":"<<key.first<<",\"candidate\":"<<quote(name(key.second))<<",\"eligible\":"<<(ok?"true":"false")<<"}";comma=true;}summary<<"]}\n";
  }
- o.release();std::ofstream(output/"receipt.json")<<"{\"passed\":true,\"device_executed\":true,\"safe_to_exit\":true,\"live_bytes\":0,\"in_flight\":0,\"mode\":"<<quote(mode)<<",\"real_model_qualified\":false}\n";owner.reset();return 0;
+ o.release();std::ofstream(output/"receipt.json")<<"{\"completed\":true,\"passed\":"<<(total.finite_failures?"false":"true")<<",\"finite_element_gate_failures\":"<<total.finite_failures<<",\"all_gates_passed\":"<<(total.passed()?"true":"false")<<",\"gate_policy\":"<<quote(gate_policy)<<",\"gate_summary\":\"gate-summary.json\",\"device_executed\":true,\"safe_to_exit\":true,\"live_bytes\":0,\"in_flight\":0,\"mode\":"<<quote(mode)<<",\"real_model_qualified\":false}\n";owner.reset();return total.finite_failures?2:0;
  }catch(const std::exception&e){std::cerr<<e.what()<<"\n";if(!output.empty()){fs::create_directories(output);std::ofstream(output/"failure.json")<<"{\"passed\":false,\"before_teardown\":true,\"error\":"<<quote(e.what())<<"}\n";}
  bool safe=!owner;try{if(owner){owner->release();safe=true;}}catch(const std::exception&drain){if(!output.empty())std::ofstream(output/"drain-failure.txt")<<drain.what()<<"\n";}
  if(!output.empty())std::ofstream(output/"receipt.json")<<"{\"passed\":false,\"device_executed\":true,\"safe_to_exit\":"<<(safe?"true":"false")<<"}\n";

@@ -2,8 +2,8 @@
   "arithmetic": "iq3-p17-detmath-v2",
   "bf_digest": "f5adec6b2b66367f",
   "binary_hashes": {
-    "build/host-gcc": "4eb7939737c7437846351f790f4a358b885eb2e43762210def60bc666c3750e5",
-    "build/host-icpx": "a95dc71b6860f2c05ca6ef6130332edc5d5046715e20a83400d3b7ac490d31bb"
+    "build/host-gcc": "08be77bda81c9e5a0c098b7fe61578daa0bb83e81aaf68d3950f77e79387865d",
+    "build/host-icpx": "3e8ac919497b1d109fe01bda0f2da67315c456632304e52614e921638f971682"
   },
   "comparisons": 16400,
   "compilers": [
@@ -12,6 +12,7 @@
   ],
   "device_executed": false,
   "digest": "a1e8311e8cd20bf2",
+  "exceptional_gate_tests": 10,
   "families": {
     "14/current": 400,
     "14/rows4": 400,
@@ -51,6 +52,43 @@
   },
   "fp_digest": "9d647ef4bc24c2fe",
   "fresh_processes": 4,
+  "g1_a_element14_host_bits_by_compiler": {
+    "host-gcc": {
+      "bf16": [
+        "0xffc0",
+        "0xffc0"
+      ],
+      "fp32": [
+        "0xffc00000",
+        "0xffc00000"
+      ]
+    },
+    "host-icpx": {
+      "bf16": [
+        "0x7fc0",
+        "0x7fc0"
+      ],
+      "fp32": [
+        "0x7fc00000",
+        "0x7fc00000"
+      ]
+    }
+  },
+  "g1_a_element14_input_prefix_bf16": [
+    "0x7fc0",
+    "0xffc0",
+    "0x7f81",
+    "0xff81",
+    "0x0000",
+    "0x8000",
+    "0x0001",
+    "0x8001",
+    "0x007f",
+    "0x807f",
+    "0x7f80",
+    "0xff80"
+  ],
+  "gate_policy": "finite including signed zero/denormals and infinity exact; host NaN requires card NaN; candidate exact current-card bits",
   "independent_finite_rows": 560,
   "isolated_decoded_values": 24576,
   "mapping_cases": 420,

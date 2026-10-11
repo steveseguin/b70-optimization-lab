@@ -6,7 +6,7 @@ from pathlib import Path
 def percentile90(values):
     return sorted(values)[math.ceil(.9*len(values))-1]
 
-def summarise(records):
+def summarise(records, allow_empty=False):
     grouped=defaultdict(list);frequencies={};classes={}
     for row in records:
         assert row['passed'] is True
@@ -25,6 +25,7 @@ def summarise(records):
     for (owner,shape,candidate),value in stats.items():
         baseline=stats[(owner,shape,'current')]['median_ms']
         rows.append(dict(owner=owner,shape=shape,**{'class':classes[shape]},candidate=candidate,**value,launch_groups_per_token=frequencies[shape],ms_per_token_saved=(baseline-value['median_ms'])*frequencies[shape]))
+    if not rows and allow_empty: return []
     assert {r['owner'] for r in rows}=={1,2}, 'two fresh owners required'
     a={(r['shape'],r['candidate']) for r in rows if r['owner']==1}
     b={(r['shape'],r['candidate']) for r in rows if r['owner']==2}
@@ -57,19 +58,23 @@ def sequence_summary(rows, full=False):
 
 def write_summary(window):
     window=Path(window)
-    w=json.loads((window/'window.json').read_text());assert w['passed'] and w['window']=='G1' and w['fresh_owners']==2
+    w=json.loads((window/'window.json').read_text());assert (w['passed'] or w.get('completed')) and w['window']=='G1' and w['fresh_owners']==2
     records=[];sequences=[]
     for owner in (1,2):
         for line in (window/f'run/owner{owner}/timing.jsonl').read_text().splitlines():records.append(dict(json.loads(line),owner=owner))
         root=window/f'run/owner{owner}'
         readlines=lambda name:[json.loads(line) for line in (root/name).read_text().splitlines()]
-        plan=readlines('full-sequence-plan.jsonl')
-        assert len(plan)==7*13 and len({(r['tier'],r['shape']) for r in plan})==7*13
-        sequences.append(dict(owner=owner,classes=sequence_summary(readlines('sequence-wall.jsonl')),full=sequence_summary(readlines('full-sequence-wall.jsonl'),True)))
-    result=summarise(records)
+        gate=json.loads((root/'gate-summary.json').read_text())
+        full=[]
+        if not gate['full_sequence_skipped']:
+            plan=readlines('full-sequence-plan.jsonl')
+            assert len(plan)==7*13 and len({(r['tier'],r['shape']) for r in plan})==7*13
+            full=sequence_summary(readlines('full-sequence-wall.jsonl'),True)
+        sequences.append(dict(owner=owner,classes=sequence_summary(readlines('sequence-wall.jsonl')),full=full,gate_summary=gate))
+    result=summarise(records, allow_empty=True)
     (window/'sequence-summary.json').write_text(json.dumps(sequences,indent=2)+'\n')
-    (window/'ranked.json').write_text(json.dumps(dict(diagnostic=True,real_model_qualified=False,rows=result),indent=2)+'\n')
-    lines=['| Shape | Candidate | Median ms | p90 ms | ms/token saved |','| --- | --- | ---: | ---: | ---: |']
+    (window/'ranked.json').write_text(json.dumps(dict(diagnostic=True,real_model_qualified=False,window_passed=w["passed"],gate_summaries=[r["gate_summary"] for r in sequences],rows=result),indent=2)+'\n')
+    lines=['Eligible arms only. Exclusions and all gate counts: window.json and sequence-summary.json.', '', '| Shape | Candidate | Median ms | p90 ms | ms/token saved |','| --- | --- | ---: | ---: | ---: |']
     for r in result:lines.append(f"| {r['shape']} | {r['candidate']} | {r['median_ms']:.6f} | {r['p90_ms']:.6f} | {r['ms_per_token_saved']:.6f} |")
     text='\n'.join(lines)+'\n';(window/'ranked.md').write_text(text);print(text)
     return 0

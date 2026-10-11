@@ -70,6 +70,15 @@ class Tests(unittest.TestCase):
             with patch.object(w,"read",return_value=dict(good,**{key:value})):
                 with self.assertRaises(ValueError): w.native_gate(Path("mock"),"K0")
 
+    def test_completed_finite_failure_keeps_safe_receipt(self):
+        row=dict(passed=False,completed=True,finite_element_gate_failures=1,
+                 safe_to_exit=True,device_executed=True,live_bytes=0,in_flight=0,mode="G1")
+        with patch.object(w,"read",return_value=row), patch.object(Path,"is_file",return_value=True):
+            self.assertEqual(w.native_gate(Path("mock"),"G1",True),row)
+            with self.assertRaises(ValueError): w.native_gate(Path("mock"),"G1")
+            row["safe_to_exit"]=False
+            with self.assertRaises(ValueError): w.native_gate(Path("mock"),"G1",True)
+
     def test_distinct_owners(self):
         w.distinct_owners([dict(unit="a",pid=1),dict(unit="b",pid=2)],2)
         with self.assertRaises(ValueError): w.distinct_owners([dict(unit="a",pid=1),dict(unit="a",pid=2)],2)

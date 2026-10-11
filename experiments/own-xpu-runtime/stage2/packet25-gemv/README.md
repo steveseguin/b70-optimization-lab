@@ -1,9 +1,10 @@
 # Packet 25: exact large GEMV candidates
 
 CPU preparation only for `iq3-p17-detmath-v2`, with the frozen
-`r234-sg32-split4-bf16` trees. **No device executable ran. No speed is claimed.**
+`r234-sg32-split4-bf16` trees. **This repair ran only on CPU. No speed is claimed.**
 This packet does not change packet 23, packet 24, the scoreboard, or the live
-runtime. All device and real-model gates remain pending.
+runtime. The coordinator’s first K0 passed; G1 stopped at an exceptional-input fixture.
+The repaired K0-b/G1-b and real-model gates remain pending.
 
 The [timing plan](timing-plan.json) binds the supplied 63-token class trace.
 It supplies launch-group frequencies and deadline sizing, not measurements of
@@ -66,7 +67,8 @@ A CPU pass is not a device pass. See [WINDOW.md](WINDOW.md) for the remaining ga
 
 Initial tests exposed compiler-dependent NaN operand propagation in a duplicated
 expression. [initial-failures.json](initial-failures.json) retains the failed
-bytes. We did not canonicalize model inputs or outputs, or relax comparison.
+bytes. No model input or output is canonicalized. The host/card NaN encoding policy
+is now explicit below; finite-value comparisons remain bit-exact.
 For nonfinite source scales, nonfinite inputs, or |input| >= 2^64, candidate
 **dispatch uses the current implementation itself**. CPU tests call the frozen
 function again; they do not copy expected results. Device submissions select
@@ -78,8 +80,8 @@ The standalone fixture inputs are immutable, so this classification is done
 once during fixture preparation and logged as `fallback_current`. Integration
 must produce that flag from the actual input and weights, including its cost;
 it cannot assume every future input is finite. This flag, prologue scheduling
-and the real-model oracle are explicit integration gates. CPU NaN equality does
-not establish GPU NaN equality: G1 first requires current == host on the card.
+and the real-model oracle are explicit integration gates. CPU NaN encoding does not establish GPU NaN encoding. G1 applies the
+policy below to the host comparison and exact bits to the same-card comparison.
 
 ## CPU evidence and independent review
 
@@ -142,3 +144,57 @@ This is a retained nonlinear portability failure, not a GEMV failure or a pass.
 No GEMV input fixture was removed. This packet's outputs stop at the independently
 rounded gate/up matrices; it does not qualify replacement of the fused packet23
 SiLU/mixture kernel. Neither NaNs nor arithmetic were canonicalized to force a pass.
+
+## G1-b exceptional-input gate repair (2026-10-11)
+
+The coordinator's [G1-a evidence](evidence/20261011-g1-a-special-input-current-vs-host/README.md)
+stopped at `k256/special1/input3/split1`, element 14 (IQ2_S,
+slot 2, row 4, packed seed row 7). The old receipt has no output bytes, so
+its exact card encoding cannot be recovered. Reproducing that host element
+with the unchanged arithmetic gives both paired FP32 outputs `0xffc00000`
+and BF16 `0xffc0` on GCC, versus `0x7fc00000` and `0x7fc0` on icpx.
+These are negative and positive quiet NaNs. Little-endian FP32 bytes are
+`00 00 c0 ff` versus `00 00 c0 7f`; BF16 bytes are `c0 ff` versus `c0 7f`. The slot's BF16 input starts
+`7fc0 ffc0 7f81 ff81 0000 8000 0001 8001 007f 807f 7f80 ff80`.
+Special half scales include NaNs and infinities; invalid products and mixed
+NaN operands feed the fixed reduction. NaN sign/payload propagation or a
+canonical GPU quiet NaN is the expected difference class, not a demonstrated
+card diagnosis. G1-b records the actual host and card encodings together.
+The [CPU receipt](cpu-tests.json) retains both compiler results; ordinary CPU
+output digests still agree exactly across all four fresh processes.
+
+Gate policy (also written into native and window receipts):
+
+- Every finite host component, including either zero sign and denormals,
+  requires exact current-card/host bits and exact candidate/current-card bits.
+- Host infinity requires exact bits, including its sign.
+- Host NaN requires a card NaN, allowing any sign/payload in the host/card
+  comparison. Candidate/current-card equality remains bit-exact even for NaNs.
+  Encoding-only host differences are counted as information per fixture.
+
+This is an oracle policy, not changed arithmetic: the model path treats any
+nonfinite value as a fatal sticky error, so NaN encodings are not model outputs.
+The lane's model oracle gates are on finite values. Counts refer to output
+components (two FP32 and two BF16 fields per row); they are not unique rows.
+Each comparison logs the first eight rows with any encoding difference, full
+BF16 input bits for the corresponding slot, both host outputs, both device
+outputs, and the current-card outputs. `first_mismatch` denotes a policy failure;
+`first_encoding_difference` also includes informational NaN differences.
+
+All fixtures and classes run even after a numerical gate failure. An affected
+candidate is excluded across its format; failure of current excludes the whole
+format. Only eligible arms are timed, with a complete eligibility table in
+`gate-summary.json`. The full sequence is skipped, with a reason, if any required
+current format fails; it never substitutes an excluded control. Both fresh
+owners still run and the timing table is written even when a finite gate fails.
+Numerical exit status is nonzero only for finite-element failures (native code 2,
+wrapper code 1). Infinity/NaN-class or same-card NaN-bit failures still exclude
+arms and set `all_gates_passed=false`; exit zero is not qualification. Device
+faults, budget violations and unsafe/incomplete runs retain their safety aborts.
+No fault latch is created merely for a completed numerical gate failure.
+
+CPU gate tests cover NaN sign/payload changes, NaN-to-infinity, infinity sign,
+signed zero, denormal flushing, finite ULP differences and same-card comparison.
+Mock tests cover a completed finite failure and ranking the remaining class.
+Original `build/K0` and `build/G1` are preserved. Use the fresh output paths in
+[WINDOW.md](WINDOW.md); no device binary ran during this repair.

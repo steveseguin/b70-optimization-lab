@@ -80,9 +80,11 @@ def unchanged(bindings):
     for path, digest in bindings.items():
         require(sha(path) == digest, "sealed input changed: "+str(path))
 
-def native_gate(path, mode):
+def native_gate(path, mode, allow_completed_failure=False):
     r = read(path/"receipt.json")
-    require(r.get("passed") is True and r.get("safe_to_exit") is True, "native failure/unsafe teardown")
+    require((r.get("passed") is True or (allow_completed_failure and mode == "G1" and
+            r.get("completed") is True and r.get("finite_element_gate_failures", 0) > 0)) and
+            r.get("safe_to_exit") is True, "native failure/unsafe teardown")
     require(r.get("device_executed") is True, "native device receipt required")
     require(r.get("live_bytes") == 0 and r.get("in_flight") == 0, "native ownership accounting incomplete")
     require(r.get("mode") == mode, "native mode differs from admitted window")
@@ -239,28 +241,33 @@ def main(argv=None):
                 owner = dict(unit=child.unit, pid=child.pid, command=command, passed=False)
                 record["owners"].append(owner); record["device_executed"] = True; persist()
                 owner.update(supervise(child, remaining, cursor, kernel, failure, reasons))
-                require(owner["returncode"] == 0 and not reasons, "native owner failed/stopped")
+                require(owner["returncode"] in ((0, 2) if a.window == "G1" else (0,)) and not reasons, "native owner failed/stopped")
             unchanged(bindings)
-            native_gate(native, a.window)
-            owner.update(passed=True, native_receipt_sha256=sha(native/"receipt.json"))
+            native_receipt = native_gate(native, a.window, allow_completed_failure=True)
+            require(owner["returncode"] == (2 if native_receipt.get("finite_element_gate_failures", 0) else 0), "native exit/receipt mismatch")
+            owner.update(passed=native_receipt["passed"], completed=True, finite_element_gate_failures=native_receipt.get("finite_element_gate_failures", 0), native_receipt_sha256=sha(native/"receipt.json"))
             if a.window == "G1":
                 owner["exactness_sha256"] = sha(native/"exactness.jsonl")
+                owner["gate_summary"] = read(native/"gate-summary.json")
                 owner["timing_sha256"] = sha(native/"timing.jsonl")
                 owner["sequence_wall_sha256"] = sha(native/"sequence-wall.jsonl")
-                owner["full_sequence_wall_sha256"] = sha(native/"full-sequence-wall.jsonl")
-                owner["full_sequence_plan_sha256"] = sha(native/"full-sequence-plan.jsonl")
+                if not owner["gate_summary"]["full_sequence_skipped"]:
+                    owner["full_sequence_wall_sha256"] = sha(native/"full-sequence-wall.jsonl")
+                    owner["full_sequence_plan_sha256"] = sha(native/"full-sequence-plan.jsonl")
             persist()
             cursor = owner["journal_cursor"]
         distinct_owners(record["owners"], OWNERS[a.window])
         if a.window == "G1":
             require(len({r["exactness_sha256"] for r in record["owners"]}) == 1,
                     "fresh owners disagree on fixture exactness/exclusions")
-        record["passed"] = True
+        record["completed"] = True
+        record["passed"] = all(r["passed"] for r in record["owners"])
+        record["finite_element_gate_failures"] = sum(r["finite_element_gate_failures"] for r in record["owners"])
         record["fresh_owners"] = OWNERS[a.window]
     except Exception as error:
         failure(str(error))
     persist()
-    if record["passed"] and a.window == "G1":
+    if record.get("completed") and a.window == "G1":
         try:
             from summary import write_summary
             write_summary(out)

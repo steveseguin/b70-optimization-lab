@@ -1,4 +1,8 @@
 import unittest
+import json
+import tempfile
+from pathlib import Path
+from summary import write_summary
 from summary import summarise,sequence_summary
 class MockTiming(unittest.TestCase):
  def records(self):
@@ -25,6 +29,21 @@ class MockTiming(unittest.TestCase):
   with self.assertRaises(AssertionError):summarise(rows)
  def test_two_owners(self):
   with self.assertRaises(AssertionError):summarise([r for r in self.records() if r['owner']==1])
+ def test_completed_failure_still_ranks_remaining_class(self):
+  scratch=Path(__file__).resolve().parent/'build';scratch.mkdir(exist_ok=True)
+  with tempfile.TemporaryDirectory(dir=scratch) as directory:
+   root=Path(directory)
+   (root/'window.json').write_text(json.dumps(dict(passed=False,completed=True,window='G1',fresh_owners=2)))
+   for owner in (1,2):
+    run=root/f'run/owner{owner}';run.mkdir(parents=True)
+    (run/'gate-summary.json').write_text(json.dumps(dict(full_sequence_skipped=True,finite_element_gate_failures=1)))
+    (run/'timing.jsonl').write_text(''.join(json.dumps(r)+'\n' for r in self.records() if r['owner']==owner))
+    (run/'sequence-wall.jsonl').write_text('')
+   self.assertEqual(write_summary(root),0)
+   result=json.loads((root/'ranked.json').read_text())
+   self.assertFalse(result['window_passed']);self.assertEqual(len(result['rows']),3)
+ def test_all_classes_excluded(self):
+  self.assertEqual(summarise([],allow_empty=True),[])
  def test_full_sequence(self):
   rows=[dict(tier=t,repetition=r,layers=48,waits=1,launch_groups=253,wall_ms=20) for t in range(7) for r in range(200)]
   self.assertEqual(len(sequence_summary(rows,True)),7)
