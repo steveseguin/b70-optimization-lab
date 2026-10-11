@@ -1,7 +1,334 @@
 {
   "schema": "lab.cleanup-followup-validation.v1",
-  "status": "preservation checked; combined workflow validation pending",
   "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997",
+  "validation_kind": "CPU-only repository checks; no runtime requalification",
+  "workflows": [
+    {
+      "path": ".github/workflows/guides.yml",
+      "sha256": "8096a51983a156566e36d3b8c0def24961b28195b2a49f0f62b8388d6b763131",
+      "steps": [
+        {
+          "step": 1,
+          "command": "python3 tools/validate-repro-guides.py",
+          "exit_code": 0,
+          "seconds": 0.681,
+          "log_sha256": "404f399d0a1ccb5434226d56e0a852634adf942d50e6faf521b3257333b34fcd"
+        },
+        {
+          "step": 2,
+          "command": "node --test tools/test_guides_browser.cjs",
+          "exit_code": 0,
+          "seconds": 0.319,
+          "log_sha256": "96056aa9710bbf489ee041370b00709e8b34922493ab2f974228ef510aaeac14"
+        },
+        {
+          "step": 3,
+          "command": "python3 -m unittest tools/test_validate_repro_guides.py tools/test_sync_depth_sweep_profiles.py",
+          "exit_code": 0,
+          "seconds": 0.687,
+          "log_sha256": "5a24e5e378404705e6dd1d3c83978d40e2c114b7ef580a53f5b30677b11e36b3"
+        },
+        {
+          "step": 4,
+          "command": "python3 tools/validate-recipe-publication.py",
+          "exit_code": 0,
+          "seconds": 0.568,
+          "log_sha256": "ee324c8e324176ace04e8b17eb6b918e43914a7c0a14d22f153f3a8c8f1cceec"
+        },
+        {
+          "step": 5,
+          "command": "python3 -m unittest tools/test_validate_recipe_publication.py",
+          "exit_code": 0,
+          "seconds": 0.095,
+          "log_sha256": "293eda1681e8fb9f72107b88b85eb61f4e2e3e338d5c4536b6ccd3315262eb6c"
+        },
+        {
+          "step": 6,
+          "command": "python3 tools/sync-public-result-summary.py --check",
+          "exit_code": 0,
+          "seconds": 0.022,
+          "log_sha256": "677316f98761dbd1d4777f96cccea5c8cd8300a115d148be37af33bb3761cf29"
+        },
+        {
+          "step": 7,
+          "command": "python3 -m unittest tools/test_sync_public_result_summary.py",
+          "exit_code": 0,
+          "seconds": 0.036,
+          "log_sha256": "ea76649f29229bd946b13e26d51d498d417a30eba54e484d0e7493c686cd2bea"
+        },
+        {
+          "step": 8,
+          "command": "python3 tools/build-family-pages.py --check",
+          "exit_code": 0,
+          "seconds": 0.242,
+          "log_sha256": "341af3b8233a56110eec53771224af1ad621f3183b6c051e74688458ca50d881"
+        },
+        {
+          "step": 9,
+          "command": "python3 -m unittest tools/test_build_family_pages.py",
+          "exit_code": 0,
+          "seconds": 1.24,
+          "log_sha256": "585f8b315a89937f9023dc820e458de2d13093b115f504c0502ec5e4e2334dae"
+        },
+        {
+          "step": 10,
+          "command": "python3 -m unittest tools/test_measured_opt_contract.py",
+          "exit_code": 0,
+          "seconds": 0.058,
+          "log_sha256": "22d87b30f5f15fd27ec20179828b77d16967ff3a5f323b46e9d37b7e0538bf59"
+        },
+        {
+          "step": 11,
+          "command": "python3 tools/sync-short-prefill-profiles.py --check",
+          "exit_code": 0,
+          "seconds": 0.022,
+          "log_sha256": "de730c72db8744031323349bda32eb09c8e3ff1458e4eef7929915f9bbcfbc45"
+        },
+        {
+          "step": 12,
+          "command": "python3 experiments/qwen38-27b-b70/scripts/verify-prefill-followup-evidence.py",
+          "exit_code": 0,
+          "seconds": 0.404,
+          "log_sha256": "0e5fb3f57c7677f18d08d94847cf66f78dd293abad2232912ffd79702d492712"
+        },
+        {
+          "step": 13,
+          "command": "python3 tools/sync-prefill-followup-profiles.py --check",
+          "exit_code": 0,
+          "seconds": 0.025,
+          "log_sha256": "fd2c91c82ed037c70cebf128806df86177e6f8bf7f05ca4b034c6cf269e35231"
+        },
+        {
+          "step": 14,
+          "command": "python3 tools/replay_fp8_prefill_source_drift.py",
+          "exit_code": 0,
+          "seconds": 0.884,
+          "log_sha256": "a1bac5f05e4128f325f5071b806b38dcec2173e2f70b3fd582e4398323e6a007"
+        },
+        {
+          "step": 15,
+          "command": "python3 -m unittest tools/test_source_drift_proofs.py",
+          "exit_code": 0,
+          "seconds": 0.098,
+          "log_sha256": "fb6f76994c6a616dd603233e98a16878de350a28414f7c7ae0cd03b7f3359a7c"
+        },
+        {
+          "step": 16,
+          "command": "python3 tools/sync-fp8-prefill-focus-profile.py --check",
+          "exit_code": 0,
+          "seconds": 0.021,
+          "log_sha256": "7f7ce2d6d214eec7b49687731ee2265f6d4042f95ef46cc52dba5d2a9bc7c63b"
+        },
+        {
+          "step": 17,
+          "command": "python3 tools/sync-amd-transfer-prefill-profile.py --check",
+          "exit_code": 0,
+          "seconds": 0.106,
+          "log_sha256": "a7818084c7abc58db9ed92e7fc32b089e4e8e314dbde7c510e1312e9e4d5b3f9"
+        },
+        {
+          "step": 18,
+          "command": "python3 -m unittest tools/test_sync_fp8_prefill_focus_profile.py",
+          "exit_code": 0,
+          "seconds": 0.051,
+          "log_sha256": "620a075cd2e241a9cd5b12ca7219490536bbbe23dc58e28e0abddcaa122256d4"
+        },
+        {
+          "step": 19,
+          "command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*fp8_prefill*.py\"",
+          "exit_code": 0,
+          "seconds": 2.282,
+          "log_sha256": "20b51af0a0e1be266a661c99b1ceeda174f1d89d5ce20bd60ab08da4722e29f6"
+        },
+        {
+          "step": 20,
+          "command": "python3 -m unittest tools/test_sync_prefill_followup_profiles.py",
+          "exit_code": 0,
+          "seconds": 0.064,
+          "log_sha256": "d1aaab86fa02d87997171aeb3220b40f5e28046ec4d1674848f9ec5f589f297c"
+        },
+        {
+          "step": 21,
+          "command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*prefill_followup.py\"",
+          "exit_code": 0,
+          "seconds": 1.359,
+          "log_sha256": "6230de2f77613accb35ad4c82f1705e9274e41d38104cfc209abc794828d0796"
+        },
+        {
+          "step": 22,
+          "command": "python3 -m unittest tools/test_build_model_pages.py",
+          "exit_code": 0,
+          "seconds": 0.086,
+          "log_sha256": "a0aaba130eea8aace6734b8ea10f4aff5e3ba82cd903b1dd93563a9be28ea53b"
+        },
+        {
+          "step": 23,
+          "command": "python3 -m unittest tools/test_fp8_serve.py tools/test_fp8_practical_session.py tools/test_fp8_tp2_acceptance_evidence.py tools/test_fp8_tp2_acceptance_session.py",
+          "exit_code": 0,
+          "seconds": 0.523,
+          "log_sha256": "bf8463abebcd2228fdd72d28583a2bd31c22933030dac54ded015ffe72c1f01d"
+        },
+        {
+          "step": 24,
+          "command": "python3 experiments/qwen38-27b-b70/scripts/collect-fp8-tp2-acceptance-evidence.py",
+          "exit_code": 0,
+          "seconds": 0.184,
+          "log_sha256": "dd847fa490acb030efead6d8cf52adf5042f20568dda41d8b62ae2c311583f85"
+        },
+        {
+          "step": 25,
+          "command": "python3 tools/build-model-pages.py",
+          "exit_code": 0,
+          "seconds": 0.055,
+          "log_sha256": "cfcf1eb089e067a4df83bfcae5ab1d30861465dbec43d60933297937d31b9690"
+        },
+        {
+          "step": 26,
+          "command": "git diff --exit-code -- index.html learn/hardware.html models",
+          "exit_code": 0,
+          "seconds": 0.04,
+          "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "step": 27,
+          "command": "python3 tools/check-doc-links.py",
+          "exit_code": 0,
+          "seconds": 0.172,
+          "log_sha256": "3bb505c6878403f67b522ae53f3af9e85b4957c011bd172ba32e45338bf72109"
+        },
+        {
+          "step": 28,
+          "command": "python3 tools/check-doc-links.py --all-tracked --baseline audits/repository-cleanup/2026-10-10/link-baseline.json",
+          "exit_code": 0,
+          "seconds": 1.157,
+          "log_sha256": "63bbfac62aa841639ea7aea435730d4b73fd8d5fd77a1bf77a826f4f654d76d2"
+        },
+        {
+          "step": 29,
+          "command": "python3 -m unittest tools/test_check_doc_links.py",
+          "exit_code": 0,
+          "seconds": 0.492,
+          "log_sha256": "456dca43ae8d1fee902fdd4bf708ad81a2ed8f14bd47201a4c54e07b95d9329a"
+        },
+        {
+          "step": 30,
+          "command": "python3 -B tools/check-pinned-hashes.py --historical-manifest audits/repository-cleanup/2026-10-10/pin-audit.json",
+          "exit_code": 0,
+          "seconds": 0.144,
+          "log_sha256": "8df0c8f503c843b8f162632b6b296f292f49c5946ceefa7cab17b6f8aeb177e5"
+        },
+        {
+          "step": 31,
+          "command": "python3 -B -m unittest tools/test_pinned_hashes.py",
+          "exit_code": 0,
+          "seconds": 0.779,
+          "log_sha256": "81fea61b7df7cc651ac4835f0cdfa3afb8246eab2e1036356e118e7dba05eb39"
+        },
+        {
+          "step": 32,
+          "command": "python3 -B tools/restore-source-archives.py patches/laguna-s-2.1-xpu-b70/source-archive-manifest.json",
+          "exit_code": 0,
+          "seconds": 0.685,
+          "log_sha256": "0045ad6c0f78115bb21c71d15bc67f587a0efc0ba3c0516b21cce985666caaa4"
+        },
+        {
+          "step": 33,
+          "command": "python3 -B tools/restore-source-archives.py patches/gemma4-26b-a4b-q8-b70/source-archive-manifest.json",
+          "exit_code": 0,
+          "seconds": 0.144,
+          "log_sha256": "99bb7c2ba572236ba40a5692565de1e43ce0d59dd449fe2788a0c5e54398fd42"
+        },
+        {
+          "step": 34,
+          "command": "python3 -B tools/test-restore-source-archives.py",
+          "exit_code": 0,
+          "seconds": 0.087,
+          "log_sha256": "d0f4cb4453a92a69d5dd26c24dffc24abb841b09c300bd1df43f899fc1976ff5"
+        },
+        {
+          "step": 35,
+          "command": "python3 -m unittest tools/test_xccl_probe.py",
+          "exit_code": 0,
+          "seconds": 0.05,
+          "log_sha256": "f995ab38498707c386aa7ab6f1687d497ebba40e7881dae3ab652fff1a2f0b83"
+        },
+        {
+          "step": 36,
+          "command": "python3 -m unittest tools/test_pr45_gpu_review.py",
+          "exit_code": 0,
+          "seconds": 0.069,
+          "log_sha256": "e104cfef5ab00583bf0c33f747e695f163473594415cfa7bdaed4a3286f53348"
+        },
+        {
+          "step": 37,
+          "command": "python3 tools/check-manifest-paths.py",
+          "exit_code": 0,
+          "seconds": 0.067,
+          "log_sha256": "44e0feb84f2e3a9bb987a7b1c93b86448523df5836f7a7a45ea7219265975e58"
+        },
+        {
+          "step": 38,
+          "command": "python3 -m unittest tools/test_container_packet_smoke.py",
+          "exit_code": 0,
+          "seconds": 0.358,
+          "log_sha256": "25d4a9087682165fc994074743288ff9ca5e7ad22d4bc98bae43274a05732799"
+        },
+        {
+          "step": 39,
+          "command": "pip install --quiet pyyaml",
+          "exit_code": 0,
+          "seconds": 0.019,
+          "log_sha256": "cf3701cb2416e87a99c0e77dbd0518fc4fc27e390f025c024e6ed1c389c928e0",
+          "substitution": "Verified installed PyYAML instead of reinstalling this already available dependency.",
+          "effective_command": "python3 -B -c \"import yaml; print(yaml.__version__)\""
+        },
+        {
+          "step": 40,
+          "command": "python3 tools/check-container-packet.py",
+          "exit_code": 0,
+          "seconds": 0.071,
+          "log_sha256": "d3699c0c4fa38a6dcb69cc9ba83c7032c99504b01af86475a8896cb6289302b3"
+        },
+        {
+          "step": 41,
+          "command": "python3 -m unittest tools/test_check_container_packet.py",
+          "exit_code": 0,
+          "seconds": 0.201,
+          "log_sha256": "7dbb8429daeb53e841e615adccd134c10e21779b69d7575a66c0a66da55ba092"
+        },
+        {
+          "step": 42,
+          "command": "python3 -m unittest tools/test_audit_launcher_env_implemented.py tools/test_flash_next_frozen_verifiers.py tools/test_flash_next_replay_cleanup.py",
+          "exit_code": 0,
+          "seconds": 0.118,
+          "log_sha256": "174f73311db407ab971f6d83724f703588626473a65f7701c386bb4b85a7c3e0"
+        }
+      ]
+    },
+    {
+      "path": ".github/workflows/repository-hygiene.yml",
+      "sha256": "0e6c83ee846ca9750cf2800be3d754d9c98acad1e8689308e32bb0b671e1e1a4",
+      "steps": [
+        {
+          "step": 1,
+          "command": "python3 -B -m unittest tools/test_repository_hygiene.py",
+          "exit_code": 0,
+          "seconds": 0.249,
+          "log_sha256": "15f85afac205e50d3d63c67e2a15e7ab4e236662b46ce77fcc7e123a9c1d2b0b"
+        },
+        {
+          "step": 2,
+          "command": "python3 -B tools/check-repository-hygiene.py --event-json \"$GITHUB_EVENT_PATH\"",
+          "exit_code": 0,
+          "seconds": 0.37,
+          "log_sha256": "54f9d6c54ebda40d17cb75af3edcd336917152f98e0b9f2b7449cd25a7681d6d"
+        }
+      ]
+    }
+  ],
+  "status": "passed",
+  "validated_commit": "3634a5470dbdb32fe3c10c253f2faa7aef4a6e2a",
+  "merged_concurrent_commit": "597817eb0aaa748774bf729149d111356c7077d1",
   "preservation": {
     "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997",
     "manifest_originals_match_base": 76,
@@ -13,5 +340,73 @@
       "experiments/qwen38-27b-b70/scripts/run-fp8-tp1-server.py": "47aaaeb858b29618be35f2d55ff1b57bc8322f761c0d8702054b4442f44968f4"
     },
     "verifier_versions_independently_verified_against_git": 8
-  }
+  },
+  "experiment_review": {
+    "areas": 37,
+    "reviewed_source_references": 69,
+    "unique_reviewed_sources": 67,
+    "reviewed_hashes_and_paths_verified": true,
+    "inventory_records": 23755,
+    "inventory_hashes_verified": true,
+    "inventory_ignored": true,
+    "local_only_retained_paths": [
+      "experiments/qwen27_graphsafe_flash_attention/work"
+    ]
+  },
+  "storage": {
+    "measurement_commit": "3634a5470dbdb32fe3c10c253f2faa7aef4a6e2a",
+    "tracked_blob_paths": 53297,
+    "tracked_logical_bytes": 2480639713,
+    "root_git_file_logical_bytes": 596086336,
+    "root_git_file_allocated_bytes": 596873216,
+    "git_count_objects": "count: 194\nsize: 45752\nin-pack: 124577\npacks: 4\nsize-pack: 525843\nprune-packable: 1\ngarbage: 0\nsize-garbage: 0\n",
+    "before": {
+      "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997",
+      "tracked_blob_paths": 53342,
+      "tracked_logical_bytes": 2662614896,
+      "root_git_file_logical_bytes": 550046279,
+      "root_git_file_allocated_bytes": 550510592,
+      "git_count_objects": "count: 58\nsize: 464\nin-pack: 124577\npacks: 4\nsize-pack: 525843\nprune-packable: 1\ngarbage: 0\nsize-garbage: 0\n",
+      "measure": "Tracked working-tree equivalent is the sum of HEAD blob sizes per path; root Git file sizes exclude directory overhead. No history rewrite or pruning."
+    },
+    "tracked_bytes_saved_at_measurement": 181975183,
+    "measure": "Sum of committed HEAD blob sizes per path; includes merged concurrent owner receipt. Taken before final validation receipt update. Root Git file sizes exclude directory overhead. History retained, with no rewrite or pruning."
+  },
+  "results": {
+    "guides_workflow_commands_passed": 42,
+    "hygiene_workflow_commands_passed": 2,
+    "documents_checked": 4760,
+    "new_broken_links": 0,
+    "known_broken_links": 4,
+    "unverified_host_or_template_references": 101,
+    "manifest_paths_checked": 6454,
+    "manifest_files_checked": 55,
+    "missing_manifest_paths": 0,
+    "historical_pin_checks": 318,
+    "matching_current_pins": 87,
+    "recoverable_historical_clients": 230,
+    "blocked_historical_clients": 1,
+    "exact_historical_verifier_versions": 8,
+    "maintained_replay_identities_matching": 5,
+    "archive_members_verified": 76,
+    "restoration_unit_tests": 10,
+    "historical_pin_unit_tests": 17,
+    "hygiene_unit_tests": 15,
+    "large_artifact_warnings": 1,
+    "hygiene_errors": 0
+  },
+  "reviewed_large_artifact": {
+    "path": "patches/laguna-s-2.1-xpu-b70/source-history-20261010.tar.xz",
+    "bytes": 45359284,
+    "rationale": "Preserves four exact hash-bound source bundles in a smaller representation; all members restored and compared before original removal. See archive-consolidation.json."
+  },
+  "limitations": [
+    "Scientific review is source-led synthesis across all 37 areas from 67 distinct sources, with read scope explicit. It is not semantic rereading or scientific requalification of every inventoried document or raw log.",
+    "Raw literal-pin mode still intentionally reports 231 drifts and exits 1. Explicit historical mode validates 230 recoverable clients and one blocked A317; no frozen client or evidence hash was repinned.",
+    "Laguna original/restored strict git fsck both exit 2 for the same inherited missing ancestor; bundle source tips and 22,563-object inventories are identical. See archive-consolidation.json.",
+    "Existing four link-baseline exceptions and 101 visibly unverified host/template references remain; this task adds no new broken relative links.",
+    "Storage snapshot precedes this final validation receipt update; includes the concurrently merged owner receipt. Git history is retained, and archives increase Git object storage while reducing checkout bytes.",
+    "Full workflow logs are local under /tmp/lab-cleanup-phase2-validation-20261010; command identities, results and log hashes are retained here.",
+    "No GPU or model runtime was launched. The separately merged owner acceptance receipt may supersede historical gates; audit gate descriptions remain pinned to source_commit."
+  ]
 }
