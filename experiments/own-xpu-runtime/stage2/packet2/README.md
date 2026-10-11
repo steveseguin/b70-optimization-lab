@@ -213,3 +213,18 @@ those three JSON files, credited to ggml/llama.cpp contributors under their
 `generate_grids.py` reproduces the table bytes and tests enforce equality.
 No ggml kernel, runtime implementation or baseline source tree is copied or
 linked. Unsloth supplies the separately pinned mixed-quantization model.
+
+## First device execution — PASS, 2026-10-11 02:48 UTC (boot 13858eef, card 3)
+
+Run in the owner-authorized window ("continue" after incident 5), concurrently
+with two llama.cpp screens on cards 0-2, under `source /opt/intel/oneapi/setvars.sh`.
+`validate.py --keep-build` regenerated and CPU-validated the fixtures and
+rebuilt the binary (SHA256 03cec8dc…); `tests/device_window.py --authorized-device-window --card 3`
+then ran **108 checks, all PASS** in 6.8 s: FP32 dequant bytes, FP32 GEMV
+accumulator bytes and F16/BF16 output bytes identical to the shared CPU path for
+real IQ2_S, IQ3_S and IQ4_NL blocks and synthetic F16/F32/IQ3_S/IQ4_NL
+fixtures, at subgroup 16 and 32, with sign-mutated activations and changed
+expert IDs/spans. Teardown complete (`safe_to_exit=true`, `in_flight=0`,
+`live_bytes=0`), zero kernel fault-class lines during the test. Receipts:
+[first-device-20261011/](first-device-20261011/). Performance was not measured
+here; the next device step is the real-layer timing against the roofline table.
