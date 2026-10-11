@@ -249,16 +249,27 @@ def compare_run(out, cfg, expected_hashes, expected_tokens, oracle_root=None, di
 
 
 
+def watchdog_seconds(window, seconds=None):
+    default, lower, upper = (600, 300, 1800) if window == 'W0' else (10800, 7800, 10800)
+    seconds = default if seconds is None else seconds
+    require(lower <= seconds <= upper, f'{window} watchdog must be {lower}..{upper} seconds')
+    return seconds
+
+
 def canary_receipt_gate(run):
-    require(run.get('schema') == 'own-runtime.iq3.packet18.canary.v1' and
+    require(run.get('schema') == 'own-runtime.iq3.packet18.canary.v2' and
             run.get('passed') is True and run.get('device_executed') is True and
             run.get('round_trips') == 100 and run.get('kernels_per_card') == 1000 and
             run.get('token_sequence') is True and safe_teardown(run, 2),
             'W0 canary coverage/teardown incomplete')
     require(0 < run.get('owned_device_bytes', 0) < 16*1024**2 and
-            0 < run.get('wall_ms', 0) < 30000 and
+            run.get('submission_budget_passed') is True and
             0 < run.get('max_submission_ns', 0) < 100000000,
-            'W0 canary memory/time bounds failed')
+            'W0 canary memory/submission bounds failed')
+    for field in ('wall_ms', 'startup_jit_ms', 'device_work_ms', 'work_wall_ms', 'teardown_ms'):
+        value = run.get(field)
+        require(type(value) in (int, float) and math.isfinite(value) and value >= 0,
+                'W0 invalid timing: ' + field)
 
 def w0_gate(path, binary_hash, boot, card, environment):
     require(path is not None, 'W2/W3 require --w0 passing two-card canary receipt')
@@ -274,7 +285,7 @@ def w0_gate(path, binary_hash, boot, card, environment):
     return row
 
 def run_w0(a, cfg, binary, boot, out, latch, bindings, dependency_preflight, environment):
-    require(a.seconds <= 30, 'W0 deadline must be <=30 seconds')
+    watchdog_seconds('W0', a.seconds)
     require(a.repeat_of is None, 'W0 is a single canary; no automatic repeat')
     cmd = [str(binary), '--authorized-device-window', '--canary', '--cards', '2',
            '--card', str(cfg['card']), '--memory', 'resident', '--seconds', str(a.seconds),
@@ -282,7 +293,7 @@ def run_w0(a, cfg, binary, boot, out, latch, bindings, dependency_preflight, env
     record = dict(schema='own-runtime.iq3.packet18.window.v1', window='W0', boot_id=boot,
                   card=cfg['card'], cards=2, binary_sha256=sha(binary),
                   command=cmd, environment=environment, ldd_preflight=dependency_preflight,
-                  passed=False, device_executed=False,
+                  passed=False, device_executed=False, watchdog_seconds=a.seconds,
                   bindings={str(k): v for k, v in bindings.items()})
     pre, cursor = p2.journal()
     out.mkdir(parents=True)
@@ -322,10 +333,10 @@ def main():
     for key in ('input', 'output', 'oracle', 'w0', 'w1', 'repeat-of'):
         parser.add_argument('--' + key, type=Path, required=key == 'output')
     parser.add_argument('--card', type=int, help='first physical card; W2/W3 use this and the next card')
-    parser.add_argument('--seconds', type=int, default=10800)
+    parser.add_argument('--seconds', type=int, help='child watchdog; W0 default 600 (300..1800), W1-W3 default 10800 (7800..10800)')
     a = parser.parse_args()
     environment = environment_gate()
-    require(1 <= a.seconds <= 10800, 'deadline must be 1..10800 seconds')
+    a.seconds = watchdog_seconds(a.window, a.seconds)
     require(os.environ.get('OMP_NUM_THREADS') == '2' and os.getpriority(os.PRIO_PROCESS, 0) == 19, 'nice19 OMP_NUM_THREADS=2 required')
     require('idle' in subprocess.check_output(['ionice', '-p', str(os.getpid())], text=True, timeout=2), 'ionice -c3 required')
     for variable in ('ONEAPI_DEVICE_SELECTOR','SYCL_DEVICE_FILTER','ZE_AFFINITY_MASK'):

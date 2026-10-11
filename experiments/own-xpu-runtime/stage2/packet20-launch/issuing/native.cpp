@@ -48,22 +48,24 @@ class Backend final:public ownrt::Backend {
  struct End{Clock::time_point wall;std::pair<uint64_t,uint64_t> device;};
  End finish(){auto wall=Clock::now();return{wall,stamp()};}
  std::map<ownrt::Event,sycl::event> events;
- std::exception_ptr error;std::mutex errors;Clock::time_point deadline;
+ std::exception_ptr error;std::mutex errors;
+ double setup_total_ms=0,device_total_ms=0;
  void save_error(sycl::exception_list e){std::lock_guard lock(errors);if(!error&&e.size())error=*e.begin();}
  void check_error(){std::lock_guard lock(errors);if(error)std::rethrow_exception(error);}
  std::filesystem::path spirv;
  bool active=false;
  std::array<uint32_t,2> token_state{};
  std::array<uint16_t,2560> staging{},output{};
- void admission(){if(stopped||Clock::now()>deadline)throw std::runtime_error("cooperative deadline/stop");check_error();}
- void poll(sycl::event e){auto end=std::min(deadline,Clock::now()+std::chrono::milliseconds(900));while(e.get_info<sycl::info::event::command_execution_status>()!=sycl::info::event_command_status::complete){if(Clock::now()>end)throw std::runtime_error("submission exceeded 900ms bound");std::this_thread::sleep_for(std::chrono::microseconds(100));}e.wait_and_throw();check_error();}
- void empty(sycl::queue& queue){auto end=std::min(deadline,Clock::now()+std::chrono::milliseconds(900));while(!queue.ext_oneapi_empty()){if(Clock::now()>end)throw std::runtime_error("queue exceeded 900ms bound");std::this_thread::sleep_for(std::chrono::microseconds(100));}queue.wait_and_throw();}
- template<class F>void raw_wait(F test){auto end=std::min(deadline,Clock::now()+std::chrono::milliseconds(900));for(;;){auto v=test();if(v==ZE_RESULT_SUCCESS)break;if(v!=ZE_RESULT_NOT_READY)ze(v);if(Clock::now()>end)throw std::runtime_error("raw completion exceeded 900ms bound");std::this_thread::sleep_for(std::chrono::microseconds(100));}}
+ void admission(){if(stopped)throw std::runtime_error("cooperative stop");check_error();}
+ void poll(sycl::event e){auto end=Clock::now()+std::chrono::seconds(5);while(e.get_info<sycl::info::event::command_execution_status>()!=sycl::info::event_command_status::complete){if(Clock::now()>end)throw std::runtime_error("submission exceeded five-second wait bound");std::this_thread::sleep_for(std::chrono::microseconds(100));}e.wait_and_throw();check_error();}
+ void empty(sycl::queue& queue){auto end=Clock::now()+std::chrono::seconds(5);while(!queue.ext_oneapi_empty()){if(Clock::now()>end)throw std::runtime_error("queue exceeded five-second wait bound");std::this_thread::sleep_for(std::chrono::microseconds(100));}queue.wait_and_throw();}
+ template<class F>void raw_wait(F test){auto end=Clock::now()+std::chrono::seconds(5);for(;;){auto v=test();if(v==ZE_RESULT_SUCCESS)break;if(v!=ZE_RESULT_NOT_READY)ze(v);if(Clock::now()>end)throw std::runtime_error("raw completion exceeded five-second wait bound");std::this_thread::sleep_for(std::chrono::microseconds(100));}}
  std::pair<uint64_t,uint64_t> stamp(){uint64_t host,dev;ze(zeDeviceGetGlobalTimestamps(device,&host,&dev));return{host,dev};}
  void row(const Trial&t,int repeat,int launches,Clock::time_point begin,std::pair<uint64_t,uint64_t> first,double span,double setup_ms,End end){
   auto completed=end.wall;auto last=end.device;const auto& prop=properties;
   uint64_t mask=prop.timestampValidBits>=64?~uint64_t(0):(uint64_t(1)<<prop.timestampValidBits)-1;
   double device_ns=double((last.second-first.second)&mask)*prop.timerResolution;
+  device_total_ms+=device_ns/1e6;
   double wall_ns=std::chrono::duration<double,std::nano>(completed-begin).count();
   *t.rows<<"{\"method\":"<<ownrt::quote(t.method)<<",\"workload\":"<<ownrt::quote(t.kind?"gemv_like":"bf16_elementwise_17ptr")<<",\"n\":"<<t.n<<",\"launches\":"<<launches<<",\"repeat\":"<<repeat<<",\"wall_ns\":"<<wall_ns<<",\"wall_ns_per_launch\":"<<wall_ns/launches<<",\"device_envelope_ns\":"<<device_ns<<",\"device_envelope_ns_per_launch\":"<<device_ns/launches<<",\"profiled_span_ns\":";
   if(span<0)*t.rows<<"null";else *t.rows<<span;
@@ -81,16 +83,17 @@ class Backend final:public ownrt::Backend {
   bool discard=t.method=="discard_in_order",out=t.method=="explicit_out_of_order",implicit=t.method=="implicit_in_order"||discard;
   auto handler=[this](sycl::exception_list e){save_error(e);};
   sycl::property_list props=discard?sycl::property_list{sycl::property::queue::in_order{},sycl::ext::oneapi::property::queue::discard_events{}}:out?sycl::property_list{sycl::property::queue::enable_profiling{}}:sycl::property_list{sycl::property::queue::in_order{},sycl::property::queue::enable_profiling{}};
+  auto setup=Clock::now();
   auto queue=new sycl::queue(*c,d,handler,props);
   gx::command_graph<gx::graph_state::executable>* executable=nullptr;
-  auto setup=Clock::now();int launches=t.method=="fusion8"?(t.n+7)/8:t.n;
+  int launches=t.method=="fusion8"?(t.n+7)/8:t.n;
   // No H2D/D2H or host tasks during recording. Fixed pointers only.
   if(t.method=="graph"){
    gx::command_graph graph{*c,d};graph.begin_recording(*queue);
    for(int i=0;i<t.n;i++){admission();submit(*queue,a,1,t.kind,{});}graph.end_recording(*queue);
    executable=new gx::command_graph<gx::graph_state::executable>(graph.finalize());
   }
-  double setup_ms=std::chrono::duration<double,std::milli>(Clock::now()-setup).count();
+  double setup_ms=std::chrono::duration<double,std::milli>(Clock::now()-setup).count();setup_total_ms+=setup_ms;
   for(int repeat=0;repeat<5;repeat++){
    admission();state(a,repeat,t.kind);std::vector<sycl::event> retained;retained.reserve(launches);std::map<ownrt::Event,sycl::event> owner_events;
    auto first=stamp();auto begin=Clock::now();double span=-1;End ended;
@@ -123,7 +126,7 @@ class Backend final:public ownrt::Backend {
   ze_event_pool_desc_t pd{};pd.stype=ZE_STRUCTURE_TYPE_EVENT_POOL_DESC;pd.flags=ZE_EVENT_POOL_FLAG_HOST_VISIBLE|ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;pd.count=3;ze_event_pool_handle_t pool=nullptr;ze(zeEventPoolCreate(context,&pd,1,&device,&pool));ze_event_desc_t ed{};ed.stype=ZE_STRUCTURE_TYPE_EVENT_DESC;ed.signal=ZE_EVENT_SCOPE_FLAG_HOST;ed.wait=ZE_EVENT_SCOPE_FLAG_DEVICE;ze_event_handle_t done=nullptr;ze(zeEventCreate(pool,&ed,&done));ze_event_handle_t first_event=nullptr,last_event=nullptr;ed.index=1;ze(zeEventCreate(pool,&ed,&first_event));ed.index=2;ze(zeEventCreate(pool,&ed,&last_event));
   ze_group_count_t gc{20,1,1};
   if(!immediate){for(int i=0;i<t.n;i++){admission();ze(zeCommandListAppendLaunchKernel(list,kernel,&gc,i==0?first_event:i==t.n-1?last_event:nullptr,0,nullptr));}ze(zeCommandListAppendBarrier(list,done,0,nullptr));ze(zeCommandListClose(list));}
-  double setup_ms=std::chrono::duration<double,std::milli>(Clock::now()-setup).count();
+  double setup_ms=std::chrono::duration<double,std::milli>(Clock::now()-setup).count();setup_total_ms+=setup_ms;
   for(int repeat=0;repeat<5;repeat++){
    admission();state(a,repeat,t.kind);ze(zeEventHostReset(done));ze(zeEventHostReset(first_event));ze(zeEventHostReset(last_event));auto first=stamp();auto begin=Clock::now();
    if(immediate){for(int i=0;i<t.n;i++){admission();ze(zeCommandListAppendLaunchKernel(list,kernel,&gc,i==0?first_event:i==t.n-1?last_event:nullptr,0,nullptr));}ze(zeCommandListAppendBarrier(list,done,0,nullptr));}
@@ -140,12 +143,15 @@ class Backend final:public ownrt::Backend {
   ze(zeCommandListDestroy(list));ze(zeEventDestroy(done));ze(zeEventDestroy(first_event));ze(zeEventDestroy(last_event));ze(zeEventPoolDestroy(pool));ze(zeKernelDestroy(kernel));ze(zeModuleDestroy(module));if(queue)ze(zeCommandQueueDestroy(queue));
  }
  public:
- Backend(size_t card,Clock::time_point end,std::filesystem::path spv):deadline(end),spirv(std::move(spv)){
+ Backend(size_t card,std::filesystem::path spv):spirv(std::move(spv)){
   admission();std::vector<sycl::device> cards;for(auto&p:sycl::platform::get_platforms())if(p.get_backend()==sycl::backend::ext_oneapi_level_zero)for(auto&v:p.get_devices(sycl::info::device_type::gpu))cards.push_back(v);if(card>=cards.size())throw std::runtime_error("card index out of range");d=cards[card];
   auto handler=[this](sycl::exception_list e){save_error(e);};c=std::make_unique<sycl::context>(d,handler);q=std::make_unique<sycl::queue>(*c,d,handler,sycl::property::queue::in_order{});
   context=sycl::get_native<sycl::backend::ext_oneapi_level_zero>(*c);device=sycl::get_native<sycl::backend::ext_oneapi_level_zero>(d);
   properties.stype=ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;ze(zeDeviceGetProperties(device,&properties));
  }
+ auto compiled_bundle(){return sycl::get_kernel_bundle<sycl::bundle_state::executable>(*c,std::vector<sycl::device>{d});}
+ double setup_ms()const{return setup_total_ms;}
+ double device_ms()const{return device_total_ms;}
  ~Backend(){if(q||c||active)ownrt::hold_for_supervisor();}
  std::string identity()const override{return "packet20-stage1-owner-backend";}
  void*allocate(size_t n,ownrt::Memory m)override{if(m==ownrt::Memory::shadow)return ::operator new(n);return m==ownrt::Memory::device?sycl::malloc_device(n,*q):sycl::malloc_host(n,*q);}
@@ -167,23 +173,30 @@ class Backend final:public ownrt::Backend {
  void close_context()override{c.reset();context=nullptr;device=nullptr;}
 };
 int main(int argc,char**argv){
- auto start=Clock::now();std::filesystem::path out;size_t card=0;int seconds=50;bool authorized=false;
+ auto start=Clock::now();std::filesystem::path out;size_t card=0;int seconds=600;bool authorized=false;
  for(int i=1;i<argc;i++){std::string a=argv[i];if(a=="--authorized-device-window")authorized=true;else if(a=="--card"&&i+1<argc)card=std::stoul(argv[++i]);else if(a=="--output"&&i+1<argc)out=argv[++i];else if(a=="--seconds"&&i+1<argc)seconds=std::stoi(argv[++i]);else return 64;}
- if(!authorized||out.empty()||seconds<1||seconds>50)return 64;std::signal(SIGTERM,signal_stop);std::signal(SIGINT,signal_stop);
+ if(!authorized||out.empty()||seconds<300||seconds>1800)return 64;std::signal(SIGTERM,signal_stop);std::signal(SIGINT,signal_stop);
  std::ofstream rows(out/"rows.jsonl");if(!rows)return 73;
  try{
-  ownrt::Device owner(std::make_unique<Backend>(card,start+std::chrono::seconds(seconds),std::filesystem::path(argv[0]).parent_path()/"raw.spv"));
+  auto backend=std::make_unique<Backend>(card,std::filesystem::path(argv[0]).parent_path()/"raw.spv");auto raw=backend.get();
+  auto compiled=raw->compiled_bundle(); // Materialize SYCL JIT before short device waits.
+  double startup_ms=std::chrono::duration<double,std::milli>(Clock::now()-start).count();
+  ownrt::Device owner(std::move(backend));
   std::vector<ownrt::Allocation> bindings;for(int i=0;i<17;i++)bindings.push_back(owner.arena.allocate("arg"+std::to_string(i),5120,ownrt::Memory::device,ownrt::Category::scratch,ownrt::Lifetime::transaction));
   // CPU storage remains alive through the explicitly waited upload.
   std::array<uint16_t,2560> initial{};initial.fill(0x3a80);
   auto host=owner.arena.allocate("initial",5120,ownrt::Memory::shadow,ownrt::Category::host_shadow,ownrt::Lifetime::process);
-  std::memcpy(owner.arena.row(host).pointer,initial.data(),5120);ownrt::CopyEngine copies(owner);for(auto b:bindings){auto e=copies.copy(b,0,host,0,5120,{});if(!owner.wait(e,std::chrono::milliseconds(900)))ownrt::hold_for_supervisor();}
+  std::memcpy(owner.arena.row(host).pointer,initial.data(),5120);ownrt::CopyEngine copies(owner);for(auto b:bindings){auto e=copies.copy(b,0,host,0,5120,{});if(!owner.wait(e,std::chrono::seconds(5)))ownrt::hold_for_supervisor();}
   int count=0;bool passed=true;std::string failure;
   for(auto method:{"explicit_in_order","explicit_out_of_order","explicit_wait_each","implicit_in_order","discard_in_order","graph","raw_regular","raw_immediate","fusion8"})for(int kind:{0,1})for(int n:{100,1000,4000}){
-   if(stopped||Clock::now()>start+std::chrono::seconds(seconds)){passed=false;failure="deadline before full matrix";break;}
-   Trial t;t.method=method;t.n=n;t.kind=kind;t.rows=&rows;bool available=true;t.available=&available;auto e=owner.compute(t,bindings,{});if(!owner.wait(e,std::chrono::milliseconds(900)))ownrt::hold_for_supervisor();count+=5;if(!available){passed=false;failure="one or more methods unavailable on device";}
+   if(stopped){passed=false;failure="cooperative stop before full matrix";break;}
+   Trial t;t.method=method;t.n=n;t.kind=kind;t.rows=&rows;bool available=true;t.available=&available;auto e=owner.compute(t,bindings,{});if(!owner.wait(e,std::chrono::seconds(5)))ownrt::hold_for_supervisor();count+=5;if(!available){passed=false;failure="one or more methods unavailable on device";}
   }
+  double startup_jit_ms=startup_ms+raw->setup_ms(),device_work_ms=raw->device_ms();
+  auto teardown_start=Clock::now();
   auto receipt=owner.shutdown(std::chrono::seconds(3));if(!receipt.safe_to_exit)ownrt::hold_for_supervisor();
-  std::ofstream final(out/"device.json");final<<"{\"passed\":"<<(passed?"true":"false")<<",\"device_executed\":true,\"safe_to_exit\":true,\"live_bytes\":0,\"in_flight\":0,\"rows\":"<<count<<",\"expected_rows\":270,\"error\":"<<ownrt::quote(failure)<<",\"teardown\":"<<receipt.json()<<"}\n";return passed?0:75;
+  double wall_ms=std::chrono::duration<double,std::milli>(Clock::now()-start).count();
+  double teardown_ms=std::chrono::duration<double,std::milli>(Clock::now()-teardown_start).count();
+  std::ofstream final(out/"device.json");final<<"{\"passed\":"<<(passed?"true":"false")<<",\"device_executed\":true,\"safe_to_exit\":true,\"live_bytes\":0,\"in_flight\":0,\"rows\":"<<count<<",\"expected_rows\":270,\"error\":"<<ownrt::quote(failure)<<",\"wall_ms\":"<<wall_ms<<",\"startup_jit_ms\":"<<startup_jit_ms<<",\"device_work_ms\":"<<device_work_ms<<",\"work_wall_ms\":"<<wall_ms-startup_jit_ms-teardown_ms<<",\"teardown_ms\":"<<teardown_ms<<",\"total_goal_ms\":60000,\"total_goal_exceeded\":"<<(wall_ms>=60000?"true":"false")<<",\"teardown\":"<<receipt.json()<<"}\n";return passed?0:75;
  }catch(const std::exception&e){std::cerr<<e.what()<<std::endl;return 1;}
 }

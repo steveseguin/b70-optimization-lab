@@ -66,14 +66,16 @@ def main():
         save(HERE/"evidence/loader-preflight.json",dict(returncode=preflight.returncode,stdout=preflight.stdout,stderr=preflight.stderr,device_executed=False))
         # Bind local tracked inputs plus external source dependencies actually compiled.
         paths=[p for p in HERE.rglob("*") if p.is_file() and BUILD not in p.parents and p.name!="build-receipt.json" and "__pycache__" not in p.parts]
-        paths += [rope,reference,HERE.parent/"packet18-decode-v2/census.json",HERE/"fusion/build-receipt.json",HERE/"issuing/build-receipt.json",binary,BUILD/"issuing/raw.spv",BUILD/"fusion-icpx/fusion-device"]
+        paths += [rope,reference,HERE.parent/"packet18-decode-v2/census.json",HERE.parent/"packet18-decode-v2/DEADLINES.md",HERE.parent/"packet18-decode-v2/deadline-journal.json",HERE/"fusion/build-receipt.json",HERE/"issuing/build-receipt.json",binary,BUILD/"issuing/raw.spv",BUILD/"fusion-icpx/fusion-device"]
         for dep in list(BUILD.rglob("*.o.d")):
             for token in dep.read_text().replace("\\\n", " ").split():
                 candidate=Path(token)
                 if candidate.is_absolute() and candidate.is_file() and ROOT in candidate.parents and BUILD not in candidate.parents:
                     paths.append(candidate)
         hashes={os.path.relpath(p,HERE):sha(p) for p in sorted(set(paths))}
-        receipt=dict(schema="own-runtime.packet20.build.v1",passed=True,device_executed=False,arithmetic="iq3-p17-detmath-v2",compiler=issuing.get("compiler_version"),fusion_receipt_sha256=sha(HERE/"fusion/build-receipt.json"),issuing_receipt_sha256=sha(HERE/"issuing/build-receipt.json"),window_tests_sha256=sha(HERE/"evidence/window-tests.txt"),binary="build/issuing/launch-bench",binary_sha256=sha(binary),hashes=hashes,elapsed_seconds=time.monotonic()-started,device_timing_measured=False,opaque_driver_memory_bound_proven=False,healthy_duration_under_60s_proven=False)
+        reuse=dict(scope="unchanged fusion oracle/fixture/fresh-repeat gates; issuing recompiled; no device ran",
+                   receipts={name:sha(HERE/"fusion"/name) for name in ("build-receipt.json", "gnu-0.json", "gnu-1.json", "icpx-0.json", "icpx-1.json")})
+        receipt=dict(reused_cpu_evidence=reuse, schema="own-runtime.packet20.build.v1",passed=True,device_executed=False,arithmetic="iq3-p17-detmath-v2",compiler=issuing.get("compiler_version"),fusion_receipt_sha256=sha(HERE/"fusion/build-receipt.json"),issuing_receipt_sha256=sha(HERE/"issuing/build-receipt.json"),window_tests_sha256=sha(HERE/"evidence/window-tests.txt"),binary="build/issuing/launch-bench",binary_sha256=sha(binary),hashes=hashes,elapsed_seconds=time.monotonic()-started,device_timing_measured=False,opaque_driver_memory_bound_proven=False,healthy_duration_under_60s_proven=False)
         save(HERE/"build-receipt.json",receipt)
         receipt["hashes"]["build-receipt.json"]=sha(HERE/"build-receipt.json")
         save(BUILD/"prepared.json",receipt)

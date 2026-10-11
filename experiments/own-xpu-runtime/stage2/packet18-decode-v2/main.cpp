@@ -90,6 +90,7 @@ struct Options {
 };
 static Options parse(int argc, char **argv) {
   Options a;
+  bool seconds_supplied = false;
   for (int i = 1; i < argc; ++i) {
     std::string k = argv[i];
     auto value = [&] {
@@ -120,7 +121,7 @@ static Options parse(int argc, char **argv) {
     else if (k == "--context")
       a.context = std::stoi(value());
     else if (k == "--seconds")
-      a.seconds = std::stoi(value());
+      { a.seconds = std::stoi(value()); seconds_supplied = true; }
     else if (k == "--input" || k == "--prompt-tokens")
       a.inputs = value();
     else if (k == "--output")
@@ -136,6 +137,7 @@ static Options parse(int argc, char **argv) {
     else
       throw std::runtime_error("unknown option " + k);
   }
+  if (a.canary && !seconds_supplied) a.seconds = 600;
   require(a.cards >= 1 && a.cards <= 2 && a.card >= 0 && a.card + a.cards <= 4,
           "card range");
   require(a.tokens > 0 && a.tokens <= 64 && a.context >= 8 &&

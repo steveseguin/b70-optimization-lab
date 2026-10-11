@@ -13,7 +13,7 @@ def source_hashes():
   paths=[]
   for folder in folders:
    paths.extend(p for p in folder.rglob('*') if p.is_file() and 'build' not in p.relative_to(folder).parts and p.suffix in ('.cpp','.hpp','.py'))
-  paths.extend([HERE/'rope.bf16',HERE/'source-provenance.json',HERE/'integration-provenance.json',HERE.parent/'packet17-detmath/detmath.hpp',HERE.parent/'packet17-detmath/arithmetic.json',HERE/'CMakeLists.txt',HERE/'receipt.schema.json',ROOT/'experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/tokenizer.py',ROOT/'experiments/own-xpu-runtime/stage1/packet1b/loaders/headers.py',ROOT/'experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/admission-receipt.json',ROOT/'experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/tensor-census.json'])
+  paths.extend([HERE/'deadline-reuse.json',HERE/'deadline-journal.json',HERE/'deadline-native-cli-tests.json',HERE/'DEADLINES.md',HERE/'WINDOW.md',HERE/'CLOSEOUT.md',HERE/'DO-NOT-REPEAT.md',HERE/'rope.bf16',HERE/'source-provenance.json',HERE/'integration-provenance.json',HERE.parent/'packet17-detmath/detmath.hpp',HERE.parent/'packet17-detmath/arithmetic.json',HERE/'CMakeLists.txt',HERE/'receipt.schema.json',ROOT/'experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/tokenizer.py',ROOT/'experiments/own-xpu-runtime/stage1/packet1b/loaders/headers.py',ROOT/'experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/admission-receipt.json',ROOT/'experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/tensor-census.json'])
   return {str(p.relative_to(ROOT)):sha(p) for p in sorted(set(paths))}
 
 def main():
@@ -31,6 +31,9 @@ def main():
   print('PASS' if not v.returncode else 'FAIL', ' '.join(cmd),flush=True)
   if v.returncode:raise RuntimeError(v.stderr+v.stdout)
   return v.stdout
+ from deadline_reuse import verify as verify_reuse, unchanged_or_model_neutral
+ reuse = verify_reuse() if a.reuse_real_gates or a.reuse_sanitizer_gates else None
+ r['deadline_only_gate_reuse'] = reuse
  before_sources=source_hashes()
  r['sources_before_build']=before_sources
  from math_gate import check
@@ -64,9 +67,12 @@ def main():
   for mode in ('core','parallel'):
    run([PY,'-B',HERE/'test.py','--binary',BUILD/'host/own-rt-iq3','--scratch',BUILD/f'tests-{mode}-{time.time_ns()}','--input',inp,'--receipt',HERE/f'cpu-mini-{mode}.json','--nongemv',mode])
   canary_path=BUILD/f'canary-cpu-{time.time_ns()}'
-  run([BUILD/'host/own-rt-iq3','--canary','--cards','2','--card','0','--memory','resident','--seconds','30','--output',canary_path])
+  run([BUILD/'host/own-rt-iq3','--canary','--cards','2','--card','0','--memory','resident','--seconds','600','--output',canary_path])
   r['canary_cpu_mock']=json.loads((canary_path/'receipt.json').read_text())
   assert r['canary_cpu_mock']['passed'] and not r['canary_cpu_mock']['device_executed']
+  cli=json.loads((HERE/'deadline-native-cli-tests.json').read_text())
+  assert cli['passed'] and cli['device_executed'] is False and cli['binary_sha256']==sha(BUILD/'host/own-rt-iq3'), 'native CLI tests require rebuilt host identity'
+  r['canary_native_cli_tests_sha256']=sha(HERE/'deadline-native-cli-tests.json')
   run([PY,'-B',HERE/'test_mismatch.py'])
   run([PY,'-B',HERE/'test_window.py'])
   run([PY,'-B',HERE/'census.py'])
@@ -77,7 +83,7 @@ def main():
   for dispatch in ('frozen','r5'):
    gate=HERE/f'cpu-real-{dispatch}.json'
    if a.reuse_real_gates:
-    data=json.loads(gate.read_text());assert data['passed'] and data['binary_sha256']==sha(BUILD/'host/own-rt-iq3'), 'real CPU gate requires current binary'
+    data=json.loads(gate.read_text());assert data['passed'] and data['binary_sha256']==reuse['original_host_sha256'], 'reused real CPU gate requires the original tested binary identity'
     from cpu_gate import ORACLE
     assert len(data['tokens'])>=(64 if dispatch=='frozen' else 8) and data['tokens']==json.loads((ORACLE/'result.json').read_text())['tokens'][:len(data['tokens'])], 'real CPU coverage/token binding'
     assert json.loads((ORACLE/'input.json').read_text())['tokens']==json.loads((inp/'input.json').read_text())['tokens'], 'real CPU prompt binding'
@@ -98,11 +104,11 @@ def main():
 
   sb=json.loads((BUILD/'sanitized/build.json').read_text())
   assert sha(Path(sb['binary']))==sb['sha256'], 'sanitizer binary changed'
-  assert all(sha(Path(name))==digest for name,digest in sb['sources'].items()), 'sanitizer source manifest changed'
+  assert all(unchanged_or_model_neutral(Path(name),digest) if a.reuse_sanitizer_gates else sha(Path(name))==digest for name,digest in sb['sources'].items()), 'sanitizer source manifest changed'
   assert all(json.loads((HERE/f'sanitizer-real-short-{seed}.json').read_text())['binary_sha256']==sb['sha256'] for seed in (0,1,17,73))
   assert json.loads((HERE/'sanitizer-real-full.json').read_text())['positions']==87
   r['sanitizer']={'receipts':{name:sha(HERE/name) for name in sanitizer_names},'binary_sha256':sb['sha256'],'build_manifest_sha256':sha(BUILD/'sanitized/build.json'),'violations':0}
-  cpu=dict(schema='own-runtime.iq3.packet18.cpu-tests.v1',passed=True,device_executed=False,binary_sha256=sha(BUILD/'host/own-rt-iq3'),integration={mode:json.loads((HERE/f'cpu-mini-{mode}.json').read_text()) for mode in ('core','parallel')},units=units,window_protocol_tests=36,mismatch_rejections=json.loads((HERE/'cpu-mismatch-rejection.json').read_text()),real_model={m:{k:gates[m][k] for k in ('passed','layer_matches','layer_total','token_matches','tokens','first_differing_layer','missing_fixtures','wall_seconds')} for m in gates})
+  cpu=dict(schema='own-runtime.iq3.packet18.cpu-tests.v1',passed=True,device_executed=False,binary_sha256=sha(BUILD/'host/own-rt-iq3'),integration={mode:json.loads((HERE/f'cpu-mini-{mode}.json').read_text()) for mode in ('core','parallel')},units=units,window_protocol_tests=39,deadline_only_gate_reuse=reuse,mismatch_rejections=json.loads((HERE/'cpu-mismatch-rejection.json').read_text()),real_model={m:{k:gates[m][k] for k in ('passed','layer_matches','layer_total','token_matches','tokens','first_differing_layer','missing_fixtures','wall_seconds')} for m in gates})
   (HERE/'cpu-tests.json').write_text(json.dumps(cpu,indent=2)+'\n')
   assert source_hashes()==before_sources, 'source changed during build/gates'
   r.update(passed=True,real_model_qualified=False,artifacts_sha256={str(p.relative_to(BUILD)):sha(p) for p in (BUILD/'host/own-rt-iq3',BUILD/'device/own-rt-iq3')},cpu_tests_sha256=sha(HERE/'cpu-tests.json'),census_sha256=sha(HERE/'census.json'),input_sha256=sha(inp/'input.json'))

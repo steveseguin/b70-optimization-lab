@@ -98,7 +98,7 @@ The fixture gate compares every retained output/state byte against the unfused
 v2 core under GNU and Intel host compilers, with two fresh processes each.
 All four runs pass **72 operator fixtures, six multi-site chains, eleven
 additional BF16 boundaries and eight control cases**, with identical output
-hashes. The harness passes **23 CPU-only protocol tests**, including the full
+hashes. The harness passes **27 CPU-only protocol tests**, including the full
 270-row mock. Native fusion compiles and links with precision flags on both
 lines. CPU
 parity cannot establish device parity. Details and hashes are retained locally.
@@ -119,3 +119,5 @@ even for help or discovery. Scratch is removed; prepared build artifacts stay
 under ignored `build/`. [REPLAY.md](REPLAY.md) covers dynamic model state,
 context growth, exact masking, graph memory and two-card boundaries.
 [Independent review](review/INDEPENDENT-REVIEW.md) records the fixes and limits.
+
+The watchdog now defaults to 600 s (300..1800), with startup/JIT reported separately. The <60 s goal never signals or fails a completed run. [Deadline audit](../packet18-decode-v2/DEADLINES.md). No device ran.

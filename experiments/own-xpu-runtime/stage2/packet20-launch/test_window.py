@@ -111,6 +111,40 @@ class Protocol(unittest.TestCase):
         child.kill.assert_not_called();child.terminate.assert_not_called()
         return result
 
+    def test_watchdog_bounds(self):
+        self.assertEqual(w.watchdog_seconds(), 600)
+        for value in (300, 600, 1800): self.assertEqual(w.watchdog_seconds(value), value)
+        for value in (0, 50, 299, 1801):
+            with self.assertRaisesRegex(ValueError, 'watchdog'): w.watchdog_seconds(value)
+
+    def test_expectation_exceeded_finishes_without_signal(self):
+        tick=[0.0]
+        child=Mock(pid=424242,returncode=0)
+        child.poll.side_effect=lambda: 0 if tick[0]>=95 else None
+        requested=[]
+        result=w.supervise(child,io.StringIO(),'cursor',requested,lambda:None,
+            now=lambda:tick[0],sleep=lambda t:tick.__setitem__(0,tick[0]+t),reader=lambda _:('', 'cursor'))
+        self.assertFalse(requested)
+        child.send_signal.assert_not_called()
+        self.assertEqual(result['returncode'],0)
+        self.assertGreater(result['elapsed_seconds'],60)
+
+    def test_reported_goal_is_not_pass_gate(self):
+        raw=dict(wall_ms=95000,startup_jit_ms=45000,device_work_ms=1000,work_wall_ms=49000,teardown_ms=1000)
+        self.assertTrue(w.native_timings(raw)['total_goal_exceeded'])
+        with self.assertRaisesRegex(ValueError,'invalid native timing'):
+            w.native_timings(dict(raw, startup_jit_ms=float('nan')))
+
+    def test_real_watchdog_sends_only_once_and_retains(self):
+        tick=[0.0];child=Mock(pid=424242,returncode=None);child.poll.return_value=None
+        requested=[]
+        result=w.supervise(child,io.StringIO(),'cursor',requested,lambda:None,
+            now=lambda:tick[0],sleep=lambda t:tick.__setitem__(0,tick[0]+t),reader=lambda _:('', 'cursor'),seconds=300)
+        child.send_signal.assert_called_once_with(signal.SIGTERM)
+        self.assertGreaterEqual(tick[0],360)
+        self.assertTrue(result['child_still_running'])
+        child.kill.assert_not_called()
+
     def test_clean(self):self.watch("clean")
     def test_fault(self):self.watch("fault")
     def test_journal_lost(self):self.watch("journal")
@@ -159,8 +193,8 @@ class Protocol(unittest.TestCase):
             w.validate_rows(self.rows_file(rows))
 
     def test_whole_window_mock(self):
-        def watch(child,kernel,cursor,requested,persist):
-            w.save(self.out / "device.json",dict(device_executed=True,passed=True,safe_to_exit=True,live_bytes=0,in_flight=0,rows=270,expected_rows=270))
+        def watch(child,kernel,cursor,requested,persist,**kwargs):
+            w.save(self.out / "device.json",dict(device_executed=True,passed=True,safe_to_exit=True,live_bytes=0,in_flight=0,rows=270,expected_rows=270,wall_ms=95000,startup_jit_ms=45000,device_work_ms=1000,work_wall_ms=49000,teardown_ms=1000))
             (self.out / "rows.jsonl").write_text(self.rows_file(self.mock_rows()).read_text())
             return dict(returncode=0,child_still_running=False)
         with patch.object(w.subprocess,"run",return_value=SimpleNamespace(returncode=0,stdout="idle\n",stderr="")),patch.object(w,"ldd_preflight",return_value={}),patch.object(w,"journal",return_value=("","cursor")),patch.object(w,"supervise",side_effect=watch),patch.object(w.subprocess,"Popen",return_value=Mock(pid=424242)) as launch:

@@ -89,7 +89,7 @@ inner site is never invented. Step1 means the final prompt position predicting
 the first answer. Final CPU gates pass: **64/64 frozen tokens + 384/384 fixtures; 8/8 R5 tokens
 + 384/384 fixtures; 13/13 integration cases per non-GEMV mode; 150/150 GEMV
 arithmetic comparisons; 4/4 owner-retirement checks; 7/7 deferred-chain checks;
-36/36 window protocol tests; 2/2 deliberate wrong-fixture rejections**.
+39/39 window protocol tests; 2/2 deliberate wrong-fixture rejections**.
 No device ran. CPU-only receipts and final counts are in `cpu-tests.json`,
 `cpu-real-frozen.json`, `cpu-real-r5.json` and `build-receipt.json`.
 
@@ -221,3 +221,5 @@ queued automatically. Fixture overhead remains in timing. `ldd` checks loader
 dependencies before any latch write. Compiler success and CPU parity do not
 prove device math, peer transfers, resident fit, fresh-process determinism or
 speed. See [independent review](review.md) and [closeout](CLOSEOUT.md).
+
+Watchdog correction: [deadline audit](DEADLINES.md). The long CPU model/sanitizer gates are retained under the [explicit reuse proof](deadline-reuse.json); rebuilt canary, unit/mini and wrapper tests are fresh. No device ran.

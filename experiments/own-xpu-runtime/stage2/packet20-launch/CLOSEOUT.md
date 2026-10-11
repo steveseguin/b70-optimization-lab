@@ -42,7 +42,7 @@ device parity or full-model equality. Raw/graph API availability at compile
 time does not establish B70 runtime support. Opaque runtime memory and blocking
 driver calls prevent certifying a total <64 MB footprint or hard <60 s elapsed
 time before measurement. Explicit device buffers are 87,040 bytes; work has a
-50 s cooperative admission deadline and bounded completion polls. The host
+600 s child watchdog (300..1800 s) and five-second completion polls. The host
 halt remains binding; no recovery or device launch was attempted.
 
 ## Evidence and patches
@@ -61,3 +61,18 @@ then a separately admitted fresh owner for any speed verdict. Select issuing
 method only from exact changed-input results. Integrate useful fusions with
 packet18 layer/state fixtures, then test eager/replay and two fresh processes
 before a model performance claim. No scoreboard entry or public result is made.
+
+## October 11: watchdog correction, CPU only
+
+Closed arm: **a watchdog set to the expected run time**. The old 50 s native
+admission and watcher cutoff are removed. Startup/JIT/setup and device envelopes
+are reported separately; <60 s is a reporting goal, never a signal or pass gate.
+The watchdog defaults to 600 s, refuses below 300 s, and allows at most 1800 s.
+The watcher retains a still-running child after 60 s of cooperative drain.
+[Every deadline and its margin](../packet18-decode-v2/DEADLINES.md).
+
+The issuing binary was rebuilt without execution; 27 CPU wrapper tests passed.
+GNU/Intel fusion oracle gates and fresh-repeat receipts were reused because none
+of their bound sources, fixtures, compiler commands or binaries changed. The
+seal rechecks those identities and records the reused receipts. No long CPU
+oracle gate was rerun. No device ran; PID 183867 and host FAULT HALT are untouched.

@@ -2,6 +2,7 @@
 
 | Mistake / closed preparation lever | Evidence / decision | Revisit condition |
 | --- | --- | --- |
+| a watchdog set to the expected run time | Incident 5 (2026-10-11 02:34 UTC): a stop during startup/JIT can fault the engine. The 30/50 s watchdogs are withdrawn; expectations only report. [Deadline audit](DEADLINES.md). | Never restore a short total-time cutoff; keep first-use JIT and at least 4× margin in every signal deadline. |
 | events chained across two cards' queues | Packet16 incident and packet19 audit; packet18 now fences, retires and rejects foreign events. [Independent review](review-queue-isolation.md). | Separate tiny preregistered device experiment after recovery; never a fallback. |
 | environment keys added to a prepared window | Faulting packet16 used NEOReadDebugKeys/EnableDeferBacking; no passing own-runtime device run did. Every packet18 window refuses these and unknown keys before latch creation. | Separately preregistered experiment, outside this packet. |
 | Never-written full snapshot readback | Packet19 sanitizer; initialize every byte before first capture, including unowned slices. | Never restore uninitialized readbacks. |

@@ -65,7 +65,10 @@ command buffers, JIT storage and graph pools are opaque and are not covered by
 that number. This packet cannot certify their aggregate is below 64 MB before
 a device measurement. One graph exists at a time; it is destroyed before the
 next chain is recorded. Runtime/JIT calls themselves cannot be forcibly
-time-bounded safely. Admission stops at 50 seconds; completion polling has a
-900 ms bound and failures retain the process. Expected normal runtime is
-20–50 seconds; a hard <60-second guarantee would require unsafe termination
-and is not asserted. No device result or speed decision is available yet.
+time-bounded safely. Completion polling has a five-second bound after submission;
+failures retain the process. There is no 50 s native admission cutoff. The wrapper
+watchdog is 600 s by default (300..1800), while <60 s is reported, never enforced.
+SYCL bundle preparation precedes the short waits; raw module JIT and graph setup
+are included in startup/setup timing. Expected work is 20–50 s, with a 17 s
+first-use JIT planning proxy added for watchdog sizing. See WINDOW.md and the
+shared deadline audit. No device result or speed decision is available yet.

@@ -72,7 +72,7 @@ def latch(value):
         json.dump(value, f, indent=2)
         f.write("\n")
 
-def supervise(child, kernel, cursor, requested, persist, now=time.monotonic, sleep=time.sleep, reader=journal, seconds=50, drain_seconds=5):
+def supervise(child, kernel, cursor, requested, persist, now=time.monotonic, sleep=time.sleep, reader=journal, seconds=600, drain_seconds=60):
     start = now()
     sent = None
     while True:
@@ -85,7 +85,7 @@ def supervise(child, kernel, cursor, requested, persist, now=time.monotonic, sle
         except Exception as error:
             requested.append("journal lost: " + str(error))
         if now() - start >= seconds:
-            requested.append("50-second work deadline")
+            requested.append("child watchdog deadline")
         if requested and sent is None:
             latch(dict(reason=requested[0], pid=child.pid))
             if child.poll() is None:
@@ -150,13 +150,29 @@ def summarize_rows(rows):
                     median_profiled_span_ns=statistics.median(profile) if len(profile)==5 else None))
     return dict(scope="single-owner surrogate issuing comparison; no model speed verdict",fresh_owners=1,rows=summary)
 
-def execute(card, output):
+def watchdog_seconds(seconds=600):
+    require(300 <= seconds <= 1800, "watchdog must be 300..1800 seconds")
+    return seconds
+
+
+def native_timings(raw):
+    for field in ("wall_ms", "startup_jit_ms", "device_work_ms", "work_wall_ms", "teardown_ms"):
+        value = raw.get(field)
+        require(type(value) in (int, float) and math.isfinite(value) and value >= 0,
+                "invalid native timing: " + field)
+    # The <60 s goal is informational even when the complete verified run is slower.
+    return dict(total_goal_ms=60000, total_goal_exceeded=raw["wall_ms"] >= 60000,
+                **{field: raw[field] for field in ("wall_ms", "startup_jit_ms", "device_work_ms", "work_wall_ms", "teardown_ms")})
+
+
+def execute(card, output, seconds=600):
+    seconds = watchdog_seconds(seconds)
     out, binary, manifest, loader = check(card, output)
     pre, cursor = journal()
     out.mkdir(parents=True)
     (out / "preflight-kernel.txt").write_text(pre)
     record = dict(schema="own-runtime.packet20.window.v1", card=card, passed=False, device_executed=False,
-                  prepared_sha256=sha(BUILD / "prepared.json"), ldd=loader, external_idle_health_still_required=True)
+                  watchdog_seconds=seconds, prepared_sha256=sha(BUILD / "prepared.json"), ldd=loader, external_idle_health_still_required=True)
     requested = []
     def persist():
         record["stop_reason"] = requested[0] if requested else None
@@ -171,12 +187,12 @@ def execute(card, output):
     try:
         require(not requested, "stop before launch")
         with (out / "stdout.txt").open("w") as log, (out / "kernel-window.txt").open("w") as kernel:
-            cmd = PREFIX + [str(binary), "--authorized-device-window", "--card", str(card), "--output", str(out), "--seconds", "50"]
+            cmd = PREFIX + [str(binary), "--authorized-device-window", "--card", str(card), "--output", str(out), "--seconds", str(seconds)]
             record["command"] = cmd
             child = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT)
             record.update(pid=child.pid, device_executed=True)
             persist()
-            record.update(supervise(child, kernel, cursor, requested, persist))
+            record.update(supervise(child, kernel, cursor, requested, persist, seconds=seconds))
         require(record["returncode"] == 0 and not requested, "native child failed/stopped")
         raw = json.loads((out / "device.json").read_text())
         require(raw.get("device_executed") is True and raw.get("passed") is True and raw.get("safe_to_exit") is True and raw.get("live_bytes") == 0 and raw.get("in_flight") == 0, "native coverage/teardown failed")
@@ -185,6 +201,7 @@ def execute(card, output):
         rows = validate_rows(out / "rows.jsonl")
         require(raw.get("rows") == raw.get("expected_rows") == len(rows) == 270, "native coverage mismatch")
         save(out / "summary.json", summarize_rows(rows))
+        record["timings"] = native_timings(raw)
         record["native_sha256"] = sha(out / "device.json")
         record["rows_sha256"] = sha(out / "rows.jsonl")
         record["passed"] = True
@@ -204,13 +221,15 @@ def main():
     p.add_argument("--authorized-device-window", action="store_true")
     p.add_argument("--card", required=True, type=int)
     p.add_argument("--output", required=True, type=Path)
+    p.add_argument("--seconds", type=int, default=600, help="child watchdog, 300..1800 seconds; not the 60-second goal")
     a = p.parse_args()
+    watchdog_seconds(a.seconds)
     if a.check:
         check(a.card, a.output)
         print("CPU identity and ldd passed; no device queried or binary executed.")
         return 0
     require(a.authorized_device_window, "separately authorized device window required; host halt remains binding")
-    return 0 if execute(a.card, a.output)["passed"] else 1
+    return 0 if execute(a.card, a.output, a.seconds)["passed"] else 1
 
 if __name__ == "__main__":
     raise SystemExit(main())

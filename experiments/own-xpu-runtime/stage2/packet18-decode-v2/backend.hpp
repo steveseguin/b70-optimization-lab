@@ -44,6 +44,11 @@ class Context final : public ownrt::Backend {
     return r;
   }
  public:
+  // W0 only: materialize the executable bundle before starting work/wait clocks.
+  auto canary_bundle() {
+    return sycl::get_kernel_bundle<sycl::bundle_state::executable>(*context,
+        std::vector<sycl::device>{queues[0]->get_device(),queues[1]->get_device()});
+  }
   bool access_ab=false,access_ba=false;
   int allocation_card=0;
   Context(int a,int b) {

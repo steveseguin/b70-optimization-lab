@@ -21,7 +21,7 @@ ORACLE=experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/a
 
 ```bash
 nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 "$PY" -B "$P/window.py" \
-  --authorized-device-window --window W0 --card 2 --seconds 30 \
+  --authorized-device-window --window W0 --card 2 --seconds 600 \
   --output "$P/build/w0-cards23-a"
 ```
 
@@ -39,8 +39,23 @@ copies. It checks result, error, streams and both committed positions. Finally
 it chains 1,000 kernels on each card, with one completion wait at the end of
 each chain; neither chain shares an event with the other card. Host readbacks
 verify the results. A native profiling check requires every recorded submission
-below 100 ms, well below one second. The binary must complete within 30 seconds;
-there is no retry if initialization, JIT, a submission, or teardown misses a bound.
+below 100 ms, well below one second. A slow completed submission is recorded as
+`submission_budget_passed=false`; the canary finishes the fixed coverage and
+teardown normally and writes a failed receipt. No timing expectation signals it.
+The child watchdog defaults to **600 s**, accepts **300..1800 s**, and refuses
+anything tighter. The former 30 s total is only a reported expectation, never a
+pass gate. There is no aggregate device-work time gate.
+
+Before device work, the native program constructs both queues and materializes
+the executable SYCL kernel bundle for both devices. `startup_jit_ms` measures
+that phase. `device_work_ms` sums profiled execution intervals of recorded
+submissions, excluding startup/JIT and host issuing gaps; it is zero in the CPU
+mock, which has no device clock. `work_wall_ms` measures the work phase including
+host overhead, `teardown_ms` measures shutdown, and `wall_ms` records the full
+native elapsed time. All three wall phases are separate from the profiled sum.
+Completion waits and canary teardown allow five seconds each. Blocking driver
+calls cannot be safely forced to honor a short bound; only the roomy child
+watchdog can request a stop. No retries are scheduled.
 The clean watcher adds five seconds of postflight (up to two more for a journal
 read). Driver-internal allocations are not measurable from the requested-byte
 census and remain a device-qualification risk; no measured device-memory claim
@@ -48,7 +63,7 @@ is made from this CPU preparation.
 
 W2 and W3 require `--w0` with a passing receipt on the same boot, binary, card
 pair and recorded environment. They re-hash W0's native receipt and recheck its
-coverage, memory/time bounds and safe teardown. W0 does not substitute for W1.
+coverage, memory/submission bounds and safe teardown. W0 does not substitute for W1.
 `ldd` and environment checks run before any output directory or fault latch is
 created. A device window still requires coordinator admission after FAULT HALT.
 
@@ -62,7 +77,9 @@ nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 "$PY" -B "$P/window.py" \
 ```
 
 Expected W1 duration: roughly 10–20 minutes, an unmeasured planning estimate;
-the explicit deadline remains three hours.
+the explicit watchdog remains three hours. W1–W3 accept only 7,800..10,800 s;
+the floor includes more than 4× the retained 1,897.718 s CPU full gate plus
+17 s first-run JIT proxy. See [all deadline margins](DEADLINES.md).
 
 The native arguments are `--card 3 --cards 1 --memory layer-streaming
 --stage first-token --max-new 8 --context 256 --nongemv parallel --gemv frozen`.
@@ -200,3 +217,23 @@ Preserve the wrapper/native receipts, timing rows, every retained fixture,
 input/source identities, allocation census, stdout and kernel evidence before
 cleaning ignored output. Full fresh-process determinism and broader prompt
 quality still need their own completed evidence.
+
+## October 11 watchdog repair and CPU-only reseal
+
+[Deadline audit](DEADLINES.md) lists every timeout, its evidence and expiry action.
+No device ran. The 39 wrapper tests, rebuilt CPU canary, unit/mini checks and
+compile-only SYCL build are fresh. The long frozen/R5 oracle gates and dependency
+sanitizer gates are reused under [the narrow reuse audit](deadline-reuse.json):
+model computation and all its bound numerical inputs are unchanged; only the
+canary/default-selection/helper and wrapper code changed. Original gate receipts
+retain their original tested binary hashes. This is not a fresh full-model run.
+
+CPU-only rebuild/reseal (from repository root):
+
+```bash
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B \
+  experiments/own-xpu-runtime/stage2/packet18-decode-v2/build.py \
+  --keep-build --reuse-real-gates --reuse-sanitizer-gates
+```
+
+Seven [host-only native CLI checks](deadline-native-cli-tests.json) also pass: default 600 s, accepted 300/1800 s, and refused 0/30/299/1801 s. No device binary ran.

@@ -12,21 +12,23 @@ struct CanaryIncrement final
 #endif
 };
 static int run_canary(const Options& a) {
- require(a.cards==2 && a.seconds<=30,"canary: two cards and <=30 seconds");
+ require(a.cards==2 && a.seconds>=300 && a.seconds<=1800,"canary: two cards and watchdog 300..1800 seconds");
  auto start=std::chrono::steady_clock::now();
 #ifdef OWN_RT_HOST_ONLY
  auto backend=std::make_unique<Host>();auto select=[](int){};
 #else
  auto backend=std::make_unique<tp2::Context>(a.card,a.card+1);auto raw=backend.get();
  auto select=[&](int c){raw->allocation_card=c;};
+ auto compiled=raw->canary_bundle(); // Hold the compiled bundle through teardown.
 #endif
+ double startup_jit_ms=Engine::ms(start);auto work_start=std::chrono::steady_clock::now();
  ownrt::Device d(std::move(backend));ownrt::CopyEngine copy(d,4096,1);
  std::array<std::map<std::string,Allocation>,2> b;
- std::vector<ownrt::Event> segment;ownrt::Event tail=0;double max_ns=0;unsigned waits=0;
- auto guard=[&]{require(!stopped,"canary cooperative stop");require(Engine::ms(start)<a.seconds*1000.,"canary deadline");};
- auto drain=[&]{if(!tail)return;guard();++waits;require(d.wait(tail,std::chrono::seconds(1)),"canary one-second drain timeout");
+ std::vector<ownrt::Event> segment;ownrt::Event tail=0;double max_ns=0,device_ns=0;bool submission_budget_passed=true;unsigned waits=0;
+ auto guard=[&]{require(!stopped,"canary cooperative stop");};
+ auto drain=[&]{if(!tail)return;guard();++waits;require(d.wait(tail,std::chrono::seconds(5)),"canary five-second drain timeout");
 #ifndef OWN_RT_HOST_ONLY
-  for(auto e:segment){auto t=d.timing(e);require(t.end_ns>=t.start_ns&&t.start_ns,"canary profiling required");max_ns=std::max(max_ns,double(t.end_ns-t.start_ns));require(max_ns<100000000.,"canary submission >=100 ms");}
+  for(auto e:segment){auto t=d.timing(e);require(t.end_ns>=t.start_ns&&t.start_ns,"canary profiling required");max_ns=std::max(max_ns,double(t.end_ns-t.start_ns));device_ns+=double(t.end_ns-t.start_ns);submission_budget_passed &= max_ns<100000000.;}
 #endif
   segment.clear();tail=0;d.retire_completed_events();};
  auto save_event=[&](ownrt::Event e){tail=e;segment.push_back(e);};
@@ -60,14 +62,17 @@ static int run_canary(const Options& a) {
  verify(0,"next_token",7,1);verify(0,"error",0,1);verify(1,"error",0,1);verify(1,"streams",7,64);
  for(int c=0;c<2;++c){for(int i=0;i<1000;++i)increment(c);drain();verify(c,"data",1200,64);}
  auto bytes=d.arena.total(Memory::device);require(bytes<16*1024*1024,"canary allocation bound");
- auto receipt=d.shutdown(std::chrono::seconds(1));require(receipt.safe_to_exit,"canary unsafe teardown");
- double elapsed=Engine::ms(start);require(elapsed<30000,"canary total exceeded 30 seconds");
- std::ostringstream out;out<<"{\"schema\":\"own-runtime.iq3.packet18.canary.v1\",\"passed\":true,\"owner_cards\":2,\"device_executed\":"
+ double work_wall_ms=Engine::ms(work_start);auto teardown_start=std::chrono::steady_clock::now();
+ auto receipt=d.shutdown(std::chrono::seconds(5));require(receipt.safe_to_exit,"canary unsafe teardown");
+ double elapsed=Engine::ms(start),teardown_ms=Engine::ms(teardown_start);
+ std::ostringstream out;out<<"{\"schema\":\"own-runtime.iq3.packet18.canary.v2\",\"passed\":"<<(submission_budget_passed?"true":"false")<<",\"owner_cards\":2,\"device_executed\":"
 #ifdef OWN_RT_HOST_ONLY
  <<"false"
 #else
  <<"true"
 #endif
+ <<",\"startup_jit_ms\":"<<startup_jit_ms<<",\"device_work_ms\":"<<device_ns/1e6<<",\"work_wall_ms\":"<<work_wall_ms<<",\"teardown_ms\":"<<teardown_ms
+ <<",\"submission_budget_passed\":"<<(submission_budget_passed?"true":"false")<<",\"total_expectation_ms\":30000,\"total_expectation_exceeded\":"<<(elapsed>=30000?"true":"false")
  <<",\"round_trips\":100,\"kernels_per_card\":1000,\"token_sequence\":true,\"owned_device_bytes\":"<<bytes<<",\"wall_ms\":"<<elapsed<<",\"max_submission_ns\":"<<max_ns<<",\"host_waits\":"<<waits<<",\"teardown\":["<<receipt.json()<<"]}";
  save(a.output/"receipt.json",out.str());return 0;
 }

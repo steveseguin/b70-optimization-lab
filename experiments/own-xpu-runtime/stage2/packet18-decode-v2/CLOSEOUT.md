@@ -17,7 +17,7 @@ Device compilation and CPU preparation are separate from native qualification.
 No device binary ran; no GPU or server was started; no speed is claimed.
 Frozen matches **64/64 tokens and 384/384 fixtures**; R5 matches **8/8 tokens
 and 384/384 fixtures**. Both non-GEMV modes pass 13 integration cases each. The
-150 arithmetic, 4 owner-retirement, 7 chain/lifetime, 36 window protocol and 2
+150 arithmetic, 4 owner-retirement, 7 chain/lifetime, 39 window protocol and 2
 wrong-fixture rejection checks pass. Final binary/source identities are retained in
 [build-receipt.json](build-receipt.json) and [cpu-tests.json](cpu-tests.json).
 W0/W1/W2/W3 remain unrun and require coordinator admission.
@@ -67,7 +67,7 @@ and replaced with the resident CPU path to avoid repeated expansion; its
 was observed in that interrupted attempt. The two preliminary CPU jobs were stopped cooperatively to finish W0's field
 order and position assertions, then definitive gates started with rebuilt
 binaries; [interruption record](cpu-pre-final-interruption.json). Native arithmetic,
-peer-copy/backing behavior, resident host-shadow fit, the 30-second canary bound,
+peer-copy/backing behavior, resident host-shadow fit, first-use startup/JIT duration,
 driver-internal memory, fresh-process determinism and speed are open.
 The prepared wrapper rejects shorter coverage and names the first differing
 retained layer boundary, with BF16 value statistics. It does not pretend that
@@ -97,3 +97,25 @@ recorded environment permit W2/W3. Fresh-process repeats
 then test each dispatch. Use the measured packet15 kernel costs as planning
 weights for the deferred exact fusion candidates in README, after device parity
 is established. Nothing queues a device window automatically.
+
+## October 11: watchdog correction, CPU only
+
+The old W0 30 s cutoff could signal a normally initializing GPU process. Closed
+arm: **a watchdog set to the expected run time**. W0 now defaults to 600 s
+(300..1800); its native receipt separates startup/JIT, device submission times,
+work wall, teardown and total wall. Total time is recorded, never a pass gate.
+A completed submission beyond 100 ms fails the budget in the final receipt after
+normal coverage/teardown; five-second completion waits protect pending work.
+W1–W3 keep 10,800 s with a new 7,800 s minimum. [Audit](DEADLINES.md).
+
+Both host and SYCL binaries were rebuilt; only the host was run. Unit/mini,
+canary and 39 wrapper tests were rerun. Long frozen (64 tokens/384 layers), R5
+(8 tokens/384 layers), and dependency sanitizer gates were **reused**, with
+original receipts and binary identities preserved. [Reuse proof](deadline-reuse.json)
+reverses the exact model-neutral default/helper edits to the prior source hash,
+checks every other bound numerical source/data/build input, and separately binds
+the isolated canary. The new build receipt explicitly labels reused evidence;
+no claim that the long gates ran on the new binary is made. No device ran,
+no device discovery occurred, and PID 183867 and FAULT HALT remain untouched.
+
+Seven [host-only native CLI checks](deadline-native-cli-tests.json) also pass: default 600 s, accepted 300/1800 s, and refused 0/30/299/1801 s. No device binary ran.

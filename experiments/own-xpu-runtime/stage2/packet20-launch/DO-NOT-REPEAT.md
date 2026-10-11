@@ -2,6 +2,7 @@
 
 | Closed mistake | Retained evidence / rule | Revisit condition |
 | --- | --- | --- |
+| a watchdog set to the expected run time | Incident 5 (2026-10-11 02:34 UTC): a stop during startup/JIT can fault the engine. The 30/50 s watchdogs are withdrawn; expectations only report. [Deadline audit](../packet18-decode-v2/DEADLINES.md). | Never restore a short total-time cutoff; keep first-use JIT and at least 4× margin in every signal deadline. |
 | Calling compilation a B70 runtime pass | All native methods are unrun; decision table says not measured | A separately admitted complete device window |
 | Concatenating phases across work-groups with only a local barrier | Fusion prototype uses one group for a whole chain; fusion plan explains performance tradeoff | A dependency-correct parallel schedule with exact gates |
 | Changing the reduction tree when padding attention | REPLAY preserves active-prefix tree and original missing-partner add-zero | Never under v2 identity |

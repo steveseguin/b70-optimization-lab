@@ -64,6 +64,38 @@ class Windows(unittest.TestCase):
         record = w.supervise(child, seconds, 'cursor', io.StringIO(), latched.append, lambda: None,
                              requested, journal=journal, now=clock.now, sleep=clock.sleep, drain_seconds=2)
         return record, requested, latched
+    def test_watchdog_bounds_and_defaults(self):
+        self.assertEqual(w.watchdog_seconds('W0'), 600)
+        for value in (0, 30, 299, 1801):
+            with self.assertRaisesRegex(ValueError, 'watchdog'):
+                w.watchdog_seconds('W0', value)
+        for value in (300, 600, 1800):
+            self.assertEqual(w.watchdog_seconds('W0', value), value)
+        for name in ('W1', 'W2', 'W3'):
+            self.assertEqual(w.watchdog_seconds(name), 10800)
+            with self.assertRaisesRegex(ValueError, 'watchdog'):
+                w.watchdog_seconds(name, 7799)
+
+    def test_slow_startup_and_expectation_do_not_signal(self):
+        clock = Clock(); child = Child(clock, end=95)
+        record, requested, latched = self.watch(child, clock, seconds=w.watchdog_seconds('W0'))
+        self.assertFalse(child.signals or requested or latched)
+        self.assertGreater(record['elapsed_seconds'], 30)
+
+    def test_canary_timing_and_submission_budget(self):
+        row = dict(schema='own-runtime.iq3.packet18.canary.v2', passed=True,
+                   device_executed=True, owner_cards=2, round_trips=100,
+                   kernels_per_card=1000, token_sequence=True, owned_device_bytes=1344,
+                   wall_ms=200000, startup_jit_ms=150000, device_work_ms=100,
+                   work_wall_ms=49900, teardown_ms=100, max_submission_ns=1000,
+                   submission_budget_passed=True,
+                   teardown=[dict(safe_to_exit=True, live_bytes=0, in_flight=0)])
+        w.canary_receipt_gate(row)  # Total and work duration are never pass gates.
+        for changes in ({'max_submission_ns':100000000}, {'submission_budget_passed':False},
+                        {'startup_jit_ms':float('nan')}, {'device_work_ms':-1},
+                        {'schema':'own-runtime.iq3.packet18.canary.v1'}):
+            with self.assertRaises(ValueError): w.canary_receipt_gate(dict(row, **changes))
+
     def test_deadline_sends_one_sigterm(self):
         clock = Clock(); child = Child(clock)
         record, requested, latched = self.watch(child, clock)
@@ -262,9 +294,11 @@ class Windows(unittest.TestCase):
             w.memory_admission(census,'frozen',{'MemAvailable':floor-1,'GPUActive':99})
 
     def test_w0_requires_same_boot_binary_cards_environment(self):
-        native=dict(schema='own-runtime.iq3.packet18.canary.v1',passed=True,device_executed=True,
+        native=dict(schema='own-runtime.iq3.packet18.canary.v2',passed=True,device_executed=True,
                     owner_cards=2,round_trips=100,kernels_per_card=1000,token_sequence=True,
-                    owned_device_bytes=1344,wall_ms=500,max_submission_ns=1000,
+                    owned_device_bytes=1344,wall_ms=65000,max_submission_ns=1000,
+                    startup_jit_ms=62000,device_work_ms=1,work_wall_ms=2999,teardown_ms=1,
+                    submission_budget_passed=True,
                     teardown=[dict(safe_to_exit=True,live_bytes=0,in_flight=0)])
         self.write(self.root/'run/receipt.json',native)
         row=dict(schema='own-runtime.iq3.packet18.window.v1',window='W0',passed=True,
@@ -288,7 +322,7 @@ class Windows(unittest.TestCase):
             latch=HERE/'build/FAULT.json'
             before=latch.read_bytes() if latch.exists() else None
             result=subprocess.run([sys.executable,'-B',str(HERE/'window.py'),
-                '--authorized-device-window','--window','W0','--seconds','30','--output',str(out)],
+                '--authorized-device-window','--window','W0','--seconds','600','--output',str(out)],
                 env=env,capture_output=True,text=True)
             self.assertNotEqual(result.returncode,0)
             self.assertIn('before latch',result.stderr)

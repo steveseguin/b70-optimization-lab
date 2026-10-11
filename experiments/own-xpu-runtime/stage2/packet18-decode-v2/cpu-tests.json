@@ -2,7 +2,7 @@
   "schema": "own-runtime.iq3.packet18.cpu-tests.v1",
   "passed": true,
   "device_executed": false,
-  "binary_sha256": "620c3a61cb0e1bf76b68cb5e66d571110ebfbdffc611041cdb9bae46c52403c2",
+  "binary_sha256": "89276452001c948ad96c3aa8269a40ee3bb994e3402469942007ffedf3896da7",
   "integration": {
     "core": {
       "schema": "own-runtime.iq3.packet18.cpu-tests.v1",
@@ -127,7 +127,7 @@
           "dispatch_sites": 1825
         }
       ],
-      "binary_sha256": "620c3a61cb0e1bf76b68cb5e66d571110ebfbdffc611041cdb9bae46c52403c2"
+      "binary_sha256": "89276452001c948ad96c3aa8269a40ee3bb994e3402469942007ffedf3896da7"
     },
     "parallel": {
       "schema": "own-runtime.iq3.packet18.cpu-tests.v1",
@@ -252,7 +252,7 @@
           "dispatch_sites": 1825
         }
       ],
-      "binary_sha256": "620c3a61cb0e1bf76b68cb5e66d571110ebfbdffc611041cdb9bae46c52403c2"
+      "binary_sha256": "89276452001c948ad96c3aa8269a40ee3bb994e3402469942007ffedf3896da7"
     }
   },
   "units": {
@@ -261,11 +261,25 @@
     "chain-tests": "7 deferred chain/lifetime checks PASS; 5000 copies without intervening wait\n",
     "queue-tests": "4/4 peer-drain and foreign-dependency gates PASS\n"
   },
-  "window_protocol_tests": 36,
+  "window_protocol_tests": 39,
+  "deadline_only_gate_reuse": {
+    "audit_sha256": "cd2dd685722bf1952961086008f0124263e40d0ae526e19843df27dd855a00c5",
+    "original_host_sha256": "620c3a61cb0e1bf76b68cb5e66d571110ebfbdffc611041cdb9bae46c52403c2",
+    "retained_receipts": {
+      "cpu-real-frozen.json": "9e9083337c8ee605a23ed3433d13cf31b7bc352d259ca86343110fcab83cb84c",
+      "cpu-real-r5.json": "dff29a3510fd8859ea1bfee0acc1b52d5b5cddc5b791255292f7374d425d77be",
+      "sanitizer-mini.json": "1ca79b0ae12539486e3dbcd81245d9bde52a9c94e16535f0b753a357b9c3e977",
+      "sanitizer-integration.json": "7c1062b2dd22a9b3c9e94575e26c8b5b2c41209179b40b9a2e46ee8ae1d0db10",
+      "sanitizer-real-short.json": "e1fb9d19e56fe23f4c553cc44c13199c449ff2421df934317c46551e8fdfa150",
+      "sanitizer-real-full.json": "7837ec33f7bef7c34f38aa49e2a5003872f3e495a009d8e1814126228d5a29f8",
+      "sanitizer-unit.json": "69c3e7d8e5b3c25ae2c49203be57f4822c2bde69127c94c6f81da2cf6a4842c4"
+    },
+    "scope": "unchanged model path only; new canary/mini/unit/window checks run on rebuilt code"
+  },
   "mismatch_rejections": {
     "passed": true,
     "device_executed": false,
-    "binary_sha256": "620c3a61cb0e1bf76b68cb5e66d571110ebfbdffc611041cdb9bae46c52403c2",
+    "binary_sha256": "89276452001c948ad96c3aa8269a40ee3bb994e3402469942007ffedf3896da7",
     "tests": [
       {
         "nongemv": "core",
