@@ -72,29 +72,58 @@ MEMORY_NOTE = """
 - Fetch each item with `next` as a command of its own (nothing chained to it), so it can be archived word for word.
 """
 
+# The instruction comes AFTER the turns. The first live run (2026-10-11, campaign 6) had it before them: the model
+# read 8K tokens of its own turns last and simply wrote one more (a running state, no RULES section), so the rule
+# of item 1 was lost at the first cut.
 NOTES_REQUEST = """\
-The oldest part of this conversation is about to be moved out of view (it stays in the archive, searchable with \
-`recall`). Do not call any tool. Rewrite the NOTES so that the work can continue without those turns.
+The oldest part of this conversation is about to be moved out of view. It stays in a searchable archive, but you \
+will no longer see it. Below are your current NOTES and the turns being moved out; after them you are asked to \
+write the new NOTES.
 
-Write exactly these three sections, in this order:
+=== CURRENT NOTES ===
+{notes}
+
+=== TURNS BEING MOVED OUT ===
+{turns}
+
+=== END OF THE TURNS ===
+
+Do not continue the task and do not call any tool. Write the new NOTES now, so that the work can continue without \
+those turns. Use exactly this layout; the first line of your reply is the word RULES:
+
 RULES
-one line per standing rule, method, definition or instruction stated so far that still applies, complete and in its \
-original words. Copy every existing RULES line unchanged and add the new ones found in the turns below. Never drop \
-or shorten a rule.
+one line per standing rule, method or definition that the turns being moved out state and that applies from then \
+on, complete and in its original words, after every RULES line of the current NOTES, copied unchanged. Never drop \
+or shorten a rule. Do not repeat the task statement at the top of the conversation: it stays in view. If there is \
+no rule, write (none).
 STATE
 what later work depends on, one fact per line, current values only: replace a superseded value, and keep a line \
 `name removed` for something that was removed.
 OPEN
 anything unfinished or to watch for (may be empty).
 
-Keep the whole NOTES under about {cap} tokens. Output only the NOTES, starting with the line RULES.
-
-Current NOTES:
-{notes}
-
-Turns being moved out:
-{turns}
+Keep the whole NOTES under about {cap} tokens. Output only the NOTES.
 """
+LAYOUT_RETRY = ("Your reply did not use the layout. Reply with the NOTES only: first line RULES, then the rules, "
+                "then a line STATE, then the state, then a line OPEN.")
+
+
+def section_of(line: str) -> str:
+    """RULES, STATE or OPEN if the line is that heading (plain, with a colon, or as a markdown heading), else ''."""
+    head = line.strip().strip("#*_ ").rstrip(":").strip("*_ ").upper()
+    return head if head in ("RULES", "STATE", "OPEN") else ""
+
+
+def from_rules(text: str) -> str:
+    """The reply from its RULES heading on (a reply may open with a THOUGHT line the agent's system prompt asks for)."""
+    lines = text.splitlines()
+    at = next((i for i, ln in enumerate(lines) if section_of(ln) == "RULES"), None)
+    return text if at is None else "\n".join(lines[at:]).strip()
+
+
+def has_layout(notes: str) -> bool:
+    heads = [section_of(ln) for ln in notes.splitlines()]
+    return "RULES" in heads and "STATE" in heads and heads.index("RULES") < heads.index("STATE")
 
 
 def split_items(tool_text: str) -> dict[int, str]:
@@ -142,15 +171,12 @@ def rule_lines(notes: str) -> list[str]:
     """Lines of the RULES section (between the line RULES and the line STATE), bullets stripped."""
     lines, on = [], False
     for ln in notes.splitlines():
-        s = ln.strip()
-        head = s.rstrip(":").upper()
-        if head == "RULES":
-            on = True
-        elif head in ("STATE", "OPEN"):
-            on = False
+        s, head = ln.strip(), section_of(ln)
+        if head:
+            on = head == "RULES"
         elif on and s:
             lines.append(s.lstrip("-* ").strip())
-    return [ln for ln in lines if ln]
+    return [ln for ln in lines if ln and ln.lower().strip("().") != "none"]
 
 
 def keep_rules(old: str, new: str) -> tuple[str, list[str]]:
@@ -161,7 +187,7 @@ def keep_rules(old: str, new: str) -> tuple[str, list[str]]:
     if not lost:
         return new, []
     lines = new.splitlines()
-    at = next((i for i, ln in enumerate(lines) if ln.strip().rstrip(":").upper() == "RULES"), None)
+    at = next((i for i, ln in enumerate(lines) if section_of(ln) == "RULES"), None)
     if at is None:
         lines, at = ["RULES"] + lines, 0
     lines[at + 1:at + 1] = lost
@@ -408,7 +434,7 @@ class KeeperAgent(TruncateAgent):
             if isinstance(resp, Exception):
                 rec["notes_error"] = f"{type(resp).__name__}: {resp}"
                 continue
-            usage, text = getattr(resp, "usage", None), (resp.choices[0].message.content or "").strip()
+            usage, text = getattr(resp, "usage", None), from_rules((resp.choices[0].message.content or "").strip())
             rec["notes_prompt_tokens"] += getattr(usage, "prompt_tokens", 0) or 0
             rec["notes_completion_tokens"] += getattr(usage, "completion_tokens", 0) or 0
             rec["notes_finish"] = resp.choices[0].finish_reason
@@ -417,6 +443,10 @@ class KeeperAgent(TruncateAgent):
                 rec["notes_error"] = "empty reply"
             elif size > 2 * self.notes_max_tokens:
                 rec["notes_error"] = f"reply of {size} tokens is over twice the cap"
+            elif not has_layout(text):
+                rec["notes_error"] = "reply without the RULES / STATE layout"
+                rec["notes_bad_layout"] = text[:200]
+                req = req + [{"role": "assistant", "content": text}, {"role": "user", "content": LAYOUT_RETRY}]
             else:
                 text, lost = keep_rules(self.notes, text)
                 self.n_rules_put_back += len(lost)

@@ -76,6 +76,25 @@ class Keeper(unittest.TestCase):
         for cmd in ("next && echo DONE", "next; cat /app/answers.json", "next | head", "echo x && next", "nextx", ""):
             self.assertFalse(ok(cmd), cmd)
 
+    def test_layout_check(self):
+        ok = NS["has_layout"]
+        self.assertTrue(ok("RULES\n- A is secret.\nSTATE\nabcd12 5\nOPEN"))
+        self.assertTrue(ok("## RULES\n(none)\n\n**STATE:**\n- abcd12 = 5"))
+        self.assertFalse(ok("ITEM 5/147:\n- abcd12 went up\n\nCurrent state:\n- abcd12 = 5\n\nContinuing."))
+        self.assertFalse(ok("STATE\nabcd12 5\nRULES\n- late"))
+        self.assertEqual(NS["rule_lines"]("## RULES\n(none)\n**STATE**\nabcd12 5"), [])
+        self.assertEqual(NS["rule_lines"]("**RULES:**\n- A is secret.\n### STATE\nabcd12 5"), ["A is secret."])
+
+    def test_text_before_the_rules_heading_is_dropped(self):
+        self.assertEqual(NS["from_rules"]("THOUGHT: I need to rewrite the NOTES.\n\nRULES\n- A is secret.\nSTATE\nabcd12 5"),
+                         "RULES\n- A is secret.\nSTATE\nabcd12 5")
+        self.assertEqual(NS["from_rules"]("no heading here"), "no heading here")
+
+    def test_request_puts_the_instruction_after_the_turns(self):
+        text = NS["NOTES_REQUEST"].format(cap=2048, notes="(none yet)", turns="OUTPUT: ITEM 1/9 (UPDATE)\nx")
+        self.assertLess(text.index("=== TURNS BEING MOVED OUT ==="), text.index("Write the new NOTES now"))
+        self.assertTrue(text.rstrip().endswith("Output only the NOTES."))
+
     def test_pin_head_round_trip(self):
         self.assertEqual(NS["PIN_RE"].match(NS["PIN_HEAD"].format(n=17)).group(1), "17")
 
