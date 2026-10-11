@@ -33,6 +33,8 @@ On **October 11 at 00:56:50 UTC**, Flash-Next attempt 8 faulted on all four card
 
 The **October 11 CPU-only [first-forward audit](notes/2026-10-11-attempt8-moe-first-forward-audit.md)** traces the expert pointers and production call path. The saved faults report writes; the passing one-layer probe skipped production routing and workspace handling. The cause remains unknown. Next is CPU preparation of checks that identify the failing operation. A full-model one-card test, then two cards, needs reviewed adapter changes and memory admission; the current adapter requires four cards. No runtime fix or GPU launch was performed, and the halt above remains.
 
+The **October 11 [MoE boundary diagnostic](notes/2026-10-11-moe-boundary-diagnostic.md)** is now separately sealed and passes 122 CPU tests; it checks routing, expert ownership and buffer bounds before the first expert multiplication. It is off by default, and the original overlay is unchanged. The prepared four-card load-only command still needs an authorized window; no GPU work was done here.
+
 The certified FP8 result remains **46.854250 tok/s**, with its exact identity and gates in the [closeout](results/qwen38-flash-next-fp8-b70/CLOSEOUT-20260913.md), [handoff](results/qwen38-flash-next-fp8-b70/HANDOFF.md) and [reproduction
 guide](repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md). Reopening diagnostics and CPU preparation do not replace that record.
 

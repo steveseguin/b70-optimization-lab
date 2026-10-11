@@ -1,0 +1,50 @@
+{
+  "schema": "screen1b.moe-boundary-cpu-validation.v1",
+  "recorded_utc": "2026-10-11T01:50:22.223374+00:00",
+  "host": "steve-b70s",
+  "device": "cpu",
+  "command": "nice -n 19 env OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 PYTHONDONTWRITEBYTECODE=1 /home/steve/.venvs/ltx25-baseline/bin/python -B experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/run_cpu_tests.py",
+  "test_summary": {
+    "discovered": 122,
+    "passed": 122,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 22.999
+  },
+  "torch": "2.14.0+xpu",
+  "gpu_executed": false,
+  "server_launched": false,
+  "synthetic_operator_doubles": true,
+  "native_qualification": false,
+  "production_overlay_unchanged": true,
+  "initial_resume_suite": {
+    "discovered": 116,
+    "passed": 113,
+    "failures": 1,
+    "errors": 2,
+    "reason": "Interrupted variant artifacts stale; no structural boundary test failure. Resealed after review fixes."
+  },
+  "source_sha256": {
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/base-runtime/vllm/model_executor/layers/fused_moe/moe_align_block_size.py": "c3f7fc2087836f0160a32ab99ceb1d8f6e87c793679da34dd672e225cb7fa31b",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/boundary.patch": "7fdca5dcc55edf2caf4980d02c8ddae4b7abf157e70de75d4f51da25a13b9a82",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/build_patch.py": "a8b3906bc019aaebb7584905b58729865cb2793cdb29abc7bedc3a0ef4a42300",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/copies/container-entrypoint.sh": "24b58de86922d046ddf5e0ca5010e26325faa110930f675722de71821d706338",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/copies/overlay/vllm/model_executor/layers/fused_moe/experts/triton_moe.py": "ec64215fe72ec18f16c456ca4521fb914e954a5fe667e349166ba5246bb9fe99",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/copies/overlay/vllm/model_executor/layers/fused_moe/fused_moe.py": "ac692ee18549ef5739e041d216d1b2ccade01f363358ffd03d4fed694c6a09b4",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/copies/overlay/vllm/model_executor/layers/fused_moe/modular_kernel.py": "7a085c62fdcde0be3d6cea07da8f3bd9cfba08f54fa76c577c3be4efcc5949c0",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/copies/overlay/vllm/model_executor/layers/fused_moe/moe_align_block_size.py": "ebb51d990d55f6ccec68c422e82b2bd34c40b166220907f224c427cce0647fea",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/copies/overlay/vllm/q38_expert_placement.py": "68a97cd866ba77f41e2c7349c537f858e53d0d8717e5d1236edf699b19fc0afc",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/copies/overlay/vllm/screen1b_moe_boundary.py": "1e31ffb9927c49cdcbea91c729ad94cad40237b4d46a1e8396b7b81b19379e7b",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/copies/overlay/vllm/v1/worker/gpu/model_runner.py": "297b8f893d594218cbf0b339155eed78856f673d9ff76c155756363dccca24ff",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/copies/overlay/vllm/v1/worker/gpu_worker.py": "60b24532e657e4c67602890ba909ad8bf95db5e9a094804781d97aba4e40347b",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/copies/overlay-manifest.json": "c786f7380ca0ab0cf8c52d31ad8bd109752917ed1397b9377c734232a176b101",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/copies/probe/watch_kernel.py": "945d3bd83250b5ba8b29fd5675bccdf893e9a51e0d506d0bf4cee4995b7745cd",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/copies/screen.py": "dff46c9c0e4cdce34b988cd9524717c241591c550a92c7f3bcad4a1723b558dd",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/patch-manifest.json": "f3555f9f03d4f7e8e49fa0c0ef052864a926c1e2596214209e979279bdb2335d",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/run_cpu_tests.py": "78969e2d8bf7895869ea92530d1fe371facb7f320de1bb6c64da72ce6a229670",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/test_artifacts.py": "d4775cbf7fc83ad73d4529d6dcc5a52f3ec8d56f0b2eab4a6ef423af5214c274",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/test_boundary.py": "eb68d0a7f7eb24e435147371ec2378f4a9774998bd50aa2eece68e76d351311d",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/test_window.py": "74cf48fc9a6cc9b15dad416efc8720a58a8c35609af249e7fc54ca13f9884804"
+  }
+}

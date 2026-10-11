@@ -1,0 +1,1366 @@
+--- a/container-entrypoint.sh
++++ b/container-entrypoint.sh
+@@ -33,6 +33,13 @@
+ [[ ! -e /screen/STOP ]] || { echo 'Screen 1b cancellation is latched' >&2; exit 2; }
+ # Required native-FP8 mmap contract is sealed with the overlay. No table rewrite.
+ [[ "${VLLM_USE_V2_MODEL_RUNNER:-}" == 1 ]] || { echo 'mmap PLE needs the V2 pre-forward hook' >&2; exit 2; }
++# The staged diagnostic is never an implicit production replacement.
++[[ "${SCREEN1B_MOE_BOUNDARY:-}" == 1 ]] || {
++    echo 'Staged MoE boundary overlay requires SCREEN1B_MOE_BOUNDARY=1' >&2; exit 2;
++}
++[[ "${SCREEN1B_MOE_BOUNDARY_WATCHER:-}" == /screen/watcher.json &&
++   "${SCREEN1B_MOE_BOUNDARY_DIR:-}" == /screen/moe-boundary ]] || exit 2
++[[ ! -e /screen/FAULT ]] || exit 2
+ # Apply before any vLLM import. Official container Python tree only, never a host venv.
+ /opt/venv/bin/python /screen-package/apply_overlay.py \
+     --root /opt/venv/lib/python3.12/site-packages > /screen/overlay-application.json
+--- a/overlay-manifest.json
++++ b/overlay-manifest.json
+@@ -37,22 +37,24 @@
+     "vllm/v1/kv_offload/tiering/manager.py": "1bb9af3d334fc322911aaffa6e21d2f15c19ae1b2bb6a5be425e31143172bcc6",
+     "vllm/v1/utils.py": "ddedc85392c3f3f782bec31b6e2b671639cca41f3f7aabcb8b518cea05e4606c",
+     "vllm/v1/worker/gpu/attn_utils.py": "d5ef338178e824f0d2fb9447cdebda1e8f4e7ec9cd7791994083007ff1ad77c8",
+-    "vllm/v1/worker/gpu/model_runner.py": "8a70ef96ca611702be151cdf3ee7d883f84d90e7657273103d19206aec6e19c3",
++    "vllm/v1/worker/gpu/model_runner.py": "297b8f893d594218cbf0b339155eed78856f673d9ff76c155756363dccca24ff",
+     "vllm/v1/worker/gpu/model_states/mamba_hybrid.py": "e2b41b0b066d1d9e18ca0ce4f135df46ebf0ba0084888441dba4d171d1342021",
+     "vllm/v1/worker/gpu/sample/prompt_logprob.py": "ab17fa440e054fe1414956d80f08b67fa733171020ebe1a67c8a6bdaab29f9d1",
+     "vllm/v1/worker/gpu/spec_decode/autoregressive/speculator.py": "5f688e3972a0a7491ecfa786135d2fa0e1a5aa148e97a9ef3cf507cff6dbe171",
+     "vllm/v1/worker/gpu_model_runner.py": "6e79d4687c38aad5c26cb2eeeada4909ae60008c266993105d4e4c5ed31326ad",
+     "vllm/v1/worker/mamba_utils.py": "e5014b3e6f2808aa0aca6478e0c650000a0233d16b5abc9cfdf82533b1b749dc",
+-    "vllm/model_executor/layers/fused_moe/experts/triton_moe.py": "855829b35cf8d230e8e7401a0df1cc54c5adc6adcfde27fd415f8f595fc0623f",
+-    "vllm/model_executor/layers/fused_moe/fused_moe.py": "f5252f843722ea91149b1e93c60e67318957d552ff1cf8014d15909ef30b5542",
+-    "vllm/model_executor/layers/fused_moe/modular_kernel.py": "0f070a39fd5149d3b37042cad6c40828206c341967f3be2c3ba4578099f9a347",
++    "vllm/model_executor/layers/fused_moe/experts/triton_moe.py": "ec64215fe72ec18f16c456ca4521fb914e954a5fe667e349166ba5246bb9fe99",
++    "vllm/model_executor/layers/fused_moe/fused_moe.py": "ac692ee18549ef5739e041d216d1b2ccade01f363358ffd03d4fed694c6a09b4",
++    "vllm/model_executor/layers/fused_moe/modular_kernel.py": "7a085c62fdcde0be3d6cea07da8f3bd9cfba08f54fa76c577c3be4efcc5949c0",
+     "vllm/model_executor/layers/fused_moe/routed_experts.py": "89c281c171042ffd3b5215fa5c424dff739cd65a9a6aeb11146ac056cada6527",
+     "vllm/model_executor/layers/quantization/fp8.py": "dd1a2cc2d89d694ecde7cca16c82aebf61eaed08babb516c955075be9f7186cf",
+-    "vllm/q38_expert_placement.py": "ffe5c85153c9cbc31cab4798f198161aafc7b31407d7d20dbcfbfd2f9e5fcbe9",
++    "vllm/q38_expert_placement.py": "68a97cd866ba77f41e2c7349c537f858e53d0d8717e5d1236edf699b19fc0afc",
+     "vllm/screen1b_ple.py": "ecd36c30c6cafa739f3565b98cb3cb3936c7f1cbc6746d7581c900e610d0cbb2",
+     "vllm/screen1b_teardown.py": "c37445ab688ff43ff0366698e689af50c5780dc1a4aa5112f2e517059cf04449",
+-    "vllm/v1/worker/gpu_worker.py": "1b55f9910bf1569a138e5ab458ea97694afc9d3e3543d9a82bd0a4fc197f57b0",
+-    "vllm/v1/worker/xpu_worker.py": "b976b96b49de5feafc3f750e0087fab62f336a1ec2751cab884edae10662666f"
++    "vllm/v1/worker/gpu_worker.py": "60b24532e657e4c67602890ba909ad8bf95db5e9a094804781d97aba4e40347b",
++    "vllm/v1/worker/xpu_worker.py": "b976b96b49de5feafc3f750e0087fab62f336a1ec2751cab884edae10662666f",
++    "vllm/model_executor/layers/fused_moe/moe_align_block_size.py": "ebb51d990d55f6ccec68c422e82b2bd34c40b166220907f224c427cce0647fea",
++    "vllm/screen1b_moe_boundary.py": "1e31ffb9927c49cdcbea91c729ad94cad40237b4d46a1e8396b7b81b19379e7b"
+   },
+   "schema": "neural.download.screen1b-overlay.v1",
+   "source_tree": "/home/steve/src/lumnus-20261008/vllm",
+@@ -196,7 +198,7 @@
+     },
+     "vllm/v1/worker/gpu/model_runner.py": {
+       "base_sha256": "174c93db921c23cf0396eee4764be25b2bd2d4b6a06e9fa41ce3598b884ce8ce",
+-      "sha256": "8a70ef96ca611702be151cdf3ee7d883f84d90e7657273103d19206aec6e19c3"
++      "sha256": "297b8f893d594218cbf0b339155eed78856f673d9ff76c155756363dccca24ff"
+     },
+     "vllm/v1/worker/gpu/model_states/mamba_hybrid.py": {
+       "base_sha256": "573e130ac5587d4822fabf97adad1ad0fda02ff83c5e70df879a5bb175ae845c",
+@@ -220,15 +222,15 @@
+     },
+     "vllm/model_executor/layers/fused_moe/experts/triton_moe.py": {
+       "base_sha256": "806fbccfe30f5fbd578acf773add99bdf022b12d617958bd6281aef6de369701",
+-      "sha256": "855829b35cf8d230e8e7401a0df1cc54c5adc6adcfde27fd415f8f595fc0623f"
++      "sha256": "ec64215fe72ec18f16c456ca4521fb914e954a5fe667e349166ba5246bb9fe99"
+     },
+     "vllm/model_executor/layers/fused_moe/fused_moe.py": {
+       "base_sha256": "7072eb06237be9d33dcb0ef7101410f886a6363c98cbee70a014c68b70f639cb",
+-      "sha256": "f5252f843722ea91149b1e93c60e67318957d552ff1cf8014d15909ef30b5542"
++      "sha256": "ac692ee18549ef5739e041d216d1b2ccade01f363358ffd03d4fed694c6a09b4"
+     },
+     "vllm/model_executor/layers/fused_moe/modular_kernel.py": {
+       "base_sha256": "8dc4e0dbbf35b3aac8add63ca6f2a7bbfdadaabbd60826e24598b22c7d8e5c22",
+-      "sha256": "0f070a39fd5149d3b37042cad6c40828206c341967f3be2c3ba4578099f9a347"
++      "sha256": "7a085c62fdcde0be3d6cea07da8f3bd9cfba08f54fa76c577c3be4efcc5949c0"
+     },
+     "vllm/model_executor/layers/fused_moe/routed_experts.py": {
+       "base_sha256": "68c48e5df0ea4a7cc1f04436b7b9153eb53802ecd9bb55d38db8738508daac6d",
+@@ -240,7 +242,7 @@
+     },
+     "vllm/q38_expert_placement.py": {
+       "base_sha256": null,
+-      "sha256": "ffe5c85153c9cbc31cab4798f198161aafc7b31407d7d20dbcfbfd2f9e5fcbe9"
++      "sha256": "68a97cd866ba77f41e2c7349c537f858e53d0d8717e5d1236edf699b19fc0afc"
+     },
+     "vllm/screen1b_ple.py": {
+       "base_sha256": null,
+@@ -252,16 +254,24 @@
+     },
+     "vllm/v1/worker/gpu_worker.py": {
+       "base_sha256": "6994436e4547c0996ab555b3e814e8ccea26b650dfc1b378b97d640745309347",
+-      "sha256": "1b55f9910bf1569a138e5ab458ea97694afc9d3e3543d9a82bd0a4fc197f57b0"
++      "sha256": "60b24532e657e4c67602890ba909ad8bf95db5e9a094804781d97aba4e40347b"
+     },
+     "vllm/v1/worker/xpu_worker.py": {
+       "base_sha256": "711b56432506b58041cd86e71320c3960413f7bd61061990b66488421d81cfc3",
+       "sha256": "b976b96b49de5feafc3f750e0087fab62f336a1ec2751cab884edae10662666f"
++    },
++    "vllm/model_executor/layers/fused_moe/moe_align_block_size.py": {
++      "base_sha256": "c3f7fc2087836f0160a32ab99ceb1d8f6e87c793679da34dd672e225cb7fa31b",
++      "sha256": "ebb51d990d55f6ccec68c422e82b2bd34c40b166220907f224c427cce0647fea"
++    },
++    "vllm/screen1b_moe_boundary.py": {
++      "base_sha256": null,
++      "sha256": "1e31ffb9927c49cdcbea91c729ad94cad40237b4d46a1e8396b7b81b19379e7b"
+     }
+   },
+   "support_files": {
+     "apply_overlay.py": "4c3620bde0cd73686fce04df94253a8e3615e6fc458283a3bfe4cc8196259ddf",
+-    "container-entrypoint.sh": "969d6372ac635d3444dea2368686c153cfd0dcae6a6dbdf6c6bc65a076d9692b",
++    "container-entrypoint.sh": "24b58de86922d046ddf5e0ca5010e26325faa110930f675722de71821d706338",
+     "placement-certified-v5.json": "f3f4812cfae2f4f704e75cc9b47a4031a476f846b353e3def23141b9d9c05f96",
+     "memory-contract.json": "5b76ab8735f74e11bd7d7048b5879991ab637a701576ce85b563965f36b2544b",
+     "memory-bounds.json": "7f7a0a5458aedac8e371aeac4a82033b55d1f783276a2073861e50b45007b70d",
+@@ -270,8 +280,45 @@
+     "vram_plan.py": "75b1c1e5671ab5a34d6375df137eec8a3f62f108432eb31c05d87cb56b784955",
+     "placement_plan.py": "eb9953f4f09ae6da682dc1701bedade66680a597f0509203102bfacd47cbd8e5",
+     "memory_watchdog.py": "f084dd183b57e6340d43bef1c0dcb7194ee2f449469e31195d248ae8129966c7",
+-    "screen.py": "fdb57ed3241aeb29e3d1060671fe0e8ae0feebf2d06a80e316039d975d3f1428",
+-    "teardown_receipts.py": "46099d077ec2025d2849ffc4052baee603e15b5f32b811a536a14ebb5727b5a7"
++    "screen.py": "dff46c9c0e4cdce34b988cd9524717c241591c550a92c7f3bcad4a1723b558dd",
++    "teardown_receipts.py": "46099d077ec2025d2849ffc4052baee603e15b5f32b811a536a14ebb5727b5a7",
++    "probe/watch_kernel.py": "945d3bd83250b5ba8b29fd5675bccdf893e9a51e0d506d0bf4cee4995b7745cd",
++    "analyze_host_budget.py": "04ed1860094c6f2323ba3b49142b2762e9057302271c0d306dc840c2a0b8f116",
++    "analyze_partial_load.py": "a461f81eb02b9ce168d4c39aac15b3cb7a5d22d88bcfa3bb61f3ff0655ab24e5",
++    "attempt7_budget.py": "9e6f05e35892c28dace0256f5bd97f1490cb2591992236289bc7fbd41a09934e",
++    "calibration.py": "6ec6dbf7be651ee3cee07bf47d683c97a0a1ab452b2da1aaf654653ebd0cf31e",
++    "certified-memory-reconstruction.json": "db7b54cefa07aee7c3f5265cec46bf30cc7f1003a0dc7418f50883f86f987287",
++    "certified-run-search.json": "181479f8ddd5979108e8ba528235e026059dbe114f8c0be2dbc37f6a41e2454d",
++    "cpu-adapter-validation.json": "7c8aea09dc2e8e6dd907571699cc696995c9c790a5d9bb61b7203a56d5ac66da",
++    "cpu-buffer-measurement.json": "abf1826ea3813e09f76b75b301d580ef624a6cfe4f766d214af951c8c1099fd2",
++    "dry_buffers.py": "366f2fe40924aab1ea809449368e269d967d3135eb82b62d5cb54ce4d8625bbd",
++    "host-memory-prediction.json": "5f5ddc1177ee8b1b59573a72a76f2d0628e58695e02f958d4275801d170b4eb5",
++    "image-plan.json": "08bf4e83bff6fb77dc6d4bb0d11e53edd63a59ebfd9bfb9a36e7197806469cee",
++    "probe/single_rank_slab_probe.py": "a5bec8bb47799547bd814789b3b0b9395327768f317c99e341002ffa527e1558",
++    "protocol.py": "63bea7cf80ed497051af6483647ec26026732af2428265c7999642732bfa6fe8",
++    "rescue_calibration.py": "4ea7cd6cecf3ff3b16f4c15ae80ca58d3d8586d99f8b265acce08ce96053a9c8",
++    "rescued-calibration.json": "79c4f65b1a66d6cc78ed9c6bd350388c277235aee67f9699b4c52cab4835fa6f",
++    "test_allocation_receipts.py": "232f8d87632678f0c772f0695e7b51a9c05610918bbdb5c27641cb1f3fa86bc8",
++    "test_attempt3_diagnostics.py": "b7778636884e30de8e9e7f8cd9f6e6e76af397ae5153a0ce66c3b010f14aa4f0",
++    "test_calibration.py": "da000f80316751d5bf022725fb8503c7a32ce5268314bc88cd28031a713b6651",
++    "test_conversion_dispatch.py": "674397b10da7e349d7f9a43e667060e812381921ed054f9213df64b7d64846e1",
++    "test_copy_dispatch.py": "8b283b56716545038d07f0090b968d75ed175bbc5cb7c16771cbcc692b0d911f",
++    "test_cpu.py": "1b7e0960acf03bea749e571a76d5e9f8ec6ab4f19b900d1e77a72b4c550a95f6",
++    "test_driver_environment.py": "07d2df940cf1cbc4c5deb28c9cc1a1aca707c873d5844899c37869e46b069a35",
++    "test_host_budget.py": "3f084c173b35b1f98661d2e1351d15d287db7f92c3b56b8933ddc8d4b8e06fad",
++    "test_journal.py": "f51d029feb4dbc8b4a2685cb51d889636c4600b748c3dfb10cf078e5718b06d6",
++    "test_loading_guard.py": "8b6742ab6436ea833191fe08d1817c01ece0c2dbdedc0026c8261b39eb3cd68f",
++    "test_memory_plan.py": "4a4874821331c741ceec02675ba7fef54d97d47b48d92630d12d52b940197488",
++    "test_overlay_cpu.py": "274b90a7d16ee4088fbc67b5fb7cfbda6238bef826f4d0661dd2e08c11a26f9d",
++    "test_owner_acceptance.py": "74c53316c23d2c9d2bda4c431375fb006b59792417c35af0e35963d1be821c31",
++    "test_partial_load.py": "d4312f868bbffb8993ee621fe57f224f3970408c9947b6d7fefc2230f6e2f71d",
++    "test_pinned_policy.py": "8fd6256cde827b8965bab88282e2d65bd393a27c3879140508037e45ccf8d2e9",
++    "test_placement.py": "79cdf53c3ecab83085ec71f5c73879113b84f2911e2f2c2c1899fd460d5ddfab",
++    "test_ple_mmap.py": "e57740543f9c3f023e65445948c3320d9f342269a2598931ac4ad9c012eff1b2",
++    "test_vram_plan.py": "1059dc977affdebd5c4ddf97fd1852d456fa2924858e90da204402f0dc4be152",
++    "test_watchdog.py": "71077ed08ee0b06fe76e4f2ed5a474481da8f31e55fcb38fcd6bcafa6d11c740",
++    "test_worker_init_rehearsal.py": "83fcfca20526c0464c4e42469353f3c165824e255e4611e617c4dafe1f364766",
++    "worker_init_rehearsal.py": "c1730006398eb1457b5afdd0bd1f93c9996ed09fca8473cac295c24e09cb39ce"
+   },
+   "semantics": {
+     "PLE": "native FP8 shard mmap; fixed 1 GiB pinned clock cache/rank; original hash, raw int8 owner reduction and unchanged dequantization; synchronous pre-forward staging",
+@@ -282,6 +329,7 @@
+     "exact_gdn_native_kernel": "not ported; fused official kernel unchanged",
+     "embedding": "certified input embedding selected for generic UVA, shared MTP alias counted once",
+     "driver_allocation": "NEOReadDebugKeys=1 EnableDeferBacking=0 retained; Flash-Next shadow-saving claim withdrawn after attempt 6; pinned host reservation remains.",
+-    "pinned_allocator": "Torch 2.13: all allocator environment aliases set pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1 before import; exact large pins, small cached pins; source-derived sizes, runtime fit unqualified"
++    "pinned_allocator": "Torch 2.13: all allocator environment aliases set pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1 before import; exact large pins, small cached pins; source-derived sizes, runtime fit unqualified",
++    "moe_boundary": "UNQUALIFIED default-off SCREEN1B_MOE_BOUNDARY=1 diagnostic; TP4/EP4 profile only; watcher-gated queue drains, raw/remapped routing, owned rows/workspaces and eleven pointer receipts; nonlocal zero-return precedes table access only when enabled; native USM/context unknown"
+   }
+ }
+--- a/overlay/vllm/model_executor/layers/fused_moe/experts/triton_moe.py
++++ b/overlay/vllm/model_executor/layers/fused_moe/experts/triton_moe.py
+@@ -3,6 +3,7 @@
+ """Triton-based MoE expert implementations."""
+
+ import torch
++from vllm import screen1b_moe_boundary as _moe_boundary
+
+ import vllm.model_executor.layers.fused_moe.modular_kernel as mk
+ from vllm import _custom_ops as ops
+@@ -321,6 +322,14 @@
+         else:
+             raise ValueError(f"Unsupported compute_type: {hidden_states.dtype}")
+
++        if _moe_boundary.enabled():
++            _boundary = _moe_boundary.get(hidden_states.device)
++            _boundary.stage("experts.entry")
++            _boundary.weights(w1)
++            _boundary.weights(w2)
++            _boundary.workspace(workspace13, workspace2, num_tokens, top_k_num, N, K,
++                                self.adjust_N_for_activation(N, activation), output)
++
+         # Note that the output tensor might be in workspace1
+         intermediate_cache1 = _resize_cache(workspace2, (num_tokens, top_k_num, N))
+         cache2_dim = self.adjust_N_for_activation(N, activation)
+--- a/overlay/vllm/model_executor/layers/fused_moe/fused_moe.py
++++ b/overlay/vllm/model_executor/layers/fused_moe/fused_moe.py
+@@ -8,6 +8,7 @@
+ from typing import Any
+
+ import torch
++from vllm import screen1b_moe_boundary as _moe_boundary
+
+ import vllm.envs as envs
+ import vllm.model_executor.layers.fused_moe.modular_kernel as mk
+@@ -354,6 +355,7 @@
+     USE_B_TABLE: tl.constexpr = False,
+     # Tensor-descriptor path for the A gather and B load in the K-loop.
+     USE_TD: tl.constexpr = False,
++    DIAGNOSTIC_BOUNDARY: tl.constexpr = False,
+ ):
+     """
+     Implements the fused computation for a Mixture of Experts (MOE) using
+@@ -423,11 +425,12 @@
+     token_mask = offs_token < num_valid_tokens
+
+     off_experts = tl.load(expert_ids_ptr + pid_m).to(tl.int64)
+-    if USE_B_TABLE:
+-        b_off = tl.load(b_table_ptr + tl.maximum(off_experts, 0))
+-        b_base = b_ptr + tl.multiple_of(b_off, 256)
+-    else:
+-        b_base = b_ptr + off_experts * stride_be
++    if not DIAGNOSTIC_BOUNDARY:
++        if USE_B_TABLE:
++            b_off = tl.load(b_table_ptr + tl.maximum(off_experts, 0))
++            b_base = b_ptr + tl.multiple_of(b_off, 256)
++        else:
++            b_base = b_ptr + off_experts * stride_be
+     if off_experts == -1:
+         # -----------------------------------------------------------
+         # Write back zeros to the output when the expert is not
+@@ -445,6 +448,13 @@
+             compute_type,
+         )
+         return
++
++    if DIAGNOSTIC_BOUNDARY:
++        if USE_B_TABLE:
++            b_off = tl.load(b_table_ptr + off_experts)
++            b_base = b_ptr + tl.multiple_of(b_off, 256)
++        else:
++            b_base = b_ptr + off_experts * stride_be
+
+     offs_bn = (pid_n * BLOCK_SIZE_N + tl.arange(0, BLOCK_SIZE_N).to(tl.int64)) % N
+     offs_k = tl.arange(0, BLOCK_SIZE_K)
+@@ -868,6 +878,13 @@
+     if A_scale is not None and A_scale.ndim == 0:
+         A_scale = A_scale.reshape(1)
+
++    _boundary = _moe_boundary.get(A.device) if _moe_boundary.enabled() else None
++    if _boundary is not None:
++        _boundary.before_gemm(A, B, C, A_scale, B_scale, topk_weights, sorted_token_ids,
++                              expert_ids, num_tokens_post_padded, top_k,
++                              dict(config, BLOCK_SIZE_K=BLOCK_SIZE_K), block_shape,
++                              B_bias, mul_routed_weight)
++        _boundary.clear()
+     _q38_b_table = getattr(B, "_q38_base_table", None)
+     fused_moe_kernel[grid](
+         A,
+@@ -914,8 +931,11 @@
+         SWAP_AB=SWAP_AB,
+         USE_B_TABLE=_q38_b_table is not None,
+         USE_TD=use_td,
++        DIAGNOSTIC_BOUNDARY=_boundary is not None,
+         **config,
+     )
++    if _boundary is not None:
++        _boundary.stage("gemm.complete")
+
+
+ def dispatch_fused_moe_kernel(
+--- a/overlay/vllm/model_executor/layers/fused_moe/modular_kernel.py
++++ b/overlay/vllm/model_executor/layers/fused_moe/modular_kernel.py
+@@ -8,6 +8,7 @@
+ from typing import final
+
+ import torch
++from vllm import screen1b_moe_boundary as _moe_boundary
+
+ import vllm.envs as envs
+ from vllm.logger import init_logger
+@@ -1194,6 +1195,10 @@
+         workspace13 = _resize_cache(common_workspace, workspace13_shape)
+         fused_out = _resize_cache(common_workspace, fused_out_shape)
+
++        if _moe_boundary.enabled():
++            _boundary = _moe_boundary.get(device)
++            _boundary.workspace(workspace13, workspace2, M_chunk, top_k, N, K,
++                                self.fused_experts.adjust_N_for_activation(N, activation), fused_out)
+         return workspace13, workspace2, fused_out
+
+     def _maybe_apply_shared_experts(
+--- /dev/null
++++ b/overlay/vllm/model_executor/layers/fused_moe/moe_align_block_size.py
+@@ -0,0 +1,203 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++
++import torch
++from vllm import screen1b_moe_boundary as _moe_boundary
++
++from vllm import _custom_ops as ops
++from vllm.triton_utils import triton
++from vllm.utils.math_utils import round_up
++
++
++def moe_align_block_size(
++    topk_ids: torch.Tensor,
++    block_size: int,
++    num_experts: int,
++    expert_map: torch.Tensor | None = None,
++    pad_sorted_ids: bool = False,
++    ignore_invalid_experts: bool = False,
++) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
++    """
++    Aligns the token distribution across experts to be compatible with block
++    size for matrix multiplication.
++
++    Note: In the case of expert_parallel, moe_align_block_size initially
++    considers all experts as valid and aligns all tokens appropriately.
++    Before the function returns it marks the experts_ids that are not in
++    the current GPU rank as -1 so the MoE matmuls could skip those blocks.
++    This requires the num_experts input arg to be the num global experts.
++
++    Parameters:
++    - topk_ids: A tensor of shape [total_tokens, top_k] representing the
++        top-k expert indices for each token.
++    - block_size: The block size used in block matrix multiplication.
++    - num_experts: The total number of experts.
++    - expert_map: A tensor of shape [num_experts] that maps the expert index
++        from the global space to the local index space of the current
++        expert parallel shard. If the expert is not in the current expert
++        parallel shard, the mapping is set to -1.
++    - pad_sorted_ids: A flag indicating whether the sorted_token_ids length
++        should be padded to a multiple of block_size,
++    - ignore_invalid_experts: A flag indicating whether to ignore invalid
++        experts. When False, all expert_ids in topk_ids will participate in
++        counting and ranking, but invalid experts in expert_ids will be marked
++        as -1. When True, all invalid expert_ids in topk_ids will be ignored
++        and will not participate in counting or ranking, and there will be no
++        -1 in expert_ids.
++
++    Returns:
++    - sorted_token_ids: A tensor containing the sorted token indices according
++        to their allocated expert.
++    - expert_ids: A tensor indicating the assigned expert index for each block.
++    - num_tokens_post_padded: The total number of tokens after padding,
++        ensuring divisibility by block_size.
++
++    This function pads the number of tokens that each expert needs to process
++    so that it is divisible by block_size.
++    Padding ensures that during block matrix multiplication, the dimensions
++    align correctly.
++
++    Example:
++    Given topk_ids = [[2, 3, 4], [1, 2, 4], [1, 3, 4], [1, 2, 3]],
++    block_size = 4, and num_experts = 4:
++    - We initially have 12 tokens (after repeating 'top_k' times) and 4 experts,
++        with each expert needing to process 3 tokens.
++    - As block_size is 4, we pad 1 token for each expert.
++    - First, flatten topk_ids to [2, 3, 4, 1, 2, 4, 1, 3, 4, 1, 2, 3].
++    - Then append padding tokens [12, 12, 12, 12] for each block.
++    - After sorting by expert index, we obtain token_ids
++        [3, 6, 9, 12, 0, 4, 10, 12, 1, 7, 11, 12, 2, 5, 8, 12].
++        Tokens 12 are non-existent (padding) and are ignored in
++        the subsequent matrix multiplication.
++    - The padding ensures that the total number of tokens is now divisible
++        by block_size for proper block matrix operations.
++    """
++    max_num_tokens_padded = topk_ids.numel() + num_experts * (block_size - 1)
++    if pad_sorted_ids:
++        max_num_tokens_padded = round_up(max_num_tokens_padded, block_size)
++    if topk_ids.numel() < num_experts:
++        max_num_tokens_padded = min(
++            topk_ids.numel() * block_size, max_num_tokens_padded
++        )
++    sorted_ids = torch.empty(
++        (max_num_tokens_padded,), dtype=torch.int32, device=topk_ids.device
++    )
++    max_num_m_blocks = triton.cdiv(max_num_tokens_padded, block_size)
++    expert_ids = torch.empty(
++        (max_num_m_blocks,), dtype=torch.int32, device=topk_ids.device
++    )
++    num_tokens_post_pad = torch.empty((1), dtype=torch.int32, device=topk_ids.device)
++
++    _boundary = _moe_boundary.get(topk_ids.device) if _moe_boundary.enabled() else None
++    if _boundary is not None:
++        _boundary_state = _boundary.router(topk_ids, expert_map, block_size, num_experts, ignore_invalid_experts)
++        _boundary.stage("alignment.native_begin")
++        _boundary.clear()
++    ops.moe_align_block_size(
++        topk_ids,
++        num_experts,
++        block_size,
++        sorted_ids,
++        expert_ids,
++        num_tokens_post_pad,
++        expert_map if ignore_invalid_experts else None,
++    )
++
++    if _boundary is not None:
++        _boundary.raw_alignment(_boundary_state, sorted_ids, expert_ids, num_tokens_post_pad)
++        _boundary.clear()
++    if expert_map is not None and not ignore_invalid_experts:
++        expert_ids = expert_map[expert_ids]
++
++    if _boundary is not None:
++        _boundary.remapped(_boundary_state, expert_ids, sorted_ids, num_tokens_post_pad)
++    return sorted_ids, expert_ids, num_tokens_post_pad
++
++
++def batched_moe_align_block_size(
++    max_tokens_per_batch: int, block_size: int, expert_num_tokens: torch.Tensor
++) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
++    """
++    Given num_batches, max_tokens_per_batch, block_size and the number of
++    valid-tokens in each batch, prepare sorted_token_ids, expert_ids and
++    num_tokens_post_pad. sorted_token_ids, expert_ids and num_tokens_post_pad
++    have the same semantics as in moe_align_block_size.
++
++    This function is intended to be a drop in replacement for
++    moe_align_batch_size for the batched case.
++
++    Parameters:
++    - max_tokens_per_batch (int): Number of tokens in each batch (both
++        valid and invalid).
++    - block_size (int): block_size to align the data to.
++    - expert_num_tokens (torch.Tensor): expert_num_tokens[i], indicates
++        the number of valid tokens in batch i.
++
++    Returns:
++    - sorted_token_ids (torch.Tensor): Torch tensor of size
++        (num_batches * max_tokens_per_batch) indicating the token indices for
++        that block.
++    - expert_ids (torch.Tensor): Torch tensor of size
++        ceil((num_batches * max_tokens_per_batch) / block_size) indicating
++        what expert to use for each block.
++    - num_tokens_post_pad (torch.Tensor): Torch tensor of size 1
++        indicating the number of valid blocks with actual data to
++        process. This is represented in terms of num tokens.
++    Example:
++    Let num_batches=5, max_tokens_per_batch=8, block_size=4, and
++    expert_num_tokens=[2, 3, 0, 6, 8]. This expert_num_tokens tensor
++    indicates that,
++     - The first 2 tokens in the 0th batch are valid and the rest 6 are
++     invalid (i.e. in the 2D hidden_states tensor of shape,
++     [num_batches * max_tokens_per_batch, K], indices 0, 1 are valid)
++     - The first 3 tokens in the 1st batch are valid. i.e. indices 8, 9, 10
++     - 0 tokens in the 2nd batch are valid
++     - first 6 tokens in the  3rd batch are valid. i.e. indices,
++     24, 25, 26, 27, 28, 29
++     - so on ...
++
++     In this case,
++      sorted_token_ids will be [0, 1, 40, 40,
++                                8, 9, 10, 40,
++                                24, 25, 26, 27,
++                                28, 29, 40, 40,
++                                32, 33, 34, 35,
++                                36, 37, 38, 39,
++                                40, 40, 40, 40,
++                                (rest all 40, 40, 40, 40)
++                                ...]
++      Here, 40 represents an invalid index. as there is no token index 40.
++      The gemm kernel using this sorted_token_ids is expected to skip the
++      gemm computation when it encounters this invalid index.
++
++      expert_ids will be [0, 1, 3, 3, 4, 5, 5, -1, -1, (rest all -1) ...]
++      Here, -1 represents an invalid expert. The gemm kernel using this
++      expert_ids is expected to skip the gemm computation when it encounters
++      an expert of id -1.
++
++      num_tokens_post_pad will be 24 as sorted_token_ids has valid entries
++      until 24.
++    """
++
++    B = expert_num_tokens.size(0)
++    device = expert_num_tokens.device
++
++    # Round up so each batch can be split to blocks evenly.
++    max_num_tokens_padded = B * round_up(max_tokens_per_batch, block_size)
++
++    sorted_ids = torch.empty((max_num_tokens_padded,), dtype=torch.int32, device=device)
++    assert max_num_tokens_padded % block_size == 0
++    max_num_m_blocks = max_num_tokens_padded // block_size
++    expert_ids = torch.empty((max_num_m_blocks,), dtype=torch.int32, device=device)
++    num_tokens_post_pad = torch.empty((1), dtype=torch.int32, device=device)
++
++    ops.batched_moe_align_block_size(
++        max_tokens_per_batch,
++        block_size,
++        expert_num_tokens,
++        sorted_ids,
++        expert_ids,
++        num_tokens_post_pad,
++    )
++
++    return sorted_ids, expert_ids, num_tokens_post_pad
+--- a/overlay/vllm/q38_expert_placement.py
++++ b/overlay/vllm/q38_expert_placement.py
+@@ -110,6 +110,8 @@
+         param._q38_host_storage = uva
+         param._q38_num_experts = shape[0]
+         param._q38_base_table = table
++        from vllm import screen1b_moe_boundary as _moe_boundary
++        _moe_boundary.stamp_weight(param)
+         # Save on __dict__, not register a second parameter alias in the module.
+         layer.__dict__['_q38_placed_' + name] = param
+         guard.receipt('v5_allocated', layer=layer.layer_name, parameter=name,
+@@ -140,3 +142,5 @@
+         for key in ('_q38_row_map', '_q38_host_cpu', '_q38_host_storage',
+                     '_q38_num_experts', '_q38_base_table'):
+             setattr(current, key, getattr(saved, key))
++        if hasattr(saved, "_screen1b_boundary_owner"):
++            current._screen1b_boundary_owner = saved._screen1b_boundary_owner
+--- /dev/null
++++ b/overlay/vllm/screen1b_moe_boundary.py
+@@ -0,0 +1,376 @@
++# SPDX-License-Identifier: Apache-2.0
++"""Default-off Screen 1b structural diagnostic; never repairs tensors.
++
++Native USM kind/context/residency cannot be inferred from Torch storage. The
++receipts explicitly leave these unknown. Only CPU snapshots are inspected;
++every readback follows a queue drain and fresh watcher/latch checks.
++"""
++import hashlib
++import json
++import os
++from pathlib import Path
++import time
++
++ENABLE = "SCREEN1B_MOE_BOUNDARY"
++POINTERS = ("a_ptr", "b_ptr", "b_table_ptr", "c_ptr", "b_bias_ptr",
++            "a_scale_ptr", "b_scale_ptr", "topk_weights_ptr",
++            "sorted_token_ids_ptr", "expert_ids_ptr", "num_tokens_post_padded_ptr")
++
++INTENDED_OWNERS = {
++    "a_ptr": "NoDPEP/activation quantizer rank-local output",
++    "b_ptr": "placement resident rows; indirect host rows retained separately",
++    "b_table_ptr": "placement rank-local int64 offset table or unused B placeholder",
++    "c_ptr": "workspace2 output view; writable",
++    "b_bias_ptr": "absent in declared FP8 lane",
++    "a_scale_ptr": "activation quantizer rank-local FP32 scales",
++    "b_scale_ptr": "post-load logical-local FP32 weight scales",
++    "topk_weights_ptr": "absent for w13; rank-local router output for w2",
++    "sorted_token_ids_ptr": "native alignment rank-local route output",
++    "expert_ids_ptr": "rank expert-map remap output",
++    "num_tokens_post_padded_ptr": "native alignment rank-local count output",
++}
++
++
++class BoundaryError(RuntimeError):
++    pass
++
++
++def enabled():
++    value = os.environ.get(ENABLE, "0")
++    if value not in ("0", "1"):
++        raise BoundaryError("SCREEN1B_MOE_BOUNDARY must be 0 or 1")
++    return value == "1"
++
++
++def span(t):
++    """Metadata only: no device command or tensor-value read."""
++    storage = t.untyped_storage()
++    start = t.data_ptr()
++    width = t.element_size()
++    size = 0 if t.numel() == 0 else (1 + sum((n-1)*s for n, s in zip(t.shape, t.stride()))) * width
++    return dict(pointer=start, end=start+size, storage_base=storage.data_ptr(),
++                storage_end=storage.data_ptr()+storage.nbytes(), storage_offset=t.storage_offset(),
++                shape=list(t.shape), stride=list(t.stride()), dtype=str(t.dtype),
++                device=str(t.device), bytes=size)
++
++
++def overlaps(a, b):
++    return a["pointer"] < b["end"] and b["pointer"] < a["end"]
++
++
++class Boundary:
++    def __init__(self, directory, watcher, rank, device, synchronize, *, cpu_test=False):
++        self.directory, self.watcher = Path(directory), Path(watcher)
++        self.rank, self.device, self.pid = rank, str(device), os.getpid()
++        self.synchronize, self.cpu_test = synchronize, cpu_test
++        self.boot = Path("/proc/sys/kernel/random/boot_id").read_text().strip()
++        self.directory.mkdir(parents=True, exist_ok=True)
++        self.path = self.directory / f"rank{rank}-pid{self.pid}.jsonl"
++        self.failed = False
++        self.sequence = 0
++        self.allocations = {}
++        self.alignment = {}
++
++    def emit(self, phase, **values):
++        self.sequence += 1
++        row = dict(rank=self.rank, pid=self.pid, device=self.device, phase=phase,
++                   sequence=self.sequence, unix=time.time(), monotonic=time.monotonic(),
++                   boot_id=self.boot, **values)
++        # Open/flush/fsync per row: a native crash must not hide completed checks.
++        with self.path.open("a") as f:
++            f.write(json.dumps(row, sort_keys=True, ensure_ascii=False)+"\n")
++            f.flush()
++            os.fsync(f.fileno())
++
++    def latch(self, reason):
++        self.failed = True
++        # Share cancellation immediately across ranks; never overwrite evidence.
++        try:
++            with (self.watcher.parent / "STOP").open("x") as f:
++                f.write(f"MoE boundary rank={self.rank} pid={self.pid}: {reason}\n")
++                f.flush()
++                os.fsync(f.fileno())
++        except FileExistsError:
++            pass
++
++    def require(self, ok, message, **values):
++        if not ok:
++            self.latch(message)
++        self.emit("check", check=message, passed=bool(ok), **values)
++        if not ok:
++            raise BoundaryError(f"MoE boundary rank={self.rank}: {message}")
++
++    def clear(self):
++        if self.failed:
++            raise BoundaryError("MoE boundary already failed; no further device work")
++        try:
++            if any((self.watcher.parent / name).exists() for name in ("STOP", "FAULT", "FAULT.json")):
++                raise ValueError("fault/stop latch set")
++            w = json.loads(self.watcher.read_text())
++            now = time.time()
++            if (w.get("passed") is not True or w.get("boot_id") != self.boot
++                    or w.get("new_fault_lines") != []
++                    or not 0 <= now-w["updated_unix"] <= 3
++                    or not 0 <= now-w["read_started_unix"] <= 3):
++                raise ValueError("watcher missing clean fresh same-boot approval")
++        except (OSError, ValueError, KeyError, TypeError) as exc:
++            self.require(False, "watcher/fault latch: " + str(exc))
++
++    def stage(self, phase):
++        self.clear()
++        self.emit(phase+".sync_begin")
++        try:
++            self.synchronize()
++        except BaseException as exc:
++            self.latch(phase+": synchronization failed")
++            self.emit(phase+".sync_failed", exception=repr(exc))
++            raise BoundaryError(f"MoE boundary {phase}: synchronization failed") from exc
++        self.clear()
++        self.emit(phase+".sync_complete")
++
++    def snapshot(self, tensor, phase):
++        self.stage(phase)
++        self.clear()
++        # No GPU conversion/contiguous kernel before the guarded readback.
++        try:
++            cpu = tensor.detach().cpu()
++        except BaseException as exc:
++            self.latch(phase+": readback failed")
++            self.emit(phase+".readback_failed", exception=repr(exc))
++            raise BoundaryError(f"MoE boundary {phase}: readback failed") from exc
++        self.clear()
++        raw = cpu.contiguous().view(__import__("torch").uint8).numpy().tobytes()
++        self.emit(phase+".snapshot", sha256=hashlib.sha256(raw).hexdigest(), tensor_span=span(tensor))
++        return cpu
++
++    def register(self, tensor, label):
++        s = span(tensor)
++        self.require(all(x >= 0 for x in tensor.stride()) and
++                     s["storage_base"] <= s["pointer"] <= s["end"] <= s["storage_end"],
++                     "tensor span within allocation", label=label, span=s)
++        key = (s["storage_base"], s["storage_end"], str(tensor.device))
++        previous = self.allocations.get(key)
++        if previous is None:
++            previous = dict(owner_pid=self.pid, owner_rank=self.rank, owner_device=str(tensor.device),
++                            first_observed_as=label, allocation_id=len(self.allocations)+1)
++            self.allocations[key] = previous
++        return dict(**s, **previous, native_usm_kind=None, native_context=None,
++                    native_residency_verified=False, provenance="retained Torch storage; first observation")
++
++    def device_tensor(self, tensor, label):
++        self.require(str(tensor.device) == self.device, "pointer device/owner mismatch", label=label,
++                     expected=self.device, actual=str(tensor.device))
++        self.require(self.cpu_test or tensor.device.type == "xpu", "runtime requires XPU pointer", label=label)
++        return self.register(tensor, label)
++
++    def router(self, topk, expert_map, block, global_experts, ignore_invalid=False):
++        self.clear()
++        self.require(global_experts == 512 and block > 0 and not ignore_invalid,
++                     "unsupported alignment geometry/filter", global_experts=global_experts, block=block)
++        self.device_tensor(topk, "router.topk_ids")
++        self.require(topk.ndim == 2 and topk.is_contiguous()
++                     and str(topk.dtype) in ("torch.int32", "torch.int64"), "router ID dtype/shape/layout")
++        ids = self.snapshot(topk, "router.ids").reshape(-1).tolist()
++        self.require(all(0 <= x < 512 for x in ids), "router IDs outside [0,512)", count=len(ids))
++        self.require(expert_map is not None, "TP4 expert map required")
++        self.device_tensor(expert_map, "router.expert_map")
++        self.require(str(expert_map.dtype) == "torch.int32" and list(expert_map.shape) == [512]
++                     and expert_map.is_contiguous(), "expert map dtype/layout")
++        mapping = self.snapshot(expert_map, "router.map").tolist()
++        expected = [-1]*512
++        expected[self.rank*128:(self.rank+1)*128] = list(range(128))
++        self.require(mapping == expected, "rank expert map ownership/coverage", rank_start=self.rank*128)
++        return dict(routes=ids, mapping=mapping, block=block, M=topk.shape[0], topk=topk.shape[1])
++
++    def raw_alignment(self, state, sorted_ids, raw_ids, padded):
++        for label, tensor in (("sorted", sorted_ids), ("raw_experts", raw_ids), ("padded", padded)):
++            self.device_tensor(tensor, "alignment."+label)
++            self.require(str(tensor.dtype) == "torch.int32" and tensor.ndim == 1 and tensor.is_contiguous(),
++                         "alignment buffer dtype/layout", label=label)
++        self.require(padded.numel() == 1, "padded count scalar capacity")
++        count = self.snapshot(padded, "alignment.padded").item()
++        raw = self.snapshot(raw_ids, "alignment.raw_experts").tolist()
++        # Entire tail is about to be indexed by production expert_map[expert_ids].
++        self.require(all(0 <= x < 512 for x in raw), "raw alignment IDs outside [0,512), including tail", values=raw)
++        block, routes = state["block"], state["routes"]
++        self.require(0 <= count <= sorted_ids.numel() and count % block == 0 and count//block <= len(raw),
++                     "padded layout capacity/divisibility", padded=count, capacity=sorted_ids.numel(), block=block)
++        hist = [routes.count(e) for e in range(512)]
++        expected = sum((n+block-1)//block*block for n in hist)
++        self.require(count == expected, "padded counts inconsistent with M*topk", expected=expected, actual=count)
++        ordered = self.snapshot(sorted_ids, "alignment.sorted")[:count].tolist()
++        self.require(all(0 <= x <= len(routes) for x in ordered), "sorted route index/padding out of bounds")
++        self.require(sorted(x for x in ordered if x < len(routes)) == list(range(len(routes))),
++                     "sorted routes missing/duplicate; M*topk coverage")
++        for start in range(0, count, block):
++            e = raw[start//block]
++            chunk = ordered[start:start+block]
++            if not all(x == len(routes) or routes[x] == e for x in chunk):
++                self.require(False, "sorted route assigned to wrong expert", block=start//block, expert=e)
++        self.emit("alignment.block_membership_pass", blocks=count//block)
++        blocks = [0]*512
++        for e in raw[:count//block]:
++            blocks[e] += 1
++        self.require(blocks == [(n+block-1)//block for n in hist], "padded expert histogram mismatch")
++        state.update(raw=raw, count=count, sorted=ordered)
++        self.emit("alignment.raw_pass", count=count, M=state["M"], topk=state["topk"])
++
++    def remapped(self, state, local, sorted_ids, padded):
++        self.device_tensor(local, "alignment.remapped")
++        self.require(str(local.dtype) == "torch.int32" and local.ndim == 1
++                     and local.numel() == len(state["raw"]) and local.is_contiguous(),
++                     "remapped ID dtype/layout")
++        values = self.snapshot(local, "alignment.remapped").tolist()
++        self.require(values == [state["mapping"][e] for e in state["raw"]],
++                     "local remap differs from rank expert map")
++        active = values[:state["count"]//state["block"]]
++        self.require(all(x == -1 or 0 <= x < 128 for x in active), "active local expert out of range")
++        self.emit("alignment.local_pass", values=active, nonlocal_zero_blocks=active.count(-1),
++                  no_negative_weight_access=True)
++        state["local"] = values
++        state["owners"] = (local, sorted_ids, padded)  # retain producer allocations
++        self.alignment = state
++        self.clear()
++
++    def weights(self, weight, local_experts=128):
++        self.device_tensor(weight, "weight.resident")
++        self.require(weight.ndim == 3 and weight.is_contiguous(), "weight layout unsupported")
++        self.require(str(weight.dtype) == "torch.float8_e4m3fn" or
++                     (self.cpu_test and str(weight.dtype) == "torch.float32"), "weight FP8 dtype")
++        compact = weight.shape[0] != local_experts
++        table = getattr(weight, "_q38_base_table", None)
++        self.require(not compact or table is not None, "compact weight missing base-table attribute")
++        if table is None:
++            self.require(weight.shape[0] == local_experts, "dense weight expert capacity")
++            return
++        self.require(getattr(weight, "_q38_num_experts", None) == local_experts, "compact logical expert count")
++        stamp = getattr(weight, "_screen1b_boundary_owner", None)
++        self.require(stamp == (self.pid, self.rank, self.device), "compact weight allocation owner mismatch", owner=stamp)
++        self.device_tensor(table, "weight.base_table")
++        self.require(str(table.dtype) == "torch.int64" and list(table.shape) == [local_experts] and table.is_contiguous(),
++                     "base table dtype/length/layout")
++        host = getattr(weight, "_q38_host_cpu", None)
++        alias = getattr(weight, "_q38_host_storage", None)
++        mapping = getattr(weight, "_q38_row_map", None)
++        self.require(host is not None and alias is not None and isinstance(mapping, dict), "compact retained owners missing")
++        self.require(host.device.type == "cpu" and (self.cpu_test or host.is_pinned()), "host owner must be pinned CPU")
++        self.device_tensor(alias, "weight.host_alias")
++        self.register(host, "weight.host_cpu")
++        self.require(host.is_contiguous() and alias.is_contiguous() and host.shape == alias.shape
++                     and host.dtype == alias.dtype == weight.dtype and host.stride() == alias.stride()
++                     and tuple(host.shape[1:]) == tuple(weight.shape[1:]), "host alias geometry mismatch")
++        # The native view in this lane must retain the exact same host VA.
++        self.require(alias.data_ptr() == host.data_ptr(), "host alias address differs from retained owner")
++        self.require(sorted(mapping) == list(range(local_experts)), "row-map logical coverage")
++        self.require(sorted(mapping.values()) == sorted(
++            [("resident", i) for i in range(weight.shape[0])] + [("host", i) for i in range(host.shape[0])]),
++            "row-map physical partition")
++        offsets = self.snapshot(table, "weight.base_table").tolist()
++        row_bytes = weight.shape[1]*weight.shape[2]*weight.element_size()
++        spans = {"resident": span(weight), "host": span(alias)}
++        rows = []
++        for e in range(local_experts):
++            kind, index = mapping[e]
++            owner = spans[kind]
++            address = (weight.data_ptr()+offsets[e]*weight.element_size()) % (1<<64)
++            expected = owner["pointer"]+index*row_bytes
++            if not (offsets[e] % 256 == 0 and address == expected
++                    and owner["pointer"] <= address and address+row_bytes <= owner["end"]):
++                self.require(False, "weight row outside owned span or wrong row", expert=e, kind=kind,
++                             row_index=index, address=address, expected=expected, row_bytes=row_bytes)
++            rows.append([e, kind, index, address, address+row_bytes])
++        self.emit("weight.rows_pass", rows=rows, row_bytes=row_bytes)
++
++    def workspace(self, w13, w2, M, topk, N, K, activation_dim, output=None):
++        a, b = self.device_tensor(w13, "workspace13"), self.device_tensor(w2, "workspace2")
++        self.require(w13.is_contiguous() and w2.is_contiguous() and w13.dtype == w2.dtype
++                     and (str(w13.dtype) == "torch.bfloat16" or
++                          (self.cpu_test and str(w13.dtype) == "torch.float32")),
++                     "workspace layout/dtype")
++        needs = [M*topk*max(activation_dim, K), M*topk*max(N, K)]
++        self.require(M > 0 and topk > 0 and N > 0 and K > 0 and activation_dim > 0
++                     and w13.numel() >= needs[0] and w2.numel() >= needs[1],
++                     "workspace capacity for M/topk/N/K", M=M, topk=topk, N=N, K=K,
++                     required_elements=needs, actual_elements=[w13.numel(), w2.numel()])
++        self.require(not overlaps(a, b), "workspace13/workspace2 overlap", workspace13=a, workspace2=b)
++        if output is not None:
++            out = self.device_tensor(output, "workspace.output")
++            self.require(output.dtype == w13.dtype and output.numel() >= M*K
++                         and not overlaps(out, b), "output capacity/workspace2 overlap")
++            self.require(not overlaps(out, a) or (a["pointer"] <= out["pointer"] and out["end"] <= a["end"]),
++                         "output alias exceeds workspace13")
++        self.emit("workspace.pass", sequential_aliases=["cache1/cache3 in workspace2", "output in workspace13"])
++
++    def before_gemm(self, A, B, C, A_scale, B_scale, routes, sorted_ids, local_ids, padded,
++                    topk, config, block_shape, bias, mul_weight):
++        import torch
++        self.stage("gemm.pre")
++        state = self.alignment
++        self.require(bool(state), "GEMM missing validated alignment")
++        self.require(all(x is y for x, y in zip(state["owners"], (local_ids, sorted_ids, padded))),
++                     "GEMM alignment producer identity mismatch")
++        local = self.snapshot(local_ids, "gemm.local_ids").tolist()
++        current_count = self.snapshot(padded, "gemm.padded").item()
++        current_sort = self.snapshot(sorted_ids, "gemm.sorted")[:state["count"]].tolist()
++        self.require(local == state["local"] and current_count == state["count"] and current_sort == state["sorted"],
++                     "alignment mutated before GEMM")
++        self.require(config["BLOCK_SIZE_M"] == state["block"] and block_shape == [128, 128], "GEMM config mismatch")
++        self.weights(B)
++        self.require(A.ndim == 2 and C.ndim == 3 and A.is_contiguous() and C.is_contiguous(), "GEMM A/C layout")
++        self.require((A.dtype == B.dtype and str(A.dtype) == "torch.float8_e4m3fn"
++                      and C.dtype == torch.bfloat16) or
++                     (self.cpu_test and A.dtype == B.dtype == C.dtype == torch.float32),
++                     "GEMM FP8 input/BF16 output dtype")
++        self.require(topk in (1, state["topk"]) and A.shape[0]*topk == state["M"]*state["topk"] and A.shape[1] == B.shape[2]
++                     and list(C.shape) == [state["M"], state["topk"], B.shape[1]], "GEMM A/C capacity")
++        self.require(A_scale is not None and B_scale is not None and bias is None, "FP8 scale/bias contract")
++        self.require(A_scale.dtype == B_scale.dtype == torch.float32
++                     and list(A_scale.shape) == [A.shape[0], (B.shape[2]+127)//128]
++                     and list(B_scale.shape) == [128, (B.shape[1]+127)//128, (B.shape[2]+127)//128]
++                     and A_scale.is_contiguous() and B_scale.is_contiguous(), "FP8 scale capacity/layout")
++        self.require(not mul_weight or (routes is not None and routes.numel() == state["M"]*state["topk"]
++                     and routes.dtype == torch.float32 and routes.is_contiguous()), "route weight capacity/layout")
++        table = getattr(B, "_q38_base_table", None)
++        tensors = (A, B, B if table is None else table, C, bias, A_scale, B_scale,
++                   routes, sorted_ids, local_ids, padded)
++        census = {}
++        for label, tensor in zip(POINTERS, tensors):
++            census[label] = None if tensor is None else self.device_tensor(tensor, label)
++        for label, tensor in zip(POINTERS, tensors):
++            if tensor is not None and label != "c_ptr":
++                self.require(not overlaps(span(C), span(tensor)), "GEMM output overlaps live input", pointer=label)
++        host_alias = getattr(B, "_q38_host_storage", None)
++        if host_alias is not None:
++            self.require(not overlaps(span(C), span(host_alias)), "GEMM output overlaps indirect host rows")
++        self.emit("gemm.launch_ready", pointers=census, pointer_sources=INTENDED_OWNERS,
++                  config=config, block_shape=block_shape,
++                  topk=topk, mul_routed_weight=mul_weight, table_placeholder=table is None,
++                  negative_blocks="validated nonlocal zero-write return before table/weight/dot",
++                  native_usm_context_verified=False)
++        self.clear()
++
++
++_instances = {}
++
++
++def get(device):
++    """Never called on the off path. No import-time Torch/device activity."""
++    if not enabled():
++        raise BoundaryError("boundary get called while disabled")
++    import torch
++    from vllm.distributed import get_tensor_model_parallel_rank
++    rank = get_tensor_model_parallel_rank()
++    key = (os.getpid(), rank, str(device))
++    if key not in _instances:
++        _instances[key] = Boundary(os.environ["SCREEN1B_MOE_BOUNDARY_DIR"],
++            os.environ["SCREEN1B_MOE_BOUNDARY_WATCHER"], rank, device,
++            lambda: torch.xpu.synchronize(device))
++    return _instances[key]
++
++
++def stamp_weight(weight):
++    if enabled():
++        b = get(weight.device)
++        b.clear()
++        weight._screen1b_boundary_owner = (b.pid, b.rank, b.device)
++        b.device_tensor(weight, "placement.allocation")
+--- a/overlay/vllm/v1/worker/gpu/model_runner.py
++++ b/overlay/vllm/v1/worker/gpu/model_runner.py
+@@ -937,6 +937,12 @@
+
+     @torch.inference_mode()
+     def profile_run(self) -> None:
++        from vllm.screen1b_moe_boundary import enabled, get
++        if enabled():
++            if getattr(self, "_screen1b_profile_started", False):
++                raise RuntimeError("MoE boundary refuses a second startup profile")
++            self._screen1b_profile_started = True
++            get(self.device).stage("profile_entry")
+         if self.supports_mm_inputs and self.is_first_pp_rank:
+             mm_config = self.model_config.multimodal_config
+             if mm_config is not None and not mm_config.skip_mm_profiling:
+@@ -965,7 +971,12 @@
+             else:
+                 self._dummy_pooler_run(hidden_states)
+
++        if enabled():
++            get(self.device).clear()
+         torch.accelerator.synchronize()
++        if enabled():
++            get(self.device).stage("profile_complete")
++            self._screen1b_profile_complete = True
+         del hidden_states, sample_hidden_states
+         self.reset_encoder_cache()
+         gc.collect()
+@@ -1648,6 +1659,11 @@
+         context_len: int = 0,
+         valid_dummy_state_slots: bool = False,
+     ) -> ModelRunnerOutput | IntermediateTensors | None:
++        from vllm.screen1b_moe_boundary import enabled, get
++        if enabled():
++            get(self.device).clear()
++            if not (dummy_run and is_profile) or getattr(self, "_screen1b_profile_complete", False):
++                raise RuntimeError("MoE boundary allows only the startup profile forward")
+         if not dummy_run:
+             # Update the request states.
+             self.update_pp_decode_requests()
+--- a/overlay/vllm/v1/worker/gpu_worker.py
++++ b/overlay/vllm/v1/worker/gpu_worker.py
+@@ -771,6 +771,14 @@
+
+     @instrument(span_name="Warmup (GPU)")
+     def compile_or_warm_up_model(self) -> CompilationTimes:
++        from vllm.screen1b_moe_boundary import enabled, get
++        if enabled():
++            boundary = get(self.device)
++            boundary.clear()
++            if not getattr(self.model_runner, "_screen1b_profile_complete", False):
++                raise RuntimeError("MoE boundary requires one completed startup profile")
++            boundary.emit("profile_only_no_warmup", warmup_forwards=0, capture_forwards=0)
++            return CompilationTimes(language_model=0.0, encoder=0.0)
+         warmup_sizes: list[int] = []
+
+         if self.vllm_config.compilation_config.mode == CompilationMode.VLLM_COMPILE:
+--- a/probe/watch_kernel.py
++++ b/probe/watch_kernel.py
+@@ -1,90 +1,116 @@
+ #!/usr/bin/env python3
+-"""Coordinator-only, CPU journal watcher; never signals/restarts a GPU process."""
++"""Independent CPU watcher for the bounded production-path diagnostic.
++
++Retains the original probe watcher's precise fault classification and latching
++contract, with a full-load deadline and a 305-second post-exit observation gap.
++Never signals, restarts, or initializes a device.
++"""
+ import argparse
+-import datetime as dt
+ import json
++import os
+ from pathlib import Path
+-import subprocess
+ import sys
+ import time
+-from single_rank_slab_probe import atomic_json, digest, lane, require
++
++sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
++import screen
+
+
+-def admission_refused(outcome, read_started):
+-    """Only an explicit pre-spawn terminal receipt can end monitoring early."""
+-    return (outcome.get('schema') == 'neural.download.flashnext-first-forward.v1'
+-            and outcome.get('stage') == 'admission_refused'
+-            and outcome.get('passed') is False
+-            and outcome.get('worker_started') is False
+-            and not any(key in outcome for key in ('worker_pid', 'worker_wait_status', 'worker_returncode'))
+-            and isinstance(outcome.get('admission_refused_unix'), (int, float))
+-            and read_started >= outcome['admission_refused_unix'])
++def atomic_json(path, value):
++    temporary = path.with_suffix(".tmp")
++    with temporary.open("w") as stream:
++        json.dump(value, stream, sort_keys=True)
++        stream.write("\n")
++        stream.flush()
++        os.fsync(stream.fileno())
++    temporary.replace(path)
+
+
+-def latch_stop(directory, reason):
++def latch(directory, name, reason):
+     try:
+-        with (directory / 'STOP').open('x') as stream:
+-            stream.write(reason + '\n')
++        with (directory / name).open("x") as stream:
++            stream.write(reason + "\n")
+     except FileExistsError:
+         pass
+
+
+-def main(argv=None):
+-    parser = argparse.ArgumentParser(description=__doc__)
+-    parser.add_argument('--owner-acceptance', type=Path)
+-    parser.add_argument('--health-receipt', type=Path, required=True)
+-    parser.add_argument('--receipt-dir', type=Path, required=True)
+-    args = parser.parse_args(argv)
+-    require(args.receipt_dir.is_dir(), 'create a fresh receipt directory first')
+-    require(not (args.receipt_dir / 'watcher.json').exists(), 'watcher receipt exists; no retry')
+-    boot = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+-    screen = lane()
+-    deadline = time.monotonic() + 150
+-    while True:
+-        audit = screen.admission_audit()
+-        try:
+-            if args.owner_acceptance is not None:
+-                screen.verify_owner_acceptance(args.owner_acceptance, boot, dt.datetime.now(dt.timezone.utc), audit)
+-            health_bytes = args.health_receipt.read_bytes()
+-            receipt = json.loads(health_bytes)
+-            require(time.monotonic() < deadline, '150-second watcher bound exceeded')
+-            require(Path('/proc/sys/kernel/random/boot_id').read_text().strip() == boot, 'boot changed')
+-            read_started = time.time()
+-            result = subprocess.run(['journalctl', '-k', '-b', '--no-pager', '-o', 'short-iso-precise'],
+-                                    capture_output=True, text=True, check=True, timeout=3)
+-            require(result.stdout.strip() and not result.stderr.strip(), 'complete kernel journal required')
+-            log = args.receipt_dir / 'kernel-latest.log'
+-            log.write_text(result.stdout)
+-            screen.admit_journal(result.stdout, receipt, boot_id=boot,
+-                                 owner_acceptance=args.owner_acceptance, audit=audit)
+-            atomic_json(args.receipt_dir / 'watcher.json', {'passed': True, 'boot_id': boot,
+-                        'updated_unix': time.time(), 'read_started_unix': read_started,
+-                        'health_sha256': digest(health_bytes), 'new_fault_lines': [],
+-                        'journal_admission': audit})
+-            probe = args.receipt_dir / 'receipt.json'
+-            if probe.exists():
+-                outcome = json.loads(probe.read_text())
+-                if admission_refused(outcome, read_started):
+-                    # The clean read above still applies all fault/acceptance
+-                    # rules. This is a failed probe, never a successful run.
+-                    latch_stop(args.receipt_dir, 'harness refused before device work')
+-                    atomic_json(args.receipt_dir / 'watcher.json', {
+-                        'passed': False, 'status': 'harness refused before device work',
+-                        'boot_id': boot, 'updated_unix': time.time(),
+-                        'read_started_unix': read_started, 'health_sha256': digest(health_bytes),
+-                        'journal_admission': audit, 'new_fault_lines': [],
+-                        'probe_exception': outcome.get('exception')})
+-                    return 2
+-                if ('worker_wait_status' in outcome
+-                        and read_started >= outcome['postflight_requested_unix']):
+-                    return
+-        except BaseException as exc:
+-            latch_stop(args.receipt_dir, f'{type(exc).__name__}: {exc}')
+-            atomic_json(args.receipt_dir / 'watcher.json', {'passed': False, 'boot_id': boot,
+-                        'updated_unix': time.time(), 'journal_admission': audit, 'exception': f'{type(exc).__name__}: {exc}'})
+-            raise
+-        time.sleep(.5)
++def terminal_time(path, boot):
++    if not path.exists():
++        return None
++    marker = json.loads(path.read_text())
++    screen.require(marker.get("schema") == "screen1b.moe-boundary-controller-exit.v1"
++                   and marker.get("boot_id") == boot and marker.get("server_exited") is True,
++                   "invalid controller exit marker")
++    value = marker.get("exit_unix")
++    screen.require(isinstance(value, (int, float)) and 0 < value <= time.time(),
++                   "invalid controller exit time")
++    return value
+
+
+-if __name__ == '__main__':
++def watch(run, cutoff):
++    boot = Path("/proc/sys/kernel/random/boot_id").read_text().strip()
++    admission = json.loads((run / "journal-admission.json").read_text())
++    screen.require(admission.get("passed") is True and
++                   admission.get("monitoring_cutoff_unix") == cutoff,
++                   "watcher admission must match the controller receipt")
++    screen.require(not (run / "watcher.json").exists(), "watcher exists; no retry")
++    deadline = time.monotonic() + 2700
++    failure = None
++    retained_faults = []
++
++    def failed(reason):
++        nonlocal failure
++        failure = failure or reason
++        latch(run, "STOP", failure)
++        latch(run, "FAULT", failure)
++
++    try:
++        while True:
++            screen.require(time.monotonic() < deadline, "2700-second watcher bound exceeded")
++            screen.require(Path("/proc/sys/kernel/random/boot_id").read_text().strip() == boot,
++                           "watcher boot changed")
++            read_started = time.time()
++            readable = False
++            try:
++                text = screen.journal()
++                (run / "kernel-watcher.log").write_text(text)
++                faults = screen.new_fault_lines(text, cutoff)
++                readable = True
++                for line in faults:
++                    if line not in retained_faults:
++                        retained_faults.append(line)
++                if faults:
++                    failed("kernel fault: " + str(faults[:1]))
++            except Exception as exc:
++                failed(f"{type(exc).__name__}: {exc}")
++            row = dict(passed=failure is None, boot_id=boot, updated_unix=time.time(),
++                       read_started_unix=read_started, new_fault_lines=retained_faults,
++                       monitoring_cutoff_unix=cutoff, journal_readable=readable)
++            if failure is not None:
++                row["exception"] = failure
++            exited = terminal_time(run / "controller-exit.json", boot)
++            if readable and exited is not None and read_started >= exited + 305:
++                row.update(status="post-exit gap complete", post_exit_gap_seconds=305)
++                atomic_json(run / "watcher.json", row)
++                return 0 if failure is None else 2
++            atomic_json(run / "watcher.json", row)
++            time.sleep(.5)
++    except BaseException as exc:
++        reason = f"{type(exc).__name__}: {exc}"
++        failed(reason)
++        atomic_json(run / "watcher.json", dict(passed=False, boot_id=boot,
++                    updated_unix=time.time(), exception=failure, terminal_exception=reason,
++                    new_fault_lines=retained_faults))
++        raise
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--receipt-dir", required=True, type=Path)
++    parser.add_argument("--cutoff", required=True, type=float)
++    args = parser.parse_args()
++    return watch(args.receipt_dir, args.cutoff)
++
++
++if __name__ == "__main__":
+     sys.exit(main())
+--- a/screen.py
++++ b/screen.py
+@@ -31,7 +31,7 @@
+ import urllib.request
+
+ HERE = Path(__file__).resolve().parent
+-REPO = HERE.parents[2]
++REPO = (Path(os.environ["SCREEN1B_SOURCE_REPO"]) if "SCREEN1B_SOURCE_REPO" in os.environ else HERE.parents[2]).resolve()
+ PLAN = json.loads((HERE / 'image-plan.json').read_text())
+ OVERLAY = json.loads((HERE / 'overlay-manifest.json').read_text())
+ MODEL = Path('/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8')
+@@ -347,7 +347,7 @@
+     args = ['journalctl', '-k', '-b', '--no-pager', '-o', 'short-iso-precise']
+     if since:
+         args += ['--since', since]
+-    p = call(args, capture_output=True)
++    p = call(args, capture_output=True, timeout=3)
+     if 'permission' in p.stderr.lower() or 'not seeing messages' in p.stderr.lower():
+         raise RuntimeError('Cannot verify the complete kernel journal without existing read access')
+     if not p.stdout.strip():
+@@ -355,8 +355,49 @@
+     return p.stdout
+
+
++def boundary_atomic_json(path, value):
++    temporary = path.with_suffix(".tmp")
++    with temporary.open("w") as stream:
++        json.dump(value, stream, sort_keys=True)
++        stream.write("\n")
++        stream.flush()
++        os.fsync(stream.fileno())
++    temporary.replace(path)
++
++
++def boundary_window_enabled():
++    return os.environ.get("SCREEN1B_MOE_BOUNDARY") == "1"
++
++
+ def overlay_check():
++    require(boundary_window_enabled(), "Staged overlay requires SCREEN1B_MOE_BOUNDARY=1")
+     verify_package(HERE)
++
++
++def boundary_watcher_clear(run):
++    require(not (run / "FAULT").exists() and not (run / "STOP").exists(),
++            "MoE boundary STOP/FAULT latched")
++    receipt = json.loads((run / "watcher.json").read_text())
++    now = time.time()
++    require(receipt.get("passed") is True and receipt.get("new_fault_lines") == [],
++            "MoE boundary watcher is not clear")
++    require(receipt.get("boot_id") == Path("/proc/sys/kernel/random/boot_id").read_text().strip(),
++            "MoE boundary watcher boot mismatch")
++    for field in ("read_started_unix", "updated_unix"):
++        require(isinstance(receipt.get(field), (int, float)) and 0 <= now - receipt[field] <= 3,
++                "MoE boundary watcher stale: " + field)
++
++
++def boundary_window_admission(args):
++    require(boundary_window_enabled() and args.mode == "calibrate-load",
++            "MoE boundary window requires explicit enable and calibrate-load")
++    require(args.health_receipt is not None, "MoE boundary requires a fresh health receipt")
++    require(args.previous_stop_utc is not None, "MoE boundary requires --previous-stop-utc")
++    previous = parse_utc(args.previous_stop_utc)
++    require((datetime.datetime.now(datetime.timezone.utc) - previous).total_seconds() >= 305,
++            "MoE boundary requires a 305-second gap after the prior GPU stop")
++    require(REPO.joinpath(".git").exists(), "SCREEN1B_SOURCE_REPO must name this main checkout")
++
+
+
+ SCAN_SNIPPET = r'''
+@@ -444,6 +485,7 @@
+
+
+ def preflight(args, image_present=False, observations=None):
++    boundary_window_admission(args)
+     if socket.gethostname() != 'steve-b70s':
+         raise RuntimeError('Wrong host')
+     if call(['git', '-C', REPO, 'branch', '--show-current'], capture_output=True).stdout.strip() != 'main':
+@@ -473,6 +515,8 @@
+
+
+ def launch(args, run):
++    require(boundary_window_enabled() and args.mode == 'calibrate-load',
++            'Diagnostic launch requires SCREEN1B_MOE_BOUNDARY=1 and calibrate-load')
+     mode = 'mtp1' if args.mode == 'calibrate-load' else args.mode
+     cmd = ['docker', 'run', '--name', 'flashnext-screen1-' + run.name,
+            '--pull=never', '--restart=no', '--network=host', '--device=/dev/dri',
+@@ -489,7 +533,7 @@
+         'CCL_ZE_IPC_EXCHANGE': 'sockets', 'CCL_SYCL_ALLGATHERV_TMP_BUF': '1',
+         'CCL_SYCL_ALLREDUCE_TMP_BUF': '1', 'VLLM_TARGET_DEVICE': 'xpu',
+         'VLLM_WORKER_MULTIPROC_METHOD': 'spawn', 'VLLM_USE_V2_MODEL_RUNNER': '1',
+-        'VLLM_XPU_ENABLE_XPU_GRAPH': '1', 'B70_GDN_MODE': 'official',
++        'VLLM_XPU_ENABLE_XPU_GRAPH': '0', 'B70_GDN_MODE': 'official',
+         'Q38_EXPERT_HOST_PLACEMENT': '/screen-package/placement-attempt6-v5.json',
+         'B70_SCREEN1B': '1', 'B70_SCREEN1B_STATE_DIR': '/screen',
+         'B70_PLE_FP8': '0', 'B70_PLE_INT8': '0', 'B70_PLE_DIRECT_PINNED': '0',
+@@ -498,6 +542,10 @@
+         'TRITON_CACHE_DIR': '/screen/cache/triton', 'VLLM_CACHE_ROOT': '/screen/cache/vllm',
+         'XDG_CACHE_HOME': '/screen/cache/xdg', 'TMPDIR': '/screen/cache/tmp',
+         'PYTHONDONTWRITEBYTECODE': '1',
++        'SCREEN1B_MOE_BOUNDARY': '1',
++        'SCREEN1B_MOE_BOUNDARY_WATCHER': '/screen/watcher.json',
++        'SCREEN1B_MOE_BOUNDARY_DIR': '/screen/moe-boundary',
++        'OMP_NUM_THREADS': '2',
+     }
+     if args.mode == 'calibrate-load':
+         limit = getattr(args, 'loading_ram_guard_gb', None)
+@@ -528,8 +576,8 @@
+             '--safetensors-load-strategy', 'lazy',
+             '--moe-backend', 'triton', '--enable-prompt-tokens-details',
+             '--limit-mm-per-prompt', '{"image":0,"video":0}',
+-            '--compilation-config', json.dumps({'mode': 0, 'compile_sizes': [], 'cudagraph_num_of_warmups': 1, 'cudagraph_mode': 'FULL_DECODE_ONLY', 'cudagraph_capture_sizes': {'mtp0': [1], 'mtp1': [1, 2], 'mtp3': [1, 4]}[mode]}),
+-            '--cudagraph-metrics']
++            '--compilation-config', json.dumps({'mode': 0, 'compile_sizes': [], 'cudagraph_num_of_warmups': 0, 'cudagraph_mode': 'NONE', 'cudagraph_capture_sizes': []}),
++            '--cudagraph-metrics', '--enforce-eager']
+     if mode != 'mtp0':
+         cmd += ['--speculative-config', json.dumps({'method': 'mtp', 'num_speculative_tokens': int(mode[-1]), 'rejection_sample_method': 'standard'})]
+     return cmd
+@@ -570,6 +618,8 @@
+     since = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+     (run / 'started-utc.txt').write_text(since + '\n')
+     server = None
++    watcher = None
++    watcher_log = None
+     client = None
+     name = 'flashnext-screen1-' + run.name
+     stop = DeferredStop(run, name)
+@@ -590,12 +640,23 @@
+     try:
+         if watchdog.check():
+             raise RuntimeError('Memory watchdog refused allocation before launch')
++        watcher_log = open(run / 'watcher.log', 'w')
++        watcher = subprocess.Popen([sys.executable, str(HERE / 'probe/watch_kernel.py'),
++                                    '--receipt-dir', str(run), '--cutoff', str(journal_cutoff)],
++                                   stdout=watcher_log, stderr=subprocess.STDOUT)
++        watcher_deadline = time.monotonic() + 10
++        while not (run / 'watcher.json').exists():
++            require(watcher.poll() is None and time.monotonic() < watcher_deadline,
++                    'Independent kernel watcher failed before launch')
++            time.sleep(.1)
++        boundary_watcher_clear(run)
+         with open(run / 'server.log', 'w') as log, open(run / 'client.log', 'w') as client_log:
+             # Start before Popen: no unmonitored first-second allocation window.
+             if calibrating:
+                 watchdog.start()
+             if stop.requested:
+                 raise RuntimeError('Watchdog stopped before launch')
++            boundary_watcher_clear(run)
+             server = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT)
+             stop.armed = True
+             if not calibrating:
+@@ -681,6 +742,10 @@
+                                 container_clean = (state_data.get('ExitCode') == 0 and
+                                               not state_data.get('OOMKilled') and not state_data.get('Error'))
+                                 (run / 'container-exit.json').write_text(json.dumps(state_data, indent=2) + '\n')
++                        boundary_atomic_json(run / 'controller-exit.json', {
++                            'schema': 'screen1b.moe-boundary-controller-exit.v1',
++                            'boot_id': Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
++                            'server_exited': True, 'exit_unix': time.time()})
+                         break
+                     if not stop.sent:
+                         request_stop('deferred stop after container creation')
+@@ -690,6 +755,19 @@
+                 if server.poll() is None:
+                     server.wait(timeout=15)
+             watchdog.close()
++            if watcher is not None and server is not None:
++                # Watch through a full quiet gap; never turn this wait into a kill.
++                watcher_deadline = time.monotonic() + 315
++                while watcher.poll() is None and time.monotonic() < watcher_deadline:
++                    time.sleep(.5)
++                require(watcher.poll() == 0, 'Watcher fault/timeout; preserve state, no retry')
++                final_watcher = json.loads((run / 'watcher.json').read_text())
++                require(final_watcher.get('status') == 'post-exit gap complete',
++                        'Missing 305-second post-exit journal coverage')
++            elif watcher is not None:
++                # No server was spawned; still terminate the CPU watcher gracefully.
++                watcher.terminate()
++                watcher.wait(timeout=5)
+             end = journal()
+             (run / 'kernel-postflight.log').write_text(end)
+             idle()
+@@ -707,6 +785,8 @@
+             raise
+         finally:
+             watchdog.close()
++            if watcher_log is not None:
++                watcher_log.close()
+             for sig, previous in previous_handlers.items():
+                 signal.signal(sig, previous)
+             if calibrating:
+@@ -732,6 +812,7 @@
+
+
+ def check_live(run, journal_cutoff, *, calibrating=False):
++    boundary_watcher_clear(run)
+     text = journal()  # whole current boot avoids empty --since false negatives
+     (run / 'kernel-latest.log').write_text(text)
+     if new_fault_lines(text, journal_cutoff):
+@@ -754,6 +835,7 @@
+     p.add_argument('--calibration', type=Path, help='Qualified calibration-load.json for MTP1')
+     p.add_argument('--loading-ram-guard-gb', type=int,
+                    help='Calibrate-load only: host-use ceiling in decimal GB (default 90, maximum 96)')
++    p.add_argument('--previous-stop-utc', help='Verified previous stop time: YYYY-MM-DD HH:MM:SS UTC')
+     p.add_argument('--port', type=int, default=19988)
+     p.add_argument('--run-dir', type=Path, default=None)
+     x = p.add_mutually_exclusive_group()
+@@ -811,11 +893,13 @@
+         for d in ['tmp', 'hf', 'triton', 'vllm', 'xdg']:
+             (run / 'cache' / d).mkdir(parents=True)
+         unit = 'flashnext-screen1-' + datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
+-        passthrough = [f'--setenv={k}={os.environ[k]}' for k in ('SCREEN_PRIVILEGED_FD_SCAN', 'SCREEN_SUDO_PASSWORD_FILE') if k in os.environ]
++        passthrough = [f'--setenv={k}={os.environ[k]}' for k in ('SCREEN_PRIVILEGED_FD_SCAN', 'SCREEN_SUDO_PASSWORD_FILE', 'SCREEN1B_MOE_BOUNDARY', 'SCREEN1B_SOURCE_REPO', 'OMP_NUM_THREADS') if k in os.environ]
+         command = ['systemd-run', '--user', '--unit', unit, '--collect', *passthrough,
+                    '--property=Restart=no', '--property=KillMode=process', '--property=SendSIGKILL=no',
+-                   '--property=TimeoutStopSec=360', sys.executable, str(HERE / 'screen.py'), '_worker',
++                   '--property=TimeoutStopSec=660', '--property=Nice=19', sys.executable, str(HERE / 'screen.py'), '_worker',
+                    '--mode', args.mode, '--port', str(args.port), '--run-dir', str(run), '--execute']
++        if args.previous_stop_utc:
++            command += ['--previous-stop-utc', args.previous_stop_utc]
+         if args.calibration:
+             command += ['--calibration', str(args.calibration)]
+         if args.loading_ram_guard_gb is not None:
