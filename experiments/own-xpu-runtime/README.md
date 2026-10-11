@@ -1,7 +1,9 @@
 # Our model-specific Intel Xe runtimes
 
-Stage 0, 2026-10-10: design and inventory, accepted for CPU work. No runtime
-has been implemented or measured here. The [owner's objective](../../docs/own-xpu-runtime-objective.md)
+**[Measured state and next levers — October 11 scoreboard](SCOREBOARD.md).**
+
+Historical Stage 0 snapshot, 2026-10-10: design and inventory, accepted for CPU
+work. No runtime had been implemented or measured at that stage. The [owner's objective](../../docs/own-xpu-runtime-objective.md)
 sets the rules and stage gates. This is our own project for one to four Intel
 Arc Pro B70 cards. Other projects supply credited ideas, never our code base;
 Intel platform libraries are allowed dependencies.

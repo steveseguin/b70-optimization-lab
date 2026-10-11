@@ -1,5 +1,7 @@
 # Objective: Our Own Model-Specific Inference Runtimes For Intel Xe (B70)
 
+**[October 11 runtime scoreboard: measurements, limits and next levers](../experiments/own-xpu-runtime/SCOREBOARD.md).**
+
 **Owner decision, 2026-10-10.** This is a long-running objective of the lab,
 alongside the two standing priorities (the Flash-Next line and the LTX live
 stream). It is not a replacement for the current certified lanes; those keep

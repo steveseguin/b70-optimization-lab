@@ -1,0 +1,788 @@
+{
+  "schema": "own-runtime.scoreboard-snapshot.v1",
+  "observed_utc": "2026-10-11T06:45:09.479555+00:00",
+  "scope": "CPU-only read of existing receipts; no new device measurements",
+  "kernel_method": "Round 1 SG32; rounds 2/3 fastest recorded layer-0 variant median across diagnostic phases; round 5 fetched_weight_bytes / median of the two fresh-owner per-operation medians. Warm operator diagnostics, not throughput qualification. Missing rounds are not carried forward.",
+  "sources": {
+    "1": {
+      "path": "experiments/own-xpu-runtime/stage2/packet6-kopt/receipts-card3-20261011/timing/timing.json",
+      "sha256": "a9bcb85094ef02b107640c4fb3f93842a816229b5a4c346ff5d183a68f40a3f0"
+    },
+    "2": {
+      "path": "experiments/own-xpu-runtime/stage2/packet7-kopt2/receipts-card3-20261011/timing.json",
+      "sha256": "ca8a3b92b77c57058d4b1b310732d99bbc4d4aa1933c01c370028d92d86a6234"
+    },
+    "3": {
+      "path": "experiments/own-xpu-runtime/stage2/packet8-kopt3/receipts-card3-20261011/timing.json",
+      "sha256": "5d1129d38ce49722ecc3cf99884d49b93c074401611d50e225307e79a772b72a"
+    },
+    "4": {
+      "path": "experiments/own-xpu-runtime/stage2/packet9-kopt4/receipts-card3-20261011/timing.json",
+      "sha256": "0b50594b64c92093ba3a1de5b55b04ff88cdfa836a89b86e85144c4dd27d14bf"
+    },
+    "5": {
+      "path": "experiments/own-xpu-runtime/stage2/packet10-kopt5/receipts-card3-20261011/timing.json",
+      "sha256": "2709637a2d3dcf39aebd0394971a056ce159b62a68d9824f402f1947f9a3405f"
+    },
+    "6": {
+      "path": "experiments/own-xpu-runtime/stage2/packet11-kopt6/receipts-card3-20261011/timing.json",
+      "sha256": "1b5f156108a4c73f05cb8b2426b266b74a8706da283a3e653d429648c406b5a7"
+    }
+  },
+  "layer0_metrics": {
+    "attn_qkv": {
+      "1": {
+        "variant": "kopt_sg32",
+        "effective_GB_s": 87.67820337967181,
+        "median_ms": 0.2452605
+      },
+      "2": {
+        "variant": "kopt_sg32",
+        "effective_GB_s": 87.82753064712766,
+        "median_ms": 0.2448435
+      },
+      "3": {
+        "variant": "decode_const_sg32_v1",
+        "effective_GB_s": 122.98963647594427,
+        "median_ms": 0.174844
+      },
+      "5": {
+        "variant": "expanded_split4",
+        "effective_GB_s": 326.4883176406117,
+        "median_ms": 0.10036500000000001,
+        "fetched_weight_bytes": 32768000.0
+      }
+    },
+    "attn_gate": {
+      "1": {
+        "variant": "kopt_sg32",
+        "effective_GB_s": 78.51852753418572,
+        "median_ms": 0.164323
+      },
+      "2": {
+        "variant": "kopt_sg32",
+        "effective_GB_s": 78.41926445472284,
+        "median_ms": 0.16453099999999998
+      },
+      "3": {
+        "variant": "decode_const_sg32_v1",
+        "effective_GB_s": 118.47281141534901,
+        "median_ms": 0.108906
+      },
+      "5": {
+        "variant": "expanded_split4",
+        "effective_GB_s": 315.75879001529745,
+        "median_ms": 0.062265249999999994,
+        "fetched_weight_bytes": 19660800.0
+      }
+    },
+    "ssm_out": {
+      "1": {
+        "variant": "kopt_sg32",
+        "effective_GB_s": 60.509451084394975,
+        "median_ms": 0.21322950000000002
+      },
+      "2": {
+        "variant": "splitk4_v1",
+        "effective_GB_s": 80.61380051483268,
+        "median_ms": 0.160052
+      },
+      "3": {
+        "variant": "decode_const_split4_v1",
+        "effective_GB_s": 114.21236893470304,
+        "median_ms": 0.1129685
+      },
+      "5": {
+        "variant": "expanded_split4",
+        "effective_GB_s": 296.06851764705885,
+        "median_ms": 0.06640625,
+        "fetched_weight_bytes": 19660800.0
+      }
+    },
+    "hc_attn_down": {
+      "1": {
+        "variant": "kopt_sg32",
+        "effective_GB_s": 40.07597122302158,
+        "median_ms": 0.086875
+      },
+      "2": {
+        "variant": "splitk4_v1",
+        "effective_GB_s": 101.12992709210793,
+        "median_ms": 0.034427
+      },
+      "3": {
+        "variant": "splitk4_v1",
+        "effective_GB_s": 100.97740653731256,
+        "median_ms": 0.034479
+      },
+      "5": {
+        "variant": "expanded_split4",
+        "effective_GB_s": 174.33084271256973,
+        "median_ms": 0.021146,
+        "fetched_weight_bytes": 3686400.0
+      }
+    },
+    "hc_attn_up": {
+      "1": {
+        "variant": "kopt_sg32",
+        "effective_GB_s": 81.12592040264703,
+        "median_ms": 0.042916
+      },
+      "2": {
+        "variant": "kopt_sg32",
+        "effective_GB_s": 80.92885949721645,
+        "median_ms": 0.0430205
+      },
+      "3": {
+        "variant": "kopt_sg32",
+        "effective_GB_s": 81.02679870137426,
+        "median_ms": 0.0429685
+      },
+      "5": {
+        "variant": "expanded_split4",
+        "effective_GB_s": 125.49446808510639,
+        "median_ms": 0.029375,
+        "fetched_weight_bytes": 3686400.0
+      }
+    },
+    "ffn_gate_inp": {
+      "1": {
+        "variant": "kopt_sg32",
+        "effective_GB_s": 285.98047237222494,
+        "median_ms": 0.018333
+      },
+      "2": {
+        "variant": "kopt_sg32",
+        "effective_GB_s": 287.61204673871305,
+        "median_ms": 0.018229
+      },
+      "3": {
+        "variant": "decode_const_split4_v1",
+        "effective_GB_s": 396.31718194874895,
+        "median_ms": 0.013229
+      },
+      "5": {
+        "variant": "expanded_split4",
+        "effective_GB_s": 238.53771170535848,
+        "median_ms": 0.02197925,
+        "fetched_weight_bytes": 5242880
+      }
+    },
+    "ffn_gate_exps": {
+      "1": {
+        "variant": "kopt_sg32",
+        "effective_GB_s": 50.6084977530907,
+        "median_ms": 0.103698
+      },
+      "2": {
+        "variant": "kopt_sg32",
+        "effective_GB_s": 50.40604334650793,
+        "median_ms": 0.1041145
+      },
+      "3": {
+        "variant": "decode_const_sg32_v1",
+        "effective_GB_s": 51.80549248780873,
+        "median_ms": 0.101302
+      }
+    },
+    "ffn_up_exps": {
+      "1": {
+        "variant": "kopt_sg32",
+        "effective_GB_s": 50.35574298229202,
+        "median_ms": 0.10421849999999999
+      },
+      "2": {
+        "variant": "kopt_sg32",
+        "effective_GB_s": 50.50718919022963,
+        "median_ms": 0.103906
+      },
+      "3": {
+        "variant": "decode_const_sg32_v1",
+        "effective_GB_s": 51.93931176453123,
+        "median_ms": 0.101041
+      }
+    },
+    "ffn_down_exps": {
+      "1": {
+        "variant": "kopt_sg32",
+        "effective_GB_s": 68.10875525633162,
+        "median_ms": 0.135313
+      },
+      "2": {
+        "variant": "kopt_sg32",
+        "effective_GB_s": 67.74403398962818,
+        "median_ms": 0.13604149999999998
+      },
+      "3": {
+        "variant": "kopt_sg32",
+        "effective_GB_s": 67.7961114339731,
+        "median_ms": 0.135937
+      }
+    },
+    "ffn_gate_shexp": {
+      "1": {
+        "variant": "kopt_sg32",
+        "effective_GB_s": 51.40365639103496,
+        "median_ms": 0.026146
+      },
+      "2": {
+        "variant": "kopt_sg32",
+        "effective_GB_s": 51.40365639103496,
+        "median_ms": 0.026146
+      },
+      "3": {
+        "variant": "decode_const_split4_v1",
+        "effective_GB_s": 52.66251322440343,
+        "median_ms": 0.025521
+      },
+      "5": {
+        "variant": "expanded_split4",
+        "effective_GB_s": 129.34600688413806,
+        "median_ms": 0.0158335,
+        "fetched_weight_bytes": 2048000.0
+      }
+    },
+    "ffn_down_shexp": {
+      "1": {
+        "variant": "kopt_sg32",
+        "effective_GB_s": 72.81701629264008,
+        "median_ms": 0.0239065
+      },
+      "2": {
+        "variant": "kopt_sg32",
+        "effective_GB_s": 73.45767575322812,
+        "median_ms": 0.023698
+      },
+      "3": {
+        "variant": "kopt_sg32",
+        "effective_GB_s": 73.61921678085088,
+        "median_ms": 0.023646
+      },
+      "5": {
+        "variant": "expanded_split4",
+        "effective_GB_s": 121.19936875328774,
+        "median_ms": 0.015208,
+        "fetched_weight_bytes": 1843200.0
+      }
+    },
+    "hc_attn_inject": {
+      "1": {
+        "variant": "kopt_sg32",
+        "effective_GB_s": 2.7025154639175257,
+        "median_ms": 0.060625
+      },
+      "2": {
+        "variant": "splitk4_v1",
+        "effective_GB_s": 5.295752795914409,
+        "median_ms": 0.030938
+      },
+      "3": {
+        "variant": "decode_const_split4_v1",
+        "effective_GB_s": 9.474901688642147,
+        "median_ms": 0.017292
+      },
+      "5": {
+        "variant": "expanded_split4",
+        "effective_GB_s": 7.729031040664212,
+        "median_ms": 0.021198,
+        "fetched_weight_bytes": 163840
+      }
+    },
+    "ssm_alpha": {
+      "1": {
+        "variant": "kopt_sg32",
+        "effective_GB_s": 28.94870133694564,
+        "median_ms": 0.016979
+      },
+      "2": {
+        "variant": "splitk4_v1",
+        "effective_GB_s": 32.88199090179288,
+        "median_ms": 0.014948
+      },
+      "3": {
+        "variant": "decode_const_split4_v1",
+        "effective_GB_s": 55.84185412406271,
+        "median_ms": 0.008802
+      },
+      "5": {
+        "variant": "expanded_split4",
+        "effective_GB_s": 43.69066666666667,
+        "median_ms": 0.01125,
+        "fetched_weight_bytes": 491520
+      }
+    }
+  },
+  "live_run": {
+    "source": "experiments/own-xpu-runtime/stage2/packet13-integrate/build/card3-first-token-a/run/timings.jsonl",
+    "prefix_bytes": 14797683,
+    "prefix_sha256": "1517bae6be4647949db3419cf7898ee2371b0f8244ca7acffe4e6759d05409e7",
+    "complete_jsonl_rows": 90476,
+    "completed_prompt_positions": 48,
+    "planned_prompt_positions": 87,
+    "planned_generated_tokens": 8,
+    "status": "prefill in progress",
+    "token_rows": [
+      {
+        "kind": "token",
+        "token_index": 0,
+        "input_token": 248045,
+        "wall_ms": 69038.6,
+        "gemv_device_ms": 60.855741,
+        "non_gemv_device_ms": 46954.090715,
+        "transfer_wall_ms": 3506.6
+      },
+      {
+        "kind": "token",
+        "token_index": 1,
+        "input_token": 846,
+        "wall_ms": 52017.5,
+        "gemv_device_ms": 60.642266,
+        "non_gemv_device_ms": 47006.331075,
+        "transfer_wall_ms": 3507.87
+      },
+      {
+        "kind": "token",
+        "token_index": 2,
+        "input_token": 198,
+        "wall_ms": 52161.1,
+        "gemv_device_ms": 60.962185,
+        "non_gemv_device_ms": 47132.670929,
+        "transfer_wall_ms": 3513
+      },
+      {
+        "kind": "token",
+        "token_index": 3,
+        "input_token": 2523,
+        "wall_ms": 52169.1,
+        "gemv_device_ms": 61.1223,
+        "non_gemv_device_ms": 47142.303026,
+        "transfer_wall_ms": 3511.02
+      },
+      {
+        "kind": "token",
+        "token_index": 4,
+        "input_token": 513,
+        "wall_ms": 52390.5,
+        "gemv_device_ms": 61.365198,
+        "non_gemv_device_ms": 47295.7251,
+        "transfer_wall_ms": 3515.7
+      },
+      {
+        "kind": "token",
+        "token_index": 5,
+        "input_token": 60566,
+        "wall_ms": 52390.5,
+        "gemv_device_ms": 61.587081,
+        "non_gemv_device_ms": 47276.840931,
+        "transfer_wall_ms": 3536.47
+      },
+      {
+        "kind": "token",
+        "token_index": 6,
+        "input_token": 449,
+        "wall_ms": 52542.3,
+        "gemv_device_ms": 61.911154,
+        "non_gemv_device_ms": 47394.074892,
+        "transfer_wall_ms": 3544.49
+      },
+      {
+        "kind": "token",
+        "token_index": 7,
+        "input_token": 13343,
+        "wall_ms": 52493.3,
+        "gemv_device_ms": 62.304482,
+        "non_gemv_device_ms": 47369.946467,
+        "transfer_wall_ms": 3545.44
+      },
+      {
+        "kind": "token",
+        "token_index": 8,
+        "input_token": 2015,
+        "wall_ms": 52723.9,
+        "gemv_device_ms": 62.871029,
+        "non_gemv_device_ms": 47550.46894,
+        "transfer_wall_ms": 3562.98
+      },
+      {
+        "kind": "token",
+        "token_index": 9,
+        "input_token": 1238,
+        "wall_ms": 52774.3,
+        "gemv_device_ms": 63.311146,
+        "non_gemv_device_ms": 47524.402619,
+        "transfer_wall_ms": 3571.52
+      },
+      {
+        "kind": "token",
+        "token_index": 10,
+        "input_token": 264,
+        "wall_ms": 52869.1,
+        "gemv_device_ms": 63.577825,
+        "non_gemv_device_ms": 47637.510529,
+        "transfer_wall_ms": 3581.34
+      },
+      {
+        "kind": "token",
+        "token_index": 11,
+        "input_token": 2393,
+        "wall_ms": 52914.6,
+        "gemv_device_ms": 63.91374,
+        "non_gemv_device_ms": 47606.138853,
+        "transfer_wall_ms": 3613.38
+      },
+      {
+        "kind": "token",
+        "token_index": 12,
+        "input_token": 10142,
+        "wall_ms": 53088.9,
+        "gemv_device_ms": 64.095317,
+        "non_gemv_device_ms": 47755.247603,
+        "transfer_wall_ms": 3604.7
+      },
+      {
+        "kind": "token",
+        "token_index": 13,
+        "input_token": 13,
+        "wall_ms": 53027.9,
+        "gemv_device_ms": 64.796336,
+        "non_gemv_device_ms": 47714.974902,
+        "transfer_wall_ms": 3600.58
+      },
+      {
+        "kind": "token",
+        "token_index": 14,
+        "input_token": 9357,
+        "wall_ms": 53171.7,
+        "gemv_device_ms": 65.483218,
+        "non_gemv_device_ms": 47834.231998,
+        "transfer_wall_ms": 3608.83
+      },
+      {
+        "kind": "token",
+        "token_index": 15,
+        "input_token": 264,
+        "wall_ms": 53182.5,
+        "gemv_device_ms": 66.565632,
+        "non_gemv_device_ms": 47809.481566,
+        "transfer_wall_ms": 3613.08
+      },
+      {
+        "kind": "token",
+        "token_index": 16,
+        "input_token": 61446,
+        "wall_ms": 53454.9,
+        "gemv_device_ms": 67.38459,
+        "non_gemv_device_ms": 48072.927385,
+        "transfer_wall_ms": 3624.31
+      },
+      {
+        "kind": "token",
+        "token_index": 17,
+        "input_token": 694,
+        "wall_ms": 53539,
+        "gemv_device_ms": 67.606355,
+        "non_gemv_device_ms": 48037.001053,
+        "transfer_wall_ms": 3665.65
+      },
+      {
+        "kind": "token",
+        "token_index": 18,
+        "input_token": 4434,
+        "wall_ms": 53534.7,
+        "gemv_device_ms": 67.602598,
+        "non_gemv_device_ms": 48171.547699,
+        "transfer_wall_ms": 3612.32
+      },
+      {
+        "kind": "token",
+        "token_index": 19,
+        "input_token": 10142,
+        "wall_ms": 53525.9,
+        "gemv_device_ms": 68.365621,
+        "non_gemv_device_ms": 48128.771855,
+        "transfer_wall_ms": 3603.14
+      },
+      {
+        "kind": "token",
+        "token_index": 20,
+        "input_token": 76135,
+        "wall_ms": 53688.4,
+        "gemv_device_ms": 68.633541,
+        "non_gemv_device_ms": 48293.57125,
+        "transfer_wall_ms": 3611.15
+      },
+      {
+        "kind": "token",
+        "token_index": 21,
+        "input_token": 364,
+        "wall_ms": 53655,
+        "gemv_device_ms": 68.839171,
+        "non_gemv_device_ms": 48226.990956,
+        "transfer_wall_ms": 3620.8
+      },
+      {
+        "kind": "token",
+        "token_index": 22,
+        "input_token": 264,
+        "wall_ms": 53866.6,
+        "gemv_device_ms": 69.622508,
+        "non_gemv_device_ms": 48385.85294,
+        "transfer_wall_ms": 3631.8
+      },
+      {
+        "kind": "token",
+        "token_index": 23,
+        "input_token": 5492,
+        "wall_ms": 53869.1,
+        "gemv_device_ms": 70.329374,
+        "non_gemv_device_ms": 48319.892596,
+        "transfer_wall_ms": 3647.83
+      },
+      {
+        "kind": "token",
+        "token_index": 24,
+        "input_token": 5165,
+        "wall_ms": 54069.3,
+        "gemv_device_ms": 70.994387,
+        "non_gemv_device_ms": 48511.483034,
+        "transfer_wall_ms": 3648.32
+      },
+      {
+        "kind": "token",
+        "token_index": 25,
+        "input_token": 85093,
+        "wall_ms": 54045,
+        "gemv_device_ms": 72.432501,
+        "non_gemv_device_ms": 48439.508043,
+        "transfer_wall_ms": 3665.03
+      },
+      {
+        "kind": "token",
+        "token_index": 26,
+        "input_token": 8613,
+        "wall_ms": 54131,
+        "gemv_device_ms": 71.144474,
+        "non_gemv_device_ms": 48596.43566,
+        "transfer_wall_ms": 3636.39
+      },
+      {
+        "kind": "token",
+        "token_index": 27,
+        "input_token": 539,
+        "wall_ms": 53884.4,
+        "gemv_device_ms": 70.374181,
+        "non_gemv_device_ms": 48533.80259,
+        "transfer_wall_ms": 3578.02
+      },
+      {
+        "kind": "token",
+        "token_index": 28,
+        "input_token": 264,
+        "wall_ms": 54067.6,
+        "gemv_device_ms": 70.506022,
+        "non_gemv_device_ms": 48726.348232,
+        "transfer_wall_ms": 3579.69
+      },
+      {
+        "kind": "token",
+        "token_index": 29,
+        "input_token": 3743,
+        "wall_ms": 54010.1,
+        "gemv_device_ms": 71.03094,
+        "non_gemv_device_ms": 48637.130503,
+        "transfer_wall_ms": 3578.92
+      },
+      {
+        "kind": "token",
+        "token_index": 30,
+        "input_token": 6297,
+        "wall_ms": 54223.9,
+        "gemv_device_ms": 70.841772,
+        "non_gemv_device_ms": 48808.413736,
+        "transfer_wall_ms": 3589.75
+      },
+      {
+        "kind": "token",
+        "token_index": 31,
+        "input_token": 8060,
+        "wall_ms": 54175.3,
+        "gemv_device_ms": 72.265536,
+        "non_gemv_device_ms": 48726.549067,
+        "transfer_wall_ms": 3594.61
+      },
+      {
+        "kind": "token",
+        "token_index": 32,
+        "input_token": 362,
+        "wall_ms": 54589,
+        "gemv_device_ms": 72.571766,
+        "non_gemv_device_ms": 49122.642913,
+        "transfer_wall_ms": 3599.02
+      },
+      {
+        "kind": "token",
+        "token_index": 33,
+        "input_token": 5728,
+        "wall_ms": 54473.8,
+        "gemv_device_ms": 73.168225,
+        "non_gemv_device_ms": 49028.858311,
+        "transfer_wall_ms": 3602.04
+      },
+      {
+        "kind": "token",
+        "token_index": 34,
+        "input_token": 13,
+        "wall_ms": 54645.9,
+        "gemv_device_ms": 73.113676,
+        "non_gemv_device_ms": 49220.602488,
+        "transfer_wall_ms": 3589.26
+      },
+      {
+        "kind": "token",
+        "token_index": 35,
+        "input_token": 28763,
+        "wall_ms": 54563,
+        "gemv_device_ms": 73.287891,
+        "non_gemv_device_ms": 49125.607376,
+        "transfer_wall_ms": 3593.39
+      },
+      {
+        "kind": "token",
+        "token_index": 36,
+        "input_token": 5253,
+        "wall_ms": 54782.4,
+        "gemv_device_ms": 74.353622,
+        "non_gemv_device_ms": 49327.190831,
+        "transfer_wall_ms": 3599.62
+      },
+      {
+        "kind": "token",
+        "token_index": 37,
+        "input_token": 11,
+        "wall_ms": 54699.3,
+        "gemv_device_ms": 74.438952,
+        "non_gemv_device_ms": 49228.068535,
+        "transfer_wall_ms": 3604.05
+      },
+      {
+        "kind": "token",
+        "token_index": 38,
+        "input_token": 24024,
+        "wall_ms": 54941.2,
+        "gemv_device_ms": 74.544998,
+        "non_gemv_device_ms": 49417.30563,
+        "transfer_wall_ms": 3614.45
+      },
+      {
+        "kind": "token",
+        "token_index": 39,
+        "input_token": 11,
+        "wall_ms": 54830.5,
+        "gemv_device_ms": 75.265316,
+        "non_gemv_device_ms": 49317.041161,
+        "transfer_wall_ms": 3612.88
+      },
+      {
+        "kind": "token",
+        "token_index": 40,
+        "input_token": 27780,
+        "wall_ms": 55091.6,
+        "gemv_device_ms": 75.652707,
+        "non_gemv_device_ms": 49556.592693,
+        "transfer_wall_ms": 3617.54
+      },
+      {
+        "kind": "token",
+        "token_index": 41,
+        "input_token": 9085,
+        "wall_ms": 55005.8,
+        "gemv_device_ms": 75.962093,
+        "non_gemv_device_ms": 49439.320418,
+        "transfer_wall_ms": 3621.58
+      },
+      {
+        "kind": "token",
+        "token_index": 42,
+        "input_token": 11,
+        "wall_ms": 55211.2,
+        "gemv_device_ms": 76.714271,
+        "non_gemv_device_ms": 49645.349593,
+        "transfer_wall_ms": 3625.39
+      },
+      {
+        "kind": "token",
+        "token_index": 43,
+        "input_token": 17448,
+        "wall_ms": 55127.9,
+        "gemv_device_ms": 78.182596,
+        "non_gemv_device_ms": 49516.047292,
+        "transfer_wall_ms": 3632.74
+      },
+      {
+        "kind": "token",
+        "token_index": 44,
+        "input_token": 31092,
+        "wall_ms": 55416.3,
+        "gemv_device_ms": 77.527276,
+        "non_gemv_device_ms": 49757.827277,
+        "transfer_wall_ms": 3637.89
+      },
+      {
+        "kind": "token",
+        "token_index": 45,
+        "input_token": 11,
+        "wall_ms": 55309.7,
+        "gemv_device_ms": 77.730732,
+        "non_gemv_device_ms": 49626.864085,
+        "transfer_wall_ms": 3642.02
+      },
+      {
+        "kind": "token",
+        "token_index": 46,
+        "input_token": 32418,
+        "wall_ms": 55545.8,
+        "gemv_device_ms": 79.604479,
+        "non_gemv_device_ms": 49833.422796,
+        "transfer_wall_ms": 3648.77
+      },
+      {
+        "kind": "token",
+        "token_index": 47,
+        "input_token": 6880,
+        "wall_ms": 55432.3,
+        "gemv_device_ms": 80.727284,
+        "non_gemv_device_ms": 49707.189889,
+        "transfer_wall_ms": 3656.63
+      }
+    ],
+    "first_position_note": "First input position, not a generated token or steady decode rate; wall includes initialization/host work not explained by event sums."
+  },
+  "packet15_observation": {
+    "source": "experiments/own-xpu-runtime/stage2/packet15-nongemv/README.md",
+    "sha256": "e804925940db40a4baa63a6ee58e2b1cb987db728d1662a88341108a706c9312",
+    "status_excerpt": "# Stage 2 packet 15 \u2014 parallel non-GEMV candidate\n\n**CPU-only preparation, October 11, 2026. SYCL compile/link passes. The\npacket1b byte-exact gate FAILS. This candidate is not qualified or integrated\ninto packet13. No device timing or model speedup is claimed.**\n\nThe requested lossless replacement is not complete. The parallel algorithms,\nowner-managed launch interface, independent fixtures, guarded device protocol\nand timing harness are retained here so the remaining arithmetic problem is\nreproducible. Do not replace the oracle, loosen a tolerance, or adopt a changed\noutput to turn this into a pass."
+  },
+  "fused_expert_metrics": {
+    "4": {
+      "variant": "experts_sg32",
+      "median_ms": 0.29848949999999996,
+      "effective_GB_s": 66.03917390728988
+    },
+    "5": {
+      "variant": "experts_sg32",
+      "median_ms": 0.2976565,
+      "effective_GB_s": 66.22398637355475
+    },
+    "6": {
+      "variant": "experts_sg32",
+      "median_ms": 0.298854,
+      "effective_GB_s": 65.95862862802572
+    }
+  },
+  "head_metric": {
+    "variant": "expanded_sg32",
+    "fetched_weight_bytes": 794624000.0,
+    "median_ms": 2.1396870000000003,
+    "effective_GB_s": 371.373943946007
+  }
+}
