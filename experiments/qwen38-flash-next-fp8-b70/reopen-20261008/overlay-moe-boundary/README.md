@@ -70,23 +70,24 @@ and the 305-second gap still apply. Do not pass historical owner acceptance
 to bypass the fourth-incident halt.
 
 **Both stage and run directories must be fresh.** Never edit or reuse the
-failed `/mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011T04`:
-its bytes and failed-window evidence remain preserved. If either destination
+failed `/mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011T04`
+or `/mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-compilation-v2`;
+their bytes and failed-window evidence remain preserved. If either destination
 below already exists, choose a new unique suffix in both commands.
 
 ```sh
 nice -n 19 env OMP_NUM_THREADS=2 PYTHONDONTWRITEBYTECODE=1 SCREEN1B_MOE_BOUNDARY=1 \
   python3 -B /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/build_patch.py \
-  --stage /mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-compilation-v2
+  --stage /mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-source-paths-v3
 
 nice -n 19 env OMP_NUM_THREADS=2 PYTHONDONTWRITEBYTECODE=1 \
   SCREEN1B_SOURCE_REPO=/home/steve/llm-optimizations \
   SCREEN1B_MOE_BOUNDARY=1 SCREEN_PRIVILEGED_FD_SCAN=1 \
-  python3 -B /mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-compilation-v2/screen.py \
+  python3 -B /mnt/fast-ai/bench-results/flashnext-moe-boundary-package-20261011-source-paths-v3/screen.py \
   run --mode calibrate-load --loading-ram-guard-gb 96 \
   --health-receipt "${HEALTH_RECEIPT:?set fresh health receipt path}" \
   --previous-stop-utc "${PREVIOUS_STOP_UTC:?set verified previous stop UTC}" \
-  --run-dir /mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-compilation-v2 --execute
+  --run-dir /mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-source-paths-v3 --execute
 ```
 
 The controller creates one owned user unit using Nice=19 and OMP_NUM_THREADS=2.
@@ -95,8 +96,10 @@ Container receipt paths are `/screen/moe-boundary/` and `/screen/watcher.json`,
 which map to the new run directory. STOP and FAULT are siblings of those paths.
 Existing production files, prior evidence and latches are never modified.
 
-CPU validation after the compilation repair: **124 passed, zero failures/errors/skips**;
-[source-bound receipt](../evidence/moe-boundary-compilation-cpu-20261011/validation.json).
+CPU validation after the source-path repair: **128 passed, zero failures/errors/skips**;
+[source-bound receipt](../evidence/moe-boundary-paths-cpu-20261011/validation.json).
+The [124-test compilation receipt](../evidence/moe-boundary-compilation-cpu-20261011/validation.json)
+remains historical evidence; its predictor test stopped before the failing census read.
 The [original 122-test receipt](../evidence/moe-boundary-cpu-20261011/validation.json)
 is retained under its original seal.
 `test_window.py` exercises command identity, explicit enable,
@@ -105,7 +108,20 @@ the allocation census), refusal of the old graph mode, zero-generation-only
 admission, watcher freshness/latches, gap timing,
 terminal markers, and runtime warmup/extra-forward refusal with synthetic
 objects. It imports neither vLLM nor Torch and does not initialize any device.
-Native behavior remains unqualified until the authorized window is run.
+`test_staged_paths.py` imports the complete staged controller and runs the
+README's `run --execute` admission path from an unrelated working directory,
+with an explicit stop before the first Docker operation. It uses real package
+seals, placement/candidate calculations, runtime source hashes and installed
+model config/index plus bounded headers (131 shards; no tensor payloads).
+Every input open must name an existing file; the test also requires every seal
+member, model header, source hash member and historical placement census to
+have been opened. Disk capacity, idle cards, socket binding and journal are
+CPU doubles, and a synthetic health receipt goes through the real validator;
+this is not live host admission. Relative receipt and tiny synthetic model
+metadata paths, missing source-repo refusal and dormant client/routing paths
+have separate checks. The installed model metadata and pinned source tree are
+required for this lab integration test. Native behavior remains unqualified
+until the authorized window is run.
 
 `test_boundary.py` runs synthetic good/bad inputs for alignment, ownership,
 workspace and all eleven pointer roles; it executes the extracted production
@@ -156,6 +172,44 @@ nice -n 19 env OMP_NUM_THREADS=2 python3 -B experiments/qwen38-flash-next-fp8-b7
 nice -n 19 env OMP_NUM_THREADS=2 python3 -B experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/build_patch.py --check
 ```
 
-Diagnostic overlay manifest SHA256: `800c83a0d7681a29b9d4c3c50742dd3d96024be0f6fb93665a02a3ccde88019b`.
+Diagnostic overlay manifest SHA256: `6c9dafd3e265f5adc528408325e2824a5acc64882e51ac1234f348109963062b`.
 
-Patch manifest SHA256: `ca3052a004321d255f87b9055696029df30ad9043cd643886a12039acb4fbaea`.
+Patch manifest SHA256: `f5e6301cc9310d7108f75d5fefac84101ec16f6ce0f19b7de37325ee58621511`.
+
+
+## Source-path repair and staged-command audit, October 11
+
+At 04:08:41 UTC the coordinator's compilation-v2 stage passed admission/disk
+checks, then refused while reading the historical placement census under
+`/mnt/fast-ai/bench-results/data/`. The failure was in
+`placement_plan.enumerate_candidates`, called at the end of `build_prediction`:
+`HERE.parent` meant the original lane directory before staging, but the
+bench-results directory afterward. The actual tracked census is
+`experiments/qwen38-flash-next-fp8-b70/data/20260913-q38-expert-host-placement-a315-census-5gib-mc2-per-rank.json`
+under the source repository. The controller's existing environment override
+did not reach that imported helper. The prior identity test stopped before
+allocation and therefore never exercised this read.
+
+The variant now seals a shared `source_paths.py`. Host repository inputs use
+`SCREEN1B_SOURCE_REPO`; a staged package without that variable refuses rather
+than guessing a checkout from its parents. Only the variant copies changed;
+the production controller, predictor, overlay and historical stages retain
+their bytes. Prediction arithmetic, input hash requirements and admission
+thresholds are unchanged; the diagnostic seal includes the new support files.
+
+| Input or command path | Resolution after staging |
+| --- | --- |
+| Historical placement census and four routing census files | Source repo + `experiments/qwen38-flash-next-fp8-b70/data/` |
+| Git main check, model-verification script and pinned owner-acceptance location | Source repo; controller already used the override, now shares the resolver |
+| Relative health/calibration/owner receipt arguments | Source repo; absolute paths unchanged; normalized before worker handoff |
+| Explicit relative model root, bounds override, bounds source root, predictor launch JSON | Source repo; absolute model/runtime paths unchanged; shard filenames remain relative to their model root |
+| Image plan, bounds/contract defaults, tuned placement map (`placement-attempt6-v5.json`), certified map, Python overlay, all seal/support members | Stage directory, checked against the diagnostic seal; never redirected to production copies |
+| Protocol benchmark clients, exact-depth fixture, realistic suite and output authorities | Source repo; dormant in this zero-generation diagnostic |
+| vLLM tuned GEMM configuration lookup | Container runtime `configs/`; this command supplies no `VLLM_TUNED_CONFIG_FOLDER` override |
+| Entrypoint, package and model bind mounts | Absolute stage/model paths; `/screen-package`, `/model`, `/screen` container paths unchanged |
+| Run output, caches, watcher receipts, STOP/FAULT and worker controller | Fresh run directory and stage; absolute worker paths and source-repo environment forwarded |
+
+`vram_plan.generate` also resolves routing inputs through the source repo;
+its output stays in the supplied package and it is not invoked by the screen.
+Never regenerate files in an existing sealed coordinator stage. Use the fresh
+source-paths-v3 stage/run commands above with current coordinator admission.

@@ -22,6 +22,7 @@ import time
 import threading
 
 import calibration
+from source_paths import REPO, repo_input
 
 from memory_watchdog import DeferredStop, MemoryWatchdog, sample_memory, trip_reason
 from teardown_receipts import validate_rank_receipts
@@ -31,7 +32,6 @@ from apply_overlay import verify_package
 import urllib.request
 
 HERE = Path(__file__).resolve().parent
-REPO = (Path(os.environ["SCREEN1B_SOURCE_REPO"]) if "SCREEN1B_SOURCE_REPO" in os.environ else HERE.parents[2]).resolve()
 PLAN = json.loads((HERE / 'image-plan.json').read_text())
 OVERLAY = json.loads((HERE / 'overlay-manifest.json').read_text())
 MODEL = Path('/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8')
@@ -851,11 +851,11 @@ def main():
         args.loading_ram_guard_gb = 90
     run = (args.run_dir or HERE / 'runs' / ('screen1b-' + args.mode)).resolve()
     if args.calibration:
-        args.calibration = args.calibration.resolve()
+        args.calibration = repo_input(args.calibration)
     if args.health_receipt:
-        args.health_receipt = args.health_receipt.resolve()
+        args.health_receipt = repo_input(args.health_receipt)
     if args.owner_acceptance:
-        args.owner_acceptance = args.owner_acceptance.resolve()
+        args.owner_acceptance = repo_input(args.owner_acceptance)
     if args.mode == 'calibrate-load' and args.action not in ('run', '_worker', 'preflight'):
         p.error('calibrate-load uses the already-present image; prepare is not a calibration action')
     args.run_dir = run

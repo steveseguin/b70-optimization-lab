@@ -14,6 +14,52 @@
  # Apply before any vLLM import. Official container Python tree only, never a host venv.
  /opt/venv/bin/python /screen-package/apply_overlay.py \
      --root /opt/venv/lib/python3.12/site-packages > /screen/overlay-application.json
+--- a/memory_plan.py
++++ b/memory_plan.py
+@@ -18,6 +18,7 @@
+ from pathlib import Path
+ import re
+ import struct
++from source_paths import repo_input
+
+ HERE = Path(__file__).resolve().parent
+ GIB = 1 << 30
+@@ -91,7 +92,7 @@
+
+ def read_metadata(root):
+     """Read config, index and bounded headers only; never seek tensor payloads."""
+-    root = Path(root)
++    root = repo_input(root)
+     config_path = root / 'config.json'
+     index_path = root / 'model.safetensors.index.json'
+     config = json.loads(config_path.read_text())
+@@ -358,7 +359,7 @@
+
+ def build_prediction(command, model_root=DEFAULT_MODEL, bounds_path=None, observations=None):
+     """Build prediction; persisted bounds are source-bound and fail closed."""
+-    bounds_path = Path(bounds_path or HERE / 'memory-bounds.json')
++    bounds_path = repo_input(bounds_path) if bounds_path is not None else HERE / 'memory-bounds.json'
+     bound = json.loads(bounds_path.read_text())
+     config, tensors, metadata = read_metadata(model_root)
+     identity = launch_identity([str(x) for x in command])
+@@ -446,7 +447,7 @@
+     overlay_identity = sha256(overlay_manifest)
+     if bound.get('qualified', False) and bound.get('qualified_overlay_manifest_sha256') != overlay_identity:
+         refusal.append('qualified phase bound does not match overlay manifest identity')
+-    source_root = Path(bound['source_root'])
++    source_root = repo_input(bound['source_root'])
+     for rel, digest in bound['source_sha256'].items():
+         try:
+             if sha256(source_root / rel) != digest:
+@@ -576,7 +577,7 @@
+     parser.add_argument('--model-root', type=Path, default=DEFAULT_MODEL)
+     parser.add_argument('--output', type=Path)
+     args = parser.parse_args()
+-    plan = build_prediction(json.loads(args.launch_json.read_text()), args.model_root)
++    plan = build_prediction(json.loads(repo_input(args.launch_json).read_text()), args.model_root)
+     print(format_table(plan))
+     if args.output:
+         args.output.write_text(json.dumps(plan, indent=2) + '\n')
 --- a/overlay-manifest.json
 +++ b/overlay-manifest.json
 @@ -37,22 +37,24 @@
@@ -85,7 +131,7 @@
      },
      "vllm/screen1b_ple.py": {
        "base_sha256": null,
-@@ -252,16 +254,24 @@
+@@ -252,26 +254,72 @@
      },
      "vllm/v1/worker/gpu_worker.py": {
        "base_sha256": "6994436e4547c0996ab555b3e814e8ccea26b650dfc1b378b97d640745309347",
@@ -112,15 +158,21 @@
      "placement-certified-v5.json": "f3f4812cfae2f4f704e75cc9b47a4031a476f846b353e3def23141b9d9c05f96",
      "memory-contract.json": "5b76ab8735f74e11bd7d7048b5879991ab637a701576ce85b563965f36b2544b",
      "memory-bounds.json": "7f7a0a5458aedac8e371aeac4a82033b55d1f783276a2073861e50b45007b70d",
-@@ -270,8 +280,45 @@
-     "vram_plan.py": "75b1c1e5671ab5a34d6375df137eec8a3f62f108432eb31c05d87cb56b784955",
-     "placement_plan.py": "eb9953f4f09ae6da682dc1701bedade66680a597f0509203102bfacd47cbd8e5",
+-    "memory_plan.py": "8e0ee052d88901cdf54b92dd18bf11a2f29ba4a0e2317cbab8920fe065880600",
++    "memory_plan.py": "dc40b95b0d2c63a6eabf3b30891f30d6d29876b87a7a1219f6860fc464559e53",
+     "placement-attempt6-v5.json": "b64cf1c9cf732d9093ed55a90cc59e1d52b5be5a755914fc04d860aecf384ce6",
+-    "vram_plan.py": "75b1c1e5671ab5a34d6375df137eec8a3f62f108432eb31c05d87cb56b784955",
+-    "placement_plan.py": "eb9953f4f09ae6da682dc1701bedade66680a597f0509203102bfacd47cbd8e5",
++    "vram_plan.py": "3589e4c1506252e65dc85b72b3cdecbb2c0b210a3070bf25e731ec1ed3af0c9f",
++    "placement_plan.py": "47007bf611bab7e1481e0b0804a98c9fdd68cc9a76cbd845200c347ee2a183c5",
      "memory_watchdog.py": "f084dd183b57e6340d43bef1c0dcb7194ee2f449469e31195d248ae8129966c7",
 -    "screen.py": "fdb57ed3241aeb29e3d1060671fe0e8ae0feebf2d06a80e316039d975d3f1428",
 -    "teardown_receipts.py": "46099d077ec2025d2849ffc4052baee603e15b5f32b811a536a14ebb5727b5a7"
-+    "screen.py": "40f30d8ded0262359b2a1ded2ef7e9a967409d634ef9fafdbdd8c0d7acc751e8",
++    "screen.py": "88921a802b8fc9230ee4fb38580fe67a6ae6d3299b801b1f861f8d35334083a6",
 +    "teardown_receipts.py": "46099d077ec2025d2849ffc4052baee603e15b5f32b811a536a14ebb5727b5a7",
 +    "probe/watch_kernel.py": "945d3bd83250b5ba8b29fd5675bccdf893e9a51e0d506d0bf4cee4995b7745cd",
++    "protocol.py": "e388a9c8365b1b5c849277c8d981b32113db39c24694078dcc582f6cdac6325d",
++    "source_paths.py": "c84752c415aa3c67a085ea64ab8d1da40ec4443ac91128a2f3b86a80d433608d",
 +    "analyze_host_budget.py": "04ed1860094c6f2323ba3b49142b2762e9057302271c0d306dc840c2a0b8f116",
 +    "analyze_partial_load.py": "a461f81eb02b9ce168d4c39aac15b3cb7a5d22d88bcfa3bb61f3ff0655ab24e5",
 +    "attempt7_budget.py": "9e6f05e35892c28dace0256f5bd97f1490cb2591992236289bc7fbd41a09934e",
@@ -133,7 +185,6 @@
 +    "host-memory-prediction.json": "5f5ddc1177ee8b1b59573a72a76f2d0628e58695e02f958d4275801d170b4eb5",
 +    "image-plan.json": "08bf4e83bff6fb77dc6d4bb0d11e53edd63a59ebfd9bfb9a36e7197806469cee",
 +    "probe/single_rank_slab_probe.py": "a5bec8bb47799547bd814789b3b0b9395327768f317c99e341002ffa527e1558",
-+    "protocol.py": "63bea7cf80ed497051af6483647ec26026732af2428265c7999642732bfa6fe8",
 +    "rescue_calibration.py": "4ea7cd6cecf3ff3b16f4c15ae80ca58d3d8586d99f8b265acce08ce96053a9c8",
 +    "rescued-calibration.json": "79c4f65b1a66d6cc78ed9c6bd350388c277235aee67f9699b4c52cab4835fa6f",
 +    "test_allocation_receipts.py": "232f8d87632678f0c772f0695e7b51a9c05610918bbdb5c27641cb1f3fa86bc8",
@@ -160,7 +211,7 @@
    },
    "semantics": {
      "PLE": "native FP8 shard mmap; fixed 1 GiB pinned clock cache/rank; original hash, raw int8 owner reduction and unchanged dequantization; synchronous pre-forward staging",
-@@ -282,6 +329,7 @@
+@@ -282,6 +330,7 @@
      "exact_gdn_native_kernel": "not ported; fused official kernel unchanged",
      "embedding": "certified input embedding selected for generic UVA, shared MTP alias counted once",
      "driver_allocation": "NEOReadDebugKeys=1 EnableDeferBacking=0 retained; Flash-Next shadow-saving claim withdrawn after attempt 6; pinned host reservation remains.",
@@ -950,6 +1001,25 @@
          warmup_sizes: list[int] = []
 
          if self.vllm_config.compilation_config.mode == CompilationMode.VLLM_COMPILE:
+--- a/placement_plan.py
++++ b/placement_plan.py
+@@ -3,6 +3,7 @@
+ import json
+ import math
+ from pathlib import Path
++from source_paths import LANE
+
+ HERE = Path(__file__).resolve().parent
+ spec = importlib.util.spec_from_file_location('v5_plan', HERE/'overlay/vllm/q38_expert_placement.py')
+@@ -57,7 +58,7 @@
+
+ def enumerate_candidates(config, tensors, kv=376569856):
+     certified=json.loads((HERE/'placement-certified-v5.json').read_text())
+-    larger=json.loads((HERE.parent/'data/20260913-q38-expert-host-placement-a315-census-5gib-mc2-per-rank.json').read_text())
++    larger=json.loads((LANE/'data/20260913-q38-expert-host-placement-a315-census-5gib-mc2-per-rank.json').read_text())
+     # Explore larger host placements too; no cold expert is pruned. These
+     # are planning masks, not claims that their additional experts are never hit.
+     extended=[]
 --- a/probe/watch_kernel.py
 +++ b/probe/watch_kernel.py
 @@ -1,90 +1,116 @@
@@ -1141,14 +1211,34 @@
 +
 +if __name__ == "__main__":
      sys.exit(main())
+--- a/protocol.py
++++ b/protocol.py
+@@ -19,8 +19,8 @@
+ import signal
+ import sys
+ import urllib.parse
+-
+-ROOT = Path(__file__).resolve().parents[3]
++from source_paths import REPO as ROOT
++
+ LANE = ROOT / "experiments/qwen38-flash-next-fp8-b70"
+ DEPTH = ROOT / "scripts/bench-openai-token-depth-suite.py"
+ REALISTIC = ROOT / "scripts/bench-openai-realistic-suite.py"
 --- a/screen.py
 +++ b/screen.py
-@@ -31,7 +31,7 @@
+@@ -22,6 +22,7 @@
+ import threading
+
+ import calibration
++from source_paths import REPO, repo_input
+
+ from memory_watchdog import DeferredStop, MemoryWatchdog, sample_memory, trip_reason
+ from teardown_receipts import validate_rank_receipts
+@@ -31,7 +32,6 @@
  import urllib.request
 
  HERE = Path(__file__).resolve().parent
 -REPO = HERE.parents[2]
-+REPO = (Path(os.environ["SCREEN1B_SOURCE_REPO"]) if "SCREEN1B_SOURCE_REPO" in os.environ else HERE.parents[2]).resolve()
  PLAN = json.loads((HERE / 'image-plan.json').read_text())
  OVERLAY = json.loads((HERE / 'overlay-manifest.json').read_text())
  MODEL = Path('/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8')
@@ -1337,6 +1427,21 @@
      p.add_argument('--port', type=int, default=19988)
      p.add_argument('--run-dir', type=Path, default=None)
      x = p.add_mutually_exclusive_group()
+@@ -767,11 +851,11 @@
+         args.loading_ram_guard_gb = 90
+     run = (args.run_dir or HERE / 'runs' / ('screen1b-' + args.mode)).resolve()
+     if args.calibration:
+-        args.calibration = args.calibration.resolve()
++        args.calibration = repo_input(args.calibration)
+     if args.health_receipt:
+-        args.health_receipt = args.health_receipt.resolve()
++        args.health_receipt = repo_input(args.health_receipt)
+     if args.owner_acceptance:
+-        args.owner_acceptance = args.owner_acceptance.resolve()
++        args.owner_acceptance = repo_input(args.owner_acceptance)
+     if args.mode == 'calibrate-load' and args.action not in ('run', '_worker', 'preflight'):
+         p.error('calibrate-load uses the already-present image; prepare is not a calibration action')
+     args.run_dir = run
 @@ -811,11 +895,13 @@
          for d in ['tmp', 'hf', 'triton', 'vllm', 'xdg']:
              (run / 'cache' / d).mkdir(parents=True)
@@ -1353,3 +1458,51 @@
          if args.calibration:
              command += ['--calibration', str(args.calibration)]
          if args.loading_ram_guard_gb is not None:
+--- /dev/null
++++ b/source_paths.py
+@@ -0,0 +1,20 @@
++"""Host input roots for the relocatable diagnostic package.
++
++Package members stay beside this file; repository inputs use SOURCE_REPO.
++Absolute model/runtime/receipt paths retain their original identities.
++"""
++import os
++from pathlib import Path
++
++HERE = Path(__file__).resolve().parent
++configured = os.environ.get("SCREEN1B_SOURCE_REPO")
++if (HERE / "diagnostic-stage.json").exists() and not configured:
++    raise RuntimeError("staged package requires SCREEN1B_SOURCE_REPO")
++REPO = (Path(configured) if configured else HERE.parents[2]).resolve()
++LANE = REPO / "experiments/qwen38-flash-next-fp8-b70"
++
++
++def repo_input(path):
++    """Resolve repository-relative inputs independently of stage and cwd."""
++    path = Path(path)
++    return (path if path.is_absolute() else REPO / path).resolve()
+--- a/vram_plan.py
++++ b/vram_plan.py
+@@ -3,6 +3,7 @@
+ import json
+ from collections import defaultdict
+ from pathlib import Path
++from source_paths import LANE
+
+ HERE = Path(__file__).resolve().parent
+ GIB = 1 << 30
+@@ -107,12 +108,12 @@
+
+ def generate():
+     original = json.loads((HERE/'placement-certified-v5.json').read_text())
+-    paths = [HERE.parent/f'data/20260907-tp4-mtp1-a315-routing-census-rank{r}.json' for r in range(4)]
++    paths = [LANE/f'data/20260907-tp4-mtp1-a315-routing-census-rank{r}.json' for r in range(4)]
+     placement, rows = expanded_placement(original, [json.loads(p.read_text()) for p in paths])
+     (HERE/PLACEMENT).write_text(json.dumps(placement, indent=2, ensure_ascii=False)+'\n')
+     receipt = dict(schema='screen1b.attempt6-placement.v1', algorithm='preserve certified rows, then (count, layer, expert) ascending; retain >=1 device row/layer',
+                    goal_rows_per_rank=2600, expert_row_bytes=EXPERT_BYTES, ranks=rows,
+-                   input_sha256={str(p.relative_to(HERE.parent)): hashlib.sha256(p.read_bytes()).hexdigest()
++                   input_sha256={str(p.relative_to(HERE) if p.parent == HERE else p.relative_to(LANE)): hashlib.sha256(p.read_bytes()).hexdigest()
+                                  for p in [HERE/'placement-certified-v5.json', *paths]},
+                    placement_sha256=hashlib.sha256((HERE/PLACEMENT).read_bytes()).hexdigest(),
+                    decode_cost=dict(assumed_ms_per_extra_selected_expert=0.1,

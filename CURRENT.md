@@ -39,6 +39,8 @@ The **October 11 [MoE boundary diagnostic](notes/2026-10-11-moe-boundary-diagnos
 
 **October 11, CPU-only boundary launch repair:** The coordinator's diagnostic stopped before launch because its graph setting did not match the memory check. The [resealed packet and commands](experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/README.md) now match attempt 8's compilation settings and pass 124 CPU tests, including a staged-command check through the memory predictor. No GPU work ran here; the coordinator needs fresh stage/run directories and current admission for the next window.
 
+**October 11, CPU-only boundary path repair:** The [resealed diagnostic and fresh commands](experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/README.md#source-path-repair-and-staged-command-audit-october-11) now read repository inputs from the source checkout after staging, fixing the missing placement census. All 128 CPU tests pass, including the full staged prediction and admission path stopped before Docker; existing stages and production files are preserved. No GPU or server work ran here; the coordinator owns the next admitted window.
+
 The certified FP8 result remains **46.854250 tok/s**, with its exact identity and gates in the [closeout](results/qwen38-flash-next-fp8-b70/CLOSEOUT-20260913.md), [handoff](results/qwen38-flash-next-fp8-b70/HANDOFF.md) and [reproduction
 guide](repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md). Reopening diagnostics and CPU preparation do not replace that record.
 
