@@ -1,0 +1,42 @@
+{
+  "schema": "packet26.preparation-findings.v1",
+  "device_executed": false,
+  "findings": [
+    {
+      "id": "CPU-K1-argmax-output",
+      "outcome": "fixed",
+      "detail": "Initial adapter fixture omitted the separate error output for argmax; the harness was corrected. Runtime arithmetic was unchanged."
+    },
+    {
+      "id": "CPU-integration-extra-shadow",
+      "outcome": "fixed",
+      "detail": "Python integration harness shadowed dispatch arguments with per-case arguments; renamed base_extra and repeated both dispatch gates."
+    },
+    {
+      "id": "CPU-GEMV-plan-cache",
+      "outcome": "fixed",
+      "detail": "Plan cache initially used expert_down instead of the actual routed_gemv operation label; corrected and repeated all integration modes."
+    },
+    {
+      "id": "CPU-GEMV-nonfinite",
+      "outcome": "excluded-from-qualification",
+      "evidence": "evidence/gemv-nonfinite-diagnostic/receipt.json",
+      "detail": "Unchanged baseline and separately compiled CPU arithmetic disagree in synthetic NaN sign. Strict finite GEMV fixtures retained; NaN routing remains required."
+    },
+    {
+      "id": "CPU-oracle-interrupted",
+      "outcome": "rerun-final-binary",
+      "detail": "Two early streaming CPU attempts were terminated gracefully before completion after fixture-source changes. Neither counted as an oracle pass."
+    },
+    {
+      "id": "literal-copy-count",
+      "outcome": "explicit-unmet-scope",
+      "detail": "Preserving packet18 peer fences and diagnostic snapshots exceeds two total copies/card/token. Separate control-upload counts meet <=2; parameter uploads/launch are zero."
+    },
+    {
+      "id": "GPU",
+      "outcome": "not-run",
+      "detail": "No device binary, discovery API, /dev/dri access or settings change occurred."
+    }
+  ]
+}

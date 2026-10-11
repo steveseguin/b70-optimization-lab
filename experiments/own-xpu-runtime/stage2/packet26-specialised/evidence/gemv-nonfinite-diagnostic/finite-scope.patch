@@ -1,0 +1,29 @@
+--- diagnostic-source.cpp
++++ gemv_timing.cpp
+@@ -12,6 +12,8 @@
+ using namespace ownrt;using namespace integrated;
+ struct Shape {const char* label;const char* klass;iq3::Type type;unsigned rows,k,count;bool paired;};
+ // Production geometry/type identities from packet25 fixtures and this packet's plan.tsv.
++// K1 GEMV modes: finite varied, signed zero, finite subnormal, finite extreme.
++// Nonfinite GEMV weights/activations are NOT qualified; see NONFINITE-GEMV.md.
+ constexpr Shape shapes[]{
+  {"expsgate.iq2","expsgate",iq3::Type::IQ2_S,640,2560,10,true},
+  {"expsgate.iq3","expsgate",iq3::Type::IQ3_S,640,2560,10,true},
+@@ -32,7 +34,7 @@
+  {"logits","logits",iq3::Type::Q6_K,248320,2560,1,false}
+ };
+ uint32_t rng(uint32_t& s){s^=s<<13;s^=s>>17;s^=s<<5;return s;}
+-std::vector<uint8_t> seed(const Shape& s,unsigned salt,unsigned v,unsigned mode=0){auto fmt=iq3::layout(s.type);std::vector<uint8_t> packed(8*(s.k/fmt.elements)*fmt.bytes);uint32_t state=0x23456789u+salt;for(auto& b:packed)b=rng(state);for(size_t off=0;off<packed.size();off+=fmt.bytes){size_t at=off+(s.type==iq3::Type::Q6_K?208:0);uint16_t half=uint16_t(0x1800+rng(state)%0x1000);if(mode>=2){constexpr uint16_t special[]{0,0x8000,1,0x8001,0x7c00,0xfc00,0x7c01,0x7e00};half=special[(off/fmt.bytes)%8];}packed[at]=half&255;packed[at+1]=half>>8;}return arithmetic::is_expanded(v)?iq3::expanded::expand(s.type,packed.data(),packed.size(),s.k):packed;}
++std::vector<uint8_t> seed(const Shape& s,unsigned salt,unsigned v,unsigned mode=0){auto fmt=iq3::layout(s.type);std::vector<uint8_t> packed(8*(s.k/fmt.elements)*fmt.bytes);uint32_t state=0x23456789u+salt;for(auto& b:packed)b=rng(state);for(size_t off=0;off<packed.size();off+=fmt.bytes){size_t at=off+(s.type==iq3::Type::Q6_K?208:0);uint16_t half=uint16_t(0x1800+rng(state)%0x1000);if(mode==2){constexpr uint16_t special[]{0,0x8000,1,0x8001,0x03ff,0x83ff,0x0400,0x8400};half=special[(off/fmt.bytes)%8];}packed[at]=half&255;packed[at+1]=half>>8;}return arithmetic::is_expanded(v)?iq3::expanded::expand(s.type,packed.data(),packed.size(),s.k):packed;}
+ #ifdef OWN_RT_HOST_ONLY
+ struct Cpu:Backend {
+  std::string identity()const override{return "CPU packet26 GEMV fixture";}
+@@ -66,7 +68,7 @@
+  auto runner=std::make_unique<Runner>(card);unsigned checks=0;try{std::ofstream events(out/"events.jsonl",std::ios::app),fixture_bytes;if(!timing)fixture_bytes.open(out/"output.bin",std::ios::binary|std::ios::app);
+  for(auto s:shapes){auto& r=*runner;unsigned experts=s.count>1?512:1,v=arithmetic::r5_variant(s.type,s.rows,s.k,experts,false);auto rb=arithmetic::row_bytes(s.type,s.k,v);if(!timing)s.rows=8;auto selected=packet26::dispatch.gemv_for(s.klass);bool candidate_available=!selected.empty()&&selected!="r5";
+  for(unsigned mode=0;mode<(!timing?4u:1u);++mode){
+-  std::vector<uint16_t> x(size_t(s.k)*(s.paired?1:s.count));for(size_t i=0;i<x.size();++i){x[i]=iq3::bf16_bits(float(int(i*17%127)-63)/128.f);if(mode==1)x[i]=i%2?0x8000:0;if(mode==3){constexpr uint16_t special[]{0,0x8000,1,0x8001,0x7f80,0xff80,0x7fc0,0xffc0};x[i]=special[i%8];}}
++  std::vector<uint16_t> x(size_t(s.k)*(s.paired?1:s.count));for(size_t i=0;i<x.size();++i){x[i]=iq3::bf16_bits(float(int(i*17%127)-63)/128.f);if(mode==1)x[i]=i%2?0x8000:0;if(mode==2){constexpr uint16_t tiny[]{0,0x8000,1,0x8001,0x007f,0x807f,0x0080,0x8080};x[i]=tiny[i%8];}if(mode==3){constexpr uint16_t extreme[]{0,0x8000,0x4f00,0xcf00,0x3000,0xb000,0x3f80,0xbf80};x[i]=extreme[i%8];}}
+   auto xid=r.upload(x.data(),x.size()*2);constexpr unsigned ids[]{1,1,7,3,3,0,9,2,5,4};std::array<iq3::Route,10> routes{};for(unsigned j=0;j<s.count;++j)routes[j]={ids[j],0,s.rows};auto rid=s.count>1?r.upload(routes.data(),s.count*sizeof(iq3::Route)):Allocation(0);
+   std::vector<Matrix> matrices;std::vector<std::vector<uint16_t>> expected;std::vector<Allocation> hosts;
+   for(unsigned projection=0;projection<(s.paired?2u:1u);++projection){auto eight=seed(s,projection,v,mode);std::vector<uint8_t> weights(size_t(experts)*s.rows*rb);for(size_t row=0;row<size_t(experts)*s.rows;++row)std::memcpy(weights.data()+row*rb,eight.data()+(row%8)*rb,rb);

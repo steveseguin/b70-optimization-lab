@@ -1,0 +1,477 @@
+--- packet18/main.cpp
++++ packet26/main.cpp
+@@ -3,6 +3,9 @@
+ #include "../packet3/step/plan.hpp"
+ #include "performance.hpp"
+ #include "adapter.hpp"
++#include "dispatch.hpp"
++#include "p25_bridge.hpp"
++#include <unordered_map>
+ #ifndef OWN_RT_HOST_ONLY
+ #include "backend.hpp"
+ #endif
+@@ -83,7 +86,9 @@
+ #endif
+ struct Options {
+   bool canary = false, mini = false, first = false, record = false, authorized = false, checked = false;
+-  std::string nongemv = "parallel", gemv = "frozen", stage = "first-token";
++  std::string nongemv = "parallel", gemv = "frozen", stage = "first-token", timing="token";
++  fs::path dispatch;
++  int wait_seconds=60;
+   int cards = 1, card = 3, tokens = 8, context = 128, seconds = 10800;
+   std::string memory = "layer-streaming";
+   fs::path inputs, output, model, plan, auth, oracle;
+@@ -98,6 +103,9 @@
+       return std::string(argv[++i]);
+     };
+     if (k == "--canary") a.canary = true;
++    else if (k == "--timing") a.timing=value();
++    else if (k == "--dispatch") a.dispatch=value();
++    else if (k == "--wait-seconds") a.wait_seconds=std::stoi(value());
+     else if (k == "--checked") a.checked = true;
+     else if (k == "--nongemv") a.nongemv = value();
+     else if (k == "--gemv") a.gemv = value();
+@@ -143,6 +151,8 @@
+   require(a.tokens > 0 && a.tokens <= 64 && a.context >= 8 &&
+               a.context <= 1024 && a.seconds > 0 && a.seconds <= 10800,
+           "bounded generation/context/deadline");
++  require(a.timing=="token" || a.timing=="launch" || a.timing=="class","timing mode");
++  require(a.wait_seconds>0 && a.wait_seconds<=600,"bounded wait deadline");
+   require(a.nongemv=="core" || a.nongemv=="parallel", "nongemv mode");
+   require(a.gemv=="frozen" || a.gemv=="r5", "gemv mode");
+   require(a.stage=="first-token" || a.stage=="decode", "stage");
+@@ -380,7 +390,45 @@
+     } else fused.push_back(l);
+   }
+   p.launches=std::move(fused);
++  // Optional arithmetic-preserving specialised fusions. The default schedule is
++  // byte-for-byte packet18. The route consumer uses the single source row.
++  std::vector<flash::Launch> specialised;
++  std::map<std::string,std::string> routed_source;
++  for(size_t i=0;i<p.launches.size();++i) {
++    auto l=p.launches[i];
++    if(a.nongemv=="parallel" && l.op=="route" && i+1<p.launches.size() && p.launches[i+1].op=="expert_gather" &&
++       packet26::dispatch.fusion_for("route+gather")) {
++      const auto& gather=p.launches[++i];
++      l.outputs.push_back(gather.outputs[0]);l.outputs.push_back(gather.outputs[1]);
++      routed_source[gather.outputs[2]]=gather.inputs[1];
++    }
++    if(l.op=="expert_gate_up" && routed_source.count(l.inputs[0]))l.inputs[0]=routed_source.at(l.inputs[0]);
++    if(a.nongemv=="parallel" && l.op=="hc_combine" && i+1<p.launches.size()) {
++      const auto& next=p.launches[i+1];
++      auto fusion_class=l.label;if(fusion_class.starts_with("blk."))fusion_class=fusion_class.substr(fusion_class.find('.',4)+1);
++      if(packet26::dispatch.fusion_for(fusion_class+"+norm") && next.op=="norm" && next.card==l.card && next.inputs==l.outputs) {
++        l.outputs.insert(l.outputs.end(),next.outputs.begin(),next.outputs.end());
++        l.weights=next.weights;l.parameter=next.parameter;++i;
++      }
++    }
++    specialised.push_back(std::move(l));
++  }
++  p.launches=std::move(specialised);
+   return p;
++}
++static unsigned selected_variant(const Weights& w,const Options& a,const flash::Plan& p,const flash::Launch& l,size_t projection=0) {
++    const auto& t=w.directory.at(l.weights[projection]);
++    auto choice=packet26::dispatch.gemv_for(l.label);
++    if(choice.empty())choice=a.gemv;
++    if(choice.starts_with("p25."))choice="r5"; // packed/expanded storage identity is unchanged
++    if(choice=="r5")return arithmetic::r5_variant(flash::grid_type(t.grid),l.shape[1],l.shape[2],l.op=="gemv"?1:p.g.experts,a.mini);
++    if(choice=="frozen" || choice=="packet18")return arithmetic::variant(flash::grid_type(t.grid),l.shape[1],l.shape[2],l.op=="gemv"?1:p.g.experts,a.mini);
++    for(unsigned v=0;v<8;++v)if(choice==arithmetic::name(v)) {
++      require(l.op=="gemv" || v==2,"expert dispatch requires registered expert kernel");
++      require(!arithmetic::is_expanded(v) || iq3::expanded::quantized(flash::grid_type(t.grid)),"expanded kernel requires quantized weights");
++      return v;
++    }
++    throw std::invalid_argument("GEMV candidate is not linked: "+choice);
+ }
+ struct Slot {
+   Allocation id;
+@@ -399,7 +447,31 @@
+   std::vector<size_t> owned_bytes;
+   std::map<Allocation,std::pair<int,size_t>> allocations;
+   std::vector<Allocation> ropes, controls, scores, probabilities, snapshots;
+-  struct Pending { Launch launch; bool gemv; };
++  struct Pending { Launch launch; bool gemv; int cls; };
++  std::map<std::string,int> class_ids;
++  std::vector<std::string> class_names;
++  std::vector<double> class_ms;
++  std::vector<uint64_t> class_launches,class_groups;
++  int current_cls=0;
++  double wait_ms=0,prepare_ms=0,enqueue_ms=0,enqueue_including_wait_ms=0;
++  void set_class(const std::string& label) {
++    std::string name=label;
++    if(name.starts_with("blk.")){auto dot=name.find('.',4);if(dot!=std::string::npos)name=name.substr(dot+1);}
++    auto [it,added]=class_ids.try_emplace(name,int(class_names.size()));
++    if(added){class_names.push_back(name);class_ms.push_back(0);class_launches.push_back(0);class_groups.push_back(0);}
++    current_cls=it->second;
++  }
++  void dump_classes(const fs::path& path,int tokens) {
++    if(a.timing!="class")return;
++    std::ofstream o(path);o<<"{\"profiling\":true,\"timing_definition\":\"sum of individual GPU event execution durations\",\"tokens\":"<<tokens<<",\"classes\":[";
++    for(size_t i=0;i<class_names.size();++i)o<<(i?",":"")<<"{\"class\":"<<ownrt::quote(class_names[i])<<",\"device_ms\":"<<class_ms[i]<<",\"launches\":"<<class_launches[i]<<",\"groups\":"<<class_groups[i]<<"}";
++    o<<"]}\n";
++  }
++  struct Prepared { Spec spec; std::vector<Allocation> bindings; };
++  std::unordered_map<const flash::Launch*,Prepared> prepared;
++  std::unordered_map<const flash::Launch*,std::vector<Matrix>> matrices;
++  std::unordered_map<const flash::Launch*,std::pair<std::string,std::array<unsigned,2>>> gemv_choices;
++
+   std::vector<Pending> pending;
+   ownrt::Event tail=0;
+   int submission_card=-1;
+@@ -414,14 +486,14 @@
+   std::vector<int> loaded_layer;
+   std::ofstream timings, prefill_timings, site_timings;
+   double gemv_ms=0, nongemv_ms=0, transfer_ms=0;
+-  uint64_t submitted=0;
++  uint64_t submitted=0,max_submission_ns=0;
+   size_t peak_device_bytes=0;
+   static double ms(std::chrono::steady_clock::time_point t) {
+     return std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-t).count();
+   }
+   void finish(int, Launch l, bool gemv) {
+     // Submission only. Owner::compute appends the preceding owned event.
+-    pending.push_back({l,gemv}); tail=l.last; submitted+=l.passes;
++    if(a.timing!="token")pending.push_back({l,gemv,current_cls}); tail=l.last; submitted+=l.passes;
+   }
+   void finish(int c, ownrt::Event event) { finish(c,{event,event,1},false); }
+   void drain() {
+@@ -429,9 +501,16 @@
+     if(tail)wait(0,tail);
+ #ifndef OWN_RT_HOST_ONLY
+     for(auto item:pending) {
+-      auto first=dev(0).timing(item.launch.first), last=dev(0).timing(item.launch.last);
+-      require(first.start_ns && last.end_ns>=first.start_ns,"invalid profiling interval");
+-      (item.gemv?gemv_ms:nongemv_ms)+=double(last.end_ns-first.start_ns)/1e6;
++      require(item.launch.last-item.launch.first+1==item.launch.passes,"non-contiguous event group");
++      double duration=0;
++      for(auto id=item.launch.first;id<=item.launch.last;++id) {
++        auto t=dev(0).timing(id);require(t.start_ns && t.end_ns>=t.start_ns,"invalid profiling interval");
++        max_submission_ns=std::max(max_submission_ns,t.end_ns-t.start_ns);
++        require(t.end_ns-t.start_ns<=4000000000ull,"GPU submission exceeded declared 4-second budget");
++        duration+=double(t.end_ns-t.start_ns)/1e6;
++      }
++      (item.gemv?gemv_ms:nongemv_ms)+=duration;
++      if(a.timing=="class") {class_ms[item.cls]+=duration;class_launches[item.cls]+=item.launch.passes;++class_groups[item.cls];}
+     }
+ #endif
+     pending.clear();tail=0;
+@@ -446,7 +525,12 @@
+       : w(source), a(args), p(std::move(q)),
+         timings(a.output / "timings.jsonl"), prefill_timings(a.output/"prefill-timings.jsonl"), site_timings(a.output/"sites.jsonl"), progress(a.output / "progress.jsonl"),
+         deadline(std::chrono::steady_clock::now() +
+-                 std::chrono::seconds(a.seconds)) {}
++                 std::chrono::seconds(a.seconds)) {pending.reserve(4096);prepared.reserve(p.launches.size());matrices.reserve(p.launches.size());gemv_choices.reserve(p.launches.size());
++    for(const auto& l:p.launches)if(l.op=="gemv"||l.op=="expert_gate_up"||l.op=="routed_gemv"){
++      std::array<unsigned,2> variants{selected_variant(w,a,p,l),0};if(l.op=="expert_gate_up")variants[1]=selected_variant(w,a,p,l,1);
++      gemv_choices.emplace(&l,std::make_pair(packet26::dispatch.gemv_for(l.label),variants));
++    }
++  }
+   void guard() {
+     require(!poisoned, "poisoned step");
+     require(!stopped, "cooperative stop");
+@@ -462,9 +546,10 @@
+     return *devices.at(0);
+   }
+   void wait(int c, ownrt::Event e) {
+-    ++host_waits;
+-    require(dev(c).wait(e, std::chrono::seconds(60)),
++    ++host_waits;auto t0=std::chrono::steady_clock::now();
++    require(dev(c).wait(e, std::chrono::seconds(a.wait_seconds)),
+             "operation drain timeout; retain owner");
++    wait_ms+=ms(t0);
+   }
+   Allocation allocate(int c, std::string name, size_t bytes, Category cat,
+                       Lifetime life, Memory m = Memory::device) {
+@@ -515,11 +600,7 @@
+     std::memcpy(&v, b.data(), 4);
+     return v;
+   }
+-  unsigned variant(const flash::Launch& l,size_t projection=0)const {
+-    const auto& t=w.directory.at(l.weights[projection]);
+-    return a.gemv=="r5" ? arithmetic::r5_variant(flash::grid_type(t.grid),l.shape[1],l.shape[2],l.op=="gemv"?1:p.g.experts,a.mini)
+-      : arithmetic::variant(flash::grid_type(t.grid),l.shape[1],l.shape[2],l.op=="gemv"?1:p.g.experts,a.mini);
+-  }
++  unsigned variant(const flash::Launch& l,size_t projection=0)const {return gemv_choices.at(&l).second.at(projection);}
+   unsigned weight_variant(const std::string& name)const {
+     for(const auto& l:p.launches)if(l.op=="gemv" && l.weights[0]==name)return variant(l);
+     return 2;
+@@ -565,7 +646,7 @@
+     devices.push_back(std::make_unique<ownrt::Device>(std::make_unique<Host>()));
+ #else
+     if(a.cards==2) {
+-      peer_context=std::make_shared<tp2::Context>(a.card,a.card+1);
++      peer_context=std::make_shared<tp2::Context>(a.card,a.card+1,a.timing!="token");
+       // Device owns a forwarding backend; shared context outlives shutdown.
+       struct Forward final:ownrt::Backend {
+         std::shared_ptr<tp2::Context> p;
+@@ -585,7 +666,7 @@
+         void close_context()override{p->close_context();}
+       };
+       devices.push_back(std::make_unique<ownrt::Device>(std::make_unique<Forward>(peer_context)));
+-    } else devices.push_back(std::make_unique<ownrt::Device>(ownrt::make_sycl_device(a.card,true)));
++    } else devices.push_back(std::make_unique<ownrt::Device>(ownrt::make_sycl_device(a.card,a.timing!="token")));
+ #endif
+     std::ifstream rope_file(fs::path(__FILE__).parent_path()/"rope.bf16",std::ios::binary);
+     require(bool(rope_file),"RoPE model constant missing");
+@@ -657,6 +738,17 @@
+             load(l.card, name);
+     }
+   }
++  void prepare_plan() {
++    if(a.cards!=2)return;
++    for(const auto& l:p.launches) {
++      if(l.op=="lookup" || l.op=="handoff" || l.op=="handoff_result")continue;
++      if(l.op=="gemv" || l.op=="routed_gemv" || l.op=="expert_gate_up") {
++        std::vector<Matrix> values{matrix(l)};
++        if(l.op=="expert_gate_up")values.push_back(matrix(l,1));
++        matrices.emplace(&l,std::move(values));
++      } else prepared.emplace(&l,prepare_site(l));
++    }
++  }
+   std::map<std::string,std::vector<uint8_t>> lookup_ids;
+   void prepare_token(int token) {
+     lookup_ids.clear();
+@@ -752,35 +844,25 @@
+     return m;
+   }
+   void linear(const flash::Launch& l) {
+-    int c=l.card;auto m=matrix(l);
++    int c=l.card;
++    auto it=matrices.find(&l);
++    if(a.cards==2 && it==matrices.end()) {
++      std::vector<Matrix> values{matrix(l)};
++      if(l.op=="expert_gate_up")values.push_back(matrix(l,1));
++      it=matrices.emplace(&l,std::move(values)).first;
++    }
++    auto m=a.cards==2?it->second[0]:matrix(l);
++    const auto& candidate=gemv_choices.at(&l).first;
++    if(candidate.starts_with("p25.")){
++      std::vector<Matrix> selected{m};if(l.op=="expert_gate_up")selected.push_back(a.cards==2?it->second[1]:matrix(l,1));
++      finish(c,packet26::p25bridge::submit(dev(c),selected,candidate,l.op=="expert_gate_up",variant(l)),true);return;
++    }
+     if(l.op=="gemv")finish(c,dense(dev(c),m,variant(l)),true);
+     else if(l.op=="expert_gate_up") {
+-      auto up=matrix(l,1);finish(c,experts(dev(c),{m,up},true),true);
++      auto up=a.cards==2?it->second[1]:matrix(l,1);finish(c,experts(dev(c),{m,up},true),true);
+     } else finish(c,experts(dev(c),{m},false),true);
+   }
+-  flash::Event enqueue(const flash::Launch &l, flash::Event dep) override {
+-    guard();
+-    require(dep == logical, "step event order");
+-    int c = l.card;
+-    if(submission_card!=c)drain(); // both queues drained and events retired on host
+-    submission_card=c;
+-    if(l.label.starts_with("blk."))stage_layer(c,std::stoi(l.label.substr(4)));
+-    auto site_start=std::chrono::steady_clock::now();
+-    double old_g=gemv_ms,old_n=nongemv_ms,old_t=transfer_ms;
+-    uint64_t old_submitted=submitted;
+-    if (l.op == "lookup") { /* Prepared once at token boundary from known input/history. */ }
+-    else if (l.op == "handoff" || l.op == "handoff_result") {
+-      for (auto &name : l.outputs) {
+-        drain(); // every peer copy starts with both owners drained
+-        auto source=buffers[l.source_card].at(name), dest=buffers[c].at(name);
+-        ownrt::CopyEngine copy(dev(c));
+-        tail=copy.copy(dest.id,0,source.id,0,source.n*flash::scalar_bytes(source.type),{});
+-      }
+-    } else if (l.op == "gemv" || l.op == "routed_gemv" || l.op=="expert_gate_up") {
+-      linear(l);
+-    } else {
+-      if(l.op=="moe_combine")finish(c,mixture(dev(c),buffers[c].at(l.inputs[0]).id,
+-          buffers[c].at(l.inputs[1]).id,mixture_out[c],p.g.h),false);
++  Prepared prepare_site(const flash::Launch& l) {int c=l.card;
+       Spec s;
+       s.g = p.g;
+       s.packed_heads = !a.mini;
+@@ -851,6 +933,40 @@
+       for (auto name : {"error", "position", "active"})
+         bindings.push_back(buffers[c].at(name).id);
+       bindings.push_back(ropes[c]);
++      s.implementation=packet26::dispatch.new_for(l.label,s.op)?1:0;
++      s.fused_combine_norm=l.op=="hc_combine" && l.outputs.size()==2;
++      if(s.fused_combine_norm || (l.op=="route" && l.outputs.size()==4))s.implementation=1;
++      return {s,std::move(bindings)};
++  }
++  flash::Event enqueue(const flash::Launch &l, flash::Event dep) override {
++    guard();
++    require(dep == logical, "step event order");
++    int c = l.card;
++    if(submission_card!=c)drain(); // both queues drained and events retired on host
++    if(a.timing=="class")set_class(l.label);
++    submission_card=c;
++    if(l.label.starts_with("blk."))stage_layer(c,std::stoi(l.label.substr(4)));
++    auto site_start=std::chrono::steady_clock::now();
++    double old_g=gemv_ms,old_n=nongemv_ms,old_t=transfer_ms;
++    uint64_t old_submitted=submitted;
++    if (l.op == "lookup") { /* Prepared once at token boundary from known input/history. */ }
++    else if (l.op == "handoff" || l.op == "handoff_result") {
++      for (auto &name : l.outputs) {
++        drain(); // every peer copy starts with both owners drained
++        auto source=buffers[l.source_card].at(name), dest=buffers[c].at(name);
++        ownrt::CopyEngine copy(dev(c));
++        tail=copy.copy(dest.id,0,source.id,0,source.n*flash::scalar_bytes(source.type),{});
++      }
++    } else if (l.op == "gemv" || l.op == "routed_gemv" || l.op=="expert_gate_up") {
++      linear(l);
++    } else {
++      if(l.op=="moe_combine")finish(c,mixture(dev(c),buffers[c].at(l.inputs[0]).id,
++          buffers[c].at(l.inputs[1]).id,mixture_out[c],p.g.h),false);
++      Prepared temporary;
++      const Prepared* bound=nullptr;
++      if(a.cards==2)bound=&prepared.at(&l);
++      else {temporary=prepare_site(l);bound=&temporary;}
++      const auto& s=bound->spec;const auto& bindings=bound->bindings;
+       if(a.nongemv=="parallel")finish(c,packet18::submit_parallel(dev(c),s,bindings,controls[c],scores[c],probabilities[c],{}),false);
+       else finish(c, iq3::step_operator(dev(c), s, bindings));
+       if(l.op=="route" && a.cards==1) {
+@@ -883,9 +999,10 @@
+     for (auto &d : devices) {
+       auto r = d->shutdown(std::chrono::seconds(60));
+       receipts.push_back(r.json());
+-      if (!r.safe_to_exit) {
++      if (!r.safe_to_exit || r.exit_code) {
+         save(a.output / "retained-owner.json", r.json());
+-        ownrt::hold_for_supervisor();
++        if(r.in_flight)ownrt::hold_for_supervisor();
++        throw std::runtime_error("owner teardown failed after drain: "+r.error);
+       }
+     }
+     return receipts;
+@@ -904,10 +1021,7 @@
+                        const Weights &w, int cards, const Options& a) {
+   std::map<std::string, int> owner;
+   std::map<std::string,size_t> stored;
+-  auto dispatch=[&](const flash::Launch& l,const auto& t){
+-    return a.gemv=="r5"?arithmetic::r5_variant(flash::grid_type(t.grid),l.shape[1],l.shape[2],l.op=="gemv"?1:p.g.experts,w.mini)
+-      :arithmetic::variant(flash::grid_type(t.grid),l.shape[1],l.shape[2],l.op=="gemv"?1:p.g.experts,w.mini);
+-  };
++  auto dispatch=[&](const flash::Launch& l,const auto&){return selected_variant(w,a,p,l);};
+   std::ostringstream o;
+   o << "{\"schema\":\"own-runtime.iq3.packet13.plan.v1\",\"cards\":" << cards
+     << ",\"dispatch_sites\":" << p.launches.size() << ",\"tensor_owners\":[";
+@@ -997,9 +1111,11 @@
+   size_t max_read = 0;
+   Options a;
+   double prefill_ms=0,first_token_ms=0,decode_ms=0;
++  uint64_t max_submission_ns=0;
+   std::string census = "[]";
+   try {
+     a = parse(argc, argv);
++    if(!a.dispatch.empty())packet26::dispatch.load(a.dispatch);
+     require(!fs::exists(a.output), "output already exists");
+     output = a.output;
+     fs::create_directories(output);
+@@ -1046,6 +1162,7 @@
+     e = std::make_unique<Engine>(*w, a, p);
+     record_host_memory(output,"before_load");
+     e->initialize();
++    e->prepare_plan();
+     record_host_memory(output,"after_load");
+     fs::create_directory(output / "step1");
+ 
+@@ -1055,13 +1172,16 @@
+       auto token_start=std::chrono::steady_clock::now();
+       double token_g=e->gemv_ms,token_n=e->nongemv_ms,token_t=e->transfer_ms;
+       auto token_sub=e->submitted,token_wait=e->host_waits;
++      auto copy_before=ownrt::copy_audit(e->dev(0));
+       bool capture=fixture_step>0 && fixture_step<=8;
+       fs::path fixture_dir=output/("step"+std::to_string(fixture_step));
+       if(capture)fs::create_directories(fixture_dir);
+       std::vector<std::pair<int,int>> captured;
+       for (int c=0;c<a.cards;++c)if(e->buffers[c].count("token"))e->put(c,"token",&token,4);
+-      e->prepare_token(token);
+-      for(auto& l:p.launches) {
++      double tok_wait=e->wait_ms;
++      {auto t0=std::chrono::steady_clock::now();e->prepare_token(token);e->prepare_ms=Engine::ms(t0);}
++      auto enqueue_start=std::chrono::steady_clock::now();double enqueue_wait=e->wait_ms;
++      for(auto& l:e->p.launches) {
+         if(fixture_step==0 && (l.label.starts_with("final.") || l.label=="logits" || l.label=="argmax"))continue;
+         e->enqueue(l,e->logical);
+         if(ends(l.label,".ffn.combine")) {
+@@ -1075,6 +1195,8 @@
+           if(a.cards==1 && !a.first){e->release_layer(l.card);e->loaded_layer[l.card]=-1;}
+         }
+       }
++      e->enqueue_including_wait_ms=Engine::ms(enqueue_start);
++      e->enqueue_ms=e->enqueue_including_wait_ms-(e->wait_ms-enqueue_wait);
+       // One token-boundary readback contains sticky error and greedy output.
+       e->drain(); // commit.final is Q1; readback is Q0
+       auto& owner=e->dev(0);ownrt::CopyEngine copy(owner);
+@@ -1108,17 +1230,26 @@
+       if(a.cards==1 && !a.first)e->release_layer(0);
+       auto elapsed=Engine::ms(token_start);
+       if(fixture_step==1)first_generated_ms=elapsed;
+-      (fixture_step>0?e->timings:e->prefill_timings)<<"{\"kind\":"<<ownrt::quote(fixture_step>0?"generated_token":"prefill_token")
++      auto copies=ownrt::copy_audit(e->dev(0));
++      auto& token_rows=(fixture_step>0?e->timings:e->prefill_timings);
++      token_rows<<"{\"kind\":"<<ownrt::quote(fixture_step>0?"generated_token":"prefill_token")
+         <<",\"token_index\":"<<token_index++<<",\"generated_index\":"<<fixture_step
+         <<",\"input_token\":"<<token<<",\"token_id\":"<<result<<",\"wall_ms\":"<<elapsed
+         <<",\"gemv_device_ms\":"<<device_ms(e->gemv_ms-token_g)<<",\"non_gemv_device_ms\":"<<device_ms(e->nongemv_ms-token_n)
+         <<",\"transfer_wall_ms\":"<<e->transfer_ms-token_t<<",\"kernel_submissions\":"<<e->submitted-token_sub
+-        <<",\"host_waits\":"<<e->host_waits-token_wait<<"}\n";
++        <<",\"host_waits\":"<<e->host_waits-token_wait<<",\"prepare_ms\":"<<e->prepare_ms<<",\"enqueue_loop_ms\":"<<e->enqueue_ms<<",\"enqueue_including_wait_ms\":"<<e->enqueue_including_wait_ms<<",\"wait_ms\":"<<e->wait_ms-tok_wait<<",\"parameter_uploads_per_launch\":0,\"copy_counts\":[";
++      for(int c=0;c<a.cards;++c)token_rows<<(c?",":"")<<"{\"card\":"<<c
++        <<",\"host_to_device\":"<<copies.host_to_device[c]-copy_before.host_to_device[c]
++        <<",\"device_to_host\":"<<copies.device_to_host[c]-copy_before.device_to_host[c]
++        <<",\"peer\":"<<copies.peer[c]-copy_before.peer[c]
++        <<",\"device_local\":"<<copies.device_local[c]-copy_before.device_local[c]<<"}";
++      token_rows<<"]}\n";
+       e->timings.flush();e->prefill_timings.flush();return a.first?-1:result;
+     };
+     int next=-1;auto prefill_start=std::chrono::steady_clock::now();
+     for(size_t i=0;i<input.size();++i)next=step(input[i],i+1==input.size()?1:0);
+     prefill_ms=Engine::ms(prefill_start);first_token_ms=first_generated_ms;
++    for(auto& v:e->class_ms)v=0;for(auto& v:e->class_launches)v=0;for(auto& v:e->class_groups)v=0;
+     auto decode_start=std::chrono::steady_clock::now();
+     if(!a.first)for(int i=0;i<a.tokens;++i){
+       generated.push_back(next);text+=a.mini?"<"+std::to_string(next)+">":vocab.at(next);
+@@ -1127,6 +1258,7 @@
+       if(i+1<a.tokens)next=step(next,i+2);
+     }
+     decode_ms=Engine::ms(decode_start);
++    e->dump_classes(output/"class-times.json",generated.empty()?0:int(generated.size())-1);
+     std::cout << "text " << text << '\n';
+     if (a.mini) {
+       std::ostringstream dump;
+@@ -1158,6 +1290,7 @@
+       ",\"pinned_bytes_per_owner\":4194304,\"mode\":"+ownrt::quote(a.memory)+"}\n");
+     read_bytes = w->read_bytes;
+     max_read = w->max_read;
++    max_submission_ns=e->max_submission_ns;
+     teardown = e->shutdown();
+     e.reset();
+     w.reset();
+@@ -1168,9 +1301,10 @@
+       max_read = w->max_read;
+     }
+     std::cerr << error << '\n';
++    if(!output.empty() && fs::is_directory(output)) {save(output/"failure.txt",error+"\n");save(output/"receipt.json","{\"passed\":false,\"error\":"+ownrt::quote(error)+",\"teardown_pending\":true}\n");}
+     if (e) {
+       e->poisoned = true;
+-      teardown = e->shutdown();
++      try {teardown=e->shutdown();}catch(const std::exception& close_error) {error+="; ";error+=close_error.what();}
+       e.reset();
+     }
+   }
+@@ -1178,7 +1312,7 @@
+     return 1;
+   record_host_memory(output,"end");
+   std::ostringstream r;
+-  r << "{\"schema\":\"own-runtime.iq3.packet18.run.v1\",\"passed\":"
++  r << "{\"schema\":\"own-runtime.iq3.packet26.run.v1\",\"passed\":"
+     << (error.empty() && comparison ? "true" : "false")
+     << ",\"error\":" << ownrt::quote(error) << ",\"mode\":"
+     << ownrt::quote(a.mini    ? "mini"
+@@ -1193,9 +1327,10 @@
+   r << "true";
+ #endif
+   r << ",\"owner_cards\":"<<a.cards<<",\"nongemv\":"<<ownrt::quote(a.nongemv)<<",\"gemv\":"<<ownrt::quote(a.gemv)
+-    <<",\"context\":"<<a.context<<",\"prefill_ms\":"<<prefill_ms<<",\"first_generated_token_ms\":"<<first_token_ms
++    <<",\"timing\":"<<ownrt::quote(a.timing)<<",\"profiling\":"<<(a.timing!="token"?"true":"false")<<",\"context\":"<<a.context<<",\"prefill_ms\":"<<prefill_ms<<",\"first_generated_token_ms\":"<<first_token_ms
+     <<",\"decode_wall_ms\":"<<decode_ms<<",\"decode_tokens\":"<<(generated.empty()?0:generated.size()-1)
+     <<",\"decode_tok_s\":"<<(generated.size()>1 && decode_ms>0 ? std::to_string((generated.size()-1)*1000./decode_ms):"null");
++  r << ",\"submission_budget_ns\":4000000000,\"submission_budget_measured\":"<<(a.timing!="token"?"true":"false")<<",\"max_submission_ns\":"<<max_submission_ns;
+   r << ",\"oracle_compared\":" << (did_compare ? "true" : "false")
+     << ",\"oracle_exact\":"
+     << (!did_compare ? "null"

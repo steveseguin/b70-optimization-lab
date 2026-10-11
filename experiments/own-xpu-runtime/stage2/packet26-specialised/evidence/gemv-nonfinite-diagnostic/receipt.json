@@ -1,0 +1,19 @@
+{
+  "scope": "CPU mock, rejected synthetic GEMV nonfinite-weight diagnostic; no device ran",
+  "expected_bf16_hex": "0x7fc0",
+  "actual_bf16_hex": "0xffc0",
+  "baseline_variant": 0,
+  "input_mode": 2,
+  "class": "expsgate.iq2",
+  "element": 0,
+  "comparison": "strict byte comparison failed; no tolerance introduced",
+  "sources": {
+    "gemv_timing.cpp": "35bbbcaef94a878c858d3606b880a6087a8ab87f0e7650ee0104abb456891f38",
+    "performance.cpp": "9f0b52da35dff6d71a4f4eea72b0cfee26a9796934aa033295cf73256bca04d1",
+    "arithmetic.hpp": "4eea12510e598964cd901860bc0375e96918fc3eaefdaea009edefb20bcd6999"
+  },
+  "binaries": {
+    "build/gemv-localize": "e2dcdd64cc57a68b7db57a6e15d7a5a7cb6118df8f422c44368f0752e5575b59",
+    "build/host/CMakeFiles/programs.dir/performance.cpp.o": "36c8afa1289763b8392f1fc4ba08f4575e51020f3e07033de466c936aa203b5c"
+  }
+}

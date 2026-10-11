@@ -1,0 +1,68 @@
+{
+  "schema": "packet26.host-owner-before-after.v1",
+  "device_executed": false,
+  "limitation": "CPU no-op backend measures owner binding/event issue overhead only; excludes SYCL, GPU execution and Engine plan work. W2 validates actual enqueue_loop_ms. Same launch/binding workload in both binaries.",
+  "before": {
+    "schema": "packet26.host-issue-mock.v1",
+    "device_executed": false,
+    "allocations": 3000,
+    "launches_per_token": 2181,
+    "bindings_per_launch": 19,
+    "warmup_iterations": 3,
+    "measured_iterations": 9,
+    "median_ms": 31.3621,
+    "p90_ms": 31.4328,
+    "us_per_launch": 14.3797,
+    "checksum": 151674912,
+    "sorted_ms": [
+      31.3472,
+      31.3501,
+      31.3513,
+      31.3556,
+      31.3621,
+      31.3677,
+      31.3797,
+      31.3818,
+      31.4328
+    ]
+  },
+  "after": {
+    "schema": "packet26.host-issue-mock.v1",
+    "device_executed": false,
+    "allocations": 3000,
+    "launches_per_token": 2181,
+    "bindings_per_launch": 19,
+    "warmup_iterations": 3,
+    "measured_iterations": 9,
+    "median_ms": 0.200046,
+    "p90_ms": 0.20757,
+    "us_per_launch": 0.0917221,
+    "checksum": 128146880,
+    "sorted_ms": [
+      0.197351,
+      0.199084,
+      0.199265,
+      0.199435,
+      0.200046,
+      0.200286,
+      0.200947,
+      0.201319,
+      0.20757
+    ]
+  },
+  "compiler": "g++ -std=c++20 -O2 -fno-fast-math -ffp-contract=off",
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet26-specialised/host_issue_benchmark.cpp": "2368aaed46469f309f2421412cc789af295f1ae4421d8902aed7a3106286b6fc",
+    "experiments/own-xpu-runtime/stage2/packet18-decode-v2/owner.cpp": "76b016f25af1be94df839081bd23b75c44195d930d2bf35a5de6e19299bfe906",
+    "experiments/own-xpu-runtime/stage2/packet18-decode-v2/owner_retire.cpp": "e35c366f640d8909b519891fa814aa80228b01ce69bd19ccdf00a8d13cae0da2",
+    "experiments/own-xpu-runtime/stage2/packet26-specialised/owner.cpp": "141d0de1056beb70b6fcc615a42b52a8e766839b4e79295b74ec2ffa18dab002",
+    "experiments/own-xpu-runtime/stage2/packet26-specialised/owner_retire.cpp": "e35c366f640d8909b519891fa814aa80228b01ce69bd19ccdf00a8d13cae0da2",
+    "experiments/own-xpu-runtime/stage2/packet26-specialised/owner.hpp": "494c6443d603e3866f16692bc4ac1e0553b43688b84634f67e8205f943bedb64"
+  },
+  "binaries": {
+    "before": "63eaceaa35250f396a839c15b606765ef4406c00a2fd5297fa34aa13e18ce15e",
+    "after": "402d2a6a747b839ec38d04474a50a637a417ff3f44c7618af4b4efae9c29d744"
+  },
+  "median_owner_speedup": 156.77444187836798,
+  "passed": true
+}

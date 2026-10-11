@@ -1,0 +1,187 @@
+{
+  "schema": "packet26.independent-bit-review.v1",
+  "reviewer": "windows subagent; independent of kernel author",
+  "device_executed": false,
+  "source_review_complete": true,
+  "device_exactness_certified": false,
+  "arithmetic": "iq3-p17-detmath-v2",
+  "registered_valid_shapes_no_arithmetic_difference_found": true,
+  "symbolic_tree_checks": 1056,
+  "symbolic_tree_receipt_sha256": "0e493057622c398681f3d0f3b02c67ed3212f5aacfd7f34cb64f8493251154e9",
+  "sources_sha256": {
+    "specialised.hpp": "a5604dcf33c1f01940505b3ab5e6fab8d05e9f6ba6fed2884f40ae95b47c88cb",
+    "specialised_submit.cpp": "46f74d87620ff9f627a098905b8d6cfca7e2d2ebb3077a32ed906060442ade7d",
+    "adapter.cpp": "c5e2ca7ab65072aea4a0c0686a64bec0ad870880e0b5ea22ae9d1a1f217f44f4",
+    "core_v2.hpp": "c3c265894d5041e0d6e026d53094b67f9b58bb86bd1aa1c8fea06ab4d8692ffd",
+    "kernels.hpp": "24e24e660203c959db09d30dc633490906508b749cf4e2838e2df50d4013d43a",
+    "adapter_fixture.cpp": "45fd5ddb3d6b50852ece7664c1ce343e1602ae6100c31c856cbce77c71ecaf5c",
+    "p25_bridge.cpp": "1a3b0750969c5265542b804d79bd053ed42921eb6c408696bbf5d181e5ac531b",
+    "p25_bridge.hpp": "14805dbc8afce981f91e13124a537ec5f7efe80265cb5bf4cdb6d9cb8da9444d",
+    "p25_candidates.hpp": "e9f29f761bb2a5679a04335c5b18e74599be0569d43bb0afb41811bbc7e02dbf"
+  },
+  "classes": [
+    {
+      "kernel": "route",
+      "candidate": "adapter.cpp simple_body<route>; specialised.hpp route_gather",
+      "reference": "core_v2.hpp route; kernels.hpp route_gather",
+      "reason": "Finite scan precedes outputs; finite max preserves first equal value. detmath exp -> original adjacent sum -> division -> rank of probabilities, with lower-index tie break -> original selected-probability sum -> division. No raw-logit ranking shortcut."
+    },
+    {
+      "kernel": "gather",
+      "candidate": "adapter.cpp simple_body<expert_gather>",
+      "reference": "core_v2.hpp expert_gather; packet18 adapter simple",
+      "reason": "IDs validated before conversion; descriptor fields and repeated-row modulo match. Error is delayed until outputs are initialized. Folded producer emits the same route descriptors; dropped repeated-row storage is not observable by its rewired consumers."
+    },
+    {
+      "kernel": "attn.combine / ffn.combine + following norm",
+      "candidate": "specialised.hpp norm_value/body<combine_norm>",
+      "reference": "core_v2.hpp hc_combine followed by norm; kernels.hpp combine_norm",
+      "reason": "Round combined value to BF16 before squaring, retain the original combined BF16 output, preserve sigmoid/divide/multiply/add parentheses and gain multiplication. New norm is the complete-subtree reduction followed by original upper nodes."
+    },
+    {
+      "kernel": "hc norms / standalone norms",
+      "candidate": "specialised.hpp body<norm>",
+      "reference": "core_v2.hpp norm; kernels.hpp norm",
+      "reason": "Square each original value, sum exact ordered tree, divide by width, add 1e-6, detmath rsqrt, multiply input*inv then gain+unit, finally BF16 put. Registered production shape four streams x2560."
+    },
+    {
+      "kernel": "gdn.recurrence",
+      "candidate": "specialised.hpp dot128/body<gdn>",
+      "reference": "core_v2.hpp dot(gdn=true)/gdn; kernels.hpp gdn",
+      "reason": "Each lane sums four products from +0 then tree32. q/k normalization, decay, prediction, delta and updated state retain operation order. State and output round only at original BF16 writes; sequential token loop reads the previous rounded state."
+    },
+    {
+      "kernel": "gdn.norm",
+      "candidate": "specialised.hpp body<gated_norm>",
+      "reference": "core_v2.hpp gdn_norm_gate; kernels.hpp gated_norm",
+      "reason": "Width128 square tree and inverse norm unchanged. Multiply by gain before sigmoid gate; no intervening BF16 rounding, then final BF16 output."
+    },
+    {
+      "kernel": "qsa.prepare",
+      "candidate": "specialised.hpp rounded_normalized/rotary/body<prepare>",
+      "reference": "core_v2.hpp qsa_prepare/head_norm/rope; kernels.hpp norm_rope",
+      "reason": "Per-head tree128/256, normalize and round to BF16 before rotary. Rotary uses unchanged BF16 tables and preserves a*c-b*s / b*c+a*s parentheses; final output rounds exactly once."
+    },
+    {
+      "kernel": "qsa.pool",
+      "candidate": "specialised.hpp body<pool>",
+      "reference": "core_v2.hpp qsa_append_pool; kernels.hpp pool",
+      "reason": "Four chronological inputs sum from +0, divide by4, BF16 round before norm/rotary. Existing earlier complete pools remain unchanged; only newly complete pools recompute. Append reads previous cache positions or current input exactly as reference."
+    },
+    {
+      "kernel": "qsa.select",
+      "candidate": "specialised.hpp body<select>",
+      "reference": "core_v2.hpp qsa_select; kernels.hpp select",
+      "reason": "Per-block private tree128, max(0,dot) per head, four-head sum from +0, divide by sqrt128. Rank all finite scores with earlier-block tie break; sentinel fill and trailing tokens preserved."
+    },
+    {
+      "kernel": "attention / qsa.attention scores",
+      "candidate": "specialised.hpp body<attention_score>",
+      "reference": "core_v2.hpp qsa_attention; kernels.hpp attention_score",
+      "reason": "Tree256 product order and division by sqrt256 preserved; absent selection writes negative infinity; invalid IDs flagged before address arithmetic."
+    },
+    {
+      "kernel": "attention / qsa.attention softmax",
+      "candidate": "specialised.hpp body<attention_softmax>",
+      "reference": "core_v2.hpp qsa_attention; kernels.hpp attention_softmax",
+      "reason": "Max over original chronological scores, detmath exp subtraction, complete-subtree sums with odd-tail +0 then division. Invalid/tail selection checks precede use."
+    },
+    {
+      "kernel": "attention / qsa.attention values",
+      "candidate": "specialised.hpp body<attention_value>",
+      "reference": "core_v2.hpp qsa_attention; kernels.hpp attention_value",
+      "reason": "For valid selections, original probability*BF16 value leaves, same ordered sum, BF16 round before sigmoid-gate multiply, final BF16 output. Poisoned standalone diagnostic output is explicitly outside byte-parity claim; see finding B2."
+    },
+    {
+      "kernel": "argmax",
+      "candidate": "adapter.cpp simple_body<argmax>",
+      "reference": "core_v2.hpp argmax; packet18 adapter simple",
+      "reason": "Finite data selects lower index on ties by ascending chunk and within-chunk strict comparison. Nonfinite fallback repeats original 128-lane selection order and sets the same error output."
+    },
+    {
+      "kernel": "streams broadcast",
+      "candidate": "adapter.cpp simple_body<hc_mix> Special::broadcast",
+      "reference": "packet18 adapter simple Special::broadcast; integrated evaluate",
+      "reason": "Each output reads the identical source modulo input length and uses the same View get/put conversions."
+    },
+    {
+      "kernel": "ple.add",
+      "candidate": "adapter.cpp simple_body<ple_add>",
+      "reference": "core_v2.hpp ple_add; packet18 adapter simple",
+      "reason": "Preserves inner BF16(b+c) before adding a, followed by output BF16 conversion; no reassociation."
+    },
+    {
+      "kernel": "packet25 named GEMV bridge",
+      "candidate": "p25_bridge.cpp Kernel<Type,Variant>; p25_candidates.hpp lane/host_row",
+      "reference": "arithmetic.hpp row and retained packet18 specialised GEMV",
+      "reason": "Type and candidate are template constants; same per-lane eight-product order, adjacent subgroup tree32, and split4 upper tree (p0+p1)+(p2+p3). By-value Bound carries scalars and actual tensor pointers. Exception exactness still requires requested-candidate fixture gate against unchanged scalar/reference path."
+    }
+  ],
+  "findings": [
+    {
+      "id": "B1",
+      "severity": "correctness",
+      "finding": "upper private array128 overflowed validated route top129..512",
+      "resolution": "Changed upper capacity to512; production top10 unaffected",
+      "status": "fixed"
+    },
+    {
+      "id": "B2",
+      "severity": "scope",
+      "finding": "Standalone attention_value poisoned-ID diagnostic can leave different output bytes after error; original workgroup atomic error snapshots already make those bytes order-dependent",
+      "resolution": "Reject invalid IDs before address calculation; no exact-output claim for poisoned standalone diagnostic bytes. Valid registered selections and NaN route fixture parity remain required.",
+      "status": "documented"
+    },
+    {
+      "id": "B3",
+      "severity": "admission",
+      "finding": "Independent component timing could enable an unmeasured folded pair",
+      "resolution": "Separate fusions table; actual old-pair/new-pair K1/K2 fixtures; pair requires its own measured winner",
+      "status": "fixed"
+    },
+    {
+      "id": "B4",
+      "severity": "fixture",
+      "finding": "Actual adapter argmax fixture lacked required second error output and crashed reference evaluator",
+      "resolution": "Both K1 and K2 argmax sites now bind error as output1",
+      "status": "fixed"
+    },
+    {
+      "id": "B5",
+      "severity": "correctness",
+      "finding": "count1 routed matrix lost routes/status due to count>1 test",
+      "resolution": "Bound.has_routes explicitly records allocation presence",
+      "status": "fixed"
+    },
+    {
+      "id": "B6",
+      "severity": "safety",
+      "finding": "paired bridge accepted unequal expert counts or input allocations",
+      "resolution": "Require equal experts and x before either kernel launch; reject unsupported routed span and zero/out-of-range geometry",
+      "status": "fixed"
+    },
+    {
+      "id": "B7",
+      "severity": "safety",
+      "finding": "Packed expert row stride truncates non-block-aligned columns; expert split4 variant unsupported by bridge current split selection",
+      "resolution": "Reject incomplete quantization blocks and accept only expert variant2 or dense variant6/7 before launch",
+      "status": "fixed"
+    }
+  ],
+  "remaining_gates": [
+    "fresh CPU fixture/compiler repeats",
+    "eight-token384-layer all-new v2 oracle",
+    "K1a/K1b exact device bytes",
+    "K2 exact measured admission"
+  ],
+  "bridge_race_review": {
+    "passed": true,
+    "argument": "For each subgroup, row/slot/route valid status are uniform. local_size=32*split*rows_per_group supplies every partial; lane0 writes one unique (row,projection,part), barrier precedes part0 final read. One lane0/part0 writes each output; only row0 writes each route status. No workgroup communication or shared writes across rows."
+  },
+  "bridge_indirection_review": {
+    "passed": true,
+    "argument": "Kernel<Type,Variant> and compile-time candidate branches, no descriptor or operation-list iteration; local Bound by value plus SYCL local accessor. w/peer/x/y/routes/status are actual tensor data, not hot parameter blocks. Unsupported half_table/staged names fail closed."
+  },
+  "bridge_admission_review_passed": true,
+  "bridge_final_addendum": "review-bridge-addendum.md"
+}

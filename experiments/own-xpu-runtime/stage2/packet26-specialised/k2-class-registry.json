@@ -1,0 +1,256 @@
+{
+  "schema": "packet26.k2.registry.v1",
+  "classes": {
+    "norm": {
+      "dispatch_section": "classes",
+      "dispatch_key": "norm",
+      "candidate_available": true,
+      "dispatch_keys": [
+        "hc.a.norm",
+        "hc.f.norm",
+        "final.norm",
+        "ple.kn",
+        "ple.qn",
+        "ple.cn"
+      ],
+      "shared_workload": "same norm Op, four rows x2560, F32 gains, unit=0; aliases are independently selectable, not separate measurements"
+    },
+    "gdn.norm": {
+      "dispatch_section": "classes",
+      "dispatch_key": "gdn.norm",
+      "candidate_available": true
+    },
+    "gdn.recurrence": {
+      "dispatch_section": "classes",
+      "dispatch_key": "gdn.recurrence",
+      "candidate_available": true
+    },
+    "qsa.prepare": {
+      "dispatch_section": "classes",
+      "dispatch_key": "qsa.prepare",
+      "candidate_available": true
+    },
+    "qsa.pool": {
+      "dispatch_section": "classes",
+      "dispatch_key": "qsa.pool",
+      "candidate_available": true
+    },
+    "qsa.select": {
+      "dispatch_section": "classes",
+      "dispatch_key": "qsa.select",
+      "candidate_available": true
+    },
+    "qsa.attention": {
+      "dispatch_section": "classes",
+      "dispatch_key": "qsa.attention",
+      "candidate_available": true
+    },
+    "attn.combine": {
+      "dispatch_section": "classes",
+      "dispatch_key": "attn.combine",
+      "candidate_available": true
+    },
+    "ffn.combine": {
+      "dispatch_section": "classes",
+      "dispatch_key": "ffn.combine",
+      "candidate_available": true
+    },
+    "route": {
+      "dispatch_section": "classes",
+      "dispatch_key": "route",
+      "candidate_available": true
+    },
+    "gather": {
+      "dispatch_section": "classes",
+      "dispatch_key": "gather",
+      "candidate_available": true
+    },
+    "argmax": {
+      "dispatch_section": "classes",
+      "dispatch_key": "argmax",
+      "candidate_available": true
+    },
+    "hc.combine_norm": {
+      "dispatch_section": null,
+      "dispatch_key": null,
+      "candidate_available": true,
+      "diagnostic_only": true
+    },
+    "route_gather": {
+      "dispatch_section": null,
+      "dispatch_key": null,
+      "candidate_available": true,
+      "diagnostic_only": true
+    },
+    "conv": {
+      "dispatch_section": null,
+      "dispatch_key": null,
+      "candidate_available": false,
+      "diagnostic_only": true
+    },
+    "activation": {
+      "dispatch_section": null,
+      "dispatch_key": null,
+      "candidate_available": false,
+      "diagnostic_only": true
+    },
+    "hc.mix": {
+      "dispatch_section": null,
+      "dispatch_key": null,
+      "candidate_available": false,
+      "diagnostic_only": true
+    },
+    "moe": {
+      "dispatch_section": null,
+      "dispatch_key": null,
+      "candidate_available": false,
+      "diagnostic_only": true
+    },
+    "attn.combine+norm": {
+      "dispatch_section": "fusions",
+      "dispatch_key": "attn.combine+norm",
+      "candidate_available": true
+    },
+    "ffn.combine+norm": {
+      "dispatch_section": "fusions",
+      "dispatch_key": "ffn.combine+norm",
+      "candidate_available": true
+    },
+    "route+gather": {
+      "dispatch_section": "fusions",
+      "dispatch_key": "route+gather",
+      "candidate_available": true
+    },
+    "gemv:expsgate": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "expsgate",
+      "candidate_available": false,
+      "baseline_implementation": "r5",
+      "workloads": [
+        "expsgate.iq2",
+        "expsgate.iq3"
+      ]
+    },
+    "gemv:expsdown": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "expsdown",
+      "candidate_available": false,
+      "baseline_implementation": "r5",
+      "workloads": [
+        "expsdown"
+      ]
+    },
+    "gemv:gdn.qkv": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "gdn.qkv",
+      "candidate_available": false,
+      "baseline_implementation": "r5",
+      "workloads": [
+        "gdn.qkv.q6",
+        "gdn.qkv.q8"
+      ]
+    },
+    "gemv:gdn.z": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "gdn.z",
+      "candidate_available": false,
+      "baseline_implementation": "r5",
+      "workloads": [
+        "gdn.z.q6",
+        "gdn.z.q8"
+      ]
+    },
+    "gemv:qsa.qgate": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "qsa.qgate",
+      "candidate_available": false,
+      "baseline_implementation": "r5",
+      "workloads": [
+        "qsa.qgate"
+      ]
+    },
+    "gemv:qsa.k": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "qsa.k",
+      "candidate_available": false,
+      "baseline_implementation": "r5",
+      "workloads": [
+        "qsa.k"
+      ]
+    },
+    "gemv:qsa.v": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "qsa.v",
+      "candidate_available": false,
+      "baseline_implementation": "r5",
+      "workloads": [
+        "qsa.v"
+      ]
+    },
+    "gemv:attention": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "attention",
+      "candidate_available": false,
+      "baseline_implementation": "r5",
+      "workloads": [
+        "attention.gdn",
+        "attention.qsa"
+      ]
+    },
+    "gemv:ple.key": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "ple.key",
+      "candidate_available": false,
+      "baseline_implementation": "r5",
+      "workloads": [
+        "ple.key"
+      ]
+    },
+    "gemv:ple.value": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "ple.value",
+      "candidate_available": false,
+      "baseline_implementation": "r5",
+      "workloads": [
+        "ple.value"
+      ]
+    },
+    "gemv:hc.gate": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "hc.gate",
+      "candidate_available": false,
+      "baseline_implementation": "r5",
+      "workloads": [
+        "hc.gate"
+      ]
+    },
+    "gemv:hc.low": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "hc.low",
+      "candidate_available": false,
+      "baseline_implementation": "r5",
+      "workloads": [
+        "hc.low"
+      ]
+    },
+    "gemv:logits": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "logits",
+      "candidate_available": false,
+      "baseline_implementation": "r5",
+      "workloads": [
+        "logits"
+      ]
+    },
+    "streams": {
+      "dispatch_section": "classes",
+      "dispatch_key": "streams",
+      "candidate_available": true
+    },
+    "ple.add": {
+      "dispatch_section": "classes",
+      "dispatch_key": "ple.add",
+      "candidate_available": true
+    }
+  }
+}

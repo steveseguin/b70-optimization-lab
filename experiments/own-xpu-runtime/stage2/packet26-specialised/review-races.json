@@ -1,0 +1,79 @@
+{
+  "schema": "packet26.independent-write-race-review.v1",
+  "reviewer": "host-path subagent (not specialised kernel author)",
+  "device_executed": false,
+  "sources": {
+    "specialised.hpp": "a5604dcf33c1f01940505b3ab5e6fab8d05e9f6ba6fed2884f40ae95b47c88cb",
+    "specialised_submit.cpp": "46f74d87620ff9f627a098905b8d6cfca7e2d2ebb3077a32ed906060442ade7d",
+    "adapter.cpp": "c5e2ca7ab65072aea4a0c0686a64bec0ad870880e0b5ea22ae9d1a1f217f44f4",
+    "p25_bridge.cpp": "1a3b0750969c5265542b804d79bd053ed42921eb6c408696bbf5d181e5ac531b",
+    "p25_candidates.hpp": "e9f29f761bb2a5679a04335c5b18e74599be0569d43bb0afb41811bbc7e02dbf",
+    "core_v2.hpp": "c3c265894d5041e0d6e026d53094b67f9b58bb86bd1aa1c8fea06ab4d8692ffd",
+    "kernels.hpp": "24e24e660203c959db09d30dc633490906508b749cf4e2838e2df50d4013d43a"
+  },
+  "status": "static-review-pass-with-required-device-gates",
+  "classes": [
+    {
+      "class": "route and route+gather",
+      "ownership_argument": "Each chunk owns its maxima/sum and exponential interval. Probability stage owns one index. Strict rank with lower-index tie break gives a unique writer for each admitted rank, its probability, and its two triples. The final probability normalization has one work-item."
+    },
+    {
+      "class": "standalone gather",
+      "ownership_argument": "Each descriptor index and each repeated-row output index has one writer. Invalid-ID flags are stored independently; one later work-item raises sticky error, after deterministic safe descriptor/data initialization."
+    },
+    {
+      "class": "argmax",
+      "ownership_argument": "Each chunk writes one candidate and one invalid flag; the second stage is one work-item. Bad-value fallback runs serially and writes the result before setting error."
+    },
+    {
+      "class": "norm, gated norm, combine+norm",
+      "ownership_argument": "Stage zero writes one subtree partial per row/chunk. Stage one reads completed partials and owns four output positions. In-place combined streams are read and written by the same output owner; norm_value never reads another output position. Branch/injection/gain inputs must remain distinct from norm outputs, as in the plan."
+    },
+    {
+      "class": "GDN recurrence",
+      "ownership_argument": "Each work-item owns one (head,value-coordinate) state row of 128 elements and all token outputs at that coordinate. The token loop within that owner serializes recurrence. Stage-zero query/key ranges and 48 decay/beta slots are disjoint."
+    },
+    {
+      "class": "QSA prepare",
+      "ownership_argument": "Each row/chunk owns one partial; second-stage four-coordinate output tiles are disjoint. RoPE partner reads read-only input values, not other work-items output."
+    },
+    {
+      "class": "QSA pool",
+      "ownership_argument": "Current-token cache writes do not intersect previous-token cache reads (r < position). New-token pooled reads use the input row, not the concurrently appended cache. Partial sums and pooled output tiles have distinct owners."
+    },
+    {
+      "class": "QSA select",
+      "ownership_argument": "First stage initializes each selection output and one score per block. Second-stage rank uniqueness makes rank*4 output ranges disjoint; the one trailing-token writer starts after selected full blocks."
+    },
+    {
+      "class": "attention score, softmax, value",
+      "ownership_argument": "Score owns one head/slot; softmax phases write disjoint max/sum/exponential/normalized spans separated by queue order; value owns one output/chunk partial then one final output coordinate. No cross-work-item communication lacks a kernel boundary."
+    },
+    {
+      "class": "streams broadcast",
+      "ownership_argument": "Dedicated SimpleNew<hc_mix,0> broadcast instantiation assigns exactly one work-item to each output index. It reads index modulo the immutable source-row extent. The registered streams output is distinct from its embedding input; no writer modifies the shared source row."
+    },
+    {
+      "class": "PLE add",
+      "ownership_argument": "Dedicated SimpleNew<ple_add,0> assigns one writer per output index and reads the three inputs at that same index. The intermediate addition is rounded before the outer addition. The registered in-place streams alias is safe because no work-item reads another work-item output coordinate."
+    },
+    {
+      "class": "fixed-shape instantiations",
+      "ownership_argument": "The host selects 2560-width/four-head norm and combine specializations only after matching those exact dimensions; route512/top10 likewise matches before dispatch. Template constants replace the same admitted shape fields and do not change work-item count or partition boundaries."
+    },
+    {
+      "class": "packet25 GEMV bridge",
+      "ownership_argument": "For rows-per-group R and split S, subgroup row rr, projection p and split part have local slot (2*rr+p)*S+part, written by lane0 alone. Local size has R*S subgroups. A workgroup barrier precedes reads by lane0/part0, the sole writer of each global slot*rows+row. Only row0/part0/lane0 writes each route status. Active and route-valid predicates are subgroup-uniform. Paired projection buffers must be distinct as in registered plans; arbitrary adversarial aliases remain outside this review."
+    }
+  ],
+  "findings": [],
+  "guard_review": "Sticky error uses device-scope atomic load/store on native paths. Invalid routes can leave internal scratch partially written in a schedule-dependent manner; subsequent kernels observe sticky error and do not commit semantic outputs. Gather defers error until initialization is complete. No data race was found in visible output writes. This is not a claim that arbitrary scratch bytes are deterministic.",
+  "ordering_review": "specialised_submit creates separate submissions for every stage. Device chains them, and tp2 Context omits explicit native dependencies only after same-card validation on an in-order queue. Card changes and all peer copies retain host drain+retirement fences.",
+  "limits": [
+    "Static review does not prove hardware execution ordering; K1 two fresh owners plus randomized CPU scheduling are mandatory.",
+    "Valid registered bindings are assumed; arbitrary adversarial output/input aliasing beyond the plan is not supported.",
+    "Core kernel and packet18 reference remain independent CPU/device exactness comparators."
+  ],
+  "scope": "Final source-only read-through of registered specialised kernel write ownership, fixed-shape dispatch and packet25 bridge; no device execution or new test run by this reviewer.",
+  "bridge_addendum": "review-bridge-addendum.md independently records the final bridge admission/bit-identity review by the windows subagent. This reviewer additionally read its final source and independently checked scratch, output and status write ownership."
+}

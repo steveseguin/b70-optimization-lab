@@ -1,0 +1,754 @@
+{
+  "schema": "packet26.independent-interpreter-review.v1",
+  "device_executed": false,
+  "reviewer": "independent interpreter/capture audit agent",
+  "passed": false,
+  "scope": "actual packet26 sources and generated checked imported GEMV mirrors; CPU static inspection only",
+  "sources": {
+    "specialised.hpp": "a5604dcf33c1f01940505b3ab5e6fab8d05e9f6ba6fed2884f40ae95b47c88cb",
+    "specialised_submit.cpp": "46f74d87620ff9f627a098905b8d6cfca7e2d2ebb3077a32ed906060442ade7d",
+    "adapter.cpp": "34ac1535574444e97755a9568c8bd82b31debe5a5c9819a568e1b56f63fe1c9e",
+    "runtime_kernels.cpp": "ff95284fda68e0097c35e7ee0b03851563b77cf935602b4e2ea0d5ba526f37f0",
+    "core_v2.hpp": "c3c265894d5041e0d6e026d53094b67f9b58bb86bd1aa1c8fea06ab4d8692ffd",
+    "kernels.hpp": "24e24e660203c959db09d30dc633490906508b749cf4e2838e2df50d4013d43a",
+    "kernel_overlay.py": "ce04187e0c9aa194668f864991d8a7a6feb699f57c2f512e7a5bc0d1c780cfcd",
+    "kernel_gate.py": "b7b1161dc9e76b764bf3a84d745f416fe43180dcbc2dfdfc0ed4a87cae3fd4e2",
+    "kernel_guard.hpp": "3ea4ec84bfcc75b51d98163afc6c4912ce1b34e9f248b9a348a55d2d0e29d4ad",
+    "dispatch.hpp": "b611d88832fd930c72d6e7cde0ef47965c7ebd6c7e2972391bd56757e2c6283f",
+    "main.cpp": "d8fb67012b596eb728343ee73321d134fd102d9479ab9816e3ad4b33f085a0ed",
+    "arithmetic.hpp": "4eea12510e598964cd901860bc0375e96918fc3eaefdaea009edefb20bcd6999",
+    "CMakeLists.txt": "bc7f0e03b789c7fb5b9797b4641293d649abc2b05fec24c5333bfe11864fabed"
+  },
+  "findings": [
+    {
+      "id": "I1",
+      "severity": "high",
+      "status": "fixed_source_reviewed",
+      "file": "dispatch.hpp",
+      "finding": "Class lookup does not normalize blk.<layer>. prefix; attn.combine/ffn.combine and per-class GEMV table keys miss real plan sites unless every exact label is emitted.",
+      "remedy": "Exact label first, then normalized class, then generic Op fallback; GEMV should similarly normalize.",
+      "resolution": "Reviewed class_name() prefix removal and new_for/gemv_for exact-label then class lookup in current dispatch.hpp."
+    },
+    {
+      "id": "I2",
+      "severity": "medium",
+      "status": "fixed_source_reviewed",
+      "file": "kernel_gate.py",
+      "finding": "Capture recognizer accepts [&]; sizeof closure guard alone cannot mechanically enforce by-value capture.",
+      "remedy": "Reject reference-capture device closures and add negative checker test. Existing inspected closures all use [=].",
+      "resolution": "Reviewed kernel_gate.py explicit assertion rejecting [&] device closures. All other unsupported capture forms remain fail-closed through recognizer."
+    },
+    {
+      "id": "I3",
+      "severity": "medium",
+      "status": "open",
+      "file": "main.cpp:selected_variant",
+      "finding": "Additional packet25 GEMV names cannot be enabled as table edit alone: only existing 0..7 variants are registered and unknown names throw.",
+      "remedy": "Register/link supported packet25 candidate names before advertising table-only adoption, or clearly record unavailable candidates."
+    },
+    {
+      "id": "I4",
+      "severity": "medium",
+      "status": "fixed_source_reviewed",
+      "file": "adapter.cpp:SimpleNew",
+      "finding": "Production route selects SimpleNew with runtime n/top; specialised_submit fixed route<512> applies to fixture API, not production route path.",
+      "remedy": "Instantiate production fixed width/top constants for model geometry, retaining variable tiny/odd-fixture fallback.",
+      "resolution": "Reviewed SimpleNew/submit/body FixedN/FixedTop templates and production host choice simple_new_submit<Op::route,512,10>; mini/odd shapes retain fallback."
+    }
+  ],
+  "observations": [
+    "New candidates select Op and Stage/Phase with templates and if constexpr; no new Batch/Chain kernel found.",
+    "No hot parameter block uploaded to device or dereferenced through device pointer found; data, scratch, RoPE, route records remain legitimate buffers.",
+    "Imported GEMV mirror packet6/7/8 captures one descriptor by value, removes descriptor search, and specializes Type template; its fixed single-matrix metadata is not a command interpreter.",
+    "Packet9 proven expert projection uses one/two matching matrices and explicit type template; frozen Core evaluator, Glue and ng::group are baseline/reference paths and are not newly introduced candidate interpreters."
+  ],
+  "capture_symbols": {
+    "count": 132,
+    "maximum_bytes": 744,
+    "all_within_1024": true,
+    "objects": 12,
+    "rows": [
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp.o",
+        "bytes": 1,
+        "symbol": "_ZN8packet2612capture_sizeIZZN5ownrt12_GLOBAL__N_110SyclDevice6markerESt4spanIKmLm18446744073709551615EEENKUlRN4sycl3_V17handlerEE_clESA_EUlvE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp.o",
+        "bytes": 40,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq38expanded12_GLOBAL__N_16Decode6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS6_5eventESaISE_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp.o",
+        "bytes": 112,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS1_4TypeE0EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp.o",
+        "bytes": 112,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS1_4TypeE11EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp.o",
+        "bytes": 112,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS1_4TypeE14EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp.o",
+        "bytes": 112,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS1_4TypeE18EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp.o",
+        "bytes": 112,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS1_4TypeE1EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp.o",
+        "bytes": 112,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS1_4TypeE20EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp.o",
+        "bytes": 112,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS1_4TypeE21EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp.o",
+        "bytes": 112,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS1_4TypeE22EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp.o",
+        "bytes": 112,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS1_4TypeE23EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp.o",
+        "bytes": 112,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS1_4TypeE30EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp.o",
+        "bytes": 112,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS1_4TypeE8EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp.o",
+        "bytes": 32,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq312_GLOBAL__N_16Decode3runILj16EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp.o",
+        "bytes": 32,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq312_GLOBAL__N_16Decode3runILj32EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp.o",
+        "bytes": 136,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq312_GLOBAL__N_18Multiply3runILj16EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp.o",
+        "bytes": 136,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq312_GLOBAL__N_18Multiply3runILj32EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/adapter.cpp.o",
+        "bytes": 744,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK8packet1812_GLOBAL__N_14Glue6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE0_clESJ_EUlNS5_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/adapter.cpp.o",
+        "bytes": 720,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK8packet1812_GLOBAL__N_14Glue6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlvE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/adapter.cpp.o",
+        "bytes": 704,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK8packet1812_GLOBAL__N_19SimpleNewILN10integrated2OpE17ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/adapter.cpp.o",
+        "bytes": 704,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK8packet1812_GLOBAL__N_19SimpleNewILN10integrated2OpE17ELi1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/adapter.cpp.o",
+        "bytes": 704,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK8packet1812_GLOBAL__N_19SimpleNewILN10integrated2OpE4ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/adapter.cpp.o",
+        "bytes": 704,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK8packet1812_GLOBAL__N_19SimpleNewILN10integrated2OpE8ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/adapter.cpp.o",
+        "bytes": 704,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK8packet1812_GLOBAL__N_19SimpleNewILN10integrated2OpE8ELi1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/adapter.cpp.o",
+        "bytes": 704,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK8packet1812_GLOBAL__N_19SimpleNewILN10integrated2OpE8ELi2EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/adapter.cpp.o",
+        "bytes": 704,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK8packet1812_GLOBAL__N_19SimpleNewILN10integrated2OpE8ELi3EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/adapter.cpp.o",
+        "bytes": 704,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK8packet1812_GLOBAL__N_19SimpleNewILN10integrated2OpE8ELi4EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/adapter.cpp.o",
+        "bytes": 704,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK8packet1812_GLOBAL__N_19SimpleNewILN10integrated2OpE9ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/adapter.cpp.o",
+        "bytes": 704,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK8packet1812_GLOBAL__N_19SimpleNewILN10integrated2OpE9ELi1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/native.cpp.o",
+        "bytes": 216,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK2ng6Kernel6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS4_5eventESaISC_EEENKUlRNS4_7handlerEE_clESI_EUlNS4_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/runtime_kernels.cpp.o",
+        "bytes": 704,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq34Step6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS4_5eventESaISC_EEENKUlRNS4_7handlerEE_clESI_EUlvE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE10ELi0ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE10ELi1ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE11ELi0ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE11ELi1ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE12ELi0ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE13ELi0ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE13ELi1ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE13ELi2ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE14ELi0ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE14ELi1ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE1ELi0ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE1ELi1ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE2ELi0ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE2ELi0ELi2560ELi4EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE2ELi1ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE2ELi1ELi2560ELi4EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE5ELi0ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE5ELi0ELi2560ELi4EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE5ELi1ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE5ELi1ELi2560ELi4EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE6ELi0ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE6ELi0ELi512ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE6ELi1ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE6ELi1ELi512ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE6ELi2ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE6ELi2ELi512ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE6ELi3ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE6ELi3ELi512ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE6ELi4ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE6ELi4ELi512ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE8ELi0ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE8ELi1ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE9ELi0ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet26-specialised/specialised_submit.cpp.o",
+        "bytes": 192,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK11specialised6KernelILN2ng2OpE9ELi1ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS7_5eventESaISF_EEENKUlRNS7_7handlerEE_clESL_EUlNS7_2idILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o",
+        "bytes": 208,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq34kopt12_GLOBAL__N_18Multiply3runILNS1_4TypeE0ELj16EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o",
+        "bytes": 208,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq34kopt12_GLOBAL__N_18Multiply3runILNS1_4TypeE0ELj32EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o",
+        "bytes": 208,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq34kopt12_GLOBAL__N_18Multiply3runILNS1_4TypeE11ELj16EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o",
+        "bytes": 208,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq34kopt12_GLOBAL__N_18Multiply3runILNS1_4TypeE11ELj32EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o",
+        "bytes": 208,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq34kopt12_GLOBAL__N_18Multiply3runILNS1_4TypeE14ELj16EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o",
+        "bytes": 208,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq34kopt12_GLOBAL__N_18Multiply3runILNS1_4TypeE14ELj32EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o",
+        "bytes": 208,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq34kopt12_GLOBAL__N_18Multiply3runILNS1_4TypeE18ELj16EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o",
+        "bytes": 208,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq34kopt12_GLOBAL__N_18Multiply3runILNS1_4TypeE18ELj32EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o",
+        "bytes": 208,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq34kopt12_GLOBAL__N_18Multiply3runILNS1_4TypeE1ELj16EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o",
+        "bytes": 208,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq34kopt12_GLOBAL__N_18Multiply3runILNS1_4TypeE1ELj32EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o",
+        "bytes": 208,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq34kopt12_GLOBAL__N_18Multiply3runILNS1_4TypeE20ELj16EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o",
+        "bytes": 208,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq34kopt12_GLOBAL__N_18Multiply3runILNS1_4TypeE20ELj32EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o",
+        "bytes": 208,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq34kopt12_GLOBAL__N_18Multiply3runILNS1_4TypeE21ELj16EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o",
+        "bytes": 208,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq34kopt12_GLOBAL__N_18Multiply3runILNS1_4TypeE21ELj32EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o",
+        "bytes": 208,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq34kopt12_GLOBAL__N_18Multiply3runILNS1_4TypeE22ELj16EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o",
+        "bytes": 208,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq34kopt12_GLOBAL__N_18Multiply3runILNS1_4TypeE22ELj32EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o",
+        "bytes": 208,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq34kopt12_GLOBAL__N_18Multiply3runILNS1_4TypeE30ELj16EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o",
+        "bytes": 208,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq34kopt12_GLOBAL__N_18Multiply3runILNS1_4TypeE30ELj32EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o",
+        "bytes": 208,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq34kopt12_GLOBAL__N_18Multiply3runILNS1_4TypeE8ELj16EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o",
+        "bytes": 208,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq34kopt12_GLOBAL__N_18Multiply3runILNS1_4TypeE8ELj32EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o",
+        "bytes": 24,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt212_GLOBAL__N_16Stream6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS6_5eventESaISE_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o",
+        "bytes": 224,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt212_GLOBAL__N_18Multiply3runILNS1_4TypeE0ELj32EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o",
+        "bytes": 224,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt212_GLOBAL__N_18Multiply3runILNS1_4TypeE0ELj64EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o",
+        "bytes": 224,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt212_GLOBAL__N_18Multiply3runILNS1_4TypeE11ELj32EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o",
+        "bytes": 224,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt212_GLOBAL__N_18Multiply3runILNS1_4TypeE11ELj64EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o",
+        "bytes": 224,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt212_GLOBAL__N_18Multiply3runILNS1_4TypeE14ELj32EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o",
+        "bytes": 224,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt212_GLOBAL__N_18Multiply3runILNS1_4TypeE14ELj64EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o",
+        "bytes": 224,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt212_GLOBAL__N_18Multiply3runILNS1_4TypeE18ELj32EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o",
+        "bytes": 224,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt212_GLOBAL__N_18Multiply3runILNS1_4TypeE18ELj64EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o",
+        "bytes": 224,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt212_GLOBAL__N_18Multiply3runILNS1_4TypeE1ELj32EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o",
+        "bytes": 224,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt212_GLOBAL__N_18Multiply3runILNS1_4TypeE1ELj64EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o",
+        "bytes": 224,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt212_GLOBAL__N_18Multiply3runILNS1_4TypeE20ELj32EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o",
+        "bytes": 224,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt212_GLOBAL__N_18Multiply3runILNS1_4TypeE20ELj64EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o",
+        "bytes": 224,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt212_GLOBAL__N_18Multiply3runILNS1_4TypeE21ELj32EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o",
+        "bytes": 224,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt212_GLOBAL__N_18Multiply3runILNS1_4TypeE21ELj64EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o",
+        "bytes": 224,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt212_GLOBAL__N_18Multiply3runILNS1_4TypeE22ELj32EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o",
+        "bytes": 224,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt212_GLOBAL__N_18Multiply3runILNS1_4TypeE22ELj64EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o",
+        "bytes": 224,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt212_GLOBAL__N_18Multiply3runILNS1_4TypeE30ELj32EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o",
+        "bytes": 224,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt212_GLOBAL__N_18Multiply3runILNS1_4TypeE30ELj64EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o",
+        "bytes": 224,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt212_GLOBAL__N_18Multiply3runILNS1_4TypeE8ELj32EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o",
+        "bytes": 224,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt212_GLOBAL__N_18Multiply3runILNS1_4TypeE8ELj64EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o",
+        "bytes": 176,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt312_GLOBAL__N_18Multiply3runILNS1_4TypeE0ELb0EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o",
+        "bytes": 304,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt312_GLOBAL__N_18Multiply3runILNS1_4TypeE0ELb1EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o",
+        "bytes": 176,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt312_GLOBAL__N_18Multiply3runILNS1_4TypeE11ELb0EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o",
+        "bytes": 304,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt312_GLOBAL__N_18Multiply3runILNS1_4TypeE11ELb1EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o",
+        "bytes": 176,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt312_GLOBAL__N_18Multiply3runILNS1_4TypeE14ELb0EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o",
+        "bytes": 304,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt312_GLOBAL__N_18Multiply3runILNS1_4TypeE14ELb1EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o",
+        "bytes": 176,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt312_GLOBAL__N_18Multiply3runILNS1_4TypeE18ELb0EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o",
+        "bytes": 304,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt312_GLOBAL__N_18Multiply3runILNS1_4TypeE18ELb1EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o",
+        "bytes": 176,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt312_GLOBAL__N_18Multiply3runILNS1_4TypeE1ELb0EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o",
+        "bytes": 304,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt312_GLOBAL__N_18Multiply3runILNS1_4TypeE1ELb1EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o",
+        "bytes": 176,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt312_GLOBAL__N_18Multiply3runILNS1_4TypeE20ELb0EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o",
+        "bytes": 304,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt312_GLOBAL__N_18Multiply3runILNS1_4TypeE20ELb1EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o",
+        "bytes": 176,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt312_GLOBAL__N_18Multiply3runILNS1_4TypeE21ELb0EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o",
+        "bytes": 304,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt312_GLOBAL__N_18Multiply3runILNS1_4TypeE21ELb1EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o",
+        "bytes": 176,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt312_GLOBAL__N_18Multiply3runILNS1_4TypeE22ELb0EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o",
+        "bytes": 304,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt312_GLOBAL__N_18Multiply3runILNS1_4TypeE22ELb1EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o",
+        "bytes": 176,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt312_GLOBAL__N_18Multiply3runILNS1_4TypeE30ELb0EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o",
+        "bytes": 304,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt312_GLOBAL__N_18Multiply3runILNS1_4TypeE30ELb1EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o",
+        "bytes": 176,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt312_GLOBAL__N_18Multiply3runILNS1_4TypeE8ELb0EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o",
+        "bytes": 304,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt312_GLOBAL__N_18Multiply3runILNS1_4TypeE8ELb1EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.cpp.o",
+        "bytes": 184,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS1_4TypeE20EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi3EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.cpp.o",
+        "bytes": 184,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS1_4TypeE21EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi3EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.cpp.o",
+        "bytes": 184,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS1_4TypeE22EEEN4sycl3_V15eventERNS8_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS9_SaIS9_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi3EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.cpp.o",
+        "bytes": 48,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK3iq35kopt412_GLOBAL__N_17Combine6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS6_5eventESaISE_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/entry-main.cpp.o",
+        "bytes": 1,
+        "symbol": "_ZN8packet2612capture_sizeIZZN3tp27Context6markerESt4spanIKmLm18446744073709551615EEENKUlRN4sycl3_V17handlerEE_clES9_EUlvE_EE"
+      },
+      {
+        "object": "build/device/CMakeFiles/programs.dir/entry-main.cpp.o",
+        "bytes": 8,
+        "symbol": "_ZN8packet2612capture_sizeIZZNK15CanaryIncrement6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS3_5eventESaISB_EEENKUlRNS3_7handlerEE_clESH_EUlNS3_2idILi1EEEE_EE"
+      }
+    ]
+  },
+  "limits": [
+    "Compilation was already running elsewhere; object list is a snapshot, not a final linked-binary attestation.",
+    "No device binary was executed. No speed or byte identity verdict inferred from this architecture review."
+  ],
+  "sources_before_fixes": {
+    "specialised.hpp": "a5604dcf33c1f01940505b3ab5e6fab8d05e9f6ba6fed2884f40ae95b47c88cb",
+    "specialised_submit.cpp": "46f74d87620ff9f627a098905b8d6cfca7e2d2ebb3077a32ed906060442ade7d",
+    "adapter.cpp": "f1abb0d87727fa3ddb7ca34cf6cc3a08182639e9aeae5d982c268b9171fd85b7",
+    "runtime_kernels.cpp": "ff95284fda68e0097c35e7ee0b03851563b77cf935602b4e2ea0d5ba526f37f0",
+    "core_v2.hpp": "c3c265894d5041e0d6e026d53094b67f9b58bb86bd1aa1c8fea06ab4d8692ffd",
+    "kernels.hpp": "24e24e660203c959db09d30dc633490906508b749cf4e2838e2df50d4013d43a",
+    "kernel_overlay.py": "ce04187e0c9aa194668f864991d8a7a6feb699f57c2f512e7a5bc0d1c780cfcd",
+    "kernel_gate.py": "b7b1161dc9e76b764bf3a84d745f416fe43180dcbc2dfdfc0ed4a87cae3fd4e2",
+    "kernel_guard.hpp": "3ea4ec84bfcc75b51d98163afc6c4912ce1b34e9f248b9a348a55d2d0e29d4ad",
+    "dispatch.hpp": "b611d88832fd930c72d6e7cde0ef47965c7ebd6c7e2972391bd56757e2c6283f",
+    "main.cpp": "d8fb67012b596eb728343ee73321d134fd102d9479ab9816e3ad4b33f085a0ed",
+    "arithmetic.hpp": "4eea12510e598964cd901860bc0375e96918fc3eaefdaea009edefb20bcd6999",
+    "CMakeLists.txt": "bc7f0e03b789c7fb5b9797b4641293d649abc2b05fec24c5333bfe11864fabed"
+  },
+  "architecture_passed": true,
+  "remaining_limitation": "Future packet25 implementation names are not yet linked; current table supports the existing arithmetic kernel names only."
+}

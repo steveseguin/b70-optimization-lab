@@ -1,0 +1,12 @@
+--- packet18/runtime_kernels.hpp
++++ packet26/runtime_kernels.hpp
+@@ -45,6 +45,9 @@
+ };
+ enum class Special { normal, begin, commit, broadcast, ple_hash, check_status };
+ struct Spec {
++  bool no_materialize_gather = false;
++  bool fused_combine_norm = false;
++  int implementation = 0; // host-selected per-class variant; never a device descriptor
+   Geometry g;
+   Op op{};
+   Special special = Special::normal;
