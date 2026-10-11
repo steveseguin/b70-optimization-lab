@@ -93,6 +93,22 @@ bool Device::wait(Event e,std::chrono::milliseconds timeout) {
   validate(std::span(&e,1));
   return backend_->wait(e,std::chrono::steady_clock::now()+timeout);
 }
+Event Device::compute(const Operation& op, std::span<const Allocation> buffers, std::span<const Event> deps) {
+  admit(); validate(deps);
+  if(buffers.empty()) throw std::invalid_argument("empty compute bindings");
+  std::vector<void*> pointers;
+  for(auto id:buffers) {
+    const auto& r=arena.row(id);
+    if(!r.live || r.memory!=Memory::device) throw std::logic_error("compute requires live device allocation");
+    pointers.push_back(r.pointer);
+  }
+  std::vector<Event> chain(deps.begin(),deps.end());
+  if(!events_.empty()) chain.push_back(events_.back());
+  events_.reserve(events_.size()+1);
+  try {
+    auto e=backend_->compute(op,pointers,chain); events_.push_back(e); return e;
+  } catch(const std::exception& e) {fault_=e.what(); throw;}
+}
 bool Device::drain(Deadline end) {
   // Visit every event, even if one fails, preserving a single total deadline.
   bool ok=true;

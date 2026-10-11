@@ -5,7 +5,7 @@
 
 namespace ownrt {
 // Deterministic manual completion. No SYCL headers, loader or device access.
-class MockDevice final : public Backend {
+class MockDevice : public Backend {
   struct Work { bool done; std::vector<Event> deps; std::function<void()> run; };
   std::map<Event,Work> work_;
   std::map<void*,Memory> allocations_;

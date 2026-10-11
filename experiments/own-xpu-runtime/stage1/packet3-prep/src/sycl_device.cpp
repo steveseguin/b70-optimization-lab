@@ -1,4 +1,5 @@
 #include "owner.hpp"
+#include "sycl_operation.hpp"
 #include <sycl/sycl.hpp>
 #include <sycl/ext/oneapi/backend/level_zero.hpp>
 #include <level_zero/ze_api.h>
@@ -77,6 +78,12 @@ class SyclDevice final : public Backend {
     check_error(); auto wait=dependencies(deps); auto id=next_handle();
     auto [it,inserted]=events_.try_emplace(id); (void)inserted;
     it->second=queue_->submit([&](sycl::handler& h){h.depends_on(wait); h.single_task<class IdleMarker>([]{});}); return id;
+  }
+  Event compute(const Operation& op,std::span<void* const> bindings,std::span<const Event> deps) override {
+    const auto& native=dynamic_cast<const SyclOperation&>(op);
+    check_error(); auto wait=dependencies(deps); auto id=next_handle();
+    auto [it,inserted]=events_.try_emplace(id); (void)inserted;
+    it->second=native.submit(*queue_,bindings,wait); return id;
   }
   bool complete(Event e) override {
     return events_.at(e).get_info<sycl::info::event::command_execution_status>()==sycl::info::event_command_status::complete;

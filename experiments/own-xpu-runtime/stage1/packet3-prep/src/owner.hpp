@@ -6,6 +6,7 @@
 #include <map>
 #include <memory>
 #include <span>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -22,6 +23,7 @@ enum class Category { weights, kv, recurrent, scratch, graph_static,
                       pinned_slab, output_ring, loader_staging, host_shadow,
                       runtime_overhead };
 enum class Lifetime { process, request, transaction, graph, transfer };
+struct Operation { virtual ~Operation() = default; };
 std::string quote(const std::string&);
 const char* name(Memory);
 const char* name(Category);
@@ -36,6 +38,9 @@ struct Backend {
   virtual void release(void*, Memory) = 0;
   virtual Event copy(void*, const void*, std::size_t, std::span<const Event>) = 0;
   virtual Event marker(std::span<const Event>) = 0;
+  virtual Event compute(const Operation&, std::span<void* const>, std::span<const Event>) {
+    throw std::logic_error("compute unsupported by backend");
+  }
   virtual bool complete(Event) = 0;
   virtual bool wait(Event, Deadline) = 0;
   virtual void synchronize() = 0; // only after all tracked events complete
@@ -115,6 +120,8 @@ class Device {
   std::string identity() const;
   std::size_t in_flight();
   bool wait(Event, std::chrono::milliseconds);
+  // Device-only bindings; host/UVA pointers require a separate admission path.
+  Event compute(const Operation&, std::span<const Allocation>, std::span<const Event>);
   void graph(std::string, std::vector<Allocation>, std::function<void()>);
   Receipt shutdown(std::chrono::milliseconds timeout);
 };

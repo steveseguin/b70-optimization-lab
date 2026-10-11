@@ -1,0 +1,272 @@
+{
+  "schema": "own-runtime.iq3.packet2.build.v1",
+  "utc": "2026-10-11T02:40:59.395627+00:00",
+  "host": "steve-b70s",
+  "nice": 19,
+  "OMP_NUM_THREADS": "2",
+  "max_build_jobs": 2,
+  "device_executed": false,
+  "commands": [
+    {
+      "argv": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "--version"
+      ],
+      "returncode": 0,
+      "stdout": "Intel(R) oneAPI DPC++/C++ Compiler 2026.0.0 (2026.0.0.20260331)\nTarget: x86_64-unknown-linux-gnu\nThread model: posix\nInstalledDir: /opt/intel/oneapi/compiler/2026.0/bin/compiler\nConfiguration file: /opt/intel/oneapi/compiler/2026.0/bin/compiler/../icpx.cfg\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "cmake",
+        "--version"
+      ],
+      "returncode": 0,
+      "stdout": "cmake version 4.3.2\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake).\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "dpkg-query",
+        "-W",
+        "libze-dev",
+        "libze1"
+      ],
+      "returncode": 0,
+      "stdout": "libze-dev:amd64\t1.28.2-1~24.04~ppa1\nlibze1:amd64\t1.28.2-1~24.04~ppa1\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "cmake",
+        "-S",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/build/host",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DIQ3_DEVICE=OFF"
+      ],
+      "returncode": 0,
+      "stdout": "-- Configuring done (0.0s)\n-- Generating done (0.0s)\n-- Build files have been written to: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/build/host\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "cmake",
+        "--build",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/build/host",
+        "--clean-first",
+        "-j2"
+      ],
+      "returncode": 0,
+      "stdout": "[ 16%] Building CXX object CMakeFiles/owner.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp.o\n[ 33%] Linking CXX static library libowner.a\n[ 33%] Built target owner\n[ 50%] Building CXX object CMakeFiles/gguf.dir/loader/gguf.cpp.o\n[ 66%] Linking CXX static library libgguf.a\n[ 66%] Built target gguf\n[ 83%] Building CXX object CMakeFiles/host-tests.dir/tests/host.cpp.o\n[100%] Linking CXX executable host-tests\n[100%] Built target host-tests\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "cmake",
+        "-S",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/build/device",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DIQ3_DEVICE=ON"
+      ],
+      "returncode": 0,
+      "stdout": "-- Configuring done (0.0s)\n-- Generating done (0.0s)\n-- Build files have been written to: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/build/device\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "cmake",
+        "--build",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/build/device",
+        "--clean-first",
+        "-j2"
+      ],
+      "returncode": 0,
+      "stdout": "[  9%] Building CXX object CMakeFiles/owner.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp.o\n[ 18%] Building CXX object CMakeFiles/kernels.dir/kernels/device.cpp.o\n[ 27%] Linking CXX static library libowner.a\n[ 27%] Built target owner\n[ 36%] Building CXX object CMakeFiles/kernels.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp.o\n[ 45%] Building CXX object CMakeFiles/gguf.dir/loader/gguf.cpp.o\n[ 54%] Linking CXX static library libkernels.a\n[ 54%] Built target kernels\n[ 63%] Linking CXX static library libgguf.a\n[ 63%] Built target gguf\n[ 72%] Building CXX object CMakeFiles/host-tests.dir/tests/host.cpp.o\n[ 81%] Building CXX object CMakeFiles/device-test.dir/tests/device.cpp.o\n[ 90%] Linking CXX executable host-tests\n[ 90%] Built target host-tests\n[100%] Linking CXX executable device-test\n[100%] Built target device-test\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "cmake",
+        "-S",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/build/owner-host",
+        "-DOWN_RT_HOST_ONLY=ON",
+        "-DOWN_RT_BUILD_NATIVE_SMOKE=OFF",
+        "-DPython3_EXECUTABLE=/home/steve/.venvs/vllm-xpu/bin/python"
+      ],
+      "returncode": 0,
+      "stdout": "-- Configuring done (0.2s)\n-- Generating done (0.0s)\n-- Build files have been written to: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/build/owner-host\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "cmake",
+        "--build",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/build/owner-host",
+        "-j2"
+      ],
+      "returncode": 0,
+      "stdout": "[ 33%] Built target owner\n[ 66%] Built target owner-tests\n[100%] Built target own-rt-smoke\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "ctest",
+        "--test-dir",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/build/owner-host",
+        "--output-on-failure"
+      ],
+      "returncode": 0,
+      "stdout": "Test project /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/build/owner-host\n      Start  1: census\n 1/12 Test  #1: census ...........................   Passed    0.00 sec\n      Start  2: lifetime\n 2/12 Test  #2: lifetime .........................   Passed    0.00 sec\n      Start  3: closed\n 3/12 Test  #3: closed ...........................   Passed    0.00 sec\n      Start  4: inflight\n 4/12 Test  #4: inflight .........................   Passed    0.00 sec\n      Start  5: order\n 5/12 Test  #5: order ............................   Passed    0.00 sec\n      Start  6: copy_bounds\n 6/12 Test  #6: copy_bounds ......................   Passed    0.00 sec\n      Start  7: dependencies\n 7/12 Test  #7: dependencies .....................   Passed    0.00 sec\n      Start  8: graph_lifetime\n 8/12 Test  #8: graph_lifetime ...................   Passed    0.00 sec\n      Start  9: marker\n 9/12 Test  #9: marker ...........................   Passed    0.00 sec\n      Start 10: receipt\n10/12 Test #10: receipt ..........................   Passed    0.00 sec\n      Start 11: receipt_schema\n11/12 Test #11: receipt_schema ...................   Passed    0.13 sec\n      Start 12: mock_smoke\n12/12 Test #12: mock_smoke .......................   Passed    0.00 sec\n\n100% tests passed, 0 tests failed out of 12\n\nTotal Test time (real) =   0.16 sec\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/steve/.venvs/vllm-xpu/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/tests/run_cpu.py",
+        "--host",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/build/host/host-tests",
+        "--scratch",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/build/fixtures",
+        "--receipt",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/cpu-receipt.json"
+      ],
+      "returncode": 0,
+      "stdout": "{\n  \"schema\": \"own-runtime.iq3.packet2.cpu.v1\",\n  \"passed\": true,\n  \"host_binary_sha256\": \"3d4d3a91d5fbcf12e21df5480c8d235bdb7957fa5d5d1980be8071a9112cdafa\",\n  \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\",\n  \"torch\": \"2.11.0+xpu\",\n  \"nice\": 19,\n  \"OMP_NUM_THREADS\": \"2\",\n  \"ionice\": \"idle\",\n  \"header_bytes_read_total\": 44098076,\n  \"real_payload_bytes_read\": 81680,\n  \"census_tensors\": 1224,\n  \"placement_bytes\": [\n    26506330880,\n    26798288640,\n    29321610240\n  ],\n  \"dequant_values\": 282880,\n  \"gemv_rows\": 148,\n  \"fresh_process_repeats\": 37,\n  \"widen_patterns_per_type\": 65536,\n  \"output_cast_values\": 115141,\n  \"routed_expert_ids_tested\": 512,\n  \"device_execution\": false\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/tests/test_window.py"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ".......\n----------------------------------------------------------------------\nRan 7 tests in 0.026s\n\nOK\n"
+    },
+    {
+      "argv": [
+        "readelf",
+        "-d",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/build/host/host-tests"
+      ],
+      "returncode": 0,
+      "stdout": "\nDynamic section at offset 0x3bda0 contains 27 entries:\n  Tag        Type                         Name/Value\n 0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]\n 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]\n 0x000000000000000c (INIT)               0x404000\n 0x000000000000000d (FINI)               0x42df1c\n 0x0000000000000019 (INIT_ARRAY)         0x43b688\n 0x000000000000001b (INIT_ARRAYSZ)       16 (bytes)\n 0x000000000000001a (FINI_ARRAY)         0x43b698\n 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)\n 0x000000006ffffef5 (GNU_HASH)           0x400378\n 0x0000000000000005 (STRTAB)             0x401290\n 0x0000000000000006 (SYMTAB)             0x400480\n 0x000000000000000a (STRSZ)              4811 (bytes)\n 0x000000000000000b (SYMENT)             24 (bytes)\n 0x0000000000000015 (DEBUG)              0x0\n 0x0000000000000003 (PLTGOT)             0x43bfe8\n 0x0000000000000002 (PLTRELSZ)           2760 (bytes)\n 0x0000000000000014 (PLTREL)             RELA\n 0x0000000000000017 (JMPREL)             0x402ab0\n 0x0000000000000007 (RELA)               0x402828\n 0x0000000000000008 (RELASZ)             648 (bytes)\n 0x0000000000000009 (RELAENT)            24 (bytes)\n 0x000000006ffffffe (VERNEED)            0x402688\n 0x000000006fffffff (VERNEEDNUM)         3\n 0x000000006ffffff0 (VERSYM)             0x40255c\n 0x0000000000000000 (NULL)               0x0\n",
+      "stderr": ""
+    }
+  ],
+  "passed": true,
+  "development_failures": [
+    "Initial C++ auto declarations mixed signed and unsigned types; split declarations.",
+    "SYCL does not support strict FP dynamic rounding/exceptions; explicit no-fast-math, contract-off and IEEE denormal flags replace strict mode.",
+    "icpx precise mode warns when contraction is separately disabled; use explicit independent FP controls.",
+    "Name-based placement check initially treated global PLE as layerless; census binds it to layer1, now explicit."
+  ],
+  "compile_commands": {
+    "host": [
+      {
+        "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/build/host",
+        "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -o CMakeFiles/owner.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp",
+        "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp",
+        "output": "CMakeFiles/owner.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp.o"
+      },
+      {
+        "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/build/host",
+        "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -o CMakeFiles/gguf.dir/loader/gguf.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp",
+        "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp",
+        "output": "CMakeFiles/gguf.dir/loader/gguf.cpp.o"
+      },
+      {
+        "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/build/host",
+        "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -o CMakeFiles/host-tests.dir/tests/host.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/tests/host.cpp",
+        "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/tests/host.cpp",
+        "output": "CMakeFiles/host-tests.dir/tests/host.cpp.o"
+      }
+    ],
+    "device": [
+      {
+        "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/build/device",
+        "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -o CMakeFiles/owner.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp",
+        "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp",
+        "output": "CMakeFiles/owner.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp.o"
+      },
+      {
+        "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/build/device",
+        "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -o CMakeFiles/gguf.dir/loader/gguf.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp",
+        "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp",
+        "output": "CMakeFiles/gguf.dir/loader/gguf.cpp.o"
+      },
+      {
+        "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/build/device",
+        "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -o CMakeFiles/host-tests.dir/tests/host.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/tests/host.cpp",
+        "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/tests/host.cpp",
+        "output": "CMakeFiles/host-tests.dir/tests/host.cpp.o"
+      },
+      {
+        "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/build/device",
+        "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fsycl -o CMakeFiles/kernels.dir/kernels/device.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp",
+        "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp",
+        "output": "CMakeFiles/kernels.dir/kernels/device.cpp.o"
+      },
+      {
+        "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/build/device",
+        "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fsycl -o CMakeFiles/kernels.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp",
+        "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp",
+        "output": "CMakeFiles/kernels.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp.o"
+      },
+      {
+        "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/build/device",
+        "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fsycl -o CMakeFiles/device-test.dir/tests/device.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/tests/device.cpp",
+        "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/tests/device.cpp",
+        "output": "CMakeFiles/device-test.dir/tests/device.cpp.o"
+      }
+    ]
+  },
+  "artifacts_sha256": {
+    "host/host-tests": "3d4d3a91d5fbcf12e21df5480c8d235bdb7957fa5d5d1980be8071a9112cdafa",
+    "device/device-test": "03cec8dc9dbcd6861d2cd84078c636bf70cfe3ec68686badc9c7c4385a9bf710",
+    "device/libkernels.a": "c91b160a62d00e24441e01f9e2aa74199b0f0cf950c3bb794a3e5ddb92a5efc0"
+  },
+  "cpu_receipt_sha256": "a0b7d12c4be55dbf9bd845e1bf1d87e4ea2985c094db69abad66c2021c318cbc",
+  "level_zero_header_sha256": "252c2f3138853c632763fc381b2814118938f874e15d11c3812f683cdd59410d",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/stage1/packet1b/loaders/FORMAT.md": "3d2f7dd919731c1ae2f69456890430a5a99f6d7539b774bb230be9e91d5f323c",
+    "experiments/own-xpu-runtime/stage1/packet1b/loaders/dequant.py": "7d03878cdc036911902b24ac2d9d3df2ab7d9df42fc344cc73e5e2f56457dd2e",
+    "experiments/own-xpu-runtime/stage1/packet1b/loaders/headers.py": "7503587cb34eb2ed5464ad78d429817e6abc4121c0db81ffc6011da58a54c9fa",
+    "experiments/own-xpu-runtime/stage1/packet1b/loaders/iq2-s-grid.json": "52701183171fe7cd5df9cfbb3fddaaff9fee4714608876e2b14b1dc2728a2164",
+    "experiments/own-xpu-runtime/stage1/packet1b/loaders/iq3-grid.json": "7f29119f156da1b67deeae4ed1a7b2a3d89dc9b72fc3a123923b189dd8cab372",
+    "experiments/own-xpu-runtime/stage1/packet1b/loaders/iq3-s-grid.json": "44036cafc3c93700bc12dbaca4720a7e84179270ff2507b93b86a1c61bd899a4",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/mock_device.hpp": "e5e68fd9aa3c9baaa34811b74c58f6ff8311f6bd18fae787fe80ccef2d6e3a32",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp": "2fe3cb1201996885c3d49235e3504661beb4f7b822eb631fd6fb9da260902ac4",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.hpp": "08e63391774bf800d2a05aa9911fc5adfbc37d3082b4ff0caa6bf2c693138214",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/smoke.cpp": "e79654dc1500c13e868dbc9456870784eff83d1f4e2064db1ca850a6fba1a790",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp": "65b6f30da149e284913a7e99e552eecd96940040ebd3c2a17d4f010f576f2728",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_operation.hpp": "296eeb3fdf685b698cb7bb35da86157fbb12f97ff215f61ab7ad90f207364c9b",
+    "experiments/own-xpu-runtime/stage2/packet2/CMakeLists.txt": "4f14e3be5e79f809e0e6623eff0a0b65409c8eb70cb4997d0bc2418f5fa72596",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp": "021766a26c108dbdb830070bfb8c13c00934ca5a7df3f472aa3f10335309bb33",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/device.hpp": "1044e1a57d101d35a1d02e7fd911c3db9e5faed41248255ac61af52528f98f74",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/generate_grids.py": "4ae0212006862c298ffee544f4d3df89d61ed5bbd448cd714a803fb0e56ea9ff",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4",
+    "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp": "d2560c5530d56ca62b0ec43bcbd1668cd7c637d1743f51abfebfb96de56ee480",
+    "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.hpp": "80647a747f697dd8131019ee2041ab42b1f6b772f735abdf116fa6e2036323f1",
+    "experiments/own-xpu-runtime/stage2/packet2/roofline.py": "61b8ca33917a71ba91aaee129fa298663b5c566507737878a7d5f49db7d4c441",
+    "experiments/own-xpu-runtime/stage2/packet2/tests/device.cpp": "7c34ac4558bbeda2b16ce9c9661269ceedf51b9ec01f1e8052cb2974ae8f6c43",
+    "experiments/own-xpu-runtime/stage2/packet2/tests/device_window.py": "a26998d3bd062b78c8ffb8825e8daf9adb50cd866552b3c23bfacdafb0189e5f",
+    "experiments/own-xpu-runtime/stage2/packet2/tests/fixture.hpp": "aec94f0301d5871805292a349a73ebb06bf95a2c51d9db0df97aeeaaf660ff89",
+    "experiments/own-xpu-runtime/stage2/packet2/tests/host.cpp": "9520e1c8b1ccb89cea183e5eb1b0ea84c8294f9119161cfb2998fd2127da4a07",
+    "experiments/own-xpu-runtime/stage2/packet2/tests/run_cpu.py": "09fbeedd3ba67172a76343400f1e1dcb71165085694a2b8e83b47f6d4e27d88b",
+    "experiments/own-xpu-runtime/stage2/packet2/tests/test_window.py": "a23626e3084068244e2cc928f5058086c2cb2115b822376632b046ff1831f999",
+    "experiments/own-xpu-runtime/stage2/packet2/validate.py": "46f9d28896908429e0113ed9152b191c2b82b6ec103a7cf7238f5ad806157e97",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/admission-receipt.json": "a5807f19898d09af66bbd2c9616392483ccf0f4fd74550999776c69aeec3506e",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/tensor-census.json": "3312f5a18582788c5c6c84572fd616488b6835b454272c81eec218a58521607c"
+  },
+  "build_directory_removed": true
+}

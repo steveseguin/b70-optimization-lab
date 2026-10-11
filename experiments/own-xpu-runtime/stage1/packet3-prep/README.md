@@ -186,3 +186,13 @@ fault-class lines during the run. Receipt:
 [first-native-receipt-20261011.json](first-native-receipt-20261011.json).
 This closes packet 3's native smoke gate; it is not a model, speed or
 teardown-under-load result.
+
+## Stage 2 compute extension — CPU and compile evidence only
+
+[Stage 2 packet 2](../../stage2/packet2/README.md) adds tracked device-only
+compute bindings and an internal SYCL operation hook to this owner. Compute
+events share its existing copy/event drain protocol; mock tests cover
+dependency rejection, host-pointer rejection and refusal to free in-flight
+storage. All twelve original host tests still pass in the packet 2 build
+receipt. The native smoke above retains its original source identity; it does
+not qualify the new compute interface, whose first native window is pending.

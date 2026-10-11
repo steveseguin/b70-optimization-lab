@@ -61,6 +61,8 @@ Approved duplicate retirements are recorded in lane notes; a later full proof mu
 
 ## Our Own Intel Xe Runtimes
 
+**October 11, CPU-only:** the owner's first real-model target for our own engine is now the IQ3 quantized compressed version on two B70s; the 27B FP8 work remains documented. [Stage 2 packet 2](experiments/own-xpu-runtime/stage2/packet2/README.md) adds the GGUF loader and packed kernels, with exact CPU checks and a successful SYCL build. Nothing ran on a GPU in this task; the next step is the [bounded one-card device comparison](experiments/own-xpu-runtime/stage2/packet2/WINDOW.md) in a separately authorized window.
+
 The October 10 [objective](docs/own-xpu-runtime-objective.md) is our own model-specific code. Other projects supply credited ideas, not a code base. Official-publisher or Unsloth weights are permitted; another source needs written justification and
 owner approval. The earlier ISTA IQ3_S proposal is withdrawn. These CPU packets do not qualify a native runtime or authorize a GPU window.
 
