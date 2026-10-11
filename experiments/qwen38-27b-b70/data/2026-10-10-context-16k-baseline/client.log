@@ -1,0 +1,49 @@
+### start 2026-10-10 21:19:35 arms=W16 D16 B16ir B16ira size=240000 seed=0 MemAvailable 6107 MiB
+### [generate] 21:19
+stream_tokens = 240208 n_probes = 15 n_items = 147 
+### [W16] start 21:19
+### [W16] done rc=0 in 22 min 21:42
+   rc=0 ledger score 0.8276 raw 0.8276 ({'correct': 24, 'blank': 0, 'wrong': 5, 'stale': 0}) void=False
+arm	kind	mode	size	seed	correct	blank	stale	wrong	lost_never	lost_dropped	lost_copy	stored_frac	items	delivered	seen_whole	items_lost	cut	gate_refusals	protecte
+### [D16] start 21:42
+### [D16] done rc=0 in 19 min 22:01
+   rc=0 ledger score 0.8276 raw 0.8276 ({'correct': 24, 'blank': 3, 'wrong': 2, 'stale': 0}) void=False
+arm	kind	mode	size	seed	correct	blank	stale	wrong	lost_never	lost_dropped	lost_copy	stored_frac	items	delivered	seen_whole	items_lost	cut	gate_refusals	protecte
+### [B16ir] start 22:01
+### [B16ir] done rc=0 in 20 min 22:22
+   rc=0 ledger score 0.6207 raw 0.6207 ({'correct': 18, 'blank': 4, 'wrong': 7, 'stale': 0}) void=False
+arm	kind	mode	size	seed	correct	blank	stale	wrong	lost_never	lost_dropped	lost_copy	stored_frac	items	delivered	seen_whole	items_lost	cut	gate_refusals	protecte
+### [B16ira] start 22:22
+### [B16ira] done rc=0 in 36 min 22:58
+   rc=0 ledger score 0.6897 raw 0.6897 ({'correct': 20, 'blank': 0, 'wrong': 7, 'stale': 2}) void=False
+arm	kind	mode	size	seed	correct	blank	stale	wrong	lost_never	lost_dropped	lost_copy	stored_frac	items	delivered	seen_whole	items_lost	cut	gate_refusals	protecte
+### [analysis] 22:58
+# 1. probe accuracy (correct/n=acc, pooled over trials; distance in items)
+arm	trials	probes	d1-4	d5-24	d25-99	d100-399	d400+	t:current	t:old_value	t:who	final_query	total_correct
+B16ir	1	4/15=0.27	3/8=0.38	1/5=0.20	0/2=0.00	n/a	n/a	3/5=0.60	1/5=0.20	0/5=0.00	14/14	18/29
+B16ira	1	12/15=0.80	7/8=0.88	4/5=0.80	1/2=0.50	n/a	n/a	3/5=0.60	4/5=0.80	5/5=1.00	8/14	20/29
+D16	1	10/15=0.67	5/8=0.62	3/5=0.60	2/2=1.00	n/a	n/a	5/5=1.00	5/5=1.00	0/5=0.00	14/14	24/29
+W16	1	10/15=0.67	8/8=1.00	2/5=0.40	0/2=0.00	n/a	n/a	5/5=1.00	2/5=0.40	3/5=0.60	14/14	24/29
+
+# 2a. speed: cumulative minutes when the history reached N tokens (mean over trials reaching it)
+arm	source	coverage	100K	200K
+B16ir	timing+ctx	0.921	8.79	16.43
+B16ira	timing+ctx	0.942	17.7	24.91
+D16	timing+ctx	1.0	7.29	14.87
+W16	timing+ctx	1.0	8.17	18.17
+
+# 2b. speed: minutes per 100K tokens of history in each segment (rises if the method slows down)
+arm	0-100K	100-200K
+B16ir	8.79	7.64
+B16ira	17.7	7.21
+D16	7.29	7.58
+W16	8.17	10.0
+
+# 3. totals (mean per trial; peak_ctx_max = max over trials)
+arm	trials	tokens_written	lm_calls	peak_ctx	wall_s	real_edits	summaries	summary_failed	ctxfold_calls	fold_batches	truncations	compactions	recalls	rollbacks	window_refusals	peak_ctx_max
+B16ir	1	37284	360	9366	1247	160	n/a	n/a	150	1	n/a	n/a	0	0	n/a	9366
+B16ira	1	80290	466	11648	2175	175	n/a	n/a	175	1	n/a	n/a	24	3	n/a	11648
+D16	1	38947	155	9891	1151	0	n/a	n/a	n/a	n/a	n/a	134	n/a	0	n/a	9891
+W16	1	58977	157	12793	1362	0	n/a	n/a	n/a	n/a	52	n/a	n/a	0	n/a	12793
+# trials used=4 skipped=0
+### complete 2026-10-10 22:58:44

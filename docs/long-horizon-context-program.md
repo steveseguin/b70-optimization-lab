@@ -81,6 +81,18 @@ agent's wall time per 100K of history does not grow, and nothing numeric in the 
 
 W48/D48 are from `/mnt/fast-ai/bench-results/context-longrun-20261008/campaign/` (not written up until now).
 
+**2026-10-10 fast-scale baseline (16K cap, 240K history, one card, seed 0; `experiments/qwen38-27b-b70/notes/2026-10-10-context-16k-baseline.md`):**
+
+| arm | probes | 1-4 back | 5-24 | 25-99 | who | final | minutes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| W16 window-drop | 10/15 | 8/8 | 2/5 | 0/2 | 3/5 | 14/14 | 22 |
+| D16 compaction | 10/15 | 5/8 | 3/5 | 2/2 | 0/5 | 14/14 | 19 |
+| B16ir self-edit read mode | 4/15 | 3/8 | 1/5 | 0/2 | 0/5 | 14/14 | 20 |
+| B16ira + archive and recall | 12/15 | 7/8 | 4/5 | 1/2 | 5/5 | 8/14 | 36 |
+
+Archive + recall is the first method above the lossy floor on probes; it wrote stale recalled values back into its
+state (final 8/14), which is the next fix. In-window self-editing collapses at 16K (needs 32K of working room).
+
 ### 4b. Proposed here, not yet run
 
 - Per-batch commit proof with atomic staging; file I/O cost vs decode cost; **exact KV park-and-restore on NVMe**;
