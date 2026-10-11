@@ -308,3 +308,36 @@ on already well-populated grids, retain that evidence and pursue decode issue
 cost / register pressure instead. If wide rows lose on HC down, the explicit
 SLM bound gives the next lever: smaller tiles or direct block reads. No lane
 is declared finished, and no changed arithmetic is silently adopted.
+
+## Device results — card 3, 2026-10-11 04:3x UTC (boot 13858eef)
+
+Exactness: all 494 device cases PASS (kopt_sg32 54, splitk2 54, splitk4 54,
+rows2_vec32 54, rows2_vec64 54, fused_rows2_vec32 112, fused_rows2_vec64 112),
+zero kernel fault lines. Receipts: [receipts-card3-20261011/](receipts-card3-20261011/).
+
+**Attainable ceiling on this card** (64 MiB, 16-byte streaming read with a
+deterministic u64 sum): **589-593 GB/s** payload; device memcpy 271 GB/s one way
+(542 GB/s read+write). So the practical target is ~590 GB/s, not 507.
+
+| Weight (layer 0/3) | MB | kopt_sg32 GB/s | splitk2 | splitk4 | rows2_vec32 | best |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| ffn_gate_inp (F16 router) | 5.24 | **289** | 217 | 210 | 95 | sg32 |
+| attn_qkv (Q6) | 21.50 | **88** | 78 | 59 | 40 | sg32 |
+| attn_gate | 12.90 | **78** | 77 | 59 | 34 | sg32 |
+| attn_q (layer 3) | 25.80 | **93** | - | 59 | - | sg32 |
+| ssm_out / attn_output | 12.90 | 61 | 77 | **81** | 20 | splitk4 (1.33x) |
+| hc_attn_down / hc_ffn_down | 3.48 | 40 | 62 | **101** | 10 | splitk4 (2.5x) |
+| hc_attn_up / hc_ffn_up | 3.48 | **81** | 40 | 22 | 55 | sg32 |
+| ffn_*_exps (10 experts, IQ2_S/IQ3_S) | 5.25-9.22 | **50-68** | - | 19-26 | - | sg32 |
+| ffn_*_shexp | 1.34-1.74 | **51-73** | - | 35-38 | - | sg32 |
+| hc_*_inject (0.16 MB) | 0.16 | 2.7 | 3.0 | **5.3** | 0.9 | splitk4 (launch floor) |
+| ssm_alpha / ssm_beta | 0.49 | 28 | 26 | **33** | 9 | splitk4 |
+
+Reading: the plain F16 router matrix reaches 289 GB/s with the same GEMV
+framework, so the framework can stream at half the ceiling; the quantized grids
+stall at 50-100 GB/s because the per-weight **decode** (codebook lookups,
+sign bits, scales) is the bottleneck, not the loads. Split-K helps the
+"down"-shaped matrices (large K, few rows) 1.3-2.5x and hurts the "up"-shaped
+ones; the two-rows-per-subgroup wide-load variants are worse everywhere and are
+dropped. The fused and sequence entries were not populated in this run.
+Round 3 targets the decode path itself and a shape-aware variant table.
