@@ -199,6 +199,12 @@ Warm operator timings cannot qualify a cold-prompt benchmark or predict tok/s.
 
 ## Credit and retained lessons
 
+Packet-6 implementation and CPU validation were prepared by Codex. A concurrent
+shared-index commit (`8212071623`) included the staged packet files; the focused
+follow-up records this attribution without rewriting the sibling's commit.
+The final clean CPU build passed and removed packet-6 scratch. Its retained
+receipt binds all 79 timing shapes and the 272 prepared device cases.
+
 Conceptual credit: [IDEAS.md](../../IDEAS.md) pins llama.cpp/ik_llama.cpp
 MMVQ unpack reuse and exllamav3 tile scheduling. No external kernel code was
 copied, adapted or linked; normative GGUF tables retain packet 2's format
