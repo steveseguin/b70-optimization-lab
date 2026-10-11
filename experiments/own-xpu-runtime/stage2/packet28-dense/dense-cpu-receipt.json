@@ -1,0 +1,71 @@
+{
+  "scope": "CPU only; no device discovery or execution",
+  "precision_flags_compile_and_link": [
+    "-O2",
+    "-std=c++20",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-DHOST_ONLY"
+  ],
+  "icpx_extra": [
+    "-fdenormal-fp-math=ieee"
+  ],
+  "gates": {
+    "gcc": {
+      "suite": "dense",
+      "passed": true,
+      "classes": 32,
+      "checks": 3345216,
+      "host_reference_nan_equivalence": 225,
+      "new_current_nan_encoding_differences": 0,
+      "strict_same_card_gate_pending": true,
+      "fresh_process_repeats": 2
+    },
+    "icpx": {
+      "suite": "dense",
+      "passed": true,
+      "classes": 32,
+      "checks": 3345216,
+      "host_reference_nan_equivalence": 828,
+      "new_current_nan_encoding_differences": 181116,
+      "strict_same_card_gate_pending": true,
+      "fresh_process_repeats": 2
+    }
+  },
+  "hashes": {
+    "dense.hpp": "152577e2cf47f8d52bacfdd39aff218dc7ec39d804e13e4fd53c3bb27bbd06e4",
+    "dense_cpu.cpp": "a2ccf3e6cf44b8da952791463b1d33083544465ab115f2612c0426dbc413fe14",
+    "build/dense-cpu-gcc": "f0f8c96c8ce1db2093e7b578e87bc7c55f37f10d30a6169b2b6068c0bb89d804",
+    "build/dense-cpu-icpx": "32fdbe5e6c6f4699b3c327558f0b311ee24eadf90963a0457d22f1a429091470",
+    "dense-gcc-repeat1.log": "e2c32d8a9e1ca9e4675920216042d2ec7290ce9e662be39cce0906991637328d",
+    "dense-gcc-repeat2.log": "e2c32d8a9e1ca9e4675920216042d2ec7290ce9e662be39cce0906991637328d",
+    "dense-icpx-repeat1.log": "8dd6d2c6f2a69372dcb2235f14f7f4f86d252eb32cd4d447efd87b99a1ff6b8c",
+    "dense-icpx-repeat2.log": "8dd6d2c6f2a69372dcb2235f14f7f4f86d252eb32cd4d447efd87b99a1ff6b8c"
+  },
+  "failed_diagnostics": [
+    {
+      "compiler": "icpx",
+      "flags_extra": [],
+      "strict_payload_gate": false,
+      "first_difference": [
+        "7fc10000",
+        "ffc00000"
+      ],
+      "class": "gdn.qkv.q6",
+      "scenario": "zero block scale and mixed NaN/infinite BF16 inputs"
+    },
+    {
+      "compiler": "icpx",
+      "flags_extra": [
+        "-fp-model=strict"
+      ],
+      "strict_payload_gate": false,
+      "first_difference": [
+        "7fc10000",
+        "ffc00000"
+      ],
+      "adopted": false
+    }
+  ],
+  "interpretation": "All non-NaN bits agree. NaN encoding differences are counted and do not establish strict bit identity. Same-card new/current byte comparisons and runtime v2 oracle remain pending."
+}

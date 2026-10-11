@@ -1,0 +1,7 @@
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet28-dense/build/oversized.cpp:1:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet28-dense/kernel_guard.hpp: In instantiation of ‘F p28_guard::checked(F) [with F = main()::<lambda()>]’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet28-dense/build/oversized.cpp:2:56:   required from here
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet28-dense/kernel_guard.hpp:5:25: error: static assertion failed: device kernel capture exceeds 1024 bytes
+    5 |  static_assert(sizeof(F)<=1024,"device kernel capture exceeds 1024 bytes");
+      |                ~~~~~~~~~^~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet28-dense/kernel_guard.hpp:5:25: note: the comparison reduces to ‘(1025 <= 1024)’

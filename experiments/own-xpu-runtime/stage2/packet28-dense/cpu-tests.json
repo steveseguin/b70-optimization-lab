@@ -1,0 +1,62 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "strict_exceptional_output_bit_identity": false,
+  "same_card_strict_gate_pending": true,
+  "host_compilers": 2,
+  "fresh_process_repeats_per_compiler": 2,
+  "arithmetic_checks_per_process": 7890288,
+  "family_validation_checks_per_process": 1451529,
+  "harness": [
+    {
+      "compiler": "host",
+      "task": "validation",
+      "fresh_process_repeats": 2,
+      "output_sha256": "ecc14da0505b7504cf61d361bec7805d670e7405da02201de703fddd1e22f746",
+      "binary_sha256": "111ed802489b43e114bc2ba4237e157b35bcda4bc4921797a136f145d25acc31",
+      "checks": 78,
+      "negative_validation_checks": 546
+    },
+    {
+      "compiler": "host",
+      "task": "fixtures",
+      "fresh_process_repeats": 2,
+      "output_sha256": "43d9c0c6fb1c06eb799b10c079387117d29b09064a185fcb3c12f3f5c73c7e3d",
+      "binary_sha256": "111ed802489b43e114bc2ba4237e157b35bcda4bc4921797a136f145d25acc31",
+      "checks": 579,
+      "negative_validation_checks": 0
+    },
+    {
+      "compiler": "icpx-host",
+      "task": "validation",
+      "fresh_process_repeats": 2,
+      "output_sha256": "ecc14da0505b7504cf61d361bec7805d670e7405da02201de703fddd1e22f746",
+      "binary_sha256": "105d1dc52136ac4175c3d6af6dee31649b341d4d060e143a191fa9304baf62e0",
+      "checks": 78,
+      "negative_validation_checks": 546
+    },
+    {
+      "compiler": "icpx-host",
+      "task": "fixtures",
+      "fresh_process_repeats": 2,
+      "output_sha256": "74bb7f2ca31f9ef85f07cab8687311b0d4dba2c47aab8cf3f0a660607c04a27b",
+      "binary_sha256": "105d1dc52136ac4175c3d6af6dee31649b341d4d060e143a191fa9304baf62e0",
+      "checks": 579,
+      "negative_validation_checks": 0
+    }
+  ],
+  "protocol_tests": 15,
+  "kernel_guard": {
+    "passed": true,
+    "capture_symbols": 172,
+    "maximum_capture_bytes": 304,
+    "negative_compile_guard_passed": true
+  },
+  "receipt_hashes": {
+    "dense-cpu-receipt.json": "1c21954cfe34944e934e6c8149b590487819af07073f7727d2351925e6d44183",
+    "expert-build-receipt.json": "924a917e82d936ff2bf3051345d0f3ddfc10818c57de0ec240d2681f70507c8d",
+    "protocol-tests.json": "be7d53538373a9b5f64ed137cdd0d4d3440f25816a47c0479b1457a50c33627e",
+    "kernel-sizes.json": "cb8414b84a3d2b716809c6dfe0854c52e6d1abfb7ffb1f5fd6121180b9cb3848",
+    "cpu-harness-evidence.json.gz": "11058f8268f71bb9a89c4eef17fc6aafdfb035b2e6e81d7c5bbcde77c80c0c3c"
+  }
+}

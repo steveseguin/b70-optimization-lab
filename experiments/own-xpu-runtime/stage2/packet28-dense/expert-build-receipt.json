@@ -1,0 +1,89 @@
+[
+  {
+    "compiler": "/usr/bin/g++",
+    "command": [
+      "nice",
+      "-n",
+      "19",
+      "ionice",
+      "-c",
+      "3",
+      "/usr/bin/g++",
+      "-O2",
+      "-std=c++20",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-DHOST_ONLY",
+      "experiments/own-xpu-runtime/stage2/packet28-dense/expert_cpu.cpp",
+      "-o",
+      "experiments/own-xpu-runtime/stage2/packet28-dense/build/expert-gcc"
+    ],
+    "sha256": "096c2e6554ceeee79f2f7b5bd38f17cd531da357bb447f27172253277cef3317",
+    "outputs": [
+      {
+        "suite": "expert",
+        "checks": 4545072,
+        "validation_checks": 1451529,
+        "nan_payload_differences": 199746,
+        "digest": "da72c4d261e3678a",
+        "finite_and_nan_category_passed": true,
+        "strict_nan_payload_passed": false
+      },
+      {
+        "suite": "expert",
+        "checks": 4545072,
+        "validation_checks": 1451529,
+        "nan_payload_differences": 199746,
+        "digest": "da72c4d261e3678a",
+        "finite_and_nan_category_passed": true,
+        "strict_nan_payload_passed": false
+      }
+    ],
+    "strict_nan_payload_passed": false,
+    "same_output_repeats": true
+  },
+  {
+    "compiler": "/opt/intel/oneapi/compiler/latest/bin/icpx",
+    "command": [
+      "nice",
+      "-n",
+      "19",
+      "ionice",
+      "-c",
+      "3",
+      "/opt/intel/oneapi/compiler/latest/bin/icpx",
+      "-O2",
+      "-std=c++20",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-DHOST_ONLY",
+      "-fdenormal-fp-math=ieee",
+      "experiments/own-xpu-runtime/stage2/packet28-dense/expert_cpu.cpp",
+      "-o",
+      "experiments/own-xpu-runtime/stage2/packet28-dense/build/expert-icpx"
+    ],
+    "sha256": "2f694bd63e46fd706fc96c0877c61d08bcffd71a62ef57d489c46bc7cce164a1",
+    "outputs": [
+      {
+        "suite": "expert",
+        "checks": 4545072,
+        "validation_checks": 1451529,
+        "nan_payload_differences": 0,
+        "digest": "da72c4d261e3678a",
+        "finite_and_nan_category_passed": true,
+        "strict_nan_payload_passed": true
+      },
+      {
+        "suite": "expert",
+        "checks": 4545072,
+        "validation_checks": 1451529,
+        "nan_payload_differences": 0,
+        "digest": "da72c4d261e3678a",
+        "finite_and_nan_category_passed": true,
+        "strict_nan_payload_passed": true
+      }
+    ],
+    "strict_nan_payload_passed": true,
+    "same_output_repeats": true
+  }
+]

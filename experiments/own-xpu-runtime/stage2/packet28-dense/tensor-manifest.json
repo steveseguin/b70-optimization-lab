@@ -1,0 +1,480 @@
+{
+  "schema": "packet28.tensor-manifest.v1",
+  "source": "../packet26-specialised/build/input/plan.tsv",
+  "source_sha256": "9926b7a266ba2774f02fe00583257ab2aaff96ee0313d350d3ba54602ae2a656",
+  "note": "Tensor storage census includes non-GEMV norms/convolution. registry.hpp selects actual GEMV operations. Dimensions are GGUF order K,rows[,experts].",
+  "tensors": [
+    {
+      "group": "gdn",
+      "type": 0,
+      "dimensions": [
+        2560,
+        48
+      ],
+      "suffix": "ssm_alpha.weight",
+      "count": 36,
+      "example": "blk.0.ssm_alpha.weight"
+    },
+    {
+      "group": "gdn",
+      "type": 0,
+      "dimensions": [
+        2560,
+        48
+      ],
+      "suffix": "ssm_beta.weight",
+      "count": 36,
+      "example": "blk.0.ssm_beta.weight"
+    },
+    {
+      "group": "gdn",
+      "type": 0,
+      "dimensions": [
+        4,
+        10240
+      ],
+      "suffix": "ssm_conv1d.weight",
+      "count": 36,
+      "example": "blk.0.ssm_conv1d.weight"
+    },
+    {
+      "group": "gdn",
+      "type": 0,
+      "dimensions": [
+        48
+      ],
+      "suffix": "ssm_a",
+      "count": 36,
+      "example": "blk.0.ssm_a"
+    },
+    {
+      "group": "gdn",
+      "type": 0,
+      "dimensions": [
+        48
+      ],
+      "suffix": "ssm_dt.bias",
+      "count": 36,
+      "example": "blk.0.ssm_dt.bias"
+    },
+    {
+      "group": "gdn",
+      "type": 14,
+      "dimensions": [
+        2560,
+        10240
+      ],
+      "suffix": "attn_qkv.weight",
+      "count": 35,
+      "example": "blk.0.attn_qkv.weight"
+    },
+    {
+      "group": "gdn",
+      "type": 14,
+      "dimensions": [
+        2560,
+        6144
+      ],
+      "suffix": "attn_gate.weight",
+      "count": 35,
+      "example": "blk.0.attn_gate.weight"
+    },
+    {
+      "group": "gdn",
+      "type": 14,
+      "dimensions": [
+        6144,
+        2560
+      ],
+      "suffix": "ssm_out.weight",
+      "count": 36,
+      "example": "blk.0.ssm_out.weight"
+    },
+    {
+      "group": "gdn",
+      "type": 8,
+      "dimensions": [
+        2560,
+        10240
+      ],
+      "suffix": "attn_qkv.weight",
+      "count": 1,
+      "example": "blk.2.attn_qkv.weight"
+    },
+    {
+      "group": "gdn",
+      "type": 8,
+      "dimensions": [
+        2560,
+        6144
+      ],
+      "suffix": "attn_gate.weight",
+      "count": 1,
+      "example": "blk.2.attn_gate.weight"
+    },
+    {
+      "group": "hyperconnections",
+      "type": 0,
+      "dimensions": [
+        10240,
+        4
+      ],
+      "suffix": "hc_attn_inject.weight",
+      "count": 48,
+      "example": "blk.0.hc_attn_inject.weight"
+    },
+    {
+      "group": "hyperconnections",
+      "type": 0,
+      "dimensions": [
+        10240,
+        4
+      ],
+      "suffix": "hc_ffn_inject.weight",
+      "count": 48,
+      "example": "blk.0.hc_ffn_inject.weight"
+    },
+    {
+      "group": "hyperconnections",
+      "type": 8,
+      "dimensions": [
+        10240,
+        320
+      ],
+      "suffix": "hc_attn_down.weight",
+      "count": 48,
+      "example": "blk.0.hc_attn_down.weight"
+    },
+    {
+      "group": "hyperconnections",
+      "type": 8,
+      "dimensions": [
+        10240,
+        320
+      ],
+      "suffix": "hc_ffn_down.weight",
+      "count": 48,
+      "example": "blk.0.hc_ffn_down.weight"
+    },
+    {
+      "group": "hyperconnections",
+      "type": 8,
+      "dimensions": [
+        10240,
+        320
+      ],
+      "suffix": "output_hc_down.weight",
+      "count": 1,
+      "example": "output_hc_down.weight"
+    },
+    {
+      "group": "hyperconnections",
+      "type": 8,
+      "dimensions": [
+        320,
+        10240
+      ],
+      "suffix": "hc_attn_up.weight",
+      "count": 48,
+      "example": "blk.0.hc_attn_up.weight"
+    },
+    {
+      "group": "hyperconnections",
+      "type": 8,
+      "dimensions": [
+        320,
+        10240
+      ],
+      "suffix": "hc_ffn_up.weight",
+      "count": 48,
+      "example": "blk.0.hc_ffn_up.weight"
+    },
+    {
+      "group": "hyperconnections",
+      "type": 8,
+      "dimensions": [
+        320,
+        10240
+      ],
+      "suffix": "output_hc_up.weight",
+      "count": 1,
+      "example": "output_hc_up.weight"
+    },
+    {
+      "group": "ple_projection",
+      "type": 0,
+      "dimensions": [
+        10240
+      ],
+      "suffix": "ple_norm_conv.weight",
+      "count": 1,
+      "example": "blk.1.ple_norm_conv.weight"
+    },
+    {
+      "group": "ple_projection",
+      "type": 0,
+      "dimensions": [
+        10240
+      ],
+      "suffix": "ple_norm_key.weight",
+      "count": 1,
+      "example": "blk.1.ple_norm_key.weight"
+    },
+    {
+      "group": "ple_projection",
+      "type": 0,
+      "dimensions": [
+        10240
+      ],
+      "suffix": "ple_norm_query.weight",
+      "count": 1,
+      "example": "blk.1.ple_norm_query.weight"
+    },
+    {
+      "group": "ple_projection",
+      "type": 0,
+      "dimensions": [
+        4,
+        10240
+      ],
+      "suffix": "ple_conv1d.weight",
+      "count": 1,
+      "example": "blk.1.ple_conv1d.weight"
+    },
+    {
+      "group": "ple_projection",
+      "type": 8,
+      "dimensions": [
+        2560,
+        10240
+      ],
+      "suffix": "ple_key.weight",
+      "count": 1,
+      "example": "blk.1.ple_key.weight"
+    },
+    {
+      "group": "ple_projection",
+      "type": 8,
+      "dimensions": [
+        2560,
+        2560
+      ],
+      "suffix": "ple_value.weight",
+      "count": 1,
+      "example": "blk.1.ple_value.weight"
+    },
+    {
+      "group": "qsa_attention",
+      "type": 14,
+      "dimensions": [
+        2560,
+        12288
+      ],
+      "suffix": "attn_q.weight",
+      "count": 12,
+      "example": "blk.11.attn_q.weight"
+    },
+    {
+      "group": "qsa_attention",
+      "type": 14,
+      "dimensions": [
+        2560,
+        512
+      ],
+      "suffix": "attn_k.weight",
+      "count": 12,
+      "example": "blk.11.attn_k.weight"
+    },
+    {
+      "group": "qsa_attention",
+      "type": 14,
+      "dimensions": [
+        2560,
+        512
+      ],
+      "suffix": "attn_v.weight",
+      "count": 12,
+      "example": "blk.11.attn_v.weight"
+    },
+    {
+      "group": "qsa_attention",
+      "type": 14,
+      "dimensions": [
+        6144,
+        2560
+      ],
+      "suffix": "attn_output.weight",
+      "count": 12,
+      "example": "blk.11.attn_output.weight"
+    },
+    {
+      "group": "qsa_indexer",
+      "type": 30,
+      "dimensions": [
+        2560,
+        128
+      ],
+      "suffix": "indexer.k_proj.weight",
+      "count": 12,
+      "example": "blk.11.indexer.k_proj.weight"
+    },
+    {
+      "group": "qsa_indexer",
+      "type": 30,
+      "dimensions": [
+        2560,
+        512
+      ],
+      "suffix": "indexer.q_proj.weight",
+      "count": 12,
+      "example": "blk.11.indexer.q_proj.weight"
+    },
+    {
+      "group": "routed_experts",
+      "type": 20,
+      "dimensions": [
+        640,
+        2560,
+        512
+      ],
+      "suffix": "ffn_down_exps.weight",
+      "count": 48,
+      "example": "blk.0.ffn_down_exps.weight"
+    },
+    {
+      "group": "routed_experts",
+      "type": 21,
+      "dimensions": [
+        2560,
+        640,
+        512
+      ],
+      "suffix": "ffn_gate_exps.weight",
+      "count": 1,
+      "example": "blk.2.ffn_gate_exps.weight"
+    },
+    {
+      "group": "routed_experts",
+      "type": 21,
+      "dimensions": [
+        2560,
+        640,
+        512
+      ],
+      "suffix": "ffn_up_exps.weight",
+      "count": 1,
+      "example": "blk.2.ffn_up_exps.weight"
+    },
+    {
+      "group": "routed_experts",
+      "type": 22,
+      "dimensions": [
+        2560,
+        640,
+        512
+      ],
+      "suffix": "ffn_gate_exps.weight",
+      "count": 47,
+      "example": "blk.0.ffn_gate_exps.weight"
+    },
+    {
+      "group": "routed_experts",
+      "type": 22,
+      "dimensions": [
+        2560,
+        640,
+        512
+      ],
+      "suffix": "ffn_up_exps.weight",
+      "count": 47,
+      "example": "blk.0.ffn_up_exps.weight"
+    },
+    {
+      "group": "routers",
+      "type": 0,
+      "dimensions": [
+        2560
+      ],
+      "suffix": "ffn_gate_inp_shexp.weight",
+      "count": 48,
+      "example": "blk.0.ffn_gate_inp_shexp.weight"
+    },
+    {
+      "group": "routers",
+      "type": 0,
+      "dimensions": [
+        2560,
+        512
+      ],
+      "suffix": "ffn_gate_inp.weight",
+      "count": 48,
+      "example": "blk.0.ffn_gate_inp.weight"
+    },
+    {
+      "group": "shared_experts",
+      "type": 14,
+      "dimensions": [
+        2560,
+        640
+      ],
+      "suffix": "ffn_gate_shexp.weight",
+      "count": 47,
+      "example": "blk.0.ffn_gate_shexp.weight"
+    },
+    {
+      "group": "shared_experts",
+      "type": 14,
+      "dimensions": [
+        2560,
+        640
+      ],
+      "suffix": "ffn_up_shexp.weight",
+      "count": 47,
+      "example": "blk.0.ffn_up_shexp.weight"
+    },
+    {
+      "group": "shared_experts",
+      "type": 8,
+      "dimensions": [
+        2560,
+        640
+      ],
+      "suffix": "ffn_gate_shexp.weight",
+      "count": 1,
+      "example": "blk.2.ffn_gate_shexp.weight"
+    },
+    {
+      "group": "shared_experts",
+      "type": 8,
+      "dimensions": [
+        2560,
+        640
+      ],
+      "suffix": "ffn_up_shexp.weight",
+      "count": 1,
+      "example": "blk.2.ffn_up_shexp.weight"
+    },
+    {
+      "group": "shared_experts",
+      "type": 8,
+      "dimensions": [
+        640,
+        2560
+      ],
+      "suffix": "ffn_down_shexp.weight",
+      "count": 48,
+      "example": "blk.0.ffn_down_shexp.weight"
+    },
+    {
+      "group": "target_head",
+      "type": 14,
+      "dimensions": [
+        2560,
+        248320
+      ],
+      "suffix": "output.weight",
+      "count": 1,
+      "example": "output.weight"
+    }
+  ]
+}
