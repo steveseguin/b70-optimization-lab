@@ -217,3 +217,29 @@ requires preserving allocation class and resident footprint while timing.
 The exact phrase “Triton loaded offsets need alignment” was not found in the
 searched notes; this implementation instead asserts and handles alignment
 explicitly at each load boundary.
+
+## Device results — card 3, 2026-10-11 03:5x UTC (boot 13858eef)
+
+Exactness: all device cases PASS (baseline 108, kopt_sg16 54, kopt_sg32 54,
+kopt_fused_sg16 56), zero kernel fault lines. Timing (median of 20 warm
+iterations, SYCL events; receipts in [receipts-card3-20261011/](receipts-card3-20261011/)):
+
+| Weight (layer 0) | MB | baseline ms | kopt_sg16 ms | kopt_sg32 ms | sg32 GB/s | sg32 / 507 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| attn_qkv | 21.50 | 0.348 | 0.371 | 0.245 | 88 | 0.17 |
+| attn_gate | 12.90 | 0.216 | 0.250 | 0.164 | 79 | 0.15 |
+| ssm_out | 12.90 | 0.254 | 0.359 | 0.213 | 61 | 0.12 |
+| ffn_gate_exps (10 experts) | 5.25 | 0.253 | 0.143 | 0.104 | 51 | 0.10 |
+| ffn_up_exps (10 experts) | 5.25 | 0.255 | 0.143 | 0.104 | 50 | 0.10 |
+| ffn_down_exps (10 experts) | 9.22 | 0.202 | 0.156 | 0.135 | 68 | 0.13 |
+| hc_attn_down | 3.48 | 0.120 | 0.156 | 0.087 | 40 | 0.08 |
+| hc_attn_inject | 0.16 | 0.087 | 0.110 | 0.061 | 2.7 | 0.005 |
+| ssm_alpha | 0.49 | 0.024 | 0.030 | 0.017 | 29 | 0.06 |
+
+Reading: subgroup-32 helps everywhere (1.2x on the big projections, 2.4x on
+the routed-expert GEMVs), subgroup-16 is slower than the baseline on the big
+rows; the whole class is still 6-10x off the memory roofline, and the small
+matrices sit on a ~17 us launch floor. Round 2 targets: attainable-bandwidth
+ceiling kernel, split-K with deterministic two-level reduction for the big
+rows, wider per-work-item loads, occupancy check against the device
+properties in the receipt, and the fused small-matrix launch's measured cost.
