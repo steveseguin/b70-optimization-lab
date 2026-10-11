@@ -1,5 +1,15 @@
 # MoE boundary proof with the production router-padding fix
 
+**October 11 v5 proof completed:** the fixed experimental TP4 line loads and
+profiles cleanly, 15,895 receipts/rank, zero failed checks/new kernel faults,
+and container exit 0. [Fourth-incident closure and proof limits](../../../../notes/2026-10-11-fourth-incident-closed.md).
+Calibration still refuses qualification for unknown VRAM reserves; this was
+one zero-generation profile with warmup/capture bypassed. The commands below
+are the preserved load-only proof plan, not the next generation screen.
+That next step needs a separately sealed bounded boundary-on variant.
+Earlier “pending” statements below describe the pre-proof state.
+
+
 **October 11, v4 result:** all four raw `[64,10]` router tensors contained
 signed int32 `-1` in all 640 slots. The strict boundary stopped before native
 alignment; rank 3 won the STOP-file race. The source trace identifies V2 dummy

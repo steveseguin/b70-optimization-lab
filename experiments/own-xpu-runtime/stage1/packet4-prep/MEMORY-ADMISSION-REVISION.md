@@ -234,3 +234,85 @@ placement, driver/allocation settings, completed phase/peak evidence, fixture
 allowance, a reviewed need-plus-margin calculation and a new document-bound
 owner receipt. This append changes the document hash; an older approval hash
 must not be reused. The fourth-incident window remains halted for the owner.
+
+
+## Measured on the fixed line, 2026-10-11 05:3x UTC
+
+**This is measured loading/startup need for the fixed experimental mmap-adapter
+line, not the certified A367 recipe's need.** The requested 05:3x label names
+this session; the actual container window is **05:28:52.550–05:47:15.596 UTC**,
+and the maximum occurs around **05:46:45.233 UTC**, not in the 05:30s.
+[Incident closure and scope](../../../../notes/2026-10-11-fourth-incident-closed.md)
+and [extracted counters, rank inventories and source hashes](../../../qwen38-flash-next-fp8-b70/reopen-20261008/evidence/fourth-incident-closed-20261011/summary.json)
+refer to the read-only proof directory
+`/mnt/fast-ai/bench-results/flashnext-moe-boundary-window-20261011-router-padding-v5`.
+
+This is one TP4/EP4, MTP1, official FP8, full 16-bit-KV load/profile with the
+production router-padding fix and strict boundary ON. The diagnostic bypasses
+warmup/capture and forbids subsequent forwards. Exact large pinned allocation,
+attempt-6 placement, per-process NEO settings and the 96 GB loading guard
+remain the experimental settings; shared official weights do not turn this
+into A367. No generation request was made.
+
+| Measured host counter | Bytes | Decimal GB |
+| --- | ---: | ---: |
+| MemTotal | 124,179,144,704 | 124.179144704 |
+| MemAvailable before hashing | 118,679,756,800 | 118.679756800 |
+| MemAvailable after hashing / baseline before load | **119,170,121,728** | **119.170121728** |
+| Accounted pressure after hashing | 5,009,022,976 | 5.009022976 |
+| Maximum sampled loading pressure | 77,042,282,496 | 77.042282496 |
+| Maximum sampled pressure, including ready plateau | **77,079,252,992** | **77.079252992** |
+| Minimum sampled MemAvailable, in ready plateau | **47,099,891,712** | **47.099891712** |
+| Availability decline from post-hash baseline to trough | **72,070,230,016** | **72.070230016** |
+| Attempt 8 peak (incomplete startup) | 75,447,590,912 | 75.447590912 |
+| Fixed-run peak minus attempt 8 peak | +1,631,662,080 | +1.631662080 |
+
+Accounted pressure is whole-host **MemTotal minus MemAvailable**, including
+baseline use, not RSS and not memory attributable solely to the model. The
+peak is one-based sample **2,148**, monotonic **14752.050393240**, in `plateau`.
+Its approximate UTC is derived from paired wall/monotonic boundary clocks.
+There are 2,141 loading samples, 43 plateau samples spanning 20.685 seconds,
+and 29 shutdown samples, **2,213 total**. The whole sample file SHA256 is
+`d0c978217b5e3aa5cf24bd92673e4d1e618213d8df9b7fa565e11538c6378873`,
+matching calibration. These are observed sampled maxima, not an upper bound
+between samples or during future generation.
+
+| Rank, both load_complete snapshots | Pinned retained tensor bytes | Pageable metadata bytes |
+| --- | ---: | ---: |
+| 0 | 14,171,275,264 | 434,086,598 |
+| 1 | 14,171,275,264 | 434,086,598 |
+| 2 | 14,171,275,264 | 434,086,598 |
+| 3 | 14,171,275,264 | 434,086,598 |
+| Four-rank total (do not double-count snapshots) | **56,685,101,056** | **1,736,346,392** |
+
+These match attempt 8's inventories. Pins count unique retained storage;
+`allocator_bytes_measured=false`. Pageable bytes are instantiated mmap/cache
+metadata accounting, not separately sampled RSS. They are not allocator or
+driver high-water marks, and must not be added to overlapping whole-host
+pressure, cgroup or RSS counters. Two snapshots per rank describe successive
+target/MTP loading, not independent successful starts.
+
+The fixed line reaches readiness and finishes its profiling forward, then
+stops with `controller completion`, SIGINT command rc 0 and container exit 0.
+All 63,580 boundary receipts contain zero failed checks; there are zero new
+kernel faults through the completed 305-second quiet gap. Calibration records
+`ready=true`, `clean_exit=true`, no watchdog/failure, and zero generation.
+However **`verdict.passed=false`** because all four per-rank VRAM reserves are
+unknown; the controller unit exits 2 with that explicit refusal. Clean load
+and shutdown do not remove this admission gap.
+
+The 77.079 GB peak is **1.632 GB higher** than attempt 8's 75.448 GB. That
+compares one completed instrumented startup with one failed startup on another
+boot, not a controlled memory regression or saving. Padded rows now compute
+ordinary routes and the boundary adds synchronization/receipts. This run
+improves the experimental line's own loading budget evidence; it establishes
+neither full serving demand nor A367 plus packet-4 fixture demand.
+
+The declared **133,542,784 KiB** proposal, **120,000,000 KiB** default, memory
+exclusions and guards are unchanged. Next is a separately bounded generation
+screen under the boundary, then matched certified-recipe calibration when the
+owner approves its floor or a scoped calibration-only exception. Any revised
+need-plus-margin/fixture calculation still needs matched evidence and a new
+explicit owner receipt bound to this document; this append changes its hash.
+The fourth software incident is closed, but closure is not host-wide admission
+or authorization to reuse an old receipt.

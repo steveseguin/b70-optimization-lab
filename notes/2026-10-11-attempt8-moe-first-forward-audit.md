@@ -1,17 +1,19 @@
 # Attempt 8: first MoE forward, memory ownership and repair plan
 
-**October 11, boundary-window verdict update:** all four raw router tensors
-were 640 signed `-1` padding IDs; native alignment/remapping had not run.
-The V2 dummy batch intentionally marks every row as padding, and the pinned
-native aligner lacks the negative-ID guard already present in the older lab
-runtime. Hypothesis 1 now has an observed input and a specific unsafe-write
-mechanism; rank-specific/global-local/table versions of hypothesis 4 are not
-supported by this refusal. The production router compatibility fix is applied
-and passes 143 CPU tests; its next native proof retains the strict boundary.
-[Evidence, exact source lines, identity argument and commands](2026-10-11-moe-boundary-caught-router-ids.md).
-The original audit below is preserved as the pre-boundary assessment; its
-“unknown” verdict and “no patch applied” statements describe that earlier state.
+**October 11, final verdict: fourth incident closed as a software defect.**
+The all-`-1` padding IDs observed before native alignment identify the unsafe
+producer/consumer contract. After the production router-padding fix, one TP4
+load and profiling forward completes under the unchanged strict boundary:
+15,895 receipts/rank, zero failed checks, zero new kernel faults and clean exit.
+[Closure, proof receipts, memory and remaining questions](2026-10-11-fourth-incident-closed.md).
+This supports hypothesis 1's specific negative-ID invalid-write mechanism;
+the rank/global-local/table variants of hypothesis 4 are not supported by the
+catch. The historical faulting instruction was not captured. No generation,
+full-model parity, fresh-process repeat or certified A367 qualification follows.
+Calibration's overall verdict remains false for unknown per-rank VRAM reserves.
 
+The original audit below is preserved as the pre-boundary assessment; its
+“unknown”, “no patch applied” and halt statements describe that earlier state.
 
 **The cause is still unknown. The first investigation should isolate a bad
 device write in the production routing/alignment/workspace path, with native

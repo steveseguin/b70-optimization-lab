@@ -1,15 +1,20 @@
 # Qwen3.8 Flash-Next FP8 B70 handoff
 
-**October 11 reopening handoff:** the fourth boundary window caught signed
-`-1` in all 640 raw router slots on every rank, before native alignment.
-The [source trace and fix](../../notes/2026-10-11-moe-boundary-caught-router-ids.md)
-identify V2 dummy padding combined with the official wheel's missing
-negative-ID alignment guard. The repository production routers now route
-padding normally in Screen 1b XPU; 143 CPU tests pass and both packages are
-sealed. Use the [fresh boundary-on stage/run commands](../../experiments/qwen38-flash-next-fp8-b70/reopen-20261008/overlay-moe-boundary/README.md#future-authorized-window-command--not-run-by-this-task)
-for the next admitted coordinator window. Native proof/output gates are open;
-this CPU task launched nothing and does not replace the certified record.
+**October 11 reopening handoff: fourth incident closed.** The production
+router-padding fix lets the experimental attempt-8 mmap line load and finish
+its TP4 profiling forward under the strict boundary: 15,895 receipts/rank,
+zero violations, zero new kernel faults, clean container exit. The
+[closure and open questions](../../notes/2026-10-11-fourth-incident-closed.md)
+retain the timeline, proof hashes and **77.079 GB** host peak. This was one
+zero-generation run with no warmup/capture; unknown per-rank VRAM reserves
+still make calibration's overall verdict false. It is not certified A367
+memory evidence, output parity, repeatability or a speed qualification.
 
+Next is a separately bounded generation screen under the boundary, then the
+certified-recipe calibration when the owner approves its floor. The v5
+load-only hook rejects further forwards and must not be reused as a generation
+plan. Keep current admission and quality gates; the certified record below
+is unchanged. No GPU or server ran in this CPU receipt review.
 
 ## Current handoff: campaign closed, 2026-09-13
 

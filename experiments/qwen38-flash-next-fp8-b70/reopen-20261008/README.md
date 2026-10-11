@@ -1,15 +1,21 @@
 # Flash-Next Screen 1b — native FP8 mmap adapter
 
-**October 11, current CPU follow-up:** the fourth MoE boundary window stopped
-before alignment because every rank's raw router tensor contained 640 signed
-`-1` padding IDs. The V2 padding mask reaches a native aligner without a
-negative-ID guard. [Evidence and root cause](../../../notes/2026-10-11-moe-boundary-caught-router-ids.md).
-The [production router fix](overlay-fix-router-padding/README.md) is applied
-and the boundary package is resealed; 143 CPU tests pass. The
-[next stage/run commands](overlay-moe-boundary/README.md#future-authorized-window-command--not-run-by-this-task)
-keep the strict boundary ON for a separately admitted native proof. Native
-startup and output qualification remain pending; no GPU ran in this repair.
-[Do-not-repeat entry](DO-NOT-REPEAT.md) and [diagnosis closeout](overlay-fix-router-padding/root-cause-closeout.md).
+**October 11: fourth incident closed as a router-padding software defect.**
+The fixed attempt-8 mmap-adapter line loads and profiles cleanly under the
+strict boundary: 15,895 receipts/rank, zero failed checks, zero new kernel
+faults and container exit 0. [Closure, proof receipts and remaining questions](../../../notes/2026-10-11-fourth-incident-closed.md).
+One run, zero generation requests, warmup/capture bypassed; calibration still
+refuses qualification because per-rank VRAM reserves are unknown. Host pressure
+peaks at 77.079 GB, with 47.100 GB available. This is experimental-line loading
+evidence, not certified A367 memory or output evidence.
+
+Next: a separately bounded generation screen with the boundary retained, then
+certified-recipe calibration when the owner approves its floor. The v5 hook
+forbids further forwards, so it is not the generation command. Keep its stage
+and receipts intact; current coordinator admission is still required.
+[Production fix](overlay-fix-router-padding/README.md),
+[boundary history](overlay-moe-boundary/README.md),
+[do-not-repeat list](DO-NOT-REPEAT.md). No native work ran in this review.
 
 ## Historical attempt-8 assessment
 

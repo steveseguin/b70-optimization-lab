@@ -1,5 +1,14 @@
 # Qwen3.8 Flash-Next FP8 on four Arc Pro B70s
 
+**October 11 lane status:** the fourth incident is
+[closed as a router-padding software defect](../../notes/2026-10-11-fourth-incident-closed.md).
+The fixed experimental attempt-8 mmap line loads and profiles cleanly under
+the boundary, with no violations or new kernel faults and clean exit.
+One zero-generation run does not qualify output or speed; its 77.079 GB host
+peak is not A367 memory evidence, and per-card VRAM reserves remain unknown.
+Next: bounded generation under the boundary, then certified-recipe calibration
+when the owner approves its floor. The certified result below is unchanged.
+
 ## September 13 campaign closeout (A340-A394)
 
 **Current qualified headline: 46.854250 tok/s**, fixed cold 12-prompt realistic
