@@ -75,6 +75,7 @@ def timings(text):
         assert int(count) > 0 and float(ms) > 0
         result[name] = {'milliseconds': float(ms), 'count': int(count), 'count_unit': unit,
                         'reported_tokens_per_second': float(rate)}
+    return result
 
 
 def main():

@@ -27,6 +27,14 @@ class ScreenTests(unittest.TestCase):
             with self.subTest(text=text), self.assertRaises(AssertionError):
                 screen.timings(text)
 
+    def test_immediate_end_of_text_records_zero_generation(self):
+        text = ('I common_perf_print: prompt eval time =    1519.66 ms /    90 tokens (   16.89 ms per token,    59.22 tokens per second)\n'
+                'I common_perf_print:        eval time =       0.00 ms /     1 runs   (    0.00 ms per token,      inf tokens per second)\n')
+        r = screen.timings(text)
+        self.assertEqual(r['prefill']['count'], 90)
+        self.assertIsNone(r['decode'])
+        self.assertEqual(r['generated_tokens'], 0)
+
     def test_signals_only_set_supervisor_stop(self):
         with patch.object(screen.subprocess, 'Popen', side_effect=AssertionError('native launch')):
             screen.stop(None, None)
