@@ -1,0 +1,51 @@
+{
+  "schema": "packet17.host-hashes.v2",
+  "complete": true,
+  "device_executed": false,
+  "inputs_per_function": 4294967296,
+  "chunk": 262144,
+  "rows": 32768,
+  "threads": 1,
+  "source_snapshot": "evidence/host-hashes-census.cpp.snapshot",
+  "source_sha256": "6558bb9173219c7ae66eba090d5878a731fe026e931b77cc3b0a69d4a4d3d2a8",
+  "detmath_sha256": "fbc845e5327579447fed4a6fb3d2638b6b5a389330ea712c45f9d8f2bf043cfc",
+  "binary_sha256": "1ec1fbce607addcb0a9bb516b0d5a6254844b81e75d0950b6e567375b178bdc2",
+  "hashes_sha256": "4a028a4bc6597e2eb16547b4042f708302d7e3db2de61071ab527581e4fe2913",
+  "compressed_sha256": "d6530cc3e1d1321eeb66ad5a161afadcb1e4a41fe15870ada6342659cde1c8d6",
+  "sanity": {
+    "authority": "glibc sanity only; not true-value authority",
+    "threads": 1,
+    "inputs_per_function": 4294967296,
+    "functions": [
+      {
+        "function": "exp-v2",
+        "finite_differences": 170655,
+        "nan_encoding_differences": 16777213,
+        "special_differences": 0,
+        "max_glibc_ulp_distance": 1,
+        "worst_input_bits": 864026624,
+        "monotonic_failures": 0,
+        "seconds": 91.9816
+      },
+      {
+        "function": "log-v2",
+        "finite_differences": 416903,
+        "nan_encoding_differences": 2155872253,
+        "special_differences": 0,
+        "max_glibc_ulp_distance": 1,
+        "worst_input_bits": 9287,
+        "monotonic_failures": 0,
+        "seconds": 276.278
+      }
+    ],
+    "complete": true
+  },
+  "command": [
+    "build/gnu/census-host",
+    "host-hashes",
+    "32",
+    "262144",
+    "build/host-hashes.txt",
+    "1"
+  ]
+}

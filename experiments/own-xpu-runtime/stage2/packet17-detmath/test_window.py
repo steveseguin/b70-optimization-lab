@@ -1,0 +1,182 @@
+#!/usr/bin/env python3
+"""CPU-only protocol regressions. All child launches and journals are mocked."""
+import json
+from pathlib import Path
+import signal
+import subprocess
+import tempfile
+import unittest
+from unittest.mock import Mock, patch
+import device_window as w
+import summarize_census as census_summary
+
+
+class WindowTests(unittest.TestCase):
+    def setUp(self):
+        w.BUILD.mkdir(exist_ok=True)
+        self.temp = tempfile.TemporaryDirectory(prefix='window-test-', dir=w.BUILD)
+        self.root = Path(self.temp.name)
+        self.build = self.root / 'build'
+        self.build.mkdir()
+        self.latch = self.build / 'device-fault-latch.json'
+        self.output = self.build / 'fresh'
+        self.patches = [patch.object(w, 'ROOT', self.root), patch.object(w, 'BUILD', self.build),
+                        patch.object(w, 'LATCH', self.latch), patch.object(w.os, 'getpriority', return_value=19),
+                        patch.dict(w.os.environ, {'OMP_NUM_THREADS': '2'})]
+        for p in self.patches:
+            p.start()
+        self.source = self.root / 'source.txt'
+        self.source.write_text('original')
+        self.manifest = dict(compiled=True, device_executed=False, chunk=262144, native_bits=32,
+                             hashes={'source.txt': w.sha(self.source)}, host_hashes_complete=True,
+                             cpu_three_way_passed=True, fixture_trace_complete=True,
+                             census_binary='census-device', fixture_binary='fixture-device',
+                             fixture_trace='trace.bin', host_hashes='hashes.txt', fixtures='fixtures',
+                             cases=['case'], authority='iq3-p17-detmath-v2')
+        w.save(self.build / 'window-prepared.json', self.manifest)
+
+    def tearDown(self):
+        for p in reversed(self.patches):
+            p.stop()
+        self.temp.cleanup()
+
+    def test_missing_libraries_fail_before_latch_or_output(self):
+        missing = subprocess.CompletedProcess([], 0, 'libsycl.so => not found\n', '')
+        with patch.object(w.subprocess, 'run', return_value=missing) as run:
+            with self.assertRaisesRegex(ValueError, 'loader preflight'):
+                w.check('W-A', self.output, 3)
+        self.assertIn('ldd', run.call_args.args[0])
+        self.assertFalse(self.output.exists())
+        self.assertFalse(self.latch.exists())
+
+    def test_existing_output_rejected(self):
+        self.output.mkdir()
+        with self.assertRaisesRegex(ValueError, 'fresh output'):
+            w.check('W-A', self.output, 3)
+
+    def test_changed_source_rejected_before_loader(self):
+        self.source.write_text('changed')
+        with patch.object(w.subprocess, 'run') as run:
+            with self.assertRaisesRegex(ValueError, 'identity changed'):
+                w.check('W-A', self.output, 3)
+            run.assert_not_called()
+
+    def test_incomplete_host_hashes_rejected(self):
+        self.manifest['host_hashes_complete'] = False
+        w.save(self.build / 'window-prepared.json', self.manifest)
+        with self.assertRaisesRegex(ValueError, r'all 2\^32'):
+            w.check('W-B', self.output, 3)
+
+    def test_core_device_vs_host_is_mandatory(self):
+        path = self.build / 'fixture-owner'
+        path.mkdir()
+        receipt = dict(checks=2, packet4_device_checks=1, packet4_device_host_matches=0,
+                       authority='iq3-p17-detmath-v2', error='',
+                       teardown=dict(safe_to_exit=True, idle_marker_complete=True, live_bytes=0,
+                                     in_flight=0, exit_code=0, status='complete', error='',
+                                     sequence=['context-released']))
+        w.save(path / 'device.json', receipt)
+        (path / 'case.core').write_bytes(b'core')
+        with self.assertRaisesRegex(ValueError, 'host-core'):
+            w.fixture_gate(path, ['case'], 'iq3-p17-detmath-v2')
+        receipt['packet4_device_host_matches'] = 1
+        w.save(path / 'device.json', receipt)
+        self.assertEqual(w.fixture_gate(path, ['case'], 'iq3-p17-detmath-v2'), {'case': w.sha(path / 'case.core')})
+
+    def test_second_fresh_owner_must_match(self):
+        with patch.object(w, 'check', return_value=(self.manifest, self.output)), \
+                patch.object(w, 'journal', return_value=('', 'cursor')), \
+                patch.object(w, 'watch', return_value={'returncode': 0}), \
+                patch.object(w, 'final_jsonl', return_value={'complete': True}), \
+                patch.object(w, 'sha', return_value='digest'), \
+                patch.object(w, 'fixture_gate', side_effect=[{'case': 'one'}, {'case': 'two'}]):
+            receipt = w.execute('W-B', self.output, 3, 60)
+        self.assertFalse(receipt['passed'])
+        self.assertIn('fresh owners differ', receipt['error'])
+        self.assertTrue(self.latch.exists())
+
+    def test_deadline_sends_one_sigterm_then_returns_live_owner(self):
+        child = Mock(pid=777)
+        child.poll.return_value = None
+        tick = iter(range(0, 1000, 25))
+        with patch.object(w, 'journal', return_value=('', 'cursor')), \
+                patch.object(w.subprocess, 'Popen', return_value=child), \
+                patch.object(w.time, 'monotonic', side_effect=lambda: next(tick)), \
+                patch.object(w.time, 'sleep'):
+            with self.assertRaisesRegex(RuntimeError, 'no retry'):
+                w.watch(['never-executed'], self.output, 1)
+        child.send_signal.assert_called_once_with(signal.SIGTERM)
+        child.kill.assert_not_called()
+        child.terminate.assert_not_called()
+        receipt = json.loads((self.output / 'watch.json').read_text())
+        self.assertTrue(receipt['child_alive'])
+        self.assertEqual(receipt['pid'], 777)
+        self.assertTrue(self.latch.exists())
+
+    def test_watcher_preflight_does_not_claim_execution(self):
+        with patch.object(w, 'check', return_value=(self.manifest, self.output)), \
+                patch.object(w, 'journal', return_value=('', 'cursor')), \
+                patch.object(w, 'watch', side_effect=RuntimeError('watch journal preflight failed')):
+            receipt = w.execute('W-A', self.output, 3, 60)
+        self.assertFalse(receipt['device_executed'])
+
+    def test_launch_callback_only_after_popen(self):
+        child = Mock(pid=778)
+        child.poll.return_value = 0
+        callback = Mock()
+        with patch.object(w, 'journal', return_value=('', 'cursor')), \
+                patch.object(w.subprocess, 'Popen', return_value=child), \
+                patch.object(w.time, 'sleep'):
+            w.watch(['never-executed'], self.output, 60, on_started=callback)
+        callback.assert_called_once_with(778)
+
+    def census_rows(self, differences=None, both_nan=None, fixture_difference=None):
+        differences, both_nan = differences or {}, both_nan or {}
+        rows = []
+        def add(kind, name, n, diff=0, both=0):
+            rows.append(dict(kind=kind, function=name, start=0, count=n, different=diff,
+                             both_nan_different=both, seconds=.001,
+                             ulp_histogram=[n-diff, diff] + [0] * 32))
+        for name in census_summary.UNARY:
+            rows.append(dict(kind='coverage-selection', function=name, selected_bits=32))
+            add('native-exhaustive', name, 1 << 32, differences.get(name, 0), both_nan.get(name, 0))
+        for name in ('division', 'mul-add', 'fma', 'separate'):
+            add('triples', name, 1 << 26)
+        add('rope-arguments', 'pow-sin-cos-rope', 3 * 32 * 151)
+        for name in ('sqrtf',) + census_summary.CANDIDATES:
+            add('actual-fixture-inputs', name, 1, int(fixture_difference == name))
+        rows.append(dict(complete=True, fixture_calls=4))
+        path = self.build / 'mock-census.jsonl'
+        path.write_text(''.join(json.dumps(row) + '\n' for row in rows))
+        return path
+
+    def test_summary_both_nan_payloads_exempt(self):
+        path = self.census_rows({'sqrtf': 1, 'rsqrt-barrier': 2}, {'sqrtf': 1, 'rsqrt-barrier': 2})
+        result = census_summary.summarize(path)
+        self.assertEqual(result['selected_spelling'], 'rsqrt-barrier')
+        self.assertTrue(result['reciprocal_sqrt_candidates']['rsqrt-barrier']['exact_on_tested_inputs'])
+
+    def test_summary_one_nan_mismatch_fails_candidate(self):
+        path = self.census_rows({'rsqrt-barrier': 1})
+        result = census_summary.summarize(path)
+        self.assertFalse(result['reciprocal_sqrt_candidates']['rsqrt-barrier']['exact_on_tested_inputs'])
+        self.assertEqual(result['selected_spelling'], 'rsqrt-plain')
+
+    def test_summary_sqrt_mismatch_blocks_every_candidate(self):
+        result = census_summary.summarize(self.census_rows({'sqrtf': 1}))
+        self.assertIsNone(result['selected_spelling'])
+        self.assertTrue(all(not c['exact_on_tested_inputs'] for c in result['reciprocal_sqrt_candidates'].values()))
+
+    def test_summary_fixture_mismatch_also_blocks_candidate(self):
+        result = census_summary.summarize(self.census_rows(fixture_difference='rsqrt-barrier'))
+        self.assertFalse(result['reciprocal_sqrt_candidates']['rsqrt-barrier']['exact_on_tested_inputs'])
+
+    def test_summary_incomplete_file_rejected(self):
+        path = self.census_rows()
+        path.write_text('\n'.join(path.read_text().splitlines()[:-1]) + '\n')
+        with self.assertRaisesRegex(ValueError, 'did not finish'):
+            census_summary.summarize(path)
+
+
+if __name__ == '__main__':
+    unittest.main()

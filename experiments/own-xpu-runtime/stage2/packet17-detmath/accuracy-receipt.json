@@ -1,0 +1,22 @@
+{
+  "files": {
+    "accuracy.cpp": "bc639dc05759dfec1ffe46d1f414af5fcb0123a7a55a3bbb7ad9e397b823d21a",
+    "detmath.hpp": "fbc845e5327579447fed4a6fb3d2638b6b5a389330ea712c45f9d8f2bf043cfc",
+    "build/accuracy-host": "efcbe2376ea71b7033e82324de81cc82a5f0d6d3fa5db7a917e31c6dcf0722db"
+  },
+  "compiler_flags": "g++ -O2 -mfma -fno-fast-math -ffp-contract=off -std=c++20",
+  "cpu_threads": 1,
+  "stratified_inputs": 268435456,
+  "device_executed": false,
+  "compiler_version": "GNU C++ 13.3.0",
+  "long_double_significand_bits": 64,
+  "libc": "glibc 2.39",
+  "resource_usage": "\tCommand being timed: \"experiments/own-xpu-runtime/stage2/packet17-detmath/build/accuracy-host 28\"\n\tUser time (seconds): 103.42\n\tSystem time (seconds): 0.00\n\tPercent of CPU this job got: 99%\n\tElapsed (wall clock) time (h:mm:ss or m:ss): 1:43.43\n\tAverage shared text size (kbytes): 0\n\tAverage unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 1688\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 87\n\tVoluntary context switches: 1\n\tInvoluntary context switches: 328\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 8\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n",
+  "result_sha256": {
+    "accuracy-results.json": "260d8e277d41518371f8ba82cfd5f4066e70671e8854f4bf25eae1a65b76f3b6",
+    "accuracy-high-precision.json": "49c01d0d0079afae91613a91c7c433901d1850482e14a3b0569f8207aadc0469",
+    "accuracy.py": "bd832aaef14c3b7e092262b3925d7f574152adcbde68f2a70d8d8cde1795305e"
+  },
+  "whole_domain_accuracy_proven": false,
+  "coverage": "2^28 distinct stratified samples of all float bit patterns, 2^24 uniform real exp inputs, all 2^24 float inputs in [0.5,2) for log, 5 transition collars of +/-4096 bit patterns, 14 selected IEEE special cases; each finite sampled result also compared against nextafter(x,+inf) for monotonicity"
+}
