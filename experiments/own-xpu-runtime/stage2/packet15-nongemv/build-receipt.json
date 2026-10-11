@@ -1,0 +1,664 @@
+{
+  "schema": "own-runtime.packet15.build.v1",
+  "compiled": true,
+  "cpu_exactness_passed": false,
+  "device_executed": false,
+  "host_results": [
+    {
+      "checks": 72,
+      "compared_bytes": 25048064,
+      "passed": false,
+      "error": "failed gdn-1.fixture; failed gdn-packed-1.fixture; failed gdn-runtime-f32-1.fixture; failed gdn-3.fixture; failed gdn-packed-3.fixture; failed gdn-runtime-f32-3.fixture; failed qsa-attention-3.fixture; failed gdn-87.fixture; failed gdn-packed-87.fixture; failed mix-87.fixture; failed gdn-runtime-f32-87.fixture; failed qsa-attention-87.fixture; ",
+      "device_executed": false
+    },
+    {
+      "checks": 72,
+      "compared_bytes": 25048064,
+      "passed": false,
+      "error": "failed gdn-1.fixture; failed gdn-packed-1.fixture; failed gdn-runtime-f32-1.fixture; failed gdn-3.fixture; failed gdn-packed-3.fixture; failed gdn-runtime-f32-3.fixture; failed qsa-attention-3.fixture; failed gdn-87.fixture; failed gdn-packed-87.fixture; failed mix-87.fixture; failed gdn-runtime-f32-87.fixture; failed qsa-attention-87.fixture; ",
+      "device_executed": false
+    },
+    {
+      "checks": 72,
+      "compared_bytes": 25048064,
+      "passed": false,
+      "error": "failed gdn-1.fixture; failed gdn-packed-1.fixture; failed gdn-runtime-f32-1.fixture; failed gdn-3.fixture; failed gdn-packed-3.fixture; failed gdn-runtime-f32-3.fixture; failed qsa-attention-3.fixture; failed gdn-87.fixture; failed gdn-packed-87.fixture; failed mix-87.fixture; failed gdn-runtime-f32-87.fixture; failed qsa-attention-87.fixture; ",
+      "device_executed": false
+    }
+  ],
+  "fixtures": {
+    "schema": "own-runtime.packet15.fixtures.v1",
+    "device_executed": false,
+    "seed": 1511,
+    "torch_version": "2.11.0+xpu",
+    "cpu_capability": "AVX2",
+    "reference_sha256": "e1fb0aa0107c4c3e0e55803b2789ddbb717122194e2a3b00788d73f646a653c8",
+    "cases": [
+      {
+        "name": "gdn-1.fixture",
+        "op": 1,
+        "M": 1,
+        "output_bytes": 1585164,
+        "sha256": "94f7772bd493e4c27d68e4fb8ac213bdda4937f5153117c74c6e4f4e0cde6087"
+      },
+      {
+        "name": "gdn-inactive.fixture",
+        "op": 1,
+        "M": 1,
+        "output_bytes": 1585164,
+        "sha256": "c63366c2c8bfd095a126f6a2d72d489162ca5dfca472d2e956315c69850072ce"
+      },
+      {
+        "name": "gdn-sticky-error.fixture",
+        "op": 1,
+        "M": 1,
+        "output_bytes": 1585164,
+        "sha256": "df155877d4082f6a04555053d6406bbd07761d4609906d7c4f95ecc6ab958110"
+      },
+      {
+        "name": "gdn-packed-1.fixture",
+        "op": 1,
+        "M": 1,
+        "output_bytes": 1585164,
+        "sha256": "570d4dd6c63b9d97e9517bfe2a70e5a27bd30b179ef7d89b967d938fa79c0886"
+      },
+      {
+        "name": "conv-17-1.fixture",
+        "op": 0,
+        "M": 1,
+        "output_bytes": 148,
+        "sha256": "f5c37023c5acc967934130207299be19c1043dbdbe110f69424b696c2290a53b"
+      },
+      {
+        "name": "conv-10240-1.fixture",
+        "op": 0,
+        "M": 1,
+        "output_bytes": 81932,
+        "sha256": "fee7cc6bd8a37454ae7dd21811088b398a23cee4b7bac6c6e5ba7365c54c48bc"
+      },
+      {
+        "name": "norm-1.fixture",
+        "op": 2,
+        "M": 1,
+        "output_bytes": 20492,
+        "sha256": "a64926b4485b43dd20e1f8cc36d1778e96358d55dfc11af7786cce3b12749b90"
+      },
+      {
+        "name": "combine-norm-1.fixture",
+        "op": 5,
+        "M": 1,
+        "output_bytes": 40972,
+        "sha256": "4094421a7f86695142bbc718d50cf4fb0a3508100b5ef3c53ea1a00e323b7ed8"
+      },
+      {
+        "name": "mix-1.fixture",
+        "op": 4,
+        "M": 1,
+        "output_bytes": 5132,
+        "sha256": "cfe7230d29f72705cce48cfec09501c9dea3fcf5e3ddebf72496e74d3472ef03"
+      },
+      {
+        "name": "hc-act-1.fixture",
+        "op": 3,
+        "M": 1,
+        "output_bytes": 652,
+        "sha256": "1dbbdea04dc9e81cdd4be58dd83fb1b4d499d71ebc9963adc3882cab76626d4a"
+      },
+      {
+        "name": "ffn-act-1.fixture",
+        "op": 3,
+        "M": 1,
+        "output_bytes": 1292,
+        "sha256": "aaa7ac2666af65df9cf6cf67c2d4375993204fc44bfc87dcc639084e6f2523c6"
+      },
+      {
+        "name": "ffn-routed-act-1.fixture",
+        "op": 3,
+        "M": 1,
+        "output_bytes": 12812,
+        "sha256": "94ed1051f3b8942eb38355cf878c52a90f8881f0f697ebef5224729bed9084af"
+      },
+      {
+        "name": "gdn-gated-1.fixture",
+        "op": 8,
+        "M": 1,
+        "output_bytes": 12300,
+        "sha256": "508d204b2a88deac3044ede7137841c039169fece55d732d1daaa344fa66ecbc"
+      },
+      {
+        "name": "route-gather-1.fixture",
+        "op": 6,
+        "M": 1,
+        "output_bytes": 51532,
+        "sha256": "73c953b09d5c0e00a6c095af1357b6c7c8fdcb40cce25bac0beb5d586afd9d46"
+      },
+      {
+        "name": "moe-combine-1.fixture",
+        "op": 7,
+        "M": 1,
+        "output_bytes": 5132,
+        "sha256": "24bb91ec9dabbe7cbc3784b74ecc1b51e522cd984a006e5a0b6d316743be9f79"
+      },
+      {
+        "name": "norm-stored-f32-1.fixture",
+        "op": 2,
+        "M": 1,
+        "output_bytes": 20492,
+        "sha256": "3b15078c1892760ebbe5cd8c4bd4d05d129fe7c46ee2aa7e17bdcbc1e7222f7e"
+      },
+      {
+        "name": "gdn-runtime-f32-1.fixture",
+        "op": 1,
+        "M": 1,
+        "output_bytes": 1585164,
+        "sha256": "096b931cd760400480f0c98ab1acbbca1f8873595e18bd839ea73261aee68368"
+      },
+      {
+        "name": "qsa-prepare-1.fixture",
+        "op": 9,
+        "M": 1,
+        "output_bytes": 26636,
+        "sha256": "209cdd9d47145fde5edde998b653eedeb1baa6274b189a5adc6b07a5f6643137"
+      },
+      {
+        "name": "qsa-pool-1.fixture",
+        "op": 10,
+        "M": 1,
+        "output_bytes": 303116,
+        "sha256": "7c5a3fca68265d3fd5fc96c754de1bb87149ee53cf962e3c630396ede22d2a56"
+      },
+      {
+        "name": "qsa-select-1.fixture",
+        "op": 11,
+        "M": 1,
+        "output_bytes": 8216,
+        "sha256": "c5b771b2a6e3f2268a848c6e118ef30569804fa4501f4289aa86efb9cee6af3f"
+      },
+      {
+        "name": "qsa-attention-1.fixture",
+        "op": 12,
+        "M": 1,
+        "output_bytes": 406092,
+        "sha256": "f42f50099d20a6be7de8f27ae913961510b974ca2c2f4d0f030312285de688bd"
+      },
+      {
+        "name": "gdn-3.fixture",
+        "op": 1,
+        "M": 3,
+        "output_bytes": 1609740,
+        "sha256": "5a9157373619d003a831557316fa3d1e3b769a5e9dadca14dc3b8e057b4b45fd"
+      },
+      {
+        "name": "gdn-packed-3.fixture",
+        "op": 1,
+        "M": 3,
+        "output_bytes": 1609740,
+        "sha256": "033dc0e9d920cd5df231be2566a75713805997e3453a7cac3f78a1cff3f7cb07"
+      },
+      {
+        "name": "conv-17-3.fixture",
+        "op": 0,
+        "M": 3,
+        "output_bytes": 216,
+        "sha256": "1759ad4491705cbf932e4a55e57112b0f34322253d291f89f22742c53c08abdb"
+      },
+      {
+        "name": "conv-10240-3.fixture",
+        "op": 0,
+        "M": 3,
+        "output_bytes": 122892,
+        "sha256": "bceff2c637a56ca535600ddccfc4a5af676a513e7861bf912dbf2ceeebd94b61"
+      },
+      {
+        "name": "norm-3.fixture",
+        "op": 2,
+        "M": 3,
+        "output_bytes": 61452,
+        "sha256": "5898ad37b4edf3b02553243795a6419664b05bb2c09ad5b1362da4ea4c3a5efc"
+      },
+      {
+        "name": "combine-norm-3.fixture",
+        "op": 5,
+        "M": 3,
+        "output_bytes": 122892,
+        "sha256": "8888d33c7b4e1d1de3726e3177c435f3d9fed45dc630e8f87aed164bb85354f6"
+      },
+      {
+        "name": "mix-3.fixture",
+        "op": 4,
+        "M": 3,
+        "output_bytes": 15372,
+        "sha256": "e14013e1e867bfd05b66ea9bbe9352d435e06bb5a8e97b53a2b0c6cbeaf51d92"
+      },
+      {
+        "name": "hc-act-3.fixture",
+        "op": 3,
+        "M": 3,
+        "output_bytes": 1932,
+        "sha256": "28875ab1a640b0f5489c59ec4f277fbfe15c793c2bf32ce7fc899d9fcee36a5a"
+      },
+      {
+        "name": "ffn-act-3.fixture",
+        "op": 3,
+        "M": 3,
+        "output_bytes": 3852,
+        "sha256": "0f8bc9eb2b0e12a4156e0d11b95a5feff67a32ed1b8dbccc012c27aea1518a97"
+      },
+      {
+        "name": "ffn-routed-act-3.fixture",
+        "op": 3,
+        "M": 3,
+        "output_bytes": 38412,
+        "sha256": "7aab2944ea0c7512c923ada6adfbee3fd484e317422ce9000fa46b08d3587115"
+      },
+      {
+        "name": "gdn-gated-3.fixture",
+        "op": 8,
+        "M": 3,
+        "output_bytes": 36876,
+        "sha256": "8f602ba826175eea15b0ad56c5547e7c593c792c7445fe3aa6c58d7ba94d1e4d"
+      },
+      {
+        "name": "route-gather-3.fixture",
+        "op": 6,
+        "M": 3,
+        "output_bytes": 154572,
+        "sha256": "31743839920fe6f90224ef32ae1d41413841b3d1bb2059bbae83c5653b941686"
+      },
+      {
+        "name": "moe-combine-3.fixture",
+        "op": 7,
+        "M": 3,
+        "output_bytes": 15372,
+        "sha256": "3c465c7ee768c465929aebd5e1ec3bc62537d739bb03a3e66d6bc0a7fe5a4c24"
+      },
+      {
+        "name": "norm-stored-f32-3.fixture",
+        "op": 2,
+        "M": 3,
+        "output_bytes": 61452,
+        "sha256": "96119bc03117dd5d242092bd340cf3979f833f16d0bfe22d65b0773ed08ac3fe"
+      },
+      {
+        "name": "gdn-runtime-f32-3.fixture",
+        "op": 1,
+        "M": 3,
+        "output_bytes": 1609740,
+        "sha256": "c93ce7110e1ed90f33af7c77e85077bf35334fb588118eb5d308a91184238cce"
+      },
+      {
+        "name": "qsa-prepare-3.fixture",
+        "op": 9,
+        "M": 3,
+        "output_bytes": 79884,
+        "sha256": "17592dc2f6acf3e1a3ee551d5bfe4f2972950fea908d71d532e330ecd34e6ea6"
+      },
+      {
+        "name": "qsa-pool-3.fixture",
+        "op": 10,
+        "M": 3,
+        "output_bytes": 303116,
+        "sha256": "26c2f3f34ff8a587701adff2b80d7ca4a320bd59120972ce129cd6096be02ed2"
+      },
+      {
+        "name": "qsa-select-3.fixture",
+        "op": 11,
+        "M": 3,
+        "output_bytes": 24624,
+        "sha256": "cc79ed3c4580af07fbe28272c367b55bd5abe5dbcec2b83be1fe893bc7cb316f"
+      },
+      {
+        "name": "qsa-attention-3.fixture",
+        "op": 12,
+        "M": 3,
+        "output_bytes": 1218252,
+        "sha256": "77b21cd7d6b8d0198440cf74f2f258c0081fb2166f0f719636708f4fb69ff03d"
+      },
+      {
+        "name": "gdn-87.fixture",
+        "op": 1,
+        "M": 87,
+        "output_bytes": 2641932,
+        "sha256": "274a7bc1dc84b6c564acdaea2615ecc28cac41eb20c402b7350a3f2cd688753f"
+      },
+      {
+        "name": "gdn-packed-87.fixture",
+        "op": 1,
+        "M": 87,
+        "output_bytes": 2641932,
+        "sha256": "404f9eb95a64cfc660995793167679687962e5749e9c04cafb67f89beaff00c2"
+      },
+      {
+        "name": "conv-17-87.fixture",
+        "op": 0,
+        "M": 87,
+        "output_bytes": 3072,
+        "sha256": "0bcae2a34827266763e0f6abff03d18a09ee630a93d0eb41d4c964a2bf1df0e0"
+      },
+      {
+        "name": "conv-10240-87.fixture",
+        "op": 0,
+        "M": 87,
+        "output_bytes": 1843212,
+        "sha256": "83b456cbb3337f651bf8b9654e01a79d25d317069a3ea98ff224d18ee86e581d"
+      },
+      {
+        "name": "norm-87.fixture",
+        "op": 2,
+        "M": 87,
+        "output_bytes": 1781772,
+        "sha256": "0740dd64e311bcbfdcd172a726301b0d988e95b93ff6ae46d23f358801f9fe78"
+      },
+      {
+        "name": "combine-norm-87.fixture",
+        "op": 5,
+        "M": 87,
+        "output_bytes": 3563532,
+        "sha256": "c142fafd6bbfefa7dcaa5c2a1bd974b57677d300bc5ab5285e332bd5c4e08905"
+      },
+      {
+        "name": "mix-87.fixture",
+        "op": 4,
+        "M": 87,
+        "output_bytes": 445452,
+        "sha256": "689aa8a7b6b2e0fb5b6de175a05cd80f672e4f4d09478ea6ccbdd579b4b60caa"
+      },
+      {
+        "name": "hc-act-87.fixture",
+        "op": 3,
+        "M": 87,
+        "output_bytes": 55692,
+        "sha256": "96bfe4a9c1f4bd70c1c1a564849a7a06ec13d88147d8c8451e3082569d7e5f37"
+      },
+      {
+        "name": "ffn-act-87.fixture",
+        "op": 3,
+        "M": 87,
+        "output_bytes": 111372,
+        "sha256": "f33ed6cc48de269b1d002b8efba1fb750454479770e694610dfd4cc8bac94c2d"
+      },
+      {
+        "name": "ffn-routed-act-87.fixture",
+        "op": 3,
+        "M": 87,
+        "output_bytes": 1113612,
+        "sha256": "b5baa672234d8e51930a822c34b858362b9a2ee83b6e7bd27290ef7fad4ab300"
+      },
+      {
+        "name": "gdn-gated-87.fixture",
+        "op": 8,
+        "M": 87,
+        "output_bytes": 1069068,
+        "sha256": "6d7b5c3e74ad205619134dd8e75e4367054dbc5fcdfa28c59a69cbd8e7e97cbb"
+      },
+      {
+        "name": "route-gather-87.fixture",
+        "op": 6,
+        "M": 87,
+        "output_bytes": 4482252,
+        "sha256": "05034a82d771f401744cdc46b7bcaa13e79bb582d6582bdc1820fccda5414545"
+      },
+      {
+        "name": "moe-combine-87.fixture",
+        "op": 7,
+        "M": 87,
+        "output_bytes": 445452,
+        "sha256": "6e0bb186b2336c5ada2fd240320bc2790b4c325d336d9e45bfb1dad798a60d3d"
+      },
+      {
+        "name": "norm-stored-f32-87.fixture",
+        "op": 2,
+        "M": 87,
+        "output_bytes": 1781772,
+        "sha256": "9004265c5a1cb5b50afea661d0d0432d88a3e1a7ed75a516fe89b0eb3880780b"
+      },
+      {
+        "name": "gdn-runtime-f32-87.fixture",
+        "op": 1,
+        "M": 87,
+        "output_bytes": 2641932,
+        "sha256": "23382a0e3c4a3f48a88e523d587b93434941e995f26df557b46861a2a33bff66"
+      },
+      {
+        "name": "qsa-prepare-87.fixture",
+        "op": 9,
+        "M": 87,
+        "output_bytes": 2316300,
+        "sha256": "657854b7dc2e6100dbd0748f402c979e7f5144cfe9c614fdd411ee5a984fba49"
+      },
+      {
+        "name": "qsa-pool-87.fixture",
+        "op": 10,
+        "M": 87,
+        "output_bytes": 303116,
+        "sha256": "98d6bc444c918100ca01886572fb5c48236bf119d53a7bac32b535f0e7a9a4d0"
+      },
+      {
+        "name": "qsa-select-87.fixture",
+        "op": 11,
+        "M": 87,
+        "output_bytes": 713760,
+        "sha256": "2d00bcadcc975c80fb9c12e45244e70ee354f36dc4e6130b65b8ded489e262b2"
+      },
+      {
+        "name": "qsa-attention-87.fixture",
+        "op": 12,
+        "M": 87,
+        "output_bytes": 35328972,
+        "sha256": "a7f62b53ff615c21d6a4371faab64a0426bba45c5bd8cdb21fb228c70c2bcd6e"
+      },
+      {
+        "name": "conv-real-f32-weights.fixture",
+        "op": 0,
+        "M": 3,
+        "output_bytes": 216,
+        "sha256": "6892e601a763ab9296b56b2f15e6e220e4a5e4bfb3782270f1f166071d6bc510"
+      },
+      {
+        "name": "norm-odd-1.fixture",
+        "op": 2,
+        "M": 1,
+        "output_bytes": 20,
+        "sha256": "4b2bb43e2e0d1cea77bf2f7510756ac7b091dd79d3b61ecda72e411ba8f55b08"
+      },
+      {
+        "name": "norm-odd-3.fixture",
+        "op": 2,
+        "M": 1,
+        "output_bytes": 36,
+        "sha256": "faff23de2a34c39973234782f474ff9d60a343ff47d72bcdd88f049f05d17a17"
+      },
+      {
+        "name": "norm-odd-17.fixture",
+        "op": 2,
+        "M": 1,
+        "output_bytes": 148,
+        "sha256": "d55142ae6bb1123ed95f14792d717c1852cfb558039beebca10748fddd66b2d5"
+      },
+      {
+        "name": "norm-odd-255.fixture",
+        "op": 2,
+        "M": 1,
+        "output_bytes": 2052,
+        "sha256": "854ff287664fc499c46314fafd012f37d779d5ea615ead58441f8821511796ee"
+      },
+      {
+        "name": "norm-odd-2560.fixture",
+        "op": 2,
+        "M": 1,
+        "output_bytes": 20492,
+        "sha256": "79dd473c25a6f571bbed69f7c650029bb926c81f8e5b7181bac0c2f6e3789871"
+      },
+      {
+        "name": "conv-dilation3.fixture",
+        "op": 0,
+        "M": 5,
+        "output_bytes": 488,
+        "sha256": "6b6b2fdb4650b32d380f17a4de0bf99432124497c98d118c1d884bfadbdbd24a"
+      },
+      {
+        "name": "route-ties.fixture",
+        "op": 6,
+        "M": 1,
+        "output_bytes": 51532,
+        "sha256": "41670934a58c97c18167bb0f1e999930ec2ab8535536660ac7fa6300e989ad0b"
+      },
+      {
+        "name": "route-varied.fixture",
+        "op": 6,
+        "M": 1,
+        "output_bytes": 51532,
+        "sha256": "95c490555ae8561d772e691deb20dc93b2302dc81ce1e1c48b943f7bef34f553"
+      },
+      {
+        "name": "select-pruned-tail.fixture",
+        "op": 11,
+        "M": 1,
+        "output_bytes": 40,
+        "sha256": "bf28ba2e66a07e3b18c23a7554c2c521afdc41adb381f913ace0eefe99e0343c"
+      },
+      {
+        "name": "route-nan.fixture",
+        "op": 6,
+        "M": 1,
+        "output_bytes": 51532,
+        "sha256": "b261b63b27eac45fe110cae8aa94a6eb2dc8067b210cc038cf9d5ec7343b0435"
+      },
+      {
+        "name": "pool-existing.fixture",
+        "op": 10,
+        "M": 1,
+        "output_bytes": 37900,
+        "sha256": "d9014c2d2ed4b3d8c3d6f1c26219e54e8a4c1ad88646bb3d1c7e7c45c985960b"
+      },
+      {
+        "name": "pool-inactive.fixture",
+        "op": 10,
+        "M": 1,
+        "output_bytes": 37900,
+        "sha256": "8dffa5bf1aa6a0f7c132acd79970358d90b5247edf2d2fd2c233c93166c77dff"
+      }
+    ]
+  },
+  "hashes": {
+    "experiments/own-xpu-runtime/stage2/packet15-nongemv/native.hpp": "c0b710b43748dfeb23bb317254053106d68fc967d9ecdfe43f17f56a80d372b4",
+    "experiments/own-xpu-runtime/stage2/packet15-nongemv/kernels.hpp": "8b2c0c76d6a7e1b34da67adc8a0b5155f693dc60ca60c744e12e7d74ba9890d9",
+    "experiments/own-xpu-runtime/stage2/packet15-nongemv/native.cpp": "ca87181cadd07dbde66c3b6c6134db3a39e46cae00c0e7cab815479f3391c58f",
+    "experiments/own-xpu-runtime/stage2/packet15-nongemv/math_probe.cpp": "064db3b0cda33166b0bf108fa3ee2bfa376e5d315295f69faf27d6b1ed26bb1b",
+    "experiments/own-xpu-runtime/stage2/packet15-nongemv/runner.cpp": "37bfca0399cd18b65571d564f8aadff7567d3631b7f13a80feedbf84d63f92a1",
+    "experiments/own-xpu-runtime/stage2/packet15-nongemv/test_window.py": "379f1d7eeb2ac6efed24bd4d5568e8247538c7ece2bbaed713dab025d30971df",
+    "experiments/own-xpu-runtime/stage2/packet15-nongemv/build.py": "2523b117cd7598aa67b3d4741200b5261b4b61f9f0b630f12d4a146a1bbb342d",
+    "experiments/own-xpu-runtime/stage2/packet15-nongemv/fixtures.py": "eb1d47987523a815e0ef20f551fa21ca13dc0fbe0cdb5354c3bf5149434e08a3",
+    "experiments/own-xpu-runtime/stage2/packet15-nongemv/device_window.py": "923afbfd4baa728ab978567a2a8b06b6334db1e40e7989d3a05f8416b373a14a",
+    "experiments/own-xpu-runtime/stage2/packet15-nongemv/math_probe.py": "3a694ec4a84354ffc5c09abcdeaf12f0777bbe9a6c4159806c2f99e0d8f4b678",
+    "experiments/own-xpu-runtime/stage2/packet15-nongemv/CMakeLists.txt": "cacd6bb142474c257c968ba86751cd4468538cfda602db65ee72090116582af7",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.hpp": "94db5f67e518d4b4940811c9f381f3e1add47c403fca134cad11d84d4d2e626b",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp": "5039a86f032727b0219e4d4ef07b158ff715ee542bb949023ad2306b4225e842",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_operation.hpp": "296eeb3fdf685b698cb7bb35da86157fbb12f97ff215f61ab7ad90f207364c9b",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp": "7e10dbe50d9c73a154e079f9aa9b36139d43f4bb1e3ac65f544ea5b5df7ea125",
+    "experiments/own-xpu-runtime/stage2/packet4/owner_retire.cpp": "07dad00e773223ea342d4c4ce92c5e1cd3d5255c9d8acfc712bb5539cf3f84df",
+    "experiments/own-xpu-runtime/stage2/packet1b/reference.py": "e1fb0aa0107c4c3e0e55803b2789ddbb717122194e2a3b00788d73f646a653c8",
+    "experiments/own-xpu-runtime/stage2/packet2/tests/device_window.py": "a26998d3bd062b78c8ffb8825e8daf9adb50cd866552b3c23bfacdafb0189e5f"
+  },
+  "binary_sha256": {
+    "native/device-test": "0b2c835c93c937763f96be563cf5da14616e3210da7496f90862de3ce0b64985",
+    "host/host-test": "841619b26c42840f64a49d35784c43e15e9448604503b0b32596181e29ee3dd2",
+    "native/host-test": "42b065a645318aeefc65b02b8c67e90f0811e4de3629cb20dd2cd7bb64f9daf5"
+  },
+  "commands": [
+    {
+      "argv": [
+        "cmake",
+        "-S",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet15-nongemv",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet15-nongemv/build/host"
+      ],
+      "returncode": 0
+    },
+    {
+      "argv": [
+        "cmake",
+        "--build",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet15-nongemv/build/host",
+        "-j2"
+      ],
+      "returncode": 0
+    },
+    {
+      "argv": [
+        "cmake",
+        "-S",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet15-nongemv",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet15-nongemv/build/native",
+        "-DNATIVE=ON",
+        "-DCMAKE_CXX_COMPILER=/opt/intel/oneapi/compiler/2026.0/bin/icpx"
+      ],
+      "returncode": 0
+    },
+    {
+      "argv": [
+        "cmake",
+        "--build",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet15-nongemv/build/native",
+        "-j2"
+      ],
+      "returncode": 0
+    },
+    {
+      "argv": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet15-nongemv/build/host/host-test",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet15-nongemv/build/fixtures",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet15-nongemv/build/host.json"
+      ],
+      "returncode": 1
+    },
+    {
+      "argv": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet15-nongemv/build/host/host-test",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet15-nongemv/build/fixtures",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet15-nongemv/build/fresh.json"
+      ],
+      "returncode": 1
+    },
+    {
+      "argv": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet15-nongemv/build/native/host-test",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet15-nongemv/build/fixtures",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet15-nongemv/build/icpx.json"
+      ],
+      "returncode": 1
+    },
+    {
+      "argv": [
+        "readelf",
+        "-d",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet15-nongemv/build/host/host-test"
+      ],
+      "returncode": 0
+    },
+    {
+      "argv": [
+        "/home/steve/.venvs/vllm-xpu/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet15-nongemv/test_window.py"
+      ],
+      "returncode": 0
+    },
+    {
+      "argv": [
+        "/home/steve/.venvs/vllm-xpu/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet15-nongemv/math_probe.py"
+      ],
+      "returncode": 0
+    }
+  ],
+  "test_output": "..................\n----------------------------------------------------------------------\nRan 18 tests in 0.028s\n\nOK\n",
+  "failure_output": [
+    "gdn-1.fixture: slot 7 mismatch bytes=3 first=401940\ngdn-packed-1.fixture: slot 7 mismatch bytes=3 first=139796\ngdn-runtime-f32-1.fixture: slot 7 mismatch bytes=3 first=139796\ngdn-3.fixture: slot 6 mismatch bytes=3 first=15740\ngdn-packed-3.fixture: slot 6 mismatch bytes=3 first=17532\ngdn-runtime-f32-3.fixture: slot 6 mismatch bytes=3 first=17532\nqsa-attention-3.fixture: slot 7 mismatch bytes=2 first=303564\ngdn-87.fixture: slot 6 mismatch bytes=162 first=21376\ngdn-packed-87.fixture: slot 6 mismatch bytes=162 first=20060\nmix-87.fixture: slot 2 mismatch bytes=2 first=41574\ngdn-runtime-f32-87.fixture: slot 6 mismatch bytes=162 first=20060\nqsa-attention-87.fixture: slot 5 mismatch bytes=5 first=230892\n",
+    "gdn-1.fixture: slot 7 mismatch bytes=3 first=401940\ngdn-packed-1.fixture: slot 7 mismatch bytes=3 first=139796\ngdn-runtime-f32-1.fixture: slot 7 mismatch bytes=3 first=139796\ngdn-3.fixture: slot 6 mismatch bytes=3 first=15740\ngdn-packed-3.fixture: slot 6 mismatch bytes=3 first=17532\ngdn-runtime-f32-3.fixture: slot 6 mismatch bytes=3 first=17532\nqsa-attention-3.fixture: slot 7 mismatch bytes=2 first=303564\ngdn-87.fixture: slot 6 mismatch bytes=162 first=21376\ngdn-packed-87.fixture: slot 6 mismatch bytes=162 first=20060\nmix-87.fixture: slot 2 mismatch bytes=2 first=41574\ngdn-runtime-f32-87.fixture: slot 6 mismatch bytes=162 first=20060\nqsa-attention-87.fixture: slot 5 mismatch bytes=5 first=230892\n",
+    "gdn-1.fixture: slot 7 mismatch bytes=3 first=401940\ngdn-packed-1.fixture: slot 7 mismatch bytes=3 first=139796\ngdn-runtime-f32-1.fixture: slot 7 mismatch bytes=3 first=139796\ngdn-3.fixture: slot 6 mismatch bytes=3 first=15740\ngdn-packed-3.fixture: slot 6 mismatch bytes=3 first=17532\ngdn-runtime-f32-3.fixture: slot 6 mismatch bytes=3 first=17532\nqsa-attention-3.fixture: slot 7 mismatch bytes=1 first=582492\ngdn-87.fixture: slot 6 mismatch bytes=162 first=21376\ngdn-packed-87.fixture: slot 6 mismatch bytes=162 first=20060\nmix-87.fixture: slot 2 mismatch bytes=2 first=41574\ngdn-runtime-f32-87.fixture: slot 6 mismatch bytes=162 first=20060\nqsa-attention-87.fixture: slot 5 mismatch bytes=5 first=230892\n"
+  ]
+}

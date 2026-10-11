@@ -131,6 +131,8 @@ owner approval. The earlier ISTA IQ3_S proposal is withdrawn. These CPU packets 
 
 **October 11, CPU-only packed expert decode:** [Round 6 packet11](experiments/own-xpu-runtime/stage2/packet11-kopt6/README.md) reads native Xe2 assembly and prepares three exact decode alternatives. Integer unpacking and sign handling take most of the visible instructions; the full IQ2 register table spills, while the packed pipeline has a smaller arithmetic body. All CPU checks and device-program builds pass. No GPU program ran, and speed predictions remain unverified. The packet gives the two card-3 commands for the coordinator after separate admission; the existing host halt remains in force.
 
+**October 11, CPU-only non-GEMV kernel preparation:** [Stage 2 packet 15](experiments/own-xpu-runtime/stage2/packet15-nongemv/README.md) replaces the scalar bring-up algorithm with parallel kernel candidates and compiles the SYCL target. Only 60 of 72 CPU reference cases agree exactly; twelve fail, so this is not a lossless replacement and is not integrated into the live runtime. All 18 protocol tests pass. No device ran. The next work is to resolve the arithmetic differences; native timing stays blocked behind exactness.
+
 ## Two-Card Lanes And Context Work
 
 **Qwen 27B FP8:** optimize the official FP8 model with native MTP and full 16-bit KV; DFlash stays excluded by the September 14 owner decision. Read the [multi-host handoff](experiments/qwen38-27b-b70/MULTI-HOST-HANDOFF.md), [closed

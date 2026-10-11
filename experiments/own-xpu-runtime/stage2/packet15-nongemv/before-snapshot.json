@@ -1,0 +1,174 @@
+{
+  "scope": "prefix snapshot of a growing live JSONL; not whole-run totals",
+  "rows_read": 56114,
+  "first_layer": {
+    "kind": "layer",
+    "token_index": 0,
+    "layer": 0,
+    "wall_ms": 17602.4,
+    "gemv_device_ms": 1.61198,
+    "non_gemv_device_ms": 1242.578647,
+    "transfer_wall_ms": 70.3251
+  },
+  "first_token": {
+    "kind": "token",
+    "token_index": 0,
+    "input_token": 248045,
+    "wall_ms": 69038.6,
+    "gemv_device_ms": 60.855741,
+    "non_gemv_device_ms": 46954.090715,
+    "transfer_wall_ms": 3506.6
+  },
+  "non_gemv_sites": {
+    "streams": {
+      "sites": 31,
+      "device_ms": 86.01010399949999,
+      "kernel_submissions": 31
+    },
+    "hc.a.norm": {
+      "sites": 1441,
+      "device_ms": 20915.725413997774,
+      "kernel_submissions": 1441
+    },
+    "hc.a.act": {
+      "sites": 1441,
+      "device_ms": 388.5153350029827,
+      "kernel_submissions": 1441
+    },
+    "hc.a.mix": {
+      "sites": 1441,
+      "device_ms": 11411.416071999081,
+      "kernel_submissions": 1441
+    },
+    "gdn.conv": {
+      "sites": 1081,
+      "device_ms": 53289.50677800186,
+      "kernel_submissions": 1081
+    },
+    "gdn.recurrence": {
+      "sites": 1080,
+      "device_ms": 1132484.1948800008,
+      "kernel_submissions": 1080
+    },
+    "gdn.gated": {
+      "sites": 1080,
+      "device_ms": 12705.60760100101,
+      "kernel_submissions": 1080
+    },
+    "attn.combine": {
+      "sites": 1440,
+      "device_ms": 15607.358953003733,
+      "kernel_submissions": 1440
+    },
+    "hc.f.norm": {
+      "sites": 1440,
+      "device_ms": 20912.11603899736,
+      "kernel_submissions": 1440
+    },
+    "hc.f.act": {
+      "sites": 1440,
+      "device_ms": 388.1107480033498,
+      "kernel_submissions": 1440
+    },
+    "hc.f.mix": {
+      "sites": 1440,
+      "device_ms": 11401.754181999759,
+      "kernel_submissions": 1440
+    },
+    "route": {
+      "sites": 1440,
+      "device_ms": 16617.354190999176,
+      "kernel_submissions": 1440
+    },
+    "gather": {
+      "sites": 1440,
+      "device_ms": 25079.21970600131,
+      "kernel_submissions": 1440
+    },
+    "expsact": {
+      "sites": 1440,
+      "device_ms": 10287.643007996947,
+      "kernel_submissions": 1440
+    },
+    "shexpact": {
+      "sites": 1440,
+      "device_ms": 1041.0250989943293,
+      "kernel_submissions": 1440
+    },
+    "moe": {
+      "sites": 1440,
+      "device_ms": 5360.858127001721,
+      "kernel_submissions": 2880
+    },
+    "ffn.combine": {
+      "sites": 1440,
+      "device_ms": 15599.321983996231,
+      "kernel_submissions": 1440
+    },
+    "ple.kn": {
+      "sites": 30,
+      "device_ms": 435.4704180001999,
+      "kernel_submissions": 30
+    },
+    "ple.qn": {
+      "sites": 30,
+      "device_ms": 436.14666800009996,
+      "kernel_submissions": 30
+    },
+    "ple.gated": {
+      "sites": 30,
+      "device_ms": 443.81447699940003,
+      "kernel_submissions": 30
+    },
+    "ple.cn": {
+      "sites": 30,
+      "device_ms": 435.44947900050005,
+      "kernel_submissions": 30
+    },
+    "ple.conv": {
+      "sites": 30,
+      "device_ms": 2932.401874000299,
+      "kernel_submissions": 30
+    },
+    "ple.add": {
+      "sites": 30,
+      "device_ms": 392.61447899970017,
+      "kernel_submissions": 30
+    },
+    "qsa.prepare": {
+      "sites": 360,
+      "device_ms": 8629.044370001007,
+      "kernel_submissions": 360
+    },
+    "qsa.pool": {
+      "sites": 360,
+      "device_ms": 24137.310722999988,
+      "kernel_submissions": 360
+    },
+    "qsa.select": {
+      "sites": 360,
+      "device_ms": 756.4731190008707,
+      "kernel_submissions": 360
+    },
+    "qsa.attention": {
+      "sites": 360,
+      "device_ms": 41147.6312589999,
+      "kernel_submissions": 360
+    },
+    "final.norm": {
+      "sites": 30,
+      "device_ms": 434.82135500029995,
+      "kernel_submissions": 30
+    },
+    "final.mix": {
+      "sites": 30,
+      "device_ms": 237.45020999980002,
+      "kernel_submissions": 30
+    },
+    "argmax": {
+      "sites": 30,
+      "device_ms": 2140.9035440005996,
+      "kernel_submissions": 30
+    }
+  }
+}
