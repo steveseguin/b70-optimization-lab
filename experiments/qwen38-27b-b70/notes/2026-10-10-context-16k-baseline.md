@@ -460,8 +460,8 @@ verbatim. With seed 0 that is 85 of 85. The replication bar (35/39-equivalent wi
 
 | through PROBE item 18 (item 378 of 617) | N32j keeper | B32iraR at the same point |
 | --- | ---: | ---: |
-| all probes | **114 / 126 (90 %)** | 98 / 126 (78 %; its 14th item unanswered) |
-| current / old value / who / rule / method | 33/36, 29/36, 17/18, 18/18, 17/18 | old value about half, rule 16/18 |
+| all probes | **114 / 126 (90 %)** | 97 / 126 (77 %; its 14th item unanswered) |
+| current / old value / who / rule / method | 33/36, 29/36, 17/18, 18/18, 17/18 | 32/36, 18/36, 17/18, 16/18, 14/18 |
 | 1-4 / 5-24 / 25-99 / 100-399 items back | 32/36, 34/35, 14/18, 34/37 | |
 | minutes per 100K of history | about 7.3 (399 items in about 47 min) | 8.7 |
 
@@ -484,7 +484,7 @@ against N32j's 39/39 in 15. Two questions lost (one current value, one final) fo
 was "within one". The thinking in the notes call is what keeps the books; N32j stays the setting.
 
 **B32iraRH is not run.** It was the fix for B32iraR's weak old-value answers at 1M. The keeper already answers
-those better without it (29/36 against about half), and the proxy now keeps every NOTES version for the same
+those better without it (29/36 against 18/36), and the proxy now keeps every NOTES version for the same
 purpose (`recall` with `notes_at`). The arm stays in the tree, unit-tested and wire-tested.
 
 ## Campaign 8 (2026-10-11, preregistered before any result): the keeper as a proxy
