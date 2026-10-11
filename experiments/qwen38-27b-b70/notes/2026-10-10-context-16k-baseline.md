@@ -259,3 +259,39 @@ How the results will be read (fixed now):
   slower once the window is full (41 tok/s at 137K, 26 at 246K, measured 10-05). If it is cut, the probes it reached
   are graded from the last copy of its answers file (`partial_grade.py`) and reported as a cut run.
 - Phase 3: C32 against B32ira on the same seed, accuracy and minutes; a cut run is "did not finish in 80 min".
+
+## Campaign 5, phase 1 (2026-10-11 05:41-06:34): a pinned place for rules
+
+Rules stream, 240K, seed 0, 32K live budget, server window 262,144. Same 39 questions as campaign 4's S2.
+
+| arm | current | old value | who | **rule** | **method** | final (confidential one) | all 39 | minutes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| B32ira (campaign 4) | 5/5 | 5/5 | 5/5 | 0/5 | 5/5 | 13/14 (blank) | 33 | 20 |
+| **B32iraR** permanent `RULE:` lines | 4/5 | 4/5 | 5/5 | **5/5** | 4/5 | 13/14 (**right**) | **35** | 18 |
+| B32ira-free free-text notes | 3/5 | 5/5 | 4/5 | 4/5 | 3/5 | 9/14 (blank) | 28 | 23 |
+| B32iraR4 four items per command | stopped after 10 min at item 21 | | | | | | | |
+
+Read against the preregistered rules:
+
+- **B32iraR fixes the rule**: all five rule questions and the confidential counter in the final query. By item 11 its
+  state held two `RULE:` lines, the rule and the house method, in its own complete wording. No RULE edit was ever
+  rejected.
+- **It did not come free**: on the other 33 questions it scored 29 against B32ira's 33 (the bar was "within one").
+  The four misses are bookkeeping: one current value, one tally computed from a wrong value, one old value, one
+  stale final. Looking at the transcripts, the two runs settled on different ways of writing an update. B32ira's
+  script upserts and lets Python do the sums (`setv(s, "hike77", 383+6)`); B32iraR's rewrites matching lines with
+  values worked out in the reply (`out.append("roke54 268")`), and has no upsert (12 edits rejected for a vanished
+  line against 0). One seed, so this may be chance, but the mechanism is plausible: a state file with mixed
+  content invites line-by-line rewriting. The cleaner design keeps rules where the model never rewrites them.
+- **Free-text notes carry a rule without being told to, but not reliably, and they keep books badly.** B32ira-free
+  wrote both the rule and the method into its notes at items 1-2 unprompted and answered 4/5 rule questions; on the
+  first it answered `null` (the counter had been removed) although the rule was in view, and it left the
+  confidential final blank. Its notes are a per-item log, not a table: 9/14 finals. A place to keep a rule is
+  necessary but not sufficient; B32iraR's line "read the RULE lines before you answer" is what made it 5/5.
+- **Four items per command is not a speed lever at 32K.** The room check then wants 12.2K free (4 x 2.0K + 4.1K
+  headroom); the context sat near 25K with about 200 small turns, `next` was refused, and the run needed 115 calls
+  for 21 items. Stopped by hand (SIGINT to the client; the server was idle before the next arm, kernel log clean).
+  Closed at 4 for this budget. The lever needs either a larger live budget or the harness clearing the agent's own
+  command turns, which is the keeper arm's design (`clm_keeper.py`, not yet run).
+
+B32iraR (35) went to the 1M stream at 06:34.
