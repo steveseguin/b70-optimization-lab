@@ -67,6 +67,11 @@ int main(int argc,char**argv){
  try{
   d=std::make_unique<ownrt::Device>(ownrt::make_sycl_device(std::stoi(argv[2]),true));ownrt::CopyEngine copies(*d);
   auto wait=[&](ownrt::Event e){require(d->wait(e,std::chrono::seconds(2)),"device event deadline");};
+  // Packet15 before-snapshot.json: GDN recurrence averages 1,048.596 ms per
+  // single-work-item row on card 3. This authority is slower than the parallel
+  // kernels. Keep its wait below the driver's 5,000 ms job timeout.
+  constexpr uint64_t reference_budget_ns=3000000000ull;
+  constexpr auto reference_wait=std::chrono::seconds(4);
   auto scratch=d->arena.allocate("packet4-reference-scratch",ng::reference::scratch_floats*sizeof(float),ownrt::Memory::device,ownrt::Category::scratch,ownrt::Lifetime::transaction);
   struct Pending {ng::Shape shape;std::array<ownrt::Allocation,16> ids,host;std::array<size_t,16> sizes;};
   std::map<std::string,Pending> pending;
@@ -75,7 +80,7 @@ int main(int argc,char**argv){
    for(int j=0;j<16;++j){size_t n=f.data[j].size();ids[j]=d->arena.allocate(name+"/device"+std::to_string(j),n,ownrt::Memory::device,ownrt::Category::scratch,ownrt::Lifetime::transaction);host[j]=d->arena.allocate(name+"/host"+std::to_string(j),n,ownrt::Memory::pinned,ownrt::Category::pinned_slab,ownrt::Lifetime::transfer);std::memcpy(d->arena.row(host[j]).pointer,f.data[j].data(),n);wait(copies.copy(ids[j],0,host[j],0,n,{}));}
    // Restore inputs after the scalar device control; never reuse its output.
    std::array<ownrt::Allocation,17> reference_ids;std::copy(ids.begin(),ids.end(),reference_ids.begin());reference_ids[16]=scratch;
-   for(int row=0;row<f.s.tokens;++row){require(!stopping,"cooperative stop before reference row");auto event=ng::submit_reference(*d,f.s,row,reference_ids,{});wait(event);auto clock=d->timing(event);require(clock.end_ns-clock.start_ns<500000000ull,"reference kernel exceeded 0.5s submission budget");d->retire_completed_events();}
+   for(int row=0;row<f.s.tokens;++row){require(!stopping,"cooperative stop before reference row");auto event=ng::submit_reference(*d,f.s,row,reference_ids,{});require(d->wait(event,reference_wait),"reference device event deadline");auto clock=d->timing(event);require(clock.end_ns-clock.start_ns<reference_budget_ns,"reference kernel exceeded 3.0s submission budget");d->retire_completed_events();}
    auto core_path=fs::path(argv[3])/name;core_path+=".core";std::ifstream cpu_expected(core_path,std::ios::binary);require(bool(cpu_expected),"CPU core expected open");size_t differences=0;
    std::ofstream reference_bytes(fs::path(argv[4])/(name+".core"),std::ios::binary);
    for(int j=0;j<16;++j)if(f.outputs[j]){

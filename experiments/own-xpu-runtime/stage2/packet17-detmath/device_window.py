@@ -17,6 +17,8 @@ BUILD = HERE / 'build'
 LATCH = BUILD / 'device-fault-latch.json'
 # Exact packet2 fault signatures; no broad 'hang' match.
 FAULT = re.compile(r'Fault response|CAT error|engine.*reset|reset.*engine|devcoredump|device coredump|GPU.*coredump|GuC.*(?:hang|lockup)|timed.out.*(?:job|fence)', re.I)
+FIXTURE_SECONDS = 1800  # Packet15 slower fresh owner: 305.376 s; 5.89x margin.
+PROBE_SECONDS = 60
 PREFIX = ['nice', '-n', '19', 'ionice', '-c', '3', 'env', 'OMP_NUM_THREADS=2']
 
 
@@ -199,13 +201,14 @@ def precision_verdicts(path):
     return verdicts
 
 
-def execute(mode, output, card, seconds):
+def execute(mode, output, card, seconds, fixture_seconds=FIXTURE_SECONDS):
     m, out = check(mode, output, card)
     # Journal preflight also occurs before claiming a device launch.
     journal()
     out.mkdir()
     result = dict(schema='own-runtime.packet17.window.v2', mode=mode, card=card,
-                  passed=False, device_executed=False, prepared_sha256=sha(BUILD / 'window-prepared.json'), owners=[])
+                  passed=False, device_executed=False, prepared_sha256=sha(BUILD / 'window-prepared.json'), owners=[],
+                  deadlines_seconds=dict(census=seconds, fixtures=fixture_seconds, precision_probe=PROBE_SECONDS))
     def started(pid):
         result['device_executed'] = True
         result['last_launched_pid'] = pid
@@ -217,7 +220,7 @@ def execute(mode, output, card, seconds):
                 probe = out / label
                 command = [str(ROOT / m[key]), 'precision-probe', '32', str(m['chunk']),
                            str(probe / 'census.jsonl'), str(ROOT / m['wa_reference_dir']), str(card)]
-                observed = watch(command, probe, min(seconds, 60), on_started=started)
+                observed = watch(command, probe, PROBE_SECONDS, on_started=started)
                 final_jsonl(probe / 'census.jsonl')
                 result['precision_link_ab'][label] = dict(watch=observed, binary_sha256=sha(ROOT / m[key]),
                     probes=precision_verdicts(probe / 'census.jsonl'), receipt_sha256=sha(probe / 'census.jsonl'))
@@ -243,7 +246,7 @@ def execute(mode, output, card, seconds):
             if mode == 'W-B':
                 path = base / 'fixtures'
                 command = [str(ROOT / m['fixture_binary']), '--authorized-device-window', str(card), str(ROOT / m['fixtures']), str(path), 'exactness']
-                owner_result['fixture_watch'] = watch(command, path, min(seconds, 1800), on_started=started)
+                owner_result['fixture_watch'] = watch(command, path, fixture_seconds, on_started=started)
                 owner_result['fixture_hashes'] = fixture_gate(path, m['cases'], m['authority'])
             result['owners'].append(owner_result)
         if mode == 'W-B' and result['owners'][0]['fixture_hashes'] != result['owners'][1]['fixture_hashes']:
@@ -263,18 +266,22 @@ def main():
     p.add_argument('--check', action='store_true')
     p.add_argument('--mode', choices=('W-A', 'W-B'), required=True)
     p.add_argument('--card', type=int, default=3)
-    p.add_argument('--seconds', type=int, default=7200)
+    p.add_argument('--seconds', type=int, default=7200, help='deadline per census owner only')
+    p.add_argument('--fixture-seconds', type=int, default=FIXTURE_SECONDS,
+                   help='independent W-B fixture deadline; minimum 1800 seconds')
     p.add_argument('--output', type=Path, required=True)
     a = p.parse_args()
     if not 1 <= a.seconds <= 14400:
         raise SystemExit('deadline must be 1..14400 seconds per census owner')
+    if not FIXTURE_SECONDS <= a.fixture_seconds <= 14400:
+        raise SystemExit('fixture deadline must be 1800..14400 seconds per owner')
     if a.check:
         check(a.mode, a.output, a.card)
         print('Hash/loader checks passed; no device queried.')
         return
     if not a.authorized_device_window:
         raise SystemExit('coordinator device admission required')
-    raise SystemExit(0 if execute(a.mode, a.output, a.card, a.seconds)['passed'] else 1)
+    raise SystemExit(0 if execute(a.mode, a.output, a.card, a.seconds, a.fixture_seconds)['passed'] else 1)
 
 
 if __name__ == '__main__':

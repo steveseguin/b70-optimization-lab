@@ -43,9 +43,11 @@ class WindowTests(unittest.TestCase):
 
     def test_wa_runs_same_probe_inputs_on_both_links_before_census(self):
         commands = []
+        deadlines = []
         def watch(command, directory, seconds, on_started=None):
             directory.mkdir()
             commands.append(command)
+            deadlines.append(seconds)
             if on_started:
                 on_started(1234)
             return dict(returncode=0)
@@ -58,15 +60,41 @@ class WindowTests(unittest.TestCase):
                 patch.object(w, 'sha', return_value='digest'), \
                 patch.object(w, 'precision_verdicts', side_effect=[plain, precise]), \
                 patch.object(w, 'summarize_census', return_value={'complete': True}):
-            receipt = w.execute('W-A', self.output, 3, 900)
+            receipt = w.execute('W-A', self.output, 3, 30)
         self.assertTrue(receipt['passed'])
         self.assertTrue(receipt['precision_link_effect_observed'])
         self.assertEqual(len(commands), 3)
+        self.assertEqual(deadlines, [60, 60, 30])
         self.assertEqual([cmd[1] for cmd in commands], ['precision-probe', 'precision-probe', 'native'])
         self.assertEqual([cmd[5] for cmd in commands], [str(self.root / 'wa-reference')] * 3)
         self.assertEqual(commands[0][2:4], commands[1][2:4])
         self.assertEqual(Path(commands[0][0]).name, 'plain-control')
         self.assertEqual(Path(commands[1][0]).name, 'census-device')
+
+    def test_fixture_deadline_independent_of_census(self):
+        for census_seconds, fixture_seconds in ((60, 1800), (7200, 1800), (1800, 2400)):
+            with self.subTest(census=census_seconds, fixture=fixture_seconds), \
+                    patch.object(w, 'check', return_value=(self.manifest, self.output)), \
+                    patch.object(w, 'journal', return_value=('', 'cursor')), \
+                    patch.object(w, 'watch', return_value={'returncode': 0}) as watch, \
+                    patch.object(w, 'final_jsonl', return_value={'complete': True}), \
+                    patch.object(w, 'sha', return_value='digest'), \
+                    patch.object(w, 'fixture_gate', return_value={'case': 'same'}):
+                receipt = w.execute('W-B', self.output, 3, census_seconds, fixture_seconds)
+                self.assertTrue(receipt['passed'])
+                self.assertEqual([call.args[2] for call in watch.call_args_list],
+                                 [census_seconds, fixture_seconds] * 2)
+            import shutil
+            shutil.rmtree(self.output)
+
+    def test_short_fixture_cli_deadline_rejected_before_check(self):
+        import sys
+        with patch.object(sys, 'argv', ['device_window.py', '--check', '--mode', 'W-B',
+                                      '--fixture-seconds', '600', '--output', str(self.output)]), \
+                patch.object(w, 'check') as check:
+            with self.assertRaisesRegex(SystemExit, 'fixture deadline'):
+                w.main()
+            check.assert_not_called()
 
     def test_wa_preparation_has_no_short_timeout(self):
         with patch.object(packet_build, 'B', self.build), patch.object(packet_build, 'run') as run:

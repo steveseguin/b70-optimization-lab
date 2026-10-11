@@ -7,5 +7,7 @@
 | offload precision options only on the compile line | [Same-object link A/B](evidence/20261011-wb-a-link-flags/README.md): plain link differs for log-v2 at 0x3f7ffffe; precise link matches all 2^32 inputs for exp-v2 and log-v2. | Both options must be on compile and link commands; generated-link assertion and fresh device gates required. |
 | GNU native-math references for the Intel W-A twin | [CPU-only finite expf mismatch](evidence/wa-gnu-reference-diagnostic.md): input 0xbe27ffff differs by one bit. The unsealed GNU pass is preserved. | Use the original Intel host flags without -mfma for generator and verifier. W-B detmath hashes are independent and unchanged. |
 
+| a blanket per-submission time limit applied to the slow on-device reference | The 0.5 s cutoff would abort the first GDN fixture: v1 takes 1.048596 s per row and 305.376 s per owner. Reference-only 3 s budget / 4 s wait, independent 1800 s fixture watch, CPU row screen and protocol tests are retained in [WINDOW.md](WINDOW.md) and [row timing](reference-row-timing.json). No device ran. | Keep parallel/census at 0.5 s / 2 s. Split reference rows if the CPU screen suggests >=2.5 s; never extend the driver-bound wait. Process watches need at least 4x measured margin; record unmeasured limits honestly. |
+
 Packet17 v2 is a candidate arithmetic identity. Neither a successful native
 compile nor matching host fixtures closes its pending device proof obligations.

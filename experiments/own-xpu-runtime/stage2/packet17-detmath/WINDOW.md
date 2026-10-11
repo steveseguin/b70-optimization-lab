@@ -14,9 +14,9 @@ From the repository root, after the coordinator has sourced
 
 ```sh
 nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B experiments/own-xpu-runtime/stage2/packet17-detmath/device_window.py --check --mode W-B --card 3 --output experiments/own-xpu-runtime/stage2/packet17-detmath/build/card3-wb-b
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B experiments/own-xpu-runtime/stage2/packet17-detmath/device_window.py --authorized-device-window --mode W-B --card 3 --seconds 600 --output experiments/own-xpu-runtime/stage2/packet17-detmath/build/card3-wb-b
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B experiments/own-xpu-runtime/stage2/packet17-detmath/device_window.py --authorized-device-window --mode W-B --card 3 --seconds 1800 --fixture-seconds 1800 --output experiments/own-xpu-runtime/stage2/packet17-detmath/build/card3-wb-b
 nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B experiments/own-xpu-runtime/stage2/packet17-detmath/device_window.py --check --mode W-A --card 3 --output experiments/own-xpu-runtime/stage2/packet17-detmath/build/card3-wa-b
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B experiments/own-xpu-runtime/stage2/packet17-detmath/device_window.py --authorized-device-window --mode W-A --card 3 --seconds 900 --output experiments/own-xpu-runtime/stage2/packet17-detmath/build/card3-wa-b
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B experiments/own-xpu-runtime/stage2/packet17-detmath/device_window.py --authorized-device-window --mode W-A --card 3 --seconds 7200 --output experiments/own-xpu-runtime/stage2/packet17-detmath/build/card3-wa-b
 ```
 
 These are diagnostic device jobs, not model servers. Launch the wrapper through
@@ -101,17 +101,67 @@ The wrapper checks packet2 fault signatures throughout startup, execution and a
 five-second post-exit journal window. On a fault or deadline it writes a latch
 and sends one SIGTERM. It allows a 20-second graceful drain, then returns the
 still-live PID to the coordinator without killing it or launching anything else.
-Census and fixture device events have a two-second waiting deadline; any measured kernel duration
-of 0.5 seconds or longer aborts the window. Slabs are bounded to 262,144 values,
-with 64 values per work item. The first real device window must still establish
-the actual duration bound; no host-only build can prove a GPU time limit.
+Reference-core rows alone have a **3.0-second completed-event budget** and
+**4-second wait deadline**, below the unchanged 5-second driver job timeout.
+Card 3's v1 GDN recurrence averages 1,048.596 ms per row in
+[packet15's snapshot](../packet15-nongemv/before-snapshot.json). The scalar
+reference executes the same loops in v2, with deterministic exp/log replacing
+libm. It must not inherit the fast parallel-kernel cutoff.
+Parallel kernels and census submissions keep **0.5 seconds / 2 seconds**.
+Slabs remain bounded to 262,144 values, with 64 values per work item.
 
-Planning allowances, not new device measurements: W-B a few minutes
-(600 seconds per census owner); W-A about 5–10 minutes (900-second ceiling),
-including bounded slab decoding and the short A/B probes. W-A's exact duration
-still needs a coordinator measurement. Its full reference pass runs before
-card admission. Each submission retains the 0.5-second abort threshold and
-two-second wait deadline; no longer submissions were introduced.
+`--seconds` controls each census owner only (default 7200). W-B's fixture watch
+has its own `--fixture-seconds` (default and minimum 1800), never clamped by
+`--seconds`. The two historical fixture owners took 305.376 and 297.717 seconds;
+1800 gives 5.89x margin over the slower run. The recommended W-B census limit
+is also 1800. W-A uses 7200, giving 12x the old **unmeasured** 600-second planning
+allowance; its full streamed-device duration is still unmeasured. Each link probe
+has an independent 60-second watch. These are per-process limits, not a limit
+on the whole two-owner W-B window. Deadline SIGTERM is a fault-class event;
+never shrink these limits to fit a scheduling slot.
+
+[CPU row screening](reference-row-timing.json) times every row of all 72 fixtures
+with both cores, using three fresh fixture copies and the same Intel host flags.
+Scaling its slowest v2 row median against the v1 GDN CPU median and the measured
+v1 device cost is only a risk screen, **not a device measurement or upper bound**.
+The builder refuses to seal if that screen reaches 2.5 seconds; split the row
+before admission in that case, never increase the limits. No core loops or
+arithmetic were changed by this timeout repair.
+
+### Deadline margins (seconds)
+
+Measurements below are historical v1/earlier-census evidence, not fresh v2
+qualification. A dash means the duration is unmeasured; no ratio is invented.
+The requested reference wait is an explicit exception to the fourfold margin:
+4 / 1.048596 = 3.81x, not 4x. Raising it would erode the driver's 5-second bound.
+The 3-second budget is checked **after completion**, not a watchdog timeout.
+
+| Window / bound | Measured duration | Limit | Limit / measured |
+| --- | ---: | ---: | ---: |
+| W-B reference completed-event budget | 1.048596 (GDN site mean) | 3 | 2.86x |
+| W-B reference event wait | 1.048596 (GDN site mean) | 4 | 3.81x; requested exception |
+| W-B parallel completed-event budget | <=0.0147204 (whole three-kernel chain) | 0.5 | >=33.97x |
+| W-B parallel chain wait | 0.0148333 (host wall) | 2 | 134.83x |
+| W-B copy wait | — | 2 | — |
+| W-A/W-B census completed-event budget | 0.000295938 (old W-B maximum) | 0.5 | 1689.54x for that sample |
+| W-A/W-B census event wait | 0.000295938 (device time only) | 2 | 6758.17x for that sample; host wait unmeasured |
+| W-B census owner watch | 18.989899 (incomplete failed attempt) | 1800 recommended; 7200 default | 94.79x / 379.15x of partial run only; full pass unmeasured |
+| W-B fixture owner watch | 305.376040 (slower fresh v1 owner) | 1800 independent default/minimum | 5.89x |
+| W-A census owner watch | — (old planning allowance 300–600) | 7200 | —; 12x 600-second estimate |
+| W-A plain-link / precise-link watch, each | — | 60 | — |
+| W-B fixture shutdown | — (prior receipts confirm clean exit, no separate time) | 10 | — |
+| Both watcher graceful drain after SIGTERM | — | 20 | —; returns live PID, never hard-kills |
+| Both journal command timeout | — | 3 | —; journal loss can stop child |
+| Both loader check timeout (before launch) | — | 15 | —; no GPU process yet |
+| Driver job timeout (unchanged, both windows) | 1.048596 (v1 GDN) | 5 | 4.77x |
+
+Both watches also observe the journal for **5 seconds after child exit** (20 ×
+0.25-second sleeps); this is a fixed observation period, not a child deadline.
+Polling sleeps are not execution budgets. W-A has no explicit separate shutdown
+deadline; queue destruction is covered by its owner watch. New W-A submissions,
+probe startup, copies, shutdown and journal latency still need measured bounds
+at the coordinator's next admitted window; the table does not assert a measured
+fourfold guarantee where no measurement exists.
 
 ## Same-object link A/B in W-A
 
@@ -131,15 +181,17 @@ The full census, not these short probes, remains the rsqrt candidate gate.
 
 ## Rebuild or restore W-A references on CPU
 
-For the existing packet build (verified host hashes and oracle retained):
+For this runner repair (verified host hashes, W-A references and oracle retained):
 
 ```sh
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B experiments/own-xpu-runtime/stage2/packet17-detmath/build.py --native-only --jobs 2
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B experiments/own-xpu-runtime/stage2/packet17-detmath/prepare_wa.py
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B experiments/own-xpu-runtime/stage2/packet17-detmath/build.py --jobs 2
 nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B experiments/own-xpu-runtime/stage2/packet17-detmath/seal.py
 ```
 
-`prepare_wa.py` verifies completed references; it never launches a device.
+`seal.py` verifies the existing W-A input identity and every stored-file hash; it
+does not regenerate reference math or repeat full CPU readback. `prepare_wa.py`
+can repeat full CPU readback if its verifier or bound inputs change; it never
+launches a device.
 The build requires system zlib headers and library for lossless slab storage.
 For a clean CPU reference reconstruction, build the Intel HOST_ONLY
 `wa-precompute` and `wa-verify` targets with at most two jobs, then use `prepare_wa.py --precompute` with a **fresh**

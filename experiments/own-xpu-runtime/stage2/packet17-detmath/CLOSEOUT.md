@@ -108,3 +108,39 @@ comparisons against the original host arithmetic. The lossless files occupy
 14,643,930,234 bytes. Readback took 214 seconds on one CPU thread; this is
 CPU preparation timing, not device-window timing. The sealed
 [reference receipt](wa-reference-receipt.json) records every file hash.
+
+## October 11 reference-row deadline repair (CPU only)
+
+Coordinator review found that a blanket 0.5-second cutoff would reject the
+slow scalar authority before W-B reached its fixture gates. Historical v1 GDN
+recurrence costs 1.048596 seconds per row; the two complete packet15 fixture
+owners took 305.376 and 297.717 seconds with clean teardown. Reference rows now
+have a 3-second completed-event budget and a 4-second wait, below the unchanged
+5-second driver timeout. Parallel and census kernels retain 0.5 / 2 seconds.
+The requested 4-second wait is 3.81x the measured mean, an explicit exception to
+fourfold margin; it is not described as a fourfold guarantee.
+
+W-B fixtures now have an independent 1800-second default and minimum (5.89x the
+slower v1 owner), with regression tests proving shorter census limits cannot
+truncate them. W-A's recommended census watch is 7200 seconds; its full streaming
+duration remains unmeasured. The two link probes retain independent 60-second
+watches. [Every limit and its measurement gap](WINDOW.md#deadline-margins-seconds)
+is listed, including copy, shutdown, journal, loader and graceful-drain deadlines.
+
+The matched Intel HOST_ONLY [row screen](reference-row-timing.json) covers every
+row in all 72 fixtures with three fresh fixture copies for each core. The v2
+GDN core has the same 48-head, 128-row, 128-element recurrence and reduction
+loops. Deterministic exp/log add work in the softplus, decay and sigmoid paths;
+no recurrence dimensions grow. The worst median-row screen remains below
+2.5 seconds when scaled against v1 GDN's measured cost, so no row was split.
+This CPU ratio cannot qualify device timing, compiler lowering or device safety.
+The build now refuses to seal a screen at or above that threshold.
+
+The packet pipeline rebuilt both compiler host suites and the device binaries
+without executing device code. The 72-case host gates and fresh repeats were
+rerun. Existing exhaustive host hashes, W-A reference files and the CPU oracle
+were verified and reused; their bound arithmetic inputs did not change. The
+updated build receipt and ignored window-prepared.json bind the repaired code,
+tests, commands and binary hashes. No device ran. The host remains in FAULT HALT;
+PID 183867 was not signaled or attached to. The coordinator owns recovery and
+admission before W-B, then W-A.

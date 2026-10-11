@@ -102,6 +102,7 @@ def main():
   run([B/folder/'host-test',B/'fixtures',P/(tag+'-host.json'),'--generate-core'])
   run([B/folder/'host-test',B/'fixtures',P/(tag+'-fresh.json')])
  link_precision_control()
+ run([sys.executable,'-B',P/'time_reference_rows.py'])
  run([sys.executable,'-B',P/'capture_fixtures.py'])
  run([sys.executable,'-B',P/'test_window.py'])
  if a.hashes:

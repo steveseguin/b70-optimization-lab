@@ -186,8 +186,12 @@ fixture operands, raw-bit comparisons and ULP histograms. The build verifies
 every stored fingerprint before sealing. A short same-object plain/precise link
 A/B reports divide, sqrt and rsqrt rounding directly in the window receipt.
 All device timings and the new A/B result remain pending; neither binary ran
-in this task. Allow a few minutes for W-B and roughly 5–10 for W-A, as planning
-estimates. The old 1–4-hour host calculation is outside the device window.
+in this task. Historical W-B fixture owners took about five minutes each;
+the two-owner window needs both passes plus its censuses. W-A remains an
+unmeasured 5–10-minute planning estimate. Use the margin-bearing deadlines in
+[WINDOW.md](WINDOW.md), including the independent 1800-second fixture watch
+and 7200-second W-A census watch. The old 1–4-hour host calculation is outside
+the device window.
 
 The W-A generator and verifier use the original Intel host flags, without
 `-mfma`. The initial GNU preparation was rejected at a finite `expf` input

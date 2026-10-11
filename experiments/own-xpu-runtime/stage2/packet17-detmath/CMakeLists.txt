@@ -36,3 +36,11 @@ if(NATIVE)
  target_link_libraries(census-device PRIVATE z)
  target_link_options(census-device PRIVATE -fsycl -foffload-fp32-prec-div -foffload-fp32-prec-sqrt)
 endif()
+
+# Matched CPU-only row timing screens the slow reference before device admission.
+foreach(version v1 v2)
+ add_executable(host-row-${version} host_row_timing.cpp)
+ target_compile_definitions(host-row-${version} PRIVATE HOST_ONLY)
+ target_compile_options(host-row-${version} PRIVATE -O2 -mfma -fno-fast-math -ffp-contract=off)
+endforeach()
+target_compile_definitions(host-row-v1 PRIVATE TIMING_V1)

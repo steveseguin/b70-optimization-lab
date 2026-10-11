@@ -28,6 +28,16 @@ for name in (B/'fixtures/cases.txt').read_text().split():
 sourcefiles=sorted(q for q in P.iterdir() if q.suffix in ('.hpp','.cpp','.py') or q.name=='CMakeLists.txt')
 binaries=[B/'gnu/host-test',B/'native/host-test',B/'native/census-device',B/'native/device-test',B/'oracle/oracle',B/'host-hashes-generator']
 receipt=dict(device_link_commands=link_commands, host_hashes_reused_and_verified=True, schema='own-runtime.packet17.build.v2',compiled=True,device_executed=False,arithmetic='iq3-p17-detmath-v2',parallel_vs_core_gnu=72,parallel_vs_core_intel=72,core_gnu_vs_intel=72,host_fresh_repeats_passed=True,compared_bytes_per_suite=g['compared_bytes'],host_cases=i['cases'],hashes={str(q.relative_to(ROOT)):sha(q) for q in sourcefiles},binaries={str(q.relative_to(P)):sha(q) for q in binaries},fixture_hashes_sha256=sha(P/'fixture-hashes.json'),rope_sha256=sha(P/'rope.bf16'),host_hashes_receipt_sha256=sha(P/'host-hashes-receipt.json'),host_hashes_sha256=sha(B/'host-hashes.txt'),fixture_trace_receipt_sha256=sha(P/'fixture-trace-receipt.json'),accuracy_receipt_sha256=sha(P/'accuracy-receipt.json'),protocol_tests=protocol.stderr,native_compiler='/opt/intel/oneapi/compiler/2026.0/bin/icpx',native_flags=['-O2','-fsycl','-fno-fast-math','-ffp-contract=off','-fdenormal-fp-math=ieee','-foffload-fp32-prec-div','-foffload-fp32-prec-sqrt'],cpu_threads=2,max_compile_jobs=2)
+timing=json.loads((P/'reference-row-timing.json').read_text())
+assert timing['device_executed'] is False and not timing['split_required_by_cpu_screen']
+for name,digest in timing['sources'].items():assert sha(ROOT/name)==digest
+for version,digest in timing['binaries'].items():assert sha(B/'native'/('host-row-'+version))==digest
+receipt['reference_row_cpu_screen']=dict(receipt_sha256=sha(P/'reference-row-timing.json'),
+    worst=timing['worst_screen'],device_executed=False)
+receipt['window_budgets_seconds']=dict(reference_submission=3.0,reference_wait=4,
+    parallel_and_census_submission=0.5,parallel_and_census_wait=2,
+    fixture_watch_default=1800,census_watch_default=7200,precision_probe_watch=60,
+    fixture_shutdown=10,watcher_graceful_drain=20,post_exit_observation=5)
 if (P/'oracle-comparison.json').exists():
  comparison=json.loads((P/'oracle-comparison.json').read_text())
  run=ROOT/'experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261011'
