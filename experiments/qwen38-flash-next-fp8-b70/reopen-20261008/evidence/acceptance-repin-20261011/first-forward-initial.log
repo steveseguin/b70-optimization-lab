@@ -1,0 +1,99 @@
+test_absent_native_trace_is_explicitly_unavailable (test_first_forward_probe.FirstForwardTests.test_absent_native_trace_is_explicitly_unavailable) ... ok
+test_container_mount_layout_admits_without_runtime_or_worker (test_first_forward_probe.FirstForwardTests.test_container_mount_layout_admits_without_runtime_or_worker) ... FAIL
+test_control_failure_never_runs_mixed (test_first_forward_probe.FirstForwardTests.test_control_failure_never_runs_mixed) ... ok
+test_event_flushes_both_clocks_and_pid (test_first_forward_probe.FirstForwardTests.test_event_flushes_both_clocks_and_pid) ... ok
+test_exact_pair_finishes_once (test_first_forward_probe.FirstForwardTests.test_exact_pair_finishes_once) ... ok
+test_exception_object_is_not_retained_during_teardown (test_first_forward_probe.FirstForwardTests.test_exception_object_is_not_retained_during_teardown) ... ok
+test_existing_receipt_is_never_overwritten (test_first_forward_probe.FirstForwardTests.test_existing_receipt_is_never_overwritten) ... ok
+test_failed_release_does_not_report_success (test_first_forward_probe.FirstForwardTests.test_failed_release_does_not_report_success) ... ok
+test_fault_after_mixed_never_compares (test_first_forward_probe.FirstForwardTests.test_fault_after_mixed_never_compares) ... ok
+test_first_stop_reason_is_preserved (test_first_forward_probe.FirstForwardTests.test_first_stop_reason_is_preserved) ... ok
+test_guardian_exact_clean_exit_passes_with_postflight (test_first_forward_probe.FirstForwardTests.test_guardian_exact_clean_exit_passes_with_postflight) ... ok
+test_guardian_native_crash_latches_stop (test_first_forward_probe.FirstForwardTests.test_guardian_native_crash_latches_stop) ... ok
+test_guardian_pass_requires_valid_rank_receipt (test_first_forward_probe.FirstForwardTests.test_guardian_pass_requires_valid_rank_receipt) ... ok
+test_guardian_stop_before_spawn_refuses_without_child (test_first_forward_probe.FirstForwardTests.test_guardian_stop_before_spawn_refuses_without_child) ... ok
+test_guardian_timeout_latches_stop_without_killing (test_first_forward_probe.FirstForwardTests.test_guardian_timeout_latches_stop_without_killing) ... ok
+test_import_and_help_do_not_import_torch (test_first_forward_probe.FirstForwardTests.test_import_and_help_do_not_import_torch) ... ok
+test_incomplete_shutdown_refuses (test_first_forward_probe.FirstForwardTests.test_incomplete_shutdown_refuses) ... ok
+test_initial_fault_prevents_all_work (test_first_forward_probe.FirstForwardTests.test_initial_fault_prevents_all_work) ... ok
+test_instrumentation_calls_real_stage_and_restores (test_first_forward_probe.FirstForwardTests.test_instrumentation_calls_real_stage_and_restores) ... ok
+test_instrumentation_restores_even_on_failure (test_first_forward_probe.FirstForwardTests.test_instrumentation_restores_even_on_failure) ... ok
+test_journal_fault_after_control_prevents_mixed (test_first_forward_probe.FirstForwardTests.test_journal_fault_after_control_prevents_mixed) ... ok
+test_kernel_ir_is_saved_and_hashed (test_first_forward_probe.FirstForwardTests.test_kernel_ir_is_saved_and_hashed) ... ok
+test_missing_rank_receipt_cannot_pass (test_first_forward_probe.FirstForwardTests.test_missing_rank_receipt_cannot_pass) ... ok
+test_missing_teardown_refuses (test_first_forward_probe.FirstForwardTests.test_missing_teardown_refuses) ... ok
+test_mixed_mismatch_fails_exact_gate (test_first_forward_probe.FirstForwardTests.test_mixed_mismatch_fails_exact_gate) ... ok
+test_no_signal_kill_or_abrupt_exit_in_first_forward (test_first_forward_probe.FirstForwardTests.test_no_signal_kill_or_abrupt_exit_in_first_forward) ... ok
+test_overlay_pin_and_closed_payload (test_first_forward_probe.FirstForwardTests.test_overlay_pin_and_closed_payload) ... ok
+test_overlay_pin_refuses_before_loader_import (test_first_forward_probe.FirstForwardTests.test_overlay_pin_refuses_before_loader_import) ... ok
+test_pre_stage_fault_never_calls_kernel (test_first_forward_probe.FirstForwardTests.test_pre_stage_fault_never_calls_kernel) ... ok
+test_preservation_never_signals_or_exits (test_first_forward_probe.FirstForwardTests.test_preservation_never_signals_or_exits) ... ok
+test_printed_command_keeps_single_device_and_pin (test_first_forward_probe.FirstForwardTests.test_printed_command_keeps_single_device_and_pin) ... ok
+test_printer_requires_sha256 (test_first_forward_probe.FirstForwardTests.test_printer_requires_sha256) ... ok
+test_production_geometry_and_exact_host_bytes (test_first_forward_probe.FirstForwardTests.test_production_geometry_and_exact_host_bytes) ... ok
+test_refusal_does_not_spawn_or_import_torch (test_first_forward_probe.FirstForwardTests.test_refusal_does_not_spawn_or_import_torch) ... ok
+test_routes_cover_every_host_row_and_both_placements (test_first_forward_probe.FirstForwardTests.test_routes_cover_every_host_row_and_both_placements) ... ok
+test_source_hash_failure_is_terminal_before_spawn (test_first_forward_probe.FirstForwardTests.test_source_hash_failure_is_terminal_before_spawn) ... ok
+test_teardown_calls_reviewed_shutdown_then_release (test_first_forward_probe.FirstForwardTests.test_teardown_calls_reviewed_shutdown_then_release) ... ok
+
+======================================================================
+FAIL: test_container_mount_layout_admits_without_runtime_or_worker (test_first_forward_probe.FirstForwardTests.test_container_mount_layout_admits_without_runtime_or_worker)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/probe/test_first_forward_probe.py", line 343, in test_container_mount_layout_admits_without_runtime_or_worker
+    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+AssertionError: 1 != 0 : Traceback (most recent call last):
+  File "<string>", line 56, in <module>
+AssertionError: {
+  "admission_refused_unix": 1791679229.4405453,
+  "bytes_equal": false,
+  "diagnostic_only": true,
+  "environment": {
+    "FLASHNEXT_PROBE_ADMIT": "1",
+    "FLASHNEXT_PROBE_PACKAGE": "/tmp/flashnext-acceptance-repin-fgwotlbd/tmpo4qca_mi/repo/experiments/qwen38-flash-next-fp8-b70/reopen-20261008",
+    "PYTORCH_ALLOC_CONF": "pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1",
+    "PYTORCH_CUDA_ALLOC_CONF": "pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1",
+    "PYTORCH_HIP_ALLOC_CONF": "pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1"
+  },
+  "exception": {
+    "message": "Owner acceptance time is in the future",
+    "type": "RuntimeError"
+  },
+  "image": "vllm/vllm-openai-xpu@sha256:e4446310b1d30015e8fdc1a0a2ef1669ac6bef857cbe772487571ed5c1a926a9",
+  "image_plan_sha256": "08bf4e83bff6fb77dc6d4bb0d11e53edd63a59ebfd9bfb9a36e7197806469cee",
+  "journal_admission": {
+    "counted_fault_lines": [],
+    "counted_gpu_incidents": null,
+    "excluded_fault_lines": [],
+    "journal_evidence_available": false,
+    "owner_acceptance_path": "/tmp/flashnext-acceptance-repin-fgwotlbd/tmpo4qca_mi/repo/experiments/ltx25-b70/data/resume-20261008/fault-archive-20261011T003614Z-owner-accept-receipt.json",
+    "owner_acceptance_sha256": "c2947a5065aeb27bd88938ed09cb8801043646e2e4d8f5e433ff8da7807ba2f0",
+    "owner_acceptance_verified": false,
+    "passed": false
+  },
+  "native_queue_destruction_verified": false,
+  "overlay_sha256": "daf50d2391549a9fb5c03ee2cf3a69e763cc44e621fdaf35e4b06529c7142b69",
+  "passed": false,
+  "schema": "neural.download.flashnext-first-forward.v1",
+  "source_sha256": "ff9af15de9ed21e028f847ffd48f1e10b59565030957fdc89939f23801dbc4ea",
+  "stage": "admission_refused",
+  "status": "harness refused before device work",
+  "support_source_sha256": {
+    "placement-attempt6-v5.json": "b64cf1c9cf732d9093ed55a90cc59e1d52b5be5a755914fc04d860aecf384ce6",
+    "probe/container_command.py": "9021c9063d68183e95b6851436f73e75e6cb1c43c8a268e978d32b932ed02cec",
+    "probe/first_forward_command.py": "f5f2973411f48706209117fdd77cfd7387356e5f09de5349cf4790d5931cd27b",
+    "probe/run-first-forward-in-container.sh": "91ff02af77101317242b1d1aa8f56205eb4a063e021e5a9ce7e249690350a134",
+    "probe/single_rank_slab_probe.py": "a5bec8bb47799547bd814789b3b0b9395327768f317c99e341002ffa527e1558",
+    "probe/watch_kernel.py": "6e04346d89585f2285e0a3aa0c137ccbe4f4a03ffe6d654b20cb43ef602fd459",
+    "teardown_receipts.py": "46099d077ec2025d2849ffc4052baee603e15b5f32b811a536a14ebb5727b5a7"
+  },
+  "teardown_complete": false,
+  "worker_started": false
+}
+
+
+
+----------------------------------------------------------------------
+Ran 37 tests in 0.276s
+
+FAILED (failures=1)

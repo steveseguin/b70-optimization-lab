@@ -29,6 +29,10 @@ continuous-service rule or superseded relaunch queues.
 
 ## Four-Card Halt And Flash-Next
 
+**2026-10-11 CPU repair:** The owner's new receipt accepts the third incident for the engine window and supersedes the earlier halt decision below; it explicitly keeps the LTX stream stopped.
+The Flash-Next receipt tests and controller hash now match that decision, and the teardown bundle was rebuilt; the CPU preview passes, with one older host-pointer patch test still failing ([checks and limits](notes/2026-10-11-third-incident-acceptance-repin.md)).
+This task operated no GPU or service, and the supplied health receipt predates acceptance, so actual launch admission still needs a valid later receipt.
+
 On October 10 the immediate-abrupt-exit probe completed correct computation, then card `23:00.0` logged four fault-class lines at 18:07:19 UTC. The boot then had eight fault-class lines; the bounded postflight added none. Preserve
 `/mnt/fast-ai/bench-results/ltx25-baseline-20260913/FAULT.json` and every probe/run receipt under `experiments/qwen38-flash-next-fp8-b70/reopen-20261008/`.
 
