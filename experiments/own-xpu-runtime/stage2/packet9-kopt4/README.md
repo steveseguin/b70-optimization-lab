@@ -1,7 +1,7 @@
 # Round 4 — routed experts and whole-layer GEMV timing
 
 CPU preparation only. New expert kernels and both SYCL executables compile;
-CPU exactness and harness checks pass. No device binary was executed. Card-3
+CPU exactness and harness checks pass. This repair ran no device binary. Card-3
 exactness, speed, target-model parity and performance promotion remain pending.
 Earlier packets are unchanged. This is our own code over the lab's packet2
 owner/math, packet6/7 kernels and packet8 decode, with Intel SYCL dependencies.
@@ -151,13 +151,50 @@ operator output and two fresh-owner timing results before deciding the next
 lever. A full-model lossless gate and realistic suite are still required for
 any headline. See [closeout](CLOSEOUT.md) and [negative index](DO-NOT-REPEAT.md).
 
+## October 11 allocation and failure-classification repair
+
+The coordinator's **04:40:09 UTC** card-3 attempt stopped in `experts_sg32`
+with `duplicate allocation label`, **zero completed cases**, no kernel fault
+lines and clean teardown. Each matrix reused the pinned `packed-stage`,
+`x-stage` and `route-stage` labels; readback labels also repeated. The previous
+CPU tests only exercised arithmetic, so they missed this allocation path.
+
+[The shared expert case](tests/expert_case.hpp) now scopes every allocation by
+case and every matrix buffer by projection index (0 gate, 1 up, 2 down).
+[MockDevice coverage](tests/mock_experts.hpp) runs that same case setup and
+copy/readback path on ordinary CPU memory with reference operations. The
+Arena still rejects duplicate live labels. Kernel arithmetic is unchanged.
+
+The native receipt distinguishes an actual byte mismatch (`failure_kind:
+exactness`) from an infrastructure exception. `checks` counts completed
+cases, so an actual mismatch in the first case can still have `checks: 0`.
+The packet-local watcher and exactness harness now record:
+
+- Infrastructure abort: `outcome: aborted`, `error: aborted: <error>`, no
+  fault latch for a clean native abort. The run stays failed and cannot admit timing.
+- Byte mismatch: `outcome: exactness_failed`, with a latch even in the first case.
+- Kernel-journal fault: `outcome: kernel_fault`, with the matching `fault_lines`
+  saved in the latch, including faults during postflight or without native JSON.
+
+Deadlines, interrupted windows, lost journal visibility and unsafe teardown
+retain their safety latches. There is no automatic retry. Nine new Python
+checks cover these boundaries and success through both variants, mocking the
+child and journal; none launches a device process.
+
+The original coordinator tree and archived false latch were moved intact to
+`archive-20261011-0440/build/`. All 214 original files were rehashed after the
+move; `archive-inventory.json` records their hashes, and the pre-repair build
+receipt is retained there. This is preserved evidence, not validation scratch.
+The fresh `validate.py` run passed and removed only its new `build/` scratch.
+Device exactness and timing remain pending after this repair.
+
 ## CPU checks and coordinator commands
 
-[build-receipt.json](build-receipt.json) records **22 Python tests**, **27
+[build-receipt.json](build-receipt.json) records **31 Python tests**, **27
 hash-matched fixtures**, **616,960 scalar decode comparisons** (551,424 regular
 plus 65,536 IQ4_XS), **3,032 row comparisons**, **448 ordered mixture checks**,
 and an identical fresh CPU process repeat. The special-value subset is not
-added twice. SYCL device tests compile but were never invoked. The host
+added twice. Both SYCL targets compile; neither was invoked during this repair. The host
 executable is checked with `readelf` for absence of device libraries.
 
 The prepared device gate contains **28 expert-block cases**: 14 per mode,
@@ -165,7 +202,10 @@ covering three formats, BF16/F16 inputs, different gate/up weights, nontrivial
 slot activations, route order, bank 511, duplicate IDs, invalid IDs, row spans,
 tails, both reduction orders and weighted mixtures. Every projection's FP32
 and rounded BF16 output and every route status is compared with the CPU
-reference. These are pending device checks, not CPU-test passes.
+reference. The same case setup now runs all 28 cases end to end through `MockDevice`,
+including allocation, upload, three reference operations, byte comparisons,
+release and clean teardown. This catches Arena refusals before a device window;
+it does not execute or qualify the SYCL kernels.
 
 Build/test on CPU (no device runtime execution):
 

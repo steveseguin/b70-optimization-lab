@@ -78,4 +78,64 @@ class Protocol(unittest.TestCase):
         self.assertFalse(a['measured']);self.assertEqual(a['corrections']['selected_expert_bytes_per_token'],949760000)
         self.assertGreater(a['scenarios'][0]['predicted_ms_range'][0],a['scenarios'][0]['bandwidth_only_590_floor_ms'])
 
+class ExactnessWindow(unittest.TestCase):
+    def run_window(self, raw, fault_at=None, stop_reason=None):
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch, Mock
+        import watcher
+        exact=load('_packet9_exactness',HERE/'tests/device_window.py')
+        with tempfile.TemporaryDirectory(dir=HERE/'build') as tmp:
+            root=Path(tmp);out=root/'window';latch=root/'latch.json'
+            fault='xe: Fault response for engine 0'
+            tails=iter(range(22))
+            def journal(*args):
+                n=next(tails,99)
+                return (fault+'\n' if n==fault_at else '', 'cursor')
+            def launch(command, **kwargs):
+                if raw is not None:Path(command[4]).write_text(json.dumps(raw))
+                child=Mock(pid=123,returncode=1 if raw is None or raw.get('error') else 0)
+                child.poll.return_value=child.returncode
+                return child
+            with patch.object(exact,'admit',return_value=(out,dict(fixture_cases={m:14 for m in MODES}))), \
+                 patch.object(exact,'sha',return_value='prepared'), patch.object(exact,'LATCH',latch), \
+                 patch.object(watcher,'LATCH',latch), patch.object(watcher,'journal',side_effect=journal), \
+                 patch.object(watcher.subprocess,'Popen',side_effect=launch) as child, \
+                 patch.object(watcher.time,'sleep'), patch.object(watcher.signal,'signal'), \
+                 patch.object(watcher.signal,'getsignal'):
+                if stop_reason:
+                    with patch.object(watcher.time,'monotonic',side_effect=[0,121,122]):exact.execute(3,out)
+                else:exact.execute(3,out)
+                record=json.loads((out/'window.json').read_text())
+                saved=json.loads(latch.read_text()) if latch.exists() else None
+                self.assertEqual(child.call_count,2 if record['passed'] else 1)
+                return record,saved
+    def raw(self, error='', checks=14, failure_kind=''):
+        return dict(checks=checks,error=error,failure_kind=failure_kind,teardown=native(plan()['layers'][0])['teardown'])
+    def test_native_aborted_before_checks(self):
+        r,latch=self.run_window(self.raw('duplicate allocation label',0,'infrastructure'))
+        self.assertEqual(r['error'],'aborted: duplicate allocation label');self.assertEqual(r['outcome'],'aborted')
+        self.assertFalse(r['passed']);self.assertIsNone(latch)
+    def test_actual_exactness_failure_in_first_case(self):
+        r,latch=self.run_window(self.raw('device/CPU byte mismatch',0,'exactness'))
+        self.assertEqual(r['outcome'],'exactness_failed');self.assertIn('exactness failed',latch['reason'])
+    def test_kernel_fault_before_native_receipt(self):
+        r,latch=self.run_window(None,fault_at=1)
+        self.assertEqual(r['outcome'],'kernel_fault');self.assertIn('Fault response',latch['fault_lines'][0])
+    def test_post_exit_fault_overrides_native_abort(self):
+        r,latch=self.run_window(self.raw('duplicate allocation label',0,'infrastructure'),fault_at=2)
+        self.assertEqual(r['outcome'],'kernel_fault');self.assertEqual(len(latch['fault_lines']),1)
+    def test_missing_native_receipt_is_abort(self):
+        r,latch=self.run_window(None);self.assertEqual(r['outcome'],'aborted');self.assertIsNone(latch)
+    def test_incomplete_coverage_is_abort(self):
+        r,latch=self.run_window(self.raw(checks=0));self.assertEqual(r['outcome'],'aborted');self.assertIsNone(latch)
+    def test_both_variants_pass(self):
+        r,latch=self.run_window(self.raw());self.assertTrue(r['passed']);self.assertIsNone(latch)
+    def test_deadline_still_latches(self):
+        r,latch=self.run_window(self.raw('cooperative stop',0,'infrastructure'),stop_reason='deadline')
+        self.assertEqual(r['outcome'],'window_stopped');self.assertEqual(latch['reason'],'window deadline')
+    def test_unsafe_teardown_still_latches(self):
+        raw=self.raw('allocation failed',0,'infrastructure');raw['teardown']['safe_to_exit']=False
+        r,latch=self.run_window(raw);self.assertFalse(r['passed']);self.assertIn('unsafe teardown',latch['reason'])
+
 if __name__=='__main__':unittest.main()

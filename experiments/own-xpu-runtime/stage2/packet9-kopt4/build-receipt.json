@@ -1,7 +1,7 @@
 {
   "schema": "own-runtime.iq3.packet9.cpu-build.v1",
   "passed": true,
-  "date_utc": "2026-10-11T04:36:27.676150+00:00",
+  "date_utc": "2026-10-11T04:47:22.410067+00:00",
   "device_executed": false,
   "commands": [
     {
@@ -14,7 +14,7 @@
         "-DCMAKE_BUILD_TYPE=Release"
       ],
       "returncode": 0,
-      "stdout": "-- The CXX compiler identification is IntelLLVM 2026.0.0\n-- Detecting CXX compiler ABI info\n-- Detecting CXX compiler ABI info - done\n-- Check for working CXX compiler: /opt/intel/oneapi/compiler/2026.0/bin/icpx - skipped\n-- Detecting CXX compile features\n-- Detecting CXX compile features - done\n-- Configuring done (0.3s)\n-- Generating done (0.0s)\n-- Build files have been written to: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet9-kopt4/build/device\n",
+      "stdout": "-- The CXX compiler identification is IntelLLVM 2026.0.0\n-- Detecting CXX compiler ABI info\n-- Detecting CXX compiler ABI info - done\n-- Check for working CXX compiler: /opt/intel/oneapi/compiler/2026.0/bin/icpx - skipped\n-- Detecting CXX compile features\n-- Detecting CXX compile features - done\n-- Configuring done (0.2s)\n-- Generating done (0.0s)\n-- Build files have been written to: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet9-kopt4/build/device\n",
       "stderr": ""
     },
     {
@@ -25,7 +25,7 @@
         "-j2"
       ],
       "returncode": 0,
-      "stdout": "[  6%] Building CXX object CMakeFiles/owner.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp.o\n[ 13%] Building CXX object CMakeFiles/kopt.dir/kernels.cpp.o\n[ 20%] Linking CXX static library libowner.a\n[ 20%] Built target owner\n[ 26%] Building CXX object CMakeFiles/host-tests.dir/tests/host.cpp.o\n[ 33%] Linking CXX executable host-tests\n[ 33%] Built target host-tests\n[ 40%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o\n[ 46%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o\n[ 53%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o\n[ 60%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp.o\n[ 66%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp.o\n[ 73%] Linking CXX static library libkopt.a\n[ 73%] Built target kopt\n[ 80%] Building CXX object CMakeFiles/device-test.dir/tests/device.cpp.o\n[ 86%] Building CXX object CMakeFiles/device-timing.dir/tests/timing.cpp.o\n[ 93%] Linking CXX executable device-timing\n[ 93%] Built target device-timing\n[100%] Linking CXX executable device-test\n[100%] Built target device-test\n",
+      "stdout": "[  6%] Building CXX object CMakeFiles/owner.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp.o\n[ 13%] Building CXX object CMakeFiles/kopt.dir/kernels.cpp.o\n[ 20%] Linking CXX static library libowner.a\n[ 20%] Built target owner\n[ 26%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o\n[ 33%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o\n[ 40%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o\n[ 46%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp.o\n[ 53%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp.o\n[ 60%] Building CXX object CMakeFiles/host-tests.dir/tests/host.cpp.o\n[ 66%] Linking CXX static library libkopt.a\n[ 66%] Built target kopt\n[ 73%] Building CXX object CMakeFiles/device-test.dir/tests/device.cpp.o\n[ 80%] Linking CXX executable host-tests\n[ 80%] Built target host-tests\n[ 86%] Building CXX object CMakeFiles/device-timing.dir/tests/timing.cpp.o\n[ 93%] Linking CXX executable device-test\n[100%] Linking CXX executable device-timing\n[100%] Built target device-test\n[100%] Built target device-timing\n",
       "stderr": ""
     },
     {
@@ -35,7 +35,7 @@
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet9-kopt4/build/device/host-tests"
       ],
       "returncode": 0,
-      "stdout": "\nDynamic section at offset 0x2cda0 contains 27 entries:\n  Tag        Type                         Name/Value\n 0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]\n 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]\n 0x000000000000000c (INIT)               0x402000\n 0x000000000000000d (FINI)               0x42328c\n 0x0000000000000019 (INIT_ARRAY)         0x42c948\n 0x000000000000001b (INIT_ARRAYSZ)       16 (bytes)\n 0x000000000000001a (FINI_ARRAY)         0x42c958\n 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)\n 0x000000006ffffef5 (GNU_HASH)           0x400378\n 0x0000000000000005 (STRTAB)             0x400a40\n 0x0000000000000006 (SYMTAB)             0x4003c8\n 0x000000000000000a (STRSZ)              2053 (bytes)\n 0x000000000000000b (SYMENT)             24 (bytes)\n 0x0000000000000015 (DEBUG)              0x0\n 0x0000000000000003 (PLTGOT)             0x42cfe8\n 0x0000000000000002 (PLTRELSZ)           1272 (bytes)\n 0x0000000000000014 (PLTREL)             RELA\n 0x0000000000000017 (JMPREL)             0x401550\n 0x0000000000000007 (RELA)               0x401400\n 0x0000000000000008 (RELASZ)             336 (bytes)\n 0x0000000000000009 (RELAENT)            24 (bytes)\n 0x000000006ffffffe (VERNEED)            0x4012d0\n 0x000000006fffffff (VERNEEDNUM)         3\n 0x000000006ffffff0 (VERSYM)             0x401246\n 0x0000000000000000 (NULL)               0x0\n",
+      "stdout": "\nDynamic section at offset 0x41da0 contains 27 entries:\n  Tag        Type                         Name/Value\n 0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]\n 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]\n 0x000000000000000c (INIT)               0x403000\n 0x000000000000000d (FINI)               0x435aec\n 0x0000000000000019 (INIT_ARRAY)         0x4426a8\n 0x000000000000001b (INIT_ARRAYSZ)       16 (bytes)\n 0x000000000000001a (FINI_ARRAY)         0x4426b8\n 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)\n 0x000000006ffffef5 (GNU_HASH)           0x400378\n 0x0000000000000005 (STRTAB)             0x401020\n 0x0000000000000006 (SYMTAB)             0x400480\n 0x000000000000000a (STRSZ)              4122 (bytes)\n 0x000000000000000b (SYMENT)             24 (bytes)\n 0x0000000000000015 (DEBUG)              0x0\n 0x0000000000000003 (PLTGOT)             0x442fe8\n 0x0000000000000002 (PLTRELSZ)           2160 (bytes)\n 0x0000000000000014 (PLTREL)             RELA\n 0x0000000000000017 (JMPREL)             0x402528\n 0x0000000000000007 (RELA)               0x4022b8\n 0x0000000000000008 (RELASZ)             624 (bytes)\n 0x0000000000000009 (RELAENT)            24 (bytes)\n 0x000000006ffffffe (VERNEED)            0x402138\n 0x000000006fffffff (VERNEEDNUM)         3\n 0x000000006ffffff0 (VERSYM)             0x40203a\n 0x0000000000000000 (NULL)               0x0\n",
       "stderr": ""
     },
     {
@@ -56,7 +56,7 @@
       ],
       "returncode": 0,
       "stdout": "",
-      "stderr": "......................\n----------------------------------------------------------------------\nRan 22 tests in 0.436s\n\nOK\n"
+      "stderr": "...............................\n----------------------------------------------------------------------\nRan 31 tests in 0.545s\n\nOK\n"
     },
     {
       "argv": [
@@ -73,7 +73,7 @@
   "prepared": {
     "baseline_cpu_receipt_sha256": "a0b7d12c4be55dbf9bd845e1bf1d87e4ea2985c094db69abad66c2021c318cbc",
     "binary_sha256": {
-      "device-test": "d9da89e8075f0c1fa9f72be5d21224de31afc5e400970ea01823895e8ca54d7c",
+      "device-test": "c9e2d3999fee40a110fc5f1f6a0745302e0ac9f72d7d6d73b8af7c8c1ce55cfc",
       "device-timing": "bce43d7505fb76cf2f52e5a8aacd874220d41af3f5a1025ee87ce36415139221"
     },
     "cpu": {
@@ -81,9 +81,10 @@
       "extended_rows": 200,
       "fixtures": 27,
       "fresh_process_repeats": 1,
-      "host_binary_sha256": "277be82aa14000b3f7b7d0937f940fae252475b34fcddd9fbee86bbc2f022ca3",
+      "host_binary_sha256": "a77e998fc698345ca49d8f49520e6b582a94de5bd6ff237818c95e3c0179581f",
       "invalid_variant_rejected": true,
       "mixture_checks": 448,
+      "mock_expert_cases": 28,
       "old_fp32_differences": 260,
       "old_output_differences": 0,
       "oracle_rows": 2832,
@@ -91,7 +92,7 @@
       "passed": true,
       "special_decode_checks": 409600
     },
-    "cpu_receipt_sha256": "3b4d8449a23f2d55b648546db6d8a78590cec96869d972e86a06ef41cc762279",
+    "cpu_receipt_sha256": "0ae4a549faba9068cda4c99bea82ee98bc9b26e713d5d10b7eca122d7d86b909",
     "device_executed": false,
     "fixture_cases": {
       "experts_sg32": 14,
@@ -1411,7 +1412,7 @@
       "experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.hpp": "218ec7d39db6272038f05453c84e7823220f6e3d97f7272a17efa1cd9593c706",
       "experiments/own-xpu-runtime/stage2/packet8-kopt3/reference.hpp": "f744a148509ed091d69a708262d0fcbc94c179da8ca5ed364791e8ba77a328af",
       "experiments/own-xpu-runtime/stage2/packet8-kopt3/validate.py": "93d25f8d96c507156bbaff545ca93f00bf0899e2993a697a93c6527e38efe74a",
-      "experiments/own-xpu-runtime/stage2/packet9-kopt4/CMakeLists.txt": "569fdfd3a9d2354afc7ed3730a4066b7a2efc1e3967fa98c4cdd8891cccf86fa",
+      "experiments/own-xpu-runtime/stage2/packet9-kopt4/CMakeLists.txt": "1e004044fd5995e03035cca6bf7eea0e183b7bedb909d0cc6ffab99f6f8b2e4e",
       "experiments/own-xpu-runtime/stage2/packet9-kopt4/analysis.py": "f66718e935b681291cf5f7cccfc9958d5344698484800a97b7c662c19a5bf703",
       "experiments/own-xpu-runtime/stage2/packet9-kopt4/dispatch.hpp": "8f1895c0209b88057253b44a9aee82c4cd1e73cd207e4c1d3d233da1cc8d6495",
       "experiments/own-xpu-runtime/stage2/packet9-kopt4/dispatch.json": "c1a0b1dacaad8634c6a2d06b67b794f37f5f0d9353312786dd73e545d2382cfd",
@@ -1419,15 +1420,18 @@
       "experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.cpp": "ff0852ed39e4a33fb4002440a8bae301ca3003c4a391bcfce2feb946d589aa72",
       "experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.hpp": "5122c8e7115d94e0546d7b40fcd9a9a795c45717394a636ac3c806ad6d37dd6e",
       "experiments/own-xpu-runtime/stage2/packet9-kopt4/reference.hpp": "95bdc549c66d5cb72fd54cc73696187dae08568f15b19d206cc954ca290c85f4",
-      "experiments/own-xpu-runtime/stage2/packet9-kopt4/tests/common.py": "7557602e7470051e764b3f4db4d25d973bdbad8b1cdc49de88a5af16302d596a",
-      "experiments/own-xpu-runtime/stage2/packet9-kopt4/tests/device.cpp": "33186b8400a5eb5093b2635c231712fbb34e75a264672d4702d19cb0e1da0aba",
+      "experiments/own-xpu-runtime/stage2/packet9-kopt4/tests/common.py": "1e4885302c5436cf7e1dcaa3dcc93e7899640a5a5d3b20e1d36854bbcbd42e94",
+      "experiments/own-xpu-runtime/stage2/packet9-kopt4/tests/device.cpp": "ed64d085ebc6ab82d37e43db94afb860dddcf8d8f345a8012cd7bf4923505f3d",
       "experiments/own-xpu-runtime/stage2/packet9-kopt4/tests/device_timing.py": "fe7a4eed4c4ff9d36c56d6d4bc2919fc73fe0bf717560b0fdb2f3ebc4b7a36bb",
-      "experiments/own-xpu-runtime/stage2/packet9-kopt4/tests/device_window.py": "59f906e0b697627d2efde1dff94722602b79b6907d16a30a92d8b5829c57c2c4",
+      "experiments/own-xpu-runtime/stage2/packet9-kopt4/tests/device_window.py": "f4e4c8b63f95e47c4fbcf780a086dd1eec1cd9add57c8b0f1cf6c10cabdf3da8",
+      "experiments/own-xpu-runtime/stage2/packet9-kopt4/tests/expert_case.hpp": "dd548b5d480770cce949ae5e723cfc6a169f69a63c34011c47138669d717b895",
       "experiments/own-xpu-runtime/stage2/packet9-kopt4/tests/fixtures.py": "a82f61bdb887fa97d7412f21b18abe63061986fd2d79912ba49beafbb79fa094",
-      "experiments/own-xpu-runtime/stage2/packet9-kopt4/tests/host.cpp": "443aa6eddc1dec795694df882eb8bb009977b14006273dd9efa47fe9a54cee00",
+      "experiments/own-xpu-runtime/stage2/packet9-kopt4/tests/host.cpp": "95f3695c72ac0eaa83bdfedefd238e56440ea20e80f2405389b3439ba36cd11c",
+      "experiments/own-xpu-runtime/stage2/packet9-kopt4/tests/mock_experts.hpp": "4f61990080a297dc09446fcd12067afdd5495474ae49788bd049be859209b08c",
       "experiments/own-xpu-runtime/stage2/packet9-kopt4/tests/prepare.py": "f2c15243bc1d28c3a3af536ae58c8ca6eaa0e37fbafe0e5dde996e0ecfc7f300",
-      "experiments/own-xpu-runtime/stage2/packet9-kopt4/tests/test_protocol.py": "d12e72d312f73d2bbb1c9ed4e44ce069c4a32c5d2cc7fbad94bbbff067352bb8",
+      "experiments/own-xpu-runtime/stage2/packet9-kopt4/tests/test_protocol.py": "a6a0cbb9d70ce394810c8ebb4c0c3e84ca8811a5b72bd1f24fadbc7db353b52d",
       "experiments/own-xpu-runtime/stage2/packet9-kopt4/tests/timing.cpp": "7b38fb5998aca25474642a31ddbcddfb4074aeca3e968a88e4335687e5c20b57",
+      "experiments/own-xpu-runtime/stage2/packet9-kopt4/tests/watcher.py": "cf72c5db1e9e41a543a6f365c7bf65a3562143f9d45c82dc54c0a258b5b74dc4",
       "experiments/own-xpu-runtime/stage2/packet9-kopt4/validate.py": "77f5d0f04bbeb4cb598a6457334dc118743314452f41e8fd4fd16c076e2d4aaa",
       "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/tensor-census.json": "3312f5a18582788c5c6c84572fd616488b6835b454272c81eec218a58521607c"
     }

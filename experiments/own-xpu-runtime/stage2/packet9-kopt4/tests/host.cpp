@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <iostream>
 #include <set>
+#include "mock_experts.hpp"
 using namespace iq3;
 namespace {
 uint64_t values=0,rows=0,old_fp32_differences=0,old_output_differences=0,output_fingerprint=14695981039346656037ull;
@@ -124,6 +125,7 @@ int main(int argc,char** argv) {
     }
     if(kopt4::work_groups(640,10,4,2)!=12800 || kopt4::work_groups(2560,10,1)!=6400 || kopt4::work_groups(5,10,1,2)!=40)throw std::runtime_error("work group counts");
     auto special_checks=special_decode_checks();
+    auto mock_cases=expert_test::mock_experts(argv[1]);
     kopt3::validate_aliases({{1,false},{1,false},{2,true}});
     for(const auto& bad:std::vector<std::vector<std::pair<uint64_t,bool>>>{{{1,true},{1,false}},{{1,false},{1,true}},{{1,true},{1,true}}}) {
       bool rejected_alias=false;try{kopt3::validate_aliases(bad);}catch(const std::invalid_argument&){rejected_alias=true;}
@@ -134,6 +136,6 @@ int main(int argc,char** argv) {
     if(!unknown)throw std::runtime_error("unknown dispatch accepted");
     bool rejected=false;try{kopt3::splits(static_cast<kopt3::Variant>(99));}catch(const std::invalid_argument&){rejected=true;}
     if(!rejected)throw std::runtime_error("invalid variant accepted");
-    std::cout<<"{\"passed\":true,\"fixtures\":"<<paths.size()<<",\"mixture_checks\":"<<mixture_checks<<",\"extended_rows\":"<<extended_rows<<",\"special_decode_checks\":"<<special_checks<<",\"decode_values\":"<<values<<",\"output_fingerprint_fnv1a\":"<<output_fingerprint<<",\"oracle_rows\":"<<rows<<",\"old_fp32_differences\":"<<old_fp32_differences<<",\"old_output_differences\":"<<old_output_differences<<",\"invalid_variant_rejected\":true}\n";
+    std::cout<<"{\"passed\":true,\"fixtures\":"<<paths.size()<<",\"mock_expert_cases\":"<<mock_cases<<",\"mixture_checks\":"<<mixture_checks<<",\"extended_rows\":"<<extended_rows<<",\"special_decode_checks\":"<<special_checks<<",\"decode_values\":"<<values<<",\"output_fingerprint_fnv1a\":"<<output_fingerprint<<",\"oracle_rows\":"<<rows<<",\"old_fp32_differences\":"<<old_fp32_differences<<",\"old_output_differences\":"<<old_output_differences<<",\"invalid_variant_rejected\":true}\n";
   }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

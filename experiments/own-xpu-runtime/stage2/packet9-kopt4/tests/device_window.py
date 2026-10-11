@@ -16,16 +16,37 @@ def execute(card, output):
             command = [str(BUILD / 'device/device-test'), '--authorized-device-window', str(card), str(FIXTURES),
                 str(destination / 'device.json'), str(destination / 'census.json'), mode]
             window = watch(command, destination)
+            variant = dict(kernel=mode, passed=False, window=window)
+            record['variants'].append(variant)
+            if window.get('fault_lines') or window['stop_reason']:
+                reason = window['stop_reason'] or 'kernel-journal fault'
+                save(LATCH, dict(reason=reason, output=str(out), fault_lines=window.get('fault_lines', [])))
+                record['outcome'] = 'kernel_fault' if window.get('fault_lines') else 'window_stopped'
+                record['error'] = reason
+                break
             raw = json.loads((destination / 'device.json').read_text())
-            passed = (window['returncode'] == 0 and window['stop_reason'] is None and teardown_ok(raw)
-                      and raw.get('checks') == manifest['fixture_cases'][mode])
-            record['variants'].append(dict(kernel=mode, passed=passed, window=window, native=raw))
-            if not passed:
-                raise ValueError('exactness failed: ' + mode)
-        record['passed'] = True
+            variant['native'] = raw
+            if raw.get('failure_kind') == 'exactness':
+                reason = 'exactness failed: ' + mode + ': ' + raw['error']
+                record.update(outcome='exactness_failed', error=reason)
+                save(LATCH, dict(reason=reason, output=str(out), fault_lines=[]))
+                break
+            if not teardown_ok(dict(raw, error='')):
+                save(LATCH, dict(reason='unsafe teardown: ' + mode, output=str(out), fault_lines=[]))
+            if raw.get('error'):
+                raise ValueError(raw['error'])
+            if window['returncode'] != 0:
+                raise ValueError('native exit ' + str(window['returncode']))
+            if not teardown_ok(raw):
+                save(LATCH, dict(reason='unsafe teardown: ' + mode, output=str(out), fault_lines=[]))
+                raise ValueError('unsafe teardown: ' + mode)
+            if raw.get('checks') != manifest['fixture_cases'][mode]:
+                raise ValueError('incomplete exactness coverage: ' + mode)
+            variant['passed'] = True
+        else:
+            record.update(passed=True, outcome='passed')
     except Exception as e:
-        record['error'] = str(e)
-        save(LATCH, dict(reason=str(e), output=str(out)))
+        record.update(outcome='aborted', error='aborted: ' + str(e))
     save(out / 'window.json', record)
     return record['passed']
 

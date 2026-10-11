@@ -36,7 +36,9 @@ p2 = load('_packet2_timing', BASE / 'tests/device_timing.py')
 planlib = sys.modules['timing_plan']
 sha, save, priority = planlib.sha, planlib.save, p2.priority
 p2.LATCH = LATCH
-watch = p2.watch
+def watch(command, out, seconds=120):
+    from watcher import watch as bounded_watch
+    return bounded_watch(command, out, seconds)
 
 
 def sources():
