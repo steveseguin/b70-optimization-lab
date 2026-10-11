@@ -37,6 +37,12 @@
 #   B32ira-free                             B32ira with free-text notes (clm_freenotes, cap STATE_MAX_TOKENS) instead of name-value lines
 #   B32iraR                                 B32ira + permanent `RULE: ...` lines in STATE.txt for standing rules and methods (clm_rules)
 #   B32iraR4                                B32iraR with FOLD_BATCHES=4 (fetch and fold four items per command)
+#   B32iraRH                                B32iraR + a version history of the pinned state kept by the harness (clm_history):
+#                                           `recall --state-at N NAME` answers "what did X hold at the end of item N"; own rule class
+#   N32 N200                                the plain sliding-window agent (W) whose cut turns go to the archive, with NOTES (RULES /
+#                                           STATE / OPEN) rewritten by one tool-less model call at each cut and `recall` (clm_keeper):
+#                                           no per-item protocol, the policy a serving-side proxy could apply to any agent
+#   N32j                                    N32 with thinking only where a question, refusal or error is in view; the notes call thinks
 #   W48 D48 C48 B48ir B48ira B48ira-free   live-cap study at budget 49,152 (48K): W = truncate (clm_baselines
 #          TruncateAgent: drop oldest turns once over the limit, down to 75 %), D = compact (CompactAgent: at 75 %
 #          stub all but the newest 3 tool outputs and strip earlier thinking, then drop oldest if still over),
@@ -142,6 +148,10 @@ ARMS.update({"W32": ("truncate", "memory", 32768), "P32": ("compact", "memory", 
 ARMS["B32ira-free"] = ("improved", "memory", 32768)   # free-text notes + archive at 32K (general form of B32ira; 2026-10-11)
 ARMS["B32iraR"] = ("improved", "memory", 32768)       # B32ira + permanent RULE lines in STATE.txt (clm_rules; 2026-10-11)
 ARMS["B32iraR4"] = ("improved", "memory", 32768)      # B32iraR fetching and folding 4 items per command (speed lever)
+ARMS["B32iraRH"] = ("improved", "memory", 32768)      # B32iraR + state history kept by the harness (`recall --state-at N`; own rule class)
+ARMS["N32"] = ("truncate", "memory", 32768)           # sliding window + archive of the cut items + NOTES at each cut + recall (clm_keeper)
+ARMS["N200"] = ("truncate", "memory", 204800)         # the same at the 200K cap
+ARMS["N32j"] = ("truncate", "memory", 32768)          # N32 thinking only on calls that hold a question or an error; the notes call thinks
 for a in ("A", "B32", "C32", "E32"):  # same arm with earlier thinking dropped from every call
     ARMS[a + "t"] = ARMS[a]
 bad = [a for a in arms if a not in ARMS]
@@ -257,10 +267,15 @@ run_one() {  # arm agent budget task_dir job_name drop_old_thinking
     fi
   fi
   local fb=${FOLD_BATCHES:-}
-  if [[ "$arm" == B32iraR || "$arm" == B32iraR4 ]]; then   # B32ira + pinned RULE lines (standing rules and methods stay in view)
+  if [[ "$arm" == B32iraR || "$arm" == B32iraR4 || "$arm" == B32iraRH ]]; then   # B32ira + pinned RULE lines (standing rules and methods stay in view)
     fm=read; tp=judgement; tc=${THINK_CAP_R:-4096}; ar=1
     xa=(-a clm_rules:ClmRulesAgent)
+    [[ "$arm" == B32iraRH ]] && xa=(-a clm_history:ClmHistoryAgent)   # + every accepted STATE.txt version, read with `recall --state-at N`
     [[ "$arm" == B32iraR4 ]] && fb=4               # four items per command: half the calls per item become an eighth
+  fi
+  if [[ "$arm" == N32 || "$arm" == N200 || "$arm" == N32j ]]; then   # sliding window that archives what it cuts, keeps NOTES, offers recall
+    xa=(-a clm_keeper:KeeperAgent)
+    [[ "$arm" == N32j ]] && extra="thinking_policy=judgement notes_thinking=true"
   fi
   echo "arm=$arm agent_class=${xa[1]:-run-context-job.sh default for $agent} extra_kwargs=$extra fold_batches=${fb:-1}" > "$RUNS/$job.arm.txt"
   TASKS="$td" JOB_NAME="$job" CONTEXT_BUDGET="$budget" DROP_OLD_THINKING="$drop" THINK_CAP="$tc" ENABLE_THINKING="$et" THINKING_POLICY="$tp" SHOW_WINDOW="$sw" FOLD_MODE="$fm" ARCHIVE="$ar" QUOTED="$qt" FOLD_BATCHES="$fb" EXTRA_KWARGS="${EXTRA_KWARGS:-} $extra" "$D/run-context-job.sh" "$agent" "$RUNS" "${xa[@]}" > "$RUNS/$job.out" 2>&1
@@ -306,5 +321,5 @@ if [[ "${STUB:-0}" == 1 ]]; then   # storage-rule probes (memory mode, no budget
 fi
 
 echo; echo "== table (all trials of this comparison)"
-"$PY" "$D/summarize_results.py" --json "$O/summary.json" "$RUNS"/jobs/[A-EW]* | tee "$O/summary.txt"
+"$PY" "$D/summarize_results.py" --json "$O/summary.json" "$RUNS"/jobs/[A-ENPW]* | tee "$O/summary.txt"
 [[ $FAILED == 0 ]] || { echo "!!! at least one trial was ended by a cap/timeout/rule; see the lines above"; exit 1; }

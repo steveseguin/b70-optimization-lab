@@ -8,7 +8,7 @@ import unittest
 
 SRC = (Path(__file__).parent / "clm_keeper.py").read_text()
 NS: dict = {"json": json, "re": re, "Path": Path, "Any": Any, "__file__": str(Path(__file__).parent / "clm_keeper.py")}
-exec(SRC[SRC.index("ARCH = "):SRC.index("class _KeeperGuard")], NS)
+exec(SRC[SRC.index("ARCH = "):SRC.index("class _KeeperEnv")], NS)
 
 
 class Keeper(unittest.TestCase):

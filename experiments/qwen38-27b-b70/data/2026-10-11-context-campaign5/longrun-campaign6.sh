@@ -67,7 +67,7 @@ say "campaign 6 start; stage 1: $STAGE1 (240K rules, seed 0); stage 2: C32 (cap 
 [[ -e $SRV ]] && { say "ABORT: $SRV already exists"; exit 2; }
 ss -tln | grep -q ":$PORT " && { say "ABORT: port $PORT is in use"; exit 2; }
 [[ -n $(docker ps -q --filter name=fp8-tp) ]] && { say "ABORT: an fp8 container is already running"; exit 2; }
-mkdir -p "$OD1M/snap" "$ODR/snap" "$ODP/snap"
+mkdir -p "$OD1M/snap/kept" "$ODR/snap/kept" "$ODP/snap/kept"
 cd "$CTX" || exit 2
 
 # ---- tasks first (the tokenizer costs host memory; nothing is generated while the server is up)
@@ -118,13 +118,30 @@ for i in $(seq 1 120); do
   sleep 15
 done
 
+keep_best() {  # out_dir arm: the snapshot becomes the current copy unless it lost probe answers the current copy has
+  # (campaign 5: the agent rewrote its answers file at the final item and the next copy overwrote the good one)
+  python3 - "$1/snap/$2-answers.tmp" "$1/snap/$2-answers.json" <<'PY'
+import json, os, re, sys
+new, cur = sys.argv[1:3]
+def probes(path):
+    try:
+        return sum(1 for k in json.load(open(path)) if re.fullmatch(r"p\d+_\d+", k))
+    except Exception:
+        return -1
+if probes(new) >= probes(cur):
+    os.replace(new, cur)
+else:
+    os.replace(new, cur.replace("-answers.json", "-answers-after-loss.json"))
+PY
+}
 snap_loop() {  # out_dir arm: copy /app/answers.json out of the task container every 2 minutes while the arm runs
   local od=$1 arm=$2 c
   while :; do
     sleep 120
     c=$(docker ps --filter name=sparse- --format '{{.Names}}' | head -1)
     [[ -n $c ]] && docker cp "$c:/app/answers.json" "$od/snap/$arm-answers.tmp" >/dev/null 2>&1 \
-      && mv "$od/snap/$arm-answers.tmp" "$od/snap/$arm-answers.json" && date +%s > "$od/snap/$arm-answers.at"
+      && cp "$od/snap/$arm-answers.tmp" "$od/snap/kept/$arm-$(date +%H%M%S).json" \
+      && keep_best "$od" "$arm" && date +%s > "$od/snap/$arm-answers.at"
   done
 }
 run_arm() {  # arm cap_seconds out_dir size sparse_args [seed]

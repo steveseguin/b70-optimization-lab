@@ -14,6 +14,8 @@ things the HARNESS does when the context goes over the limit, right before it cu
      a RULES line can never disappear: one the model leaves out is put back by the harness;
   3. the cut turns are replaced by one pinned user message holding the NOTES, right after the task statement, so
      everything before the recent turns is byte-identical between cuts and the server's prefix cache keeps working.
+The cut is made as soon as there is no longer room for the largest item seen so far (plus a margin) and goes down to
+60 % of the limit, so an arriving item is never head/tail-truncated to fit, as it can be in W32.
 The system prompt gains a short Memory section (NOTES, `recall`). When a delivered item asks questions and NOTES holds
 rules, the harness also appends the RULES lines as a reminder right after that item (recite_rules, on by default).
 Nothing else differs from W32.
@@ -198,6 +200,22 @@ def wants_thinking(messages: list[dict[str, Any]]) -> bool:
     return bool(codes and codes[-1] != "0")
 
 
+class _KeeperEnv(_cb._NoMirrorEnv):
+    """Keeps the verbatim text of every delivered item as `next` printed it (for the archive) and the size of the
+    largest delivery (so the cut can leave room for the next one)."""
+
+    agent: "KeeperAgent"
+
+    async def step(self, command, messages, *, environment, pending=None):
+        res = await super().step(command, messages, environment=environment, pending=pending)
+        got = split_items(getattr(res.result, "stdout", "") or "")
+        if got:
+            a = self.agent
+            a._delivered.update(got)
+            a._largest_delivery = max(a._largest_delivery, self.budget.count([{"role": "tool", "content": res.stdout_block}]))
+        return res
+
+
 class _KeeperGuard:
     """Wraps the checkpointer: after its maybe(), the agent archives, takes notes and cuts if it is over the limit
     (the same place as the sliding-window baseline's cut: right before the budget gate and the model call)."""
@@ -230,8 +248,21 @@ class KeeperAgent(TruncateAgent):
 
     def __init__(self, *args: Any, notes_max_tokens: int | str = 2048, notes_call_max_tokens: int | str = 4096,
                  notes_thinking: Any = False, thinking_policy: str = "always", recite_rules: Any = True,
-                 **kwargs: Any) -> None:
+                 keep_headroom: int | str = 1024, **kwargs: Any) -> None:
+        kwargs.setdefault("truncate_target_ratio", 0.6)   # cut deeper than W32 (0.75): fewer cuts, fewer notes calls
         super().__init__(*args, **kwargs)
+        # A delivered item is never cut on arrival (the budget's newest-output cap head/tail-truncates whatever does
+        # not fit, which is how W32 loses text near its limit); instead the cut is made early enough to leave room
+        # for the largest delivery seen plus keep_headroom, and the archive is written from what `next` printed.
+        self.keep_headroom, self._largest_delivery, self._delivered = int(keep_headroom), 0, {}
+        self._ctx.__class__ = _KeeperEnv
+        self._ctx.agent = self
+        orig_cap, is_delivery = self._budget.cap_newest_output, self._guard_out
+
+        def cap_newest_output(messages, tool_content, *, floor=128):
+            return tool_content if is_delivery.search(tool_content) else orig_cap(messages, tool_content, floor=floor)
+
+        self._budget.cap_newest_output = cap_newest_output
         self.notes_max_tokens, self.notes_call_max_tokens = int(notes_max_tokens), int(notes_call_max_tokens)
         self.notes_thinking = _cb._as_bool(notes_thinking)
         self.recite_rules, self.n_recitals = _cb._as_bool(recite_rules), 0
@@ -292,6 +323,7 @@ class KeeperAgent(TruncateAgent):
             if m.get("role") != "tool":
                 continue
             for num, text in split_items(str(m.get("content") or "")).items():
+                text = self._delivered.pop(num, text)          # what `next` printed, if the harness saw the delivery
                 blob = base64.b64encode((text + "\n").encode()).decode()
                 f = f"{ARCH}/item-{num:03d}.txt"
                 try:
@@ -326,7 +358,7 @@ class KeeperAgent(TruncateAgent):
         if not limit:
             return
         before = self._budget.count(messages)
-        if before <= self.trigger_ratio * limit:
+        if before <= min(self.trigger_ratio * limit, limit - self._largest_delivery - self.keep_headroom):
             return
         start, prev = self._head(messages)
         head, body = messages[:self._protect], messages[start:]
@@ -387,6 +419,7 @@ class KeeperAgent(TruncateAgent):
                     "notes_thinking": self.notes_thinking, "items_archived": self.n_items_archived,
                     "rules_put_back": self.n_rules_put_back, "rules": rule_lines(self.notes),
                     "recite_rules": self.recite_rules, "recitals": self.n_recitals,
-                    "notes_max_tokens": self.notes_max_tokens}, indent=1) + "\n")
+                    "notes_max_tokens": self.notes_max_tokens, "target_ratio": self.target_ratio,
+                    "largest_delivery_tokens": self._largest_delivery, "keep_headroom": self.keep_headroom}, indent=1) + "\n")
             except Exception:
                 pass
