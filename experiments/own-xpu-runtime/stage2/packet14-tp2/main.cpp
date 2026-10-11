@@ -742,14 +742,16 @@ public:
     weights[c].clear();
   }
 };
-static void write_plan(const fs::path& path,const flash::Plan& p,const Weights& w,int cards) {
+static void write_plan(const fs::path& path,const flash::Plan& p,const Weights& w,int cards,bool one_layer) {
   std::map<std::string,flash::Launch> sites;
   for(const auto& l:p.launches)for(const auto& name:l.weights)sites.try_emplace(name,l);
-  require(sites.size()==w.directory.size(),"complete tensor coverage");
+  // A one-layer diagnostic plan names only that layer's tensors; every other mode must cover the directory.
+  require(one_layer?!sites.empty()&&sites.size()<w.directory.size():sites.size()==w.directory.size(),"complete tensor coverage");
   std::ostringstream o;o<<"{\"schema\":\"own-runtime.iq3.packet14.plan.v1\",\"cards\":"<<cards<<",\"tensor_owners\":[";
   bool comma=false;
   for(const auto& [name,t]:w.directory) {
-    const auto& l=sites.at(name);bool expert=l.op=="routed_gemv" || l.op=="expert_gate_up";
+    auto site=sites.find(name);if(site==sites.end())continue;
+    const auto& l=site->second;bool expert=l.op=="routed_gemv" || l.op=="expert_gate_up";
     bool lookup=l.op=="lookup";
     bool shard=cards==2 && (expert || (l.op=="gemv" && l.shape[1]>=2));
     size_t extent=expert?p.g.experts:l.op=="gemv"?l.shape[1]:1;
@@ -800,7 +802,7 @@ int main(int argc, char **argv) {
     std::signal(SIGINT, stop);
     w = std::make_unique<Weights>(a);
     auto p = plan(*w, a);
-    write_plan(output / "plan.json", p, *w, a.cards);
+    write_plan(output / "plan.json", p, *w, a.cards, a.first && !a.mini);
     if (a.record) {
       save(output / "record.json",
            "{\"device_executed\":false,\"passed\":true}\n");

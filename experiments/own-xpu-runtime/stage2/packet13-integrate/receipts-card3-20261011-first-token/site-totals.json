@@ -1,0 +1,474 @@
+{
+ "scope": "whole run, 95 positions (87 prompt + 8 generated), summed per site class",
+ "sites": {
+  "argmax": {
+   "sites": 94,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 6708.187,
+   "wall_ms": 6718.801,
+   "kernel_submissions": 94
+  },
+  "attention": {
+   "sites": 4512,
+   "gemv_device_ms": 592.208,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 1761.198,
+   "kernel_submissions": 9024
+  },
+  "attn.combine": {
+   "sites": 4512,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 48907.003,
+   "wall_ms": 49276.5,
+   "kernel_submissions": 4512
+  },
+  "begin.0": {
+   "sites": 94,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 0.398,
+   "wall_ms": 7424.314,
+   "kernel_submissions": 94
+  },
+  "commit.final": {
+   "sites": 94,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 0.292,
+   "wall_ms": 8.651,
+   "kernel_submissions": 94
+  },
+  "embedding": {
+   "sites": 94,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 15.215,
+   "kernel_submissions": 0
+  },
+  "expsact": {
+   "sites": 4512,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 32226.084,
+   "wall_ms": 32629.26,
+   "kernel_submissions": 4512
+  },
+  "expsdown": {
+   "sites": 4512,
+   "gemv_device_ms": 575.381,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 67650.978,
+   "kernel_submissions": 4512
+  },
+  "expsdown.check": {
+   "sites": 4512,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 16.313,
+   "wall_ms": 415.115,
+   "kernel_submissions": 4512
+  },
+  "expsgate": {
+   "sites": 4512,
+   "gemv_device_ms": 796.425,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 127537.789,
+   "kernel_submissions": 4512
+  },
+  "expsgate.check": {
+   "sites": 4512,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 18.193,
+   "wall_ms": 435.65,
+   "kernel_submissions": 4512
+  },
+  "expsup.check": {
+   "sites": 4512,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 17.286,
+   "wall_ms": 395.079,
+   "kernel_submissions": 4512
+  },
+  "ffn.combine": {
+   "sites": 4512,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 48876.753,
+   "wall_ms": 49270.639,
+   "kernel_submissions": 4512
+  },
+  "final.act": {
+   "sites": 94,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 25.368,
+   "wall_ms": 33.08,
+   "kernel_submissions": 94
+  },
+  "final.gate": {
+   "sites": 94,
+   "gemv_device_ms": 4.464,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 241.341,
+   "kernel_submissions": 94
+  },
+  "final.low": {
+   "sites": 94,
+   "gemv_device_ms": 7.108,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 246.721,
+   "kernel_submissions": 188
+  },
+  "final.mix": {
+   "sites": 94,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 743.995,
+   "wall_ms": 751.937,
+   "kernel_submissions": 94
+  },
+  "final.norm": {
+   "sites": 94,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 1362.612,
+   "wall_ms": 1438.25,
+   "kernel_submissions": 94
+  },
+  "gather": {
+   "sites": 4512,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 78582.155,
+   "wall_ms": 78966.259,
+   "kernel_submissions": 4512
+  },
+  "gdn.a": {
+   "sites": 3384,
+   "gemv_device_ms": 193.127,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 742.579,
+   "kernel_submissions": 6768
+  },
+  "gdn.b": {
+   "sites": 3384,
+   "gemv_device_ms": 188.622,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 732.151,
+   "kernel_submissions": 6768
+  },
+  "gdn.conv": {
+   "sites": 3384,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 166789.441,
+   "wall_ms": 167266.8,
+   "kernel_submissions": 3384
+  },
+  "gdn.gated": {
+   "sites": 3384,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 39810.843,
+   "wall_ms": 40609.56,
+   "kernel_submissions": 3384
+  },
+  "gdn.qkv": {
+   "sites": 3384,
+   "gemv_device_ms": 648.618,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 1211.225,
+   "kernel_submissions": 3384
+  },
+  "gdn.recurrence": {
+   "sites": 3384,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 3548636.118,
+   "wall_ms": 3549721.87,
+   "kernel_submissions": 3384
+  },
+  "gdn.z": {
+   "sites": 3384,
+   "gemv_device_ms": 385.328,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 932.653,
+   "kernel_submissions": 3384
+  },
+  "hc.a.act": {
+   "sites": 4512,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 1216.336,
+   "wall_ms": 1560.694,
+   "kernel_submissions": 4512
+  },
+  "hc.a.gate": {
+   "sites": 4512,
+   "gemv_device_ms": 231.858,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 1916.786,
+   "kernel_submissions": 4512
+  },
+  "hc.a.inject": {
+   "sites": 4512,
+   "gemv_device_ms": 280.267,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 3639.741,
+   "kernel_submissions": 9024
+  },
+  "hc.a.low": {
+   "sites": 4512,
+   "gemv_device_ms": 325.281,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 6194.583,
+   "kernel_submissions": 9024
+  },
+  "hc.a.mix": {
+   "sites": 4512,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 35724.216,
+   "wall_ms": 36076.182,
+   "kernel_submissions": 4512
+  },
+  "hc.a.norm": {
+   "sites": 4512,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 65492.581,
+   "wall_ms": 66308.739,
+   "kernel_submissions": 4512
+  },
+  "hc.f.act": {
+   "sites": 4512,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 1216.112,
+   "wall_ms": 1547.793,
+   "kernel_submissions": 4512
+  },
+  "hc.f.gate": {
+   "sites": 4512,
+   "gemv_device_ms": 223.011,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 1014.971,
+   "kernel_submissions": 4512
+  },
+  "hc.f.inject": {
+   "sites": 4512,
+   "gemv_device_ms": 280.976,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 1119.195,
+   "kernel_submissions": 9024
+  },
+  "hc.f.low": {
+   "sites": 4512,
+   "gemv_device_ms": 323.911,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 1258.258,
+   "kernel_submissions": 9024
+  },
+  "hc.f.mix": {
+   "sites": 4512,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 35725.252,
+   "wall_ms": 36069.507,
+   "kernel_submissions": 4512
+  },
+  "hc.f.norm": {
+   "sites": 4512,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 65525.488,
+   "wall_ms": 66209.623,
+   "kernel_submissions": 4512
+  },
+  "logits": {
+   "sites": 94,
+   "gemv_device_ms": 510.574,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 25705.134,
+   "kernel_submissions": 94
+  },
+  "moe": {
+   "sites": 4512,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 16797.009,
+   "wall_ms": 17397.865,
+   "kernel_submissions": 9024
+  },
+  "ple.add": {
+   "sites": 94,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 1230.292,
+   "wall_ms": 1239.051,
+   "kernel_submissions": 94
+  },
+  "ple.cn": {
+   "sites": 94,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 1364.557,
+   "wall_ms": 1378.563,
+   "kernel_submissions": 94
+  },
+  "ple.conv": {
+   "sites": 94,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 9186.891,
+   "wall_ms": 9202.026,
+   "kernel_submissions": 94
+  },
+  "ple.gated": {
+   "sites": 94,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 1390.618,
+   "wall_ms": 1398.635,
+   "kernel_submissions": 94
+  },
+  "ple.hash": {
+   "sites": 94,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 1.494,
+   "wall_ms": 13.205,
+   "kernel_submissions": 94
+  },
+  "ple.key": {
+   "sites": 94,
+   "gemv_device_ms": 25.063,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 42.441,
+   "kernel_submissions": 94
+  },
+  "ple.kn": {
+   "sites": 94,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 1364.483,
+   "wall_ms": 1376.84,
+   "kernel_submissions": 94
+  },
+  "ple.lookup": {
+   "sites": 94,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 43.332,
+   "kernel_submissions": 0
+  },
+  "ple.qn": {
+   "sites": 94,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 1366.602,
+   "wall_ms": 1380.618,
+   "kernel_submissions": 94
+  },
+  "ple.value": {
+   "sites": 94,
+   "gemv_device_ms": 8.396,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 24.857,
+   "kernel_submissions": 188
+  },
+  "qsa.attention": {
+   "sites": 1128,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 307037.125,
+   "wall_ms": 307171.078,
+   "kernel_submissions": 1128
+  },
+  "qsa.ik": {
+   "sites": 1128,
+   "gemv_device_ms": 62.8,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 243.028,
+   "kernel_submissions": 2256
+  },
+  "qsa.iq": {
+   "sites": 1128,
+   "gemv_device_ms": 63.148,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 244.932,
+   "kernel_submissions": 2256
+  },
+  "qsa.k": {
+   "sites": 1128,
+   "gemv_device_ms": 66.675,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 253.428,
+   "kernel_submissions": 2256
+  },
+  "qsa.pool": {
+   "sites": 1128,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 77487.333,
+   "wall_ms": 77686.809,
+   "kernel_submissions": 1128
+  },
+  "qsa.prepare": {
+   "sites": 1128,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 27038.842,
+   "wall_ms": 27294.119,
+   "kernel_submissions": 1128
+  },
+  "qsa.qgate": {
+   "sites": 1128,
+   "gemv_device_ms": 254.581,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 442.744,
+   "kernel_submissions": 1128
+  },
+  "qsa.select": {
+   "sites": 1128,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 3699.403,
+   "wall_ms": 3806.638,
+   "kernel_submissions": 1128
+  },
+  "qsa.v": {
+   "sites": 1128,
+   "gemv_device_ms": 64.103,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 247.129,
+   "kernel_submissions": 2256
+  },
+  "route": {
+   "sites": 4512,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 51918.635,
+   "wall_ms": 52393.161,
+   "kernel_submissions": 4512
+  },
+  "router": {
+   "sites": 4512,
+   "gemv_device_ms": 277.458,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 1045.159,
+   "kernel_submissions": 9024
+  },
+  "shared_gate": {
+   "sites": 4512,
+   "gemv_device_ms": 333.455,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 1234.707,
+   "kernel_submissions": 9024
+  },
+  "shexpact": {
+   "sites": 4512,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 3261.725,
+   "wall_ms": 3629.427,
+   "kernel_submissions": 4512
+  },
+  "shexpdown": {
+   "sites": 4512,
+   "gemv_device_ms": 138.191,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 1058.876,
+   "kernel_submissions": 4512
+  },
+  "shexpgate": {
+   "sites": 4512,
+   "gemv_device_ms": 394.518,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 1429.216,
+   "kernel_submissions": 8930
+  },
+  "shexpup": {
+   "sites": 4512,
+   "gemv_device_ms": 346.99,
+   "non_gemv_device_ms": 0.0,
+   "wall_ms": 1292.998,
+   "kernel_submissions": 8930
+  },
+  "streams": {
+   "sites": 94,
+   "gemv_device_ms": 0.0,
+   "non_gemv_device_ms": 260.591,
+   "wall_ms": 268.107,
+   "kernel_submissions": 94
+  }
+ }
+}

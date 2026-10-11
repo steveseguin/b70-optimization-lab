@@ -1,0 +1,53 @@
+{
+  "schema": "own-runtime.iq3.packet14.window.v1",
+  "boot_id": "13858eef-ec68-44ea-a67c-9444933b7100",
+  "card": 2,
+  "cards": 2,
+  "memory": "tp2-streaming",
+  "stage": "layer",
+  "arithmetic": "iq3-p14-full-row-p13-tree-slot-order-v1",
+  "real_model_qualified": false,
+  "binary_sha256": "1457ca05209b4ae902146c628ac73e8c5b38c596764367f0d40fbfe472ee60fc",
+  "input_sha256": "9cab78bcdc3b7c19e289fa884b32f2771811b31a6a74d205c447425c13e485f1",
+  "command": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet14-tp2/build/device/own-rt-iq3",
+    "--authorized-device-window",
+    "--card",
+    "2",
+    "--cards",
+    "2",
+    "--memory",
+    "tp2-streaming",
+    "--input",
+    "experiments/own-xpu-runtime/stage2/packet14-tp2/build/input/tokens.txt",
+    "--plan",
+    "experiments/own-xpu-runtime/stage2/packet14-tp2/build/input/plan.tsv",
+    "--identity",
+    "experiments/own-xpu-runtime/stage2/packet14-tp2/build/input/identity.tsv",
+    "--model-dir",
+    "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet14-tp2/build/cards23-layer-b/run",
+    "--seconds",
+    "3600",
+    "--tokens",
+    "1",
+    "--first-layer"
+  ],
+  "passed": true,
+  "external_idle_health_still_required": true,
+  "baseline_sha256": "e43f33a0b0404f7022f432b7f0fff451dd77598994864f3082b40d34cad3d514",
+  "oracle_hashes": {
+    "step1/layer-00.bf16": "ab1bbb5a358fe6cd78cf3fbd56c00f6ca745ac23f978cd36c56a271c7cbabe4a"
+  },
+  "pid": 167057,
+  "returncode": 0,
+  "elapsed_seconds": 138.3240492139994,
+  "diagnostic_complete": true,
+  "oracle_exact": true,
+  "layer_hashes": {
+    "step1/layer-00.bf16": "ab1bbb5a358fe6cd78cf3fbd56c00f6ca745ac23f978cd36c56a271c7cbabe4a"
+  },
+  "tokens": [],
+  "fresh_repeat_passed": false
+}

@@ -1,0 +1,38 @@
+{
+  "scope": "synthetic non-GEMV operator sequence; GEMVs/transfers/real layer dependencies excluded",
+  "measured": true,
+  "rows": [
+    {
+      "layer": "gdn",
+      "M": 1,
+      "non_gemv_device_ms": 0.4608335,
+      "wall_ms": 0.61205,
+      "samples": 10,
+      "kernel_submissions": 14
+    },
+    {
+      "layer": "gdn",
+      "M": 87,
+      "non_gemv_device_ms": 3.481305,
+      "wall_ms": 3.7905100000000003,
+      "samples": 10,
+      "kernel_submissions": 14
+    },
+    {
+      "layer": "qsa",
+      "M": 1,
+      "non_gemv_device_ms": 0.5551045,
+      "wall_ms": 0.7631085,
+      "samples": 10,
+      "kernel_submissions": 17
+    },
+    {
+      "layer": "qsa",
+      "M": 87,
+      "non_gemv_device_ms": 15.5989,
+      "wall_ms": 16.05795,
+      "samples": 10,
+      "kernel_submissions": 17
+    }
+  ]
+}
