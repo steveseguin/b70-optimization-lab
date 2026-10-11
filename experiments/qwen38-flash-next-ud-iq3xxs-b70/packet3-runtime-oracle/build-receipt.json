@@ -1,0 +1,131 @@
+{
+  "schema": "iq3-arithmetic-identity-v1.build",
+  "device_executed": false,
+  "commands": [
+    {
+      "argv": [
+        "g++",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-shared",
+        "-fPIC",
+        "/home/steve/llm-optimizations/experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/matmul.cpp",
+        "-o",
+        "/tmp/iq3-packet3-build-parallel-20261011/matmul.so"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "g++",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-DOWN_RT_HOST_ONLY",
+        "-fopenmp",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet13-integrate",
+        "/home/steve/llm-optimizations/experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/oracle.cpp",
+        "/tmp/iq3-packet3-build-parallel-20261011/performance-cpu.cpp",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/kernels.cpp",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/owner_retire.cpp",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp",
+        "-lcrypto",
+        "-o",
+        "/tmp/iq3-packet3-build-parallel-20261011/oracle"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "g++",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet13-integrate/authority_test.cpp",
+        "-o",
+        "/tmp/iq3-packet3-build-parallel-20261011/authority-test"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/tmp/iq3-packet3-build-parallel-20261011/authority-test"
+      ],
+      "returncode": 0,
+      "stdout": "75 independent production-shape arithmetic comparisons; unknown shape refused\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "g++",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/tests",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet8-kopt3/tests/host.cpp",
+        "-o",
+        "/tmp/iq3-packet3-build-parallel-20261011/fixture-test"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "readelf",
+        "-d",
+        "/tmp/iq3-packet3-build-parallel-20261011/oracle"
+      ],
+      "returncode": 0,
+      "stdout": "\nDynamic section at offset 0x768f8 contains 32 entries:\n  Tag        Type                         Name/Value\n 0x0000000000000001 (NEEDED)             Shared library: [libcrypto.so.3]\n 0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libgomp.so.1]\n 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]\n 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]\n 0x000000000000000c (INIT)               0x6000\n 0x000000000000000d (FINI)               0x64c4c\n 0x0000000000000019 (INIT_ARRAY)         0x760d0\n 0x000000000000001b (INIT_ARRAYSZ)       8 (bytes)\n 0x000000000000001a (FINI_ARRAY)         0x760d8\n 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)\n 0x000000006ffffef5 (GNU_HASH)           0x3b0\n 0x0000000000000005 (STRTAB)             0x1738\n 0x0000000000000006 (SYMTAB)             0x520\n 0x000000000000000a (STRSZ)              6746 (bytes)\n 0x000000000000000b (SYMENT)             24 (bytes)\n 0x0000000000000015 (DEBUG)              0x0\n 0x0000000000000003 (PLTGOT)             0x76b38\n 0x0000000000000002 (PLTRELSZ)           3216 (bytes)\n 0x0000000000000014 (PLTREL)             RELA\n 0x0000000000000017 (JMPREL)             0x4378\n 0x0000000000000007 (RELA)               0x3538\n 0x0000000000000008 (RELASZ)             3648 (bytes)\n 0x0000000000000009 (RELAENT)            24 (bytes)\n 0x000000000000001e (FLAGS)              BIND_NOW\n 0x000000006ffffffb (FLAGS_1)            Flags: NOW PIE\n 0x000000006ffffffe (VERNEED)            0x3318\n 0x000000006fffffff (VERNEEDNUM)         6\n 0x000000006ffffff0 (VERSYM)             0x3192\n 0x000000006ffffff9 (RELACOUNT)          93\n 0x0000000000000000 (NULL)               0x0\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "g++",
+        "--version"
+      ],
+      "returncode": 0,
+      "stdout": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0\nCopyright (C) 2023 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "stderr": ""
+    }
+  ],
+  "cpu_row_parallel_overlay": {
+    "source_sha256": "fb13a5c2b0b79a7f725df343610f297326af335a1548a408cad2e90f738cc018",
+    "generated_sha256": "8ae8f10c1e3fdf53b6045ee476d2e00ea0743d6f1d332d48778798c9babc83a0",
+    "search": "        for(size_t row=0;row<m.rows;++row) {",
+    "replacement": "        #pragma omp parallel for schedule(static) num_threads(8)\n        for(size_t row=0;row<m.rows;++row) {"
+  },
+  "production_shape_proof": "75 independent production-shape arithmetic comparisons; unknown shape refused\n",
+  "dynamic_dependencies": "\nDynamic section at offset 0x768f8 contains 32 entries:\n  Tag        Type                         Name/Value\n 0x0000000000000001 (NEEDED)             Shared library: [libcrypto.so.3]\n 0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libgomp.so.1]\n 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]\n 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]\n 0x000000000000000c (INIT)               0x6000\n 0x000000000000000d (FINI)               0x64c4c\n 0x0000000000000019 (INIT_ARRAY)         0x760d0\n 0x000000000000001b (INIT_ARRAYSZ)       8 (bytes)\n 0x000000000000001a (FINI_ARRAY)         0x760d8\n 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)\n 0x000000006ffffef5 (GNU_HASH)           0x3b0\n 0x0000000000000005 (STRTAB)             0x1738\n 0x0000000000000006 (SYMTAB)             0x520\n 0x000000000000000a (STRSZ)              6746 (bytes)\n 0x000000000000000b (SYMENT)             24 (bytes)\n 0x0000000000000015 (DEBUG)              0x0\n 0x0000000000000003 (PLTGOT)             0x76b38\n 0x0000000000000002 (PLTRELSZ)           3216 (bytes)\n 0x0000000000000014 (PLTREL)             RELA\n 0x0000000000000017 (JMPREL)             0x4378\n 0x0000000000000007 (RELA)               0x3538\n 0x0000000000000008 (RELASZ)             3648 (bytes)\n 0x0000000000000009 (RELAENT)            24 (bytes)\n 0x000000000000001e (FLAGS)              BIND_NOW\n 0x000000006ffffffb (FLAGS_1)            Flags: NOW PIE\n 0x000000006ffffffe (VERNEED)            0x3318\n 0x000000006fffffff (VERNEEDNUM)         6\n 0x000000006ffffff0 (VERSYM)             0x3192\n 0x000000006ffffff9 (RELACOUNT)          93\n 0x0000000000000000 (NULL)               0x0\n",
+  "sources": {
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/oracle.cpp": "a89d2eb335dd9a13a98fe5873913a3c746e0a6bf56d34d0f95c715902e6ba450",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/matmul.cpp": "81900f76281853ff984e00a34972b0ab55d4e99ff39354cbf31974981c2d767f",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/build.py": "28c8cfd6aada2f0c788073f5a73991685c3bd2ffe4e953b153cf4cf05da77227"
+  },
+  "compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0\nCopyright (C) 2023 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+  "binaries": {
+    "fixture-test": "664a11f9f8b6fbf9b714d9d65c23c2b984114906492a12c4c3b07bebc258e824",
+    "authority-test": "56bf7a8de7a4e86291d22f01196bf7ae3de251f596588258073a3a153f17df86",
+    "matmul.so": "00555ed00aacf9620eaad0f417623d1e3195d71fe6142cd229b8e403ef4ec6b6",
+    "performance-cpu.cpp": "8ae8f10c1e3fdf53b6045ee476d2e00ea0743d6f1d332d48778798c9babc83a0",
+    "oracle": "4ee4eca602f50ccdc5572d3f8cec17ff241bfb024d0a0f378b3ec695eca98271"
+  },
+  "passed": true
+}

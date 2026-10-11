@@ -57,3 +57,9 @@ production shape/operator contract and complete CPU oracle preparation.
 [Packet 2 CPU oracle preparation](packet2-cpu-oracle/README.md) passes bounded real-weight decoding and all twelve tokenizer checks; the coordinator resolved the GDN gate to sigmoid using the pinned official Flash-Next modeling code. The packet records the bounded CPU run, its actual coverage and informational baseline comparisons.
 
 [CPU oracle closeout](packet2-cpu-oracle/CLOSEOUT-20261011.md) · [Closed choices](DO-NOT-REPEAT.md).
+
+[Packet 3 runtime-order oracle](packet3-runtime-oracle/README.md) implements the
+frozen arithmetic identity with the runtime's shared decoders, dispatch,
+reductions and nonlinear rounding. Its exact CPU proofs and covered prompt
+fixtures are the new device comparison inputs; the BLAS-order oracle remains
+an informational baseline.
