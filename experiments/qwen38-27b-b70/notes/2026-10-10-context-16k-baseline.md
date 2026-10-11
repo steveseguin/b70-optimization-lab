@@ -556,3 +556,38 @@ tokens; a rejected notes reply is logged with its reason and asked for again wit
 searches are used up the model is asked once more without the tool and the client never receives a `recall` call.
 Seed 0 had none of this (22 cuts, 22 notes, 12 searches, 21 minutes). The proxy's numbers so far are therefore
 37/39 and 42/46 with a known defect in the second; it is rerun after the fixes.
+
+**N32j on the 1M stream, second attempt: 226 of 228, a finished and verified run.** With the repeat guard and
+thinking kept on while a question is open; 12:08-13:32. Evidence:
+[`../data/2026-10-11-context-keeper/`](../data/2026-10-11-context-keeper/).
+
+| 999,460 tokens, 617 items, 32K live budget | N32j keeper (official grade) | B32iraR (stopped run, rebuilt answers) |
+| --- | ---: | ---: |
+| all 228 questions | **226 (99.1 %)**, not void | 187 (probes 163/203, finals 24/25) |
+| probes | **201 / 203** | 163 / 203 |
+| current / old value / who / rule / method | 58/58, 58/58, 27/29, 29/29, 29/29 | 54/58, 37/58, 25/29, 22/29, 25/29 |
+| 1-4 / 5-24 / 25-99 / 100-399 / 400+ items back | 49/50, 49/50, 30/30, 48/48, **25/25** | 45/50, 40/50, 23/30, 35/48, 20/25 |
+| first / middle / last third of the run | 68/70, 70/70, 63/63 | 56/70, 52/70, 55/63 |
+| final query | 25 / 25, confidential one right | 24 / 25 |
+| minutes | 83 (8.3 per 100K) | 87 (8.7 per 100K) |
+| model calls | 865 (755 by the agent, 110 notes calls) | 2,170 |
+
+The storage rule passed: 609 items in the archive, all 609 verbatim copies; nothing else written. The two misses are
+"who did it" questions 3 and 5 items back, both in the first third. By segment of 100K the run took 7.7, 7.8,
+10.1, 9.4, 6.4, 7.9, 7.9, 8.9 and 8.9 minutes (interpolated from the two-minute answer snapshots): the last 200K
+took 15 % longer than the first, inside the preregistered 25 %. NOTES stayed between 388 and 1,031 tokens over 110
+cuts; both rules were in it from the first cut to the end and the model never dropped one (0 put back); the rules
+were recited 30 times. The agent thought on 168 of its 755 calls and wrote 66K tokens; the notes calls read 1.36M
+tokens and wrote 231K. No command was refused as a repeat and no answer had to be put back: the loop of the first
+attempt did not recur once thinking stayed on through a probe, and old values went from 29/36 to 36/36 over the same
+items.
+
+Against the preregistered reading: flat with distance (every far bin at or above the near bins), flat with history
+length (the last third is perfect), speed flat, rule 100 %, "as good at scale" met by 19 points over B32iraR.
+One stream, one seed: a result, not yet a replication.
+
+**What the day adds up to.** On this task family the keeper is the best method at every size tested (39/39 and
+46/46 at 240K, 226/228 at 1M), the cheapest in model calls, and the only one that asks nothing of the agent. As a
+proxy it scored 37/39 and 42/46 before the fixes its second run prompted. Still owed: C32 (running), W200 and the
+proxy on the 1M stream, a second seed for the protocol arms and for the keeper at 1M, and the proxy under a real
+agent on a real task.

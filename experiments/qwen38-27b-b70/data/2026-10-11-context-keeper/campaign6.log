@@ -1,0 +1,69 @@
+### 08:39:14 campaign 6 start; stage 1: N32 N32j (240K rules, seed 0); stage 2: C32 (cap 4800s); stage 3: B32iraR B32ira + better keeper (240K rules, seed 1); stage 4: keeper at 1M if >= 33 (cap 6000s), W200 at 1M (cap 5400s); MemAvailable 13272 MiB
+### 08:39:14 tasks ready: sparse-memory-t1000k-s0, rules 240K seeds 0 and 1, plain 240K seed 0
+### 08:39:14 stopping the Gemma service (front door state: 0 0)
+### 08:39:20 cards free; MemAvailable 13491 MiB
+Running as unit: ctx-fp8-tp2-server.service; invocation ID: 55ff62aa521f4f4592bf3677b1d6ac70
+### 08:42:05 server ready after ~180 s; MemAvailable 2835 MiB
+### 08:42:05 [N32, 240K, seed 0] start (cap 0s); MemAvailable 2834 MiB; server totals: prompt 15 cached 0 generated 64
+### 08:44:51 [N32, 240K, seed 0] done rc=1 in 2 min; MemAvailable 2617 MiB; server totals: prompt 450584 cached 293696 generated 9124
+!!! N32__sparse-memory-t240k-s0: launcher exited with status 130; this run does not count
+!!! N32__sparse-memory-t240k-s0: a cap, timeout, server refusal or the storage rule ended this run; it does not count:
+!!! B32iraR4__sparse-memory-t240k-s0/sparse-memory-t240k-s0__EDvRLkb: ended_by=EXC:CancelledError rule=ok violations=None  -> this trial does not count; fix and re-run it
+### 08:44:54 [N32j, 240K, seed 0] start (cap 0s); MemAvailable 2569 MiB; server totals: prompt 450584 cached 293696 generated 9124
+### 09:00:53 [N32j, 240K, seed 0] done rc=0 in 15 min; MemAvailable 2456 MiB; server totals: prompt 4461453 cached 3194048 generated 61522
+   rc=0 ledger score 1.0000 raw 1.0000 ({'correct': 39, 'blank': 0, 'wrong': 0, 'stale': 0}) void=False
+!!! B32iraR4__sparse-memory-t240k-s0/sparse-memory-t240k-s0__EDvRLkb: ended_by=EXC:CancelledError rule=ok violations=None  -> this trial does not count; fix and re-run it
+!!! N32__sparse-memory-t240k-s0/sparse-memory-t240k-s0__yiAb6sT: ended_by=EXC:CancelledError rule=ok violations=None  -> this trial does not count; fix and re-run it
+### 09:00:56 stage 1: N32 0 right, N32j 39 right; B32iraR 35, B32ira 33, W32 23 on the same task; better keeper: N32j (39)
+### 09:00:56 [B32iraRH, 1000K, seed 0] start (cap 3600s); MemAvailable 2454 MiB; server totals: prompt 4461453 cached 3194048 generated 61522
+### 09:02:37 [B32iraRH, 1000K, seed 0] done rc=1 in 1 min; MemAvailable 2464 MiB; server totals: prompt 4747390 cached 3378752 generated 65333
+!!! B32iraRH__sparse-memory-t1000k-s0: launcher exited with status 130; this run does not count
+!!! B32iraRH__sparse-memory-t1000k-s0: a cap, timeout, server refusal or the storage rule ended this run; it does not count:
+!!! B32iraR__sparse-memory-t1000k-s0/sparse-memory-t1000k-s0__GGuqj3L: ended_by=EXC:CancelledError rule=ok violations=None  -> this trial does not count; fix and re-run it
+### 09:02:40 stopped by STOP-CAMPAIGN6
+### 09:02:40 stopped by STOP-CAMPAIGN6
+### 09:02:40 stopped by STOP-CAMPAIGN6
+### 09:02:40 stopped by STOP-CAMPAIGN6
+### 09:02:40 stopped by STOP-CAMPAIGN6
+### 09:02:40 stopping the server; MemAvailable 2459 MiB
+server state: stopped None stop_confirmed True
+host memory available while the server ran: min 1.95  1% 2.09  median 2.18 GiB  (2838 samples)
+### 09:03:09 rules stream, 240K, seeds pooled
+# 1. probe accuracy (correct/n=acc, pooled over trials; distance in items)
+arm	trials	probes	d1-4	d5-24	d25-99	d100-399	d400+	t:current	t:old_value	t:procedure	t:rule	t:who	final_query	total_correct
+B32ir	1	6/25=0.24	4/5=0.80	2/9=0.22	0/6=0.00	0/5=0.00	n/a	3/5=0.60	3/5=0.60	0/5=0.00	0/5=0.00	0/5=0.00	12/14	18/39
+B32ira	1	20/25=0.80	5/5=1.00	9/9=1.00	3/6=0.50	3/5=0.60	n/a	5/5=1.00	5/5=1.00	5/5=1.00	0/5=0.00	5/5=1.00	13/14	33/39
+B32ira-free	1	19/25=0.76	3/5=0.60	8/9=0.89	4/6=0.67	4/5=0.80	n/a	3/5=0.60	5/5=1.00	3/5=0.60	4/5=0.80	4/5=0.80	9/14	28/39
+B32iraR	1	22/25=0.88	5/5=1.00	8/9=0.89	6/6=1.00	3/5=0.60	n/a	4/5=0.80	4/5=0.80	4/5=0.80	5/5=1.00	5/5=1.00	13/14	35/39
+N32j	1	25/25=1.00	5/5=1.00	9/9=1.00	6/6=1.00	5/5=1.00	n/a	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	14/14	39/39
+P32	1	9/25=0.36	1/5=0.20	5/9=0.56	1/6=0.17	2/5=0.40	n/a	3/5=0.60	3/5=0.60	3/5=0.60	0/5=0.00	0/5=0.00	11/14	20/39
+W32	1	10/25=0.40	5/5=1.00	5/9=0.56	0/6=0.00	0/5=0.00	n/a	5/5=1.00	3/5=0.60	0/5=0.00	0/5=0.00	2/5=0.40	13/14	23/39
+
+# 2a. speed: cumulative minutes when the history reached N tokens (mean over trials reaching it)
+arm	source	coverage	100K	200K
+### 09:03:11 plain stream, 240K, all rounds pooled
+# 1. probe accuracy (correct/n=acc, pooled over trials; distance in items)
+arm	trials	probes	d1-4	d5-24	d25-99	d100-399	d400+	t:current	t:old_value	t:who	final_query	total_correct
+B16ir	2	9/30=0.30	5/11=0.45	4/14=0.29	0/5=0.00	n/a	n/a	8/10=0.80	1/10=0.10	0/10=0.00	35/35	44/65
+B16ira	1	12/15=0.80	7/8=0.88	4/5=0.80	1/2=0.50	n/a	n/a	3/5=0.60	4/5=0.80	5/5=1.00	8/14	20/29
+B32ir	2	16/30=0.53	6/11=0.55	8/14=0.57	2/5=0.40	n/a	n/a	10/10=1.00	6/10=0.60	0/10=0.00	35/35	51/65
+B32ira	2	28/30=0.93	10/11=0.91	13/14=0.93	5/5=1.00	n/a	n/a	10/10=1.00	9/10=0.90	9/10=0.90	35/35	63/65
+D16	2	19/30=0.63	8/11=0.73	9/14=0.64	2/5=0.40	n/a	n/a	10/10=1.00	8/10=0.80	1/10=0.10	35/35	54/65
+P32	2	23/30=0.77	10/11=0.91	10/14=0.71	3/5=0.60	n/a	n/a	10/10=1.00	9/10=0.90	4/10=0.40	25/35	48/65
+W16	2	16/30=0.53	11/11=1.00	5/14=0.36	0/5=0.00	n/a	n/a	9/10=0.90	3/10=0.30	4/10=0.40	34/35	50/65
+W32	2	21/30=0.70	11/11=1.00	10/14=0.71	0/5=0.00	n/a	n/a	10/10=1.00	4/10=0.40	7/10=0.70	35/35	56/65
+
+# 2a. speed: cumulative minutes when the history reached N tokens (mean over trials reaching it)
+arm	source	coverage	100K	200K
+### 09:03:13 1M stream, finished trials
+# 1. probe accuracy (correct/n=acc, pooled over trials; distance in items)
+no probes
+arm	trials	final_query	total_correct
+
+# 2a. speed: cumulative minutes when the history reached N tokens (mean over trials reaching it)
+n/a (no per-step timing)
+### 09:03:13 kernel log clean since 2026-10-11 08:39:14; restoring Gemma (throughput)
+backend 19350: slots 8 x 4096 tokens
+backend 19351: slots 8 x 4096 tokens
+frontdoor: throughput-ctx32768-parallel8-4k-slots-nospec-2gpu active 0 queued 0
+### 09:07:39 campaign 6 complete

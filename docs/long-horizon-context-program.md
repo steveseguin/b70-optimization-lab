@@ -160,6 +160,23 @@ What this settles and what it opens:
   cut and rules recited at each question. It is the policy a serving-side proxy could apply to any agent, and the
   candidate for P3. Campaign 6 tests it.
 
+**The keeper (2026-10-11, campaigns 6-8; note sections "Campaign 6, stage 1", "Campaign 7 results", "Campaign 8 results"):**
+
+| arm | 240K rules stream, seed 0 (39) | seed 1 (46) | 1M rules stream (228) | model calls at 1M |
+| --- | ---: | ---: | ---: | ---: |
+| **N32j keeper** (harness archives, takes NOTES at each cut, recites rules; nothing asked of the agent) | **39** in 15 min | **46** in 16 min | **226 (99 %), not void, 83 min** | 865 |
+| **X32**: the same policy as the proxy `tools/ctxkeeper`, agent sends its whole history | 37 in 21 min | 42 in 47 min (proxy defect, fixed) | not yet run | |
+| B32iraR pinned RULE lines | 35 in 18 min | not yet run | 187 (stopped run) | 2,170 |
+| B32ira | 33 | not yet run | | |
+| W32 | 23 | | | |
+
+At 1M the keeper is flat with distance (25/25 at 400+ items back), flat with history length (last third 63/63) and
+flat in speed (8.3 minutes per 100K), with the rule and the method at 29/29 each and old values at 58/58. P1 has its
+answer on this task family, and P3 has a first implementation: `tools/ctxkeeper/` (standard library, 20 tests).
+What three failed runs taught, now in the code: ask for the notes after the turns being cut, not before; a rule
+needs a pinned place and a reminder at the question; thinking must stay on while a question is open, and an
+identical repeated call must be refused.
+
 ### 4b. Proposed here, not yet run
 
 - Per-batch commit proof with atomic staging; file I/O cost vs decode cost; **exact KV park-and-restore on NVMe**;
@@ -253,6 +270,9 @@ the W48/D48 curves above as the first baseline, the fixed checkers (PR #73, #74)
 **Built 2026-10-11:** axis 4 and axis 5 (`make_sparse_prose_tasks.py --rules`: a standing rule in item 1, a house
 method in item 2, one question of each per PROBE item and a confidential counter in the final query);
 `partial_grade.py` grades the probes a cut run reached, so a slow arm can be stopped once the gap is clear.
+
+**Next (2026-10-11):** the proxy under a real agent on a real task (this is axis 6 in practice); the proxy and the
+baselines W200 and C32 on the 1M stream; second seeds for the protocol arms and for the keeper at 1M.
 
 **Missing and to build:** axis 6 (artefact task), a compaction-count dimension (force k compactions and plot accuracy
 vs k), and a "management overhead" ledger per arm (the campaign runner now logs server prompt, cached and generated
