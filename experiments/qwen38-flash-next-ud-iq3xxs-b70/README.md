@@ -54,4 +54,4 @@ are prepared and CPU-tested; GPU execution remains the coordinator's work.
 [Results status](results/README.md). Next is packet 2: quantized tokenizer,
 production shape/operator contract and complete CPU oracle preparation.
 
-[Packet 2 CPU oracle preparation](packet2-cpu-oracle/README.md) passes bounded real-weight decoding and all twelve tokenizer checks; full-model execution awaits the documented SiLU-versus-sigmoid arithmetic decision, with no token oracle or CPU speed claimed yet.
+[Packet 2 CPU oracle preparation](packet2-cpu-oracle/README.md) passes bounded real-weight decoding and all twelve tokenizer checks; the coordinator resolved the GDN gate to sigmoid using the pinned official Flash-Next modeling code. The packet records the bounded CPU run, its actual coverage and informational baseline comparisons.

@@ -3,6 +3,7 @@ import hashlib
 import json
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 import torch
 import reference as R
 
@@ -96,6 +97,18 @@ class GDN(unittest.TestCase):
     def test_zero_fixed_point(self):
         a=[torch.zeros_like(z) for z in self.args()];y,s=R.recurrence(*a)
         self.assertEqual(torch.count_nonzero(y),0);self.assertEqual(torch.count_nonzero(s),0)
+    def test_official_sigmoid_output_gate(self):
+        # Zero gate distinguishes sigmoid (1/2) from superseded SiLU (0).
+        # Replace only the recurrence to make its output independently known.
+        w=gw();w['z']=lambda x: torch.zeros(len(x),6144,dtype=R.BF16)
+        w['out']=lambda x:x
+        x=sample((1,2560));history=sample((10240,3));state=sample((48,128,128))
+        with patch.object(R,'recurrence',return_value=(torch.ones(1,48,128,dtype=R.BF16),state)):
+            y,_,_=R.gdn(x,w,history,state)
+        self.assertTrue(torch.equal(y,torch.full((1,6144),.5,dtype=R.BF16)))
+        config=json.loads((Path(__file__).parent.parent/'packet1/metadata/config.json').read_text())
+        self.assertEqual(config['text_config']['output_gate_type'],'sigmoid')
+        self.assertEqual(config['text_config']['hidden_act'],'silu')
     def test_full_layer_and_repeat(self):
         x=sample((2,2560));history=sample((10240,3));state=sample((48,128,128))
         w=gw();out=R.gdn(x,w,history,state);again=R.gdn(x,w,history,state)

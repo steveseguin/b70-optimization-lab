@@ -1,0 +1,1462 @@
+{
+  "schema": "iq3-cpu-oracle.v1",
+  "started_utc": "2026-10-11T02:42:01.380178+00:00",
+  "git_head": "8cc29eee77a27c42d93902ddbf1dc6b477013ea9",
+  "host": "steve-b70s",
+  "python": "3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]",
+  "torch": "2.11.0+xpu",
+  "numpy": "2.3.5",
+  "torch_config": "PyTorch built with:\n  - GCC 13.3\n  - C++ Version: 201703\n  - Intel(R) oneAPI Math Kernel Library Version 2025.3-Product Build 20251007 for Intel(R) 64 architecture applications\n  - Intel(R) MKL-DNN v3.10.2 (Git Hash f1d471933dc852f956fd05389f9313c7148783d5)\n  - OpenMP 201511 (a.k.a. OpenMP 4.5)\n  - LAPACK is enabled (usually provided by MKL)\n  - NNPACK is enabled\n  - CPU capability usage: AVX2\nXPU backend  - Build settings: BLAS_INFO=mkl, BUILD_TYPE=Release, COMMIT_SHA=70d99e998b4955e0049d13a98d77ae1b14db1f45, CXX_COMPILER=/opt/rh/gcc-toolset-13/root/usr/bin/c++, CXX_FLAGS= -fvisibility-inlines-hidden -DUSE_PTHREADPOOL -DNDEBUG -DUSE_KINETO -DLIBKINETO_NOCUPTI -DLIBKINETO_NOROCTRACER -DLIBKINETO_NOXPUPTI=OFF -DUSE_FBGEMM -DUSE_PYTORCH_QNNPACK -DUSE_XNNPACK -DSYMBOLICATE_MOBILE_DEBUG_HANDLE -O2 -fPIC -DC10_NODEPRECATED -Wall -Wextra -Werror=return-type -Werror=non-virtual-dtor -Werror=range-loop-construct -Werror=bool-operation -Wnarrowing -Wno-missing-field-initializers -Wno-unknown-pragmas -Wno-unused-parameter -Wno-strict-overflow -Wno-strict-aliasing -Wno-stringop-overflow -Wsuggest-override -Wno-psabi -Wno-error=old-style-cast -faligned-new -Wno-maybe-uninitialized -fno-math-errno -fno-trapping-math -Werror=format -Wno-dangling-reference -Wno-error=dangling-reference -Wno-stringop-overflow, LAPACK_INFO=mkl, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, TORCH_VERSION=2.11.0, USE_CUDA=0, USE_CUDNN=OFF, USE_CUSPARSELT=OFF, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_GLOO=ON, USE_MKL=ON, USE_MKLDNN=ON, USE_MPI=0, USE_NCCL=OFF, USE_NNPACK=ON, USE_OPENMP=ON, USE_ROCM=OFF, USE_ROCM_KERNEL_ASSERT=OFF, USE_XCCL=1, USE_XPU=ON, \n",
+  "torch_cpu_capability": "AVX2",
+  "nice": 19,
+  "threads": 8,
+  "interop_threads": 1,
+  "max_wall_seconds": 10800.0,
+  "gdn_output_gate": "sigmoid",
+  "sources": {
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/tokenizer.py": "1c284c06b6a159c39cb9a00acd7cc411ed9adae87b4850e98da5dd4fd33543a7",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/oracle.py": "79cb6454459c4b1808f39003cb3b5dc76bd63e735d3b82b0279a20f45c61448b",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/compare.py": "5b7939490bb3e5ae720a74ba2ae00cc8b31254cf153c6abd7b4b8ee315d16400",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/reference_gguf.py": "08cf7aeb3e55601fb63ce60a84b299897e174678ef1277388716c7844741f47b",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/qualify.py": "6da19b39da566021bb67a9bd6fab778a51df9e8d976669f5dae65f7331a6a205",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/packed.py": "44c8891a1236d29212c6614aefa16e7c510f3205a4635020e77e627f0dd7d578",
+    "experiments/own-xpu-runtime/stage1/packet1b/loaders/headers.py": "7503587cb34eb2ed5464ad78d429817e6abc4121c0db81ffc6011da58a54c9fa",
+    "experiments/own-xpu-runtime/stage1/packet1b/loaders/dequant.py": "7d03878cdc036911902b24ac2d9d3df2ab7d9df42fc344cc73e5e2f56457dd2e",
+    "experiments/own-xpu-runtime/stage1/packet1b/loaders/__init__.py": "504ab594fa4f516eb61e2ad8127e20e398517aef0e3160d33f1857e6bb33833b",
+    "experiments/own-xpu-runtime/stage1/packet1b/loaders/iq3-grid.json": "7f29119f156da1b67deeae4ed1a7b2a3d89dc9b72fc3a123923b189dd8cab372",
+    "experiments/own-xpu-runtime/stage1/packet1b/loaders/iq2-s-grid.json": "52701183171fe7cd5df9cfbb3fddaaff9fee4714608876e2b14b1dc2728a2164",
+    "experiments/own-xpu-runtime/stage1/packet1b/loaders/iq3-s-grid.json": "44036cafc3c93700bc12dbaca4720a7e84179270ff2507b93b86a1c61bd899a4",
+    "experiments/own-xpu-runtime/stage2/packet1b/reference.py": "e1fb0aa0107c4c3e0e55803b2789ddbb717122194e2a3b00788d73f646a653c8",
+    "experiments/own-xpu-runtime/stage2/packet1/metadata/config.json": "99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e70a15a90a8d",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/prompts/prompts.json": "dc78a59a085d4d426936645a887fd3718ba6743715f5b78ebd0d2b6af543d29b",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/research-sources.json": "5a483679a52832d44923b4ab72622b7871dd0cd5e5d260ef0582f2517984dd0c",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/arithmetic-decision.json": "eb054857771b0f5aa5886b94033e6ef8c70d1aad8d18b79384b4c06875c61793",
+    "experiments/own-xpu-runtime/stage2/packet1b/gate-evidence.json": "5c1fc5b34dc2f780bb82be5f59f523c564ecf1e1ba432a5bcca124175bed4c10",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/admission-receipt.json": "a5807f19898d09af66bbd2c9616392483ccf0f4fd74550999776c69aeec3506e",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/tensor-census.json": "3312f5a18582788c5c6c84572fd616488b6835b454272c81eec218a58521607c",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/baseline-llamacpp/prepare-prompts.py": "e90c2df6f5dfa1696d627978e23150dfd1a5657556c0b803649fbada35eeba08",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/baseline-llamacpp/prompt-receipt.json": "53753c8bafb8eee96d20f519238a502a38916fdc82774e595a32daeeb116ad08",
+    "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json": "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac"
+  },
+  "inputs": {
+    "chunk_bytes": 4194304,
+    "completed_utc": "2026-10-10T23:48:01.935211+00:00",
+    "directory_inventory_stable": true,
+    "execution": {
+      "OMP_NUM_THREADS": "2",
+      "ionice": "idle",
+      "nice": 19
+    },
+    "files": [
+      {
+        "after": {
+          "bytes": 10946624,
+          "ctime_ns": 1791667841381886400,
+          "device": 2050,
+          "inode": 2741158,
+          "mtime_ns": 1791667841378924200
+        },
+        "before": {
+          "bytes": 10946624,
+          "ctime_ns": 1791667841381886400,
+          "device": 2050,
+          "inode": 2741158,
+          "mtime_ns": 1791667841378924200
+        },
+        "bytes": 10946624,
+        "data_start": 10946624,
+        "elapsed_seconds": 0.024303521000547335,
+        "expected_bytes": 10946624,
+        "expected_sha256": "268f81fdedf3149a538f252308927a4d5d1f6e062c178568a51e3b519744f8a8",
+        "header_bytes": 10946618,
+        "header_matches_range_capture": true,
+        "header_sha256": "7c1460a95eb2e95377c32b14deb92cf74fe504d4feb5a62a40d48f78e9e0dcb8",
+        "padding_bytes": 6,
+        "passed": true,
+        "path": "UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00001-of-00003.gguf",
+        "sha256": "268f81fdedf3149a538f252308927a4d5d1f6e062c178568a51e3b519744f8a8",
+        "tensor_bytes": 0,
+        "tensor_count": 0
+      },
+      {
+        "after": {
+          "bytes": 49567921344,
+          "ctime_ns": 1791675421213040100,
+          "device": 2050,
+          "inode": 2740947,
+          "mtime_ns": 1791675421206920900
+        },
+        "before": {
+          "bytes": 49567921344,
+          "ctime_ns": 1791675421213040100,
+          "device": 2050,
+          "inode": 2740947,
+          "mtime_ns": 1791675421206920900
+        },
+        "bytes": 49567921344,
+        "data_start": 29632,
+        "elapsed_seconds": 81.5139079450164,
+        "expected_bytes": 49567921344,
+        "expected_sha256": "cfe600b236b88c7fad1613a5ca5e83b9f2beb63cbd44c32b2be50a44747c695f",
+        "header_bytes": 29604,
+        "header_matches_range_capture": true,
+        "header_sha256": "7744187256a32b79476b0c443b912a887160258793dddf86782608874b31de64",
+        "padding_bytes": 28,
+        "passed": true,
+        "path": "UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "sha256": "cfe600b236b88c7fad1613a5ca5e83b9f2beb63cbd44c32b2be50a44747c695f",
+        "tensor_bytes": 49567891712,
+        "tensor_count": 468
+      },
+      {
+        "after": {
+          "bytes": 32382955968,
+          "ctime_ns": 1791675159197568800,
+          "device": 2050,
+          "inode": 2740946,
+          "mtime_ns": 1791675159184122100
+        },
+        "before": {
+          "bytes": 32382955968,
+          "ctime_ns": 1791675159197568800,
+          "device": 2050,
+          "inode": 2740946,
+          "mtime_ns": 1791675159184122100
+        },
+        "bytes": 32382955968,
+        "data_start": 48320,
+        "elapsed_seconds": 72.46776958799455,
+        "expected_bytes": 32382955968,
+        "expected_sha256": "f1912ba34c79427d2295a58dcb2b732b5931af5bef7a373c60557a57d9ee7250",
+        "header_bytes": 48297,
+        "header_matches_range_capture": true,
+        "header_sha256": "77ceba7e90d26ca4e93b4e39b96573e52d69022c32369c0cd0ed441f3eac4c0f",
+        "padding_bytes": 23,
+        "passed": true,
+        "path": "UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00003-of-00003.gguf",
+        "sha256": "f1912ba34c79427d2295a58dcb2b732b5931af5bef7a373c60557a57d9ee7250",
+        "tensor_bytes": 32382907648,
+        "tensor_count": 756
+      }
+    ],
+    "host": "steve-b70s",
+    "max_rss_kib": 83296,
+    "model_dir": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+    "passed": true,
+    "repository": "unsloth/Qwen3.8-Flash-Next-GGUF",
+    "revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+    "schema": "qwen38-ud-iq3xxs.weight-admission.v1",
+    "sources": {
+      "experiments/own-xpu-runtime/data/unsloth-flash-next-stage2-files.json": "bc2cca5edad478d22341b68db2fe28984111f1e909f0dc38f907999641faebd8",
+      "experiments/own-xpu-runtime/stage1/packet1b/loaders/headers.py": "7503587cb34eb2ed5464ad78d429817e6abc4121c0db81ffc6011da58a54c9fa",
+      "experiments/own-xpu-runtime/stage2/packet1c/fetch-receipt.json": "180e209714d4ca2841051a04d1d7b976a21e307c0281a6b5020e44f509bb116f",
+      "experiments/own-xpu-runtime/stage2/packet1c/ud-census.json": "9395cb923e1f8fb19f22d9f7524ae8cf6045c1d3c68697b1b092698cc7257d3d",
+      "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/admit.py": "304b66c08970e63f2391f46127ff58affb5b555fbb659c5c9e409e49e9577dd8"
+    },
+    "started_utc": "2026-10-10T23:45:26.829969+00:00",
+    "total_bytes": 81961823936
+  },
+  "tokenizer": {
+    "pre": "qwen35",
+    "vocab": "5ee0f927bcaa4b9fe85c244776ae9487468e427f83e053fc81f2a186f14936a3",
+    "merges": "7e299304d9ad9dc312acdbcb1f6ccf0dce1256bf1aa986d651f13814dfd27e7b"
+  },
+  "template": "12827f24b742ea4e80cdc12dbcf9622227056b9f797252a3149263d4f9aaadce",
+  "status": "running",
+  "prompts": [
+    {
+      "id": "incident-retrospective",
+      "prompt_tokens": 87,
+      "tokens": [
+        332,
+        37947,
+        1653,
+        10082,
+        3508,
+        8812,
+        25,
+        23288,
+        5165,
+        4230,
+        416,
+        318,
+        37163,
+        12,
+        17,
+        15,
+        17,
+        19,
+        12,
+        15,
+        23,
+        24,
+        31230,
+        271,
+        332,
+        70152,
+        20858,
+        332,
+        198,
+        1860,
+        6324,
+        220,
+        16,
+        17,
+        11,
+        220,
+        17,
+        15,
+        17,
+        19,
+        11,
+        279,
+        5839,
+        2570,
+        11976,
+        5165,
+        10015,
+        264,
+        220,
+        19,
+        20,
+        22764,
+        2702,
+        85093,
+        26982,
+        220,
+        16,
+        15,
+        15,
+        4,
+        314,
+        1301,
+        9163,
+        13
+      ],
+      "steps": [
+        {
+          "token_id": 332,
+          "top5_ids": [
+            332,
+            2,
+            37947,
+            13962,
+            3723
+          ],
+          "top5_logits": [
+            23.5,
+            20.375,
+            18.0,
+            16.375,
+            15.625
+          ],
+          "logits_fp32_sha256": "b22c279edffe4445ce8fff809d26b4d9161351d0dc1a8e88ee592f7850714305",
+          "seconds": 1985.578947899
+        },
+        {
+          "token_id": 37947,
+          "top5_ids": [
+            37947,
+            3723,
+            3997,
+            12646,
+            37163
+          ],
+          "top5_logits": [
+            26.0,
+            19.875,
+            18.75,
+            17.375,
+            17.125
+          ],
+          "logits_fp32_sha256": "2444b1c59fc6fea3d205fab68e8a4f1881eef1441f994fe9348f80ed58608ea5",
+          "seconds": 44.27119536600003
+        },
+        {
+          "token_id": 1653,
+          "top5_ids": [
+            1653,
+            21808,
+            6867,
+            59543,
+            10082
+          ],
+          "top5_logits": [
+            21.125,
+            13.375,
+            13.25,
+            12.25,
+            11.625
+          ],
+          "logits_fp32_sha256": "cd7a037b703083a28f509c01efebdc28cca6b106971253628fb8da6b7372ffce",
+          "seconds": 43.526938160999634
+        },
+        {
+          "token_id": 10082,
+          "top5_ids": [
+            10082,
+            8001,
+            10552,
+            3746,
+            2937
+          ],
+          "top5_logits": [
+            22.125,
+            18.5,
+            17.5,
+            17.125,
+            16.625
+          ],
+          "logits_fp32_sha256": "daa2cc47840e42ad064e5601cd792f5d82e4ddb30cfd4fb96531fc28bd641ceb",
+          "seconds": 44.668247783999504
+        },
+        {
+          "token_id": 3508,
+          "top5_ids": [
+            3508,
+            8812,
+            428,
+            32330,
+            76135
+          ],
+          "top5_logits": [
+            18.25,
+            10.5625,
+            10.5,
+            10.4375,
+            9.8125
+          ],
+          "logits_fp32_sha256": "a060fdc03a3ac37b2bfea53bce8cdba247804e1be0dba6e4183561df5138a4e6",
+          "seconds": 42.841669282999646
+        },
+        {
+          "token_id": 8812,
+          "top5_ids": [
+            8812,
+            520,
+            3890,
+            1340,
+            3295
+          ],
+          "top5_logits": [
+            22.75,
+            13.6875,
+            13.0625,
+            13.0,
+            12.6875
+          ],
+          "logits_fp32_sha256": "4f5c3d9ca81f6d08fef7ff7b6c2dccedcc880dd755a9a1d7faf90e9cd67d99a1",
+          "seconds": 44.24328389599941
+        },
+        {
+          "token_id": 25,
+          "top5_ids": [
+            25,
+            64700,
+            23288,
+            332,
+            33513
+          ],
+          "top5_logits": [
+            22.125,
+            13.375,
+            12.5,
+            11.75,
+            11.4375
+          ],
+          "logits_fp32_sha256": "246f36432b6991f4a383cb0a34bf4d1ac2569121ca917af69bc993a7e7815311",
+          "seconds": 42.00720308600012
+        },
+        {
+          "token_id": 23288,
+          "top5_ids": [
+            23288,
+            387,
+            33513,
+            5165,
+            177224
+          ],
+          "top5_logits": [
+            19.375,
+            16.625,
+            16.25,
+            15.9375,
+            15.625
+          ],
+          "logits_fp32_sha256": "b1ffcb6b26d699e45269b752afad2e83f9c22471e38496f914e2e7fd31586cc8",
+          "seconds": 43.518611170999975
+        },
+        {
+          "token_id": 5165,
+          "top5_ids": [
+            5165,
+            4230,
+            7304,
+            18887,
+            6991
+          ],
+          "top5_logits": [
+            23.125,
+            15.8125,
+            15.4375,
+            14.875,
+            13.625
+          ],
+          "logits_fp32_sha256": "2b779cf000fb428afb3c59c2ab084d0a80433a4fdfe0789ddaa7dd791e7d607a",
+          "seconds": 42.347148543
+        },
+        {
+          "token_id": 4230,
+          "top5_ids": [
+            4230,
+            18887,
+            50066,
+            9632,
+            55320
+          ],
+          "top5_logits": [
+            20.875,
+            17.875,
+            17.0,
+            16.75,
+            16.75
+          ],
+          "logits_fp32_sha256": "5b0441fe740581184d7697a1f9212a7639a4663fea34b9254899de030af081f7",
+          "seconds": 41.77508246099933
+        },
+        {
+          "token_id": 416,
+          "top5_ids": [
+            416,
+            1098,
+            45790,
+            22906,
+            14511
+          ],
+          "top5_logits": [
+            22.625,
+            13.6875,
+            13.5,
+            12.6875,
+            12.5625
+          ],
+          "logits_fp32_sha256": "b04f59d156338abbcf8b1a5de781a808586abbcc8cb94e95dbfabe71bb5134c1",
+          "seconds": 42.845442036999884
+        },
+        {
+          "token_id": 318,
+          "top5_ids": [
+            318,
+            22921,
+            1317,
+            14000,
+            4016
+          ],
+          "top5_logits": [
+            19.875,
+            19.625,
+            18.375,
+            18.0,
+            17.875
+          ],
+          "logits_fp32_sha256": "3c4abab93f067f168d550fa497894c3b25a4180cd65085a167cb18a0de721f8b",
+          "seconds": 42.037518111999816
+        },
+        {
+          "token_id": 37163,
+          "top5_ids": [
+            37163,
+            7976,
+            17,
+            37947,
+            47
+          ],
+          "top5_logits": [
+            20.75,
+            19.5,
+            18.25,
+            18.25,
+            18.0
+          ],
+          "logits_fp32_sha256": "5a8996c99170f5f449984affc4604eec78bd0b6f058f0a7bb087f78a8b790961",
+          "seconds": 43.367444436999904
+        },
+        {
+          "token_id": 12,
+          "top5_ids": [
+            12,
+            887,
+            19206,
+            17,
+            51574
+          ],
+          "top5_logits": [
+            24.75,
+            15.6875,
+            15.4375,
+            15.25,
+            14.9375
+          ],
+          "logits_fp32_sha256": "10c5f987925842522ecc668589f7bbbc281444cc0e91d620bd759cfe8a0ff404",
+          "seconds": 44.23414839799989
+        },
+        {
+          "token_id": 17,
+          "top5_ids": [
+            17,
+            19,
+            22,
+            23,
+            15
+          ],
+          "top5_logits": [
+            25.125,
+            20.75,
+            17.625,
+            17.625,
+            16.5
+          ],
+          "logits_fp32_sha256": "ef3db6c7d4ab333f3a83332f36abbf528a5be2a71fbcc4d215f2b48f39385196",
+          "seconds": 41.6605632740002
+        },
+        {
+          "token_id": 15,
+          "top5_ids": [
+            15,
+            19,
+            24,
+            18,
+            23
+          ],
+          "top5_logits": [
+            25.125,
+            19.125,
+            16.625,
+            16.125,
+            15.5
+          ],
+          "logits_fp32_sha256": "13b3aa59093c65f0f8c67807f0cd4e8e6773398a1e5be2a90c40f6a3216a3a19",
+          "seconds": 43.436919457999466
+        },
+        {
+          "token_id": 17,
+          "top5_ids": [
+            17,
+            19,
+            18,
+            24,
+            23
+          ],
+          "top5_logits": [
+            23.375,
+            18.0,
+            15.625,
+            15.125,
+            14.0
+          ],
+          "logits_fp32_sha256": "6f4f3b99c51ff343315b9ac9fcc73d3c6a909d4b6ce4f538d83f0fb0ab979a18",
+          "seconds": 41.96513531100027
+        },
+        {
+          "token_id": 19,
+          "top5_ids": [
+            19,
+            18,
+            24,
+            55,
+            20
+          ],
+          "top5_logits": [
+            21.375,
+            21.125,
+            13.0625,
+            12.8125,
+            12.75
+          ],
+          "logits_fp32_sha256": "fc01dc5ef4d0c05245019bc54cdf0574f8ebcb0426e0cf2ad5046e30da0cb813",
+          "seconds": 44.675110863000555
+        },
+        {
+          "token_id": 12,
+          "top5_ids": [
+            12,
+            15,
+            27325,
+            16,
+            9023
+          ],
+          "top5_logits": [
+            24.625,
+            17.0,
+            15.625,
+            15.0625,
+            14.8125
+          ],
+          "logits_fp32_sha256": "b8c9fcd71878163085ccf50d44ef6058054c717244a6a90add7f4503f211790f",
+          "seconds": 42.81358470499981
+        },
+        {
+          "token_id": 15,
+          "top5_ids": [
+            15,
+            16,
+            23,
+            19,
+            18
+          ],
+          "top5_logits": [
+            22.75,
+            21.0,
+            16.875,
+            16.75,
+            15.375
+          ],
+          "logits_fp32_sha256": "03611b073e85c85154b55f5c7a6ee742524a8cd4f746709a3e6510e53716e0ad",
+          "seconds": 42.13290300300014
+        },
+        {
+          "token_id": 23,
+          "top5_ids": [
+            23,
+            19,
+            24,
+            15,
+            16
+          ],
+          "top5_logits": [
+            21.0,
+            20.875,
+            20.75,
+            18.0,
+            18.0
+          ],
+          "logits_fp32_sha256": "dee3af1ba32f02e657405e7a62cf611b1b4b183bedcda52b003b620fa8ad3234",
+          "seconds": 43.77175932099999
+        },
+        {
+          "token_id": 24,
+          "top5_ids": [
+            24,
+            12,
+            31230,
+            16,
+            23
+          ],
+          "top5_logits": [
+            20.25,
+            18.5,
+            17.75,
+            17.625,
+            17.25
+          ],
+          "logits_fp32_sha256": "fc471e5d613135fd1660b0d4013c131d7cfc8a6812e5b21f12b9dcd84e80a22c",
+          "seconds": 42.776476915000785
+        },
+        {
+          "token_id": 31230,
+          "top5_ids": [
+            31230,
+            8,
+            17,
+            16,
+            32
+          ],
+          "top5_logits": [
+            21.875,
+            16.75,
+            16.5,
+            14.625,
+            13.9375
+          ],
+          "logits_fp32_sha256": "f1b1140e13fc6b39951780dae1ac8e3bd07af6aa9df97da1fa1bacc250c5fefa",
+          "seconds": 44.4248336440005
+        },
+        {
+          "token_id": 271,
+          "top5_ids": [
+            271,
+            198,
+            2228,
+            332,
+            18050
+          ],
+          "top5_logits": [
+            20.625,
+            20.25,
+            13.625,
+            8.5,
+            8.25
+          ],
+          "logits_fp32_sha256": "d5959c997d9696a93489249a7d848c1d73133903b5b10888d210afb1b5c03446",
+          "seconds": 42.4263644950006
+        },
+        {
+          "token_id": 332,
+          "top5_ids": [
+            332,
+            13962,
+            1860,
+            760,
+            1851
+          ],
+          "top5_logits": [
+            25.5,
+            17.875,
+            17.0,
+            16.375,
+            15.375
+          ],
+          "logits_fp32_sha256": "7259fef94b1b8b53d01750caf1b0a6808c376d6b2512714d109909386bf4cfd9",
+          "seconds": 43.55308248900019
+        },
+        {
+          "token_id": 70152,
+          "top5_ids": [
+            70152,
+            18656,
+            1851,
+            37947,
+            69075
+          ],
+          "top5_logits": [
+            23.375,
+            22.75,
+            21.25,
+            20.375,
+            20.25
+          ],
+          "logits_fp32_sha256": "1f40efedb92b5f986a8ececeba4abf98420d535311726d598158a64ec0fc1a2c",
+          "seconds": 42.170201466000435
+        },
+        {
+          "token_id": 20858,
+          "top5_ids": [
+            20858,
+            33655,
+            11782,
+            7860,
+            27647
+          ],
+          "top5_logits": [
+            26.5,
+            16.75,
+            15.375,
+            15.25,
+            15.0625
+          ],
+          "logits_fp32_sha256": "fdfc2d7fe6de93dfcc33cb9edd20eabfafdf36793ac4e383047d98dddae9cb14",
+          "seconds": 43.80105967899999
+        },
+        {
+          "token_id": 332,
+          "top5_ids": [
+            332,
+            64700,
+            594,
+            198,
+            321
+          ],
+          "top5_logits": [
+            25.5,
+            17.75,
+            17.5,
+            14.6875,
+            14.6875
+          ],
+          "logits_fp32_sha256": "c8e9924834b847b5d0f05ee0b58dea59929ed6a562cd79e769fdcf4f96161e50",
+          "seconds": 42.185824874999525
+        },
+        {
+          "token_id": 198,
+          "top5_ids": [
+            198,
+            2228,
+            1860,
+            1848,
+            271
+          ],
+          "top5_logits": [
+            24.375,
+            17.625,
+            14.0625,
+            13.6875,
+            13.375
+          ],
+          "logits_fp32_sha256": "cf66e732727d769d13fce2a61232e33bc548837e0b4b226e8f2d17b7deb9e510",
+          "seconds": 43.31149293400085
+        },
+        {
+          "token_id": 1860,
+          "top5_ids": [
+            1860,
+            1597,
+            32,
+            24667,
+            1919
+          ],
+          "top5_logits": [
+            24.875,
+            20.875,
+            20.125,
+            18.75,
+            17.75
+          ],
+          "logits_fp32_sha256": "ed274e7f9219a37442e6bc6fec7e1c1d79a8eaf570b6fe18743f8f583b2b3191",
+          "seconds": 43.561607556000126
+        },
+        {
+          "token_id": 6324,
+          "top5_ids": [
+            6324,
+            7348,
+            5963,
+            5297,
+            498
+          ],
+          "top5_logits": [
+            22.5,
+            20.625,
+            20.25,
+            19.125,
+            17.875
+          ],
+          "logits_fp32_sha256": "ee1693c0822b20c3919ab96e4b9cf0265d462f37c655710ae04166765e9e0a7e",
+          "seconds": 41.481241178000346
+        },
+        {
+          "token_id": 220,
+          "top5_ids": [
+            220,
+            279,
+            11,
+            16,
+            498
+          ],
+          "top5_logits": [
+            22.75,
+            12.9375,
+            11.5625,
+            10.625,
+            10.3125
+          ],
+          "logits_fp32_sha256": "d55434e11feafba704e2efaab2899bb3b49867aea4fa4fd8f64db54e83823218",
+          "seconds": 43.55265262800003
+        },
+        {
+          "token_id": 16,
+          "top5_ids": [
+            16,
+            17,
+            19,
+            18,
+            20
+          ],
+          "top5_logits": [
+            22.75,
+            19.875,
+            14.0,
+            12.5,
+            11.625
+          ],
+          "logits_fp32_sha256": "7c7188db1fcc80eac695705cf00d5755ac31d78d39b692c34482dcfce288c3a5",
+          "seconds": 42.13947100599944
+        },
+        {
+          "token_id": 17,
+          "top5_ids": [
+            17,
+            19,
+            20,
+            15,
+            23
+          ],
+          "top5_logits": [
+            23.25,
+            22.125,
+            17.25,
+            15.3125,
+            13.125
+          ],
+          "logits_fp32_sha256": "aaf1f251850fd3ef111b3fa9b22b709d4833f4b55821933b4a0a611196a49db6",
+          "seconds": 44.28086413999972
+        },
+        {
+          "token_id": 11,
+          "top5_ids": [
+            11,
+            337,
+            506,
+            1881,
+            302
+          ],
+          "top5_logits": [
+            23.625,
+            20.375,
+            17.5,
+            13.8125,
+            13.375
+          ],
+          "logits_fp32_sha256": "726c701fb89f25b7c672bb15b33722832d5337e8b838d63369d6b7958f8a96f8",
+          "seconds": 41.853849990000526
+        },
+        {
+          "token_id": 220,
+          "top5_ids": [
+            220,
+            1881,
+            264,
+            279,
+            506
+          ],
+          "top5_logits": [
+            22.0,
+            20.25,
+            20.125,
+            19.75,
+            19.625
+          ],
+          "logits_fp32_sha256": "58333cc0e42a2d442c3d4e1908d5aa43f887bacca4e0827013f0f9b1f8610e1f",
+          "seconds": 44.11616748799952
+        },
+        {
+          "token_id": 17,
+          "top5_ids": [
+            17,
+            15,
+            16,
+            19,
+            279
+          ],
+          "top5_logits": [
+            23.25,
+            14.625,
+            14.25,
+            11.25,
+            11.25
+          ],
+          "logits_fp32_sha256": "2c7a7143a188c340c6c79b6d9e0578fd46389007b9a7c507fc064f57fb67f8ab",
+          "seconds": 41.701413155999944
+        },
+        {
+          "token_id": 15,
+          "top5_ids": [
+            15,
+            25,
+            19,
+            18,
+            17
+          ],
+          "top5_logits": [
+            24.625,
+            14.375,
+            14.0,
+            13.9375,
+            13.6875
+          ],
+          "logits_fp32_sha256": "3b365bb2c848e56e10afb794650d6917ed31c5fafec79221006cf8c03d871d89",
+          "seconds": 43.78340872999979
+        },
+        {
+          "token_id": 17,
+          "top5_ids": [
+            17,
+            15,
+            18,
+            19,
+            11
+          ],
+          "top5_logits": [
+            21.5,
+            12.3125,
+            12.1875,
+            12.0,
+            11.375
+          ],
+          "logits_fp32_sha256": "69392fad25a591c2675198ec7ecfaaafbc5583e58a7e9fae604e318c4b1d2b59",
+          "seconds": 43.15469934700013
+        },
+        {
+          "token_id": 19,
+          "top5_ids": [
+            19,
+            18,
+            55,
+            20,
+            24
+          ],
+          "top5_logits": [
+            19.625,
+            19.375,
+            12.75,
+            11.8125,
+            11.375
+          ],
+          "logits_fp32_sha256": "ba467606599c6d49b1e87172f3145ece4b47bd5082709641c3e464a8894536eb",
+          "seconds": 42.21813897100037
+        },
+        {
+          "token_id": 11,
+          "top5_ids": [
+            11,
+            506,
+            1881,
+            64,
+            264
+          ],
+          "top5_logits": [
+            22.75,
+            13.3125,
+            13.125,
+            13.0625,
+            12.9375
+          ],
+          "logits_fp32_sha256": "eead20ed78bfa60a98c1388e6a3199d5ae279263fa521b831669de0629ea59b3",
+          "seconds": 43.96521285499966
+        },
+        {
+          "token_id": 279,
+          "top5_ids": [
+            279,
+            1881,
+            264,
+            506,
+            1004
+          ],
+          "top5_logits": [
+            22.125,
+            21.875,
+            21.625,
+            21.0,
+            21.0
+          ],
+          "logits_fp32_sha256": "a96d7a49f47d608837476333cd827521677f33818797ccf0f2dc5c643a2c9211",
+          "seconds": 43.77849120100018
+        },
+        {
+          "token_id": 5839,
+          "top5_ids": [
+            5839,
+            6007,
+            11926,
+            2570,
+            9237
+          ],
+          "top5_logits": [
+            19.75,
+            19.625,
+            18.375,
+            18.125,
+            18.0
+          ],
+          "logits_fp32_sha256": "19cff20eb4e39ebe31eb4e59dce12e122969c434274ef8cd7b6bbc4387a98fd6",
+          "seconds": 44.048272519999955
+        },
+        {
+          "token_id": 2570,
+          "top5_ids": [
+            2570,
+            5466,
+            11926,
+            1156,
+            19829
+          ],
+          "top5_logits": [
+            19.25,
+            19.25,
+            18.5,
+            18.375,
+            17.375
+          ],
+          "logits_fp32_sha256": "0dac92a3704362fb91d39edcf411b36d4b18d859566453c7dee9fa5ebe344c5a",
+          "seconds": 43.395114423999985
+        },
+        {
+          "token_id": 11976,
+          "top5_ids": [
+            11976,
+            22802,
+            2791,
+            5194,
+            25692
+          ],
+          "top5_logits": [
+            21.75,
+            17.75,
+            17.625,
+            16.25,
+            16.0
+          ],
+          "logits_fp32_sha256": "8818741d576cc82011412a2951431c04a90156672301baded85e8ddd404e52dd",
+          "seconds": 43.79101134499979
+        },
+        {
+          "token_id": 5165,
+          "top5_ids": [
+            5165,
+            5194,
+            2393,
+            17617,
+            4310
+          ],
+          "top5_logits": [
+            22.5,
+            19.125,
+            15.5,
+            13.9375,
+            13.8125
+          ],
+          "logits_fp32_sha256": "6a7c3e8470765b7e92b86a7b09d972c2f89dbea7f3e3a668f3449c53d055c3bd",
+          "seconds": 43.479216763000295
+        },
+        {
+          "token_id": 10015,
+          "top5_ids": [
+            10015,
+            15777,
+            2393,
+            318,
+            9919
+          ],
+          "top5_logits": [
+            23.375,
+            18.625,
+            15.5625,
+            15.4375,
+            14.5
+          ],
+          "logits_fp32_sha256": "a8a4be2d1132369cc153e30ac2e61c16e4cbf63f39a006e84ab4d0fb9d94646d",
+          "seconds": 44.36887408199982
+        },
+        {
+          "token_id": 264,
+          "top5_ids": [
+            264,
+            220,
+            449,
+            14938,
+            4927
+          ],
+          "top5_logits": [
+            24.625,
+            17.25,
+            16.25,
+            16.25,
+            16.125
+          ],
+          "logits_fp32_sha256": "f45f6b0a4cc8537523c5fed271e62858651f55c810295e34614842254d02100d",
+          "seconds": 44.3943595970004
+        },
+        {
+          "token_id": 220,
+          "top5_ids": [
+            220,
+            2702,
+            8751,
+            14938,
+            4434
+          ],
+          "top5_logits": [
+            22.625,
+            19.375,
+            19.375,
+            19.375,
+            18.75
+          ],
+          "logits_fp32_sha256": "fd9cc6e2497b4e39b5ce2779ccc86c6f6a3d11109b96fd9e1ecc34667fa06058",
+          "seconds": 42.78392629300015
+        },
+        {
+          "token_id": 19,
+          "top5_ids": [
+            19,
+            17,
+            16,
+            24,
+            18
+          ],
+          "top5_logits": [
+            23.625,
+            20.625,
+            20.25,
+            18.125,
+            17.75
+          ],
+          "logits_fp32_sha256": "daf199f62209c495f54215ce3234a55e0db1c318c5560b39ccc40877f5f6cf91",
+          "seconds": 43.69814612400023
+        },
+        {
+          "token_id": 20,
+          "top5_ids": [
+            20,
+            17,
+            22,
+            23,
+            18
+          ],
+          "top5_logits": [
+            22.25,
+            21.125,
+            18.5,
+            16.375,
+            16.25
+          ],
+          "logits_fp32_sha256": "83346925f619532b30665bc98e1e77f7505456981530690cb5f23d9b56f9c5a6",
+          "seconds": 44.55131841399998
+        },
+        {
+          "token_id": 22764,
+          "top5_ids": [
+            22764,
+            4,
+            42412,
+            9104,
+            1395
+          ],
+          "top5_logits": [
+            23.625,
+            14.5625,
+            14.5,
+            14.0625,
+            13.5625
+          ],
+          "logits_fp32_sha256": "2ad53d3415a2c50765f57b5dab441d7d1c5b129b63d0db550c8e2782874ad87d",
+          "seconds": 45.31554054299977
+        },
+        {
+          "token_id": 2702,
+          "top5_ids": [
+            2702,
+            6907,
+            85093,
+            2400,
+            50702
+          ],
+          "top5_logits": [
+            18.875,
+            18.75,
+            18.75,
+            18.25,
+            17.75
+          ],
+          "logits_fp32_sha256": "59c0014d4e76ee1ecdb7a5852568dd12566d33a43a966ee7185b0e130fec06e9",
+          "seconds": 44.41667849100031
+        },
+        {
+          "token_id": 85093,
+          "top5_ids": [
+            85093,
+            2393,
+            72306,
+            632,
+            17509
+          ],
+          "top5_logits": [
+            21.25,
+            19.5,
+            17.125,
+            16.375,
+            15.625
+          ],
+          "logits_fp32_sha256": "a15eef06a869d74884bdad09adc0d22b2664d21c178a9b000a8fe1e9f8916938",
+          "seconds": 43.756811402000494
+        },
+        {
+          "token_id": 26982,
+          "top5_ids": [
+            26982,
+            4016,
+            12571,
+            13,
+            321
+          ],
+          "top5_logits": [
+            21.0,
+            19.75,
+            19.625,
+            19.125,
+            19.125
+          ],
+          "logits_fp32_sha256": "279411caae73f4efab1cec807e468ff4ac18ef2688deadb55f6c9a304ba140f8",
+          "seconds": 44.251118090999626
+        },
+        {
+          "token_id": 220,
+          "top5_ids": [
+            220,
+            660,
+            12805,
+            1301,
+            3521
+          ],
+          "top5_logits": [
+            23.125,
+            20.25,
+            19.625,
+            19.125,
+            16.5
+          ],
+          "logits_fp32_sha256": "1620c9d0c0bfa8051c1fcf37b9ad1b4c5a6e38e9483a4adf076984e5f3e8857f",
+          "seconds": 43.932474842000374
+        },
+        {
+          "token_id": 16,
+          "top5_ids": [
+            16,
+            18,
+            23,
+            21,
+            24
+          ],
+          "top5_logits": [
+            24.0,
+            19.75,
+            19.125,
+            18.875,
+            18.625
+          ],
+          "logits_fp32_sha256": "f0186664b9ff02a1b5915651a3c31147cb468159d84834604f509820a17e9033",
+          "seconds": 43.192845202999706
+        },
+        {
+          "token_id": 15,
+          "top5_ids": [
+            15,
+            17,
+            20,
+            23,
+            13
+          ],
+          "top5_logits": [
+            23.125,
+            18.625,
+            18.625,
+            16.75,
+            15.3125
+          ],
+          "logits_fp32_sha256": "8816bacc913c6e036836e81104218be1b428bd9e7927e09248064fbf55fb6a0c",
+          "seconds": 42.56329117200039
+        },
+        {
+          "token_id": 15,
+          "top5_ids": [
+            15,
+            4,
+            11,
+            3410,
+            13
+          ],
+          "top5_logits": [
+            23.125,
+            14.6875,
+            13.375,
+            11.6875,
+            10.625
+          ],
+          "logits_fp32_sha256": "ed019db7f64d231eafb3ef7910745818d11da6f0c288e218143d83d15c3023da",
+          "seconds": 43.47830219200023
+        },
+        {
+          "token_id": 4,
+          "top5_ids": [
+            4,
+            314,
+            11,
+            15,
+            188460
+          ],
+          "top5_logits": [
+            22.75,
+            12.6875,
+            12.5,
+            12.375,
+            11.125
+          ],
+          "logits_fp32_sha256": "a6e39943142fda9f6f998379698b8927e4fcd31e3885d3b8c74f3f26adb7a66f",
+          "seconds": 44.91799680499935
+        },
+        {
+          "token_id": 314,
+          "top5_ids": [
+            314,
+            1301,
+            1020,
+            3521,
+            36027
+          ],
+          "top5_logits": [
+            22.625,
+            14.75,
+            12.4375,
+            12.3125,
+            11.625
+          ],
+          "logits_fp32_sha256": "d7cec9c7cdf9c8fcdb15f8bfaee013b1d1be93280b7b39983b392b365a02e1ee",
+          "seconds": 43.148534770998594
+        },
+        {
+          "token_id": 1301,
+          "top5_ids": [
+            1301,
+            36027,
+            9163,
+            13332,
+            3521
+          ],
+          "top5_logits": [
+            21.75,
+            21.625,
+            19.25,
+            18.5,
+            18.375
+          ],
+          "logits_fp32_sha256": "a3f4dde49030bff57995ed6a475f7b4f332d6de665b3b08872f221c7d4cd5d29",
+          "seconds": 43.20776054799899
+        },
+        {
+          "token_id": 9163,
+          "top5_ids": [
+            9163,
+            7154,
+            7289,
+            321,
+            71065
+          ],
+          "top5_logits": [
+            21.25,
+            20.375,
+            20.25,
+            18.375,
+            18.125
+          ],
+          "logits_fp32_sha256": "e3710cf9e65f059cb1dbbd46e7b03b998cbb1291f211f3857597a60c13555415",
+          "seconds": 43.32554673899904
+        },
+        {
+          "token_id": 13,
+          "top5_ids": [
+            13,
+            364,
+            321,
+            2261,
+            310
+          ],
+          "top5_logits": [
+            21.75,
+            18.75,
+            18.375,
+            16.75,
+            15.75
+          ],
+          "logits_fp32_sha256": "8362a4ead951c98584f81e0c220b48f357ff541691064016e6d6ca33b0c9af8d",
+          "seconds": 43.470453742000245
+        }
+      ],
+      "status": "token-cap",
+      "prefill_seconds": 1985.578947899,
+      "text": "**Incident Retrospective: Production API Outage (INC-2024-089)**\n\n**Executive Summary**\nOn October 12, 2024, the primary User Profile API experienced a 45-minute total outage affecting 100% of read traffic.",
+      "seconds": 4715.5681536110005,
+      "pilot_decode_seconds_per_token": 43.58244982099976,
+      "decode_seconds_per_token": 43.331175516126955
+    }
+  ]
+}

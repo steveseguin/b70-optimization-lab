@@ -1,6 +1,6 @@
 {
   "schema": "own-xpu-runtime.stage2.packet1b.cpu-tests.v1",
-  "utc": "2026-10-10T19:58:40.983623+00:00",
+  "utc": "2026-10-11T02:41:44.037053+00:00",
   "host": "steve-b70s",
   "python": "3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]",
   "executable": "/home/steve/.venvs/vllm-xpu/bin/python",
@@ -12,7 +12,7 @@
   "interop_threads": 1,
   "device": "cpu",
   "weights": "synthetic only; no model-file reads",
-  "tests_run": 37,
+  "tests_run": 38,
   "test_ids": [
     "test_reference.Arithmetic.test_conv_chronology",
     "test_reference.Arithmetic.test_cpu_reject_meta",
@@ -24,6 +24,7 @@
     "test_reference.Arithmetic.test_rope_zero_and_nonzero",
     "test_reference.Arithmetic.test_tree_cancellation_order",
     "test_reference.GDN.test_full_layer_and_repeat",
+    "test_reference.GDN.test_official_sigmoid_output_gate",
     "test_reference.GDN.test_reject_fp32_state",
     "test_reference.GDN.test_serial_bf16_boundary",
     "test_reference.GDN.test_zero_fixed_point",
@@ -59,12 +60,12 @@
   "compare_receipt": "experiments/own-xpu-runtime/stage2/packet1b/test-receipt.json",
   "fresh_process_equal": true,
   "command": "nice -n 19 env OMP_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B experiments/own-xpu-runtime/stage2/packet1b/run_tests.py --compare-receipt experiments/own-xpu-runtime/stage2/packet1b/test-receipt.json --receipt experiments/own-xpu-runtime/stage2/packet1b/test-receipt-fresh.json",
-  "elapsed_seconds": 2.661243253998691,
-  "max_rss_kib": 1011596,
+  "elapsed_seconds": 2.6526018760000625,
+  "max_rss_kib": 1011168,
   "output_sha256": {
-    "gdn_layer": "be58c47fe94f90380f5ccfe97f5383faf0ee621e57a297ed3d00bd8a7a144fea",
+    "gdn_layer": "edf2562e2719e3166a73f532fa52533812be946f22b5f7a1fef4bc80124a1a9d",
     "gdn_recurrence": "c3cbcd8147b20b65d66fef066c5fd098d3dceca308f218fba035ace734f39d99",
-    "gdn_decoder": "a2c4a7549ffaa0c2192103916a129b274acd7ee5ea9facefd28ad74807acc569",
+    "gdn_decoder": "33b2f4c6c09576975c98f52c2ba13367e12cf0846a5d5a8fdce58af7c0455ac4",
     "mtp": "5a91f338f13737f911eaa4492213f8f414d1ac725782b0a4483f5da88efe702f",
     "ple": "153c7f784d51513fc2c8e8646d10950aabe3705f2eeffdc232f54b3e4f26c850",
     "qsa_layer": "84a0e92e3af7b576677a0ad58e56decfe8a85df858f26fd548acb802853fe862",
@@ -72,17 +73,18 @@
     "moe": "c78120deca4b98880f1c9c012bd858719cb35df71f6cbee0dfa570084df2d2ca"
   },
   "hashes": {
-    "../STAGE2-PLAN.md": "572b0ed5d0457b34b1472ba76b3c5b7c74c48793cb454fd577c02751645fe202",
-    "../stage1/packet1b/loaders/headers.py": "c09330c1fa27331523e2af276249f971ed08a5b23ef2f5bc80b889f54c3cf1be",
+    "../STAGE2-PLAN.md": "a15b9d62ca7d78318b35e18ab688cb9b6fa7da78a5682108d5bf2f79da518984",
+    "../stage1/packet1b/loaders/headers.py": "7503587cb34eb2ed5464ad78d429817e6abc4121c0db81ffc6011da58a54c9fa",
     "packet1/identity.json": "bac2ee1b05c57dbd883d98c2b4b1144d41668a34fe4474343b012f73f8084a19",
     "packet1/tensor-contract.json": "37daac926403b543bd5e1d6db06e70487feebd8ef97880d106e58f91011b5c96",
-    "packet1b/README.md": "c2bc5807a1e0ec3eb5bf1ea0fc23ff771b882c51ef9882c8fd5e5605e5c6907a",
+    "packet1b/README.md": "13f93826a04dc90bb19c3d6583e8254acbf5bfade3e862351891dd099b89c88c",
+    "packet1b/gate-evidence.json": "5c1fc5b34dc2f780bb82be5f59f523c564ecf1e1ba432a5bcca124175bed4c10",
     "packet1b/planning-arithmetic.json": "575fe9510e37355f8c79468079a797e60c99bc4e823871ba8f9963dbe5cf092a",
     "packet1b/planning.py": "14067c05e1e03c70d936f424539f3ce33007004a1e17922bbbbd6aad8b5e839d",
-    "packet1b/reference.py": "4e36c7c7890e7df428c7e1d10dc1b536d26ba18b8b7066c07f9dbdea2ff4909b",
+    "packet1b/reference.py": "e1fb0aa0107c4c3e0e55803b2789ddbb717122194e2a3b00788d73f646a653c8",
     "packet1b/run_tests.py": "e488a9993643a8317ac967cd56f64975f5ec77b704f1bc60ac2af0dcb85f7262",
     "packet1b/source-evidence.json": "2696795a2bd57ad57ffda91a8147692a9597536e5221be5c0de1b6098be7edea",
-    "packet1b/test_reference.py": "7016a5ee31ea008546917962119fa98943e2b770c8a59ae5693ac2e9585a9e3f"
+    "packet1b/test_reference.py": "ab988f33a8409fbb92e186d28b0ad3e1d6c01c0577cbde6cf93112c3a4c8b773"
   },
   "failure_details": []
 }

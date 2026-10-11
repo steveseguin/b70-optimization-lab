@@ -270,6 +270,7 @@ def run(args):
     sources = list(HERE.glob('*.py'))+list((OWN/'stage1/packet1b/loaders').glob('*.py'))+list((OWN/'stage1/packet1b/loaders').glob('*grid*.json'))+[
         OWN/'stage2/packet1b/reference.py',OWN/'stage2/packet1/metadata/config.json',
         HERE/'prompts/prompts.json',HERE/'research-sources.json',HERE/'arithmetic-decision.json',
+        OWN/'stage2/packet1b/gate-evidence.json',
         HERE.parent/'packet1/admission-receipt.json',HERE.parent/'packet1/tensor-census.json',
         HERE.parent/'baseline-llamacpp/prepare-prompts.py',HERE.parent/'baseline-llamacpp/prompt-receipt.json',
         ROOT/'repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json']
@@ -336,7 +337,8 @@ def run(args):
             dump(args.out/'receipt.json',receipt)
             del model
             if result['status'] == 'pilot-too-slow': break
-        receipt['status'] = 'completed' if len(receipt['prompts']) == args.prompts else 'wall-limit'
+        receipt['status'] = ('pilot-too-slow' if result['status'] == 'pilot-too-slow' else
+                             'completed' if len(receipt['prompts']) == args.prompts else 'wall-limit')
     except InterruptedError as exc:
         receipt['status'] = 'wall-limit-or-stop'
         receipt['stop_reason'] = str(exc)
@@ -345,6 +347,12 @@ def run(args):
         receipt['error'] = repr(exc)
         raise
     finally:
+        for result in receipt['prompts']:
+            times = [s['seconds'] for s in result['steps'][1:]]
+            result['decode_seconds_per_token'] = sum(times)/len(times) if times else None
+            if result['status'] in ('prefill','decode'):
+                result['status'] = receipt['status']
+            dump(args.out/result['id']/'result.json',result)
         receipt['elapsed_seconds'] = time.monotonic()-started
         receipt['max_rss_kib'] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         receipt['model_bytes_read'] = store.read_bytes
@@ -356,13 +364,13 @@ def run(args):
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--out',type=Path,required=True)
-    ap.add_argument('--hours',type=float,default=4)
+    ap.add_argument('--hours',type=float,default=3)
     ap.add_argument('--prompts',type=int,default=12)
     ap.add_argument('--tokens',type=int,default=64)
-    ap.add_argument('--gdn-output-gate',choices=['silu','sigmoid'],required=True,
-                    help='Pending owner choice: packet1b SiLU or published-config sigmoid')
+    ap.add_argument('--gdn-output-gate',choices=['sigmoid'],default='sigmoid',
+                    help='Frozen official Qwen4Exp output gate; see packet1b/gate-evidence.json')
     args = ap.parse_args()
-    assert 0 < args.hours <= 4 and 1 <= args.prompts <= 12 and 1 <= args.tokens <= 64
+    assert 0 < args.hours <= 3 and 1 <= args.prompts <= 12 and 1 <= args.tokens <= 64
     def stop(signum, frame):
         global STOP
         STOP = True

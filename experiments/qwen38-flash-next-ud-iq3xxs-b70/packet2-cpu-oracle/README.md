@@ -1,23 +1,28 @@
 # Packet 2 — streaming IQ3 CPU oracle preparation
 
-**Arithmetic decision pending; no full-model run or token oracle certified.**
-The CPU forward, prompt/tokenizer preparation and bounded packed-weight reader
-are implemented. The full-model pilot has not run because the requested frozen
-reference conflicts with the pinned model configuration: packet 1b's
-[`gdn`](../../own-xpu-runtime/stage2/packet1b/reference.py) applies **SiLU** to
-its output gate, whereas the retained publisher
-[`config.json`](../../own-xpu-runtime/stage2/packet1/metadata/config.json)
-specifies **`output_gate_type: sigmoid`**. The retained implementation of
-`QwenGatedDeltaNetAttention` reads that field. This is an output-changing
-arithmetic choice, not a performance setting. The owner has been asked which
-authority to use; elapsed time is not approval. The command requires an explicit
-choice and neither variant is silently certified.
+**Official-code sigmoid identity frozen, 2026-10-11. Full-model coverage below.**
+The coordinator resolved the gate by the official modeling code for the pinned
+`Qwen4ExpForConditionalGeneration` architecture. Transformers revision
+`536ecc007387a50e77603bb5d92100e9b07514cc`,
+[`modeling_qwen4_exp.py`](https://github.com/huggingface/transformers/blob/536ecc007387a50e77603bb5d92100e9b07514cc/src/transformers/models/qwen4_exp/modeling_qwen4_exp.py#L491)
+lines **490–491** chooses GDN's `config.output_gate_type or config.hidden_act`;
+line **185** applies it. This config selects **sigmoid**. Line **889** independently
+uses sigmoid for QSA/full attention. Unlike the 27B full-attention case, Flash's
+GDN **does read** the gate-type string. Convolution (469), FFN (904/922), HC
+(1013) and PLE convolution (1221) retain SiLU. Exact hashes, lines and the
+superseded choice are in [gate-evidence.json](../../own-xpu-runtime/stage2/packet1b/gate-evidence.json).
+
+Packet 1b's earlier GDN SiLU choice and this packet's pending-choice state at
+`c1440908cf` are superseded; QSA already used sigmoid. The corrected reference,
+regression test and two fresh-process test receipts live in packet 1b. The gate
+choice is source-verified; this does not claim Transformers execution parity
+or close the documented device cast/reduction uncertainties.
 
 This is the separate Unsloth UD-IQ3_XXS quantized compressed model, revision
 `766911a6b7369840a91dbcd95f9f997acaab6cd6`. Its authority must be its exact
 published bytes and a frozen, accepted CPU arithmetic identity. llama.cpp
 comparisons are informational, and FP8 output differences are not a tolerance
-gate. This preparation does not alter packet 1b or the FP8 lane.
+gate. This correction updates packet 1b CPU math; it does not replace certified FP8 results.
 
 [`qualification.json`](qualification.json) passes all **156 retained real
 weight windows**, bit for bit against packet 1's scalar-loader fixtures, plus
@@ -43,8 +48,8 @@ GGUF stores `1+w` norm gains and negative `exp(A_log)` decay controls, so the
 adapter uses those values directly rather than adding one or taking an inverse
 logarithm. F32 controls stay exact. The GDN value-head layout is reordered back
 from GGUF `[3,16,D]` to the reference's `[16,3,D]`; output projection inputs are
-reordered back to stored column order. The pending gate has explicit `silu`
-and `sigmoid` choices; all other inherited operator math is retained.
+reordered back to stored column order. The GDN output gate is frozen to `sigmoid`; a SiLU request is rejected.
+All other inherited operator math is retained.
 
 The CPU reduction identity uses packet1b's FP32 adjacent-pair trees, its
 32-lane/four-product GDN dot order, ascending convolution taps, and selected
@@ -68,7 +73,8 @@ norm and dilation-three convolution, SiLU, then residual addition. Explicit
 BF16 eager boundaries are recorded in `Model.ple`; convolution accumulation
 and elementary operations use FP32. The GGUF PLE table already includes its
 published scaling, so no official FP8 scale is reapplied. Its full integration
-has **not** been exercised by a real-model forward yet. The mathematical and
+has now executed in the real-model incident prompt forward. This is coverage,
+not independent proof of official-runtime parity. The mathematical and
 storage-format research sources, including the missing PLE path and converter
 layout, are pinned in [`research-sources.json`](research-sources.json); none
 of those external runtimes is imported or used as the code base.
@@ -86,28 +92,41 @@ the owner's 40 GB RSS ceiling. Run at nice 19, eight numeric threads, one
 interop thread; all preparation uses two threads. No GPU, server, Docker,
 systemd, device node, port 8188, LTX unit or host setting was accessed.
 
-**Measured runtime cost:** full-model seconds/token is **not measured**.
-The two-thread operator screen in [`operator-timing.json`](operator-timing.json)
-measured one real QKV projection at 0.160 s, one selected gate projection at
-0.023 s and one selected down projection at 0.009 s. These are diagnostics,
-not extrapolated token speed. Coverage is **0 model prompts / 0 generated
-tokens**, plus twelve verified tokenizer inputs. Baseline agreement is
-**not measured**. No per-layer hidden fixtures exist yet.
+**Measured runtime cost and coverage:** the three-hour run is saved under
+[`runs/official-sigmoid-20261011/`](runs/official-sigmoid-20261011/receipt.json).
+The completed incident row has **87 prompt tokens + 64 generated tokens**.
+Its prompt pass, including the first vocabulary prediction, took
+**1,985.579 seconds**; the subsequent 63 forward calls averaged
+**43.331 seconds/token**. The first eight-token pilot averaged
+**43.582 seconds/token** over its seven decode calls, passing the 600-second
+extension threshold. These are measured CPU reference costs, not device speeds.
+Further suite coverage is still being collected within the same three-hour
+limit. The earlier [operator screen](operator-timing.json) remains a separate
+diagnostic; it is not used to estimate complete-model speed.
 
-After resolving the arithmetic choice, rerun qualification and freeze that
-decision before starting the four-hour timer. From repository root:
+[Baseline comparison](runs/official-sigmoid-20261011/baseline-comparison.json):
+the incident output shares **68 characters** with both the two-card and
+one-card llama.cpp outputs, then writes **Executive Summary** where each
+baseline writes **Summary** (zero-based character index 68). The two-card
+text re-tokenization agrees for 25 tokens before IDs 70152 versus 18656;
+character prefixes are primary because stdout cannot recover exact token
+framing. The two llama.cpp setups themselves share 180 characters, then differ
+at **error rates** (one card) versus **request failure** (two cards). Neither
+baseline is our arithmetic authority; these differences are informational.
+
+Rerun qualification before starting the three-hour timer. The arithmetic
+identity is `iq3-cpu-fp32-m1-bf16-state-sigmoid-v1`. From repository root:
 
 ```bash
 PACKET=experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle
 PYTHON=/home/steve/.venvs/vllm-xpu/bin/python
 nice -n 19 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 \
   "$PYTHON" -B "$PACKET/qualify.py"
-# Replace CHOSEN_GATE only with the resolved arithmetic choice.
 nice -n 19 env OMP_NUM_THREADS=8 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=8 \
-  "$PYTHON" -B "$PACKET/oracle.py" --gdn-output-gate CHOSEN_GATE \
-  --out "$PACKET/runs/accepted-arithmetic" --hours 4 --tokens 64 --prompts 12
+  "$PYTHON" -B "$PACKET/oracle.py" --gdn-output-gate sigmoid \
+  --out "$PACKET/runs/official-sigmoid-20261011" --hours 3 --tokens 64 --prompts 12
 nice -n 19 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 \
-  "$PYTHON" -B "$PACKET/compare.py" "$PACKET/runs/accepted-arithmetic"
+  "$PYTHON" -B "$PACKET/compare.py" "$PACKET/runs/official-sigmoid-20261011"
 ```
 
 The first incident prompt is processed in full, followed by eight generated
@@ -115,14 +134,14 @@ tokens unless EOS arrives earlier. After seven decode forwards, mean measured
 decode cost must be below 600 s/token to extend to 64 and subsequent prompts.
 The runner respects immediate end-of-text and end-of-message tokens, without
 padding or retrying. It saves per-layer progress, every completed token's ID,
-top-five IDs/logits and timing, and atomic receipts. The four-hour guard and
+top-five IDs/logits and timing, and atomic receipts. The three-hour guard and
 SIGTERM/SIGINT are checked between layers and selected experts. Completed
 tokens survive a stop; unfinished forward state is not resumable. A stopped
 prefill can leave partial layer fixtures, which must never be called a complete
 prompt oracle. No scratch is retained; all files here are deliberate evidence.
 
 For generated step 1 (the prediction at the final prompt position), the run
-will write `PROMPT/step1/layer-00.bf16` through `layer-47.bf16`, each 20,480 bytes
+writes `PROMPT/step1/layer-00.bf16` through `layer-47.bf16`, each 20,480 bytes
 with shape `[1,4,2560]`, plus `layers.jsonl` with hashes. Each prompt also gets
 `input.json`, `progress.jsonl`, `tokens.jsonl` and `result.json`; the run gets
 `receipt.json` and `baseline-comparison.json`. The baseline comparator strips

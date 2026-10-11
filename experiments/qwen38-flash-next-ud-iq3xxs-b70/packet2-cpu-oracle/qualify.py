@@ -87,8 +87,8 @@ def main():
     # boundary and require row batching to preserve every bit of output/state.
     tokens = [248045,872,198,2610]
     streams = torch.arange(4*4*2560).float().sin().reshape(4,4,2560).to(bf)
-    batch = Model(s,lambda _:None,time.monotonic()+120,'silu')
-    serial = Model(s,lambda _:None,time.monotonic()+120,'silu')
+    batch = Model(s,lambda _:None,time.monotonic()+120,'sigmoid')
+    serial = Model(s,lambda _:None,time.monotonic()+120,'sigmoid')
     actual = batch.ple(streams,tokens)
     expected = torch.cat([serial.ple(streams[i:i+1],[t]) for i,t in enumerate(tokens)])
     assert torch.equal(actual,expected) and torch.isfinite(actual).all()

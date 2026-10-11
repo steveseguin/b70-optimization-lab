@@ -6,7 +6,31 @@ from pathlib import Path
 from oracle import Store, Tokenizer, HERE, sha, dump
 
 
-def compare(run, baseline):
+def visible_stdout(source):
+    raw = source.read_bytes()
+    text = raw.decode()
+    terminal = ' [end of text]'
+    if terminal in text:
+        text = text[:text.index(terminal)]
+    else:
+        assert text.endswith('\n\n'), 'unknown stdout framing'
+        text = text[:-2]
+    return raw, text
+
+
+def text_comparison(left, right):
+    count = 0
+    for a, b in zip(left, right):
+        if a != b: break
+        count += 1
+    return dict(agreement_characters=count,
+        text_prefix_agrees=count == min(len(left), len(right)),
+        first_text_divergence=(dict(index=count, left=left[count:count+80], right=right[count:count+80])
+                               if count < min(len(left), len(right)) else None),
+        left_characters=len(left), right_characters=len(right))
+
+
+def compare(run, baseline, onecard=None):
     store = Store(); tok = Tokenizer(store.meta); store.close()
     records = {r['id']:r for r in json.loads((baseline/'runs.json').read_text()) if r['repeat']==1}
     results = []
@@ -46,7 +70,32 @@ def compare(run, baseline):
             text_prefix_agrees=oracle_text.startswith(text) or text.startswith(oracle_text),
             caveat='Retokenized text can merge tokens at the truncation boundary; EOS ID is not recoverable from stdout.')
         results.append(row)
-    dump(run/'baseline-comparison.json',dict(informational_only=True,baseline=str(baseline),rows=results))
+    # Character prefixes are primary; retokenized IDs are supplemental only.
+    for row in results:
+        if row['status'] == 'compared':
+            oracle = json.loads((run/row['id']/'result.json').read_text())
+            _, text = visible_stdout(baseline/f"repeat1-{row['id']}.stdout")
+            visible = [i for i in oracle['tokens'] if i not in (248044,248046)]
+            row.update(text_comparison(tok.decode(visible), text))
+    onecard_rows = []
+    baseline_pair = None
+    if onecard is not None:
+        raw, text = visible_stdout(onecard)
+        source = baseline/'repeat1-incident-retrospective.stdout'
+        raw2, text2 = visible_stdout(source)
+        baseline_pair = dict(left=str(onecard),right=str(source),left_sha256=sha(raw),
+                             right_sha256=sha(raw2),**text_comparison(text,text2))
+        f = run/'incident-retrospective/result.json'
+        if f.exists():
+            oracle = json.loads(f.read_text())
+            visible = [i for i in oracle['tokens'] if i not in (248044,248046)]
+            onecard_rows.append(dict(id=oracle['id'],source=str(onecard),sha256=sha(raw),
+                **text_comparison(tok.decode(visible),text)))
+    dump(run/'baseline-comparison.json',dict(informational_only=True,baseline=str(baseline),
+        baseline_completed_rows=len(records),rows=results,onecard_rows=onecard_rows,
+        baseline_vs_baseline=baseline_pair,
+        missing_oracle_ids=sorted(set(records)-{r['id'] for r in results}),
+        caveat='Neither llama.cpp topology is arithmetic authority; their outputs already differ.'))
     return results
 
 
@@ -54,5 +103,6 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('run',type=Path)
     ap.add_argument('--baseline',type=Path,default=HERE.parent/'baseline-llamacpp/runs/window-20261011-boot13858eef')
+    ap.add_argument('--onecard',type=Path,default=HERE.parent/'explore/onecard-fit-20261011b/stdout.txt')
     args = ap.parse_args()
-    print(json.dumps(compare(args.run,args.baseline),indent=2))
+    print(json.dumps(compare(args.run,args.baseline,args.onecard),indent=2))

@@ -8,7 +8,7 @@ translated into our implementation, or used as its base. Source was inspected
 for mathematical contracts and credited below; only torch CPU arithmetic and
 the lab's existing GGUF block-size parser are execution dependencies.
 
-[Reference](reference.py), [37 tests](test_reference.py),
+[Reference](reference.py), [38 tests](test_reference.py),
 [test receipt](test-receipt.json), [fresh-process receipt](test-receipt-fresh.json),
 [source pins](source-evidence.json) and [planning arithmetic](planning-arithmetic.json)
 are retained. Receipts pin source/docs/contracts, CPU build, nice/thread
@@ -16,6 +16,23 @@ settings, test IDs, failure counts, RSS and eight synthetic output digests.
 Both runs must pass; the fresh receipt compares every output digest and test
 ID to the first receipt. Same-process repeats are also tested. No claim about
 cross-build numerical stability follows from this CPU repeat.
+
+## Gate correction, 2026-10-11
+
+The old GDN SiLU choice at `c1440908cf` is superseded by **sigmoid**;
+QSA already used sigmoid. The coordinator authorized following the official
+architecture, `Qwen4ExpForConditionalGeneration`, rather than inferring an
+activation from another model. [Gate evidence](gate-evidence.json) pins
+Transformers `536ecc007387a50e77603bb5d92100e9b07514cc`, source hashes and lines.
+In `src/transformers/models/qwen4_exp/modeling_qwen4_exp.py`, line 889 applies
+sigmoid to full-attention output; lines 490–491 pass
+`config.output_gate_type or config.hidden_act` to GDN RMSNormGated, and line 185
+applies that activation. The pinned Flash config selects sigmoid. Unlike 27B's
+full-attention code, this GDN implementation **does read** the gate string.
+Convolution (469), FFN (904/922), HC (1013) and PLE convolution (1221) retain
+SiLU. This corrects activation selection, not the U1/U2/U3 cast/reduction
+uncertainties. Historical receipts remain in Git at the superseded commit;
+the new receipts bind the corrected math and regression test.
 
 ## Geometry and coverage
 
@@ -58,7 +75,7 @@ need them. Lab deltas credit their underlying vLLM/XPU-kernel contributors.
 
 | Key | Certified-line evidence | Frozen CPU dependency/cast sequence |
 | --- | --- | --- |
-| S1 | [Exact serial extension](../../../../patches/qwen38-flash-next-fp8-b70/xpu-kernels-gdn-exact-serial-bbae3c5/README.md), kernel commit `bbae3c59e226c1b0c2a2dca6c51b4465cf36fd26`, `gated_delta_rule.hpp`, `causal_conv1d.hpp`, `spec_decode.hpp`; [packet1 precision evidence](../packet1/README.md#differences-and-boundaries-that-must-survive-implementation) | BF16 projections, width4 chronological conv with FP32 ascending tap accumulation, FP32 SiLU then BF16. Normalize Q/K, scale Q by1/sqrt128, decay old state, dot with K, `(V-prediction)*sigmoid(b)`, outer-product add, dot updated state with Q. Output rounds BF16; **state rounds BF16 after every serial row**, before the next row reads it. State layout[48,V128,K128]. GDN ordinary RMS gain then SiLU(z), BF16 before output projection. |
+| S1 | [Exact serial extension](../../../../patches/qwen38-flash-next-fp8-b70/xpu-kernels-gdn-exact-serial-bbae3c5/README.md), kernel commit `bbae3c59e226c1b0c2a2dca6c51b4465cf36fd26`, `gated_delta_rule.hpp`, `causal_conv1d.hpp`, `spec_decode.hpp`; [packet1 precision evidence](../packet1/README.md#differences-and-boundaries-that-must-survive-implementation) | BF16 projections, width4 chronological conv with FP32 ascending tap accumulation, FP32 SiLU then BF16. Normalize Q/K, scale Q by1/sqrt128, decay old state, dot with K, `(V-prediction)*sigmoid(b)`, outer-product add, dot updated state with Q. Output rounds BF16; **state rounds BF16 after every serial row**, before the next row reads it. State layout[48,V128,K128]. GDN ordinary RMS gain then sigmoid(z), BF16 before output projection. |
 | S2 | `amd/indexer_qsa.py`, `amd/ops/qsa.py`, `nvidia/ops/qsa_pre_indexer.py`; [QSA port and serial guard](../../../../patches/qwen38-flash-next-fp8-b70/vllm-qsafused-mtp1-6d872457/README.md) | Project BF16 index Q4×128/K128. Q norm→text rotary. Four chronological raw keys sum FP32→divide4→**BF16 pooled boundary**→key norm→rotary at first position. Index score adds ReLU(Q·K) in head order0–3 then /sqrt128. Stable score-descending/logical-index-ascending selection of up to512 complete blocks; expand each selected block in token order and append incomplete tail; pad to2051 with−1. Serial rows preserve causality. Actual attention K/V remain BF16; architectural key pooling is not compressed-precision KV. |
 | S3 | `model_executor/models/qwen3_next.py`, `layers/fused_moe/router/fused_topk_router.py`; `amd/model.py` inherits its MoE | FP32 softmax→top10→renormalize selected probabilities. CPU chooses stable descending/lowest-ID ties, accumulates experts in selection order, applies routing weight after down projection. Shared expert computes SiLU(gate)×up→down, sigmoid(shared gate), then adds to routed result. Exact device tie/reduction/quantization order is **U2/U4**, not established by the wrapper. |
 | S4 | `amd/hyperconnection.py`, `amd/ops/hc.py`; [HC delta](../../../../patches/qwen38-flash-next-fp8-b70/vllm-hctriton-mtp1-62219122/README.md) | Normalize each H2560 stream separately with gain1+w, BF16 output. Down10240→320 and injection10240→4; divide down by4 before SiLU→BF16; up320→10240→sigmoid, mix normalized streams0–3 in FP32, /4→BF16. Combine `residual + branch*(2*sigmoid(injection/4))`, then BF16. CPU materializes pending combine before next mix; native fused path still needs U5. |
@@ -95,7 +112,7 @@ schema validity alone never proves bytes or numerical identity.
 
 | ID | Unverified boundary | Required fixtures/gate |
 | --- | --- | --- |
-| U1 | GDN FMA, subgroup tree, transcendental approximations, gate/conv casts and exact serial/checkpoint behavior | All M1/M2/prefill shapes and row states, rounding/cancellation cases, accepted-prefix replay, poisoned padding. Preserve known BF16 inter-row commit; no FP32 substitution. |
+| U1 | GDN sigmoid selection is source-verified (gate-evidence.json); native casts/reductions remain unverified. GDN FMA, subgroup tree, transcendental approximations, gate/conv casts and exact serial/checkpoint behavior | All M1/M2/prefill shapes and row states, rounding/cancellation cases, accepted-prefix replay, poisoned padding. Preserve known BF16 inter-row commit; no FP32 substitution. |
 | U2 | Flash Triton FP8 expert activation quantization, scale application, K reduction, dequant intermediates, output rounding; BF16 projection library math | All gate/up/down, shared/dense/head shapes, production tiles, scales and M-dependent dispatch; exact image-bound operators. CPU BF16-dequant/FP32-BLAS surrogate is not this arithmetic. |
 | U3 | QSA norm/pool tree, rotary cache generation/casts, paged/split-K score/softmax/PV, query gate | Complete group/tail/context/page-boundary cases, ties, long context, serial rows, raw/compressed index keys and full BF16 KV. Current CPU covers text causal math only. |
 | U4 | Certified router tie/NaN policy, top10 output order, route-weight placement and EP accumulation/allreduce order | All512 experts reachable, rank-skew/host-miss fixtures, near ties, same/fresh repeats and every served M. Softmax/renormalize is sourced; CPU stable ties and ordered accumulation remain choices. |

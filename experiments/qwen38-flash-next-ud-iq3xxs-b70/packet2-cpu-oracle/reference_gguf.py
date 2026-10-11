@@ -135,16 +135,16 @@ def recurrence(q, k, v, a, b, alog, dt, state):
     return torch.stack(ys), s
 
 
-def gdn(x, w, history, state, output_gate='silu'):
+def gdn(x, w, history, state, output_gate='sigmoid'):
     qkv, z = w['qkv'](x), w['z'](x).reshape(-1,48,128)
     rows = []
     for row in qkv:
         y, history = conv(row,history,w['conv']); rows.append(y)
     q,k,v = torch.stack(rows).split([2048,2048,6144],-1)
     y,state = recurrence(q.reshape(-1,16,128),k.reshape(-1,16,128),v.reshape(-1,48,128),w['a'](x),w['b'](x),w['alog'],w['dt'],state)
-    if output_gate not in ('silu','sigmoid'):
-        raise ValueError('explicit GDN output gate required')
-    gate = silu(z) if output_gate == 'silu' else torch.sigmoid(z.float())
+    if output_gate != 'sigmoid':
+        raise ValueError('frozen Flash-Next GDN output gate is sigmoid')
+    gate = torch.sigmoid(z.float())
     y = norm(y,w['norm'],unit=False,out=F32)*gate
     return w['out'](y.to(BF16).flatten(1)),history,state
 

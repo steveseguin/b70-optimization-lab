@@ -142,7 +142,8 @@ def gdn(x, w, history, state):
         y, history = conv(row,history,w['conv']); rows.append(y)
     q,k,v = torch.stack(rows).split([2048,2048,6144],-1)
     y,state = recurrence(q.reshape(-1,16,128),k.reshape(-1,16,128),v.reshape(-1,48,128),w['a'](x),w['b'](x),w['alog'],w['dt'],state)
-    y = norm(y,w['norm'],unit=False,out=F32)*silu(z)
+    # Official Qwen4Exp: config.output_gate_type selects sigmoid (gate-evidence.json).
+    y = norm(y,w['norm'],unit=False,out=F32)*torch.sigmoid(z.float())
     return w['out'](y.to(BF16).flatten(1)),history,state
 
 
