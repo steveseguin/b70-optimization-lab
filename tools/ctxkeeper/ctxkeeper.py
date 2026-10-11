@@ -98,6 +98,8 @@ what is unfinished or should be watched for (may be empty).
 
 Keep the whole NOTES under about {cap} tokens. Output only the NOTES.
 """
+RECALL_LIMIT_NOTE = ("[[That was the last archive search for this turn ({n} made). Do not call `recall` again now: "
+                     "act or answer with what you have. You can search again on a later turn.]]")
 REPEAT_NOTE = ("[[You have made the same tool call {n} times in a row with the same result. Calling it again will not "
                "change anything: use the result you have and decide the next step.]]")
 LAYOUT_RETRY = ("Your reply did not use the layout. Reply with the NOTES only: first line RULES, then the rules, "
@@ -348,7 +350,7 @@ class Keeper:
 
     def __init__(self, ask, state_dir: Path, budget: int = 32768, target_ratio: float = 0.6, headroom: int = 2048,
                  notes_cap: int = 2048, notes_max_tokens: int = 8192, notes_thinking: bool | None = True,
-                 recite: bool = True, max_recalls: int = 6, reply_reserve: int = 4096,
+                 recite: bool = True, max_recalls: int = 8, reply_reserve: int = 4096,
                  recite_when: str | None = None, think_when: str | None = None, effort: str | None = None,
                  memory_note: bool = True, think_until: str | None = None, repeat_limit: int = 3) -> None:
         self.ask, self.root = ask, Path(state_dir)
@@ -497,13 +499,24 @@ class Keeper:
             if s.state["cut"] or self.memory_note:   # with the note the tool is there from the start (a stable prompt)
                 out["tools"] = list(body.get("tools") or []) + [RECALL_TOOL]
             resp: dict[str, Any] = {}
-            for _ in range(self.max_recalls + 1):
+            for round_ in range(self.max_recalls + 1):
+                if round_ == self.max_recalls:
+                    # The budget of searches for one turn is used up. The client must never be handed a `recall` call
+                    # (it does not know the tool): ask once more without it, and say why.
+                    out = dict(out, messages=out["messages"] + [{"role": "user", "content": RECALL_LIMIT_NOTE.format(n=self.max_recalls)}],
+                               tools=[t for t in out.get("tools") or [] if t is not RECALL_TOOL])
+                    if not out["tools"]:
+                        out.pop("tools")
+                    s.state["recall_limit_hit"] = s.state.get("recall_limit_hit", 0) + 1
                 resp = self.ask(out)
                 self.learn(s, out["messages"], resp)
                 msg = ((resp.get("choices") or [{}])[0].get("message") or {})
                 calls = msg.get("tool_calls") or []
                 mine = [c for c in calls if ((c.get("function") or {}).get("name")) == "recall"]
                 if not mine:
+                    break
+                if round_ == self.max_recalls:      # it asked anyway: the client gets the words without the call
+                    msg["tool_calls"] = [c for c in calls if c not in mine] or None
                     break
                 if len(mine) < len(calls):          # mixed with the client's own tools: hand those over, drop ours
                     msg["tool_calls"] = [c for c in calls if c not in mine]

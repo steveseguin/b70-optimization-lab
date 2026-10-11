@@ -153,6 +153,27 @@ class Policy(unittest.TestCase):
         events = [json.loads(l) for l in (s.dir / "events.jsonl").read_text().splitlines()]
         self.assertEqual((events[0]["event"], events[0]["why"], events[0]["attempt"]), ("notes call rejected", "empty reply", 1))
 
+    def test_the_client_never_receives_a_recall_call(self):
+        seen = []
+
+        def greedy(body):                           # a model that always wants one more search, while it has the tool
+            seen.append(body)
+            names = [t["function"]["name"] for t in body.get("tools") or []]
+            if "recall" in names:
+                return reply("still checking", [{"id": f"c{len(seen)}", "type": "function", "function": {"name": "recall", "arguments": json.dumps({"pattern": "abcd"})}}])
+            return reply("Here is my answer with what I have.")
+
+        k = ck.Keeper(greedy, Path(self.dir.name) / "g", budget=100000, max_recalls=3, memory_note=True)
+        resp = k.complete({"model": "m", "messages": conversation(3), "tools": [{"type": "function", "function": {"name": "bash"}}]})
+        msg = resp["choices"][0]["message"]
+        self.assertFalse(msg.get("tool_calls"))
+        self.assertEqual(msg["content"], "Here is my answer with what I have.")
+        self.assertEqual(len(seen), 4)                                            # three searches, then one call without the tool
+        self.assertEqual([t["function"]["name"] for t in seen[-1]["tools"]], ["bash"])
+        self.assertIn("last archive search for this turn", seen[-1]["messages"][-1]["content"])
+        s = next(iter(k.sessions.values()))
+        self.assertEqual((s.state["recalls"], s.state["recall_limit_hit"]), (3, 1))
+
     def test_rules_are_recited_after_a_new_user_message(self):
         self.run_conversation(30)
         self.keeper.complete({"model": "m", "messages": conversation(30) + [{"role": "user", "content": "And in item 3?"}]})
