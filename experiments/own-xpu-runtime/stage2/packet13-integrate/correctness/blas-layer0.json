@@ -1,0 +1,35 @@
+{
+  "expected_layers": 1,
+  "cpu_layers": 1,
+  "compared_layers": 1,
+  "first_observed_divergent_layer": 0,
+  "first_divergent_layer": 0,
+  "coverage_complete": true,
+  "all_layers_match": false,
+  "rows": [
+    {
+      "layer": 0,
+      "cpu_sha256": "1b7f914b9ef1834a72aea1cb186b74c8dbecddff743fa529fe8e916e1352d82e",
+      "status": "compared",
+      "exact": false,
+      "other_sha256": "6da649699aa3e71e052a7691ad8e9aa133b0e5d131d2062e37f45e8b946a84f4",
+      "unequal_bf16_values": 2103,
+      "first_index": 57,
+      "first_values": {
+        "cpu": -1.9550323486328125e-05,
+        "other": -1.9431114196777344e-05
+      },
+      "max_abs": 0.0009765625,
+      "max_abs_index": 5388,
+      "max_abs_values": {
+        "cpu": 0.1650390625,
+        "other": 0.166015625
+      },
+      "rms_abs": 2.469297739985483e-05,
+      "other_rms": 0.009817264322286969
+    }
+  ],
+  "cpu_fixture_root": "experiments/own-xpu-runtime/stage2/packet13-integrate/correctness/original-layer0/step1",
+  "other_fixture_root": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/runs/official-sigmoid-20261011/incident-retrospective/step1",
+  "observed_utc": "2026-10-11T06:26:50.568012+00:00"
+}

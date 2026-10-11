@@ -1,0 +1,91 @@
+// CPU-only diagnostic harness around the unchanged Packet 13 Engine.
+#ifndef OWN_RT_HOST_ONLY
+#error Host-only correctness checker; never compile a device target
+#endif
+#define main packet13_unused_main
+#include "../main.cpp"
+#undef main
+
+int main(int argc, char **argv) {
+  std::unique_ptr<Weights> weights;
+  std::unique_ptr<Engine> engine;
+  fs::path out;
+  bool created_output = false;
+  try {
+    require(argc == 6, "INPUT OUTPUT MODEL_DIR LAYERS SECONDS");
+    require(getpriority(PRIO_PROCESS, 0) == 19, "nice 19");
+    require(getenv("OMP_NUM_THREADS") && std::string(getenv("OMP_NUM_THREADS")) == "8", "8 numeric threads");
+    rlimit cap{38'000'000'000ull, 38'000'000'000ull};
+    require(setrlimit(RLIMIT_AS, &cap) == 0, "38 GB address cap");
+    Options a;
+    fs::path input = argv[1];
+    a.inputs = input / "tokens.txt"; a.plan = input / "plan.tsv";
+    a.auth = input / "identity.tsv"; a.output = out = argv[2]; a.model = argv[3];
+    int layers = std::stoi(argv[4]); a.seconds = std::stoi(argv[5]);
+    require(layers >= 1 && layers <= 48 && a.seconds > 0 && a.seconds <= 5400, "bounds");
+    require(!fs::exists(out), "new output required");
+    created_output = fs::create_directories(out);
+    require(created_output, "output creation failed");
+    std::signal(SIGTERM, stop); std::signal(SIGINT, stop);
+    weights = std::make_unique<Weights>(a);
+    auto p = plan(*weights, a);
+    // Keep each included layer's exact operation sequence and position commit.
+    // Later layers cannot feed back into earlier layers. Prefix checks have no head.
+    std::erase_if(p.launches, [&](const auto &l) {
+      if (l.label.starts_with("blk.")) return std::stoi(l.label.substr(4)) >= layers;
+      return layers < 48 && (l.label.starts_with("final.") || l.label == "logits" || l.label == "argmax");
+    });
+    write_plan(out / "plan.json", p, *weights, 1);
+    engine = std::make_unique<Engine>(*weights, a, p); engine->initialize();
+    std::vector<int> ids; int id; std::ifstream f(a.inputs);
+    while (f >> id) { require(id >= 0 && id < p.g.vocab, "token bounds"); ids.push_back(id); }
+    require(f.eof() && !ids.empty() && ids.size() <= size_t(a.context), "input");
+    fs::create_directory(out / "step1");
+    std::ofstream hashes(out / "step1/layers.jsonl"), positions(out / "positions.jsonl");
+    auto start = std::chrono::steady_clock::now();
+    for (size_t pos = 0; pos < ids.size(); ++pos) {
+      engine->put(0, "token", &ids[pos], 4);
+      for (const auto &l : p.launches) {
+        // Intermediate prompt-position head predictions are unused by prefill.
+        if (pos + 1 < ids.size() && (l.label.starts_with("final.") || l.label == "logits" || l.label == "argmax")) continue;
+        engine->enqueue(l, engine->logical);
+        if (ends(l.label, ".ffn.combine")) {
+          if (pos + 1 == ids.size()) {
+            int layer = std::stoi(l.label.substr(4));
+            auto raw = engine->readback(0, engine->buffers[0].at("streams").id, 4 * p.g.h * 2);
+            char name[40]; std::snprintf(name, sizeof name, "layer-%02d.bf16", layer);
+            std::ofstream b(out / "step1" / name, std::ios::binary);
+            b.write(reinterpret_cast<const char *>(raw.data()), raw.size());
+            hashes << "{\"layer\":" << layer << ",\"shape\":[1,4," << p.g.h
+                   << "],\"dtype\":\"BF16 little-endian\",\"sha256\":" << ownrt::quote(hash(raw)) << "}\n";
+            hashes.flush();
+          }
+          engine->release_layer(0); engine->loaded_layer[0] = -1;
+        }
+      }
+      engine->release_layer(0);
+      positions << "{\"position\":" << pos << ",\"input_token\":" << ids[pos] << "}\n"; positions.flush();
+      std::cout << "prefill position " << pos << "/" << ids.size()-1 << std::endl;
+    }
+    std::string token = layers == 48 ? std::to_string(engine->integer(0, "next_token")) : "null";
+    if (layers == 48) {
+      auto s = engine->buffers[0].at("logits");
+      auto raw = engine->readback(0, s.id, s.n * flash::scalar_bytes(s.type));
+      View v{raw.data(), s.n, s.type}; int best = 0;
+      for (size_t i=0; i<v.n; ++i) { require(std::isfinite(v.get(i)), "nonfinite logit"); if(v.get(i)>v.get(best)) best=i; }
+      require(std::to_string(best)==token, "independent host argmax mismatch");
+    }
+    auto teardown = engine->shutdown(); engine.reset();
+    rusage usage{}; getrusage(RUSAGE_SELF, &usage);
+    save(out / "receipt.json", "{\"completed\":true,\"device_executed\":false,\"layers\":" + std::to_string(layers)
+      + ",\"prompt_tokens\":" + std::to_string(ids.size()) + ",\"first_generated_token\":" + token
+      + ",\"max_rss_kib\":" + std::to_string(usage.ru_maxrss) + ",\"seconds\":" + std::to_string(Engine::ms(start)/1000)
+      + ",\"arithmetic\":" + ownrt::quote(arithmetic::version) + ",\"teardown\":[" + teardown.at(0) + "]}\n");
+    return 0;
+  } catch (const std::exception &ex) {
+    std::cerr << ex.what() << std::endl;
+    if (engine) engine->shutdown();
+    if (created_output) save(out / "error.json", "{\"error\":"+ownrt::quote(ex.what())+"}\n");
+    return 1;
+  }
+}
