@@ -1,0 +1,58 @@
+{
+  "window": "K0",
+  "passed": true,
+  "boot_id": "13858eef-ec68-44ea-a67c-9444933b7100",
+  "artifacts_sha256": {
+    "device/own-rt-iq3": "704c8e785e6018e0fb5fb369700ea17e303eb7047b9abadefd73e96c825edf2b",
+    "device/jit-smoke": "5f6ce2586609200f744b27b3e2f4f57e941614fe9c7b42eb8456cc0c4197cdd3",
+    "device/k2-fixtures": "96f5980eb05e06f8b8e5013e9e3fe483aca6e96e119add1abdb6ff547193800c",
+    "device/fused-fixtures": "3d6f7f8fbe39e83029a1246079c7aaef79f06d69008445807956d7b6a297ed0c",
+    "device/nongemv-fixtures": "a6d28acd2aafeef9f614b544a2ccff02d7b5dc5e08cfcf60b59006ec1b41f6fe"
+  },
+  "environment": {
+    "native": {
+      "HOME": "/home/steve",
+      "LANG": "en_US.UTF-8",
+      "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+      "PATH": "/home/steve/.local/bin:/home/steve/bin:/home/steve/.opencode/bin:/home/steve/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin",
+      "OMP_NUM_THREADS": "2"
+    },
+    "relevant_environment": {
+      "HOME": "/home/steve",
+      "LANG": "en_US.UTF-8",
+      "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+      "OMP_NUM_THREADS": "2",
+      "PATH": "/home/steve/.local/bin:/home/steve/bin:/home/steve/.opencode/bin:/home/steve/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
+    },
+    "policy": "closed environment; unknown names refused; native receives only recorded environment"
+  },
+  "card": 0,
+  "cards": 2,
+  "deadlines": {
+    "expected_work_seconds": 30.0,
+    "first_jit_estimate_seconds": 17.0,
+    "expected_total_seconds": 47.0,
+    "expectation_enforced": false,
+    "watchdog_seconds": 600,
+    "watchdog_estimate_ratio": 12.76595744680851,
+    "submission_budget_seconds": null,
+    "slowest_known_kernel": "historical reference core row approximately 1.05 s; packet24 kernels unmeasured",
+    "driver_job_timeout_seconds": 5.0,
+    "fused_kernel_device_durations_known": false
+  },
+  "command": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet24-kernels/build/device/jit-smoke",
+    "--authorized-device-window",
+    "--card",
+    "0",
+    "--cards",
+    "2",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet24-kernels/build/k0-c0/run"
+  ],
+  "returncode": 0,
+  "child_still_running": false,
+  "elapsed_seconds": 43.77124991299934,
+  "sigterm_sent": false,
+  "native_receipt_sha256": "34ea280be813c82e77f6d49c42ab8f15a2427b90aa185a9e97ba81006fcca69b"
+}
