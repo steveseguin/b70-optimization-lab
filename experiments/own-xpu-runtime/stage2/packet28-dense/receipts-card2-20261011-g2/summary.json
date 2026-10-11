@@ -1,0 +1,845 @@
+{
+  "device_executed": true,
+  "measured_on_tiled_fixtures": true,
+  "model_speed_claim": false,
+  "rows": [
+    {
+      "class_name": "expsgate",
+      "current_kernel": [
+        "integrated::experts/iq3::kopt4::expert_gate_up(split=1)"
+      ],
+      "in_model_group_us": 177.9206349206349,
+      "r5_median_us": 171.406,
+      "baseline_matches_model": true,
+      "reason": [],
+      "groups_per_token": 48.0,
+      "launches_per_token": 48.0,
+      "selected": "p28.paired.wg32",
+      "ms_per_token_saved_lower_bound": 4.250064,
+      "candidates": [
+        {
+          "candidate": "p28.paired.rows4",
+          "eligible": true,
+          "median_us": 82.3955,
+          "p90_us": 85.104
+        },
+        {
+          "candidate": "p28.paired.wg32",
+          "eligible": true,
+          "median_us": 79.896,
+          "p90_us": 82.5
+        },
+        {
+          "candidate": "p28.private.rows4",
+          "eligible": true,
+          "median_us": 105.02625,
+          "p90_us": 108.645
+        },
+        {
+          "candidate": "p28.private.wg32",
+          "eligible": true,
+          "median_us": 101.4065,
+          "p90_us": 104.687
+        },
+        {
+          "candidate": "p28.shared.rows4",
+          "eligible": true,
+          "median_us": 91.71950000000001,
+          "p90_us": 95.0
+        },
+        {
+          "candidate": "p28.shared.wg32",
+          "eligible": true,
+          "median_us": 89.4785,
+          "p90_us": 91.98
+        }
+      ]
+    },
+    {
+      "class_name": "gdn.qkv",
+      "current_kernel": [
+        "integrated::dense/expanded_sg32_v1"
+      ],
+      "in_model_group_us": 100.65079365079364,
+      "r5_median_us": 93.07249999999999,
+      "baseline_matches_model": true,
+      "reason": [],
+      "groups_per_token": 36.0,
+      "launches_per_token": 36.0,
+      "selected": "p28.dense.wg32",
+      "ms_per_token_saved_lower_bound": 0.8512199999999998,
+      "candidates": [
+        {
+          "candidate": "p28.dense.rows4",
+          "eligible": true,
+          "median_us": 73.5415,
+          "p90_us": 78.02
+        },
+        {
+          "candidate": "p28.dense.wg32",
+          "eligible": true,
+          "median_us": 69.1665,
+          "p90_us": 72.5
+        }
+      ]
+    },
+    {
+      "class_name": "attention",
+      "current_kernel": [
+        "integrated::dense/expanded_split4_v1"
+      ],
+      "in_model_group_us": 66.74074074074075,
+      "r5_median_us": 58.334,
+      "baseline_matches_model": true,
+      "reason": [],
+      "groups_per_token": 48.0,
+      "launches_per_token": 48.0,
+      "selected": "p28.dense.wg32",
+      "ms_per_token_saved_lower_bound": 0.6950400000000002,
+      "candidates": [
+        {
+          "candidate": "p28.dense.rows4",
+          "eligible": true,
+          "median_us": 45.573,
+          "p90_us": 45.937
+        },
+        {
+          "candidate": "p28.dense.wg32",
+          "eligible": true,
+          "median_us": 43.854,
+          "p90_us": 44.166
+        }
+      ]
+    },
+    {
+      "class_name": "logits",
+      "current_kernel": [
+        "integrated::dense/expanded_sg32_v1"
+      ],
+      "in_model_group_us": 2136.4761904761904,
+      "r5_median_us": 2446.432,
+      "baseline_matches_model": true,
+      "reason": [],
+      "groups_per_token": 1.0,
+      "launches_per_token": 1.0,
+      "selected": "p28.dense.wg32",
+      "ms_per_token_saved_lower_bound": 0.5423435,
+      "candidates": [
+        {
+          "candidate": "p28.dense.rows4",
+          "eligible": true,
+          "median_us": 1927.9425,
+          "p90_us": 1941.77
+        },
+        {
+          "candidate": "p28.dense.wg32",
+          "eligible": true,
+          "median_us": 1902.18775,
+          "p90_us": 1914.063
+        }
+      ]
+    },
+    {
+      "class_name": "gdn.z",
+      "current_kernel": [
+        "integrated::dense/expanded_sg32_v1"
+      ],
+      "in_model_group_us": 62.02601410934744,
+      "r5_median_us": 56.979,
+      "baseline_matches_model": true,
+      "reason": [],
+      "groups_per_token": 36.0,
+      "launches_per_token": 36.0,
+      "selected": "p28.dense.wg32",
+      "ms_per_token_saved_lower_bound": 0.47998799999999997,
+      "candidates": [
+        {
+          "candidate": "p28.dense.rows4",
+          "eligible": true,
+          "median_us": 43.6975,
+          "p90_us": 46.146
+        },
+        {
+          "candidate": "p28.dense.wg32",
+          "eligible": true,
+          "median_us": 41.5625,
+          "p90_us": 44.167
+        }
+      ]
+    },
+    {
+      "class_name": "qsa.qgate",
+      "current_kernel": [
+        "integrated::dense/expanded_sg32_v1"
+      ],
+      "in_model_group_us": 118.00066137566138,
+      "r5_median_us": 113.80199999999999,
+      "baseline_matches_model": true,
+      "reason": [],
+      "groups_per_token": 12.0,
+      "launches_per_token": 12.0,
+      "selected": "p28.dense.wg32",
+      "ms_per_token_saved_lower_bound": 0.31874399999999997,
+      "candidates": [
+        {
+          "candidate": "p28.dense.rows4",
+          "eligible": true,
+          "median_us": 91.5625,
+          "p90_us": 92.813
+        },
+        {
+          "candidate": "p28.dense.wg32",
+          "eligible": true,
+          "median_us": 87.23949999999999,
+          "p90_us": 88.021
+        }
+      ]
+    },
+    {
+      "class_name": "hc.f.gate",
+      "current_kernel": [
+        "integrated::dense/expanded_sg32_v1"
+      ],
+      "in_model_group_us": 29.5021164021164,
+      "r5_median_us": 26.875,
+      "baseline_matches_model": true,
+      "reason": [],
+      "groups_per_token": 48.0,
+      "launches_per_token": 48.0,
+      "selected": "p28.dense.wg32",
+      "ms_per_token_saved_lower_bound": 0.29001600000000005,
+      "candidates": [
+        {
+          "candidate": "p28.dense.rows4",
+          "eligible": true,
+          "median_us": 22.2395,
+          "p90_us": 22.604
+        },
+        {
+          "candidate": "p28.dense.wg32",
+          "eligible": true,
+          "median_us": 20.7815,
+          "p90_us": 21.042
+        }
+      ]
+    },
+    {
+      "class_name": "hc.a.gate",
+      "current_kernel": [
+        "integrated::dense/expanded_sg32_v1"
+      ],
+      "in_model_group_us": 29.34232804232804,
+      "r5_median_us": 26.875,
+      "baseline_matches_model": true,
+      "reason": [],
+      "groups_per_token": 48.0,
+      "launches_per_token": 48.0,
+      "selected": "p28.dense.wg32",
+      "ms_per_token_saved_lower_bound": 0.289968,
+      "candidates": [
+        {
+          "candidate": "p28.dense.rows4",
+          "eligible": true,
+          "median_us": 22.292,
+          "p90_us": 22.604
+        },
+        {
+          "candidate": "p28.dense.wg32",
+          "eligible": true,
+          "median_us": 20.834,
+          "p90_us": 21.042
+        }
+      ]
+    },
+    {
+      "class_name": "hc.a.low",
+      "current_kernel": [
+        "integrated::dense/expanded_split4_v1"
+      ],
+      "in_model_group_us": 18.380588624338625,
+      "r5_median_us": 16.198,
+      "baseline_matches_model": true,
+      "reason": [],
+      "groups_per_token": 48.0,
+      "launches_per_token": 48.0,
+      "selected": "p28.dense.rows4",
+      "ms_per_token_saved_lower_bound": 0.18499199999999996,
+      "candidates": [
+        {
+          "candidate": "p28.dense.rows4",
+          "eligible": true,
+          "median_us": 12.344000000000001,
+          "p90_us": 12.604
+        },
+        {
+          "candidate": "p28.dense.wg32",
+          "eligible": true,
+          "median_us": 13.646,
+          "p90_us": 13.854
+        }
+      ]
+    },
+    {
+      "class_name": "shexpgate",
+      "current_kernel": [
+        "integrated::dense/expanded_sg32_v1",
+        "integrated::dense/expanded_split4_v1"
+      ],
+      "in_model_group_us": 16.402380952380952,
+      "r5_median_us": 13.9585,
+      "baseline_matches_model": true,
+      "reason": [],
+      "groups_per_token": 48.0,
+      "launches_per_token": 48.0,
+      "selected": "p28.dense.wg32",
+      "ms_per_token_saved_lower_bound": 0.15499199999999996,
+      "candidates": [
+        {
+          "candidate": "p28.dense.rows4",
+          "eligible": true,
+          "median_us": 10.677,
+          "p90_us": 11.146
+        },
+        {
+          "candidate": "p28.dense.wg32",
+          "eligible": true,
+          "median_us": 10.6255,
+          "p90_us": 11.042
+        }
+      ]
+    },
+    {
+      "class_name": "shexpup",
+      "current_kernel": [
+        "integrated::dense/expanded_sg32_v1",
+        "integrated::dense/expanded_split4_v1"
+      ],
+      "in_model_group_us": 15.21957671957672,
+      "r5_median_us": 14.01,
+      "baseline_matches_model": true,
+      "reason": [],
+      "groups_per_token": 48.0,
+      "launches_per_token": 48.0,
+      "selected": "p28.dense.rows4",
+      "ms_per_token_saved_lower_bound": 0.15499199999999996,
+      "candidates": [
+        {
+          "candidate": "p28.dense.rows4",
+          "eligible": true,
+          "median_us": 10.625,
+          "p90_us": 11.146
+        },
+        {
+          "candidate": "p28.dense.wg32",
+          "eligible": true,
+          "median_us": 10.677,
+          "p90_us": 11.146
+        }
+      ]
+    },
+    {
+      "class_name": "shexpdown",
+      "current_kernel": [
+        "integrated::dense/expanded_sg32_v1"
+      ],
+      "in_model_group_us": 15.754596560846561,
+      "r5_median_us": 14.219000000000001,
+      "baseline_matches_model": true,
+      "reason": [],
+      "groups_per_token": 48.0,
+      "launches_per_token": 48.0,
+      "selected": "p28.dense.wg32",
+      "ms_per_token_saved_lower_bound": 0.140016,
+      "candidates": [
+        {
+          "candidate": "p28.dense.rows4",
+          "eligible": true,
+          "median_us": 12.604,
+          "p90_us": 12.917
+        },
+        {
+          "candidate": "p28.dense.wg32",
+          "eligible": true,
+          "median_us": 11.25,
+          "p90_us": 11.458
+        }
+      ]
+    },
+    {
+      "class_name": "qsa.ik",
+      "current_kernel": [
+        "integrated::dense/decode_const_split4_v1"
+      ],
+      "in_model_group_us": 10.389695767195766,
+      "r5_median_us": 8.854,
+      "baseline_matches_model": true,
+      "reason": [],
+      "groups_per_token": 12.0,
+      "launches_per_token": 24.0,
+      "selected": "p28.dense.wg32",
+      "ms_per_token_saved_lower_bound": 0.052499999999999984,
+      "candidates": [
+        {
+          "candidate": "p28.dense.rows4",
+          "eligible": true,
+          "median_us": 4.7915,
+          "p90_us": 5.0
+        },
+        {
+          "candidate": "p28.dense.wg32",
+          "eligible": true,
+          "median_us": 4.479,
+          "p90_us": 4.584
+        }
+      ]
+    },
+    {
+      "class_name": "qsa.k",
+      "current_kernel": [
+        "integrated::dense/expanded_split4_v1"
+      ],
+      "in_model_group_us": 10.814748677248678,
+      "r5_median_us": 9.844000000000001,
+      "baseline_matches_model": true,
+      "reason": [],
+      "groups_per_token": 12.0,
+      "launches_per_token": 12.0,
+      "selected": "p28.dense.rows4",
+      "ms_per_token_saved_lower_bound": 0.031248000000000012,
+      "candidates": [
+        {
+          "candidate": "p28.dense.rows4",
+          "eligible": true,
+          "median_us": 7.2395,
+          "p90_us": 7.5
+        },
+        {
+          "candidate": "p28.dense.wg32",
+          "eligible": true,
+          "median_us": 8.49,
+          "p90_us": 8.646
+        }
+      ]
+    },
+    {
+      "class_name": "qsa.v",
+      "current_kernel": [
+        "integrated::dense/expanded_split4_v1"
+      ],
+      "in_model_group_us": 10.542314814814814,
+      "r5_median_us": 9.896,
+      "baseline_matches_model": true,
+      "reason": [],
+      "groups_per_token": 12.0,
+      "launches_per_token": 12.0,
+      "selected": "p28.dense.rows4",
+      "ms_per_token_saved_lower_bound": 0.03000600000000001,
+      "candidates": [
+        {
+          "candidate": "p28.dense.rows4",
+          "eligible": true,
+          "median_us": 7.29125,
+          "p90_us": 7.5
+        },
+        {
+          "candidate": "p28.dense.wg32",
+          "eligible": true,
+          "median_us": 8.4375,
+          "p90_us": 8.647
+        }
+      ]
+    },
+    {
+      "class_name": "ple.key",
+      "current_kernel": [
+        "integrated::dense/expanded_sg32_v1"
+      ],
+      "in_model_group_us": 102.61571428571429,
+      "r5_median_us": 92.187,
+      "baseline_matches_model": true,
+      "reason": [],
+      "groups_per_token": 1.0,
+      "launches_per_token": 1.0,
+      "selected": "p28.dense.wg32",
+      "ms_per_token_saved_lower_bound": 0.024269999999999996,
+      "candidates": [
+        {
+          "candidate": "p28.dense.rows4",
+          "eligible": true,
+          "median_us": 71.667,
+          "p90_us": 72.605
+        },
+        {
+          "candidate": "p28.dense.wg32",
+          "eligible": true,
+          "median_us": 67.813,
+          "p90_us": 68.437
+        }
+      ]
+    },
+    {
+      "class_name": "ple.value",
+      "current_kernel": [
+        "integrated::dense/expanded_split4_v1"
+      ],
+      "in_model_group_us": 38.523492063492064,
+      "r5_median_us": 34.167,
+      "baseline_matches_model": true,
+      "reason": [],
+      "groups_per_token": 1.0,
+      "launches_per_token": 1.0,
+      "selected": "p28.dense.wg32",
+      "ms_per_token_saved_lower_bound": 0.009479000000000003,
+      "candidates": [
+        {
+          "candidate": "p28.dense.rows4",
+          "eligible": true,
+          "median_us": 26.042,
+          "p90_us": 26.458
+        },
+        {
+          "candidate": "p28.dense.wg32",
+          "eligible": true,
+          "median_us": 24.6875,
+          "p90_us": 24.896
+        }
+      ]
+    },
+    {
+      "class_name": "final.gate",
+      "current_kernel": [
+        "integrated::dense/expanded_sg32_v1"
+      ],
+      "in_model_group_us": 29.823015873015873,
+      "r5_median_us": 26.875,
+      "baseline_matches_model": true,
+      "reason": [],
+      "groups_per_token": 1.0,
+      "launches_per_token": 1.0,
+      "selected": "p28.dense.wg32",
+      "ms_per_token_saved_lower_bound": 0.006041,
+      "candidates": [
+        {
+          "candidate": "p28.dense.rows4",
+          "eligible": true,
+          "median_us": 22.240000000000002,
+          "p90_us": 22.604
+        },
+        {
+          "candidate": "p28.dense.wg32",
+          "eligible": true,
+          "median_us": 20.8335,
+          "p90_us": 21.042
+        }
+      ]
+    },
+    {
+      "class_name": "final.low",
+      "current_kernel": [
+        "integrated::dense/expanded_split4_v1"
+      ],
+      "in_model_group_us": 18.055555555555557,
+      "r5_median_us": 16.146,
+      "baseline_matches_model": true,
+      "reason": [],
+      "groups_per_token": 1.0,
+      "launches_per_token": 1.0,
+      "selected": "p28.dense.rows4",
+      "ms_per_token_saved_lower_bound": 0.003854000000000001,
+      "candidates": [
+        {
+          "candidate": "p28.dense.rows4",
+          "eligible": true,
+          "median_us": 12.292,
+          "p90_us": 12.5
+        },
+        {
+          "candidate": "p28.dense.wg32",
+          "eligible": true,
+          "median_us": 13.698,
+          "p90_us": 13.854
+        }
+      ]
+    },
+    {
+      "class_name": "expsdown",
+      "current_kernel": [
+        "integrated::experts/iq3::kopt4::expert_down(split=1)"
+      ],
+      "in_model_group_us": 130.12929894179894,
+      "r5_median_us": 125.625,
+      "baseline_matches_model": true,
+      "reason": [],
+      "groups_per_token": 48.0,
+      "launches_per_token": 48.0,
+      "selected": "r5",
+      "ms_per_token_saved_lower_bound": 0,
+      "candidates": [
+        {
+          "candidate": "p28.private.rows4",
+          "eligible": false,
+          "median_us": 159.24425000000002,
+          "p90_us": 160.625
+        },
+        {
+          "candidate": "p28.private.wg32",
+          "eligible": false,
+          "median_us": 154.7395,
+          "p90_us": 155.417
+        },
+        {
+          "candidate": "p28.shared.rows4",
+          "eligible": false,
+          "median_us": 159.73925,
+          "p90_us": 161.146
+        },
+        {
+          "candidate": "p28.shared.wg32",
+          "eligible": false,
+          "median_us": 154.375,
+          "p90_us": 155.209
+        }
+      ]
+    },
+    {
+      "class_name": "hc.a.inject",
+      "current_kernel": [
+        "integrated::dense/decode_const_split4_v1"
+      ],
+      "in_model_group_us": 18.763392857142858,
+      "r5_median_us": 15.417,
+      "baseline_matches_model": false,
+      "reason": [
+        "R5 does not reproduce in-model time within 15%: hc.a.inject"
+      ],
+      "groups_per_token": 48.0,
+      "launches_per_token": 96.0,
+      "selected": "r5",
+      "ms_per_token_saved_lower_bound": 0,
+      "candidates": [
+        {
+          "candidate": "p28.dense.rows4",
+          "eligible": false,
+          "median_us": 8.438,
+          "p90_us": 8.542
+        },
+        {
+          "candidate": "p28.dense.wg32",
+          "eligible": false,
+          "median_us": 8.125,
+          "p90_us": 8.229
+        }
+      ]
+    },
+    {
+      "class_name": "hc.f.low",
+      "current_kernel": [
+        "integrated::dense/expanded_split4_v1"
+      ],
+      "in_model_group_us": 19.761805555555558,
+      "r5_median_us": 16.146,
+      "baseline_matches_model": false,
+      "reason": [
+        "R5 does not reproduce in-model time within 15%: hc.f.low"
+      ],
+      "groups_per_token": 48.0,
+      "launches_per_token": 48.0,
+      "selected": "r5",
+      "ms_per_token_saved_lower_bound": 0,
+      "candidates": [
+        {
+          "candidate": "p28.dense.rows4",
+          "eligible": false,
+          "median_us": 12.34375,
+          "p90_us": 12.5
+        },
+        {
+          "candidate": "p28.dense.wg32",
+          "eligible": false,
+          "median_us": 13.697500000000002,
+          "p90_us": 13.854
+        }
+      ]
+    },
+    {
+      "class_name": "hc.f.inject",
+      "current_kernel": [
+        "integrated::dense/decode_const_split4_v1"
+      ],
+      "in_model_group_us": 19.37063492063492,
+      "r5_median_us": 15.3645,
+      "baseline_matches_model": false,
+      "reason": [
+        "R5 does not reproduce in-model time within 15%: hc.f.inject"
+      ],
+      "groups_per_token": 48.0,
+      "launches_per_token": 96.0,
+      "selected": "r5",
+      "ms_per_token_saved_lower_bound": 0,
+      "candidates": [
+        {
+          "candidate": "p28.dense.rows4",
+          "eligible": false,
+          "median_us": 8.438,
+          "p90_us": 8.542
+        },
+        {
+          "candidate": "p28.dense.wg32",
+          "eligible": false,
+          "median_us": 8.125,
+          "p90_us": 8.126
+        }
+      ]
+    },
+    {
+      "class_name": "qsa.iq",
+      "current_kernel": [
+        "integrated::dense/decode_const_split4_v1"
+      ],
+      "in_model_group_us": 16.071428571428573,
+      "r5_median_us": 11.458,
+      "baseline_matches_model": false,
+      "reason": [
+        "R5 does not reproduce in-model time within 15%: qsa.iq"
+      ],
+      "groups_per_token": 12.0,
+      "launches_per_token": 24.0,
+      "selected": "r5",
+      "ms_per_token_saved_lower_bound": 0,
+      "candidates": [
+        {
+          "candidate": "p28.dense.rows4",
+          "eligible": false,
+          "median_us": 8.073,
+          "p90_us": 8.23
+        },
+        {
+          "candidate": "p28.dense.wg32",
+          "eligible": false,
+          "median_us": 8.958,
+          "p90_us": 9.063
+        }
+      ]
+    },
+    {
+      "class_name": "router",
+      "current_kernel": [
+        "integrated::dense/decode_const_split4_v1"
+      ],
+      "in_model_group_us": 20.16871693121693,
+      "r5_median_us": 10.8855,
+      "baseline_matches_model": false,
+      "reason": [
+        "R5 does not reproduce in-model time within 15%: router"
+      ],
+      "groups_per_token": 48.0,
+      "launches_per_token": 96.0,
+      "selected": "r5",
+      "ms_per_token_saved_lower_bound": 0,
+      "candidates": [
+        {
+          "candidate": "p28.dense.rows4",
+          "eligible": false,
+          "median_us": 7.865,
+          "p90_us": 8.021
+        },
+        {
+          "candidate": "p28.dense.wg32",
+          "eligible": false,
+          "median_us": 9.688,
+          "p90_us": 9.792
+        }
+      ]
+    },
+    {
+      "class_name": "gdn.a",
+      "current_kernel": [
+        "integrated::dense/decode_const_split4_v1"
+      ],
+      "in_model_group_us": 9.99885361552028,
+      "r5_median_us": 7.084,
+      "baseline_matches_model": false,
+      "reason": [
+        "R5 does not reproduce in-model time within 15%: gdn.a"
+      ],
+      "groups_per_token": 36.0,
+      "launches_per_token": 72.0,
+      "selected": "r5",
+      "ms_per_token_saved_lower_bound": 0,
+      "candidates": [
+        {
+          "candidate": "p28.dense.rows4",
+          "eligible": false,
+          "median_us": 3.646,
+          "p90_us": 3.75
+        },
+        {
+          "candidate": "p28.dense.wg32",
+          "eligible": false,
+          "median_us": 3.75,
+          "p90_us": 3.854
+        }
+      ]
+    },
+    {
+      "class_name": "gdn.b",
+      "current_kernel": [
+        "integrated::dense/decode_const_split4_v1"
+      ],
+      "in_model_group_us": 9.12200176366843,
+      "r5_median_us": 7.0835,
+      "baseline_matches_model": false,
+      "reason": [
+        "R5 does not reproduce in-model time within 15%: gdn.b"
+      ],
+      "groups_per_token": 36.0,
+      "launches_per_token": 72.0,
+      "selected": "r5",
+      "ms_per_token_saved_lower_bound": 0,
+      "candidates": [
+        {
+          "candidate": "p28.dense.rows4",
+          "eligible": false,
+          "median_us": 3.646,
+          "p90_us": 3.75
+        },
+        {
+          "candidate": "p28.dense.wg32",
+          "eligible": false,
+          "median_us": 3.75,
+          "p90_us": 3.854
+        }
+      ]
+    },
+    {
+      "class_name": "shared_gate",
+      "current_kernel": [
+        "integrated::dense/decode_const_split4_v1"
+      ],
+      "in_model_group_us": 8.910185185185187,
+      "r5_median_us": 6.667,
+      "baseline_matches_model": false,
+      "reason": [
+        "R5 does not reproduce in-model time within 15%: shared_gate"
+      ],
+      "groups_per_token": 48.0,
+      "launches_per_token": 96.0,
+      "selected": "r5",
+      "ms_per_token_saved_lower_bound": 0,
+      "candidates": [
+        {
+          "candidate": "p28.dense.rows4",
+          "eligible": false,
+          "median_us": 3.2815000000000003,
+          "p90_us": 3.334
+        },
+        {
+          "candidate": "p28.dense.wg32",
+          "eligible": false,
+          "median_us": 3.542,
+          "p90_us": 3.646
+        }
+      ]
+    }
+  ]
+}
