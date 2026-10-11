@@ -1,5 +1,21 @@
 # Screen 1b CPU validation — native FP8 mmap, 2026-10-08
 
+## Attempt 8 fourth incident, 2026-10-11
+
+The owner-authorized calibrate-load attempt 8 completed weight loading on all
+four ranks, then faulted during KV-initialization profile/dummy forward before
+readiness/capture. Manifest `daf50d2391549a9fb5c03ee2cf3a69e763cc44e621fdaf35e4b06529c7142b69`
+applied 50 files. Calibration failed: no plateau, no generation, container exit
+1, no OOM kill, no qualified four-rank teardown. SIGINT command rc 0 is not
+native teardown success. The fourth incident halts the engine window despite
+a passing saved bounded postflight. Fault cause remains unknown.
+
+[Full analysis and memory evidence](../../../notes/2026-10-11-attempt8-fourth-incident.md)
+and [receipt bundle](evidence/fourth-incident-20261011/index.json).
+This update checked saved evidence, source identity, arithmetic, links and diffs
+on CPU; it did not repeat the historical runtime tests below. Earlier advice
+to run attempt 8 is now historical, not permission for a retry.
+
 ## Exit fault reproduction, 2026-10-10
 
 The coordinator's second native window supplied two new results; this update

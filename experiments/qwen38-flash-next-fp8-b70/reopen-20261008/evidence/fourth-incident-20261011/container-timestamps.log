@@ -1,0 +1,728 @@
+2026-10-11T00:46:00.675171612Z (APIServer pid=1) INFO 10-11 00:46:00 [api_utils.py:347] 
+2026-10-11T00:46:00.675205305Z (APIServer pid=1) INFO 10-11 00:46:00 [api_utils.py:347]        █     █     █▄   ▄█
+2026-10-11T00:46:00.675302779Z (APIServer pid=1) INFO 10-11 00:46:00 [api_utils.py:347]  ▄▄ ▄█ █     █     █ ▀▄▀ █  version 0.30.0
+2026-10-11T00:46:00.675305754Z (APIServer pid=1) INFO 10-11 00:46:00 [api_utils.py:347]   █▄█▀ █     █     █     █  model   /model
+2026-10-11T00:46:00.675308179Z (APIServer pid=1) INFO 10-11 00:46:00 [api_utils.py:347]    ▀▀  ▀▀▀▀▀ ▀▀▀▀▀ ▀     ▀
+2026-10-11T00:46:00.675310483Z (APIServer pid=1) INFO 10-11 00:46:00 [api_utils.py:347] 
+2026-10-11T00:46:00.680599008Z (APIServer pid=1) INFO 10-11 00:46:00 [api_utils.py:286] non-default args: {'model_tag': '/model', 'enable_prompt_tokens_details': True, 'host': '127.0.0.1', 'port': 19988, 'model': '/model', 'dtype': 'bfloat16', 'max_model_len': 4352, 'quantization': 'fp8', 'served_model_name': ['qwen38-flash-next-fp8-tp4'], 'generation_config': 'vllm', 'safetensors_load_strategy': 'lazy', 'tensor_parallel_size': 4, 'enable_expert_parallel': True, 'gpu_memory_utilization': 0.9, 'kv_cache_memory_bytes': 376569856, 'enable_prefix_caching': False, 'offload_backend': 'uva', 'cpu_offload_gb': 12.25, 'cpu_offload_params': ['ple_embedding.ngram_embedding.weight', 'embed_tokens.weight'], 'limit_mm_per_prompt': {'image': 0, 'video': 0}, 'cudagraph_metrics': True, 'max_num_batched_tokens': 64, 'max_num_seqs': 1, 'enable_chunked_prefill': True, 'async_scheduling': False, 'moe_backend': 'triton', 'speculative_config': {'method': 'mtp', 'num_speculative_tokens': 1, 'rejection_sample_method': 'standard'}, 'compilation_config': {'mode': <CompilationMode.NONE: 0>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': [], 'ir_enable_torch_wrap': None, 'splitting_ops': None, 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': [], 'compile_ranges_endpoints': None, 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_DECODE_ONLY: (2, 0)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': None, 'pass_config': {}, 'max_cudagraph_capture_size': None, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': None, 'static_all_moe_layers': []}}
+2026-10-11T00:46:00.709861664Z (APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+2026-10-11T00:46:00.710204308Z (APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+2026-10-11T00:46:00.713914324Z (APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+2026-10-11T00:46:00.713986640Z (APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+2026-10-11T00:46:00.714067873Z (APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+2026-10-11T00:46:24.091612602Z (APIServer pid=1) INFO 10-11 00:46:24 [model.py:692] Resolved architecture: Qwen4ExpForConditionalGeneration
+2026-10-11T00:46:24.091958613Z (APIServer pid=1) INFO 10-11 00:46:24 [model.py:2030] Using max model len 4352
+2026-10-11T00:46:25.212967871Z (APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+2026-10-11T00:46:25.213295808Z (APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+2026-10-11T00:46:25.216885619Z (APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+2026-10-11T00:46:25.216953166Z (APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+2026-10-11T00:46:25.217030932Z (APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+2026-10-11T00:46:25.822589505Z (APIServer pid=1) INFO 10-11 00:46:25 [registry.py:146] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+2026-10-11T00:46:25.822612258Z (APIServer pid=1) INFO 10-11 00:46:25 [model.py:900] Disabled mm_prefix attention mode because multimodal inputs are configuration-disabled. Attention backends without mm_prefix support may now be selected.
+2026-10-11T00:46:25.904148748Z (APIServer pid=1) WARNING 10-11 00:46:25 [indexer_topk.py:29] Failed to import the DeepSelect extension (vllm._deepselect_C): No module named 'vllm._deepselect_C'
+2026-10-11T00:46:26.038246537Z (APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+2026-10-11T00:46:26.038584502Z (APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+2026-10-11T00:46:26.042279331Z (APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+2026-10-11T00:46:26.042348381Z (APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+2026-10-11T00:46:26.042423663Z (APIServer pid=1) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+2026-10-11T00:46:43.377897963Z (APIServer pid=1) INFO 10-11 00:46:43 [model.py:692] Resolved architecture: Qwen4ExpMTP
+2026-10-11T00:46:43.377982021Z (APIServer pid=1) INFO 10-11 00:46:43 [model.py:2030] Using max model len 262144
+2026-10-11T00:46:43.378581038Z (APIServer pid=1) INFO 10-11 00:46:43 [speculative.py:1651] Overriding draft model max model len from 262144 to 4352
+2026-10-11T00:46:43.378842410Z (APIServer pid=1) INFO 10-11 00:46:43 [scheduler.py:288] Chunked prefill is enabled with max_num_batched_tokens=64.
+2026-10-11T00:46:43.388683769Z (APIServer pid=1) INFO 10-11 00:46:43 [vllm.py:762] Auto-enabling VLLM_USE_BREAKABLE_CUDAGRAPH=1. Set VLLM_USE_BREAKABLE_CUDAGRAPH=0 to opt out.
+2026-10-11T00:46:43.389472813Z (APIServer pid=1) INFO 10-11 00:46:43 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['vllm_c', 'native'], fused_add_rms_norm=['vllm_c', 'native'], gelu_and_mul_sparse=['native'])
+2026-10-11T00:46:43.389618006Z (APIServer pid=1) WARNING 10-11 00:46:43 [vllm.py:2135] max_num_scheduled_tokens is set to 64 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommodate the additional draft token slots, or decrease num_speculative_tokens.
+2026-10-11T00:46:43.389770854Z (APIServer pid=1) WARNING 10-11 00:46:43 [xpu.py:308] XPU Graph support is experimental and currently only supports single-GPU execution.
+2026-10-11T00:46:43.389826168Z (APIServer pid=1) INFO 10-11 00:46:43 [xpu.py:382] XPU platform: set server shutdown_timeout=5.
+2026-10-11T00:46:43.408552117Z (APIServer pid=1) INFO 10-11 00:46:43 [compilation.py:336] Enabled custom fusions: norm_quant, act_quant
+2026-10-11T00:47:02.025763150Z (EngineCore pid=339) INFO 10-11 00:47:02 [core.py:124] Initializing a V1 LLM engine (v0.30.0) with config: model='/model', speculative_config=SpeculativeConfig(method='mtp', model='/model', num_spec_tokens=1), tokenizer='/model', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=4352, download_dir=None, load_format=auto, tensor_parallel_size=4, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=True, quantization=fp8, quantization_config=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=xpu, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, per_request_spec_decode_metrics='none', kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=True, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False, jit_monitor_mode='warn', jit_monitor_verbose=False), seed=0, served_model_name=qwen38-flash-next-fp8-tp4, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.NONE: 0>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['+quant_fp8', 'all', '+quant_fp8'], 'ir_enable_torch_wrap': False, 'splitting_ops': [], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': [], 'compile_ranges_endpoints': [64], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_DECODE_ONLY: (2, 0)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': True, 'fuse_act_quant': True, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False, 'enable_qk_norm_rope_fusion': False, 'fuse_rope_kvcache_cat_mla': False, 'fuse_act_padding': False, 'fuse_qk_norm_rope_kvcache': False}, 'max_cudagraph_capture_size': 2, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': False, 'static_all_moe_layers': []}, kernel_config=KernelConfig(ir_op_priority=IrOpPriorityConfig(rms_norm=['vllm_c', 'native'], fused_add_rms_norm=['vllm_c', 'native'], gelu_and_mul_sparse=['native']), enable_flashinfer_autotune=True, enable_cutedsl_warmup=True, enable_jit_warmup=True, moe_backend='triton', sparse_indexer_topk_backend='auto', linear_backend='auto', linear_backend_per_quant=None)
+2026-10-11T00:47:02.026500046Z (EngineCore pid=339) INFO 10-11 00:47:02 [multiproc_executor.py:156] DP group leader: node_rank=0, node_rank_within_dp=0, master_addr=127.0.0.1, mq_connect_ip=192.168.2.44 (local), world_size=4, local_world_size=4
+2026-10-11T00:47:17.972068686Z WARNING 10-11 00:47:17 [indexer_topk.py:29] Failed to import the DeepSelect extension (vllm._deepselect_C): No module named 'vllm._deepselect_C'
+2026-10-11T00:47:18.924812511Z [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+2026-10-11T00:47:18.925150958Z [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+2026-10-11T00:47:18.928852961Z [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+2026-10-11T00:47:18.928931449Z [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+2026-10-11T00:47:18.928999888Z [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+2026-10-11T00:47:19.530606581Z INFO 10-11 00:47:19 [registry.py:146] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+2026-10-11T00:47:19.597793033Z (Worker pid=451) INFO 10-11 00:47:19 [parallel_state.py:1827] world_size=4 rank=0 local_rank=0 distributed_init_method=file:///screen/cache/tmp/vllm_dist_669998644d9e416dad4e7ed93cb58b08 backend=xccl
+2026-10-11T00:47:32.947245347Z WARNING 10-11 00:47:32 [indexer_topk.py:29] Failed to import the DeepSelect extension (vllm._deepselect_C): No module named 'vllm._deepselect_C'
+2026-10-11T00:47:33.921973813Z [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+2026-10-11T00:47:33.922327338Z [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+2026-10-11T00:47:33.926040413Z [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+2026-10-11T00:47:33.926097871Z [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+2026-10-11T00:47:33.926193471Z [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+2026-10-11T00:47:34.527877035Z INFO 10-11 00:47:34 [registry.py:146] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+2026-10-11T00:47:34.586339643Z (Worker pid=478) INFO 10-11 00:47:34 [parallel_state.py:1827] world_size=4 rank=1 local_rank=1 distributed_init_method=file:///screen/cache/tmp/vllm_dist_669998644d9e416dad4e7ed93cb58b08 backend=xccl
+2026-10-11T00:47:48.094277370Z WARNING 10-11 00:47:48 [indexer_topk.py:29] Failed to import the DeepSelect extension (vllm._deepselect_C): No module named 'vllm._deepselect_C'
+2026-10-11T00:47:49.052386184Z [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+2026-10-11T00:47:49.052747494Z [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+2026-10-11T00:47:49.056479164Z [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+2026-10-11T00:47:49.056537204Z [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+2026-10-11T00:47:49.056615411Z [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+2026-10-11T00:47:49.647421887Z INFO 10-11 00:47:49 [registry.py:146] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+2026-10-11T00:47:49.710149574Z (Worker pid=513) INFO 10-11 00:47:49 [parallel_state.py:1827] world_size=4 rank=2 local_rank=2 distributed_init_method=file:///screen/cache/tmp/vllm_dist_669998644d9e416dad4e7ed93cb58b08 backend=xccl
+2026-10-11T00:48:03.201601986Z WARNING 10-11 00:48:03 [indexer_topk.py:29] Failed to import the DeepSelect extension (vllm._deepselect_C): No module named 'vllm._deepselect_C'
+2026-10-11T00:48:04.115534087Z [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+2026-10-11T00:48:04.115828942Z [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+2026-10-11T00:48:04.119488487Z [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+2026-10-11T00:48:04.119543971Z [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+2026-10-11T00:48:04.119606639Z [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+2026-10-11T00:48:04.684437556Z INFO 10-11 00:48:04 [registry.py:146] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+2026-10-11T00:48:04.742037112Z (Worker pid=548) INFO 10-11 00:48:04 [parallel_state.py:1827] world_size=4 rank=3 local_rank=3 distributed_init_method=file:///screen/cache/tmp/vllm_dist_669998644d9e416dad4e7ed93cb58b08 backend=xccl
+2026-10-11T00:48:04.790222336Z (Worker pid=451) INFO 10-11 00:48:04 [parallel_state.py:2267] rank 0 in world size 4 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, ETP rank 0, EP rank 0, EPLB rank N/A
+2026-10-11T00:48:04.793480416Z 2026:10:11-00:48:04:  451 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026-10-11T00:48:04.793492980Z 2026:10:11-00:48:04:  478 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026-10-11T00:48:04.793497789Z 2026:10:11-00:48:04:  548 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026-10-11T00:48:04.793510823Z 2026:10:11-00:48:04:  513 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026-10-11T00:48:04.793513599Z 2026:10:11-00:48:04:  451 |CCL_WARN| value of CCL_SYCL_ALLREDUCE_TMP_BUF changed to be 1 (default:0)
+2026-10-11T00:48:04.793516093Z 2026:10:11-00:48:04:  478 |CCL_WARN| value of CCL_SYCL_ALLREDUCE_TMP_BUF changed to be 1 (default:0)
+2026-10-11T00:48:04.793518688Z 2026:10:11-00:48:04:  548 |CCL_WARN| value of CCL_SYCL_ALLREDUCE_TMP_BUF changed to be 1 (default:0)
+2026-10-11T00:48:04.793521223Z 2026:10:11-00:48:04:  451 |CCL_WARN| value of CCL_SYCL_ALLGATHERV_TMP_BUF changed to be 1 (default:0)
+2026-10-11T00:48:04.793523768Z 2026:10:11-00:48:04:  478 |CCL_WARN| value of CCL_SYCL_ALLGATHERV_TMP_BUF changed to be 1 (default:0)
+2026-10-11T00:48:04.793526232Z 2026:10:11-00:48:04:  548 |CCL_WARN| value of CCL_SYCL_ALLGATHERV_TMP_BUF changed to be 1 (default:0)
+2026-10-11T00:48:04.793528707Z 2026:10:11-00:48:04:  513 |CCL_WARN| value of CCL_SYCL_ALLREDUCE_TMP_BUF changed to be 1 (default:0)
+2026-10-11T00:48:04.793531212Z 2026:10:11-00:48:04:  513 |CCL_WARN| value of CCL_SYCL_ALLGATHERV_TMP_BUF changed to be 1 (default:0)
+2026-10-11T00:48:04.793950290Z 2026:10:11-00:48:04:  548 |CCL_WARN| value of CCL_ZE_IPC_EXCHANGE changed to be sockets (default:pidfd)
+2026-10-11T00:48:04.793956762Z 2026:10:11-00:48:04:  451 |CCL_WARN| value of CCL_ZE_IPC_EXCHANGE changed to be sockets (default:pidfd)
+2026-10-11T00:48:04.793961301Z 2026:10:11-00:48:04:  478 |CCL_WARN| value of CCL_ZE_IPC_EXCHANGE changed to be sockets (default:pidfd)
+2026-10-11T00:48:04.793966160Z 2026:10:11-00:48:04:  548 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026-10-11T00:48:04.793971520Z 2026:10:11-00:48:04:  451 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026-10-11T00:48:04.793976499Z 2026:10:11-00:48:04:  478 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026-10-11T00:48:04.793981369Z 2026:10:11-00:48:04:  513 |CCL_WARN| value of CCL_ZE_IPC_EXCHANGE changed to be sockets (default:pidfd)
+2026-10-11T00:48:04.793986749Z 2026:10:11-00:48:04:  513 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026-10-11T00:48:06.157513810Z 2026:10:11-00:48:06:  451:[0] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+2026-10-11T00:48:06.157542334Z 2026:10:11-00:48:06:  478:[1] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+2026-10-11T00:48:06.157548305Z 2026:10:11-00:48:06:  548:[3] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+2026-10-11T00:48:06.157553144Z 2026:10:11-00:48:06:  513:[2] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+2026-10-11T00:48:06.450249499Z (Worker pid=451) INFO 10-11 00:48:06 [xpu_worker.py:169] Using V2 Model Runner
+2026-10-11T00:48:06.814572822Z (Worker pid=451) INFO 10-11 00:48:06 [base.py:138] Offloader set to UVAOffloader
+2026-10-11T00:48:07.157822749Z (Worker_TP0_EP0 pid=451) INFO 10-11 00:48:07 [model_runner.py:397] Loading model from scratch...
+2026-10-11T00:48:07.173337559Z (Worker_TP0_EP0 pid=451) INFO 10-11 00:48:07 [xpu.py:233] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+2026-10-11T00:48:07.174732814Z (Worker_TP0_EP0 pid=451) INFO 10-11 00:48:07 [mm_encoder_attention.py:372] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+2026-10-11T00:48:07.259448327Z (Worker_TP2_EP2 pid=513) INFO 10-11 00:48:07 [uva.py:70] Total CPU offloaded parameters: 0.3
+2026-10-11T00:48:07.310541864Z (Worker_TP1_EP1 pid=478) INFO 10-11 00:48:07 [uva.py:70] Total CPU offloaded parameters: 0.3
+2026-10-11T00:48:07.361689873Z (Worker_TP3_EP3 pid=548) INFO 10-11 00:48:07 [uva.py:70] Total CPU offloaded parameters: 0.3
+2026-10-11T00:48:07.411896251Z (Worker_TP0_EP0 pid=451) INFO 10-11 00:48:07 [uva.py:70] Total CPU offloaded parameters: 0.3
+2026-10-11T00:48:07.413476354Z (Worker_TP0_EP0 pid=451) INFO 10-11 00:48:07 [qwen_gdn_linear_attn.py:176] Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128).
+2026-10-11T00:48:07.413510558Z (Worker_TP0_EP0 pid=451) INFO 10-11 00:48:07 [qwen_gdn_linear_attn.py:528] GDN decode kernel: cuda
+2026-10-11T00:48:07.833574944Z (Worker_TP0_EP0 pid=451) INFO 10-11 00:48:07 [expert_map_manager.py:245] [EP Rank 0/4] Expert parallelism is enabled. Expert placement strategy: linear. Local/global number of experts: 128/512. Experts local to global index map: 0->0, 1->1, 2->2, 3->3, 4->4, 5->5, 6->6, 7->7, 8->8, 9->9, 10->10, 11->11, 12->12, 13->13, 14->14, 15->15, 16->16, 17->17, 18->18, 19->19, 20->20, 21->21, 22->22, 23->23, 24->24, 25->25, 26->26, 27->27, 28->28, 29->29, 30->30, 31->31, 32->32, 33->33, 34->34, 35->35, 36->36, 37->37, 38->38, 39->39, 40->40, 41->41, 42->42, 43->43, 44->44, 45->45, 46->46, 47->47, 48->48, 49->49, 50->50, 51->51, 52->52, 53->53, 54->54, 55->55, 56->56, 57->57, 58->58, 59->59, 60->60, 61->61, 62->62, 63->63, 64->64, 65->65, 66->66, 67->67, 68->68, 69->69, 70->70, 71->71, 72->72, 73->73, 74->74, 75->75, 76->76, 77->77, 78->78, 79->79, 80->80, 81->81, 82->82, 83->83, 84->84, 85->85, 86->86, 87->87, 88->88, 89->89, 90->90, 91->91, 92->92, 93->93, 94->94, 95->95, 96->96, 97->97, 98->98, 99->99, 100->100, 101->101, 102->102, 103->103, 104->104, 105->105, 106->106, 107->107, 108->108, 109->109, 110->110, 111->111, 112->112, 113->113, 114->114, 115->115, 116->116, 117->117, 118->118, 119->119, 120->120, 121->121, 122->122, 123->123, 124->124, 125->125, 126->126, 127->127.
+2026-10-11T00:48:07.833928499Z (Worker_TP0_EP0 pid=451) INFO 10-11 00:48:07 [fp8.py:359] Using TRITON Fp8 MoE backend out of potential backends: ['XPU', 'AITER', 'FLASHINFER_TRTLLM', 'FLASHINFER_CUTLASS', 'DEEPGEMM', 'VLLM_CUTLASS', 'TRITON', 'MARLIN', 'HUMMING', 'BATCHED_DEEPGEMM', 'BATCHED_VLLM_CUTLASS', 'BATCHED_TRITON', 'CPU', 'HPC'].
+2026-10-11T00:48:07.890133303Z (Worker_TP1_EP1 pid=478) INFO 10-11 00:48:07 [ngram_embedding.py:2239] Initialized PLE embedding language_model.model.layers.1.ple.ple_embedding.ngram_embedding: quantization_method=Qwen4ExpPLEFp8EmbeddingMethod, weight_dtype=torch.float8_e4m3fn, weight_device=xpu:1, pinned=False
+2026-10-11T00:48:07.966154057Z (Worker_TP0_EP0 pid=451) INFO 10-11 00:48:07 [ngram_embedding.py:2239] Initialized PLE embedding language_model.model.layers.1.ple.ple_embedding.ngram_embedding: quantization_method=Qwen4ExpPLEFp8EmbeddingMethod, weight_dtype=torch.float8_e4m3fn, weight_device=xpu:0, pinned=False
+2026-10-11T00:48:08.071748012Z (Worker_TP2_EP2 pid=513) INFO 10-11 00:48:08 [ngram_embedding.py:2239] Initialized PLE embedding language_model.model.layers.1.ple.ple_embedding.ngram_embedding: quantization_method=Qwen4ExpPLEFp8EmbeddingMethod, weight_dtype=torch.float8_e4m3fn, weight_device=xpu:2, pinned=False
+2026-10-11T00:48:08.152832023Z (Worker_TP3_EP3 pid=548) INFO 10-11 00:48:08 [ngram_embedding.py:2239] Initialized PLE embedding language_model.model.layers.1.ple.ple_embedding.ngram_embedding: quantization_method=Qwen4ExpPLEFp8EmbeddingMethod, weight_dtype=torch.float8_e4m3fn, weight_device=xpu:3, pinned=False
+2026-10-11T00:48:08.602747524Z (Worker_TP0_EP0 pid=451) INFO 10-11 00:48:08 [flash_attn.py:1116] Using FlashAttention version 2
+2026-10-11T00:48:16.849846935Z (Worker_TP3_EP3 pid=548) INFO 10-11 00:48:16 [uva.py:70] Total CPU offloaded parameters: 0.3
+2026-10-11T00:48:18.210342236Z (Worker_TP1_EP1 pid=478) INFO 10-11 00:48:18 [uva.py:70] Total CPU offloaded parameters: 0.3
+2026-10-11T00:48:18.262726143Z (Worker_TP0_EP0 pid=451) INFO 10-11 00:48:18 [uva.py:70] Total CPU offloaded parameters: 0.3
+2026-10-11T00:48:18.443061188Z (Worker_TP2_EP2 pid=513) INFO 10-11 00:48:18 [uva.py:70] Total CPU offloaded parameters: 0.3
+2026-10-11T00:48:18.567253642Z (Worker_TP0_EP0 pid=451) WARNING 10-11 00:48:18 [compilation.py:1361] Op 'quant_fp8' not present in model, enabling with '+quant_fp8' has no effect
+2026-10-11T00:48:19.542748177Z (Worker_TP0_EP0 pid=451) INFO 10-11 00:48:19 [weight_utils.py:896] Filesystem type for checkpoints: EXT4. Checkpoint size: 172.78 GiB. Available RAM: 47.49 GiB.
+2026-10-11T00:48:19.557101912Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:   0% Completed | 0/131 [00:00<?, ?it/s]
+2026-10-11T00:48:19.959803425Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:   1% Completed | 1/131 [00:00<00:52,  2.48it/s]
+2026-10-11T00:48:25.896540442Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:   2% Completed | 2/131 [00:06<07:51,  3.66s/it]
+2026-10-11T00:48:30.248046770Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:   2% Completed | 3/131 [00:10<08:28,  3.97s/it]
+2026-10-11T00:48:37.353067440Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:   3% Completed | 4/131 [00:17<11:01,  5.21s/it]
+2026-10-11T00:48:42.417329494Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:   4% Completed | 5/131 [00:22<10:49,  5.16s/it]
+2026-10-11T00:48:48.736590096Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  29% Completed | 38/131 [00:29<00:43,  2.14it/s]
+2026-10-11T00:48:51.919582355Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  30% Completed | 39/131 [00:32<00:52,  1.74it/s]
+2026-10-11T00:48:59.940104825Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  31% Completed | 40/131 [00:40<01:28,  1.03it/s]
+2026-10-11T00:49:02.943953320Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  31% Completed | 41/131 [00:43<01:40,  1.11s/it]
+2026-10-11T00:49:09.380638116Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  32% Completed | 42/131 [00:49<02:22,  1.60s/it]
+2026-10-11T00:49:13.760888796Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  33% Completed | 43/131 [00:54<02:49,  1.92s/it]
+2026-10-11T00:49:19.134509181Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  34% Completed | 44/131 [00:59<03:29,  2.41s/it]
+2026-10-11T00:49:22.793069567Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  34% Completed | 45/131 [01:03<03:45,  2.62s/it]
+2026-10-11T00:49:28.977048819Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  35% Completed | 46/131 [01:09<04:41,  3.31s/it]
+2026-10-11T00:49:32.364353192Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  36% Completed | 47/131 [01:12<04:39,  3.33s/it]
+2026-10-11T00:49:39.170048575Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  37% Completed | 48/131 [01:19<05:44,  4.15s/it]
+2026-10-11T00:49:43.468290649Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  37% Completed | 49/131 [01:23<05:43,  4.19s/it]
+2026-10-11T00:49:51.440733402Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  38% Completed | 50/131 [01:31<07:00,  5.19s/it]
+2026-10-11T00:49:54.795564965Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  39% Completed | 51/131 [01:35<06:14,  4.69s/it]
+2026-10-11T00:50:02.495238789Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  40% Completed | 52/131 [01:42<07:17,  5.54s/it]
+2026-10-11T00:50:06.475489861Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  40% Completed | 53/131 [01:46<06:36,  5.09s/it]
+2026-10-11T00:50:14.291775868Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  41% Completed | 54/131 [01:54<07:32,  5.88s/it]
+2026-10-11T00:50:19.212723160Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  42% Completed | 55/131 [01:59<07:05,  5.60s/it]
+2026-10-11T00:50:26.704439268Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  43% Completed | 56/131 [02:07<07:41,  6.16s/it]
+2026-10-11T00:50:30.906243938Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  44% Completed | 57/131 [02:11<06:52,  5.58s/it]
+2026-10-11T00:50:39.094166216Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  44% Completed | 58/131 [02:19<07:43,  6.36s/it]
+2026-10-11T00:50:43.531365834Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  45% Completed | 59/131 [02:23<06:56,  5.78s/it]
+2026-10-11T00:50:44.260890198Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  46% Completed | 60/131 [02:24<05:03,  4.27s/it]
+2026-10-11T00:50:51.411299470Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  47% Completed | 61/131 [02:31<05:59,  5.13s/it]
+2026-10-11T00:50:58.514646863Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  47% Completed | 62/131 [02:38<06:34,  5.72s/it]
+2026-10-11T00:51:10.396345833Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  48% Completed | 63/131 [02:50<08:34,  7.57s/it]
+2026-10-11T00:51:16.181896611Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  49% Completed | 64/131 [02:56<07:51,  7.03s/it]
+2026-10-11T00:51:23.844073060Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  50% Completed | 65/131 [03:04<07:56,  7.22s/it]
+2026-10-11T00:51:27.196304838Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  50% Completed | 66/131 [03:07<06:34,  6.06s/it]
+2026-10-11T00:51:35.873416762Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  51% Completed | 67/131 [03:16<07:18,  6.85s/it]
+2026-10-11T00:51:39.992567192Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  52% Completed | 68/131 [03:20<06:19,  6.03s/it]
+2026-10-11T00:51:48.545796279Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  53% Completed | 69/131 [03:28<07:00,  6.79s/it]
+2026-10-11T00:51:53.069068558Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  53% Completed | 70/131 [03:33<06:12,  6.11s/it]
+2026-10-11T00:51:59.151640012Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  54% Completed | 71/131 [03:39<06:05,  6.10s/it]
+2026-10-11T00:52:03.263120541Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  55% Completed | 72/131 [03:43<05:24,  5.50s/it]
+2026-10-11T00:52:11.311977617Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  56% Completed | 73/131 [03:51<06:03,  6.27s/it]
+2026-10-11T00:52:14.785109687Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  56% Completed | 74/131 [03:55<05:09,  5.43s/it]
+2026-10-11T00:52:21.848137925Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  57% Completed | 75/131 [04:02<05:31,  5.92s/it]
+2026-10-11T00:52:26.465409727Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  58% Completed | 76/131 [04:06<05:04,  5.53s/it]
+2026-10-11T00:52:33.802623325Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  59% Completed | 77/131 [04:14<05:27,  6.07s/it]
+2026-10-11T00:52:37.851767735Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  60% Completed | 78/131 [04:18<04:49,  5.46s/it]
+2026-10-11T00:52:44.763285060Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  60% Completed | 79/131 [04:25<05:06,  5.90s/it]
+2026-10-11T00:52:49.239678862Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  61% Completed | 80/131 [04:29<04:39,  5.47s/it]
+2026-10-11T00:52:57.946450498Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  62% Completed | 81/131 [04:38<05:22,  6.44s/it]
+2026-10-11T00:53:02.290776226Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  63% Completed | 82/131 [04:42<04:44,  5.81s/it]
+2026-10-11T00:53:10.299719609Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  63% Completed | 83/131 [04:50<05:10,  6.47s/it]
+2026-10-11T00:53:13.902949815Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  64% Completed | 84/131 [04:54<04:23,  5.61s/it]
+2026-10-11T00:53:19.534360358Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  65% Completed | 85/131 [04:59<04:18,  5.62s/it]
+2026-10-11T00:53:23.857569232Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  66% Completed | 86/131 [05:04<03:55,  5.23s/it]
+2026-10-11T00:53:31.020536819Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  66% Completed | 87/131 [05:11<04:15,  5.81s/it]
+2026-10-11T00:53:35.246525506Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  67% Completed | 88/131 [05:15<03:49,  5.33s/it]
+2026-10-11T00:53:41.466577953Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  68% Completed | 89/131 [05:21<03:55,  5.60s/it]
+2026-10-11T00:53:44.661272567Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  69% Completed | 90/131 [05:25<03:20,  4.88s/it]
+2026-10-11T00:53:53.482821010Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  69% Completed | 91/131 [05:33<04:02,  6.06s/it]
+2026-10-11T00:53:58.060452275Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  70% Completed | 92/131 [05:38<03:39,  5.62s/it]
+2026-10-11T00:54:04.832559598Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  71% Completed | 93/131 [05:45<03:46,  5.96s/it]
+2026-10-11T00:54:09.629557989Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  72% Completed | 94/131 [05:50<03:27,  5.61s/it]
+2026-10-11T00:54:15.575342503Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  73% Completed | 95/131 [05:56<03:25,  5.71s/it]
+2026-10-11T00:54:19.665681432Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  73% Completed | 96/131 [06:00<03:02,  5.23s/it]
+2026-10-11T00:54:27.060344997Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  74% Completed | 97/131 [06:07<03:19,  5.88s/it]
+2026-10-11T00:54:31.582069623Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  75% Completed | 98/131 [06:12<03:00,  5.47s/it]
+2026-10-11T00:54:39.133285602Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  76% Completed | 99/131 [06:19<03:15,  6.09s/it]
+2026-10-11T00:54:42.291857048Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  76% Completed | 100/131 [06:22<02:41,  5.21s/it]
+2026-10-11T00:54:49.204596026Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  77% Completed | 101/131 [06:29<02:51,  5.72s/it]
+2026-10-11T00:54:53.667307009Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  78% Completed | 102/131 [06:34<02:35,  5.35s/it]
+2026-10-11T00:55:00.186627043Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  79% Completed | 103/131 [06:40<02:39,  5.70s/it]
+2026-10-11T00:55:04.576422411Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  79% Completed | 104/131 [06:45<02:23,  5.31s/it]
+2026-10-11T00:55:10.979908352Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  80% Completed | 105/131 [06:51<02:26,  5.63s/it]
+2026-10-11T00:55:11.431702562Z (Worker_TP1_EP1 pid=478) INFO 10-11 00:55:11 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['vllm_c', 'native'], fused_add_rms_norm=['vllm_c', 'native'], gelu_and_mul_sparse=['native'])
+2026-10-11T00:55:13.154465787Z (Worker_TP2_EP2 pid=513) INFO 10-11 00:55:13 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['vllm_c', 'native'], fused_add_rms_norm=['vllm_c', 'native'], gelu_and_mul_sparse=['native'])
+2026-10-11T00:55:13.372704635Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  81% Completed | 106/131 [06:53<01:56,  4.66s/it]
+2026-10-11T00:55:14.367446144Z (Worker_TP3_EP3 pid=548) INFO 10-11 00:55:14 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['vllm_c', 'native'], fused_add_rms_norm=['vllm_c', 'native'], gelu_and_mul_sparse=['native'])
+2026-10-11T00:55:15.437157089Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  82% Completed | 107/131 [06:55<01:33,  3.88s/it]
+2026-10-11T00:55:16.610472001Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  82% Completed | 108/131 [06:57<01:10,  3.07s/it]
+2026-10-11T00:55:18.838099341Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  83% Completed | 109/131 [06:59<01:01,  2.82s/it]
+2026-10-11T00:55:20.042982658Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  84% Completed | 110/131 [07:00<00:49,  2.33s/it]
+2026-10-11T00:55:22.275609065Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  85% Completed | 111/131 [07:02<00:46,  2.30s/it]
+2026-10-11T00:55:23.598450964Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  85% Completed | 112/131 [07:04<00:38,  2.01s/it]
+2026-10-11T00:55:25.611546956Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  86% Completed | 113/131 [07:06<00:36,  2.01s/it]
+2026-10-11T00:55:26.854782949Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  87% Completed | 114/131 [07:07<00:30,  1.78s/it]
+2026-10-11T00:55:32.987409709Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  88% Completed | 115/131 [07:13<00:49,  3.09s/it]
+2026-10-11T00:55:36.207133883Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  89% Completed | 116/131 [07:16<00:46,  3.13s/it]
+2026-10-11T00:55:38.220966744Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  89% Completed | 117/131 [07:18<00:39,  2.79s/it]
+2026-10-11T00:55:39.338734353Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  90% Completed | 118/131 [07:19<00:29,  2.29s/it]
+2026-10-11T00:55:41.515691945Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  91% Completed | 119/131 [07:21<00:27,  2.26s/it]
+2026-10-11T00:55:42.779328577Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  92% Completed | 120/131 [07:23<00:21,  1.96s/it]
+2026-10-11T00:55:44.957848692Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  92% Completed | 121/131 [07:25<00:20,  2.02s/it]
+2026-10-11T00:55:46.233460210Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  93% Completed | 122/131 [07:26<00:16,  1.80s/it]
+2026-10-11T00:55:48.410481162Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  94% Completed | 123/131 [07:28<00:15,  1.91s/it]
+2026-10-11T00:55:49.566070858Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  95% Completed | 124/131 [07:30<00:11,  1.69s/it]
+2026-10-11T00:55:51.597355473Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  95% Completed | 125/131 [07:32<00:10,  1.79s/it]
+2026-10-11T00:55:52.825121049Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  96% Completed | 126/131 [07:33<00:08,  1.62s/it]
+2026-10-11T00:55:54.878711214Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  97% Completed | 127/131 [07:35<00:07,  1.75s/it]
+2026-10-11T00:55:56.117219624Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  98% Completed | 128/131 [07:36<00:04,  1.60s/it]
+2026-10-11T00:55:58.231848492Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  98% Completed | 129/131 [07:38<00:03,  1.75s/it]
+2026-10-11T00:55:59.472646285Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  99% Completed | 130/131 [07:39<00:01,  1.60s/it]
+2026-10-11T00:55:59.643179830Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards: 100% Completed | 131/131 [07:40<00:00,  1.17s/it]
+2026-10-11T00:55:59.643947506Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards: 100% Completed | 131/131 [07:40<00:00,  3.51s/it]
+2026-10-11T00:55:59.643957735Z (Worker_TP0_EP0 pid=451) 
+2026-10-11T00:55:59.711646164Z (Worker_TP0_EP0 pid=451) INFO 10-11 00:55:59 [default_loader.py:437] Loading weights took 460.11 seconds
+2026-10-11T00:55:59.772340230Z (Worker_TP0_EP0 pid=451) INFO 10-11 00:55:59 [fp8.py:740] Using MoEPrepareAndFinalizeNoDPEPModular
+2026-10-11T00:56:01.810394311Z (Worker_TP0_EP0 pid=451) INFO 10-11 00:56:01 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['vllm_c', 'native'], fused_add_rms_norm=['vllm_c', 'native'], gelu_and_mul_sparse=['native'])
+2026-10-11T00:56:01.812064908Z (Worker_TP0_EP0 pid=451) WARNING 10-11 00:56:01 [vllm.py:2135] max_num_scheduled_tokens is set to 64 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommodate the additional draft token slots, or decrease num_speculative_tokens.
+2026-10-11T00:56:01.814041641Z (Worker_TP0_EP0 pid=451) WARNING 10-11 00:56:01 [xpu.py:308] XPU Graph support is experimental and currently only supports single-GPU execution.
+2026-10-11T00:56:01.844626847Z (Worker_TP0_EP0 pid=451) INFO 10-11 00:56:01 [compilation.py:336] Enabled custom fusions: norm_quant, act_quant
+2026-10-11T00:56:02.216796160Z (Worker_TP0_EP0 pid=451) INFO 10-11 00:56:02 [weight_utils.py:896] Filesystem type for checkpoints: EXT4. Checkpoint size: 172.78 GiB. Available RAM: 51.00 GiB.
+2026-10-11T00:56:02.221120725Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:   0% Completed | 0/131 [00:00<?, ?it/s]
+2026-10-11T00:56:02.768533615Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:   2% Completed | 2/131 [00:00<00:35,  3.65it/s]
+2026-10-11T00:56:03.008418754Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:   2% Completed | 3/131 [00:00<00:33,  3.85it/s]
+2026-10-11T00:56:03.484884668Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:   3% Completed | 4/131 [00:01<00:43,  2.94it/s]
+2026-10-11T00:56:03.729583724Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:   4% Completed | 5/131 [00:01<00:38,  3.26it/s]
+2026-10-11T00:56:04.224122178Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  29% Completed | 38/131 [00:02<00:02, 31.46it/s]
+2026-10-11T00:56:05.213739076Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  31% Completed | 41/131 [00:02<00:05, 15.55it/s]
+2026-10-11T00:56:05.939489136Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  33% Completed | 43/131 [00:03<00:08, 10.82it/s]
+2026-10-11T00:56:06.661734307Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  34% Completed | 45/131 [00:04<00:10,  8.05it/s]
+2026-10-11T00:56:07.141629404Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  35% Completed | 46/131 [00:04<00:12,  6.58it/s]
+2026-10-11T00:56:07.389385040Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  36% Completed | 47/131 [00:05<00:13,  6.19it/s]
+2026-10-11T00:56:07.866519258Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  37% Completed | 48/131 [00:05<00:16,  4.97it/s]
+2026-10-11T00:56:08.127167959Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  37% Completed | 49/131 [00:05<00:17,  4.76it/s]
+2026-10-11T00:56:08.431326729Z (Worker_TP3_EP3 pid=548) INFO 10-11 00:56:08 [model_runner.py:429] Model loading took 20.87 GiB memory and 481.616486 seconds
+2026-10-11T00:56:08.452890795Z (Worker_TP3_EP3 pid=548) INFO 10-11 00:56:08 [interface.py:933] Setting attention block size to 800 tokens to ensure that attention page size is >= mamba page size.
+2026-10-11T00:56:08.453223833Z (Worker_TP3_EP3 pid=548) INFO 10-11 00:56:08 [interface.py:957] Padding mamba page size by 1.52% to ensure that mamba page size and attention page size are exactly equal.
+2026-10-11T00:56:08.453300838Z (Worker_TP3_EP3 pid=548) INFO 10-11 00:56:08 [xpu.py:429] [XPU]Setting attention block size to 832 tokens to ensure multiple of 64, set mamba_page_size_padded to 851968 bytes accordingly, before was 819200 bytes.
+2026-10-11T00:56:08.555186769Z (Worker_TP2_EP2 pid=513) INFO 10-11 00:56:08 [model_runner.py:429] Model loading took 20.87 GiB memory and 481.740438 seconds
+2026-10-11T00:56:08.574815831Z (Worker_TP2_EP2 pid=513) INFO 10-11 00:56:08 [interface.py:933] Setting attention block size to 800 tokens to ensure that attention page size is >= mamba page size.
+2026-10-11T00:56:08.575175588Z (Worker_TP2_EP2 pid=513) INFO 10-11 00:56:08 [interface.py:957] Padding mamba page size by 1.52% to ensure that mamba page size and attention page size are exactly equal.
+2026-10-11T00:56:08.575241512Z (Worker_TP2_EP2 pid=513) INFO 10-11 00:56:08 [xpu.py:429] [XPU]Setting attention block size to 832 tokens to ensure multiple of 64, set mamba_page_size_padded to 851968 bytes accordingly, before was 819200 bytes.
+2026-10-11T00:56:08.619100661Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  38% Completed | 50/131 [00:06<00:21,  3.84it/s]
+2026-10-11T00:56:08.778567776Z (Worker_TP1_EP1 pid=478) INFO 10-11 00:56:08 [model_runner.py:429] Model loading took 20.87 GiB memory and 481.963822 seconds
+2026-10-11T00:56:08.798510598Z (Worker_TP1_EP1 pid=478) INFO 10-11 00:56:08 [interface.py:933] Setting attention block size to 800 tokens to ensure that attention page size is >= mamba page size.
+2026-10-11T00:56:08.798793742Z (Worker_TP1_EP1 pid=478) INFO 10-11 00:56:08 [interface.py:957] Padding mamba page size by 1.52% to ensure that mamba page size and attention page size are exactly equal.
+2026-10-11T00:56:08.798866008Z (Worker_TP1_EP1 pid=478) INFO 10-11 00:56:08 [xpu.py:429] [XPU]Setting attention block size to 832 tokens to ensure multiple of 64, set mamba_page_size_padded to 851968 bytes accordingly, before was 819200 bytes.
+2026-10-11T00:56:08.867879424Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  39% Completed | 51/131 [00:06<00:20,  3.88it/s]
+2026-10-11T00:56:09.347517050Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  40% Completed | 52/131 [00:07<00:24,  3.25it/s]
+2026-10-11T00:56:09.597540077Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  40% Completed | 53/131 [00:07<00:22,  3.40it/s]
+2026-10-11T00:56:10.072694269Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  41% Completed | 54/131 [00:07<00:26,  2.94it/s]
+2026-10-11T00:56:10.315087376Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  42% Completed | 55/131 [00:08<00:23,  3.18it/s]
+2026-10-11T00:56:10.789477169Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  43% Completed | 56/131 [00:08<00:26,  2.79it/s]
+2026-10-11T00:56:11.039894741Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  44% Completed | 57/131 [00:08<00:24,  3.05it/s]
+2026-10-11T00:56:11.517169929Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  44% Completed | 58/131 [00:09<00:27,  2.70it/s]
+2026-10-11T00:56:11.760494211Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  45% Completed | 59/131 [00:09<00:24,  3.00it/s]
+2026-10-11T00:56:14.107177932Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  46% Completed | 60/131 [00:11<01:05,  1.08it/s]
+2026-10-11T00:56:14.581897551Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  47% Completed | 61/131 [00:12<00:55,  1.26it/s]
+2026-10-11T00:56:15.989922964Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  47% Completed | 62/131 [00:13<01:07,  1.03it/s]
+2026-10-11T00:56:16.467777731Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  48% Completed | 63/131 [00:14<00:56,  1.21it/s]
+2026-10-11T00:56:16.716253799Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  49% Completed | 64/131 [00:14<00:43,  1.53it/s]
+2026-10-11T00:56:17.195677601Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  50% Completed | 65/131 [00:14<00:39,  1.66it/s]
+2026-10-11T00:56:17.455388782Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  50% Completed | 66/131 [00:15<00:32,  2.00it/s]
+2026-10-11T00:56:17.933922970Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  51% Completed | 67/131 [00:15<00:31,  2.03it/s]
+2026-10-11T00:56:18.183037552Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  52% Completed | 68/131 [00:15<00:26,  2.38it/s]
+2026-10-11T00:56:18.660660524Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  53% Completed | 69/131 [00:16<00:27,  2.29it/s]
+2026-10-11T00:56:18.908809157Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  53% Completed | 70/131 [00:16<00:23,  2.63it/s]
+2026-10-11T00:56:19.384863336Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  54% Completed | 71/131 [00:17<00:24,  2.44it/s]
+2026-10-11T00:56:19.649569376Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  55% Completed | 72/131 [00:17<00:21,  2.73it/s]
+2026-10-11T00:56:20.135293459Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  56% Completed | 73/131 [00:17<00:23,  2.49it/s]
+2026-10-11T00:56:20.389929011Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  56% Completed | 74/131 [00:18<00:20,  2.80it/s]
+2026-10-11T00:56:20.880927289Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  57% Completed | 75/131 [00:18<00:22,  2.51it/s]
+2026-10-11T00:56:21.138560558Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  58% Completed | 76/131 [00:18<00:19,  2.81it/s]
+2026-10-11T00:56:21.629221602Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  59% Completed | 77/131 [00:19<00:21,  2.52it/s]
+2026-10-11T00:56:21.894737709Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  60% Completed | 78/131 [00:19<00:18,  2.80it/s]
+2026-10-11T00:56:22.386271187Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  60% Completed | 79/131 [00:20<00:20,  2.52it/s]
+2026-10-11T00:56:22.636600179Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  61% Completed | 80/131 [00:20<00:18,  2.83it/s]
+2026-10-11T00:56:23.125310961Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  62% Completed | 81/131 [00:20<00:19,  2.54it/s]
+2026-10-11T00:56:23.382835567Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  63% Completed | 82/131 [00:21<00:17,  2.83it/s]
+2026-10-11T00:56:23.873231624Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  63% Completed | 83/131 [00:21<00:18,  2.54it/s]
+2026-10-11T00:56:24.118554969Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  64% Completed | 84/131 [00:21<00:16,  2.86it/s]
+2026-10-11T00:56:24.596585917Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  65% Completed | 85/131 [00:22<00:17,  2.58it/s]
+2026-10-11T00:56:24.856484516Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  66% Completed | 86/131 [00:22<00:15,  2.86it/s]
+2026-10-11T00:56:25.335053077Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  66% Completed | 87/131 [00:23<00:17,  2.58it/s]
+2026-10-11T00:56:25.591180413Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  67% Completed | 88/131 [00:23<00:14,  2.87it/s]
+2026-10-11T00:56:26.068691684Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  68% Completed | 89/131 [00:23<00:16,  2.58it/s]
+2026-10-11T00:56:26.326163933Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  69% Completed | 90/131 [00:24<00:14,  2.87it/s]
+2026-10-11T00:56:26.805136568Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  69% Completed | 91/131 [00:24<00:15,  2.58it/s]
+2026-10-11T00:56:27.048567199Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  70% Completed | 92/131 [00:24<00:13,  2.90it/s]
+2026-10-11T00:56:27.540771899Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  71% Completed | 93/131 [00:25<00:14,  2.57it/s]
+2026-10-11T00:56:27.808656360Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  72% Completed | 94/131 [00:25<00:13,  2.84it/s]
+2026-10-11T00:56:28.298749813Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  73% Completed | 95/131 [00:26<00:14,  2.54it/s]
+2026-10-11T00:56:28.550250607Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  73% Completed | 96/131 [00:26<00:12,  2.85it/s]
+2026-10-11T00:56:29.041864013Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  74% Completed | 97/131 [00:26<00:13,  2.54it/s]
+2026-10-11T00:56:29.294398223Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  75% Completed | 98/131 [00:27<00:11,  2.85it/s]
+2026-10-11T00:56:29.778423689Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  76% Completed | 99/131 [00:27<00:12,  2.56it/s]
+2026-10-11T00:56:30.035729697Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  76% Completed | 100/131 [00:27<00:10,  2.85it/s]
+2026-10-11T00:56:30.514004332Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  77% Completed | 101/131 [00:28<00:11,  2.57it/s]
+2026-10-11T00:56:30.772827378Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  78% Completed | 102/131 [00:28<00:10,  2.86it/s]
+2026-10-11T00:56:31.251280169Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  79% Completed | 103/131 [00:29<00:10,  2.57it/s]
+2026-10-11T00:56:31.496231227Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  79% Completed | 104/131 [00:29<00:09,  2.89it/s]
+2026-10-11T00:56:31.972049607Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  80% Completed | 105/131 [00:29<00:09,  2.60it/s]
+2026-10-11T00:56:32.228428010Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  81% Completed | 106/131 [00:30<00:08,  2.89it/s]
+2026-10-11T00:56:32.708682205Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  82% Completed | 107/131 [00:30<00:09,  2.59it/s]
+2026-10-11T00:56:32.991290433Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  82% Completed | 108/131 [00:30<00:08,  2.82it/s]
+2026-10-11T00:56:33.481956802Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  83% Completed | 109/131 [00:31<00:08,  2.53it/s]
+2026-10-11T00:56:33.730668846Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  84% Completed | 110/131 [00:31<00:07,  2.84it/s]
+2026-10-11T00:56:34.215947337Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  85% Completed | 111/131 [00:31<00:07,  2.55it/s]
+2026-10-11T00:56:34.479592539Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  85% Completed | 112/131 [00:32<00:06,  2.83it/s]
+2026-10-11T00:56:34.958794735Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  86% Completed | 113/131 [00:32<00:07,  2.56it/s]
+2026-10-11T00:56:35.217618837Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  87% Completed | 114/131 [00:32<00:05,  2.85it/s]
+2026-10-11T00:56:35.692837692Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  88% Completed | 115/131 [00:33<00:06,  2.57it/s]
+2026-10-11T00:56:35.943819582Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  89% Completed | 116/131 [00:33<00:05,  2.88it/s]
+2026-10-11T00:56:36.418761987Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  89% Completed | 117/131 [00:34<00:05,  2.59it/s]
+2026-10-11T00:56:36.671968728Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  90% Completed | 118/131 [00:34<00:04,  2.89it/s]
+2026-10-11T00:56:37.147379747Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  91% Completed | 119/131 [00:34<00:04,  2.60it/s]
+2026-10-11T00:56:37.408107776Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  92% Completed | 120/131 [00:35<00:03,  2.88it/s]
+2026-10-11T00:56:37.881460628Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  92% Completed | 121/131 [00:35<00:03,  2.60it/s]
+2026-10-11T00:56:38.126155388Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  93% Completed | 122/131 [00:35<00:03,  2.91it/s]
+2026-10-11T00:56:38.601611173Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  94% Completed | 123/131 [00:36<00:03,  2.61it/s]
+2026-10-11T00:56:38.858508738Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  95% Completed | 124/131 [00:36<00:02,  2.90it/s]
+2026-10-11T00:56:39.333255888Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  95% Completed | 125/131 [00:37<00:02,  2.60it/s]
+2026-10-11T00:56:39.591368202Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  96% Completed | 126/131 [00:37<00:01,  2.89it/s]
+2026-10-11T00:56:40.077933383Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  97% Completed | 127/131 [00:37<00:01,  2.58it/s]
+2026-10-11T00:56:40.329296014Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  98% Completed | 128/131 [00:38<00:01,  2.88it/s]
+2026-10-11T00:56:40.816806887Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  98% Completed | 129/131 [00:38<00:00,  2.57it/s]
+2026-10-11T00:56:41.092503012Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards:  99% Completed | 130/131 [00:38<00:00,  2.82it/s]
+2026-10-11T00:56:41.124691772Z (Worker_TP0_EP0 pid=451) Loading safetensors checkpoint shards: 100% Completed | 131/131 [00:38<00:00,  3.37it/s]
+2026-10-11T00:56:41.124703544Z (Worker_TP0_EP0 pid=451) 
+2026-10-11T00:56:41.128798767Z (Worker_TP0_EP0 pid=451) INFO 10-11 00:56:41 [default_loader.py:437] Loading weights took 38.92 seconds
+2026-10-11T00:56:45.291018103Z (Worker_TP0_EP0 pid=451) INFO 10-11 00:56:45 [model_runner.py:429] Model loading took 20.87 GiB memory and 518.475773 seconds
+2026-10-11T00:56:45.311478472Z (Worker_TP0_EP0 pid=451) INFO 10-11 00:56:45 [interface.py:933] Setting attention block size to 800 tokens to ensure that attention page size is >= mamba page size.
+2026-10-11T00:56:45.311496916Z (Worker_TP0_EP0 pid=451) INFO 10-11 00:56:45 [interface.py:957] Padding mamba page size by 1.52% to ensure that mamba page size and attention page size are exactly equal.
+2026-10-11T00:56:45.311581386Z (Worker_TP0_EP0 pid=451) INFO 10-11 00:56:45 [xpu.py:429] [XPU]Setting attention block size to 832 tokens to ensure multiple of 64, set mamba_page_size_padded to 851968 bytes accordingly, before was 819200 bytes.
+2026-10-11T00:56:45.497939327Z (EngineCore pid=339) INFO 10-11 00:56:45 [torch_utils.py:287] Reducing Torch threads from 8 to 1 for serving. Set OMP_NUM_THREADS in the external environment to override.
+2026-10-11T00:56:45.565201251Z (EngineCore pid=339) INFO 10-11 00:56:45 [utils.py:320] Using BLNHC KV cache layout.
+2026-10-11T00:56:50.563688313Z (Worker_TP0_EP0 pid=451) WARNING 10-11 00:56:50 [fused_moe.py:1175] Using default MoE config. Performance might be sub-optimal! Config file not found at /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/fused_moe/configs/E=128,N=640,device_name=Intel(R)_Arc(TM)_Pro_B70_Graphics,dtype=fp8_w8a8,block_shape=[128,128].json
+2026-10-11T00:57:08.039247750Z !!!!!!! Segfault encountered !!!!!!!
+2026-10-11T00:57:08.039268839Z   File "<unknown>", line 0, in torch::impl::dispatch::PythonKernelHolder::operator()(c10::OperatorHandle const&, c10::DispatchKeySet, std::vector<c10::IValue, std::allocator<c10::IValue> >*)
+2026-10-11T00:57:08.039273959Z   File "<unknown>", line 0, in c10::Dispatcher::callBoxed(c10::OperatorHandle const&, std::vector<c10::IValue, std::allocator<c10::IValue> >*) const [clone .isra.0]
+2026-10-11T00:57:08.039277746Z   File "<unknown>", line 0, in torch::jit::invokeOperatorFromPython(c10::ArrayRef<std::shared_ptr<torch::jit::Operator> >, pybind11::args const&, pybind11::kwargs const&, std::optional<c10::DispatchKey>)
+2026-10-11T00:57:08.039281433Z   File "<unknown>", line 0, in torch::jit::_get_operation_for_overload_or_packet(c10::ArrayRef<std::shared_ptr<torch::jit::Operator> >, c10::Symbol, pybind11::args const&, pybind11::kwargs const&, bool, std::optional<c10::DispatchKey>)
+2026-10-11T00:57:08.039292003Z   File "<unknown>", line 0, in torch::jit::_get_operation_for_overload_or_packet(std::vector<std::shared_ptr<torch::jit::Operator>, std::allocator<std::shared_ptr<torch::jit::Operator> > > const&, c10::Symbol, pybind11::args const&, pybind11::kwargs const&, bool, std::optional<c10::DispatchKey>)
+2026-10-11T00:57:08.039297764Z   File "<unknown>", line 0, in pybind11::cpp_function::initialize<torch::jit::initJITBindings(_object*)::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const::{lambda(pybind11::args const&, pybind11::kwargs const&)#1}, pybind11::object, pybind11::args const&, pybind11::kwargs const&, pybind11::name, pybind11::doc>(torch::jit::initJITBindings(_object*)::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const::{lambda(pybind11::args const&, pybind11::kwargs const&)#1}&&, pybind11::object (*)(pybind11::args const&, pybind11::kwargs const&), pybind11::name const&, pybind11::doc const&)::{lambda(pybind11::detail::function_call&)#1}::_FUN(pybind11::detail::function_call&)
+2026-10-11T00:57:08.039310999Z   File "<unknown>", line 0, in pybind11::cpp_function::dispatcher(_object*, _object* const*, unsigned long, _object*)
+2026-10-11T00:57:08.039313403Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039315577Z   File "<unknown>", line 0, in _PyObject_Call_Prepend
+2026-10-11T00:57:08.039317752Z   File "<unknown>", line 0, in _PyObject_MakeTpCall
+2026-10-11T00:57:08.039320056Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039322220Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.039324374Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039326478Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.039328562Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039330676Z   File "<unknown>", line 0, in _PyObject_Call_Prepend
+2026-10-11T00:57:08.039332770Z   File "<unknown>", line 0, in _PyObject_MakeTpCall
+2026-10-11T00:57:08.039334914Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039337058Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039339172Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039341276Z   File "<unknown>", line 0, in _PyObject_Call_Prepend
+2026-10-11T00:57:08.039343911Z   File "<unknown>", line 0, in _PyObject_MakeTpCall
+2026-10-11T00:57:08.039349521Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039351786Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.039353880Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039356124Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.039358228Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039360332Z   File "<unknown>", line 0, in _PyObject_Call_Prepend
+2026-10-11T00:57:08.039362426Z   File "<unknown>", line 0, in _PyObject_MakeTpCall
+2026-10-11T00:57:08.039364540Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039366674Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.039368768Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039370882Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.039372966Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039375080Z   File "<unknown>", line 0, in _PyObject_Call_Prepend
+2026-10-11T00:57:08.039377194Z   File "<unknown>", line 0, in _PyObject_MakeTpCall
+2026-10-11T00:57:08.039379318Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039381411Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.039383505Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039385609Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.039387703Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039389797Z   File "<unknown>", line 0, in _PyObject_Call_Prepend
+2026-10-11T00:57:08.039392202Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.039394346Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039396470Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039398574Z   File "<unknown>", line 0, in PyEval_EvalCode
+2026-10-11T00:57:08.039400678Z   File "<unknown>", line 0, in PyRun_StringFlags
+2026-10-11T00:57:08.039402792Z   File "<unknown>", line 0, in PyRun_SimpleStringFlags
+2026-10-11T00:57:08.039404896Z   File "<unknown>", line 0, in Py_RunMain
+2026-10-11T00:57:08.039406980Z   File "<unknown>", line 0, in Py_BytesMain
+2026-10-11T00:57:08.039409084Z   File "<unknown>", line 0, in _start
+2026-10-11T00:57:08.039411167Z   File "<unknown>", line 0, in 0xffffffffffffffff
+2026-10-11T00:57:08.039413322Z 
+2026-10-11T00:57:08.039415335Z !!!!!!! Segfault encountered !!!!!!!
+2026-10-11T00:57:08.039420475Z   File "<unknown>", line 0, in torch::impl::dispatch::PythonKernelHolder::operator()(c10::OperatorHandle const&, c10::DispatchKeySet, std::vector<c10::IValue, std::allocator<c10::IValue> >*)
+2026-10-11T00:57:08.039423040Z   File "<unknown>", line 0, in c10::Dispatcher::callBoxed(c10::OperatorHandle const&, std::vector<c10::IValue, std::allocator<c10::IValue> >*) const [clone .isra.0]
+2026-10-11T00:57:08.039425484Z   File "<unknown>", line 0, in torch::jit::invokeOperatorFromPython(c10::ArrayRef<std::shared_ptr<torch::jit::Operator> >, pybind11::args const&, pybind11::kwargs const&, std::optional<c10::DispatchKey>)
+2026-10-11T00:57:08.039428029Z   File "<unknown>", line 0, in torch::jit::_get_operation_for_overload_or_packet(c10::ArrayRef<std::shared_ptr<torch::jit::Operator> >, c10::Symbol, pybind11::args const&, pybind11::kwargs const&, bool, std::optional<c10::DispatchKey>)
+2026-10-11T00:57:08.039430624Z   File "<unknown>", line 0, in torch::jit::_get_operation_for_overload_or_packet(std::vector<std::shared_ptr<torch::jit::Operator>, std::allocator<std::shared_ptr<torch::jit::Operator> > > const&, c10::Symbol, pybind11::args const&, pybind11::kwargs const&, bool, std::optional<c10::DispatchKey>)
+2026-10-11T00:57:08.039433730Z   File "<unknown>", line 0, in pybind11::cpp_function::initialize<torch::jit::initJITBindings(_object*)::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const::{lambda(pybind11::args const&, pybind11::kwargs const&)#1}, pybind11::object, pybind11::args const&, pybind11::kwargs const&, pybind11::name, pybind11::doc>(torch::jit::initJITBindings(_object*)::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const::{lambda(pybind11::args const&, pybind11::kwargs const&)#1}&&, pybind11::object (*)(pybind11::args const&, pybind11::kwargs const&), pybind11::name const&, pybind11::doc const&)::{lambda(pybind11::detail::function_call&)#1}::_FUN(pybind11::detail::function_call&)
+2026-10-11T00:57:08.039437988Z   File "<unknown>", line 0, in pybind11::cpp_function::dispatcher(_object*, _object* const*, unsigned long, _object*)
+2026-10-11T00:57:08.039440232Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039442366Z   File "<unknown>", line 0, in _PyObject_Call_Prepend
+2026-10-11T00:57:08.039444490Z   File "<unknown>", line 0, in _PyObject_MakeTpCall
+2026-10-11T00:57:08.039446594Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039448688Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.039450792Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039452906Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.039457665Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039459879Z   File "<unknown>", line 0, in _PyObject_Call_Prepend
+2026-10-11T00:57:08.039462003Z   File "<unknown>", line 0, in _PyObject_MakeTpCall
+2026-10-11T00:57:08.039464107Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039466211Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039468325Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039470439Z   File "<unknown>", line 0, in _PyObject_Call_Prepend
+2026-10-11T00:57:08.039472553Z   File "<unknown>", line 0, in _PyObject_MakeTpCall
+2026-10-11T00:57:08.039474667Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039476791Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.039478885Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039481009Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.039483173Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039485287Z   File "<unknown>", line 0, in _PyObject_Call_Prepend
+2026-10-11T00:57:08.039487391Z   File "<unknown>", line 0, in _PyObject_MakeTpCall
+2026-10-11T00:57:08.039489495Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039491619Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.039493743Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039495867Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.039498402Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039500566Z   File "<unknown>", line 0, in _PyObject_Call_Prepend
+2026-10-11T00:57:08.039502700Z   File "<unknown>", line 0, in _PyObject_MakeTpCall
+2026-10-11T00:57:08.039504814Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039506928Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.039509483Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039511587Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.039513691Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039515775Z   File "<unknown>", line 0, in _PyObject_Call_Prepend
+2026-10-11T00:57:08.039517888Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.039520023Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039524862Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.039527076Z   File "<unknown>", line 0, in PyEval_EvalCode
+2026-10-11T00:57:08.039529190Z   File "<unknown>", line 0, in PyRun_StringFlags
+2026-10-11T00:57:08.039531354Z   File "<unknown>", line 0, in PyRun_SimpleStringFlags
+2026-10-11T00:57:08.039533498Z   File "<unknown>", line 0, in Py_RunMain
+2026-10-11T00:57:08.039535592Z   File "<unknown>", line 0, in Py_BytesMain
+2026-10-11T00:57:08.039537676Z   File "<unknown>", line 0, in _start
+2026-10-11T00:57:08.039539800Z   File "<unknown>", line 0, in 0xffffffffffffffff
+2026-10-11T00:57:08.039541994Z 
+2026-10-11T00:57:08.461995395Z !!!!!!! Segfault encountered !!!!!!!
+2026-10-11T00:57:08.462018900Z   File "<unknown>", line 0, in torch::impl::dispatch::PythonKernelHolder::operator()(c10::OperatorHandle const&, c10::DispatchKeySet, std::vector<c10::IValue, std::allocator<c10::IValue> >*)
+2026-10-11T00:57:08.462024340Z   File "<unknown>", line 0, in c10::Dispatcher::callBoxed(c10::OperatorHandle const&, std::vector<c10::IValue, std::allocator<c10::IValue> >*) const [clone .isra.0]
+2026-10-11T00:57:08.462027626Z   File "<unknown>", line 0, in torch::jit::invokeOperatorFromPython(c10::ArrayRef<std::shared_ptr<torch::jit::Operator> >, pybind11::args const&, pybind11::kwargs const&, std::optional<c10::DispatchKey>)
+2026-10-11T00:57:08.462030541Z   File "<unknown>", line 0, in torch::jit::_get_operation_for_overload_or_packet(c10::ArrayRef<std::shared_ptr<torch::jit::Operator> >, c10::Symbol, pybind11::args const&, pybind11::kwargs const&, bool, std::optional<c10::DispatchKey>)
+2026-10-11T00:57:08.462033327Z   File "<unknown>", line 0, in torch::jit::_get_operation_for_overload_or_packet(std::vector<std::shared_ptr<torch::jit::Operator>, std::allocator<std::shared_ptr<torch::jit::Operator> > > const&, c10::Symbol, pybind11::args const&, pybind11::kwargs const&, bool, std::optional<c10::DispatchKey>)
+2026-10-11T00:57:08.462038887Z   File "<unknown>", line 0, in pybind11::cpp_function::initialize<torch::jit::initJITBindings(_object*)::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const::{lambda(pybind11::args const&, pybind11::kwargs const&)#1}, pybind11::object, pybind11::args const&, pybind11::kwargs const&, pybind11::name, pybind11::doc>(torch::jit::initJITBindings(_object*)::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const::{lambda(pybind11::args const&, pybind11::kwargs const&)#1}&&, pybind11::object (*)(pybind11::args const&, pybind11::kwargs const&), pybind11::name const&, pybind11::doc const&)::{lambda(pybind11::detail::function_call&)#1}::_FUN(pybind11::detail::function_call&)
+2026-10-11T00:57:08.462112155Z   File "<unknown>", line 0, in pybind11::cpp_function::dispatcher(_object*, _object* const*, unsigned long, _object*)
+2026-10-11T00:57:08.462115201Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462117435Z   File "<unknown>", line 0, in _PyObject_Call_Prepend
+2026-10-11T00:57:08.462119639Z   File "<unknown>", line 0, in _PyObject_MakeTpCall
+2026-10-11T00:57:08.462121753Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462128626Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.462132824Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462134998Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.462138044Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462141631Z   File "<unknown>", line 0, in _PyObject_Call_Prepend
+2026-10-11T00:57:08.462145358Z   File "<unknown>", line 0, in _PyObject_MakeTpCall
+2026-10-11T00:57:08.462148904Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462151900Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462154084Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462156238Z   File "<unknown>", line 0, in _PyObject_Call_Prepend
+2026-10-11T00:57:08.462158372Z   File "<unknown>", line 0, in _PyObject_MakeTpCall
+2026-10-11T00:57:08.462160486Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462162610Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.462164885Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462167059Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.462169173Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462171287Z   File "<unknown>", line 0, in _PyObject_Call_Prepend
+2026-10-11T00:57:08.462173401Z   File "<unknown>", line 0, in _PyObject_MakeTpCall
+2026-10-11T00:57:08.462175495Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462177588Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.462179712Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462181826Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.462183970Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462186074Z   File "<unknown>", line 0, in _PyObject_Call_Prepend
+2026-10-11T00:57:08.462204199Z   File "<unknown>", line 0, in _PyObject_MakeTpCall
+2026-10-11T00:57:08.462206553Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462208717Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.462210811Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462212955Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.462215049Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462217213Z   File "<unknown>", line 0, in _PyObject_Call_Prepend
+2026-10-11T00:57:08.462219738Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.462222884Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462225058Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462227172Z   File "<unknown>", line 0, in PyEval_EvalCode
+2026-10-11T00:57:08.462229376Z   File "<unknown>", line 0, in PyRun_StringFlags
+2026-10-11T00:57:08.462231480Z   File "<unknown>", line 0, in PyRun_SimpleStringFlags
+2026-10-11T00:57:08.462233674Z   File "<unknown>", line 0, in Py_RunMain
+2026-10-11T00:57:08.462235778Z   File "<unknown>", line 0, in Py_BytesMain
+2026-10-11T00:57:08.462237892Z   File "<unknown>", line 0, in _start
+2026-10-11T00:57:08.462239996Z   File "<unknown>", line 0, in 0xffffffffffffffff
+2026-10-11T00:57:08.462242130Z 
+2026-10-11T00:57:08.462244184Z !!!!!!! Segfault encountered !!!!!!!
+2026-10-11T00:57:08.462246318Z   File "<unknown>", line 0, in torch::impl::dispatch::PythonKernelHolder::operator()(c10::OperatorHandle const&, c10::DispatchKeySet, std::vector<c10::IValue, std::allocator<c10::IValue> >*)
+2026-10-11T00:57:08.462248803Z   File "<unknown>", line 0, in c10::Dispatcher::callBoxed(c10::OperatorHandle const&, std::vector<c10::IValue, std::allocator<c10::IValue> >*) const [clone .isra.0]
+2026-10-11T00:57:08.462251337Z   File "<unknown>", line 0, in torch::jit::invokeOperatorFromPython(c10::ArrayRef<std::shared_ptr<torch::jit::Operator> >, pybind11::args const&, pybind11::kwargs const&, std::optional<c10::DispatchKey>)
+2026-10-11T00:57:08.462253932Z   File "<unknown>", line 0, in torch::jit::_get_operation_for_overload_or_packet(c10::ArrayRef<std::shared_ptr<torch::jit::Operator> >, c10::Symbol, pybind11::args const&, pybind11::kwargs const&, bool, std::optional<c10::DispatchKey>)
+2026-10-11T00:57:08.462256627Z   File "<unknown>", line 0, in torch::jit::_get_operation_for_overload_or_packet(std::vector<std::shared_ptr<torch::jit::Operator>, std::allocator<std::shared_ptr<torch::jit::Operator> > > const&, c10::Symbol, pybind11::args const&, pybind11::kwargs const&, bool, std::optional<c10::DispatchKey>)
+2026-10-11T00:57:08.462265424Z   File "<unknown>", line 0, in pybind11::cpp_function::initialize<torch::jit::initJITBindings(_object*)::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const::{lambda(pybind11::args const&, pybind11::kwargs const&)#1}, pybind11::object, pybind11::args const&, pybind11::kwargs const&, pybind11::name, pybind11::doc>(torch::jit::initJITBindings(_object*)::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const::{lambda(pybind11::args const&, pybind11::kwargs const&)#1}&&, pybind11::object (*)(pybind11::args const&, pybind11::kwargs const&), pybind11::name const&, pybind11::doc const&)::{lambda(pybind11::detail::function_call&)#1}::_FUN(pybind11::detail::function_call&)
+2026-10-11T00:57:08.462269852Z   File "<unknown>", line 0, in pybind11::cpp_function::dispatcher(_object*, _object* const*, unsigned long, _object*)
+2026-10-11T00:57:08.462272097Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462274311Z   File "<unknown>", line 0, in _PyObject_Call_Prepend
+2026-10-11T00:57:08.462276415Z   File "<unknown>", line 0, in _PyObject_MakeTpCall
+2026-10-11T00:57:08.462278549Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462280683Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.462282787Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462284921Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.462287085Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462289199Z   File "<unknown>", line 0, in _PyObject_Call_Prepend
+2026-10-11T00:57:08.462291423Z   File "<unknown>", line 0, in _PyObject_MakeTpCall
+2026-10-11T00:57:08.462293577Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462295761Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462297905Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462300029Z   File "<unknown>", line 0, in _PyObject_Call_Prepend
+2026-10-11T00:57:08.462302153Z   File "<unknown>", line 0, in _PyObject_MakeTpCall
+2026-10-11T00:57:08.462304257Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462306411Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.462308505Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462310689Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.462312803Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462317682Z   File "<unknown>", line 0, in _PyObject_Call_Prepend
+2026-10-11T00:57:08.462319907Z   File "<unknown>", line 0, in _PyObject_MakeTpCall
+2026-10-11T00:57:08.462322011Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462324135Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.462326218Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462328322Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.462330807Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462332971Z   File "<unknown>", line 0, in _PyObject_Call_Prepend
+2026-10-11T00:57:08.462335075Z   File "<unknown>", line 0, in _PyObject_MakeTpCall
+2026-10-11T00:57:08.462337169Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462339353Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.462341457Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462343561Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.462345735Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462347849Z   File "<unknown>", line 0, in _PyObject_Call_Prepend
+2026-10-11T00:57:08.462350033Z   File "<unknown>", line 0, in PyObject_Call
+2026-10-11T00:57:08.462352207Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462354351Z   File "<unknown>", line 0, in _PyEval_EvalFrameDefault
+2026-10-11T00:57:08.462356516Z   File "<unknown>", line 0, in PyEval_EvalCode
+2026-10-11T00:57:08.462358630Z   File "<unknown>", line 0, in PyRun_StringFlags
+2026-10-11T00:57:08.462360794Z   File "<unknown>", line 0, in PyRun_SimpleStringFlags
+2026-10-11T00:57:08.462362928Z   File "<unknown>", line 0, in Py_RunMain
+2026-10-11T00:57:08.462365042Z   File "<unknown>", line 0, in Py_BytesMain
+2026-10-11T00:57:08.462367156Z   File "<unknown>", line 0, in _start
+2026-10-11T00:57:08.462369290Z   File "<unknown>", line 0, in 0xffffffffffffffff
+2026-10-11T00:57:08.462371444Z 
+2026-10-11T00:57:38.757465622Z (EngineCore pid=339) ERROR 10-11 00:57:38 [multiproc_executor.py:323] Worker proc VllmWorker-1 died unexpectedly (exit code: None), shutting down executor.
+2026-10-11T00:57:46.623885859Z (EngineCore pid=339) INFO 10-11 00:57:46 [shm_broadcast.py:801] No available shared memory broadcast block found in 60 seconds. This typically happens when some processes are hanging or doing some time-consuming work (e.g. compilation, weight/kv cache quantization).
+2026-10-11T00:58:27.958843583Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381] EngineCore failed to start.
+2026-10-11T00:58:27.958880763Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381] Traceback (most recent call last):
+2026-10-11T00:58:27.958885512Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 1343, in run_engine_core
+2026-10-11T00:58:27.958889399Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]     engine_core = EngineCoreProc(*args, engine_index=dp_rank, **kwargs)
+2026-10-11T00:58:27.958892745Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-11T00:58:27.958896112Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]   File "/opt/venv/lib/python3.12/site-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+2026-10-11T00:58:27.958899438Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]     return func(*args, **kwargs)
+2026-10-11T00:58:27.958902524Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]            ^^^^^^^^^^^^^^^^^^^^^
+2026-10-11T00:58:27.958905580Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 1086, in __init__
+2026-10-11T00:58:27.958909066Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]     super().__init__(
+2026-10-11T00:58:27.958912172Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 146, in __init__
+2026-10-11T00:58:27.958915448Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]     kv_cache_config = self._initialize_kv_caches(vllm_config)
+2026-10-11T00:58:27.958918564Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-11T00:58:27.958921700Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]   File "/opt/venv/lib/python3.12/site-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+2026-10-11T00:58:27.958924966Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]     return func(*args, **kwargs)
+2026-10-11T00:58:27.958928012Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]            ^^^^^^^^^^^^^^^^^^^^^
+2026-10-11T00:58:27.958931959Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 309, in _initialize_kv_caches
+2026-10-11T00:58:27.958935255Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]     available_gpu_memory = self.model_executor.determine_available_memory()
+2026-10-11T00:58:27.958938381Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-11T00:58:27.958941527Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/executor/abstract.py", line 149, in determine_available_memory
+2026-10-11T00:58:27.958944844Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]     return self.collective_rpc("determine_available_memory")
+2026-10-11T00:58:27.958948480Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-11T00:58:27.958956145Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/executor/multiproc_executor.py", line 457, in collective_rpc
+2026-10-11T00:58:27.958959681Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]     return future if non_block else future.result()
+2026-10-11T00:58:27.958963098Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]                                     ^^^^^^^^^^^^^^^
+2026-10-11T00:58:27.958966294Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/executor/multiproc_executor.py", line 100, in result
+2026-10-11T00:58:27.958969660Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]     return super().result()
+2026-10-11T00:58:27.958972746Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]            ^^^^^^^^^^^^^^^^
+2026-10-11T00:58:27.958975852Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]   File "/usr/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+2026-10-11T00:58:27.958979088Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]     return self.__get_result()
+2026-10-11T00:58:27.958983997Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]            ^^^^^^^^^^^^^^^^^^^
+2026-10-11T00:58:27.958987173Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]   File "/usr/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+2026-10-11T00:58:27.958990459Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]     raise self._exception
+2026-10-11T00:58:27.958993896Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/executor/multiproc_executor.py", line 104, in _wait_for_response
+2026-10-11T00:58:27.958997232Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]     response = self.aggregate(self.get_response())
+2026-10-11T00:58:27.959000318Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]                               ^^^^^^^^^^^^^^^^^^^
+2026-10-11T00:58:27.959003424Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/executor/multiproc_executor.py", line 442, in get_response
+2026-10-11T00:58:27.959006680Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]     status, result = mq.dequeue(timeout=dequeue_timeout)
+2026-10-11T00:58:27.959009806Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-11T00:58:27.959012932Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]   File "/opt/venv/lib/python3.12/site-packages/vllm/distributed/device_communicators/shm_broadcast.py", line 889, in dequeue
+2026-10-11T00:58:27.959016198Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]     with self.acquire_read(timeout, indefinite) as buf:
+2026-10-11T00:58:27.959019294Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]   File "/usr/lib/python3.12/contextlib.py", line 137, in __enter__
+2026-10-11T00:58:27.959026117Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]     return next(self.gen)
+2026-10-11T00:58:27.959030034Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]            ^^^^^^^^^^^^^^
+2026-10-11T00:58:27.959033110Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]   File "/opt/venv/lib/python3.12/site-packages/vllm/distributed/device_communicators/shm_broadcast.py", line 797, in acquire_read
+2026-10-11T00:58:27.959036947Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381]     raise RuntimeError("cancelled")
+2026-10-11T00:58:27.959040293Z (EngineCore pid=339) ERROR 10-11 00:58:27 [core.py:1381] RuntimeError: cancelled
+2026-10-11T00:58:27.960056508Z (EngineCore pid=339) Process EngineCore:
+2026-10-11T00:58:27.961185705Z (EngineCore pid=339) Traceback (most recent call last):
+2026-10-11T00:58:27.962029544Z (EngineCore pid=339)   File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+2026-10-11T00:58:27.962037099Z (EngineCore pid=339)     self.run()
+2026-10-11T00:58:27.962042248Z (EngineCore pid=339)   File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+2026-10-11T00:58:27.962047218Z (EngineCore pid=339)     self._target(*self._args, **self._kwargs)
+2026-10-11T00:58:27.962052037Z (EngineCore pid=339)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 1385, in run_engine_core
+2026-10-11T00:58:27.962056976Z (EngineCore pid=339)     raise e
+2026-10-11T00:58:27.962061655Z (EngineCore pid=339)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 1343, in run_engine_core
+2026-10-11T00:58:27.962066494Z (EngineCore pid=339)     engine_core = EngineCoreProc(*args, engine_index=dp_rank, **kwargs)
+2026-10-11T00:58:27.962071163Z (EngineCore pid=339)                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-11T00:58:27.962166052Z (EngineCore pid=339)   File "/opt/venv/lib/python3.12/site-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+2026-10-11T00:58:27.962174527Z (EngineCore pid=339)     return func(*args, **kwargs)
+2026-10-11T00:58:27.962178034Z (EngineCore pid=339)            ^^^^^^^^^^^^^^^^^^^^^
+2026-10-11T00:58:27.962181050Z (EngineCore pid=339)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 1086, in __init__
+2026-10-11T00:58:27.962184216Z (EngineCore pid=339)     super().__init__(
+2026-10-11T00:58:27.962187221Z (EngineCore pid=339)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 146, in __init__
+2026-10-11T00:58:27.962190387Z (EngineCore pid=339)     kv_cache_config = self._initialize_kv_caches(vllm_config)
+2026-10-11T00:58:27.962193473Z (EngineCore pid=339)                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-11T00:58:27.962196499Z (EngineCore pid=339)   File "/opt/venv/lib/python3.12/site-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+2026-10-11T00:58:27.962199615Z (EngineCore pid=339)     return func(*args, **kwargs)
+2026-10-11T00:58:27.962202600Z (EngineCore pid=339)            ^^^^^^^^^^^^^^^^^^^^^
+2026-10-11T00:58:27.962214332Z (EngineCore pid=339)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 309, in _initialize_kv_caches
+2026-10-11T00:58:27.962219242Z (EngineCore pid=339)     available_gpu_memory = self.model_executor.determine_available_memory()
+2026-10-11T00:58:27.962222438Z (EngineCore pid=339)                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-11T00:58:27.962225564Z (EngineCore pid=339)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/executor/abstract.py", line 149, in determine_available_memory
+2026-10-11T00:58:27.962228760Z (EngineCore pid=339)     return self.collective_rpc("determine_available_memory")
+2026-10-11T00:58:27.962231825Z (EngineCore pid=339)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-11T00:58:27.962234821Z (EngineCore pid=339)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/executor/multiproc_executor.py", line 457, in collective_rpc
+2026-10-11T00:58:27.962238017Z (EngineCore pid=339)     return future if non_block else future.result()
+2026-10-11T00:58:27.962241033Z (EngineCore pid=339)                                     ^^^^^^^^^^^^^^^
+2026-10-11T00:58:27.962244038Z (EngineCore pid=339)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/executor/multiproc_executor.py", line 100, in result
+2026-10-11T00:58:27.962247375Z (EngineCore pid=339)     return super().result()
+2026-10-11T00:58:27.962250400Z (EngineCore pid=339)            ^^^^^^^^^^^^^^^^
+2026-10-11T00:58:27.962253436Z (EngineCore pid=339)   File "/usr/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+2026-10-11T00:58:27.962256562Z (EngineCore pid=339)     return self.__get_result()
+2026-10-11T00:58:27.962259528Z (EngineCore pid=339)            ^^^^^^^^^^^^^^^^^^^
+2026-10-11T00:58:27.962262543Z (EngineCore pid=339)   File "/usr/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+2026-10-11T00:58:27.962265639Z (EngineCore pid=339)     raise self._exception
+2026-10-11T00:58:27.962268605Z (EngineCore pid=339)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/executor/multiproc_executor.py", line 104, in _wait_for_response
+2026-10-11T00:58:27.962271821Z (EngineCore pid=339)     response = self.aggregate(self.get_response())
+2026-10-11T00:58:27.962274877Z (EngineCore pid=339)                               ^^^^^^^^^^^^^^^^^^^
+2026-10-11T00:58:27.962277902Z (EngineCore pid=339)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/executor/multiproc_executor.py", line 442, in get_response
+2026-10-11T00:58:27.962281118Z (EngineCore pid=339)     status, result = mq.dequeue(timeout=dequeue_timeout)
+2026-10-11T00:58:27.962284124Z (EngineCore pid=339)                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-11T00:58:27.962287741Z (EngineCore pid=339)   File "/opt/venv/lib/python3.12/site-packages/vllm/distributed/device_communicators/shm_broadcast.py", line 889, in dequeue
+2026-10-11T00:58:27.962290977Z (EngineCore pid=339)     with self.acquire_read(timeout, indefinite) as buf:
+2026-10-11T00:58:27.962298681Z (EngineCore pid=339)   File "/usr/lib/python3.12/contextlib.py", line 137, in __enter__
+2026-10-11T00:58:27.962302118Z (EngineCore pid=339)     return next(self.gen)
+2026-10-11T00:58:27.962305053Z (EngineCore pid=339)            ^^^^^^^^^^^^^^
+2026-10-11T00:58:27.962308029Z (EngineCore pid=339)   File "/opt/venv/lib/python3.12/site-packages/vllm/distributed/device_communicators/shm_broadcast.py", line 797, in acquire_read
+2026-10-11T00:58:27.962311235Z (EngineCore pid=339)     raise RuntimeError("cancelled")
+2026-10-11T00:58:27.962314341Z (EngineCore pid=339) RuntimeError: cancelled
+2026-10-11T00:58:35.856277533Z (APIServer pid=1) Traceback (most recent call last):
+2026-10-11T00:58:35.856538264Z (APIServer pid=1)   File "/opt/venv/bin/vllm", line 10, in <module>
+2026-10-11T00:58:35.858308048Z (APIServer pid=1)     sys.exit(main())
+2026-10-11T00:58:35.858525468Z (APIServer pid=1)              ^^^^^^
+2026-10-11T00:58:35.858688836Z (APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/entrypoints/cli/main.py", line 106, in main
+2026-10-11T00:58:35.860113239Z (APIServer pid=1)     args.dispatch_function(args)
+2026-10-11T00:58:35.860736413Z (APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/entrypoints/cli/serve.py", line 154, in cmd
+2026-10-11T00:58:35.860921361Z (APIServer pid=1)     uvloop.run(run_server(args))
+2026-10-11T00:58:35.862950674Z (APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/uvloop/__init__.py", line 96, in run
+2026-10-11T00:58:35.863464161Z (APIServer pid=1)     return __asyncio.run(
+2026-10-11T00:58:35.863470083Z (APIServer pid=1)            ^^^^^^^^^^^^^^
+2026-10-11T00:58:35.863473208Z (APIServer pid=1)   File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+2026-10-11T00:58:35.863666503Z (APIServer pid=1)     return runner.run(main)
+2026-10-11T00:58:35.864031841Z (APIServer pid=1)            ^^^^^^^^^^^^^^^^
+2026-10-11T00:58:35.864036730Z (APIServer pid=1)   File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+2026-10-11T00:58:35.864110559Z (APIServer pid=1)     return self._loop.run_until_complete(task)
+2026-10-11T00:58:35.864665705Z (APIServer pid=1)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-11T00:58:35.864672518Z (APIServer pid=1)   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-10-11T00:58:35.865937461Z (APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/uvloop/__init__.py", line 48, in wrapper
+2026-10-11T00:58:35.866101240Z (APIServer pid=1)     return await main
+2026-10-11T00:58:35.866134162Z (APIServer pid=1)            ^^^^^^^^^^
+2026-10-11T00:58:35.866234661Z (APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/entrypoints/launchers/api_server/entry.py", line 176, in run_server
+2026-10-11T00:58:35.866602544Z (APIServer pid=1)     await run_server_worker(listen_address, sock, args, **uvicorn_kwargs)
+2026-10-11T00:58:35.867228844Z (APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/entrypoints/launchers/api_server/entry.py", line 190, in run_server_worker
+2026-10-11T00:58:35.867300148Z (APIServer pid=1)     async with build_async_engine_client(
+2026-10-11T00:58:35.867397722Z (APIServer pid=1)   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+2026-10-11T00:58:35.867465359Z (APIServer pid=1)     return await anext(self.gen)
+2026-10-11T00:58:35.867776606Z (APIServer pid=1)            ^^^^^^^^^^^^^^^^^^^^^
+2026-10-11T00:58:35.867957827Z (APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/entrypoints/launchers/api_server/entry.py", line 58, in build_async_engine_client
+2026-10-11T00:58:35.868020325Z (APIServer pid=1)     async with build_async_engine_client_from_engine_args(
+2026-10-11T00:58:35.868024032Z (APIServer pid=1)   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+2026-10-11T00:58:35.868208309Z (APIServer pid=1)     return await anext(self.gen)
+2026-10-11T00:58:35.868234538Z (APIServer pid=1)            ^^^^^^^^^^^^^^^^^^^^^
+2026-10-11T00:58:35.868332362Z (APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/entrypoints/launchers/api_server/entry.py", line 94, in build_async_engine_client_from_engine_args
+2026-10-11T00:58:35.868396082Z (APIServer pid=1)     async_llm = AsyncLLM.from_vllm_config(
+2026-10-11T00:58:35.868417874Z (APIServer pid=1)                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-11T00:58:35.868563919Z (APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/async_llm.py", line 235, in from_vllm_config
+2026-10-11T00:58:35.868955216Z (APIServer pid=1)     return cls(
+2026-10-11T00:58:35.868960265Z (APIServer pid=1)            ^^^^
+2026-10-11T00:58:35.868970985Z (APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/async_llm.py", line 169, in __init__
+2026-10-11T00:58:35.869045646Z (APIServer pid=1)     self.engine_core = EngineCoreClient.make_async_mp_client(
+2026-10-11T00:58:35.869438807Z (APIServer pid=1)                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-11T00:58:35.869504040Z (APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+2026-10-11T00:58:35.869572919Z (APIServer pid=1)     return func(*args, **kwargs)
+2026-10-11T00:58:35.869615830Z (APIServer pid=1)            ^^^^^^^^^^^^^^^^^^^^^
+2026-10-11T00:58:35.869797282Z (APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core_client.py", line 163, in make_async_mp_client
+2026-10-11T00:58:35.870006997Z (APIServer pid=1)     return AsyncMPClient(
+2026-10-11T00:58:35.870011496Z (APIServer pid=1)            ^^^^^^^^^^^^^^
+2026-10-11T00:58:35.870014110Z (APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+2026-10-11T00:58:35.870090444Z (APIServer pid=1)     return func(*args, **kwargs)
+2026-10-11T00:58:35.870117145Z (APIServer pid=1)            ^^^^^^^^^^^^^^^^^^^^^
+2026-10-11T00:58:35.870216001Z (APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core_client.py", line 1060, in __init__
+2026-10-11T00:58:35.870398945Z (APIServer pid=1)     super().__init__(
+2026-10-11T00:58:35.870512579Z (APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core_client.py", line 656, in __init__
+2026-10-11T00:58:35.870634199Z (APIServer pid=1)     with launch_core_engines(
+2026-10-11T00:58:35.870637906Z (APIServer pid=1)   File "/usr/lib/python3.12/contextlib.py", line 144, in __exit__
+2026-10-11T00:58:35.870692569Z (APIServer pid=1)     next(self.gen)
+2026-10-11T00:58:35.870909587Z (APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/utils.py", line 1240, in launch_core_engines
+2026-10-11T00:58:35.871284163Z (APIServer pid=1)     wait_for_engine_startup(
+2026-10-11T00:58:35.871381336Z (APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/utils.py", line 1320, in wait_for_engine_startup
+2026-10-11T00:58:35.871578397Z (APIServer pid=1)     raise RuntimeError(
+2026-10-11T00:58:35.871592023Z (APIServer pid=1) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {'EngineCore': 1}

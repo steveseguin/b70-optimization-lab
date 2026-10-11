@@ -1,33 +1,28 @@
 # Flash-Next Screen 1b — native FP8 mmap adapter
 
-**2026-10-10, second probe window: immediate abrupt exit reproduced the fault;
-first-forward passed under the teardown overlay. The host is halted awaiting
-the owner's decision after its third incident.** Clean exit and abrupt exit
-after ten seconds had passed earlier. The immediate arm completed the gather
-and exact readback, then logged BCS `-ENOENT`/CAT/reset 70.669 ms after its
-before-exit marker. This supports an exit/lifetime timing problem; the particular
-native mapping remains unidentified, and attempt 7's startup fault remains
-unresolved. Every cooperative worker exit must use the applied graceful path.
+**2026-10-11: attempt 8 loaded all four ranks, then faulted on all four cards
+during startup's KV-memory profile/dummy forward. This is the fourth incident
+on boot `4aafe57b`; the engine window is halted for the owner.** The controller
+sent one SIGINT; the container exited 1, without OOM kill. Saved postflight
+passed all four cards with no new probe-window faults; it does not reopen the
+window. No readiness, plateau, generation or clean four-rank teardown qualified.
 
-[Verdict, receipt timestamps, limits and exact next command](../notes/2026-10-10-exit-fault-reproduced.md),
-[validation status](VALIDATION.md#exit-fault-reproduction-2026-10-10),
-[probe results](probe/README.md#exit-fault-reproduced-second-window-2026-10-10).
-The single-rank first-forward returned exact bytes and all teardown phases with
-zero new faults. It does not qualify full TP4, PLE, partial-load/signal exits or
-model outputs. Another retained-reference abrupt arm is not the next step.
+[Attempt-8 timeline, phase, memory and owner recommendation](../../../notes/2026-10-11-attempt8-fourth-incident.md),
+[saved evidence](evidence/fourth-incident-20261011/index.json),
+[validation status](VALIDATION.md#attempt-8-fourth-incident-2026-10-11).
+The causal verdict is **unknown**: the first logged fault precedes recorded
+SIGINT and crash reports, as in attempt 7; neither the earlier abrupt-exit
+class nor mmap-PLE row access is established. The applied 50-file manifest is
+`daf50d2391549a9fb5c03ee2cf3a69e763cc44e621fdaf35e4b06529c7142b69`.
 
-After owner resolution, fresh health, an exclusive idle window, the five-minute
-gap and FAULT absence, recommend one **attempt-8 calibrate-load** with the
-96 GB loading guard and the teardown overlay. The old owner receipt does not
-admit work after this fault. Same-boot continuation needs a new reviewed/pinned
-decision and admission update; on an authorized fresh clean boot omit the old
-boot-specific flag. The linked command is text only, not a queued launch.
-The overlay manifest remains
-`e00bb55d8378ecd0065e82a8c3b6fdd59268bd33aae6e0f356ca48f067926f2d`.
-Evidence and FAULT remain untouched; this analysis operated no device, container,
-server, systemd unit or LTX endpoint. Earlier
-[CPU admission repair](VALIDATION.md#probe-mount-admission-repair-2026-10-10)
-and [first-window results](../notes/2026-10-10-exit-probes-result.md) remain history.
+Sampled host pressure peaked at **75.448 GB**, with **48.732 GB available**.
+These incomplete experimental mmap-line measurements do not justify lowering
+the certified A367 fixture floor. Recommend owner-authorized reboot before
+further GPU work and a separately reviewed localization plan; no unchanged
+retry, new health probe or reboot is queued by this documentation task.
+The third-incident acceptance receipt remains unchanged and does not admit
+work after this fourth incident. Earlier exit-probe evidence remains in the
+[October 10 note](../notes/2026-10-10-exit-fault-reproduced.md).
 
 ## Historical attempt-7 preparation (it later faulted)
 

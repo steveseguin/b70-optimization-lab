@@ -21,7 +21,7 @@ Update the affected host and lane here when ground truth changes, in the same co
 
 | Host | Latest operational observation in the source ledger | Current constraint |
 | --- | --- | --- |
-| Four B70: `steve-b70s`, 128 GiB installed, bad-memory blocks fenced | **2026-10-10 18:10 UTC:** third GPU fault incident on boot `4aafe57b-a54f-4bfd-b4ed-9f1cbb8830c7`, kernel `7.0.0-39`. LTX 137 stopped at 18:05:13 after 62 chunks of its second session. The bounded health check subsequently passed all four cards. | **GPU launches halted.** The successful health check does not clear this third incident; a new owner decision and matching admission are required. |
+| Four B70: `steve-b70s`, 128 GiB installed, bad-memory blocks fenced | **2026-10-11 00:56:50 UTC:** fourth GPU incident on boot `4aafe57b-a54f-4bfd-b4ed-9f1cbb8830c7`, during Flash-Next attempt 8; container exited 1 at 00:58:47 UTC; saved four-card postflight passed without new faults | **Engine window halted for owner decision; LTX remains off.** |
 | Two B70: `steve-TURIND8-2L2T` (turin), 15 GiB ECC RAM | **2026-10-08 21:10 EDT:** cards empty after the retention study; that day's H3 live session had ended at 13:33 EDT. October 10 H3 input checks are provenance checks, not a newer service observation. | Qwen 27B FP8 and H3 remain its optimization lanes. Recheck actual state before using the host; the recorded empty-card observation is not a live check. |
 
 No resident server is authorized by this consolidation. Start/measure/gracefully stop experiments; leave cards empty unless the owner explicitly requests hosting. One GPU lane per host at a time. Do not revive the withdrawn September 13
@@ -29,21 +29,7 @@ continuous-service rule or superseded relaunch queues.
 
 ## Four-Card Halt And Flash-Next
 
-**2026-10-11 CPU repair:** The owner's new receipt accepts the third incident for the engine window and supersedes the earlier halt decision below; it explicitly keeps the LTX stream stopped.
-The Flash-Next receipt tests and controller hash now match that decision, and the teardown bundle was rebuilt; the CPU preview passes, with one older host-pointer patch test still failing ([checks and limits](notes/2026-10-11-third-incident-acceptance-repin.md)).
-This task operated no GPU or service, and the supplied health receipt predates acceptance, so actual launch admission still needs a valid later receipt.
-
-On October 10 the immediate-abrupt-exit probe completed correct computation, then card `23:00.0` logged four fault-class lines at 18:07:19 UTC. The boot then had eight fault-class lines; the bounded postflight added none. Preserve
-`/mnt/fast-ai/bench-results/ltx25-baseline-20260913/FAULT.json` and every probe/run receipt under `experiments/qwen38-flash-next-fp8-b70/reopen-20261008/`.
-
-The earlier same-boot acceptance does not cover this incident. The halt remains until a newly recorded owner decision and matching admission support resolve it; a cleanup instruction is not that decision. No automatic reboot, driver reset, retry loop
-or new GPU probe is authorized here.
-
-[The corrected interpretation](experiments/qwen38-flash-next-fp8-b70/notes/2026-10-10-exit-fault-reproduced.md) supports an exit/lifetime timing problem: clean shutdown, exit after ten idle seconds, and the one-layer first-forward case with graceful
-teardown passed. It does not identify the exact outstanding resource, prove full-rank loading repaired, or explain attempt 7's earlier startup fault. The older categorical remedy claim is superseded.
-
-After the halt is resolved, the recorded next Flash-Next step is one full loading check with graceful teardown and the **96 GB loading guard**, fresh admission/health and an exclusive idle window at least **five minutes** after the preceding stop.
-Another abrupt-exit probe is not needed now. Preserve failed loading/OOM runs and the A367 host-pressure evidence; memory fit is unresolved.
+On **October 11 at 00:56:50 UTC**, Flash-Next attempt 8 faulted on all four cards after the weights loaded, during startup's memory-profiling run. The controller sent one stop signal, the container exited with an error, and the later four-card health check passed without new faults. This fourth incident halts the engine window and leaves LTX off; the cause is still unknown, and we recommend the owner authorize a reboot before further GPU work. The measured host-memory peak was **75.45 GB**, but this failed experimental run does not justify lowering the certified recipe's memory floor. Preserve the fault marker, original owner receipt and [attempt-8 evidence and analysis](notes/2026-10-11-attempt8-fourth-incident.md); the owner decision is pending **October 11**.
 
 The certified FP8 result remains **46.854250 tok/s**, with its exact identity and gates in the [closeout](results/qwen38-flash-next-fp8-b70/CLOSEOUT-20260913.md), [handoff](results/qwen38-flash-next-fp8-b70/HANDOFF.md) and [reproduction
 guide](repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md). Reopening diagnostics and CPU preparation do not replace that record.
@@ -123,7 +109,7 @@ worker/recall trials and five unused tasks. Further worker tuning/integration is
 
 ## Known Issues And Next Actions
 
-1. **Owner decision dated October 10:** resolve the four-card third-incident halt; only then admit the bounded Flash loading check or LTX native/relaunch work. CPU analysis, documentation and existing receipt review can proceed.
+1. **Owner decision dated October 11:** resolve the four-card fourth-incident halt before any further GPU work; the prior engine-window acceptance is spent. CPU analysis and receipt review can proceed; LTX stays off.
 2. Finish the CPU runtime tokenizer/operator and adapter work, retaining the fixture memory-floor, receipt and native-window blockers above. Keep H3's missing publication evidence explicit; its source acceptance is already resolved.
 3. Keep each certified result under its exact model, weights, arithmetic, topology, metric and quality identity. Preserve historical high scores and negative patches; host/session drift does not by itself justify merging different benchmark
    identities or lowering a record. Consult the [reproducibility map](docs/current-reproducibility-map.md), [effort index](docs/model-effort-index.md) and [scoreboard](results/scoreboard.md).

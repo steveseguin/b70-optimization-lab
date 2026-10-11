@@ -157,3 +157,80 @@ real peak host demand on this boot. The first authorized window therefore runs
 in this order: health receipt, attempt 8 calibrate-load, revised need
 calculation from its receipt, owner approval receipt for the derived floor,
 then the fixture extraction. No floor is lowered without that measurement.
+
+
+## Measured on 2026-10-11 (attempt 8)
+
+**Attempt 8 is not matched need evidence for a lower A367 admission floor.**
+This corrects the preceding reviewer paragraph's description of the run as
+“the certified TP4 line.” The run used the experimental Screen 1b mmap-PLE
+adapter, v0.30.0 runtime, attempt-6 expert placement, exact large pinned
+allocation policy and per-process `NEOReadDebugKeys=1 EnableDeferBacking=0`.
+Its overlay applied 50 files, manifest
+`daf50d2391549a9fb5c03ee2cf3a69e763cc44e621fdaf35e4b06529c7142b69`.
+A fresh official-model hash receipt passes; shared weight identity does not
+make this the certified A367 recipe, arithmetic or memory path.
+
+[Incident/timeline and interpretation](../../../../notes/2026-10-11-attempt8-fourth-incident.md)
+and [saved receipts/index](../../../qwen38-flash-next-fp8-b70/reopen-20261008/evidence/fourth-incident-20261011/index.json)
+preserve the evidence from
+`runs/screen1b-mmap-calibrate-load-20261011-attempt8/` in the reopen lane.
+`receipts/host-memory-samples.jsonl.gz` is a lossless compressed copy of the
+complete sampled series; its uncompressed SHA256 matches calibration.
+
+| Measured host counter | Bytes | Decimal GB |
+| --- | ---: | ---: |
+| MemTotal | 124,179,124,224 | 124.179124224 |
+| MemAvailable before hashing | 118,942,818,304 | 118.942818304 |
+| Accounted pressure before hashing | 5,236,305,920 | 5.236305920 |
+| MemAvailable after hashing / before load | **119,046,037,504** | **119.046037504** |
+| Accounted pressure after hashing | 5,133,086,720 | 5.133086720 |
+| Maximum sampled loading accounted pressure | **75,447,590,912** | **75.447590912** |
+| Minimum sampled MemAvailable | **48,731,533,312** | **48.731533312** |
+| Availability decline from post-hash baseline to trough | 70,314,504,192 | 70.314504192 |
+| Sampled cgroup memory peak | 59,570,315,264 | 59.570315264 |
+| Global bounded staging peak | 268,431,360 | 0.268431360 |
+
+Host pressure means **MemTotal minus MemAvailable**; it includes the initial
+host baseline. The 70.314504192 GB decline subtracts that baseline. The peak
+occurs at sample 488, monotonic `172173.051341620`, during loading. Minimum
+available memory is 45.385 GiB; total peak pressure is 70.266 GiB. These are
+sampled observations, not guarantees between samples or later in startup.
+
+| Rank at load_complete (both snapshots) | Pinned retained tensor bytes | Pageable metadata bytes |
+| --- | ---: | ---: |
+| 0 | 14,171,275,264 | 434,086,598 |
+| 1 | 14,171,275,264 | 434,086,598 |
+| 2 | 14,171,275,264 | 434,086,598 |
+| 3 | 14,171,275,264 | 434,086,598 |
+| Total | **56,685,101,056** | **1,736,346,392** |
+
+The pinned figures count unique retained tensor storage, with
+`allocator_bytes_measured=false`; actual allocator backing/retention peaks
+are unmeasured. The pageable figures are metadata counts calculated from the
+instantiated mmap/cache geometry, not separately observed RSS. Each rank maps
+12,800,061,440 file-backed payload bytes; mapped resident bytes and PLE
+hits/misses are zero in these load snapshots. Mapped address space is not a
+resident-memory allocation. `staging-live.json` ends with an empty live map;
+its peak is 256 MiB minus 4,096 bytes. Cgroup, worker RSS, pinned storage and
+host counters overlap and peak at different times: do not sum them.
+
+All four ranks finished weight loading, then all four cards faulted during
+startup's KV-initialization profile/dummy forward. Calibration records
+`ready=false`, `clean_exit=false`, `passed=false`, zero generation requests,
+1,343 loading samples, 235 shutdown samples, no 20-second plateau and unknown
+per-card free-VRAM reserves. `watchdog_reason=null`: failure was the GPU fault,
+not the 96 GB loading guard. The container exited 1 without an OOM kill.
+Kernel recovery also reported a failed atomic allocation for a GuC coredump
+snapshot; available RAM alone does not prove every allocation could succeed.
+
+These data document the experimental adapter's incomplete startup and improve
+its own budget evidence. They establish neither complete startup/serving demand
+nor matched demand for A367 plus packet-4 fixture capture. No floor reduction,
+new margin formula or fixture authorization follows. The declared
+**133,542,784 KiB** proposal, existing **120,000,000 KiB** default, exclusions
+and all guards remain unchanged. A revised floor still needs matched runtime,
+placement, driver/allocation settings, completed phase/peak evidence, fixture
+allowance, a reviewed need-plus-margin calculation and a new document-bound
+owner receipt. This append changes the document hash; an older approval hash
+must not be reused. The fourth-incident window remains halted for the owner.

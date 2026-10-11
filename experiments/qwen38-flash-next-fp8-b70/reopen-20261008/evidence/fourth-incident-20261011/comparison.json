@@ -1,0 +1,227 @@
+[
+  {
+    "attempt": 6,
+    "run": "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt6",
+    "server_sha256": "b6a788901ca388608cc5d91f05eb833314fb2712c0de9bbbd064e454e153e061",
+    "calibration_sha256": "d91993a1fdcb5baebdc83a72f27e3b395efa692599b917cd163bbf3041a027f2",
+    "failure": "RuntimeError: Startup stopped/exited; no retry",
+    "verdict": {
+      "passed": false,
+      "refusal_reasons": [
+        "readiness not reached",
+        "clean container exit not verified",
+        "RuntimeError: Startup stopped/exited; no retry",
+        "20 second plateau missing",
+        "observed loading/plateau host peak exceeds 90 GB",
+        "plateau worker/cgroup accounting incomplete",
+        "rank 0 VRAM reserve unknown",
+        "rank 1 VRAM reserve unknown",
+        "rank 2 VRAM reserve unknown",
+        "rank 3 VRAM reserve unknown"
+      ],
+      "phase_peaks": {
+        "loading": {
+          "accounted_pressure_bytes": 90059751424,
+          "committed_as_bytes": 182318751744,
+          "mlocked_bytes": 131072,
+          "unevictable_bytes": 3276800,
+          "cgroup_memory_current_bytes": 11506753536,
+          "cgroup_memory_peak_bytes": 11513569280,
+          "mem_available_min_bytes": 34119380992,
+          "worker_rss_peak_bytes": [
+            2901725184,
+            2782445568,
+            2788347904,
+            3441754112
+          ],
+          "vram_free_min_bytes_per_rank": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "sample_count": 331,
+          "duration_seconds": 164.5763052770053
+        },
+        "plateau": null,
+        "shutdown": null
+      },
+      "plateau_plus_15_percent_bytes": null,
+      "vram_reserve_bytes_per_rank": [
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "server_excerpts": [
+      {
+        "line": 219,
+        "text": "(Worker_TP3_EP3 pid=547) ERROR 10-08 20:08:48 [multiproc_executor.py:998] vllm.screen1b_guard.LoadCancelled: Screen 1b cancellation latched; no new allocations/copies; first stop: allocation would cross 90 GB pressure or 31.8318 GiB MemAvailable: pid=477, pressure_bytes=89975808000, next_bytes=196608000, projected_pressure_bytes=90172416000, MemAvailable=34203324416"
+      },
+      {
+        "line": 299,
+        "text": "(Worker_TP1_EP1 pid=477) ERROR 10-08 20:08:48 [multiproc_executor.py:998]     raise LoadCancelled(f'Screen 1b next allocation exceeds early stop margin; {reason}')\r"
+      },
+      {
+        "line": 300,
+        "text": "(Worker_TP1_EP1 pid=477) ERROR 10-08 20:08:48 [multiproc_executor.py:998] vllm.screen1b_guard.LoadCancelled: Screen 1b next allocation exceeds early stop margin; allocation would cross 90 GB pressure or 31.8318 GiB MemAvailable: pid=477, pressure_bytes=89975808000, next_bytes=196608000, projected_pressure_bytes=90172416000, MemAvailable=34203324416"
+      },
+      {
+        "line": 388,
+        "text": "(Worker_TP2_EP2 pid=512) ERROR 10-08 20:08:48 [multiproc_executor.py:998] vllm.screen1b_guard.LoadCancelled: Screen 1b cancellation latched; no new allocations/copies; first stop: allocation would cross 90 GB pressure or 31.8318 GiB MemAvailable: pid=477, pressure_bytes=89975808000, next_bytes=196608000, projected_pressure_bytes=90172416000, MemAvailable=34203324416"
+      },
+      {
+        "line": 454,
+        "text": "(Worker_TP0_EP0 pid=450) ERROR 10-08 20:08:48 [multiproc_executor.py:998] vllm.screen1b_guard.LoadCancelled: Screen 1b cancellation latched; no new allocations/copies; first stop: allocation would cross 90 GB pressure or 31.8318 GiB MemAvailable: pid=477, pressure_bytes=89975808000, next_bytes=196608000, projected_pressure_bytes=90172416000, MemAvailable=34203324416"
+      },
+      {
+        "line": 460,
+        "text": "(EngineCore pid=339) ERROR 10-08 20:08:51 [core.py:1375] EngineCore failed to start.\r"
+      }
+    ]
+  },
+  {
+    "attempt": 7,
+    "run": "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt7",
+    "server_sha256": "c970f5fbc3bd4d86f0e5ae97aae8057cb3773265c3c88ccabc991056ada9cd06",
+    "calibration_sha256": "db8c387e8926de35a219775074e718634620c378d72c6cdad7c0495ca8906c66",
+    "failure": "RuntimeError: Fault recorded; no recovery or second launch is automated",
+    "verdict": {
+      "passed": false,
+      "refusal_reasons": [
+        "readiness not reached",
+        "clean container exit not verified",
+        "RuntimeError: Fault recorded; no recovery or second launch is automated",
+        "20 second plateau missing",
+        "plateau worker/cgroup accounting incomplete",
+        "rank 0 VRAM reserve unknown",
+        "rank 1 VRAM reserve unknown",
+        "rank 2 VRAM reserve unknown",
+        "rank 3 VRAM reserve unknown"
+      ],
+      "phase_peaks": {
+        "loading": {
+          "accounted_pressure_bytes": 79208165376,
+          "committed_as_bytes": 172272513024,
+          "mlocked_bytes": 147456,
+          "unevictable_bytes": 3416064,
+          "cgroup_memory_current_bytes": 58069307392,
+          "cgroup_memory_peak_bytes": 58145247232,
+          "mem_available_min_bytes": 44970967040,
+          "worker_rss_peak_bytes": [
+            3935305728,
+            3870818304,
+            3876765696,
+            3986620416
+          ],
+          "vram_free_min_bytes_per_rank": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "sample_count": 1357,
+          "duration_seconds": 677.8809057929902
+        },
+        "plateau": null,
+        "shutdown": {
+          "accounted_pressure_bytes": 76507947008,
+          "committed_as_bytes": 163511070720,
+          "mlocked_bytes": 131072,
+          "unevictable_bytes": 3276800,
+          "cgroup_memory_current_bytes": 57178112000,
+          "cgroup_memory_peak_bytes": 58145247232,
+          "mem_available_min_bytes": 47671185408,
+          "worker_rss_peak_bytes": [
+            2653769728,
+            3899707392,
+            2430824448,
+            2463514624
+          ],
+          "vram_free_min_bytes_per_rank": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "sample_count": 239,
+          "duration_seconds": 119.0237699149875
+        }
+      },
+      "plateau_plus_15_percent_bytes": null,
+      "vram_reserve_bytes_per_rank": [
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "server_excerpts": [
+      {
+        "line": 255,
+        "text": "(Worker_TP1_EP1 pid=478) INFO 10-08 21:10:40 [model_runner.py:429] Model loading took 20.87 GiB memory and 489.555930 seconds"
+      },
+      {
+        "line": 259,
+        "text": "(Worker_TP2_EP2 pid=513) INFO 10-08 21:10:40 [model_runner.py:429] Model loading took 20.87 GiB memory and 490.022026 seconds"
+      },
+      {
+        "line": 263,
+        "text": "(Worker_TP3_EP3 pid=548) INFO 10-08 21:10:40 [model_runner.py:429] Model loading took 20.87 GiB memory and 490.053580 seconds"
+      },
+      {
+        "line": 341,
+        "text": "(Worker_TP0_EP0 pid=450) INFO 10-08 21:11:12 [model_runner.py:429] Model loading took 20.87 GiB memory and 522.464889 seconds"
+      },
+      {
+        "line": 348,
+        "text": "!!!!!!! Segfault encountered !!!!!!!"
+      },
+      {
+        "line": 402,
+        "text": "!!!!!!! Segfault encountered !!!!!!!"
+      },
+      {
+        "line": 456,
+        "text": "!!!!!!! Segfault encountered !!!!!!!"
+      },
+      {
+        "line": 510,
+        "text": "!!!!!!! Segfault encountered !!!!!!!"
+      },
+      {
+        "line": 564,
+        "text": "(EngineCore pid=339) ERROR 10-08 21:12:07 [multiproc_executor.py:315] Worker proc VllmWorker-3 died unexpectedly (exit code: None), shutting down executor."
+      },
+      {
+        "line": 566,
+        "text": "(EngineCore pid=339) ERROR 10-08 21:12:56 [core.py:1375] EngineCore failed to start.\r"
+      },
+      {
+        "line": 583,
+        "text": "(EngineCore pid=339) ERROR 10-08 21:12:56 [core.py:1375]     available_gpu_memory = self.model_executor.determine_available_memory()\r"
+      },
+      {
+        "line": 585,
+        "text": "(EngineCore pid=339) ERROR 10-08 21:12:56 [core.py:1375]   File \"/opt/venv/lib/python3.12/site-packages/vllm/v1/executor/abstract.py\", line 149, in determine_available_memory\r"
+      },
+      {
+        "line": 586,
+        "text": "(EngineCore pid=339) ERROR 10-08 21:12:56 [core.py:1375]     return self.collective_rpc(\"determine_available_memory\")\r"
+      },
+      {
+        "line": 636,
+        "text": "(EngineCore pid=339)     available_gpu_memory = self.model_executor.determine_available_memory()"
+      },
+      {
+        "line": 638,
+        "text": "(EngineCore pid=339)   File \"/opt/venv/lib/python3.12/site-packages/vllm/v1/executor/abstract.py\", line 149, in determine_available_memory"
+      },
+      {
+        "line": 639,
+        "text": "(EngineCore pid=339)     return self.collective_rpc(\"determine_available_memory\")"
+      }
+    ]
+  }
+]

@@ -1,0 +1,83 @@
+[
+    {
+        "Id": "sha256:e4446310b1d30015e8fdc1a0a2ef1669ac6bef857cbe772487571ed5c1a926a9",
+        "RepoTags": [
+            "vllm/vllm-openai-xpu@sha256:e4446310b1d30015e8fdc1a0a2ef1669ac6bef857cbe772487571ed5c1a926a9"
+        ],
+        "RepoDigests": [
+            "vllm/vllm-openai-xpu@sha256:e4446310b1d30015e8fdc1a0a2ef1669ac6bef857cbe772487571ed5c1a926a9"
+        ],
+        "Comment": "buildkit.dockerfile.v0",
+        "Created": "2026-09-21T22:50:18.89466892Z",
+        "Config": {
+            "Env": [
+                "PATH=/opt/venv/bin:/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "DEBIAN_FRONTEND=noninteractive",
+                "VIRTUAL_ENV=/opt/venv",
+                "UV_PYTHON_INSTALL_DIR=/opt/uv/python",
+                "UV_HTTP_TIMEOUT=500",
+                "PIP_EXTRA_INDEX_URL=https://download.pytorch.org/whl/xpu",
+                "UV_EXTRA_INDEX_URL=https://download.pytorch.org/whl/xpu",
+                "UV_INDEX_STRATEGY=unsafe-best-match",
+                "UV_LINK_MODE=copy",
+                "LD_LIBRARY_PATH=/opt/ucx/lib:/opt/venv/lib:/usr/local/lib",
+                "VLLM_TARGET_DEVICE=xpu",
+                "VLLM_WORKER_MULTIPROC_METHOD=spawn"
+            ],
+            "Entrypoint": [
+                "vllm",
+                "serve"
+            ],
+            "WorkingDir": "/workspace/vllm",
+            "Labels": {
+                "org.opencontainers.image.version": "24.04"
+            },
+            "ArgsEscaped": true,
+            "Shell": [
+                "bash",
+                "-c"
+            ]
+        },
+        "Architecture": "amd64",
+        "Os": "linux",
+        "Size": 4311818420,
+        "RootFS": {
+            "Type": "layers",
+            "Layers": [
+                "sha256:65e5d715ea720349e6475f91651a0956279fc295a45fd73aa04f1cec046281a1",
+                "sha256:a2aab35a5ea1fa52c2d67a5c066e36214de7ecdd86c286d66e66148bd9034270",
+                "sha256:25baf4ec65926e39336a9b863239b5548cb4fffb27b0c36b8b37007fa12c07d4",
+                "sha256:f7e9f195343f9376dda185883619f476b9e90d291730e1e6002a7fab1c5ff15d",
+                "sha256:72993c2d42eea255fcfafcbc1899565aee9fce2ae754ef47f0885984ca44a7bd",
+                "sha256:75c2b420906db31f4d75abed4d73c7dba5003d2baa22a03c5b5a9389e1fdd16b",
+                "sha256:a2a63a39b107293b8f435dcd5004fddcd7fd867296c252406a0a49852852db2a",
+                "sha256:20c45840c292d2931023c97784cf2529d44e6339a369130d89a69ee582ab96d2",
+                "sha256:a90fd457737920a68cfc55dc1f8fdf1e88b45e0b5088771f7d3d9c3c20802c7c",
+                "sha256:c306386f1abd1b373c404ae22633565be10d2ecadaf7a8b072a16a7dcacffd74",
+                "sha256:598995d956023618909c5fc321838eb45f790b3e91612c196015547b31478845",
+                "sha256:b05457b622259a0566066fcfad598f0e93b08b668b3122bfc6d9288bb358aefb",
+                "sha256:50dd499321a2e538dc3dfec16cb1c3f32c70bc3b34c38e2d4e6f631f09ee8b27",
+                "sha256:074d170251addbc56cf6395102853b08cd26f947f2fa4d886326d95eb91c4968",
+                "sha256:a9539c62694214ba5545952bcdecfc5dcbca23d8ae6d5962019a8ea37a102ab3",
+                "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+                "sha256:28691ffedc81fe7eea57dcc0a843be2cac5acb42d10de9d85071f4fc4f33d9fd",
+                "sha256:24bc817b5f77b21ed5901d0c2589aa8ea488e758f6b6770305fb6f96b75e26c3"
+            ]
+        },
+        "Metadata": {
+            "LastTagTime": "2026-10-08T13:58:22.7281799Z"
+        },
+        "Descriptor": {
+            "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+            "digest": "sha256:e4446310b1d30015e8fdc1a0a2ef1669ac6bef857cbe772487571ed5c1a926a9",
+            "size": 4109
+        },
+        "Identity": {
+            "Pull": [
+                {
+                    "Repository": "docker.io/vllm/vllm-openai-xpu"
+                }
+            ]
+        }
+    }
+]

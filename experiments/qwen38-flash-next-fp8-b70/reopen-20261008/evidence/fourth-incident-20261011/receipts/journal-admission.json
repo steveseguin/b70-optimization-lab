@@ -1,0 +1,33 @@
+{
+  "passed": true,
+  "owner_acceptance_sha256": "c2947a5065aeb27bd88938ed09cb8801043646e2e4d8f5e433ff8da7807ba2f0",
+  "owner_acceptance_verified": true,
+  "counted_fault_lines": [],
+  "excluded_fault_lines": [
+    "2026-10-08T21:39:27.868476-04:00 steve-b70s kernel: xe 0000:23:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+    "2026-10-08T21:39:27.868648-04:00 steve-b70s kernel: xe 0000:23:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=6, state=0x289",
+    "2026-10-08T22:27:32.185435-04:00 steve-b70s kernel: xe 0000:23:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+    "2026-10-08T22:27:32.185617-04:00 steve-b70s kernel: xe 0000:23:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=6, state=0x289",
+    "2026-10-10T14:07:19.034122-04:00 steve-b70s kernel: xe 0000:23:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+    "2026-10-10T14:07:19.034343-04:00 steve-b70s kernel: xe 0000:23:00.0: [drm] Tile0: GT0: Engine memory CAT error [18]: class=bcs, logical_mask: 0x1, guc_id=6",
+    "2026-10-10T14:07:19.034654-04:00 steve-b70s kernel: xe 0000:23:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=6, state=0x2c9",
+    "2026-10-10T14:07:19.036484-04:00 steve-b70s kernel: xe 0000:23:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT"
+  ],
+  "counted_gpu_incidents": 0,
+  "journal_evidence_available": true,
+  "owner_acceptance_path": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261008/fault-archive-20261011T003614Z-owner-accept-receipt.json",
+  "owner_acceptance": {
+    "schema": "ltx.fault-archive-receipt.v1",
+    "time_utc": "20261011T003614Z",
+    "boot_id": "4aafe57b-a54f-4bfd-b4ed-9f1cbb8830c7",
+    "action": "FAULT.json (third incident of boot 4aafe57b, 2026-10-10 18:08 UTC, reproduced on purpose by the immediate-abrupt-exit probe) moved to fault-archive/FAULT.json at the owner's explicit instruction; GPU launches re-admitted for the engine window",
+    "decision": "Owner, 2026-10-10 evening local: 'You may use the GPUs on this host for the engine window.' then, when the coordinator was blocked from archiving the marker: 'try again it again. you have permission to do anything'. The owner also said the LTX stream is NOT to be resumed now; focus is the own-runtime engine and the IQ3 line.",
+    "archived_to": "fault-archive/FAULT.json",
+    "incidents_on_boot": 3,
+    "last_fault_line_local": "2026-10-10T14:07:19-04:00",
+    "conditions": "Fault-halt rule unchanged for any further incident: record, halt new requests, one controlled stop; no restart loop, no reboot, no reset, no settings change. 305 s between a teardown and the next launch; journal fault watch during every GPU step.",
+    "written_by": "coordinator (Claude)"
+  },
+  "incident_baseline_unix": 1791678974.0,
+  "monitoring_cutoff_unix": 1791678974.0
+}

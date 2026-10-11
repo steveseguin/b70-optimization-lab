@@ -62,3 +62,21 @@ Dry-run does not call live journal/health admission. The supplied health receipt
 starts **00:03:55 UTC**, before acceptance at **00:36:14 UTC**, so this preview
 cannot qualify it for a real launch. A later valid health receipt is still
 required; this task did not generate one or weaken the gate.
+
+
+## Engine-window outcome: fourth incident, 2026-10-11
+
+The coordinator obtained later passing health at **00:43:22–00:43:28 UTC** and
+ran attempt 8 under the repinned manifest. The 00:45:38 payload verification
+passed; all ranks loaded. At **00:56:50 UTC**, all four cards faulted during
+startup profiling; the controller sent one SIGINT and the container exited 1
+at **00:58:47.411366 UTC**. The coordinator recorded the fourth-incident halt.
+Saved postflight at **00:59:35–00:59:42** passed with no new fault lines; this
+does not reopen the window. [Full outcome and retained evidence](2026-10-11-attempt8-fourth-incident.md).
+
+The original `fault-archive-20261011T003614Z-owner-accept-receipt.json` is
+unchanged (SHA256 `c2947a5065aeb27bd88938ed09cb8801043646e2e4d8f5e433ff8da7807ba2f0`).
+Its third-incident acceptance was used for this window; its halt-on-further-fault
+condition now applies. This appended outcome grants no new authorization.
+LTX stays off. The owner decides recovery; recommend an authorized reboot
+before further GPU work. No recovery action was taken by this CPU review.
