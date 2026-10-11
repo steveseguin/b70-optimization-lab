@@ -1,0 +1,24 @@
+0.03.618.924 I llama_completion: llama backend init
+0.03.618.939 I llama_completion: load the model and apply lora adapter, if any
+0.07.043.111 W llama_model_loader: tensor overrides to CPU are used with mmap enabled - consider using --load-mode none for better performance
+0.12.882.018 I cmn          init: llama threadpool init, n_threads = 8
+0.12.885.244 I 
+0.12.885.301 I system_info: n_threads = 8 (n_threads_batch = 8) / 32 | CPU : SSE3 = 1 | SSSE3 = 1 | AVX = 1 | AVX2 = 1 | F16C = 1 | FMA = 1 | BMI2 = 1 | LLAMAFILE = 1 | OPENMP = 1 | REPACK = 1 | 
+0.12.885.303 I 
+0.12.885.686 I sampler seed: 4294967295
+0.12.885.694 I sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 1, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+0.12.885.700 I sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+0.12.885.700 I generate: n_ctx = 4096, n_batch = 512, n_predict = 64, n_keep = 0
+0.12.885.700 I 
+0.17.561.846 I common_perf_print:    sampling time =      17.32 ms
+0.17.561.847 I common_perf_print:    samplers time =       4.70 ms /   151 tokens
+0.17.561.850 I common_perf_print:        load time =    1746.55 ms
+0.17.561.851 I common_perf_print: prompt eval time =    1746.01 ms /    87 tokens (   20.07 ms per token,    49.83 tokens per second)
+0.17.561.851 I common_perf_print:        eval time =    2910.71 ms /    63 runs   (   46.20 ms per token,    21.64 tokens per second)
+0.17.561.852 I common_perf_print:       total time =    4676.61 ms /   150 tokens
+0.17.561.852 I common_perf_print: unaccounted time =       2.56 ms /   0.1 %      (total - sampling - prompt eval - eval) / (total)
+0.17.561.852 I common_perf_print:    graphs reused =         62
