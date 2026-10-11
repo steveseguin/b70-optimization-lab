@@ -1,0 +1,128 @@
+{
+  "schema": "own-runtime.peer.window.v1",
+  "passed": true,
+  "cards": [
+    2,
+    3
+  ],
+  "start_utc": "2026-10-11T05:59:43.113964+00:00",
+  "boot_id": "13858eef-ec68-44ea-a67c-9444933b7100",
+  "binary_sha256": "fc9d76c6ac4419aa69f6de7c627b400747017725bdb7183f33f5e58310f7557e",
+  "build_receipt": {
+    "schema": "own-runtime.peer.build.v1",
+    "passed": true,
+    "native_executed": false,
+    "timestamp": "2026-10-11T05:59:31.333093+00:00",
+    "commands": [
+      {
+        "argv": [
+          "/usr/bin/python3",
+          "-B",
+          "-m",
+          "unittest",
+          "-v",
+          "test_packet"
+        ],
+        "returncode": 0,
+        "output": "test_coverage_and_units (test_packet.ReceiptTests.test_coverage_and_units) ... ok\ntest_directional_access (test_packet.ReceiptTests.test_directional_access) ... ok\ntest_missing_duplicate_inexact (test_packet.ReceiptTests.test_missing_duplicate_inexact) ... ok\ntest_nonfinite_wall (test_packet.ReceiptTests.test_nonfinite_wall) ... ok\ntest_optional_event_timing (test_packet.ReceiptTests.test_optional_event_timing) ... ok\ntest_projection_is_reproducible_and_unmeasured (test_packet.ReceiptTests.test_projection_is_reproducible_and_unmeasured) ... ok\ntest_exactness_and_teardown_failure (test_packet.WindowTests.test_exactness_and_teardown_failure) ... ok\ntest_fault_latch_and_one_signal (test_packet.WindowTests.test_fault_latch_and_one_signal) ... ok\ntest_lost_journal (test_packet.WindowTests.test_lost_journal) ... ok\ntest_post_exit_fault (test_packet.WindowTests.test_post_exit_fault) ... ok\ntest_preflight_refuses_launch (test_packet.WindowTests.test_preflight_refuses_launch) ... ok\ntest_specific_fault_signatures (test_packet.WindowTests.test_specific_fault_signatures) ... ok\ntest_success (test_packet.WindowTests.test_success) ... ok\ntest_timeout (test_packet.WindowTests.test_timeout) ... ok\n\n----------------------------------------------------------------------\nRan 14 tests in 0.075s\n\nOK\n"
+      },
+      {
+        "argv": [
+          "cmake",
+          "-S",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet12-peer",
+          "-B",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet12-peer/build/compile",
+          "-DCMAKE_BUILD_TYPE=Release"
+        ],
+        "returncode": 0,
+        "output": "-- The CXX compiler identification is IntelLLVM 2026.0.0\n-- Detecting CXX compiler ABI info\n-- Detecting CXX compiler ABI info - done\n-- Check for working CXX compiler: /opt/intel/oneapi/compiler/2026.0/bin/icpx - skipped\n-- Detecting CXX compile features\n-- Detecting CXX compile features - done\n-- Configuring done (0.3s)\n-- Generating done (0.0s)\n-- Build files have been written to: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet12-peer/build/compile\n"
+      },
+      {
+        "argv": [
+          "cmake",
+          "--build",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet12-peer/build/compile",
+          "-j2"
+        ],
+        "returncode": 0,
+        "output": "[ 14%] Building CXX object CMakeFiles/owner.dir/build/owner/owner.cpp.o\n[ 28%] Building CXX object CMakeFiles/owner.dir/build/owner/owner_retire.cpp.o\n[ 42%] Linking CXX static library libowner.a\n[ 42%] Built target owner\n[ 71%] Building CXX object CMakeFiles/host-tests.dir/host_tests.cpp.o\n[ 71%] Building CXX object CMakeFiles/peer-native.dir/native.cpp.o\n[ 85%] Linking CXX executable host-tests\n[ 85%] Built target host-tests\n[100%] Linking CXX executable peer-native\n[100%] Built target peer-native\n"
+      },
+      {
+        "argv": [
+          "readelf",
+          "-d",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet12-peer/build/compile/host-tests"
+        ],
+        "returncode": 0,
+        "output": "\nDynamic section at offset 0x24da0 contains 27 entries:\n  Tag        Type                         Name/Value\n 0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]\n 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]\n 0x000000000000000c (INIT)               0x403000\n 0x000000000000000d (FINI)               0x41d98c\n 0x0000000000000019 (INIT_ARRAY)         0x425628\n 0x000000000000001b (INIT_ARRAYSZ)       16 (bytes)\n 0x000000000000001a (FINI_ARRAY)         0x425638\n 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)\n 0x000000006ffffef5 (GNU_HASH)           0x400378\n 0x0000000000000005 (STRTAB)             0x400ec0\n 0x0000000000000006 (SYMTAB)             0x400470\n 0x000000000000000a (STRSZ)              3335 (bytes)\n 0x000000000000000b (SYMENT)             24 (bytes)\n 0x0000000000000015 (DEBUG)              0x0\n 0x0000000000000003 (PLTGOT)             0x425fe8\n 0x0000000000000002 (PLTRELSZ)           1848 (bytes)\n 0x0000000000000014 (PLTREL)             RELA\n 0x0000000000000017 (JMPREL)             0x402078\n 0x0000000000000007 (RELA)               0x401e08\n 0x0000000000000008 (RELASZ)             624 (bytes)\n 0x0000000000000009 (RELAENT)            24 (bytes)\n 0x000000006ffffffe (VERNEED)            0x401ca8\n 0x000000006fffffff (VERNEEDNUM)         3\n 0x000000006ffffff0 (VERSYM)             0x401bc8\n 0x0000000000000000 (NULL)               0x0\n"
+      },
+      {
+        "argv": [
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet12-peer/build/compile/host-tests"
+        ],
+        "returncode": 0,
+        "output": "PASS: 24 copy cases (480 changed payloads), 3 exchange cases (900 rounds), regrouping counterexample, stop and lifetime gates\n"
+      },
+      {
+        "argv": [
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet12-peer/build/compile/host-tests"
+        ],
+        "returncode": 0,
+        "output": "PASS: 24 copy cases (480 changed payloads), 3 exchange cases (900 rounds), regrouping counterexample, stop and lifetime gates\n"
+      }
+    ],
+    "source_sha256": {
+      "experiments/own-xpu-runtime/stage2/packet12-peer/CMakeLists.txt": "eeba3c78089cdd6be187113ca7c81e0627195b08a95f03a008871267c6240953",
+      "experiments/own-xpu-runtime/stage2/packet12-peer/backend.hpp": "6fe1fe50e15608ee445929dcae5f53d7e0aeb01dd2169f834035203bad194b21",
+      "experiments/own-xpu-runtime/stage2/packet12-peer/cases.hpp": "12d2f8a9868c88db7e1e8381bfd1f3778f577c346e413b5479c1ff43d526b317",
+      "experiments/own-xpu-runtime/stage2/packet12-peer/device_window.py": "3934073a29664ad37773eb1418d785832c1821a62b0074722a1e392f75568010",
+      "experiments/own-xpu-runtime/stage2/packet12-peer/exchange.hpp": "8a2bf523afda47b3070d107e6df698f97891531edafb5d477fdb918b2f299ef7",
+      "experiments/own-xpu-runtime/stage2/packet12-peer/host_tests.cpp": "f9b947a0e498e4f78b4728d275967a2f539e1d3d3f2bbe11546e0bbdb8b52a81",
+      "experiments/own-xpu-runtime/stage2/packet12-peer/native.cpp": "acd9cb67db6eb5a8ab3186b37f7e979e7be45117a411d6268e2b2b53bda5fa2c",
+      "experiments/own-xpu-runtime/stage2/packet12-peer/owner-source.json": "0d45c9e6a48f2c96a8ae0d78aa640bf495c420e1b3d39222e21cbd5dde9cfd20",
+      "experiments/own-xpu-runtime/stage2/packet12-peer/project.py": "2864df70cf967c4c9f632ae6cd4aed7607d3fea03dde4426d6b42ea347a87b68",
+      "experiments/own-xpu-runtime/stage2/packet12-peer/projection.json": "9bec21e12a3f516d4dbb888864b5b63e228807e3d5dfcb2c4fb4c4c12a8dccd9",
+      "experiments/own-xpu-runtime/stage2/packet12-peer/receipt.py": "8e12d020db02dee3d0cd39ee1c9eab5b26409650d95bea95b2de881e23b8ea56",
+      "experiments/own-xpu-runtime/stage2/packet12-peer/test_packet.py": "ca7110b20f854adf53598dc2a5ef6562d14fce923bc6a471fd4b3d2aa8c57085",
+      "experiments/own-xpu-runtime/stage2/packet12-peer/validate.py": "d33a683b4c1f340f286ea21cddfd0b94b988f8498a5581e49295737bec8e4350",
+      "experiments/own-xpu-runtime/stage2/packet2/tests/device_window.py": "a26998d3bd062b78c8ffb8825e8daf9adb50cd866552b3c23bfacdafb0189e5f"
+    },
+    "binary_sha256": "fc9d76c6ac4419aa69f6de7c627b400747017725bdb7183f33f5e58310f7557e",
+    "compile_commands": [
+      {
+        "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet12-peer/build/compile",
+        "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet12-peer/build/owner -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -o CMakeFiles/owner.dir/build/owner/owner.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet12-peer/build/owner/owner.cpp",
+        "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet12-peer/build/owner/owner.cpp",
+        "output": "CMakeFiles/owner.dir/build/owner/owner.cpp.o"
+      },
+      {
+        "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet12-peer/build/compile",
+        "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet12-peer/build/owner -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -o CMakeFiles/owner.dir/build/owner/owner_retire.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet12-peer/build/owner/owner_retire.cpp",
+        "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet12-peer/build/owner/owner_retire.cpp",
+        "output": "CMakeFiles/owner.dir/build/owner/owner_retire.cpp.o"
+      },
+      {
+        "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet12-peer/build/compile",
+        "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet12-peer/build/owner -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -o CMakeFiles/host-tests.dir/host_tests.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet12-peer/host_tests.cpp",
+        "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet12-peer/host_tests.cpp",
+        "output": "CMakeFiles/host-tests.dir/host_tests.cpp.o"
+      },
+      {
+        "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet12-peer/build/compile",
+        "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet12-peer/build/owner -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fsycl -o CMakeFiles/peer-native.dir/native.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet12-peer/native.cpp",
+        "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet12-peer/native.cpp",
+        "output": "CMakeFiles/peer-native.dir/native.cpp.o"
+      }
+    ],
+    "scratch_removed": false
+  },
+  "seconds": 120,
+  "external_idle_health_still_required": true,
+  "environment": {
+    "OMP_NUM_THREADS": "2"
+  },
+  "pid": 115945,
+  "returncode": 0,
+  "elapsed_seconds": 6.822299135999856
+}

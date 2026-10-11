@@ -153,3 +153,23 @@ future device build. Two fresh admitted owners are required before a speed
 verdict; a failed attempt is never automatically rerun. Do not delete sibling
 scratch or fault evidence. [Closeout](CLOSEOUT.md) closes this preparation only;
 the measurement and full-model quality gates remain open.
+
+## First measurement — cards 2 and 3, 2026-10-11 06:1x UTC (boot 13858eef)
+
+Peer access between the two B70s is available in both directions. Receipts in
+[cards2-3-20261011/](cards2-3-20261011/). Medians of 20 repetitions (wall,
+including the owner's completion wait):
+
+| Payload | peer A->B | peer B->A | host-bounce A->B |
+| --- | ---: | ---: | ---: |
+| 10 KB | 18.3 us | 18.6 us | 70 us |
+| 64 KB | 18.8 us (3.5 GB/s) | 20.4 us | 28 us |
+| 1 MB | 54 us (19.3 GB/s) | 53 us (19.8 GB/s) | 100 us (10.5 GB/s) |
+| 16 MB | 671 us (25.0 GB/s) | 685 us (24.5 GB/s) | 1272 us (13.2 GB/s) |
+| exchange, 60 ordered round trips of 10 KB | **3.14 ms total (52 us each)** | | 10.0 ms |
+
+Reading: a per-layer hidden-vector exchange costs about 52 us round trip over
+the peer path, so 60 layer boundaries cost ~3.1 ms per token, within
+TWO-CARD-TP.md's 3.7 ms budget; the host-bounce path is 3x worse. All copies
+were byte-exact. This clears the transport question for the two-card
+tensor-parallel decode step.
