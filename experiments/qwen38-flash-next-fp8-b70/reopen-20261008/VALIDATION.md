@@ -1,5 +1,20 @@
 # Screen 1b CPU validation — native FP8 mmap, 2026-10-08
 
+## Attempt 8 first-MoE source audit, 2026-10-11
+
+The [CPU-only audit](../../../notes/2026-10-11-attempt8-moe-first-forward-audit.md)
+records the profiling call path, every first-GEMM pointer argument and its
+ownership, ranked hypotheses, the passing probe's missing coverage, bounded
+EP1/EP2 designs and unverified repair sketches. All 50 overlay hashes match
+both attempt 8 and the passing probe's historical replacement set; all 31
+indexed incident evidence files rehash correctly. Placement counts/coverage,
+fault access types, probe source identity, buffer arithmetic and local links
+were checked. No runtime tests, GPU work or source/manifest changes occurred.
+Cause remains unknown; native mapping and operator traces are missing.
+The proposed full-model EP1/EP2 tests require separate topology and memory
+admission: the current adapter explicitly requires TP4/EP4. The existing halt
+and all original receipts remain unchanged.
+
 ## Attempt 8 fourth incident, 2026-10-11
 
 The owner-authorized calibrate-load attempt 8 completed weight loading on all
