@@ -118,36 +118,39 @@ for i in $(seq 1 120); do
   sleep 15
 done
 
-keep_best() {  # out_dir arm: the snapshot becomes the current copy unless it lost probe answers the current copy has
+keep_best() {  # snap_dir tag: the new copy becomes the current one unless it lost probe answers the current one has
   # (campaign 5: the agent rewrote its answers file at the final item and the next copy overwrote the good one)
-  python3 - "$1/snap/$2-answers.tmp" "$1/snap/$2-answers.json" <<'PY'
+  python3 - "$1/$2-answers.tmp" "$1/$2-answers.json" <<'PY'
 import json, os, re, sys
 new, cur = sys.argv[1:3]
 def probes(path):
     try:
-        return sum(1 for k in json.load(open(path)) if re.fullmatch(r"p\d+_\d+", k))
+        return {k for k in json.load(open(path)) if re.fullmatch(r"p\d+_\d+", k)}
     except Exception:
-        return -1
-if probes(new) >= probes(cur):
+        return None
+n, c = probes(new), probes(cur)
+if n is not None and (c is None or c <= n):
     os.replace(new, cur)
 else:
     os.replace(new, cur.replace("-answers.json", "-answers-after-loss.json"))
 PY
 }
-snap_loop() {  # out_dir arm: copy /app/answers.json out of the task container every 2 minutes while the arm runs
-  local od=$1 arm=$2 c
+snap_loop() {  # snap_dir tag: copy /app/answers.json out of the task container every 2 minutes while the arm runs
+  local sd=$1 tag=$2 c
   while :; do
     sleep 120
     c=$(docker ps --filter name=sparse- --format '{{.Names}}' | head -1)
-    [[ -n $c ]] && docker cp "$c:/app/answers.json" "$od/snap/$arm-answers.tmp" >/dev/null 2>&1 \
-      && cp "$od/snap/$arm-answers.tmp" "$od/snap/kept/$arm-$(date +%H%M%S).json" \
-      && keep_best "$od" "$arm" && date +%s > "$od/snap/$arm-answers.at"
+    [[ -n $c ]] && docker cp "$c:/app/answers.json" "$sd/$tag-answers.tmp" >/dev/null 2>&1 \
+      && cp "$sd/$tag-answers.tmp" "$sd/kept/$tag-$(date +%H%M%S).json" \
+      && keep_best "$sd" "$tag" && date +%s > "$sd/$tag-answers.at"
   done
 }
 run_arm() {  # arm cap_seconds out_dir size sparse_args [seed]
   local arm=$1 cap=$2 od=$3 size=$4 sp=$5 seed=${6:-0} t0=$SECONDS rc snp
+  local tag="c6-$arm-$((size/1000))k-s$seed"      # one snapshot series per arm, stream and seed of this campaign
+  rm -f "$od/snap/$tag-answers.json" "$od/snap/$tag-answers.at" "$od/snap/$tag-answers.tmp"
   say "[$arm, $((size/1000))K, seed $seed] start (cap ${cap}s); MemAvailable $(avail) MiB; $(mline)"
-  snap_loop "$od" "$arm" & snp=$!
+  snap_loop "$od/snap" "$tag" & snp=$!
   if (( cap > 0 )); then
     timeout -s INT -k 180 "$cap" env OUT_DIR="$od" API_BASE="http://127.0.0.1:$PORT/v1" MODEL_NAME=qwen38-27b-fp8 SPARSE_ARGS="$sp" MAX_TOKENS=8192 \
       KINDS=sparse SEEDS="$seed" SIZES="$size" SUBSET=core ARMS="$arm" ./second-comparison.sh > "$od/arm-$arm-s$seed-c6.out" 2>&1
@@ -159,9 +162,9 @@ run_arm() {  # arm cap_seconds out_dir size sparse_args [seed]
   say "[$arm, $((size/1000))K, seed $seed] done rc=$rc in $(( (SECONDS-t0)/60 )) min; MemAvailable $(avail) MiB; $(mline)"
   grep -h 'ledger score\|^!!!' "$od/arm-$arm-s$seed-c6.out" | grep -v 'B16ira__sparse-memory-t240k-s1' | head -3 | cut -c1-200
   if (( rc == 124 || rc == 137 )); then
-    say "[$arm] CUT at the time cap; last answers snapshot is $(( $(date +%s) - $(cat "$od/snap/$arm-answers.at" 2>/dev/null || echo 0) )) s old"
+    say "[$arm] CUT at the time cap; last answers snapshot is $(( $(date +%s) - $(cat "$od/snap/$tag-answers.at" 2>/dev/null || echo 0) )) s old"
     for c in $(docker ps -q --filter name=sparse-); do docker rm -f "$c" >/dev/null 2>&1; done
-    echo "$arm $od $seed cut after $(( SECONDS - t0 )) s" >> "$O/CUT6.txt"
+    echo "$arm $od $seed $tag cut after $(( SECONDS - t0 )) s" >> "$O/CUT6.txt"
   fi
   wait_idle || say "[$arm] server still busy after 3 min"
 }
@@ -234,9 +237,9 @@ say "plain stream, 240K, all rounds pooled"; sed -n '1,13p' "$ODP/probe-analysis
 say "1M stream, finished trials"; sed -n '1,6p' "$OD1M/probe-analysis.txt" | cut -c1-300
 sed -n '/^# 2b/,/^# 3/p' "$OD1M/probe-analysis.txt" | cut -c1-240
 if [[ -e $O/CUT6.txt ]]; then
-  while read -r arm od seed _; do
+  while read -r arm od seed tag _; do
     say "cut arm $arm (seed $seed), probes reached before the cut"
-    "$PY" ./partial_grade.py "$(ls -d "$od"/tasks/sparse-memory/sparse-memory-t*k-s"$seed" | head -1)" "$od/snap/$arm-answers.json" --json "$od/snap/$arm-partial.json" 2>&1 | cut -c1-240
+    "$PY" ./partial_grade.py "$(ls -d "$od"/tasks/sparse-memory/sparse-memory-t*k-s"$seed" | head -1)" "$od/snap/$tag-answers.json" --json "$od/snap/$tag-partial.json" 2>&1 | cut -c1-240
   done < "$O/CUT6.txt"
 fi
 
