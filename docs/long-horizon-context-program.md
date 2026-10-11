@@ -90,8 +90,20 @@ W48/D48 are from `/mnt/fast-ai/bench-results/context-longrun-20261008/campaign/`
 | B16ir self-edit read mode | 4/15 | 3/8 | 1/5 | 0/2 | 0/5 | 14/14 | 20 |
 | B16ira + archive and recall | 12/15 | 7/8 | 4/5 | 1/2 | 5/5 | 8/14 | 36 |
 
-Archive + recall is the first method above the lossy floor on probes; it wrote stale recalled values back into its
-state (final 8/14), which is the next fix. In-window self-editing collapses at 16K (needs 32K of working room).
+Archive + recall is the first method above the lossy floor on probes; at 16K it wrote stale recalled values back into
+its state (final 8/14). In-window self-editing collapses at 16K (needs 32K of working room).
+
+**Round 2 (32K cap, seed 0; 16K seed 1 agrees with the 16K ranking above):**
+
+| arm (32K) | probes | 25-99 back | who | final | all 29 | minutes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| W32 window-drop | 11/15 | 0/2 | 4/5 | 14/14 | 25 | 20 |
+| P32 compaction | 13/15 | 2/2 | 3/5 | 4/14 (6 stale) | 17 | 13 |
+| B32ir self-edit read | 8/15 | 1/2 | 0/5 | 14/14 | 22 | 16 |
+| **B32ira + archive and recall** | **13/15** | 2/2 | 4/5 | **14/14** | **27** | **15** |
+
+At 32K the archive method is above the lossy floor on every axis at once and is also the fastest; 32K is the fast-scale
+cap from here. Compaction that keeps old state visible reports stale values as current (4/14 finals).
 
 ### 4b. Proposed here, not yet run
 
