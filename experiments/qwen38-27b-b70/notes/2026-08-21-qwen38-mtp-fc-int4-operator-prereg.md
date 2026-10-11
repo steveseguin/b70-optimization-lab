@@ -5,11 +5,11 @@ Date: 2026-08-21
 Status: **Q1 COMPLETE 2026-08-22 — PASS** (`qualified-only-for-default-off-integration-design`); see the [result](2026-08-22-qwen38-mtp-fc-int4-operator-result.md). Authorized by explicit user go-ahead this session, after every drafted prerequisite was satisfied and frozen. The four
 launch-dependency conditions below are all met: (1) the authorized host-wide
 `xe` recovery completed with its full post-recovery gate
-([recovery note](2026-08-22-measuring-host-xe-recovery-2.md)); (2) the
+([recovery note](2026-08-21-measuring-host-xe-recovery-2.md)); (2) the
 fresh-root GPU3 stock-health r2 published a supervisor-validated immutable
 `gpu3-incumbent-control-health-pass` terminal on boot
 `256bc838-c015-4c91-a8f9-363d281f7555`
-([r2 pass](2026-08-22-qwen38-gpu3-incumbent-control-health-r2-result.md));
+([r2 pass](2026-08-21-qwen38-gpu3-incumbent-control-health-r2-result.md));
 (3) the driver now carries the bounded per-arm process-group watchdog, live
 GPU2 BDF/UUID rederivation, same-boot binding, immutable per-arm receipts, and
 an enclosing campaign terminal; (4) the qualifier's

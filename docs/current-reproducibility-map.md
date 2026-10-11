@@ -5,21 +5,40 @@ the authority for the currently loaded service or active research lane; use
 [`CURRENT.md`](../CURRENT.md) for that live state. Historical service claims
 below describe recorded lane context and may not describe what is running now.
 
-This page connects the active Gemma 4 service, the deployable MiniMax baseline,
-the session-cache experiments, the TurboQuant patch, and the long-context
-research path. It is meant for a fresh human or agent who needs to reproduce or
-review the current work without reading every historical note first.
+Navigation reviewed **2026-10-10**. Start with the
+[lane entrypoint inventory](model-effort-index.md#lane-entry-points-and-evidence-status)
+for every maintained lane, including own-runtime CPU work, LTX, MiniMax-H3,
+Qwen3.8 FP8 and the Qwen3.5 recipes. Use the
+[package directory](../packages/README.md) for packaging and certification status.
+The detailed sections here retain earlier build, service and diagnostic history;
+their old “current”, “next” and endpoint wording is local to the dated experiment,
+not authority to resume it. Campaign closeout does not mean a model lane is
+finished.
 
-Hardware scope: the local Intel lab is four Arc Pro B70 32 GB GPUs
-(`128 GB` aggregate VRAM). Results here are useful because they are produced on
-real community-accessible XPU hardware, but the same limit also constrains
-larger model coverage. Additional high-VRAM Intel hardware would let this map
-include larger GLM/DeepSeek-class lanes and more concurrent service/optimization
-comparisons without sacrificing the current endpoint. The lab has spare EPYC
-9015 PCIe 5.0 slot capacity, so the missing piece for broader Intel coverage is
-higher-memory XPU hardware rather than host expansion.
+Hardware and admission rules live in [AGENTS.md](../AGENTS.md#host-facts) and
+CURRENT; this catalog covers both the two-card and four-card hosts.
 
-## Promoted Closed Recipes
+## Section Inventory
+
+| Section / identity | How to use the retained material |
+| --- | --- |
+| [Muse Q8/WOQ](#muse-glimmer-30b-q8woq-century-result) | Retained measured campaign, with its non-BF16 quality boundary |
+| [Flash-Next FP8](#qwen38-flash-next-fp8-tp4-exact-gdn-mtp1-campaign-closed) | September record foundation; October loading/fault work is linked separately |
+| [Qwen3.6 family](#qwen36-family-recipes) | Maintained navigation to distinct Q8, INT4, Q4 and 35B packets |
+| [Historical production](#historical-production-recipes) | Old Gemma frontdoor/service configuration; not a live endpoint |
+| [One-card Qwen Q8](#qwen36-27b-q8_0-one-b70-baseline) | August baseline and service experiments; use the lane README for final outcomes |
+| [Qwen INT4 history](#historical-qwen36-27b-optimization-lane) | Original July record and later failed stricter qualification remain distinct |
+| [Laguna](#laguna-s-21-int4-qualified-published-result) | Later qualified record and its earlier source-reconstruction milestone |
+| [DeepSeek K160](#deepseek-v4-flash-k160-closed-frontier) | Experimental pruned-artifact frontier and reuse conditions |
+| [MiniMax baseline](#minimax-deployable-baseline) | Historical c1 deployment recipe; check present host rules before reuse |
+| [Gemma result](#gemma-4-26b-realistic-suite-observation) | Retained short-decode result, distinct from prefill/service candidates |
+| [Build inputs](#baseline-build-inputs) / [baseline results](#baseline-results) | Historical host versions and May measurements |
+| [Session cache](#session-cache--ram-backed-juggling) | Old parked-session experiments and measured blockers |
+| [TurboQuant](#turboquant) / [196K path](#full-196k-active-context-path) | Historical compressed-KV/offload research; not the current full-16-bit-KV default |
+
+<a id="promoted-closed-recipes"></a>
+
+## Retained Campaign Recipes
 
 ### Muse-Glimmer-30B Q8/WOQ Century Result
 
@@ -33,7 +52,7 @@ Identity: four B70s, TP4/concurrency one, Muse UD-Q8_K_XL target, pretrained
 BF16 DFlash, fixed-N16 direct oneDNN WOQ, distributed ARGMAX. Two canonical
 full-256 arithmetic means were `100.088` and `100.649 tok/s`; the frozen
 15-prompt conventional first-100 median was `161.900 tok/s`, p10 `108.574`,
-with every prompt cache-zero. This is a closed Q8/WOQ target-verified result,
+with every prompt cache-zero. This is a retained Q8/WOQ target-verified result,
 not BF16/lossless or universally token-exact. LocalMaxxing approved the
 conventional interval median as `cmss8515c00n0ms01n3begqgg`. Raw evidence is
 mirrored into the repro, so review does not depend on `/mnt` paths.
@@ -42,7 +61,9 @@ mirrored into the repro, so review does not depend on `/mnt` paths.
 
 ### Qwen3.8 Flash-Next FP8 TP4, exact-GDN MTP1 (campaign closed)
 
-- [Current result and campaign closeout](../results/qwen38-flash-next-fp8-b70/CLOSEOUT-20260913.md)
+- [Retained result packet](../results/qwen38-flash-next-fp8-b70/README.md)
+- [September campaign closeout](../results/qwen38-flash-next-fp8-b70/CLOSEOUT-20260913.md)
+- [October loading and fault investigation](../experiments/qwen38-flash-next-fp8-b70/reopen-20261008/README.md)
 - [Exact-GDN record recipe](../repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md)
 - [Public family page](../models/qwen-flash-next.html)
 - [Historical MTP3 foundation](../repro/qwen38-flash-next-fp8-tp4-mtp3-b70/README.md)
@@ -71,10 +92,14 @@ audit, but they do not define one comparable benchmark class.
 | 27B intrinsic-MTP Q4 | [result packet](../results/qwen36-27b-mtp-gguf-q4-b70/README.md) |
 | 35B Quark W8A8 INT8 | [result packet](../results/qwen36-35b-quark-int8-b70/README.md) |
 
-The current Q8 TP2 record remains `35.699225 tok/s` conventional with 12/12
-cold exact outputs and cache zero. Its 2026-08-14 post-record pass promoted no
-replacement; use its handoff rather than interpreting individual experiment
-notes as active configuration.
+The [Q8 TP2 result packet](../results/qwen36-27b-q8-tp2-asrock-b70/README.md)
+owns the retained August 15 record: **36.604128 tok/s** conventional over
+99 intervals, 12/12 complete cold 512-token outputs exact, all cache counts
+zero. The [structured summary](../data/qwen36-q8-tp2-asrock-b70-20260814/summary.json)
+includes pass-2 and two-chain DP4A improvements after the earlier 35.699225
+milestone. The historical helper value is 36.973866; target-only Q8_0/F16-KV
+TP2 and lab-replay certification remain unchanged. Use the handoff for rejected
+levers, not old intermediate “next” entries.
 
 The AutoRound INT4 row is a separate model/runtime identity from Q8_0. Its
 historical July result remains reproducible evidence under the original bar,
@@ -151,6 +176,9 @@ Latest full-32K concurrency conclusion:
   about `22.20 s` to `12.45 s`.
 
 ## Qwen3.6 27B Q8_0 One-B70 Baseline
+
+Historical August campaign detail follows. The [lane README](../experiments/qwen36-27b-q8-gguf-b70/README.md)
+owns its final outcome; old proposed next steps below are not an active queue.
 
 The target-only Unsloth Q8_0 GGUF now has a validated one-card baseline and a
 32K F16-KV capacity/quality gate. The correctness-qualified default disables
@@ -396,6 +424,10 @@ PASS/performance FAIL as the honest comparator.
 
 ## Historical Qwen3.6 27B Optimization Lane
 
+The “current” labels in this section describe the July record snapshot. Read
+the [family map](qwen36-research-map.md) for the later independent validation
+and August determinism closeouts before treating this as qualified today.
+
 Qwen3.6 27B INT4 AutoRound was a prior optimization target, separate from the
 production LAN endpoint:
 
@@ -522,6 +554,9 @@ commits. The K160 artifact is hash-pruned and its calibration/ranking is not
 reproducible, so this record applies only to that explicitly labeled artifact.
 
 ## MiniMax Deployable Baseline
+
+Historical recipe snapshot: the endpoint and profile-switching commands below
+do not imply a running service or override CURRENT and present host rules.
 
 The MiniMax 32K FP16-family KV c1 endpoint remains the deployable baseline
 recipe and optimization reference:
@@ -709,6 +744,9 @@ The full optimization ledger remains in
 
 ## Baseline Build Inputs
 
+These are historical build inputs for the baseline sections, not a current
+host inventory. Use each maintained recipe for its own pinned environment.
+
 The fresh Ubuntu 24 repro builds from source and applies two compressed patch
 artifacts from the older strict-speed repro:
 
@@ -757,6 +795,9 @@ Detailed notes:
 - `../notes/2026-05-23-current-host-pcie4-prefill-check.md`
 
 ## Session-Cache / RAM-Backed Juggling
+
+Historical MiniMax experiments follow, including their then-open blockers.
+They do not authorize resident services, host-memory changes or a new profile.
 
 This is the main experimental path for keeping multiple long conversations
 warm. It is not one huge active context.
@@ -858,6 +899,9 @@ Live c4 caveat:
 
 ## TurboQuant
 
+Historical compressed-KV research, separate from the full-16-bit-KV default
+and quality rules in [AGENTS.md](../AGENTS.md#quality-rules-no-cheating).
+
 TurboQuant is a compressed-KV research lane. It can raise the live KV ceiling,
 but it is not the production mode.
 
@@ -893,6 +937,9 @@ blocks to fit in live GPU memory. It helps capacity, but it is not active-contex
 overflow.
 
 ## Full 196K Active Context Path
+
+Historical offload design and partial evidence; “active context” names the
+research objective, not the current state of a host.
 
 The credible exact-quality path is CPU-paged attention, not simply increasing
 `--kv-offloading-size`.

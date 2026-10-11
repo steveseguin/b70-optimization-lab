@@ -9,24 +9,24 @@ Live service and active-lane authority remains [`CURRENT.md`](../CURRENT.md).
 
 Related larger-model research: [Flash-Next Strata quant inventory and ranked plan](../notes/2026-10-10-strata-flash-next-quants.md) (2026-10-10, CPU-only; separate quant/runtime identities, no weight download or B70 qualification).
 
-## Current Decision
+<a id="current-decision"></a>
 
-Qwen3.6 27B AutoRound INT4 TP2 is paused after the final approved gate. The
-dependency screen failed at 15/25 exact and `96.386 tok/s`. A later fixed
-per-row RMSNorm screen matched both then-sealed four-prompt controls at
-`106.663 tok/s`,
-but its matched-source 25-prompt candidate was only 12/25 exact at
-`93.445681 tok/s`. The approach failed both normal gates, is not
-production-ready, and no LocalMaxxing row was submitted. The distinct Q8
-target-only TP2 lane remains closed and banked at **`35.699225 tok/s`**
-conventional.
+## Retained Results And Campaign Decisions
 
-The final deterministic-greedy follow-up did not change that decision. A
-bounded lower-ID rule made two fresh M1 structured controls token-identical,
-but the best full resumed candidate was only 16/25 exact at `92.559993 tok/s`.
-Raising the bound changed M1 and M4 trajectories differently; serial gated RMS
-and progressive FA were also negative. See the
-[deterministic-greedy closeout](../notes/2026-08-17-qwen36-int4-deterministic-greedy-closeout.md).
+Navigation reconciled **2026-10-10** against the retained result packets.
+The accepted Q8_0 target-only TP2 result is **36.604128 tok/s** conventional
+(99 intervals), recorded August 15, with 12/12 complete cold 512-token outputs
+exact and cache zero. The [result packet](../results/qwen36-27b-q8-tp2-asrock-b70/README.md)
+and [structured summary](../data/qwen36-q8-tp2-asrock-b70-20260814/summary.json)
+include the later pass-2 and DP4A improvements; 35.699225 was an intermediate
+record. This is a lab-replay result, not a new measurement or clean-host claim.
+
+The separate AutoRound INT4 campaign ended August 18 without a replacement for
+its historical July result. Its [final determinism/speed account](../notes/2026-08-18-qwen36-int4-determinism-speed-tradeoff.md)
+keeps same-configuration repeats, differently configured oracles, and different
+prompt suites distinct. Earlier dependency, RMSNorm and greedy-tie screens are
+negative research evidence, not current production recommendations. A completed
+campaign does not finish either model lane; active work remains in CURRENT.
 
 Start with:
 
@@ -34,7 +34,8 @@ Start with:
 2. [promoted Q8 TP2 result](../results/qwen36-27b-q8-tp2-asrock-b70/README.md)
 3. [standalone Q8 TP2 repro](../repro/qwen36-27b-q8-tp2-asrock-b70/README.md)
 4. [Q8 TP2 source patch](../patches/qwen36-27b-q8-tp2-asrock-b70/README.md)
-5. [post-record pass-1 ledger](../notes/2026-08-14-qwen36-q8-tp2-40tps-pass1.md)
+5. [pass-1 negatives](../notes/2026-08-14-qwen36-q8-tp2-40tps-pass1.md) and
+   [pass-2 progression](../notes/2026-08-14-qwen36-q8-tp2-40tps-pass2.md)
 
 Do not retry the built-in TP2 SYCL profiler or the unsafe root-both remote-write
 prototype; both caused device faults/resets. The other pass-1 hypotheses were
@@ -44,15 +45,15 @@ neutral or slower and remain default-off/reverted.
 
 | Identity | Hardware and runtime | Verified status | Primary pointer |
 | --- | --- | --- | --- |
-| 27B GGUF Q8_0, target-only | 2x ASRock B70, llama.cpp/SYCL TP2 | Current no-speculation record: `35.699225 tok/s` conventional; 12/12 exact, cache-zero; closed after pass 1 | [handoff](../results/qwen36-27b-q8-tp2-asrock-b70/HANDOFF.md) |
+| 27B GGUF Q8_0, target-only | 2x ASRock B70, llama.cpp/SYCL TP2 | Retained August 15 record: `36.604128 tok/s` conventional; 12/12 cold 512-token outputs exact, cache-zero; lab replay | [handoff](../results/qwen36-27b-q8-tp2-asrock-b70/HANDOFF.md) |
 | 27B GGUF Q8_0, target-only baseline | 1x B70, llama.cpp/SYCL | `15.550257 tok/s` 128-token median; exact 32K F16-KV retrieval baseline; service/concurrency experiments are separate evidence | [experiment lane](../experiments/qwen36-27b-q8-gguf-b70/README.md) |
-| 27B AutoRound INT4, MTP3 | 2x B70, vLLM/XPU TP2 | **LANE CLOSED 2026-08-18** — succeeded by the Qwen3.8 27B INT4 AutoRound lane ([setup](../repro/qwen38-27b-autoround-int4-b70/README.md)). Retained record `95.385` stands. Measured tradeoff, no new record: deterministic ceiling `94.710 tok/s` all-25 (quality pass; raised from `92.003` by a masked-max greedy tie break) vs fastest non-reproducing `96.822`. On the 12-prompt suite the July record was set on, these score `89.766`/`94.103` — nothing beats `95.385` like-for-like. Complete-token parity against a differently-configured reference is unsatisfiable — 11 configurations agree 7–16/25 across every cross-config pairing, 24–25/25 only when identical. XPU batch invariance is dead code (`is_cuda_alike()` gates) | [determinism/speed note](../notes/2026-08-18-qwen36-int4-determinism-speed-tradeoff.md), [structured evidence](../data/qwen36-27b-autoround-int4-determinism-speed-20260818.json), [repro](../repro/qwen36-27b-autoround-int4-b70-determinism-20260818/README.md), and [closeout source packet](../patches/qwen36-27b-autoround-int4-b70/determinism-closeout-20260818/README.md), and [prior closeout](../notes/2026-08-17-qwen36-int4-deterministic-greedy-closeout.md) |
+| 27B AutoRound INT4, MTP3 | 2x B70, vLLM/XPU TP2 | August campaign complete; July `95.385` remains historical evidence under its original gate. Later full-output/repeat checks do not qualify a replacement. Qwen3.8 INT4 is a separate successor identity | [final tradeoff and evidence](../notes/2026-08-18-qwen36-int4-determinism-speed-tradeoff.md), [historical repro](../repro/qwen36-27b-autoround-int4-b70/README.md), [closeout source](../patches/qwen36-27b-autoround-int4-b70/determinism-closeout-20260818/README.md) |
 | 27B AutoRound INT4, target-verified MTP | 1x B70, vLLM/XPU | Historical high `68.236263 tok/s`; later isolated confirmation was `65.4-66.7` | [result packet](../results/qwen36-27b-autoround-int4-b70/README.md) |
-| 27B GGUF Q4_0, DFlash5 | 1x B70, llama.cpp/SYCL | Closed strict record `47.818818 tok/s` historical (`47.340630` conventional); unchanged Q4 target verifies accepted tokens | [closure](../notes/2026-07-13-qwen27-dflash-sycl-closure.md) |
+| 27B GGUF Q4_0, DFlash5 | 1x B70, llama.cpp/SYCL | Retained campaign record `47.818818 tok/s` historical (`47.340630` conventional); unchanged Q4 target verifies accepted tokens | [closure](../notes/2026-07-13-qwen27-dflash-sycl-closure.md) |
 | 27B GGUF UD-Q4_K_XL, intrinsic MTP | 1x B70, llama.cpp/SYCL | Best valid p-min support row `31.480049 tok/s`; different target/quality identity | [result packet](../results/qwen36-27b-mtp-gguf-q4-b70/README.md) |
 | 27B native FP8 | 2x B70, vLLM/XPU | Community validation `30.171 tok/s` on a different prompt-length benchmark; not rank-comparable to fixed-suite rows | [status](../community/dominick253-qwen36-27b-fp8-tp2-docker/STATUS.md) |
 | 35B A3B AutoRound W4A16, target-only concurrency experiment | 1x B70, vLLM/XPU TP1 | Experimental measured throughput: full seven-point sweep reaches `1,039.408` aggregate tok/s at B64; later two-point treatment reaches `1,052.870` at B64 and `90.909` at B1. Literal smoke passes, but fixed-seed B64 repeat identity remains incomplete, so this is not promoted | [consumer evidence](qwen36-35b-aggregate-throughput-evidence.md), [machine-readable sweep](../data/qwen36-35b-autoround-b70-concurrency-20260824.json) |
-| 35B A3B Quark W8A8 INT8 | 4x B70, vLLM/XPU | Closed reference; strict PIECEWISE forced-comm baseline about `93.55 tok/s`; no valid `>150` speculative result | [result packet](../results/qwen36-35b-quark-int8-b70/README.md) |
+| 35B A3B Quark W8A8 INT8 | 4x B70, vLLM/XPU | Retained campaign reference; strict PIECEWISE forced-comm baseline about `93.55 tok/s`; no valid `>150` speculative result | [result packet](../results/qwen36-35b-quark-int8-b70/README.md) |
 
 The repository [Qwen3.6 27B model board](../README.md#qwen36-27b-model-board)
 contains the full row-by-row comparison and accounting labels.
@@ -77,15 +78,20 @@ Compressed, speculative, and target-only rows may all be valid, but they must
 retain their declared identities. Do not promote a family-level “Qwen speed”
 number without those boundaries.
 
-## Current Q8 TP2 Closeout
+<a id="current-q8-tp2-closeout"></a>
 
-The post-record pass tested collective topology, queue readiness, Q8 scheduling,
+## Q8 TP2 Progression And Rejected Levers
+
+Pass 1 tested collective topology, queue readiness, Q8 scheduling,
 Level Zero submission, copy offload, host polling, thread/affinity controls,
 FlashAttention variants, recurrent/GDN fusions, and power/clock hypotheses.
-None cleared a matched promotion gate. The accepted source and reproduction
-remain the recovery reference.
+None of those pass-1 candidates cleared its promotion gate. Pass 2 then
+promoted exact handoff, cache-write, reduction and fusion changes; the August 15
+two-chain DP4A change produced the retained record. The
+[handoff](../results/qwen36-27b-q8-tp2-asrock-b70/HANDOFF.md) preserves later
+DP4A follow-up negatives and the accepted source identity.
 
-Reopen that exact lane only for a materially new input:
+Select the next lever from a materially new input:
 
 - a new checkpoint/quantization with its own quality baseline;
 - an upstream SYCL/oneDNN/runtime change with a bounded source-backed thesis;
@@ -93,13 +99,13 @@ Reopen that exact lane only for a materially new input:
 - an exact kernel proof with enough isolated critical-path value to move the
   end-to-end record.
 
-Do not restart it with another generic flag sweep.
+Do not repeat the rejected generic flag sweep.
 
 ## Other Lane Decisions
 
 ### 27B INT4 AutoRound
 
-The graph-safe FlashAttention and ReplaySSM transaction lane is a closed
+The graph-safe FlashAttention and ReplaySSM transaction campaign is a retained
 reference. Its standalone repro now preserves the exact local-only vLLM and
 XPU-kernel source, original run directories, pinned oneCCL/libccl dependency,
 and historical target-verification rules.
@@ -116,7 +122,7 @@ pass or a robust `>100` result. No replacement LocalMaxxing row was submitted.
 This is an AutoRound INT4/vLLM identity and must not be merged with the Q8_0
 GGUF/llama.cpp record merely because both use a Qwen3.6 27B base model.
 
-The subsequent native-packed/persistent-scratch recovery and current Inductor-
+The subsequent native-packed/persistent-scratch recovery and then-tested Inductor-
 partition recovery are separate experiment identities. The partitioned arm
 fixes the old recurring token-68 canary and raises the four-arm central median
 to `99.798 tok/s`, but complete 512-token outputs still differ from target on
@@ -163,7 +169,7 @@ before comparing any result.
 ## Artifact And Storage Pointers
 
 - [Qwen ignored-artifact archive manifest](../notes/2026-08-14-qwen-artifact-archive.md)
-- [Q8 TP2 promoted data](../data/qwen36-q8-tp2-asrock-b70-20260813/summary.json)
+- [Q8 TP2 retained record data](../data/qwen36-q8-tp2-asrock-b70-20260814/summary.json)
 - [Q8 one-card experiment](../experiments/qwen36-27b-q8-gguf-b70/README.md)
 - [INT4 AutoRound experiment](../experiments/qwen36-27b-autoround-int4-b70/README.md)
 - [graph-safe FlashAttention experiment](../experiments/qwen27_graphsafe_flash_attention/README.md)

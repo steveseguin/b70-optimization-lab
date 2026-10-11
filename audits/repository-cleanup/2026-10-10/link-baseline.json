@@ -1,0 +1,40 @@
+{
+  "schema": "lab.cleanup-link-baseline.v1",
+  "date": "2026-10-10",
+  "known_broken": [
+    {
+      "document": "community/STATUS-TEMPLATE.md",
+      "link": "../../docs/contribution-verification.md",
+      "reason": "Template is copied to community/<entry>/STATUS.md, where this relative target resolves.",
+      "resolved_source": "docs/contribution-verification.md",
+      "document_sha256": "7db96792697454d54ad41fdbb3ad121060ae37277645f4efdb2b3d47c27e1223",
+      "resolved_source_sha256": "30f6f2524af4146d10a82388a913458a6f629ca1238480362d09bcfba60ed48b"
+    },
+    {
+      "document": "experiments/ltx25-b70/notes/2026-10-03-packet-90c-results.md",
+      "link": "2026-10-03-packet-90b-build.md",
+      "reason": "90b build note was superseded in commit 94f667a107efb3b480722418c6908eeea424ad45. Existing 90c build note matches the result's exact packet manifest 80559bde4971229ab0a2ce927ab412ae1a2ca5fde5494abdef5f1da801a22be7. Result bytes are pinned by notes/2026-10-07-sampler-after105-audit.md; preserve them and use this companion mapping.",
+      "resolved_source": "experiments/ltx25-b70/notes/2026-10-03-packet-90c-build.md",
+      "document_sha256": "fed9df3a3f435f4083a551ebd5f39a447eb4fabe8d30108bd4c57db8eda82d2b",
+      "resolved_source_sha256": "9e41fe079a0deac9d068327132b1b01268fa716417296d0d450ba912e8fa0a7b"
+    },
+    {
+      "document": "experiments/qwen38-27b-b70/data/2026-10-07-history-study/source/study-plan.md",
+      "link": "2026-10-07-context-next-study-decision.md",
+      "reason": "Frozen study-plan copy retains the source note's relative link; plan and queues pin its original bytes.",
+      "resolved_source": "experiments/qwen38-27b-b70/notes/2026-10-07-context-next-study-decision.md",
+      "document_sha256": "e581c58a0096bdb7aeb9cb674a24e0b092c322272fa0414b52cfce9ee2af03d7",
+      "resolved_source_sha256": "b114ee619aba510d744d30b27d738017f6b0d22d4bb9baaf493a5a70d1647ea2"
+    },
+    {
+      "document": "experiments/qwen38-27b-b70/data/2026-10-07-history-study/source/study-plan.md",
+      "link": "../data/2026-10-07-temporal-development/review-note.md",
+      "reason": "Frozen study-plan copy retains the source note's relative link; plan and queues pin its original bytes.",
+      "resolved_source": "experiments/qwen38-27b-b70/data/2026-10-07-temporal-development/review-note.md",
+      "document_sha256": "e581c58a0096bdb7aeb9cb674a24e0b092c322272fa0414b52cfce9ee2af03d7",
+      "resolved_source_sha256": "5f9bdf09e202538653dc7715e87417ad1fdb69d83ce70f05d30d6c99a2bf83a6"
+    }
+  ],
+  "unverified_host_and_template_references": 101,
+  "note": "Explicit broad-scan baseline. Source mappings preserve frozen bytes; these entries are reported, not certified as fixed."
+}

@@ -25,4 +25,4 @@ Evidence: `experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a394-32k
 
 Post-interruption audit: row evidence verified directly; teardown rc 143 and cached
 GPU receipts do not establish a clean shutdown. See
-[recovery note](../../../../notes/2026-09-13-a394-freeze-recovery.md).
+[recovery note](../../../notes/2026-09-13-a394-freeze-recovery.md).

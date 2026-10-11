@@ -1,20 +1,42 @@
 # Model Effort Index
 
-This page is the cross-model work queue and archive. It is meant to help the
-next agent switch models without rereading every historical note.
+This page indexes measured outcomes, research packets, and remaining gaps so a
+new reader can switch models without rereading every historical note.
+Navigation reviewed **2026-10-10**. [CURRENT.md](../CURRENT.md) alone owns active
+work, host admission and protected paths. A completed campaign or rejected lever
+does not mean a model lane is finished; dated entries below describe recorded
+evidence, not a running service or an instruction to launch one.
 
-Hardware planning note: the measuring host has four Intel B70 32 GB cards and
-about 125 GiB system RAM. A second host (`steve-TURIND8-2L2T`) has two ASRock
-B70 32 GB cards and about 15 GiB system RAM. That second host is no longer
-restricted to source/build/op-level work: since 2026-09-07 it carries the
-measured Qwen3.5 4B and 9B lanes end to end, including strict pairs, identity
-ladders, 2K-32K depth ladders, and promoted LocalMaxxing submissions. What it
-still cannot do is anything in the four-card band, which is a VRAM and system
-RAM limit rather than a policy: MiniMax M2.7 INT4 alone is about 115 GB of
-weights against 64 GiB of VRAM here. Route four-card lanes to the measuring
-host. Higher-VRAM Intel hardware would make larger future efforts, such as GLM
-5.2 and DeepSeek Flash-class models, much more realistic to validate under the
-same quality rules.
+The lab has a four-B70 host with about 128 GiB host RAM and a two-B70 host
+with 15 GiB. Treat their topology and memory limits as different experimental
+identities; use [AGENTS.md](../AGENTS.md#host-facts) for host details.
+
+## Lane Entry Points And Evidence Status
+
+This inventory separates the maintained entry points from the older campaign
+summaries below. The linked packets own exact numbers and qualification limits.
+
+| Lane | Start here | Evidence status |
+| --- | --- | --- |
+| Own Intel Xe runtimes | [objective](own-xpu-runtime-objective.md), [packets](../experiments/own-xpu-runtime/README.md) | CPU preparation; native execution is a separate admission gate |
+| LTX 2.5 | [145-frame recipe](../repro/ltx25-continuation-stream-b70-145f-20261010/README.md) | Lab replay; early-window timing is separate from sustained delivery and later packets |
+| MiniMax-H3 | [result](../results/minimax-h3-b70/README.md), [recipe](../repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md) | Owner-selected fitted denoiser; exact scheduling result against its own reference; rebuild gaps remain |
+| Qwen3.8 Flash-Next FP8 | [result](../results/qwen38-flash-next-fp8-b70/README.md), [reopen work](../experiments/qwen38-flash-next-fp8-b70/reopen-20261008/README.md) | September record retained; October fault/loading investigation is separate |
+| Qwen3.8 27B FP8 | [one-card recipe](../repro/qwen38-27b-fp8-vllm-tp1-b70/README.md), [two-card recipe](../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md) | Official FP8 identity; context and many-user profiles have separate evidence |
+| Qwen3.5 4B / 9B | [4B handoff](../experiments/qwen35-4b-b70/HANDOFF.md), [9B W4A16 recipe](../repro/qwen35-9b-w4a16-b70/README.md), [9B FP8 recipe](../repro/qwen35-9b-fp8-b70/README.md) | Qualified single-request profiles; concurrency, runtime revisions and FP8 remain separately scoped |
+| Qwen3.6 family | [family map](qwen36-research-map.md) | Q8 TP2 record, one-card Q8, INT4/MTP, Q4, FP8 and 35B evidence are distinct |
+| Qwen3.8 27B GGUF / AutoRound INT4 | [model board](../README.md#qwen38-27b-model-board), [INT4 recipe](../repro/qwen38-27b-autoround-int4-b70/README.md) | August discovery notes below are historical; use maintained recipes for later qualification |
+| Muse-Glimmer 30B | [result](../results/muse-glimmer-30b-q8-woq-b70/README.md) | Retained Q8/WOQ campaign result; not a BF16/lossless claim |
+| Laguna S 2.1 | [result](../results/laguna-s-2.1-int4-b70/README.md), [125 tok/s recipe](../repro/laguna-s-2.1-int4-b70-125tps-20260731/README.md) | Qualified BF16-KV record; July 26 recipe is an earlier milestone |
+| Gemma 4 26B A4B | [result](../results/gemma4-26b-a4b-q8-b70/README.md), [reconstruction](../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md) | Historical cold-suite result and separate service/prefill work; source reconstruction is not binary-exact replay |
+| Gemma 4 12B | [experiment](../experiments/gemma4-12b-int4-autoround-vllm/README.md) | Retained c8 service experiment; c10 research and c12+ failures remain separate |
+| MiniMax M2.7 | [recipe](../repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md) | Historical deployment/optimization baseline; no resident-service claim |
+| DeepSeek V4 Flash K160 | [result](../results/deepseek-v4-flash-k160-b70/README.md) | Retained experimental pruned-artifact frontier; not official true REAP |
+
+For packaged models beyond these detailed campaign summaries, use the
+[package directory](../packages/README.md); for first-pass baselines use the
+[performance index](../results/scoreboard.md). A package entry does not confer
+clean-host certification.
 
 ## How To Add A Model Effort
 
@@ -37,17 +59,19 @@ Do not move old files just to make the tree look tidy. Add indexes and links
 unless a file is clearly misplaced and no one is likely to reference the old
 path.
 
-## Active / Recent Efforts
+<a id="active--recent-efforts"></a>
+
+## Recorded Efforts And Remaining Gaps
 
 ### Qwen3.8 Flash-Next FP8, four B70s — campaign closed September 13
 
-Fable's A340-A394 campaign is complete: **46.854250 tok/s** approved
-class-balanced record (+23.87%), exact-GDN MTP1, and **44.052 tok/s** four-row
-32K depth median with cross-server output parity. Larger-prefill, MTP2 and
-many-user trials were not promoted. No further runs queued. See the
-[closeout](../results/qwen38-flash-next-fp8-b70/CLOSEOUT-20260913.md) and
-[recipe](../repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md).
-
+The September A340–A394 campaign has a retained qualified result and separately
+scoped depth measurements in the [result packet](../results/qwen38-flash-next-fp8-b70/README.md)
+and [recipe](../repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md).
+Its [September closeout](../results/qwen38-flash-next-fp8-b70/CLOSEOUT-20260913.md)
+is historical: October [reopen work](../experiments/qwen38-flash-next-fp8-b70/reopen-20261008/README.md)
+examines loading and exit faults and does not supersede that performance record.
+Check CURRENT before using any prepared command.
 
 ### Qwen3.5 4B And 9B On One Or Two B70s
 
@@ -62,134 +86,53 @@ Main entries:
 - [experiment archive](../experiments/qwen35-9b-b70/) and
   [4B archive](../experiments/qwen35-4b-b70/)
 
-Status: active, and the lane where the lab's output-identity work now lives. Seven LocalMaxxing
-submissions between 2026-09-07 and 2026-09-08. Best measured single-user figures, all lossless
-against a same-configuration MTP0 oracle: 4B W4A16 `236.916` on two cards and `177.287` on one; 9B
-W4A16 `172.296` on two and `113.265` on one; 9B FP8 `147.8` on two and `98.251` on one. Depth 3 with
-the draft-only INT4 lm_head and full decode-only graph capture is the operating point on every route,
-confirmed by sweeps on both models rather than inherited.
+The September 7–13 campaigns produced several different operating profiles.
+Use the recipes above for the qualified R294b single-user shortlist records,
+R304 replay, two-card results, and context ladders. The
+[4B shortlist evidence](../experiments/qwen35-4b-b70/data/qwen35-4b-w4a16-20260912-slu67k-strict-result.json)
+and [9B shortlist evidence](../experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-20260912-slu67k-strict-result.json)
+retain two fresh MTP3 servers and all four G1/G2/G3 comparisons at 12/12;
+these one-card, class-balanced cold-suite records do not qualify arbitrary
+concurrent serving.
 
-What this lane established, and what it costs to re-derive, is the identity account:
+The useful conclusions, in their final measured scope:
 
-- The INT4 W4A16 route is byte-exact against a sequential oracle where the FP8 route is not, on both
-  models, because its GEMM does not vary its reduction with the decode row count. Five independent
-  confirmations, most usefully the depth sweeps: depth `d` makes the verify step process `d+1` rows,
-  so it varies row count without varying users, and FP8 loses a third of the suite from depth 4 up
-  while W4A16 is lossless at 3, 4, 5 and 6 on both models.
-- The guarantee is one-card. On two cards the 9B loses about one request at 64 users and the 4B holds
-  only to 32. Note before designing any experiment here: that metric is **intermittent** - six
-  control passes read four at 63/64 and two at 64/64 - so two passes per arm cannot decide whether an
-  intervention worked
-  ([why, and what to measure instead](../experiments/qwen35-9b-b70/notes/2026-09-08-the-two-card-c64-identity-metric-is-intermittent.md)).
-  Four powered arms now exist, 1280 requests each with knob presence verified: control 9 divergent,
-  serialised norm 7, row-wise all-reduce 6, both 3. The trend is monotone and in the predicted
-  direction, and **none of it is significant** - the pair reaches only `p = 0.15`
-  ([note](../experiments/qwen35-9b-b70/notes/2026-09-08-powered-arms-neither-mechanism-nor-the-pair-is-established.md)).
-  **Settled, and it closes this line:** with the batch filled by the twelve flip-prone prompts the
-  control yields 23 events instead of 9, and at that power the pair of interventions scores 24
-  against 23 - two-sided `p = 1.00`. Neither the cross-card all-reduce nor the serialised norm, alone
-  or together, affects the divergence. The same data shows why: byte-identical prompts issued in the
-  same batch disagree with each other, 23 of 240 prompt-groups per campaign, so batch *size* cannot
-  be the explanation and shape-invariance interventions were never going to help
-  ([note](../experiments/qwen35-9b-b70/notes/2026-09-08-identical-prompts-in-one-batch-diverge-from-each-other.md)).
-  **It does not reproduce offline at all.** Five configurations through the in-process API - lockstep,
-  graph capture, induced drift, the twelve fragile prompts, and the ladder's own chunked-prefill
-  scheduling - all match a strictly single-row oracle exactly, while the same prompts diverge at
-  1.7% through `vllm serve`
-  ([note](../experiments/qwen35-9b-b70/notes/2026-09-08-the-divergence-does-not-reproduce-offline.md)).
-  The remaining difference is asynchronous admission: the server's batch grows from one to sixty-four
-  while early requests decode, where the offline batch is assembled once and only shrinks. Instrument
-  the server path rather than rebuilding it offline - the layer hook works in eager mode and the
-  strict launcher can run eager.
-  **Newest result, and it reframes the target.** A batch of constant composition is deterministic:
-  64 identical prompts in lockstep at TP2 give byte-identical outputs, eager *and* with full
-  decode-only graph capture, and the per-layer hook finds no same-position row disagreeing in 8000
-  observations. The ladder differs by having its requests drift - about three decode steps of spread -
-  so step composition varies
-  ([note](../experiments/qwen35-9b-b70/notes/2026-09-08-a-lockstep-batch-is-deterministic-the-ladder-is-not.md)).
-  That explains all four failed interventions at once: if the mechanism is a request meeting a
-  differently-composed step than the oracle did, every row-count-dependent op contributes and fixing
-  them singly cannot help. **Next: reproduce the divergence offline by inducing drift** - staggered
-  arrival or unequal generation caps - rather than probing another op.
-  position, the body is bitwise deterministic - 8000 decode observations at TP2, none disagreeing
-  ([note](../experiments/qwen35-9b-b70/notes/2026-09-08-a-per-layer-capture-hook-and-what-it-shows-so-far.md)).
-  But that run did not reproduce the divergence: it was eager and unspeculated, where the ladder uses
-  full decode-only graph capture. **Re-run the probe with graph capture on before looking anywhere
-  else** - a replayed graph is shape-specialised and can differ from eager without any op being
-  individually non-deterministic.
-  Before designing any knob-based arm here, run `tools/audit-launcher-env-implemented.py` against the
-  image: **47 of the 78 variables the launchers forward have no reader in R276**, including the
-  four GDN trace hooks that a body bisection would otherwise reach for, the R65 batch-invariant
-  lm_head, and VLLM_XPU_W8A16_DECODE_PAD_ROWS. A recorded container environment showing one of
-  these reads as a deliberate setting and controls nothing.
-  **Tested and negative, but it localises the cause.** Chunking the FP16 vocabulary projection to 32
-  rows - verified to make every row's logits bitwise equal to the oracle's, and free - leaves the
-  divergence untouched: 20 against 22 in 1280 requests
-  ([note](../experiments/qwen35-9b-b70/notes/2026-09-08-the-divergence-originates-upstream-of-the-vocabulary-projection.md)).
-  Since the intervention demonstrably works on identical inputs, the inputs cannot be identical: the
-  hidden states reaching the head already differ. That is the first positive localisation - the cause is
-  in the body, not the head. Bisect it the way R74-R77 did for Qwen3.8 rather than guessing another op;
-  four guesses have now been tested and none moved the number. Historical detail:
-  below, and every row differs from 33 up, by up to `3.9e-3` in logit space
-  ([note](../experiments/qwen35-9b-b70/notes/2026-09-08-the-fp16-vocabulary-projection-switches-strategy-above-32-rows.md)).
-  That is the last matmul before the argmax, it sits outside the fixed-K predicate because it is
-  f16 x f16, and its threshold is the only one that matches where the ladders break - exact at 32
-  users on both topologies, lossy above. Every intervention arm so far left it untouched. Extending
-  fixed-K to the FP16 head, or padding its decode rows to tiers of 32, is the next thing to try.
-  Neither slot index nor step drift explains it, and the GEMM's fixed-K covers the two-card shapes,
-  so all three are eliminated
-  ([note](../experiments/qwen35-9b-b70/notes/2026-09-08-three-candidates-eliminated-for-the-two-card-divergence.md)).
-  Copies of one prompt are spread over about three decode steps whether or not they disagree. The
-  untouched ground is attention and the GDN recurrent path, neither probed for composition dependence
-  the way the norm was; that probe needs no server and no second card.
-  What follows is how that was reached.
-  Note the cost: the row-wise path costs `-65%` at 64 users, not the `-0.25%` published earlier from
-  an arm where the knob never reached the container, so it could not ship even if it worked. Before
-  spending cards on another full-suite ladder, read
-  [the tie-site note](../experiments/qwen35-9b-b70/notes/2026-09-08-the-divergences-are-a-dozen-fixed-tie-sites.md):
-  the 25 divergences across those arms resolve to **12 fixed sites**, each flipping the same token at
-  the same position every time, and the rate is near zero on most prompts and about 6% on a handful.
-  Filling the batch with the fragile prompts instead of the whole suite gathers events roughly an
-  order of magnitude faster, turning a 60-80 pass experiment into one under ten. Enable logprobs when
-  doing it: the ladder requests them but the field came back empty, and the margin at the flipped
-  token is what would say which mechanism moved it.
-- The GEMM is not the only shape-dependent reduction on the path. The RMSNorm this route runs gives
-  about 2-3% of rows a last-bit difference once the batch reaches 16
-  ([probe](../experiments/qwen35-9b-b70/notes/2026-09-08-the-rmsnorm-is-also-row-count-dependent.md)),
-  which is the residue the collective experiment could not remove. Treat "the INT4 route is exact"
-  as scoped to the regimes measured, not as a property of the kernel alone.
+- **Single-operator fixes did not remove the concurrent identity gap.** The
+  early serial-norm/row-wise-allreduce trend was not established; the powered
+  fragile-prompt comparison was 23 versus 24 divergent requests. Later
+  [TP1 norm](../experiments/qwen35-9b-b70/notes/2026-09-09-the-norm-is-not-the-mechanism.md)
+  and [capture-ceiling](../experiments/qwen35-9b-b70/notes/2026-09-09-capture-fallback-is-not-the-mechanism.md)
+  tests also failed to remove it. Their old “try this next” paragraphs are
+  chronology, not the present queue.
+- **Admission and workload matter.** The [4B handoff](../experiments/qwen35-4b-b70/HANDOFF.md)
+  records repeated exact MTP0 ladders with 5 ms staggered admission, including
+  two-card runs. The [9B R293 result](../experiments/qwen35-9b-b70/notes/2026-09-11-r293-on-the-9b.md)
+  independently measured its staggered c64 profile at 1280/1280 exact. These
+  bounded suites do not establish exactness for arbitrary arrivals, prompts or
+  speculation. The [classification retrospective](../experiments/qwen35-4b-b70/notes/2026-09-09-divergence-classification-retrospective.md)
+  corrects the mistaken interpretation of ordinary tie forks as inserted tokens.
+- **The FP16 projection chunk was a throughput cost.** R293's verified
+  class-consistent padding/splitting improved the measured many-user profiles
+  on [4B](../experiments/qwen35-4b-b70/notes/2026-09-11-r293-class-consistent-fp16-linear-on-the-server.md)
+  and [9B](../experiments/qwen35-9b-b70/notes/2026-09-11-r293-on-the-9b.md).
+  Its single-user cost means it is a separate profile, not the shortlist
+  record default. Older c16 scaling limits belong to their original runtime.
+- **R308 repaired a separate request-lifecycle defect.** Accepted-state metadata
+  is retained across pause/removal/re-add. The [final qualification](../experiments/qwen35-4b-b70/notes/2026-09-13-r308-qualified-single-request.md)
+  passed both models' 60/60 MTP0 boundary checks, 52/52 on each fresh MTP3
+  server, and all strict comparisons 12/12. Scope is TP1, one active request,
+  fixed depth 3, capacities 256 for boundaries and 1024 for strict tests.
+  Concurrent speculation, TP2, dynamic depth, forced preemption and a new 32K
+  R308 profile remain unqualified. R308's timings are supporting measurements,
+  not a new speed headline.
 
-Open, in the order worth doing:
-
-1. The norm. The option space is now closed and costed
-   ([existence](../experiments/qwen35-9b-b70/notes/2026-09-08-a-row-invariant-norm-exists-and-is-not-a-drop-in.md),
-   [what is ruled out](../experiments/qwen35-9b-b70/notes/2026-09-08-no-cheap-value-preserving-norm-fix-exists-at-the-torch-level.md)).
-   The native op is pure PyTorch, so no oneDNN rebuild is involved, but no rewrite of its reduction
-   is both invariant and value-preserving: sum, matmul and unsqueeze formulations all track the
-   native mean exactly, float32 accumulation is three times worse than float16, and chunking
-   preserves the M=1 oracle only at chunk size 1. The three real options are serialising the variance
-   reduction (preserves every hash), switching to the float16 reduction (invariant and cheap, but
-   re-qualifies the lane), or writing an invariant kernel. **Option 1 is now measured end to end and
-   costs nothing**: +0.06% at single-request shape and -0.2% to +0.6% across every ladder rung up to
-   the 64-row threshold, on both the speculative and no-speculation paths, against an isolated ratio
-   of about 33x. So the value-preserving fix is viable and the isolated ratio was not predictive.
-   **It does not close the identity gap**, measured properly: 20 passes at 64 users per arm, 1280
-   requests each, 7 divergent against the control's 9 - a difference of 2 events against a Poisson
-   standard error of 4. That rules out removal and any large reduction, not a modest one. Above 64
-   rows the knob does not engage and the cost is unmeasured. Neither mechanism removes the gap alone;
-   whether the pair does is running now (arm p2, both overlays in one image).
-2. Per-channel FP8 row-invariance. Specified in
-   [this note](../experiments/qwen35-9b-b70/notes/2026-09-07-per-channel-fp8-row-invariance-specification.md)
-   with guard conditions and the eight projection shapes; needs a oneDNN rebuild and a bitwise
-   screening pass. Would close the 4B FP8 repeat-exactness failure and the 9B FP8 c16 flip at once.
-3. Clean-host replay for all three packets.
-
-Do not re-run the W4A16 determinism pad: measured inert below its threshold and `-13%` at 64 users
-above it, buying no identity.
-
-On the Gemma lane, do not re-run the draft-thread sweep expecting a win: 16 threads against the
-record's 32 looked `+3.06%` at two samples and `+1.72%` at six, with overlapping ranges and roughly
-`p = 0.19`. Not established, and a best case of about 2%.
+Remaining work is scoped by those gaps and CURRENT's host admission: independent
+clean-host replay, further qualification of request scheduling, and separately
+registered FP8 arithmetic work. The
+[FP8 row-invariance specification](../experiments/qwen35-9b-b70/notes/2026-09-07-per-channel-fp8-row-invariance-specification.md)
+is a proposal, not a demonstrated fix. Preserve the
+[4B FP8 repeat failures](../experiments/qwen35-4b-b70/notes/2026-09-07-qwen35-4b-fp8-not-repeat-exact.md)
+as a separate model/runtime result. No Qwen3.5 lane is declared finished here.
 
 ### Muse-Glimmer-30B Q8/WOQ On Four B70s
 
@@ -201,7 +144,7 @@ Main entries:
 - [structured record](../data/muse-q8-woq-argmax-century-20260813.json)
 - [experiment archive](../experiments/muse-glimmer-30b-b70/README.md)
 
-Status: closed and banked 2026-08-13. The original BF16/lossless century
+Campaign result retained from 2026-08-13. The original BF16/lossless century
 objective was not reached. The operator-approved no-training UD-Q8_K_XL
 successor measured two independent canonical means of `100.088` and `100.649
 tok/s`; the frozen 15-prompt conventional first-100 median was `161.900 tok/s`
@@ -233,7 +176,7 @@ Main entries:
 - [archived contributed GPTQ INT4/MTP route](../community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md)
 - [AutoRound INT4/MTP3 lane and replay gates](../repro/qwen38-27b-autoround-int4-b70/README.md)
 
-Status: active as of 2026-08-27. The target-only GGUF records remain Q4_K_M
+Historical snapshot, 2026-08-27: The target-only GGUF records remain Q4_K_M
 TP2 at `49.717503 tok/s` conventional (`50.219700` historical helper) and Q8_0
 TP2 at `36.772932 tok/s`. The official FP8 route has moved beyond its original
 `21.708532 tok/s` graph baseline: the block-W8A16 overlay directly measures
@@ -283,29 +226,22 @@ Main entries:
 - [initial compatibility patch](../community/mndodd-qwen36-27b-llamacpp-sycl/patches/0001-asrock-lab-lowram-dnnless-tp2.patch)
 - [model board](../README.md#qwen36-27b-model-board)
 
-Status: active target-only TP2 optimization as of 2026-08-14. The quality-cleared
-endpoint best uses mndodd's pinned SYCL optimization fork plus the lab's full
-exact collective, Q8 handoff, recurrent dispatch, and persistent-state-I/O
-stack. It reaches **`35.964046 tok/s`** under conventional 99-interval
-accounting or `36.327319 tok/s` under the historical helper. This is
-`+15.918%` over the matched mndodd fork baseline (`31.025377` conventional).
-All 12 cold completions are 512 tokens, cache-zero, and byte-exact against the
-accepted pre-state-I/O control. Direct GDN state I/O added `+3.132%`; direct
-convolution state I/O added another `+0.855%` in the final long suite, and the
-recurrent RMS/gate/multiply/Q8 tail added `+0.219%` in pooled matched A/Bs.
+The retained **2026-08-15 target-only TP2 record** is **36.604128 tok/s**
+conventional (99 intervals); its historical compatibility value is
+36.973866. The [structured summary](../data/qwen36-q8-tp2-asrock-b70-20260814/summary.json)
+and [result packet](../results/qwen36-27b-q8-tp2-asrock-b70/README.md) own the
+full metrics and progression. Scope: Q8_0 target, F16 KV, equal two-card split,
+12 unique cold prompts with 512-token outputs, 12/12 complete hashes exact to
+the accepted control, all cache counts zero; no MTP or DFlash. The recipe is
+lab replay, not clean-host certification.
 
-The earlier one-card fork endpoint reached `17.955800` helper / `17.776242`
-conventional, `+3.809%` over its matched control. MTP and DFlash measurements
-are support lanes, not substitutes for this target-only objective. Forced SG32,
-GDN workgroup packing, batched Q/K normalization with RoPE, Q8 cache hints,
-asymmetric tensor split, root-barrier
-elision, BMG-forced MMVQ phase ordering, and copy-engine replication did not
-win. TP2 graph capture aborted or hung, and the built-in TP2 profiler reset
-both compute engines; both remain prohibited. Pass 2 promoted a register-direct
-Q8 handoff and direct IMRoPE-to-KV-cache write after clean rebuild and full
-exact-output replay. Continue from its
-[handoff](../results/qwen36-27b-q8-tp2-asrock-b70/HANDOFF.md) only with a
-materially new exact kernel proof; do not recycle rejected doors.
+Pass 1 promoted no gain. Pass 2 and the August 15 two-chain DP4A change advanced
+the record; older 35.699225 / 35.964046 / 36.347290 summaries are intermediate
+milestones. Contributor mndodd's source base and matched baseline remain
+credited in the packet. For the next materially new exact critical-path idea,
+read the [handoff](../results/qwen36-27b-q8-tp2-asrock-b70/HANDOFF.md) and retain
+its rejected-kernel and fault boundaries. Do not repeat the unsafe TP2 profiler
+or root-both remote-write prototype.
 
 ### Laguna S 2.1 INT4 On Four B70s
 
@@ -320,23 +256,18 @@ Main entries:
 - [standalone repro](../repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md)
 - [metric correction](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-throughput-window-accounting-correction.md)
 
-Status: approved at `102.971435596 tok/s` under the submitted legacy
-100-event/99-interval convention and `101.941721240 tok/s` under conventional
-interval accounting. It is 13/13 token-and-text exact against the canonical
-q1 teacher, cache-zero on all rows, and approved by LocalMaxxing as
-`cms2ccv2d00lps201rej94pjy`. The result uses exact width 12, DFlash depth 11,
-an audited 146/145 Breakable PIECEWISE topology, BF16 KV, and 31 runtime
-E4M3FN W8A16 DFlash projection conversions per rank.
+The [qualified result packet](../results/laguna-s-2.1-int4-b70/README.md)
+and [July 31 reproduction](../repro/laguna-s-2.1-int4-b70-125tps-20260731/README.md)
+own the later 125.461973 conventional record. The July 26 102.971436 legacy /
+101.941721 conventional result linked above is an earlier milestone, not the
+latest record or an unmet current target. Both preserve their exact source,
+metric and quality identities; campaign closeouts do not declare the lane
+finished or identify a live service.
 
-This lane is sealed and closed; no benchmark or service is active. The
-conventional 102 objective remains short by `0.058278760 tok/s`. Reopening it
-requires a new preregistration, not a continuation from the superseded
-94.920 row.
-
-Poolside's quantized checkpoint officially ships calibrated FP8 KV; BF16 is a
-deliberate record-lane override. The earlier B70 A/B doubled cache capacity
-with FP8 but slowed short decode and changed output. Keep future official
-long-context FP8 service work separate from the BF16 bitwise-exact record.
+The record uses BF16 KV and target-verified DFlash. Poolside's checkpoint also
+ships calibrated FP8 KV, but the earlier B70 A/B changed outputs and slowed
+short decode despite higher capacity. Keep that research separately labeled;
+it does not replace the BF16 exact-output record.
 
 ### Qwen3.6 27B Q8_0 GGUF On One B70
 
@@ -352,10 +283,10 @@ tok/s` median and the full 32K F16-KV retrieval ladder at `28,372 MiB` loaded;
 no full-512 throughput result is promoted yet. The historically recorded Q8_0 family result of `15.275 tok/s`
 at p512/n128 is only a trend anchor because its raw evidence, revision, and
 binary were not retained. F16 KV is validated; Q8 KV is a separate fallback
-quality identity and is unnecessary for the requested 32K ceiling. The primary
-next target is F16 c2/32K on each of four independent one-GPU processes, using
-parallel screening but isolated same-card promotion. MTP and vision remain
-optional later lanes.
+quality identity and was unnecessary for that 32K ceiling. Subsequent c2/32K
+and MTP experiments have their own outcomes in the
+[lane README](../experiments/qwen36-27b-q8-gguf-b70/README.md); the original
+baseline's proposed next steps do not replace those results.
 
 ### Qwen3.6 27B INT4 AutoRound On B70
 
@@ -368,7 +299,7 @@ Main entries:
 - [private source bundle and patches](../patches/qwen36-27b-autoround-int4-b70/record-20260711/README.md)
 - [experiment lane](../experiments/qwen36-27b-autoround-int4-b70/README.md)
 
-**Lane closed 2026-08-18.** The retained `95.385` record stands; nothing beat it
+**August campaign closed 2026-08-18.** The retained `95.385` record stands; nothing beat it
 like-for-like. Closing evidence:
 
 - [determinism/speed closeout](../notes/2026-08-18-qwen36-int4-determinism-speed-tradeoff.md)
@@ -383,9 +314,9 @@ Opened 2026-08-18. `devan-carlin/Qwen3.8-27B-int4-AutoRound`, vLLM/XPU TP2 with
 native MTP speculative decoding. Its tensor architecture is compatible with the
 Qwen3.6 INT4 lane, so the pinned source stack runs without a model-specific
 code change. The new weights still require independent quality, determinism,
-and performance validation. Current margin-free MTP5 anchor: `101.170 tok/s`
+and performance validation. The August 18 margin-free MTP5 anchor was: `101.170 tok/s`
 on the 25-prompt suite (`92.851` selection-12), with only 21–22/25 pairwise
-repeatability. A valid target-only quality oracle now exists, but its A/B is
+repeatability. At that point a valid target-only quality oracle existed, but its A/B is
 24/25 and the sealed-cache TP1 MTP5 control is only 2/4. This is research
 evidence, not a record.
 
@@ -399,11 +330,12 @@ Main entries:
 - [post-recovery TP1 result](../experiments/qwen38-27b-b70/notes/2026-08-20-postrecovery-marginfree-tp1-runtime-nondeterminism.md)
 - [current source/host queue](../repro/qwen38-27b-autoround-int4-b70/REFERENCE-HOST-HANDOFF.md)
 
-Status: active research. The target oracle, post-recovery TP2 repeats, and TP1
-control are complete. The immediate queue is a least-intrusive same-cache TP1
-trace of the structured-extraction flip at token 225. Only after runtime
-determinism and target parity pass should draft-acceptance changes or a record
-submission be considered.
+This is the August discovery history. The token-225 trace proposal is
+superseded as a navigation entry by the maintained
+[INT4 recipe](../repro/qwen38-27b-autoround-int4-b70/README.md) and
+[performance index](../results/scoreboard.md), which include later qualified
+profiles. Keep the August failures and their exact source identities for
+localization; do not treat this old queue as current launch instructions.
 
 ### Gemma 4 26B A4B Q8 / INT8 On B70
 
@@ -417,10 +349,10 @@ Main entries:
 - [reliability protocol](../results/gemma4-26b-a4b-q8-b70/reliability-protocol.md)
 - [VDR2 selected-down record note](../results/gemma4-26b-a4b-q8-b70/20260629-vdr2-selected-down-record.md)
 
-Status: production-servable one-B70 backend plus current frontier/reference,
-with diminishing returns unless the next change is a larger
-verifier/router/speculation or service-prefill design rather than another small
-flag sweep.
+Recorded result and service/prefill research, not a live-service assertion.
+Use the linked research plan and reliability protocol to select a new
+verifier, router, speculation or prefill hypothesis without repeating the
+rejected small flag sweeps.
 
 Best strict fresh-response result:
 
@@ -466,7 +398,7 @@ Main entry:
 
 - [experiment packet](../experiments/gemma4-12b-int4-autoround-vllm/README.md)
 
-Status: current model-slot production profile is c8. c10 is research-only;
+Recorded service experiment: c8 was the accepted profile. c10 is research-only;
 c12+ hit boundary failures.
 
 ### MiniMax M2.7 INT4 AutoRound
@@ -493,8 +425,7 @@ Main entries:
 - [result packet](../results/qwen36-35b-quark-int8-b70/README.md)
 - [research map](qwen36-research-map.md)
 
-Status: closed reference packet for now, but preserve every lesson for a future
-return. No valid `>150 tok/s` path was found; best strict 4x baseline is
+Status: retained campaign reference; preserve every lesson for future work. No valid `>150 tok/s` path was found; best strict 4x baseline is
 `93.55 tok/s`. The main carryover lesson is that graph/speculative speed paths
 must pass full-scale canaries, not smoke tests.
 
@@ -505,7 +436,7 @@ Main entries:
 - [FP8 vLLM/XPU result note](../results/fp8-vllm-xpu-qwen36-2026-05-04.md)
 - older notes under `../notes/`
 
-Status: the intensive Q4_0/DFlash SYCL lane closed on 2026-07-13 at a strict
+Status: the intensive Q4_0/DFlash SYCL campaign closed on 2026-07-13 at a strict
 one-B70 record of `47.818818 tok/s`; the `100/200 tok/s` single-session goals
 were not reached. Read the
 [closure and transfer note](../notes/2026-07-13-qwen27-dflash-sycl-closure.md)
@@ -529,7 +460,7 @@ Main entry:
 - [historical lane handoff](../experiments/deepseek-v4-flash-reap-xpu-b70/HANDOFF.md)
 - [frontier closeout](../experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-21-deepseek-v4-flash-frontier-closeout.md)
 
-Status: paused/closed on 2026-07-21 at a fully characterized frontier. The best
+Campaign frontier recorded on 2026-07-21. The best
 verified one-session result is the experimental uniform-K160 target with
 target-verified DSpark7: `80.820052 tok/s` strict high and `78.287226 tok/s`
 three-suite median-of-medians on four B70s, with 36/36 cache-zero realistic

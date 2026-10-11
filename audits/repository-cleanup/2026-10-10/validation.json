@@ -1,0 +1,784 @@
+{
+  "schema": "lab.cleanup-validation.v1",
+  "completed_utc": "2026-10-11T00:15:24.095791+00:00",
+  "source_commit": "f7b5356bafa5bc2af06e9dffbc88822fb0d2cded",
+  "status": "workflow-passed-with-preexisting-pin-debt",
+  "workflow": {
+    "path": ".github/workflows/guides.yml",
+    "sha256": "098435a12727a8fe13077dc9cb8d2ec2046d190cb77a6d375ed6bd71a75ad99e",
+    "commands": [
+      {
+        "command": "python3 tools/validate-repro-guides.py",
+        "executed": "python3 tools/validate-repro-guides.py",
+        "exit_code": 0,
+        "seconds": 0.657,
+        "log_sha256": "404f399d0a1ccb5434226d56e0a852634adf942d50e6faf521b3257333b34fcd"
+      },
+      {
+        "command": "node --test tools/test_guides_browser.cjs",
+        "executed": "node --test tools/test_guides_browser.cjs",
+        "exit_code": 0,
+        "seconds": 0.277,
+        "log_sha256": "a72a1deae5b6130729cf71985fbfd9fc54e221cae251dc8c0d9663530a8d1d38"
+      },
+      {
+        "command": "python3 -m unittest tools/test_validate_repro_guides.py tools/test_sync_depth_sweep_profiles.py",
+        "executed": "python3 -m unittest tools/test_validate_repro_guides.py tools/test_sync_depth_sweep_profiles.py",
+        "exit_code": 0,
+        "seconds": 0.647,
+        "log_sha256": "d644e283e6fae2da7c45b82d21c2394287d143b5d8d27c8b2eec938732a33196"
+      },
+      {
+        "command": "python3 tools/validate-recipe-publication.py",
+        "executed": "python3 tools/validate-recipe-publication.py",
+        "exit_code": 0,
+        "seconds": 0.582,
+        "log_sha256": "ee324c8e324176ace04e8b17eb6b918e43914a7c0a14d22f153f3a8c8f1cceec"
+      },
+      {
+        "command": "python3 -m unittest tools/test_validate_recipe_publication.py",
+        "executed": "python3 -m unittest tools/test_validate_recipe_publication.py",
+        "exit_code": 0,
+        "seconds": 0.096,
+        "log_sha256": "293eda1681e8fb9f72107b88b85eb61f4e2e3e338d5c4536b6ccd3315262eb6c"
+      },
+      {
+        "command": "python3 tools/sync-public-result-summary.py --check",
+        "executed": "python3 tools/sync-public-result-summary.py --check",
+        "exit_code": 0,
+        "seconds": 0.023,
+        "log_sha256": "677316f98761dbd1d4777f96cccea5c8cd8300a115d148be37af33bb3761cf29"
+      },
+      {
+        "command": "python3 -m unittest tools/test_sync_public_result_summary.py",
+        "executed": "python3 -m unittest tools/test_sync_public_result_summary.py",
+        "exit_code": 0,
+        "seconds": 0.036,
+        "log_sha256": "4cdb8a86087fb17cf4204a7351bb51a6a80ac69b4825977178cf01b66763ea99"
+      },
+      {
+        "command": "python3 tools/build-family-pages.py --check",
+        "executed": "python3 tools/build-family-pages.py --check",
+        "exit_code": 0,
+        "seconds": 0.242,
+        "log_sha256": "341af3b8233a56110eec53771224af1ad621f3183b6c051e74688458ca50d881"
+      },
+      {
+        "command": "python3 -m unittest tools/test_build_family_pages.py",
+        "executed": "python3 -m unittest tools/test_build_family_pages.py",
+        "exit_code": 0,
+        "seconds": 1.226,
+        "log_sha256": "ca253b555855c677d2671dcf87cc0d54a4f5c26b8170bd7f77ab5099e3628d44"
+      },
+      {
+        "command": "python3 -m unittest tools/test_measured_opt_contract.py",
+        "executed": "python3 -m unittest tools/test_measured_opt_contract.py",
+        "exit_code": 0,
+        "seconds": 0.058,
+        "log_sha256": "22d87b30f5f15fd27ec20179828b77d16967ff3a5f323b46e9d37b7e0538bf59"
+      },
+      {
+        "command": "python3 tools/sync-short-prefill-profiles.py --check",
+        "executed": "python3 tools/sync-short-prefill-profiles.py --check",
+        "exit_code": 0,
+        "seconds": 0.022,
+        "log_sha256": "de730c72db8744031323349bda32eb09c8e3ff1458e4eef7929915f9bbcfbc45"
+      },
+      {
+        "command": "python3 experiments/qwen38-27b-b70/scripts/verify-prefill-followup-evidence.py",
+        "executed": "python3 experiments/qwen38-27b-b70/scripts/verify-prefill-followup-evidence.py",
+        "exit_code": 0,
+        "seconds": 0.404,
+        "log_sha256": "0e5fb3f57c7677f18d08d94847cf66f78dd293abad2232912ffd79702d492712"
+      },
+      {
+        "command": "python3 tools/sync-prefill-followup-profiles.py --check",
+        "executed": "python3 tools/sync-prefill-followup-profiles.py --check",
+        "exit_code": 0,
+        "seconds": 0.024,
+        "log_sha256": "fd2c91c82ed037c70cebf128806df86177e6f8bf7f05ca4b034c6cf269e35231"
+      },
+      {
+        "command": "python3 tools/replay_fp8_prefill_source_drift.py",
+        "executed": "python3 tools/replay_fp8_prefill_source_drift.py",
+        "exit_code": 0,
+        "seconds": 0.899,
+        "log_sha256": "a1bac5f05e4128f325f5071b806b38dcec2173e2f70b3fd582e4398323e6a007"
+      },
+      {
+        "command": "python3 -m unittest tools/test_source_drift_proofs.py",
+        "executed": "python3 -m unittest tools/test_source_drift_proofs.py",
+        "exit_code": 0,
+        "seconds": 0.097,
+        "log_sha256": "fb6f76994c6a616dd603233e98a16878de350a28414f7c7ae0cd03b7f3359a7c"
+      },
+      {
+        "command": "python3 tools/sync-fp8-prefill-focus-profile.py --check",
+        "executed": "python3 tools/sync-fp8-prefill-focus-profile.py --check",
+        "exit_code": 0,
+        "seconds": 0.02,
+        "log_sha256": "7f7ce2d6d214eec7b49687731ee2265f6d4042f95ef46cc52dba5d2a9bc7c63b"
+      },
+      {
+        "command": "python3 tools/sync-amd-transfer-prefill-profile.py --check",
+        "executed": "python3 tools/sync-amd-transfer-prefill-profile.py --check",
+        "exit_code": 0,
+        "seconds": 0.107,
+        "log_sha256": "a7818084c7abc58db9ed92e7fc32b089e4e8e314dbde7c510e1312e9e4d5b3f9"
+      },
+      {
+        "command": "python3 -m unittest tools/test_sync_fp8_prefill_focus_profile.py",
+        "executed": "python3 -m unittest tools/test_sync_fp8_prefill_focus_profile.py",
+        "exit_code": 0,
+        "seconds": 0.051,
+        "log_sha256": "620a075cd2e241a9cd5b12ca7219490536bbbe23dc58e28e0abddcaa122256d4"
+      },
+      {
+        "command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*fp8_prefill*.py\"",
+        "executed": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*fp8_prefill*.py\"",
+        "exit_code": 0,
+        "seconds": 2.302,
+        "log_sha256": "be4bdc9506748cd05d645b654236f4cfb89fd945c845f0727f24e5d2d2586e65"
+      },
+      {
+        "command": "python3 -m unittest tools/test_sync_prefill_followup_profiles.py",
+        "executed": "python3 -m unittest tools/test_sync_prefill_followup_profiles.py",
+        "exit_code": 0,
+        "seconds": 0.063,
+        "log_sha256": "d1aaab86fa02d87997171aeb3220b40f5e28046ec4d1674848f9ec5f589f297c"
+      },
+      {
+        "command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*prefill_followup.py\"",
+        "executed": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*prefill_followup.py\"",
+        "exit_code": 0,
+        "seconds": 1.36,
+        "log_sha256": "283dbee269ce5aa4a5275e8eab45d3e0b172e85e7e02ff58ec7efca34693b829"
+      },
+      {
+        "command": "python3 -m unittest tools/test_build_model_pages.py",
+        "executed": "python3 -m unittest tools/test_build_model_pages.py",
+        "exit_code": 0,
+        "seconds": 0.087,
+        "log_sha256": "a0aaba130eea8aace6734b8ea10f4aff5e3ba82cd903b1dd93563a9be28ea53b"
+      },
+      {
+        "command": "python3 -m unittest tools/test_fp8_serve.py tools/test_fp8_practical_session.py tools/test_fp8_tp2_acceptance_evidence.py tools/test_fp8_tp2_acceptance_session.py",
+        "executed": "python3 -m unittest tools/test_fp8_serve.py tools/test_fp8_practical_session.py tools/test_fp8_tp2_acceptance_evidence.py tools/test_fp8_tp2_acceptance_session.py",
+        "exit_code": 0,
+        "seconds": 0.521,
+        "log_sha256": "c7b0a1b697a96cdf5fa546b4251427bff502860d824e4235e682ee7c0ed49dcd"
+      },
+      {
+        "command": "python3 experiments/qwen38-27b-b70/scripts/collect-fp8-tp2-acceptance-evidence.py",
+        "executed": "python3 experiments/qwen38-27b-b70/scripts/collect-fp8-tp2-acceptance-evidence.py",
+        "exit_code": 0,
+        "seconds": 0.184,
+        "log_sha256": "dd847fa490acb030efead6d8cf52adf5042f20568dda41d8b62ae2c311583f85"
+      },
+      {
+        "command": "python3 tools/build-model-pages.py",
+        "executed": "python3 tools/build-model-pages.py",
+        "exit_code": 0,
+        "seconds": 0.056,
+        "log_sha256": "cfcf1eb089e067a4df83bfcae5ab1d30861465dbec43d60933297937d31b9690"
+      },
+      {
+        "command": "git diff --exit-code -- index.html learn/hardware.html models",
+        "executed": "git diff --exit-code -- index.html learn/hardware.html models",
+        "exit_code": 0,
+        "seconds": 0.041,
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": "python3 tools/check-doc-links.py",
+        "executed": "python3 tools/check-doc-links.py",
+        "exit_code": 0,
+        "seconds": 0.172,
+        "log_sha256": "3bb505c6878403f67b522ae53f3af9e85b4957c011bd172ba32e45338bf72109"
+      },
+      {
+        "command": "python3 tools/check-doc-links.py --all-tracked --baseline audits/repository-cleanup/2026-10-10/link-baseline.json",
+        "executed": "python3 tools/check-doc-links.py --all-tracked --baseline audits/repository-cleanup/2026-10-10/link-baseline.json --json /tmp/lab-cleanup-validation-20261010/final/all-links.json",
+        "exit_code": 0,
+        "seconds": 1.164,
+        "log_sha256": "47e8d8b8c1d14854d2f6ad2573f9ddfc7f92eb9cb125c4df44afd88cab4d6296"
+      },
+      {
+        "command": "python3 -m unittest tools/test_check_doc_links.py",
+        "executed": "python3 -m unittest tools/test_check_doc_links.py",
+        "exit_code": 0,
+        "seconds": 0.493,
+        "log_sha256": "456dca43ae8d1fee902fdd4bf708ad81a2ed8f14bd47201a4c54e07b95d9329a"
+      },
+      {
+        "command": "python3 -m unittest tools/test_xccl_probe.py",
+        "executed": "python3 -m unittest tools/test_xccl_probe.py",
+        "exit_code": 0,
+        "seconds": 0.049,
+        "log_sha256": "f995ab38498707c386aa7ab6f1687d497ebba40e7881dae3ab652fff1a2f0b83"
+      },
+      {
+        "command": "python3 -m unittest tools/test_pr45_gpu_review.py",
+        "executed": "python3 -m unittest tools/test_pr45_gpu_review.py",
+        "exit_code": 0,
+        "seconds": 0.069,
+        "log_sha256": "e104cfef5ab00583bf0c33f747e695f163473594415cfa7bdaed4a3286f53348"
+      },
+      {
+        "command": "python3 tools/check-manifest-paths.py",
+        "executed": "python3 tools/check-manifest-paths.py",
+        "exit_code": 0,
+        "seconds": 0.069,
+        "log_sha256": "44e0feb84f2e3a9bb987a7b1c93b86448523df5836f7a7a45ea7219265975e58"
+      },
+      {
+        "command": "python3 -m unittest tools/test_container_packet_smoke.py",
+        "executed": "python3 -m unittest tools/test_container_packet_smoke.py",
+        "exit_code": 0,
+        "seconds": 0.361,
+        "log_sha256": "7581cbd4b21705bfbb22f87e01cf8c5cb2ed559c0dd31cf503596abb2ea22d15"
+      },
+      {
+        "command": "pip install --quiet pyyaml",
+        "executed": "python3 -B -c 'import yaml; print(yaml.__version__)'",
+        "exit_code": 0,
+        "seconds": 0.019,
+        "log_sha256": "cf3701cb2416e87a99c0e77dbd0518fc4fc27e390f025c024e6ed1c389c928e0"
+      },
+      {
+        "command": "python3 tools/check-container-packet.py",
+        "executed": "python3 tools/check-container-packet.py",
+        "exit_code": 0,
+        "seconds": 0.071,
+        "log_sha256": "d3699c0c4fa38a6dcb69cc9ba83c7032c99504b01af86475a8896cb6289302b3"
+      },
+      {
+        "command": "python3 -m unittest tools/test_check_container_packet.py",
+        "executed": "python3 -m unittest tools/test_check_container_packet.py",
+        "exit_code": 0,
+        "seconds": 0.202,
+        "log_sha256": "0f9a5dbf04ef0a43bf33b2b7b5f0efc503f3da587c59b22fad8792e7acb314bc"
+      },
+      {
+        "command": "python3 -m unittest tools/test_audit_launcher_env_implemented.py tools/test_flash_next_frozen_verifiers.py tools/test_flash_next_replay_cleanup.py",
+        "executed": "python3 -m unittest tools/test_audit_launcher_env_implemented.py tools/test_flash_next_frozen_verifiers.py tools/test_flash_next_replay_cleanup.py",
+        "exit_code": 0,
+        "seconds": 0.12,
+        "log_sha256": "174f73311db407ab971f6d83724f703588626473a65f7701c386bb4b85a7c3e0"
+      }
+    ],
+    "passed": 37,
+    "dependency_note": "Installed PyYAML 6.0.1 import verified instead of reinstalling it. PYTHONDONTWRITEBYTECODE=1 used throughout. All other workflow commands executed."
+  },
+  "links": {
+    "documents_checked": 4753,
+    "broken_total": 0,
+    "findings": {},
+    "known_broken_total": 4,
+    "known_broken": {
+      "community/STATUS-TEMPLATE.md": [
+        {
+          "link": "../../docs/contribution-verification.md",
+          "resolved": "../docs/contribution-verification.md"
+        }
+      ],
+      "experiments/ltx25-b70/notes/2026-10-03-packet-90c-results.md": [
+        {
+          "link": "2026-10-03-packet-90b-build.md",
+          "resolved": "experiments/ltx25-b70/notes/2026-10-03-packet-90b-build.md"
+        }
+      ],
+      "experiments/qwen38-27b-b70/data/2026-10-07-history-study/source/study-plan.md": [
+        {
+          "link": "2026-10-07-context-next-study-decision.md",
+          "resolved": "experiments/qwen38-27b-b70/data/2026-10-07-history-study/source/2026-10-07-context-next-study-decision.md"
+        },
+        {
+          "link": "../data/2026-10-07-temporal-development/review-note.md",
+          "resolved": "experiments/qwen38-27b-b70/data/2026-10-07-history-study/data/2026-10-07-temporal-development/review-note.md"
+        }
+      ]
+    },
+    "unverified_total": 101,
+    "unverified": {
+      "audits/public-closure/2026-09-03-recipe-completeness-audit.md": [
+        {
+          "link": "…",
+          "reason": "template"
+        }
+      ],
+      "experiments/ltx25-b70/data/reviews-20261003/codex-review-91.md": [
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_pipeline.py:292",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/prepare-graph-capture-runtime.py:865",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/pipeline_decode_node.py:547",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/pipeline_decode_node.py:568",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-campaign-91.sh:194",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_decode_replica.py:140",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_decode_replica.py:153",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-decode-91/source/comfy/ldm/lightricks/vae/na_diffusion_decoder.py:331",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/pipeline_decode_node.py:402",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/pipeline_decode_node.py:458",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_decode_replica.py:199",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_graph_capture.py:927",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_pipeline.py:194",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_pipeline.py:288",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-campaign-91.sh:97",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/pipeline_decode_node.py:298",
+          "reason": "absolute-host-path"
+        }
+      ],
+      "experiments/ltx25-b70/data/reviews-20261003/codex-review-91b.md": [
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/pipeline_sampler_node.py:331",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_pipeline.py:198",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/pipeline_decode_node.py:455",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_graph_capture.py:489",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_decode_replica.py:300",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/pipeline_decode_node.py:601",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/pipeline_decode_node.py:640",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_decode_replica.py:186",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/pipeline_decode_node.py:506",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_graph_capture.py:927",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_graph_text_encoder.py:324",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/pipeline_decode_node.py:284",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_decode_replica.py:221",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_pipeline.py:138",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/pipeline_decode_node.py:163",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-campaign-91b.sh:113",
+          "reason": "absolute-host-path"
+        }
+      ],
+      "experiments/ltx25-b70/notes/2026-10-07-resolution-reference-design.md": [
+        {
+          "link": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b/graphs/host-embedding-control.json",
+          "reason": "absolute-host-path"
+        }
+      ],
+      "experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-codex-cudagraph-metrics-receipt-audit.md": [
+        {
+          "link": "/home/steve/src/vllm-current-main/vllm/v1/worker/xpu_worker.py:102",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/vllm-current-main/vllm/config/vllm.py:610",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/vllm-current-main/vllm/v1/worker/xpu_model_runner.py:9",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/vllm-current-main/vllm/v1/worker/xpu_worker.py:102",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/vllm-current-main/vllm/v1/worker/gpu/model_runner.py:1471",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/vllm-current-main/vllm/v1/worker/gpu/model_runner.py:1631",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/vllm-current-main/vllm/v1/worker/gpu/model_runner.py:1689",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/vllm-current-main/vllm/v1/worker/gpu/model_runner.py:1964",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/vllm-current-main/vllm/v1/worker/gpu/model_runner.py:1767",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/vllm-current-main/vllm/v1/outputs.py:337",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/vllm-current-main/vllm/v1/worker/gpu_model_runner.py:3811",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/vllm-current-main/vllm/v1/worker/gpu_model_runner.py:5108",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/vllm-current-main/vllm/v1/executor/multiproc_executor.py:904",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/vllm-current-main/vllm/v1/executor/multiproc_executor.py:316",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/vllm-current-main/vllm/v1/executor/multiproc_executor.py:499",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/vllm-current-main/vllm/v1/serial_utils.py:124",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/vllm-current-main/vllm/v1/engine/core_client.py:585",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/vllm-current-main/vllm/v1/core/sched/scheduler.py:1665",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/vllm-current-main/vllm/v1/core/sched/scheduler.py:2467",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/vllm-current-main/vllm/v1/engine/llm_engine.py:103",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/vllm-current-main/vllm/v1/metrics/loggers.py:107",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/vllm-current-main/vllm/v1/metrics/loggers.py:203",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/vllm-current-main/vllm/v1/worker/xpu_model_runner.py:38",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/vllm-current-main/vllm/compilation/cuda_graph.py:63",
+          "reason": "absolute-host-path"
+        }
+      ],
+      "experiments/qwen38-flash-next-fp8-b70/notes/2026-10-08-lumnus-v0300-stack-analysis.md": [
+        {
+          "link": "/home/steve/src/lumnus-20261008/acquisition-receipt.txt:1",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0001-qwen4exp-xpu-gate.patch:34",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0002-qwen4exp-ple-pinned-host-uva-and-capture-stream.patch:119",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0003-qwen4exp-hc-down-gemm-ksplit.patch:151",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0004-gdn-spec-metadata-fusion.patch:105",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0005-xpu-ops-gdn-index64-hook.patch:36",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0006-b70-ple-direct-pinned-load.patch:96",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0007-b70-ple-fp8-pinned-table.patch:11",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0008-b70-ple-int8-rowscale-pinned-table.patch:11",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0009-b70-thinking-budget-per-requested-effort.patch:24",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0010-b70-default-repetition-detection.patch:6",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0012-b70-reasoning-effort-alias.patch:6",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0013-b70-ple-int8-nvme-table.patch:6",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0013b-b70-ple-int8-nvme-lookahead.patch:6",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0014a-b70-offload-trace.patch:7",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0014b-b70-offload-junction.patch:7",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0014c-b70-offload-gdn-backstep.patch:7",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0014d-b70-offload-empty-advance-guard.patch:7",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0014e-b70-offload-group-evict-51787.patch:7",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0014f-b70-offload-gates.patch:11",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0018-b70-offload-chunked-pinned-pool.patch:23",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0019-b70-qwen4exp-dense-qsa-skip-indexer.patch:26",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0020-b70-qwen4exp-mtp-dense-qsa-skip-indexer.patch:32",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0021-b70-mtp-draft-prefill-no-piecewise-xpu.patch:7",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0022-b70-port-vllm55506-mamba-spec-block-tables-by-req-slot.patch:6",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0023-b70-gdn-op-mode-switch-and-nan-tracer.patch:105",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0023c-0024t-b70-sampling-nan-tracer-and-null-block-probe.patch:7",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0026-b70-mtp-uniform-drafts-guard.patch:7",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0027-b70-gdn-index64-lib-optional.patch:19",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0028-b70-qwen4exp-ple-accepts-incconfig.patch:50",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0029-b70-prompt-logprobs-row-chunks-v1.patch:68",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0029b-b70-prompt-logprobs-row-chunks-v2.patch:46",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0031-b70-offload-h2d-direct-from-pinned.patch:16",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm/0032-b70-index64-fallback-warn-once.patch:12",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm-xpu-kernels/b70.3/0001-GDN-causal_conv1d-compute-the-conv-state-pointer-off.patch:29",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm-xpu-kernels/b70.3/0002-GDN-Fix-ragged-speculative-token-traversal-600.patch:48",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm-xpu-kernels/b70.3/0003-fix-xpu-preserve-tensor-strides-when-pinning-non-pin.patch:35",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm-xpu-kernels/b70.3/0004-fix-topk_topp_sampler-unaligned-vocab_size-563.patch:24",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm-xpu-kernels/b70.3/0005-EP-Fix-negative-expert-IDs-in-XPU-MoE-remapping-578.patch:31",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm-xpu-kernels/b70.3/0006-fix-initialize-atomic_buffer-to-0-to-avoid-race-cond.patch:34",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm-xpu-kernels/b70.3/0007-B70-K1-swap_blocks_batch-H2D-copies-directly-from-pi.patch:59",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/src/lumnus-20261008/b70-flash-next/patches/vllm-xpu-kernels/0001-gdn-causal-conv1d-int64-state-offset.patch:28",
+          "reason": "absolute-host-path"
+        },
+        {
+          "link": "/home/steve/llm-optimizations/.agents/skills/review-model-contribution/SKILL.md:1",
+          "reason": "absolute-host-path"
+        }
+      ]
+    },
+    "read_errors": {},
+    "baseline_errors": []
+  },
+  "literal_pins": {
+    "command": "python3 -B tools/check-pinned-hashes.py",
+    "exit_code": 1,
+    "checked": 318,
+    "match": 87,
+    "preexisting_drift": 231,
+    "absent": 0,
+    "output": "checked 318 literal file pins: 87 match, 231 drifted, 0 target absent\n  DRIFT  experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py\n         pinned by experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a193-fullgraphdet-w13n32-client.sh\n  DRIFT  experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n16-selection.py\n         pinned by experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a317-fullgraphdet-w13n16-client.sh\n",
+    "historical_hashes_repinned": false
+  },
+  "preservation": {
+    "tracked_files_verified": 53344,
+    "removed_paths": [
+      "experiments/laguna-s-2.1-xpu-b70/tools/__pycache__/analyze_rank2_rescue.cpython-312.pyc",
+      "experiments/laguna-s-2.1-xpu-b70/tools/__pycache__/audit_probe_identity.cpython-312.pyc",
+      "experiments/laguna-s-2.1-xpu-b70/tools/__pycache__/bench_laguna_expert_gemm.cpython-312.pyc",
+      "experiments/laguna-s-2.1-xpu-b70/tools/__pycache__/run_laguna_phase0_cycle_attribution_arm.cpython-312.pyc",
+      "tools/__pycache__/build-family-pages.cpython-313.pyc",
+      "tools/__pycache__/build-model-pages.cpython-313.pyc",
+      "tools/__pycache__/site_seo.cpython-313.pyc",
+      "tools/__pycache__/sync-depth-sweep-profiles.cpython-313.pyc",
+      "tools/__pycache__/test_sync_depth_sweep_profiles.cpython-313.pyc",
+      "tools/__pycache__/test_validate_repro_guides.cpython-313.pyc",
+      "tools/__pycache__/validate-repro-guides.cpython-313.pyc"
+    ],
+    "changed_paths": [
+      ".github/workflows/guides.yml",
+      ".gitignore",
+      "CURRENT.md",
+      "README.md",
+      "docs/README.md",
+      "docs/current-reproducibility-map.md",
+      "docs/model-effort-index.md",
+      "docs/qwen36-research-map.md",
+      "docs/research-workflow-playbook.md",
+      "experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp-fc-int4-operator-prereg.md",
+      "experiments/qwen38-flash-next-fp8-b70/notes/2026-09-13-a394-32k-mtp1-fresh-server-repeat-result.md",
+      "experiments/qwen38-flash-next-fp8-b70/notes/2026-10-08-attempt7-gpu-fault-analysis.md",
+      "notes/README.md",
+      "patches/README.md",
+      "results/scoreboard.md",
+      "tools/check-doc-links.py"
+    ],
+    "original_dirty_scripts_unchanged": true,
+    "history_archive_identical_to_source_commit": true
+  },
+  "additional_checks": {
+    "inventory_fixtures": "Passed: tracked/ignored/nested Git paths, symlinks, SHA256s, duplicates, totals, canonical output exclusion, unreadable directories and missing tracked files. Temporary CPU-only fixture.",
+    "link_checker_tests": 13,
+    "experiment_index_directories": 37,
+    "diff_whitespace": "passed",
+    "archive_sha256": "b0dec25fb12e796963454e28101c88b8f53c7678fff48b0c11504b5ca642036c"
+  },
+  "limits": [
+    "No GPU experiment or host-state requalification performed.",
+    "Inventory includes every local repository path in its recorded scope; historical experiment semantics were reviewed selectively.",
+    "Four historical relative-link exceptions retain pinned bytes and checked companion mappings.",
+    "101 host/template references remain unverified; no external paths or network links were opened by the checker.",
+    "Bulk experiment bundles and protected working trees retained; removed 383800 logical cache bytes is not a net repository-size reduction claim."
+  ]
+}

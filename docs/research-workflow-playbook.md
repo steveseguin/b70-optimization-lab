@@ -1,12 +1,14 @@
 # Research Workflow Playbook
 
 This page captures the prompts and approaches that produced the best outcomes
-across the MiniMax, Gemma, and Qwen36 B70 work. Use it when starting a new model
-lane or when an experiment series starts losing structure.
+across the MiniMax, Gemma, Qwen, Laguna and LTX B70 work. Use it when starting a
+new model lane or when an experiment series starts losing structure.
 
 For the full start-to-finish operating manual, use
-`model-optimization-guide.md`. This playbook is the shorter prompt and workflow
-companion.
+[model-optimization-guide.md](model-optimization-guide.md). This playbook is the
+shorter prompt and workflow companion. [CURRENT.md](../CURRENT.md) and
+[AGENTS.md](../AGENTS.md) control active work, admission and operating rules;
+historical examples below do not authorize a launch.
 
 ## Start With A Clear Target
 
@@ -158,8 +160,24 @@ one. The linked negative results are as important as the wins.
 | Require fresh-start capture liveness before runtime promotion | A transaction replay pass and one exact model start are not enough for a distributed graph runtime. Run a fresh full-lifetime service and require every rank to finish capture and reach replay; a missing rank is a capture-protocol failure, not a performance sample. Do not retry a preregistered first-start gate into success. | After Laguna's public libccl passed its transaction and 2x400 tensor gates, the fresh 13x512 start completed target capture on ranks 0-2 but hung rank 3 before any target replay. The treatment was closed despite the earlier exact pass. See the [lifetime result](../experiments/laguna-s-2.1-xpu-b70/notes/2026-08-01-public-oneccl-prefix24-service-lifetime-result.md). |
 | Oracle-gate speculative branching before integration | Measure benchmark-matched alternate rescues, calculate a hindsight ceiling, then evaluate a policy using only pre-verification features with prompt-held-out validation. In TP, candidate identity must also be deterministic without inserting an unprofiled collective boundary. | Laguna's perfect chain/tree oracle projected only `130.890237 tok/s`, while its held-out margin policy projected `129.271627`; one near-tied rank-2 token differed across ranks, and an in-loop canonical broadcast deadlocked. The route was closed before integration; see the [conditional-tree negative](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-confidence-conditioned-tree-preregistration.md). |
 | Choose GPU count empirically | More aggregate compute or memory does not imply faster batch-1 decode. Compare complete 1/2/3/4-GPU identities and treat uneven or assist splits as separate configurations. | Qwen Q4's validated four-card assist layout still trailed TP3, while equal four-card split was worse; see the [four-card refresh](../notes/2026-05-07-q4-quad-assist-refresh.md). Gemma's one-GPU strategy avoids collectives when the model fits. |
-| Localize graph-boundary failures structurally, then gate service lifetime | Give repeated boundaries stable ordinals and map them to layer and operation. Binary-search fresh services to find the first divergent boundary, but treat that only as localization. Separately test long generation, next-request turnover, and rollover before any score. | Laguna's short smoke placed the first failure at slot 48, layer 24 attention O-projection gather. Capturing all other slots still failed, and the apparently safe 48-slot prefix later failed request 1 at token 0 after an exact 512-token request 0. See the [victory ledger](../experiments/laguna-s-2.1-xpu-b70/notes/2026-08-01-optimization-victories-and-transferable-methods.md). |
+| Localize graph-boundary failures structurally, then gate service lifetime | After the required operator census, give captured boundaries stable ordinals and map them to layer and operation. A boundary trace localizes the fault; it does not qualify the runtime. Separately test long generation, next-request turnover, and rollover before any score. | Laguna's short smoke placed the first failure at slot 48, layer 24 attention O-projection gather. Capturing all other slots still failed, and the apparently safe 48-slot prefix later failed request 1 at token 0 after an exact 512-token request 0. See the [victory ledger](../experiments/laguna-s-2.1-xpu-b70/notes/2026-08-01-optimization-victories-and-transferable-methods.md). |
 | Record victories by mechanism and evidence class | Keep promoted endpoint, measured endpoint, component, research, and projection claims separate. Record conventional delta, absolute cycle saving, correctness scope, artifact identity, applicability boundary, and what the result does not prove. | Laguna's current [victory ledger](../experiments/laguna-s-2.1-xpu-b70/notes/2026-08-01-optimization-victories-and-transferable-methods.md) tracks the full 33.086→125.462 ladder while classifying slot localization and harness improvements as research wins rather than throughput. |
+
+## Lessons Surfaced From Later Campaigns
+
+These are scoped conclusions from retained evidence, not reasons to repeat the
+original experiment or assume that its result transfers to another model.
+
+| Lesson | Evidence and transfer limit |
+| --- | --- |
+| Verify the compiled treatment before interpreting an A/B | A Qwen3.6 Q8 DP4A screen accidentally reused a byte-identical object. Only the rebuilt, distinct-object treatment qualified. Preserve source, object and loaded-library identity together; see the [result packet](../results/qwen36-27b-q8-tp2-asrock-b70/README.md#bounded-negative-results). |
+| Verify that a forwarded flag has a reader | Qwen3.5's R276 audit found 47 of 78 forwarded variables had no reader in that image. A present environment value does not prove behavior changed; some behavior had become unconditional. Preserve the image-specific [implementation audit](../experiments/qwen35-9b-b70/data/2026-09-08-launcher-env-implementation-audit.json) and verify execution before treating a null result as a tested hypothesis. |
+| Census operators before server bisection | When rows, shapes or users change output, start with a kernel invariance census under the exact production shapes. Bind the oracle to that arithmetic and require fresh-server repeats. The [diagnosis rules](../AGENTS.md#diagnosis-and-campaign-speed-rules-2026-09-02) record why repeated token-stream bisection was closed as the first localization method. |
+| Scope exactness to the suite, arrival policy and runtime | Qwen3.5's few-pass concurrency ladders missed intermittent tie forks; later staggered MTP0 profiles were exact on their registered suites. Neither establishes universal determinism. Keep powered controls and oracle-free disagreement counts; see the [4B handoff](../experiments/qwen35-4b-b70/HANDOFF.md#method-findings-that-apply-beyond-this-lane) and [9B replication](../experiments/qwen35-9b-b70/notes/2026-09-11-r293-on-the-9b.md). |
+| Test request removal and re-entry as state transitions | R308 repaired accepted-count metadata lost across pause/removal/re-add. Its two-model boundary and strict gates qualify one active TP1 request at fixed depth 3; they do not clear concurrent speculation, preemption or long context. Preserve the failures alongside the [qualified result](../experiments/qwen35-4b-b70/notes/2026-09-13-r308-qualified-single-request.md). |
+| Correct output is separate from safe completion | Flash-Next's immediate-exit probe returned exact bytes and then faulted; orderly exit and a delayed abrupt exit passed. This supports an exit-lifetime hypothesis, not a proven allocation cause or complete TP4 remedy. Require ordered teardown receipts and post-exit health; see the [fault analysis](../experiments/qwen38-flash-next-fp8-b70/notes/2026-10-10-exit-fault-reproduced.md). |
+| Separate computation from client pacing | LTX's raw delivery intervals include client holds. Its early uninterrupted prefix and later hold-free diagnostic answer different questions; neither can be substituted for sustained unthrottled speed. Retain every interval, segment at restarts and record exact hold timing; see the [corrected ledger](../results/ltx25-continuation-stream-pacing-2026-10-10.md). |
+| Preserve restore evidence when consolidating | Source snapshots can include required default-off research, and measured libraries can come from several commits. A tidy selected-hunk patch is not necessarily the recorded source. See the [Gemma aggregate](../patches/gemma4-26b-a4b-q8-b70/README.md) and [Laguna mixed-binary provenance](../patches/laguna-s-2.1-xpu-b70/README.md). |
 
 ## Negative Result Discipline
 
@@ -179,6 +197,29 @@ Summarize this failed experiment as a reusable negative result. Include the
 reason we tried it, exact identity, artifacts, observed failure, whether it
 rules out a class of fixes, and the next action it implies.
 ```
+
+## Maintain The Knowledge Without Rewriting Evidence
+
+Keep one maintained result packet per measured identity and link indexes to it.
+When later evidence settles a hypothesis, replace the old next step in the
+navigation summary with its outcome and a link to the chronological note.
+Retain the note's original scope, rejected patch and raw receipts. State that a
+lever or campaign ended; do not declare an optimization lane finished.
+
+A summary should retain the question, exact identity, test and quality scope,
+result, failure mechanism or uncertainty, decision, and concrete conditions
+under which the idea would be worth trying again. Preserve failed admissions
+and invalidated comparisons when they explain why a tempting number cannot be
+used. The [Qwen3.5 classification correction](../experiments/qwen35-4b-b70/notes/2026-09-09-divergence-classification-retrospective.md)
+is an example of a useful retraction that must remain discoverable.
+
+Before moving, compressing or deleting evidence, record its original path and
+hash, every dependent recipe/manifest/script, the replacement location and a
+verified restoration. Exact duplicate bytes can have distinct provenance roles.
+Check Markdown links, JSON manifest paths and literal hash pins; the
+[publication checks](../AGENTS.md#publication-checklist) cover different kinds
+of dependency. Historical evidence pins stay historical; a changed summary is
+not permission to rewrite them or silently update a failed receipt.
 
 ## Cross-Agent Use
 

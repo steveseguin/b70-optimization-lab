@@ -3,6 +3,14 @@
 This folder is the chronological lab notebook. Prefer adding a new dated note
 or a dated addendum over editing old conclusions in place.
 
+For the latest conclusions, start with the
+[model effort index](../docs/model-effort-index.md),
+[result packets](../results/README.md), and
+[research workflow lessons](../docs/research-workflow-playbook.md).
+The dated notes below retain their original experiment context. A historical
+handoff or service command does not describe what is running now;
+[CURRENT.md](../CURRENT.md) owns recorded host state.
+
 ## Gemma Entry Points
 
 - [../results/gemma4-26b-a4b-q8-b70/HANDOFF.md](../results/gemma4-26b-a4b-q8-b70/HANDOFF.md):
@@ -24,8 +32,9 @@ or a dated addendum over editing old conclusions in place.
 
 ## Qwen Entry Points
 
-- [2026-06-20-master-plan.md](2026-06-20-master-plan.md): current baseline-first
-  plan for Qwen3.6-35B on 4x B70.
+- [2026-06-20-master-plan.md](2026-06-20-master-plan.md): historical baseline-first
+  plan for Qwen3.6-35B on 4x B70; use the
+  [result packet](../results/qwen36-35b-quark-int8-b70/README.md) for its later outcomes.
 - [2026-06-16-qwen36-current-handoff.md](2026-06-16-qwen36-current-handoff.md):
   detailed handoff with accepted, rejected, and interrupted work.
 - [2026-06-21-qwen36-phase3-copy-skip.md](2026-06-21-qwen36-phase3-copy-skip.md):
@@ -45,6 +54,9 @@ or a dated addendum over editing old conclusions in place.
   the note.
 - Separate observations from decisions. A failed quality gate can still be a
   useful result.
+- When an investigation ends, put its conclusion, limits and source links in
+  the lane handoff or negative-result ledger. Add reusable lessons to the
+  workflow playbook; keep the raw history available through those links.
 
 ## Promotion Path
 

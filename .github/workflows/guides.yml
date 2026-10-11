@@ -4,8 +4,9 @@ on:
   pull_request:
     paths:
       - ".github/workflows/guides.yml"
+      - "**/*.md"
+      - "**/*.html"
       - "families/**"
-      - "models/*.html"
       - "community/**"
       - "data/**"
       - "experiments/**"
@@ -14,10 +15,9 @@ on:
       - "packages/**"
       - "repro/**"
       - "results/**"
-      - "README.md"
-      - "index.html"
-      - "guides.html"
-      - "learn.html"
+      - "docs/**"
+      - "notes/**"
+      - "audits/repository-cleanup/*/link-baseline.json"
       - "learn/**"
       - "tools/build-family-pages.py"
       - "tools/build-model-pages.py"
@@ -45,6 +45,7 @@ on:
       - "tools/sync-public-result-summary.py"
       - "tools/test_sync_public_result_summary.py"
       - "tools/check-doc-links.py"
+      - "tools/test_check_doc_links.py"
       - "scripts/check-qwen36-xpu-xccl-health.sh"
       - "tools/xccl_probe.py"
       - "tools/test_xccl_probe.py"
@@ -62,8 +63,9 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/guides.yml"
+      - "**/*.md"
+      - "**/*.html"
       - "families/**"
-      - "models/*.html"
       - "community/**"
       - "data/**"
       - "experiments/**"
@@ -72,10 +74,9 @@ on:
       - "packages/**"
       - "repro/**"
       - "results/**"
-      - "README.md"
-      - "index.html"
-      - "guides.html"
-      - "learn.html"
+      - "docs/**"
+      - "notes/**"
+      - "audits/repository-cleanup/*/link-baseline.json"
       - "learn/**"
       - "tools/build-family-pages.py"
       - "tools/build-model-pages.py"
@@ -103,6 +104,7 @@ on:
       - "tools/sync-public-result-summary.py"
       - "tools/test_sync_public_result_summary.py"
       - "tools/check-doc-links.py"
+      - "tools/test_check_doc_links.py"
       - "scripts/check-qwen36-xpu-xccl-health.sh"
       - "tools/xccl_probe.py"
       - "tools/test_xccl_probe.py"
@@ -153,6 +155,8 @@ jobs:
       # Offline: resolves repository-relative links in the guides and site pages. Publisher-side manifest checking
       # (tools/verify-model-manifests-remote.py) stays manual, since it needs the Hugging Face API and would flake here.
       - run: python3 tools/check-doc-links.py
+      - run: python3 tools/check-doc-links.py --all-tracked --baseline audits/repository-cleanup/2026-10-10/link-baseline.json
+      - run: python3 -m unittest tools/test_check_doc_links.py
       - run: python3 -m unittest tools/test_xccl_probe.py
       - run: python3 -m unittest tools/test_pr45_gpu_review.py
       - run: python3 tools/check-manifest-paths.py

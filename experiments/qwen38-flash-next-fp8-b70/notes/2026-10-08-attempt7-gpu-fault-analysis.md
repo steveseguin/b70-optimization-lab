@@ -36,8 +36,8 @@ the mmap wholesale is therefore not the proposed fix.
 
 Paths below use these abbreviations:
 
-- `S`: [Screen 1b package](../experiments/qwen38-flash-next-fp8-b70/reopen-20261008/).
-- `R`: [attempt-7 saved run](../experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt7/).
+- `S`: [Screen 1b package](../reopen-20261008/).
+- `R`: [attempt-7 saved run](../reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt7/).
 - `K`: `R/cache/triton/53VVJR52M36CPS5OKWZZUWAK74K27BN65GI2YRRGPK4KHNWBHSYA/`.
 
 `R/runtime-versions.json` records vLLM `0.30.0+xpu`, Torch `2.13.0+xpu`,
@@ -107,7 +107,7 @@ the fault and controller shutdown, not the initiating error.
 
 ## Allocations, views and the expert kernel contract
 
-The [attempt-7 implementation record](../experiments/qwen38-flash-next-fp8-b70/reopen-20261008/ATTEMPT7-BUDGET.md)
+The [attempt-7 implementation record](../reopen-20261008/ATTEMPT7-BUDGET.md)
 explicitly selected the allocator-policy alternative. All three allocator
 environment aliases in the saved launch contain
 `pinned_max_round_threshold_mb:1,pinned_max_cached_size_mb:1`.
