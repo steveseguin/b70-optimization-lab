@@ -609,3 +609,26 @@ keeps old values (4/5) and loses the incidental detail nobody knew to keep (who 
 Campaign 8 ended here (14:06): server stopped idle, no GPU fault line, host memory never under 1.96 GiB with the
 1.6 GiB floor, Gemma put back. Not run: X32 on the 1M stream, W200, the seed-1 protocol arms, and X32 seed 1 again
 with the fixed proxy.
+
+## Campaign 9 (2026-10-11 afternoon, preregistered before any result): the proxy after its fixes
+
+Runner `longrun-campaign9.sh`. Arm **X32b** is X32 with `tools/ctxkeeper` as of commit `c16585171`; a new name so that
+X32's two runs stay on record beside it. Between the two lie the fixes of campaign 8's second seed (the notes call's
+effort, room and retry; the search limit) and nine defects found by a Codex read-only review of the proxy, among them
+a history fingerprint that no longer mistakes dropped thinking for a new conversation and a notes reply cut off by
+the token cap no longer being accepted.
+
+| stage | arm | stream | question |
+| --- | --- | --- | --- |
+| 1 | X32b | rules 240K, seed 1 | X32 scored 42/46 in 47 minutes with 10 of 24 notes calls rejected. Are the notes calls accepted now, and does the time come back toward the harness keeper's 16 minutes? |
+| 2 | X32b | rules 240K, seed 0 | X32 scored 37/39 in 21 minutes with no rejected notes call. Did the fixes cost anything where nothing was wrong? |
+| 3 | X32b, cut at 110 min | rules 1M, seed 0 | the proxy at the owner's scale (harness keeper: 226/228 in 83 minutes) |
+
+How the results will be read (fixed now):
+- Stage 1: fixed if no more than one notes call is rejected for good (`notes_failed` in the proxy's counters) and
+  the run takes under 30 minutes; the score bar is unchanged (41/46 with rule and method at 4/5, not void).
+- Stage 2: no cost if the score is 36/39 or more and the time within five minutes of 21.
+- Stage 3: read like the harness keeper's 1M run. "The proxy carries the policy at scale" at 90 % or more of the
+  228 questions with the rule at 90 % or better, not void if it finishes; a cut run is graded on the probes it
+  reached and reported as cut. The client holds the whole 1M-token history in this arm (a real client would too);
+  its memory is watched, since the host has little to spare beside the server.
