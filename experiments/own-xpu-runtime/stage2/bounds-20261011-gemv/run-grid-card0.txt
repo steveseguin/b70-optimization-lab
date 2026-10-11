@@ -1,0 +1,8 @@
+device Intel(R) Arc(TM) Pro B70 Graphics card 0
+--- expert gate/up shape 12800 x 2560 (32768000 weights), 2.5-bit grid format; the runtime's IQ2_S kernel measures 178 us in the model
+  grid entry as uint64, shifted per weight (current style)                              126.2 us    259.5 G weights/s
+  grid entry read as 8 bytes from the table                                             128.0 us    256.0 G weights/s
+  8 bytes from the table, sign folded into the integer before the float conversion      136.8 us    239.6 G weights/s
+  uint64 grid word, four rows per work-group                                            126.7 us    258.7 G weights/s
+  byte grid loads, four rows per work-group                                             130.7 us    250.7 G weights/s
+  identical outputs: u64==bytes 1; bytes==signfold 1

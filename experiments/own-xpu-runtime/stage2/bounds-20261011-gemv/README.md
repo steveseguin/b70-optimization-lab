@@ -42,3 +42,16 @@ Readings:
    costs 2–5 times the whole kernel. 64-bit integer loads and shifts are slower than
    byte loads on this GPU (first program), so wide loads and register-held tables are
    the wrong direction. float32 weights are memory-bound and slow.
+
+## Addendum, 23:14 UTC: the 2.5-bit grid format (expert gate/up)
+
+[bound-grid.cpp](bound-grid.cpp) ([output](run-grid-card0.txt)) uses a stand-in for
+IQ2_S: a 10-bit index per 8 weights into a 1,024-entry table of 8 magnitudes, 8 sign
+bits, and a block scale, all fetched once per lane-tile, at the 12,800 × 2,560 shape.
+It takes **126–128 µs** whether the grid entry is a 64-bit word shifted per weight or
+eight byte loads; the runtime's IQ2_S kernel takes 178 µs in the model. So the packed
+gate/up kernel has about 1.4 times of headroom as well (about 2.5 ms per token), not
+the "near its bound" stated in reading 3 above, which came from the 4-bit stand-in.
+
+Summed over the classes, kernels that do only this per-weight work would take the
+large GEMVs from about 27 ms to about 15 ms per token.
