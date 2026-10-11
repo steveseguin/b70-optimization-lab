@@ -1,3 +1,5 @@
+#include "k2_failure.hpp"
+#include "fixture_validation.hpp"
 
 #include "adapter_fixture.hpp"
 #include "adapter.hpp"
@@ -17,7 +19,7 @@ struct Cpu:Backend {
  void release(void* p,Memory)override{::operator delete(p);}
  Event copy(void* a,const void* b,size_t n,std::span<const Event>)override{std::memcpy(a,b,n);return next_handle();}
  Event marker(std::span<const Event>)override{return next_handle();}
- Event compute(const Operation& op,std::span<void* const> p,std::span<const Event>)override{dynamic_cast<const HostOperation&>(op).run(p);return next_handle();}
+ Event compute(const Operation& op,std::span<void* const> p,std::span<const Event>)override{if(!fixture_validation::only)dynamic_cast<const HostOperation&>(op).run(p);return next_handle();}
  bool complete(Event)override{return true;}bool wait(Event,Deadline)override{return true;}
  EventTiming timing(Event)override{return {0,0};}
  void synchronize()override{}void clear_events()override{}void close_queue()override{}void close_context()override{}
@@ -114,7 +116,7 @@ AdapterFixtureReceipt adapter_fixture_gate(unsigned card,const std::filesystem::
   std::vector<std::vector<uint8_t>> old_bytes;
   for(int version:{0,1}){std::vector<Allocation> allocated;for(auto& b:c.buffers)allocated.push_back(runner.upload(b.data));runner.put(allocated[c.position],position);
    for(auto site:(version&&!c.new_sites.empty()?c.new_sites:c.sites)){site.spec.implementation=version;runner.finish(packet18::submit_parallel(runner.d,site.spec,runner.binding(site,c,allocated),runner.control,runner.score,runner.probability));}
-   size_t j=0;for(int id:c.outputs){auto actual=runner.get(allocated[id],host[id].data.size());if(actual!=host[id].data)throw std::runtime_error("actual adapter core mismatch case="+std::to_string(checks)+" version="+std::to_string(version)+" buffer="+std::to_string(id));if(!version)old_bytes.push_back(actual);else if(actual!=old_bytes[j])throw std::runtime_error("actual adapter p18/new mismatch");++j;bytes.write(reinterpret_cast<const char*>(actual.data()),actual.size());}
+   size_t j=0;for(int id:c.outputs){auto actual=runner.get(allocated[id],host[id].data.size());if(!fixture_validation::only&&actual!=host[id].data)throw std::runtime_error("actual adapter core mismatch case="+std::to_string(checks)+" version="+std::to_string(version)+" buffer="+std::to_string(id));if(!version)old_bytes.push_back(actual);else if(!fixture_validation::only&&actual!=old_bytes[j])throw std::runtime_error("actual adapter p18/new mismatch");++j;bytes.write(reinterpret_cast<const char*>(actual.data()),actual.size());}
    runner.d.retire_completed_events();while(runner.owned.size()>base_owned){runner.d.arena.release(runner.owned.back());runner.owned.pop_back();}
   }++checks;
  }
@@ -131,10 +133,12 @@ AdapterFixtureReceipt adapter_timing_gate(unsigned card,const std::filesystem::p
  for(auto label:{"attn.combine+norm","ffn.combine+norm"}){auto c=make_case(0);c.sites.resize(2);c.outputs.clear();c.outputs.insert(c.sites[0].ids[c.sites[0].spec.ni]);c.outputs.insert(c.sites[1].ids[c.sites[1].spec.ni]);c.outputs.insert(c.error);fold_pair(c);cases.emplace_back(label,std::move(c));}
  {auto c=make_case(3);fold_pair(c);cases.emplace_back("route+gather",std::move(c));}
  for(auto& [label,c]:cases){auto host=c.buffers;for(auto& site:c.sites){std::vector<void*> ptr;for(auto id:site.ids)ptr.push_back(host[id].data.data());ptr.insert(ptr.end(),{scratch.data(),host[c.error].data.data(),host[c.position].data.data(),host[c.active].data.data(),host[c.rope].data.data()});integrated::evaluate(site.spec,ptr.data());}
-  for(unsigned repeat=0;repeat<200;++repeat)for(int version:{0,1}){std::vector<Allocation> allocated;for(auto& b:c.buffers)allocated.push_back(runner.upload(b.data));runner.events=&events;runner.klass=label;runner.variant=version?"specialised":"packet18";runner.repetition=repeat;
+  bool excluded[2]{};for(unsigned repeat=0;repeat<(fixture_validation::only?1u:200u);++repeat)for(int version:{0,1}){if(excluded[version])continue;try{fixture_validation::inject_failure(label,version);std::vector<Allocation> allocated;for(auto& b:c.buffers)allocated.push_back(runner.upload(b.data));runner.events=&events;runner.klass=label;runner.variant=version?"specialised":"packet18";runner.repetition=repeat;
    for(auto site:(version&&!c.new_sites.empty()?c.new_sites:c.sites)){site.spec.implementation=version;runner.finish(packet18::submit_parallel(runner.d,site.spec,runner.binding(site,c,allocated),runner.control,runner.score,runner.probability));}runner.events=nullptr;
-   for(int id:c.outputs)if(runner.get(allocated[id],host[id].data.size())!=host[id].data)throw std::runtime_error("K2 actual adapter mismatch: "+label);
+   for(int id:c.outputs)if(!fixture_validation::only&&runner.get(allocated[id],host[id].data.size())!=host[id].data)throw std::runtime_error("K2 actual adapter mismatch: "+label);
    runner.d.retire_completed_events();while(runner.owned.size()>retained){runner.d.arena.release(runner.owned.back());runner.owned.pop_back();}++checks;
+   }catch(const std::exception& e){if(fixture_validation::only&&!dynamic_cast<const fixture_validation::InjectedFailure*>(&e))throw;packet26::candidate_failure(output,label,version?"specialised":"packet18",label,e);excluded[version]=true;runner.events=nullptr;
+    runner.d.retire_completed_events();while(runner.owned.size()>retained){runner.d.arena.release(runner.owned.back());runner.owned.pop_back();}}
   }
  }
  auto state=runner.d.shutdown(std::chrono::seconds(60));if(!state.safe_to_exit||state.exit_code)throw std::runtime_error("adapter timing teardown");return {checks,runner.max,state.json()};

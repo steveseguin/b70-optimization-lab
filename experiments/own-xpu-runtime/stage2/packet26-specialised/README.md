@@ -57,7 +57,7 @@ K2 records 200 repetitions of each old/new class, each event's GPU execution
 timestamps, exact byte comparisons, median and p90. Nonpositive durations are
 counted and excluded; an affected multi-stage repetition is excluded as a whole.
 More than 1% invalid rows fails the window. New wins only below 0.9× the old
-median complete execution sum. Failed equality never produces a dispatch file.
+median complete execution sum. Failed candidates are recorded and excluded while the rest of K2 continues. The complete table is always written after a completed run; only a passing K2 receipt admits it.
 For a GEMV class covering multiple formats, every registered workload must clear that threshold independently. Model windows consume the hash-bound measured file. Its schema is
 `packet26.dispatch.v1`, with separate `classes`, `fusions` and `gemv` maps. A
 folded pair needs its own measured win. The 36-workload K2 registry includes actual
@@ -131,10 +131,37 @@ Native executables are compiled and inspected only. Individual `prepare`, `host`
 
 Final CPU results: five unit suites, 156 integration cases, four fresh
 fixture processes (GNU/Intel, twice each), 32 sanitized mini runs,
-57 wrapper tests and 1056 symbolic tree checks passed. Each fixture
+61 wrapper tests and 1056 symbolic tree checks passed. Each fixture
 process covered 92 non-GEMV fixtures, 44 adapter cases and 136 GEMV arm checks.
 All 384 layer fixtures and all eight generated tokens matched the v2
-oracle under all-new dispatch. The streaming oracle used 908520 KiB peak RSS.
+oracle under all-new dispatch. The streaming oracle used 907872 KiB peak RSS.
 The native build has 165 checked capture instantiations, maximum
-744 bytes. No device window has run. Exact identities and scope limits are in
+744 bytes. The first device K1a cleanly refused a dense fixture geometry; see the R2 repair below. Exact identities and scope limits are in
 [build-receipt.json](build-receipt.json) and [cpu-tests.json](cpu-tests.json).
+
+## R2 CPU repair after the K1a refusal
+
+The first dense workload, `gdn.qkv.q6`, reached packet 10 expanded GEMV through
+R5 with a nonzero status allocation. Dense kernels require status=0; status
+belongs only to routed expert matrices. Both old/new dense arms now leave it
+zero. Packet 10 validation is unchanged. The CPU arithmetic twin previously
+checked byte extents but skipped the device geometry, alignment and alias checks.
+
+`validation_mirror.py` compiles the verbatim device validation prefixes for
+packet 10 dense, packet 9 expert and packet 26 non-GEMV entries into the CPU
+fixture twins. Packet 25, specialised and adapter checks already share their
+entry code. The mirror asserts its extraction/injection anchors and records its
+source hashes. Hardware capability queries remain device-only; no discovery is
+part of a CPU gate.
+
+`validation_gate.py` runs both fixture executables with both host compilers,
+all K1 modes and actual K2 shapes, all registered classes and every linked
+candidate allowed by each format. Validation-only skips arithmetic, never
+claims exactness and retains the real allocation extents. Reintroducing a dense
+status buffer must fail both K1 and K2 on CPU. Injected failures in three classes
+must still reach logits. Ordinary fixture gates still compare all output bytes.
+
+The wrapper records matching wrapper/native nice values, default 19. W2/W2m/W2c
+are documented at nice 0; CPU helper processes run at 19. K windows remain at 19.
+**The previous seal's K0 and W0 receipts are void.** Preserve the old a-/b-
+receipts and use the fresh `-r2` commands in [WINDOW.md](WINDOW.md).

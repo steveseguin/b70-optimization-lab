@@ -52,7 +52,7 @@ def run(argv, **kw):
 def main():
     assert os.getpriority(os.PRIO_PROCESS, 0) == 19
     assert os.environ.get('OMP_NUM_THREADS') == '2'
-    resource.setrlimit(resource.RLIMIT_AS, (8*1024**3, resource.RLIM_INFINITY))
+    resource.setrlimit(resource.RLIMIT_AS, (8*1024**3, 8*1024**3))
     build = HERE/'build'
     build.mkdir(exist_ok=True)
     receipt = {'schema':'own-runtime.packet26.entry-smoke.v1', 'passed':False,

@@ -9,3 +9,4 @@
 | changing cross-card event fences while reducing host overhead | [Packet 18 isolation review](../packet18-decode-v2/review-queue-isolation.md) | Preserve the host drains and foreign-event rejection. No cross-card event chain. |
 | pretending CPU mock time is native submission time | [Host issue benchmark](host-issue-benchmark.json) | W2 enqueue_loop_ms is the required device-window evidence. |
 | precision flags only at compile time | [Packet 17 link incident](../packet17-detmath/evidence/20261011-wb-a-link-flags/README.md) | Check every compile and link command. |
+| dense fixture with a routed-expert status buffer; CPU arithmetic-only geometry gate | [R2 repair](repair-r2-closeout.md), [coordinator refusal](evidence/20261011-k1a-a-expanded-dense-geometry/README.md) | Dense status must be zero; both fixture twins must run the verbatim device argument checks and poison regression before resealing. |

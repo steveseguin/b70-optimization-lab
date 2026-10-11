@@ -1,0 +1,604 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "scope": "K1 and K2 argument validation, every registered class and linked candidate; exact production K2 extents; no arithmetic in validate-only mode",
+  "checks": [
+    {
+      "compiler": "host",
+      "entry": "nongemv-fixtures",
+      "poison": false,
+      "returncode": 0,
+      "binary_sha256": "402ef8e62885aa03729d70bf0334ea63abe41e69efbbd3ba4a5f59026074d822",
+      "evidence": "validation-1791754622308983815/host-nongemv-fixtures",
+      "gemv_entry_calls": 568,
+      "workloads": [
+        "attention.gdn",
+        "attention.qsa",
+        "expsdown",
+        "expsgate.iq2",
+        "expsgate.iq3",
+        "gdn.qkv.q6",
+        "gdn.qkv.q8",
+        "gdn.z.q6",
+        "gdn.z.q8",
+        "hc.gate",
+        "hc.low",
+        "logits",
+        "ple.key",
+        "ple.value",
+        "qsa.k",
+        "qsa.qgate",
+        "qsa.v"
+      ],
+      "candidate_coverage": {
+        "attention.gdn": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "attention.qsa": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "expsdown": [
+          "p25.private_decode",
+          "p25.rows4",
+          "p25.wg32",
+          "p25.wide8",
+          "r5"
+        ],
+        "expsgate.iq2": [
+          "p25.paired_input",
+          "p25.private_decode",
+          "p25.rows4",
+          "p25.wg32",
+          "r5"
+        ],
+        "expsgate.iq3": [
+          "p25.paired_input",
+          "p25.private_decode",
+          "p25.rows4",
+          "p25.wg32",
+          "r5"
+        ],
+        "gdn.qkv.q6": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "gdn.qkv.q8": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "gdn.z.q6": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "gdn.z.q8": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "hc.gate": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "hc.low": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "logits": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "ple.key": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "ple.value": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "qsa.k": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "qsa.qgate": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "qsa.v": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ]
+      },
+      "entry_trace_sha256": "ef98a8d1447c2ec0349d482b048c462281aa0718c0664af41e417fe77aed7e40",
+      "receipt_sha256": "5a28b5196e811bf19a46f1b8fbbf29e0d4d356effe5a48fcb4694adab80c5904"
+    },
+    {
+      "compiler": "host",
+      "entry": "nongemv-fixtures",
+      "poison": true,
+      "returncode": 1,
+      "binary_sha256": "402ef8e62885aa03729d70bf0334ea63abe41e69efbbd3ba4a5f59026074d822",
+      "evidence": "validation-1791754622308983815/host-nongemv-fixtures-poison"
+    },
+    {
+      "compiler": "host",
+      "entry": "k2-fixtures",
+      "poison": false,
+      "returncode": 0,
+      "binary_sha256": "4efe15e0c344c9c39883b0788f4062b9e3f93d236f7c6f605a2351de850b2bae",
+      "evidence": "validation-1791754622308983815/host-k2-fixtures",
+      "gemv_entry_calls": 142,
+      "workloads": [
+        "attention.gdn",
+        "attention.qsa",
+        "expsdown",
+        "expsgate.iq2",
+        "expsgate.iq3",
+        "gdn.qkv.q6",
+        "gdn.qkv.q8",
+        "gdn.z.q6",
+        "gdn.z.q8",
+        "hc.gate",
+        "hc.low",
+        "logits",
+        "ple.key",
+        "ple.value",
+        "qsa.k",
+        "qsa.qgate",
+        "qsa.v"
+      ],
+      "candidate_coverage": {
+        "attention.gdn": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "attention.qsa": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "expsdown": [
+          "p25.private_decode",
+          "p25.rows4",
+          "p25.wg32",
+          "p25.wide8",
+          "r5"
+        ],
+        "expsgate.iq2": [
+          "p25.paired_input",
+          "p25.private_decode",
+          "p25.rows4",
+          "p25.wg32",
+          "r5"
+        ],
+        "expsgate.iq3": [
+          "p25.paired_input",
+          "p25.private_decode",
+          "p25.rows4",
+          "p25.wg32",
+          "r5"
+        ],
+        "gdn.qkv.q6": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "gdn.qkv.q8": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "gdn.z.q6": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "gdn.z.q8": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "hc.gate": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "hc.low": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "logits": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "ple.key": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "ple.value": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "qsa.k": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "qsa.qgate": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "qsa.v": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ]
+      },
+      "entry_trace_sha256": "c25dfcbe1b6c42c6c7f520e48c1693773e72b7dbd8d9adeed3c0784a4db0e639",
+      "receipt_sha256": "022e0140a73f491b3dfbc8c6452fc6f6c75dd6c43c00cad4da199611dace01f7"
+    },
+    {
+      "compiler": "host",
+      "entry": "k2-fixtures",
+      "poison": true,
+      "returncode": 1,
+      "binary_sha256": "4efe15e0c344c9c39883b0788f4062b9e3f93d236f7c6f605a2351de850b2bae",
+      "evidence": "validation-1791754622308983815/host-k2-fixtures-poison"
+    },
+    {
+      "compiler": "host",
+      "continued_after_failures": [
+        "gemv:gdn.qkv",
+        "norm",
+        "streams"
+      ]
+    },
+    {
+      "compiler": "icpx-host",
+      "entry": "nongemv-fixtures",
+      "poison": false,
+      "returncode": 0,
+      "binary_sha256": "69fc6865d4128b33a63874e36893a3eaaf50c5a210c6c6e315379bc5275b8283",
+      "evidence": "validation-1791754622308983815/icpx-host-nongemv-fixtures",
+      "gemv_entry_calls": 568,
+      "workloads": [
+        "attention.gdn",
+        "attention.qsa",
+        "expsdown",
+        "expsgate.iq2",
+        "expsgate.iq3",
+        "gdn.qkv.q6",
+        "gdn.qkv.q8",
+        "gdn.z.q6",
+        "gdn.z.q8",
+        "hc.gate",
+        "hc.low",
+        "logits",
+        "ple.key",
+        "ple.value",
+        "qsa.k",
+        "qsa.qgate",
+        "qsa.v"
+      ],
+      "candidate_coverage": {
+        "attention.gdn": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "attention.qsa": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "expsdown": [
+          "p25.private_decode",
+          "p25.rows4",
+          "p25.wg32",
+          "p25.wide8",
+          "r5"
+        ],
+        "expsgate.iq2": [
+          "p25.paired_input",
+          "p25.private_decode",
+          "p25.rows4",
+          "p25.wg32",
+          "r5"
+        ],
+        "expsgate.iq3": [
+          "p25.paired_input",
+          "p25.private_decode",
+          "p25.rows4",
+          "p25.wg32",
+          "r5"
+        ],
+        "gdn.qkv.q6": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "gdn.qkv.q8": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "gdn.z.q6": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "gdn.z.q8": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "hc.gate": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "hc.low": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "logits": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "ple.key": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "ple.value": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "qsa.k": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "qsa.qgate": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "qsa.v": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ]
+      },
+      "entry_trace_sha256": "ef98a8d1447c2ec0349d482b048c462281aa0718c0664af41e417fe77aed7e40",
+      "receipt_sha256": "f814d50db30bcd4a7f40c9c3e029fb40cdc44ed666b7fe4a5f989dd5e0085f92"
+    },
+    {
+      "compiler": "icpx-host",
+      "entry": "nongemv-fixtures",
+      "poison": true,
+      "returncode": 1,
+      "binary_sha256": "69fc6865d4128b33a63874e36893a3eaaf50c5a210c6c6e315379bc5275b8283",
+      "evidence": "validation-1791754622308983815/icpx-host-nongemv-fixtures-poison"
+    },
+    {
+      "compiler": "icpx-host",
+      "entry": "k2-fixtures",
+      "poison": false,
+      "returncode": 0,
+      "binary_sha256": "b7d22f55484d6a86945cc5b5d98ffbb0ea182177fede522ae03a9e951c9c5188",
+      "evidence": "validation-1791754622308983815/icpx-host-k2-fixtures",
+      "gemv_entry_calls": 142,
+      "workloads": [
+        "attention.gdn",
+        "attention.qsa",
+        "expsdown",
+        "expsgate.iq2",
+        "expsgate.iq3",
+        "gdn.qkv.q6",
+        "gdn.qkv.q8",
+        "gdn.z.q6",
+        "gdn.z.q8",
+        "hc.gate",
+        "hc.low",
+        "logits",
+        "ple.key",
+        "ple.value",
+        "qsa.k",
+        "qsa.qgate",
+        "qsa.v"
+      ],
+      "candidate_coverage": {
+        "attention.gdn": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "attention.qsa": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "expsdown": [
+          "p25.private_decode",
+          "p25.rows4",
+          "p25.wg32",
+          "p25.wide8",
+          "r5"
+        ],
+        "expsgate.iq2": [
+          "p25.paired_input",
+          "p25.private_decode",
+          "p25.rows4",
+          "p25.wg32",
+          "r5"
+        ],
+        "expsgate.iq3": [
+          "p25.paired_input",
+          "p25.private_decode",
+          "p25.rows4",
+          "p25.wg32",
+          "r5"
+        ],
+        "gdn.qkv.q6": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "gdn.qkv.q8": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "gdn.z.q6": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "gdn.z.q8": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "hc.gate": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "hc.low": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "logits": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "ple.key": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "ple.value": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "qsa.k": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "qsa.qgate": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ],
+        "qsa.v": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "r5"
+        ]
+      },
+      "entry_trace_sha256": "c25dfcbe1b6c42c6c7f520e48c1693773e72b7dbd8d9adeed3c0784a4db0e639",
+      "receipt_sha256": "022e0140a73f491b3dfbc8c6452fc6f6c75dd6c43c00cad4da199611dace01f7"
+    },
+    {
+      "compiler": "icpx-host",
+      "entry": "k2-fixtures",
+      "poison": true,
+      "returncode": 1,
+      "binary_sha256": "b7d22f55484d6a86945cc5b5d98ffbb0ea182177fede522ae03a9e951c9c5188",
+      "evidence": "validation-1791754622308983815/icpx-host-k2-fixtures-poison"
+    },
+    {
+      "compiler": "icpx-host",
+      "continued_after_failures": [
+        "gemv:gdn.qkv",
+        "norm",
+        "streams"
+      ]
+    }
+  ],
+  "maxrss_kib": 489376
+}

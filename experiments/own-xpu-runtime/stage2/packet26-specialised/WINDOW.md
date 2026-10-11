@@ -1,9 +1,11 @@
 # Packet 26 prepared device windows
 
+**R2 reseal:** previous-seal K0 and W0 receipts are void. Preserve `build/a-*` and `build/b-*`; run fresh K0 and W0 under this seal. The original K1a geometry refusal is retained in [the coordinator evidence](evidence/20261011-k1a-a-expanded-dense-geometry/README.md).
+
 No device ran during preparation. No speed is claimed. The coordinator alone
 admits and runs these commands in an approved systemd user unit. They never queue
 another window. Run from `/home/steve/llm-optimizations`; the coordinator supplies
-`LD_LIBRARY_PATH`. Each command sets idle CPU/I/O priority and two threads.
+`LD_LIBRARY_PATH`. K windows use nice 19. W2/W2m/W2c use nice 0; all commands use idle I/O priority and two threads.
 
 `--card` is a physical index. Examples below use cards 0+1; the one-card fixture
 and timing windows use card 0. To use another adjacent pair, change every `--card`
@@ -20,7 +22,7 @@ creation or kernel execution. It binds the complete device-binary set, source
 hashes, boot and recorded environment for all following windows.
 
 ```bash
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B "$P/window.py" --authorized-device-window --window K0 --card 0 --native-nice 19 --seconds 600 --output "$P/build/k0"
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B "$P/window.py" --authorized-device-window --window K0 --card 0 --native-nice 19 --seconds 600 --output "$P/build/k0-r2"
 ```
 
 K1a and K1b run all new kernels against packet 18 and the reference core. Each
@@ -31,8 +33,8 @@ x four finite modes x two implementations), across three sequential owners per p
 must use a distinct owner process; both must have safe teardown.
 
 ```bash
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B "$P/window.py" --authorized-device-window --window K1a --card 0 --native-nice 19 --seconds 10800 --k0 "$P/build/k0/window.json" --output "$P/build/k1a"
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B "$P/window.py" --authorized-device-window --window K1b --card 0 --native-nice 19 --seconds 10800 --k0 "$P/build/k0/window.json" --k1a "$P/build/k1a/window.json" --output "$P/build/k1b"
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B "$P/window.py" --authorized-device-window --window K1a --card 0 --native-nice 19 --seconds 10800 --k0 "$P/build/k0-r2/window.json" --output "$P/build/k1a-r2"
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B "$P/window.py" --authorized-device-window --window K1b --card 0 --native-nice 19 --seconds 10800 --k0 "$P/build/k0-r2/window.json" --k1a "$P/build/k1a-r2/window.json" --output "$P/build/k1b-r2"
 ```
 
 K2 profiles packet 18 and specialised kernels on one card at the registered
@@ -42,13 +44,13 @@ p90 both per event and for each class's summed stage execution time. It excludes
 zero/negative/nonfinite event intervals, counts them, and excludes their whole
 repetition from summed timings. More than 1% affected event rows fails the window;
 exactly 1% is permitted. Missing classes/repetitions, changing stage coverage,
-incorrect bytes or an over-budget submission also fail.
+an unexcluded incorrect output or an over-budget submission also fail. Candidate failures are retained in `candidate-failures.jsonl`.
 
 ```bash
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B "$P/window.py" --authorized-device-window --window K2 --card 0 --native-nice 19 --seconds 10800 --k0 "$P/build/k0/window.json" --k1a "$P/build/k1a/window.json" --k1b "$P/build/k1b/window.json" --output "$P/build/k2"
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B "$P/window.py" --authorized-device-window --window K2 --card 0 --native-nice 19 --seconds 10800 --k0 "$P/build/k0-r2/window.json" --k1a "$P/build/k1a-r2/window.json" --k1b "$P/build/k1b-r2/window.json" --output "$P/build/k2-r2"
 ```
 
-Only a passing K2 creates `build/k2/run/dispatch-measured.json`. Each class stays
+K2 always writes the full class table and `dispatch-measured.json` after a completed run. Validation or equality failures exclude the affected candidate and leave that class on packet18; other classes continue. Reference failures, missing unexcluded arms, execution errors and budget failures still prevent admission. Only a passing, hash-bound K2 receipt can admit its table. Each class stays
 on `packet18` unless the exact specialised implementation's median execution sum
 is strictly below 0.9 times packet 18's. The table and raw events are hash-bound
 into the window receipt. Future named GEMV winners belong in the table's `gemv`
@@ -74,7 +76,7 @@ W0 runs the retained packet 18 two-card canary through the packet 26 model binar
 queue ownership, tiny memory allocation, per-submission budget and safe teardown.
 
 ```bash
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B "$P/window.py" --authorized-device-window --window W0 --card 0 --native-nice 19 --seconds 600 --k0 "$P/build/k0/window.json" --output "$P/build/w0"
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B "$P/window.py" --authorized-device-window --window W0 --card 0 --native-nice 19 --seconds 600 --k0 "$P/build/k0-r2/window.json" --output "$P/build/w0-r2"
 ```
 
 W2 is the control: two cards resident, 64 tokens, R5 GEMV, original packet 18
@@ -85,14 +87,14 @@ Every token row includes `prepare_ms`, `enqueue_loop_ms` and `wait_ms`, so the
 host issue target of at most 12 ms/token can be tested on the cards.
 
 ```bash
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B "$P/window.py" --authorized-device-window --window W2 --card 0 --native-nice 19 --seconds 10800 --k0 "$P/build/k0/window.json" --w0 "$P/build/w0/window.json" --input "$P/build/input" --oracle "$ORACLE" --output "$P/build/w2"
+nice -n 0 ionice -c 3 env OMP_NUM_THREADS=2 python -B "$P/window.py" --authorized-device-window --window W2 --card 0 --native-nice 0 --seconds 10800 --k0 "$P/build/k0-r2/window.json" --w0 "$P/build/w0-r2/window.json" --input "$P/build/input" --oracle "$ORACLE" --output "$P/build/w2-r2"
 ```
 
 W2m changes only the per-class dispatch admitted by K1a/K1b/K2. The wrapper binds
 all gates to the same boot and binary set and verifies the measured table hash.
 
 ```bash
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B "$P/window.py" --authorized-device-window --window W2m --card 0 --native-nice 19 --seconds 10800 --k0 "$P/build/k0/window.json" --w0 "$P/build/w0/window.json" --k1a "$P/build/k1a/window.json" --k1b "$P/build/k1b/window.json" --k2 "$P/build/k2/window.json" --dispatch "$P/build/k2/run/dispatch-measured.json" --input "$P/build/input" --oracle "$ORACLE" --output "$P/build/w2m"
+nice -n 0 ionice -c 3 env OMP_NUM_THREADS=2 python -B "$P/window.py" --authorized-device-window --window W2m --card 0 --native-nice 0 --seconds 10800 --k0 "$P/build/k0-r2/window.json" --w0 "$P/build/w0-r2/window.json" --k1a "$P/build/k1a-r2/window.json" --k1b "$P/build/k1b-r2/window.json" --k2 "$P/build/k2-r2/window.json" --dispatch "$P/build/k2-r2/run/dispatch-measured.json" --input "$P/build/input" --oracle "$ORACLE" --output "$P/build/w2m-r2"
 ```
 
 W2c uses the same table with `--timing class` in the native command. Its queues
@@ -101,7 +103,7 @@ profiling and is never a decode speed claim. W2/W2m use `--timing token`: queues
 without profiling and no timestamp queries.
 
 ```bash
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B "$P/window.py" --authorized-device-window --window W2c --card 0 --native-nice 19 --seconds 10800 --k0 "$P/build/k0/window.json" --w0 "$P/build/w0/window.json" --k1a "$P/build/k1a/window.json" --k1b "$P/build/k1b/window.json" --k2 "$P/build/k2/window.json" --dispatch "$P/build/k2/run/dispatch-measured.json" --input "$P/build/input" --oracle "$ORACLE" --output "$P/build/w2c"
+nice -n 0 ionice -c 3 env OMP_NUM_THREADS=2 python -B "$P/window.py" --authorized-device-window --window W2c --card 0 --native-nice 0 --seconds 10800 --k0 "$P/build/k0-r2/window.json" --w0 "$P/build/w0-r2/window.json" --k1a "$P/build/k1a-r2/window.json" --k1b "$P/build/k1b-r2/window.json" --k2 "$P/build/k2-r2/window.json" --dispatch "$P/build/k2-r2/run/dispatch-measured.json" --input "$P/build/input" --oracle "$ORACLE" --output "$P/build/w2c-r2"
 ```
 
 Optional W1 streams one layer at a time on one card for eight generated tokens.
@@ -109,7 +111,7 @@ If supplied to a model window with `--w1`, its identity and exactness are checke
 Its omission never blocks W2.
 
 ```bash
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B "$P/window.py" --authorized-device-window --window W1 --card 0 --native-nice 19 --seconds 10800 --k0 "$P/build/k0/window.json" --input "$P/build/input" --oracle "$ORACLE" --output "$P/build/w1"
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B "$P/window.py" --authorized-device-window --window W1 --card 0 --native-nice 19 --seconds 10800 --k0 "$P/build/k0-r2/window.json" --input "$P/build/input" --oracle "$ORACLE" --output "$P/build/w1-r2"
 ```
 
 Every model window compares all retained 384 layer fixtures and all requested
@@ -125,8 +127,7 @@ library resolution; missing dependencies fail before the native binary starts.
 The environment policy is closed: unknown variables and unregistered driver
 settings are rejected, including empty debug variables. Only the recorded native
 allowlist reaches the child. `--native-nice` records the requested native priority
-and refuses a priority lower than the wrapper inherited; this packet's commands
-use 19 and do not seek privileges to change that.
+and requires the wrapper to already have exactly that nice value (default 19). The receipt records `wrapper_nice`, `native_nice` and `helper_nice`. The wrapper launches hashing, loader inspection and journal helpers at nice 19 itself, without changing the priority inherited by the native child. Launch nice-0 commands from a nice-0 coordinator; no privilege escalation is attempted.
 
 Output directories must be new and beneath ignored `build/`. Preserve receipts,
 fixtures, raw timestamps, stdout and kernel logs before cleaning measured output.

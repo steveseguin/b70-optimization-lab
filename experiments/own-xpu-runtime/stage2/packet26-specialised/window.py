@@ -16,7 +16,27 @@ HERE=Path(__file__).resolve().parent
 ROOT=HERE.parents[3]
 spec=importlib.util.spec_from_file_location('packet2_window',HERE.parent/'packet2/tests/device_window.py')
 p2=importlib.util.module_from_spec(spec);spec.loader.exec_module(p2)
-sha=p2.sha
+def helper_command(command):
+ return ['nice','-n','19','ionice','-c','3']+list(map(str,command))
+
+def sha(path):
+ return subprocess.check_output(helper_command(['sha256sum','--',path]),text=True,timeout=120).split()[0]
+
+def journal(cursor=None):
+ args=['journalctl','-k','--no-pager','--show-cursor']
+ args+=['--after-cursor',cursor] if cursor else ['-n','200']
+ result=subprocess.run(helper_command(args),capture_output=True,text=True,timeout=2)
+ if result.returncode or result.stderr.strip():raise RuntimeError('kernel journal unavailable: '+result.stderr)
+ lines=result.stdout.splitlines();cursors=[s[len('-- cursor: '):] for s in lines if s.startswith('-- cursor: ')]
+ if not cursors and not cursor:raise RuntimeError('missing journal boundary')
+ return '\n'.join(s for s in lines if not s.startswith('-- cursor: '))+'\n',cursors[-1] if cursors else cursor
+
+def priority_gate(requested):
+ actual=os.getpriority(os.PRIO_PROCESS,0)
+ require(0<=requested<=19 and actual==requested,'wrapper nice must equal requested --native-nice (default 19)')
+ require(os.environ.get('OMP_NUM_THREADS')=='2','OMP_NUM_THREADS=2 required')
+ return dict(wrapper_nice=actual,native_nice=requested,helper_nice=19)
+
 AUTHORITY='iq3-p17-detmath-v2'
 SCHEMA='own-runtime.iq3.packet26.window.v1'
 CONFIG={
@@ -82,7 +102,7 @@ def oracle_gate(path, input_tokens, steps, count):
     return fixtures(path, steps), tokens[:count]
 
 def supervise(child, seconds, cursor, kernel, latch_fault, persist, requested,
-              journal=p2.journal, now=time.monotonic, sleep=time.sleep, drain_seconds=60):
+              journal=journal, now=time.monotonic, sleep=time.sleep, drain_seconds=60):
     """Every poll/drain has a deadline; only one SIGTERM, never hard-kill."""
     start = now()
     sent = None
@@ -164,10 +184,10 @@ def compare_layers(actual_root, oracle_root, expected_hashes):
 
 def ldd_preflight(binary, runner=subprocess.run):
     # Loader inspection only: never invoke the device program or discovery.
-    result = runner(['ldd', str(binary)], capture_output=True, text=True, timeout=10)
+    result = runner(helper_command(['ldd', str(binary)]), capture_output=True, text=True, timeout=10)
     require(result.returncode == 0 and 'not found' not in result.stdout + result.stderr,
             'ldd dependency preflight failed: ' + result.stdout + result.stderr)
-    return dict(argv=['ldd', str(binary)], returncode=result.returncode, stdout=result.stdout, stderr=result.stderr)
+    return dict(argv=helper_command(['ldd', str(binary)]), returncode=result.returncode, stdout=result.stdout, stderr=result.stderr)
 
 def token_diagnostics(observed, expected):
     first = next((i + 1 for i in range(max(len(observed), len(expected)))
@@ -299,7 +319,7 @@ def run_child(command,record,out,latch,seconds,environment,bindings,check):
  record.update(command=command,passed=False,device_executed=False)
  persist()
  try:
-  pre,cursor=p2.journal();(out/'preflight-kernel.txt').write_text(pre)
+  pre,cursor=journal();(out/'preflight-kernel.txt').write_text(pre)
   with (out/'stdout.txt').open('w') as log,(out/'kernel-window.txt').open('w') as kernel:
    require(not requested,'stopped before launch')
    child=subprocess.Popen(command,stdout=log,stderr=subprocess.STDOUT,env=environment['native'])
@@ -325,11 +345,8 @@ def main():
  for key in ('input','output','oracle','k0','k1a','k1b','k2','w0','w1','dispatch'):
   parser.add_argument('--'+key,type=Path,required=key=='output')
  a=parser.parse_args();environment=environment_gate()
- require(os.environ.get('OMP_NUM_THREADS')=='2' and os.getpriority(os.PRIO_PROCESS,0)==19,'wrapper nice19 OMP_NUM_THREADS=2 required')
- require('idle' in subprocess.check_output(['ionice','-p',str(os.getpid())],text=True,timeout=2),'wrapper ionice -c3 required')
- # A child cannot lower an inherited nice value without privileges. Never pretend
- # --native-nice 0 took effect when the wrapper was launched nice19.
- require(a.native_nice>=os.getpriority(os.PRIO_PROCESS,0),'native nice cannot be lower than inherited nice; launch coordinator wrapper at requested priority')
+ priorities=priority_gate(a.native_nice)
+ require('idle' in subprocess.check_output(helper_command(['ionice','-p',str(os.getpid())]),text=True,timeout=2),'wrapper ionice -c3 required')
  seconds=watchdog_seconds(a.window,a.seconds);cfg=dict(CONFIG[a.window],card=a.card)
  require(0<=a.card and a.card+cfg['cards']<=4,'card indexes outside 0..3')
  build=(HERE/'build').resolve();out=a.output.resolve();boot=Path('/proc/sys/kernel/random/boot_id').read_text().strip();latch=build/'FAULT.json'
@@ -343,7 +360,7 @@ def main():
  for name,digest in native_hashes.items():bindings[build/name]=digest
  for path,digest in bindings.items():require(sha(path)==digest,'source/binary changed: '+str(path))
  identity=dict(schema=SCHEMA,window=a.window,boot_id=boot,artifacts_sha256=native_hashes,environment=environment,**cfg)
- record=dict(identity,binary_sha256=artifacts['device/own-rt-iq3'],deadlines=deadline_record(a.window,seconds),native_nice=a.native_nice,
+ record=dict(identity,binary_sha256=artifacts['device/own-rt-iq3'],deadlines=deadline_record(a.window,seconds),**priorities,
   profiling=a.window in ('K2','W2c'),evidence_label='profiling; not model decode speed' if a.window in ('K2','W2c') else 'correctness window')
  if a.window!='K0':k0_gate(a.k0,identity,cfg);bindings[a.k0]=sha(a.k0)
  if a.window in ('K1a','K1b','K2'):
@@ -384,8 +401,8 @@ def main():
   def check(r):
    n=read(out/'run/receipt.json')
    require(n.get('schema')=='packet26.k2.v1' and n.get('passed') is True and n.get('device_executed') is True and n.get('diagnostic') is True and n.get('repetitions')==200 and n.get('owner_cards')==1 and sequential_teardown(n,3),'K2 native coverage/teardown incomplete')
-   require(type(n.get('max_submission_ns')) in (int,float) and 0<n['max_submission_ns']<=4e9,'K2 submission budget failed')
    summary=summarize(out/'run',identity)
+   require(type(n.get('max_submission_ns')) in (int,float) and 0<n['max_submission_ns']<=4e9,'K2 submission budget failed')
    require(summary['passed'],'K2 timing/exactness gate failed')
    r.update(class_rows=len(summary['classes']),dispatch_sha256=sha(out/'run/dispatch-measured.json'),events_sha256=sha(out/'run/events.jsonl'),summary_sha256=sha(out/'run/summary.json'))
  elif a.window=='W0':
@@ -412,7 +429,7 @@ def main():
  if a.dispatch is not None and a.window in ('K1a','K1b','K2'):command+=['--dispatch',str(a.dispatch.resolve())]
  record['ldd_preflight']=ldd_preflight(binary)
  record['bindings']={str(k):v for k,v in bindings.items()}
- command=['nice','-n',str(a.native_nice-os.getpriority(os.PRIO_PROCESS,0)),'ionice','-c','3']+command
+ command=['ionice','-c','3']+command
  return run_child(command,record,out,latch,seconds,environment,bindings,check)
 
 if __name__=='__main__':

@@ -135,7 +135,7 @@ class Windows(unittest.TestCase):
  def test_ldd_not_device_execution(self):
   calls=[]
   def runner(cmd,**kwargs):calls.append(cmd);return type('Result',(),dict(returncode=0,stdout='lib present',stderr=''))()
-  w.ldd_preflight(Path('/never/execute'),runner);self.assertEqual(calls,[['ldd','/never/execute']])
+  w.ldd_preflight(Path('/never/execute'),runner);self.assertEqual(calls,[w.helper_command(['ldd','/never/execute'])])
  def test_ldd_failure(self):
   def runner(*a,**kw):return type('Result',(),dict(returncode=0,stdout='not found',stderr=''))()
   with self.assertRaises(ValueError):w.ldd_preflight(Path('/never/execute'),runner)
@@ -182,6 +182,23 @@ class Windows(unittest.TestCase):
   row.update(dispatch_sha256=w.sha(root/'dispatch-measured.json'),events_sha256=w.sha(root/'events.jsonl'),summary_sha256=w.sha(root/'summary.json'));self.write(p,row)
   w.k2_gate(p,self.identity(),root/'dispatch-measured.json');(root/'dispatch-measured.json').write_text('{"changed":true}')
   with self.assertRaises(ValueError):w.k2_gate(p,self.identity(),root/'dispatch-measured.json')
+
+class Priority(unittest.TestCase):
+ def test_priorities(self):
+  from unittest.mock import patch
+  for actual in (0,7,19):
+   with patch.object(w.os,'getpriority',return_value=actual), patch.dict(w.os.environ,{'OMP_NUM_THREADS':'2'}):
+    self.assertEqual(w.priority_gate(actual),dict(wrapper_nice=actual,native_nice=actual,helper_nice=19))
+    for requested in (0,19):
+     if actual!=requested:
+      with self.assertRaisesRegex(ValueError,'must equal'):w.priority_gate(requested)
+ def test_cpu_helpers_are_idle(self):
+  from unittest.mock import patch
+  with patch.object(w.subprocess,'check_output',return_value='abc  file\n') as run:
+   self.assertEqual(w.sha(Path('/file')),'abc');self.assertEqual(run.call_args.args[0][:6],['nice','-n','19','ionice','-c','3'])
+  result=type('Result',(),dict(returncode=0,stdout='hello\n-- cursor: end\n',stderr=''))()
+  with patch.object(w.subprocess,'run',return_value=result) as run:
+   self.assertEqual(w.journal(),('hello\n','end'));self.assertEqual(run.call_args.args[0][:6],['nice','-n','19','ionice','-c','3'])
 
 class K2Summary(unittest.TestCase):
  def rows(self,new=80):return [dict(**{'class':'norm'},variant=v,repetition=i,start_ns=100,end_ns=100+(100 if v=='packet18' else new),exact=True) for v in ('packet18','specialised') for i in range(200)]
@@ -246,4 +263,42 @@ class K2Summary(unittest.TestCase):
   result=aggregate(rows,{'gemv:gdn.qkv':{'workloads':['q6','q8']}})
   self.assertFalse(result['passed']);self.assertTrue(any('missing repetitions' in x for x in result['failures']))
  def test_empty_fails(self):self.assertFalse(aggregate([],['norm'])['passed'])
-if __name__=='__main__':unittest.main()
+class K2Failures(unittest.TestCase):
+ rows=K2Summary.rows
+ def test_changed_gemv_identity_still_refused(self):
+  from k2_summary import summarize
+  with tempfile.TemporaryDirectory(dir=w.HERE/'build') as tmp:
+   root=Path(tmp);rows=[dict(r,**{'class':'gemv:test'},implementation='r5' if r['variant']=='packet18' else 'p25.rows4',candidate_available=True) for r in self.rows()]
+   rows[-1]['implementation']='p25.wide8'
+   (root/'events.jsonl').write_text('\n'.join(json.dumps(r) for r in rows))
+   report=summarize(root,classes={'gemv:test':dict(dispatch_section='gemv',dispatch_key='test')})
+   self.assertFalse(report['passed']);self.assertTrue((root/'dispatch-measured.json').exists())
+ def test_failed_candidates_continue_and_write_complete_table(self):
+  from k2_summary import summarize
+  with tempfile.TemporaryDirectory(dir=w.HERE/'build') as tmp:
+   root=Path(tmp);rows=self.rows()
+   rows += [dict(r,**{'class':'route'}) for r in self.rows() if r['variant']=='packet18']
+   registry={k:dict(dispatch_section='classes',dispatch_key=k) for k in ('norm','route','streams')}
+   rows += [dict(r,**{'class':'streams'}) for r in self.rows() if r['variant']=='packet18']
+   (root/'events.jsonl').write_text('\n'.join(json.dumps(r) for r in rows))
+   (root/'candidate-failures.jsonl').write_text('\n'.join(json.dumps(dict(**{'class':k},variant='specialised',error='mismatch')) for k in ('route','streams')))
+   report=summarize(root,classes=registry)
+   self.assertTrue(report['passed']);self.assertEqual(set(report['classes']),set(registry))
+   dispatch=json.loads((root/'dispatch-measured.json').read_text())
+   self.assertEqual(dispatch['classes'],dict(norm='specialised',route='packet18',streams='packet18'))
+   # Excluding a candidate never waives its device execution budget.
+   over=dict(self.rows()[0],**{'class':'route'},variant='specialised',end_ns=5e9)
+   (root/'events.jsonl').write_text('\n'.join(json.dumps(r) for r in rows+[over]))
+   self.assertFalse(summarize(root,classes=registry)['passed'])
+   # A missing reference remains a failure even when its candidate was excluded.
+   (root/'events.jsonl').write_text('\n'.join(json.dumps(r) for r in rows if not (r['class']=='route' and r['repetition']==1)))
+   self.assertFalse(summarize(root,classes=registry)['passed'])
+   self.assertTrue((root/'dispatch-measured.json').exists())
+
+if __name__=='__main__':
+ import hashlib
+ suite=unittest.defaultTestLoader.loadTestsFromModule(__import__(__name__))
+ result=unittest.TextTestRunner().run(suite)
+ receipt=dict(passed=result.wasSuccessful(),returncode=0 if result.wasSuccessful() else 1,tests=result.testsRun,device_executed=False,source_sha256={name:hashlib.sha256((w.HERE/name).read_bytes()).hexdigest() for name in ('test_window.py','window.py','window_safety.py','k2_summary.py','k2-class-registry.json')})
+ (w.HERE/'window-tests.json').write_text(json.dumps(receipt,indent=2)+'\n')
+ raise SystemExit(receipt['returncode'])

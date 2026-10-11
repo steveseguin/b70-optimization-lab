@@ -27,7 +27,7 @@ def prepare():
  values=struct.unpack('<262144H',(P/'rope.bf16').read_bytes())
  (B/'fusion-rope.hpp').write_text('#pragma once\nnamespace rope_constants { inline constexpr int positions=4096; inline constexpr uint16_t table[]={'+','.join(map(str,values))+'};}\n')
 def seal():
- gates={name:json.loads((P/name).read_text()) for name in ('integration-gates.json','fixture-gates.json','sanitizer-mini.json','real-eight.json','host-issue-benchmark.json','entry-smoke.json','kernel-sizes.json','carryover-proof.json','copy-budget.json','window-tests.json','identity-tree-tests.json','entry-codes.json')}
+ gates={name:json.loads((P/name).read_text()) for name in ('integration-gates.json','fixture-gates.json','sanitizer-mini.json','real-eight.json','host-issue-benchmark.json','entry-smoke.json','kernel-sizes.json','carryover-proof.json','copy-budget.json','window-tests.json','identity-tree-tests.json','entry-codes.json','validation-gates.json')}
  assert all(v.get('passed') for v in gates.values())
  archived=gates['fixture-gates.json']['full_receipts'];blob=P/archived['path']
  assert sha(blob)==archived['compressed_sha256']
@@ -39,6 +39,8 @@ def seal():
  assert gates['integration-gates.json']['binary_sha256']==binaries['host/own-rt-iq3']
  assert gates['copy-budget.json']['binary_sha256']==binaries['host/own-rt-iq3']
  assert gates['sanitizer-mini.json']['binary_sha256']==binaries['asan/own-rt-iq3']
+ for row in gates['validation-gates.json']['checks']:
+  if 'entry' in row:assert row['binary_sha256']==binaries[row['compiler']+'/'+row['entry']]
  for row in gates['fixture-gates.json']['rows']:assert row['binary_sha256']==binaries[row['compiler']+'/nongemv-fixtures']
  host_flags=['-fno-fast-math','-ffp-contract=off']
  host_precision={}
@@ -72,7 +74,7 @@ def main():
  if a.stage=='all':
   for mode in ('host','icpx-host','asan','device'):configure(mode)
  if a.stage in ('cheap','all'):
-  for script in ('cpu_gates.py','copy_budget.py','fixture_gate.py','sanitizer_gate.py','test_window.py','entry_smoke_test.py','entry_codes.py','census.py','capture_gate.py','carryover.py'):
+  for script in ('cpu_gates.py','copy_budget.py','fixture_gate.py','validation_gate.py','sanitizer_gate.py','test_window.py','entry_smoke_test.py','entry_codes.py','census.py','capture_gate.py','carryover.py'):
    run([PY,'-B',P/script],script+'.log',bounded=script!='sanitizer_gate.py')
  if a.stage in ('real','all'):run([PY,'-B',P/'real_eight_gate.py'],'real-eight.log')
  if a.stage in ('seal','all'):seal()

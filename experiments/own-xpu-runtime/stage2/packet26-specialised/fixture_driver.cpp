@@ -1,3 +1,5 @@
+#include "k2_failure.hpp"
+#include "fixture_validation.hpp"
 #define integrated kernel_fixture_snapshot_integrated
 #define ng kernel_fixture_snapshot_ng
 #define detmath kernel_fixture_snapshot_detmath
@@ -65,7 +67,7 @@ struct Cpu:Backend {
  void release(void* p,Memory)override{::operator delete(p);}
  Event copy(void* a,const void* b,size_t n,std::span<const Event>)override{std::memcpy(a,b,n);return next_handle();}
  Event marker(std::span<const Event>)override{return next_handle();}
- Event compute(const Operation& op,std::span<void* const> p,std::span<const Event>)override{dynamic_cast<const HostOperation&>(op).run(p);return next_handle();}
+ Event compute(const Operation& op,std::span<void* const> p,std::span<const Event>)override{if(!fixture_validation::only)dynamic_cast<const HostOperation&>(op).run(p);return next_handle();}
  bool complete(Event)override{return true;}bool wait(Event,Deadline)override{return true;}
  EventTiming timing(Event)override{return {0,0};}
  void synchronize()override{}void clear_events()override{}void close_queue()override{}void close_context()override{}
@@ -94,7 +96,7 @@ struct Runner {
    if(specialised_path&&specialised::supported(s))launch=specialised::submit(device,s,bindings,scratch);
    else {
 #ifdef OWN_RT_HOST_ONLY
-    Original op(s);auto e=device.compute(op,bindings,{});
+    fixture_validation::nongemv(device,s,bindings);Original op(s);auto e=device.compute(op,bindings,{});
 #else
     auto e=ng::submit(device,s,bindings,{});
 #endif
@@ -108,11 +110,23 @@ struct Runner {
   device.retire_completed_events();for(auto a:owned)device.arena.release(a);owned.clear();
  }
 };
-void compare(const Fixture& a,const Fixture& b,std::ofstream& bytes){for(int j=0;j<19;++j)if(a.outputs[j]){check(a.data[j]==b.data[j],a.name+" mismatch slot "+std::to_string(j));bytes.write(reinterpret_cast<const char*>(b.data[j].data()),b.data[j].size());}}
+void compare(const Fixture& a,const Fixture& b,std::ofstream& bytes){if(fixture_validation::only)return;for(int j=0;j<19;++j)if(a.outputs[j]){check(a.data[j]==b.data[j],a.name+" mismatch slot "+std::to_string(j));bytes.write(reinterpret_cast<const char*>(b.data[j].data()),b.data[j].size());}}
 }
 int main(int argc,char** argv){std::filesystem::path out;std::unique_ptr<Runner> runner;try{
  unsigned card=0,seed=1,repetitions=200;bool authorized=false;auto fixtures=std::filesystem::path(__FILE__).parent_path()/"build/fusion-fixtures";
- for(int i=1;i<argc;++i){std::string arg=argv[i];if(arg=="--dispatch"&&i+1<argc)packet26::dispatch.load(argv[++i]);else if(arg=="--card"&&i+1<argc)card=std::stoul(argv[++i]);else if(arg=="--output"&&i+1<argc)out=argv[++i];else if(arg=="--fixtures"&&i+1<argc)fixtures=argv[++i];else if(arg=="--seed"&&i+1<argc)seed=std::stoul(argv[++i]);else if(arg=="--repetitions"&&i+1<argc)repetitions=std::stoul(argv[++i]);else if(arg=="--authorized-device-window")authorized=true;else throw std::invalid_argument("fixture arguments");}
+ for(int i=1;i<argc;++i){std::string arg=argv[i];if(arg=="--validate-only"){
+#ifdef OWN_RT_HOST_ONLY
+ fixture_validation::only=true;
+#else
+ throw std::invalid_argument("CPU validation only");
+#endif
+ }else if(arg=="--poison-dense-status"||arg=="--inject-candidate-failures"){
+#ifdef OWN_RT_HOST_ONLY
+ if(arg=="--poison-dense-status")fixture_validation::poison_dense=true;else fixture_validation::inject=true;
+#else
+ throw std::invalid_argument("CPU regression only");
+#endif
+ }else if(arg=="--dispatch"&&i+1<argc)packet26::dispatch.load(argv[++i]);else if(arg=="--card"&&i+1<argc)card=std::stoul(argv[++i]);else if(arg=="--output"&&i+1<argc)out=argv[++i];else if(arg=="--fixtures"&&i+1<argc)fixtures=argv[++i];else if(arg=="--seed"&&i+1<argc)seed=std::stoul(argv[++i]);else if(arg=="--repetitions"&&i+1<argc)repetitions=std::stoul(argv[++i]);else if(arg=="--authorized-device-window")authorized=true;else throw std::invalid_argument("fixture arguments");}
  check(!out.empty(),"--output required");std::filesystem::create_directories(out);
 #ifdef OWN_RT_HOST_ONLY
  check(!authorized,"host fixture binary cannot run device window");
@@ -130,12 +144,18 @@ int main(int argc,char** argv){std::filesystem::path out;std::unique_ptr<Runner>
  unsigned decode_cases=0;
  for(auto source:cases){if(!decode_names.contains(source.name))continue;++decode_cases;
   if(source.shape.op==ng::prepare||source.shape.op==ng::pool||source.shape.op==ng::select||source.shape.op==ng::attention_score){source.data[17]=Fixture::integer(63);if(source.shape.op==ng::attention_score){auto a=source.args();for(int j=0;j<source.shape.budget+3;++j)a.i(4)[j]=j<64?j:-1;}}
-  auto oracle=source;oracle.reference();
-  for(unsigned r=0;r<repetitions;++r){auto old=source,newer=source;runner->events=&events;runner->run(old,false,r);runner->run(newer,true,r);compare(oracle,old,bytes);compare(oracle,newer,bytes);compare(old,newer,bytes);++checks;}
+  auto oracle=source;if(!fixture_validation::only)oracle.reference();
+  bool excluded[2]{};
+  for(unsigned r=0;r<(fixture_validation::only?1u:repetitions);++r)for(int version:{0,1}){
+   if(excluded[version])continue;
+   try{fixture_validation::inject_failure(classname(source.shape),version);auto actual=source;runner->events=&events;runner->run(actual,version,r);compare(oracle,actual,bytes);++checks;}
+   catch(const std::exception& e){if(fixture_validation::only&&!dynamic_cast<const fixture_validation::InjectedFailure*>(&e))throw;packet26::candidate_failure(out,classname(source.shape),version?"specialised":"packet18",source.name,e);excluded[version]=true;
+    runner->device.retire_completed_events();for(auto a:runner->owned)runner->device.arena.release(a);runner->owned.clear();}
+  }
  }
  check(decode_cases==decode_names.size(),"all registered decode fixtures required");
 #else
- for(const auto& source:cases){auto oracle=source,old=source,newer=source;oracle.reference();runner->run(old,false);runner->run(newer,true);compare(oracle,old,bytes);compare(oracle,newer,bytes);compare(old,newer,bytes);++checks;}
+ for(const auto& source:cases){auto oracle=source,old=source,newer=source;if(!fixture_validation::only)oracle.reference();runner->run(old,false);runner->run(newer,true);compare(oracle,old,bytes);compare(oracle,newer,bytes);compare(old,newer,bytes);++checks;}
 #endif
  bytes.close();events.close();
  auto shutdown=runner->device.shutdown(std::chrono::seconds(60));check(shutdown.safe_to_exit&&shutdown.exit_code==0,"fixture teardown");
@@ -153,12 +173,13 @@ int main(int argc,char** argv){std::filesystem::path out;std::unique_ptr<Runner>
 #endif
  adapter_checks+=gemv.checks;runner->maximum=std::max(runner->maximum,gemv.max_submission_ns);teardown.insert(teardown.size()-1,","+gemv.teardown);
  std::ifstream input(out/"output.bin",std::ios::binary);SHA256_CTX hash;SHA256_Init(&hash);std::array<char,65536> block;while(input){input.read(block.data(),block.size());SHA256_Update(&hash,block.data(),input.gcount());}unsigned char digest[32];SHA256_Final(digest,&hash);std::ostringstream hex;for(auto b:digest)hex<<std::hex<<std::setw(2)<<std::setfill('0')<<unsigned(b);
+ bool all_exact=!fixture_validation::only&&!std::filesystem::exists(out/"candidate-failures.jsonl");
  std::ofstream receipt(out/"receipt.json");receipt<<"{\"schema\":\""<<
 #ifdef PACKET26_K2
  "packet26.k2.v1"
 #else
  "packet26.fixtures.v1"
 #endif
- <<"\",\"passed\":true,\"device_executed\":"<<(authorized?"true":"false")<<",\"diagnostic\":true,\"owner_cards\":1,\"reference_exact\":true,\"packet18_exact\":true,\"fixtures\":"<<checks<<",\"adapter_checks\":"<<adapter_checks<<",\"odd_lengths\":20,\"ties\":1,\"nan_routes\":1,\"repetitions\":"<<repetitions<<",\"output_sha256\":\""<<hex.str()<<"\",\"max_submission_ns\":"<<runner->maximum<<",\"teardown\":"<<teardown<<"}\n";
+ <<"\",\"passed\":true,\"device_executed\":"<<(authorized?"true":"false")<<",\"validation_only\":"<<(fixture_validation::only?"true":"false")<<",\"diagnostic\":true,\"owner_cards\":1,\"reference_exact\":"<<(all_exact?"true":"false")<<",\"packet18_exact\":"<<(all_exact?"true":"false")<<",\"fixtures\":"<<checks<<",\"adapter_checks\":"<<adapter_checks<<",\"odd_lengths\":20,\"ties\":1,\"nan_routes\":1,\"repetitions\":"<<repetitions<<",\"output_sha256\":\""<<hex.str()<<"\",\"max_submission_ns\":"<<runner->maximum<<",\"teardown\":"<<teardown<<"}\n";
  std::cout<<checks<<" fixture checks PASS\n";return 0;
  }catch(const std::exception& error){std::cerr<<error.what()<<'\n';if(!out.empty()){std::filesystem::create_directories(out);std::ofstream(out/"failure.json")<<"{\"passed\":false,\"error\":"<<quote(error.what())<<"}\n";}if(runner)packet26::failure(runner->device,out,error.what());return 1;}}

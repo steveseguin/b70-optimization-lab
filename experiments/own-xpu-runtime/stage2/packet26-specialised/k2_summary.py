@@ -42,7 +42,7 @@ def aggregate(rows,classes=None,repetitions=200):
  if not rows:failures.append('empty event set')
  if rows and bad/len(rows)>.01:failures.append('more than one percent invalid event durations')
  result={};selection={}
- for name in sorted(names):
+ for name in sorted(names|set(registry)):
   variants={};counts={}
   for variant in ('packet18','specialised'):
    keys=[(name,variant,i) for i in range(repetitions)]
@@ -59,7 +59,7 @@ def aggregate(rows,classes=None,repetitions=200):
   candidate_rows=[r for r in rows if r['class']==name and r['variant']=='specialised']
   if name.startswith('gemv:'):available=bool(candidate_rows) and all(r.get('candidate_available') is True for r in candidate_rows)
   elif any(r.get('candidate_available') is False for r in candidate_rows):available=False
-  selected='specialised' if available and old is not None and new is not None and new<.9*old else 'packet18'
+  selected='specialised' if available and all(r.get('exact') is True for r in candidate_rows) and all((name,v,i) in grouped for v in ('packet18','specialised') for i in range(repetitions)) and old is not None and new is not None and new<.9*old else 'packet18'
   workload_stats={}
   workload_names={r.get('workload') for r in rows if r['class']==name and r.get('workload') is not None}
   required=registry.get(name,{}).get('workloads')
@@ -90,20 +90,52 @@ def summarize(root,identity=None,classes=None):
   registry=HERE/'k2-class-registry.json'
   if not registry.is_file():raise ValueError('registered K2 classes missing')
   classes=json.loads(registry.read_text())['classes']
+ failure_file=root/'candidate-failures.jsonl'
+ rejected=[json.loads(s) for s in failure_file.read_text().splitlines() if s.strip()] if failure_file.exists() else []
+ excluded={r['class'] for r in rejected}
  summary=aggregate(rows,classes)
+ summary['candidate_failures']=rejected
+ summary['excluded_classes']=sorted(excluded)
+ # Excluded candidate arms are expected to have incomplete timing rows. Retain
+ # their complete diagnostics but do not let them prevent unrelated measurements.
+ fatal=[]
+ for name,entry in classes.items():
+  part=aggregate([r for r in rows if r['class']==name],{name:entry})
+  if name in excluded:
+   summary['selection'][name]='packet18'
+   summary['classes'][name]['selected']='packet18'
+   summary['classes'][name]['candidate_failures']=[r for r in rejected if r['class']==name]
+   if any(r['variant']=='packet18' for r in rejected if r['class']==name):
+    fatal.append('reference arm failed: '+name)
+   # Check the surviving reference with a duplicate reference arm, so missing
+   # reference workloads, bad bytes and budgets cannot hide behind exclusion.
+   old=[r for r in rows if r['class']==name and r['variant']=='packet18']
+   control=aggregate(old+[dict(r,variant='specialised') for r in old],{name:entry})
+   fatal.extend(f for f in control['failures'] if f!='more than one percent invalid event durations')
+  else:fatal.extend(f for f in part['failures'] if f!='more than one percent invalid event durations')
+ if any(r['class'] not in classes for r in rows+rejected):fatal.append('unregistered class')
+ for name in classes:
+  if name.startswith('gemv:'):
+   for variant in ('packet18','specialised'):
+    implementations={r.get('implementation','r5') for r in rows if r['class']==name and r['variant']==variant}
+    if len(implementations)>1:fatal.append('GEMV implementation identity changed: '+name+'/'+variant)
+ # The duration budget is global and never waived by a candidate exclusion.
+ fatal.extend(f for f in summary['failures'] if 'submission exceeds four seconds:' in f)
+ if rows and summary['invalid_duration_rows']/len(rows)>.01:fatal.append('more than one percent invalid event durations')
+ summary['excluded_arm_diagnostics']=summary['failures']
+ summary['failures']=sorted(set(fatal));summary['passed']=not fatal
  summary['events_sha256']=hashlib.sha256(events.read_bytes()).hexdigest()
  (root/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
- if summary['passed']:
-  dispatch=dict(schema='packet26.dispatch.v1',classes={},fusions={},gemv={})
-  for name,selected in summary['selection'].items():
-   entry=classes[name];section=entry.get('dispatch_section');key=entry.get('dispatch_key')
-   if section is None:continue
-   if section=='gemv':
-    implementations={r.get('implementation','r5') for r in rows if r['class']==name and r['variant']==selected}
-    if len(implementations)!=1:raise ValueError('GEMV implementation identity changed: '+name)
-    selected=implementations.pop()
-   for target in entry.get('dispatch_keys',[key]):dispatch[section][target]=selected
-  (root/'dispatch-measured.json').write_text(json.dumps(dispatch,indent=2)+'\n')
+ dispatch=dict(schema='packet26.dispatch.v1',classes={},fusions={},gemv={})
+ for name,entry in classes.items():
+  selected=summary['selection'][name]
+  section=entry.get('dispatch_section');key=entry.get('dispatch_key')
+  if section is None:continue
+  if section=='gemv':
+   implementations={r.get('implementation','r5') for r in rows if r['class']==name and r['variant']==selected}
+   selected=implementations.pop() if len(implementations)==1 else 'r5'
+  for target in entry.get('dispatch_keys',[key]):dispatch[section][target]=selected
+ (root/'dispatch-measured.json').write_text(json.dumps(dispatch,indent=2)+'\n')
  return summary
 
 if __name__=='__main__':
