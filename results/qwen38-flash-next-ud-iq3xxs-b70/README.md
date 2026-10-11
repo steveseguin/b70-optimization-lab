@@ -82,3 +82,12 @@ recorded as such. The one-card number was taken while the two-card screen and
 several CPU builds shared the host; an uncontended exploratory run measured
 21.6 tok/s. Full tables: [reference-baseline-20261011.md](reference-baseline-20261011.md).
 These are uncertified reference figures for our own runtime to beat.
+
+Uncontended repeat of the one-card plan (card 2 alone, 03:23-03:55 UTC): decode
+median **15.96 tok/s**, 12/12 byte-equal
+([table](reference-baseline-onecard-uncontended-20261011.md)). Identical to the
+contended run, so the earlier exploratory 21.6 tok/s came from giving the CPU
+side 8 threads instead of the plan's 2: the one-card reference is bound by the
+CPU threads working the layers the fitter leaves on the host. A one-card plan
+variant with more CPU threads is a reasonable future reference row; it is not
+our runtime's concern.
