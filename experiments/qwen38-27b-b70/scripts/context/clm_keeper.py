@@ -319,17 +319,15 @@ def fact_of(line: str) -> tuple[str, str]:
 
 
 def number_of(value: str) -> int | None:
-    """The whole number a STATE value holds now: the one it starts with (`75 (60, gained 15 in item 606)` -> 75), the
-    one after an arrow (`-107 -> -31` -> -31), or the only one in it (`opened at 402` -> 402); None for `removed`
-    and for anything else."""
-    v = re.split(r"\u2192|->|=>", value.strip())[-1].strip()
-    m = re.match(r"(-?\d[\d,]*)(?![\d.])", v)
-    if m:
-        return int(m.group(1).replace(",", ""))
-    nums = re.findall(r"-?\d[\d,]*", re.sub(r"\(.*?\)", "", v))
-    if len(nums) == 1 and not re.match(r"(removed|closed|struck|deleted|gone)\b", v.lower()):
-        return int(nums[0].replace(",", ""))
-    return None
+    """The whole number a STATE value holds now: the last number in it once bracketed remarks are set aside
+    (`75 (60, gained 15 in item 606)` -> 75, `-107 -> -31` -> -31, `opened at 402` -> 402,
+    `-58 - 35 = -93, then set to 82 (item 48)` -> 82); None for `removed ...` and for a value without a whole number.
+    (A model that thinks writes such lines; reading the first number instead sent correct replies to the fallback.)"""
+    v = re.sub(r"\([^()]*\)", " ", value).replace("\u2212", "-").strip()
+    if re.match(r"(removed|closed|struck|deleted|gone)\b", v.lower()):
+        return None
+    nums = re.findall(r"(?<![\w.])-?\d[\d,]*(?![\d.]*\d)", v)
+    return int(nums[-1].replace(",", "")) if nums else None
 
 
 def _calc(expr: str) -> float | None:

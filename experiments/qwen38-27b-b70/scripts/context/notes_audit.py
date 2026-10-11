@@ -33,12 +33,10 @@ for f in sorted(glob.glob(t + "agent/context_snapshots/turn-*.json")):
         if sec == "STATE" and s:
             m = re.match(r"`?([a-z]+\d\d)`?\s*[:=]?\s*(.*)$", s)
             if m:
-                v = m.group(2).strip()
-                v = re.split(r"\u2192|->|=>", v)[-1].strip()          # "-107 -> -31": the value now is the last one
-                n = re.match(r"-?\d+", v)
-                nums = re.findall(r"-?\d+", re.sub(r"\(.*?\)", "", v))
-                gone = re.match(r"(removed|closed|struck|deleted)", v.lower())
-                state[m.group(1)] = int(n.group(0)) if n else (None if gone or len(nums) != 1 else int(nums[0]))
+                v = re.sub(r"\([^()]*\)", " ", m.group(2)).strip()        # as clm_keeper.number_of: the last number counts
+                nums = re.findall(r"(?<![\w.])-?\d[\d,]*(?![\d.]*\d)", v)
+                gone = re.match(r"(removed|closed|struck|deleted|gone)\b", v.lower())
+                state[m.group(1)] = None if gone or not nums else int(nums[-1].replace(",", ""))
     bad = {k: (state.get(k, "missing"), truth.get(k)) for k in set(state) | set(truth) if state.get(k) != truth.get(k)}
     for k, v in bad.items():
         if k not in first_bad:
