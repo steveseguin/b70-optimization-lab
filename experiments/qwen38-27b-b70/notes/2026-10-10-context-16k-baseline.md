@@ -653,3 +653,44 @@ had been wrong, and the run is four minutes quicker.
 
 The proxy now carries the policy at about the harness's score and time, with an agent that manages nothing and
 sends its whole history on every call.
+
+**X32b on the 1M stream: 222 of 228, a finished and verified run through the proxy.** 15:00-16:36, 95 minutes.
+
+| 999,460 tokens, 617 items, 32K live window | X32b proxy (official grade) | N32j harness keeper (official grade) |
+| --- | ---: | ---: |
+| all 228 questions | **222 (97.4 %)**, not void | 226 (99.1 %), not void |
+| probes | 197 / 203 | 201 / 203 |
+| current / old value / who / rule / method | 58/58, 56/58, 28/29, 28/29, 27/29 | 58/58, 58/58, 27/29, 29/29, 29/29 |
+| 1-4 / 5-24 / 25-99 / 100-399 / 400+ items back | 49/50, 50/50, 30/30, 44/48, 24/25 | 49/50, 49/50, 30/30, 48/48, 25/25 |
+| first / middle / last third of the run | 70/70, 66/70, 61/63 | 68/70, 70/70, 63/63 |
+| final query | 25 / 25, confidential one right | 25 / 25 |
+| minutes (per 100K) | 95 (9.5) | 83 (8.3) |
+| calls by the agent | 657 | 755 (plus 110 notes calls) |
+
+The agent sent its whole history on every call (1,266 messages by the end) and managed nothing; nothing was
+written in the sandbox. Proxy counters: 102 cuts, 102 notes versions saved and none rejected, 161 searches (one turn
+hit the limit of eight and was answered without the tool), NOTES between 2.4K and 4.9K characters, 4.0 to 4.2
+characters per token learned from the server. Per 100K the run took 7.9, 9.6, 12.1, 9.4, 8.4, 9.1, 8.6, 8.9 and
+11.7 minutes: no trend. Against the preregistered bar ("carries the policy at scale" at 90 % of the 228 with the
+rule at 90 %, not void): met, at 97.4 % with the rule at 28/29. One stream, one seed.
+
+One thing to fix that this run showed: the proxy put a RULES line back 95 times. The model kept copying the task
+statement's own rules into RULES and rewording them at each cut; the proxy restored the earlier wording and kept
+the rewording too, so the section carried near-copies (the notes stayed small because the model also tidied them).
+The proxy now replaces a rewording with the original line (commit `41795b839`, after this run started).
+
+**The memory guard fired once, at the very end, with no harm.** At 16:35:24, after the agent's last model call and
+the grader's verdict, the client's end-of-run bookkeeping on a 1,266-message history (final trajectory, 1.7 GB of
+per-call snapshots, the summary step) took about 0.8 GiB within seconds; available host memory went from 2.28 to
+1.49 GiB and the guard stopped the server container, which was idle. The run's result was already written. No GPU
+fault line in the kernel log; Gemma was restored on both cards at 16:40 and both answer. Handled as the standing
+rule says for a hard stop: evidence kept (`campaign9-MEMORY-GUARD.json`), cards checked, noted in CURRENT.md.
+For the next full-history client at this size: stop the server (idle) before the client's post-processing, or keep
+per-call snapshots off for that arm.
+
+| the keeper policy, 32K live window | 240K seed 0 (39) | 240K seed 1 (46) | 1M (228) |
+| --- | ---: | ---: | ---: |
+| in the harness (N32j) | 39, 15 min | 46, 16 min | 226, 83 min |
+| as the proxy (X32b) | 39, 17 min | 44, 18 min | 222, 95 min |
+| best protocol arm (B32iraR) | 35, 18 min | not run | 187, stopped run |
+| sliding window (W32) | 23, 26 min | not run | not run (W200) |
