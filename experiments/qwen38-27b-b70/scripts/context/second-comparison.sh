@@ -32,6 +32,7 @@
 #          item, checks the counters, does the arithmetic, archives and drops the item (QUOTED=1)
 #   KINDS=sparse  sparse prose (make_sparse_prose_tasks.py), options from SPARSE_ARGS (e.g. "--density 6 --words")
 #   PROSE_BATCH_TOKENS  prose batch size at generation [6400] (use a new OUT_DIR when changing it)
+#   W16 D16 C16 B16ir B16ira B16ira-free   live-cap study at budget 16,384 (16K, fast scale; same arms as 48)
 #   W48 D48 C48 B48ir B48ira B48ira-free   live-cap study at budget 49,152 (48K): W = truncate (clm_baselines
 #          TruncateAgent: drop oldest turns once over the limit, down to 75 %), D = compact (CompactAgent: at 75 %
 #          stub all but the newest 3 tool outputs and strip earlier thinking, then drop oldest if still over),
@@ -129,7 +130,7 @@ ARMS = {"A": ("plain", "memory", 0), "B32": ("clm", "memory", 32768), "B131": ("
         "E32o": ("plain", "notes", 32768), "Aw": ("plain", "memory", 0),
         "B32ir": ("improved", "memory", 32768), "Ar": ("plain", "memory", 0), "E32r": ("plain", "notes", 32768),
         "B32ira": ("improved", "memory", 32768), "B32iq": ("improved", "memory", 32768)}
-for cap, b in (("48", 49152), ("200", 204800)):  # live-cap study: lossy baselines vs the improved agent
+for cap, b in (("16", 16384), ("48", 49152), ("200", 204800)):  # live-cap study: lossy baselines vs the improved agent (16K = fast scale, 2026-10-10)
     ARMS.update({"W" + cap: ("truncate", "memory", b), "D" + cap: ("compact", "memory", b),
                  "C" + cap: ("summary", "memory", b), "B" + cap + "ir": ("improved", "memory", b),
                  "B" + cap + "ira": ("improved", "memory", b), "B" + cap + "ira-free": ("improved", "memory", b)})
@@ -239,7 +240,7 @@ run_one() {  # arm agent budget task_dir job_name drop_old_thinking
   [[ "$arm" == B32iq ]] && ar=1 && qt=1            # B32iq: + quoted events (`ctxfold --events`)
   [[ "$arm" == Ar ]] && sw=1                       # Ar: keep everything + window line (reading task baseline)
   local xa=() extra=""
-  if [[ "$arm" =~ ^B(48|200)(ir|ira|ira-free)$ ]]; then   # live-cap arms: as B32ir / B32ira / longmemeval B32ira-free
+  if [[ "$arm" =~ ^B(16|48|200)(ir|ira|ira-free)$ ]]; then   # live-cap arms: as B32ir / B32ira / longmemeval B32ira-free
     fm=read; tp=judgement; tc=${THINK_CAP_R:-4096}
     [[ "$arm" == *ira* ]] && ar=1
     if [[ "$arm" == *-free ]]; then

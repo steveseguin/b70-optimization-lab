@@ -210,7 +210,14 @@ def main():
     lock = open('/tmp/qwen-short-prefill-stage.lock', 'a')
     fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     name = 'fp8-tp1-' + uuid.uuid4().hex[:12]
-    helper.check_available(a.port, name)
+    if os.environ.get('B70_ALLOW_BUSY_RENDER') == '1':   # research: the other card is intentionally serving (2026-10-10)
+        import socket as _socket
+        with _socket.socket() as probe:
+            probe.bind(('127.0.0.1', a.port))
+        if helper.inspect_container(name) is not None:
+            raise RuntimeError('Selected container name already exists.')
+    else:
+        helper.check_available(a.port, name)
     image_info = json.loads(helper.run(['docker', 'image', 'inspect', a.image]).stdout)[0]
     a.image = image_info['Id']  # record and run the resolved id, never a movable tag
     out.mkdir(parents=True)
