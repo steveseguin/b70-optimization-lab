@@ -1,0 +1,1754 @@
+{
+  "schema": "lab.historical-verifier-recovery.v1",
+  "audited_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997",
+  "scope": "318 git-tracked literal shell pins at audit time; excludes variable-held, absolute-path, non-shell pins and runtime dependencies.",
+  "semantics": "Recoverable means exact historical verifier bytes are preserved; it does not mean the old shared path matches or a GPU replay is qualified. Blocked entries are reviewed defects, not valid replay identities.",
+  "versions": [
+    {
+      "original_path": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "sha256": "0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753",
+      "snapshot": "repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/verify-moe-selection-frozen.py",
+      "git_blob": "00c545733d2a21412dc27299c2bd2b5a93a4abf9",
+      "origin_commit": "ea58981cda857e8721ceaffa472bf1cd25b32987",
+      "holders": 24
+    },
+    {
+      "original_path": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "sha256": "13073e712ba4743cd0da1d43e4eddc4d7a246b5eda28cdff0ba9f9999243cef0",
+      "snapshot": "repro/qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906/verify-moe-selection-frozen.py",
+      "git_blob": "b5b86f65221f5585a646ace86284d3b751124678",
+      "origin_commit": "d1db2695d3c99f8c346bb24c44589206a76eaeaf",
+      "holders": 9
+    },
+    {
+      "original_path": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "sha256": "20546ff1b349ce5d969d29855ed9a95b38c5be2d22084b6cb4326bac4a7e8849",
+      "snapshot": "repro/qwen38-flash-next-fp8-tp4-mtp1-hctriton-b70-37tps-20260907/verify-moe-selection-frozen.py",
+      "git_blob": "4845ae4cbb258a3691f41bedd496ceaf03d28d04",
+      "origin_commit": "33500141c1a7977a1cc9d651fb4a4cec053ee0af",
+      "holders": 16
+    },
+    {
+      "original_path": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "snapshot": "experiments/qwen38-flash-next-fp8-b70/historical-verifiers/sha256-4f4942289f38.py",
+      "git_blob": "05b12735174c9c95a72161cca56fc9871f196d9e",
+      "origin_commit": "4e27ee27f4062694cac6de652ae4ba3583ef3b74",
+      "holders": 108
+    },
+    {
+      "original_path": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "sha256": "790f48b37e5145f494c5df4d1d52295c289209ab7e9462bdb6e6f4a39b1e0712",
+      "snapshot": "experiments/qwen38-flash-next-fp8-b70/historical-verifiers/sha256-790f48b37e51.py",
+      "git_blob": "67746c764a913d590799f7630a724cf90582bab0",
+      "origin_commit": "d1356e5a2faf7c35310b7df85786c1e2c15e0fb1",
+      "holders": 7
+    },
+    {
+      "original_path": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "sha256": "94487432c5758a98333aae33988d91cbf7dd8a2fd64afa18b3b273c311a8f652",
+      "snapshot": "experiments/qwen38-flash-next-fp8-b70/historical-verifiers/sha256-94487432c575.py",
+      "git_blob": "2d2ee0df5e711b00e39cde21eb9ccacaccc93b95",
+      "origin_commit": "66285ee8e0bdc060e0df86dab4c0644c26eca864",
+      "holders": 2
+    },
+    {
+      "original_path": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "snapshot": "experiments/qwen38-flash-next-fp8-b70/historical-verifiers/sha256-a464b0f6a46e.py",
+      "git_blob": "ebff9059fd795e2d46ae200ee1269b2b564191de",
+      "origin_commit": "d5212f63c84ca5b211fae6e3dbecabbaee236ae7",
+      "holders": 57
+    },
+    {
+      "original_path": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "sha256": "dd58fde9d6ea054819698dd77e3f05ce8225a395b1842ebe03cc04f43bfe7dad",
+      "snapshot": "experiments/qwen38-flash-next-fp8-b70/historical-verifiers/sha256-dd58fde9d6ea.py",
+      "git_blob": "cdbaac8b4f958e947120c27a7c9b67abc5723948",
+      "origin_commit": "15f84050218fbc3b11f6b3b2d6b2cb1f539ccf1b",
+      "holders": 7
+    }
+  ],
+  "pins": [
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-2304-ple-only-a56-fullgraph-w13n32-client.sh",
+      "holder_sha256": "ed23aa1e34216445a64228f64025b679d18167dd240e75f301e6860297f037c5",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-2304-ple-only-a57-fullgraph-w13n32-client.sh",
+      "holder_sha256": "aa99a5194ca5b58eee267359786a5c60dd7dd87e718a793bf37151d6461fd0de",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-2304-ple-only-a58-fullgraph-w13n32-client.sh",
+      "holder_sha256": "30735b72cadc3b9bc88aca76e11da5c532f0767f9f9a6053770976846069a6ce",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-2304-ple-only-a59-fullgraph-w13n32-client.sh",
+      "holder_sha256": "4204d28d8d46c3c4ca57be65f228ad8bfaf472b6cd45483e80bcf12804f9ebd8",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-2304-ple-only-a60-nograph-w13n32-client.sh",
+      "holder_sha256": "5970b93dcb22f5d0d6d7e89369f0068e5829e05e7af9443f13cef9d7800d8dc5",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-2304-ple-only-a61-bundledccl-w13n32-client.sh",
+      "holder_sha256": "4f442ec8490ee4ce433dd2d3dcce773e75a2a7645054f98ade4892d63ebc317e",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-2304-ple-only-a62-bundledccl-w13n32-client.sh",
+      "holder_sha256": "25fe95624afe4dfc1029fcb69239195b5105d6e0a168b3ec6a34fee5a2461260",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-2304-ple-only-a63-oldhead-w13n32-client.sh",
+      "holder_sha256": "6449d16cbac491f6b6505d4fbb9a2012abf1a56581b2d903b88709c384e51dee",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-2304-ple-only-a64-gdntrace-w13n32-client.sh",
+      "holder_sha256": "b37bb78be5421852f74275584e3ed51bb724a4b558e95cd30100ee066f671b59",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-2304-ple-only-a65-q38trace-w13n32-client.sh",
+      "holder_sha256": "4620efedc7bdcd0790321d45ef6f99b21e000114854cff5b8dd20d0c90b6e3b4",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-2304-ple-only-a66-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "c403b49f8784eb89bdd141419fc94106b1258a4a64152c10162a30f456a9dd37",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-2304-ple-only-a67-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "0480fae03a05540cd2a416669f10600b72e6c11a498021c660476dd0d4f2c17f",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-2304-ple-only-a68-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "36369d40d5922648d12c60cb47bf517246c04efd3f8e63097141c7fed9926a40",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-2304-ple-only-a69-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "84fdf25cd896ba55220b5fbe2035930ad0ebb6eaa1e01b90858398e565505743",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-2304-ple-only-a70-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "127318d67d492be6604ea46c786b3d17b56e137fdc9732c0c68af1fb932bc52f",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "94487432c5758a98333aae33988d91cbf7dd8a2fd64afa18b3b273c311a8f652",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-2304-ple-only-a71-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "f7e3cffe4c97096bc1d4a85f5d418f66fa4c20cf0bcb4e1c73bd3f177b81b190",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "94487432c5758a98333aae33988d91cbf7dd8a2fd64afa18b3b273c311a8f652",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-2304-ple-only-a72-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "676c38eccf953828c21798a8b8b2f900a78962b5a1f217bd488c5a7b4fd23ca6",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a105-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "02e13549abc7795dd41a1896643aa9b9b285422fed8ddc1e11be764fb2dd523c",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a111-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "b986e761d72773f8ea39d6ef24a174ffa4cfc00f9c22ba9b4a375c7308897f74",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a123-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "c3fe28fb13e3ee22b7f0559f690eec47878f88a73ce9ad75b0e0fa1ba07c3324",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a125-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "633e1a39c42645139476ec994ba1ad9bdc1c61496da31b118a9f869a94d21744",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a132-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "047c6afea71e350da3693a46eeb2211df899e0929d29bf83b5d3491024f60b42",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a134-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "3fb8a3202df8b9778ef0f995d826c42ae8aef08d0105aaa8ad19efebc9442a4b",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a137-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "9ecc40a9787fbff8c959ac8ec0e97ab2b809cea50ccf2cec9de9e478855edeb3",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a142-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "f3fab6073497646bd6751af95e69ede399bafb1b75c8358fc8893728278bd263",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a145-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "3a41022f1140f7e474c1cf4392077d0441ec2dcebcbb5398bd744395f368db46",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a146-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "1a33e7b0683e2ac754e44a5fb66a5a021ba2ed9461ae27adb895d6438e41450b",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a147-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "5faa44321eba3bb7ef2acb2e5984179303dc5abe9864ca57f2cd10471d97ab55",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a148-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "dbee7ac52199e369779226ad4153b4bc6d8cfd9539cbf498261fbbb9af5bcf6c",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a150-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "26106608924ec46b4ba56668f04916cba6e6120820a16f7bd71daea198aa054e",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a151-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "d6286d005adcbe13510be12599531c4d3e1ab7df11ff149b2744ca9cf824810b",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a152-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "8da7e0da1f858fa6a5aa4900473d9066a0196da57758a7983086bbfd007a9209",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a153-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "a103d455ce27692c9f83157f66c8a1ed1f4e268b34b1bf778f57c3366c42ecff",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a154-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "cbc077d68fb1c99bd372d05823586ba838b9d0032a573846b44a7b0bafc59ec6",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a155-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "9293ce011393c4ab3b0a6586a600daaca3b37d68b1285bd5b2eb056c1ef71169",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a156-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "45fbac4875e59760de02288094c3da6e3a11a986700b7fb28c2c0c9dff5d9768",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a159-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "5100efdc09660f92183fb0d4e5bc8a35dc81ec02f3f7bee86f785dc45fb71260",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a160-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "599d3951d22dd0cb88c97b7d435216362d69af3352e9897eda0e24b994d0e569",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a161-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "8bfd4b4543400b8854173ba9782fa1854fafaca84435db52c005afa00e0bcda3",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a162-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "2f3cfc03c7493c12778ae1457cd6f6caa7a46e690fcd12ba180493a3f2744cab",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a163-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "94d5db5bef8e3db26779c1b8f0c7c424a48d66c579763fde5b9f1b0d9ec61ac5",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a164-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "b29674a7ee27b44ab3ca367a00e639fb2e69dc06bba78d8c3f69127257bd14de",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a165-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "f27d0956a4e264d6e4478a955d36aea0f65033db39d43b7731fd0dca001e36b1",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a166-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "f83eccd2213b887f700e0c99c6afa88dbb40b6982b1b455dcf05631f32ae90f5",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a168-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "58a41aedf45395ccc5e5bb4791e35fbb224cc0606734897b258fe3b1df3db9fc",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a169-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "57083ad1c4de1785e9831827c5524bce59747de7b5b056e4675d2924a3123f3f",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a170-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "931b3213a07f5a9743594cd66e567be659b037eaa16b309c5b145c5322cb0933",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a171-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "37d3e6812d0898fca146d67a710d07e8c2c4b1ee83e041a09f6d40a649e94776",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a172-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "3eb2826b5b502bb7ce7f1f717330b770a33b6cab2caa5b29aca598595165c9a9",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a173-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "91b6b8618c40e9393975e89b8f0eaa9beb791cf4967db8a016c4618d26b6eb42",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a174-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "b0f45b73887ac65f9e34f43d2c202202f2fe8b6f67bff152063ba2e3f066606b",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a175-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "5ebec4cca36fc4de9fda8aa34dd204141e660252ab7389f8830393dc8ff4a0e8",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a176-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "51d6cbc1da8104e812042b746ad3d0322dac643297cc8bef00dfa4fbda9e5c79",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a177-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "6f889d2666d8b9ddaac7e8dac47cd6f1ded00017336848752dc11753e28e91b6",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a178-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "bbdd071dfa3e11e47bc1113fb6b2877d580cb398c157343083c18ed8689a4f5b",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a179-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "3499b3faa25dc56da1fb1e77febb2594a762854cef02e7b9fd9b3b0f1f6b635c",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a180-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "df2ebdebf311ce2655ce1a9bf1c1d6e0c968c3a04b9455b8156fe0c7dd5b913d",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a181-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "15be8b1a2f9db4f21ef926bb0666cc41b3a520dea29c7abf6ce74ae7e36ccd23",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a182-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "a4fa7c43275062ad26200950aacc4ffaa5d122f1a98a0e654069e1e3030f53d7",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a183-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "8219923d2a4a1a6f6f7ee251a7fab92ee266cfcb0c735f863b200d46c703cd5d",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a187-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "cdeaee380d8481dfd8596744fabd536423014ba4cb665e35456a9c655f4aef8b",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a188-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "01b9ae419ec259f58cc1d3e8b1ffb5598783b561171c38ea1882a78556a2b7b2",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a192-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "29b5d5c11e7d12b6a9657df87f8b942c971483ea4a11bad25f64800393a6acd2",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a193-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "a1d1ad0f1f48e758df227035c021654a90987f552fdbfd8c5f1b99513fdbc196",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a194-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "6085fc1f2261d70f9dac436bf9c3da479abbed79e99e675a7b1ea1f8644a5cef",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a195-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "469ca667cadb6c1cc2ed2e2d381a1df0b452642d427bdbf193e5d16f88a94a9a",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a196-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "4619c701fe25d62043b5e00fe0b43fbc5db35e5704fc505123f260affd9d0d94",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a197-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "d2dc8508256eb785d8480a77245dd6c805b1cebeee662aaf517ad4d5f5bdf858",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a199-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "c079b3857de5f82ed3b64e1b1aff4c2f7817b6d407caf892d480e0c3d0d37b0f",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a201-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "b05664d2e2de6db3dc490408961eb5bb451b42415d2a6a96dca5945e6a775b43",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a202-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "a045d6be06ce21758e42ae7287dce478715a23aa39d576688b851d339e15dd3a",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a204-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "893aaea62369ab9e9ff382d0896be45879fabdbaf6b5e9f4345a4ad2a7ec2b3d",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a206-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "b11908e70ffaac2e584555356fdb41b7c61eab6bd03ab38067a1ed8c07b36f44",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a207-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "ef8ad4127f80257ef8db437ed43f942cbf6d0d49e9d7ab4401e2b1326108a29d",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a209-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "fe820aa63f72f282a58fe2704b129535a2d056b61ca35936a9f752e158347c10",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a210-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "3e6dbe63f821d6887924fc1ec1ae7a40e4eebea94078c615a03fac2d2420f764",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a212-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "63695ce13c124106c157083d142839e45b36f066fd5bcce7ae6872878779cbab",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a213-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "617c5f5dcd5829d7c1acd4bd590a0486c5f1027c2ae98d7f635e87f3e3eccef1",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a222-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "3e5f1bfd6d764727ed107ed696c9e4accd0740ccbab53f2a8e639c6df7346a04",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a223-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "6cb0a20d585140f3647af1a188cd8a0dbac35df1614c3688ebdc833986c12516",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "13073e712ba4743cd0da1d43e4eddc4d7a246b5eda28cdff0ba9f9999243cef0",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a224-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "d21743c42872a7094d0bc614235e17413755742047942c1fb242dd752e8cd98e",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "13073e712ba4743cd0da1d43e4eddc4d7a246b5eda28cdff0ba9f9999243cef0",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a227-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "e7d13e7975f300b900226012d503a22ad3e9fbc22e0378f85f0783a4bb1efd3a",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "13073e712ba4743cd0da1d43e4eddc4d7a246b5eda28cdff0ba9f9999243cef0",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a230-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "5106afaf0ab3c2e69c29d3f891beaea781fc2b3ef9d1e69fc51ccb7d55e9b2b7",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a232-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "15532bf40690fbdddb9a3aa53f8c6bfdec46511a489453f11b3e54a732fd5b50",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a233-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "3327a78706e4a279a1ec542a7ab10810c0028eee3c3055d5938e5317d19ea7e9",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a234-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "250291ea03b6dde472e3d33bc60ee8493a8eba5334dae1cbd9916671bb487f17",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a235-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "330b7cce4fe5613306a327277ad202821c5187643b4ea31b7e4fc4e25567f91d",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a236-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "f34fe6e429017884f97bae0b07fa5537f9feefb20238bad18ce0abf030396703",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a237-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "0d6dc4767992bf8b2b458a934623fade755d97db3ba3135db1d6a3cfc5dfc2ce",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a238-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "3f792e663181b9c2b27cce58c5b1a4d1918813bd5185bb3b313e1deb85e15ba3",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a239-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "bc20203c440dde63326467758274a520ac68e9dfe2e5c00ee860283343174e93",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a240-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "0e5ddde4a8064c6d5b6253e56154933fcdd806610e234f66892e2e0f742bd474",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a241-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "c1f42e753476ba4d4513ccdb4d769e4282173809ab5b7c6eb18b97c4b7f3bfdc",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a242-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "332ac4ab0fe79f1d58ae924cedb811c78a1e0de701ab0f363e0b5fa9194c2431",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a243-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "0e1c4db751367a0a9b4bdd7d222ff6bb761574300189ececae7997eec5a4ce56",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a244-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "208f48e5e50304b77a3e8f2667a83c4ea7b331595468b77ad38f3d20be706a23",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a245-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "9a71fd46321ebee5e9c96b3bc7037e212071b636ae1ca1a908028bdbdc7b9906",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a246-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "4231a6d2f464b9e5fe4fb49602861e4f51d21066efd61392dc15770c9e7b6d0d",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a247-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "4e492d2980458ceb4b3ef76de9c917e98ca9de915fc5a99b38510dc0fcf5773d",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a248-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "a9f7b3b0484104cdc402beaea431475b1ada8e94d67804aba59796a5a3fb349d",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "dd58fde9d6ea054819698dd77e3f05ce8225a395b1842ebe03cc04f43bfe7dad",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a249-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "d460105be9d82a2c5b5d0752f985e9826d015978e9558379342e74f0dc7948a9",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "dd58fde9d6ea054819698dd77e3f05ce8225a395b1842ebe03cc04f43bfe7dad",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a252-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "d0f56c1d3a39b7342db910e35d31ae6f12d258b2cf48025ef8565207aa199b92",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "dd58fde9d6ea054819698dd77e3f05ce8225a395b1842ebe03cc04f43bfe7dad",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a253-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "941b03bd5b97814f417f3ad3e211aaf3999649c5d2c178f543618fcde483ff97",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "dd58fde9d6ea054819698dd77e3f05ce8225a395b1842ebe03cc04f43bfe7dad",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a259-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "67b051cdc03f165a8e2c22577bb89bc46b41b4c124ab7ac6d855435bdd4bc569",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "790f48b37e5145f494c5df4d1d52295c289209ab7e9462bdb6e6f4a39b1e0712",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a260-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "d8782b4c9be847324088fe4b5e626d6731c07156101cd9156a7c42f241faf455",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "790f48b37e5145f494c5df4d1d52295c289209ab7e9462bdb6e6f4a39b1e0712",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a263-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "59dd6e2a801b36718f602871e5b740e3ec3f1ce72daf1f21862662bcd7fc6247",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "790f48b37e5145f494c5df4d1d52295c289209ab7e9462bdb6e6f4a39b1e0712",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a264-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "1819feab9416eaeacf942f4f586089bd63095a11c97be2728954882f33f8145c",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "790f48b37e5145f494c5df4d1d52295c289209ab7e9462bdb6e6f4a39b1e0712",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a266-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "062ade8ad4424ce3e4740d806c3efaa460ea5dfebf6adf7ca141664bd110867d",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "20546ff1b349ce5d969d29855ed9a95b38c5be2d22084b6cb4326bac4a7e8849",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a267-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "afa21da409c699a6389fab2724eb82ec82bdd0f374cdf53067966e335d74c529",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "20546ff1b349ce5d969d29855ed9a95b38c5be2d22084b6cb4326bac4a7e8849",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a269-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "3da2a50c3aa06b7c2a7e506960b81a3391280920c1a3d62595246d791b6676be",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "20546ff1b349ce5d969d29855ed9a95b38c5be2d22084b6cb4326bac4a7e8849",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a270-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "e3fab6b070fbadbf9643523aa388ddfff5a4e145c279d21d9cef7a55e6f580d7",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "20546ff1b349ce5d969d29855ed9a95b38c5be2d22084b6cb4326bac4a7e8849",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a275-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "b6dfb4b174831ecab326292bc41c3a5c3124c12bb2aa3e3b957dbb74a6f83f2f",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a276-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "0623bcd91ee258eb704f7f615d70c5ff59317080ec42a74c9bf296c754bbe978",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a277-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "30d3d3df9fb770e9510a79e992b9540583425899a36a21d2cafc5a97764ebbb6",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a278-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "1e7e4d01aa1d3593517516b9aee9ea3f5238ff564f5226de73122d165fde5013",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a279-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "f6f22203fc66283e2478c7eb8792e3e3bb13773d2d7d0c4b659de1170aabe99b",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a280-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "45bff35875584e9c4bf49042c0f40319460e115e736ccd140b5e2cbaae4684a4",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a281-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "8831edd7f69eb68e334ce5fa05bb8a1733a478fc9ce02795530410e75e1fbca3",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a282-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "6ae9ffe13d0b2c0898f7368979f0b0a33c4c4ab25767e9a3baa3eae0abcf58e6",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a283-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "e99ac687c4f85dd9aae60ffd7a834dc9503f281bc0eee44cd959e6508581280b",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a284-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "a54d5923af1efe39f6ef49f3631f794d043784f3b6df0620d3bcd974725f69dd",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a285-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "c7f69f7673c224ef3645c6ea4267f508647333a5d2e8bcd290f10523d461e4c6",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a286-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "5c732d9b7b01e8b90fbac6a5b76cc9546d1a9d9db83de1808bc1e30feab09e13",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a287-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "46b36c0285808f333734cc5a48577a4fb3f5b61667fbe80a90758cafffde9d3c",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a288-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "1ec5273cba1d0904c2a69b42cbf53a58925f153b67a310cdbb19cfdc998fad79",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a289-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "c9d0b3bb63ab51a465f806da14e7e58087a8c5d5268cddd04ee8d8d8561db5b4",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a290-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "2666a361b03d11f6532621067a664d579a4d6e48393b40369022d3c195484d43",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a291-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "8e8efe8e07ed8823a431f775befe6843c4c123ad8e54a471d3b363fa518c502c",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a292-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "d33c5366b522a17ee7726746851c6f5eb2f51c646d72ed189a228103771ad47a",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a293-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "2b54e5a2c5a903f3ea06956a6aaf99918acd65da4d7109cc0854ccb72d0e7abb",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a294-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "cea9fdd90fae7052a32c563ed7484a9eef53b284dfdb600d388088e7a85f84a2",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a295-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "b752385b3e88092241e51722f5f1ea5ef5e193fb55a31ac9128e9d8a1cd3a672",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a296-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "cfad747dd2dd7cbf4567c4a88dbac01914860ff2c20c8570dc1d288018582aa6",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a297-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "a2f53db89feecd75837021fbd1cf3434a4f288c7e1b7b41eeca59632b1bc5a97",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a298-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "cb562be6afff8e6e7b5de941d843c41f6bfce2c630a9122769556fae595bc66a",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a299-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "749dd6e06ee72c46143f76c40e62fd984a89a2243e316ed5bbcc5bd9406cd95a",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a73-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "24ac1167974c33f6e4e3f768960f0d44cf8c426bf3b1fcb2a5497a5075c087ad",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a74-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "c8011a2781ecd88eb9d9514446e0b16ff160b5d090422d2e7762ea2d729920ae",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a75-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "06944f94a3865aaf1a2c03631cf24f0abaf4026cd1d54cb70a7f0babfa1466f5",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a76-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "081d4cdcc729156f5a7a08578cf658fa70f91036bdbcb3ab5e3ef2e3da5f7d9f",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a77-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "24616b382d4069e6e3854eee196a4456fb00de090a8b15fe4cf7a560c00b7817",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a78-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "38e0388cce6a39f9348a4e76051f96b0d912f7a4cd60d0e42aa9022d9a79185d",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a79-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "c4fc22827de7a521880492c3ef975c905e12704da8e4d4168778b4409aface56",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a94-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "db06946bce52ff8d3be1806e9670b14f39f0f4539216d3d846d1ad6952e56e13",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-4352-ple-only-a96-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "9b2bd5c31cb9d64f47d13f410052f771f54e0a64ca164febb305bc2acb834bfa",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a100-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "cd0a999d872a618005e6f1fc718930b697ba352164ed373d7a43480b6a8989f1",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a101-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "f0c433b325a09c28a54df6232b187ed770e36c133d366db778708216466a8e7b",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a102-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "1cd41a8ea498cb00ec1c1548623c285ce84b500b70fa6f79cfab9b1b60a4ea6f",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a104-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "b56466554d71c8abb19bccb5120efaed34ca074e47df5e7f6b2075f72479b8cb",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a106-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "ff0e74dc229aaac81d8d07abac41624753713c61a8c082b855b1f9563643de53",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a107-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "a97195166b8818c28aea911f8591a7eb3d915c397732f8904fc28cb871ed6f08",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a108-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "bcfcf0aef6cabc66b6c98d18ab983bc8c7e81068495ce2db6174813676563a71",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a109-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "aee1eac0f0b5af2be0f36dfe403c558287abdde1a2a2d3766ad4671d07412bdf",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a110-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "4a44a5037e8c655cc213797e20759af4bf083639c9102587fbddfbcc7ebda387",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a112-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "24293ee154e4b80e1198cbac7b00f1c6b855441ac5e52ab675ea9887b61c9346",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a113-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "9d986973463a2878d6ab789a87e72071d47af90c38c31b668a9ac10a258672aa",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a114-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "62525b13384be6a9809ae99be794dcd73ffed436b88a7a0bf2ccdea6ecc3ad21",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a115-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "a79d0a6ae89b39ffa112a9e0598fceb7ae6ebb2c701fe9d01e269b585c6a846e",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a116-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "f59b1cf0ae258d10e033667c13dcb40112fee899381cd0fed7a6c04ff4f31d0e",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a117-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "ab52b2dbf4a34bde756b838e76da8b547e1be7552ccc724e74bc1bd395e9815c",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a118-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "2c7f70b075669e728bdb44d1f17a6670dee0eb1cd0d6ca41434568420f82ebef",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a119-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "5e41aff3107f068a42ad286d63b8735431a70601cb35ddfe6311b09954475b78",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a120-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "4c25729665b793e5a563cec1594cbaf9693e38c4dfb90fd7c3452b7938034d61",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a121-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "2d9cc51945c420498e4eb511f3a938f38ca53a415562952826962931e35d81b3",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a122-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "b7408ffced8907ca6ce4db7178c133d29df5276b152bae5e97dc16758e9daf0a",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a124-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "cb3c14506468ab8be705e09f095ae44e4e09a3dd29c30e81c4360aa37b0bbfce",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a127-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "464934ab761dbf9aff7dc4e503af8ddde2c9f0c5557e508e4fba8114b4916f03",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a129-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "1e4d4f45db599c3909ce3df1deea943e0d461f43283412be058c27a4e57c663f",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a130-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "6abd06c1a360940f1864ed30dd8934b33f2c3ba35a8c6060e92af5af7f8f773b",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a131-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "46ce08feeb6d62e7b24da5b22f27a2a67331711e0136d475844c498d8e30cf0f",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a135-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "d692c02bfe0a083fe186dc4ee68d232e6e0c6c265d5dc9db3e1e343ea8899893",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a136-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "a128708827a24b77fcea354612488b2742b62d77967201de2e2cf73b2c8dd9e1",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a141-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "1ea8dd358e03d431f63768248a5fb2f26f800f5e783bd5c38b2a02961c54974d",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a143-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "e5980ee6710d52477fbe60c049cf586f17c533effe1147cb654567b8709114fe",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a144-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "ac6158f5d27c8bdc4f488cd14951e5395134132fdea80b408cb15ceba7badffa",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a184-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "441322f4f4a16b2bfd94af332ee7ea0984e2909e940ac3b4ba171d9d7291e098",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a185-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "5eb9ace4f8013c6d64b3e6b1fc0d07f1150f0133b6d3cb0ff909c0b9b5dd0ea1",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a189-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "503593664c4eff1252c26ee456f4093d57540f21e81ea4c497dd5e36c16cae9b",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a190-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "63a292f7a53e0214c5a98f95439d0406bfdc737e4db592a84321410f21e5ff83",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a191-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "228cd28f524bae62a3377ccba132c0dc235a571d73f4dfd843ad0179502b185c",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a198-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "de5ceec90dca3a9d2024e9392869d74a5ac614477682a5e7580d541717e9b865",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a200-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "c0357d5cc644ad9818c50bd8c3f6776d307499c1176ed69c40540bcabc510bfd",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a205-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "2c7670f33a59fd3d8cde71811b12e539ad48c7ab9bef7718ebc6bbfe5eb80452",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a208-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "d2922a4dcba840e76813e09d0e626c7c58b91fffbbf92abc314d8dfe8c8818cb",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a225-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "a7f26094532203c0605fa052747829e33324115fb5b774b6c7dd5a47124a54c3",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "13073e712ba4743cd0da1d43e4eddc4d7a246b5eda28cdff0ba9f9999243cef0",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a226-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "8279051e2c4a8547a0dae9f1daf8bb9553ae0cbcb0f70befc5fa00312a05c8c0",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "13073e712ba4743cd0da1d43e4eddc4d7a246b5eda28cdff0ba9f9999243cef0",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a229-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "c26eedc2a89ace35b8eee0bf83f1de236d855abf67b4d417a0f74f3fdce4a70e",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "13073e712ba4743cd0da1d43e4eddc4d7a246b5eda28cdff0ba9f9999243cef0",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a231-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "49b356ec68b88e9d81ad6669200c01fd763b4a736c0ad1ab6cef3a631668cd0c",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "13073e712ba4743cd0da1d43e4eddc4d7a246b5eda28cdff0ba9f9999243cef0",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a250-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "50b254ce9e269afa7b71a0c00e8492930618eb37cca7106efeb32a31bbe8d03a",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "dd58fde9d6ea054819698dd77e3f05ce8225a395b1842ebe03cc04f43bfe7dad",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a251-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "9f72e80c5a62f8b2cf922ddfed82331f0d8b23fb60bf8252506bba7e578f53d6",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "dd58fde9d6ea054819698dd77e3f05ce8225a395b1842ebe03cc04f43bfe7dad",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a254-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "5c6a9db27eae113982137004b341cb81036b03d0647ed9b77c292cc4714cf47d",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "dd58fde9d6ea054819698dd77e3f05ce8225a395b1842ebe03cc04f43bfe7dad",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a261-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "c7b29d20556f8a8e04251fb0c37f4e03e460767ba9bbfcf459b1dd296f77201c",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "790f48b37e5145f494c5df4d1d52295c289209ab7e9462bdb6e6f4a39b1e0712",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a262-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "57e79d699da94269e849905e16d4e3b532e2adabeef919338f594f6ff358f450",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "790f48b37e5145f494c5df4d1d52295c289209ab7e9462bdb6e6f4a39b1e0712",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a265-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "b5b073977742f3c406d34b4a4980b2e059a6dd7b7145b958107a8db9d1ff7d0b",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "790f48b37e5145f494c5df4d1d52295c289209ab7e9462bdb6e6f4a39b1e0712",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a268-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "bce4eb96d178801925ed160443ae10b16f6cad8ef55f0a0d520df2f0d6e09e3e",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "20546ff1b349ce5d969d29855ed9a95b38c5be2d22084b6cb4326bac4a7e8849",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a271-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "df1ce2a35c5615d4cd154a00715c3d6cc8f5e51125cb21f4a5468546fcd72bc9",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "20546ff1b349ce5d969d29855ed9a95b38c5be2d22084b6cb4326bac4a7e8849",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a272-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "b18b42f4e1c9528f849a522d325bc750205beb4d6795e0dc10dab9584207ba97",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "20546ff1b349ce5d969d29855ed9a95b38c5be2d22084b6cb4326bac4a7e8849",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a273-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "35aa9f7287156324fc3eafe53d82448bc4b3b27df0f251e1f9cec3e36ab8511c",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "20546ff1b349ce5d969d29855ed9a95b38c5be2d22084b6cb4326bac4a7e8849",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a317-fullgraphdet-w13n16-client.sh",
+      "holder_sha256": "c7dceff9185bce7a5abf67a02897f283270ccf66ac9fc334d096cdfdedea74c4",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n16-selection.py",
+      "expected_sha256": "c874852bbae20f4d738e1f3a37f1b16d553e50dc9e8c56c2b0caabc22675dc0e",
+      "disposition": "blocked",
+      "reason": "A317 renamed the N32 verifier path to N16 while preserving the N32 digest. Neither N16 Git version matches; the packet generator explicitly says the screen bypassed the frozen client. Do not substitute an N32 verifier for an N16 map or infer a qualified replacement.",
+      "evidence": [
+        {
+          "path": "experiments/qwen38-flash-next-fp8-b70/tools/rewrite-q38-a311-to-a317-mtp1-w13-blockn16-screen.py",
+          "sha256": "157faee2216a9388c590185e7d8c9e963262d5fc2834741cdf045537fc359caa"
+        },
+        {
+          "path": "experiments/qwen38-flash-next-fp8-b70/notes/2026-09-07-a317-a318-the-w13-tile-never-applied-at-mtp1.md",
+          "sha256": "e792e5f23b5778df08cc78ef2889bcb904b115e03ecd79165bed4f369f2f693b"
+        }
+      ]
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a330-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "03a62fe233463cc4e03c0e8e30a571f9a36609ac496cf875d1c54538f01ba011",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "20546ff1b349ce5d969d29855ed9a95b38c5be2d22084b6cb4326bac4a7e8849",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a331-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "a33c8b3784bde42994bdafac88a174d9b9a2812ad119dc7e51646fcd8e69884e",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "20546ff1b349ce5d969d29855ed9a95b38c5be2d22084b6cb4326bac4a7e8849",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a332-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "64680f3e8def55d5a975dce3b99e31a2c52f5c3255fffb4c9559ab6ad399bd15",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "20546ff1b349ce5d969d29855ed9a95b38c5be2d22084b6cb4326bac4a7e8849",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a335-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "6faf7b2ea46b6b533d77d1c2bfd2dc0f1f4a77a2e60235ad7180a9931ab976a6",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "13073e712ba4743cd0da1d43e4eddc4d7a246b5eda28cdff0ba9f9999243cef0",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a339-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "cda68ae44ab2692ce9ad68fa35226eb29733f57e1519919ec4c189f2c1cf03cd",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "20546ff1b349ce5d969d29855ed9a95b38c5be2d22084b6cb4326bac4a7e8849",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a80-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "35fbfd759c4f1043b96d1ea990776f7c187db1ac074609891b50a1e72bf7e1cd",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a81-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "ac19fe01e1fe83972cc217386608c612a8009047bd01d3194e52675a2121674d",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a82-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "95bdbb43298cfcc267a656752efc661cf8ac3f19c6be822d1858f24c38cb6f9c",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a83-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "47f3b1160e38e35aac00299a79f5f3491a938758f88d3fd2cd8064279aa7cfbc",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a84-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "413ad1561646b17d74f6037bc82d024c20208c5638dea6d4c5c250d73491f728",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a85-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "9f16a9307d35f19fa358b337396afae8860c8b7c12e5d8b2579fb9f3ee33d797",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a87-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "feac16dfc1164c6faaedcb019a50305eb40e4eb42cb5759d9e113fdbee04ca87",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a88-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "6387296c2f21fa5f7f10f4e39501f102b3e7ddc69716e1bab4085971fe94e439",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a89-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "9b5346e6c120c741a9b738ca4e62020501485d8f88840d5e23dc02ddb921f4c4",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a90-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "b2f9f37bd12d5b7778a6d5d3fc669f1ed4690f3cb5f5b0c6d99f02aac84b49b7",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a91-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "34c855a3a6acca2f82f95705e6cb8ac6bc03b6a0668ce656380d0034920c3556",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a92-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "63399f06ec17b545132325afaa9d502e8b2cf775277f71a5a0d48657c44a3ad6",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a93-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "02950ffbeadecb05e5212701cb66c4a9e1511c76b00b03cd5c11a156733acf86",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a95-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "a2fe013b7f0e1af879eabf1be8566485b967fbd2c028c9ed06ae26d58c57677c",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a97-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "5a5232c9aa04a0751303db1e81aa1f966090e713f3131961e4c226bc58c5f91d",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a98-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "cb7b216f1280d30ea11c9297e21a576ae6f669f3c6ccb788c939741a165b7c06",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a99-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "f565855ac6dceb8b07564eb0b29ef30e1212d9e0699d8d42166a811dfcbb4aea",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp2-4352-ple-only-a133-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "91d7d57adce91e68f85c0b11795abb5b9f3489d105fbbcaf341b0dea02a1cc84",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp2-4352-ple-only-a138-mkldnndet-w13n32-client.sh",
+      "holder_sha256": "49409e9d8a0518f45d3df8211b6ebac3faa12bb58a8baa9018fc36b918b1d1e0",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp2-4352-ple-only-a139-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "12a046230a425e43d411853812d5acc7695ee4145153182e852e354ca5221432",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp2-4352-ple-only-a140-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "c4f4b476ce5c4255bba06ee63aae07503810c53913199d70b9668642de26cfb4",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp2-4352-ple-only-a186-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "73511287bc0a29dfcf6e509ec3410b9a3791f00e7cfae03245ece0acb5cfe162",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp2-4352-ple-only-a228-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "5cc6f15365a6dfd752b07e1c3dc1d5d641bb65e9aa340ece338c4bf6ec8b452a",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "13073e712ba4743cd0da1d43e4eddc4d7a246b5eda28cdff0ba9f9999243cef0",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp2-4352-ple-only-a274-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "8448887a03d0aeb70c184abed120b2d5961c4bac07e99d3528ce3ebb5157a07e",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "20546ff1b349ce5d969d29855ed9a95b38c5be2d22084b6cb4326bac4a7e8849",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp2-4352-ple-only-a309-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "b9adda77f7a9a2c509874c9cdc78885343959d0451da49829714d358eb72d726",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "20546ff1b349ce5d969d29855ed9a95b38c5be2d22084b6cb4326bac4a7e8849",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp2-4352-ple-only-a368-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "e42c1c1694ca6341415c3ad869f29f4d57e85753cde819b3a2faef80f006e06d",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "20546ff1b349ce5d969d29855ed9a95b38c5be2d22084b6cb4326bac4a7e8849",
+      "disposition": "recoverable"
+    },
+    {
+      "holder": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp2-4352-ple-only-a374-fullgraphdet-w13n32-client.sh",
+      "holder_sha256": "0d9fb70ecff613d83cd03107ce1780fd880bec342451400572bc031bcddf32a1",
+      "target": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "expected_sha256": "20546ff1b349ce5d969d29855ed9a95b38c5be2d22084b6cb4326bac4a7e8849",
+      "disposition": "recoverable"
+    }
+  ],
+  "maintained_replays": [
+    {
+      "pin_file": "repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/verifier-pin.txt",
+      "pin_file_sha256": "b6eb926cf12ec7ba143f810733d4c7181d58d8eb60761c61c2bd2f1a300a4403",
+      "verifier": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "mode": "current-shared-verifier",
+      "maker": "repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/make-replay-attempt.py",
+      "maker_sha256": "876615b34c40b6f8a5585c091730c1c43f61feae0d50f5206ef1982b73861aa1",
+      "identity": "repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/verify-identity.sh",
+      "identity_sha256": "388c383b4a958ed7903efc0668600afafd7679bb2050ce26e5270a16282c55c1"
+    },
+    {
+      "pin_file": "repro/qwen38-flash-next-fp8-tp4-mtp1-hctriton-b70-37tps-20260907/verifier-pin.txt",
+      "pin_file_sha256": "9822f72d242df08ad03c455be9336dcda7a73992eb2037e64b1e5aa345f787f4",
+      "verifier": "repro/qwen38-flash-next-fp8-tp4-mtp1-hctriton-b70-37tps-20260907/verify-moe-selection-frozen.py",
+      "mode": "frozen-snapshot",
+      "maker": "repro/qwen38-flash-next-fp8-tp4-mtp1-hctriton-b70-37tps-20260907/make-replay-attempt.py",
+      "maker_sha256": "75e9e0330d1c08ae5b8439c85a818dae0baf769634ee197d43b5bbcdd71ff9b1",
+      "identity": "repro/qwen38-flash-next-fp8-tp4-mtp1-hctriton-b70-37tps-20260907/verify-identity.sh",
+      "identity_sha256": "afd63444dda138204c71b7797c9ce1d4ac43817918340b3c98901c8a65cb4a3f"
+    },
+    {
+      "pin_file": "repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/verifier-pin.txt",
+      "pin_file_sha256": "2d4a08fac43519fd61c3ac775c6f6362afdad0fdcdd02348c1e6f476246d6baa",
+      "verifier": "repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/verify-moe-selection-frozen.py",
+      "mode": "frozen-snapshot",
+      "maker": "repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/make-replay-attempt.py",
+      "maker_sha256": "7c30dabe9c5f0b6545cae001ae00b87606c61e7493e9e1ecf349624d3816250b",
+      "identity": "repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/verify-identity.sh",
+      "identity_sha256": "953c0a13b7e568f69138fa501fcdd93b05a1c927597f8ebf997153beb98d7e80"
+    },
+    {
+      "pin_file": "repro/qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906/verifier-pin.txt",
+      "pin_file_sha256": "6c99f01755e33c22ea16ac4950e04e8266b260bf8ba770165ae5d81b6059b699",
+      "verifier": "repro/qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906/verify-moe-selection-frozen.py",
+      "mode": "frozen-snapshot",
+      "maker": "repro/qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906/make-replay-attempt.py",
+      "maker_sha256": "b047c1574abf30772a925b206f8431297978f7f65b368eddcf86346bfd7445d2",
+      "identity": "repro/qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906/verify-identity.sh",
+      "identity_sha256": "e1b9b5cdb0c72ca7a5291808219b697119ded23358219ca09878742e82b05c81"
+    },
+    {
+      "pin_file": "repro/qwen38-flash-next-fp8-tp4-mtp1-qsafused-b70-38tps-20260907/verifier-pin.txt",
+      "pin_file_sha256": "b6eb926cf12ec7ba143f810733d4c7181d58d8eb60761c61c2bd2f1a300a4403",
+      "verifier": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+      "mode": "current-shared-verifier",
+      "maker": "repro/qwen38-flash-next-fp8-tp4-mtp1-qsafused-b70-38tps-20260907/make-replay-attempt.py",
+      "maker_sha256": "19265eb2b44b9ae855399a2c3a1166c4b7f3d24292a739312731f8165164a477",
+      "identity": "repro/qwen38-flash-next-fp8-tp4-mtp1-qsafused-b70-38tps-20260907/verify-identity.sh",
+      "identity_sha256": "bfa8174a8f973c7b26e2b44793bde8d50378e3ac271f1187d12033520ef60215"
+    }
+  ]
+}

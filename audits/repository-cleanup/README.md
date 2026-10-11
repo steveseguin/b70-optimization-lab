@@ -2,10 +2,54 @@
 
 The cleanup keeps useful findings, source changes and replay evidence at
 traceable paths while reducing duplicated guidance and disposable files.
-The first pass on 2026-10-10 covers the repository; external models, runtime
-trees, mounts and running experiments are outside its mutation scope.
+The two passes on 2026-10-10 cover the repository; external models, runtime
+trees, mounts and running experiments are outside their mutation scope.
 
-## Coverage and results
+The follow-up completes the [review of all 37 experiment areas](2026-10-10/experiment-review.md),
+[historical verifier triage](2026-10-10/pin-audit.md), and
+[restore-tested source consolidation](2026-10-10/archive-consolidation.md).
+New [CI hygiene checks](../../tools/check-repository-hygiene.py) flag large new
+artifacts, reject tracked caches and require useful, source-linked campaign
+closeouts. The detailed first-pass account below is retained as a dated record;
+the follow-up changes its pending archive and verifier work as described next.
+
+## Follow-up completed
+
+- **Knowledge:** every immediate experiment area has a source-linked review of
+  outcomes, failures, uncertainty, retained evidence and conditions for revisiting
+  old ideas. The review states its reading coverage; inventorying every file does
+  not mean revalidating every raw run. Historical results retain their original
+  model, precision, workload and quality limits.
+- **Verifier identities:** all 231 historical mismatches are classified.
+  Eight exact verifier versions recover 230 clients; one inconsistent A317
+  client remains explicitly blocked. Five maintained replay routes pass their
+  identity checks. Frozen clients and evidence hashes were not rewritten.
+  Preparation produces review copies only, not newly qualified replay packets.
+- **Storage:** 76 historical source files totaling 228,054,022 bytes are preserved
+  in two archives totaling 45,480,000 bytes. That saves **174.12 MiB of payload**
+  before the small manifests, tools and review documents. All original bytes were
+  restored and checked before removal. Maintained consumers have restoration
+  pointers; frozen consumers resolve through exact path/hash manifests.
+- **Future upkeep:** use the [campaign closeout template](../../experiments/CLOSEOUT-TEMPLATE.md)
+  to record what worked, what failed, useful source/evidence and when to revisit.
+  CI checks staged/committed content, flags new or changed artifacts of at least
+  1 MiB for review and prevents regenerated Python/tool caches entering Git.
+
+The [follow-up validation receipt](2026-10-10/followup-validation.json) records
+workflow commands, preservation checks, review coverage and separately measured
+checkout/Git storage. The [first-pass receipt](2026-10-10/validation.json) remains
+unchanged.
+
+The archive review found an inherited missing Git ancestor in the Laguna
+bundles. Their source tips and original object sets restore exactly; complete
+ancestry is not claimed. The [archive audit](2026-10-10/archive-consolidation.md)
+records that boundary. Git history remains intact, so checkout savings do not
+mean smaller clone history. Active work belongs to [CURRENT.md](../../CURRENT.md)
+and subsequent owner/host receipts; this cleanup grants no launch permission
+and performs no runtime qualification. The experiment review is explicitly
+bound to its audit-time source commit so later operational work can continue.
+
+## First-pass coverage and results
 
 The [census summary](2026-10-10/census/summary.json) accounts for **64,981 files**:
 53,344 tracked, 11,636 ignored and one then-untracked inventory tool. All
@@ -48,7 +92,7 @@ inside the repo, including ignored files, but does not follow symlinks or open
 external models. The default action for every inventoried file is retention;
 its role or membership in a duplicate group never authorizes deletion.
 
-## Evidence kept and follow-up review
+## First-pass retention decisions
 
 The census found 908 exact-byte duplicate groups of at least 1 KiB. This is a
 review queue, not a space-saving total: sealed packet copies, Git objects and
@@ -56,14 +100,14 @@ independent consumers can require the same bytes at several paths.
 
 | Material | Why it remains |
 | --- | --- |
-| Six large Laguna source bundles | Complete overlapping histories, but different tips and hash-bound provenance. Consolidation needs verified restoration of every original source identity and updates to all consumers. |
-| Gemma source snapshots and repeated experiment helpers | Some are deliberate frozen packet dependencies. Removing a repeated copy could make a retained result unreplayable. |
+| Six large Laguna source bundles | Overlapping source histories, but different tips and hash-bound provenance. The follow-up archived four byte-for-byte and left two accepted bundles unpacked; it also documented their inherited missing ancestor. |
+| Gemma source snapshots and repeated experiment helpers | Some are deliberate frozen packet dependencies. The follow-up archived 72 cumulative snapshots with exact restoration manifests; canonical record patches and repeated packet helpers remain unpacked. |
 | Eight large native-GDN prefill JSONs | Equal size but different SHA256s; preserve independent per-process/per-GPU evidence and their comparison pins. |
 | Graphsafe Qwen `work/` and `staged-package/` | Protected generated research state, nested dependency histories and replay inputs. `repro/qwen36-27b-autoround-int4-b70/scripts/run-record.sh` defaults to `work/source`. Archive only after a complete restore test and consumer migration. |
 | Recent Flash-Next fault traces and LTX packets | Support unresolved fault diagnosis and the current halt; unique failure evidence remains valuable. |
 | Own-runtime tensor contracts | Active identity evidence. Compression requires compatible readers and unchanged original-byte verification. |
 
-There are **231 preexisting literal pin mismatches** against two shared
+The first pass found **231 preexisting literal pin mismatches** against two shared
 Flash-Next verifier scripts (318 checks: 87 match, none absent). Cleanup does
 not replace historical verifier hashes with current ones. The required repair
 is to restore the exact qualified verifier identity or explicitly requalify a
@@ -82,7 +126,7 @@ deleted destination.
 Absolute host paths remain visibly unverified; they are not converted into
 fictitious repository links.
 
-## Validation and future cleanup
+## First-pass validation and ongoing checks
 
 The [validation record](2026-10-10/validation.json) covers the local guide/package
 workflow, broader link scan and preservation audit. The workflow now checks all
@@ -105,9 +149,14 @@ python3 -B tools/check-doc-links.py --all-tracked --baseline audits/repository-c
 python3 -B tools/check-manifest-paths.py
 python3 -B tools/validate-repro-guides.py
 python3 -B tools/check-pinned-hashes.py
+python3 -B tools/check-pinned-hashes.py --historical-manifest audits/repository-cleanup/2026-10-10/pin-audit.json
+python3 -B tools/check-repository-hygiene.py
 ```
 
-The pin check currently fails for the preexisting drift above. Link checking
+The raw pin check still fails for the preexisting drift above. The explicit
+historical-manifest mode used by CI checks every reviewed client, exact recovered
+verifier, blocked case and maintained replay identity; it fails on new or changed
+debt. It does not turn the blocked client into a passing experiment. Link checking
 does not validate every fragment, dynamically assembled path, hash or reader;
 review those dependencies before a move. Tests of the new inventory covered
 ignored directories, nested Git metadata, symlink boundaries, hashes, exact

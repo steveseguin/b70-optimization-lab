@@ -18,6 +18,10 @@ on:
       - "docs/**"
       - "notes/**"
       - "audits/repository-cleanup/*/link-baseline.json"
+      - "audits/repository-cleanup/*/pin-audit.json"
+      - "tools/*historical*"
+      - "tools/*pinned*"
+      - "tools/*restore-source-archives.py"
       - "learn/**"
       - "tools/build-family-pages.py"
       - "tools/build-model-pages.py"
@@ -77,6 +81,10 @@ on:
       - "docs/**"
       - "notes/**"
       - "audits/repository-cleanup/*/link-baseline.json"
+      - "audits/repository-cleanup/*/pin-audit.json"
+      - "tools/*historical*"
+      - "tools/*pinned*"
+      - "tools/*restore-source-archives.py"
       - "learn/**"
       - "tools/build-family-pages.py"
       - "tools/build-model-pages.py"
@@ -157,6 +165,11 @@ jobs:
       - run: python3 tools/check-doc-links.py
       - run: python3 tools/check-doc-links.py --all-tracked --baseline audits/repository-cleanup/2026-10-10/link-baseline.json
       - run: python3 -m unittest tools/test_check_doc_links.py
+      - run: python3 -B tools/check-pinned-hashes.py --historical-manifest audits/repository-cleanup/2026-10-10/pin-audit.json
+      - run: python3 -B -m unittest tools/test_pinned_hashes.py
+      - run: python3 -B tools/restore-source-archives.py patches/laguna-s-2.1-xpu-b70/source-archive-manifest.json
+      - run: python3 -B tools/restore-source-archives.py patches/gemma4-26b-a4b-q8-b70/source-archive-manifest.json
+      - run: python3 -B tools/test-restore-source-archives.py
       - run: python3 -m unittest tools/test_xccl_probe.py
       - run: python3 -m unittest tools/test_pr45_gpu_review.py
       - run: python3 tools/check-manifest-paths.py

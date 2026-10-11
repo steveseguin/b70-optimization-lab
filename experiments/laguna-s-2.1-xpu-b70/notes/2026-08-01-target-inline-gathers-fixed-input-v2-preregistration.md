@@ -1,5 +1,10 @@
 # Laguna M12 target inline gathers with fixed inputs v2
 
+> **Source storage update (2026-10-10):** Some historical source paths below
+> are now exact restoration destinations. See [Laguna S 2.1 source archive](../../../patches/laguna-s-2.1-xpu-b70/SOURCE-ARCHIVE.md).
+> Restore the listed files before using those paths; original bytes, hashes
+> and experimental conclusions are preserved.
+
 Date: 2026-08-01 America/Toronto
 
 Status: **closed negative at the preregistered non-scored model gate; no

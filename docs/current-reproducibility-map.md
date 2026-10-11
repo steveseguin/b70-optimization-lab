@@ -742,6 +742,12 @@ Record identity:
 The full optimization ledger remains in
 `../results/gemma4-26b-a4b-q8-b70/README.md`.
 
+The historical cumulative files under `source-snapshots/` are stored in the
+[verified Gemma source archive](../patches/gemma4-26b-a4b-q8-b70/SOURCE-ARCHIVE.md).
+Restore the needed original path before using a historical command that names
+one of those files. The archive guide gives the restore command and original
+member hashes; the qualified record patch remains directly available.
+
 ## Baseline Build Inputs
 
 These are historical build inputs for the baseline sections, not a current

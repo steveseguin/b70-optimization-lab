@@ -10,6 +10,7 @@ CI chooses the push before-SHA or PR merge base from --event-json.
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import importlib.util
 import json
 import os
@@ -27,6 +28,10 @@ SECTIONS = (
     "What failed or remains uncertain", "Evidence and patches", "When to revisit",
 )
 LINK = re.compile(r"\[[^\]]*\]\((?:<([^>\n]+)>|([^\s)]+))\)")
+REFERENCE_DEFINITION = re.compile(
+    r"(?m)^ {0,3}\[([^\]\n]+)\]:[ \t]*(?:<([^>\n]+)>|([^\s]+))[^\n]*$")
+REFERENCE_LINK = re.compile(r"(?<!\\)\[([^\]\n]+)\](?:[ \t]*\[([^\]\n]*)\])?")
+HEADING = re.compile(r"(?m)^ {0,3}(#{1,6})[ \t]+([^\n]*?)[ \t]*$")
 _LINK_SPEC = importlib.util.spec_from_file_location("doc_links", Path(__file__).with_name("check-doc-links.py"))
 _LINK_CHECKER = importlib.util.module_from_spec(_LINK_SPEC)
 _LINK_SPEC.loader.exec_module(_LINK_CHECKER)
@@ -72,9 +77,22 @@ def trees(root, base):
 def repository_links(document, text, candidate):
     """Return actual linked candidate files; prose in code blocks is not evidence."""
     text = _LINK_CHECKER.markdown_prose(text)
+    text = re.sub(r"<!--.*?-->", "", text, flags=re.S)
+    normalize = lambda label: " ".join(label.split()).casefold()
+    definitions = {}
+    for match in REFERENCE_DEFINITION.finditer(text):
+        definitions.setdefault(normalize(match[1]), match[2] or match[3])
+    # An unused reference definition is not a link in the rendered document.
+    text = REFERENCE_DEFINITION.sub("", text)
+    targets = [match[1] or match[2] for match in LINK.finditer(text)]
+    for match in REFERENCE_LINK.finditer(text):
+        if text[match.end():].startswith("("):
+            continue  # Inline link, already handled above.
+        label = match[2] if match[2] else match[1]
+        if normalize(label) in definitions:
+            targets.append(definitions[normalize(label)])
     found = set()
-    for match in LINK.finditer(text):
-        raw = match[1] or match[2]
+    for raw in targets:
         target = urllib.parse.urlsplit(raw)
         if target.scheme or target.netloc or not target.path or target.path.startswith("/"):
             continue
@@ -86,9 +104,27 @@ def repository_links(document, text, candidate):
     return sorted(found)
 
 
+def markdown_sections(prose):
+    """Parse ATX headings once for both section names and their visible bodies."""
+    prose = re.sub(r"<!--.*?-->", "", prose, flags=re.S)
+    headings = list(HEADING.finditer(prose))
+    sections = []
+    for index, heading in enumerate(headings):
+        level = len(heading[1])
+        name = re.sub(r"[ \t]+#+[ \t]*$", "", heading[2]).strip()
+        end = next((other.start() for other in headings[index + 1:]
+                    if len(other[1]) <= level), len(prose))
+        body = prose[heading.end():end]
+        body = HEADING.sub("", body)
+        body = re.sub(r"<!--.*?-->", "", body, flags=re.S)
+        sections.append((level, name, body))
+    return sections
+
+
 def check(root, base, large_bytes=1024**2):
     previous, candidate = trees(root, base)
-    old_blobs = {v["oid"] for v in previous.values()}
+    # Each removed old path can exempt one byte-identical move, not new copies.
+    moved_blobs = Counter(v["oid"] for p, v in previous.items() if p not in candidate)
     changed = {p: v for p, v in candidate.items()
                if p not in previous or previous[p]["oid"] != v["oid"]
                or previous[p]["mode"] != v["mode"]}
@@ -114,18 +150,24 @@ def check(root, base, large_bytes=1024**2):
         if not path.lower().endswith(".md") or item["mode"] not in ("100644", "100755"):
             continue
         # Existing source blobs can move without imposing a new format on frozen evidence.
-        if path not in previous and item["oid"] in old_blobs:
+        if path not in previous and moved_blobs[item["oid"]] > 0:
+            moved_blobs[item["oid"]] -= 1
             continue
         text = git(root, "cat-file", "blob", item["oid"]).decode("utf-8", errors="replace")
-        if path in previous and "<!-- campaign-closeout -->" not in text:
+        marked = "<!-- campaign-closeout -->" in text
+        if path in previous and previous[path]["mode"] in ("100644", "100755"):
+            old_text = git(root, "cat-file", "blob", previous[path]["oid"]).decode("utf-8", errors="replace")
+            marked = marked or "<!-- campaign-closeout -->" in old_text
+        if path in previous and not marked:
             continue
         if not (CLOSEOUT_NAME.search(PurePosixPath(path).name)
-                or "<!-- campaign-closeout -->" in text):
+                or marked):
             continue
         if path == "experiments/CLOSEOUT-TEMPLATE.md":
             continue
         prose = _LINK_CHECKER.markdown_prose(text)
-        headings = set(re.findall(r"(?m)^#{2,6}\s+(.+?)\s*#*\s*$", prose))
+        sections = markdown_sections(prose)
+        headings = {name for level, name, _ in sections if level >= 2}
         missing = [s for s in SECTIONS if s not in headings]
         if missing:
             errors.append({"path": path, "reason": "closeout is missing sections: " + ", ".join(missing)})
@@ -133,10 +175,9 @@ def check(root, base, large_bytes=1024**2):
         if not evidence:
             errors.append({"path": path, "reason": "closeout needs at least one link to tracked repository evidence"})
         # Empty headings or untouched template placeholders cannot satisfy the contract.
-        for section in SECTIONS:
-            match = re.search(r"(?ms)^#{2,6}\s+" + re.escape(section) + r"\s*\n(.*?)(?=^#{1,6}\s|\Z)", prose)
-            if match and (not match[1].strip() or "<fill in" in match[1].lower()):
-                errors.append({"path": path, "reason": f"closeout section needs content: {section}"})
+        for level, name, body in sections:
+            if level >= 2 and name in SECTIONS and (not body.strip() or "<fill in" in body.lower()):
+                errors.append({"path": path, "reason": f"closeout section needs content: {name}"})
         closeouts.append({"path": path, "evidence": evidence})
     return {"schema": "lab.repository-hygiene.v1", "base": base,
             "candidate": "git-index", "tracked_files": len(candidate),

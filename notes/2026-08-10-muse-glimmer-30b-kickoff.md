@@ -1,5 +1,10 @@
 # 2026-08-10 Muse Glimmer 30B Kickoff (And Gemma Quad Stop)
 
+> **Source storage update (2026-10-10):** Some historical source paths below
+> are now exact restoration destinations. See [Gemma 4 26B A4B Q8 source archive](../patches/gemma4-26b-a4b-q8-b70/SOURCE-ARCHIVE.md).
+> Restore the listed files before using those paths; original bytes, hashes
+> and experimental conclusions are preserved.
+
 ## Gemma quad production interlude
 
 - 11:42 EDT: `install-gemma4-26b-q8-quad-service.sh --start` deployed the quad

@@ -1,5 +1,10 @@
 # Gemma 4 26B A4B Q8 record-source packet
 
+> **Source storage update (2026-10-10):** Some historical source paths below
+> are now exact restoration destinations. See [Gemma 4 26B A4B Q8 source archive](SOURCE-ARCHIVE.md).
+> Restore the listed files before using those paths; original bytes, hashes
+> and experimental conclusions are preserved.
+
 This directory is the in-repository source of truth for the one-B70 Gemma 4
 Q8 short-decode record stack.  The canonical aggregate is:
 

@@ -1,0 +1,2292 @@
+{
+  "schema": "b70-source-archive-consolidation-v1",
+  "date": "2026-10-10",
+  "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997",
+  "scope": "Four historical Laguna bundles and 72 Gemma source-snapshot patches; accepted package inputs remain unpacked.",
+  "archive_representation": "Deterministic PAX tar stream, path order sorted, uid/gid/mtime zero, regular files mode0644, XZ LZMA2 preset6 dictionary64MiB single thread. Exact original bytes retained; no Git repacking.",
+  "archives": [
+    {
+      "manifest": "patches/laguna-s-2.1-xpu-b70/source-archive-manifest.json",
+      "manifest_sha256": "5333b10870f27d222536c8387b5bd2dfc30399bf186ecbcf7725b5968087e766",
+      "archive_path": "patches/laguna-s-2.1-xpu-b70/source-history-20261010.tar.xz",
+      "file": "source-history-20261010.tar.xz",
+      "size": 45359284,
+      "sha256": "8dda9ff94f9f372b7ccadb1f48d2c9e216a18c44a03cc34e93137f739eb7ad71",
+      "member_count": 4,
+      "original_bytes": 185069979
+    },
+    {
+      "manifest": "patches/gemma4-26b-a4b-q8-b70/source-archive-manifest.json",
+      "manifest_sha256": "96f8ba07ed07343882b90e9cd6d1a92ffce4aa9e281f70ab98329f3c457f5b62",
+      "archive_path": "patches/gemma4-26b-a4b-q8-b70/source-history-20261010.tar.xz",
+      "file": "source-history-20261010.tar.xz",
+      "size": 120716,
+      "sha256": "55e2eabce8d55be714a27391f7b6f983ca019e1e51490224b37da5fbe9121ff2",
+      "member_count": 72,
+      "original_bytes": 42984043
+    }
+  ],
+  "original_bytes": 228054022,
+  "compressed_bytes": 45480000,
+  "payload_bytes_saved": 182574022,
+  "consumer_search": {
+    "method": "git grep -I -n -F of every original basename and SHA256 over tracked text at source_commit; candidate Markdown consumer full-file SHA256 search before edits",
+    "matching_lines": 125,
+    "matching_files": 61,
+    "maintained_narratives_annotated": 44,
+    "candidate_consumer_sha256_references_found": 0,
+    "actual_markdown_links_to_archived_members_found": 0
+  },
+  "consumers": [
+    {
+      "path": "audits/repository-cleanup/2026-10-10/census/summary.json",
+      "source_sha256": "f5afa5e68ff2c1fa1780967b795a49d80a5cfd441b92b4bd4635e493fbacc085",
+      "disposition": "frozen evidence or retained canonical byte-hash alias: unchanged; original paths resolve through archive manifests",
+      "matches": [
+        {
+          "line": 1296,
+          "members": [
+            {
+              "member": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-dflash-local-tp4-rejected-448351379-20260801.bundle",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 1302,
+          "members": [
+            {
+              "member": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-confidence-tree-diagnostic-8b8cd5227-20260801.bundle",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 1308,
+          "members": [
+            {
+              "member": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-target-inline-gathers-fixed-input-v2-68a4a5f3e-20260801.bundle",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 1314,
+          "members": [
+            {
+              "member": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-target-inline-gathers-ce2f3dfc0-20260731.bundle",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "data/git-bundle-portability-inventory-v1.json",
+      "source_sha256": "86d1533c88025d8ec6210fb1a96fb14c22cf7090d0a0456b04db335628ef7145",
+      "disposition": "frozen evidence or retained canonical byte-hash alias: unchanged; original paths resolve through archive manifests",
+      "matches": [
+        {
+          "line": 146,
+          "members": [
+            {
+              "member": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-confidence-tree-diagnostic-8b8cd5227-20260801.bundle",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 147,
+          "members": [
+            {
+              "member": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-confidence-tree-diagnostic-8b8cd5227-20260801.bundle",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 195,
+          "members": [
+            {
+              "member": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-dflash-local-tp4-rejected-448351379-20260801.bundle",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 196,
+          "members": [
+            {
+              "member": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-dflash-local-tp4-rejected-448351379-20260801.bundle",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 325,
+          "members": [
+            {
+              "member": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-target-inline-gathers-ce2f3dfc0-20260731.bundle",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 326,
+          "members": [
+            {
+              "member": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-target-inline-gathers-ce2f3dfc0-20260731.bundle",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 340,
+          "members": [
+            {
+              "member": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-target-inline-gathers-fixed-input-v2-68a4a5f3e-20260801.bundle",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 341,
+          "members": [
+            {
+              "member": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-target-inline-gathers-fixed-input-v2-68a4a5f3e-20260801.bundle",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "data/laguna-dflash-local-tp4-negative-20260801.json",
+      "source_sha256": "b3c38cb751d5dc39419056dee9d1261923731d0c5babeaceb6a4cc93d0837283",
+      "disposition": "frozen evidence or retained canonical byte-hash alias: unchanged; original paths resolve through archive manifests",
+      "matches": [
+        {
+          "line": 31,
+          "members": [
+            {
+              "member": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-dflash-local-tp4-rejected-448351379-20260801.bundle",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 32,
+          "members": [
+            {
+              "member": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-dflash-local-tp4-rejected-448351379-20260801.bundle",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "data/laguna-target-inline-gathers-fixed-input-v2-negative-20260801.json",
+      "source_sha256": "ece1dd76b87409316de1ac072e14f889963688b21e0575a6bf6aec9ab3ce1c16",
+      "disposition": "frozen evidence or retained canonical byte-hash alias: unchanged; original paths resolve through archive manifests",
+      "matches": [
+        {
+          "line": 13,
+          "members": [
+            {
+              "member": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-target-inline-gathers-fixed-input-v2-68a4a5f3e-20260801.bundle",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 14,
+          "members": [
+            {
+              "member": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-target-inline-gathers-fixed-input-v2-68a4a5f3e-20260801.bundle",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "data/laguna-target-inline-gathers-negative-20260731.json",
+      "source_sha256": "766fa93d166d2f8e80b94d44b432d0351942f935368349b19ecb8f6386923b43",
+      "disposition": "frozen evidence or retained canonical byte-hash alias: unchanged; original paths resolve through archive manifests",
+      "matches": [
+        {
+          "line": 38,
+          "members": [
+            {
+              "member": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-target-inline-gathers-ce2f3dfc0-20260731.bundle",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "docs/current-reproducibility-map.md",
+      "source_sha256": "62119eec7f0407050a9561fe4aca899c6b6aa1799128db881976283d95dab2ef",
+      "disposition": "maintained navigation: restore guide added by root agent",
+      "matches": [
+        {
+          "line": 708,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 710,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-dkq576-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/20260702-conditional-bonus-verifier-argmax.md",
+      "source_sha256": "26d130703eb0e7f3bd394300980acc5e9f39ffdeaf7a96b4e5447efa2466cea6",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 17,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-conditional-bonus-preedit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 19,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-conditional-bonus-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-eogclip-and-spechead-negative.md",
+      "source_sha256": "29895c10f8823bf954f8d295c47ea7849e74e24c960c0fa5413930df0af0bc76",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 21,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260629-eogclip-spechead-current-files.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-fused-down-selected-softmax-strict128.md",
+      "source_sha256": "1d47f1dba1ec124615117b9f1e2006be25f9b5da4d3adbf6209168dcdea4f76f",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 31,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260629-fused-down-selected-softmax-current-files.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-ingraph-late-bonus-audit.md",
+      "source_sha256": "89d641dfb8c603b603ed9717d04711c1dec175cff670063a632903ee3b6dcf1c",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 59,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260629-ingraph-bonus-preedit.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-packed-gateup-geglu-epilogue-negative.md",
+      "source_sha256": "50b478277bcdd0739889b623bf5de81a018b7d76b9ce2aaf9fa4b9d060934123",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 28,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260629-faon-vmm-pre-packed-geglu.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-regular-mmvq-top1-epilogue-negative.md",
+      "source_sha256": "6e3c73703fd7946fc0f057736885436b0ad829d72e55fe6faef6a0c119dc3570",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 20,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260629-llamacpp-current-stack-before-next.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 22,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260629-llamacpp-current-stack-with-top1epilogue.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-regular-mmvq-top1-partial-negative.md",
+      "source_sha256": "a7c033b32e7c87bdd82ce1c3a3758cf4330206dbb1f3175c384b7301ff75b748",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 31,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260629-llamacpp-current-stack-before-top1partial.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-selecteddown-next-lane-triage.md",
+      "source_sha256": "d645aa5139bba7ec4da6df2b3bcd17d5ed129d9b6216e69ac1465191d5bd0e0f",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 33,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260629-llamacpp-current-stack-before-next.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-accept-prefix-parity-probe.md",
+      "source_sha256": "2978f49ed16b70f3b3845d81222b0c2e03453f8a973011e4e70352c94dc0c248",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 20,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260630-acceptprefix-parity-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-acceptprefix-argmax-negative.md",
+      "source_sha256": "8716e1252141b2daa98f2741b713a6fc9a044f6d2e356ac735ab11840776b37c",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 20,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-acceptprefix-preedit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-candidate-bound-lmhead-proof-design.md",
+      "source_sha256": "c20248287f62a51ceed0d244bbb130d0184c1cd308d26c3ee65d7164958d6523",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 43,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-candidate-bound-lmhead-proof-preedit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-candidate-proof-profile.md",
+      "source_sha256": "e02c25c9703fd3845d76c9d1eaddd2146057b376aa33bc1cc5fb3cd1c2a957ee",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 32,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-candidate-proof-profile-preedit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 34,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-candidate-proof-profile-sampling-abandoned-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 36,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-candidate-proof-profile-server-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-direct-sampled-egress-negative.md",
+      "source_sha256": "1e67ed7deb6eed17962a35c7c0d3a396918d98d74cd858e44bc043ae508b527e",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 27,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-direct-sampled-egress-preedit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 29,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-direct-sampled-egress-parity-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 31,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-direct-sampled-egress-strictparity-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 35,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-direct-sampled-egress-backendcopy-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 38,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-direct-sampled-egress-backendcopy-prealloc-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 42,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-post-directegress-cleanup-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-fattn-dv512-gqa-ncols16-negative.md",
+      "source_sha256": "ad2f35f45e40c8f607c0efba98ead32438ec99f9cc856ebea1523312a64f9d60",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 19,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-prefill-ncols16-preedit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 24,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-fattn-dv512-gqa-ncols16-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 102,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-prefill-ncols16-preedit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-global-fattn-causal-fastmask-negative.md",
+      "source_sha256": "c1f0b5cdc2cce0a54d08c106c8477dbce85518c217b6314ccc1f392b3edf112f",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 7,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-active-record-stack-before-fastmask-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 8,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-global-fattn-causal-fastmask-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-next-lanes-after-workspace-cleanup.md",
+      "source_sha256": "cb72ef4db5d47fd577113bd9eb4df1cb25a97bcb7bdc1a3cc70c5d02fcd7394c",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 11,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-active-record-stack-before-fastmask-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-post-consolidation-next-lanes.md",
+      "source_sha256": "d2af6eff0f94d7912f5d9ad30feec0253dd5ade4aeb54b6eaf1575ce0005d9a1",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 14,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-post-consolidation-current-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-swa-left-bound-fast-negative.md",
+      "source_sha256": "6e87f1234f88cd687d9cb2eb5f7f21343ad52a10fa44131243bc38b807008d60",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 32,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-swa-left-bound-fast-builder.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-top2-logging-reopen-abandoned.md",
+      "source_sha256": "aa16c484a6ff9e3cbf09a42dac5a08dd6b40f7e44d6986202eb2f02c681953af",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 15,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-top2-logging-reopen-preedit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-verifier-acceptprefix-v2-and-latehead-negative.md",
+      "source_sha256": "a8d00142b55ecd8bcbb28aeba19b6d14796c8e1de50cec398b285397f8137343",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 25,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-acceptprefix-v2-preedit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-verifier-top2-margin-profile.md",
+      "source_sha256": "1f4c29a5e93ce08132ede7b0c0153dcfe5178200dcabeae059a7a6a270b7c220",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 35,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-verifier-v3-preedit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 40,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-verifier-top2-margin-profile-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-verifier-top2-v2-instrumentation-failure.md",
+      "source_sha256": "1cbebc9f34a8eb25df092a5aed62a9880e2500578e990cd07fbeedaa67978b38",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 17,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-verifier-top2-v2-preedit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 19,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-verifier-top2-v2-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-acceptprefix-top1-epilogue-negative.md",
+      "source_sha256": "16427bf692175992e43632615abefef2152bcc5aaeb70b547c1071d8460d606e",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 21,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-acceptprefix-epilogue-preedit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 23,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-acceptprefix-epilogue-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 36,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-acceptprefix-epilogue-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-hotglobal-pb1-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-dkq576-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-no-kq-lsm-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-skipbarrier-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-q6k-argmax-profile-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-qstaging-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-wg512-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260810-production-binary-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-conditional-bonus-negative.md",
+      "source_sha256": "3506df0bca1a07924ca3389b4be10279b5be275c90902da043041442fd4a19fc",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 22,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-conditional-bonus-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-current-service-context-ladder.md",
+      "source_sha256": "ffb9b0411769a4205e037310ebce1ca2db28705b8bc8c78a08af6e3201e7eb84",
+      "disposition": "frozen evidence or retained canonical byte-hash alias: unchanged; original paths resolve through archive manifests",
+      "matches": [
+        {
+          "line": 55,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-acceptprefix-epilogue-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-hotglobal-pb1-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-dkq576-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-no-kq-lsm-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-skipbarrier-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-q6k-argmax-profile-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-qstaging-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-wg512-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260810-production-binary-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-fattn-nbatchk-and-nospec-anchor.md",
+      "source_sha256": "2b3fcdb161069685a3c8810475c3d5cf9134d608eb7d80403d2dfdfadf96c4bc",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 45,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-fattn-nbatchk-preedit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 56,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-fattn-dv512-gqa16-nbatchk32-focused.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 58,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-fattn-dv512-gqa16-nbatchk32-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 60,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-fattn-dv512-gqa16-nbatchk128-focused.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 62,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-fattn-dv512-gqa16-nbatchk128-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-dvsplit-neutral.md",
+      "source_sha256": "72b7e6d06c8a483d31836b586a281d6e029c8104bac14e546f4e0edeca640a2b",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 24,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-global-fattn-dvsplit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 29,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-global-fattn-dvsplit-preedit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-kq-reg-bcast-dkq576-service-win.md",
+      "source_sha256": "0910e35bff3a8e8a84b5076327b4f1f8b9d653c9aa6ce7bb1f0f68a60f5f414c",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 24,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-dkq576-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 27,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-dkq576-fattn-tile.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 31,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-dkq576-preedit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 34,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-dkq576-preedit-fattn-tile.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-kq-reg-bcast-service-win.md",
+      "source_sha256": "09de5db47843f67141696c1e8769e31cc8f1fd31ffd1c30410854656767268a6",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 28,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 33,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-preedit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-right-bound-negative.md",
+      "source_sha256": "0cfc648321d7b55c13c5d40a8c575e8822a9fad791b3f9e73da4a429b5992929",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 15,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702T054719Z-pre-global-fattn-right-bound.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 17,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702T061300Z-global-fattn-right-bound-built.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-vecdispatch-negative.md",
+      "source_sha256": "f2ff080953ba259e20720fe7e06a7da0868c4ffb7a3742318d7aa3bba6ee24d1",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 23,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-global-fattn-vecdispatch-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 28,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-global-fattn-vecdispatch-preedit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-ncols16-negative.md",
+      "source_sha256": "e53b1324888001a905a5dddbcccbe39589e386cf13fa05932265963e7874ac05",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 21,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-global-ncols16-preedit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 26,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-global-ncols16-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-hotglobalpb1-service-no-win.md",
+      "source_sha256": "0950d7aed5d6b9e2295ae513ee9995b3729f50d6b511dfe5149c4b330beade1f",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 34,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-hotglobal-pb1-preedit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 39,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-hotglobal-pb1-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 59,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-acceptprefix-epilogue-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-hotglobal-pb1-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-dkq576-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-no-kq-lsm-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-skipbarrier-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-q6k-argmax-profile-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-qstaging-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-wg512-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260810-production-binary-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-kq-reg-bcast-no-kq-lsm-negative.md",
+      "source_sha256": "5b79632cdd095991fd34055ff099c9509cf7a2766ec7867d2bc2691db58435fc",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 31,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-no-kq-lsm-preedit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 33,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-no-kq-lsm-preedit-fattn-tile.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 34,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-no-kq-lsm-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 36,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-no-kq-lsm-fattn-tile.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-kq-reg-bcast-skipbarrier-negative.md",
+      "source_sha256": "5015d25dafa081e15960b3e83f1d5e235efdffd0a9a1bad9ecd77780d2cf3e09",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 31,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-skipbarrier-preedit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 33,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-skipbarrier-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 35,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-skipbarrier-fattn-tile.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-q6k-argmax-profile.md",
+      "source_sha256": "79964a29895446a2b0854402cc29e6707d7ba889d2083a72bd176ce7bee8fc26",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 56,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-q6k-argmax-profile-preedit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 58,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-q6k-argmax-profile-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-qglobal-qstaging-negative.md",
+      "source_sha256": "ae8bfbd89d69dd32690e8449e2b3c3bc260f8aa68abb391488a481bca8fc4d65",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 14,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-qstaging-preedit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 16,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-qstaging-qglobal-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 17,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-qstaging-qglobal-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-tail-only-direct-confidence-negative.md",
+      "source_sha256": "876fb33524eebd7f029fbe3c931cf64c538eed33b9626f1dc81608eeaef1e256",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 21,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-pre-next-verifier-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 23,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-tail-only-direct-confidence-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-wg512-hot-fattn-neutral.md",
+      "source_sha256": "2f8779486786c4dcbb75ed2c1da29ad05328c7acfef707356a68bf05f0ef0c61",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 22,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-wg512-preedit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 23,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-wg512-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 27,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-acceptprefix-epilogue-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-hotglobal-pb1-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-dkq576-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-no-kq-lsm-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-skipbarrier-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-q6k-argmax-profile-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-qstaging-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-wg512-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260810-production-binary-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 28,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-wg512-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-local-tp-emulated-dflash-preregistration.md",
+      "source_sha256": "7761dfb7340fb16a35c8b89b94d58cb4bdaffec41d09b48192d41de52986aec9",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 191,
+          "members": [
+            {
+              "member": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-dflash-local-tp4-rejected-448351379-20260801.bundle",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 195,
+          "members": [
+            {
+              "member": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-dflash-local-tp4-rejected-448351379-20260801.bundle",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-target-inline-gathers-negative.md",
+      "source_sha256": "7a6420f07703db5d8681d18b34bdf4a55b5027982dafdd13a311d2d3309c9695",
+      "disposition": "frozen evidence or retained canonical byte-hash alias: unchanged; original paths resolve through archive manifests",
+      "matches": [
+        {
+          "line": 60,
+          "members": [
+            {
+              "member": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-target-inline-gathers-ce2f3dfc0-20260731.bundle",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/laguna-s-2.1-xpu-b70/notes/2026-08-01-target-inline-gathers-fixed-input-v2-preregistration.md",
+      "source_sha256": "57e07f26c7a6f0a2e568555d7a9322e8f8977a501b43eb1f14364e3d49c5c3e5",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 104,
+          "members": [
+            {
+              "member": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-target-inline-gathers-fixed-input-v2-68a4a5f3e-20260801.bundle",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 105,
+          "members": [
+            {
+              "member": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-target-inline-gathers-fixed-input-v2-68a4a5f3e-20260801.bundle",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/data/2026-09-14-amd-transfer/corpus.json",
+      "source_sha256": "3a2bb7b530732d147f324d503d2f64baa8790a2d205d3c50c4c02b3067bdc5da",
+      "disposition": "frozen evidence or retained canonical byte-hash alias: unchanged; original paths resolve through archive manifests",
+      "matches": [
+        {
+          "line": 7,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-dkq576-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/data/2026-09-17-long-corpus/corpus.json",
+      "source_sha256": "789a8aad103abefa39b8d54f5cff0fd76a4c48ae131ca7ddfbc9b7e1fbafd5b5",
+      "disposition": "frozen evidence or retained canonical byte-hash alias: unchanged; original paths resolve through archive manifests",
+      "matches": [
+        {
+          "line": 8,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-dkq576-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "notes/2026-08-10-muse-glimmer-30b-kickoff.md",
+      "source_sha256": "aa239084ccb18eb8599c97fbf0564c4992494c1c19be19e6e41f5d620393a193",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 20,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260810-production-binary-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "packages/catalog.json",
+      "source_sha256": "d687e5d488bebcd4538998a30e341bab4411f7bf7b2e95c5dd6474b2ed228924",
+      "disposition": "frozen evidence or retained canonical byte-hash alias: unchanged; original paths resolve through archive manifests",
+      "matches": [
+        {
+          "line": 776,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-candidate-proof-profile-server-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-direct-sampled-egress-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-top2-logging-reopen-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "packages/gemma4-26b-a4b-q8-b70/package.json",
+      "source_sha256": "db35658f5b3a59279ea1b8790518350a52659c921bdc7fbd2b629c4d8b759e4e",
+      "disposition": "frozen evidence or retained canonical byte-hash alias: unchanged; original paths resolve through archive manifests",
+      "matches": [
+        {
+          "line": 771,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-candidate-proof-profile-server-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-direct-sampled-egress-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-top2-logging-reopen-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "patches/gemma4-26b-a4b-q8-b70/README.md",
+      "source_sha256": "2d34e8ee68e61b2f0f19c1d0f963286373ad8b4c5ca7768857ecc7d1f66c6606",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 20,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-candidate-proof-profile-server-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-direct-sampled-egress-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-top2-logging-reopen-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 26,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-direct-sampled-egress-preedit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "patches/gemma4-26b-a4b-q8-b70/record-source-verification-20260822.json",
+      "source_sha256": "ea1d7495597f1d2613aa9075b9299218f7eb54acd94859d2ad397e26b7e69396",
+      "disposition": "frozen evidence or retained canonical byte-hash alias: unchanged; original paths resolve through archive manifests",
+      "matches": [
+        {
+          "line": 9,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-candidate-proof-profile-server-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-direct-sampled-egress-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-top2-logging-reopen-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 10,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-direct-sampled-egress-preedit-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 11,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-candidate-proof-profile-server-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-direct-sampled-egress-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-top2-logging-reopen-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/README.md",
+      "source_sha256": "f5043de3bd52c01efc3bbe5161f7f277d3934831e21bc6878ecfcbf7866f1d70",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 13,
+          "members": [
+            {
+              "member": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-dflash-local-tp4-rejected-448351379-20260801.bundle",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 15,
+          "members": [
+            {
+              "member": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-dflash-local-tp4-rejected-448351379-20260801.bundle",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 103,
+          "members": [
+            {
+              "member": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-target-inline-gathers-ce2f3dfc0-20260731.bundle",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 224,
+          "members": [
+            {
+              "member": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-confidence-tree-diagnostic-8b8cd5227-20260801.bundle",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/docker/Dockerfile.record-build-oneapi-2026.0",
+      "source_sha256": "ec5dd928b1bd21d87b3afc0713941b106c203e02db9a597d5545c8942ec5c740",
+      "disposition": "frozen evidence or retained canonical byte-hash alias: unchanged; original paths resolve through archive manifests",
+      "matches": [
+        {
+          "line": 10,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-candidate-proof-profile-server-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-direct-sampled-egress-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-top2-logging-reopen-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/preflight.sh",
+      "source_sha256": "61e6d44366f1533428621c6b5ed95ade57f7b4f38575940de156fb59237a2eab",
+      "disposition": "frozen evidence or retained canonical byte-hash alias: unchanged; original paths resolve through archive manifests",
+      "matches": [
+        {
+          "line": 10,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-candidate-proof-profile-server-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-direct-sampled-egress-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-top2-logging-reopen-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/restore-and-build.sh",
+      "source_sha256": "8ff90bbc4bc9cedeba4ebc2d06303265ac62ff3923c3f47085b95d9a68111a25",
+      "disposition": "frozen evidence or retained canonical byte-hash alias: unchanged; original paths resolve through archive manifests",
+      "matches": [
+        {
+          "line": 11,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-candidate-proof-profile-server-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-direct-sampled-egress-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-top2-logging-reopen-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "repro/gemma4-26b-a4b-q8-b70/README.md",
+      "source_sha256": "103bb8c1e0044e9d0a7ea78c681248554c87f9d5325c893c199d561662be6fb9",
+      "disposition": "maintained narrative: added dated restore guide without changing recorded conclusions",
+      "matches": [
+        {
+          "line": 86,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        },
+        {
+          "line": 88,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-dkq576-source.patch",
+              "matched_by": [
+                "original_filename"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "results/gemma4-26b-a4b-q8-b70/reproduce.md",
+      "source_sha256": "e74d038996e9c25d011d31bd02f43cf462e27a7c4ca6ecab47a95f074fdfcfbd",
+      "disposition": "frozen evidence or retained canonical byte-hash alias: unchanged; original paths resolve through archive manifests",
+      "matches": [
+        {
+          "line": 84,
+          "members": [
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-candidate-proof-profile-server-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-direct-sampled-egress-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            },
+            {
+              "member": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-top2-logging-reopen-preedit-source.patch",
+              "matched_by": [
+                "original_sha256"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "restore_proof": {
+    "scope": "byte-identical source restoration; inherited ancestry limitation retained",
+    "restoration": [
+      {
+        "manifest": "patches/laguna-s-2.1-xpu-b70/source-archive-manifest.json",
+        "members_restored_and_byte_equal": 4,
+        "original_bytes": 185069979,
+        "archive_sha256": "8dda9ff94f9f372b7ccadb1f48d2c9e216a18c44a03cc34e93137f739eb7ad71"
+      },
+      {
+        "manifest": "patches/gemma4-26b-a4b-q8-b70/source-archive-manifest.json",
+        "members_restored_and_byte_equal": 72,
+        "original_bytes": 42984043,
+        "archive_sha256": "55e2eabce8d55be714a27391f7b6f983ca019e1e51490224b37da5fbe9121ff2"
+      }
+    ],
+    "bundles": [
+      {
+        "path": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-confidence-tree-diagnostic-8b8cd5227-20260801.bundle",
+        "sha256": "f102dc5d3ade64880d340a189f3a5c08d97584a5558ea72b97deea579c7a6956",
+        "original_and_restored_bundle_heads_identical": true,
+        "bundle_verify_exit_code": 0,
+        "tips": [
+          {
+            "commit": "8b8cd522754aeecc9fb26405fb8d34fc1b8c9aff",
+            "ref": "refs/heads/experiment/laguna-confidence-tree-diag-20260731",
+            "tree": "7d0ab169d24ed582c9006df6ee535d8eac2ed8d5",
+            "tree_entries": 5954,
+            "tree_listing_sha256": "2950997254e1de3c5570ec74df48c93c25a69d0cf814f67a1aca239fa0bd5479",
+            "git_archive_tar_sha256": "5ed1a924ff43bcb0bcf352d85b162382003bb8f42fc1b87134b2ac298e605b68",
+            "original_and_restored_source_tree_exports_identical": true
+          }
+        ]
+      },
+      {
+        "path": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-dflash-local-tp4-rejected-448351379-20260801.bundle",
+        "sha256": "18317f6a824bd8f3dc788225462cc292f8e572292061c83a0945e8da854cea98",
+        "original_and_restored_bundle_heads_identical": true,
+        "bundle_verify_exit_code": 0,
+        "tips": [
+          {
+            "commit": "448351379b4ced80891725dc16a4b7f14cdb5663",
+            "ref": "refs/heads/experiment/laguna-dflash-local-tp-20260731",
+            "tree": "b3602c379bce8507c2ca9ce520c17f47a74ec7c8",
+            "tree_entries": 5954,
+            "tree_listing_sha256": "a22ef6b596204779b21bc252c90fd6fbc9a2e8775f71f33724b49c353ca8cb2c",
+            "git_archive_tar_sha256": "b932cd58705b619a5fb9c533480b0bcbb508f02c85ef61e871ca4b023f500655",
+            "original_and_restored_source_tree_exports_identical": true
+          }
+        ]
+      },
+      {
+        "path": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-target-inline-gathers-ce2f3dfc0-20260731.bundle",
+        "sha256": "231d391d4526e7816ba69e80d211aefb0df663699846d5211e50c659c1ee9ea7",
+        "original_and_restored_bundle_heads_identical": true,
+        "bundle_verify_exit_code": 0,
+        "tips": [
+          {
+            "commit": "ce2f3dfc02bce59095d8654d299c52b05c72d423",
+            "ref": "refs/heads/experiment/laguna-target-inline-gathers-20260731",
+            "tree": "5d849dfecb1b48991b06f4cbcd7120130105af53",
+            "tree_entries": 5954,
+            "tree_listing_sha256": "2a4e53fe8a843c482cff9b4765c7f19933dfc2fcd020c5288f694dcd0271416f",
+            "git_archive_tar_sha256": "4647f944af68548dd4e29a7a1837e02967fce1e39110bc5aaf1c9e20a114f89a",
+            "original_and_restored_source_tree_exports_identical": true
+          }
+        ]
+      },
+      {
+        "path": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-target-inline-gathers-fixed-input-v2-68a4a5f3e-20260801.bundle",
+        "sha256": "a181c0036436860b24cacea057e1f285ddd1fcf75a9e010f3d32fecb65095fad",
+        "original_and_restored_bundle_heads_identical": true,
+        "bundle_verify_exit_code": 0,
+        "tips": [
+          {
+            "commit": "68a4a5f3e44f2d1ab62c5d7cb3741e316914d32f",
+            "ref": "refs/heads/experiment/laguna-target-inline-gathers-fixed-input-v2-20260801",
+            "tree": "a6746cebd0116157fd9d8b91a2853bd9d4e56965",
+            "tree_entries": 5954,
+            "tree_listing_sha256": "50ed6230e7e8ebd43b865e28bc7d14c18b886603ac31f59c9be42401345a6da5",
+            "git_archive_tar_sha256": "44bc2bbed5fc0640747a17d87d5194d05921997aeec0c75f835fd66b31f1362f",
+            "original_and_restored_source_tree_exports_identical": true
+          }
+        ]
+      }
+    ],
+    "original_and_restored_object_inventory_and_fsck_identical": true,
+    "original_control": {
+      "git_fsck_exit_code": 2,
+      "git_fsck_stdout": "broken link from  commit 40eac9a9d92bba51ad49ca777a5517ee212ea394\n              to  commit b5adb027ad03c29b46181752ba3b1cb84eff1dd4\nmissing commit b5adb027ad03c29b46181752ba3b1cb84eff1dd4\n",
+      "git_fsck_stderr": "notice: HEAD points to an unborn branch (master)\n",
+      "object_inventory_sha256": "8a76ebc548c6152444f5fa9c8dcba003a55828fe6a690c119414fbe5c55d6e69",
+      "object_count": 22563
+    },
+    "restored_control": {
+      "git_fsck_exit_code": 2,
+      "git_fsck_stdout": "broken link from  commit 40eac9a9d92bba51ad49ca777a5517ee212ea394\n              to  commit b5adb027ad03c29b46181752ba3b1cb84eff1dd4\nmissing commit b5adb027ad03c29b46181752ba3b1cb84eff1dd4\n",
+      "git_fsck_stderr": "notice: HEAD points to an unborn branch (master)\n",
+      "object_inventory_sha256": "8a76ebc548c6152444f5fa9c8dcba003a55828fe6a690c119414fbe5c55d6e69",
+      "object_count": 22563
+    },
+    "inherited_limitations": [
+      "Both original and restored bundles omit parent b5adb027ad03c29b46181752ba3b1cb84eff1dd4 of commit 40eac9a9d92bba51ad49ca777a5517ee212ea394. git bundle verify succeeds because no prerequisite is declared; strict fsck exits 2 for this same boundary. No ancestry repair or complete-history claim is made. All retained bundle-tip trees export fully and identically."
+    ]
+  },
+  "tool_tests": {
+    "command": "python3 -B tools/test-restore-source-archives.py",
+    "tests_passed": 10
+  },
+  "disposition": "Archive source files are removed only after all members restore byte-identically and original/restored Git source-tree exports and object sets agree. Exact ignore entries prevent restored bulk bytes being recommitted.",
+  "retained_bundle_control": {
+    "retained_unmodified_bundles": [
+      "patches/laguna-s-2.1-xpu-b70/vllm-laguna-qknorm-rope-m12-58608c6-20260731.bundle",
+      "patches/laguna-s-2.1-xpu-b70/vllm-laguna-shared-elementwise-m12-1a7f61fef-20260731.bundle"
+    ],
+    "git_fsck_exit_code": 2,
+    "git_fsck_stdout": "broken link from  commit 40eac9a9d92bba51ad49ca777a5517ee212ea394\n              to  commit b5adb027ad03c29b46181752ba3b1cb84eff1dd4\nmissing commit b5adb027ad03c29b46181752ba3b1cb84eff1dd4\n",
+    "git_fsck_stderr": "notice: HEAD points to an unborn branch (master)\n"
+  },
+  "completed_disposition": {
+    "unpacked_files_removed": 76,
+    "bytes_removed": 228054022,
+    "archive_member_count": 76,
+    "restored_original_paths_ignored": true,
+    "final_helper_full_restore_verified": true,
+    "no_commits_or_staging_performed_by_this_agent": true
+  },
+  "post_change_checks": {
+    "markdown_documents_checked": 48,
+    "new_broken_links": 0,
+    "known_broken_links": 0,
+    "git_diff_check": "passed",
+    "frozen_consumer_files_hash_unchanged": 16,
+    "original_unpacked_paths_absent": 76,
+    "helper_tests_passed": 10
+  }
+}

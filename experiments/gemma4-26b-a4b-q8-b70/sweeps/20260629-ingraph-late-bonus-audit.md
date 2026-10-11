@@ -1,5 +1,10 @@
 # 2026-06-29 in-graph late-bonus verifier audit
 
+> **Source storage update (2026-10-10):** Some historical source paths below
+> are now exact restoration destinations. See [Gemma 4 26B A4B Q8 source archive](../../../patches/gemma4-26b-a4b-q8-b70/SOURCE-ARCHIVE.md).
+> Restore the listed files before using those paths; original bytes, hashes
+> and experimental conclusions are preserved.
+
 Purpose: decide whether to spend GPU/build time on a replacement for the
 existing `LLAMA_SPEC_VERIFY_LATE_HEAD_BONUS` path.
 

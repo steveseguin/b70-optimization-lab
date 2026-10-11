@@ -119,6 +119,62 @@ class RepositoryHygieneTests(unittest.TestCase):
         self.git("mv", "old-closeout.md", "new-closeout.md")
         self.assertFalse(self.check()["errors"])
 
+    def test_closing_atx_hashes_do_not_hide_empty_sections(self):
+        content = self.closeout()
+        for heading in HYGIENE.SECTIONS:
+            content = content.replace(f"## {heading}\n", f"## {heading} ##\n")
+        self.write("experiments/lane/closeout.md", content)
+        self.git("add", "experiments/lane/closeout.md")
+        self.assertFalse(self.check()["errors"])
+        self.write("experiments/lane/closeout.md", content.replace(
+            "Measured observation or explicit limitation.", ""))
+        self.git("add", "experiments/lane/closeout.md")
+        errors = self.check()["errors"]
+        self.assertEqual(5, sum("section needs content" in e["reason"] for e in errors))
+
+    def test_new_copy_of_retained_old_note_is_not_a_historical_move(self):
+        original = "# Ordinary historical note\n"
+        self.write("old-note.md", original)
+        self.git("add", "old-note.md")
+        self.git("commit", "-qm", "ordinary note")
+        self.write("experiments/lane/copy-closeout.md", original)
+        self.git("add", "experiments/lane/copy-closeout.md")
+        self.assertTrue(any("missing sections" in e["reason"] for e in self.check()["errors"]))
+        # Removing the old path can exempt one move, not two new copies.
+        self.git("rm", "old-note.md")
+        self.write("experiments/lane/second-closeout.md", original)
+        self.git("add", "experiments/lane/second-closeout.md")
+        self.assertEqual(1, len(self.check()["closeouts_checked"]))
+        self.assertTrue(self.check()["errors"])
+
+    def test_reference_style_links_are_evidence_but_unused_definitions_are_not(self):
+        for link in ("[source][artifact]", "[Artifact][]", "[ARTIFACT]"):
+            with self.subTest(link=link):
+                content = self.closeout(link) + '\n[artifact]: ../../source.py "Source"\n'
+                self.write("experiments/lane/closeout.md", content)
+                self.git("add", "experiments/lane/closeout.md")
+                report = self.check()
+                self.assertFalse(report["errors"])
+                self.assertEqual(["source.py"], report["closeouts_checked"][0]["evidence"])
+        content = self.closeout("No evidence linked.") + '\n[artifact]: ../../source.py\n'
+        self.write("experiments/lane/closeout.md", content)
+        self.git("add", "experiments/lane/closeout.md")
+        self.assertTrue(any("tracked repository evidence" in e["reason"] for e in self.check()["errors"]))
+
+    def test_removing_existing_marker_does_not_disable_closeout_validation(self):
+        self.write("experiments/lane/result.md", "<!-- campaign-closeout -->\n" + self.closeout())
+        self.git("add", "experiments/lane/result.md")
+        self.git("commit", "-qm", "completed campaign")
+        self.write("experiments/lane/result.md", self.closeout())
+        self.git("add", "experiments/lane/result.md")
+        self.assertEqual(1, len(self.check()["closeouts_checked"]))
+        self.assertFalse(self.check()["errors"])
+        self.write("experiments/lane/result.md", "# Result\nLooks fast.\n")
+        self.git("add", "experiments/lane/result.md")
+        errors = self.check()["errors"]
+        self.assertTrue(any("missing sections" in e["reason"] for e in errors))
+        self.assertTrue(any("tracked repository evidence" in e["reason"] for e in errors))
+
     def test_event_base_handles_first_push_and_rejects_injected_revision(self):
         event = self.write("event.json", json.dumps({"before": "0" * 40}))
         base = HYGIENE.base_for_event(self.root, event)

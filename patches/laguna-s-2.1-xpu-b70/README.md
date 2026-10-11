@@ -1,5 +1,10 @@
 # Laguna S 2.1 source snapshots
 
+> **Source storage update (2026-10-10):** Some historical source paths below
+> are now exact restoration destinations. See [Laguna S 2.1 source archive](SOURCE-ARCHIVE.md).
+> Restore the listed files before using those paths; original bytes, hashes
+> and experimental conclusions are preserved.
+
 ## August 4-7 diagnostic history
 
 The no-spec graph fix, replicated-attention diagnostics, native-MM reachability

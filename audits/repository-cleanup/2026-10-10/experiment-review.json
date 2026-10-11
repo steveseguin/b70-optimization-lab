@@ -1,0 +1,2132 @@
+{
+  "schema": "lab.experiment-review.v1",
+  "review_date": "2026-10-10",
+  "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997",
+  "current_authority": {
+    "path": "CURRENT.md",
+    "sha256": "c61d3470e56f70a5ba351618d6842c51ed5aecd45113ce5b0642a53d7700107e",
+    "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997",
+    "read_scope": "full recorded-state snapshot; no live process verification"
+  },
+  "scope": "Source-led semantic synthesis of all 37 immediate experiment areas; selected canonical handoffs, closeouts and decisive structured evidence. Mechanical document inventory is broader than semantic review.",
+  "limitations": [
+    "A concrete entry for every area does not mean every campaign, note or raw log was reread. reviewed_sources records the actual full/partial/delegated read scope; paths listed only as retained evidence were checked for existence, not automatically read.",
+    "Reviewed scientific sources are hashed as Git blobs at source_commit. Later archive annotations may change current working-tree bytes; current-only archive closeouts explicitly have null source_commit and their own identity_scope.",
+    "The document inventory records path/category/size/tracked status, not semantic correctness or a content hash for every file. It does not traverse symlinks or .git directories and omits raw binary/source/log formats; the broader repository census covers filesystem footprint.",
+    "All gates are recorded state from CURRENT.md at source_commit, not present authorization. Later owner receipts or host-state updates can supersede this snapshot; consult the current CURRENT.md and those receipts before acting. No models, live services, GPU tests, recovery actions or old launch commands were executed. Historical source instructions do not override present owner rules.",
+    "Rates remain scoped to their original model, KV precision, runtime, metric, context, concurrency, cache and quality identities. This catalog creates no new certified record and does not resolve missing binary/source/replay receipts.",
+    "Area-level summaries are a navigation and learning layer. Canonical frozen result packets, raw failures and exact patch histories remain the authorities for detailed reconstruction."
+  ],
+  "narrative_inventory": {
+    "path": "audits/repository-cleanup/2026-10-10/census/experiment-documents.jsonl.gz",
+    "sha256": "81290757b2d91b2d02adbf5d6d8a956dc182081e6cd71b4d1808d8b739746e89",
+    "uncompressed_sha256": "0f52d7f39cdf8affdd655b198f3e583eb40415c2820a86c9bd6b09f5eb12c2fe",
+    "records": 23755,
+    "narrative_documents": 3769,
+    "text_receipts": 1804,
+    "structured_documents": 18182,
+    "generated_or_vendor_location": 847,
+    "tracked_documents": 22896,
+    "semantically_reviewed_inventory_paths": 54,
+    "reviewed_source_references": 69,
+    "unique_reviewed_sources": 67,
+    "raw_logs_not_semantically_reviewed": 2422,
+    "selection": "All regular .md/.rst/.txt/.json/.jsonl/.yaml/.yml/.toml files under every immediate experiment directory, including ignored generated/vendor locations. Root/external canonical sources appear in reviewed_sources but are outside this denominator.",
+    "excluded_symlinks": [],
+    "traversal_errors": [],
+    "storage": "Ignored local compressed metadata inventory; this catalog retains counts, exact compressed/uncompressed digest and every semantic source identity. Regeneration can change counts after repository edits."
+  },
+  "transferable_lessons": [
+    {
+      "lesson": "A valid component is only one gate: fresh capture, lifecycle, full-model exactness and representative workload can fail independently.",
+      "areas": [
+        "minimax_ar_fused_rms_xpu",
+        "qwen35-4b-b70",
+        "qwen27_graphsafe_flash_attention"
+      ]
+    },
+    {
+      "lesson": "Measure the production bottleneck and fair baseline before endpoint work. Launch reduction, extra parallelism and speculative acceptance can all cost more than they save.",
+      "areas": [
+        "qwen27_fused_postattn_rms_w4a16",
+        "laguna-s-2.1-xpu-b70",
+        "deepseek-v4-flash-reap-xpu-b70",
+        "ornith-15-b70"
+      ]
+    },
+    {
+      "lesson": "Quality failures and missing receipts remain visible after later successes. Fast corrupt output, a skipped NULL and an empty ENOSPC summary cannot be promoted.",
+      "areas": [
+        "minimax-m27-reap-autoround-vllm",
+        "gemma4-26b-a4b-q8-b70",
+        "ltx25-b70",
+        "minicpm5-2b-b70"
+      ]
+    },
+    {
+      "lesson": "Keep cache state, pacing, first-use, concurrency and metric interval definitions beside every number; a plausible rate can describe a different experiment.",
+      "areas": [
+        "rapid-model-snapshots-b70",
+        "ltx25-b70",
+        "laguna-s-2.1-xpu-b70",
+        "qwen38-flash-next-fp8-b70"
+      ]
+    },
+    {
+      "lesson": "Source-byte recovery, binary identity, complete Git ancestry and independent runtime reproduction are different guarantees.",
+      "areas": [
+        "gemma4-26b-a4b-q8-b70",
+        "laguna-s-2.1-xpu-b70",
+        "own-xpu-runtime"
+      ]
+    },
+    {
+      "lesson": "Full source access and complete answers are different. Preserve omissions, failed tasks and unused holdouts; do not hide a wrong ownership join behind preserved numeric details.",
+      "areas": [
+        "lab-navigator-20261007",
+        "project-decision-recall-20261007",
+        "qwen38-27b-b70",
+        "local-coding-worker"
+      ]
+    },
+    {
+      "lesson": "Checkpoint names and ability to load are insufficient admission: census actual tensor types, memory residency, output contract and host budget first.",
+      "areas": [
+        "deepseek-v4-flash-autoround-vllm",
+        "qwen38-flash-next-ud-iq3xxs-b70",
+        "minicpm5-2b-b70",
+        "minimax-h3-b70"
+      ]
+    }
+  ],
+  "areas": [
+    {
+      "area": "deepseek-v4-flash-autoround-vllm",
+      "purpose": "Determine whether the Intel W4A16 checkpoint can run fully resident on four B70s.",
+      "outcomes": [
+        "Deployment was rejected before download: 46 shards total 152,946,418,392 bytes, a 35.61 GiB/card weight-only floor versus 32 GB cards."
+      ],
+      "worked": [
+        "Direct shard accounting corrected the misleading 303.7 GB API storage figure. An architecture class existing in vLLM was checked separately from support for this quantization."
+      ],
+      "failures_and_uncertainty": [
+        "Weights exceed device capacity before KV, graph and scratch allocations; the exact AutoRound checkpoint also lacked the documented runtime support."
+      ],
+      "validity_limits": [
+        "A metadata/fit decision, not model inference or a measured speed. The smaller K160 derivative is a different lane and cannot inherit this model identity."
+      ],
+      "retained_paths": [
+        "experiments/deepseek-v4-flash-autoround-vllm/README.md",
+        "experiments/deepseek-v4-flash-autoround-vllm/notes/2026-05-31-deployment-decision.md"
+      ],
+      "revisit_conditions": [
+        "A smaller compatible checkpoint, more VRAM, or an explicitly separate expert-offload design with measured latency and quality."
+      ],
+      "current_gate": "Not listed as an active lane in CURRENT.md. Retain as historical research; a new experiment needs current host ownership and admission. The four-card fault halt remains binding.",
+      "closeout_sources": [
+        "experiments/deepseek-v4-flash-autoround-vllm/notes/2026-05-31-deployment-decision.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/deepseek-v4-flash-autoround-vllm/README.md",
+          "sha256": "ec7649ec364513b8428b2a756e07e73b53e5a08f0ecee307274089078488339e",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "experiments/deepseek-v4-flash-autoround-vllm/notes/2026-05-31-deployment-decision.md",
+          "sha256": "52319debdf6253532bf02d5ff0445d4c28454b3a89efc65c360447d482dc7c95",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 16,
+        "narrative_documents": 14,
+        "text_receipts": 0,
+        "structured_documents": 2,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 2,
+        "reviewed_sources_including_external": 2,
+        "raw_logs_not_semantically_reviewed": 0
+      }
+    },
+    {
+      "area": "deepseek-v4-flash-reap-xpu-b70",
+      "purpose": "Optimize an explicitly identified K160 derivative and target-verified speculative decoding on four B70s.",
+      "outcomes": [
+        "Historical target-verified DSpark7 record: 80.820052 tok/s; nonspeculative direct-MoE anchor about 43.77 tok/s."
+      ],
+      "worked": [
+        "More verifier work per launch improved utilization. Exact fixed-geometry command-list substrate and replay corpora remain reusable even though their endpoint speed did not improve."
+      ],
+      "failures_and_uncertainty": [
+        "Submission collapse did not remove device execution time; tile-major prepacking fragmented coalescing, and inexact MHC fusion changed about half the tokens. A small EAGLE corpus overfit: offline hybrid acceptance rose only 2.8%, insufficient against extra draft cost."
+      ],
+      "validity_limits": [
+        "K160 is not the unmodified official checkpoint. The closeout rooflines are model assumptions, not measurements or a permanent impossibility theorem. Old claims that the lane is exhausted do not override the standing optimization policy. Some held-out packs were exposed to broad searches."
+      ],
+      "retained_paths": [
+        "experiments/deepseek-v4-flash-reap-xpu-b70/README.md",
+        "experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-21-deepseek-v4-flash-frontier-closeout.md",
+        "patches/deepseek-v4-flash-reap-xpu-b70/README.md",
+        "results/deepseek-v4-flash-k160-b70/README.md"
+      ],
+      "revisit_conditions": [
+        "A mechanism reducing actual device work, or independently justified draft training data that clears a predeclared acceptance-versus-cost gate; regenerate uncontaminated evaluation before promotion."
+      ],
+      "current_gate": "Not listed as an active lane in CURRENT.md. Retain as historical research; a new experiment needs current host ownership and admission. The four-card fault halt remains binding.",
+      "closeout_sources": [
+        "experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-21-deepseek-v4-flash-frontier-closeout.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/deepseek-v4-flash-reap-xpu-b70/README.md",
+          "sha256": "fd20c612b23c0c22dae9685e325e9ad5c280679b73963ac8ee634048db3f8c17",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-21-deepseek-v4-flash-frontier-closeout.md",
+          "sha256": "023dbfa647768443398908180e263bba69aea6e1b640363dfc7be4eb57534c88",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 263,
+        "narrative_documents": 111,
+        "text_receipts": 0,
+        "structured_documents": 152,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 2,
+        "reviewed_sources_including_external": 2,
+        "raw_logs_not_semantically_reviewed": 0
+      }
+    },
+    {
+      "area": "gemma4-12b-int4-autoround-vllm",
+      "purpose": "Bring up text/image AutoRound inference and characterize context, concurrency and graph execution.",
+      "outcomes": [
+        "The model-loader backport enabled text and image smoke tests. Historical c8/32K graph profile improved short-request throughput; c12 burst load lost the device."
+      ],
+      "worked": [
+        "Transformers/model-registry/helper compatibility had to be repaired together. Graph execution helped decode while 32K prefill stayed around 22.28 s TTFT; separating wall time from post-first-text rates avoided claiming a prefill improvement."
+      ],
+      "failures_and_uncertainty": [
+        "One of 32 scheduled soak cycles returned a wrong copy phrase; later passing repeats do not erase it. A final-interval harness bug generated rapid extra cycles. Explicit zero audio/video limits broke dummy multimodal profiling."
+      ],
+      "validity_limits": [
+        "Old production, LAN-listener and prefix-cache statements are historical. Repeated/prefix-cached and synthetic throughput is not a present cold-suite headline; coalesced long-prompt streaming made inter-token rates unusable."
+      ],
+      "retained_paths": [
+        "experiments/gemma4-12b-int4-autoround-vllm/README.md",
+        "patches/vllm-gemma4-unified-backport-b70-20260607.patch"
+      ],
+      "revisit_conditions": [
+        "Use a current compatible loader, preserved failed canary, fixed soak scheduling and a preregistered cold quality/concurrency gate; study prefill separately from decode."
+      ],
+      "current_gate": "Not listed as an active lane in CURRENT.md. Retain as historical research; a new experiment needs current host ownership and admission. The four-card fault halt remains binding.",
+      "closeout_sources": [
+        "experiments/gemma4-12b-int4-autoround-vllm/README.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/gemma4-12b-int4-autoround-vllm/README.md",
+          "sha256": "af0acaaed5a9759a8515fb0640b50ebe37e3f1c9b61f4bb5a3850a7e115c5830",
+          "read_scope": "lines 1-108, 284-308, 482-580, 699-757, 908-940",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 7,
+        "narrative_documents": 1,
+        "text_receipts": 0,
+        "structured_documents": 6,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 1,
+        "reviewed_sources_including_external": 1,
+        "raw_logs_not_semantically_reviewed": 0
+      }
+    },
+    {
+      "area": "gemma4-26b-a4b-q8-b70",
+      "purpose": "Improve the Q8 model without conflating decode records, prefill experiments and sampled-output extraction.",
+      "outcomes": [
+        "The accepted result packet remains the record authority. Two reviewed followups are useful negatives: direct sampled egress failed strict value parity, and deleting an unused local-memory declaration produced no prefill win."
+      ],
+      "worked": [
+        "A stricter null-value test exposed false reassurance from skipped NULL samples. Mirrored prefill waves exposed noise that looked like a small single-run gain."
+      ],
+      "failures_and_uncertainty": [
+        "Direct egress returned -1 where copied outputs were valid, with 356/355 mismatches in variants; skipping the copy could leave logits missing. KQ no-LSM comparison was about -0.0336% mean / +0.0669% median with alternating wave direction."
+      ],
+      "validity_limits": [
+        "The 120.303 cleanup sanity run used a 64-token cap and 1-50 metric, not the record protocol. The source snapshot is recoverable, but an absent original binary hash prevents claiming exact historical binary identity."
+      ],
+      "retained_paths": [
+        "experiments/gemma4-26b-a4b-q8-b70/README.md",
+        "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-direct-sampled-egress-negative.md",
+        "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-kq-reg-bcast-no-kq-lsm-negative.md",
+        "data/gemma4-global-fattn-kq-reg-bcast-no-kq-lsm-comparison-20260702.json",
+        "results/gemma4-26b-a4b-q8-b70/README.md",
+        "patches/gemma4-26b-a4b-q8-b70/README.md",
+        "patches/gemma4-26b-a4b-q8-b70/SOURCE-ARCHIVE.md",
+        "patches/gemma4-26b-a4b-q8-b70/source-archive-manifest.json"
+      ],
+      "revisit_conditions": [
+        "Bind the real graph sample producer and pass zero strict mismatches before removing egress copies; revisit local-memory declarations only with compiler evidence that they change occupancy."
+      ],
+      "current_gate": "Not listed as an active lane in CURRENT.md. Retain as historical research; a new experiment needs current host ownership and admission. The four-card fault halt remains binding.",
+      "closeout_sources": [
+        "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-direct-sampled-egress-negative.md",
+        "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-kq-reg-bcast-no-kq-lsm-negative.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/gemma4-26b-a4b-q8-b70/README.md",
+          "sha256": "68a6af4bc404054ff1697a0c957cc854220fa537da3beb0b8fd43ac9727a472e",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-direct-sampled-egress-negative.md",
+          "sha256": "1e67ed7deb6eed17962a35c7c0d3a396918d98d74cd858e44bc043ae508b527e",
+          "read_scope": "full",
+          "reviewer": "patch_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-kq-reg-bcast-no-kq-lsm-negative.md",
+          "sha256": "5b79632cdd095991fd34055ff099c9509cf7a2766ec7867d2bc2691db58435fc",
+          "read_scope": "full",
+          "reviewer": "patch_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "data/gemma4-global-fattn-kq-reg-bcast-no-kq-lsm-comparison-20260702.json",
+          "sha256": "d808248843545165bbe4cbe6f8eda424fa11883a1aad8eb746739345ae58cb3e",
+          "read_scope": "comparison fields and validity evidence",
+          "reviewer": "patch_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "patches/gemma4-26b-a4b-q8-b70/SOURCE-ARCHIVE.md",
+          "sha256": "3d275a9b8219acafe64ab0e43c5414af6ee3e989e86209306e29161b3d15054e",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": null,
+          "identity_scope": "working-tree storage closeout read after the scientific source snapshot"
+        }
+      ],
+      "storage_note": "Historical source paths listed by the archive manifest are exact restore destinations. Use SOURCE-ARCHIVE.md before a historical command that consumes an archived file; the archive changes storage, not experimental status.",
+      "inventory_counts": {
+        "documents": 282,
+        "narrative_documents": 277,
+        "text_receipts": 0,
+        "structured_documents": 5,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 3,
+        "reviewed_sources_including_external": 5,
+        "raw_logs_not_semantically_reviewed": 0
+      }
+    },
+    {
+      "area": "lab-navigator-20261007",
+      "purpose": "Retrieve original commit-pinned evidence with verifiable paths, hashes and visible omissions.",
+      "outcomes": [
+        "Frozen search retrieved every required passage for 4/6 development and 4/6 held-out questions; held-out file discovery alone did not ensure passage completeness."
+      ],
+      "worked": [
+        "Exact Git/source/excerpt binding, complete-source reads, explicit included files and omitted-line ranges make review auditable. The index is disposable while original evidence is retained."
+      ],
+      "failures_and_uncertainty": [
+        "Flash-Next and worker evidence were among misses. Budgeted excerpts can omit an oversized explicit-only source; a complete reader-side log is not proof that a model saw untruncated tool output."
+      ],
+      "validity_limits": [
+        "Retrieval, citation integrity and answer completeness are separate. These are CPU/source-access checks, not local-model memory, general intelligence or speed qualification."
+      ],
+      "retained_paths": [
+        "experiments/lab-navigator-20261007/README.md",
+        "experiments/lab-navigator-20261007/evaluation/README.md",
+        "experiments/lab-navigator-20261007/results"
+      ],
+      "revisit_conditions": [
+        "A real unanswered coordinator question or demonstrated scale requirement; first open the missing original source and verify displayed coverage rather than tune on frozen holdouts."
+      ],
+      "current_gate": "Useful CPU source-navigation tool. CURRENT parks worker/memory integration; historical host snapshots are not live authority.",
+      "closeout_sources": [
+        "experiments/lab-navigator-20261007/README.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/lab-navigator-20261007/README.md",
+          "sha256": "a9de5e6442cbbf86ad3a34881ce13c87e4764975a125a75fcb7fda5e04481e45",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 12,
+        "narrative_documents": 2,
+        "text_receipts": 0,
+        "structured_documents": 10,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 1,
+        "reviewed_sources_including_external": 1,
+        "raw_logs_not_semantically_reviewed": 0
+      }
+    },
+    {
+      "area": "laguna-s-2.1-fp8-kv-xpu-b70",
+      "purpose": "Test calibrated E4M3 KV as a separate Laguna model/runtime identity with its own target-only teacher.",
+      "outcomes": [
+        "Replicated target embedding removed a collective and yielded two exact endpoint medians, 95.0193/95.8187 tok/s. Earlier FP8 versus BF16 screen was 4.132% slower while doubling KV capacity."
+      ],
+      "worked": [
+        "Target calibrated scales and draft unit scales were audited separately. The lane preserved the BF16 oracle and froze a new FP8 teacher instead of borrowing cross-precision exactness."
+      ],
+      "failures_and_uncertainty": [
+        "Native page-32 component tests passed, but candidate and restored page-64 control stalled in XCCL initialization; endpoint page-size speed remains unknown."
+      ],
+      "validity_limits": [
+        "Compressed KV is separately scoped and no longer a default under current owner rules. Component correctness and capacity are not a performance promotion; old reboot instructions do not grant permission."
+      ],
+      "retained_paths": [
+        "experiments/laguna-s-2.1-fp8-kv-xpu-b70/README.md",
+        "experiments/laguna-s-2.1-fp8-kv-xpu-b70/patches",
+        "experiments/laguna-s-2.1-fp8-kv-xpu-b70/notes/2026-07-27-replicated-embedding-page32-and-xccl-boundary.md"
+      ],
+      "revisit_conditions": [
+        "Only with explicit compressed-KV authorization, healthy current host admission, fresh exact FP8 teacher, four-rank scale/topology evidence and two fresh complete suites."
+      ],
+      "current_gate": "Not listed as an active lane in CURRENT.md. Retain as historical research; a new experiment needs current host ownership and admission. The four-card fault halt remains binding.",
+      "closeout_sources": [
+        "experiments/laguna-s-2.1-fp8-kv-xpu-b70/README.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/laguna-s-2.1-fp8-kv-xpu-b70/README.md",
+          "sha256": "75d650eeb3a3bc949011d332369374c1080ec51df66747ae1f0f0a4ff8eae233",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 12,
+        "narrative_documents": 6,
+        "text_receipts": 0,
+        "structured_documents": 6,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 1,
+        "reviewed_sources_including_external": 1,
+        "raw_logs_not_semantically_reviewed": 0
+      }
+    },
+    {
+      "area": "laguna-s-2.1-xpu-b70",
+      "purpose": "Optimize INT4/BF16-KV target-verified DFlash while preserving metric, topology and long-context identity.",
+      "outcomes": [
+        "Conventional short-suite record retained at 125.461973 tok/s. Long-context graph/cutoff experiments did not qualify a replacement; a 32K graph diagnostic differs 9/128 tokens and lacks a completed corrected run."
+      ],
+      "worked": [
+        "Exact shared-elementwise fusions and segmented drafting improved the scoped record. Pure-prefill chunks improved prompt latency separately from 32K decode. Component cost gates avoided an expensive local-TP endpoint trial."
+      ],
+      "failures_and_uncertainty": [
+        "Local TP4 draft replication added 4.208694 ms versus only 1.239689 ms collective savings, failing its net gate. Fixed-input inline-gather V2 retained a 176-token exact prefix then diverged; V1 did not save the failing response, so its first divergence is unknown."
+      ],
+      "validity_limits": [
+        "Legacy 102.971436 uses inclusive-event accounting; conventional value is 101.941721. Interpolated crossover and correctness-failing cutoff rate are not scores. Different attention/router DSO source identities cannot be represented by one HEAD.",
+        "The original and restored Git bundles preserve complete identical source-tip trees, but share a missing historical parent. Passing git bundle verify did not establish full ancestry; strict fsck detected the inherited limitation. The archive preserves rather than repairs it."
+      ],
+      "retained_paths": [
+        "experiments/laguna-s-2.1-xpu-b70/RESUME.md",
+        "experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-local-tp-emulated-dflash-preregistration.md",
+        "data/laguna-dflash-local-tp4-negative-20260801.json",
+        "experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-target-inline-gathers-negative.md",
+        "data/laguna-target-inline-gathers-fixed-input-v2-negative-20260801.json",
+        "patches/laguna-s-2.1-xpu-b70/README.md",
+        "patches/laguna-s-2.1-xpu-b70/SOURCE-ARCHIVE.md",
+        "patches/laguna-s-2.1-xpu-b70/source-archive-manifest.json"
+      ],
+      "revisit_conditions": [
+        "Prove a different producer/consumer dependency or communication saving without multiplying projection work; pass exact real-cycle and fresh endpoint gates before speed. A new long-context mechanism must preserve the pinned oracle and audit replay."
+      ],
+      "current_gate": "Not listed as an active lane in CURRENT.md. Retain as historical research; a new experiment needs current host ownership and admission. The four-card fault halt remains binding.",
+      "closeout_sources": [
+        "experiments/laguna-s-2.1-xpu-b70/RESUME.md",
+        "data/laguna-dflash-local-tp4-negative-20260801.json",
+        "data/laguna-target-inline-gathers-fixed-input-v2-negative-20260801.json"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/laguna-s-2.1-xpu-b70/RESUME.md",
+          "sha256": "3522219a0de0b96af4ee4c11f5c3bc1107afd4400c16949017df90e6a51eb695",
+          "read_scope": "lines 1-110",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-local-tp-emulated-dflash-preregistration.md",
+          "sha256": "7761dfb7340fb16a35c8b89b94d58cb4bdaffec41d09b48192d41de52986aec9",
+          "read_scope": "full",
+          "reviewer": "patch_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "data/laguna-dflash-local-tp4-negative-20260801.json",
+          "sha256": "b3c38cb751d5dc39419056dee9d1261923731d0c5babeaceb6a4cc93d0837283",
+          "read_scope": "parity, component costs and failed net gate",
+          "reviewer": "patch_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-target-inline-gathers-negative.md",
+          "sha256": "7a6420f07703db5d8681d18b34bdf4a55b5027982dafdd13a311d2d3309c9695",
+          "read_scope": "full",
+          "reviewer": "patch_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "data/laguna-target-inline-gathers-fixed-input-v2-negative-20260801.json",
+          "sha256": "ece1dd76b87409316de1ac072e14f889963688b21e0575a6bf6aec9ab3ce1c16",
+          "read_scope": "full-model parity failure and retained response",
+          "reviewer": "patch_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "patches/laguna-s-2.1-xpu-b70/SOURCE-ARCHIVE.md",
+          "sha256": "5ca05d26b78324ca37fe99afe243d57732ec7be74a703d3a53794c989ad032bc",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": null,
+          "identity_scope": "working-tree storage closeout read after the scientific source snapshot"
+        }
+      ],
+      "storage_note": "Historical source paths listed by the archive manifest are exact restore destinations. Use SOURCE-ARCHIVE.md before a historical command that consumes an archived file; the archive changes storage, not experimental status.",
+      "inventory_counts": {
+        "documents": 375,
+        "narrative_documents": 356,
+        "text_receipts": 0,
+        "structured_documents": 19,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 3,
+        "reviewed_sources_including_external": 6,
+        "raw_logs_not_semantically_reviewed": 0
+      }
+    },
+    {
+      "area": "local-coding-worker",
+      "purpose": "Test whether a local model completes real repairs under independently checked acceptance criteria.",
+      "outcomes": [
+        "The scoped 27B attempt made 12 requests in 114.54 s, no edits and no acceptance submission: 0/1 repairs. Five original cases remain unused."
+      ],
+      "worked": [
+        "Pinned small snapshots, source preservation and baseline/fix CPU controls worked; the wrapper kept accounting and graceful lifecycle receipts. This separates valid infrastructure from unsuccessful model behavior."
+      ],
+      "failures_and_uncertainty": [
+        "The relevant function was visible by request 3, but inspection continued; six tool outputs truncated. Outputs ended naturally below the cap, so the failure is not established as token-cap or request-timeout exhaustion."
+      ],
+      "validity_limits": [
+        "The scoped attempt uses a historical R276 identity and differs from earlier full-repository trials; neither proves improvement, current package qualification or general coding capability."
+      ],
+      "retained_paths": [
+        "experiments/local-coding-worker/scoped-task-20261007/CLOSEOUT.md",
+        "experiments/local-coding-worker/scoped-task-20261007/runtime-plan.json",
+        "experiments/local-coding-worker/evaluation-20261007"
+      ],
+      "revisit_conditions": [
+        "A new justified task/protocol and independently frozen acceptance checks, without retuning the failed task or consuming the five unused cases casually. Address observation-to-edit behavior and display completeness first."
+      ],
+      "current_gate": "CURRENT explicitly parks further worker tuning and memory integration. Preserve failed attempts and five unused cases.",
+      "closeout_sources": [
+        "experiments/local-coding-worker/scoped-task-20261007/CLOSEOUT.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/local-coding-worker/scoped-task-20261007/CLOSEOUT.md",
+          "sha256": "f047bb7b549b920795ddc0d3aa9657c61a0dae3f01de6cd159f3738606c5678c",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 793,
+        "narrative_documents": 54,
+        "text_receipts": 160,
+        "structured_documents": 579,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 1,
+        "reviewed_sources_including_external": 1,
+        "raw_logs_not_semantically_reviewed": 61
+      }
+    },
+    {
+      "area": "ltx25-b70",
+      "purpose": "Improve exact video generation, then coherent continuing-video delivery faster than playback.",
+      "outcomes": [
+        "Accepted w93c-reference batch-1 packet97 recorded 1.308 s/clip, 126/126 exact. Later 145-frame continuation packet135 has an early unthrottled 52-period median of 5.2415 s and raw 747-period median of 5.553 s."
+      ],
+      "worked": [
+        "Explicit reference changes, parallel scheduling and exact per-clip checks made gains reviewable. Separating client pacing from server work corrected a misleading sustained-speed interpretation. Sealed copies recovered an empty source helper after ENOSPC."
+      ],
+      "failures_and_uncertainty": [
+        "Batch2/4 clips differ from batch1 despite exactness to their own references. Disk-full progress-lock failure left an empty summary and truncated log; a preceding completed campaign cannot fill that missing receipt. Packet138 prefetch has CPU tests but no native overlap/peak measurement."
+      ],
+      "validity_limits": [
+        "Early unthrottled, raw paced delivery and hold-free diagnostics are distinct metrics. Seam/audio acceptance and portable independent replay remain open; larger-size and output-changing arms do not inherit accepted-reference quality."
+      ],
+      "retained_paths": [
+        "experiments/ltx25-b70/RESUME.md",
+        "results/ltx25-continuation-stream-pacing-2026-10-10.md",
+        "experiments/ltx25-b70/data/resume-20261008/continuation138-build.json",
+        "experiments/ltx25-b70/data/stability-01-window-prereg.json",
+        "experiments/ltx25-b70/recovery/20261010-continuation138-stream/LAUNCH.md"
+      ],
+      "revisit_conditions": [
+        "After owner resolves current fault halt, admit native packet138 with unchanged conditioning checks and memory/disk reserves; measure sustained delivery including scene cuts and maintenance, then obtain separate visual/audio acceptance."
+      ],
+      "current_gate": "CURRENT: four-card GPU halt after third fault; packet137 stopped, packet138 native qualification pending. Old resume/launch queues are superseded.",
+      "closeout_sources": [
+        "experiments/ltx25-b70/RESUME.md",
+        "results/ltx25-continuation-stream-pacing-2026-10-10.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/ltx25-b70/RESUME.md",
+          "sha256": "e3e13d8cbf4ebdf27ee7eea02a155fc15bc3c53ef858fcd875d9ac606e1a26dd",
+          "read_scope": "lines 1-120",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "results/ltx25-continuation-stream-pacing-2026-10-10.md",
+          "sha256": "66786af7afece3f68ad0e47a5e12fe5d94298eafa2597cce4c9a243b95d9329f",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 10560,
+        "narrative_documents": 454,
+        "text_receipts": 84,
+        "structured_documents": 10022,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 1,
+        "reviewed_sources_including_external": 2,
+        "raw_logs_not_semantically_reviewed": 1534
+      }
+    },
+    {
+      "area": "minicpm5-2b-b70",
+      "purpose": "Establish an unchanged native BF16 reference before optimizing a new small model.",
+      "outcomes": [
+        "Checkpoint loads, but baseline is unqualified and optimization never started. Publisher sampling passed 5/6 objective checks; the neutral-system preset passed 4/6."
+      ],
+      "worked": [
+        "Frozen arithmetic, copy and format requirements stopped invalid promotion before broad repeats. Exact input hashes and all-four-card postflight were retained."
+      ],
+      "failures_and_uncertainty": [
+        "Greedy arithmetic failed even at the larger budget. Neutral-system JSON tasks returned explanatory prose or fenced JSON; correct values in wrong required format still fail. Full fresh-process repeat and cache parity were never reached."
+      ],
+      "validity_limits": [
+        "Evidence applies to these declared presets/runtime, not a universal checkpoint defect. Loading, semantic plausibility and a passing smoke do not certify the baseline or speed."
+      ],
+      "retained_paths": [
+        "experiments/minicpm5-2b-b70/README.md",
+        "experiments/minicpm5-2b-b70/data/qualification-decision.json"
+      ],
+      "revisit_conditions": [
+        "A materially justified preset/runtime change with a new preregistration and preserved original failures; no prompt replacement or relaxed checker merely to pass."
+      ],
+      "current_gate": "Not listed as an active lane in CURRENT.md. Retain as historical research; a new experiment needs current host ownership and admission. The four-card fault halt remains binding.",
+      "closeout_sources": [
+        "experiments/minicpm5-2b-b70/data/qualification-decision.json"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/minicpm5-2b-b70/README.md",
+          "sha256": "166272bdfbac69e95c1b08bb84f0440829d51497b1a3a4e2f6d5f021d71ce2bc",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "experiments/minicpm5-2b-b70/data/qualification-decision.json",
+          "sha256": "c4f2d181ccf90381b49f6bdd6c3f284485a22865a037a6c965663ecfd0caf0cc",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 40,
+        "narrative_documents": 7,
+        "text_receipts": 9,
+        "structured_documents": 24,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 2,
+        "reviewed_sources_including_external": 2,
+        "raw_logs_not_semantically_reviewed": 12
+      }
+    },
+    {
+      "area": "minimax-h3-b70",
+      "purpose": "Increase exact scheduling throughput for the owner-selected Comfy-Org fitted-AdaLN denoiser on turin.",
+      "outcomes": [
+        "The measured eight-clip batch is 396.6 s/clip, 32 matching hash checks and eight repeats against this denoiser. The 800.8 s baseline is ledger-only; raw baseline receipts are missing."
+      ],
+      "worked": [
+        "One process per card overcame nonoverlapping Python-thread execution. Persistent decode workers reduced repeated load/setup; controlling encoder rate control and mux timestamps made output files repeatable, beyond tensor parity."
+      ],
+      "failures_and_uncertainty": [
+        "Threaded two-card decode was only 1.01x. FP16 decode changes pixels and two-process FP16 was not repeatable; it is not an exact default. An early 4 GiB cgroup limit during a 27 GB load beside a build exhausted the 15 GiB host."
+      ],
+      "validity_limits": [
+        "The lab did not produce the fit. Exact scheduling relative to Comfy-Org weights is not losslessness versus the official model. Steps count sigma-grid points: 51 means 50 evaluations. Clean-build/runtime and full independent publication evidence remain absent."
+      ],
+      "retained_paths": [
+        "experiments/minimax-h3-b70/README.md",
+        "CURRENT.md",
+        "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md",
+        "experiments/minimax-h3-b70/data/2026-10-03-gates"
+      ],
+      "revisit_conditions": [
+        "Complete missing reconstruction/reference receipts and independent full-suite repeat; pursue process scheduling/measurement with unchanged fp32 picture decode and watchdog, not unaccepted arithmetic changes."
+      ],
+      "current_gate": "CURRENT: active turin optimization lane, source/model acceptance resolved, recipe remains draft. GPU work only through smoke_h3.sh with memory watchdog and fresh host ownership.",
+      "closeout_sources": [
+        "experiments/minimax-h3-b70/README.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/minimax-h3-b70/README.md",
+          "sha256": "d41470b3c3e87803e8ba861324b176162af672909ca04aea9e63bf123d6537dc",
+          "read_scope": "lines 1-108",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "CURRENT.md",
+          "sha256": "c61d3470e56f70a5ba351618d6842c51ed5aecd45113ce5b0642a53d7700107e",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 74,
+        "narrative_documents": 20,
+        "text_receipts": 7,
+        "structured_documents": 47,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 1,
+        "reviewed_sources_including_external": 2,
+        "raw_logs_not_semantically_reviewed": 8
+      }
+    },
+    {
+      "area": "minimax-m27-reap-autoround-vllm",
+      "purpose": "Evaluate a smaller REAP W4A16 MiniMax derivative while retaining the larger-model reference.",
+      "outcomes": [
+        "Historical quality-gated 89.499223 tok/s remains preserved but was not reproduced quality-valid from later live source. Later safe paths are about 83–85 tok/s; fast stale-cache results are not promoted."
+      ],
+      "worked": [
+        "A stronger async-output check exposed all-zero/NUL generation in a cache that still benchmarked 88.63 tok/s. Clean-weight ownership repair restored usable output, showing that similar graph counts did not prove equal runtime state."
+      ],
+      "failures_and_uncertainty": [
+        "The f728 cache without owner repair is corrupt; adding the shim returns about 83.32 tok/s. Signed-compact template specialization passed quality but regressed to 80.0069 versus restored 84.2293; branch removal did not remove the bottleneck."
+      ],
+      "validity_limits": [
+        "Checkpoint pruning, model size and metric differ from the full MiniMax line. Historical record preservation does not make a stale cache usable. Instruction-cache/compiler-scheduling explanations for specialization remain hypotheses."
+      ],
+      "retained_paths": [
+        "experiments/minimax-m27-reap-autoround-vllm/README.md",
+        "experiments/minimax-m27-reap-autoround-vllm/REPRO.md",
+        "experiments/minimax-m27-reap-autoround-vllm/notes/2026-06-01-f728-quality-speed-split.md",
+        "experiments/minimax-m27-reap-autoround-vllm/notes/2026-06-02-u4-specialization-reject.md",
+        "patches/vllm-reap-piecewise-static-range-and-b70-e192-configs-20260531.patch",
+        "experiments/minimax-m27-reap-autoround-vllm/patches/llm-scaler-ws-signedcompact-specialization-rejected-20260602.patch"
+      ],
+      "revisit_conditions": [
+        "A graph-safe clean-weight ownership path or measured MoE/QK work reduction, followed by fresh async quality and repeated matched timing; never recover a number by reviving the corrupt cache."
+      ],
+      "current_gate": "Not listed as an active lane in CURRENT.md. Retain as historical research; a new experiment needs current host ownership and admission. The four-card fault halt remains binding.",
+      "closeout_sources": [
+        "experiments/minimax-m27-reap-autoround-vllm/notes/2026-06-01-f728-quality-speed-split.md",
+        "experiments/minimax-m27-reap-autoround-vllm/notes/2026-06-02-u4-specialization-reject.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/minimax-m27-reap-autoround-vllm/README.md",
+          "sha256": "19564eaf83499a6b54945d5120f4e7f79989ea6c3358b646dac446fb88efbd04",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "experiments/minimax-m27-reap-autoround-vllm/REPRO.md",
+          "sha256": "4f8409b690f6f0e3dce79376bf4060818b6367ba3a6ac050c3e49b31fefc55ee",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "experiments/minimax-m27-reap-autoround-vllm/notes/2026-06-01-f728-quality-speed-split.md",
+          "sha256": "0475cbf558912e78e15520a68ca796dd2147c2169c4eeff61c59bcaf6effaecc",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "experiments/minimax-m27-reap-autoround-vllm/notes/2026-06-02-u4-specialization-reject.md",
+          "sha256": "ad7c7bf981c795ac794370d69ff79192525b116bd24ef6c62bb3f8962bcf88d0",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 32,
+        "narrative_documents": 26,
+        "text_receipts": 0,
+        "structured_documents": 6,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 4,
+        "reviewed_sources_including_external": 4,
+        "raw_logs_not_semantically_reviewed": 3
+      }
+    },
+    {
+      "area": "minimax_ar_fused_rms_xpu",
+      "purpose": "Fuse attention all-reduce, residual add and RMSNorm while preserving model output.",
+      "outcomes": [
+        "Both integration shapes were rejected before promoted timing: the c10d helper passed one strict screen then failed n256 repeat exactness; post-reduce-only failed n64."
+      ],
+      "worked": [
+        "device_group.group_name fixed the c10d lookup bug; unique_name belongs to another registry. Standalone add/RMS microchecks were exact."
+      ],
+      "failures_and_uncertainty": [
+        "Correct local formula and deterministic output within one run did not preserve fresh graph/model output. Keeping collective order in the narrower epilogue still failed."
+      ],
+      "validity_limits": [
+        "No throughput survives the failed quality gate; the failed-check 9.52 tok/s is not a benchmark. Outcomes live in root notes/data, not a local README."
+      ],
+      "retained_paths": [
+        "notes/2026-05-19-minimax-ar-fused-rms-c10d-repeatability-negative.md",
+        "notes/2026-05-19-minimax-attn-post-reduce-rms-xpu-quality-fail.md",
+        "data/minimax-m27-ar-fused-rms-c10d-repeatability-negative-20260519.json",
+        "data/minimax-m27-attn-post-reduce-rms-xpu-quality-fail-20260519.json",
+        "experiments/minimax_ar_fused_rms_xpu"
+      ],
+      "revisit_conditions": [
+        "A materially different lowering with integrated arithmetic and fresh-capture parity, before long timing."
+      ],
+      "current_gate": "Not listed as an active lane in CURRENT.md. Retain as historical research; a new experiment needs current host ownership and admission. The four-card fault halt remains binding.",
+      "closeout_sources": [
+        "notes/2026-05-19-minimax-ar-fused-rms-c10d-repeatability-negative.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "notes/2026-05-19-minimax-ar-fused-rms-c10d-repeatability-negative.md",
+          "sha256": "52e12e757d502baaba4cfd3fcad7d6565346b8e9d754d264f23730bff3ce12de",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "notes/2026-05-19-minimax-attn-post-reduce-rms-xpu-quality-fail.md",
+          "sha256": "d2f2acef50d4cabb0ec09344614c6f0a0cabc29603d1590c0363a74ac1b7fb41",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "data/minimax-m27-ar-fused-rms-c10d-repeatability-negative-20260519.json",
+          "sha256": "6aabe12ccc1ff45d26f913ec26657ee47172460ba5402a67dbcef28fb179fd64",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "data/minimax-m27-attn-post-reduce-rms-xpu-quality-fail-20260519.json",
+          "sha256": "23996d4ae5ba9bce0f6cf039fd8f34ce911c38bdf186fe6ddb522b0a1e51925e",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 0,
+        "narrative_documents": 0,
+        "text_receipts": 0,
+        "structured_documents": 0,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 0,
+        "reviewed_sources_including_external": 4,
+        "raw_logs_not_semantically_reviewed": 0
+      }
+    },
+    {
+      "area": "minimax_moe_tuned_configs",
+      "purpose": "Isolate MiniMax tile/configuration effects without overwriting the live runtime.",
+      "outcomes": [
+        "The old device-config alias was selected but failed raw145-n64 exactness. Controlled default, tile, warp and stage candidates remain."
+      ],
+      "worked": [
+        "Isolated config folders preserve the accepted runtime; exact device filename and nearest numeric-key behavior identify what actually executes."
+      ],
+      "failures_and_uncertainty": [
+        "A missing key 1 selects the nearest larger key, not defaults. The README does not establish outcomes for every listed candidate."
+      ],
+      "validity_limits": [
+        "Shape-specific configuration screens do not establish a portable optimum or new model result."
+      ],
+      "retained_paths": [
+        "experiments/minimax_moe_tuned_configs/README.md",
+        "patches/minimax-moe-config-alias-quality-fail-20260626.md"
+      ],
+      "revisit_conditions": [
+        "A new tile/warp/stage mechanism with a safe decode key, observed selector activation, exact canary and matched endpoint comparison."
+      ],
+      "current_gate": "Not listed as an active lane in CURRENT.md. Retain as historical research; a new experiment needs current host ownership and admission. The four-card fault halt remains binding.",
+      "closeout_sources": [
+        "experiments/minimax_moe_tuned_configs/README.md"
+      ],
+      "closeout_gap": "The alias rejection is documented, but not every candidate has a reviewed outcome.",
+      "reviewed_sources": [
+        {
+          "path": "experiments/minimax_moe_tuned_configs/README.md",
+          "sha256": "6b78f88d0b576a7dc476609dfc47628f32e0f7c44ebe8495405c74ddf01542d2",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 7,
+        "narrative_documents": 1,
+        "text_receipts": 0,
+        "structured_documents": 6,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 1,
+        "reviewed_sources_including_external": 1,
+        "raw_logs_not_semantically_reviewed": 0
+      }
+    },
+    {
+      "area": "minimax_pair_argmax_xpu",
+      "purpose": "Reduce gathered local maximum-logit/token-ID pairs using a tiny SYCL helper.",
+      "outcomes": [
+        "Default-off helper design preserves all_gather then pair reduction; no promoted endpoint outcome is established by the local README."
+      ],
+      "worked": [
+        "Explicit pair gathering avoids the problematic B70/XCCL packed MAX reduction."
+      ],
+      "failures_and_uncertainty": [
+        "Standalone correctness, raw145 hashes, semantic repeats and adjacent timing remain stated prerequisites rather than recorded passes."
+      ],
+      "validity_limits": [
+        "A math-preserving design is not demonstrated correctness or speed."
+      ],
+      "retained_paths": [
+        "experiments/minimax_pair_argmax_xpu/README.md"
+      ],
+      "revisit_conditions": [
+        "Only after a measured tail bottleneck warrants it: prove tie/ID semantics and model parity, then matched p512/n1536 timing."
+      ],
+      "current_gate": "Not listed as an active lane in CURRENT.md. Retain as historical research; a new experiment needs current host ownership and admission. The four-card fault halt remains binding.",
+      "closeout_sources": [],
+      "closeout_gap": "Only design/promotion gates found in local narrative; no outcome closeout.",
+      "reviewed_sources": [
+        {
+          "path": "experiments/minimax_pair_argmax_xpu/README.md",
+          "sha256": "ed7d76304020f202d9f84f87fbb185f34a0579d9c91ea91cec4609c43ad03aeb",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 1,
+        "narrative_documents": 1,
+        "text_receipts": 0,
+        "structured_documents": 0,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 1,
+        "reviewed_sources_including_external": 1,
+        "raw_logs_not_semantically_reviewed": 0
+      }
+    },
+    {
+      "area": "minimax_qk_rms_xpu",
+      "purpose": "Test isolated Q/K RMS and RoPE helpers while keeping the release kernel wheel.",
+      "outcomes": [
+        "Tested helpers were numerically valid but slower in the model: QK/RoPE moved 39.610585 to 35.681825 tok/s; plain var/apply remained below stock."
+      ],
+      "worked": [
+        "An independent extension avoided changing unrelated kernels. Compiler-specific oneAPI 2025.3 matched the runtime ABI."
+      ],
+      "failures_and_uncertainty": [
+        "Swapping the whole _C wheel regressed other kernels; generic latest/2026.0 environment caused an undefined SYCL symbol. Warmed reload improvement did not beat stock."
+      ],
+      "validity_limits": [
+        "FP16 component validity is not full-model parity; cold and warmed compile/cache states are different measurements."
+      ],
+      "retained_paths": [
+        "experiments/minimax_qk_rms_xpu/README.md"
+      ],
+      "revisit_conditions": [
+        "A modified kernel retaining release-wheel and ABI identity, then exact model gates and fresh paired timing; keep helper flags off meanwhile."
+      ],
+      "current_gate": "Not listed as an active lane in CURRENT.md. Retain as historical research; a new experiment needs current host ownership and admission. The four-card fault halt remains binding.",
+      "closeout_sources": [
+        "experiments/minimax_qk_rms_xpu/README.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/minimax_qk_rms_xpu/README.md",
+          "sha256": "4f0b6afce708447f4d0521ea9884bff35b0016b02e460a55804bcddeb6864c0c",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 1,
+        "narrative_documents": 1,
+        "text_receipts": 0,
+        "structured_documents": 0,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 1,
+        "reviewed_sources_including_external": 1,
+        "raw_logs_not_semantically_reviewed": 0
+      }
+    },
+    {
+      "area": "minimax_qk_rms_xpu_ipc",
+      "purpose": "Explore cross-process peer-memory variance reduction for collective/RMS fusion.",
+      "outcomes": [
+        "IPC access worked, but single-kernel polling cost about 417 ms/iteration versus XCCL 0.061791 ms for tiny FP32 payloads. Current integration rejected."
+      ],
+      "worked": [
+        "Directional capability tests separated memory access from remote atomics. A two-kernel CPU-barrier variant validated at 0.290768 ms."
+      ],
+      "failures_and_uncertainty": [
+        "Cross-device atomics were absent; no-barrier and system-scope atomic variants failed. Slot overwrite can hang an equality-based poll."
+      ],
+      "validity_limits": [
+        "CPU-barrier success is neither graph-safe nor model-safe; rejection is scoped to this protocol/stack."
+      ],
+      "retained_paths": [
+        "experiments/minimax_qk_rms_xpu_ipc/README.md"
+      ],
+      "revisit_conditions": [
+        "A correct graph-compatible primitive or proven event/barrier protocol; demonstrate visibility and slot lifetime before model integration."
+      ],
+      "current_gate": "Not listed as an active lane in CURRENT.md. Retain as historical research; a new experiment needs current host ownership and admission. The four-card fault halt remains binding.",
+      "closeout_sources": [
+        "experiments/minimax_qk_rms_xpu_ipc/README.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/minimax_qk_rms_xpu_ipc/README.md",
+          "sha256": "00c19544941ef4d79c8859874f98f835b315ca5886fd6b27b945375663f87700",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 1,
+        "narrative_documents": 1,
+        "text_receipts": 0,
+        "structured_documents": 0,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 1,
+        "reviewed_sources_including_external": 1,
+        "raw_logs_not_semantically_reviewed": 0
+      }
+    },
+    {
+      "area": "minimax_xpu_kv_offload",
+      "purpose": "Use host RAM for KV storage and investigate active context beyond device KV.",
+      "outcomes": [
+        "Two 14K sessions completed with about 26K device-KV capacity, demonstrating session swapping. Full 196K active context was not achieved."
+      ],
+      "worked": [
+        "Worker-side CUDA assumptions were separated from scheduler admission. Dense scratch supplied promising synthetic attention/LSE evidence."
+      ],
+      "failures_and_uncertainty": [
+        "A 33,580-token active prompt timed out at 131/132 blocks. Paged scratch LSE was unstable for exact merge; c4 continuation and compressed-KV quality stayed unresolved."
+      ],
+      "validity_limits": [
+        "Session reload is not host-paged active attention; cached repeat rates are not cold benchmarks. Dense-scratch tolerance is not full-model exactness."
+      ],
+      "retained_paths": [
+        "experiments/minimax_xpu_kv_offload/README.md",
+        "experiments/minimax_xpu_kv_offload/ARTIFACTS.md",
+        "experiments/minimax_xpu_kv_offload/probes/xpu_cpu_dense_staged_attention_probe.py"
+      ],
+      "revisit_conditions": [
+        "A full-precision dense-staged implementation with exactness and PCIe-cost gates; raising max_model_len/offload size alone is closed."
+      ],
+      "current_gate": "Not listed as an active lane in CURRENT.md. Retain as historical research; a new experiment needs current host ownership and admission. The four-card fault halt remains binding.",
+      "closeout_sources": [
+        "experiments/minimax_xpu_kv_offload/README.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/minimax_xpu_kv_offload/README.md",
+          "sha256": "6bb220ccae83f85ccda906a8860d9f6c257dca27203180b03f912988ae465867",
+          "read_scope": "lines 1-34,162-183,286-333,618-693",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 25,
+        "narrative_documents": 18,
+        "text_receipts": 0,
+        "structured_documents": 7,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 1,
+        "reviewed_sources_including_external": 1,
+        "raw_logs_not_semantically_reviewed": 0
+      }
+    },
+    {
+      "area": "model-intake-resume-20261007",
+      "purpose": "Repair aria2 partial files mistaken for complete downloads because of preallocation.",
+      "outcomes": [
+        "Applied fix resumes size-matching files with aria2 sidecars; complete files retain skipping. Three tests/four offline cases passed."
+      ],
+      "worked": [
+        "Sparse fixtures and fake HTTP clients reproduced the bug without weights. Application waited for active download exit and matched tested bytes."
+      ],
+      "failures_and_uncertainty": [
+        "File size alone was not completion; the old branch skipped an unfinished payload."
+      ],
+      "validity_limits": [
+        "Offline controls do not authenticate downloaded models; publisher hashes remain required."
+      ],
+      "retained_paths": [
+        "experiments/model-intake-resume-20261007/validation.json",
+        "experiments/model-intake-resume-20261007/application.json"
+      ],
+      "revisit_conditions": [
+        "A changed downloader or concrete failed-resume case with sidecar and hash controls."
+      ],
+      "current_gate": "Applied CPU utility; CURRENT still requires storage admission and authenticated model bytes.",
+      "closeout_sources": [
+        "experiments/model-intake-resume-20261007/application.json"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/model-intake-resume-20261007/validation.json",
+          "sha256": "f8ee5fe9750e9efbd95420a7dcf7f803a401c1821c48797156d64ca34b2af922",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "experiments/model-intake-resume-20261007/application.json",
+          "sha256": "8fd7b6a2c0f80e48c17c6fa6304461a769b94efaa604ffe35949a1342866071f",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 3,
+        "narrative_documents": 0,
+        "text_receipts": 0,
+        "structured_documents": 3,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 2,
+        "reviewed_sources_including_external": 2,
+        "raw_logs_not_semantically_reviewed": 0
+      }
+    },
+    {
+      "area": "muse-glimmer-30b-b70",
+      "purpose": "Pursue fast Muse decoding with separate BF16 and compressed-model identities.",
+      "outcomes": [
+        "BF16 did not reach 100 tok/s. Approved Q8/DFlash/fixed-N16 WOQ route recorded canonical means 100.088/100.649; cold first-100 median 161.900 uses a different metric."
+      ],
+      "worked": [
+        "Fixed-N16 projection and verified drafting helped the compressed route. Genre-specific acceptance and verifier/draft cost decomposition identified useful work."
+      ],
+      "failures_and_uncertainty": [
+        "Upstream greedy SYCL near-tie outputs were nondeterministic even without speculation; single-card Q8 plus draft exceeded the envelope."
+      ],
+      "validity_limits": [
+        "Compressed result is neither BF16 nor universally token-exact. Quantization changes cannot solve the original BF16 objective under the same identity."
+      ],
+      "retained_paths": [
+        "experiments/muse-glimmer-30b-b70/README.md",
+        "results/muse-glimmer-30b-q8-woq-b70/README.md",
+        "patches/muse-glimmer-30b-b70"
+      ],
+      "revisit_conditions": [
+        "A new preregistration with deterministic target oracle; single-card work needs source-level memory reduction first."
+      ],
+      "current_gate": "Not listed as an active lane in CURRENT.md. Retain as historical research; a new experiment needs current host ownership and admission. The four-card fault halt remains binding.",
+      "closeout_sources": [
+        "experiments/muse-glimmer-30b-b70/README.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/muse-glimmer-30b-b70/README.md",
+          "sha256": "614de516f6742abd5d1d0abaa268e02bd46b1a982a8f0556d7c383debb923cb1",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 196,
+        "narrative_documents": 64,
+        "text_receipts": 4,
+        "structured_documents": 128,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 1,
+        "reviewed_sources_including_external": 1,
+        "raw_logs_not_semantically_reviewed": 1
+      }
+    },
+    {
+      "area": "ornith-15-b70",
+      "purpose": "Optimize actual dense/MoE Ornith shapes and verify that gains survive integration.",
+      "outcomes": [
+        "Ordered expert addition improved fresh-server throughput 4.85%; convolution/SiLU added 2.10% in scoped tests. Two-row verifier work remained below target-only."
+      ],
+      "worked": [
+        "Ordered FP32 addition removed launches without regrouping arithmetic. Actual Q4_K gate/up and Q6_K down shapes avoided a misleading Qwen proxy."
+      ],
+      "failures_and_uncertainty": [
+        "MoE command graphs fell from 101.846 to 48.805 tok/s despite passing components. Flash-off/Q8KV changed transcripts. Exact rollback fusion helped alone but regressed on the preferred stack."
+      ],
+      "validity_limits": [
+        "The apparent dense graph 2x gain was NFS mmap confounding. Qwen surrogate aggregate scores, launch counts and isolated gains are not Ornith endpoint claims."
+      ],
+      "retained_paths": [
+        "experiments/ornith-15-b70/README.md",
+        "experiments/ornith-15-b70/notes/2026-08-22-ornith35b-moe-add-reduce-positive.md",
+        "experiments/ornith-15-b70/notes/2026-08-23-ornith35b-mtp2row-two-snapshot-state-research.md"
+      ],
+      "revisit_conditions": [
+        "A new device-work reduction, canonical transcript equality, stack interaction test and two fresh-server comparisons."
+      ],
+      "current_gate": "Not listed as an active lane in CURRENT.md. Retain as historical research; a new experiment needs current host ownership and admission. The four-card fault halt remains binding.",
+      "closeout_sources": [
+        "experiments/ornith-15-b70/README.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/ornith-15-b70/README.md",
+          "sha256": "fa544ca2f7f6fd19628012a59bce628debaff2bcc5e210ec5240783a25003a46",
+          "read_scope": "lines 1-140,440-532",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 549,
+        "narrative_documents": 80,
+        "text_receipts": 32,
+        "structured_documents": 437,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 1,
+        "reviewed_sources_including_external": 1,
+        "raw_logs_not_semantically_reviewed": 243
+      }
+    },
+    {
+      "area": "own-xpu-runtime",
+      "purpose": "Build original model-specific Xe runtimes against certified model/output authorities.",
+      "outcomes": [
+        "CPU identity/parser/reference packets pass; BF16 stored scales and sigmoid attention gate were corrected. Native runtime and actual one-card fit remain unqualified."
+      ],
+      "worked": [
+        "Staged identity, arithmetic, resource ownership and native-fixture gates prevent CPU preparation becoming a GPU claim. Historical pressure receipts constrain admission."
+      ],
+      "failures_and_uncertainty": [
+        "A367 used a host environment, not the reopen image. Its host availability decline contains unattributed memory; LTX shadow savings cannot be borrowed. The proposed 133,542,784 KiB floor exceeds capacity."
+      ],
+      "validity_limits": [
+        "Mock devices, compiled SYCL and synthetic repeats are not device parity. README packet-1-only wording is superseded by CURRENT. Planning floor is not a universal bound."
+      ],
+      "retained_paths": [
+        "experiments/own-xpu-runtime/README.md",
+        "experiments/own-xpu-runtime/stage1/packet4-prep/MEMORY-ADMISSION-REVISION.md",
+        "CURRENT.md",
+        "experiments/own-xpu-runtime/stage1/packet2/README.md"
+      ],
+      "revisit_conditions": [
+        "Complete adapters; after halt resolution obtain matched load evidence and owner-bound admission before fixtures. Preserve official/Unsloth source rule and original implementation."
+      ],
+      "current_gate": "CURRENT: CPU preparation active; halt, capacity, model-receipt mismatch and native-window authorization block device work.",
+      "closeout_sources": [
+        "experiments/own-xpu-runtime/stage1/packet4-prep/MEMORY-ADMISSION-REVISION.md"
+      ],
+      "closeout_gap": "Ongoing staged work; no whole-runtime native qualification.",
+      "reviewed_sources": [
+        {
+          "path": "experiments/own-xpu-runtime/README.md",
+          "sha256": "9a5116daa9d03beead50ed0eada53c229827b363c2dfdc4f90faf8203927802d",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "experiments/own-xpu-runtime/stage1/packet4-prep/MEMORY-ADMISSION-REVISION.md",
+          "sha256": "148b984857c6bd0a4f9900487fa3cadab8ef89d431436b8bf3a1f9f4791c4001",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "CURRENT.md",
+          "sha256": "c61d3470e56f70a5ba351618d6842c51ed5aecd45113ce5b0642a53d7700107e",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 171,
+        "narrative_documents": 23,
+        "text_receipts": 9,
+        "structured_documents": 139,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 2,
+        "reviewed_sources_including_external": 3,
+        "raw_logs_not_semantically_reviewed": 5
+      }
+    },
+    {
+      "area": "project-decision-recall-20261007",
+      "purpose": "Compare source search and complete-source delivery on frozen project decisions.",
+      "outcomes": [
+        "Search/read: 12/12 questions, 38/38 criteria. Paged full source: 11/12 complete, 37/38 criteria; missing caveat appeared in its citation."
+      ],
+      "worked": [
+        "Independent completeness grading separated real citations from adequate answers. Paging retained the initial truncated/format-invalid failure."
+      ],
+      "failures_and_uncertainty": [
+        "One answer omitted the distinction between final answers and intermediate-state correctness. Reader-side full logs did not prove visible delivery."
+      ],
+      "validity_limits": [
+        "Curated assistant-authored records/questions and hosted sessions are a small development diagnostic, not local-Qwen or generic memory/speed evidence. Search read the full corpus."
+      ],
+      "retained_paths": [
+        "experiments/project-decision-recall-20261007/RESULTS.md",
+        "experiments/project-decision-recall-20261007/results/search/semantic-review.json",
+        "experiments/project-decision-recall-20261007/results/full-paged/semantic-review.json"
+      ],
+      "revisit_conditions": [
+        "A real retained-state/scale need unmet by ordinary sources, with new fixed tasks and independent references; check caveats in answers explicitly."
+      ],
+      "current_gate": "CURRENT: source access and completeness review recommended; structured memory and worker integration not admitted.",
+      "closeout_sources": [
+        "experiments/project-decision-recall-20261007/RESULTS.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/project-decision-recall-20261007/RESULTS.md",
+          "sha256": "c5de4a484133611856bd7f0102553d4273a03c4fdda17486a7c48c0b7a312e34",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 48,
+        "narrative_documents": 3,
+        "text_receipts": 8,
+        "structured_documents": 37,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 1,
+        "reviewed_sources_including_external": 1,
+        "raw_logs_not_semantically_reviewed": 0
+      }
+    },
+    {
+      "area": "qwen27-dflash-sycl-b70",
+      "purpose": "Develop a one-card Q4 GGUF verifier and DFlash path distinct from AutoRound vLLM.",
+      "outcomes": [
+        "Strict Q4_0/DFlash record 47.818818 tok/s; 100/200 tok/s goals unmet. Unfinished QKVZAB/Q5_K/trace work remains unvalidated."
+      ],
+      "worked": [
+        "F16 draft-KV control recovered about 94% acceptance. MMVQ rows 9–17 dispatch fix removed repeated weight reads; explicit replay instrumentation detected graph ineligibility."
+      ],
+      "failures_and_uncertainty": [
+        "Compressed native draft KV collapsed acceptance. The target verifier cost about 58.7 ms versus about 10 ms draft, making about 1 ms feature injection a poor first lever. Old DISABLE environment names were ignored."
+      ],
+      "validity_limits": [
+        "Favorable-code about 74 tok/s is not the mixed-suite record; four independent TP1 workers are not TP4; topology reuse is not device replay."
+      ],
+      "retained_paths": [
+        "experiments/qwen27-dflash-sycl-b70/README.md",
+        "notes/2026-07-13-qwen27-dflash-sycl-closure.md",
+        "experiments/qwen27-dflash-sycl-b70/harness"
+      ],
+      "revisit_conditions": [
+        "A measured small-M verifier improvement and new exact cold gate; retain unfinished source before integration."
+      ],
+      "current_gate": "Not listed as an active lane in CURRENT.md. Retain as historical research; a new experiment needs current host ownership and admission. The four-card fault halt remains binding.",
+      "closeout_sources": [
+        "experiments/qwen27-dflash-sycl-b70/README.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/qwen27-dflash-sycl-b70/README.md",
+          "sha256": "4dcf2af3f6a160d69884a148eb4cf77933998e2858697a81cfc7dbbd26ef3570",
+          "read_scope": "lines 1-105,125-end",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 82,
+        "narrative_documents": 65,
+        "text_receipts": 1,
+        "structured_documents": 16,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 1,
+        "reviewed_sources_including_external": 1,
+        "raw_logs_not_semantically_reviewed": 0
+      }
+    },
+    {
+      "area": "qwen27_fused_postattn_rms_w4a16",
+      "purpose": "Fuse residual/RMS and four-row INT4 projection in a graph-compatible operation.",
+      "outcomes": [
+        "Component/compile/1000-replay checks passed, but 0.206377 ms versus production 0.119454 ms was 72.8% slower; no integration."
+      ],
+      "worked": [
+        "Two ordered kernels respected the normalization/consumer dependency. The same loaded weight layout supported a fair comparison."
+      ],
+      "failures_and_uncertainty": [
+        "Apparent improvement against 0.288957 ms eager allocation was unfair; handwritten projection lost to oneDNN."
+      ],
+      "validity_limits": [
+        "Numeric component parity is not model-token qualification, and the slower fair baseline closes the tested design."
+      ],
+      "retained_paths": [
+        "experiments/qwen27_fused_postattn_rms_w4a16/README.md"
+      ],
+      "revisit_conditions": [
+        "Keep oneDNN/DPAS projection while fusing a larger boundary without a graph split; compare real production primitives."
+      ],
+      "current_gate": "Not listed as an active lane in CURRENT.md. Retain as historical research; a new experiment needs current host ownership and admission. The four-card fault halt remains binding.",
+      "closeout_sources": [
+        "experiments/qwen27_fused_postattn_rms_w4a16/README.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/qwen27_fused_postattn_rms_w4a16/README.md",
+          "sha256": "64bb94df0c238f78129ea9cd4b28665f510fe8f5f4c091db4a70530bdafb509c",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 1,
+        "narrative_documents": 1,
+        "text_receipts": 0,
+        "structured_documents": 0,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 1,
+        "reviewed_sources_including_external": 1,
+        "raw_logs_not_semantically_reviewed": 0
+      }
+    },
+    {
+      "area": "qwen27_graphsafe_flash_attention",
+      "purpose": "Enable attention graph capture without changing kernel math.",
+      "outcomes": [
+        "Handler-owned local storage enabled graph replay; crossover means 91.019 versus 88.426 tok/s supported a historical gain. Later rebuild passed 6,000 packed and 6,000 one-token replays."
+      ],
+      "worked": [
+        "Poisoned outputs, live input/length mutations and shuffled blocks exposed stale replay. Narrow AOT configs made the low-RAM rebuild practical."
+      ],
+      "failures_and_uncertainty": [
+        "Forced chunk decode scales badly: about 17 us at 128 KV versus about 220 us at 2048. Python dispatch bypassed the C++ force switch until separately patched."
+      ],
+      "validity_limits": [
+        "Component tolerance is not universal token exactness; Qwen3.6 speed and Qwen3.8 rebuild are separate identities. Historical launchers still consume work/source."
+      ],
+      "retained_paths": [
+        "experiments/qwen27_graphsafe_flash_attention/README.md",
+        "repro/qwen38-27b-autoround-int4-b70/evidence/graph-stage-oracles-20260818.json",
+        "experiments/qwen27_graphsafe_flash_attention/qwen27-chunk-prefill-local-accessor.patch",
+        "experiments/qwen27_graphsafe_flash_attention/work"
+      ],
+      "revisit_conditions": [
+        "A graph-safe paged kernel or other measured long-context mechanism, with activation evidence at Python and C++ boundaries."
+      ],
+      "current_gate": "CURRENT explicitly protects this source/generated tree in place; ignored work/ is not disposable.",
+      "closeout_sources": [
+        "experiments/qwen27_graphsafe_flash_attention/README.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/qwen27_graphsafe_flash_attention/README.md",
+          "sha256": "b1bfdfa24060356a5c8dbfbdb05c582a841bc1d9087e7397c7003afb8190f54b",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "repro/qwen38-27b-autoround-int4-b70/evidence/graph-stage-oracles-20260818.json",
+          "sha256": "9d9ef3dbe9b1d3112bbd19fb41993cb9d3765d2a7bdcaa71e0fdfb27353eff74",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 848,
+        "narrative_documents": 346,
+        "text_receipts": 166,
+        "structured_documents": 336,
+        "generated_or_vendor_location": 847,
+        "semantically_reviewed_inventory_paths": 1,
+        "reviewed_sources_including_external": 2,
+        "raw_logs_not_semantically_reviewed": 0
+      },
+      "local_only_retained_paths": [
+        "experiments/qwen27_graphsafe_flash_attention/work"
+      ]
+    },
+    {
+      "area": "qwen35-4b-b70",
+      "purpose": "Qualify a fast INT4 target/MTP path across short prompts, request reuse and concurrency.",
+      "outcomes": [
+        "R308 repaired single-active-request reentry: both 4B and 9B passed 60/60 oracle and 52/52 boundary cases on each of two fresh MTP3 processes, plus strict 12/12 suites. Historical single-user and high-concurrency profiles remain separate results."
+      ],
+      "worked": [
+        "Preserving accepted-state metadata across paused-request reentry fixed the measured lifecycle defect. Class-consistent padding replaced weight rereads in FP16 row chunks; MTP0 staggered throughput reached 2104/3164 tok/s at c64 on TP1/TP2."
+      ],
+      "failures_and_uncertainty": [
+        "Strict 12-prompt tests missed short-prompt degeneration and request-lifecycle bugs. Deterministic PyTorch mode cost about 29% at c64 without repairing batch-shape-dependent output changes. FP8 controls repeatedly missed the full quality gate."
+      ],
+      "validity_limits": [
+        "R308 qualification covers one active request, fixed depth 3 and the specified capacities, not concurrent speculation or a new 32K result. Reproducibility within a fixed composition is not exactness across different batch shapes; MTP0 and MTP3 cannot inherit each other’s gates."
+      ],
+      "retained_paths": [
+        "experiments/qwen35-4b-b70/HANDOFF.md",
+        "experiments/qwen35-4b-b70/notes/2026-09-13-r308-qualified-single-request.md",
+        "experiments/qwen35-4b-b70/notes/2026-09-13-r307-single-request-and-r308-negative.md"
+      ],
+      "revisit_conditions": [
+        "A newly specified workload beyond the qualified lifecycle, with short prompts, interleaving/reentry and matching oracle tests before speed claims."
+      ],
+      "current_gate": "Not listed as an active lane in CURRENT.md. Retain as historical research; a new experiment needs current host ownership and admission. The four-card fault halt remains binding.",
+      "closeout_sources": [
+        "experiments/qwen35-4b-b70/HANDOFF.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/qwen35-4b-b70/HANDOFF.md",
+          "sha256": "c84be27247390935d6fa23e7d43c5b67b62f5786babd0f711eda5433bed2e50d",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 464,
+        "narrative_documents": 16,
+        "text_receipts": 213,
+        "structured_documents": 235,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 1,
+        "reviewed_sources_including_external": 1,
+        "raw_logs_not_semantically_reviewed": 30
+      }
+    },
+    {
+      "area": "qwen35-9b-b70",
+      "purpose": "Reduce draft vocabulary projection cost while retaining full target verification.",
+      "outcomes": [
+        "The 67,248-row draft shortlist improved the paired measurements from 113.48/113.49 to 124.03/124.13 tok/s, about 9.3%; all G1/G2/G3 gates were 12/12."
+      ],
+      "worked": [
+        "The draft head previously covered 248,320 tokens and about 28% of step time. A text-derived shortlist reduced proposal work; the target still verified against its full FP16 head."
+      ],
+      "failures_and_uncertainty": [
+        "A 32,776-row shortlist lost acceptance without improving speed materially; 91,754 rows were slower than the chosen shortlist. Position-level profiling was noisy."
+      ],
+      "validity_limits": [
+        "This is a proposal optimization with a full verifier, not target vocabulary pruning. Exactness still depends on a valid verifier and lifecycle; the separate R308 single-request qualification does not admit concurrent speculation."
+      ],
+      "retained_paths": [
+        "experiments/qwen35-9b-b70/notes/2026-09-12-the-draft-head-only-needs-a-shortlist.md",
+        "experiments/qwen35-9b-b70/data/2026-09-12-qwen35-9b-draft-head-shortlist.json",
+        "experiments/qwen38-27b-b70/docker/r294-draft-head-shortlist.py",
+        "repro/qwen35-9b-w4a16-b70/README.md"
+      ],
+      "revisit_conditions": [
+        "A different language/domain corpus or changed draft bottleneck, with independent quality coverage, shortlist provenance and separate lifecycle gates."
+      ],
+      "current_gate": "Not listed as an active lane in CURRENT.md. Retain as historical research; a new experiment needs current host ownership and admission. The four-card fault halt remains binding.",
+      "closeout_sources": [
+        "experiments/qwen35-9b-b70/notes/2026-09-12-the-draft-head-only-needs-a-shortlist.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/qwen35-9b-b70/notes/2026-09-12-the-draft-head-only-needs-a-shortlist.md",
+          "sha256": "2b2bc45d01016f3266d20faaea95c4acd9d06c32eafee8f376f37588afd2970e",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "experiments/qwen35-9b-b70/data/2026-09-12-qwen35-9b-draft-head-shortlist.json",
+          "sha256": "9cd15954b00617baf8c34a18ebff92b7b7c05ee2227ebb66b9cbabddb8dedeef",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 77,
+        "narrative_documents": 35,
+        "text_receipts": 0,
+        "structured_documents": 42,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 2,
+        "reviewed_sources_including_external": 2,
+        "raw_logs_not_semantically_reviewed": 0
+      }
+    },
+    {
+      "area": "qwen36-27b-autoround-int4-b70",
+      "purpose": "Optimize AutoRound INT4 inference and intrinsic MTP while preserving accepted state and source identity.",
+      "outcomes": [
+        "The historical webhie INT4 TP2 packet records 95.384867741895 tok/s. A later matched-source August 17 gate ran 93.445681 tok/s but passed only 12/25 exact cases and is not promotable."
+      ],
+      "worked": [
+        "Reading the accepted state slot instead of copying it removed expensive redundant work. Repairing the public oneCCL installation and containing mixed-KV metadata to the DFlash path restored intended execution."
+      ],
+      "failures_and_uncertainty": [
+        "Blind copy removal/full-accept state skipping broke needle quality. A 106.663 tok/s small RMS screen did not predict the complete exact gate. Higher replay/depth configurations spilled and failed quality; offline adaptation did not transfer automatically."
+      ],
+      "validity_limits": [
+        "Intel and webhie checkpoints, GGUF Q8 and Qwen3.8 FP8 are distinct identities. Top-k oracle thought experiments assume free extraction and are not measured end-to-end speed. A historical record does not validate later source combinations."
+      ],
+      "retained_paths": [
+        "experiments/qwen36-27b-autoround-int4-b70/README.md",
+        "notes/2026-08-17-qwen36-int4-batch-invariant-rmsnorm-closeout.md",
+        "patches/qwen36-27b-autoround-int4-b70/record-20260711/README.md"
+      ],
+      "revisit_conditions": [
+        "A concrete device-work reduction with accepted-state diagnostics, matched source/image and all exact cold cases; draft work must first show enough accepted tokens to pay its measured cost."
+      ],
+      "current_gate": "CURRENT explicitly protects the historical INT4 tree and evidence. It is not the active Qwen3.8 FP8 lane; any rerun requires fresh host admission and respects the four-card halt.",
+      "closeout_sources": [
+        "notes/2026-08-17-qwen36-int4-batch-invariant-rmsnorm-closeout.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/qwen36-27b-autoround-int4-b70/README.md",
+          "sha256": "05ba1c2c7ba7f97673ddac507c8868c81279260bcc4d5073b6e8bace3f6f38d1",
+          "read_scope": "lines 1-70, 820-900, 970-1015",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 392,
+        "narrative_documents": 210,
+        "text_receipts": 0,
+        "structured_documents": 182,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 1,
+        "reviewed_sources_including_external": 1,
+        "raw_logs_not_semantically_reviewed": 25
+      }
+    },
+    {
+      "area": "qwen36-27b-mtp-gguf-q4-b70",
+      "purpose": "Measure intrinsic MTP for the UD-Q4_K_XL GGUF model using cold requests.",
+      "outcomes": [
+        "Initial n-max 3 MTP improved 23.567 to 30.679 tok/s; a cache-off refresh measured 30.812 tok/s. The p-min screen’s best tested combination reached 31.480 tok/s."
+      ],
+      "worked": [
+        "Explicit cache_prompt:false and zero cached-token checks made results interpretable. Fixing shell JSON defaults and the oneAPI selector prevented harness/launch errors from masquerading as model behavior."
+      ],
+      "failures_and_uncertainty": [
+        "Probability/minimum-draft tuning produced incremental changes, not a major new mechanism. Larger speculative settings cannot be assumed faster."
+      ],
+      "validity_limits": [
+        "This is a GGUF Q4/llama.cpp identity, separate from AutoRound and Q8. Historical graph flags and short-suite results do not establish current replay or long-context qualification."
+      ],
+      "retained_paths": [
+        "experiments/qwen36-27b-mtp-gguf-q4-b70/README.md",
+        "experiments/qwen36-27b-mtp-gguf-q4-b70/notes/2026-07-05-cacheoff-selector-refresh.md",
+        "experiments/qwen36-27b-mtp-gguf-q4-b70/notes/2026-07-05-pmin-screen-and-harness-fix.md"
+      ],
+      "revisit_conditions": [
+        "A measured draft/verification bottleneck change with the same cold metric and full gate, rather than another broad knob sweep."
+      ],
+      "current_gate": "Not listed as an active lane in CURRENT.md. Retain as historical research; a new experiment needs current host ownership and admission. The four-card fault halt remains binding.",
+      "closeout_sources": [
+        "experiments/qwen36-27b-mtp-gguf-q4-b70/README.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/README.md",
+          "sha256": "34ed713a74f128981770a7ff36758337fd9ae01378c7ef1187b34d207540d432",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 208,
+        "narrative_documents": 101,
+        "text_receipts": 0,
+        "structured_documents": 107,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 1,
+        "reviewed_sources_including_external": 1,
+        "raw_logs_not_semantically_reviewed": 0
+      }
+    },
+    {
+      "area": "qwen36-27b-q8-gguf-b70",
+      "purpose": "Qualify a one-card full-context Q8 target and distinguish exact MTP gains from concurrency tradeoffs.",
+      "outcomes": [
+        "Target-only Q8/F16-KV 32K passed its gates. Matched embedded-MTP cold control improved 17.107772 to 36.048707 tok/s over 12 prompts with exact tokens/content. Four independent-service evidence remains separately scoped."
+      ],
+      "worked": [
+        "VDR2 improved decode about 8.2-10% in tested bands. Disabling the implicated DNN path preserved exactness without the severe cost of disabling every optimization."
+      ],
+      "failures_and_uncertainty": [
+        "ubatch 1024 cut near-32K prefill about fourfold but failed middle-band exactness. Ordinary near-32K c2 passed functionality but failed performance/fairness: aggregate 10.144217 tok/s, fairness 0.498956. Full-MTP c2/32K was not launched after a 32,683 MiB projection."
+      ],
+      "validity_limits": [
+        "Four TP1 services are not one c2 service. A forced continuation after a natural answer is not proof of a wrong completed answer; natural-stop synchronization remains unmeasured. Cross-paired publisher heads/converters cannot inherit the matched-model exact gate. Early missing-identity data are trend evidence only."
+      ],
+      "retained_paths": [
+        "experiments/qwen36-27b-q8-gguf-b70/README.md",
+        "experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-embedded-mtp-realistic-suite-matched-control-pass.md",
+        "experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-embedded-mtp-crossband-four-service-recovery-closeout.md"
+      ],
+      "revisit_conditions": [
+        "A mechanism improving measured c2 memory/fairness or prefill without middle-band drift; preserve matched publisher model/head and use natural-stop as well as forced-token checks."
+      ],
+      "current_gate": "Not listed as an active lane in CURRENT.md. Retain as historical research; a new experiment needs current host ownership and admission. The four-card fault halt remains binding.",
+      "closeout_sources": [
+        "experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-embedded-mtp-realistic-suite-matched-control-pass.md",
+        "experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-embedded-mtp-crossband-four-service-recovery-closeout.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/qwen36-27b-q8-gguf-b70/README.md",
+          "sha256": "0361ae689e7dd5d173888992239f56bc27ad36ce88799f035a25d605aaea42a9",
+          "read_scope": "lines 1-104, 350-460",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 49,
+        "narrative_documents": 26,
+        "text_receipts": 1,
+        "structured_documents": 22,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 1,
+        "reviewed_sources_including_external": 1,
+        "raw_logs_not_semantically_reviewed": 0
+      }
+    },
+    {
+      "area": "qwen36-35b-quark-int8-b70",
+      "purpose": "Preserve detached kernel edits from the older Quark INT8/GDN/MoE investigation.",
+      "outcomes": [
+        "Three dirty kernel files were captured from detached source 3b4effe: speculative convolution state commit, MoE top-k index types and interface diagnostics. This preservation note is the reviewed outcome; no speed or quality qualification is established by it."
+      ],
+      "worked": [
+        "The convolution change snapshots a row/window within one work item to avoid cross-work-item accepted-state read/write overlap. The MoE helper admits both int32 and int64 top-k indices."
+      ],
+      "failures_and_uncertainty": [
+        "The surviving context did not establish which older 35B runs qualified this snapshot. It must not be silently attributed to the later Qwen27 record."
+      ],
+      "validity_limits": [
+        "A preserved patch is a recoverable hypothesis, not proof of correctness or a promoted runtime. The note identifies provenance uncertainty explicitly."
+      ],
+      "retained_paths": [
+        "experiments/qwen36-35b-quark-int8-b70/notes/2026-07-04-vllm-xpu-kernels-detached-dirty-snapshot.md",
+        "patches/qwen36-35b-quark-int8-b70/vllm-xpu-kernels-detached-dirty-gdn-moe-snapshot-20260704.patch"
+      ],
+      "revisit_conditions": [
+        "A current exact failure matching this mechanism, followed by isolated patch replay and accepted-state/dtype tests before model qualification."
+      ],
+      "current_gate": "Not listed as an active lane in CURRENT.md. Retain as historical research; a new experiment needs current host ownership and admission. The four-card fault halt remains binding.",
+      "closeout_sources": [
+        "experiments/qwen36-35b-quark-int8-b70/notes/2026-07-04-vllm-xpu-kernels-detached-dirty-snapshot.md"
+      ],
+      "closeout_gap": "Preservation is documented; a decisive matching performance/quality closeout for this detached source snapshot was not found in the reviewed note.",
+      "reviewed_sources": [
+        {
+          "path": "experiments/qwen36-35b-quark-int8-b70/notes/2026-07-04-vllm-xpu-kernels-detached-dirty-snapshot.md",
+          "sha256": "990f7596d79e4874d0f103be6b5106f3b68347823093127f9a160a1d50242d25",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 1,
+        "narrative_documents": 1,
+        "text_receipts": 0,
+        "structured_documents": 0,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 1,
+        "reviewed_sources_including_external": 1,
+        "raw_logs_not_semantically_reviewed": 0
+      }
+    },
+    {
+      "area": "qwen38-27b-b70",
+      "purpose": "Maintain qualified FP8 inference while testing exact kernels, concurrency and evidence-grounded source workflows.",
+      "outcomes": [
+        "CURRENT records about 875 aggregate tok/s for the accepted 64-request short FP8 profile, with two fresh exact 16/32/64 short and long passes. A separate source-access study completed 24/24 tasks in each of two cold requests; historical Q8 and Q4 records remain separately identified."
+      ],
+      "worked": [
+        "Operator census and exact component oracles avoided repeating roughly fifty closed server-level bisects. In the decision-history study, the full immutable source preserved numerical checkpoints and quoted postings; direct source access avoided the tested history summaries’ ownership-join errors."
+      ],
+      "failures_and_uncertainty": [
+        "History-summary rows scored 19/24, 19/24, 19/24 and 23/24 versus four source-only 24/24 rows. Sixteen ownership joins used initial owners despite all 96 numeric checkpoints and 202 quoted postings surviving. Unsafe DFlash was excluded; the PR45 mixed soak remains unverified."
+      ],
+      "validity_limits": [
+        "The source study used different information schedules and timing, so 27.75/34.86 s is not a generic speed comparison or intermediate-step guarantee. The FP8 multiuser gate is not an all-suite/single-user certificate. An old multi-host handoff’s 21.708532 baseline is historical; later Q8 matched-kernel results do not overwrite a different identity’s score."
+      ],
+      "retained_paths": [
+        "experiments/qwen38-27b-b70/DO-NOT-REPEAT.md",
+        "experiments/qwen38-27b-b70/MULTI-HOST-HANDOFF.md",
+        "experiments/qwen38-27b-b70/notes/2026-10-07-history-state-study-result.md",
+        "experiments/qwen38-27b-b70/notes/2026-10-07-full-source-screen-result.md",
+        "experiments/qwen38-27b-b70/data/2026-10-07-history-study-result/audit.json",
+        "experiments/qwen38-27b-b70/docker",
+        "experiments/qwen38-27b-b70/scripts/context/second-comparison.sh",
+        "experiments/qwen38-27b-b70/scripts/run-fp8-tp1-server.py"
+      ],
+      "revisit_conditions": [
+        "An observed production-shape gap or changed kernel dependency, with current exact workload and source census; use original source completeness checks before designing additional memory machinery."
+      ],
+      "current_gate": "CURRENT retains the official FP8/multiuser lane on Turin; new work needs its 15 GB host budget and single-heavy-job admission. Context/memory/worker expansion is parked. Preserve both user-dirty scripts; no service start is implied.",
+      "closeout_sources": [
+        "experiments/qwen38-27b-b70/notes/2026-10-07-history-state-study-result.md",
+        "experiments/qwen38-27b-b70/notes/2026-10-07-full-source-screen-result.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/qwen38-27b-b70/DO-NOT-REPEAT.md",
+          "sha256": "65b51dc62a728ea3e6ee9c17a69183d6105dc039bfb6bdadb52e241dff70bf49",
+          "read_scope": "lines 1-28",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "experiments/qwen38-27b-b70/MULTI-HOST-HANDOFF.md",
+          "sha256": "9a5ca283141f84cdacba877496da50c8cb0df6dd2de2eaaca24f77a06e886814",
+          "read_scope": "lines 1-100",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "experiments/qwen38-27b-b70/notes/2026-10-07-history-state-study-result.md",
+          "sha256": "169de8f929c9d52675bf3a3a2803f4e01c00aff45144f438fa946df1f501658a",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "experiments/qwen38-27b-b70/notes/2026-10-07-full-source-screen-result.md",
+          "sha256": "f2cf131f601600c58a183543e98689e2826b815999905bbd4788f6bb3783c5fe",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "experiments/qwen38-27b-b70/data/2026-10-07-history-study-result/audit.json",
+          "sha256": "010625f2c67845cebda90833cec8200b87833d78e61d44857d0f4e6758d95851",
+          "read_scope": "top-level audit and per-trial condition/case/quality/score; not every detailed trial field",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 6610,
+        "narrative_documents": 961,
+        "text_receipts": 1017,
+        "structured_documents": 4632,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 5,
+        "reviewed_sources_including_external": 5,
+        "raw_logs_not_semantically_reviewed": 361
+      }
+    },
+    {
+      "area": "qwen38-flash-next-fp8-b70",
+      "purpose": "Improve the official FP8 target and isolate the recurrent device-loss boundary before more execution.",
+      "outcomes": [
+        "The September closeout records 46.854250 tok/s on its fixed class-balanced 99-interval protocol. Exact serial two-row GDN reduced that component from 42.7 to 33.7 ms. October evidence narrowed the repeated fault to an abrupt process-exit path after correct computation."
+      ],
+      "worked": [
+        "Separating first-use from steady decode exposed a roughly 29 versus 47 tok/s startup effect. Clean exit and a 10 s hold passed where abrupt exit after the same successful compute failed; one-layer replay also passed."
+      ],
+      "failures_and_uncertainty": [
+        "MTP2 was slower; larger prefill settings improved TTFT but changed outputs; multiuser exactness failed. In the decisive abrupt-exit probe, return preceded the abrupt action by 0.297 ms and the first fault followed by 70.669 ms; this does not identify the faulty resource or a full-rank remedy."
+      ],
+      "validity_limits": [
+        "The 8/16/32K rows are separately scoped, not the complete frozen certificate. Correct outputs before exit do not establish driver/runtime cleanup safety. Older health receipts and start permissions are superseded by the current third-incident halt."
+      ],
+      "retained_paths": [
+        "results/qwen38-flash-next-fp8-b70/CLOSEOUT-20260913.md",
+        "experiments/qwen38-flash-next-fp8-b70/notes/2026-10-10-exit-fault-reproduced.md",
+        "experiments/qwen38-flash-next-fp8-b70/data",
+        "experiments/qwen38-flash-next-fp8-b70/reopen-20261008",
+        "experiments/qwen38-flash-next-fp8-b70/stability"
+      ],
+      "revisit_conditions": [
+        "Owner-directed recovery followed by a newly bounded fault-isolation plan and current memory/health admission; no repeated launch merely to reconfirm the known abrupt-exit failure."
+      ],
+      "current_gate": "CURRENT: four-card host is halted after its third device-loss incident. Owner-directed recovery and fresh receipts are required; historical launch/reboot notes are not authorization.",
+      "closeout_sources": [
+        "results/qwen38-flash-next-fp8-b70/CLOSEOUT-20260913.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "results/qwen38-flash-next-fp8-b70/CLOSEOUT-20260913.md",
+          "sha256": "6dfc794a8488fe22b0928448b42f1c8b2ad3ed8eb3b15fc7874396f78ce8de39",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "experiments/qwen38-flash-next-fp8-b70/notes/2026-10-10-exit-fault-reproduced.md",
+          "sha256": "361332f9318099f78b1cf2abfffb3d881382d276abb59f34b6b4f4e6fbe34b5a",
+          "read_scope": "lines 1-76, 215-270",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 1524,
+        "narrative_documents": 477,
+        "text_receipts": 93,
+        "structured_documents": 954,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 1,
+        "reviewed_sources_including_external": 2,
+        "raw_logs_not_semantically_reviewed": 132
+      }
+    },
+    {
+      "area": "qwen38-flash-next-ud-iq3xxs-b70",
+      "purpose": "Establish an independent lossless GGUF storage/parser identity before admitting native inference.",
+      "outcomes": [
+        "The three authenticated shards total 81,961,823,936 bytes and 1,224 tensors. CPU qualification passed 112 loader tests, 576 synthetic blocks/104,448 decoded values and repeated sampled real-tensor checks. No model inference or GPU fit is established."
+      ],
+      "worked": [
+        "Independent normative decoders, bitwise checks and real-file samples made format errors visible. Tensor census exposed that the UD-IQ3_XXS label contains mixed IQ2_S/IQ3_S/IQ4_NL/Q6_K/Q8/F32/BF16 tensors rather than IQ3_XXS tensors."
+      ],
+      "failures_and_uncertainty": [
+        "The target packed allocation is 53,304,619,520 bytes across two cards; the 29,321,610,240-byte off-device projection exceeds Turin’s 15 GB host budget. A file-backed lookup/I/O and driver-memory plan is required before device admission."
+      ],
+      "validity_limits": [
+        "Sampled byte checks are not a complete-tensor finiteness proof. The model has no native MTP block; any optional official MTP mixture needs separate admission. This GGUF identity cannot borrow FP8 tolerances or quality certificates."
+      ],
+      "retained_paths": [
+        "experiments/qwen38-flash-next-ud-iq3xxs-b70/README.md",
+        "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/README.md",
+        "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1"
+      ],
+      "revisit_conditions": [
+        "Complete tokenizer/operator oracles and a measured file-backed host-memory plan before device parity; only then consider bounded inference under the owner’s current host gate."
+      ],
+      "current_gate": "CURRENT retains CPU identity/parser work. Device parity and inference remain unlaunched and subject to the four-card halt or Turin’s separate 15 GB admission.",
+      "closeout_sources": [
+        "experiments/qwen38-flash-next-ud-iq3xxs-b70/README.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/README.md",
+          "sha256": "9c7d608878cb479694c73bf4e980ea91c364bc40c94a0420925cf59b3e6ff94e",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/README.md",
+          "sha256": "e8aee7ef8e17fdfa60ac2705b3442280c23cbcfdb11f53ad8d9f4fd2677adaca",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 18,
+        "narrative_documents": 6,
+        "text_receipts": 0,
+        "structured_documents": 12,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 2,
+        "reviewed_sources_including_external": 2,
+        "raw_logs_not_semantically_reviewed": 7
+      }
+    },
+    {
+      "area": "rapid-model-snapshots-b70",
+      "purpose": "Compare a small model set with a shared cold streaming harness and retain useful deployment screens.",
+      "outcomes": [
+        "Historical scoped rates include Qwen3 MoE 107.4839, Qwen Coder 108.1165, GLM 40.769, Phi Q4 96.548 versus Q8 72.246, DeepCoder 57.096 and Nemotron 50.904 tok/s. These are preserved screen identities, not a current leaderboard."
+      ],
+      "worked": [
+        "Explicit cache_prompt:false removed hidden request reuse. Running Phi alone recovered 96.5 tok/s from about 74.8 during concurrent four-GPU screening, showing the need for uncontended headline measurements."
+      ],
+      "failures_and_uncertainty": [
+        "Reasoning-parser output for R1 had zero measurable output deltas at the 128-token cap; the raw-think 512-token diagnostic still ended without a final answer. Nemotron knob changes were effectively neutral."
+      ],
+      "validity_limits": [
+        "Small-context speed wins do not establish long-context quality. A raw reasoning rate is not completed-answer throughput, and parallel screening is not a standalone record. Historical power/storage/service instructions are superseded by CURRENT."
+      ],
+      "retained_paths": [
+        "experiments/rapid-model-snapshots-b70/README.md",
+        "experiments/rapid-model-snapshots-b70/deepseek-r1-distill-qwen-14b-q4km.md",
+        "experiments/rapid-model-snapshots-b70/localmaxxing"
+      ],
+      "revisit_conditions": [
+        "A new model or runtime mechanism, with current host admission, standalone cold quality and completed-answer measurement; avoid replaying broad neutral knob screens."
+      ],
+      "current_gate": "Not listed as an active lane in CURRENT.md. Retain as historical research; a new experiment needs current host ownership and admission. The four-card fault halt remains binding.",
+      "closeout_sources": [
+        "experiments/rapid-model-snapshots-b70/README.md"
+      ],
+      "closeout_gap": null,
+      "reviewed_sources": [
+        {
+          "path": "experiments/rapid-model-snapshots-b70/README.md",
+          "sha256": "9e50a2a66b4350b14d7a9362516ea3a1623c681026c84d36d0d551206ff46e5f",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 12,
+        "narrative_documents": 3,
+        "text_receipts": 0,
+        "structured_documents": 9,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 1,
+        "reviewed_sources_including_external": 1,
+        "raw_logs_not_semantically_reviewed": 0
+      }
+    },
+    {
+      "area": "xpu_level_zero_peer_probe",
+      "purpose": "Check Level Zero peer access, IPC import/export and allocation lifetime assumptions before communication kernels.",
+      "outcomes": [
+        "The sibling IPC experiment records successful all-pair functional access and forked import/export. Remote pairs reported ACCESS without ATOMICS while each device’s self-pair reported both; these are capability checks, not model speed gains."
+      ],
+      "worked": [
+        "A known remote fill pattern and child import/export distinguish visibility from an assumed pointer mapping. Capability enumeration prevents treating all cross-device operations as equivalent."
+      ],
+      "failures_and_uncertainty": [
+        "Write/access success does not prove persistent peer-polling atomics are safe. The sibling fused IPC path later hung during replay despite functional setup passing."
+      ],
+      "validity_limits": [
+        "The standalone README describes the probe, while the reviewed measured outcomes are in the sibling IPC README. No standalone dated machine receipt was established by this review; driver-specific observations are not permanent hardware guarantees."
+      ],
+      "retained_paths": [
+        "experiments/xpu_level_zero_peer_probe/README.md",
+        "experiments/minimax_qk_rms_xpu_ipc/README.md",
+        "experiments/xpu_level_zero_peer_probe/peer_probe.cpp"
+      ],
+      "revisit_conditions": [
+        "A changed driver/runtime or communication design, first with a bounded capability/lifetime check and only then a graph-replay/model gate."
+      ],
+      "current_gate": "Not listed as an active lane in CURRENT.md. Retain as historical research; a new experiment needs current host ownership and admission. The four-card fault halt remains binding.",
+      "closeout_sources": [
+        "experiments/minimax_qk_rms_xpu_ipc/README.md"
+      ],
+      "closeout_gap": "Functional measurements are documented by the sibling IPC closeout; this area has no separately reviewed standalone dated receipt.",
+      "reviewed_sources": [
+        {
+          "path": "experiments/xpu_level_zero_peer_probe/README.md",
+          "sha256": "6b79b1519d6ae180bce48273702054ae29abd9ffafed6810f713be874505629b",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        },
+        {
+          "path": "experiments/minimax_qk_rms_xpu_ipc/README.md",
+          "sha256": "00c19544941ef4d79c8859874f98f835b315ca5886fd6b27b945375663f87700",
+          "read_scope": "full",
+          "reviewer": "knowledge_audit",
+          "source_commit": "8c4505c311ba4c98fb1edcea0d22e2137a739997"
+        }
+      ],
+      "inventory_counts": {
+        "documents": 1,
+        "narrative_documents": 1,
+        "text_receipts": 0,
+        "structured_documents": 0,
+        "generated_or_vendor_location": 0,
+        "semantically_reviewed_inventory_paths": 1,
+        "reviewed_sources_including_external": 2,
+        "raw_logs_not_semantically_reviewed": 0
+      }
+    }
+  ]
+}

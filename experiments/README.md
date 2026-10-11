@@ -8,8 +8,14 @@ sources. Old launch commands and sections called “current” describe their da
 
 Use the [model effort index](../docs/model-effort-index.md) to find maintained
 result packets and recipes, and the [research workflow playbook](../docs/research-workflow-playbook.md)
-for lessons that transfer between models. Source history, failed patches,
-negative results and original evidence remain preserved at their existing paths.
+for lessons that transfer between models. The [substantive learning review](../audits/repository-cleanup/2026-10-10/experiment-review.md)
+covers all 37 areas with outcomes, failures, validity limits and revisit conditions;
+its [source catalog](../audits/repository-cleanup/2026-10-10/experiment-review.json)
+distinguishes actual semantic reads from the much broader document inventory.
+Source history, failed patches, negative results and original evidence remain
+preserved. Consolidated historical source files are byte-identical archive
+members with [Gemma](../patches/gemma4-26b-a4b-q8-b70/SOURCE-ARCHIVE.md) and
+[Laguna](../patches/laguna-s-2.1-xpu-b70/SOURCE-ARCHIVE.md) restore guides.
 An index entry does not promote an experiment or authorize a launch.
 
 ## Model and runtime lanes
@@ -43,8 +49,10 @@ An index entry does not promote an experiment or authorize a launch.
   Video scheduling, process-based parallelism and repeatable decode/output files.
   Exactness is against the owner-selected fitted denoiser; the [recipe](../repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md) records provenance and rebuild gaps.
 - **[minimax-m27-reap-autoround-vllm](minimax-m27-reap-autoround-vllm/README.md)** —
-  Smaller REAP/AutoRound checkpoint intake and fit comparison with MiniMax M2.7.
-  A favorable storage estimate does not establish quality, repeatability or a promoted result.
+  Smaller REAP/AutoRound model, kernel integration and quality/speed reconciliation.
+  The historical qualified 89.499223 tok/s result remains preserved; later
+  corrupt-cache and repaired-source runs do not reproduce or replace it.
+  The [reproduction handoff](minimax-m27-reap-autoround-vllm/REPRO.md) records that gap.
 - **[muse-glimmer-30b-b70](muse-glimmer-30b-b70/README.md)** —
   BF16 and compressed-target studies, DFlash and weight-only kernels.
   The retained Q8/WOQ result is not a BF16, lossless or universally token-exact claim.
@@ -132,3 +140,17 @@ An index entry does not promote an experiment or authorize a launch.
 - **[rapid-model-snapshots-b70](rapid-model-snapshots-b70/README.md)** —
   Reproducible first-pass model baselines and a shared cold-response gate.
   Diagnostic screens and promising intake candidates do not become headline results without that gate.
+
+## Keeping the record useful
+
+When a campaign ends or a lever is rejected, use the
+[closeout template](CLOSEOUT-TEMPLATE.md) to preserve its question and identity,
+outcome, useful successes and failures, evidence/patch links, and a concrete
+condition for revisiting it. Link the closeout from the lane's README or handoff.
+Keep current next steps there and dated chronology in the closeout; a failed
+experiment can still contain the patch or lesson that prevents repeated work.
+
+The [repository hygiene check](../tools/check-repository-hygiene.py) enforces the
+minimum record for new closeouts and flags large additions for review. Before
+archiving source or deleting generated material, follow the
+[cleanup preservation and validation record](../audits/repository-cleanup/README.md).
