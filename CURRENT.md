@@ -117,6 +117,8 @@ owner approval. The earlier ISTA IQ3_S proposal is withdrawn. These CPU packets 
 
 **October 11, CPU-only expert-path preparation:** [Round 4 packet9](experiments/own-xpu-runtime/stage2/packet9-kopt4/README.md) adds one gate/up launch, one down launch and an ordered weighted-sum launch, plus whole-layer GEMV timing. CPU checks and the SYCL build pass; no device program ran. The census corrects the planning inputs to 36 GDN + 12 QSA layers and 19.712 MB per ordinary expert block. The coordinator can next run the packet's card-3 exactness and paired timing commands after admission. Full-model output checks and actual speed remain pending.
 
+**October 11, CPU-only exact weight expansion:** [Round 5 packet10](experiments/own-xpu-runtime/stage2/packet10-kopt5/README.md) prepares expanded dense weights and two output-head kernels. The budget is 55.194 GB of weights, or 63.348 GB with the existing reserve; routed experts remain packed. CPU bit checks and device-program compilation are complete, but no GPU program ran. The speed estimates remain below the reference, and native fit and full-model quality are untested. The coordinator's next step is the packet's card-3 exactness and paired timing commands after admission.
+
 ## Two-Card Lanes And Context Work
 
 **Qwen 27B FP8:** optimize the official FP8 model with native MTP and full 16-bit KV; DFlash stays excluded by the September 14 owner decision. Read the [multi-host handoff](experiments/qwen38-27b-b70/MULTI-HOST-HANDOFF.md), [closed

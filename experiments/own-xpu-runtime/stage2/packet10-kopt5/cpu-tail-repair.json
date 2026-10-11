@@ -1,0 +1,80 @@
+{
+  "schema": "own-runtime.iq3.packet10.cpu-repair.v1",
+  "device_executed": false,
+  "failed_receipt": {
+    "schema": "own-runtime.iq3.packet10.cpu-build.v1",
+    "passed": false,
+    "date_utc": "2026-10-11T05:07:52.937801+00:00",
+    "device_executed": false,
+    "commands": [
+      {
+        "argv": [
+          "cmake",
+          "-S",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5",
+          "-B",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/device",
+          "-DCMAKE_BUILD_TYPE=Release"
+        ],
+        "returncode": 0,
+        "stdout": "-- The CXX compiler identification is IntelLLVM 2026.0.0\n-- Detecting CXX compiler ABI info\n-- Detecting CXX compiler ABI info - done\n-- Check for working CXX compiler: /opt/intel/oneapi/compiler/2026.0/bin/icpx - skipped\n-- Detecting CXX compile features\n-- Detecting CXX compile features - done\n-- Configuring done (0.2s)\n-- Generating done (0.0s)\n-- Build files have been written to: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/device\n",
+        "stderr": ""
+      },
+      {
+        "argv": [
+          "cmake",
+          "--build",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/device",
+          "-j2"
+        ],
+        "returncode": 0,
+        "stdout": "[  6%] Building CXX object CMakeFiles/owner.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp.o\n[ 12%] Building CXX object CMakeFiles/kopt.dir/kernels.cpp.o\n[ 18%] Linking CXX static library libowner.a\n[ 18%] Built target owner\n[ 25%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.cpp.o\n[ 31%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o\n[ 37%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o\n[ 43%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o\n[ 50%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp.o\n[ 56%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp.o\n[ 62%] Building CXX object CMakeFiles/host-tests.dir/tests/host.cpp.o\n[ 68%] Linking CXX executable host-tests\n[ 68%] Built target host-tests\n[ 75%] Linking CXX static library libkopt.a\n[ 75%] Built target kopt\n[ 87%] Building CXX object CMakeFiles/device-test.dir/tests/device.cpp.o\n[ 87%] Building CXX object CMakeFiles/device-timing.dir/tests/timing.cpp.o\n[ 93%] Linking CXX executable device-timing\n[100%] Linking CXX executable device-test\n[100%] Built target device-timing\n[100%] Built target device-test\n",
+        "stderr": ""
+      },
+      {
+        "argv": [
+          "readelf",
+          "-d",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/device/host-tests"
+        ],
+        "returncode": 0,
+        "stdout": "\nDynamic section at offset 0x34da0 contains 27 entries:\n  Tag        Type                         Name/Value\n 0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]\n 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]\n 0x000000000000000c (INIT)               0x403000\n 0x000000000000000d (FINI)               0x42971c\n 0x0000000000000019 (INIT_ARRAY)         0x4356a8\n 0x000000000000001b (INIT_ARRAYSZ)       16 (bytes)\n 0x000000000000001a (FINI_ARRAY)         0x4356b8\n 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)\n 0x000000006ffffef5 (GNU_HASH)           0x400378\n 0x0000000000000005 (STRTAB)             0x401068\n 0x0000000000000006 (SYMTAB)             0x400480\n 0x000000000000000a (STRSZ)              4292 (bytes)\n 0x000000000000000b (SYMENT)             24 (bytes)\n 0x0000000000000015 (DEBUG)              0x0\n 0x0000000000000003 (PLTGOT)             0x435fe8\n 0x0000000000000002 (PLTRELSZ)           2232 (bytes)\n 0x0000000000000014 (PLTREL)             RELA\n 0x0000000000000017 (JMPREL)             0x402620\n 0x0000000000000007 (RELA)               0x4023b0\n 0x0000000000000008 (RELASZ)             624 (bytes)\n 0x0000000000000009 (RELAENT)            24 (bytes)\n 0x000000006ffffffe (VERNEED)            0x402230\n 0x000000006fffffff (VERNEEDNUM)         3\n 0x000000006ffffff0 (VERSYM)             0x40212c\n 0x0000000000000000 (NULL)               0x0\n",
+        "stderr": ""
+      },
+      {
+        "argv": [
+          "/usr/bin/python3",
+          "-B",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/analysis.py"
+        ],
+        "returncode": 0,
+        "stdout": "{\n  \"policies\": [\n    {\n      \"policy\": \"packed\",\n      \"weight_bytes\": 53304619520,\n      \"expansion_factor\": 1.0,\n      \"reserve_bytes\": 8154079512,\n      \"resident_with_reserve_bytes\": 61458699032,\n      \"margin_64_decimal_GB\": 2541300968,\n      \"historical_capacity_bytes\": 68484595712,\n      \"historical_capacity_margin\": 7025896680,\n      \"per_card_layer_split_weight_bytes\": [\n        26506330880,\n        26798288640\n      ],\n      \"per_card_with_half_reserve\": [\n        30583370636.0,\n        30875328396.0\n      ],\n      \"fits_64_decimal_GB_arithmetic\": true,\n      \"measured_fit\": false\n    },\n    {\n      \"policy\": \"dense\",\n      \"weight_bytes\": 55193940480,\n      \"expansion_factor\": 1.0354438504019547,\n      \"reserve_bytes\": 8154079512,\n      \"resident_with_reserve_bytes\": 63348019992,\n      \"margin_64_decimal_GB\": 651980008,\n      \"historical_capacity_bytes\": 68484595712,\n      \"historical_capacity_margin\": 5136575720,\n      \"per_card_layer_split_weight_bytes\": [\n        27285635840,\n        27908304640\n      ],\n      \"per_card_with_half_reserve\": [\n        31362675596.0,\n        31985344396.0\n      ],\n      \"fits_64_decimal_GB_arithmetic\": true,\n      \"measured_fit\": false\n    },\n    {\n      \"policy\": \"dense_plus_iq2_experts\",\n      \"weight_bytes\": 131582702080,\n      \"expansion_factor\": 2.4685046674168625,\n      \"reserve_bytes\": 8154079512,\n      \"resident_with_reserve_bytes\": 139736781592,\n      \"margin_64_decimal_GB\": -75736781592,\n      \"historical_capacity_bytes\": 68484595712,\n      \"historical_capacity_margin\": -71252185880,\n      \"per_card_layer_split_weight_bytes\": [\n        64667370240,\n        66915331840\n      ],\n      \"per_card_with_half_reserve\": [\n        68744409996.0,\n        70992371596.0\n      ],\n      \"fits_64_decimal_GB_arithmetic\": false,\n      \"measured_fit\": false\n    },\n    {\n      \"policy\": \"all_resident_quantized\",\n      \"weight_bytes\": 157954388480,\n      \"expansion_factor\": 2.96324014508227,\n      \"reserve_bytes\": 8154079512,\n      \"resident_with_reserve_bytes\": 166108467992,\n      \"margin_64_decimal_GB\": -102108467992,\n      \"historical_capacity_bytes\": 68484595712,\n      \"historical_capacity_margin\": -97623872280,\n      \"per_card_layer_split_weight_bytes\": [\n        78456144640,\n        79498243840\n      ],\n      \"per_card_with_half_reserve\": [\n        82533184396.0,\n        83575283596.0\n      ],\n      \"fits_64_decimal_GB_arithmetic\": false,\n      \"measured_fit\": false\n    }\n  ],\n  \"forecasts\": [\n    {\n      \"assumed_dense_GB_s\": 290,\n      \"layers\": [\n        {\n          \"layer\": 0,\n          \"kind\": \"ordinary_gdn\",\n          \"dense_fetched_bytes\": 99338240.0,\n          \"expert_measured_ms\": 0.29848949999999996,\n          \"predicted_ms\": 1.0150351551724137,\n          \"native_launches\": 25\n        },\n        {\n          \"layer\": 1,\n          \"kind\": \"ple_gdn\",\n          \"dense_fetched_bytes\": 136202240.0,\n          \"expert_measured_ms\": 0.29791674999999995,\n          \"predicted_ms\": 1.175579646551724,\n          \"native_launches\": 27\n        },\n        {\n          \"layer\": 2,\n          \"kind\": \"upgraded_gdn\",\n          \"dense_fetched_bytes\": 93685760.0,\n          \"expert_measured_ms\": 0.296693,\n          \"predicted_ms\": 0.9937473448275864,\n          \"native_launches\": 25\n        },\n        {\n          \"layer\": 3,\n          \"kind\": \"qsa\",\n          \"dense_fetched_bytes\": 91801600.0,\n          \"expert_measured_ms\": 0.298125,\n          \"predicted_ms\": 1.0056822413793105,\n          \"native_launches\": 26\n        },\n        {\n          \"layer\": 4,\n          \"kind\": \"head\",\n          \"dense_fetched_bytes\": 801996800.0,\n          \"expert_measured_ms\": 0,\n          \"predicted_ms\": 2.8165062068965514,\n          \"native_launches\": 3\n        }\n      ],\n      \"predicted_ms_per_token\": 51.565221370689656,\n      \"predicted_tok_s\": 19.39291587272062\n    },\n    {\n      \"assumed_dense_GB_s\": 376,\n      \"layers\": [\n        {\n          \"layer\": 0,\n          \"kind\": \"ordinary_gdn\",\n          \"dense_fetched_bytes\": 99338240.0,\n          \"expert_measured_ms\": 0.29848949999999996,\n          \"predicted_ms\": 0.9366869468085106,\n          \"native_launches\": 25\n        },\n        {\n          \"layer\": 1,\n          \"kind\": \"ple_gdn\",\n          \"dense_fetched_bytes\": 136202240.0,\n          \"expert_measured_ms\": 0.29791674999999995,\n          \"predicted_ms\": 1.06815675,\n          \"native_launches\": 27\n        },\n        {\n          \"layer\": 2,\n          \"kind\": \"upgraded_gdn\",\n          \"dense_fetched_bytes\": 93685760.0,\n          \"expert_measured_ms\": 0.296693,\n          \"predicted_ms\": 0.9198572553191489,\n          \"native_launches\": 25\n        },\n        {\n          \"layer\": 3,\n          \"kind\": \"qsa\",\n          \"dense_fetched_bytes\": 91801600.0,\n          \"expert_measured_ms\": 0.298125,\n          \"predicted_ms\": 0.9332781914893616,\n          \"native_launches\": 26\n        },\n        {\n          \"layer\": 4,\n          \"kind\": \"head\",\n          \"dense_fetched_bytes\": 801996800.0,\n          \"expert_measured_ms\": 0,\n          \"predicted_ms\": 2.1839702127659573,\n          \"native_launches\": 3\n        }\n      ],\n      \"predicted_ms_per_token\": 47.218684707446805,\n      \"predicted_tok_s\": 21.178057080490664\n    }\n  ],\n  \"head\": {\n    \"type\": \"Q6_K\",\n    \"rows\": 248320,\n    \"k\": 2560,\n    \"packed_bytes\": 521472000,\n    \"expanded_resident_bytes\": 839321600,\n    \"fetched_bytes\": 794624000.0,\n    \"predicted_kernel_ms_at_290\": 2.7570827586206894,\n    \"predicted_kernel_ms_at_376\": 2.1303617021276593\n  }\n}\n",
+        "stderr": ""
+      },
+      {
+        "argv": [
+          "/usr/bin/python3",
+          "-B",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/test_protocol.py"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "..................................\n----------------------------------------------------------------------\nRan 34 tests in 0.551s\n\nOK\n"
+      },
+      {
+        "argv": [
+          "/home/steve/.venvs/vllm-xpu/bin/python",
+          "-B",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/prepare.py"
+        ],
+        "returncode": 1,
+        "stdout": "",
+        "stderr": "Traceback (most recent call last):\n  File \"/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/prepare.py\", line 3, in <module>\n    print(prepare()[\"cpu\"])\n          ^^^^^^^^^\n  File \"/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/common.py\", line 124, in prepare\n    test = subprocess.run([str(host), str(FIXTURES)], capture_output=True, text=True, check=True)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/subprocess.py\", line 571, in run\n    raise CalledProcessError(retcode, process.args,\nsubprocess.CalledProcessError: Command '['/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/device/host-tests', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/fixtures']' returned non-zero exit status 1.\n"
+      }
+    ],
+    "scratch_removed": true,
+    "error": "CPU command failed: ['/home/steve/.venvs/vllm-xpu/bin/python', '-B', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/prepare.py']"
+  },
+  "diagnosis": "New three-row tail mock allocated three rows but attempted to upload the four-row fixture. Bounded upload now uses n * row_bytes; failure caught on CPU before device.",
+  "status": "fixed; see build-receipt.json for final rerun"
+}

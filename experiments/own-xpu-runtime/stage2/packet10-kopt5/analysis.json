@@ -1,0 +1,347 @@
+{
+  "schema": "own-runtime.iq3.packet10.analysis.v1",
+  "measured": false,
+  "formats": [
+    {
+      "type": "Q8_0",
+      "min_direct_signed_bits": 8,
+      "chosen_code_bits": 8,
+      "source_bytes_per_weight": 1.0625,
+      "resident_bytes_per_weight": 1.1875,
+      "fetched_bytes_per_weight": 1.125,
+      "expansion_factor": 1.1176470588235294,
+      "original_metadata_bytes": 2,
+      "group": 32
+    },
+    {
+      "type": "Q3_K",
+      "min_direct_signed_bits": 3,
+      "chosen_code_bits": 4,
+      "source_bytes_per_weight": 0.4296875,
+      "resident_bytes_per_weight": 0.8046875,
+      "fetched_bytes_per_weight": 0.75,
+      "expansion_factor": 1.8727272727272728,
+      "original_metadata_bytes": 14,
+      "group": 16
+    },
+    {
+      "type": "Q6_K",
+      "min_direct_signed_bits": 6,
+      "chosen_code_bits": 8,
+      "source_bytes_per_weight": 0.8203125,
+      "resident_bytes_per_weight": 1.3203125,
+      "fetched_bytes_per_weight": 1.25,
+      "expansion_factor": 1.6095238095238096,
+      "original_metadata_bytes": 18,
+      "group": 16
+    },
+    {
+      "type": "IQ3_XXS",
+      "min_direct_signed_bits": 7,
+      "chosen_code_bits": 8,
+      "source_bytes_per_weight": 0.3828125,
+      "resident_bytes_per_weight": 1.1640625,
+      "fetched_bytes_per_weight": 1.125,
+      "expansion_factor": 3.0408163265306123,
+      "original_metadata_bytes": 10,
+      "group": 32
+    },
+    {
+      "type": "IQ4_NL",
+      "min_direct_signed_bits": 8,
+      "chosen_code_bits": 8,
+      "source_bytes_per_weight": 0.5625,
+      "resident_bytes_per_weight": 1.1875,
+      "fetched_bytes_per_weight": 1.125,
+      "expansion_factor": 2.111111111111111,
+      "original_metadata_bytes": 2,
+      "group": 32
+    },
+    {
+      "type": "IQ3_S",
+      "min_direct_signed_bits": 5,
+      "chosen_code_bits": 8,
+      "source_bytes_per_weight": 0.4296875,
+      "resident_bytes_per_weight": 1.1484375,
+      "fetched_bytes_per_weight": 1.125,
+      "expansion_factor": 2.672727272727273,
+      "original_metadata_bytes": 6,
+      "group": 32
+    },
+    {
+      "type": "IQ2_S",
+      "min_direct_signed_bits": 7,
+      "chosen_code_bits": 8,
+      "source_bytes_per_weight": 0.3203125,
+      "resident_bytes_per_weight": 1.2890625,
+      "fetched_bytes_per_weight": 1.25,
+      "expansion_factor": 4.024390243902439,
+      "original_metadata_bytes": 10,
+      "group": 16
+    },
+    {
+      "type": "IQ4_XS",
+      "min_direct_signed_bits": 8,
+      "chosen_code_bits": 8,
+      "source_bytes_per_weight": 0.53125,
+      "resident_bytes_per_weight": 1.15625,
+      "fetched_bytes_per_weight": 1.125,
+      "expansion_factor": 2.176470588235294,
+      "original_metadata_bytes": 8,
+      "group": 32
+    }
+  ],
+  "policies": [
+    {
+      "policy": "packed",
+      "weight_bytes": 53304619520,
+      "expansion_factor": 1.0,
+      "reserve_bytes": 8154079512,
+      "resident_with_reserve_bytes": 61458699032,
+      "margin_64_decimal_GB": 2541300968,
+      "historical_capacity_bytes": 68484595712,
+      "historical_capacity_margin": 7025896680,
+      "per_card_layer_split_weight_bytes": [
+        26506330880,
+        26798288640
+      ],
+      "per_card_with_half_reserve": [
+        30583370636.0,
+        30875328396.0
+      ],
+      "fits_64_decimal_GB_arithmetic": true,
+      "measured_fit": false
+    },
+    {
+      "policy": "dense",
+      "weight_bytes": 55193940480,
+      "expansion_factor": 1.0354438504019547,
+      "reserve_bytes": 8154079512,
+      "resident_with_reserve_bytes": 63348019992,
+      "margin_64_decimal_GB": 651980008,
+      "historical_capacity_bytes": 68484595712,
+      "historical_capacity_margin": 5136575720,
+      "per_card_layer_split_weight_bytes": [
+        27285635840,
+        27908304640
+      ],
+      "per_card_with_half_reserve": [
+        31362675596.0,
+        31985344396.0
+      ],
+      "fits_64_decimal_GB_arithmetic": true,
+      "measured_fit": false
+    },
+    {
+      "policy": "dense_plus_iq2_experts",
+      "weight_bytes": 131582702080,
+      "expansion_factor": 2.4685046674168625,
+      "reserve_bytes": 8154079512,
+      "resident_with_reserve_bytes": 139736781592,
+      "margin_64_decimal_GB": -75736781592,
+      "historical_capacity_bytes": 68484595712,
+      "historical_capacity_margin": -71252185880,
+      "per_card_layer_split_weight_bytes": [
+        64667370240,
+        66915331840
+      ],
+      "per_card_with_half_reserve": [
+        68744409996.0,
+        70992371596.0
+      ],
+      "fits_64_decimal_GB_arithmetic": false,
+      "measured_fit": false
+    },
+    {
+      "policy": "all_resident_quantized",
+      "weight_bytes": 157954388480,
+      "expansion_factor": 2.96324014508227,
+      "reserve_bytes": 8154079512,
+      "resident_with_reserve_bytes": 166108467992,
+      "margin_64_decimal_GB": -102108467992,
+      "historical_capacity_bytes": 68484595712,
+      "historical_capacity_margin": -97623872280,
+      "per_card_layer_split_weight_bytes": [
+        78456144640,
+        79498243840
+      ],
+      "per_card_with_half_reserve": [
+        82533184396.0,
+        83575283596.0
+      ],
+      "fits_64_decimal_GB_arithmetic": false,
+      "measured_fit": false
+    }
+  ],
+  "components": {
+    "packed": {
+      "gdn": 1754576384,
+      "routed_experts": 48627712000,
+      "shared_experts": 213376000,
+      "routers": 252149760,
+      "hyperconnections": 1366589440,
+      "norms": 4028416,
+      "ple_projection": 35102720,
+      "qsa_attention": 490291200,
+      "qsa_indexer": 39321600,
+      "target_head": 521472000
+    },
+    "dense": {
+      "gdn": 2776937984,
+      "routed_experts": 48627712000,
+      "shared_experts": 300620800,
+      "routers": 252149760,
+      "hyperconnections": 1525514240,
+      "norms": 4028416,
+      "ple_projection": 39198720,
+      "qsa_attention": 789135360,
+      "qsa_indexer": 39321600,
+      "target_head": 839321600
+    },
+    "dense_plus_iq2_experts": {
+      "gdn": 2776937984,
+      "routed_experts": 125016473600,
+      "shared_experts": 300620800,
+      "routers": 252149760,
+      "hyperconnections": 1525514240,
+      "norms": 4028416,
+      "ple_projection": 39198720,
+      "qsa_attention": 789135360,
+      "qsa_indexer": 39321600,
+      "target_head": 839321600
+    },
+    "all_resident_quantized": {
+      "gdn": 2776937984,
+      "routed_experts": 151388160000,
+      "shared_experts": 300620800,
+      "routers": 252149760,
+      "hyperconnections": 1525514240,
+      "norms": 4028416,
+      "ple_projection": 39198720,
+      "qsa_attention": 789135360,
+      "qsa_indexer": 39321600,
+      "target_head": 839321600
+    }
+  },
+  "forecasts": [
+    {
+      "assumed_dense_GB_s": 290,
+      "layers": [
+        {
+          "layer": 0,
+          "kind": "ordinary_gdn",
+          "dense_fetched_bytes": 99338240.0,
+          "expert_measured_ms": 0.29848949999999996,
+          "predicted_ms": 1.0150351551724137,
+          "native_launches": 25
+        },
+        {
+          "layer": 1,
+          "kind": "ple_gdn",
+          "dense_fetched_bytes": 136202240.0,
+          "expert_measured_ms": 0.29791674999999995,
+          "predicted_ms": 1.175579646551724,
+          "native_launches": 27
+        },
+        {
+          "layer": 2,
+          "kind": "upgraded_gdn",
+          "dense_fetched_bytes": 93685760.0,
+          "expert_measured_ms": 0.296693,
+          "predicted_ms": 0.9937473448275864,
+          "native_launches": 25
+        },
+        {
+          "layer": 3,
+          "kind": "qsa",
+          "dense_fetched_bytes": 91801600.0,
+          "expert_measured_ms": 0.298125,
+          "predicted_ms": 1.0056822413793105,
+          "native_launches": 26
+        },
+        {
+          "layer": 4,
+          "kind": "head",
+          "dense_fetched_bytes": 801996800.0,
+          "expert_measured_ms": 0,
+          "predicted_ms": 2.8165062068965514,
+          "native_launches": 3
+        }
+      ],
+      "predicted_ms_per_token": 51.565221370689656,
+      "predicted_tok_s": 19.39291587272062
+    },
+    {
+      "assumed_dense_GB_s": 376,
+      "layers": [
+        {
+          "layer": 0,
+          "kind": "ordinary_gdn",
+          "dense_fetched_bytes": 99338240.0,
+          "expert_measured_ms": 0.29848949999999996,
+          "predicted_ms": 0.9366869468085106,
+          "native_launches": 25
+        },
+        {
+          "layer": 1,
+          "kind": "ple_gdn",
+          "dense_fetched_bytes": 136202240.0,
+          "expert_measured_ms": 0.29791674999999995,
+          "predicted_ms": 1.06815675,
+          "native_launches": 27
+        },
+        {
+          "layer": 2,
+          "kind": "upgraded_gdn",
+          "dense_fetched_bytes": 93685760.0,
+          "expert_measured_ms": 0.296693,
+          "predicted_ms": 0.9198572553191489,
+          "native_launches": 25
+        },
+        {
+          "layer": 3,
+          "kind": "qsa",
+          "dense_fetched_bytes": 91801600.0,
+          "expert_measured_ms": 0.298125,
+          "predicted_ms": 0.9332781914893616,
+          "native_launches": 26
+        },
+        {
+          "layer": 4,
+          "kind": "head",
+          "dense_fetched_bytes": 801996800.0,
+          "expert_measured_ms": 0,
+          "predicted_ms": 2.1839702127659573,
+          "native_launches": 3
+        }
+      ],
+      "predicted_ms_per_token": 47.218684707446805,
+      "predicted_tok_s": 21.178057080490664
+    }
+  ],
+  "scope": "GEMV-only two-card sequential 36 GDN + 12 QSA; scenarios, not measured decode",
+  "limits": [
+    "17us allowance is not an empty-launch measurement",
+    "no nonlinear/state/KV/host lookup/PCIe timing",
+    "raw router F32 evidence does not guarantee int8 throughput",
+    "full-model quality and native fit pending"
+  ],
+  "head": {
+    "type": "Q6_K",
+    "rows": 248320,
+    "k": 2560,
+    "packed_bytes": 521472000,
+    "expanded_resident_bytes": 839321600,
+    "fetched_bytes": 794624000.0,
+    "predicted_kernel_ms_at_290": 2.7570827586206894,
+    "predicted_kernel_ms_at_376": 2.1303617021276593
+  },
+  "inputs": {
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/tensor-census.json": "3312f5a18582788c5c6c84572fd616488b6835b454272c81eec218a58521607c",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/memory-admission.json": "0a9325d445a34acce9b6ee77ea2070fd6b0d337f337a78f00c8343a62ec60fb5",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/receipts-card3-20261011/timing.json": "0b50594b64c92093ba3a1de5b55b04ff88cdfa836a89b86e85144c4dd27d14bf"
+  },
+  "reference_tok_s": 28.49,
+  "packet9_projected_tok_s": 16.549939255516705,
+  "packed_590_GB_s_ceiling_tok_s": 119.16204586884838
+}

@@ -343,3 +343,18 @@ remaining choice is the grid (IQ3_XXS first, per packet 1c). Publication label:
 "Qwen3.8 Flash-Next UD-IQ3_XXS (Unsloth), quantized compressed version". The
 FP8 four-card line remains the Flash-Next authority. Full text:
 [docs/own-xpu-runtime-objective.md](../../docs/own-xpu-runtime-objective.md).
+
+## October 11 addendum — in-memory format is ours: exact expansion
+
+The owner permits changing in-memory packing while retaining every decoded
+value of the separate published quantized model. [Round 5](stage2/packet10-kopt5/README.md)
+prepares int8/nibble codes with cached exact FP32 subscales and retained source
+scale fields. This is value-exact load-time expansion, not weight quantization;
+the older DESIGN byte-invertibility wording does not require retaining unused
+GGUF packing bits for this owner-authorized path. FP32 multiplication order,
+matching GEMV reduction, full 16-bit KV, and complete-model quality gates stay
+binding. Dense-only expansion is 55.194 GB of weights / 63.348 GB including
+the existing estimated 32K reserve. Routed experts stay packed; all-grid or
+all-IQ2-expert expansion exceeds two-card capacity. The Q6_K head is tested
+at its real 248320×2560 shape with SG32 and local split4. CPU preparation is
+not native admission, a fit measurement or a speed promotion.

@@ -1,0 +1,538 @@
+{
+  "schema": "own-runtime.iq3.packet10.dispatch.v1",
+  "source": "packet9-kopt4/dispatch.json",
+  "source_sha256": "c1a0b1dacaad8634c6a2d06b67b794f37f5f0d9353312786dd73e545d2382cfd",
+  "rule": "dense quantized: split4 when packet9 variant is split4, otherwise SG32; raw unchanged; experts packed fused SG32; head SG32 and local split4 candidates",
+  "promoted": false,
+  "source_table": [
+    {
+      "key": [
+        0,
+        1,
+        2560,
+        1
+      ],
+      "variant": "decode_const_split4_v1",
+      "round2_round3_median_ms": {
+        "kopt_sg32": 0.017604,
+        "splitk4_v1": 0.014791249999999999,
+        "decode_const_sg32_v1": 0.01546875,
+        "decode_slm_sg32_v1": 0.016015500000000002,
+        "decode_const_split4_v1": 0.008698000000000001,
+        "decode_slm_split4_v1": 0.009245
+      },
+      "evidence": "round2/3 shape medians; diagnostic selection",
+      "candidates": [
+        "decode_const_sg32_v1",
+        "decode_slm_sg32_v1"
+      ]
+    },
+    {
+      "key": [
+        0,
+        1,
+        10240,
+        1
+      ],
+      "variant": "kopt_sg32",
+      "round2_round3_median_ms": {},
+      "evidence": "unmeasured shape; conservative SG32 fallback",
+      "candidates": [
+        "decode_const_sg32_v1",
+        "decode_slm_sg32_v1"
+      ]
+    },
+    {
+      "key": [
+        0,
+        4,
+        10240,
+        1
+      ],
+      "variant": "decode_const_split4_v1",
+      "round2_round3_median_ms": {
+        "kopt_sg32": 0.061458,
+        "splitk4_v1": 0.031301999999999996,
+        "decode_const_sg32_v1": 0.052292,
+        "decode_slm_sg32_v1": 0.051875,
+        "decode_const_split4_v1": 0.017292,
+        "decode_slm_split4_v1": 0.0175
+      },
+      "evidence": "round2/3 shape medians; diagnostic selection",
+      "candidates": [
+        "decode_const_sg32_v1",
+        "decode_slm_sg32_v1"
+      ]
+    },
+    {
+      "key": [
+        0,
+        48,
+        2560,
+        1
+      ],
+      "variant": "decode_const_split4_v1",
+      "round2_round3_median_ms": {
+        "kopt_sg32": 0.017396,
+        "splitk4_v1": 0.015052,
+        "decode_const_sg32_v1": 0.0152605,
+        "decode_slm_sg32_v1": 0.0154165,
+        "decode_const_split4_v1": 0.008828250000000001,
+        "decode_slm_split4_v1": 0.009270750000000001
+      },
+      "evidence": "round2/3 shape medians; diagnostic selection",
+      "candidates": [
+        "decode_const_sg32_v1",
+        "decode_slm_sg32_v1"
+      ]
+    },
+    {
+      "key": [
+        0,
+        512,
+        2560,
+        1
+      ],
+      "variant": "decode_const_split4_v1",
+      "round2_round3_median_ms": {
+        "kopt_sg32": 0.018177,
+        "splitk4_v1": 0.02666675,
+        "decode_const_sg32_v1": 0.016771,
+        "decode_slm_sg32_v1": 0.0164065,
+        "decode_const_split4_v1": 0.013959,
+        "decode_slm_split4_v1": 0.018151
+      },
+      "evidence": "round2/3 shape medians; diagnostic selection",
+      "candidates": [
+        "decode_const_sg32_v1",
+        "decode_slm_sg32_v1"
+      ]
+    },
+    {
+      "key": [
+        0,
+        10240,
+        4,
+        1
+      ],
+      "variant": "kopt_sg32",
+      "round2_round3_median_ms": {},
+      "evidence": "unmeasured shape; conservative SG32 fallback",
+      "candidates": [
+        "decode_const_sg32_v1",
+        "decode_slm_sg32_v1"
+      ]
+    },
+    {
+      "key": [
+        8,
+        320,
+        10240,
+        1
+      ],
+      "variant": "splitk4_v1",
+      "round2_round3_median_ms": {
+        "kopt_sg32": 0.086875,
+        "splitk4_v1": 0.034427,
+        "decode_const_sg32_v1": 0.08197925,
+        "decode_slm_sg32_v1": 0.104687,
+        "decode_const_split4_v1": 0.038047,
+        "decode_slm_split4_v1": 0.06304675
+      },
+      "evidence": "round2/3 shape medians; diagnostic selection",
+      "candidates": [
+        "decode_const_split4_v1",
+        "decode_slm_split4_v1"
+      ]
+    },
+    {
+      "key": [
+        8,
+        640,
+        2560,
+        1
+      ],
+      "variant": "kopt_sg32",
+      "round2_round3_median_ms": {
+        "kopt_sg32": 0.02572925,
+        "splitk4_v1": 0.030416,
+        "decode_const_sg32_v1": 0.026667,
+        "decode_slm_sg32_v1": 0.038671750000000005,
+        "decode_const_split4_v1": 0.027526000000000002,
+        "decode_slm_split4_v1": 0.043125
+      },
+      "evidence": "round2/3 shape medians; diagnostic selection",
+      "candidates": [
+        "decode_const_sg32_v1",
+        "decode_slm_sg32_v1"
+      ]
+    },
+    {
+      "key": [
+        8,
+        2560,
+        640,
+        1
+      ],
+      "variant": "kopt_sg32",
+      "round2_round3_median_ms": {
+        "kopt_sg32": 0.023776,
+        "splitk4_v1": 0.04572925,
+        "decode_const_sg32_v1": 0.030963249999999998,
+        "decode_slm_sg32_v1": 0.04815125,
+        "decode_const_split4_v1": 0.038047,
+        "decode_slm_split4_v1": 0.06799474999999999
+      },
+      "evidence": "round2/3 shape medians; diagnostic selection",
+      "candidates": [
+        "decode_const_sg32_v1",
+        "decode_slm_sg32_v1"
+      ]
+    },
+    {
+      "key": [
+        8,
+        2560,
+        2560,
+        1
+      ],
+      "variant": "splitk4_v1",
+      "round2_round3_median_ms": {
+        "kopt_sg32": 0.077813,
+        "splitk4_v1": 0.0732295,
+        "decode_const_sg32_v1": 0.080573,
+        "decode_slm_sg32_v1": 0.1278125,
+        "decode_const_split4_v1": 0.076354,
+        "decode_slm_split4_v1": 0.129948
+      },
+      "evidence": "round2/3 shape medians; diagnostic selection",
+      "candidates": [
+        "decode_const_split4_v1",
+        "decode_slm_split4_v1"
+      ]
+    },
+    {
+      "key": [
+        8,
+        6144,
+        2560,
+        1
+      ],
+      "variant": "decode_const_sg32_v1",
+      "round2_round3_median_ms": {
+        "kopt_sg32": 0.154219,
+        "splitk4_v1": 0.169479,
+        "decode_const_sg32_v1": 0.143333,
+        "decode_slm_sg32_v1": 0.266094,
+        "decode_const_split4_v1": 0.172031,
+        "decode_slm_split4_v1": 0.2968225
+      },
+      "evidence": "round2/3 shape medians; diagnostic selection",
+      "candidates": [
+        "decode_const_sg32_v1",
+        "decode_slm_sg32_v1"
+      ]
+    },
+    {
+      "key": [
+        8,
+        10240,
+        320,
+        1
+      ],
+      "variant": "kopt_sg32",
+      "round2_round3_median_ms": {
+        "kopt_sg32": 0.04294275,
+        "splitk4_v1": 0.1615885,
+        "decode_const_sg32_v1": 0.06617200000000001,
+        "decode_slm_sg32_v1": 0.11822949999999999,
+        "decode_const_split4_v1": 0.117682,
+        "decode_slm_split4_v1": 0.2402085
+      },
+      "evidence": "round2/3 shape medians; diagnostic selection",
+      "candidates": [
+        "decode_const_sg32_v1",
+        "decode_slm_sg32_v1"
+      ]
+    },
+    {
+      "key": [
+        8,
+        10240,
+        2560,
+        1
+      ],
+      "variant": "kopt_sg32",
+      "round2_round3_median_ms": {
+        "kopt_sg32": 0.23612,
+        "splitk4_v1": 0.28367200000000004,
+        "decode_const_sg32_v1": 0.23960925,
+        "decode_slm_sg32_v1": 0.43289049999999996,
+        "decode_const_split4_v1": 0.28351550000000003,
+        "decode_slm_split4_v1": 0.49143250000000005
+      },
+      "evidence": "round2/3 shape medians; diagnostic selection",
+      "candidates": [
+        "decode_const_sg32_v1",
+        "decode_slm_sg32_v1"
+      ]
+    },
+    {
+      "key": [
+        14,
+        512,
+        2560,
+        1
+      ],
+      "variant": "decode_const_split4_v1",
+      "round2_round3_median_ms": {
+        "kopt_sg32": 0.0252085,
+        "splitk4_v1": 0.023281,
+        "decode_const_sg32_v1": 0.026406,
+        "decode_slm_sg32_v1": 0.0270835,
+        "decode_const_split4_v1": 0.016719,
+        "decode_slm_split4_v1": 0.024036500000000002
+      },
+      "evidence": "round2/3 shape medians; diagnostic selection",
+      "candidates": [
+        "decode_const_sg32_v1",
+        "decode_slm_sg32_v1"
+      ]
+    },
+    {
+      "key": [
+        14,
+        640,
+        2560,
+        1
+      ],
+      "variant": "decode_const_split4_v1",
+      "round2_round3_median_ms": {
+        "kopt_sg32": 0.026119749999999997,
+        "splitk4_v1": 0.038542,
+        "decode_const_sg32_v1": 0.027031,
+        "decode_slm_sg32_v1": 0.027604,
+        "decode_const_split4_v1": 0.025469,
+        "decode_slm_split4_v1": 0.033099
+      },
+      "evidence": "round2/3 shape medians; diagnostic selection",
+      "candidates": [
+        "decode_const_sg32_v1",
+        "decode_slm_sg32_v1"
+      ]
+    },
+    {
+      "key": [
+        14,
+        2560,
+        6144,
+        1
+      ],
+      "variant": "decode_const_split4_v1",
+      "round2_round3_median_ms": {
+        "kopt_sg32": 0.21458349999999998,
+        "splitk4_v1": 0.15955750000000002,
+        "decode_const_sg32_v1": 0.15656225000000001,
+        "decode_slm_sg32_v1": 0.18703125,
+        "decode_const_split4_v1": 0.11309875,
+        "decode_slm_split4_v1": 0.16291675
+      },
+      "evidence": "round2/3 shape medians; diagnostic selection",
+      "candidates": [
+        "decode_const_sg32_v1",
+        "decode_slm_sg32_v1"
+      ]
+    },
+    {
+      "key": [
+        14,
+        6144,
+        2560,
+        1
+      ],
+      "variant": "decode_const_sg32_v1",
+      "round2_round3_median_ms": {
+        "kopt_sg32": 0.1628905,
+        "splitk4_v1": 0.21726575,
+        "decode_const_sg32_v1": 0.108203,
+        "decode_slm_sg32_v1": 0.167578,
+        "decode_const_split4_v1": 0.14036474999999998,
+        "decode_slm_split4_v1": 0.2033855
+      },
+      "evidence": "round2/3 shape medians; diagnostic selection",
+      "candidates": [
+        "decode_const_sg32_v1",
+        "decode_slm_sg32_v1"
+      ]
+    },
+    {
+      "key": [
+        14,
+        10240,
+        2560,
+        1
+      ],
+      "variant": "decode_const_sg32_v1",
+      "round2_round3_median_ms": {
+        "kopt_sg32": 0.24494775,
+        "splitk4_v1": 0.36640625000000004,
+        "decode_const_sg32_v1": 0.17552099999999998,
+        "decode_slm_sg32_v1": 0.25325525000000004,
+        "decode_const_split4_v1": 0.230182,
+        "decode_slm_split4_v1": 0.33440075
+      },
+      "evidence": "round2/3 shape medians; diagnostic selection",
+      "candidates": [
+        "decode_const_sg32_v1",
+        "decode_slm_sg32_v1"
+      ]
+    },
+    {
+      "key": [
+        14,
+        12288,
+        2560,
+        1
+      ],
+      "variant": "decode_const_sg32_v1",
+      "round2_round3_median_ms": {
+        "kopt_sg32": 0.277812,
+        "splitk4_v1": 0.43875,
+        "decode_const_sg32_v1": 0.2096355,
+        "decode_slm_sg32_v1": 0.285625,
+        "decode_const_split4_v1": 0.27723949999999997,
+        "decode_slm_split4_v1": 0.401354
+      },
+      "evidence": "round2/3 shape medians; diagnostic selection",
+      "candidates": [
+        "decode_const_sg32_v1",
+        "decode_slm_sg32_v1"
+      ]
+    },
+    {
+      "key": [
+        14,
+        248320,
+        2560,
+        1
+      ],
+      "variant": "kopt_sg32",
+      "round2_round3_median_ms": {},
+      "evidence": "unmeasured shape; conservative SG32 fallback",
+      "candidates": [
+        "decode_const_sg32_v1",
+        "decode_slm_sg32_v1"
+      ]
+    },
+    {
+      "key": [
+        20,
+        2560,
+        640,
+        512
+      ],
+      "variant": "kopt_sg32",
+      "round2_round3_median_ms": {
+        "kopt_sg32": 0.135885,
+        "splitk4_v1": 0.49750025,
+        "decode_const_sg32_v1": 0.202422,
+        "decode_slm_sg32_v1": 0.17794300000000002,
+        "decode_const_split4_v1": 0.331901,
+        "decode_slm_split4_v1": 0.40809925
+      },
+      "evidence": "round2/3 shape medians; diagnostic selection",
+      "candidates": [
+        "decode_const_sg32_v1",
+        "decode_slm_sg32_v1"
+      ]
+    },
+    {
+      "key": [
+        21,
+        640,
+        2560,
+        512
+      ],
+      "variant": "decode_const_sg32_v1",
+      "round2_round3_median_ms": {
+        "kopt_sg32": 0.11403625,
+        "splitk4_v1": 0.17888,
+        "decode_const_sg32_v1": 0.10143275,
+        "decode_slm_sg32_v1": 0.13578125,
+        "decode_const_split4_v1": 0.12674449999999998,
+        "decode_slm_split4_v1": 0.18458325
+      },
+      "evidence": "round2/3 shape medians; diagnostic selection",
+      "candidates": [
+        "decode_const_sg32_v1",
+        "decode_slm_sg32_v1"
+      ]
+    },
+    {
+      "key": [
+        22,
+        640,
+        2560,
+        512
+      ],
+      "variant": "decode_const_sg32_v1",
+      "round2_round3_median_ms": {
+        "kopt_sg32": 0.103932,
+        "splitk4_v1": 0.198646,
+        "decode_const_sg32_v1": 0.10112,
+        "decode_slm_sg32_v1": 0.13976575000000002,
+        "decode_const_split4_v1": 0.126667,
+        "decode_slm_split4_v1": 0.19874975
+      },
+      "evidence": "round2/3 shape medians; diagnostic selection",
+      "candidates": [
+        "decode_const_sg32_v1",
+        "decode_slm_sg32_v1"
+      ]
+    },
+    {
+      "key": [
+        30,
+        128,
+        2560,
+        1
+      ],
+      "variant": "decode_const_split4_v1",
+      "round2_round3_median_ms": {
+        "kopt_sg32": 0.02099,
+        "splitk4_v1": 0.017031,
+        "decode_const_sg32_v1": 0.0207815,
+        "decode_slm_sg32_v1": 0.0210415,
+        "decode_const_split4_v1": 0.010417,
+        "decode_slm_split4_v1": 0.010833
+      },
+      "evidence": "round2/3 shape medians; diagnostic selection",
+      "candidates": [
+        "decode_const_sg32_v1",
+        "decode_slm_sg32_v1"
+      ]
+    },
+    {
+      "key": [
+        30,
+        512,
+        2560,
+        1
+      ],
+      "variant": "decode_const_split4_v1",
+      "round2_round3_median_ms": {
+        "kopt_sg32": 0.021563,
+        "splitk4_v1": 0.023177,
+        "decode_const_sg32_v1": 0.02125,
+        "decode_slm_sg32_v1": 0.021406500000000002,
+        "decode_const_split4_v1": 0.013438,
+        "decode_slm_split4_v1": 0.019688
+      },
+      "evidence": "round2/3 shape medians; diagnostic selection",
+      "candidates": [
+        "decode_const_sg32_v1",
+        "decode_slm_sg32_v1"
+      ]
+    }
+  ]
+}
