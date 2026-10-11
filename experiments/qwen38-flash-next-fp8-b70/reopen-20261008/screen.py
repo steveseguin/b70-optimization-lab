@@ -201,11 +201,12 @@ def new_fault_lines(whole_boot, cutoff):
     return later
 
 
-# Explicit owner decision committed in 317309759. Pin bytes as well as location:
+# Explicit owner decision of 2026-10-11 (third incident of boot 4aafe57b accepted for the
+# engine window; supersedes the 2026-10-10 01:18 receipt of commit 317309759). Pin bytes as well as location:
 # a later edit or an arbitrary lookalike receipt cannot authorize this exception.
 OWNER_ACCEPTANCE_RELATIVE = Path('experiments/ltx25-b70/data/resume-20261008/'
-    'fault-archive-20261010T011831Z-owner-accept-receipt.json')
-OWNER_ACCEPTANCE_SHA256 = '7c67c88aee396774ae8c2b29e23dd8366de9ab2375acdafec7b6254f23bbd5b1'
+    'fault-archive-20261011T003614Z-owner-accept-receipt.json')
+OWNER_ACCEPTANCE_SHA256 = 'c2947a5065aeb27bd88938ed09cb8801043646e2e4d8f5e433ff8da7807ba2f0'
 
 
 def verify_owner_acceptance(path, boot_id, now, audit=None):
