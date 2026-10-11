@@ -1,6 +1,8 @@
 """CPU-only integration contracts; AST loads avoid all runtime/device imports."""
 import ast
 import datetime
+from decimal import Decimal
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -8,7 +10,7 @@ import tempfile
 import time
 from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 HERE = Path(__file__).resolve().parent
 BASE = HERE.parent
@@ -19,8 +21,8 @@ def require(value, message):
         raise RuntimeError(message)
 
 
-def functions(relative, names, namespace):
-    tree = ast.parse((HERE / "copies" / relative).read_text())
+def functions(relative, names, namespace, root=None):
+    tree = ast.parse(((root or HERE / "copies") / relative).read_text())
     selected = [node for node in ast.walk(tree)
                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in names]
     for node in selected:
@@ -58,13 +60,71 @@ class WindowTests(unittest.TestCase):
                             ("--kv-cache-dtype", "auto"), ("--kv-cache-memory-bytes", "376569856")]:
             self.assertEqual(cmd[cmd.index(flag)+1], value)
         self.assertIn("--enable-expert-parallel", cmd)
-        self.assertIn("--enforce-eager", cmd)
+        self.assertNotIn("--enforce-eager", cmd)
+        self.assertIn("VLLM_XPU_ENABLE_XPU_GRAPH=1", cmd)
         config = json.loads(cmd[cmd.index("--compilation-config")+1])
-        self.assertEqual(config["cudagraph_mode"], "NONE")
-        self.assertEqual(config["cudagraph_num_of_warmups"], 0)
+        self.assertEqual(config, {"mode": 0, "compile_sizes": [],
+                                  "cudagraph_mode": "FULL_DECODE_ONLY",
+                                  "cudagraph_num_of_warmups": 1,
+                                  "cudagraph_capture_sizes": [1, 2]})
         self.assertIn("SCREEN1B_MOE_BOUNDARY_WATCHER=/screen/watcher.json", cmd)
         self.assertIn("SCREEN1B_MOE_BOUNDARY_DIR=/screen/moe-boundary", cmd)
         self.assertIn("OMP_NUM_THREADS=2", cmd)
+
+    def staged_prediction_fixture(self):
+        # Real fresh package and its controller/predictor; no runtime imports,
+        # model weights, device access or execution of the returned command.
+        import build_patch as builder
+        staged = builder.stage(self.run / "staged")
+        ns = functions("screen.py", {"launch", "boundary_window_enabled"},
+                       dict(self.ns, HERE=staged), root=staged)
+        command = ns["launch"](self.args(), self.run)
+        class IdentityReached(Exception):
+            pass
+        # Stop immediately AFTER real launch_identity; the full allocation
+        # census needs checkpoint headers and is outside this identity test.
+        metadata = Mock(return_value=({}, {}, {}))
+        census = Mock(side_effect=IdentityReached)
+        predictor = functions("memory_plan.py", {"flag", "launch_identity", "build_prediction"},
+                              dict(Path=Path, HERE=staged, DEFAULT_MODEL=self.run / "no-model",
+                                   json=json, Decimal=Decimal, GIB=1 << 30, hashlib=hashlib,
+                                   read_metadata=metadata, planned_parameters=census), root=staged)
+        return staged, command, predictor, metadata, census, IdentityReached
+
+    def test_staged_build_prediction_reaches_census_with_attempt8_identity(self):
+        staged, cmd, predictor, metadata, census, reached = self.staged_prediction_fixture()
+        with self.assertRaises(reached):
+            predictor["build_prediction"](cmd)
+        metadata.assert_called_once_with(self.run / "no-model")
+        census.assert_called_once_with({}, {}, 4)
+        # Compare against the frozen production calibrate-load builder used by
+        # attempt 8, not another manually-maintained expected flag list.
+        import build_patch as builder
+        (self.run / "production-screen.py").write_bytes(builder.before("screen.py"))
+        production = functions("production-screen.py", {"launch"},
+                               dict(self.ns, HERE=staged), root=self.run)
+        baseline = production["launch"](self.args(), self.run)
+        actual = predictor["launch_identity"](cmd)
+        expected = predictor["launch_identity"](baseline)
+        actual.pop("command_sha256")  # Diagnostic env additions are intentional.
+        expected.pop("command_sha256")
+        self.assertEqual(actual, expected)
+        self.assertEqual(cmd[cmd.index("--compilation-config"):],
+                         baseline[baseline.index("--compilation-config"):])
+        self.assertIn("VLLM_XPU_ENABLE_XPU_GRAPH=1", cmd)
+        self.assertNotIn("--enforce-eager", cmd)
+
+    def test_staged_build_prediction_refuses_old_diagnostic_graph_mode(self):
+        _, cmd, predictor, metadata, census, _ = self.staged_prediction_fixture()
+        index = cmd.index("--compilation-config") + 1
+        config = json.loads(cmd[index])
+        config.update(cudagraph_mode="NONE", cudagraph_num_of_warmups=0,
+                      cudagraph_capture_sizes=[])
+        cmd[index] = json.dumps(config)
+        with self.assertRaisesRegex(ValueError, "compilation NONE / FULL_DECODE_ONLY"):
+            predictor["build_prediction"](cmd)
+        metadata.assert_called_once()
+        census.assert_not_called()
 
     def test_launch_refuses_disabled(self):
         with patch.dict(os.environ, {"SCREEN1B_MOE_BOUNDARY": "0"}):

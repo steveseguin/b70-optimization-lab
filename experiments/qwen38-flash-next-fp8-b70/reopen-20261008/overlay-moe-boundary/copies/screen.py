@@ -533,7 +533,7 @@ def launch(args, run):
         'CCL_ZE_IPC_EXCHANGE': 'sockets', 'CCL_SYCL_ALLGATHERV_TMP_BUF': '1',
         'CCL_SYCL_ALLREDUCE_TMP_BUF': '1', 'VLLM_TARGET_DEVICE': 'xpu',
         'VLLM_WORKER_MULTIPROC_METHOD': 'spawn', 'VLLM_USE_V2_MODEL_RUNNER': '1',
-        'VLLM_XPU_ENABLE_XPU_GRAPH': '0', 'B70_GDN_MODE': 'official',
+        'VLLM_XPU_ENABLE_XPU_GRAPH': '1', 'B70_GDN_MODE': 'official',
         'Q38_EXPERT_HOST_PLACEMENT': '/screen-package/placement-attempt6-v5.json',
         'B70_SCREEN1B': '1', 'B70_SCREEN1B_STATE_DIR': '/screen',
         'B70_PLE_FP8': '0', 'B70_PLE_INT8': '0', 'B70_PLE_DIRECT_PINNED': '0',
@@ -558,6 +558,8 @@ def launch(args, run):
             '-v', f'{HERE / "container-entrypoint.sh"}:/screen-entrypoint.sh:ro']
     # Apply hash-checked Python files inside the disposable container layer.
     cmd += ['-v', f'{HERE}:/screen-package:ro']
+    # Match attempt 8's compilation identity. The profile is internally eager;
+    # the diagnostic worker hook bypasses later warmup/capture, not CLI flags.
     cmd += [PLAN['image'], '/screen-entrypoint.sh', '--execute', 'serve', '/model',
             '--host', '127.0.0.1', '--port', str(args.port),
             '--served-model-name', 'qwen38-flash-next-fp8-tp4',
@@ -576,8 +578,8 @@ def launch(args, run):
             '--safetensors-load-strategy', 'lazy',
             '--moe-backend', 'triton', '--enable-prompt-tokens-details',
             '--limit-mm-per-prompt', '{"image":0,"video":0}',
-            '--compilation-config', json.dumps({'mode': 0, 'compile_sizes': [], 'cudagraph_num_of_warmups': 0, 'cudagraph_mode': 'NONE', 'cudagraph_capture_sizes': []}),
-            '--cudagraph-metrics', '--enforce-eager']
+            '--compilation-config', json.dumps({'mode': 0, 'compile_sizes': [], 'cudagraph_num_of_warmups': 1, 'cudagraph_mode': 'FULL_DECODE_ONLY', 'cudagraph_capture_sizes': {'mtp0': [1], 'mtp1': [1, 2], 'mtp3': [1, 4]}[mode]}),
+            '--cudagraph-metrics']
     if mode != 'mtp0':
         cmd += ['--speculative-config', json.dumps({'method': 'mtp', 'num_speculative_tokens': int(mode[-1]), 'rejection_sample_method': 'standard'})]
     return cmd

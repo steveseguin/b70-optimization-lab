@@ -118,7 +118,7 @@
      "memory_watchdog.py": "f084dd183b57e6340d43bef1c0dcb7194ee2f449469e31195d248ae8129966c7",
 -    "screen.py": "fdb57ed3241aeb29e3d1060671fe0e8ae0feebf2d06a80e316039d975d3f1428",
 -    "teardown_receipts.py": "46099d077ec2025d2849ffc4052baee603e15b5f32b811a536a14ebb5727b5a7"
-+    "screen.py": "dff46c9c0e4cdce34b988cd9524717c241591c550a92c7f3bcad4a1723b558dd",
++    "screen.py": "40f30d8ded0262359b2a1ded2ef7e9a967409d634ef9fafdbdd8c0d7acc751e8",
 +    "teardown_receipts.py": "46099d077ec2025d2849ffc4052baee603e15b5f32b811a536a14ebb5727b5a7",
 +    "probe/watch_kernel.py": "945d3bd83250b5ba8b29fd5675bccdf893e9a51e0d506d0bf4cee4995b7745cd",
 +    "analyze_host_budget.py": "04ed1860094c6f2323ba3b49142b2762e9057302271c0d306dc840c2a0b8f116",
@@ -1228,15 +1228,6 @@
      mode = 'mtp1' if args.mode == 'calibrate-load' else args.mode
      cmd = ['docker', 'run', '--name', 'flashnext-screen1-' + run.name,
             '--pull=never', '--restart=no', '--network=host', '--device=/dev/dri',
-@@ -489,7 +533,7 @@
-         'CCL_ZE_IPC_EXCHANGE': 'sockets', 'CCL_SYCL_ALLGATHERV_TMP_BUF': '1',
-         'CCL_SYCL_ALLREDUCE_TMP_BUF': '1', 'VLLM_TARGET_DEVICE': 'xpu',
-         'VLLM_WORKER_MULTIPROC_METHOD': 'spawn', 'VLLM_USE_V2_MODEL_RUNNER': '1',
--        'VLLM_XPU_ENABLE_XPU_GRAPH': '1', 'B70_GDN_MODE': 'official',
-+        'VLLM_XPU_ENABLE_XPU_GRAPH': '0', 'B70_GDN_MODE': 'official',
-         'Q38_EXPERT_HOST_PLACEMENT': '/screen-package/placement-attempt6-v5.json',
-         'B70_SCREEN1B': '1', 'B70_SCREEN1B_STATE_DIR': '/screen',
-         'B70_PLE_FP8': '0', 'B70_PLE_INT8': '0', 'B70_PLE_DIRECT_PINNED': '0',
 @@ -498,6 +542,10 @@
          'TRITON_CACHE_DIR': '/screen/cache/triton', 'VLLM_CACHE_ROOT': '/screen/cache/vllm',
          'XDG_CACHE_HOME': '/screen/cache/xdg', 'TMPDIR': '/screen/cache/tmp',
@@ -1248,18 +1239,16 @@
      }
      if args.mode == 'calibrate-load':
          limit = getattr(args, 'loading_ram_guard_gb', None)
-@@ -528,8 +576,8 @@
-             '--safetensors-load-strategy', 'lazy',
-             '--moe-backend', 'triton', '--enable-prompt-tokens-details',
-             '--limit-mm-per-prompt', '{"image":0,"video":0}',
--            '--compilation-config', json.dumps({'mode': 0, 'compile_sizes': [], 'cudagraph_num_of_warmups': 1, 'cudagraph_mode': 'FULL_DECODE_ONLY', 'cudagraph_capture_sizes': {'mtp0': [1], 'mtp1': [1, 2], 'mtp3': [1, 4]}[mode]}),
--            '--cudagraph-metrics']
-+            '--compilation-config', json.dumps({'mode': 0, 'compile_sizes': [], 'cudagraph_num_of_warmups': 0, 'cudagraph_mode': 'NONE', 'cudagraph_capture_sizes': []}),
-+            '--cudagraph-metrics', '--enforce-eager']
-     if mode != 'mtp0':
-         cmd += ['--speculative-config', json.dumps({'method': 'mtp', 'num_speculative_tokens': int(mode[-1]), 'rejection_sample_method': 'standard'})]
-     return cmd
-@@ -570,6 +618,8 @@
+@@ -510,6 +558,8 @@
+             '-v', f'{HERE / "container-entrypoint.sh"}:/screen-entrypoint.sh:ro']
+     # Apply hash-checked Python files inside the disposable container layer.
+     cmd += ['-v', f'{HERE}:/screen-package:ro']
++    # Match attempt 8's compilation identity. The profile is internally eager;
++    # the diagnostic worker hook bypasses later warmup/capture, not CLI flags.
+     cmd += [PLAN['image'], '/screen-entrypoint.sh', '--execute', 'serve', '/model',
+             '--host', '127.0.0.1', '--port', str(args.port),
+             '--served-model-name', 'qwen38-flash-next-fp8-tp4',
+@@ -570,6 +620,8 @@
      since = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
      (run / 'started-utc.txt').write_text(since + '\n')
      server = None
@@ -1268,7 +1257,7 @@
      client = None
      name = 'flashnext-screen1-' + run.name
      stop = DeferredStop(run, name)
-@@ -590,12 +640,23 @@
+@@ -590,12 +642,23 @@
      try:
          if watchdog.check():
              raise RuntimeError('Memory watchdog refused allocation before launch')
@@ -1292,7 +1281,7 @@
              server = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT)
              stop.armed = True
              if not calibrating:
-@@ -681,6 +742,10 @@
+@@ -681,6 +744,10 @@
                                  container_clean = (state_data.get('ExitCode') == 0 and
                                                not state_data.get('OOMKilled') and not state_data.get('Error'))
                                  (run / 'container-exit.json').write_text(json.dumps(state_data, indent=2) + '\n')
@@ -1303,7 +1292,7 @@
                          break
                      if not stop.sent:
                          request_stop('deferred stop after container creation')
-@@ -690,6 +755,19 @@
+@@ -690,6 +757,19 @@
                  if server.poll() is None:
                      server.wait(timeout=15)
              watchdog.close()
@@ -1323,7 +1312,7 @@
              end = journal()
              (run / 'kernel-postflight.log').write_text(end)
              idle()
-@@ -707,6 +785,8 @@
+@@ -707,6 +787,8 @@
              raise
          finally:
              watchdog.close()
@@ -1332,7 +1321,7 @@
              for sig, previous in previous_handlers.items():
                  signal.signal(sig, previous)
              if calibrating:
-@@ -732,6 +812,7 @@
+@@ -732,6 +814,7 @@
 
 
  def check_live(run, journal_cutoff, *, calibrating=False):
@@ -1340,7 +1329,7 @@
      text = journal()  # whole current boot avoids empty --since false negatives
      (run / 'kernel-latest.log').write_text(text)
      if new_fault_lines(text, journal_cutoff):
-@@ -754,6 +835,7 @@
+@@ -754,6 +837,7 @@
      p.add_argument('--calibration', type=Path, help='Qualified calibration-load.json for MTP1')
      p.add_argument('--loading-ram-guard-gb', type=int,
                     help='Calibrate-load only: host-use ceiling in decimal GB (default 90, maximum 96)')
@@ -1348,7 +1337,7 @@
      p.add_argument('--port', type=int, default=19988)
      p.add_argument('--run-dir', type=Path, default=None)
      x = p.add_mutually_exclusive_group()
-@@ -811,11 +893,13 @@
+@@ -811,11 +895,13 @@
          for d in ['tmp', 'hf', 'triton', 'vllm', 'xdg']:
              (run / 'cache' / d).mkdir(parents=True)
          unit = 'flashnext-screen1-' + datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
