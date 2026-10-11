@@ -69,10 +69,14 @@ inline float value(Type t,const uint8_t* row,size_t k,size_t i){
  int q=t==Type::Q3_K?int((row[i/2]>>(4*(i%2)))&15):signed8(row[i]);
  if(t==Type::Q3_K && q>=8)q-=16;
  float s=bits_float(u32(row+codes_size(t,k)+4*(i/group_size(t))));
- // Preserve the original magnitude-then-sign NaN equation; finite sign folding
- // preserves every bit, including signed zero. No contraction anywhere.
- if((t==Type::IQ2_S || t==Type::IQ3_S || t==Type::IQ3_XXS) && (std::bit_cast<uint32_t>(s)&0x7fffffff)>=0x7f800000)
-  return (s*float(q<0?-q:q))*float(q<0?-1:1);
+ // The packed CPU equation propagates the scale NaN's sign/payload. Express
+ // that in bits: icpx may turn multiply by conditional +/-1 into sign XOR
+ // when T is specialized, even with no fast math and contraction disabled.
+ // Multiplication and negation have different NaN-sign behavior. IQ integer
+ // magnitudes are nonzero; finite and infinite scales still fold signs exactly.
+ auto sbits=std::bit_cast<uint32_t>(s);
+ if((t==Type::IQ2_S || t==Type::IQ3_S || t==Type::IQ3_XXS) && (sbits&0x7fffffff)>0x7f800000)
+  return bits_float(sbits|0x00400000);
  return s*float(q);
 }
 inline float lane(Type t,const uint8_t* w,const uint16_t* x,Type a,size_t k,size_t begin,size_t end,unsigned l){

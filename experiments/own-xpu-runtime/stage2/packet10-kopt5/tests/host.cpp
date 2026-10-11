@@ -2,6 +2,7 @@
 #include "fixture.hpp"
 #include "case.hpp"
 #include "dense_case.hpp"
+#include "format_regression.hpp"
 #include "../../packet9-kopt4/tests/mock_experts.hpp"
 #include <filesystem>
 #include <iostream>
@@ -10,6 +11,20 @@ uint64_t checks=0,rows=0;
 void equal(float a,float b){if(std::bit_cast<uint32_t>(a)!=std::bit_cast<uint32_t>(b))throw std::runtime_error("FP32 bit mismatch");++checks;}
 int main(int argc,char** argv){try{
  if(argc!=2)throw std::runtime_error("fixtures required");unsigned fixtures=0;
+ // Exercise the same readback/error path without opening a device. A NaN sign
+ // mismatch must retain both FP32 words and its row in the exception receipt.
+ {
+  auto backend=std::make_unique<expert_test::CpuDevice>();ownrt::Device d(std::move(backend));
+  expanded_test::Buffers b(d,"IQ3_S/split1/K256");std::vector<uint32_t> actual(64,0),expected(64,0);
+  actual[23]=0x7fc00000;expected[23]=0xffc00000;
+  auto id=b.allocate("fp",actual.size()*4,ownrt::Category::scratch);b.upload(id,actual.data(),actual.size()*4,"stage");
+  bool caught=false;
+  try{b.equal(id,expected.data(),expected.size()*4,"format GEMV FP32");}
+  catch(const expert_test::ExactnessFailure& e){std::string message=e.what();caught=message.find("element=23 actual_bits=0x7fc00000 expected_bits=0xffc00000")!=std::string::npos && message.find("byte_offset=95")!=std::string::npos;}
+  if(!caught)throw std::runtime_error("first-mismatch diagnostic lost NaN bits or row");
+  b.release();auto teardown=d.shutdown(std::chrono::seconds(10));if(!teardown.safe_to_exit || teardown.live_bytes)throw std::runtime_error("diagnostic mock teardown");
+  float av=1.5f,ev=1.0f;if(expanded_test::difference(&av,&ev,4,4).find("delta=0.5")==std::string::npos)throw std::runtime_error("finite delta diagnostic");
+ }
  for(auto& path:std::filesystem::directory_iterator(argv[1]))if(path.path().extension()==".fixture"){
   Fixture f(path.path());++fixtures;
   for(size_t k:{size_t(1),size_t(7),size_t(32),size_t(320),size_t(640),size_t(256),size_t(768),size_t(2560),size_t(10240),size_t(17408)}){
@@ -35,11 +50,12 @@ int main(int argc,char** argv){try{
   }
   auto receipt=d.shutdown(std::chrono::seconds(10));if(!receipt.safe_to_exit || receipt.live_bytes || receipt.in_flight)throw std::runtime_error("mock teardown");
  }
- if(fixtures!=27)throw std::runtime_error("fixture count");unsigned cases=0;
+ if(fixtures!=27)throw std::runtime_error("fixture count");unsigned cases=0,format_rows=0;
  auto directory=std::filesystem::path(argv[1]).parent_path()/"cases";
  if(std::filesystem::exists(directory))for(auto& path:std::filesystem::directory_iterator(directory)){
   ExpandedCase c(path.path());auto e=expanded::expand(c.type,c.packed.data(),c.packed.size(),c.k);if(e!=c.expected)throw std::runtime_error("Python/C++ expansion bytes: "+path.path().string());
+  format_rows+=expanded_test::format_regression(c,path.path().stem());
   size_t rb=expanded::row_bytes(c.type,c.k);for(unsigned r=0;r<c.rows;++r)for(unsigned i=0;i<c.k;++i)equal(expanded::value(c.type,e.data()+r*rb,c.k,i),c.values[r*c.k+i]);++cases;
  }
- std::cout<<"{\"passed\":true,\"fixtures\":"<<fixtures<<",\"value_and_row_comparisons\":"<<checks<<",\"rows\":"<<rows<<",\"python_format_cases\":"<<cases<<",\"mock_dense_cases\":"<<mock_cases<<"}\n";
+ std::cout<<"{\"passed\":true,\"fixtures\":"<<fixtures<<",\"value_and_row_comparisons\":"<<checks<<",\"rows\":"<<rows<<",\"python_format_cases\":"<<cases<<",\"specialized_format_rows\":"<<format_rows<<",\"mock_dense_cases\":"<<mock_cases<<"}\n";
  }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

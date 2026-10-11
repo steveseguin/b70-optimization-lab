@@ -10,4 +10,6 @@
 | Unsplit and split4 are the same reduction | Distinct declared lane/tile trees | Complete-model identity evidence |
 | 119 tok/s is expanded-layout ceiling | Old 4.951 GB packed payload | Recompute byte floor for the actual candidate |
 
-[CPU closeout](CLOSEOUT.md). Device outcome remains pending.
+| Runtime-type dequant tests cover a specialized exceptional-scale GEMV | IQ3_S CPU row 23 flips NaN sign; [repair](exactness-repair.json) | Require specialized GEMV against packed/materialized bits, then a fresh device gate |
+
+[CPU closeout](CLOSEOUT.md). The original device gate failed exactness; repaired device qualification remains pending.

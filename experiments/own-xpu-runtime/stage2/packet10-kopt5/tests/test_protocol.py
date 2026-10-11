@@ -2,7 +2,7 @@
 import copy
 import json
 import unittest
-from common import HERE, load, plan, MODES, passes
+from common import HERE, BUILD, load, plan, MODES, passes
 h=load('_packet10_timing',HERE/'tests/device_timing.py')
 
 def native(layer):
@@ -97,13 +97,20 @@ class Protocol(unittest.TestCase):
 
 
 class ExactnessWindow(unittest.TestCase):
+    def test_cpu_build_override_cannot_admit_device(self):
+        from unittest.mock import patch
+        import common
+        self.assertEqual(common.LATCH,HERE/'build/device-fault-latch.json')
+        with patch.object(common,'BUILD',HERE/'build/cpu-scratch'),patch.object(common,'priority'):
+            with self.assertRaisesRegex(ValueError,'alternate build is CPU-only'):
+                common.admit(3,HERE/'build/cpu-scratch/window')
     def run_window(self, raw, fault_at=None, stop_reason=None):
         import tempfile
         from pathlib import Path
         from unittest.mock import patch, Mock
         import watcher
         exact=load('_packet10_exactness',HERE/'tests/device_window.py')
-        with tempfile.TemporaryDirectory(dir=HERE/'build') as tmp:
+        with tempfile.TemporaryDirectory(dir=BUILD) as tmp:
             root=Path(tmp);out=root/'window';latch=root/'latch.json'
             fault='xe: Fault response for engine 0'
             tails=iter(range(22))
@@ -137,6 +144,12 @@ class ExactnessWindow(unittest.TestCase):
     def test_actual_exactness_failure_in_first_case(self):
         r,latch=self.run_window(self.raw('device/CPU byte mismatch',0,'exactness'))
         self.assertEqual(r['outcome'],'exactness_failed');self.assertIn('exactness failed',latch['reason'])
+    def test_first_mismatch_details_survive_receipt_and_latch(self):
+        detail='device/CPU byte mismatch: IQ3_S/split1/K256/format GEMV FP32 byte_offset=95 element=23 actual_bits=0x7fc00000 expected_bits=0xffc00000 actual=nan expected=-nan delta=nonfinite'
+        r,latch=self.run_window(self.raw(detail,57,'exactness'))
+        self.assertEqual(r['variants'][0]['native']['error'],detail)
+        self.assertIn(detail,latch['reason'])
+        self.assertEqual(r['outcome'],'exactness_failed')
     def test_kernel_fault_before_native_receipt(self):
         r,latch=self.run_window(None,fault_at=1)
         self.assertEqual(r['outcome'],'kernel_fault');self.assertIn('Fault response',latch['fault_lines'][0])

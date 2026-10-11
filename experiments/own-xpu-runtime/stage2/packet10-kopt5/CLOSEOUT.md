@@ -46,3 +46,17 @@ Measure head SG32/split4 and complete representative GEMV sequences twice;
 then integrate only after full-model exactness. Retain experts packed under
 this budget and pursue their decode cost or dependency-correct small-op fusion
 as the next lever if dense expansion alone cannot beat the reference.
+
+## October 11 exactness repair follow-up
+
+The first native gate failed on the IQ3_S format GEMV after 57 checks, with
+clean teardown and no kernel faults. The original native error omitted row
+and values; those cannot be recovered. CPU specialization reproduces row 23's
+NaN sign flip, caused by conditional sign multiplication lowering to sign XOR.
+The [repair and regression evidence](exactness-repair.json) and
+[original device receipts](receipts-card3-exactness-20261011/card3-exactness/window.json)
+are retained. Explicit cached NaN-bit propagation closes the proven CPU defect;
+all eight format cases now exercise specialized GEMV against packed/materialized
+oracles. Native mismatch reporting retains the first index and words.
+The original latch remains; only the coordinator can qualify the repaired
+kernel in a new admitted window. No GPU ran during this repair.

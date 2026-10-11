@@ -1,11 +1,12 @@
 #pragma once
 #include "../kernels.hpp"
 #include "../../packet9-kopt4/tests/expert_case.hpp"
+#include "diagnostics.hpp"
 namespace dense_test {
 using namespace iq3;
 using namespace expert_test;
 template<class Launch> void exercise_dense(Launch launch,ownrt::Device& d,const Fixture& f,unsigned mutation,unsigned split,bool head=false){
- Buffers b(d,"dense/"+std::to_string(unsigned(f.type))+"/"+std::to_string(mutation)+"/"+std::to_string(split)+"/"+std::to_string(head));
+ expanded_test::Buffers b(d,"dense/"+std::to_string(unsigned(f.type))+"/"+std::to_string(mutation)+"/"+std::to_string(split)+"/"+std::to_string(head));
  auto ex=expanded::expand(f.type,f.packed.data(),f.packed.size(),f.columns);size_t rb=expanded::row_bytes(f.type,f.columns);unsigned n=head?248320:f.rows-(mutation?1:0);
  kopt3::Matrix m; m.type=f.type;m.rows=n;m.columns=f.columns;m.activation=f.activation;m.output_type=f.output_type;
  auto alloc=[&](const char* name,size_t bytes){return b.allocate(name,bytes,ownrt::Category::scratch);};

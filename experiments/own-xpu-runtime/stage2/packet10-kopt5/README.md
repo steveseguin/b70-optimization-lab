@@ -78,8 +78,10 @@ absent from this checkpoint's production census.
 Load-time caching preserves `(d * subscale) * q` and the IQ half-step
 multiplication order exactly. The last weight-scale multiplication still
 rounds to FP32. Finite IQ signs can fold into nonzero signed integers without
-changing any bit, including signed zero. Infinite/NaN IQ scales retain the
-original magnitude-then-sign equation explicitly. No F16/BF16 weight shadow,
+changing any bit, including signed zero. Infinite IQ scales keep the signed
+multiplication. NaN IQ scales preserve
+the cached quiet-NaN bits explicitly, matching the packed CPU oracle; see the
+[October 11 exactness repair](#october-11-exactness-repair). No F16/BF16 weight shadow,
 weight approximation, compressed KV or changed model is introduced.
 
 **One FMA per weight cannot satisfy the requested unchanged FP32 arithmetic.**
@@ -181,10 +183,12 @@ host lookup latency and real dependency scheduling remain outside the projection
 
 [build-receipt.json](build-receipt.json) retains CPU counts, fresh-process
 repeat, compiler flags, dependency checks and every source/fixture/binary hash.
-The final preparation runs 34 Python protocol/bounds tests; 27 hash-matched
+The repaired preparation runs 36 Python protocol/bounds tests; 27 hash-matched
 packet2 fixtures; **4,394,270 value/row comparisons including 5,790 rows**;
 eight independent Python format cases spanning all codebook entries and special
-half scales; and **108 MockDevice dense cases** through the shared allocation,
+half scales; **1,024 specialized and runtime-type format GEMV row checks**
+against materialized and packed CPU oracles; and **108 MockDevice dense cases**
+through the shared allocation,
 upload, launch, FP32/16-bit comparison and release path. Both SYCL targets are
 compiled only. The host executable is checked for absence of device libraries.
 
@@ -210,8 +214,8 @@ In the installed oneAPI environment, after independent card-3 health and
 ownership admission, run these **two commands**, once each, in order:
 
 ```bash
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$P/tests/device_window.py" --authorized-device-window --card 3 --output "$P/build/card3-exactness"
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$P/tests/device_timing.py" --authorized-device-window --card 3 --exactness "$P/build/card3-exactness/window.json" --output "$P/build/card3-timing"
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$P/tests/device_window.py" --authorized-device-window --card 3 --output "$P/build/card3-exactness-repair1"
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$P/tests/device_timing.py" --authorized-device-window --card 3 --exactness "$P/build/card3-exactness-repair1/window.json" --output "$P/build/card3-timing-repair1"
 ```
 
 The inherited cooperative watcher retains journal evidence, stops on faults,
@@ -220,3 +224,76 @@ drain fails. These commands do not replace coordinator admission. Timing
 comparisons are warm operator diagnostics; full-model lossless and realistic
 cold-prompt gates remain separate. No candidate is enabled as a runtime default.
 [Preparation closeout](CLOSEOUT.md) and [closed assumptions](DO-NOT-REPEAT.md).
+
+## October 11 exactness repair
+
+The coordinator's **05:18:46 UTC** card-3 window failed after 57 completed
+checks in `expanded_sg32`, at `IQ3_S/format GEMV FP32`. This was a real
+byte mismatch: the latch and exactness classification were correct. The
+[original receipts](receipts-card3-exactness-20261011/card3-exactness/window.json)
+record no kernel faults and clean teardown. **They did not retain the device
+row or either differing value.** No exact device row or delta can be recovered
+from those receipts; the CPU reproduction below is separately labeled.
+
+The exact saved [IQ3_S format fixture](receipts-card3-exactness-20261011/IQ3_S.case)
+is 64 rows × 256 columns, with BF16 inputs `float(i % 31 - 15) / 32`.
+An optimized, compile-time IQ3_S CPU path reproduces a failure on **zero-based
+row 23, SG32**, whose F16 scale is `0xfe00` (negative quiet NaN): expanded
+FP32 is **`0x7fc00000`**, while packed and Python-materialized CPU results are
+**`0xffc00000`**. Their little-endian bytes are `00 00 c0 7f` and
+`00 00 c0 ff`; XOR is `0x80000000`. This is a NaN sign mismatch, so a finite
+numeric delta or ULP distance is not meaningful. The
+[repair evidence](exactness-repair.json) retains the failing and passing CPU
+runs, compiler flags, assembly excerpt and original receipt hashes.
+
+**Root cause:** the exceptional-scale branch expressed sign application as
+`(scale * abs(q)) * (q < 0 ? -1.0f : 1.0f)`. With compile-time specialization,
+icpx 2026.0 lowers the conditional sign multiplication to a sign-bit XOR.
+That flips a NaN's sign; the packed CPU multiplication propagates its sign.
+The saved assembly shows the conditional `xorps` with `0x80000000`. Ordinary
+finite sign folding is still exact. Both host and SYCL compilation already
+used `-fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee`, with no
+`-fp-model` override. Disabling FMA alone did not prevent this transformation.
+
+The other suspected mechanisms were checked: IQ3_S caches
+`d * (1 + 2 * nibble)` and then multiplies the code, matching the packed
+order; low/high nibbles select consecutive 32-weight groups; cached scales
+are read little-endian; and lane, adjacent-lane and split trees match their
+packed oracles. The failed format fixture has one complete 256-weight block
+per row, so it has no partial chunk. Earlier CPU geometry checks still cover
+long rows and short raw/32-weight-format tails.
+
+**Fix:** return the cached quiet-NaN bits explicitly for the three IQ formats
+that shared the faulty branch. Keep finite and infinite signed-scale
+multiplication, all packed bytes, scale order, and reduction trees unchanged.
+No comparison tolerance, NaN canonicalization of results, or oracle change
+was introduced. The same regression fails against the original implementation
+and passes with the fix. Device confirmation remains pending; CPU evidence
+cannot prove which row failed in the original device run.
+
+**Test gap closed:** the previous CPU format checks compared expansion bytes
+and individual decoded values with a runtime type. They never accumulated
+these special-scale format fixtures through the compile-time-specialized
+consumer used by the device kernel. `tests/format_regression.hpp` now runs
+all eight exact format fixtures through that specialization and the runtime
+expanded path, checking FP32/BF16 bits against the materialized Python values
+and the packed SG32/split4 oracle (IQ4_XS has no packed packet7 path). The
+specialization intentionally inlines the scalar consumer: merely wrapping
+`expanded::row` in a template can still call the runtime-type function and
+miss the defect. Mock readback and Python receipt tests ensure first-mismatch
+indices, raw words and deltas survive into the native error, window and latch.
+For GEMV, the reported `element` is the zero-based output row; for dequant it
+is the flattened weight index.
+
+The original `build/card3-exactness` and `build/device-fault-latch.json` remain
+untouched. A byte-verified copy is also retained under
+`receipts-card3-exactness-20261011/`, including the coordinator's build receipt.
+CPU validation uses `validate.py --build-dir "$P/build/repair-validation"`,
+which deletes only that fresh scratch directory. Alternate build roots cannot
+be used for device admission or to bypass the original latch.
+
+Before the two commands above, the coordinator must review/archive the old
+build and latch with its recovery receipt, then recreate the default build
+using `validate.py --keep-build` and admit card 3. The fresh output names avoid
+overwriting the failed window. Timing requires the new exactness pass; the
+old failure remains part of this packet's record.

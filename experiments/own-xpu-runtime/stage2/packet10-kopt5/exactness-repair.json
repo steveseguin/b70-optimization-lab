@@ -1,0 +1,88 @@
+{
+  "schema": "own-runtime.iq3.packet10.exactness-repair.v1",
+  "device_executed_by_repair": false,
+  "original_files": {
+    "IQ3_S.case": "1dc70a514663ef387b9c19b60f0b796d08060c70569897b9b0312a7f4ede5841",
+    "card3-exactness/expanded_sg32/census.json": "3c6947c6cfc8d6d96b2bbf57e8beb02b8069ac6a256de102bc56b0e81967968d",
+    "card3-exactness/expanded_sg32/device.json": "9ab56ad46d564c78f6c4928594dce62d2a9b21547a659a1f193e8c94a74a77da",
+    "card3-exactness/expanded_sg32/kernel-window.txt": "9cb96e54e56385c6df7d7ec8917f28925a4bbc1cb1f5c04eaf263c742918c858",
+    "card3-exactness/expanded_sg32/preflight-kernel.txt": "e8114bb01c78da6e75149fa7599351a0d59e502b12455071dfe1b4aa3f9185b4",
+    "card3-exactness/expanded_sg32/stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "card3-exactness/expanded_sg32/window.json": "a79f83e9a7dab1408fa39602480d68b2449f93c5faabb1186d25d5d264fca234",
+    "card3-exactness/window.json": "286cad63af08de343c92afacd69bf5f85bfd5cf831aecd14e2f190412580cf02",
+    "coordinator-build-receipt.json": "8548cc344e728842e4756a415772f272f2ff3a24e1e52d6a0b679d6ecc8e31c6",
+    "device-fault-latch.json": "ba4dbd510c517742d77c3e8c237aa9bfbc657b08301488c0464b02633a223358"
+  },
+  "cpu_runs": [
+    {
+      "binary": "host-red",
+      "sha256": "ed110c3a29dc4c160354898713a15f1abdeaefb9bfcdcfe6a77c84ea7ad0220b",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "specialized format GEMV IQ3_S split=1 row=23 byte_offset=3 element=0 actual_bits=0x7fc00000 expected_bits=0xffc00000 actual=nan expected=-nan delta=nonfinite\n"
+    },
+    {
+      "binary": "host-green",
+      "sha256": "92ae9f8dc80f769fc76743b630dd33eb923526df4c8ddaa6f2ff4e65be76b538",
+      "returncode": 0,
+      "stdout": "{\"passed\":true,\"fixtures\":27,\"value_and_row_comparisons\":4394270,\"rows\":5790,\"python_format_cases\":8,\"specialized_format_rows\":1024,\"mock_dense_cases\":108}\n",
+      "stderr": ""
+    }
+  ],
+  "original_device_row_and_values": "not retained; do not infer the original device row from CPU reproduction",
+  "cpu_first_mismatch": {
+    "case": "IQ3_S.case",
+    "case_sha256": "1dc70a514663ef387b9c19b60f0b796d08060c70569897b9b0312a7f4ede5841",
+    "shape": [
+      64,
+      256
+    ],
+    "split": 1,
+    "row_zero_based": 23,
+    "f16_scale_bits": "0xfe00",
+    "expanded_fp32_bits": "0x7fc00000",
+    "packed_and_materialized_fp32_bits": "0xffc00000",
+    "xor_bits": "0x80000000",
+    "numerical_delta": null,
+    "classification": "NaN sign bit; not a finite rounding error"
+  },
+  "compiler_evidence": {
+    "version": "icpx 2026.0.0",
+    "flags": [
+      "-O3",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-fdenormal-fp-math=ieee"
+    ],
+    "fp_model_override": null,
+    "assembly_excerpt": [
+      "\ttestl\t$2139095040, %ebp               # imm = 0x7F800000",
+      "\tjne\t.LBB0_59",
+      "# %bb.57:                               #   in Loop: Header=BB0_54 Depth=5",
+      "\tmovl\t%r11d, %ebp",
+      "\tnegl\t%ebp",
+      "\tcmovsl\t%r11d, %ebp",
+      "\txorps\t%xmm2, %xmm2",
+      "\tcvtsi2ss\t%ebp, %xmm2",
+      "\tmulss\t%xmm2, %xmm1",
+      "\ttestb\t%r10b, %r10b",
+      "\tjns\t.LBB0_60",
+      "# %bb.58:                               #   in Loop: Header=BB0_54 Depth=5",
+      "\txorps\t.LCPI0_7(%rip), %xmm1",
+      "\tjmp\t.LBB0_60",
+      "\t.p2align\t4"
+    ],
+    "xor_constant": ".LCPI0_7: 0x80000000",
+    "root_cause": "Specialized conditional sign multiply lowered to sign-bit XOR on NaN; runtime-type CPU coverage did not execute this format-case GEMV specialization."
+  },
+  "validation": {
+    "passed": true,
+    "receipt": "build-receipt.json",
+    "receipt_sha256": "95f124b0ccf47eb1330f5153dd15c73fd31a6dd2137b9b649e12f266d4b233f5",
+    "python_tests": 36,
+    "specialized_format_rows": 1024,
+    "fresh_host_process_repeats": 1,
+    "device_targets_compiled_not_executed": true,
+    "scratch_removed": true
+  }
+}

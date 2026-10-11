@@ -11,12 +11,14 @@ import sys
 HERE = Path(__file__).resolve().parents[1]
 BASE = HERE.parent / 'packet2'
 ROOT = HERE.parents[3]
-BUILD = HERE / 'build'
+BUILD = Path(os.environ.get('PACKET10_CPU_BUILD', HERE / 'build')).absolute()
+if BUILD.resolve()!=BUILD or (BUILD!=HERE/'build' and HERE/'build' not in BUILD.parents):
+    raise ValueError('CPU build override must be within packet10/build without symlinks')
 INPUTS = BUILD / 'timing-input'
 FIXTURES = BUILD / 'fixtures'
 sys.path.insert(0, str(HERE))
 MANIFEST = BUILD / 'prepared.json'
-LATCH = BUILD / 'device-fault-latch.json'
+LATCH = HERE / 'build/device-fault-latch.json'
 VARIANTS = ('expanded_sg32', 'expanded_split4')
 MODES = VARIANTS
 def passes(variant):
@@ -196,6 +198,8 @@ def check():
 
 def admit(card, output):
     priority()
+    if BUILD != HERE / 'build':
+        raise ValueError('alternate build is CPU-only; device admission requires the default build')
     out = output.resolve()
     if card != 3 or BUILD.is_symlink() or BUILD not in out.parents or out.exists():
         raise ValueError('card3 and fresh packet10/build output required')

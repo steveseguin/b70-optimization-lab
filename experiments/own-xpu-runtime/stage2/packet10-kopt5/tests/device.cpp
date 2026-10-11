@@ -2,6 +2,7 @@
 #include "../../packet9-kopt4/tests/expert_case.hpp"
 #include "case.hpp"
 #include "dense_case.hpp"
+#include "diagnostics.hpp"
 #include <filesystem>
 #include <memory>
 using namespace iq3;
@@ -15,7 +16,7 @@ int main(int argc,char** argv){
   d=std::make_unique<ownrt::Device>(ownrt::make_sycl_device(3));
   for(auto& path:std::filesystem::directory_iterator(argv[3]))if(path.path().extension()==".fixture"){Fixture f(path.path());for(unsigned mutation=0;mutation<2;++mutation){dense_test::exercise_dense(expanded::gemv,*d,f,mutation,split);++checks;}}
   for(auto& path:std::filesystem::directory_iterator(std::filesystem::path(argv[3]).parent_path()/"cases")){
-   ExpandedCase c(path.path());auto ex=expanded::expand(c.type,c.packed.data(),c.packed.size(),c.k);require(ex==c.expected,"Python/C++ expansion");Buffers b(*d,path.path().stem());
+   ExpandedCase c(path.path());auto ex=expanded::expand(c.type,c.packed.data(),c.packed.size(),c.k);require(ex==c.expected,"Python/C++ expansion");expanded_test::Buffers b(*d,path.path().stem().string()+"/split"+std::to_string(split)+"/K"+std::to_string(c.k));
    auto w=b.allocate("weights",ex.size(),ownrt::Category::weights),y=b.allocate("values",c.values.size()*4,ownrt::Category::scratch);b.upload(w,ex.data(),ex.size(),"stage");require(!stopping,"stop before decode");wait(*d,expanded::dequant(*d,c.type,w,y,c.rows,c.k));b.equal(y,c.values.data(),c.values.size()*4,"dequantized bits");
    std::vector<uint16_t> x(c.k);for(unsigned i=0;i<c.k;++i)x[i]=bf16_bits(float(int(i%31)-15)/32);
    auto input=b.allocate("x",c.k*2,ownrt::Category::scratch),out=b.allocate("out",c.rows*2,ownrt::Category::scratch),fp=b.allocate("fp",c.rows*4,ownrt::Category::scratch);b.upload(input,x.data(),c.k*2,"x-stage");

@@ -1,7 +1,7 @@
 {
   "schema": "own-runtime.iq3.packet10.cpu-build.v1",
   "passed": true,
-  "date_utc": "2026-10-11T05:08:39.768200+00:00",
+  "date_utc": "2026-10-11T05:27:15.410265+00:00",
   "device_executed": false,
   "commands": [
     {
@@ -10,32 +10,32 @@
         "-S",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5",
         "-B",
-        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/device",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/repair-validation/device",
         "-DCMAKE_BUILD_TYPE=Release"
       ],
       "returncode": 0,
-      "stdout": "-- The CXX compiler identification is IntelLLVM 2026.0.0\n-- Detecting CXX compiler ABI info\n-- Detecting CXX compiler ABI info - done\n-- Check for working CXX compiler: /opt/intel/oneapi/compiler/2026.0/bin/icpx - skipped\n-- Detecting CXX compile features\n-- Detecting CXX compile features - done\n-- Configuring done (0.2s)\n-- Generating done (0.0s)\n-- Build files have been written to: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/device\n",
+      "stdout": "-- The CXX compiler identification is IntelLLVM 2026.0.0\n-- Detecting CXX compiler ABI info\n-- Detecting CXX compiler ABI info - done\n-- Check for working CXX compiler: /opt/intel/oneapi/compiler/2026.0/bin/icpx - skipped\n-- Detecting CXX compile features\n-- Detecting CXX compile features - done\n-- Configuring done (0.2s)\n-- Generating done (0.0s)\n-- Build files have been written to: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/repair-validation/device\n",
       "stderr": ""
     },
     {
       "argv": [
         "cmake",
         "--build",
-        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/device",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/repair-validation/device",
         "-j2"
       ],
       "returncode": 0,
-      "stdout": "[ 12%] Building CXX object CMakeFiles/owner.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp.o\n[ 12%] Building CXX object CMakeFiles/kopt.dir/kernels.cpp.o\n[ 18%] Linking CXX static library libowner.a\n[ 18%] Built target owner\n[ 25%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.cpp.o\n[ 31%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o\n[ 37%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o\n[ 43%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o\n[ 50%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp.o\n[ 56%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp.o\n[ 62%] Building CXX object CMakeFiles/host-tests.dir/tests/host.cpp.o\n[ 68%] Linking CXX executable host-tests\n[ 68%] Built target host-tests\n[ 75%] Linking CXX static library libkopt.a\n[ 75%] Built target kopt\n[ 81%] Building CXX object CMakeFiles/device-test.dir/tests/device.cpp.o\n[ 87%] Building CXX object CMakeFiles/device-timing.dir/tests/timing.cpp.o\n[ 93%] Linking CXX executable device-timing\n[100%] Linking CXX executable device-test\n[100%] Built target device-timing\n[100%] Built target device-test\n",
+      "stdout": "[  6%] Building CXX object CMakeFiles/owner.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp.o\n[ 12%] Building CXX object CMakeFiles/kopt.dir/kernels.cpp.o\n[ 18%] Linking CXX static library libowner.a\n[ 18%] Built target owner\n[ 25%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.cpp.o\n[ 31%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o\n[ 37%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o\n[ 43%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o\n[ 50%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp.o\n[ 56%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp.o\n[ 62%] Building CXX object CMakeFiles/host-tests.dir/tests/host.cpp.o\n[ 68%] Linking CXX executable host-tests\n[ 68%] Built target host-tests\n[ 75%] Linking CXX static library libkopt.a\n[ 75%] Built target kopt\n[ 81%] Building CXX object CMakeFiles/device-test.dir/tests/device.cpp.o\n[ 87%] Building CXX object CMakeFiles/device-timing.dir/tests/timing.cpp.o\n[ 93%] Linking CXX executable device-timing\n[ 93%] Built target device-timing\n[100%] Linking CXX executable device-test\n[100%] Built target device-test\n",
       "stderr": ""
     },
     {
       "argv": [
         "readelf",
         "-d",
-        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/device/host-tests"
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/repair-validation/device/host-tests"
       ],
       "returncode": 0,
-      "stdout": "\nDynamic section at offset 0x34da0 contains 27 entries:\n  Tag        Type                         Name/Value\n 0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]\n 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]\n 0x000000000000000c (INIT)               0x403000\n 0x000000000000000d (FINI)               0x42971c\n 0x0000000000000019 (INIT_ARRAY)         0x4356a8\n 0x000000000000001b (INIT_ARRAYSZ)       16 (bytes)\n 0x000000000000001a (FINI_ARRAY)         0x4356b8\n 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)\n 0x000000006ffffef5 (GNU_HASH)           0x400378\n 0x0000000000000005 (STRTAB)             0x401068\n 0x0000000000000006 (SYMTAB)             0x400480\n 0x000000000000000a (STRSZ)              4292 (bytes)\n 0x000000000000000b (SYMENT)             24 (bytes)\n 0x0000000000000015 (DEBUG)              0x0\n 0x0000000000000003 (PLTGOT)             0x435fe8\n 0x0000000000000002 (PLTRELSZ)           2232 (bytes)\n 0x0000000000000014 (PLTREL)             RELA\n 0x0000000000000017 (JMPREL)             0x402620\n 0x0000000000000007 (RELA)               0x4023b0\n 0x0000000000000008 (RELASZ)             624 (bytes)\n 0x0000000000000009 (RELAENT)            24 (bytes)\n 0x000000006ffffffe (VERNEED)            0x402230\n 0x000000006fffffff (VERNEEDNUM)         3\n 0x000000006ffffff0 (VERSYM)             0x40212c\n 0x0000000000000000 (NULL)               0x0\n",
+      "stdout": "\nDynamic section at offset 0x3ada0 contains 27 entries:\n  Tag        Type                         Name/Value\n 0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]\n 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]\n 0x000000000000000c (INIT)               0x404000\n 0x000000000000000d (FINI)               0x42e63c\n 0x0000000000000019 (INIT_ARRAY)         0x43a6a8\n 0x000000000000001b (INIT_ARRAYSZ)       16 (bytes)\n 0x000000000000001a (FINI_ARRAY)         0x43a6b8\n 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)\n 0x000000006ffffef5 (GNU_HASH)           0x400378\n 0x0000000000000005 (STRTAB)             0x401148\n 0x0000000000000006 (SYMTAB)             0x4004d0\n 0x000000000000000a (STRSZ)              4511 (bytes)\n 0x000000000000000b (SYMENT)             24 (bytes)\n 0x0000000000000015 (DEBUG)              0x0\n 0x0000000000000003 (PLTGOT)             0x43afe8\n 0x0000000000000002 (PLTRELSZ)           2352 (bytes)\n 0x0000000000000014 (PLTREL)             RELA\n 0x0000000000000017 (JMPREL)             0x4027e8\n 0x0000000000000007 (RELA)               0x402578\n 0x0000000000000008 (RELASZ)             624 (bytes)\n 0x0000000000000009 (RELAENT)            24 (bytes)\n 0x000000006ffffffe (VERNEED)            0x4023f8\n 0x000000006fffffff (VERNEEDNUM)         3\n 0x000000006ffffff0 (VERSYM)             0x4022e8\n 0x0000000000000000 (NULL)               0x0\n",
       "stderr": ""
     },
     {
@@ -56,7 +56,7 @@
       ],
       "returncode": 0,
       "stdout": "",
-      "stderr": "..................................\n----------------------------------------------------------------------\nRan 34 tests in 0.520s\n\nOK\n"
+      "stderr": "....................................\n----------------------------------------------------------------------\nRan 36 tests in 0.536s\n\nOK\n"
     },
     {
       "argv": [
@@ -65,7 +65,7 @@
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/prepare.py"
       ],
       "returncode": 0,
-      "stdout": "{'passed': True, 'fixtures': 27, 'value_and_row_comparisons': 4394270, 'rows': 5790, 'python_format_cases': 8, 'mock_dense_cases': 108, 'fresh_process_repeats': 1, 'host_binary_sha256': 'ac9aa3da0f56ad45924555d7579eea8120766d3b2eeb01c7777714f89a8e92a9'}\n",
+      "stdout": "{'passed': True, 'fixtures': 27, 'value_and_row_comparisons': 4394270, 'rows': 5790, 'python_format_cases': 8, 'specialized_format_rows': 1024, 'mock_dense_cases': 108, 'fresh_process_repeats': 1, 'host_binary_sha256': '780bf71668f8b2fda38b26a573dd17d16e75e909be2c6bb5701c81c81f49b8f5'}\n",
       "stderr": ""
     }
   ],
@@ -73,8 +73,8 @@
   "prepared": {
     "baseline_cpu_receipt_sha256": "a0b7d12c4be55dbf9bd845e1bf1d87e4ea2985c094db69abad66c2021c318cbc",
     "binary_sha256": {
-      "device-test": "5e0f04df1e189dc1ef282ea17277f6666f74edf2fe7e1f1af66a9559281f6f0a",
-      "device-timing": "ab05c62b8cba24af2cdbaff7fb9c637f542db48caa6aade9499ffe9e29e51716"
+      "device-test": "17fa848b68678af1958a4faa08921dbbb769f525dc22f01a6712f3acbb6501f1",
+      "device-timing": "c82ba8444b12c3741cb11493d0c5f5678435b151d59aedc0c24de15d80ea092b"
     },
     "cases": {
       "IQ2_S.case": "d1f842ff981a122a7c8fcc3d2538ed44f84bfdf382e191b8a8b8fab5ff586681",
@@ -89,14 +89,15 @@
     "cpu": {
       "fixtures": 27,
       "fresh_process_repeats": 1,
-      "host_binary_sha256": "ac9aa3da0f56ad45924555d7579eea8120766d3b2eeb01c7777714f89a8e92a9",
+      "host_binary_sha256": "780bf71668f8b2fda38b26a573dd17d16e75e909be2c6bb5701c81c81f49b8f5",
       "mock_dense_cases": 108,
       "passed": true,
       "python_format_cases": 8,
       "rows": 5790,
+      "specialized_format_rows": 1024,
       "value_and_row_comparisons": 4394270
     },
-    "cpu_receipt_sha256": "f6fbe12d2bb3137fb8ffba60d27d8ee937a97f6a85c1e565dc5b84fb22af4832",
+    "cpu_receipt_sha256": "ec6ab4e61f433ce99319843db73784cc07dbffcd26d9a2326ba32a1b4c1e8256",
     "device_executed": false,
     "fixture_cases": {
       "expanded_sg32": 63,
@@ -1390,23 +1391,25 @@
       "experiments/own-xpu-runtime/stage2/packet10-kopt5/analysis.json": "d7697511556a09508dd37470ead94eab3ed955bebcd397e04f71a424b8471351",
       "experiments/own-xpu-runtime/stage2/packet10-kopt5/analysis.py": "d66f191ab76b85f5e87aa32cc3ca7e3397693f81cd8d9c4d22e0c976520652f8",
       "experiments/own-xpu-runtime/stage2/packet10-kopt5/dispatch.json": "dbd54c24565997ce67737174bc1becca8a338e7786b56bf7f10cc9c95b497c21",
-      "experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp": "6bbac45e8c7aebf516e6f2387c172a8d7dcd6824514ddaf8ed1ac33a203b4f3e",
+      "experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp": "6e96276d9eee2564aa74d2f90b6802d04709f78d2b866b394c6fca2fe818dee3",
       "experiments/own-xpu-runtime/stage2/packet10-kopt5/expansion.py": "50661b485363fc1a8c97c5648060db593112e00505a52b1b4af3cbc9173f6aa3",
       "experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp": "f3b311c18744091930ed4a038db8acb4fd4b30d8e348a62a0c25d377d309f1fc",
       "experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.hpp": "b5a6c3b39d051853e49761491aaf69f55e7ad882cffef34ea8300a68c608176d",
       "experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/case.hpp": "8d3b59740a7320520fcc1f89bece98b4024bf38cfa388a859a43f99012bd43a7",
-      "experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/common.py": "7042ad2c97438244c9aa61c87ae89857725dcfafe279ea2c6bbb8e9e67be05e4",
-      "experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/dense_case.hpp": "09ebdef2b3e9d9c22bdd9d7bd12f5214ae28c7c08068cac417e4021760485e6a",
-      "experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/device.cpp": "ee53b921732b04d0fb0cdfa62fa0c1988b7bb59df393896edda9ced3c3bdd3d1",
+      "experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/common.py": "34d388d4125919f8b02a115738be62d609b6b963916ad58a0c29f5a8ca0b9055",
+      "experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/dense_case.hpp": "98c6f4828d10535f4bfb520c18bc13554b292023d2e6acbf92aa3c43623ae037",
+      "experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/device.cpp": "26153495c06631126cb3148aa8a730d6ca6f14db1ebacd8048967525bdf8a5d1",
       "experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/device_timing.py": "f2d20c2852243e86bde2116c2a611395eee892c6e2f473e610d8c162e72b9374",
       "experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/device_window.py": "c3cbf2b08d7eadb51b469a619581d70213517476bf13180c5d2bbfff00e12470",
+      "experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/diagnostics.hpp": "4dd60fdb95fa0e84a456682a96130dcf4abf220c86e75637fe194bc33f9ef26c",
       "experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/fixtures.py": "a82f61bdb887fa97d7412f21b18abe63061986fd2d79912ba49beafbb79fa094",
-      "experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/host.cpp": "c04e15473f476266f25e3d73a1b10c10c4c836b1ac91a080517de896644543e2",
+      "experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/format_regression.hpp": "63eb67576c7619fd3717062fe5aca89ed15fa943687055ab2f093a97dc259e3f",
+      "experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/host.cpp": "71521e2895ba40cd63988724a42abd5f7138edd6e7b7ceb7bd01acd979c1169c",
       "experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/prepare.py": "e19f9d2ddbc75a8aa3ed9e021ff8a43c0a3d193c7d1b7f328bcdb68b84504164",
-      "experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/test_protocol.py": "1399e2b9fc147ca7b19bc3370bf9950dc8a062556b55a7a9aed86f949130d0b9",
+      "experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/test_protocol.py": "f05c7cdf4bbabf0b42f242daa200d22ec8932d951d8084e309d36dbcd392d7c0",
       "experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/timing.cpp": "dfd85835add68d3cfc67fe83861309addd91a7b8112608513b73d5ab242649f0",
       "experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/watcher.py": "17f8e990f9b2222c1c39ca8f17fea5401350bcb71b189e1c07e155ef139a9d0d",
-      "experiments/own-xpu-runtime/stage2/packet10-kopt5/validate.py": "7a494e7873c13e6d12b859304732f263395ecbe6c4503b0ae12518b6421e847b",
+      "experiments/own-xpu-runtime/stage2/packet10-kopt5/validate.py": "a1bbe4973d684032024fd29d93a73eb2ee9d0b9001ad3075bfa22be6a65ad3b5",
       "experiments/own-xpu-runtime/stage2/packet2/CMakeLists.txt": "dd7542c6df69c07449eec60af530b7debeaff12b1237931bb6eccb6006360357",
       "experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp": "021766a26c108dbdb830070bfb8c13c00934ca5a7df3f472aa3f10335309bb33",
       "experiments/own-xpu-runtime/stage2/packet2/kernels/device.hpp": "1044e1a57d101d35a1d02e7fd911c3db9e5faed41248255ac61af52528f98f74",
@@ -1469,67 +1472,67 @@
   },
   "compile_commands": [
     {
-      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/device",
+      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/repair-validation/device",
       "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5 -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../packet2/tests -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -o CMakeFiles/owner.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp",
       "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp",
       "output": "CMakeFiles/owner.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp.o"
     },
     {
-      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/device",
+      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/repair-validation/device",
       "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5 -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../packet2/tests -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fsycl -o CMakeFiles/kopt.dir/kernels.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp",
       "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp",
       "output": "CMakeFiles/kopt.dir/kernels.cpp.o"
     },
     {
-      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/device",
+      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/repair-validation/device",
       "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5 -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../packet2/tests -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fsycl -o CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.cpp",
       "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.cpp",
       "output": "CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.cpp.o"
     },
     {
-      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/device",
+      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/repair-validation/device",
       "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5 -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../packet2/tests -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fsycl -o CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp",
       "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp",
       "output": "CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o"
     },
     {
-      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/device",
+      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/repair-validation/device",
       "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5 -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../packet2/tests -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fsycl -o CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp",
       "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp",
       "output": "CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o"
     },
     {
-      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/device",
+      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/repair-validation/device",
       "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5 -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../packet2/tests -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fsycl -o CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp",
       "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp",
       "output": "CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o"
     },
     {
-      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/device",
+      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/repair-validation/device",
       "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5 -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../packet2/tests -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fsycl -o CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp",
       "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp",
       "output": "CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp.o"
     },
     {
-      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/device",
+      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/repair-validation/device",
       "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5 -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../packet2/tests -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fsycl -o CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp",
       "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp",
       "output": "CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp.o"
     },
     {
-      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/device",
+      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/repair-validation/device",
       "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5 -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../packet2/tests -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fsycl -o CMakeFiles/device-test.dir/tests/device.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/device.cpp",
       "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/device.cpp",
       "output": "CMakeFiles/device-test.dir/tests/device.cpp.o"
     },
     {
-      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/device",
+      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/repair-validation/device",
       "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5 -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../packet2/tests -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fsycl -o CMakeFiles/device-timing.dir/tests/timing.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/timing.cpp",
       "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/timing.cpp",
       "output": "CMakeFiles/device-timing.dir/tests/timing.cpp.o"
     },
     {
-      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/device",
+      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/build/repair-validation/device",
       "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5 -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../packet2/tests -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -o CMakeFiles/host-tests.dir/tests/host.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/host.cpp",
       "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/tests/host.cpp",
       "output": "CMakeFiles/host-tests.dir/tests/host.cpp.o"

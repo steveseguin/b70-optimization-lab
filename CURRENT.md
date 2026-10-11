@@ -71,6 +71,16 @@ Approved duplicate retirements are recorded in lane notes; a later full proof mu
 
 ## Our Own Intel Xe Runtimes
 
+**October 11, CPU-only packet10 exactness repair:** The coordinator's first
+card-3 gate failed an IQ3_S output comparison after 57 checks; teardown was
+clean and no kernel faults were recorded. [The repair](experiments/own-xpu-runtime/stage2/packet10-kopt5/README.md#october-11-exactness-repair)
+reproduces a NaN sign change when the compiler specializes the expanded path,
+preserves the original bits explicitly, and adds the missing CPU comparisons
+and detailed failure reporting. The original device row was not saved; the CPU
+reproduction is separate evidence. Original receipts and the latch remain.
+No GPU ran in this repair; the coordinator owns the fresh exactness gate and,
+only if it passes, timing.
+
 **October 11, CPU-only two-card exchange preparation:** The [tensor-parallel design](experiments/own-xpu-runtime/stage2/TWO-CARD-TP.md) and [packet 12 harness](experiments/own-xpu-runtime/stage2/packet12-peer/README.md) prepare both cards to work within each layer. CPU tests and the SYCL build pass; no device program ran. The design corrects the count to 48 layers and keeps exact output agreement as a gate: simply adding two partial sums can change answers. Peer support and exchange timing remain unmeasured. The coordinator's next step is the documented cards-2/3 transport window after admission; the speed scenarios are calculations, not model results.
 
 **October 11, CPU-only packet9 repair:** The coordinator's 04:40 UTC card-3 attempt stopped before completing any checks because staging buffers reused names; teardown was clean and no kernel faults were reported. [The repair](experiments/own-xpu-runtime/stage2/packet9-kopt4/README.md#october-11-allocation-and-failure-classification-repair) gives each buffer a unique name and separates infrastructure aborts from output mismatches and kernel faults. All 31 Python tests, 28 mock expert cases and the SYCL build pass. Original evidence is preserved; new scratch is removed. No GPU ran in this repair. The coordinator owns the next card-3 exactness and timing windows; device qualification is still pending.
