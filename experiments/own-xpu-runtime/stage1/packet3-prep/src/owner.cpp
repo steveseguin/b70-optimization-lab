@@ -93,6 +93,11 @@ bool Device::wait(Event e,std::chrono::milliseconds timeout) {
   validate(std::span(&e,1));
   return backend_->wait(e,std::chrono::steady_clock::now()+timeout);
 }
+EventTiming Device::timing(Event e) {
+  validate(std::span(&e,1));
+  if(!backend_->complete(e)) throw std::logic_error("profiling before completion");
+  return backend_->timing(e);
+}
 Event Device::compute(const Operation& op, std::span<const Allocation> buffers, std::span<const Event> deps) {
   admit(); validate(deps);
   if(buffers.empty()) throw std::invalid_argument("empty compute bindings");

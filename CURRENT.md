@@ -95,6 +95,8 @@ owner approval. The earlier ISTA IQ3_S proposal is withdrawn. These CPU packets 
 
 **October 11, CPU-only IQ3 decode orchestration:** [Stage 2 packet 3](experiments/own-xpu-runtime/stage2/packet3/README.md) now checks every tensor's placement and runs the ordered step on synthetic CPU inputs; 23 Python tests and 18 C++ cases pass, including exact NumPy comparisons and fresh-process repeats. Its plan has 1,873 dispatch sites and 4.951 GB of weight/lookup reads per token, which are planning counts, not measured speed. The step follows the corrected sigmoid GDN gate; device execution and host lookup mapping remain open, and no GPU or model payload was touched.
 
+**October 11, CPU-only IQ3 timing preparation:** [Packet 2 timing window](experiments/own-xpu-runtime/stage2/packet2/README.md#timing-window) now prepares the real layer shapes and ten selected experts, with a whole-GDN GEMV sequence and a fault-watched receipt. The native binary compiles; CPU plan, receipt and ownership checks pass. No timing window was run. The coordinator’s next step is the bounded card-3 measurement against the 507/537 GB/s byte floors.
+
 ## Two-Card Lanes And Context Work
 
 **Qwen 27B FP8:** optimize the official FP8 model with native MTP and full 16-bit KV; DFlash stays excluded by the September 14 owner decision. Read the [multi-host handoff](experiments/qwen38-27b-b70/MULTI-HOST-HANDOFF.md), [closed

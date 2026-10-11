@@ -1,0 +1,346 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "own-runtime.iq3.packet2.timing.v1",
+  "title": "Warm GEMV diagnostic receipt; no full-model performance claim",
+  "type": "object",
+  "required": [
+    "schema",
+    "passed",
+    "device_executed",
+    "card",
+    "binary_sha256",
+    "prepared_manifest",
+    "plan",
+    "window",
+    "environment",
+    "kernel_journal_sha256",
+    "error"
+  ],
+  "properties": {
+    "schema": {
+      "const": "own-runtime.iq3.packet2.timing.v1"
+    },
+    "passed": {
+      "type": "boolean"
+    },
+    "device_executed": {
+      "const": true
+    },
+    "card": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3
+    },
+    "binary_sha256": {
+      "$ref": "#/$defs/hash"
+    },
+    "kernel_journal_sha256": {
+      "$ref": "#/$defs/hash"
+    },
+    "environment": {
+      "type": "object"
+    },
+    "error": {
+      "type": "string"
+    },
+    "prepared_manifest": {
+      "type": "object",
+      "required": [
+        "source_sha256",
+        "seeds",
+        "binary_sha256",
+        "commands"
+      ]
+    },
+    "plan": {
+      "type": "object",
+      "required": [
+        "schema",
+        "layers",
+        "census_sha256",
+        "roofline_sha256",
+        "iterations",
+        "scope"
+      ],
+      "properties": {
+        "iterations": {
+          "const": 20
+        },
+        "layers": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4
+        }
+      }
+    },
+    "window": {
+      "type": "object",
+      "required": [
+        "start_utc",
+        "boot_id",
+        "pid",
+        "initial_cursor",
+        "final_cursor",
+        "returncode",
+        "stop_reason",
+        "elapsed_seconds",
+        "external_idle_health_still_required"
+      ],
+      "properties": {
+        "external_idle_health_still_required": {
+          "const": true
+        }
+      }
+    },
+    "native": {
+      "type": "object",
+      "required": [
+        "schema",
+        "device",
+        "error",
+        "kernels",
+        "sequence",
+        "teardown"
+      ],
+      "properties": {
+        "schema": {
+          "const": "own-runtime.iq3.packet2.timing-native.v1"
+        },
+        "device": {
+          "type": "string"
+        },
+        "kernels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "events",
+              "route_status"
+            ],
+            "properties": {
+              "events": {
+                "type": "array",
+                "minItems": 20,
+                "maxItems": 20,
+                "items": {
+                  "$ref": "#/$defs/event"
+                }
+              }
+            }
+          }
+        },
+        "sequence": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "required": [
+            "layer",
+            "launches_per_layer",
+            "iterations"
+          ],
+          "properties": {
+            "layer": {
+              "const": 0
+            },
+            "iterations": {
+              "type": "array",
+              "minItems": 20,
+              "maxItems": 20
+            }
+          }
+        },
+        "teardown": {
+          "type": "object",
+          "required": [
+            "schema",
+            "status",
+            "safe_to_exit",
+            "idle_marker_complete",
+            "live_bytes",
+            "in_flight",
+            "exit_code",
+            "error",
+            "sequence",
+            "backend"
+          ]
+        }
+      }
+    },
+    "census": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "schema",
+          "allocations",
+          "totals",
+          "unmeasured_driver_shadow_bytes",
+          "unmeasured_library_pool_bytes"
+        ]
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": [
+        "kernels",
+        "sequence"
+      ],
+      "properties": {
+        "kernels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/metrics"
+          }
+        },
+        "sequence": {
+          "$ref": "#/$defs/metrics"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "passed": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "native",
+          "census",
+          "summary"
+        ],
+        "properties": {
+          "error": {
+            "const": ""
+          },
+          "window": {
+            "properties": {
+              "returncode": {
+                "const": 0
+              },
+              "stop_reason": {
+                "type": "null"
+              }
+            }
+          },
+          "native": {
+            "properties": {
+              "error": {
+                "const": ""
+              },
+              "teardown": {
+                "properties": {
+                  "status": {
+                    "const": "complete"
+                  },
+                  "safe_to_exit": {
+                    "const": true
+                  },
+                  "idle_marker_complete": {
+                    "const": true
+                  },
+                  "live_bytes": {
+                    "const": 0
+                  },
+                  "in_flight": {
+                    "const": 0
+                  },
+                  "exit_code": {
+                    "const": 0
+                  },
+                  "error": {
+                    "const": ""
+                  }
+                }
+              },
+              "device": {
+                "type": "string",
+                "minLength": 1
+              },
+              "kernels": {
+                "minItems": 1
+              },
+              "sequence": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start_ns",
+        "end_ns"
+      ],
+      "properties": {
+        "start_ns": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end_ns": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "required": [
+        "median_ms",
+        "min_ms",
+        "packed_bytes",
+        "effective_GB_s",
+        "bandwidth_ratio",
+        "latency_over_floor"
+      ],
+      "properties": {
+        "median_ms": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "min_ms": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "packed_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "effective_GB_s": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "bandwidth_ratio": {
+          "type": "object",
+          "required": [
+            "507",
+            "537"
+          ]
+        },
+        "latency_over_floor": {
+          "type": "object",
+          "required": [
+            "507",
+            "537"
+          ]
+        }
+      }
+    }
+  }
+}

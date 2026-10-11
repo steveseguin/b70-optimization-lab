@@ -44,18 +44,20 @@ def main():
         run(['ctest','--test-dir',build/'owner-host','--output-on-failure'])
         run([PYTHON,'-B',HERE/'tests/run_cpu.py','--host',build/'host/host-tests','--scratch',build/'fixtures','--receipt',HERE/'cpu-receipt.json'])
         run([sys.executable,'-B',HERE/'tests/test_window.py'])
+        run([PYTHON,'-B',HERE/'tests/test_timing.py'])
+        run([build/'host/timing-owner-tests'])
         from roofline import calculate
         assert json.loads((HERE/'roofline.json').read_text())==calculate()
         deps=run(['readelf','-d',build/'host/host-tests'])
         assert all(s not in deps.lower() for s in ('libsycl','libze_loader','libur_loader','libopencl'))
         receipt['compile_commands']={mode:json.loads((build/mode/'compile_commands.json').read_text()) for mode in ('host','device')}
         assert all('-fsycl' not in c['command'] for c in receipt['compile_commands']['host'])
-        receipt['artifacts_sha256']={str(p.relative_to(build)):sha(p) for p in (build/'host/host-tests',build/'device/device-test',build/'device/libkernels.a')}
+        receipt['artifacts_sha256']={str(p.relative_to(build)):sha(p) for p in (build/'host/host-tests',build/'device/device-test',build/'device/device-timing',build/'host/timing-owner-tests',build/'device/libkernels.a')}
         receipt['cpu_receipt_sha256']=sha(HERE/'cpu-receipt.json')
         receipt['level_zero_header_sha256']=sha(Path('/usr/include/level_zero/ze_api.h'))
         receipt['passed']=True
     finally:
-        source=list(HERE.rglob('*.cpp'))+list(HERE.rglob('*.hpp'))+list(HERE.rglob('*.py'))+[HERE/'CMakeLists.txt']+list((OWNER/'src').glob('*'))
+        source=list(HERE.rglob('*.cpp'))+list(HERE.rglob('*.hpp'))+list(HERE.rglob('*.py'))+[HERE/'CMakeLists.txt',HERE/'tests/timing.schema.json']+list((OWNER/'src').glob('*'))
         source=[p for p in source if p.is_file() and build not in p.parents]
         source+=[ROOT/'experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1'/name for name in ('tensor-census.json','admission-receipt.json')]
         source+=[HERE.parents[1]/'stage1/packet1b/loaders'/name for name in ('dequant.py','headers.py','FORMAT.md','iq3-grid.json','iq2-s-grid.json','iq3-s-grid.json')]

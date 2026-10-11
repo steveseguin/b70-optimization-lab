@@ -23,6 +23,7 @@ enum class Category { weights, kv, recurrent, scratch, graph_static,
                       pinned_slab, output_ring, loader_staging, host_shadow,
                       runtime_overhead };
 enum class Lifetime { process, request, transaction, graph, transfer };
+struct EventTiming { std::uint64_t start_ns, end_ns; };
 struct Operation { virtual ~Operation() = default; };
 std::string quote(const std::string&);
 const char* name(Memory);
@@ -41,6 +42,7 @@ struct Backend {
   virtual Event compute(const Operation&, std::span<void* const>, std::span<const Event>) {
     throw std::logic_error("compute unsupported by backend");
   }
+  virtual EventTiming timing(Event) { throw std::logic_error("profiling disabled"); }
   virtual bool complete(Event) = 0;
   virtual bool wait(Event, Deadline) = 0;
   virtual void synchronize() = 0; // only after all tracked events complete
@@ -120,6 +122,7 @@ class Device {
   std::string identity() const;
   std::size_t in_flight();
   bool wait(Event, std::chrono::milliseconds);
+  EventTiming timing(Event); // completed, owned event only; profiling is opt-in
   // Device-only bindings; host/UVA pointers require a separate admission path.
   Event compute(const Operation&, std::span<const Allocation>, std::span<const Event>);
   void graph(std::string, std::vector<Allocation>, std::function<void()>);
@@ -128,6 +131,6 @@ class Device {
 // On an unrecoverable backend error, keep ownership alive for the supervisor.
 // No _Exit/terminate, automatic reset, kill, retry or successful exit receipt.
 [[noreturn]] void hold_for_supervisor();
-std::unique_ptr<Backend> make_sycl_device(std::size_t card);
+std::unique_ptr<Backend> make_sycl_device(std::size_t card, bool profiling = false);
 std::vector<std::string> enumerate_sycl_cards();
 }

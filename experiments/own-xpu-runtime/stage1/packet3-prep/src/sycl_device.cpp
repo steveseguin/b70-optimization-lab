@@ -33,12 +33,13 @@ class SyclDevice final : public Backend {
     std::vector<sycl::event> out; for(auto e:deps) out.push_back(events_.at(e)); return out;
   }
  public:
-  explicit SyclDevice(std::size_t card):card_(card) {
+  explicit SyclDevice(std::size_t card,bool profiling):card_(card) {
     std::lock_guard lock(registry_mutex);
     if(owned_cards.contains(card)) throw std::logic_error("card already has an owner");
     auto found=cards(); if(card>=found.size()) throw std::out_of_range("Level Zero GPU index");
     auto d=found[card];
     label_="LevelZero:"+std::to_string(card)+":"+d.get_info<sycl::info::device::name>();
+    if(profiling) label_+=":driver="+d.get_info<sycl::info::device::driver_version>();
     auto handler=[this](sycl::exception_list errors) {
       std::lock_guard error_lock(error_mutex_);
       if(!error_ && errors.size()) error_=*errors.begin();
@@ -52,7 +53,10 @@ class SyclDevice final : public Backend {
       // release native context only AFTER SYCL event/queue/context wrappers.
       context_=std::make_unique<sycl::context>(sycl::make_context<sycl::backend::ext_oneapi_level_zero>(
         {native_,{d},sycl::ext::oneapi::level_zero::ownership::keep},handler));
-      queue_=std::make_unique<sycl::queue>(*context_,d,handler,sycl::property::queue::in_order{});
+      auto properties=profiling
+        ? sycl::property_list{sycl::property::queue::in_order{},sycl::property::queue::enable_profiling{}}
+        : sycl::property_list{sycl::property::queue::in_order{}};
+      queue_=std::make_unique<sycl::queue>(*context_,d,handler,properties);
       owned_cards.insert(card);
     } catch(...) {queue_.reset(); context_.reset(); zeContextDestroy(native_); native_=nullptr; throw;}
   }
@@ -85,6 +89,13 @@ class SyclDevice final : public Backend {
     auto [it,inserted]=events_.try_emplace(id); (void)inserted;
     it->second=native.submit(*queue_,bindings,wait); return id;
   }
+  EventTiming timing(Event e) override {
+    check_error();
+    if(!queue_->has_property<sycl::property::queue::enable_profiling>())
+      throw std::logic_error("profiling disabled");
+    return {events_.at(e).get_profiling_info<sycl::info::event_profiling::command_start>(),
+            events_.at(e).get_profiling_info<sycl::info::event_profiling::command_end>()};
+  }
   bool complete(Event e) override {
     return events_.at(e).get_info<sycl::info::event::command_execution_status>()==sycl::info::event_command_status::complete;
   }
@@ -105,7 +116,7 @@ class SyclDevice final : public Backend {
   }
 };
 }
-std::unique_ptr<Backend> make_sycl_device(std::size_t card) {return std::make_unique<SyclDevice>(card);}
+std::unique_ptr<Backend> make_sycl_device(std::size_t card,bool profiling) {return std::make_unique<SyclDevice>(card,profiling);}
 std::vector<std::string> enumerate_sycl_cards() {
   std::vector<std::string> names;
   for(const auto& d:cards()) names.push_back(d.get_info<sycl::info::device::name>());

@@ -1,6 +1,6 @@
 # Stage 2 packet 2 — IQ3 GGUF loader and packed SYCL kernels
 
-**CPU exactness passed; SYCL compiled and linked; no device execution.**
+**CPU and first small-device exactness passed; real-shape timing prepared, not run.**
 Prepared on `steve-b70s`, October 11, 2026 UTC. The own runtime's first real
 model target is now **Qwen3.8 Flash-Next UD-IQ3_XXS (Unsloth), quantized
 compressed version, on two B70s**. The 27B FP8 stage remains documented.
@@ -228,3 +228,130 @@ expert IDs/spans. Teardown complete (`safe_to_exit=true`, `in_flight=0`,
 `live_bytes=0`), zero kernel fault-class lines during the test. Receipts:
 [first-device-20261011/](first-device-20261011/). Performance was not measured
 here; the next device step is the real-layer timing against the roofline table.
+
+## Timing window
+
+[device_timing.py](tests/device_timing.py) prepares the first **warm M=1 GEMV
+diagnostic**, using the unchanged packet-2 kernels and packet-3 Device/Arena
+owner. The timing executable compiles and links; CPU validation is retained in
+[timing-cpu-receipt.json](timing-cpu-receipt.json). **No timing window was run
+in this preparation.** The 108 earlier exactness checks remain separate
+small-fixture evidence; they are not a real-shape timing or quality result.
+
+From the repository root, inspect the complete census-derived plan without
+opening a device or model payload:
+
+```bash
+nice -n 19 env OMP_NUM_THREADS=2 python3 -B experiments/own-xpu-runtime/stage2/packet2/tests/device_timing.py --dry-run
+```
+
+Prepare using installed tools only (CPU reads and compilation, never device
+execution). This requires new `build/timing-input/` and `build/timing-compile/`
+directories; preserve any earlier receipts before removing those directories.
+It leaves the existing exactness fixtures and receipts alone.
+
+```bash
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B experiments/own-xpu-runtime/stage2/packet2/tests/device_timing.py --prepare
+```
+
+After the **coordinator** admits physical card 3 and its current health/window,
+set up the installed oneAPI environment in that shell, then run exactly once:
+
+```bash
+source /opt/intel/oneapi/setvars.sh
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B experiments/own-xpu-runtime/stage2/packet2/tests/device_timing.py --authorized-device-window --card 3 --output experiments/own-xpu-runtime/stage2/packet2/build/timing-card3
+```
+
+The output directory must be new. Card indices use the same Level Zero GPU
+enumeration as `device_window.py`; the coordinator must confirm its physical
+mapping. Device selectors/runtime environment, boot, card index, device name,
+driver version, PID, source and binary hashes are retained. No selector is
+silently changed. There is one profiled in-order queue, its existing explicit
+dependency chain and no graph, server, retry, device reset or forced kill.
+
+The controller watches a kernel-journal cursor every 250 ms and retains a
+five-second post-exit tail. A fault, journal failure, timeout or signal stops
+submissions with one cooperative signal to the captured PID and writes
+`build/timing-fault-latch.json`. Subsequent windows refuse that latch until
+the coordinator resolves it. Native work also checks a 120-second deadline
+before each submission. As in the exactness window, this bounds admitted work;
+a blocked driver/drain retains ownership for the coordinator, rather than
+being hard-killed at the deadline. The same orderly drain, release, idle
+marker and event/queue/context teardown receipt is required. Independent
+postflight idle/health admission is still the coordinator's responsibility.
+
+Each layer's full packed weights are resident together in **device** Arena
+allocations, including the complete 512-expert banks. Only one layer is
+resident at a time, peaking at 1,275,934,720 weight bytes in layer 2, plus
+activation/output/routes and one reusable 8 MiB pinned upload slab. The census
+records requested memory classes and lifetimes; driver shadows remain unknown.
+Ten fixed expert IDs span the bank: 0, 7, 31, 63, 127, 255, 319, 383, 447, 511.
+Gate, up and down each use one routed launch over ten full expert matrices.
+
+Preparation reads **1,478,480 bytes** total at idle I/O priority. Tensors up to
+64 KiB are copied in full; otherwise four complete real packed rows are saved
+as a small fixture and tiled across the real-size allocation. Each job records
+`real_tensor` or `real_packed_fixture_tiled`, source path/stat/offset, seed size
+and SHA256. Tiling cycles whole packed bytes continuously, including across
+upload chunks. It is not a claim that the full device buffer contains the
+original model weights. The existing packet-1 admission binds the model;
+sample hashes do not reauthenticate unsampled shard bytes. Activations are
+fixed small signed BF16 values; accumulators remain FP32 with the exact
+packet-2 reduction and final BF16 cast. FP32 diagnostic-output stores are off.
+
+There is one untimed warmup followed by **20 profiled events per kernel** at
+subgroup 16. Inputs, allocations, copies and JIT are outside the measured
+events. The ordinary GDN also runs one warmup and 20 whole-layer **GEMV
+sequences**, in packet-3 decode order, with 19 launches issued back to back
+and no wait, upload or allocation between them. Each iteration records every
+event, first-start to last-end span, summed kernel time, intervening queue
+gaps, host submission time and host wall time. Host wall time includes the
+owner's 1 ms completion-poll granularity. The event span is the primary
+sequence measurement. No empty-launch subtraction is presented as measured
+model time.
+
+Read `timing.json` alongside [roofline.json](roofline.json):
+
+| Layer | GEMV launches | Timed packed bytes | Full roofline bytes | Full floor at 507 / 537 GB/s |
+| --- | ---: | ---: | ---: | ---: |
+| Ordinary GDN, layer 0 | 19 | 91,939,840 | 92,186,496 | 0.181827 / 0.171669 ms |
+| PLE projection GDN, layer 1 | 21 | 126,755,840 | 127,289,216 | 0.251064 / 0.237038 ms |
+| Upgraded grids, layer 2 | 19 | 106,475,520 | 106,722,176 | 0.210497 / 0.198738 ms |
+| QSA, layer 3 | 20 | 87,782,400 | 87,867,392 | 0.173308 / 0.163626 ms |
+
+The plan reconciles timed bytes plus explicitly excluded norms, convolutions
+and recurrent controls to every full-layer roofline row. Each kernel's
+`median_ms` and `min_ms` come from the 20 `end_ns - start_ns` intervals.
+`effective_GB_s = packed_active_bytes / (median_ms * 1e6)`, in decimal units;
+for routed GEMV this counts ten selected experts, not all 512 resident ones.
+`bandwidth_ratio[507|537]` is that effective rate divided by the indicated
+roofline bandwidth; `latency_over_floor` is measured latency divided by the
+**same measured-byte scope's** calculated floor. Sequence ratios likewise
+use the 91,939,840 timed bytes, not the full layer's 92,186,496 bytes.
+
+The receipt embeds the plan, packed-fixture provenance, raw events, derived
+statistics, allocation census, journal hash/window and teardown, with
+[JSON schema](tests/timing.schema.json) and semantic checks. `passed` means
+complete measurement and clean local teardown/journal, not full-model quality
+or a performance promotion. Warm repeated inputs can benefit from caches;
+effective packed-byte GB/s is not a hardware DRAM-counter measurement.
+
+**Measure under the execution context you ship.** The historical
+[Flash memory/step investigation](../../../qwen38-flash-next-fp8-b70/notes/2026-09-05-day-summary.md)
+showed that isolated timings missed both scheduling and resident-footprint
+costs. This window therefore preserves the device memory class, full expert
+bank extents, owner submission path and layer GEMV sequence. It still omits
+nonlinear/state operations, true activation dependencies, full-model
+residency, changing routes, KV, host lookups and the second card. It cannot
+predict decode tok/s or replace an eventual complete-step measurement.
+
+CPU checks (including mocked faults, unavailable journals and deadlines):
+
+```bash
+nice -n 19 env OMP_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B experiments/own-xpu-runtime/stage2/packet2/tests/test_timing.py
+```
+
+`validate.py` also builds the timing target, runs these CPU tests and the mock
+profiling-ownership test, and hashes the new binary. It never executes either
+native device test. Preparation scratch was removed after retaining the CPU
+receipt; run `--prepare` before the coordinator's timing command.
