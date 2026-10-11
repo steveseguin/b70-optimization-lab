@@ -1,0 +1,176 @@
+{
+  "scope": "Historical packet15 synthetic non-GEMV operator measurements; not packet18 measurements, no speedup inferred",
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet15-nongemv/receipts-card3-20261011/timing-a/owner0/timings.jsonl": "ae4c62980e3d1529ba5b5899335004e0e9cc0194883d1cdfbf88c238308b45e2",
+    "experiments/own-xpu-runtime/stage2/packet15-nongemv/receipts-card3-20261011/timing-a/owner1/timings.jsonl": "a5705d4c64f8a3cb0de73a741a5c5c2d46134e546a341d0490b4422ec673873b"
+  },
+  "method": "Median across both fresh owners; M=1, repeat>0 (first iteration excluded by packet15 timing method)",
+  "rows": {
+    "gdn-1.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.111823,
+      "median_wall_ms": 0.1334705
+    },
+    "gdn-inactive.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.0021875,
+      "median_wall_ms": 0.023634000000000002
+    },
+    "gdn-sticky-error.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.10125,
+      "median_wall_ms": 0.12323100000000001
+    },
+    "gdn-packed-1.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.1095835,
+      "median_wall_ms": 0.132719
+    },
+    "conv-17-1.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.004531,
+      "median_wall_ms": 0.025493000000000002
+    },
+    "conv-10240-1.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.00375,
+      "median_wall_ms": 0.0273265
+    },
+    "norm-1.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.024636,
+      "median_wall_ms": 0.0496985
+    },
+    "combine-norm-1.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.0359375,
+      "median_wall_ms": 0.061615500000000004
+    },
+    "mix-1.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.003854,
+      "median_wall_ms": 0.028964499999999997
+    },
+    "hc-act-1.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.003177,
+      "median_wall_ms": 0.0307025
+    },
+    "ffn-act-1.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.002969,
+      "median_wall_ms": 0.033182
+    },
+    "ffn-routed-act-1.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.003021,
+      "median_wall_ms": 0.0349305
+    },
+    "gdn-gated-1.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.005313,
+      "median_wall_ms": 0.038071499999999994
+    },
+    "route-gather-1.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.238125,
+      "median_wall_ms": 0.272673
+    },
+    "moe-combine-1.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.00625,
+      "median_wall_ms": 0.0410275
+    },
+    "norm-stored-f32-1.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.025052,
+      "median_wall_ms": 0.061215500000000006
+    },
+    "gdn-runtime-f32-1.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.110625,
+      "median_wall_ms": 0.1481385
+    },
+    "qsa-prepare-1.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.006771,
+      "median_wall_ms": 0.0460165
+    },
+    "qsa-pool-1.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.0068225000000000004,
+      "median_wall_ms": 0.0488865
+    },
+    "qsa-select-1.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.056041,
+      "median_wall_ms": 0.09677150000000001
+    },
+    "qsa-attention-1.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.143906,
+      "median_wall_ms": 0.205336
+    },
+    "norm-odd-1.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.003125,
+      "median_wall_ms": 0.0695955
+    },
+    "norm-odd-3.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.003229,
+      "median_wall_ms": 0.0706025
+    },
+    "norm-odd-17.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.004375,
+      "median_wall_ms": 0.090741
+    },
+    "norm-odd-255.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.0060940000000000005,
+      "median_wall_ms": 0.09159149999999999
+    },
+    "norm-odd-2560.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.024635,
+      "median_wall_ms": 0.111043
+    },
+    "route-ties.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.229688,
+      "median_wall_ms": 0.317907
+    },
+    "route-varied.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.230416,
+      "median_wall_ms": 0.31951
+    },
+    "select-pruned-tail.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.055521,
+      "median_wall_ms": 0.129984
+    },
+    "route-nan.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.0433335,
+      "median_wall_ms": 0.13640649999999999
+    },
+    "pool-existing.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.006979,
+      "median_wall_ms": 0.1228705
+    },
+    "pool-inactive.fixture": {
+      "samples": 10,
+      "median_device_ms": 0.001042,
+      "median_wall_ms": 0.104146
+    }
+  },
+  "owner_supplied_launch_overhead_us": 30,
+  "selected_planning_cases": {
+    "route_gather": "route-varied.fixture",
+    "gdn": "gdn-packed-1.fixture",
+    "qsa_attention": "qsa-attention-1.fixture"
+  }
+}
