@@ -1,14 +1,13 @@
-# Our Intel Xe runtime — measured state, 2026-10-11 13:05 UTC
+# Our Intel Xe runtime — measured state, 2026-10-11 16:10 UTC
 
-**Device work is halted: second GPU fault on this boot (09:10 UTC), reboot is the
-owner's decision** ([incident][fault]). State at the halt, for Unsloth UD-IQ3_XXS, the
-**quantized compressed version**, full 16-bit KV: the runtime answers correctly on a
-card; one-card decode with the parallel kernels costs about **0.2 s of device time per
-token plus weight streaming**; no two-card decode has been measured. The bit-exactness
-gap is explained: our device builds linked without Intel's correctly-rounded
-divide/sqrt options, and the card's own `exp`/`log` are not glibc's. With the link
-fixed, our deterministic `exp`/`log` match the host on the card for all 2^32 inputs.
-Reference runtime: **28.49 tok/s**. Receipts follow below.
+**Bit-exact on one card and on two; 3.15 tok/s measured; most of that time is our
+own stopwatch.** For Unsloth UD-IQ3_XXS, the **quantized compressed version**, full
+16-bit KV: the runtime reproduces its CPU oracle exactly on the cards (64/64 tokens,
+384/384 layer fixtures, two cards, two GEMV dispatches). Measured two-card decode:
+**2.46 tok/s** with the frozen GEMV variants, **3.15 tok/s** with R5; reference
+**28.49 tok/s**. About two thirds of each token is per-launch timing queries, not GPU
+work. GPU work continues on this boot on the owner's instruction after the 09:10 UTC
+fault ([incident][fault]); the fault has not recurred. [Receipts and reading][w2note].
 
 **Kernel progress.** Effective GB/s means payload bytes divided by device time,
 not measured memory-bus traffic. These are warm, fixed-input operator diagnostics
@@ -111,23 +110,14 @@ expert decoders][r6] reached only **13.6 / 8.4 / 7.6 GB/s** versus the retained
 **66 GB/s** path. [Expanding all experts does not fit two cards][expansion];
 keep experts packed and qualify dense-only expansion separately.
 
-**Next, in order (device steps need the reboot first):**
+**Next, in order:**
 
-1. **[Packet 20][p20] launch micro-benchmark:** 20–50 s on one card with 87 KB of
-   device memory. Times every way of issuing kernels, including command-graph replay.
-2. **[Packet 17][p17] W-B** on one card: 72 fixtures, host versus card, two fresh owners.
-3. **[Packet 18][p18] W1:** one card, gated directly against the v2 CPU oracle. First
-   true exactness gate of the lane. CPU gate already passes 64/64 tokens, 384/384 layers.
-4. **Packet 18 W0, then W2:** a few-KiB two-card canary, then the 64-token two-card
-   decode: first measured decode tok/s. [Packet 19][p19] found no application defect
-   behind the fault; packet 18 now drains both cards on the host at every crossing.
-5. **[Packet 21][p21], fused launch schedule:** measured on CPU at **876 launches per
-   token** (2,445 before), bit-identical to the v2 oracle (64/64 tokens, 384/384
-   layers), sanitizer clean. At about 30 µs each that is still 26 ms of issuing cost,
-   so replay of a recorded command graph is the next step; the micro-benchmark decides
-   which replay method. Its device windows (K1, W0, W1, W2) follow packet 18's.
-6. **R5 GEMV dispatch** (41 ms projected versus 71–92 ms measured with the frozen one).
-7. **Merge packet 14's exchanges** (41 per layer to a few), then repeat its gate.
+1. **[Packet 23][p23]:** fused schedule (876 launches) with timing reduced to one wall
+   reading per token and profiling off. First run that measures the runtime itself.
+2. **Device time after that:** GEMV 61 ms span (R5) and non-GEMV 47 ms span are upper
+   bounds that include gaps. Expert GEMV is at 11% of the memory roofline.
+3. **Two cards inside a layer:** merge packet 14's 41 exchanges per layer first.
+4. **Replay ([packet 22][p22])** only if issuing still matters; a launch costs 3.4–5 µs.
 
 [r1]: stage2/packet6-kopt/receipts-card3-20261011/timing/timing.json
 [r2]: stage2/packet7-kopt2/receipts-card3-20261011/timing.json
@@ -174,3 +164,6 @@ keep experts packed and qualify dense-only expansion separately.
 [p19]: stage2/packet19-depcheck/README.md
 [p20]: stage2/packet20-launch/README.md
 [p21]: stage2/packet21-fused/README.md
+[w2note]: ../../notes/2026-10-11-first-exact-two-card-decode.md
+[p23]: stage2/packet23-fast/README.md
+[p22]: stage2/packet22-replay/README.md
