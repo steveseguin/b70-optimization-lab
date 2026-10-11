@@ -27,3 +27,16 @@ fixtures, and only then run the packet 4 first-layer device gate. Any later
 change to the reduction order (for example kernel optimization round 1's
 subgroup tree) changes the identity and requires regenerating the oracle
 fixtures; the receipts must pin the order version.
+
+## Addendum, 04:00 UTC: the oracle's early divergence from llama.cpp is a near-tie
+
+The CPU oracle (sigmoid gate, BLAS order) and both llama.cpp baselines agree
+on the first 68 characters of the 'incident-retrospective' answer and then
+differ at the heading ("Executive Summary" vs "Summary"). The oracle's saved
+top-5 logits show why: at step 11 the two leading candidates are 19.875 vs
+19.625, a 0.25-logit margin, while every surrounding step has margins of 2.75
+to 9.1 logits and agrees with llama.cpp. A quarter-logit tie flipped by
+summation-order rounding between two independent implementations is expected
+and benign; it is not evidence of an architecture bug in the reference. This
+is exactly why the lane's authority must be a frozen order rather than "the
+model": two correct implementations can legitimately differ at near-ties.
