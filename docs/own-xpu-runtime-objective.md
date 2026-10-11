@@ -33,7 +33,7 @@ running and keep publishing while this is built.
 2. **Intel Xe only, B70 first.** One to four Arc Pro B70 cards (32 GB each,
    one compute queue per card, copy-engine overlap only). No CUDA/HIP ports,
    no portability layer for other vendors.
-3. **Weights: official publisher or Unsloth.** The model author's own release
+3. **Weights: official publisher, Unsloth or Intel** (Intel added by the owner on 2026-10-11: "i now trust Intel and I trust unsloth; I also trust the original author"). The model author's own release
    (any precision they publish) or an Unsloth release. Any other source needs
    a written justification in the lane note and the owner's approval before a
    byte is downloaded. Quantizations we produce ourselves from an official

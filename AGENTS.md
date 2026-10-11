@@ -127,9 +127,11 @@ around it.
   projects (Strata, llama.cpp, vLLM, SGLang and the rest) are read for ideas
   and credited, never used as the base of our code. Intel platform libraries
   are ordinary dependencies.
-- Weights come from the official publisher or Unsloth. Any other source
-  needs a written justification and the owner's approval before download.
-  Quantizations we produce from an official release are our own work.
+- Weights come from the official publisher, Unsloth or Intel (owner,
+  2026-10-11: "i now trust Intel and I trust unsloth; I also trust the
+  original author"). Any other source needs a written justification and the
+  owner's approval before download. Quantizations we produce from an official
+  release are our own work.
 - The current certified lanes keep running and publishing; the runtime earns
   its place stage by stage against them. Full text and plan:
   `docs/own-xpu-runtime-objective.md`.
