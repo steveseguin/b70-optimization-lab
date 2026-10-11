@@ -23,8 +23,12 @@ Independent true-value samples stay below one ULP (maximum approximately
 0.500000045 for exp and 0.500000011 for log). All 2^32 inputs per function have
 host hash rows, exhaustive monotonic checks and glibc sanity comparisons; each
 finite discrepancy is at most one ULP. Device hash/fixture gates remain unrun.
-The real-model CPU oracle is recorded separately with its explicit coverage
-and v1 comparison once complete.
+The [completed real-model CPU comparison](oracle-comparison.json) has the
+87-token prompt, all 64 generated token/top-five records and 384 layer files
+(48 layers at steps 1..8). Only 41/64 token positions agree with v1; the first
+difference is step 42. [Every layer difference](oracle-layer-comparison.md)
+is retained, including the unchanged first-step layer 0 and 3.8136% relative
+RMS difference at layer 47. This output-changing revision is not adopted.
 
 ## What worked
 
@@ -43,6 +47,9 @@ Platform libm was not a reproducible arithmetic definition: v1 matched only
 claimed correctly rounded everywhere: some measured vectors slightly exceed
 0.5 ULP, while meeting the one-ULP target. Sampled high-precision checking plus
 exhaustive glibc sanity is not a formal whole-domain proof against real arithmetic.
+The real-model v2 oracle changes output at step 42 (v1 token 1881, v2 token
+279, a changed top-logit tie). This closes any claim of lossless v1 replacement;
+owner quality judgement is required before adopting the new identity.
 The FP32 device division/sqrt/FMA lowering, default rsqrt barrier spelling,
 actual kernel duration bounds, device/compiler denormal behavior and full-model
 device state equality remain unproven. Fingerprints have a collision risk.

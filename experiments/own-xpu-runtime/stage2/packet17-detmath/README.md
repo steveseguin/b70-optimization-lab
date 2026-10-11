@@ -153,7 +153,20 @@ risk; it is not a stored element-by-element proof. No W-A or W-B ran here.
 
 The re-based real-model CPU oracle uses the same 87-token incident prompt,
 48-layer graph, per-row GEMV order, BF16 boundaries, 64-token cap, top-five
-logits each step and all 48 hidden-state fixtures at steps 1..8. Its result and
-v1 comparison will be linked after completion. It uses two CPU threads at
-nice 19, idle I/O, with no device dependencies. It does not qualify a device
+logits each step and all 48 hidden-state fixtures at steps 1..8. The completed
+[run receipt](../../../qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261011/receipt.json)
+records all 64 generated tokens and 384 layer files.
+[The full comparison](oracle-comparison.json) reports **41/64 token positions
+equal**, with the first divergence at step 42. [Per-layer differences](oracle-layer-comparison.md)
+cover all 384 fixtures. At step 1, layer 0 is unchanged; layer 47 differs in
+9,758/10,240 BF16 values with 3.8136% relative RMS. The run used two CPU threads
+at nice 19, idle I/O, with no device dependencies. It does not qualify a device
 runtime or promote a performance result.
+
+The v2 oracle first changes the generated output at step 42: v1 chooses token
+1881 with top logits 22 versus 21.875 for token 279; v2 ties both at 22 and
+chooses token 279 under the unchanged greedy tie rule. The first 41 tokens,
+including steps 11 and 12, agree. Therefore v2 is an **output-changing arithmetic
+revision relative to v1**, not a lossless replacement for v1. It remains a
+candidate identity requiring the owner's quality judgement before adoption;
+none of the host or prepared device gates overrides this difference.

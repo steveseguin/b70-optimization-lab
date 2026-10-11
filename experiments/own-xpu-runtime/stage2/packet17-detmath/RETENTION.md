@@ -32,3 +32,17 @@ admitted by archive restoration alone. Temporary trace instrumentation, input
 preparation and test scratch may be removed after verified evidence retention;
 the ignored build's native binaries, hash rows, table and expected fixtures
 remain required for the prepared coordinator windows.
+
+## Final oracle large-artifact review
+
+The following files are retained as original run evidence. Restore their exact
+bytes from Git; for `.gz` files, the run receipt also provides the decompressed
+SHA-256. The consumers are the oracle review and future failure/state comparisons.
+`teardown.json` records allocation ownership and retirement across the complete
+run, so it is evidence that the graph retired correctly, not temporary scratch.
+
+| Artifact (relative to the oracle run) | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `incident-retrospective/progress.jsonl.gz` | 1712886 | `2cde3378959d5f78b4585f398d5c5883b5c7dd8d79cb165ad9d5e0140f94a3f3` |
+| `incident-retrospective/teardown.json` | 8808288 | `14171f0e51bfbedfe4c1cd96513aa986e5910141840cbd0193eacb224b247fa0` |
+| `incident-retrospective/timings.jsonl.gz` | 2774144 | `d55761cce785db2527bc9e94f17e1901c03adad654b897305a39363dbf817c19` |
