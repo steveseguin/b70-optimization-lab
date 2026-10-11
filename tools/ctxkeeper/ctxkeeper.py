@@ -243,7 +243,8 @@ def choose_cut(body: list[dict[str, Any]], size, target: int) -> int:
 
 # ------------------------------------------------------------------ archive
 class Archive:
-    """Append-only, verbatim. One JSON line per archived message: {"n": number in the conversation, "role", "text"}."""
+    """Append-only, verbatim. One JSON line per archived message: {"n": number in the conversation, "role", "text":
+    what `recall` searches, "message": the message exactly as the client sent it}."""
 
     def __init__(self, path: Path) -> None:
         self.path = path
@@ -252,7 +253,7 @@ class Archive:
     def add(self, first_number: int, messages: list[dict[str, Any]]) -> None:
         with self.lock, self.path.open("a") as f:
             for k, m in enumerate(messages):
-                f.write(json.dumps({"n": first_number + k, "role": m.get("role"), "text": text_of(m)}) + "\n")
+                f.write(json.dumps({"n": first_number + k, "role": m.get("role"), "text": text_of(m), "message": m}) + "\n")
 
     def rows(self) -> list[dict[str, Any]]:
         if not self.path.exists():
@@ -342,7 +343,17 @@ class Session:
 
 
 def fingerprint(messages: list[dict[str, Any]]) -> str:
-    return hashlib.sha256(json.dumps([[m.get("role"), text_of(m)] for m in messages]).encode()).hexdigest()[:16]
+    """A hash of what was said, stable across the ways clients resend a history: thinking is left out (many clients
+    drop it), text parts are joined, spacing is collapsed. Tool calls count by name and arguments."""
+    rows = []
+    for m in messages:
+        c = m.get("content")
+        if isinstance(c, list):
+            c = "".join(str(p.get("text", "")) if isinstance(p, dict) else str(p) for p in c)
+        calls = [[(t.get("function") or {}).get("name"), (t.get("function") or {}).get("arguments")]
+                 for t in m.get("tool_calls") or [] if isinstance(t, dict)]
+        rows.append([m.get("role"), " ".join(str(c or "").split()), calls])
+    return hashlib.sha256(json.dumps(rows).encode()).hexdigest()[:16]
 
 
 class Keeper:
@@ -425,7 +436,8 @@ class Keeper:
                 why = f"{type(exc).__name__}: {exc}"
             size = self.tokens(s, [{"role": "user", "content": text}]) if text else 0
             if not why:
-                why = ("empty reply" if not text else "no RULES / STATE layout" if not has_layout(text)
+                why = ("empty reply" if not text else "cut off by the token cap" if finish == "length"
+                       else "no RULES / STATE layout" if not has_layout(text)
                        else f"{size} tokens, over twice the cap" if size > 2 * self.notes_cap else "")
             if not why:
                 text, lost = keep_rules(s.state["notes"], text)
@@ -437,7 +449,7 @@ class Keeper:
                          "thinking": thinking, "upto": upto, "reply_start": text[:160]})
             # ask once more: with the model's own reply and a correction if it wrote something, and without thinking
             # (a reply cut off or emptied by a long think is the usual reason for nothing usable coming back)
-            if text:
+            if text and finish != "length":
                 req = req + [{"role": "assistant", "content": text}, {"role": "user", "content": LAYOUT_RETRY}]
             if thinking:
                 thinking = False
@@ -449,7 +461,7 @@ class Keeper:
         # A history that no longer contains what was archived (the client rewrote it, or started the same task again)
         # is a new conversation: notes and cut start over, and the old archive is set aside, not searched.
         if s.state["cut"] and (len(messages) < h + s.state["cut"]
-                               or fingerprint(messages[h + s.state["cut"] - 1:h + s.state["cut"]]) != s.state["boundary"]):
+                               or fingerprint(messages[h:h + s.state["cut"]]) != s.state["boundary"]):
             s.restart()
         view = self.view(s, messages)
         limit = self.budget - self.reply_reserve
@@ -459,17 +471,21 @@ class Keeper:
         fixed = messages[:h] + [self.pin(s)]
         n = choose_cut(body, lambda kept: self.tokens(s, fixed + kept), int(self.target_ratio * limit))
         if not n:
+            if self.tokens(s, view) > limit:         # one turn larger than the window: nothing can be cut; say so once
+                s.log_event({"event": "over the window with nothing left to cut", "tokens": self.tokens(s, view), "limit": limit})
             return
         gone = body[:n]
         s.archive.add(h + s.state["cut"] + 1, gone)
         self.notes_call(s, model, messages[:h], gone, upto=h + s.state["cut"] + n)
         s.state["cut"] += n
-        s.state["boundary"] = fingerprint(gone[-1:])
+        s.state["boundary"] = fingerprint(messages[h:h + s.state["cut"]])   # everything archived so far, not only its end
         s.state["cuts"] += 1
         s.save()
 
     def complete(self, body: dict[str, Any], header: str | None = None) -> dict[str, Any]:
         """One chat completion through the keeper. Returns the server's response for the client."""
+        if (body.get("n") or 1) != 1:
+            raise ValueError("ctxkeeper handles one choice per request (n = 1)")
         s = self.session(body, header)
         with s.lock:
             messages = list(body.get("messages") or [])
@@ -489,6 +505,7 @@ class Keeper:
                 view.append({"role": "user", "content": REPEAT_NOTE.format(n=repeats(messages))})
                 s.state["repeats_broken"] = s.state.get("repeats_broken", 0) + 1
             out = dict(body, messages=view, stream=False)
+            out.pop("stream_options", None)          # the upstream call is never streamed
             if self.think_when is not None or self.effort or stuck:
                 ctk = dict(body.get("chat_template_kwargs") or {})
                 if self.think_when is not None:
@@ -520,7 +537,13 @@ class Keeper:
                 if not mine:
                     break
                 if round_ == self.max_recalls:      # it asked anyway: the client gets the words without the call
-                    msg["tool_calls"] = [c for c in calls if c not in mine] or None
+                    rest = [c for c in calls if c not in mine]
+                    if rest:
+                        msg["tool_calls"] = rest
+                    else:
+                        msg.pop("tool_calls", None)
+                        msg["content"] = msg.get("content") or "(I could not finish checking the archive in this turn.)"
+                        (resp.get("choices") or [{}])[0]["finish_reason"] = "stop"
                     break
                 if len(mine) < len(calls):          # mixed with the client's own tools: hand those over, drop ours
                     msg["tool_calls"] = [c for c in calls if c not in mine]
@@ -600,7 +623,11 @@ def make_handler(keeper: Keeper, upstream: str, timeout: float):
                 self._forward("GET", None)
 
         def do_POST(self) -> None:
-            data = self.rfile.read(int(self.headers.get("Content-Length") or 0))
+            length = self.headers.get("Content-Length") or ""
+            if "chunked" in (self.headers.get("Transfer-Encoding") or "").lower() or not length.isdigit():
+                self.close_connection = True
+                return self._send(411, b'{"error": {"message": "ctxkeeper: send the body with a Content-Length"}}')
+            data = self.rfile.read(int(length))
             if self.path.split("?")[0].rstrip("/") != "/v1/chat/completions":
                 return self._forward("POST", data)
             try:
@@ -611,6 +638,8 @@ def make_handler(keeper: Keeper, upstream: str, timeout: float):
                 resp = keeper.complete(body, self.headers.get("X-Ctx-Session"))
             except urllib.error.HTTPError as e:                 # the model server refused: pass its answer on
                 return self._send(e.code, e.read(), e.headers.get("Content-Type", "application/json"))
+            except ValueError as e:
+                return self._send(400, json.dumps({"error": {"message": str(e)}}).encode())
             except Exception as e:
                 return self._send(502, json.dumps({"error": {"message": f"ctxkeeper: {type(e).__name__}: {e}"}}).encode())
             if body.get("stream"):

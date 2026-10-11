@@ -67,13 +67,18 @@ python3 tools/ctxkeeper/ctxkeeper.py --upstream http://127.0.0.1:18196 --port 18
 
 ## Limits
 
-- Measured so far as a harness policy on one synthetic task family, one model and one machine. The proxy itself has
-  only been run against a scripted model (`python3 -m unittest test_ctxkeeper`); its first run against the real
-  server is the next step.
+- Measured on one synthetic task family, one model and one machine. As a harness policy: 39/39 and 46/46 at 240K,
+  226/228 on a 1M-token stream. As this proxy, with a plain agent that sends its whole history: 37/39 and 42/46 at
+  240K on its first two runs against the real server; the second exposed a defect in the notes call (fixed, not yet
+  re-run). Not yet run under a real coding or research agent, nor on the 1M stream. Tests against a scripted model:
+  `python3 -m unittest test_ctxkeeper`.
 - Token counts are characters over a ratio learned from the server's `usage.prompt_tokens`, with margins. A server
   that reports no usage keeps the starting guess of 3.6 characters per token.
 - `recall` is a text and regular-expression search over archived sentences with message numbers: it answers "what
   was said". For "what was true at message N" every saved version of NOTES is kept, and `recall` with `notes_at`
   returns the one saved at or before N; what happened between that save and N still has to be read from the archive.
 - If the model answers with `recall` and one of the client's tools in the same turn, the client's call is passed on
-  and the recall is dropped.
+  and the recall is dropped. A turn gets at most eight searches; after that the model is asked once more without
+  the tool, and the client is never handed a `recall` call.
+- One choice per request (`n` = 1). A conversation is recognised as the same one by what was said (roles, text, tool
+  calls), not by thinking the client may have dropped or by how text parts were split.

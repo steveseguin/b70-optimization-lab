@@ -76,6 +76,7 @@ class Policy(unittest.TestCase):
         self.assertEqual(len(rows), s.state["cut"])                               # every cut message is in the archive
         self.assertEqual(rows[0]["n"], 3)                                         # numbered as in the conversation
         self.assertIn("counter abcd00 to 0", rows[1]["text"])                     # verbatim
+        self.assertEqual(rows[1]["message"], conversation(30)[3])                 # and the message itself, as sent
         self.assertEqual(ck.rule_lines(s.state["notes"]), ["Always answer in French."])
         sent = [r for r in self.model.requests if "TURNS BEING MOVED OUT" not in str(r["messages"][-1].get("content"))][-1]
         view = sent["messages"]
@@ -168,6 +169,10 @@ class Policy(unittest.TestCase):
         msg = resp["choices"][0]["message"]
         self.assertFalse(msg.get("tool_calls"))
         self.assertEqual(msg["content"], "Here is my answer with what I have.")
+        stubborn = lambda body: reply(None, [{"id": "c", "type": "function", "function": {"name": "recall", "arguments": "{}"}}])
+        k2 = ck.Keeper(stubborn, Path(self.dir.name) / "g2", budget=100000, max_recalls=2)
+        r2 = k2.complete({"model": "m", "messages": conversation(3)})["choices"][0]
+        self.assertEqual((r2["finish_reason"], "tool_calls" in r2["message"], bool(r2["message"]["content"])), ("stop", False, True))
         self.assertEqual(len(seen), 4)                                            # three searches, then one call without the tool
         self.assertEqual([t["function"]["name"] for t in seen[-1]["tools"]], ["bash"])
         self.assertIn("last archive search for this turn", seen[-1]["messages"][-1]["content"])
@@ -221,6 +226,46 @@ class Policy(unittest.TestCase):
         self.assertEqual(s.archive.rows(), [])                                    # the new conversation searches nothing old
         self.assertEqual(len(list(s.dir.glob("archive-until-*.jsonl"))), 1)       # ... and nothing was deleted
         self.assertEqual(self.model.requests[-1]["messages"], changed[:12])
+
+    def test_dropped_thinking_and_text_parts_do_not_look_like_a_new_conversation(self):
+        base = conversation(30)
+        with_thinking = [dict(m, reasoning_content="hmm, let me see") if m["role"] == "assistant" else m for m in base]
+        for n in range(1, 31):
+            self.keeper.complete({"model": "m", "messages": with_thinking[:2 + 2 * n]})
+        s = next(iter(self.keeper.sessions.values()))
+        cut, notes = s.state["cut"], s.state["notes"]
+        self.assertGreater(cut, 0)
+        as_parts = [dict(m, content=[{"type": "text", "text": m["content"]}]) if m["role"] == "tool" else m for m in base]
+        self.keeper.complete({"model": "m", "messages": as_parts + [{"role": "user", "content": "go on"}]})   # thinking gone, parts
+        self.assertEqual((s.state.get("restarts", 0), s.state["cut"] >= cut, bool(s.state["notes"])), (0, True, True))
+        changed = list(base)
+        changed[3] = dict(changed[3], content="an early archived message, rewritten")           # not the boundary message
+        self.keeper.complete({"model": "m", "messages": changed})
+        self.assertEqual(s.state["restarts"], 1)
+
+    def test_a_cut_off_notes_reply_is_not_accepted(self):
+        def model(body):
+            if any("=== TURNS BEING MOVED OUT ===" in str(m.get("content")) for m in body["messages"]):
+                r = reply("RULES\n- Keep it short.\nSTATE\n- half a sta")
+                r["choices"][0]["finish_reason"] = "length"
+                return r
+            return reply("ok")
+        k = ck.Keeper(model, Path(self.dir.name) / "c", budget=2400, reply_reserve=400, headroom=100, target_ratio=0.5, notes_cap=400, memory_note=False)
+        for n in range(1, 16):
+            k.complete({"model": "m", "messages": conversation(n)})
+        s = next(iter(k.sessions.values()))
+        self.assertEqual(s.state["notes"], "")                                    # nothing half-written was kept
+        self.assertGreater(s.state["notes_failed"], 0)
+        why = [json.loads(l)["why"] for l in (s.dir / "events.jsonl").read_text().splitlines()]
+        self.assertIn("cut off by the token cap", why)
+
+    def test_request_fields_are_cleaned_and_one_choice_only(self):
+        self.keeper.complete({"model": "m", "messages": conversation(2), "stream": True, "stream_options": {"include_usage": True}, "seed": 7})
+        sent = self.model.requests[-1]
+        self.assertNotIn("stream_options", sent)
+        self.assertEqual((sent["stream"], sent["seed"]), (False, 7))
+        with self.assertRaises(ValueError):
+            self.keeper.complete({"model": "m", "messages": conversation(2), "n": 2})
 
     def test_state_survives_a_restart(self):
         s = self.run_conversation(30)
