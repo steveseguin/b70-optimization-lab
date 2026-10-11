@@ -35,6 +35,8 @@ def main():
   patch=HERE/"patched"/relative
   target=patch if a.patched and patch.exists() else original
   text=target.read_text();manifest[str(target)]=hashlib.sha256(target.read_bytes()).hexdigest()
+  if original == source/"canary.hpp":
+   text=text.replace("auto compiled=raw->canary_bundle();", "auto compiled=0; // No SYCL wrapper in the dependency-sanitizer mock.")
   # Resolve quoted includes back to original source directory, selectively using
   # our patched dependencies. Never populate/edit another packet build tree.
   def inc(m):

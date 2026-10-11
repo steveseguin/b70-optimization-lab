@@ -119,3 +119,29 @@ no claim that the long gates ran on the new binary is made. No device ran,
 no device discovery occurred, and PID 183867 and FAULT HALT remain untouched.
 
 Seven [host-only native CLI checks](deadline-native-cli-tests.json) also pass: default 600 s, accepted 300/1800 s, and refused 0/30/299/1801 s. No device binary ran.
+
+## October 11: SYCL lifetime repair (CPU only)
+
+Closed arm: **SYCL object outliving the owner's context release**. The canary's
+bundle and all work captures now die in an inner scope before owner shutdown,
+including exception unwinding. [Lifetime inventory and reuse reasoning](LIFETIME.md)
+covers two-card decode, peer copies, fixtures and all linked kernel sources.
+The native decode/owner/adapter arithmetic and launch order are unchanged.
+Fresh unit, mini/integration, canary mock and mini dependency-sanitizer checks
+are recorded in `build-receipt.json`; full-model gates are explicitly carried
+forward in `lifetime-reuse.json`, with original hashes and binary identities.
+No device binary, discovery, real-model CPU run or host setting change occurred.
+
+The original W1 device receipt and W0 passing-work/abnormal-exit evidence are
+preserved. Both old build window directories and the existing fault latch remain
+untouched. The coordinator resolves the existing latch under its admission
+protocol before running these fresh commands; these commands do not clear it.
+Use the new `-b` directories below. W1 and W0 must both pass on this new binary
+before W2/W3. A native passing receipt followed by abnormal exit remains failed,
+with the exact diagnosis “device work passed; exit abnormal”.
+
+Cheap-only rebuild/reseal: `nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2
+/home/steve/.venvs/vllm-xpu/bin/python -B
+experiments/own-xpu-runtime/stage2/packet18-decode-v2/repair_build.py`.
+The earlier `build.py` watchdog-only reuse command is historical and cannot
+validate this repair; it deliberately refuses existing device-window evidence.

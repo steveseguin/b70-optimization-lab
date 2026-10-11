@@ -60,3 +60,8 @@ if(OWN_RT_HOST_ONLY)
  add_executable(queue-tests queue_test.cpp owner_retire.cpp owner.cpp)
  target_include_directories(queue-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${OWNER})
 endif()
+
+if(OWN_RT_HOST_ONLY)
+ add_executable(lifetime-tests lifetime_test.cpp owner.cpp)
+ target_include_directories(lifetime-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${OWNER})
+endif()

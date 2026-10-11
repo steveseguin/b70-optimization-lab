@@ -27,7 +27,7 @@ def run(name,seed,cards=2,mode='parallel',tokens=None,count=3):
     fixtures={str(f.relative_to(out)):sha(f) for f in sorted(out.glob('step*/layer-*.bf16'))}
     data=dict(name=name,seed=seed,cards=cards,mode=mode,argv=args,returncode=result.returncode,
               seconds=time.monotonic()-start,sanitizer=san,tokens=r['tokens'],fixtures=fixtures,
-              binary_sha256=sha(BIN),source_manifest_sha256=sha(BUILD/'sanitized/build.json'),
+              binary_sha256=sha(BIN),source_manifest_sha256=sha(BIN.parent/'build.json'),
               buffers_sha256=sha(out/'buffers.json') if (out/'buffers.json').exists() else None,
               timings=[json.loads(x) for x in (out/'timings.jsonl').read_text().splitlines()],
               passed=result.returncode==0 and r['passed'] and not san['violations'],
@@ -37,8 +37,9 @@ def run(name,seed,cards=2,mode='parallel',tokens=None,count=3):
     print(name,'PASS',round(data['seconds'],1),'seconds; zero violations',flush=True)
     return data
 def main():
-    parser=argparse.ArgumentParser();parser.add_argument('gate',choices=['mini','integration','real','all']);parser.add_argument('--run-root',type=Path);a=parser.parse_args()
-    global RUNROOT
+    parser=argparse.ArgumentParser();parser.add_argument('gate',choices=['mini','integration','real','all']);parser.add_argument('--run-root',type=Path);parser.add_argument('--tag',choices=['sanitized','lifetime-sanitized'],default='sanitized');a=parser.parse_args()
+    global RUNROOT, BIN
+    BIN=BUILD/a.tag/'depcheck-runtime'
     RUNROOT=(a.run_root or BUILD/f'sanitizer-{time.time_ns()}').resolve()
     assert BUILD.resolve() in RUNROOT.parents and not RUNROOT.exists(), 'fresh sanitizer output beneath build required'
     RUNROOT.mkdir(parents=True)

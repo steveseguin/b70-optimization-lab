@@ -4,7 +4,7 @@
   "cards": 2,
   "mode": "core",
   "argv": [
-    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/build/sanitized/depcheck-runtime",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/build/lifetime-sanitized/depcheck-runtime",
     "--card",
     "0",
     "--cards",
@@ -16,11 +16,11 @@
     "--max-new",
     "3",
     "--output",
-    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/build/sanitizer-final/mini-core-2-1",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/build/sanitizer-1791732310766403915/mini-core-2-1",
     "--mini"
   ],
   "returncode": 0,
-  "seconds": 0.03259998000066844,
+  "seconds": 0.03238129000237677,
   "sanitizer": {
     "device_executed": false,
     "submissions": 1072,
@@ -41,8 +41,8 @@
     "step3/layer-00.bf16": "0020e9a55b8ced12de2e07a370fb94c7e3611fbb727a753614ea580a5bcc3207",
     "step3/layer-01.bf16": "27a43cb92662505a64718cf7f44d6e6bf27bd04575d02272f8510c176a34e5b2"
   },
-  "binary_sha256": "93da236585712c2ed3e4cc1901d7346448a708eb3264f90288ae2a0926a069af",
-  "source_manifest_sha256": "968b0c3bd91534c66713ec1bb9701a7314a14ef971c78db56dfdeb296cfa1eda",
+  "binary_sha256": "7a84f25ff6864167cc536ae5d81fa21a8e72d99da2a3b6bf5072002df2c6d56a",
+  "source_manifest_sha256": "3bf05c28d060ce182a9cd236cb009cd56e200b6f3be1056ac55e8af9773fc8f9",
   "buffers_sha256": "a521c5b7fae14a1c9e99e303bc7f9d352c4e75a39c6feb3fd18ec8e933b27235",
   "timings": [
     {
@@ -51,10 +51,10 @@
       "generated_index": 1,
       "input_token": 1,
       "token_id": 1,
-      "wall_ms": 1.62665,
+      "wall_ms": 1.43866,
       "gemv_device_ms": null,
       "non_gemv_device_ms": null,
-      "transfer_wall_ms": 0.109073,
+      "transfer_wall_ms": 0.092164,
       "kernel_submissions": 99,
       "host_waits": 18
     },
@@ -64,10 +64,10 @@
       "generated_index": 2,
       "input_token": 1,
       "token_id": 1,
-      "wall_ms": 2.20124,
+      "wall_ms": 1.51389,
       "gemv_device_ms": null,
       "non_gemv_device_ms": null,
-      "transfer_wall_ms": 0.159188,
+      "transfer_wall_ms": 0.109325,
       "kernel_submissions": 99,
       "host_waits": 18
     },
@@ -77,10 +77,10 @@
       "generated_index": 3,
       "input_token": 1,
       "token_id": 1,
-      "wall_ms": 2.49111,
+      "wall_ms": 1.46621,
       "gemv_device_ms": null,
       "non_gemv_device_ms": null,
-      "transfer_wall_ms": 0.169118,
+      "transfer_wall_ms": 0.091452,
       "kernel_submissions": 99,
       "host_waits": 18
     }

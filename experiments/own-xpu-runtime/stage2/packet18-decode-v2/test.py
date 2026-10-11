@@ -58,6 +58,9 @@ def run(binary,scratch,input_dir,nongemv="parallel"):
         p=subprocess.run([str(binary),'--nongemv',nongemv,*map(str,args),'--output',str(out)],capture_output=True,text=True,timeout=240)
         assert (p.returncode==0)==ok,(p.stdout,p.stderr)
         rows.append(dict(name=name,returncode=p.returncode))
+        if ok and name.startswith('mini-') and binary.name == 'own-rt-iq3':
+            assert 'context lifetime PASS:' in p.stderr, p.stderr
+            rows[-1]['context_lifetime'] = p.stderr.strip()
         return out
     for cards in (1,2):
         for generated in (1,3,8):

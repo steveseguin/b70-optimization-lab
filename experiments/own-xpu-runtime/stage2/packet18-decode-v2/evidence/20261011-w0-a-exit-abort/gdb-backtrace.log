@@ -1,0 +1,41 @@
+Catchpoint 1 (throw)
+warning: File "/opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9.0.0-gdb.py" auto-loading has been declined by your `auto-load safe-path' set to "$debugdir:$datadir/auto-load".
+To enable execution of this file add
+	add-auto-load-safe-path /opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9.0.0-gdb.py
+line to your configuration file "/home/steve/.config/gdb/gdbinit".
+To completely disable this security protection add
+	set auto-load safe-path /
+line to your configuration file "/home/steve/.config/gdb/gdbinit".
+For more information about this security protection see the
+"Auto-loading safe path" section in the GDB manual.  E.g., run from the shell:
+	info "(gdb)Auto-loading safe path"
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+
+Thread 1 "own-rt-iq3" received signal SIGINT, Interrupt.
+
+Thread 1 "own-rt-iq3" received signal SIGUSR1, User defined signal 1.
+futex_wait (private=128, expected=2, futex_word=0x38b01b0) at ../sysdeps/nptl/futex-internal.h:146
+warning: 146	../sysdeps/nptl/futex-internal.h: No such file or directory
+=== final stop ===
+#0  futex_wait (private=128, expected=2, futex_word=0x38b01b0) at ../sysdeps/nptl/futex-internal.h:146
+#1  __GI___lll_lock_wait (futex=futex@entry=0x38b01b0, private=128) at ./nptl/lowlevellock.c:49
+#2  0x00007ffff6ca01e1 in lll_mutex_lock_optimized (mutex=0x38b01b0) at ./nptl/pthread_mutex_lock.c:48
+#3  ___pthread_mutex_lock (mutex=0x38b01b0) at ./nptl/pthread_mutex_lock.c:93
+#4  0x00007ffff00076e1 in ?? () from /lib/x86_64-linux-gnu/libze_intel_gpu.so.1
+#5  0x00007ffff0007b3c in ?? () from /lib/x86_64-linux-gnu/libze_intel_gpu.so.1
+#6  0x00007ffff6f61d47 in ze_memory_provider_free () from /opt/intel/oneapi/umf/1.1/lib/libumf.so.1
+#7  0x00007ffff6f58e64 in umfMemoryProviderFree () from /opt/intel/oneapi/umf/1.1/lib/libumf.so.1
+#8  0x00007ffff6f67100 in trackingFree () from /opt/intel/oneapi/umf/1.1/lib/libumf.so.1
+#9  0x00007ffff6f58e64 in umfMemoryProviderFree () from /opt/intel/oneapi/umf/1.1/lib/libumf.so.1
+#10 0x00007ffff6f6ef3d in disjoint_pool_finalize () from /opt/intel/oneapi/umf/1.1/lib/libumf.so.1
+#11 0x00007ffff6f568a2 in umfPoolDestroy () from /opt/intel/oneapi/umf/1.1/lib/libumf.so.1
+#12 0x00007ffff3dc892e in std::default_delete<UsmPool>::operator()(UsmPool*) const () from /opt/intel/oneapi/compiler/2026.0/lib/libur_adapter_level_zero_v2.so.0
+#13 0x00007ffff3d615a0 in ur_context_handle_t_::~ur_context_handle_t_() () from /opt/intel/oneapi/compiler/2026.0/lib/libur_adapter_level_zero_v2.so.0
+#14 0x00007ffff3d620e3 in ur::level_zero::urContextRelease(ur_context_handle_t_*) () from /opt/intel/oneapi/compiler/2026.0/lib/libur_adapter_level_zero_v2.so.0
+#15 0x00007ffff63589a3 in urContextRelease () from /opt/intel/oneapi/compiler/2026.0/lib/libur_loader.so.0
+#16 0x00007ffff71e4415 in sycl::_V1::detail::context_impl::~context_impl() () from /opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9
+#17 0x00007ffff7103fa2 in std::_Sp_counted_ptr_inplace<sycl::_V1::detail::kernel_bundle_impl, std::allocator<sycl::_V1::detail::kernel_bundle_impl>, (__gnu_cxx::_Lock_policy)2>::_M_dispose() () from /opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9
+#18 0x00000000004295ea in std::_Sp_counted_base<(__gnu_cxx::_Lock_policy)2>::_M_release_last_use_cold() ()
+#19 0x0000000000415790 in run_canary(Options const&) ()
+#20 0x000000000040a19a in main ()

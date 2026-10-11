@@ -22,7 +22,7 @@ ORACLE=experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/a
 ```bash
 nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 "$PY" -B "$P/window.py" \
   --authorized-device-window --window W0 --card 2 --seconds 600 \
-  --output "$P/build/w0-cards23-a"
+  --output "$P/build/w0-cards23-b"
 ```
 
 Run W0, W1, W2, then W3, each separately admitted. W0 uses the same sealed
@@ -73,7 +73,7 @@ created. A device window still requires coordinator admission after FAULT HALT.
 nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 "$PY" -B "$P/window.py" \
   --authorized-device-window --window W1 --card 3 --seconds 10800 \
   --input "$P/build/input" --oracle "$ORACLE" \
-  --output "$P/build/w1-card3-a"
+  --output "$P/build/w1-card3-b"
 ```
 
 Expected W1 duration: roughly 10–20 minutes, an unmeasured planning estimate;
@@ -102,9 +102,9 @@ is required if that gate fails. Missing output files are also listed.
 nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 "$PY" -B "$P/window.py" \
   --authorized-device-window --window W2 --card 2 --seconds 10800 \
   --input "$P/build/input" --oracle "$ORACLE" \
-  --w0 "$P/build/w0-cards23-a/window.json" \
-  --w1 "$P/build/w1-card3-a/window.json" \
-  --output "$P/build/w2-cards23-a"
+  --w0 "$P/build/w0-cards23-b/window.json" \
+  --w1 "$P/build/w1-card3-b/window.json" \
+  --output "$P/build/w2-cards23-b"
 ```
 
 Expected W2 duration: roughly 5–20 minutes, unmeasured; three-hour deadline.
@@ -121,9 +121,9 @@ same v2 oracle. W1's native safe teardown and every fixture hash are rechecked.
 nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 "$PY" -B "$P/window.py" \
   --authorized-device-window --window W3 --card 2 --seconds 10800 \
   --input "$P/build/input" --oracle "$ORACLE" \
-  --w0 "$P/build/w0-cards23-a/window.json" \
-  --w1 "$P/build/w1-card3-a/window.json" \
-  --output "$P/build/w3-cards23-a"
+  --w0 "$P/build/w0-cards23-b/window.json" \
+  --w1 "$P/build/w1-card3-b/window.json" \
+  --output "$P/build/w3-cards23-b"
 ```
 
 Expected W3 duration: roughly 5–20 minutes, unmeasured; three-hour deadline.
@@ -165,7 +165,7 @@ and fails the window. No memory, swap, cache, power or driver setting is changed
 ## Fresh-process repeats
 
 Separately admit the same window again, choose a new output directory, and
-append `--repeat-of "$P/build/w2-cards23-a/window.json"` for a W2 repeat (or
+append `--repeat-of "$P/build/w2-cards23-b/window.json"` for a W2 repeat (or
 the corresponding W1/W3 receipt). Boot, binary, prompt, manifest, dispatch,
 non-GEMV mode, topology, memory mode, stage, context, arithmetic, oracle hashes
 and expected tokens must match. Every fixture and token must repeat exactly.
@@ -237,3 +237,29 @@ nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/pyt
 ```
 
 Seven [host-only native CLI checks](deadline-native-cli-tests.json) also pass: default 600 s, accepted 300/1800 s, and refused 0/30/299/1801 s. No device binary ran.
+
+## October 11: SYCL lifetime repair (CPU only)
+
+Closed arm: **SYCL object outliving the owner's context release**. The canary's
+bundle and all work captures now die in an inner scope before owner shutdown,
+including exception unwinding. [Lifetime inventory and reuse reasoning](LIFETIME.md)
+covers two-card decode, peer copies, fixtures and all linked kernel sources.
+The native decode/owner/adapter arithmetic and launch order are unchanged.
+Fresh unit, mini/integration, canary mock and mini dependency-sanitizer checks
+are recorded in `build-receipt.json`; full-model gates are explicitly carried
+forward in `lifetime-reuse.json`, with original hashes and binary identities.
+No device binary, discovery, real-model CPU run or host setting change occurred.
+
+The original W1 device receipt and W0 passing-work/abnormal-exit evidence are
+preserved. Both old build window directories and the existing fault latch remain
+untouched. The coordinator resolves the existing latch under its admission
+protocol before running these fresh commands; these commands do not clear it.
+Use the new `-b` directories below. W1 and W0 must both pass on this new binary
+before W2/W3. A native passing receipt followed by abnormal exit remains failed,
+with the exact diagnosis “device work passed; exit abnormal”.
+
+Cheap-only rebuild/reseal: `nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2
+/home/steve/.venvs/vllm-xpu/bin/python -B
+experiments/own-xpu-runtime/stage2/packet18-decode-v2/repair_build.py`.
+The earlier `build.py` watchdog-only reuse command is historical and cannot
+validate this repair; it deliberately refuses existing device-window evidence.

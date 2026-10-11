@@ -1,0 +1,202 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "commands": [
+    {
+      "argv": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/build/host/authority-tests"
+      ],
+      "returncode": 0,
+      "stdout": "75 independent production-shape arithmetic comparisons; 75 R5 comparisons; unknown shape refused\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/build/host/owner-retirement-tests"
+      ],
+      "returncode": 0,
+      "stdout": "4 owner retirement cases PASS\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/build/host/chain-tests"
+      ],
+      "returncode": 0,
+      "stdout": "7 deferred chain/lifetime checks PASS; 5000 copies without intervening wait\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/build/host/queue-tests"
+      ],
+      "returncode": 0,
+      "stdout": "4/4 peer-drain and foreign-dependency gates PASS\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/build/host/lifetime-tests"
+      ],
+      "returncode": 0,
+      "stdout": "7/7 context lifetime controls pass (six late-destruction detections, exception unwind)\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/steve/.venvs/vllm-xpu/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/test.py",
+        "--binary",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/build/host/own-rt-iq3",
+        "--scratch",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/build/lifetime-tests-core-1791732024557890309",
+        "--input",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/build/input",
+        "--receipt",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/cpu-mini-core.json",
+        "--nongemv",
+        "core"
+      ],
+      "returncode": 0,
+      "stdout": "{\n  \"schema\": \"own-runtime.iq3.packet18.cpu-tests.v1\",\n  \"passed\": true,\n  \"device_executed\": false,\n  \"tests\": [\n    {\n      \"name\": \"mini-1-1\",\n      \"returncode\": 0,\n      \"exact\": true,\n      \"buffers\": 113,\n      \"values\": 3873,\n      \"tokens\": [\n        1\n      ]\n    },\n    {\n      \"name\": \"mini-1-3\",\n      \"returncode\": 0,\n      \"exact\": true,\n      \"buffers\": 113,\n      \"values\": 3873,\n      \"tokens\": [\n        1,\n        1,\n        1\n      ]\n    },\n    {\n      \"name\": \"mini-1-8\",\n      \"returncode\": 0,\n      \"exact\": true,\n      \"buffers\": 113,\n      \"values\": 3873,\n      \"tokens\": [\n        2,\n        2,\n        2,\n        2,\n        2,\n        2,\n        2,\n        2\n      ]\n    },\n    {\n      \"name\": \"mini-2-1\",\n      \"returncode\": 0,\n      \"exact\": true,\n      \"buffers\": 113,\n      \"values\": 3873,\n      \"tokens\": [\n        1\n      ]\n    },\n    {\n      \"name\": \"mini-2-3\",\n      \"returncode\": 0,\n      \"exact\": true,\n      \"buffers\": 113,\n      \"values\": 3873,\n      \"tokens\": [\n        1,\n        1,\n        1\n      ]\n    },\n    {\n      \"name\": \"mini-2-8\",\n      \"returncode\": 0,\n      \"exact\": true,\n      \"buffers\": 113,\n      \"values\": 3873,\n      \"tokens\": [\n        2,\n        2,\n        2,\n        2,\n        2,\n        2,\n        2,\n        2\n      ]\n    },\n    {\n      \"name\": \"repeat\",\n      \"returncode\": 0\n    },\n    {\n      \"name\": \"context-rejection\",\n      \"returncode\": 1\n    },\n    {\n      \"name\": \"bad-memory-mode\",\n      \"returncode\": 1\n    },\n    {\n      \"name\": \"bad-cards\",\n      \"returncode\": 1\n    },\n    {\n      \"name\": \"host-native-refusal\",\n      \"returncode\": 1\n    },\n    {\n      \"name\": \"real-plan-1\",\n      \"returncode\": 0,\n      \"tensors\": 1224,\n      \"owned_weight_bytes\": [\n        52629189120\n      ],\n      \"dispatch_sites\": 1821\n    },\n    {\n      \"name\": \"real-plan-2\",\n      \"returncode\": 0,\n      \"tensors\": 1224,\n      \"owned_weight_bytes\": [\n        26165134080,\n        26464055040\n      ],\n      \"dispatch_sites\": 1825\n    }\n  ],\n  \"binary_sha256\": \"669e10d7445b784895149dffe150b1644dbfc9a229fe129fb674f214942fbd71\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/steve/.venvs/vllm-xpu/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/test.py",
+        "--binary",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/build/host/own-rt-iq3",
+        "--scratch",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/build/lifetime-tests-parallel-1791732026804533925",
+        "--input",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/build/input",
+        "--receipt",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/cpu-mini-parallel.json",
+        "--nongemv",
+        "parallel"
+      ],
+      "returncode": 0,
+      "stdout": "{\n  \"schema\": \"own-runtime.iq3.packet18.cpu-tests.v1\",\n  \"passed\": true,\n  \"device_executed\": false,\n  \"tests\": [\n    {\n      \"name\": \"mini-1-1\",\n      \"returncode\": 0,\n      \"exact\": true,\n      \"buffers\": 113,\n      \"values\": 3873,\n      \"tokens\": [\n        1\n      ]\n    },\n    {\n      \"name\": \"mini-1-3\",\n      \"returncode\": 0,\n      \"exact\": true,\n      \"buffers\": 113,\n      \"values\": 3873,\n      \"tokens\": [\n        1,\n        1,\n        1\n      ]\n    },\n    {\n      \"name\": \"mini-1-8\",\n      \"returncode\": 0,\n      \"exact\": true,\n      \"buffers\": 113,\n      \"values\": 3873,\n      \"tokens\": [\n        2,\n        2,\n        2,\n        2,\n        2,\n        2,\n        2,\n        2\n      ]\n    },\n    {\n      \"name\": \"mini-2-1\",\n      \"returncode\": 0,\n      \"exact\": true,\n      \"buffers\": 113,\n      \"values\": 3873,\n      \"tokens\": [\n        1\n      ]\n    },\n    {\n      \"name\": \"mini-2-3\",\n      \"returncode\": 0,\n      \"exact\": true,\n      \"buffers\": 113,\n      \"values\": 3873,\n      \"tokens\": [\n        1,\n        1,\n        1\n      ]\n    },\n    {\n      \"name\": \"mini-2-8\",\n      \"returncode\": 0,\n      \"exact\": true,\n      \"buffers\": 113,\n      \"values\": 3873,\n      \"tokens\": [\n        2,\n        2,\n        2,\n        2,\n        2,\n        2,\n        2,\n        2\n      ]\n    },\n    {\n      \"name\": \"repeat\",\n      \"returncode\": 0\n    },\n    {\n      \"name\": \"context-rejection\",\n      \"returncode\": 1\n    },\n    {\n      \"name\": \"bad-memory-mode\",\n      \"returncode\": 1\n    },\n    {\n      \"name\": \"bad-cards\",\n      \"returncode\": 1\n    },\n    {\n      \"name\": \"host-native-refusal\",\n      \"returncode\": 1\n    },\n    {\n      \"name\": \"real-plan-1\",\n      \"returncode\": 0,\n      \"tensors\": 1224,\n      \"owned_weight_bytes\": [\n        52629189120\n      ],\n      \"dispatch_sites\": 1821\n    },\n    {\n      \"name\": \"real-plan-2\",\n      \"returncode\": 0,\n      \"tensors\": 1224,\n      \"owned_weight_bytes\": [\n        26165134080,\n        26464055040\n      ],\n      \"dispatch_sites\": 1825\n    }\n  ],\n  \"binary_sha256\": \"669e10d7445b784895149dffe150b1644dbfc9a229fe129fb674f214942fbd71\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/build/host/own-rt-iq3",
+        "--canary",
+        "--cards",
+        "2",
+        "--card",
+        "0",
+        "--memory",
+        "resident",
+        "--seconds",
+        "600",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/build/lifetime-canary-1791732029077394749"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "context lifetime PASS: 2550 destructions, native release last, zero late destructions\n"
+    },
+    {
+      "argv": [
+        "/home/steve/.venvs/vllm-xpu/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/test_window.py"
+      ],
+      "returncode": 0,
+      "stdout": "W2/W3 memory admission bytes: {'MemAvailable': 42206512158, 'GPUActive': 99, 'owned_device_bytes': [10, 20], 'host_backed_table_bytes': 29321610240, 'reserve_bytes': 12884901888, 'required_MemAvailable': 42206512158}\nW2/W3 memory admission bytes: {'MemAvailable': 42206512157, 'GPUActive': 99, 'owned_device_bytes': [10, 20], 'host_backed_table_bytes': 29321610240, 'reserve_bytes': 12884901888, 'required_MemAvailable': 42206512158}\n",
+      "stderr": "........................................\n----------------------------------------------------------------------\nRan 40 tests in 0.980s\n\nOK\n"
+    },
+    {
+      "argv": [
+        "/home/steve/.venvs/vllm-xpu/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/test_mismatch.py"
+      ],
+      "returncode": 0,
+      "stdout": "2/2 CPU wrong-fixture rejections pass\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/steve/.venvs/vllm-xpu/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/census.py"
+      ],
+      "returncode": 0,
+      "stdout": "card 0 owned_bytes 26481071676 weights 26165134080 dispatch frozen\ncard 1 owned_bytes 26780213652 weights 26464055040 dispatch frozen\ncard 0 owned_bytes 27220235836 weights 26904298240 dispatch r5\ncard 1 owned_bytes 27850908052 weights 27534749440 dispatch r5\n",
+      "stderr": ""
+    }
+  ],
+  "canary": {
+    "schema": "own-runtime.iq3.packet18.canary.v2",
+    "passed": true,
+    "owner_cards": 2,
+    "device_executed": false,
+    "startup_jit_ms": 0.01036,
+    "device_work_ms": 0,
+    "work_wall_ms": 2.48491,
+    "teardown_ms": 0.014287,
+    "submission_budget_passed": true,
+    "total_expectation_ms": 30000,
+    "total_expectation_exceeded": false,
+    "round_trips": 100,
+    "kernels_per_card": 1000,
+    "token_sequence": true,
+    "owned_device_bytes": 1344,
+    "wall_ms": 2.51042,
+    "max_submission_ns": 0,
+    "host_waits": 545,
+    "teardown": [
+      {
+        "schema": "own-xpu-runtime.teardown.v1",
+        "backend": "MockDevice",
+        "status": "complete",
+        "exit_code": 0,
+        "safe_to_exit": true,
+        "idle_marker_complete": true,
+        "in_flight": 0,
+        "live_bytes": 0,
+        "error": "",
+        "sequence": [
+          "quiesce",
+          "drain",
+          "graphs-released",
+          "free:workspace:card0:data",
+          "free:workspace:card0:streams",
+          "free:workspace:card0:token",
+          "free:workspace:card0:position",
+          "free:workspace:card0:active",
+          "free:workspace:card0:error",
+          "free:workspace:card0:next_token",
+          "free:workspace:card0:scratch",
+          "free:workspace:card0:rope",
+          "free:workspace:card0:control",
+          "free:workspace:card0:scores",
+          "free:workspace:card0:probabilities",
+          "free:workspace:card1:data",
+          "free:workspace:card1:streams",
+          "free:workspace:card1:token",
+          "free:workspace:card1:position",
+          "free:workspace:card1:active",
+          "free:workspace:card1:error",
+          "free:workspace:card1:next_token",
+          "free:workspace:card1:scratch",
+          "free:workspace:card1:rope",
+          "free:workspace:card1:control",
+          "free:workspace:card1:scores",
+          "free:workspace:card1:probabilities",
+          "free:pinned-copy-slab:canary-host",
+          "idle-marker-complete",
+          "events-released",
+          "queue-released",
+          "context-released"
+        ]
+      }
+    ]
+  }
+}

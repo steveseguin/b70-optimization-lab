@@ -15,16 +15,20 @@ static int run_canary(const Options& a) {
  require(a.cards==2 && a.seconds>=300 && a.seconds<=1800,"canary: two cards and watchdog 300..1800 seconds");
  auto start=std::chrono::steady_clock::now();
 #ifdef OWN_RT_HOST_ONLY
- auto backend=std::make_unique<Host>();auto select=[](int){};
+ auto backend=std::make_unique<Host>();auto raw=backend.get();auto select=[](int){};
 #else
  auto backend=std::make_unique<tp2::Context>(a.card,a.card+1);auto raw=backend.get();
  auto select=[&](int c){raw->allocation_card=c;};
- auto compiled=raw->canary_bundle(); // Hold the compiled bundle through teardown.
 #endif
- double startup_jit_ms=Engine::ms(start);auto work_start=std::chrono::steady_clock::now();
- ownrt::Device d(std::move(backend));ownrt::CopyEngine copy(d,4096,1);
+ ownrt::Device d(std::move(backend));
+ double startup_jit_ms=0,work_wall_ms=0,max_ns=0,device_ns=0;
+ bool submission_budget_passed=true;unsigned waits=0;size_t bytes=0;
+ { // All context borrowers unwind before the owner, including on exceptions.
+ auto compiled=raw->canary_bundle();
+ startup_jit_ms=Engine::ms(start);auto work_start=std::chrono::steady_clock::now();
+ ownrt::CopyEngine copy(d,4096,1);
  std::array<std::map<std::string,Allocation>,2> b;
- std::vector<ownrt::Event> segment;ownrt::Event tail=0;double max_ns=0,device_ns=0;bool submission_budget_passed=true;unsigned waits=0;
+ std::vector<ownrt::Event> segment;ownrt::Event tail=0;
  auto guard=[&]{require(!stopped,"canary cooperative stop");};
  auto drain=[&]{if(!tail)return;guard();++waits;require(d.wait(tail,std::chrono::seconds(5)),"canary five-second drain timeout");
 #ifndef OWN_RT_HOST_ONLY
@@ -61,8 +65,10 @@ static int run_canary(const Options& a) {
  verify(0,"position",1,1);verify(1,"position",1,1);
  verify(0,"next_token",7,1);verify(0,"error",0,1);verify(1,"error",0,1);verify(1,"streams",7,64);
  for(int c=0;c<2;++c){for(int i=0;i<1000;++i)increment(c);drain();verify(c,"data",1200,64);}
- auto bytes=d.arena.total(Memory::device);require(bytes<16*1024*1024,"canary allocation bound");
- double work_wall_ms=Engine::ms(work_start);auto teardown_start=std::chrono::steady_clock::now();
+ bytes=d.arena.total(Memory::device);require(bytes<16*1024*1024,"canary allocation bound");
+ work_wall_ms=Engine::ms(work_start);
+ } // compiled bundle, copy wrapper and submission captures are now destroyed.
+ auto teardown_start=std::chrono::steady_clock::now();
  auto receipt=d.shutdown(std::chrono::seconds(5));require(receipt.safe_to_exit,"canary unsafe teardown");
  double elapsed=Engine::ms(start),teardown_ms=Engine::ms(teardown_start);
  std::ostringstream out;out<<"{\"schema\":\"own-runtime.iq3.packet18.canary.v2\",\"passed\":"<<(submission_budget_passed?"true":"false")<<",\"owner_cards\":2,\"device_executed\":"

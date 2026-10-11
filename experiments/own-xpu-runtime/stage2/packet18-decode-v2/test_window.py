@@ -64,6 +64,21 @@ class Windows(unittest.TestCase):
         record = w.supervise(child, seconds, 'cursor', io.StringIO(), latched.append, lambda: None,
                              requested, journal=journal, now=clock.now, sleep=clock.sleep, drain_seconds=2)
         return record, requested, latched
+    def test_passing_receipt_abnormal_exit_stays_failed(self):
+        self.fake_run(cards=2)
+        record = dict(window='W2', cards=2, returncode=-6, passed=False)
+        w.exit_diagnostics(record, self.root / 'run/receipt.json')
+        self.assertFalse(record['passed'])
+        self.assertEqual(record['exit_status'], 'device work passed; exit abnormal')
+        self.assertTrue(record['native_work_passed'])
+        for changes in ({'passed': False}, {'teardown': []}, {'device_executed': False}):
+            receipt = w.read(self.root / 'run/receipt.json')
+            self.write(self.root / 'run/receipt.json', dict(receipt, **changes))
+            row = dict(window='W2', cards=2, returncode=-6, passed=False)
+            w.exit_diagnostics(row, self.root / 'run/receipt.json')
+            self.assertNotIn('exit_status', row)
+        w.exit_diagnostics(record, self.root / 'missing.json')
+
     def test_watchdog_bounds_and_defaults(self):
         self.assertEqual(w.watchdog_seconds('W0'), 600)
         for value in (0, 30, 299, 1801):

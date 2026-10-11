@@ -284,6 +284,24 @@ def w0_gate(path, binary_hash, boot, card, environment):
     canary_receipt_gate(read(native))
     return row
 
+def exit_diagnostics(record, native):
+    """A passing receipt cannot override abnormal process exit."""
+    if record.get('returncode') in (None, 0) or not native.is_file():
+        return
+    try:
+        run = read(native)
+        complete = (run.get('passed') is True and run.get('device_executed') is True
+                    and safe_teardown(run, record['cards']))
+        if complete and record['window'] == 'W0':
+            canary_receipt_gate(run)
+        if complete:
+            record.update(passed=False, native_work_passed=True,
+                          exit_status='device work passed; exit abnormal',
+                          native_receipt_sha256=sha(native), native_receipt=run)
+    except (OSError, ValueError, KeyError, TypeError):
+        return
+
+
 def run_w0(a, cfg, binary, boot, out, latch, bindings, dependency_preflight, environment):
     watchdog_seconds('W0', a.seconds)
     require(a.repeat_of is None, 'W0 is a single canary; no automatic repeat')
@@ -313,8 +331,9 @@ def run_w0(a, cfg, binary, boot, out, latch, bindings, dependency_preflight, env
         record.update(pid=child.pid, device_executed=True)
         persist()
         record.update(supervise(child, a.seconds, cursor, kernel, latch_fault, persist, requested))
+    exit_diagnostics(record, out / 'run/receipt.json')
     try:
-        require(record['returncode'] == 0 and not requested, 'W0 child failed/stopped')
+        require(record['returncode'] == 0 and not requested, record.get('exit_status', 'W0 child failed/stopped'))
         for path, digest in bindings.items():
             require(sha(path) == digest, 'W0 binding changed: '+str(path))
         native = out / 'run/receipt.json'
@@ -422,6 +441,7 @@ def main():
         record.update(pid=child.pid, device_executed=True)
         persist()
         record.update(supervise(child, a.seconds, cursor, kernel, latch_fault, persist, requested))
+    exit_diagnostics(record, out / 'run/receipt.json')
     record['memory_end'] = memory_snapshot()
     memory_log = out / 'run/host-memory.jsonl'
     record['native_memory_samples'] = [json.loads(line) for line in memory_log.read_text().splitlines()] if memory_log.exists() else []
@@ -432,7 +452,7 @@ def main():
         native_path = out / 'run/receipt.json'
         observed = read(native_path).get('tokens', []) if native_path.exists() else []
         record.update(token_diagnostics(observed, expected_tokens))
-        require(record['returncode'] == 0 and not requested, 'native child failed/stopped')
+        require(record['returncode'] == 0 and not requested, record.get('exit_status', 'native child failed/stopped'))
         for path, digest in bindings.items():
             require(sha(path) == digest, 'bound input/source changed during window: ' + str(path))
         run, actual = compare_run(out, cfg, expected_hashes, expected_tokens, a.oracle, record)

@@ -7,7 +7,7 @@
 #include "backend.hpp"
 #endif
 #ifdef OWN_RT_HOST_ONLY
-#include "mock_device.hpp"
+#include "lifetime_mock.hpp"
 #endif
 #include <csignal>
 #include <filesystem>
@@ -66,11 +66,11 @@ static bool ends(const std::string &s, const std::string &suffix) {
   return s.ends_with(suffix);
 }
 #ifdef OWN_RT_HOST_ONLY
-class Host final : public ownrt::MockDevice {
+class Host final : public packet18::LifetimeMock {
 public:
   ownrt::Event copy(void *a, const void *b, size_t n,
                     std::span<const ownrt::Event> d) override {
-    auto e = MockDevice::copy(a, b, n, d);
+    auto e = LifetimeMock::copy(a, b, n, d);
     finish(e);
     return e;
   }
