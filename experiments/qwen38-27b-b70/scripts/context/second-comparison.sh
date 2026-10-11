@@ -45,6 +45,18 @@
 #   N32j                                    N32 with thinking only where a question, refusal or error is in view; the notes call thinks
 #   N32f                                    N32j whose notes call does not think and whose cut goes down to 50 % (fewer, cheaper notes calls)
 #   N200j                                   N32j at the 200K cap
+#   N64j                                    N32j at a 64K live window
+#   N32j35                                  N32j cutting down to 35 % of the window instead of 60 % (about half as many notes calls)
+#   N32d                                    N32j with changes-only notes: the notes call writes only the lines that changed, with the
+#                                           working on the line and no thinking; the harness applies them and checks the sums (campaign 10)
+#   N32dth                                  N32d with a notes call that thinks;  N32d35: N32d cutting down to 35 %
+#   R32                                     retrieval only ("RAG"): the plain window agent, cut items go to a store, and at each question
+#                                           the 20 best-matching stored sentences per question are shown, each with the sentence
+#                                           after it (BM25 over sentences indexed with their item number, rag_retrieve.py);
+#                                           no notes, no pinned rules, no search tool
+#   N32r                                    rules-only notes + retrieval: only new rules are noted at a cut (no thinking), values are
+#                                           worked out from the retrieved sentences and `recall`
+#   N32jr N32dr                             N32j / N32d plus the retrieved sentences at each question
 #   X32b                                    X32 with tools/ctxkeeper as of commit c16585171 (notes call effort and retry, search limit,
 #                                           stable history fingerprint); a separate name so the first runs stay on record
 #   X32                                     the plain agent with no context budget (it sends its whole history), served through the
@@ -160,6 +172,9 @@ ARMS["N200"] = ("truncate", "memory", 204800)         # the same at the 200K cap
 ARMS["N32j"] = ("truncate", "memory", 32768)          # N32 thinking only on calls that hold a question or an error; the notes call thinks
 ARMS["N32f"] = ("truncate", "memory", 32768)          # N32j with a notes call that does not think and a deeper cut (to 50 %): the fast setting
 ARMS["N200j"] = ("truncate", "memory", 204800)        # N32j at the 200K cap
+ARMS["N64j"] = ("truncate", "memory", 65536)          # N32j at a 64K live window
+for a in ("N32j35", "N32d", "N32dth", "N32d35", "R32", "N32r", "N32jr", "N32dr"):   # campaign 10 (see the header)
+    ARMS[a] = ("truncate", "memory", 32768)
 ARMS["X32"] = ("plain", "memory", 0)                  # the plain agent with no budget of its own, served through tools/ctxkeeper
 ARMS["X32b"] = ("plain", "memory", 0)                 # X32 again after the proxy fixes of 2026-10-11 (same arm; a new name keeps both results)
 for a in ("A", "B32", "C32", "E32"):  # same arm with earlier thinking dropped from every call
@@ -292,6 +307,18 @@ run_one() {  # arm agent budget task_dir job_name drop_old_thinking
     [[ "$arm" == N32j || "$arm" == N200j ]] && extra="thinking_policy=judgement notes_thinking=true"
     [[ "$arm" == N32f ]] && extra="thinking_policy=judgement notes_thinking=false truncate_target_ratio=0.5"
   fi
+  local jt="thinking_policy=judgement notes_thinking=true" jf="thinking_policy=judgement notes_thinking=false"
+  case "$arm" in                                   # campaign 10: cheaper notes, and retrieval ("RAG") alone and added
+    N64j)   xa=(-a clm_keeper:KeeperAgent); extra="$jt" ;;
+    N32j35) xa=(-a clm_keeper:KeeperAgent); extra="$jt truncate_target_ratio=0.35" ;;
+    N32d)   xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=delta" ;;
+    N32dth) xa=(-a clm_keeper:KeeperAgent); extra="$jt notes_mode=delta" ;;
+    N32d35) xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=delta truncate_target_ratio=0.35" ;;
+    R32)    xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=none auto_retrieve=20 recall_tool=false" ;;
+    N32r)   xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=rules auto_retrieve=20" ;;
+    N32jr)  xa=(-a clm_keeper:KeeperAgent); extra="$jt auto_retrieve=20" ;;
+    N32dr)  xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=delta auto_retrieve=20" ;;
+  esac
   echo "arm=$arm agent_class=${xa[1]:-run-context-job.sh default for $agent} extra_kwargs=$extra fold_batches=${fb:-1}" > "$RUNS/$job.arm.txt"
   TASKS="$td" JOB_NAME="$job" CONTEXT_BUDGET="$budget" DROP_OLD_THINKING="$drop" THINK_CAP="$tc" ENABLE_THINKING="$et" THINKING_POLICY="$tp" SHOW_WINDOW="$sw" FOLD_MODE="$fm" ARCHIVE="$ar" QUOTED="$qt" FOLD_BATCHES="$fb" API_BASE="$api" EXTRA_KWARGS="${EXTRA_KWARGS:-} $extra" "$D/run-context-job.sh" "$agent" "$RUNS" "${xa[@]}" > "$RUNS/$job.out" 2>&1
   local rc=$?
@@ -336,5 +363,5 @@ if [[ "${STUB:-0}" == 1 ]]; then   # storage-rule probes (memory mode, no budget
 fi
 
 echo; echo "== table (all trials of this comparison)"
-"$PY" "$D/summarize_results.py" --json "$O/summary.json" "$RUNS"/jobs/[A-ENPWX]* | tee "$O/summary.txt"
+"$PY" "$D/summarize_results.py" --json "$O/summary.json" "$RUNS"/jobs/[A-ENPRWX]* | tee "$O/summary.txt"
 [[ $FAILED == 0 ]] || { echo "!!! at least one trial was ended by a cap/timeout/rule; see the lines above"; exit 1; }

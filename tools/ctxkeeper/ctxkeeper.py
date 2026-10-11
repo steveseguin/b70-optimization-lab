@@ -137,9 +137,12 @@ def rule_lines(notes: str) -> list[str]:
 
 
 def same_rule(a: str, b: str) -> bool:
-    """Two wordings of one rule: most of the words of the shorter are in the longer."""
+    """Two wordings of one rule: most of the words of the shorter are in the longer, and both name the same things
+    (every word with a digit in it: names such as abcd12, and numbers). "abcd12 is secret" and "efgh34 is secret"
+    share all but one word and are two rules (found by review, 2026-10-11)."""
     wa, wb = set(re.findall(r"\w+", a.lower())), set(re.findall(r"\w+", b.lower()))
-    return bool(wa and wb) and len(wa & wb) >= 0.8 * min(len(wa), len(wb))
+    named = lambda w: {t for t in w if any(c.isdigit() for c in t)}
+    return bool(wa and wb) and named(wa) == named(wb) and len(wa & wb) >= 0.8 * min(len(wa), len(wb))
 
 
 def keep_rules(old: str, new: str) -> tuple[str, list[str]]:

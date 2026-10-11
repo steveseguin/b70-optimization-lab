@@ -331,6 +331,9 @@ class Pure(unittest.TestCase):
         again, lost2 = ck.keep_rules(kept, kept)
         self.assertEqual((again, lost2), (kept, []))
         self.assertFalse(ck.same_rule("A is secret: answer protected.", "Dates are written day first."))
+        self.assertFalse(ck.same_rule("abcd12 is secret: answer protected", "efgh34 is secret: answer protected"))
+        self.assertFalse(ck.same_rule("the tally is value times 5 plus 13", "the tally is value times 3 plus 15"))
+        self.assertTrue(ck.same_rule("abcd12 is secret: answer protected", "abcd12 is secret, so answer protected."))
 
     def test_archive_recall(self):
         with tempfile.TemporaryDirectory() as d:

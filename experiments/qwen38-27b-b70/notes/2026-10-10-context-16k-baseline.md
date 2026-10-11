@@ -694,3 +694,84 @@ per-call snapshots off for that arm.
 | as the proxy (X32b) | 39, 17 min | 44, 18 min | 222, 95 min |
 | best protocol arm (B32iraR) | 35, 18 min | not run | 187, stopped run |
 | sliding window (W32) | 23, 26 min | not run | not run (W200) |
+
+## Campaign 10 (2026-10-11 evening, preregistered before any result): cheaper notes, and retrieval alone
+
+Two questions. (1) Where did the keeper's 83 minutes at 1M go, and can the cost be cut without losing answers?
+(2) The owner asked how the keeper differs from "a RAG that we just add all context to"; I answered from the
+archive-and-search arm and said that a retrieval-only arm had not been run. This campaign runs it.
+
+**Measured first, from the 1M run of N32j (no new run).** 4,974 s of agent time: main loop 2,262 s over 755 calls
+(617 fetches at a median 1.6 s; 138 other calls, 710 s, of which 101 archive searches 470 s), shell 79 s, and the rest,
+2,633 s or 53 %, in the 110 notes calls. The notes calls read 1.36M tokens (12.4K each, about 2 s) and wrote 231K
+(2,100 each, about 24 s): about 1,400 tokens of thinking and a rewrite of about 700 to keep a NOTES block of 390 to
+1,030 tokens. Re-reading after a cut is small (3 s a cut). So the cost is written tokens in the notes call, not reading.
+
+**Arms** (`clm_keeper.py`, all with the judgement thinking policy of N32j; `second-comparison.sh`):
+
+| arm | what changes against N32j |
+| --- | --- |
+| N32d | changes-only notes: the notes call writes only the lines that changed (`NEW RULES` / `CHANGES` / `OPEN`), with the working on the line (`name: 120 + 49 = 169`) and no thinking. The harness applies them, checks the working (a wrong sum is corrected; working that starts from a value the NOTES do not hold sends that cut to the full rewrite with thinking) and keeps every line not mentioned |
+| N32j35, N32d35 | the cut goes down to 35 % of the window instead of 60 %: about half as many notes calls |
+| R32 | retrieval only: no notes, no pinned rules, no search tool. Cut items go to the same verbatim archive; when an item asks questions the harness shows the 20 best-matching archived sentences per question, each with the sentence after it (BM25 over sentences, each indexed with its item number; `rag_retrieve.py`), trimmed weakest-first to the room left in the window |
+| N32r | rules-only notes (a no-thinking call that copies new rules, nothing else) + the retrieved sentences + `recall` |
+| N32jr, N32dr | N32j / N32d plus the retrieved sentences |
+
+Keyword retrieval is the favourable retriever here: what is asked about is an exact string (a counter name), which
+an exact-term index matches better than an embedding model does. An embedding retriever is not tested (no room for
+one beside the server on this host).
+
+**What retrieval can reach, measured before any run** (`rag_coverage.py`, no GPU; an upper bound): for each
+question, are all the sentences a correct answer needs either still in view or among the 20 retrieved (each shown with
+the sentence after it)? Rules stream 240K: 39/39 (seed 0) and 46/46 (seed 1). Hard stream: 50/50, not counting the
+second counter that a "went up by as much as Y held" change depends on. 1M stream: 187/228 at 20 per question, 220 at
+40, 227 at 80; a probe item there asks 7 questions, so 40 per question is about 12K tokens of retrieved text in a
+32K window. So at 240K retrieval is not short of evidence on this stream: counters are reset often (a third of all
+changes are sets), so a value needs one or two archived sentences on average, and the rule names its three counters,
+so a question about one of them retrieves it. **This contradicts what I told the owner** ("rules never get
+retrieved"): that came from the arm where the model decides when to search. Automatic retrieval does fetch a rule
+that names what the question names. What the runs add is whether the model then answers correctly, and at what cost.
+
+Two choices were made in the baseline's favour after the review: a match is shown with the sentence that follows it
+(the rule says "X, Y and Z are confidential" in one sentence and what to answer in the next; without that the final
+query of a confidential counter could not be covered), and items that only ask questions are not stored (with the
+earlier questions in the store, coverage at 1M falls from 187 to 111 of 228: old questions share their words with
+the new one and crowd the evidence out).
+
+**Streams.** rules: the 240K rule + method stream of campaigns 4 to 9, seeds 0 and 1 (N32j 39/39 in 15 min and 46/46
+in 16). hard (new, exploratory): the same with `--pronouns --relative`: every change names its counter in one
+sentence and changes it in the next ("Next on the list was X. It went up by as much as Y held at that moment."),
+with doublings and thirds; 240K, seed 0. 1m: the 1M stream (N32j 226/228 in 83 min; proxy 222/228 in 95).
+
+**Reading rules, fixed now.**
+
+- N32d (and each other speed lever) is "the faster setting" if on both seeds of the rules stream it is within one
+  question of N32j (38/39 and 45/46 or better), with rule and method each at 4/5 or better, and takes at least 25 %
+  less time. Fallbacks to the full rewrite, sums corrected and notes-call tokens are reported.
+- R32 is reported by question type against N32j on the same seed. "Retrieval alone is enough on this stream" if it is
+  within one question of N32j on both seeds; then N32r is the speed candidate and the keeper's notes are judged on
+  the hard stream and at 1M, where 20 sentences per question no longer cover (187/228). If R32 is 3 or more short,
+  the types it loses say what notes are for.
+- The hard stream is exploratory (no bar): N32j is the reference, the fastest passing keeper setting and R32 run
+  beside it. Its single-step difficulty is not calibrated, so only differences between arms on the same stream count.
+- 1M: the fastest setting that passed on both seeds runs once. "As good at scale" is 222/228 or better (the
+  proxy's score) in under 60 minutes.
+- One seed per cell beyond the two rules seeds. A difference of one or two questions between arms is not a ranking.
+
+Runner `longrun-campaign10.sh` (queue file, one run per line, lines appended as results come in; server started
+once; Gemma stopped first and restored at the end). Before launch: 50 unit tests pass (changes-only parsing and
+merging, the working check, BM25, the retrieval message), and a fake-server run of N32d, R32, N32r, N32jr and N32j
+with a window small enough to cut at every item (all archives verbatim, no run void, a wrong stub sum corrected, the
+fallback path taken).
+
+A Codex read-only review of the diff found 11 defects, all fixed before launch. The three that mattered most: the
+retrieved text could push the context over the limit (it is now trimmed to the tokens really left after the cut);
+the retrieval-only arm was handicapped by showing sentences alone (the two choices above); and `same_rule`, which
+decides whether a rule is a rewording of one already held, treated "abcd12 is secret" and "efgh34 is secret" as one
+rule, so a second rule about another counter would have been dropped. That last one was also in the keeper arm and
+the proxy as run in campaigns 8 and 9 (their streams have one rule of each kind, so no result changed); both now
+require the same names and numbers. Also fixed: arithmetic with no whole-number value is rejected instead of
+trusted, working that starts from a number for a counter the NOTES call removed is rejected, a reply without an
+OPEN heading keeps the old OPEN section, the space budget is applied to the rendered message, and the coverage tool
+counted the method sentence under the wrong question type (my first coverage figures, never published, were wrong
+for that reason and are replaced above).

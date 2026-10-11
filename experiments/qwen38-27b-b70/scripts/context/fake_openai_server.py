@@ -359,7 +359,20 @@ class H(BaseHTTPRequestHandler):
             if os.environ.get("FAKE_REASONING") == "1":   # replies carry thinking the harness must strip later
                 msg["reasoning_content"] = "stub thinking for call %d" % len(msgs)
         else:
-            msg = {"role": "assistant", "content": "Stub summary: nothing to report."}
+            # a keeper notes request (clm_keeper / tools/ctxkeeper) is answered in the layout it asks for: a full
+            # NOTES rewrite, or the changes only (one sum deliberately wrong: the harness must correct it)
+            ask = str(msgs[-1].get("content") or "") if msgs else ""
+            n = len(re.findall(r"(?m)^OUTPUT: ITEM \d+/", ask))
+            if "=== TURNS BEING MOVED OUT ===" in ask and "NEW RULES" in ask:
+                text = "NEW RULES\n- Stub rule: answer politely.\n"
+                if "\nCHANGES\n" in ask:
+                    text += "CHANGES\nstubitems: %d\nstubsum: 2 + 2 = 5\n" % n
+                text += "OPEN\n- nothing"
+            elif "=== TURNS BEING MOVED OUT ===" in ask:
+                text = "RULES\n- Stub rule: answer politely.\nSTATE\nstubitems: %d\nOPEN\n- nothing" % n
+            else:
+                text = "Stub summary: nothing to report."
+            msg = {"role": "assistant", "content": text}
             fr = "stop"
         self._send({**base, "object": "chat.completion",
                     "choices": [{"index": 0, "message": msg, "finish_reason": fr}]})

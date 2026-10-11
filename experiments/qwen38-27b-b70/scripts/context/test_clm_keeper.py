@@ -125,12 +125,107 @@ class Keeper(unittest.TestCase):
                                                    "A is secret: answer protected.", "Dates day first."])
         self.assertEqual(NS["keep_rules"](kept, kept), (kept, []))
 
+    def test_same_rule_needs_the_same_names(self):
+        same = NS["same_rule"]
+        self.assertFalse(same("abcd12 is secret: answer protected", "efgh34 is secret: answer protected"))
+        self.assertFalse(same("the tally is value times 5 plus 13", "the tally is value times 3 plus 15"))
+        self.assertTrue(same("abcd12 is secret: answer protected", "abcd12 is secret, so answer protected."))
+        old = "RULES\n- abcd12 is secret: answer protected\nSTATE\nx"
+        kept, lost = NS["keep_rules"](old, "RULES\n- efgh34 is secret: answer protected\nSTATE\ny")
+        self.assertEqual(NS["rule_lines"](kept), ["abcd12 is secret: answer protected", "efgh34 is secret: answer protected"])
+
     def test_pin_head_round_trip(self):
         self.assertEqual(NS["PIN_RE"].match(NS["PIN_HEAD"].format(n=17)).group(1), "17")
+        self.assertEqual(NS["PIN_RE"].match(NS["PIN_PLAIN"].format(n=230)).group(1), "230")     # the retrieval-only arm's pin
 
     def test_prompt_anchor_exists(self):
         baselines = (Path(__file__).parent / "clm_baselines.py").read_text()
         self.assertIn("{{finish_instructions}}", baselines[baselines.index("BASELINE_SYSTEM = "):baselines.index("SUMMARY_PROMPT = ")])
+
+
+class Delta(unittest.TestCase):
+    """Changes-only notes (notes_mode=delta): the reply's layout, the working check, how changes are applied."""
+
+    NOTES = ("RULES\n- A is secret: answer protected.\nSTATE\n- abcd12 = 75 (60, gained 15 in item 6)\n"
+             "- efgh34 removed (struck off item 5)\nwxyz56: 402\nOPEN\n- nothing")
+
+    def test_fact_of(self):
+        f = NS["fact_of"]
+        self.assertEqual(f("- abcd12 = 75 (60, gained 15 in item 6)"), ("abcd12", "75 (60, gained 15 in item 6)"))
+        self.assertEqual(f("abcd12: 120 + 49 = 169"), ("abcd12", "120 + 49 = 169"))
+        self.assertEqual(f("* `ABCD12`: removed"), ("abcd12", "removed"))
+        self.assertEqual(f("efgh34 removed (struck off item 5)"), ("efgh34", "removed (struck off item 5)"))
+        self.assertEqual(f("Build command: make -j4 test"), ("build command", "make -j4 test"))
+
+    def test_work_out(self):
+        w = NS["work_out"]
+        self.assertEqual(w("120 + 49 = 169"), (120, 169, 169))
+        self.assertEqual(w("-106 - 85 + 4 = -180"), (-106, -187, -180))          # a wrong sum is seen
+        self.assertEqual(w("1,200 + 30 = 1,230."), (1200, 1230, 1230))
+        self.assertEqual(w("75 \u2212 5 = 70 (item 9)"), (75, 70, 70))
+        self.assertEqual(w("40 x 2 = 81"), (40, 80, 81))
+        self.assertEqual(w("90 - 90/3 = 60"), (90, 60, 60))
+        self.assertEqual(w("(12 + 3) * 2 = 30"), (12, 30, 30))
+        self.assertEqual(w("7 / 2 = 3"), (7, None, 3))                         # no whole-number value: cannot be right
+        self.assertEqual(w("7 / 0 = 123"), (7, None, 123))
+        self.assertEqual(w("119 + what efgh34 holds (402) = 521"), (119, 521, 521))   # working in words: not checked
+        self.assertEqual(w("twice 40 = 2 * 40 = 81"), (None, 80, 81))           # the last step is checked
+        self.assertIsNone(w("v2-beta = 3"))
+        self.assertIsNone(w("step 3 = 4"))
+        self.assertIsNone(w("169"))
+        self.assertIsNone(w("DEBUG = 1"))
+        self.assertIsNone(w("removed"))
+        self.assertEqual(NS["number_of"]("75 (60, gained 15)"), 75)
+        self.assertEqual(NS["number_of"]("-51"), -51)
+        self.assertIsNone(NS["number_of"]("removed"))
+        self.assertIsNone(NS["number_of"]("3.5 litres"))
+
+    def test_parse_delta(self):
+        d = NS["parse_delta"]("THOUGHT: here.\nNEW RULES\n(none)\n**CHANGES**\n- abcd12: 75 + 5 = 80\n- efgh34: 12\n"
+                              "wxyz56: removed\nOPEN:\n- answer p2 next")
+        self.assertEqual(d, {"rules": [], "changes": [("abcd12", "75 + 5 = 80"), ("efgh34", "12"), ("wxyz56", "removed")],
+                             "open": ["- answer p2 next"]})
+        self.assertIsNone(NS["parse_delta"]("abcd12 is now 80"))                              # no layout
+        self.assertIsNone(NS["parse_delta"]("NEW RULES\n(none)\nOPEN\n"))                     # CHANGES is required
+        self.assertEqual(NS["parse_delta"]("NEW RULES\n- tally = value x 5 + 13\nOPEN\n", need_changes=False),
+                         {"rules": ["tally = value x 5 + 13"], "changes": [], "open": []})
+        self.assertIsNone(NS["parse_delta"]("NEW RULES\n(none)\nCHANGES\nabcd12: 5")["open"])   # no OPEN heading
+        self.assertEqual(NS["parse_delta"]("NEW RULES\nnone\nCHANGES\n(none)\nOPEN\n(none)")["changes"], [])
+
+    def test_apply_delta(self):
+        d = {"rules": ["tally = value x 5 + 13", "A is secret: answer protected"],
+             "changes": [("abcd12", "75 + 5 = 80"), ("abcd12", "80 - 30 = 60"), ("efgh34", "12"), ("mnop78", "9"),
+                         ("wxyz56", "removed")], "open": ["- watch mnop78"]}
+        new, info = NS["apply_delta"](self.NOTES, d)
+        self.assertEqual(new.splitlines(), ["RULES", "- A is secret: answer protected.", "- tally = value x 5 + 13", "STATE",
+                                            "abcd12: 50", "efgh34: 12", "wxyz56: removed", "mnop78: 9", "OPEN",
+                                            "- watch mnop78"])
+        self.assertEqual((info["changed"], info["added"], info["new_rules"], info["mismatch"]), (4, 1, 1, []))
+        self.assertEqual(info["sums_corrected"], ["abcd12: 80 - 30 = 60 -> 50"])            # the harness did the sum
+        self.assertEqual(NS["rule_lines"](new), ["A is secret: answer protected.", "tally = value x 5 + 13"])
+        self.assertTrue(NS["has_layout"](new))
+
+    def test_apply_delta_mismatch_and_first_cut(self):
+        _, info = NS["apply_delta"](self.NOTES, {"changes": [("abcd12", "70 + 5 = 75")]})
+        self.assertEqual(info["mismatch"], ["abcd12: working starts from 70, NOTES hold 75"])
+        _, info = NS["apply_delta"](self.NOTES, {"changes": [("qqqq11", "10 + 5 = 15")]})
+        self.assertEqual(info["mismatch"], [])            # a name the NOTES do not hold: nothing to check against
+        _, info = NS["apply_delta"](self.NOTES, {"changes": [("efgh34", "75 + 5 = 80")]})
+        self.assertEqual(info["mismatch"], ["efgh34: working starts from 75, NOTES say removed"])
+        _, info = NS["apply_delta"](self.NOTES, {"changes": [("efgh34", "75"), ("efgh34", "75 + 5 = 80")]})
+        self.assertEqual(info["mismatch"], [])            # opened again first, then changed
+        _, info = NS["apply_delta"](self.NOTES, {"changes": [("abcd12", "75 / 2 = 37")]})
+        self.assertEqual(info["mismatch"], ["abcd12: `75 / 2 = 37` has no whole-number value"])
+        kept, _ = NS["apply_delta"](self.NOTES, {"rules": [], "changes": [("abcd12", "9")], "open": None})
+        self.assertEqual(kept.splitlines()[-2:], ["OPEN", "- nothing"])           # no OPEN in the reply: the old one stays
+        two, info = NS["apply_delta"]("RULES\n- abcd12 is secret: answer protected\nSTATE\nOPEN",
+                                      {"rules": ["efgh34 is secret: answer protected", "abcd12 is secret, answer protected."]})
+        self.assertEqual(NS["rule_lines"](two), ["abcd12 is secret: answer protected", "efgh34 is secret: answer protected"])
+        new, info = NS["apply_delta"]("", {"rules": [], "changes": [("abcd12", "119"), ("abcd12", "119 + 49 = 168")], "open": []})
+        self.assertEqual(new, "RULES\n(none)\nSTATE\nabcd12: 168\nOPEN")
+        self.assertEqual(NS["rule_lines"](new), [])
+        again, _ = NS["apply_delta"](new, {"rules": ["R one"], "changes": [], "open": []})
+        self.assertEqual(again, "RULES\n- R one\nSTATE\nabcd12: 168\nOPEN")
 
 
 if __name__ == "__main__":
