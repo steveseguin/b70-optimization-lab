@@ -65,3 +65,20 @@ Use the [summariser](../../experiments/qwen38-flash-next-ud-iq3xxs-b70/baseline-
 on each future fresh output directory; never combine independent or partial
 windows into a completed 24-row run. No public package, headline or deployment
 is promoted here.
+
+## Reference-runtime baseline, complete screens (2026-10-11, boot 13858eef)
+
+Pinned upstream llama.cpp SYCL build (not our runtime; measurement baseline
+only). 12 fixed prompts x 2 fresh-process repeats, greedy, 64 tokens, 4K
+context, single user, 60 s gaps, concurrent on disjoint cards:
+
+| Plan | Cards | Decode tok/s median (n) | Prompt tok/s median | Repeat byte-equal |
+| --- | --- | ---: | ---: | --- |
+| two-card, layer split | 0,1 | **28.49** (22) | 54.9 | 12/12 |
+| one-card, fitter (CPU overrides) | 2 | **15.88** (22) | 47.6 | 12/12 |
+
+Two prompts ended immediately (0 generated tokens) in both plans and are
+recorded as such. The one-card number was taken while the two-card screen and
+several CPU builds shared the host; an uncontended exploratory run measured
+21.6 tok/s. Full tables: [reference-baseline-20261011.md](reference-baseline-20261011.md).
+These are uncertified reference figures for our own runtime to beat.
