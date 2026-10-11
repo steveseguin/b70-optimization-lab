@@ -321,6 +321,17 @@ class Pure(unittest.TestCase):
         self.assertEqual(ck.head_length(conversation(3)), 2)
         self.assertEqual(ck.head_length([{"role": "user", "content": "hi"}, {"role": "assistant", "content": "x"}]), 1)
 
+    def test_a_reworded_rule_comes_back_in_its_own_words_once(self):
+        old = "RULES\n- Storage rule: stream contents only in my context; never redirect or tee next. Mirror file is context.\n- A is secret: answer protected.\nSTATE\nx"
+        new = "RULES\n- Storage rule: stream contents only in my context; never redirect or tee next.\n- A is secret: answer protected.\n- Dates day first.\nSTATE\ny"
+        kept, lost = ck.keep_rules(old, new)
+        self.assertEqual(len(lost), 1)
+        self.assertEqual(ck.rule_lines(kept), ["Storage rule: stream contents only in my context; never redirect or tee next. Mirror file is context.",
+                                               "A is secret: answer protected.", "Dates day first."])
+        again, lost2 = ck.keep_rules(kept, kept)
+        self.assertEqual((again, lost2), (kept, []))
+        self.assertFalse(ck.same_rule("A is secret: answer protected.", "Dates are written day first."))
+
     def test_archive_recall(self):
         with tempfile.TemporaryDirectory() as d:
             a = ck.Archive(Path(d) / "a.jsonl")
