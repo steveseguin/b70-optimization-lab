@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["schema", "passed", "error", "mode", "arithmetic", "device_executed", "oracle_compared", "oracle_exact", "model_payload_bytes_read", "max_read_bytes", "tokens", "teardown"],
+  "properties": {
+    "schema": {"const": "own-runtime.iq3.packet13.run.v1"},
+    "passed": {"type": "boolean"},
+    "error": {"type": "string"},
+    "mode": {"enum": ["mini", "first-layer", "full-model"]},
+    "arithmetic": {"type": "string"},
+    "device_executed": {"type": "boolean"},
+    "oracle_compared": {"type": "boolean"},
+    "oracle_exact": {"type": ["boolean", "null"]},
+    "model_payload_bytes_read": {"type": "integer", "minimum": 0},
+    "max_read_bytes": {"type": "integer", "minimum": 0, "maximum": 4194304},
+    "tokens": {"type": "array", "maxItems": 64, "items": {"type": "integer", "minimum": 0, "maximum": 248319}},
+    "teardown": {"type": "array", "minItems": 0, "maxItems": 2, "items": {"type": "object", "required": ["safe_to_exit", "in_flight", "live_bytes", "sequence"]}}
+  },
+  "allOf": [{"if": {"properties": {"passed": {"const": true}}}, "then": {"properties": {"error": {"const": ""}, "teardown": {"minItems": 1, "items": {"properties": {"safe_to_exit": {"const": true}, "in_flight": {"const": 0}, "live_bytes": {"const": 0}}}}}}}]
+}

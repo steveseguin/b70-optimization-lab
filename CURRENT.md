@@ -71,6 +71,8 @@ Approved duplicate retirements are recorded in lane notes; a later full proof mu
 
 ## Our Own Intel Xe Runtimes
 
+**October 11, CPU-only packet 13 integration:** [The integrated IQ3 program](experiments/own-xpu-runtime/stage2/packet13-integrate/README.md) now uses the measured kernel choices, streams one layer's weights and selected experts on one card, and can retain weights across two cards using the existing sequential layer split. The CPU mini-model checks and SYCL build pass, and the real first layer's new hash is saved; comparison waits for the oracle's new arithmetic order. No GPU ran here; the coordinator has a [bounded card-3 command](experiments/own-xpu-runtime/stage2/packet13-integrate/WINDOW.md) to process the whole first prompt, emit eight tokens and record where the time goes, with cards 2+3 reserved for a later resident test.
+
 **October 11, CPU-only packet10 exactness repair:** The coordinator's first
 card-3 gate failed an IQ3_S output comparison after 57 checks; teardown was
 clean and no kernel faults were recorded. [The repair](experiments/own-xpu-runtime/stage2/packet10-kopt5/README.md#october-11-exactness-repair)
