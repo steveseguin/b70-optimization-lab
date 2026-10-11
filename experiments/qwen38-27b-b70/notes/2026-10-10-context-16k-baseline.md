@@ -446,3 +446,78 @@ B32ira on seed 1; W200 on the 1M stream (cut at 90 min). The reading rules of ca
   are put back by the harness if a later write drops them (the defect that cost B32iraR its 1M score). It changes
   nothing unless a write drops keys; the count is recorded.
 - N32f is the fast setting if it is within one question of N32j at 240K; its gain is the ratio of minutes.
+
+## Campaign 7 results (2026-10-11 09:08-10:55): the keeper on a second seed, at 1M, and a faster setting
+
+Three arms ran; the campaign was then stopped so that the proxy could be tested next (campaign 8 carries C32, W200
+and the seed-1 protocol arms; B32iraRH is dropped for now, see below). No GPU fault line.
+
+**Second seed: 46 of 46.** N32j on the rules stream, 240K, seed 1 (a different rule, method and day book): every
+probe, every final, the confidential counter, in 16 minutes with 188 model calls; not void, 137 items archived, all
+verbatim. With seed 0 that is 85 of 85. The replication bar (35/39-equivalent with rule and method at 4/5) is met.
+
+**One million tokens: 114 of 126 (90 %) through item 378, then a loop; a stopped run.** N32j on the 1M stream:
+
+| through PROBE item 18 (item 378 of 617) | N32j keeper | B32iraR at the same point |
+| --- | ---: | ---: |
+| all probes | **114 / 126 (90 %)** | 98 / 126 (78 %; its 14th item unanswered) |
+| current / old value / who / rule / method | 33/36, 29/36, 17/18, 18/18, 17/18 | old value about half, rule 16/18 |
+| 1-4 / 5-24 / 25-99 / 100-399 items back | 32/36, 34/35, 14/18, 34/37 | |
+| minutes per 100K of history | about 7.3 (399 items in about 47 min) | 8.7 |
+
+At item 399 (the 19th PROBE item) the agent issued `recall "p13_3"` and then the same command 790 times, each with
+the same one-line result, for 22 minutes, until I stopped the client. Cause, from the transcript: the judgement
+policy turned thinking on for the call that received the PROBE item and off again for the calls that followed it,
+so the work on a probe (searches, the answer write) ran without thinking, and greedy decoding fell into repeating
+one call. The older protocol arms have a repeat guard for exactly this; the keeper did not. Two fixes, both in
+`clm_keeper.py` and in the proxy before any further run:
+
+- an identical command is not run twice in a row (except a fetch); the refusal says so and turns thinking on;
+- thinking stays on for as long as a question is open: from a question item until the next ordinary item arrives.
+
+NOTES stayed between 388 and 1,381 tokens over 77 cuts, with both rules in place throughout (0 put back, 19
+recitals); the rule was answered 18 of 18 times, where the pinned-rule protocol arm had begun to slip. The run is
+repeated with the fixes in campaign 8.
+
+**N32f, the faster setting: closed.** A notes call that does not think and a cut down to 50 %: 37/39 in 12 minutes
+against N32j's 39/39 in 15. Two questions lost (one current value, one final) for a fifth of the time, and the bar
+was "within one". The thinking in the notes call is what keeps the books; N32j stays the setting.
+
+**B32iraRH is not run.** It was the fix for B32iraR's weak old-value answers at 1M. The keeper already answers
+those better without it (29/36 against about half), and the proxy now keeps every NOTES version for the same
+purpose (`recall` with `notes_at`). The arm stays in the tree, unit-tested and wire-tested.
+
+## Campaign 8 (2026-10-11, preregistered before any result): the keeper as a proxy
+
+Runner `longrun-campaign8.sh`. Arm **X32** is the plain agent with no context budget of its own (it sends its whole
+history, as arm A does) talking to `tools/ctxkeeper`, which keeps a 32K live window in front of the model server.
+Nothing in the harness manages context for this arm; the archive and the notes live in the proxy's state directory
+on the host, not in the task sandbox. It is the first run of the proxy against the real server.
+
+Proxy settings, chosen to mirror N32j: window 32,768 with 2,048 kept for the reply, cut down to 60 %, a notes call
+that thinks, thinking on only when the newest message is a question, a refusal or an error (`--think-when`, with
+`--effort medium`), the RULES repeated when a tool result asks questions (`--recite-when`), fresh state per run.
+What differs from N32j by construction: `recall` is a tool the proxy answers (not a shell command), the archive
+holds whole messages (not items), the proxy adds a Memory paragraph to the system message, and there is no answers
+guard (that lives in the harness).
+
+| stage | arm | stream | question |
+| --- | --- | --- | --- |
+| 1, 2 | X32 | rules 240K, seeds 0 and 1 | does the policy survive being moved out of the harness into a proxy any client can use? (N32j 39/39 and 46/46) |
+| 3 | C32, cut at 80 min | plain 240K, seed 0 | the production-style summary baseline |
+| 4 | X32, cut at 130 min, only if seed 0 scored 33 or more | rules 1M | the proxy at the owner's scale |
+| 5 | W200, cut at 90 min | rules 1M | the plain alternative at the owner's cap |
+| 6 | B32iraR, B32ira | rules 240K, seed 1 | second seed for the rule result and the cost of RULE lines |
+
+How the results will be read (fixed now):
+- X32 "carries the policy" at 35/39 or more on seed 0 and 41/46 or more on seed 1, with rule and method each at
+  4/5 or better, and not void. Between 29 and 34 it works but loses something in the move; the transcript says what.
+- The system prompt of the plain agent forbids tools other than `bash`; if the model therefore never calls `recall`
+  (proxy counter 0), far "who" and old-value questions will fail for that reason, and the fix is in the proxy's
+  wording, not in the policy.
+- Minutes are compared with N32j (15-16); the agent's own full-history bookkeeping in the harness is extra cost that
+  a real client would not have.
+- Added before launch: between X32's two seeds and C32 the runner repeats **N32j on the 1M stream** (cut at 130 min)
+  with the repeat guard and thinking kept on while a question is open. It is read like the first attempt: probes by
+  distance and type against B32iraR, minutes per 100K, NOTES size, and whether it reaches the final item this time.
+  The proxy has the same two protections (`--think-until`, `--repeat-limit`).
