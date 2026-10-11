@@ -84,6 +84,8 @@ def main():
     ap.add_argument('--out', type=Path)
     ap.add_argument('--health-receipt', type=Path)
     ap.add_argument('--execute-after-admission', action='store_true')
+    ap.add_argument('--gap-seconds', type=int, default=305,
+                    help='quiet seconds between native processes; 305 is the lane rule for large server teardowns, the owner may shorten it for short single-process runs (recorded in the run identity)')
     a = ap.parse_args()
     commands = json.loads((a.inputs / 'commands.json').read_text())
     if not a.execute_after_admission:
@@ -147,6 +149,7 @@ def main():
            'GGML_SYCL_DYNAMIC_REQUIRED_PRECISION': 'F32',
            'SYCL_CACHE_DIR': str(a.out.resolve() / 'sycl-cache'), 'XDG_CACHE_HOME': str(a.out.resolve() / 'cache')}
     write(a.out / 'environment.json', env)
+    write(a.out / 'run-identity-deltas.json', {'gap_seconds': a.gap_seconds, 'preregistered_gap_seconds': 305, 'note': 'gap shortened by the coordinator at the owner request on 2026-10-11 for 13-second single processes; fault watch unchanged' if a.gap_seconds != 305 else 'preregistered'})
     since = json.loads(a.health_receipt.read_text())['end_utc']
     start = time.monotonic()
     for sig in (signal.SIGINT, signal.SIGTERM):
@@ -203,7 +206,7 @@ def main():
         if p.returncode != 0 or bad:
             raise RuntimeError('failed process/postflight; no retry')
         # Quiet postflight and at least 305 seconds between native owners.
-        for _ in range(305):
+        for _ in range(max(1, a.gap_seconds)):
             if STOP or watch():
                 raise RuntimeError('postflight/stop blocked next process')
             time.sleep(1)
