@@ -4,7 +4,9 @@ Publisher: `unsloth/Qwen3.8-Flash-Next-GGUF`, revision
 `766911a6b7369840a91dbcd95f9f997acaab6cd6`, all three `UD-IQ3_XXS` shards.
 The owner approved the source and completed download; [packet 1](packet1/README.md)
 now authenticates all three files, reconciles all 1,224 tensors and records this
-model's first real CPU reference fixtures. **No inference result yet.**
+model's first real CPU reference fixtures. The October 11 reference-runtime
+screen has [partial, faulted results](../../results/qwen38-flash-next-ud-iq3xxs-b70/README.md);
+no full-model result is certified.
 
 The [owner's rule](../../AGENTS.md#lane-decisions-and-lane-notes), 2026-10-10:
 
@@ -37,8 +39,16 @@ its four-card record is never presented as comparable to this compressed model.
 Packet 1 confirms that the UD name describes a mixed-grid recipe: there are
 no IQ3_XXS tensors. Packed target residency is 53,304,619,520 bytes across two
 cards under the plan's PLE/embedding offload and HC-copy assumptions; native
-fit is unmeasured. The optional official MTP source remains separately pinned
+fit is not certified. The optional official MTP source remains separately pinned
 and unadmitted here.
+
+The owner's October 11 target is two B70 cards, with one card also useful;
+disjoint-card runs of this lane may run together after coordinator admission.
+The [selectable reference plans](baseline-llamacpp/run-identity.md) add
+`--plan onecard`, automatic CPU/GPU fitting with verbose allocation logs,
+60-second gaps and per-run device selection. The [summariser](baseline-llamacpp/summarise.py)
+keeps each run's repeats, missing rows and medians separate. These commands
+are prepared and CPU-tested; GPU execution remains the coordinator's work.
 
 [Admission note](notes/2026-10-10-packet1-weight-admission.md) ·
 [Results status](results/README.md). Next is packet 2: quantized tokenizer,

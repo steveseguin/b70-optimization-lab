@@ -2,9 +2,11 @@
 
 This is a reference-runtime baseline for our own Intel Xe runtime to beat,
 **not its code base**. It measures the separate **Qwen3.8 Flash-Next UD-IQ3_XXS
-(Unsloth), quantized compressed version**. No fit, speed or output result has
-been measured here. CPU-reference arithmetic parity remains unverified even
-if the future two repeats agree.
+(Unsloth), quantized compressed version**. The October 11 two-card screen
+stopped after nine first-repeat rows on a host fault; the
+[results ledger](../../../results/qwen38-flash-next-ud-iq3xxs-b70/README.md)
+retains its partial timings and missing repeats. CPU-reference arithmetic
+parity remains unverified even if future repeats agree.
 
 Upstream `ggml-org/llama.cpp` is pinned to
 **`23b0202a189c44a54625aadcb37a946dd1d6278d`**, fetched as upstream HEAD on
@@ -74,5 +76,36 @@ Use `llama-completion` for inference. Current `llama-cli` starts an internal
 HTTP server, so only its early `--help`/`--version` paths are smoked here.
 No server, health probe, device enumeration, systemd operation, port access,
 weight download, model-tree write or host-setting change is part of preparation.
-The incomplete download prevents the live GGUF-dump check; it is recorded as
-skipped, not passed. All native findings remain pending.
+At build time the incomplete download prevented the live GGUF-dump check;
+that frozen receipt remains skipped, not passed. Packet 1 later authenticated
+the completed model files. The partial native screen does not certify fit,
+full-suite speed or quality.
+
+## Selectable plans and CPU checks (October 11)
+
+`run-screen.py --plan onecard --device-selector level_zero:2 --device-list SYCL0`
+prints the full one-card plan without launching. It uses `--fit on`, explicit
+mmap and verbose stderr; no layer or tensor placement override disables the
+fitter. Its default gap is 60 seconds. The original `--plan twocard` keeps its
+305-second default (a coordinator may record `--gap-seconds 60`).
+Both retain the twelve prompts, seed, full FP16 KV and two 64-token repeats.
+The child library path retains the October 11 UMF/setvars correction, and
+natural zero-generation EOS is recorded without losing prompt timing.
+
+Per-card locks and passive process admission permit separate instances on
+disjoint cards; selected-card conflicts and unknown selectors refuse launch.
+Each screen has its own output/cache directory and fault watch. A host fault
+still blocks both. See [run identity](run-identity.md) for source-verified
+flags, card numbering, exact coordinator commands, RAM admission and caveats.
+
+```bash
+OMP_NUM_THREADS=2 nice -n 19 python3 -B -m unittest discover \
+  -s experiments/qwen38-flash-next-ud-iq3xxs-b70/baseline-llamacpp -p 'test*.py'
+OMP_NUM_THREADS=2 nice -n 19 python3 -B experiments/qwen38-flash-next-ud-iq3xxs-b70/baseline-llamacpp/summarise.py \
+  experiments/qwen38-flash-next-ud-iq3xxs-b70/data/window-20261011-boot13858eef-partial
+```
+
+The summariser accepts multiple run directories and `--out SUMMARY.md`;
+it shows per-prompt repeat decode/prompt rates, generated tokens, byte equality
+and observed-row medians without pooling different windows. Temporary CPU
+test scratch is automatically removed; no native process is launched by tests.

@@ -27,6 +27,8 @@ Update the affected host and lane here when ground truth changes, in the same co
 No resident server is authorized by this consolidation. Start/measure/gracefully stop experiments; leave cards empty unless the owner explicitly requests hosting. One GPU lane per host at a time. Do not revive the withdrawn September 13
 continuous-service rule or superseded relaunch queues.
 
+**October 11, CPU-only IQ3 screen preparation:** The [one-card and two-card plans](experiments/qwen38-flash-next-ud-iq3xxs-b70/baseline-llamacpp/run-identity.md) now let the coordinator select cards and run on disjoint cards, with automatic fitting and fuller logs for one card. The [two-card ledger](results/qwen38-flash-next-ud-iq3xxs-b70/README.md) retains nine first-repeat rows before a host fault stopped the screen; repeat checks and certification remain incomplete. No GPU work was run in this preparation; the coordinator owns recovery and any new window.
+
 ## Four-Card Halt And Flash-Next
 
 On **October 11 at 00:56:50 UTC**, Flash-Next attempt 8 faulted on all four cards after the weights loaded, during startup's memory-profiling run. The controller sent one stop signal, the container exited with an error, and the later four-card health check passed without new faults. This fourth incident halts the engine window and leaves LTX off; the cause is still unknown, and we recommend the owner authorize a reboot before further GPU work. The measured host-memory peak was **75.45 GB**, but this failed experimental run does not justify lowering the certified recipe's memory floor. Preserve the fault marker, original owner receipt and [attempt-8 evidence and analysis](notes/2026-10-11-attempt8-fourth-incident.md); the owner decision is pending **October 11**.

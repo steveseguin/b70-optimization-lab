@@ -1,4 +1,111 @@
-# Preregistered two-B70 reference screen
+# Preregistered one- or two-B70 reference screens
+
+## October 11 selectable plans
+
+Owner direction (2026-10-11): "this model is probably going to be used by folks
+with just 1 or 2 B70 GPUs; i figure 2 GPUs is a good target for us, but 1 is also
+reasonable to target. either way, we have lots of ram and lots of gpus so we
+can do multiple runs at a time".
+
+`--plan twocard` retains the original two-card argv below. `--plan onecard`
+uses the same frozen twelve prompts, sampling, seed, context, full FP16 KV,
+64-token cap and two complete repeats (24 fresh processes), with these changes:
+
+- One selector-visible device; `--fit on --load-mode mmap --verbose`.
+- Omit `--gpu-layers`, `--tensor-split` and `--override-tensor` entirely.
+  The pinned `common/fit.cpp:463-485` refuses fitting when these placements
+  are set by the user. The fitter therefore chooses device/CPU placement,
+  including expert offload. Explicit context remains 4096; no compressed KV.
+- Default gap **60 seconds**, rather than twocard's 305 seconds. These are
+  short bounded completion processes, naturally drained before each gap;
+  the owner requested shorter waits on October 11. This is a preregistered
+  pacing choice, not a claim that a particular gap prevents faults. Every
+  second is still watched, including the final gap. `--gap-seconds` records
+  an explicit coordinator override for either plan; no automatic retry.
+
+The pinned source uses `--load-mode mmap`, **not `--mmap`**
+(`common/arg.cpp:2693-2711`). `--verbose` sets logging to all levels
+(`common/arg.cpp:3944-3949`); the equivalent verbosity environment variable is
+`LLAMA_ARG_LOG_VERBOSITY`, not `LLAMA_LOG_VERBOSITY`. Fit decisions are TRACE
+messages in `common/fit.cpp`; debug fit probing is enabled by
+`common/common.cpp:1272`. Final offloaded layers and named CPU/device model
+buffers are INFO messages in `src/llama-model.cpp:1982-1990`, KV buffers in
+`src/llama-kv-cache.cpp:291`, and compute/output buffers in
+`src/llama-context.cpp`. All go to each child's stderr; log colours stay off,
+`--perf` stays on, and the timing parser accepts log prefixes. No native binary
+was run to discover these flags. Source identity is the frozen commit below.
+
+### Cards and concurrent instances
+
+`--device-selector` sets the child's `ONEAPI_DEVICE_SELECTOR` and accepts whole
+Level Zero card indices 0–3, exactly one or two according to plan. The default
+is `level_zero:0` or `level_zero:0,1`. `--device-list` passes llama's `--device`;
+these names are local to the filtered enumeration: physical card 2 alone is
+`SYCL0`, and physical cards 2,3 are `SYCL0,SYCL1`, not `SYCL2,SYCL3`.
+The pinned `ggml/src/ggml-sycl/ggml-sycl.cpp:7539-7542` numbers visible devices.
+The coordinator still verifies the actual selector-to-PCI mapping from the
+current health receipt and runtime logs before accepting a result.
+
+Admission replaces a blanket "no other llama/vLLM process" rule with passive
+`/proc` checks: a known disjoint selector is allowed, overlap is refused, and
+an absent, ambiguous or unreadable selector is refused. Each selected card
+also gets a nonblocking advisory lock held for the entire screen, including
+hashing and gaps, so two cooperating screens cannot race into the same card.
+Lock files under `/tmp/iq3-screen-cards-<uid>/` are stable coordination files,
+not scratch; never unlink a live lock. Nonparticipating launchers still require
+coordinator exclusion; this is not a host-wide scheduler. Separate output/cache
+directories are required. Combined RAM and I/O admission belongs to the
+coordinator, and concurrent runs share CPU/RAM/I/O, so record them separately
+from isolated measurements. `device-admission.json`, every command/row and
+`environment.json` retain the selector, cards and device list; each row also
+records other observed disjoint runtimes. Each screen keeps its own journal
+watch and evidence; a fault anywhere on this host still stops new launches in
+both screens. Device-aware admission does not filter out another card's faults.
+
+CPU-only preview (the existing prepared inputs serve either plan):
+
+```bash
+OMP_NUM_THREADS=2 nice -n 19 python3 -B experiments/qwen38-flash-next-ud-iq3xxs-b70/baseline-llamacpp/run-screen.py --plan onecard --device-selector level_zero:2 --device-list SYCL0
+```
+
+Coordinator-only window commands, after all admission gates below, with a fresh
+`HEALTH_RECEIPT` and a new `WINDOW_OUT` for each instance:
+
+```bash
+# One card: physical card 2, default 60-second gaps.
+OMP_NUM_THREADS=2 nice -n 19 python3 -B experiments/qwen38-flash-next-ud-iq3xxs-b70/baseline-llamacpp/run-screen.py \
+  --plan onecard --device-selector level_zero:2 --device-list SYCL0 \
+  --execute-after-admission --health-receipt "$HEALTH_RECEIPT" --out "$WINDOW_OUT"
+
+# Two cards: physical cards 2,3; record the previously authorized short-run gap.
+OMP_NUM_THREADS=2 nice -n 19 python3 -B experiments/qwen38-flash-next-ud-iq3xxs-b70/baseline-llamacpp/run-screen.py \
+  --plan twocard --device-selector level_zero:2,3 --device-list SYCL0,SYCL1 --gap-seconds 60 \
+  --execute-after-admission --health-receipt "$HEALTH_RECEIPT" --out "$WINDOW_OUT"
+```
+
+These two examples overlap on card 2 and must **not** run together. Either can
+run beside a separately admitted twocard instance on cards 0,1. The one-card
+exploratory 21.64 tok/s probe is only feasibility evidence; its split was not
+logged and its text differs from the two-card probe. Neither is a CPU-oracle
+parity result. The existing two-card screen has a fault marker and only nine
+first-repeat rows; see the [results ledger](../../../results/qwen38-flash-next-ud-iq3xxs-b70/README.md).
+
+### Retained October 11 fixes and summaries
+
+The child `LD_LIBRARY_PATH` retains the versioned paths obtained from
+`setvars.sh`, including UMF (`libumf.so.1`), rather than inheriting the caller's
+environment. Zero-generation natural EOS retains prompt timing, records
+`decode=null` and `generated_tokens=0`, and does not abort the suite merely
+because the reported decode rate is `inf`. The gap remains selectable and
+recorded. No frozen receipt is rewritten to pretend these changes existed at
+build time.
+
+`summarise.py RUN_DIR [RUN_DIR ...] --out SUMMARY.md` writes separate per-window
+tables with both repeats' decode/prompt rates, generated tokens, byte equality
+and observed medians. Missing repeats, failed rows and zero-generation rows
+remain visible; unavailable decode rates are excluded with denominators shown.
+Run CPU tests with `OMP_NUM_THREADS=2 nice -n 19 python3 -B -m unittest discover
+-s experiments/qwen38-flash-next-ud-iq3xxs-b70/baseline-llamacpp -p 'test*.py'`.
 
 **CPU preparation only. Do not execute the native command until the owner opens
 the window and resolves the current fault halt.** This is a target-only loading,
@@ -17,7 +124,7 @@ compressed version. It is not a Flash-Next FP8 result or a final quality gate.
   `/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/`.
   Pass `Qwen3.8-Flash-Next-UD-IQ3_XXS-00001-of-00003.gguf`; llama.cpp discovers
   shards 2 and 3. The first shard contains metadata and zero tensors.
-- Host: `steve-b70s` (128 GB nominal), using exactly two B70s, not the 15 GiB
+- Original twocard host: `steve-b70s` (128 GB nominal), using exactly two B70s, not the 15 GiB
   host. `ONEAPI_DEVICE_SELECTOR=level_zero:0,1` and `--device SYCL0,SYCL1`.
   The authorized coordinator must verify and record the current selector-to-PCI
   mapping before the screen; expected cards are `0000:23:00.0` and
@@ -54,12 +161,14 @@ compressed version. It is not a Flash-Next FP8 result or a final quality gate.
 The owner/coordinator, outside this CPU preparation, must:
 
 1. Resolve the current halt explicitly and record the owner decision, boot ID,
-   host, exact build/model identity and the exclusive window. No agent clears
+   host, exact build/model identity and the selected-card window. No agent clears
    or archives a FAULT file to make admission pass. Keep the LTX work protected;
    this screen neither contacts port 8188 nor stops/starts any ltx unit.
 2. Verify `CURRENT.md`, passive process/ownership facts, exclusive host/device
-   locks and at least **305 seconds** since the previous native owner's completed
-   teardown. The cards must be free of other work. Do not run this in an agent
+   locks and the registered quiet gap since the previous native owner's completed
+   teardown (60 seconds onecard; 305 twocard unless explicitly overridden).
+   Selected cards must be free of other work; disjoint cards may host separately
+   admitted runs of this lane. Do not run this in an agent
    shell subject to forced termination; the coordinator supplies the approved
    long-job owner. No systemd operation is performed by these scripts.
 3. Confirm the download has finished and admit host RAM/storage for mapped PLE,
@@ -83,7 +192,7 @@ The owner/coordinator, outside this CPU preparation, must:
 
 The explicit execution switch below attests that these **manual admission
 steps are complete**. The runner validates receipt freshness and core identities,
-but does not resolve the halt, obtain exclusivity, prove the PCI mapping or
+but does not resolve the halt, exclude noncooperating launchers, prove the PCI mapping or
 admit host memory on the owner's behalf. Missing any manual step means no launch.
 
 ## Window command
@@ -155,7 +264,7 @@ campaign without retry. Fault lines are retained in the run and lane-level
 `FAULT.json`; nothing removes device coredumps or recovery evidence.
 
 **Graceful stop means natural exit after EOS/64 tokens**, followed by resource
-destruction and a clean journal/305-second idle postflight. Upstream
+destruction and a clean journal throughout the registered idle postflight. Upstream
 `tools/completion/completion.cpp`'s SIGINT handler calls `_exit(130)`, so do not
 send Ctrl+C/SIGTERM to the child or use `timeout`, a group kill or SIGKILL.
 To cancel, create `STOP` under `WINDOW_OUT` or signal only the captured

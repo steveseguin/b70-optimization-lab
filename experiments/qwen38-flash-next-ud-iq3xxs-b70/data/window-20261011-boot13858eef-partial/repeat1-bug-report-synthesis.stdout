@@ -1,0 +1,5 @@
+# Bug Report: Stale Response Delivery Under Load
+
+## Summary
+Under high-concurrency load, users intermittently receive responses corresponding to previous requests rather than their current request. Logs indicate anomalous cache hits where `cached_tokens` is non-zero despite conditions that should yield zero cache usage. This suggests a race condition in
+

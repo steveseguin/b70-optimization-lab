@@ -2,6 +2,9 @@
 """Preregistered future native screen. Default prints commands; never launches."""
 import argparse
 import datetime as dt
+from contextlib import ExitStack
+import copy
+import fcntl
 import hashlib
 import json
 import os
@@ -21,6 +24,89 @@ FAULT_PATHS = [Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913/FAULT.js
               HERE.parent / 'FAULT.json']
 FAULT = re.compile(r'Fault response|CAT error|engine.*reset|reset.*engine|GPU HANG|GuC.*reset|coredump|timed.?out job|job.*timed.out|wedged', re.I)
 STOP = False
+
+
+def selector_cards(selector):
+    """Accept only unambiguous whole Level Zero cards; no wildcards/subdevices."""
+    if not re.fullmatch(r'level_zero:[0-3](?:,[0-3])*', selector):
+        raise ValueError('selector must name whole cards 0..3, e.g. level_zero:2,3')
+    cards = [int(n) for n in selector.split(':')[1].split(',')]
+    if len(set(cards)) != len(cards):
+        raise ValueError('duplicate cards')
+    return cards
+
+
+def configure_plan(commands, plan, selector, device_list):
+    cards = selector_cards(selector)
+    count = 1 if plan == 'onecard' else 2
+    if len(cards) != count:
+        raise ValueError(f'{plan} requires exactly {count} selected cards')
+    # SYCL indices are local to the selector-filtered enumeration.
+    devices = device_list.split(',')
+    if len(devices) != count or set(devices) != {f'SYCL{i}' for i in range(count)}:
+        raise ValueError('device list must name each selector-visible SYCL device once')
+    result = copy.deepcopy(commands)
+    for c in result:
+        argv = c['argv']
+        argv[argv.index('--device') + 1] = device_list
+        if plan == 'onecard':
+            # Each of these explicit placements makes common/fit.cpp abort fitting.
+            for flag in ('--gpu-layers', '--tensor-split', '--override-tensor'):
+                i = argv.index(flag)
+                del argv[i:i + 2]
+            argv[argv.index('--fit') + 1] = 'on'
+            argv[-2:-2] = ['--load-mode', 'mmap', '--verbose']
+        c.update(plan=plan, device_selector=selector, device_list=device_list, cards=cards)
+    return result
+
+
+def runtime_process(argv):
+    """Match executable/module tokens, never shell command strings or grep patterns."""
+    if not argv:
+        return False
+    executable = Path(argv[0]).name.lower()
+    if executable.startswith(('llama-', 'vllm')):
+        return True
+    if executable.startswith('python'):
+        return any(Path(arg).name.startswith(('llama-', 'vllm')) or
+                   arg.startswith('vllm.') for arg in argv[1:3])
+    return False
+
+
+def check_process_cards(cards, proc_root=Path('/proc')):
+    """Fail closed for relevant processes whose selector cannot be established."""
+    peers = []
+    for proc in proc_root.iterdir():
+        if not proc.name.isdigit() or int(proc.name) == os.getpid():
+            continue
+        try:
+            argv = proc.joinpath('cmdline').read_bytes().decode(errors='replace').split('\0')
+            if not runtime_process(argv):
+                continue
+            env = dict(item.split('=', 1) for item in
+                       proc.joinpath('environ').read_bytes().decode().split('\0') if '=' in item)
+            selector = env.get('ONEAPI_DEVICE_SELECTOR', '')
+            other = selector_cards(selector)
+        except FileNotFoundError:
+            continue  # exited during snapshot
+        except (OSError, ValueError, UnicodeError) as exc:
+            raise RuntimeError(f'cannot establish device ownership for pid {proc.name}') from exc
+        if set(cards) & set(other):
+            raise RuntimeError(f'cards overlap with runtime pid {proc.name}: {other}')
+        peers.append({'pid': int(proc.name), 'device_selector': selector, 'cards': other})
+    return peers
+
+
+def lock_cards(stack, cards, root=None):
+    # Keep stable lock files: unlinking on exit would allow two lock inodes.
+    root = root or Path('/tmp') / f'iq3-screen-cards-{os.getuid()}'
+    root.mkdir(mode=0o700, parents=True, exist_ok=True)
+    for card in sorted(cards):
+        handle = stack.enter_context((root / f'card-{card}.lock').open('a+'))
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise RuntimeError(f'card {card} already reserved by another screen') from exc
 
 
 def sha(path):
@@ -84,18 +170,40 @@ def main():
     ap.add_argument('--out', type=Path)
     ap.add_argument('--health-receipt', type=Path)
     ap.add_argument('--execute-after-admission', action='store_true')
-    ap.add_argument('--gap-seconds', type=int, default=305,
-                    help='quiet seconds between native processes; 305 is the lane rule for large server teardowns, the owner may shorten it for short single-process runs (recorded in the run identity)')
+    ap.add_argument('--plan', choices=('twocard', 'onecard'), default='twocard')
+    ap.add_argument('--device-selector', help='ONEAPI_DEVICE_SELECTOR; whole Level Zero cards')
+    ap.add_argument('--device-list', help='llama --device, local to the selected cards')
+    ap.add_argument('--gap-seconds', type=int,
+                    help='quiet seconds between processes; default: onecard 60, twocard 305')
     a = ap.parse_args()
+    a.device_selector = a.device_selector or ('level_zero:0' if a.plan == 'onecard' else 'level_zero:0,1')
+    a.device_list = a.device_list or ('SYCL0' if a.plan == 'onecard' else 'SYCL0,SYCL1')
+    a.registered_gap = 60 if a.plan == 'onecard' else 305
+    if a.gap_seconds is None:
+        a.gap_seconds = a.registered_gap
+    if a.gap_seconds < 0:
+        ap.error('--gap-seconds must be nonnegative')
     commands = json.loads((a.inputs / 'commands.json').read_text())
+    try:
+        commands = configure_plan(commands, a.plan, a.device_selector, a.device_list)
+    except ValueError as exc:
+        ap.error(str(exc))
     if not a.execute_after_admission:
         print(json.dumps(commands, indent=2))
         return
+    with ExitStack() as stack:
+        run_admitted(a, commands, stack)
+
+
+def run_admitted(a, commands, stack):
     # This switch is used only by the coordinator AFTER all run-identity.md gates.
     assert socket.gethostname() == 'steve-b70s'
     assert a.out and a.health_receipt
     assert not any(p.exists() for p in FAULT_PATHS), 'FAULT.json present; never clear it here'
     assert not a.out.exists(), 'fresh output directory required'
+    cards = selector_cards(a.device_selector)
+    lock_cards(stack, cards)
+    peers = check_process_cards(cards)
     check_health(a.health_receipt)
     receipt = json.loads((HERE / 'build-receipt.json').read_text())
     for item in receipt['artifacts']:
@@ -114,7 +222,8 @@ def main():
     try:
         expected = scratch / 'inputs'
         expected_manifest = prep.prepare(expected)
-        expected_commands = json.loads((expected / 'commands.json').read_text())
+        expected_commands = configure_plan(json.loads((expected / 'commands.json').read_text()),
+                                           a.plan, a.device_selector, a.device_list)
         for c, e in zip(commands, expected_commands):
             e['argv'][-1] = str((a.inputs / (e['id'] + '.txt')).resolve())
             assert c == e, 'command differs from preregistration'
@@ -127,6 +236,10 @@ def main():
     for row in prompt_receipt['prompts']:
         assert sha(a.inputs / (row['id'] + '.txt')) == row['rendered_sha256']
     a.out.mkdir(parents=True)
+    write(a.out / 'device-admission.json', {'cards': cards, 'device_selector': a.device_selector,
+          'device_list': a.device_list, 'disjoint_runtime_processes': peers,
+          'mapping': 'selector indices; coordinator verifies PCI mapping against health receipt'})
+    write(a.out / 'commands.json', commands)
     write(a.out / 'health-receipt.json', json.loads(a.health_receipt.read_text()))
     # Authenticate complete local payloads; no network and no model-tree writes.
     model_root = Path(prep.MODEL).parent.parent
@@ -145,11 +258,13 @@ def main():
            'OMP_NUM_THREADS': '2', 'MKL_NUM_THREADS': '2',
            'LD_LIBRARY_PATH': '/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib',
            # 2026-10-11: library path taken from setvars.sh (the Level Zero adapter needs libumf.so.1); first window run failed 'No device of requested type available' with the compiler/mkl/tbb-only path.
-           'ONEAPI_DEVICE_SELECTOR': 'level_zero:0,1', 'GGML_SYCL_DYNAMIC_PRECISION': 'F32',
+           'ONEAPI_DEVICE_SELECTOR': a.device_selector, 'GGML_SYCL_DYNAMIC_PRECISION': 'F32',
            'GGML_SYCL_DYNAMIC_REQUIRED_PRECISION': 'F32',
            'SYCL_CACHE_DIR': str(a.out.resolve() / 'sycl-cache'), 'XDG_CACHE_HOME': str(a.out.resolve() / 'cache')}
     write(a.out / 'environment.json', env)
-    write(a.out / 'run-identity-deltas.json', {'gap_seconds': a.gap_seconds, 'preregistered_gap_seconds': 305, 'note': 'gap shortened by the coordinator at the owner request on 2026-10-11 for 13-second single processes; fault watch unchanged' if a.gap_seconds != 305 else 'preregistered'})
+    write(a.out / 'run-identity-deltas.json', {'plan': a.plan, 'gap_seconds': a.gap_seconds,
+          'preregistered_gap_seconds': a.registered_gap,
+          'note': 'coordinator gap override; fault watch unchanged' if a.gap_seconds != a.registered_gap else 'preregistered'})
     since = json.loads(a.health_receipt.read_text())['end_utc']
     start = time.monotonic()
     for sig in (signal.SIGINT, signal.SIGTERM):
@@ -171,6 +286,7 @@ def main():
     for c in commands:
         if STOP or watch() or time.monotonic() - start >= 3.5 * 3600:
             raise RuntimeError('screen stopped before next launch; no retry')
+        peers = check_process_cards(cards)
         stem = f"repeat{c['repeat']}-{c['id']}"
         write(a.out / (stem + '-command.json'), c)
         began = time.monotonic()
@@ -192,7 +308,8 @@ def main():
                     (a.out / 'DRAINING').write_text('No further launches. Natural exit only; coordinator must handle a hang.\n')
                 time.sleep(1)
         bad = watch() or bad
-        row = {**c, 'returncode': p.returncode, 'wall_s': time.monotonic() - began,
+        row = {**c, 'disjoint_runtime_processes': peers,
+               'returncode': p.returncode, 'wall_s': time.monotonic() - began,
                'stdout_sha256': sha(a.out / (stem + '.stdout')), 'failed': bad}
         if p.returncode == 0 and not bad:
             try:
@@ -205,7 +322,7 @@ def main():
         write(a.out / 'runs.json', rows)
         if p.returncode != 0 or bad:
             raise RuntimeError('failed process/postflight; no retry')
-        # Quiet postflight and at least 305 seconds between native owners.
+        # Quiet postflight for the registered plan (or recorded coordinator override).
         for _ in range(max(1, a.gap_seconds)):
             if STOP or watch():
                 raise RuntimeError('postflight/stop blocked next process')

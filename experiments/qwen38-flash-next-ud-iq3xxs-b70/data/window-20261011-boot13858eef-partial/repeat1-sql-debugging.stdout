@@ -1,0 +1,11 @@
+# Debugging a Slow Reporting Query in PostgreSQL After Schema Migration
+
+## 1. Reproduce and Capture the Baseline
+
+Before touching anything, establish a reproducible baseline.
+
+```sql
+-- Enable detailed timing and resource tracking
+SET track_io_timing = on;
+SET log_min_duration_statement = '10
+
