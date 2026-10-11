@@ -1,0 +1,47 @@
+{
+  "schema": "packet27.independent-source-review.v1",
+  "reviewer": "gemv subagent (not small-GEMV author)",
+  "scope": "bit identity, write races, interpreter exclusion",
+  "files": {
+    "small_gemv.cpp": "36f250c15ef6de5081f934bbb85daf7476c9b36efb70f0708ef0bba2b39123af",
+    "small_gemv.hpp": "8da011c8025e8a3fec2c7d8e4e23eec08d212ad85be649ad0fc1009d75d4e872",
+    "small_gemv_fixture.cpp": "dee0aab4888ba3dd2faffe18ccbbcadcce39741e87e8e5f2dbf9b8354c0aee79",
+    "small_gemv_fixture.hpp": "8bd00ce4476cd9427c1f1bc9d222c3ee6ec66c41fb95d3fedbf663323a690180",
+    "validation_mirror.py": "8327ffa13f67d219e95c0f5722244290a06b3ebd030ab4124340eab17b7a4d26"
+  },
+  "kernel_findings": [],
+  "kernel_verdict": "source review passed; device parity and timing pending",
+  "integration_findings": [],
+  "integration_status": "all source-review findings resolved; CPU/device gate execution remains authoritative",
+  "resolved_findings": [
+    "Schedule now rejects followers preceding first, cross-card boundaries, intervening source/output writes and early output reads.",
+    "K2 controls enqueue all members before final wait and copy output only first/last repetition.",
+    "Validation mirror now extracts original packet8 constant/constant_split4 pre-submit validation verbatim, including weight alignment, allocation extent, geometry and alias checks.",
+    "Readiness guard tracks the actual matrix input first.inputs[0]; active/error pseudo-input writes do not change GEMV data. matrix(l) binds only that vector, and tuple kernels never read control pseudo-inputs."
+  ],
+  "schedule_snippet_sha256": "e8263c20216ecb14f1a87f793ccb4106a9387088c26b9119ed3c850ac3385c4b",
+  "schedule_start": "// Only move sibling projections",
+  "schedule_end": "void guard()",
+  "final_source_rereview": {
+    "changes": [
+      {
+        "file": "small_gemv.cpp",
+        "previous_sha256": "10b996470b6bb357b545c7dc8d92050b2b37986700a385539a3bebe5badb11f7",
+        "reviewed_sha256": "36f250c15ef6de5081f934bbb85daf7476c9b36efb70f0708ef0bba2b39123af"
+      },
+      {
+        "file": "small_gemv_fixture.cpp",
+        "previous_sha256": "3945ca964729daaebadb3fc6d47b4419287355bd56497a9f44fe5c5ce00da637",
+        "reviewed_sha256": "dee0aab4888ba3dd2faffe18ccbbcadcce39741e87e8e5f2dbf9b8354c0aee79"
+      }
+    ],
+    "scheduler_snippet_unchanged": true,
+    "findings": [],
+    "review_notes": [
+      "Member::host is now guarded by OWN_RT_HOST_ONLY; host arithmetic body and device member body are unchanged. This prevents host mock traversal from participating in a device compilation.",
+      "K2 event JSON now records stage_count=times.size(). times contains every submitted incumbent member stage or the single merged kernel. Event accounting changes no arithmetic, output ownership, timing boundary or byte gate."
+    ],
+    "device_executed": false,
+    "compiled": false
+  }
+}

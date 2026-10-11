@@ -1,0 +1,25 @@
+device Intel(R) Arc(TM) Pro B70 Graphics card 0
+--- expert gate/up shape 12800 x 2560 (32768000 weights)
+  int8 codes, byte loads                           median     84.7 us    386.9 G weights/s
+  int8 codes, one 64-bit code load                 median    137.2 us    238.9 G weights/s
+  IQ4_NL nibbles, byte loads + memory table        median    159.8 us    205.1 G weights/s
+  IQ4_NL nibbles, 64-bit load + register table     median    254.3 us    128.9 G weights/s
+  float32 weights                                  median    254.2 us    128.9 G weights/s
+  int8 codes + x as two 64-bit loads               median    146.1 us    224.2 G weights/s
+  outputs: int8 naive==wide 1, ==wide_x64 1, ==float32 1, nibble naive==regtable 1, nibble==int8 1
+--- expert down shape 25600 x 640 (16384000 weights)
+  int8 codes, byte loads                           median     69.2 us    236.9 G weights/s
+  int8 codes, one 64-bit code load                 median     97.7 us    167.7 G weights/s
+  IQ4_NL nibbles, byte loads + memory table        median    113.5 us    144.3 G weights/s
+  IQ4_NL nibbles, 64-bit load + register table     median    157.6 us    104.0 G weights/s
+  float32 weights                                  median    123.5 us    132.6 G weights/s
+  int8 codes + x as two 64-bit loads               median    102.5 us    159.8 G weights/s
+  outputs: int8 naive==wide 1, ==wide_x64 1, ==float32 1, nibble naive==regtable 1, nibble==int8 1
+--- gdn.qkv shape 10240 x 2560 (26214400 weights)
+  int8 codes, byte loads                           median     57.8 us    453.4 G weights/s
+  int8 codes, one 64-bit code load                 median     99.4 us    263.8 G weights/s
+  IQ4_NL nibbles, byte loads + memory table        median    120.6 us    217.3 G weights/s
+  IQ4_NL nibbles, 64-bit load + register table     median    183.8 us    142.7 G weights/s
+  float32 weights                                  median    201.8 us    129.9 G weights/s
+  int8 codes + x as two 64-bit loads               median    106.2 us    246.7 G weights/s
+  outputs: int8 naive==wide 1, ==wide_x64 1, ==float32 1, nibble naive==regtable 1, nibble==int8 1
