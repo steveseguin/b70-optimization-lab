@@ -53,7 +53,28 @@
       "minItems": 30,
       "maxItems": 36,
       "items": {
-        "$ref": "#/$defs/case"
+        "allOf": [
+          {
+            "$ref": "#/$defs/case"
+          },
+          {
+            "required": [
+              "median_wall_GBps",
+              "median_event_payload_GBps",
+              "link_bytes_per_repetition"
+            ],
+            "properties": {
+              "samples": {
+                "items": {
+                  "required": [
+                    "wall_GBps",
+                    "event_payload_GBps"
+                  ]
+                }
+              }
+            }
+          }
+        ]
       }
     },
     "overlap": {
@@ -73,7 +94,9 @@
         "required": [
           "label",
           "overlap_ratio",
-          "median_event_overlap_fraction"
+          "median_event_overlap_fraction",
+          "repetitions_without_event_timing",
+          "event_overlap_fractions"
         ],
         "properties": {
           "overlap_ratio": {
@@ -81,9 +104,30 @@
             "exclusiveMinimum": 0
           },
           "median_event_overlap_fraction": {
-            "type": "number",
+            "type": [
+              "number",
+              "null"
+            ],
             "minimum": 0,
             "maximum": 1
+          },
+          "repetitions_without_event_timing": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 20
+          },
+          "event_overlap_fractions": {
+            "type": "array",
+            "minItems": 20,
+            "maxItems": 20,
+            "items": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            }
           }
         }
       }
@@ -141,7 +185,8 @@
         "bytes",
         "mode",
         "verified",
-        "samples"
+        "samples",
+        "repetitions_without_event_timing"
       ],
       "properties": {
         "label": {
@@ -171,8 +216,16 @@
           "exclusiveMinimum": 0
         },
         "median_event_payload_GBps": {
-          "type": "number",
+          "type": [
+            "number",
+            "null"
+          ],
           "exclusiveMinimum": 0
+        },
+        "repetitions_without_event_timing": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20
         }
       }
     },
@@ -181,7 +234,8 @@
       "required": [
         "wall_ns",
         "host_bounce_memcpy_ns",
-        "events"
+        "events",
+        "event_ns"
       ],
       "properties": {
         "wall_ns": {
@@ -202,7 +256,8 @@
               "device",
               "kind",
               "start_ns",
-              "end_ns"
+              "end_ns",
+              "duration_ns"
             ],
             "properties": {
               "device": {
@@ -217,10 +272,35 @@
               },
               "end_ns": {
                 "type": "integer",
-                "minimum": 1
+                "minimum": 0
+              },
+              "duration_ns": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "exclusiveMinimum": 0
               }
             }
           }
+        },
+        "event_ns": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "exclusiveMinimum": 0
+        },
+        "wall_GBps": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "event_payload_GBps": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "exclusiveMinimum": 0
         }
       }
     }

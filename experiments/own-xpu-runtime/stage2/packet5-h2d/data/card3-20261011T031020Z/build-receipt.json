@@ -1,0 +1,157 @@
+{
+  "schema": "own-runtime.h2d.build.v1",
+  "passed": true,
+  "native_executed": false,
+  "timestamp": "2026-10-11T03:09:19.993310+00:00",
+  "commands": [
+    {
+      "argv": [
+        "patch",
+        "--batch",
+        "--fuzz=0",
+        "-p1",
+        "-i",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/independent-queues.patch"
+      ],
+      "returncode": 0,
+      "output": "patching file owner.hpp\npatching file owner.cpp\npatching file sycl_device.cpp\n"
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "-v",
+        "test_packet"
+      ],
+      "returncode": 0,
+      "output": "test_census_triplets (test_packet.PlanTests.test_census_triplets) ... ok\ntest_chunk_bound (test_packet.PlanTests.test_chunk_bound) ... ok\ntest_no_rate_in_plan (test_packet.PlanTests.test_no_rate_in_plan) ... ok\ntest_top10_not_full_model (test_packet.PlanTests.test_top10_not_full_model) ... ok\ntest_bad_receipts (test_packet.ReceiptTests.test_bad_receipts) ... ok\ntest_bounce (test_packet.ReceiptTests.test_bounce) ... ok\ntest_one_card (test_packet.ReceiptTests.test_one_card) ... ok\ntest_overlap_math (test_packet.ReceiptTests.test_overlap_math) ... ok\ntest_stream_floor_math (test_packet.ReceiptTests.test_stream_floor_math) ... ok\ntest_fault_signatures (test_packet.WindowTests.test_fault_signatures) ... ok\ntest_new_journal_boundary (test_packet.WindowTests.test_new_journal_boundary) ... ok\n\n----------------------------------------------------------------------\nRan 11 tests in 1.807s\n\nOK\n"
+    },
+    {
+      "argv": [
+        "cmake",
+        "-S",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/build/compile",
+        "-DCMAKE_BUILD_TYPE=Release"
+      ],
+      "returncode": 0,
+      "output": "-- The CXX compiler identification is IntelLLVM 2026.0.0\n-- Detecting CXX compiler ABI info\n-- Detecting CXX compiler ABI info - done\n-- Check for working CXX compiler: /opt/intel/oneapi/compiler/2026.0/bin/icpx - skipped\n-- Detecting CXX compile features\n-- Detecting CXX compile features - done\n-- Configuring done (0.3s)\n-- Generating done (0.0s)\n-- Build files have been written to: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/build/compile\n"
+    },
+    {
+      "argv": [
+        "cmake",
+        "--build",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/build/compile",
+        "-j2"
+      ],
+      "returncode": 0,
+      "output": "[ 12%] Building CXX object CMakeFiles/owner.dir/build/owner/owner.cpp.o\n[ 25%] Linking CXX static library libowner.a\n[ 25%] Built target owner\n[ 37%] Building CXX object CMakeFiles/owner-tests.dir/owner_tests.cpp.o\n[ 50%] Building CXX object CMakeFiles/h2d-native.dir/native.cpp.o\n[ 62%] Linking CXX executable owner-tests\n[ 62%] Built target owner-tests\n[ 75%] Building CXX object CMakeFiles/h2d-native.dir/build/owner/sycl_device.cpp.o\n[ 87%] Building CXX object CMakeFiles/h2d-native.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp.o\n[100%] Linking CXX executable h2d-native\n[100%] Built target h2d-native\n"
+    },
+    {
+      "argv": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/build/compile/owner-tests"
+      ],
+      "returncode": 0,
+      "output": "default serialization, opt-in independence, explicit dependencies, pending-release refusal, full drain: PASS\n"
+    },
+    {
+      "argv": [
+        "readelf",
+        "-d",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/build/compile/owner-tests"
+      ],
+      "returncode": 0,
+      "output": "\nDynamic section at offset 0x1dda0 contains 27 entries:\n  Tag        Type                         Name/Value\n 0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]\n 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]\n 0x000000000000000c (INIT)               0x403000\n 0x000000000000000d (FINI)               0x417e2c\n 0x0000000000000019 (INIT_ARRAY)         0x41e6a8\n 0x000000000000001b (INIT_ARRAYSZ)       16 (bytes)\n 0x000000000000001a (FINI_ARRAY)         0x41e6b8\n 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)\n 0x000000006ffffef5 (GNU_HASH)           0x400378\n 0x0000000000000005 (STRTAB)             0x400d80\n 0x0000000000000006 (SYMTAB)             0x400468\n 0x000000000000000a (STRSZ)              2904 (bytes)\n 0x000000000000000b (SYMENT)             24 (bytes)\n 0x0000000000000015 (DEBUG)              0x0\n 0x0000000000000003 (PLTGOT)             0x41efe8\n 0x0000000000000002 (PLTRELSZ)           1632 (bytes)\n 0x0000000000000014 (PLTREL)             RELA\n 0x0000000000000017 (JMPREL)             0x401d28\n 0x0000000000000007 (RELA)               0x401b00\n 0x0000000000000008 (RELASZ)             552 (bytes)\n 0x0000000000000009 (RELAENT)            24 (bytes)\n 0x000000006ffffffe (VERNEED)            0x4019a0\n 0x000000006fffffff (VERNEEDNUM)         3\n 0x000000006ffffff0 (VERSYM)             0x4018d8\n 0x0000000000000000 (NULL)               0x0\n"
+    }
+  ],
+  "source_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp": "021766a26c108dbdb830070bfb8c13c00934ca5a7df3f472aa3f10335309bb33",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/device.hpp": "1044e1a57d101d35a1d02e7fd911c3db9e5faed41248255ac61af52528f98f74",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4",
+    "experiments/own-xpu-runtime/stage2/packet2/tests/device_window.py": "a26998d3bd062b78c8ffb8825e8daf9adb50cd866552b3c23bfacdafb0189e5f",
+    "experiments/own-xpu-runtime/stage2/packet5-h2d/CMakeLists.txt": "30d5ec087ee94b6c0308d2f7a2dab3ba03356e557725fbe2fc2dd1ee713ddc75",
+    "experiments/own-xpu-runtime/stage2/packet5-h2d/device_window.py": "6311beb411bb0e95f442fe764e79fc0b2765e0035b288cefffcb62ea76e96283",
+    "experiments/own-xpu-runtime/stage2/packet5-h2d/independent-queues.patch": "0a7abc8c214876b76670b7c0b7fff37c264f811f654e0bf5586b383b892b10f8",
+    "experiments/own-xpu-runtime/stage2/packet5-h2d/native.cpp": "33fb30762a853f68f64183b52054bf9d4cdd8ff4a129eeeaecd32bfee502964e",
+    "experiments/own-xpu-runtime/stage2/packet5-h2d/owner-source.json": "f4ed016d74c29d048c3dca0d7d2b161d6ab50252555b47800101192223bb609b",
+    "experiments/own-xpu-runtime/stage2/packet5-h2d/owner_tests.cpp": "76139664ce1e9b18fdee95d4bb53bf5ce2e171204a3f78eda9ff8a75ad5ce0d4",
+    "experiments/own-xpu-runtime/stage2/packet5-h2d/plan.py": "be6040c8ae9a1d658907fab281570ae509f250a0078072e79a1a9403d2ef7597",
+    "experiments/own-xpu-runtime/stage2/packet5-h2d/receipt.py": "564b1cccca99c497d28ddf86b692a6c4e2abb9e9e319af0cd2902b09ead925b6",
+    "experiments/own-xpu-runtime/stage2/packet5-h2d/receipt.schema.json": "c1584b632bd440105c878d757af4e249a8143f4de3a3b2b7845ab55928640b1d",
+    "experiments/own-xpu-runtime/stage2/packet5-h2d/test_packet.py": "f73338c233c83921b863168862da19a02d1660b6b954bacbaf2739a1bf7cd480",
+    "experiments/own-xpu-runtime/stage2/packet5-h2d/validate.py": "86e515d297ee789d56e1af062b00dee653cd5b69c450f3e5495ec5c9a391c752",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/tensor-census.json": "3312f5a18582788c5c6c84572fd616488b6835b454272c81eec218a58521607c"
+  },
+  "owner_source": {
+    "commit": "2704a1e5fae6ab3254df7a8c3d3a02a8369992b0",
+    "files": {
+      "owner.hpp": {
+        "path": "experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.hpp",
+        "sha256": "08e63391774bf800d2a05aa9911fc5adfbc37d3082b4ff0caa6bf2c693138214"
+      },
+      "owner.cpp": {
+        "path": "experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp",
+        "sha256": "2fe3cb1201996885c3d49235e3504661beb4f7b822eb631fd6fb9da260902ac4"
+      },
+      "sycl_device.cpp": {
+        "path": "experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp",
+        "sha256": "65b6f30da149e284913a7e99e552eecd96940040ebd3c2a17d4f010f576f2728"
+      },
+      "sycl_operation.hpp": {
+        "path": "experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_operation.hpp",
+        "sha256": "296eeb3fdf685b698cb7bb35da86157fbb12f97ff215f61ab7ad90f207364c9b"
+      },
+      "mock_device.hpp": {
+        "path": "experiments/own-xpu-runtime/stage1/packet3-prep/src/mock_device.hpp",
+        "sha256": "e5e68fd9aa3c9baaa34811b74c58f6ff8311f6bd18fae787fe80ccef2d6e3a32"
+      }
+    }
+  },
+  "patched_source_sha256": {
+    "mock_device.hpp": "e5e68fd9aa3c9baaa34811b74c58f6ff8311f6bd18fae787fe80ccef2d6e3a32",
+    "owner.cpp": "546622b0fa639698484ba9df2b0484eb30524f6334d8666d77c2f92448b0cd6c",
+    "sycl_operation.hpp": "296eeb3fdf685b698cb7bb35da86157fbb12f97ff215f61ab7ad90f207364c9b",
+    "sycl_device.cpp": "98651b89f05965050e0e76a5e8d8584fe4fb44f7828c8955ed0ee43cea7f4460",
+    "owner.hpp": "bb1433605873a65b835f91d526373683a1ead6dea603fbf14505456905a3a0d2"
+  },
+  "binary_sha256": "9500bf594889465afd46c4b3794e87dc014bfea271acc514d549503f88f3e973",
+  "compile_commands": [
+    {
+      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/build/compile",
+      "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/build/owner -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/../packet2/kernels -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -o CMakeFiles/owner.dir/build/owner/owner.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/build/owner/owner.cpp",
+      "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/build/owner/owner.cpp",
+      "output": "CMakeFiles/owner.dir/build/owner/owner.cpp.o"
+    },
+    {
+      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/build/compile",
+      "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/build/owner -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/../packet2/kernels -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -o CMakeFiles/owner-tests.dir/owner_tests.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/owner_tests.cpp",
+      "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/owner_tests.cpp",
+      "output": "CMakeFiles/owner-tests.dir/owner_tests.cpp.o"
+    },
+    {
+      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/build/compile",
+      "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/build/owner -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/../packet2/kernels -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fsycl -o CMakeFiles/h2d-native.dir/native.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/native.cpp",
+      "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/native.cpp",
+      "output": "CMakeFiles/h2d-native.dir/native.cpp.o"
+    },
+    {
+      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/build/compile",
+      "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/build/owner -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/../packet2/kernels -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fsycl -o CMakeFiles/h2d-native.dir/build/owner/sycl_device.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/build/owner/sycl_device.cpp",
+      "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/build/owner/sycl_device.cpp",
+      "output": "CMakeFiles/h2d-native.dir/build/owner/sycl_device.cpp.o"
+    },
+    {
+      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/build/compile",
+      "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/build/owner -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/../packet2/kernels -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fsycl -o CMakeFiles/h2d-native.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp",
+      "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp",
+      "output": "CMakeFiles/h2d-native.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp.o"
+    }
+  ],
+  "plan_tsv_sha256": "6ea8cde6a14c9aa1e6413b65d77e3a9536f58ef6aa874ddf207b40aa409bdd37",
+  "plan_json_sha256": "bbcb5bff63f529e2fa6b25995cefe2f693ea9632df18ed8409d186641d87d68a",
+  "build_directory_removed": false
+}

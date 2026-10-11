@@ -2,7 +2,7 @@ import copy
 import unittest
 import jsonschema
 from plan import chunks, make_plan
-from receipt import summary, validate_receipt
+from receipt import summary, validate_receipt, event_duration
 
 
 def fixture(peer=False):
@@ -39,6 +39,7 @@ def fixture(peer=False):
                 if section == 'overlap' and mode != 'copy-only':
                     start = c['bytes']+100 if mode == 'serial' else 100
                     ev.append(dict(device=devices[0], kind='GEMV', start_ns=start, end_ns=start+1000))
+                for e in ev: e['duration_ns'] = event_duration(e)
                 wall = 10000 if mode == 'serial' else 5000
                 r[section].append(dict(label=c['label'], bytes=c['bytes'], mode=mode, verified=True,
                     samples=[dict(wall_ns=wall, host_bounce_memcpy_ns=30 if mode == 'host-bounce-A-B' else 0,
@@ -65,6 +66,55 @@ class PlanTests(unittest.TestCase):
         self.assertIsNone(make_plan()['requested_peak']['driver_shadow_bytes'])
 
 class ReceiptTests(unittest.TestCase):
+    def test_missing_event_timing_preserves_wall(self):
+        for start, end in ((0, 0), (0, 100), (100, 100), (100, 50)):
+            with self.subTest(start=start, end=end):
+                r = fixture()
+                r['schema'] = 'own-runtime.h2d.native.v1'
+                # One invalid chunk invalidates the repetition's entire event rate.
+                row = next(row for row in r['cases'] if row['label'] == 'block-256MiB')
+                old_wall = row['median_wall_GBps']
+                row['samples'][0]['events'][1].update(start_ns=start, end_ns=end, duration_ns=None)
+                result = summary(r, r['plan'])
+                row = next(row for row in result['cases'] if row['label'] == 'block-256MiB')
+                self.assertIsNone(row['samples'][0]['event_ns'])
+                self.assertIsNone(row['samples'][0]['event_payload_GBps'])
+                self.assertEqual(row['samples'][0]['wall_GBps'], old_wall)
+                self.assertEqual(row['median_wall_GBps'], old_wall)
+                self.assertEqual(row['median_event_payload_GBps'], 1)
+                self.assertEqual(row['repetitions_without_event_timing'], 1)
+                self.assertTrue(validate_receipt(result))
+
+    def test_all_event_timing_missing(self):
+        r = fixture(True); r['schema'] = 'own-runtime.h2d.native.v1'
+        for row in r['cases'] + r['overlap']:
+            for sample in row['samples']:
+                for event in sample['events']:
+                    event.update(start_ns=0, end_ns=0, duration_ns=None)
+        result = summary(r, r['plan'])
+        self.assertTrue(validate_receipt(result))
+        for row in result['cases']:
+            self.assertIsNone(row['median_event_payload_GBps'])
+            self.assertGreater(row['median_wall_GBps'], 0)
+            self.assertEqual(row['repetitions_without_event_timing'], 20)
+        for row in result['overlap_summary']:
+            self.assertIsNone(row['median_event_overlap_fraction'])
+            self.assertEqual(row['event_overlap_fractions'], [None]*20)
+            self.assertEqual(row['repetitions_without_event_timing'], 20)
+            self.assertEqual(row['overlap_ratio'], 2)
+
+    def test_mixed_overlap_timing(self):
+        r = fixture(); r['schema'] = 'own-runtime.h2d.native.v1'
+        row = next(row for row in r['overlap'] if row['mode'] == 'concurrent')
+        row['samples'][0]['events'][0].update(start_ns=10, end_ns=10, duration_ns=None)
+        result = summary(r, r['plan'])
+        self.assertTrue(validate_receipt(result))
+        row = result['overlap_summary'][0]
+        self.assertEqual(row['overlap_ratio'], 2)
+        self.assertEqual(row['repetitions_without_event_timing'], 1)
+        self.assertIsNone(row['event_overlap_fractions'][0])
+        self.assertEqual(row['median_event_overlap_fraction'], 1)
+
     def test_one_card(self): self.assertTrue(validate_receipt(fixture()))
     def test_bounce(self):
         r = fixture(True); self.assertTrue(validate_receipt(r))
@@ -87,6 +137,10 @@ class ReceiptTests(unittest.TestCase):
             lambda r: r['cases'][0].update(verified=False),
             lambda r: r['cases'][0].update(bytes=1),
             lambda r: r['cases'][0].update(median_wall_GBps=9999),
+            lambda r: r['cases'][0].update(repetitions_without_event_timing=1),
+            lambda r: r['cases'][0]['samples'][0].update(event_ns=None),
+            lambda r: r['cases'][0]['samples'][0].update(event_payload_GBps=None),
+            lambda r: r['overlap'][0]['samples'][0].update(event_ns=None),
             lambda r: r['cases'][0]['samples'][0].update(wall_ns=float('nan')),
             lambda r: r['cases'][0]['samples'][0]['events'][0].update(end_ns=0),
             lambda r: r['cases'][0]['samples'][0]['events'][0].update(kind='GEMV'),

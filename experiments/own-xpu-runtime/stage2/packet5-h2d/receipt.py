@@ -16,6 +16,20 @@ def require(value, message):
 def positive(value):
     return type(value) in (float, int) and math.isfinite(value) and value > 0
 
+def event_duration(e):
+    start, end = e['start_ns'], e['end_ns']
+    require(type(start) is int and type(end) is int and start >= 0 and end >= 0,
+            'event timestamps')
+    return end-start if 0 < start < end else None
+
+def sample_event_duration(s):
+    durations = [event_duration(e) for e in s['events']]
+    return sum(durations) if all(d is not None for d in durations) else None
+
+def nullable_median(values):
+    present = [v for v in values if v is not None]
+    return statistics.median(present) if present else None
+
 def validate_native(r, plan):
     require(r['schema'] == 'own-runtime.h2d.native.v1', 'native schema')
     require(r['completed'] is True and r['error'] == '', 'incomplete/failed native run')
@@ -64,8 +78,8 @@ def validate_native(r, plan):
                     if mode != 'copy-only': kinds += [('GEMV', devices[0])]
                 require([(e['kind'], e['device']) for e in ev] == kinds, 'event coverage/direction/device')
                 for e in ev:
-                    require(type(e['start_ns']) is int and type(e['end_ns']) is int
-                            and 0 <= e['start_ns'] < e['end_ns'], 'event timing')
+                    duration = event_duration(e)
+                    require(e['duration_ns'] == duration, 'event timing')
                 require(positive(s['host_bounce_memcpy_ns']) if mode == 'host-bounce-A-B'
                         else s['host_bounce_memcpy_ns'] == 0, 'bounce host timing')
     return True
@@ -77,11 +91,16 @@ def summary(r, plan):
     out['plan'] = plan
     out['measured'] = True
     out['rate_definition'] = 'decimal payload GB/s; event rate excludes gaps and host staging; wall includes submit/wait; bounce wall includes CPU memcpy'
+    for row in out['cases'] + out['overlap']:
+        for s in row['samples']:
+            s['event_ns'] = sample_event_duration(s)
+        row['repetitions_without_event_timing'] = sum(s['event_ns'] is None for s in row['samples'])
     for row in out['cases']:
-        wall = [row['bytes']/s['wall_ns'] for s in row['samples']]
-        event = [row['bytes']/sum(e['end_ns']-e['start_ns'] for e in s['events']) for s in row['samples']]
-        row['median_wall_GBps'] = statistics.median(wall)
-        row['median_event_payload_GBps'] = statistics.median(event)
+        for s in row['samples']:
+            s['wall_GBps'] = row['bytes']/s['wall_ns']
+            s['event_payload_GBps'] = row['bytes']/s['event_ns'] if s['event_ns'] is not None else None
+        row['median_wall_GBps'] = statistics.median(s['wall_GBps'] for s in row['samples'])
+        row['median_event_payload_GBps'] = nullable_median([s['event_payload_GBps'] for s in row['samples']])
         row['link_bytes_per_repetition'] = row['bytes'] * (2 if row['mode'] == 'host-bounce-A-B' else 1)
     out['overlap_summary'] = []
     for case in plan['cases']:
@@ -89,6 +108,9 @@ def summary(r, plan):
         walls = {m: statistics.median(s['wall_ns'] for s in r['samples']) for m, r in rows.items()}
         fractions = []
         for s in rows['concurrent']['samples']:
+            if s['event_ns'] is None:
+                fractions.append(None)
+                continue
             compute = next(e for e in s['events'] if e['kind'] == 'GEMV')
             copies = [e for e in s['events'] if e['kind'] == 'H2D']
             intersection = sum(max(0, min(e['end_ns'], compute['end_ns']) - max(e['start_ns'], compute['start_ns'])) for e in copies)
@@ -97,7 +119,9 @@ def summary(r, plan):
         out['overlap_summary'].append(dict(label=case['label'], median_wall_ns=walls,
             overlap_ratio=walls['serial']/walls['concurrent'],
             isolated_sum_ratio=(walls['copy-only']+walls['compute-only'])/walls['concurrent'],
-            median_event_overlap_fraction=statistics.median(fractions)))
+            event_overlap_fractions=fractions,
+            repetitions_without_event_timing=sum(f is None for f in fractions),
+            median_event_overlap_fraction=nullable_median(fractions)))
     out['overlap_definition'] = 'serial/concurrent wall ratio; >1 faster. Event overlap fraction=intersection/min(copy duration, GEMV duration) on the same device clock; 0 none, 1 full shorter-work overlap. No cross-card clock subtraction.'
     # Sum layer-specific transfer floors; do not silently replace mixed sizes with a big-block rate.
     floors = {}
@@ -116,6 +140,6 @@ def validate_receipt(r):
     require(r['plan'] == make_plan(), 'bound plan/census')
     native = copy.deepcopy(r); native['schema'] = 'own-runtime.h2d.native.v1'
     expected = summary(native, r['plan'])
-    for key in ('cases', 'overlap_summary', 'streaming_arithmetic', 'rate_definition', 'overlap_definition'):
+    for key in ('cases', 'overlap', 'overlap_summary', 'streaming_arithmetic', 'rate_definition', 'overlap_definition'):
         require(r[key] == expected[key], 'derived metric mismatch: '+key)
     return True

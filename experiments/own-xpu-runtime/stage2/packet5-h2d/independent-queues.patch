@@ -155,21 +155,29 @@
    }
    Event marker(std::span<const Event> deps) override {
      check_error(); auto wait=dependencies(deps); auto id=next_handle();
-@@ -85,6 +96,13 @@
+@@ -85,6 +96,21 @@
      auto [it,inserted]=events_.try_emplace(id); (void)inserted;
      it->second=native.submit(*queue_,bindings,wait); return id;
    }
 +  EventTiming timing(Event e) override {
 +    check_error();
-+    if(!queue_->has_property<sycl::property::queue::enable_profiling>())
++    if(!queue_->has_property<sycl::property::queue::enable_profiling>() ||
++       !copy_queue_->has_property<sycl::property::queue::enable_profiling>())
 +      throw std::logic_error("profiling disabled");
-+    return {events_.at(e).get_profiling_info<sycl::info::event_profiling::command_start>(),
-+            events_.at(e).get_profiling_info<sycl::info::event_profiling::command_end>()};
++    try {
++      return {events_.at(e).get_profiling_info<sycl::info::event_profiling::command_start>(),
++              events_.at(e).get_profiling_info<sycl::info::event_profiling::command_end>()};
++    } catch(const sycl::exception& error) {
++      // Only unavailable profiling is optional; execution/driver errors still fail.
++      check_error();
++      if(error.code()!=sycl::make_error_code(sycl::errc::profiling)) throw;
++      return {0,0};
++    }
 +  }
    bool complete(Event e) override {
      return events_.at(e).get_info<sycl::info::event::command_execution_status>()==sycl::info::event_command_status::complete;
    }
-@@ -95,9 +113,9 @@
+@@ -95,9 +121,9 @@
      }
      events_.at(e).wait_and_throw(); check_error(); return true;
    }
@@ -181,7 +189,7 @@
    void close_context() override {
      context_.reset();
      if(native_ && zeContextDestroy(native_)!=ZE_RESULT_SUCCESS) throw std::runtime_error("zeContextDestroy failed");
-@@ -105,7 +123,7 @@
+@@ -105,7 +131,7 @@
    }
  };
  }

@@ -1,4 +1,5 @@
 #include "mock_device.hpp"
+#include "timing.hpp"
 #include <iostream>
 using namespace ownrt;
 struct ComputeMock:MockDevice {
@@ -8,6 +9,9 @@ struct ComputeMock:MockDevice {
 };
 void require(bool b){if(!b)throw std::runtime_error("test failure");}
 int main(){
+ require(event_duration({10,30})==20);
+ require(!event_duration({0,0}) && !event_duration({0,30}));
+ require(!event_duration({30,30}) && !event_duration({30,10}));
  for(bool independent:{false,true}){
   auto mock=std::make_unique<ComputeMock>();auto m=mock.get();Device d(std::move(mock),independent);CopyEngine copy(d);
   auto a=d.arena.allocate("a",16,Memory::device,Category::scratch,Lifetime::transaction);

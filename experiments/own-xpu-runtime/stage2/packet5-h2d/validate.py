@@ -12,7 +12,7 @@ from plan import HERE, ROOT, CENSUS, make_plan, sha
 
 def source_paths():
     kernels = HERE.parent/'packet2/kernels'
-    return sorted([p for p in HERE.iterdir() if p.suffix in ('.py', '.cpp', '.patch', '.txt', '.json')
+    return sorted([p for p in HERE.iterdir() if p.suffix in ('.py', '.cpp', '.hpp', '.patch', '.txt', '.json')
                    and p.name not in ('build-receipt.json', 'plan.json')]
                   + list(kernels.glob('*.hpp')) + [kernels/'device.cpp', CENSUS,
                     HERE.parent/'packet2/tests/device_window.py'])
@@ -22,8 +22,10 @@ def main():
     if os.environ.get('OMP_NUM_THREADS') != '2' or os.getpriority(os.PRIO_PROCESS, 0) != 19:
         raise SystemExit('nice 19 and OMP_NUM_THREADS=2 required')
     build = HERE/'build'
-    if build.exists(): raise SystemExit('build/ exists; preserve prior run receipts, remove only owned scratch before rebuilding')
-    build.mkdir(); record = dict(schema='own-runtime.h2d.build.v1', passed=False, native_executed=False,
+    scratch = [build/'owner', build/'compile', build/'plan.tsv']
+    if any(path.exists() for path in scratch):
+        raise SystemExit('build scratch exists; preserve the prior build before rebuilding')
+    build.mkdir(exist_ok=True); record = dict(schema='own-runtime.h2d.build.v1', passed=False, native_executed=False,
         timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(), commands=[], source_sha256={})
     def run(args, cwd=HERE):
         q = subprocess.run(args, cwd=cwd, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -56,8 +58,13 @@ def main():
             if sha(ROOT/path) != digest: raise RuntimeError('source changed during build: '+path)
         record['passed'] = True
     finally:
-        if not a.keep_build: shutil.rmtree(build)
+        if not a.keep_build:
+            for path in scratch:
+                if path.is_dir(): shutil.rmtree(path)
+                elif path.exists(): path.unlink()
+            if not any(build.iterdir()): build.rmdir()
         record['build_directory_removed'] = not build.exists()
+        record['build_scratch_removed'] = not any(path.exists() for path in scratch)
         (HERE/'build-receipt.json').write_text(json.dumps(record, indent=2)+'\n')
     return 0
 if __name__ == '__main__': raise SystemExit(main())

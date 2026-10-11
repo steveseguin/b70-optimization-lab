@@ -1,11 +1,43 @@
 # Packet 5 — measured transport preparation
 
-CPU preparation only: the native SYCL target compiles, CPU tests pass, and
-**no device binary has been run here**. There are no measured GB/s or overlap
-claims yet. This is the first transport measurement needed by
+The first coordinator run on card 3 stopped before completing any case;
+the timing fix below is CPU-tested and compiled, with its device rerun pending.
+There are no measured GB/s or overlap claims yet. This is the first transport measurement needed by
 [ONE-CARD-PLAN](../ONE-CARD-PLAN.md), using our `Device`, `Arena`, `CopyEngine`
 and shutdown protocol, with the unchanged [packet 2 GEMV](../packet2/kernels/device.cpp).
 No torch, vLLM, model files, downloaded code or server is involved.
+
+## October 11 timing failure and fix
+
+The 03:10 UTC card-3 run returned `nonpositive profiling interval`, with no
+completed cases or overlap rows. Both in-order queues already had
+`enable_profiling`; the bug was requiring every copy event to have a positive
+interval, including setup copies. The receipt did not save the offending
+timestamps, so it cannot distinguish zero from equal or reversed timestamps
+or establish the backend cause. The [native receipt](data/card3-20261011T031020Z/native.json)
+records complete teardown, `safe_to_exit=true`, zero live bytes and zero
+in-flight events; the [window log](data/card3-20261011T031020Z/kernel-window.txt)
+has no fault lines. The failed [window](data/card3-20261011T031020Z/window.json)
+and its [original build identity](data/card3-20261011T031020Z/build-receipt.json)
+are retained unchanged. The old build is preserved locally in
+`build/prior-20261011T031020Z/`.
+
+Both queues still enable profiling, and the profiling query now checks both.
+Missing profiling information and zero/nonpositive event intervals no longer
+abort a copy: raw timestamps remain, and `duration_ns` is null for invalid
+intervals (an unavailable profiling query records zero timestamps).
+Only SYCL's profiling-unavailable error is optional; execution errors still fail.
+Each measured repetition retains its steady-clock wall time around submission
+and completion, including intermediate chunk waits and profiling queries.
+The receipt adds nullable `event_ns`, `event_payload_GBps`, and `wall_GBps`
+for every transport repetition, both median rates per case, and
+`repetitions_without_event_timing` for transport and overlap rows. Any missing
+chunk invalidates that repetition's event total; it never becomes a partial
+bandwidth estimate. Event medians use valid repetitions only, or null if none
+exist. Every wall sample remains included. The combined overlap interval and
+ratios use wall time; event-overlap fractions are separately nullable with
+their own missing-repetition count. Ownership, teardown, fault watching and
+the 120-second admission bound are unchanged. No device was opened for this fix.
 
 ## Sizes and bounded work
 
@@ -96,9 +128,10 @@ The validator runs Python plan/schema/metric/fault-protocol tests and host-only
 mock ownership tests. It compiles and links the SYCL binary with installed
 icpx 2026.0.0, `-fsycl`, strict math and two build workers. It never executes
 or enumerates through that binary. Build commands, compiler commands, source
-hashes, patched-source hashes, binary hash and test output are saved in
+hashes (including the CPU-tested timing header), patched-source hashes, binary hash and test output are saved in
 [build-receipt.json](build-receipt.json). Default validation deletes its entire
-owned build directory after recording evidence; no build scratch is retained.
+owned build scratch (`build/owner/`, `build/compile/`, `build/plan.tsv`) after
+recording evidence; prior run evidence and archived builds remain untouched.
 
 ## Coordinator command — physical card 3 admission first
 
@@ -117,8 +150,9 @@ retained; these are not peak RSS measurements. The lab's
 records `EnableDeferBacking` effects; do not assume that multi-card finding
 applies to this small single-card owner or alter it during this experiment.
 
-First rebuild with the compiled target retained (CPU only). `build/` must not
-already exist; preserve any prior run evidence before deleting owned scratch.
+First rebuild with the compiled target retained (CPU only). Its three build
+scratch paths must not already exist; preserve prior builds and run evidence
+before clearing those paths. Existing run directories under `build/` are allowed.
 Then set up the installed oneAPI runtime in the coordinator's shell; the
 [passed native smoke](../../stage1/packet3-prep/README.md#first-native-execution--pass-2026-10-11-0153-utc-boot-13858eef)
 records the UMF dependency supplied by setvars.
@@ -126,7 +160,7 @@ records the UMF dependency supplied by setvars.
 ```bash
 nice -n 19 env OMP_NUM_THREADS=2 python3 -B experiments/own-xpu-runtime/stage2/packet5-h2d/validate.py --keep-build
 source /opt/intel/oneapi/setvars.sh
-nice -n 19 env OMP_NUM_THREADS=2 python3 -B experiments/own-xpu-runtime/stage2/packet5-h2d/device_window.py --authorized-device-window --card 3 --admitted-cards 3 --seconds 120 --output experiments/own-xpu-runtime/stage2/packet5-h2d/build/card3-first
+nice -n 19 env OMP_NUM_THREADS=2 python3 -B experiments/own-xpu-runtime/stage2/packet5-h2d/device_window.py --authorized-device-window --card 3 --admitted-cards 3 --seconds 120 --output experiments/own-xpu-runtime/stage2/packet5-h2d/build/card3-timing-fix
 ```
 
 If exactly cards 3 and 2 are both admitted, change `--admitted-cards 3` to
@@ -154,7 +188,7 @@ clean process exit; watcher success alone cannot qualify the machine.
 ## Receipts and how the numbers change the one-card plan
 
 `native.json` retains device name/index/driver/UUID, every size, 20 raw wall
-samples and SYCL start/end timestamps per case, byte-check status, overlap
+samples and SYCL start/end timestamps with nullable event durations per case, byte-check status, overlap
 arms, requested allocation census and per-owner teardown. `receipt.json`
 adds decimal GB/s, overlap ratios, exact census provenance and streaming
 arithmetic. [receipt.schema.json](receipt.schema.json) checks structure;

@@ -2,7 +2,7 @@
   "schema": "own-runtime.h2d.build.v1",
   "passed": true,
   "native_executed": false,
-  "timestamp": "2026-10-11T03:05:15.464527+00:00",
+  "timestamp": "2026-10-11T03:14:13.082733+00:00",
   "commands": [
     {
       "argv": [
@@ -26,7 +26,7 @@
         "test_packet"
       ],
       "returncode": 0,
-      "output": "test_census_triplets (test_packet.PlanTests.test_census_triplets) ... ok\ntest_chunk_bound (test_packet.PlanTests.test_chunk_bound) ... ok\ntest_no_rate_in_plan (test_packet.PlanTests.test_no_rate_in_plan) ... ok\ntest_top10_not_full_model (test_packet.PlanTests.test_top10_not_full_model) ... ok\ntest_bad_receipts (test_packet.ReceiptTests.test_bad_receipts) ... ok\ntest_bounce (test_packet.ReceiptTests.test_bounce) ... ok\ntest_one_card (test_packet.ReceiptTests.test_one_card) ... ok\ntest_overlap_math (test_packet.ReceiptTests.test_overlap_math) ... ok\ntest_stream_floor_math (test_packet.ReceiptTests.test_stream_floor_math) ... ok\ntest_fault_signatures (test_packet.WindowTests.test_fault_signatures) ... ok\ntest_new_journal_boundary (test_packet.WindowTests.test_new_journal_boundary) ... ok\n\n----------------------------------------------------------------------\nRan 11 tests in 1.719s\n\nOK\n"
+      "output": "test_census_triplets (test_packet.PlanTests.test_census_triplets) ... ok\ntest_chunk_bound (test_packet.PlanTests.test_chunk_bound) ... ok\ntest_no_rate_in_plan (test_packet.PlanTests.test_no_rate_in_plan) ... ok\ntest_top10_not_full_model (test_packet.PlanTests.test_top10_not_full_model) ... ok\ntest_all_event_timing_missing (test_packet.ReceiptTests.test_all_event_timing_missing) ... ok\ntest_bad_receipts (test_packet.ReceiptTests.test_bad_receipts) ... ok\ntest_bounce (test_packet.ReceiptTests.test_bounce) ... ok\ntest_missing_event_timing_preserves_wall (test_packet.ReceiptTests.test_missing_event_timing_preserves_wall) ... ok\ntest_mixed_overlap_timing (test_packet.ReceiptTests.test_mixed_overlap_timing) ... ok\ntest_one_card (test_packet.ReceiptTests.test_one_card) ... ok\ntest_overlap_math (test_packet.ReceiptTests.test_overlap_math) ... ok\ntest_stream_floor_math (test_packet.ReceiptTests.test_stream_floor_math) ... ok\ntest_fault_signatures (test_packet.WindowTests.test_fault_signatures) ... ok\ntest_new_journal_boundary (test_packet.WindowTests.test_new_journal_boundary) ... ok\n\n----------------------------------------------------------------------\nRan 14 tests in 3.589s\n\nOK\n"
     },
     {
       "argv": [
@@ -48,7 +48,7 @@
         "-j2"
       ],
       "returncode": 0,
-      "output": "[ 12%] Building CXX object CMakeFiles/owner.dir/build/owner/owner.cpp.o\n[ 25%] Linking CXX static library libowner.a\n[ 25%] Built target owner\n[ 37%] Building CXX object CMakeFiles/h2d-native.dir/native.cpp.o\n[ 50%] Building CXX object CMakeFiles/owner-tests.dir/owner_tests.cpp.o\n[ 62%] Linking CXX executable owner-tests\n[ 62%] Built target owner-tests\n[ 75%] Building CXX object CMakeFiles/h2d-native.dir/build/owner/sycl_device.cpp.o\n[ 87%] Building CXX object CMakeFiles/h2d-native.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp.o\n[100%] Linking CXX executable h2d-native\n[100%] Built target h2d-native\n"
+      "output": "[ 12%] Building CXX object CMakeFiles/owner.dir/build/owner/owner.cpp.o\n[ 25%] Linking CXX static library libowner.a\n[ 25%] Built target owner\n[ 37%] Building CXX object CMakeFiles/owner-tests.dir/owner_tests.cpp.o\n[ 50%] Building CXX object CMakeFiles/h2d-native.dir/native.cpp.o\n[ 62%] Linking CXX executable owner-tests\n[ 62%] Built target owner-tests\n[ 75%] Building CXX object CMakeFiles/h2d-native.dir/build/owner/sycl_device.cpp.o\n[ 87%] Building CXX object CMakeFiles/h2d-native.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp.o\n[100%] Linking CXX executable h2d-native\n[100%] Built target h2d-native\n"
     },
     {
       "argv": [
@@ -75,15 +75,16 @@
     "experiments/own-xpu-runtime/stage2/packet2/tests/device_window.py": "a26998d3bd062b78c8ffb8825e8daf9adb50cd866552b3c23bfacdafb0189e5f",
     "experiments/own-xpu-runtime/stage2/packet5-h2d/CMakeLists.txt": "30d5ec087ee94b6c0308d2f7a2dab3ba03356e557725fbe2fc2dd1ee713ddc75",
     "experiments/own-xpu-runtime/stage2/packet5-h2d/device_window.py": "6311beb411bb0e95f442fe764e79fc0b2765e0035b288cefffcb62ea76e96283",
-    "experiments/own-xpu-runtime/stage2/packet5-h2d/independent-queues.patch": "0a7abc8c214876b76670b7c0b7fff37c264f811f654e0bf5586b383b892b10f8",
-    "experiments/own-xpu-runtime/stage2/packet5-h2d/native.cpp": "33fb30762a853f68f64183b52054bf9d4cdd8ff4a129eeeaecd32bfee502964e",
+    "experiments/own-xpu-runtime/stage2/packet5-h2d/independent-queues.patch": "7da4027b5f953fb03e4da68a4a0604c3009c6b98c8c6c8afccf720163097c5a3",
+    "experiments/own-xpu-runtime/stage2/packet5-h2d/native.cpp": "0aca52114fd784b33900915755eb562f7eb03e509f25eec8aa82e778276918e6",
     "experiments/own-xpu-runtime/stage2/packet5-h2d/owner-source.json": "f4ed016d74c29d048c3dca0d7d2b161d6ab50252555b47800101192223bb609b",
-    "experiments/own-xpu-runtime/stage2/packet5-h2d/owner_tests.cpp": "76139664ce1e9b18fdee95d4bb53bf5ce2e171204a3f78eda9ff8a75ad5ce0d4",
+    "experiments/own-xpu-runtime/stage2/packet5-h2d/owner_tests.cpp": "4e3e17ab54980800f9216c46faeb36fc24afedcd6884aaeb693bda9ff8b93f97",
     "experiments/own-xpu-runtime/stage2/packet5-h2d/plan.py": "be6040c8ae9a1d658907fab281570ae509f250a0078072e79a1a9403d2ef7597",
-    "experiments/own-xpu-runtime/stage2/packet5-h2d/receipt.py": "564b1cccca99c497d28ddf86b692a6c4e2abb9e9e319af0cd2902b09ead925b6",
-    "experiments/own-xpu-runtime/stage2/packet5-h2d/receipt.schema.json": "c1584b632bd440105c878d757af4e249a8143f4de3a3b2b7845ab55928640b1d",
-    "experiments/own-xpu-runtime/stage2/packet5-h2d/test_packet.py": "f73338c233c83921b863168862da19a02d1660b6b954bacbaf2739a1bf7cd480",
-    "experiments/own-xpu-runtime/stage2/packet5-h2d/validate.py": "86e515d297ee789d56e1af062b00dee653cd5b69c450f3e5495ec5c9a391c752",
+    "experiments/own-xpu-runtime/stage2/packet5-h2d/receipt.py": "f98eb799eb6355bcc60d55aa508895abea7bea9a531f68940a616b5a438979bf",
+    "experiments/own-xpu-runtime/stage2/packet5-h2d/receipt.schema.json": "bce2bac87c56832adeaabd6f505d04d0623a2d3b491ad01c578e05b627701759",
+    "experiments/own-xpu-runtime/stage2/packet5-h2d/test_packet.py": "67d17643bec4efe230b18703a3f48043385e83c460961c390a662c682a601a1e",
+    "experiments/own-xpu-runtime/stage2/packet5-h2d/timing.hpp": "1c08903a1d469e36e74cc9927a57a85e36ceeb27b45dda4392c0a80abcf760f5",
+    "experiments/own-xpu-runtime/stage2/packet5-h2d/validate.py": "6006a60ad9d2be682c1526043bc146ef6637ff0eb2545b5210ac5e7c06581e11",
     "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/tensor-census.json": "3312f5a18582788c5c6c84572fd616488b6835b454272c81eec218a58521607c"
   },
   "owner_source": {
@@ -115,10 +116,10 @@
     "mock_device.hpp": "e5e68fd9aa3c9baaa34811b74c58f6ff8311f6bd18fae787fe80ccef2d6e3a32",
     "owner.cpp": "546622b0fa639698484ba9df2b0484eb30524f6334d8666d77c2f92448b0cd6c",
     "sycl_operation.hpp": "296eeb3fdf685b698cb7bb35da86157fbb12f97ff215f61ab7ad90f207364c9b",
-    "sycl_device.cpp": "98651b89f05965050e0e76a5e8d8584fe4fb44f7828c8955ed0ee43cea7f4460",
+    "sycl_device.cpp": "a1f8e51b0f6b772c817e498111b1e39cda39036716a013f29a34f16a6b15583e",
     "owner.hpp": "bb1433605873a65b835f91d526373683a1ead6dea603fbf14505456905a3a0d2"
   },
-  "binary_sha256": "9500bf594889465afd46c4b3794e87dc014bfea271acc514d549503f88f3e973",
+  "binary_sha256": "ba6842fd26fe76685bf9d96d89fd10d6ec98b97737393e6d1fee22b9efd13e13",
   "compile_commands": [
     {
       "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet5-h2d/build/compile",
@@ -153,5 +154,6 @@
   ],
   "plan_tsv_sha256": "6ea8cde6a14c9aa1e6413b65d77e3a9536f58ef6aa874ddf207b40aa409bdd37",
   "plan_json_sha256": "bbcb5bff63f529e2fa6b25995cefe2f693ea9632df18ed8409d186641d87d68a",
-  "build_directory_removed": true
+  "build_directory_removed": false,
+  "build_scratch_removed": true
 }

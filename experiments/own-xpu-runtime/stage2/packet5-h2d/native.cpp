@@ -1,5 +1,6 @@
 // Lab-owned transport diagnostic. No model/runtime import and no peer-USM alias.
 #include "device.hpp"
+#include "timing.hpp"
 #include <algorithm>
 #include <chrono>
 #include <csignal>
@@ -49,7 +50,7 @@ std::vector<Timed> transfer(Buffers& b,Allocation dst,Allocation src,size_t n,co
   std::vector<Timed> times;
   for(size_t off=0;off<n;off+=chunk){
     admit();auto e=b.copy.copy(dst,off,src,off,std::min(chunk,n-off),{});wait(b.d,e);
-    auto t=b.d.timing(e);require(t.end_ns>t.start_ns,"nonpositive profiling interval");
+    auto t=b.d.timing(e);
     times.push_back({b.d.identity(),kind,t});
   }
   return times;
@@ -57,7 +58,11 @@ std::vector<Timed> transfer(Buffers& b,Allocation dst,Allocation src,size_t n,co
 void append(std::vector<Timed>& a,std::vector<Timed> b){a.insert(a.end(),b.begin(),b.end());}
 std::string events(const std::vector<Timed>& v){
   std::ostringstream o;o<<'[';
-  for(size_t i=0;i<v.size();++i)o<<(i?",":"")<<"{\"device\":"<<quote(v[i].device)<<",\"kind\":"<<quote(v[i].kind)<<",\"start_ns\":"<<v[i].t.start_ns<<",\"end_ns\":"<<v[i].t.end_ns<<'}';
+  for(size_t i=0;i<v.size();++i){
+    auto duration=event_duration(v[i].t);
+    o<<(i?",":"")<<"{\"device\":"<<quote(v[i].device)<<",\"kind\":"<<quote(v[i].kind)<<",\"start_ns\":"<<v[i].t.start_ns<<",\"end_ns\":"<<v[i].t.end_ns
+     <<",\"duration_ns\":"<<(duration?std::to_string(*duration):"null")<<'}';
+  }
   return o.str()+']';
 }
 std::string sample(double wall,const std::vector<Timed>& v,double cpu=0){
