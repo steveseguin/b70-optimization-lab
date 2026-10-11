@@ -632,3 +632,11 @@ How the results will be read (fixed now):
   228 questions with the rule at 90 % or better, not void if it finishes; a cut run is graded on the probes it
   reached and reported as cut. The client holds the whole 1M-token history in this arm (a real client would too);
   its memory is watched, since the host has little to spare beside the server.
+
+## Campaign 9 results (2026-10-11 14:22-): the proxy after its fixes
+
+**X32b, seed 1: 44 of 46 in 18 minutes** (X32 before the fixes: 42/46 in 47 minutes; N32j: 46/46 in 16). Current
+5/5, old value 5/5, rule 5/5, method 5/5, who 3/5, finals 21/21; not void. Proxy counters: 22 cuts, 22 notes calls
+accepted and none rejected (10 rejected before), 18 searches (68 before), 0 rules put back. Both preregistered
+conditions for "fixed" are met (no notes call rejected for good, under 30 minutes), and the score bar with them.
+The two misses are "who did it" questions, one of them 2 items back.
