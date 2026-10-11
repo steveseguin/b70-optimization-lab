@@ -71,9 +71,16 @@ def check(mode, output, card):
         raise ValueError('GNU/IntelLLVM core/parallel gate must pass before W-B')
     if mode == 'W-A' and not m.get('fixture_trace_complete'):
         raise ValueError('actual 72-fixture input trace required before W-A')
+    if mode == 'W-A':
+        if not m.get('wa_host_references_complete'):
+            raise ValueError('sealed W-A host references required before admission')
+        for name, digest in m['wa_reference_hashes'].items():
+            path = (ROOT / name).resolve()
+            if ROOT not in path.parents or sha(path) != digest:
+                raise ValueError('W-A reference changed: ' + name)
     # This precedes mkdir, latch writes and any device_executed claim. ldd does
     # not invoke main or Level Zero discovery. The coordinator sources setvars.
-    for name in ('census_binary', 'fixture_binary') if mode == 'W-B' else ('census_binary',):
+    for name in ('census_binary', 'fixture_binary') if mode == 'W-B' else ('census_binary','precision_control_binary'):
         p = subprocess.run(PREFIX + ['ldd', str(ROOT / m[name])], capture_output=True, text=True, timeout=15)
         if p.returncode or 'not found' in p.stdout or 'not found' in p.stderr:
             raise ValueError('loader preflight failed before device window: ' + p.stdout + p.stderr)
@@ -178,6 +185,20 @@ def fixture_gate(path, cases, authority):
     return {name: sha(path / (name + '.core')) for name in cases}
 
 
+def precision_verdicts(path):
+    rows = [json.loads(line) for line in Path(path).read_text().splitlines()]
+    verdicts = {}
+    for row in rows:
+        if row.get('kind') == 'precision-verdict':
+            name = row['function']
+            if name in verdicts or row['count'] != 65536 or row['correctly_rounded_on_probes'] != (row['non_nan_differences'] == 0):
+                raise ValueError('invalid precision probe receipt')
+            verdicts[name] = row
+    if set(verdicts) != {'division', 'sqrtf', 'rsqrt-plain', 'rsqrt-barrier', 'rsqrt-corrected'}:
+        raise ValueError('incomplete precision probes')
+    return verdicts
+
+
 def execute(mode, output, card, seconds):
     m, out = check(mode, output, card)
     # Journal preflight also occurs before claiming a device launch.
@@ -190,13 +211,28 @@ def execute(mode, output, card, seconds):
         result['last_launched_pid'] = pid
         save(out / 'window.json', result)
     try:
+        if mode == 'W-A':
+            result['precision_link_ab'] = {}
+            for label, key in (('plain-link', 'precision_control_binary'), ('precise-link', 'census_binary')):
+                probe = out / label
+                command = [str(ROOT / m[key]), 'precision-probe', '32', str(m['chunk']),
+                           str(probe / 'census.jsonl'), str(ROOT / m['wa_reference_dir']), str(card)]
+                observed = watch(command, probe, min(seconds, 60), on_started=started)
+                final_jsonl(probe / 'census.jsonl')
+                result['precision_link_ab'][label] = dict(watch=observed, binary_sha256=sha(ROOT / m[key]),
+                    probes=precision_verdicts(probe / 'census.jsonl'), receipt_sha256=sha(probe / 'census.jsonl'))
+            result['precision_link_effect_observed'] = any(
+                a['correctly_rounded_on_probes'] != result['precision_link_ab']['precise-link']['probes'][name]['correctly_rounded_on_probes']
+                for name, a in result['precision_link_ab']['plain-link']['probes'].items())
+            # Probes diagnose the linker; full W-A remains the candidate gate.
+            # Never invent an A/B effect if both variants happen to agree.
         for owner in range(1 if mode == 'W-A' else 2):
             base = out / ('owner' + str(owner))
             base.mkdir()
             census_out = base / 'census'
             cmd = [str(ROOT / m['census_binary']), 'native' if mode == 'W-A' else 'verify',
                    str(m['native_bits'] if mode == 'W-A' else 32), str(m['chunk']),
-                   str(census_out / 'census.jsonl'), str(ROOT / m['fixture_trace' if mode == 'W-A' else 'host_hashes']), str(card)]
+                   str(census_out / 'census.jsonl'), str(ROOT / m['wa_reference_dir' if mode == 'W-A' else 'host_hashes']), str(card)]
             owner_result = {'census_watch': watch(cmd, census_out, seconds, on_started=started)}
             owner_result['census_complete'] = final_jsonl(census_out / 'census.jsonl')
             owner_result['census_sha256'] = sha(census_out / 'census.jsonl')

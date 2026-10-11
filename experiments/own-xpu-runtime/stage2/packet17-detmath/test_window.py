@@ -28,7 +28,7 @@ class WindowTests(unittest.TestCase):
             p.start()
         self.source = self.root / 'source.txt'
         self.source.write_text('original')
-        self.manifest = dict(compiled=True, device_executed=False, chunk=262144, native_bits=32,
+        self.manifest = dict(wa_host_references_complete=True, wa_reference_hashes={}, wa_reference_dir='wa-reference', precision_control_binary='plain-control', compiled=True, device_executed=False, chunk=262144, native_bits=32,
                              hashes={'source.txt': w.sha(self.source)}, host_hashes_complete=True,
                              cpu_three_way_passed=True, fixture_trace_complete=True,
                              census_binary='census-device', fixture_binary='fixture-device',
@@ -41,6 +41,90 @@ class WindowTests(unittest.TestCase):
             p.stop()
         self.temp.cleanup()
 
+    def test_wa_runs_same_probe_inputs_on_both_links_before_census(self):
+        commands = []
+        def watch(command, directory, seconds, on_started=None):
+            directory.mkdir()
+            commands.append(command)
+            if on_started:
+                on_started(1234)
+            return dict(returncode=0)
+        plain = {name: dict(correctly_rounded_on_probes=False) for name in ('division', 'sqrtf', 'rsqrt-plain', 'rsqrt-barrier', 'rsqrt-corrected')}
+        precise = {name: dict(correctly_rounded_on_probes=True) for name in plain}
+        with patch.object(w, 'check', return_value=(self.manifest, self.output)), \
+                patch.object(w, 'journal', return_value=('', 'cursor')), \
+                patch.object(w, 'watch', side_effect=watch), \
+                patch.object(w, 'final_jsonl', return_value={'complete': True}), \
+                patch.object(w, 'sha', return_value='digest'), \
+                patch.object(w, 'precision_verdicts', side_effect=[plain, precise]), \
+                patch.object(w, 'summarize_census', return_value={'complete': True}):
+            receipt = w.execute('W-A', self.output, 3, 900)
+        self.assertTrue(receipt['passed'])
+        self.assertTrue(receipt['precision_link_effect_observed'])
+        self.assertEqual(len(commands), 3)
+        self.assertEqual([cmd[1] for cmd in commands], ['precision-probe', 'precision-probe', 'native'])
+        self.assertEqual([cmd[5] for cmd in commands], [str(self.root / 'wa-reference')] * 3)
+        self.assertEqual(commands[0][2:4], commands[1][2:4])
+        self.assertEqual(Path(commands[0][0]).name, 'plain-control')
+        self.assertEqual(Path(commands[1][0]).name, 'census-device')
+
+    def test_wa_preparation_has_no_short_timeout(self):
+        with patch.object(packet_build, 'B', self.build), patch.object(packet_build, 'run') as run:
+            packet_build.prepare_wa_references(2)
+        self.assertIn('--precompute', run.call_args.args[0])
+        self.assertIsNone(run.call_args.kwargs['timeout'])
+
+    def test_wa_index_rejects_missing_coverage_and_path_escape(self):
+        import prepare_wa
+        root = self.root / 'references'
+        root.mkdir()
+        w.save(root / 'complete.json', dict(complete=True, device_executed=False, chunk=262144, fixture_calls=1))
+        (root / 'coverage.jsonl').write_text(''.join(json.dumps(dict(function=name, selected_bits=32))+'\n' for name in census_summary.UNARY))
+        (root / 'index.txt').write_text('')
+        with self.assertRaisesRegex(ValueError, 'incomplete reference coverage'):
+            prepare_wa.validate_index(root)
+        (root / 'index.txt').write_text('../escape 0 32 native-exhaustive 4294967296 0\n')
+        with self.assertRaisesRegex(ValueError, 'invalid reference path'):
+            prepare_wa.validate_index(root)
+
+    def test_wa_host_arithmetic_matches_precomputation_snapshot(self):
+        import prepare_wa
+        prefix = (w.HERE / 'evidence/wa-precompute-census.cpp.snapshot').read_text().split('int main(int argc', 1)[0]
+        import hashlib
+        self.assertEqual(prepare_wa.input_identity()['census_host_arithmetic_sha256'],
+                         hashlib.sha256(prefix.encode()).hexdigest())
+
+    def test_wa_requires_precomputed_references_before_any_launch(self):
+        self.manifest['wa_host_references_complete'] = False
+        w.save(self.build / 'window-prepared.json', self.manifest)
+        with patch.object(w.subprocess, 'run') as run:
+            with self.assertRaisesRegex(ValueError, 'sealed W-A host references'):
+                w.check('W-A', self.output, 3)
+            run.assert_not_called()
+
+    def test_wa_changed_reference_rejected_before_loader(self):
+        self.manifest['wa_reference_hashes'] = {'source.txt': 'wrong'}
+        w.save(self.build / 'window-prepared.json', self.manifest)
+        with patch.object(w.subprocess, 'run') as run:
+            with self.assertRaisesRegex(ValueError, 'W-A reference changed'):
+                w.check('W-A', self.output, 3)
+            run.assert_not_called()
+
+    def test_precision_verdict_requires_all_same_probes(self):
+        file = self.root / 'probes.jsonl'
+        rows = [dict(kind='precision-verdict', function=name, count=65536,
+                     non_nan_differences=0, correctly_rounded_on_probes=True)
+                for name in ('division', 'sqrtf', 'rsqrt-plain', 'rsqrt-barrier', 'rsqrt-corrected')]
+        file.write_text(''.join(json.dumps(row)+'\n' for row in rows))
+        self.assertEqual(len(w.precision_verdicts(file)), 5)
+        rows[0]['non_nan_differences'] = 1
+        file.write_text(''.join(json.dumps(row)+'\n' for row in rows))
+        with self.assertRaisesRegex(ValueError, 'invalid precision'):
+            w.precision_verdicts(file)
+        file.write_text(''.join(json.dumps(row)+'\n' for row in rows[1:]))
+        with self.assertRaisesRegex(ValueError, 'incomplete precision'):
+            w.precision_verdicts(file)
+
     def test_device_link_options_required_on_every_device_target(self):
         native = self.root / 'native'
         paths = []
@@ -48,12 +132,13 @@ class WindowTests(unittest.TestCase):
         for target in ('device-test', 'census-device', 'future-device'):
             path = native / 'CMakeFiles' / (target + '.dir') / 'link.txt'
             path.parent.mkdir(parents=True)
+            (path.parent / 'flags.make').write_text('CXX_FLAGS = -O2 -fsycl')
             path.write_text('icpx ' + flags + ' object.o -o ' + target)
             paths.append(path)
         self.assertEqual(len(packet_build.assert_device_link_options(native)), 3)
         for path in paths:
             original = path.read_text()
-            for flag in ('-foffload-fp32-prec-div', '-foffload-fp32-prec-sqrt'):
+            for flag in ('-fsycl', '-foffload-fp32-prec-div', '-foffload-fp32-prec-sqrt'):
                 path.write_text(original.replace(flag, ''))
                 with self.assertRaisesRegex(ValueError, 'link command missing'):
                     packet_build.assert_device_link_options(native)

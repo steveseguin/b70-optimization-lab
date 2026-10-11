@@ -22,7 +22,7 @@ numerical fixtures, not performance measurements or a quality waiver.
 Independent true-value samples stay below one ULP (maximum approximately
 0.500000045 for exp and 0.500000011 for log). All 2^32 inputs per function have
 host hash rows, exhaustive monotonic checks and glibc sanity comparisons; each
-finite discrepancy is at most one ULP. Device hash/fixture gates remain unrun.
+finite discrepancy is at most one ULP. The rebuilt CMake targets still require fresh device hash/fixture gates; the coordinator’s earlier same-object link experiment is preserved below.
 The [completed real-model CPU comparison](oracle-comparison.json) has the
 87-token prompt, all 64 generated token/top-five records and 384 layer files
 (48 layers at steps 1..8). Only 41/64 token positions agree with v1; the first
@@ -72,7 +72,7 @@ libraries; this is not a device attempt or a GPU failure.
 
 ## When to revisit
 
-Run W-A after coordinator admission and library setup; select only an rsqrt
+Run W-B first, then W-A after coordinator admission and library setup; select only an rsqrt
 spelling with its required exactness evidence. Run W-B on the final hash-bound
 identity, with exhaustive exp/log hashes, all three fixture gates and two fresh
 owners. Preserve any failure as evidence, latch it and do not retry. Then use
@@ -87,4 +87,24 @@ command. Both device targets now have them, and the builder checks every
 generated SYCL link command before compiling. The existing exhaustive host
 hashes and CPU oracle are hash-verified and reused. Attempt-a originals are
 preserved under that evidence folder. No device ran in this repair task.
-W-B is the next coordinator window; W-A host-work relocation follows separately.
+The first repair was committed and pushed separately so the coordinator could
+rerun W-B. W-A now moves all host reference math to the CPU build. Lossless
+slabs and per-chunk fingerprints preserve the coverage and diagnostic output;
+the window only decodes slabs and submits bounded kernels. A same-object
+negative-control/precise-link probe pair records the actual link effect.
+No device ran in this task and no new device speed or exactness is claimed.
+The build/reference receipts and WINDOW.md retain verification and exact commands.
+
+The W-A generator and verifier use the original Intel host flags, without
+`-mfma`. The initial GNU preparation was rejected at a finite `expf` input
+and preserved with its [diagnostic closeout](evidence/wa-gnu-reference-diagnostic.md).
+The replacement references require full readback before admission; no reference
+mismatch is waived to finish preparation.
+
+The Intel preparation completed on October 11. All nine unary census arms
+retain full 2^32 coverage. Full readback validated 115,728 stored slabs
+(30,333,679,277 values), both chunk fingerprints, and 231,456 endpoint
+comparisons against the original host arithmetic. The lossless files occupy
+14,643,930,234 bytes. Readback took 214 seconds on one CPU thread; this is
+CPU preparation timing, not device-window timing. The sealed
+[reference receipt](wa-reference-receipt.json) records every file hash.

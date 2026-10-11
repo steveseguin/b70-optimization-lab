@@ -35,5 +35,19 @@ if (P/'oracle-comparison.json').exists():
  assert comparison['coverage_passed'] and comparison['generated_tokens']==64
  assert oracle_receipt['returncode']==0 and oracle_receipt['status']=='token-cap'
  receipt['cpu_oracle']=dict(comparison_sha256=sha(P/'oracle-comparison.json'),run_receipt_sha256=sha(run/'receipt.json'),result_sha256=sha(run/'incident-retrospective/result.json'),arithmetic_sha256=sha(run/'incident-retrospective/arithmetic.json'),prompt_tokens=87,generated_tokens=64,layer_fixtures=384,v1_tokens_equal=comparison['tokens_equal'],first_token_difference=comparison['first_token_difference'],device_executed=False)
+if (P/'wa-reference-receipt.json').exists():
+ wa=json.loads((P/'wa-reference-receipt.json').read_text())
+ from prepare_wa import input_identity, validate_index
+ assert wa['generator']['inputs']==input_identity()
+ validate_index(B/'wa-reference')
+ for name,digest in wa['hashes'].items():assert sha(P/name)==digest
+ receipt['wa_reference_receipt_sha256']=sha(P/'wa-reference-receipt.json')
+ receipt['wa_host_precomputed']=True
+ receipt['wa_reference_bytes']=wa['stored_bytes']
+ control=json.loads((B/'precision-link-control.json').read_text())
+ assert sha(B/'census-plain-link-control')==control['plain_binary_sha256']
+ assert sha(B/'native/census-device')==control['precise_binary_sha256']
+ receipt['precision_link_ab']=control
+ receipt['binaries']['build/census-plain-link-control']=sha(B/'census-plain-link-control')
 (P/'build-receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
 subprocess.run([sys.executable,'-B',str(P/'prepare_windows.py'),'--census-binary',str(B/'native/census-device'),'--fixture-binary',str(B/'native/device-test'),'--fixtures',str(B/'fixtures'),'--fixture-trace',str(B/'fixture-inputs.bin'),'--trace-receipt',str(P/'fixture-trace-receipt.json'),'--host-hashes',str(B/'host-hashes.txt'),'--cpu-receipt',str(P/'build-receipt.json'),'--authority','iq3-p17-detmath-v2'],check=True,timeout=180)

@@ -86,7 +86,25 @@ def main():
         paths.add(a.host_hashes)
     if Path(str(a.host_hashes) + '.sanity.json').is_file():
         paths.add(Path(str(a.host_hashes) + '.sanity.json'))
-    record = dict(schema='own-runtime.packet17.prepared-window.v2', compiled=True,
+    wa_receipt = HERE / 'wa-reference-receipt.json'
+    wa = json.loads(wa_receipt.read_text()) if wa_receipt.exists() else None
+    wa_hashes = {}
+    if wa:
+        from prepare_wa import input_identity, validate_index
+        if wa.get('complete') is not True or wa['generator']['inputs'] != input_identity():
+            raise SystemExit('W-A reference inputs changed')
+        validate_index(BUILD / 'wa-reference', a.chunk)
+        for name, digest in wa['hashes'].items():
+            path = HERE / name
+            if sha(path) != digest:
+                raise SystemExit('W-A reference changed: ' + name)
+            wa_hashes[relative(path)] = digest
+        paths.add(BUILD / 'census-plain-link-control')
+        paths.add(BUILD / 'precision-link-control.json')
+    record = dict(wa_host_references_complete=bool(wa), wa_reference_hashes=wa_hashes,
+                  wa_reference_dir=relative(BUILD / 'wa-reference'),
+                  precision_control_binary=relative(BUILD / 'census-plain-link-control'),
+                  schema='own-runtime.packet17.prepared-window.v2', compiled=True,
                   device_executed=False, chunk=a.chunk, native_bits=32,
                   host_hashes_complete=complete, host_hash_rows=rows,
                   cpu_three_way_passed=passed, fixture_trace_complete=trace_complete,

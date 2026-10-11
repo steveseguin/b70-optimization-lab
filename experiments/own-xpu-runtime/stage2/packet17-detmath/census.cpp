@@ -66,9 +66,10 @@ void row(std::ostream& out,int op,uint64_t start,uint64_t count,const Stats&s,co
  out<<"}\n";
 }
 }
+#include "wa_storage.hpp"
 int main(int argc,char**argv){using namespace census;std::signal(SIGTERM,stop);std::signal(SIGINT,stop);
  try{
- if(argc<6)throw std::runtime_error("usage: census MODE BITS CHUNK OUTPUT EXTRA [CARD]; host-hashes EXTRA unused; native EXTRA fixture-inputs.bin; verify EXTRA hashes.txt");
+ if(argc<6)throw std::runtime_error("usage: census MODE BITS CHUNK OUTPUT EXTRA [CARD]; host-hashes EXTRA unused; native/precision-probe EXTRA wa-reference-directory; verify EXTRA hashes.txt");
  std::string mode=argv[1];unsigned domain_bits=std::stoul(argv[2]);uint64_t chunk=std::stoull(argv[3]);std::string extra=argv[5];
  if(domain_bits<8||domain_bits>32||chunk<64||chunk>262144||chunk%64)throw std::runtime_error("invalid bounds");
  std::ofstream out(argv[4]);if(!out)throw std::runtime_error("output open");
@@ -97,7 +98,7 @@ int main(int argc,char**argv){using namespace census;std::signal(SIGTERM,stop);s
 #ifdef HOST_ONLY
  throw std::runtime_error("host binary supports host-hashes only; no device code compiled");
 #else
- if(argc!=7||(mode!="native"&&mode!="verify"))throw std::runtime_error("native mode/card missing");
+ if(argc!=7||(mode!="native"&&mode!="verify"&&mode!="precision-probe"))throw std::runtime_error("native mode/card missing");
  if(mode=="native"&&domain_bits!=32)throw std::runtime_error("native census starts exhaustive; pilot selects bounded alternative");
  if(mode=="verify"&&domain_bits!=32)throw std::runtime_error("v2 equality requires all 2^32 patterns");
  int card=std::stoi(argv[6]);std::vector<sycl::device> devices;
@@ -114,28 +115,32 @@ int main(int argc,char**argv){using namespace census;std::signal(SIGTERM,stop);s
  if(mode=="verify"){
   std::ifstream hashes(extra);if(!hashes)throw std::runtime_error("host hashes missing");uint64_t rows=0;for(int op: {int(exp_v2),int(log_v2)})for(uint64_t start=0;start<(1ULL<<32);start+=chunk){uint64_t n=std::min<uint64_t>(chunk,(1ULL<<32)-start),expected_start,expected_n,sum,xor_hash;int expected_op;if(!(hashes>>expected_op>>expected_start>>expected_n>>sum>>xor_hash)||expected_op!=op||expected_start!=start||expected_n!=n)throw std::runtime_error("hash coverage/order");for(uint64_t j=0;j<n;++j)reference[j]=0;auto [s,seconds]=submit(op,start,n,false);row(out,op,start,n,s,"v2-exhaustive",seconds);if(s.sum!=sum||s.xor_hash!=xor_hash)throw std::runtime_error("v2 host/device hash mismatch");++rows;}std::string trailing;if(hashes>>trailing)throw std::runtime_error("trailing host hashes");out<<"{\"complete\":true,\"rows\":"<<rows<<",\"inputs_per_function\":4294967296}\n";
  }else{
-  // Pilot every function on 2^20 stratified encodings. Full 2^32 is required
-  // unless its measured host cost projects beyond the ten-CPU-minute budget.
-  for(int op=exp_native;op<=rsqrt_corrected;++op){if(op==pow_rope)continue;
-   int host_op=op>=rsqrt_barrier?rsqrt_native:op;
-   uint32_t pilot_hash=0;std::clock_t pilot_begin=std::clock();
-   for(uint64_t i=0;i<(1ULL<<20);++i)pilot_hash^=bits(evaluate(host_op,value(input(i,20))));
-   double pilot_cpu=double(std::clock()-pilot_begin)/CLOCKS_PER_SEC,predicted_cpu=pilot_cpu*4096;
-   active_bits=predicted_cpu>550?28:32;
-   out<<"{\"kind\":\"coverage-selection\",\"function\":\""<<names[op]<<"\",\"pilot_inputs\":1048576,\"pilot_cpu_seconds\":"<<pilot_cpu<<",\"predicted_full_cpu_seconds\":"<<predicted_cpu<<",\"selected_bits\":"<<active_bits<<",\"pilot_hash\":"<<pilot_hash<<",\"reason\":\""<<(active_bits==32?"full enumeration fits projected host budget":"projected full enumeration exceeds 550 CPU seconds; reserve budget for fixture operands")<<"\"}\n";
-   auto cpu_start=std::chrono::steady_clock::now();double host_seconds=pilot_cpu;
-   for(uint64_t start=0;start<(1ULL<<active_bits);start+=chunk){uint64_t n=std::min<uint64_t>(chunk,(1ULL<<active_bits)-start);std::clock_t t=std::clock();for(uint64_t j=0;j<n;++j){float a=value(input(start+j,active_bits));reference[j]=bits(evaluate(host_op,a));}host_seconds+=double(std::clock()-t)/CLOCKS_PER_SEC;if(host_seconds>600)throw std::runtime_error("host elementary budget exceeded before required coverage; no completed census");auto [s,seconds]=submit(op,start,n,false);row(out,op,start,n,s,active_bits==32?"native-exhaustive":"native-stratified",seconds);}
-   out<<"{\"function\":\""<<names[op]<<"\",\"host_cpu_seconds\":"<<host_seconds<<",\"wall_seconds\":"<<std::chrono::duration<double>(std::chrono::steady_clock::now()-cpu_start).count()<<"}\n";
-  }
-  // All 32 frequencies, 151 incident-window positions, and corresponding trig
-  // arguments. Fixture traces additionally cover every actual fixture operand.
-  uint64_t rope_n=3*32*151;for(uint64_t start=0;start<rope_n;start+=chunk){uint64_t n=std::min<uint64_t>(chunk,rope_n-start);for(uint64_t j=0;j<n;++j){uint64_t k=start+j;int op=(k%3)==0?pow_rope:((k%3)==1?sin_native:cos_native);uint64_t point=k/3;float y=-float(2*(point%32))/64.f;float a=op==pow_rope?y:float(point/32)*std::pow(1.e7f,y);arguments[j]={uint32_t(op),bits(a),0,0};reference[j]=bits(evaluate(op,a));}auto [rope,seconds]=submit(pow_rope,start,n,true);row(out,pow_rope,start,n,rope,"rope-arguments",seconds);}
-  for(int op=division;op<=separate;++op)for(uint64_t start=0;start<(1ULL<<26);start+=chunk){uint64_t n=std::min<uint64_t>(chunk,(1ULL<<26)-start);for(uint64_t j=0;j<n;++j){float a,b,c;triple(start+j,a,b,c);arguments[j]={uint32_t(op),bits(a),bits(b),bits(c)};reference[j]=bits(evaluate(op,a,b,c));}auto [s,seconds]=submit(op,start,n,true);row(out,op,start,n,s,"triples",seconds);}
-  auto trace=traces(extra);for(const auto& t:trace)if(t.op>separate)throw std::runtime_error("fixture trace opcode");
-  for(int op=exp_native;op<=separate;++op){std::vector<Trace> selected;for(const auto& t:trace)if(t.op==uint32_t(op))selected.push_back(t);
-   for(uint64_t start=0;start<selected.size();start+=chunk){uint64_t n=std::min<uint64_t>(chunk,selected.size()-start);for(uint64_t j=0;j<n;++j){arguments[j]=selected[start+j];auto t=arguments[j];int host_op=(t.op==rsqrt_barrier||t.op==rsqrt_corrected)?rsqrt_native:int(t.op);reference[j]=bits(evaluate(host_op,value(t.a),value(t.b),value(t.c)));}auto [s,seconds]=submit(op,start,n,true);row(out,op,start,n,s,"actual-fixture-inputs",seconds);}
-  }
-  out<<"{\"complete\":true,\"requested_unary_encodings\":"<<(1ULL<<domain_bits)<<",\"triples_per_operation\":67108864,\"fixture_calls\":"<<trace.size()<<"}\n";
+  // All host math, coverage selection and explicit operands were sealed on CPU.
+  // Read at most one bounded lossless slab before each short device submission.
+  std::filesystem::path refs(extra);
+  std::ifstream index(refs/"index.txt");if(!index)throw std::runtime_error("W-A host references missing");
+  if(mode=="native"){std::ifstream coverage(refs/"coverage.jsonl");if(!coverage)throw std::runtime_error("W-A coverage missing");out<<coverage.rdbuf();}
+  std::string file,kind;int op;unsigned selected;uint64_t total,fixture_calls=0,probe_rows=0;bool explicit_args;
+  while(index>>file>>op>>selected>>kind>>total>>explicit_args){
+   bool probe=kind=="precision-probe";if(probe!=(mode=="precision-probe"))continue;
+   if(file.find('/')!=std::string::npos||file.find("..")!=std::string::npos||op<0||op>separate||selected<8||selected>32||!total)throw std::runtime_error("invalid reference index");
+   active_bits=selected;std::ifstream values(refs/file,std::ios::binary);if(!values)throw std::runtime_error("missing host reference values");
+   Stats aggregate;auto stream_begin=std::chrono::steady_clock::now();
+   for(uint64_t start=0;start<total;start+=chunk){uint64_t n=std::min(chunk,total-start);
+    auto [sum,xor_hash]=read_slab(values,start,n,explicit_args,reference,arguments);
+    auto [s,seconds]=submit(op,start,n,explicit_args);
+    row(out,op,start,n,s,kind.c_str(),seconds);merge(aggregate,s);
+    out<<"{\"kind\":\"host-reference-fingerprint\",\"function\":\""<<names[op]<<"\",\"start\":"<<start<<",\"count\":"<<n<<",\"sum64\":"<<sum<<",\"xor64\":"<<xor_hash<<"}\n";
+   }end_slabs(values);
+   if(kind=="native-exhaustive"||kind=="native-stratified")out<<"{\"function\":\""<<names[op]<<"\",\"host_cpu_seconds\":0,\"host_reference_work\":\"CPU build, not this window\",\"wall_seconds\":"<<std::chrono::duration<double>(std::chrono::steady_clock::now()-stream_begin).count()<<"}\n";
+   if(kind=="actual-fixture-inputs")fixture_calls+=total;
+   if(probe){++probe_rows;bool match=aggregate.different==aggregate.both_nan_different;
+    out<<"{\"kind\":\"precision-verdict\",\"function\":\""<<names[op]<<"\",\"count\":"<<total<<",\"non_nan_differences\":"<<(aggregate.different-aggregate.both_nan_different)<<",\"correctly_rounded_on_probes\":"<<(match?"true":"false")<<",\"verdict\":\""<<(match?"correctly rounded":"not correctly rounded")<<"\",\"scope\":\"tested inputs only; rsqrt means rounded sqrt followed by rounded division\"}\n";
+   }
+  }if(!index.eof())throw std::runtime_error("reference index parse");
+  if(mode=="precision-probe"&&probe_rows!=5)throw std::runtime_error("incomplete precision probes");
+  out<<"{\"complete\":true,\"requested_unary_encodings\":"<<(1ULL<<domain_bits)<<",\"triples_per_operation\":67108864,\"fixture_calls\":"<<fixture_calls<<",\"precision_probe_functions\":"<<probe_rows<<",\"host_reference_work\":\"precomputed at build time\"}\n";
+
  }
  sycl::free(partial,q);sycl::free(arguments,q);sycl::free(reference,q);return 0;
 #endif

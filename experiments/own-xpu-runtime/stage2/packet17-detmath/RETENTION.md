@@ -54,3 +54,24 @@ link comparisons, and the original failed window and latch. The full census
 JSONL (over 1 MiB) is required to locate the first mismatching chunk and retain
 all preceding successes; restore its exact bytes from Git. These are preserved
 evidence, not scratch. No original was deleted during the move out of build/.
+
+## W-A precomputed host references
+
+`wa-reference-receipt.json` records every compressed value-file SHA-256,
+coverage decision, generator identity and full fingerprint readback. The
+large generated files stay in ignored `build/wa-reference/`; they are required
+window inputs, not disposable scratch. Restore them with the CPU reconstruction
+commands in WINDOW.md and create a new seal (pilot timings can differ).
+`evidence/wa-precompute-census.cpp.snapshot` retains the source used by the
+initial GNU diagnostic generator. Its shared host arithmetic is byte-identical to the current
+census prefix, checked by a unit test. W-B's exhaustive hashes are reused
+unchanged. The extra plain-link binary is a named diagnostic control whose
+same-object identity is retained in the build receipt.
+
+The rejected GNU reference pass remains under
+`build/wa-gnu-reference-diagnostic/`. Its complete
+[evidence manifest](evidence/wa-gnu-reference-diagnostic.json) hashes each retained
+file. It is failed-preparation evidence, not scratch or an admitted W-A input.
+The accepted reference directory is separate. Reconstruct the rejected bytes
+only with its recorded GNU generator identity; timings in the coverage metadata
+are original observations and are retained rather than regenerated.

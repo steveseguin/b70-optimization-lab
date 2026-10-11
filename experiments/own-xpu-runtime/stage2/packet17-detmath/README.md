@@ -179,4 +179,18 @@ command. Both device targets now have them, and the builder checks every
 generated SYCL link command before compiling. The existing exhaustive host
 hashes and CPU oracle are hash-verified and reused. Attempt-a originals are
 preserved under that evidence folder. No device ran in this repair task.
-W-B is the next coordinator window; W-A host-work relocation follows separately.
+Run W-B first, then W-A using the [exact commands](WINDOW.md).
+W-A now reads build-time host references in bounded lossless slabs. It retains
+every selected unary input, all 2^26 triples per operation, all RoPE arguments,
+fixture operands, raw-bit comparisons and ULP histograms. The build verifies
+every stored fingerprint before sealing. A short same-object plain/precise link
+A/B reports divide, sqrt and rsqrt rounding directly in the window receipt.
+All device timings and the new A/B result remain pending; neither binary ran
+in this task. Allow a few minutes for W-B and roughly 5–10 for W-A, as planning
+estimates. The old 1–4-hour host calculation is outside the device window.
+
+The W-A generator and verifier use the original Intel host flags, without
+`-mfma`. The initial GNU preparation was rejected at a finite `expf` input
+and preserved with its [diagnostic closeout](evidence/wa-gnu-reference-diagnostic.md).
+The replacement references require full readback before admission; no reference
+mismatch is waived to finish preparation.
