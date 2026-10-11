@@ -1,0 +1,36 @@
+{
+  "schema": "own-xpu-runtime.packet4.a367-calibration-preregistration.v1",
+  "status": "CPU PREPARED; no native run; owner halt/admission pending",
+  "recipe": "A367",
+  "generation_requests": 0,
+  "sample_interval_seconds": 0.5,
+  "ready_plateau_seconds": 20,
+  "load_and_plateau_seconds": 1200,
+  "teardown_soft_seconds": 300,
+  "post_teardown_gap_seconds": 305,
+  "default_start_floor_kib": 120000000,
+  "live_reserve_kib": 12000000,
+  "need_formula_kib": "ceil((baseline MemAvailable - minimum MemAvailable)/1024) + 12000000 + 8388608",
+  "identity_deltas": [
+    {
+      "change": "Zero generation requests; only GET /health and /v1/models; 20-second post-ready plateau",
+      "scope": "No speed, quality, or generation-memory claim; startup profile and graph capture unchanged"
+    },
+    {
+      "change": "Independent 0.5-second host memory sampler/watchdog and kernel journal watcher",
+      "scope": "MemAvailable, whole-host pressure, per-rank RSS, cgroup memory.current, GPUActive where observable; no xpu-smi or device API; 12000000 KiB live reserve"
+    },
+    {
+      "change": "Owner/health/payload/halt/process/seal admission and optional explicitly owner-approved calibration-only start floor",
+      "scope": "Default 120000000 KiB retained; exception pins this preregistration and seal and is recorded separately; never fixture approval"
+    },
+    {
+      "change": "One API-PID SIGINT; spawn-safe cooperative shutdown guards; all-session exit, post-exit journal, 305-second gap",
+      "scope": "Reuse packet4 server_entry/shutdown_guard, no extraction worker or arithmetic hooks; no retry or hard kill; overrun waits for owner recovery"
+    },
+    {
+      "change": "nice19, OMP_NUM_THREADS=2 instead of historical 1; fresh run-local cache/IPC/evidence paths",
+      "scope": "Explicit task host limit and safe evidence isolation; TORCH_TRACE retained; stage/source/model and all compute selectors unchanged; no host settings changed"
+    }
+  ]
+}

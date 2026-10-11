@@ -192,3 +192,60 @@ all twelve full answers, same/fresh-process repeats, eager neutrality beyond
 this prefix, natural M6 or separate replay, 27B extraction and the packet-3
 native smoke each require later work. They are not additional launches in this
 45-minute window. No benchmark or promotion is made here.
+
+## October 11 addendum: certified A367 calibration comes first
+
+The earlier attempt-8 suggestion is superseded by the correction in
+[MEMORY-ADMISSION-REVISION.md](MEMORY-ADMISSION-REVISION.md#measured-on-2026-10-11-attempt-8).
+Attempt 8 was the experimental mmap adapter, never the certified A367 recipe.
+Its failed startup cannot justify a lower fixture floor.
+
+The **first model launch of the next owner-authorized window** is now the
+[CPU-prepared A367 calibrate-load packet](a367-calibrate/README.md), after halt
+resolution, the previous 305-second teardown gap, and a fresh passing health
+receipt. This will be the **first A367-recipe launch since the fourth incident**,
+so reaching readiness, holding 20 seconds and stopping cleanly also checks the
+certified line's startup health. It does not replace the required initial
+four-card health receipt, establish output parity, or measure serving speed.
+
+Use the host venv and sealed source/extension, original graph capture and
+allocation selectors, TP4 and the certified publisher model. No experimental
+mmap adapter or driver-shadow override is used. The packet sends zero
+generation requests, samples host memory every 0.5 seconds, then requests one
+SIGINT, proves session exit and waits 305 seconds. The packet documents all
+identity deltas, including task-required OMP=2 and cooperative cleanup.
+
+The default 120,000,000 KiB start floor still refuses this boot. The packet
+therefore offers a **separately owner-approved calibration-only start-floor
+exception**, with an exact statement bound to its preregistration and seal.
+This acknowledges the unknown loading-memory risk and retains the original
+12,000,000 KiB live watchdog reserve. It supplies no fixture approval and
+changes no default. No exception or new approval was created during CPU prep.
+The halt, absent FAULT markers, fresh health, idle ownership, 75-member seal,
+source/stage checks and historical model-receipt blocker still apply.
+
+Reserve **45 minutes for calibration alone**: 6 minutes prior gap/admission,
+2 bounded health, up to 20 for load and plateau, 5 graceful teardown, 6 for the
+mandatory post-exit gap and 6 contingency. Hash verification belongs before the
+slot; recheck health freshness immediately before launch. A teardown overrun
+fails the result and waits without escalation. There is no automated follow-on
+workload. This supersedes treating calibration plus extraction as one 45- or
+60-minute reservation: allow a separate 45-minute fixture slot after evidence
+review and the owner's derived-floor approval, roughly **90 minutes total plus
+review time** if scheduled together.
+
+Future window command (not executed in this preparation):
+
+```bash
+nice -n 19 env OMP_NUM_THREADS=2 python3 -B experiments/own-xpu-runtime/stage1/packet4-prep/a367-calibrate/a367_calibrate_load.py --execute --owner-window "$OWNER_WINDOW" --health-receipt "$HEALTH_RECEIPT" --payload-receipt "$PAYLOAD_RECEIPT" --output "$CALIBRATION"
+```
+
+Only a complete, clean receipt permits the [CPU derivation](a367-calibrate/derive_floor.py).
+It proposes the sampled baseline-to-trough need plus **12,000,000 KiB reserve
+and 8,388,608 KiB fixture allowance**, retaining uncertainty about generation,
+serialization and between-sample peaks. It writes a proposed revision document,
+unapproved receipt and exact owner sentence, without changing the current floor.
+Review and install the revised document and update its driver seal before the
+owner approves that exact hash. Then use a new fixture-window flag, fresh health
+and actual capacity checks. No failed calibration or retained `passed` boolean
+alone admits fixtures. Leave the cards empty after calibration.

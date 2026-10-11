@@ -1,0 +1,28 @@
+{
+  "schema": "own-xpu-runtime.packet4.a367-calibrate.cpu-tests.v1",
+  "utc": "2026-10-11T01:24:37.042880+00:00",
+  "passed": true,
+  "tests_run": 49,
+  "failures": 0,
+  "errors": 0,
+  "nice": 19,
+  "OMP_NUM_THREADS": "2",
+  "native_launches": 0,
+  "gpu_access": false,
+  "servers_started": 0,
+  "systemd_operations": 0,
+  "port_8188_contacted": false,
+  "scratch": "TemporaryDirectory removed all owned mock fixtures; no caches generated (-B)",
+  "seal_sha256": "47698c52be7d8ff1d6ff5ef39d007aa65c2eacedae39d1268f4a0c7219866511",
+  "command": "nice -n 19 env OMP_NUM_THREADS=2 python3 -B -m unittest discover -s experiments/own-xpu-runtime/stage1/packet4-prep/a367-calibrate -p test_calibrate.py -v",
+  "checks": [
+    "CPU plan JSON parses; native_executed=false",
+    "frozen launcher awk-derived bytes match historical SHA256",
+    "command and compute environment match certified graph recipe",
+    "admission refusals and separately declared calibration-only exception",
+    "proc/cgroup/rank RSS units, missing data, overlap and phase/gap math",
+    "mock launcher SIGINT/session-exit/postflight/305-second ordering",
+    "fault/journal/watchdog failures and no force escalation",
+    "floor proposal and unapproved owner receipt; canonical document unchanged"
+  ]
+}
