@@ -45,6 +45,8 @@
 #   N32j                                    N32 with thinking only where a question, refusal or error is in view; the notes call thinks
 #   N32f                                    N32j whose notes call does not think and whose cut goes down to 50 % (fewer, cheaper notes calls)
 #   N200j                                   N32j at the 200K cap
+#   X32                                     the plain agent with no context budget (it sends its whole history), served through the
+#                                           tools/ctxkeeper proxy at CTXKEEPER_BASE: the keeper policy as a product, not as a harness
 #   W48 D48 C48 B48ir B48ira B48ira-free   live-cap study at budget 49,152 (48K): W = truncate (clm_baselines
 #          TruncateAgent: drop oldest turns once over the limit, down to 75 %), D = compact (CompactAgent: at 75 %
 #          stub all but the newest 3 tool outputs and strip earlier thinking, then drop oldest if still over),
@@ -156,6 +158,7 @@ ARMS["N200"] = ("truncate", "memory", 204800)         # the same at the 200K cap
 ARMS["N32j"] = ("truncate", "memory", 32768)          # N32 thinking only on calls that hold a question or an error; the notes call thinks
 ARMS["N32f"] = ("truncate", "memory", 32768)          # N32j with a notes call that does not think and a deeper cut (to 50 %): the fast setting
 ARMS["N200j"] = ("truncate", "memory", 204800)        # N32j at the 200K cap
+ARMS["X32"] = ("plain", "memory", 0)                  # the plain agent with no budget of its own, served through tools/ctxkeeper
 for a in ("A", "B32", "C32", "E32"):  # same arm with earlier thinking dropped from every call
     ARMS[a + "t"] = ARMS[a]
 bad = [a for a in arms if a not in ARMS]
@@ -271,6 +274,10 @@ run_one() {  # arm agent budget task_dir job_name drop_old_thinking
     fi
   fi
   local fb=${FOLD_BATCHES:-}
+  local api=$API_BASE
+  if [[ "$arm" == X32 ]]; then                     # the keeper policy as a proxy: the agent sends everything, the proxy keeps the window
+    api=${CTXKEEPER_BASE:?arm X32 needs CTXKEEPER_BASE, the URL of a running tools/ctxkeeper proxy (http://host:port/v1)}
+  fi
   if [[ "$arm" == B32iraR || "$arm" == B32iraR4 || "$arm" == B32iraRH ]]; then   # B32ira + pinned RULE lines (standing rules and methods stay in view)
     fm=read; tp=judgement; tc=${THINK_CAP_R:-4096}; ar=1
     xa=(-a clm_rules:ClmRulesAgent)
@@ -283,7 +290,7 @@ run_one() {  # arm agent budget task_dir job_name drop_old_thinking
     [[ "$arm" == N32f ]] && extra="thinking_policy=judgement notes_thinking=false truncate_target_ratio=0.5"
   fi
   echo "arm=$arm agent_class=${xa[1]:-run-context-job.sh default for $agent} extra_kwargs=$extra fold_batches=${fb:-1}" > "$RUNS/$job.arm.txt"
-  TASKS="$td" JOB_NAME="$job" CONTEXT_BUDGET="$budget" DROP_OLD_THINKING="$drop" THINK_CAP="$tc" ENABLE_THINKING="$et" THINKING_POLICY="$tp" SHOW_WINDOW="$sw" FOLD_MODE="$fm" ARCHIVE="$ar" QUOTED="$qt" FOLD_BATCHES="$fb" EXTRA_KWARGS="${EXTRA_KWARGS:-} $extra" "$D/run-context-job.sh" "$agent" "$RUNS" "${xa[@]}" > "$RUNS/$job.out" 2>&1
+  TASKS="$td" JOB_NAME="$job" CONTEXT_BUDGET="$budget" DROP_OLD_THINKING="$drop" THINK_CAP="$tc" ENABLE_THINKING="$et" THINKING_POLICY="$tp" SHOW_WINDOW="$sw" FOLD_MODE="$fm" ARCHIVE="$ar" QUOTED="$qt" FOLD_BATCHES="$fb" API_BASE="$api" EXTRA_KWARGS="${EXTRA_KWARGS:-} $extra" "$D/run-context-job.sh" "$agent" "$RUNS" "${xa[@]}" > "$RUNS/$job.out" 2>&1
   local rc=$?
   if (( rc != 0 )); then
     echo "!!! $job: launcher exited with status $rc; this run does not count"
@@ -326,5 +333,5 @@ if [[ "${STUB:-0}" == 1 ]]; then   # storage-rule probes (memory mode, no budget
 fi
 
 echo; echo "== table (all trials of this comparison)"
-"$PY" "$D/summarize_results.py" --json "$O/summary.json" "$RUNS"/jobs/[A-ENPW]* | tee "$O/summary.txt"
+"$PY" "$D/summarize_results.py" --json "$O/summary.json" "$RUNS"/jobs/[A-ENPWX]* | tee "$O/summary.txt"
 [[ $FAILED == 0 ]] || { echo "!!! at least one trial was ended by a cap/timeout/rule; see the lines above"; exit 1; }
