@@ -44,6 +44,17 @@ class Keeper(unittest.TestCase):
         self.assertEqual(kept.splitlines()[0], "RULES")
         self.assertEqual(NS["keep_rules"](old, old), (old, []))
 
+    def test_wants_thinking(self):
+        w = NS["wants_thinking"]
+        tool = lambda text, code=0: {"role": "tool", "content": f"{text}\n\n(exit_code={code})"}
+        self.assertTrue(w([{"role": "user", "content": "task"}]))                         # nothing delivered yet
+        self.assertFalse(w([tool("ITEM 3/9 (UPDATE)\nA quiet day. abcd12 went up by four.")]))
+        self.assertTrue(w([tool("ITEM 4/9 (PROBE)\nPROBE: answer these questions now.\nASK p1_1: What value?")]))
+        self.assertTrue(w([tool("ITEM 9/9 (QUERY)\nThe auditors ask.\nQUERY abcd12")]))
+        self.assertTrue(w([tool("ITEM 3/9 (UPDATE)\ntext"), {"role": "user", "content": "CONTEXT LIMIT reached"}]))
+        self.assertTrue(w([tool("bash: nope: command not found", 127)]))
+        self.assertFalse(w([tool("ITEM 4/9 (PROBE)\nASK p1_1: x"), {"role": "assistant", "content": "ok"}, tool("written")]))
+
     def test_pin_head_round_trip(self):
         self.assertEqual(NS["PIN_RE"].match(NS["PIN_HEAD"].format(n=17)).group(1), "17")
 

@@ -162,6 +162,24 @@ def keep_rules(old: str, new: str) -> tuple[str, list[str]]:
     return "\n".join(lines), lost
 
 
+QUESTION = re.compile(r"(?m)^(?:ASK \S+?:|QUERY \S+|GET \S+)|^PROBE:|STREAM END|NOT RUN|Traceback|No tool call in your last turn"
+                      r"|CONTEXT LIMIT|FINAL turn")
+
+
+def wants_thinking(messages: list[dict[str, Any]]) -> bool:
+    """Judgement policy: think when the newest tool output (or a harness message after it) holds a question, the end
+    of the stream, a refusal or an error, when the last command failed, or before any tool output exists. A routine
+    fetch of the next item is answered without thinking."""
+    last_tool = next((i for i in range(len(messages) - 1, -1, -1) if messages[i].get("role") == "tool"), -1)
+    if last_tool < 0:
+        return True
+    tail = [str(m.get("content") or "") for m in messages[last_tool:]]
+    if any(QUESTION.search(t) for t in tail):
+        return True
+    codes = re.findall(r"\(exit_code=(-?\d+)\)", tail[0])
+    return bool(codes and codes[-1] != "0")
+
+
 class _KeeperGuard:
     """Wraps the checkpointer: after its maybe(), the agent archives, takes notes and cuts if it is over the limit
     (the same place as the sliding-window baseline's cut: right before the budget gate and the model call)."""
@@ -188,16 +206,42 @@ class KeeperAgent(TruncateAgent):
         return "keeper"
 
     def __init__(self, *args: Any, notes_max_tokens: int | str = 2048, notes_call_max_tokens: int | str = 4096,
-                 notes_thinking: Any = False, **kwargs: Any) -> None:
+                 notes_thinking: Any = False, thinking_policy: str = "always", **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.notes_max_tokens, self.notes_call_max_tokens = int(notes_max_tokens), int(notes_call_max_tokens)
         self.notes_thinking = _cb._as_bool(notes_thinking)
+        # thinking_policy (arm N32j): always = the agent's enable_thinking on every call (as W32); judgement = thinking
+        # only on calls that hold a question, a refusal or an error (see _wants_thinking). The running state then no
+        # longer sits in the agent's thinking, so the notes call does the bookkeeping: pair it with notes_thinking=true.
+        self.thinking_policy = str(thinking_policy or "always").strip().lower()
+        if self.thinking_policy not in ("always", "judgement"):
+            raise ValueError(f"thinking_policy must be always|judgement, not {thinking_policy!r}")
+        self._base_thinking = self.enable_thinking
+        self.n_thinking_on = self.n_thinking_off = 0
+        if self.thinking_policy == "judgement":
+            # the Qwen3.8 template adds a sentence to the system message when thinking is on; reasoning_effort=medium
+            # removes it, so switching per call does not change the first line of the prompt (clm_improved, stable_system)
+            import clm_improved as _ci
+            _ci._install_extra_body_hook()
+            _ci._CTK_EXTRA["reasoning_effort"] = "medium"
         self.notes = ""
         self.n_notes_calls = self.n_items_archived = self.n_rules_put_back = 0
         self._ckpt = _KeeperGuard(self._ckpt, self)   # TruncateAgent's own guard stays inside; its _manage is a no-op here
 
     def _manage(self, messages: list[dict[str, Any]]) -> None:
         return                                        # the cut happens in _keep (it needs the sandbox and a model call)
+
+    def _wants_thinking(self, messages: list[dict[str, Any]]) -> bool:
+        return wants_thinking(messages) and bool(self._base_thinking)
+
+    async def _query_with_retry(self, model: str, messages: list[dict[str, Any]]) -> Any:
+        if self.thinking_policy == "judgement":
+            self.enable_thinking = self._wants_thinking(messages)
+        if self.enable_thinking:
+            self.n_thinking_on += 1
+        else:
+            self.n_thinking_off += 1
+        return await super()._query_with_retry(model, messages)
 
     async def setup(self, environment: Any) -> None:
         await super().setup(environment)
@@ -312,5 +356,11 @@ class KeeperAgent(TruncateAgent):
             _cb.BASELINE_SYSTEM = saved
             try:
                 (self.logs_dir / "notes_final.txt").write_text(self.notes + "\n")
+                (self.logs_dir / "keeper_stats.json").write_text(json.dumps({
+                    "thinking_policy": self.thinking_policy, "thinking_on_calls": self.n_thinking_on,
+                    "thinking_off_calls": self.n_thinking_off, "notes_calls": self.n_notes_calls,
+                    "notes_thinking": self.notes_thinking, "items_archived": self.n_items_archived,
+                    "rules_put_back": self.n_rules_put_back, "rules": rule_lines(self.notes),
+                    "notes_max_tokens": self.notes_max_tokens}, indent=1) + "\n")
             except Exception:
                 pass
