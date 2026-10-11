@@ -63,6 +63,8 @@ Approved duplicate retirements are recorded in lane notes; a later full proof mu
 
 ## Our Own Intel Xe Runtimes
 
+**October 11, CPU-only kernel optimization preparation:** [Packet 6](experiments/own-xpu-runtime/stage2/packet6-kopt/README.md) adds separate packed-matrix candidates with wider loads, shared unpack work and a four-matrix diagnostic. The SYCL build, ten protocol tests, 207,360 decoded values and 1,416 CPU row comparisons pass. Its new reduction changes 134 FP32 accumulators but no final 16-bit fixture outputs; full-model parity remains open. No GPU binary ran. The coordinator owns the documented card-3 exactness and timing windows; no new speed is claimed.
+
 **October 11, CPU-only copy measurement preparation:** [Packet 5](experiments/own-xpu-runtime/stage2/packet5-h2d/README.md) now builds our bounded native copy test at the actual expert sizes, with pinned/pageable buffers and a copy-versus-compute overlap check. Eleven Python tests, host ownership checks and the SYCL build pass; no device binary ran and no transfer speed is claimed. The coordinator can run the documented card 3 window next, then use its measured copy rates in the one-card plan.
 
 **October 11, CPU-only one-card plan:** The [IQ3 one-card design](experiments/own-xpu-runtime/stage2/ONE-CARD-PLAN.md) follows the two-card target and recommends keeping dense weights and a cache of experts on the card, copying missing experts from host RAM. A 24 GB cache has a calculated transfer-only ceiling of 39.50 tokens/s at the assumed 19 GB/s rate; this is not a measured runtime speed, and actual memory fit remains to be checked. First measure our copy speed on this host and collect the CPU oracle's expert choices; this documentation work used no GPU or model payload.

@@ -1,0 +1,1400 @@
+{
+  "schema": "own-runtime.iq3.packet6.cpu-build.v1",
+  "passed": true,
+  "date_utc": "2026-10-11T03:20:22.951001+00:00",
+  "device_executed": false,
+  "commands": [
+    {
+      "argv": [
+        "cmake",
+        "-S",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/build/device",
+        "-DCMAKE_BUILD_TYPE=Release"
+      ],
+      "returncode": 0,
+      "stdout": "-- The CXX compiler identification is IntelLLVM 2026.0.0\n-- Detecting CXX compiler ABI info\n-- Detecting CXX compiler ABI info - done\n-- Check for working CXX compiler: /opt/intel/oneapi/compiler/2026.0/bin/icpx - skipped\n-- Detecting CXX compile features\n-- Detecting CXX compile features - done\n-- Configuring done (0.2s)\n-- Generating done (0.0s)\n-- Build files have been written to: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/build/device\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "cmake",
+        "--build",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/build/device",
+        "-j2"
+      ],
+      "returncode": 0,
+      "stdout": "[ 16%] Building CXX object CMakeFiles/kopt.dir/kernels.cpp.o\n[ 16%] Building CXX object CMakeFiles/owner.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp.o\n[ 25%] Linking CXX static library libowner.a\n[ 25%] Built target owner\n[ 33%] Building CXX object CMakeFiles/host-tests.dir/tests/host.cpp.o\n[ 41%] Linking CXX executable host-tests\n[ 41%] Built target host-tests\n[ 50%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp.o\n[ 58%] Building CXX object CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp.o\n[ 66%] Linking CXX static library libkopt.a\n[ 66%] Built target kopt\n[ 75%] Building CXX object CMakeFiles/device-test.dir/tests/device.cpp.o\n[ 83%] Building CXX object CMakeFiles/device-timing.dir/tests/timing.cpp.o\n[ 91%] Linking CXX executable device-timing\n[ 91%] Built target device-timing\n[100%] Linking CXX executable device-test\n[100%] Built target device-test\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "readelf",
+        "-d",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/build/device/host-tests"
+      ],
+      "returncode": 0,
+      "stdout": "\nDynamic section at offset 0x22da0 contains 27 entries:\n  Tag        Type                         Name/Value\n 0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]\n 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]\n 0x000000000000000c (INIT)               0x402000\n 0x000000000000000d (FINI)               0x41ad5c\n 0x0000000000000019 (INIT_ARRAY)         0x423948\n 0x000000000000001b (INIT_ARRAYSZ)       16 (bytes)\n 0x000000000000001a (FINI_ARRAY)         0x423958\n 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)\n 0x000000006ffffef5 (GNU_HASH)           0x400378\n 0x0000000000000005 (STRTAB)             0x400a10\n 0x0000000000000006 (SYMTAB)             0x4003c8\n 0x000000000000000a (STRSZ)              1939 (bytes)\n 0x000000000000000b (SYMENT)             24 (bytes)\n 0x0000000000000015 (DEBUG)              0x0\n 0x0000000000000003 (PLTGOT)             0x423fe8\n 0x0000000000000002 (PLTRELSZ)           1224 (bytes)\n 0x0000000000000014 (PLTREL)             RELA\n 0x0000000000000017 (JMPREL)             0x4014b0\n 0x0000000000000007 (RELA)               0x401360\n 0x0000000000000008 (RELASZ)             336 (bytes)\n 0x0000000000000009 (RELAENT)            24 (bytes)\n 0x000000006ffffffe (VERNEED)            0x401230\n 0x000000006fffffff (VERNEEDNUM)         3\n 0x000000006ffffff0 (VERSYM)             0x4011a4\n 0x0000000000000000 (NULL)               0x0\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/tests/test_protocol.py"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "..........\n----------------------------------------------------------------------\nRan 10 tests in 0.070s\n\nOK\n"
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/tests/prepare.py"
+      ],
+      "returncode": 0,
+      "stdout": "PASS CPU preparation: 27 fixtures; {'baseline': 108, 'kopt_sg16': 54, 'kopt_sg32': 54, 'kopt_fused_sg16': 56}\n",
+      "stderr": ""
+    }
+  ],
+  "scratch_removed": true,
+  "prepared": {
+    "baseline_cpu_receipt_sha256": "a0b7d12c4be55dbf9bd845e1bf1d87e4ea2985c094db69abad66c2021c318cbc",
+    "binary_sha256": {
+      "device-test": "17a6f8b1d9f2e6faab9949ceac43b255915b5120d7f6540c260a7e43a2d1da87",
+      "device-timing": "f72001433dfd48d80295c11adbdfd8c0974435b2bcbb96a706c0a45d910fab6c"
+    },
+    "cpu": {
+      "decode_values": 207360,
+      "fixtures": 27,
+      "fresh_process_repeats": 1,
+      "host_binary_sha256": "4082cfa8654bcc0f7d1d5d0f4ad6f6abb0b645d4fb50e4f34d67029d69d03cba",
+      "invalid_subgroup_rejected": true,
+      "old_fp32_differences": 134,
+      "old_output_differences": 0,
+      "oracle_rows": 1416,
+      "output_fingerprint_fnv1a": 9382745668315897635,
+      "passed": true
+    },
+    "cpu_receipt_sha256": "5b20f1b709dbfad248c9031b1e875bf9932744310f01f6d29cc3d14eb20170c0",
+    "device_executed": false,
+    "fixture_cases": {
+      "baseline": 108,
+      "kopt_fused_sg16": 56,
+      "kopt_sg16": 54,
+      "kopt_sg32": 54
+    },
+    "fixtures": {
+      "random0-BF16.fixture": "cee8fd2c105651e132e1120f35be4025e9c80b3528746caf143be43d79877e36",
+      "random0-F16.fixture": "2c972abc61f98e6f9fa9cdd7aa224b5a69ed9dc222899c3153cc6fd0108f4334",
+      "random0-F32.fixture": "96cecda2e2496ac83f72635e981f62b5998d12ce84812a01fd67c5c4286e4e25",
+      "random0-IQ2_S.fixture": "a2ed1535ef569c38da89a46957234d16e7697fe6e158ce7263bdce45b0e072ae",
+      "random0-IQ3_S.fixture": "b3796b8f1de3193632405bcea603320993106e0f63cde57db87a093de0f3069b",
+      "random0-IQ3_XXS.fixture": "f8fdc119317f968cda65b468f043ccec3d2945257b19618dddff4f5dbcd7d6c5",
+      "random0-IQ4_NL.fixture": "9ebbeb37494586dd7afec50832f97089ef719c891e57329ca9be53ce4441c96f",
+      "random0-Q3_K.fixture": "eb3ace0f8032b6f0c78e1f8b2a3643750a28d1beb1e7078bbf74426eae3e1957",
+      "random0-Q6_K.fixture": "5ed5b230a1ac30e62e98db487c1d795ec61b2cfa164d733159b8eab696a25a9f",
+      "random0-Q8_0.fixture": "17d91260018455968c1294681f3eebad83f08a1eac78d702e64441228e3ee517",
+      "random1-BF16.fixture": "839ea9d3560f8cfd9fc3be119522b3d10874b918d2f7104d22704118c85e2032",
+      "random1-F16.fixture": "ee8799aa1262b2639bacd1793c8f76ee3c54e3417c7a70e15aef18eaeb69e229",
+      "random1-F32.fixture": "2cb0b93368456dc123a147248c56ac4ce05503c493d7ae81234a8a83d4357e07",
+      "random1-IQ2_S.fixture": "eb9b099ce397511530b1d49387aa0b18246a19327fc8e2cc50b40ce42a0e897c",
+      "random1-IQ3_S.fixture": "9ccd3af89a55c3e6307962575a5668d06e7c54523b3a7f311714213edbaace29",
+      "random1-IQ3_XXS.fixture": "2cbc3b4ea52cce4155afeaaf551d996684be161753f8cc4aa941af04b2d430e9",
+      "random1-IQ4_NL.fixture": "06df57adbb51cdf53681f78473e1b252fa8559ccac65153395e21de58d9a924d",
+      "random1-Q3_K.fixture": "62f6747eb975ad1a6fb1e289933dfe788b63c1ad8bcd84fbb9584430aecb24f1",
+      "random1-Q6_K.fixture": "29bded3801f14ee5a0064aaeca0b74a8110af5ed011f494930a776b92ccc30f3",
+      "random1-Q8_0.fixture": "cac6b34379cf03ee8d088e631dc1fd7ea72f5a8ec761f128b09d9931b17a2d5a",
+      "real-BF16.fixture": "334356d556cf27e0b1916c11282ac4160546b840a50b91673b7dd4db0ff19356",
+      "real-F32.fixture": "f202f3786f70e933ccdd948969aaba551bb34d8efc2652ba6b24cdecdd502d65",
+      "real-IQ2_S.fixture": "9a6659c3405f1e148861a567d76d94023d38eb7b7e7b0340d09bd9dccd70ddbb",
+      "real-IQ3_S.fixture": "3e842d8a55941e7ba5915f78e2e8b94e159417c3468e57f81814b6d15027f1fb",
+      "real-IQ4_NL.fixture": "f208644627eb245860f84c48807c78c1424dc6cfd8ff6c8e1198cafd8d2de710",
+      "real-Q6_K.fixture": "20e0251e2b729794167816d9a84b887a6a4d20850b4a7971da4c9e01789c2bcf",
+      "real-Q8_0.fixture": "2f0629860559a05553102ecdc0f16ce0da0e55c2e6e810dcab70ee79319ca504"
+    },
+    "inputs": {
+      "blk.0.attn_gate.weight.packed": "3e4e92f1f8df95b2d6188a84b455c1e0a1e3060f6870b7b406d001bfbfe892b3",
+      "blk.0.attn_qkv.weight.packed": "708ce6ff90561ac5e20279277d317a6073cc306a42910027eaefe77c7442abe5",
+      "blk.0.ffn_down_exps.weight.packed": "feaa1b9a45a827fefac578bb88db6bade403cb3b20482a9accaf3d3d140faaf9",
+      "blk.0.ffn_down_shexp.weight.packed": "621f0bb2dc15f54d1227d21a2d724a20a386875f0857b6d86306785b235443fa",
+      "blk.0.ffn_gate_exps.weight.packed": "7a942cf72e2d247375405b43de2f3413d0e3ba3153f6cb05393ad6fe50827581",
+      "blk.0.ffn_gate_inp.weight.packed": "2eb3d08b3732a028252455c060138dac3e352bb42c28ca1ca656887a48a2a84b",
+      "blk.0.ffn_gate_inp_shexp.weight.packed": "ba7149360e4a67d47eeaaf89846e7f6313568a91aa169b8e7bde36f2934d04ab",
+      "blk.0.ffn_gate_shexp.weight.packed": "c68ee4dfd214ce8c5ab1b04e702216d089648d7e686965102fa1ab2a1ebfcb32",
+      "blk.0.ffn_up_exps.weight.packed": "dd1ef08b2c9dee4e26bf009a2306a6a1153f0a8aeec3f87ccd1b46b9e83001f8",
+      "blk.0.ffn_up_shexp.weight.packed": "e3f6c95e0cf58dc9c050efc1a626d833a9bc9ff2571b4b8cdfcaa9340432dce5",
+      "blk.0.hc_attn_down.weight.packed": "d4e73dab121f55235c5a5c56540ffb191d2a35c0eba432af5785a08043e21ca3",
+      "blk.0.hc_attn_inject.weight.packed": "b59afd17606ed5dd30aac7776eae37954be405f260d7b990799bfd2a6ee5c707",
+      "blk.0.hc_attn_up.weight.packed": "be5da5c6e0c207e479d804c693d63ab37b2d18d5093e1b5ee01ce56d2d6eedf4",
+      "blk.0.hc_ffn_down.weight.packed": "de8a4aa325128422bab29778e579e2407d025367d024d3ceb0ec6a0443ba73e9",
+      "blk.0.hc_ffn_inject.weight.packed": "4aa30e0b470b77d347cc56a2d59ebe40ffecfd2d28134b2b2da3505af28f67e2",
+      "blk.0.hc_ffn_up.weight.packed": "70432dd06ab8b394ed7084637a9b25e8067bbd3b9d27826e72a80aa9b2ea5871",
+      "blk.0.ssm_alpha.weight.packed": "856d43793ca1dc6295668801549c3baf52ddcdf42c1d96df8244e38179dc097d",
+      "blk.0.ssm_beta.weight.packed": "d26db30dd4f73e8d5947d94a7649857f883d133283975332a4e37a8a33e5addb",
+      "blk.0.ssm_out.weight.packed": "a2de4403407d16cef2744f48c2dbda5e0ae6865bfcdd16f1bd8965a7f83f232f",
+      "blk.1.attn_gate.weight.packed": "98e6a0a39f86800d0328e2be9756d2dfb726eb0c3dc9dc326198906d7902efe0",
+      "blk.1.attn_qkv.weight.packed": "1cec83aef6a6578a7156fd9287188e3043e7aadac125ec03d4f9229d1b252267",
+      "blk.1.ffn_down_exps.weight.packed": "7eb2b57d871abb3a67216261fb1f69b3636701a635fb7cdd46feb0d1f6342ea6",
+      "blk.1.ffn_down_shexp.weight.packed": "bdde062a250716021e353e22a82e7182cc33e1212cd7eb2cc221d4079490ed74",
+      "blk.1.ffn_gate_exps.weight.packed": "c222004dcf8ec7ce60b52f30522935ccded0ae4b672ba67b9bf30ac915635799",
+      "blk.1.ffn_gate_inp.weight.packed": "68c3965e85b50658a3b9602e6f54ed75a7b249fa2d865c90e0a899a0fd23264d",
+      "blk.1.ffn_gate_inp_shexp.weight.packed": "6d89a6fdddd7e2e0b5754cd2c30c6500ec5eca45603e2ad3edde3c5643065392",
+      "blk.1.ffn_gate_shexp.weight.packed": "035e4b589048e96b09ece431c3add3168c5de2492c37d74e9cfc6526c65fcfe9",
+      "blk.1.ffn_up_exps.weight.packed": "c281a14246de88132fc0b0a90d54e0f27adebe7c7273f7a5d017f95f9173f514",
+      "blk.1.ffn_up_shexp.weight.packed": "e9b6f78f8a6b674991fec6fa1d49799ad7de430c5bb703fcf541dc0b4bdb10bd",
+      "blk.1.hc_attn_down.weight.packed": "0dd3de6889ea00cc4cca2e87d44816419c92e3214e8bd934abb5954ec1483ac3",
+      "blk.1.hc_attn_inject.weight.packed": "05433383f116400e558c0268e3a4d5f23f937b8dd90dae3ec82cb0dbd5af1d63",
+      "blk.1.hc_attn_up.weight.packed": "4c98cc233ce8babaef58d58f3ee62026e06d0147d18eeff9452271b0be8c4e4e",
+      "blk.1.hc_ffn_down.weight.packed": "d130d2051394a2dd07bd0efb3aa30a829b53104888b71c1e3fb6ee955409c11d",
+      "blk.1.hc_ffn_inject.weight.packed": "ae002057e472c82da2f143841d3be606b0d1b74374788375b5b22f12008b1a7c",
+      "blk.1.hc_ffn_up.weight.packed": "4bbae61dd272458e3873c1d2370776d9297559a70afa85babb4a95399b08e8bf",
+      "blk.1.ple_key.weight.packed": "f842a3e570b418227547602cb103bf8303124e60c9a60de911386ad9b07ec7d3",
+      "blk.1.ple_value.weight.packed": "aa6955cf9bb1df0c26fa4e43df0024d2649ff3562e22a0f5d79c14231fbfeab5",
+      "blk.1.ssm_alpha.weight.packed": "1ea4d6d53acecfcc915c2afbc3f2fdc97dea0660871adf0623a19a276cbc5e31",
+      "blk.1.ssm_beta.weight.packed": "a4f3037ff4a7fcbfd5665638bc29b407b97b0437b48a7e03fc4e13d7d94998d8",
+      "blk.1.ssm_out.weight.packed": "d5512f30c1d50930fd8b7559d3c471fd58c4f97083f209a77b70f25935e4fa94",
+      "blk.2.attn_gate.weight.packed": "e87f0bed6464cfa6b60e5968d0ee51b2de60b93775c637deb0b4d9ca0a0f550c",
+      "blk.2.attn_qkv.weight.packed": "d63fad24cdfdddaef20115e7d887b99983fd7e120c64a273aebb17302d2f5b43",
+      "blk.2.ffn_down_exps.weight.packed": "2bed0ee407e5ecb10eed22ea15ba066617297d390dbad7f89f5c8acb52c48a2f",
+      "blk.2.ffn_down_shexp.weight.packed": "644120782dba4756c5a991c5e7d6caf2f8b60f755b7038820f8d08822f598b90",
+      "blk.2.ffn_gate_exps.weight.packed": "ea4341aee139df1abf7f157ea7d067d8480b32b5248bf4faafb7a8e7fceea59e",
+      "blk.2.ffn_gate_inp.weight.packed": "8ab0ec510a737f2704220c57576e483426139c7a26143856063e78044de577f6",
+      "blk.2.ffn_gate_inp_shexp.weight.packed": "120c7c51cbc0b4911b3b24881fd1a2f0588768afaf51e75e724ccbb158d57d7d",
+      "blk.2.ffn_gate_shexp.weight.packed": "22a17018b1d41202a82a74f4ba3c6436ed83393bd36b227e65bd0e62324d3ecc",
+      "blk.2.ffn_up_exps.weight.packed": "f3c44a10edd41d842ca24a9fdaf136ded8dac06e6793c0aacda29cb182541143",
+      "blk.2.ffn_up_shexp.weight.packed": "338e846e47859be097a813b86a1db51deda3186fa09e09fb071d935a845f55a8",
+      "blk.2.hc_attn_down.weight.packed": "29f56dc7a881fd6a9e01f7bebf2a506a8d132a863fd4c7a801646685b005d7eb",
+      "blk.2.hc_attn_inject.weight.packed": "e653177eaa15ca8beb8855143da0f6d0587f9b57819c84321f981450707f12b9",
+      "blk.2.hc_attn_up.weight.packed": "5626bc26805fb98e2bff347bff00d22e6b8178b53ab76bec85eff2e1ecb7b3d3",
+      "blk.2.hc_ffn_down.weight.packed": "2f466635718634c17c36123601139ea7149cdbd6ce55d8b520a7e9232bf5879f",
+      "blk.2.hc_ffn_inject.weight.packed": "e538927e0d996c68a9d456f6d51b65d59a7adb9fd6decc2697dbb4f8bc99879f",
+      "blk.2.hc_ffn_up.weight.packed": "bd63961990ee07448367bf5f8d5ef4b44ef7c967d582f5582ca902f68cd40e61",
+      "blk.2.ssm_alpha.weight.packed": "c40c27a785c50138c523b256827b60bd2a8191ea970d4ff45b275cf368d5257c",
+      "blk.2.ssm_beta.weight.packed": "5acc8136371fcbca06ef236d047b7ecec7161e713c95eb7880694307585b4551",
+      "blk.2.ssm_out.weight.packed": "f9b8e82319bd0eac4afba0fea9aa5496ac152065ae67009aa29e589b4cc3be5c",
+      "blk.3.attn_k.weight.packed": "11d774f597690c438a7b77d762371faa7db96bc86f9a2f28f994a11bd648f4c6",
+      "blk.3.attn_output.weight.packed": "f67060848334b387125b47f8bbfd95d5bfab5eb6088d6ba62cb837f205c6adce",
+      "blk.3.attn_q.weight.packed": "4698ff3e7f2b48b4a295523f449c19d98104b3240e1efd0bb1b16aa983ee4ca3",
+      "blk.3.attn_v.weight.packed": "d25bb0591febd8271b47c65a82be5f83bee3765e64fa62d77ac1d02499b72d01",
+      "blk.3.ffn_down_exps.weight.packed": "d843ce877b6901985dd9495f657bac42a79470c87b2992e7a38cb716fc06c524",
+      "blk.3.ffn_down_shexp.weight.packed": "ebad70aa3caa656d916a71f07eae22b572920ba3121552dad1476c86a3283fcc",
+      "blk.3.ffn_gate_exps.weight.packed": "4fa636b4dec1d16b1c3b67b90f200df4905c2b69f64bf4d51269b08bf1162b10",
+      "blk.3.ffn_gate_inp.weight.packed": "6a3cbf03ca1bbc250827f72f02dbf521943a54292094b89e87c297d37de037f6",
+      "blk.3.ffn_gate_inp_shexp.weight.packed": "f08977ab1ace5bcb930937da4f44d68ee6b7416d8e6cb889d5c5986818fb3c16",
+      "blk.3.ffn_gate_shexp.weight.packed": "da152d62a48917d15bb7f96950f23665b028c4272b0ebc79c09c7ded40776d91",
+      "blk.3.ffn_up_exps.weight.packed": "27de4872315c41503f90a241513f6bef152843e94efd4bcd1664e70be253f477",
+      "blk.3.ffn_up_shexp.weight.packed": "a9416f19c39781aa8ae122e232d2f520a86fa8c55b0fcbe0049353da0da77663",
+      "blk.3.hc_attn_down.weight.packed": "94de7802d47cd91c656c66ea5b71718d44487d85cddc86ac6aaecfdce586e6f5",
+      "blk.3.hc_attn_inject.weight.packed": "1b5ca6864ce0aab6936cb1cecadfc897b43f2957109b1e38d82fc765a8268d86",
+      "blk.3.hc_attn_up.weight.packed": "7be05ec24d2a05c3ef976a53184743f1ba9edbe63054759dd6a3acc67646cfcd",
+      "blk.3.hc_ffn_down.weight.packed": "d85f44af22713c940d5ca2f282ba6659b026a4a7c4e48a216a332741ea61b9cf",
+      "blk.3.hc_ffn_inject.weight.packed": "186371bb4911f328505869635de4a811c9776d076e5be7c7a212acf91ece3e80",
+      "blk.3.hc_ffn_up.weight.packed": "7169291112913bd15756b7b18db1f9b0a5e3471a83d033642aa7ef05cdeee0aa",
+      "blk.3.indexer.k_proj.weight.packed": "a2f39271db475e813a618f0beb0bec66ef497d7ecf6528432628cbac839f2b83",
+      "blk.3.indexer.q_proj.weight.packed": "8e532b6d1a305a168505c235ea42c9c438f4b98b7a874052c3ab6a23c9d428c9",
+      "layer0.tsv": "e24e670379c6a8e21148ce8d1a28233e74aa7f09a9735a18af482350924b00fa",
+      "layer1.tsv": "4d8b267cbbe5b7c750db7eb05deac45a0b04ea08f5c61f3b4e9368fbac85937c",
+      "layer2.tsv": "143c084a351543dba2ae9aafd80e17a2993c67fc9bee7d571f1aa16c236f9c4f",
+      "layer3.tsv": "f83d19524c7384568a846b1d5f1c957b11cfcc61cd09c1884203a9fbb851f3c5",
+      "plan.json": "3fd2f0c0c93c052c8b1603fa6c40652a06d21e671f2b83c8c5104db16f97737d"
+    },
+    "passed": true,
+    "schema": "own-runtime.iq3.packet6.prepared.v1",
+    "seeds": [
+      {
+        "name": "blk.0.hc_attn_down.weight.packed",
+        "offset": 30903458752,
+        "sampled_bytes": 43520,
+        "sha256": "d4e73dab121f55235c5a5c56540ffb191d2a35c0eba432af5785a08043e21ca3",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.0.hc_attn_up.weight.packed",
+        "offset": 30907145152,
+        "sampled_bytes": 1360,
+        "sha256": "be5da5c6e0c207e479d804c693d63ab37b2d18d5093e1b5ee01ce56d2d6eedf4",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.0.hc_attn_inject.weight.packed",
+        "offset": 30906940352,
+        "sampled_bytes": 40960,
+        "sha256": "b59afd17606ed5dd30aac7776eae37954be405f260d7b990799bfd2a6ee5c707",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.0.attn_qkv.weight.packed",
+        "offset": 29863018432,
+        "sampled_bytes": 8400,
+        "sha256": "708ce6ff90561ac5e20279277d317a6073cc306a42910027eaefe77c7442abe5",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.0.attn_gate.weight.packed",
+        "offset": 29850116032,
+        "sampled_bytes": 8400,
+        "sha256": "3e4e92f1f8df95b2d6188a84b455c1e0a1e3060f6870b7b406d001bfbfe892b3",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.0.ssm_alpha.weight.packed",
+        "offset": 30917794944,
+        "sampled_bytes": 40960,
+        "sha256": "856d43793ca1dc6295668801549c3baf52ddcdf42c1d96df8244e38179dc097d",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.0.ssm_beta.weight.packed",
+        "offset": 30918286464,
+        "sampled_bytes": 40960,
+        "sha256": "d26db30dd4f73e8d5947d94a7649857f883d133283975332a4e37a8a33e5addb",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.0.ssm_out.weight.packed",
+        "offset": 30918942528,
+        "sampled_bytes": 20160,
+        "sha256": "a2de4403407d16cef2744f48c2dbda5e0ae6865bfcdd16f1bd8965a7f83f232f",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.0.hc_ffn_down.weight.packed",
+        "offset": 30910626752,
+        "sampled_bytes": 43520,
+        "sha256": "de8a4aa325128422bab29778e579e2407d025367d024d3ceb0ec6a0443ba73e9",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.0.hc_ffn_up.weight.packed",
+        "offset": 30914313152,
+        "sampled_bytes": 1360,
+        "sha256": "70432dd06ab8b394ed7084637a9b25e8067bbd3b9d27826e72a80aa9b2ea5871",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.0.hc_ffn_inject.weight.packed",
+        "offset": 30914108352,
+        "sampled_bytes": 40960,
+        "sha256": "4aa30e0b470b77d347cc56a2d59ebe40ffecfd2d28134b2b2da3505af28f67e2",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.0.ffn_gate_inp.weight.packed",
+        "offset": 30626820032,
+        "sampled_bytes": 40960,
+        "sha256": "2eb3d08b3732a028252455c060138dac3e352bb42c28ca1ca656887a48a2a84b",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.0.ffn_gate_exps.weight.packed",
+        "offset": 30358122432,
+        "sampled_bytes": 3280,
+        "sha256": "7a942cf72e2d247375405b43de2f3413d0e3ba3153f6cb05393ad6fe50827581",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.0.ffn_up_exps.weight.packed",
+        "offset": 30633417152,
+        "sampled_bytes": 3280,
+        "sha256": "dd1ef08b2c9dee4e26bf009a2306a6a1153f0a8aeec3f87ccd1b46b9e83001f8",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.0.ffn_down_exps.weight.packed",
+        "offset": 29884522432,
+        "sampled_bytes": 1440,
+        "sha256": "feaa1b9a45a827fefac578bb88db6bade403cb3b20482a9accaf3d3d140faaf9",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.0.ffn_gate_shexp.weight.packed",
+        "offset": 30632073152,
+        "sampled_bytes": 8400,
+        "sha256": "c68ee4dfd214ce8c5ab1b04e702216d089648d7e686965102fa1ab2a1ebfcb32",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.0.ffn_up_shexp.weight.packed",
+        "offset": 30902114752,
+        "sampled_bytes": 8400,
+        "sha256": "e3f6c95e0cf58dc9c050efc1a626d833a9bc9ff2571b4b8cdfcaa9340432dce5",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.0.ffn_down_shexp.weight.packed",
+        "offset": 30356381632,
+        "sampled_bytes": 2720,
+        "sha256": "621f0bb2dc15f54d1227d21a2d724a20a386875f0857b6d86306785b235443fa",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.0.ffn_gate_inp_shexp.weight.packed",
+        "offset": 30632062912,
+        "sampled_bytes": 10240,
+        "sha256": "ba7149360e4a67d47eeaaf89846e7f6313568a91aa169b8e7bde36f2934d04ab",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.1.ple_key.weight.packed",
+        "offset": 31999687488,
+        "sampled_bytes": 10880,
+        "sha256": "f842a3e570b418227547602cb103bf8303124e60c9a60de911386ad9b07ec7d3",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.1.ple_value.weight.packed",
+        "offset": 32027663168,
+        "sampled_bytes": 10880,
+        "sha256": "aa6955cf9bb1df0c26fa4e43df0024d2649ff3562e22a0f5d79c14231fbfeab5",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.1.hc_attn_down.weight.packed",
+        "offset": 31985187648,
+        "sampled_bytes": 43520,
+        "sha256": "0dd3de6889ea00cc4cca2e87d44816419c92e3214e8bd934abb5954ec1483ac3",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.1.hc_attn_up.weight.packed",
+        "offset": 31988874048,
+        "sampled_bytes": 1360,
+        "sha256": "4c98cc233ce8babaef58d58f3ee62026e06d0147d18eeff9452271b0be8c4e4e",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.1.hc_attn_inject.weight.packed",
+        "offset": 31988669248,
+        "sampled_bytes": 40960,
+        "sha256": "05433383f116400e558c0268e3a4d5f23f937b8dd90dae3ec82cb0dbd5af1d63",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.1.attn_qkv.weight.packed",
+        "offset": 30944747328,
+        "sampled_bytes": 8400,
+        "sha256": "1cec83aef6a6578a7156fd9287188e3043e7aadac125ec03d4f9229d1b252267",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.1.attn_gate.weight.packed",
+        "offset": 30931844928,
+        "sampled_bytes": 8400,
+        "sha256": "98e6a0a39f86800d0328e2be9756d2dfb726eb0c3dc9dc326198906d7902efe0",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.1.ssm_alpha.weight.packed",
+        "offset": 32034626560,
+        "sampled_bytes": 40960,
+        "sha256": "1ea4d6d53acecfcc915c2afbc3f2fdc97dea0660871adf0623a19a276cbc5e31",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.1.ssm_beta.weight.packed",
+        "offset": 32035118080,
+        "sampled_bytes": 40960,
+        "sha256": "a4f3037ff4a7fcbfd5665638bc29b407b97b0437b48a7e03fc4e13d7d94998d8",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.1.ssm_out.weight.packed",
+        "offset": 32035774144,
+        "sampled_bytes": 20160,
+        "sha256": "d5512f30c1d50930fd8b7559d3c471fd58c4f97083f209a77b70f25935e4fa94",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.1.hc_ffn_down.weight.packed",
+        "offset": 31992355648,
+        "sampled_bytes": 43520,
+        "sha256": "d130d2051394a2dd07bd0efb3aa30a829b53104888b71c1e3fb6ee955409c11d",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.1.hc_ffn_up.weight.packed",
+        "offset": 31996042048,
+        "sampled_bytes": 1360,
+        "sha256": "4bbae61dd272458e3873c1d2370776d9297559a70afa85babb4a95399b08e8bf",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.1.hc_ffn_inject.weight.packed",
+        "offset": 31995837248,
+        "sampled_bytes": 40960,
+        "sha256": "ae002057e472c82da2f143841d3be606b0d1b74374788375b5b22f12008b1a7c",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.1.ffn_gate_inp.weight.packed",
+        "offset": 31708548928,
+        "sampled_bytes": 40960,
+        "sha256": "68c3965e85b50658a3b9602e6f54ed75a7b249fa2d865c90e0a899a0fd23264d",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.1.ffn_gate_exps.weight.packed",
+        "offset": 31439851328,
+        "sampled_bytes": 3280,
+        "sha256": "c222004dcf8ec7ce60b52f30522935ccded0ae4b672ba67b9bf30ac915635799",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.1.ffn_up_exps.weight.packed",
+        "offset": 31715146048,
+        "sampled_bytes": 3280,
+        "sha256": "c281a14246de88132fc0b0a90d54e0f27adebe7c7273f7a5d017f95f9173f514",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.1.ffn_down_exps.weight.packed",
+        "offset": 30966251328,
+        "sampled_bytes": 1440,
+        "sha256": "7eb2b57d871abb3a67216261fb1f69b3636701a635fb7cdd46feb0d1f6342ea6",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.1.ffn_gate_shexp.weight.packed",
+        "offset": 31713802048,
+        "sampled_bytes": 8400,
+        "sha256": "035e4b589048e96b09ece431c3add3168c5de2492c37d74e9cfc6526c65fcfe9",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.1.ffn_up_shexp.weight.packed",
+        "offset": 31983843648,
+        "sampled_bytes": 8400,
+        "sha256": "e9b6f78f8a6b674991fec6fa1d49799ad7de430c5bb703fcf541dc0b4bdb10bd",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.1.ffn_down_shexp.weight.packed",
+        "offset": 31438110528,
+        "sampled_bytes": 2720,
+        "sha256": "bdde062a250716021e353e22a82e7182cc33e1212cd7eb2cc221d4079490ed74",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.1.ffn_gate_inp_shexp.weight.packed",
+        "offset": 31713791808,
+        "sampled_bytes": 10240,
+        "sha256": "6d89a6fdddd7e2e0b5754cd2c30c6500ec5eca45603e2ad3edde3c5643065392",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.2.hc_attn_down.weight.packed",
+        "offset": 33296471744,
+        "sampled_bytes": 43520,
+        "sha256": "29f56dc7a881fd6a9e01f7bebf2a506a8d132a863fd4c7a801646685b005d7eb",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.2.hc_attn_up.weight.packed",
+        "offset": 33300158144,
+        "sampled_bytes": 1360,
+        "sha256": "5626bc26805fb98e2bff347bff00d22e6b8178b53ab76bec85eff2e1ecb7b3d3",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.2.hc_attn_inject.weight.packed",
+        "offset": 33299953344,
+        "sampled_bytes": 40960,
+        "sha256": "e653177eaa15ca8beb8855143da0f6d0587f9b57819c84321f981450707f12b9",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.2.attn_qkv.weight.packed",
+        "offset": 32065388224,
+        "sampled_bytes": 10880,
+        "sha256": "d63fad24cdfdddaef20115e7d887b99983fd7e120c64a273aebb17302d2f5b43",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.2.attn_gate.weight.packed",
+        "offset": 32048676544,
+        "sampled_bytes": 10880,
+        "sha256": "e87f0bed6464cfa6b60e5968d0ee51b2de60b93775c637deb0b4d9ca0a0f550c",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.2.ssm_alpha.weight.packed",
+        "offset": 33310807936,
+        "sampled_bytes": 40960,
+        "sha256": "c40c27a785c50138c523b256827b60bd2a8191ea970d4ff45b275cf368d5257c",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.2.ssm_beta.weight.packed",
+        "offset": 33311299456,
+        "sampled_bytes": 40960,
+        "sha256": "5acc8136371fcbca06ef236d047b7ecec7161e713c95eb7880694307585b4551",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.2.ssm_out.weight.packed",
+        "offset": 33311955520,
+        "sampled_bytes": 20160,
+        "sha256": "f9b8e82319bd0eac4afba0fea9aa5496ac152065ae67009aa29e589b4cc3be5c",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.2.hc_ffn_down.weight.packed",
+        "offset": 33303639744,
+        "sampled_bytes": 43520,
+        "sha256": "2f466635718634c17c36123601139ea7149cdbd6ce55d8b520a7e9232bf5879f",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.2.hc_ffn_up.weight.packed",
+        "offset": 33307326144,
+        "sampled_bytes": 1360,
+        "sha256": "bd63961990ee07448367bf5f8d5ef4b44ef7c967d582f5582ca902f68cd40e61",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.2.hc_ffn_inject.weight.packed",
+        "offset": 33307121344,
+        "sampled_bytes": 40960,
+        "sha256": "e538927e0d996c68a9d456f6d51b65d59a7adb9fd6decc2697dbb4f8bc99879f",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.2.ffn_gate_inp.weight.packed",
+        "offset": 32927289024,
+        "sampled_bytes": 40960,
+        "sha256": "8ab0ec510a737f2704220c57576e483426139c7a26143856063e78044de577f6",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.2.ffn_gate_exps.weight.packed",
+        "offset": 32566841024,
+        "sampled_bytes": 4400,
+        "sha256": "ea4341aee139df1abf7f157ea7d067d8480b32b5248bf4faafb7a8e7fceea59e",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.2.ffn_up_exps.weight.packed",
+        "offset": 32934282944,
+        "sampled_bytes": 4400,
+        "sha256": "f3c44a10edd41d842ca24a9fdaf136ded8dac06e6793c0aacda29cb182541143",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.2.ffn_down_exps.weight.packed",
+        "offset": 32093241024,
+        "sampled_bytes": 1440,
+        "sha256": "2bed0ee407e5ecb10eed22ea15ba066617297d390dbad7f89f5c8acb52c48a2f",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.2.ffn_gate_shexp.weight.packed",
+        "offset": 32932542144,
+        "sampled_bytes": 10880,
+        "sha256": "22a17018b1d41202a82a74f4ba3c6436ed83393bd36b227e65bd0e62324d3ecc",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.2.ffn_up_shexp.weight.packed",
+        "offset": 33294730944,
+        "sampled_bytes": 10880,
+        "sha256": "338e846e47859be097a813b86a1db51deda3186fa09e09fb071d935a845f55a8",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.2.ffn_down_shexp.weight.packed",
+        "offset": 32565100224,
+        "sampled_bytes": 2720,
+        "sha256": "644120782dba4756c5a991c5e7d6caf2f8b60f755b7038820f8d08822f598b90",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.2.ffn_gate_inp_shexp.weight.packed",
+        "offset": 32932531904,
+        "sampled_bytes": 10240,
+        "sha256": "120c7c51cbc0b4911b3b24881fd1a2f0588768afaf51e75e724ccbb158d57d7d",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.3.hc_attn_down.weight.packed",
+        "offset": 34384653888,
+        "sampled_bytes": 43520,
+        "sha256": "94de7802d47cd91c656c66ea5b71718d44487d85cddc86ac6aaecfdce586e6f5",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.3.hc_attn_up.weight.packed",
+        "offset": 34388340288,
+        "sampled_bytes": 1360,
+        "sha256": "7be05ec24d2a05c3ef976a53184743f1ba9edbe63054759dd6a3acc67646cfcd",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.3.hc_attn_inject.weight.packed",
+        "offset": 34388135488,
+        "sampled_bytes": 40960,
+        "sha256": "1b5ca6864ce0aab6936cb1cecadfc897b43f2957109b1e38d82fc765a8268d86",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.3.attn_q.weight.packed",
+        "offset": 33338836544,
+        "sampled_bytes": 8400,
+        "sha256": "4698ff3e7f2b48b4a295523f449c19d98104b3240e1efd0bb1b16aa983ee4ca3",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.3.attn_k.weight.packed",
+        "offset": 33324857920,
+        "sampled_bytes": 8400,
+        "sha256": "11d774f597690c438a7b77d762371faa7db96bc86f9a2f28f994a11bd648f4c6",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.3.attn_v.weight.packed",
+        "offset": 33364642368,
+        "sampled_bytes": 8400,
+        "sha256": "d25bb0591febd8271b47c65a82be5f83bee3765e64fa62d77ac1d02499b72d01",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.3.indexer.q_proj.weight.packed",
+        "offset": 34399646272,
+        "sampled_bytes": 20480,
+        "sha256": "8e532b6d1a305a168505c235ea42c9c438f4b98b7a874052c3ab6a23c9d428c9",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.3.indexer.k_proj.weight.packed",
+        "offset": 34398990400,
+        "sampled_bytes": 20480,
+        "sha256": "a2f39271db475e813a618f0beb0bec66ef497d7ecf6528432628cbac839f2b83",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.3.attn_output.weight.packed",
+        "offset": 33325934144,
+        "sampled_bytes": 20160,
+        "sha256": "f67060848334b387125b47f8bbfd95d5bfab5eb6088d6ba62cb837f205c6adce",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.3.hc_ffn_down.weight.packed",
+        "offset": 34391821888,
+        "sampled_bytes": 43520,
+        "sha256": "d85f44af22713c940d5ca2f282ba6659b026a4a7c4e48a216a332741ea61b9cf",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.3.hc_ffn_up.weight.packed",
+        "offset": 34395508288,
+        "sampled_bytes": 1360,
+        "sha256": "7169291112913bd15756b7b18db1f9b0a5e3471a83d033642aa7ef05cdeee0aa",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.3.hc_ffn_inject.weight.packed",
+        "offset": 34395303488,
+        "sampled_bytes": 40960,
+        "sha256": "186371bb4911f328505869635de4a811c9776d076e5be7c7a212acf91ece3e80",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.3.ffn_gate_inp.weight.packed",
+        "offset": 34108015168,
+        "sampled_bytes": 40960,
+        "sha256": "6a3cbf03ca1bbc250827f72f02dbf521943a54292094b89e87c297d37de037f6",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.3.ffn_gate_exps.weight.packed",
+        "offset": 33839317568,
+        "sampled_bytes": 3280,
+        "sha256": "4fa636b4dec1d16b1c3b67b90f200df4905c2b69f64bf4d51269b08bf1162b10",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.3.ffn_up_exps.weight.packed",
+        "offset": 34114612288,
+        "sampled_bytes": 3280,
+        "sha256": "27de4872315c41503f90a241513f6bef152843e94efd4bcd1664e70be253f477",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.3.ffn_down_exps.weight.packed",
+        "offset": 33365717568,
+        "sampled_bytes": 1440,
+        "sha256": "d843ce877b6901985dd9495f657bac42a79470c87b2992e7a38cb716fc06c524",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.3.ffn_gate_shexp.weight.packed",
+        "offset": 34113268288,
+        "sampled_bytes": 8400,
+        "sha256": "da152d62a48917d15bb7f96950f23665b028c4272b0ebc79c09c7ded40776d91",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.3.ffn_up_shexp.weight.packed",
+        "offset": 34383309888,
+        "sampled_bytes": 8400,
+        "sha256": "a9416f19c39781aa8ae122e232d2f520a86fa8c55b0fcbe0049353da0da77663",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.3.ffn_down_shexp.weight.packed",
+        "offset": 33837576768,
+        "sampled_bytes": 2720,
+        "sha256": "ebad70aa3caa656d916a71f07eae22b572920ba3121552dad1476c86a3283fcc",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      },
+      {
+        "name": "blk.3.ffn_gate_inp_shexp.weight.packed",
+        "offset": 34113258048,
+        "sampled_bytes": 10240,
+        "sha256": "f08977ab1ace5bcb930937da4f44d68ee6b7416d8e6cb889d5c5986818fb3c16",
+        "source": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "source_stat": [
+          2050,
+          2740947,
+          49567921344,
+          1791675421206920900,
+          1791675421213040100
+        ]
+      }
+    ],
+    "source_sha256": {
+      "experiments/own-xpu-runtime/stage1/packet3-prep/src/mock_device.hpp": "e5e68fd9aa3c9baaa34811b74c58f6ff8311f6bd18fae787fe80ccef2d6e3a32",
+      "experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp": "5039a86f032727b0219e4d4ef07b158ff715ee542bb949023ad2306b4225e842",
+      "experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.hpp": "94db5f67e518d4b4940811c9f381f3e1add47c403fca134cad11d84d4d2e626b",
+      "experiments/own-xpu-runtime/stage1/packet3-prep/src/smoke.cpp": "e79654dc1500c13e868dbc9456870784eff83d1f4e2064db1ca850a6fba1a790",
+      "experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp": "7e10dbe50d9c73a154e079f9aa9b36139d43f4bb1e3ac65f544ea5b5df7ea125",
+      "experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_operation.hpp": "296eeb3fdf685b698cb7bb35da86157fbb12f97ff215f61ab7ad90f207364c9b",
+      "experiments/own-xpu-runtime/stage2/packet2/CMakeLists.txt": "dd7542c6df69c07449eec60af530b7debeaff12b1237931bb6eccb6006360357",
+      "experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp": "021766a26c108dbdb830070bfb8c13c00934ca5a7df3f472aa3f10335309bb33",
+      "experiments/own-xpu-runtime/stage2/packet2/kernels/device.hpp": "1044e1a57d101d35a1d02e7fd911c3db9e5faed41248255ac61af52528f98f74",
+      "experiments/own-xpu-runtime/stage2/packet2/kernels/generate_grids.py": "4ae0212006862c298ffee544f4d3df89d61ed5bbd448cd714a803fb0e56ea9ff",
+      "experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+      "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4",
+      "experiments/own-xpu-runtime/stage2/packet2/roofline.json": "74994645a1ddb0a70c5e757a2bd65cf472fa570a187ea245016f27fdd2a668c6",
+      "experiments/own-xpu-runtime/stage2/packet2/tests/device.cpp": "7c34ac4558bbeda2b16ce9c9661269ceedf51b9ec01f1e8052cb2974ae8f6c43",
+      "experiments/own-xpu-runtime/stage2/packet2/tests/device_timing.py": "20bf7b029b769d9422656cabe931f6d15abc23775746254a83f118829f094f09",
+      "experiments/own-xpu-runtime/stage2/packet2/tests/device_window.py": "a26998d3bd062b78c8ffb8825e8daf9adb50cd866552b3c23bfacdafb0189e5f",
+      "experiments/own-xpu-runtime/stage2/packet2/tests/fixture.hpp": "aec94f0301d5871805292a349a73ebb06bf95a2c51d9db0df97aeeaaf660ff89",
+      "experiments/own-xpu-runtime/stage2/packet2/tests/host.cpp": "9520e1c8b1ccb89cea183e5eb1b0ea84c8294f9119161cfb2998fd2127da4a07",
+      "experiments/own-xpu-runtime/stage2/packet2/tests/run_cpu.py": "09fbeedd3ba67172a76343400f1e1dcb71165085694a2b8e83b47f6d4e27d88b",
+      "experiments/own-xpu-runtime/stage2/packet2/tests/test_timing.py": "fe9afcf7a63a24cc0ce6c554cd18c673525f7460e7414a31c9841dcbe91ea520",
+      "experiments/own-xpu-runtime/stage2/packet2/tests/test_window.py": "a23626e3084068244e2cc928f5058086c2cb2115b822376632b046ff1831f999",
+      "experiments/own-xpu-runtime/stage2/packet2/tests/timing.cpp": "870f971da6530cf5811913d08063ec186b2c7ccfaf8591a3627f0e07aaf93476",
+      "experiments/own-xpu-runtime/stage2/packet2/tests/timing_owner.cpp": "f4b6c6a23868e21303a397f86343c996498c9cab4f3ec4d2c5f9a07a447333b9",
+      "experiments/own-xpu-runtime/stage2/packet2/tests/timing_plan.py": "0796abac61f0c1de69253feccc2171790bb6b650eadfb38af7117d51a0dc6e7e",
+      "experiments/own-xpu-runtime/stage2/packet6-kopt/CMakeLists.txt": "4c78bc32145373ef72efa01ec042fcbe2a5e27ea6feda03112068fa2962b196a",
+      "experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp": "5391274d85d8f62e0398e80297744bcd85f23a16ac8c252a9a925bacbd630e8f",
+      "experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.hpp": "78f15ee1abaace582eff11e876e9f76a3e69d78159156655e1133dc2ed3aa8c0",
+      "experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp": "2ec2a1defe33d873b87a121c37bee62d45b8ad0b1b4bc93e7ceb0ba3ca59dc3f",
+      "experiments/own-xpu-runtime/stage2/packet6-kopt/tests/common.py": "371c8ef333d673bb5c2830d653771e8340327cc9d784b2cdafa8ca2b1c5a2964",
+      "experiments/own-xpu-runtime/stage2/packet6-kopt/tests/device.cpp": "7473e64394173af7daae28b1f3f8e344be593ec2f63173d2550bf66762b64eae",
+      "experiments/own-xpu-runtime/stage2/packet6-kopt/tests/device_timing.py": "691dd585632388fc3997d2b31ae01d74161e1453599f6b8ae8fc10e7d823c0d5",
+      "experiments/own-xpu-runtime/stage2/packet6-kopt/tests/device_window.py": "60595add64cf0014a91ca95b7f48309bc8d66f1ecd2517a62dfccefe1351bd52",
+      "experiments/own-xpu-runtime/stage2/packet6-kopt/tests/fixtures.py": "a82f61bdb887fa97d7412f21b18abe63061986fd2d79912ba49beafbb79fa094",
+      "experiments/own-xpu-runtime/stage2/packet6-kopt/tests/host.cpp": "39b58dc51357dc11f37d93e04affa7f5e89b2e575448d76d528b0c13a56de607",
+      "experiments/own-xpu-runtime/stage2/packet6-kopt/tests/prepare.py": "f2c15243bc1d28c3a3af536ae58c8ca6eaa0e37fbafe0e5dde996e0ecfc7f300",
+      "experiments/own-xpu-runtime/stage2/packet6-kopt/tests/test_protocol.py": "d77cb54bdead99b669d697c31113803d122ba43688b0d27ef3ff02d595873e32",
+      "experiments/own-xpu-runtime/stage2/packet6-kopt/tests/timing.cpp": "fca68d873378e1b4acb0f35ea77c92e9740ffed4995f1640e07181131155cb56",
+      "experiments/own-xpu-runtime/stage2/packet6-kopt/validate.py": "c7e372f8657e76983164c40cb705722d2324b04134f7edc9ebb7da117bf724cc",
+      "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/tensor-census.json": "3312f5a18582788c5c6c84572fd616488b6835b454272c81eec218a58521607c"
+    }
+  },
+  "compile_commands": [
+    {
+      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/build/device",
+      "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/../packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/../packet2/tests -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -o CMakeFiles/owner.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp",
+      "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp",
+      "output": "CMakeFiles/owner.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp.o"
+    },
+    {
+      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/build/device",
+      "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/../packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/../packet2/tests -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fsycl -o CMakeFiles/kopt.dir/kernels.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp",
+      "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp",
+      "output": "CMakeFiles/kopt.dir/kernels.cpp.o"
+    },
+    {
+      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/build/device",
+      "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/../packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/../packet2/tests -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fsycl -o CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp",
+      "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp",
+      "output": "CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp.o"
+    },
+    {
+      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/build/device",
+      "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/../packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/../packet2/tests -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fsycl -o CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp",
+      "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp",
+      "output": "CMakeFiles/kopt.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp.o"
+    },
+    {
+      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/build/device",
+      "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/../packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/../packet2/tests -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fsycl -o CMakeFiles/device-test.dir/tests/device.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/tests/device.cpp",
+      "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/tests/device.cpp",
+      "output": "CMakeFiles/device-test.dir/tests/device.cpp.o"
+    },
+    {
+      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/build/device",
+      "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/../packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/../packet2/tests -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fsycl -o CMakeFiles/device-timing.dir/tests/timing.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/tests/timing.cpp",
+      "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/tests/timing.cpp",
+      "output": "CMakeFiles/device-timing.dir/tests/timing.cpp.o"
+    },
+    {
+      "directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/build/device",
+      "command": "/opt/intel/oneapi/compiler/2026.0/bin/icpx  -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/../packet2/kernels -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/../packet2/tests -I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/../../stage1/packet3-prep/src -O3 -DNDEBUG -std=gnu++20 -Wall -Wextra -Werror -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -o CMakeFiles/host-tests.dir/tests/host.cpp.o -c /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/tests/host.cpp",
+      "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/tests/host.cpp",
+      "output": "CMakeFiles/host-tests.dir/tests/host.cpp.o"
+    }
+  ]
+}
