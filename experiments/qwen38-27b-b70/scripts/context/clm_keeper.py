@@ -319,9 +319,17 @@ def fact_of(line: str) -> tuple[str, str]:
 
 
 def number_of(value: str) -> int | None:
-    """The whole number a STATE value starts with (`75 (60, gained 15 in item 606)` -> 75), or None."""
-    m = re.match(r"(-?\d[\d,]*)(?![\d.])", value.strip())
-    return int(m.group(1).replace(",", "")) if m else None
+    """The whole number a STATE value holds now: the one it starts with (`75 (60, gained 15 in item 606)` -> 75), the
+    one after an arrow (`-107 -> -31` -> -31), or the only one in it (`opened at 402` -> 402); None for `removed`
+    and for anything else."""
+    v = re.split(r"\u2192|->|=>", value.strip())[-1].strip()
+    m = re.match(r"(-?\d[\d,]*)(?![\d.])", v)
+    if m:
+        return int(m.group(1).replace(",", ""))
+    nums = re.findall(r"-?\d[\d,]*", re.sub(r"\(.*?\)", "", v))
+    if len(nums) == 1 and not re.match(r"(removed|closed|struck|deleted|gone)\b", v.lower()):
+        return int(nums[0].replace(",", ""))
+    return None
 
 
 def _calc(expr: str) -> float | None:
@@ -351,6 +359,9 @@ def work_out(value: str) -> tuple[int | None, int | None, int] | None:
     the stated result."""
     v = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", value.strip())
     v = v.replace("\u2212", "-").replace("\u00d7", "*").replace("\u00f7", "/")
+    arrow = re.fullmatch(r"(-?\d+)\s*(?:\u2192|->|=>)\s*(-?\d+)\.?", v)      # `-107 -> -31`: old value, then the new one
+    if arrow:
+        return int(arrow.group(1)), int(arrow.group(2)), int(arrow.group(2))
     v = re.sub(r"(?<=[\d)])\s*x\s*(?=[\d(-])", " * ", v)
     parts = v.split("=")
     m = RESULT.fullmatch(parts[-1]) if len(parts) > 1 else None
@@ -1014,7 +1025,7 @@ class KeeperAgent(TruncateAgent):
         seen, why = numbers_in(render_turns(body)), "no reply"
         for _attempt in (1, 2):
             rec["notes_attempts"] += 1
-            resp = await asyncio.to_thread(self._notes_call, req, False, True)
+            resp = await asyncio.to_thread(self._notes_call, req, self.notes_thinking, True)
             if isinstance(resp, Exception):
                 why = f"{type(resp).__name__}: {resp}"
                 continue

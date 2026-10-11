@@ -147,6 +147,10 @@ class Keeper(unittest.TestCase):
         self.assertEqual(info["mismatch"], ["abcd12: working starts from -13, NOTES hold -31"])
         _, info = NS["apply_delta"](notes, {"changes": [("abcd12", "-31 + 12 = -19")]}, seen)
         self.assertEqual((info["mismatch"], info.get("set_in_turns", 0)), ([], 0))
+        new, info = NS["apply_delta"](notes, {"changes": [("abcd12", "-31 \u2192 294"), ("abcd12", "294 + 12 = 306")]}, seen)
+        self.assertEqual((info["mismatch"], new.splitlines()[3]), ([], "abcd12: 306"))       # an arrow line is stored as its result
+        new, info = NS["apply_delta"]("RULES\n(none)\nSTATE\nabcd12: opened at 402\nOPEN", {"changes": [("abcd12", "400 + 5 = 405")]}, set())
+        self.assertEqual(info["mismatch"], ["abcd12: working starts from 400, NOTES hold 402"])
 
     def test_split_turns(self):
         turn = lambda i, n: [{"role": "assistant", "content": f"a{i}"}, {"role": "tool", "content": "x" * n}]
@@ -223,6 +227,11 @@ class Delta(unittest.TestCase):
         self.assertEqual(NS["number_of"]("-51"), -51)
         self.assertIsNone(NS["number_of"]("removed"))
         self.assertIsNone(NS["number_of"]("3.5 litres"))
+        self.assertEqual(NS["number_of"]("-107 \u2192 -31"), -31)
+        self.assertEqual(NS["number_of"]("opened at 402"), 402)
+        self.assertIsNone(NS["number_of"]("removed (item 67)"))
+        self.assertEqual(w("-107 \u2192 -31"), (-107, -31, -31))
+        self.assertEqual(w("75 -> 80."), (75, 80, 80))
 
     def test_parse_delta(self):
         d = NS["parse_delta"]("THOUGHT: here.\nNEW RULES\n(none)\n**CHANGES**\n- abcd12: 75 + 5 = 80\n- efgh34: 12\n"
