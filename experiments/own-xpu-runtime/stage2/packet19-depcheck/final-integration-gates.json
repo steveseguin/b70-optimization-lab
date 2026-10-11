@@ -1,0 +1,1152 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "original_test_sha256": "3b7af102d1dee535c294b5fe82db575330ea871dcc425b03794aad839c8b15ed",
+  "cases_per_mode": 13,
+  "seeds": [
+    0,
+    1,
+    17,
+    73
+  ],
+  "binary_sha256": "316bbf6d10e784921abb18027a99cbc1963feab9e6fbc7ebd4a619c345f5014b",
+  "build_manifest_sha256": "81532b8566f8bbe02fff8e035a05cb8d0dabecf83e87383fb3628f459a650f68",
+  "build_manifest": {
+    "mode": "final-patched",
+    "compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+    "sources": {
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/patched/packet16-decode/main.cpp": "5cc7ff6602542ba640e571b5937325c27c94f2bd350aa40cf5f9198b24d66f10",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.hpp": "80647a747f697dd8131019ee2041ab42b1f6b772f735abdf116fa6e2036323f1",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet16-decode/owner.hpp": "3ae945e401c217a7705e43f5b1f5b63eaf1e635d32c983ffad7dec771ff28a4e",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet3/kernels/mock.hpp": "86bad02ec52f4131f47f556933cfcedeb1d00614747c37a55728da9fb8ead8ff",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet3/kernels/api.hpp": "7d33644438281bcc5a1ab2fbbde2310cbff3a55b683312eab3d52178d4fdbe33",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet3/step/plan.hpp": "e8da06cfc064ef9dd5f154d4b313b0dfeb95244fb6e7cb1a073591e6e8497cfa",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet3/model/directory.hpp": "535eea979a14d3a5eb9f4768edffb6e47c7d0aa61cfeeaf27e9dade75d19759f",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet16-decode/performance.hpp": "0a3690fa59562dcb8cba21dcb223184617c2b5e47694906f02bd0ff6c311da63",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/patched/packet4/kernels.hpp": "e2563266fc2225b41ba886a97a601be05b80364e3d848c8efa4a3e51a0ef733d",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.hpp": "1044e1a57d101d35a1d02e7fd911c3db9e5faed41248255ac61af52528f98f74",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/patched/packet4/core.hpp": "f54dba9d274e2b27eb99cba3b7410588d0e6505842311c33ff87610d1efbf86c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.hpp": "5122c8e7115d94e0546d7b40fcd9a9a795c45717394a636ac3c806ad6d37dd6e",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.hpp": "218ec7d39db6272038f05453c84e7823220f6e3d97f7272a17efa1cd9593c706",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.hpp": "a4c24610451981c3d0d19289919e7b16521ed652605ba557f44c234bc413d54e",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.hpp": "78f15ee1abaace582eff11e876e9f76a3e69d78159156655e1133dc2ed3aa8c0",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet7-kopt2/reference.hpp": "7532f67c6d9a0be2a9187ce149b2004d9f1ea045705327d0ce542a283ad5ed72",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp": "2ec2a1defe33d873b87a121c37bee62d45b8ad0b1b4bc93e7ceb0ba3ca59dc3f",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet8-kopt3/reference.hpp": "f744a148509ed091d69a708262d0fcbc94c179da8ca5ed364791e8ba77a328af",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet8-kopt3/decode.hpp": "7db4f3b62f899f8d5f245d193ba5e5a39007f8512e4e378f312ed8391b44332c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet8-kopt3/dispatch.hpp": "efd7bb4c4dcdc0ee2afa24a7c1146e19a993f4f3cebd73cf025c84bc209053ed",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet9-kopt4/reference.hpp": "95bdc549c66d5cb72fd54cc73696187dae08568f15b19d206cc954ca290c85f4",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet9-kopt4/dispatch.hpp": "8f1895c0209b88057253b44a9aee82c4cd1e73cd207e4c1d3d233da1cc8d6495",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet16-decode/arithmetic.hpp": "c012067d11db1385b630a48dc9522fbbc4df70c3edfcc09d7bd237b38a07c857",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp": "6e96276d9eee2564aa74d2f90b6802d04709f78d2b866b394c6fca2fe818dee3",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.hpp": "b5a6c3b39d051853e49761491aaf69f55e7ad882cffef34ea8300a68c608176d",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet16-decode/adapter.hpp": "fcde3bcdc56ef61303bc1f34516e4dd1378cfe7f45b691a80b12b47f639bbc19",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/patched/packet16-decode/backend.hpp": "15ab8bca2fe8737b87a05aa1c94c1163a5df55647c070d1b4b4724bd48242572",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet16-decode/performance.cpp": "9f0b52da35dff6d71a4f4eea72b0cfee26a9796934aa033295cf73256bca04d1",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/patched/packet16-decode/adapter.cpp": "7c393b20aa138f95b1d087f4632ebfac4f35264bbea272e857bd9d7bf6022329",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/patched/packet15-nongemv/kernels.hpp": "6031a402122a5c509bd7ad9db8e6fead693f1b8a46ca76290d4441a1ec8c9354",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet15-nongemv/native.hpp": "5f330984cd6b13a1d56dc52cdebdf1790f00b0b932060b24d0221d352493cd2d",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/kernels.cpp": "590281ec3eb7a80787f6a97e99a88d7aaf7524cabe9d24540fe2a4f21201bfcc",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/instrument.hpp": "0bfddb11f841208cf226e99e192b928f67f2e79df9c37b843db5f54e6ae9d31b",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/depcheck.hpp": "21a6f46fad3465f3a3a5f7b6f2b2617924279e12a84cedb20f654ea62c6c8e72",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet16-decode/owner.cpp": "13be27f2608e909428f390b3e2fae26625efdeae41aab9e4f4f16306de281a3b",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/performance.cpp": "0240d65a7c092f04990b5981372de4117320e11355e89d1c813431a79a353a1b",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/instrument.hpp": "fdad0e20fef791d3e7a84b7f21a9d208e217e0ca13498a388d5f82c2cf0e71ce",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet19-depcheck__depcheck.hpp": "966b701fadc3fbcefc867d3e89db5c82e7d6e59fc39154e2ed5818c6d283e740",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.hpp": "94db5f67e518d4b4940811c9f381f3e1add47c403fca134cad11d84d4d2e626b",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet16-decode__performance.hpp": "e0d80e788186a7ba00edaed0b2d0c031d41c34c00660b36c2edfe347bd28ab7f",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet4__kernels.hpp": "37606a03516eb8124ed4472060d57c75160ae5599f4eb2d520fc516f8e4367f0",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet2__kernels__device.hpp": "30433c5254afbf26f99423562170126e6eea360814945edab29611ac5baac2f2",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet2__kernels__math.hpp": "6334b317d88055650eeebdfae19daf23eff1a1b1c47f45017ad01bf82d453e28",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet2__kernels__grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet16-decode__owner.hpp": "bace7ae78bdb24b4294a2cea3f1dcc3b285f7716efeddd2e105df5a076ff3788",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet4__core.hpp": "f4e1bb3f75ba3f50e7e973292308d53a98975a30a2cf8bbd703155b33d6c7ca4",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet3__kernels__api.hpp": "dfe0af855f326cd851945739ad9b1e6719d9b68227b7436e9d45bfe0342b7f26",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet9-kopt4__kernels.hpp": "14687a1aa80f38b1efb8fce87ee598d864ef8880427891ea5c91846d764eb139",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet8-kopt3__kernels.hpp": "39e8a7d7f670cb26070880283e20300f57d6799a949f55e5083ceeddff1c5a99",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet7-kopt2__kernels.hpp": "04daceb3dc1112eba89fc9a0d0b8855008c49908969cf8a1e1efa33be4e5812b",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet6-kopt__kernels.hpp": "31929319f6269aede21e20b69db5f5d3b7f1d433043afc5761e2b271a3d8dce1",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet7-kopt2__reference.hpp": "1b3df6c5ab89897035b6fe8b582c92276eb36cd9fb013618b05ddcad9479e5d8",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet6-kopt__reference.hpp": "207819d624467766a55f6ea74074f3135e78d935e63283ed3a49c2e8e4c0d572",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet8-kopt3__reference.hpp": "3e562af833f412131097ffc69b8398908b6165908a6cf2258616b67ccf2d5451",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet8-kopt3__decode.hpp": "8c98ab56dd101b7cda31c8e59af7f7029f01b8d40f69bb8df8c03e64952d7278",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet8-kopt3__dispatch.hpp": "efd7bb4c4dcdc0ee2afa24a7c1146e19a993f4f3cebd73cf025c84bc209053ed",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet9-kopt4__reference.hpp": "d4f120b17944925adfae822014b6b4206f4f4005b7a41ff32c2bebc6e19b7983",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet9-kopt4__dispatch.hpp": "8f1895c0209b88057253b44a9aee82c4cd1e73cd207e4c1d3d233da1cc8d6495",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet16-decode__arithmetic.hpp": "aa74fd2ea257d6832b0a8cc46e2495e84e3d11245017562f1109d9ba6dd61318",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet10-kopt5__expanded.hpp": "5ef34be55b0dbc68d0e1c4b1e5c9707a3a601a357f3cd99ab7695dcf135b36a8",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet10-kopt5__kernels.hpp": "e863b93eb43948c5b46a4f4df7ee870e5858d29f313cd6d42c7349ac1227a354",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet15-nongemv__kernels.hpp": "6031a402122a5c509bd7ad9db8e6fead693f1b8a46ca76290d4441a1ec8c9354",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/owner.cpp": "b85d2389a092b9c3626c1b39439d6eaf3a0712e6157d77ae1381872bb6e4af6c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/fatal_cpu.hpp": "c90417948cbfe7d9c9add80e416673fb51ade5afd3cdd1330e0abe367c67e32e",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/../../stage1/packet3-prep/src/owner.hpp": "94db5f67e518d4b4940811c9f381f3e1add47c403fca134cad11d84d4d2e626b",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp": "d2560c5530d56ca62b0ec43bcbd1668cd7c637d1743f51abfebfb96de56ee480",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/owner_retire.cpp": "07dad00e773223ea342d4c4ce92c5e1cd3d5255c9d8acfc712bb5539cf3f84df",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/adapter.cpp": "0f2877d09d97e9b0807b19f390f6ad4eb320adf55f353dfcfa1fc06e70035b25",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet16-decode__adapter.hpp": "ff7593c244449ad6d943678278b274a07d0845f29594a44649118389665506ff",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/main.cpp": "97d1fe857753c32720453715929bdf997e29eb8cd5000a49ba06d0a2709553c1",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet2__loader__gguf.hpp": "fdfb89632521353acca58f85cef65c218b122f15e8ca7d7f057b39ceaab3deae",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet3__kernels__mock.hpp": "06c3cc11ac900c9ab1fc2fec915c0823377f45792fb503cfcf510efd0f7a6018",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet3__step__plan.hpp": "ae478ee43f718dae4a5ed0cfa6a3a634e90d42ebf8f2a76792eccb1a87edb32e",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/packet3__model__directory.hpp": "e9e6f60038da5c61cb67c72df95205ed17e78cc8d27eb8d1da3a268c50c6c4dc",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/mock_device.hpp": "e5e68fd9aa3c9baaa34811b74c58f6ff8311f6bd18fae787fe80ccef2d6e3a32",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/core.cpp": "5ea302556f75950f6a5dee80bc714d72e40b7de3e3b68637ad806b48a45824f3",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build.py": "1126cdb6b1b7ff72a0548ffd25ed8312d473f52d6b235da6115e02598e7f568a"
+    },
+    "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/final-patched/depcheck-runtime",
+    "sha256": "316bbf6d10e784921abb18027a99cbc1963feab9e6fbc7ebd4a619c345f5014b",
+    "flags": [
+      "-std=c++20",
+      "-MMD",
+      "-O3",
+      "-march=native",
+      "-fopenmp",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-DOWN_RT_HOST_ONLY",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet16-decode",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader"
+    ],
+    "device_executed": false
+  },
+  "source_equivalence_sha256": "aa02e762b9210815ffaa0896eb2ff4a3a0086bde5b15d8fbc3c3010add995c8c",
+  "original_integration_gates_sha256": "6164e0f8d50b84fe880a143a9012ce3f16a3a9e6447f48cdcc6e19626430edbd",
+  "runs": [
+    {
+      "seed": 0,
+      "mode": "parallel",
+      "result": {
+        "schema": "own-runtime.iq3.packet13.cpu-tests.v1",
+        "passed": true,
+        "device_executed": false,
+        "tests": [
+          {
+            "name": "mini-1-1",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1
+            ]
+          },
+          {
+            "name": "mini-1-3",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "name": "mini-1-8",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          },
+          {
+            "name": "mini-2-1",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1
+            ]
+          },
+          {
+            "name": "mini-2-3",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "name": "mini-2-8",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          },
+          {
+            "name": "repeat",
+            "returncode": 0
+          },
+          {
+            "name": "context-rejection",
+            "returncode": 1
+          },
+          {
+            "name": "bad-memory-mode",
+            "returncode": 1
+          },
+          {
+            "name": "bad-cards",
+            "returncode": 1
+          },
+          {
+            "name": "host-native-refusal",
+            "returncode": 1
+          },
+          {
+            "name": "real-plan-1",
+            "returncode": 0,
+            "tensors": 1224,
+            "owned_weight_bytes": [
+              52629189120
+            ],
+            "dispatch_sites": 1821
+          },
+          {
+            "name": "real-plan-2",
+            "returncode": 0,
+            "tensors": 1224,
+            "owned_weight_bytes": [
+              26165134080,
+              26464055040
+            ],
+            "dispatch_sites": 1825
+          }
+        ],
+        "binary_sha256": "316bbf6d10e784921abb18027a99cbc1963feab9e6fbc7ebd4a619c345f5014b"
+      }
+    },
+    {
+      "seed": 0,
+      "mode": "core",
+      "result": {
+        "schema": "own-runtime.iq3.packet13.cpu-tests.v1",
+        "passed": true,
+        "device_executed": false,
+        "tests": [
+          {
+            "name": "mini-1-1",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1
+            ]
+          },
+          {
+            "name": "mini-1-3",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "name": "mini-1-8",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          },
+          {
+            "name": "mini-2-1",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1
+            ]
+          },
+          {
+            "name": "mini-2-3",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "name": "mini-2-8",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          },
+          {
+            "name": "repeat",
+            "returncode": 0
+          },
+          {
+            "name": "context-rejection",
+            "returncode": 1
+          },
+          {
+            "name": "bad-memory-mode",
+            "returncode": 1
+          },
+          {
+            "name": "bad-cards",
+            "returncode": 1
+          },
+          {
+            "name": "host-native-refusal",
+            "returncode": 1
+          },
+          {
+            "name": "real-plan-1",
+            "returncode": 0,
+            "tensors": 1224,
+            "owned_weight_bytes": [
+              52629189120
+            ],
+            "dispatch_sites": 1821
+          },
+          {
+            "name": "real-plan-2",
+            "returncode": 0,
+            "tensors": 1224,
+            "owned_weight_bytes": [
+              26165134080,
+              26464055040
+            ],
+            "dispatch_sites": 1825
+          }
+        ],
+        "binary_sha256": "316bbf6d10e784921abb18027a99cbc1963feab9e6fbc7ebd4a619c345f5014b"
+      }
+    },
+    {
+      "seed": 1,
+      "mode": "parallel",
+      "result": {
+        "schema": "own-runtime.iq3.packet13.cpu-tests.v1",
+        "passed": true,
+        "device_executed": false,
+        "tests": [
+          {
+            "name": "mini-1-1",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1
+            ]
+          },
+          {
+            "name": "mini-1-3",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "name": "mini-1-8",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          },
+          {
+            "name": "mini-2-1",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1
+            ]
+          },
+          {
+            "name": "mini-2-3",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "name": "mini-2-8",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          },
+          {
+            "name": "repeat",
+            "returncode": 0
+          },
+          {
+            "name": "context-rejection",
+            "returncode": 1
+          },
+          {
+            "name": "bad-memory-mode",
+            "returncode": 1
+          },
+          {
+            "name": "bad-cards",
+            "returncode": 1
+          },
+          {
+            "name": "host-native-refusal",
+            "returncode": 1
+          },
+          {
+            "name": "real-plan-1",
+            "returncode": 0,
+            "tensors": 1224,
+            "owned_weight_bytes": [
+              52629189120
+            ],
+            "dispatch_sites": 1821
+          },
+          {
+            "name": "real-plan-2",
+            "returncode": 0,
+            "tensors": 1224,
+            "owned_weight_bytes": [
+              26165134080,
+              26464055040
+            ],
+            "dispatch_sites": 1825
+          }
+        ],
+        "binary_sha256": "316bbf6d10e784921abb18027a99cbc1963feab9e6fbc7ebd4a619c345f5014b"
+      }
+    },
+    {
+      "seed": 1,
+      "mode": "core",
+      "result": {
+        "schema": "own-runtime.iq3.packet13.cpu-tests.v1",
+        "passed": true,
+        "device_executed": false,
+        "tests": [
+          {
+            "name": "mini-1-1",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1
+            ]
+          },
+          {
+            "name": "mini-1-3",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "name": "mini-1-8",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          },
+          {
+            "name": "mini-2-1",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1
+            ]
+          },
+          {
+            "name": "mini-2-3",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "name": "mini-2-8",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          },
+          {
+            "name": "repeat",
+            "returncode": 0
+          },
+          {
+            "name": "context-rejection",
+            "returncode": 1
+          },
+          {
+            "name": "bad-memory-mode",
+            "returncode": 1
+          },
+          {
+            "name": "bad-cards",
+            "returncode": 1
+          },
+          {
+            "name": "host-native-refusal",
+            "returncode": 1
+          },
+          {
+            "name": "real-plan-1",
+            "returncode": 0,
+            "tensors": 1224,
+            "owned_weight_bytes": [
+              52629189120
+            ],
+            "dispatch_sites": 1821
+          },
+          {
+            "name": "real-plan-2",
+            "returncode": 0,
+            "tensors": 1224,
+            "owned_weight_bytes": [
+              26165134080,
+              26464055040
+            ],
+            "dispatch_sites": 1825
+          }
+        ],
+        "binary_sha256": "316bbf6d10e784921abb18027a99cbc1963feab9e6fbc7ebd4a619c345f5014b"
+      }
+    },
+    {
+      "seed": 17,
+      "mode": "parallel",
+      "result": {
+        "schema": "own-runtime.iq3.packet13.cpu-tests.v1",
+        "passed": true,
+        "device_executed": false,
+        "tests": [
+          {
+            "name": "mini-1-1",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1
+            ]
+          },
+          {
+            "name": "mini-1-3",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "name": "mini-1-8",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          },
+          {
+            "name": "mini-2-1",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1
+            ]
+          },
+          {
+            "name": "mini-2-3",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "name": "mini-2-8",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          },
+          {
+            "name": "repeat",
+            "returncode": 0
+          },
+          {
+            "name": "context-rejection",
+            "returncode": 1
+          },
+          {
+            "name": "bad-memory-mode",
+            "returncode": 1
+          },
+          {
+            "name": "bad-cards",
+            "returncode": 1
+          },
+          {
+            "name": "host-native-refusal",
+            "returncode": 1
+          },
+          {
+            "name": "real-plan-1",
+            "returncode": 0,
+            "tensors": 1224,
+            "owned_weight_bytes": [
+              52629189120
+            ],
+            "dispatch_sites": 1821
+          },
+          {
+            "name": "real-plan-2",
+            "returncode": 0,
+            "tensors": 1224,
+            "owned_weight_bytes": [
+              26165134080,
+              26464055040
+            ],
+            "dispatch_sites": 1825
+          }
+        ],
+        "binary_sha256": "316bbf6d10e784921abb18027a99cbc1963feab9e6fbc7ebd4a619c345f5014b"
+      }
+    },
+    {
+      "seed": 17,
+      "mode": "core",
+      "result": {
+        "schema": "own-runtime.iq3.packet13.cpu-tests.v1",
+        "passed": true,
+        "device_executed": false,
+        "tests": [
+          {
+            "name": "mini-1-1",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1
+            ]
+          },
+          {
+            "name": "mini-1-3",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "name": "mini-1-8",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          },
+          {
+            "name": "mini-2-1",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1
+            ]
+          },
+          {
+            "name": "mini-2-3",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "name": "mini-2-8",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          },
+          {
+            "name": "repeat",
+            "returncode": 0
+          },
+          {
+            "name": "context-rejection",
+            "returncode": 1
+          },
+          {
+            "name": "bad-memory-mode",
+            "returncode": 1
+          },
+          {
+            "name": "bad-cards",
+            "returncode": 1
+          },
+          {
+            "name": "host-native-refusal",
+            "returncode": 1
+          },
+          {
+            "name": "real-plan-1",
+            "returncode": 0,
+            "tensors": 1224,
+            "owned_weight_bytes": [
+              52629189120
+            ],
+            "dispatch_sites": 1821
+          },
+          {
+            "name": "real-plan-2",
+            "returncode": 0,
+            "tensors": 1224,
+            "owned_weight_bytes": [
+              26165134080,
+              26464055040
+            ],
+            "dispatch_sites": 1825
+          }
+        ],
+        "binary_sha256": "316bbf6d10e784921abb18027a99cbc1963feab9e6fbc7ebd4a619c345f5014b"
+      }
+    },
+    {
+      "seed": 73,
+      "mode": "parallel",
+      "result": {
+        "schema": "own-runtime.iq3.packet13.cpu-tests.v1",
+        "passed": true,
+        "device_executed": false,
+        "tests": [
+          {
+            "name": "mini-1-1",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1
+            ]
+          },
+          {
+            "name": "mini-1-3",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "name": "mini-1-8",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          },
+          {
+            "name": "mini-2-1",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1
+            ]
+          },
+          {
+            "name": "mini-2-3",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "name": "mini-2-8",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          },
+          {
+            "name": "repeat",
+            "returncode": 0
+          },
+          {
+            "name": "context-rejection",
+            "returncode": 1
+          },
+          {
+            "name": "bad-memory-mode",
+            "returncode": 1
+          },
+          {
+            "name": "bad-cards",
+            "returncode": 1
+          },
+          {
+            "name": "host-native-refusal",
+            "returncode": 1
+          },
+          {
+            "name": "real-plan-1",
+            "returncode": 0,
+            "tensors": 1224,
+            "owned_weight_bytes": [
+              52629189120
+            ],
+            "dispatch_sites": 1821
+          },
+          {
+            "name": "real-plan-2",
+            "returncode": 0,
+            "tensors": 1224,
+            "owned_weight_bytes": [
+              26165134080,
+              26464055040
+            ],
+            "dispatch_sites": 1825
+          }
+        ],
+        "binary_sha256": "316bbf6d10e784921abb18027a99cbc1963feab9e6fbc7ebd4a619c345f5014b"
+      }
+    },
+    {
+      "seed": 73,
+      "mode": "core",
+      "result": {
+        "schema": "own-runtime.iq3.packet13.cpu-tests.v1",
+        "passed": true,
+        "device_executed": false,
+        "tests": [
+          {
+            "name": "mini-1-1",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1
+            ]
+          },
+          {
+            "name": "mini-1-3",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "name": "mini-1-8",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          },
+          {
+            "name": "mini-2-1",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1
+            ]
+          },
+          {
+            "name": "mini-2-3",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "name": "mini-2-8",
+            "returncode": 0,
+            "exact": true,
+            "buffers": 113,
+            "values": 3873,
+            "tokens": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          },
+          {
+            "name": "repeat",
+            "returncode": 0
+          },
+          {
+            "name": "context-rejection",
+            "returncode": 1
+          },
+          {
+            "name": "bad-memory-mode",
+            "returncode": 1
+          },
+          {
+            "name": "bad-cards",
+            "returncode": 1
+          },
+          {
+            "name": "host-native-refusal",
+            "returncode": 1
+          },
+          {
+            "name": "real-plan-1",
+            "returncode": 0,
+            "tensors": 1224,
+            "owned_weight_bytes": [
+              52629189120
+            ],
+            "dispatch_sites": 1821
+          },
+          {
+            "name": "real-plan-2",
+            "returncode": 0,
+            "tensors": 1224,
+            "owned_weight_bytes": [
+              26165134080,
+              26464055040
+            ],
+            "dispatch_sites": 1825
+          }
+        ],
+        "binary_sha256": "316bbf6d10e784921abb18027a99cbc1963feab9e6fbc7ebd4a619c345f5014b"
+      }
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+PASS missing RAW includes exact writer
+PASS missing WAW
+PASS retain every outstanding reader for WAR
+PASS transitive diamond satisfies both readers
+PASS cross queue transitive dependency
+PASS cross queue missing dependency
+PASS same queue alone grants no implicit edge
+PASS executed event is not a host fence
+PASS explicit host fence establishes order
+PASS host fence does not expose unrelated executed work
+PASS foreign owning device
+PASS foreign context even with matching device
+PASS partial byte poison in device index
+PASS disjoint ranges do not conflict
+PASS partial overlapping ranges conflict
+PASS copy source and destination offset contract
+PASS host slab overwrite catches pending reader
+PASS release pending allocation is diagnosed
+PASS released allocation use diagnosed
+PASS reused allocation loses old initialization
+PASS retire cannot erase merely executed hazard history
+PASS overlapping allocation registration rejected
+PASS release pending retains allocation lifetime
+PASS double release fails closed
+PASS host write after release fails closed
+PASS index poison cannot execute arbitrary addressing closure
+PASS unused foreign compute binding still rejected
+PASS copy propagates partial poison into device index
+PASS copy cannot erase poison through a second transfer
+PASS read-write alias does not create self hazard
+PASS deep ancestors across bitset word boundaries
+PASS adversarial order exposes absent edge
+PASS adversarial declared DAG keeps exact results
+RESULT 33/33 passed; device_executed=false

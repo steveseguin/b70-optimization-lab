@@ -1,0 +1,79 @@
+--- a/experiments/own-xpu-runtime/stage2/packet16-decode/backend.hpp
++++ b/experiments/own-xpu-runtime/stage2/packet16-decode/backend.hpp
+@@ -7,6 +7,7 @@
+ #include <mutex>
+ #include <sstream>
+ #include <thread>
++#include <set>
+ 
+ namespace tp2 {
+ // Shared native context and pointer registry; one Device/Arena owns both queues
+@@ -16,6 +17,10 @@
+   std::unique_ptr<sycl::context> context;
+   std::array<std::unique_ptr<sycl::queue>,2> queues;
+   std::map<ownrt::Event,sycl::event> events;
++  std::map<ownrt::Event,int> event_cards;
++  // Conservative containment until cross-card native event residency has its
++  // own small device qualification. Host completion preserves the DAG order.
++  uint64_t cross_card_fences=0;
+   struct Location {int card; size_t bytes;};
+   std::map<void*,Location> locations;
+   int location(const void* ptr,size_t bytes)const {
+@@ -29,8 +34,18 @@
+   std::exception_ptr error;
+   std::string label;
+   void check() { std::lock_guard lock(mutex); if(error) std::rethrow_exception(error); }
+-  std::vector<sycl::event> dependencies(std::span<const ownrt::Event> deps) {
+-    std::vector<sycl::event> r;for(auto e:deps)r.push_back(events.at(e));return r;
++  std::vector<sycl::event> dependencies(std::span<const ownrt::Event> deps,int target) {
++    std::vector<sycl::event> r;
++    std::set<ownrt::Event> unique(deps.begin(),deps.end());
++    for(auto e:unique) {
++      if(event_cards.at(e)==target)r.push_back(events.at(e));
++      else {
++        ++cross_card_fences;
++        if(!wait(e,std::chrono::steady_clock::now()+std::chrono::seconds(60)))
++          throw std::runtime_error("cross-card host fence timed out; retain owner");
++      }
++    }
++    return r;
+   }
+  public:
+   bool access_ab=false,access_ba=false;
+@@ -94,19 +109,20 @@
+   ownrt::Event copy(void* dst,const void* src,std::size_t n,std::span<const ownrt::Event> deps) override {
+     check();int d=location(dst,n),s=location(src,n);
+     if(d>=0&&s>=0&&d!=s&&!(access_ab&&access_ba))throw std::logic_error("peer path without bidirectional access");
+-    auto wait=dependencies(deps);auto e=ownrt::next_handle();auto [it,ok]=events.try_emplace(e);(void)ok;
+-    it->second=queues[d>=0?d:s>=0?s:0]->submit([&](sycl::handler& h){h.depends_on(wait);h.memcpy(dst,src,n);});return e;
++    int target=d>=0?d:s>=0?s:0;
++    auto wait=dependencies(deps,target);auto e=ownrt::next_handle();auto [it,ok]=events.try_emplace(e);(void)ok;event_cards[e]=target;
++    it->second=queues[target]->submit([&](sycl::handler& h){h.depends_on(wait);h.memcpy(dst,src,n);});return e;
+   }
+   ownrt::Event compute(const ownrt::Operation& base,std::span<void* const> p,std::span<const ownrt::Event> deps) override {
+     check();const auto& op=dynamic_cast<const ownrt::SyclOperation&>(base);
+     for(auto ptr:p)if(location(ptr,1)!=allocation_card)throw std::logic_error("foreign compute binding");
+-    auto wait=dependencies(deps);auto e=ownrt::next_handle();
++    auto wait=dependencies(deps,allocation_card);auto e=ownrt::next_handle();event_cards[e]=allocation_card;
+     auto [it,ok]=events.try_emplace(e);(void)ok;
+     it->second=op.submit(*queues[allocation_card],p,wait);return e;
+   }
+ 
+   ownrt::Event marker(std::span<const ownrt::Event> deps) override {
+-    check();auto wait=dependencies(deps);auto e=ownrt::next_handle();auto [it,ok]=events.try_emplace(e);(void)ok;
++    check();auto wait=dependencies(deps,allocation_card);auto e=ownrt::next_handle();event_cards[e]=allocation_card;auto [it,ok]=events.try_emplace(e);(void)ok;
+     it->second=queues[allocation_card]->submit([&](sycl::handler& h){h.depends_on(wait);h.single_task([]{});});return e;
+   }
+   bool complete(ownrt::Event e) override {check();return events.at(e).get_info<sycl::info::event::command_execution_status>()==sycl::info::event_command_status::complete;}
+@@ -120,9 +136,9 @@
+     catch(const sycl::exception& ex) {if(ex.code()!=sycl::errc::profiling)throw;return {0,0};}
+   }
+   void synchronize() override {for(auto& q:queues)q->wait_and_throw();check();}
+-  void forget(ownrt::Event e){events.erase(e);}
++  void forget(ownrt::Event e){events.erase(e);event_cards.erase(e);}
+   int closed_ranks=0;
+-  void clear_events() override {events.clear();}
++  void clear_events() override {events.clear();event_cards.clear();}
+   void close_queue() override {queues={};}
+   void close_context() override {context.reset();if(zeContextDestroy(native)!=ZE_RESULT_SUCCESS)throw std::runtime_error("context destroy failed");native=nullptr;}
+ };

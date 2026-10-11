@@ -1,0 +1,57 @@
+{
+  "schema": "packet19.cpu-fatal-owner-regression.v1",
+  "device_executed": false,
+  "passed": true,
+  "cases": [
+    {
+      "case": "poisoned-index",
+      "exit_code": 2,
+      "elapsed_seconds": 0.002080482998280786,
+      "report": {
+        "device_executed": false,
+        "exit_code": 2,
+        "fatal_owner_retention": true,
+        "submissions": 1,
+        "executed": 0,
+        "max_ready": 1,
+        "canceled_submissions": 1,
+        "violations": [
+          "index-consumer: uninitialized INDEX allocation=index"
+        ],
+        "canceled_events": [
+          {
+            "event": 2,
+            "site": "index-consumer"
+          }
+        ]
+      },
+      "stderr": "expected checker failure: index-consumer: refusing unsafe indexed/lifetime execution\nCPU sanitizer retained-owner failure: canceled 1 pending submissions; exit 2.\n"
+    },
+    {
+      "case": "missing-edge",
+      "exit_code": 2,
+      "elapsed_seconds": 0.0017653499999141786,
+      "report": {
+        "device_executed": false,
+        "exit_code": 2,
+        "fatal_owner_retention": true,
+        "submissions": 1,
+        "executed": 0,
+        "max_ready": 0,
+        "canceled_submissions": 1,
+        "violations": [
+          "index-consumer: RAW allocation=index missing edge from event=2 (orphan-writer)"
+        ],
+        "canceled_events": [
+          {
+            "event": 2,
+            "site": "orphan-writer"
+          }
+        ]
+      },
+      "stderr": "expected checker failure: index-consumer: RAW allocation=index missing edge from event=2 (orphan-writer)\nCPU sanitizer retained-owner failure: canceled 1 pending submissions; exit 2.\n"
+    }
+  ],
+  "owner_sha256": "13be27f2608e909428f390b3e2fae26625efdeae41aab9e4f4f16306de281a3b",
+  "binary_sha256": "795caf0aa1843f0431a9857faaf937d201b30a9c168ae09a5c11e0bc2eb48076"
+}

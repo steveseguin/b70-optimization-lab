@@ -1,0 +1,314 @@
+**** Xe Device Coredump ****
+Reason: Timedout job - seqno=4294967170, lrc_seqno=4294967170, guc_id=2, flags=0x20
+kernel: 7.0.0-39-generic
+module: xe
+Snapshot time: 1791709785.190157439
+Uptime: 26932.007713791
+Process: own-rt-iq3 [183867]
+PCI ID: 0xe223
+PCI revision: 0x00
+GT id: 0
+	Tile: 0
+	Type: main
+	IP ver: 20.2.0
+	CS reference clock: 19200000
+GT id: 1
+	Tile: 0
+	Type: media
+	IP ver: 13.1.2
+	CS reference clock: 19200000
+
+**** GT #0 ****
+	Tile: 0
+
+**** GuC Log ****
+GuC firmware: xe/bmg_guc_70.bin
+GuC version: 70.44.1 (wanted 70.54.0)
+Kernel timestamp: 0x187E9B93E640 [26932055107136]
+GuC timestamp: 0x78CE2477D9 [518854571993]
+Log level: 1
+[LOG].length: 0x115000
+
+**** GuC CT ****
+H2G CTB (all sizes in DW):
+	size: 1024
+	resv_space: 0
+	head: 849
+	tail: 745
+	space: 103
+	broken: 0
+	head (memory): 745
+	tail (memory): 745
+	status (memory): 0x0
+G2H CTB (all sizes in DW):
+	size: 32768
+	resv_space: 16384
+	head: 23688
+	tail: 0
+	space: 16383
+	broken: 0
+	head (memory): 23688
+	tail (memory): 23688
+	status (memory): 0x0
+	g2h outstanding: 0
+[CTB].length: 0x22000
+
+**** Contexts ****
+GuC ID: 2
+	Name: ccs2
+	Class: 5
+	Logical mask: 0x1
+	Width: 1
+	Ref: 2
+	Timeout: 0 (ms)
+	Timeslice: 1000 (us)
+	Preempt timeout: 640000 (us)
+	HW Context Desc: 0x013c1000
+	HW Ring address: 0x013bd000
+	HW Indirect Ring State: 0x00000000
+	LRC Head: (memory) 168
+	LRC Tail: (internal) 328, (memory) 328
+	Ring start: (memory) 0x013bd000
+	Start seqno: (memory) -126
+	Seqno: (memory) -127
+	Timestamp: 0x00000001
+	Job Timestamp: 0x000278ab
+	[HWSP].length: 0x1000
+	[HWSP].data: zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzs8W+Mzs8W+Nz!!7DGzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz!!!!&zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+	[HWCTX].length: 0x2000
+
+	[HWCTX].replay_offset: 0x0
+
+	[HWCTX].replay_length: 0x2000
+	[HWCTX].data: z&I8pg!!/f^s8N'i!!/`L!!!"t!!/`H!!!$j!!/`P!B\X.!!/`T!!"\R!!/d,!!(0C!!/cY<=&Y1!!/c)z!!/e/!B`UJ!!/e3z!!/e7z!!/dD!!!"L!!/h$z!!/c9z!!/c=zz&I8p[!!/jn!!!!"!!/jrz!!/c!z!!/gIz!!/gEz!!/gAz!!/g=!!!(%!!/g9!!!!(!!/g5pp"3Gzz&I8pM!!/pps8N'!!!/pt!!&Ynzzzzzz&I8@;!!/b6zzzzzzzzzzzzzzzzzz&I8pM!!/aoz!!/agzzzzzzzz&I8qb!!/pPz!!/pPz!!/pPz!!/pPz!!/pPz!!/pPz!!/`@s8N'!!!/a_rr3N0!!/b.s8N'!!!/d<!!!!"!!/d@!#/O8!!/isTta,u!!/d4!!(0C!!/ci<=&Xf!!/cm!!!!=!!/cq!!!!"!!/l8z!!/qsz!!/r"z!!/r&z!!/r*z!!/r.z!!/r2z!!/r6z!!/r:z!!/r>z!!/rBz!!/rFz!!/rJz!!/rNz!!/rRz!!/rVz!!/rZz!!/r^z!!/rbz!!/rfz!!/rjz!!/rnz!!/rrz!!/s!z!!/s%z!!/s)z!!/s-z!!/s1z!!/s5z!!/s9z!!/s=z!!/sAz!!/sEz!!/a+!e:7N!!/aGs8N*"!!/k%z!!/k)z!!/f6z!!/ekzzzzzzzzzz&HWLO!!#H<z!!#H@z!!#HDz!!#HHz!!#HLz!!#HPzzzzzzz@0lo7"b0n[!!%Kdzz&I8pq!!/e_z!!/dHs8N'!!!/pHs8N'"!!/nrz!!/o!z!!/o%z!!/kqz!!/kuz!!/l$z!!/l(z!!/l,z!!/l0z!!/l4z!!/gUz!!/gYz!!/dXz!!/d\z!!/j&z!!/j*z!!/bFs8N'!zzzzzzBa"G;@0$?Bzzzzzzzzzzzzzzzzzzzzz@0-E0zz@0HW3s8N'!s8N'!Go6S`zzzGm"*KzzzGm"*K5QCcazz@0Q]7zzzzzJ:IV'zzzzzz@1*&9zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"TSN'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+	Schedule State: 0x241
+	Flags: 0x20
+
+**** Job ****
+batch_addr[0]: 0x0000caac55090080
+
+**** HW Engines ****
+ccs0 (physical), logical instance=0
+	Capture_source: GuC
+	Coverage: full-capture
+	Forcewake: domain 0x2, ref 1
+	Reserved: no
+	FORCEWAKE_GT: 0x00010000
+	RCU_MODE: 0x00000001
+	HWSTAM: 0xffffffff
+	RING_HWS_PGA: 0x0142a000
+	RING_HEAD: 0x000000f4
+	RING_TAIL: 0x00000148
+	RING_CTL: 0x00003001
+	RING_MI_MODE: 0x00001000
+	RING_MODE: 0x00000008
+	RING_ESR: 0x00000000
+	RING_EMR: 0xffffffff
+	RING_EIR: 0x00000000
+	RING_IMR: 0x00000000
+	IPEHR: 0x0e00d003
+	RING_INSTDONE: 0xffdeffff
+	INDIRECT_RING_STATE: 0x00000000
+	CURRENT_LRCA: 0x013c1001
+	ACTHD: 0x0000caac550900dc
+	RING_BBADDR: 0x0000caac550900dd
+	RING_START: 0x00000000013bd000
+	RING_DMA_FADD: 0x0000caac550904c0
+	RING_EXECLIST_STATUS: 0x000001004000309c
+	RING_EXECLIST_SQ_CONTENTS: 0x00000100013c1119
+	SAMPLER_INSTDONE[0]: 0xffffffff
+	ROW_INSTDONE[0]: 0x00000000
+	SC_INSTDONE[0]: 0xffffffff
+	SC_INSTDONE_EXTRA[0]: 0xffffffff
+	SC_INSTDONE_EXTRA2[0]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[0]: 0xffdfffff
+	SAMPLER_INSTDONE[1]: 0xffffffff
+	ROW_INSTDONE[1]: 0x00000000
+	SC_INSTDONE[1]: 0xffffffff
+	SC_INSTDONE_EXTRA[1]: 0xffffffff
+	SC_INSTDONE_EXTRA2[1]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[1]: 0xffdfffff
+	SAMPLER_INSTDONE[2]: 0xffffffff
+	ROW_INSTDONE[2]: 0x00000000
+	SC_INSTDONE[2]: 0xffffffff
+	SC_INSTDONE_EXTRA[2]: 0xffffffff
+	SC_INSTDONE_EXTRA2[2]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[2]: 0xffdfffff
+	SAMPLER_INSTDONE[3]: 0xffffffff
+	ROW_INSTDONE[3]: 0x00000000
+	SC_INSTDONE[3]: 0xffffffff
+	SC_INSTDONE_EXTRA[3]: 0xffffffff
+	SC_INSTDONE_EXTRA2[3]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[3]: 0xffdfffff
+	SAMPLER_INSTDONE[4]: 0xffffffff
+	ROW_INSTDONE[4]: 0x00000000
+	SC_INSTDONE[4]: 0xffffffff
+	SC_INSTDONE_EXTRA[4]: 0xffffffff
+	SC_INSTDONE_EXTRA2[4]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[4]: 0xffdfffff
+	SAMPLER_INSTDONE[5]: 0xffffffff
+	ROW_INSTDONE[5]: 0x00000000
+	SC_INSTDONE[5]: 0xffffffff
+	SC_INSTDONE_EXTRA[5]: 0xffffffff
+	SC_INSTDONE_EXTRA2[5]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[5]: 0xffdfffff
+	SAMPLER_INSTDONE[6]: 0xffffffff
+	ROW_INSTDONE[6]: 0x00000000
+	SC_INSTDONE[6]: 0xffffffff
+	SC_INSTDONE_EXTRA[6]: 0xffffffff
+	SC_INSTDONE_EXTRA2[6]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[6]: 0xffdfffff
+	SAMPLER_INSTDONE[7]: 0xffffffff
+	ROW_INSTDONE[7]: 0x00000000
+	SC_INSTDONE[7]: 0xffffffff
+	SC_INSTDONE_EXTRA[7]: 0xffffffff
+	SC_INSTDONE_EXTRA2[7]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[7]: 0xffdfffff
+	SAMPLER_INSTDONE[8]: 0xffffffff
+	ROW_INSTDONE[8]: 0x00000000
+	SC_INSTDONE[8]: 0xffffffff
+	SC_INSTDONE_EXTRA[8]: 0xffffffff
+	SC_INSTDONE_EXTRA2[8]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[8]: 0xffdfffff
+	SAMPLER_INSTDONE[9]: 0xffffffff
+	ROW_INSTDONE[9]: 0x00000000
+	SC_INSTDONE[9]: 0xffffffff
+	SC_INSTDONE_EXTRA[9]: 0xffffffff
+	SC_INSTDONE_EXTRA2[9]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[9]: 0xffdfffff
+	SAMPLER_INSTDONE[10]: 0xffffffff
+	ROW_INSTDONE[10]: 0x00000000
+	SC_INSTDONE[10]: 0xffffffff
+	SC_INSTDONE_EXTRA[10]: 0xffffffff
+	SC_INSTDONE_EXTRA2[10]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[10]: 0xffdfffff
+	SAMPLER_INSTDONE[11]: 0xffffffff
+	ROW_INSTDONE[11]: 0x00000000
+	SC_INSTDONE[11]: 0xffffffff
+	SC_INSTDONE_EXTRA[11]: 0xffffffff
+	SC_INSTDONE_EXTRA2[11]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[11]: 0xffdfffff
+	SAMPLER_INSTDONE[12]: 0xffffffff
+	ROW_INSTDONE[12]: 0x00000000
+	SC_INSTDONE[12]: 0xffffffff
+	SC_INSTDONE_EXTRA[12]: 0xffffffff
+	SC_INSTDONE_EXTRA2[12]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[12]: 0xffdfffff
+	SAMPLER_INSTDONE[13]: 0xffffffff
+	ROW_INSTDONE[13]: 0x00000000
+	SC_INSTDONE[13]: 0xffffffff
+	SC_INSTDONE_EXTRA[13]: 0xffffffff
+	SC_INSTDONE_EXTRA2[13]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[13]: 0xffdfffff
+	SAMPLER_INSTDONE[14]: 0xffffffff
+	ROW_INSTDONE[14]: 0x00000000
+	SC_INSTDONE[14]: 0xffffffff
+	SC_INSTDONE_EXTRA[14]: 0xffffffff
+	SC_INSTDONE_EXTRA2[14]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[14]: 0xffdfffff
+	SAMPLER_INSTDONE[15]: 0xffffffff
+	ROW_INSTDONE[15]: 0x00000000
+	SC_INSTDONE[15]: 0xffffffff
+	SC_INSTDONE_EXTRA[15]: 0xffffffff
+	SC_INSTDONE_EXTRA2[15]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[15]: 0xffdfffff
+	SAMPLER_INSTDONE[16]: 0xffffffff
+	ROW_INSTDONE[16]: 0x00000000
+	SC_INSTDONE[16]: 0xffffffff
+	SC_INSTDONE_EXTRA[16]: 0xffffffff
+	SC_INSTDONE_EXTRA2[16]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[16]: 0xffdfffff
+	SAMPLER_INSTDONE[17]: 0xffffffff
+	ROW_INSTDONE[17]: 0x00000000
+	SC_INSTDONE[17]: 0xffffffff
+	SC_INSTDONE_EXTRA[17]: 0xffffffff
+	SC_INSTDONE_EXTRA2[17]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[17]: 0xffdfffff
+	SAMPLER_INSTDONE[18]: 0xffffffff
+	ROW_INSTDONE[18]: 0x00000000
+	SC_INSTDONE[18]: 0xffffffff
+	SC_INSTDONE_EXTRA[18]: 0xffffffff
+	SC_INSTDONE_EXTRA2[18]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[18]: 0xffdfffff
+	SAMPLER_INSTDONE[19]: 0xffffffff
+	ROW_INSTDONE[19]: 0x00000000
+	SC_INSTDONE[19]: 0xffffffff
+	SC_INSTDONE_EXTRA[19]: 0xffffffff
+	SC_INSTDONE_EXTRA2[19]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[19]: 0xffdfffff
+	SAMPLER_INSTDONE[20]: 0xffffffff
+	ROW_INSTDONE[20]: 0x00000000
+	SC_INSTDONE[20]: 0xffffffff
+	SC_INSTDONE_EXTRA[20]: 0xffffffff
+	SC_INSTDONE_EXTRA2[20]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[20]: 0xffdfffff
+	SAMPLER_INSTDONE[21]: 0xffffffff
+	ROW_INSTDONE[21]: 0x00000000
+	SC_INSTDONE[21]: 0xffffffff
+	SC_INSTDONE_EXTRA[21]: 0xffffffff
+	SC_INSTDONE_EXTRA2[21]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[21]: 0xffdfffff
+	SAMPLER_INSTDONE[22]: 0xffffffff
+	ROW_INSTDONE[22]: 0x00000000
+	SC_INSTDONE[22]: 0xffffffff
+	SC_INSTDONE_EXTRA[22]: 0xffffffff
+	SC_INSTDONE_EXTRA2[22]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[22]: 0xffdfffff
+	SAMPLER_INSTDONE[23]: 0xffffffff
+	ROW_INSTDONE[23]: 0x00000000
+	SC_INSTDONE[23]: 0xffffffff
+	SC_INSTDONE_EXTRA[23]: 0xffffffff
+	SC_INSTDONE_EXTRA2[23]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[23]: 0xffdfffff
+	SAMPLER_INSTDONE[24]: 0xffffffff
+	ROW_INSTDONE[24]: 0x00000000
+	SC_INSTDONE[24]: 0xffffffff
+	SC_INSTDONE_EXTRA[24]: 0xffffffff
+	SC_INSTDONE_EXTRA2[24]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[24]: 0xffdfffff
+	SAMPLER_INSTDONE[25]: 0xffffffff
+	ROW_INSTDONE[25]: 0x00000000
+	SC_INSTDONE[25]: 0xffffffff
+	SC_INSTDONE_EXTRA[25]: 0xffffffff
+	SC_INSTDONE_EXTRA2[25]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[25]: 0xffdfffff
+	SAMPLER_INSTDONE[26]: 0xffffffff
+	ROW_INSTDONE[26]: 0x00000000
+	SC_INSTDONE[26]: 0xffffffff
+	SC_INSTDONE_EXTRA[26]: 0xffffffff
+	SC_INSTDONE_EXTRA2[26]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[26]: 0xffdfffff
+	SAMPLER_INSTDONE[27]: 0xffffffff
+	ROW_INSTDONE[27]: 0x00000000
+	SC_INSTDONE[27]: 0xffffffff
+	SC_INSTDONE_EXTRA[27]: 0xffffffff
+	SC_INSTDONE_EXTRA2[27]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[27]: 0xffdfffff
+	SAMPLER_INSTDONE[28]: 0xffffffff
+	ROW_INSTDONE[28]: 0x00000000
+	SC_INSTDONE[28]: 0xffffffff
+	SC_INSTDONE_EXTRA[28]: 0xffffffff
+	SC_INSTDONE_EXTRA2[28]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[28]: 0xffdfffff
+	SAMPLER_INSTDONE[29]: 0xffffffff
+	ROW_INSTDONE[29]: 0x00000000
+	SC_INSTDONE[29]: 0xffffffff
+	SC_INSTDONE_EXTRA[29]: 0xffffffff
+	SC_INSTDONE_EXTRA2[29]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[29]: 0xffdfffff
+	SAMPLER_INSTDONE[30]: 0xffffffff
+	ROW_INSTDONE[30]: 0x00000000
+	SC_INSTDONE[30]: 0xffffffff
+	SC_INSTDONE_EXTRA[30]: 0xffffffff
+	SC_INSTDONE_EXTRA2[30]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[30]: 0xffdfffff
+	SAMPLER_INSTDONE[31]: 0xffffffff
+	ROW_INSTDONE[31]: 0x00000000
+	SC_INSTDONE[31]: 0xffffffff
+	SC_INSTDONE_EXTRA[31]: 0xffffffff
+	SC_INSTDONE_EXTRA2[31]: 0xffffffff
+	INSTDONE_GEOM_SVGUNIT[31]: 0xffdfffff
+
+
+**** VM state ****
+[0].error: -19

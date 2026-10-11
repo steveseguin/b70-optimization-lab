@@ -1,0 +1,82 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "checker_cases": 33,
+  "index_cases": 46,
+  "tests": [
+    {
+      "source": "tests.cpp",
+      "command": [
+        "g++",
+        "-std=c++20",
+        "-O2",
+        "-g",
+        "-DOWN_RT_HOST_ONLY",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet16-decode",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/tests.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/checker-tests"
+      ],
+      "returncode": 0,
+      "stdout": "PASS missing RAW includes exact writer\nPASS missing WAW\nPASS retain every outstanding reader for WAR\nPASS transitive diamond satisfies both readers\nPASS cross queue transitive dependency\nPASS cross queue missing dependency\nPASS same queue alone grants no implicit edge\nPASS executed event is not a host fence\nPASS explicit host fence establishes order\nPASS host fence does not expose unrelated executed work\nPASS foreign owning device\nPASS foreign context even with matching device\nPASS partial byte poison in device index\nPASS disjoint ranges do not conflict\nPASS partial overlapping ranges conflict\nPASS copy source and destination offset contract\nPASS host slab overwrite catches pending reader\nPASS release pending allocation is diagnosed\nPASS released allocation use diagnosed\nPASS reused allocation loses old initialization\nPASS retire cannot erase merely executed hazard history\nPASS overlapping allocation registration rejected\nPASS release pending retains allocation lifetime\nPASS double release fails closed\nPASS host write after release fails closed\nPASS index poison cannot execute arbitrary addressing closure\nPASS unused foreign compute binding still rejected\nPASS copy propagates partial poison into device index\nPASS copy cannot erase poison through a second transfer\nPASS read-write alias does not create self hazard\nPASS deep ancestors across bitset word boundaries\nPASS adversarial order exposes absent edge\nPASS adversarial declared DAG keeps exact results\nRESULT 33/33 passed; device_executed=false\n",
+      "stderr": "",
+      "binary_sha256": "7c680e40cd8a5d7077d6e3964317790af93de42282cb92b182ba69c9897a8fa3",
+      "source_sha256": "ffc29b23e9b9250b914e18f104b2e5f6f05af1e9cda77ad6fe88ce6029f779e2"
+    },
+    {
+      "source": "test_bounds.cpp",
+      "command": [
+        "g++",
+        "-std=c++20",
+        "-O1",
+        "-g",
+        "-DOWN_RT_HOST_ONLY",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet16-decode",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "-fsanitize=address,undefined,float-cast-overflow",
+        "-fno-omit-frame-pointer",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/test_bounds.cpp",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet16-decode/owner.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/test-bounds"
+      ],
+      "returncode": 0,
+      "stdout": "{\"cpu_only\":true,\"malformed_and_valid_index_cases\":27,\"passed\":true}\n",
+      "stderr": "",
+      "binary_sha256": "a479d2cbd5f3a354c8e97fdd310d3e064fa4cc6920358eb25564f8b9e860ddde",
+      "source_sha256": "819f1bd7da727a8735d4707b98fa2fb36a81837289feb7cbfbd6d1daf2d838e6"
+    },
+    {
+      "source": "test_core_bounds.cpp",
+      "command": [
+        "g++",
+        "-std=c++20",
+        "-O1",
+        "-g",
+        "-DOWN_RT_HOST_ONLY",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet16-decode",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "-fsanitize=address,undefined,float-cast-overflow",
+        "-fno-omit-frame-pointer",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/test_core_bounds.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/test-core-bounds"
+      ],
+      "returncode": 0,
+      "stdout": "{\"cpu_only\":true,\"serial_core_index_cases\":19,\"passed\":true}\n",
+      "stderr": "",
+      "binary_sha256": "0d769efe399420942737aff666697f6885334151ba77fe402a7e65c81d2fe09b",
+      "source_sha256": "f7c2ff7b5fc2528fd10239c4cf745bf88edbca0edc2e9fb6248e3b25470a727d"
+    }
+  ]
+}

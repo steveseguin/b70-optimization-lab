@@ -1,0 +1,13 @@
+--- a/experiments/own-xpu-runtime/stage2/packet16-decode/main.cpp
++++ b/experiments/own-xpu-runtime/stage2/packet16-decode/main.cpp
+@@ -625,6 +625,10 @@
+             upload(c, id, off, zero.data(), std::min(zero.size(), bytes - off));
+         }
+     for (int c = 0; c < a.cards; ++c) {
++      // Capture readbacks cover the full 48-layer slab, including layers owned
++      // by the other card. Define those bytes once before the first capture.
++      std::vector<uint8_t> snapshot_zero(48*4*p.g.h*2,0);
++      upload(c,snapshots[c],0,snapshot_zero.data(),snapshot_zero.size());
+       if (!buffers[c].count("active"))
+         continue;
+       float unit=1; upload(c,one[c],0,&unit,4);

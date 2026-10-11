@@ -1,0 +1,323 @@
+{
+  "passed": true,
+  "scope": "Read-only source snapshot, mini scheduling/contract gate only; no v2 oracle qualification",
+  "build": {
+    "mode": "packet18",
+    "compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+    "sources": {
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/main.cpp": "3a8a4bf2b665a9a2ebc7d7102226801957bed5a7acda56f0048626a5d6625dbb",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.hpp": "80647a747f697dd8131019ee2041ab42b1f6b772f735abdf116fa6e2036323f1",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/owner.hpp": "3ae945e401c217a7705e43f5b1f5b63eaf1e635d32c983ffad7dec771ff28a4e",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/synthetic.hpp": "0f3285642055d61ff84790f668b7e19fdf347b2c7875aed804a88db5f9c06f35",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet3/step/plan.hpp": "e8da06cfc064ef9dd5f154d4b313b0dfeb95244fb6e7cb1a073591e6e8497cfa",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet3/model/directory.hpp": "535eea979a14d3a5eb9f4768edffb6e47c7d0aa61cfeeaf27e9dade75d19759f",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet3/kernels/api.hpp": "7d33644438281bcc5a1ab2fbbde2310cbff3a55b683312eab3d52178d4fdbe33",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/performance.hpp": "97048551886ee82850180ef9a7981259d80569fb82981c16e8473793739b2137",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/runtime_kernels.hpp": "2502331389696cb329e8e88fcdce495188cba5e685a1db785406a6f44543dcd8",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.hpp": "1044e1a57d101d35a1d02e7fd911c3db9e5faed41248255ac61af52528f98f74",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/core_v2.hpp": "e8cea58ff041afc285ba0e4cef9ac9c0a481ef321e540472ecfcdaaebeaf8047",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/detmath.hpp": "eba96cc4599d21ab24fe97276bda0c954c60878d3b696a77393abbfa2a4e049c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet17-detmath/detmath.hpp": "fbc845e5327579447fed4a6fb3d2638b6b5a389330ea712c45f9d8f2bf043cfc",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/rope.hpp": "93d877610f8db3ebcd7b4d7d16c2e3968d78ee291e3609ba460f1dc325cbb885",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.hpp": "5122c8e7115d94e0546d7b40fcd9a9a795c45717394a636ac3c806ad6d37dd6e",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.hpp": "218ec7d39db6272038f05453c84e7823220f6e3d97f7272a17efa1cd9593c706",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.hpp": "a4c24610451981c3d0d19289919e7b16521ed652605ba557f44c234bc413d54e",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.hpp": "78f15ee1abaace582eff11e876e9f76a3e69d78159156655e1133dc2ed3aa8c0",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet7-kopt2/reference.hpp": "7532f67c6d9a0be2a9187ce149b2004d9f1ea045705327d0ce542a283ad5ed72",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp": "2ec2a1defe33d873b87a121c37bee62d45b8ad0b1b4bc93e7ceb0ba3ca59dc3f",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet8-kopt3/reference.hpp": "f744a148509ed091d69a708262d0fcbc94c179da8ca5ed364791e8ba77a328af",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet8-kopt3/decode.hpp": "7db4f3b62f899f8d5f245d193ba5e5a39007f8512e4e378f312ed8391b44332c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet8-kopt3/dispatch.hpp": "efd7bb4c4dcdc0ee2afa24a7c1146e19a993f4f3cebd73cf025c84bc209053ed",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet9-kopt4/reference.hpp": "95bdc549c66d5cb72fd54cc73696187dae08568f15b19d206cc954ca290c85f4",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet9-kopt4/dispatch.hpp": "8f1895c0209b88057253b44a9aee82c4cd1e73cd207e4c1d3d233da1cc8d6495",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/arithmetic.hpp": "4eea12510e598964cd901860bc0375e96918fc3eaefdaea009edefb20bcd6999",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp": "6e96276d9eee2564aa74d2f90b6802d04709f78d2b866b394c6fca2fe818dee3",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.hpp": "b5a6c3b39d051853e49761491aaf69f55e7ad882cffef34ea8300a68c608176d",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/adapter.hpp": "ed38260c7ca1ddeab55f465e2635ae9f97f31970424b412d7e9ba9ca071a63be",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/backend.hpp": "e06e42cd450dee94194c141e4c5cf9f078c4ff7425313dba0def3ebdf49c75f0",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/performance.cpp": "9f0b52da35dff6d71a4f4eea72b0cfee26a9796934aa033295cf73256bca04d1",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/adapter.cpp": "bb395b3dcac3eb30c4bfa659a178d5af8a26723aceaf4e9ec29d2f6fa1d28f71",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/kernels.hpp": "35a2431070b2e0a5a1948ac89ca1a76af3f3afab35c26bb5f001d69613389bfa",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/native.hpp": "c0b710b43748dfeb23bb317254053106d68fc967d9ecdfe43f17f56a80d372b4",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/runtime_kernels.cpp": "ff95284fda68e0097c35e7ee0b03851563b77cf935602b4e2ea0d5ba526f37f0",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/instrument18.hpp": "d35bba0330289f5b8cee412460abaa05644e3efca38566640c213f196d5f291f",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/depcheck.hpp": "21a6f46fad3465f3a3a5f7b6f2b2617924279e12a84cedb20f654ea62c6c8e72",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/performance.cpp": "aeeeff5d1b982c3d71ffc014612fc401f893ddee8428a9dc01918a2e1707d00d",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/instrument.hpp": "150791dfbb8c93a44009093ad5ab32dff4398adf917b5e7c051b216d6937f154",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet19-depcheck__depcheck.hpp": "966b701fadc3fbcefc867d3e89db5c82e7d6e59fc39154e2ed5818c6d283e740",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.hpp": "94db5f67e518d4b4940811c9f381f3e1add47c403fca134cad11d84d4d2e626b",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet18-decode-v2__performance.hpp": "1151be31c8f614f75df3fc5a0d9bddd9381968d449f0623b59f8cbe242aa93f3",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet18-decode-v2__runtime_kernels.hpp": "a48fd3f38ecfa39f25ae6109b0dd65e5d251b158411188c78868829d62e6d76b",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet2__kernels__device.hpp": "e58bd37c61c5724d93392974cf1656b00d99d469ba6e35b9397444cdfe89525b",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet2__kernels__math.hpp": "2bb6ae68cebdfef249d02fa36a455ef0da14f8028fe8bb665dd0b65873fb4f62",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet2__kernels__grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet18-decode-v2__owner.hpp": "bace7ae78bdb24b4294a2cea3f1dcc3b285f7716efeddd2e105df5a076ff3788",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet18-decode-v2__core_v2.hpp": "5b3fe251ccf5321bc11586eeea8d6823980a046c341550c34d5e5bd34cf564fd",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet18-decode-v2__detmath.hpp": "e7f472bd6d8d20166157255f34931fdca3e0ae6938d4ee63f59ba35b9c2d3bb8",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet17-detmath__detmath.hpp": "fbc845e5327579447fed4a6fb3d2638b6b5a389330ea712c45f9d8f2bf043cfc",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet18-decode-v2__rope.hpp": "93d877610f8db3ebcd7b4d7d16c2e3968d78ee291e3609ba460f1dc325cbb885",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet3__kernels__api.hpp": "c6748063cc929b261037416be4e136733782fe04ee2752eda86fda1edb5cacf1",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet9-kopt4__kernels.hpp": "6ba361f4ff0cf96638850348fa6181b9e33440b3698b334db7a033a1d0712231",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet8-kopt3__kernels.hpp": "55d754573543b3ee9e7c308f387f5601eb702e5d3467e779487f991eac802510",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet7-kopt2__kernels.hpp": "a1a62fa90551e594a0320368a9cf2c5ad97f580989dc97bddc2ca73977f8b177",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet6-kopt__kernels.hpp": "0f9994cb8fd9a933c1611e094ecd11d89c04620e405ca3d1bb4ec5dffd570367",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet7-kopt2__reference.hpp": "10c1cb8fd4f67cc7f849b9acfc1a8da030f1ad4df4976b189d1f487785bfeabd",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet6-kopt__reference.hpp": "c675f664be7647aa4b1010b0fdd6da351d0c7aed97c37d0f3ec64131a5f2238a",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet8-kopt3__reference.hpp": "3f62eaad7b4917d54d783093e5fd194539065f48f6bc0efd6cad7fe61e21ff95",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet8-kopt3__decode.hpp": "f1bfac17aaa00d24011e64799b17191819a68d70c965680fdffcb5ca66588d2b",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet8-kopt3__dispatch.hpp": "efd7bb4c4dcdc0ee2afa24a7c1146e19a993f4f3cebd73cf025c84bc209053ed",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet9-kopt4__reference.hpp": "e15b1b37cfddb12f9071cb6cb02a982ecdad083d167074229cb8fb25fd7f212c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet9-kopt4__dispatch.hpp": "8f1895c0209b88057253b44a9aee82c4cd1e73cd207e4c1d3d233da1cc8d6495",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet18-decode-v2__arithmetic.hpp": "7c419faaecc4ce33d13a689960a2d0bae38e5a1df65340cd51efde995e4b97ed",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet10-kopt5__expanded.hpp": "daf5f5ed0ee93b0c6eb4bdebd4a9e47d4e6dca8e2cd74d5b03b8e4b15fb9ae48",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet10-kopt5__kernels.hpp": "1bad94e4624e8d4a2893c2f7ceaf67fe0a4cc445ef4e9d183d5534214380d895",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet18-decode-v2__kernels.hpp": "19391239752acafbe9060d4eddd8774284cdc0c22680965c141ba691fbfa9dca",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/owner.cpp": "13be27f2608e909428f390b3e2fae26625efdeae41aab9e4f4f16306de281a3b",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/../../stage1/packet3-prep/src/owner.hpp": "94db5f67e518d4b4940811c9f381f3e1add47c403fca134cad11d84d4d2e626b",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp": "d2560c5530d56ca62b0ec43bcbd1668cd7c637d1743f51abfebfb96de56ee480",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/owner_retire.cpp": "07dad00e773223ea342d4c4ce92c5e1cd3d5255c9d8acfc712bb5539cf3f84df",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/adapter.cpp": "c12aaa6c6ce13cf0a1229ae78e8c9c7c24efb05ae99def1bbee7f5891ee10e59",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet18-decode-v2__adapter.hpp": "34b75ac9e5ec4d164db604ac1b8a567441413e5d9c7438ed593bf789bbf86c5b",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/main.cpp": "3344ffbbc0264d9069ad5e1a65a2d65499acf54b8ba763674bc67d4fbd50a69c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet2__loader__gguf.hpp": "d642194f0cfc0ee39008815e8ce5a13ac74df4eb2ac21bf8d7d80074ecd3dc75",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet18-decode-v2__synthetic.hpp": "0f3285642055d61ff84790f668b7e19fdf347b2c7875aed804a88db5f9c06f35",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet3__step__plan.hpp": "aafc601f48aa4bfc9e43fcc6295c69e67406265986632c12b46701b3eab960fa",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/packet3__model__directory.hpp": "348a32a64da34d7938232bee0802de1a6e548d78d0fd5576a67fa2b3c6da2b5a",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/mock_device.hpp": "e5e68fd9aa3c9baaa34811b74c58f6ff8311f6bd18fae787fe80ccef2d6e3a32",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/core.cpp": "c55212ca63653c6c67e96580a406490f3379301700e5f1e4995e0670c0c3d89c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build.py": "ade9d93eb11bbd7ba1ab336b0ab7564bd8a3d8fce0cc2fc23167af37d2848e78",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2/rope.bf16": "ccdfe87fa7360fc6b4aa7c999fa7b920f791f5635010cf303ae76f4d01dca058",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/rope.bf16": "ccdfe87fa7360fc6b4aa7c999fa7b920f791f5635010cf303ae76f4d01dca058"
+    },
+    "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet19-depcheck/build/packet18/depcheck-runtime",
+    "sha256": "beff7a3079c8d25386b8d5e2911f07fc2bb1e2bd789ba9e5394507333a67613b",
+    "flags": [
+      "-std=c++20",
+      "-MMD",
+      "-O3",
+      "-march=native",
+      "-fopenmp",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-DOWN_RT_HOST_ONLY",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet18-decode-v2",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader",
+      "-DDEPCHECK_PACKET18"
+    ],
+    "device_executed": false
+  },
+  "runs": [
+    {
+      "cards": 1,
+      "mode": "parallel",
+      "seed": 0,
+      "returncode": 2,
+      "buffers_sha256": "a521c5b7fae14a1c9e99e303bc7f9d352c4e75a39c6feb3fd18ec8e933b27235",
+      "tokens": [
+        1,
+        1,
+        1
+      ],
+      "sanitizer": {
+        "device_executed": false,
+        "submissions": 1772,
+        "executed": 1772,
+        "max_ready": 1,
+        "violations": [
+          "position=4:readback:card0:layer-snapshots:0: uninitialized read allocation=card0:layer-snapshots:0",
+          "position=5:readback:card0:layer-snapshots:0: uninitialized read allocation=card0:layer-snapshots:0",
+          "position=6:readback:card0:layer-snapshots:0: uninitialized read allocation=card0:layer-snapshots:0"
+        ]
+      }
+    },
+    {
+      "cards": 1,
+      "mode": "parallel",
+      "seed": 17,
+      "returncode": 2,
+      "buffers_sha256": "a521c5b7fae14a1c9e99e303bc7f9d352c4e75a39c6feb3fd18ec8e933b27235",
+      "tokens": [
+        1,
+        1,
+        1
+      ],
+      "sanitizer": {
+        "device_executed": false,
+        "submissions": 1772,
+        "executed": 1772,
+        "max_ready": 1,
+        "violations": [
+          "position=4:readback:card0:layer-snapshots:0: uninitialized read allocation=card0:layer-snapshots:0",
+          "position=5:readback:card0:layer-snapshots:0: uninitialized read allocation=card0:layer-snapshots:0",
+          "position=6:readback:card0:layer-snapshots:0: uninitialized read allocation=card0:layer-snapshots:0"
+        ]
+      }
+    },
+    {
+      "cards": 1,
+      "mode": "core",
+      "seed": 0,
+      "returncode": 2,
+      "buffers_sha256": "a521c5b7fae14a1c9e99e303bc7f9d352c4e75a39c6feb3fd18ec8e933b27235",
+      "tokens": [
+        1,
+        1,
+        1
+      ],
+      "sanitizer": {
+        "device_executed": false,
+        "submissions": 1772,
+        "executed": 1772,
+        "max_ready": 1,
+        "violations": [
+          "position=4:readback:card0:layer-snapshots:0: uninitialized read allocation=card0:layer-snapshots:0",
+          "position=5:readback:card0:layer-snapshots:0: uninitialized read allocation=card0:layer-snapshots:0",
+          "position=6:readback:card0:layer-snapshots:0: uninitialized read allocation=card0:layer-snapshots:0"
+        ]
+      }
+    },
+    {
+      "cards": 1,
+      "mode": "core",
+      "seed": 17,
+      "returncode": 2,
+      "buffers_sha256": "a521c5b7fae14a1c9e99e303bc7f9d352c4e75a39c6feb3fd18ec8e933b27235",
+      "tokens": [
+        1,
+        1,
+        1
+      ],
+      "sanitizer": {
+        "device_executed": false,
+        "submissions": 1772,
+        "executed": 1772,
+        "max_ready": 1,
+        "violations": [
+          "position=4:readback:card0:layer-snapshots:0: uninitialized read allocation=card0:layer-snapshots:0",
+          "position=5:readback:card0:layer-snapshots:0: uninitialized read allocation=card0:layer-snapshots:0",
+          "position=6:readback:card0:layer-snapshots:0: uninitialized read allocation=card0:layer-snapshots:0"
+        ]
+      }
+    },
+    {
+      "cards": 2,
+      "mode": "parallel",
+      "seed": 0,
+      "returncode": 2,
+      "buffers_sha256": "a521c5b7fae14a1c9e99e303bc7f9d352c4e75a39c6feb3fd18ec8e933b27235",
+      "tokens": [
+        1,
+        1,
+        1
+      ],
+      "sanitizer": {
+        "device_executed": false,
+        "submissions": 1070,
+        "executed": 1070,
+        "max_ready": 1,
+        "violations": [
+          "position=4:readback:card0:layer-snapshots:0: uninitialized read allocation=card0:layer-snapshots:0",
+          "position=4:readback:card1:layer-snapshots:1: uninitialized read allocation=card1:layer-snapshots:1",
+          "position=4:readback:card1:layer-snapshots:1: uninitialized read allocation=card1:layer-snapshots:1",
+          "position=5:readback:card0:layer-snapshots:0: uninitialized read allocation=card0:layer-snapshots:0",
+          "position=5:readback:card1:layer-snapshots:1: uninitialized read allocation=card1:layer-snapshots:1",
+          "position=5:readback:card1:layer-snapshots:1: uninitialized read allocation=card1:layer-snapshots:1",
+          "position=6:readback:card0:layer-snapshots:0: uninitialized read allocation=card0:layer-snapshots:0",
+          "position=6:readback:card1:layer-snapshots:1: uninitialized read allocation=card1:layer-snapshots:1",
+          "position=6:readback:card1:layer-snapshots:1: uninitialized read allocation=card1:layer-snapshots:1"
+        ]
+      }
+    },
+    {
+      "cards": 2,
+      "mode": "parallel",
+      "seed": 17,
+      "returncode": 2,
+      "buffers_sha256": "a521c5b7fae14a1c9e99e303bc7f9d352c4e75a39c6feb3fd18ec8e933b27235",
+      "tokens": [
+        1,
+        1,
+        1
+      ],
+      "sanitizer": {
+        "device_executed": false,
+        "submissions": 1070,
+        "executed": 1070,
+        "max_ready": 1,
+        "violations": [
+          "position=4:readback:card0:layer-snapshots:0: uninitialized read allocation=card0:layer-snapshots:0",
+          "position=4:readback:card1:layer-snapshots:1: uninitialized read allocation=card1:layer-snapshots:1",
+          "position=4:readback:card1:layer-snapshots:1: uninitialized read allocation=card1:layer-snapshots:1",
+          "position=5:readback:card0:layer-snapshots:0: uninitialized read allocation=card0:layer-snapshots:0",
+          "position=5:readback:card1:layer-snapshots:1: uninitialized read allocation=card1:layer-snapshots:1",
+          "position=5:readback:card1:layer-snapshots:1: uninitialized read allocation=card1:layer-snapshots:1",
+          "position=6:readback:card0:layer-snapshots:0: uninitialized read allocation=card0:layer-snapshots:0",
+          "position=6:readback:card1:layer-snapshots:1: uninitialized read allocation=card1:layer-snapshots:1",
+          "position=6:readback:card1:layer-snapshots:1: uninitialized read allocation=card1:layer-snapshots:1"
+        ]
+      }
+    },
+    {
+      "cards": 2,
+      "mode": "core",
+      "seed": 0,
+      "returncode": 2,
+      "buffers_sha256": "a521c5b7fae14a1c9e99e303bc7f9d352c4e75a39c6feb3fd18ec8e933b27235",
+      "tokens": [
+        1,
+        1,
+        1
+      ],
+      "sanitizer": {
+        "device_executed": false,
+        "submissions": 1070,
+        "executed": 1070,
+        "max_ready": 1,
+        "violations": [
+          "position=4:readback:card0:layer-snapshots:0: uninitialized read allocation=card0:layer-snapshots:0",
+          "position=4:readback:card1:layer-snapshots:1: uninitialized read allocation=card1:layer-snapshots:1",
+          "position=4:readback:card1:layer-snapshots:1: uninitialized read allocation=card1:layer-snapshots:1",
+          "position=5:readback:card0:layer-snapshots:0: uninitialized read allocation=card0:layer-snapshots:0",
+          "position=5:readback:card1:layer-snapshots:1: uninitialized read allocation=card1:layer-snapshots:1",
+          "position=5:readback:card1:layer-snapshots:1: uninitialized read allocation=card1:layer-snapshots:1",
+          "position=6:readback:card0:layer-snapshots:0: uninitialized read allocation=card0:layer-snapshots:0",
+          "position=6:readback:card1:layer-snapshots:1: uninitialized read allocation=card1:layer-snapshots:1",
+          "position=6:readback:card1:layer-snapshots:1: uninitialized read allocation=card1:layer-snapshots:1"
+        ]
+      }
+    },
+    {
+      "cards": 2,
+      "mode": "core",
+      "seed": 17,
+      "returncode": 2,
+      "buffers_sha256": "a521c5b7fae14a1c9e99e303bc7f9d352c4e75a39c6feb3fd18ec8e933b27235",
+      "tokens": [
+        1,
+        1,
+        1
+      ],
+      "sanitizer": {
+        "device_executed": false,
+        "submissions": 1070,
+        "executed": 1070,
+        "max_ready": 1,
+        "violations": [
+          "position=4:readback:card0:layer-snapshots:0: uninitialized read allocation=card0:layer-snapshots:0",
+          "position=4:readback:card1:layer-snapshots:1: uninitialized read allocation=card1:layer-snapshots:1",
+          "position=4:readback:card1:layer-snapshots:1: uninitialized read allocation=card1:layer-snapshots:1",
+          "position=5:readback:card0:layer-snapshots:0: uninitialized read allocation=card0:layer-snapshots:0",
+          "position=5:readback:card1:layer-snapshots:1: uninitialized read allocation=card1:layer-snapshots:1",
+          "position=5:readback:card1:layer-snapshots:1: uninitialized read allocation=card1:layer-snapshots:1",
+          "position=6:readback:card0:layer-snapshots:0: uninitialized read allocation=card0:layer-snapshots:0",
+          "position=6:readback:card1:layer-snapshots:1: uninitialized read allocation=card1:layer-snapshots:1",
+          "position=6:readback:card1:layer-snapshots:1: uninitialized read allocation=card1:layer-snapshots:1"
+        ]
+      }
+    }
+  ]
+}
