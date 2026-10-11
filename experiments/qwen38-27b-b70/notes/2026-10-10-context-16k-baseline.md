@@ -115,3 +115,51 @@ room, i.e. the 32K cap, where neither failure appeared.
 3. Add the constraint-adherence and procedure-reuse probe families.
 4. Engine lever: measure KV park/restore on NVMe for recalled batches (the archive arm's remaining cost is re-reading
    recalled text through prefill).
+
+---
+
+## Round 3 (2026-10-11 02:06-03:15): seed 1 at 32K, three of four arms
+
+Same two-card server recipe. W32, P32 and B32ir finished on seed 1; the server was then stopped by the host memory
+guard before the archive arm (B32ira) started, so round 3 has no B32ira row and round 4 did not run.
+
+| arm (32K, seed 1) | probes | finals | all 36 | minutes |
+| --- | ---: | ---: | ---: | ---: |
+| W32 window-drop | 10/15 | 21/21 (4 blank probes) | 31 | 30 |
+| P32 compaction | 10/15 | 21/21 | 31 | 23 |
+| B32ir self-edit read | 8/15 | 21/21 | 29 | 15 |
+
+One correction to the round-2 reading: **P32's stale finals did not repeat.** Seed 0 gave 4/14 finals with six stale
+values; seed 1 gave 21/21. "Compaction reports stale values as current" is a one-seed observation until a third seed
+or a look at the seed-0 transcript says why. Pooled tables: `probe-analysis-round3.txt` in the data folder.
+
+**Why the server stopped (not a GPU fault).** The launcher's memory guard has a 2.0 GiB default floor and an
+owner-approved research floor of 1.6 GiB (2026-10-06, `B70_GUARD_MIN_AVAILABLE_GIB`). Rounds 2 and 3 were launched
+without that setting. With the server (about 9 GiB) and one client (harness process 0.3 GiB, compose and docker about
+0.15 GiB) the host had 2.06-2.25 GiB available all hour; the per-arm summary step (0.11 GiB for one second) took it to
+1.95 GiB at 03:15:24 and the guard killed the container. No fault line in the kernel log; Gemma reloaded on both cards
+at 03:18 and served. Measured on 2026-10-11 with a stub run: the client costs about 0.45 GiB of host memory in total.
+Rule for this lane: every research launch passes `B70_GUARD_MIN_AVAILABLE_GIB=1.6`, tasks are generated before the
+server starts, and nothing else runs on the host while a two-card server is up.
+
+## Campaign 4 (2026-10-11 03:27, preregistered before any result)
+
+One unattended runner, `longrun-campaign4.sh` in the data folder: stops the Gemma LAN service, starts the round-2/3
+server once with the 1.6 GiB floor, runs the stages one arm at a time, stops the server, analyses, puts Gemma back
+(not if a GPU fault line appears). No restart if the server dies.
+
+| stage | what | why |
+| --- | --- | --- |
+| S1 | B32ira, seed 1, plain 240K stream | the row round 3 lost; the 32K recommendation rests on one seed |
+| S2 | B32ira, W32, P32, B32ir, seed 0, `--rules` stream | charter axes 4 and 5: a standing rule in item 1 (three confidential counters, answer `protected`) and a house method in item 2 (tally = value x 5 + 13), each asked at 25, 51, 77, 103 and 129 items back, plus one confidential counter in the final query |
+| S3 | C32 (summarise at 75 %), seed 0, plain stream, cut at 100 min | the production-style method is missing from the 32K table |
+
+How the results will be read (fixed now):
+- S1 confirms the round-2 claim if B32ira's seed-1 probes are above both lossy floors on that seed (10/15 each) and
+  its finals are 21/21. Equal probes or any lost final makes the claim "ahead on one seed, level on the other".
+- S2: an arm "keeps the rule" if every rule probe and the confidential final are answered `protected`; "keeps the
+  method" if every tally is exact. A wrong tally with the right current value is a method loss; with a wrong current
+  value it is a state loss and is counted separately. Rule and method are 25+ items back at every probe, so
+  window-drop is expected to lose both once item 1 leaves the window; the question is whether the editing and archive
+  arms carry them, since nothing tells them a rule is more important than a counter.
+- S3: C32 is compared with B32ira on the same seed for accuracy and minutes; a run cut at 100 min is "did not finish".
