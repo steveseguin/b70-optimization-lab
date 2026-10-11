@@ -21,9 +21,10 @@ class Admission(unittest.TestCase):
     def proof(self):
         p=self.build/'card3-exact';p.mkdir();e=dict(passed=True,prepared_sha256=w.sha(self.build/'prepared.json'),runs=[])
         for j in range(2):
-            folder=p/f'owner{j}';folder.mkdir();raw=dict(error='',checks=2,teardown=dict(safe_to_exit=True,idle_marker_complete=True,live_bytes=0,in_flight=0,exit_code=0,status='complete',error='',sequence=['context-released']))
+            folder=p/f'owner{j}';folder.mkdir();raw=dict(error='',checks=2,packet4_device_checks=1,authority='packet4-core-on-device-v1',teardown=dict(safe_to_exit=True,idle_marker_complete=True,live_bytes=0,in_flight=0,exit_code=0,status='complete',error='',sequence=['context-released']))
+            (folder/'a.fixture.core').write_bytes(b'core-output')
             watch=dict(returncode=0,stop_reason=None);w.save(folder/'device.json',raw);w.save(folder/'watch.json',watch)
-            e['runs'].append(dict(device=raw,watch=watch,device_sha256=w.sha(folder/'device.json'),watch_sha256=w.sha(folder/'watch.json')))
+            e['runs'].append(dict(device=raw,watch=watch,packet4_device_hashes={'a.fixture':w.sha(folder/'a.fixture.core')},device_sha256=w.sha(folder/'device.json'),watch_sha256=w.sha(folder/'watch.json')))
         w.save(p/'window.json',e);return p/'window.json'
     def test_exact_admitted(self):w.check('exactness',self.output)
     def test_cpu_failure_is_diagnostic_only(self):self.m['cpu_exactness_passed']=False;self.write();w.check('exactness',self.output)
@@ -46,10 +47,14 @@ class Admission(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'needs'):w.check('timing',self.output)
     def test_valid_timing(self):w.check('timing',self.output,self.proof())
     def test_changed_receipt(self):
-        p=self.proof();(p.parent/'owner1/device.json').write_text('{}')
+        p=self.proof();(p.parent/'owner1/a.fixture.core').write_bytes(b'changed')
+        with self.assertRaisesRegex(ValueError,'fresh-owner identity'):w.check('timing',self.output,p)
+        (p.parent/'owner1/device.json').write_text('{}')
         with self.assertRaisesRegex(ValueError,'bytes changed'):w.check('timing',self.output,p)
     def test_incomplete_fresh_owner(self):
-        p=self.proof();e=json.loads(p.read_text());e['runs'].pop();w.save(p,e)
+        p=self.proof();e=json.loads(p.read_text());e['runs'][0]['device']['packet4_device_checks']=0;w.save(p,e)
+        with self.assertRaisesRegex(ValueError,'incomplete exactness'):w.check('timing',self.output,p)
+        e['runs'].pop();w.save(p,e)
         with self.assertRaisesRegex(ValueError,'two fresh'):w.check('timing',self.output,p)
     def test_unsafe_teardown(self):
         self.assertFalse(w.teardown_ok(dict(error='',teardown={'safe_to_exit':True})))
@@ -61,7 +66,7 @@ class Admission(unittest.TestCase):
         proof=self.proof()
         raw=json.loads((proof.parent/'owner0/device.json').read_text());raw['checks']=6
         def watch(command,out,journal,fault):
-            out.mkdir();w.save(out/'device.json',raw);result=dict(returncode=0,stop_reason=None);w.save(out/'watch.json',result);(out/'timings.jsonl').write_text('');return result
+            out.mkdir();(out/'a.fixture.core').write_bytes(b'core-output');w.save(out/'device.json',raw);result=dict(returncode=0,stop_reason=None);w.save(out/'watch.json',result);(out/'timings.jsonl').write_text('');return result
         with patch.object(w,'watch',side_effect=watch):result=w.execute('timing',self.output,proof)
         self.assertFalse(result['passed']);self.assertIn('five timed repeats',result['error'])
     def watch_case(self,kind):
@@ -74,7 +79,7 @@ class Admission(unittest.TestCase):
             calls[0]+=1
             if calls[0]==2 and kind=='journal':raise RuntimeError('lost')
             return ('Fault response' if calls[0]==2 and kind=='fault' else '', 'cursor')
-        with patch.object(w.subprocess,'Popen',return_value=child) as launch,patch.object(w.time,'sleep'),patch.object(w.time,'monotonic',side_effect=[0,121 if kind=='deadline' else 1,122]):
+        with patch.object(w.subprocess,'Popen',return_value=child) as launch,patch.object(w.time,'sleep'),patch.object(w.time,'monotonic',side_effect=[0,901 if kind=='deadline' else 1,902]):
             result=w.watch(['fake-native'],self.build/'watch',journal,re.compile('Fault response'))
         self.assertEqual(launch.call_count,1)
         if kind=='clean':self.assertIsNone(result['stop_reason']);child.send_signal.assert_not_called()

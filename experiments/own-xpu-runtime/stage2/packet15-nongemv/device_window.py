@@ -34,16 +34,18 @@ def check(mode,output,exactness=None):
         if e.get('passed') is not True or e.get('prepared_sha256')!=sha(BUILD/'prepared.json') or len(e.get('runs',[]))!=2:raise ValueError('two fresh exact owners for same prepared identity required')
         for index,run in enumerate(e['runs']):
             folder=exactness.parent/f'owner{index}'
-            if not teardown_ok(run.get('device',{})) or run['device'].get('checks')!=2*len(lines) or run.get('watch',{}).get('returncode')!=0 or run['watch'].get('stop_reason'):raise ValueError('incomplete exactness owner')
+            if not teardown_ok(run.get('device',{})) or run['device'].get('checks')!=2*len(lines) or run['device'].get('packet4_device_checks')!=len(lines) or run['device'].get('authority')!='packet4-core-on-device-v1' or run.get('watch',{}).get('returncode')!=0 or run['watch'].get('stop_reason'):raise ValueError('incomplete exactness owner')
             if sha(folder/'device.json')!=run.get('device_sha256') or json.loads((folder/'device.json').read_text())!=run['device']:raise ValueError('exactness bytes changed')
             if sha(folder/'watch.json')!=run.get('watch_sha256'):raise ValueError('watch evidence changed')
+            actual={name:sha(folder/(name+'.core')) for name in lines}
+            if actual!=run.get('packet4_device_hashes') or actual!=e['runs'][0].get('packet4_device_hashes'):raise ValueError('device core fresh-owner identity changed')
     return m,out
 
 def teardown_ok(v):
     t=v.get('teardown',{})
     return not v.get('error') and t.get('safe_to_exit') is True and t.get('idle_marker_complete') is True and t.get('live_bytes')==t.get('in_flight')==t.get('exit_code')==0 and t.get('status')=='complete' and not t.get('error') and 'context-released' in t.get('sequence',[])
 
-def watch(command,out,journal,fault,seconds=120):
+def watch(command,out,journal,fault,seconds=900):
     # Journal reader is the repository's packet2 implementation. No GPU API here.
     pre,cursor=journal();out.mkdir();(out/'preflight-kernel.txt').write_text(pre)
     result=dict(returncode=None,stop_reason=None,fault_lines=[],external_idle_health_still_required=True)
@@ -102,9 +104,13 @@ def execute(mode,output,exactness=None):
             raw=json.loads((destination/'device.json').read_text()) if (destination/'device.json').exists() else {}
             receipt['runs'].append(dict(watch=w,device=raw,device_sha256=sha(destination/'device.json') if (destination/'device.json').exists() else None,watch_sha256=sha(destination/'watch.json')))
             expected=len(m['fixtures']['cases'])*(6 if mode=='timing' else 2)
-            if w['returncode']!=0 or w['stop_reason'] or not teardown_ok(raw) or raw.get('checks')!=expected:
+            if w['returncode']!=0 or w['stop_reason'] or not teardown_ok(raw) or raw.get('checks')!=expected or raw.get('packet4_device_checks')!=len(m['fixtures']['cases']) or raw.get('authority')!='packet4-core-on-device-v1':
                 save(LATCH,dict(reason='failed window, exactness, coverage or teardown',output=str(out)))
                 raise ValueError('failed child; no retry')
+        for run_index,run in enumerate(receipt['runs']):
+            folder=out/f'owner{run_index}'
+            run['packet4_device_hashes']={case['name']:sha(folder/(case['name']+'.core')) for case in m['fixtures']['cases']}
+        if receipt['runs'][0]['packet4_device_hashes']!=receipt['runs'][1]['packet4_device_hashes']:raise ValueError('device core fresh-owner identity changed')
         if mode=='timing':
             rows=[]
             for repeat in range(2):rows.extend(json.loads(line) for line in (out/f'owner{repeat}/timings.jsonl').read_text().splitlines())

@@ -1,4 +1,5 @@
 #include "native.hpp"
+#include "reference.hpp"
 #include "sycl_operation.hpp"
 namespace ng {
 struct DeviceTeam {
@@ -26,4 +27,21 @@ struct Kernel final:ownrt::SyclOperation{
  }
 };
 ownrt::Event submit(ownrt::Device& d,Shape s,std::span<const ownrt::Allocation> a,std::span<const ownrt::Event> deps){validate(s);if(a.size()!=16)throw std::invalid_argument("16 bound slots required");auto bytes=required_bytes(s);for(size_t j=0;j<a.size();++j)if(d.arena.row(a[j]).bytes<bytes[j])throw std::invalid_argument("short allocation binding");Kernel k(s);return d.compute(k,a,deps);}
+// Decisive identity control: unchanged packet4 Core, same SYCL compiler/card.
+// The only added binding is a reusable 256 MiB interpreter scratch allocation.
+struct ReferenceKernel final:ownrt::SyclOperation {
+ Shape shape;int row;
+ ReferenceKernel(Shape s,int r):shape(s),row(r){}
+ sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps)const override {
+  Args a;std::copy_n(p.begin(),16,a.p.begin());auto s=shape;int r=row;auto scratch=static_cast<float*>(p[16]);
+  return q.submit([&](sycl::handler& h){h.depends_on(deps);h.single_task([=]{reference::row(s,a,r,scratch);});});
+ }
+};
+ownrt::Event submit_reference(ownrt::Device& d,Shape s,int row,std::span<const ownrt::Allocation> a,std::span<const ownrt::Event> deps){
+ validate(s);if(a.size()!=17||row<0||row>=s.tokens)throw std::invalid_argument("reference bindings/row");
+ auto bytes=required_bytes(s);for(int j=0;j<16;++j)if(d.arena.row(a[j]).bytes<bytes[j])throw std::invalid_argument("short reference binding");
+ if(d.arena.row(a[16]).bytes<reference::scratch_floats*sizeof(float))throw std::invalid_argument("reference scratch");
+ ReferenceKernel k(s,row);return d.compute(k,a,deps);
+}
+
 }

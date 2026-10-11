@@ -24,8 +24,8 @@ struct Args {
   float* f(int slot)const{return static_cast<float*>(p[slot]);}
   int32_t* i(int slot)const{return static_cast<int32_t*>(p[slot]);}
 };
-inline float sigmoid(float x){return 1.f/(1.f+std::exp(-x));}
-inline float silu(float x){return x*sigmoid(x);}
+inline float sigmoid(float x){return 1.f / (1.f + std::exp(-x));}
+inline float silu(float x){return x * sigmoid(x);}
 inline int groups(Shape s){
  switch(s.op){
  case conv:return (s.width+127)/128;
@@ -101,7 +101,7 @@ template<class Team,class F> float tree(Team t,int n,F value,int base=0){t.each(
 template<class Team,class Get,class Put> void norm_rope(Team t,Get get,Put put,const Args& a,int gain,int width,int position,int flags){
  float inv=1.f/std::sqrt(tree(t,width,[&](int j){float v=get(j);return v*v;})/float(width)+1e-6f);
  t.barrier();t.each(width,[&](int j){t.x[j]=Args::bf((get(j)*inv)*(a.weight(gain,j,flags)+float(flags&1)));});t.barrier();
- t.each(width,[&](int j){float v=t.x[j];if(j<64){int k=j%32;float angle=float(position)*std::pow(1e7f,-float(2*k)/64.f);float c=Args::bf(std::cos(angle)),z=Args::bf(std::sin(angle));v=j<32?t.x[k]*c-t.x[k+32]*z:t.x[k+32]*c+t.x[k]*z;}put(j,v);});t.barrier();
+ t.each(width,[&](int j){float v=t.x[j];if(j<64){int k=j%32;constexpr int rotary=64;float angle=float(position)*std::pow(1e7f,-float(2*k)/float(rotary));float c=Args::bf(std::cos(angle)),z=Args::bf(std::sin(angle));v=j<32?t.x[k]*c-t.x[k+32]*z:t.x[k+32]*c+t.x[k]*z;}put(j,v);});t.barrier();
 }
 template<class Team> void group(Shape s,Args a,int group,Team t){
  // control = {position, active, sticky_error}; no host readback.
@@ -117,10 +117,10 @@ template<class Team> void group(Shape s,Args a,int group,Team t){
    size_t qbase=size_t(row)*10240+key*128,kbase=qbase+2048;
    float qn=std::sqrt(dot128(t,[&](int k){float v=a.b(0,qbase+k);return v*v;})+1e-6f);t.barrier();
    float kn=std::sqrt(dot128(t,[&](int k){float v=a.b(0,kbase+k);return v*v;})+1e-6f);t.barrier();
-   float gate=a.b(1,row*48+h)+a.weight(4,h,s.flags),sp=gate<20?std::log(1.f+std::exp(gate)):gate;
+   float gate=a.b(1,row*48+h)+a.weight(4,h,s.flags),sp=gate<20.f?std::log(1.f+std::exp(gate)):gate;
    float av=(s.flags&2)?a.f(3)[h]:-std::exp(a.weight(3,h,s.flags));float decay=std::exp(av*sp);
    int state=(h*128+j)*128;
-   t.each(128,[&](int k){t.x[k]=(a.b(0,qbase+k)/qn)/std::sqrt(128.f);t.x[128+k]=a.b(0,kbase+k)/kn;t.x[256+k]=a.b(row?7:5,state+k)*decay;});t.barrier();
+   t.each(128,[&](int k){t.x[k]=(a.b(0,qbase+k)/qn)/std::sqrt(float(128));t.x[128+k]=a.b(0,kbase+k)/kn;t.x[256+k]=a.b(row?7:5,state+k)*decay;});t.barrier();
    float pred=dot128(t,[&](int k){return t.x[256+k]*t.x[128+k];});t.barrier();
    float delta=(a.b(0,row*10240+4096+h*128+j)-pred)*sigmoid(a.b(2,row*48+h));
    t.each(128,[&](int k){t.x[256+k]=t.x[256+k]+delta*t.x[128+k];});t.barrier();
@@ -150,7 +150,7 @@ template<class Team> void group(Shape s,Args a,int group,Team t){
   });
  }else if(s.op==route_gather){
   int r=group,n=s.width,top=s.extra;float maximum=-INFINITY;
-  bool finite=true;for(int j=0;j<n;++j){float v=a.b(0,r*n+j);finite=finite&&std::isfinite(v);maximum=std::fmax(maximum,v);}
+  bool finite=true;for(int j=0;j<n;++j){float v=a.b(0,r*n+j);finite=finite&&std::isfinite(v);maximum=std::max(maximum,v);}
   if(!finite){t.each(1,[&](int){t.fail(a);});return;}
   t.each(n,[&](int j){t.x[j]=std::exp(a.b(0,r*n+j)-maximum);t.x[512+j]=t.x[j];});t.barrier();float den=t.sum(n);t.barrier();
   t.each(n,[&](int j){t.x[512+j]=t.x[512+j]/den;});t.barrier();
@@ -176,9 +176,9 @@ template<class Team> void group(Shape s,Args a,int group,Team t){
   int r=group,position=pos+r,n=(position+1)/4,cap=(s.capacity+3)/4,base=3*cap;
   for(int h=0;h<4;++h){
    // Parallel blocks; each block dot uses a fixed local private tree. Only 128 values.
-   t.each(n,[&](int b){float v[128];for(int k=0;k<128;++k)v[k]=a.b(0,(r*4+h)*128+k)*a.b(1,b*128+k);for(int stride=1;stride<128;stride*=2)for(int k=0;k<128;k+=2*stride)v[k]=v[k]+v[k+stride];t.x[b]=(h?t.x[b]:0.f)+std::fmax(0.f,v[0]);});t.barrier();
+   t.each(n,[&](int b){float v[128];for(int k=0;k<128;++k)v[k]=a.b(0,(r*4+h)*128+k)*a.b(1,b*128+k);for(int stride=1;stride<128;stride*=2)for(int k=0;k<128;k+=2*stride)v[k]=v[k]+v[k+stride];t.x[b]=(h?t.x[b]:0.f)+std::max(0.f,v[0]);});t.barrier();
   }
-  (void)base;t.each(n,[&](int b){t.x[b]=t.x[b]/std::sqrt(128.f);});t.barrier();
+  (void)base;t.each(n,[&](int b){t.x[b]=t.x[b]/std::sqrt(float(128));});t.barrier();
   int count=std::min(n,s.budget/4),slots=s.budget+3;
   t.each(slots,[&](int j){a.i(2)[r*slots+j]=-1;});t.barrier();
   t.each(n,[&](int b){int rank=0;for(int k=0;k<n;++k)rank+=t.x[k]>t.x[b]||(t.x[k]==t.x[b]&&k<b);if(rank<count)for(int j=0;j<4;++j)a.i(2)[r*slots+rank*4+j]=b*4+j;});
@@ -188,10 +188,10 @@ template<class Team> void group(Shape s,Args a,int group,Team t){
   int offset=(r*24+h)*slots+slot;
   if(id>=s.capacity||id>pos+r){t.each(1,[&](int){t.fail(a);});return;}
   if(id<0){t.each(1,[&](int){a.f(6)[offset]=-INFINITY;});return;}
-  float score=tree(t,256,[&](int k){return a.b(0,(r*24+h)*256+k)*a.b(2,(id*2+h/12)*256+k);})/16.f;t.barrier();t.each(1,[&](int){a.f(6)[offset]=score;});
+  float score=tree(t,256,[&](int k){return a.b(2,(id*2+h/12)*256+k)*a.b(0,(r*24+h)*256+k);})/std::sqrt(float(256));t.barrier();t.each(1,[&](int){a.f(6)[offset]=score;});
  }else if(s.op==attention_softmax){
   int slots=s.budget+3,r=group/24,n=0;while(n<slots&&a.i(4)[r*slots+n]>=0)++n;
-  if(!n)return;float m=-INFINITY;for(int k=0;k<n;++k)m=std::fmax(m,a.f(6)[group*slots+k]);
+  if(!n)return;float m=-INFINITY;for(int k=0;k<n;++k)m=std::max(m,a.f(6)[group*slots+k]);
   t.each(n,[&](int k){float v=std::exp(a.f(6)[group*slots+k]-m);t.x[k]=v;a.f(7)[group*slots+k]=v;});t.barrier();float den=t.sum(n);t.barrier();
   t.each(n,[&](int k){a.f(7)[group*slots+k]=a.f(7)[group*slots+k]/den;});
  }else if(s.op==attention_value){

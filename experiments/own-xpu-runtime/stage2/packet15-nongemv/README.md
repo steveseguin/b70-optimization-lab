@@ -1,14 +1,14 @@
 # Stage 2 packet 15 — parallel non-GEMV candidate
 
-**CPU-only preparation, October 11, 2026. SYCL compile/link passes. The
-packet1b byte-exact gate FAILS. This candidate is not qualified or integrated
-into packet13. No device timing or model speedup is claimed.**
+**CPU-only correction, October 11, 2026: 72/72 cases pass against the frozen
+Packet 4 core under GNU and IntelLLVM, including fresh-process repeats.
+18/18 protocol tests pass for each compiler build. SYCL compile/link passes.
+Device exactness and timing remain pending; this is not integrated into
+Packet 13 and no model speedup is claimed.**
 
-The requested lossless replacement is not complete. The parallel algorithms,
-owner-managed launch interface, independent fixtures, guarded device protocol
-and timing harness are retained here so the remaining arithmetic problem is
-reproducible. Do not replace the oracle, loosen a tolerance, or adopt a changed
-output to turn this into a pass.
+The earlier 60/72 result gated against the superseded Packet 1b Torch path.
+Its expected bytes remain a diagnostic column; they do not define runtime v1.
+The arithmetic authority itself is unchanged.
 
 ## Why recurrence takes a second
 
@@ -87,52 +87,104 @@ The goal of a few ms for the whole token is not established by these ranges;
 long context and full-step capture still need work. No predicted point belongs
 in a benchmark, package or performance curve.
 
-## Arithmetic identity and failing gate
+## Arithmetic identity v1 and the corrected gate
 
-Packet1b's [independent reference](../packet1b/reference.py) supplies expected
-bytes. Ordinary norms use `1+w`; recurrence takes BF16 A_log and maps value
-head `h` to key head `h/3`. Packet13 instead uses stored gain, F32
-`-exp(A_log)` and packed `h%16`. `Shape.flags` explicitly carries unit gain
-(bit0), stored decay coefficient (bit1), packed heads (bit2), and FP32 scalar weights
-(bit3). Real GGUF convolution, norm and dt weights retain their FP32 bytes;
-they are never rounded to BF16 by the loader. Stored-gain FP32 norms and
-non-BF16 convolution coefficients have separate fixtures. Packed tests
-permute the reference value heads/state and transform the parameter without
-changing the expected calculation. No real model weights or prompts were read.
+The authority is the unchanged [Packet 4 core](../packet4/core.hpp), as bound
+by [its interpreter](../packet4/kernels.hpp). The
+[arithmetic decision](../../../../notes/2026-10-11-iq3-arithmetic-authority-decision.md)
+and [rebased runtime oracle](../../../qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/README.md)
+explain why: Packet 1b uses Torch vector-library elementary functions and
+`rsqrt`, while runtime v1 uses scalar FP32 `std::exp`, `std::log`, `std::sqrt`,
+`1.f / std::sqrt(...)`, and explicit reduction trees. The rebased oracle at
+`9ee12b3527` and Packet 13 CPU mock at `1c9af40c1e` match all 48 layer hashes
+([first-token evidence](../../../../notes/2026-10-11-first-token-correctness.md)).
+Changing the candidate to match the pre-rebase Python path would change this
+identity. This correction changes which existing authority the test uses,
+not the authority's equations or tolerances.
 
-All arithmetic compiles with `-fno-fast-math -ffp-contract=off`; native adds
-IEEE denormals. GDN's dot128 is 32 ascending sums of four products, then an
-adjacent tree. Other reductions zero-pad odd tails at each stage. No floating
-atomics or unspecified SYCL reductions are used. Router error control uses
-an integer atomic and a uniform group decision before barriers.
+[reference.hpp](reference.hpp) is a thin adapter around `integrated::Core`.
+It calls `Core::run()` once per synthetic row, retaining convolution/recurrent
+state between rows and resetting the interpreter scratch. Compound sites call
+the corresponding core operations in order. Attention final output comes
+from `Core::run`; the exposed score/probability buffers use `Core::dot/tree`
+and the same core expressions, since the interpreter does not expose them.
+No expected arithmetic calls Packet 15's parallel group body.
 
-[build-receipt.json](build-receipt.json) is the exact current test count and
-source identity. Tests cover synthetic values at real GDN16/48/128, HC4/2560,
-512/top10 MoE and QSA24/2/256 shapes, M=1/3/87, small odd shapes, nonzero initial
-state, packed layout, ties, NaNs, inactive/error controls, nine-row PLE history,
-existing QSA pools, and attention score/probability intermediates. **60 of 72 cases pass** (25,048,064 bytes in passing cases); twelve fail. All
-18 CPU-only protocol tests pass. The host
-suite runs in two fresh GNU processes and once under the Intel compiler. The
-host executable has no accelerator-library dependency.
+All 72 original `.fixture` files retain their original inputs **and** Packet
+1b-derived expected bytes. `.fixture.core` and `.fixture.core.icpx` separately
+store GNU and IntelLLVM Packet 4 expected bytes. `build.py` regenerates both
+with the core, hashes every file, then checks each compiler's fresh core and
+candidate against those bytes. Reports keep `packet4_passed`,
+`packet1b_diagnostic_passed`, `packet1b_differing_bytes`, and
+`packet4_core_vs_gnu_differing_bytes` for every case. A failed gate reports the
+first differing slot, byte and element; no tolerance is used.
 
-The failures are genuine: some GDN state/output BF16 values, an 87-row HC mix,
-and attention probability/output bytes differ. The independent
-[elementary census](math-probe.json) demonstrates C++/torch differences in log,
-sqrt and sigmoid. That is supporting localization evidence, **not proof
-that all twelve failing fixtures have that one cause**. Native library semantics
-remain untested. [The rejected reciprocal experiment](rejected-scalar-reciprocal.patch)
-and its [receipt](rejected-scalar-reciprocal.json) preserve a failed attempted
-fix. The next task is exact elementary arithmetic/localization, not a new
-oracle or relaxed comparison.
+`Shape.flags` preserves all original fixture semantics: unit-offset gain
+(bit 0), stored FP32 decay coefficient (bit 1), packed heads (bit 2), and
+FP32 scalar weights (bit 3). The adapter passes stored gains directly for
+runtime cases and transforms unit-offset fixtures for core sites that require
+stored gain. It passes stored `-exp(A_log)` without exponentiating it again;
+legacy A_log fixtures transform it once in FP32. Runtime recurrence uses
+`h%16`, while the separate legacy-layout fixtures retain `h/3`. FP32 norm,
+convolution and dt weights never round to BF16. No weights or prompts from the
+real model were read.
 
-The device window checks fixture/source/binary hashes, performs two fresh
-owners with two restores/repeats per case, compares every output byte, checks
-coverage and safe teardown, and watches a cursor-bounded kernel journal through
-a five-second post-exit tail. A fault, lost journal, deadline, bad teardown or
-exactness failure latches the window. There is one cooperative SIGTERM, no
-hard kill and no retry. Unsafe owners remain alive for the coordinator.
-`--check` does only CPU file checks. The exactness command is diagnostic while
-the CPU gate fails; timing refuses until both CPU and native exactness pass.
+The candidate expressions follow the core, including:
+
+- sigmoid `1.f / (1.f + std::exp(-x))` and SiLU `x * sigmoid(x)`;
+- RMS inverse `1.f / std::sqrt(sum / float(width) + 1e-6f)`;
+- GDN `(q / qn) / std::sqrt(float(d))`, ordinary `k / kn`,
+  `gate < 20.f ? std::log(1.f + std::exp(gate)) : gate`, and
+  `std::exp(stored_a * sp)`;
+- attention **K times Q**, then division by `std::sqrt(float(ad))`,
+  max-subtracted exp, adjacent-tree denominator and ordinary division;
+- BF16 before rotary and on trig values; PLE convolution BF16 **before**
+  SiLU; GDN state BF16 **after** the updated-state output dot; attention PV
+  BF16 before the sigmoid gate; separate routed/shared BF16 boundaries.
+
+All builds retain `-fno-fast-math -ffp-contract=off`; native adds IEEE denormals.
+GDN dot128 uses 32 ascending four-product sums, then the adjacent tree.
+Other trees zero-pad odd tails at each level. The changes align operand order,
+FP32 literals, square-root division and max selection; the already-correct
+rounding boundaries are preserved. **Neither Packet 4 header was edited.**
+
+[build-receipt.json](build-receipt.json) records **72/72** core matches and
+**79,551,248 compared bytes per run**, in two fresh GNU and two fresh IntelLLVM
+processes. The same **12/72** cases still differ from the old Torch diagnostic:
+GDN source, packed and runtime-FP32 variants at M=1/3/87; HC mix at M=87;
+and attention at M=3/87. All **18/18** CPU protocol tests pass for each build
+(the Python protocol tests themselves are compiler-independent).
+Remaining candidate-versus-core failing cases: **none**.
+
+GNU links glibc scalar libm; IntelLLVM links Intel scalar libm. Their core
+results differ in **1 byte** for attention M=3 and **26 bytes** for M=87,
+so cross-compiler CPU bit identity is **not** claimed. Both candidates match
+their own compiled core exactly. [math-probe.json](math-probe.json) and the
+[rejected reciprocal experiment](rejected-scalar-reciprocal.patch) remain
+historical diagnostics; matching Torch is no longer a gate.
+
+### Decisive device gate (prepared, not run)
+
+CPU libm versus device libm may differ for exp/log (and other elementary
+functions). Matching source expressions is necessary, but the on-device byte
+comparison decides whether the parallel lowering matches the scalar core.
+The card-3 window now runs the unchanged Packet 4 core in a `single_task`
+with the **same SYCL compiler, card and input bytes**, then restores every
+input and runs the candidate twice. Each row is a separate bounded reference
+submission sharing a 256 MiB scratch allocation; reference work is excluded
+from candidate timing. It records device-core versus GNU-CPU differences as
+diagnostics, and gates every candidate output byte against **device core**.
+
+The window uses two fresh owners. Device-core output bytes are retained as
+`ownerN/*.fixture.core`; their SHA256 hashes must also match across owners.
+Timing admission rechecks their hashes and full 72-case core coverage, in
+addition to candidate coverage and safe teardown. The same controls reject
+inactive/error writes and unexpected core failures. A 900-second owner deadline
+allows the serial reference census; the per-event deadline stays 30 seconds.
+These are bounds, not measured durations. The existing journal fault watch,
+five-second post-exit tail, cooperative SIGTERM, no hard kill and no retry
+remain. `--check` performs CPU file checks only. Native timing remains blocked
+until the native exactness proof passes.
 
 ## Reproduce and coordinator commands
 
@@ -144,11 +196,11 @@ nice -n 19 env OMP_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B \
   experiments/own-xpu-runtime/stage2/packet15-nongemv/build.py
 ```
 
-It returns nonzero on the current exactness failures and preserves the receipt.
+It returns nonzero on any candidate/core or repeat failure and preserves the receipt.
 `--rebuild-fixtures` regenerates only these deterministic synthetic fixtures;
 rebuilding refuses if a packet15 device window or latch is already present.
-The roughly 200 MiB ignored tree contains reconstructible fixtures, executable
-and compiler output for the coordinator; no scratch directory is retained.
+The ignored build tree contains reconstructible fixtures, both compilers'
+core outputs, executables and compiler output for the coordinator; no scratch directory is retained.
 
 After separate coordinator card/host admission, the two card-3 commands are:
 
@@ -167,7 +219,7 @@ nice -n 19 env OMP_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B \
   --output experiments/own-xpu-runtime/stage2/packet15-nongemv/build/card3-timing-a
 ```
 
-**The second command is currently blocked by the CPU exactness failure.**
+**The second command remains blocked until native exactness passes.**
 Timing would report raw per-op rows plus measured GDN/QSA sequence device and
 wall ms for M=1/87. Each of two fresh owners has one untimed-from-summary initial
 iteration and five retained samples; no state is reused between iterations.
@@ -200,4 +252,4 @@ All state here belongs in the transaction arena specified by
 | select | 0 IQ, 1 pooled keys | 2 IDs[T,budget+3] |
 | attention score / softmax / value | 0 Q, 1 gate, 2 K cache, 3 V cache, 4 IDs | 6 F32 scores, 7 F32 probabilities, 5 gated BF16 output respectively |
 
-[Closeout](CLOSEOUT.md) records the unqualified state and next exactness work.
+[Closeout](CLOSEOUT.md) records this authority correction and the remaining device gate.

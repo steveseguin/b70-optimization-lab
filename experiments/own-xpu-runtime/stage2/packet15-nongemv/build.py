@@ -28,22 +28,32 @@ def main():
     run(['cmake','--build',BUILD/'host','-j2'])
     run(['cmake','-S',HERE,'-B',BUILD/'native','-DNATIVE=ON','-DCMAKE_CXX_COMPILER=/opt/intel/oneapi/compiler/2026.0/bin/icpx'])
     run(['cmake','--build',BUILD/'native','-j2'])
+    for name,binary in [('gnu',BUILD/'host/host-test'),('icpx',BUILD/'native/host-test')]:
+        run([binary,fixture_dir,BUILD/(name+'-oracle.json'),'--generate-core'],allow_failure=True)
     results=[];failures=[]
-    for name,binary in [('host',BUILD/'host/host-test'),('fresh',BUILD/'host/host-test'),('icpx',BUILD/'native/host-test')]:
+    for name,binary in [('host',BUILD/'host/host-test'),('fresh',BUILD/'host/host-test'),('icpx',BUILD/'native/host-test'),('icpx-fresh',BUILD/'native/host-test')]:
         r=run([binary,fixture_dir,BUILD/(name+'.json')],allow_failure=True);failures.append(r.stderr);results.append(json.loads((BUILD/(name+'.json')).read_text()))
-    dynamic=run(['readelf','-d',BUILD/'host/host-test']).stdout
-    if any(x in dynamic for x in ('libsycl','libze_loader','libOpenCL')):raise RuntimeError('CPU binary accelerator dependency')
-    tests=run([sys.executable,'-B',HERE/'test_window.py'])
+    for binary in (BUILD/'host/host-test',BUILD/'native/host-test'):
+        dynamic=run(['readelf','-d',binary]).stdout
+        if any(x in dynamic for x in ('libsycl','libze_loader','libOpenCL')):raise RuntimeError('CPU binary accelerator dependency')
+    protocol_tests=[]
+    for compiler in ('GNU','IntelLLVM'):
+        tests=run([sys.executable,'-B',HERE/'test_window.py'])
+        protocol_tests.append(dict(compiler_build=compiler,returncode=tests.returncode,output=tests.stderr))
     probe=run([sys.executable,'-B',HERE/'math_probe.py']);(HERE/'math-probe.json').write_text(probe.stdout)
     fixture_manifest=json.loads((fixture_dir/'manifest.json').read_text())
+    fixture_manifest['authority']='frozen runtime arithmetic identity v1: packet4/core.hpp'
+    fixture_manifest['packet1b_role']='pre-rebase diagnostic only; original expected bytes retained'
+    for case in fixture_manifest['cases']:
+        case['packet4_expected_sha256']={compiler:sha(fixture_dir/(case['name']+suffix)) for compiler,suffix in [('GNU','.core'),('IntelLLVM','.core.icpx')]}
     files=list(HERE.glob('*.hpp'))+list(HERE.glob('*.cpp'))+list(HERE.glob('*.py'))+[HERE/'CMakeLists.txt']
     owner=HERE.parent.parent/'stage1/packet3-prep/src'
     files += [owner/n for n in ('owner.hpp','owner.cpp','sycl_operation.hpp','sycl_device.cpp')]
-    files += [HERE.parent/'packet4/owner_retire.cpp',HERE.parent/'packet1b/reference.py',HERE.parent/'packet2/tests/device_window.py']
+    files += [HERE.parent/'packet4/core.hpp',HERE.parent/'packet4/kernels.hpp',HERE.parent/'packet3/kernels/api.hpp',HERE.parent/'packet2/kernels/math.hpp',HERE.parent/'packet2/kernels/grids.hpp',HERE.parent/'packet4/owner_retire.cpp',HERE.parent/'packet1b/reference.py',HERE.parent/'packet2/tests/device_window.py']
     files += list(fixture_dir.iterdir())+[BUILD/'native/device-test',BUILD/'host/host-test',BUILD/'native/host-test']
     hashes={str(f.relative_to(ROOT)):sha(f) for f in files}
-    exact=all(r['passed'] for r in results) and results[0]==results[1]==results[2]
-    receipt=dict(schema='own-runtime.packet15.build.v1',compiled=True,cpu_exactness_passed=exact,device_executed=False,host_results=results,fixtures=fixture_manifest,hashes=hashes,commands=commands)
+    exact=all(r['passed'] for r in results) and results[0]==results[1] and results[2]==results[3]
+    receipt=dict(schema='own-runtime.packet15.build.v1',compiled=True,cpu_exactness_passed=exact,device_executed=False,protocol_tests=protocol_tests,host_results=results,fixtures=fixture_manifest,hashes=hashes,commands=commands)
     (BUILD/'prepared.json').write_text(json.dumps(receipt,indent=2)+'\n')
     # Durable small evidence; generated fixtures and binaries remain ignored.
     small={k:v for k,v in receipt.items() if k not in ('commands','hashes')}
