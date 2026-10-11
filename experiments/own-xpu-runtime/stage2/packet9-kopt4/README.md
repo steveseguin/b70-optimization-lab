@@ -228,3 +228,26 @@ Only the coordinator runs these after card-3 admission. They never restart a
 server or retry a failed owner. Preserve device receipts and fault evidence
 before deleting any coordinator build tree. No power, memory, driver, service
 or resident workload changes are part of this packet.
+
+## Device results — card 3, 2026-10-11 04:5x UTC (boot 13858eef)
+
+Exactness: all fused expert cases PASS (experts_sg32, experts_split4), zero
+kernel fault lines, after the duplicate-label harness fix. Receipts:
+[receipts-card3-20261011/](receipts-card3-20261011/).
+
+| Item | measured | notes |
+| --- | ---: | --- |
+| MoE block, fused (3 launches) | 0.298 ms (sg32) / 0.344 ms (split4) | 19.7 MB -> ~66 GB/s; 30 separate launches were 1.07-1.14 ms (sg32 layer 3) |
+| GDN layer, all GEMVs, dispatch table | 1.14 ms (experts_split4 variant), 30 launches | floor at 590 GB/s: 0.16 ms |
+| QSA layer | 1.07-1.12 ms, 33 launches | |
+| PLE layer (layer 1) | 1.42-1.47 ms | |
+| head + final hyperconnection | 5.47 ms, 4 launches | ~1.27 GB head: ~232 GB/s, the largest single item |
+| **GEMV-only projection, two-card sequential** | **60.4 ms/token = 16.5 tok/s** | reference llama.cpp 28.49; 590 GB/s ceiling 119 tok/s (8.4 ms) |
+
+Reading: fusing the expert launches removed the launch overhead (1.1 ms ->
+0.30 ms per block) but the expert GEMVs remain decode-bound (~66 GB/s). With
+every kernel at ~20% of the memory ceiling the GEMV-only projection sits at
+58% of the reference runtime. Beating 28.49 tok/s needs <= 35 ms/token, i.e.
+GDN layers at <= 0.5 ms and the head at <= 3 ms: a 2-3x kernel-efficiency gain
+across the board, which the decode-bound diagnosis says must come from the
+in-memory weight format and the head's dense GEMV, not from launch scheduling.
