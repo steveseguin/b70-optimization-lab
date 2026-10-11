@@ -1,15 +1,14 @@
-# Our Intel Xe runtime — measured state, 2026-10-11 20:30 UTC
+# Our Intel Xe runtime — measured state, 2026-10-11 22:30 UTC
 
-**Bit-exact on one card and on two; 11.89 tok/s measured on two cards.** For Unsloth
+**Bit-exact on one card and on two; 17.85 tok/s measured on two cards.** For Unsloth
 UD-IQ3_XXS, the **quantized compressed version**, full 16-bit KV: the runtime reproduces
 its CPU oracle exactly on the cards (64/64 tokens, 384/384 layer fixtures). Two-card
-decode measured **2.46 tok/s** (frozen GEMV variants) and **3.15 tok/s** (R5) as first
-sealed, then **11.89 tok/s** (83 ms per token, still exact) in a scratch build once a
+decode, all exact, same day: **3.15 tok/s** as first sealed, **12.08 tok/s** after a
 linear allocation scan in the two-card backend was replaced by an ordered lookup
-([evidence][locscan]). Reference **28.49 tok/s**. After that fix a token is about half
-host issuing (2,181 launches) and half GPU work. An earlier statement on this page that
-per-launch timing queries were two thirds of the token was wrong: removing them changed
-315 ms to 300 ms. [Receipts and reading][w2note].
+([evidence][locscan]), **17.85 tok/s** (55.4 ms per token) with specialised non-GEMV
+kernels selected class by class from a timing run on the card ([receipts][p26w2m]).
+Reference **28.49 tok/s**. The token is now GPU-bound: 11 ms of host issuing, 44 ms
+waiting on the cards. [First exact decode and its reading][w2note].
 
 **Kernel progress.** Effective GB/s means payload bytes divided by device time,
 not measured memory-bus traffic. These are warm, fixed-input operator diagnostics
@@ -112,25 +111,26 @@ expert decoders][r6] reached only **13.6 / 8.4 / 7.6 GB/s** versus the retained
 **66 GB/s** path. [Expanding all experts does not fit two cards][expansion];
 keep experts packed and qualify dense-only expansion separately.
 
+**Where the 53.5 ms of GPU time per token goes** ([measured][p26w2m]): routed expert
+gate/up 8.5 ms and down 6.2; gdn.qkv 3.6; route 3.3; attention projections 3.2; QSA
+attention 3.2; gdn.z 2.2; logits 2.1; recurrence 1.9; about 11 ms in roughly 720 small
+GEMV launches of 15–30 µs (HC gates, low, inject, router, shared expert).
+
 **Next, in order:**
 
-1. **[Packet 26][p26], the corrected line:** packet 18's specialised kernels with the
-   ordered lookup and a leaner host path (the 12 tok/s configuration, to be sealed),
-   plus specialised fast non-GEMV kernels admitted class by class by a timing run on the
-   card. GPU time per token by kind of kernel ([measured][locscan]): route 9.8 ms,
-   expert gate/up 8.5, the two combine+norm steps 7.5 and 7.4, expert down 6.2,
-   gather 3.8; the small non-GEMV kernels take 150–200 µs per launch.
-2. **[Packet 25][p25], large GEMV kernels:** exact candidates for expert gate/up and
-   down (59 and 71 GB/s on packed bytes) and the expanded dense classes, ranked by a
-   timing run on the card.
-3. **Abandoned: the fused generic kernels of packets 21, 23 and 24.** They are bit-exact
-   on the cards (packet 23: 64/64 tokens, 384/384 layers) but 50–100 times slower per
-   launch than the specialised kernels ([measurement][k2slow]); packet 23's two-card
-   decode ran at 4,445 ms per token. A launch costs 3.4–5 µs, so fewer, generic
-   launches was the wrong trade. Replay ([packet 22][p22]) is shelved for the same reason.
-4. **Two cards inside a layer:** only one card works at a time today. With host-fenced
-   exchanges the split does not pay for kernels of 100–200 µs; revisit only if the
-   kernels cannot reach the target.
+1. **[Packet 27][p27], second kernel round** (Codex, CPU, in progress): merge the small
+   GEMVs into compile-time specialised kernels (11 ms → about 5), route and QSA
+   attention, fewer operations per weight in the large GEMVs, and the packet 25
+   candidates that beat the current kernels (5–20%). Each change is admitted only by a
+   per-class timing on the card.
+2. **Routed experts** are the largest single item (14.8 ms) and the hardest: six kernel
+   rounds and [packet 25][p25] leave them near 170 and 125 µs per launch group.
+3. **Two cards inside a layer:** only one card works at a time. With host-fenced
+   exchanges of about 50 µs the split does not pay for kernels of 100–200 µs. Chaining
+   events between the cards directly would make it pay (about 7 ms), but that is the
+   leading suspect of the 09:09 fault and needs its own tiny qualification first.
+4. **Abandoned:** the fused generic kernels of packets 21, 23 and 24 (bit-exact,
+   50–100 times slower per launch, [measurement][k2slow]) and replay ([packet 22][p22]).
 
 [r1]: stage2/packet6-kopt/receipts-card3-20261011/timing/timing.json
 [r2]: stage2/packet7-kopt2/receipts-card3-20261011/timing.json
@@ -185,3 +185,5 @@ keep experts packed and qualify dense-only expansion separately.
 [p26]: stage2/packet26-specialised/README.md
 [p25]: stage2/packet25-gemv/README.md
 [k2slow]: stage2/packet24-kernels/evidence/20261011-k2-c0-generic-kernels-slow/README.md
+[p26w2m]: stage2/packet26-specialised/receipts-cards01-20261011-native-w2m/README.md
+[p27]: stage2/packet27-round2/README.md
