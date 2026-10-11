@@ -91,6 +91,8 @@ owner approval. The earlier ISTA IQ3_S proposal is withdrawn. These CPU packets 
 
 **IQ3 CPU oracle, owner decision pending October 11:** [Packet 2](experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/README.md) prepares the streaming forward and passes real-weight decoder and twelve-prompt tokenizer checks. The requested frozen math uses a SiLU output gate, but the pinned model configuration says sigmoid, so the full-model run waits for the owner's arithmetic choice. No oracle tokens, full-model CPU speed or baseline agreement have been measured; this work used only the CPU and did not touch GPU work.
 
+**October 11, CPU-only IQ3 decode orchestration:** [Stage 2 packet 3](experiments/own-xpu-runtime/stage2/packet3/README.md) now checks every tensor's placement and runs the ordered step on synthetic CPU inputs; 23 Python tests and 18 C++ cases pass, including exact NumPy comparisons and fresh-process repeats. Its plan has 1,873 dispatch sites and 4.951 GB of weight/lookup reads per token, which are planning counts, not measured speed. The step follows the corrected sigmoid GDN gate; device execution and host lookup mapping remain open, and no GPU or model payload was touched.
+
 ## Two-Card Lanes And Context Work
 
 **Qwen 27B FP8:** optimize the official FP8 model with native MTP and full 16-bit KV; DFlash stays excluded by the September 14 owner decision. Read the [multi-host handoff](experiments/qwen38-27b-b70/MULTI-HOST-HANDOFF.md), [closed

@@ -1,0 +1,123 @@
+{
+  "schema": "own-xpu-runtime.stage2.packet3.cpu-tests.v1",
+  "gpu_execution": false,
+  "synthetic_only": true,
+  "native_gate": "NOT RUN",
+  "nice": 19,
+  "OMP_NUM_THREADS": "2",
+  "python": "3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]",
+  "compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+  "record": {
+    "launch_count": 1873,
+    "weight_bytes": 4951240940,
+    "buffer_read_extent_bytes": 1019096524,
+    "buffer_write_extent_bytes": 1008871792
+  },
+  "placement": [
+    {
+      "card": 0,
+      "capacity_bytes": 34242297856,
+      "weight_bytes": 26165134080,
+      "state": {
+        "bf16_gdn": 28311552,
+        "bf16_gdn_conv": 1105920,
+        "bf16_ple_conv": 184320,
+        "full16_kv": 402653184,
+        "bf16_qsa_raw_index": 50331648,
+        "bf16_qsa_pooled_index": 12582912,
+        "rollback_gdn_conv_ple": 29601792
+      },
+      "overhead": {
+        "graphs_static_buffers": 1073741824,
+        "operator_scratch": 1073741824,
+        "allocator_driver_reserve": 1073741824,
+        "bounded_staging": 268435456,
+        "ple_control_metadata": 280
+      },
+      "estimated_total_bytes": 30179566616,
+      "remaining_bytes": 4062731240
+    },
+    {
+      "card": 1,
+      "capacity_bytes": 34242297856,
+      "weight_bytes": 26464055040,
+      "state": {
+        "bf16_gdn": 28311552,
+        "bf16_gdn_conv": 1105920,
+        "bf16_ple_conv": 0,
+        "full16_kv": 402653184,
+        "bf16_qsa_raw_index": 50331648,
+        "bf16_qsa_pooled_index": 12582912,
+        "rollback_gdn_conv_ple": 29417472
+      },
+      "overhead": {
+        "graphs_static_buffers": 1073741824,
+        "operator_scratch": 1073741824,
+        "allocator_driver_reserve": 1073741824,
+        "bounded_staging": 268435456,
+        "ple_control_metadata": 0
+      },
+      "estimated_total_bytes": 30478118656,
+      "remaining_bytes": 3764179200
+    }
+  ],
+  "tests_run": 23,
+  "failures": 0,
+  "errors": 0,
+  "passed": true,
+  "cpp_cases": 18,
+  "numpy_tiny_buffers": 113,
+  "numpy_tiny_values": 3873,
+  "numpy_real_buffers": 49,
+  "numpy_real_values": 996958,
+  "launch_plan_sha256": "b47d99e2d6729380bc4c9050c4b8e790c76bbc141159e07621dfcff5ad4e9aee",
+  "source_sha256": {
+    "kernels/api.hpp": "7d33644438281bcc5a1ab2fbbde2310cbff3a55b683312eab3d52178d4fdbe33",
+    "kernels/mock.hpp": "86bad02ec52f4131f47f556933cfcedeb1d00614747c37a55728da9fb8ead8ff",
+    "model/directory.hpp": "535eea979a14d3a5eb9f4768edffb6e47c7d0aa61cfeeaf27e9dade75d19759f",
+    "model/plan.py": "ac0b5f30e9cbad06e26af6c38dff5f36873c695a3af1eaed677201b809a9014a",
+    "run_tests.py": "37c5907bb17dd55488a5832c16ef811a9948a6867991b81f3bea6f54acd68333",
+    "step/main.cpp": "60f75e845e040f22db5bc08afc9a1846c2179fe20b94f7a39f02fd6afbe8aacc",
+    "step/plan.hpp": "e8da06cfc064ef9dd5f154d4b313b0dfeb95244fb6e7cb1a073591e6e8497cfa",
+    "tests/host.cpp": "576f05272cca3a649f6e86620f3b3fefefb9a24f59586e38c4cbc7faaf28564b",
+    "tests/reference.py": "148e99de6d5a01bb391cfd7d0bb92c250d8d4c01654ad9d3e4d11fb36b248bfa",
+    "tests/test_execution.py": "7b10cbf9e5c2b5181a4e98f756b4e36d58a002479775424ecc546b1b05e3d8e4",
+    "tests/test_plan.py": "e64e8bb5c9f3eff75396af8d8676e24d4b775d483a3531d19a4f308a10865229"
+  },
+  "packet2_math_sha256": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4",
+  "input_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+    "experiments/own-xpu-runtime/stage2/packet1b/reference.py": "e1fb0aa0107c4c3e0e55803b2789ddbb717122194e2a3b00788d73f646a653c8",
+    "experiments/own-xpu-runtime/stage2/packet3/gate-evidence.json": "5c1fc5b34dc2f780bb82be5f59f523c564ecf1e1ba432a5bcca124175bed4c10",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/tensor-census.json": "3312f5a18582788c5c6c84572fd616488b6835b454272c81eec218a58521607c"
+  },
+  "commands": [
+    [
+      "g++",
+      "-std=c++20",
+      "-O2",
+      "-ffp-contract=off",
+      "-fno-fast-math",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet3/step/main.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet3/build/step"
+    ],
+    [
+      "g++",
+      "-std=c++20",
+      "-O2",
+      "-ffp-contract=off",
+      "-fno-fast-math",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet3/tests/host.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet3/build/host-tests"
+    ]
+  ],
+  "elapsed_seconds": 8.022
+}

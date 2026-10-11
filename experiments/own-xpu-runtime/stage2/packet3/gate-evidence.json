@@ -1,0 +1,108 @@
+{
+  "schema": "own-xpu-runtime.gate-evidence.v1",
+  "decision": "2026-10-11 coordinator: follow official architecture modeling code; SIGMOID",
+  "architecture": "Qwen4ExpForConditionalGeneration",
+  "gguf_architecture": "qwen4exp",
+  "config": {
+    "path": "../packet1/metadata/config.json",
+    "sha256": "99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e70a15a90a8d",
+    "output_gate_type": "sigmoid",
+    "hidden_act": "silu"
+  },
+  "sources": [
+    {
+      "file": "src/transformers/models/qwen4_exp/modeling_qwen4_exp.py",
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/536ecc007387a50e77603bb5d92100e9b07514cc/src/transformers/models/qwen4_exp/modeling_qwen4_exp.py",
+      "revision": "536ecc007387a50e77603bb5d92100e9b07514cc",
+      "bytes": 122262,
+      "sha256": "f94401c10c1bbafd814cc174ba6f40dde1f40b35715ce1ae827ccf8ee3cd81fa",
+      "evidence": [
+        {
+          "line": 172,
+          "text": "    def __init__(self, hidden_size: int, eps: float = 1e-6, activation: str = \"silu\") -> None:"
+        },
+        {
+          "line": 185,
+          "text": "        hidden_states = hidden_states * ACT2FN[self.activation](gate.to(torch.float32))"
+        },
+        {
+          "line": 456,
+          "text": "class Qwen4ExpTextGatedDeltaNet(nn.Module):"
+        },
+        {
+          "line": 469,
+          "text": "        self.activation = config.hidden_act"
+        },
+        {
+          "line": 490,
+          "text": "        self.norm = Qwen4ExpTextRMSNormGated("
+        },
+        {
+          "line": 491,
+          "text": "            self.head_v_dim, eps=self.layer_norm_epsilon, activation=config.output_gate_type or config.hidden_act"
+        },
+        {
+          "line": 612,
+          "text": "        core_attn_out = self.norm(core_attn_out, z)"
+        },
+        {
+          "line": 889,
+          "text": "        attn_output = attn_output * torch.sigmoid(gate)"
+        },
+        {
+          "line": 904,
+          "text": "        self.act_fn = ACT2FN[config.hidden_act]"
+        },
+        {
+          "line": 922,
+          "text": "        self.act_fn = ACT2FN[config.hidden_act]"
+        },
+        {
+          "line": 1013,
+          "text": "        input_mix_weight = F.silu(self.input_mix_weight_down(hyper_input_normed) / self.hc_count)"
+        },
+        {
+          "line": 1221,
+          "text": "        hidden_states = F.silu(self.conv1d(hidden_states))"
+        },
+        {
+          "line": 1239,
+          "text": "        gated_value = torch.sigmoid(gate) * value.unsqueeze(-2)"
+        }
+      ]
+    },
+    {
+      "file": "src/transformers/models/qwen4_exp/configuration_qwen4_exp.py",
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/536ecc007387a50e77603bb5d92100e9b07514cc/src/transformers/models/qwen4_exp/configuration_qwen4_exp.py",
+      "revision": "536ecc007387a50e77603bb5d92100e9b07514cc",
+      "bytes": 16195,
+      "sha256": "ac0950ab34516d26fe4f6b28cffe0649d763449effe44e42b5913463806f7e0b",
+      "evidence": [
+        {
+          "line": 163,
+          "text": "    output_gate_type: str | None = None"
+        },
+        {
+          "line": 192,
+          "text": "        output_gate_type = self.output_gate_type or self.hidden_act"
+        },
+        {
+          "line": 193,
+          "text": "        if output_gate_type not in {\"sigmoid\", \"silu\"}:"
+        },
+        {
+          "line": 194,
+          "text": "            raise ValueError(f\"Unsupported Qwen4-Exp output gate activation: {output_gate_type}.\")"
+        }
+      ]
+    }
+  ],
+  "verdict": "QSA/full attention uses hard-coded sigmoid. Unlike Qwen3_5, Qwen4Exp GDN reads output_gate_type or hidden_act, so this pinned config also selects sigmoid for GDN RMS output gating. Convolution and routed/shared FFN use hidden_act=silu; HC low rank and PLE convolution use SiLU. No external runtime is imported or copied as a base.",
+  "superseded": {
+    "commit": "c1440908cf",
+    "packet1b_reference_sha256": "4e36c7c7890e7df428c7e1d10dc1b536d26ba18b8b7066c07f9dbdea2ff4909b",
+    "choice": "GDN SiLU; QSA already sigmoid",
+    "reason": "GDN activation was not bound to the official Flash architecture/config."
+  },
+  "boundaries": "This corrects gate selection only; frozen lab CPU casts/reductions and BF16 recurrent state remain. Official Transformers execution and certified FP8 device parity are not claimed."
+}
