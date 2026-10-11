@@ -58,15 +58,23 @@ def check_health(path):
 
 
 def timings(text):
+    """Parse llama.cpp perf lines. A greedy run that emits end-of-text immediately prints
+    'eval time = 0.00 ms / 1 runs (0.00 ms per token, inf tokens per second)'; since 2026-10-11
+    that is recorded as decode=None with generated_tokens=0 instead of aborting the screen
+    (first window run: prompt 'code-review' ended at once, the old assertion stopped all 24 rows)."""
     result = {}
     for name, pattern in [('prefill', r'prompt eval time'), ('decode', r'(?<!prompt )\beval time')]:
-        matches = re.findall(pattern + r'\s*=\s*([\d.]+) ms /\s*(\d+) (tokens|runs)\s*\(\s*([\d.]+) ms per token,\s*([\d.]+) tokens per second\)', text)
+        matches = re.findall(pattern + r'\s*=\s*([\d.]+) ms /\s*(\d+) (tokens|runs)\s*\(\s*([\d.]+|inf|nan|-nan) ms per token,\s*([\d.]+|inf|nan|-nan) tokens per second\)', text)
         assert len(matches) == 1, 'missing/ambiguous runtime timing: ' + name
         ms, count, unit, per_token, rate = matches[0]
+        if name == 'decode' and (float(ms) == 0.0 or rate in ('inf', 'nan', '-nan')):
+            result[name] = None
+            result['generated_tokens'] = 0
+            result['decode_note'] = 'immediate end-of-text; no decode step timed'
+            continue
         assert int(count) > 0 and float(ms) > 0
         result[name] = {'milliseconds': float(ms), 'count': int(count), 'count_unit': unit,
                         'reported_tokens_per_second': float(rate)}
-    return result
 
 
 def main():
