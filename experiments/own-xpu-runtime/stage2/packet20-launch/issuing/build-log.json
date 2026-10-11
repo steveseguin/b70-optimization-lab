@@ -1,0 +1,66 @@
+[
+  {
+    "command": [
+      "nice",
+      "-n",
+      "19",
+      "ionice",
+      "-c",
+      "3",
+      "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+      "--version"
+    ],
+    "returncode": 0,
+    "output": "Intel(R) oneAPI DPC++/C++ Compiler 2026.0.0 (2026.0.0.20260331)\nTarget: x86_64-unknown-linux-gnu\nThread model: posix\nInstalledDir: /opt/intel/oneapi/compiler/2026.0/bin/compiler\nConfiguration file: /opt/intel/oneapi/compiler/2026.0/bin/compiler/../icpx.cfg\n"
+  },
+  {
+    "command": [
+      "nice",
+      "-n",
+      "19",
+      "ionice",
+      "-c",
+      "3",
+      "cmake",
+      "-S",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet20-launch/issuing",
+      "-B",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet20-launch/build/issuing",
+      "-DCMAKE_CXX_COMPILER=/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+      "-DCMAKE_BUILD_TYPE=Release"
+    ],
+    "returncode": 0,
+    "output": "-- Configuring done (0.0s)\n-- Generating done (0.0s)\n-- Build files have been written to: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet20-launch/build/issuing\n"
+  },
+  {
+    "command": [
+      "nice",
+      "-n",
+      "19",
+      "ionice",
+      "-c",
+      "3",
+      "cmake",
+      "--build",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet20-launch/build/issuing",
+      "-j",
+      "1"
+    ],
+    "returncode": 0,
+    "output": "[ 20%] Built target raw_spirv\n[100%] Built target launch-bench\n"
+  },
+  {
+    "command": [
+      "nice",
+      "-n",
+      "19",
+      "ionice",
+      "-c",
+      "3",
+      "ldd",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet20-launch/build/issuing/launch-bench"
+    ],
+    "returncode": 0,
+    "output": "\tlinux-vdso.so.1 (0x000074290fa70000)\n\tlibze_loader.so.1 => /lib/x86_64-linux-gnu/libze_loader.so.1 (0x000074290f8cf000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x000074290f600000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x000074290f517000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x000074290f8a1000)\n\tlibsycl.so.9 => /opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9 (0x000074290f000000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x000074290ec00000)\n\t/lib64/ld-linux-x86-64.so.2 (0x000074290fa72000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x000074290f89a000)\n\tlibur_loader.so.0 => /opt/intel/oneapi/compiler/2026.0/lib/libur_loader.so.0 (0x000074290de00000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x000074290f895000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x000074290f890000)\n\tlibimf.so => /opt/intel/oneapi/compiler/2026.0/lib/libimf.so (0x000074290d800000)\n\tlibz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x000074290f4fb000)\n\tlibsvml.so => /opt/intel/oneapi/compiler/2026.0/lib/libsvml.so (0x000074290c000000)\n\tlibirng.so => /opt/intel/oneapi/compiler/2026.0/lib/libirng.so (0x000074290f402000)\n\tlibintlc.so.5 => /opt/intel/oneapi/compiler/2026.0/lib/libintlc.so.5 (0x000074290ef9d000)\n"
+  }
+]

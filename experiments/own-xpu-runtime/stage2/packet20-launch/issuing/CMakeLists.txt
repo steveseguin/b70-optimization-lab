@@ -1,0 +1,21 @@
+cmake_minimum_required(VERSION 3.25)
+set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+project(packet20_issuing LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 20)
+if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
+ message(FATAL_ERROR "IntelLLVM 2026.0 required")
+endif()
+set(OWNER ${CMAKE_CURRENT_SOURCE_DIR}/../../../stage1/packet3-prep/src)
+set(PRECISE -foffload-fp32-prec-div -foffload-fp32-prec-sqrt -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee)
+add_executable(launch-bench native.cpp dynamic_probe.cpp ${OWNER}/owner.cpp)
+target_include_directories(launch-bench PRIVATE ${OWNER})
+target_compile_options(launch-bench PRIVATE -O2 -fsycl ${PRECISE})
+target_link_options(launch-bench PRIVATE -fsycl ${PRECISE})
+target_link_libraries(launch-bench PRIVATE ze_loader)
+set(COMPILER /opt/intel/oneapi/compiler/2026.0/bin/compiler)
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/raw.spv
+ COMMAND ${COMPILER}/clang -x cl -cl-std=CL2.0 -target spir64 -emit-llvm -c -O2 -ffp-contract=off -fno-fast-math -fdenormal-fp-math=ieee ${CMAKE_CURRENT_SOURCE_DIR}/raw.cl -o ${CMAKE_CURRENT_BINARY_DIR}/raw.bc
+ COMMAND ${COMPILER}/llvm-spirv ${CMAKE_CURRENT_BINARY_DIR}/raw.bc -o ${CMAKE_CURRENT_BINARY_DIR}/raw.spv
+ DEPENDS raw.cl VERBATIM)
+add_custom_target(raw_spirv ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/raw.spv)
+add_dependencies(launch-bench raw_spirv)
