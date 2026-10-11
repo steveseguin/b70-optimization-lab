@@ -241,3 +241,31 @@ exllamav3/turboderp for register-prefetch and fixed reduction scheduling;
 Intel SYCL/Level Zero are platform dependencies. No external kernel code was
 copied. [CPU preparation closeout](CLOSEOUT.md) and [closed directions](DO-NOT-REPEAT.md)
 retain limitations and the coordinator's next measurement decision.
+
+## Device results — card 3, 2026-10-11 04:2x UTC (boot 13858eef)
+
+Exactness: all device cases PASS for every round-3 variant (decode_const_sg32,
+decode_slm_sg32, decode_const_split4, decode_slm_split4, fused_decode_*),
+zero kernel fault lines. Timing receipts: [receipts-card3-20261011/](receipts-card3-20261011/).
+
+| Weight | MB | round-2 best GB/s | round-3 best (variant) | gain |
+| --- | ---: | ---: | ---: | ---: |
+| attn_qkv (Q6) | 21.50 | 88 | 123 (decode_const_sg32) | 1.40x |
+| attn_gate | 12.90 | 78 | 118 (decode_const_sg32) | 1.51x |
+| ssm_out | 12.90 | 81 | 114 (decode_const_split4, layer 1) | 1.4x |
+| ffn_gate_inp (F16) | 5.24 | 289 | 376 (decode_const_split4) | 1.31x |
+| hc_*_down | 3.48 | 101 | 101 (splitk4) | - |
+| hc_*_up | 3.48 | 82 | 82 (sg32) | - |
+| ffn_gate/up_exps (10 experts, IQ2_S) | 5.25 | 50-51 | 52 (decode_const_sg32) | 1.03x |
+| ffn_down_exps (10 experts, IQ3_S) | 9.22 | 68 | 68 (sg32) | - |
+| ffn_*_shexp | 1.34-1.74 | 51-74 | 53-74 | - |
+| ssm_alpha/beta, hc_*_inject (tiny) | 0.16-0.49 | 5-33 | 9-56 (decode_const_split4) | 1.9-3.6x |
+
+Reading: constant-memory codebooks with cooperative block decode lift the
+dense quantized projections 1.3-1.5x (now 114-123 GB/s, ~20% of the 590 GB/s
+ceiling), and split4 helps the tiny matrices, but the **routed-expert GEMVs
+did not move (50-68 GB/s)**: ten experts x 640/2560 rows per launch is too
+little parallelism per launch, and the fused per-layer expert launch was not
+timed in this run (summary.fused is empty). Round 4 must make the fused
+expert launch real and measured, and time one whole layer with the dispatch
+table applied to get ms/layer and a projected tok/s.
