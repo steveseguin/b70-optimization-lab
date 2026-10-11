@@ -1,0 +1,132 @@
+{
+  "schema": "own-runtime.packet24.independent-tree-review.v1",
+  "reviewer": "Codex subagent tree_review, independent of implementation authors",
+  "device_executed": false,
+  "implementation_files_edited": false,
+  "scope": "Source-level arithmetic identity and separate inter-workgroup race review; not a device correctness, compiler-codegen, timing or full gate certification.",
+  "source_sha256": {
+    "kernels_v2.hpp": "13a8c9f073309037087b90db999092465bfeedbed8a323e0fc6b2d00bedb985b",
+    "adapter_v2.inc": "265a31aee1f977124c75df21bfa5f1960182d8634fde738503b7df7c3d3435b8",
+    "kernels.hpp": "24e24e660203c959db09d30dc633490906508b749cf4e2838e2df50d4013d43a",
+    "core_v2.hpp": "c3c265894d5041e0d6e026d53094b67f9b58bb86bd1aa1c8fea06ab4d8692ffd",
+    "adapter.cpp": "7e9722b4827f2f8bec99243eed077c833b46b93542444a5309961ac233a3ce2b",
+    "prototype/snapshot/reference.hpp": "9dbd20b4d8b210be469e1a8dc31c1592b18d352f15c3bee7058c18bf9aa924bc",
+    "owner.cpp": "3ff71df7639b4a3f6c045f21c26bf7bbeef5401529c76b5b19aa9c3561b6780b",
+    "mock_order.hpp": "d2b1f370518ad0181a0d1f81b370374ceee4e9177abd3531439bd94017980149",
+    "kernels_fixture.cpp": "9a1d37b727fe40245c47b27d4bc8be19ca7051349b9899a59e38c9ccdb417830"
+  },
+  "arithmetic_verdict": "No reassociation or changed rounding found for valid supported registered shapes. All five initial parity/bounds findings fixed and source-reviewed; expanded fixture coverage verified by eight CPU receipts across two compilers/two versions/two fresh processes.",
+  "symbolic_check": {
+    "method": "Construct ordered expression tuples from the original compact adjacent-pair tree with explicit positive-zero odd tails; independently construct power-of-two aligned subtree expressions and the upper adjacent-pair tree; compare every ordered node, including +0 nodes. Executed CPU-only Python without creating scratch files.",
+    "cuts": [
+      16,
+      32
+    ],
+    "lengths": [
+      1,
+      3,
+      17,
+      31,
+      32,
+      33,
+      255,
+      256,
+      257,
+      512,
+      2051,
+      2560,
+      4096
+    ],
+    "cases": 26,
+    "passed": 26
+  },
+  "proof": {
+    "invariant": "After level d, occupied leaf index i divisible by 2^d stores exactly original node (d,i): the same left node plus the same right node if occupied, otherwise literal +0. A 2^k-aligned cut finishes d=1..k locally, and upper stride 2^j computes original level k+j+1. If n<2^k, local reduction stops at the original root, without extra additions.",
+    "odd_cases": "n=1 performs no add. n=3 adds x0+x1 and x2+0 then their roots. n=17 keeps the leaf16 odd-tail chain through strides1,2,4,8 before stride16 combines it. n=255 carries the leaf254 tail as +0 at its first level and continues original nodes. n=2560 gives 80 cut32 roots (or160 cut16 roots), preserving the original odd-tail zero at the corresponding upper levels. n=33 exercises a partial final cut32 subtree and every required +0 up to cut depth.",
+    "norm_combine_gated": "Products x*x enter cut32 trees. Combine x is BF16-rounded before squaring and before output. Norm inverse remains rsqrt(sum/float(width)+1e-6f); multiplication order and unit gain addition preserved. Gated norm multiplies sigmoid before its sole final BF16 output rounding.",
+    "gdn": "dot128 is exactly 32 lanes, each (((+0+p[4*l])+p[4*l+1])+p[4*l+2])+p[4*l+3], then a32-leaf adjacent tree. Q/K normalization, decay and delta order unchanged. State products and updates remain F32, y is computed before BF16 state stores. A work item processes all tokens sequentially for its own state row, including re-reading rounded state for later tokens.",
+    "select": "Each head/block dot retains128-leaf adjacent tree. Four positive-score terms accumulate serially from +0 in head order0,1,2,3, followed by division by sqrt128. Rank comparator score descending/index ascending is equivalent to stable sort for finite scores.",
+    "attention": "Score retains256-leaf adjacent tree and divide by sqrt256. Chunk maxima preserve first equal value in input order; sum and value trees use cut32 plus exact upper levels. Exponentials and probabilities remain F32. Weighted value sum is BF16-rounded before sigmoid multiplication, then BF16-rounded again on output.",
+    "route": "For finite input, chunk maxima then ordered chunk maxima retain the first equal maximum, including signed-zero ties. NaN/infinity rejects before visible output writes. Exponentials and probabilities remain F32. Cut16 sums plus upper tree preserve all nodes. rank=(number greater)+(equal scores with lower original index), so ties are stable. Selected normalization uses original tree and division. Host extent guard now limits selected tree<=32 and input<=4096.",
+    "argmax_gather": "Finite argmax chunk winners and ordered upper comparison preserve earliest tied index. Invalid path now reproduces v1 lane128 selection before setting sticky error. Gather initializes safe triples and copies before delayed sticky error, matching v1 output effects.",
+    "prepare_pool": "Prepare retains128/256-leaf square trees via cut32. Normalized values are BF16-rounded before rotary, the low and high normalized values are recomputed identically, and both rotary expressions preserve operand and multiplication/addition order. Pool retains serial +0 then four row additions, divide4 then BF16 average,128-leaf square tree, BF16 norm before rotary, and BF16 final output. Incremental completed-block range equals v1; unchanged historical blocks are assumed previously valid, as in v1."
+  },
+  "findings": [
+    {
+      "id": "T1",
+      "status": "fixed_source_reviewed",
+      "finding": "V2 argmax used sticky failure in phase0, suppressing winner output; v1 writes winner then fails.",
+      "resolution": "Phase0 writes per-chunk finite flags; phase1 invalid-only path reproduces v1 lane128 winner, writes it, then fails."
+    },
+    {
+      "id": "T2",
+      "status": "fixed_source_reviewed",
+      "finding": "V2 gather failure suppressed later independent triple/copy writes.",
+      "resolution": "Phase0 initializes all outputs and per-index validity; a dependent phase1 sets sticky error."
+    },
+    {
+      "id": "T3",
+      "status": "fixed_source_reviewed",
+      "finding": "Fixed-width route upper and selected trees could truncate unsupported standalone geometry.",
+      "resolution": "Host rejects top outside1..32, top>n and n>4096 before submission."
+    },
+    {
+      "id": "T4",
+      "status": "fixed_source_reviewed",
+      "finding": "V2 entry bypasses v1 binding-count check; lower indexes and SimpleV2 copies bindings before equivalent validation.",
+      "required": "Restore count/maximum check on public v2 entry paths before indexing or copying.",
+      "resolution": "submit_parallel and simple_submit now validate exact binding count and maximum31 before indexing/copying."
+    },
+    {
+      "id": "T5",
+      "status": "fixed_source_reviewed",
+      "finding": "SimpleV2 newly consumes global scratch without checking allocation extent.",
+      "required": "Before compute, validate float counts route=2*ceil(n/16)+2*n; argmax=2*ceil(n/256); gather=top.",
+      "resolution": "simple_submit now computes required scratch float count and rejects insufficient allocation before first compute."
+    },
+    {
+      "id": "T6",
+      "status": "fixed_source_reviewed_and_cpu_receipts_checked",
+      "finding": "Inherited nongemv fixture snapshot path does not exercise ng2 merely because --kernels v2 is selected.",
+      "required": "Separate actual-kernel fixture gate must run ng2, v1 and core over all fixtures and odd widths; agent ng_schedule is implementing it.",
+      "resolution": "kernels_fixture.cpp requires all72 inherited cases plus20 odd-width norm/combine cases. Supported ops execute actual ng2 versus v1/core; unchanged unsupported ops explicitly use v1 on both paths. Eight CPU receipts each report92cases/276pairwise checks across both host compilers and fresh repeats. This is not92 newly optimized ops."
+    }
+  ],
+  "race_review_file": "race-review.json",
+  "host_order_addendum": "Latest adapter host path replaces sequential item loop with mock_items: iota0..n-1 then deterministic shuffle, each item visited exactly once; stage order unchanged. No new arithmetic or device scheduling changes.",
+  "final_evidence_review": {
+    "fixture_gates_sha256": "e0355e69a923d13443b1631c7612b088fdacd367c288c381a80d3331c0cab6e9",
+    "actual_kernel_receipts_checked": 8,
+    "actual_kernel_cases_per_receipt": 92,
+    "actual_kernel_pairwise_checks_per_receipt": 276,
+    "host_compilers": [
+      "host",
+      "icpx-host"
+    ],
+    "fresh_repeats_per_version_compiler": 2,
+    "kernel_sizes_sha256": "23e1ae235f85cd3d524032a587093ea09c7ebdbb7378f67b8917c2c845e982f3",
+    "compiled_capture_classes": 46,
+    "maximum_compiled_capture_bytes": 224,
+    "entry_smoke_sha256": "6948ddc8d50a9f3bad2d32808495d25fc3ab25461f640a4508a313659a2c476c",
+    "k0_mock_exit_checks_passed": 3,
+    "device_executed": false,
+    "real_model_gate_not_certified_here": true,
+    "fixture_verbatim_archive": {
+      "path": "fixture-gates-verbatim.json.gz",
+      "sha256": "371d003d624963d3232bf574bac28a4ebdcd5a937cd894a2faa879aae9f43e1e",
+      "uncompressed_sha256": "f674c038354619153a59bf7b6ed44d060e4ae62e43db79ec29daa4fecc8c0b6b",
+      "uncompressed_bytes": 8801213
+    },
+    "fixture_compaction_independent_verification": {
+      "passed": true,
+      "archive_raw_bytes_hash_verified": true,
+      "archive_size_verified": true,
+      "roundtrip_original_hash_matches_prior_review": true,
+      "all_nonsequence_fields_unchanged": true,
+      "sequence_count_and_hash_verified": true,
+      "cpu_process_receipts": 16,
+      "sequence_lists": 48,
+      "sequence_items": 169936
+    }
+  }
+}

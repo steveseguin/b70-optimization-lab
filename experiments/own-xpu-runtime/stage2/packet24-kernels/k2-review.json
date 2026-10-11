@@ -1,0 +1,125 @@
+{
+  "schema": "own-runtime.packet24.independent-k2-review.v1",
+  "reviewer": "Codex subagent tree_review, independent implementation reviewer",
+  "device_executed": false,
+  "source_sha256": {
+    "k2.cpp": "5dabfc96a5528d6dd647ec0b7413eafab2e2fbc46466d900720eee76fd94403a",
+    "k2.py": "7ecab7d3427209e7bb53c13a62d2d9f26e7f9cf2f0dde7991b32b536e2960096",
+    "main.cpp": "80d6df8c69371a3711af468ec9e4284934f28cc2d72f555b144f6b646c90d46d",
+    "owner.cpp": "3ff71df7639b4a3f6c045f21c26bf7bbeef5401529c76b5b19aa9c3561b6780b",
+    "math_gate.py": "383a687c905635954f4ee505f8c755ef593d0856523d17fe1bc66662537b18cc",
+    "kernel_gate.py": "a612f44f4354ab27c37b4bb94a6a8790eb9ef498cf778149de82b5ed1622c001",
+    "kernel_guard.hpp": "e2d79ebcd5d7171e673a7c90fac2ae5c44b9515a134a072b2c97c96ce347f2e0",
+    "CMakeLists.txt": "1f0665be09b87b9e5eedb00c1aa68b211c877cd8c0099b05fc047fe0d152d881",
+    "adapter_v2.inc": "265a31aee1f977124c75df21bfa5f1960182d8634fde738503b7df7c3d3435b8",
+    "kernels_fixture.cpp": "9a1d37b727fe40245c47b27d4bc8be19ca7051349b9899a59e38c9ccdb417830",
+    "mock_order.hpp": "d2b1f370518ad0181a0d1f81b370374ceee4e9177abd3531439bd94017980149"
+  },
+  "verdict": "Eight identified defects fixed and source-reviewed; independent cheap summary tests pass3/3. Checked-source mirrors wrap new .inc/fixture lambdas, and compiled capture receipt reports46 classes/max224bytes. No device qualification implied.",
+  "checks": {
+    "geometry": "Geometry defaults match model h2560,512 experts/top10,mid640,GDN16/48 heads and128 width,QSA24/2 heads and256 width,vocab248320. Four representative layers0/1/2/3 cover GDN,PLE and QSA. Context256 and position63 give64 valid attention positions. Quantization comes from current tensor census.",
+    "weights": "111 selected descriptor tensors total5080627840 bytes (4.731703400611877GiB), excluding embeddings/PLE lookup. <=64KiB seeds tiled bytewise through bounded4MiB reads; original descriptor dimensions and bytes retained. Device arena limit checked; no model weights loaded by K2 input preparation.",
+    "events": "owner.cpp captures each owned compute event. K2 records command_start/end for every event and k2.py sums each duration per launch group; inter-event gaps excluded. Exactly200 unique repetition IDs required per version/site. Median and nearest-rank p90 reported; frequencies produce labeled diagnostic weighted ms/token.",
+    "sequence": "Each layer0..3 is issued200 times; no explicit wait inside sequence loop; exactly one measured final wait. Extra drain/check waits occur after measured issue/completion endpoints. Per-version warmups resolve parameter upload/JIT work before measured jobs; previously warmed cached descriptors reused.",
+    "guards": "Final generated mirror inspected: adapter_v2.inc has2 checked lambdas and kernels_fixture.cpp has2 checked lambdas. Closure includes .inc and all fixture/K2 source. kernel-sizes.json passed with46 compiled capture classes, maximum224bytes, and oversized1025byte negative test rejected. No device execution.",
+    "entry": "k2.cpp now renames included main to packet23_model_entry, matching native model shim while own K2 entry is renamed separately.",
+    "paired_inputs": "Every class/version starts from the same prepared logical buffer snapshot; equal one-job warmups precede200 repeated measurements. Every layer sequence independently restores same snapshot. Snapshot copy waits occur outside timing.",
+    "final_tiny_changes": "K2 adds distinct begin.1/commit.0 synthetic control classes on the one-card fixture to cover both owner-control labels; each remains frequency1. Layer wall timing sets tail=0 after its single final wait, so drain only profiles/retires. Per-event submission bound now4seconds. Kernel mirror K2 embedding emits packet24_k2_entry while included model source remains packet23_model_entry."
+  },
+  "cpu_summary_tests": {
+    "count": 3,
+    "passed": 3,
+    "method": "Temporary synthetic JSON only, not GPU receipts. Test1 two events lasting1us and2us separated by98000ns gap yield3us median/p90 and0.144 weighted ms at48 groups/token. Test2 duplicate event ID rejected. Test3 failed native receipt rejected.",
+    "scratch_deleted": true
+  },
+  "findings": [
+    {
+      "id": "K1",
+      "status": "fixed_source_reviewed",
+      "finding": "Sticky error could be reset after class failure, admitting mostly no-op timings.",
+      "resolution": "Check after preparation, each warmup, each measured class and each measured sequence before next reset."
+    },
+    {
+      "id": "K2",
+      "status": "fixed_source_reviewed",
+      "finding": "Only v1 prewarmed; first v2 sample could JIT/upload parameter tables.",
+      "resolution": "Each version/job submits an untimed warmup and drains before200 repetitions."
+    },
+    {
+      "id": "K3",
+      "status": "fixed_source_reviewed",
+      "finding": "All initialized BF16 operands remained zero because lookup skipped.",
+      "resolution": "Deterministic small nonzero BF16 input/state fill now precedes preparation; integer routing/cache selections prepared by runtime schedule."
+    },
+    {
+      "id": "K4",
+      "status": "fixed_source_reviewed",
+      "finding": "Native model shim expected packet23_model_entry but embedded main used packet24_k2_embedded_model_entry.",
+      "resolution": "Embedded main name now matches model shim."
+    },
+    {
+      "id": "K5",
+      "status": "fixed_source_reviewed",
+      "finding": "hc.a.norm weighted48 despite blk0 norm fused into streams group.",
+      "resolution": "Standalone hc.a.norm frequency now47 and streams group remains1."
+    },
+    {
+      "id": "K6",
+      "status": "fixed_source_reviewed_and_cpu_tested",
+      "finding": "Summary ignored final failure receipt and accepted repeated event IDs.",
+      "resolution": "Require native passed/safe teardown, raw class/frequency agreement, globally unique compute-event IDs."
+    },
+    {
+      "id": "K7",
+      "status": "fixed_source_reviewed",
+      "finding": "Only controls are reset between version/class measurements; recurrent/conv/streams buffers mutate across200 repetitions. V2 can inherit v1 final state.",
+      "required": "Restore deterministic identical non-control inputs/state before each paired version/class, outside measured loops, with valid route/cache/probability preparation.",
+      "resolution": "Owner-tracked device copies snapshot all logical buffers after common preparation. Restore identical bytes before each class warmup and each layer sequence outside timing. Shared scratch is overwritten by its owning group before reads; weights/constants immutable."
+    },
+    {
+      "id": "K8",
+      "status": "fixed_source_reviewed",
+      "finding": "Layer0 sequence excluded initial norm because fused streams group was classified outside.",
+      "resolution": "Layer0 loop explicitly includes streams broadcast+norm group and receipt labels includes_initial_broadcast_norm=true; other layers false."
+    }
+  ],
+  "limitations": [
+    "This does not certify device execution or measured speed.",
+    "Synthetic weighted class values are projections from representative shapes, not measured full-token performance."
+  ],
+  "final_evidence_review": {
+    "fixture_gates_sha256": "e0355e69a923d13443b1631c7612b088fdacd367c288c381a80d3331c0cab6e9",
+    "actual_kernel_receipts_checked": 8,
+    "actual_kernel_cases_per_receipt": 92,
+    "actual_kernel_pairwise_checks_per_receipt": 276,
+    "host_compilers": [
+      "host",
+      "icpx-host"
+    ],
+    "fresh_repeats_per_version_compiler": 2,
+    "kernel_sizes_sha256": "23e1ae235f85cd3d524032a587093ea09c7ebdbb7378f67b8917c2c845e982f3",
+    "compiled_capture_classes": 46,
+    "maximum_compiled_capture_bytes": 224,
+    "entry_smoke_sha256": "6948ddc8d50a9f3bad2d32808495d25fc3ab25461f640a4508a313659a2c476c",
+    "k0_mock_exit_checks_passed": 3,
+    "device_executed": false,
+    "real_model_gate_not_certified_here": true,
+    "fixture_verbatim_archive": {
+      "path": "fixture-gates-verbatim.json.gz",
+      "sha256": "371d003d624963d3232bf574bac28a4ebdcd5a937cd894a2faa879aae9f43e1e",
+      "uncompressed_sha256": "f674c038354619153a59bf7b6ed44d060e4ae62e43db79ec29daa4fecc8c0b6b",
+      "uncompressed_bytes": 8801213
+    },
+    "fixture_compaction_independent_verification": {
+      "passed": true,
+      "archive_raw_bytes_hash_verified": true,
+      "archive_size_verified": true,
+      "roundtrip_original_hash_matches_prior_review": true,
+      "all_nonsequence_fields_unchanged": true,
+      "sequence_count_and_hash_verified": true,
+      "cpu_process_receipts": 16,
+      "sequence_lists": 48,
+      "sequence_items": 169936
+    }
+  }
+}

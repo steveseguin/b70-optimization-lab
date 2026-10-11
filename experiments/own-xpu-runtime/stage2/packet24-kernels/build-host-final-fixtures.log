@@ -1,0 +1,49 @@
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet24-kernels/build/host
+[ 10%] Building CXX object CMakeFiles/nongemv-fixtures.dir/build/host-entry-nongemv_fixture.cpp.o
+[ 20%] Building CXX object CMakeFiles/nongemv-fixtures.dir/build/host-nongemv-fixtures-entry.cpp.o
+[ 30%] Building CXX object CMakeFiles/nongemv-fixtures.dir/kernels_fixture.cpp.o
+[ 40%] Linking CXX executable nongemv-fixtures
+[100%] Built target nongemv-fixtures
+[ 10%] Building CXX object CMakeFiles/k2-fixtures.dir/build/host-entry-k2.cpp.o
+[ 20%] Building CXX object CMakeFiles/k2-fixtures.dir/build/host-k2-fixtures-entry.cpp.o
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet24-kernels/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/kernels.hpp:3,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet24-kernels/../packet9-kopt4/../packet8-kopt3/kernels.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet24-kernels/../packet9-kopt4/kernels.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet24-kernels/performance.hpp:3,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet24-kernels/main.cpp:6,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet24-kernels/k2.cpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet24-kernels/../packet9-kopt4/../packet8-kopt3/../packet7-kopt2/reference.hpp:25: warning: ignoring ‘#pragma unroll ’ [-Wunknown-pragmas]
+   25 |     #pragma unroll
+      | 
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet24-kernels/../packet9-kopt4/../packet8-kopt3/reference.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet24-kernels/../packet9-kopt4/../packet8-kopt3/kernels.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet24-kernels/../packet9-kopt4/../packet8-kopt3/decode.hpp:53: warning: ignoring ‘#pragma unroll ’ [-Wunknown-pragmas]
+   53 |     #pragma unroll
+      | 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet24-kernels/../packet9-kopt4/../packet8-kopt3/decode.hpp:90: warning: ignoring ‘#pragma unroll ’ [-Wunknown-pragmas]
+   90 |     #pragma unroll
+      | 
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet24-kernels/../packet9-kopt4/../packet8-kopt3/decode.hpp:99: warning: ignoring ‘#pragma unroll ’ [-Wunknown-pragmas]
+   99 |     #pragma unroll
+      | 
+In file included from /usr/include/c++/13/string:49,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet24-kernels/selection.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet24-kernels/main.cpp:1:
+In member function ‘constexpr bool std::less<_Tp*>::operator()(_Tp*, _Tp*) const [with _Tp = void]’,
+    inlined from ‘std::pair<std::_Rb_tree_iterator<_Val>, std::_Rb_tree_iterator<_Val> > std::_Rb_tree<_Key, _Val, _KeyOfValue, _Compare, _Alloc>::equal_range(const _Key&) [with _Key = void*; _Val = std::pair<void* const, ownrt::Memory>; _KeyOfValue = std::_Select1st<std::pair<void* const, ownrt::Memory> >; _Compare = std::less<void*>; _Alloc = std::allocator<std::pair<void* const, ownrt::Memory> >]’ at /usr/include/c++/13/bits/stl_tree.h:2020:30,
+    inlined from ‘std::_Rb_tree<_Key, _Val, _KeyOfValue, _Compare, _Alloc>::size_type std::_Rb_tree<_Key, _Val, _KeyOfValue, _Compare, _Alloc>::erase(const _Key&) [with _Key = void*; _Val = std::pair<void* const, ownrt::Memory>; _KeyOfValue = std::_Select1st<std::pair<void* const, ownrt::Memory> >; _Compare = std::less<void*>; _Alloc = std::allocator<std::pair<void* const, ownrt::Memory> >]’ at /usr/include/c++/13/bits/stl_tree.h:2519:49,
+    inlined from ‘std::map<_Key, _Tp, _Compare, _Alloc>::size_type std::map<_Key, _Tp, _Compare, _Alloc>::erase(const key_type&) [with _Key = void*; _Tp = ownrt::Memory; _Compare = std::less<void*>; _Alloc = std::allocator<std::pair<void* const, ownrt::Memory> >]’ at /usr/include/c++/13/bits/stl_map.h:1119:26,
+    inlined from ‘virtual void ownrt::MockDevice::release(void*, ownrt::Memory)’ at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet24-kernels/../../stage1/packet3-prep/src/mock_device.hpp:22:45:
+/usr/include/c++/13/bits/stl_function.h:457:38: warning: pointer ‘p’ may be used after ‘void operator delete(void*)’ [-Wuse-after-free]
+  457 |         return (__UINTPTR_TYPE__)__x < (__UINTPTR_TYPE__)__y;
+      |                ~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet24-kernels/lifetime_mock.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet24-kernels/main.cpp:13:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet24-kernels/../../stage1/packet3-prep/src/mock_device.hpp: In member function ‘virtual void ownrt::MockDevice::release(void*, ownrt::Memory)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet24-kernels/../../stage1/packet3-prep/src/mock_device.hpp:22:22: note: call to ‘void operator delete(void*)’ here
+   22 |     ::operator delete(p); allocations_.erase(p); calls.push_back("free");
+      |     ~~~~~~~~~~~~~~~~~^~~
+[ 30%] Linking CXX executable k2-fixtures
+[100%] Built target k2-fixtures

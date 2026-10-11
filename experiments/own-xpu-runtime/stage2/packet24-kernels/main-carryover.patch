@@ -1,0 +1,145 @@
+--- packet23/main.cpp
++++ packet24/main.cpp
+@@ -1,3 +1,4 @@
++#include "selection.hpp"
+ #include "failure.hpp"
+ #include "../packet2/loader/gguf.hpp"
+ #include "synthetic.hpp"
+@@ -85,7 +86,8 @@
+ #endif
+ struct Options {
+   bool canary = false, mini = false, first = false, record = false, authorized = false, checked = false;
+-  std::string fusion = "on", timing = "token";
++  bool fixture_resident = false; // K2 internal only; never parsed from model CLI.
++  std::string fusion = "on", timing = "token", kernels="v1";
+   std::string nongemv = "parallel", gemv = "frozen", stage = "first-token";
+   int cards = 1, card = 3, tokens = 8, context = 128, seconds = 10800;
+   std::string memory = "layer-streaming";
+@@ -103,6 +105,7 @@
+     if (k == "--canary") a.canary = true;
+     else if (k == "--checked") a.checked = true;
+     else if (k == "--timing") a.timing=value();
++    else if (k == "--kernels") {a.kernels=value();packet24::select(a.kernels);}
+     else if (k == "--fusion") a.fusion=value();
+     else if (k == "--nongemv") a.nongemv = value();
+     else if (k == "--gemv") a.gemv = value();
+@@ -173,6 +176,7 @@
+   std::unique_ptr<iq3::Model> model;
+   flash::Directory directory;
+   std::map<std::string, std::vector<uint8_t>> synthetic;
++  std::map<std::string, std::vector<uint8_t>> tiled; // K2 bounded packed-row seeds.
+   uint64_t read_bytes = 0;
+   size_t max_read = 0;
+   Weights(const Options &a) : mini(a.mini) {
+@@ -265,6 +269,11 @@
+     require(n && n <= 4 * 1024 * 1024, "bounded read (4 MiB)");
+     read_bytes += n;
+     max_read = std::max(max_read, n);
++    if (tiled.count(name)) {
++      const auto& seed=tiled.at(name);const auto bytes=directory.at(name).bytes;
++      require(!seed.empty() && off<=bytes && n<=bytes-off,"tiled fixture bounds");
++      std::vector<uint8_t> out(n);for(size_t i=0;i<n;) {size_t at=(off+i)%seed.size(),take=std::min(n-i,seed.size()-at);std::memcpy(out.data()+i,seed.data()+at,take);i+=take;}return out;
++    }
+     if (mini) {
+       auto &b = synthetic.at(name);
+       require(off <= b.size() && n <= b.size() - off, "synthetic bounds");
+@@ -406,7 +415,11 @@
+   std::vector<size_t> owned_bytes;
+   std::map<Allocation,std::pair<int,size_t>> allocations;
+   std::vector<Allocation> ropes, controls, scores, probabilities, snapshots;
+-  struct Pending { Launch launch; bool gemv; };
++  struct Pending { Launch launch; bool gemv; std::string label; };
++  std::string profile_label;
++  struct ClassProfile {double span_ms=0;uint64_t launches=0,groups=0;};
++  std::map<std::string,ClassProfile> class_profile;
++  bool profile_decode=false;
+   std::vector<Pending> pending;
+   ownrt::Event tail=0;
+   int submission_card=-1;
+@@ -428,7 +441,7 @@
+   }
+   void finish(int, Launch l, bool gemv) {
+     // Submission only. Owner::compute appends the preceding owned event.
+-    if(a.timing=="launch")pending.push_back({l,gemv}); tail=l.last; submitted+=l.passes;
++    if(a.timing=="launch")pending.push_back({l,gemv,profile_decode?profile_label:std::string()}); tail=l.last; submitted+=l.passes;
+   }
+   void finish(int c, ownrt::Event event) { finish(c,{event,event,1},false); }
+   void drain() {
+@@ -441,6 +454,7 @@
+       auto first=dev(0).timing(item.launch.first), last=dev(0).timing(item.launch.last);
+       require(first.start_ns && last.end_ns>=first.start_ns,"invalid profiling interval");
+       (item.gemv?gemv_ms:nongemv_ms)+=double(last.end_ns-first.start_ns)/1e6;
++      if(!item.label.empty()){auto label=item.label;if(label.starts_with("blk."))label=label.substr(label.find('.',4)+1);auto& row=class_profile[label];row.span_ms+=double(last.end_ns-first.start_ns)/1e6;row.launches+=item.launch.passes;++row.groups;}
+     }
+ #endif
+     pending.clear();tail=0;
+@@ -744,15 +758,15 @@
+   Matrix matrix(const flash::Launch& l,size_t projection=0) {
+     int c=l.card;bool routed=l.op!="gemv";
+     const auto& t=w.directory.at(l.weights[projection]);
+-    if(routed && a.cards==1)load_selected(c,t.name);else load(c,t.name);
++    if(routed && a.cards==1 && !a.fixture_resident)load_selected(c,t.name);else load(c,t.name);
+     Matrix m{};m.type=flash::grid_type(t.grid);m.w=weights[c].at(t.name);
+     m.x=buffers[c].at(l.inputs[0]).id;m.y=buffers[c].at(l.outputs[projection*2]).id;
+     m.rows=l.shape[1];m.columns=l.shape[2];m.span=m.rows;
+     m.workspace=workspace[c];
+     if(routed) {
+-      m.count=p.g.top;m.experts=a.cards==1?p.g.top:p.g.experts;
++      m.count=p.g.top;m.experts=(a.cards==1 && !a.fixture_resident)?p.g.top:p.g.experts;
+       m.status=buffers[c].at(l.outputs[projection*2+1]).id;
+-      if(a.cards==1) {
++      if(a.cards==1 && !a.fixture_resident) {
+         std::vector<iq3::Route> routes;
+         for(int j=0;j<p.g.top;++j)routes.push_back({uint32_t(j),0,uint32_t(m.rows)});
+         upload(c,compact_routes[c],0,routes.data(),routes.size()*sizeof(iq3::Route));
+@@ -847,7 +861,7 @@
+       for (auto name : {"error", "position", "active"})
+         bindings.push_back(buffers[c].at(name).id);
+       bindings.push_back(ropes[c]);
+-      if(a.cards==2)bound_sites.emplace(l.label,std::make_pair(s,bindings));
++      if(a.cards==2 || a.fixture_resident)bound_sites.emplace(l.label,std::make_pair(s,bindings));
+       return {s,bindings};
+   }
+   void make_schedule(){
+@@ -930,7 +944,7 @@
+     if(task.kind=="rank"){
+       auto l=task.sites[0];l.outputs.insert(l.outputs.end(),task.sites[1].outputs.begin(),task.sites[1].outputs.begin()+2);
+       auto [spec,bindings]=bind_site(l);finish(c,packet18::submit_rank(dev(c),spec,bindings),false);
+-      if(a.cards==1){std::vector<std::string> evict;for(const auto& [name,id]:weights[c])if(name.find("_exps.weight")!=std::string::npos)evict.push_back(name);drain();for(const auto& name:evict){release(c,weights[c].at(name));weights[c].erase(name);}auto ids=readback(c,buffers[c].at(l.outputs[0]).id,p.g.top*4);selected[c].resize(p.g.top);std::memcpy(selected[c].data(),ids.data(),ids.size());}
++      if(a.cards==1 && !a.fixture_resident){std::vector<std::string> evict;for(const auto& [name,id]:weights[c])if(name.find("_exps.weight")!=std::string::npos)evict.push_back(name);drain();for(const auto& name:evict){release(c,weights[c].at(name));weights[c].erase(name);}auto ids=readback(c,buffers[c].at(l.outputs[0]).id,p.g.top*4);selected[c].resize(p.g.top);std::memcpy(selected[c].data(),ids.data(),ids.size());}
+       return;
+     }
+     std::vector<Spec> specs;std::vector<std::vector<Allocation>> bindings;
+@@ -940,6 +954,7 @@
+   flash::Event enqueue(const flash::Launch &l, flash::Event dep) override {
+     guard();
+     require(dep == logical, "step event order");
++    if(a.timing=="launch")profile_label=l.label;
+     int c = l.card;
+     if(submission_card!=c)drain(); // both queues drained and events retired on host
+     submission_card=c;
+@@ -1165,6 +1180,7 @@
+     size_t token_index=0;
+     double first_generated_ms=0;
+     auto step = [&](int token, int fixture_step) {
++      e->profile_decode=fixture_step>1;
+       auto token_start=std::chrono::steady_clock::now();
+       double token_g=e->gemv_ms,token_n=e->nongemv_ms,token_t=e->transfer_ms;
+       auto token_sub=e->submitted,token_wait=e->host_waits;
+@@ -1273,6 +1289,7 @@
+     read_bytes = w->read_bytes;
+     max_read = w->max_read;
+     e->timings.flush();
++    if(a.timing=="launch"){e->drain();std::ostringstream report;report<<"{\"profiling\":true,\"definition\":\"first start to last end span; includes inter-event gaps\",\"tokens\":"<<(generated.size()>0?generated.size()-1:0)<<",\"classes\":[";bool comma=false;for(const auto& [name,row]:e->class_profile){report<<(comma?",":"")<<"{\"class\":"<<ownrt::quote(name)<<",\"device_ms\":"<<row.span_ms<<",\"launches\":"<<row.launches<<",\"groups\":"<<row.groups<<"}";comma=true;}report<<"]}\n";save(output/"class-times.json",report.str());}
+     teardown = e->shutdown();
+     e.reset();
+     w.reset();
+@@ -1309,7 +1326,7 @@
+   r << "true";
+ #endif
+   r << ",\"owner_cards\":"<<a.cards<<",\"nongemv\":"<<ownrt::quote(a.nongemv)<<",\"gemv\":"<<ownrt::quote(a.gemv)
+-    <<",\"fusion\":"<<ownrt::quote(a.fusion)<<",\"context\":"<<a.context<<",\"prefill_ms\":"<<prefill_ms<<",\"first_generated_token_ms\":"<<first_token_ms
++    <<",\"kernels\":"<<ownrt::quote(a.kernels)<<",\"fusion\":"<<ownrt::quote(a.fusion)<<",\"context\":"<<a.context<<",\"prefill_ms\":"<<prefill_ms<<",\"first_generated_token_ms\":"<<first_token_ms
+     <<",\"timing\":"<<ownrt::quote(a.timing)<<",\"timing_distorted\":"<<(a.timing=="launch"?"true":"false")
+     <<",\"decode_wall_ms\":"<<decode_ms<<",\"decode_tokens\":"<<(generated.empty()?0:generated.size()-1)
+     <<",\"decode_tok_s\":"<<(generated.size()>1 && decode_ms>0 ? std::to_string((generated.size()-1)*1000./decode_ms):"null");

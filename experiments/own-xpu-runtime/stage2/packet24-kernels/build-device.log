@@ -1,0 +1,135 @@
+{
+  "passed": true,
+  "grep_argv": [
+    "rg",
+    "-n",
+    "(std::|sycl::(native::|half_precision::)?|__builtin_)(exp|log|pow|sin|cos)(2|10|1p|m1)?f?\\s*\\("
+  ],
+  "translation_units": 23,
+  "files": [
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/mock_device.hpp",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.hpp",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_operation.hpp",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet17-detmath/detmath.hpp",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/device.hpp",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp",
+    "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp",
+    "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/adapter.cpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/adapter.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/adapter_fixture.cpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/adapter_fixture.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/adapter_v2.inc",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/arithmetic.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/backend.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/build/fusion-rope.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/canary.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/capture_events.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/core_v2.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/detmath.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/failure.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/gemv_batch.cpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/gemv_batch.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/gemv_fixture.cpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/jit_smoke.cpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/k2.cpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/kernels_fixture.cpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/kernels_fixture.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/kernels_v2.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/lifetime_mock.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/main.cpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/mock_order.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/native.cpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/native.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/nongemv_fixture.cpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/owner.cpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/owner.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/owner_retire.cpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/performance.cpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/performance.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/prototype/fused.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/prototype/gate.cpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/prototype/snapshot/core_v2.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/prototype/snapshot/detmath.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/prototype/snapshot/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/prototype/snapshot/reference.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/prototype/snapshot/rope.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/rope.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/route_fixture.cpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/route_fixture.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/runtime_kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/runtime_kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/selection.hpp",
+    "experiments/own-xpu-runtime/stage2/packet24-kernels/synthetic.hpp",
+    "experiments/own-xpu-runtime/stage2/packet3/kernels/api.hpp",
+    "experiments/own-xpu-runtime/stage2/packet3/model/directory.hpp",
+    "experiments/own-xpu-runtime/stage2/packet3/step/plan.hpp",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/reference.hpp",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/decode.hpp",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/dispatch.hpp",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/reference.hpp",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/dispatch.hpp",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.cpp",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.hpp",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/reference.hpp"
+  ]
+}
+{
+  "passed": true,
+  "checks": [
+    "one-card event ID follows parameter planning/submission",
+    "two-card event ID follows parameter planning/submission",
+    "cached native dependencies released before context",
+    "owner compute dependency assertion",
+    "owner queue rejection",
+    "peer requires drained queues",
+    "shutdown marker has no dependencies",
+    "every native entry checks target queue",
+    "native same-queue event filter",
+    "queue switches fence",
+    "all peer copies fence",
+    "final Q1 commit before Q0 readback fences",
+    "retirement drains queues before deleting IDs"
+  ],
+  "sources": {
+    "main.cpp": "80d6df8c69371a3711af468ec9e4284934f28cc2d72f555b144f6b646c90d46d",
+    "owner.cpp": "3ff71df7639b4a3f6c045f21c26bf7bbeef5401529c76b5b19aa9c3561b6780b",
+    "backend.hpp": "4457586a7ce7123757a50579a5fc1e670bd4ce9745ea65d78a033542c48fc9fe",
+    "owner_retire.cpp": "e35c366f640d8909b519891fa814aa80228b01ce69bd19ccdf00a8d13cae0da2"
+  },
+  "limit": "Source structure guard plus owner runtime assertion; no native execution proof"
+}
+[  0%] Built target math-gate
+[  0%] Built target kernel-gate
+[  3%] Building CXX object CMakeFiles/packet23-programs.dir/build/jit-main.cpp.o
+[  6%] Building CXX object CMakeFiles/packet23-programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet24-kernels/kernels_fixture.cpp.o
+[ 67%] Built target packet23-programs
+[ 70%] Building CXX object CMakeFiles/own-rt-iq3.dir/build/own-rt-iq3-entry.cpp.o
+[ 74%] Building CXX object CMakeFiles/fused-fixtures.dir/build/fused-fixtures-entry.cpp.o
+[ 77%] Linking CXX executable own-rt-iq3
+[ 80%] Linking CXX executable fused-fixtures
+[ 80%] Built target fused-fixtures
+[ 83%] Building CXX object CMakeFiles/nongemv-fixtures.dir/build/nongemv-fixtures-entry.cpp.o
+[ 83%] Built target own-rt-iq3
+[ 87%] Building CXX object CMakeFiles/k2-fixtures.dir/build/k2-fixtures-entry.cpp.o
+[ 90%] Linking CXX executable nongemv-fixtures
+[ 93%] Linking CXX executable k2-fixtures
+[ 93%] Built target k2-fixtures
+[ 93%] Built target nongemv-fixtures
+[ 96%] Building CXX object CMakeFiles/jit-smoke.dir/build/checked/experiments/own-xpu-runtime/stage2/packet24-kernels/jit_smoke.cpp.o
+[100%] Linking CXX executable jit-smoke
+[100%] Built target jit-smoke

@@ -1,0 +1,67 @@
+{
+  "schema": "own-runtime.packet24.independent-race-review.v1",
+  "reviewer": "Codex subagent tree_review, independent of implementation authors",
+  "device_executed": false,
+  "implementation_files_edited": false,
+  "source_sha256": {
+    "kernels_v2.hpp": "13a8c9f073309037087b90db999092465bfeedbed8a323e0fc6b2d00bedb985b",
+    "adapter_v2.inc": "265a31aee1f977124c75df21bfa5f1960182d8634fde738503b7df7c3d3435b8",
+    "kernels.hpp": "24e24e660203c959db09d30dc633490906508b749cf4e2838e2df50d4013d43a",
+    "core_v2.hpp": "c3c265894d5041e0d6e026d53094b67f9b58bb86bd1aa1c8fea06ab4d8692ffd",
+    "adapter.cpp": "7e9722b4827f2f8bec99243eed077c833b46b93542444a5309961ac233a3ce2b",
+    "prototype/snapshot/reference.hpp": "9dbd20b4d8b210be469e1a8dc31c1592b18d352f15c3bee7058c18bf9aa924bc",
+    "owner.cpp": "3ff71df7639b4a3f6c045f21c26bf7bbeef5401529c76b5b19aa9c3561b6780b",
+    "mock_order.hpp": "d2b1f370518ad0181a0d1f81b370374ceee4e9177abd3531439bd94017980149",
+    "kernels_fixture.cpp": "9a1d37b727fe40245c47b27d4bc8be19ca7051349b9899a59e38c9ccdb417830"
+  },
+  "verdict": "No inter-workgroup race found in reviewed new kernels for valid registered bindings. Invalid-input sticky failure can suppress unrelated work, but uses device-scope atomic accesses; failed-output bytes are not generally a valid-output guarantee.",
+  "stage_order": "Every staged simple/ng2 submission depends_on the preceding returned event. submit_chain propagates last event across sites. Device::compute also includes the owner preceding event, ordering reuse of shared scratch. Parameter tables are immutable, content-addressed per owner and retained until teardown.",
+  "unique_writers": {
+    "norm": "Stage0 writes one row/chunk partial per item. Stage1 writes unique nonoverlapping groups of up to4 output elements; upper partials read-only.",
+    "gdn": "Stage0 Q/K slices use disjoint32-element ranges and gate scalars occupy disjoint4096..4191 positions. Stage1 item(h,j) exclusively owns state[(h*128+j)*128 .. +127] and one output per token; all sequential reads/writes of that row remain in its owner.",
+    "select": "Stage0 initializes one selection slot and at most one score per item. Stage1 stable finite rank is injective; four-element blocks selected by distinct ranks never overlap. Trailing positions begin at count*4 and are written solely by b=0.",
+    "attention": "Scores are one(head,slot) per item. Maxima and sums are one(head,chunk) each; exp chunks and normalized four-element slices are disjoint. Value partials are one(output,chunk); final outputs one per item.",
+    "route": "Maxima/sums each one chunk; exponentials only within that chunk; probabilities each one index. Finite total rank is unique, so route IDs/probabilities/triples have single writers. Final normalization is one work item after rank event.",
+    "argmax_gather_combine": "Argmax chunk state is disjoint, final winner single writer. Gather validity/triples indexed uniquely and copy output indexed uniquely; delayed error is one item. Combine/broadcast output index is unique.",
+    "prepare": "Stage0 one(row,chunk) partial; stage1 unique four-element output slice. Recomputed normalized low/high rotary inputs are read-only; input/output buffers distinct in registered schedule.",
+    "pool": "Stage0 append items uniquely own current cache elements at rows>=pos, while subtree items read cache only at rows<pos and current rows from input slot2. Thus simultaneous append and subtree reads are disjoint. Stage1 output blocks/four-element slices are unique, after dependent stage0; recomputation again reads historical cache or original current input."
+  },
+  "alias_limits": "Reviewed actual registered aliases include GDN input/output state and conv history, plus sequential chain outputs consumed by later sites. New norm stages tolerate corresponding elementwise in-place input/output but do not establish arbitrary cross-slot alias safety. No approval for arbitrary malformed alias bindings is implied.",
+  "dynamic_race_detector_run": false,
+  "host_order_addendum": "Latest adapter host path replaces sequential item loop with mock_items: iota0..n-1 then deterministic shuffle, each item visited exactly once; stage order unchanged. No new arithmetic or device scheduling changes.",
+  "final_evidence_review": {
+    "fixture_gates_sha256": "e0355e69a923d13443b1631c7612b088fdacd367c288c381a80d3331c0cab6e9",
+    "actual_kernel_receipts_checked": 8,
+    "actual_kernel_cases_per_receipt": 92,
+    "actual_kernel_pairwise_checks_per_receipt": 276,
+    "host_compilers": [
+      "host",
+      "icpx-host"
+    ],
+    "fresh_repeats_per_version_compiler": 2,
+    "kernel_sizes_sha256": "23e1ae235f85cd3d524032a587093ea09c7ebdbb7378f67b8917c2c845e982f3",
+    "compiled_capture_classes": 46,
+    "maximum_compiled_capture_bytes": 224,
+    "entry_smoke_sha256": "6948ddc8d50a9f3bad2d32808495d25fc3ab25461f640a4508a313659a2c476c",
+    "k0_mock_exit_checks_passed": 3,
+    "device_executed": false,
+    "real_model_gate_not_certified_here": true,
+    "fixture_verbatim_archive": {
+      "path": "fixture-gates-verbatim.json.gz",
+      "sha256": "371d003d624963d3232bf574bac28a4ebdcd5a937cd894a2faa879aae9f43e1e",
+      "uncompressed_sha256": "f674c038354619153a59bf7b6ed44d060e4ae62e43db79ec29daa4fecc8c0b6b",
+      "uncompressed_bytes": 8801213
+    },
+    "fixture_compaction_independent_verification": {
+      "passed": true,
+      "archive_raw_bytes_hash_verified": true,
+      "archive_size_verified": true,
+      "roundtrip_original_hash_matches_prior_review": true,
+      "all_nonsequence_fields_unchanged": true,
+      "sequence_count_and_hash_verified": true,
+      "cpu_process_receipts": 16,
+      "sequence_lists": 48,
+      "sequence_items": 169936
+    }
+  }
+}

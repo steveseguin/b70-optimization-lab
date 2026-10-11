@@ -1,0 +1,23 @@
+{
+  "passed": true,
+  "cases": 2,
+  "parameter_cache_event_order_controls": 1,
+  "rows": [
+    {
+      "mode": "jit",
+      "returncode": 1,
+      "stderr": "{\"passed\":false,\"error\":\"injected first kernel build failure\",\"teardown\":{\"schema\":\"own-xpu-runtime.teardown.v1\",\"backend\":\"failure-mock\",\"status\":\"refused\",\"exit_code\":75,\"safe_to_exit\":false,\"idle_marker_complete\":false,\"in_flight\":0,\"live_bytes\":4,\"error\":\"injected first kernel build failure\",\"sequence\":[],\"in_flight_event_ids\":[],\"registered_borrowers\":[]}}\n{\"passed\":false,\"error\":\"injected first kernel build failure\",\"teardown\":{\"schema\":\"own-xpu-runtime.teardown.v1\",\"backend\":\"failure-mock\",\"status\":\"failed-drained\",\"exit_code\":1,\"safe_to_exit\":true,\"idle_marker_complete\":true,\"in_flight\":0,\"live_bytes\":0,\"error\":\"injected first kernel build failure\",\"sequence\":[\"quiesce\",\"drain\",\"graphs-released\",\"free:workspace:test\",\"idle-marker-complete\",\"events-released\",\"queue-released\",\"context-released\"],\"in_flight_event_ids\":[],\"registered_borrowers\":[]}}\n{\"passed\":false,\"error\":\"injected first kernel build failure\",\"teardown\":{\"schema\":\"own-xpu-runtime.teardown.v1\",\"backend\":\"failure-mock\",\"status\":\"refused\",\"exit_code\":75,\"safe_to_exit\":false,\"idle_marker_complete\":false,\"in_flight\":0,\"live_bytes\":0,\"error\":\"injected first kernel build failure\",\"sequence\":[],\"in_flight_event_ids\":[],\"registered_borrowers\":[]}}\n{\"passed\":false,\"error\":\"injected first kernel build failure\",\"teardown\":{\"schema\":\"own-xpu-runtime.teardown.v1\",\"backend\":\"failure-mock\",\"status\":\"complete\",\"exit_code\":0,\"safe_to_exit\":true,\"idle_marker_complete\":true,\"in_flight\":0,\"live_bytes\":0,\"error\":\"\",\"sequence\":[\"quiesce\",\"drain\",\"graphs-released\",\"free:workspace:test\",\"idle-marker-complete\",\"events-released\",\"queue-released\",\"context-released\"],\"in_flight_event_ids\":[],\"registered_borrowers\":[]}}\n"
+    },
+    {
+      "mode": "borrower",
+      "returncode": 1,
+      "stderr": "{\"passed\":false,\"error\":\"borrower alive at shutdown\",\"teardown\":{\"schema\":\"own-xpu-runtime.teardown.v1\",\"backend\":\"failure-mock\",\"status\":\"refused\",\"exit_code\":75,\"safe_to_exit\":false,\"idle_marker_complete\":false,\"in_flight\":0,\"live_bytes\":4,\"error\":\"borrower alive at shutdown\",\"sequence\":[],\"in_flight_event_ids\":[],\"registered_borrowers\":[\"injected executable bundle\"]}}\n{\"passed\":false,\"error\":\"borrower alive at shutdown\",\"teardown\":{\"schema\":\"own-xpu-runtime.teardown.v1\",\"backend\":\"failure-mock\",\"status\":\"refused\",\"exit_code\":1,\"safe_to_exit\":true,\"idle_marker_complete\":false,\"in_flight\":0,\"live_bytes\":4,\"error\":\"registered borrowers remain; drained backend retained until process exit\",\"sequence\":[\"quiesce\",\"drain\"],\"in_flight_event_ids\":[],\"registered_borrowers\":[\"injected executable bundle\"]}}\n{\"passed\":false,\"error\":\"borrower alive at shutdown\",\"teardown\":{\"schema\":\"own-xpu-runtime.teardown.v1\",\"backend\":\"failure-mock\",\"status\":\"refused\",\"exit_code\":1,\"safe_to_exit\":true,\"idle_marker_complete\":false,\"in_flight\":0,\"live_bytes\":4,\"error\":\"borrower alive at shutdown\",\"sequence\":[\"quiesce\",\"drain\"],\"in_flight_event_ids\":[],\"registered_borrowers\":[\"injected executable bundle\"]}}\n{\"passed\":false,\"error\":\"borrower alive at shutdown\",\"teardown\":{\"schema\":\"own-xpu-runtime.teardown.v1\",\"backend\":\"failure-mock\",\"status\":\"refused\",\"exit_code\":1,\"safe_to_exit\":true,\"idle_marker_complete\":false,\"in_flight\":0,\"live_bytes\":4,\"error\":\"registered borrowers remain; drained backend retained until process exit\",\"sequence\":[\"quiesce\",\"drain\"],\"in_flight_event_ids\":[],\"registered_borrowers\":[\"injected executable bundle\"]}}\n"
+    },
+    {
+      "mode": "parameters",
+      "returncode": 0,
+      "stderr": ""
+    }
+  ],
+  "device_executed": false
+}
