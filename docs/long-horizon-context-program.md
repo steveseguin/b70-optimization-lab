@@ -170,6 +170,10 @@ What this settles and what it opens:
 | B32ira | 33 | not yet run | | |
 | W32 | 23 | | | |
 
+C32 (summarise at 75 % of 32K) finally ran on the plain 240K stream, seed 0: 23/29 in 29 minutes, against 27/29 in
+15 for archive + recall and 25/29 in 20 for window-drop. The production-style method is the slowest and loses the
+incidental detail (who 2/5).
+
 At 1M the keeper is flat with distance (25/25 at 400+ items back), flat with history length (last third 63/63) and
 flat in speed (8.3 minutes per 100K), with the rule and the method at 29/29 each and old values at 58/58. P1 has its
 answer on this task family, and P3 has a first implementation: `tools/ctxkeeper/` (standard library, 20 tests).

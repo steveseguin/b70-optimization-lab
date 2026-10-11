@@ -1,0 +1,74 @@
+### 10:56:45 campaign 8 start; X32 (proxy) seeds 0 and 1, N32j at 1M again (cap 7800s), C32 (cap 4800s), X32 at 1M if >= 33 (cap 7800s), W200 at 1M (cap 5400s), B32iraR B32ira seed 1; MemAvailable 13386 MiB
+### 10:56:45 tasks ready: sparse-memory-t1000k-s0, rules 240K seeds 0 and 1, plain 240K seed 0
+### 10:56:45 stopping the Gemma service (front door state: 0 0)
+### 10:56:51 cards free; MemAvailable 13710 MiB
+Running as unit: ctx-fp8-tp2-server.service; invocation ID: 52336e02b1c54e8aa350d42f32cecce5
+### 10:59:21 server ready after ~165 s; MemAvailable 3262 MiB
+Running as unit: ctx-keeper-proxy.service; invocation ID: 70f6b671251b4d18a901ca23bf06272c
+### 10:59:22 [X32, 240K, seed 0] start (cap 0s); MemAvailable 3257 MiB; server totals: prompt 0 cached 0 generated 0
+### 11:20:54 [X32, 240K, seed 0] done rc=0 in 21 min; MemAvailable 2413 MiB; server totals: prompt 3878880 cached 2802176 generated 85088
+   rc=0 ledger score 0.9487 raw 0.9487 ({'correct': 37, 'blank': 0, 'wrong': 2, 'stale': 0}) void=False
+!!! B32iraR4__sparse-memory-t240k-s0/sparse-memory-t240k-s0__EDvRLkb: ended_by=EXC:CancelledError rule=ok violations=None  -> this trial does not count; fix and re-run it
+!!! N32__sparse-memory-t240k-s0/sparse-memory-t240k-s0__yiAb6sT: ended_by=EXC:CancelledError rule=ok violations=None  -> this trial does not count; fix and re-run it
+proxy: cuts 22, messages archived 276, recalls 12, notes failed 0, rules put back 0, restarts 0, chars per token 4.2004
+Running as unit: ctx-keeper-proxy.service; invocation ID: 09fcf5ad1ebc483d943989b96892270b
+### 11:20:58 [X32, 240K, seed 1] start (cap 0s); MemAvailable 2478 MiB; server totals: prompt 3878880 cached 2802176 generated 85088
+### 12:08:55 [X32, 240K, seed 1] done rc=0 in 47 min; MemAvailable 2327 MiB; server totals: prompt 8714615 cached 6367296 generated 284643
+   rc=0 ledger score 0.9130 raw 0.9130 ({'correct': 42, 'blank': 0, 'wrong': 4, 'stale': 0}) void=False
+!!! B32iraR4__sparse-memory-t240k-s0/sparse-memory-t240k-s0__EDvRLkb: ended_by=EXC:CancelledError rule=ok violations=None  -> this trial does not count; fix and re-run it
+!!! N32__sparse-memory-t240k-s0/sparse-memory-t240k-s0__yiAb6sT: ended_by=EXC:CancelledError rule=ok violations=None  -> this trial does not count; fix and re-run it
+proxy: cuts 24, messages archived 304, recalls 68, notes failed 10, rules put back 0, restarts 0, chars per token 2.8527
+### 12:08:58 X32 through the proxy: 37 right on seed 0 (N32j 39, B32iraR 35, B32ira 33, W32 23)
+### 12:08:58 [N32j, 1000K, seed 0] start (cap 7800s); MemAvailable 2408 MiB; server totals: prompt 8714615 cached 6367296 generated 284643
+### 13:32:10 [N32j, 1000K, seed 0] done rc=0 in 83 min; MemAvailable 2393 MiB; server totals: prompt 26771722 cached 19290752 generated 581653
+   rc=0 ledger score 0.9912 raw 0.9912 ({'correct': 226, 'blank': 0, 'wrong': 2, 'stale': 0}) void=False
+!!! B32iraR__sparse-memory-t1000k-s0/sparse-memory-t1000k-s0__GGuqj3L: ended_by=EXC:CancelledError rule=ok violations=None  -> this trial does not count; fix and re-run it
+!!! B32iraRH__sparse-memory-t1000k-s0/sparse-memory-t1000k-s0__hJnx59a: ended_by=EXC:CancelledError rule=ok violations=None  -> this trial does not count; fix and re-run it
+### 13:32:13 [C32, 240K, seed 0] start (cap 4800s); MemAvailable 2435 MiB; server totals: prompt 26771722 cached 19290752 generated 581653
+### 14:01:26 [C32, 240K, seed 0] done rc=0 in 29 min; MemAvailable 2428 MiB; server totals: prompt 29346576 cached 20995520 generated 708488
+   rc=0 ledger score 0.7931 raw 0.7931 ({'correct': 23, 'blank': 1, 'wrong': 5, 'stale': 0}) void=False
+### 14:01:29 stopped by STOP-CAMPAIGN8
+### 14:01:29 stopped by STOP-CAMPAIGN8
+### 14:01:29 stopped by STOP-CAMPAIGN8
+### 14:01:29 stopping the server; MemAvailable 2460 MiB
+server state: stopped None stop_confirmed True
+host memory available while the server ran: min 1.96  1% 2.14  median 2.23 GiB  (22185 samples)
+### 14:01:59 rules stream, 240K, seeds pooled
+# 1. probe accuracy (correct/n=acc, pooled over trials; distance in items)
+arm	trials	probes	d1-4	d5-24	d25-99	d100-399	d400+	t:current	t:old_value	t:procedure	t:rule	t:who	final_query	total_correct
+B32ir	1	6/25=0.24	4/5=0.80	2/9=0.22	0/6=0.00	0/5=0.00	n/a	3/5=0.60	3/5=0.60	0/5=0.00	0/5=0.00	0/5=0.00	12/14	18/39
+B32ira	1	20/25=0.80	5/5=1.00	9/9=1.00	3/6=0.50	3/5=0.60	n/a	5/5=1.00	5/5=1.00	5/5=1.00	0/5=0.00	5/5=1.00	13/14	33/39
+B32ira-free	1	19/25=0.76	3/5=0.60	8/9=0.89	4/6=0.67	4/5=0.80	n/a	3/5=0.60	5/5=1.00	3/5=0.60	4/5=0.80	4/5=0.80	9/14	28/39
+B32iraR	1	22/25=0.88	5/5=1.00	8/9=0.89	6/6=1.00	3/5=0.60	n/a	4/5=0.80	4/5=0.80	4/5=0.80	5/5=1.00	5/5=1.00	13/14	35/39
+N32f	1	24/25=0.96	4/5=0.80	9/9=1.00	6/6=1.00	5/5=1.00	n/a	4/5=0.80	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	13/14	37/39
+N32j	2	50/50=1.00	10/10=1.00	17/17=1.00	13/13=1.00	10/10=1.00	n/a	10/10=1.00	10/10=1.00	10/10=1.00	10/10=1.00	10/10=1.00	35/35	85/85
+P32	1	9/25=0.36	1/5=0.20	5/9=0.56	1/6=0.17	2/5=0.40	n/a	3/5=0.60	3/5=0.60	3/5=0.60	0/5=0.00	0/5=0.00	11/14	20/39
+W32	1	10/25=0.40	5/5=1.00	5/9=0.56	0/6=0.00	0/5=0.00	n/a	5/5=1.00	3/5=0.60	0/5=0.00	0/5=0.00	2/5=0.40	13/14	23/39
+X32	2	46/50=0.92	8/10=0.80	16/17=0.94	13/13=1.00	9/10=0.90	n/a	8/10=0.80	10/10=1.00	10/10=1.00	10/10=1.00	8/10=0.80	33/35	79/85
+
+### 14:02:01 plain stream, 240K, all rounds pooled
+# 1. probe accuracy (correct/n=acc, pooled over trials; distance in items)
+arm	trials	probes	d1-4	d5-24	d25-99	d100-399	d400+	t:current	t:old_value	t:who	final_query	total_correct
+B16ir	2	9/30=0.30	5/11=0.45	4/14=0.29	0/5=0.00	n/a	n/a	8/10=0.80	1/10=0.10	0/10=0.00	35/35	44/65
+B16ira	1	12/15=0.80	7/8=0.88	4/5=0.80	1/2=0.50	n/a	n/a	3/5=0.60	4/5=0.80	5/5=1.00	8/14	20/29
+B32ir	2	16/30=0.53	6/11=0.55	8/14=0.57	2/5=0.40	n/a	n/a	10/10=1.00	6/10=0.60	0/10=0.00	35/35	51/65
+B32ira	2	28/30=0.93	10/11=0.91	13/14=0.93	5/5=1.00	n/a	n/a	10/10=1.00	9/10=0.90	9/10=0.90	35/35	63/65
+C32	1	10/15=0.67	7/8=0.88	2/5=0.40	1/2=0.50	n/a	n/a	4/5=0.80	4/5=0.80	2/5=0.40	13/14	23/29
+D16	2	19/30=0.63	8/11=0.73	9/14=0.64	2/5=0.40	n/a	n/a	10/10=1.00	8/10=0.80	1/10=0.10	35/35	54/65
+P32	2	23/30=0.77	10/11=0.91	10/14=0.71	3/5=0.60	n/a	n/a	10/10=1.00	9/10=0.90	4/10=0.40	25/35	48/65
+W16	2	16/30=0.53	11/11=1.00	5/14=0.36	0/5=0.00	n/a	n/a	9/10=0.90	3/10=0.30	4/10=0.40	34/35	50/65
+W32	2	21/30=0.70	11/11=1.00	10/14=0.71	0/5=0.00	n/a	n/a	10/10=1.00	4/10=0.40	7/10=0.70	35/35	56/65
+
+# 2a. speed: cumulative minutes when the history reached N tokens (mean over trials reaching it)
+### 14:02:02 1M stream, finished trials
+# 1. probe accuracy (correct/n=acc, pooled over trials; distance in items)
+arm	trials	probes	d1-4	d5-24	d25-99	d100-399	d400+	t:current	t:old_value	t:procedure	t:rule	t:who	final_query	total_correct
+N32j	1	201/203=0.99	49/50=0.98	49/50=0.98	30/30=1.00	48/48=1.00	25/25=1.00	58/58=1.00	58/58=1.00	29/29=1.00	29/29=1.00	27/29=0.93	25/25	226/228
+
+# 2a. speed: cumulative minutes when the history reached N tokens (mean over trials reaching it)
+n/a (no per-step timing)
+### 14:02:02 kernel log clean since 2026-10-11 10:56:45; restoring Gemma (throughput)
+backend 19350: slots 8 x 4096 tokens
+backend 19351: slots 8 x 4096 tokens
+frontdoor: throughput-ctx32768-parallel8-4k-slots-nospec-2gpu active 0 queued 0
+### 14:06:34 campaign 8 complete

@@ -591,3 +591,21 @@ One stream, one seed: a result, not yet a replication.
 proxy it scored 37/39 and 42/46 before the fixes its second run prompted. Still owed: C32 (running), W200 and the
 proxy on the 1M stream, a second seed for the protocol arms and for the keeper at 1M, and the proxy under a real
 agent on a real task.
+
+**C32, the production-style summary method: 23 of 29 in 29 minutes.** Summarise at 75 % of a 32K budget, plain 240K
+stream, seed 0; it finished well inside its 80-minute cap. Same seed, same stream:
+
+| arm (32K, plain stream, seed 0) | probes | current | old value | who | final | all 29 | minutes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| B32ira archive + recall | 13/15 | 5/5 | 4/5 | 4/5 | 14/14 | 27 | 15 |
+| W32 window-drop | 11/15 | 5/5 | 2/5 | 4/5 | 14/14 | 25 | 20 |
+| **C32 summarise at 75 %** | 10/15 | 4/5 | 4/5 | 2/5 | 13/14 | **23** | **29** |
+| P32 compaction | 13/15 | 5/5 | 5/5 | 3/5 | 4/14 | 17 | 13 |
+
+Thirteen summaries, none failed (361K tokens read and 87K written for them, on top of 2.2M read and 40K written by
+the agent). It is the slowest arm at this size and below the plain sliding window in questions right: a summary
+keeps old values (4/5) and loses the incidental detail nobody knew to keep (who 2/5). Not void. One seed.
+
+Campaign 8 ended here (14:06): server stopped idle, no GPU fault line, host memory never under 1.84 GiB with the
+1.6 GiB floor, Gemma put back. Not run: X32 on the 1M stream, W200, the seed-1 protocol arms, and X32 seed 1 again
+with the fixed proxy.
