@@ -132,7 +132,8 @@ def main():
     check_health(a.health_receipt)
     env = {'PATH': '/usr/bin:/bin', 'HOME': str(a.out.resolve()), 'LANG': 'C.UTF-8',
            'OMP_NUM_THREADS': '2', 'MKL_NUM_THREADS': '2',
-           'LD_LIBRARY_PATH': '/opt/intel/oneapi/compiler/2026.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/tbb/2023.0/lib',
+           'LD_LIBRARY_PATH': '/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib',
+           # 2026-10-11: library path taken from setvars.sh (the Level Zero adapter needs libumf.so.1); first window run failed 'No device of requested type available' with the compiler/mkl/tbb-only path.
            'ONEAPI_DEVICE_SELECTOR': 'level_zero:0,1', 'GGML_SYCL_DYNAMIC_PRECISION': 'F32',
            'GGML_SYCL_DYNAMIC_REQUIRED_PRECISION': 'F32',
            'SYCL_CACHE_DIR': str(a.out.resolve() / 'sycl-cache'), 'XDG_CACHE_HOME': str(a.out.resolve() / 'cache')}
