@@ -218,3 +218,7 @@ redistribution). Destination: `/mnt/usb-models/llm-models/Intel-Qwen3.8-Flash-Ne
 publisher hashes: `experiments/qwen38-flash-next-fp8-b70/data/intel-w4a16-autoround-manifest-4c67bf68.json`.
 Order of work stays: IQ3 line first; the INT4 line is tried after good IQ3
 results, as its own separate model under the quantized-line rule.
+
+Intel W4A16 AutoRound download completed 2026-10-11 04:32 UTC; all 29 files
+verified against the publisher's sizes and SHA256 (receipt: `experiments/qwen38-flash-next-fp8-b70/data/intel-w4a16-autoround-verification-20261011T043502Z.json`,
+0 mismatches, 0 missing).
