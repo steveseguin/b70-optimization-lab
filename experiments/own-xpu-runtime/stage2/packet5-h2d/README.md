@@ -212,3 +212,28 @@ bytes according to observed routing, not the copy rate. Host gathers, routing,
 cache misses, GEMV and dependencies still add time, and the current-layer
 copy/compute overlap test does not demonstrate next-layer prefetch or full-model
 throughput. The packet produces diagnostic transport evidence, no speed headline.
+
+## First measurement — card 3, 2026-10-11 03:3x UTC (boot 13858eef)
+
+Receipts in [card3-20261011/](card3-20261011/). Medians of 20 repetitions;
+"wall" is host submit-to-completion including the owner's 1 ms polling
+granularity (so small copies read low), "event" is the device-side SYCL
+profiling interval (the honest per-copy rate):
+
+| Case | MB | H2D pinned wall / event GB/s | H2D pageable wall / event | D2D wall / event |
+| --- | ---: | ---: | ---: | ---: |
+| one expert (grid 0) | 1.97 | 1.8 / 25.0 | 12.7 / - | 82 / 860 |
+| ten experts (grid 0) | 19.7 | 17.9 / 28.7 | 9.0 / 18.6 | 185 / 293 |
+| ten experts (grid 1) | 23.3 | 20.0 / 28.7 | 8.8 / 17.3 | 155 / 284 |
+| 64 MiB | 67.1 | 20.0 / 28.7 | 14.4 / 20.4 | 203 / 271 |
+| 256 MiB | 268.4 | 24.8 / 57.5 | 14.9 / 35.6 | 226 / 541 |
+
+Reading: pinned host-to-device copies run at about **28 GB/s device-side**
+for expert-sized transfers (one token's ten experts of one layer, ~20 MB, in
+~0.7 ms device time, ~1.1 ms wall), pageable copies at 9-15 GB/s. The
+copy/compute overlap test (a GEMV on the compute queue while a copy runs on
+the copy queue) shows concurrent ≈ copy-only and serial ≈ copy + compute, so
+the copy engine does overlap compute as expected on this card. For the
+one-card plan: ~0.95 GB of IQ3 expert bytes per token at 28 GB/s is ~34 ms if
+every expert misses the cache, i.e. a ~29 tok/s transport-only ceiling with no
+cache, consistent with ONE-CARD-PLAN's arithmetic; a hot-expert cache raises it.
