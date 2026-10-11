@@ -1,0 +1,217 @@
+{
+  "schema": "own-runtime.peer.projection.v1",
+  "measured": false,
+  "source": "experiments/own-xpu-runtime/stage2/packet9-kopt4/receipts-card3-20261011/timing.json",
+  "source_sha256": "0b50594b64c92093ba3a1de5b55b04ff88cdfa836a89b86e85144c4dd27d14bf",
+  "checkpoint_layers": 48,
+  "baseline": {
+    "embedding_floor_ms": 6e-06,
+    "gdn_layers": 36,
+    "gdn_ms": 1.1427345,
+    "head_and_final_hc_ms": 5.465885500000001,
+    "ple_gdn_ms": 1.467448,
+    "projected_ms_per_token": 60.423182499999996,
+    "projected_tok_s": 16.549939255516705,
+    "qsa_layers": 12,
+    "qsa_ms": 1.11541625,
+    "reference_ms_per_token": 35.1000351000351,
+    "reference_tok_s": 28.49,
+    "scope": "checkpoint: 48 total layers",
+    "upgraded_gdn_ms": 1.251875,
+    "variant": "experts_split4"
+  },
+  "sequential_ms": 60.423182499999996,
+  "expected_max_hits_uniform_independent": 6.23046875,
+  "two_card_payload_gain_with_HC_replica": 1.75991830366975,
+  "optimistic_bounce_payload_us_per_round": 1.4628571428571429,
+  "assumptions": [
+    "GEMV-only; not full decode or performance promotion",
+    "80% parallel fraction is a sensitivity choice, not a profile",
+    "61.8 us is an illustrative budget near unrelated XCCL scalar timing; not measured peer latency",
+    "48 exchanges assumes one/layer, 60 is stress count, 96 is two/layer before exact gathers and routing",
+    "D2H and H2D both assumed 28 GB/s for payload floor; small-copy latency unmeasured",
+    "No perfect route balance, halved kernel time or single-card parity has been demonstrated"
+  ],
+  "scenarios": [
+    {
+      "parallel_fraction_assumed": 1.0,
+      "exchanges": 48,
+      "round_us_assumed": 20.0,
+      "compute_ms": 30.211591249999998,
+      "exchange_ms": 0.96,
+      "projected_ms": 31.17159125,
+      "projected_tok_s": 32.08049252217754,
+      "gain": 1.938405454357419
+    },
+    {
+      "parallel_fraction_assumed": 1.0,
+      "exchanges": 48,
+      "round_us_assumed": 61.8,
+      "compute_ms": 30.211591249999998,
+      "exchange_ms": 2.9663999999999997,
+      "projected_ms": 33.17799125,
+      "projected_tok_s": 30.140462466967467,
+      "gain": 1.8211826642759754
+    },
+    {
+      "parallel_fraction_assumed": 1.0,
+      "exchanges": 48,
+      "round_us_assumed": 200.0,
+      "compute_ms": 30.211591249999998,
+      "exchange_ms": 9.6,
+      "projected_ms": 39.81159125,
+      "projected_tok_s": 25.11831274767245,
+      "gain": 1.517728395244689
+    },
+    {
+      "parallel_fraction_assumed": 1.0,
+      "exchanges": 60,
+      "round_us_assumed": 20.0,
+      "compute_ms": 30.211591249999998,
+      "exchange_ms": 1.2,
+      "projected_ms": 31.411591249999997,
+      "projected_tok_s": 31.83538178760683,
+      "gain": 1.9235950837097437
+    },
+    {
+      "parallel_fraction_assumed": 1.0,
+      "exchanges": 60,
+      "round_us_assumed": 61.8,
+      "compute_ms": 30.211591249999998,
+      "exchange_ms": 3.708,
+      "projected_ms": 33.919591249999996,
+      "projected_tok_s": 29.48148733956221,
+      "gain": 1.7813652898898067
+    },
+    {
+      "parallel_fraction_assumed": 1.0,
+      "exchanges": 60,
+      "round_us_assumed": 200.0,
+      "compute_ms": 30.211591249999998,
+      "exchange_ms": 12.0,
+      "projected_ms": 42.21159125,
+      "projected_tok_s": 23.6901753851793,
+      "gain": 1.4314357907556967
+    },
+    {
+      "parallel_fraction_assumed": 1.0,
+      "exchanges": 96,
+      "round_us_assumed": 20.0,
+      "compute_ms": 30.211591249999998,
+      "exchange_ms": 1.92,
+      "projected_ms": 32.13159125,
+      "projected_tok_s": 31.12201920594269,
+      "gain": 1.88049144624918
+    },
+    {
+      "parallel_fraction_assumed": 1.0,
+      "exchanges": 96,
+      "round_us_assumed": 61.8,
+      "compute_ms": 30.211591249999998,
+      "exchange_ms": 5.932799999999999,
+      "projected_ms": 36.14439125,
+      "projected_tok_s": 27.6668098539355,
+      "gain": 1.671716700997143
+    },
+    {
+      "parallel_fraction_assumed": 1.0,
+      "exchanges": 96,
+      "round_us_assumed": 200.0,
+      "compute_ms": 30.211591249999998,
+      "exchange_ms": 19.2,
+      "projected_ms": 49.41159125,
+      "projected_tok_s": 20.23816628249146,
+      "gain": 1.222854414752328
+    },
+    {
+      "parallel_fraction_assumed": 0.8,
+      "exchanges": 48,
+      "round_us_assumed": 20.0,
+      "compute_ms": 36.2539095,
+      "exchange_ms": 0.96,
+      "projected_ms": 37.2139095,
+      "projected_tok_s": 26.871672808254665,
+      "gain": 1.623671990173459
+    },
+    {
+      "parallel_fraction_assumed": 0.8,
+      "exchanges": 48,
+      "round_us_assumed": 61.8,
+      "compute_ms": 36.2539095,
+      "exchange_ms": 2.9663999999999997,
+      "projected_ms": 39.2203095,
+      "projected_tok_s": 25.49699410199708,
+      "gain": 1.540609527826393
+    },
+    {
+      "parallel_fraction_assumed": 0.8,
+      "exchanges": 48,
+      "round_us_assumed": 200.0,
+      "compute_ms": 36.2539095,
+      "exchange_ms": 9.6,
+      "projected_ms": 45.8539095,
+      "projected_tok_s": 21.808391277956353,
+      "gain": 1.317732406219365
+    },
+    {
+      "parallel_fraction_assumed": 0.8,
+      "exchanges": 60,
+      "round_us_assumed": 20.0,
+      "compute_ms": 36.2539095,
+      "exchange_ms": 1.2,
+      "projected_ms": 37.4539095,
+      "projected_tok_s": 26.699482466576686,
+      "gain": 1.613267701733513
+    },
+    {
+      "parallel_fraction_assumed": 0.8,
+      "exchanges": 60,
+      "round_us_assumed": 61.8,
+      "compute_ms": 36.2539095,
+      "exchange_ms": 3.708,
+      "projected_ms": 39.9619095,
+      "projected_tok_s": 25.023829254205186,
+      "gain": 1.5120194018756787
+    },
+    {
+      "parallel_fraction_assumed": 0.8,
+      "exchanges": 60,
+      "round_us_assumed": 200.0,
+      "compute_ms": 36.2539095,
+      "exchange_ms": 12.0,
+      "projected_ms": 48.2539095,
+      "projected_tok_s": 20.723709443687667,
+      "gain": 1.2521924777929132
+    },
+    {
+      "parallel_fraction_assumed": 0.8,
+      "exchanges": 96,
+      "round_us_assumed": 20.0,
+      "compute_ms": 36.2539095,
+      "exchange_ms": 1.92,
+      "projected_ms": 38.1739095,
+      "projected_tok_s": 26.195902203833747,
+      "gain": 1.5828397796143985
+    },
+    {
+      "parallel_fraction_assumed": 0.8,
+      "exchanges": 96,
+      "round_us_assumed": 61.8,
+      "compute_ms": 36.2539095,
+      "exchange_ms": 5.932799999999999,
+      "projected_ms": 42.1867095,
+      "projected_tok_s": 23.70414786675884,
+      "gain": 1.4322800525601551
+    },
+    {
+      "parallel_fraction_assumed": 0.8,
+      "exchanges": 96,
+      "round_us_assumed": 200.0,
+      "compute_ms": 36.2539095,
+      "exchange_ms": 19.2,
+      "projected_ms": 55.453909499999995,
+      "projected_tok_s": 18.032993688208766,
+      "gain": 1.0896108686439863
+    }
+  ]
+}
