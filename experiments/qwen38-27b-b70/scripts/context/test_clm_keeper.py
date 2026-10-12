@@ -255,6 +255,51 @@ class Keeper(unittest.TestCase):
                          ["wxyz56: 170 is not a value the turns state; write the working from the value the NOTES hold, 100"])
         self.assertEqual(ap([("wxyz56", "99 + 1 = 100")], near=near), [])                         # noted before: no question at all
 
+    def test_an_amount_may_be_another_things_value_or_a_small_factor(self):
+        """The hard stream: "went up by as much as bamo35 held at that moment", "was doubled". The amount is another
+        thing's value, or a factor said in words (N32nr, hard seed 1: every such line was questioned)."""
+        ok = NS["amounts_ok"]
+        self.assertTrue(ok(" * 2", set()) and ok(" / 2", {5}) and ok(" x 3", set()) and ok(" + 577", {577}))
+        self.assertFalse(ok(" + 2", set()) or ok(" * 27", set()) or ok(" - 27", {523}))
+        tool = lambda text: {"role": "tool", "content": text + "\n\n(exit_code=0)"}
+        turns = [tool("ITEM 32/147 (UPDATE)\nAttention then turned to vohihi44. It went up by as much as bamo35 held at that moment. "
+                      "bamo35 lost 7. sajaro19 was doubled. mosu40 went up by as much as bamo35 held at that moment.")]
+        notes = "RULES\n(none)\nSTATE\nvohihi44: 228\nbamo35: 577\nsajaro19: 549\nmosu40: 392\nOPEN"
+        names = ["vohihi44", "bamo35", "sajaro19", "mosu40"]
+        near, seen = NS["numbers_near"](names, turns), NS["numbers_in"](turns[0]["content"])
+        ap = lambda changes: NS["apply_delta"](notes, {"changes": changes}, seen, strict=True, near=near)
+        new, info = ap([("vohihi44", "228 + 577 = 805"), ("bamo35", "577 - 7 = 570"), ("sajaro19", "549 * 2 = 1098"),
+                        ("mosu40", "392 + 570 = 962")])
+        self.assertEqual(info["mismatch"], [])
+        self.assertEqual(new.splitlines()[3:7], ["vohihi44: 805", "bamo35: 570", "sajaro19: 1098", "mosu40: 962"])
+        _, info = ap([("vohihi44", "228 + 578 = 806")])                             # nobody holds 578
+        self.assertEqual(len(info["mismatch"]), 1)
+        _, info = ap([("bamo35", "577 - 7 = 570"), ("mosu40", "392 + 577 = 969")])    # the value bamo35 held before its change: also held
+        self.assertEqual(info["mismatch"], [])
+
+    def test_a_misspelled_name_is_put_right(self):
+        mentions = {"vozimi36": 1, "abcd12": 2, "vozu36": 1, "wxyz56": 1}
+        delta = {"rules": [], "open": None, "changes": [("vozi36", "212 - 47 = 165"), ("abcd12", "5"), ("qqqq99", "7"), ("plain", "x")]}
+        out, fixed = NS["respell"](delta, {"vozimi36": 1, "abcd12": 2, "wxyz56": 1})
+        self.assertEqual((fixed, out["changes"][0]), ({"vozi36": "vozimi36"}, ("vozimi36", "212 - 47 = 165")))
+        self.assertEqual(NS["respell"](delta, mentions)[1], {})                      # two names as close: not guessed
+        self.assertEqual(NS["respell"](delta, {"vozimi37": 1, "abcd12": 1})[1], {})  # other digits: another thing
+        taken = {"rules": [], "open": None, "changes": [("vozi36", "1"), ("vozimi36", "2")]}
+        self.assertEqual(NS["respell"](taken, {"vozimi36": 2})[1], {})               # the right name has its own line already
+
+    def test_lines_the_turns_do_not_bear_out_are_left_out(self):
+        tool = lambda text: {"role": "tool", "content": text + "\n\n(exit_code=0)"}
+        turns = [tool("ITEM 9/147 (UPDATE)\nabcd12 gained 5. wxyz56 was struck off the books. wxyz56 was opened at 30.")]
+        notes = "RULES\n(none)\nSTATE\nabcd12: 10\nwxyz56: 7\nOPEN"
+        near, seen = NS["numbers_near"](["abcd12", "wxyz56"], turns), NS["numbers_in"](turns[0]["content"])
+        delta = {"rules": [], "open": None, "changes": [("abcd12", "10 + 5 = 15"), ("abcd12", "15 - 84 = -69"), ("wxyz56", "removed"),
+                                                        ("wxyz56", "opened at 214"), ("wxyz56", "30"), ("abcd12", "99 + 1 = 100")]}
+        kept, left = NS["without_doubtful"](notes, delta, seen, True, near)
+        self.assertEqual(left, ["abcd12: 15 - 84 = -69", "wxyz56: opened at 214"])
+        new, info = NS["apply_delta"](notes, kept, seen, strict=True, near=near)
+        self.assertEqual(new.splitlines()[3:5], ["abcd12: 100", "wxyz56: 30"])          # a wrong start is not left out: it is taken
+        self.assertEqual(info["mismatch"], ["abcd12: working starts from 99, NOTES hold 15"])
+
     def test_a_change_noted_before_and_written_again_is_no_change(self):
         """The line ends at the value the NOTES already hold, from another start: it was noted at the last call and
         is read again (the newest exchange stays in view). No question about it, no change, no mention accounted."""

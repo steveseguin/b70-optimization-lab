@@ -389,6 +389,24 @@ class InPlace(unittest.TestCase):
         self.assertEqual((s.state["inplace_reasks"], s.state["inplace_failed"]), (0, 0))
         self.assertIn("names the turns do not mention left out", self.events(keeper))
 
+    def test_a_misspelled_name_in_the_notes_is_put_right(self):
+        """X32n2 at 1M wrote `vozi36` for `vozimi36`: the line was left out as unsupported and the change was lost."""
+        class Misspelling(LedgerModel):
+            def __call__(self, body):
+                resp = super().__call__(body)
+                msg = resp["choices"][0]["message"]
+                if str(msg.get("content")).startswith("NEW RULES") and len(self.notes_requests) == 1:
+                    msg["content"] = msg["content"].replace("abcd01:", "abd01:")
+                return resp
+
+        keeper = self.keeper(Misspelling(), notes_checks="near")
+        s = self.run_conversation(keeper, 4)
+        notes = s.state["notes"].splitlines()
+        self.assertIn("abcd01: 7", notes)
+        self.assertFalse([ln for ln in notes if ln.startswith("abd01")])
+        self.assertEqual((s.state["inplace_reasks"], s.state["inplace_failed"]), (0, 0))
+        self.assertIn("a misspelled name put right", self.events(keeper))
+
     def test_no_usable_second_reply_means_the_first_stands_without_the_questioned_line(self):
         model = self.Tampering({1: ["abcd01: 999"]}, on_check=[""])
         keeper = self.keeper(model, notes_checks="near")
@@ -487,6 +505,30 @@ class Policy(unittest.TestCase):
         self.assertEqual(second[-1]["role"], "tool")
         self.assertIn("counter abcd03 to 21", second[-1]["content"])
         self.assertGreaterEqual(len(self.model.requests) - before, 2)
+
+    def test_recall_and_notes_at_use_the_contents_own_numbers_when_told_to(self):
+        k = ck.Keeper(self.model, Path(self.dir.name) / "lab", budget=2400, reply_reserve=400, headroom=100, target_ratio=0.5,
+                      notes_cap=400, memory_note=False, recall_label=r"ITEM (\d+):", recall_unit="item")
+        for n in range(1, 31):
+            k.complete({"model": "m", "messages": conversation(n)})
+        s = next(iter(k.sessions.values()))
+        self.assertGreater(s.state["cuts"], 1)
+        asked = conversation(30) + [{"role": "user", "content": "What was counter abcd03 set to?"}]
+        self.model.recall_once = {"pattern": "abcd03", "before": 5}
+        k.complete({"model": "m", "messages": asked})
+        sent = self.model.requests[-1]
+        self.assertEqual(sent["messages"][-1]["content"], "item 3 (tool): ITEM 3: the clerk moved counter abcd03 to 21.")
+        self.assertIn("All numbers here are item numbers", sent["tools"][-1]["function"]["description"])
+        self.model.recall_once = {"notes_at": 4}
+        k.complete({"model": "m", "messages": asked})
+        self.assertRegex(self.model.requests[-1]["messages"][-1]["content"],
+                         r"^recall: no NOTES were saved at or before item 4 \(the first save covers items up to \d+\)$")
+        self.model.recall_once = {"notes_at": 14}
+        k.complete({"model": "m", "messages": asked})
+        text = self.model.requests[-1]["messages"][-1]["content"]
+        self.assertRegex(text, r"^NOTES as saved after item \d+\.")
+        self.assertNotIn("message", text.split("\n")[0])
+        self.assertLessEqual(int(text.split()[5].rstrip(".")), 14)
 
     def test_notes_history_answers_what_was_true_then(self):
         s = self.run_conversation(30)
@@ -838,14 +880,49 @@ class Pure(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             a = ck.Archive(Path(d) / "a.jsonl")
             a.add(5, [{"role": "tool", "content": f"The porter moved box {i}. Nothing else happened."} for i in range(50)])
-            out = a.recall(pattern="porter")
-            self.assertIn("message 5 (tool): The porter moved box 0.", out)
-            self.assertIn("50 matches; showing the first 40", out)
-            self.assertEqual(a.recall(pattern="porter", before=20, last=2).splitlines()[:2],
-                             ["message 19 (tool): The porter moved box 14.", "message 20 (tool): The porter moved box 15."])
+            out = a.recall(pattern="porter").splitlines()
+            # more than fit: the count comes first and the newest are shown (the first 40 of 63, with the note last,
+            # were read as "that is all" at 1M and hid every later change)
+            self.assertEqual(out[0], "[50 matches; showing the newest 40; 10 earlier ones are not shown (narrow with `after`, or search for less)]")
+            self.assertEqual((out[1], out[-1], len(out)), ("message 15 (tool): The porter moved box 10.", "message 54 (tool): The porter moved box 49.", 41))
+            near = a.recall(pattern="porter", before=48).splitlines()
+            self.assertEqual(near[0], "[44 matches; showing the 40 nearest before message 48; 4 earlier ones are not shown (narrow with `after`, or search for less)]")
+            self.assertEqual((near[1], near[-1]), ("message 9 (tool): The porter moved box 4.", "message 48 (tool): The porter moved box 43."))
+            onward = a.recall(pattern="porter", after=10).splitlines()
+            self.assertEqual(onward[0], "[45 matches; showing the first 40 from message 10 on; 5 later ones are not shown (narrow with `before`, or search for less)]")
+            self.assertEqual(onward[1], "message 10 (tool): The porter moved box 5.")
+            self.assertEqual(a.recall(pattern="porter", before=20, last=2).splitlines(),
+                             ["[16 matches; showing the newest 2; 14 earlier ones are not shown (narrow with `after`, or search for less)]",
+                              "message 19 (tool): The porter moved box 14.", "message 20 (tool): The porter moved box 15."])
             self.assertTrue(a.recall(message=7).startswith("message 7 (tool):\nThe porter moved box 2."))
             self.assertIn("is not in the archive", a.recall(message=99))
             self.assertIn("nothing in the archive matches", a.recall(pattern="zebra"))
+
+    def test_recall_in_the_contents_own_numbering(self):
+        """With --recall-label every number the tool shows or takes is the content's own (items here), never a
+        message number: X32n2 at 1M passed `before` 332 meaning item 332 and was cut off at message 332, item 150."""
+        d = tempfile.TemporaryDirectory()
+        self.addCleanup(d.cleanup)
+        a = ck.Archive(Path(d.name) / "a.jsonl")
+        msgs = []
+        for i in range(1, 61):
+            msgs.append({"role": "tool", "content": f"ITEM {i}/617 (UPDATE)\nThe fog lifted. moja47 was set to {i * 3}. It rained."})
+            msgs.append({"role": "assistant", "content": f"moja47 is {i * 3} now."})
+        a.add(3, msgs)
+        label = ck.re.compile(r"(?m)^ITEM (\d+)/")
+        out = a.recall("moja47 was set", before=58, label=label, unit="item").splitlines()
+        self.assertEqual(out[0], "[58 matches; showing the 40 nearest before item 58; 18 earlier ones are not shown (narrow with `after`, or search for less)]")
+        self.assertEqual((out[1], out[-1]), ("item 19 (tool): moja47 was set to 57.", "item 58 (tool): moja47 was set to 174."))
+        self.assertEqual(a.recall("moja47", after=59, label=label, unit="item").splitlines(),
+                         ["item 59 (tool): moja47 was set to 177.", "item 59 (assistant): moja47 is 177 now.",
+                          "item 60 (tool): moja47 was set to 180.", "item 60 (assistant): moja47 is 180 now."])
+        self.assertEqual(a.recall(message=7, label=label, unit="item"), "item 7 (tool):\nITEM 7/617 (UPDATE)\nThe fog lifted. moja47 was set to 21. It rained.")
+        self.assertIn("item 99 is not in the archive", a.recall(message=99, label=label, unit="item"))
+        self.assertEqual(a.recall("zebra", before=5, label=label, unit="item"), "recall: nothing in the archive matches 'zebra' at or before item 5")
+        tool = ck.recall_tool("item")["function"]["description"]
+        self.assertIn("All numbers here are item numbers", tool)
+        self.assertNotIn("message number", tool)
+        self.assertIn("All numbers here are message numbers", ck.RECALL_TOOL["function"]["description"])
 
     def test_text_of_counts_calls_and_parts(self):
         m = {"role": "assistant", "content": [{"type": "text", "text": "hello"}], "reasoning_content": "hmm",

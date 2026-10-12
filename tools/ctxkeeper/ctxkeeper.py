@@ -63,21 +63,31 @@ MEMORY_NOTE = """
   Read the RULES before you answer or act, and apply every one that covers what you are doing.
 - Everything moved out of view is kept verbatim in an archive. The `recall` tool searches it; you may call it in
   addition to any other tool whenever something you need is no longer in view."""
-RECALL_TOOL = {
-    "type": "function",
-    "function": {
-        "name": "recall",
-        "description": ("Search the archive of earlier conversation that was moved out of view (it is kept verbatim). "
-                        "Give `pattern` (text or a regular expression, case-insensitive) to list matching sentences, "
-                        "each with its message number and the first line of that message; narrow with `before` / "
-                        "`after` (message numbers) and take the newest with `last`. Give `message` alone to print one archived message in full. Give "
-                        "`notes_at` alone (a message number) to see the NOTES as they stood at the last save at or "
-                        "before that message: what was true then, not now."),
-        "parameters": {"type": "object", "properties": {
-            "pattern": {"type": "string"}, "before": {"type": "integer"}, "after": {"type": "integer"},
-            "last": {"type": "integer"}, "message": {"type": "integer"}, "notes_at": {"type": "integer"}}},
-    },
-}
+def recall_tool(unit: str = "message") -> dict[str, Any]:
+    """The `recall` tool as the model sees it. Every number it takes or shows counts one thing, named here: archived
+    messages, or (with --recall-label) the content's own numbering, such as items. Two numberings in one tool were
+    mixed up at once (X32n2 at 1M: `before` 332 meant as item 332 cut the search off at message 332, item 150)."""
+    return {
+        "type": "function",
+        "function": {
+            "name": "recall",
+            "description": ("Search the archive of earlier conversation that was moved out of view (it is kept verbatim). "
+                            "Give `pattern` (text or a regular expression, case-insensitive) to list matching sentences, "
+                            f"each with the number of its {unit}"
+                            + (" and the first line of that message" if unit == "message" else "")
+                            + f". All numbers here are {unit} numbers. Narrow with `before` / `after` (inclusive); when "
+                            "there are more matches than fit, the ones nearest to `before` (or after `after`, or the "
+                            f"newest) are shown; `last` takes the newest N. Give `message` alone to print one archived {unit} "
+                            f"in full. Give `notes_at` alone to see the NOTES as they stood at the last save at or "
+                            f"before that {unit}: what was true then, not now."),
+            "parameters": {"type": "object", "properties": {
+                "pattern": {"type": "string"}, "before": {"type": "integer"}, "after": {"type": "integer"},
+                "last": {"type": "integer"}, "message": {"type": "integer"}, "notes_at": {"type": "integer"}}},
+        },
+    }
+
+
+RECALL_TOOL = recall_tool()
 # The instruction comes AFTER the turns: asked first, the model reads its own turns last and writes one more of them.
 NOTES_REQUEST = """\
 The oldest part of this conversation is about to be moved out of view. It stays in a searchable archive, but you \
@@ -136,7 +146,8 @@ that names a thing of STATE is either a change (a line of its own, or one step i
 it changes nothing, a line `name: (no change)`. If the turns change nothing, write (none).
 OPEN
 at most three short lines: what is unfinished right now and what to watch for (this replaces the old OPEN \
-section; may be empty). Do not list what has been received or answers already given.
+section; may be empty). Do not list what has been received or answers already given, and do not repeat \
+values here: they are in STATE.
 
 Output only these three sections.
 """
@@ -146,7 +157,6 @@ Output only these three sections.
 OVERLAP_NOTE = (" The first assistant message of those turns was written before the NOTES were last brought up to "
                 "date: what it says about a result that came before it is already in the NOTES, so do not write "
                 "that again; a change counts only if a result or message among those turns states it.")
-DROPPABLE = ("is not a value the turns state", "adds or takes an amount the turns do not state")
 RECALL_LIMIT_NOTE = ("[[That was the last archive search for this turn ({n} made). Do not call `recall` again now: take "
                      "the next step with what you have, for what you are sure of. You can search again right after "
                      "that step for anything still missing; do not give something up as unknown because of this limit.]]")
@@ -351,40 +361,61 @@ class Archive:
         with self.lock:
             return [json.loads(l) for l in self.path.read_text().splitlines() if l.strip()]
 
+    def labelled(self, label: re.Pattern | None) -> list[dict[str, Any]]:
+        """The rows with the number each one is known by: its message number, or with `label` (a pattern whose first
+        group is a whole number, such as `^ITEM (\\d+)/`) the number of the labelled message it is or follows; `own`
+        is true for the message that carries the label itself."""
+        rows, at = self.rows(), 0
+        for r in rows:
+            m = label.search(r["text"]) if label else None
+            if m:
+                at = int(m.group(1))
+            r["k"], r["own"] = (at if label else r["n"]), bool(m) or not label
+        return rows
+
     def recall(self, pattern: str | None = None, before: int | None = None, after: int | None = None,
-               last: int | None = None, message: int | None = None, limit: int = 40) -> str:
-        rows = self.rows()
+               last: int | None = None, message: int | None = None, limit: int = 40,
+               label: re.Pattern | None = None, unit: str = "message") -> str:
+        rows = self.labelled(label)
         if message is not None:
-            hit = [r for r in rows if r["n"] == message]
-            return (f"message {message} ({hit[0]['role']}):\n{hit[0]['text']}" if hit else
-                    f"recall: message {message} is not in the archive (it holds {len(rows)} messages"
-                    + (f", numbers {rows[0]['n']}-{rows[-1]['n']})" if rows else ")"))
+            hit = [r for r in rows if r["k"] == message and r["own"]]
+            if hit:
+                return "\n\n".join(f"{unit} {message} ({r['role']}):\n{r['text']}" for r in hit)
+            return (f"recall: {unit} {message} is not in the archive (it holds {len(rows)} messages"
+                    + (f", {unit}s {rows[0]['k']}-{rows[-1]['k']})" if rows else ")"))
         if not pattern:
-            return "recall: give `pattern`, or `message` for one archived message in full"
+            return f"recall: give `pattern`, or `message` for one archived {unit} in full"
         try:
             rx = re.compile(pattern, re.I)
         except re.error:
             rx = re.compile(re.escape(pattern), re.I)
         hits = []
         for r in rows:
-            if (before is not None and r["n"] > before) or (after is not None and r["n"] < after):
+            if (before is not None and r["k"] > before) or (after is not None and r["k"] < after):
                 continue
             first = r["text"].strip().split("\n", 1)[0].strip()[:60]
             for s in re.split(r"(?<=[.!?])\s+|\n+", r["text"]):
                 if s.strip() and rx.search(s):
-                    # with the first line of its message, so that a sentence can be placed ("ITEM 50/617 (UPDATE)",
-                    # a file name, a command): the 1M proxy run with in-place notes replayed old values from
-                    # sentences it could not tell apart by item
-                    where = (f', "{first}"' if first and "\n" in r["text"].strip() and s.strip() not in first
+                    # with the first line of its message, so that a sentence can be placed (a file name, a command);
+                    # with a label the number says it
+                    where = (f', "{first}"' if not label and first and "\n" in r["text"].strip() and s.strip() not in first
                              and not first.startswith(s.strip()[:40]) else "")
-                    hits.append(f"message {r['n']} ({r['role']}{where}): {s.strip()[:300]}")
+                    hits.append(f"{unit} {r['k']} ({r['role']}{where}): {s.strip()[:300]}")
         if not hits:
-            return f"recall: nothing in the archive matches {pattern!r}"
-        shown = hits[-last:] if last else hits[:limit]
-        note = ("" if len(shown) == len(hits) else
-                f"\n[{len(hits)} matches; showing the {'last' if last else 'first'} {len(shown)}. Narrow with "
-                f"`before` / `after`, or take the newest with `last`]")
-        return "\n".join(shown) + note
+            return f"recall: nothing in the archive matches {pattern!r}" + (
+                f" at or before {unit} {before}" if before is not None else "") + (f" from {unit} {after} on" if after is not None else "")
+        if len(hits) <= (last or limit):
+            return "\n".join(hits)
+        # more than fit: the ones nearest to where the search was anchored, and the count comes FIRST (a note at the
+        # end was read as "these are all": the first 40 of 63 matches hid every change after item 150)
+        if last or before is not None or after is None:
+            shown, which = hits[-(last or limit):], (f"the {last or limit} nearest before {unit} {before}" if before is not None and not last
+                                                     else f"the newest {last or limit}")
+            more = f"{len(hits) - len(shown)} earlier ones are not shown (narrow with `after`, or search for less)"
+        else:
+            shown, which = hits[:limit], f"the first {limit} from {unit} {after} on"
+            more = f"{len(hits) - len(shown)} later ones are not shown (narrow with `before`, or search for less)"
+        return f"[{len(hits)} matches; showing {which}; {more}]\n" + "\n".join(shown)
 
 
 # ------------------------------------------------------------------ one conversation
@@ -417,17 +448,20 @@ class Session:
         with (self.dir / "notes-history.jsonl").open("a") as f:
             f.write(json.dumps({"upto": upto, "at": round(time.time(), 1), "notes": self.state["notes"]}) + "\n")
 
-    def notes_at(self, n: int) -> str:
+    def notes_at(self, n: int, label: re.Pattern | None = None, unit: str = "message") -> str:
         f = self.dir / "notes-history.jsonl"
         rows = [json.loads(l) for l in f.read_text().splitlines() if l.strip()] if f.exists() else []
-        older = [r for r in rows if r["upto"] <= n]
+        number = {r["n"]: r["k"] for r in self.archive.labelled(label)} if label else {}
+        for r in rows:                               # each save, in the numbering the model uses
+            r["k"] = number.get(r["upto"], r["upto"]) if label else r["upto"]
+        older = [r for r in rows if r["k"] <= n]
         if not older:
-            return (f"recall: no NOTES were saved at or before message {n}"
-                    + (f" (the first save covers messages up to {rows[0]['upto']})" if rows else " (none saved yet)"))
+            return (f"recall: no NOTES were saved at or before {unit} {n}"
+                    + (f" (the first save covers {unit}s up to {rows[0]['k']})" if rows else " (none saved yet)"))
         r = older[-1]
-        later = "" if r["upto"] == n else (f" Anything said in messages {r['upto'] + 1}-{n} is not in them: "
-                                           f"search those with `pattern`, `after` {r['upto'] + 1} and `before` {n}.")
-        return f"NOTES as saved after message {r['upto']}.{later}\n{r['notes']}"
+        later = "" if r["k"] == n else (f" Anything said in {unit}s {r['k'] + 1}-{n} is not in them: "
+                                        f"search those with `pattern`, `after` {r['k'] + 1} and `before` {n}.")
+        return f"NOTES as saved after {unit} {r['k']}.{later}\n{r['notes']}"
 
     def restart(self) -> None:
         stamp = f"{time.strftime('%Y%m%dT%H%M%S')}-{self.state['cuts']}"
@@ -470,7 +504,7 @@ class Keeper:
                  recite_when: str | None = None, think_when: str | None = None, effort: str | None = None,
                  memory_note: bool = True, think_until: str | None = None, repeat_limit: int = 3,
                  notes_mode: str = "full", inplace_tokens: int = 15000, notes_checks: str = "off",
-                 notes_scan: str | None = None) -> None:
+                 notes_scan: str | None = None, recall_label: str | None = None, recall_unit: str = "item") -> None:
         self.ask, self.root = ask, Path(state_dir)
         self.budget, self.target_ratio, self.headroom = budget, target_ratio, headroom
         self.notes_cap, self.notes_max_tokens, self.notes_thinking = notes_cap, notes_max_tokens, notes_thinking
@@ -505,6 +539,11 @@ class Keeper:
         # read for mentions and stated numbers (default: all of them). The 1M run counted the keys of an answers file
         # that the agent printed (p21_7 ...) as things to account for; the harness arm reads delivered items only.
         self.notes_scan = re.compile(notes_scan) if notes_scan else None
+        # recall_label: a pattern whose first group is the content's own number (`(?m)^ITEM (\d+)/`); `recall` then
+        # shows and takes that number, called recall_unit, instead of message numbers
+        self.recall_label = re.compile(recall_label) if recall_label else None
+        self.recall_unit = recall_unit if recall_label else "message"
+        self.recall_tool = recall_tool(self.recall_unit) if recall_label else RECALL_TOOL
         self.sessions: dict[str, Session] = {}
         self.clock = threading.local()                 # per request thread: seconds spent in the model server
         self.lock = threading.Lock()
@@ -676,31 +715,6 @@ class Keeper:
             return delta
         return dict(delta, changes=[(k, v) for k, v in delta["changes"] if k not in gone], unsupported=gone)
 
-    @staticmethod
-    def without_doubtful(notes: str, delta: dict, seen: set[int], strict: bool, near: dict | None) -> tuple[dict, list[str]]:
-        """The reply without the lines the checks still question because the turns do not state their number
-        (DROPPABLE). One line at a time: the line of that name whose removal makes the question go away. Returns
-        the reply and the lines left out."""
-        changes, dropped = list(delta["changes"]), []
-        for _ in range(12):
-            _, info = nd.apply_delta(notes, dict(delta, changes=changes), seen, strict=strict, near=near)
-            bad = [m for m in info["mismatch"] if any(d in m for d in DROPPABLE)]
-            if not bad:
-                break
-            name = bad[0].split(":", 1)[0]
-            before = sum(m.split(":", 1)[0] == name for m in info["mismatch"])
-            for i in [i for i, (k, _) in enumerate(changes) if k == name]:
-                trial = changes[:i] + changes[i + 1:]
-                _, t = nd.apply_delta(notes, dict(delta, changes=trial), seen, strict=strict, near=near)
-                if sum(m.split(":", 1)[0] == name for m in t["mismatch"]) < before:
-                    dropped.append(f"{changes[i][0]}: {changes[i][1]}")
-                    changes = trial
-                    break
-            else:                                    # no single line explains it: every line of that name goes
-                dropped += [f"{k}: {v}" for k, v in changes if k == name]
-                changes = [(k, v) for k, v in changes if k != name]
-        return dict(delta, changes=changes), dropped
-
     def keep_inplace(self, s: Session, model: Any, messages: list[dict[str, Any]], h: int, client: dict[str, Any]) -> bool:
         """In-place notes (see INPLACE_REQUEST). True when the turns before the newest exchange were noted and moved
         out; False leaves everything as it was, and the ordinary cut handles those turns when the window fills."""
@@ -730,7 +744,7 @@ class Keeper:
         req = base + [{"role": "user", "content": INPLACE_REQUEST.format(start=start, overlap=overlap)}]
         tools = list(client.get("tools") or [])
         if s.state["cut"] or self.memory_note:       # the same tool list as the ordinary calls: the same prompt start
-            tools = tools + [RECALL_TOOL]
+            tools = tools + [self.recall_tool]
         texts = [t for t in (text_of(m) for m in noted if m.get("role") in ("tool", "user"))
                  if self.notes_scan is None or self.notes_scan.search(t)]
         seen = nd.numbers_in("\n".join(nd.TRAILER.sub("", text_of(m)) for m in noted))
@@ -771,7 +785,7 @@ class Keeper:
                 s.log_event({"event": "in-place notes: no usable second reply, the first stands", "attempt": attempt})
                 kept = self.supported(earlier, texts, strict)
                 near = nd.numbers_near(nd.state_keys(s.state["notes"]) + [k for k, _ in kept["changes"]], texts) if self.notes_checks == "near" else None
-                delta, dropped = self.without_doubtful(s.state["notes"], dict(kept, rules=list(rules_seen)), seen, strict, near)
+                delta, dropped = nd.without_doubtful(s.state["notes"], dict(kept, rules=list(rules_seen)), seen, strict, near)
                 new, info = nd.apply_delta(s.state["notes"], delta, seen, strict=strict, near=near)
                 info.pop("steps", None)
                 if dropped:
@@ -795,6 +809,11 @@ class Keeper:
             # an asked-for reply replaces the lines of the names it mentions; the other lines of the reply before it stay
             delta = earlier = nd.merge_replies(earlier, delta)
             delta["rules"] = list(rules_seen)
+            if strict:                               # a misspelled name is put right before anything is judged
+                delta, spelt = nd.respell(delta, nd.mention_counts(nd.state_keys(s.state["notes"]) + nd.identifiers_in(texts), texts))
+                if spelt:
+                    earlier = delta
+                    s.log_event({"event": "in-place notes: a misspelled name put right", "names": spelt})
             # a line for a name that none of these turns mentions is not a change these turns made (see OVERLAP_NOTE)
             delta = self.supported(delta, texts, strict)
             if delta.get("unsupported"):
@@ -835,7 +854,7 @@ class Keeper:
         if info.get("mismatch"):
             # After the second reply: a line whose number the turns do not state is left out (the old value stays);
             # working from another start than the NOTES hold is taken (a model that thinks may be right about it).
-            kept, dropped = self.without_doubtful(s.state["notes"], delta, seen, strict, near)
+            kept, dropped = nd.without_doubtful(s.state["notes"], delta, seen, strict, near)
             if dropped:
                 new, info = nd.apply_delta(s.state["notes"], kept, seen, strict=strict, near=near)
                 info.pop("steps", None)
@@ -911,7 +930,7 @@ class Keeper:
                     ctk["reasoning_effort"] = self.effort
                 out["chat_template_kwargs"] = ctk
             if s.state["cut"] or self.memory_note:   # with the note the tool is there from the start (a stable prompt)
-                out["tools"] = list(body.get("tools") or []) + [RECALL_TOOL]
+                out["tools"] = list(body.get("tools") or []) + [self.recall_tool]
             resp: dict[str, Any] = {}
             rounds: list[str] = []                   # this turn's searches and what they returned, as text
             full = False                             # no room in the window for another search
@@ -923,7 +942,7 @@ class Keeper:
                     # and say why.
                     note = RECALL_ROOM_NOTE if full else RECALL_LIMIT_NOTE.format(n=self.max_recalls)
                     out = dict(out, messages=out["messages"] + [{"role": "user", "content": note}],
-                               tools=[t for t in out.get("tools") or [] if t is not RECALL_TOOL])
+                               tools=[t for t in out.get("tools") or [] if t is not self.recall_tool])
                     if not out["tools"]:
                         out.pop("tools")
                     s.state["recall_limit_hit"] = s.state.get("recall_limit_hit", 0) + 1
@@ -961,9 +980,10 @@ class Keeper:
                     try:
                         args = json.loads((c.get("function") or {}).get("arguments") or "{}")
                         if args.get("notes_at") is not None:
-                            text = s.notes_at(int(args["notes_at"]))
+                            text = s.notes_at(int(args["notes_at"]), self.recall_label, self.recall_unit)
                         else:
-                            text = s.archive.recall(**{k: args[k] for k in ("pattern", "before", "after", "last", "message") if args.get(k) is not None})
+                            text = s.archive.recall(**{k: args[k] for k in ("pattern", "before", "after", "last", "message") if args.get(k) is not None},
+                                                    label=self.recall_label, unit=self.recall_unit)
                     except Exception as exc:
                         args, text = {}, f"recall: bad arguments ({exc})"
                     # a result never takes the window past the room for the reply: it is cut to what is left, and
@@ -1114,6 +1134,9 @@ def main() -> None:
                     help="with --notes-mode inplace: extra checks of the reply for ledger-like state with names such as "
                          "abcd12 (count: every mention accounted for, values without working must be stated; near: "
                          "stated in a sentence that names the thing)")
+    ap.add_argument("--recall-label", help="a pattern whose first group is the content's own number, such as '(?m)^ITEM (\\d+)/': "
+                                          "`recall` then shows and takes that number instead of message numbers")
+    ap.add_argument("--recall-unit", default="item", help="what --recall-label counts, as the model is told (default: item)")
     ap.add_argument("--notes-scan", help="with --notes-checks count or near: read only the tool results and user messages "
                                          "matching this regular expression for mentions and stated numbers")
     ap.add_argument("--max-recalls", type=int, default=8,
@@ -1130,7 +1153,7 @@ def main() -> None:
                     think_when=a.think_when, effort=a.effort, memory_note=not a.no_memory_note,
                     think_until=a.think_until, repeat_limit=a.repeat_limit, notes_mode=a.notes_mode,
                     inplace_tokens=a.inplace_tokens, notes_checks=a.notes_checks, notes_scan=a.notes_scan,
-                    max_recalls=a.max_recalls)
+                    max_recalls=a.max_recalls, recall_label=a.recall_label, recall_unit=a.recall_unit)
     server = ThreadingHTTPServer((a.host, a.port), make_handler(keeper, upstream, a.timeout))
     print(f"ctxkeeper: http://{a.host}:{a.port}/v1 -> {upstream}/v1, live window {a.budget} tokens, notes {a.notes_mode}"
           + (f" every {a.inplace_tokens} tokens, checks {a.notes_checks}" if a.notes_mode == "inplace" else "")

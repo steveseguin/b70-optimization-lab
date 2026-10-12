@@ -215,13 +215,20 @@ def steps_in(value: str) -> int:
 
 def amounts_ok(working: str, amounts: set[int] | None) -> bool:
     """Every number in this stretch of working (what is added to or taken from the value it starts from) is one the
-    turns state for the thing, whatever its sign there. Working that is right as arithmetic can still be made up:
+    turns state for the thing, whatever its sign there; the caller adds every value a thing of STATE holds or held
+    while the reply was applied ("went up by as much as bamo35 held at that moment"), and times or divided by a
+    small whole number passes ("was doubled"). Working that is right as arithmetic can still be made up:
     X32m at 1M read "recorded katu85 at five hundred and twenty-three" as 623 and wrote `650 - 27 = 623`, which
     starts from the value held and adds up; 27 is nowhere in the turns."""
     if amounts is None:
         return True
     have = {abs(a) for a in amounts}
-    return all(int(k) in have for k in re.findall(r"\d+", re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", working)))
+    text = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", working).replace("\u2212", "-").replace("\u00d7", "*").replace("\u00f7", "/")
+    for op, k in re.findall(r"([-+*/x]?)\s*\(?\s*-?(\d+)", text):
+        # "was doubled", "lost a third": times or divided by a small whole number is said in words, not in figures
+        if int(k) not in have and not (op in ("*", "/", "x") and 2 <= int(k) <= 10):
+            return False
+    return True
 
 
 PARTS = re.compile(r",(?!\d{3}\b)|;|\bthen\b")       # what separates the changes packed onto one line
@@ -321,6 +328,7 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
             have.append(r)
             info["new_rules"] += 1
     where = {fact_of(ln)[0]: i for i, ln in enumerate(state)}
+    ever = {v for v in (number_of(fact_of(ln)[1]) for ln in state) if v is not None}     # every value held, then and since
     for name, value in delta.get("changes", []):
         if NO_CHANGE.fullmatch(value.strip()):           # `name: (no change)`: mentioned, not changed
             steps[name] = steps.get(name, 0) + 1
@@ -331,13 +339,14 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
         if strict and seen is not None:
             # several changes on one line: followed part by part; a line that can be followed is right as it stands
             ch = chain_of(value, held, (seen if near is None else near.get(name, set())) - used.get(name, set()),
-                          None if near is None else near.get(name, set()))
+                          None if near is None else near.get(name, set()) | ever)
             if ch is not None:
                 final, sets, opening = ch
                 used.setdefault(name, set()).update(sets)
                 steps[name] = steps.get(name, 0) + counted + opening
                 info["chained"] = info.get("chained", 0) + 1
                 line = f"{name}: {final}" if final is not None else f"{name}: removed"
+                ever.update(n for n in map(int, re.findall(r"(?<![\w.])-?\d+(?![\d.]*\d)", REMARK.sub(" ", value).replace("\u2212", "-"))))
                 if name in where:
                     state[where[name]] = line
                     info["changed"] += 1
@@ -382,7 +391,7 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
             if near is not None and strict and start is not None and len(info["mismatch"]) == asked:
                 expr = value.replace("\u2212", "-").split("=")[-2]
                 first = re.match(r"\(?\s*-?\d+", expr.strip())
-                if first and not amounts_ok(expr.strip()[first.end():], near.get(name, set())):
+                if first and not amounts_ok(expr.strip()[first.end():], near.get(name, set()) | ever):
                     info["mismatch"].append(f"{name}: `{value}` adds or takes an amount the turns do not state for it; read the item again")
             if total != stated:
                 info["sums_corrected"].append(f"{name}: {value} -> {total}")
@@ -401,6 +410,8 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
                 else:
                     used.setdefault(name, set()).add(now)
         line = f"{name}: {value}" if value else name
+        if number_of(value) is not None:
+            ever.add(number_of(value))
         if name in where:
             state[where[name]] = line
             info["changed"] += 1
@@ -412,6 +423,59 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
         opened = list(delta["open"])
     info["steps"] = steps
     return "\n".join(["RULES"] + (rules or ["(none)"]) + ["STATE"] + state + ["OPEN"] + opened), info
+
+
+def respell(delta: dict, mentions: dict[str, int]) -> tuple[dict, dict[str, str]]:
+    """A line for an identifier-like name that the turns never mention, a letter or two from a name they do mention
+    and for which the reply has no line, is that name misspelled: the line is given to it. Returns the reply and
+    {written: meant}. (X32n2 at 1M wrote `vozi36` for `vozimi36`; the line was left out as unsupported, the count
+    question about vozimi36 got an 8,192-token reply that could not be used, and the change was lost.)
+    `mentions`: how often the turns mention each identifier-like name (mention_counts)."""
+    import difflib
+    names = list(dict.fromkeys(k for k, _ in delta["changes"]))
+    free = [m for m in mentions if m not in names]
+    fixed: dict[str, str] = {}
+    for n in names:
+        if n in mentions or len(n) < 3 or not re.search(r"[\d_]", n) or " " in n:
+            continue
+        tail = re.search(r"\d*$", n).group(0)
+        close = [m for m in free if re.search(r"\d*$", m).group(0) == tail
+                 and difflib.SequenceMatcher(None, n, m).ratio() >= 0.75]
+        if len(close) == 1:
+            fixed[n] = close[0]
+            free.remove(close[0])
+    if not fixed:
+        return delta, {}
+    return dict(delta, changes=[(fixed.get(k, k), v) for k, v in delta["changes"]]), fixed
+
+
+DROPPABLE = ("is not a value the turns state", "adds or takes an amount the turns do not state")
+
+
+def without_doubtful(notes: str, delta: dict, seen: set[int] | None, strict: bool, near: dict | None) -> tuple[dict, list[str]]:
+    """The reply without the lines the checks still question because the turns do not state their number
+    (DROPPABLE): after a second reply such a line was wrong or pointless every time it was looked at (campaign 12),
+    so it is left out and the old value stays. One line at a time: the line of that name whose removal makes the
+    question go away. Returns the reply and the lines left out."""
+    changes, dropped = list(delta["changes"]), []
+    for _ in range(12):
+        _, info = apply_delta(notes, dict(delta, changes=changes), seen, strict=strict, near=near)
+        bad = [m for m in info["mismatch"] if any(d in m for d in DROPPABLE)]
+        if not bad:
+            break
+        name = bad[0].split(":", 1)[0]
+        before = sum(m.split(":", 1)[0] == name for m in info["mismatch"])
+        for i in [i for i, (k, _) in enumerate(changes) if k == name]:
+            trial = changes[:i] + changes[i + 1:]
+            _, t = apply_delta(notes, dict(delta, changes=trial), seen, strict=strict, near=near)
+            if sum(m.split(":", 1)[0] == name for m in t["mismatch"]) < before:
+                dropped.append(f"{changes[i][0]}: {changes[i][1]}")
+                changes = trial
+                break
+        else:                                        # no single line explains it: every line of that name goes
+            dropped += [f"{k}: {v}" for k, v in changes if k == name]
+            changes = [(k, v) for k, v in changes if k != name]
+    return dict(delta, changes=changes), dropped
 
 
 def merge_replies(first: dict | None, second: dict) -> dict:
