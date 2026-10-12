@@ -35,7 +35,7 @@ No device executable ran, and no model speed is claimed.
   24 requests and twelve prompt comparisons. Every comparison matched all
   32 fixture files and 210 target state entries (216 with MTP).
 - All fixture and model window receipt paths passed end to end on CPU. The
-  suite checker schema was checked against five available oracle requests.
+  suite checker schema was checked against all twelve available oracle requests.
   These oracle-derived checks are distinct from actual runtime execution.
 - The actual two-process miniature receipt path measured a 3.15 ms native
   median forward gap and 4.05 ms Python gap, eight samples each with full state
@@ -45,14 +45,15 @@ No device executable ran, and no model speed is claimed.
   forward gap and 2.16 ms Python gap, eight samples each. These include host
   capture and scheduling work and are diagnostics from one fresh pair each,
   not a speed verdict or a prediction of GPU hand-over cost.
-- GNU's five real-model modes passed: none, n-gram, all-hit, all-miss and MTP.
-  Each matched eight emitted tokens and all 384 retained layer fixtures.
+- All fifteen real-model mode runs passed: GNU/Python, Intel/Python and
+  GNU/native, each in none, n-gram, all-hit, all-miss and MTP. Each matched eight
+  emitted tokens and all 384 retained layer fixtures. Native/Python additionally
+  matched guesses, hit/miss events and both ranks' complete target/draft state.
 - Four fresh draft captures passed and match the parent streams and fixtures.
 
 ## Remaining qualification
 
-Intel/native real-model modes and the persistent real CPU suite are running
-or queued. The real CPU suite uses Intel's current host binary after its five
+The persistent real CPU suite is running. It uses Intel's current host binary after its five
 real-model modes pass; GNU retains the controller and request-order proofs.
 The real CPU suite uses the three-request
 snapshot frozen when those were the available complete oracles. Its partial

@@ -384,6 +384,15 @@
       "evidence": "oracle-derived fixture receipt only; not a real-model runtime execution"
     },
     {
+      "prompt_id": "sql-debugging",
+      "tokens": 64,
+      "fixtures": 384,
+      "exact_schema_roundtrip": true,
+      "corrupt_token_rejected": true,
+      "checker_sha256": "c5574e59b58e0a410353bb6c47db09a89c6da20e2226ec155d17efaa3e8f77bc",
+      "evidence": "oracle-derived fixture receipt only; not a real-model runtime execution"
+    },
+    {
       "prompt_id": "release-plan",
       "tokens": 64,
       "fixtures": 384,
@@ -400,13 +409,67 @@
       "corrupt_token_rejected": true,
       "checker_sha256": "c5574e59b58e0a410353bb6c47db09a89c6da20e2226ec155d17efaa3e8f77bc",
       "evidence": "oracle-derived fixture receipt only; not a real-model runtime execution"
+    },
+    {
+      "prompt_id": "architecture-tradeoff",
+      "tokens": 64,
+      "fixtures": 384,
+      "exact_schema_roundtrip": true,
+      "corrupt_token_rejected": true,
+      "checker_sha256": "c5574e59b58e0a410353bb6c47db09a89c6da20e2226ec155d17efaa3e8f77bc",
+      "evidence": "oracle-derived fixture receipt only; not a real-model runtime execution"
+    },
+    {
+      "prompt_id": "bug-report-synthesis",
+      "tokens": 64,
+      "fixtures": 384,
+      "exact_schema_roundtrip": true,
+      "corrupt_token_rejected": true,
+      "checker_sha256": "c5574e59b58e0a410353bb6c47db09a89c6da20e2226ec155d17efaa3e8f77bc",
+      "evidence": "oracle-derived fixture receipt only; not a real-model runtime execution"
+    },
+    {
+      "prompt_id": "technical-guide",
+      "tokens": 64,
+      "fixtures": 384,
+      "exact_schema_roundtrip": true,
+      "corrupt_token_rejected": true,
+      "checker_sha256": "c5574e59b58e0a410353bb6c47db09a89c6da20e2226ec155d17efaa3e8f77bc",
+      "evidence": "oracle-derived fixture receipt only; not a real-model runtime execution"
+    },
+    {
+      "prompt_id": "risk-register",
+      "tokens": 64,
+      "fixtures": 384,
+      "exact_schema_roundtrip": true,
+      "corrupt_token_rejected": true,
+      "checker_sha256": "c5574e59b58e0a410353bb6c47db09a89c6da20e2226ec155d17efaa3e8f77bc",
+      "evidence": "oracle-derived fixture receipt only; not a real-model runtime execution"
+    },
+    {
+      "prompt_id": "performance-hypotheses",
+      "tokens": 64,
+      "fixtures": 384,
+      "exact_schema_roundtrip": true,
+      "corrupt_token_rejected": true,
+      "checker_sha256": "c5574e59b58e0a410353bb6c47db09a89c6da20e2226ec155d17efaa3e8f77bc",
+      "evidence": "oracle-derived fixture receipt only; not a real-model runtime execution"
+    },
+    {
+      "prompt_id": "decision-memo",
+      "tokens": 64,
+      "fixtures": 384,
+      "exact_schema_roundtrip": true,
+      "corrupt_token_rejected": true,
+      "checker_sha256": "c5574e59b58e0a410353bb6c47db09a89c6da20e2226ec155d17efaa3e8f77bc",
+      "evidence": "oracle-derived fixture receipt only; not a real-model runtime execution"
     }
   ],
   "formula_test": true,
   "receipt_metadata": {
     "passed": true,
     "device_executed": false,
-    "gates": 10,
+    "gates": 18,
     "synthetic_clocks": true,
     "covers": [
       "both handover directions",
@@ -415,7 +478,11 @@
       "all-command idle lower bound",
       "interval union",
       "profiled timing retained",
-      "CPU never labeled GPU timing"
+      "CPU never labeled GPU timing",
+      "suite EOS-excluded events/numerator/endpoints/rate",
+      "suite decode rank clipping",
+      "suite per-output rank fields",
+      "immediate EOS empty decode span"
     ]
   },
   "input_admission": {
