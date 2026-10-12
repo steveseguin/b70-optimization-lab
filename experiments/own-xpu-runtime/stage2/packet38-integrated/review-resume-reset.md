@@ -114,3 +114,20 @@ This reviewer verified the receipt, proof fields and binary identity; the parent
 executed the gate. The five real-oracle schema checks in that receipt are
 oracle-derived fixture checks, not real-model runtime executions. Device
 request-order and real-model suite execution remain separate evidence.
+
+Final receipt-metadata rereview: suite.py now derives decode event count,
+numerator, endpoints and clipped rank occupancy from a local non-EOS timing-row
+slice. It leaves emitted tokens, original timing rows, request execution,
+warm-up and reset unchanged. Eighteen authority-agent synthetic metadata checks
+were parsed and their current test/source files reviewed; the receipt itself
+does not bind source hashes, so this review records those hashes separately.
+Eleven warm-up and nine export/retention checks have current source bindings.
+The parent reran all five reset-retention checks after the metadata-only diff;
+this reviewer independently parsed the new passing receipt and checked every
+source hash against current files. No independent re-execution is claimed.
+
+The compiler-selection diff was also reread: CPU suite qualification checks
+five Intel host correctness receipts before launch; export binds both launch
+executable paths and every request hash to that qualified binary, then rechecks
+the binary at export completion. This changes qualification identity only;
+request/reset implementation is unchanged.

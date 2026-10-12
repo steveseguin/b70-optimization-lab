@@ -51,7 +51,11 @@ of 3.15 ms with the native controller and 4.05 ms with Python. Each is only
 eight samples from one fresh pair, with retained fixtures and full state
 capture enabled. The gap includes capture and host scheduling work, so this
 is a receipt-path diagnostic, not a speed verdict. `cpu-handover-cost.json`
-binds the timing rows to their compressed source receipts.
+binds the timing rows to their compressed source receipts. The real-model
+none-mode CPU receipts additionally show a 1.85 ms native median forward gap
+and 2.16 ms Python gap, again eight samples from one fresh pair each. These
+include host preparation and scheduling and are diagnostics, not GPU latency
+or a cross-server speed verdict.
 
 AddressSanitizer, UndefinedBehaviorSanitizer, and ThreadSanitizer passed all
 1,123 cases and all five fault/lifecycle gates. GCC 13's ThreadSanitizer runtime

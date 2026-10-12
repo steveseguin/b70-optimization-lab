@@ -28,6 +28,21 @@ def execute(stage,argv):
  if child.returncode:raise RuntimeError('CPU gate failed: '+str(path))
  return result
 
+def suite_compiler_preflight(packet=P):
+ from storage import digest
+ from suite_export import cpu_suite_identity
+ identity=cpu_suite_identity(packet);receipts={}
+ dispatch=digest(packet/'dispatch-p38.json')
+ for mode in ('none','ngram','hit','miss','mtp'):
+  name=f'real-icpx-host-{mode}.json';path=packet/name;row=json.loads(path.read_text())
+  assert row['passed'] is True and row['device_executed'] is False and row['mode']==mode,('Intel suite prerequisite failed',mode)
+  assert row['binary_sha256']==identity['binary_sha256'] and row['dispatch_sha256']==dispatch,('Intel suite prerequisite identity differs',mode)
+  assert row['token_matches']==8 and row['layer_matches']==row['layer_total']==384,('Intel suite prerequisite coverage incomplete',mode)
+  receipts[name]=digest(path)
+ return dict(passed=True,device_executed=False,**identity,dispatch_sha256=dispatch,prerequisite_receipts_sha256=receipts,
+             purpose='CPU qualification only; independently qualified Intel host build selected before suite launch to reduce qualification time; no model speed claim',
+             preserves='GNU native-mini, request-order proof, real-native controller comparison and capture identities remain unchanged')
+
 def main():
  ap=argparse.ArgumentParser();ap.add_argument('phase',choices=['cheap','mini','real','real-gnu','real-intel','real-native','draft','captures','draft-final','suite']);ap.add_argument('--start',default='');a=ap.parse_args()
  assert os.getpriority(os.PRIO_PROCESS,0)==19 and os.environ.get('OMP_NUM_THREADS')=='2'
@@ -62,11 +77,17 @@ def main():
  else:
   import fcntl
   draft_lock=(B/'cpu-mtp.lock').open('a');fcntl.flock(draft_lock,fcntl.LOCK_EX)
+  qualification=suite_compiler_preflight()
+  qualification['recorded_before_launch_unix']=time.time()
+  (P/'suite-cpu-qualification-plan.json').write_text(json.dumps(qualification,indent=2)+'\n')
   source=P/'suite-cpu-manifest.json';snapshot=B/'suite-cpu-manifest.json';snapshot.write_bytes(source.read_bytes())
   run=B/('suite-real-'+str(time.time_ns()))
-  rows.append(execute('suite-real',[PY,'-B',P/'suite.py','--binary',B/'gnu-host/own-rt-iq3','--output',run,'--suite-manifest',snapshot,'--controller','native','--draft','mtp','--dispatch',P/'dispatch-p38.json','--repeat','1','--context','256','--seconds','172800','--wait-seconds','7200']))
+  rows.append(execute('suite-real',[PY,'-B',P/'suite.py','--binary',B/qualification['binary_relative_to_build'],'--output',run,'--suite-manifest',snapshot,'--controller','native','--draft','mtp','--dispatch',P/'dispatch-p38.json','--repeat','1','--context','256','--seconds','172800','--wait-seconds','7200']))
   from suite_export import export_run
   exported=export_run(run,P/'suite-real-cpu.json')
+  from storage import digest
+  assert all(exported[k]==qualification[k] for k in ('host_compiler','binary_relative_to_build','binary_sha256'))
+  exported['qualification_plan_sha256']=digest(P/'suite-cpu-qualification-plan.json')
   from storage import discard,archive_files
   exported['scratch_archive']=discard(run)
   rows[-1]['scratch_archive']=exported['scratch_archive']

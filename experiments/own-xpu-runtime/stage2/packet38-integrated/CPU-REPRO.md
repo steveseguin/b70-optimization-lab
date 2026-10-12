@@ -27,6 +27,7 @@ packet38_cpu "$packet38/cpu_campaign.py" real-intel
 packet38_cpu "$packet38/cpu_campaign.py" real-native
 packet38_cpu "$packet38/cpu_campaign.py" captures
 packet38_cpu "$packet38/cpu_campaign.py" draft-final
+packet38_cpu "$packet38/cpu_campaign.py" suite
 ```
 
 These campaign phases reproduce the inherited parent gates and real-model
@@ -43,7 +44,12 @@ Archive completed gate scratch with `storage.discard` before the next stage.
 The retained `suite-cpu-manifest.json` and `suite-cpu-freeze.json` pin the partial
 real CPU suite. Do not silently substitute a growing live manifest into that
 receipt. `cpu_campaign.py suite` runs this frozen snapshot in two persistent
-host ranks and archives it after exporting exactness evidence. Coordinator WS
+Intel host ranks and archives it after exporting exactness evidence. Before
+launch, all five Intel real-model mode receipts must pass with the current
+binary and dispatch. The qualification plan records this choice before launch;
+export and seal bind both rank executables and every request to that identity.
+GNU remains the compiler for native/Python equivalence and request-order proof.
+Compiler choice here makes no model-speed claim. Coordinator WS
 uses the current full suite manifest separately, as documented in `WINDOW.md`.
 
 After every required gate is current, finalization is deliberately three steps:

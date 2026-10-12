@@ -34,7 +34,7 @@
     "mtp_kernels.cpp": "1b179214aecb9e4910cc414c5ecb272510143f02d9edf4a1de5ae44d455370b4",
     "argument_block.hpp": "f2cc8a5709ae443e2fcaa755cfb86e36080a710e9964422b12d3a8425433db35",
     "request_reset.hpp": "b35ad7753e3b2155e62e9d02700c24c52292f773c5f0b5f496914c705b6fbe99",
-    "suite.py": "28cd8afff3df0eb0fd7eec1153f5e64b13873561e55423e75ac6326dc8fe8d4a",
+    "suite.py": "ff60b3900a5b0210f0e5d9fcd6e0a29316b3fe6338246413bfc833efca453cad",
     "native_mini_gate.py": "aa5859a27c141476abb8885f1feda049de9a0622d757a8b85655659d61d8c8c7",
     "suite_gates.py": "d209c17d779c2e8710d8ac78a791552436da1084e2515f6f65bdf663504be17b",
     "prepared_invalidation_test.cpp": "b082a461f27c10b7e678e6c37f810e78fef6fa587645ae0e327a730ece01f27d",
@@ -49,5 +49,6 @@
   "failure_path_followup": "Re-read guarded pipeline/suite diagnostic writes and rank failure catch; cooperative cleanup changes do not modify success-path token authority.",
   "retention_followup": "Read request_state_inventory.hpp and suite retention path. Boundary-only inventory drains and reads hashes; both RESET replies precede raw-state retention and shared mapping clearing. Verified archive/hash checks happen before deletion; retained layer fixtures and emission remain unchanged.",
   "mini_gate_followup": "Reviewed single-boundary request reset optimization: each preceding request is captured/reset into the next request destination; signatures and exhaustive script coverage are unchanged.",
-  "warmup_followup": "Reviewed distinct synthetic warmup selection and EOS suppression scoped only to excluded warmup: measured requests retain original EOS and complete reset path. K2 chooses one type per dispatch class across all context workloads; position cannot switch prepared kernel type later. No device compile/cache-hit claim from source review."
+  "warmup_followup": "Reviewed distinct synthetic warmup selection and EOS suppression scoped only to excluded warmup: measured requests retain original EOS and complete reset path. K2 chooses one type per dispatch class across all context workloads; position cannot switch prepared kernel type later. No device compile/cache-hit claim from source review.",
+  "timing_metadata_followup": "Reviewed metadata-only timing postprocessing: tokens and timing rows remain unchanged; decode rate/numerator/intervals/events/wall/endpoints consistently exclude terminal EOS; rank decode/per-output fields added without executing commands or changing reset."
 }

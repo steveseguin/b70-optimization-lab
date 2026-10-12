@@ -17,3 +17,9 @@ nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B experiments/own-xpu-runti
 ```
 
 These commands are prepared instructions, not a claim that the seal or admission gate ran.
+
+## Intel CPU suite qualification decision, before launch
+
+The parent authorized selecting the separately qualified Intel host executable for the persistent real CPU suite to reduce qualification time. This is a scheduling decision, not an inferred model speedup. The suite remains pending. GNU continues to own native-mini equivalence, request-order proofs, all five native real-controller comparisons, and captures. No runtime/C++/suite execution path was changed by this decision.
+
+The campaign now requires all five Intel modes to pass against the current binary and dispatch before recording `suite-cpu-qualification-plan.json` and launching. The export verifies both rank executable paths and every request's binary hash; it records the compiler and executable. The seal binds this suite to a separate Intel hash and preserves the GNU identity of all other checks. Nine synthetic prerequisite checks, nine export/retention checks and seven seal/warmup mocks passed without launching ranks. Actual persistent Intel suite evidence remains required.

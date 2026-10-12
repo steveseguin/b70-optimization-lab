@@ -41,10 +41,20 @@ These recorded values are read-only historical evidence, not a new device probe.
 Compute a draft from an unconfirmed guess while the target verifies its parent.
 At development acceptance alpha=199/256=0.77734, independent two-step survival
 would be alpha squared=0.6043; independence is an assumption and must be
-measured, not used as an acceptance claim. The upper benefit is hiding at most
-one further half/draft cycle for those surviving chains. Packet32's diagnostic
-all-hit 24.1 ms cycle sets a useful comparison, not a speed forecast. Wrong
-parents require discarding every descendant and redoing target work.
+measured, not used as an acceptance claim. A sensitivity model for savings per
+attempt is S = alpha² h − (1−alpha²) w − o, where h is draft work newly hidden
+on the critical path when both guesses survive, w is incremental failed-chain
+work on that path, and o is bookkeeping/communication overhead. All three are
+unmeasured; this simplified model charges failed chains equally and needs
+separate parent/descendant failure measurements before use. It does not remove
+any target verification. The second token remains provisional until the target
+verifies it; wrong parents discard every descendant and may redo target work.
+
+For an explicitly hypothetical h=4 ms, w=1 ms and o=0.2 ms, S=1.82 ms per
+attempt; h=4 ms, w=6 ms and o=0.2 ms instead gives S=−0.16 ms. Break-even is
+h > ((1−alpha²)w+o)/alpha². Packet32's measured diagnostic all-hit 24.1 ms
+cycle is a comparison scale only: neither these assumed savings nor that
+all-hit rate predicts real acceptance, throughput or a device result.
 
 This needs a second private draft bank (all QSA cache writes and position),
 separate confirmed and provisional hidden/embedding histories, transaction IDs
@@ -59,12 +69,25 @@ the gain. Packet38 intentionally implements only one outstanding guess.
 
 # Batch prefill (design only)
 
-The current pipeline reads prompt positions one at a time. The development
-prompt begins near 88 positions; at the measured 47.2 ms sum of halves, a serial
-approximation is 4.15 s of prompt arithmetic, excluding overlap and startup.
-Existing prompt overlap can approach half that ideal bound. These are
-projections; no batch-prefill speed has been measured. Larger matrix batches
-could reuse weight reads across positions and avoid per-token scheduling.
+The current pipeline reads prompt positions one at a time. Packet32's chain
+receipt measured 4.13 s serial and 2.06 s with prompt overlap across the 86
+positions after the first position of its 87-token prompt. These exclude the
+first-position kernel compilation cost; they are the measured baseline, not a
+batch-prefill result. Larger matrix batches could reuse weight reads across
+positions and avoid per-token scheduling.
+
+An Amdahl sensitivity model against that overlapped baseline is
+P = 2.06 [(1−f)+f/r] + b seconds, where f is the unknown fraction of elapsed
+critical-path prefill time that batching can accelerate, r is its unknown
+speedup from weight reuse/batched execution, and b is added scratch, routing
+and synchronization time. The saving is 2.06 f (1−1/r) − b. For purely
+hypothetical f=0.25–0.50, r=2–4 and b=0–0.05 s, P spans 1.29–1.85 s
+(about 1.11–1.60× the measured baseline rate). This is an assumption range,
+not a performance forecast. Even unlimited reuse leaves 2.06(1−f)+b seconds;
+serial recurrences and already-overlapped work cannot be counted twice.
+Measure critical-path time by class, weight reuse versus batch size, expert
+occupancy, recurrence barriers, extra memory and b before estimating a gain.
+Source: packet32 receipts-cards01-20261012-chain/README.md.
 
 Needed: block shapes for every dense/routed projection; token-position-specific
 expert routes; causal QSA with correct cache append/pooling order; exact serial

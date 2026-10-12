@@ -17,16 +17,16 @@
     "k2_summary.py": "37fcd561faf2b1df6b9a3c7220c23accceb09b5e7f7c49f50831d3a9e62e9b35",
     "KERNELS.md": "1dc4564eed02d37e31389658679b16ef8ea9fbf1be7086889482ae54736933a4",
     "KERNELS-P30.md": "7b8bf70cb14bfabf2cdb9e022100f16e1a53a3060bae50835e83a97bac4b394e",
-    "WINDOW.md": "c07e56e8c7ac8355d8d0d742af289e81085dd0005f5b38f69dad9e2176381ffd",
+    "WINDOW.md": "567284b27d45ffa113fa729085ba81311ca2dc0f1ca32d9507da5e81699a8aba",
     "DEADLINES.md": "91a24ba609f81b8cc8b157eede9c50d99641d095ada3f027c470633afcdd3801",
-    "FUTURE.md": "b714030748fdd28f38ee13e554ba2ff161a92c3876396cf7b41de799b123fdd5",
+    "FUTURE.md": "21ede653db3c29666b7ee4a7344c1a6b42e540c5578c89f9b721c8f2cb9e3a03",
     "draft_window.py": "ad8e90f12f584cb5385b04986b85ea623ea8a6d7392092ed6b0a1f13ca45d8be",
     "test_draft_window_cleanup.py": "65bfe069969c2d9bf476ec6566740b47bb118743b5f2a12a5ec347e248d00fc9",
     "pipeline.py": "d8f9ae3a34c4942c14c5e12df23c7fb729de1f917f94feac08b794b2e0949c23",
     "window.py": "69b8ae293a20330816a96a44bd0da837f64b0d44498c5d90e655a7353cfd2f75",
     "storage.py": "53787deddc760e89f4d3bb9b25e96b2b9bdf3cc54bcc96a99df3286e19badbe3",
-    "LIFETIME.md": "5c3390110722edff2423b80fcacbbc547ed9b483ea062cc7e22e699f158a684d",
-    "test_window_seal_admission.py": "19beca02c635fa87fd58f17569945641418bb764cd06e8a1f4c31c5aa9898d30"
+    "LIFETIME.md": "e3633a885dbfff17e45d89d9d20a16326a86fd6ef663a79bb1ae59bd272c6573",
+    "test_window_seal_admission.py": "9da8ba8d22c64e164dd044537414e48c6ac785b9685985df2a1750529cff5901"
   },
   "cpu_cleanup_gate_sha256": "52b02106ee7b56e40467e769e76b6d16e4dcc565d3cc21c44a991b8c55aaaab6",
   "findings_reported_to_parent": [
@@ -41,7 +41,7 @@
     "No device window or device timing executed",
     "Parent owns final seal repair and admission check"
   ],
-  "no_launch_admission_test": "test_window_seal_admission.py written; actual completed build receipt required before execution",
+  "no_launch_admission_test": "Reviewed bootstrap candidate and final seal consumers: CPU test alone injects the supplied candidate at the fixed final receipt read/hash; production window still requires final seal. All launchers blocked; each window must be failed/unexecuted, and contract fieldset unchanged.",
   "storage_rereview": {
     "reviewed_at_utc": "2026-10-12T06:03:03.418777+00:00",
     "reviewer": "independent controller_review subagent, storage-only follow-up to original authority requirements review",
@@ -50,5 +50,7 @@
     "previous_binding": "23f966dcf3d6607d739dea611edf3e70cf98fb2f226ef69d1353a91ebd69b1b4",
     "current_binding": "53787deddc760e89f4d3bb9b25e96b2b9bdf3cc54bcc96a99df3286e19badbe3",
     "scope": "Storage admission retains 8GB root-free floor and build<3GB projected bound. Existing positional admit callers remain compatible. Streaming archive verification preserves exact retained text/nested gzip bytes and all file hashes before deletion. Single-pass build-size census skips only vanished files; other I/O errors propagate. These changes preserve device-window storage admission and bounded cleanup requirements. No update to original kernel, timing, seal or publication findings."
-  }
+  },
+  "window_lifetime_followup": "Reviewed interleaved offline parity/retention commands against retain_window.py: require passed windows, matching identities, exact tokens/guesses/fixtures/final state, safe rank teardown, verify archived bytes/hashes before deletion; keep prerequisite windows. LIFETIME links resumed source reviews and documents KD reference inputs preserved by cleanup.py. No device qualification asserted.",
+  "future_followup": "Re-read corrected design-only FUTURE.md: packet32 historical halves, all-hit cycle, 4.13/2.06 s over 86 post-first prompt positions and rank0 VRAM agree with source receipts; packet36 allocation/head values agree with memory-plan.json. Checked arithmetic of rank0/rank1 planning headroom and explicitly hypothetical double-speculation/Amdahl sensitivity examples. No projected number is presented as a new measured speed or approved residency."
 }

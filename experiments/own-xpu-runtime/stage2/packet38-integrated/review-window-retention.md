@@ -42,3 +42,10 @@ real suite mode supplies the checked oracle result and 48-layer fixtures. The
 helper's real-window requirements therefore remain intact. No legitimate
 coordinator field mismatch was found. No archived scratch was restored or
 deleted, and no rank was started for this audit.
+
+Final source refresh: independently reread the suite timing-metadata and Intel
+CPU export identity deltas. Timing changes affect receipt metadata only; the
+state-retention path and exact emitted output remain unchanged. Offline window
+retention imports `retained_state_binding`, which is unchanged; compiler checks
+are confined to CPU `export_run`. All 13 lightweight retention tests were rerun
+on these final sources and passed. No rank or device process was launched.

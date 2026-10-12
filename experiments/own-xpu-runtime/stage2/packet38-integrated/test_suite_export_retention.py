@@ -41,19 +41,34 @@ def main():
   pipeline.save(run/'input-admission.json',dict(passed=True))
   for rank in (0,1):
    (run/f'ranks/rank{rank}').mkdir(parents=True)
-   pipeline.save(run/f'ranks/rank{rank}-launch.json',dict(device_executed=False,pid=100+rank))
+   pipeline.save(run/f'ranks/rank{rank}-launch.json',dict(device_executed=False,pid=100+rank,argv=[str(P/'build/icpx-host/own-rt-iq3')]))
    pipeline.save(run/f'ranks/rank{rank}/receipt.json',dict(passed=True,rank=rank,teardown=[dict(safe_to_exit=True,live_bytes=0,in_flight=0)]))
   original=suite.checker_module;suite.checker_module=lambda:checker
+  identity_original=suite_export.cpu_suite_identity
+  suite_export.cpu_suite_identity=lambda:dict(host_compiler='icpx-host',binary_relative_to_build='icpx-host/own-rt-iq3',binary_sha256='f'*64)
   try:
    exported=suite_export.export_run(run,root/'export.json')
    assert exported['rows'][0]['state_evidence_sha256']==bound['state_evidence_sha256'] and not exported['complete_frozen_suite']
+   assert exported['host_compiler']=='icpx-host' and exported['binary_relative_to_build']=='icpx-host/own-rt-iq3'
+   for targets in [(0,),(0,1)]:
+    for rank in targets:pipeline.save(run/f'ranks/rank{rank}-launch.json',dict(device_executed=False,pid=100+rank,argv=[str(P/'build/gnu-host/own-rt-iq3')]))
+    try:suite_export.export_run(run,root/'wrong-compiler.json')
+    except ValueError:pass
+    else:raise AssertionError('wrong or mixed compiler rank launch admitted')
+    for rank in targets:pipeline.save(run/f'ranks/rank{rank}-launch.json',dict(device_executed=False,pid=100+rank,argv=[str(P/'build/icpx-host/own-rt-iq3')]))
+   checks.extend(['mixed rank compiler paths refused','GNU-only suite compiler refused'])
+   wrong=dict(receipt,binary_sha256='0'*64);pipeline.save(output/'receipt.json',wrong)
+   try:suite_export.export_run(run,root/'wrong-binary.json')
+   except ValueError:pass
+   else:raise AssertionError('request binary differs from qualified Intel binary')
+   pipeline.save(output/'receipt.json',receipt);checks.append('request binary hash mismatch refused')
    assert pipeline.sha(P/exported['export_checker_snapshot'])==exported['export_checker_sha256']
    teardown=run/'ranks/rank0/receipt.json';good=teardown.read_bytes();pipeline.save(teardown,dict(passed=True,rank=0,teardown=[]))
    try:suite_export.export_run(run,root/'invalid.json')
    except ValueError:pass
    else:raise AssertionError('empty teardown accepted')
    teardown.write_bytes(good)
-  finally:suite.checker_module=original
+  finally:suite.checker_module=original;suite_export.cpu_suite_identity=identity_original
   checks.append('full synthetic export binds state and checker; empty teardown refused')
   raw_archive=output/'state-evidence.json.gz';original_nested=raw_archive.read_bytes()
   archive=root/'retained.jsonl.gz';result=storage.archive_files([f for f in run.rglob('*') if f.is_file()],archive)

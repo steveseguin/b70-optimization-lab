@@ -14,7 +14,7 @@
     "native_controller_test.cpp": "db276644ce9fcb90871533b141f768723361c78e52f28533aadb6c8769a587e7",
     "native_mailbox_fault_test.cpp": "f6d1102a02c9bb0594cf9681d87c9f34a417f35715c0be3ac3be1a8905ec044a",
     "test_controller_review.py": "d794647d3ca3e40143f13288153ec16588832cf7c3a8ad698f45cf45e33f6661",
-    "suite.py": "28cd8afff3df0eb0fd7eec1153f5e64b13873561e55423e75ac6326dc8fe8d4a",
+    "suite.py": "ff60b3900a5b0210f0e5d9fcd6e0a29316b3fe6338246413bfc833efca453cad",
     "test_failure_storage.py": "d2bc95e6db229729949e696d6429616586a7a6dd4bb8e9e1712fc08a941735d2",
     "window.py": "69b8ae293a20330816a96a44bd0da837f64b0d44498c5d90e655a7353cfd2f75",
     "test_window_storage.py": "86001852f3d91eb0afde1698e2a29d5962c6b5109e54a5e4347a8fcaaa7276e5",
@@ -62,7 +62,7 @@
     "Device backend cancellation and owner drain require coordinator device windows."
   ],
   "regression_receipt": "review-resume-storage-gates.json",
-  "regression_receipt_sha256": "ae256874eb3ec82087d2329cbb7994fedfc79ad1b69d94ba67e9cea2216b4357",
+  "regression_receipt_sha256": "ea81eb9557f5c38f7f8194a8d42e25933826e1f201d140b299b632059731b8aa",
   "window_storage_regression_receipt": "review-resume-window-storage-gates.json",
   "window_storage_regression_receipt_sha256": "2bd16e6f47c460c38589692e298a922f59503d54a038393db7f3244d1b15730c",
   "final_rereview": {
@@ -96,9 +96,9 @@
     "passed": true,
     "source_sha256": "53787deddc760e89f4d3bb9b25e96b2b9bdf3cc54bcc96a99df3286e19badbe3",
     "evidence_receipt": "suite-export-retention-gates.json",
-    "evidence_receipt_sha256": "9ddadfc53fec966052d4998bcfbd6203cf44299add942deb512888d67ac995ce",
+    "evidence_receipt_sha256": "7fb2ba99ec7112fc15b99e2725853132e82443a0ffa9a43d9948b130c028ae5a",
     "receipt_source_hashes_verified": true,
-    "reported_synthetic_checks": 6,
+    "reported_synthetic_checks": 9,
     "findings": [],
     "scope": "archive_files streams bounded chunks, checks retained bytes against input hashes, verifies completed archive before replacement; discard deletes scratch only after verified archive returns. Nested gzip evidence is retained exactly. Existing admit(extra) callers preserve root/build checks; archive-only build_extra=0 still checks current build budget and full root reserve. Runtime/native/suite gate results are not inferred from six synthetic export checks."
   },
@@ -113,13 +113,20 @@
   "distinct_warmup_rereview": {
     "utc": "2026-10-12T06:01:10.167257+00:00",
     "passed": true,
-    "source_sha256": "28cd8afff3df0eb0fd7eec1153f5e64b13873561e55423e75ac6326dc8fe8d4a",
+    "source_sha256": "ff60b3900a5b0210f0e5d9fcd6e0a29316b3fe6338246413bfc833efca453cad",
     "evidence_receipt": "suite-warmup-gates.json",
-    "evidence_receipt_sha256": "a5854deb3377e3f6df57eb1dc6c1c8b6ce1721de4ac4458ed2290e1a7f0954a1",
+    "evidence_receipt_sha256": "4528cc66c03660e459984913208b6be21c109e8ad9b459d3cd12e91b2fe080ee",
     "reported_no_rank_checks": 11,
     "receipt_source_hashes_verified": true,
     "findings": [],
     "review": "Bounded deterministic five-token selection is absent from every contiguous suite span and independent of prompt order. Initial short synthetic request is excluded from measurements and followed by complete request reset. Review found first-token EOS could leave draft head cold; final code suppresses EOS only for keyword-selected excluded warmup and requires both target outputs. Normal measured requests retain their original EOS behavior. Controller/IPC/reset code unchanged.",
     "tests_this_turn": "Three mocked ENOSPC/hook cases rerun and passed; no rank or device execution; integrated suite results remain separate."
+  },
+  "suite_timing_metadata_rereview": {
+    "kind": "source-only metadata rereview",
+    "passed": true,
+    "change": "Per-request rate numerator, interval endpoints and decode rank occupancy now consistently use non-EOG events. Per-output rank fields added. No token generation, reset, IPC or speculation state transition changes.",
+    "current_suite_sha256": "ff60b3900a5b0210f0e5d9fcd6e0a29316b3fe6338246413bfc833efca453cad",
+    "dynamic_controller_claim": false
   }
 }

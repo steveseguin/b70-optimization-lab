@@ -23,7 +23,8 @@ No device executable ran, and no model speed is claimed.
   Full non-GEMV fixture identity passed in four fresh host processes.
 - Capacity256 attention: 528 full-array comparisons across two compilers,
   with 66 workloads per compiler covering contexts88–152 and256.
-- Timing metadata: ten synthetic-clock checks. Window wrapper: 36 tests.
+- Timing metadata: eighteen synthetic-clock checks, including early-EOS
+  event counts, endpoints and per-rank fields. Window wrapper: 36 tests.
   Full-disk/stop cleanup and state-retention checks passed; exact counts and
   source identities remain in their individual receipts.
 
@@ -40,11 +41,20 @@ No device executable ran, and no model speed is claimed.
   median forward gap and 4.05 ms Python gap, eight samples each with full state
   capture enabled. This is a diagnostic with no cross-server speed verdict;
   see `cpu-handover-cost.json`.
+- The real-model no-draft CPU receipt path measured a 1.85 ms native median
+  forward gap and 2.16 ms Python gap, eight samples each. These include host
+  capture and scheduling work and are diagnostics from one fresh pair each,
+  not a speed verdict or a prediction of GPU hand-over cost.
+- GNU's five real-model modes passed: none, n-gram, all-hit, all-miss and MTP.
+  Each matched eight emitted tokens and all 384 retained layer fixtures.
+- Four fresh draft captures passed and match the parent streams and fixtures.
 
 ## Remaining qualification
 
-GNU/Intel/native real-model modes, four final MTP captures, and the persistent
-real CPU suite are running or queued. The real CPU suite uses the three-request
+Intel/native real-model modes and the persistent real CPU suite are running
+or queued. The real CPU suite uses Intel's current host binary after its five
+real-model modes pass; GNU retains the controller and request-order proofs.
+The real CPU suite uses the three-request
 snapshot frozen when those were the available complete oracles. Its partial
 coverage is explicit. Twelve-prompt device qualification remains separate
 coordinator work.

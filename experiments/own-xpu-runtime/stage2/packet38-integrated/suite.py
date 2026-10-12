@@ -126,6 +126,34 @@ def rate(result,device):
     elapsed=rows[-1]['completed_monotonic']-rows[0]['completed_monotonic']
     return (len(rows)-1)/elapsed if elapsed>0 else None
 
+def timing_metadata(result,transport):
+    """Match request/rank receipt fields, using the reference non-EOG span."""
+    stamps=result.get('timing_rows',[])
+    if stamps and stamps[-1]['token_id'] in EOS:stamps=stamps[:-1]
+    count=max(0,len(stamps)-1)
+    left=stamps[0]['completed_monotonic'] if stamps else None
+    right=stamps[-1]['completed_monotonic'] if stamps else None
+    span=(right-left)*1000 if left is not None else 0.
+    result.update(decode_wall_ms=span,decode_intervals=count,decode_numerator=count,
+        decode_event_count=len(stamps),decode_first_completed_monotonic=left,decode_last_completed_monotonic=right,
+        decode_definition='(N-1)*1000/(completion_ms[N]-completion_ms[1]); N non-EOG emitted tokens, at most 64; null rate with fewer than two events',
+        rank_timing_scope='model request only, excluding load/teardown; busy includes half and draft wall time, idle includes coordinator and accept/rollback IO')
+    elapsed=(transport.work_end-transport.work_start)*1000
+    for m in result['rank_metrics']:
+        m['idle_and_coordination_ms']=max(0.,elapsed-m['busy_ms'])
+        m['busy_ms_per_output_token']=m['busy_ms']/max(1,len(result.get('tokens',[])))
+        m['idle_ms_per_output_token']=m['idle_and_coordination_ms']/max(1,len(result.get('tokens',[])))
+    if count:
+        decode_ranks=[]
+        for rank in (0,1):
+            busy=sum(max(0.,min(right,t['rank_completed'])-max(left,t['rank_received']))*1000
+                     for t in transport.trace if t['rank']==rank and t['op'] in (pipeline.HALF,pipeline.DRAFT))
+            decode_ranks.append(dict(rank=rank,intervals=count,busy_ms=busy,idle_and_coordination_ms=max(0.,span-busy),
+                busy_ms_per_interval=busy/count,idle_ms_per_interval=max(0.,span-busy)/count))
+        result['decode_rank_metrics']=decode_ranks
+        result['decode_rank_timing_scope']='native host HALF/DRAFT wall occupancy clipped to non-EOG decode span; includes uploads/drains, not GPU busy time'
+    return result
+
 def summarize(rows,complete,expected=12):
     def median(values):
         good=[v for v in values if isinstance(v,(int,float)) and math.isfinite(v) and v>0]
@@ -169,10 +197,7 @@ def run_request(transport,args,prompt,count,*,kernel_warmup=False):
                   binary_sha256=pipeline.sha(args.binary),no_speed_claim=True)
     if args.timing=='class':result.update(diagnostic=True,evidence_label='DIAGNOSTIC ONLY: per-class profiling')
     result['decode_tok_s']=rate(result,args.device)
-    elapsed=(transport.work_end-transport.work_start)*1000
-    for m in result['rank_metrics']:
-        m['idle_and_coordination_ms']=max(0.,elapsed-m['busy_ms'])
-    return result
+    return timing_metadata(result,transport)
 
 def compare_request(output,result,entry,compare):
     """Exactness is a request outcome, not a rank-execution exception."""
