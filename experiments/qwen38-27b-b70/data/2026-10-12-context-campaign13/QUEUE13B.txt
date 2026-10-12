@@ -1,9 +1,11 @@
 # campaign 13b queue: ARM STREAM SEED CAP_SECONDS (lines may be appended while it runs)
 XR3 repair 1 3600
-W32 repair 1 3600
-C32 repair 1 3600
+XR3 repair 1x 3600
+W32 repair 1x 3600
+C32 repair 1x 3600
 N32g hard 1 2400
-N32gr hard 1 2400
+X32g hard 1 2400
 X32g rules 1 2400
-N32g 1m 1 5400
-X32g 1m 1 6000
+# 14:58: N32gr (retrieval at questions) replaced by X32g on the hard stream (a proxy session keeps the replies: check_score.py)
+# 15:21: the repair arms moved to repair-n40-s1x (see the note); the first line was stopped by hand
+# 16:10: the two 1M lines moved to campaign 13c (after the self-test of repair-n40-s1x, which needs the server down, and one more repair arm)

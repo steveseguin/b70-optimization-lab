@@ -12,7 +12,8 @@ O11=/mnt/fast-ai/bench-results/context-longrun-20261011
 ODR=/mnt/fast-ai/bench-results/context-longrun-20261010/client-rules
 ODH=$O11/client-hard; OD1M=$O11/client-1m
 for f in campaign13.attempt1.log campaign13.log QUEUE13.txt longrun-campaign13.sh metrics-c13.attempt1.tsv metrics-c13.tsv \
-         campaign13b.log QUEUE13B.txt longrun-campaign13b.sh metrics-c13b.tsv metrics-sampler.sh; do
+         campaign13b.log QUEUE13B.txt longrun-campaign13b.sh metrics-c13b.tsv campaign13c.log QUEUE13C.txt longrun-campaign13c.sh \
+         metrics-c13c.tsv metrics-sampler.sh; do
   [[ -e $O/$f ]] && cp "$O/$f" "$D/"
 done
 for e in campaign13.err campaign13b.err; do [[ -s $O/$e ]] && cp "$O/$e" "$D/"; done
@@ -38,19 +39,27 @@ for odx in "$O/client-repair" "$O/client-repair2"; do
     arm=${name%%__*}; rest=${name#*__}                # XR__repair-n40-s0.guard-stop-1135 -> XR, repair-n40-s0.guard-stop-1135
     for x in settings.txt summary.txt; do cp "$odx/runs/$name.$x" "$out/" 2>/dev/null; done
     cp "$odx/runs/proxy-status-$name.json" "$out/proxy-status.json" 2>/dev/null
-    for tag in c13 c13b; do
+    for tag in c13 c13b c13c; do
       s=$(first "$O/proxy-state/$tag-$arm-$rest")
       [[ -n $s ]] && { mkdir -p "$out/proxy"; cp "$s/notes-history.jsonl" "$s/events.jsonl" "$s/state.json" "$out/proxy/" 2>/dev/null; }
     done
   done
 done
 
+# a run graded in its live container before the outer time cap cut it (the harness grades nothing after such a cut)
+for g in "$O"/client-repair2/runs/live-grade-*; do
+  [[ -d $g ]] && { mkdir -p "$D/repair/client-repair2/$(basename "$g")"; cp "$g"/* "$D/repair/client-repair2/$(basename "$g")/" 2>/dev/null; }
+done
+for j in "$O"/client-repair2/runs/jobs/C32__repair-*; do     # the summariser's own record of its summaries
+  t=$(first "$j"); [[ -n $t && -e $t/agent/summary_calls.json ]] && cp "$t/agent/summary_calls.json" "$D/repair/client-repair2/$(basename "$j")/"
+done
+
 # ---- the ledger runs of part B (and of 13b)
 cd "$CTX" || exit 2
 python3 c10_table.py "$ODR" X32p X32q X32g N32u --json "$D/table-rules-240k.json" > "$D/table-rules-240k.txt" 2>&1
-python3 c10_table.py "$ODH" N32sr:0 N32z:0 N32nr:1 N32pr:1 N32p:1 N32h:1 N32gr:1 N32g:1 --json "$D/table-hard-240k.json" > "$D/table-hard-240k.txt" 2>&1
+python3 c10_table.py "$ODH" N32sr:0 N32z:0 N32nr:1 N32pr:1 N32p:1 N32h:1 N32g:1 X32g:1 --json "$D/table-hard-240k.json" > "$D/table-hard-240k.txt" 2>&1
 python3 c10_table.py "$OD1M" N32u:0 X32p:0 N32n:1 N32g:1 X32g:1 --json "$D/table-1m.json" > "$D/table-1m.txt" 2>&1
-for spec in "$ODH N32pr 1" "$ODH N32p 1" "$ODH N32h 1" "$ODH N32gr 1" "$ODH N32g 1" "$OD1M N32g 1"; do
+for spec in "$ODH N32pr 1" "$ODH N32p 1" "$ODH N32h 1" "$ODH N32g 1" "$OD1M N32g 1"; do
   set -- $spec
   compgen -G "$1/runs/jobs/$2__sparse-memory-t*k-s$3/*/verifier/details.json" >/dev/null || continue
   python3 notes_audit.py "$1" "$2" "$3" > "$D/audit-$(basename "$1")-$2-s$3.txt" 2>&1
@@ -65,8 +74,12 @@ proxy() {  # label session_dir out_dir arm seed
 }
 proxy X32q-rules-s0 "$(first "$O/proxy-state/c13-X32q-240k-s0")" "$ODR" X32q 0
 proxy X32q-rules-s1 "$(first "$O/proxy-state/c13-X32q-240k-s1")" "$ODR" X32q 1
-proxy X32g-rules-s1 "$(first "$O/proxy-state/c13b-X32g-240k-s1")" "$ODR" X32g 1
-proxy X32g-1m-s1 "$(first "$O/proxy-state/c13b-X32g-1000k-s1")" "$OD1M" X32g 1
+# (both X32g runs of 13b used the state folder c13b-X32g-240k-s1: the hard stream's session and the rules stream's)
+for sdir in "$O"/proxy-state/c13b-X32g-240k-s1/*/; do
+  [[ -d $sdir ]] || continue
+  if grep -q "reduced by a third" "$sdir/archive.jsonl" 2>/dev/null; then proxy X32g-hard-s1 "${sdir%/}" "$ODH" X32g 1; else proxy X32g-rules-s1 "${sdir%/}" "$ODR" X32g 1; fi
+done
+proxy X32g-1m-s1 "$(first "$O/proxy-state/c13c-X32g-1000k-s1")" "$OD1M" X32g 1
 for od in "$ODR" "$ODH" "$OD1M"; do
   for j in "$od"/runs/jobs/{X32q,X32g,N32p,N32pr,N32h,N32g,N32gr}__*; do
     [[ -d $j ]] || continue
@@ -79,7 +92,7 @@ for od in "$ODR" "$ODH" "$OD1M"; do
     cp "$od"/proxy-status-c13*-"$(basename "$j" | cut -d_ -f1)"-*-s"$(basename "$j" | sed 's/.*-s//')".json "$out/" 2>/dev/null
   done
 done
-for tag in c13.attempt1 c13 c13b; do
+for tag in c13.attempt1 c13 c13b c13c; do
   SRV=$O/server/tp2-w262144-$tag
   [[ -e $SRV/state.json ]] && cp "$SRV/state.json" "$D/server-state-$tag.json"
   [[ -e $SRV/MEMORY-GUARD.json ]] && cp "$SRV/MEMORY-GUARD.json" "$D/server-MEMORY-GUARD-$tag.json"
