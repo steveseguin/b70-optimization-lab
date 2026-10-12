@@ -1910,3 +1910,29 @@ its self-test, which starts containers (`--no-selftest`; the builder, grader and
 self-test passed on `repair-n40-s1` an hour earlier); the self-test is run on the same folder once the cards are
 free and reported with the results. Arms, caps and what I expect are as registered above. The stopped attempt is
 kept (`client-repair2/runs/jobs/XR3__repair-n40-s1`).
+
+### Campaign 13c, registered 2026-10-12 16:15 (after XR3 on `repair-n40-s1x`, before W32 and C32 have finished)
+
+XR3 on `repair-n40-s1x`: 40 fixed, 40 clean, audit 7 of 7, 47.1 minutes (the other two arms are running; the
+table comes with them). Two things in that run set up one more arm:
+
+- The notes call without thinking costs almost nothing: 13 cuts wrote 4,892 tokens in all (46,816 in part A's XR
+  for 10 cuts) and no cut failed. It keeps the notices word for word; its STATE is thinner (it keeps one line
+  called `ticket` and overwrites it, where the thinking model kept a line per ticket), and the audit was answered
+  with one search of the archive, all seven lines right.
+- Half the run was the model thinking to its limit: 15 of 319 calls took more than a minute each and 1,318 of the
+  2,746 model seconds between them; eleven replies came back empty after 8,192 tokens of thinking and were asked
+  for again. The server wrote 234,000 tokens in this arm and the agent received 139,000. One ticket (`peekable`,
+  the 37th) took twelve minutes that way. This has nothing to do with the context method, every arm has it, and
+  the ledger arms do not, because they run at `reasoning_effort=medium`. The proxy can set that for a client that
+  does not (`--effort medium`: it adds the field to every call it forwards).
+
+**XR4** = XR3 with `--effort medium` on the proxy, on `repair-n40-s1x`. Expected: 36 or more clean, audit 6 or 7 of
+7, and 35 minutes or less (three quarters of XR3's time); fewer than 30,000 tokens written and thrown away. If it
+is not faster, effort is not what bounds the thinking on this model and the cap on a reply's tokens is the next
+thing to try. It is a setting of the model, not a way of managing context: W32 and C32 would gain the same from it
+if their client set it, and a comparison at medium effort for all three is the run after this one if XR4 holds.
+
+Then the queue runs the two 1M ledger lines on the day's final check code (N32g and X32g on the second 1M stream;
+expectations as registered under campaign 13, part B, items 3 and 4). The self-test of `repair-n40-s1x` runs
+between 13b and 13c, while no server is up.
