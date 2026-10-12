@@ -1424,3 +1424,57 @@ the model server: 190 s reading (517K tokens that were not in its cache, 2,720 a
 as much again in notes, the turns re-read after each cut and the uneven ends of cached blocks) and 333 s writing
 (35.3K tokens at 106 a second, 20K of them notes). The proxy itself adds 2 seconds over the run; the client, its
 155 shell commands and the trial start and end add about a minute.
+
+### X32n2 at one million tokens: 220 of 228 in 53 minutes. The bar is met
+
+| 1M tokens, 32K window | right | minutes | notes calls | counters ever wrong in the NOTES |
+| --- | ---: | ---: | --- | ---: |
+| harness keeper, in-place notes (N32u) | 228/228 | 50.2 | 63 cuts, 20 asked again | 0 of 63 versions |
+| proxy, full rewrite (X32b) | 222/228 | 95.1 | 102 cuts | not audited |
+| proxy, in-place notes, first build (X32m) | 216/228 | 75.8 | 77 cuts, 33 asked again | 2 of 77 |
+| **proxy, in-place notes, today's fixes (X32n2)** | **220/228** | **53.3** | 76 cuts, 5 asked again, none failed | 2 of 76 |
+
+The bar was 220 or more in under 70 minutes: met, by the smallest margin on the score and a wide one on time
+(expected: 222 or more in 58 to 66 minutes; it came in at 220 in 53). Not void, no blank answer. By type: final list
+24/25, current 56/58, earlier value 54/58, who 29/29, rule 29/29, method 28/29. No guard event at the end: host
+memory was 2.4 GiB available when the summary script had run.
+
+What each fix did here:
+- *Search hits labelled with their item:* the six questions about a numbered item that X32m got wrong in the first
+  150 items are all right, and "who" is 29 of 29 (X32m 26).
+- *Item 441*, where X32m left six answers blank: 7 of 7. The carry of lost searches was never needed, nor the
+  retry of an empty reply, nor the search limit (161 searches, X32m 255).
+- *Counting and following packed lines:* 5 replies asked for again instead of 33; notes calls wrote 119K tokens
+  instead of 134K, and the main loop 43K instead of 80K (fewer long search turns).
+- *The first reply stands:* used twice; no in-place attempt failed.
+
+Where the 53 minutes go (server counters): 2,789 of 3,196 seconds are the model server, 914 s reading (2.48M
+tokens not in its cache: the 1.06M stream once and 1.4M more in turns re-read after cuts, search results, notes
+calls and the uneven ends of cached blocks) and 1,875 s writing (192K tokens at 102 a second: 119K notes, 43K main
+loop, 29K in search rounds). The proxy adds 24 seconds over the run; the client, 659 shell commands and the trial's
+start and end about six minutes. 24 calls took over 20 seconds, 12 minutes in all (X32m: 60 calls, 42 minutes).
+
+**The eight misses.**
+- *Six, probably seven, are one confusion that my own fix made possible.* The search tool takes `before` and
+  `after` as message numbers; since this morning each hit also shows its item ("ITEM 150/617"). At item 336 the
+  model searched "before 332", meaning item 332; that is message 332, which is item 150. It read the result as
+  complete ("no other mention between item 72 and 332"), concluded that `moja47` had been removed since item 72,
+  and answered three questions about it with null although its NOTES said `moja47: set to 330 (ITEM 332)`; two
+  more answers of that item and one each at items 378 and 588 are the same. The thinking is on record.
+- *One lost to a misspelled name.* The model wrote `vozi36` for `vozimi36`; the new filter left the line out as
+  unsupported; the question about the missing mention got an 8,192-token reply that could not be used; the first
+  reply stood without the change. (Not asked about while wrong.)
+- *One sign slip in the notes:* "+35" written as `-46 - 35`, which every check passes; `nidi38` was wrong in the
+  final list (24/25).
+
+**Fixed as code state p (arms X32p, N32p, N32pr), unit-tested, under review, not yet run:** `recall` can run in
+the content's own numbering (`--recall-label '(?m)^ITEM (\d+)/' --recall-unit item`): every number it shows or
+takes is then an item number; when there are more matches than fit, the ones nearest to the anchor are shown and
+the count line comes first, not last. A line for a name the turns never mention, one or two letters from a
+mentioned name that has no line, is given to that name. The OPEN section is told not to repeat STATE (the model
+listed every live value there in every reply, about a fifth of what the notes calls wrote). For the hard stream: an
+amount may be a value some thing of STATE holds or held, and times or divided by 2 to 10 passes. The harness takes
+the proxy's rule that a questioned reply never falls back to the full rewrite.
+
+Next in this queue, as soon as the review is in: X32p on both 240K seeds (gate as before) and on the 1M stream.
+Expected at 1M: 225 or more of 228 in 46 to 54 minutes. A sign slip of the kind above can still cost one.
