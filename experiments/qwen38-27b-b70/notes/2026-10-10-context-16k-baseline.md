@@ -1991,3 +1991,48 @@ out of the pool, or the instruction should allow a ticket to be given up after s
 time cap leaves no grade behind; the task now carries the agent's time limit itself (`--agent-timeout`, 55
 minutes), and the harness grades what is there when it expires. (3) Half of the model's time in every arm is
 thinking that runs to the limit; XR4 in 13c tries the obvious setting.
+
+### Campaign 13b, the ledger runs (2026-10-12 18:07 to 18:44): the hard stream again, and the gate on the final code
+
+| run | checks | result | time | notes calls | counters ever wrong in the saved NOTES |
+| --- | --- | ---: | ---: | --- | ---: |
+| N32p, hard stream, seed 1 (campaign 13) | strict (`47fa9ae60`) | 48/49 | 14.0 min | 34 for 14 cuts | 1 |
+| N32h, same | first relative rule (`42df34618`) | 47/49 | 23.0 min | 28 for 14 cuts | 8 |
+| N32g, same | corrected rule (`a7f76c8c1`) | 46/49 | 15.3 min | 31 for 14 cuts | 5 |
+| X32g, same, through the proxy | corrected rule | 47/49 | 11.8 min | 17 cuts in place, 0 failed, 19 asked again | 5 |
+| X32g, rules stream, seed 1 (gate) | corrected rule | 46/46 | 9.6 min | 17 cuts, 0 failed, 2 asked again | 0 |
+
+What was written down for N32g: 46 or more (yes, just), 14 minutes or less (no: 15.3), 25 notes calls or fewer
+(no: 31), 2 lines or fewer left out (yes: 2), no more wrong values in the NOTES than N32p (no: 5 against 1). Taken
+one run against one run, the new rule bought nothing. Two things say that this is not the measure to judge it by:
+
+- The three harness runs differ by more than the rule can explain. The count of mentions asks again at 12 of 14
+  cuts in every one of them (this stream names its counters by pronoun and in passing, and the count check asks
+  whenever a counter is named more often than it has lines), so the notes calls cannot fall by much whatever the
+  working check does; and which of the model's misreadings ends up in the NOTES depends on what its second reply
+  happens to say.
+- The proxy run saved every reply, so the same replies can be put through each version of the checks and compared
+  with the true ledger (`check_score.py`, 234 counter lines of the first replies):
+
+  | checks of | accepted, right | accepted, **wrong** | asked about, wrong | asked about, right |
+  | --- | ---: | ---: | ---: | ---: |
+  | `47fa9ae60` (strict) | 155 | 0 | 5 | 64 |
+  | `42df34618` (first relative rule: another counter's value as the new value) | 197 | 4 | 1 | 22 |
+  | `a7f76c8c1` (corrected rule) | 197 | 0 | 5 | 22 |
+
+  On identical replies the corrected rule asks about 22 right lines where the strict checks asked about 64, lets
+  no wrong value through, and still asks about all five wrong ones; the first version of it let four of the five
+  through, which is what the audit of N32h shows from the other side (8 counters wrong).
+
+So the rule stays, on the strength of the controlled comparison, and the run-against-run table is kept as what it
+is: three draws from a noisy process. The five wrong lines are one sentence. "X received exactly what Y stood at
+then" is an increase by Y's value (the task statement says "increased by as much as another counter holds"); the
+model writes it as a set to Y's value about every other time, the checks ask, and its second reply usually says
+the same again; the line is then left out and the old value stays, wrong either way. All five counters ever wrong
+in X32g's NOTES are this. A question that told the model what the sentence can mean would be the next thing to
+try there; no check can supply the right number.
+
+The proxy's first run on the hard stream is also its fastest on any arm: 11.8 minutes against 14 to 23 for the
+harness keeper, with the same score within one answer. Retrieval at question time was not run again (see above).
+The gate on the final code is unchanged to the token from this afternoon's (the replay said the rules streams
+would not notice the new rules: no reply there contains what they act on).
