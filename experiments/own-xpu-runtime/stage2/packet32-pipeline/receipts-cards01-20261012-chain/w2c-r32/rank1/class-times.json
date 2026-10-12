@@ -1,0 +1,332 @@
+{
+  "profiling": true,
+  "timing_definition": "sum of individual GPU event execution durations",
+  "tokens": 64,
+  "classes": [
+    {
+      "class": "begin.0",
+      "device_ms": 1.07156,
+      "launches": 150,
+      "groups": 150
+    },
+    {
+      "class": "hc.a.norm",
+      "device_ms": 27.6427,
+      "launches": 7200,
+      "groups": 3600
+    },
+    {
+      "class": "hc.a.low",
+      "device_ms": 52.6645,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "hc.a.act",
+      "device_ms": 15.2524,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "hc.a.gate",
+      "device_ms": 80.2248,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "hc.a.mix",
+      "device_ms": 30.382,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "hc.a.inject",
+      "device_ms": 40.2884,
+      "launches": 7200,
+      "groups": 3600
+    },
+    {
+      "class": "gdn.qkv",
+      "device_ms": 212.413,
+      "launches": 2700,
+      "groups": 2700
+    },
+    {
+      "class": "gdn.z",
+      "device_ms": 130.102,
+      "launches": 2700,
+      "groups": 2700
+    },
+    {
+      "class": "gdn.a",
+      "device_ms": 13.9389,
+      "launches": 2700,
+      "groups": 2700
+    },
+    {
+      "class": "gdn.b",
+      "device_ms": 13.5675,
+      "launches": 2700,
+      "groups": 2700
+    },
+    {
+      "class": "gdn.conv",
+      "device_ms": 19.0938,
+      "launches": 2700,
+      "groups": 2700
+    },
+    {
+      "class": "gdn.recurrence",
+      "device_ms": 92.7401,
+      "launches": 2700,
+      "groups": 2700
+    },
+    {
+      "class": "gdn.gated",
+      "device_ms": 20.1357,
+      "launches": 2700,
+      "groups": 2700
+    },
+    {
+      "class": "attention",
+      "device_ms": 192.03,
+      "launches": 7200,
+      "groups": 3600
+    },
+    {
+      "class": "attn.combine",
+      "device_ms": 40.0606,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "hc.f.norm",
+      "device_ms": 27.2203,
+      "launches": 7200,
+      "groups": 3600
+    },
+    {
+      "class": "hc.f.low",
+      "device_ms": 52.4337,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "hc.f.act",
+      "device_ms": 16.7263,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "hc.f.gate",
+      "device_ms": 80.4965,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "hc.f.mix",
+      "device_ms": 30.3029,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "hc.f.inject",
+      "device_ms": 40.3523,
+      "launches": 7200,
+      "groups": 3600
+    },
+    {
+      "class": "router",
+      "device_ms": 51.0248,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "route",
+      "device_ms": 247.257,
+      "launches": 18000,
+      "groups": 3600
+    },
+    {
+      "class": "expsgate",
+      "device_ms": 303.509,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "expsgate.check",
+      "device_ms": 13.6108,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "expsup.check",
+      "device_ms": 11.1799,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "expsact",
+      "device_ms": 16.353,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "expsdown",
+      "device_ms": 471.906,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "expsdown.check",
+      "device_ms": 10.5006,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "shexpgate",
+      "device_ms": 46.9905,
+      "launches": 7200,
+      "groups": 3600
+    },
+    {
+      "class": "shexpup",
+      "device_ms": 43.587,
+      "launches": 7200,
+      "groups": 3600
+    },
+    {
+      "class": "shexpact",
+      "device_ms": 14.2629,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "shexpdown",
+      "device_ms": 48.1718,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "shared_gate",
+      "device_ms": 15.4005,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "moe",
+      "device_ms": 22.3509,
+      "launches": 7200,
+      "groups": 7200
+    },
+    {
+      "class": "ffn.combine",
+      "device_ms": 39.3489,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "qsa.qgate",
+      "device_ms": 83.1874,
+      "launches": 900,
+      "groups": 900
+    },
+    {
+      "class": "qsa.k",
+      "device_ms": 7.74271,
+      "launches": 900,
+      "groups": 900
+    },
+    {
+      "class": "qsa.v",
+      "device_ms": 7.50802,
+      "launches": 900,
+      "groups": 900
+    },
+    {
+      "class": "qsa.iq",
+      "device_ms": 8.23656,
+      "launches": 900,
+      "groups": 900
+    },
+    {
+      "class": "qsa.ik",
+      "device_ms": 5.82979,
+      "launches": 1800,
+      "groups": 900
+    },
+    {
+      "class": "qsa.prepare",
+      "device_ms": 7.58947,
+      "launches": 900,
+      "groups": 900
+    },
+    {
+      "class": "qsa.pool",
+      "device_ms": 4.2649,
+      "launches": 900,
+      "groups": 900
+    },
+    {
+      "class": "qsa.select",
+      "device_ms": 12.5386,
+      "launches": 1800,
+      "groups": 900
+    },
+    {
+      "class": "qsa.attention",
+      "device_ms": 178.957,
+      "launches": 2700,
+      "groups": 900
+    },
+    {
+      "class": "commit.final",
+      "device_ms": 0.547705,
+      "launches": 150,
+      "groups": 150
+    },
+    {
+      "class": "final.norm",
+      "device_ms": 0.468442,
+      "launches": 128,
+      "groups": 64
+    },
+    {
+      "class": "final.low",
+      "device_ms": 0.92958,
+      "launches": 64,
+      "groups": 64
+    },
+    {
+      "class": "final.act",
+      "device_ms": 0.267597,
+      "launches": 64,
+      "groups": 64
+    },
+    {
+      "class": "final.gate",
+      "device_ms": 1.40573,
+      "launches": 64,
+      "groups": 64
+    },
+    {
+      "class": "final.mix",
+      "device_ms": 0.522607,
+      "launches": 64,
+      "groups": 64
+    },
+    {
+      "class": "logits",
+      "device_ms": 107.203,
+      "launches": 64,
+      "groups": 64
+    },
+    {
+      "class": "argmax",
+      "device_ms": 1.54521,
+      "launches": 128,
+      "groups": 64
+    }
+  ],
+  "scope": "entire request: prompt plus accepted, rejected and redone halves"
+}

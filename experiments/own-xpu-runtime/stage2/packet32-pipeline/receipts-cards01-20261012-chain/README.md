@@ -43,3 +43,12 @@ the official draft head fed with this quantized target's own final streams guess
 target's next token **198 times out of 256 (77.3%, 95% interval 71.8–82.0%)** over four
 development prompts (84%, 67%, 81%, 77%); requantising its experts to 8 bits changes 2
 of 256 guesses and not the hit count. Token lookups reach 6–9%, which is what W2n shows.
+
+**Two more diagnostics (02:57 and 03:03 UTC).** [W2c](w2c-r32/receipt.json), per-class GPU
+time per rank (prompt, kept, discarded and redone halves together): 19.4 ms of GPU time
+per half on the first card and 20.0 ms on the second, against 22.8 and 23.1 ms of
+host-observed half time: about 3 ms per half is not kernel time (lookups, drains, stream
+read-back and upload, controller round trips). [W2s with prompt overlap off](w2s-off-r32/receipt.json):
+the 86 prompt positions after the first take 4.13 s without overlap and 2.06 s with it
+(20.8 against 41.7 positions per second); the first position costs 17–19 s per rank of
+one-time kernel compilation in either case.
