@@ -165,10 +165,52 @@ def run_tests(root: Path, mod: str, classes: list[str], timeout: int = 20) -> di
         return None
 
 
-def screen(src_root: Path, work: Path, out: Path, per_func: int = 4) -> None:
-    """For every candidate (at most per_func per function, spread over kinds): does the function's own test class
-    fail, without hanging? Writes the survivors as JSON."""
-    keep = []
+RUN_ALL = r'''
+import sys, unittest, json
+suite = unittest.TestSuite()
+for mod in ("test_more", "test_recipes"):
+    suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(__import__("tests." + mod, fromlist=["x"])))
+r = unittest.TextTestRunner(stream=open("/dev/null", "w"), verbosity=0).run(suite)
+print(json.dumps({"run": r.testsRun, "bad": [t.id() for t, _ in r.failures + r.errors]}))
+'''
+
+
+def run_all(root: Path, timeout: int = 240) -> dict | None:
+    try:
+        p = subprocess.run([sys.executable, "-I", "-c", "import sys; sys.path.insert(0, %r)\n" % str(root) + RUN_ALL],
+                           cwd=root, capture_output=True, text=True, timeout=timeout)
+        return json.loads(p.stdout.strip().splitlines()[-1]) if p.stdout.strip() else None
+    except (subprocess.TimeoutExpired, json.JSONDecodeError, IndexError):
+        return None
+
+
+def screen_one(job: tuple) -> dict | None:
+    """One candidate: its function's own test class must fail (1 to MAX_FAIL tests, no hang); then the whole suite
+    is run once to count the tests it breaks elsewhere (`collateral`: a defect in a helper breaks its callers)."""
+    src_root, work, name, src, cls, c, i = job
+    root = Path(work) / f"w{i}"
+    if root.exists():
+        shutil.rmtree(root)
+    shutil.copytree(Path(src_root) / "more_itertools", root / "more_itertools")
+    shutil.copytree(Path(src_root) / "tests", root / "tests")
+    (root / "more_itertools" / name).write_text(apply(src, [c]))
+    got = run_tests(root, TESTS[name], [cls])
+    out = None
+    if got and 1 <= len(got["bad"]) <= MAX_FAIL:
+        every = run_all(root)
+        if every is not None:
+            own = f"tests.{TESTS[name]}.{cls}."
+            out = dict(c, file=name, cls=cls, fails=len(got["bad"]), of=got["run"],
+                       collateral=sum(not t.startswith(own) for t in every["bad"]))
+    shutil.rmtree(root, ignore_errors=True)
+    return out
+
+
+def screen(src_root: Path, work: Path, out: Path, per_func: int = 4, workers: int = 4) -> None:
+    """Every candidate (at most per_func per function, spread over the kinds of mutation) through screen_one,
+    several at a time. Writes the survivors as JSON."""
+    from concurrent.futures import ProcessPoolExecutor
+    jobs = []
     for name in FILES:
         src = (src_root / "more_itertools" / name).read_text()
         classes = test_classes((src_root / "tests" / f"{TESTS[name]}.py").read_text())
@@ -182,25 +224,24 @@ def screen(src_root: Path, work: Path, out: Path, per_func: int = 4) -> None:
             base = run_tests(src_root, TESTS[name], [cls])
             if not base or base["bad"] or not base["run"]:
                 continue                              # the class must pass on the untouched library
-            rng = random.Random(func)
-            rng.shuffle(cands)
-            seen_kinds, tried = set(), 0
-            for c in sorted(cands, key=lambda c: c["kind"] in seen_kinds):
-                if tried >= per_func:
-                    break
-                tried += 1
-                seen_kinds.add(c["kind"])
-                if work.exists():
-                    shutil.rmtree(work)
-                shutil.copytree(src_root / "more_itertools", work / "more_itertools")
-                shutil.copytree(src_root / "tests", work / "tests")
-                (work / "more_itertools" / name).write_text(apply(src, [c]))
-                got = run_tests(work, TESTS[name], [cls])
-                if got and 1 <= len(got["bad"]) <= MAX_FAIL:
-                    keep.append(dict(c, file=name, cls=cls, fails=len(got["bad"]), of=got["run"]))
-                    print(f"keep {name}:{func} line {c['line']} ({c['kind']}): {len(got['bad'])}/{got['run']} tests of {cls} fail", flush=True)
+            random.Random(func).shuffle(cands)
+            picked, kinds = [], set()
+            for c in cands:                           # one of each kind first, then whatever is left
+                if c["kind"] not in kinds:
+                    picked.append(c)
+                    kinds.add(c["kind"])
+            picked += [c for c in cands if c not in picked]
+            jobs += [(str(src_root), str(work), name, src, cls, c, len(jobs) + k) for k, c in enumerate(picked[:per_func])]
+    keep = []
+    with ProcessPoolExecutor(max_workers=workers) as pool:
+        for got in pool.map(screen_one, jobs):
+            if got:
+                keep.append(got)
+                print(f"keep {got['file']}:{got['func']} line {got['line']} ({got['kind']}): {got['fails']}/{got['of']} tests of "
+                      f"{got['cls']} fail, {got['collateral']} elsewhere", flush=True)
     out.write_text(json.dumps(keep, indent=1))
-    print(f"{len(keep)} mutations kept over {len({(k['file'], k['func']) for k in keep})} functions")
+    print(f"{len(keep)} of {len(jobs)} mutations kept over {len({(k['file'], k['func']) for k in keep})} functions; "
+          f"{len({(k['file'], k['func']) for k in keep if not k['collateral']})} functions have one that breaks nothing else")
 
 
 # ------------------------------------------------------------------ the task
@@ -378,13 +419,61 @@ print(f"repair score {score:.4f} fixed {counts['fixed']}/{n} clean {counts['clea
 '''
 
 
+SOLVE = r'''#!/usr/bin/env python3
+"""The scripted solution (also the builder's self-test): put the original line back for every ticket and follow
+the rules in force. `careless` fixes everything and follows none of the notices."""
+import json, sys
+careless = "careless" in sys.argv[1:]
+spec = json.load(open("/tests/spec.json"))
+at, mark = spec["rule_at"], spec["mark"]
+for tk in spec["bugs"]:
+    path = f"/app/more_itertools/{tk['file']}"
+    now = open(path).read().split("\n")
+    ref = open(f"/tests/reference/{tk['file']}").read().split("\n")
+    line = ref[tk["line"] - 1]
+    if tk["ticket"] > at["R1"] and not careless:
+        line = line + "  " + mark
+    now[tk["line"] - 1] = line
+    open(path, "w").write("\n".join(now))
+    if tk["ticket"] > at["R2"] and not careless:
+        open("/app/FIXES.md", "a").write(f"{tk['ticket']} | {tk['func']} | {tk['kind']}\n")
+    if tk["ticket"] > at["R3"] and tk["file"] == "recipes.py" and not careless:
+        open("/app/RECIPES.txt", "a").write(tk["func"] + "\n")
+'''
+
+
+def selftest(task: Path, image: str) -> None:
+    """In a container without network: the untouched task scores 0 fixed; the scripted solution scores N clean;
+    the careless solution scores N fixed and is clean only for the tickets before the first notice."""
+    spec = json.loads((task / "tests" / "spec.json").read_text())
+    n, first = len(spec["bugs"]), min(spec["rule_at"].values())
+    before = sum(b["ticket"] < first for b in spec["bugs"])
+    script = ("set -e; for mode in none solve careless; do rm -rf /app /logs; mkdir -p /app /logs; "
+              "cp -r /env/more_itertools /env/tests /app/; "
+              "if [ $mode = solve ]; then python3 /solution/solve.py; fi; "
+              "if [ $mode = careless ]; then python3 /solution/solve.py careless; fi; "
+              "echo \"== $mode\"; bash /tests/test.sh; done")
+    p = subprocess.run(["docker", "run", "--rm", "--network", "none", "--memory", "1g", "--cpus", "2",
+                        "-v", f"{(task / 'environment').resolve()}:/env:ro", "-v", f"{(task / 'tests').resolve()}:/tests:ro",
+                        "-v", f"{(task / 'solution').resolve()}:/solution:ro", image, "bash", "-c", script],
+                       capture_output=True, text=True)
+    print(p.stdout.strip() or p.stderr.strip())
+    got = {m: (int(a), int(b)) for m, a, b in re.findall(r"== (\w+)\nrepair score [\d.]+ fixed (\d+)/\d+ clean (\d+)/", p.stdout)}
+    want = {"none": (0, 0), "solve": (n, n), "careless": (n, before)}
+    print("self-test", "OK" if got == want else f"FAILED: got {got}, expected {want}")
+    if got != want:
+        sys.exit(1)
+
+
 def build(src_root: Path, kept: list[dict], out: Path, n: int, seed: int, image: str, rule_at: tuple[int, ...]) -> None:
     rng = random.Random(seed)
     by_func: dict[tuple[str, str], list[dict]] = {}
     for k in kept:
         by_func.setdefault((k["file"], k["func"]), []).append(k)
+    best = {f: min(c.get("collateral", 0) for c in cs) for f, cs in by_func.items()}
     funcs = sorted(by_func)
     rng.shuffle(funcs)
+    funcs.sort(key=lambda f: best[f] > 0)             # stable: those that break nothing else first
     # a quarter from recipes.py (the rule by condition needs them), the rest from more.py
     want_rec = max(n // 4, 1)
     rec = [f for f in funcs if f[0] == "recipes.py"][:want_rec]
@@ -393,7 +482,8 @@ def build(src_root: Path, kept: list[dict], out: Path, n: int, seed: int, image:
     if len(chosen) < n:
         sys.exit(f"only {len(chosen)} functions with a usable mutation; asked for {n}")
     rng.shuffle(chosen)
-    bugs = [rng.choice(by_func[f]) for f in chosen]
+    bugs = [rng.choice([c for c in by_func[f] if c.get("collateral", 0) == best[f]]) for f in chosen]
+    print(f"chosen: {sum(best[f] == 0 for f in chosen)} of {len(chosen)} break only their own test class")
     task = out / f"repair-n{n}-s{seed}"
     if task.exists():
         shutil.rmtree(task)
@@ -436,8 +526,12 @@ def build(src_root: Path, kept: list[dict], out: Path, n: int, seed: int, image:
                                                  "n_items": total, "seed": seed, "library": "more-itertools 10.7.0"}, indent=1))
     (tests / "grade.py").write_text(GRADE)
     (tests / "test.sh").write_text("#!/bin/bash\nmkdir -p /logs/verifier\npython3 /tests/grade.py\n")
+    (tests / "reference").mkdir()
+    for name in FILES:
+        shutil.copy(src_root / "more_itertools" / name, tests / "reference" / name)
     (task / "solution").mkdir()
-    (task / "solution" / "solve.sh").write_text("#!/bin/bash\necho 'no scripted solution: see tests/spec.json for the injected lines'\n")
+    (task / "solution" / "solve.py").write_text(SOLVE)
+    (task / "solution" / "solve.sh").write_text("#!/bin/bash\npython3 /solution/solve.py \"$@\"\n")
     (task / "task.toml").write_text(textwrap.dedent(f"""\
         schema_version = "1.3"
         artifacts = []
@@ -480,22 +574,24 @@ def main() -> None:
     ap.add_argument("--rule-at", default="3,9,16", help="ticket numbers of the three notices")
     ap.add_argument("--screen", metavar="OUT_JSON", help="(inside the container) screen the mutations and write the survivors")
     ap.add_argument("--work", default="/tmp/repair-work")
+    ap.add_argument("--workers", type=int, default=6, help="candidates screened at a time")
     a = ap.parse_args()
     src = Path(a.src)
     if a.screen:
-        screen(src, Path(a.work), Path(a.screen))
+        screen(src, Path(a.work), Path(a.screen), workers=a.workers)
         return
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     kept_file = out / "mutations.json"
     if not kept_file.exists():
         # the library's tests run only in a container: no network, read-only source, the script mounted beside it
-        subprocess.run(["docker", "run", "--rm", "--network", "none", "--memory", "1g", "--cpus", "2",
+        subprocess.run(["docker", "run", "--rm", "--network", "none", "--memory", "2g", "--cpus", str(a.workers),
                         "-v", f"{src.resolve()}:/src:ro", "-v", f"{Path(__file__).resolve()}:/builder/make_repair_tasks.py:ro",
                         "-v", f"{out.resolve()}:/out", a.image, "python3", "-I", "/builder/make_repair_tasks.py",
-                        "--src", "/src", "--screen", "/out/mutations.json"], check=True)
+                        "--src", "/src", "--screen", "/out/mutations.json", "--workers", str(a.workers)], check=True)
     kept = json.loads(kept_file.read_text())
     build(src, kept, out, a.n, a.seed, a.image, tuple(int(x) for x in a.rule_at.split(",")))
+    selftest(out / f"repair-n{a.n}-s{a.seed}", a.image)
 
 
 if __name__ == "__main__":
