@@ -341,8 +341,9 @@ class InPlace(unittest.TestCase):
             msgs = conversation(6)
             msgs[6:6] = [{"role": "assistant", "content": "", "tool_calls": [{"id": "cat", "type": "function", "function": {"name": "bash", "arguments": "{}"}}]},
                          {"role": "tool", "tool_call_id": "cat", "content": '{"p21_7": 571, "p22_1": 3} ' + "filler " * 60}]   # a printed answers file
+            s = keeper.session({"model": "m", "messages": msgs}, None)
+            s.state["notes"] = "RULES\n(none)\nSTATE\np21_7: 571\nOPEN"       # the model had noted an answer key as a thing of STATE
             keeper.complete({"model": "m", "messages": msgs})
-            s = next(iter(keeper.sessions.values()))
             self.assertEqual((s.state["inplace_cuts"], s.state["inplace_reasks"]), (1, reasks))
 
     def test_options_are_checked(self):
