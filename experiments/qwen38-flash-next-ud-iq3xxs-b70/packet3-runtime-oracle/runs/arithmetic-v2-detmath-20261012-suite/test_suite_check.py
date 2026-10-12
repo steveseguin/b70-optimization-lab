@@ -132,6 +132,9 @@ class ExactChecks(unittest.TestCase):
             row=check.read(path);row['passed']=False;path.write_text(json.dumps(row))
             with self.assertRaisesRegex(ValueError,'runtime receipt failed'):
                 check.check_prompt(self.copy,self.reference)
+            row.pop('schema');path.write_text(json.dumps(row))
+            with self.assertRaisesRegex(ValueError,'runtime receipt failed'):
+                check.check_prompt(self.copy,self.reference)
         finally:
             path.unlink()
 

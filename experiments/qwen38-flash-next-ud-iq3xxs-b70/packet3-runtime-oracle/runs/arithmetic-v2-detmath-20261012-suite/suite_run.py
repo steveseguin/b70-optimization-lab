@@ -199,6 +199,9 @@ def compress(directory, receipt):
         source.unlink()
 
 def run_prompt(row, sealed, binary, affinity):
+    check(sha(binary) == sealed['binary_sha256'], 'sealed binary changed between prompts')
+    for name, digest in sealed['arithmetic']['arithmetic_sources'].items():
+        check(sha(ROOT/name) == digest, 'arithmetic source changed between prompts: ' + name)
     prompt = row['id']
     dest = HERE / prompt
     bundle, inp = prepare(row)
@@ -423,11 +426,14 @@ Only incident-retrospective is a new full fresh-process repeat; other prompts ha
 The reference screen uses two repeats; runtime qualification still requires its own repeats.
 '''
     for root in (HERE, INPUTS):
-        (root/'README.md').write_text(text)
+        temporary = root/'README.md.tmp'
+        temporary.write_text(text)
+        check(temporary.read_text() == text, 'README write verification')
+        temporary.replace(root/'README.md')
 
 def publish(prompt):
     def git(*args):
-        return subprocess.check_output(PREFIX+['git', *args], cwd=ROOT, text=True, stderr=subprocess.STDOUT)
+        return subprocess.check_output(PREFIX+['git', '-c', 'pack.threads=1', '-c', 'index.threads=1', *args], cwd=ROOT, text=True, stderr=subprocess.STDOUT)
     check(git('branch','--show-current').strip() == 'main', 'main only')
     check(not git('diff','--cached','--name-only').strip(), 'unrelated staged files; do not commit')
     paths = [HERE/prompt, INPUTS/prompt, HERE/'suite_run.py', HERE/'runner-snapshots', HERE/'.gitignore', HERE/'README.md', INPUTS/'.gitignore', INPUTS/'README.md', INPUTS/'suite-manifest.json']

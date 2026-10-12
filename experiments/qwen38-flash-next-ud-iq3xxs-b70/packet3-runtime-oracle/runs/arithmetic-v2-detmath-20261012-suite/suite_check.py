@@ -30,6 +30,7 @@ def token_record(directory):
     # Runtime writes receipt.json; CPU oracle writes result.json plus orchestration receipt.
     receipt_path = directory/'receipt.json'
     receipt = read(receipt_path) if receipt_path.exists() else {}
+    require(receipt.get('passed') is not False and not receipt.get('teardown_pending'), 'runtime receipt failed')
     if receipt.get('schema') == 'own-runtime.iq3.packet26.run.v1':
         require(receipt.get('passed') is True, 'runtime receipt failed')
         record = receipt
