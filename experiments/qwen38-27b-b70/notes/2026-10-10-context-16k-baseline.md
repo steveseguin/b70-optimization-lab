@@ -1396,3 +1396,31 @@ an amount may also be any value a thing of STATE holds, and times or divided by 
 reply that is asked for again holds only the lines in question (`merge_replies` already keeps the rest), which cuts
 the cost of every question, on every stream, from about 1,500 tokens to a few hundred; and the harness takes the
 proxy's rule that a questioned reply never falls back to the full rewrite.
+
+### X32n2 passes the gate: 39/39 in 8.8 minutes and 46/46 in 9.7, NOTES clean
+
+| 240K rules stream, 32K window | seed 0 | seed 1 |
+| --- | ---: | ---: |
+| proxy, full rewrite (X32b, campaign 9) | 39/39, 17.0 min | 44/46, 18.0 min |
+| proxy, in-place notes, last night (X32m) | 39/39, 10.2 min | 46/46, 13.1 min |
+| **proxy, in-place notes, today's fixes (X32n2)** | **39/39, 8.8 min** | **46/46, 9.7 min** |
+| harness keeper, in-place notes (N32u, campaign 10b) | 39/39, 9.9 min | 46/46, 10.0 min |
+| X32n2: in-place cuts, failed, replies asked for again | 17, 0, 1 | 17, 0, 2 |
+| X32n2: tokens written by notes calls (X32m: 22K, 31K) | 16.0K | 20.0K |
+| X32n2: counters ever wrong in the NOTES (17 of 17 versions audited) | 0 | 0 |
+
+The proxy is now as fast as the harness arm it was built from, on both streams, with the same score and clean
+notes. What the fixes did in these two runs:
+
+- No line for a name the turns never mention was written at all: saying what the first message after the NOTES
+  is was enough (the filter that would have left such lines out never had to act).
+- On seed 0 the model again answered the count question at the first cut with "Let me verify each mention in the
+  archive before replying." The first reply stood, the cut was made in place, and the RULES section holds the two
+  rules of the stream and nothing else. That is the whole difference between 14/39 and 39/39 on this seed.
+- Three replies were asked for again over the two runs (X32m: 22).
+
+Where the 9.7 minutes of seed 1 go (the server's own counters, sampled every 30 seconds): 523 of 584 seconds are
+the model server: 190 s reading (517K tokens that were not in its cache, 2,720 a second: the 240K stream once, and
+as much again in notes, the turns re-read after each cut and the uneven ends of cached blocks) and 333 s writing
+(35.3K tokens at 106 a second, 20K of them notes). The proxy itself adds 2 seconds over the run; the client, its
+155 shell commands and the trial start and end add about a minute.
