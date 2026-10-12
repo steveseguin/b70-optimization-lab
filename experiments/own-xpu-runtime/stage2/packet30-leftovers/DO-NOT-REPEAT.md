@@ -13,4 +13,6 @@
 | Mark empty attention triple equality passed | [Attention diagnostic](attention-design.md): Core rejects, incumbent leaves output | Separately approved contract repair; unchanged v2 here |
 | Compare candidate after failed baseline with empty current output vector | [Harness review](review-harness.md) | Size guard and baseline failure propagated, now fixed |
 
+| Trust binary `ldd` alone or omit coordinator `LD_LIBRARY_PATH` | [2026-10-12 K0 admission failure](evidence/20261012-k0-no-devices-missing-library-path/README.md): lazy Level Zero adapter absent, zero devices, empty kernel delta; false latch retired | Require unchanged library path, filesystem-only lazy-library preflight and explicit device-contact failure classification |
+
 No candidate is closed as a performance winner or loser by these CPU checks.

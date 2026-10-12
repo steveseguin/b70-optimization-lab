@@ -47,10 +47,45 @@ def deadlines(window, seconds=None):
                 expectation_enforced=False, watchdog_seconds=seconds, minimum_watchdog_seconds=minimum,
                 submission_budget_seconds={"all": 300}, expected_event_seconds=.010)
 
-def ldd_preflight(binary, runner=subprocess.run):
-    r = runner(["ldd", str(binary)], capture_output=True, text=True, timeout=10)
+def ldd_preflight(binary, runner=subprocess.run, environment=None):
+    r = runner(["ldd", str(binary)], capture_output=True, text=True, timeout=10, env=environment)
     require(r.returncode == 0 and "not found" not in r.stdout+r.stderr, "ldd dependency preflight failed: "+r.stdout+r.stderr)
     return dict(argv=["ldd", str(binary)], returncode=r.returncode, stdout=r.stdout, stderr=r.stderr)
+
+# This compiler ships both adapters; its default v2 adapter is required here.
+LAZY_LIBRARIES = ("libur_adapter_level_zero_v2.so", "libumf.so", "libze_loader.so")
+
+def lazy_library_preflight(library_path):
+    """Resolve files only. Never dlopen a library or enumerate devices."""
+    require(bool(library_path), "LD_LIBRARY_PATH is required from the coordinator")
+    entries = [Path(entry or ".") for entry in library_path.split(":")]
+    resolved = {}
+    for name in LAZY_LIBRARIES:
+        found = next((entry/name for entry in entries if (entry/name).is_file()), None)
+        require(found is not None, "missing lazy runtime library in LD_LIBRARY_PATH: "+name)
+        resolved[name] = str(found.resolve())
+    return dict(passed=True, method="filesystem path search only; no dlopen/discovery", libraries=resolved)
+
+def kernel_delta_empty(text):
+    return all(not line.strip() or line.strip() == "-- No entries --" for line in text.splitlines())
+
+def precontact_failure(owners):
+    # Unknown contact, absent reports, incomplete journal or a running child
+    # retain the old fail-closed latch behaviour.
+    return bool(owners) and all(o.get("device_contacted") is False and
+        o.get("child_still_running") is False and o.get("kernel_delta_empty") is True
+        for o in owners)
+
+def owner_contact(native):
+    for name in ("contact.json", "failure.json", "receipt.json"):
+        path = native/name
+        if path.is_file():
+            try:
+                row = read(path)
+                return row.get("device_contacted"), dict(path=str(path), sha256=sha(path), report=row)
+            except (ValueError, OSError):
+                return None, None
+    return None, None
 
 def sealed_build(root=HERE):
     path = root/"build-receipt.json"
@@ -99,7 +134,7 @@ def k0_gate(path, identity):
     require(path is not None, "G3 requires --k0 passing K0 window receipt")
     prior = read(path)
     require(prior.get("window") == "K0" and prior.get("passed") is True, "K0 not passed")
-    for key in ("boot_id", "card", "binary_sha256", "environment", "build_receipt_sha256"):
+    for key in ("boot_id", "card", "binary_sha256", "environment", "ld_library_path_sha256", "build_receipt_sha256"):
         require(prior.get(key) == identity.get(key), "K0 identity mismatch: "+key)
     owners = prior.get("owners", [])
     require(len(owners) == 1, "K0 owner coverage")
@@ -201,9 +236,10 @@ def main(argv=None):
     out = confined(a.output, HERE)
     require(not out.exists(), "output directory already exists; no retries")
     binary, bindings = sealed_build()
-    loader = ldd_preflight(binary)  # Deliberately before latch inspection/creation.
+    loader = ldd_preflight(binary, environment=environment["native"])
+    lazy_loader = lazy_library_preflight(environment["native"]["LD_LIBRARY_PATH"])  # Before any latch/native launch.
     boot = Path("/proc/sys/kernel/random/boot_id").read_text().strip()
-    identity = dict(boot_id=boot, card=a.card, binary_sha256=sha(binary), environment=environment,
+    identity = dict(ld_library_path_sha256=hashlib.sha256(os.fsencode(environment["native"]["LD_LIBRARY_PATH"])).hexdigest(), boot_id=boot, card=a.card, binary_sha256=sha(binary), environment=environment,
                     build_receipt_sha256=sha(HERE/"build-receipt.json"))
     if a.window == "G3":
         k0_gate(a.k0, identity)
@@ -214,7 +250,8 @@ def main(argv=None):
     out.mkdir(parents=True)
     (out/"preflight-kernel.txt").write_text(pre)
     record = dict(schema="packet30.window.v1", **identity, window=a.window, passed=False,
-                  device_executed=False, owners=[], deadlines=limits, ldd_preflight=loader,
+                  device_executed=False, device_contacted=False, owners=[], deadlines=limits, ldd_preflight=loader,
+                  lazy_library_preflight=lazy_loader,
                   k0=str(a.k0.resolve()) if a.k0 else None,
                   bindings={str(k):v for k,v in bindings.items()})
     reasons = []
@@ -222,6 +259,11 @@ def main(argv=None):
         save(out/"window.json", record)
     def failure(reason):
         record.update(passed=False, stop_reason=reason)
+        if precontact_failure(record["owners"]) and not latch.exists():
+            record.update(device_contacted=False, failure_class="preflight", fault_latch_written=False)
+            persist()
+            return
+        record["fault_latch_written"] = True
         persist()
         save(latch, dict(boot_id=boot, window=str(out), reason=reason,
                         units=[r.get("unit") for r in record["owners"]]))
@@ -239,8 +281,14 @@ def main(argv=None):
             with (out/("owner%d.log"%(index+1))).open("w") as log, (out/("owner%d-kernel.log"%(index+1))).open("w") as kernel:
                 child = NativeChild(command, stdout=log, environment=environment)
                 owner = dict(unit=child.unit, pid=child.pid, command=command, passed=False)
-                record["owners"].append(owner); record["device_executed"] = True; persist()
+                record["owners"].append(owner); record["device_executed"] = True; record["device_contacted"] = None; persist()
                 owner.update(supervise(child, remaining, cursor, kernel, failure, reasons))
+                contacted, report = owner_contact(native)
+                owner.update(device_contacted=contacted, native_contact_report=report,
+                             kernel_delta_empty=kernel_delta_empty((out/("owner%d-kernel.log"%(index+1))).read_text()) and
+                             not any("journal failed" in reason for reason in reasons))
+                record["device_contacted"] = (True if any(o.get("device_contacted") is True for o in record["owners"])
+                                              else False if all(o.get("device_contacted") is False for o in record["owners"]) else None)
                 require(owner["returncode"] in ((0, 2) if a.window == "G3" else (0,)) and not reasons, "native owner failed/stopped")
             unchanged(bindings)
             native_receipt = native_gate(native, a.window, allow_completed_failure=True)

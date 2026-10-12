@@ -49,7 +49,7 @@ def main():
  for f in (P/'build').glob('*repeat*.log'):evidence[str(f.relative_to(P))]=f.read_text()
  for f in (P/'build').glob('*build*.log'):evidence[str(f.relative_to(P))]=f.read_text()
  raw=json.dumps(evidence,ensure_ascii=False,sort_keys=True).encode();(P/'cpu-evidence.json.gz').write_bytes(gzip.compress(raw,mtime=0))
- receipts={n:sha(P/n) for n in (*families,'protocol-tests.json','kernel-sizes.json','ldd-preflight.json','cpu-evidence.json.gz')}
+ receipts={n:sha(P/n) for n in (*families,'protocol-tests.json','kernel-sizes.json','ldd-preflight.json','cpu-evidence.json.gz','lazy-library-preflight.json')}
  save(P/'cpu-tests.json',dict(passed=True,device_executed=False,arithmetic='iq3-p17-detmath-v2',harness=rows,exactness_jsonl_sha256=hashes[0],families=families,receipt_hashes=receipts,protocol_tests=result.testsRun,empty_attention_three_way_gate='not passed: existing Core/incumbent disagreement; excluded runtime domain',source_sha256={f.name:sha(f) for f in P.iterdir() if f.suffix in ('.hpp','.cpp','.py')},no_speed_claim=True))
  print('CPU seal PASS: '+str(len(rows))+' harness invocations, '+str(result.testsRun)+' protocol tests; native never executed')
 if __name__=='__main__':main()

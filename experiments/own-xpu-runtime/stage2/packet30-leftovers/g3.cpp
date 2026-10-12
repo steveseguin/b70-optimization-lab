@@ -23,7 +23,7 @@ volatile std::sig_atomic_t stopped=0;
 void signal_stop(int){stopped=1;}
 void check(bool b,const std::string& why){if(!b)throw std::runtime_error(why);}
 void stop(){check(!stopped,"cooperative stop requested");}
-bool validation=false,cpu_fixtures=false;
+bool validation=false,cpu_fixtures=false,device_contacted=false;
 struct Options{unsigned card=0;std::string mode="G3";std::filesystem::path output;};
 Options options(int argc,char** argv){Options o;for(int i=1;i<argc;++i){std::string a=argv[i];if(a=="--validate")validation=true;else if(a=="--cpu-fixtures")cpu_fixtures=true;else if((a=="--card"||a=="--mode"||a=="--output")&&i+1<argc){std::string v=argv[++i];if(a=="--card"){size_t n;auto card=std::stoul(v,&n);check(n==v.size()&&card<4,"card must be0..3");o.card=card;}else if(a=="--mode")o.mode=v;else o.output=v;}else throw std::invalid_argument("unknown/missing option "+a);}check(!o.output.empty()&&(o.mode=="K0"||o.mode=="G3"),"output/mode required");
 #ifdef OWN_RT_HOST_ONLY
@@ -159,11 +159,19 @@ void check_small(Runner& r,const std::string& klass,const std::string& name,std:
 }
 int main(int argc,char** argv){Options o;std::unique_ptr<Runner> runner;unsigned checks=0,failures=0,negatives=0;try{std::signal(SIGTERM,signal_stop);std::signal(SIGINT,signal_stop);o=options(argc,argv);std::filesystem::create_directories(o.output);
 #ifndef OWN_RT_HOST_ONLY
- if(o.mode=="K0"){std::vector<sycl::device> devices;for(auto p:sycl::platform::get_platforms())if(p.get_backend()==sycl::backend::ext_oneapi_level_zero)for(auto d:p.get_devices(sycl::info::device_type::gpu))devices.push_back(d);check(o.card<devices.size(),"K0 card range");auto ids=sycl::get_kernel_ids();check(!ids.empty(),"K0 kernels missing");{auto d=devices[o.card];sycl::context ctx(d);auto in=sycl::get_kernel_bundle<sycl::bundle_state::input>(ctx,{d},ids);auto exe=sycl::build(in,{d});for(auto id:ids)check(exe.has_kernel(id,d),"K0 missing executable kernel");}std::ofstream(o.output/"receipt.json")<<"{\"passed\":true,\"completed\":true,\"safe_to_exit\":true,\"device_executed\":true,\"kernel_execution\":false,\"mode\":\"K0\",\"live_bytes\":0,\"in_flight\":0,\"finite_element_gate_failures\":0,\"kernels\":"<<ids.size()<<"}\n";return 0;}
+ std::vector<sycl::device> devices;
+ for(auto p:sycl::platform::get_platforms())if(p.get_backend()==sycl::backend::ext_oneapi_level_zero)
+  for(auto d:p.get_devices(sycl::info::device_type::gpu))devices.push_back(d);
+ check(!devices.empty(),"no Level Zero GPU device visible (runtime adapter not loaded?)");
+ check(o.card<devices.size(),"card index "+std::to_string(o.card)+" out of range ("+std::to_string(devices.size())+" devices)");
+ // Conservatively mark contact before context/backend construction: it may
+ // partially succeed and then throw. Empty enumeration never reaches this.
+ device_contacted=true;
+ if(o.mode=="K0"){auto ids=sycl::get_kernel_ids();check(!ids.empty(),"K0 kernels missing");{auto d=devices[o.card];sycl::context ctx(d);auto in=sycl::get_kernel_bundle<sycl::bundle_state::input>(ctx,{d},ids);auto exe=sycl::build(in,{d});for(auto id:ids)check(exe.has_kernel(id,d),"K0 missing executable kernel");}std::ofstream(o.output/"receipt.json")<<"{\"passed\":true,\"completed\":true,\"safe_to_exit\":true,\"device_executed\":true,\"device_contacted\":true,\"kernel_execution\":false,\"mode\":\"K0\",\"live_bytes\":0,\"in_flight\":0,\"finite_element_gate_failures\":0,\"kernels\":"<<ids.size()<<"}\n";return 0;}
 #endif
  runner=std::make_unique<Runner>(o.card);auto& r=*runner;std::ofstream exact(o.output/"exactness.jsonl"),timing(o.output/"timing.jsonl"),validations(o.output/"validation-entries.jsonl");
  for(std::string label:{"route","qsa.attention","attn.combine+norm","ffn.combine+norm","hc.a.norm","hc.f.norm","hc.a.mix","hc.f.mix"}){auto f=make_ng(label);check_ng(r,f,exact,timing,validations,checks,failures,negatives);}
  for(auto [klass,name]:std::vector<std::pair<std::string,std::string>>{{"hc.a.gate","hc.gate"},{"hc.f.gate","hc.gate"},{"small.hc","small.hc"},{"small.ffn.q6","small.ffn.q6"},{"small.ffn.q8","small.ffn.q8"},{"shexpdown","shexpdown"}})check_small(r,klass,name,exact,timing,validations,checks,failures,negatives);
  if(failures)std::ofstream(o.output/"failures-before-teardown.json")<<"{\"failures\":"<<failures<<",\"reported_before_teardown\":true}\n";
- auto state=r.device.shutdown(std::chrono::seconds(60));check(state.safe_to_exit&&state.exit_code==0,"teardown incomplete");std::ofstream(o.output/"receipt.json")<<"{\"passed\":"<<(failures?"false":"true")<<",\"completed\":true,\"safe_to_exit\":true,\"device_executed\":"<<((validation||cpu_fixtures)?"false":"true")<<",\"mode\":"<<quote(o.mode)<<",\"live_bytes\":"<<state.live_bytes<<",\"in_flight\":"<<state.in_flight<<",\"finite_element_gate_failures\":"<<failures<<",\"checks\":"<<checks<<",\"negative_validation_checks\":"<<negatives<<",\"teardown\":"<<state.json()<<"}\n";return failures?2:0;
- }catch(const std::exception& e){std::cerr<<e.what()<<"\n";if(runner)packet26::failure(runner->device,o.output,e.what());else if(!o.output.empty())std::ofstream(o.output/"failure.json")<<"{\"passed\":false,\"error\":"<<quote(e.what())<<"}\n";return 1;}}
+ auto state=r.device.shutdown(std::chrono::seconds(60));check(state.safe_to_exit&&state.exit_code==0,"teardown incomplete");std::ofstream(o.output/"receipt.json")<<"{\"passed\":"<<(failures?"false":"true")<<",\"completed\":true,\"safe_to_exit\":true,\"device_executed\":"<<((validation||cpu_fixtures)?"false":"true")<<",\"device_contacted\":"<<(device_contacted?"true":"false")<<",\"mode\":"<<quote(o.mode)<<",\"live_bytes\":"<<state.live_bytes<<",\"in_flight\":"<<state.in_flight<<",\"finite_element_gate_failures\":"<<failures<<",\"checks\":"<<checks<<",\"negative_validation_checks\":"<<negatives<<",\"teardown\":"<<state.json()<<"}\n";return failures?2:0;
+ }catch(const std::exception& e){std::cerr<<e.what()<<"\n";if(!o.output.empty())std::ofstream(o.output/"contact.json")<<"{\"device_contacted\":"<<(device_contacted?"true":"false")<<"}\n";if(runner)packet26::failure(runner->device,o.output,e.what());else if(!o.output.empty())std::ofstream(o.output/"failure.json")<<"{\"passed\":false,\"device_contacted\":"<<(device_contacted?"true":"false")<<",\"error\":"<<quote(e.what())<<"}\n";return 1;}}

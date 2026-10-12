@@ -4,6 +4,9 @@ import copy
 import json
 from pathlib import Path
 import unittest
+import tempfile
+from unittest.mock import patch
+import window
 from summary import summarize, timing_stats, admission
 from window_safety import environment_gate
 from window import deadlines, ldd_preflight, distinct_owners
@@ -14,7 +17,7 @@ def fixture(kind="fusion", modes=None, payload=1024):
     label = "hc.a.norm" if kind == "fusion" else "route"
     candidate = "sg32" if kind == "fusion" else "p30.route.two.g1.wg32"
     registry = dict(repetitions=200,rotation_threshold_bytes=8*1024*1024,baseline_relative_tolerance=.15,minimum_relative_saving=.1,classes=[dict(klass=label,family=kind,candidates=[candidate],required_modes=modes,groups_per_token=48,anchor=dict(status="matched_class",expected_group_us=100,launches_per_group=2),resources=[label],dispatch=dict(section="classes",key="norm"))])
-    environment = environment_gate(dict(OMP_NUM_THREADS="2",PATH="/usr/bin",HOME="/tmp"))
+    environment = environment_gate(dict(OMP_NUM_THREADS="2",PATH="/usr/bin",HOME="/tmp",LD_LIBRARY_PATH="/synthetic/libs"))
     w=dict(schema="packet30.window.v1",window="G3",completed=True,device_executed=True,environment=environment,ldd_preflight=dict(argv=["ldd","binary"],returncode=0,stdout="libc.so resolved",stderr=""),deadlines=dict(expected_total_seconds=100,watchdog_seconds=400,submission_budget_seconds=dict(other=300)),owners=[])
     packets=[]
     for owner in range(2):
@@ -172,9 +175,112 @@ class Protocol(unittest.TestCase):
         self.assertNotIn('len({r["exactness_sha256"]',source)
     def test_unknown_selection(self):
         with self.assertRaises(ValueError):summarize(*fixture(),overlap_selection=["invented"])
+    def test_library_path_required_and_unchanged(self):
+        env = dict(HOME="/tmp", PATH="/usr/bin", OMP_NUM_THREADS="2")
+        for value in (None, ""):
+            if value is not None: env["LD_LIBRARY_PATH"] = value
+            with self.assertRaisesRegex(ValueError, "LD_LIBRARY_PATH"):
+                environment_gate(env)
+        env.update(LD_LIBRARY_PATH="/a:/b::/a", LC_TIME="C", XDG_RUNTIME_DIR="/bus", DBUS_SESSION_BUS_ADDRESS="bus")
+        native = environment_gate(env)["native"]
+        self.assertEqual(native["LD_LIBRARY_PATH"], "/a:/b::/a")
+        self.assertEqual(native["LC_TIME"], "C")
+        self.assertNotIn("XDG_RUNTIME_DIR", native)
+        self.assertNotIn("DBUS_SESSION_BUS_ADDRESS", native)
+        for key in ("TMPDIR", "LD_PRELOAD", "SYCL_DEVICE_FILTER", "SHELL"):
+            with self.assertRaises(ValueError): environment_gate(dict(env, **{key:"x"}))
+    def test_lazy_library_empty_and_partial_path(self):
+        with self.assertRaisesRegex(ValueError, "LD_LIBRARY_PATH"):
+            window.lazy_library_preflight("")
+        with tempfile.TemporaryDirectory(dir=window.HERE/"build") as directory:
+            root = Path(directory)
+            for index, name in enumerate(window.LAZY_LIBRARIES):
+                with self.assertRaisesRegex(ValueError, name):
+                    window.lazy_library_preflight(str(root))
+                (root/name).write_bytes(b"filesystem fixture, never loaded")
+            result = window.lazy_library_preflight(str(root))
+            self.assertTrue(result["passed"])
+            self.assertEqual(set(result["libraries"]), set(window.LAZY_LIBRARIES))
+    def test_ldd_uses_native_environment(self):
+        class R: returncode=0; stdout="resolved"; stderr=""
+        env=fixture()[0]["environment"]["native"]
+        with patch("subprocess.run", return_value=R()) as run:
+            ldd_preflight("unused", runner=run, environment=env)
+            self.assertEqual(run.call_args.kwargs["env"], env)
+    def test_unit_forwards_library_path(self):
+        env=fixture()[0]["environment"]
+        with patch.object(window.subprocess, "Popen") as popen:
+            window.NativeChild(["never-executed"], stdout=None, environment=env)
+            command=popen.call_args.args[0]
+            self.assertIn("LD_LIBRARY_PATH="+env["native"]["LD_LIBRARY_PATH"], command)
+            self.assertIn("-i", command)
+    def test_k0_binds_library_path_hash(self):
+        with tempfile.TemporaryDirectory(dir=window.HERE/"build") as directory:
+            path=Path(directory)/"window.json"
+            prior=dict(window="K0", passed=True, ld_library_path_sha256="old")
+            path.write_text(json.dumps(prior))
+            with self.assertRaisesRegex(ValueError, "ld_library_path_sha256"):
+                window.k0_gate(path, dict(ld_library_path_sha256="new"))
+    def test_kernel_empty_markers_only(self):
+        for text in ("", "\n", "-- No entries --\n-- No entries --\n"):
+            self.assertTrue(window.kernel_delta_empty(text))
+        for text in ("Fault response", "[1.0] ordinary kernel entry", "journal unavailable"):
+            self.assertFalse(window.kernel_delta_empty(text))
+    def simulated_failure(self, contacted, kernel_text="", mode="K0", journal_error=False):
+        # Every operational boundary is mocked: no device, journal, or unit runs.
+        with tempfile.TemporaryDirectory(dir=window.HERE/"build") as directory:
+            root=Path(directory);(root/"build").mkdir();binary=root/"binary";binary.write_text("not executable")
+            (root/"build-receipt.json").write_text("{}")
+            for name in window.LAZY_LIBRARIES:(root/name).write_bytes(b"fixture")
+            env=environment_gate(dict(OMP_NUM_THREADS="2", LD_LIBRARY_PATH=str(root)))
+            class Child:
+                unit="mock-unit";pid=123
+                def __init__(self, command, **kwargs):
+                    native=Path(command[-1]);native.mkdir(parents=True)
+                    if contacted is not None:
+                        (native/"failure.json").write_text(json.dumps(dict(passed=False,device_contacted=contacted,error="mock")))
+            def supervise(child, seconds, cursor, kernel, failure, reasons):
+                kernel.write(kernel_text);kernel.flush()
+                if journal_error:reasons.append("kernel journal failed: mock")
+                return dict(returncode=1,child_still_running=False,journal_cursor="mock")
+            with patch.multiple(window, HERE=root, environment_gate=lambda:env,
+                    sealed_build=lambda:(binary,{}), ldd_preflight=lambda *a,**k:{},
+                    journal=lambda:("", "mock"), NativeChild=Child, supervise=supervise,
+                    k0_gate=lambda *a:None), patch.object(window.os,"getpriority",return_value=19), \
+                    patch.object(window.subprocess,"check_output",return_value="idle"), \
+                    patch.object(window.signal,"signal"):
+                args=["--authorized-device-window","--window",mode,"--card","2","--output",str(root/"out")]
+                if mode=="G3":
+                    k0=root/"k0.json";k0.write_text("{}");args += ["--k0",str(k0)]
+                self.assertEqual(window.main(args),1)
+            record=json.loads((root/"out/window.json").read_text())
+            return record,(root/"build/device-fault-latch.json").exists()
+    def test_no_contact_failure_never_latches(self):
+        for mode in ("K0", "G3"):
+            for kernel in ("", "-- No entries --\n"):
+                record,latched=self.simulated_failure(False,kernel,mode)
+                self.assertFalse(latched)
+                self.assertFalse(record["passed"])
+                self.assertFalse(record["device_contacted"])
+                self.assertEqual(record["failure_class"],"preflight")
+    def test_contacted_and_unknown_failures_latch(self):
+        for contacted in (True,None):
+            record,latched=self.simulated_failure(contacted)
+            self.assertTrue(latched)
+    def test_nonempty_or_unavailable_journal_latches(self):
+        for kernel in ("Fault response\n", "[1.0] unrelated kernel entry\n"):
+            self.assertTrue(self.simulated_failure(False,kernel)[1])
+        self.assertTrue(self.simulated_failure(False,journal_error=True)[1])
+    def test_unknown_or_running_owner_cannot_clear_fault(self):
+        owner=dict(device_contacted=False,child_still_running=False,kernel_delta_empty=True)
+        self.assertTrue(window.precontact_failure([owner]))
+        for key,value in (("device_contacted",None),("device_contacted",True),("child_still_running",True),("kernel_delta_empty",False)):
+            self.assertFalse(window.precontact_failure([dict(owner,**{key:value})]))
+        self.assertFalse(window.precontact_failure([]))
     def test_safety_precedes_latch(self):
         source=Path(__file__).with_name("window.py").read_text();main=source[source.index("def main("):]
         self.assertLess(main.index("loader = ldd_preflight"),main.index("latch ="))
+        self.assertLess(main.index("lazy_loader = lazy_library_preflight"),main.index("latch ="))
         self.assertLess(main.index("environment = environment_gate"),main.index("latch ="))
 
 if __name__=="__main__":unittest.main(verbosity=2)
