@@ -82,6 +82,8 @@
 #   R32a40                                  R32a with up to 40 sentences per question (the 1M stream: 20 cover 187 of 228 questions, 40 cover 220)
 #   R32b R32b40                             R32a / R32a40 with the store kept by the harness only (no archive files in the sandbox): in R32 and
 #                                           R32a the model found the archive directory itself and answered the final list with scripts over it
+#   R32c40                                  R32b40 with room for 70,000 characters of retrieved text instead of 30,000 (the window is cut deeper to
+#                                           make room): at 1M a probe item asks seven questions, and 40 sentences each do not fit in 30,000
 #   N32r                                    rules-only notes + retrieval: only new rules are noted at a cut (no thinking), values are
 #                                           worked out from the retrieved sentences and `recall`
 #   N32jr N32dr                             N32j / N32d plus the retrieved sentences at each question
@@ -201,7 +203,7 @@ ARMS["N32j"] = ("truncate", "memory", 32768)          # N32 thinking only on cal
 ARMS["N32f"] = ("truncate", "memory", 32768)          # N32j with a notes call that does not think and a deeper cut (to 50 %): the fast setting
 ARMS["N200j"] = ("truncate", "memory", 204800)        # N32j at the 200K cap
 ARMS["N64j"] = ("truncate", "memory", 65536)          # N32j at a 64K live window
-for a in ("N32j35", "N32d", "N32dth", "N32d35", "N32e", "N32e35", "N32e25", "N32c35", "N32c25", "N32c15", "N32x", "N32x8", "N32xth", "N32xth6", "N32y", "N32z", "N32w", "N32w6", "N32v", "N32u", "R32", "R32a", "R32a40", "R32b", "R32b40", "N32r", "N32ra", "N32jr", "N32dr", "N32er"):   # campaign 10 (see the header)
+for a in ("N32j35", "N32d", "N32dth", "N32d35", "N32e", "N32e35", "N32e25", "N32c35", "N32c25", "N32c15", "N32x", "N32x8", "N32xth", "N32xth6", "N32y", "N32z", "N32w", "N32w6", "N32v", "N32u", "R32", "R32a", "R32a40", "R32b", "R32b40", "R32c40", "N32r", "N32ra", "N32jr", "N32dr", "N32er"):   # campaign 10 (see the header)
     ARMS[a] = ("truncate", "memory", 32768)
 ARMS["X32"] = ("plain", "memory", 0)                  # the plain agent with no budget of its own, served through tools/ctxkeeper
 ARMS["X32b"] = ("plain", "memory", 0)                 # X32 again after the proxy fixes of 2026-10-11 (same arm; a new name keeps both results)
@@ -363,6 +365,7 @@ run_one() {  # arm agent budget task_dir job_name drop_old_thinking
     R32a40) xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=none auto_retrieve=40 recall_tool=false retrieve_scope=all" ;;
     R32b)   xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=none auto_retrieve=20 recall_tool=false retrieve_scope=all archive_files=false" ;;
     R32b40) xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=none auto_retrieve=40 recall_tool=false retrieve_scope=all archive_files=false" ;;
+    R32c40) xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=none auto_retrieve=40 recall_tool=false retrieve_scope=all archive_files=false retrieve_max_chars=70000" ;;
     N32r)   xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=rules auto_retrieve=20" ;;
     N32ra)  xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=rules auto_retrieve=20 retrieve_scope=all" ;;
     N32jr)  xa=(-a clm_keeper:KeeperAgent); extra="$jt auto_retrieve=20" ;;
