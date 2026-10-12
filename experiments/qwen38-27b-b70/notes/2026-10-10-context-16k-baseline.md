@@ -1746,12 +1746,13 @@ wrong.** Two things qualify the comparison and set the next runs:
 
    Reading is no dearer through the proxy (it is the cheapest of the three: after a cut the view is small). The
    difference is 50,000 more tokens written, and most of them were thrown away. The agent's own replies are 97,850
-   tokens; nine good notes replies about 22,000 (four fifths of that is thinking); the remaining 58,000 or so are
-   six replies in which the model thought up to the cap of 8,192 tokens and wrote nothing: three ordinary turns
-   (the proxy asks again without thinking, as designed) and one notes call three times over (in-place try, its
-   retry with thinking still on, and the first try of the full rewrite; fixed since, commit `199ed4657`: an empty
-   notes reply is tried again without thinking). Notes for a coding task do not need the arithmetic care the
-   ledger needed, so the next run also tries the notes call without thinking at all.
+   tokens; nine good notes replies about 22,000 (four fifths of that is thinking); of the remaining 58,000 or so,
+   about 45,000 are six replies in which the model thought up to the cap of 8,192 tokens and wrote nothing: three
+   ordinary turns (the proxy asks again without thinking, as designed) and one notes call three times over
+   (in-place try, its retry with thinking still on, and the first try of the full rewrite; fixed since, commit
+   `199ed4657`: an empty notes reply is tried again without thinking). The last 13,000 I have not attributed.
+   Notes for a coding task do not need the arithmetic care the ledger needed, so the next run also tries the
+   notes call without thinking at all.
 
 The proxy's notes on real code read well without any change to the request text: the three notices word for word
 under RULES, one STATE line per ticket (`ticket 24 (polynomial_eval, recipes.py line 1118): fixed & verified ...`),
