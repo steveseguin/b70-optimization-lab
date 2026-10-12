@@ -21,7 +21,7 @@ def agent(replies, **over):
     a.__dict__.update(_budget=Budget(), _protect=2, notes="", notes_mode="delta", notes_inplace=True, inplace_turn_tokens=300, inplace_turn_hold=0,
                       notes_max_tokens=2048, notes_chunk_tokens=400, _pin_tail="", n_inplace=0, n_inplace_failed=0, inplace_cached=0, inplace_prompt=0,
                       inplace_failures=[], n_items_archived=0, n_sums_corrected=0, n_delta_fallbacks=0, n_notes_failed=0, n_rules_put_back=0, n_lm_calls=7, n_inplace_redone=0,
-                      _delivered={}, _mixed={}, n_not_archived_mixed=0, n_archive_failed=0, auto_retrieve=0, manage_calls=[], _server_total=0,
+                      _delivered={}, _mixed={}, n_not_archived_mixed=0, n_archive_failed=0, auto_retrieve=0, archive_files=True, manage_calls=[], _server_total=0,
                       trigger_ratio=1.0, target_ratio=0.35, _largest_delivery=500, keep_headroom=100, notes_thinking=False, calls=[], snaps=[])
     a.__dict__.update(over)
     it = iter(replies)

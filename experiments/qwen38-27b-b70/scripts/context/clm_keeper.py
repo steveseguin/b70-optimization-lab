@@ -107,7 +107,7 @@ MEMORY_RAG_ALL = """
 ## Memory (read carefully)
 
 - This task is long. Older turns are moved out of view automatically; you do not manage that.
-- Every item is kept in a store from the moment it arrives. Whenever an item asks questions, the harness searches
+- Every item is kept in a store from the moment it arrives. The store is not in your sandbox: no file holds it. Whenever an item asks questions, the harness searches
   the whole store for each question, the items still in view included, and shows the best-matching sentences right
   after the item (as `item N: ...`, in item order). Work out each answer from that list, applying the changes in
   item order.
@@ -754,7 +754,7 @@ class KeeperAgent(TruncateAgent):
                  auto_retrieve: int | str = 0, retrieve_floor: float | str = 0.0, recall_tool: Any = True,
                  retrieve_max_chars: int | str = 30000, retrieve_window: int | str = 1, retrieve_scope: str = "archive",
                  notes_chunk_tokens: int | str = 0, notes_inplace: Any = False, inplace_turn_tokens: int | str = 9500,
-                 **kwargs: Any) -> None:
+                 archive_files: Any = True, **kwargs: Any) -> None:
         kwargs.setdefault("truncate_target_ratio", 0.6)   # cut deeper than W32 (0.75): fewer cuts, fewer notes calls
         super().__init__(*args, **kwargs)
         # A delivered item is never cut on arrival (the budget's newest-output cap head/tail-truncates whatever does
@@ -828,6 +828,10 @@ class KeeperAgent(TruncateAgent):
         if self.retrieve_scope not in ("archive", "all"):
             raise ValueError(f"retrieve_scope must be archive|all, not {retrieve_scope!r}")
         self.recall_tool = _cb._as_bool(recall_tool)
+        # archive_files=false (arm R32b): the cut items are kept by the harness only, not as files in the sandbox. In
+        # the first retrieval-only runs the model found /tmp/.live_ctx/archive on its own (the task statement names
+        # /tmp/.live_ctx) and answered the final list with scripts over those files, so they were not retrieval-only.
+        self.archive_files = _cb._as_bool(archive_files)
         self._index, self.n_retrievals, self.retrieved_chars, self.n_retrievals_skipped = _rag.Index(), 0, 0, 0
         self._ckpt = _KeeperGuard(self._ckpt, self)   # TruncateAgent's own guard stays inside; its _manage is a no-op here
 
@@ -850,7 +854,8 @@ class KeeperAgent(TruncateAgent):
         await super().setup(environment)
         tool = ("cat > /usr/local/bin/recall <<'RECALL_EOF'\n" + RECALL_SRC.read_text() + "\nRECALL_EOF\n"
                 "chmod +x /usr/local/bin/recall") if self.recall_tool else "true"
-        await environment.exec(command=f"mkdir -p {ARCH} && touch {ARCH}/.on && " + tool, timeout_sec=60)
+        if self.archive_files or self.recall_tool:
+            await environment.exec(command=f"mkdir -p {ARCH} && touch {ARCH}/.on && " + tool, timeout_sec=60)
 
     def _pin(self, n: int) -> dict[str, Any]:
         if self.notes_mode == "none":
@@ -922,6 +927,12 @@ class KeeperAgent(TruncateAgent):
                     continue
                 blob = base64.b64encode((text + "\n").encode()).decode()
                 f = f"{ARCH}/item-{num:03d}.txt"
+                if not self.archive_files:            # kept by the harness only
+                    self._delivered.pop(num, None)
+                    if self.auto_retrieve and not ASKS.search(text):
+                        self._index.add(num, text)
+                    n += 1
+                    continue
                 try:
                     r = await environment.exec(
                         command=f"[ -e {f} ] || {{ echo {blob} | base64 -d > {f} && chmod 444 {f}; }}", timeout_sec=60)
@@ -1208,6 +1219,7 @@ class KeeperAgent(TruncateAgent):
                     "retrievals_skipped": self.n_retrievals_skipped, "retrieve_window": self.retrieve_window,
                     "retrieve_scope": self.retrieve_scope,
                     "passages_indexed": len(self._index.docs), "recall_tool": self.recall_tool,
+                    "archive_files": self.archive_files,
                     "notes_max_tokens": self.notes_max_tokens, "target_ratio": self.target_ratio,
                     "largest_delivery_tokens": self._largest_delivery, "keep_headroom": self.keep_headroom}, indent=1) + "\n")
             except Exception:
