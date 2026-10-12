@@ -1201,7 +1201,8 @@ class KeeperAgent(TruncateAgent):
         self._snap(req, "keeper")
         base, seen, why = req, numbers_in(render_turns(body)), "no reply"
         thinking, hinted = self.notes_thinking, not self.mention_check
-        for _attempt in (1, 2, 3, 4):
+        rules_seen: list[str] = []                    # a rule named in any reply of this cut is kept: a second reply
+        for _attempt in (1, 2, 3, 4):                 # that leaves it out must not lose it (hard stream, 2026-10-12)
             # a reply without the layout is asked for once more; working that cannot be trusted is asked for again
             # from the start with thinking on (first run of N32x: one such reply ended the in-place cuts for good)
             rec["notes_attempts"] += 1
@@ -1224,6 +1225,8 @@ class KeeperAgent(TruncateAgent):
             near = None
             if self.mention_check == "near":
                 near = numbers_near(state_keys(self.notes) + [k for k, _ in delta["changes"]], body)
+            rules_seen += [r for r in delta["rules"] if not any(same_rule(r, x) for x in rules_seen)]
+            delta["rules"] = list(rules_seen)
             new, info = apply_delta(self.notes, delta, seen, strict=self.mention_check in ("count", "near"), near=near)
             steps = info.pop("steps")
             if hinted:
