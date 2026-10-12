@@ -1,0 +1,106 @@
+[
+ {
+  "case": "packet 36 as measured: T=45.9, D=4.2, python controller",
+  "first_half_ms": 22.8123,
+  "second_half_ms": 23.087699999999998,
+  "draft_ms": 4.2,
+  "tok_s": {
+   "incident-retrospective": 32.791184022511146,
+   "code-review": 29.115502910002043,
+   "customer-email": 31.787919077040243,
+   "benchmark-analysis": 31.15250009197401
+  },
+  "median_tok_s": 31.470209584507124
+ },
+ {
+  "case": "  + cancel a wrong half at once",
+  "first_half_ms": 22.8123,
+  "second_half_ms": 23.087699999999998,
+  "draft_ms": 4.2,
+  "tok_s": {
+   "incident-retrospective": 32.791184022511146,
+   "code-review": 29.115502910002043,
+   "customer-email": 31.787919077040243,
+   "benchmark-analysis": 31.15250009197401
+  },
+  "median_tok_s": 31.470209584507124
+ },
+ {
+  "case": "packet 38 expected: T=41.4 (packet 37 halves), D=3.7, native controller",
+  "first_half_ms": 20.7,
+  "second_half_ms": 20.7,
+  "draft_ms": 3.7,
+  "tok_s": {
+   "incident-retrospective": 36.77328975017504,
+   "code-review": 32.73747661608808,
+   "customer-email": 35.673839184597895,
+   "benchmark-analysis": 34.97668221185871
+  },
+  "median_tok_s": 35.325260698228306
+ },
+ {
+  "case": "  + cancel a wrong half at once",
+  "first_half_ms": 20.7,
+  "second_half_ms": 20.7,
+  "draft_ms": 3.7,
+  "tok_s": {
+   "incident-retrospective": 36.77328975017504,
+   "code-review": 32.73747661608808,
+   "customer-email": 35.673839184597895,
+   "benchmark-analysis": 34.97668221185871
+  },
+  "median_tok_s": 35.325260698228306
+ },
+ {
+  "case": "  draft on rank 0, layers rebalanced (rank 0 half = rank 1 half - D)",
+  "first_half_ms": 18.849999999999998,
+  "second_half_ms": 22.55,
+  "draft_ms": 3.7,
+  "tok_s": {
+   "incident-retrospective": 38.6609800251604,
+   "code-review": 33.904690148804,
+   "customer-email": 37.35104049327096,
+   "benchmark-analysis": 36.52173913043486
+  },
+  "median_tok_s": 36.936389811852905
+ },
+ {
+  "case": "  draft on rank 0, rebalanced, + cancel",
+  "first_half_ms": 18.849999999999998,
+  "second_half_ms": 22.55,
+  "draft_ms": 3.7,
+  "tok_s": {
+   "incident-retrospective": 38.6609800251604,
+   "code-review": 33.904690148804,
+   "customer-email": 37.351040493270965,
+   "benchmark-analysis": 36.52173913043486
+  },
+  "median_tok_s": 36.93638981185291
+ },
+ {
+  "case": "  the same with a 2.5 ms draft",
+  "first_half_ms": 19.45,
+  "second_half_ms": 21.95,
+  "draft_ms": 2.5,
+  "tok_s": {
+   "incident-retrospective": 39.43044906900328,
+   "code-review": 34.35957568650977,
+   "customer-email": 38.02740387517353,
+   "benchmark-analysis": 37.14184648036788
+  },
+  "median_tok_s": 37.584625177770704
+ },
+ {
+  "case": "  the same with T=38 (epilogues, QSA attention) and a 2.5 ms draft",
+  "first_half_ms": 17.75,
+  "second_half_ms": 20.25,
+  "draft_ms": 2.5,
+  "tok_s": {
+   "incident-retrospective": 42.75099243375298,
+   "code-review": 37.29907344365181,
+   "customer-email": 41.24386252045832,
+   "benchmark-analysis": 40.29163468917887
+  },
+  "median_tok_s": 40.76774860481859
+ }
+]
