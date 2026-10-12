@@ -824,6 +824,13 @@ class Policy(unittest.TestCase):
         seen.clear()
         k.complete({"model": "m", "messages": conversation(2), "chat_template_kwargs": {"enable_thinking": False}})
         self.assertEqual(len(seen), 1)                                            # thinking was off already: the reply stands
+        seen.clear()
+        quiet = ck.Keeper(model, Path(self.dir.name) / "q", budget=262144, memory_note=False, effort="medium", empty_retry=False)
+        resp = quiet.complete({"model": "m", "messages": conversation(2), "chat_template_kwargs": {"enable_thinking": True}})
+        self.assertEqual(len(seen), 1)                                            # the control mode: the empty reply goes back as it is
+        self.assertEqual(seen[0]["chat_template_kwargs"], {"enable_thinking": True, "reasoning_effort": "medium"})
+        self.assertNotIn("tools", seen[0])                                        # and nothing but the effort was added
+        self.assertEqual(seen[0]["messages"], conversation(2))
 
     def test_searches_stop_when_the_window_has_no_room_left(self):
         """A search result is cut to the room left beside the reply, and then no further search is made this turn."""

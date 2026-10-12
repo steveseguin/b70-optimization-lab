@@ -514,8 +514,10 @@ class Keeper:
                  recite_when: str | None = None, think_when: str | None = None, effort: str | None = None,
                  memory_note: bool = True, think_until: str | None = None, repeat_limit: int = 3,
                  notes_mode: str = "full", inplace_tokens: int = 15000, notes_checks: str = "off",
-                 notes_scan: str | None = None, recall_label: str | None = None, recall_unit: str = "item") -> None:
+                 notes_scan: str | None = None, recall_label: str | None = None, recall_unit: str = "item",
+                 empty_retry: bool = True) -> None:
         self.ask, self.root = ask, Path(state_dir)
+        self.empty_retry = empty_retry               # ask once more without thinking when a reply comes back empty
         self.budget, self.target_ratio, self.headroom = budget, target_ratio, headroom
         self.notes_cap, self.notes_max_tokens, self.notes_thinking = notes_cap, notes_max_tokens, notes_thinking
         self.recite, self.max_recalls, self.reply_reserve = recite, max_recalls, reply_reserve
@@ -1003,7 +1005,7 @@ class Keeper:
                 resp = self.upstream(out)
                 self.learn(s, out["messages"], resp)
                 msg = ((resp.get("choices") or [{}])[0].get("message") or {})
-                if (not msg.get("tool_calls") and not str(msg.get("content") or "").strip()
+                if (self.empty_retry and not msg.get("tool_calls") and not str(msg.get("content") or "").strip()
                         and (out.get("chat_template_kwargs") or {}).get("enable_thinking") is not False):
                     # Nothing for the client at all: the thinking used the reply up. Asked once more without it.
                     s.state["empty_replies_retried"] = s.state.get("empty_replies_retried", 0) + 1
@@ -1197,6 +1199,9 @@ def main() -> None:
     ap.add_argument("--recall-unit", default="item", help="what --recall-label counts, as the model is told (default: item)")
     ap.add_argument("--notes-scan", help="with --notes-checks count or near: read only the tool results and user messages "
                                          "matching this regular expression for mentions and stated numbers")
+    ap.add_argument("--no-empty-retry", action="store_true",
+                    help="do not ask again without thinking when a reply comes back empty (for control runs: with a "
+                         "window larger than the client ever fills and --effort, the proxy then only sets the effort)")
     ap.add_argument("--max-recalls", type=int, default=8,
                     help="archive searches the model may make within one client call before it is asked to go on "
                          "(with in-place notes little is in view, and a turn with several questions needs more: 24)")
@@ -1212,7 +1217,8 @@ def main() -> None:
                     think_when=a.think_when, effort=a.effort, memory_note=not a.no_memory_note,
                     think_until=a.think_until, repeat_limit=a.repeat_limit, notes_mode=a.notes_mode,
                     inplace_tokens=a.inplace_tokens, notes_checks=a.notes_checks, notes_scan=a.notes_scan,
-                    max_recalls=a.max_recalls, recall_label=a.recall_label, recall_unit=a.recall_unit)
+                    max_recalls=a.max_recalls, recall_label=a.recall_label, recall_unit=a.recall_unit,
+                    empty_retry=not a.no_empty_retry)
     server = ThreadingHTTPServer((a.host, a.port), make_handler(keeper, upstream, a.timeout))
     print(f"ctxkeeper: http://{a.host}:{a.port}/v1 -> {upstream}/v1, live window {a.budget} tokens, notes {a.notes_mode}"
           + (f" every {a.inplace_tokens} tokens, checks {a.notes_checks}" if a.notes_mode == "inplace" else "")

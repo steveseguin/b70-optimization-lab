@@ -2036,3 +2036,32 @@ The proxy's first run on the hard stream is also its fastest on any arm: 11.8 mi
 harness keeper, with the same score within one answer. Retrieval at question time was not run again (see above).
 The gate on the final code is unchanged to the token from this afternoon's (the replay said the rules streams
 would not notice the new rules: no reply there contains what they act on).
+
+### Campaign 13c so far, and its control (13d), registered 2026-10-12 19:45 before the control runs
+
+**XR4** (the proxy as XR3, plus `--effort medium`: `reasoning_effort=medium` added to every call it forwards) on
+`repair-n40-s1x`: 40 fixed, **40 clean**, audit **7 of 7**, **29.5 minutes** (XR3: 47.1). Expected 36 or more
+clean, audit 6 or 7, 35 minutes or less: all three. Expected fewer than 30,000 tokens thrown away: no, about
+57,000 (the server wrote 138,000 tokens, the agent received 78,000 and the notes calls 2,400): seven replies still
+thought to the limit and were asked for again, and eight calls of 290 took 797 of the 1,703 model seconds. So the
+effort setting takes more than a third off the run, and the runaway replies are still nearly half of what is
+left; a smaller cap on a thinking reply, with the full cap for the retry, is the next lever (not built).
+
+XR4 has two things XR3 did not have against C32 in 13b: the effort setting, and (as XR3) the proxy's habit of
+asking again without thinking when a reply comes back empty. Neither is a way of managing context. The control:
+
+**C32m** = the harness's summariser exactly as C32 (compaction at 32K, its own summary calls), with the proxy in
+front as a pass-through that only adds the effort: a window of 262,144 tokens that the client never fills (no cut,
+no notes, no `recall`), no memory note in the prompt, and `--no-empty-retry` (a new switch; a unit test checks
+that the forwarded request is the client's own with the one field added). Summary calls go through it too.
+
+Expected: it finishes inside the 55 minutes the task now allows and fixes 38 or more. On the instructions I expect
+it to do well this time (36 or more clean): the summary that lost them in 13b came out of a stall that the effort
+setting shortens. The audit is the open question again; its good summaries in 13b did hold the functions of
+tickets 1 to 8 until the bad one, so 4 or more of 7 would not surprise me. If C32m matches XR4 on clean tickets,
+audit and time, then on this task the two methods tie whenever the model's thinking is kept in bounds, and what
+13b showed is the proxy's robustness to one bad compaction step, not a difference in the ordinary case. If it
+loses instructions or the audit again, the difference is in the method.
+
+W32 is being run again in 13c with the task's own time limit (graded where it stops), at the default effort, as
+the row that 13b could not grade. After C32m the queue runs the proxy on the second 1M ledger stream (X32g).
