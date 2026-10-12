@@ -237,8 +237,9 @@ changes (so a thing changed twice has two lines). The harness replaces the STATE
 When the new value follows from the old one, write the working and put the result last, like \
 `stock: 120 + 49 = 169`, starting from the value in the NOTES or in your earlier line. A thing that is new, or \
 opened again after it was removed, first gets a line with its opening value. Write `name: removed` when \
-something is removed. Go through the turns from the first to the last and leave no change out. If the turns \
-change nothing, write (none).
+something is removed. Go through the turns from the first to the last and leave no change out: every sentence \
+that names a thing of STATE is either a change (a line of its own, or one step in the working of a line) or, if \
+it changes nothing, a line `name: (no change)`. If the turns change nothing, write (none).
 OPEN
 at most three short lines: what is unfinished right now and what to watch for (this replaces the old OPEN \
 section; may be empty). Do not list what has been received or answers already given.
@@ -421,6 +422,7 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None) -> tuple[
         elif ln.strip() and sec == "OPEN":
             opened.append(ln.rstrip())
     info: dict[str, Any] = {"changed": 0, "added": 0, "sums_corrected": [], "mismatch": [], "new_rules": 0}
+    steps: dict[str, int] = {}                       # changes each name's lines account for (a line, or a step of its working)
     have = [_plain(r) for r in rules]
     for r in delta.get("rules", []):
         if not any(same_rule(r, h) for h in have):
@@ -430,12 +432,17 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None) -> tuple[
     where = {fact_of(ln)[0]: i for i, ln in enumerate(state)}
     for name, value in delta.get("changes", []):
         if NO_CHANGE.fullmatch(value.strip()):           # `name: (no change)`: mentioned, not changed
+            steps[name] = steps.get(name, 0) + 1
             continue
         w = work_out(value)
+        steps[name] = steps.get(name, 0) + 1
         if w:
             start, total, stated = w
             old = fact_of(state[where[name]])[1] if name in where else None
             held = number_of(old) if old is not None else None
+            ops = len(re.findall(r"[\d)]\s*[-+*/x\u00d7\u2212]\s*[\d(-]", value.split("=")[-2] if "=" in value else ""))
+            # the steps of the working, plus the set it starts from when that is not the value the NOTES hold
+            steps[name] += max(ops, 1) - 1 + (1 if start is not None and start != held else 0)
             if total is None:
                 info["mismatch"].append(f"{name}: `{value}` has no whole-number value")
                 total = stated
@@ -458,6 +465,7 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None) -> tuple[
             info["added"] += 1
     if delta.get("open") is not None:
         opened = list(delta["open"])
+    info["steps"] = steps
     return "\n".join(["RULES"] + (rules or ["(none)"]) + ["STATE"] + state + ["OPEN"] + opened), info
 
 
@@ -557,6 +565,33 @@ def unaccounted(names: list[str], turns: list[dict[str, Any]], changes: list[tup
             text += [s for s in re.split(r"(?<=[.!?])\s+", " ".join(body.split("\n\n(exit_code=")[0].split())) if not s.endswith("?")]
     low = " ".join(text).lower()
     return [n for n in names if re.search(rf"(?<![\w]){re.escape(n)}(?![\w])", low)]
+
+
+COUNT_RETRY = ("The turns mention these names more often than your CHANGES account for: {names}. Go through the turns again "
+               "for each of them, one mention at a time. Then reply with the three complete sections again, every change "
+               "included: a change is a line of its own or one step in the working of a line. For a mention that changes "
+               "nothing, write `name: (no change)`.")
+
+
+def mention_counts(names: list[str], turns: list[dict[str, Any]]) -> dict[str, int]:
+    """How often each name (identifier-like only, as in `unaccounted`) is mentioned in the delivered items of the
+    turns, outside questions."""
+    names = [n for n in dict.fromkeys(names) if len(n) >= 3 and re.search(r"[\d_]", n) and " " not in n]
+    text = []
+    for m in turns:
+        body = str(m.get("content") or "") if m.get("role") == "tool" else ""
+        if ITEMS.search(body):
+            text += [s for s in re.split(r"(?<=[.!?])\s+", " ".join(body.split("\n\n(exit_code=")[0].split())) if not s.endswith("?")]
+    low = " ".join(text).lower()
+    out = {n: len(re.findall(rf"(?<![\w]){re.escape(n)}(?![\w])", low)) for n in names}
+    return {n: c for n, c in out.items() if c}
+
+
+def under_accounted(mentions: dict[str, int], steps: dict[str, int]) -> list[str]:
+    """`name (mentioned 3 times, 2 changes written)` for every name whose lines account for fewer changes than the
+    items mention it. N32z seed 0: three counters went wrong in the NOTES although each had a line (the second of two
+    changes in one item was left out twice); a check for names without any line cannot see that."""
+    return [f"{n} (mentioned {c} times, {steps.get(n, 0)} changes written)" for n, c in mentions.items() if steps.get(n, 0) < c]
 
 
 def split_turns(turns: list[dict[str, Any]], count: Any, max_tokens: int) -> list[list[dict[str, Any]]]:
@@ -856,7 +891,10 @@ class KeeperAgent(TruncateAgent):
         self.n_inplace_redone = 0
         # mention_check (in-place notes): a STATE name that the items being moved out mention, outside a question,
         # without a line in CHANGES is asked about once (see unaccounted)
-        self.mention_check, self.n_mention_reasks = _cb._as_bool(mention_check), 0
+        # mention_check=count: the name's lines must account for as many changes as the items mention it
+        mc = str(mention_check).strip().lower()
+        self.mention_check = "count" if mc == "count" else ("names" if _cb._as_bool(mention_check) else "")
+        self.n_mention_reasks = 0
         self.inplace_turn_hold = 0                    # after a failed in-place call: no new attempt on the same turns
         # auto_retrieve=K: when a delivered item asks questions, the K best-matching archived sentences per question
         # (BM25, rag_retrieve.py) are shown right after it, each with the retrieve_window sentences that follow it
@@ -1098,15 +1136,23 @@ class KeeperAgent(TruncateAgent):
                 rec["layout_retries"] = 1
                 req = req + [{"role": "assistant", "content": text}, {"role": "user", "content": DELTA_RETRY}]
                 continue
-            missing = [] if hinted else unaccounted(state_keys(self.notes), body, delta["changes"])
-            if missing:                               # asked once: a name the turns mention has no line
+            new, info = apply_delta(self.notes, delta, seen)
+            steps = info.pop("steps")
+            if hinted:
+                missing = []
+            elif self.mention_check == "count":
+                names = state_keys(self.notes) + [k for k, _ in delta["changes"]]
+                missing = under_accounted(mention_counts(names, body), steps)
+            else:
+                missing = unaccounted(state_keys(self.notes), body, delta["changes"])
+            if missing:                               # asked once: a name the turns mention is not accounted for
                 hinted = True
                 rec["unaccounted"] = missing[:30]
                 self.n_mention_reasks += 1
+                retry = COUNT_RETRY if self.mention_check == "count" else MENTION_RETRY
                 req = req + [{"role": "assistant", "content": text},
-                             {"role": "user", "content": MENTION_RETRY.format(names=", ".join(missing[:30]))}]
+                             {"role": "user", "content": retry.format(names=", ".join(missing[:30]))}]
                 continue
-            new, info = apply_delta(self.notes, delta, seen)
             size = self._budget.count([{"role": "user", "content": new}])
             if info["mismatch"] and "inplace_redo" not in rec:
                 # asked once more, with thinking and with the lines in question named; the second reply stands
@@ -1192,6 +1238,7 @@ class KeeperAgent(TruncateAgent):
             if not delta_mode:
                 delta["changes"] = []
             new, info = apply_delta(self.notes, delta, numbers_in(turns))
+            info.pop("steps", None)
             if info["mismatch"]:
                 return "working starts from a value the NOTES do not hold: " + "; ".join(info["mismatch"][:3])
             size = self._budget.count([{"role": "user", "content": new}])

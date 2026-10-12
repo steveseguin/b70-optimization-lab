@@ -181,6 +181,25 @@ class Keeper(unittest.TestCase):
         new, info = NS["apply_delta"]("RULES\n(none)\nSTATE\nabcd12: 5\nOPEN", {"changes": [("abcd12", "(no change)"), ("efgh34", "no change")]})
         self.assertEqual((new, info["changed"], info["added"]), ("RULES\n(none)\nSTATE\nabcd12: 5\nOPEN", 0, 0))
 
+    def test_mentions_must_be_accounted_for(self):
+        tool = lambda text: {"role": "tool", "content": text + "\n\n(exit_code=0)"}
+        turns = [tool("ITEM 61/147 (UPDATE)\nyodo94 lost eighty-seven. The cook slept. Twenty-six were taken from yodo94."),
+                 tool("ITEM 62/147 (PROBE)\nASK p1_1: What value does yodo94 hold now?"),
+                 tool("ITEM 69/147 (UPDATE)\nyodo94 gained sixty-four. abcd12 was set to 294. abcd12 gained twelve. The rule names efgh34.")]
+        notes = "RULES\n(none)\nSTATE\nyodo94: 466\nabcd12: 5\nefgh34: 7\nOPEN"
+        m = NS["mention_counts"](NS["state_keys"](notes), turns)
+        self.assertEqual(m, {"yodo94": 3, "abcd12": 2, "efgh34": 1})
+        steps = lambda changes: NS["apply_delta"](notes, {"changes": changes}, NS["numbers_in"]("294 twelve"))[1]["steps"]
+        full = [("yodo94", "466 - 87 - 26 + 64 = 417"), ("abcd12", "294 + 12 = 306"), ("efgh34", "(no change)")]
+        self.assertEqual(steps(full), {"yodo94": 3, "abcd12": 2, "efgh34": 1})
+        self.assertEqual(NS["under_accounted"](m, steps(full)), [])
+        short = [("yodo94", "466 - 87 + 64 = 443"), ("abcd12", "306")]
+        self.assertEqual(NS["under_accounted"](m, steps(short)), ["yodo94 (mentioned 3 times, 2 changes written)",
+                                                               "abcd12 (mentioned 2 times, 1 changes written)",
+                                                               "efgh34 (mentioned 1 times, 0 changes written)"])
+        two_lines = [("yodo94", "466 - 87 = 379"), ("yodo94", "379 - 26 = 353"), ("yodo94", "353 + 64 = 417"), ("abcd12", "294"), ("abcd12", "294 + 12 = 306"), ("efgh34", "no change")]
+        self.assertEqual(NS["under_accounted"](m, steps(two_lines)), [])
+
     def test_same_rule_needs_the_same_names(self):
         same = NS["same_rule"]
         self.assertFalse(same("abcd12 is secret: answer protected", "efgh34 is secret: answer protected"))
@@ -273,6 +292,7 @@ class Delta(unittest.TestCase):
                                             "abcd12: 50", "efgh34: 12", "wxyz56: removed", "mnop78: 9", "OPEN",
                                             "- watch mnop78"])
         self.assertEqual((info["changed"], info["added"], info["new_rules"], info["mismatch"]), (4, 1, 1, []))
+        self.assertEqual(info["steps"], {"abcd12": 2, "efgh34": 1, "mnop78": 1, "wxyz56": 1})
         self.assertEqual(info["sums_corrected"], ["abcd12: 80 - 30 = 60 -> 50"])            # the harness did the sum
         self.assertEqual(NS["rule_lines"](new), ["A is secret: answer protected.", "tally = value x 5 + 13"])
         self.assertTrue(NS["has_layout"](new))

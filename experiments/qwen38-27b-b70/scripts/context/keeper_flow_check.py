@@ -20,7 +20,7 @@ def agent(replies, **over):
     a = object.__new__(ck.KeeperAgent)
     a.__dict__.update(_budget=Budget(), _protect=2, notes="", notes_mode="delta", notes_inplace=True, inplace_turn_tokens=300, inplace_turn_hold=0,
                       notes_max_tokens=2048, notes_chunk_tokens=400, _pin_tail="", n_inplace=0, n_inplace_failed=0, inplace_cached=0, inplace_prompt=0,
-                      inplace_failures=[], n_items_archived=0, n_sums_corrected=0, n_delta_fallbacks=0, n_notes_failed=0, n_rules_put_back=0, n_lm_calls=7, n_inplace_redone=0, mention_check=False, n_mention_reasks=0,
+                      inplace_failures=[], n_items_archived=0, n_sums_corrected=0, n_delta_fallbacks=0, n_notes_failed=0, n_rules_put_back=0, n_lm_calls=7, n_inplace_redone=0, mention_check="", n_mention_reasks=0,
                       _delivered={}, _mixed={}, n_not_archived_mixed=0, n_archive_failed=0, auto_retrieve=0, archive_files=True, manage_calls=[], _server_total=0,
                       trigger_ratio=1.0, target_ratio=0.35, _largest_delivery=500, keep_headroom=100, notes_thinking=False, calls=[], snaps=[])
     a.__dict__.update(over)
@@ -81,10 +81,18 @@ async def main():
     # 5c. a name the items mention has no line: asked once, the second reply is the one applied
     first = "NEW RULES\n(none)\nCHANGES\nzzzz99: 1\nOPEN\n"
     second = "NEW RULES\n(none)\nCHANGES\nabcd12: 294 + 12 = 306\nzzzz99: (no change)\nOPEN\n"
-    a = agent([reply(first), reply(second)], mention_check=True, notes="RULES\n(none)\nSTATE\nabcd12: 7\nOPEN"); msgs = convo(5)
+    a = agent([reply(first), reply(second)], mention_check="names", notes="RULES\n(none)\nSTATE\nabcd12: 7\nOPEN"); msgs = convo(5)
     a._delivered = {i: f"item {i} text" for i in range(1, 6)}
     assert await a._keep_inplace(Env(), msgs, 1) is True and "abcd12: 306" in a.notes and "zzzz99" not in a.notes and a.n_mention_reasks == 1, a.notes
     assert a.calls[1]["last"].startswith("The turns mention these names") and a.manage_calls[-1]["unaccounted"] == ["abcd12"], a.manage_calls[-1]
+    # 5d. the count check: changes of a name that were left out are asked about once
+    first = "NEW RULES\n(none)\nCHANGES\nabcd12: 294\nOPEN\n"
+    second = "NEW RULES\n(none)\nCHANGES\nabcd12: 294 + 12 + 12 - 1 = 317\nOPEN\n"
+    a = agent([reply(first), reply(second)], mention_check="count", notes="RULES\n(none)\nSTATE\nabcd12: 7\nOPEN"); msgs = convo(5)
+    msgs[7]["content"] = msgs[7]["content"].replace("\n\n(exit_code=0)", " abcd12 gained 12. abcd12 lost one.\n\n(exit_code=0)")
+    a._delivered = {i: f"item {i} text" for i in range(1, 6)}
+    assert await a._keep_inplace(Env(), msgs, 1) is True and "abcd12: 317" in a.notes and a.n_mention_reasks == 1, a.notes
+    assert a.manage_calls[-1]["unaccounted"] == ["abcd12 (mentioned 3 times, 1 changes written)"] and "steps" not in a.manage_calls[-1]["delta"], a.manage_calls[-1]
     # 6. the ordinary cut with pieces: two delta calls for one cut, then a second cut continues from the pin
     a = agent([reply("NEW RULES\n- R one\nCHANGES\nabcd12: 294\nOPEN\n"), reply("NEW RULES\n(none)\nCHANGES\nabcd12: 294 + 12 = 306\nOPEN\n"),
                reply("NEW RULES\n(none)\nCHANGES\n(none)\nOPEN\n")], notes_inplace=False)

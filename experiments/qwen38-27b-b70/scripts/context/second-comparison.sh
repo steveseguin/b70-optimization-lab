@@ -65,6 +65,9 @@
 #                                           last number in it ("-58 - 35 = -93, then set to 82" is 82); same settings, the arm for both seeds and 1M
 #   N32z                                    N32y plus the mention check: a name of a STATE line that the items being moved out mention, outside a
 #                                           question, without a line in CHANGES is asked about once (N32y seed 1 missed one removal that way)
+#   N32w N32w6                              N32z with the count check: a name's lines in CHANGES must account for as many changes as the items being
+#                                           moved out mention it (N32z seed 0: three counters wrong in the NOTES, two of them the second of two
+#                                           changes in one item); N32w6 takes notes every six items instead of ten
 #   N32er                                   N32e plus the retrieved sentences (store holds every item)
 #   R32                                     retrieval only ("RAG"): the plain window agent, cut items go to a store, and at each question
 #                                           the 20 best-matching stored sentences per question are shown, each with the sentence
@@ -194,7 +197,7 @@ ARMS["N32j"] = ("truncate", "memory", 32768)          # N32 thinking only on cal
 ARMS["N32f"] = ("truncate", "memory", 32768)          # N32j with a notes call that does not think and a deeper cut (to 50 %): the fast setting
 ARMS["N200j"] = ("truncate", "memory", 204800)        # N32j at the 200K cap
 ARMS["N64j"] = ("truncate", "memory", 65536)          # N32j at a 64K live window
-for a in ("N32j35", "N32d", "N32dth", "N32d35", "N32e", "N32e35", "N32e25", "N32c35", "N32c25", "N32c15", "N32x", "N32x8", "N32xth", "N32xth6", "N32y", "N32z", "R32", "R32a", "R32a40", "R32b", "R32b40", "N32r", "N32ra", "N32jr", "N32dr", "N32er"):   # campaign 10 (see the header)
+for a in ("N32j35", "N32d", "N32dth", "N32d35", "N32e", "N32e35", "N32e25", "N32c35", "N32c25", "N32c15", "N32x", "N32x8", "N32xth", "N32xth6", "N32y", "N32z", "N32w", "N32w6", "R32", "R32a", "R32a40", "R32b", "R32b40", "N32r", "N32ra", "N32jr", "N32dr", "N32er"):   # campaign 10 (see the header)
     ARMS[a] = ("truncate", "memory", 32768)
 ARMS["X32"] = ("plain", "memory", 0)                  # the plain agent with no budget of its own, served through tools/ctxkeeper
 ARMS["X32b"] = ("plain", "memory", 0)                 # X32 again after the proxy fixes of 2026-10-11 (same arm; a new name keeps both results)
@@ -342,6 +345,8 @@ run_one() {  # arm agent budget task_dir job_name drop_old_thinking
     N32x8)  xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=delta notes_inplace=true notes_chunk_tokens=11000 inplace_turn_tokens=13000" ;;
     N32y)   xa=(-a clm_keeper:KeeperAgent); extra="$jt notes_mode=delta notes_inplace=true notes_chunk_tokens=11000 inplace_turn_tokens=17000" ;;
     N32z)   xa=(-a clm_keeper:KeeperAgent); extra="$jt notes_mode=delta notes_inplace=true notes_chunk_tokens=11000 inplace_turn_tokens=17000 mention_check=true" ;;
+    N32w)   xa=(-a clm_keeper:KeeperAgent); extra="$jt notes_mode=delta notes_inplace=true notes_chunk_tokens=11000 inplace_turn_tokens=17000 mention_check=count" ;;
+    N32w6)  xa=(-a clm_keeper:KeeperAgent); extra="$jt notes_mode=delta notes_inplace=true notes_chunk_tokens=11000 inplace_turn_tokens=9500 mention_check=count" ;;
     N32xth) xa=(-a clm_keeper:KeeperAgent); extra="$jt notes_mode=delta notes_inplace=true notes_chunk_tokens=11000 inplace_turn_tokens=17000" ;;
     N32xth6) xa=(-a clm_keeper:KeeperAgent); extra="$jt notes_mode=delta notes_inplace=true notes_chunk_tokens=11000" ;;
     N32er)  xa=(-a clm_keeper:KeeperAgent); extra="$jf notes_mode=delta auto_retrieve=20 retrieve_scope=all" ;;
