@@ -34,9 +34,13 @@ LONG-B. The longer contexts are new oracle coverage, not inferred device equalit
 The wrapper also checkpoints every complete 100 positions, copies selection buffers
 and audits pool scores at retained positions. These operations observe state only.
 They do not prune a layer, change a reduction, compress KV or substitute a kernel.
-The checkpoint proof interrupts a six-token diagnostic in prefill and generation,
-then compares its complete eight-token result and retained bytes to an uninterrupted
-run. Resume restores all plan buffers and regenerates transient workspaces/weights.
+The checkpoint proof interrupts the 87-token incident prompt after positions 79
+and 89 (80 and 90 consumed positions), then compares eight predictions and retained
+bytes to the first eight predictions of the uninterrupted 64-token capacity gate.
+Four predictions must be computed after the generation-state restore. The earlier
+six-token diagnostic ended at EOG after three predictions and is retained separately
+as a narrower test. Resume restores all plan buffers and regenerates transient
+workspaces/weights.
 
 The input bundle builder takes only a rendered prompt. tokens.txt, input.json,
 identity.tsv, plan.tsv and vocab.bin encode no context or generation cap. Old runtime

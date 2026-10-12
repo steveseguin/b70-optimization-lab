@@ -93,11 +93,13 @@ def launch(label,bundle,cap,*,resume=False,extra=None):
   oracle_environment_overrides=extra or {},checkpoint_interval=int((extra or {}).get('IQ3_CHECKPOINT_INTERVAL','100')),address_space_cap_bytes=38_000_000_000,anonymous_memory_guard_bytes=11_500_000_000,resumed=resume,prior_attempt=prior)
  save(attempt/'receipt.json',r);snapshot=HERE/'runner-snapshots'/(r['runner_sha256']+'.py');snapshot.parent.mkdir(exist_ok=True)
  if not snapshot.exists():shutil.copyfile(Path(__file__),snapshot)
- child=None;start=time.monotonic();before=resource.getrusage(resource.RUSAGE_CHILDREN);peak=0;last_pos=-1;last_disk=0
+ child=None;stop_requested=False;start=time.monotonic();before=resource.getrusage(resource.RUSAGE_CHILDREN);peak=0;last_pos=-1;last_disk=0
  with (attempt/('stdout-resume-'+str(time.time_ns())+'.txt' if resume else 'stdout.txt')).open('w') as log:
   child=subprocess.Popen(cmd,stdout=log,stderr=subprocess.STDOUT,env={**ENV,'IQ3_MODEL_DIR':inp['model_dir'],**(extra or {})})
   r['pid']=child.pid;save(attempt/'receipt.json',r)
   def stop(sig,frame):
+   nonlocal stop_requested
+   stop_requested=True
    if child.poll() is None:child.send_signal(sig)
   old={s:signal.signal(s,stop) for s in (signal.SIGTERM,signal.SIGINT)}
   try:
@@ -135,6 +137,7 @@ def launch(label,bundle,cap,*,resume=False,extra=None):
  r.update(status=read(d/'result.json')['status'],returncode=child.returncode,elapsed_seconds=time.monotonic()-start,cpu_seconds=after.ru_utime+after.ru_stime-before.ru_utime-before.ru_stime,peak_anonymous_bytes=peak,completed_utc=utc())
  save(attempt/'receipt.json',r);archived_logs(d,True)
  check(child.returncode==0,'CPU oracle failed; no automatic retry')
+ check(not stop_requested,'supervisor stopped cooperatively; no automatic next segment')
  return d
 
 def mid_inventory(d,prompt_count):
@@ -228,7 +231,7 @@ def main():
    save(HERE/'status.json',dict(status='capacity-gate-passed',updated_utc=utc()))
   if a.stage in ('all','resume-test'):resume_test(a.resume)
   if a.stage in ('all','long'):
-   check(read(HERE/'capacity-incident/equality-proof.json')['passed'],'capacity gate required');check(read(HERE/'resume-equality-proof.json')['passed'],'resume gate required')
+   check(read(HERE/'capacity-incident/equality-proof.json')['passed'],'capacity gate required');proof=read(HERE/'resume-equality-proof.json');check(proof['passed'] and proof['tokens']==8 and proof['raw_fixtures']==384 and proof['generated_tokens_after_decode_resume']==4,'nonterminal resume gate required')
    for label in ('LONG-A','LONG-B'):
     run_segmented(label,INPUTS/label,32,a.resume);seal(label,INPUTS/label,32);module('site_costs',HERE/'summarize_costs.py').summarize(HERE/label);refresh();checker_tests(label)
     if a.publish:publish(label)

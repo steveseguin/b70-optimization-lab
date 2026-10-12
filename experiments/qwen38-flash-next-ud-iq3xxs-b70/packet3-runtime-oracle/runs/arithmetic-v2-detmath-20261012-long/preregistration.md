@@ -71,3 +71,16 @@ Completed teardown JSON and every segment's old teardown are compressed lossless
 with original/raw hashes verified before removal. This avoids a single>100MB
 GitHub object for a long run. Loaders accept either original JSON or its verified
 compressed form. The CPU fixtures, token streams and mid-prompt bytes are unchanged.
+
+## Resume-test correction after natural EOG
+
+The six-token prefix ended naturally at its third prediction. It proved prefill
+restoration but not generation after restoration; its original proof is retained
+under resume-equality-proof-short-eog.json. Before continuing LONG-A, replace the
+qualification with the complete87-token incident prompt, cap8, interrupted after
+80 positions (prefill) and90 positions (four generated tokens). Four further tokens
+must be generated after restoration. Compare all eight tokens/logit records,384
+fixtures/eight ledgers and mid-prompt records against the first eight predictions
+of the already completed uninterrupted64-token capacity gate. EOG is never ignored.
+The numerical program and binary are unchanged. Initial LONG-A prefill was stopped
+and retained; it had not reached its first100-position checkpoint.

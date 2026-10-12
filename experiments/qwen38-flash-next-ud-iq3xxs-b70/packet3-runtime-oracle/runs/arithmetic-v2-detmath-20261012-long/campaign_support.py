@@ -5,51 +5,42 @@ from pathlib import Path
 def install(m):
  H,R,I=m.HERE,m.ROOT,m.INPUTS
  def resume_test(allow_resume=False):
-  if (H/'resume-equality-proof.json').exists():
-   proof=m.read(H/'resume-equality-proof.json');m.check(proof['passed'],'existing resume proof');return
-  bundle=I/'resume-test-input'
-  if not bundle.exists():
-   m.disk_guard();tmp=I/'.resume-test-input.partial';tmp.mkdir()
-   original=R/'experiments/own-xpu-runtime/stage2/suite-inputs-20261012/incident-retrospective'
-   for n in ('identity.tsv','plan.tsv','vocab.bin'):shutil.copyfile(original/n,tmp/n)
-   inp=m.read(original/'input.json');inp['tokens']=inp['tokens'][:6]
-   (tmp/'tokens.txt').write_text(' '.join(map(str,inp['tokens']))+'\n')
-   # This is explicitly a synthetic six-token checkpoint test, never a long oracle.
-   inp['checkpoint_test_only']=True;inp['source_input_sha256']=m.sha(original/'input.json')
-   inp['files']={p.name:m.sha(p) for p in tmp.iterdir()};m.save(tmp/'input.json',inp);tmp.rename(bundle)
-  inp=m.read(bundle/'input.json');vocab=[]
-  with (bundle/'vocab.bin').open('rb') as f:
-   while raw:=f.read(4):vocab.append(f.read(struct.unpack('<I',raw)[0]))
-  prefix=b''.join(vocab[t] for t in inp['tokens']);prompt=I/'resume-test.txt';prompt.write_bytes(prefix)
-  inp.update(source_prompt=inp.get('source_prompt',inp['prompt']),prompt=str(prompt),prompt_sha256=hashlib.sha256(prefix).hexdigest())
-  m.save(bundle/'input.json',inp)
-  d=m.launch('resume-uninterrupted',bundle,8,resume=allow_resume and (H/'.resume-uninterrupted.partial/native').exists(),extra={'IQ3_CHECKPOINT_INTERVAL':'4'})
-  reference=m.seal('resume-uninterrupted',bundle,8)
-  m.check(not m.read(reference/'receipt.json')['resumed'],'control must be uninterrupted')
-  d=H/'.resume-interrupted.partial/native'
-  if not (H/'resume-interrupted').exists():
-   if not d.exists():m.launch('resume-interrupted',bundle,8,extra={'IQ3_CHECKPOINT_INTERVAL':'4','IQ3_STOP_AT_CHECKPOINT':'4'})
+  proof_path=H/'resume-equality-proof.json'
+  if proof_path.exists():
+   proof=m.read(proof_path);m.check(proof['passed'] and proof['tokens']==8 and proof['generated_tokens_after_decode_resume']==4,'qualified resume proof');return
+  bundle=R/'experiments/own-xpu-runtime/stage2/suite-inputs-20261012/incident-retrospective'
+  reference=H/'capacity-incident';label='resume-incident';d=H/('.'+label+'.partial/native')
+  if not (H/label).exists():
+   if not d.exists():m.launch(label,bundle,8,extra={'IQ3_CHECKPOINT_INTERVAL':'10','IQ3_STOP_AT_CHECKPOINT':'80'})
    state=m.read(d/'result.json')
    if state['status']=='failed-or-stopped':m.check(allow_resume,'explicit --resume required for interrupted qualification')
    checkpoint=m.read(d/'checkpoint.json')
-   if checkpoint['next_position']==4:
-    m.save(H/'resume-prefill-checkpoint.json',dict(**checkpoint,sha256=m.sha(d/'checkpoint.bin')))
-    m.launch('resume-interrupted',bundle,8,resume=True,extra={'IQ3_CHECKPOINT_INTERVAL':'4','IQ3_STOP_AT_CHECKPOINT':'8'})
-   checkpoint=m.read(d/'checkpoint.json')
-   if checkpoint['next_position']==8:
-    m.save(H/'resume-decode-checkpoint.json',dict(**checkpoint,sha256=m.sha(d/'checkpoint.bin')))
-    m.launch('resume-interrupted',bundle,8,resume=True,extra={'IQ3_CHECKPOINT_INTERVAL':'4'})
-   elif m.read(d/'result.json')['status'] not in ('token-cap','eos'):
-    m.check(allow_resume,'explicit --resume required');m.launch('resume-interrupted',bundle,8,resume=True,extra={'IQ3_CHECKPOINT_INTERVAL':'4'})
-  resumed=m.seal('resume-interrupted',bundle,8)
-  first=m.read(H/'resume-prefill-checkpoint.json');second=m.read(H/'resume-decode-checkpoint.json')
-  proof=m.base.compare_prefix(resumed,reference)
-  mid_a,_=m.mid_inventory(reference,6);mid_b,_=m.mid_inventory(resumed,6);m.check(mid_a==mid_b,'resume mid-prompt bytes')
-  a,b=m.read(reference/'result.json'),m.read(resumed/'result.json')
-  m.check(a['tokens']==b['tokens'],'resumed tokens')
-  proof.update(midprompt_hashes=mid_a,prefill_checkpoint=first,decode_checkpoint=second,context=4096,interrupted_in_prefill_and_decode=True,
+   if checkpoint['next_position']<80:
+    m.check(allow_resume,'explicit --resume required');m.launch(label,bundle,8,resume=True,extra={'IQ3_CHECKPOINT_INTERVAL':'10','IQ3_STOP_AT_CHECKPOINT':'80'})
+    checkpoint=m.read(d/'checkpoint.json')
+   if checkpoint['next_position']==80:
+    m.save(H/'resume-incident-prefill-checkpoint.json',dict(**checkpoint,sha256=m.sha(d/'checkpoint.bin')))
+    m.launch(label,bundle,8,resume=True,extra={'IQ3_CHECKPOINT_INTERVAL':'10','IQ3_STOP_AT_CHECKPOINT':'90'})
+    checkpoint=m.read(d/'checkpoint.json')
+   if checkpoint['next_position']==90 and m.read(d/'result.json')['status'] not in ('token-cap','eos'):
+    state=m.read(d/'result.json');m.check(len(state['tokens'])==4 and state['tokens'][-1] not in (248044,248046),'decode checkpoint must be nonterminal')
+    m.save(H/'resume-incident-decode-checkpoint.json',dict(**checkpoint,generated_tokens=4,sha256=m.sha(d/'checkpoint.bin')))
+    m.launch(label,bundle,8,resume=True,extra={'IQ3_CHECKPOINT_INTERVAL':'10'})
+  resumed=m.seal(label,bundle,8);a,b=m.read(resumed/'result.json'),m.read(reference/'result.json')
+  m.check(len(a['tokens'])==8 and a['tokens']==b['tokens'][:8],'eight resumed tokens')
+  keys=('step','token_id','top5_ids','top5_logits','logits_bf16_sha256')
+  m.check(all(all(x[k]==y[k] for k in keys) for x,y in zip(a['steps'],b['steps'][:8])),'resumed logits')
+  hashes={}
+  for i in range(1,9):
+   for p in (reference/f'step{i}').iterdir():
+    name=str(p.relative_to(reference));m.check(p.read_bytes()==(resumed/name).read_bytes(),'resumed fixture '+name);hashes[name]=m.sha(p)
+  m.check(len(hashes)==392,'fixture/ledger coverage')
+  mid_a,_=m.mid_inventory(reference,87);mid_b,_=m.mid_inventory(resumed,87);m.check(mid_a==mid_b,'resumed mid-prompt bytes')
+  proof=dict(passed=True,reference=str(reference.relative_to(R)),reference_result_sha256=m.sha(reference/'result.json'),reference_scope='First eight predictions of the uninterrupted 64-token capacity gate; not a separately run eight-token control',
+   reference_generated_tokens=64,tokens=8,token_int32le_sha256=hashlib.sha256(struct.pack('<8i',*a['tokens'])).hexdigest(),raw_fixtures=384,layer_hash_ledgers=8,all_prefix_logits_and_top5_equal=True,fixture_hashes=hashes,midprompt_hashes=mid_a,
+   prefill_checkpoint=m.read(H/'resume-incident-prefill-checkpoint.json'),decode_checkpoint=m.read(H/'resume-incident-decode-checkpoint.json'),context=4096,interrupted_in_prefill_and_decode=True,generated_tokens_after_decode_resume=4,
    uninterrupted_receipt_sha256=m.sha(reference/'receipt.json'),resumed_receipt_sha256=m.sha(resumed/'receipt.json'))
-  m.save(H/'resume-equality-proof.json',proof);m.save(H/'status.json',dict(status='resume-gate-passed',updated_utc=m.utc()))
+  m.save(proof_path,proof);m.save(H/'status.json',dict(status='resume-gate-passed',updated_utc=m.utc()))
 
  def checker_tests(label):
   checker=m.module('long_checker_tests',H/'suite_check.py');oracle=H/label
@@ -169,9 +160,13 @@ logit records and log offsets every 100 completed positions. Each buffer is hash
 the temporary checkpoint is fully reread, then atomically renamed. Resume validates
 input/plan/admission/capacity binding and every buffer, truncates output logs to the
 checkpoint, and discards only this attempt's fixtures beyond that point. No weights
-are checkpointed. The six-token diagnostic compares uninterrupted output with a
-run interrupted in both prefill (after four positions) and generation (after eight):
-eight tokens, 384 fixtures, eight ledgers, logit records and all mid-prompt records.
+are checkpointed. The incident diagnostic compares the first eight predictions of the uninterrupted
+64-token capacity gate with a run interrupted in prefill (after 80 positions) and
+generation (after 90): eight tokens, 384 fixtures, eight ledgers, logit records and
+all mid-prompt records. Four tokens must be generated after the second restoration.
+The earlier six-token diagnostic ended naturally after three tokens and therefore
+proved only prefill restoration; its narrow evidence is retained separately. LONG-A
+was stopped during initial prefill until the stronger gate passed.
 See `resume-equality-proof.json`. Failed runs never retry automatically; use `--resume`
 explicitly. Completed runs are verified and skipped. Status updates after every position.
 

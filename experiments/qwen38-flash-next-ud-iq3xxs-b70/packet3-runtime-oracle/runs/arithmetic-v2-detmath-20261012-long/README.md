@@ -52,15 +52,19 @@ See `capacity-analysis.md` and the 4,096-capacity `capacity-incident/equality-pr
 ledgers must match before LONG-A starts. LONG-A must be sealed before LONG-B starts.
 Both gates compare against the unchanged sealed arithmetic, with no tolerance.
 
-Resume proof: **PENDING**. The original suite wrapper could not resume; `oracle_long.cpp`
+Resume proof: **PASS**. The original suite wrapper could not resume; `oracle_long.cpp`
 adds a checkpoint of **all** plan buffers, position, token history, generated IDs,
 logit records and log offsets every 100 completed positions. Each buffer is hashed,
 the temporary checkpoint is fully reread, then atomically renamed. Resume validates
 input/plan/admission/capacity binding and every buffer, truncates output logs to the
 checkpoint, and discards only this attempt's fixtures beyond that point. No weights
-are checkpointed. The six-token diagnostic compares uninterrupted output with a
-run interrupted in both prefill (after four positions) and generation (after eight):
-eight tokens, 384 fixtures, eight ledgers, logit records and all mid-prompt records.
+are checkpointed. The incident diagnostic compares the first eight predictions of the uninterrupted
+64-token capacity gate with a run interrupted in prefill (after 80 positions) and
+generation (after 90): eight tokens, 384 fixtures, eight ledgers, logit records and
+all mid-prompt records. Four tokens must be generated after the second restoration.
+The earlier six-token diagnostic ended naturally after three tokens and therefore
+proved only prefill restoration; its narrow evidence is retained separately. LONG-A
+was stopped during initial prefill until the stronger gate passed.
 See `resume-equality-proof.json`. Failed runs never retry automatically; use `--resume`
 explicitly. Completed runs are verified and skipped. Status updates after every position.
 
