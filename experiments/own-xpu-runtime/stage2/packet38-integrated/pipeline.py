@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Bounded two-process controller; CPU host backend by default. No threads."""
-import argparse, hashlib, json, mmap, os, select, signal, socket, struct, subprocess, sys, time
+import argparse, hashlib, json, math, mmap, os, select, signal, socket, struct, subprocess, sys, time
 from pathlib import Path
 P=Path(__file__).resolve().parent
 SLOT=65536;SHARED=2*SLOT+4096
@@ -141,7 +141,7 @@ class NativeController:
         diagnostic=self.draft.mode=="script" or getattr(b.a,"draft_fault","none")!="none"
         r.update(diagnostic=diagnostic,prompt_overlap=self.overlap,acceptance=r["stats"]["hits"]/r["stats"]["guesses"] if r["stats"]["guesses"] else None,
                  evidence_label="DIAGNOSTIC ONLY: scripted guesses or provider fault injection" if diagnostic else "official draft head, draft-only 8-bit requantisation, output identical to sequential decode" if self.draft.mode=="mtp" else "CPU preparation; device qualification pending",
-                 decode_definition="(N-1)*1000/(completion_ms[N]-completion_ms[1]); N<=64",
+                 decode_definition="(N-1)*1000/(completion_ms[N]-completion_ms[1]); N emitted events",
                  decode_tok_s=(r["decode_intervals"]*1000/r["decode_wall_ms"] if r["decode_wall_ms"] else None) if b.device and not diagnostic else None)
         return r
 
@@ -199,11 +199,55 @@ def enrich_result(result,transport):
     result['rank_metrics']=transport.metrics
     return result
 
+SUBMISSION_DEFINITION = ('rate for the 99 inter-token intervals between generated-token timestamps 1 and 100 after TTFT; '
+                         '99 / (t100 - t1), timestamps in seconds; 100 events, 99 intervals')
+LEGACY_DEFINITION = ('(N-1) / (tN - t1), timestamps in seconds; first N=min(64, non-EOG output count) events; '
+                     '63 intervals ending at tokens 2..64 for N=64')
+
+def request_timing_metadata(result,transport,prompt,count):
+    """Wrapper accounting only: preserve every completion and both fixed spans."""
+    rows=result.get('timing_rows',[])
+    stamps=[r['completed_monotonic'] for r in rows]
+    require(len(stamps)==len(result['tokens']), 'missing generated-token completion timestamp')
+    require(all(math.isfinite(t) for t in stamps) and
+            all(b>=a for a,b in zip(stamps,stamps[1:])), 'invalid completion timestamps')
+    start,end=transport.work_start,transport.work_end
+    require(not stamps or start<=stamps[0]<=stamps[-1]<=end,'completion outside request')
+    elapsed=end-start
+    speed=transport.device and not result.get('diagnostic')
+    legacy=rows[:-1] if rows and rows[-1]['token_id'] in (248044,248046) else rows
+    legacy=legacy[:64]
+    span=legacy[-1]['completed_monotonic']-legacy[0]['completed_monotonic'] if len(legacy)>1 else 0.
+    intervals=max(0,len(legacy)-1)
+    submission_span=stamps[99]-stamps[0] if len(stamps)>=100 else None
+    result.update(requested_output_tokens=count,prompt_tokens=len(prompt),output_tokens=len(stamps),
+        ended_early=len(stamps)<count,request_start_monotonic=start,request_end_monotonic=end,
+        generated_token_completion_timestamps=stamps,completion_timestamp_clock='monotonic seconds',
+        ttft_ms=(stamps[0]-start)*1000 if stamps else None,
+        ttft_definition='1000 * (t1 - request_start); prompt processing plus first generated token',
+        prompt_wall_definition='native/controller prompt_wall_ms includes first generated token; do not add it to TTFT',
+        request_wall_ms=elapsed*1000,wall_tok_s=len(stamps)/elapsed if speed and elapsed>0 else None,
+        wall_rate_definition='output_tokens / (request_end - request_start); prompt plus full generation, excludes load/reset/teardown',
+        guesses=result['stats']['guesses'],hits=result['stats']['hits'],
+        decode_wall_ms=span*1000,decode_intervals=intervals,decode_numerator=intervals,
+        decode_event_count=len(legacy),decode_definition=LEGACY_DEFINITION,
+        decode_tok_s=intervals/span if speed and span>0 else None,
+        submission_tok_s=99/submission_span if speed and submission_span and submission_span>0 else None,
+        submission_definition=SUBMISSION_DEFINITION,
+        submission_event_count=100 if submission_span is not None else 0,
+        submission_intervals=99 if submission_span is not None else 0,
+        submission_numerator=99 if submission_span is not None else 0,
+        submission_first_completed_monotonic=stamps[0] if submission_span is not None else None,
+        submission_last_completed_monotonic=stamps[99] if submission_span is not None else None,
+        submission_wall_ms=submission_span*1000 if submission_span is not None else None,
+        submission_window_available=submission_span is not None)
+    return result
+
 def request_run(transport,provider,prompt,count,eos=(),overlap=True,dumps=False):
     cls=NativeController if getattr(transport.a,"controller","python")=="native" else Controller
     result=cls(transport,provider,overlap,dumps).run(prompt,count,eos)
     result["controller"]=getattr(transport.a,"controller","python")
-    return enrich_result(result,transport)
+    return request_timing_metadata(enrich_result(result,transport),transport,prompt,count)
 
 class Transport:
     def __init__(self,args,out,environment=None,check=None,launch_hook=None):

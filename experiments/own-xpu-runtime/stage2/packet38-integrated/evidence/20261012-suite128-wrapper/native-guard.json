@@ -1,0 +1,31 @@
+{
+  "command": [
+    "nice",
+    "-n",
+    "19",
+    "ionice",
+    "-c",
+    "3",
+    "experiments/own-xpu-runtime/stage2/packet38-integrated/build/gnu-host/own-rt-iq3",
+    "--mini",
+    "--pipeline-mini",
+    "--max-new",
+    "128",
+    "--context",
+    "256",
+    "--native-nice",
+    "19",
+    "--output",
+    "experiments/own-xpu-runtime/stage2/packet38-integrated/build/suite128-guard-refusal"
+  ],
+  "exit_code": 1,
+  "stdout": "",
+  "stderr": "bounded generation/context/deadline\n",
+  "device_executed": false,
+  "real_model_execution": false,
+  "binary_sha256": "0b98e1ed834b92885052eb706b6cfee0e2a3068639396c991ab72bf2a19fb134",
+  "source_sha256": "d409f9ab0f096338c3a0a93f547d635d04eac7339f6c9f50cd17b350b0259251",
+  "source_line": 193,
+  "condition": "a.tokens > 0 && a.tokens <= 64",
+  "resolution": "Separate authorized native change/rebuild/qualification required; intentionally not changed in wrapper-only task"
+}

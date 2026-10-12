@@ -298,10 +298,11 @@ def main():
         prerequisites(a.w0p,'W0p',identity);measured=prerequisites(a.k2,'K2',identity)
         require(a.dispatch and sha(a.dispatch)==measured.get('dispatch_sha256'),'suite measured dispatch required')
         manifest=json.loads(a.suite_manifest.read_text())
-        require(manifest.get('arithmetic')=='iq3-p17-detmath-v2' and manifest.get('token_cap')==64,'suite identity')
+        from suite import validate_manifest
+        suite_cap=validate_manifest(manifest)
         sample=memory_snapshot();require(sample['MemAvailable']>=97*1024**3,'suite needs97GiB available before ranks load')
         record['memory_admission']=dict(sample,required_MemAvailable=97*1024**3)
-        record.update(suite_manifest_sha256=sha(a.suite_manifest),controller=a.controller,repeat=a.repeat,dispatch_sha256=sha(a.dispatch))
+        record.update(token_cap=suite_cap,suite_manifest_sha256=sha(a.suite_manifest),controller=a.controller,repeat=a.repeat,dispatch_sha256=sha(a.dispatch))
     if a.dispatch:validate(json.loads(a.dispatch.read_text()))
     request_count=(1+len(manifest.get('requests',manifest.get('prompts',[])))*a.repeat) if a.window in ('WS','WSs') else 1
     record['storage_admission']=admit(projected_write_bytes(a.window,request_count))
@@ -340,10 +341,10 @@ def main():
             record['ldd_preflight']=ldd_preflight(args.binary)
             if a.window=='W0p':concurrency_canary(args,out,environment['native'],watch)
             elif a.window in ('WS','WSs'):
-                args.suite_manifest=a.suite_manifest;args.repeat=a.repeat;args.draft='mtp' if a.window=='WS' else 'none'
+                args.tokens=suite_cap;args.suite_manifest=a.suite_manifest;args.repeat=a.repeat;args.draft='mtp' if a.window=='WS' else 'none'
                 args.controller=a.controller
                 r=pp.run(args,environment['native'],watch.check,watch.latch,watch.mark_launched)
-                record.update(summary=r,decode_tok_s=r['decode_median_tok_s'])
+                record.update(summary=r,decode_tok_s=r['decode_median_tok_s'],submission_tok_s=r['submission_median_tok_s'])
                 require(r['passed'],'one or more suite requests failed exactness')
             else:
                 args.draft={'W2s':'none','W2n':'ngram','W2d':'script','W2x':'script','W2c':'ngram','W2m':'mtp','W2mc':'mtp'}[a.window]

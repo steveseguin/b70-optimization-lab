@@ -10,6 +10,50 @@ RESET=11
 CHECKER=ROOT/'experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite/suite_check.py'
 EOS=(248044,248046)
 
+CHECKER128=ROOT/'experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/suite_check.py'
+
+def validate_manifest(manifest,context=256,mini=False):
+    cap=manifest.get('token_cap')
+    pipeline.require(manifest.get('arithmetic')=='iq3-p17-detmath-v2' and type(cap) is int and cap in (64,128),'suite identity: token_cap must be 64 or 128')
+    pipeline.require(type(manifest.get('context')) is int and 0<manifest['context']<=context<=256 and (mini or context==256),'suite context capacity must be 256')
+    entries=manifest['prompts']
+    pipeline.require(entries and len({e['prompt_id'] for e in entries})==len(entries),'empty/duplicate suite')
+    for entry in entries:
+        length=len(entry['mini_tokens']) if mini else entry['prompt_tokens']
+        count=entry.get('mini_count',cap) if mini else cap
+        pipeline.require(type(length) is int and length>0 and length+count<=context,'prompt tokens + cap exceeds context capacity')
+    return cap
+
+class RetainedFixtureChecker:
+    """The 128 checker has no step-list API. Keep its oracle admission intact;
+    compare actual tokens and retained early fixtures directly, without inventing
+    late binary output or modifying the read-only checker.
+    """
+    def __init__(self,oracle_checker):
+        self.oracle_checker=oracle_checker
+        self.source_sha256=oracle_checker.source_sha256
+        self.token_cap=128
+    def check_prompt(self,actual,oracle,entry,repo_root=ROOT):
+        check=self.oracle_checker
+        n,_=check.check_prompt(oracle,oracle,entry,repo_root)
+        pipeline.require(n==self.token_cap,'oracle must contain all cap tokens')
+        if actual==oracle:return n,8*48
+        pipeline.require(check.token_record(actual)==check.token_record(oracle),'generated tokens differ')
+        steps=list(range(1,9))
+        pipeline.require({d.name for d in actual.glob('step*') if d.is_dir()}=={f'step{i}' for i in steps},'retained fixture step coverage differs')
+        for step in steps:
+            directory=actual/f'step{step}'
+            records=[json.loads(line) for line in (directory/'layers.jsonl').read_text().splitlines()]
+            pipeline.require([r.get('layer') for r in records]==list(range(48)),'retained fixture layer coverage differs')
+            pipeline.require({f.name for f in directory.glob('*.bf16')}=={f'layer-{i:02}.bf16' for i in range(48)},'retained fixture filenames differ')
+            for row in records:
+                name=f"step{step}/layer-{row['layer']:02}.bf16"
+                raw=(actual/name).read_bytes()
+                pipeline.require(row.get('shape')==[1,4,2560] and row.get('dtype')=='BF16 little-endian','retained fixture shape/dtype')
+                pipeline.require(len(raw)==20480 and hashlib.sha256(raw).hexdigest()==row.get('sha256'),'retained fixture length/hash differs')
+                pipeline.require(raw==(oracle/name).read_bytes(),name+' byte mismatch')
+        return n,len(steps)*48
+
 def select_warmup(prompts,context,vocab):
     """A short synthetic request absent from every contiguous suite input span.
 
@@ -123,6 +167,7 @@ def rate(result,device):
     rows=result.get('timing_rows',[])
     if rows and rows[-1]['token_id'] in EOS:rows=rows[:-1]
     if not device or result.get('diagnostic') or len(rows)<2:return None
+    rows=rows[:64]
     elapsed=rows[-1]['completed_monotonic']-rows[0]['completed_monotonic']
     return (len(rows)-1)/elapsed if elapsed>0 else None
 
@@ -130,13 +175,14 @@ def timing_metadata(result,transport):
     """Match request/rank receipt fields, using the reference non-EOG span."""
     stamps=result.get('timing_rows',[])
     if stamps and stamps[-1]['token_id'] in EOS:stamps=stamps[:-1]
+    stamps=stamps[:64]
     count=max(0,len(stamps)-1)
     left=stamps[0]['completed_monotonic'] if stamps else None
     right=stamps[-1]['completed_monotonic'] if stamps else None
     span=(right-left)*1000 if left is not None else 0.
     result.update(decode_wall_ms=span,decode_intervals=count,decode_numerator=count,
         decode_event_count=len(stamps),decode_first_completed_monotonic=left,decode_last_completed_monotonic=right,
-        decode_definition='(N-1)*1000/(completion_ms[N]-completion_ms[1]); N non-EOG emitted tokens, at most 64; null rate with fewer than two events',
+        decode_definition=pipeline.LEGACY_DEFINITION,
         rank_timing_scope='model request only, excluding load/teardown; busy includes half and draft wall time, idle includes coordinator and accept/rollback IO')
     elapsed=(transport.work_end-transport.work_start)*1000
     for m in result['rank_metrics']:
@@ -160,12 +206,23 @@ def summarize(rows,complete,expected=12):
         return statistics.median(good) if good else None
     valid=[r for r in rows if r.get('passed')]
     repeats=sorted({r['repeat'] for r in rows})
+    prompts=sorted({r['prompt_id'] for r in rows})
+    prompt_medians={key:{name:median(r.get(key) for r in valid if r['prompt_id']==name) for name in prompts}
+                    for key in ('decode_tok_s','submission_tok_s')}
     return dict(schema='packet38.suite.v1',passed=bool(rows) and all(r.get('passed') for r in rows),
                 complete=bool(complete),expected_prompts=expected,rows=rows,
                 decode_median_tok_s=median(r.get('decode_tok_s') for r in valid),
+                decode_median_of_prompt_medians_tok_s=median(prompt_medians['decode_tok_s'].values()),
+                submission_median_tok_s=median(r.get('submission_tok_s') for r in valid),
+                submission_median_of_prompt_medians_tok_s=median(prompt_medians['submission_tok_s'].values()),
+                per_prompt_decode_medians=prompt_medians['decode_tok_s'],
+                per_prompt_submission_medians=prompt_medians['submission_tok_s'],
+                submission_all_requests_have_100_events=bool(rows) and all(r.get('submission_window_available',False) for r in rows),
+                submission_definition=pipeline.SUBMISSION_DEFINITION,
+                prompt_median_definition='ordinary median within each prompt across repeats, then ordinary median of those prompt medians; not prompt-class aggregation or a promotion gate',
                 repeat_decode_medians={str(n):median(r.get('decode_tok_s') for r in valid if r['repeat']==n) for n in repeats},
                 median_definition='ordinary median of all successful finite positive per-request rates across prompts and repeats; failed/missing/zero rates excluded; never pool distinct windows',
-                decode_definition='(N-1)/(completion_time[N]-completion_time[1]), N non-EOG emitted tokens, at most 64; 63 intervals for 64 tokens',
+                decode_definition=pipeline.LEGACY_DEFINITION,
                 no_speed_claim=True)
 
 def collect_fixtures(output,count,mini=False):
@@ -199,12 +256,15 @@ def run_request(transport,args,prompt,count,*,kernel_warmup=False):
     result['decode_tok_s']=rate(result,args.device)
     return timing_metadata(result,transport)
 
-def compare_request(output,result,entry,compare):
+def compare_request(output,result,entry,compare,token_cap=None):
     """Exactness is a request outcome, not a rank-execution exception."""
     try:
         if compare:
             n,f=compare.check_prompt(output,ROOT/entry['oracle_directory'],entry,ROOT)
+            if token_cap is not None:pipeline.require(n==token_cap,'oracle count differs from token cap')
             result['oracle_check']=dict(passed=True,tokens=n,fixture_files=f,checker_sha256=compare.source_sha256)
+            result.update(fixture_steps_checked=list(range(1,min(n,8)+1)),
+                          fixture_steps_not_retained_by_this_binary=list(range(97,105)) if token_cap==128 else [])
     except (OSError,ValueError,KeyError,TypeError) as error:
         result.update(passed=False,exactness_error=str(error))
     return result
@@ -241,12 +301,12 @@ def run(args,environment=None,check=None,failure_hook=None,launch_hook=None):
     pipeline.require(not args.output.exists(),'new suite output required')
     manifest_bytes=args.suite_manifest.read_bytes();manifest=json.loads(manifest_bytes);entries=manifest['prompts']
     pipeline.require(entries and len({e['prompt_id'] for e in entries})==len(entries),'empty/duplicate suite')
-    pipeline.require(manifest['arithmetic']=='iq3-p17-detmath-v2' and manifest['token_cap']==64,'suite identity')
+    cap=validate_manifest(manifest,args.context,args.mini)
     pipeline.require(all(Path(e['prompt_id']).name==e['prompt_id'] and e['prompt_id'] not in ('.','..') for e in entries),'unsafe prompt id')
     args.output.mkdir(parents=True);(args.output/'suite-manifest.snapshot.json').write_bytes(manifest_bytes);ranks=args.output/'ranks';ranks.mkdir()
-    compare=checker_module() if not args.mini else None
+    compare=(RetainedFixtureChecker(checker_module(CHECKER128)) if cap==128 else checker_module()) if not args.mini else None
     snapshots=admit_inputs(entries,args.output,compare) if compare else {}
-    launch=copy.copy(args);launch.input=(snapshots[entries[0]['prompt_id']][0] if compare else ROOT/entries[0]['input_bundle']);launch.oracle=None;launch.tokens=64
+    launch=copy.copy(args);launch.input=(snapshots[entries[0]['prompt_id']][0] if compare else ROOT/entries[0]['input_bundle']);launch.oracle=None;launch.tokens=cap
     pipeline.require(args.context>=manifest['context'],'suite context admission')
     transport=None;rows=[];failure=None;stopped=[]
     old={s:signal.signal(s,lambda signum,frame:stopped.append(signum)) for s in (signal.SIGTERM,signal.SIGINT)}
@@ -276,19 +336,21 @@ def run(args,environment=None,check=None,failure_hook=None,launch_hook=None):
                 output=args.output/f'repeat-{repeat}'/entry['prompt_id']
                 reset(transport,output)
                 prompt=entry.get('mini_tokens') if args.mini else snapshots[entry['prompt_id']][1]
-                count=entry.get('mini_count',64) if args.mini else 64
-                pipeline.require(len(prompt)+count-1<=args.context,'request context exceeded')
+                count=entry.get('mini_count',cap) if args.mini else cap
+                pipeline.require(len(prompt)+count<=args.context,'request context exceeded')
                 result=run_request(transport,args,prompt,count)
                 collect_fixtures(output,len(result['tokens']),args.mini)
                 result.update(prompt_id=entry['prompt_id'],repeat=repeat,ended_early=len(result['tokens'])<count,
                               first_position_ms_by_rank=[next((r['busy_ms'] for r in transport.trace if r['rank']==rank and r['op']==pipeline.HALF),None) for rank in (0,1)])
                 pipeline.save(output/'receipt.json',result)
-                compare_request(output,result,entry,compare)
+                compare_request(output,result,entry,compare,cap)
                 pipeline.save(output/'receipt.json',result)
                 rows.append(dict(prompt_id=entry['prompt_id'],repeat=repeat,passed=result['passed'],tokens=len(result['tokens']),
                                  decode_tok_s=result['decode_tok_s'],prompt_wall_ms=result['prompt_wall_ms'],acceptance=result['acceptance'],
                                  receipt=str((output/'receipt.json').relative_to(args.output)),error=result.get('exactness_error')))
-                pipeline.save(args.output/'summary.json',summarize(rows,manifest.get('complete',False)))
+                rows[-1].update({key:result[key] for key in ('decode_event_count','decode_intervals','decode_numerator','decode_first_completed_monotonic','decode_last_completed_monotonic','decode_wall_ms','submission_tok_s','submission_window_available','submission_event_count','submission_intervals','submission_numerator','submission_first_completed_monotonic','submission_last_completed_monotonic','submission_wall_ms','generated_token_completion_timestamps','ttft_ms','prompt_tokens','output_tokens','request_wall_ms','wall_tok_s','ended_early','guesses','hits','requested_output_tokens')})
+                rows[-1].update({key:result[key] for key in ('fixture_steps_checked','fixture_steps_not_retained_by_this_binary') if key in result})
+                pipeline.save(args.output/'summary.json',summarize(rows,manifest.get('complete',False),len(entries)))
         # Final reset retains the last request's complete state before FINISH.
         reset(transport,args.output/'after-suite')
         transport.close(True)
@@ -306,8 +368,10 @@ def run(args,environment=None,check=None,failure_hook=None,launch_hook=None):
                     pipeline.failure_attempt("suite teardown receipt",lambda:pipeline.save(args.output/'teardown-error.json',dict(error=teardown_message)),diagnostic_errors)
     finally:
         for sig,handler in old.items():signal.signal(sig,handler)
-    summary=summarize(rows,manifest.get('complete',False));summary.update(device_executed=args.device,controller=getattr(args,'controller','python'),draft=args.draft,
-        manifest_sha256=hashlib.sha256(manifest_bytes).hexdigest(),same_rank_processes=True,
+    summary=summarize(rows,manifest.get('complete',False),len(entries));summary.update(device_executed=args.device,controller=getattr(args,'controller','python'),draft=args.draft,
+        manifest_sha256=hashlib.sha256(manifest_bytes).hexdigest(),same_rank_processes=True,token_cap=cap,
+        fixture_steps_checked=list(range(1,9)) if compare and all(r.get('passed') for r in rows) and rows else [],
+        fixture_steps_not_retained_by_this_binary=list(range(97,105)) if cap==128 else [],
         evidence_label='official draft head, draft-only 8-bit requantisation, output identical to sequential decode' if args.draft=='mtp' else 'sequential target decode')
     if failure:summary.update(passed=False,error=str(failure))
     pipeline.save(args.output/'summary.json',summary);pipeline.save(args.output/'receipt.json',summary)
