@@ -1,0 +1,24 @@
+{
+  "reviewer": "independent dense-kernel agent",
+  "device_executed": false,
+  "passed": true,
+  "tests": 13,
+  "findings": [
+    {
+      "id": "HC-site-costs",
+      "severity": "correctness",
+      "status": "fixed",
+      "problem": "small.hc originally priced only hc.a low+inject although hc.f selections can differ.",
+      "fix": "Compare a and f site sums independently; require the fusion to beat both; hc.low remains an alias.",
+      "regression": "test_both_hc_sites_must_win"
+    }
+  ],
+  "source_sha256": {
+    "k2_summary.py": "b15469c8655b7c8b837c08bcf9fd0485976ebd32629d76a18c1f91cbf4fbf357",
+    "gemv_timing.cpp": "62d79654129da0d87d0016b513e04cbe7df048e139339b3d1261fb3f74903f81",
+    "k2_fixture.cpp": "d579d8599c0941759b54a4afcae6d0b5dfe3169c84b4ebfd268ee3860ff16030",
+    "k2-class-registry.json": "5d3264488b715d1f19232de6bfaa645f0907199866bad0c36fa4a1f0cac4b39f",
+    "kernel-registry.json": "e23b886564f570d05d912fc0dd1379168b12c71a4e2b66c4401bda0edeb7e38c",
+    "test_k2_selection.py": "afb6669afb518093ad9f1a4c5f57ae56cf318801047fd404cfa905de6729122b"
+  }
+}

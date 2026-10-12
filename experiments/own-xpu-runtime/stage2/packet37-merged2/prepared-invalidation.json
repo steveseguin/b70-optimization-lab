@@ -1,0 +1,50 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "tests": 13,
+  "schema": "packet35.prepared-invalidation.v1",
+  "sanitizers": [
+    "address",
+    "undefined"
+  ],
+  "leak_detection": true,
+  "precision_flags_compile_and_link": [
+    "-fno-fast-math",
+    "-ffp-contract=off"
+  ],
+  "binary_sha256": "b335a9921f4c3a57137225279de08506c3a946137f6567105357894c5d56ecc2",
+  "source_sha256": {
+    "prepared_invalidation_test.cpp": "0a290443fa00e8bcaa51358bdef09b6fae1c6b45d8137dea1f59b55ec7951d90",
+    "owner.cpp": "b792de9ae31c600e81f44b2496de49d4ce08c091a4d33a9b7ba70df41b223b45",
+    "owner_retire.cpp": "e35c366f640d8909b519891fa814aa80228b01ce69bd19ccdf00a8d13cae0da2",
+    "owner_api.hpp": "70009b6570429a2888ab5111a80e001e7b0097f85faff924585a79edb1baf223",
+    "owner.hpp": "ee69610bda3e786e2aecf9888430541879af2d4c51cb64329784cb58d3ba1faf",
+    "argument_block.hpp": "58c09e4a08b15521250ab22db87260ae9337c06fc0d9a174bd1ea916d809f4fb"
+  },
+  "compile_argv": [
+    "g++",
+    "-std=c++20",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-DOWN_RT_HOST_ONLY",
+    "-I",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet37-merged2",
+    "-O1",
+    "-g",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet37-merged2/prepared_invalidation_test.cpp",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet37-merged2/owner.cpp",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet37-merged2/owner_retire.cpp",
+    "-o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet37-merged2/build/prepared-invalidation-tests-asan"
+  ],
+  "run_argv": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet37-merged2/build/prepared-invalidation-tests-asan"
+  ],
+  "run_environment": {
+    "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1",
+    "UBSAN_OPTIONS": "halt_on_error=1",
+    "OMP_NUM_THREADS": "2"
+  }
+}

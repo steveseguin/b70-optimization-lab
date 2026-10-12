@@ -1,0 +1,29 @@
+{
+  "schema": "packet37.linked-fixture-independent-review.v1",
+  "passed": true,
+  "device_executed": false,
+  "source_only": true,
+  "source_sha256": {
+    "p33_linked_fixture.cpp": "1abb466123de8a71898ade5d65cf35aee16395481331cf99836e33d6051b4fe6",
+    "p33_linked_fixture_gate.py": "aac1dac3a41c78f075d750179d76be52c4bc94f0928042b5834ab7d158aed9d2",
+    "window.py": "090206826c2f1806e628e74f30c4884c464fbbdc0a7ecd84fb7bb1974f9a0c95",
+    "build.py": "56ac6040b5a4ce5e7aaef7ea8bf7ba140b97d34d5ee0309c6b2ce79cf5b34e1e",
+    "p33_submit.cpp": "c7bcacd934e0d06639aaecf46625a0c3e1a8fea47dda799d415e5c392f21b84a"
+  },
+  "coverage": {
+    "type_k_families": 18,
+    "split_instantiations": 36,
+    "modes": 6,
+    "checks": 216,
+    "output_rows": 1512
+  },
+  "findings": [
+    {
+      "id": "linked-host-binary-seal",
+      "status": "fixed",
+      "description": "Seal must compare all six linked host fixture binary hashes and coverage to current binaries before using their output hash.",
+      "resolution": "Inspected exact six compiler/repeat set plus cardinality, each current linked-host binary hash, 216 checks/36 splits and shared output digest assertions in final build.py seal."
+    }
+  ],
+  "metadata_refresh": "Verified only addition is sealing three independent review JSON receipts; no other build.py source change."
+}

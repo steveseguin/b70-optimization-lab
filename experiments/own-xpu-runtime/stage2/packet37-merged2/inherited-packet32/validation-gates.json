@@ -1,0 +1,1550 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "scope": "K1 and K2 argument validation, every registered class and linked candidate; exact production K2 extents; no arithmetic in validate-only mode",
+  "checks": [
+    {
+      "compiler": "gnu-host",
+      "entry": "nongemv-fixtures",
+      "poison": false,
+      "returncode": 0,
+      "binary_sha256": "bc3e34e070bf729b04e51d218e48b50ce66b45ffbbc8220492b6da574d7db2b8",
+      "evidence": "validation-1791767021643894888/gnu-host-nongemv-fixtures",
+      "gemv_entry_calls": 2568,
+      "small_entry_calls": 56,
+      "small_workloads": [
+        "small.ffn.q6",
+        "small.ffn.q8",
+        "small.gdn.ab",
+        "small.hc",
+        "small.mini.ffn",
+        "small.mini.gdn.ab",
+        "small.mini.hc"
+      ],
+      "workloads": [
+        "attention.gdn",
+        "attention.qsa",
+        "expsdown",
+        "expsgate.iq2",
+        "expsgate.iq3",
+        "final.gate",
+        "final.low",
+        "gdn.a",
+        "gdn.b",
+        "gdn.qkv.q6",
+        "gdn.qkv.q8",
+        "gdn.z.q6",
+        "gdn.z.q8",
+        "hc.a.gate",
+        "hc.a.inject",
+        "hc.a.low",
+        "hc.f.gate",
+        "hc.f.inject",
+        "hc.f.low",
+        "logits",
+        "ple.key",
+        "ple.value",
+        "qsa.ik",
+        "qsa.iq",
+        "qsa.k",
+        "qsa.qgate",
+        "qsa.v",
+        "router",
+        "shared_gate",
+        "shexpdown",
+        "shexpgate.q6",
+        "shexpgate.q8",
+        "shexpup.q6",
+        "shexpup.q8"
+      ],
+      "candidate_coverage": {
+        "attention.gdn": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "attention.qsa": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "expsdown": [
+          "p25.private_decode",
+          "p25.rows4",
+          "p25.wg32",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p27.rows2sg",
+          "p28.private.rows4",
+          "p28.private.wg32",
+          "p28.shared.rows4",
+          "p28.shared.wg32",
+          "p29.down.rows4",
+          "p29.down.wg32",
+          "r5"
+        ],
+        "expsgate.iq2": [
+          "p25.half_table",
+          "p25.paired_input",
+          "p25.private_decode",
+          "p25.rows4",
+          "p25.wg32",
+          "p27.fp32_input",
+          "p28.paired.rows4",
+          "p28.paired.wg32",
+          "p28.private.rows4",
+          "p28.private.wg32",
+          "p28.shared.rows4",
+          "p28.shared.wg32",
+          "r5"
+        ],
+        "expsgate.iq3": [
+          "p25.half_table",
+          "p25.paired_input",
+          "p25.private_decode",
+          "p25.rows4",
+          "p25.wg32",
+          "p27.fp32_input",
+          "p28.paired.rows4",
+          "p28.paired.wg32",
+          "p28.private.rows4",
+          "p28.private.wg32",
+          "p28.shared.rows4",
+          "p28.shared.wg32",
+          "r5"
+        ],
+        "final.gate": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "final.low": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "gdn.a": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "gdn.b": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "gdn.qkv.q6": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "gdn.qkv.q8": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "gdn.z.q6": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "gdn.z.q8": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "hc.a.gate": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "hc.a.inject": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "hc.a.low": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "hc.f.gate": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "hc.f.inject": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "hc.f.low": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "logits": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "ple.key": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "ple.value": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "qsa.ik": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "qsa.iq": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "qsa.k": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "qsa.qgate": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "qsa.v": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "router": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "shared_gate": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "shexpdown": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "shexpgate.q6": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "shexpgate.q8": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "shexpup.q6": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "shexpup.q8": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ]
+      },
+      "entry_trace_sha256": "7a3bfe78147409556e24a7b42626bbd7bbf28a8b84a178204c017768661c1030",
+      "receipt_sha256": "0ad67d9e9073ac21d6ad314d133141b368f22c86f324d0856407c77db908f622"
+    },
+    {
+      "compiler": "gnu-host",
+      "entry": "nongemv-fixtures",
+      "poison": true,
+      "returncode": 1,
+      "binary_sha256": "bc3e34e070bf729b04e51d218e48b50ce66b45ffbbc8220492b6da574d7db2b8",
+      "evidence": "validation-1791767021643894888/gnu-host-nongemv-fixtures-poison"
+    },
+    {
+      "compiler": "gnu-host",
+      "entry": "k2-fixtures",
+      "poison": false,
+      "returncode": 0,
+      "binary_sha256": "31cfa7f1fa88673b5d77e5d289a1613499d15b1c905fe6bb64ee218c2af93055",
+      "evidence": "validation-1791767021643894888/gnu-host-k2-fixtures",
+      "gemv_entry_calls": 628,
+      "small_entry_calls": 8,
+      "small_workloads": [
+        "small.ffn.q6",
+        "small.ffn.q8",
+        "small.gdn.ab",
+        "small.hc"
+      ],
+      "workloads": [
+        "attention.gdn",
+        "attention.qsa",
+        "expsdown",
+        "expsgate.iq2",
+        "expsgate.iq3",
+        "final.gate",
+        "final.low",
+        "gdn.a",
+        "gdn.b",
+        "gdn.qkv.q6",
+        "gdn.qkv.q8",
+        "gdn.z.q6",
+        "gdn.z.q8",
+        "hc.a.gate",
+        "hc.a.inject",
+        "hc.a.low",
+        "hc.f.gate",
+        "hc.f.inject",
+        "hc.f.low",
+        "logits",
+        "ple.key",
+        "ple.value",
+        "qsa.ik",
+        "qsa.iq",
+        "qsa.k",
+        "qsa.qgate",
+        "qsa.v",
+        "router",
+        "shared_gate",
+        "shexpdown",
+        "shexpgate.q6",
+        "shexpgate.q8",
+        "shexpup.q6",
+        "shexpup.q8"
+      ],
+      "candidate_coverage": {
+        "attention.gdn": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "attention.qsa": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "expsdown": [
+          "p25.private_decode",
+          "p25.rows4",
+          "p25.wg32",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p27.rows2sg",
+          "p28.private.rows4",
+          "p28.private.wg32",
+          "p28.shared.rows4",
+          "p28.shared.wg32",
+          "p29.down.rows4",
+          "p29.down.wg32",
+          "r5"
+        ],
+        "expsgate.iq2": [
+          "p25.half_table",
+          "p25.paired_input",
+          "p25.private_decode",
+          "p25.rows4",
+          "p25.wg32",
+          "p27.fp32_input",
+          "p28.paired.rows4",
+          "p28.paired.wg32",
+          "p28.private.rows4",
+          "p28.private.wg32",
+          "p28.shared.rows4",
+          "p28.shared.wg32",
+          "r5"
+        ],
+        "expsgate.iq3": [
+          "p25.half_table",
+          "p25.paired_input",
+          "p25.private_decode",
+          "p25.rows4",
+          "p25.wg32",
+          "p27.fp32_input",
+          "p28.paired.rows4",
+          "p28.paired.wg32",
+          "p28.private.rows4",
+          "p28.private.wg32",
+          "p28.shared.rows4",
+          "p28.shared.wg32",
+          "r5"
+        ],
+        "final.gate": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "final.low": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "gdn.a": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "gdn.b": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "gdn.qkv.q6": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "gdn.qkv.q8": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "gdn.z.q6": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "gdn.z.q8": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "hc.a.gate": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "hc.a.inject": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "hc.a.low": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "hc.f.gate": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "hc.f.inject": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "hc.f.low": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "logits": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "ple.key": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "ple.value": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "qsa.ik": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "qsa.iq": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "qsa.k": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "qsa.qgate": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "qsa.v": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "router": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "shared_gate": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "shexpdown": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "shexpgate.q6": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "shexpgate.q8": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "shexpup.q6": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "shexpup.q8": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ]
+      },
+      "entry_trace_sha256": "7a87957c3871cd02f419abd0e1c3e612e1cb8d0391884e766fb057e58a20a765",
+      "receipt_sha256": "e41878fb8963f52d4e1dec94a086cca0e31f6429518d20f124d63890ced5f145"
+    },
+    {
+      "compiler": "gnu-host",
+      "entry": "k2-fixtures",
+      "poison": true,
+      "returncode": 1,
+      "binary_sha256": "31cfa7f1fa88673b5d77e5d289a1613499d15b1c905fe6bb64ee218c2af93055",
+      "evidence": "validation-1791767021643894888/gnu-host-k2-fixtures-poison"
+    },
+    {
+      "compiler": "gnu-host",
+      "continued_after_failures": [
+        "gemv:gdn.qkv",
+        "norm",
+        "streams"
+      ]
+    },
+    {
+      "compiler": "icpx-host",
+      "entry": "nongemv-fixtures",
+      "poison": false,
+      "returncode": 0,
+      "binary_sha256": "4045472ecffc4030446297d8d49e6c060bb284c1ee8b71f9289898edbae2bb4d",
+      "evidence": "validation-1791767021643894888/icpx-host-nongemv-fixtures",
+      "gemv_entry_calls": 2568,
+      "small_entry_calls": 56,
+      "small_workloads": [
+        "small.ffn.q6",
+        "small.ffn.q8",
+        "small.gdn.ab",
+        "small.hc",
+        "small.mini.ffn",
+        "small.mini.gdn.ab",
+        "small.mini.hc"
+      ],
+      "workloads": [
+        "attention.gdn",
+        "attention.qsa",
+        "expsdown",
+        "expsgate.iq2",
+        "expsgate.iq3",
+        "final.gate",
+        "final.low",
+        "gdn.a",
+        "gdn.b",
+        "gdn.qkv.q6",
+        "gdn.qkv.q8",
+        "gdn.z.q6",
+        "gdn.z.q8",
+        "hc.a.gate",
+        "hc.a.inject",
+        "hc.a.low",
+        "hc.f.gate",
+        "hc.f.inject",
+        "hc.f.low",
+        "logits",
+        "ple.key",
+        "ple.value",
+        "qsa.ik",
+        "qsa.iq",
+        "qsa.k",
+        "qsa.qgate",
+        "qsa.v",
+        "router",
+        "shared_gate",
+        "shexpdown",
+        "shexpgate.q6",
+        "shexpgate.q8",
+        "shexpup.q6",
+        "shexpup.q8"
+      ],
+      "candidate_coverage": {
+        "attention.gdn": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "attention.qsa": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "expsdown": [
+          "p25.private_decode",
+          "p25.rows4",
+          "p25.wg32",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p27.rows2sg",
+          "p28.private.rows4",
+          "p28.private.wg32",
+          "p28.shared.rows4",
+          "p28.shared.wg32",
+          "p29.down.rows4",
+          "p29.down.wg32",
+          "r5"
+        ],
+        "expsgate.iq2": [
+          "p25.half_table",
+          "p25.paired_input",
+          "p25.private_decode",
+          "p25.rows4",
+          "p25.wg32",
+          "p27.fp32_input",
+          "p28.paired.rows4",
+          "p28.paired.wg32",
+          "p28.private.rows4",
+          "p28.private.wg32",
+          "p28.shared.rows4",
+          "p28.shared.wg32",
+          "r5"
+        ],
+        "expsgate.iq3": [
+          "p25.half_table",
+          "p25.paired_input",
+          "p25.private_decode",
+          "p25.rows4",
+          "p25.wg32",
+          "p27.fp32_input",
+          "p28.paired.rows4",
+          "p28.paired.wg32",
+          "p28.private.rows4",
+          "p28.private.wg32",
+          "p28.shared.rows4",
+          "p28.shared.wg32",
+          "r5"
+        ],
+        "final.gate": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "final.low": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "gdn.a": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "gdn.b": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "gdn.qkv.q6": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "gdn.qkv.q8": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "gdn.z.q6": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "gdn.z.q8": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "hc.a.gate": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "hc.a.inject": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "hc.a.low": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "hc.f.gate": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "hc.f.inject": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "hc.f.low": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "logits": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "ple.key": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "ple.value": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "qsa.ik": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "qsa.iq": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "qsa.k": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "qsa.qgate": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "qsa.v": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "router": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "shared_gate": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "shexpdown": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "shexpgate.q6": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "shexpgate.q8": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "shexpup.q6": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "shexpup.q8": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ]
+      },
+      "entry_trace_sha256": "7a3bfe78147409556e24a7b42626bbd7bbf28a8b84a178204c017768661c1030",
+      "receipt_sha256": "9d0eaf1d860aebeb01bcb1d7e4fb68b25a1815450541cf0bbdcf3d305a52f340"
+    },
+    {
+      "compiler": "icpx-host",
+      "entry": "nongemv-fixtures",
+      "poison": true,
+      "returncode": 1,
+      "binary_sha256": "4045472ecffc4030446297d8d49e6c060bb284c1ee8b71f9289898edbae2bb4d",
+      "evidence": "validation-1791767021643894888/icpx-host-nongemv-fixtures-poison"
+    },
+    {
+      "compiler": "icpx-host",
+      "entry": "k2-fixtures",
+      "poison": false,
+      "returncode": 0,
+      "binary_sha256": "9d248cb8459511a8db9a0dd3babd822acd41559a799566c95db8468dbb05ef75",
+      "evidence": "validation-1791767021643894888/icpx-host-k2-fixtures",
+      "gemv_entry_calls": 628,
+      "small_entry_calls": 8,
+      "small_workloads": [
+        "small.ffn.q6",
+        "small.ffn.q8",
+        "small.gdn.ab",
+        "small.hc"
+      ],
+      "workloads": [
+        "attention.gdn",
+        "attention.qsa",
+        "expsdown",
+        "expsgate.iq2",
+        "expsgate.iq3",
+        "final.gate",
+        "final.low",
+        "gdn.a",
+        "gdn.b",
+        "gdn.qkv.q6",
+        "gdn.qkv.q8",
+        "gdn.z.q6",
+        "gdn.z.q8",
+        "hc.a.gate",
+        "hc.a.inject",
+        "hc.a.low",
+        "hc.f.gate",
+        "hc.f.inject",
+        "hc.f.low",
+        "logits",
+        "ple.key",
+        "ple.value",
+        "qsa.ik",
+        "qsa.iq",
+        "qsa.k",
+        "qsa.qgate",
+        "qsa.v",
+        "router",
+        "shared_gate",
+        "shexpdown",
+        "shexpgate.q6",
+        "shexpgate.q8",
+        "shexpup.q6",
+        "shexpup.q8"
+      ],
+      "candidate_coverage": {
+        "attention.gdn": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "attention.qsa": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "expsdown": [
+          "p25.private_decode",
+          "p25.rows4",
+          "p25.wg32",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p27.rows2sg",
+          "p28.private.rows4",
+          "p28.private.wg32",
+          "p28.shared.rows4",
+          "p28.shared.wg32",
+          "p29.down.rows4",
+          "p29.down.wg32",
+          "r5"
+        ],
+        "expsgate.iq2": [
+          "p25.half_table",
+          "p25.paired_input",
+          "p25.private_decode",
+          "p25.rows4",
+          "p25.wg32",
+          "p27.fp32_input",
+          "p28.paired.rows4",
+          "p28.paired.wg32",
+          "p28.private.rows4",
+          "p28.private.wg32",
+          "p28.shared.rows4",
+          "p28.shared.wg32",
+          "r5"
+        ],
+        "expsgate.iq3": [
+          "p25.half_table",
+          "p25.paired_input",
+          "p25.private_decode",
+          "p25.rows4",
+          "p25.wg32",
+          "p27.fp32_input",
+          "p28.paired.rows4",
+          "p28.paired.wg32",
+          "p28.private.rows4",
+          "p28.private.wg32",
+          "p28.shared.rows4",
+          "p28.shared.wg32",
+          "r5"
+        ],
+        "final.gate": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "final.low": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "gdn.a": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "gdn.b": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "gdn.qkv.q6": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "gdn.qkv.q8": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "gdn.z.q6": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "gdn.z.q8": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "hc.a.gate": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "hc.a.inject": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "hc.a.low": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "hc.f.gate": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "hc.f.inject": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "hc.f.low": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "logits": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "ple.key": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "ple.value": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "qsa.ik": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "qsa.iq": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "qsa.k": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "qsa.qgate": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "qsa.v": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "router": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "shared_gate": [
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "shexpdown": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "shexpgate.q6": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "shexpgate.q8": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "shexpup.q6": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ],
+        "shexpup.q8": [
+          "p25.rows4",
+          "p25.scale8",
+          "p25.wide8",
+          "p27.fp32_input",
+          "p27.packed64",
+          "p28.dense.rows4",
+          "p28.dense.wg32",
+          "r5"
+        ]
+      },
+      "entry_trace_sha256": "7a87957c3871cd02f419abd0e1c3e612e1cb8d0391884e766fb057e58a20a765",
+      "receipt_sha256": "e41878fb8963f52d4e1dec94a086cca0e31f6429518d20f124d63890ced5f145"
+    },
+    {
+      "compiler": "icpx-host",
+      "entry": "k2-fixtures",
+      "poison": true,
+      "returncode": 1,
+      "binary_sha256": "9d248cb8459511a8db9a0dd3babd822acd41559a799566c95db8468dbb05ef75",
+      "evidence": "validation-1791767021643894888/icpx-host-k2-fixtures-poison"
+    },
+    {
+      "compiler": "icpx-host",
+      "continued_after_failures": [
+        "gemv:gdn.qkv",
+        "norm",
+        "streams"
+      ]
+    }
+  ],
+  "maxrss_kib": 495812
+}

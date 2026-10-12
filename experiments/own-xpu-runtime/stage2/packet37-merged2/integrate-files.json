@@ -1,0 +1,901 @@
+{
+  "schema": "packet37.integration-files.v1",
+  "base": "packet32-pipeline",
+  "base_commit": "2e8ec7585c",
+  "files": [
+    {
+      "path": "ARTIFACTS.md",
+      "status": "added",
+      "reason": "Document packet37 behavior, coordinator commands, pending device gates and merge/lifetime rules.",
+      "packet32_sha256": null,
+      "packet37_sha256": "3aaf344637480094b335bdf03c9b8a64ae09fd12d8c535a77d029fa208d1b4ad"
+    },
+    {
+      "path": "BINARY-HASHES.md",
+      "status": "changed",
+      "reason": "Document packet37 behavior, coordinator commands, pending device gates and merge/lifetime rules.",
+      "packet32_sha256": "f289efbd0b9f35d355d0d15ce652206a40f3deec81b093d225a1f896219454d3",
+      "packet37_sha256": "486d98c66efe09e7415cd6ee3c34ea6b6faab6b82f59b75619ac47c7d1a7be7f"
+    },
+    {
+      "path": "CLOSEOUT.md",
+      "status": "changed",
+      "reason": "Document packet37 behavior, coordinator commands, pending device gates and merge/lifetime rules.",
+      "packet32_sha256": "ef36c1ded9c25d5d4f3f44cd05ab3a0b2b1af190e720bd890d59463701945e3b",
+      "packet37_sha256": "b6c5c00805a705e9ee4f72fb26335a12a8db99524eb5855842a10b34d480dc67"
+    },
+    {
+      "path": "CMakeLists.txt",
+      "status": "changed",
+      "reason": "Link prepared-host and packet33 translation units with strict compile/link precision flags.",
+      "packet32_sha256": "45642fcbdaf9603d1be5c92123ad89d4ef2380f645209f061c6a96f30add11ef",
+      "packet37_sha256": "020a4ccb11e4ec7371640c38099e029cf59619133243a84f86196c9b4ab4dece"
+    },
+    {
+      "path": "DEADLINES.md",
+      "status": "changed",
+      "reason": "Document packet37 behavior, coordinator commands, pending device gates and merge/lifetime rules.",
+      "packet32_sha256": "0704506fad918189897df942d2f29e008db5d85191a1c16badea2b25681eff39",
+      "packet37_sha256": "2d6d3e93c30f029771542cc2c80ce210b894f7c048413cfcaf9e867d71b4ed53"
+    },
+    {
+      "path": "DO-NOT-REPEAT.md",
+      "status": "changed",
+      "reason": "Document packet37 behavior, coordinator commands, pending device gates and merge/lifetime rules.",
+      "packet32_sha256": "32aadd161a5c99132a93d318f28ebdcef9d882598855badfee6f9b5b6d11eb83",
+      "packet37_sha256": "89402c487370bc6a56a6dfc9dca2fca3f0a82a2bb05a178b9f8712f7f54719f1"
+    },
+    {
+      "path": "KERNELS.md",
+      "status": "added",
+      "reason": "Document packet37 behavior, coordinator commands, pending device gates and merge/lifetime rules.",
+      "packet32_sha256": null,
+      "packet37_sha256": "c40a9bd1bf8c04fa768e37c04938ac15caf08db708fca1ca3bf5758a1a23e378"
+    },
+    {
+      "path": "LIFETIME.md",
+      "status": "changed",
+      "reason": "Document packet37 behavior, coordinator commands, pending device gates and merge/lifetime rules.",
+      "packet32_sha256": "659abbd92a53efe9fbfad0d73c4d264d7b43fda2a40986990db7af856b11e38f",
+      "packet37_sha256": "24465bffc3f4f712716fabc79b1ed992e4062a2af4e4eae2c24e25e06f069a1f"
+    },
+    {
+      "path": "README.md",
+      "status": "changed",
+      "reason": "Document packet37 behavior, coordinator commands, pending device gates and merge/lifetime rules.",
+      "packet32_sha256": "3a66a5e8341b77f854355356fafba162c031ba41a0bf3e54382e99635b958bd8",
+      "packet37_sha256": "a798abd3cd7aadc64cad01b021a62f26c990d82e4e1624e8b953a0645908303e"
+    },
+    {
+      "path": "ROLLBACK.md",
+      "status": "changed",
+      "reason": "Document packet37 behavior, coordinator commands, pending device gates and merge/lifetime rules.",
+      "packet32_sha256": "36008c31f24416c650a921179283de7f47090727f93cca1aa509cf81e2e544df",
+      "packet37_sha256": "ab35b9a01fa3280c5f665322188fefdbbdff5e6e339f2ca0edf45dcd6d5ba146"
+    },
+    {
+      "path": "WINDOW.md",
+      "status": "changed",
+      "reason": "Document packet37 behavior, coordinator commands, pending device gates and merge/lifetime rules.",
+      "packet32_sha256": "93a59376d7596cc68462534353998b3fbb23c57f3764353f49d9e6c967f84e8d",
+      "packet37_sha256": "10600dd5601431eb6c2c44a987e64c66aa1c8e0e0120b812c9b455f172c863e8"
+    },
+    {
+      "path": "adapter.cpp",
+      "status": "changed",
+      "reason": "Prepare the selected packet33 QSA dispatch path with unchanged non-GEMV bindings.",
+      "packet32_sha256": "5583d32af6bb9d9f1d10da5df7e6babe0f08ecd908e26760622dee95d2b2af10",
+      "packet37_sha256": "644a2ea02525a06fa385c96699bc240361627568342e1538a0cca03e97504756"
+    },
+    {
+      "path": "adapter_fixture.cpp",
+      "status": "changed",
+      "reason": "Use measured packet29 non-GEMV incumbents in K2.",
+      "packet32_sha256": "71ca72e27607e30089f70e9f69973982f754a7e4dd338239e5289e1ab2de91ab",
+      "packet37_sha256": "c992799b4d65254620c2baab0ffe953c7d165268d03e9e9508dc184753eea1cf"
+    },
+    {
+      "path": "argument-block-tests.json",
+      "status": "added",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": null,
+      "packet37_sha256": "e7f247cb1fab6c63f055cdaae422094daad77bebcb601883f1916d20dc527bb6"
+    },
+    {
+      "path": "argument-state-gates.json",
+      "status": "added",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": null,
+      "packet37_sha256": "24e10e965278172261de54416947a4c5775272c86774c1c2265d94b3b23d5d45"
+    },
+    {
+      "path": "argument-state-registry.json",
+      "status": "added",
+      "reason": "Record packet37 build, gate or kernel receipts; never reinterpret inherited evidence as a new run.",
+      "packet32_sha256": null,
+      "packet37_sha256": "38d288a683a2b4629541b86d3f4c5b003cf96293fe0bca6f46c842f512c68626"
+    },
+    {
+      "path": "argument_block.hpp",
+      "status": "added",
+      "reason": "Guard pointer-only bounded launch blocks for prepared submissions.",
+      "packet32_sha256": null,
+      "packet37_sha256": "58c09e4a08b15521250ab22db87260ae9337c06fc0d9a174bd1ea916d809f4fb"
+    },
+    {
+      "path": "argument_block_test.cpp",
+      "status": "added",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": null,
+      "packet37_sha256": "667e90221625c35d8d62ad1cb8e6943d0d3846412c42ceda13ceaaa9ec84154f"
+    },
+    {
+      "path": "argument_state_gate.py",
+      "status": "added",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": null,
+      "packet37_sha256": "7d82e2c7fe0fd7e888b469beaac0bbd8ed575b1b530c0369c54bb20c392a2b35"
+    },
+    {
+      "path": "audit_rollback.py",
+      "status": "changed",
+      "reason": "Connect inherited CPU validation/build harnesses to packet37 additions.",
+      "packet32_sha256": "e4fca15e3b17d81b902fc8ccbd2f834eff0fb0388f95356fcc840b1b4f6cfa95",
+      "packet37_sha256": "e64222e3317f980bfc7b8f92f78bb1b65184692961f49ccfa6813d85dbb8af91"
+    },
+    {
+      "path": "backend.hpp",
+      "status": "changed",
+      "reason": "Add capture/replay support and prepared command representation.",
+      "packet32_sha256": "4020cebb5bbde7934958ff3e9cfdec1ba11481dc1b7b4b324b99fcb34176f976",
+      "packet37_sha256": "0496927e624ec32e44be489d7e1ffe3248ecf8d6021ff92f791d0619e02760e4"
+    },
+    {
+      "path": "build-receipt.json",
+      "status": "changed",
+      "reason": "Record packet37 build, gate or kernel receipts; never reinterpret inherited evidence as a new run.",
+      "packet32_sha256": "1026c92b444311ca02f6e2e6b587671872b5c909bf7ece5be7cefba362afcde4",
+      "packet37_sha256": "62b1c8aac5d32f78e3fa5b84aa326c19aede2448d0697cdaf917e8b2a64dee32"
+    },
+    {
+      "path": "build.py",
+      "status": "changed",
+      "reason": "Connect inherited CPU validation/build harnesses to packet37 additions.",
+      "packet32_sha256": "0f07d67d9fb96b5c68750643435f6c6da30c73744b5e8d06d8d4ff11ec56a7e8",
+      "packet37_sha256": "56ac6040b5a4ce5e7aaef7ea8bf7ba140b97d34d5ee0309c6b2ce79cf5b34e1e"
+    },
+    {
+      "path": "canary-host-gates.json",
+      "status": "changed",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": "7f1bec137d74c210355e9a2de3970748336757a4f0578c5a9d8520887dde43eb",
+      "packet37_sha256": "4db36e5d0ccf68606a36f381b15a0756dd8fc3bb00e2f8cc2fb17d0e23527ad7"
+    },
+    {
+      "path": "cleanup.py",
+      "status": "changed",
+      "reason": "Connect inherited CPU validation/build harnesses to packet37 additions.",
+      "packet32_sha256": "9df13d8bad5f76740c84481614da0529bb9015291ce59141451257c7c8bff629",
+      "packet37_sha256": "2f927455b03ecd9a51179e615473168725325201336e06be0c35c719733ef571"
+    },
+    {
+      "path": "cpu-tests.json",
+      "status": "changed",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": "da204e1c3e15589f2afba090ae3c15537b4a5a29ee3052b46cce2012fada3e71",
+      "packet37_sha256": "2859d8c12c5604080a3e719bf5b7937ebe660a04e9b72a3e8d86c29104b49d84"
+    },
+    {
+      "path": "dispatch-incumbent.json",
+      "status": "added",
+      "reason": "Copy the measured packet29 map solely as K2 incumbent provenance.",
+      "packet32_sha256": null,
+      "packet37_sha256": "f913ec4073ee9b8a2717cc56b55de5e36c2df40bab3c996b928e867b178f6b0f"
+    },
+    {
+      "path": "dispatch-p33.json",
+      "status": "added",
+      "reason": "Record packet37 build, gate or kernel receipts; never reinterpret inherited evidence as a new run.",
+      "packet32_sha256": null,
+      "packet37_sha256": "51954f199abfb68414fa20d1d717fca76cad2d08e6f6d53d86236e98e2edcd5e"
+    },
+    {
+      "path": "dispatch.hpp",
+      "status": "changed",
+      "reason": "Admit packet33 QSA implementation identifier 3.",
+      "packet32_sha256": "24e557ed944bfe4e7c3e275c36b8d269c80f17408e08992d283fedcacaa0ee4e",
+      "packet37_sha256": "ea1632faa6b12586a3b16245009685b0696c20544cb9f1d159cea21ced2af0f9"
+    },
+    {
+      "path": "dispatch_registry.hpp",
+      "status": "changed",
+      "reason": "Extend the closed C++ dispatch vocabulary with five packet33 kernels.",
+      "packet32_sha256": "e041bef966611b730b967d64dcc352a0f244d7af921d3e57e6e043421688aad4",
+      "packet37_sha256": "5bae44b97e44dc737db31ca84d8528d18cea40532ce55aace322c3282db7b5aa"
+    },
+    {
+      "path": "entry-codes.json",
+      "status": "changed",
+      "reason": "Record packet37 build, gate or kernel receipts; never reinterpret inherited evidence as a new run.",
+      "packet32_sha256": "bc5ccc91754a71cb85ff793a94a90e2e64c2b8f1a54de6e4cfb5376d7c38bf32",
+      "packet37_sha256": "5c131574176df6a795b0e2cb8ec51fd243e3d709c33a3586d979c56f24c193bd"
+    },
+    {
+      "path": "evidence/fixture-gates-full.json.gz",
+      "status": "changed",
+      "reason": "Retain packet-local implementation or validation support required by the merged runtime.",
+      "packet32_sha256": "033cdb8df706274a3d1171e5ce447c496e801b75296cafcefaa5995c8ee1ddff",
+      "packet37_sha256": "bb727751110f031d0582d49bab21d9cc1c9e60ff03aba8b0c11c5843627cb8ba"
+    },
+    {
+      "path": "evidence/preparation-logs-p37-6e8738e7636297b1.json.gz",
+      "status": "added",
+      "reason": "Retain packet-local implementation or validation support required by the merged runtime.",
+      "packet32_sha256": null,
+      "packet37_sha256": "99f7b2595f7936f1342a062e1689ff58f1c083785497a07a25d1d8e27b2def3e"
+    },
+    {
+      "path": "evidence/real-hit-rank0-arguments.jsonl.gz",
+      "status": "added",
+      "reason": "Retain packet-local implementation or validation support required by the merged runtime.",
+      "packet32_sha256": null,
+      "packet37_sha256": "fdbed760f8903fa577bde979307bbeb5bfab92d43e8cbcc06efa2501f78b79dc"
+    },
+    {
+      "path": "evidence/real-hit-rank1-arguments.jsonl.gz",
+      "status": "added",
+      "reason": "Retain packet-local implementation or validation support required by the merged runtime.",
+      "packet32_sha256": null,
+      "packet37_sha256": "a2a1be475d51611f32170dbb5aa497a8bafba4b84bbbcbb891050c559e4d1ad4"
+    },
+    {
+      "path": "evidence/real-miss-rank0-arguments.jsonl.gz",
+      "status": "added",
+      "reason": "Retain packet-local implementation or validation support required by the merged runtime.",
+      "packet32_sha256": null,
+      "packet37_sha256": "33b2edfafb77581a54ba6feb8dbe657ef75be2bf240792fcd4958c91c72bf897"
+    },
+    {
+      "path": "evidence/real-miss-rank1-arguments.jsonl.gz",
+      "status": "added",
+      "reason": "Retain packet-local implementation or validation support required by the merged runtime.",
+      "packet32_sha256": null,
+      "packet37_sha256": "3faea2e05cc4dab832dfb46a0c55cefb0cc1f9e98ce84c911e5cc30137718be3"
+    },
+    {
+      "path": "evidence/real-ngram-rank0-arguments.jsonl.gz",
+      "status": "added",
+      "reason": "Retain packet-local implementation or validation support required by the merged runtime.",
+      "packet32_sha256": null,
+      "packet37_sha256": "f750f5a20ab5dd2fade08ca5633ebe970a1126c2aeb35c2e9d9288dfd7a48193"
+    },
+    {
+      "path": "evidence/real-ngram-rank1-arguments.jsonl.gz",
+      "status": "added",
+      "reason": "Retain packet-local implementation or validation support required by the merged runtime.",
+      "packet32_sha256": null,
+      "packet37_sha256": "e87a74c8167195f21210352bd1791b4f92c1bbcead17e8cc0d2c0fb56f22ae68"
+    },
+    {
+      "path": "evidence/real-none-rank0-arguments.jsonl.gz",
+      "status": "added",
+      "reason": "Retain packet-local implementation or validation support required by the merged runtime.",
+      "packet32_sha256": null,
+      "packet37_sha256": "9a2bfc074d18ceb8a5ecfb3354ac8c3ec0805b338a17f40c31e203291120aef9"
+    },
+    {
+      "path": "evidence/real-none-rank1-arguments.jsonl.gz",
+      "status": "added",
+      "reason": "Retain packet-local implementation or validation support required by the merged runtime.",
+      "packet32_sha256": null,
+      "packet37_sha256": "c05c8401824e7462be483ea7813e4674e6d0fed19c2d6b6fa201c64ea2191b87"
+    },
+    {
+      "path": "fixture-gates.json",
+      "status": "changed",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": "4c0269a3c7d28dee805af6e3924fc2e8f9f2a5210f0d9ee99143cc40b71bd3d6",
+      "packet37_sha256": "7298606dcacbdad0c5f08aeb7bd92a8b978b3d6e94a031c5dd618bd0f9e3a0f3"
+    },
+    {
+      "path": "fixture_driver.cpp",
+      "status": "changed",
+      "reason": "Gate linked packet33 QSA under K1 and time it under K2.",
+      "packet32_sha256": "8acdce9f475aea14d02c224cdd52adc784ce0d6c1e0b41eec2acd19971887e0f",
+      "packet37_sha256": "bc08e07c2ef6d45b0938c7120362ce32dee2b983901586d89a61976a2f74a50d"
+    },
+    {
+      "path": "gates.py",
+      "status": "changed",
+      "reason": "Connect inherited CPU validation/build harnesses to packet37 additions.",
+      "packet32_sha256": "54032d14ad111931901510fc7c9650eef841a4c545d8ae431979569d0ea3f3cb",
+      "packet37_sha256": "0588fa5a028eee7d3f68aa7da92c84c98709f77861995a25c6b0561df4b29ec8"
+    },
+    {
+      "path": "gemv_timing.cpp",
+      "status": "changed",
+      "reason": "Gate/time packet33 GEMVs and same-run packet29 controls, retaining R5 alternatives.",
+      "packet32_sha256": "15bfa0bc28582fd4487dddad8062a04c49da80059767d5a702f133da01bac918",
+      "packet37_sha256": "62d79654129da0d87d0016b513e04cbe7df048e139339b3d1261fb3f74903f81"
+    },
+    {
+      "path": "integration_inventory.py",
+      "status": "added",
+      "reason": "Regenerate this explicit file-by-file merge inventory.",
+      "packet32_sha256": null,
+      "packet37_sha256": "1f1f92d1fd1f57fa363d21c50960ecdb9a7a609204edcf659a7f6285c67c3f62"
+    },
+    {
+      "path": "k2-admission-tests.json",
+      "status": "added",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": null,
+      "packet37_sha256": "ca3a01088a48e23a5f11860945752fe4f72ff035f30b3882297af63e24f875d9"
+    },
+    {
+      "path": "k2-class-registry.json",
+      "status": "changed",
+      "reason": "Declare complete candidates, workloads and packet29 incumbent identities.",
+      "packet32_sha256": "2ce2bde2e61bb54f9f2c980a4c6d6870c3ef90deecd260ee54673d64e988e16e",
+      "packet37_sha256": "5d3264488b715d1f19232de6bfaa645f0907199866bad0c36fa4a1f0cac4b39f"
+    },
+    {
+      "path": "k2-selection-tests.json",
+      "status": "added",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": null,
+      "packet37_sha256": "551fbd3d3f12efc608747f0dd60864c0acdd42b3131b985602801575753990e2"
+    },
+    {
+      "path": "k2_incumbents.hpp",
+      "status": "added",
+      "reason": "Compile the registered packet29 controls into native fixtures.",
+      "packet32_sha256": null,
+      "packet37_sha256": "0443bb11aced12e3c9c96745f285e02779e217f991c57d7092b72832a7849616"
+    },
+    {
+      "path": "k2_summary.py",
+      "status": "changed",
+      "reason": "Port measured fusion selection; compare both HC sites and emit rank dispatch maps.",
+      "packet32_sha256": "8351dd2b3eba9bdfd247b25988dcf81b6ac2a3804a6e479476f32e9210f886ca",
+      "packet37_sha256": "b15469c8655b7c8b837c08bcf9fd0485976ebd32629d76a18c1f91cbf4fbf357"
+    },
+    {
+      "path": "kernel-registry.json",
+      "status": "changed",
+      "reason": "Extend the machine-readable closed kernel vocabulary.",
+      "packet32_sha256": "37aad1caa52ca99d3b63fb0d89bd98dd7d5fa8b5a6f3801aaff3b978c3a3f359",
+      "packet37_sha256": "e23b886564f570d05d912fc0dd1379168b12c71a4e2b66c4401bda0edeb7e38c"
+    },
+    {
+      "path": "kernel-sizes.json",
+      "status": "changed",
+      "reason": "Record packet37 build, gate or kernel receipts; never reinterpret inherited evidence as a new run.",
+      "packet32_sha256": "4205dbbf167b75dc941883b1fdd0fcc3eb91e0b67518b2f7ca1e2b71d1862bf2",
+      "packet37_sha256": "c2bc4769c349aeb3c74423af50accce250697f65901dc70c79a0250bc8d8bb3f"
+    },
+    {
+      "path": "kernel-submissions.json",
+      "status": "changed",
+      "reason": "Record packet37 build, gate or kernel receipts; never reinterpret inherited evidence as a new run.",
+      "packet32_sha256": "a103ea3143d3639cf750220a50a213985a25774b0d003b108d84ee0eaaf74ed9",
+      "packet37_sha256": "7deb896a41238f0a673095ab14f19281a11ae46963045a8cc1e8565d1a2df93a"
+    },
+    {
+      "path": "kernel_gate.py",
+      "status": "changed",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": "b7b1161dc9e76b764bf3a84d745f416fe43180dcbc2dfdfc0ed4a87cae3fd4e2",
+      "packet37_sha256": "dda5ca15289d17e9405ea9a8fcca6da5b002b1bcbec222e324943225159232c7"
+    },
+    {
+      "path": "main.cpp",
+      "status": "changed",
+      "reason": "Prepare/replay both rank parities, residency and per-token host receipts.",
+      "packet32_sha256": "95328b8a39329fe1caf3f21a9abc2e83b80f6d821f93818056a25c0678aff484",
+      "packet37_sha256": "82f2bbfe93ae39267ab1ad7f6b37a704d5cee872c4ecf2c0e1cf1aad7f113d44"
+    },
+    {
+      "path": "math_gate.py",
+      "status": "changed",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": "52c59082ffceb569fed79bb91f68bb2f8ba85a74d279def8a2d581b8eb9b265d",
+      "packet37_sha256": "39dd6e97c75536a7f551c999f4c19c0f95863ff7daff6eabc301debaf5b08cbc"
+    },
+    {
+      "path": "mini-asan.json",
+      "status": "changed",
+      "reason": "Record packet37 build, gate or kernel receipts; never reinterpret inherited evidence as a new run.",
+      "packet32_sha256": "e9391d91d3eca6bf6fc83d1f43283ee51f9220baee3734bdf08dfd384d3d6743",
+      "packet37_sha256": "483dbd81e05b3574c9794eeab059dbd0b3b1f9314c96a0f52c43ffa80510b607"
+    },
+    {
+      "path": "mini-gnu-host.json",
+      "status": "changed",
+      "reason": "Record packet37 build, gate or kernel receipts; never reinterpret inherited evidence as a new run.",
+      "packet32_sha256": "f57cc34abe857f4eb970e2392730b261e58b6e98c21fec37cd3561f0623f9b86",
+      "packet37_sha256": "ace15a33dd08183b2a4b06036f844acfb603034dfabafaa1ee54c2e6658c45da"
+    },
+    {
+      "path": "mini-icpx-host.json",
+      "status": "changed",
+      "reason": "Record packet37 build, gate or kernel receipts; never reinterpret inherited evidence as a new run.",
+      "packet32_sha256": "1e84b731d016092438d980919567e6b4b15d54b7ddfbe03a9e096ca6980791ca",
+      "packet37_sha256": "19e3fce3f3b5f7eb32ac37666c9e8f5c14c0a89121ccb4e847135c2f2e8d68c4"
+    },
+    {
+      "path": "oversized-capture.log",
+      "status": "changed",
+      "reason": "Retain packet-local implementation or validation support required by the merged runtime.",
+      "packet32_sha256": "aed3769f40657b3e443694310b3c81935e144631bb3ffd5741858db61ddb4307",
+      "packet37_sha256": "b440115cd7a404a8ec59ff8fbc65c49c01a71b2b997d52505514bcab64f7c426"
+    },
+    {
+      "path": "owner-gates.json",
+      "status": "changed",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": "1d2b7c701295979d2bd0a15b7533190884f3cc4de02912898b882477965448f8",
+      "packet37_sha256": "56ea43f82456245f2c4feb4267fcc3b591717a095d150f038dbdc656f7342f2c"
+    },
+    {
+      "path": "owner.cpp",
+      "status": "changed",
+      "reason": "Capture stable launches, preserve lifetime rules, and remove redundant dependencies.",
+      "packet32_sha256": "91c3dea67dfb027cacb98b00dc98cca8dd3aaa6b7f4c7f0e08bc03f3a093a130",
+      "packet37_sha256": "b792de9ae31c600e81f44b2496de49d4ce08c091a4d33a9b7ba70df41b223b45"
+    },
+    {
+      "path": "owner.hpp",
+      "status": "changed",
+      "reason": "Own prepared command state and validated allocation/event lifetimes.",
+      "packet32_sha256": "65db2da35fbed8be57275f58e2ec4b0cddc4cb3b3aa003046cb6ce9cfd5996df",
+      "packet37_sha256": "ee69610bda3e786e2aecf9888430541879af2d4c51cb64329784cb58d3ba1faf"
+    },
+    {
+      "path": "owner_api.hpp",
+      "status": "added",
+      "reason": "Expose prepared backend operations through the owner API.",
+      "packet32_sha256": null,
+      "packet37_sha256": "70009b6570429a2888ab5111a80e001e7b0097f85faff924585a79edb1baf223"
+    },
+    {
+      "path": "p33-candidate-gates.json",
+      "status": "added",
+      "reason": "Extend and gate existing packet33 arithmetic, shape specialization or binding entry points.",
+      "packet32_sha256": null,
+      "packet37_sha256": "4fd789ae7ace42d00b9513f1bb29d96e8af3403d7dec0221fc36b4f99ce53966"
+    },
+    {
+      "path": "p33-linked-fixture-gates.json",
+      "status": "added",
+      "reason": "Extend and gate existing packet33 arithmetic, shape specialization or binding entry points.",
+      "packet32_sha256": null,
+      "packet37_sha256": "bf96be545ddf7fe0c9cd1506b96873177faf307c18321c912517559f79aff198"
+    },
+    {
+      "path": "p33_candidate_cpu.cpp",
+      "status": "added",
+      "reason": "Extend and gate existing packet33 arithmetic, shape specialization or binding entry points.",
+      "packet32_sha256": null,
+      "packet37_sha256": "648e43a52d503a62af85640c756db9fe95525b7d526a5f8f99c8612f6a6517e0"
+    },
+    {
+      "path": "p33_candidate_gates.py",
+      "status": "added",
+      "reason": "Extend and gate existing packet33 arithmetic, shape specialization or binding entry points.",
+      "packet32_sha256": null,
+      "packet37_sha256": "9e392836d79f43cc3da4bab945dbae85c66f172a3b3b480972ec7a209bd05988"
+    },
+    {
+      "path": "p33_candidates.hpp",
+      "status": "added",
+      "reason": "Extend and gate existing packet33 arithmetic, shape specialization or binding entry points.",
+      "packet32_sha256": null,
+      "packet37_sha256": "17f835ea9642d004eebbeb71c4b68dec5e3b795dbf6166c39a08f08307313797"
+    },
+    {
+      "path": "p33_linked_fixture.cpp",
+      "status": "added",
+      "reason": "Extend and gate existing packet33 arithmetic, shape specialization or binding entry points.",
+      "packet32_sha256": null,
+      "packet37_sha256": "1abb466123de8a71898ade5d65cf35aee16395481331cf99836e33d6051b4fe6"
+    },
+    {
+      "path": "p33_linked_fixture_gate.py",
+      "status": "added",
+      "reason": "Extend and gate existing packet33 arithmetic, shape specialization or binding entry points.",
+      "packet32_sha256": null,
+      "packet37_sha256": "aac1dac3a41c78f075d750179d76be52c4bc94f0928042b5834ab7d158aed9d2"
+    },
+    {
+      "path": "p33_submit.cpp",
+      "status": "added",
+      "reason": "Extend and gate existing packet33 arithmetic, shape specialization or binding entry points.",
+      "packet32_sha256": null,
+      "packet37_sha256": "c7bcacd934e0d06639aaecf46625a0c3e1a8fea47dda799d415e5c392f21b84a"
+    },
+    {
+      "path": "p33_submit.hpp",
+      "status": "added",
+      "reason": "Extend and gate existing packet33 arithmetic, shape specialization or binding entry points.",
+      "packet32_sha256": null,
+      "packet37_sha256": "b6833e2d825934c64d58d03e5b274e4bd1e87e7bd13082b8ca9caf01e3e302c8"
+    },
+    {
+      "path": "p33r2.cpp",
+      "status": "added",
+      "reason": "Extend and gate existing packet33 arithmetic, shape specialization or binding entry points.",
+      "packet32_sha256": null,
+      "packet37_sha256": "4fe740e4accddc2ba4a5f733c16113c564b4a548d53d12f718a73227b80e5a86"
+    },
+    {
+      "path": "p33r2.hpp",
+      "status": "added",
+      "reason": "Extend and gate existing packet33 arithmetic, shape specialization or binding entry points.",
+      "packet32_sha256": null,
+      "packet37_sha256": "f7d736727f5c77bd78a2eff8460c1b56e7984ef7bbb21c4cd803507df73c6895"
+    },
+    {
+      "path": "pipeline.py",
+      "status": "changed",
+      "reason": "Carry packet37 rank preparation and per-token receipts through the Python controller.",
+      "packet32_sha256": "300de27dc87a0f40fe0ef1e056394d9126eb3e7acf7b5263c1eb6e812eebb999",
+      "packet37_sha256": "6b2e06faec6a3a7075ea835e72fe650abfeeeb6052b9b0d4c8337bd0d5169a2c"
+    },
+    {
+      "path": "prepared-host-benchmark.json",
+      "status": "added",
+      "reason": "Record packet37 build, gate or kernel receipts; never reinterpret inherited evidence as a new run.",
+      "packet32_sha256": null,
+      "packet37_sha256": "13ba49e06af9605b984a32de683c88fa53a5bf712ab4ebfe1cea56303a0fab34"
+    },
+    {
+      "path": "prepared-invalidation.json",
+      "status": "added",
+      "reason": "Record packet37 build, gate or kernel receipts; never reinterpret inherited evidence as a new run.",
+      "packet32_sha256": null,
+      "packet37_sha256": "79d6bcb3c83f696feaa9a0958a3a06352e70d76e774c539692150830792f98cf"
+    },
+    {
+      "path": "prepared_host_benchmark.py",
+      "status": "added",
+      "reason": "Qualify prepared launch equivalence, allocation-free replay or lookup residency.",
+      "packet32_sha256": null,
+      "packet37_sha256": "cdde1566b26f1c04be41bf8a33d47747fc957ea410af2bd6f026e0002fcc4677"
+    },
+    {
+      "path": "prepared_invalidation_test.cpp",
+      "status": "added",
+      "reason": "Qualify prepared launch equivalence, allocation-free replay or lookup residency.",
+      "packet32_sha256": null,
+      "packet37_sha256": "0a290443fa00e8bcaa51358bdef09b6fae1c6b45d8137dea1f59b55ec7951d90"
+    },
+    {
+      "path": "prepared_issue_benchmark.cpp",
+      "status": "added",
+      "reason": "Qualify prepared launch equivalence, allocation-free replay or lookup residency.",
+      "packet32_sha256": null,
+      "packet37_sha256": "722edbeb96cf5794b8494323c80d8a7e50554610377956c3d0ad68ff8da479ba"
+    },
+    {
+      "path": "prepared_submission.hpp",
+      "status": "added",
+      "reason": "Qualify prepared launch equivalence, allocation-free replay or lookup residency.",
+      "packet32_sha256": null,
+      "packet37_sha256": "41405cfc3c10727e245536993f647601b99705cdc9ac070e29f2ef695ffed2b9"
+    },
+    {
+      "path": "prepared_unit_gate.py",
+      "status": "added",
+      "reason": "Qualify prepared launch equivalence, allocation-free replay or lookup residency.",
+      "packet32_sha256": null,
+      "packet37_sha256": "87627b5bf4b30bef6a0778251cdff3e07d685eb9fe4265e239435dfc531d50ff"
+    },
+    {
+      "path": "rank.hpp",
+      "status": "changed",
+      "reason": "Bind prepared submissions to speculation parity and rollback transaction state.",
+      "packet32_sha256": "d88be274d1f5dafb0be81f4cc8da4cecbb831be77b3155e7c72d992ba5bfde08",
+      "packet37_sha256": "49b023265d3ea26dc2abdd9344f3ca5e97983cdf45bccb42721e48f8177b005e"
+    },
+    {
+      "path": "real-campaign-icpx-host.json",
+      "status": "changed",
+      "reason": "Record packet37 build, gate or kernel receipts; never reinterpret inherited evidence as a new run.",
+      "packet32_sha256": "c7687c2cc73158de10b8799a588d9571c9e1265c6b9f1495be945bf5c97754dc",
+      "packet37_sha256": "5283d21bf84eba53a444b896f6bcdb49d73dd2ae2ae8543891ca66ae86c81c7b"
+    },
+    {
+      "path": "real-campaign.json",
+      "status": "changed",
+      "reason": "Record packet37 build, gate or kernel receipts; never reinterpret inherited evidence as a new run.",
+      "packet32_sha256": "291af3bbf1883e2ebaa1befd6995725fc19c6dc7ffd9567e2a3c9535e503658b",
+      "packet37_sha256": "1de1b77f6703f51026de793328e8e595415bd75facb2089c4bca102c772fc965"
+    },
+    {
+      "path": "real-hit.json",
+      "status": "changed",
+      "reason": "Record packet37 build, gate or kernel receipts; never reinterpret inherited evidence as a new run.",
+      "packet32_sha256": "0309febfdce171b9db1bb97d9e29492d0949fca0fce0bc10ecb6306bf2116e1e",
+      "packet37_sha256": "947ad2dd35dbcde896cde905a75025f51c1f71bb0e5b7097a862bea50cc7d34e"
+    },
+    {
+      "path": "real-icpx-host-hit.json",
+      "status": "changed",
+      "reason": "Record packet37 build, gate or kernel receipts; never reinterpret inherited evidence as a new run.",
+      "packet32_sha256": "1382413d1569089492c2b8c646b60a073feaec693eaa45af21e6a2d0273ecb1c",
+      "packet37_sha256": "300e89522cf470367e615945c4ed31fb8b616aaf1f0dfc1b1e50d6476923f103"
+    },
+    {
+      "path": "real-icpx-host-miss.json",
+      "status": "changed",
+      "reason": "Record packet37 build, gate or kernel receipts; never reinterpret inherited evidence as a new run.",
+      "packet32_sha256": "598cf6c0e8e818be752866cee9239349cb5946e9b9e5a3e13fde3f47127a4022",
+      "packet37_sha256": "75c5caa4761454a253b8efed00be8f13d1f1b65145bbca9fa2f28125b8d1fe4c"
+    },
+    {
+      "path": "real-icpx-host-ngram.json",
+      "status": "changed",
+      "reason": "Record packet37 build, gate or kernel receipts; never reinterpret inherited evidence as a new run.",
+      "packet32_sha256": "dd70d3c344b1f1d70c0088d0bae1daf8eb421ab7fcae74bc9bd50a9baa01a7bc",
+      "packet37_sha256": "4b52dc1142a485cfecd23d5b179ee7119de4911e549d97c1ed43f8c7a0782bfb"
+    },
+    {
+      "path": "real-icpx-host-none.json",
+      "status": "changed",
+      "reason": "Record packet37 build, gate or kernel receipts; never reinterpret inherited evidence as a new run.",
+      "packet32_sha256": "a344b3e81a7fd64e8b41de4f55e8eac5720f1db6f5186105f6301a27c563719a",
+      "packet37_sha256": "da7d4cb4fd62c551ed7ef97f524f9da7922979e3ee1aa19b18a0135b493d267a"
+    },
+    {
+      "path": "real-miss.json",
+      "status": "changed",
+      "reason": "Record packet37 build, gate or kernel receipts; never reinterpret inherited evidence as a new run.",
+      "packet32_sha256": "1826ef771702049b2fd96f2059e1a868780db29e35ec4fcd97742823764e04ec",
+      "packet37_sha256": "8c8bbbbf21aef6cfc4c716d5fa6d3d68b30b60fbdd7178e283657e34449f216c"
+    },
+    {
+      "path": "real-ngram.json",
+      "status": "changed",
+      "reason": "Record packet37 build, gate or kernel receipts; never reinterpret inherited evidence as a new run.",
+      "packet32_sha256": "8c17340216036655d8ff7cdadea9c440fdcef2eba8d0dc9d879c7fbe87edfb2d",
+      "packet37_sha256": "7d24a14a36ac3c310cbd5a45419e3e2afa6a77ed8691be9952eae811e78dbe5b"
+    },
+    {
+      "path": "real-none.json",
+      "status": "changed",
+      "reason": "Record packet37 build, gate or kernel receipts; never reinterpret inherited evidence as a new run.",
+      "packet32_sha256": "e9350233d027992c434c235e19a16616c2de19868d429d7077e4986d4c4a0715",
+      "packet37_sha256": "e14733b53f73070c8f76538c6e16a06d251ffacc52336a6655adcc523611ca41"
+    },
+    {
+      "path": "real_campaign.py",
+      "status": "changed",
+      "reason": "Run inherited real-model oracle modes through packet37 binaries.",
+      "packet32_sha256": "5c8bd1d40236ffdf9bf7568beef1cc552366aca774e86a6ad4f3ef4d4cd4fbcb",
+      "packet37_sha256": "ee84709f5db5d6754e6e169d2dc41221daff6e8b0f537c43d09981a1aea60cff"
+    },
+    {
+      "path": "resident-host-gates.json",
+      "status": "changed",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": "5076406f3b805d19c0ab22c42d9cb0a07bdc426a2ef19a938b573839b769030b",
+      "packet37_sha256": "4d06c54779a769cdefb6bbfd6afb857b105dc870fd913ae011413787872feb1f"
+    },
+    {
+      "path": "resident_host_gate.py",
+      "status": "changed",
+      "reason": "Qualify prepared launch equivalence, allocation-free replay or lookup residency.",
+      "packet32_sha256": "ada8f8753a924e6b2eb952e6bf51fd786405548a755d596b7ce3e4e4e119cfa8",
+      "packet37_sha256": "8b4dfb188da11d284742383a518f85681e4f264ee7d382519851263e0024122e"
+    },
+    {
+      "path": "review-controller-tests.json",
+      "status": "changed",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": "858c61bc0965a4b83171f893f6ea43c0f28e42207b6d3306677a965e2d6369fe",
+      "packet37_sha256": "d12cae2f8fc4bdc2bffd67eeeef0085841c17d9bc7a7557f6a3a76c7a78d9871"
+    },
+    {
+      "path": "review-dense-independent.json",
+      "status": "added",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": null,
+      "packet37_sha256": "3e569a776abc98615d770291bf4dbde7ffa3efc44cb6193442229dbca14df5b3"
+    },
+    {
+      "path": "review-dense-independent.md",
+      "status": "added",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": null,
+      "packet37_sha256": "805884929e9ac1ac324a9c06b11449c9499cd2cdeb50df67a25990b274eb9ec9"
+    },
+    {
+      "path": "review-identity-sources.json",
+      "status": "changed",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": "e5e71664cab999839acc341673c3868ad8123ba9c1a473f01631311e454a3456",
+      "packet37_sha256": "7173f95a568f7945d562a8d702505ffc7df03b0d2ad9633e4bb6ccd33c6d3fb6"
+    },
+    {
+      "path": "review-k2-port.md",
+      "status": "added",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": null,
+      "packet37_sha256": "2b55a9090a87c0724da5646e12ced7956249eaf3cccf9ccc376021872775841b"
+    },
+    {
+      "path": "review-k2-selection.json",
+      "status": "added",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": null,
+      "packet37_sha256": "cd2521728523e08a60c4629a17d49616bf436a203ffbe070bcc381e78798e764"
+    },
+    {
+      "path": "review-k2-selection.md",
+      "status": "added",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": null,
+      "packet37_sha256": "bbf07ff522561ae2c706270a50e3cbac238278938ff42942e0c37725d371b4aa"
+    },
+    {
+      "path": "review-linked-fixture.json",
+      "status": "added",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": null,
+      "packet37_sha256": "2d36a23c1264603607d3c61d09691ea2ea594c369142bdc76c28ba7ede8f804a"
+    },
+    {
+      "path": "review-linked-fixture.md",
+      "status": "added",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": null,
+      "packet37_sha256": "c84f7a43bf8ddaa1ca58f5f96164d2df3035254e31098e2b4059b9dc39879661"
+    },
+    {
+      "path": "review-native-faults.json",
+      "status": "changed",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": "c32d5c442b011fcf3c7c143c292fdea1fd1cd381ba44a74feb16b1b10f826c89",
+      "packet37_sha256": "68eba2b3fdb32e866aea4344fb61f597d91a999909eb656a9beb67b225e6d419"
+    },
+    {
+      "path": "review-prepared-gates.json",
+      "status": "added",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": null,
+      "packet37_sha256": "db004cbc5d833f9d4124feb387cdf4345d92b41262df57ca9a423d6c80981650"
+    },
+    {
+      "path": "review-prepared.md",
+      "status": "added",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": null,
+      "packet37_sha256": "b620199161bf6def5e93c655a504388ff7a95c780de1d608543029a0b0a85f1a"
+    },
+    {
+      "path": "review_prepared_gate.py",
+      "status": "added",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": null,
+      "packet37_sha256": "fdc2369b51459a3dd294a57b602158fa22cb54289a1fec509d8ff4f0fd22c183"
+    },
+    {
+      "path": "rollback-inventory.json",
+      "status": "changed",
+      "reason": "Record packet37 build, gate or kernel receipts; never reinterpret inherited evidence as a new run.",
+      "packet32_sha256": "270e62d2466145f0b0b97d5d78bc6eed34f52ef996b48ae2d4f7d33e6edd51e2",
+      "packet37_sha256": "7a186f85deb4d332f8ca9539cfe892419f5138bd2c563d8e87e930bbcd58d305"
+    },
+    {
+      "path": "scratch-cleanup.json",
+      "status": "changed",
+      "reason": "Record packet37 build, gate or kernel receipts; never reinterpret inherited evidence as a new run.",
+      "packet32_sha256": "d86435a6dc2fcf5736761a7324daa2b9aa737418f6fe15aa21aa3eb8b968538e",
+      "packet37_sha256": "a1e33ff644cef810123709fc299a80a1f573a4f07679a2614ae5415b8c640c19"
+    },
+    {
+      "path": "single_device.cpp",
+      "status": "added",
+      "reason": "Replay prepared device operations without per-launch discovery or binding work.",
+      "packet32_sha256": null,
+      "packet37_sha256": "4275f214b3727f5d23231b844992db35443446d004c0d34b5cc30b374a3fe11b"
+    },
+    {
+      "path": "source-packet32.json",
+      "status": "added",
+      "reason": "Record the source packet identity; copied historical receipts remain inherited evidence.",
+      "packet32_sha256": null,
+      "packet37_sha256": "104c79a27326b0f3a60e40ac3bc712ba11b1151affc88c3bbb9533ebfb2f428e"
+    },
+    {
+      "path": "submission-overlay-gates.json",
+      "status": "added",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": null,
+      "packet37_sha256": "ce40f847a830df335722a78cb936129770dd6b24368639f58bb36572e6e044cb"
+    },
+    {
+      "path": "submission_overlay.py",
+      "status": "added",
+      "reason": "Maintain the precision/dependency overlay used by the build.",
+      "packet32_sha256": null,
+      "packet37_sha256": "c5c5d24589c3311d48676b5932df0c2316b8f2891b9378910f1a7377bc6ec868"
+    },
+    {
+      "path": "test_k2_admission.py",
+      "status": "added",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": null,
+      "packet37_sha256": "3474170b4d2746faca9803617aa73608f48f05d4860e92e29feed78d384a6e78"
+    },
+    {
+      "path": "test_k2_selection.py",
+      "status": "added",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": null,
+      "packet37_sha256": "afb6669afb518093ad9f1a4c5f57ae56cf318801047fd404cfa905de6729122b"
+    },
+    {
+      "path": "test_submission_overlay.py",
+      "status": "added",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": null,
+      "packet37_sha256": "32ca9c17e17dc1b9bbd61780ebd6198a8e3783dd710e3329b3f6aae761479895"
+    },
+    {
+      "path": "test_window.py",
+      "status": "changed",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": "01d1d9ded4a2b5a30b1b05310c360f28f925bc777b08e52e0ee3aba3d3ce66bb",
+      "packet37_sha256": "e11a5166f68ca896ffd0189c024e225add2b57ba9c8f12f26df025aa12a68d4c"
+    },
+    {
+      "path": "validation-gates.json",
+      "status": "changed",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": "eab60dd45d08286e84d90f88cd9fead9058a6fc19a0f384b947a7a4d30f18603",
+      "packet37_sha256": "f534534bee233224bd8c519a20a66e20226965542f976f0b43e7316814c4ffa9"
+    },
+    {
+      "path": "validation_gate.py",
+      "status": "changed",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": "12c15d963a8d2f6241fd36f19386f3e75b9604cf12deda28cad22bd2384dfefa",
+      "packet37_sha256": "b4b5e625bfcbcda0eaee2c0195464b698ac81c31c22b46d82ec6f20cb8810488"
+    },
+    {
+      "path": "validation_mirror.py",
+      "status": "changed",
+      "reason": "Mirror new registry entries in CPU validation contracts.",
+      "packet32_sha256": "8327ffa13f67d219e95c0f5722244290a06b3ebd030ab4124340eab17b7a4d26",
+      "packet37_sha256": "1006456d47ac73d0425cf33e04e440e567959fe6783d8106d0c5ebcec65b2fde"
+    },
+    {
+      "path": "window-tests.json",
+      "status": "changed",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": "d4f143f9a1186fca984f24aa3fe6c852e1a78a6be2bc2b4e9e45eaf629fdde55",
+      "packet37_sha256": "75eb9f61dee20f58f9cdc0a159973cad2b06539d1e24e90126e0e9fbec28cefc"
+    },
+    {
+      "path": "window.py",
+      "status": "changed",
+      "reason": "Prepare packet37 windows, provenance binding, deadlines and fault-safe ownership.",
+      "packet32_sha256": "a29f40b2cb9db0c21f1fda28993539e0ea13177eb20edd80c486858a9f21c320",
+      "packet37_sha256": "090206826c2f1806e628e74f30c4884c464fbbdc0a7ecd84fb7bb1974f9a0c95"
+    },
+    {
+      "path": "wrapper-contract-tests.json",
+      "status": "added",
+      "reason": "Record or execute focused CPU validation and independent review.",
+      "packet32_sha256": null,
+      "packet37_sha256": "069ffed9a8861b1b4c99f8c28fc5d5ad6e71232bfdd1e75d8f330e280190704b"
+    }
+  ],
+  "exclusions": [
+    "ignored build scratch",
+    "inherited-packet32 provenance directory",
+    "INTEGRATE.md and integrate-files.json inventory outputs"
+  ]
+}

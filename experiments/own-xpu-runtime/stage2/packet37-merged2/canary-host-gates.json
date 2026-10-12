@@ -1,0 +1,184 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "rows": [
+    {
+      "compiler": "gnu-host",
+      "binary_sha256": "c5b523c1f263a482515ce291907b5d3697801035e9573fb6acc7e060eaa99c08",
+      "handovers": 1000,
+      "kernels_per_rank": 1000,
+      "native_receipts": [
+        {
+          "schema": "packet32.canary-rank.v1",
+          "passed": true,
+          "rank": 0,
+          "kernels": 1000,
+          "handovers": 1000,
+          "device_bytes": 256,
+          "host_pinned_bytes": 256,
+          "max_submission_ns": 0,
+          "gpu_ms": 0,
+          "error": "",
+          "teardown": [
+            {
+              "schema": "own-xpu-runtime.teardown.v1",
+              "backend": "MockDevice",
+              "status": "complete",
+              "exit_code": 0,
+              "safe_to_exit": true,
+              "idle_marker_complete": true,
+              "in_flight": 0,
+              "live_bytes": 0,
+              "error": "",
+              "sequence": [
+                "quiesce",
+                "drain",
+                "graphs-released",
+                "free:workspace:card0:canary",
+                "free:pinned-copy-slab:canary-host",
+                "idle-marker-complete",
+                "events-released",
+                "queue-released",
+                "context-released"
+              ]
+            }
+          ]
+        },
+        {
+          "schema": "packet32.canary-rank.v1",
+          "passed": true,
+          "rank": 1,
+          "kernels": 1000,
+          "handovers": 1000,
+          "device_bytes": 256,
+          "host_pinned_bytes": 256,
+          "max_submission_ns": 0,
+          "gpu_ms": 0,
+          "error": "",
+          "teardown": [
+            {
+              "schema": "own-xpu-runtime.teardown.v1",
+              "backend": "MockDevice",
+              "status": "complete",
+              "exit_code": 0,
+              "safe_to_exit": true,
+              "idle_marker_complete": true,
+              "in_flight": 0,
+              "live_bytes": 0,
+              "error": "",
+              "sequence": [
+                "quiesce",
+                "drain",
+                "graphs-released",
+                "free:workspace:card0:canary",
+                "free:pinned-copy-slab:canary-host",
+                "idle-marker-complete",
+                "events-released",
+                "queue-released",
+                "context-released"
+              ]
+            }
+          ]
+        }
+      ],
+      "ownership": {
+        "retained_pids": [],
+        "stop_requested": false,
+        "returncodes": [
+          0,
+          0
+        ],
+        "signals_sent": 0
+      }
+    },
+    {
+      "compiler": "icpx-host",
+      "binary_sha256": "e7632d417c97350ac7c09f1090f5e728f81701d75aafd56cd4905ac3e153610b",
+      "handovers": 1000,
+      "kernels_per_rank": 1000,
+      "native_receipts": [
+        {
+          "schema": "packet32.canary-rank.v1",
+          "passed": true,
+          "rank": 0,
+          "kernels": 1000,
+          "handovers": 1000,
+          "device_bytes": 256,
+          "host_pinned_bytes": 256,
+          "max_submission_ns": 0,
+          "gpu_ms": 0,
+          "error": "",
+          "teardown": [
+            {
+              "schema": "own-xpu-runtime.teardown.v1",
+              "backend": "MockDevice",
+              "status": "complete",
+              "exit_code": 0,
+              "safe_to_exit": true,
+              "idle_marker_complete": true,
+              "in_flight": 0,
+              "live_bytes": 0,
+              "error": "",
+              "sequence": [
+                "quiesce",
+                "drain",
+                "graphs-released",
+                "free:workspace:card0:canary",
+                "free:pinned-copy-slab:canary-host",
+                "idle-marker-complete",
+                "events-released",
+                "queue-released",
+                "context-released"
+              ]
+            }
+          ]
+        },
+        {
+          "schema": "packet32.canary-rank.v1",
+          "passed": true,
+          "rank": 1,
+          "kernels": 1000,
+          "handovers": 1000,
+          "device_bytes": 256,
+          "host_pinned_bytes": 256,
+          "max_submission_ns": 0,
+          "gpu_ms": 0,
+          "error": "",
+          "teardown": [
+            {
+              "schema": "own-xpu-runtime.teardown.v1",
+              "backend": "MockDevice",
+              "status": "complete",
+              "exit_code": 0,
+              "safe_to_exit": true,
+              "idle_marker_complete": true,
+              "in_flight": 0,
+              "live_bytes": 0,
+              "error": "",
+              "sequence": [
+                "quiesce",
+                "drain",
+                "graphs-released",
+                "free:workspace:card0:canary",
+                "free:pinned-copy-slab:canary-host",
+                "idle-marker-complete",
+                "events-released",
+                "queue-released",
+                "context-released"
+              ]
+            }
+          ]
+        }
+      ],
+      "ownership": {
+        "retained_pids": [],
+        "stop_requested": false,
+        "returncodes": [
+          0,
+          0
+        ],
+        "signals_sent": 0
+      }
+    }
+  ]
+}

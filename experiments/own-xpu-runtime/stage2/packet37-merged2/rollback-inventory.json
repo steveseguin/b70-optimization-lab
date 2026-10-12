@@ -1,0 +1,5449 @@
+{
+  "schema": "packet37.rollback-inventory.v1",
+  "passed": true,
+  "device_executed": false,
+  "provenance": {
+    "launch-plan-rank0.json": "78111f10a6b5406e40a64c92e622bb63181d155bb7b9a71fc62ae49f343ff6b9",
+    "main.cpp": "82f2bbfe93ae39267ab1ad7f6b37a704d5cee872c4ecf2c0e1cf1aad7f113d44",
+    "rank.hpp": "49b023265d3ea26dc2abdd9344f3ca5e97983cdf45bccb42721e48f8177b005e",
+    "adapter.cpp": "644a2ea02525a06fa385c96699bc240361627568342e1538a0cca03e97504756",
+    "kernels.hpp": "24e24e660203c959db09d30dc633490906508b749cf4e2838e2df50d4013d43a",
+    "specialised.hpp": "a5604dcf33c1f01940505b3ab5e6fab8d05e9f6ba6fed2884f40ae95b47c88cb"
+  },
+  "buffer_count": 1015,
+  "launch_count": 890,
+  "banked_buffer_count": 37,
+  "alternate_bank_bytes": 29601792,
+  "temporal_buffer_count": 64,
+  "temporal": [
+    {
+      "name": "blk.0.gdn.history",
+      "bytes": 61440,
+      "writer": "blk.0.gdn.conv",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.0.gdn.state",
+      "bytes": 1572864,
+      "writer": "blk.0.gdn.recurrence",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.1.gdn.history",
+      "bytes": 61440,
+      "writer": "blk.1.gdn.conv",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.1.gdn.state",
+      "bytes": 1572864,
+      "writer": "blk.1.gdn.recurrence",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.1.ple.history",
+      "bytes": 184320,
+      "writer": "blk.1.ple.conv",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.10.gdn.history",
+      "bytes": 61440,
+      "writer": "blk.10.gdn.conv",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.10.gdn.state",
+      "bytes": 1572864,
+      "writer": "blk.10.gdn.recurrence",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.11.qsa.keys",
+      "bytes": 262144,
+      "writer": "blk.11.qsa.pool",
+      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "bankable": false,
+      "hot_copy_bytes": 0,
+      "row_bytes": 1024,
+      "offset": "position*1024",
+      "write_condition": "every half"
+    },
+    {
+      "name": "blk.11.qsa.pooled",
+      "bytes": 16384,
+      "writer": "blk.11.qsa.pool",
+      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "bankable": false,
+      "hot_copy_bytes": 0,
+      "row_bytes": 256,
+      "offset": "(position//4)*256",
+      "write_condition": "position%4==3"
+    },
+    {
+      "name": "blk.11.qsa.raw",
+      "bytes": 65536,
+      "writer": "blk.11.qsa.pool",
+      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "bankable": false,
+      "hot_copy_bytes": 0,
+      "row_bytes": 256,
+      "offset": "position*256",
+      "write_condition": "every half"
+    },
+    {
+      "name": "blk.11.qsa.values",
+      "bytes": 262144,
+      "writer": "blk.11.qsa.pool",
+      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "bankable": false,
+      "hot_copy_bytes": 0,
+      "row_bytes": 1024,
+      "offset": "position*1024",
+      "write_condition": "every half"
+    },
+    {
+      "name": "blk.12.gdn.history",
+      "bytes": 61440,
+      "writer": "blk.12.gdn.conv",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.12.gdn.state",
+      "bytes": 1572864,
+      "writer": "blk.12.gdn.recurrence",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.13.gdn.history",
+      "bytes": 61440,
+      "writer": "blk.13.gdn.conv",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.13.gdn.state",
+      "bytes": 1572864,
+      "writer": "blk.13.gdn.recurrence",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.14.gdn.history",
+      "bytes": 61440,
+      "writer": "blk.14.gdn.conv",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.14.gdn.state",
+      "bytes": 1572864,
+      "writer": "blk.14.gdn.recurrence",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.15.qsa.keys",
+      "bytes": 262144,
+      "writer": "blk.15.qsa.pool",
+      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "bankable": false,
+      "hot_copy_bytes": 0,
+      "row_bytes": 1024,
+      "offset": "position*1024",
+      "write_condition": "every half"
+    },
+    {
+      "name": "blk.15.qsa.pooled",
+      "bytes": 16384,
+      "writer": "blk.15.qsa.pool",
+      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "bankable": false,
+      "hot_copy_bytes": 0,
+      "row_bytes": 256,
+      "offset": "(position//4)*256",
+      "write_condition": "position%4==3"
+    },
+    {
+      "name": "blk.15.qsa.raw",
+      "bytes": 65536,
+      "writer": "blk.15.qsa.pool",
+      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "bankable": false,
+      "hot_copy_bytes": 0,
+      "row_bytes": 256,
+      "offset": "position*256",
+      "write_condition": "every half"
+    },
+    {
+      "name": "blk.15.qsa.values",
+      "bytes": 262144,
+      "writer": "blk.15.qsa.pool",
+      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "bankable": false,
+      "hot_copy_bytes": 0,
+      "row_bytes": 1024,
+      "offset": "position*1024",
+      "write_condition": "every half"
+    },
+    {
+      "name": "blk.16.gdn.history",
+      "bytes": 61440,
+      "writer": "blk.16.gdn.conv",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.16.gdn.state",
+      "bytes": 1572864,
+      "writer": "blk.16.gdn.recurrence",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.17.gdn.history",
+      "bytes": 61440,
+      "writer": "blk.17.gdn.conv",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.17.gdn.state",
+      "bytes": 1572864,
+      "writer": "blk.17.gdn.recurrence",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.18.gdn.history",
+      "bytes": 61440,
+      "writer": "blk.18.gdn.conv",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.18.gdn.state",
+      "bytes": 1572864,
+      "writer": "blk.18.gdn.recurrence",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.19.qsa.keys",
+      "bytes": 262144,
+      "writer": "blk.19.qsa.pool",
+      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "bankable": false,
+      "hot_copy_bytes": 0,
+      "row_bytes": 1024,
+      "offset": "position*1024",
+      "write_condition": "every half"
+    },
+    {
+      "name": "blk.19.qsa.pooled",
+      "bytes": 16384,
+      "writer": "blk.19.qsa.pool",
+      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "bankable": false,
+      "hot_copy_bytes": 0,
+      "row_bytes": 256,
+      "offset": "(position//4)*256",
+      "write_condition": "position%4==3"
+    },
+    {
+      "name": "blk.19.qsa.raw",
+      "bytes": 65536,
+      "writer": "blk.19.qsa.pool",
+      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "bankable": false,
+      "hot_copy_bytes": 0,
+      "row_bytes": 256,
+      "offset": "position*256",
+      "write_condition": "every half"
+    },
+    {
+      "name": "blk.19.qsa.values",
+      "bytes": 262144,
+      "writer": "blk.19.qsa.pool",
+      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "bankable": false,
+      "hot_copy_bytes": 0,
+      "row_bytes": 1024,
+      "offset": "position*1024",
+      "write_condition": "every half"
+    },
+    {
+      "name": "blk.2.gdn.history",
+      "bytes": 61440,
+      "writer": "blk.2.gdn.conv",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.2.gdn.state",
+      "bytes": 1572864,
+      "writer": "blk.2.gdn.recurrence",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.20.gdn.history",
+      "bytes": 61440,
+      "writer": "blk.20.gdn.conv",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.20.gdn.state",
+      "bytes": 1572864,
+      "writer": "blk.20.gdn.recurrence",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.21.gdn.history",
+      "bytes": 61440,
+      "writer": "blk.21.gdn.conv",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.21.gdn.state",
+      "bytes": 1572864,
+      "writer": "blk.21.gdn.recurrence",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.22.gdn.history",
+      "bytes": 61440,
+      "writer": "blk.22.gdn.conv",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.22.gdn.state",
+      "bytes": 1572864,
+      "writer": "blk.22.gdn.recurrence",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.23.qsa.keys",
+      "bytes": 262144,
+      "writer": "blk.23.qsa.pool",
+      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "bankable": false,
+      "hot_copy_bytes": 0,
+      "row_bytes": 1024,
+      "offset": "position*1024",
+      "write_condition": "every half"
+    },
+    {
+      "name": "blk.23.qsa.pooled",
+      "bytes": 16384,
+      "writer": "blk.23.qsa.pool",
+      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "bankable": false,
+      "hot_copy_bytes": 0,
+      "row_bytes": 256,
+      "offset": "(position//4)*256",
+      "write_condition": "position%4==3"
+    },
+    {
+      "name": "blk.23.qsa.raw",
+      "bytes": 65536,
+      "writer": "blk.23.qsa.pool",
+      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "bankable": false,
+      "hot_copy_bytes": 0,
+      "row_bytes": 256,
+      "offset": "position*256",
+      "write_condition": "every half"
+    },
+    {
+      "name": "blk.23.qsa.values",
+      "bytes": 262144,
+      "writer": "blk.23.qsa.pool",
+      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "bankable": false,
+      "hot_copy_bytes": 0,
+      "row_bytes": 1024,
+      "offset": "position*1024",
+      "write_condition": "every half"
+    },
+    {
+      "name": "blk.3.qsa.keys",
+      "bytes": 262144,
+      "writer": "blk.3.qsa.pool",
+      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "bankable": false,
+      "hot_copy_bytes": 0,
+      "row_bytes": 1024,
+      "offset": "position*1024",
+      "write_condition": "every half"
+    },
+    {
+      "name": "blk.3.qsa.pooled",
+      "bytes": 16384,
+      "writer": "blk.3.qsa.pool",
+      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "bankable": false,
+      "hot_copy_bytes": 0,
+      "row_bytes": 256,
+      "offset": "(position//4)*256",
+      "write_condition": "position%4==3"
+    },
+    {
+      "name": "blk.3.qsa.raw",
+      "bytes": 65536,
+      "writer": "blk.3.qsa.pool",
+      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "bankable": false,
+      "hot_copy_bytes": 0,
+      "row_bytes": 256,
+      "offset": "position*256",
+      "write_condition": "every half"
+    },
+    {
+      "name": "blk.3.qsa.values",
+      "bytes": 262144,
+      "writer": "blk.3.qsa.pool",
+      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "bankable": false,
+      "hot_copy_bytes": 0,
+      "row_bytes": 1024,
+      "offset": "position*1024",
+      "write_condition": "every half"
+    },
+    {
+      "name": "blk.4.gdn.history",
+      "bytes": 61440,
+      "writer": "blk.4.gdn.conv",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.4.gdn.state",
+      "bytes": 1572864,
+      "writer": "blk.4.gdn.recurrence",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.5.gdn.history",
+      "bytes": 61440,
+      "writer": "blk.5.gdn.conv",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.5.gdn.state",
+      "bytes": 1572864,
+      "writer": "blk.5.gdn.recurrence",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.6.gdn.history",
+      "bytes": 61440,
+      "writer": "blk.6.gdn.conv",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.6.gdn.state",
+      "bytes": 1572864,
+      "writer": "blk.6.gdn.recurrence",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.7.qsa.keys",
+      "bytes": 262144,
+      "writer": "blk.7.qsa.pool",
+      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "bankable": false,
+      "hot_copy_bytes": 0,
+      "row_bytes": 1024,
+      "offset": "position*1024",
+      "write_condition": "every half"
+    },
+    {
+      "name": "blk.7.qsa.pooled",
+      "bytes": 16384,
+      "writer": "blk.7.qsa.pool",
+      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "bankable": false,
+      "hot_copy_bytes": 0,
+      "row_bytes": 256,
+      "offset": "(position//4)*256",
+      "write_condition": "position%4==3"
+    },
+    {
+      "name": "blk.7.qsa.raw",
+      "bytes": 65536,
+      "writer": "blk.7.qsa.pool",
+      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "bankable": false,
+      "hot_copy_bytes": 0,
+      "row_bytes": 256,
+      "offset": "position*256",
+      "write_condition": "every half"
+    },
+    {
+      "name": "blk.7.qsa.values",
+      "bytes": 262144,
+      "writer": "blk.7.qsa.pool",
+      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "bankable": false,
+      "hot_copy_bytes": 0,
+      "row_bytes": 1024,
+      "offset": "position*1024",
+      "write_condition": "every half"
+    },
+    {
+      "name": "blk.8.gdn.history",
+      "bytes": 61440,
+      "writer": "blk.8.gdn.conv",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.8.gdn.state",
+      "bytes": 1572864,
+      "writer": "blk.8.gdn.recurrence",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.9.gdn.history",
+      "bytes": 61440,
+      "writer": "blk.9.gdn.conv",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "blk.9.gdn.state",
+      "bytes": 1572864,
+      "writer": "blk.9.gdn.recurrence",
+      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "bankable": true,
+      "hot_copy_bytes": 0
+    },
+    {
+      "name": "error",
+      "bytes": 4,
+      "writers": [
+        "begin.0",
+        "blk.0.expsgate.check",
+        "blk.0.expsup.check",
+        "blk.0.expsdown.check",
+        "blk.1.expsgate.check",
+        "blk.1.expsup.check",
+        "blk.1.expsdown.check",
+        "blk.2.expsgate.check",
+        "blk.2.expsup.check",
+        "blk.2.expsdown.check",
+        "blk.3.expsgate.check",
+        "blk.3.expsup.check",
+        "blk.3.expsdown.check",
+        "blk.4.expsgate.check",
+        "blk.4.expsup.check",
+        "blk.4.expsdown.check",
+        "blk.5.expsgate.check",
+        "blk.5.expsup.check",
+        "blk.5.expsdown.check",
+        "blk.6.expsgate.check",
+        "blk.6.expsup.check",
+        "blk.6.expsdown.check",
+        "blk.7.expsgate.check",
+        "blk.7.expsup.check",
+        "blk.7.expsdown.check",
+        "blk.8.expsgate.check",
+        "blk.8.expsup.check",
+        "blk.8.expsdown.check",
+        "blk.9.expsgate.check",
+        "blk.9.expsup.check",
+        "blk.9.expsdown.check",
+        "blk.10.expsgate.check",
+        "blk.10.expsup.check",
+        "blk.10.expsdown.check",
+        "blk.11.expsgate.check",
+        "blk.11.expsup.check",
+        "blk.11.expsdown.check",
+        "blk.12.expsgate.check",
+        "blk.12.expsup.check",
+        "blk.12.expsdown.check",
+        "blk.13.expsgate.check",
+        "blk.13.expsup.check",
+        "blk.13.expsdown.check",
+        "blk.14.expsgate.check",
+        "blk.14.expsup.check",
+        "blk.14.expsdown.check",
+        "blk.15.expsgate.check",
+        "blk.15.expsup.check",
+        "blk.15.expsdown.check",
+        "blk.16.expsgate.check",
+        "blk.16.expsup.check",
+        "blk.16.expsdown.check",
+        "blk.17.expsgate.check",
+        "blk.17.expsup.check",
+        "blk.17.expsdown.check",
+        "blk.18.expsgate.check",
+        "blk.18.expsup.check",
+        "blk.18.expsdown.check",
+        "blk.19.expsgate.check",
+        "blk.19.expsup.check",
+        "blk.19.expsdown.check",
+        "blk.20.expsgate.check",
+        "blk.20.expsup.check",
+        "blk.20.expsdown.check",
+        "blk.21.expsgate.check",
+        "blk.21.expsup.check",
+        "blk.21.expsdown.check",
+        "blk.22.expsgate.check",
+        "blk.22.expsup.check",
+        "blk.22.expsdown.check",
+        "blk.23.expsgate.check",
+        "blk.23.expsup.check",
+        "blk.23.expsdown.check"
+      ],
+      "strategy": "sticky implicit and explicit writers; any failure aborts; never cleared",
+      "bankable": false,
+      "restore_bytes_per_miss": 0
+    },
+    {
+      "name": "position",
+      "bytes": 4,
+      "writers": [
+        "commit.final"
+      ],
+      "strategy": "commit increments; restore attempted position before redo",
+      "bankable": false,
+      "restore_bytes_per_miss": 4
+    },
+    {
+      "name": "token_history",
+      "bytes": 16,
+      "writers": [
+        "blk.1.ple.hash"
+      ],
+      "strategy": "snapshot before half; restore before redo (ple_hash mutates input)",
+      "bankable": false,
+      "restore_bytes_per_miss": 16
+    }
+  ],
+  "externally_initialized": {
+    "active": "immutable initialized guard",
+    "ple_metadata": "immutable uploaded model metadata",
+    "token": "host uploads current token before half",
+    "next_token": "rank0 never reads or writes; initialized placeholder"
+  },
+  "overwrite_only_count": 947,
+  "overwrite_only": [
+    {
+      "name": "blk.0.attention",
+      "bytes": 5120,
+      "first_writer": "blk.0.attention"
+    },
+    {
+      "name": "blk.0.expsact",
+      "bytes": 12800,
+      "first_writer": "blk.0.expsact"
+    },
+    {
+      "name": "blk.0.expsdown",
+      "bytes": 51200,
+      "first_writer": "blk.0.expsdown"
+    },
+    {
+      "name": "blk.0.expsdown.status",
+      "bytes": 40,
+      "first_writer": "blk.0.expsdown"
+    },
+    {
+      "name": "blk.0.expsgate",
+      "bytes": 12800,
+      "first_writer": "blk.0.expsgate"
+    },
+    {
+      "name": "blk.0.expsgate.status",
+      "bytes": 40,
+      "first_writer": "blk.0.expsgate"
+    },
+    {
+      "name": "blk.0.expsup",
+      "bytes": 12800,
+      "first_writer": "blk.0.expsgate"
+    },
+    {
+      "name": "blk.0.expsup.status",
+      "bytes": 40,
+      "first_writer": "blk.0.expsgate"
+    },
+    {
+      "name": "blk.0.gdn.a",
+      "bytes": 96,
+      "first_writer": "blk.0.gdn.a"
+    },
+    {
+      "name": "blk.0.gdn.b",
+      "bytes": 96,
+      "first_writer": "blk.0.gdn.b"
+    },
+    {
+      "name": "blk.0.gdn.conv",
+      "bytes": 20480,
+      "first_writer": "blk.0.gdn.conv"
+    },
+    {
+      "name": "blk.0.gdn.gated",
+      "bytes": 12288,
+      "first_writer": "blk.0.gdn.gated"
+    },
+    {
+      "name": "blk.0.gdn.qkv",
+      "bytes": 20480,
+      "first_writer": "blk.0.gdn.qkv"
+    },
+    {
+      "name": "blk.0.gdn.y",
+      "bytes": 12288,
+      "first_writer": "blk.0.gdn.recurrence"
+    },
+    {
+      "name": "blk.0.gdn.z",
+      "bytes": 12288,
+      "first_writer": "blk.0.gdn.z"
+    },
+    {
+      "name": "blk.0.hc.a.act",
+      "bytes": 640,
+      "first_writer": "blk.0.hc.a.act"
+    },
+    {
+      "name": "blk.0.hc.a.gate",
+      "bytes": 20480,
+      "first_writer": "blk.0.hc.a.gate"
+    },
+    {
+      "name": "blk.0.hc.a.inject",
+      "bytes": 8,
+      "first_writer": "blk.0.hc.a.inject"
+    },
+    {
+      "name": "blk.0.hc.a.low",
+      "bytes": 640,
+      "first_writer": "blk.0.hc.a.low"
+    },
+    {
+      "name": "blk.0.hc.a.mix",
+      "bytes": 5120,
+      "first_writer": "blk.0.hc.a.mix"
+    },
+    {
+      "name": "blk.0.hc.a.norm",
+      "bytes": 20480,
+      "first_writer": "blk.0.hc.a.norm"
+    },
+    {
+      "name": "blk.0.hc.f.act",
+      "bytes": 640,
+      "first_writer": "blk.0.hc.f.act"
+    },
+    {
+      "name": "blk.0.hc.f.gate",
+      "bytes": 20480,
+      "first_writer": "blk.0.hc.f.gate"
+    },
+    {
+      "name": "blk.0.hc.f.inject",
+      "bytes": 8,
+      "first_writer": "blk.0.hc.f.inject"
+    },
+    {
+      "name": "blk.0.hc.f.low",
+      "bytes": 640,
+      "first_writer": "blk.0.hc.f.low"
+    },
+    {
+      "name": "blk.0.hc.f.mix",
+      "bytes": 5120,
+      "first_writer": "blk.0.hc.f.mix"
+    },
+    {
+      "name": "blk.0.hc.f.norm",
+      "bytes": 20480,
+      "first_writer": "blk.0.hc.f.norm"
+    },
+    {
+      "name": "blk.0.ids",
+      "bytes": 40,
+      "first_writer": "blk.0.route"
+    },
+    {
+      "name": "blk.0.moe",
+      "bytes": 5120,
+      "first_writer": "blk.0.moe"
+    },
+    {
+      "name": "blk.0.prob",
+      "bytes": 40,
+      "first_writer": "blk.0.route"
+    },
+    {
+      "name": "blk.0.router",
+      "bytes": 1024,
+      "first_writer": "blk.0.router"
+    },
+    {
+      "name": "blk.0.routes",
+      "bytes": 120,
+      "first_writer": "blk.0.route"
+    },
+    {
+      "name": "blk.0.routes.down",
+      "bytes": 120,
+      "first_writer": "blk.0.route"
+    },
+    {
+      "name": "blk.0.shared_gate",
+      "bytes": 2,
+      "first_writer": "blk.0.shared_gate"
+    },
+    {
+      "name": "blk.0.shexpact",
+      "bytes": 1280,
+      "first_writer": "blk.0.shexpact"
+    },
+    {
+      "name": "blk.0.shexpdown",
+      "bytes": 5120,
+      "first_writer": "blk.0.shexpdown"
+    },
+    {
+      "name": "blk.0.shexpgate",
+      "bytes": 1280,
+      "first_writer": "blk.0.shexpgate"
+    },
+    {
+      "name": "blk.0.shexpup",
+      "bytes": 1280,
+      "first_writer": "blk.0.shexpup"
+    },
+    {
+      "name": "blk.1.attention",
+      "bytes": 5120,
+      "first_writer": "blk.1.attention"
+    },
+    {
+      "name": "blk.1.expsact",
+      "bytes": 12800,
+      "first_writer": "blk.1.expsact"
+    },
+    {
+      "name": "blk.1.expsdown",
+      "bytes": 51200,
+      "first_writer": "blk.1.expsdown"
+    },
+    {
+      "name": "blk.1.expsdown.status",
+      "bytes": 40,
+      "first_writer": "blk.1.expsdown"
+    },
+    {
+      "name": "blk.1.expsgate",
+      "bytes": 12800,
+      "first_writer": "blk.1.expsgate"
+    },
+    {
+      "name": "blk.1.expsgate.status",
+      "bytes": 40,
+      "first_writer": "blk.1.expsgate"
+    },
+    {
+      "name": "blk.1.expsup",
+      "bytes": 12800,
+      "first_writer": "blk.1.expsgate"
+    },
+    {
+      "name": "blk.1.expsup.status",
+      "bytes": 40,
+      "first_writer": "blk.1.expsgate"
+    },
+    {
+      "name": "blk.1.gdn.a",
+      "bytes": 96,
+      "first_writer": "blk.1.gdn.a"
+    },
+    {
+      "name": "blk.1.gdn.b",
+      "bytes": 96,
+      "first_writer": "blk.1.gdn.b"
+    },
+    {
+      "name": "blk.1.gdn.conv",
+      "bytes": 20480,
+      "first_writer": "blk.1.gdn.conv"
+    },
+    {
+      "name": "blk.1.gdn.gated",
+      "bytes": 12288,
+      "first_writer": "blk.1.gdn.gated"
+    },
+    {
+      "name": "blk.1.gdn.qkv",
+      "bytes": 20480,
+      "first_writer": "blk.1.gdn.qkv"
+    },
+    {
+      "name": "blk.1.gdn.y",
+      "bytes": 12288,
+      "first_writer": "blk.1.gdn.recurrence"
+    },
+    {
+      "name": "blk.1.gdn.z",
+      "bytes": 12288,
+      "first_writer": "blk.1.gdn.z"
+    },
+    {
+      "name": "blk.1.hc.a.act",
+      "bytes": 640,
+      "first_writer": "blk.1.hc.a.act"
+    },
+    {
+      "name": "blk.1.hc.a.gate",
+      "bytes": 20480,
+      "first_writer": "blk.1.hc.a.gate"
+    },
+    {
+      "name": "blk.1.hc.a.inject",
+      "bytes": 8,
+      "first_writer": "blk.1.hc.a.inject"
+    },
+    {
+      "name": "blk.1.hc.a.low",
+      "bytes": 640,
+      "first_writer": "blk.1.hc.a.low"
+    },
+    {
+      "name": "blk.1.hc.a.mix",
+      "bytes": 5120,
+      "first_writer": "blk.1.hc.a.mix"
+    },
+    {
+      "name": "blk.1.hc.a.norm",
+      "bytes": 20480,
+      "first_writer": "blk.1.hc.a.norm"
+    },
+    {
+      "name": "blk.1.hc.f.act",
+      "bytes": 640,
+      "first_writer": "blk.1.hc.f.act"
+    },
+    {
+      "name": "blk.1.hc.f.gate",
+      "bytes": 20480,
+      "first_writer": "blk.1.hc.f.gate"
+    },
+    {
+      "name": "blk.1.hc.f.inject",
+      "bytes": 8,
+      "first_writer": "blk.1.hc.f.inject"
+    },
+    {
+      "name": "blk.1.hc.f.low",
+      "bytes": 640,
+      "first_writer": "blk.1.hc.f.low"
+    },
+    {
+      "name": "blk.1.hc.f.mix",
+      "bytes": 5120,
+      "first_writer": "blk.1.hc.f.mix"
+    },
+    {
+      "name": "blk.1.hc.f.norm",
+      "bytes": 20480,
+      "first_writer": "blk.1.hc.f.norm"
+    },
+    {
+      "name": "blk.1.ids",
+      "bytes": 40,
+      "first_writer": "blk.1.route"
+    },
+    {
+      "name": "blk.1.moe",
+      "bytes": 5120,
+      "first_writer": "blk.1.moe"
+    },
+    {
+      "name": "blk.1.ple.cn",
+      "bytes": 20480,
+      "first_writer": "blk.1.ple.cn"
+    },
+    {
+      "name": "blk.1.ple.conv",
+      "bytes": 20480,
+      "first_writer": "blk.1.ple.conv"
+    },
+    {
+      "name": "blk.1.ple.gated",
+      "bytes": 20480,
+      "first_writer": "blk.1.ple.gated"
+    },
+    {
+      "name": "blk.1.ple.ids",
+      "bytes": 128,
+      "first_writer": "blk.1.ple.hash"
+    },
+    {
+      "name": "blk.1.ple.key",
+      "bytes": 20480,
+      "first_writer": "blk.1.ple.key"
+    },
+    {
+      "name": "blk.1.ple.kn",
+      "bytes": 20480,
+      "first_writer": "blk.1.ple.kn"
+    },
+    {
+      "name": "blk.1.ple.lookup",
+      "bytes": 5120,
+      "first_writer": "blk.1.ple.lookup"
+    },
+    {
+      "name": "blk.1.ple.qn",
+      "bytes": 20480,
+      "first_writer": "blk.1.ple.qn"
+    },
+    {
+      "name": "blk.1.ple.value",
+      "bytes": 5120,
+      "first_writer": "blk.1.ple.value"
+    },
+    {
+      "name": "blk.1.prob",
+      "bytes": 40,
+      "first_writer": "blk.1.route"
+    },
+    {
+      "name": "blk.1.router",
+      "bytes": 1024,
+      "first_writer": "blk.1.router"
+    },
+    {
+      "name": "blk.1.routes",
+      "bytes": 120,
+      "first_writer": "blk.1.route"
+    },
+    {
+      "name": "blk.1.routes.down",
+      "bytes": 120,
+      "first_writer": "blk.1.route"
+    },
+    {
+      "name": "blk.1.shared_gate",
+      "bytes": 2,
+      "first_writer": "blk.1.shared_gate"
+    },
+    {
+      "name": "blk.1.shexpact",
+      "bytes": 1280,
+      "first_writer": "blk.1.shexpact"
+    },
+    {
+      "name": "blk.1.shexpdown",
+      "bytes": 5120,
+      "first_writer": "blk.1.shexpdown"
+    },
+    {
+      "name": "blk.1.shexpgate",
+      "bytes": 1280,
+      "first_writer": "blk.1.shexpgate"
+    },
+    {
+      "name": "blk.1.shexpup",
+      "bytes": 1280,
+      "first_writer": "blk.1.shexpup"
+    },
+    {
+      "name": "blk.10.attention",
+      "bytes": 5120,
+      "first_writer": "blk.10.attention"
+    },
+    {
+      "name": "blk.10.expsact",
+      "bytes": 12800,
+      "first_writer": "blk.10.expsact"
+    },
+    {
+      "name": "blk.10.expsdown",
+      "bytes": 51200,
+      "first_writer": "blk.10.expsdown"
+    },
+    {
+      "name": "blk.10.expsdown.status",
+      "bytes": 40,
+      "first_writer": "blk.10.expsdown"
+    },
+    {
+      "name": "blk.10.expsgate",
+      "bytes": 12800,
+      "first_writer": "blk.10.expsgate"
+    },
+    {
+      "name": "blk.10.expsgate.status",
+      "bytes": 40,
+      "first_writer": "blk.10.expsgate"
+    },
+    {
+      "name": "blk.10.expsup",
+      "bytes": 12800,
+      "first_writer": "blk.10.expsgate"
+    },
+    {
+      "name": "blk.10.expsup.status",
+      "bytes": 40,
+      "first_writer": "blk.10.expsgate"
+    },
+    {
+      "name": "blk.10.gdn.a",
+      "bytes": 96,
+      "first_writer": "blk.10.gdn.a"
+    },
+    {
+      "name": "blk.10.gdn.b",
+      "bytes": 96,
+      "first_writer": "blk.10.gdn.b"
+    },
+    {
+      "name": "blk.10.gdn.conv",
+      "bytes": 20480,
+      "first_writer": "blk.10.gdn.conv"
+    },
+    {
+      "name": "blk.10.gdn.gated",
+      "bytes": 12288,
+      "first_writer": "blk.10.gdn.gated"
+    },
+    {
+      "name": "blk.10.gdn.qkv",
+      "bytes": 20480,
+      "first_writer": "blk.10.gdn.qkv"
+    },
+    {
+      "name": "blk.10.gdn.y",
+      "bytes": 12288,
+      "first_writer": "blk.10.gdn.recurrence"
+    },
+    {
+      "name": "blk.10.gdn.z",
+      "bytes": 12288,
+      "first_writer": "blk.10.gdn.z"
+    },
+    {
+      "name": "blk.10.hc.a.act",
+      "bytes": 640,
+      "first_writer": "blk.10.hc.a.act"
+    },
+    {
+      "name": "blk.10.hc.a.gate",
+      "bytes": 20480,
+      "first_writer": "blk.10.hc.a.gate"
+    },
+    {
+      "name": "blk.10.hc.a.inject",
+      "bytes": 8,
+      "first_writer": "blk.10.hc.a.inject"
+    },
+    {
+      "name": "blk.10.hc.a.low",
+      "bytes": 640,
+      "first_writer": "blk.10.hc.a.low"
+    },
+    {
+      "name": "blk.10.hc.a.mix",
+      "bytes": 5120,
+      "first_writer": "blk.10.hc.a.mix"
+    },
+    {
+      "name": "blk.10.hc.a.norm",
+      "bytes": 20480,
+      "first_writer": "blk.10.hc.a.norm"
+    },
+    {
+      "name": "blk.10.hc.f.act",
+      "bytes": 640,
+      "first_writer": "blk.10.hc.f.act"
+    },
+    {
+      "name": "blk.10.hc.f.gate",
+      "bytes": 20480,
+      "first_writer": "blk.10.hc.f.gate"
+    },
+    {
+      "name": "blk.10.hc.f.inject",
+      "bytes": 8,
+      "first_writer": "blk.10.hc.f.inject"
+    },
+    {
+      "name": "blk.10.hc.f.low",
+      "bytes": 640,
+      "first_writer": "blk.10.hc.f.low"
+    },
+    {
+      "name": "blk.10.hc.f.mix",
+      "bytes": 5120,
+      "first_writer": "blk.10.hc.f.mix"
+    },
+    {
+      "name": "blk.10.hc.f.norm",
+      "bytes": 20480,
+      "first_writer": "blk.10.hc.f.norm"
+    },
+    {
+      "name": "blk.10.ids",
+      "bytes": 40,
+      "first_writer": "blk.10.route"
+    },
+    {
+      "name": "blk.10.moe",
+      "bytes": 5120,
+      "first_writer": "blk.10.moe"
+    },
+    {
+      "name": "blk.10.prob",
+      "bytes": 40,
+      "first_writer": "blk.10.route"
+    },
+    {
+      "name": "blk.10.router",
+      "bytes": 1024,
+      "first_writer": "blk.10.router"
+    },
+    {
+      "name": "blk.10.routes",
+      "bytes": 120,
+      "first_writer": "blk.10.route"
+    },
+    {
+      "name": "blk.10.routes.down",
+      "bytes": 120,
+      "first_writer": "blk.10.route"
+    },
+    {
+      "name": "blk.10.shared_gate",
+      "bytes": 2,
+      "first_writer": "blk.10.shared_gate"
+    },
+    {
+      "name": "blk.10.shexpact",
+      "bytes": 1280,
+      "first_writer": "blk.10.shexpact"
+    },
+    {
+      "name": "blk.10.shexpdown",
+      "bytes": 5120,
+      "first_writer": "blk.10.shexpdown"
+    },
+    {
+      "name": "blk.10.shexpgate",
+      "bytes": 1280,
+      "first_writer": "blk.10.shexpgate"
+    },
+    {
+      "name": "blk.10.shexpup",
+      "bytes": 1280,
+      "first_writer": "blk.10.shexpup"
+    },
+    {
+      "name": "blk.11.attention",
+      "bytes": 5120,
+      "first_writer": "blk.11.attention"
+    },
+    {
+      "name": "blk.11.expsact",
+      "bytes": 12800,
+      "first_writer": "blk.11.expsact"
+    },
+    {
+      "name": "blk.11.expsdown",
+      "bytes": 51200,
+      "first_writer": "blk.11.expsdown"
+    },
+    {
+      "name": "blk.11.expsdown.status",
+      "bytes": 40,
+      "first_writer": "blk.11.expsdown"
+    },
+    {
+      "name": "blk.11.expsgate",
+      "bytes": 12800,
+      "first_writer": "blk.11.expsgate"
+    },
+    {
+      "name": "blk.11.expsgate.status",
+      "bytes": 40,
+      "first_writer": "blk.11.expsgate"
+    },
+    {
+      "name": "blk.11.expsup",
+      "bytes": 12800,
+      "first_writer": "blk.11.expsgate"
+    },
+    {
+      "name": "blk.11.expsup.status",
+      "bytes": 40,
+      "first_writer": "blk.11.expsgate"
+    },
+    {
+      "name": "blk.11.hc.a.act",
+      "bytes": 640,
+      "first_writer": "blk.11.hc.a.act"
+    },
+    {
+      "name": "blk.11.hc.a.gate",
+      "bytes": 20480,
+      "first_writer": "blk.11.hc.a.gate"
+    },
+    {
+      "name": "blk.11.hc.a.inject",
+      "bytes": 8,
+      "first_writer": "blk.11.hc.a.inject"
+    },
+    {
+      "name": "blk.11.hc.a.low",
+      "bytes": 640,
+      "first_writer": "blk.11.hc.a.low"
+    },
+    {
+      "name": "blk.11.hc.a.mix",
+      "bytes": 5120,
+      "first_writer": "blk.11.hc.a.mix"
+    },
+    {
+      "name": "blk.11.hc.a.norm",
+      "bytes": 20480,
+      "first_writer": "blk.11.hc.a.norm"
+    },
+    {
+      "name": "blk.11.hc.f.act",
+      "bytes": 640,
+      "first_writer": "blk.11.hc.f.act"
+    },
+    {
+      "name": "blk.11.hc.f.gate",
+      "bytes": 20480,
+      "first_writer": "blk.11.hc.f.gate"
+    },
+    {
+      "name": "blk.11.hc.f.inject",
+      "bytes": 8,
+      "first_writer": "blk.11.hc.f.inject"
+    },
+    {
+      "name": "blk.11.hc.f.low",
+      "bytes": 640,
+      "first_writer": "blk.11.hc.f.low"
+    },
+    {
+      "name": "blk.11.hc.f.mix",
+      "bytes": 5120,
+      "first_writer": "blk.11.hc.f.mix"
+    },
+    {
+      "name": "blk.11.hc.f.norm",
+      "bytes": 20480,
+      "first_writer": "blk.11.hc.f.norm"
+    },
+    {
+      "name": "blk.11.ids",
+      "bytes": 40,
+      "first_writer": "blk.11.route"
+    },
+    {
+      "name": "blk.11.moe",
+      "bytes": 5120,
+      "first_writer": "blk.11.moe"
+    },
+    {
+      "name": "blk.11.prob",
+      "bytes": 40,
+      "first_writer": "blk.11.route"
+    },
+    {
+      "name": "blk.11.qsa.gate",
+      "bytes": 12288,
+      "first_writer": "blk.11.qsa.prepare"
+    },
+    {
+      "name": "blk.11.qsa.ids",
+      "bytes": 8204,
+      "first_writer": "blk.11.qsa.select"
+    },
+    {
+      "name": "blk.11.qsa.ik",
+      "bytes": 256,
+      "first_writer": "blk.11.qsa.ik"
+    },
+    {
+      "name": "blk.11.qsa.iq",
+      "bytes": 1024,
+      "first_writer": "blk.11.qsa.iq"
+    },
+    {
+      "name": "blk.11.qsa.iqn",
+      "bytes": 1024,
+      "first_writer": "blk.11.qsa.prepare"
+    },
+    {
+      "name": "blk.11.qsa.k",
+      "bytes": 1024,
+      "first_writer": "blk.11.qsa.k"
+    },
+    {
+      "name": "blk.11.qsa.kn",
+      "bytes": 1024,
+      "first_writer": "blk.11.qsa.prepare"
+    },
+    {
+      "name": "blk.11.qsa.q",
+      "bytes": 12288,
+      "first_writer": "blk.11.qsa.prepare"
+    },
+    {
+      "name": "blk.11.qsa.qgate",
+      "bytes": 24576,
+      "first_writer": "blk.11.qsa.qgate"
+    },
+    {
+      "name": "blk.11.qsa.v",
+      "bytes": 1024,
+      "first_writer": "blk.11.qsa.v"
+    },
+    {
+      "name": "blk.11.qsa.y",
+      "bytes": 12288,
+      "first_writer": "blk.11.qsa.attention"
+    },
+    {
+      "name": "blk.11.router",
+      "bytes": 1024,
+      "first_writer": "blk.11.router"
+    },
+    {
+      "name": "blk.11.routes",
+      "bytes": 120,
+      "first_writer": "blk.11.route"
+    },
+    {
+      "name": "blk.11.routes.down",
+      "bytes": 120,
+      "first_writer": "blk.11.route"
+    },
+    {
+      "name": "blk.11.shared_gate",
+      "bytes": 2,
+      "first_writer": "blk.11.shared_gate"
+    },
+    {
+      "name": "blk.11.shexpact",
+      "bytes": 1280,
+      "first_writer": "blk.11.shexpact"
+    },
+    {
+      "name": "blk.11.shexpdown",
+      "bytes": 5120,
+      "first_writer": "blk.11.shexpdown"
+    },
+    {
+      "name": "blk.11.shexpgate",
+      "bytes": 1280,
+      "first_writer": "blk.11.shexpgate"
+    },
+    {
+      "name": "blk.11.shexpup",
+      "bytes": 1280,
+      "first_writer": "blk.11.shexpup"
+    },
+    {
+      "name": "blk.12.attention",
+      "bytes": 5120,
+      "first_writer": "blk.12.attention"
+    },
+    {
+      "name": "blk.12.expsact",
+      "bytes": 12800,
+      "first_writer": "blk.12.expsact"
+    },
+    {
+      "name": "blk.12.expsdown",
+      "bytes": 51200,
+      "first_writer": "blk.12.expsdown"
+    },
+    {
+      "name": "blk.12.expsdown.status",
+      "bytes": 40,
+      "first_writer": "blk.12.expsdown"
+    },
+    {
+      "name": "blk.12.expsgate",
+      "bytes": 12800,
+      "first_writer": "blk.12.expsgate"
+    },
+    {
+      "name": "blk.12.expsgate.status",
+      "bytes": 40,
+      "first_writer": "blk.12.expsgate"
+    },
+    {
+      "name": "blk.12.expsup",
+      "bytes": 12800,
+      "first_writer": "blk.12.expsgate"
+    },
+    {
+      "name": "blk.12.expsup.status",
+      "bytes": 40,
+      "first_writer": "blk.12.expsgate"
+    },
+    {
+      "name": "blk.12.gdn.a",
+      "bytes": 96,
+      "first_writer": "blk.12.gdn.a"
+    },
+    {
+      "name": "blk.12.gdn.b",
+      "bytes": 96,
+      "first_writer": "blk.12.gdn.b"
+    },
+    {
+      "name": "blk.12.gdn.conv",
+      "bytes": 20480,
+      "first_writer": "blk.12.gdn.conv"
+    },
+    {
+      "name": "blk.12.gdn.gated",
+      "bytes": 12288,
+      "first_writer": "blk.12.gdn.gated"
+    },
+    {
+      "name": "blk.12.gdn.qkv",
+      "bytes": 20480,
+      "first_writer": "blk.12.gdn.qkv"
+    },
+    {
+      "name": "blk.12.gdn.y",
+      "bytes": 12288,
+      "first_writer": "blk.12.gdn.recurrence"
+    },
+    {
+      "name": "blk.12.gdn.z",
+      "bytes": 12288,
+      "first_writer": "blk.12.gdn.z"
+    },
+    {
+      "name": "blk.12.hc.a.act",
+      "bytes": 640,
+      "first_writer": "blk.12.hc.a.act"
+    },
+    {
+      "name": "blk.12.hc.a.gate",
+      "bytes": 20480,
+      "first_writer": "blk.12.hc.a.gate"
+    },
+    {
+      "name": "blk.12.hc.a.inject",
+      "bytes": 8,
+      "first_writer": "blk.12.hc.a.inject"
+    },
+    {
+      "name": "blk.12.hc.a.low",
+      "bytes": 640,
+      "first_writer": "blk.12.hc.a.low"
+    },
+    {
+      "name": "blk.12.hc.a.mix",
+      "bytes": 5120,
+      "first_writer": "blk.12.hc.a.mix"
+    },
+    {
+      "name": "blk.12.hc.a.norm",
+      "bytes": 20480,
+      "first_writer": "blk.12.hc.a.norm"
+    },
+    {
+      "name": "blk.12.hc.f.act",
+      "bytes": 640,
+      "first_writer": "blk.12.hc.f.act"
+    },
+    {
+      "name": "blk.12.hc.f.gate",
+      "bytes": 20480,
+      "first_writer": "blk.12.hc.f.gate"
+    },
+    {
+      "name": "blk.12.hc.f.inject",
+      "bytes": 8,
+      "first_writer": "blk.12.hc.f.inject"
+    },
+    {
+      "name": "blk.12.hc.f.low",
+      "bytes": 640,
+      "first_writer": "blk.12.hc.f.low"
+    },
+    {
+      "name": "blk.12.hc.f.mix",
+      "bytes": 5120,
+      "first_writer": "blk.12.hc.f.mix"
+    },
+    {
+      "name": "blk.12.hc.f.norm",
+      "bytes": 20480,
+      "first_writer": "blk.12.hc.f.norm"
+    },
+    {
+      "name": "blk.12.ids",
+      "bytes": 40,
+      "first_writer": "blk.12.route"
+    },
+    {
+      "name": "blk.12.moe",
+      "bytes": 5120,
+      "first_writer": "blk.12.moe"
+    },
+    {
+      "name": "blk.12.prob",
+      "bytes": 40,
+      "first_writer": "blk.12.route"
+    },
+    {
+      "name": "blk.12.router",
+      "bytes": 1024,
+      "first_writer": "blk.12.router"
+    },
+    {
+      "name": "blk.12.routes",
+      "bytes": 120,
+      "first_writer": "blk.12.route"
+    },
+    {
+      "name": "blk.12.routes.down",
+      "bytes": 120,
+      "first_writer": "blk.12.route"
+    },
+    {
+      "name": "blk.12.shared_gate",
+      "bytes": 2,
+      "first_writer": "blk.12.shared_gate"
+    },
+    {
+      "name": "blk.12.shexpact",
+      "bytes": 1280,
+      "first_writer": "blk.12.shexpact"
+    },
+    {
+      "name": "blk.12.shexpdown",
+      "bytes": 5120,
+      "first_writer": "blk.12.shexpdown"
+    },
+    {
+      "name": "blk.12.shexpgate",
+      "bytes": 1280,
+      "first_writer": "blk.12.shexpgate"
+    },
+    {
+      "name": "blk.12.shexpup",
+      "bytes": 1280,
+      "first_writer": "blk.12.shexpup"
+    },
+    {
+      "name": "blk.13.attention",
+      "bytes": 5120,
+      "first_writer": "blk.13.attention"
+    },
+    {
+      "name": "blk.13.expsact",
+      "bytes": 12800,
+      "first_writer": "blk.13.expsact"
+    },
+    {
+      "name": "blk.13.expsdown",
+      "bytes": 51200,
+      "first_writer": "blk.13.expsdown"
+    },
+    {
+      "name": "blk.13.expsdown.status",
+      "bytes": 40,
+      "first_writer": "blk.13.expsdown"
+    },
+    {
+      "name": "blk.13.expsgate",
+      "bytes": 12800,
+      "first_writer": "blk.13.expsgate"
+    },
+    {
+      "name": "blk.13.expsgate.status",
+      "bytes": 40,
+      "first_writer": "blk.13.expsgate"
+    },
+    {
+      "name": "blk.13.expsup",
+      "bytes": 12800,
+      "first_writer": "blk.13.expsgate"
+    },
+    {
+      "name": "blk.13.expsup.status",
+      "bytes": 40,
+      "first_writer": "blk.13.expsgate"
+    },
+    {
+      "name": "blk.13.gdn.a",
+      "bytes": 96,
+      "first_writer": "blk.13.gdn.a"
+    },
+    {
+      "name": "blk.13.gdn.b",
+      "bytes": 96,
+      "first_writer": "blk.13.gdn.b"
+    },
+    {
+      "name": "blk.13.gdn.conv",
+      "bytes": 20480,
+      "first_writer": "blk.13.gdn.conv"
+    },
+    {
+      "name": "blk.13.gdn.gated",
+      "bytes": 12288,
+      "first_writer": "blk.13.gdn.gated"
+    },
+    {
+      "name": "blk.13.gdn.qkv",
+      "bytes": 20480,
+      "first_writer": "blk.13.gdn.qkv"
+    },
+    {
+      "name": "blk.13.gdn.y",
+      "bytes": 12288,
+      "first_writer": "blk.13.gdn.recurrence"
+    },
+    {
+      "name": "blk.13.gdn.z",
+      "bytes": 12288,
+      "first_writer": "blk.13.gdn.z"
+    },
+    {
+      "name": "blk.13.hc.a.act",
+      "bytes": 640,
+      "first_writer": "blk.13.hc.a.act"
+    },
+    {
+      "name": "blk.13.hc.a.gate",
+      "bytes": 20480,
+      "first_writer": "blk.13.hc.a.gate"
+    },
+    {
+      "name": "blk.13.hc.a.inject",
+      "bytes": 8,
+      "first_writer": "blk.13.hc.a.inject"
+    },
+    {
+      "name": "blk.13.hc.a.low",
+      "bytes": 640,
+      "first_writer": "blk.13.hc.a.low"
+    },
+    {
+      "name": "blk.13.hc.a.mix",
+      "bytes": 5120,
+      "first_writer": "blk.13.hc.a.mix"
+    },
+    {
+      "name": "blk.13.hc.a.norm",
+      "bytes": 20480,
+      "first_writer": "blk.13.hc.a.norm"
+    },
+    {
+      "name": "blk.13.hc.f.act",
+      "bytes": 640,
+      "first_writer": "blk.13.hc.f.act"
+    },
+    {
+      "name": "blk.13.hc.f.gate",
+      "bytes": 20480,
+      "first_writer": "blk.13.hc.f.gate"
+    },
+    {
+      "name": "blk.13.hc.f.inject",
+      "bytes": 8,
+      "first_writer": "blk.13.hc.f.inject"
+    },
+    {
+      "name": "blk.13.hc.f.low",
+      "bytes": 640,
+      "first_writer": "blk.13.hc.f.low"
+    },
+    {
+      "name": "blk.13.hc.f.mix",
+      "bytes": 5120,
+      "first_writer": "blk.13.hc.f.mix"
+    },
+    {
+      "name": "blk.13.hc.f.norm",
+      "bytes": 20480,
+      "first_writer": "blk.13.hc.f.norm"
+    },
+    {
+      "name": "blk.13.ids",
+      "bytes": 40,
+      "first_writer": "blk.13.route"
+    },
+    {
+      "name": "blk.13.moe",
+      "bytes": 5120,
+      "first_writer": "blk.13.moe"
+    },
+    {
+      "name": "blk.13.prob",
+      "bytes": 40,
+      "first_writer": "blk.13.route"
+    },
+    {
+      "name": "blk.13.router",
+      "bytes": 1024,
+      "first_writer": "blk.13.router"
+    },
+    {
+      "name": "blk.13.routes",
+      "bytes": 120,
+      "first_writer": "blk.13.route"
+    },
+    {
+      "name": "blk.13.routes.down",
+      "bytes": 120,
+      "first_writer": "blk.13.route"
+    },
+    {
+      "name": "blk.13.shared_gate",
+      "bytes": 2,
+      "first_writer": "blk.13.shared_gate"
+    },
+    {
+      "name": "blk.13.shexpact",
+      "bytes": 1280,
+      "first_writer": "blk.13.shexpact"
+    },
+    {
+      "name": "blk.13.shexpdown",
+      "bytes": 5120,
+      "first_writer": "blk.13.shexpdown"
+    },
+    {
+      "name": "blk.13.shexpgate",
+      "bytes": 1280,
+      "first_writer": "blk.13.shexpgate"
+    },
+    {
+      "name": "blk.13.shexpup",
+      "bytes": 1280,
+      "first_writer": "blk.13.shexpup"
+    },
+    {
+      "name": "blk.14.attention",
+      "bytes": 5120,
+      "first_writer": "blk.14.attention"
+    },
+    {
+      "name": "blk.14.expsact",
+      "bytes": 12800,
+      "first_writer": "blk.14.expsact"
+    },
+    {
+      "name": "blk.14.expsdown",
+      "bytes": 51200,
+      "first_writer": "blk.14.expsdown"
+    },
+    {
+      "name": "blk.14.expsdown.status",
+      "bytes": 40,
+      "first_writer": "blk.14.expsdown"
+    },
+    {
+      "name": "blk.14.expsgate",
+      "bytes": 12800,
+      "first_writer": "blk.14.expsgate"
+    },
+    {
+      "name": "blk.14.expsgate.status",
+      "bytes": 40,
+      "first_writer": "blk.14.expsgate"
+    },
+    {
+      "name": "blk.14.expsup",
+      "bytes": 12800,
+      "first_writer": "blk.14.expsgate"
+    },
+    {
+      "name": "blk.14.expsup.status",
+      "bytes": 40,
+      "first_writer": "blk.14.expsgate"
+    },
+    {
+      "name": "blk.14.gdn.a",
+      "bytes": 96,
+      "first_writer": "blk.14.gdn.a"
+    },
+    {
+      "name": "blk.14.gdn.b",
+      "bytes": 96,
+      "first_writer": "blk.14.gdn.b"
+    },
+    {
+      "name": "blk.14.gdn.conv",
+      "bytes": 20480,
+      "first_writer": "blk.14.gdn.conv"
+    },
+    {
+      "name": "blk.14.gdn.gated",
+      "bytes": 12288,
+      "first_writer": "blk.14.gdn.gated"
+    },
+    {
+      "name": "blk.14.gdn.qkv",
+      "bytes": 20480,
+      "first_writer": "blk.14.gdn.qkv"
+    },
+    {
+      "name": "blk.14.gdn.y",
+      "bytes": 12288,
+      "first_writer": "blk.14.gdn.recurrence"
+    },
+    {
+      "name": "blk.14.gdn.z",
+      "bytes": 12288,
+      "first_writer": "blk.14.gdn.z"
+    },
+    {
+      "name": "blk.14.hc.a.act",
+      "bytes": 640,
+      "first_writer": "blk.14.hc.a.act"
+    },
+    {
+      "name": "blk.14.hc.a.gate",
+      "bytes": 20480,
+      "first_writer": "blk.14.hc.a.gate"
+    },
+    {
+      "name": "blk.14.hc.a.inject",
+      "bytes": 8,
+      "first_writer": "blk.14.hc.a.inject"
+    },
+    {
+      "name": "blk.14.hc.a.low",
+      "bytes": 640,
+      "first_writer": "blk.14.hc.a.low"
+    },
+    {
+      "name": "blk.14.hc.a.mix",
+      "bytes": 5120,
+      "first_writer": "blk.14.hc.a.mix"
+    },
+    {
+      "name": "blk.14.hc.a.norm",
+      "bytes": 20480,
+      "first_writer": "blk.14.hc.a.norm"
+    },
+    {
+      "name": "blk.14.hc.f.act",
+      "bytes": 640,
+      "first_writer": "blk.14.hc.f.act"
+    },
+    {
+      "name": "blk.14.hc.f.gate",
+      "bytes": 20480,
+      "first_writer": "blk.14.hc.f.gate"
+    },
+    {
+      "name": "blk.14.hc.f.inject",
+      "bytes": 8,
+      "first_writer": "blk.14.hc.f.inject"
+    },
+    {
+      "name": "blk.14.hc.f.low",
+      "bytes": 640,
+      "first_writer": "blk.14.hc.f.low"
+    },
+    {
+      "name": "blk.14.hc.f.mix",
+      "bytes": 5120,
+      "first_writer": "blk.14.hc.f.mix"
+    },
+    {
+      "name": "blk.14.hc.f.norm",
+      "bytes": 20480,
+      "first_writer": "blk.14.hc.f.norm"
+    },
+    {
+      "name": "blk.14.ids",
+      "bytes": 40,
+      "first_writer": "blk.14.route"
+    },
+    {
+      "name": "blk.14.moe",
+      "bytes": 5120,
+      "first_writer": "blk.14.moe"
+    },
+    {
+      "name": "blk.14.prob",
+      "bytes": 40,
+      "first_writer": "blk.14.route"
+    },
+    {
+      "name": "blk.14.router",
+      "bytes": 1024,
+      "first_writer": "blk.14.router"
+    },
+    {
+      "name": "blk.14.routes",
+      "bytes": 120,
+      "first_writer": "blk.14.route"
+    },
+    {
+      "name": "blk.14.routes.down",
+      "bytes": 120,
+      "first_writer": "blk.14.route"
+    },
+    {
+      "name": "blk.14.shared_gate",
+      "bytes": 2,
+      "first_writer": "blk.14.shared_gate"
+    },
+    {
+      "name": "blk.14.shexpact",
+      "bytes": 1280,
+      "first_writer": "blk.14.shexpact"
+    },
+    {
+      "name": "blk.14.shexpdown",
+      "bytes": 5120,
+      "first_writer": "blk.14.shexpdown"
+    },
+    {
+      "name": "blk.14.shexpgate",
+      "bytes": 1280,
+      "first_writer": "blk.14.shexpgate"
+    },
+    {
+      "name": "blk.14.shexpup",
+      "bytes": 1280,
+      "first_writer": "blk.14.shexpup"
+    },
+    {
+      "name": "blk.15.attention",
+      "bytes": 5120,
+      "first_writer": "blk.15.attention"
+    },
+    {
+      "name": "blk.15.expsact",
+      "bytes": 12800,
+      "first_writer": "blk.15.expsact"
+    },
+    {
+      "name": "blk.15.expsdown",
+      "bytes": 51200,
+      "first_writer": "blk.15.expsdown"
+    },
+    {
+      "name": "blk.15.expsdown.status",
+      "bytes": 40,
+      "first_writer": "blk.15.expsdown"
+    },
+    {
+      "name": "blk.15.expsgate",
+      "bytes": 12800,
+      "first_writer": "blk.15.expsgate"
+    },
+    {
+      "name": "blk.15.expsgate.status",
+      "bytes": 40,
+      "first_writer": "blk.15.expsgate"
+    },
+    {
+      "name": "blk.15.expsup",
+      "bytes": 12800,
+      "first_writer": "blk.15.expsgate"
+    },
+    {
+      "name": "blk.15.expsup.status",
+      "bytes": 40,
+      "first_writer": "blk.15.expsgate"
+    },
+    {
+      "name": "blk.15.hc.a.act",
+      "bytes": 640,
+      "first_writer": "blk.15.hc.a.act"
+    },
+    {
+      "name": "blk.15.hc.a.gate",
+      "bytes": 20480,
+      "first_writer": "blk.15.hc.a.gate"
+    },
+    {
+      "name": "blk.15.hc.a.inject",
+      "bytes": 8,
+      "first_writer": "blk.15.hc.a.inject"
+    },
+    {
+      "name": "blk.15.hc.a.low",
+      "bytes": 640,
+      "first_writer": "blk.15.hc.a.low"
+    },
+    {
+      "name": "blk.15.hc.a.mix",
+      "bytes": 5120,
+      "first_writer": "blk.15.hc.a.mix"
+    },
+    {
+      "name": "blk.15.hc.a.norm",
+      "bytes": 20480,
+      "first_writer": "blk.15.hc.a.norm"
+    },
+    {
+      "name": "blk.15.hc.f.act",
+      "bytes": 640,
+      "first_writer": "blk.15.hc.f.act"
+    },
+    {
+      "name": "blk.15.hc.f.gate",
+      "bytes": 20480,
+      "first_writer": "blk.15.hc.f.gate"
+    },
+    {
+      "name": "blk.15.hc.f.inject",
+      "bytes": 8,
+      "first_writer": "blk.15.hc.f.inject"
+    },
+    {
+      "name": "blk.15.hc.f.low",
+      "bytes": 640,
+      "first_writer": "blk.15.hc.f.low"
+    },
+    {
+      "name": "blk.15.hc.f.mix",
+      "bytes": 5120,
+      "first_writer": "blk.15.hc.f.mix"
+    },
+    {
+      "name": "blk.15.hc.f.norm",
+      "bytes": 20480,
+      "first_writer": "blk.15.hc.f.norm"
+    },
+    {
+      "name": "blk.15.ids",
+      "bytes": 40,
+      "first_writer": "blk.15.route"
+    },
+    {
+      "name": "blk.15.moe",
+      "bytes": 5120,
+      "first_writer": "blk.15.moe"
+    },
+    {
+      "name": "blk.15.prob",
+      "bytes": 40,
+      "first_writer": "blk.15.route"
+    },
+    {
+      "name": "blk.15.qsa.gate",
+      "bytes": 12288,
+      "first_writer": "blk.15.qsa.prepare"
+    },
+    {
+      "name": "blk.15.qsa.ids",
+      "bytes": 8204,
+      "first_writer": "blk.15.qsa.select"
+    },
+    {
+      "name": "blk.15.qsa.ik",
+      "bytes": 256,
+      "first_writer": "blk.15.qsa.ik"
+    },
+    {
+      "name": "blk.15.qsa.iq",
+      "bytes": 1024,
+      "first_writer": "blk.15.qsa.iq"
+    },
+    {
+      "name": "blk.15.qsa.iqn",
+      "bytes": 1024,
+      "first_writer": "blk.15.qsa.prepare"
+    },
+    {
+      "name": "blk.15.qsa.k",
+      "bytes": 1024,
+      "first_writer": "blk.15.qsa.k"
+    },
+    {
+      "name": "blk.15.qsa.kn",
+      "bytes": 1024,
+      "first_writer": "blk.15.qsa.prepare"
+    },
+    {
+      "name": "blk.15.qsa.q",
+      "bytes": 12288,
+      "first_writer": "blk.15.qsa.prepare"
+    },
+    {
+      "name": "blk.15.qsa.qgate",
+      "bytes": 24576,
+      "first_writer": "blk.15.qsa.qgate"
+    },
+    {
+      "name": "blk.15.qsa.v",
+      "bytes": 1024,
+      "first_writer": "blk.15.qsa.v"
+    },
+    {
+      "name": "blk.15.qsa.y",
+      "bytes": 12288,
+      "first_writer": "blk.15.qsa.attention"
+    },
+    {
+      "name": "blk.15.router",
+      "bytes": 1024,
+      "first_writer": "blk.15.router"
+    },
+    {
+      "name": "blk.15.routes",
+      "bytes": 120,
+      "first_writer": "blk.15.route"
+    },
+    {
+      "name": "blk.15.routes.down",
+      "bytes": 120,
+      "first_writer": "blk.15.route"
+    },
+    {
+      "name": "blk.15.shared_gate",
+      "bytes": 2,
+      "first_writer": "blk.15.shared_gate"
+    },
+    {
+      "name": "blk.15.shexpact",
+      "bytes": 1280,
+      "first_writer": "blk.15.shexpact"
+    },
+    {
+      "name": "blk.15.shexpdown",
+      "bytes": 5120,
+      "first_writer": "blk.15.shexpdown"
+    },
+    {
+      "name": "blk.15.shexpgate",
+      "bytes": 1280,
+      "first_writer": "blk.15.shexpgate"
+    },
+    {
+      "name": "blk.15.shexpup",
+      "bytes": 1280,
+      "first_writer": "blk.15.shexpup"
+    },
+    {
+      "name": "blk.16.attention",
+      "bytes": 5120,
+      "first_writer": "blk.16.attention"
+    },
+    {
+      "name": "blk.16.expsact",
+      "bytes": 12800,
+      "first_writer": "blk.16.expsact"
+    },
+    {
+      "name": "blk.16.expsdown",
+      "bytes": 51200,
+      "first_writer": "blk.16.expsdown"
+    },
+    {
+      "name": "blk.16.expsdown.status",
+      "bytes": 40,
+      "first_writer": "blk.16.expsdown"
+    },
+    {
+      "name": "blk.16.expsgate",
+      "bytes": 12800,
+      "first_writer": "blk.16.expsgate"
+    },
+    {
+      "name": "blk.16.expsgate.status",
+      "bytes": 40,
+      "first_writer": "blk.16.expsgate"
+    },
+    {
+      "name": "blk.16.expsup",
+      "bytes": 12800,
+      "first_writer": "blk.16.expsgate"
+    },
+    {
+      "name": "blk.16.expsup.status",
+      "bytes": 40,
+      "first_writer": "blk.16.expsgate"
+    },
+    {
+      "name": "blk.16.gdn.a",
+      "bytes": 96,
+      "first_writer": "blk.16.gdn.a"
+    },
+    {
+      "name": "blk.16.gdn.b",
+      "bytes": 96,
+      "first_writer": "blk.16.gdn.b"
+    },
+    {
+      "name": "blk.16.gdn.conv",
+      "bytes": 20480,
+      "first_writer": "blk.16.gdn.conv"
+    },
+    {
+      "name": "blk.16.gdn.gated",
+      "bytes": 12288,
+      "first_writer": "blk.16.gdn.gated"
+    },
+    {
+      "name": "blk.16.gdn.qkv",
+      "bytes": 20480,
+      "first_writer": "blk.16.gdn.qkv"
+    },
+    {
+      "name": "blk.16.gdn.y",
+      "bytes": 12288,
+      "first_writer": "blk.16.gdn.recurrence"
+    },
+    {
+      "name": "blk.16.gdn.z",
+      "bytes": 12288,
+      "first_writer": "blk.16.gdn.z"
+    },
+    {
+      "name": "blk.16.hc.a.act",
+      "bytes": 640,
+      "first_writer": "blk.16.hc.a.act"
+    },
+    {
+      "name": "blk.16.hc.a.gate",
+      "bytes": 20480,
+      "first_writer": "blk.16.hc.a.gate"
+    },
+    {
+      "name": "blk.16.hc.a.inject",
+      "bytes": 8,
+      "first_writer": "blk.16.hc.a.inject"
+    },
+    {
+      "name": "blk.16.hc.a.low",
+      "bytes": 640,
+      "first_writer": "blk.16.hc.a.low"
+    },
+    {
+      "name": "blk.16.hc.a.mix",
+      "bytes": 5120,
+      "first_writer": "blk.16.hc.a.mix"
+    },
+    {
+      "name": "blk.16.hc.a.norm",
+      "bytes": 20480,
+      "first_writer": "blk.16.hc.a.norm"
+    },
+    {
+      "name": "blk.16.hc.f.act",
+      "bytes": 640,
+      "first_writer": "blk.16.hc.f.act"
+    },
+    {
+      "name": "blk.16.hc.f.gate",
+      "bytes": 20480,
+      "first_writer": "blk.16.hc.f.gate"
+    },
+    {
+      "name": "blk.16.hc.f.inject",
+      "bytes": 8,
+      "first_writer": "blk.16.hc.f.inject"
+    },
+    {
+      "name": "blk.16.hc.f.low",
+      "bytes": 640,
+      "first_writer": "blk.16.hc.f.low"
+    },
+    {
+      "name": "blk.16.hc.f.mix",
+      "bytes": 5120,
+      "first_writer": "blk.16.hc.f.mix"
+    },
+    {
+      "name": "blk.16.hc.f.norm",
+      "bytes": 20480,
+      "first_writer": "blk.16.hc.f.norm"
+    },
+    {
+      "name": "blk.16.ids",
+      "bytes": 40,
+      "first_writer": "blk.16.route"
+    },
+    {
+      "name": "blk.16.moe",
+      "bytes": 5120,
+      "first_writer": "blk.16.moe"
+    },
+    {
+      "name": "blk.16.prob",
+      "bytes": 40,
+      "first_writer": "blk.16.route"
+    },
+    {
+      "name": "blk.16.router",
+      "bytes": 1024,
+      "first_writer": "blk.16.router"
+    },
+    {
+      "name": "blk.16.routes",
+      "bytes": 120,
+      "first_writer": "blk.16.route"
+    },
+    {
+      "name": "blk.16.routes.down",
+      "bytes": 120,
+      "first_writer": "blk.16.route"
+    },
+    {
+      "name": "blk.16.shared_gate",
+      "bytes": 2,
+      "first_writer": "blk.16.shared_gate"
+    },
+    {
+      "name": "blk.16.shexpact",
+      "bytes": 1280,
+      "first_writer": "blk.16.shexpact"
+    },
+    {
+      "name": "blk.16.shexpdown",
+      "bytes": 5120,
+      "first_writer": "blk.16.shexpdown"
+    },
+    {
+      "name": "blk.16.shexpgate",
+      "bytes": 1280,
+      "first_writer": "blk.16.shexpgate"
+    },
+    {
+      "name": "blk.16.shexpup",
+      "bytes": 1280,
+      "first_writer": "blk.16.shexpup"
+    },
+    {
+      "name": "blk.17.attention",
+      "bytes": 5120,
+      "first_writer": "blk.17.attention"
+    },
+    {
+      "name": "blk.17.expsact",
+      "bytes": 12800,
+      "first_writer": "blk.17.expsact"
+    },
+    {
+      "name": "blk.17.expsdown",
+      "bytes": 51200,
+      "first_writer": "blk.17.expsdown"
+    },
+    {
+      "name": "blk.17.expsdown.status",
+      "bytes": 40,
+      "first_writer": "blk.17.expsdown"
+    },
+    {
+      "name": "blk.17.expsgate",
+      "bytes": 12800,
+      "first_writer": "blk.17.expsgate"
+    },
+    {
+      "name": "blk.17.expsgate.status",
+      "bytes": 40,
+      "first_writer": "blk.17.expsgate"
+    },
+    {
+      "name": "blk.17.expsup",
+      "bytes": 12800,
+      "first_writer": "blk.17.expsgate"
+    },
+    {
+      "name": "blk.17.expsup.status",
+      "bytes": 40,
+      "first_writer": "blk.17.expsgate"
+    },
+    {
+      "name": "blk.17.gdn.a",
+      "bytes": 96,
+      "first_writer": "blk.17.gdn.a"
+    },
+    {
+      "name": "blk.17.gdn.b",
+      "bytes": 96,
+      "first_writer": "blk.17.gdn.b"
+    },
+    {
+      "name": "blk.17.gdn.conv",
+      "bytes": 20480,
+      "first_writer": "blk.17.gdn.conv"
+    },
+    {
+      "name": "blk.17.gdn.gated",
+      "bytes": 12288,
+      "first_writer": "blk.17.gdn.gated"
+    },
+    {
+      "name": "blk.17.gdn.qkv",
+      "bytes": 20480,
+      "first_writer": "blk.17.gdn.qkv"
+    },
+    {
+      "name": "blk.17.gdn.y",
+      "bytes": 12288,
+      "first_writer": "blk.17.gdn.recurrence"
+    },
+    {
+      "name": "blk.17.gdn.z",
+      "bytes": 12288,
+      "first_writer": "blk.17.gdn.z"
+    },
+    {
+      "name": "blk.17.hc.a.act",
+      "bytes": 640,
+      "first_writer": "blk.17.hc.a.act"
+    },
+    {
+      "name": "blk.17.hc.a.gate",
+      "bytes": 20480,
+      "first_writer": "blk.17.hc.a.gate"
+    },
+    {
+      "name": "blk.17.hc.a.inject",
+      "bytes": 8,
+      "first_writer": "blk.17.hc.a.inject"
+    },
+    {
+      "name": "blk.17.hc.a.low",
+      "bytes": 640,
+      "first_writer": "blk.17.hc.a.low"
+    },
+    {
+      "name": "blk.17.hc.a.mix",
+      "bytes": 5120,
+      "first_writer": "blk.17.hc.a.mix"
+    },
+    {
+      "name": "blk.17.hc.a.norm",
+      "bytes": 20480,
+      "first_writer": "blk.17.hc.a.norm"
+    },
+    {
+      "name": "blk.17.hc.f.act",
+      "bytes": 640,
+      "first_writer": "blk.17.hc.f.act"
+    },
+    {
+      "name": "blk.17.hc.f.gate",
+      "bytes": 20480,
+      "first_writer": "blk.17.hc.f.gate"
+    },
+    {
+      "name": "blk.17.hc.f.inject",
+      "bytes": 8,
+      "first_writer": "blk.17.hc.f.inject"
+    },
+    {
+      "name": "blk.17.hc.f.low",
+      "bytes": 640,
+      "first_writer": "blk.17.hc.f.low"
+    },
+    {
+      "name": "blk.17.hc.f.mix",
+      "bytes": 5120,
+      "first_writer": "blk.17.hc.f.mix"
+    },
+    {
+      "name": "blk.17.hc.f.norm",
+      "bytes": 20480,
+      "first_writer": "blk.17.hc.f.norm"
+    },
+    {
+      "name": "blk.17.ids",
+      "bytes": 40,
+      "first_writer": "blk.17.route"
+    },
+    {
+      "name": "blk.17.moe",
+      "bytes": 5120,
+      "first_writer": "blk.17.moe"
+    },
+    {
+      "name": "blk.17.prob",
+      "bytes": 40,
+      "first_writer": "blk.17.route"
+    },
+    {
+      "name": "blk.17.router",
+      "bytes": 1024,
+      "first_writer": "blk.17.router"
+    },
+    {
+      "name": "blk.17.routes",
+      "bytes": 120,
+      "first_writer": "blk.17.route"
+    },
+    {
+      "name": "blk.17.routes.down",
+      "bytes": 120,
+      "first_writer": "blk.17.route"
+    },
+    {
+      "name": "blk.17.shared_gate",
+      "bytes": 2,
+      "first_writer": "blk.17.shared_gate"
+    },
+    {
+      "name": "blk.17.shexpact",
+      "bytes": 1280,
+      "first_writer": "blk.17.shexpact"
+    },
+    {
+      "name": "blk.17.shexpdown",
+      "bytes": 5120,
+      "first_writer": "blk.17.shexpdown"
+    },
+    {
+      "name": "blk.17.shexpgate",
+      "bytes": 1280,
+      "first_writer": "blk.17.shexpgate"
+    },
+    {
+      "name": "blk.17.shexpup",
+      "bytes": 1280,
+      "first_writer": "blk.17.shexpup"
+    },
+    {
+      "name": "blk.18.attention",
+      "bytes": 5120,
+      "first_writer": "blk.18.attention"
+    },
+    {
+      "name": "blk.18.expsact",
+      "bytes": 12800,
+      "first_writer": "blk.18.expsact"
+    },
+    {
+      "name": "blk.18.expsdown",
+      "bytes": 51200,
+      "first_writer": "blk.18.expsdown"
+    },
+    {
+      "name": "blk.18.expsdown.status",
+      "bytes": 40,
+      "first_writer": "blk.18.expsdown"
+    },
+    {
+      "name": "blk.18.expsgate",
+      "bytes": 12800,
+      "first_writer": "blk.18.expsgate"
+    },
+    {
+      "name": "blk.18.expsgate.status",
+      "bytes": 40,
+      "first_writer": "blk.18.expsgate"
+    },
+    {
+      "name": "blk.18.expsup",
+      "bytes": 12800,
+      "first_writer": "blk.18.expsgate"
+    },
+    {
+      "name": "blk.18.expsup.status",
+      "bytes": 40,
+      "first_writer": "blk.18.expsgate"
+    },
+    {
+      "name": "blk.18.gdn.a",
+      "bytes": 96,
+      "first_writer": "blk.18.gdn.a"
+    },
+    {
+      "name": "blk.18.gdn.b",
+      "bytes": 96,
+      "first_writer": "blk.18.gdn.b"
+    },
+    {
+      "name": "blk.18.gdn.conv",
+      "bytes": 20480,
+      "first_writer": "blk.18.gdn.conv"
+    },
+    {
+      "name": "blk.18.gdn.gated",
+      "bytes": 12288,
+      "first_writer": "blk.18.gdn.gated"
+    },
+    {
+      "name": "blk.18.gdn.qkv",
+      "bytes": 20480,
+      "first_writer": "blk.18.gdn.qkv"
+    },
+    {
+      "name": "blk.18.gdn.y",
+      "bytes": 12288,
+      "first_writer": "blk.18.gdn.recurrence"
+    },
+    {
+      "name": "blk.18.gdn.z",
+      "bytes": 12288,
+      "first_writer": "blk.18.gdn.z"
+    },
+    {
+      "name": "blk.18.hc.a.act",
+      "bytes": 640,
+      "first_writer": "blk.18.hc.a.act"
+    },
+    {
+      "name": "blk.18.hc.a.gate",
+      "bytes": 20480,
+      "first_writer": "blk.18.hc.a.gate"
+    },
+    {
+      "name": "blk.18.hc.a.inject",
+      "bytes": 8,
+      "first_writer": "blk.18.hc.a.inject"
+    },
+    {
+      "name": "blk.18.hc.a.low",
+      "bytes": 640,
+      "first_writer": "blk.18.hc.a.low"
+    },
+    {
+      "name": "blk.18.hc.a.mix",
+      "bytes": 5120,
+      "first_writer": "blk.18.hc.a.mix"
+    },
+    {
+      "name": "blk.18.hc.a.norm",
+      "bytes": 20480,
+      "first_writer": "blk.18.hc.a.norm"
+    },
+    {
+      "name": "blk.18.hc.f.act",
+      "bytes": 640,
+      "first_writer": "blk.18.hc.f.act"
+    },
+    {
+      "name": "blk.18.hc.f.gate",
+      "bytes": 20480,
+      "first_writer": "blk.18.hc.f.gate"
+    },
+    {
+      "name": "blk.18.hc.f.inject",
+      "bytes": 8,
+      "first_writer": "blk.18.hc.f.inject"
+    },
+    {
+      "name": "blk.18.hc.f.low",
+      "bytes": 640,
+      "first_writer": "blk.18.hc.f.low"
+    },
+    {
+      "name": "blk.18.hc.f.mix",
+      "bytes": 5120,
+      "first_writer": "blk.18.hc.f.mix"
+    },
+    {
+      "name": "blk.18.hc.f.norm",
+      "bytes": 20480,
+      "first_writer": "blk.18.hc.f.norm"
+    },
+    {
+      "name": "blk.18.ids",
+      "bytes": 40,
+      "first_writer": "blk.18.route"
+    },
+    {
+      "name": "blk.18.moe",
+      "bytes": 5120,
+      "first_writer": "blk.18.moe"
+    },
+    {
+      "name": "blk.18.prob",
+      "bytes": 40,
+      "first_writer": "blk.18.route"
+    },
+    {
+      "name": "blk.18.router",
+      "bytes": 1024,
+      "first_writer": "blk.18.router"
+    },
+    {
+      "name": "blk.18.routes",
+      "bytes": 120,
+      "first_writer": "blk.18.route"
+    },
+    {
+      "name": "blk.18.routes.down",
+      "bytes": 120,
+      "first_writer": "blk.18.route"
+    },
+    {
+      "name": "blk.18.shared_gate",
+      "bytes": 2,
+      "first_writer": "blk.18.shared_gate"
+    },
+    {
+      "name": "blk.18.shexpact",
+      "bytes": 1280,
+      "first_writer": "blk.18.shexpact"
+    },
+    {
+      "name": "blk.18.shexpdown",
+      "bytes": 5120,
+      "first_writer": "blk.18.shexpdown"
+    },
+    {
+      "name": "blk.18.shexpgate",
+      "bytes": 1280,
+      "first_writer": "blk.18.shexpgate"
+    },
+    {
+      "name": "blk.18.shexpup",
+      "bytes": 1280,
+      "first_writer": "blk.18.shexpup"
+    },
+    {
+      "name": "blk.19.attention",
+      "bytes": 5120,
+      "first_writer": "blk.19.attention"
+    },
+    {
+      "name": "blk.19.expsact",
+      "bytes": 12800,
+      "first_writer": "blk.19.expsact"
+    },
+    {
+      "name": "blk.19.expsdown",
+      "bytes": 51200,
+      "first_writer": "blk.19.expsdown"
+    },
+    {
+      "name": "blk.19.expsdown.status",
+      "bytes": 40,
+      "first_writer": "blk.19.expsdown"
+    },
+    {
+      "name": "blk.19.expsgate",
+      "bytes": 12800,
+      "first_writer": "blk.19.expsgate"
+    },
+    {
+      "name": "blk.19.expsgate.status",
+      "bytes": 40,
+      "first_writer": "blk.19.expsgate"
+    },
+    {
+      "name": "blk.19.expsup",
+      "bytes": 12800,
+      "first_writer": "blk.19.expsgate"
+    },
+    {
+      "name": "blk.19.expsup.status",
+      "bytes": 40,
+      "first_writer": "blk.19.expsgate"
+    },
+    {
+      "name": "blk.19.hc.a.act",
+      "bytes": 640,
+      "first_writer": "blk.19.hc.a.act"
+    },
+    {
+      "name": "blk.19.hc.a.gate",
+      "bytes": 20480,
+      "first_writer": "blk.19.hc.a.gate"
+    },
+    {
+      "name": "blk.19.hc.a.inject",
+      "bytes": 8,
+      "first_writer": "blk.19.hc.a.inject"
+    },
+    {
+      "name": "blk.19.hc.a.low",
+      "bytes": 640,
+      "first_writer": "blk.19.hc.a.low"
+    },
+    {
+      "name": "blk.19.hc.a.mix",
+      "bytes": 5120,
+      "first_writer": "blk.19.hc.a.mix"
+    },
+    {
+      "name": "blk.19.hc.a.norm",
+      "bytes": 20480,
+      "first_writer": "blk.19.hc.a.norm"
+    },
+    {
+      "name": "blk.19.hc.f.act",
+      "bytes": 640,
+      "first_writer": "blk.19.hc.f.act"
+    },
+    {
+      "name": "blk.19.hc.f.gate",
+      "bytes": 20480,
+      "first_writer": "blk.19.hc.f.gate"
+    },
+    {
+      "name": "blk.19.hc.f.inject",
+      "bytes": 8,
+      "first_writer": "blk.19.hc.f.inject"
+    },
+    {
+      "name": "blk.19.hc.f.low",
+      "bytes": 640,
+      "first_writer": "blk.19.hc.f.low"
+    },
+    {
+      "name": "blk.19.hc.f.mix",
+      "bytes": 5120,
+      "first_writer": "blk.19.hc.f.mix"
+    },
+    {
+      "name": "blk.19.hc.f.norm",
+      "bytes": 20480,
+      "first_writer": "blk.19.hc.f.norm"
+    },
+    {
+      "name": "blk.19.ids",
+      "bytes": 40,
+      "first_writer": "blk.19.route"
+    },
+    {
+      "name": "blk.19.moe",
+      "bytes": 5120,
+      "first_writer": "blk.19.moe"
+    },
+    {
+      "name": "blk.19.prob",
+      "bytes": 40,
+      "first_writer": "blk.19.route"
+    },
+    {
+      "name": "blk.19.qsa.gate",
+      "bytes": 12288,
+      "first_writer": "blk.19.qsa.prepare"
+    },
+    {
+      "name": "blk.19.qsa.ids",
+      "bytes": 8204,
+      "first_writer": "blk.19.qsa.select"
+    },
+    {
+      "name": "blk.19.qsa.ik",
+      "bytes": 256,
+      "first_writer": "blk.19.qsa.ik"
+    },
+    {
+      "name": "blk.19.qsa.iq",
+      "bytes": 1024,
+      "first_writer": "blk.19.qsa.iq"
+    },
+    {
+      "name": "blk.19.qsa.iqn",
+      "bytes": 1024,
+      "first_writer": "blk.19.qsa.prepare"
+    },
+    {
+      "name": "blk.19.qsa.k",
+      "bytes": 1024,
+      "first_writer": "blk.19.qsa.k"
+    },
+    {
+      "name": "blk.19.qsa.kn",
+      "bytes": 1024,
+      "first_writer": "blk.19.qsa.prepare"
+    },
+    {
+      "name": "blk.19.qsa.q",
+      "bytes": 12288,
+      "first_writer": "blk.19.qsa.prepare"
+    },
+    {
+      "name": "blk.19.qsa.qgate",
+      "bytes": 24576,
+      "first_writer": "blk.19.qsa.qgate"
+    },
+    {
+      "name": "blk.19.qsa.v",
+      "bytes": 1024,
+      "first_writer": "blk.19.qsa.v"
+    },
+    {
+      "name": "blk.19.qsa.y",
+      "bytes": 12288,
+      "first_writer": "blk.19.qsa.attention"
+    },
+    {
+      "name": "blk.19.router",
+      "bytes": 1024,
+      "first_writer": "blk.19.router"
+    },
+    {
+      "name": "blk.19.routes",
+      "bytes": 120,
+      "first_writer": "blk.19.route"
+    },
+    {
+      "name": "blk.19.routes.down",
+      "bytes": 120,
+      "first_writer": "blk.19.route"
+    },
+    {
+      "name": "blk.19.shared_gate",
+      "bytes": 2,
+      "first_writer": "blk.19.shared_gate"
+    },
+    {
+      "name": "blk.19.shexpact",
+      "bytes": 1280,
+      "first_writer": "blk.19.shexpact"
+    },
+    {
+      "name": "blk.19.shexpdown",
+      "bytes": 5120,
+      "first_writer": "blk.19.shexpdown"
+    },
+    {
+      "name": "blk.19.shexpgate",
+      "bytes": 1280,
+      "first_writer": "blk.19.shexpgate"
+    },
+    {
+      "name": "blk.19.shexpup",
+      "bytes": 1280,
+      "first_writer": "blk.19.shexpup"
+    },
+    {
+      "name": "blk.2.attention",
+      "bytes": 5120,
+      "first_writer": "blk.2.attention"
+    },
+    {
+      "name": "blk.2.expsact",
+      "bytes": 12800,
+      "first_writer": "blk.2.expsact"
+    },
+    {
+      "name": "blk.2.expsdown",
+      "bytes": 51200,
+      "first_writer": "blk.2.expsdown"
+    },
+    {
+      "name": "blk.2.expsdown.status",
+      "bytes": 40,
+      "first_writer": "blk.2.expsdown"
+    },
+    {
+      "name": "blk.2.expsgate",
+      "bytes": 12800,
+      "first_writer": "blk.2.expsgate"
+    },
+    {
+      "name": "blk.2.expsgate.status",
+      "bytes": 40,
+      "first_writer": "blk.2.expsgate"
+    },
+    {
+      "name": "blk.2.expsup",
+      "bytes": 12800,
+      "first_writer": "blk.2.expsgate"
+    },
+    {
+      "name": "blk.2.expsup.status",
+      "bytes": 40,
+      "first_writer": "blk.2.expsgate"
+    },
+    {
+      "name": "blk.2.gdn.a",
+      "bytes": 96,
+      "first_writer": "blk.2.gdn.a"
+    },
+    {
+      "name": "blk.2.gdn.b",
+      "bytes": 96,
+      "first_writer": "blk.2.gdn.b"
+    },
+    {
+      "name": "blk.2.gdn.conv",
+      "bytes": 20480,
+      "first_writer": "blk.2.gdn.conv"
+    },
+    {
+      "name": "blk.2.gdn.gated",
+      "bytes": 12288,
+      "first_writer": "blk.2.gdn.gated"
+    },
+    {
+      "name": "blk.2.gdn.qkv",
+      "bytes": 20480,
+      "first_writer": "blk.2.gdn.qkv"
+    },
+    {
+      "name": "blk.2.gdn.y",
+      "bytes": 12288,
+      "first_writer": "blk.2.gdn.recurrence"
+    },
+    {
+      "name": "blk.2.gdn.z",
+      "bytes": 12288,
+      "first_writer": "blk.2.gdn.z"
+    },
+    {
+      "name": "blk.2.hc.a.act",
+      "bytes": 640,
+      "first_writer": "blk.2.hc.a.act"
+    },
+    {
+      "name": "blk.2.hc.a.gate",
+      "bytes": 20480,
+      "first_writer": "blk.2.hc.a.gate"
+    },
+    {
+      "name": "blk.2.hc.a.inject",
+      "bytes": 8,
+      "first_writer": "blk.2.hc.a.inject"
+    },
+    {
+      "name": "blk.2.hc.a.low",
+      "bytes": 640,
+      "first_writer": "blk.2.hc.a.low"
+    },
+    {
+      "name": "blk.2.hc.a.mix",
+      "bytes": 5120,
+      "first_writer": "blk.2.hc.a.mix"
+    },
+    {
+      "name": "blk.2.hc.a.norm",
+      "bytes": 20480,
+      "first_writer": "blk.2.hc.a.norm"
+    },
+    {
+      "name": "blk.2.hc.f.act",
+      "bytes": 640,
+      "first_writer": "blk.2.hc.f.act"
+    },
+    {
+      "name": "blk.2.hc.f.gate",
+      "bytes": 20480,
+      "first_writer": "blk.2.hc.f.gate"
+    },
+    {
+      "name": "blk.2.hc.f.inject",
+      "bytes": 8,
+      "first_writer": "blk.2.hc.f.inject"
+    },
+    {
+      "name": "blk.2.hc.f.low",
+      "bytes": 640,
+      "first_writer": "blk.2.hc.f.low"
+    },
+    {
+      "name": "blk.2.hc.f.mix",
+      "bytes": 5120,
+      "first_writer": "blk.2.hc.f.mix"
+    },
+    {
+      "name": "blk.2.hc.f.norm",
+      "bytes": 20480,
+      "first_writer": "blk.2.hc.f.norm"
+    },
+    {
+      "name": "blk.2.ids",
+      "bytes": 40,
+      "first_writer": "blk.2.route"
+    },
+    {
+      "name": "blk.2.moe",
+      "bytes": 5120,
+      "first_writer": "blk.2.moe"
+    },
+    {
+      "name": "blk.2.prob",
+      "bytes": 40,
+      "first_writer": "blk.2.route"
+    },
+    {
+      "name": "blk.2.router",
+      "bytes": 1024,
+      "first_writer": "blk.2.router"
+    },
+    {
+      "name": "blk.2.routes",
+      "bytes": 120,
+      "first_writer": "blk.2.route"
+    },
+    {
+      "name": "blk.2.routes.down",
+      "bytes": 120,
+      "first_writer": "blk.2.route"
+    },
+    {
+      "name": "blk.2.shared_gate",
+      "bytes": 2,
+      "first_writer": "blk.2.shared_gate"
+    },
+    {
+      "name": "blk.2.shexpact",
+      "bytes": 1280,
+      "first_writer": "blk.2.shexpact"
+    },
+    {
+      "name": "blk.2.shexpdown",
+      "bytes": 5120,
+      "first_writer": "blk.2.shexpdown"
+    },
+    {
+      "name": "blk.2.shexpgate",
+      "bytes": 1280,
+      "first_writer": "blk.2.shexpgate"
+    },
+    {
+      "name": "blk.2.shexpup",
+      "bytes": 1280,
+      "first_writer": "blk.2.shexpup"
+    },
+    {
+      "name": "blk.20.attention",
+      "bytes": 5120,
+      "first_writer": "blk.20.attention"
+    },
+    {
+      "name": "blk.20.expsact",
+      "bytes": 12800,
+      "first_writer": "blk.20.expsact"
+    },
+    {
+      "name": "blk.20.expsdown",
+      "bytes": 51200,
+      "first_writer": "blk.20.expsdown"
+    },
+    {
+      "name": "blk.20.expsdown.status",
+      "bytes": 40,
+      "first_writer": "blk.20.expsdown"
+    },
+    {
+      "name": "blk.20.expsgate",
+      "bytes": 12800,
+      "first_writer": "blk.20.expsgate"
+    },
+    {
+      "name": "blk.20.expsgate.status",
+      "bytes": 40,
+      "first_writer": "blk.20.expsgate"
+    },
+    {
+      "name": "blk.20.expsup",
+      "bytes": 12800,
+      "first_writer": "blk.20.expsgate"
+    },
+    {
+      "name": "blk.20.expsup.status",
+      "bytes": 40,
+      "first_writer": "blk.20.expsgate"
+    },
+    {
+      "name": "blk.20.gdn.a",
+      "bytes": 96,
+      "first_writer": "blk.20.gdn.a"
+    },
+    {
+      "name": "blk.20.gdn.b",
+      "bytes": 96,
+      "first_writer": "blk.20.gdn.b"
+    },
+    {
+      "name": "blk.20.gdn.conv",
+      "bytes": 20480,
+      "first_writer": "blk.20.gdn.conv"
+    },
+    {
+      "name": "blk.20.gdn.gated",
+      "bytes": 12288,
+      "first_writer": "blk.20.gdn.gated"
+    },
+    {
+      "name": "blk.20.gdn.qkv",
+      "bytes": 20480,
+      "first_writer": "blk.20.gdn.qkv"
+    },
+    {
+      "name": "blk.20.gdn.y",
+      "bytes": 12288,
+      "first_writer": "blk.20.gdn.recurrence"
+    },
+    {
+      "name": "blk.20.gdn.z",
+      "bytes": 12288,
+      "first_writer": "blk.20.gdn.z"
+    },
+    {
+      "name": "blk.20.hc.a.act",
+      "bytes": 640,
+      "first_writer": "blk.20.hc.a.act"
+    },
+    {
+      "name": "blk.20.hc.a.gate",
+      "bytes": 20480,
+      "first_writer": "blk.20.hc.a.gate"
+    },
+    {
+      "name": "blk.20.hc.a.inject",
+      "bytes": 8,
+      "first_writer": "blk.20.hc.a.inject"
+    },
+    {
+      "name": "blk.20.hc.a.low",
+      "bytes": 640,
+      "first_writer": "blk.20.hc.a.low"
+    },
+    {
+      "name": "blk.20.hc.a.mix",
+      "bytes": 5120,
+      "first_writer": "blk.20.hc.a.mix"
+    },
+    {
+      "name": "blk.20.hc.a.norm",
+      "bytes": 20480,
+      "first_writer": "blk.20.hc.a.norm"
+    },
+    {
+      "name": "blk.20.hc.f.act",
+      "bytes": 640,
+      "first_writer": "blk.20.hc.f.act"
+    },
+    {
+      "name": "blk.20.hc.f.gate",
+      "bytes": 20480,
+      "first_writer": "blk.20.hc.f.gate"
+    },
+    {
+      "name": "blk.20.hc.f.inject",
+      "bytes": 8,
+      "first_writer": "blk.20.hc.f.inject"
+    },
+    {
+      "name": "blk.20.hc.f.low",
+      "bytes": 640,
+      "first_writer": "blk.20.hc.f.low"
+    },
+    {
+      "name": "blk.20.hc.f.mix",
+      "bytes": 5120,
+      "first_writer": "blk.20.hc.f.mix"
+    },
+    {
+      "name": "blk.20.hc.f.norm",
+      "bytes": 20480,
+      "first_writer": "blk.20.hc.f.norm"
+    },
+    {
+      "name": "blk.20.ids",
+      "bytes": 40,
+      "first_writer": "blk.20.route"
+    },
+    {
+      "name": "blk.20.moe",
+      "bytes": 5120,
+      "first_writer": "blk.20.moe"
+    },
+    {
+      "name": "blk.20.prob",
+      "bytes": 40,
+      "first_writer": "blk.20.route"
+    },
+    {
+      "name": "blk.20.router",
+      "bytes": 1024,
+      "first_writer": "blk.20.router"
+    },
+    {
+      "name": "blk.20.routes",
+      "bytes": 120,
+      "first_writer": "blk.20.route"
+    },
+    {
+      "name": "blk.20.routes.down",
+      "bytes": 120,
+      "first_writer": "blk.20.route"
+    },
+    {
+      "name": "blk.20.shared_gate",
+      "bytes": 2,
+      "first_writer": "blk.20.shared_gate"
+    },
+    {
+      "name": "blk.20.shexpact",
+      "bytes": 1280,
+      "first_writer": "blk.20.shexpact"
+    },
+    {
+      "name": "blk.20.shexpdown",
+      "bytes": 5120,
+      "first_writer": "blk.20.shexpdown"
+    },
+    {
+      "name": "blk.20.shexpgate",
+      "bytes": 1280,
+      "first_writer": "blk.20.shexpgate"
+    },
+    {
+      "name": "blk.20.shexpup",
+      "bytes": 1280,
+      "first_writer": "blk.20.shexpup"
+    },
+    {
+      "name": "blk.21.attention",
+      "bytes": 5120,
+      "first_writer": "blk.21.attention"
+    },
+    {
+      "name": "blk.21.expsact",
+      "bytes": 12800,
+      "first_writer": "blk.21.expsact"
+    },
+    {
+      "name": "blk.21.expsdown",
+      "bytes": 51200,
+      "first_writer": "blk.21.expsdown"
+    },
+    {
+      "name": "blk.21.expsdown.status",
+      "bytes": 40,
+      "first_writer": "blk.21.expsdown"
+    },
+    {
+      "name": "blk.21.expsgate",
+      "bytes": 12800,
+      "first_writer": "blk.21.expsgate"
+    },
+    {
+      "name": "blk.21.expsgate.status",
+      "bytes": 40,
+      "first_writer": "blk.21.expsgate"
+    },
+    {
+      "name": "blk.21.expsup",
+      "bytes": 12800,
+      "first_writer": "blk.21.expsgate"
+    },
+    {
+      "name": "blk.21.expsup.status",
+      "bytes": 40,
+      "first_writer": "blk.21.expsgate"
+    },
+    {
+      "name": "blk.21.gdn.a",
+      "bytes": 96,
+      "first_writer": "blk.21.gdn.a"
+    },
+    {
+      "name": "blk.21.gdn.b",
+      "bytes": 96,
+      "first_writer": "blk.21.gdn.b"
+    },
+    {
+      "name": "blk.21.gdn.conv",
+      "bytes": 20480,
+      "first_writer": "blk.21.gdn.conv"
+    },
+    {
+      "name": "blk.21.gdn.gated",
+      "bytes": 12288,
+      "first_writer": "blk.21.gdn.gated"
+    },
+    {
+      "name": "blk.21.gdn.qkv",
+      "bytes": 20480,
+      "first_writer": "blk.21.gdn.qkv"
+    },
+    {
+      "name": "blk.21.gdn.y",
+      "bytes": 12288,
+      "first_writer": "blk.21.gdn.recurrence"
+    },
+    {
+      "name": "blk.21.gdn.z",
+      "bytes": 12288,
+      "first_writer": "blk.21.gdn.z"
+    },
+    {
+      "name": "blk.21.hc.a.act",
+      "bytes": 640,
+      "first_writer": "blk.21.hc.a.act"
+    },
+    {
+      "name": "blk.21.hc.a.gate",
+      "bytes": 20480,
+      "first_writer": "blk.21.hc.a.gate"
+    },
+    {
+      "name": "blk.21.hc.a.inject",
+      "bytes": 8,
+      "first_writer": "blk.21.hc.a.inject"
+    },
+    {
+      "name": "blk.21.hc.a.low",
+      "bytes": 640,
+      "first_writer": "blk.21.hc.a.low"
+    },
+    {
+      "name": "blk.21.hc.a.mix",
+      "bytes": 5120,
+      "first_writer": "blk.21.hc.a.mix"
+    },
+    {
+      "name": "blk.21.hc.a.norm",
+      "bytes": 20480,
+      "first_writer": "blk.21.hc.a.norm"
+    },
+    {
+      "name": "blk.21.hc.f.act",
+      "bytes": 640,
+      "first_writer": "blk.21.hc.f.act"
+    },
+    {
+      "name": "blk.21.hc.f.gate",
+      "bytes": 20480,
+      "first_writer": "blk.21.hc.f.gate"
+    },
+    {
+      "name": "blk.21.hc.f.inject",
+      "bytes": 8,
+      "first_writer": "blk.21.hc.f.inject"
+    },
+    {
+      "name": "blk.21.hc.f.low",
+      "bytes": 640,
+      "first_writer": "blk.21.hc.f.low"
+    },
+    {
+      "name": "blk.21.hc.f.mix",
+      "bytes": 5120,
+      "first_writer": "blk.21.hc.f.mix"
+    },
+    {
+      "name": "blk.21.hc.f.norm",
+      "bytes": 20480,
+      "first_writer": "blk.21.hc.f.norm"
+    },
+    {
+      "name": "blk.21.ids",
+      "bytes": 40,
+      "first_writer": "blk.21.route"
+    },
+    {
+      "name": "blk.21.moe",
+      "bytes": 5120,
+      "first_writer": "blk.21.moe"
+    },
+    {
+      "name": "blk.21.prob",
+      "bytes": 40,
+      "first_writer": "blk.21.route"
+    },
+    {
+      "name": "blk.21.router",
+      "bytes": 1024,
+      "first_writer": "blk.21.router"
+    },
+    {
+      "name": "blk.21.routes",
+      "bytes": 120,
+      "first_writer": "blk.21.route"
+    },
+    {
+      "name": "blk.21.routes.down",
+      "bytes": 120,
+      "first_writer": "blk.21.route"
+    },
+    {
+      "name": "blk.21.shared_gate",
+      "bytes": 2,
+      "first_writer": "blk.21.shared_gate"
+    },
+    {
+      "name": "blk.21.shexpact",
+      "bytes": 1280,
+      "first_writer": "blk.21.shexpact"
+    },
+    {
+      "name": "blk.21.shexpdown",
+      "bytes": 5120,
+      "first_writer": "blk.21.shexpdown"
+    },
+    {
+      "name": "blk.21.shexpgate",
+      "bytes": 1280,
+      "first_writer": "blk.21.shexpgate"
+    },
+    {
+      "name": "blk.21.shexpup",
+      "bytes": 1280,
+      "first_writer": "blk.21.shexpup"
+    },
+    {
+      "name": "blk.22.attention",
+      "bytes": 5120,
+      "first_writer": "blk.22.attention"
+    },
+    {
+      "name": "blk.22.expsact",
+      "bytes": 12800,
+      "first_writer": "blk.22.expsact"
+    },
+    {
+      "name": "blk.22.expsdown",
+      "bytes": 51200,
+      "first_writer": "blk.22.expsdown"
+    },
+    {
+      "name": "blk.22.expsdown.status",
+      "bytes": 40,
+      "first_writer": "blk.22.expsdown"
+    },
+    {
+      "name": "blk.22.expsgate",
+      "bytes": 12800,
+      "first_writer": "blk.22.expsgate"
+    },
+    {
+      "name": "blk.22.expsgate.status",
+      "bytes": 40,
+      "first_writer": "blk.22.expsgate"
+    },
+    {
+      "name": "blk.22.expsup",
+      "bytes": 12800,
+      "first_writer": "blk.22.expsgate"
+    },
+    {
+      "name": "blk.22.expsup.status",
+      "bytes": 40,
+      "first_writer": "blk.22.expsgate"
+    },
+    {
+      "name": "blk.22.gdn.a",
+      "bytes": 96,
+      "first_writer": "blk.22.gdn.a"
+    },
+    {
+      "name": "blk.22.gdn.b",
+      "bytes": 96,
+      "first_writer": "blk.22.gdn.b"
+    },
+    {
+      "name": "blk.22.gdn.conv",
+      "bytes": 20480,
+      "first_writer": "blk.22.gdn.conv"
+    },
+    {
+      "name": "blk.22.gdn.gated",
+      "bytes": 12288,
+      "first_writer": "blk.22.gdn.gated"
+    },
+    {
+      "name": "blk.22.gdn.qkv",
+      "bytes": 20480,
+      "first_writer": "blk.22.gdn.qkv"
+    },
+    {
+      "name": "blk.22.gdn.y",
+      "bytes": 12288,
+      "first_writer": "blk.22.gdn.recurrence"
+    },
+    {
+      "name": "blk.22.gdn.z",
+      "bytes": 12288,
+      "first_writer": "blk.22.gdn.z"
+    },
+    {
+      "name": "blk.22.hc.a.act",
+      "bytes": 640,
+      "first_writer": "blk.22.hc.a.act"
+    },
+    {
+      "name": "blk.22.hc.a.gate",
+      "bytes": 20480,
+      "first_writer": "blk.22.hc.a.gate"
+    },
+    {
+      "name": "blk.22.hc.a.inject",
+      "bytes": 8,
+      "first_writer": "blk.22.hc.a.inject"
+    },
+    {
+      "name": "blk.22.hc.a.low",
+      "bytes": 640,
+      "first_writer": "blk.22.hc.a.low"
+    },
+    {
+      "name": "blk.22.hc.a.mix",
+      "bytes": 5120,
+      "first_writer": "blk.22.hc.a.mix"
+    },
+    {
+      "name": "blk.22.hc.a.norm",
+      "bytes": 20480,
+      "first_writer": "blk.22.hc.a.norm"
+    },
+    {
+      "name": "blk.22.hc.f.act",
+      "bytes": 640,
+      "first_writer": "blk.22.hc.f.act"
+    },
+    {
+      "name": "blk.22.hc.f.gate",
+      "bytes": 20480,
+      "first_writer": "blk.22.hc.f.gate"
+    },
+    {
+      "name": "blk.22.hc.f.inject",
+      "bytes": 8,
+      "first_writer": "blk.22.hc.f.inject"
+    },
+    {
+      "name": "blk.22.hc.f.low",
+      "bytes": 640,
+      "first_writer": "blk.22.hc.f.low"
+    },
+    {
+      "name": "blk.22.hc.f.mix",
+      "bytes": 5120,
+      "first_writer": "blk.22.hc.f.mix"
+    },
+    {
+      "name": "blk.22.hc.f.norm",
+      "bytes": 20480,
+      "first_writer": "blk.22.hc.f.norm"
+    },
+    {
+      "name": "blk.22.ids",
+      "bytes": 40,
+      "first_writer": "blk.22.route"
+    },
+    {
+      "name": "blk.22.moe",
+      "bytes": 5120,
+      "first_writer": "blk.22.moe"
+    },
+    {
+      "name": "blk.22.prob",
+      "bytes": 40,
+      "first_writer": "blk.22.route"
+    },
+    {
+      "name": "blk.22.router",
+      "bytes": 1024,
+      "first_writer": "blk.22.router"
+    },
+    {
+      "name": "blk.22.routes",
+      "bytes": 120,
+      "first_writer": "blk.22.route"
+    },
+    {
+      "name": "blk.22.routes.down",
+      "bytes": 120,
+      "first_writer": "blk.22.route"
+    },
+    {
+      "name": "blk.22.shared_gate",
+      "bytes": 2,
+      "first_writer": "blk.22.shared_gate"
+    },
+    {
+      "name": "blk.22.shexpact",
+      "bytes": 1280,
+      "first_writer": "blk.22.shexpact"
+    },
+    {
+      "name": "blk.22.shexpdown",
+      "bytes": 5120,
+      "first_writer": "blk.22.shexpdown"
+    },
+    {
+      "name": "blk.22.shexpgate",
+      "bytes": 1280,
+      "first_writer": "blk.22.shexpgate"
+    },
+    {
+      "name": "blk.22.shexpup",
+      "bytes": 1280,
+      "first_writer": "blk.22.shexpup"
+    },
+    {
+      "name": "blk.23.attention",
+      "bytes": 5120,
+      "first_writer": "blk.23.attention"
+    },
+    {
+      "name": "blk.23.expsact",
+      "bytes": 12800,
+      "first_writer": "blk.23.expsact"
+    },
+    {
+      "name": "blk.23.expsdown",
+      "bytes": 51200,
+      "first_writer": "blk.23.expsdown"
+    },
+    {
+      "name": "blk.23.expsdown.status",
+      "bytes": 40,
+      "first_writer": "blk.23.expsdown"
+    },
+    {
+      "name": "blk.23.expsgate",
+      "bytes": 12800,
+      "first_writer": "blk.23.expsgate"
+    },
+    {
+      "name": "blk.23.expsgate.status",
+      "bytes": 40,
+      "first_writer": "blk.23.expsgate"
+    },
+    {
+      "name": "blk.23.expsup",
+      "bytes": 12800,
+      "first_writer": "blk.23.expsgate"
+    },
+    {
+      "name": "blk.23.expsup.status",
+      "bytes": 40,
+      "first_writer": "blk.23.expsgate"
+    },
+    {
+      "name": "blk.23.hc.a.act",
+      "bytes": 640,
+      "first_writer": "blk.23.hc.a.act"
+    },
+    {
+      "name": "blk.23.hc.a.gate",
+      "bytes": 20480,
+      "first_writer": "blk.23.hc.a.gate"
+    },
+    {
+      "name": "blk.23.hc.a.inject",
+      "bytes": 8,
+      "first_writer": "blk.23.hc.a.inject"
+    },
+    {
+      "name": "blk.23.hc.a.low",
+      "bytes": 640,
+      "first_writer": "blk.23.hc.a.low"
+    },
+    {
+      "name": "blk.23.hc.a.mix",
+      "bytes": 5120,
+      "first_writer": "blk.23.hc.a.mix"
+    },
+    {
+      "name": "blk.23.hc.a.norm",
+      "bytes": 20480,
+      "first_writer": "blk.23.hc.a.norm"
+    },
+    {
+      "name": "blk.23.hc.f.act",
+      "bytes": 640,
+      "first_writer": "blk.23.hc.f.act"
+    },
+    {
+      "name": "blk.23.hc.f.gate",
+      "bytes": 20480,
+      "first_writer": "blk.23.hc.f.gate"
+    },
+    {
+      "name": "blk.23.hc.f.inject",
+      "bytes": 8,
+      "first_writer": "blk.23.hc.f.inject"
+    },
+    {
+      "name": "blk.23.hc.f.low",
+      "bytes": 640,
+      "first_writer": "blk.23.hc.f.low"
+    },
+    {
+      "name": "blk.23.hc.f.mix",
+      "bytes": 5120,
+      "first_writer": "blk.23.hc.f.mix"
+    },
+    {
+      "name": "blk.23.hc.f.norm",
+      "bytes": 20480,
+      "first_writer": "blk.23.hc.f.norm"
+    },
+    {
+      "name": "blk.23.ids",
+      "bytes": 40,
+      "first_writer": "blk.23.route"
+    },
+    {
+      "name": "blk.23.moe",
+      "bytes": 5120,
+      "first_writer": "blk.23.moe"
+    },
+    {
+      "name": "blk.23.prob",
+      "bytes": 40,
+      "first_writer": "blk.23.route"
+    },
+    {
+      "name": "blk.23.qsa.gate",
+      "bytes": 12288,
+      "first_writer": "blk.23.qsa.prepare"
+    },
+    {
+      "name": "blk.23.qsa.ids",
+      "bytes": 8204,
+      "first_writer": "blk.23.qsa.select"
+    },
+    {
+      "name": "blk.23.qsa.ik",
+      "bytes": 256,
+      "first_writer": "blk.23.qsa.ik"
+    },
+    {
+      "name": "blk.23.qsa.iq",
+      "bytes": 1024,
+      "first_writer": "blk.23.qsa.iq"
+    },
+    {
+      "name": "blk.23.qsa.iqn",
+      "bytes": 1024,
+      "first_writer": "blk.23.qsa.prepare"
+    },
+    {
+      "name": "blk.23.qsa.k",
+      "bytes": 1024,
+      "first_writer": "blk.23.qsa.k"
+    },
+    {
+      "name": "blk.23.qsa.kn",
+      "bytes": 1024,
+      "first_writer": "blk.23.qsa.prepare"
+    },
+    {
+      "name": "blk.23.qsa.q",
+      "bytes": 12288,
+      "first_writer": "blk.23.qsa.prepare"
+    },
+    {
+      "name": "blk.23.qsa.qgate",
+      "bytes": 24576,
+      "first_writer": "blk.23.qsa.qgate"
+    },
+    {
+      "name": "blk.23.qsa.v",
+      "bytes": 1024,
+      "first_writer": "blk.23.qsa.v"
+    },
+    {
+      "name": "blk.23.qsa.y",
+      "bytes": 12288,
+      "first_writer": "blk.23.qsa.attention"
+    },
+    {
+      "name": "blk.23.router",
+      "bytes": 1024,
+      "first_writer": "blk.23.router"
+    },
+    {
+      "name": "blk.23.routes",
+      "bytes": 120,
+      "first_writer": "blk.23.route"
+    },
+    {
+      "name": "blk.23.routes.down",
+      "bytes": 120,
+      "first_writer": "blk.23.route"
+    },
+    {
+      "name": "blk.23.shared_gate",
+      "bytes": 2,
+      "first_writer": "blk.23.shared_gate"
+    },
+    {
+      "name": "blk.23.shexpact",
+      "bytes": 1280,
+      "first_writer": "blk.23.shexpact"
+    },
+    {
+      "name": "blk.23.shexpdown",
+      "bytes": 5120,
+      "first_writer": "blk.23.shexpdown"
+    },
+    {
+      "name": "blk.23.shexpgate",
+      "bytes": 1280,
+      "first_writer": "blk.23.shexpgate"
+    },
+    {
+      "name": "blk.23.shexpup",
+      "bytes": 1280,
+      "first_writer": "blk.23.shexpup"
+    },
+    {
+      "name": "blk.3.attention",
+      "bytes": 5120,
+      "first_writer": "blk.3.attention"
+    },
+    {
+      "name": "blk.3.expsact",
+      "bytes": 12800,
+      "first_writer": "blk.3.expsact"
+    },
+    {
+      "name": "blk.3.expsdown",
+      "bytes": 51200,
+      "first_writer": "blk.3.expsdown"
+    },
+    {
+      "name": "blk.3.expsdown.status",
+      "bytes": 40,
+      "first_writer": "blk.3.expsdown"
+    },
+    {
+      "name": "blk.3.expsgate",
+      "bytes": 12800,
+      "first_writer": "blk.3.expsgate"
+    },
+    {
+      "name": "blk.3.expsgate.status",
+      "bytes": 40,
+      "first_writer": "blk.3.expsgate"
+    },
+    {
+      "name": "blk.3.expsup",
+      "bytes": 12800,
+      "first_writer": "blk.3.expsgate"
+    },
+    {
+      "name": "blk.3.expsup.status",
+      "bytes": 40,
+      "first_writer": "blk.3.expsgate"
+    },
+    {
+      "name": "blk.3.hc.a.act",
+      "bytes": 640,
+      "first_writer": "blk.3.hc.a.act"
+    },
+    {
+      "name": "blk.3.hc.a.gate",
+      "bytes": 20480,
+      "first_writer": "blk.3.hc.a.gate"
+    },
+    {
+      "name": "blk.3.hc.a.inject",
+      "bytes": 8,
+      "first_writer": "blk.3.hc.a.inject"
+    },
+    {
+      "name": "blk.3.hc.a.low",
+      "bytes": 640,
+      "first_writer": "blk.3.hc.a.low"
+    },
+    {
+      "name": "blk.3.hc.a.mix",
+      "bytes": 5120,
+      "first_writer": "blk.3.hc.a.mix"
+    },
+    {
+      "name": "blk.3.hc.a.norm",
+      "bytes": 20480,
+      "first_writer": "blk.3.hc.a.norm"
+    },
+    {
+      "name": "blk.3.hc.f.act",
+      "bytes": 640,
+      "first_writer": "blk.3.hc.f.act"
+    },
+    {
+      "name": "blk.3.hc.f.gate",
+      "bytes": 20480,
+      "first_writer": "blk.3.hc.f.gate"
+    },
+    {
+      "name": "blk.3.hc.f.inject",
+      "bytes": 8,
+      "first_writer": "blk.3.hc.f.inject"
+    },
+    {
+      "name": "blk.3.hc.f.low",
+      "bytes": 640,
+      "first_writer": "blk.3.hc.f.low"
+    },
+    {
+      "name": "blk.3.hc.f.mix",
+      "bytes": 5120,
+      "first_writer": "blk.3.hc.f.mix"
+    },
+    {
+      "name": "blk.3.hc.f.norm",
+      "bytes": 20480,
+      "first_writer": "blk.3.hc.f.norm"
+    },
+    {
+      "name": "blk.3.ids",
+      "bytes": 40,
+      "first_writer": "blk.3.route"
+    },
+    {
+      "name": "blk.3.moe",
+      "bytes": 5120,
+      "first_writer": "blk.3.moe"
+    },
+    {
+      "name": "blk.3.prob",
+      "bytes": 40,
+      "first_writer": "blk.3.route"
+    },
+    {
+      "name": "blk.3.qsa.gate",
+      "bytes": 12288,
+      "first_writer": "blk.3.qsa.prepare"
+    },
+    {
+      "name": "blk.3.qsa.ids",
+      "bytes": 8204,
+      "first_writer": "blk.3.qsa.select"
+    },
+    {
+      "name": "blk.3.qsa.ik",
+      "bytes": 256,
+      "first_writer": "blk.3.qsa.ik"
+    },
+    {
+      "name": "blk.3.qsa.iq",
+      "bytes": 1024,
+      "first_writer": "blk.3.qsa.iq"
+    },
+    {
+      "name": "blk.3.qsa.iqn",
+      "bytes": 1024,
+      "first_writer": "blk.3.qsa.prepare"
+    },
+    {
+      "name": "blk.3.qsa.k",
+      "bytes": 1024,
+      "first_writer": "blk.3.qsa.k"
+    },
+    {
+      "name": "blk.3.qsa.kn",
+      "bytes": 1024,
+      "first_writer": "blk.3.qsa.prepare"
+    },
+    {
+      "name": "blk.3.qsa.q",
+      "bytes": 12288,
+      "first_writer": "blk.3.qsa.prepare"
+    },
+    {
+      "name": "blk.3.qsa.qgate",
+      "bytes": 24576,
+      "first_writer": "blk.3.qsa.qgate"
+    },
+    {
+      "name": "blk.3.qsa.v",
+      "bytes": 1024,
+      "first_writer": "blk.3.qsa.v"
+    },
+    {
+      "name": "blk.3.qsa.y",
+      "bytes": 12288,
+      "first_writer": "blk.3.qsa.attention"
+    },
+    {
+      "name": "blk.3.router",
+      "bytes": 1024,
+      "first_writer": "blk.3.router"
+    },
+    {
+      "name": "blk.3.routes",
+      "bytes": 120,
+      "first_writer": "blk.3.route"
+    },
+    {
+      "name": "blk.3.routes.down",
+      "bytes": 120,
+      "first_writer": "blk.3.route"
+    },
+    {
+      "name": "blk.3.shared_gate",
+      "bytes": 2,
+      "first_writer": "blk.3.shared_gate"
+    },
+    {
+      "name": "blk.3.shexpact",
+      "bytes": 1280,
+      "first_writer": "blk.3.shexpact"
+    },
+    {
+      "name": "blk.3.shexpdown",
+      "bytes": 5120,
+      "first_writer": "blk.3.shexpdown"
+    },
+    {
+      "name": "blk.3.shexpgate",
+      "bytes": 1280,
+      "first_writer": "blk.3.shexpgate"
+    },
+    {
+      "name": "blk.3.shexpup",
+      "bytes": 1280,
+      "first_writer": "blk.3.shexpup"
+    },
+    {
+      "name": "blk.4.attention",
+      "bytes": 5120,
+      "first_writer": "blk.4.attention"
+    },
+    {
+      "name": "blk.4.expsact",
+      "bytes": 12800,
+      "first_writer": "blk.4.expsact"
+    },
+    {
+      "name": "blk.4.expsdown",
+      "bytes": 51200,
+      "first_writer": "blk.4.expsdown"
+    },
+    {
+      "name": "blk.4.expsdown.status",
+      "bytes": 40,
+      "first_writer": "blk.4.expsdown"
+    },
+    {
+      "name": "blk.4.expsgate",
+      "bytes": 12800,
+      "first_writer": "blk.4.expsgate"
+    },
+    {
+      "name": "blk.4.expsgate.status",
+      "bytes": 40,
+      "first_writer": "blk.4.expsgate"
+    },
+    {
+      "name": "blk.4.expsup",
+      "bytes": 12800,
+      "first_writer": "blk.4.expsgate"
+    },
+    {
+      "name": "blk.4.expsup.status",
+      "bytes": 40,
+      "first_writer": "blk.4.expsgate"
+    },
+    {
+      "name": "blk.4.gdn.a",
+      "bytes": 96,
+      "first_writer": "blk.4.gdn.a"
+    },
+    {
+      "name": "blk.4.gdn.b",
+      "bytes": 96,
+      "first_writer": "blk.4.gdn.b"
+    },
+    {
+      "name": "blk.4.gdn.conv",
+      "bytes": 20480,
+      "first_writer": "blk.4.gdn.conv"
+    },
+    {
+      "name": "blk.4.gdn.gated",
+      "bytes": 12288,
+      "first_writer": "blk.4.gdn.gated"
+    },
+    {
+      "name": "blk.4.gdn.qkv",
+      "bytes": 20480,
+      "first_writer": "blk.4.gdn.qkv"
+    },
+    {
+      "name": "blk.4.gdn.y",
+      "bytes": 12288,
+      "first_writer": "blk.4.gdn.recurrence"
+    },
+    {
+      "name": "blk.4.gdn.z",
+      "bytes": 12288,
+      "first_writer": "blk.4.gdn.z"
+    },
+    {
+      "name": "blk.4.hc.a.act",
+      "bytes": 640,
+      "first_writer": "blk.4.hc.a.act"
+    },
+    {
+      "name": "blk.4.hc.a.gate",
+      "bytes": 20480,
+      "first_writer": "blk.4.hc.a.gate"
+    },
+    {
+      "name": "blk.4.hc.a.inject",
+      "bytes": 8,
+      "first_writer": "blk.4.hc.a.inject"
+    },
+    {
+      "name": "blk.4.hc.a.low",
+      "bytes": 640,
+      "first_writer": "blk.4.hc.a.low"
+    },
+    {
+      "name": "blk.4.hc.a.mix",
+      "bytes": 5120,
+      "first_writer": "blk.4.hc.a.mix"
+    },
+    {
+      "name": "blk.4.hc.a.norm",
+      "bytes": 20480,
+      "first_writer": "blk.4.hc.a.norm"
+    },
+    {
+      "name": "blk.4.hc.f.act",
+      "bytes": 640,
+      "first_writer": "blk.4.hc.f.act"
+    },
+    {
+      "name": "blk.4.hc.f.gate",
+      "bytes": 20480,
+      "first_writer": "blk.4.hc.f.gate"
+    },
+    {
+      "name": "blk.4.hc.f.inject",
+      "bytes": 8,
+      "first_writer": "blk.4.hc.f.inject"
+    },
+    {
+      "name": "blk.4.hc.f.low",
+      "bytes": 640,
+      "first_writer": "blk.4.hc.f.low"
+    },
+    {
+      "name": "blk.4.hc.f.mix",
+      "bytes": 5120,
+      "first_writer": "blk.4.hc.f.mix"
+    },
+    {
+      "name": "blk.4.hc.f.norm",
+      "bytes": 20480,
+      "first_writer": "blk.4.hc.f.norm"
+    },
+    {
+      "name": "blk.4.ids",
+      "bytes": 40,
+      "first_writer": "blk.4.route"
+    },
+    {
+      "name": "blk.4.moe",
+      "bytes": 5120,
+      "first_writer": "blk.4.moe"
+    },
+    {
+      "name": "blk.4.prob",
+      "bytes": 40,
+      "first_writer": "blk.4.route"
+    },
+    {
+      "name": "blk.4.router",
+      "bytes": 1024,
+      "first_writer": "blk.4.router"
+    },
+    {
+      "name": "blk.4.routes",
+      "bytes": 120,
+      "first_writer": "blk.4.route"
+    },
+    {
+      "name": "blk.4.routes.down",
+      "bytes": 120,
+      "first_writer": "blk.4.route"
+    },
+    {
+      "name": "blk.4.shared_gate",
+      "bytes": 2,
+      "first_writer": "blk.4.shared_gate"
+    },
+    {
+      "name": "blk.4.shexpact",
+      "bytes": 1280,
+      "first_writer": "blk.4.shexpact"
+    },
+    {
+      "name": "blk.4.shexpdown",
+      "bytes": 5120,
+      "first_writer": "blk.4.shexpdown"
+    },
+    {
+      "name": "blk.4.shexpgate",
+      "bytes": 1280,
+      "first_writer": "blk.4.shexpgate"
+    },
+    {
+      "name": "blk.4.shexpup",
+      "bytes": 1280,
+      "first_writer": "blk.4.shexpup"
+    },
+    {
+      "name": "blk.5.attention",
+      "bytes": 5120,
+      "first_writer": "blk.5.attention"
+    },
+    {
+      "name": "blk.5.expsact",
+      "bytes": 12800,
+      "first_writer": "blk.5.expsact"
+    },
+    {
+      "name": "blk.5.expsdown",
+      "bytes": 51200,
+      "first_writer": "blk.5.expsdown"
+    },
+    {
+      "name": "blk.5.expsdown.status",
+      "bytes": 40,
+      "first_writer": "blk.5.expsdown"
+    },
+    {
+      "name": "blk.5.expsgate",
+      "bytes": 12800,
+      "first_writer": "blk.5.expsgate"
+    },
+    {
+      "name": "blk.5.expsgate.status",
+      "bytes": 40,
+      "first_writer": "blk.5.expsgate"
+    },
+    {
+      "name": "blk.5.expsup",
+      "bytes": 12800,
+      "first_writer": "blk.5.expsgate"
+    },
+    {
+      "name": "blk.5.expsup.status",
+      "bytes": 40,
+      "first_writer": "blk.5.expsgate"
+    },
+    {
+      "name": "blk.5.gdn.a",
+      "bytes": 96,
+      "first_writer": "blk.5.gdn.a"
+    },
+    {
+      "name": "blk.5.gdn.b",
+      "bytes": 96,
+      "first_writer": "blk.5.gdn.b"
+    },
+    {
+      "name": "blk.5.gdn.conv",
+      "bytes": 20480,
+      "first_writer": "blk.5.gdn.conv"
+    },
+    {
+      "name": "blk.5.gdn.gated",
+      "bytes": 12288,
+      "first_writer": "blk.5.gdn.gated"
+    },
+    {
+      "name": "blk.5.gdn.qkv",
+      "bytes": 20480,
+      "first_writer": "blk.5.gdn.qkv"
+    },
+    {
+      "name": "blk.5.gdn.y",
+      "bytes": 12288,
+      "first_writer": "blk.5.gdn.recurrence"
+    },
+    {
+      "name": "blk.5.gdn.z",
+      "bytes": 12288,
+      "first_writer": "blk.5.gdn.z"
+    },
+    {
+      "name": "blk.5.hc.a.act",
+      "bytes": 640,
+      "first_writer": "blk.5.hc.a.act"
+    },
+    {
+      "name": "blk.5.hc.a.gate",
+      "bytes": 20480,
+      "first_writer": "blk.5.hc.a.gate"
+    },
+    {
+      "name": "blk.5.hc.a.inject",
+      "bytes": 8,
+      "first_writer": "blk.5.hc.a.inject"
+    },
+    {
+      "name": "blk.5.hc.a.low",
+      "bytes": 640,
+      "first_writer": "blk.5.hc.a.low"
+    },
+    {
+      "name": "blk.5.hc.a.mix",
+      "bytes": 5120,
+      "first_writer": "blk.5.hc.a.mix"
+    },
+    {
+      "name": "blk.5.hc.a.norm",
+      "bytes": 20480,
+      "first_writer": "blk.5.hc.a.norm"
+    },
+    {
+      "name": "blk.5.hc.f.act",
+      "bytes": 640,
+      "first_writer": "blk.5.hc.f.act"
+    },
+    {
+      "name": "blk.5.hc.f.gate",
+      "bytes": 20480,
+      "first_writer": "blk.5.hc.f.gate"
+    },
+    {
+      "name": "blk.5.hc.f.inject",
+      "bytes": 8,
+      "first_writer": "blk.5.hc.f.inject"
+    },
+    {
+      "name": "blk.5.hc.f.low",
+      "bytes": 640,
+      "first_writer": "blk.5.hc.f.low"
+    },
+    {
+      "name": "blk.5.hc.f.mix",
+      "bytes": 5120,
+      "first_writer": "blk.5.hc.f.mix"
+    },
+    {
+      "name": "blk.5.hc.f.norm",
+      "bytes": 20480,
+      "first_writer": "blk.5.hc.f.norm"
+    },
+    {
+      "name": "blk.5.ids",
+      "bytes": 40,
+      "first_writer": "blk.5.route"
+    },
+    {
+      "name": "blk.5.moe",
+      "bytes": 5120,
+      "first_writer": "blk.5.moe"
+    },
+    {
+      "name": "blk.5.prob",
+      "bytes": 40,
+      "first_writer": "blk.5.route"
+    },
+    {
+      "name": "blk.5.router",
+      "bytes": 1024,
+      "first_writer": "blk.5.router"
+    },
+    {
+      "name": "blk.5.routes",
+      "bytes": 120,
+      "first_writer": "blk.5.route"
+    },
+    {
+      "name": "blk.5.routes.down",
+      "bytes": 120,
+      "first_writer": "blk.5.route"
+    },
+    {
+      "name": "blk.5.shared_gate",
+      "bytes": 2,
+      "first_writer": "blk.5.shared_gate"
+    },
+    {
+      "name": "blk.5.shexpact",
+      "bytes": 1280,
+      "first_writer": "blk.5.shexpact"
+    },
+    {
+      "name": "blk.5.shexpdown",
+      "bytes": 5120,
+      "first_writer": "blk.5.shexpdown"
+    },
+    {
+      "name": "blk.5.shexpgate",
+      "bytes": 1280,
+      "first_writer": "blk.5.shexpgate"
+    },
+    {
+      "name": "blk.5.shexpup",
+      "bytes": 1280,
+      "first_writer": "blk.5.shexpup"
+    },
+    {
+      "name": "blk.6.attention",
+      "bytes": 5120,
+      "first_writer": "blk.6.attention"
+    },
+    {
+      "name": "blk.6.expsact",
+      "bytes": 12800,
+      "first_writer": "blk.6.expsact"
+    },
+    {
+      "name": "blk.6.expsdown",
+      "bytes": 51200,
+      "first_writer": "blk.6.expsdown"
+    },
+    {
+      "name": "blk.6.expsdown.status",
+      "bytes": 40,
+      "first_writer": "blk.6.expsdown"
+    },
+    {
+      "name": "blk.6.expsgate",
+      "bytes": 12800,
+      "first_writer": "blk.6.expsgate"
+    },
+    {
+      "name": "blk.6.expsgate.status",
+      "bytes": 40,
+      "first_writer": "blk.6.expsgate"
+    },
+    {
+      "name": "blk.6.expsup",
+      "bytes": 12800,
+      "first_writer": "blk.6.expsgate"
+    },
+    {
+      "name": "blk.6.expsup.status",
+      "bytes": 40,
+      "first_writer": "blk.6.expsgate"
+    },
+    {
+      "name": "blk.6.gdn.a",
+      "bytes": 96,
+      "first_writer": "blk.6.gdn.a"
+    },
+    {
+      "name": "blk.6.gdn.b",
+      "bytes": 96,
+      "first_writer": "blk.6.gdn.b"
+    },
+    {
+      "name": "blk.6.gdn.conv",
+      "bytes": 20480,
+      "first_writer": "blk.6.gdn.conv"
+    },
+    {
+      "name": "blk.6.gdn.gated",
+      "bytes": 12288,
+      "first_writer": "blk.6.gdn.gated"
+    },
+    {
+      "name": "blk.6.gdn.qkv",
+      "bytes": 20480,
+      "first_writer": "blk.6.gdn.qkv"
+    },
+    {
+      "name": "blk.6.gdn.y",
+      "bytes": 12288,
+      "first_writer": "blk.6.gdn.recurrence"
+    },
+    {
+      "name": "blk.6.gdn.z",
+      "bytes": 12288,
+      "first_writer": "blk.6.gdn.z"
+    },
+    {
+      "name": "blk.6.hc.a.act",
+      "bytes": 640,
+      "first_writer": "blk.6.hc.a.act"
+    },
+    {
+      "name": "blk.6.hc.a.gate",
+      "bytes": 20480,
+      "first_writer": "blk.6.hc.a.gate"
+    },
+    {
+      "name": "blk.6.hc.a.inject",
+      "bytes": 8,
+      "first_writer": "blk.6.hc.a.inject"
+    },
+    {
+      "name": "blk.6.hc.a.low",
+      "bytes": 640,
+      "first_writer": "blk.6.hc.a.low"
+    },
+    {
+      "name": "blk.6.hc.a.mix",
+      "bytes": 5120,
+      "first_writer": "blk.6.hc.a.mix"
+    },
+    {
+      "name": "blk.6.hc.a.norm",
+      "bytes": 20480,
+      "first_writer": "blk.6.hc.a.norm"
+    },
+    {
+      "name": "blk.6.hc.f.act",
+      "bytes": 640,
+      "first_writer": "blk.6.hc.f.act"
+    },
+    {
+      "name": "blk.6.hc.f.gate",
+      "bytes": 20480,
+      "first_writer": "blk.6.hc.f.gate"
+    },
+    {
+      "name": "blk.6.hc.f.inject",
+      "bytes": 8,
+      "first_writer": "blk.6.hc.f.inject"
+    },
+    {
+      "name": "blk.6.hc.f.low",
+      "bytes": 640,
+      "first_writer": "blk.6.hc.f.low"
+    },
+    {
+      "name": "blk.6.hc.f.mix",
+      "bytes": 5120,
+      "first_writer": "blk.6.hc.f.mix"
+    },
+    {
+      "name": "blk.6.hc.f.norm",
+      "bytes": 20480,
+      "first_writer": "blk.6.hc.f.norm"
+    },
+    {
+      "name": "blk.6.ids",
+      "bytes": 40,
+      "first_writer": "blk.6.route"
+    },
+    {
+      "name": "blk.6.moe",
+      "bytes": 5120,
+      "first_writer": "blk.6.moe"
+    },
+    {
+      "name": "blk.6.prob",
+      "bytes": 40,
+      "first_writer": "blk.6.route"
+    },
+    {
+      "name": "blk.6.router",
+      "bytes": 1024,
+      "first_writer": "blk.6.router"
+    },
+    {
+      "name": "blk.6.routes",
+      "bytes": 120,
+      "first_writer": "blk.6.route"
+    },
+    {
+      "name": "blk.6.routes.down",
+      "bytes": 120,
+      "first_writer": "blk.6.route"
+    },
+    {
+      "name": "blk.6.shared_gate",
+      "bytes": 2,
+      "first_writer": "blk.6.shared_gate"
+    },
+    {
+      "name": "blk.6.shexpact",
+      "bytes": 1280,
+      "first_writer": "blk.6.shexpact"
+    },
+    {
+      "name": "blk.6.shexpdown",
+      "bytes": 5120,
+      "first_writer": "blk.6.shexpdown"
+    },
+    {
+      "name": "blk.6.shexpgate",
+      "bytes": 1280,
+      "first_writer": "blk.6.shexpgate"
+    },
+    {
+      "name": "blk.6.shexpup",
+      "bytes": 1280,
+      "first_writer": "blk.6.shexpup"
+    },
+    {
+      "name": "blk.7.attention",
+      "bytes": 5120,
+      "first_writer": "blk.7.attention"
+    },
+    {
+      "name": "blk.7.expsact",
+      "bytes": 12800,
+      "first_writer": "blk.7.expsact"
+    },
+    {
+      "name": "blk.7.expsdown",
+      "bytes": 51200,
+      "first_writer": "blk.7.expsdown"
+    },
+    {
+      "name": "blk.7.expsdown.status",
+      "bytes": 40,
+      "first_writer": "blk.7.expsdown"
+    },
+    {
+      "name": "blk.7.expsgate",
+      "bytes": 12800,
+      "first_writer": "blk.7.expsgate"
+    },
+    {
+      "name": "blk.7.expsgate.status",
+      "bytes": 40,
+      "first_writer": "blk.7.expsgate"
+    },
+    {
+      "name": "blk.7.expsup",
+      "bytes": 12800,
+      "first_writer": "blk.7.expsgate"
+    },
+    {
+      "name": "blk.7.expsup.status",
+      "bytes": 40,
+      "first_writer": "blk.7.expsgate"
+    },
+    {
+      "name": "blk.7.hc.a.act",
+      "bytes": 640,
+      "first_writer": "blk.7.hc.a.act"
+    },
+    {
+      "name": "blk.7.hc.a.gate",
+      "bytes": 20480,
+      "first_writer": "blk.7.hc.a.gate"
+    },
+    {
+      "name": "blk.7.hc.a.inject",
+      "bytes": 8,
+      "first_writer": "blk.7.hc.a.inject"
+    },
+    {
+      "name": "blk.7.hc.a.low",
+      "bytes": 640,
+      "first_writer": "blk.7.hc.a.low"
+    },
+    {
+      "name": "blk.7.hc.a.mix",
+      "bytes": 5120,
+      "first_writer": "blk.7.hc.a.mix"
+    },
+    {
+      "name": "blk.7.hc.a.norm",
+      "bytes": 20480,
+      "first_writer": "blk.7.hc.a.norm"
+    },
+    {
+      "name": "blk.7.hc.f.act",
+      "bytes": 640,
+      "first_writer": "blk.7.hc.f.act"
+    },
+    {
+      "name": "blk.7.hc.f.gate",
+      "bytes": 20480,
+      "first_writer": "blk.7.hc.f.gate"
+    },
+    {
+      "name": "blk.7.hc.f.inject",
+      "bytes": 8,
+      "first_writer": "blk.7.hc.f.inject"
+    },
+    {
+      "name": "blk.7.hc.f.low",
+      "bytes": 640,
+      "first_writer": "blk.7.hc.f.low"
+    },
+    {
+      "name": "blk.7.hc.f.mix",
+      "bytes": 5120,
+      "first_writer": "blk.7.hc.f.mix"
+    },
+    {
+      "name": "blk.7.hc.f.norm",
+      "bytes": 20480,
+      "first_writer": "blk.7.hc.f.norm"
+    },
+    {
+      "name": "blk.7.ids",
+      "bytes": 40,
+      "first_writer": "blk.7.route"
+    },
+    {
+      "name": "blk.7.moe",
+      "bytes": 5120,
+      "first_writer": "blk.7.moe"
+    },
+    {
+      "name": "blk.7.prob",
+      "bytes": 40,
+      "first_writer": "blk.7.route"
+    },
+    {
+      "name": "blk.7.qsa.gate",
+      "bytes": 12288,
+      "first_writer": "blk.7.qsa.prepare"
+    },
+    {
+      "name": "blk.7.qsa.ids",
+      "bytes": 8204,
+      "first_writer": "blk.7.qsa.select"
+    },
+    {
+      "name": "blk.7.qsa.ik",
+      "bytes": 256,
+      "first_writer": "blk.7.qsa.ik"
+    },
+    {
+      "name": "blk.7.qsa.iq",
+      "bytes": 1024,
+      "first_writer": "blk.7.qsa.iq"
+    },
+    {
+      "name": "blk.7.qsa.iqn",
+      "bytes": 1024,
+      "first_writer": "blk.7.qsa.prepare"
+    },
+    {
+      "name": "blk.7.qsa.k",
+      "bytes": 1024,
+      "first_writer": "blk.7.qsa.k"
+    },
+    {
+      "name": "blk.7.qsa.kn",
+      "bytes": 1024,
+      "first_writer": "blk.7.qsa.prepare"
+    },
+    {
+      "name": "blk.7.qsa.q",
+      "bytes": 12288,
+      "first_writer": "blk.7.qsa.prepare"
+    },
+    {
+      "name": "blk.7.qsa.qgate",
+      "bytes": 24576,
+      "first_writer": "blk.7.qsa.qgate"
+    },
+    {
+      "name": "blk.7.qsa.v",
+      "bytes": 1024,
+      "first_writer": "blk.7.qsa.v"
+    },
+    {
+      "name": "blk.7.qsa.y",
+      "bytes": 12288,
+      "first_writer": "blk.7.qsa.attention"
+    },
+    {
+      "name": "blk.7.router",
+      "bytes": 1024,
+      "first_writer": "blk.7.router"
+    },
+    {
+      "name": "blk.7.routes",
+      "bytes": 120,
+      "first_writer": "blk.7.route"
+    },
+    {
+      "name": "blk.7.routes.down",
+      "bytes": 120,
+      "first_writer": "blk.7.route"
+    },
+    {
+      "name": "blk.7.shared_gate",
+      "bytes": 2,
+      "first_writer": "blk.7.shared_gate"
+    },
+    {
+      "name": "blk.7.shexpact",
+      "bytes": 1280,
+      "first_writer": "blk.7.shexpact"
+    },
+    {
+      "name": "blk.7.shexpdown",
+      "bytes": 5120,
+      "first_writer": "blk.7.shexpdown"
+    },
+    {
+      "name": "blk.7.shexpgate",
+      "bytes": 1280,
+      "first_writer": "blk.7.shexpgate"
+    },
+    {
+      "name": "blk.7.shexpup",
+      "bytes": 1280,
+      "first_writer": "blk.7.shexpup"
+    },
+    {
+      "name": "blk.8.attention",
+      "bytes": 5120,
+      "first_writer": "blk.8.attention"
+    },
+    {
+      "name": "blk.8.expsact",
+      "bytes": 12800,
+      "first_writer": "blk.8.expsact"
+    },
+    {
+      "name": "blk.8.expsdown",
+      "bytes": 51200,
+      "first_writer": "blk.8.expsdown"
+    },
+    {
+      "name": "blk.8.expsdown.status",
+      "bytes": 40,
+      "first_writer": "blk.8.expsdown"
+    },
+    {
+      "name": "blk.8.expsgate",
+      "bytes": 12800,
+      "first_writer": "blk.8.expsgate"
+    },
+    {
+      "name": "blk.8.expsgate.status",
+      "bytes": 40,
+      "first_writer": "blk.8.expsgate"
+    },
+    {
+      "name": "blk.8.expsup",
+      "bytes": 12800,
+      "first_writer": "blk.8.expsgate"
+    },
+    {
+      "name": "blk.8.expsup.status",
+      "bytes": 40,
+      "first_writer": "blk.8.expsgate"
+    },
+    {
+      "name": "blk.8.gdn.a",
+      "bytes": 96,
+      "first_writer": "blk.8.gdn.a"
+    },
+    {
+      "name": "blk.8.gdn.b",
+      "bytes": 96,
+      "first_writer": "blk.8.gdn.b"
+    },
+    {
+      "name": "blk.8.gdn.conv",
+      "bytes": 20480,
+      "first_writer": "blk.8.gdn.conv"
+    },
+    {
+      "name": "blk.8.gdn.gated",
+      "bytes": 12288,
+      "first_writer": "blk.8.gdn.gated"
+    },
+    {
+      "name": "blk.8.gdn.qkv",
+      "bytes": 20480,
+      "first_writer": "blk.8.gdn.qkv"
+    },
+    {
+      "name": "blk.8.gdn.y",
+      "bytes": 12288,
+      "first_writer": "blk.8.gdn.recurrence"
+    },
+    {
+      "name": "blk.8.gdn.z",
+      "bytes": 12288,
+      "first_writer": "blk.8.gdn.z"
+    },
+    {
+      "name": "blk.8.hc.a.act",
+      "bytes": 640,
+      "first_writer": "blk.8.hc.a.act"
+    },
+    {
+      "name": "blk.8.hc.a.gate",
+      "bytes": 20480,
+      "first_writer": "blk.8.hc.a.gate"
+    },
+    {
+      "name": "blk.8.hc.a.inject",
+      "bytes": 8,
+      "first_writer": "blk.8.hc.a.inject"
+    },
+    {
+      "name": "blk.8.hc.a.low",
+      "bytes": 640,
+      "first_writer": "blk.8.hc.a.low"
+    },
+    {
+      "name": "blk.8.hc.a.mix",
+      "bytes": 5120,
+      "first_writer": "blk.8.hc.a.mix"
+    },
+    {
+      "name": "blk.8.hc.a.norm",
+      "bytes": 20480,
+      "first_writer": "blk.8.hc.a.norm"
+    },
+    {
+      "name": "blk.8.hc.f.act",
+      "bytes": 640,
+      "first_writer": "blk.8.hc.f.act"
+    },
+    {
+      "name": "blk.8.hc.f.gate",
+      "bytes": 20480,
+      "first_writer": "blk.8.hc.f.gate"
+    },
+    {
+      "name": "blk.8.hc.f.inject",
+      "bytes": 8,
+      "first_writer": "blk.8.hc.f.inject"
+    },
+    {
+      "name": "blk.8.hc.f.low",
+      "bytes": 640,
+      "first_writer": "blk.8.hc.f.low"
+    },
+    {
+      "name": "blk.8.hc.f.mix",
+      "bytes": 5120,
+      "first_writer": "blk.8.hc.f.mix"
+    },
+    {
+      "name": "blk.8.hc.f.norm",
+      "bytes": 20480,
+      "first_writer": "blk.8.hc.f.norm"
+    },
+    {
+      "name": "blk.8.ids",
+      "bytes": 40,
+      "first_writer": "blk.8.route"
+    },
+    {
+      "name": "blk.8.moe",
+      "bytes": 5120,
+      "first_writer": "blk.8.moe"
+    },
+    {
+      "name": "blk.8.prob",
+      "bytes": 40,
+      "first_writer": "blk.8.route"
+    },
+    {
+      "name": "blk.8.router",
+      "bytes": 1024,
+      "first_writer": "blk.8.router"
+    },
+    {
+      "name": "blk.8.routes",
+      "bytes": 120,
+      "first_writer": "blk.8.route"
+    },
+    {
+      "name": "blk.8.routes.down",
+      "bytes": 120,
+      "first_writer": "blk.8.route"
+    },
+    {
+      "name": "blk.8.shared_gate",
+      "bytes": 2,
+      "first_writer": "blk.8.shared_gate"
+    },
+    {
+      "name": "blk.8.shexpact",
+      "bytes": 1280,
+      "first_writer": "blk.8.shexpact"
+    },
+    {
+      "name": "blk.8.shexpdown",
+      "bytes": 5120,
+      "first_writer": "blk.8.shexpdown"
+    },
+    {
+      "name": "blk.8.shexpgate",
+      "bytes": 1280,
+      "first_writer": "blk.8.shexpgate"
+    },
+    {
+      "name": "blk.8.shexpup",
+      "bytes": 1280,
+      "first_writer": "blk.8.shexpup"
+    },
+    {
+      "name": "blk.9.attention",
+      "bytes": 5120,
+      "first_writer": "blk.9.attention"
+    },
+    {
+      "name": "blk.9.expsact",
+      "bytes": 12800,
+      "first_writer": "blk.9.expsact"
+    },
+    {
+      "name": "blk.9.expsdown",
+      "bytes": 51200,
+      "first_writer": "blk.9.expsdown"
+    },
+    {
+      "name": "blk.9.expsdown.status",
+      "bytes": 40,
+      "first_writer": "blk.9.expsdown"
+    },
+    {
+      "name": "blk.9.expsgate",
+      "bytes": 12800,
+      "first_writer": "blk.9.expsgate"
+    },
+    {
+      "name": "blk.9.expsgate.status",
+      "bytes": 40,
+      "first_writer": "blk.9.expsgate"
+    },
+    {
+      "name": "blk.9.expsup",
+      "bytes": 12800,
+      "first_writer": "blk.9.expsgate"
+    },
+    {
+      "name": "blk.9.expsup.status",
+      "bytes": 40,
+      "first_writer": "blk.9.expsgate"
+    },
+    {
+      "name": "blk.9.gdn.a",
+      "bytes": 96,
+      "first_writer": "blk.9.gdn.a"
+    },
+    {
+      "name": "blk.9.gdn.b",
+      "bytes": 96,
+      "first_writer": "blk.9.gdn.b"
+    },
+    {
+      "name": "blk.9.gdn.conv",
+      "bytes": 20480,
+      "first_writer": "blk.9.gdn.conv"
+    },
+    {
+      "name": "blk.9.gdn.gated",
+      "bytes": 12288,
+      "first_writer": "blk.9.gdn.gated"
+    },
+    {
+      "name": "blk.9.gdn.qkv",
+      "bytes": 20480,
+      "first_writer": "blk.9.gdn.qkv"
+    },
+    {
+      "name": "blk.9.gdn.y",
+      "bytes": 12288,
+      "first_writer": "blk.9.gdn.recurrence"
+    },
+    {
+      "name": "blk.9.gdn.z",
+      "bytes": 12288,
+      "first_writer": "blk.9.gdn.z"
+    },
+    {
+      "name": "blk.9.hc.a.act",
+      "bytes": 640,
+      "first_writer": "blk.9.hc.a.act"
+    },
+    {
+      "name": "blk.9.hc.a.gate",
+      "bytes": 20480,
+      "first_writer": "blk.9.hc.a.gate"
+    },
+    {
+      "name": "blk.9.hc.a.inject",
+      "bytes": 8,
+      "first_writer": "blk.9.hc.a.inject"
+    },
+    {
+      "name": "blk.9.hc.a.low",
+      "bytes": 640,
+      "first_writer": "blk.9.hc.a.low"
+    },
+    {
+      "name": "blk.9.hc.a.mix",
+      "bytes": 5120,
+      "first_writer": "blk.9.hc.a.mix"
+    },
+    {
+      "name": "blk.9.hc.a.norm",
+      "bytes": 20480,
+      "first_writer": "blk.9.hc.a.norm"
+    },
+    {
+      "name": "blk.9.hc.f.act",
+      "bytes": 640,
+      "first_writer": "blk.9.hc.f.act"
+    },
+    {
+      "name": "blk.9.hc.f.gate",
+      "bytes": 20480,
+      "first_writer": "blk.9.hc.f.gate"
+    },
+    {
+      "name": "blk.9.hc.f.inject",
+      "bytes": 8,
+      "first_writer": "blk.9.hc.f.inject"
+    },
+    {
+      "name": "blk.9.hc.f.low",
+      "bytes": 640,
+      "first_writer": "blk.9.hc.f.low"
+    },
+    {
+      "name": "blk.9.hc.f.mix",
+      "bytes": 5120,
+      "first_writer": "blk.9.hc.f.mix"
+    },
+    {
+      "name": "blk.9.hc.f.norm",
+      "bytes": 20480,
+      "first_writer": "blk.9.hc.f.norm"
+    },
+    {
+      "name": "blk.9.ids",
+      "bytes": 40,
+      "first_writer": "blk.9.route"
+    },
+    {
+      "name": "blk.9.moe",
+      "bytes": 5120,
+      "first_writer": "blk.9.moe"
+    },
+    {
+      "name": "blk.9.prob",
+      "bytes": 40,
+      "first_writer": "blk.9.route"
+    },
+    {
+      "name": "blk.9.router",
+      "bytes": 1024,
+      "first_writer": "blk.9.router"
+    },
+    {
+      "name": "blk.9.routes",
+      "bytes": 120,
+      "first_writer": "blk.9.route"
+    },
+    {
+      "name": "blk.9.routes.down",
+      "bytes": 120,
+      "first_writer": "blk.9.route"
+    },
+    {
+      "name": "blk.9.shared_gate",
+      "bytes": 2,
+      "first_writer": "blk.9.shared_gate"
+    },
+    {
+      "name": "blk.9.shexpact",
+      "bytes": 1280,
+      "first_writer": "blk.9.shexpact"
+    },
+    {
+      "name": "blk.9.shexpdown",
+      "bytes": 5120,
+      "first_writer": "blk.9.shexpdown"
+    },
+    {
+      "name": "blk.9.shexpgate",
+      "bytes": 1280,
+      "first_writer": "blk.9.shexpgate"
+    },
+    {
+      "name": "blk.9.shexpup",
+      "bytes": 1280,
+      "first_writer": "blk.9.shexpup"
+    },
+    {
+      "name": "embedding",
+      "bytes": 5120,
+      "first_writer": "embedding"
+    },
+    {
+      "name": "streams",
+      "bytes": 20480,
+      "first_writer": "streams"
+    }
+  ],
+  "proof": "Every allocation classified exactly once. Every overwrite-only buffer has a reviewed full-write producer before its first plan read. QSA partial writes and implicit sticky error writes are separately classified by kernel contracts. Streams first writer is broadcast, so no temporal HC carry.",
+  "host_state": {
+    "history0_history1_bytes": 16,
+    "rollback": "restored before prepare_token redo",
+    "lookup_ids": "cleared/recomputed",
+    "fp32_sources_extents": "invalidated on every bank swap and rollback",
+    "prepared_operator_maps": "two bank-specific binding maps swap with allocation IDs",
+    "prepared_command_vectors": "two captured issue-site vectors swap with the maps and explicit parity; fresh reconstruction audit after swaps",
+    "matrices": "no banked temporal allocation appears as GEMV input/output"
+  },
+  "nonplan_storage": {
+    "snapshots": "only confirmed candidate fixture bytes published; scratch rewritten per captured layer",
+    "scratch_controls_scores_probabilities_workspace_routes_mixture": "producer-before-consumer within half; not cross-position model state",
+    "weights_rope_unit_scalar": "immutable",
+    "events_counters_profiling": "execution bookkeeping intentionally records attempts, not rolled back"
+  },
+  "rollback_transfer_bytes": {
+    "device_to_host_per_rank0_half": 16,
+    "host_to_device_per_miss": 20,
+    "banked_state_copy": 0,
+    "qsa_cache_copy": 0
+  },
+  "rank1": "No speculation: only confirmed stream handovers enter its half; no rollback needed"
+}
