@@ -336,6 +336,33 @@ def amounts_ok(working: str, amounts: set[int] | None, start: int | None = None)
 PARTS = re.compile(r",(?!\d{3}\b)|;|(?i:\bthen\b)")   # what separates the changes packed onto one line (also `. Then`)
 
 
+def one_sign(expr: str, result: int) -> bool:
+    """A sum of additions and subtractions that does not give `result` as written but does with the sign of one
+    amount turned round (`-87 - 71 = -16`: the model meant plus 71 and wrote the result of that). A miscount that
+    lands exactly there is not to be expected, so the written result is what was meant. X32p at 1M: the checker
+    redid this sum to -158; -16 was the true value."""
+    text = expr.replace(" ", "")
+    m = re.fullmatch(r"(-?\d{1,15})((?:[-+]\d{1,15})+)", text)
+    if not m:
+        return False
+    start, steps = int(m.group(1)), [int(x) for x in re.findall(r"[-+]\d+", m.group(2))]
+    return sum(steps) + start != result and any(start + sum(steps) - 2 * x == result for x in steps)
+
+
+# A remark that says the value was SET (`(set, item 373)`, `(recorded at, item 377)`), written after the result of
+# a sum. If that result is not a number the turns state for the thing, the line has added the set value to the old
+# one instead of setting it: three of the four wrong values that every version of the checks let through in the
+# replies of X32p at 1M (`lodo77: 173 + 549 = 722 (set, item 373)`, true value after the set 549).
+SET_SAID = re.compile(r"\b(?:set|reset|recorded|opened|reopened|stands at|now at|now stands)\b", re.I)
+
+
+def set_written_as_a_sum(value: str, stated: set[int]) -> bool:
+    for m in re.finditer(r"=\s*(-?\d[\d,]{0,24})\.?\s*(\([^()]*\))", value.replace("\u2212", "-")):
+        if SET_SAID.search(m.group(2)) and not REFERENCE.fullmatch(m.group(2)) and int(m.group(1).replace(",", "")) not in stated:
+            return True
+    return False
+
+
 def restated(value: str) -> str | None:
     """`112 + 16 + 45 = 128 + 45 = 173` is one sum written out twice, not two changes. When every piece between
     the `=` signs of a line without separators has the same value, the line is its first piece and the result
@@ -445,7 +472,8 @@ def chain_of(value: str, held: int | None, stated: set[int], amounts: set[int] |
             if first and n in stated and n not in sets:
                 readings.append((expr, expr[first.end():], n))
             for full, taken, a_set in readings:
-                if worth(full, taken, cur if a_set is None else a_set) == wrote:
+                got = worth(full, taken, cur if a_set is None else a_set)
+                if got == wrote or (got is not None and one_sign(full if a_set is not None or first else f"{cur} {expr}", wrote)):
                     if a_set is not None:
                         sets.append(a_set)
                         opening += 1
@@ -520,6 +548,9 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
             continue
         counted, asked, written = steps_in(value), len(info["mismatch"]), value
         flat = unremarked(value)
+        said_set = strict and near is not None and set_written_as_a_sum(value, near.get(name, set()))
+        set_question = (f"{name}: `{value}` has a sum whose remark says the value was set, and its result is not a number the turns state; "
+                        "write `set to N` on a line of its own, then the changes after it")
         several = sum(bool(x.strip()) for x in re.split(PARTS.pattern + r"|\u2192|->|=>", flat)) > 1 or flat.count("=") > 1
         if strict and seen is not None:
             # several changes on one line: followed part by part; a line that can be followed is right as it stands
@@ -533,6 +564,8 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
                 used.setdefault(name, set()).update(sets)
                 steps[name] = steps.get(name, 0) + counted + opening
                 info["chained"] = info.get("chained", 0) + 1
+                if said_set:
+                    info["mismatch"].append(set_question)
                 line = f"{name}: {final}" if final is not None else f"{name}: removed"
                 ever.update(sets if final is None else sets + [final])
                 if name in where:
@@ -590,6 +623,9 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
                                             start if name in near.get(LOOSE, ()) else None):
                     info["mismatch"].append(f"{name}: `{value}` adds or takes an amount the turns do not state for it; read the item again")
             sum_text = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", flat).replace("\u2212", "-").replace("\u00f7", "/").split("=")[-2]
+            if total != stated and one_sign(sum_text, stated):
+                total = stated                           # one sign written the wrong way round: the result is what was meant
+                info["signs_read"] = info.get("signs_read", 0) + 1
             by_rule = _calc(sum_text)
             if strict and near is not None and len(info["mismatch"]) == asked:
                 if two_readings(sum_text) and by_rule != stated:
@@ -621,6 +657,8 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
                                             + (f" from the value the NOTES hold, {held}" if held is not None else ""))
                 else:
                     used.setdefault(name, set()).add(now)
+        if said_set and len(info["mismatch"]) == asked:
+            info["mismatch"].append(set_question)
         if several and strict and near is not None and len(info["mismatch"]) == asked:
             # several parts, and they could not be followed one by one: nothing has checked this line (`100, then
             # 100 + 999 = 1099` would otherwise pass because its amounts are looked at only on a plain line)

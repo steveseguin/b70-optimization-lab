@@ -554,6 +554,21 @@ class Keeper(unittest.TestCase):
         for line in ("493 \u2192 549 (received exactly what wxyz56 stood at then)", "493 + 56 = 549"):
             new, info = NS["apply_delta"](notes, {"rules": [], "open": None, "changes": [("abcd12", line)]}, seen, strict=True, near=near)
             self.assertEqual((new.splitlines()[3], info["mismatch"]), ("abcd12: 549", []), line)
+        # eighth: two rules taken from the four wrong values that every version let through in real replies (X32p at
+        # 1M, found by scoring the checks against the true ledger, tools/ctxkeeper/check_score.py)
+        # a set written as a sum, with a remark that says it was a set: asked about (plain and packed)
+        self.assertEqual(run(173, "abcd12 was set to 549. abcd12 gained 86.", "173 + 549 = 722 (set, item 373)", "722 + 86 = 808")[:2], (1, [0]))
+        self.assertEqual(run(173, "abcd12 was set to 549. abcd12 gained 86.", "173 + 549 = 722 (set, item 373), then 722 + 86 = 808")[:2], (1, [0]))
+        self.assertEqual(run(208, "The clerk recorded abcd12 at 64.", "208 + 64 = 272 (recorded at, item 377)")[:2], (1, [0]))
+        self.assertEqual(run(279, "abcd12 was set to 415. abcd12 lost 18.", "279 \u2192 415 (set, item 582), then 415 - 18 = 397"), (0, [], [], 397))   # the remark is on the set itself
+        self.assertEqual(run(100, "abcd12 was set to 150.", "100 + 50 = 150 (set, item 5)")[:1], (1,))           # (the unstated 50 is asked about as before)
+        self.assertEqual(run(10, "abcd12 gained 5.", "10 + 5 = 15 (item 3)"), (0, [], [], 15))
+        # one sign written the wrong way round: the result is what was meant
+        self.assertEqual(run(-87, "abcd12 gained 71.", "-87 - 71 = -16"), (0, [], [], -16))
+        self.assertEqual(run(10, "abcd12 gained 5. abcd12 lost 2.", "10 + 5 = 15, then 15 + 2 = 13"), (0, [], [], 13))
+        self.assertEqual(run(10, "abcd12 gained 5.", "10 + 5 = 16"), (0, [], [], 15))                            # a miscount is still redone
+        self.assertTrue(NS["one_sign"]("-87 - 71", -16) and NS["one_sign"]("10 + 5 - 3", 2) and not NS["one_sign"]("10 + 5", 15) and not NS["one_sign"]("10 + 5", 16)
+                        and not NS["one_sign"]("10 * 5", -40) and not NS["one_sign"]("(10) + 5", 5))
         # absurd input does not raise
         NS["work_out"]("5" + " * 999999999999999" * 22 + " = 7"), NS["work_out"]("10 + 2 = " + "7" * 5000), NS["chain_of"]("10, then 10 + 2 = " + "7" * 5000, 10, set())
         self.assertEqual(run(10, "abcd12 gained 2.", "10 + 2 = " + "7" * 5000)[:1], (1,))

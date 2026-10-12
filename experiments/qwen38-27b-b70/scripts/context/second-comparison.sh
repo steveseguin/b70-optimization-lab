@@ -86,7 +86,9 @@
 #                                           lines followed exactly or asked about) and changes said without their number: a line without working
 #                                           is followed when the turns name the thing in a sentence without any number and the new value is the
 #                                           old one times 2..10, the old one with a whole fraction of itself added or taken, or the old one with
-#                                           another thing's value added or taken
+#                                           another thing's value added or taken; and (15:10) two rules from scoring the checks against the
+#                                           true ledger (tools/ctxkeeper/check_score.py): a set written as a sum with a remark that says "set" is
+#                                           asked about, and a sum that gives its written result with one sign turned round is read that way
 #   N32h                                    the first version of that rule (14:18), which also took another thing's value as the NEW value: the
 #                                           model's misreading of "received exactly what X stood at" as a set passed without a question
 #   X32q                                    X32p with the proxy code of 2026-10-12 10:00: a question that arrived in a tool result and is still open
