@@ -545,7 +545,9 @@ def render_turns(turns: list[dict[str, Any]]) -> str:
     return "\n".join(out)
 
 
-NO_CHANGE = re.compile(r"\(?\s*(no change|unchanged|not changed|no changes)\s*\)?\.?", re.I)
+# `name: (no change)`, also with a remark after it: `(no change - the mention is the rule itself)`. A run with six items
+# per notes call stored such a remark as the value of a counter and lost its number (2026-10-12, arm N32u6).
+NO_CHANGE = re.compile(r"\(?\s*(no change|unchanged|not changed|no changes)\b.*", re.I | re.S)
 MISMATCH_RETRY = ("Check these lines of your CHANGES against the NOTES and the turns: {lines}. Working must start from the "
                   "value the NOTES hold, or from a value the turns set; when the turns set a new value and then change "
                   "it, write the set as a line of its own first. Then reply with the three complete sections again.")
