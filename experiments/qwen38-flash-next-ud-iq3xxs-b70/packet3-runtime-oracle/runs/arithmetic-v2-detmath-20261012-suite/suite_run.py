@@ -437,7 +437,7 @@ def publish(prompt):
     git('add','--',*paths)
     git('diff','--cached','--check')
     if git('diff','--cached','--name-only').strip():
-        print(git('commit','-m',f'Add verified arithmetic-v2 suite oracle: {prompt}','-m','Co-Authored-By: Codex <noreply@openai.com>'), flush=True)
+        print(git('commit','--quiet','-m',f'Add verified arithmetic-v2 suite oracle: {prompt}','-m','Co-Authored-By: Codex <noreply@openai.com>'), flush=True)
     git('fetch','origin','main')
     check(subprocess.call(PREFIX+['git','merge-base','--is-ancestor','origin/main','HEAD'],cwd=ROOT)==0, 'remote main diverged; no rebase or stash; focused commit retained')
     print(git('push','origin','HEAD:main'), flush=True)
