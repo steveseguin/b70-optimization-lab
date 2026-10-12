@@ -677,14 +677,14 @@ class Keeper:
         return dict(delta, changes=[(k, v) for k, v in delta["changes"] if k not in gone], unsupported=gone)
 
     @staticmethod
-    def without_doubtful(notes: str, delta: dict, seen: set[int], strict: bool, near: dict | None, every: bool = False) -> tuple[dict, list[str]]:
+    def without_doubtful(notes: str, delta: dict, seen: set[int], strict: bool, near: dict | None) -> tuple[dict, list[str]]:
         """The reply without the lines the checks still question because the turns do not state their number
-        (DROPPABLE; with `every`, without any questioned line). One line at a time: the line of that name whose
-        removal makes the question go away. Returns the reply and the lines left out."""
+        (DROPPABLE). One line at a time: the line of that name whose removal makes the question go away. Returns
+        the reply and the lines left out."""
         changes, dropped = list(delta["changes"]), []
         for _ in range(12):
             _, info = nd.apply_delta(notes, dict(delta, changes=changes), seen, strict=strict, near=near)
-            bad = [m for m in info["mismatch"] if every or any(d in m for d in DROPPABLE)]
+            bad = [m for m in info["mismatch"] if any(d in m for d in DROPPABLE)]
             if not bad:
                 break
             name = bad[0].split(":", 1)[0]
@@ -767,14 +767,13 @@ class Keeper:
             if delta is None and earlier is not None:
                 # Asked about some lines of a reply that was in the layout, the model wrote nothing usable (X32n,
                 # seed 1: an empty reply, twice; the whole cut then went to the full rewrite, which lost a change).
-                # The reply before it stands, without the lines that were in question.
+                # The reply before it stands, without the lines whose number the turns do not state.
                 s.log_event({"event": "in-place notes: no usable second reply, the first stands", "attempt": attempt})
-                delta, kept = dict(earlier, rules=list(rules_seen)), self.supported(earlier, texts, strict)
+                kept = self.supported(earlier, texts, strict)
                 near = nd.numbers_near(nd.state_keys(s.state["notes"]) + [k for k, _ in kept["changes"]], texts) if self.notes_checks == "near" else None
-                kept, dropped = self.without_doubtful(s.state["notes"], dict(kept, rules=list(rules_seen)), seen, strict, near, every=True)
-                new, info = nd.apply_delta(s.state["notes"], kept, seen, strict=strict, near=near)
+                delta, dropped = self.without_doubtful(s.state["notes"], dict(kept, rules=list(rules_seen)), seen, strict, near)
+                new, info = nd.apply_delta(s.state["notes"], delta, seen, strict=strict, near=near)
                 info.pop("steps", None)
-                info["mismatch"] = []
                 if dropped:
                     s.log_event({"event": "in-place notes: lines left out (the turns do not bear them out)", "lines": dropped[:12]})
                 why = ""
