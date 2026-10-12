@@ -1,0 +1,29 @@
+{
+  "reason": "Correct old-suite path-prefix collision after code-review was committed and pushed",
+  "completed_prompt_commit": "5bf163490231652f932c352026fc19ef497a617f",
+  "supervisor_pid": 567061,
+  "signal": "SIGTERM",
+  "no_completed_prompt_recomputed": true,
+  "fix": "Match oracle output directory by path components, not a substring shared by suite and suite128",
+  "interrupted_partials": [
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/.customer-email.partial-1791793385487304932",
+      "completed_positions": 0,
+      "result": {
+        "schema": "iq3-runtime-cpu-oracle.v1",
+        "arithmetic": "iq3-p17-detmath-v2",
+        "status": "failed-or-stopped",
+        "error": "cooperative stop",
+        "device_executed": false,
+        "prefill_seconds": 0,
+        "seconds": 0.721455348,
+        "tokens": [],
+        "steps": [],
+        "decode_seconds_per_token": null,
+        "max_rss_kib": 49776,
+        "model_bytes_read": 0
+      }
+    }
+  ],
+  "administrative_preflight": "A shell refresh refused a broader affinity; administrative commands were pinned to the original recorded 4-15,20-31 mask. Oracle systemd units retained that mask throughout."
+}

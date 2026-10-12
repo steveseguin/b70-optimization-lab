@@ -469,6 +469,11 @@ Each prompt runs under a private temporary name, is verified, then renamed. Fini
 prompts are reverified and skipped on restart; completed partial results are recovered.
 An interrupted unfinished prompt alone needs recomputation. `status.json` and each
 attempt's status update after each position. Failed runs are not retried automatically.
+The coordinator was corrected after the first two prompts: its old-suite process check
+matched the new suite128 directory as a text prefix. It now compares path components.
+Both finished prompts were pushed before the supervisor was stopped; neither was rerun.
+See `coordination-fix.json`; this changed process admission only, not oracle arithmetic.
+
 Each finished prompt gets a separate explicit-path commit and push, with the requested
 coauthor. Fetch/merge main on remote movement; no stash, branches or rebase.
 
@@ -491,11 +496,11 @@ coverage past token 100; it is not a 512-token final performance gate or a speed
 
 def publish(prompt):
     def git(*args):
-        return subprocess.check_output(PREFIX+['git', '-c', 'pack.threads=1', '-c', 'index.threads=1', *args], cwd=ROOT, text=True, stderr=subprocess.STDOUT)
+        return subprocess.check_output(PREFIX+['git', '-c', 'pack.threads=1', '-c', 'index.threads=1', '-c', 'gc.auto=0', *args], cwd=ROOT, text=True, stderr=subprocess.STDOUT)
     check(git('branch','--show-current').strip() == 'main', 'main only')
     check(not git('diff','--cached','--name-only').strip(), 'unrelated staged files; do not commit')
     paths = [HERE/'build_cpu.py', HERE/'build-receipt.json', HERE/'oracle128.cpp', HERE/'oracle128.patch', HERE/'capacity-analysis.md', HERE/prompt, INPUTS/prompt, HERE/'suite_run.py', HERE/'runner-snapshots', HERE/'.gitignore', HERE/'README.md', INPUTS/'.gitignore', INPUTS/'README.md', INPUTS/'suite-manifest.json']
-    for name in ('suite_check.py', 'test_suite_check.py', 'test_suite_run.py', 'checker-tests.json', 'resume-cleanup.json', 'resume-audit.json', 'resume_verify.py'):
+    for name in ('suite_check.py', 'test_suite_check.py', 'test_suite_run.py', 'checker-tests.json', 'resume-cleanup.json', 'resume-audit.json', 'resume_verify.py', 'coordination-fix.json', 'verify_completed.py'):
         if (HERE/name).exists(): paths.append(HERE/name)
     paths = [str(p.relative_to(ROOT)) for p in paths]
     git('add','--',*paths)
@@ -504,7 +509,7 @@ def publish(prompt):
         print(git('commit','--quiet','-m',f'Add verified arithmetic-v2 suite oracle: {prompt}','-m','Co-Authored-By: Codex <noreply@openai.com>','--',*paths), flush=True)
     git('fetch','origin','main')
     if subprocess.call(PREFIX+['git','merge-base','--is-ancestor','origin/main','HEAD'],cwd=ROOT) != 0:
-        print(git('diff','--stat','HEAD','origin/main'), flush=True)
+        print(git('diff','--stat','HEAD...origin/main'), flush=True)
         print(git('merge','--no-edit','-m','Merge origin/main for suite128 receipts\n\nCo-Authored-By: Codex <noreply@openai.com>','origin/main'), flush=True)
     print(git('push','origin','HEAD:main'), flush=True)
 
@@ -521,6 +526,10 @@ def oracle_processes():
         except (OSError,StopIteration):pass
     return found
 
+def oracle_belongs_to(directory, record):
+    args=record['args']
+    return len(args)>2 and Path(args[2].decode()).is_relative_to(directory)
+
 def old_suite_running():
     for p in Path('/proc').iterdir():
         if not p.name.isdigit():continue
@@ -528,7 +537,7 @@ def old_suite_running():
             args=(p/'cmdline').read_bytes().split(b'\0')
             if any(x.decode(errors='replace').endswith(str(OLD.relative_to(ROOT))+'/suite_run.py') for x in args):return True
         except OSError:pass
-    return any(str(OLD).encode() in b' '.join(p['args']) for p in oracle_processes())
+    return any(oracle_belongs_to(OLD,p) for p in oracle_processes())
 
 def parallel_worker(row, sealed, binary, affinity, results):
     try:

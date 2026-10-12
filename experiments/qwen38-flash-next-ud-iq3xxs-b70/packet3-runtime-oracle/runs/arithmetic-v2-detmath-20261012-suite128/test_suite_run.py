@@ -22,6 +22,10 @@ class Gates(unittest.TestCase):
    result['tokens'][63]^=1;r.save(d/'result.json',result)
    f=d/'step8/layer-47.bf16';raw=bytearray(f.read_bytes());raw[-1]^=1;f.write_bytes(raw)
    with self.assertRaisesRegex(RuntimeError,'prefix fixture'):r.equality(d)
+ def test_old_suite_path_is_not_a_text_prefix(self):
+  self.assertTrue(r.oracle_belongs_to(r.OLD,dict(args=[b'oracle',b'input',str(r.OLD/'.prompt.partial/native').encode()])))
+  self.assertFalse(r.oracle_belongs_to(r.OLD,dict(args=[b'oracle',b'input',str(r.HERE/'.prompt.partial/native').encode()])))
+  self.assertFalse(r.oracle_belongs_to(r.OLD,dict(args=[b'oracle'])))
  def test_build_delta(self):
   old=(r.P17/'oracle.cpp').read_text()
   new=(r.HERE/'oracle128.cpp').read_text()

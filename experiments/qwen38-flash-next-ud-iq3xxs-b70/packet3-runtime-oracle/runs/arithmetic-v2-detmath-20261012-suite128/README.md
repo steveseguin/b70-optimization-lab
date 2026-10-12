@@ -48,6 +48,11 @@ Each prompt runs under a private temporary name, is verified, then renamed. Fini
 prompts are reverified and skipped on restart; completed partial results are recovered.
 An interrupted unfinished prompt alone needs recomputation. `status.json` and each
 attempt's status update after each position. Failed runs are not retried automatically.
+The coordinator was corrected after the first two prompts: its old-suite process check
+matched the new suite128 directory as a text prefix. It now compares path components.
+Both finished prompts were pushed before the supervisor was stopped; neither was rerun.
+See `coordination-fix.json`; this changed process admission only, not oracle arithmetic.
+
 Each finished prompt gets a separate explicit-path commit and push, with the requested
 coauthor. Fetch/merge main on remote movement; no stash, branches or rebase.
 
