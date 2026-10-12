@@ -350,6 +350,14 @@ class H(BaseHTTPRequestHandler):
             msg = {"role": "assistant", "content": 'Fetching the next item.\nbash {"command": "next"}'}
             return self._send({**base, "object": "chat.completion",
                                "choices": [{"index": 0, "message": msg, "finish_reason": "stop"}]})
+        last_user = next((str(m.get("content") or "") for m in reversed(msgs) if m.get("role") == "user"), "")
+        if req.get("tools") and req.get("tool_choice") == "none" and (
+                last_user.startswith("[[Message from the harness") or last_user.startswith("The turns mention these names")
+                or last_user.startswith("Check these lines") or last_user.startswith("Your reply did not use the layout")):
+            # an in-place notes request of the keeper (the live conversation plus one message, tools listed, none to be called)
+            n = sum(1 for m in msgs if m.get("role") == "tool" and str(m.get("content") or "").startswith("ITEM "))
+            msg = {"role": "assistant", "content": "NEW RULES\n- Stub rule: answer politely.\nCHANGES\nstubitems: %d\nOPEN\n- nothing" % n}
+            return self._send({**base, "object": "chat.completion", "choices": [{"index": 0, "message": msg, "finish_reason": "stop"}]})
         if req.get("tools"):
             cmd = plan(msgs)
             msg = {"role": "assistant", "content": "THOUGHT: scripted stub step.",
