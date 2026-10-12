@@ -1,0 +1,25 @@
+{
+  "schema": "p30.cpu-gates.v1",
+  "family": "attention",
+  "checks_per_process": 266547,
+  "finite_fixtures": 10,
+  "variants": 2,
+  "compilers": [
+    "g++",
+    "icpx"
+  ],
+  "fresh_processes_per_compiler": 2,
+  "passed": true,
+  "empty_core_incumbent_disagreement": true,
+  "device_ran": false,
+  "precision_flags_compile_and_link": [
+    "-fno-fast-math",
+    "-ffp-contract=off"
+  ],
+  "binary_sha256": {
+    "gcc": "47d59964bd4206a0fbfc09c1da03fb8a2f855a9580f994723bed18ebda58601c",
+    "icpx": "a55d838dfcc4266a4c48b979f5c41589e8c048315e3cc65329c3569951637617"
+  },
+  "additional_icpx_flag": "-fdenormal-fp-math=ieee",
+  "range_end_overflow_poison_passed": true
+}

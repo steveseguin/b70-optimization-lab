@@ -1,0 +1,453 @@
+{
+  "schema": "packet30.class-registry.v1",
+  "source": "experiments/own-xpu-runtime/stage2/packet27-round2/receipts-cards01-20261012-chain/w2c-r27/class-times.json",
+  "source_sha256": "7e17f2db86c3b0d36bcbf441b909e6858e43dc5296f3470959ed2203ef7670c8",
+  "tokens": 63,
+  "timing_definition": "sum of individual GPU event execution durations",
+  "repetitions": 200,
+  "fresh_owners": 2,
+  "minimum_relative_saving": 0.1,
+  "baseline_relative_tolerance": 0.15,
+  "rotation_threshold_bytes": 8388608,
+  "rotation_copies": 8,
+  "classes": [
+    {
+      "klass": "route",
+      "family": "route",
+      "candidates": [
+        "p30.route.two.g1.wg32",
+        "p30.route.two.g16.wg32",
+        "p30.route.two.g16.wg64",
+        "p30.route.single.sg32"
+      ],
+      "required_modes": [
+        0,
+        1,
+        2
+      ],
+      "groups_per_token": 48.0,
+      "anchor": {
+        "status": "matched_class",
+        "expected_group_us": 68.76984126984128,
+        "prior_group_us": 68.76984126984128,
+        "classes": [
+          "route"
+        ],
+        "launches_per_group": 5.0,
+        "reason": "Actual W2c class-group GPU event sum."
+      },
+      "dispatch": {
+        "section": "fusions",
+        "key": "route+gather"
+      },
+      "resources": [
+        "route"
+      ]
+    },
+    {
+      "klass": "qsa.attention",
+      "family": "attention",
+      "candidates": [
+        "p30.attention.sg32",
+        "p30.attention.score_softmax"
+      ],
+      "required_modes": [
+        0
+      ],
+      "groups_per_token": 12.0,
+      "anchor": {
+        "status": "matched_class",
+        "expected_group_us": 267.73280423280426,
+        "prior_group_us": 267.73280423280426,
+        "classes": [
+          "qsa.attention"
+        ],
+        "launches_per_group": 3.0,
+        "reason": "Actual W2c class-group GPU event sum."
+      },
+      "dispatch": {
+        "section": "classes",
+        "key": "qsa.attention"
+      },
+      "resources": [
+        "qsa.attention"
+      ]
+    },
+    {
+      "klass": "attn.combine+norm",
+      "family": "fusion",
+      "candidates": [
+        "sg32",
+        "tiled"
+      ],
+      "required_modes": [
+        0
+      ],
+      "groups_per_token": 48.0,
+      "anchor": {
+        "status": "matched_class",
+        "expected_group_us": 18.615310846560845,
+        "prior_group_us": 18.615310846560845,
+        "classes": [
+          "attn.combine",
+          "hc.f.norm"
+        ],
+        "launches_per_group": 3.0,
+        "reason": "Actual W2c class-group GPU event sum."
+      },
+      "dispatch": {
+        "section": "fusions",
+        "key": "attn.combine+norm"
+      },
+      "resources": [
+        "attn.combine",
+        "hc.f.norm"
+      ]
+    },
+    {
+      "klass": "ffn.combine+norm",
+      "family": "fusion",
+      "candidates": [
+        "sg32",
+        "tiled"
+      ],
+      "required_modes": [
+        0
+      ],
+      "groups_per_token": 48.0,
+      "anchor": {
+        "status": "cross_layer_anchor_pending",
+        "expected_group_us": null,
+        "prior_group_us": 18.77251984126984,
+        "classes": [
+          "ffn.combine",
+          "hc.a.norm"
+        ],
+        "launches_per_group": 3.0,
+        "reason": "Last FFN flows to final.norm and first hc.a.norm has no preceding FFN; aggregate class means cannot pin the full fused schedule."
+      },
+      "dispatch": {
+        "section": "fusions",
+        "key": "ffn.combine+norm"
+      },
+      "resources": [
+        "ffn.combine",
+        "hc.a.norm"
+      ]
+    },
+    {
+      "klass": "hc.a.norm",
+      "family": "fusion",
+      "candidates": [
+        "sg32",
+        "tiled"
+      ],
+      "required_modes": [
+        0
+      ],
+      "groups_per_token": 48.0,
+      "anchor": {
+        "status": "matched_class",
+        "expected_group_us": 7.749537037037037,
+        "prior_group_us": 7.749537037037037,
+        "classes": [
+          "hc.a.norm"
+        ],
+        "launches_per_group": 2.0,
+        "reason": "Actual W2c class-group GPU event sum."
+      },
+      "dispatch": {
+        "section": "classes",
+        "key": "norm"
+      },
+      "resources": [
+        "hc.a.norm"
+      ]
+    },
+    {
+      "klass": "hc.f.norm",
+      "family": "fusion",
+      "candidates": [
+        "sg32",
+        "tiled"
+      ],
+      "required_modes": [
+        0
+      ],
+      "groups_per_token": 48.0,
+      "anchor": {
+        "status": "matched_class",
+        "expected_group_us": 7.5141865079365076,
+        "prior_group_us": 7.5141865079365076,
+        "classes": [
+          "hc.f.norm"
+        ],
+        "launches_per_group": 2.0,
+        "reason": "Actual W2c class-group GPU event sum."
+      },
+      "dispatch": {
+        "section": "classes",
+        "key": "norm"
+      },
+      "resources": [
+        "hc.f.norm"
+      ]
+    },
+    {
+      "klass": "hc.a.mix",
+      "family": "fusion",
+      "candidates": [
+        "sg32",
+        "tiled"
+      ],
+      "required_modes": [
+        0
+      ],
+      "groups_per_token": 48.0,
+      "anchor": {
+        "status": "matched_class",
+        "expected_group_us": 8.371560846560845,
+        "prior_group_us": 8.371560846560845,
+        "classes": [
+          "hc.a.mix"
+        ],
+        "launches_per_group": 1.0,
+        "reason": "Actual W2c class-group GPU event sum."
+      },
+      "dispatch": {
+        "section": "classes",
+        "key": "hc.mix"
+      },
+      "resources": [
+        "hc.a.mix"
+      ]
+    },
+    {
+      "klass": "hc.f.mix",
+      "family": "fusion",
+      "candidates": [
+        "sg32",
+        "tiled"
+      ],
+      "required_modes": [
+        0
+      ],
+      "groups_per_token": 48.0,
+      "anchor": {
+        "status": "matched_class",
+        "expected_group_us": 8.477347883597885,
+        "prior_group_us": 8.477347883597885,
+        "classes": [
+          "hc.f.mix"
+        ],
+        "launches_per_group": 1.0,
+        "reason": "Actual W2c class-group GPU event sum."
+      },
+      "dispatch": {
+        "section": "classes",
+        "key": "hc.mix"
+      },
+      "resources": [
+        "hc.f.mix"
+      ]
+    },
+    {
+      "klass": "hc.a.gate",
+      "family": "small",
+      "candidates": [
+        "sg32",
+        "rows4"
+      ],
+      "required_modes": [
+        0
+      ],
+      "groups_per_token": 48.0,
+      "anchor": {
+        "status": "post_p28_in_model_anchor_missing",
+        "expected_group_us": null,
+        "prior_group_us": 29.761044973544973,
+        "classes": [
+          "hc.a.gate"
+        ],
+        "launches_per_group": 1.0,
+        "reason": "G3 incumbent is selected p28.dense.wg32, not measured pre-p28 runtime; G2 fixture winner is not an in-model replacement anchor.",
+        "g2_fixture_only": {
+          "source": "experiments/own-xpu-runtime/stage2/packet28-dense/receipts-card2-20261011-g2/summary.json",
+          "source_sha256": "d3dcd5220bbca609869422e90794bfac72cffd3a0aa8927c26e128c12b11b04f",
+          "candidate": "p28.dense.wg32",
+          "median_us": 20.834,
+          "p90_us": 21.042,
+          "not_an_in_model_anchor": true
+        }
+      },
+      "dispatch": {
+        "section": "gemv",
+        "key": "hc.a.gate"
+      },
+      "resources": [
+        "hc.a.gate"
+      ]
+    },
+    {
+      "klass": "hc.f.gate",
+      "family": "small",
+      "candidates": [
+        "sg32",
+        "rows4"
+      ],
+      "required_modes": [
+        0
+      ],
+      "groups_per_token": 48.0,
+      "anchor": {
+        "status": "post_p28_in_model_anchor_missing",
+        "expected_group_us": null,
+        "prior_group_us": 30.405919312169313,
+        "classes": [
+          "hc.f.gate"
+        ],
+        "launches_per_group": 1.0,
+        "reason": "G3 incumbent is selected p28.dense.wg32, not measured pre-p28 runtime; G2 fixture winner is not an in-model replacement anchor.",
+        "g2_fixture_only": {
+          "source": "experiments/own-xpu-runtime/stage2/packet28-dense/receipts-card2-20261011-g2/summary.json",
+          "source_sha256": "d3dcd5220bbca609869422e90794bfac72cffd3a0aa8927c26e128c12b11b04f",
+          "candidate": "p28.dense.wg32",
+          "median_us": 20.7815,
+          "p90_us": 21.042,
+          "not_an_in_model_anchor": true
+        }
+      },
+      "dispatch": {
+        "section": "gemv",
+        "key": "hc.f.gate"
+      },
+      "resources": [
+        "hc.f.gate"
+      ]
+    },
+    {
+      "klass": "small.hc",
+      "family": "small",
+      "candidates": [
+        "sg32",
+        "rows4"
+      ],
+      "required_modes": [
+        0
+      ],
+      "groups_per_token": 96.0,
+      "anchor": {
+        "status": "matched_class",
+        "expected_group_us": 18.472056878306876,
+        "prior_group_us": 18.472056878306876,
+        "classes": [
+          "small.hc"
+        ],
+        "launches_per_group": 1.0,
+        "reason": "Actual W2c class-group GPU event sum."
+      },
+      "dispatch": {
+        "section": "fusions",
+        "key": "small.hc"
+      },
+      "resources": [
+        "small.hc"
+      ]
+    },
+    {
+      "klass": "small.ffn.q6",
+      "family": "small",
+      "candidates": [
+        "sg32",
+        "rows4"
+      ],
+      "required_modes": [
+        0
+      ],
+      "groups_per_token": 47.0,
+      "anchor": {
+        "status": "matched_class",
+        "expected_group_us": 30.877710233029383,
+        "prior_group_us": 30.877710233029383,
+        "classes": [
+          "small.ffn.q6"
+        ],
+        "launches_per_group": 1.0,
+        "reason": "Actual W2c class-group GPU event sum."
+      },
+      "dispatch": {
+        "section": "fusions",
+        "key": "small.ffn"
+      },
+      "resources": [
+        "small.ffn.q6"
+      ]
+    },
+    {
+      "klass": "small.ffn.q8",
+      "family": "small",
+      "candidates": [
+        "sg32",
+        "rows4"
+      ],
+      "required_modes": [
+        0
+      ],
+      "groups_per_token": 1.0,
+      "anchor": {
+        "status": "matched_class",
+        "expected_group_us": 24.536984126984127,
+        "prior_group_us": 24.536984126984127,
+        "classes": [
+          "small.ffn.q8"
+        ],
+        "launches_per_group": 1.0,
+        "reason": "Actual W2c class-group GPU event sum."
+      },
+      "dispatch": {
+        "section": "fusions",
+        "key": "small.ffn"
+      },
+      "resources": [
+        "small.ffn.q8"
+      ]
+    },
+    {
+      "klass": "shexpdown",
+      "family": "small",
+      "candidates": [
+        "sg32",
+        "rows4"
+      ],
+      "required_modes": [
+        0
+      ],
+      "groups_per_token": 48.0,
+      "anchor": {
+        "status": "post_p28_in_model_anchor_missing",
+        "expected_group_us": null,
+        "prior_group_us": 16.1666335978836,
+        "classes": [
+          "shexpdown"
+        ],
+        "launches_per_group": 1.0,
+        "reason": "G3 incumbent is selected p28.dense.wg32, not measured pre-p28 runtime; G2 fixture winner is not an in-model replacement anchor.",
+        "g2_fixture_only": {
+          "source": "experiments/own-xpu-runtime/stage2/packet28-dense/receipts-card2-20261011-g2/summary.json",
+          "source_sha256": "d3dcd5220bbca609869422e90794bfac72cffd3a0aa8927c26e128c12b11b04f",
+          "candidate": "p28.dense.wg32",
+          "median_us": 11.25,
+          "p90_us": 11.458,
+          "not_an_in_model_anchor": true
+        }
+      },
+      "dispatch": {
+        "section": "gemv",
+        "key": "shexpdown"
+      },
+      "resources": [
+        "shexpdown"
+      ]
+    }
+  ]
+}

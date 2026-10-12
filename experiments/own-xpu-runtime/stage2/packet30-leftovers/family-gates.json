@@ -1,0 +1,297 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "rows": [
+    {
+      "family": "route",
+      "compiler": "gcc",
+      "compile_and_link_argv": [
+        "/usr/bin/g++",
+        "-std=c++20",
+        "-O2",
+        "-Werror=return-type",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fno-associative-math",
+        "-fno-unsafe-math-optimizations",
+        "-DOWN_RT_HOST_ONLY",
+        "-DHOST_ONLY",
+        "-DP30_ROUTE_CPU_MAIN",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet30-leftovers/route_cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet30-leftovers/build/families/route-gcc"
+      ],
+      "compile_stdout": "",
+      "compile_stderr": "",
+      "binary_sha256": "032de04b7f55ec479e38d1477d597db5b0e606215f6a9bf85827c0f950a86cea",
+      "runs": [
+        {
+          "returncode": 0,
+          "stdout": "444\n",
+          "stderr": ""
+        },
+        {
+          "returncode": 0,
+          "stdout": "444\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "family": "attention",
+      "compiler": "gcc",
+      "compile_and_link_argv": [
+        "/usr/bin/g++",
+        "-std=c++20",
+        "-O2",
+        "-Werror=return-type",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fno-associative-math",
+        "-fno-unsafe-math-optimizations",
+        "-DOWN_RT_HOST_ONLY",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet30-leftovers/attention_cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet30-leftovers/build/families/attention-gcc"
+      ],
+      "compile_stdout": "",
+      "compile_stderr": "",
+      "binary_sha256": "47d59964bd4206a0fbfc09c1da03fb8a2f855a9580f994723bed18ebda58601c",
+      "runs": [
+        {
+          "returncode": 0,
+          "stdout": "{\"checks\":266547,\"finite_fixtures\":10,\"variants\":2,\"empty_core_incumbent_disagreement\":true,\"device_ran\":false,\"passed\":true}\n",
+          "stderr": ""
+        },
+        {
+          "returncode": 0,
+          "stdout": "{\"checks\":266547,\"finite_fixtures\":10,\"variants\":2,\"empty_core_incumbent_disagreement\":true,\"device_ran\":false,\"passed\":true}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "family": "small",
+      "compiler": "gcc",
+      "compile_and_link_argv": [
+        "/usr/bin/g++",
+        "-std=c++20",
+        "-O2",
+        "-Werror=return-type",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fno-associative-math",
+        "-fno-unsafe-math-optimizations",
+        "-DOWN_RT_HOST_ONLY",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet30-leftovers/small_cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet30-leftovers/build/families/small-gcc"
+      ],
+      "compile_stdout": "",
+      "compile_stderr": "",
+      "binary_sha256": "04d3198fbc013402adc3814b18ff65b0e851b5201083ae954d71fa0b06370da3",
+      "runs": [
+        {
+          "returncode": 0,
+          "stdout": "{\"passed\":true,\"checks\":66856,\"validation_rejections\":40}\n",
+          "stderr": ""
+        },
+        {
+          "returncode": 0,
+          "stdout": "{\"passed\":true,\"checks\":66856,\"validation_rejections\":40}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "family": "fusion",
+      "compiler": "gcc",
+      "compile_and_link_argv": [
+        "/usr/bin/g++",
+        "-std=c++20",
+        "-O2",
+        "-Werror=return-type",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fno-associative-math",
+        "-fno-unsafe-math-optimizations",
+        "-DOWN_RT_HOST_ONLY",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet30-leftovers/fusion_cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet30-leftovers/build/families/fusion-gcc"
+      ],
+      "compile_stdout": "",
+      "compile_stderr": "",
+      "binary_sha256": "ee6c6286db2f1ec58894377e5ae51547453150371b5d9d513900e4cef1ce3285",
+      "runs": [
+        {
+          "returncode": 0,
+          "stdout": "{\"passed\":true,\"cases\":768,\"compared_bytes\":6755328,\"validation_rejections\":2304}\n",
+          "stderr": ""
+        },
+        {
+          "returncode": 0,
+          "stdout": "{\"passed\":true,\"cases\":768,\"compared_bytes\":6755328,\"validation_rejections\":2304}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "family": "route",
+      "compiler": "icpx",
+      "compile_and_link_argv": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-Werror=return-type",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fno-associative-math",
+        "-fno-unsafe-math-optimizations",
+        "-DOWN_RT_HOST_ONLY",
+        "-fdenormal-fp-math=ieee",
+        "-DHOST_ONLY",
+        "-DP30_ROUTE_CPU_MAIN",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet30-leftovers/route_cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet30-leftovers/build/families/route-icpx"
+      ],
+      "compile_stdout": "",
+      "compile_stderr": "",
+      "binary_sha256": "adcbf6c761d8485be0039086d74f543b335f340b00fc72218060f4125a7fb455",
+      "runs": [
+        {
+          "returncode": 0,
+          "stdout": "444\n",
+          "stderr": ""
+        },
+        {
+          "returncode": 0,
+          "stdout": "444\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "family": "attention",
+      "compiler": "icpx",
+      "compile_and_link_argv": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-Werror=return-type",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fno-associative-math",
+        "-fno-unsafe-math-optimizations",
+        "-DOWN_RT_HOST_ONLY",
+        "-fdenormal-fp-math=ieee",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet30-leftovers/attention_cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet30-leftovers/build/families/attention-icpx"
+      ],
+      "compile_stdout": "",
+      "compile_stderr": "",
+      "binary_sha256": "a55d838dfcc4266a4c48b979f5c41589e8c048315e3cc65329c3569951637617",
+      "runs": [
+        {
+          "returncode": 0,
+          "stdout": "{\"checks\":266547,\"finite_fixtures\":10,\"variants\":2,\"empty_core_incumbent_disagreement\":true,\"device_ran\":false,\"passed\":true}\n",
+          "stderr": ""
+        },
+        {
+          "returncode": 0,
+          "stdout": "{\"checks\":266547,\"finite_fixtures\":10,\"variants\":2,\"empty_core_incumbent_disagreement\":true,\"device_ran\":false,\"passed\":true}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "family": "small",
+      "compiler": "icpx",
+      "compile_and_link_argv": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-Werror=return-type",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fno-associative-math",
+        "-fno-unsafe-math-optimizations",
+        "-DOWN_RT_HOST_ONLY",
+        "-fdenormal-fp-math=ieee",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet30-leftovers/small_cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet30-leftovers/build/families/small-icpx"
+      ],
+      "compile_stdout": "",
+      "compile_stderr": "",
+      "binary_sha256": "84456111704dfe935dd58965c764dc5ff75f2bee820fc62055483172c5644c60",
+      "runs": [
+        {
+          "returncode": 0,
+          "stdout": "{\"passed\":true,\"checks\":66856,\"validation_rejections\":40}\n",
+          "stderr": ""
+        },
+        {
+          "returncode": 0,
+          "stdout": "{\"passed\":true,\"checks\":66856,\"validation_rejections\":40}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "family": "fusion",
+      "compiler": "icpx",
+      "compile_and_link_argv": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-Werror=return-type",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fno-associative-math",
+        "-fno-unsafe-math-optimizations",
+        "-DOWN_RT_HOST_ONLY",
+        "-fdenormal-fp-math=ieee",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet30-leftovers/fusion_cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet30-leftovers/build/families/fusion-icpx"
+      ],
+      "compile_stdout": "",
+      "compile_stderr": "",
+      "binary_sha256": "9ccc9c87e06ac01875519a256b19b49e9068305a122516df1de9f5b63091abbf",
+      "runs": [
+        {
+          "returncode": 0,
+          "stdout": "{\"passed\":true,\"cases\":768,\"compared_bytes\":6755328,\"validation_rejections\":2304}\n",
+          "stderr": ""
+        },
+        {
+          "returncode": 0,
+          "stdout": "{\"passed\":true,\"cases\":768,\"compared_bytes\":6755328,\"validation_rejections\":2304}\n",
+          "stderr": ""
+        }
+      ]
+    }
+  ],
+  "source_sha256": {
+    "fusion.hpp": "7bfb176a7fd9ec2bf3e8eb96b86d393002546af302c983a4296b042610f349b5",
+    "attention.cpp": "4517d33ac38e20aa3a28633c421a7488857f0ba1288b169ded55865d37cbfc7f",
+    "p28_incumbent.cpp": "16d02576a55665fd2ef1d13c7423703a12adde189040901b0ac901b61c701ed1",
+    "route.hpp": "9d1d22d56bc16095d9a4639ee5e3609aacb5409683dd9768436288a20b099160",
+    "small.cpp": "89e0cafa20d1392bc54330ece0155e70945eaa1ab427db733d88cb3e26f0ce65",
+    "small_cpu.cpp": "84137af48aa944068177b7c1837e08feb110bd92334109ec48384b54b00c9c30",
+    "attention_cpu.cpp": "2594cad5db8fd9b08c10fe4fab51d2ac60aad6c22299e5bf3f58d4211aa5cce9",
+    "attention.hpp": "bc7fd795ef80905eeb10e7694d9f790173c18057285fd88f803b399d4a0a1912",
+    "g3.cpp": "455d9c586492cdf25241fb9fc8ceac37a5b3b454758491927f195993bd8b9b0c",
+    "route.cpp": "02b3200ed7f18b24e8223f31b49dfcac85763404bea5c1a8a2b1b3681eb29f10",
+    "fusion_cpu.cpp": "84e82fc9ef989e51a9edf3a0cd8adc3b6d8c6e776c482e00bfd714d1d044502e",
+    "route_cpu.cpp": "8cfc548a40f96ebd53d4a052ba5fb178e001c4f22477779f0d937c70422693e7",
+    "fusion.cpp": "78098d1a5b633933898396ae237b70ccc0fc77f2ee3f37d3bf03de7e27ddfad0",
+    "kernel_guard.hpp": "f66691a0c2e354fac7506e19763a5f15ec4fb37b84b582caf46a62eee8796037",
+    "small.hpp": "001c189c164f163b1f31839912f98192bed753d11bd7fb9dea56e5b45330ac6b"
+  },
+  "max_compile_jobs": 1,
+  "memory_limit_bytes": 8589934592
+}

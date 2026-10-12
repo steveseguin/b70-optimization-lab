@@ -1,0 +1,130 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "records": [
+    {
+      "family": "small",
+      "compiler": "g++",
+      "command": [
+        "g++",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fno-associative-math",
+        "-fno-unsafe-math-optimizations",
+        "-DOWN_RT_HOST_ONLY",
+        "experiments/own-xpu-runtime/stage2/packet30-leftovers/small_cpu.cpp",
+        "-o",
+        "experiments/own-xpu-runtime/stage2/packet30-leftovers/build/small-gcc"
+      ],
+      "sha256": "04d3198fbc013402adc3814b18ff65b0e851b5201083ae954d71fa0b06370da3",
+      "results": [
+        {
+          "passed": true,
+          "checks": 66856,
+          "validation_rejections": 40
+        },
+        {
+          "passed": true,
+          "checks": 66856,
+          "validation_rejections": 40
+        }
+      ]
+    },
+    {
+      "family": "fusion",
+      "compiler": "g++",
+      "command": [
+        "g++",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fno-associative-math",
+        "-fno-unsafe-math-optimizations",
+        "-DOWN_RT_HOST_ONLY",
+        "experiments/own-xpu-runtime/stage2/packet30-leftovers/fusion_cpu.cpp",
+        "-o",
+        "experiments/own-xpu-runtime/stage2/packet30-leftovers/build/fusion-gcc"
+      ],
+      "sha256": "ee6c6286db2f1ec58894377e5ae51547453150371b5d9d513900e4cef1ce3285",
+      "results": [
+        {
+          "passed": true,
+          "cases": 768,
+          "compared_bytes": 6755328,
+          "validation_rejections": 2304
+        },
+        {
+          "passed": true,
+          "cases": 768,
+          "compared_bytes": 6755328,
+          "validation_rejections": 2304
+        }
+      ]
+    },
+    {
+      "family": "small",
+      "compiler": "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+      "command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fno-associative-math",
+        "-fno-unsafe-math-optimizations",
+        "-DOWN_RT_HOST_ONLY",
+        "experiments/own-xpu-runtime/stage2/packet30-leftovers/small_cpu.cpp",
+        "-o",
+        "experiments/own-xpu-runtime/stage2/packet30-leftovers/build/small-icpx"
+      ],
+      "sha256": "84456111704dfe935dd58965c764dc5ff75f2bee820fc62055483172c5644c60",
+      "results": [
+        {
+          "passed": true,
+          "checks": 66856,
+          "validation_rejections": 40
+        },
+        {
+          "passed": true,
+          "checks": 66856,
+          "validation_rejections": 40
+        }
+      ]
+    },
+    {
+      "family": "fusion",
+      "compiler": "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+      "command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fno-associative-math",
+        "-fno-unsafe-math-optimizations",
+        "-DOWN_RT_HOST_ONLY",
+        "experiments/own-xpu-runtime/stage2/packet30-leftovers/fusion_cpu.cpp",
+        "-o",
+        "experiments/own-xpu-runtime/stage2/packet30-leftovers/build/fusion-icpx"
+      ],
+      "sha256": "9ccc9c87e06ac01875519a256b19b49e9068305a122516df1de9f5b63091abbf",
+      "results": [
+        {
+          "passed": true,
+          "cases": 768,
+          "compared_bytes": 6755328,
+          "validation_rejections": 2304
+        },
+        {
+          "passed": true,
+          "cases": 768,
+          "compared_bytes": 6755328,
+          "validation_rejections": 2304
+        }
+      ]
+    }
+  ]
+}
