@@ -36,7 +36,8 @@ class Delta(unittest.TestCase):
         self.assertEqual(nd.identifiers_in(texts), names)                         # qq11 is only asked about
         self.assertEqual(nd.mention_counts(names + ["plain"], texts), {"abcd12": 1, "efgh34": 2, "wxyz56": 1})
         near = nd.numbers_near(names, texts)
-        self.assertEqual({k: sorted(v) for k, v in near.items()}, {"abcd12": [100, 402], "efgh34": [5, 100], "wxyz56": [-62]})
+        self.assertEqual({k: sorted(v) for k, v in near.items() if k != nd.LOOSE}, {"abcd12": [100, 402], "efgh34": [5, 100], "wxyz56": [-62]})
+        self.assertEqual(near[nd.LOOSE], {"wxyz56"})                 # named in a sentence that states no number
         seen = nd.numbers_in(texts[0])
         ap = lambda changes: nd.apply_delta(notes, {"changes": changes}, seen, strict=True, near=near)[1]
         self.assertEqual(ap([("abcd12", "402"), ("wxyz56", "-62"), ("efgh34", "100 + 5 = 105")])["mismatch"], [])
