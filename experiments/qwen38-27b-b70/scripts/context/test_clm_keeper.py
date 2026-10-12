@@ -277,6 +277,38 @@ class Keeper(unittest.TestCase):
         _, info = ap([("bamo35", "577 - 7 = 570"), ("mosu40", "392 + 577 = 969")])    # the value bamo35 held before its change: also held
         self.assertEqual(info["mismatch"], [])
 
+    def test_review_findings_of_code_state_p(self):
+        """Each of these stored a wrong value, or lost a right one, before it ran (read-only review, 2026-10-12)."""
+        tool = lambda text: {"role": "tool", "content": text + "\n\n(exit_code=0)"}
+        turns = [tool("ITEM 9/147 (UPDATE)\nabcd12 gained 5. vohi44 went up by as much as bamo35 held at that moment. katu85 was recorded at 523.")]
+        notes = "RULES\n(none)\nSTATE\nabcd12: 70\nvohi44: 228\nbamo35: 402\nkatu85: 650\nzzzz99: 27\nOPEN"
+        names = ["abcd12", "vohi44", "bamo35", "katu85", "zzzz99"]
+        near, seen = NS["numbers_near"](names, turns), NS["numbers_in"](turns[0]["content"])
+        ap = lambda changes: NS["apply_delta"](notes, {"rules": [], "open": None, "changes": changes}, seen, strict=True, near=near)
+        # 1. leaving out one made-up line must not leave the next one standing on it
+        for lines in ([("abcd12", "70 - 27 = 43"), ("abcd12", "43 - 31 = 12")], [("abcd12", "70 + 5 = 75"), ("abcd12", "75 - 27 = 48")]):
+            kept, left = NS["without_doubtful"](notes, {"rules": [], "open": None, "changes": lines}, seen, True, near)
+            new, _ = NS["apply_delta"](notes, kept, seen, strict=True, near=near)
+            self.assertIn(new.splitlines()[3], ("abcd12: 70", "abcd12: 75"), lines)
+            self.assertNotIn("abcd12: 12", new)
+        # 2. a name the NOTES hold is never taken for another name misspelled
+        delta = {"rules": [], "open": None, "changes": [("bako35", "40 + 5 = 45")]}
+        self.assertEqual(NS["respell"](delta, {"bamo35": 1}, ["bako35", "bamo35"])[1], {})
+        self.assertEqual(NS["respell"](delta, {"bamo35": 1})[1], {"bako35": "bamo35"})        # unknown to the NOTES: a misspelling
+        # 4. an amount is not excused by a value that a thing these turns never mention happens to hold (zzzz99: 27)
+        self.assertEqual(len(ap([("katu85", "650 - 27 = 623")])[1]["mismatch"]), 1)
+        self.assertEqual(ap([("vohi44", "228 + 402 = 630")])[1]["mismatch"], [])              # bamo35 is mentioned: its value counts
+        # 4b. the amounts of a packed line do not become values that later lines may use (its sets and its result do)
+        turns2 = [tool("ITEM 9/147 (UPDATE)\nabcd12 gained 27. abcd12 was set to 174. katu85 was recorded at 523.")]
+        notes2 = "RULES\n(none)\nSTATE\nabcd12: 578\nkatu85: 650\nOPEN"
+        near2, seen2 = NS["numbers_near"](["abcd12", "katu85"], turns2), NS["numbers_in"](turns2[0]["content"])
+        ap2 = lambda changes: NS["apply_delta"](notes2, {"rules": [], "open": None, "changes": changes}, seen2, strict=True, near=near2)[1]["mismatch"]
+        self.assertEqual(len(ap2([("abcd12", "578 + 27 = 605, then set to 174"), ("katu85", "650 - 27 = 623")])), 1)
+        self.assertEqual(ap2([("abcd12", "578 + 27 = 605, then set to 174"), ("katu85", "650 - 174 = 476")]), [])   # 174: abcd12 holds it now
+        # 5. a name written into the working is not an amount
+        self.assertEqual(ap([("vohi44", "228 + 402 (bamo35) = 630")])[1]["mismatch"], [])
+        self.assertTrue(NS["amounts_ok"](" + 402 (bamo35's value)", {402}) and not NS["amounts_ok"](" + 35", {402}))
+
     def test_a_misspelled_name_is_put_right(self):
         mentions = {"vozimi36": 1, "abcd12": 2, "vozu36": 1, "wxyz56": 1}
         delta = {"rules": [], "open": None, "changes": [("vozi36", "212 - 47 = 165"), ("abcd12", "5"), ("qqqq99", "7"), ("plain", "x")]}

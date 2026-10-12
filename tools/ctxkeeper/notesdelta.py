@@ -224,9 +224,11 @@ def amounts_ok(working: str, amounts: set[int] | None) -> bool:
         return True
     have = {abs(a) for a in amounts}
     text = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", working).replace("\u2212", "-").replace("\u00d7", "*").replace("\u00f7", "/")
-    for op, k in re.findall(r"([-+*/x]?)\s*\(?\s*-?(\d+)", text):
+    text = re.sub(r"(?:(?<=[\d)])|^)\s*x\s*(?=[\d(-])", " * ", text)
+    text = re.sub(r"(?<![\w.])[A-Za-z_]\w*", " ", text)        # a name in the working (`+ 402 (bamo35)`) is not an amount
+    for op, k in re.findall(r"([-+*/]?)\s*\(?\s*-?(\d+)", text):
         # "was doubled", "lost a third": times or divided by a small whole number is said in words, not in figures
-        if int(k) not in have and not (op in ("*", "/", "x") and 2 <= int(k) <= 10):
+        if int(k) not in have and not (op in ("*", "/") and 2 <= int(k) <= 10):
             return False
     return True
 
@@ -328,7 +330,8 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
             have.append(r)
             info["new_rules"] += 1
     where = {fact_of(ln)[0]: i for i, ln in enumerate(state)}
-    ever = {v for v in (number_of(fact_of(ln)[1]) for ln in state) if v is not None}     # every value held, then and since
+    # values that things mentioned in these turns hold, now and as the reply is applied: an amount may be one of them
+    ever = {v for k, v in ((fact_of(ln)[0], number_of(fact_of(ln)[1])) for ln in state) if v is not None and near is not None and k in near}
     for name, value in delta.get("changes", []):
         if NO_CHANGE.fullmatch(value.strip()):           # `name: (no change)`: mentioned, not changed
             steps[name] = steps.get(name, 0) + 1
@@ -346,7 +349,7 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
                 steps[name] = steps.get(name, 0) + counted + opening
                 info["chained"] = info.get("chained", 0) + 1
                 line = f"{name}: {final}" if final is not None else f"{name}: removed"
-                ever.update(n for n in map(int, re.findall(r"(?<![\w.])-?\d+(?![\d.]*\d)", REMARK.sub(" ", value).replace("\u2212", "-"))))
+                ever.update(sets if final is None else sets + [final])
                 if name in where:
                     state[where[name]] = line
                     info["changed"] += 1
@@ -389,7 +392,7 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
             elif start is not None and old is not None and re.match(r"(removed|closed|struck|deleted|gone)\b", old.lower()):
                 info["mismatch"].append(f"{name}: working starts from {start}, NOTES say {old.split()[0]}")
             if near is not None and strict and start is not None and len(info["mismatch"]) == asked:
-                expr = value.replace("\u2212", "-").split("=")[-2]
+                expr = REMARK.sub(" ", value).replace("\u2212", "-").split("=")[-2]
                 first = re.match(r"\(?\s*-?\d+", expr.strip())
                 if first and not amounts_ok(expr.strip()[first.end():], near.get(name, set()) | ever):
                     info["mismatch"].append(f"{name}: `{value}` adds or takes an amount the turns do not state for it; read the item again")
@@ -425,18 +428,19 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
     return "\n".join(["RULES"] + (rules or ["(none)"]) + ["STATE"] + state + ["OPEN"] + opened), info
 
 
-def respell(delta: dict, mentions: dict[str, int]) -> tuple[dict, dict[str, str]]:
+def respell(delta: dict, mentions: dict[str, int], known: list[str] | tuple = ()) -> tuple[dict, dict[str, str]]:
     """A line for an identifier-like name that the turns never mention, a letter or two from a name they do mention
     and for which the reply has no line, is that name misspelled: the line is given to it. Returns the reply and
     {written: meant}. (X32n2 at 1M wrote `vozi36` for `vozimi36`; the line was left out as unsupported, the count
     question about vozimi36 got an 8,192-token reply that could not be used, and the change was lost.)
-    `mentions`: how often the turns mention each identifier-like name (mention_counts)."""
+    `mentions`: how often the turns mention each identifier-like name (mention_counts). A name the NOTES hold
+    (`known`) is never taken for a misspelling: `bako35` and `bamo35` can both be real."""
     import difflib
     names = list(dict.fromkeys(k for k, _ in delta["changes"]))
     free = [m for m in mentions if m not in names]
     fixed: dict[str, str] = {}
     for n in names:
-        if n in mentions or len(n) < 3 or not re.search(r"[\d_]", n) or " " in n:
+        if n in mentions or n in known or len(n) < 3 or not re.search(r"[\d_]", n) or " " in n:
             continue
         tail = re.search(r"\d*$", n).group(0)
         close = [m for m in free if re.search(r"\d*$", m).group(0) == tail
@@ -464,11 +468,16 @@ def without_doubtful(notes: str, delta: dict, seen: set[int] | None, strict: boo
         if not bad:
             break
         name = bad[0].split(":", 1)[0]
-        before = sum(m.split(":", 1)[0] == name for m in info["mismatch"])
+        mine = [m for m in info["mismatch"] if m.split(":", 1)[0] == name]
         for i in [i for i, (k, _) in enumerate(changes) if k == name]:
             trial = changes[:i] + changes[i + 1:]
             _, t = apply_delta(notes, dict(delta, changes=trial), seen, strict=strict, near=near)
-            if sum(m.split(":", 1)[0] == name for m in t["mismatch"]) < before:
+            left = [m for m in t["mismatch"] if m.split(":", 1)[0] == name]
+            # fewer questions, and no working that now starts from a value not questioned before: taking out
+            # `70 - 27 = 43` must not leave `43 - 31 = 12` standing as "working starts from 43" (it would be
+            # applied: 12 stored for 75)
+            starts = lambda ms: set(re.findall(r"working starts from (-?\d+)", " | ".join(ms)))
+            if len(left) < len(mine) and starts(left) <= starts(mine):
                 dropped.append(f"{changes[i][0]}: {changes[i][1]}")
                 changes = trial
                 break

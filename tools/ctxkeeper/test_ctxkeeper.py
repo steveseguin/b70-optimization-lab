@@ -407,6 +407,30 @@ class InPlace(unittest.TestCase):
         self.assertEqual((s.state["inplace_reasks"], s.state["inplace_failed"]), (0, 0))
         self.assertIn("a misspelled name put right", self.events(keeper))
 
+    def test_a_correction_under_the_same_misspelling_replaces_the_line_it_corrects(self):
+        first = "NEW RULES\n(none)\nCHANGES\nabcd00: 0\nabd01: 999\nOPEN\n"
+        second = "NEW RULES\n(none)\nCHANGES\nabd01: 7\nOPEN\n"
+        model = LedgerModel(script=[first, second])
+        keeper = self.keeper(model, notes_checks="near")
+        s = self.run_conversation(keeper, 4)
+        notes = s.state["notes"].splitlines()
+        self.assertIn("abcd01: 7", notes)                                          # asked about the working; the answer came under the same misspelling
+        self.assertFalse([ln for ln in notes if ln.startswith("abd01")])
+        self.assertEqual(s.state["inplace_reasks"], 1)
+
+    def test_a_second_reply_without_the_layout_is_asked_for_the_layout_once_and_its_rules_count(self):
+        first = "NEW RULES\n(none)\nCHANGES\nabcd00: 0\nabcd01: 999\nabcd02: 14\nOPEN\n"
+        loose = "You are right, the line should read abcd01: 7."
+        cut_off = "NEW RULES\n- A late rule.\nCHANGES\nabcd01: 7"
+        model = LedgerModel(script=[first, loose, cut_off])
+        keeper = self.keeper(model, notes_checks="near")
+        s = self.run_conversation(keeper, 4)
+        asked = [r["messages"][-1]["content"][:40] for r in model.notes_requests]
+        self.assertTrue(asked[1].startswith("Check these lines") and asked[2].startswith("Your reply did not use the layout"), asked)
+        self.assertIn("abcd01: 7", s.state["notes"].splitlines())                 # the third reply was in the layout and is used
+        self.assertEqual(ck.rule_lines(s.state["notes"]), ["A late rule."])
+        self.assertEqual(s.state["inplace_failed"], 0)
+
     def test_no_usable_second_reply_means_the_first_stands_without_the_questioned_line(self):
         model = self.Tampering({1: ["abcd01: 999"]}, on_check=[""])
         keeper = self.keeper(model, notes_checks="near")
@@ -519,16 +543,18 @@ class Policy(unittest.TestCase):
         sent = self.model.requests[-1]
         self.assertEqual(sent["messages"][-1]["content"], "item 3 (tool): ITEM 3: the clerk moved counter abcd03 to 21.")
         self.assertIn("All numbers here are item numbers", sent["tools"][-1]["function"]["description"])
-        self.model.recall_once = {"notes_at": 4}
+        saves = [json.loads(l)["upto"] for l in (s.dir / "notes-history.jsonl").read_text().splitlines()]
+        item = {r["n"]: r["k"] for r in s.archive.labelled(k.recall_label)}
+        first_item, first_msg = item[saves[0]], saves[0]
+        self.assertLess(first_item, first_msg - 2)                                 # the two numberings differ here, so the test can tell
+        self.model.recall_once = {"notes_at": first_item - 1}
         k.complete({"model": "m", "messages": asked})
-        self.assertRegex(self.model.requests[-1]["messages"][-1]["content"],
-                         r"^recall: no NOTES were saved at or before item 4 \(the first save covers items up to \d+\)$")
-        self.model.recall_once = {"notes_at": 14}
+        self.assertEqual(self.model.requests[-1]["messages"][-1]["content"],
+                         f"recall: no NOTES were saved at or before item {first_item - 1} (the first save covers items up to {first_item})")
+        self.model.recall_once = {"notes_at": first_item + 1}                      # as a message number this is before the first save
         k.complete({"model": "m", "messages": asked})
         text = self.model.requests[-1]["messages"][-1]["content"]
-        self.assertRegex(text, r"^NOTES as saved after item \d+\.")
-        self.assertNotIn("message", text.split("\n")[0])
-        self.assertLessEqual(int(text.split()[5].rstrip(".")), 14)
+        self.assertTrue(text.startswith(f"NOTES as saved after item {first_item}. Anything said in items {first_item + 1}-{first_item + 1} is not in them"), text[:160])
 
     def test_notes_history_answers_what_was_true_then(self):
         s = self.run_conversation(30)
@@ -704,8 +730,10 @@ class Policy(unittest.TestCase):
         self.assertEqual(resp["choices"][0]["message"]["content"], "Answer with what I have.")
         final = seen[-1]["messages"]
         self.assertEqual(final[-1]["content"], ck.RECALL_ROOM_NOTE)
-        results = [m["content"] for m in final if m.get("role") == "tool" and str(m.get("content")).startswith("message ")]
-        self.assertTrue(results and results[-1].endswith(ck.RECALL_CUT_NOTE))
+        results = [m["content"] for m in final if m.get("role") == "tool" and str(m.get("tool_call_id", "")).startswith("c")]
+        self.assertTrue(results and results[0].startswith("["), results[:1])      # fitted: the count line, then the nearest matches
+        self.assertRegex(results[0].splitlines()[0], r"^\[\d+ matches; showing the newest \d+; \d+ earlier ones are not shown")
+        self.assertTrue(results[0].splitlines()[-1].startswith("message "))
         self.assertLess(len(seen), self.keeper.max_recalls + 1)                   # stopped by room, not by the count
         self.assertLessEqual(self.keeper.tokens(s, final), self.keeper.budget - self.keeper.reply_reserve + 150)
         self.assertEqual(s.state["recall_limit_hit"], 1)
@@ -923,6 +951,32 @@ class Pure(unittest.TestCase):
         self.assertIn("All numbers here are item numbers", tool)
         self.assertNotIn("message number", tool)
         self.assertIn("All numbers here are message numbers", ck.RECALL_TOOL["function"]["description"])
+
+    def test_labels_come_only_from_what_the_task_delivered_and_the_pattern_is_checked(self):
+        d = tempfile.TemporaryDirectory()
+        self.addCleanup(d.cleanup)
+        a = ck.Archive(Path(d.name) / "a.jsonl")
+        a.add(3, [{"role": "tool", "content": "ITEM 7/9 (UPDATE)\nabcd12 was set to 5."},
+                  {"role": "assistant", "content": "ITEM 2/9 was the one with the rule.\nabcd12 is 5 now."},
+                  {"role": "tool", "content": "ITEM x/9 (UPDATE)\nabcd12 gained 1."}])
+        label = ck.re.compile(r"(?m)^ITEM (\w+)/")
+        self.assertEqual([(r["k"], r["own"]) for r in a.labelled(label)], [(7, True), (7, False), (7, False)])
+        with self.assertRaises(ValueError):
+            ck.Keeper(lambda b: reply("ok"), Path(d.name) / "k", recall_label=r"^ITEM \d+/")
+
+    def test_a_search_result_is_fitted_by_leaving_out_the_farthest_matches(self):
+        d = tempfile.TemporaryDirectory()
+        self.addCleanup(d.cleanup)
+        a = ck.Archive(Path(d.name) / "a.jsonl")
+        a.add(5, [{"role": "tool", "content": f"The porter moved box {i}. Nothing else happened."} for i in range(50)])
+        out = a.recall(pattern="porter", before=40, max_chars=600).splitlines()
+        self.assertRegex(out[0], r"^\[36 matches; showing the \d+ nearest before message 40; \d+ earlier ones are not shown")
+        self.assertEqual(out[-1], "message 40 (tool): The porter moved box 35.")     # the nearest one is there
+        self.assertLessEqual(sum(len(x) + 1 for x in out), 600)
+        self.assertLess(len(out), 20)
+        onward = a.recall(pattern="porter", after=10, max_chars=600).splitlines()
+        self.assertEqual(onward[1], "message 10 (tool): The porter moved box 5.")
+        self.assertLessEqual(sum(len(x) + 1 for x in onward), 600)
 
     def test_text_of_counts_calls_and_parts(self):
         m = {"role": "assistant", "content": [{"type": "text", "text": "hello"}], "reasoning_content": "hmm",

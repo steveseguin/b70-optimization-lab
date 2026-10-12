@@ -1476,5 +1476,20 @@ listed every live value there in every reply, about a fifth of what the notes ca
 amount may be a value some thing of STATE holds or held, and times or divided by 2 to 10 passes. The harness takes
 the proxy's rule that a questioned reply never falls back to the full rewrite.
 
-Next in this queue, as soon as the review is in: X32p on both 240K seeds (gate as before) and on the 1M stream.
+**Reviewed before it ran** (a read-only review by a second model instance: the Codex CLI cannot run beside the
+research server, a reviewer that only reads can). Ten findings, eight of them defects, all fixed with tests before
+any run: leaving out one made-up line could leave the next one standing on it (`70 - 27 = 43` out, `43 - 31 = 12`
+stored); a line for a real name could be given to a similar name (`bako35` to `bamo35`); a correction written
+under the same misspelling was lost; any value held anywhere excused an invented amount (now: only values of
+things the noted turns mention, and the amounts of a packed line no longer count as held values); a name written
+into the working (`+ 402 (bamo35)`) was read as the amount 35; the label pattern was not checked and the model's
+own text could set a label; a test of `notes_at` passed in either numbering; a second reply without the layout
+was thrown away without the one layout question, and its rules with it; a search result too long for the room
+lost its nearest matches. Two are stated tradeoffs, not fixed: times or divided by 2 to 10 is never checked against
+the text, and a value a mentioned thing held earlier in the same reply still counts.
+Not covered by a test: the harness path "the first reply stands" (the proxy's is).
+
+Next in this queue: X32p on both 240K seeds (gate as before) and on the 1M stream. The proxy for these runs is
+started by hand (`start-proxy-p.sh` in the campaign folder: campaign 12's options plus `--recall-label
+'(?m)^ITEM (\d+)/' --recall-unit item`), because the running campaign script starts one only for the arms it knew.
 Expected at 1M: 225 or more of 228 in 46 to 54 minutes. A sign slip of the kind above can still cost one.

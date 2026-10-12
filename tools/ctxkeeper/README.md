@@ -126,15 +126,32 @@ working that added up). What changed after that run:
   line's working to be stated for that thing. On the saved replies of that run this would have asked again 9 times
   instead of 33.
 
-These are unit-tested and replayed on the saved replies; see the lab note (campaign 12) for the re-run.
+With these (campaign 12, build X32n2): **39/39 in 8.8 minutes and 46/46 in 9.7 at 240K** (the harness arm it was
+built from: 9.9 and 10.0), no value wrong in any saved NOTES version, and **220/228 on the 1M-token stream in 53
+minutes** (the bar was 220 in under 70; the harness arm: 228 in 50). Of 53 minutes, 15 are the server reading (the
+1.06M-token stream once, and 1.4M tokens more in turns re-read after cuts, search results and notes calls), 31 are
+the server writing (119K tokens of notes, 43K in the agent's own turns, 29K in search rounds), the proxy itself adds
+24 seconds, and the client and its shell commands the rest.
+
+Seven of that run's eight misses were one confusion: `recall` counted messages, the task counts items, and a search
+"before 332" meant as item 332 stopped at message 332. Hence:
+
+- `--recall-label REGEX` (first group: the content's own number, for example `'(?m)^ITEM (\d+)/'`) and
+  `--recall-unit WORD` (what that number counts, default `item`): `recall` then shows and takes that number and
+  nothing else. Without the option it counts archived messages, as before.
+- When there are more matches than fit, the ones nearest to where the search was anchored are shown (`before`: the
+  last ones before it; `after`: the first ones after it; neither: the newest) and the line that says how many were
+  left out comes first.
+- A notes line for a name that the noted turns never mention, a letter or two from a mentioned name that has no
+  line, is taken as that name misspelled.
 
 ## Limits
 
 - Measured on one synthetic task family, one model and one machine. As a harness policy: 39/39 and 46/46 at 240K,
   226/228 on a 1M-token stream. As this proxy, with a plain agent that sends its whole history: 37/39 and 42/46 at
   240K on its first two runs against the real server; the second exposed a defect in the notes call (fixed, not yet
-  re-run; after the fixes 39/39, 44/46 and 222/228 on the 1M stream in 95 minutes; with in-place notes 39/39, 46/46
-  and 216/228 in 76 minutes, see above). Not yet run under a real coding or research agent. Tests against a scripted model: `python3 -m unittest test_ctxkeeper test_notesdelta`.
+  re-run; after the fixes 39/39, 44/46 and 222/228 on the 1M stream in 95 minutes; with in-place notes 39/39 in 9
+  minutes, 46/46 in 10 and 220/228 in 53, see above). Not yet run under a real coding or research agent. Tests against a scripted model: `python3 -m unittest test_ctxkeeper test_notesdelta`.
 - Token counts are characters over a ratio learned from the server's `usage.prompt_tokens`, with margins. A server
   that reports no usage keeps the starting guess of 3.6 characters per token.
 - `recall` is a text and regular-expression search over archived sentences with message numbers: it answers "what
@@ -144,7 +161,7 @@ These are unit-tested and replayed on the saved replies; see the lab note (campa
   and the recall is dropped. A turn gets at most `--max-recalls` searches (8) and no more than fit the window;
   after that the model is asked once more without the tool, and the client is never handed a `recall` call.
 - A value set in words can still be noted as a change by the same number ("recorded at sixty-four" as `208 - 64 =
-  144`): the working adds up and the amount is in the sentence, so no check sees it. One such line in 77 notes
-  calls at 1M.
+  144`), and a change can be noted with the wrong sign ("+35" as `-46 - 35 = -81`): the working adds up and the
+  amount is in the sentence, so no check sees it. One such line in 77 notes calls at 1M, and one in 76.
 - One choice per request (`n` = 1). A conversation is recognised as the same one by what was said (roles, text, tool
   calls), not by thinking the client may have dropped or by how text parts were split.

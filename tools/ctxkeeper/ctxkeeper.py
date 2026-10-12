@@ -367,15 +367,20 @@ class Archive:
         is true for the message that carries the label itself."""
         rows, at = self.rows(), 0
         for r in rows:
-            m = label.search(r["text"]) if label else None
-            if m:
+            # only a tool result or a user message carries a label: the model's own text may quote one
+            m = label.search(r["text"]) if label and r["role"] in ("tool", "user") else None
+            if m and m.group(1) and m.group(1).isdigit():
                 at = int(m.group(1))
+            else:
+                m = None
             r["k"], r["own"] = (at if label else r["n"]), bool(m) or not label
         return rows
 
     def recall(self, pattern: str | None = None, before: int | None = None, after: int | None = None,
                last: int | None = None, message: int | None = None, limit: int = 40,
-               label: re.Pattern | None = None, unit: str = "message") -> str:
+               label: re.Pattern | None = None, unit: str = "message", max_chars: int | None = None) -> str:
+        """`max_chars`: the room there is; matches are left out, farthest from the anchor first, until the result
+        fits (the count line says so)."""
         rows = self.labelled(label)
         if message is not None:
             hit = [r for r in rows if r["k"] == message and r["own"]]
@@ -404,17 +409,20 @@ class Archive:
         if not hits:
             return f"recall: nothing in the archive matches {pattern!r}" + (
                 f" at or before {unit} {before}" if before is not None else "") + (f" from {unit} {after} on" if after is not None else "")
-        if len(hits) <= (last or limit):
+        # More than fit (the limit, or the room): the ones nearest to where the search was anchored, and the count
+        # comes FIRST (a note at the end was read as "these are all": the first 40 of 63 hid every later change).
+        tail = bool(last) or before is not None or after is None       # the nearest matches are the last ones
+        keep = min(last or limit, len(hits))
+        while keep > 1 and max_chars is not None and sum(len(h) + 1 for h in (hits[-keep:] if tail else hits[:keep])) + 160 > max_chars:
+            keep -= 1
+        if keep == len(hits):
             return "\n".join(hits)
-        # more than fit: the ones nearest to where the search was anchored, and the count comes FIRST (a note at the
-        # end was read as "these are all": the first 40 of 63 matches hid every change after item 150)
-        if last or before is not None or after is None:
-            shown, which = hits[-(last or limit):], (f"the {last or limit} nearest before {unit} {before}" if before is not None and not last
-                                                     else f"the newest {last or limit}")
-            more = f"{len(hits) - len(shown)} earlier ones are not shown (narrow with `after`, or search for less)"
+        if tail:
+            shown, which = hits[-keep:], (f"the {keep} nearest before {unit} {before}" if before is not None and not last else f"the newest {keep}")
+            more = f"{len(hits) - keep} earlier ones are not shown (narrow with `after`, or search for less)"
         else:
-            shown, which = hits[:limit], f"the first {limit} from {unit} {after} on"
-            more = f"{len(hits) - len(shown)} later ones are not shown (narrow with `before`, or search for less)"
+            shown, which = hits[:keep], f"the first {keep} from {unit} {after} on"
+            more = f"{len(hits) - keep} later ones are not shown (narrow with `before`, or search for less)"
         return f"[{len(hits)} matches; showing {which}; {more}]\n" + "\n".join(shown)
 
 
@@ -542,6 +550,8 @@ class Keeper:
         # recall_label: a pattern whose first group is the content's own number (`(?m)^ITEM (\d+)/`); `recall` then
         # shows and takes that number, called recall_unit, instead of message numbers
         self.recall_label = re.compile(recall_label) if recall_label else None
+        if self.recall_label is not None and self.recall_label.groups < 1:
+            raise ValueError("--recall-label needs one group for the number, such as '(?m)^ITEM (\\d+)/'")
         self.recall_unit = recall_unit if recall_label else "message"
         self.recall_tool = recall_tool(self.recall_unit) if recall_label else RECALL_TOOL
         self.sessions: dict[str, Session] = {}
@@ -752,6 +762,7 @@ class Keeper:
         thinking, asked_count, asked_working, asked_layout = self.notes_thinking, not strict, False, False
         rules_seen: list[str] = []
         earlier: dict | None = None                  # the reply before an asked-for one (see notesdelta.merge_replies)
+        spelt: dict[str, str] = {}                   # misspelled names of this cut and what was meant (notesdelta.respell)
         why, new, info = "no reply", "", {}
         for attempt in (1, 2, 3, 4):
             out: dict[str, Any] = {"model": model, "messages": req, "max_tokens": self.notes_max_tokens, "temperature": 0}
@@ -778,7 +789,11 @@ class Keeper:
             delta = nd.parse_delta(text) if finish != "length" else None
             s.log_event({"event": "in-place notes reply", "attempt": attempt, "finish_reason": finish, "thinking": thinking,
                          "written": usage.get("completion_tokens"), "reply": text[:6000]})
-            if delta is None and earlier is not None:
+            if delta is None:
+                part = nd.parse_delta(text, need_changes=False)      # its rules still count, if that section is complete
+                if part and re.search(r"(?m)^\W*(CHANGES|OPEN)\W*$", text):
+                    rules_seen += [r for r in part["rules"] if not any(nd.same_rule(r, x) for x in rules_seen)]
+            if delta is None and earlier is not None and (not text or finish == "length" or asked_layout):
                 # Asked about some lines of a reply that was in the layout, the model wrote nothing usable (X32n,
                 # seed 1: an empty reply, twice; the whole cut then went to the full rewrite, which lost a change).
                 # The reply before it stands, without the lines whose number the turns do not state.
@@ -794,9 +809,6 @@ class Keeper:
                 break
             if delta is None:
                 why = "reply cut off by the token cap" if finish == "length" else "reply without the NEW RULES / CHANGES layout"
-                part = nd.parse_delta(text, need_changes=False)      # its rules still count, if that section is complete
-                if part and re.search(r"(?m)^\W*(CHANGES|OPEN)\W*$", text):
-                    rules_seen += [r for r in part["rules"] if not any(nd.same_rule(r, x) for x in rules_seen)]
                 s.log_event({"event": "in-place notes reply rejected", "attempt": attempt, "why": why, "reply_start": text[:160]})
                 if asked_layout:
                     break
@@ -807,13 +819,17 @@ class Keeper:
             # a rule named in any reply of this cut is kept: a second, asked-for reply that leaves it out must not lose it
             rules_seen += [r for r in delta["rules"] if not any(nd.same_rule(r, x) for x in rules_seen)]
             # an asked-for reply replaces the lines of the names it mentions; the other lines of the reply before it stay
+            if strict:
+                # a misspelled name is put right in every reply of this cut, before the replies are merged (a
+                # correction written under the same misspelling must replace the line it corrects)
+                held = nd.state_keys(s.state["notes"])
+                delta = dict(delta, changes=[(spelt.get(k, k), v) for k, v in delta["changes"]])
+                delta, more = nd.respell(delta, nd.mention_counts(held + nd.identifiers_in(texts), texts), held)
+                if more:
+                    spelt.update(more)
+                    s.log_event({"event": "in-place notes: a misspelled name put right", "names": more})
             delta = earlier = nd.merge_replies(earlier, delta)
             delta["rules"] = list(rules_seen)
-            if strict:                               # a misspelled name is put right before anything is judged
-                delta, spelt = nd.respell(delta, nd.mention_counts(nd.state_keys(s.state["notes"]) + nd.identifiers_in(texts), texts))
-                if spelt:
-                    earlier = delta
-                    s.log_event({"event": "in-place notes: a misspelled name put right", "names": spelt})
             # a line for a name that none of these turns mentions is not a change these turns made (see OVERLAP_NOTE)
             delta = self.supported(delta, texts, strict)
             if delta.get("unsupported"):
@@ -983,7 +999,8 @@ class Keeper:
                             text = s.notes_at(int(args["notes_at"]), self.recall_label, self.recall_unit)
                         else:
                             text = s.archive.recall(**{k: args[k] for k in ("pattern", "before", "after", "last", "message") if args.get(k) is not None},
-                                                    label=self.recall_label, unit=self.recall_unit)
+                                                    label=self.recall_label, unit=self.recall_unit,
+                                                    max_chars=int(max(room - RECALL_MARGIN, 0) * s.state["ratio"]))
                     except Exception as exc:
                         args, text = {}, f"recall: bad arguments ({exc})"
                     # a result never takes the window past the room for the reply: it is cut to what is left, and
