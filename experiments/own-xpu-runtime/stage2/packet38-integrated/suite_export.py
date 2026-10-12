@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+"""Export hash-bound evidence from an actually executed CPU suite directory."""
+import argparse,hashlib,json
+from pathlib import Path
+import pipeline,suite
+P=Path(__file__).resolve().parent
+
+def canonical_hash(value):
+    return hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+
+def export_run(run,destination):
+    run=run.resolve();summary=json.loads((run/'summary.json').read_text())
+    manifest=json.loads((run/'suite-manifest.snapshot.json').read_text())
+    pipeline.require(summary.get('device_executed') is False,'CPU suite export requires no device execution')
+    pipeline.require(summary.get('passed') is True,'cannot export failed suite as passing')
+    pipeline.require(summary['manifest_sha256']==pipeline.sha(run/'suite-manifest.snapshot.json'),'suite manifest snapshot changed')
+    entries={entry['prompt_id']:entry for entry in manifest['prompts']};rows=summary['rows']
+    repeats={row['repeat'] for row in rows};pipeline.require(repeats and repeats==set(range(1,max(repeats)+1)),'repeat coverage')
+    pipeline.require(len(rows)==len(entries)*len(repeats) and {(r['prompt_id'],r['repeat']) for r in rows}=={(p,r) for p in entries for r in repeats},'executed request coverage')
+    ranks=[]
+    for rank in (0,1):
+        launch=run/'ranks'/f'rank{rank}-launch.json';teardown=run/'ranks'/f'rank{rank}/receipt.json'
+        launched=json.loads(launch.read_text());closed=json.loads(teardown.read_text())
+        pipeline.require(launched.get('device_executed') is False and closed.get('passed') is True,'rank execution receipt failed')
+        pipeline.require(closed.get('rank')==rank and all(row.get('safe_to_exit') and row.get('live_bytes')==0 and row.get('in_flight')==0 for row in closed['teardown']),'rank teardown ownership')
+        ranks.append(dict(rank=rank,pid=launched['pid'],launch_sha256=pipeline.sha(launch),teardown_sha256=pipeline.sha(teardown)))
+    pipeline.require(ranks[0]['pid']!=ranks[1]['pid'],'rank PID identity')
+    checker=suite.checker_module();observed=[];binaries=set()
+    for row in rows:
+        receipt=run/row['receipt'];pipeline.require(receipt.resolve().is_relative_to(run),'receipt escapes run directory')
+        output=receipt.parent;result=json.loads(receipt.read_text());entry=entries[row['prompt_id']]
+        pipeline.require(result.get('device_executed') is False and result.get('passed') is True,'request execution failed')
+        pipeline.require(result.get('oracle_check',{}).get('passed') is True,'request lacked exact oracle check')
+        pipeline.require(result.get('schema')=='own-runtime.iq3.packet26.run.v1','actual runtime receipt schema')
+        trace=result['rank_trace']
+        pipeline.require(all(any(r['rank']==rank and r['op']==pipeline.HALF for r in trace) for rank in (0,1)),'missing executed rank HALF evidence')
+        timing_hashes={str(rank):pipeline.sha(output/f'rank{rank}/timings.jsonl') for rank in (0,1)}
+        tokens,fixtures=checker.check_prompt(output,suite.ROOT/entry['oracle_directory'],entry,suite.ROOT)
+        inventory=checker.fixture_inventory(output,tokens);binaries.add(result['binary_sha256'])
+        observed.append(dict(prompt_id=row['prompt_id'],repeat=row['repeat'],tokens=result['tokens'],token_count=tokens,
+                    token_sha256=canonical_hash(result['tokens']),fixture_files=fixtures,fixture_inventory_sha256=canonical_hash(inventory),
+                    receipt_sha256=pipeline.sha(receipt),rank_timing_sha256=timing_hashes,rank_trace_sha256=canonical_hash(trace),binary_sha256=result['binary_sha256'],
+                    run_checker_sha256=result['oracle_check']['checker_sha256'],export_checker_sha256=checker.source_sha256,
+                    acceptance=result.get('acceptance'),stats=result['stats'],controller=result['controller'],draft=result['draft'],exact=True))
+    pipeline.require(len(binaries)==1,'CPU suite mixed binary identities')
+    result=dict(schema='packet38.real-suite-cpu.v1',passed=True,device_executed=False,real_model_execution=True,
+                no_speed_claim=True,complete_frozen_suite=manifest.get('complete') is True,
+                admitted_prompts=len(entries),expected_frozen_prompts=12,repeats=len(repeats),requests=len(observed),
+                token_count=sum(r['token_count'] for r in observed),fixture_files=sum(r['fixture_files'] for r in observed),
+                binary_sha256=next(iter(binaries)),manifest_sha256=summary['manifest_sha256'],summary_sha256=pipeline.sha(run/'summary.json'),
+                input_admission_sha256=pipeline.sha(run/'input-admission.json'),ranks=ranks,rows=observed,
+                evidence_directory=str(run.relative_to(P)) if run.is_relative_to(P) else str(run),
+                scope='actual persistent CPU rank executions; exact tokens and every retained fixture rechecked; incomplete manifest explicitly reported')
+    pipeline.save(destination,result);return result
+
+if __name__=='__main__':
+    ap=argparse.ArgumentParser();ap.add_argument('run',type=Path);ap.add_argument('--output',type=Path,default=P/'suite-real-cpu.json')
+    a=ap.parse_args();print(json.dumps(export_run(a.run,a.output),indent=2))
