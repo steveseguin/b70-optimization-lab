@@ -517,6 +517,27 @@ class Keeper(unittest.TestCase):
         # emphasis round a set; a remark as a part of its own after the last sum
         self.assertEqual(run(578, "abcd12 gained 62. Then abcd12 was set to 174.", "578 + 62 = 640, then **set to 174**"), (0, [], [], 174))
         self.assertEqual(run(10, "abcd12 gained 2. abcd12 gained 2. Then abcd12 was doubled.", "10 + 2 = 12, 12 + 2 = 28, (then doubled)")[:2], (1, [0]))
+        # seventh: changes said without their number (the hard stream). A line without working is as good as its
+        # working when the change is one the turns can have said so
+        self.assertEqual(run(520, "abcd12 was doubled.", "520 \u2192 1040"), (0, [], [], 1040))
+        self.assertEqual(run(520, "abcd12 was doubled.", "1040"), (0, [], [], 1040))
+        self.assertEqual(run(849, "A third of abcd12 was written off.", "849 - 283 = 566 (item 36, a third written off)"), (0, [], [], 566))
+        self.assertEqual(run(-93, "abcd12 went down by a third again.", "-93 - 31 (a third) = -124 (item 42)"), (0, [], [], -124))
+        self.assertEqual(run(849, "A third of abcd12 was written off.", "849 \u2192 566"), (0, [], [], 566))
+        self.assertEqual(run(10, "abcd12 gained 5.", "10 \u2192 15")[:2], (1, [0]))                             # a number was stated: show the working
+        self.assertEqual(run(10, "The clerk looked at abcd12. It gained 5.", "10 \u2192 15"), (0, [], [], 15))  # (named without a number: followed)
+        self.assertEqual(run(29, "abcd12 lost 73.", "-132")[:2], (1, [0]))                                       # 29 - 73 is not -132 (N32w)
+        self.assertEqual(run(10, "abcd12 gained 5. abcd12 gained 7.", "10 \u2192 22")[:2], (1, [0]))            # two changes need their working
+        self.assertEqual(run(100, "abcd12 gained 5.", "100 - 37 = 63")[:2], (1, [0]))                            # 37 is no fraction of 100
+        ok = NS["implied_ok"]
+        self.assertTrue(ok(10, 5, set(), True) and ok(9, 6, set(), True) and ok(7, 12, {5}, True) and not ok(7, 13, {5}, True) and not ok(10, 5, {5}, False))
+        tool = lambda text: {"role": "tool", "content": "ITEM 9/147 (UPDATE)\n" + text + "\n\n(exit_code=0)"}
+        turns = [tool("abcd12 received exactly what wxyz56 stood at then.")]
+        notes = "RULES\n(none)\nSTATE\nabcd12: 493\nwxyz56: 56\nOPEN"
+        near, seen = NS["numbers_near"](["abcd12", "wxyz56"], turns), NS["numbers_in"](turns[0]["content"])
+        for line in ("493 \u2192 549 (received exactly what wxyz56 stood at then)", "493 + 56 = 549"):
+            new, info = NS["apply_delta"](notes, {"rules": [], "open": None, "changes": [("abcd12", line)]}, seen, strict=True, near=near)
+            self.assertEqual((new.splitlines()[3], info["mismatch"]), ("abcd12: 549", []), line)
         # absurd input does not raise
         NS["work_out"]("5" + " * 999999999999999" * 22 + " = 7"), NS["work_out"]("10 + 2 = " + "7" * 5000), NS["chain_of"]("10, then 10 + 2 = " + "7" * 5000, 10, set())
         self.assertEqual(run(10, "abcd12 gained 2.", "10 + 2 = " + "7" * 5000)[:1], (1,))
@@ -596,7 +617,8 @@ class Keeper(unittest.TestCase):
         turns = [tool("ITEM 132/147 (UPDATE)\nzija81 went down by sixteen. The bus was 62 minutes late. Next on the list was abcd12. It was opened at 591. "
                       "wxyz56 was set to minus sixty-two.")]
         near = NS["numbers_near"](["zija81", "abcd12", "wxyz56", "plain"], turns)
-        self.assertEqual({k: sorted(v) for k, v in near.items()}, {"zija81": [16, 62], "abcd12": [591], "wxyz56": [-62]})   # signs as stated
+        self.assertEqual({k: sorted(v) for k, v in near.items() if k != NS["LOOSE"]}, {"zija81": [16, 62], "abcd12": [591], "wxyz56": [-62]})   # signs as stated
+        self.assertEqual(near[NS["LOOSE"]], {"abcd12"})        # "Next on the list was abcd12.": named in a sentence without a number
         notes = "RULES\n(none)\nSTATE\nzija81: 134\nmnop78: 5\nOPEN"
         seen = NS["numbers_in"](turns[0]["content"])
         ap = lambda changes: NS["apply_delta"](notes, {"changes": changes}, seen, strict=True, near=near)[1]["mismatch"]

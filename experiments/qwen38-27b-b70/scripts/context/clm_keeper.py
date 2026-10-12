@@ -510,11 +510,31 @@ def steps_in(value: str) -> int:
     return max(n, 1)
 
 
-def amounts_ok(working: str, amounts: set[int] | None) -> bool:
+LOOSE = "\x00said without a number"                  # a key of the `near` table (see numbers_near): the names that some
+                                                     # sentence of the turns mentions without stating any number
+
+
+def implied_ok(old: int, new: int, amounts: set[int], relative: bool) -> bool:
+    """`520 -> 1040` written without working: can the turns have said that change without stating the new number?
+    Only when some sentence mentions the thing without any number (`relative`), and then if the change is times or
+    divided by a small whole number ("was doubled"), a whole fraction of the old value ("a third written off"),
+    or by an amount in `amounts`: what the turns state for the thing or what another thing of these turns holds
+    ("received exactly what sajaro19 stood at"). Then the line is as good as its working. On the stream with such
+    changes (hard, seed 1, 2026-10-12) most questions were about lines like this, and after the second reply
+    seven of them, right ones among them, were left out. Without the condition a value written again passed as a
+    change: `10 -> 20` then `10` as "halved"; `15 + 5 = 20` then `15` as "less the stated 5"."""
+    if not relative:
+        return False
+    d = abs(new - old)
+    return d in {abs(a) for a in amounts} or any(new == old * k or old == new * k or d * k == abs(old) for k in range(2, 11))
+
+
+def amounts_ok(working: str, amounts: set[int] | None, start: int | None = None) -> bool:
     """Every number in this stretch of working (what is added to or taken from the value it starts from) is one the
     turns state for the thing, whatever its sign there; the caller adds every value a thing of STATE holds or held
     while the reply was applied ("went up by as much as bamo35 held at that moment"), and times or divided by a
-    small whole number passes ("was doubled"). Working that is right as arithmetic can still be made up:
+    small whole number passes ("was doubled"), as does a whole fraction of `start`, the value the working begins
+    with (`849 - 283 = 566` for "a third written off"). Working that is right as arithmetic can still be made up:
     X32m at 1M read "recorded katu85 at five hundred and twenty-three" as 623 and wrote `650 - 27 = 623`, which
     starts from the value held and adds up; 27 is nowhere in the turns."""
     if amounts is None:
@@ -523,10 +543,14 @@ def amounts_ok(working: str, amounts: set[int] | None) -> bool:
     text = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", working).replace("\u2212", "-").replace("\u00d7", "*").replace("\u00f7", "/")
     text = re.sub(r"(?:(?<=[\d)])|^)\s*x\s*(?=[\d(-])", " * ", text)
     text = re.sub(r"(?<![\w.])[A-Za-z_]\w*", " ", text)        # a name in the working (`+ 402 (bamo35)`) is not an amount
-    for op, k in re.findall(r"([-+*/]?)\s*\(?\s*-?(\d+)", text):
+    for op, k in re.findall(r"([-+*/]?)\s*\(?\s*-?(\d{1,24})", text):
+        n = int(k)
         # "was doubled", "lost a third": times or divided by a small whole number is said in words, not in figures
-        if int(k) not in have and not (op in ("*", "/") and 2 <= int(k) <= 10):
-            return False
+        if n in have or (op in ("*", "/") and 2 <= n <= 10):
+            continue
+        if start and n and op in ("+", "-") and abs(start) % n == 0 and 2 <= abs(start) // n <= 10:
+            continue                                 # a half, a third ... a tenth of the value it starts from
+        return False
     return True
 
 
@@ -548,7 +572,7 @@ def restated(value: str) -> str | None:
 
 
 def chain_of(value: str, held: int | None, stated: set[int], amounts: set[int] | None = None,
-             fixed: list[str] | None = None) -> tuple[int | None, list[int], int] | None:
+             fixed: list[str] | None = None, relative: bool = False) -> tuple[int | None, list[int], int] | None:
     """A CHANGES line that packs several changes, followed part by part from the value the NOTES hold:
     (the value at the end, or None after a removal; the sets it took from the turns; how many of those open a part
     of working instead of standing as a part of their own). None when any part cannot be followed exactly as it is
@@ -603,6 +627,9 @@ def chain_of(value: str, held: int | None, stated: set[int], amounts: set[int] |
             if cur is not None and n == cur:
                 continue                             # the value so far, written again
             if n not in stated or n in sets:         # (a thing really set to one value twice costs a question)
+                if cur is not None and amounts is not None and implied_ok(cur, n, amounts, relative):
+                    cur = n                          # `520 -> 1040` for "was doubled" (see implied_ok): no set
+                    continue
                 return None
             sets.append(n)
             cur = n
@@ -618,10 +645,10 @@ def chain_of(value: str, held: int | None, stated: set[int], amounts: set[int] |
                 return None
             wrote, n = int(head.group(1)), (int(first.group(1)) if first else None)
 
-            def worth(full: str, taken: str) -> int | None:
+            def worth(full: str, taken: str, begins: int | None) -> int | None:
                 # (an operator with nothing after it, or two in a row: something that was not a number stood there)
                 if (not re.fullmatch(r"[\d\s+\-*/().]+", full) or re.search(r"[-+*/]\s*(?:[+*/)]|$)|\(\s*\)", full)
-                        or not amounts_ok(taken, amounts)):
+                        or not amounts_ok(taken, amounts, begins)):
                     return None
                 return _whole(_calc(full))
 
@@ -633,7 +660,7 @@ def chain_of(value: str, held: int | None, stated: set[int], amounts: set[int] |
             if first and n in stated and n not in sets:
                 readings.append((expr, expr[first.end():], n))
             for full, taken, a_set in readings:
-                if worth(full, taken) == wrote:
+                if worth(full, taken, cur if a_set is None else a_set) == wrote:
                     if a_set is not None:
                         sets.append(a_set)
                         opening += 1
@@ -643,7 +670,7 @@ def chain_of(value: str, held: int | None, stated: set[int], amounts: set[int] |
                 last = k == len(parts) - 1 and j == len(pieces) - 2
                 plain = (MARK not in raw and not remark_at_the_end and re.search(r"[\d)]\s*[-+*/]\s*[\d(-]", expr)
                          and not two_readings(expr))
-                val = worth(expr, expr[first.end():]) if last and plain and first and cur is not None and n == cur else None
+                val = worth(expr, expr[first.end():], cur) if last and plain and first and cur is not None and n == cur else None
                 if val is None or wrote in stated or wrote in (amounts or ()):
                     return None
                 cur = val
@@ -707,7 +734,8 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
             # several changes on one line: followed part by part; a line that can be followed is right as it stands
             redone: list[str] = []
             ch = chain_of(value, held, (seen if near is None else near.get(name, set())) - used.get(name, set()),
-                          None if near is None else near.get(name, set()) | ever, redone)
+                          None if near is None else near.get(name, set()) | ever, redone,
+                          near is not None and name in near.get(LOOSE, ()))
             if ch is not None:
                 final, sets, opening = ch
                 info["sums_corrected"] += [f"{name}: {x}" for x in redone]
@@ -767,7 +795,7 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
             if near is not None and strict and start is not None and len(info["mismatch"]) == asked and plain:
                 expr = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", flat).replace("\u2212", "-").split("=")[-2]
                 first = re.match(r"\(?\s*-?\d+", expr.strip())
-                if first and not amounts_ok(expr.strip()[first.end():], near.get(name, set()) | ever):
+                if first and not amounts_ok(expr.strip()[first.end():], near.get(name, set()) | ever, start):
                     info["mismatch"].append(f"{name}: `{value}` adds or takes an amount the turns do not state for it; read the item again")
             sum_text = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", flat).replace("\u2212", "-").replace("\u00f7", "/").split("=")[-2]
             by_rule = _calc(sum_text)
@@ -793,7 +821,10 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
             held, now = (number_of(old) if old is not None else None), number_of(value)
             stated = seen if near is None else near.get(name, set())
             if now is not None and now != held:
-                if now not in stated:
+                if (now not in stated and near is not None and held is not None
+                        and implied_ok(held, now, stated | ever, name in near.get(LOOSE, ()))):
+                    info["implied"] = info.get("implied", 0) + 1     # `520 -> 1040`: a change the turns can have said so
+                elif now not in stated:
                     info["mismatch"].append(f"{name}: {now} is not a value the turns state; write the working"
                                             + (f" from the value the NOTES hold, {held}" if held is not None else ""))
                 else:
@@ -1058,9 +1089,12 @@ def numbers_near(names: list[str], turns: list[dict[str, Any]], signed: bool = T
         for i, sent in enumerate(sents):
             here = want & set(re.findall(r"[a-z0-9_]+", sent.lower()))
             if here:
-                nums = numbers_in(sent, signed) | (numbers_in(sents[i + 1], signed) if i + 1 < len(sents) else set())
+                own = numbers_in(sent, signed)
+                nums = own | (numbers_in(sents[i + 1], signed) if i + 1 < len(sents) else set())
                 for n in here:
                     out.setdefault(n, set()).update(nums)
+                if not own:                          # "abcd12 was doubled.": a change can be said without a number
+                    out.setdefault(LOOSE, set()).update(here)
     return out
 
 
