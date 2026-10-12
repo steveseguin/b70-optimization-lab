@@ -1181,3 +1181,29 @@ refused it (the text states 342), and the corrected line was applied.
 
 My audit tool misread a typographic minus sign as no sign and reported five wrong counters on the first proxy run;
 fixed before any figure was written down (harness figures did not change).
+
+### A rule that names nothing: notes keep it, retrieval never finds it
+
+Stream `client-crule`: the 240K rules stream with one more rule in item 1, "any figure below zero is reported as the
+single word overdrawn, never as a number" (for every answer about a counter, now or earlier, and the final list).
+It names no counter and shares no word with the questions it governs.
+
+| questions whose right answer is the word | seed 0 | seed 1 | both |
+| --- | ---: | ---: | ---: |
+| **Keeper with in-place notes** (N32k, N32m) | 7/7 | 9/9 | **16/16** |
+| **Retrieval only** (R32b) | 0/7 | 0/9 | **0/16** |
+| the other questions: keeper / retrieval | 31/32, 31/32 | 34/37, 36/37 | |
+| whole stream: keeper / retrieval | 38/39, 31/39 | 43/46, 36/46 | |
+| minutes: keeper / retrieval | 9.7, 10.4 | 11.4, 9.8 | |
+
+"Kept" was 80 % or more and "lost" 20 % or less; it is all against none on both seeds, as expected and now measured.
+Retrieval answered every one of the 16 with the true negative number: the rule had left the window by the first
+question item (item 26) and nothing in "What value does X hold now?" leads back to it. The keeper had the rule as a
+RULES line from the first cut, whole, and it was repeated at every question item. This is the difference between the
+two methods that campaign 10 could not show, because there the rule named its counters.
+
+One thing the stream got wrong, not the methods: the rule's last clause, "a tally is still worked out from the true
+figure", does not say how a tally that comes out below zero is to be reported, and the keeper, which had the rule in
+view, answered "overdrawn" for those (4 of the keeper's 4 misses outside the governed questions; retrieval, which
+had lost the rule, gave the number and was marked right). The grader expects the number. Read the "other questions"
+row with that in mind; the clause should say "and is reported as a number" before this stream is used again.
