@@ -1,0 +1,393 @@
+{
+  "device_executed": false,
+  "passed": true,
+  "rows": [
+    {
+      "compiler": "gcc",
+      "repeat": 0,
+      "command": [
+        "/usr/bin/g++",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-DOWN_RT_HOST_ONLY",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/expert_cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/expert/expert-cpu-gcc"
+      ],
+      "binary_sha256": "43bec16e7eaff13fd279c20f04e4e85c378e2da797b7b657e481aa801042aa7e",
+      "receipt": {
+        "device_executed": false,
+        "candidates": {
+          "down.bank": {
+            "checks": 84014,
+            "failures": 0,
+            "nonfinite_checks": 136306,
+            "nonfinite_failures": 0,
+            "hash": "55c2c4b030040839"
+          },
+          "down.bank-incumbent": {
+            "checks": 79072,
+            "failures": 0,
+            "nonfinite_checks": 128288,
+            "nonfinite_failures": 0,
+            "hash": "f2c0019500428b39"
+          },
+          "down.select": {
+            "checks": 84014,
+            "failures": 0,
+            "nonfinite_checks": 136306,
+            "nonfinite_failures": 0,
+            "hash": "55c2c4b030040839"
+          },
+          "down.select-incumbent": {
+            "checks": 79072,
+            "failures": 0,
+            "nonfinite_checks": 128288,
+            "nonfinite_failures": 0,
+            "hash": "f2c0019500428b39"
+          },
+          "expert.incumbent": {
+            "checks": 3584,
+            "failures": 0,
+            "nonfinite_checks": 2560,
+            "nonfinite_failures": 0,
+            "hash": "d4af18b203703cb7"
+          },
+          "expert.reference": {
+            "checks": 1792,
+            "failures": 0,
+            "nonfinite_checks": 1280,
+            "nonfinite_failures": 256,
+            "hash": "2cfb827b82fbab65"
+          },
+          "fixture.output-incumbent": {
+            "checks": 1960,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "14195575f86a4f63"
+          },
+          "fixture.output-reference": {
+            "checks": 1960,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "14195575f86a4f63"
+          },
+          "fixture.status": {
+            "checks": 120,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "3b94ac23d4858723"
+          },
+          "level.exhaustive": {
+            "checks": 32,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "7d3db5c0528d8503"
+          }
+        },
+        "passed": true
+      }
+    },
+    {
+      "compiler": "gcc",
+      "repeat": 1,
+      "command": [
+        "/usr/bin/g++",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-DOWN_RT_HOST_ONLY",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/expert_cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/expert/expert-cpu-gcc"
+      ],
+      "binary_sha256": "43bec16e7eaff13fd279c20f04e4e85c378e2da797b7b657e481aa801042aa7e",
+      "receipt": {
+        "device_executed": false,
+        "candidates": {
+          "down.bank": {
+            "checks": 84014,
+            "failures": 0,
+            "nonfinite_checks": 136306,
+            "nonfinite_failures": 0,
+            "hash": "55c2c4b030040839"
+          },
+          "down.bank-incumbent": {
+            "checks": 79072,
+            "failures": 0,
+            "nonfinite_checks": 128288,
+            "nonfinite_failures": 0,
+            "hash": "f2c0019500428b39"
+          },
+          "down.select": {
+            "checks": 84014,
+            "failures": 0,
+            "nonfinite_checks": 136306,
+            "nonfinite_failures": 0,
+            "hash": "55c2c4b030040839"
+          },
+          "down.select-incumbent": {
+            "checks": 79072,
+            "failures": 0,
+            "nonfinite_checks": 128288,
+            "nonfinite_failures": 0,
+            "hash": "f2c0019500428b39"
+          },
+          "expert.incumbent": {
+            "checks": 3584,
+            "failures": 0,
+            "nonfinite_checks": 2560,
+            "nonfinite_failures": 0,
+            "hash": "d4af18b203703cb7"
+          },
+          "expert.reference": {
+            "checks": 1792,
+            "failures": 0,
+            "nonfinite_checks": 1280,
+            "nonfinite_failures": 256,
+            "hash": "2cfb827b82fbab65"
+          },
+          "fixture.output-incumbent": {
+            "checks": 1960,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "14195575f86a4f63"
+          },
+          "fixture.output-reference": {
+            "checks": 1960,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "14195575f86a4f63"
+          },
+          "fixture.status": {
+            "checks": 120,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "3b94ac23d4858723"
+          },
+          "level.exhaustive": {
+            "checks": 32,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "7d3db5c0528d8503"
+          }
+        },
+        "passed": true
+      }
+    },
+    {
+      "compiler": "icpx",
+      "repeat": 0,
+      "command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-DOWN_RT_HOST_ONLY",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/expert_cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/expert/expert-cpu-icpx"
+      ],
+      "binary_sha256": "532770027c89db0dda3475d268fe898948df891c067297641a88e3c0f5f76d99",
+      "receipt": {
+        "device_executed": false,
+        "candidates": {
+          "down.bank": {
+            "checks": 84014,
+            "failures": 0,
+            "nonfinite_checks": 136306,
+            "nonfinite_failures": 0,
+            "hash": "55c2c4b030040839"
+          },
+          "down.bank-incumbent": {
+            "checks": 79072,
+            "failures": 0,
+            "nonfinite_checks": 128288,
+            "nonfinite_failures": 0,
+            "hash": "f2c0019500428b39"
+          },
+          "down.select": {
+            "checks": 84014,
+            "failures": 0,
+            "nonfinite_checks": 136306,
+            "nonfinite_failures": 0,
+            "hash": "55c2c4b030040839"
+          },
+          "down.select-incumbent": {
+            "checks": 79072,
+            "failures": 0,
+            "nonfinite_checks": 128288,
+            "nonfinite_failures": 0,
+            "hash": "f2c0019500428b39"
+          },
+          "expert.incumbent": {
+            "checks": 3584,
+            "failures": 0,
+            "nonfinite_checks": 2560,
+            "nonfinite_failures": 0,
+            "hash": "d4af18b203703cb7"
+          },
+          "expert.reference": {
+            "checks": 1792,
+            "failures": 0,
+            "nonfinite_checks": 1280,
+            "nonfinite_failures": 0,
+            "hash": "2cfb827b82fbab65"
+          },
+          "fixture.output-incumbent": {
+            "checks": 1960,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "14195575f86a4f63"
+          },
+          "fixture.output-reference": {
+            "checks": 1960,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "14195575f86a4f63"
+          },
+          "fixture.status": {
+            "checks": 120,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "3b94ac23d4858723"
+          },
+          "level.exhaustive": {
+            "checks": 32,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "7d3db5c0528d8503"
+          }
+        },
+        "passed": true
+      }
+    },
+    {
+      "compiler": "icpx",
+      "repeat": 1,
+      "command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-DOWN_RT_HOST_ONLY",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/expert_cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/expert/expert-cpu-icpx"
+      ],
+      "binary_sha256": "532770027c89db0dda3475d268fe898948df891c067297641a88e3c0f5f76d99",
+      "receipt": {
+        "device_executed": false,
+        "candidates": {
+          "down.bank": {
+            "checks": 84014,
+            "failures": 0,
+            "nonfinite_checks": 136306,
+            "nonfinite_failures": 0,
+            "hash": "55c2c4b030040839"
+          },
+          "down.bank-incumbent": {
+            "checks": 79072,
+            "failures": 0,
+            "nonfinite_checks": 128288,
+            "nonfinite_failures": 0,
+            "hash": "f2c0019500428b39"
+          },
+          "down.select": {
+            "checks": 84014,
+            "failures": 0,
+            "nonfinite_checks": 136306,
+            "nonfinite_failures": 0,
+            "hash": "55c2c4b030040839"
+          },
+          "down.select-incumbent": {
+            "checks": 79072,
+            "failures": 0,
+            "nonfinite_checks": 128288,
+            "nonfinite_failures": 0,
+            "hash": "f2c0019500428b39"
+          },
+          "expert.incumbent": {
+            "checks": 3584,
+            "failures": 0,
+            "nonfinite_checks": 2560,
+            "nonfinite_failures": 0,
+            "hash": "d4af18b203703cb7"
+          },
+          "expert.reference": {
+            "checks": 1792,
+            "failures": 0,
+            "nonfinite_checks": 1280,
+            "nonfinite_failures": 0,
+            "hash": "2cfb827b82fbab65"
+          },
+          "fixture.output-incumbent": {
+            "checks": 1960,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "14195575f86a4f63"
+          },
+          "fixture.output-reference": {
+            "checks": 1960,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "14195575f86a4f63"
+          },
+          "fixture.status": {
+            "checks": 120,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "3b94ac23d4858723"
+          },
+          "level.exhaustive": {
+            "checks": 32,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "7d3db5c0528d8503"
+          }
+        },
+        "passed": true
+      }
+    }
+  ],
+  "fresh_repeat_identical": true,
+  "finite_cross_compiler_identical": true,
+  "nonfinite_policy": "packet29 finite production qualification; nonfinite raw reference differences retained, never accepted as equal"
+}

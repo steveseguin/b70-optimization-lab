@@ -1,0 +1,5136 @@
+{
+  "device_executed": false,
+  "kernels": [
+    {
+      "instructions": 29066,
+      "simd16_issue_equivalents": 37619.0,
+      "memory_messages": 1620,
+      "messages": {
+        "load.ugm.d32x16t.a32.ca.cc": 1,
+        "load.ugm.d32x64t.a32.ca.cc": 3,
+        "store.ugm.d32x64t.a32.wb.wb": 4,
+        "store.ugm.d32x16t.a32.wb.wb": 4,
+        "store.ugm.d32x8t.a32.wb.wb": 2,
+        "store.ugm.d32x4t.a32.wb.wb": 4,
+        "load.ugm.d32x3t.a32.ca.ca": 21,
+        "load.ugm.d64x1t.a32.ca.ca": 106,
+        "load.ugm.d32x1t.a64": 130,
+        "store.slm.d32x1t.a32": 3,
+        "send.slm": 76,
+        "send.ugm": 74,
+        "send.gtwy": 77,
+        "load.slm.d32x1t.a32": 50,
+        "load.ugm.d32x1t.a32.ca.ca": 80,
+        "store.slm.d32.a32": 50,
+        "load.ugm.d64x3t.a32.ca.ca": 4,
+        "load.ugm.d64x4t.a64": 1,
+        "load.ugm.d64x2t.a64": 1,
+        "load.ugm.d64x1t.a64": 72,
+        "store.ugm.d32x2t.a64": 19,
+        "load.ugm.d64x3t.a64": 1,
+        "store.ugm.d32x4t.a64": 1,
+        "load.ugm.d64.a64": 65,
+        "load.ugm.d32.a64": 210,
+        "load.ugm.d16u32.a64": 162,
+        "load.slm.d32.a32": 64,
+        "load.ugm.d64.a32.ca.ca": 3,
+        "store.ugm.d32x2.a64": 30,
+        "store.ugm.d32.a64": 88,
+        "store.ugm.d16u32.a64": 33,
+        "store.ugm.d32x1t.a64": 10,
+        "load.ugm.d64x2t.a32.ca.ca": 7,
+        "load.ugm.d32x2t.a32.ca.ca": 9,
+        "load.ugm.d32.a32.ca.ca": 6,
+        "load.ugm.d32x8t.a32.ca.ca": 1,
+        "load.ugm.d32x4t.a32.ca.ca": 3,
+        "store.ugm.d32.a32.wb.wb": 5,
+        "load.ugm.d32x8t.a64": 14,
+        "load.ugm.d8u32.a64": 124,
+        "load.ugm.d64x4t.a32.ca.ca": 2
+      },
+      "alu64": 4268,
+      "conversions_to_float": 1055,
+      "indirect_register_moves": 12,
+      "barriers": 228,
+      "slm_messages": 167,
+      "calls": 0,
+      "explicit_scratch_messages": 0,
+      "instruction_widths": {
+        "16": 4991,
+        "1": 14983,
+        "8": 155,
+        "32": 8553,
+        "2": 367,
+        "4": 17
+      },
+      "kernel": "_ZTSZZNK8packet1812_GLOBAL__N_14Glue6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS3_5eventESaISB_EEENKUlRNS3_7handlerEE0_clESH_EUlNS3_7nd_itemILi1EEEE_",
+      "demangled": "typeinfo name for packet18::(anonymous namespace)::Glue::submit(sycl::_V1::queue&, std::span<void* const, 18446744073709551615ul>, std::vector<sycl::_V1::event, std::allocator<sycl::_V1::event> > const&) const::{lambda(sycl::_V1::handler&)#2}::operator()(sycl::_V1::handler&) const::{lambda(sycl::_V1::nd_item<1>)#1}",
+      "asm": "build/igc-00f907/OCL_asm20b6f47497700559_simd32_entry_0001.asm",
+      "asm_sha256": "6a39a6f56f25373493318010ced7c7f48c77f09500a0ddf8c485f884f6c27c19",
+      "simd": 32,
+      "grf": 128,
+      "spill_metadata": [
+        "//.spill flag store 439",
+        "//.spill flag load 577"
+      ],
+      "scratch_note": "A32 transposed UGM messages can be spill/fill even without scratch in disassembly. Use spill_metadata and execution_env; text signature alone is incomplete.",
+      "backward_branch_regions": [
+        {
+          "first_line": 25465,
+          "last_line": 25466,
+          "header": "_0_4351",
+          "instructions": 1,
+          "simd16_issue_equivalents": 1,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 1
+          }
+        },
+        {
+          "first_line": 25515,
+          "last_line": 25526,
+          "header": "_0_4359",
+          "instructions": 11,
+          "simd16_issue_equivalents": 16.0,
+          "memory_messages": 1,
+          "messages": {
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 0,
+          "conversions_to_float": 1,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 1,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 2,
+            "16": 4,
+            "32": 5
+          }
+        },
+        {
+          "first_line": 25635,
+          "last_line": 29512,
+          "header": "_0_4367",
+          "instructions": 3457,
+          "simd16_issue_equivalents": 3669.0,
+          "memory_messages": 53,
+          "messages": {
+            "load.ugm.d64x4t.a64": 1,
+            "load.ugm.d32x1t.a64": 1,
+            "load.ugm.d64x2t.a64": 1,
+            "load.ugm.d64x1t.a64": 31,
+            "store.ugm.d32x2t.a64": 16,
+            "load.ugm.d64x3t.a64": 1,
+            "load.ugm.d64x1t.a32.ca.ca": 1,
+            "store.ugm.d32x4t.a64": 1
+          },
+          "alu64": 536,
+          "conversions_to_float": 288,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 3117,
+            "2": 123,
+            "32": 212,
+            "16": 4,
+            "4": 1
+          }
+        },
+        {
+          "first_line": 29547,
+          "last_line": 29639,
+          "header": "_0_4582",
+          "instructions": 64,
+          "simd16_issue_equivalents": 82.0,
+          "memory_messages": 6,
+          "messages": {
+            "load.ugm.d64.a64": 1,
+            "load.ugm.d32.a64": 3,
+            "load.ugm.d16u32.a64": 1,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 24,
+          "conversions_to_float": 2,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 1,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 18,
+            "16": 28,
+            "32": 18
+          }
+        },
+        {
+          "first_line": 29707,
+          "last_line": 29745,
+          "header": "_0_4602",
+          "instructions": 28,
+          "simd16_issue_equivalents": 44.0,
+          "memory_messages": 3,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 4,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 16,
+            "16": 10,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 29660,
+          "last_line": 29764,
+          "header": "_0_4599",
+          "instructions": 85,
+          "simd16_issue_equivalents": 106.0,
+          "memory_messages": 6,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1,
+            "send.slm": 1,
+            "send.ugm": 1,
+            "send.gtwy": 1
+          },
+          "alu64": 6,
+          "conversions_to_float": 9,
+          "indirect_register_moves": 0,
+          "barriers": 3,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 49,
+            "32": 21,
+            "16": 12,
+            "8": 2,
+            "2": 1
+          }
+        },
+        {
+          "first_line": 29791,
+          "last_line": 29808,
+          "header": "_0_4609",
+          "instructions": 13,
+          "simd16_issue_equivalents": 15.0,
+          "memory_messages": 1,
+          "messages": {
+            "load.ugm.d64x1t.a32.ca.ca": 1
+          },
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 7,
+            "32": 2,
+            "16": 4
+          }
+        },
+        {
+          "first_line": 30284,
+          "last_line": 30437,
+          "header": "_0_4663",
+          "instructions": 125,
+          "simd16_issue_equivalents": 166.0,
+          "memory_messages": 10,
+          "messages": {
+            "load.ugm.d64.a64": 2,
+            "load.ugm.d32.a64": 6,
+            "load.ugm.d16u32.a64": 2
+          },
+          "alu64": 46,
+          "conversions_to_float": 4,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "16": 62,
+            "1": 22,
+            "32": 41
+          }
+        },
+        {
+          "first_line": 30262,
+          "last_line": 30460,
+          "header": "_0_4659",
+          "instructions": 158,
+          "simd16_issue_equivalents": 223.0,
+          "memory_messages": 12,
+          "messages": {
+            "load.ugm.d64.a64": 2,
+            "load.ugm.d32.a64": 6,
+            "load.ugm.d16u32.a64": 2,
+            "store.slm.d32.a32": 2
+          },
+          "alu64": 46,
+          "conversions_to_float": 6,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 2,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 65,
+            "1": 31,
+            "16": 62
+          }
+        },
+        {
+          "first_line": 30526,
+          "last_line": 32537,
+          "header": "_0_4681",
+          "instructions": 1449,
+          "simd16_issue_equivalents": 1548.0,
+          "memory_messages": 176,
+          "messages": {
+            "load.slm.d32x1t.a32": 16,
+            "load.ugm.d64x1t.a64": 32,
+            "load.ugm.d32x1t.a64": 96,
+            "load.ugm.d16u32.a64": 32
+          },
+          "alu64": 408,
+          "conversions_to_float": 72,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 16,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 1342,
+            "32": 99,
+            "2": 8
+          }
+        },
+        {
+          "first_line": 30521,
+          "last_line": 32632,
+          "header": "_0_4680",
+          "instructions": 1512,
+          "simd16_issue_equivalents": 1617.0,
+          "memory_messages": 182,
+          "messages": {
+            "load.slm.d32x1t.a32": 16,
+            "load.ugm.d64x1t.a64": 32,
+            "load.ugm.d32x1t.a64": 96,
+            "load.ugm.d16u32.a64": 32,
+            "store.ugm.d32x2t.a64": 1,
+            "store.ugm.d32x1t.a64": 3,
+            "store.ugm.d16u32.a64": 1,
+            "load.ugm.d64x1t.a32.ca.ca": 1
+          },
+          "alu64": 415,
+          "conversions_to_float": 75,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 16,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 1394,
+            "32": 105,
+            "2": 9,
+            "16": 4
+          }
+        },
+        {
+          "first_line": 33112,
+          "last_line": 33299,
+          "header": "_0_5032",
+          "instructions": 133,
+          "simd16_issue_equivalents": 167.0,
+          "memory_messages": 11,
+          "messages": {
+            "load.ugm.d64.a64": 2,
+            "load.ugm.d32.a64": 6,
+            "load.ugm.d16u32.a64": 2,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 50,
+          "conversions_to_float": 4,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 1,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 41,
+            "32": 34,
+            "16": 58
+          }
+        },
+        {
+          "first_line": 33370,
+          "last_line": 33408,
+          "header": "_0_5068",
+          "instructions": 28,
+          "simd16_issue_equivalents": 44.0,
+          "memory_messages": 3,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 4,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 16,
+            "16": 10,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 33320,
+          "last_line": 33427,
+          "header": "_0_5065",
+          "instructions": 88,
+          "simd16_issue_equivalents": 109.0,
+          "memory_messages": 6,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1,
+            "send.slm": 1,
+            "send.ugm": 1,
+            "send.gtwy": 1
+          },
+          "alu64": 6,
+          "conversions_to_float": 9,
+          "indirect_register_moves": 0,
+          "barriers": 3,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 52,
+            "32": 21,
+            "16": 12,
+            "8": 2,
+            "2": 1
+          }
+        },
+        {
+          "first_line": 34328,
+          "last_line": 34990,
+          "header": "_0_5144",
+          "instructions": 478,
+          "simd16_issue_equivalents": 603.0,
+          "memory_messages": 36,
+          "messages": {
+            "load.ugm.d64.a64": 1,
+            "load.ugm.d32.a64": 3,
+            "load.ugm.d16u32.a64": 1,
+            "store.slm.d32.a32": 1,
+            "store.ugm.d32x2.a64": 6,
+            "store.ugm.d32.a64": 18,
+            "store.ugm.d16u32.a64": 6
+          },
+          "alu64": 154,
+          "conversions_to_float": 8,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 1,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "16": 176,
+            "1": 173,
+            "32": 125,
+            "2": 4
+          }
+        },
+        {
+          "first_line": 35062,
+          "last_line": 35101,
+          "header": "_0_5239",
+          "instructions": 29,
+          "simd16_issue_equivalents": 45.0,
+          "memory_messages": 3,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 4,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 16,
+            "16": 10,
+            "1": 3
+          }
+        },
+        {
+          "first_line": 35011,
+          "last_line": 35120,
+          "header": "_0_5236",
+          "instructions": 90,
+          "simd16_issue_equivalents": 111.0,
+          "memory_messages": 6,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1,
+            "send.slm": 1,
+            "send.ugm": 1,
+            "send.gtwy": 1
+          },
+          "alu64": 6,
+          "conversions_to_float": 9,
+          "indirect_register_moves": 0,
+          "barriers": 3,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 54,
+            "32": 21,
+            "16": 12,
+            "8": 2,
+            "2": 1
+          }
+        },
+        {
+          "first_line": 35159,
+          "last_line": 35176,
+          "header": "_0_5248",
+          "instructions": 13,
+          "simd16_issue_equivalents": 15.0,
+          "memory_messages": 1,
+          "messages": {
+            "load.ugm.d64x1t.a32.ca.ca": 1
+          },
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 7,
+            "32": 2,
+            "16": 4
+          }
+        },
+        {
+          "first_line": 35633,
+          "last_line": 35720,
+          "header": "_0_5290",
+          "instructions": 59,
+          "simd16_issue_equivalents": 67.0,
+          "memory_messages": 5,
+          "messages": {
+            "load.ugm.d64x1t.a64": 1,
+            "load.ugm.d32x1t.a64": 3,
+            "load.ugm.d16u32.a64": 1
+          },
+          "alu64": 12,
+          "conversions_to_float": 2,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 51,
+            "32": 8
+          }
+        },
+        {
+          "first_line": 35744,
+          "last_line": 35753,
+          "header": "_0_5309",
+          "instructions": 9,
+          "simd16_issue_equivalents": 11.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 3,
+            "16": 4,
+            "32": 2
+          }
+        },
+        {
+          "first_line": 35778,
+          "last_line": 36318,
+          "header": "_0_5312",
+          "instructions": 467,
+          "simd16_issue_equivalents": 885.0,
+          "memory_messages": 7,
+          "messages": {
+            "load.ugm.d64.a64": 1,
+            "load.ugm.d32.a64": 3,
+            "load.ugm.d16u32.a64": 1,
+            "store.slm.d32.a32": 2
+          },
+          "alu64": 24,
+          "conversions_to_float": 6,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 2,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 21,
+            "16": 28,
+            "32": 418
+          }
+        },
+        {
+          "first_line": 36386,
+          "last_line": 36426,
+          "header": "_0_5351",
+          "instructions": 30,
+          "simd16_issue_equivalents": 46.0,
+          "memory_messages": 3,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 4,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 16,
+            "16": 10,
+            "1": 4
+          }
+        },
+        {
+          "first_line": 36339,
+          "last_line": 36445,
+          "header": "_0_5348",
+          "instructions": 87,
+          "simd16_issue_equivalents": 108.0,
+          "memory_messages": 6,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1,
+            "send.slm": 1,
+            "send.ugm": 1,
+            "send.gtwy": 1
+          },
+          "alu64": 6,
+          "conversions_to_float": 9,
+          "indirect_register_moves": 0,
+          "barriers": 3,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 51,
+            "32": 21,
+            "16": 12,
+            "8": 2,
+            "2": 1
+          }
+        },
+        {
+          "first_line": 36468,
+          "last_line": 36536,
+          "header": "_0_5359",
+          "instructions": 56,
+          "simd16_issue_equivalents": 71.0,
+          "memory_messages": 2,
+          "messages": {
+            "load.slm.d32.a32": 1,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 4,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 2,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 15,
+            "1": 13,
+            "16": 28
+          }
+        },
+        {
+          "first_line": 36597,
+          "last_line": 36695,
+          "header": "_0_5369",
+          "instructions": 66,
+          "simd16_issue_equivalents": 109.0,
+          "memory_messages": 4,
+          "messages": {
+            "load.slm.d32x1t.a32": 4
+          },
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 4,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 23,
+            "32": 43
+          }
+        },
+        {
+          "first_line": 36712,
+          "last_line": 36743,
+          "header": "_0_5385",
+          "instructions": 21,
+          "simd16_issue_equivalents": 33.0,
+          "memory_messages": 1,
+          "messages": {
+            "load.slm.d32x1t.a32": 1
+          },
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 1,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 9,
+            "32": 12
+          }
+        },
+        {
+          "first_line": 36574,
+          "last_line": 36887,
+          "header": "_0_5363",
+          "instructions": 214,
+          "simd16_issue_equivalents": 319.0,
+          "memory_messages": 15,
+          "messages": {
+            "load.slm.d32.a32": 1,
+            "load.slm.d32x1t.a32": 5,
+            "load.ugm.d32x1t.a32.ca.ca": 1,
+            "load.ugm.d64x1t.a32.ca.ca": 1,
+            "store.ugm.d32.a64": 3,
+            "store.ugm.d16u32.a64": 1,
+            "store.ugm.d32x2.a64": 1,
+            "store.slm.d32.a32": 2
+          },
+          "alu64": 28,
+          "conversions_to_float": 3,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 8,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 65,
+            "32": 105,
+            "16": 44
+          }
+        },
+        {
+          "first_line": 36956,
+          "last_line": 36998,
+          "header": "_0_5412",
+          "instructions": 32,
+          "simd16_issue_equivalents": 50.0,
+          "memory_messages": 3,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 4,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 18,
+            "16": 10,
+            "1": 4
+          }
+        },
+        {
+          "first_line": 36908,
+          "last_line": 37017,
+          "header": "_0_5409",
+          "instructions": 90,
+          "simd16_issue_equivalents": 113.0,
+          "memory_messages": 6,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1,
+            "send.slm": 1,
+            "send.ugm": 1,
+            "send.gtwy": 1
+          },
+          "alu64": 6,
+          "conversions_to_float": 9,
+          "indirect_register_moves": 0,
+          "barriers": 3,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 52,
+            "32": 23,
+            "16": 12,
+            "8": 2,
+            "2": 1
+          }
+        },
+        {
+          "first_line": 38211,
+          "last_line": 38217,
+          "header": "_0_5513",
+          "instructions": 6,
+          "simd16_issue_equivalents": 6,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 6
+          }
+        },
+        {
+          "first_line": 38236,
+          "last_line": 38254,
+          "header": "_0_5516",
+          "instructions": 14,
+          "simd16_issue_equivalents": 17.0,
+          "memory_messages": 2,
+          "messages": {
+            "load.ugm.d32x1t.a64": 1,
+            "load.ugm.d64x1t.a32.ca.ca": 1
+          },
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 7,
+            "32": 3,
+            "16": 4
+          }
+        },
+        {
+          "first_line": 38442,
+          "last_line": 38468,
+          "header": "_0_5521",
+          "instructions": 20,
+          "simd16_issue_equivalents": 28.0,
+          "memory_messages": 3,
+          "messages": {
+            "load.ugm.d32x1t.a64": 1,
+            "load.ugm.d64x1t.a32.ca.ca": 1,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 1,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 1,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 8,
+            "32": 8,
+            "16": 4
+          }
+        },
+        {
+          "first_line": 38688,
+          "last_line": 38789,
+          "header": "_0_5544",
+          "instructions": 69,
+          "simd16_issue_equivalents": 81.0,
+          "memory_messages": 6,
+          "messages": {
+            "load.ugm.d64x1t.a64": 1,
+            "load.ugm.d32x1t.a64": 3,
+            "load.ugm.d16u32.a64": 1,
+            "load.ugm.d64x1t.a32.ca.ca": 1
+          },
+          "alu64": 13,
+          "conversions_to_float": 2,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 53,
+            "32": 12,
+            "16": 4
+          }
+        },
+        {
+          "first_line": 38809,
+          "last_line": 38818,
+          "header": "_0_5565",
+          "instructions": 9,
+          "simd16_issue_equivalents": 11.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 3,
+            "16": 4,
+            "32": 2
+          }
+        },
+        {
+          "first_line": 39001,
+          "last_line": 39182,
+          "header": "_0_5585",
+          "instructions": 127,
+          "simd16_issue_equivalents": 156.0,
+          "memory_messages": 11,
+          "messages": {
+            "load.ugm.d64.a64": 2,
+            "load.ugm.d32.a64": 6,
+            "load.ugm.d16u32.a64": 2,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 52,
+          "conversions_to_float": 4,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 1,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 29,
+            "16": 62,
+            "1": 36
+          }
+        },
+        {
+          "first_line": 39250,
+          "last_line": 39290,
+          "header": "_0_5618",
+          "instructions": 30,
+          "simd16_issue_equivalents": 48.0,
+          "memory_messages": 3,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 4,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 18,
+            "16": 10,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 39202,
+          "last_line": 39309,
+          "header": "_0_5615",
+          "instructions": 88,
+          "simd16_issue_equivalents": 111.0,
+          "memory_messages": 6,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1,
+            "send.slm": 1,
+            "send.ugm": 1,
+            "send.gtwy": 1
+          },
+          "alu64": 6,
+          "conversions_to_float": 9,
+          "indirect_register_moves": 0,
+          "barriers": 3,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 50,
+            "32": 23,
+            "16": 12,
+            "8": 2,
+            "2": 1
+          }
+        },
+        {
+          "first_line": 39350,
+          "last_line": 39351,
+          "header": "_0_5626",
+          "instructions": 1,
+          "simd16_issue_equivalents": 1,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 1
+          }
+        },
+        {
+          "first_line": 38841,
+          "last_line": 39367,
+          "header": "_0_5566",
+          "instructions": 401,
+          "simd16_issue_equivalents": 487.0,
+          "memory_messages": 39,
+          "messages": {
+            "load.ugm.d32x1t.a32.ca.ca": 1,
+            "load.ugm.d64x1t.a32.ca.ca": 2,
+            "load.ugm.d32x1t.a64": 3,
+            "load.ugm.d16u32.a64": 3,
+            "load.ugm.d64x1t.a64": 1,
+            "load.ugm.d32x3t.a32.ca.ca": 2,
+            "load.ugm.d64x3t.a32.ca.ca": 1,
+            "load.ugm.d64.a64": 2,
+            "load.ugm.d32.a64": 6,
+            "store.slm.d32.a32": 2,
+            "send.slm": 4,
+            "send.ugm": 4,
+            "send.gtwy": 4,
+            "load.slm.d32.a32": 2,
+            "load.slm.d32x1t.a32": 1,
+            "store.slm.d32x1t.a32": 1
+          },
+          "alu64": 75,
+          "conversions_to_float": 16,
+          "indirect_register_moves": 0,
+          "barriers": 12,
+          "slm_messages": 6,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 207,
+            "32": 86,
+            "16": 96,
+            "8": 8,
+            "2": 4
+          }
+        },
+        {
+          "first_line": 39373,
+          "last_line": 39381,
+          "header": "_0_5628",
+          "instructions": 8,
+          "simd16_issue_equivalents": 9.0,
+          "memory_messages": 1,
+          "messages": {
+            "load.slm.d32x1t.a32": 1
+          },
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 1,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 7,
+            "32": 1
+          }
+        },
+        {
+          "first_line": 39391,
+          "last_line": 39852,
+          "header": "_0_5632",
+          "instructions": 414,
+          "simd16_issue_equivalents": 823.0,
+          "memory_messages": 3,
+          "messages": {
+            "load.slm.d32.a32": 1,
+            "store.slm.d32.a32": 2
+          },
+          "alu64": 0,
+          "conversions_to_float": 4,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 5,
+            "32": 409
+          }
+        },
+        {
+          "first_line": 39921,
+          "last_line": 39963,
+          "header": "_0_5658",
+          "instructions": 32,
+          "simd16_issue_equivalents": 50.0,
+          "memory_messages": 3,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 4,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 18,
+            "16": 10,
+            "1": 4
+          }
+        },
+        {
+          "first_line": 39874,
+          "last_line": 39982,
+          "header": "_0_5655",
+          "instructions": 89,
+          "simd16_issue_equivalents": 112.0,
+          "memory_messages": 6,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1,
+            "send.slm": 1,
+            "send.ugm": 1,
+            "send.gtwy": 1
+          },
+          "alu64": 6,
+          "conversions_to_float": 9,
+          "indirect_register_moves": 0,
+          "barriers": 3,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 51,
+            "32": 23,
+            "16": 12,
+            "8": 2,
+            "2": 1
+          }
+        },
+        {
+          "first_line": 40002,
+          "last_line": 40053,
+          "header": "_0_5666",
+          "instructions": 39,
+          "simd16_issue_equivalents": 52.0,
+          "memory_messages": 2,
+          "messages": {
+            "load.slm.d32.a32": 1,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 2,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 13,
+            "1": 10,
+            "16": 16
+          }
+        },
+        {
+          "first_line": 40120,
+          "last_line": 40355,
+          "header": "_0_5672",
+          "instructions": 173,
+          "simd16_issue_equivalents": 226.0,
+          "memory_messages": 13,
+          "messages": {
+            "load.ugm.d64.a64": 2,
+            "load.ugm.d32.a64": 6,
+            "load.ugm.d16u32.a64": 2,
+            "load.ugm.d64x1t.a32.ca.ca": 1,
+            "load.slm.d32.a32": 1,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 49,
+          "conversions_to_float": 5,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 2,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 52,
+            "16": 68,
+            "32": 53
+          }
+        },
+        {
+          "first_line": 40424,
+          "last_line": 40466,
+          "header": "_0_5708",
+          "instructions": 32,
+          "simd16_issue_equivalents": 50.0,
+          "memory_messages": 3,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 4,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 18,
+            "16": 10,
+            "1": 4
+          }
+        },
+        {
+          "first_line": 40375,
+          "last_line": 40485,
+          "header": "_0_5705",
+          "instructions": 91,
+          "simd16_issue_equivalents": 114.0,
+          "memory_messages": 6,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1,
+            "send.slm": 1,
+            "send.ugm": 1,
+            "send.gtwy": 1
+          },
+          "alu64": 6,
+          "conversions_to_float": 9,
+          "indirect_register_moves": 0,
+          "barriers": 3,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 53,
+            "32": 23,
+            "16": 12,
+            "8": 2,
+            "2": 1
+          }
+        },
+        {
+          "first_line": 40562,
+          "last_line": 41132,
+          "header": "_0_5716",
+          "instructions": 478,
+          "simd16_issue_equivalents": 490.0,
+          "memory_messages": 10,
+          "messages": {
+            "load.ugm.d64x1t.a64": 1,
+            "load.ugm.d32x1t.a64": 3,
+            "load.ugm.d16u32.a64": 1,
+            "store.ugm.d32x2t.a64": 1,
+            "store.ugm.d32x1t.a64": 3,
+            "store.ugm.d16u32.a64": 1
+          },
+          "alu64": 7,
+          "conversions_to_float": 8,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 457,
+            "32": 12,
+            "16": 9
+          }
+        },
+        {
+          "first_line": 40073,
+          "last_line": 41148,
+          "header": "_0_5669",
+          "instructions": 882,
+          "simd16_issue_equivalents": 1000.0,
+          "memory_messages": 47,
+          "messages": {
+            "load.ugm.d32x3t.a32.ca.ca": 1,
+            "load.ugm.d64x2t.a32.ca.ca": 1,
+            "load.ugm.d32x2t.a32.ca.ca": 1,
+            "load.ugm.d64.a64": 2,
+            "load.ugm.d32.a64": 6,
+            "load.ugm.d16u32.a64": 3,
+            "load.ugm.d64x1t.a32.ca.ca": 3,
+            "load.slm.d32.a32": 3,
+            "store.slm.d32.a32": 2,
+            "send.slm": 4,
+            "send.ugm": 4,
+            "send.gtwy": 4,
+            "load.slm.d32x1t.a32": 1,
+            "load.ugm.d32x1t.a32.ca.ca": 3,
+            "load.ugm.d64x1t.a64": 1,
+            "load.ugm.d32x1t.a64": 3,
+            "store.ugm.d32x2t.a64": 1,
+            "store.ugm.d32x1t.a64": 3,
+            "store.ugm.d16u32.a64": 1
+          },
+          "alu64": 72,
+          "conversions_to_float": 22,
+          "indirect_register_moves": 0,
+          "barriers": 12,
+          "slm_messages": 6,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 662,
+            "32": 118,
+            "2": 5,
+            "16": 89,
+            "8": 8
+          }
+        },
+        {
+          "first_line": 41268,
+          "last_line": 41450,
+          "header": "_0_5773",
+          "instructions": 128,
+          "simd16_issue_equivalents": 157.0,
+          "memory_messages": 11,
+          "messages": {
+            "load.ugm.d64.a64": 2,
+            "load.ugm.d32.a64": 6,
+            "load.ugm.d16u32.a64": 2,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 52,
+          "conversions_to_float": 4,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 1,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 37,
+            "32": 29,
+            "16": 62
+          }
+        },
+        {
+          "first_line": 41522,
+          "last_line": 41564,
+          "header": "_0_5806",
+          "instructions": 32,
+          "simd16_issue_equivalents": 50.0,
+          "memory_messages": 3,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 4,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 18,
+            "16": 10,
+            "1": 4
+          }
+        },
+        {
+          "first_line": 41470,
+          "last_line": 41583,
+          "header": "_0_5803",
+          "instructions": 94,
+          "simd16_issue_equivalents": 117.0,
+          "memory_messages": 6,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1,
+            "send.slm": 1,
+            "send.ugm": 1,
+            "send.gtwy": 1
+          },
+          "alu64": 6,
+          "conversions_to_float": 9,
+          "indirect_register_moves": 0,
+          "barriers": 3,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 56,
+            "32": 23,
+            "16": 12,
+            "8": 2,
+            "2": 1
+          }
+        },
+        {
+          "first_line": 41606,
+          "last_line": 41612,
+          "header": "_0_5814",
+          "instructions": 6,
+          "simd16_issue_equivalents": 6,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 6
+          }
+        },
+        {
+          "first_line": 41228,
+          "last_line": 41631,
+          "header": "_0_5770",
+          "instructions": 308,
+          "simd16_issue_equivalents": 378.0,
+          "memory_messages": 31,
+          "messages": {
+            "load.ugm.d32x2t.a32.ca.ca": 1,
+            "load.ugm.d64x2t.a32.ca.ca": 1,
+            "load.ugm.d64.a64": 2,
+            "load.ugm.d32.a64": 6,
+            "load.ugm.d16u32.a64": 2,
+            "store.slm.d32.a32": 2,
+            "send.slm": 4,
+            "send.ugm": 4,
+            "send.gtwy": 4,
+            "load.slm.d32.a32": 2,
+            "load.slm.d32x1t.a32": 2,
+            "store.slm.d32x1t.a32": 1
+          },
+          "alu64": 60,
+          "conversions_to_float": 13,
+          "indirect_register_moves": 0,
+          "barriers": 12,
+          "slm_messages": 7,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 150,
+            "32": 70,
+            "16": 76,
+            "8": 8,
+            "2": 4
+          }
+        },
+        {
+          "first_line": 41217,
+          "last_line": 41636,
+          "header": "_0_5767",
+          "instructions": 318,
+          "simd16_issue_equivalents": 389.0,
+          "memory_messages": 31,
+          "messages": {
+            "load.ugm.d32x2t.a32.ca.ca": 1,
+            "load.ugm.d64x2t.a32.ca.ca": 1,
+            "load.ugm.d64.a64": 2,
+            "load.ugm.d32.a64": 6,
+            "load.ugm.d16u32.a64": 2,
+            "store.slm.d32.a32": 2,
+            "send.slm": 4,
+            "send.ugm": 4,
+            "send.gtwy": 4,
+            "load.slm.d32.a32": 2,
+            "load.slm.d32x1t.a32": 2,
+            "store.slm.d32x1t.a32": 1
+          },
+          "alu64": 60,
+          "conversions_to_float": 13,
+          "indirect_register_moves": 0,
+          "barriers": 12,
+          "slm_messages": 7,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 159,
+            "32": 71,
+            "16": 76,
+            "8": 8,
+            "2": 4
+          }
+        },
+        {
+          "first_line": 41658,
+          "last_line": 41704,
+          "header": "_0_5818",
+          "instructions": 34,
+          "simd16_issue_equivalents": 47.0,
+          "memory_messages": 2,
+          "messages": {
+            "load.slm.d32.a32": 1,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 2,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 13,
+            "1": 5,
+            "16": 16
+          }
+        },
+        {
+          "first_line": 41733,
+          "last_line": 41776,
+          "header": "_0_5823",
+          "instructions": 31,
+          "simd16_issue_equivalents": 43.0,
+          "memory_messages": 1,
+          "messages": {
+            "load.slm.d32x1t.a32": 1
+          },
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 1,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 12,
+            "1": 19
+          }
+        },
+        {
+          "first_line": 41809,
+          "last_line": 41887,
+          "header": "_0_5833",
+          "instructions": 56,
+          "simd16_issue_equivalents": 69.0,
+          "memory_messages": 4,
+          "messages": {
+            "store.ugm.d32x2.a64": 1,
+            "store.ugm.d32.a64": 2,
+            "store.ugm.d16u32.a64": 1
+          },
+          "alu64": 18,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "16": 20,
+            "1": 22,
+            "2": 1,
+            "32": 13
+          }
+        },
+        {
+          "first_line": 41943,
+          "last_line": 42049,
+          "header": "_0_5853",
+          "instructions": 74,
+          "simd16_issue_equivalents": 117.0,
+          "memory_messages": 4,
+          "messages": {
+            "load.slm.d32x1t.a32": 4
+          },
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 4,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 31,
+            "32": 43
+          }
+        },
+        {
+          "first_line": 42071,
+          "last_line": 42101,
+          "header": "_0_5869",
+          "instructions": 20,
+          "simd16_issue_equivalents": 32.0,
+          "memory_messages": 1,
+          "messages": {
+            "load.slm.d32x1t.a32": 1
+          },
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 1,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 8,
+            "32": 12
+          }
+        },
+        {
+          "first_line": 41923,
+          "last_line": 42565,
+          "header": "_0_5847",
+          "instructions": 455,
+          "simd16_issue_equivalents": 631.0,
+          "memory_messages": 28,
+          "messages": {
+            "load.slm.d32.a32": 1,
+            "load.slm.d32x1t.a32": 5,
+            "load.ugm.d32x1t.a32.ca.ca": 1,
+            "load.ugm.d64x1t.a32.ca.ca": 1,
+            "store.ugm.d32x2.a64": 4,
+            "store.ugm.d32.a64": 12,
+            "store.ugm.d16u32.a64": 4
+          },
+          "alu64": 96,
+          "conversions_to_float": 12,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 6,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 151,
+            "32": 176,
+            "16": 128
+          }
+        },
+        {
+          "first_line": 42837,
+          "last_line": 42847,
+          "header": "_0_5962",
+          "instructions": 10,
+          "simd16_issue_equivalents": 12.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 4,
+            "16": 4,
+            "32": 2
+          }
+        },
+        {
+          "first_line": 42960,
+          "last_line": 42968,
+          "header": "_0_5973",
+          "instructions": 8,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 2,
+            "16": 4,
+            "32": 2
+          }
+        },
+        {
+          "first_line": 43028,
+          "last_line": 43701,
+          "header": "_0_5976",
+          "instructions": 455,
+          "simd16_issue_equivalents": 581.0,
+          "memory_messages": 49,
+          "messages": {
+            "load.ugm.d64.a64": 8,
+            "load.ugm.d32.a64": 24,
+            "load.ugm.d16u32.a64": 8,
+            "load.ugm.d32x1t.a32.ca.ca": 4,
+            "load.ugm.d64x1t.a32.ca.ca": 4,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 120,
+          "conversions_to_float": 16,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 1,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "16": 148,
+            "1": 181,
+            "32": 126
+          }
+        },
+        {
+          "first_line": 43770,
+          "last_line": 43808,
+          "header": "_0_6094",
+          "instructions": 28,
+          "simd16_issue_equivalents": 44.0,
+          "memory_messages": 3,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 4,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 16,
+            "16": 10,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 43723,
+          "last_line": 43826,
+          "header": "_0_6091",
+          "instructions": 84,
+          "simd16_issue_equivalents": 105.0,
+          "memory_messages": 6,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1,
+            "send.slm": 1,
+            "send.ugm": 1,
+            "send.gtwy": 1
+          },
+          "alu64": 6,
+          "conversions_to_float": 9,
+          "indirect_register_moves": 0,
+          "barriers": 3,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 48,
+            "32": 21,
+            "16": 12,
+            "8": 2,
+            "2": 1
+          }
+        },
+        {
+          "first_line": 44894,
+          "last_line": 44902,
+          "header": "_0_6259",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 45040,
+          "last_line": 45048,
+          "header": "_0_6271",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 45219,
+          "last_line": 45227,
+          "header": "_0_6288",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 45367,
+          "last_line": 45375,
+          "header": "_0_6298",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 45484,
+          "last_line": 45492,
+          "header": "_0_6313",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 45640,
+          "last_line": 45648,
+          "header": "_0_6325",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 45728,
+          "last_line": 45736,
+          "header": "_0_6338",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 45819,
+          "last_line": 45827,
+          "header": "_0_6350",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 43904,
+          "last_line": 45874,
+          "header": "_0_6102",
+          "instructions": 1458,
+          "simd16_issue_equivalents": 2159.0,
+          "memory_messages": 87,
+          "messages": {
+            "load.ugm.d32x1t.a32.ca.ca": 6,
+            "load.ugm.d64x1t.a32.ca.ca": 6,
+            "load.ugm.d64.a64": 9,
+            "load.ugm.d32.a64": 28,
+            "load.ugm.d16u32.a64": 17,
+            "load.ugm.d32x8t.a64": 2,
+            "load.ugm.d8u32.a64": 18,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 262,
+          "conversions_to_float": 30,
+          "indirect_register_moves": 2,
+          "barriers": 0,
+          "slm_messages": 1,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 317,
+            "16": 436,
+            "32": 701,
+            "2": 2,
+            "4": 2
+          }
+        },
+        {
+          "first_line": 46251,
+          "last_line": 46640,
+          "header": "_0_6384",
+          "instructions": 275,
+          "simd16_issue_equivalents": 342.0,
+          "memory_messages": 20,
+          "messages": {
+            "load.ugm.d64.a64": 2,
+            "load.ugm.d32.a64": 6,
+            "load.ugm.d16u32.a64": 2,
+            "store.ugm.d32x2.a64": 2,
+            "store.ugm.d32.a64": 6,
+            "store.ugm.d16u32.a64": 2
+          },
+          "alu64": 92,
+          "conversions_to_float": 8,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "16": 112,
+            "1": 96,
+            "32": 67
+          }
+        },
+        {
+          "first_line": 46991,
+          "last_line": 47000,
+          "header": "_0_6482",
+          "instructions": 9,
+          "simd16_issue_equivalents": 11.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 3,
+            "16": 4,
+            "32": 2
+          }
+        },
+        {
+          "first_line": 47037,
+          "last_line": 47141,
+          "header": "_0_6485",
+          "instructions": 76,
+          "simd16_issue_equivalents": 93.0,
+          "memory_messages": 6,
+          "messages": {
+            "load.ugm.d64.a64": 1,
+            "load.ugm.d32.a64": 3,
+            "load.ugm.d16u32.a64": 1,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 28,
+          "conversions_to_float": 2,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 1,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 17,
+            "16": 34,
+            "1": 25
+          }
+        },
+        {
+          "first_line": 47210,
+          "last_line": 47249,
+          "header": "_0_6505",
+          "instructions": 29,
+          "simd16_issue_equivalents": 45.0,
+          "memory_messages": 3,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 4,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 16,
+            "16": 10,
+            "1": 3
+          }
+        },
+        {
+          "first_line": 47163,
+          "last_line": 47267,
+          "header": "_0_6502",
+          "instructions": 85,
+          "simd16_issue_equivalents": 106.0,
+          "memory_messages": 6,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1,
+            "send.slm": 1,
+            "send.ugm": 1,
+            "send.gtwy": 1
+          },
+          "alu64": 6,
+          "conversions_to_float": 9,
+          "indirect_register_moves": 0,
+          "barriers": 3,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 49,
+            "32": 21,
+            "16": 12,
+            "8": 2,
+            "2": 1
+          }
+        },
+        {
+          "first_line": 47750,
+          "last_line": 47758,
+          "header": "_0_6572",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 47899,
+          "last_line": 47907,
+          "header": "_0_6584",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 48080,
+          "last_line": 48088,
+          "header": "_0_6601",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 48230,
+          "last_line": 48238,
+          "header": "_0_6611",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 48349,
+          "last_line": 48357,
+          "header": "_0_6626",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 48506,
+          "last_line": 48514,
+          "header": "_0_6638",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 48594,
+          "last_line": 48602,
+          "header": "_0_6651",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 48685,
+          "last_line": 48693,
+          "header": "_0_6663",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 47353,
+          "last_line": 48742,
+          "header": "_0_6513",
+          "instructions": 1067,
+          "simd16_issue_equivalents": 1654.0,
+          "memory_messages": 41,
+          "messages": {
+            "load.ugm.d32.a64": 7,
+            "load.ugm.d16u32.a64": 10,
+            "load.ugm.d64.a64": 2,
+            "load.ugm.d64x1t.a32.ca.ca": 1,
+            "load.ugm.d32x8t.a64": 2,
+            "load.ugm.d8u32.a64": 18,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 172,
+          "conversions_to_float": 16,
+          "indirect_register_moves": 2,
+          "barriers": 0,
+          "slm_messages": 1,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 150,
+            "32": 587,
+            "16": 326,
+            "2": 2,
+            "4": 2
+          }
+        },
+        {
+          "first_line": 49311,
+          "last_line": 49320,
+          "header": "_0_6729",
+          "instructions": 9,
+          "simd16_issue_equivalents": 11.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 3,
+            "16": 4,
+            "32": 2
+          }
+        },
+        {
+          "first_line": 49357,
+          "last_line": 49464,
+          "header": "_0_6732",
+          "instructions": 79,
+          "simd16_issue_equivalents": 96.0,
+          "memory_messages": 6,
+          "messages": {
+            "load.ugm.d64.a64": 1,
+            "load.ugm.d32.a64": 3,
+            "load.ugm.d16u32.a64": 1,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 28,
+          "conversions_to_float": 2,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 1,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 17,
+            "16": 34,
+            "1": 28
+          }
+        },
+        {
+          "first_line": 49533,
+          "last_line": 49572,
+          "header": "_0_6752",
+          "instructions": 29,
+          "simd16_issue_equivalents": 45.0,
+          "memory_messages": 3,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 4,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 16,
+            "16": 10,
+            "1": 3
+          }
+        },
+        {
+          "first_line": 49486,
+          "last_line": 49590,
+          "header": "_0_6749",
+          "instructions": 85,
+          "simd16_issue_equivalents": 106.0,
+          "memory_messages": 6,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1,
+            "send.slm": 1,
+            "send.ugm": 1,
+            "send.gtwy": 1
+          },
+          "alu64": 6,
+          "conversions_to_float": 9,
+          "indirect_register_moves": 0,
+          "barriers": 3,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 49,
+            "32": 21,
+            "16": 12,
+            "8": 2,
+            "2": 1
+          }
+        },
+        {
+          "first_line": 50075,
+          "last_line": 50083,
+          "header": "_0_6819",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 50224,
+          "last_line": 50232,
+          "header": "_0_6831",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 50405,
+          "last_line": 50413,
+          "header": "_0_6848",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 50556,
+          "last_line": 50564,
+          "header": "_0_6858",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 50675,
+          "last_line": 50683,
+          "header": "_0_6873",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 50832,
+          "last_line": 50840,
+          "header": "_0_6885",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 50920,
+          "last_line": 50928,
+          "header": "_0_6898",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 51011,
+          "last_line": 51019,
+          "header": "_0_6910",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 49676,
+          "last_line": 51068,
+          "header": "_0_6760",
+          "instructions": 1070,
+          "simd16_issue_equivalents": 1657.0,
+          "memory_messages": 41,
+          "messages": {
+            "load.ugm.d32.a64": 7,
+            "load.ugm.d16u32.a64": 10,
+            "load.ugm.d64.a64": 2,
+            "load.ugm.d64x1t.a32.ca.ca": 1,
+            "load.ugm.d32x8t.a64": 2,
+            "load.ugm.d8u32.a64": 18,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 172,
+          "conversions_to_float": 16,
+          "indirect_register_moves": 2,
+          "barriers": 0,
+          "slm_messages": 1,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 153,
+            "32": 587,
+            "16": 326,
+            "2": 2,
+            "4": 2
+          }
+        },
+        {
+          "first_line": 51422,
+          "last_line": 51432,
+          "header": "_0_6947",
+          "instructions": 10,
+          "simd16_issue_equivalents": 12.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 4,
+            "16": 4,
+            "32": 2
+          }
+        },
+        {
+          "first_line": 51470,
+          "last_line": 51574,
+          "header": "_0_6950",
+          "instructions": 76,
+          "simd16_issue_equivalents": 93.0,
+          "memory_messages": 6,
+          "messages": {
+            "load.ugm.d64.a64": 1,
+            "load.ugm.d32.a64": 3,
+            "load.ugm.d16u32.a64": 1,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 28,
+          "conversions_to_float": 2,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 1,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 17,
+            "16": 34,
+            "1": 25
+          }
+        },
+        {
+          "first_line": 51643,
+          "last_line": 51682,
+          "header": "_0_6970",
+          "instructions": 29,
+          "simd16_issue_equivalents": 45.0,
+          "memory_messages": 3,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 4,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 16,
+            "16": 10,
+            "1": 3
+          }
+        },
+        {
+          "first_line": 51596,
+          "last_line": 51700,
+          "header": "_0_6967",
+          "instructions": 85,
+          "simd16_issue_equivalents": 106.0,
+          "memory_messages": 6,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1,
+            "send.slm": 1,
+            "send.ugm": 1,
+            "send.gtwy": 1
+          },
+          "alu64": 6,
+          "conversions_to_float": 9,
+          "indirect_register_moves": 0,
+          "barriers": 3,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 49,
+            "32": 21,
+            "16": 12,
+            "8": 2,
+            "2": 1
+          }
+        },
+        {
+          "first_line": 52186,
+          "last_line": 52194,
+          "header": "_0_7037",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 52332,
+          "last_line": 52340,
+          "header": "_0_7049",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 52512,
+          "last_line": 52520,
+          "header": "_0_7066",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 52662,
+          "last_line": 52670,
+          "header": "_0_7076",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 52779,
+          "last_line": 52787,
+          "header": "_0_7091",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 52935,
+          "last_line": 52943,
+          "header": "_0_7103",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 53023,
+          "last_line": 53031,
+          "header": "_0_7116",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 53114,
+          "last_line": 53122,
+          "header": "_0_7128",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 51787,
+          "last_line": 53171,
+          "header": "_0_6978",
+          "instructions": 1062,
+          "simd16_issue_equivalents": 1651.0,
+          "memory_messages": 41,
+          "messages": {
+            "load.ugm.d32.a64": 7,
+            "load.ugm.d16u32.a64": 10,
+            "load.ugm.d64.a64": 2,
+            "load.ugm.d64x1t.a32.ca.ca": 1,
+            "load.ugm.d32x8t.a64": 2,
+            "load.ugm.d8u32.a64": 18,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 172,
+          "conversions_to_float": 16,
+          "indirect_register_moves": 2,
+          "barriers": 0,
+          "slm_messages": 1,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 143,
+            "32": 589,
+            "16": 326,
+            "2": 2,
+            "4": 2
+          }
+        },
+        {
+          "first_line": 53512,
+          "last_line": 53619,
+          "header": "_0_7163",
+          "instructions": 79,
+          "simd16_issue_equivalents": 96.0,
+          "memory_messages": 6,
+          "messages": {
+            "load.ugm.d64.a64": 1,
+            "load.ugm.d32.a64": 3,
+            "load.ugm.d16u32.a64": 1,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 28,
+          "conversions_to_float": 2,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 1,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 17,
+            "16": 34,
+            "1": 28
+          }
+        },
+        {
+          "first_line": 53688,
+          "last_line": 53727,
+          "header": "_0_7183",
+          "instructions": 29,
+          "simd16_issue_equivalents": 45.0,
+          "memory_messages": 3,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 4,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 16,
+            "16": 10,
+            "1": 3
+          }
+        },
+        {
+          "first_line": 53640,
+          "last_line": 53745,
+          "header": "_0_7180",
+          "instructions": 86,
+          "simd16_issue_equivalents": 107.0,
+          "memory_messages": 6,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1,
+            "send.slm": 1,
+            "send.ugm": 1,
+            "send.gtwy": 1
+          },
+          "alu64": 6,
+          "conversions_to_float": 9,
+          "indirect_register_moves": 0,
+          "barriers": 3,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 50,
+            "32": 21,
+            "16": 12,
+            "8": 2,
+            "2": 1
+          }
+        },
+        {
+          "first_line": 54244,
+          "last_line": 54252,
+          "header": "_0_7249",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 54391,
+          "last_line": 54399,
+          "header": "_0_7261",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 54571,
+          "last_line": 54579,
+          "header": "_0_7278",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 54721,
+          "last_line": 54729,
+          "header": "_0_7288",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 54839,
+          "last_line": 54847,
+          "header": "_0_7303",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 54995,
+          "last_line": 55003,
+          "header": "_0_7315",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 55083,
+          "last_line": 55091,
+          "header": "_0_7328",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 55174,
+          "last_line": 55182,
+          "header": "_0_7340",
+          "instructions": 6,
+          "simd16_issue_equivalents": 10.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 4,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 56113,
+          "last_line": 56211,
+          "header": "_0_7405",
+          "instructions": 70,
+          "simd16_issue_equivalents": 87.0,
+          "memory_messages": 6,
+          "messages": {
+            "load.ugm.d64.a64": 1,
+            "load.ugm.d32.a64": 3,
+            "load.ugm.d16u32.a64": 1,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 28,
+          "conversions_to_float": 2,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 1,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 19,
+            "32": 17,
+            "16": 34
+          }
+        },
+        {
+          "first_line": 56280,
+          "last_line": 56318,
+          "header": "_0_7425",
+          "instructions": 28,
+          "simd16_issue_equivalents": 44.0,
+          "memory_messages": 3,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 4,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 16,
+            "16": 10,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 56233,
+          "last_line": 56337,
+          "header": "_0_7422",
+          "instructions": 85,
+          "simd16_issue_equivalents": 106.0,
+          "memory_messages": 6,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1,
+            "send.slm": 1,
+            "send.ugm": 1,
+            "send.gtwy": 1
+          },
+          "alu64": 6,
+          "conversions_to_float": 9,
+          "indirect_register_moves": 0,
+          "barriers": 3,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 49,
+            "32": 21,
+            "16": 12,
+            "8": 2,
+            "2": 1
+          }
+        },
+        {
+          "first_line": 56378,
+          "last_line": 56476,
+          "header": "_0_7433",
+          "instructions": 70,
+          "simd16_issue_equivalents": 87.0,
+          "memory_messages": 6,
+          "messages": {
+            "load.ugm.d64.a64": 1,
+            "load.ugm.d32.a64": 3,
+            "load.ugm.d16u32.a64": 1,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 28,
+          "conversions_to_float": 2,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 1,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 17,
+            "16": 34,
+            "1": 19
+          }
+        },
+        {
+          "first_line": 56544,
+          "last_line": 56584,
+          "header": "_0_7453",
+          "instructions": 30,
+          "simd16_issue_equivalents": 46.0,
+          "memory_messages": 3,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 4,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 16,
+            "16": 10,
+            "1": 4
+          }
+        },
+        {
+          "first_line": 56497,
+          "last_line": 56602,
+          "header": "_0_7450",
+          "instructions": 86,
+          "simd16_issue_equivalents": 107.0,
+          "memory_messages": 6,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1,
+            "send.slm": 1,
+            "send.ugm": 1,
+            "send.gtwy": 1
+          },
+          "alu64": 6,
+          "conversions_to_float": 9,
+          "indirect_register_moves": 0,
+          "barriers": 3,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 50,
+            "32": 21,
+            "16": 12,
+            "8": 2,
+            "2": 1
+          }
+        },
+        {
+          "first_line": 56942,
+          "last_line": 56951,
+          "header": "_0_7517",
+          "instructions": 7,
+          "simd16_issue_equivalents": 8.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 6,
+            "32": 1
+          }
+        },
+        {
+          "first_line": 57056,
+          "last_line": 57065,
+          "header": "_0_7529",
+          "instructions": 7,
+          "simd16_issue_equivalents": 8.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 6,
+            "32": 1
+          }
+        },
+        {
+          "first_line": 57212,
+          "last_line": 57221,
+          "header": "_0_7546",
+          "instructions": 7,
+          "simd16_issue_equivalents": 8.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 6,
+            "32": 1
+          }
+        },
+        {
+          "first_line": 57324,
+          "last_line": 57333,
+          "header": "_0_7556",
+          "instructions": 7,
+          "simd16_issue_equivalents": 8.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 6,
+            "32": 1
+          }
+        },
+        {
+          "first_line": 57428,
+          "last_line": 57437,
+          "header": "_0_7571",
+          "instructions": 7,
+          "simd16_issue_equivalents": 8.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 6,
+            "32": 1
+          }
+        },
+        {
+          "first_line": 57552,
+          "last_line": 57561,
+          "header": "_0_7583",
+          "instructions": 7,
+          "simd16_issue_equivalents": 8.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 6,
+            "32": 1
+          }
+        },
+        {
+          "first_line": 57632,
+          "last_line": 57641,
+          "header": "_0_7596",
+          "instructions": 7,
+          "simd16_issue_equivalents": 8.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 6,
+            "32": 1
+          }
+        },
+        {
+          "first_line": 57712,
+          "last_line": 57721,
+          "header": "_0_7608",
+          "instructions": 7,
+          "simd16_issue_equivalents": 8.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 6,
+            "32": 1
+          }
+        },
+        {
+          "first_line": 58818,
+          "last_line": 58827,
+          "header": "_0_7686",
+          "instructions": 7,
+          "simd16_issue_equivalents": 8.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 6,
+            "32": 1
+          }
+        },
+        {
+          "first_line": 58933,
+          "last_line": 58942,
+          "header": "_0_7698",
+          "instructions": 7,
+          "simd16_issue_equivalents": 8.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 6,
+            "32": 1
+          }
+        },
+        {
+          "first_line": 59085,
+          "last_line": 59094,
+          "header": "_0_7715",
+          "instructions": 7,
+          "simd16_issue_equivalents": 8.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 6,
+            "32": 1
+          }
+        },
+        {
+          "first_line": 59196,
+          "last_line": 59205,
+          "header": "_0_7725",
+          "instructions": 7,
+          "simd16_issue_equivalents": 8.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 6,
+            "32": 1
+          }
+        },
+        {
+          "first_line": 59300,
+          "last_line": 59309,
+          "header": "_0_7740",
+          "instructions": 7,
+          "simd16_issue_equivalents": 8.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 6,
+            "32": 1
+          }
+        },
+        {
+          "first_line": 59423,
+          "last_line": 59432,
+          "header": "_0_7752",
+          "instructions": 7,
+          "simd16_issue_equivalents": 8.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 6,
+            "32": 1
+          }
+        },
+        {
+          "first_line": 59502,
+          "last_line": 59511,
+          "header": "_0_7765",
+          "instructions": 7,
+          "simd16_issue_equivalents": 8.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 6,
+            "32": 1
+          }
+        },
+        {
+          "first_line": 59583,
+          "last_line": 59592,
+          "header": "_0_7777",
+          "instructions": 7,
+          "simd16_issue_equivalents": 8.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 6,
+            "32": 1
+          }
+        },
+        {
+          "first_line": 60092,
+          "last_line": 60307,
+          "header": "_0_7801",
+          "instructions": 151,
+          "simd16_issue_equivalents": 185.0,
+          "memory_messages": 11,
+          "messages": {
+            "load.ugm.d64.a64": 2,
+            "load.ugm.d32.a64": 6,
+            "load.ugm.d16u32.a64": 2,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 52,
+          "conversions_to_float": 4,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 1,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 34,
+            "1": 39,
+            "16": 78
+          }
+        },
+        {
+          "first_line": 60373,
+          "last_line": 60412,
+          "header": "_0_7834",
+          "instructions": 29,
+          "simd16_issue_equivalents": 45.0,
+          "memory_messages": 3,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 4,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 16,
+            "16": 10,
+            "1": 3
+          }
+        },
+        {
+          "first_line": 60327,
+          "last_line": 60431,
+          "header": "_0_7831",
+          "instructions": 85,
+          "simd16_issue_equivalents": 106.0,
+          "memory_messages": 6,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1,
+            "send.slm": 1,
+            "send.ugm": 1,
+            "send.gtwy": 1
+          },
+          "alu64": 6,
+          "conversions_to_float": 9,
+          "indirect_register_moves": 0,
+          "barriers": 3,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 49,
+            "32": 21,
+            "16": 12,
+            "8": 2,
+            "2": 1
+          }
+        },
+        {
+          "first_line": 61095,
+          "last_line": 61468,
+          "header": "_0_7887",
+          "instructions": 263,
+          "simd16_issue_equivalents": 320.0,
+          "memory_messages": 16,
+          "messages": {
+            "load.ugm.d64.a64": 3,
+            "load.ugm.d32.a64": 9,
+            "load.ugm.d16u32.a64": 3,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 76,
+          "conversions_to_float": 6,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 1,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 57,
+            "16": 138,
+            "1": 68
+          }
+        },
+        {
+          "first_line": 61534,
+          "last_line": 61572,
+          "header": "_0_7933",
+          "instructions": 28,
+          "simd16_issue_equivalents": 44.0,
+          "memory_messages": 3,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1
+          },
+          "alu64": 4,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 16,
+            "16": 10,
+            "1": 2
+          }
+        },
+        {
+          "first_line": 61488,
+          "last_line": 61590,
+          "header": "_0_7930",
+          "instructions": 83,
+          "simd16_issue_equivalents": 104.0,
+          "memory_messages": 6,
+          "messages": {
+            "load.slm.d32.a32": 2,
+            "store.slm.d32.a32": 1,
+            "send.slm": 1,
+            "send.ugm": 1,
+            "send.gtwy": 1
+          },
+          "alu64": 6,
+          "conversions_to_float": 9,
+          "indirect_register_moves": 0,
+          "barriers": 3,
+          "slm_messages": 3,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 47,
+            "32": 21,
+            "16": 12,
+            "8": 2,
+            "2": 1
+          }
+        },
+        {
+          "first_line": 61648,
+          "last_line": 61694,
+          "header": "_0_7941",
+          "instructions": 24,
+          "simd16_issue_equivalents": 24,
+          "memory_messages": 5,
+          "messages": {
+            "store.ugm.d32x2t.a64": 1,
+            "store.ugm.d32x1t.a64": 3,
+            "store.ugm.d16u32.a64": 1
+          },
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 23,
+            "2": 1
+          }
+        }
+      ],
+      "prologue_instructions_before_first_branch": 28,
+      "dynamic_instructions_per_weight": null,
+      "dynamic_messages_per_weight": null,
+      "dynamic_limit": "Static lexical counts include divergent and exceptional paths. Null dynamic count is unestablished, not zero.",
+      "execution_env": {
+        "intel_reqd_sub_group_size": "32",
+        "intel_reqd_workgroup_walk_order": "[ 0, 1, 2 ]",
+        "barrier_count": "1",
+        "grf_count": "128",
+        "has_4gb_buffers": "true",
+        "has_global_atomics": "true",
+        "has_no_stateless_write": "true",
+        "indirect_stateless_count": "968",
+        "inline_data_payload_size": "32",
+        "offset_to_skip_per_thread_data_load": "128",
+        "simd_size": "32",
+        "private_size": "45312",
+        "subgroup_independent_forward_progress": "true",
+        "eu_thread_count": "8"
+      },
+      "cross_thread_payload_extent_bytes": 772,
+      "per_thread_payload_extent_bytes": 64,
+      "per_thread_memory_buffers_metadata": [
+        "      - type:            scratch",
+        "        usage:           single_space",
+        "        size:            65536"
+      ],
+      "offline_binary_match": {
+        "selected": true,
+        "binary": "build/igc-00f907/OCL_asm20b6f47497700559.progbin",
+        "binary_sha256": "aa88334ec0a73c03612e8be260b55d8e16e7d3e62ed395e519a4296722bebf27",
+        "binary_text_sha256": "fea3f3fb33230fa7da43479ad0e96c4c861af672e636dabf66e1f3e3548ec57e",
+        "text_bytes": 400064,
+        "dat_sha256": "dc065b7a02f0b139ab05ca7c5b131ed8d3d01417339fb01678fc42f95ef74dec",
+        "dat_bytes": 399880,
+        "proof": "Entire GEN .dat equals ELF .text prefix and remaining padding is all zero."
+      },
+      "assembly_gzip": "extras-evidence/incumbent-OCL_asm20b6f47497700559_simd32_entry_0001.asm.gz",
+      "source": "../packet33-codegen/codegen.json"
+    },
+    {
+      "instructions": 667,
+      "simd16_issue_equivalents": 667,
+      "memory_messages": 39,
+      "messages": {
+        "load.ugm.d32x16t.a32.ca.cc": 2,
+        "load.ugm.d32x32t.a32.ca.cc": 1,
+        "load.ugm.d32x1t.a64": 2,
+        "load.ugm.d16u32.a64": 32,
+        "store.ugm.d32.a64": 1,
+        "send.gtwy": 1
+      },
+      "alu64": 69,
+      "conversions_to_float": 9,
+      "indirect_register_moves": 3,
+      "barriers": 0,
+      "slm_messages": 0,
+      "calls": 0,
+      "explicit_scratch_messages": 0,
+      "instruction_widths": {
+        "16": 561,
+        "1": 105,
+        "8": 1
+      },
+      "kernel": "_ZTSZZNK11specialised6KernelILN2ng2OpE2ELi0ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_2idILi1EEEE_",
+      "demangled": "typeinfo name for specialised::Kernel<(ng::Op)2, 0, 0, 0>::submit(sycl::_V1::queue&, std::span<void* const, 18446744073709551615ul>, std::vector<sycl::_V1::event, std::allocator<sycl::_V1::event> > const&) const::{lambda(sycl::_V1::handler&)#1}::operator()(sycl::_V1::handler&) const::{lambda(sycl::_V1::id<1>)#1}",
+      "asm": "build/igc-2e228b/OCL_asm0830d2f0ea18a4dc_simd16_entry_0030.asm",
+      "asm_sha256": "15c17de3b3ef71d7235de694b974209b1f82b2c360c5a1135b437e1f767162cd",
+      "simd": 16,
+      "grf": 128,
+      "spill_metadata": [],
+      "scratch_note": "A32 transposed UGM messages can be spill/fill even without scratch in disassembly. Use spill_metadata and execution_env; text signature alone is incomplete.",
+      "backward_branch_regions": [
+        {
+          "first_line": 1485,
+          "last_line": 1523,
+          "header": "_0_234",
+          "instructions": 25,
+          "simd16_issue_equivalents": 25,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 3,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "16": 16,
+            "1": 9
+          }
+        },
+        {
+          "first_line": 1481,
+          "last_line": 1535,
+          "header": "_0_233",
+          "instructions": 33,
+          "simd16_issue_equivalents": 33,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 3,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 15,
+            "16": 18
+          }
+        }
+      ],
+      "prologue_instructions_before_first_branch": 41,
+      "dynamic_instructions_per_weight": null,
+      "dynamic_messages_per_weight": null,
+      "dynamic_limit": "Static lexical counts include divergent and exceptional paths. Null dynamic count is unestablished, not zero.",
+      "execution_env": {
+        "intel_reqd_workgroup_walk_order": "[ 0, 1, 2 ]",
+        "grf_count": "128",
+        "has_4gb_buffers": "true",
+        "has_global_atomics": "true",
+        "has_no_stateless_write": "true",
+        "inline_data_payload_size": "32",
+        "offset_to_skip_per_thread_data_load": "128",
+        "simd_size": "16",
+        "subgroup_independent_forward_progress": "true",
+        "eu_thread_count": "8"
+      },
+      "cross_thread_payload_extent_bytes": 216,
+      "per_thread_payload_extent_bytes": 64,
+      "per_thread_memory_buffers_metadata": [],
+      "offline_binary_match": {
+        "selected": true,
+        "binary": "build/igc-2e228b/OCL_asm0830d2f0ea18a4dc.progbin",
+        "binary_sha256": "4afacec8a3c9782a08fcf2b7d58538de4aaa9412d76e68e23d4bea9e108eb29e",
+        "binary_text_sha256": "51049506d72563e3771f051899e520c0b9114d2d20e8c21b2599758d3461983a",
+        "text_bytes": 8768,
+        "dat_sha256": "24ec413266ce2f082d5bfa989345b85d795f6a16b8285694dfaa8f70ed0f4a21",
+        "dat_bytes": 8608,
+        "proof": "Entire GEN .dat equals ELF .text prefix and remaining padding is all zero."
+      },
+      "assembly_gzip": "extras-evidence/incumbent-OCL_asm0830d2f0ea18a4dc_simd16_entry_0030.asm.gz",
+      "source": "../packet33-codegen/codegen.json"
+    },
+    {
+      "instructions": 415,
+      "simd16_issue_equivalents": 659.0,
+      "memory_messages": 39,
+      "messages": {
+        "load.ugm.d32x16t.a32.ca.cc": 2,
+        "load.ugm.d32x32t.a32.ca.cc": 1,
+        "load.ugm.d32x1t.a64": 2,
+        "load.ugm.d16u32.a64": 32,
+        "store.ugm.d32.a64": 1,
+        "send.gtwy": 1
+      },
+      "alu64": 75,
+      "conversions_to_float": 0,
+      "indirect_register_moves": 0,
+      "barriers": 0,
+      "slm_messages": 0,
+      "calls": 0,
+      "explicit_scratch_messages": 0,
+      "instruction_widths": {
+        "16": 95,
+        "1": 75,
+        "8": 1,
+        "32": 244
+      },
+      "kernel": "_ZTSZZNK11specialised6KernelILN2ng2OpE2ELi0ELi2560ELi4EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_2idILi1EEEE_",
+      "demangled": "typeinfo name for specialised::Kernel<(ng::Op)2, 0, 2560, 4>::submit(sycl::_V1::queue&, std::span<void* const, 18446744073709551615ul>, std::vector<sycl::_V1::event, std::allocator<sycl::_V1::event> > const&) const::{lambda(sycl::_V1::handler&)#1}::operator()(sycl::_V1::handler&) const::{lambda(sycl::_V1::id<1>)#1}",
+      "asm": "build/igc-2e228b/OCL_asm0830d2f0ea18a4dc_simd32_entry_0002.asm",
+      "asm_sha256": "0a1c83efe82b55e4e00b43af733b5fc11d9ed8c77d3aed3d47d8b7578bab5926",
+      "simd": 32,
+      "grf": 128,
+      "spill_metadata": [
+        "//.spill flag store 20",
+        "//.spill flag load 20"
+      ],
+      "scratch_note": "A32 transposed UGM messages can be spill/fill even without scratch in disassembly. Use spill_metadata and execution_env; text signature alone is incomplete.",
+      "backward_branch_regions": [],
+      "prologue_instructions_before_first_branch": 27,
+      "dynamic_instructions_per_weight": null,
+      "dynamic_messages_per_weight": null,
+      "dynamic_limit": "Static lexical counts include divergent and exceptional paths. Null dynamic count is unestablished, not zero.",
+      "execution_env": {
+        "intel_reqd_workgroup_walk_order": "[ 0, 1, 2 ]",
+        "grf_count": "128",
+        "has_4gb_buffers": "true",
+        "has_global_atomics": "true",
+        "has_no_stateless_write": "true",
+        "inline_data_payload_size": "32",
+        "offset_to_skip_per_thread_data_load": "128",
+        "simd_size": "32",
+        "subgroup_independent_forward_progress": "true",
+        "eu_thread_count": "8"
+      },
+      "cross_thread_payload_extent_bytes": 216,
+      "per_thread_payload_extent_bytes": 64,
+      "per_thread_memory_buffers_metadata": [],
+      "offline_binary_match": {
+        "selected": true,
+        "binary": "build/igc-2e228b/OCL_asm0830d2f0ea18a4dc.progbin",
+        "binary_sha256": "4afacec8a3c9782a08fcf2b7d58538de4aaa9412d76e68e23d4bea9e108eb29e",
+        "binary_text_sha256": "10e5bbc7117591ca950b4b0821c682f6883768cbda90365b583aa14a00536f71",
+        "text_bytes": 4992,
+        "dat_sha256": "4e95f14c6a1a4c5ceb9aaceaf64610b0518950aa22b5294d443fb45313eccf03",
+        "dat_bytes": 4832,
+        "proof": "Entire GEN .dat equals ELF .text prefix and remaining padding is all zero."
+      },
+      "assembly_gzip": "extras-evidence/incumbent-OCL_asm0830d2f0ea18a4dc_simd32_entry_0002.asm.gz",
+      "source": "../packet33-codegen/codegen.json"
+    },
+    {
+      "instructions": 317,
+      "simd16_issue_equivalents": 495.0,
+      "memory_messages": 32,
+      "messages": {
+        "load.ugm.d32x16t.a32.ca.cc": 2,
+        "load.ugm.d32x32t.a32.ca.cc": 1,
+        "load.ugm.d32x1t.a64": 2,
+        "load.ugm.d32x4.a64": 20,
+        "store.ugm.d32.a32.wb.wb": 1,
+        "load.ugm.d32.a32.ca.ca": 1,
+        "load.ugm.d16u32.a64": 2,
+        "load.ugm.d32.a64": 1,
+        "store.ugm.d16u32.a64": 1,
+        "send.gtwy": 1
+      },
+      "alu64": 21,
+      "conversions_to_float": 1,
+      "indirect_register_moves": 0,
+      "barriers": 0,
+      "slm_messages": 0,
+      "calls": 0,
+      "explicit_scratch_messages": 0,
+      "instruction_widths": {
+        "16": 95,
+        "1": 41,
+        "8": 3,
+        "32": 178
+      },
+      "kernel": "_ZTSZZNK11specialised6KernelILN2ng2OpE2ELi1ELi2560ELi4EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_2idILi1EEEE_",
+      "demangled": "typeinfo name for specialised::Kernel<(ng::Op)2, 1, 2560, 4>::submit(sycl::_V1::queue&, std::span<void* const, 18446744073709551615ul>, std::vector<sycl::_V1::event, std::allocator<sycl::_V1::event> > const&) const::{lambda(sycl::_V1::handler&)#1}::operator()(sycl::_V1::handler&) const::{lambda(sycl::_V1::id<1>)#1}",
+      "asm": "build/igc-2e228b/OCL_asm0830d2f0ea18a4dc_simd32_entry_0004.asm",
+      "asm_sha256": "2327a1d8036947719e8641c24996616fa61a3ed9646f2c575ec814b0e3d953b8",
+      "simd": 32,
+      "grf": 128,
+      "spill_metadata": [],
+      "scratch_note": "A32 transposed UGM messages can be spill/fill even without scratch in disassembly. Use spill_metadata and execution_env; text signature alone is incomplete.",
+      "backward_branch_regions": [],
+      "prologue_instructions_before_first_branch": 30,
+      "dynamic_instructions_per_weight": null,
+      "dynamic_messages_per_weight": null,
+      "dynamic_limit": "Static lexical counts include divergent and exceptional paths. Null dynamic count is unestablished, not zero.",
+      "execution_env": {
+        "intel_reqd_workgroup_walk_order": "[ 0, 1, 2 ]",
+        "grf_count": "128",
+        "has_4gb_buffers": "true",
+        "has_global_atomics": "true",
+        "has_no_stateless_write": "true",
+        "inline_data_payload_size": "32",
+        "offset_to_skip_per_thread_data_load": "128",
+        "simd_size": "32",
+        "private_size": "128",
+        "subgroup_independent_forward_progress": "true",
+        "eu_thread_count": "8"
+      },
+      "cross_thread_payload_extent_bytes": 216,
+      "per_thread_payload_extent_bytes": 64,
+      "per_thread_memory_buffers_metadata": [
+        "      - type:            scratch",
+        "        usage:           single_space",
+        "        size:            128"
+      ],
+      "offline_binary_match": {
+        "selected": true,
+        "binary": "build/igc-2e228b/OCL_asm0830d2f0ea18a4dc.progbin",
+        "binary_sha256": "4afacec8a3c9782a08fcf2b7d58538de4aaa9412d76e68e23d4bea9e108eb29e",
+        "binary_text_sha256": "e4cf25b5b378325c7cab9d646ff3947ea7f0356f571762a8fc563ee855326df8",
+        "text_bytes": 4288,
+        "dat_sha256": "7adbcb16fb8d98150c3db4bcaed76809a99d2aa6f75207035bf4354a7d57a910",
+        "dat_bytes": 4112,
+        "proof": "Entire GEN .dat equals ELF .text prefix and remaining padding is all zero."
+      },
+      "assembly_gzip": "extras-evidence/incumbent-OCL_asm0830d2f0ea18a4dc_simd32_entry_0004.asm.gz",
+      "source": "../packet33-codegen/codegen.json"
+    },
+    {
+      "instructions": 1567,
+      "simd16_issue_equivalents": 2639.0,
+      "memory_messages": 72,
+      "messages": {
+        "load.ugm.d32x16t.a32.ca.cc": 2,
+        "load.ugm.d32x32t.a32.ca.cc": 1,
+        "load.ugm.d32x1t.a64": 2,
+        "load.ugm.d16u32.a64": 65,
+        "store.ugm.d32.a64": 1,
+        "send.gtwy": 1
+      },
+      "alu64": 265,
+      "conversions_to_float": 4,
+      "indirect_register_moves": 0,
+      "barriers": 0,
+      "slm_messages": 0,
+      "calls": 0,
+      "explicit_scratch_messages": 0,
+      "instruction_widths": {
+        "16": 433,
+        "1": 61,
+        "8": 1,
+        "32": 1072
+      },
+      "kernel": "_ZTSZZNK11specialised6KernelILN2ng2OpE5ELi0ELi2560ELi4EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_2idILi1EEEE_",
+      "demangled": "typeinfo name for specialised::Kernel<(ng::Op)5, 0, 2560, 4>::submit(sycl::_V1::queue&, std::span<void* const, 18446744073709551615ul>, std::vector<sycl::_V1::event, std::allocator<sycl::_V1::event> > const&) const::{lambda(sycl::_V1::handler&)#1}::operator()(sycl::_V1::handler&) const::{lambda(sycl::_V1::id<1>)#1}",
+      "asm": "build/igc-2e228b/OCL_asm0830d2f0ea18a4dc_simd32_entry_0006.asm",
+      "asm_sha256": "5681e576f440a604b5d2698e83918a1d87b47129cc7cca5238001125229ce22f",
+      "simd": 32,
+      "grf": 128,
+      "spill_metadata": [],
+      "scratch_note": "A32 transposed UGM messages can be spill/fill even without scratch in disassembly. Use spill_metadata and execution_env; text signature alone is incomplete.",
+      "backward_branch_regions": [],
+      "prologue_instructions_before_first_branch": 27,
+      "dynamic_instructions_per_weight": null,
+      "dynamic_messages_per_weight": null,
+      "dynamic_limit": "Static lexical counts include divergent and exceptional paths. Null dynamic count is unestablished, not zero.",
+      "execution_env": {
+        "intel_reqd_workgroup_walk_order": "[ 0, 1, 2 ]",
+        "grf_count": "128",
+        "has_4gb_buffers": "true",
+        "has_global_atomics": "true",
+        "has_no_stateless_write": "true",
+        "inline_data_payload_size": "32",
+        "offset_to_skip_per_thread_data_load": "128",
+        "simd_size": "32",
+        "subgroup_independent_forward_progress": "true",
+        "eu_thread_count": "8"
+      },
+      "cross_thread_payload_extent_bytes": 216,
+      "per_thread_payload_extent_bytes": 64,
+      "per_thread_memory_buffers_metadata": [],
+      "offline_binary_match": {
+        "selected": true,
+        "binary": "build/igc-2e228b/OCL_asm0830d2f0ea18a4dc.progbin",
+        "binary_sha256": "4afacec8a3c9782a08fcf2b7d58538de4aaa9412d76e68e23d4bea9e108eb29e",
+        "binary_text_sha256": "d215d699228b81a0d41b3c0118487ebeb97b311a0bcce77b180f73df23898bb9",
+        "text_bytes": 19136,
+        "dat_sha256": "ba779fb3d5c215a60830f2ee50fee18f93330a1e46c2a0825233ce8e0ca95822",
+        "dat_bytes": 18960,
+        "proof": "Entire GEN .dat equals ELF .text prefix and remaining padding is all zero."
+      },
+      "assembly_gzip": "extras-evidence/incumbent-OCL_asm0830d2f0ea18a4dc_simd32_entry_0006.asm.gz",
+      "source": "../packet33-codegen/codegen.json"
+    },
+    {
+      "instructions": 794,
+      "simd16_issue_equivalents": 1409.0,
+      "memory_messages": 35,
+      "messages": {
+        "load.ugm.d32x16t.a32.ca.cc": 2,
+        "load.ugm.d32x32t.a32.ca.cc": 1,
+        "load.ugm.d32x1t.a64": 2,
+        "load.ugm.d32x4.a64": 20,
+        "store.ugm.d32.a32.wb.wb": 1,
+        "load.ugm.d32.a32.ca.ca": 1,
+        "load.ugm.d16u32.a64": 4,
+        "load.ugm.d32.a64": 1,
+        "store.ugm.d16u32.a64": 2,
+        "send.gtwy": 1
+      },
+      "alu64": 29,
+      "conversions_to_float": 5,
+      "indirect_register_moves": 0,
+      "barriers": 0,
+      "slm_messages": 0,
+      "calls": 0,
+      "explicit_scratch_messages": 0,
+      "instruction_widths": {
+        "16": 123,
+        "1": 53,
+        "8": 3,
+        "32": 615
+      },
+      "kernel": "_ZTSZZNK11specialised6KernelILN2ng2OpE5ELi1ELi2560ELi4EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_2idILi1EEEE_",
+      "demangled": "typeinfo name for specialised::Kernel<(ng::Op)5, 1, 2560, 4>::submit(sycl::_V1::queue&, std::span<void* const, 18446744073709551615ul>, std::vector<sycl::_V1::event, std::allocator<sycl::_V1::event> > const&) const::{lambda(sycl::_V1::handler&)#1}::operator()(sycl::_V1::handler&) const::{lambda(sycl::_V1::id<1>)#1}",
+      "asm": "build/igc-2e228b/OCL_asm0830d2f0ea18a4dc_simd32_entry_0008.asm",
+      "asm_sha256": "c87488b2336b7dfc0ada22a7c9149a945bea8e2558a47d0d67f6954d5497e7f3",
+      "simd": 32,
+      "grf": 128,
+      "spill_metadata": [],
+      "scratch_note": "A32 transposed UGM messages can be spill/fill even without scratch in disassembly. Use spill_metadata and execution_env; text signature alone is incomplete.",
+      "backward_branch_regions": [],
+      "prologue_instructions_before_first_branch": 30,
+      "dynamic_instructions_per_weight": null,
+      "dynamic_messages_per_weight": null,
+      "dynamic_limit": "Static lexical counts include divergent and exceptional paths. Null dynamic count is unestablished, not zero.",
+      "execution_env": {
+        "intel_reqd_workgroup_walk_order": "[ 0, 1, 2 ]",
+        "grf_count": "128",
+        "has_4gb_buffers": "true",
+        "has_global_atomics": "true",
+        "has_no_stateless_write": "true",
+        "inline_data_payload_size": "32",
+        "offset_to_skip_per_thread_data_load": "128",
+        "simd_size": "32",
+        "private_size": "128",
+        "subgroup_independent_forward_progress": "true",
+        "eu_thread_count": "8"
+      },
+      "cross_thread_payload_extent_bytes": 216,
+      "per_thread_payload_extent_bytes": 64,
+      "per_thread_memory_buffers_metadata": [
+        "      - type:            scratch",
+        "        usage:           single_space",
+        "        size:            128"
+      ],
+      "offline_binary_match": {
+        "selected": true,
+        "binary": "build/igc-2e228b/OCL_asm0830d2f0ea18a4dc.progbin",
+        "binary_sha256": "4afacec8a3c9782a08fcf2b7d58538de4aaa9412d76e68e23d4bea9e108eb29e",
+        "binary_text_sha256": "aca76e124e9809a023e34620288049c2cfa07eb0c7ccda767133c201243cae03",
+        "text_bytes": 9408,
+        "dat_sha256": "35572cf5b9c9eae51f20d0d1c1ba1305170f9130f531750e9f789746958ef9d0",
+        "dat_bytes": 9232,
+        "proof": "Entire GEN .dat equals ELF .text prefix and remaining padding is all zero."
+      },
+      "assembly_gzip": "extras-evidence/incumbent-OCL_asm0830d2f0ea18a4dc_simd32_entry_0008.asm.gz",
+      "source": "../packet33-codegen/codegen.json"
+    },
+    {
+      "instructions": 382,
+      "simd16_issue_equivalents": 521.0,
+      "memory_messages": 18,
+      "messages": {
+        "load.ugm.d32x16t.a32.ca.cc": 2,
+        "load.ugm.d32x32t.a32.ca.cc": 1,
+        "load.ugm.d32x1t.a64": 2,
+        "load.ugm.d32.a64": 2,
+        "store.ugm.d32.a32.wb.wb": 3,
+        "load.ugm.d32.a32.ca.ca": 4,
+        "load.ugm.d16u32.a64": 2,
+        "store.ugm.d16u32.a64": 1,
+        "send.gtwy": 1
+      },
+      "alu64": 26,
+      "conversions_to_float": 20,
+      "indirect_register_moves": 0,
+      "barriers": 0,
+      "slm_messages": 0,
+      "calls": 0,
+      "explicit_scratch_messages": 0,
+      "instruction_widths": {
+        "16": 119,
+        "1": 121,
+        "8": 3,
+        "32": 139
+      },
+      "kernel": "_ZTSZZNK11specialised6KernelILN2ng2OpE2ELi1ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_2idILi1EEEE_",
+      "demangled": "typeinfo name for specialised::Kernel<(ng::Op)2, 1, 0, 0>::submit(sycl::_V1::queue&, std::span<void* const, 18446744073709551615ul>, std::vector<sycl::_V1::event, std::allocator<sycl::_V1::event> > const&) const::{lambda(sycl::_V1::handler&)#1}::operator()(sycl::_V1::handler&) const::{lambda(sycl::_V1::id<1>)#1}",
+      "asm": "build/igc-2e228b/OCL_asm0830d2f0ea18a4dc_simd32_entry_0032.asm",
+      "asm_sha256": "ad94b4a001bac0a00ee7c16dffe944788be987e361679f8045e358a7b4404551",
+      "simd": 32,
+      "grf": 128,
+      "spill_metadata": [],
+      "scratch_note": "A32 transposed UGM messages can be spill/fill even without scratch in disassembly. Use spill_metadata and execution_env; text signature alone is incomplete.",
+      "backward_branch_regions": [
+        {
+          "first_line": 587,
+          "last_line": 600,
+          "header": "_0_058",
+          "instructions": 13,
+          "simd16_issue_equivalents": 17.0,
+          "memory_messages": 2,
+          "messages": {
+            "load.ugm.d32.a64": 1,
+            "store.ugm.d32.a32.wb.wb": 1
+          },
+          "alu64": 3,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 7,
+            "16": 2,
+            "32": 4
+          }
+        },
+        {
+          "first_line": 613,
+          "last_line": 641,
+          "header": "_0_062",
+          "instructions": 22,
+          "simd16_issue_equivalents": 31.0,
+          "memory_messages": 3,
+          "messages": {
+            "load.ugm.d32.a32.ca.ca": 2,
+            "store.ugm.d32.a32.wb.wb": 1
+          },
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 13,
+            "32": 9
+          }
+        },
+        {
+          "first_line": 609,
+          "last_line": 649,
+          "header": "_0_061",
+          "instructions": 28,
+          "simd16_issue_equivalents": 38.0,
+          "memory_messages": 3,
+          "messages": {
+            "load.ugm.d32.a32.ca.ca": 2,
+            "store.ugm.d32.a32.wb.wb": 1
+          },
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 18,
+            "32": 10
+          }
+        }
+      ],
+      "prologue_instructions_before_first_branch": 44,
+      "dynamic_instructions_per_weight": null,
+      "dynamic_messages_per_weight": null,
+      "dynamic_limit": "Static lexical counts include divergent and exceptional paths. Null dynamic count is unestablished, not zero.",
+      "execution_env": {
+        "intel_reqd_workgroup_walk_order": "[ 0, 1, 2 ]",
+        "grf_count": "128",
+        "has_4gb_buffers": "true",
+        "has_global_atomics": "true",
+        "has_no_stateless_write": "true",
+        "indirect_stateless_count": "2",
+        "inline_data_payload_size": "32",
+        "offset_to_skip_per_thread_data_load": "128",
+        "simd_size": "32",
+        "private_size": "65664",
+        "subgroup_independent_forward_progress": "true",
+        "eu_thread_count": "8"
+      },
+      "cross_thread_payload_extent_bytes": 216,
+      "per_thread_payload_extent_bytes": 64,
+      "per_thread_memory_buffers_metadata": [
+        "      - type:            scratch",
+        "        usage:           single_space",
+        "        size:            131072"
+      ],
+      "offline_binary_match": {
+        "selected": true,
+        "binary": "build/igc-2e228b/OCL_asm0830d2f0ea18a4dc.progbin",
+        "binary_sha256": "4afacec8a3c9782a08fcf2b7d58538de4aaa9412d76e68e23d4bea9e108eb29e",
+        "binary_text_sha256": "0a6c5f4ae4a74aa815b498b597e8b960aad41714c9fa4c0a68fea6ab7c6a1741",
+        "text_bytes": 5376,
+        "dat_sha256": "d6e61c4efeb67c100ea70fe78eb4ebb65cdde0012b55dbcfd1923f399611fb99",
+        "dat_bytes": 5240,
+        "proof": "Entire GEN .dat equals ELF .text prefix and remaining padding is all zero."
+      },
+      "assembly_gzip": "extras-evidence/incumbent-OCL_asm0830d2f0ea18a4dc_simd32_entry_0032.asm.gz",
+      "source": "../packet33-codegen/codegen.json"
+    },
+    {
+      "instructions": 8276,
+      "simd16_issue_equivalents": 15544.0,
+      "memory_messages": 55,
+      "messages": {
+        "load.ugm.d32x16t.a32.ca.cc": 2,
+        "load.ugm.d32x32t.a32.ca.cc": 1,
+        "load.ugm.d32x1t.a64": 2,
+        "load.ugm.d16u32.a64": 48,
+        "store.ugm.d32.a64": 1,
+        "send.gtwy": 1
+      },
+      "alu64": 139,
+      "conversions_to_float": 217,
+      "indirect_register_moves": 19,
+      "barriers": 0,
+      "slm_messages": 0,
+      "calls": 0,
+      "explicit_scratch_messages": 0,
+      "instruction_widths": {
+        "16": 617,
+        "1": 390,
+        "8": 1,
+        "32": 7268
+      },
+      "kernel": "_ZTSZZNK11specialised6KernelILN2ng2OpE5ELi0ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_2idILi1EEEE_",
+      "demangled": "typeinfo name for specialised::Kernel<(ng::Op)5, 0, 0, 0>::submit(sycl::_V1::queue&, std::span<void* const, 18446744073709551615ul>, std::vector<sycl::_V1::event, std::allocator<sycl::_V1::event> > const&) const::{lambda(sycl::_V1::handler&)#1}::operator()(sycl::_V1::handler&) const::{lambda(sycl::_V1::id<1>)#1}",
+      "asm": "build/igc-2e228b/OCL_asm0830d2f0ea18a4dc_simd32_entry_0034.asm",
+      "asm_sha256": "be3f7854995849f661374ed41c95a95f8fd7526c94b7bdaf322add7c5a40546c",
+      "simd": 32,
+      "grf": 128,
+      "spill_metadata": [],
+      "scratch_note": "A32 transposed UGM messages can be spill/fill even without scratch in disassembly. Use spill_metadata and execution_env; text signature alone is incomplete.",
+      "backward_branch_regions": [
+        {
+          "first_line": 5526,
+          "last_line": 14699,
+          "header": "_0_570",
+          "instructions": 8067,
+          "simd16_issue_equivalents": 15268.0,
+          "memory_messages": 48,
+          "messages": {
+            "load.ugm.d16u32.a64": 48
+          },
+          "alu64": 128,
+          "conversions_to_float": 208,
+          "indirect_register_moves": 16,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 7201,
+            "16": 576,
+            "1": 290
+          }
+        },
+        {
+          "first_line": 14713,
+          "last_line": 14751,
+          "header": "_0_1024",
+          "instructions": 25,
+          "simd16_issue_equivalents": 41.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 3,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 16,
+            "1": 9
+          }
+        },
+        {
+          "first_line": 14709,
+          "last_line": 14759,
+          "header": "_0_1023",
+          "instructions": 31,
+          "simd16_issue_equivalents": 48.0,
+          "memory_messages": 0,
+          "messages": {},
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 3,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 14,
+            "32": 17
+          }
+        }
+      ],
+      "prologue_instructions_before_first_branch": 43,
+      "dynamic_instructions_per_weight": null,
+      "dynamic_messages_per_weight": null,
+      "dynamic_limit": "Static lexical counts include divergent and exceptional paths. Null dynamic count is unestablished, not zero.",
+      "execution_env": {
+        "intel_reqd_workgroup_walk_order": "[ 0, 1, 2 ]",
+        "grf_count": "128",
+        "has_4gb_buffers": "true",
+        "has_global_atomics": "true",
+        "has_no_stateless_write": "true",
+        "inline_data_payload_size": "32",
+        "offset_to_skip_per_thread_data_load": "128",
+        "simd_size": "32",
+        "subgroup_independent_forward_progress": "true",
+        "eu_thread_count": "8"
+      },
+      "cross_thread_payload_extent_bytes": 216,
+      "per_thread_payload_extent_bytes": 64,
+      "per_thread_memory_buffers_metadata": [],
+      "offline_binary_match": {
+        "selected": true,
+        "binary": "build/igc-2e228b/OCL_asm0830d2f0ea18a4dc.progbin",
+        "binary_sha256": "4afacec8a3c9782a08fcf2b7d58538de4aaa9412d76e68e23d4bea9e108eb29e",
+        "binary_text_sha256": "db7522b5d5b8a15f27d0bedc58520a8d85e29133de71ca7e7b445e38fa8f8d30",
+        "text_bytes": 90112,
+        "dat_sha256": "e01e27be20bebaa340262c298b91cd0b8787324b7e0b9b1226e8cbe8566b85d1",
+        "dat_bytes": 89960,
+        "proof": "Entire GEN .dat equals ELF .text prefix and remaining padding is all zero."
+      },
+      "assembly_gzip": "extras-evidence/incumbent-OCL_asm0830d2f0ea18a4dc_simd32_entry_0034.asm.gz",
+      "source": "../packet33-codegen/codegen.json"
+    },
+    {
+      "instructions": 868,
+      "simd16_issue_equivalents": 1442.0,
+      "memory_messages": 21,
+      "messages": {
+        "load.ugm.d32x16t.a32.ca.cc": 2,
+        "load.ugm.d32x32t.a32.ca.cc": 1,
+        "load.ugm.d32x1t.a64": 2,
+        "load.ugm.d32.a64": 2,
+        "store.ugm.d32.a32.wb.wb": 3,
+        "load.ugm.d32.a32.ca.ca": 4,
+        "load.ugm.d16u32.a64": 4,
+        "store.ugm.d16u32.a64": 2,
+        "send.gtwy": 1
+      },
+      "alu64": 36,
+      "conversions_to_float": 24,
+      "indirect_register_moves": 0,
+      "barriers": 0,
+      "slm_messages": 0,
+      "calls": 0,
+      "explicit_scratch_messages": 0,
+      "instruction_widths": {
+        "16": 157,
+        "1": 134,
+        "8": 3,
+        "32": 574
+      },
+      "kernel": "_ZTSZZNK11specialised6KernelILN2ng2OpE5ELi1ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_2idILi1EEEE_",
+      "demangled": "typeinfo name for specialised::Kernel<(ng::Op)5, 1, 0, 0>::submit(sycl::_V1::queue&, std::span<void* const, 18446744073709551615ul>, std::vector<sycl::_V1::event, std::allocator<sycl::_V1::event> > const&) const::{lambda(sycl::_V1::handler&)#1}::operator()(sycl::_V1::handler&) const::{lambda(sycl::_V1::id<1>)#1}",
+      "asm": "build/igc-2e228b/OCL_asm0830d2f0ea18a4dc_simd32_entry_0036.asm",
+      "asm_sha256": "ff2de9b6860438d0822cbcd83198e35f3f0727108ba004b1450bbec5ad8a3ce9",
+      "simd": 32,
+      "grf": 128,
+      "spill_metadata": [],
+      "scratch_note": "A32 transposed UGM messages can be spill/fill even without scratch in disassembly. Use spill_metadata and execution_env; text signature alone is incomplete.",
+      "backward_branch_regions": [
+        {
+          "first_line": 895,
+          "last_line": 908,
+          "header": "_0_088",
+          "instructions": 13,
+          "simd16_issue_equivalents": 17.0,
+          "memory_messages": 2,
+          "messages": {
+            "load.ugm.d32.a64": 1,
+            "store.ugm.d32.a32.wb.wb": 1
+          },
+          "alu64": 3,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 7,
+            "16": 2,
+            "32": 4
+          }
+        },
+        {
+          "first_line": 921,
+          "last_line": 949,
+          "header": "_0_092",
+          "instructions": 22,
+          "simd16_issue_equivalents": 31.0,
+          "memory_messages": 3,
+          "messages": {
+            "load.ugm.d32.a32.ca.ca": 2,
+            "store.ugm.d32.a32.wb.wb": 1
+          },
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 13,
+            "32": 9
+          }
+        },
+        {
+          "first_line": 917,
+          "last_line": 957,
+          "header": "_0_091",
+          "instructions": 28,
+          "simd16_issue_equivalents": 38.0,
+          "memory_messages": 3,
+          "messages": {
+            "load.ugm.d32.a32.ca.ca": 2,
+            "store.ugm.d32.a32.wb.wb": 1
+          },
+          "alu64": 0,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 18,
+            "32": 10
+          }
+        }
+      ],
+      "prologue_instructions_before_first_branch": 44,
+      "dynamic_instructions_per_weight": null,
+      "dynamic_messages_per_weight": null,
+      "dynamic_limit": "Static lexical counts include divergent and exceptional paths. Null dynamic count is unestablished, not zero.",
+      "execution_env": {
+        "intel_reqd_workgroup_walk_order": "[ 0, 1, 2 ]",
+        "grf_count": "128",
+        "has_4gb_buffers": "true",
+        "has_global_atomics": "true",
+        "has_no_stateless_write": "true",
+        "inline_data_payload_size": "32",
+        "offset_to_skip_per_thread_data_load": "128",
+        "simd_size": "32",
+        "private_size": "65664",
+        "subgroup_independent_forward_progress": "true",
+        "eu_thread_count": "8"
+      },
+      "cross_thread_payload_extent_bytes": 216,
+      "per_thread_payload_extent_bytes": 64,
+      "per_thread_memory_buffers_metadata": [
+        "      - type:            scratch",
+        "        usage:           single_space",
+        "        size:            131072"
+      ],
+      "offline_binary_match": {
+        "selected": true,
+        "binary": "build/igc-2e228b/OCL_asm0830d2f0ea18a4dc.progbin",
+        "binary_sha256": "4afacec8a3c9782a08fcf2b7d58538de4aaa9412d76e68e23d4bea9e108eb29e",
+        "binary_text_sha256": "951c76e77dbae799e175a3640e2e6a67cbe258c041693f7859fd337e3acdf91a",
+        "text_bytes": 10624,
+        "dat_sha256": "105e590095bfc5a9d42bc84e54aa2227fab56ae6de1923692d44a20618a75759",
+        "dat_bytes": 10472,
+        "proof": "Entire GEN .dat equals ELF .text prefix and remaining padding is all zero."
+      },
+      "assembly_gzip": "extras-evidence/incumbent-OCL_asm0830d2f0ea18a4dc_simd32_entry_0036.asm.gz",
+      "source": "../packet33-codegen/codegen.json"
+    },
+    {
+      "instructions": 453,
+      "simd16_issue_equivalents": 539.0,
+      "memory_messages": 32,
+      "messages": {
+        "load.ugm.d32x16t.a32.ca.cc": 2,
+        "load.ugm.d32x64t.a32.ca.cc": 2,
+        "load.ugm.d32x32t.a32.ca.cc": 1,
+        "load.ugm.d32x8t.a32.ca.cc": 1,
+        "store.ugm.d32x64t.a32.wb.wb": 2,
+        "store.ugm.d32x16t.a32.wb.wb": 2,
+        "store.ugm.d32x8t.a32.wb.wb": 1,
+        "store.ugm.d32x4t.a32.wb.wb": 2,
+        "load.ugm.d32x3t.a32.ca.ca": 1,
+        "load.ugm.d64x1t.a32.ca.ca": 4,
+        "load.ugm.d32x1t.a64": 1,
+        "load.ugm.d32x1t.a32.ca.ca": 2,
+        "load.ugm.d64.a64": 1,
+        "load.ugm.d32.a64": 3,
+        "load.ugm.d16u32.a64": 1,
+        "store.ugm.d32x2.a64": 1,
+        "store.ugm.d32.a64": 3,
+        "store.ugm.d16u32.a64": 1,
+        "send.gtwy": 1
+      },
+      "alu64": 62,
+      "conversions_to_float": 13,
+      "indirect_register_moves": 0,
+      "barriers": 0,
+      "slm_messages": 0,
+      "calls": 0,
+      "explicit_scratch_messages": 0,
+      "instruction_widths": {
+        "16": 125,
+        "1": 182,
+        "8": 2,
+        "2": 57,
+        "4": 1,
+        "32": 86
+      },
+      "kernel": "_ZTSZZNK8packet1812_GLOBAL__N_19SimpleNewILN10integrated2OpE3ELi0ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS6_5eventESaISE_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_2idILi1EEEE_",
+      "demangled": "typeinfo name for packet18::(anonymous namespace)::SimpleNew<(integrated::Op)3, 0, 0, 0>::submit(sycl::_V1::queue&, std::span<void* const, 18446744073709551615ul>, std::vector<sycl::_V1::event, std::allocator<sycl::_V1::event> > const&) const::{lambda(sycl::_V1::handler&)#1}::operator()(sycl::_V1::handler&) const::{lambda(sycl::_V1::id<1>)#1}",
+      "asm": "build/igc-bc39da/OCL_asm9ba73454e55156ea_simd32_entry_0003.asm",
+      "asm_sha256": "e9b5c51968109c855b02a0be1eee0a54927acffc2c8a11b344917152febb8d91",
+      "simd": 32,
+      "grf": 128,
+      "spill_metadata": [],
+      "scratch_note": "A32 transposed UGM messages can be spill/fill even without scratch in disassembly. Use spill_metadata and execution_env; text signature alone is incomplete.",
+      "backward_branch_regions": [],
+      "prologue_instructions_before_first_branch": 172,
+      "dynamic_instructions_per_weight": null,
+      "dynamic_messages_per_weight": null,
+      "dynamic_limit": "Static lexical counts include divergent and exceptional paths. Null dynamic count is unestablished, not zero.",
+      "execution_env": {
+        "intel_reqd_workgroup_walk_order": "[ 0, 1, 2 ]",
+        "grf_count": "128",
+        "has_4gb_buffers": "true",
+        "has_global_atomics": "true",
+        "has_no_stateless_write": "true",
+        "indirect_stateless_count": "12",
+        "inline_data_payload_size": "32",
+        "offset_to_skip_per_thread_data_load": "128",
+        "simd_size": "32",
+        "private_size": "22528",
+        "subgroup_independent_forward_progress": "true",
+        "eu_thread_count": "8"
+      },
+      "cross_thread_payload_extent_bytes": 768,
+      "per_thread_payload_extent_bytes": 64,
+      "per_thread_memory_buffers_metadata": [
+        "      - type:            scratch",
+        "        usage:           single_space",
+        "        size:            32768"
+      ],
+      "offline_binary_match": {
+        "selected": true,
+        "binary": "build/igc-bc39da/OCL_asm9ba73454e55156ea.progbin",
+        "binary_sha256": "29c02450165e55a2bd9e3bbdc8a3da48b63319f84233d29db4f15c2ebfd6eda6",
+        "binary_text_sha256": "d99e5398e004ded6cfecb78a424326fbeb3f0483865f044f03d373d4affd50ce",
+        "text_bytes": 6336,
+        "dat_sha256": "b82ad56dcd2bf32a3bf1d29b41e84542bae5b64082a6312a015992aa7d00925d",
+        "dat_bytes": 6176,
+        "proof": "Entire GEN .dat equals ELF .text prefix and remaining padding is all zero."
+      },
+      "assembly_gzip": "extras-evidence/incumbent-OCL_asm9ba73454e55156ea_simd32_entry_0003.asm.gz",
+      "source": "../packet33-codegen/codegen.json"
+    },
+    {
+      "instructions": 930,
+      "simd16_issue_equivalents": 1447.0,
+      "memory_messages": 44,
+      "messages": {
+        "load.ugm.d32x16t.a32.ca.cc": 2,
+        "load.ugm.d32x64t.a32.ca.cc": 2,
+        "load.ugm.d32x32t.a32.ca.cc": 1,
+        "load.ugm.d32x8t.a32.ca.cc": 1,
+        "store.ugm.d32x64t.a32.wb.wb": 2,
+        "store.ugm.d32x16t.a32.wb.wb": 2,
+        "store.ugm.d32x8t.a32.wb.wb": 1,
+        "store.ugm.d32x4t.a32.wb.wb": 2,
+        "load.ugm.d32x3t.a32.ca.ca": 1,
+        "load.ugm.d64x1t.a32.ca.ca": 3,
+        "load.ugm.d32x1t.a64": 1,
+        "load.ugm.d32x1t.a32.ca.ca": 5,
+        "load.ugm.d64.a64": 3,
+        "load.ugm.d32.a64": 9,
+        "load.ugm.d16u32.a64": 3,
+        "store.ugm.d32x2.a64": 1,
+        "store.ugm.d32.a64": 3,
+        "store.ugm.d16u32.a64": 1,
+        "send.gtwy": 1
+      },
+      "alu64": 96,
+      "conversions_to_float": 21,
+      "indirect_register_moves": 0,
+      "barriers": 0,
+      "slm_messages": 0,
+      "calls": 0,
+      "explicit_scratch_messages": 0,
+      "instruction_widths": {
+        "16": 149,
+        "1": 205,
+        "8": 2,
+        "2": 56,
+        "4": 1,
+        "32": 517
+      },
+      "kernel": "_ZTSZZNK8packet1812_GLOBAL__N_19SimpleNewILN10integrated2OpE4ELi0ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS6_5eventESaISE_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_2idILi1EEEE_",
+      "demangled": "typeinfo name for packet18::(anonymous namespace)::SimpleNew<(integrated::Op)4, 0, 0, 0>::submit(sycl::_V1::queue&, std::span<void* const, 18446744073709551615ul>, std::vector<sycl::_V1::event, std::allocator<sycl::_V1::event> > const&) const::{lambda(sycl::_V1::handler&)#1}::operator()(sycl::_V1::handler&) const::{lambda(sycl::_V1::id<1>)#1}",
+      "asm": "build/igc-bc39da/OCL_asm9ba73454e55156ea_simd32_entry_0029.asm",
+      "asm_sha256": "36d8e6f65ecbbd2f5716c513e3f9b29c006d0db0af0d096f01afe29a677bf548",
+      "simd": 32,
+      "grf": 128,
+      "spill_metadata": [],
+      "scratch_note": "A32 transposed UGM messages can be spill/fill even without scratch in disassembly. Use spill_metadata and execution_env; text signature alone is incomplete.",
+      "backward_branch_regions": [],
+      "prologue_instructions_before_first_branch": 177,
+      "dynamic_instructions_per_weight": null,
+      "dynamic_messages_per_weight": null,
+      "dynamic_limit": "Static lexical counts include divergent and exceptional paths. Null dynamic count is unestablished, not zero.",
+      "execution_env": {
+        "intel_reqd_workgroup_walk_order": "[ 0, 1, 2 ]",
+        "grf_count": "128",
+        "has_4gb_buffers": "true",
+        "has_global_atomics": "true",
+        "has_no_stateless_write": "true",
+        "indirect_stateless_count": "17",
+        "inline_data_payload_size": "32",
+        "offset_to_skip_per_thread_data_load": "128",
+        "simd_size": "32",
+        "private_size": "22528",
+        "subgroup_independent_forward_progress": "true",
+        "eu_thread_count": "8"
+      },
+      "cross_thread_payload_extent_bytes": 768,
+      "per_thread_payload_extent_bytes": 64,
+      "per_thread_memory_buffers_metadata": [
+        "      - type:            scratch",
+        "        usage:           single_space",
+        "        size:            32768"
+      ],
+      "offline_binary_match": {
+        "selected": true,
+        "binary": "build/igc-bc39da/OCL_asm9ba73454e55156ea.progbin",
+        "binary_sha256": "29c02450165e55a2bd9e3bbdc8a3da48b63319f84233d29db4f15c2ebfd6eda6",
+        "binary_text_sha256": "3843ba9e97c9689f452ef902d907868378362883fdc1b593437ee27f3fff3062",
+        "text_bytes": 11520,
+        "dat_sha256": "52836ad1004278046236258130b58b91e2f665bd1439dd673df7d3634d94984d",
+        "dat_bytes": 11336,
+        "proof": "Entire GEN .dat equals ELF .text prefix and remaining padding is all zero."
+      },
+      "assembly_gzip": "extras-evidence/incumbent-OCL_asm9ba73454e55156ea_simd32_entry_0029.asm.gz",
+      "source": "../packet33-codegen/codegen.json"
+    },
+    {
+      "instructions": 466,
+      "simd16_issue_equivalents": 567.0,
+      "memory_messages": 43,
+      "messages": {
+        "load.ugm.d32x16t.a32.ca.cc": 2,
+        "load.ugm.d32x64t.a32.ca.cc": 2,
+        "load.ugm.d32x32t.a32.ca.cc": 1,
+        "load.ugm.d32x8t.a32.ca.cc": 1,
+        "store.ugm.d32x64t.a32.wb.wb": 2,
+        "store.ugm.d32x16t.a32.wb.wb": 2,
+        "store.ugm.d32x8t.a32.wb.wb": 1,
+        "store.ugm.d32x4t.a32.wb.wb": 2,
+        "load.ugm.d32x3t.a32.ca.ca": 1,
+        "load.ugm.d64x1t.a32.ca.ca": 3,
+        "load.ugm.d32x1t.a64": 1,
+        "load.ugm.d32x1t.a32.ca.ca": 4,
+        "load.ugm.d64.a64": 3,
+        "load.ugm.d32.a64": 9,
+        "load.ugm.d16u32.a64": 3,
+        "store.ugm.d32x2.a64": 1,
+        "store.ugm.d32.a64": 3,
+        "store.ugm.d16u32.a64": 1,
+        "send.gtwy": 1
+      },
+      "alu64": 92,
+      "conversions_to_float": 8,
+      "indirect_register_moves": 0,
+      "barriers": 0,
+      "slm_messages": 0,
+      "calls": 0,
+      "explicit_scratch_messages": 0,
+      "instruction_widths": {
+        "16": 115,
+        "1": 191,
+        "8": 2,
+        "2": 56,
+        "4": 1,
+        "32": 101
+      },
+      "kernel": "_ZTSZZNK8packet1812_GLOBAL__N_19SimpleNewILN10integrated2OpE16ELi0ELi0ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS6_5eventESaISE_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_2idILi1EEEE_",
+      "demangled": "typeinfo name for packet18::(anonymous namespace)::SimpleNew<(integrated::Op)16, 0, 0, 0>::submit(sycl::_V1::queue&, std::span<void* const, 18446744073709551615ul>, std::vector<sycl::_V1::event, std::allocator<sycl::_V1::event> > const&) const::{lambda(sycl::_V1::handler&)#1}::operator()(sycl::_V1::handler&) const::{lambda(sycl::_V1::id<1>)#1}",
+      "asm": "build/igc-bc39da/OCL_asm9ba73454e55156ea_simd32_entry_0035.asm",
+      "asm_sha256": "03a106ea83a03661d1e6671bd003dbd4b2e291fb8ee927234ce0e4517a373e62",
+      "simd": 32,
+      "grf": 128,
+      "spill_metadata": [],
+      "scratch_note": "A32 transposed UGM messages can be spill/fill even without scratch in disassembly. Use spill_metadata and execution_env; text signature alone is incomplete.",
+      "backward_branch_regions": [],
+      "prologue_instructions_before_first_branch": 172,
+      "dynamic_instructions_per_weight": null,
+      "dynamic_messages_per_weight": null,
+      "dynamic_limit": "Static lexical counts include divergent and exceptional paths. Null dynamic count is unestablished, not zero.",
+      "execution_env": {
+        "intel_reqd_workgroup_walk_order": "[ 0, 1, 2 ]",
+        "grf_count": "128",
+        "has_4gb_buffers": "true",
+        "has_global_atomics": "true",
+        "has_no_stateless_write": "true",
+        "indirect_stateless_count": "7",
+        "inline_data_payload_size": "32",
+        "offset_to_skip_per_thread_data_load": "128",
+        "simd_size": "32",
+        "private_size": "22528",
+        "subgroup_independent_forward_progress": "true",
+        "eu_thread_count": "8"
+      },
+      "cross_thread_payload_extent_bytes": 768,
+      "per_thread_payload_extent_bytes": 64,
+      "per_thread_memory_buffers_metadata": [
+        "      - type:            scratch",
+        "        usage:           single_space",
+        "        size:            32768"
+      ],
+      "offline_binary_match": {
+        "selected": true,
+        "binary": "build/igc-bc39da/OCL_asm9ba73454e55156ea.progbin",
+        "binary_sha256": "29c02450165e55a2bd9e3bbdc8a3da48b63319f84233d29db4f15c2ebfd6eda6",
+        "binary_text_sha256": "5db75e1bd00eb5aae47d8bf3cc69ddc10a6afec89d3e3b6bb9801cdd89010779",
+        "text_bytes": 6528,
+        "dat_sha256": "ff6840dc0b6c6b7572a4b83ae3fd5a71606bd45dc5be1bbdd33ba8210c0ae8c9",
+        "dat_bytes": 6376,
+        "proof": "Entire GEN .dat equals ELF .text prefix and remaining padding is all zero."
+      },
+      "assembly_gzip": "extras-evidence/incumbent-OCL_asm9ba73454e55156ea_simd32_entry_0035.asm.gz",
+      "source": "../packet33-codegen/codegen.json"
+    },
+    {
+      "instructions": 1519,
+      "simd16_issue_equivalents": 2232.0,
+      "memory_messages": 271,
+      "messages": {
+        "load.ugm.d32x16t.a32.ca.cc": 2,
+        "load.ugm.d32x32t.a32.ca.cc": 1,
+        "load.ugm.d32x1t.a64": 2,
+        "store.slm.d32.a32": 49,
+        "send.slm": 38,
+        "send.ugm": 38,
+        "send.gtwy": 39,
+        "load.slm.d32x1t.a32": 5,
+        "load.ugm.d16u32.a64": 32,
+        "load.slm.d32.a32": 64,
+        "store.ugm.d32x1t.a64": 1
+      },
+      "alu64": 134,
+      "conversions_to_float": 9,
+      "indirect_register_moves": 0,
+      "barriers": 114,
+      "slm_messages": 118,
+      "calls": 0,
+      "explicit_scratch_messages": 0,
+      "instruction_widths": {
+        "16": 218,
+        "1": 473,
+        "8": 77,
+        "32": 713,
+        "2": 38
+      },
+      "kernel": "_ZTSZZNK6round26KernelILN2ng2OpE11ELi0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "demangled": "typeinfo name for round2::Kernel<(ng::Op)11, 0>::submit(sycl::_V1::queue&, std::span<void* const, 18446744073709551615ul>, std::vector<sycl::_V1::event, std::allocator<sycl::_V1::event> > const&) const::{lambda(sycl::_V1::handler&)#1}::operator()(sycl::_V1::handler&) const::{lambda(sycl::_V1::nd_item<1>)#1}",
+      "asm": "build/igc-ef3a3c/OCL_asmadca67f4ff2e5959_simd32_entry_0002.asm",
+      "asm_sha256": "991222fec4ec94104d5c6506cc8c31a5ee59d0d55a398142d5b6d29b2248266a",
+      "simd": 32,
+      "grf": 128,
+      "spill_metadata": [
+        "//.spill flag store 4",
+        "//.spill flag load 16"
+      ],
+      "scratch_note": "A32 transposed UGM messages can be spill/fill even without scratch in disassembly. Use spill_metadata and execution_env; text signature alone is incomplete.",
+      "backward_branch_regions": [],
+      "prologue_instructions_before_first_branch": 18,
+      "dynamic_instructions_per_weight": null,
+      "dynamic_messages_per_weight": null,
+      "dynamic_limit": "Static lexical counts include divergent and exceptional paths. Null dynamic count is unestablished, not zero.",
+      "execution_env": {
+        "intel_reqd_sub_group_size": "32",
+        "intel_reqd_workgroup_walk_order": "[ 0, 1, 2 ]",
+        "barrier_count": "1",
+        "grf_count": "128",
+        "has_4gb_buffers": "true",
+        "has_global_atomics": "true",
+        "has_no_stateless_write": "true",
+        "inline_data_payload_size": "32",
+        "offset_to_skip_per_thread_data_load": "128",
+        "simd_size": "32",
+        "subgroup_independent_forward_progress": "true",
+        "eu_thread_count": "8"
+      },
+      "cross_thread_payload_extent_bytes": 200,
+      "per_thread_payload_extent_bytes": 64,
+      "per_thread_memory_buffers_metadata": [],
+      "offline_binary_match": {
+        "selected": true,
+        "binary": "build/igc-ef3a3c/OCL_asmadca67f4ff2e5959.progbin",
+        "binary_sha256": "e505fdd5ce9cd70a90718392f74600cda655212f05141112519e64405cca162d",
+        "binary_text_sha256": "e6bc4b2cdac736275f3dfc450625bc9b911964e8211b35d54c75e188bea46047",
+        "text_bytes": 19456,
+        "dat_sha256": "bf66e5a2b5d4a4fb8e2bd7f7eef05a1e96e61c1de466cd6822f924abfa627b9b",
+        "dat_bytes": 19320,
+        "proof": "Entire GEN .dat equals ELF .text prefix and remaining padding is all zero."
+      },
+      "assembly_gzip": "extras-evidence/incumbent-OCL_asmadca67f4ff2e5959_simd32_entry_0002.asm.gz",
+      "source": "../packet33-codegen/codegen.json"
+    },
+    {
+      "instructions": 381,
+      "simd16_issue_equivalents": 490.0,
+      "memory_messages": 25,
+      "messages": {
+        "load.ugm.d32x16t.a32.ca.cc": 2,
+        "load.ugm.d32x32t.a32.ca.cc": 1,
+        "load.ugm.d32x1t.a64": 9,
+        "store.slm.d32.a32": 1,
+        "send.slm": 2,
+        "send.ugm": 2,
+        "send.gtwy": 3,
+        "load.slm.d32x1t.a32": 1,
+        "store.ugm.d32.a64": 3,
+        "store.ugm.d32x4t.a64": 1
+      },
+      "alu64": 33,
+      "conversions_to_float": 9,
+      "indirect_register_moves": 0,
+      "barriers": 6,
+      "slm_messages": 2,
+      "calls": 0,
+      "explicit_scratch_messages": 0,
+      "instruction_widths": {
+        "16": 37,
+        "1": 225,
+        "8": 5,
+        "32": 109,
+        "2": 4,
+        "4": 1
+      },
+      "kernel": "_ZTSZZNK6round26KernelILN2ng2OpE11ELi1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "demangled": "typeinfo name for round2::Kernel<(ng::Op)11, 1>::submit(sycl::_V1::queue&, std::span<void* const, 18446744073709551615ul>, std::vector<sycl::_V1::event, std::allocator<sycl::_V1::event> > const&) const::{lambda(sycl::_V1::handler&)#1}::operator()(sycl::_V1::handler&) const::{lambda(sycl::_V1::nd_item<1>)#1}",
+      "asm": "build/igc-ef3a3c/OCL_asmadca67f4ff2e5959_simd32_entry_0003.asm",
+      "asm_sha256": "9d1a55123a6f659e16f729016f9b16713a8152a885a6f6b9da510d49e2ea826a",
+      "simd": 32,
+      "grf": 128,
+      "spill_metadata": [],
+      "scratch_note": "A32 transposed UGM messages can be spill/fill even without scratch in disassembly. Use spill_metadata and execution_env; text signature alone is incomplete.",
+      "backward_branch_regions": [
+        {
+          "first_line": 559,
+          "last_line": 596,
+          "header": "_0_117",
+          "instructions": 25,
+          "simd16_issue_equivalents": 38.0,
+          "memory_messages": 1,
+          "messages": {
+            "load.ugm.d32x1t.a64": 1
+          },
+          "alu64": 2,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "32": 13,
+            "1": 12
+          }
+        },
+        {
+          "first_line": 670,
+          "last_line": 689,
+          "header": "_0_134",
+          "instructions": 17,
+          "simd16_issue_equivalents": 24.0,
+          "memory_messages": 1,
+          "messages": {
+            "store.ugm.d32.a64": 1
+          },
+          "alu64": 4,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 4,
+            "32": 7,
+            "16": 6
+          }
+        },
+        {
+          "first_line": 749,
+          "last_line": 837,
+          "header": "_0_144",
+          "instructions": 64,
+          "simd16_issue_equivalents": 77.0,
+          "memory_messages": 4,
+          "messages": {
+            "load.ugm.d32x1t.a64": 4
+          },
+          "alu64": 8,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 51,
+            "32": 13
+          }
+        },
+        {
+          "first_line": 850,
+          "last_line": 879,
+          "header": "_0_159",
+          "instructions": 21,
+          "simd16_issue_equivalents": 25.0,
+          "memory_messages": 1,
+          "messages": {
+            "load.ugm.d32x1t.a64": 1
+          },
+          "alu64": 2,
+          "conversions_to_float": 0,
+          "indirect_register_moves": 0,
+          "barriers": 0,
+          "slm_messages": 0,
+          "calls": 0,
+          "explicit_scratch_messages": 0,
+          "instruction_widths": {
+            "1": 17,
+            "32": 4
+          }
+        }
+      ],
+      "prologue_instructions_before_first_branch": 16,
+      "dynamic_instructions_per_weight": null,
+      "dynamic_messages_per_weight": null,
+      "dynamic_limit": "Static lexical counts include divergent and exceptional paths. Null dynamic count is unestablished, not zero.",
+      "execution_env": {
+        "intel_reqd_sub_group_size": "32",
+        "intel_reqd_workgroup_walk_order": "[ 0, 1, 2 ]",
+        "barrier_count": "1",
+        "grf_count": "128",
+        "has_4gb_buffers": "true",
+        "has_global_atomics": "true",
+        "has_no_stateless_write": "true",
+        "indirect_stateless_count": "3",
+        "inline_data_payload_size": "32",
+        "offset_to_skip_per_thread_data_load": "128",
+        "simd_size": "32",
+        "subgroup_independent_forward_progress": "true",
+        "eu_thread_count": "8"
+      },
+      "cross_thread_payload_extent_bytes": 200,
+      "per_thread_payload_extent_bytes": 64,
+      "per_thread_memory_buffers_metadata": [],
+      "offline_binary_match": {
+        "selected": true,
+        "binary": "build/igc-ef3a3c/OCL_asmadca67f4ff2e5959.progbin",
+        "binary_sha256": "e505fdd5ce9cd70a90718392f74600cda655212f05141112519e64405cca162d",
+        "binary_text_sha256": "c7f42273f514118c456779c060e3686260f83d0dd98cb82549436487fa34261b",
+        "text_bytes": 5568,
+        "dat_sha256": "7f7844801e49ed7c422471796b5d9003f71891bcdd2190ee2129de280673f8b1",
+        "dat_bytes": 5400,
+        "proof": "Entire GEN .dat equals ELF .text prefix and remaining padding is all zero."
+      },
+      "assembly_gzip": "extras-evidence/incumbent-OCL_asmadca67f4ff2e5959_simd32_entry_0003.asm.gz",
+      "source": "../packet33-codegen/codegen.json"
+    }
+  ]
+}

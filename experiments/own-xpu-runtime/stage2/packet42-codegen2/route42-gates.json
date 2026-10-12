@@ -1,0 +1,158 @@
+{
+  "device_executed": false,
+  "passed": true,
+  "rows": [
+    {
+      "compiler": "gcc",
+      "repeat": 0,
+      "binary_sha256": "779b662612dda2314d8af010867a1f99b2caf2ab0733e3b612d6cafd1d038f25",
+      "receipt": {
+        "device_executed": false,
+        "cases": 120,
+        "rows": {
+          "incumbent": {
+            "checks": 16800,
+            "failures": 0,
+            "hash": "943ee7e255ea0393"
+          },
+          "reference": {
+            "checks": 16800,
+            "failures": 0,
+            "hash": "943ee7e255ea0393"
+          }
+        },
+        "passed": true
+      },
+      "command": [
+        "/usr/bin/g++",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../../stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../packet2/loader",
+        "-DOWN_RT_HOST_ONLY",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/route42_cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/route42/route42-cpu-gcc"
+      ]
+    },
+    {
+      "compiler": "gcc",
+      "repeat": 1,
+      "binary_sha256": "779b662612dda2314d8af010867a1f99b2caf2ab0733e3b612d6cafd1d038f25",
+      "receipt": {
+        "device_executed": false,
+        "cases": 120,
+        "rows": {
+          "incumbent": {
+            "checks": 16800,
+            "failures": 0,
+            "hash": "943ee7e255ea0393"
+          },
+          "reference": {
+            "checks": 16800,
+            "failures": 0,
+            "hash": "943ee7e255ea0393"
+          }
+        },
+        "passed": true
+      },
+      "command": [
+        "/usr/bin/g++",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../../stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../packet2/loader",
+        "-DOWN_RT_HOST_ONLY",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/route42_cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/route42/route42-cpu-gcc"
+      ]
+    },
+    {
+      "compiler": "icpx",
+      "repeat": 0,
+      "binary_sha256": "7074bf5d59cc65ddb0020969af41ba6bf25abd8a11c48f71dcb3b4a1c8e664f5",
+      "receipt": {
+        "device_executed": false,
+        "cases": 120,
+        "rows": {
+          "incumbent": {
+            "checks": 16800,
+            "failures": 0,
+            "hash": "943ee7e255ea0393"
+          },
+          "reference": {
+            "checks": 16800,
+            "failures": 0,
+            "hash": "943ee7e255ea0393"
+          }
+        },
+        "passed": true
+      },
+      "command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../../stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../packet2/loader",
+        "-DOWN_RT_HOST_ONLY",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/route42_cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/route42/route42-cpu-icpx"
+      ]
+    },
+    {
+      "compiler": "icpx",
+      "repeat": 1,
+      "binary_sha256": "7074bf5d59cc65ddb0020969af41ba6bf25abd8a11c48f71dcb3b4a1c8e664f5",
+      "receipt": {
+        "device_executed": false,
+        "cases": 120,
+        "rows": {
+          "incumbent": {
+            "checks": 16800,
+            "failures": 0,
+            "hash": "943ee7e255ea0393"
+          },
+          "reference": {
+            "checks": 16800,
+            "failures": 0,
+            "hash": "943ee7e255ea0393"
+          }
+        },
+        "passed": true
+      },
+      "command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../../stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../packet2/loader",
+        "-DOWN_RT_HOST_ONLY",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/route42_cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/route42/route42-cpu-icpx"
+      ]
+    }
+  ]
+}

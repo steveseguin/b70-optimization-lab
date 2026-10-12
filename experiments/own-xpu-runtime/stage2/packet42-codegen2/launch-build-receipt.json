@@ -1,0 +1,125 @@
+{
+  "device_executed": false,
+  "commands": [
+    {
+      "argv": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-fsycl",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fdenormal-fp-math=ieee",
+        "-foffload-fp32-prec-div",
+        "-foffload-fp32-prec-sqrt",
+        "-Werror=return-type",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+        "-c",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/owner.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/launch/owner.o"
+      ],
+      "returncode": 0,
+      "seconds": 4.060190538002644,
+      "source_sha256": "141d0de1056beb70b6fcc615a42b52a8e766839b4e79295b74ec2ffa18dab002"
+    },
+    {
+      "argv": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-fsycl",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fdenormal-fp-math=ieee",
+        "-foffload-fp32-prec-div",
+        "-foffload-fp32-prec-sqrt",
+        "-Werror=return-type",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+        "-c",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/owner_retire.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/launch/retire.o"
+      ],
+      "returncode": 0,
+      "seconds": 2.361561700992752,
+      "source_sha256": "e35c366f640d8909b519891fa814aa80228b01ce69bd19ccdf00a8d13cae0da2"
+    },
+    {
+      "argv": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-fsycl",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fdenormal-fp-math=ieee",
+        "-foffload-fp32-prec-div",
+        "-foffload-fp32-prec-sqrt",
+        "-Werror=return-type",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+        "-c",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/launch/sycl_device.o"
+      ],
+      "returncode": 0,
+      "seconds": 6.453787484992063,
+      "source_sha256": "7e10dbe50d9c73a154e079f9aa9b36139d43f4bb1e3ac65f544ea5b5df7ea125"
+    },
+    {
+      "argv": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-fsycl",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fdenormal-fp-math=ieee",
+        "-foffload-fp32-prec-div",
+        "-foffload-fp32-prec-sqrt",
+        "-Werror=return-type",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+        "-c",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/launch_floor.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/launch/floor.o",
+        "-fsycl-dump-device-code=/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/launch/spv"
+      ],
+      "returncode": 0,
+      "seconds": 24.19250297099643,
+      "source_sha256": "a4caab9be4dae61695229fb67d7fb08bcfe57f75f283d463036325915f38ac6d"
+    },
+    {
+      "argv": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-fsycl",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fdenormal-fp-math=ieee",
+        "-foffload-fp32-prec-div",
+        "-foffload-fp32-prec-sqrt",
+        "-Werror=return-type",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/launch/owner.o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/launch/retire.o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/launch/sycl_device.o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/launch/floor.o",
+        "-fsycl-dump-device-code=/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/launch/spv",
+        "-lze_loader",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/launch/p42-launch-floor"
+      ],
+      "returncode": 0
+    }
+  ],
+  "peak_rss_kib": 427704,
+  "binary_sha256": "a06df687f86fba805ffbecb0584d372982705055b5278640d748199debc35364"
+}

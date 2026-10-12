@@ -1,0 +1,131 @@
+{
+  "scope": "finite-scale full eight-weight tile, nonfinal tile iteration; SIMD32 instruction issues per subgroup, not scalar hardware work",
+  "regions": [
+    {
+      "first_line": 560,
+      "last_line": 588,
+      "trips": 1,
+      "instructions": 21,
+      "simd16_issue_equivalents": 38.0,
+      "memory_messages": 1,
+      "messages": {
+        "load.ugm.d32.a64": 1
+      },
+      "alu64": 2,
+      "conversions_to_float": 0,
+      "indirect_register_moves": 0,
+      "barriers": 0,
+      "slm_messages": 0,
+      "calls": 0,
+      "explicit_scratch_messages": 0,
+      "instruction_widths": {
+        "32": 17,
+        "16": 4
+      }
+    },
+    {
+      "first_line": 591,
+      "last_line": 612,
+      "trips": 8,
+      "instructions": 22,
+      "simd16_issue_equivalents": 36.0,
+      "memory_messages": 2,
+      "messages": {
+        "load.ugm.d8u32.a64": 1,
+        "load.ugm.d16u32.a64": 1
+      },
+      "alu64": 6,
+      "conversions_to_float": 1,
+      "indirect_register_moves": 0,
+      "barriers": 0,
+      "slm_messages": 0,
+      "calls": 0,
+      "explicit_scratch_messages": 0,
+      "instruction_widths": {
+        "16": 8,
+        "32": 14
+      }
+    },
+    {
+      "first_line": 615,
+      "last_line": 617,
+      "trips": 1,
+      "instructions": 2,
+      "simd16_issue_equivalents": 4.0,
+      "memory_messages": 0,
+      "messages": {},
+      "alu64": 0,
+      "conversions_to_float": 0,
+      "indirect_register_moves": 0,
+      "barriers": 0,
+      "slm_messages": 0,
+      "calls": 0,
+      "explicit_scratch_messages": 0,
+      "instruction_widths": {
+        "32": 2
+      }
+    },
+    {
+      "first_line": 666,
+      "last_line": 669,
+      "trips": 1,
+      "instructions": 3,
+      "simd16_issue_equivalents": 6.0,
+      "memory_messages": 0,
+      "messages": {},
+      "alu64": 0,
+      "conversions_to_float": 0,
+      "indirect_register_moves": 0,
+      "barriers": 0,
+      "slm_messages": 0,
+      "calls": 0,
+      "explicit_scratch_messages": 0,
+      "instruction_widths": {
+        "32": 3
+      }
+    },
+    {
+      "first_line": 676,
+      "last_line": 680,
+      "trips": 1,
+      "instructions": 4,
+      "simd16_issue_equivalents": 8.0,
+      "memory_messages": 0,
+      "messages": {},
+      "alu64": 0,
+      "conversions_to_float": 0,
+      "indirect_register_moves": 0,
+      "barriers": 0,
+      "slm_messages": 0,
+      "calls": 0,
+      "explicit_scratch_messages": 0,
+      "instruction_widths": {
+        "32": 4
+      }
+    },
+    {
+      "first_line": 688,
+      "last_line": 691,
+      "trips": 1,
+      "instructions": 3,
+      "simd16_issue_equivalents": 5.0,
+      "memory_messages": 0,
+      "messages": {},
+      "alu64": 0,
+      "conversions_to_float": 0,
+      "indirect_register_moves": 0,
+      "barriers": 0,
+      "slm_messages": 0,
+      "calls": 0,
+      "explicit_scratch_messages": 0,
+      "instruction_widths": {
+        "32": 2,
+        "1": 1
+      }
+    }
+  ],
+  "instructions_per_tile": 209,
+  "messages_per_tile": 17,
+  "conditional_cfg": "B016-B022, then B026,B028,B030; skip exceptional-scale B023-B025. Inner B021 executes8 times; B018 once because tile8 is group16 aligned.",
+  "assembly": "parallel-evidence/incumbent-OCL_asmc2f8b9814121a863_simd32_entry_0006.asm.gz"
+}

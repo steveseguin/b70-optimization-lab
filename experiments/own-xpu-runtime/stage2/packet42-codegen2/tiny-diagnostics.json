@@ -1,0 +1,80 @@
+{
+  "device_executed": false,
+  "records": [
+    {
+      "case": "extra NaN payload silu_product width1",
+      "input_bf16": "0x7fc1",
+      "compiler": "icpx 2026.0",
+      "flags": [
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off"
+      ],
+      "result": "incumbent/reference mismatch; no kernel edits",
+      "resolution": "host proof adds -fp-model=strict; isolated and full fresh-process strict gate pass. Native inherits original runtime flags and requires exact device bytes.",
+      "exact_compile_argv": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-Werror=return-type",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/tiny_cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/tiny/nan-default"
+      ],
+      "raw_cpu_results": [
+        {
+          "label": "default",
+          "argv": [
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/tiny/nan-default",
+            "--nan-probe"
+          ],
+          "returncode": 1,
+          "stdout": "",
+          "stderr": "slot 2 incumbent 192,127 reference 193,127\nincumbent/reference odd-control-op3-w1-scenario5\n",
+          "binary_sha256": "0a6bb25978ea94ebbcaad314510c185d4177bbed588cbe2a91fa534c0a790ff5"
+        },
+        {
+          "label": "strict",
+          "argv": [
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/tiny/tiny-cpu-icpx",
+            "--nan-probe"
+          ],
+          "returncode": 0,
+          "stdout": "{\"passed\":true,\"device_executed\":false,\"fixture_count\":1,\"reference_checks\":1,\"geometry_checks\":3,\"output_fnv64\":\"46b6061817fedfc8\"}\n",
+          "stderr": "",
+          "binary_sha256": "ce14ce757df92fa4d6a7779bb90c062e09df75659c9ca0afb4a7d63b74796d98"
+        }
+      ]
+    },
+    {
+      "case": "generated pool capacity256 position255",
+      "result": "incumbent/reference mismatch in retained pooled output slot7; initial fixture retained128-capacity random pooled history",
+      "resolution": "seed earlier completed pools using incumbent, then independently compare frozen Core recomputation on final position255; no arithmetic code changed",
+      "initial_slot7_first_bf16_incumbent": "0x0000",
+      "initial_slot7_first_bf16_reference": "0x3f0e"
+    },
+    {
+      "case": "cooperative compile-time specialization",
+      "result": "rejected intermediate assembly retained runtime op switch despite s.op=Code on host: candidate dynamic body included unrelated operations",
+      "resolution": "cooperative_group<Code> called directly in device lambda; exact source-copy proof in tiny_source_gate.py; final offline evidence replaces intermediate counts",
+      "device_executed": false,
+      "retained_baseline_static_instructions": [
+        12241,
+        18622
+      ],
+      "retained_baseline_private_bytes": 21504,
+      "final_specialized_static_instruction_range": [
+        801,
+        2353
+      ],
+      "final_specialized_private_bytes": 128,
+      "qualification": "Baseline totals are the still-retained incumbent ng::Kernel variants, not dynamic executed operation counts. Rejected intermediate candidate dumps were scratch; exact intermediate counts are not claimed."
+    }
+  ]
+}

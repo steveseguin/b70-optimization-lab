@@ -1,0 +1,626 @@
+{
+  "device_executed": false,
+  "independent_review": true,
+  "read_conclusion_files": false,
+  "rows": [
+    {
+      "assembly": "packet33-codegen/build/igc-a6003b/OCL_asmc2f8b9814121a863_simd32_entry_0076.asm",
+      "sha256": "b6a7d9f05fb0e46549d60bcc605c6bd5ebd5fba821c489e43caa52d4cb4ebf1e",
+      "kernel": "//.kernel _ZTSZZNK3p286KernelILN3iq34TypeE22ELj2560ELj1ELj1ELb0ELb1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "blocks": [
+        14,
+        15,
+        16,
+        23,
+        24,
+        26,
+        27,
+        28,
+        29,
+        36,
+        37,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        58
+      ],
+      "condition": "all 32 lanes active, all per-lane 8 K values in bounds, both FP16 block scales finite normal nonzero, products finite; steady backedge iteration",
+      "instructions": 392,
+      "simd16_issue_units": 641.0,
+      "memory_messages": 22,
+      "scalar_weights_per_iteration": 512,
+      "blocks_per_row": 10,
+      "scope": "hot loop only; excludes prologue/status/output/subgroup reduction and final-loop exit difference",
+      "instructions_per_weight": 0.765625,
+      "messages_per_weight": 0.04296875,
+      "format": "IQ2_S",
+      "weights_per_lane_per_iteration": 16,
+      "instructions_per_lane_weight": 24.5,
+      "messages_per_lane_weight": 1.375,
+      "retained_assembly": "launch-expert-assembly/OCL_asmc2f8b9814121a863_simd32_entry_0076.asm.gz"
+    },
+    {
+      "assembly": "packet33-codegen/build/igc-a6003b/OCL_asmc2f8b9814121a863_simd32_entry_0082.asm",
+      "sha256": "ed9c7584f156aebf7e5c32b1ab1dfc39350d9bcb49328b0118cb76794f64c23d",
+      "kernel": "//.kernel _ZTSZZNK3p286KernelILN3iq34TypeE21ELj2560ELj1ELj1ELb0ELb1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "blocks": [
+        14,
+        15,
+        16,
+        23,
+        24,
+        26,
+        27,
+        28,
+        29,
+        36,
+        37,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        58
+      ],
+      "condition": "all 32 lanes active, all per-lane 8 K values in bounds, both FP16 block scales finite normal nonzero, products finite; steady backedge iteration",
+      "instructions": 418,
+      "simd16_issue_units": 683.0,
+      "memory_messages": 22,
+      "scalar_weights_per_iteration": 512,
+      "blocks_per_row": 10,
+      "scope": "hot loop only; excludes prologue/status/output/subgroup reduction and final-loop exit difference",
+      "instructions_per_weight": 0.81640625,
+      "messages_per_weight": 0.04296875,
+      "format": "IQ3_S",
+      "weights_per_lane_per_iteration": 16,
+      "instructions_per_lane_weight": 26.125,
+      "messages_per_lane_weight": 1.375,
+      "retained_assembly": "launch-expert-assembly/OCL_asmc2f8b9814121a863_simd32_entry_0082.asm.gz"
+    },
+    {
+      "assembly": "packet33-codegen/build/igc-p33-cfc890008950/OCL_asm417cfc36614c865f_simd32_entry_0001.asm",
+      "sha256": "497df8874df8e865f907aa898d33a39a741f9199d0f7b948c6840831f86ad48e",
+      "kernel": "//.kernel _ZTSZZNK3p336KernelILj0ELN3iq34TypeE20ELj640ELj1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "blocks": [
+        22,
+        23,
+        24,
+        31
+      ],
+      "condition": "normal nonzero half scales, second full256weight tile, all32lanes active",
+      "instructions": 188,
+      "simd16_issue_units": 360.0,
+      "memory_messages": 7,
+      "scalar_weights_per_iteration": 256,
+      "weights_per_lane_per_iteration": 8,
+      "scope": "second tile region only; excludes prologue/status/output/reduction and neighboring tile setup",
+      "instructions_per_weight": 0.734375,
+      "messages_per_weight": 0.02734375,
+      "instructions_per_lane_weight": 23.5,
+      "messages_per_lane_weight": 0.875,
+      "retained_assembly": "launch-expert-assembly/OCL_asm417cfc36614c865f_simd32_entry_0001.asm.gz"
+    },
+    {
+      "assembly": "packet33-codegen/build/igc-p33-cfc890008950/OCL_asm417cfc36614c865f_simd32_entry_0002.asm",
+      "sha256": "a70470ec568125f27ea57ed5868f5b4dbf6fae3197956bb7a97c5737afdada83",
+      "kernel": "//.kernel _ZTSZZNK3p336KernelILj1ELN3iq34TypeE20ELj640ELj1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "blocks": [
+        78,
+        79,
+        80,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        97,
+        98,
+        99,
+        100,
+        101,
+        102,
+        103,
+        104,
+        105,
+        106,
+        107,
+        108,
+        109,
+        110,
+        111,
+        112,
+        113,
+        114,
+        115,
+        116,
+        117,
+        118,
+        119,
+        120,
+        121,
+        122,
+        123,
+        124,
+        125,
+        126,
+        127,
+        128,
+        129,
+        130,
+        131,
+        132,
+        133,
+        134,
+        135,
+        136,
+        137,
+        138,
+        139,
+        140,
+        141,
+        142,
+        143
+      ],
+      "condition": "normal nonzero half scales, second full256weight tile, all32lanes active; all four divergent table-bank arms represented across SIMD lanes for every lookup; union issue envelope, not measured",
+      "instructions": 482,
+      "simd16_issue_units": 839.0,
+      "memory_messages": 17,
+      "scalar_weights_per_iteration": 256,
+      "weights_per_lane_per_iteration": 8,
+      "scope": "second tile region only; excludes prologue/status/output/reduction and neighboring tile setup",
+      "instructions_per_weight": 1.8828125,
+      "messages_per_weight": 0.06640625,
+      "instructions_per_lane_weight": 60.25,
+      "messages_per_lane_weight": 2.125,
+      "homogeneous_arms": [
+        [
+          [
+            28,
+            2
+          ],
+          [
+            29,
+            2
+          ],
+          [
+            27,
+            2
+          ],
+          [
+            27,
+            2
+          ]
+        ],
+        [
+          [
+            32,
+            2
+          ],
+          [
+            33,
+            2
+          ],
+          [
+            31,
+            2
+          ],
+          [
+            31,
+            2
+          ]
+        ],
+        [
+          [
+            33,
+            2
+          ],
+          [
+            34,
+            2
+          ],
+          [
+            32,
+            2
+          ],
+          [
+            32,
+            2
+          ]
+        ],
+        [
+          [
+            33,
+            2
+          ],
+          [
+            34,
+            2
+          ],
+          [
+            32,
+            2
+          ],
+          [
+            32,
+            2
+          ]
+        ],
+        [
+          [
+            33,
+            2
+          ],
+          [
+            34,
+            2
+          ],
+          [
+            32,
+            2
+          ],
+          [
+            32,
+            2
+          ]
+        ],
+        [
+          [
+            33,
+            2
+          ],
+          [
+            34,
+            2
+          ],
+          [
+            32,
+            2
+          ],
+          [
+            32,
+            2
+          ]
+        ],
+        [
+          [
+            33,
+            2
+          ],
+          [
+            34,
+            2
+          ],
+          [
+            32,
+            2
+          ],
+          [
+            32,
+            2
+          ]
+        ],
+        [
+          [
+            32,
+            2
+          ],
+          [
+            33,
+            2
+          ],
+          [
+            31,
+            2
+          ],
+          [
+            31,
+            2
+          ]
+        ]
+      ],
+      "homogeneous_lower": [
+        290,
+        17
+      ],
+      "homogeneous_upper": [
+        306,
+        17
+      ],
+      "retained_assembly": "launch-expert-assembly/OCL_asm417cfc36614c865f_simd32_entry_0002.asm.gz"
+    },
+    {
+      "assembly": "packet42-codegen2/build/expert/igc/OCL_asm6d91835723556b59_simd32_entry_0001.asm",
+      "sha256": "524694905bb96d767e06fc69879f297d0eafa663016fd04c56ad3eaa2ea651cc",
+      "kernel": "//.kernel _ZTSZZNK9p42expert6KernelILj0ELN3iq34TypeE20ELj640ELj1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "blocks": [
+        22,
+        23,
+        24,
+        31
+      ],
+      "condition": "normal nonzero half scales, second full256weight tile, all32lanes active",
+      "instructions": 288,
+      "simd16_issue_units": 478.0,
+      "memory_messages": 11,
+      "scalar_weights_per_iteration": 256,
+      "weights_per_lane_per_iteration": 8,
+      "scope": "second tile region only; excludes prologue/status/output/reduction and neighboring tile setup",
+      "instructions_per_weight": 1.125,
+      "messages_per_weight": 0.04296875,
+      "instructions_per_lane_weight": 36.0,
+      "messages_per_lane_weight": 1.375,
+      "retained_assembly": "launch-expert-assembly/OCL_asm6d91835723556b59_simd32_entry_0001.asm.gz"
+    },
+    {
+      "assembly": "packet42-codegen2/build/expert/igc/OCL_asm6d91835723556b59_simd32_entry_0002.asm",
+      "sha256": "3f992f2908a3eb6a9a0755768ff60d50d04e83c5dda3f129425498d49db1a165",
+      "kernel": "//.kernel _ZTSZZNK9p42expert6KernelILj1ELN3iq34TypeE20ELj640ELj1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "blocks": [
+        78,
+        79,
+        80,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        97,
+        98,
+        99,
+        100,
+        101,
+        102,
+        103,
+        104,
+        105,
+        106,
+        107,
+        108,
+        109,
+        110,
+        111,
+        112,
+        113,
+        114,
+        115,
+        116,
+        117,
+        118,
+        119,
+        120,
+        121,
+        122,
+        123,
+        124,
+        125,
+        126,
+        127,
+        128,
+        129,
+        130,
+        131,
+        132,
+        133,
+        134,
+        135,
+        136,
+        137,
+        138,
+        139,
+        140,
+        141,
+        142,
+        143
+      ],
+      "condition": "normal nonzero half scales, second full256weight tile, all32lanes active; all four divergent table-bank arms represented across SIMD lanes for every lookup; union issue envelope, not measured",
+      "instructions": 441,
+      "simd16_issue_units": 787.0,
+      "memory_messages": 7,
+      "scalar_weights_per_iteration": 256,
+      "weights_per_lane_per_iteration": 8,
+      "scope": "second tile region only; excludes prologue/status/output/reduction and neighboring tile setup",
+      "instructions_per_weight": 1.72265625,
+      "messages_per_weight": 0.02734375,
+      "instructions_per_lane_weight": 55.125,
+      "messages_per_lane_weight": 0.875,
+      "homogeneous_arms": [
+        [
+          [
+            55,
+            6
+          ],
+          [
+            56,
+            6
+          ],
+          [
+            54,
+            6
+          ],
+          [
+            54,
+            6
+          ]
+        ],
+        [
+          [
+            22,
+            0
+          ],
+          [
+            23,
+            0
+          ],
+          [
+            21,
+            0
+          ],
+          [
+            21,
+            0
+          ]
+        ],
+        [
+          [
+            22,
+            0
+          ],
+          [
+            23,
+            0
+          ],
+          [
+            21,
+            0
+          ],
+          [
+            21,
+            0
+          ]
+        ],
+        [
+          [
+            22,
+            0
+          ],
+          [
+            23,
+            0
+          ],
+          [
+            21,
+            0
+          ],
+          [
+            21,
+            0
+          ]
+        ],
+        [
+          [
+            23,
+            0
+          ],
+          [
+            24,
+            0
+          ],
+          [
+            22,
+            0
+          ],
+          [
+            22,
+            0
+          ]
+        ],
+        [
+          [
+            22,
+            0
+          ],
+          [
+            23,
+            0
+          ],
+          [
+            21,
+            0
+          ],
+          [
+            21,
+            0
+          ]
+        ],
+        [
+          [
+            22,
+            0
+          ],
+          [
+            23,
+            0
+          ],
+          [
+            21,
+            0
+          ],
+          [
+            21,
+            0
+          ]
+        ],
+        [
+          [
+            22,
+            0
+          ],
+          [
+            23,
+            0
+          ],
+          [
+            21,
+            0
+          ],
+          [
+            21,
+            0
+          ]
+        ]
+      ],
+      "homogeneous_lower": [
+        249,
+        7
+      ],
+      "homogeneous_upper": [
+        265,
+        7
+      ],
+      "retained_assembly": "launch-expert-assembly/OCL_asm6d91835723556b59_simd32_entry_0002.asm.gz"
+    }
+  ],
+  "mapping_corrections": [
+    "Mangled IQ2_S=22, IQ3_S=21 verified packet2/kernels/math.hpp:11. Initial informal review labels reversed; raw counts unchanged.",
+    "p33 Kernel0 entry0001 is down.bank, Kernel1 entry0002 down.select, verified p33_submit.cpp:41. Initial informal review labels reversed before source dispatch mapping; raw counts unchanged."
+  ],
+  "count_convention": "GEN instructions and memory messages per explicit SIMD-issued region; both per-lane weight and aggregate 32-lane scalar-weight denominators provided. Not hardware cycle counts."
+}

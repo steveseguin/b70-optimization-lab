@@ -1,0 +1,16 @@
+{
+  "source": "packet29-merged/kernels.hpp",
+  "source_sha256": "24e24e660203c959db09d30dc633490906508b749cf4e2838e2df50d4013d43a",
+  "original_body_sha256": "c2ed412c61f6905a93d0689ae30ee0095e5b2ba37e5fe6d4dc981c1692f73b20",
+  "transformations": [
+    "template<class Team> void group -> template<ng::Op Code,class Team> inline void cooperative_group",
+    "s.op -> Code",
+    "if(Code== -> if constexpr(Code=="
+  ],
+  "arithmetic_statements_changed": false,
+  "device_executed": false,
+  "pre_specialization_output_fnv64": [
+    "c866f941c8bfeaf9"
+  ],
+  "namespace_qualification": "Code==select becomes Code==ng::select to disambiguate POSIX select"
+}

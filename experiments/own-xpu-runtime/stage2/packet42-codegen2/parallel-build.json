@@ -1,0 +1,72 @@
+{
+  "device_executed": false,
+  "commands": [
+    {
+      "command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=gnu++20",
+        "-O2",
+        "-Werror=return-type",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fdenormal-fp-math=ieee",
+        "-foffload-fp32-prec-div",
+        "-foffload-fp32-prec-sqrt",
+        "-fsycl",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader",
+        "-c",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/parallel_native.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/parallel/parallel_native.o"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fdenormal-fp-math=ieee",
+        "-foffload-fp32-prec-div",
+        "-foffload-fp32-prec-sqrt",
+        "-fsycl",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/p28/submit.cpp.o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/expert_down.cpp.o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/round2_submit.cpp.o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/small_gemv.cpp.o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/small_gemv_fixture.cpp.o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/p25_bridge.cpp.o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/performance.cpp.o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/adapter.cpp.o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/specialised_submit.cpp.o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/runtime_kernels.cpp.o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/owner.cpp.o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/owner_retire.cpp.o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp.o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/native.cpp.o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_device.cpp.o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp.o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.cpp.o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp.o",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/parallel/parallel-native",
+        "-Wl,-rpath,/opt/intel/oneapi/compiler/2026.0/bin/../lib:/usr/lib/x86_64-linux-gnu",
+        "/usr/lib/x86_64-linux-gnu/libcrypto.so",
+        "-lze_loader",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/parallel/parallel_submit.o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/parallel/parallel_native.o",
+        "-fsycl-dump-device-code=/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/parallel/spv"
+      ],
+      "returncode": 0
+    }
+  ],
+  "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/parallel/parallel-native",
+  "sha256": "89a91eb8e12229c72e231a0bda1da129313be337e37d01ca53bd67855609ba93"
+}

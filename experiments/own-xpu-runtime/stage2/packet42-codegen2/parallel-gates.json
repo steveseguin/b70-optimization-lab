@@ -1,0 +1,530 @@
+[
+  {
+    "tag": "gcc",
+    "command": [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-O2",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-DOWN_RT_HOST_ONLY",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/parallel_cpu.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/parallel/cpu-gcc"
+    ],
+    "returncode": 0
+  },
+  {
+    "tag": "gcc",
+    "repeat": 0,
+    "returncode": 0,
+    "binary_sha256": "c8920044663368e6dd7e159421559b5d8f8b86e8375d3e224ff8549060a63bd8",
+    "receipt": {
+      "device_executed": false,
+      "rows": {
+        "dense.bf16": {
+          "checks": 80,
+          "failures": 0,
+          "hash": "12285f82950eee61"
+        },
+        "dense.fp32": {
+          "checks": 160,
+          "failures": 0,
+          "hash": "1247455b7d0ab4a9"
+        },
+        "dense.lanes": {
+          "checks": 20480,
+          "failures": 0,
+          "hash": "1fd171bd88fd04e9"
+        },
+        "gdn-1.fixture.incumbent": {
+          "checks": 1585156,
+          "failures": 0,
+          "hash": "d8e8ed8aa0228b06"
+        },
+        "gdn-1.fixture.reference": {
+          "checks": 1585156,
+          "failures": 0,
+          "hash": "d8e8ed8aa0228b06"
+        },
+        "gdn-packed-1.fixture.incumbent": {
+          "checks": 1585156,
+          "failures": 0,
+          "hash": "889d805c9c6cebce"
+        },
+        "gdn-packed-1.fixture.reference": {
+          "checks": 1585156,
+          "failures": 0,
+          "hash": "889d805c9c6cebce"
+        },
+        "gdn-runtime-f32-1.fixture.incumbent": {
+          "checks": 6340624,
+          "failures": 0,
+          "hash": "273b66ff8641958e"
+        },
+        "gdn-runtime-f32-1.fixture.reference": {
+          "checks": 6340624,
+          "failures": 0,
+          "hash": "273b66ff8641958e"
+        },
+        "route-gather-1.fixture.incumbent": {
+          "checks": 206096,
+          "failures": 0,
+          "hash": "bb0ebb29f47c5a25"
+        },
+        "route-gather-1.fixture.reference": {
+          "checks": 206096,
+          "failures": 0,
+          "hash": "bb0ebb29f47c5a25"
+        },
+        "route-gather-3.fixture.incumbent": {
+          "checks": 154564,
+          "failures": 0,
+          "hash": "beda9f6f80bd7333"
+        },
+        "route-gather-3.fixture.reference": {
+          "checks": 154564,
+          "failures": 0,
+          "hash": "beda9f6f80bd7333"
+        },
+        "route-nan.fixture.incumbent": {
+          "checks": 51524,
+          "failures": 0,
+          "hash": "3b57fdc44fab13a2"
+        },
+        "route-nan.fixture.reference": {
+          "checks": 51524,
+          "failures": 0,
+          "hash": "3b57fdc44fab13a2"
+        },
+        "route-ties.fixture.incumbent": {
+          "checks": 51524,
+          "failures": 0,
+          "hash": "6d6c0891f2bd4e6e"
+        },
+        "route-ties.fixture.reference": {
+          "checks": 51524,
+          "failures": 0,
+          "hash": "6d6c0891f2bd4e6e"
+        },
+        "route-varied.fixture.incumbent": {
+          "checks": 51524,
+          "failures": 0,
+          "hash": "8d488ffd74cc1ddb"
+        },
+        "route-varied.fixture.reference": {
+          "checks": 51524,
+          "failures": 0,
+          "hash": "8d488ffd74cc1ddb"
+        },
+        "route.helper-invalid-diagnostic": {
+          "checks": 8192,
+          "failures": 0,
+          "hash": "4f046221e3417283"
+        },
+        "route.helper512": {
+          "checks": 24576,
+          "failures": 0,
+          "hash": "26a45882c846ac43"
+        },
+        "route.odd-ranks": {
+          "checks": 3152,
+          "failures": 0,
+          "hash": "21c4299aad9385df"
+        }
+      },
+      "passed": true
+    }
+  },
+  {
+    "tag": "gcc",
+    "repeat": 1,
+    "returncode": 0,
+    "binary_sha256": "c8920044663368e6dd7e159421559b5d8f8b86e8375d3e224ff8549060a63bd8",
+    "receipt": {
+      "device_executed": false,
+      "rows": {
+        "dense.bf16": {
+          "checks": 80,
+          "failures": 0,
+          "hash": "12285f82950eee61"
+        },
+        "dense.fp32": {
+          "checks": 160,
+          "failures": 0,
+          "hash": "1247455b7d0ab4a9"
+        },
+        "dense.lanes": {
+          "checks": 20480,
+          "failures": 0,
+          "hash": "1fd171bd88fd04e9"
+        },
+        "gdn-1.fixture.incumbent": {
+          "checks": 1585156,
+          "failures": 0,
+          "hash": "d8e8ed8aa0228b06"
+        },
+        "gdn-1.fixture.reference": {
+          "checks": 1585156,
+          "failures": 0,
+          "hash": "d8e8ed8aa0228b06"
+        },
+        "gdn-packed-1.fixture.incumbent": {
+          "checks": 1585156,
+          "failures": 0,
+          "hash": "889d805c9c6cebce"
+        },
+        "gdn-packed-1.fixture.reference": {
+          "checks": 1585156,
+          "failures": 0,
+          "hash": "889d805c9c6cebce"
+        },
+        "gdn-runtime-f32-1.fixture.incumbent": {
+          "checks": 6340624,
+          "failures": 0,
+          "hash": "273b66ff8641958e"
+        },
+        "gdn-runtime-f32-1.fixture.reference": {
+          "checks": 6340624,
+          "failures": 0,
+          "hash": "273b66ff8641958e"
+        },
+        "route-gather-1.fixture.incumbent": {
+          "checks": 206096,
+          "failures": 0,
+          "hash": "bb0ebb29f47c5a25"
+        },
+        "route-gather-1.fixture.reference": {
+          "checks": 206096,
+          "failures": 0,
+          "hash": "bb0ebb29f47c5a25"
+        },
+        "route-gather-3.fixture.incumbent": {
+          "checks": 154564,
+          "failures": 0,
+          "hash": "beda9f6f80bd7333"
+        },
+        "route-gather-3.fixture.reference": {
+          "checks": 154564,
+          "failures": 0,
+          "hash": "beda9f6f80bd7333"
+        },
+        "route-nan.fixture.incumbent": {
+          "checks": 51524,
+          "failures": 0,
+          "hash": "3b57fdc44fab13a2"
+        },
+        "route-nan.fixture.reference": {
+          "checks": 51524,
+          "failures": 0,
+          "hash": "3b57fdc44fab13a2"
+        },
+        "route-ties.fixture.incumbent": {
+          "checks": 51524,
+          "failures": 0,
+          "hash": "6d6c0891f2bd4e6e"
+        },
+        "route-ties.fixture.reference": {
+          "checks": 51524,
+          "failures": 0,
+          "hash": "6d6c0891f2bd4e6e"
+        },
+        "route-varied.fixture.incumbent": {
+          "checks": 51524,
+          "failures": 0,
+          "hash": "8d488ffd74cc1ddb"
+        },
+        "route-varied.fixture.reference": {
+          "checks": 51524,
+          "failures": 0,
+          "hash": "8d488ffd74cc1ddb"
+        },
+        "route.helper-invalid-diagnostic": {
+          "checks": 8192,
+          "failures": 0,
+          "hash": "4f046221e3417283"
+        },
+        "route.helper512": {
+          "checks": 24576,
+          "failures": 0,
+          "hash": "26a45882c846ac43"
+        },
+        "route.odd-ranks": {
+          "checks": 3152,
+          "failures": 0,
+          "hash": "21c4299aad9385df"
+        }
+      },
+      "passed": true
+    }
+  },
+  {
+    "tag": "clang",
+    "command": [
+      "/opt/intel/oneapi/compiler/2026.0/bin/compiler/clang++",
+      "-std=c++20",
+      "-O2",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-DOWN_RT_HOST_ONLY",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/parallel_cpu.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/parallel/cpu-clang"
+    ],
+    "returncode": 0
+  },
+  {
+    "tag": "clang",
+    "repeat": 0,
+    "returncode": 0,
+    "binary_sha256": "8c27c680b989d5c70dc2940414c3c19b7df8b1f0778f3784b0429d72fa32e100",
+    "receipt": {
+      "device_executed": false,
+      "rows": {
+        "dense.bf16": {
+          "checks": 80,
+          "failures": 0,
+          "hash": "12285f82950eee61"
+        },
+        "dense.fp32": {
+          "checks": 160,
+          "failures": 0,
+          "hash": "1247455b7d0ab4a9"
+        },
+        "dense.lanes": {
+          "checks": 20480,
+          "failures": 0,
+          "hash": "1fd171bd88fd04e9"
+        },
+        "gdn-1.fixture.incumbent": {
+          "checks": 1585156,
+          "failures": 0,
+          "hash": "d8e8ed8aa0228b06"
+        },
+        "gdn-1.fixture.reference": {
+          "checks": 1585156,
+          "failures": 0,
+          "hash": "d8e8ed8aa0228b06"
+        },
+        "gdn-packed-1.fixture.incumbent": {
+          "checks": 1585156,
+          "failures": 0,
+          "hash": "889d805c9c6cebce"
+        },
+        "gdn-packed-1.fixture.reference": {
+          "checks": 1585156,
+          "failures": 0,
+          "hash": "889d805c9c6cebce"
+        },
+        "gdn-runtime-f32-1.fixture.incumbent": {
+          "checks": 6340624,
+          "failures": 0,
+          "hash": "273b66ff8641958e"
+        },
+        "gdn-runtime-f32-1.fixture.reference": {
+          "checks": 6340624,
+          "failures": 0,
+          "hash": "273b66ff8641958e"
+        },
+        "route-gather-1.fixture.incumbent": {
+          "checks": 206096,
+          "failures": 0,
+          "hash": "bb0ebb29f47c5a25"
+        },
+        "route-gather-1.fixture.reference": {
+          "checks": 206096,
+          "failures": 0,
+          "hash": "bb0ebb29f47c5a25"
+        },
+        "route-gather-3.fixture.incumbent": {
+          "checks": 154564,
+          "failures": 0,
+          "hash": "beda9f6f80bd7333"
+        },
+        "route-gather-3.fixture.reference": {
+          "checks": 154564,
+          "failures": 0,
+          "hash": "beda9f6f80bd7333"
+        },
+        "route-nan.fixture.incumbent": {
+          "checks": 51524,
+          "failures": 0,
+          "hash": "3b57fdc44fab13a2"
+        },
+        "route-nan.fixture.reference": {
+          "checks": 51524,
+          "failures": 0,
+          "hash": "3b57fdc44fab13a2"
+        },
+        "route-ties.fixture.incumbent": {
+          "checks": 51524,
+          "failures": 0,
+          "hash": "6d6c0891f2bd4e6e"
+        },
+        "route-ties.fixture.reference": {
+          "checks": 51524,
+          "failures": 0,
+          "hash": "6d6c0891f2bd4e6e"
+        },
+        "route-varied.fixture.incumbent": {
+          "checks": 51524,
+          "failures": 0,
+          "hash": "8d488ffd74cc1ddb"
+        },
+        "route-varied.fixture.reference": {
+          "checks": 51524,
+          "failures": 0,
+          "hash": "8d488ffd74cc1ddb"
+        },
+        "route.helper-invalid-diagnostic": {
+          "checks": 8192,
+          "failures": 0,
+          "hash": "4f046221e3417283"
+        },
+        "route.helper512": {
+          "checks": 24576,
+          "failures": 0,
+          "hash": "26a45882c846ac43"
+        },
+        "route.odd-ranks": {
+          "checks": 3152,
+          "failures": 0,
+          "hash": "21c4299aad9385df"
+        }
+      },
+      "passed": true
+    }
+  },
+  {
+    "tag": "clang",
+    "repeat": 1,
+    "returncode": 0,
+    "binary_sha256": "8c27c680b989d5c70dc2940414c3c19b7df8b1f0778f3784b0429d72fa32e100",
+    "receipt": {
+      "device_executed": false,
+      "rows": {
+        "dense.bf16": {
+          "checks": 80,
+          "failures": 0,
+          "hash": "12285f82950eee61"
+        },
+        "dense.fp32": {
+          "checks": 160,
+          "failures": 0,
+          "hash": "1247455b7d0ab4a9"
+        },
+        "dense.lanes": {
+          "checks": 20480,
+          "failures": 0,
+          "hash": "1fd171bd88fd04e9"
+        },
+        "gdn-1.fixture.incumbent": {
+          "checks": 1585156,
+          "failures": 0,
+          "hash": "d8e8ed8aa0228b06"
+        },
+        "gdn-1.fixture.reference": {
+          "checks": 1585156,
+          "failures": 0,
+          "hash": "d8e8ed8aa0228b06"
+        },
+        "gdn-packed-1.fixture.incumbent": {
+          "checks": 1585156,
+          "failures": 0,
+          "hash": "889d805c9c6cebce"
+        },
+        "gdn-packed-1.fixture.reference": {
+          "checks": 1585156,
+          "failures": 0,
+          "hash": "889d805c9c6cebce"
+        },
+        "gdn-runtime-f32-1.fixture.incumbent": {
+          "checks": 6340624,
+          "failures": 0,
+          "hash": "273b66ff8641958e"
+        },
+        "gdn-runtime-f32-1.fixture.reference": {
+          "checks": 6340624,
+          "failures": 0,
+          "hash": "273b66ff8641958e"
+        },
+        "route-gather-1.fixture.incumbent": {
+          "checks": 206096,
+          "failures": 0,
+          "hash": "bb0ebb29f47c5a25"
+        },
+        "route-gather-1.fixture.reference": {
+          "checks": 206096,
+          "failures": 0,
+          "hash": "bb0ebb29f47c5a25"
+        },
+        "route-gather-3.fixture.incumbent": {
+          "checks": 154564,
+          "failures": 0,
+          "hash": "beda9f6f80bd7333"
+        },
+        "route-gather-3.fixture.reference": {
+          "checks": 154564,
+          "failures": 0,
+          "hash": "beda9f6f80bd7333"
+        },
+        "route-nan.fixture.incumbent": {
+          "checks": 51524,
+          "failures": 0,
+          "hash": "3b57fdc44fab13a2"
+        },
+        "route-nan.fixture.reference": {
+          "checks": 51524,
+          "failures": 0,
+          "hash": "3b57fdc44fab13a2"
+        },
+        "route-ties.fixture.incumbent": {
+          "checks": 51524,
+          "failures": 0,
+          "hash": "6d6c0891f2bd4e6e"
+        },
+        "route-ties.fixture.reference": {
+          "checks": 51524,
+          "failures": 0,
+          "hash": "6d6c0891f2bd4e6e"
+        },
+        "route-varied.fixture.incumbent": {
+          "checks": 51524,
+          "failures": 0,
+          "hash": "8d488ffd74cc1ddb"
+        },
+        "route-varied.fixture.reference": {
+          "checks": 51524,
+          "failures": 0,
+          "hash": "8d488ffd74cc1ddb"
+        },
+        "route.helper-invalid-diagnostic": {
+          "checks": 8192,
+          "failures": 0,
+          "hash": "4f046221e3417283"
+        },
+        "route.helper512": {
+          "checks": 24576,
+          "failures": 0,
+          "hash": "26a45882c846ac43"
+        },
+        "route.odd-ranks": {
+          "checks": 3152,
+          "failures": 0,
+          "hash": "21c4299aad9385df"
+        }
+      },
+      "passed": true
+    }
+  }
+]

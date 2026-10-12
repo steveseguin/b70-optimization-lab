@@ -1,0 +1,40 @@
+{
+  "command": [
+    "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+    "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/validation",
+    "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+    "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../../stage1/packet3-prep/src",
+    "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../packet2/kernels",
+    "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../packet2/loader",
+    "-std=gnu++20",
+    "-O2",
+    "-Werror=return-type",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-fdenormal-fp-math=ieee",
+    "-foffload-fp32-prec-div",
+    "-foffload-fp32-prec-sqrt",
+    "-fsycl",
+    "-fsycl-dump-device-code=/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/expert",
+    "-c",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/expert_submit.cpp",
+    "-o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/expert/expert_submit.o"
+  ],
+  "device_executed": false,
+  "object_sha256": "b31a5721ace6af19c65c043c2b357f5d8f95c7a6e6802e2189612cfc802ce692",
+  "source_sha256": {
+    "expert_candidates.hpp": "d8d09b28928b98ce2b09ef23dac3e35169710a576045102734e40efcaf41a008",
+    "expert_submit.cpp": "090f3423c28d40c7f25ad9ddc78d4f1553c4d650d61690fb127f7b9aa8ea9029",
+    "expert_submit.hpp": "50bfbde5a8468a60db3f4b9f97177bb28921ac42149b90715c47f137ee06e5e9",
+    "expert_cpu.cpp": "36cf81e79ebd2fd1febc2c2e3070e54557c5defb9b14987d6ba3e8f75ff0aa4f",
+    "expert_build.py": "6384d83b12b4fdfe3e67375a96fbd972a566f899770abf4953b975d145e89c25",
+    "expert_offline.py": "71edf704c3076e79cae845d7ceeb2b2c0840a0540b7f88f4d2f1ead4925e17d8",
+    "expert_analyze.py": "e383f52cc3a9de1ba3b0999952e9362a2d3104ef3ca99f0e5aba28db39b0f167"
+  },
+  "fixture_generator_source_sha256": "15bfa0bc28582fd4487dddad8062a04c49da80059767d5a702f133da01bac918",
+  "offline_link_extraction": {
+    "method": "icpx -fsycl -shared emitted SPIR-V before host shared link rejected non-PIC object; no object or device was executed",
+    "final_native_module_binding": "Coordinator native linker must verify the candidate SPIR-V digest is embedded in final executable."
+  }
+}
