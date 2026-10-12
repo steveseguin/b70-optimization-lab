@@ -1,7 +1,9 @@
 # Coordinator windows: prepared, never executed by this agent
 
 Use the final sealed build-receipt.json. A missing CPU gate is a refusal, not
-permission to bypass it. All W windows start from a nice-0 parent; taskset may
+permission to bypass it. Run the chain inside the coordinator's systemd user
+unit so an agent-shell exit cannot interrupt a GPU job. The unit must allow the
+wrapper to stop its ranks cooperatively. All W windows start from a nice-0 parent; taskset may
 wrap that parent and affinity is preserved. K windows use nice19 and idle I/O.
 Only supply your existing LD_LIBRARY_PATH; it is forwarded unchanged. Do not
 set device selector, cache or precision variables. --card names the first card
@@ -13,6 +15,7 @@ sequence once with context 4096, then once with context 32768. The suite default
 to the 128-token manifest; the 64-token path below is also accepted.
 
 ```bash
+set -euo pipefail
 packet44=experiments/own-xpu-runtime/stage2/packet44-context
 packet44_card=0
 packet44_context=4096 # second independent chain: 32768

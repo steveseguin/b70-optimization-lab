@@ -2,7 +2,8 @@
 
 CPU preparation in progress. No device ran and no speed is claimed.
 
-This is a copy of packet38-integrated, with target arithmetic
+This is a copy of packet38-integrated for the quantized compressed
+Qwen3.8 Flash-Next model, with target arithmetic
 `iq3-p17-detmath-v2`, the same dispatch names, two ranks, native controller and
 official draft head. It admits 256, 4096 and 32768 positions. Full BF16 caches
 remain in place. The exact copied source identities are in baseline.json.
@@ -12,7 +13,10 @@ values reduced for the same short request. Selection and attention use an
 independent launch bound rounded to 32 positions, then actual valid/selected
 counts for arithmetic. Only affected prepared commands are refreshed when
 that bound changes; each recurrent bank and the draft track their own bound.
-Pooling launches only append work and newly completed groups. Request reset
+Pooling launches only append work and newly completed groups. Longer prompts
+still cost more: beyond the budget, the current stable selector compares valid
+pools against one another, so that part grows quadratically with valid pool
+count. Attention reads at most 2,051 selected positions. Request reset
 and allocation still cost more at a larger capacity; they are outside token
 kernel execution. Device wall time, including re-preparation, remains unmeasured.
 
