@@ -4,6 +4,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock,patch
 import draft_window as kd
+import window
 import storage
 from seal40 import save,sha
 
@@ -87,11 +88,34 @@ class TeardownTests(unittest.TestCase):
   guarded=[node for node in ast.walk(tree) if isinstance(node,ast.Try) and any(isinstance(handler.type,ast.Name) and handler.type.id=='Exception' for handler in node.handlers)]
   self.assertTrue(any('children.json' in ast.unparse(node.body) and 'failed_owner(child' in ast.unparse(node.handlers) for node in guarded))
 
+class CompactionTests(unittest.TestCase):
+ def watch(self,child):
+  watch=object.__new__(window.Watch);watch.launched=[];watch.cpu_children=[];watch.new_gpu_fault=False
+  watch.mark_cpu_child(child)
+  return watch
+ def test_live_cpu_blocks_compaction(self):
+  child=SimpleNamespace(pid=12345,poll=lambda:None)
+  watch=self.watch(child)
+  self.assertEqual(window.live_owner_pids(watch),[12345]);self.assertEqual(watch.launched,[])
+ def test_exited_cpu_allows_compaction(self):
+  child=SimpleNamespace(pid=12345,poll=lambda:0)
+  self.assertEqual(window.live_owner_pids(self.watch(child)),[])
+ def test_cpu_cannot_latch_boot(self):
+  watch=self.watch(SimpleNamespace(pid=12345,poll=lambda:None));watch.new_gpu_fault=True
+  with patch.object(window,'save') as writer:watch.latch('ordinary CPU failure');writer.assert_not_called()
+ def test_window_compaction_uses_complete_lifetime_guard(self):
+  tree=ast.parse((storage.P/'window.py').read_text())
+  main=next(node for node in tree.body if isinstance(node,ast.FunctionDef) and node.name=='main')
+  text=ast.unparse(main)
+  self.assertIn('alive = live_owner_pids(watch)',text)
+  guard=next(node for node in ast.walk(main) if isinstance(node,ast.If) and ast.unparse(node.test)=='not alive')
+  self.assertIn('compress_evidence(out, record)',ast.unparse(guard))
+
 def main():
- suite=unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromTestCase(case) for case in (CleanupTests,TeardownTests))
+ suite=unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromTestCase(case) for case in (CleanupTests,TeardownTests,CompactionTests))
  result=unittest.TextTestRunner(verbosity=1).run(suite)
  save(storage.P/'draft-window-cleanup-gates.json',dict(passed=result.wasSuccessful(),gates=result.testsRun,tests=result.testsRun,failures=len(result.failures),errors=len(result.errors),device_executed=False,models_launched=0,
-  inherited_teardown_checks=5,new_lifecycle_checks=6,post_launch_bookkeeping_guarded=result.wasSuccessful(),
-  source_sha256={name:sha(storage.P/name) for name in ('draft_window.py','test_draft_window_cleanup.py','storage.py')},scope='Five inherited teardown/pipe/storage/bookkeeping checks plus six synthetic host lifecycle/archive checks; no child launched'))
+  inherited_teardown_checks=5,new_lifecycle_checks=6,live_cpu_compaction_checks=4,post_launch_bookkeeping_guarded=result.wasSuccessful(),
+  source_sha256={name:sha(storage.P/name) for name in ('draft_window.py','window.py','test_draft_window_cleanup.py','storage.py')},scope='Five inherited teardown/pipe/storage/bookkeeping checks, six synthetic host lifecycle/archive checks, four CPU ownership/compaction checks; no child launched'))
  return not result.wasSuccessful()
 if __name__=='__main__':raise SystemExit(main())

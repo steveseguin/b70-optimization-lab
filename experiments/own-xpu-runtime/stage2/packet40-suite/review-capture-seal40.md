@@ -2,7 +2,7 @@
 
 This is the capture/seal implementer's follow-up source review. The independent
 runtime review remains `review-p40-nonblocking-draft.json`, written by the
-cancellation reviewer; its six runtime source hashes remain current.
+cancellation reviewer. This follow-up does not replace that independent review.
 
 The capture producer authenticates the immutable target input streams before
 each fresh owner. GNU and Intel host owners use the same dispatch. It compares
@@ -43,13 +43,16 @@ rope header before and after, and records every artifact and compressed build
 log. A rebuild changes the artifact identity and invalidates earlier binary
 gates. Standalone builds also have compile-invocation/source receipts.
 
-The user requested equality of any state. The final terminal-EOS review found
-that abandoned speculative scratch, inactive banks and uncommitted tail bytes
-can differ even when tokens, committed state and reset state agree. Both
-bootstrap and final sealing now refuse this unresolved scope. The pending
-`state-scope-decision.json` contains no owner acceptance. Only a recorded explicit
-owner message accepting that exact exception, or a fresh execution-bound proof
-of terminal equality for every inventoried allocation, can release this gate.
+The earlier terminal-EOS finding included token-input and host cache metadata,
+in addition to inactive banks, scratch and invalid tails. Strict rollback now
+restores the complete speculative write set without scrubbing committed active
+banks or valid QSA prefixes. Its current aggregate passes 472 checks: 408 mini
+checks and 64 real-model checks, including 12 corruption negative controls.
+Both controllers and retention modes are covered. Real-model coverage uses the
+original seven-token prefix and positions 7/8 with the full production weights
+and launch plan; it is diagnostic sampled-boundary proof, not a full-context or
+device performance result. Raw allocation equality excludes the independently
+reported scheduling event counter. No owner state-scope exception is assumed.
 
 The final producer audit checked `capture40.py` and `suite128_cpu_gate.py` without
 launching a model. Capture owner failures now remain failed even when inventory
@@ -60,7 +63,7 @@ failure it retains scratch while an owned rank still exists, instead of deleting
 files beneath a child that outlived the suite's bounded cooperative drain. Setup
 files are covered by the owned-directory cleanup path. Both source files passed
 syntax parsing; these findings still require the separately scheduled runtime
-gates, and do not authorize the pending EOS exception.
+gates; the strict terminal proof is now separately complete for its declared scope.
 
 The first real capture startup then exposed an additional producer defect: it
 created the output directory before calling a binary that requires the output
@@ -91,14 +94,45 @@ time; this review launched neither tests nor compilers. No unresolved issue was
 found in this delta. The original capture/seal review remains an implementer
 follow-up; independence applies specifically to these mirror changes.
 
-Strict rollback is now applied and independently reviewed in
-`review-p40-strict-rollback.json`. It restores token-input and host cache metadata
-as well as inactive banks/scratch/tails and the rank0 shared producer slot, while
-leaving active banks and valid QSA prefixes exposed to corruption checks. The
-nonblocking-draft reviewer independently refreshed the applied rank integration;
-this reviewer did not overwrite that receipt or claim independent authorship of
-the rollback implementation. Its 20-case screen is diagnostic evidence, and the
-full terminal proof and final-binary regression runs are still separate seal
-requirements. No owner state-scope exception is assumed. Capture recompilation
-and current binary-bound execution likewise remain separate from this source
-review. The current build verifier's passing receipt is not device execution.
+Strict rollback is independently reviewed in `review-p40-strict-rollback.json`;
+this implementer follow-up binds its current 472-check aggregate and preserves
+the diagnostic scope above. It does not claim independent authorship of the
+rollback review. The refreshed `capture-startup-gates.json` passes the same three
+actual CPU startup/failure/ownership cases on the current GNU binary. No models,
+native owners, compilers or device work were launched during this review.
+
+KD now archives its CPU reference only after both device owners complete their
+byte comparisons, then removes the raw reference. The archive preserves exact
+receipt/log bytes and hashes of every raw fixture, bound by the identity receipt
+and final window receipt. The failure cleanup tracks the actual host Popen
+handle. Exited-host files are archived before removal; a live or unconfirmed
+host keeps its files. An archive/storage error records a separate failed cleanup
+disposition and leaves the original window exception authoritative. These are
+ordinary wrapper failures. The cleanup never writes the boot fault latch;
+`Watch.latch` requires a launched device-owner list and a new kernel fault
+signature. The host reference is deliberately absent from that device list.
+All five inherited teardown/pipe/storage/bookkeeping checks remain alongside six
+new synthetic lifecycle checks. Four additional CPU-ownership/compaction checks
+bring the combined current receipt to 15 passing tests. The existing mocked
+window storage/failure suite also passes all eight checks without owner launches.
+
+The follow-up found and fixed one integration gap: outer log compaction had
+consulted only the device-owner PID list. `Watch` now retains actual CPU child
+Popen handles in a separate list, registered inside the protected post-launch
+block. `live_owner_pids` checks each handle's exit status as well as device-owner
+PIDs before compaction. A still-running CPU owner therefore preserves every log
+and event file; an exited handle cannot be confused with a reused PID. CPU
+ownership does not populate `watch.launched`, so it does not create a device
+execution claim or let an ordinary CPU failure latch the boot. The window
+receipt records CPU-owned and retained owner PIDs separately. The no-launch seal
+admission mock was updated to carry this separate ownership field. The four new
+checks cover live-owner preservation, exited-owner release, refusal to latch for
+CPU-only work, and the outer compaction call site's lifetime guard. No unresolved
+source issue remains in this reviewed cleanup path.
+
+The final full-wrapper rehearsal and build-identity outer-ledger refresh remain
+pending after the cleanup source change, along with final source-bound regression
+and capture campaigns required by the seal. Previous passing wrapper receipts
+are stale; this source review does not upgrade them. Coordinator KD parity,
+queue overlap, driver behavior and measured snapshot overhead remain device-only
+work, with no packet40 device execution or speed claim.

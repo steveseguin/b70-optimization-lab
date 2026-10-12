@@ -16,7 +16,7 @@ B=P/'build'
 class BlockedLaunch(RuntimeError):pass
 
 class Watch:
-    def __init__(self,*unused):self.launched=[];self.cancelled=[];self.last=0.;self.end=time.monotonic()+300
+    def __init__(self,*unused):self.launched=[];self.cpu_children=[];self.cancelled=[];self.last=0.;self.end=time.monotonic()+300
     def check(self):pass
     def poll_kernel(self):pass
     def mark_launched(self,pid):raise AssertionError('device contact is prohibited')

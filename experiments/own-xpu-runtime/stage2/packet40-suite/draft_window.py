@@ -115,6 +115,7 @@ def _run(a,out,env,watch,build,*,cpu_rehearsal=False,host_lifecycle):
    child=subprocess.Popen(['nice','-n','19','ionice','-c','3']+cpu_capture(host_cmd),env=env,stdout=log,stderr=subprocess.STDOUT,pass_fds=(stop_r,))
    host_lifecycle['child']=child
    try:
+    watch.mark_cpu_child(child)
     while child.poll() is None:
      watch.check()
      try:

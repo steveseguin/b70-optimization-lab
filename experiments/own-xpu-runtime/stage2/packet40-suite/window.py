@@ -52,10 +52,14 @@ def foreign_engines(proc=Path('/proc')):
     return dict(active=active,scope='whole-host conservative',unreadable_processes=max(u0,u1),sample_seconds=.25)
 class Watch:
     def __init__(self,out,boot,seconds):
-        self.out=out;self.boot=boot;self.end=time.monotonic()+seconds;self.last=0.;self.cancelled=[];self.launched=[];self.new_gpu_fault=False
+        self.out=out;self.boot=boot;self.end=time.monotonic()+seconds;self.last=0.;self.cancelled=[];self.launched=[];self.cpu_children=[];self.new_gpu_fault=False
         text,self.cursor=journal();(out/'kernel-preflight.txt').write_text(text)
     def mark_launched(self,pid):
         self.launched.append(int(pid))
+    def mark_cpu_child(self,child):
+        # Keep the actual process handle: poll distinguishes exit from PID reuse.
+        # CPU ownership never counts as device contact for the fault latch.
+        self.cpu_children.append(child)
     def latch(self,reason):
         # Admission/loader/argument refusals before any child exists cannot poison a boot.
         if not self.launched or not self.new_gpu_fault:return
@@ -78,6 +82,11 @@ class Watch:
     def postflight(self):
         end=time.monotonic()+5
         while time.monotonic()<end:self.check();time.sleep(.25)
+
+def live_owner_pids(watch):
+    device=[pid for pid in watch.launched if Path(f'/proc/{pid}').exists()]
+    cpu=[child.pid for child in watch.cpu_children if child.poll() is None]
+    return sorted(set(device+cpu))
 
 def output_path(path,*,cpu_rehearsal=False):
     out=Path(path).resolve();boundary=B.resolve() if cpu_rehearsal else P.resolve()
@@ -469,7 +478,9 @@ def main(*,cpu_rehearsal=False):
         for s,handler in old.items():signal.signal(s,handler)
     record['device_executed']=bool(watch.launched) and not cpu_rehearsal;record['launched_pids']=watch.launched
     # Only completed owners may have their logs compacted. Preserve any retained owner.
-    alive=[pid for pid in watch.launched if Path(f'/proc/{pid}').exists()]
+    alive=live_owner_pids(watch)
+    record['cpu_owned_pids']=[child.pid for child in watch.cpu_children]
+    record['retained_owner_pids']=alive
     if not alive:
         try:compress_evidence(out,record)
         except Exception as error:record.update(passed=False,retention_error=str(error))

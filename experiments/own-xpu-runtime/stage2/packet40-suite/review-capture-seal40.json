@@ -2,19 +2,30 @@
   "schema": "packet40.capture-seal-source-review.v1",
   "source_review_passed": true,
   "device_executed": false,
-  "reviewer": "draft_runtime subagent; implementer follow-up, independent runtime reviewer identity preserved separately",
+  "reviewer": "draft_runtime subagent; capture/seal/KD implementer follow-up; independent scope remains suite-agent mirror-validator delta only",
   "source_sha256": {
     "capture40.py": "a4a6b7b3dd639a6b780b681503359df063e205dc42994fd39c4475ecc282e1bf",
     "pipeline_draft_agreement.py": "24c3401a4a5c8b78a1c15b660a335f83fa53c72fd4dfb592eb6ee6d98154bc6a",
-    "draft_window.py": "daa3c2637e9027c0eec35a98e03a70ddd86f927531a83be032431dd6f458013f",
-    "seal40.py": "3e64c5e8e3e4313d3a36c7459b25a773963c23c1170ddb9cd55adfb0de869ea4",
-    "build_identity40.py": "998e4312e85e09130343f3c06738ab68fbef6c5da1163a1b7619f9cb5c39d184",
+    "draft_window.py": "69f11152d91f653dd24b8a5dec28494e166e830a334aed926b5ae9b059ccb771",
+    "seal40.py": "68f40becd031429e418bd1273224f26c5f53c0f887f4b2bb78b6a1f69c9fec25",
+    "build_identity40.py": "e9e3f571f34fdd502e700b1fad265a693288675c9235c726049ebca2d1dc0dad",
     "storage.py": "53787deddc760e89f4d3bb9b25e96b2b9bdf3cc54bcc96a99df3286e19badbe3",
-    "test_seal40.py": "1b0d49802a7aa8592dd91bacb80933853f9a302ca80b5a97cb40c0cb075440ff",
-    "review-capture-seal40.md": "f2f09af1152c792057a63117c49f570793656bd99e61e9fb1ec674de2e96eab6",
+    "test_seal40.py": "13f12e24306dc5e1e5f15b42b5de0fed332c5740c28d6f3d4e6fa738d4d70d49",
+    "review-capture-seal40.md": "f241422e6d6f2c27cb8245e8c3304a22992119c33e3c77a831ffec41a8b0b7ab",
     "python_tests.py": "1b4a2a7781705f53e8e7d4ba3de77c6a018f33391d921fc566e5cd1dce9da357",
     "suite128_cpu_gate.py": "23248ccffc14afa3a5c6e46b75cf141b6c98a28735665241d09ce3eee5f0b132",
-    "capture_startup_gate.py": "7dd670a36d65bfe40cb462e1f10c41343e9522521be58f73e6fef4cb32b5713a"
+    "capture_startup_gate.py": "7dd670a36d65bfe40cb462e1f10c41343e9522521be58f73e6fef4cb32b5713a",
+    "test_build_identity40.py": "3ff4fa2d692885cc7b13eed914ae645795ae3f5dcbc85a721d536493bd6ca23f",
+    "kernel_gate.py": "dda5ca15289d17e9405ea9a8fcca6da5b002b1bcbec222e324943225159232c7",
+    "kernel_overlay.py": "ce04187e0c9aa194668f864991d8a7a6feb699f57c2f512e7a5bc0d1c780cfcd",
+    "submission_overlay.py": "c5c5d24589c3311d48676b5932df0c2316b8f2891b9378910f1a7377bc6ec868",
+    "validation_mirror.py": "1006456d47ac73d0425cf33e04e440e567959fe6783d8106d0c5ebcec65b2fde",
+    "math_gate.py": "63611b83ffafeb436a4a8fb445f301665d66a57f4364f46a445d2369560ae35c",
+    "window.py": "309946dba1c0fc6cbcbfd21bbe31a5b061b1dcd78010e2dbb02d34baf6c33a32",
+    "full_wrapper_gate.py": "3a10c3650051d2bae33860de4bedd50064a4e3dac0c64dee5d2778ab5ce997b5",
+    "test_draft_window_cleanup.py": "b5cf113be806fa6c0c9785418b63ed3247152b269f35f59cd648122fbd15ef5e",
+    "test_window_seal_admission.py": "cd5ac01252fa54ce3ee6604f2ec8945d483bb2a40a491e404ccd8447af7cf00c",
+    "test_window_storage.py": "35ac82092cc88c7623197907a5827ff527dc5f41ffa8ed3c7c6d6a5cc300a16f"
   },
   "checks": [
     "immutable target capture input provenance",
@@ -38,7 +49,15 @@
     "Retained nested host-issue benchmark ELF is explicitly inventoried and hashed without executing it; old dependency ledgers remain unchanged",
     "Runtime creates its own previously absent capture output path; parent logs beside it until CPU child exits",
     "Missing capture owner receipt is an explicit failure with archived startup log",
-    "Focused actual CPU startup gate passed3 cases including26 mini fixture files and existing-output preservation"
+    "Focused actual CPU startup gate passed3 cases including26 mini fixture files and existing-output preservation",
+    "Compiler checked/JIT and validation mirrors are regenerated before the four builds; actual bytes and generator overlays are bound",
+    "Second mirror generation must be byte-identical and second four-mode dependency build must have no compile/link actions or artifact drift",
+    "Unchanged generated-file timestamps restored only for identical bytes; source races and missing/outside generated mappings refuse proof",
+    "KD reference archive and identity bind all raw fixture hashes before successful scratch deletion",
+    "KD failed-window cleanup tracks actual host Popen; live/unconfirmed hosts preserve files and cleanup errors preserve original exception",
+    "Inherited five KD teardown/pipe/storage checks preserved alongside six new lifecycle checks; current15-test receipt passes, including four CPU ownership/compaction checks",
+    "Current strict terminal proof passes472checks including12corruption negatives; bothcontrollers, allmini and sampledreal boundaries with declared diagnostic scope",
+    "Outer compaction checks separately tracked actual CPU child handles; live host logs/events preserved without device-contact attribution or false boot latch"
   ],
   "findings_fixed": [
     "historical draft rebind replaced by fresh selected-dispatch host/reference gate",
@@ -47,17 +66,42 @@
     "explicit current CMake source/artifact verification added",
     "capture failed inventory path previously could save passed=true",
     "suite128 finally previously deleted scratch even if suite teardown retained live rank owners",
-    "First real capture startup rejected precreated output directory; fixed with outside logging and binary-owned output creation"
+    "First real capture startup rejected precreated output directory; fixed with outside logging and binary-owned output creation",
+    "Outer compaction previously ignored a still-live KD CPU host; separate Popen ownership and shared lifetime guard now preserve its files without device attribution"
   ],
-  "independent_runtime_review": "review-p40-nonblocking-draft.json (original independent cancellation reviewer confirmed all6 source identities current)",
+  "independent_runtime_review": "review-p40-nonblocking-draft.json and review-p40-strict-rollback.json: cancellation reviewer independently refreshed applied runtime sources; this follow-up leaves those receipts unchanged",
   "runtime_evidence_status": "Required producer executions, seal refusal tests and final admission are separate gates; source review alone cannot seal packet.",
   "pending": [
-    "coordinator device KD parity and actual event/overlap timing",
-    "fresh execution of new cross-compiler capture producer and current build verifier",
-    "Explicit owner state-scope decision or strict terminal all-allocation proof"
+    "Fresh final full-wrapper rehearsal after cleanup changes",
+    "Fresh build-identity outer execution ledger after wrapper changes",
+    "Final source/binary-bound capture and regression campaigns required by seal",
+    "Coordinator device KD parity and actual event/overlap timing"
   ],
-  "producer_audit_validation": "Source audit plus fresh capture-startup-gates.json:3 actual CPU startup/failure/ownership cases; no device execution.",
+  "producer_audit_validation": "Current-GNU capture startup3cases inspected; KD cleanup15checks and existing window storage/failure8checks pass with no subprocess/model/device launches. Original5teardown cases preserved.",
   "gate_receipts_sha256": {
-    "capture-startup-gates.json": "490c608893db2ca503c032f7de5a2bba5cfd45439f1103a2d61002eb7695d0ff"
+    "capture-startup-gates.json": "d4fc51c8419f939d8708fc3760a66ca0e5bb1cde01ce25b0f3916a9147f9b135",
+    "draft-window-cleanup-gates.json": "ef05d2cdfc0d785847ea1ebe80417c17a941bec77ca4b5a035535e179a2cb3d6",
+    "kd-compaction-storage-regression.json": "55cc1ee1e6d118ef9f32554d2ae64ab2dc7c6dbf7a75564d69b8db1df629c07e",
+    "terminal-eos-all-state-gates.json": "68fd9b282479042ceb1c22944e43161badc18af86d0f8bfbb29256b59e1da97d"
+  },
+  "independent_delta_review": {
+    "scope": [
+      "build_identity40.py regeneration/verification and two-pass build changes",
+      "seal40.py mirror-bound build admission",
+      "test_build_identity40.py and new test_seal40.py mirror refusal cases"
+    ],
+    "implementation_author": "suite-metrics agent",
+    "reviewer": "draft-runtime agent",
+    "source_review_passed": true,
+    "unresolved_findings": [],
+    "execution_performed_during_review": false
+  },
+  "unresolved_findings": [],
+  "strict_terminal_evidence": {
+    "gates": 472,
+    "negative_controls": 12,
+    "scope": "Every mini boundary and sampled real full-weight production boundaries at positions7/8 using original seven-token prefix; both controllers/retention; diagnostic only, no all-context/device claim.",
+    "receipt": "terminal-eos-all-state-gates.json",
+    "passed": true
   }
 }
