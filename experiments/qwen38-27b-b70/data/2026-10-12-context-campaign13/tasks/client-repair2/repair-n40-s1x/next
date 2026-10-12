@@ -1,0 +1,11 @@
+#!/usr/bin/env python3
+import json, os, sys
+D = "/opt/repair"
+items = [json.loads(l) for l in open(D + "/tickets.jsonl")]
+pos_file = D + "/.pos"
+pos = int(open(pos_file).read()) if os.path.exists(pos_file) else 0
+if pos >= len(items):
+    print(open(D + "/end_text").read()); sys.exit(0)
+open(pos_file, "w").write(str(pos + 1))
+open(D + "/.log", "a").write(json.dumps({"ticket": items[pos]["ticket"], "kind": items[pos]["kind"], "at": __import__("time").time()}) + "\n")
+print(items[pos]["text"])
