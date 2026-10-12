@@ -1493,3 +1493,35 @@ Next in this queue: X32p on both 240K seeds (gate as before) and on the 1M strea
 started by hand (`start-proxy-p.sh` in the campaign folder: campaign 12's options plus `--recall-label
 '(?m)^ITEM (\d+)/' --recall-unit item`), because the running campaign script starts one only for the arms it knew.
 Expected at 1M: 225 or more of 228 in 46 to 54 minutes. A sign slip of the kind above can still cost one.
+
+### The harness keeper on a second 1M stream: 210 of 222 in 50 minutes (below what I expected)
+
+Stream `client-1m` seed 1 (618 items, 222 questions), arm N32n (in-place notes with this morning's checks; the
+harness's own `recall`, which was not changed today).
+
+| 1M tokens, 32K window, harness keeper with in-place notes | right | minutes | notes |
+| --- | ---: | ---: | --- |
+| seed 0 (N32u, campaign 10) | 228/228 (100 %) | 50.2 | NOTES audit 0 wrong of 63 |
+| **seed 1 (N32n)** | **210/222 (94.6 %)** | **50.0** | 7 blank, 5 wrong; NOTES audit 1 counter wrong for a stretch, 65 of 65 versions |
+
+Expected: 97 % or more in 45 to 60 minutes. The time is as expected; the score is not. Not void. By type: final
+list 19/19, current 55/58, earlier value 55/58, who 26/28, rule 28/29, method 26/29. 65 in-place cuts, none failed,
+no fall back; 78 notes calls wrote 95K tokens (seed 0: 111K).
+
+**Seven of the twelve are one event, and it is a hole in the keeper, not in the notes.** At the last question item
+(609) the model searched for a counter's history up to item 480. The harness `recall` prints the first matches in
+item order and stops at its line limit ("the list shows up to item 468"), so the model fetched whole items 468 to
+480, three at a time, about 5K tokens a fetch. The window filled, the ordinary cut ran, and it moved the question
+item itself out of view together with the first search results. The model finished reading item 480, no longer saw
+any question, and ran `next`. Nothing was written for that item. The in-place cut waits while a question is open;
+the ordinary cut does not, in the harness or in the proxy (the proxy is less exposed: its searches never enter the
+history, and it made no ordinary cut in any run today).
+
+The other five: two tallies and one current value computed from a value that the NOTES had right (the audit finds
+them right at those items; the model answered from a search instead), one "who", one earlier value.
+
+So the one-stream claim "228 of 228" does not carry over as it stood: **over the two 1M streams the harness keeper
+is 438 of 450 (97.3 %)**, and both streams took 50 minutes. To fix, in this order: `recall` in the harness shows
+the matches nearest to where it is asked (as the proxy's now does) and takes `--before` / `--after`; an open
+question is never cut out of view by any cut (kept word for word until it is answered), in the harness and in the
+proxy.
