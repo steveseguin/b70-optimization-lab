@@ -1,14 +1,15 @@
-# Our Intel Xe runtime — measured state, 2026-10-11 22:30 UTC
+# Our Intel Xe runtime — measured state, 2026-10-12 00:15 UTC
 
-**Bit-exact on one card and on two; 17.85 tok/s measured on two cards.** For Unsloth
+**Bit-exact on one card and on two; 19.63 tok/s measured on two cards.** For Unsloth
 UD-IQ3_XXS, the **quantized compressed version**, full 16-bit KV: the runtime reproduces
 its CPU oracle exactly on the cards (64/64 tokens, 384/384 layer fixtures). Two-card
-decode, all exact, same day: **3.15 tok/s** as first sealed, **12.08 tok/s** after a
+decode, all exact, within one day: **3.15 tok/s** as first sealed, **12.08** after a
 linear allocation scan in the two-card backend was replaced by an ordered lookup
-([evidence][locscan]), **17.85 tok/s** (55.4 ms per token) with specialised non-GEMV
-kernels selected class by class from a timing run on the card ([receipts][p26w2m]).
-Reference **28.49 tok/s**. The token is now GPU-bound: 11 ms of host issuing, 44 ms
-waiting on the cards. [First exact decode and its reading][w2note].
+([evidence][locscan]), **17.85** with specialised non-GEMV kernels selected class by
+class from a timing run on the card ([receipts][p26w2m]), **19.63** (50.2 ms per token)
+with the second kernel round, sealed end to end ([packet 27][p27r]). Reference **28.49
+tok/s**. The token is GPU-bound: 12 ms of host issuing, 38 ms waiting on the cards.
+[First exact decode and its reading][w2note].
 
 **Kernel progress.** Effective GB/s means payload bytes divided by device time,
 not measured memory-bus traffic. These are warm, fixed-input operator diagnostics
@@ -118,19 +119,20 @@ GEMV launches of 15–30 µs (HC gates, low, inject, router, shared expert).
 
 **Next, in order:**
 
-1. **[Packet 27][p27], second kernel round** (Codex, CPU, in progress): merge the small
-   GEMVs into compile-time specialised kernels (11 ms → about 5), route and QSA
-   attention, fewer operations per weight in the large GEMVs, and the packet 25
-   candidates that beat the current kernels (5–20%). Each change is admitted only by a
-   per-class timing on the card.
-2. **Routed experts** are the largest single item (14.8 ms) and the hardest: six kernel
-   rounds and [packet 25][p25] leave them near 170 and 125 µs per launch group.
-3. **Two cards inside a layer:** only one card works at a time. With host-fenced
-   exchanges of about 50 µs the split does not pay for kernels of 100–200 µs. Chaining
-   events between the cards directly would make it pay (about 7 ms), but that is the
-   leading suspect of the 09:09 fault and needs its own tiny qualification first.
-4. **Abandoned:** the fused generic kernels of packets 21, 23 and 24 (bit-exact,
-   50–100 times slower per launch, [measurement][k2slow]) and replay ([packet 22][p22]).
+1. **[Packet 29][p29], merge** (Codex, CPU, in progress): packet 27's runtime plus the
+   [packet 28][p28g2] GEMV kernels measured on the card: a paired expert gate/up kernel
+   that roughly halves that class (about 4.25 ms per token) and dense variants worth
+   about 4 ms more; new expert-down candidates. Expected near 24 tok/s.
+2. **Routed expert down** (6.2 ms, no winner yet) and **QSA attention** (3.2 ms, no
+   winner yet).
+3. **What a GEMV can reach here** ([bounding study][bounds]): the dense classes are
+   close to the card's streaming-read limit; the packed expert kernels are bound by
+   per-weight work.
+4. **Two cards inside a layer:** only one card works at a time. Host-fenced exchanges of
+   about 50 µs do not pay for kernels of 100–200 µs, and chaining events between the
+   cards directly is the leading suspect of the 09:09 fault.
+5. **Abandoned:** the fused generic kernels of packets 21, 23 and 24 (bit-exact, 50–100
+   times slower per launch, [measurement][k2slow]) and replay ([packet 22][p22]).
 
 [r1]: stage2/packet6-kopt/receipts-card3-20261011/timing/timing.json
 [r2]: stage2/packet7-kopt2/receipts-card3-20261011/timing.json
@@ -187,3 +189,7 @@ GEMV launches of 15–30 µs (HC gates, low, inject, router, shared expert).
 [k2slow]: stage2/packet24-kernels/evidence/20261011-k2-c0-generic-kernels-slow/README.md
 [p26w2m]: stage2/packet26-specialised/receipts-cards01-20261011-native-w2m/README.md
 [p27]: stage2/packet27-round2/README.md
+[p27r]: stage2/packet27-round2/receipts-cards01-20261012-chain/README.md
+[p29]: stage2/packet29-merged/README.md
+[p28g2]: stage2/packet28-dense/receipts-card2-20261011-g2/timing-table.md
+[bounds]: stage2/bounds-20261011-gemv/README.md
