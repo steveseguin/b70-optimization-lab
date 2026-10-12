@@ -135,6 +135,7 @@ class Keeper(unittest.TestCase):
         self.assertNotIn(400, n)
         self.assertNotIn(2, n)
         self.assertEqual(NS["numbers_in"]("nothing here and there"), set())
+        self.assertEqual(NS["numbers_in"]("ITEM 132/147 (UPDATE)\nabcd62 lost sixteen. v2_final stays."), {16, -16})
 
     def test_working_may_start_from_a_value_the_turns_set(self):
         notes = "RULES\n(none)\nSTATE\nabcd12: -31\nefgh34: removed\nOPEN"

@@ -263,7 +263,9 @@ _TENS = {w: 10 * (i + 2) for i, w in enumerate("twenty thirty forty fifty sixty 
 
 def numbers_in(text: str) -> set[int]:
     """Every whole number the text states, in digits or in English words ("four hundred and two", "forty-nine"),
-    each with both signs (a "minus" or "lost" before it is not parsed)."""
+    each with both signs (a "minus" or "lost" before it is not parsed). Digits inside a name (`abcd62`) and the
+    numbers of an `ITEM 132/147 (UPDATE)` heading are not numbers the text states."""
+    text = re.sub(r"ITEM \d+/\d+ \(\w+\)", " ", text)
     out: set[int] = set()
     total = part = 0
     open_ = False
@@ -272,8 +274,10 @@ def numbers_in(text: str) -> set[int]:
         if open_:
             out.update((total + part, -(total + part)))
         total, part, open_ = 0, 0, False
-    for tok in re.findall(r"[a-z]+|\d[\d,]*", text.lower()):
-        if tok[0].isdigit():
+    for tok in re.findall(r"[a-z_]+\d\w*|[a-z]+|\d[\d,]*", text.lower()):
+        if tok[0].isalpha() and tok[-1].isdigit() or "_" in tok:
+            close()                                  # a name such as abcd62
+        elif tok[0].isdigit():
             close()
             n = int(tok.replace(",", "") or 0)
             out.update((n, -n))
