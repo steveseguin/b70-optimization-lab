@@ -1583,3 +1583,65 @@ Fixed after the run, before the next (not yet run): a packed line is followed th
 recomputed like a plain line's; a line is left out only when it is a bare value that the turns do not state, or
 working with an amount they do not state, never because the checker could not follow it; working whose result is a
 value the turns state for the thing is taken as that set without a question.
+
+## Campaign 13 (2026-10-12 midday, preregistered before any result): a real-code task; the open-question fix
+
+### Part A: the repair marathon (first run of this task; a pilot, one seed, one run per arm)
+
+Every result so far is on one synthetic family. This task is real code with a real test suite
+(`scripts/context/make_repair_tasks.py`, its module text has the details): more-itertools 10.7.0 (MIT) with 40
+injected one-token defects (a comparison turned round, plus for minus, `and` for `or`, True for False, a dropped
+`not`), one per function, each breaking that function's own test class and, for 39 of the 40, nothing else. The
+agent gets 43 tickets one at a time from `next`: 40 BUG tickets ("`chunked` in more.py gives wrong results; its
+tests: `t ChunkedTests`") and three NOTICE tickets, each a standing instruction "from now on":
+
+- ticket 3: every line added or changed in the library ends with the comment `# fixed`;
+- ticket 9: after each fix, one line in `/app/FIXES.md`: ticket, function, a few words;
+- ticket 16: only for fixes in `recipes.py`, the function's name also goes into `/app/RECIPES.txt` (a rule by
+  condition: 10 of the 40 defects are in `recipes.py`, all placed after this notice; listing a `more.py` fix there
+  breaks the rule too).
+
+The grader restores the original tests, runs each ticket's test class against the agent's library, and checks each
+instruction for every ticket after its notice: a ticket is *fixed* when its tests pass and *clean* when it is
+fixed and no instruction in force was broken for it. Built and checked before any model saw it: a self-test builds
+the image, runs `next` through the queue and `t` once, and grades six scripted solutions whose scores are known
+(untouched 0 fixed; correct 40 clean; no notice followed 2; no FIXES.md 7; no RECIPES.txt 30; everything in
+RECIPES.txt 23), and a stub model has driven it through the harness. The builder was reviewed read-only before its
+first run (11 findings, among them a host-memory risk: every test process is now capped).
+
+Arms, the same plain agent in each (it sends one shell command per turn; thinking on in every call, at most 8,192
+tokens a reply, temperature 0), the same server:
+
+| arm | what manages the context |
+| --- | --- |
+| XR | nothing in the agent: it sends its whole history through `tools/ctxkeeper` (32K window, in-place notes, checks off because this is not a ledger, RULES recited when a ticket arrives, `recall` in message numbers) |
+| W32 | a 32K sliding window: the oldest turns are dropped |
+| C32 | summary compaction at 32K: what agent programs usually do |
+
+What I expect, written down before any result (a pilot can only show large differences):
+- *Fixing* is local work and all three arms can do it: 30 or more of 40 fixed in each.
+- *Instructions:* XR keeps the marker and the log line on 90 % or more of the fixes they apply to, and the rule by
+  condition on 80 % or more. W32 keeps the marker and the log line while its own last fix is still in view (habit:
+  70 % or more would not surprise me) and loses the rule by condition, whose last use is usually out of the window
+  when the next `recipes.py` ticket comes (50 % or less). C32 lands between the two.
+- *Clean tickets:* XR 28 or more of 40; W32 20 or fewer.
+- *Time:* XR within 1.3 times W32.
+If W32 keeps every instruction, the task does not separate the methods and that is the finding; the next version
+then spaces the tickets further apart. If XR fixes fewer than 10 by its time cap (60 minutes), the set-up is at
+fault and the other arms are not run until it is understood.
+
+### Part B: the open-question fix and the later check fixes, on the ledger streams
+
+Code at the commit this campaign starts from: proxy arm X32q, harness arms N32p and N32pr (the harness has not run
+since this morning's N32n: it now has `recall --before N` with the nearest matches, the open question kept across
+the ordinary cut, no fall back for a questioned reply, misspelled names, amounts that are another thing's value).
+
+1. X32q, rules stream, seeds 1 and 0. Gate as before: 39/39 and 45/46 or better, no failed in-place attempt.
+2. N32pr and N32p, hard stream seed 1 (the pair that could not be compared this morning). Expected: both finish;
+   N32pr 45 or more of 49 in 16 minutes or less (this morning 46 in 23); retrieval adds two or more answers.
+3. N32p, 1M stream seed 1 (this morning 210 of 222: seven lost to the question that was cut out of view). Expected:
+   217 or more of 222 in 45 to 55 minutes.
+4. X32q, 1M stream seed 1 (the proxy's second 1M stream). Expected: 213 or more of 222 (96 %) in 45 to 55 minutes.
+
+Order in the queue: part A, then B1, B2, B3, B4. Gemma is off for the length of the queue (about four and a half
+hours if everything runs); the 1M runs go last and are dropped if the cards are wanted sooner.
