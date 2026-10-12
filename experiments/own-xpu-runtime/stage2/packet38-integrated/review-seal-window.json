@@ -7,7 +7,7 @@
   "rank_processes_started": 0,
   "dynamic_final_seal_pending": true,
   "source_sha256": {
-    "seal.py": "5162b9336d846aaa17ae93e440334564ddf1aa946d85481fd9c059d65e34404c",
+    "seal.py": "83682dd245b67ae85bed363db8efe075c5155ab2a93403af73f740fd6b9b994f",
     "test_window_seal_admission.py": "9da8ba8d22c64e164dd044537414e48c6ac785b9685985df2a1750529cff5901",
     "test_seal_bootstrap.py": "514a7192d35fe4015a45a23484acc8772809d30a4abf884588ef199ea5c7042c",
     "window.py": "69b8ae293a20330816a96a44bd0da837f64b0d44498c5d90e655a7353cfd2f75",
@@ -54,7 +54,7 @@
     "Final seal requires at least18 receipt metadata checks, including non-EOG/decode-rank metadata."
   ],
   "mock_gate_receipt": "seal-bootstrap-gates.json",
-  "mock_gate_receipt_sha256": "aa4c5d555e591ca39914125ce272a310ed4a6e53d2db7c9b349da586722e37aa",
+  "mock_gate_receipt_sha256": "465883ad2f20ea475c9aff591a347fc6981606d46f5f3b7e8cb35e02603f0d01",
   "mock_checks": 7,
   "limits": [
     "No actual final seal, admission rehearsal or GPU window was executed by this review.",
@@ -77,12 +77,12 @@
       },
       {
         "receipt": "suite-export-retention-gates.json",
-        "sha256": "f9196341d8c8d6c07a782ef04314acf6ccda41a4271e219085b16533d4556b3d",
+        "sha256": "7769bfabfc33e802a13a1ecec8589e6e6fff69d06e90c23281d1a7407c985d14",
         "synthetic_checks": 9
       },
       {
         "receipt": "seal-bootstrap-gates.json",
-        "sha256": "aa4c5d555e591ca39914125ce272a310ed4a6e53d2db7c9b349da586722e37aa",
+        "sha256": "465883ad2f20ea475c9aff591a347fc6981606d46f5f3b7e8cb35e02603f0d01",
         "mock_checks": 7
       }
     ],
@@ -95,5 +95,20 @@
       "rank_processes_started": 0
     },
     "prior_refusal": "Initial preflight incorrectly expected p38 for real-mode receipts actually measured under p33; parent preserved refusal. No rank launched. Dispatch identities are now separate; the actual preflight passes."
+  },
+  "cleanup_gate_requirement": {
+    "recorded_utc": "2026-10-12T08:51:35.547398+00:00",
+    "required": true,
+    "minimum_checks": 6,
+    "receipt": "cleanup-path-gates.json",
+    "receipt_sha256": "04afec75d5e62b7c384a47e15a442ec52efd4fa9dcdbe17112d5add386c1b5ed",
+    "source_hashes_verified": true,
+    "source_coverage": [
+      "cleanup.py",
+      "pipeline_draft_agreement.py",
+      "storage.py",
+      "test_cleanup_paths.py"
+    ],
+    "scope": "required gate inventory/source binding only; cleanup reviewer owns underlying path-safety source review"
   }
 }

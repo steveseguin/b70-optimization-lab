@@ -55,3 +55,10 @@ inputs, and the current draft capture outputs consumed by KD. These are required
 inputs rather than abandoned test scratch. `LIFETIME.md` lists the KD dependency
 chain. Rebuild with `build.py`; regenerate draft captures with `capture_cpu.py`.
 The exact commands and environment are in `WINDOW.md`.
+
+Cleanup archives finished capture timing/progress/site logs before removing
+their raw files. Draft-row reference tables become `draft-rows.jsonl.gz`, with
+an exact decompression check and both hashes in `scratch-cleanup.json`.
+`pipeline_draft_agreement.py` accepts either raw or compressed rows. The small
+deterministic `draft-capture.jsonl` token table remains a comparison input;
+the BF16/cache fixtures required by KD remain byte-for-byte intact.

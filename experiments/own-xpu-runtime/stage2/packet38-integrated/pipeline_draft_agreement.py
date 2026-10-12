@@ -1,9 +1,11 @@
 """Join real two-rank MTP evidence to independent captured-input draft evidence."""
-import json,hashlib
+import json,hashlib,gzip
 from pathlib import Path
 P=Path(__file__).resolve().parent
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
-def lines(p):return [json.loads(s) for s in p.read_text().splitlines()]
+def lines(p):
+ raw=p.read_bytes() if p.exists() else gzip.decompress(p.with_name(p.name+'.gz').read_bytes())
+ return [json.loads(s) for s in raw.decode().splitlines()]
 def main():
  capture=json.loads((P/'capture-run-incident-retrospective.json').read_text())
  reference=Path(capture['output']);expected=lines(reference/'draft-rows.jsonl')

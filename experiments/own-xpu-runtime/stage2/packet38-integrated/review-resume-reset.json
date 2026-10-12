@@ -1,13 +1,14 @@
 {
   "schema": "packet38.independent-reset-review.v1",
-  "reviewed_at_utc": "2026-10-12T07:36:40.016817+00:00",
+  "reviewed_at_utc": "2026-10-12T08:54:00.340938+00:00",
   "reviewer": "independent reset_review subagent",
   "source_review_passed": true,
   "blocking_findings": [],
   "device_executed": false,
   "tests_executed": [
     "test_state_retention.py (5 lightweight CPU-only retention checks)",
-    "test_suite_export_retention.py (6 synthetic tempfile-only export/archive checks; no ranks)"
+    "test_suite_export_retention.py (6 synthetic tempfile-only export/archive checks; no ranks)",
+    "test_cleanup_paths.py (6 packet-local synthetic path/compression checks; no ranks)"
   ],
   "existing_receipts_trusted": false,
   "source_sha256": {
@@ -27,12 +28,14 @@
     "storage.py": "53787deddc760e89f4d3bb9b25e96b2b9bdf3cc54bcc96a99df3286e19badbe3",
     "SUITE.md": "c02b438366a559950fe9866e44c5ff8f1d6885feff524a90b9ddc453f4ad900b",
     "suite_export.py": "6c4b0a2a2d5778d81263c3101335eb35b1a389d79a4977217ce15ae3780c548f",
-    "cpu_campaign.py": "010cd13bfe4a86f84bddbdfc8e7928e18e72ea9689a47b7ac09d68836a05bf06",
-    "cleanup.py": "d96cf504468482b8a983a70f9cd9438d3adc1ccae755810cd306fc00c6c7d081",
+    "cpu_campaign.py": "7d76ffe1b2db7486f5d62e73580dbe042d2ba4bd9cdc153a079ac1103d4aeb39",
+    "cleanup.py": "8d4b37733d3355c3ece31390574d141244ad5a3f6b8e8663134e1c519bf3ad2e",
     "test_suite_export_retention.py": "d53b93827ec7f5b1d583ef6b1886ce0e9d7ede940e3d8d40a2f1b1d28448c1e4",
     "test_storage_race.py": "4633a0f7df6a7e70c4ed416b38a13ba509b59f7cd4c72e06d5fa78b6d36474a6",
     "test_suite_warmup.py": "7c0dd710ac4f7cca3f8fe1fae084636b8d7875bc7f2f5c434fafb51021960d8c",
-    "test_receipt_metadata.py": "b09e74107a178cb01111f4fd1a27588b440ef88da24841c097c7556f686b7316"
+    "test_receipt_metadata.py": "b09e74107a178cb01111f4fd1a27588b440ef88da24841c097c7556f686b7316",
+    "pipeline_draft_agreement.py": "281a0df7b60a7b896aeaabd56f5205d52ecd965d3073f14d9019cd4691bd2b35",
+    "test_cleanup_paths.py": "d3e2c988d384dc349b96dbbba797d5e755fa6e87307331ab01558c156505c9b1"
   },
   "observations": [
     {
@@ -69,7 +72,9 @@
     "distinct five-token warm-up precedes unchanged complete reset and does not reuse any admitted contiguous five-token input span",
     "EOS termination override is keyword-only and used solely for excluded two-output warm-up; measured EOS behavior and post-warm-up complete reset unchanged",
     "suite EOS timing metadata clips a local timing-row slice only; exact tokens, original timing rows, execution, warm-up and reset remain unchanged",
-    "CPU suite export binds qualified Intel host executable on both rank launches and every request; qualification receipts precede launch and neither compiler choice nor export alters model state"
+    "CPU suite export binds qualified Intel host executable on both rank launches and every request; qualification receipts precede launch and neither compiler choice nor export alters model state",
+    "finished capture cleanup touches only four named event logs and draft-rows; bin/bf16 KD inputs remain; input/output symlinks refused and gzip decompression exactly checked before source unlink",
+    "preflight distinguishes inherited p33 dispatch proof from p38 suite dispatch and requires current p30/capacity kernel evidence; launch/controller/request-reset paths remain unchanged"
   ],
   "changes_authored": [
     "request_state_inventory.hpp",
@@ -136,6 +141,13 @@
         "pipeline.py": "d8f9ae3a34c4942c14c5e12df23c7fb729de1f917f94feac08b794b2e0949c23",
         "test_receipt_metadata.py": "b09e74107a178cb01111f4fd1a27588b440ef88da24841c097c7556f686b7316"
       }
+    },
+    "cleanup-path-gates.json": {
+      "receipt_sha256": "04afec75d5e62b7c384a47e15a442ec52efd4fa9dcdbe17112d5add386c1b5ed",
+      "checks": 6,
+      "all_source_hashes_current": true,
+      "executed_by": "this reviewer",
+      "rank_processes_started": 0
     }
   }
 }

@@ -131,3 +131,19 @@ five Intel host correctness receipts before launch; export binds both launch
 executable paths and every request hash to that qualified binary, then rechecks
 the binary at export completion. This changes qualification identity only;
 request/reset implementation is unchanged.
+
+Final cleanup rereview: capture scans require packet-local build/direct child
+directories and ordinary nonsymlink named files. Compression refuses existing
+outputs, including dangling output symlinks, checks exact decompression before
+unlinking rows, and records both hashes. Agreement reading accepts original or
+gzip rows without changing parsed values. Six packet-local synthetic checks
+passed, including both input symlink cases, both output collisions, exact gzip
+reading and unchanged `.bin`/`.bf16` KD fixtures. Full agreement after real
+cleanup remains the parent's separate check; no rank/device process ran here.
+
+Final preflight rereview: inherited Intel correctness receipts are checked
+against their actual p33 dispatch, while the p38 suite dispatch is independently
+validated and bound alongside current p30/capacity kernel gates, source hashes
+and child/binary receipts. This qualification-only correction leaves the suite
+launch command, controller and request/reset paths unchanged. No tests or ranks
+were launched for this source review.
