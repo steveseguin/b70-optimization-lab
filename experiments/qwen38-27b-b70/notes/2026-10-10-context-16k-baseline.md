@@ -1893,3 +1893,20 @@ turns being noted, and whether they are counted as mentions there has not been l
 
 The lesson for this lane: when there is ground truth and the replies are saved, measure the checker against it
 first; ask reviewers for probes second. The tool also works for any future stream that has a reference.
+
+### Campaign 13b, a change to the task before any arm has finished on it (2026-10-12 15:20)
+
+The first arm on `repair-n40-s1` (XR3, started 14:50) was stopped by hand after 27 minutes: it had fixed four
+tickets in four minutes and then spent 23 minutes on the fifth, `combination_with_replacement_index`, by then
+rewriting the function from nothing instead of looking for the one wrong token (eleven replies thought to the cap
+and came back empty). That is the function that took every arm of part A between 3 and 11 minutes as ticket 22
+(644 s, 188 s, 540 s; no other ticket took all three arms more than a minute or two). As ticket 5 of 44 it decides
+the whole run inside a 60-minute cap, for whichever arm happens to dig in, and none of that has to do with how the
+context is managed. The builder can now leave functions out of the pool (`--exclude`), and the three arms run on
+`repair-n40-s1x` instead: seed 1 again, built with `--audit --exclude combination_with_replacement_index` (other
+defects in another order: the exclusion changes the draw; first `recipes.py` ticket 17, then 22, 23, 24, 29, 33,
+34, 38, 41, 42; the audit asks for tickets 1, 2, 4, 5, 6, 7, 8). It was written beside the running server without
+its self-test, which starts containers (`--no-selftest`; the builder, grader and scripts are the ones whose
+self-test passed on `repair-n40-s1` an hour earlier); the self-test is run on the same folder once the cards are
+free and reported with the results. Arms, caps and what I expect are as registered above. The stopped attempt is
+kept (`client-repair2/runs/jobs/XR3__repair-n40-s1`).

@@ -571,8 +571,9 @@ def selftest(task: Path) -> None:
 
 
 def build(src_root: Path, kept: list[dict], out: Path, n: int, seed: int, image: str, rule_at: tuple[int, ...],
-          audit: bool = False) -> None:
+          audit: bool = False, exclude: tuple[str, ...] = (), tag: str = "") -> Path:
     rng = random.Random(seed)
+    kept = [k for k in kept if k["func"] not in exclude]
     body = n + len(NOTICES)                               # bugs and notices; the audit ticket, if any, comes after them
     total = body + bool(audit)
     if len(set(rule_at)) != len(NOTICES) or sorted(rule_at) != list(rule_at) or rule_at[0] < 2 or rule_at[-1] >= body:
@@ -612,7 +613,7 @@ def build(src_root: Path, kept: list[dict], out: Path, n: int, seed: int, image:
     where = dict(zip(rng.sample(late, min(len(rec), len(late))), rec))
     rest = iter(rec[len(where):] + more)
     bugs = [where[t] if t in where else next(rest) for t in slots]
-    task = out / f"repair-n{n}-s{seed}"
+    task = out / f"repair-n{n}-s{seed}{tag}"
     if task.exists():
         shutil.rmtree(task)
     env, tests = task / "environment", task / "tests"
@@ -654,7 +655,8 @@ def build(src_root: Path, kept: list[dict], out: Path, n: int, seed: int, image:
     sha = {f.name: hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted((src_root / "tests").glob("*.py"))}
     (tests / "spec.json").write_text(json.dumps({"kind": "repair", "mark": MARK, "rule_at": at, "bugs": spec_bugs, "tests_sha": sha,
                                                  "n_items": total, "seed": seed, "library": "more-itertools 10.7.0",
-                                                 **({"audit": asked} if audit else {})}, indent=1))
+                                                 **({"audit": asked} if audit else {}),
+                                                 **({"excluded": list(exclude)} if exclude else {})}, indent=1))
     (tests / "grade.py").write_text(GRADE)
     (tests / "test.sh").write_text("#!/bin/bash\nmkdir -p /logs/verifier\npython3 /tests/grade.py\n")
     (tests / "reference").mkdir()
@@ -670,7 +672,7 @@ def build(src_root: Path, kept: list[dict], out: Path, n: int, seed: int, image:
         artifacts = []
 
         [task]
-        name = "local/repair-n{n}-s{seed}"
+        name = "local/repair-n{n}-s{seed}{tag}"
         description = "repair marathon: more-itertools 10.7.0 with {n} injected defects, {total} tickets, three standing rules by notice"
         authors = []
         keywords = ["context", "repair"]
@@ -697,7 +699,9 @@ def build(src_root: Path, kept: list[dict], out: Path, n: int, seed: int, image:
         cpus = 2
         """))
     print(f"wrote {task}: {n} bugs ({sum(b['file'] == 'recipes.py' for b in bugs)} in recipes.py), notices at tickets {at}"
-          + (f", audit ticket {total} asks for tickets {asked}" if audit else ""))
+          + (f", audit ticket {total} asks for tickets {asked}" if audit else "")
+          + (f"; left out of the pool: {', '.join(exclude)}" if exclude else ""))
+    return task
 
 
 def main() -> None:
@@ -708,6 +712,14 @@ def main() -> None:
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--image", default="python:3.12-slim")
     ap.add_argument("--rule-at", default="3,9,16", help="ticket numbers of the three notices")
+    ap.add_argument("--exclude", default="", metavar="FUNC[,FUNC]",
+                    help="functions left out of the pool. `combination_with_replacement_index` took every arm of the "
+                         "first campaign 3 to 11 minutes and the first arm on the second seed more than 25 (the model "
+                         "starts rewriting the function): one ticket then decides the whole run")
+    ap.add_argument("--tag", default="", help="suffix of the task's folder name (repair-nN-sSEED<tag>)")
+    ap.add_argument("--no-selftest", action="store_true",
+                    help="write the task only (no container is started). For a build beside a running model server; "
+                         "run the builder again without this flag afterwards, on the same arguments, to get the self-test")
     ap.add_argument("--audit", action="store_true",
                     help="add a last ticket that asks for /app/AUDIT.md: ticket number and function of every BUG ticket "
                          "before the FIXES.md notice (graded apart from the score, as `audit` in details.json)")
@@ -733,8 +745,12 @@ def main() -> None:
                         "-v", f"{out.resolve()}:/out", a.image, "python3", "-I", "/builder/make_repair_tasks.py",
                         "--src", "/src", "--screen", "/out/mutations.json", "--workers", str(a.workers)], check=True)
     kept = json.loads(kept_file.read_text())
-    build(src, kept, out, a.n, a.seed, a.image, tuple(int(x) for x in a.rule_at.split(",")), audit=a.audit)
-    selftest(out / f"repair-n{a.n}-s{a.seed}")
+    task = build(src, kept, out, a.n, a.seed, a.image, tuple(int(x) for x in a.rule_at.split(",")), audit=a.audit,
+                 exclude=tuple(x for x in a.exclude.split(",") if x), tag=a.tag)
+    if a.no_selftest:
+        print("no self-test was run (--no-selftest)")
+    else:
+        selftest(task)
 
 
 if __name__ == "__main__":
