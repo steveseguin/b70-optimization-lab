@@ -25,3 +25,9 @@ takes 265 µs per QSA layer at these lengths.) `p30.attention.sg32` is the faste
 every length measured and grows by about 1 µs per context position.
 
 Fix: reduce the grid to a handful of lengths and rerun (packet 38's follow-up seal).
+
+**Storage note (15:58 UTC).** The rerun of K2 was refused once by the packet's own storage
+admission (build tree 1.91 GB + 1.1 GB reserve against a 3 GB limit, 11 MB over). The
+compressed raw fixture outputs of the superseded first-attempt K1a and K1b windows
+(113 MB each; their SHA-256 is in each window's `run0/receipt.json`) were removed from
+the ignored build tree to make room. No receipt was removed.
