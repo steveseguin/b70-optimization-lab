@@ -429,6 +429,8 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None) -> tuple[
             info["new_rules"] += 1
     where = {fact_of(ln)[0]: i for i, ln in enumerate(state)}
     for name, value in delta.get("changes", []):
+        if NO_CHANGE.fullmatch(value.strip()):           # `name: (no change)`: mentioned, not changed
+            continue
         w = work_out(value)
         if w:
             start, total, stated = w
@@ -516,6 +518,45 @@ def render_turns(turns: list[dict[str, Any]]) -> str:
         elif text:
             out.append("NOTE: " + text)
     return "\n".join(out)
+
+
+NO_CHANGE = re.compile(r"\(?\s*(no change|unchanged|not changed|no changes)\s*\)?\.?", re.I)
+MISMATCH_RETRY = ("Check these lines of your CHANGES against the NOTES and the turns: {lines}. Working must start from the "
+                  "value the NOTES hold, or from a value the turns set; when the turns set a new value and then change "
+                  "it, write the set as a line of its own first. Then reply with the three complete sections again.")
+MENTION_RETRY = ("The turns mention these names, but your CHANGES have no line for them: {names}. Go through the turns "
+                 "again for each of them. Then reply with the three complete sections again (NEW RULES, CHANGES, OPEN), "
+                 "every change included; for a name that the turns mention without changing it, write `name: (no change)`.")
+
+
+def state_keys(notes: str) -> list[str]:
+    """The names of the STATE lines of the NOTES."""
+    keys, sec = [], ""
+    for ln in notes.splitlines():
+        head = section_of(ln)
+        if head:
+            sec = head
+        elif ln.strip() and sec == "STATE":
+            keys.append(fact_of(ln)[0])
+    return keys
+
+
+def unaccounted(names: list[str], turns: list[dict[str, Any]], changes: list[tuple[str, str]]) -> list[str]:
+    """Names (of STATE facts) that a delivered item among the turns mentions, outside a question, although CHANGES
+    has no line for them. Only names that look like identifiers (a digit or an underscore in them) are checked: a
+    plain word can turn up anywhere. A notes call that thinks still missed a removal on seed 1 of the rules stream
+    (`xasa62 was removed from the ledger`, the only mention of that counter in ten items); this catches that kind."""
+    told = {k for k, _ in changes}
+    names = [n for n in dict.fromkeys(names) if n not in told and len(n) >= 3 and re.search(r"[\d_]", n) and " " not in n]
+    if not names:
+        return []
+    text = []
+    for m in turns:
+        body = str(m.get("content") or "") if m.get("role") == "tool" else ""
+        if ITEMS.search(body):
+            text += [s for s in re.split(r"(?<=[.!?])\s+", " ".join(body.split("\n\n(exit_code=")[0].split())) if not s.endswith("?")]
+    low = " ".join(text).lower()
+    return [n for n in names if re.search(rf"(?<![\w]){re.escape(n)}(?![\w])", low)]
 
 
 def split_turns(turns: list[dict[str, Any]], count: Any, max_tokens: int) -> list[list[dict[str, Any]]]:
@@ -754,7 +795,7 @@ class KeeperAgent(TruncateAgent):
                  auto_retrieve: int | str = 0, retrieve_floor: float | str = 0.0, recall_tool: Any = True,
                  retrieve_max_chars: int | str = 30000, retrieve_window: int | str = 1, retrieve_scope: str = "archive",
                  notes_chunk_tokens: int | str = 0, notes_inplace: Any = False, inplace_turn_tokens: int | str = 9500,
-                 archive_files: Any = True, **kwargs: Any) -> None:
+                 archive_files: Any = True, mention_check: Any = False, **kwargs: Any) -> None:
         kwargs.setdefault("truncate_target_ratio", 0.6)   # cut deeper than W32 (0.75): fewer cuts, fewer notes calls
         super().__init__(*args, **kwargs)
         # A delivered item is never cut on arrival (the budget's newest-output cap head/tail-truncates whatever does
@@ -813,6 +854,9 @@ class KeeperAgent(TruncateAgent):
         self._pin_tail = ""
         self.inplace_failures: list[dict[str, Any]] = []
         self.n_inplace_redone = 0
+        # mention_check (in-place notes): a STATE name that the items being moved out mention, outside a question,
+        # without a line in CHANGES is asked about once (see unaccounted)
+        self.mention_check, self.n_mention_reasks = _cb._as_bool(mention_check), 0
         self.inplace_turn_hold = 0                    # after a failed in-place call: no new attempt on the same turns
         # auto_retrieve=K: when a delivered item asks questions, the K best-matching archived sentences per question
         # (BM25, rag_retrieve.py) are shown right after it, each with the retrieve_window sentences that follow it
@@ -1033,8 +1077,8 @@ class KeeperAgent(TruncateAgent):
             start="message that holds the NOTES" if start > self._protect else "first turn after the task statement")}]
         self._snap(req, "keeper")
         base, seen, why = req, numbers_in(render_turns(body)), "no reply"
-        thinking = self.notes_thinking
-        for _attempt in (1, 2, 3):
+        thinking, hinted = self.notes_thinking, not self.mention_check
+        for _attempt in (1, 2, 3, 4):
             # a reply without the layout is asked for once more; working that cannot be trusted is asked for again
             # from the start with thinking on (first run of N32x: one such reply ended the in-place cuts for good)
             rec["notes_attempts"] += 1
@@ -1049,17 +1093,32 @@ class KeeperAgent(TruncateAgent):
             if delta is None:
                 why = "reply without the NEW RULES layout" if rec["notes_finish"] != "length" else "reply cut at the token cap"
                 rec["notes_bad_layout"] = text[:200]
+                if rec.get("layout_retries"):
+                    break                             # asked twice already
+                rec["layout_retries"] = 1
                 req = req + [{"role": "assistant", "content": text}, {"role": "user", "content": DELTA_RETRY}]
+                continue
+            missing = [] if hinted else unaccounted(state_keys(self.notes), body, delta["changes"])
+            if missing:                               # asked once: a name the turns mention has no line
+                hinted = True
+                rec["unaccounted"] = missing[:30]
+                self.n_mention_reasks += 1
+                req = req + [{"role": "assistant", "content": text},
+                             {"role": "user", "content": MENTION_RETRY.format(names=", ".join(missing[:30]))}]
                 continue
             new, info = apply_delta(self.notes, delta, seen)
             size = self._budget.count([{"role": "user", "content": new}])
+            if info["mismatch"] and "inplace_redo" not in rec:
+                # asked once more, with thinking and with the lines in question named; the second reply stands
+                # (the check has false alarms: a model that thinks may start from a value it worked out itself)
+                rec["inplace_redo"] = "; ".join(info["mismatch"][:6])
+                req = req + [{"role": "assistant", "content": text},
+                             {"role": "user", "content": MISMATCH_RETRY.format(lines="; ".join(info["mismatch"][:6]))}]
+                thinking = True
+                continue
             if info["mismatch"]:
-                why = "working starts from a value the NOTES do not hold: " + "; ".join(info["mismatch"][:3])
-                rec.setdefault("inplace_redo", why)
-                if not thinking:
-                    req, thinking = base, True
-                    continue
-            elif size > 2 * self.notes_max_tokens:
+                rec["mismatch_accepted"] = info["mismatch"][:6]
+            if size > 2 * self.notes_max_tokens:
                 why = f"NOTES of {size} tokens after the changes, over twice the cap"
             else:
                 why = ""
@@ -1212,6 +1271,7 @@ class KeeperAgent(TruncateAgent):
                     "notes_chunk_tokens": self.notes_chunk_tokens, "notes_inplace": self.notes_inplace,
                     "inplace_cuts": self.n_inplace, "inplace_failed": self.n_inplace_failed,
                     "inplace_redone_with_thinking": self.n_inplace_redone,
+                    "mention_check": self.mention_check, "mention_reasks": self.n_mention_reasks,
                     "inplace_failures": self.inplace_failures[:20], "inplace_prompt_tokens": self.inplace_prompt,
                     "inplace_cached_tokens": self.inplace_cached, "inplace_turn_tokens": self.inplace_turn_tokens,
                     "sums_corrected": self.n_sums_corrected, "auto_retrieve": self.auto_retrieve,

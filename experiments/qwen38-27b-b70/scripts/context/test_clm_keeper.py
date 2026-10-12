@@ -167,6 +167,20 @@ class Keeper(unittest.TestCase):
         self.assertEqual(NS["split_turns"](lead, count, 150)[0][0]["content"], "note")
         self.assertEqual(NS["split_turns"]([], count, 100), [[]])
 
+    def test_unaccounted_names(self):
+        tool = lambda text: {"role": "tool", "content": text + "\n\n(exit_code=0)"}
+        turns = [{"role": "assistant", "content": ""}, tool("ITEM 31/147 (UPDATE)\nThe cook slept. xasa62 was removed from the ledger. It rained."),
+                 {"role": "assistant", "content": ""}, tool("ITEM 32/147 (PROBE)\nPROBE: now.\nASK p1_1: What value does efgh34 hold now?"),
+                 {"role": "assistant", "content": ""}, tool("item 12: mnop78 was set to four."),            # a search result, not a delivery
+                 {"role": "assistant", "content": ""}, tool("ITEM 33/147 (UPDATE)\nabcd12 gained five. The build was late.")]
+        names = ["abcd12", "xasa62", "efgh34", "mnop78", "build", "zz"]
+        self.assertEqual(NS["unaccounted"](names, turns, [("abcd12", "5 + 5 = 10")]), ["xasa62"])
+        self.assertEqual(NS["unaccounted"](names, turns, [("abcd12", "10"), ("xasa62", "removed")]), [])
+        self.assertEqual(NS["unaccounted"](names, turns, []), ["abcd12", "xasa62"])
+        self.assertEqual(NS["state_keys"]("RULES\n- r\nSTATE\nabcd12: 5\n- xasa62 = -152 (item 30)\nOPEN\n- o"), ["abcd12", "xasa62"])
+        new, info = NS["apply_delta"]("RULES\n(none)\nSTATE\nabcd12: 5\nOPEN", {"changes": [("abcd12", "(no change)"), ("efgh34", "no change")]})
+        self.assertEqual((new, info["changed"], info["added"]), ("RULES\n(none)\nSTATE\nabcd12: 5\nOPEN", 0, 0))
+
     def test_same_rule_needs_the_same_names(self):
         same = NS["same_rule"]
         self.assertFalse(same("abcd12 is secret: answer protected", "efgh34 is secret: answer protected"))
