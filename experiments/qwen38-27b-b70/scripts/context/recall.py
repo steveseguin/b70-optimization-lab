@@ -7,7 +7,8 @@ Every item that `ctxfold --drop` removes from the context is first written verba
 `recall` lands in your context like any tool output (it counts against your budget), so keep it small.
 
   recall PATTERN [--max-lines N]     sentences matching PATTERN (case-insensitive regex; plain text
-                                     works too), in item order, as "item N: <sentence>"; default 40 lines
+                                     works too), each with the sentence after it, in item order, as
+                                     "item N: <sentence> <next sentence>"; default 40 lines
   recall --item N [--max-lines N]    the text of item N, one paragraph per line; default 80 lines
 """
 import os
@@ -56,9 +57,13 @@ def main():
     lim = maxl or 40
     hits = []
     for n, txt in arch:
-        for s in re.split(r"(?<=[.!?])\s+", " ".join(txt.split())):
+        sents = re.split(r"(?<=[.!?])\s+", " ".join(txt.split()))
+        for i, s in enumerate(sents):
             if rx.search(s):
-                hits.append(f"item {n}: {s[:300]}")
+                # with the sentence after it: text often names a thing in one sentence and says what happened to it
+                # in the next ("Next on the list was abcd12. It was opened at 591.")
+                after = (" " + sents[i + 1][:200]) if i + 1 < len(sents) else ""
+                hits.append(f"item {n}: {s[:300]}{after}")
     print("\n".join(hits[:lim]) if hits else f"recall: no archived sentence matches {pat!r}")
     if len(hits) > lim:
         print(f"[{len(hits)} matches; showing the first {lim}; narrow the pattern or use --max-lines]")

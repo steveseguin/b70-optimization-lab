@@ -104,6 +104,12 @@ async def main():
               mention_check="near", notes="RULES\n(none)\nSTATE\nabcd12: 7\nOPEN"); msgs = convo(5)
     a._delivered = {i: f"item {i} text" for i in range(1, 6)}
     assert await a._keep_inplace(Env(), msgs, 1) is True and "abcd12: 306" in a.notes and "49 is not a value the turns state" in a.manage_calls[-1]["inplace_redo"], (a.notes, a.manage_calls[-1])
+    # 5g. a rule named in the first reply and left out of the asked-for second reply is kept
+    first = "NEW RULES\n- abcd12 is confidential: answer protected.\nCHANGES\nabcd12: 317\nOPEN\n"
+    second = "NEW RULES\n(none)\nCHANGES\nabcd12: 294 + 12 = 306\nOPEN\n"
+    a = agent([reply(first), reply(second)], mention_check="near", notes="RULES\n(none)\nSTATE\nabcd12: 7\nOPEN"); msgs = convo(5)
+    a._delivered = {i: f"item {i} text" for i in range(1, 6)}
+    assert await a._keep_inplace(Env(), msgs, 1) is True and "abcd12: 306" in a.notes and ck.rule_lines(a.notes) == ["abcd12 is confidential: answer protected."], a.notes
     # 6. the ordinary cut with pieces: two delta calls for one cut, then a second cut continues from the pin
     a = agent([reply("NEW RULES\n- R one\nCHANGES\nabcd12: 294\nOPEN\n"), reply("NEW RULES\n(none)\nCHANGES\nabcd12: 294 + 12 = 306\nOPEN\n"),
                reply("NEW RULES\n(none)\nCHANGES\n(none)\nOPEN\n")], notes_inplace=False)

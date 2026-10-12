@@ -545,7 +545,9 @@ def render_turns(turns: list[dict[str, Any]]) -> str:
     return "\n".join(out)
 
 
-NO_CHANGE = re.compile(r"\(?\s*(no change|unchanged|not changed|no changes)\s*\)?\.?", re.I)
+# `name: (no change)`, also with a remark after it: `(no change - the mention is the rule itself)`. A run with six items
+# per notes call stored such a remark as the value of a counter and lost its number (2026-10-12, arm N32u6).
+NO_CHANGE = re.compile(r"\(?\s*(no change|unchanged|not changed|no changes)\b.*", re.I | re.S)
 MISMATCH_RETRY = ("Check these lines of your CHANGES against the NOTES and the turns: {lines}. Working must start from the "
                   "value the NOTES hold, or from a value the turns set; when the turns set a new value and then change "
                   "it, write the set as a line of its own first. Then reply with the three complete sections again.")
@@ -751,6 +753,24 @@ REPEAT_NOTE = ("NOT RUN: this is exactly the command you just ran, and nothing h
                "the same. Use the result you already have and decide the next step.")
 
 
+REPEAT_STOP = ("NOT RUN: you have now sent this same command {n} times in a row. It will not be run again, and sending it "
+               "again changes nothing. Stop looking for this. If a question is open, answer it now with what you have "
+               "(write \"\" for anything you cannot work out), then continue the task.")
+
+
+def repeat_note(streak: int) -> str:
+    """What a refused repeat is told: the plain note for the first two in a row, then the stop note with the count.
+    (Hard stream, 2026-10-12: one refused command was sent 362 times in a row; the plain note did not break it.)"""
+    return REPEAT_NOTE if streak < 3 else REPEAT_STOP.format(n=streak)
+
+
+def loop_temperature(streak: int) -> float | None:
+    """Sampling temperature for the call after `streak` refused repeats in a row: None (the run's own setting) for
+    fewer than three, then 0.5 rising to 1.0. With greedy decoding the same context plus the same refusal gives the
+    same command again, for ever; one sampled call is enough to leave the loop."""
+    return None if streak < 3 else min(1.0, 0.5 + 0.1 * (streak - 3))
+
+
 def is_repeat(cmd: str, last: str, fetches: bool) -> bool:
     """A command identical to the previous one, unless it fetches the next item (each fetch delivers something new)."""
     return bool(cmd) and cmd == last and not fetches
@@ -778,12 +798,28 @@ class _KeeperEnv(_cb._NoMirrorEnv):
         # hundred times in a row, each with the same result, until the run had to be stopped. A command identical to
         # the one just run is not run again unless it is a fetch; the refusal says so, and "NOT RUN" turns thinking on.
         cmd = (command or "").strip()
-        if a.repeat_guard and is_repeat(cmd, a._last_cmd, bool(a._guard_cmd.search(cmd))):
+        fetch = bool(a._guard_cmd.search(cmd))
+        if fetch:
+            a._searches = {}
+        # A search sent for the third time since the last item arrived is a repeat too, even with other commands in
+        # between: the archive has not changed. (Hard stream: the agent circled between three searches for ten
+        # minutes; a guard that looks only at the command just before never fired twice in a row.)
+        circling = a.repeat_guard and cmd.startswith("recall") and a._searches.get(cmd, 0) >= 2
+        if cmd.startswith("recall") and not circling:
+            a._searches[cmd] = a._searches.get(cmd, 0) + 1
+        if circling:
+            a._repeat_streak = max(a._repeat_streak, 2)
+        if circling or (a.repeat_guard and is_repeat(cmd, a._last_cmd, fetch)):
             a.n_repeats_refused += 1
-            res = types.SimpleNamespace(stdout=REPEAT_NOTE, stderr="", return_code=75)
-            return StepResult(result=res, ctx_changed=False, stdout_block=REPEAT_NOTE + "\n\n(exit_code=75)",
+            a._repeat_streak += 1
+            a.longest_repeat_streak = max(a.longest_repeat_streak, a._repeat_streak)
+            note = repeat_note(a._repeat_streak)
+            res = types.SimpleNamespace(stdout=note, stderr="", return_code=75)
+            return StepResult(result=res, ctx_changed=False, stdout_block=note + "\n\n(exit_code=75)",
                               readout="", notes="", exec_time=0.0, touched_ctx=False)
         a._last_cmd = cmd
+        if fetch or not cmd.startswith("recall"):
+            a._repeat_streak = 0                      # a search that runs does not end a streak of refused searches
         res = await super().step(command, messages, environment=environment, pending=pending)
         got = split_items(getattr(res.result, "stdout", "") or "")
         if got:
@@ -877,6 +913,8 @@ class KeeperAgent(TruncateAgent):
         self.keep_headroom, self._largest_delivery, self._delivered = int(keep_headroom), 0, {}
         self._mixed: dict[int, str] = {}              # items delivered by a command that printed something else too
         self.repeat_guard, self._last_cmd, self.n_repeats_refused = _cb._as_bool(repeat_guard), "", 0
+        self._repeat_streak = self.longest_repeat_streak = self.n_sampled_calls = 0
+        self._searches: dict[str, int] = {}           # each search command sent since the last item arrived
         self._answers: dict = {}                      # the answers file as last seen; earlier keys are never lost
         self.n_answers_put_back = 0
         self.n_archive_failed = self.n_not_archived_mixed = 0
@@ -969,7 +1007,15 @@ class KeeperAgent(TruncateAgent):
             self.n_thinking_on += 1
         else:
             self.n_thinking_off += 1
-        return await super()._query_with_retry(model, messages)
+        heat = loop_temperature(self._repeat_streak) if self.repeat_guard else None
+        if heat is None:
+            return await super()._query_with_retry(model, messages)
+        saved, self.temperature = self.temperature, heat     # one sampled call to leave a loop of refused repeats
+        self.n_sampled_calls += 1
+        try:
+            return await super()._query_with_retry(model, messages)
+        finally:
+            self.temperature = saved
 
     async def setup(self, environment: Any) -> None:
         await super().setup(environment)
@@ -1155,7 +1201,8 @@ class KeeperAgent(TruncateAgent):
         self._snap(req, "keeper")
         base, seen, why = req, numbers_in(render_turns(body)), "no reply"
         thinking, hinted = self.notes_thinking, not self.mention_check
-        for _attempt in (1, 2, 3, 4):
+        rules_seen: list[str] = []                    # a rule named in any reply of this cut is kept: a second reply
+        for _attempt in (1, 2, 3, 4):                 # that leaves it out must not lose it (hard stream, 2026-10-12)
             # a reply without the layout is asked for once more; working that cannot be trusted is asked for again
             # from the start with thinking on (first run of N32x: one such reply ended the in-place cuts for good)
             rec["notes_attempts"] += 1
@@ -1178,6 +1225,8 @@ class KeeperAgent(TruncateAgent):
             near = None
             if self.mention_check == "near":
                 near = numbers_near(state_keys(self.notes) + [k for k, _ in delta["changes"]], body)
+            rules_seen += [r for r in delta["rules"] if not any(same_rule(r, x) for x in rules_seen)]
+            delta["rules"] = list(rules_seen)
             new, info = apply_delta(self.notes, delta, seen, strict=self.mention_check in ("count", "near"), near=near)
             steps = info.pop("steps")
             if hinted:
@@ -1355,6 +1404,7 @@ class KeeperAgent(TruncateAgent):
                     "recite_rules": self.recite_rules, "recitals": self.n_recitals,
                     "notes_failed": self.n_notes_failed, "archive_writes_failed": self.n_archive_failed,
                     "answers_put_back": self.n_answers_put_back, "repeats_refused": self.n_repeats_refused,
+                    "longest_repeat_streak": self.longest_repeat_streak, "sampled_calls_to_leave_a_loop": self.n_sampled_calls,
                     "items_not_archived_mixed_output": self.n_not_archived_mixed,
                     "notes_mode": self.notes_mode, "delta_fallbacks": self.n_delta_fallbacks,
                     "notes_chunk_tokens": self.notes_chunk_tokens, "notes_inplace": self.notes_inplace,

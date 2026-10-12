@@ -116,6 +116,10 @@ class Keeper(unittest.TestCase):
         self.assertFalse(rep("next", "next", True))                                 # a fetch is never a repeat
         self.assertFalse(rep("", "", False))
         self.assertIn("NOT RUN", NS["REPEAT_NOTE"])                                 # the words that turn thinking on
+        self.assertEqual(NS["repeat_note"](1), NS["REPEAT_NOTE"])
+        self.assertIn("5 times in a row", NS["repeat_note"](5))
+        self.assertTrue(NS["QUESTION"].search(NS["repeat_note"](5)))                # still turns thinking on
+        self.assertEqual([NS["loop_temperature"](n) for n in (0, 2, 3, 5, 20)], [None, None, 0.5, 0.7, 1.0])
         self.assertTrue(NS["QUESTION"].search(NS["REPEAT_NOTE"] + "\n\n(exit_code=75)"))
 
     def test_a_reworded_rule_comes_back_in_its_own_words_once(self):
@@ -181,6 +185,8 @@ class Keeper(unittest.TestCase):
         self.assertEqual(NS["state_keys"]("RULES\n- r\nSTATE\nabcd12: 5\n- xasa62 = -152 (item 30)\nOPEN\n- o"), ["abcd12", "xasa62"])
         new, info = NS["apply_delta"]("RULES\n(none)\nSTATE\nabcd12: 5\nOPEN", {"changes": [("abcd12", "(no change)"), ("efgh34", "no change")]})
         self.assertEqual((new, info["changed"], info["added"]), ("RULES\n(none)\nSTATE\nabcd12: 5\nOPEN", 0, 0))
+        new, info = NS["apply_delta"]("RULES\n(none)\nSTATE\nabcd12: 5\nOPEN", {"changes": [("abcd12", "(no change \u2014 mention is the confidentiality rule itself)")]})
+        self.assertEqual((new, info["steps"]), ("RULES\n(none)\nSTATE\nabcd12: 5\nOPEN", {"abcd12": 1}))
 
     def test_a_worked_out_value_must_show_its_working(self):
         notes = "RULES\n(none)\nSTATE\nrumi16: 29\nabcd12: 5\nOPEN"
