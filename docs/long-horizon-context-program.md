@@ -214,12 +214,70 @@ the first three question items), after four fixes that stream forced: a sampled 
 repeats, `recall` showing the sentence after each match, a guard against circling between searches, and keeping a
 rule that only the first of two replies named. Six items per notes call instead of ten gave nothing.
 
+**Campaigns 11 and 12 (2026-10-12; note sections "Campaign 11 ..." and "Campaign 12 ..."): the proxy gets the
+fast notes, a rule that names nothing, and what broke on the way.**
+
+| | 240K rules stream, seed 0 (39) | seed 1 (46) | 1M rules stream, seed 0 (228) |
+| --- | ---: | ---: | ---: |
+| Proxy, full rewrite (X32b, campaign 9) | 39 in 17.0 min | 44 in 18.0 min | 222 in 95 min |
+| Proxy, in-place notes, first build (X32m, campaign 11) | 39 in 10.2 min | 46 in 13.1 min | 216 in 76 min (bar: 220 in under 70; missed) |
+| **Proxy, in-place notes, after the fixes (X32n2, campaign 12)** | **39 in 8.8 min** | **46 in 9.7 min** | **220 in 53 min** (bar: 220 in under 70; met) |
+| **Proxy, in-place notes, code state p (X32p, campaign 12): `recall` in item numbers** | **39 in 8.5 min** | **46 in 9.4 min** | **226 in 50 min** |
+| Harness keeper, in-place notes (N32u, campaigns 10 and 10b) | 39 in 9.9 min | 46 in 10.0 min | 228 in 50 min |
+
+The proxy now does at 1M what only the harness did two days ago: 220 of 228 in 53 minutes, not void, the server reading for 15 of them and writing for 31. Seven of its eight misses are one confusion (the search tool counted messages, the questions count items); that and three smaller things are fixed as code state p, which was reviewed before it ran and then scored 226 of 228 in 50 minutes: within two answers of the harness arm, and as fast. The second 1M stream for the harness keeper: 210 of 222 in 50 minutes (seed 0: 228 of 228 in 50), 438 of 450 over the two; seven of the twelve misses are one question item that an ordinary cut moved out of view while the model was still reading for it.
+
+**A rule that names nothing** (stream `crule`: "any figure below zero is reported as the single word overdrawn"):
+the keeper answered the governed questions 16 of 16 over two seeds, retrieval alone 0 of 16 (it gave the true
+negative number every time: nothing in "what value does X hold now" leads a search to the rule). This is the
+measured difference between notes and retrieval that campaign 10 could not show.
+
+**Hard stream, seed 1:** the keeper with retrieval at question time 46 of 49 (seed 0: 47 and 46 of 50); the partner
+run without retrieval did not finish, and the day's stricter checks cost this stream ten minutes (prepared fix:
+an amount may be another thing's value; a questioned reply is answered with the lines in question only).
+
+What these two campaigns taught, each from a run that failed first:
+
+1. **Results the client never sees must not be lost when a turn ends empty.** The proxy answers the model's
+   archive searches itself; a turn that ended with nothing lost them and six answers with them. They are carried
+   into the next request now.
+2. **A search hit must say where it is from** (the first line of its message: an item, a file, a command), or
+   questions about "item 50" are answered by guesswork.
+3. **What stays in view after a cut gets noted twice.** The proxy keeps the newest exchange (a real agent needs the
+   result it has just fetched); its assistant message is about the result before it, already noted. The notes
+   request now says so, and a line for a name that none of the noted turns mentions is left out.
+4. **A questioned notes reply must never fall back to a different, slower path.** No usable second reply sent the
+   cut to the full rewrite, which lost a change in one run and in another wrote a "rule" that restated the task's
+   opening message; recited at the final item, it made the model overwrite 25 good answers (14/39). The first
+   reply stands now.
+5. **"The second reply stands" was wrong for a number the turns do not state**: such a line is left out and the old
+   value kept. Working that adds up and starts from the right value can be invented (`650 - 27 = 623` for a set
+   to 523): every amount in the working must be in the text.
+6. **Count a line by its parts.** A model packs changes (`578 + 62 = 640, then set to 174`); counting each line as
+   one change made the count check ask again on a third of all notes calls, harness and proxy alike.
+7. **The server was being stopped by a results script**, not by the client: `summarize_results.py` held 1.7 GB of
+   snapshots at once after a 1M proxy run (2.1 GB resident). One at a time now.
+8. **One tool, one numbering; and a cut-off list says so first.** Hits labelled with item numbers beside a tool
+   that takes message numbers were mixed up at once, and "the first 40 of 63, note at the end" was read as all
+   there is. `recall` can now run in the content's own numbering and shows the matches nearest the anchor.
+9. **Review before the run, every time, and it can be done with the cards busy.** Two Codex reviews and one by a
+   second Claude instance that only reads (it may run beside the research server; Codex may not) found 26 issues in
+   this day's new checking code, at least six of which would have stored a wrong value.
+
+
 ### 4b. Proposed here, not yet run
 
-- **From campaigns 10 and 10b:** in-place notes in the proxy (`tools/ctxkeeper`): the notes call rides on the last
-  upstream request, the newest exchange stays in view behind a "NOTES are current up to here" marker; the keeper
-  with retrieval added (arm N32sr) at 1M; a second seed at 1M and of the hard stream; a rule that does not name
-  what it covers; an embedding retriever beside BM25 on a host with room for one.
+- **From campaigns 10 to 12 (done: in-place notes in the proxy; a rule that names nothing; a second seed of the
+  hard stream with retrieval):** the proxy on a second 1M stream; the keeper with retrieval added at 1M; the hard
+  stream with the cheaper checks of code state p; an embedding retriever beside BM25 on a host with room for one.
+- **A real task (built 2026-10-12, not yet run):** `make_repair_tasks.py`, a real library (more-itertools 10.7.0)
+  with 40 injected one-token defects, worked as tickets one at a time, with standing instructions that arrive as
+  notices along the way (a marker comment on every changed line, a log line per fix, and one that applies only to
+  one of the two files). Arms: the proxy, a sliding window, summary compaction. Then the same under a real agent
+  program of the owner's choice.
+- **Not caught by any check yet:** a change noted with the wrong sign, and a set noted as a change by the same
+  number (one line in about 75 notes calls). Idea: compare each notes line with what the model itself said when
+  the item arrived, when it said anything.
 
 - Per-batch commit proof with atomic staging; file I/O cost vs decode cost; **exact KV park-and-restore on NVMe**;
   prompt layouts that pay back the prefix cache (`2026-10-05-context-followup-ideas.md`).

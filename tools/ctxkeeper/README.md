@@ -145,13 +145,19 @@ Seven of that run's eight misses were one confusion: `recall` counted messages, 
 - A notes line for a name that the noted turns never mention, a letter or two from a mentioned name that has no
   line, is taken as that name misspelled.
 
+With `--recall-label` (build X32p): **39/39 in 8.5 minutes, 46/46 in 9.4, and 226/228 on the 1M-token stream in 50
+minutes**, every earlier-value question right, with fewer searches (112 against 161). After that run two more
+things were changed and have not been run yet: a question that arrived in a tool result and is still open is never
+cut out of view (it is shown after NOTES until a message matching `--think-until` closes it), and a notes line is
+left out only when the turns contradict its number, never because the checker could not follow how it was written.
+
 ## Limits
 
 - Measured on one synthetic task family, one model and one machine. As a harness policy: 39/39 and 46/46 at 240K,
   226/228 on a 1M-token stream. As this proxy, with a plain agent that sends its whole history: 37/39 and 42/46 at
   240K on its first two runs against the real server; the second exposed a defect in the notes call (fixed, not yet
   re-run; after the fixes 39/39, 44/46 and 222/228 on the 1M stream in 95 minutes; with in-place notes 39/39 in 9
-  minutes, 46/46 in 10 and 220/228 in 53, see above). Not yet run under a real coding or research agent. Tests against a scripted model: `python3 -m unittest test_ctxkeeper test_notesdelta`.
+  minutes, 46/46 in 9 and 226/228 in 50, see above). Not yet run under a real coding or research agent. Tests against a scripted model: `python3 -m unittest test_ctxkeeper test_notesdelta`.
 - Token counts are characters over a ratio learned from the server's `usage.prompt_tokens`, with margins. A server
   that reports no usage keeps the starting guess of 3.6 characters per token.
 - `recall` is a text and regular-expression search over archived sentences with message numbers: it answers "what
