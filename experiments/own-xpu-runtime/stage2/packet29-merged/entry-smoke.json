@@ -1,0 +1,82 @@
+{
+  "schema": "own-runtime.packet26.entry-smoke.v1",
+  "passed": true,
+  "device_executed": false,
+  "real_device_discovery": false,
+  "mock_only": true,
+  "max_compile_jobs": 1,
+  "source_sha256": "e55ed2bfe8baaf3e976cd5a1334aee3bd901ba45fdcb8769e37b66db5324e0da",
+  "mock_header_sha256": "e2fbe16e7a2aad10f7121b02cb638f86912ec5884de26cc9b12b32e2111d5aa1",
+  "checks": [
+    {
+      "entry": "packet26_mock_k0_entry",
+      "case": "success",
+      "expected_returncode": 0,
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "",
+      "mock_receipt": {
+        "passed": true,
+        "kernel_execution": false,
+        "explicit_allocations": 0,
+        "kernels_per_device": 2,
+        "cards": 1
+      }
+    },
+    {
+      "entry": "packet26_mock_k0_entry",
+      "case": "admission_failure",
+      "expected_returncode": 1,
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "K0 admission/output required\n",
+      "mock_receipt": {
+        "passed": false,
+        "error": "K0 admission/output required"
+      }
+    },
+    {
+      "entry": "packet26_mock_k0_entry",
+      "case": "range_failure",
+      "expected_returncode": 1,
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "K0 card range\n",
+      "mock_receipt": {
+        "passed": false,
+        "error": "K0 card range"
+      }
+    }
+  ],
+  "compile": {
+    "argv": [
+      "nice",
+      "-n",
+      "19",
+      "ionice",
+      "-c",
+      "3",
+      "env",
+      "OMP_NUM_THREADS=2",
+      "g++",
+      "-std=c++20",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror=return-type",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/entry-smoke-_vpyiv5q",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/entry-smoke-_vpyiv5q/entry.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/entry-smoke-_vpyiv5q/k0-entry-cpu-mock"
+    ],
+    "returncode": 0,
+    "stdout": "",
+    "stderr": "In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/entry-smoke-_vpyiv5q/entry.cpp:2:\n/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/jit_smoke.cpp: In function \u2018int packet26_mock_k0_entry(int, char**)\u2019:\n/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/jit_smoke.cpp:8:2: warning: this \u2018if\u2019 clause does not guard... [-Wmisleading-indentation]\n    8 |  if(!authorized||out.empty())throw std::runtime_error(\"K0 admission/output required\");std::filesystem::create_directories(out);\n      |  ^~\n/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/jit_smoke.cpp:8:87: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the \u2018if\u2019\n    8 |  if(!authorized||out.empty())throw std::runtime_error(\"K0 admission/output required\");std::filesystem::create_directories(out);\n      |                                                                                       ^~~\n"
+  },
+  "binary_sha256": "fcd1be1d8eb71bc984a15770d28b4d57946dc8ae2c1ec4509f5d00da884ec777",
+  "mock_translation_unit_sha256": "111c8d438917d736a54a2b77b66981493cb0d9cab686048df1e8a89f9c36ce0e",
+  "dynamic_dependencies": "\nDynamic section at offset 0x6c38 contains 29 entries:\n  Tag        Type                         Name/Value\n 0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]\n 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]\n 0x000000000000000c (INIT)               0x2000\n 0x000000000000000d (FINI)               0x5148\n 0x0000000000000019 (INIT_ARRAY)         0x7a78\n 0x000000000000001b (INIT_ARRAYSZ)       8 (bytes)\n 0x000000000000001a (FINI_ARRAY)         0x7a80\n 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)\n 0x000000006ffffef5 (GNU_HASH)           0x3b0\n 0x0000000000000005 (STRTAB)             0xa30\n 0x0000000000000006 (SYMTAB)             0x400\n 0x000000000000000a (STRSZ)              2278 (bytes)\n 0x000000000000000b (SYMENT)             24 (bytes)\n 0x0000000000000015 (DEBUG)              0x0\n 0x0000000000000003 (PLTGOT)             0x7e48\n 0x0000000000000002 (PLTRELSZ)           1080 (bytes)\n 0x0000000000000014 (PLTREL)             RELA\n 0x0000000000000017 (JMPREL)             0x1690\n 0x0000000000000007 (RELA)               0x14b0\n 0x0000000000000008 (RELASZ)             480 (bytes)\n 0x0000000000000009 (RELAENT)            24 (bytes)\n 0x000000000000001e (FLAGS)              BIND_NOW\n 0x000000006ffffffb (FLAGS_1)            Flags: NOW PIE\n 0x000000006ffffffe (VERNEED)            0x13a0\n 0x000000006fffffff (VERNEEDNUM)         3\n 0x000000006ffffff0 (VERSYM)             0x1316\n 0x000000006ffffff9 (RELACOUNT)          3\n 0x0000000000000000 (NULL)               0x0\n",
+  "scratch_deleted": true
+}

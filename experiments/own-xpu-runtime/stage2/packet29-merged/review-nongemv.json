@@ -1,0 +1,44 @@
+{
+  "schema": "packet27.independent-static-review.v1",
+  "reviewer": "smallgemv-agent",
+  "scope": "non-GEMV bit identity, output races, descriptor interpreter exclusion, qsa.pool harness repair",
+  "status": "passed_static_review_after_fixes",
+  "device_executed": false,
+  "files": {
+    "round2.hpp": "5b3ddd9ba04b8a9b8fc6953ef6d47ac275a97af0bf8f7b95e8d95a89a6203f83",
+    "round2_submit.hpp": "d9231c86021695fb1e6f0e84f833380bc5e5d685d6a92f52292ffe191718a7ad",
+    "round2_submit.cpp": "9376df1464877b7e5f0e24eb56000df350ade782582bd42ad18cc5cbb2a7c45b",
+    "fixture_driver.cpp": "77904c1dfb4c773010885112bd0131efd1554caef86f39f5935e1cccdc97161f",
+    "adapter.cpp": "5583d32af6bb9d9f1d10da5df7e6babe0f08ecd908e26760622dee95d2b2af10",
+    "adapter_fixture.cpp": "c5f587e3a60f88b0681fec9cf869f95fc1ef02cca4c9e29adc09a91be06c3720"
+  },
+  "classes": [
+    "gdn.recurrence",
+    "qsa.attention.score",
+    "qsa.attention.softmax",
+    "qsa.attention.value",
+    "qsa.select",
+    "route",
+    "argmax"
+  ],
+  "findings_fixed": [
+    "ADL helper ambiguity",
+    "route unsigned ID type and logical extent guards",
+    "select nonfinite complete ID clearing",
+    "small fixture directory argument",
+    "folded route dispatch override",
+    "explicit scratch/writable alias guard preserving in-place GDN state",
+    "live device allocation and alignment guards on used bindings/scratch",
+    "scheduled ni3 ABI with exact active/error aliases and four regression cases"
+  ],
+  "limits": [
+    "Static review does not certify native code generation or device bit identity.",
+    "Coordinator must run two fresh K1 owners, K2 exactness/timing, W0 and W2.",
+    "Poisoned request failure behavior is not promoted model output."
+  ],
+  "additional_review": [
+    "CPU-only GDN two-thread independent rows, unchanged serial token recurrence",
+    "248320-element argmax fixture/timing workload",
+    "complete per-arm stage counts and separate fixture counters"
+  ]
+}
