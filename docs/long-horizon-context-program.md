@@ -183,7 +183,36 @@ What three failed runs taught, now in the code: ask for the notes after the turn
 needs a pinned place and a reminder at the question; thinking must stay on while a question is open, and an
 identical repeated call must be refused.
 
+**Campaign 10 (2026-10-11 evening; note sections "Campaign 10 ..."): where the time goes, in-place notes, and
+retrieval alone.** Measured first: at 1M the keeper spent 53 % of its 83 minutes in notes calls, and on the server
+54 % of all time is reading (2,640 tokens/s), because every token is read about four times (on arrival, when kept
+turns are read back after each cut, and when cut turns are shown to the notes call).
+
+| arm | 240K rules stream, seed 0 (39) | seed 1 (46) | 1M rules stream (228) |
+| --- | ---: | ---: | ---: |
+| N32j keeper (full NOTES rewrite at each cut) | 39 in 15.7 min | 46 in 16.5 min | 226 in 83 min; NOTES audit: 5 counters lost in one version |
+| **In-place notes** (the notes call is the live conversation plus one message; changes only, with thinking; checked by the harness; then every turn is moved out) | **39 in 9.5 min** (N32xth), 38 and 39 (N32z, N32w) | **46 in 8.5 min** (N32y), 45 (N32v) | **228 in 50 min (N32u); NOTES audit: 0 wrong in 63 versions** |
+| Changes-only notes without thinking (N32d, N32e, N32e35, N32e25, N32c35) | 39, 39, 36, 39, 38 in 10 to 14 min; 2 to 8 counters wrong in the NOTES of every run | | not run: not adopted |
+| **Retrieval only, built right** (R32b: every item in a store outside the sandbox, BM25 over sentences, 20 per question, no notes) | **39 in 9.2 min** | **45 in 9.7 min** | see the note (R32c40) |
+| Retrieval only, first two builds (R32, R32a) | 32, 38 | 30 | |
+
+Three things to carry forward. (1) **In-place notes are the keeper's fast form:** same answers, about 40 % less
+time, and changes-only notes cannot lose lines the way a truncated rewrite did at 1M. (2) **A score does not audit
+the notes:** `notes_audit.py` compares every NOTES version with the true ledger; no-thinking notes passed 39 of 39
+with eight wrong values sitting in them. (3) **Retrieval alone matches the keeper on this stream at 240K.** What I
+had told the owner (a rule would not be retrieved; current values would be lost to replay) was wrong for this
+stream: its rule names the counters, values need one or two old sentences, and questions are explicit. Where the two
+part: the stream with "it" and cross-references (keeper 15/15 on the first three question items and 42/50 in all,
+retrieval 10/15 and too slow to finish), and the 1M run recorded in the note. The first two retrieval builds were
+not retrieval-only: the model found the archive directory by itself and ran scripts over it.
+
 ### 4b. Proposed here, not yet run
+
+- **From campaign 10:** in-place notes in the proxy (`tools/ctxkeeper`): the notes call rides on the last upstream
+  request, the newest exchange stays in view behind a "NOTES are current up to here" marker; six items per notes
+  call instead of ten (arm N32w6); a second seed at 1M; the hard stream as the calibration task for both methods;
+  retrieval as the keeper's archive tier (arms N32jr / N32er are wired, not run); an embedding retriever beside
+  BM25 on a host with room for one.
 
 - Per-batch commit proof with atomic staging; file I/O cost vs decode cost; **exact KV park-and-restore on NVMe**;
   prompt layouts that pay back the prefix cache (`2026-10-05-context-followup-ideas.md`).
