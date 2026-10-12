@@ -44,7 +44,7 @@ all five existing bundle files by SHA256 without duplicating them. Use the manif
 `input_bundle` for window.py `--input`; the native runtime takes its `tokens.txt`.
 
 Two OpenMP threads per oracle. While the existing suite runs, only one new oracle runs;
-after it exits, at most three run, within the 12-thread ceiling. CPU affinity is inherited,
+after it exits, at most three run, within the 12-thread ceiling. CPU affinity stayed at the original 4-15,20-31 mask;
 nice 19 and idle I/O are required. Combined oracle anonymous memory is guarded below
 11 GB; each new worker below 3 GB. No sudo, devices, host settings, or model writes.
 `df -B1 /` guards large writes and runs every ten seconds; below 8 GB stops work.
@@ -69,12 +69,16 @@ coauthor. Fetch/merge main on remote movement; no stash, branches or rebase.
 Run from repository root:
 
 ```sh
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 python3 -B experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/build_cpu.py
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 python3 -B experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/suite_run.py --all --jobs 3 --publish
-nice -n 19 ionice -c 3 python3 -B experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/suite_check.py experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128
+nice -n 19 ionice -c 3 taskset -c 4-15,20-31 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 python3 -B experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/build_cpu.py
+nice -n 19 ionice -c 3 taskset -c 4-15,20-31 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 python3 -B experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/suite_run.py --all --jobs 3 --publish
+nice -n 19 ionice -c 3 taskset -c 4-15,20-31 python3 -B experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/suite_check.py experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128
 ```
 
 The checker accepts prompt directories or prompt/run directories and verifies both
 fixture ranges and the complete 128-token sequence (or recorded EOG). Unit tests use
 oracle files and corrupted copies, including tail corruption. This extends exactness
 coverage past token 100; it is not a 512-token final performance gate or a speed result.
+
+Final verification: all twelve oracle outputs and both fixture ranges passed the exact checker. All twelve available 64-token prefixes and their step 1–8 fixtures matched. The sealed incident capacity gate passed. Actual campaign span: 21922.563 seconds (6.090 hours); summed process wall time: 43649.869 seconds; measured CPU time: 20.199154 CPU hours. See `final-verification.json` and `checker-tests.json` in the oracle directory.
+
+Campaign closeout: [outcome, evidence, and remaining scope](CLOSEOUT.md).

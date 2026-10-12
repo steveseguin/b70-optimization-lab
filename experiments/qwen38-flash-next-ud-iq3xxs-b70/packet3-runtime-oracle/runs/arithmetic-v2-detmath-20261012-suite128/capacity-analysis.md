@@ -27,8 +27,9 @@ immediately after generating token 64. The supervisor compares canonical int32 t
 bytes, all 64 logit hashes/top-five records, 384 raw BF16 fixtures and eight layer ledgers
 against the sealed context-192 incident. Only success releases token 65. The proof is
 saved as incident-retrospective/capacity-prefix-proof.json and equality-proof.json.
-Until those files exist the measured gate is pending. Every other completed prompt is
-also compared against its available 64-token suite result before it is sealed.
+The measured gate passed before token 65 was released. All twelve completed prompts
+also passed comparison against their available 64-token suite results before sealing.
+See [final-verification.json](final-verification.json) for the complete recheck.
 
 The old binary hard-codes context 192 and cap <=64. oracle128.patch is the entire
 wrapper delta: context 256, cap <=128, retention of steps 97-104 as well as 1-8,
