@@ -1,0 +1,106 @@
+{
+  "schema": "packet38.p30-cpu-gates.v1",
+  "passed": true,
+  "device_executed": false,
+  "arithmetic": "iq3-p17-detmath-v2",
+  "precision_flags_compile_and_link": [
+    "-O2",
+    "-std=c++20",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-DOWN_RT_HOST_ONLY"
+  ],
+  "commands": [
+    {
+      "kind": "compile-and-link",
+      "argv": [
+        "nice",
+        "-n",
+        "19",
+        "ionice",
+        "-c",
+        "3",
+        "/usr/bin/g++",
+        "-O2",
+        "-std=c++20",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-DOWN_RT_HOST_ONLY",
+        "-I",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite",
+        "-I",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "-I",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+        "-I",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/p30_attention_cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/p30-attention-cpu"
+      ]
+    },
+    {
+      "kind": "compile-and-link",
+      "argv": [
+        "nice",
+        "-n",
+        "19",
+        "ionice",
+        "-c",
+        "3",
+        "/usr/bin/g++",
+        "-O2",
+        "-std=c++20",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-DOWN_RT_HOST_ONLY",
+        "-I",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite",
+        "-I",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "-I",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+        "-I",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/p30_small_cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/p30-small-cpu"
+      ]
+    }
+  ],
+  "binaries_sha256": {
+    "build/p30-attention-cpu": "72f521cc141169a512f9d74acd731046b9a6e30b6c2d3b97ee89aea9fe848185",
+    "build/p30-small-cpu": "5c37dea9848716875c84314ed3a7f5817c47609a64d7ca423942e8121e46aceb"
+  },
+  "sources_sha256": {
+    "p30_attention.cpp": "d72c76a532192487986b808f34232c96b41fd94c39511978b2c8c945a192285c",
+    "p30_attention.hpp": "b5c55ae4545c7273e84b1aa7aa345de1fb52605d53b7246fbd4f9985e275d618",
+    "p30_attention_cpu.cpp": "d961c8e9b194fd8a0c890ce8d225855142600e5ddbcfa0c37f55350a2daf643c",
+    "p30_small.cpp": "fe8eee300850e3531ceeeecfff9c25300a99b7c7ef4202c3bda791e0f7f9733a",
+    "p30_small.hpp": "4304140e67c89512773d3adefa306f2153d1dd13585224e2ce0bb61182ca4261",
+    "p30_small_cpu.cpp": "999d4e9cd642945328c2fca175e01708cbf5d85e69f951961a1f69045a95c885",
+    "p30_submit.cpp": "a9760c71db9a438c81ce6b3e42ccd936e37585c934c7a48da817396615fad70d",
+    "p30_submit.hpp": "16502b1bf1d7c2f6669bd60d59ecb0885274958907371851a8d82951654f3fbd"
+  },
+  "receipts": {
+    "p30-attention-cpu.json": {
+      "sha256": "e60f11631ee37785ed14a674a41a3674c67f621c142327b3f76799ae5ae2e7a2",
+      "result": {
+        "checks": 1016167,
+        "finite_fixtures": 75,
+        "variants": 2,
+        "empty_core_incumbent_disagreement": true,
+        "device_ran": false,
+        "passed": true
+      }
+    },
+    "p30-small-cpu.json": {
+      "sha256": "4071964cdec4bb0ed74f7b803edac698a7f081ab12041cc4c2cf4abcad16971d",
+      "result": {
+        "passed": true,
+        "checks": 66856,
+        "validation_rejections": 40
+      }
+    }
+  }
+}

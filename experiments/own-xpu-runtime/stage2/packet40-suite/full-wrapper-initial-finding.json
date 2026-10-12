@@ -1,0 +1,9 @@
+{
+  "passed": false,
+  "device_executed": false,
+  "error": "K1 exactness incomplete",
+  "cause": "CPU validation-only host backend honestly reports reference_exact=false; internal rehearsal gate now explicitly accepts validation-only and preserves production exactness checks",
+  "window_sha256": "075481717a0d95df7a40317ed8cdb6eeb217680896545809b4dbe1751f67e403",
+  "second_finding": "Validation-only arithmetic is deliberately skipped, so uncomputed output bytes are not a reference oracle; CPU seam binds output to its own recorded hash and requires seal key, production still requires host-reference equality",
+  "third_finding": "CPU internal mini backend must not forward synthetic wrapper oracle path to rank; outer every-token/fixture comparison still uses independently captured mini baseline"
+}

@@ -1,0 +1,51 @@
+{
+  "passed": true,
+  "source_review_passed": true,
+  "device_executed": false,
+  "reviewer": "/root/cancel_runtime independent of suite metrics implementation",
+  "review_kind": "read-only independent source/authority comparison; no model or new tests run",
+  "checks": [
+    "Fixed64 uses 63 / (t64 - t1), includes natural EOS at event 64, and is null with fewer than 64 events.",
+    "The historical comparison drops terminal EOS and uses (N - 1) / (tN - t1), N=min(64, non-EOS events), null for N<2. The 28.49 reference has eleven nonzero prompt rates per repeat because code-review stopped immediately.",
+    "Submission100 uses 99 / (t100 - t1), first 100 generated events. EOS at event 100 has a valid window; earlier EOS yields null. The numerator is never 100.",
+    "The primary aggregate takes the conventional median within each prompt class, then the conventional median of those class medians; the all-prompt median is secondary.",
+    "The prompt-class mapping exactly matches scripts/qualify_realistic_window_metrics.py, including separate documentation and structured-writing classes.",
+    "Timestamp count equals emitted-token count. Timestamps must be finite, strictly increasing, and after request start. Event count, interval count, numerator and endpoints remain recorded.",
+    "Raw fields cover timestamps, TTFT, actual prompt/output counts, cached tokens zero, wall rate, early end, finish reason, requested cap, hashes and helper metadata. Integer top-level count medians match the helper.",
+    "Top-level statistics use repeat 1. Each repeat has a separate summary; pooled historical rates have a distinct name. The synthetic warmup excludes measured prompts and request reset precedes every measured request.",
+    "Caps 64/128, subsets and repeats cannot authorize submission: both final-gate markers remain false. Model/runtime identity, promotion attestation and the requested 512-token cap remain required."
+  ],
+  "findings": [],
+  "sources_sha256": {
+    "suite_metrics.py": "a2faa445802298a0a621f06af243f74315928614eee14aa2e5a289fb8a6e97d9",
+    "suite.py": "2769b8ea58cef73ccf950243ba34aff4630b35255526e99dd3ec2946349a1a7e",
+    "pipeline.py": "9868dc6654a66eff485381b00895d887c451eba07bdbd62f9fd001e74eb5f280"
+  },
+  "authority_sha256": {
+    "docs/localmaxxing.md": "1967212760178b54784248afbb4caacbacb171fa11c17b64b7d15aeff94e71fc",
+    "scripts/submit_localmaxxing_results.py": "1ee44c479c4420b8056fe6517593a5593bea2c59c785311250f24bb9d2fe0428",
+    "scripts/qualify_realistic_window_metrics.py": "24e8af342dae966264354cf52c5d5f8c385506959d261e2034d8b3ef3c05da83",
+    "experiments/qwen38-flash-next-fp8-b70/data/20260904-tp4-mtp0-a134-localmaxxing-payload-queue.json": "24aa64bdbc1a41e9e6a65f089b82ff2f3ac1de968c6659cc25b783bff590dd38",
+    "results/qwen38-flash-next-ud-iq3xxs-b70/reference-baseline-20261011.md": "4fcf2af75d642844475f280875c9ce2e400148a297812ef5f01625e288a35192",
+    "repro/rapid-model-snapshots-b70/realistic-suite-v1.json": "0ad543d1c1f379a0b6cee88e06236e495c45eee7ba12cfcef062b6e03303e812",
+    "results/qwen38-flash-next-ud-iq3xxs-b70/README.md": "ef27e0e0d4e0accba1e47ee5b8e864b101e1c930e93ff05cda88155d293cb293",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/baseline-llamacpp/build-receipt.json": "04e7d7cbb2983b905cae36b55e67cb803a26be0eb71d626519a6d380c5f28809",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/baseline-llamacpp/runs/window2-twocard-20261011T024653Z/model-verification.json": "cd2e36d7312f2ef4b61ae1ba5adbf79bb14f087bc1b197d7bff8453ded76b5fd",
+    "experiments/own-xpu-runtime/stage2/suite-inputs-20261012-cap128/suite-manifest.json": "acb9a4295f21620e809f47d893898ae63f2d21b25c128f1eed16d7dea15c6236",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/code-review/result.json": "54c99409ae2687da688edb438a9ccb38697d9edac2bdfc6d8666e83f878e5a2e"
+  },
+  "limitations": [
+    "Current caps are screening evidence, not a 512-cap final gate or submission-ready payload.",
+    "Partial or failed suites may report descriptive statistics for successful rows, explicitly labeled; these cannot pass the final gate.",
+    "TTFT and wall timestamp capture still require coordinator device receipt qualification.",
+    "The 28.49 external reference uses different arithmetic/runtime/KV/context and excludes an immediate-EOG prompt from its rate median. Current oracle populations differ; formula parity alone does not imply matched quality or benchmark identity."
+  ],
+  "reference_identity_scope": {
+    "reference_runtime": "unmodified llama.cpp 23b0202a189c44a54625aadcb37a946dd1d6278d, SYCL F32, FP16 K/V, context4096, no speculation or runtime warmup",
+    "model": "unsloth/Qwen3.8-Flash-Next-GGUF revision766911a6b7369840a91dbcd95f9f997acaab6cd6 UD-IQ3_XXS",
+    "current_runtime": "independent own-runtime arithmetic iq3-p17-detmath-v2, BF16 KV/state, context256, distinct kernel warmup, optional verified official draft",
+    "reference_population": "twelve attempted prompts; eleven finite positive non-EOG decode rates per repeat",
+    "current_population": "all twelve oracle prompts reach128; code-review starts1919, not immediateEOG",
+    "conclusion": "A matching fixed64 formula does not establish matched arithmetic/runtime/output identity or the same valid-prompt population.28.49 is an external screening reference, not a bit-exact matched-control speedup denominator."
+  }
+}

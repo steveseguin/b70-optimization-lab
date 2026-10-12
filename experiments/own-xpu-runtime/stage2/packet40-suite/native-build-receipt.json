@@ -1,0 +1,202 @@
+{
+  "device_executed": false,
+  "binaries": [
+    {
+      "binary": "build/native-controller-test",
+      "sha256": "bfe76af842228aacea9612c4a7bddc382fb7a45a3a33b3350b56396723c2141b",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "ionice",
+        "-c",
+        "3",
+        "g++",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-pthread",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/native_controller_test.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/native-controller-test"
+      ],
+      "environment": {
+        "OMP_NUM_THREADS": "2",
+        "TMPDIR": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/tmp"
+      },
+      "compile_and_link_same_invocation": true,
+      "source_sha256": {
+        "native_controller_test.cpp": "db276644ce9fcb90871533b141f768723361c78e52f28533aadb6c8769a587e7",
+        "native_controller.hpp": "2e183a51553f32422158d35d5ca7d0cae050157082f9728f6ef316e66b52f368"
+      }
+    },
+    {
+      "binary": "build/native-controller-asan",
+      "sha256": "399dfe916cc810cb7639a77a91d9f807896814b086f408d33b35993955dd42a1",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "ionice",
+        "-c",
+        "3",
+        "g++",
+        "-std=c++20",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-pthread",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/native_controller_test.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/native-controller-asan"
+      ],
+      "environment": {
+        "OMP_NUM_THREADS": "2",
+        "TMPDIR": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/tmp"
+      },
+      "compile_and_link_same_invocation": true,
+      "source_sha256": {
+        "native_controller_test.cpp": "db276644ce9fcb90871533b141f768723361c78e52f28533aadb6c8769a587e7",
+        "native_controller.hpp": "2e183a51553f32422158d35d5ca7d0cae050157082f9728f6ef316e66b52f368"
+      }
+    },
+    {
+      "binary": "build/native-controller-tsan-llvm22",
+      "sha256": "6e0f3bd37ee40ec41b693a1b9c8d551fb77473d77bbef9895a12a82fe798c84c",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "ionice",
+        "-c",
+        "3",
+        "/opt/intel/oneapi/compiler/2026.0/bin/compiler/clang++",
+        "-std=c++20",
+        "-O1",
+        "-g",
+        "-fsanitize=thread",
+        "-fno-omit-frame-pointer",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-pthread",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/native_controller_test.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/native-controller-tsan-llvm22"
+      ],
+      "environment": {
+        "OMP_NUM_THREADS": "2",
+        "TMPDIR": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/tmp"
+      },
+      "compile_and_link_same_invocation": true,
+      "source_sha256": {
+        "native_controller_test.cpp": "db276644ce9fcb90871533b141f768723361c78e52f28533aadb6c8769a587e7",
+        "native_controller.hpp": "2e183a51553f32422158d35d5ca7d0cae050157082f9728f6ef316e66b52f368"
+      }
+    },
+    {
+      "binary": "build/native-mailbox-fault-test",
+      "sha256": "4d0c20536ec2a70e7c76c30e173948ab474a4c8f61679d45504e345f9fd7f719",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "ionice",
+        "-c",
+        "3",
+        "g++",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-pthread",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/native_mailbox_fault_test.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/native-mailbox-fault-test"
+      ],
+      "environment": {
+        "OMP_NUM_THREADS": "2",
+        "TMPDIR": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/tmp"
+      },
+      "compile_and_link_same_invocation": true,
+      "source_sha256": {
+        "native_mailbox_fault_test.cpp": "f6d1102a02c9bb0594cf9681d87c9f34a417f35715c0be3ac3be1a8905ec044a",
+        "native_controller.hpp": "2e183a51553f32422158d35d5ca7d0cae050157082f9728f6ef316e66b52f368",
+        "native_controller_test.cpp": "db276644ce9fcb90871533b141f768723361c78e52f28533aadb6c8769a587e7"
+      }
+    },
+    {
+      "binary": "build/native-mailbox-fault-asan",
+      "sha256": "d6cfc2c4220a25875bce52cc04b209caf9277aaa6edecfe1f27126257149148c",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "ionice",
+        "-c",
+        "3",
+        "g++",
+        "-std=c++20",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-pthread",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/native_mailbox_fault_test.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/native-mailbox-fault-asan"
+      ],
+      "environment": {
+        "OMP_NUM_THREADS": "2",
+        "TMPDIR": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/tmp"
+      },
+      "compile_and_link_same_invocation": true,
+      "source_sha256": {
+        "native_mailbox_fault_test.cpp": "f6d1102a02c9bb0594cf9681d87c9f34a417f35715c0be3ac3be1a8905ec044a",
+        "native_controller.hpp": "2e183a51553f32422158d35d5ca7d0cae050157082f9728f6ef316e66b52f368",
+        "native_controller_test.cpp": "db276644ce9fcb90871533b141f768723361c78e52f28533aadb6c8769a587e7"
+      }
+    },
+    {
+      "binary": "build/native-mailbox-fault-tsan-llvm22",
+      "sha256": "789e0348fd0b97422189e25e538e5ad0e6e9e683421cda8cc0fbdaa35ffc64ec",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "ionice",
+        "-c",
+        "3",
+        "/opt/intel/oneapi/compiler/2026.0/bin/compiler/clang++",
+        "-std=c++20",
+        "-O1",
+        "-g",
+        "-fsanitize=thread",
+        "-fno-omit-frame-pointer",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-pthread",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/native_mailbox_fault_test.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/native-mailbox-fault-tsan-llvm22"
+      ],
+      "environment": {
+        "OMP_NUM_THREADS": "2",
+        "TMPDIR": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/tmp"
+      },
+      "compile_and_link_same_invocation": true,
+      "source_sha256": {
+        "native_mailbox_fault_test.cpp": "f6d1102a02c9bb0594cf9681d87c9f34a417f35715c0be3ac3be1a8905ec044a",
+        "native_controller.hpp": "2e183a51553f32422158d35d5ca7d0cae050157082f9728f6ef316e66b52f368",
+        "native_controller_test.cpp": "db276644ce9fcb90871533b141f768723361c78e52f28533aadb6c8769a587e7"
+      }
+    }
+  ],
+  "precision_flags_on_compile_and_link": true,
+  "serial_compile_jobs": 1
+}

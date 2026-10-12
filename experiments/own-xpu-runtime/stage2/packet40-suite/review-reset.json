@@ -1,0 +1,39 @@
+{
+  "schema": "packet38.independent-reset-review.v1",
+  "source_review_passed": true,
+  "dynamic_order_gate": "suite-gate-results.json",
+  "findings": [
+    {
+      "severity": "receipt correctness",
+      "description": "Draft reset uploads occurred after clearing request counters.",
+      "fixed": "Provider reset now precedes final counter clearing; submission_card/current_cls are reset."
+    }
+  ],
+  "inventory": [
+    "target recurrent banks and parity",
+    "target full QSA cache including unused tails",
+    "target buffers/controls/history/lookup cache",
+    "target scratch/snapshot/fp32 validity",
+    "draft mutable allocations and position/disabled",
+    "immutable weight residency and prepared allocation identities retained",
+    "controller history/guesses/counters and shared publication bytes at quiescence",
+    "socket transport sequence intentionally monotonic across requests"
+  ],
+  "reviewed_sha256": {
+    "request_reset.hpp": "bd97a57a06194c31811f203d48662a6877c8889ff16cdc3acdac6f45ad16d625",
+    "mtp.hpp": "dbef887e12fe8d1e398a83e5a6a8dbdb7bc29dbabd803a25d2870c974552845d",
+    "rank.hpp": "4086517afb0d6d204b21e852ff06f6b507d2096f94f27eb4a6915328945e7115",
+    "suite.py": "43c9ba06d6e5447854334bc94543deca133e790be01997c4537c1f1029105321",
+    "ROLLBACK.md": "d4023d62728bd107105c4d794359600cf41589a90bb175f8af2afdcc50b1a1d1"
+  },
+  "passed": true,
+  "dynamic_order_gate_sha256": "87d0cf490a3a9c848abe2cc158f955847d203f815dc929b06da1193b59d0403f",
+  "binary_sha256": "490db2320878a19dc0f0bead086a466ff859bc1173bf58227d92e64f04dc1ab6",
+  "proofs": 4,
+  "prompts_per_proof": 3,
+  "orders_per_proof": 2,
+  "fixture_files_per_request": 32,
+  "target_state_files_per_request": 208,
+  "mtp_state_files_per_request": 214,
+  "review_note": "Final metadata-only suite changes reviewed: per-request idle bounds retained from common enrich_result; reset protocol and complete zeroing unchanged. Both controllers and both draft modes passed final binary order gate."
+}

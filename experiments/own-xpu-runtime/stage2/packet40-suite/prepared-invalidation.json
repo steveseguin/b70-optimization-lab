@@ -1,0 +1,50 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "tests": 15,
+  "schema": "packet35.prepared-invalidation.v1",
+  "sanitizers": [
+    "address",
+    "undefined"
+  ],
+  "leak_detection": true,
+  "precision_flags_compile_and_link": [
+    "-fno-fast-math",
+    "-ffp-contract=off"
+  ],
+  "binary_sha256": "b674011c6155da8d82ee093815e21fafba0fd280f6a088a651e1d8cf1887be61",
+  "source_sha256": {
+    "prepared_invalidation_test.cpp": "b082a461f27c10b7e678e6c37f810e78fef6fa587645ae0e327a730ece01f27d",
+    "owner.cpp": "8e82affd2c119ef2ef13df14c11063f60ec8ba641ed643b7f2c652e7c256e94b",
+    "owner_retire.cpp": "e35c366f640d8909b519891fa814aa80228b01ce69bd19ccdf00a8d13cae0da2",
+    "owner_api.hpp": "1c712169fca15d34319ab082701a054a4a1fc63caccdfd7515a00067f4843608",
+    "owner.hpp": "ee69610bda3e786e2aecf9888430541879af2d4c51cb64329784cb58d3ba1faf",
+    "argument_block.hpp": "f2cc8a5709ae443e2fcaa755cfb86e36080a710e9964422b12d3a8425433db35"
+  },
+  "compile_argv": [
+    "g++",
+    "-std=c++20",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-DOWN_RT_HOST_ONLY",
+    "-I",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite",
+    "-O1",
+    "-g",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/prepared_invalidation_test.cpp",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/owner.cpp",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/owner_retire.cpp",
+    "-o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/prepared-invalidation-tests-asan"
+  ],
+  "run_argv": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/prepared-invalidation-tests-asan"
+  ],
+  "run_environment": {
+    "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1",
+    "UBSAN_OPTIONS": "halt_on_error=1",
+    "OMP_NUM_THREADS": "2"
+  }
+}

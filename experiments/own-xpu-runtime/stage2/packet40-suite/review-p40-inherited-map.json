@@ -1,0 +1,91 @@
+{
+  "schema": "packet40.inherited-review-map.v1",
+  "device_executed": false,
+  "scope": "Map copied historical reviews to independent packet40 source review and current CPU evidence; do not recertify old binary hashes",
+  "inherited": {
+    "review-resume-controller.json": {
+      "sha256": "4eb53f7d10f919730c5e937bc43d19b53747b5d5bde1b5d48caf2548b8e9c6c2",
+      "status": "copied packet38 historical review; its prior source/binary qualification does not certify packet40"
+    },
+    "review-resume-reset.json": {
+      "sha256": "66535016597af44b7617a64deeed231c55a76c4bc5802523a53f34de1b3fdb72",
+      "status": "copied packet38 historical review; its prior source/binary qualification does not certify packet40"
+    },
+    "review-resume-authority.json": {
+      "sha256": "75a4de9e07fbb2b73d4c946c1d606477fa53caf8e8378d57436d3b913e649e63",
+      "status": "copied packet38 historical review; its prior source/binary qualification does not certify packet40"
+    },
+    "review-token-authority.json": {
+      "sha256": "33df04b3252cff722d55856e5851adca44a2fbda67f9f99d9451181c938def47",
+      "status": "copied packet38 historical review; its prior source/binary qualification does not certify packet40"
+    }
+  },
+  "current_evidence": {
+    "review-p40-nonblocking-draft.json": "bf007865911b9129a9f68c23c6f59f45872be1c4dede4a3f4b1796a4d256cd18",
+    "review-cancellation-retention-p40.json": "e361265c1fac721dde8c1c5ea3e97cd568f41aeb8e60a901b8e62ea80c1ea3bc",
+    "review-metrics-retention.md": "60db898792fffbedf80d6473dd422ec6a509fbcb44d423a272cbb332eb43f5f5",
+    "cancellation-retention-mini-native.json": "18f46cab06f62cfb9bab708f745a8246aa24eeb12d3935ca5fd6909d49f99ac5",
+    "cancellation-retention-mini-python.json": "3805000febbcea8f4c9dbfef42e1cc7b0c1613ef1fe93f73a85cf945e8ef0de8",
+    "draft-async-gates-gnu.json": "960b83f2d2712f888f8a638c5d37580fbbb10802ee12f3635c462455fbf96830",
+    "cancellation-retention-real-native.json": "0a9ed788b63fe29dc6a80b77463fe2a0d5f6c8a88d3fd339e44cff85b2bac06d",
+    "cancellation-inventory-gates.json": "00b99ea85e09f5c8625a1df03684fa003b17999efb30856b3126207216c4b9d3",
+    "native-mini-cpu.json": "ac1558fe1f600c6e58efb3fe178a5c812c638d3cd81d6c3cc3db5a43507f4345"
+  },
+  "mapping": [
+    {
+      "scope": "controller release/acquire, stop/abort, async publication and cleanup",
+      "historical": "review-resume-controller.json",
+      "current": [
+        "review-p40-nonblocking-draft.json",
+        "review-cancellation-retention-p40.json"
+      ],
+      "changes": "Separate draft publication event and sequence; kernel-boundary cancellation drains prefix; CPU wrapper and fault tests are separately required"
+    },
+    {
+      "scope": "reset and full state",
+      "historical": "review-resume-reset.json",
+      "current": [
+        "cancellation-retention-mini-native.json",
+        "cancellation-retention-mini-python.json"
+      ],
+      "changes": "Snapshot buffers canonicalized to zero; full standalone initial scratch zero; retained model state unchanged; request-order suite gates compare every prior field except scheduling-dependent logical_event and retain original hashes"
+    },
+    {
+      "scope": "emitted token authority",
+      "historical": "review-resume-authority.json",
+      "current": [
+        "review-metrics-retention.md",
+        "review-p40-nonblocking-draft.json"
+      ],
+      "changes": "Only unchanged checked rank1 target emits; private draft publication can only supply provisional rank0 input; target-only verification release triggers cancellation"
+    },
+    {
+      "scope": "terminal EOS rollback",
+      "historical": "review-token-authority.json",
+      "current": [
+        "ROLLBACK.md",
+        "native_mini_gate.py"
+      ],
+      "changes": "Compare committed active banks/history/valid QSA prefixes and full rank1 state; discarded inactive/scratch/tails are not claimed physically identical; forced miss plus redo retains full physical buffer gate"
+    }
+  ],
+  "pending": [
+    "owner decision on terminal EOS discarded physical-byte equality scope",
+    "coordinator native event/device qualification"
+  ],
+  "async_cpu_cases": 28,
+  "cpu_proofs": {
+    "mini_all_boundaries": 200,
+    "mini_actual_launches_per_half": 99,
+    "real_sampled_boundaries": [
+      140,
+      425,
+      436,
+      680
+    ],
+    "real_actual_launches_per_half": 909,
+    "whole_inventory_forced_miss_cases": 204,
+    "native_controller_cases": 1109,
+    "terminal_scope": "committed active state only; universal discarded physical-byte equality not established"
+  }
+}

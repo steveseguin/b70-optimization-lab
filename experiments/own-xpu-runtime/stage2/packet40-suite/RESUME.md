@@ -1,0 +1,51 @@
+# Recovery after disk exhaustion
+
+The prior agent session ended near 04:59 UTC on October 12 when the root disk
+filled. The coordinator incident record is
+[DISK-CLEANUP-20261012.md](../DISK-CLEANUP-20261012.md).
+This session began by checking the filesystem (28.34 GB available) and finding
+6.8 GB of packet-local build output. Stale fixture and test scratch was hashed;
+text evidence was compressed and verified before deletion. The build tree fell
+to 1.7 GB. No other packet was changed.
+
+The initial scan found empty interrupted mini-model receipts. No such receipt
+is used for qualification. Existing target/draft inputs were hash checked;
+GNU, Intel host, address/undefined-sanitized and device variants were rebuilt.
+No device program was executed. ThreadSanitizer uses the successful LLVM CPU
+runtime, without a host setting change.
+
+Independent resumed reviews found that a receipt or journal write error could
+bypass cooperative shutdown. Controller, rank and window failure paths now
+attempt evidence first and still request bounded teardown if writing fails.
+Injected full-disk, hook and stop-pipe failures are tested. Request-order proof
+now covers standalone target scratch and host lookup state as well as plan
+buffers, both recurrent banks, draft state, tokens and retained fixtures.
+
+Final CPU results and any open coordinator-only checks are recorded in
+CPU-RESULTS.md and build-receipt.json. Qualification is now sealed.
+
+The first resumed exhaustive mini run reached 553 exact comparisons, then hit
+a concurrent scratch-deletion race in its already-imported disk-size helper.
+Both ranks exited cleanly. The failure is retained in
+`native-mini-resume-storage-race-failed.json`. The helper now ignores only a
+vanished file during the accounting scan, with three regression checks; other
+I/O errors still propagate. The full gate was launched again after that fix.
+
+The Intel suite preflight later refused before launching any rank: it incorrectly
+expected the packet38 candidate dispatch hash in the inherited five-mode receipts,
+which use packet33 dispatch. `suite-preflight-refusal.json` and its verified
+archive preserve the refusal. The corrected prerequisite records both dispatch
+identities separately. `resume_suite_after_refusal.py` provides one reviewed
+continuation; it preserves all completed stages and performs no automatic retry.
+
+The resumed run completed all 91 required CPU gate receipts, including the actual
+three-request persistent suite (192 exact tokens, 1,152 exact fixtures), and
+sealed 41 binaries. The post-cleanup seal passed again. A stale SUITE.md review
+hash caused one expected seal refusal after the result paragraph was updated;
+the independent reviewer checked the completed evidence and refreshed that
+document-only binding. No runtime rerun or device contact was involved.
+
+Final cleanup retained the required binaries and KD/reference inputs in a
+1.40 GB build tree, compressed raw event logs and draft reference rows, and
+verified the compressed-reader draft agreement without changing its receipt.
+See scratch-cleanup.json and final-verification.json.

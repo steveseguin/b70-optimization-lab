@@ -1,0 +1,19 @@
+{
+  "passed": false,
+  "blocked": true,
+  "device_executed": false,
+  "reason": "ThreadSanitizer runtime exits before main with unexpected memory mapping on this host",
+  "attempts": [
+    {
+      "binary": "build/native-controller-tsan",
+      "returncode": 66,
+      "error": "FATAL: ThreadSanitizer: unexpected memory mapping 0x5c3aed881000-0x5c3aed884000"
+    },
+    {
+      "binary": "build/native-controller-tsan-nopie",
+      "returncode": 66,
+      "error": "FATAL: ThreadSanitizer: unexpected memory mapping 0x77be38872000-0x77be38d00000"
+    }
+  ],
+  "host_settings_changed": false
+}

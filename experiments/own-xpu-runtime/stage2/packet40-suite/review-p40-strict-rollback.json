@@ -1,0 +1,39 @@
+{
+  "source_review_passed": true,
+  "passed": true,
+  "reviewer": "/root/cancel_runtime independent of strict rollback implementation",
+  "review_kind": "patch-stage source review; execution qualification pending",
+  "device_executed": false,
+  "patch": "strict-terminal-snapshot.patch",
+  "patch_sha256": "5e4fbbe8f62f10a8d1d127c7df0a7fdc16cb11c5c67e9950005dc45c8b7c4d75",
+  "checks": [
+    "Checkpoint begins before speculative token upload, host PLE preparation, and any target compute; rank0 owns the image and no asynchronous worker accesses it.",
+    "Every saved D2D copy is chained by the owner, and each successful copy updates Engine tail. Later writes drain the saved prefix; rollback drains compute and restores after any completed bank swap is reversed.",
+    "The plan output union explicitly includes token, position and token_history. The current plan declares token_history as an output despite PLE hash input mutation. Standalone mutable controls and FP32 scratch are covered.",
+    "Active recurrent banks and already committed QSA prefixes are deliberately not saved or overwritten. Thus illegal mutation remains visible to final-state gates and CPU negative controls.",
+    "QSA geometry matches the planner: capacity rows, ceil(capacity/4) pooled rows; rollback saves only tails after position or floor(position/4) valid rows.",
+    "Correct original allocation IDs are retained across bank selection changes; restore requires original parity and includes exact prior inactive bank bytes.",
+    "History, lookup IDs, selected experts, loaded layers, FP32 source IDs and extents are restored together. Streaming layer state must be released at checkpoint and restore; restored FP32 sources must still be live.",
+    "Sticky errors and poisoned ownership are checked before backup/restore; rollback cannot erase a target failure.",
+    "The private backup is initialized and cleared only after resolution at dump/reset/finish, and remains included in the ordinary allocation inventory. Model allocations are never scrubbed before hashing.",
+    "Engine owns the persistent backup allocation; it participates in normal admission, reset, drain and teardown. Constructor now runs before after-load memory recording, census and READY.",
+    "Rank1 allocates no rollback image. Its target token authority and asynchronous draft publication are unchanged.",
+    "CPU-only command12 corrupts an excluded active-bank or valid-QSA byte after speculation. It cannot compile into the device command handler and must cause final-state comparison failure."
+  ],
+  "findings": [
+    {
+      "issue": "Initial draft allocated backup after census and READY, omitting capacity from startup census and exposing incomplete readiness.",
+      "resolution": "Latest patch constructs SpeculativeImage before after-load memory accounting, census and READY.",
+      "status": "resolved in reviewed patch"
+    }
+  ],
+  "unresolved_source_findings": [],
+  "pending": [
+    "Apply reviewed patch after existing campaign completes",
+    "Compile and sanitizer checks",
+    "Strict terminal/no-speculative full-buffer and whole-inventory equivalence",
+    "Protected-state negative corruption gates",
+    "Requalify existing cancellation/retention/controllers on final binaries",
+    "Coordinator-only device behavior and measured snapshot overhead"
+  ]
+}

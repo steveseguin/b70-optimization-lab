@@ -1,0 +1,44 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "reviewer": "root independent review of suite_metrics implementation",
+  "checks": [
+    {
+      "check": "Fixed64 numerator/endpoints",
+      "finding": "63/(timestamps[63]-timestamps[0]); null when fewer than64 emitted events. EOS event64 counts."
+    },
+    {
+      "check": "Submission100 numerator/endpoints",
+      "finding": "99/(timestamps[99]-timestamps[0]); seconds. Counts intervals, not100 token events or median instantaneous rates."
+    },
+    {
+      "check": "Historical baseline compatibility",
+      "finding": "Separate reference_table removes terminal EOG and uses(N-1)/(tN-t1) with N<=64; do not label it fixed64 if early EOS."
+    },
+    {
+      "check": "Aggregation",
+      "finding": "Ordinary median of per-prompt rates; primary median of per-class medians. Repeats separately summarized; no pooled repeat becomes cold-suite primary."
+    },
+    {
+      "check": "Timestamp integrity",
+      "finding": "Counts equal emitted tokens; every timestamp finite and strictly increasing, including timestamps beyond primary100 window."
+    },
+    {
+      "check": "Eligibility",
+      "finding": "CPU and retained-fixture timings cannot become device speed. cap128 can calculate99 intervals but full fixed512 publication gate remains false."
+    },
+    {
+      "check": "Cap prefix and eligibility review",
+      "finding": "admit_cap permits positive integer prefixes through oracle cap; invalid cap, nonfinite or nonincreasing timestamps fail; timestamp and token counts match. Additional cap coverage does not change the two interval formulas."
+    }
+  ],
+  "sources_sha256": {
+    "suite_metrics.py": "a2faa445802298a0a621f06af243f74315928614eee14aa2e5a289fb8a6e97d9"
+  },
+  "references": [
+    "docs/localmaxxing.md",
+    "scripts/submit_localmaxxing_results.py",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/baseline-llamacpp/summarise.py"
+  ],
+  "test_receipt": "suite-metric-gates.json"
+}

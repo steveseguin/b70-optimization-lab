@@ -1,0 +1,54 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "checks": [
+    {
+      "entry": "own-rt-iq3",
+      "case": "missing-arguments",
+      "returncode": 1,
+      "binary_sha256": "b60ace4f20d5445cf3bb18313b786a84671ccc67b27a850ae650bf21b94870ec",
+      "stderr": "--output required\n"
+    },
+    {
+      "entry": "own-rt-iq3",
+      "case": "device-authorization-refusal",
+      "returncode": 1,
+      "binary_sha256": "b60ace4f20d5445cf3bb18313b786a84671ccc67b27a850ae650bf21b94870ec",
+      "stderr": "host binary cannot authorize device execution\n"
+    },
+    {
+      "entry": "nongemv-fixtures",
+      "case": "missing-arguments",
+      "returncode": 1,
+      "binary_sha256": "bdbe7eeae41ca89a57f67d249a99ccb12edafd053c730c462d0b6d2cc70d476b",
+      "stderr": "--output required\n"
+    },
+    {
+      "entry": "nongemv-fixtures",
+      "case": "device-authorization-refusal",
+      "returncode": 1,
+      "binary_sha256": "bdbe7eeae41ca89a57f67d249a99ccb12edafd053c730c462d0b6d2cc70d476b",
+      "stderr": "host fixture binary cannot run device window\n"
+    },
+    {
+      "entry": "k2-fixtures",
+      "case": "missing-arguments",
+      "returncode": 1,
+      "binary_sha256": "c3e38a441041b4e526fd81387776cff56b8ec90472c94d6323bf6c40cb63abca",
+      "stderr": "--output required\n"
+    },
+    {
+      "entry": "k2-fixtures",
+      "case": "device-authorization-refusal",
+      "returncode": 1,
+      "binary_sha256": "c3e38a441041b4e526fd81387776cff56b8ec90472c94d6323bf6c40cb63abca",
+      "stderr": "host fixture binary cannot run device window\n"
+    }
+  ],
+  "success_exit_evidence": [
+    "integration-gates.json",
+    "fixture-gates.json",
+    "entry-smoke.json"
+  ],
+  "native_K2_success_execution": "pending coordinator K2"
+}

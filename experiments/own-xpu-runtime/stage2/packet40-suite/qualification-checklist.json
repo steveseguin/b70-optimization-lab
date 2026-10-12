@@ -1,0 +1,1049 @@
+{
+  "schema": "packet40.qualification-checklist.v1",
+  "checklist_is_not_a_gate_receipt": true,
+  "device_executed": false,
+  "inherited_gate_count": 91,
+  "source_inventory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet38-integrated/cpu-tests.json",
+  "source_inventory_sha256": "c204e52b20272d8eabc4becb42a9f832add217a7a915240c0aced635c25a6159",
+  "requirements": [
+    "All 91 inherited receipts need fresh execution/review or explicitly justified unchanged-source/binary identity; copied passed booleans are never accepted.",
+    "Do not use inherited CPU-RESULTS.md as evidence for packet40.",
+    "Seal must verify source hashes AND exact final binary hashes AND dispatch/cap/retention identities.",
+    "CPU stdout/binary hashes from standalone tests need fresh wrappers/aggregates where inherited scripts do not emit them.",
+    "Run sequentially by default; disk admission before large writes, <=2 compile jobs and <=4 CPU-bound processes, remove scratch after receipt."
+  ],
+  "inherited_gates": [
+    {
+      "inherited_receipt": "argument-block-tests.json",
+      "inherited_sha256": "19c3cc9353203b1d1e8de598997f021d16d630b19657088004ed2df737031903",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/prepared_unit_gate.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "argument-state-gates.json",
+      "inherited_sha256": "86149bcca462e4158a7f8043d92e3078456156532d17b97c4579ea2cfde119a3",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/argument_state_gate.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "prepared-invalidation.json",
+      "inherited_sha256": "e8e72593c0b497e61a32b03e8d4612af2d53f59912450123f5bd58e7e43861b4",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/prepared_unit_gate.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": [
+        "owner.cpp",
+        "owner_api.hpp"
+      ]
+    },
+    {
+      "inherited_receipt": "prepared-host-benchmark.json",
+      "inherited_sha256": "2cb470d34b2f8cbca4b90c2ec301bd9d40dfaec776cfe9f880ccb1351dd2c921",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/prepared_host_benchmark.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "submission-overlay-gates.json",
+      "inherited_sha256": "e7a85b4d4d0e97ed0863bbdf65444fc9f78ddd36008047108079e2f521b341a6",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/test_submission_overlay.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "review-prepared-gates.json",
+      "inherited_sha256": "d8615de7306dcf00ac026e4591e95ad75e64ce48d6e893ff8ea7e8ec49ce057c",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/review_prepared_gate.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": [
+        "main.cpp",
+        "owner.cpp",
+        "rank.hpp"
+      ]
+    },
+    {
+      "inherited_receipt": "p33-candidate-gates.json",
+      "inherited_sha256": "6882b365f7bb92daa91e38ca8797603c329176343d122e2f52f0cc9d0b92dff2",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/p33_candidate_gates.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "p33-linked-fixture-gates.json",
+      "inherited_sha256": "7d86f32dff44af931a5d686001f277e7415fcb9418639591acf89597b743fd9e",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/p33_linked_fixture_gate.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "k2-admission-tests.json",
+      "inherited_sha256": "ca3a01088a48e23a5f11860945752fe4f72ff035f30b3882297af63e24f875d9",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/test_k2_admission.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "k2-selection-tests.json",
+      "inherited_sha256": "551fbd3d3f12efc608747f0dd60864c0acdd42b3131b985602801575753990e2",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/test_k2_selection.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "p38-k2-selection-tests.json",
+      "inherited_sha256": "43869ac120d4185ba224575aba60e66334f134d7c29e50eab6c78a12abd70897",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/qualification_extra40.py p38k2"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "working_directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite",
+      "action": "Write fresh aggregate test count and current source hashes after command succeeds; test modules do not themselves write this aggregate.",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "p38-kernel-gates.json",
+      "inherited_sha256": "6da9379a53c2d9b0e9ffe0262de39e9b891762557104b9d459b14f096033f51c",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/p38_kernel_gate.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "p38-qsa-capacity-gates.json",
+      "inherited_sha256": "1b6f36743ea3fdd77f8d3062cfbc0bbe8a2b6594d422797b664c58ccef8f384f",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 /usr/bin/g++ -O2 -std=c++20 -fno-fast-math -ffp-contract=off -DOWN_RT_HOST_ONLY -I experiments/own-xpu-runtime/stage2/packet40-suite -I experiments/own-xpu-runtime/stage1/packet3-prep/src -I experiments/own-xpu-runtime/stage2/packet2/kernels -I experiments/own-xpu-runtime/stage2/packet2/loader experiments/own-xpu-runtime/stage2/packet40-suite/p38_qsa_cpu.cpp -o experiments/own-xpu-runtime/stage2/packet40-suite/build/p38-qsa-cpu-gnu",
+        "nice -n 19 ionice -c 3 /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/p38-qsa-cpu-gnu",
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 /opt/intel/oneapi/compiler/2026.0/bin/icpx -O2 -std=c++20 -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -DOWN_RT_HOST_ONLY -I experiments/own-xpu-runtime/stage2/packet40-suite -I experiments/own-xpu-runtime/stage1/packet3-prep/src -I experiments/own-xpu-runtime/stage2/packet2/kernels -I experiments/own-xpu-runtime/stage2/packet2/loader experiments/own-xpu-runtime/stage2/packet40-suite/p38_qsa_cpu.cpp -o experiments/own-xpu-runtime/stage2/packet40-suite/build/p38-qsa-cpu-icpx",
+        "nice -n 19 ionice -c 3 /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/p38-qsa-cpu-icpx"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "action": "Re-emit aggregate only from both newly compiled successful CPU outputs and current source hashes; no dedicated inherited producer script.",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "p30-attention-cpu.json",
+      "inherited_sha256": "e60f11631ee37785ed14a674a41a3674c67f621c142327b3f76799ae5ae2e7a2",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/p38_kernel_gate.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "p30-small-cpu.json",
+      "inherited_sha256": "4071964cdec4bb0ed74f7b803edac698a7f081ab12041cc4c2cf4abcad16971d",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/p38_kernel_gate.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "owner-gates.json",
+      "inherited_sha256": "2edc97ba418b373bc1b5430dc15679be557cb3797341c34b547fbd115ee0d24d",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/cpu_gates.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "fixture-gates.json",
+      "inherited_sha256": "915ef1554a842cf848f7ae12ceffb43a087b41f167c947953e41ee4eced19ffd",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/fixture_gate.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "validation-gates.json",
+      "inherited_sha256": "6632c14e289dd3d81451e00bd5211539131a9ff91ffc98da5bbdeb759137a3bf",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/validation_gate.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "entry-codes.json",
+      "inherited_sha256": "b4f3d354ffbada21b8ccdcd618b4036efae8326248d493055d01477b5a57f81b",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/entry_codes.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "window-tests.json",
+      "inherited_sha256": "49ee10ef338c57dc557eacf1cb72f5d9bff1468ae40be1ef6e221299838164b4",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/test_window.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "identity-tree-tests.json",
+      "inherited_sha256": "0e493057622c398681f3d0f3b02c67ed3212f5aacfd7f34cb64f8493251154e9",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/identity_tree_test.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "kernel-sizes.json",
+      "inherited_sha256": "02feb449960e9fd911a8acefc9a3493de98b9eeef8f670158f046754fcf48543",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/capture_gate.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "expert-down-review-gates.json",
+      "inherited_sha256": "ca6e2955ccadae4b364c3849ad85c711528a4506bb10f34c14a1ff7c9273afea",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/expert_down_review_gate.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "state-machine-tests.json",
+      "inherited_sha256": "dd873ff87efe7856d416de53954bca1ba2fe20ab8db8cf34abed771976b478c8",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/test_state_machine.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "mtp-controller-tests.json",
+      "inherited_sha256": "ec701f91912a4afca09b51d30583cef099bd0fe6e74996d36eef13830052bf2a",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/test_mtp_controller.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "review-controller-tests.json",
+      "inherited_sha256": "66499b1932134d903e525ebb4f278bfc494601261fab96833109aa6a1a81e81d",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/test_controller_review.py --output /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/review-controller-tests.json"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "review-native-faults.json",
+      "inherited_sha256": "15d1f61c0e21c094fa05358aa001d3b00d66b8a0ade260afae90d35b0d441c25",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/run_fault_gate.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "canary-host-gates.json",
+      "inherited_sha256": "1502f3bad9418a901f67e602b8a7a874175ac81a17406269f401a2b4a40e948f",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/canary_host_gate.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "resident-host-gates.json",
+      "inherited_sha256": "e34102e13c4d69efc75f192bb5b5388fac90e4a020138e7fec8afa3b2c8a001f",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/resident_host_gate.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "rollback-inventory.json",
+      "inherited_sha256": "a6e6775672b5e015daa7eef5277f6454dac94752f8a7ee1feefbfcf614a22b33",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/audit_rollback.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "draft-auth-gates.json",
+      "inherited_sha256": "4b7a0a6b57b443dfb944c19d096e924c7544788c38542e0b9bfbc0583bdfc5a5",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/draft_auth_gate.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "pipeline-draft-agreement.json",
+      "inherited_sha256": "da2e262c7bad29f122bc29a7f82cc38cc247d8554198b7d337965ce01c806c1d",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/pipeline_draft_agreement.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "native-controller-cpu.json",
+      "inherited_sha256": "5d92d2dfe58fa52aecb867a0e11b32823f16f8b7519512040c93fdab50ab0c80",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/qualification_extra40.py native"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "native-controller-asan.json",
+      "inherited_sha256": "c4917345312ea28c0f2462cf15e2c9eb7d828d9fa550c60f886c9c79f64f580d",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/qualification_extra40.py native"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "native-controller-tsan.json",
+      "inherited_sha256": "a63802f2a998637204dea022ae98176a2a59a858391faf7a7ace61d72cafd0d6",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/qualification_extra40.py native"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "native-mailbox-faults.json",
+      "inherited_sha256": "e952b7d73370616ce54edc837986735eb417a796a283471b8c86a4fe90efc79a",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/qualification_extra40.py native"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "action": "Parse emitted JSON and retain current binary/source hash binding; do not copy old receipt.",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "native-mailbox-faults-asan.json",
+      "inherited_sha256": "d148f94efb0dc562f338ec3ff43146118e9861ea30811f88e4f31baf365f1630",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/qualification_extra40.py native"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "action": "Parse emitted JSON and retain current binary/source hash binding; do not copy old receipt.",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "native-mailbox-faults-tsan.json",
+      "inherited_sha256": "686d9b37ad595c7bc35a4d494c468f92c147e0a206c51da7abe0b47515038373",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/qualification_extra40.py native"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "action": "Parse emitted JSON and retain current binary/source hash binding; do not copy old receipt.",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "native-mini-cpu.json",
+      "inherited_sha256": "b7158788735b340238f27eb126e7437d692abfb18112d31fde5a05a4e470e454",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/native_mini_gate.py --binary /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/gnu-host/own-rt-iq3 --output /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/native-mini-cpu.json"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "receipt-metadata-gates.json",
+      "inherited_sha256": "a3408b4ad94e7400a3fba24059cc9668672b65d609bfa2d36ff5dfb205c0f657",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/test_receipt_metadata.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "cpu-handover-cost.json",
+      "inherited_sha256": "0a0a3c9a3d4f280a193fbb1f30c5bfe10e666363adeecdc4b38b58afbb677229",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/cpu_handover_report.py /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/window-cpu-models-current"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": [
+        "pipeline.py"
+      ],
+      "action": "Run after fresh window CPU models and real none/native runs have current archive_files/discard archives; argument identifies original archived scratch root, which need not still exist."
+    },
+    {
+      "inherited_receipt": "suite-gate-results.json",
+      "inherited_sha256": "95659a7a778e42554ae2e14d96bff841c90eadc6a5cf3dd27296f3b02b00f8af",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/suite_gates.py --output /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/suite-gates-current"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "real-controller-gates.json",
+      "inherited_sha256": "8faa28a9f52a66fc3d097b3ccee9f63389dcc440674aabfd8eb224223d53b273",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/real_controller_gate.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "review-resume-controller.json",
+      "inherited_sha256": "4eb53f7d10f919730c5e937bc43d19b53747b5d5bde1b5d48caf2548b8e9c6c2",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "kind": "independent_review",
+      "current_counterparts": [
+        "review-p40-nonblocking-draft.json",
+        "review-cancellation-retention-p40.json"
+      ],
+      "action": "Re-review current sources and bind their hashes. Counterparts listed are scope pointers, not automatic equivalent coverage; controller/reset/authority and regenerated KD references must each be explicitly covered.",
+      "changed_or_missing_inherited_source_bindings": [
+        "main.cpp",
+        "native_controller.hpp",
+        "native_mini_gate.py",
+        "pipeline.py",
+        "rank.hpp",
+        "suite.py",
+        "suite_gates.py",
+        "test_window.py",
+        "window.py"
+      ]
+    },
+    {
+      "inherited_receipt": "review-resume-reset.json",
+      "inherited_sha256": "66535016597af44b7617a64deeed231c55a76c4bc5802523a53f34de1b3fdb72",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "kind": "independent_review",
+      "current_counterparts": [
+        "review-cancellation-retention-p40.json"
+      ],
+      "action": "Re-review current sources and bind their hashes. Counterparts listed are scope pointers, not automatic equivalent coverage; controller/reset/authority and regenerated KD references must each be explicitly covered.",
+      "changed_or_missing_inherited_source_bindings": [
+        "ROLLBACK.md",
+        "main.cpp",
+        "mtp.hpp",
+        "native_controller.hpp",
+        "native_mini_gate.py",
+        "pipeline.py",
+        "rank.hpp",
+        "suite.py",
+        "suite_gates.py",
+        "test_suite_warmup.py"
+      ]
+    },
+    {
+      "inherited_receipt": "review-resume-authority.json",
+      "inherited_sha256": "75a4de9e07fbb2b73d4c946c1d606477fa53caf8e8378d57436d3b913e649e63",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "kind": "independent_review",
+      "current_counterparts": [
+        "review-cancellation-retention-p40.json"
+      ],
+      "action": "Re-review current sources and bind their hashes. Counterparts listed are scope pointers, not automatic equivalent coverage; controller/reset/authority and regenerated KD references must each be explicitly covered.",
+      "changed_or_missing_inherited_source_bindings": [
+        "mtp.hpp",
+        "native_controller.hpp",
+        "native_mini_gate.py",
+        "pipeline.py",
+        "rank.hpp",
+        "suite.py",
+        "suite_gates.py"
+      ]
+    },
+    {
+      "inherited_receipt": "review-resume-storage-gates.json",
+      "inherited_sha256": "ea81eb9557f5c38f7f8194a8d42e25933826e1f201d140b299b632059731b8aa",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/test_failure_storage.py --output /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/review-resume-storage-gates.json"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": [
+        "pipeline.py",
+        "rank.hpp",
+        "suite.py"
+      ]
+    },
+    {
+      "inherited_receipt": "review-resume-window-storage-gates.json",
+      "inherited_sha256": "2bd16e6f47c460c38589692e298a922f59503d54a038393db7f3244d1b15730c",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/test_window_storage.py --output /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/review-resume-window-storage-gates.json"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": [
+        "window.py"
+      ]
+    },
+    {
+      "inherited_receipt": "draft-window-cleanup-gates.json",
+      "inherited_sha256": "52b02106ee7b56e40467e769e76b6d16e4dcc565d3cc21c44a991b8c55aaaab6",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/test_draft_window_cleanup.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": [
+        "draft_window.py"
+      ]
+    },
+    {
+      "inherited_receipt": "reset-retention-gate-results.json",
+      "inherited_sha256": "39d8a66b8efdfde6fbef0b4cfb07a432492418746f793503c499633d149c8a84",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/test_state_retention.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": [
+        "native_mini_gate.py",
+        "suite.py",
+        "suite_gates.py"
+      ]
+    },
+    {
+      "inherited_receipt": "suite-export-retention-gates.json",
+      "inherited_sha256": "7769bfabfc33e802a13a1ecec8589e6e6fff69d06e90c23281d1a7407c985d14",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/test_suite_export_retention.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "storage-race-gates.json",
+      "inherited_sha256": "e1866dff7473b679dd852bda913f332393d4baac3eee9a0606f4a85a0afc9bea",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/test_storage_race.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "suite-warmup-gates.json",
+      "inherited_sha256": "4528cc66c03660e459984913208b6be21c109e8ad9b459d3cd12e91b2fe080ee",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/test_suite_warmup.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": [
+        "suite.py",
+        "test_suite_warmup.py"
+      ]
+    },
+    {
+      "inherited_receipt": "cleanup-path-gates.json",
+      "inherited_sha256": "04afec75d5e62b7c384a47e15a442ec52efd4fa9dcdbe17112d5add386c1b5ed",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/test_cleanup_paths.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "suite-compiler-gates.json",
+      "inherited_sha256": "fadaf18e8397bd90b4badfb2c21256360b5e15754e47c9888c93252ed04f53e8",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/test_suite_compiler.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "seal-bootstrap-gates.json",
+      "inherited_sha256": "465883ad2f20ea475c9aff591a347fc6981606d46f5f3b7e8cb35e02603f0d01",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/test_seal_bootstrap.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": [
+        "seal.py",
+        "suite.py"
+      ]
+    },
+    {
+      "inherited_receipt": "window-retention-gates.json",
+      "inherited_sha256": "06cfa78c1498ea63f97c0d476dddbe8a56cc38b72e18f7d25f297e9260e802f3",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/test_retain_window.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": [
+        "suite.py"
+      ]
+    },
+    {
+      "inherited_receipt": "resume-input-integrity.json",
+      "inherited_sha256": "84f9f8c33ec25ef07b260dc7242e425a3c395e4af9a1fc8b712d1da7ff4e47ac",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/qualification_extra40.py integrity"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "kind": "input_reauthentication",
+      "action": "Re-hash every target bundle, official draft tensor and captured target stream using manifests/current checker. No dedicated inherited producer script; record fresh SHA-bound integrity receipt, no copied passed boolean.",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "review-draft-capture.json",
+      "inherited_sha256": "7e73baea5f5f17b1ade6c8cb96fa3ad7bf28a95fbe99da70527c4cbe90bccd3d",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "kind": "independent_review",
+      "current_counterparts": [
+        "review-p40-nonblocking-draft.json",
+        "draft-async-gates-gnu.json"
+      ],
+      "action": "Re-review current sources and bind their hashes. Counterparts listed are scope pointers, not automatic equivalent coverage; controller/reset/authority and regenerated KD references must each be explicitly covered.",
+      "changed_or_missing_inherited_source_bindings": [
+        "mtp.hpp"
+      ]
+    },
+    {
+      "inherited_receipt": "window-cpu-fixtures.json",
+      "inherited_sha256": "786429ad489ef0467337d0f9f756f97357baf16a5e9293a425494b6915ebd116",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/window_cpu_gate.py --phase fixtures --binary /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/gnu-host/own-rt-iq3 --output /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/window-cpu-fixtures-current"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "window-cpu-models.json",
+      "inherited_sha256": "220ee7a76c5a779c4d42e5feb4681907cff7af776ef3bb42f7b774612d769058",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/window_cpu_gate.py --phase models --binary /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/gnu-host/own-rt-iq3 --output /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/window-cpu-models-current"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "suite-cpu-qualification-plan.json",
+      "inherited_sha256": "c3a9053dedb62debca1f799cab791b2a9c0ab66a878b0c7544379d4e417b6ee4",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/cpu_campaign.py suite"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "action": "Freeze current manifest intentionally; record partial/full scope and cap; regenerate prerequisites and export against current binary. Packet38 hardcoded three-prompt schema needs packet40 adaptation.",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "suite-real-cpu.json",
+      "inherited_sha256": "d72fb773dd6774fcb2b85cb846f50179df6e002e0a246537ebd717562d8bbc05",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/cpu_campaign.py suite"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "action": "Freeze current manifest intentionally; record partial/full scope and cap; regenerate prerequisites and export against current binary. Packet38 hardcoded three-prompt schema needs packet40 adaptation.",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "mini-gnu-host.json",
+      "inherited_sha256": "7053057efe333ff7430de02f7e9f60975c097e879b36b9a756f22159a959752a",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/gates.py mini gnu-host"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "mtp-gates-gnu-host.json",
+      "inherited_sha256": "56afd2a5d99a0f1a4a021f01317734cec01de6345237cc0a5d60c186df181f24",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/mtp_gates.py gnu-host"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "mini-icpx-host.json",
+      "inherited_sha256": "aed4a9d9251d384320f232b19d6cef130ff2696bc3b9dfa66da2fe57e010e145",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/gates.py mini icpx-host"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "mtp-gates-icpx-host.json",
+      "inherited_sha256": "b14d2fc8f6cc93703496dbcef1082c2a5a4f1879c8c89700fa51fe4b936cac00",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/mtp_gates.py icpx-host"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "mini-asan.json",
+      "inherited_sha256": "772842fa91a3395898750709c36335477af9a5370b0d036a1440fb33704de02c",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/gates.py mini asan"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "mtp-gates-asan.json",
+      "inherited_sha256": "95cfcfc5f6e02e9f7a3f22eb5bd75be553a6340ae74c64d9bcdd3c74f9553452",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/mtp_gates.py asan"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "real-campaign-gnu-host.json",
+      "inherited_sha256": "ad412fb09dcb3549269b78f63ec1d08f0e6d0fd1dc98eefa56c90d16874a4f04",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/real_campaign.py gnu-host"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "real-none.json",
+      "inherited_sha256": "4843bbac592d34431bb3963f51a787e9b7ac80a6d7675409d2ff85f4f1a7e597",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/real_campaign.py gnu-host"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "real-ngram.json",
+      "inherited_sha256": "4725a7ada63f87db37303caa6787db40cb8cdacd753fd47b3e31518eac57ebae",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/real_campaign.py gnu-host"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "real-hit.json",
+      "inherited_sha256": "956f6aead19a87a96f9a9f302cfa1b069c3f301da4f36dcef1b663b2ff2d5819",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/real_campaign.py gnu-host"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "real-miss.json",
+      "inherited_sha256": "6ee5fcce9e2ed6b063980a5813f48f6a061accd474e1e1337f6e07447752b949",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/real_campaign.py gnu-host"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "real-mtp.json",
+      "inherited_sha256": "777fec1f3db7b9d55c381a462ca46a00d34084273e7edfffa04f0df4a2daac33",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/real_campaign.py gnu-host"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "real-campaign-icpx-host.json",
+      "inherited_sha256": "6f6aa92f2b87c12674586e8477d12ab0a6bbd96f435faca77744233435c5427e",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/real_campaign.py icpx-host"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "real-icpx-host-none.json",
+      "inherited_sha256": "cc239dacfc3ca122a35e930cef428be00d8153e693b411c75c829fa1fecaca4c",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/real_campaign.py icpx-host"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "real-icpx-host-ngram.json",
+      "inherited_sha256": "ea0c03f22d03fab31c021149ffac62ed2f0be1937a13318fa2ac47c35967b90b",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/real_campaign.py icpx-host"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "real-icpx-host-hit.json",
+      "inherited_sha256": "d2c67d3f71f28f42a7e36e67ea6b5264675d9ee7ed27fadf8943f4170c40d981",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/real_campaign.py icpx-host"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "real-icpx-host-miss.json",
+      "inherited_sha256": "fe6442ebe25db82d09cec3bd0920812bf73b8fe104e2594639fd657f68e6180a",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/real_campaign.py icpx-host"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "real-icpx-host-mtp.json",
+      "inherited_sha256": "4208775382f42d7e8a8e94cd456c21019dd79f16f63133e7cd9fa950e8d326e9",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/real_campaign.py icpx-host"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "real-native-none.json",
+      "inherited_sha256": "2e217dd8704acc0987836e063b0698b1b79c6cfc5b43caa0c779fab95eadf481",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/real_controller_gate.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "real-native-ngram.json",
+      "inherited_sha256": "64297f59a1891d3ba81ec44517dbb712d7cacf1c0b85282ced69e21cb6720f91",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/real_controller_gate.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "real-native-hit.json",
+      "inherited_sha256": "604faa1e7a9bf239d76fa61fae1c3435d14fa14f26f0216b36c3e222442fc4b9",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/real_controller_gate.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "real-native-miss.json",
+      "inherited_sha256": "a9f41b88866693fad140fbaa48a76c58bdfff7ccc864d1c378784ad69e8d30fb",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/real_controller_gate.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "real-native-mtp.json",
+      "inherited_sha256": "72fa2c4d379d58f4f34562537a088f9bc1a6750dedf6e9d21fa56564d55f2520",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/real_controller_gate.py"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": []
+    },
+    {
+      "inherited_receipt": "agreement-incident-retrospective.json",
+      "inherited_sha256": "ce311247d5f8d62baed5486c4ae3d48cedb4437b45be82d2dff7abea89fa0592",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/capture40.py incident-retrospective"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "action": "Regenerated draft reference must bind current selected dispatch. Existing comparison against packet38 draft-output hashes must not reject a valid new draft arithmetic identity or silently reuse it.",
+      "changed_or_missing_inherited_source_bindings": [],
+      "current_scope": "Fresh GNU and Intel host selected-dispatch full-vocabulary/sample/cache/control byte identity; archived fixtures, no old arithmetic reuse."
+    },
+    {
+      "inherited_receipt": "agreement-code-review.json",
+      "inherited_sha256": "3079b4a83000d931091df719809b6bfddcb8286cd0f732bdeb9a4429c22ef23d",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/capture40.py code-review"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "action": "Regenerated draft reference must bind current selected dispatch. Existing comparison against packet38 draft-output hashes must not reject a valid new draft arithmetic identity or silently reuse it.",
+      "changed_or_missing_inherited_source_bindings": [],
+      "current_scope": "Fresh GNU and Intel host selected-dispatch full-vocabulary/sample/cache/control byte identity; archived fixtures, no old arithmetic reuse."
+    },
+    {
+      "inherited_receipt": "agreement-customer-email.json",
+      "inherited_sha256": "d59e369c338a4dda159b2f054843a06ebf2b6ed179d31d45e3832763d1919f11",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/capture40.py customer-email"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "action": "Regenerated draft reference must bind current selected dispatch. Existing comparison against packet38 draft-output hashes must not reject a valid new draft arithmetic identity or silently reuse it.",
+      "changed_or_missing_inherited_source_bindings": [],
+      "current_scope": "Fresh GNU and Intel host selected-dispatch full-vocabulary/sample/cache/control byte identity; archived fixtures, no old arithmetic reuse."
+    },
+    {
+      "inherited_receipt": "agreement-benchmark-analysis.json",
+      "inherited_sha256": "5450e9c18a1f784e2e0c2f1143d598e82a8e5f77087643ab63525add4f54ff10",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/capture40.py benchmark-analysis"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "action": "Regenerated draft reference must bind current selected dispatch. Existing comparison against packet38 draft-output hashes must not reject a valid new draft arithmetic identity or silently reuse it.",
+      "changed_or_missing_inherited_source_bindings": [],
+      "current_scope": "Fresh GNU and Intel host selected-dispatch full-vocabulary/sample/cache/control byte identity; archived fixtures, no old arithmetic reuse."
+    },
+    {
+      "inherited_receipt": "window-seal-admission-gates.json",
+      "inherited_sha256": "d5da7cc9138409f1f84ae2659c85472200b7d0e76089700a708b50e3d4725357",
+      "inherited_boolean_is_current_qualification": false,
+      "commands": [
+        "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/test_window_seal_admission.py --build-receipt /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build-admission-candidate.json"
+      ],
+      "status_at_checklist_creation": "requires_current_execution_or_independent_review",
+      "changed_or_missing_inherited_source_bindings": [
+        "draft_window.py",
+        "fixture_support.py",
+        "window.py"
+      ]
+    }
+  ],
+  "packet40_additional_requirements": [
+    {
+      "gate": "draft asynchronous/synchronous failure and retention identity",
+      "command": "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/draft_async_gate.py --binary /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/gnu-host/own-rt-iq3 --output /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/draft-async-gates-gnu.json"
+    },
+    {
+      "gate": "cancellation every mini kernel and random real kernel indices",
+      "producer": "cancellation_gate.py",
+      "command": null
+    },
+    {
+      "gate": "metric formulas and class aggregation",
+      "producer": "test_suite_metrics.py (current suite owner implementation)",
+      "command": null
+    },
+    {
+      "gate": "every window end-to-end host wrapper plus storage/format/fault classification",
+      "producer": "packet40 wrapper rehearsal (parent implementation)",
+      "command": null
+    }
+  ],
+  "execution_recorder": "Run executable producers through seal40.py --record-phase NAME -- COMMAND; successful source/binary/log/receipt-bound execution ledger required for inherited gates."
+}

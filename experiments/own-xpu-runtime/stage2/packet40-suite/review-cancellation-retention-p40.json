@@ -1,0 +1,57 @@
+{
+  "schema": "packet40.independent-cancellation-retention-review.v1",
+  "reviewer": "draft_runtime subagent (not cancellation author)",
+  "source_review_passed": false,
+  "device_executed": false,
+  "findings": [
+    {
+      "finding": "Cancellation originally checked plan sites rather than every kernel submission.",
+      "status": "fixed",
+      "evidence": "owner.cpp before_compute runs before compute/issue; half_step catches CancelledLaunch; after_compute tracks every submitted event as drain tail."
+    },
+    {
+      "finding": "An incomplete speculative prefix must not exchange active temporal state banks.",
+      "status": "verified",
+      "evidence": "candidate.swapped only after an uncancelled half; undo swaps only when candidate.swapped, then restores position/history and invalidates lookup/fp32 caches."
+    },
+    {
+      "finding": "Shared target-verification token publication must not admit draft guesses or stale positions.",
+      "status": "verified",
+      "evidence": "rank1 publishes after checked target completion; matching position+1 release/acquire fence; controller cannot begin next rank1 half until previous rank0 candidate resolved."
+    },
+    {
+      "finding": "Retention may only read target streams and mutate dedicated snapshot storage.",
+      "status": "verified",
+      "evidence": "CopyEngine queues source reads after each layer; host extraction and snapshot zeroing happen after drain; no control flow or arithmetic binding uses snapshots."
+    },
+    {
+      "finding": "Callback lifetimes must not survive their stack frame.",
+      "status": "verified",
+      "evidence": "half observers cleared on normal completion, cancellation and all exceptions before returning; native controller uses no separate cancellation callback now."
+    },
+    {
+      "finding": "Terminal rollback leaves token input and host-derived cache/routing metadata different from the exact pre-speculation image.",
+      "status": "open",
+      "evidence": "half_step writes token and prepare_token before first cancellation boundary; undo restores history/position/token_history but not token, clears lookup_ids/fp32 metadata, and does not restore selected. Existing committed_terminal gate omits these fields.",
+      "scope": "Strict terminal all-state equivalence only; preserved nonterminal redo and retention receipts do not prove this case."
+    }
+  ],
+  "runtime_gates": "Use cancellation_gate.py and draft_async_gate.py receipts; code review alone is not runtime qualification.",
+  "source_sha256": {
+    "main.cpp": "93a9b7be9803decbb4929e28561b4972ebdcb204b5ce79713b6fcdbcdeea7de2",
+    "rank.hpp": "3defe947138b86e2c453b02a006288c8fca75f52bd59d156f3d1d8dc94ac053c",
+    "owner.cpp": "8e82affd2c119ef2ef13df14c11063f60ec8ba641ed643b7f2c652e7c256e94b",
+    "owner_api.hpp": "1c712169fca15d34319ab082701a054a4a1fc63caccdfd7515a00067f4843608",
+    "native_controller.hpp": "2e183a51553f32422158d35d5ca7d0cae050157082f9728f6ef316e66b52f368",
+    "request_state_inventory.hpp": "c4818d42606ec5f29e00c7fa0ede2f12b4bdc6c6c2f5ca1740ca5e9cc023ea65",
+    "request_reset.hpp": "b35ad7753e3b2155e62e9d02700c24c52292f773c5f0b5f496914c705b6fbe99"
+  },
+  "gate_receipts_sha256": {
+    "cancellation-retention-mini-native.json": "18f46cab06f62cfb9bab708f745a8246aa24eeb12d3935ca5fd6909d49f99ac5",
+    "cancellation-retention-mini-python.json": "3805000febbcea8f4c9dbfef42e1cc7b0c1613ef1fe93f73a85cf945e8ef0de8",
+    "draft-async-gates-gnu.json": "960b83f2d2712f888f8a638c5d37580fbbb10802ee12f3635c462455fbf96830"
+  },
+  "reviewed_followup": "Standalone scratch initialization is deterministic zeroing at construction. It closes retention full-allocation parity without changing arithmetic. Actual native/Python cancellation gates total202 and draft/retention gates28 pass current GNU binary.",
+  "nonterminal_source_review_passed": true,
+  "strict_terminal_state_review_passed": false
+}

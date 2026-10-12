@@ -1,0 +1,11 @@
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/oversized-capture.cpp:1:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/kernel_guard.hpp:7:16: error: static assertion failed due to requirement 'sizeof(std::array<char, 1025>) <= 1024': device kernel capture exceeds 1024 bytes
+    7 |  static_assert(sizeof(F)<=1024,"device kernel capture exceeds 1024 bytes");
+      |                ^~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/oversized-capture.cpp:3:23: note: in instantiation of function template specialization 'packet26::checked<std::array<char, 1025>>' requested here
+    3 | void test(){packet26::checked(std::array<char,1025>{});}
+      |                       ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/kernel_guard.hpp:7:25: note: expression evaluates to '1025 <= 1024'
+    7 |  static_assert(sizeof(F)<=1024,"device kernel capture exceeds 1024 bytes");
+      |                ~~~~~~~~~^~~~~~
+1 error generated.

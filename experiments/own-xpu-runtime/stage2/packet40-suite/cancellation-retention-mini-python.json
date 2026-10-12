@@ -1,0 +1,840 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "binary_sha256": "b60ace4f20d5445cf3bb18313b786a84671ccc67b27a850ae650bf21b94870ec",
+  "real_model": false,
+  "controller": "python",
+  "plan_sites": 88,
+  "actual_compute_launches": 99,
+  "gate_count": 101,
+  "retention_independence": true,
+  "retained_fixture_files": 32,
+  "retention_modes": [
+    "none",
+    "1-8,97-104"
+  ],
+  "every_launch_boundary": true,
+  "random_seed": null,
+  "final_state_sha256": {
+    "rank0/state-2147483647/active.bin": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450",
+    "rank0/state-2147483647/alternate-blk.0.gdn.history.bin": "1c2d92f6973f7ea2f19399f5b4f9c85974bdf2ef0123f7ae250acaae60287015",
+    "rank0/state-2147483647/alternate-blk.0.gdn.state.bin": "9e6f32dc6a9c90a0952f29594ea652db8bd4ccdb0c8f27340bf7b1accd26d270",
+    "rank0/state-2147483647/alternate-blk.1.ple.history.bin": "7f95102c75e026197a8484a820323dc53f2dcf622e23ca698cfd67f1cde41968",
+    "rank0/state-2147483647/blk.0.attention.bin": "bef277ee981cafff19139623bb1d0abf543df673f29cdb8fb12d85b9b8c5678d",
+    "rank0/state-2147483647/blk.0.expsact.bin": "5479d991a4db5e67cdf501a3c1724296796a351c485ed6962fc3f4d9b21c96a1",
+    "rank0/state-2147483647/blk.0.expsdown.bin": "16ba517e56696ca931c3d50d7074b40202329980f718ce50637c217faefde4c1",
+    "rank0/state-2147483647/blk.0.expsdown.status.bin": "2c34ce1df23b838c5abf2a7f6437cca3d3067ed509ff25f11df6b11b582b51eb",
+    "rank0/state-2147483647/blk.0.expsgate.bin": "6f7b9fc87d0394ac06a951acce598c3f1d4112733b9109b345189ac4ee0bc490",
+    "rank0/state-2147483647/blk.0.expsgate.status.bin": "2c34ce1df23b838c5abf2a7f6437cca3d3067ed509ff25f11df6b11b582b51eb",
+    "rank0/state-2147483647/blk.0.expsup.bin": "d61444aad12bfb7e16ec3742dd251299d7d7fd51549d41555b907e49fd8b37d0",
+    "rank0/state-2147483647/blk.0.expsup.status.bin": "2c34ce1df23b838c5abf2a7f6437cca3d3067ed509ff25f11df6b11b582b51eb",
+    "rank0/state-2147483647/blk.0.gdn.a.bin": "293b50b61032dda4695b73621fbfd201eb3a146aa72e0236be88d7a3ec02a571",
+    "rank0/state-2147483647/blk.0.gdn.b.bin": "c54e6104e622374e943c1ba1641e5997e19dadaa3ff01f2bd28b856200599b80",
+    "rank0/state-2147483647/blk.0.gdn.conv.bin": "d06620547805073db01767b32882d56bfaa76174edfce2e4b7589039845e7e5c",
+    "rank0/state-2147483647/blk.0.gdn.gated.bin": "4ca9821c83d1a9104f169a16c5e260e0e4fe0e25385a11bcac4b89172fcac6a3",
+    "rank0/state-2147483647/blk.0.gdn.history.bin": "1c2d92f6973f7ea2f19399f5b4f9c85974bdf2ef0123f7ae250acaae60287015",
+    "rank0/state-2147483647/blk.0.gdn.qkv.bin": "250bbdf6415ee27395d4ac90aecf83a2ea2e32a8f9084d37b6613a08700d9746",
+    "rank0/state-2147483647/blk.0.gdn.state.bin": "b52378d670dd8e5d2159c1bc5e673ba1bd0abde1fba06d098daa3ff92e52754a",
+    "rank0/state-2147483647/blk.0.gdn.y.bin": "7fb72dc506ca96aee7d1c95a850a48d8bb828ab113d329295f917bd428185fc5",
+    "rank0/state-2147483647/blk.0.gdn.z.bin": "378d468413ad8292774ca0e4d165266455edaddf3403c4c92fa7e67c8e9c94d8",
+    "rank0/state-2147483647/blk.0.hc.a.act.bin": "bf1316560457b760d6ad30feaf14fc081176dde35dd1e8eee386f181ee3d4be9",
+    "rank0/state-2147483647/blk.0.hc.a.gate.bin": "edc4c2ed61aa1dc766a3365512b775d05b987937d6eb5b2eb531050fd9b5f868",
+    "rank0/state-2147483647/blk.0.hc.a.inject.bin": "d5c67e838979624d483c1ca646b84783803dcef5b208c7478cbd942c3218b1b5",
+    "rank0/state-2147483647/blk.0.hc.a.low.bin": "aefad8524f21afc039010f91006ab11b196d725576d2907117cbf14b5495516f",
+    "rank0/state-2147483647/blk.0.hc.a.mix.bin": "28ddb4af1d1c2415232b253a6eb1ef3f8a042cfbf9d39f3b2ab9455b4ff60a7e",
+    "rank0/state-2147483647/blk.0.hc.a.norm.bin": "5ec523c3dbe0238144faec1b69ca91fc623934a854fa4d9e6f701757e48f476c",
+    "rank0/state-2147483647/blk.0.hc.f.act.bin": "350d0162bd1e491acddfbeda9b848562ba579a553876aa8ee9e70f4dd7f6bedf",
+    "rank0/state-2147483647/blk.0.hc.f.gate.bin": "cb8fc48dc056d856220e090e66ce5689efef911d9d0b172b0e74441e445d75a1",
+    "rank0/state-2147483647/blk.0.hc.f.inject.bin": "057e060dbf2f674e88bf1a995c60aaa186ced3d797ed0706b952d23e03f8242b",
+    "rank0/state-2147483647/blk.0.hc.f.low.bin": "234321bbf0ea33208195a577a8a124d6aece2406bdd22f551acf0f6893a412cb",
+    "rank0/state-2147483647/blk.0.hc.f.mix.bin": "1268b974954d4dedd85cba3b605b43cc99da7d35a9102eb3f33b17c446e242f5",
+    "rank0/state-2147483647/blk.0.hc.f.norm.bin": "3ec1a81d1d5b4d853f81c4e2acf28a1f34bc7f8eac63a531ce0fddf6f87d3fba",
+    "rank0/state-2147483647/blk.0.ids.bin": "ef7cdfffb49681257ccb01c2ddf9e50132b25d72ca41cd00f56515f5d6547ada",
+    "rank0/state-2147483647/blk.0.moe.bin": "b567c9d7f764b4e0446e9641544e1a059937dad966a393d9f1c7dd8d98c87b10",
+    "rank0/state-2147483647/blk.0.prob.bin": "3ef6cec28b8ee829c23fc756b156d5363210b5d59b12dadb7b39febb8bd7bbdd",
+    "rank0/state-2147483647/blk.0.router.bin": "59d5181c7bcf93da5b31d5c3355d0b5c30d5e55e259c4bec7bfc4c61b0768fe0",
+    "rank0/state-2147483647/blk.0.routes.bin": "5593101644920cf50a1aaab3e382d5af001906c5eb9b933ccbfd68e38abf8c5b",
+    "rank0/state-2147483647/blk.0.routes.down.bin": "373ffe06db2a2c6b8543c00aacab85a82248b8d73655f00e1d55826f2b050cda",
+    "rank0/state-2147483647/blk.0.shared_gate.bin": "e44dcf1b2d56f008831f93b0019d957c3a8d77ca7087d288857a68676cdfe19d",
+    "rank0/state-2147483647/blk.0.shexpact.bin": "f648cc4f6c919572d4a1d5d68321986948bb7e867b5c02454b95df431417f35e",
+    "rank0/state-2147483647/blk.0.shexpdown.bin": "2ab0c9df76269c3746c68c4b9e8c1c58a9ba3202ba8b46c990d1106b8997f243",
+    "rank0/state-2147483647/blk.0.shexpgate.bin": "ea80532a3fc04122cdf33afb553ea59244c07e4dda90e22c278af2739a0cbf40",
+    "rank0/state-2147483647/blk.0.shexpup.bin": "19bd7aeb20fb5f3f74a64e158ef63015e8566076e6dfa0d2bebc084785afe8da",
+    "rank0/state-2147483647/blk.1.attention.bin": "e8c84ec94ccf9c6aefc246a4f8961812a79300a8ad2ffb30461837c4c1d27efd",
+    "rank0/state-2147483647/blk.1.expsact.bin": "fc9d291304743ecd7825b0355deba33d8c47510d56ca4be50be21008e200f5c1",
+    "rank0/state-2147483647/blk.1.expsdown.bin": "24f01c58b620d491f66e7e7b868cccd898b77eec4dc51ded6a74584ae3e265c2",
+    "rank0/state-2147483647/blk.1.expsdown.status.bin": "2c34ce1df23b838c5abf2a7f6437cca3d3067ed509ff25f11df6b11b582b51eb",
+    "rank0/state-2147483647/blk.1.expsgate.bin": "3589e355cf9dcd6df0bcf3d13a61208170400c2b1b9e5e31b435b0fb93f38af0",
+    "rank0/state-2147483647/blk.1.expsgate.status.bin": "2c34ce1df23b838c5abf2a7f6437cca3d3067ed509ff25f11df6b11b582b51eb",
+    "rank0/state-2147483647/blk.1.expsup.bin": "c65e92d93d8bd8fc2688d53d347ad38239ec8344fe7dd50d0a9f2bd56689159d",
+    "rank0/state-2147483647/blk.1.expsup.status.bin": "2c34ce1df23b838c5abf2a7f6437cca3d3067ed509ff25f11df6b11b582b51eb",
+    "rank0/state-2147483647/blk.1.hc.a.act.bin": "a40eaedc6c5babe8a19de9a351f64ee633d39fef9aee772507c0230332d55ad7",
+    "rank0/state-2147483647/blk.1.hc.a.gate.bin": "4cfe67a7226422faa506c6c6ac450dea7849854559fa2bae21b8fb2657784eff",
+    "rank0/state-2147483647/blk.1.hc.a.inject.bin": "9bddb0ebba08b289d41ae08489ff6366ac0cff21305384e4072d9c37bd2d54db",
+    "rank0/state-2147483647/blk.1.hc.a.low.bin": "c1bd459ee8e5f6471f92bb3ab15cc7abdb28d5c8724ef32a305c18c7bbea3987",
+    "rank0/state-2147483647/blk.1.hc.a.mix.bin": "e5b1cbbc5f30ce97cfa30f6f927b9deb33c3a1bb182bd40a6287ff2a39c7fbf7",
+    "rank0/state-2147483647/blk.1.hc.a.norm.bin": "992f546f1e22ef7e9797aa016e6f6fb05feb7bc4af90249df82163e0abbf2fb0",
+    "rank0/state-2147483647/blk.1.hc.f.act.bin": "6ffa8286f25e572d3671e7746740f1996c5306a21394a0a766c0f8c563d30d10",
+    "rank0/state-2147483647/blk.1.hc.f.gate.bin": "d41aad28e4f24a7a5f08ddfac19cc189c3a865e9e7f251382755aa897511f3e2",
+    "rank0/state-2147483647/blk.1.hc.f.inject.bin": "66835e024bb09a44ebe7d40235405c2b38376154354d50bd69daea18eadae6f0",
+    "rank0/state-2147483647/blk.1.hc.f.low.bin": "3111b6f41cef390312f71f02171a3a7bf6ec5b79ed411b5cd93ac687a40a5f49",
+    "rank0/state-2147483647/blk.1.hc.f.mix.bin": "3300c093bb65619025d6b8ef2ef702299eb733e6e6540347e94c00071fc40a83",
+    "rank0/state-2147483647/blk.1.hc.f.norm.bin": "135b00653e4a5793de3d37986b68f9583bdcbd7bd275f71d75de731a4c62d923",
+    "rank0/state-2147483647/blk.1.ids.bin": "ef7cdfffb49681257ccb01c2ddf9e50132b25d72ca41cd00f56515f5d6547ada",
+    "rank0/state-2147483647/blk.1.moe.bin": "8f094e732e35442d91200b0c6b596bfcdbaa38120d46356ab2e9177544d48c86",
+    "rank0/state-2147483647/blk.1.ple.cn.bin": "37c528054531f1d9416f348007a2be5da7d07a5c98968a6a36a5fb3cd4f3674b",
+    "rank0/state-2147483647/blk.1.ple.conv.bin": "5d224e20b441895ac900a3e67564f467af03737a5fc747fcead551f045f062c2",
+    "rank0/state-2147483647/blk.1.ple.gated.bin": "459895d8a0e2c6dda2438f952af38e0892d2f33d177b36bf0f11f434e100068d",
+    "rank0/state-2147483647/blk.1.ple.history.bin": "b8dfa9db4b120c33ee5ffa602f86cb8bbf81e6b2679461694576489bffd4605f",
+    "rank0/state-2147483647/blk.1.ple.ids.bin": "8a42780c8cd212235b8b6ac266e51eb8fb874ac54851ad239e527847aacdb6db",
+    "rank0/state-2147483647/blk.1.ple.key.bin": "d0e7d8f315bc1c3323553dac57d07e7ce65b7db2a0218581376d459808c965bf",
+    "rank0/state-2147483647/blk.1.ple.kn.bin": "d1627caba8ea0841c990a6c76c0550bfa6730d9595362c66a0932fa8d0076512",
+    "rank0/state-2147483647/blk.1.ple.lookup.bin": "eabb7e0d232e75a910f3b71e4a1108d2aedd82314d222cf1802453cf4c278551",
+    "rank0/state-2147483647/blk.1.ple.qn.bin": "e1d88b471bf4bcbb7698d1329685ed74ecad9930f075cafe47d33d96556de3dc",
+    "rank0/state-2147483647/blk.1.ple.value.bin": "9791e457a2bd0f782f03a58ab0d9d869ecbccbcd121016eda9ca465a96b163fa",
+    "rank0/state-2147483647/blk.1.prob.bin": "a52a50fe9ca30b9a7ef208a6d0608161cc667479651cccbfa0a21ca8c5ac8d25",
+    "rank0/state-2147483647/blk.1.qsa.gate.bin": "9496b8dd9ab3395089f970d57a6aa059467bb11acf1dac737f0e683e7acd0fd9",
+    "rank0/state-2147483647/blk.1.qsa.ids.bin": "b69f0035d122cce8b3f703466e7fc993c6ed2d19fe13284591510699f3d8b51c",
+    "rank0/state-2147483647/blk.1.qsa.ik.bin": "0eb46662f4b3779ec207ec22628adbbc17ab9bbeb117061e4806dc5acc2526a8",
+    "rank0/state-2147483647/blk.1.qsa.iq.bin": "69c2c8e020d863ddd9be15cb908b1a8e043df7149b68820094abb618155e3a88",
+    "rank0/state-2147483647/blk.1.qsa.iqn.bin": "a0d84c8cf46ebd442d81ca61c0012227f291d8f061612914b7158dbda169739d",
+    "rank0/state-2147483647/blk.1.qsa.k.bin": "09fd114d7147613410634cbe0db4606ce92d62ff5415ad8c3d9f310804dc7d9c",
+    "rank0/state-2147483647/blk.1.qsa.keys.bin": "1910229663bdd4cabf5caff6fdc22d563812894bf461af5bea887af15c8ba3ee",
+    "rank0/state-2147483647/blk.1.qsa.kn.bin": "938d1d0a6fe95d25659f6332570182ad214cce4d127bed0dfb2c01d71b6588cb",
+    "rank0/state-2147483647/blk.1.qsa.pooled.bin": "be7a68cd5d54b1f88b2d0e0941c1dba23e01cdc346bb65b781fd6385c96f685d",
+    "rank0/state-2147483647/blk.1.qsa.q.bin": "c162823c7e40dc595817049ee41a503fc1f834b48f6c953348329c7edf185fde",
+    "rank0/state-2147483647/blk.1.qsa.qgate.bin": "ceaf6f78bce93d280592b75617edac99a0439ce4c333dedf6f23554f8da756be",
+    "rank0/state-2147483647/blk.1.qsa.raw.bin": "125626ae98da7a6685e58afce453cb6778f652ddecaef4e2c80dcf39bad9c8c5",
+    "rank0/state-2147483647/blk.1.qsa.v.bin": "7dd1d3644b2be965da9ac9f1b22d01a2075fef315b71b64b6f947e36570f6f11",
+    "rank0/state-2147483647/blk.1.qsa.values.bin": "4692794d4fcc78488c2faf8bf57d0ac6b660eff62a6c9963469a4bda18eda169",
+    "rank0/state-2147483647/blk.1.qsa.y.bin": "9caee094a57b27b161cd44bad0026052adbb69a8fba54dd0b616ac8e5024bbef",
+    "rank0/state-2147483647/blk.1.router.bin": "f43b83fc0fbf0d8f14bfc15014ae411d6bdb0ba46c20cc7482646288b642e950",
+    "rank0/state-2147483647/blk.1.routes.bin": "5593101644920cf50a1aaab3e382d5af001906c5eb9b933ccbfd68e38abf8c5b",
+    "rank0/state-2147483647/blk.1.routes.down.bin": "373ffe06db2a2c6b8543c00aacab85a82248b8d73655f00e1d55826f2b050cda",
+    "rank0/state-2147483647/blk.1.shared_gate.bin": "51a306694da0610ac333f1a7657d0e45b21a724ef92095424df2cca4de4b8389",
+    "rank0/state-2147483647/blk.1.shexpact.bin": "75b247a6795738e75bf59d2f5e0be1bf8d4c8ff59e779508ca6db679822b4312",
+    "rank0/state-2147483647/blk.1.shexpdown.bin": "9502f4e2863a6729e39825ad6a8f652a0e330f9a1e86082cb000b925a7fafc20",
+    "rank0/state-2147483647/blk.1.shexpgate.bin": "84c0bbcb9b55fbf57b7acbb758345a42c9879bc76783bc6cf9067bdaefbb9890",
+    "rank0/state-2147483647/blk.1.shexpup.bin": "fce8ddfbfd85add8123872135b6da98403364eec1cf2f620065fae42d04b0865",
+    "rank0/state-2147483647/embedding.bin": "cc2670b7ff71f969b95da87f5ff7d490b72f7aa2c0eb320bd3b6a9d126a76f71",
+    "rank0/state-2147483647/error.bin": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+    "rank0/state-2147483647/next_token.bin": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+    "rank0/state-2147483647/ple_metadata.bin": "f52169a0e52814e63c9e80b3460f696567ed09d009a81985164d13fd1ca0f4a8",
+    "rank0/state-2147483647/position.bin": "42f4aeb81c1ef81f771f3de8abca9dcf66901c575530e7672e4b1146474ae650",
+    "rank0/state-2147483647/state.json": "9dd81ed15a5f9aac574e75cb12002850be4786e9037559872762e4110fa226c6",
+    "rank0/state-2147483647/streams.bin": "2a7ff924b45df2e127ee51da862e9d714391591850106ae282410a1e906e4dfe",
+    "rank0/state-2147483647/token.bin": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450",
+    "rank0/state-2147483647/token_history.bin": "814dd7b9784d57c15b9c2972e9b4fd6cf7e164f8162a934bdb2452a413dab1f7",
+    "rank1/state-2147483647/active.bin": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450",
+    "rank1/state-2147483647/blk.2.attention.bin": "0a28b738cffac98b1ee5bbc911d1c02b10cda7331517aab9132f3c66d99e8aa9",
+    "rank1/state-2147483647/blk.2.expsact.bin": "c79c9ece6e877d8e61246a0ab82bb51a22ac63a44db9b7b287e2935f5c4f3ea5",
+    "rank1/state-2147483647/blk.2.expsdown.bin": "ef300611b047a7d8aaf594a57af31990783ff5200a3ce1e7be1eb34c52ffc75b",
+    "rank1/state-2147483647/blk.2.expsdown.status.bin": "2c34ce1df23b838c5abf2a7f6437cca3d3067ed509ff25f11df6b11b582b51eb",
+    "rank1/state-2147483647/blk.2.expsgate.bin": "ee701d38f681aac6c7d0af17c282b57adc3579a49013815a3ec3c647fc977342",
+    "rank1/state-2147483647/blk.2.expsgate.status.bin": "2c34ce1df23b838c5abf2a7f6437cca3d3067ed509ff25f11df6b11b582b51eb",
+    "rank1/state-2147483647/blk.2.expsup.bin": "a60b3539e7fd8022197a8097e936dd551187f08f13dd9c1142630ae5ef495193",
+    "rank1/state-2147483647/blk.2.expsup.status.bin": "2c34ce1df23b838c5abf2a7f6437cca3d3067ed509ff25f11df6b11b582b51eb",
+    "rank1/state-2147483647/blk.2.gdn.a.bin": "c99c514e79aff006ffb6130a1a891fc49b3edfdd791887f7d8f23dcd0dc6e169",
+    "rank1/state-2147483647/blk.2.gdn.b.bin": "0024144f975395ce10cc09c03018072480218cd64e7722149924f578df735973",
+    "rank1/state-2147483647/blk.2.gdn.conv.bin": "58ef2b4ac5456ba02c91182c59a445c2ee6a883be683d2599aa94e58e1904788",
+    "rank1/state-2147483647/blk.2.gdn.gated.bin": "fa0aff5a220f505df077ea5ec84b16eeeb3702fc18ed9b1055485f5403f0a7e7",
+    "rank1/state-2147483647/blk.2.gdn.history.bin": "8a797999c7167c2b15aee882b6778016765129a5843447fe192e8dd97d42f27c",
+    "rank1/state-2147483647/blk.2.gdn.qkv.bin": "949655e70f8501c93588883f0bc13aec0ae3c26130b77d496d392d36fef6cc4f",
+    "rank1/state-2147483647/blk.2.gdn.state.bin": "4352906e57994420e0f06bba0990aa7dca2e1a2b9e163fba2af907010925beaf",
+    "rank1/state-2147483647/blk.2.gdn.y.bin": "8aae387f032e7e75d1da4ae3be09d5fac9a4888a098d5ede9e3d49cd0a52be04",
+    "rank1/state-2147483647/blk.2.gdn.z.bin": "7800be3f49e2b07751e8b8d8e849e396e7e305305ab6c8f296266a950cdc33d3",
+    "rank1/state-2147483647/blk.2.hc.a.act.bin": "0acb1ea8c6f9889df17f8b07017aacd256a587cd950f41893cfcbcaa0b79fc37",
+    "rank1/state-2147483647/blk.2.hc.a.gate.bin": "ca1f9ed0d033bedeea1bf218a255178e4d0f9130a50a90b9c3640bb84d06876a",
+    "rank1/state-2147483647/blk.2.hc.a.inject.bin": "0dbd5b9aa22edd27d282908fc7943001d43b15ab5ebcb7984327fd6f1e6a84ff",
+    "rank1/state-2147483647/blk.2.hc.a.low.bin": "cbe93102ee3324bcd08f704746b3fa4cf63673dfea8ca13a96c7544b0b145b1f",
+    "rank1/state-2147483647/blk.2.hc.a.mix.bin": "5dc67e24f1e17aa402bd5d9305e8fc1242e191481855d13537a44c13b0adb24e",
+    "rank1/state-2147483647/blk.2.hc.a.norm.bin": "4239f86af417aacecc22e8d4378144f52f446b408eb3f2ff5336caeb26dcb18f",
+    "rank1/state-2147483647/blk.2.hc.f.act.bin": "87642c63fb3ca75af37987fd471bf1e0e448cced8abbacc7af38809539e97537",
+    "rank1/state-2147483647/blk.2.hc.f.gate.bin": "96e7dbfa8734ee77ce89d75b879289a9107f811e7c70ed239ac807efcc3cbdd3",
+    "rank1/state-2147483647/blk.2.hc.f.inject.bin": "0a5a436ba430db7140def885614f8ce8634d86c906823a73c01a6d0c219d1b64",
+    "rank1/state-2147483647/blk.2.hc.f.low.bin": "89ff7197757635e88e85600eac02951b18813c75c65f5c9ad8771551d00813bf",
+    "rank1/state-2147483647/blk.2.hc.f.mix.bin": "13c756aece61d8a2cb43771f18e39a293f90b8b2ed5d5a6c5b4d9e3130d09a2f",
+    "rank1/state-2147483647/blk.2.hc.f.norm.bin": "b607cbe8b79e35dc580dc6a616b6ef03160f9707eda96394b8dd95ba9e84186c",
+    "rank1/state-2147483647/blk.2.ids.bin": "91c0a65eefa84fbf9a0844942094652e8d6bfbb1369aefa498d68a151b8acdda",
+    "rank1/state-2147483647/blk.2.moe.bin": "541ce97115cb26a3c7e11b4f83e723f2755c4fbda5bee82aaacd0c25edf9e511",
+    "rank1/state-2147483647/blk.2.prob.bin": "3753711fcc1d86f91d56359b5df3d308fc473acebf3d00ffa0762fc6f8defeea",
+    "rank1/state-2147483647/blk.2.router.bin": "f4acfdb5857e7690157901d1da91b11108287ed930eab9122de50ba5eed14447",
+    "rank1/state-2147483647/blk.2.routes.bin": "afe1d551a9d8de3632957742dddbc1e2f0f7c1ee6dfcee312fb27f3b41334152",
+    "rank1/state-2147483647/blk.2.routes.down.bin": "104b47986a57eb673f40687d4d385349d464cbad37558c8565ad65ebfbe925d3",
+    "rank1/state-2147483647/blk.2.shared_gate.bin": "d519b912b633b5bee412b76d1324b645ddb08adc4c2e65fd310da3187e1fc41e",
+    "rank1/state-2147483647/blk.2.shexpact.bin": "ac7fe20fa43ce87d930391faf273190e632ecf8187c6f29e26836f63592f02ae",
+    "rank1/state-2147483647/blk.2.shexpdown.bin": "76caec6e66c857a0aa8bb07f79d6f55082a381a25a15890d4d01ba8be1527900",
+    "rank1/state-2147483647/blk.2.shexpgate.bin": "6bdb778ce58ae7d06cadf1cb625dcf498794a3315e96bf6849be90e315985492",
+    "rank1/state-2147483647/blk.2.shexpup.bin": "73f557d1d85fe514b15f1e0710f457001ef67e23b9cd747da7f76cc102bc3fd8",
+    "rank1/state-2147483647/blk.3.attention.bin": "be926dcf06e4e0c5f8d12cd3ff9b6cfebb89d2643d47ea68163a698a6f0351d8",
+    "rank1/state-2147483647/blk.3.expsact.bin": "854af53a6768228e244461d67b7b8419d7726040b474fbd83f32a399759cfd02",
+    "rank1/state-2147483647/blk.3.expsdown.bin": "6d4e7275f4ae95d7474f39df4cfbe3d56b4d5f9d06d1501283a58bb050a5c84f",
+    "rank1/state-2147483647/blk.3.expsdown.status.bin": "2c34ce1df23b838c5abf2a7f6437cca3d3067ed509ff25f11df6b11b582b51eb",
+    "rank1/state-2147483647/blk.3.expsgate.bin": "d68dc50f4b0330890fbb2d17cab8c79ce90e73fb59d329dce7d06ef22a2102b2",
+    "rank1/state-2147483647/blk.3.expsgate.status.bin": "2c34ce1df23b838c5abf2a7f6437cca3d3067ed509ff25f11df6b11b582b51eb",
+    "rank1/state-2147483647/blk.3.expsup.bin": "73971a1f240c159988c8d26cd834f5272eda794e090a3d15e2103bc23c2f9637",
+    "rank1/state-2147483647/blk.3.expsup.status.bin": "2c34ce1df23b838c5abf2a7f6437cca3d3067ed509ff25f11df6b11b582b51eb",
+    "rank1/state-2147483647/blk.3.hc.a.act.bin": "7566eb830664ecede95f843e07118148162b6ce9dd5baf5ec30ad29fddb2ae96",
+    "rank1/state-2147483647/blk.3.hc.a.gate.bin": "38357eb503f88b6bfb73cccffebab6720c9cf52c8b61b873f9b12dbdbd4fa7c1",
+    "rank1/state-2147483647/blk.3.hc.a.inject.bin": "d1d7aa7179081d1940ca2a387ca3b20a3f9a71bc8ee963cbc464a19c95abfdb0",
+    "rank1/state-2147483647/blk.3.hc.a.low.bin": "baddd958b70d512c6e5cf81df21a105b15f0ec27b3f1a5185e0933497603d763",
+    "rank1/state-2147483647/blk.3.hc.a.mix.bin": "cd2325720b4e0a70b62dce85ef406ce87ee89f4bc0825393ae74fa5b9ce64800",
+    "rank1/state-2147483647/blk.3.hc.a.norm.bin": "79f6b134d9204abdd8001bb1d3f79f68f2e3626daa81beee07103e044b797f72",
+    "rank1/state-2147483647/blk.3.hc.f.act.bin": "f42fa85689875207c17e516152356d9a6654e911133cd25d7376f08e9df5394e",
+    "rank1/state-2147483647/blk.3.hc.f.gate.bin": "b317014c2c25baf5822ddbb1305fea4e7c22c576720b4c39544306afcc5ee872",
+    "rank1/state-2147483647/blk.3.hc.f.inject.bin": "4678e065a3630a42c17248c446a14fec030bb1fb05e7ac4bbbca3e70cca3182f",
+    "rank1/state-2147483647/blk.3.hc.f.low.bin": "3cda1231b14a345412577301478049780be8447893ae37c1146b24e0a2b133b3",
+    "rank1/state-2147483647/blk.3.hc.f.mix.bin": "614812112085f7682bee14bf8e0a96e40b792cb0d1ab6aefb1d069a29753ebf2",
+    "rank1/state-2147483647/blk.3.hc.f.norm.bin": "668984531176c66f0f64fe1fac15628c0fcc5dacd9a99134351b87adb94ff89c",
+    "rank1/state-2147483647/blk.3.ids.bin": "44e20f06f08bbd31d89e58b84dce111c06c2a5ec91c8fab46bbad1840abbe7c8",
+    "rank1/state-2147483647/blk.3.moe.bin": "8b1a502b0076d6a10c3c9f5697460bf84271dfc29c1b0395d58f649a1927fa4c",
+    "rank1/state-2147483647/blk.3.prob.bin": "a3ce889fe62910a4917f98f29f304e7e0995bc50e018bd7a3ed67ac517f9dd7d",
+    "rank1/state-2147483647/blk.3.qsa.gate.bin": "119ddf6d72d709a87e48c226f40ebc6d6ef20b45b02115221217d545ff9a0832",
+    "rank1/state-2147483647/blk.3.qsa.ids.bin": "b69f0035d122cce8b3f703466e7fc993c6ed2d19fe13284591510699f3d8b51c",
+    "rank1/state-2147483647/blk.3.qsa.ik.bin": "477ff8e471328533667f12a1491e3b93e6656402fa27b2461df6e16ca9044426",
+    "rank1/state-2147483647/blk.3.qsa.iq.bin": "e18613de495612e597eabf344386d88feb942f50ef2db532afda7076ab4135e0",
+    "rank1/state-2147483647/blk.3.qsa.iqn.bin": "e9d79cbed499250bf7c199de724401c84d5b64da5caecf9f7f8069523c8d138c",
+    "rank1/state-2147483647/blk.3.qsa.k.bin": "bda01e2f01333b6a7bbb783c868e13e2de67d586c0d9978c6f19d34e7b1787db",
+    "rank1/state-2147483647/blk.3.qsa.keys.bin": "4c9c369c95139f1ce10d85a5fda0f98f21833b3d8c9747c160ccd66f737298f5",
+    "rank1/state-2147483647/blk.3.qsa.kn.bin": "7a572db361705cb5bcc2847af5116ac670ea10c4859c8abdaf4188d4b9267dbb",
+    "rank1/state-2147483647/blk.3.qsa.pooled.bin": "d8f5fc065730e5374887a3b03fbe3514caa4a2fe67420edef219473c6ba96ab2",
+    "rank1/state-2147483647/blk.3.qsa.q.bin": "22f29ad66577911eac3664d916e541101fd306091556bfc2119159a203cbe690",
+    "rank1/state-2147483647/blk.3.qsa.qgate.bin": "45b5ff3d0c845ea9fa584156702730825f44f250af56dbda06ca8493c51e31cc",
+    "rank1/state-2147483647/blk.3.qsa.raw.bin": "680343de6e63bb9423db0e906fc66bcf0cd1e1e910aa8b6430a9edbf40e78f6c",
+    "rank1/state-2147483647/blk.3.qsa.v.bin": "ac9a032337b9b9d5357042b202c0af11112831a944d1eda8de190bbab5433a3b",
+    "rank1/state-2147483647/blk.3.qsa.values.bin": "9e894a986c7e233f8945dadf96fe6b835c0569fca999fb0330cb3ab33b01b8ca",
+    "rank1/state-2147483647/blk.3.qsa.y.bin": "4a71230c7b3171b75a49206344da8c3493b62d6195259d24d120c6cccb161410",
+    "rank1/state-2147483647/blk.3.router.bin": "85865baf98e38624a99f6ee197554bb3d8f30e8dfd582512526b900e9893d910",
+    "rank1/state-2147483647/blk.3.routes.bin": "d5244c73ecc8ec1d6159ab5a6a4affca15375f6cdac1b758130a36892c3202e4",
+    "rank1/state-2147483647/blk.3.routes.down.bin": "fd3f86fcf98799b526cb80a9fe21344d2d9550cc3dd2254020b085e0161b1072",
+    "rank1/state-2147483647/blk.3.shared_gate.bin": "47f654f9820bd916804bde48e5f6cbe31c1f17cff560795e2ad988e2cdca9928",
+    "rank1/state-2147483647/blk.3.shexpact.bin": "34355945e030ed3b58fd515be2cd9d652c4aa0879395e5da47ea644ebbc551ff",
+    "rank1/state-2147483647/blk.3.shexpdown.bin": "40e8ef99650a50fa89ec3234493d6e9204aeb45c1ee261bad522c6e7b5330659",
+    "rank1/state-2147483647/blk.3.shexpgate.bin": "0989ca21cbccfed5dfb2a12d16bd0b60b5c91551a2e4ab0a65df2b2418423992",
+    "rank1/state-2147483647/blk.3.shexpup.bin": "3c9b2f57da2c8bc85b7a36c20b9a270301b43d50da59098da4eab016ac45c3dc",
+    "rank1/state-2147483647/error.bin": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+    "rank1/state-2147483647/final.act.bin": "617f06854d6e50c563dea4e6f385aacdd919db9ba0bc01f15e976fa643c68f69",
+    "rank1/state-2147483647/final.gate.bin": "724d862d89bce5ac849ecdc03db44013a75b6a6fb03c49a8673e1429ee5c5f66",
+    "rank1/state-2147483647/final.low.bin": "9668288095b5295dfc75c52e2c12e573adb1b7f92b04cc09b67861b6dc1d0b04",
+    "rank1/state-2147483647/final.mix.bin": "a675ae20007179bee33f72669701a7be41f1642dd7ec2d24fa1ec7ce5e448955",
+    "rank1/state-2147483647/final.norm.bin": "b4eb4784964e055376d4ae7dde7a5dd5b35a1b168edc579572114f5c2bf184c3",
+    "rank1/state-2147483647/logits.bin": "d2b7d969270d42dd3dfa048835e1121465d55ac091678453efb25ed64f05cbb8",
+    "rank1/state-2147483647/next_token.bin": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450",
+    "rank1/state-2147483647/position.bin": "42f4aeb81c1ef81f771f3de8abca9dcf66901c575530e7672e4b1146474ae650",
+    "rank1/state-2147483647/state.json": "672b600ae7063179098c54f6e893004ab2924bb943e3a1da67c6c3a16423d1e5",
+    "rank1/state-2147483647/streams.bin": "cb56bfaf3f0844ccbd7486e248075c82dd416a384d6a1c22956e2b80ddefc4a5",
+    "rank1/state-2147483647/token.bin": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450"
+  },
+  "tokens": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+  ],
+  "rows": [
+    {
+      "launch_boundary": 0,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 1,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 2,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 3,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 4,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 5,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 6,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 7,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 8,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 9,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 10,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 11,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 12,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 13,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 14,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 15,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 16,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 17,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 18,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 19,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 20,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 21,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 22,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 23,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 24,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 25,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 26,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 27,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 28,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 29,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 30,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 31,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 32,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 33,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 34,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 35,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 36,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 37,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 38,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 39,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 40,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 41,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 42,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 43,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 44,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 45,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 46,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 47,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 48,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 49,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 50,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 51,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 52,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 53,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 54,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 55,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 56,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 57,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 58,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 59,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 60,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 61,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 62,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 63,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 64,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 65,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 66,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 67,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 68,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 69,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 70,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 71,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 72,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 73,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 74,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 75,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 76,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 77,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 78,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 79,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 80,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 81,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 82,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 83,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 84,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 85,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 86,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 87,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 88,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 89,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 90,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 91,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 92,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 93,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 94,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 95,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 96,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 97,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 98,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    },
+    {
+      "launch_boundary": 99,
+      "cancelled_halves": 7,
+      "tokens_equal": true,
+      "final_state_hashes_equal": true
+    }
+  ]
+}

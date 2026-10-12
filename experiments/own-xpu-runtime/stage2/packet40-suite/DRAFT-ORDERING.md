@@ -1,0 +1,13 @@
+# Packet 40 draft ordering and kernel identity
+
+The native controller submits the rank 1 draft, receives a submission acknowledgement, and starts rank 1's confirmed target half before waiting for the guess. The draft and target half use one in-order queue. Private pinned copies of the draft status and token are queued immediately after the draft's last kernel. Target token and stream uploads are then queued from separate private pinned staging storage without draining the draft.
+
+The rank's one owning thread checks the draft-copy event while issuing target launches, while waiting for its half to finish, and while waiting for the next native command. There is no helper thread sharing the owner, queue, event ledger, or streams. Once the copy is complete, it reads the pinned bytes and publishes a position- and command-sequence-bound guess behind a release/acquire mailbox fence. The target half continues on the queue. Event polling and profiling occur before the owner retires events. The draft result is never a target `Reply.token`.
+
+The draft reads the previous confirmed target hidden state through an ordered copy before any next-half overwrite. All draft mutable allocations are distinct from target buffers and weights, checked at construction. It shares only immutable target output-head weights and RoPE data. The output head, dense BF16 projections with a matching class, and non-GEMV operators use the current selected dispatch. `draft-kernel-choices.json` records every draft site and its selected identity.
+
+Two format boundaries are explicit. Target expert kernels consume IQ2/IQ3/IQ4 bytes; draft experts consume their separately registered draft-only INT8 representation. Those kernels cannot be substituted across formats. The target's selected p30 small kernel consumes Q8_0 bytes; the draft's BF16 projections retain the same four-subgroup rows4 schedule with BF16 loads. There is no invented compatible specialization. The KD host reference must be regenerated with this binary and the same dispatch as the device window.
+
+A cooperative draft failure publishes no guess and disables further draft computation for the request. It does not change the target's state, error buffer, or output authority. Device/owner failures still fail the window; they are not suppressed as draft guesses. Quiescent reset zeros the private pinned staging/publication storage and clears the publication callback.
+
+The Python controller keeps the synchronous draft path as an independent scheduling reference. It uses exactly the same draft kernels and target kernels. Native/Python output identity, failure fallbacks, and retention independence are checked by `draft_async_gate.py`; actual overlap and latency remain device-window evidence.

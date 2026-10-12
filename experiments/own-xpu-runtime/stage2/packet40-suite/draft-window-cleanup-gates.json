@@ -1,0 +1,36 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "gates": 5,
+  "rows": [
+    {
+      "case": "normal",
+      "passed": true,
+      "cooperative_stop": true,
+      "bounded_drain": true
+    },
+    {
+      "case": "disk-full-and-journal-error",
+      "passed": true,
+      "cooperative_stop": true,
+      "bounded_drain": true
+    },
+    {
+      "case": "stop-write-error",
+      "passed": true,
+      "cooperative_stop": true,
+      "bounded_drain": true
+    },
+    {
+      "case": "bounded-retained-owner",
+      "passed": true,
+      "cooperative_stop": true,
+      "bounded_drain": true
+    }
+  ],
+  "post_launch_bookkeeping_guarded": true,
+  "source_sha256": {
+    "draft_window.py": "daa3c2637e9027c0eec35a98e03a70ddd86f927531a83be032431dd6f458013f",
+    "test_draft_window_cleanup.py": "65bfe069969c2d9bf476ec6566740b47bb118743b5f2a12a5ec347e248d00fc9"
+  }
+}

@@ -1,0 +1,192 @@
+--- /dev/null
++++ b/experiments/own-xpu-runtime/stage2/packet40-suite/strict_snapshot.hpp
+@@ -0,0 +1,111 @@
++#pragma once
++// Exact speculative rollback. Only the private backup is cleared at a request
++// boundary; no model allocation is canonicalized, hidden or reset before hashing.
++namespace pipeline {
++class SpeculativeImage {
++ Engine& e;
++ struct Source {std::string name;Allocation standalone=0;size_t bytes=0;bool bank=false,kv=false,pooled=false;};
++ struct Extent {Allocation id;size_t offset,bytes,backup_offset;};
++ std::vector<Source> sources;
++ std::vector<Extent> saved;
++ std::vector<std::pair<Allocation,size_t>> protected_active,protected_qsa;
++ Allocation backup=0;size_t capacity=0;bool valid=false,dirty=false;
++ unsigned parity=0;int64_t history0=0,history1=0;
++ std::map<std::string,std::vector<uint8_t>> lookup;
++ std::vector<std::vector<uint32_t>> selected;
++ std::vector<int> loaded;
++ std::vector<Allocation> fp32_sources;
++ std::vector<size_t> fp32_extents;
++ uint64_t captures=0,restores=0,saved_bytes=0;
++ void zero_private() {
++  if(!backup)return;
++  std::vector<uint8_t> zeros(std::min(capacity,size_t(4*1024*1024)),0);
++  for(size_t off=0;off<capacity;off+=zeros.size())e.upload(0,backup,off,zeros.data(),std::min(zeros.size(),capacity-off));
++  dirty=false;
++ }
++ void copy(bool restore) {
++  ownrt::CopyEngine engine(e.dev(0));
++  for(const auto& x:saved)for(size_t off=0;off<x.bytes;off+=128ull*1024*1024){
++   size_t count=std::min(x.bytes-off,size_t(128ull*1024*1024));
++   e.tail=restore?engine.copy(x.id,x.offset+off,backup,x.backup_offset+off,count,{}):engine.copy(backup,x.backup_offset+off,x.id,x.offset+off,count,{});
++  }
++ }
++public:
++ explicit SpeculativeImage(Engine& owner):e(owner) {
++  if(e.a.rank!=0)return;
++  std::set<std::string> outputs{"token","position","token_history"},kv;
++  std::set<Allocation> represented;
++  for(const auto& site:e.p.launches){outputs.insert(site.outputs.begin(),site.outputs.end());if(site.op=="qsa_append_pool")kv.insert(site.outputs.begin(),site.outputs.end());}
++  for(const auto& [name,slot]:e.buffers[0]) {
++   represented.insert(slot.id);
++   if(!outputs.count(name))continue;
++   Source row{name,0,slot.n*flash::scalar_bytes(slot.type),e.state_spares.count(name)!=0,kv.count(name)!=0,ends(name,".pooled")};
++   capacity+=row.bytes;sources.push_back(std::move(row));
++  }
++  for(const auto& [name,id]:e.state_spares)represented.insert(id);
++  for(const auto& [id,owner]:e.allocations){const auto& row=e.dev(owner.first).arena.row(id);
++   if(!row.live||row.category==Category::weights||row.category==Category::pinned_slab||represented.count(id)||id==e.one[0])continue;
++   require(owner.first==0&&row.memory==Memory::device,"snapshot owner/memory");
++   sources.push_back({{},id,row.bytes,false,false,false});capacity+=row.bytes;
++  }
++  require(capacity>0,"empty speculative snapshot");saved.reserve(sources.size());
++  backup=e.allocate(0,"speculative-private-image",capacity,Category::runtime_overhead,Lifetime::request);
++  zero_private();
++ }
++ void begin() {
++  require(e.a.rank==0&&backup&&!valid,"snapshot begin ownership");e.drain();
++  require(!e.poisoned&&!e.integer(0,"error"),"snapshot cannot erase target failure");
++  // Host layer streaming releases its weights at every completed half. Restoring
++  // metadata never revives an allocation freed by a later layer transition.
++  if(!e.resident)for(int layer:e.loaded_layer)require(layer==-1,"snapshot requires released streaming layer");
++  parity=e.bank_parity;history0=e.history0;history1=e.history1;
++  lookup=e.lookup_ids;selected=e.selected;loaded=e.loaded_layer;fp32_sources=e.fp32_sources;fp32_extents=e.fp32_extents;
++  int position=e.integer(0,"position");require(position>=0&&position<e.p.g.context,"snapshot position");
++  saved.clear();protected_active.clear();protected_qsa.clear();size_t offset=0;
++  for(const auto& source:sources){
++   Allocation id=source.standalone;size_t skip=0;
++   if(!id){id=source.bank?e.state_spares.at(source.name):e.buffers[0].at(source.name).id;
++    if(source.bank)protected_active.push_back({e.buffers[0].at(source.name).id,source.bytes});
++    if(source.kv){size_t rows=source.pooled?size_t((e.p.g.context+3)/4):size_t(e.p.g.context);
++     size_t valid_rows=source.pooled?size_t(position/4):size_t(position);
++     require(source.bytes%rows==0,"snapshot QSA row geometry");skip=valid_rows*(source.bytes/rows);
++     if(skip)protected_qsa.push_back({id,skip});
++    }
++   }
++   // Active recurrent banks and already-committed QSA prefixes are not saved:
++   // illegal mutation there must remain visible to the full-state gate.
++   size_t bytes=source.bytes-skip;if(bytes)saved.push_back({id,skip,bytes,offset});offset+=bytes;
++  }
++  require(offset<=capacity,"snapshot extent overflow");valid=true;dirty=true;
++  copy(false);++captures;saved_bytes+=offset;
++ }
++ void accept(){require(valid,"snapshot accept without speculation");e.drain();valid=false;}
++ void restore(){
++  require(valid,"snapshot restore without speculation");e.drain();
++  require(!e.poisoned&&!e.integer(0,"error"),"snapshot cannot roll back sticky failure");
++  require(e.bank_parity==parity,"snapshot restore bank selection");
++  if(!e.resident)for(int layer:e.loaded_layer)require(layer==-1,"snapshot restore streaming layer retained");
++  copy(true);e.drain();
++  e.history0=history0;e.history1=history1;e.lookup_ids=std::move(lookup);e.selected=std::move(selected);
++  e.loaded_layer=std::move(loaded);e.fp32_sources=std::move(fp32_sources);e.fp32_extents=std::move(fp32_extents);
++  for(size_t card=0;card<e.fp32_sources.size();++card)if(e.fp32_sources[card])require(e.dev(int(card)).arena.row(e.fp32_sources[card]).live,"snapshot resurrected dead FP32 source");
++  valid=false;++restores;
++ }
++ void boundary(){
++  require(!valid,"snapshot boundary with unresolved speculation");e.drain();if(dirty)zero_private();
++  lookup.clear();selected.clear();loaded.clear();fp32_sources.clear();fp32_extents.clear();saved.clear();
++  protected_active.clear();protected_qsa.clear();history0=history1=0;parity=0;
++  require(lookup.empty()&&selected.empty()&&loaded.empty()&&fp32_sources.empty()&&fp32_extents.empty()&&saved.empty(),"private host snapshot retirement");
++  if(backup)save(e.a.output/"speculative-snapshot.json","{\"passed\":true,\"capacity_bytes\":"+std::to_string(capacity)+",\"captures\":"+std::to_string(captures)+",\"restores\":"+std::to_string(restores)+",\"snapshot_payload_bytes\":"+std::to_string(saved_bytes)+",\"private_backup_zeroed\":true,\"committed_state_scrubbed\":false,\"private_host_backup_empty\":true,\"snapshot_valid\":false,\"counters_are_telemetry\":true}");
++ }
++#ifdef OWN_RT_HOST_ONLY
++ // CPU-only negative control: write a byte excluded from the rollback image.
++ // A subsequent strict final-state comparison MUST detect the corruption.
++ void corrupt_protected_for_gate(int which){
++  require(valid&&(which==0||which==1),"negative control outside speculation");e.drain();
++  const auto& list=which?protected_qsa:protected_active;require(!list.empty(),"negative control lacks protected extent");
++  auto [id,bytes]=list.front();require(bytes,"empty protected extent");auto raw=e.readback(0,id,1);raw[0]^=1;e.upload(0,id,0,raw.data(),1);
++ }
++#endif
++};
++}
+--- a/experiments/own-xpu-runtime/stage2/packet40-suite/rank.hpp
++++ b/experiments/own-xpu-runtime/stage2/packet40-suite/rank.hpp
+@@ -1,4 +1,5 @@
+ #pragma once
++#include "strict_snapshot.hpp"
+ #include <poll.h>
+ #include <functional>
+ #include <sys/mman.h>
+@@ -97,7 +98,7 @@
+   std::ofstream f(dest/name,std::ios::binary);f.write(reinterpret_cast<const char*>(bytes.data()),bytes.size());require(bool(f),"fixture write");
+  }
+ }
+-static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uint8_t* shared,bool prepared_inputs=false) {
++static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uint8_t* shared,SpeculativeImage& image,bool prepared_inputs=false) {
+  require(!candidate.pending,"half before resolving prior candidate");
+  require(request.position>=0&&request.position<e.p.g.context,"half position bound");
+  if(!prepared_inputs)require(e.integer(0,"position")==request.position,"position sequence mismatch");
+@@ -108,6 +109,7 @@
+  struct rusage before{},after{},thread_before{},thread_after{};getrusage(RUSAGE_SELF,&before);getrusage(RUSAGE_THREAD,&thread_before);
+  auto waits=e.host_waits;double waited=e.wait_ms;e.family_ms.fill(0);
+  auto start=std::chrono::steady_clock::now();double gpu=e.gemv_ms+e.nongemv_ms;
++ if(request.speculative)image.begin();
+  candidate={};candidate.pending=true;candidate.position=request.position;candidate.fixture=request.fixture;candidate.speculative=request.speculative;
+  if(e.a.rank==0){candidate.h0=e.history0;candidate.h1=e.history1;
+   if(e.buffers[0].count("token_history"))candidate.token_history=e.readback(0,e.buffers[0].at("token_history").id,16);}
+@@ -166,12 +168,10 @@
+  if(!e.class_timing)e.timings<<"null";else {e.timings<<'{';for(size_t j=0;j<e.families.size();++j)e.timings<<(j?",":"")<<ownrt::quote(e.families[j])<<':'<<e.family_ms[j];e.timings<<'}';}e.timings<<"}\n";
+  return {0,token,error,int32_t(bytes),request.sequence,e.a.rank,{int32_t(candidate.cancelled),int32_t(issued)},Engine::ms(start),e.gemv_ms+e.nongemv_ms-gpu,0,0};
+ }
+-static void undo(Engine& e,Candidate& c) {
++static void undo(Engine& e,Candidate& c,SpeculativeImage& image) {
+  require(e.a.rank==0&&c.pending&&c.speculative,"rollback outside rank0 speculation");
+  e.drain();require(!e.integer(0,"error"),"sticky error cannot be rolled back");
+- if(c.swapped)e.swap_state_banks();e.history0=c.h0;e.history1=c.h1;
+- if(!c.token_history.empty())e.put(0,"token_history",c.token_history.data(),c.token_history.size());
+- e.put(0,"position",&c.position,4);e.lookup_ids.clear();e.fp32_sources[0]=0;e.fp32_extents[0]=0;c={};
++ if(c.swapped)e.swap_state_banks();image.restore();c={};
+ }
+ static void state_dump(Engine& e,int sequence) {
+  std::ostringstream o;o<<"{\"history0\":"<<e.history0<<",\"history1\":"<<e.history1<<",\"buffers\":{";bool comma=false;
+@@ -206,6 +206,7 @@
+   dump_plan(a.output/"launch-plan.json",p);write_plan(a.output/"plan.json",p,*weights,1,a);
+   engine=std::make_unique<Engine>(*weights,a,p);record_host_memory(a.output,"before_load");engine->initialize();
+   if(a.rank==0)banks(*engine);else {engine->prepare_plan();engine->prepare_commands();}
++  SpeculativeImage image(*engine);
+ #ifndef OWN_RT_HOST_ONLY
+   if(a.rank==0)weights->warm_lookups();
+ #endif
+@@ -241,12 +242,15 @@
+    else if(r.op==half){
+     bool prepared_inputs=async_half_ready;
+     if(prepared_inputs){require(r.position==async_half_position&&r.token==async_half_token,"asynchronous draft/half confirmed identity");provider->queue_half_inputs(r.token,static_cast<uint8_t*>(mapping)+slot_bytes);async_half_ready=false;}
+-    response=half_step(*engine,c,r,static_cast<uint8_t*>(mapping),prepared_inputs);
++    response=half_step(*engine,c,r,static_cast<uint8_t*>(mapping),image,prepared_inputs);
+    }
+-   else if(r.op==pipeline::accept){require(c.pending,"accept without candidate");publish(*engine,c);if(c.fixture>0)++accepted;c={};}
+-   else if(r.op==rollback)undo(*engine,c);
+-   else if(r.op==dump){require(!c.pending,"dump uncommitted state");state_dump(*engine,r.position);if(r.position==2147483647)request_state_inventory(*engine);}
+-   else if(r.op==11){request_reset(*engine,c,provider.get(),a.output/("reset-"+std::to_string(r.sequence)+".txt"),accepted);accepted=0;}
++   else if(r.op==pipeline::accept){require(c.pending,"accept without candidate");publish(*engine,c);if(c.speculative)image.accept();if(c.fixture>0)++accepted;c={};}
++   else if(r.op==rollback)undo(*engine,c,image);
++   else if(r.op==dump){require(!c.pending,"dump uncommitted state");image.boundary();state_dump(*engine,r.position);if(r.position==2147483647)request_state_inventory(*engine);}
++   else if(r.op==11){image.boundary();request_reset(*engine,c,provider.get(),a.output/("reset-"+std::to_string(r.sequence)+".txt"),accepted);accepted=0;}
++   #ifdef OWN_RT_HOST_ONLY
++   else if(r.op==12){require(a.rank==0&&c.pending&&c.speculative,"negative control ownership");image.corrupt_protected_for_gate(r.token);}
++#endif
+    else if(r.op==fail)throw std::runtime_error("injected rank failure");
+    else if(r.op==stall){auto until=std::chrono::steady_clock::now()+std::chrono::seconds(a.seconds);while(std::chrono::steady_clock::now()<until){pipeline_cancel_check();poll(nullptr,0,10);}throw std::runtime_error("bounded injected stall");}
+    else throw std::runtime_error("unknown rank command");
+@@ -255,7 +259,7 @@
+    return response;
+   };
+   for(;;){Request r{};transfer(a.channel,&r,sizeof r,false,a.seconds);require(r.sequence==++sequence,"command sequence");
+-   if(r.op==finish){require(!c.pending,"finish with unresolved candidate");if(provider)provider->dump(engine->a.output/"draft-final-state");break;}
++   if(r.op==finish){require(!c.pending,"finish with unresolved candidate");image.boundary();if(provider)provider->dump(engine->a.output/"draft-final-state");break;}
+    Reply response{};
+    if(r.op==10){
+     require(!c.pending,"native entry unresolved candidate");

@@ -1,0 +1,50 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "structural_checks": [
+    "bank ids/maps/commands/parity move together after drain",
+    "both command parities captured before request admission",
+    "miss drains before bank restore and history/cache reset",
+    "rank1 cannot speculate and only a completed rank0 candidate swaps after drain",
+    "partial launch cancellation preserves issued prefix owner tail",
+    "cancelled candidate cannot publish fixtures",
+    "target-only verification identity guards cancellation",
+    "audit compares selected commands to independent current-bank reconstruction",
+    "audit bypasses cached operation binding map",
+    "compute and prepared submission poll before backend fault catch",
+    "legacy multi-pass submission has the same cancellation boundary",
+    "issue rejects changed owner and generation",
+    "release requires idle and invalidates commands",
+    "single native owner supports prepared submission on in-order queue",
+    "device accessor rejects only on failure without temporary string",
+    "prepared issue site has no allocation/string/map/query calls",
+    "owner issue success has no allocation/string/map/query calls",
+    "rank loop uses captured metadata and fixed layer capture array",
+    "per-launch prepared decision is cached boolean"
+  ],
+  "checks": 19,
+  "negative_mutations_rejected": 14,
+  "mutations": [
+    "prepared.swap(alternate_prepared)",
+    "issue_sites.swap(alternate_issue_sites)",
+    "std::swap(buffers[0].at(name).id,id)",
+    "bank_parity^=1",
+    "x.operation_bytes==y.operation_bytes",
+    "fresh_arguments=true",
+    "rank.hpp:!candidate.cancelled",
+    "rank.hpp:candidate.swapped=true;",
+    "rank.hpp:if(c.swapped)",
+    "rank.hpp:e.tail=event;++issued;",
+    "rank.hpp:require(!c.cancelled,",
+    "rank.hpp:__ATOMIC_ACQUIRE",
+    "owner.cpp:if(!item.copy_counter&&before_compute)before_compute();",
+    "owner.cpp:if(before_compute)before_compute();"
+  ],
+  "source_sha256": {
+    "main.cpp": "93a9b7be9803decbb4929e28561b4972ebdcb204b5ce79713b6fcdbcdeea7de2",
+    "rank.hpp": "3defe947138b86e2c453b02a006288c8fca75f52bd59d156f3d1d8dc94ac053c",
+    "owner.cpp": "8e82affd2c119ef2ef13df14c11063f60ec8ba641ed643b7f2c652e7c256e94b",
+    "single_device.cpp": "4275f214b3727f5d23231b844992db35443446d004c0d34b5cc30b374a3fe11b"
+  },
+  "limitation": "Source/mutation proof only; execution gates independently establish arguments, tokens, layers and rollback bytes."
+}

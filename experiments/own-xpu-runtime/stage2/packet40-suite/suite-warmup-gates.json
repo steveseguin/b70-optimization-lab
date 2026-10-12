@@ -1,0 +1,100 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "rank_processes_started": 0,
+  "gates": 11,
+  "rows": [
+    {
+      "case": "first-measured-prompt-is-old-warmup",
+      "warmup": [
+        2,
+        5,
+        3,
+        7,
+        2
+      ],
+      "distinct": true,
+      "order_independent": true
+    },
+    {
+      "case": "old-warmup-is-long-prompt-prefix",
+      "warmup": [
+        2,
+        5,
+        3,
+        7,
+        2
+      ],
+      "distinct": true,
+      "order_independent": true
+    },
+    {
+      "case": "old-warmup-is-long-prompt-interior",
+      "warmup": [
+        2,
+        5,
+        3,
+        7,
+        2
+      ],
+      "distinct": true,
+      "order_independent": true
+    },
+    {
+      "case": "short-suite-prompts",
+      "warmup": [
+        2,
+        5,
+        3,
+        7,
+        1
+      ],
+      "distinct": true,
+      "order_independent": true
+    },
+    {
+      "case": "thirty-three-consecutive-collisions",
+      "warmup": [
+        2,
+        5,
+        3,
+        9,
+        4
+      ],
+      "distinct": true,
+      "order_independent": true
+    },
+    {
+      "case": "first-token-eos-warmup-only",
+      "warmup_completed_two": true,
+      "normal_eos_unchanged": true,
+      "controller_boundary_calls": [
+        {
+          "eos": [],
+          "tokens": [
+            248044,
+            7
+          ],
+          "draft_decode_head_calls": 1
+        },
+        {
+          "eos": [
+            248044,
+            248046
+          ],
+          "tokens": [
+            248044
+          ],
+          "draft_decode_head_calls": 0
+        }
+      ]
+    }
+  ],
+  "guards": 4,
+  "real_and_mini_vocabulary_checked": true,
+  "source_sha256": {
+    "suite.py": "2769b8ea58cef73ccf950243ba34aff4630b35255526e99dd3ec2946349a1a7e",
+    "test_suite_warmup.py": "74d0dc6844f8c2e601f3478badcf0da9a1244d1c1c29d235ed829d70293c3253"
+  },
+  "scope": "selection, source wiring, mocked controller EOS boundary only; integrated order/window/suite gates run separately"
+}

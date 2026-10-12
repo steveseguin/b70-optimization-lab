@@ -1,0 +1,114 @@
+{
+  "schema": "packet38.seal-window-source-review.v1",
+  "reviewed_utc": "2026-10-12T06:34:24.825836+00:00",
+  "review_complete": true,
+  "source_review_passed": true,
+  "device_executed": false,
+  "rank_processes_started": 0,
+  "dynamic_final_seal_pending": true,
+  "source_sha256": {
+    "seal.py": "83682dd245b67ae85bed363db8efe075c5155ab2a93403af73f740fd6b9b994f",
+    "test_window_seal_admission.py": "9da8ba8d22c64e164dd044537414e48c6ac785b9685985df2a1750529cff5901",
+    "test_seal_bootstrap.py": "514a7192d35fe4015a45a23484acc8772809d30a4abf884588ef199ea5c7042c",
+    "window.py": "69b8ae293a20330816a96a44bd0da837f64b0d44498c5d90e655a7353cfd2f75",
+    "draft_window.py": "ad8e90f12f584cb5385b04986b85ea623ea8a6d7392092ed6b0a1f13ca45d8be",
+    "suite.py": "ff60b3900a5b0210f0e5d9fcd6e0a29316b3fe6338246413bfc833efca453cad",
+    "suite_export.py": "6c4b0a2a2d5778d81263c3101335eb35b1a389d79a4977217ce15ae3780c548f",
+    "cpu_campaign.py": "7d76ffe1b2db7486f5d62e73580dbe042d2ba4bd9cdc153a079ac1103d4aeb39",
+    "test_suite_compiler.py": "73358d245bcb339fb4a9efadce522b8459d56b4cfd15b65e558a48b93a67c117",
+    "test_suite_export_retention.py": "d53b93827ec7f5b1d583ef6b1886ce0e9d7ede940e3d8d40a2f1b1d28448c1e4"
+  },
+  "document_snapshots": {
+    "WINDOW.md": "567284b27d45ffa113fa729085ba81311ca2dc0f1ca32d9507da5e81699a8aba",
+    "DEADLINES.md": "91a24ba609f81b8cc8b157eede9c50d99641d095ada3f027c470633afcdd3801"
+  },
+  "findings": [
+    {
+      "id": "seal-final-admission",
+      "status": "fixed-source; actual admission pending",
+      "finding": "An optional admission receipt allowed a final-looking seal before complete wrapper admission rehearsal.",
+      "resolution": "Explicit --bootstrap writes only build-admission-candidate.json. Default final seal requires source/consumed-contract-bound window-seal-admission-gates.json. Production wrapper still reads only final build-receipt.json; candidate injection exists only in CPU test mocks."
+    },
+    {
+      "id": "seal-warmup-binding",
+      "status": "fixed-source; actual suite evidence pending",
+      "finding": "Binary/checker/manifest binding alone did not reject old Python suite evidence that warmed the first measured prompt.",
+      "resolution": "Final seal parses archived warmup receipt, verifies excluded status, two outputs, deterministic distinct five-token prompt against admitted input snapshots, token hash, EOS-only-warmup rule and complete reset assertion; final receipt binds warmup receipt hash."
+    },
+    {
+      "id": "window-disk-sequencing",
+      "status": "parent updating documentation",
+      "finding": "Keeping all sequential W2 pair final-state snapshots under build can exhaust the 3GB packet budget.",
+      "resolution_requested": "Archive each completed controller pair only after parity comparison, preserve K/KD prerequisites and captured CPU references for later windows; parent owns documentation."
+    }
+  ],
+  "confirmed": [
+    "Required K0/K1a/K1b/K2/W0p/KD windows present.",
+    "W2s/W2m/W2d/W2mc have both python/native commands; ngram/all-miss parity commands also present.",
+    "WS native MTP and WSs native none suite commands present, repeat2 explicit.",
+    "Deadline table agrees with CONFIG and every watchdog exceeds max(300,4*(estimate+17)).",
+    "Nice0 W parent, inherited taskset affinity, LD_LIBRARY_PATH unchanged, packet-local HOME and diagnostics labels documented.",
+    "cpu-handover-cost.json remains mandatory seal gate.",
+    "build.py seal still invokes main() without argv parsing; argparse exists only at standalone entry.",
+    "window-retention-gates.json is mandatory final/bootstrap source-bound gate.",
+    "Final seal requires at least18 receipt metadata checks, including non-EOG/decode-rank metadata."
+  ],
+  "mock_gate_receipt": "seal-bootstrap-gates.json",
+  "mock_gate_receipt_sha256": "465883ad2f20ea475c9aff591a347fc6981606d46f5f3b7e8cb35e02603f0d01",
+  "mock_checks": 7,
+  "limits": [
+    "No actual final seal, admission rehearsal or GPU window was executed by this review.",
+    "Existing/full queued CPU campaigns remain owned by parent; source review does not declare them passed.",
+    "The new mock gate tests seal output isolation and warmup refusal cases, not the complete all-window admission path."
+  ],
+  "intel_cpu_suite_qualification": {
+    "reviewed_utc": "2026-10-12T07:33:05.538167+00:00",
+    "source_review_passed": true,
+    "actual_suite_execution_pending": true,
+    "decision": "Only the persistent real CPU suite uses the independently qualified Intel host executable to reduce qualification time. No speedup is inferred or claimed. GNU native-mini, request-order proofs, native real-controller comparisons and captures retain their existing identities.",
+    "preflight": "Before launch, all five Intel modes must pass 8-token/384-fixture checks against the current Intel binary and their actual prerequisite dispatch-p33 hash. The intended suite dispatch-p38 hash is separate and its current CPU kernel source/binary/child receipts plus full-array dual-compiler capacity qualification are required. Qualification plan persists both dispatch identities before launch.",
+    "export": "Both rank executable paths must be the Intel host path; every request binary hash must match that binary; compiler/executable/hash are exported explicitly.",
+    "seal": "Separate Intel suite hash/path; GNU host_sha unchanged. Seal checks qualification plan hash, separate p33 prerequisite and p38 suite dispatch hashes, five mode receipt hashes and both p38 kernel qualification receipts.",
+    "tests": [
+      {
+        "receipt": "suite-compiler-gates.json",
+        "sha256": "fadaf18e8397bd90b4badfb2c21256360b5e15754e47c9888c93252ed04f53e8",
+        "mock_checks": 10
+      },
+      {
+        "receipt": "suite-export-retention-gates.json",
+        "sha256": "7769bfabfc33e802a13a1ecec8589e6e6fff69d06e90c23281d1a7407c985d14",
+        "synthetic_checks": 9
+      },
+      {
+        "receipt": "seal-bootstrap-gates.json",
+        "sha256": "465883ad2f20ea475c9aff591a347fc6981606d46f5f3b7e8cb35e02603f0d01",
+        "mock_checks": 7
+      }
+    ],
+    "runtime_source_changed": false,
+    "rank_processes_started": 0,
+    "actual_preflight_check": {
+      "receipt": "suite-compiler-admission-check.json",
+      "sha256": "aeb6da1224bd0870ace85c1037b4cee80f011984c0a3cc7fc189c8686bc5d2bb",
+      "passed": true,
+      "rank_processes_started": 0
+    },
+    "prior_refusal": "Initial preflight incorrectly expected p38 for real-mode receipts actually measured under p33; parent preserved refusal. No rank launched. Dispatch identities are now separate; the actual preflight passes."
+  },
+  "cleanup_gate_requirement": {
+    "recorded_utc": "2026-10-12T08:51:35.547398+00:00",
+    "required": true,
+    "minimum_checks": 6,
+    "receipt": "cleanup-path-gates.json",
+    "receipt_sha256": "04afec75d5e62b7c384a47e15a442ec52efd4fa9dcdbe17112d5add386c1b5ed",
+    "source_hashes_verified": true,
+    "source_coverage": [
+      "cleanup.py",
+      "pipeline_draft_agreement.py",
+      "storage.py",
+      "test_cleanup_paths.py"
+    ],
+    "scope": "required gate inventory/source binding only; cleanup reviewer owns underlying path-safety source review"
+  }
+}

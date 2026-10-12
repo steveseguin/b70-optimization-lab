@@ -1,0 +1,50 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "cases": 3,
+  "rows": [
+    {
+      "case": "exact-mini-startup",
+      "passed": true,
+      "owner_passed": true,
+      "archive": {
+        "path": "evidence/scratch-capture-startup-1791824676955007185-success.jsonl.gz",
+        "sha256": "0a76557acbc872ca62927e149adba4247c4d9b76e570e6f069f985b6fe35d412",
+        "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
+        "files": 36,
+        "retained_files": 10,
+        "retained_bytes": 11799
+      },
+      "fixture_files": 26,
+      "failure": null
+    },
+    {
+      "case": "missing-receipt",
+      "passed": true,
+      "owner_passed": false,
+      "archive": {
+        "path": "evidence/scratch-capture-startup-1791824676955007185-missing-receipt.jsonl.gz",
+        "sha256": "04399bb03c5f25d6387dde1767a23ee86cf93f89f4f69a0d211d127a61df5a26",
+        "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
+        "files": 1,
+        "retained_files": 1,
+        "retained_bytes": 48
+      },
+      "fixture_files": 0,
+      "failure": "capture owner exited 1 without receipt.json; startup log retained"
+    },
+    {
+      "case": "preexisting-output-preserved",
+      "passed": true
+    }
+  ],
+  "binary_sha256": "b60ace4f20d5445cf3bb18313b786a84671ccc67b27a850ae650bf21b94870ec",
+  "source_sha256": {
+    "capture_startup_gate.py": "7dd670a36d65bfe40cb462e1f10c41343e9522521be58f73e6fef4cb32b5713a",
+    "capture40.py": "a4a6b7b3dd639a6b780b681503359df063e205dc42994fd39c4475ecc282e1bf",
+    "main.cpp": "93a9b7be9803decbb4929e28561b4972ebdcb204b5ce79713b6fcdbcdeea7de2",
+    "mtp.hpp": "13c5dd22a6e9ec7225c7c3900a8a406a1a95b2315b8d10bb0597b8be3889d4a8",
+    "dispatch-p38.json": "2c7783ae00f9bbaee355a285b56fe46fc2178e483274c5e03c8e0e1bcbf335a5"
+  },
+  "scope": "Exact CPU mini capture startup, missing-receipt error and preserved startup log, archive-before-delete cleanup, and refusal to remove preexisting output"
+}
