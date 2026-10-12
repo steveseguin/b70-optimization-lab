@@ -38,7 +38,7 @@
     "summarize.py": "853e7f9f237f5116a44614853f2a3a6c1cd2efb78f90f267366ddddb0184e93d",
     "test_protocol.py": "292fbb8d644f44d5b7a39c9f65c8d649b2df9479388f8f84e1be7d416d088aa4",
     "timing_prepare.py": "5a7cc679d99cf2084086874d508b9ade781b9fc497209fbaacee9e8daf995777",
-    "window.py": "c2ad82bf3ab86416dcef9b0f92cd84f5374571db6fef775dc1100105224ede39"
+    "window.py": "b25aee3cf7f40f7a1326cd92f76454eb9c33cdfba23b27c9a6ccca78ffc15efb"
   },
   "external_object_sha256": {
     "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/jit-smoke.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/jit_smoke.cpp.o": "1293ecfa388adadc62617bdb6f3cf7db495bf5f4449e746ce1c396d393acb12c",
@@ -97,5 +97,14 @@
     "passed": true
   },
   "raw_dumps": "ignored build/; regenerate with documented pinned input sequence",
-  "retention": "codegen.json over1MiB is extracted reproducibility evidence, with loop/message/metadata tables and final ELF-text proof; see REBUILD.md"
+  "retention": "codegen.json over1MiB is extracted reproducibility evidence, with loop/message/metadata tables and final ELF-text proof; see REBUILD.md",
+  "coordinator_amendments": [
+    {
+      "utc": "2026-10-12T01:57Z",
+      "file": "window.py",
+      "before_sha256": "c2ad82bf3ab86416dcef9b0f92cd84f5374571db6fef775dc1100105224ede39",
+      "after_sha256": "b25aee3cf7f40f7a1326cd92f76454eb9c33cdfba23b27c9a6ccca78ffc15efb",
+      "reason": "K2 command list contained a PosixPath; json.dumps raised before the child was started (no device contact). One str() added; no native binary or kernel source changed."
+    }
+  ]
 }

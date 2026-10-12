@@ -44,7 +44,7 @@ def main():
  expected=60 if a.window=='K0' else 180;watchdog=max(300,4*expected)
  row=dict(schema='packet33.window.v1',window=a.window,passed=False,card=a.card,boot_id=boot,native_binary_sha256=binaries,environment=dict(os.environ),expected_seconds=expected,expectation_enforced=False,watchdog_seconds=watchdog,ldd=dep.stdout,device_accessed=True,kernel_execution=a.window=='K2',device_executed=a.window=='K2')
  command=helper([binary,'--authorized-device-window','--card',a.card,'--output',out/'run'])
- command+=['--cards','1'] if a.window=='K0' else ['--repetitions','200','--fixtures',P.parent/'packet29-merged/build/fusion-fixtures']
+ command+=['--cards','1'] if a.window=='K0' else ['--repetitions','200','--fixtures',str(P.parent/'packet29-merged/build/fusion-fixtures')]
  row['command']=command;requested=[];sent=None
  for sig in (signal.SIGINT,signal.SIGTERM):signal.signal(sig,lambda s,f:requested.append('coordinator signal'))
  def persist(): (out/'window.json').write_text(json.dumps(row,indent=2)+'\n')
