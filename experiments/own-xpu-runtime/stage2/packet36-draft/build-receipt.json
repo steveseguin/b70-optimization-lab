@@ -49,7 +49,7 @@
     "experiments/own-xpu-runtime/stage2/packet36-draft/dispatch.hpp": "24e557ed944bfe4e7c3e275c36b8d269c80f17408e08992d283fedcacaa0ee4e",
     "experiments/own-xpu-runtime/stage2/packet36-draft/dispatch_registry.hpp": "e041bef966611b730b967d64dcc352a0f244d7af921d3e57e6e043421688aad4",
     "experiments/own-xpu-runtime/stage2/packet36-draft/draft_auth_gate.py": "30a167ca3a30d5da04ffe87d5b53232b1002e839c09b9b4158260473bda3e7d0",
-    "experiments/own-xpu-runtime/stage2/packet36-draft/draft_window.py": "956541fccb2aa53db41a6a964103efe45ec446b402694ff91d1ec6e6ead2ac6f",
+    "experiments/own-xpu-runtime/stage2/packet36-draft/draft_window.py": "d80a349eecea0575a703394420f27d1d1cb0970cce19c4d33802c1264285f88a",
     "experiments/own-xpu-runtime/stage2/packet36-draft/entry_codes.py": "f85208c77c7f7111161a9436e7170032be84143785198315e80d88b89c42545a",
     "experiments/own-xpu-runtime/stage2/packet36-draft/expert_down.cpp": "027dd4750e4d285b55dd83e4289c19bee59398fbe84ca54e63d139866e1451ba",
     "experiments/own-xpu-runtime/stage2/packet36-draft/expert_down.hpp": "eb327fb716344751870064c00c843ec3147219f996dfd89a8818c70fede03ffb",
@@ -5471,6 +5471,14 @@
         "cpu_tests_sha256": "18b7116d26497a52c9ef5584516c1b5ba75dd81a2b3a073a5e8d08becb977246"
       },
       "reason": "K1a ran correctly on card 0 (111 fixtures, output hash equal to this packet's own sealed host fixture gate and to packets 29/32/35) but the inherited wrapper gate reads two build-receipt keys that this packet's restructured receipt no longer wrote; values taken from this packet's own sealed gate files, no binary, source or gate changed. K0 is rerun because it binds the receipt hash."
+    },
+    {
+      "utc": "2026-10-12T05:24Z",
+      "file": "draft_window.py",
+      "before_sha256": "956541fccb2aa53db41a6a964103efe45ec446b402694ff91d1ec6e6ead2ac6f",
+      "after_sha256": "d80a349eecea0575a703394420f27d1d1cb0970cce19c4d33802c1264285f88a",
+      "build_receipt_before_sha256": "cd172c18dcb5c0a9d9651f7caee455f2f7222849710f6dc4482a4c517d0adade",
+      "reason": "KD owner 0 completed on the card (150 draft rows, receipt passed, clean teardown) but the wrapper's memory watch read /proc/<pid>/status of the just-exited, not yet reaped child, found no RssAnon line and raised StopIteration (empty message), which the failure path turned into a latch. One default value added. No native binary, kernel source or gate changed. All windows are rerun because K0 binds the receipt hash."
     }
   ]
 }

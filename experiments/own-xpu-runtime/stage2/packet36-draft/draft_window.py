@@ -33,7 +33,7 @@ def run(a,out,env,watch,build):
      watch.check()
      try:
       status=Path(f'/proc/{child.pid}/status').read_text()
-      anon=int(next(row.split()[1] for row in status.splitlines() if row.startswith('RssAnon:')))*1024
+      anon=int(next((row.split()[1] for row in status.splitlines() if row.startswith('RssAnon:')),'0'))*1024 # an exited, not yet reaped child has no RssAnon line
       require(anon<8*1024**3,'KD anonymous memory exceeded8GiB')
      except FileNotFoundError:pass
      time.sleep(.1)
