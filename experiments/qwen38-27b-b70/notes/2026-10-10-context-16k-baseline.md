@@ -956,3 +956,62 @@ layout check; changes-only notes cannot, because the harness keeps every line th
 
 One seed, one stream. The 240K runs of the earlier in-place arms had one wrong answer in two of five runs; N32u is
 the first arm with every check and has this one run. Its two 240K runs are queued behind the retrieval-only run.
+
+### Retrieval alone at one million tokens: perfect for two thirds, then it falls behind
+
+Arm R32c40: the retrieval-only build that scored 39/39 and 45/46 at 240K, with 40 sentences per question and room
+for 70,000 characters of retrieved text (a question item asks seven questions here). Same 1M stream, same window.
+A stopped run: I ended it after 59 minutes, when it had answered every question item and then issued 223 empty
+commands at the final list.
+
+| mid-stream questions (203) | R32c40 retrieval only | N32u in-place notes |
+| --- | ---: | ---: |
+| all | 189 (93 %) | 203 (100 %) |
+| first / middle / last third of the run | 63/63, 70/70, **56/70** | 63/63, 70/70, 70/70 |
+| current / old value / who / rule / method | 55/58, 53/58, 28/29, **25/29**, 28/29 | 58/58, 58/58, 29/29, 29/29, 29/29 |
+| by distance back: 1-4 / 5-24 / 25-99 / 100-399 / 400+ items | 50/50, 46/50, 27/30, 47/48, **19/25** | 50/50, 50/50, 30/30, 48/48, 25/25 |
+| final list of 25 | not answered | 25/25 |
+| minutes | 46.9 to reach the final item | 50.2 for the whole run |
+
+Through item 420 it was perfect (140 of 140) and slightly faster than the keeper. All 14 errors are after item 500.
+Four are the standing rule: by then a confidential counter has been mentioned dozens of times, the 40 best matches
+for its name are recent changes (ties go to the later sentence), and the rule from item 1 is no longer among them;
+the model answered a number or null. The rest are values worked out from an incomplete list. This is what the
+coverage figures predicted before the run (187 of 228 questions coverable at 20 sentences, 220 at 40): the evidence
+a question needs grows with the history, and the rule is one sentence among thousands. The keeper's NOTES stayed
+at about 1,000 tokens with both rules in them.
+
+The final list is a limit of this build rather than of retrieval: the retrieved text for 25 questions filled the
+window, the next cut removed the question item and that text, and the model had nothing left to work from. A build
+that answers a long list a few questions at a time would not fail this way. The mid-stream comparison is the clean
+one.
+
+**The memory guard fired at 23:27:09** (1.28 GiB available; the floor is 1.6) two seconds after I stopped that
+client: its shutdown wrote out a 900-call history. Same cause as on campaign 9. The server was idle, nothing was
+lost but the three runs still queued (N32u on the two 240K seeds and on the hard stream); no GPU fault line in the
+kernel log; Gemma was restored at 23:32 and answers. For 1M runs the client's bookkeeping has to happen after the
+server is stopped, or without per-call snapshots; the campaign runner should do that itself.
+
+### Reading (campaign 10)
+
+1. **The fast form of the keeper is in-place notes.** Same or better answers at every size tested: 240K in 8.5 to 9.7
+   minutes against 15.7 and 16.5; 1M in 50 minutes against 83, at 228 of 228 with NOTES that the audit finds right
+   in all 63 versions. Two things made it: the notes call reuses what the server has already read, and after it the
+   window is emptied instead of trimmed, so nothing is read back. And three checks keep a changes-only reply
+   complete: every mention accounted for, every worked-out value with its working, every sum redone by the harness.
+2. **Notes written without thinking are not safe, whatever they score.** 2 to 8 wrong values in the NOTES of every
+   such run, with scores of 39, 39, 36, 39 and 38 of 39. Only the audit showed it.
+3. **Retrieval alone is much better than I said, and not enough at scale.** Built right it equals the keeper at
+   240K (39/39, 45/46) with no notes call at all, and for the first 420 items of the 1M stream. It falls behind
+   where the history is long (56/70 in the last third, the rule lost 4 times in 29) and where the text refers to
+   things indirectly (10/15 against 15/15 on the hard stream). Building it right took three tries: the store has
+   to hold everything from the moment it arrives, and the model must not be able to reach it with its own scripts.
+4. **So the two are not rivals.** Retrieval finds; notes hold what must always be in view (rules, current state)
+   at a fixed size. The keeper already has both halves (`recall` is retrieval on demand); automatic retrieval at
+   question time is wired as arms N32jr and N32er and not yet run.
+5. **A full rewrite of the notes can lose lines silently** (the keeper's own 1M run, once, five counters). Changes
+   applied by the harness cannot.
+
+Owed: N32u on both 240K seeds and on the hard stream (queued, lost to the guard); a second seed at 1M; the proxy
+with in-place notes (designed in the charter, not built); the hybrid arms; six items per notes call; a rule that
+does not name what it covers, which neither retrieval nor this benchmark has been tested on.
