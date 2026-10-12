@@ -1,0 +1,24 @@
+{
+  "repair-window-fixtures": {
+    "path": "evidence/scratch-repair-window-fixtures.jsonl.gz",
+    "sha256": "e4af9d700d59cd25281999f5dcf290cfecfc4d8460f18af2877f9ceec8c53090",
+    "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
+    "files": 35,
+    "retained_files": 32,
+    "retained_bytes": 4988162,
+    "reason": "Retain the new CPU wrapper/controller rehearsal text, metadata, state hashes and nested compressed evidence after removing reproducible scratch from the 3 GB build tree; not a model performance measurement",
+    "restore": "Read gzip JSONL file/chunk/end records; for retained files concatenate base64-decoded chunks, verify bytes and sha256 from file record, then write to a separate review directory. Non-retained raw fixture files keep hashes and are regenerated with CPU-COMMANDS.md.",
+    "bytes": 605781
+  },
+  "repair-window-models": {
+    "path": "evidence/scratch-repair-window-models.jsonl.gz",
+    "sha256": "c4b18a55097327af0cc7f3eef043322397903e2a485557dda8b5ed57c3a7267e",
+    "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
+    "files": 18613,
+    "retained_files": 1023,
+    "retained_bytes": 69818743,
+    "reason": "Retain the new CPU wrapper/controller rehearsal text, metadata, state hashes and nested compressed evidence after removing reproducible scratch from the 3 GB build tree; not a model performance measurement",
+    "restore": "Read gzip JSONL file/chunk/end records; for retained files concatenate base64-decoded chunks, verify bytes and sha256 from file record, then write to a separate review directory. Non-retained raw fixture files keep hashes and are regenerated with CPU-COMMANDS.md.",
+    "bytes": 6316904
+  }
+}

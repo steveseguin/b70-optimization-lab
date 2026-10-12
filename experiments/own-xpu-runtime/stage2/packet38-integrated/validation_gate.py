@@ -42,11 +42,12 @@ def main():
       events=[json.loads(s) for s in (out/'events.jsonl').read_text().splitlines()]
       registry=json.loads((P/'k2-class-registry.json').read_text())['classes']
       assert {r['class'] for r in events}==set(registry)
+      assert {r['workload'] for r in events if r['class']=='qsa.attention'}==set(registry['qsa.attention']['workloads'])
       assert all({r['variant'] for r in events if r['class']==k}=={'packet18','specialised'} for k in registry)
      else:
       qsa_grid=json.loads((P/'k2-class-registry.json').read_text())['classes']['qsa.attention']['workloads']
-      assert qsa_grid==['qsa-c256-n'+str(n) for n in list(range(88,153))+[256]]
-      assert receipt['source_fixtures']==93+len(qsa_grid) and receipt['fixtures']>receipt['source_fixtures']
+      assert qsa_grid==['qsa-c256-n'+str(n) for n in (88,104,120,136,152,256)]
+      assert receipt['source_fixtures']==93+66 and receipt['fixtures']>receipt['source_fixtures']
     results.append(dict(compiler=compiler,entry=entry,poison=poison,returncode=r.returncode,binary_sha256=sha(binary),evidence=str(out.relative_to(B)),**({} if poison else dict(gemv_entry_calls=len(rows),small_entry_calls=len(small_rows),small_workloads=sorted(small_workloads),workloads=sorted(workloads),candidate_coverage={w:sorted({r['candidate'] for r in rows if r['workload']==w}) for w in sorted(workloads)},entry_trace_sha256=sha(out/'validation-entries.jsonl'),receipt_sha256=sha(out/'receipt.json')))))
   out=root/(compiler+'-continue');r=subprocess.run([str(B/compiler/'k2-fixtures'),'--validate-only','--inject-candidate-failures','--output',str(out)],capture_output=True,text=True,timeout=120)
   assert r.returncode==0,r.stderr

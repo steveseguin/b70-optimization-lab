@@ -17,6 +17,13 @@ class Gate(unittest.TestCase):
   for name,(estimate,_) in w.CONFIG.items():
    self.assertGreaterEqual(w.watchdog(name),max(300,4*(estimate+17)))
    with self.assertRaises(ValueError):w.watchdog(name,299)
+ def test_expected_budget_refuses_before_launch(self):
+  from unittest.mock import patch
+  with patch.dict(w.CONFIG,{'K2':(3000,10800)}):
+   with self.assertRaisesRegex(ValueError,'quarter'):w.watchdog('K2')
+  with self.assertRaises(ValueError):w.watchdog('K2',0)
+  self.assertEqual(w.CONFIG['K2'][0],6*216+300)
+
  def test_prerequisite(self):
   path,_=self.receipt();w.prerequisites(path,'K0',self.identity())
  def test_prerequisite_identity(self):

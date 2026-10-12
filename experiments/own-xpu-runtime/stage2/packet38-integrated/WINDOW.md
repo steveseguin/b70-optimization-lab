@@ -20,10 +20,10 @@ packet38_suite=experiments/own-xpu-runtime/stage2/suite-inputs-20261012/suite-ma
 K windows, from the same coordinator library environment:
 
 ```bash
-nice -n 19 ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 -B "$packet38/window.py" --authorized-device-window --window K0 --card "$packet38_card" --output "$packet38/build/K0"
-nice -n 19 ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 -B "$packet38/window.py" --authorized-device-window --window K1a --card "$packet38_card" --output "$packet38/build/K1a" --k0 "$packet38/build/K0/window.json" --dispatch "$packet38/dispatch-p38.json"
-nice -n 19 ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 -B "$packet38/window.py" --authorized-device-window --window K1b --card "$packet38_card" --output "$packet38/build/K1b" --k0 "$packet38/build/K0/window.json" --k1a "$packet38/build/K1a/window.json" --dispatch "$packet38/dispatch-p38.json"
-nice -n 19 ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 -B "$packet38/window.py" --authorized-device-window --window K2 --card "$packet38_card" --output "$packet38/build/K2" --k0 "$packet38/build/K0/window.json" --k1a "$packet38/build/K1a/window.json" --k1b "$packet38/build/K1b/window.json" --dispatch "$packet38/dispatch-p38.json"
+nice -n 19 ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 -B "$packet38/window.py" --authorized-device-window --window K0 --card "$packet38_card" --output "$packet38/build/K0b"
+nice -n 19 ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 -B "$packet38/window.py" --authorized-device-window --window K1a --card "$packet38_card" --output "$packet38/build/K1ab" --k0 "$packet38/build/K0b/window.json" --dispatch "$packet38/dispatch-p38.json"
+nice -n 19 ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 -B "$packet38/window.py" --authorized-device-window --window K1b --card "$packet38_card" --output "$packet38/build/K1bb" --k0 "$packet38/build/K0b/window.json" --k1a "$packet38/build/K1ab/window.json" --dispatch "$packet38/dispatch-p38.json"
+nice -n 19 ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 -B "$packet38/window.py" --authorized-device-window --window K2 --card "$packet38_card" --output "$packet38/build/K2b" --k0 "$packet38/build/K0b/window.json" --k1a "$packet38/build/K1ab/window.json" --k1b "$packet38/build/K1bb/window.json" --dispatch "$packet38/dispatch-p38.json"
 ```
 
 Reusable W command below forwards every prerequisite. Unused prerequisites are
@@ -32,10 +32,10 @@ names for every attempt. The function performs no launch until called.
 
 ```bash
 packet38_window() {
-  nice -n 0 ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 -B "$packet38/window.py" --authorized-device-window --card "$packet38_card" --input "$packet38/build/input" --oracle "$packet38_oracle" --dispatch "$packet38/build/K2/run0/dispatch-measured.json" --k0 "$packet38/build/K0/window.json" --k1a "$packet38/build/K1a/window.json" --k1b "$packet38/build/K1b/window.json" --k2 "$packet38/build/K2/window.json" --w0p "$packet38/build/W0p/window.json" --kd "$packet38/build/KD/window.json" "$@"
+  nice -n 0 ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 -B "$packet38/window.py" --authorized-device-window --card "$packet38_card" --input "$packet38/build/input" --oracle "$packet38_oracle" --dispatch "$packet38/build/K2b/run0/dispatch-measured.json" --k0 "$packet38/build/K0b/window.json" --k1a "$packet38/build/K1ab/window.json" --k1b "$packet38/build/K1bb/window.json" --k2 "$packet38/build/K2b/window.json" --w0p "$packet38/build/W0p/window.json" --kd "$packet38/build/KD/window.json" "$@"
 }
 packet38_window --window W0p --output "$packet38/build/W0p"
-nice -n 19 ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 -B "$packet38/window.py" --authorized-device-window --window KD --card "$packet38_card" --output "$packet38/build/KD" --input "$packet38/build/input" --dispatch "$packet38/build/K2/run0/dispatch-measured.json" --k0 "$packet38/build/K0/window.json" --k1a "$packet38/build/K1a/window.json" --k1b "$packet38/build/K1b/window.json" --k2 "$packet38/build/K2/window.json"
+nice -n 19 ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 -B "$packet38/window.py" --authorized-device-window --window KD --card "$packet38_card" --output "$packet38/build/KD" --input "$packet38/build/input" --dispatch "$packet38/build/K2b/run0/dispatch-measured.json" --k0 "$packet38/build/K0b/window.json" --k1a "$packet38/build/K1ab/window.json" --k1b "$packet38/build/K1bb/window.json" --k2 "$packet38/build/K2b/window.json"
 packet38_window --window W2s --controller python --output "$packet38/build/W2s-python"
 packet38_window --window W2s --controller native --output "$packet38/build/W2s-native"
 nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$packet38/retain_window.py" --pair W2s

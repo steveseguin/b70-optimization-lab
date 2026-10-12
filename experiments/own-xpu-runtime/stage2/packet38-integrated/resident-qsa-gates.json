@@ -1,0 +1,131 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "checks": 432,
+  "rows": [
+    {
+      "passed": true,
+      "device_executed": false,
+      "reference_exact": true,
+      "diagnostic": true,
+      "resident_qsa_checks": 144,
+      "lengths": [
+        88,
+        104,
+        120,
+        136,
+        152,
+        256
+      ],
+      "repetitions_per_arm": 3,
+      "compiler": "gnu-host",
+      "binary_sha256": "9a1377cb0f48ce3ff6b6b1c08d901ef924565f6c1495a56b1d68bea13825cb3c",
+      "elapsed_seconds": 1.7119246980000753,
+      "output_sha256": "7731295c996f96ad2beb240ae2fa732d7c59ed4eb36085a82b32483607f50854",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "ionice",
+        "-c",
+        "3",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet38-integrated/build/gnu-host/k2-fixtures",
+        "--qsa-resident-smoke",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet38-integrated/build/repair-resident-gnu-host-1791819289411069747"
+      ],
+      "scratch_archive": {
+        "path": "evidence/scratch-repair-resident-gnu-host-1791819289411069747.jsonl.gz",
+        "sha256": "6c3c3ef00a99f8c0329d22064199ba543eb764ae56e005abbd203493a1a78287",
+        "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
+        "files": 3,
+        "retained_files": 2,
+        "retained_bytes": 136090
+      }
+    },
+    {
+      "passed": true,
+      "device_executed": false,
+      "reference_exact": true,
+      "diagnostic": true,
+      "resident_qsa_checks": 144,
+      "lengths": [
+        88,
+        104,
+        120,
+        136,
+        152,
+        256
+      ],
+      "repetitions_per_arm": 3,
+      "compiler": "icpx-host",
+      "binary_sha256": "fbb5bf36f066a8f995f53af3e3c5cf511e5f668cf5e542daf7315a3950053e01",
+      "elapsed_seconds": 1.7611948839912657,
+      "output_sha256": "7731295c996f96ad2beb240ae2fa732d7c59ed4eb36085a82b32483607f50854",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "ionice",
+        "-c",
+        "3",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet38-integrated/build/icpx-host/k2-fixtures",
+        "--qsa-resident-smoke",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet38-integrated/build/repair-resident-icpx-host-1791819291257700693"
+      ],
+      "scratch_archive": {
+        "path": "evidence/scratch-repair-resident-icpx-host-1791819291257700693.jsonl.gz",
+        "sha256": "0baa312d06640a1148e79cdb975938e19c4e1963fb772f56cf3e04cca7f8d3af",
+        "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
+        "files": 3,
+        "retained_files": 2,
+        "retained_bytes": 136090
+      }
+    },
+    {
+      "passed": true,
+      "device_executed": false,
+      "reference_exact": true,
+      "diagnostic": true,
+      "resident_qsa_checks": 144,
+      "lengths": [
+        88,
+        104,
+        120,
+        136,
+        152,
+        256
+      ],
+      "repetitions_per_arm": 3,
+      "compiler": "asan",
+      "binary_sha256": "a3b7f0c4880d2a1e3b0cac28c7560a29d6bfd061f9ee359638300d882f6ff1e8",
+      "elapsed_seconds": 14.84127411499503,
+      "output_sha256": "7731295c996f96ad2beb240ae2fa732d7c59ed4eb36085a82b32483607f50854",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "ionice",
+        "-c",
+        "3",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet38-integrated/build/asan/k2-fixtures",
+        "--qsa-resident-smoke",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet38-integrated/build/repair-resident-asan-1791819293165138179"
+      ],
+      "scratch_archive": {
+        "path": "evidence/scratch-repair-resident-asan-1791819293165138179.jsonl.gz",
+        "sha256": "68bf813550c1234727c5138348fd9b569f2513c642ad8ff75a691feeda0e1da7",
+        "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
+        "files": 3,
+        "retained_files": 2,
+        "retained_bytes": 136090
+      }
+    }
+  ],
+  "sources_sha256": {
+    "fixture_driver.cpp": "321f790cece417bd2ab8afa9e01f6d16c2a26c32d5000be448635515cb9556fb",
+    "repair_gates.py": "fe59d610c2cd277348b271f100f8be7b51c040d4224934f97659d927f60e4c3c"
+  }
+}

@@ -1,7 +1,8 @@
 # Packet38 integrated kernel registry
 
 This packet merges existing exact arithmetic and host scheduling changes.
-The integrated packet has not run on a card and claims no speed.
+K0 and both K1 windows passed before the K2 repair; K2 was cooperatively stopped.
+The repaired binaries await coordinator reruns and claim no model speed.
 
 | New dispatch name | Scope | Arithmetic retained |
 | --- | --- | --- |
@@ -66,9 +67,10 @@ remain explicit, validated, hash-bound diagnostic choices.
 
 The `p33.qsa.shape` body now has compile-time capacity128 and capacity256
 instantiations, both with budget2048 and one token. Prepared W windows use
-the capacity256 body. K2 compares every candidate at all context lengths88
-through152 and256, so its selection covers the development decode range and
-capacity limit. Full W timings still require separate coordinator evidence.
+the capacity256 body. K2 compares every candidate at lengths **88, 104, 120, 136, 152, 256**.
+A candidate must be strictly faster than 90% of the same-run incumbent median
+at **every one** of these six lengths. No interpolation or claim about unmeasured
+lengths follows. K1 retains all 66 lengths (88 through 152 and 256) for exactness. Full W timings still require separate coordinator evidence.
 
 ## Packet38 additions
 
@@ -77,3 +79,20 @@ geometry and the whole-workload K2 selection contract. Draft commands capture
 private addresses once after allocation, including merge normalization, merge
 addition, dense/expanded-int8 routed projections, QSA and the shared target
 output head. Draft KV remains full BF16. No packet39 epilogue is enabled.
+
+The QSA incumbent remains `packet18`: both the model adapter and fixture runner
+call `ng::submit` from `native.cpp` for score, softmax and value, with capacity256,
+budget2048, one token and unchanged BF16 data. The old ~1 ms fixture timing used
+400 separate state allocations per paired comparison, unlike the model's resident
+buffers (~265 us in its separate measurement). That old row is non-representative
+of model residency and must not select this repair's dispatch. The fixture also waited between score/softmax/value, unlike the model's chained
+submission. K2b now chains these stages and waits only for the group. The numerical gap
+cannot be attributed quantitatively without a new device measurement; it is not
+evidence that a different kernel was called. K2b now uses one resident state per
+arm, overwritten each repetition, with reusable pinned readback and an exact
+output check after **every** repetition. No target KV/prompt/response is reused:
+this is an explicitly diagnostic operator fixture, not a model benchmark. The
+summary requires `state_storage=resident-overwrite` for QSA on every event and
+rejects old rows. Each candidate is compared to a freshly measured resident
+incumbent on the same six workloads. Other stateful classes retain independent
+preuploaded states; heavy GEMV rotation rules are unchanged.

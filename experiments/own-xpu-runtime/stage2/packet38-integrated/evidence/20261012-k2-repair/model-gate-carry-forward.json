@@ -1,0 +1,32 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "scope": "Historical model CPU arithmetic/controller/suite evidence carried across fixture-only relink; not a new execution of those gates",
+  "prior_archive_sha256": "d53a707f3051581cfd9532bc54fbd79161e908ab4b73ccd018064ef8fa2e13ce",
+  "proof_receipts_sha256": {
+    "evidence/20261012-k2-repair/build-gnu-host.json": "c69a1596b29899e3c945c6015264e0c3acc374c67cc38b8fc496a0f129fa46aa",
+    "evidence/20261012-k2-repair/build-icpx-host.json": "46561773d2f524537751ccb1eff633b5966decc36a983417d722adff5824aba9",
+    "evidence/20261012-k2-repair/build-asan.json": "1087671b6d817ec4a4153c82293146f676106b3f27249200968a106fbcc306a1",
+    "evidence/20261012-k2-repair/build-device.json": "a309dc3274aecb3df195f7e59f2cfe82025ef2009a47a5fbc50d563816d19884"
+  },
+  "source_delta": [
+    "experiments/own-xpu-runtime/stage2/packet38-integrated/fixture_driver.cpp"
+  ],
+  "link_commands_unchanged": true,
+  "model_binary_mapping": {
+    "gnu-host": {
+      "executed_sha256": "a9a4af196369a0050a4e0f72db840035dd078bace1237f153f1da3670bc75ecb",
+      "current_sha256": "0b98e1ed834b92885052eb706b6cfee0e2a3068639396c991ab72bf2a19fb134"
+    },
+    "icpx-host": {
+      "executed_sha256": "50563ff9e6b20f5aeb6de8eea9187c4e584ef439a5822e0c6c60e36d3e86b3c5",
+      "current_sha256": "b88e533f410649e873f0662ffe28d8dddb3e9876f481d6fbea54887d55fff8c8"
+    },
+    "asan": {
+      "executed_sha256": "4ccb18285ad3db697971d165d41173d5cd1b476173a52477082f3cc95e4a0473",
+      "current_sha256": "85fef2a3754bea07cb3ebe13892ce37c4c9c57ab8d7ce8fc3d1aae1984ca2777"
+    }
+  },
+  "excluded": "Fixture arithmetic/validation, resident QSA arithmetic, wrapper and seal admission rerun; no old device window admitted",
+  "limitation": "Object/code equivalence is not a fresh full-model execution of the relinked executable; coordinator device qualification remains mandatory"
+}

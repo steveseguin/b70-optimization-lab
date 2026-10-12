@@ -10,11 +10,12 @@ from k2_summary import summarize
 from merge_dispatch import validate
 from storage import admit
 B=P/'build';ROOT=P.parents[3]
-CONFIG={'K0':(30,600),'K1a':(2400,10800),'K1b':(2400,10800),'K2':(1800,10800),'W0p':(30,600),
+CONFIG={'K0':(30,600),'K1a':(120,10800),'K1b':(120,10800),'K2':(1596,10800),'W0p':(30,600),
         'W2s':(1900,10800),'W2n':(1900,10800),'W2x':(1900,10800),'W2d':(1900,10800),'W2c':(1900,10800),'KD':(1800,10800),'W2m':(2100,10800),'W2mc':(2100,10800),'WS':(7200,30000),'WSs':(7200,30000)}
 FAULT=re.compile(r'Fault response|Engine memory CAT error|engine reset|timed[- ]out job|devcoredump|GPU.*coredump',re.I)
 def watchdog(name,seconds=None):
-    expected,default=CONFIG[name];seconds=seconds or default
+    expected,default=CONFIG[name];seconds=default if seconds is None else seconds
+    require(math.isfinite(expected) and expected>=0 and expected+17<=seconds/4,'expected duration exceeds a quarter of watchdog')
     require(max(300,math.ceil(4*(expected+17)))<=seconds<=172800,'watchdog below four times estimate/300s or above 172800s')
     return seconds
 
@@ -260,7 +261,7 @@ def main():
     boot=Path('/proc/sys/kernel/random/boot_id').read_text().strip()
     if (B/'FAULT.json').exists():require(json.loads((B/'FAULT.json').read_text()).get('boot_id')!=boot,'boot fault latch requires coordinator recovery')
     identity=dict(schema='packet38.window.v1',window=a.window,card=a.card,boot_id=boot,artifacts_sha256=artifacts,environment=environment,build_receipt_sha256=sha(P/'build-receipt.json'))
-    record=dict(identity,prompt_overlap=a.prompt_overlap,passed=False,device_executed=False,expected_seconds=CONFIG[a.window][0]+17,expectation_enforced=False,watchdog_seconds=seconds,cpu_affinity=sorted(os.sched_getaffinity(0)),load_average=list(os.getloadavg()))
+    record=dict(identity,prompt_overlap=a.prompt_overlap,passed=False,device_executed=False,expected_seconds=CONFIG[a.window][0]+17,expectation_enforced=True,expectation_policy='prelaunch expected+17s <= watchdog/4; no early runtime stop',watchdog_seconds=seconds,cpu_affinity=sorted(os.sched_getaffinity(0)),load_average=list(os.getloadavg()))
     if a.window!='K0':prerequisites(a.k0,'K0',identity)
     if a.window=='K1b':prerequisites(a.k1a,'K1a',identity)
     if a.window in ('K2','KD','W2s','W2n','W2x','W2d','W2c','W2m','W2mc','WS','WSs'):

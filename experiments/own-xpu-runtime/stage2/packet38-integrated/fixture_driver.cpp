@@ -94,40 +94,51 @@ struct Runner {
  void finish(Event e){check(device.wait(e,std::chrono::seconds(300)),"fixture submission deadline");auto t=device.timing(e);if(t.end_ns>t.start_ns)maximum=std::max(maximum,t.end_ns-t.start_ns);}
  Allocation upload(const std::vector<uint8_t>& b){auto host=allocate(b.size(),Memory::pinned),out=allocate(b.size());std::memcpy(device.arena.row(host).pointer,b.data(),b.size());finish(copy.copy(out,0,host,0,b.size(),{}));return out;}
  std::vector<Allocation> prepare(const Fixture& fixture){std::vector<Allocation> bindings;for(auto& b:fixture.data)bindings.push_back(upload(b));return bindings;}
- void download(Fixture& fixture,const std::vector<Allocation>& bindings){
-  for(int j=0;j<19;++j)if(fixture.outputs[j]){auto host=allocate(fixture.data[j].size(),Memory::pinned);finish(copy.copy(host,0,bindings[j],0,fixture.data[j].size(),{}));std::memcpy(fixture.data[j].data(),device.arena.row(host).pointer,fixture.data[j].size());}
+ void download(Fixture& fixture,const std::vector<Allocation>& bindings,const std::vector<Allocation>* staging=nullptr){
+  for(int j=0;j<19;++j)if(fixture.outputs[j]){auto host=staging?(*staging)[j]:allocate(fixture.data[j].size(),Memory::pinned);finish(copy.copy(host,0,bindings[j],0,fixture.data[j].size(),{}));std::memcpy(fixture.data[j].data(),device.arena.row(host).pointer,fixture.data[j].size());}
  }
  void clear(){device.retire_completed_events();for(auto a:owned)device.arena.release(a);owned.clear();}
  void run(Fixture& fixture,int implementation,int repetition=-1,int role=0,const std::string& candidate="specialised",const std::vector<Allocation>* prepared=nullptr,Allocation prepared_scratch=0){
   auto bindings=prepared?*prepared:prepare(fixture);auto shapes=std::vector<ng::Shape>{fixture.shape};if(implementation<4&&fixture.shape.op==ng::attention_score){auto s=fixture.shape;s.op=ng::attention_softmax;shapes.push_back(s);s.op=ng::attention_value;shapes.push_back(s);}
   size_t floats=1;for(auto s:shapes)if(specialised::supported(s))floats=std::max(floats,specialised::scratch_floats(s));auto scratch=prepared_scratch?prepared_scratch:allocate(floats*4);
   std::vector<std::pair<Event,EventTiming>> timings;
+  std::vector<integrated::Launch> launches;
   for(auto s:shapes){integrated::Launch launch{};
-   if(implementation>=4)launch=p30integrated::attention(device,s,bindings,unsigned(implementation-4));
-   else if(implementation==3&&round2::supported(s))launch=p33r2::submit(device,s,bindings,scratch);
-   else if(implementation==2&&round2::supported(s))launch=round2::submit(device,s,bindings,scratch);
-   else if(implementation&&specialised::supported(s))launch=specialised::submit(device,s,bindings,scratch);
+   std::array<Event,1> prior{launches.empty()?0:launches.back().last};
+   auto deps=prior[0]?std::span<const Event>(prior):std::span<const Event>{};
+   if(implementation>=4)launch=p30integrated::attention(device,s,bindings,unsigned(implementation-4),deps);
+   else if(implementation==3&&round2::supported(s))launch=p33r2::submit(device,s,bindings,scratch,deps);
+   else if(implementation==2&&round2::supported(s))launch=round2::submit(device,s,bindings,scratch,deps);
+   else if(implementation&&specialised::supported(s))launch=specialised::submit(device,s,bindings,scratch,deps);
    else {
 #ifdef OWN_RT_HOST_ONLY
-    fixture_validation::nongemv(device,s,bindings);Original op(s);auto e=device.compute(op,bindings,{});
+    fixture_validation::nongemv(device,s,bindings);Original op(s);auto e=device.compute(op,bindings,deps);
 #else
-    auto e=ng::submit(device,s,bindings,{});
+    auto e=ng::submit(device,s,bindings,deps);
 #endif
     launch={e,e,1};
    }
-   finish(launch.last);
-   for(Event event=launch.first;event<=launch.last;++event){auto t=device.timing(event);timings.push_back({event,t});}
+   launches.push_back(launch);
   }
+  // Match the model adapter: chain score/softmax/value, wait once for the group.
+  finish(launches.back().last);
+  for(auto launch:launches)for(Event event=launch.first;event<=launch.last;++event){auto t=device.timing(event);timings.push_back({event,t});if(t.end_ns>t.start_ns)maximum=std::max(maximum,t.end_ns-t.start_ns);}
   if(!prepared)download(fixture,bindings);
-  if(events&&repetition>=0)for(auto [event,t]:timings)*events<<"{\"class\":"<<quote(classname(fixture.shape))<<",\"variant\":\""<<(role?"specialised":"packet18")<<"\",\"candidate\":"<<quote(candidate)<<",\"implementation\":"<<quote(implementation==5?"p30.attention.score_softmax":implementation==4?"p30.attention.sg32":implementation==3?"p33.qsa.shape":implementation==2?"round2":implementation==1?"specialised":"packet18")<<",\"kernel_identity\":"<<quote(classname(fixture.shape)+":"+(implementation==5?"p30.attention.score_softmax":implementation==4?"p30.attention.sg32":implementation==3?"p33.qsa.shape":implementation==2?"round2":implementation==1?"specialised":"packet18"))<<",\"candidate_available\":"<<((implementation||role==0)?"true":"false")<<",\"workload\":"<<quote(fixture.name)<<",\"repetition\":"<<repetition<<",\"event\":"<<event<<",\"stage_count\":"<<timings.size()<<",\"start_ns\":"<<t.start_ns<<",\"end_ns\":"<<t.end_ns<<",\"exact\":true}\n";
+  if(events&&repetition>=0)for(auto [event,t]:timings)*events<<"{\"class\":"<<quote(classname(fixture.shape))<<",\"variant\":\""<<(role?"specialised":"packet18")<<"\",\"candidate\":"<<quote(candidate)<<",\"implementation\":"<<quote(implementation==5?"p30.attention.score_softmax":implementation==4?"p30.attention.sg32":implementation==3?"p33.qsa.shape":implementation==2?"round2":implementation==1?"specialised":"packet18")<<",\"kernel_identity\":"<<quote(classname(fixture.shape)+":"+(implementation==5?"p30.attention.score_softmax":implementation==4?"p30.attention.sg32":implementation==3?"p33.qsa.shape":implementation==2?"round2":implementation==1?"specialised":"packet18"))<<",\"candidate_available\":"<<((implementation||role==0)?"true":"false")<<",\"state_storage\":"<<quote(fixture.shape.op==ng::attention_score?"resident-overwrite":"independent-preuploaded")<<",\"workload\":"<<quote(fixture.name)<<",\"repetition\":"<<repetition<<",\"event\":"<<event<<",\"stage_count\":"<<timings.size()<<",\"start_ns\":"<<t.start_ns<<",\"end_ns\":"<<t.end_ns<<",\"exact\":true}\n";
   if(!prepared)clear();
  }
 };
 void compare(const Fixture& a,const Fixture& b,std::ofstream& bytes){if(fixture_validation::only)return;for(int j=0;j<19;++j)if(a.outputs[j]){check(a.data[j]==b.data[j],a.name+" mismatch slot "+std::to_string(j));bytes.write(reinterpret_cast<const char*>(b.data[j].data()),b.data[j].size());}}
 }
 int main(int argc,char** argv){std::filesystem::path out;std::unique_ptr<Runner> runner;try{
- unsigned card=0,seed=1,repetitions=200;bool authorized=false;auto fixtures=std::filesystem::path(__FILE__).parent_path()/"build/fusion-fixtures";
- for(int i=1;i<argc;++i){std::string arg=argv[i];if(arg=="--validate-only"){
+ unsigned card=0,seed=1,repetitions=200;bool authorized=false,qsa_smoke=false;auto fixtures=std::filesystem::path(__FILE__).parent_path()/"build/fusion-fixtures";
+ for(int i=1;i<argc;++i){std::string arg=argv[i];if(arg=="--qsa-resident-smoke"){
+#if defined(OWN_RT_HOST_ONLY) && defined(PACKET26_K2)
+ qsa_smoke=true;
+#else
+ throw std::invalid_argument("QSA smoke is host K2 only");
+#endif
+ }else if(arg=="--validate-only"){
 #ifdef OWN_RT_HOST_ONLY
  fixture_validation::only=true;
 #else
@@ -155,15 +166,19 @@ int main(int argc,char** argv){std::filesystem::path out;std::unique_ptr<Runner>
  // history while forcing the current four-token block to be newly calculated.
  {auto it=std::find_if(cases.begin(),cases.end(),[](const Fixture& f){return f.name=="qsa-pool-1.fixture";});check(it!=cases.end(),"pool regression fixture");auto moved=*it;moved.name="qsa-pool-position63-regression";moved.data[17]=Fixture::integer(63);if(!fixture_validation::only){auto fixed=moved;fixed.reference();std::copy_n(fixed.data[7].begin(),size_t(63/4)*128*2,moved.data[7].begin());}cases.push_back(std::move(moved));}
 #endif
- // Registered decode lengths cover every development context and the capacity limit.
+ // K1 keeps all 66 exactness lengths. Only K2 timing uses six checkpoints.
+#ifdef PACKET26_K2
+ std::vector<int> qsa_lengths{88,104,120,136,152,256};
+#else
  std::vector<int> qsa_lengths;for(int n=88;n<=152;++n)qsa_lengths.push_back(n);qsa_lengths.push_back(256);
+#endif
  for(int n:qsa_lengths){ng::Shape sh{ng::attention_score,1,2560,4,256,0,256,2048};Fixture f(sh,"qsa-c256-n"+std::to_string(n));f.data[17]=Fixture::integer(n-1);auto a=f.args();std::fill_n(a.i(4),sh.budget+3,-1);for(int j=0;j<n;++j)a.i(4)[j]=n-1-j;cases.push_back(std::move(f));}
  std::mt19937 rng(seed);std::shuffle(cases.begin(),cases.end(),rng);std::ofstream bytes(out/"output.bin",std::ios::binary),events(out/"events.jsonl");runner=std::make_unique<Runner>(card);size_t checks=0;
 #ifdef PACKET26_K2
  check(repetitions==200,"K2 requires exactly200 repetitions");
  const std::set<std::string> decode_names{"norm-stored-f32-1.fixture","combine-norm-1.fixture","gdn-gated-1.fixture","gdn-runtime-f32-1.fixture","qsa-prepare-1.fixture","qsa-pool-1.fixture","qsa-select-1.fixture","route-gather-1.fixture","conv-10240-1.fixture","ffn-routed-act-1.fixture","mix-1.fixture","moe-combine-1.fixture"};
  unsigned decode_cases=0;
- for(auto source:cases){if(!decode_names.contains(source.name)&&!source.name.starts_with("qsa-c256-n"))continue;++decode_cases;
+ for(auto source:cases){if(qsa_smoke&&!source.name.starts_with("qsa-c256-n"))continue;if(!decode_names.contains(source.name)&&!source.name.starts_with("qsa-c256-n"))continue;++decode_cases;
   if(source.shape.op==ng::prepare||source.shape.op==ng::pool||source.shape.op==ng::select){source.data[17]=Fixture::integer(63);if(source.shape.op==ng::attention_score){auto a=source.args();for(int j=0;j<source.shape.budget+3;++j)a.i(4)[j]=j<64?j:-1;}}
   auto oracle=source;if(!fixture_validation::only)oracle.reference();
   // Timing moves this fixture from its original position to 63. The reference
@@ -175,30 +190,38 @@ int main(int argc,char** argv){std::filesystem::path out;std::unique_ptr<Runner>
   for(int alternative:source.shape.op==ng::attention_score?std::vector<int>{2,3,4,5}:std::vector<int>{round2::supported(source.shape)?2:specialised::supported(source.shape)?1:0}){
   std::string candidate=alternative==5?"p30.attention.score_softmax":alternative==4?"p30.attention.sg32":alternative==3?"p33.qsa.shape":alternative==2?"round2":"specialised";
   bool excluded[2]{};
-  const unsigned repeats=fixture_validation::only?1u:repetitions;
-  // Each stateful invocation gets a fresh preuploaded state. No transfers or
-  // allocations occur in the timed submission loop; all outputs are read later.
+  const unsigned repeats=fixture_validation::only?1u:qsa_smoke?3u:repetitions;
+  // QSA reads immutable Q/K/V/selection and overwrites its outputs. Match the
+  // model's resident buffers, not 400 fresh allocation sets per comparison.
+  // Other stateful classes retain their independent preuploaded states.
+  const bool resident_qsa=source.shape.op==ng::attention_score;
   std::vector<std::vector<Allocation>> prepared[2];
-  for(int version:{0,1})for(unsigned r=0;r<repeats;++r)prepared[version].push_back(runner->prepare(source));
+  for(int version:{0,1})for(unsigned r=0;r<(resident_qsa?1u:repeats);++r)prepared[version].push_back(runner->prepare(source));
+  std::vector<Allocation> readback(19);
+  if(resident_qsa)for(int j=0;j<19;++j)if(source.outputs[j])readback[j]=runner->allocate(source.data[j].size(),Memory::pinned);
+  auto resident_actual=source;
   size_t nf=1;auto ss=std::vector<ng::Shape>{source.shape};if(source.shape.op==ng::attention_score){auto s=source.shape;s.op=ng::attention_softmax;ss.push_back(s);s.op=ng::attention_value;ss.push_back(s);}
   for(auto s:ss)if(specialised::supported(s))nf=std::max(nf,specialised::scratch_floats(s));
   auto prepared_scratch=runner->allocate(nf*4);
   for(unsigned r=0;r<repeats;++r)for(int version:{0,1}){
    if(excluded[version])continue;
-   try{fixture_validation::inject_failure(classname(source.shape),version);auto actual=source;runner->events=&events;runner->run(actual,version?alternative:incumbent,r,version,candidate,&prepared[version][r],prepared_scratch);++checks;}
+   try{fixture_validation::inject_failure(classname(source.shape),version);runner->events=&events;runner->run(source,version?alternative:incumbent,r,version,candidate,&prepared[version][resident_qsa?0:r],prepared_scratch);
+    if(resident_qsa){runner->download(resident_actual,prepared[version][0],&readback);compare(oracle,resident_actual,bytes);runner->device.retire_completed_events();}
+    ++checks;}
    catch(const std::exception& e){if(fixture_validation::only&&!dynamic_cast<const fixture_validation::InjectedFailure*>(&e))throw;packet26::candidate_failure(out,classname(source.shape),version?"specialised":"packet18",source.name,e,version?(alternative==5?"p30.attention.score_softmax":alternative==4?"p30.attention.sg32":alternative==3?"p33.qsa.shape":alternative==2?"round2":alternative==1?"specialised":"packet18"):(incumbent==2?"round2":incumbent==1?"specialised":"packet18"));excluded[version]=true;
     runner->device.retire_completed_events();}
   }
-  for(int version:{0,1})if(!excluded[version])for(unsigned r=0;r<repeats;++r){auto actual=source;runner->download(actual,prepared[version][r]);compare(oracle,actual,bytes);}
+  if(!resident_qsa)for(int version:{0,1})if(!excluded[version])for(unsigned r=0;r<repeats;++r){auto actual=source;runner->download(actual,prepared[version][r]);compare(oracle,actual,bytes);}
   runner->clear();
   }
  }
- check(decode_cases==decode_names.size()+qsa_lengths.size(),"all registered decode fixtures required");
+ check(decode_cases==(qsa_smoke?0:decode_names.size())+qsa_lengths.size(),"all registered decode fixtures required");
 #else
  for(const auto& source:cases){auto oracle=source,old=source,newer=source;if(!fixture_validation::only)oracle.reference();runner->run(old,0);runner->run(newer,1);compare(oracle,old,bytes);compare(oracle,newer,bytes);compare(old,newer,bytes);++checks;if(round2::supported(source.shape)){auto newest=source;runner->run(newest,2);compare(oracle,newest,bytes);compare(old,newest,bytes);++checks;}if(source.shape.op==ng::attention_score){for(int candidate:source.shape.tokens==1?std::vector<int>{3,4,5}:std::vector<int>{3}){auto newest=source;runner->run(newest,candidate);compare(oracle,newest,bytes);compare(old,newest,bytes);++checks;}}}
 #endif
  bytes.close();events.close();
  auto shutdown=runner->device.shutdown(std::chrono::seconds(60));check(shutdown.safe_to_exit&&shutdown.exit_code==0,"fixture teardown");
+ if(qsa_smoke){check(!fixture_validation::only&&checks==144,"resident smoke coverage");std::ofstream(out/"receipt.json")<<"{\"passed\":true,\"device_executed\":false,\"reference_exact\":true,\"diagnostic\":true,\"resident_qsa_checks\":144,\"lengths\":[88,104,120,136,152,256],\"repetitions_per_arm\":3}\n";return 0;}
  std::string teardown="["+shutdown.json()+"]";unsigned adapter_checks=0;
 #ifndef PACKET26_K2
  auto adapter=adapter_fixture_gate(card,out/"output.bin");

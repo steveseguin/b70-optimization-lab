@@ -1,6 +1,9 @@
 # CPU qualification
 
-CPU qualification completed on 2026-10-12. All 91 required gate receipts passed.
+Initial CPU qualification completed on 2026-10-12 with 91 required gate receipts.
+The [K2 repair](evidence/20261012-k2-repair/README.md) adds resident-QSA
+checks and reruns affected gates. Full-model CPU executions retain their original
+binary identities under the recorded unchanged-object relink proof.
 The final authority is `build-receipt.json`, bound to source, binary and evidence
 hashes; this summary does not replace it.
 No device executable ran, and no model speed is claimed.

@@ -1,7 +1,8 @@
 # Packet38 integrated runtime
 
-CPU preparation is sealed: 91 gate receipts passed. No device ran and no model
-speed is claimed. The persistent native/MTP CPU suite matched all 192 tokens
+The [K2 repair](evidence/20261012-k2-repair/README.md) is CPU-prepared.
+Earlier K0/K1a/K1b passed; K2 was cooperatively stopped. All four device windows
+must rerun under the repaired seal. No model speed is claimed. The persistent native/MTP CPU suite matched all 192 tokens
 and 1,152 retained fixtures for its three-prompt snapshot. The complete twelve-
 prompt device suite remains coordinator work. See [CPU-RESULTS.md](CPU-RESULTS.md).
 

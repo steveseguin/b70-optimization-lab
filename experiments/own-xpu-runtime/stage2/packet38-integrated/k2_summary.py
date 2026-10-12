@@ -226,6 +226,8 @@ def summarize(root,identity=None,classes=None):
    expected_incumbent=entry.get('baseline_implementation',incumbent)
    wrong_incumbent=any(r.get('implementation',expected_incumbent)!=expected_incumbent for r in all_pair if r['variant']=='packet18')
    if wrong_incumbent:fatal.append('wrong incumbent implementation: '+name+'/'+candidate)
+   wrong_storage=bool(entry.get('state_storage')) and any(r.get('state_storage')!=entry['state_storage'] for r in all_pair)
+   if wrong_storage:fatal.append('nonrepresentative state storage: '+name+'/'+candidate)
    def identities(arm):
     return sorted({r.get('kernel_identity',r.get('implementation',incumbent if r['variant']=='packet18' else candidate)) for r in arm})
    old_ids,new_ids=identities(old),identities(new)
@@ -253,7 +255,7 @@ def summarize(root,identity=None,classes=None):
    else:
     fatal.extend(name+'/'+candidate+': '+f for f in result['failures'] if f!='more than one percent invalid event durations')
     if cache_report:fatal.extend(name+'/'+candidate+'/reread: '+f for f in cache_report['failures'] if f!='more than one percent invalid event durations')
-   eligible=not rotation_errors and not failures and (cache_report is None or cache_report['passed']) and result['passed'] and part['selected']=='specialised' and not same and not wrong_incumbent
+   eligible=not rotation_errors and not failures and (cache_report is None or cache_report['passed']) and result['passed'] and part['selected']=='specialised' and not same and not wrong_incumbent and not wrong_storage
    if eligible:
     score=part['variants']['specialised']['execution_sum']['median_ns']
     implementation=entry.get('candidate_implementation',candidate)

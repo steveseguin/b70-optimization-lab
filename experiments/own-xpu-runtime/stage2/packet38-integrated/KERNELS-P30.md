@@ -20,7 +20,8 @@ selected-slot order, BF16 output rounding and deterministic exp/sqrt.
 instantiations, both with compile-time budget2048 and tokens1. Other admitted
 shapes use the original round2 body. K2 compares the incumbent, round2,
 p33.qsa.shape, p30.attention.sg32 and p30.attention.score_softmax for every
-context length88 through152 and256. Length N means device position N-1.
+timed context lengths 88, 104, 120, 136, 152 and 256. K1 retains every
+length 88 through 152 and 256 for exactness. Length N means device position N-1.
 All use capacity256, budget2048, one query token and reversed selected IDs to
 exercise selected-order arithmetic. Every workload must pass exactness and
 beat the same-run incumbent by more than10% before a global attention choice

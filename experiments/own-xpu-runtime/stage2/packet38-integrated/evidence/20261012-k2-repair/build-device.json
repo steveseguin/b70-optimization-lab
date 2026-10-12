@@ -1,0 +1,281 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "mode": "device",
+  "command": [
+    "nice",
+    "-n",
+    "19",
+    "ionice",
+    "-c",
+    "3",
+    "cmake",
+    "--build",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet38-integrated/build/device",
+    "-j2",
+    "--target",
+    "k2-fixtures",
+    "nongemv-fixtures",
+    "own-rt-iq3",
+    "p33-linked-fixtures",
+    "jit-smoke"
+  ],
+  "elapsed_seconds": 158.44493885201518,
+  "fixture_source_sha256": "321f790cece417bd2ab8afa9e01f6d16c2a26c32d5000be448635515cb9556fb",
+  "link_commands_unchanged": true,
+  "objects": [
+    {
+      "path": "build/device/CMakeFiles/jit-smoke.dir/build/checked/experiments/own-xpu-runtime/stage2/packet38-integrated/jit_smoke.cpp.o",
+      "before": "1293ecfa388adadc62617bdb6f3cf7db495bf5f4449e746ce1c396d393acb12c",
+      "after": "1293ecfa388adadc62617bdb6f3cf7db495bf5f4449e746ce1c396d393acb12c",
+      "changed": false,
+      "bytes": 35024
+    },
+    {
+      "path": "build/device/CMakeFiles/k2-fixtures.dir/k2-fixtures-entry.cpp.o",
+      "before": "6b2d9c2629f0eb830cf52a2ec89de651edc9cfb36d7922f3df040067b313320b",
+      "after": "6b2d9c2629f0eb830cf52a2ec89de651edc9cfb36d7922f3df040067b313320b",
+      "changed": false,
+      "bytes": 4000
+    },
+    {
+      "path": "build/device/CMakeFiles/nongemv-fixtures.dir/nongemv-fixtures-entry.cpp.o",
+      "before": "66e0d2c409a43d0bcb85489f03e32ef6550b1c24e0aea94f5972fe2d22bfd31d",
+      "after": "66e0d2c409a43d0bcb85489f03e32ef6550b1c24e0aea94f5972fe2d22bfd31d",
+      "changed": false,
+      "bytes": 4016
+    },
+    {
+      "path": "build/device/CMakeFiles/own-rt-iq3.dir/own-rt-iq3-entry.cpp.o",
+      "before": "7e407e7dc4d9caab1648254fe5008e8e75ceabd72b908e2a043136e3df81033f",
+      "after": "7e407e7dc4d9caab1648254fe5008e8e75ceabd72b908e2a043136e3df81033f",
+      "changed": false,
+      "bytes": 3992
+    },
+    {
+      "path": "build/device/CMakeFiles/p33-linked-fixtures.dir/build/checked/experiments/own-xpu-runtime/stage2/packet38-integrated/p33_linked_fixture.cpp.o",
+      "before": "285dcaf51835278bc9af3edf187a24b7a91667be2096c2a883678b408e301bbf",
+      "after": "285dcaf51835278bc9af3edf187a24b7a91667be2096c2a883678b408e301bbf",
+      "changed": false,
+      "bytes": 154576
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp.o",
+      "before": "22020e628acdfc36cf010268c1f157daadf90894f508a9f1c4627267c4e6a792",
+      "after": "22020e628acdfc36cf010268c1f157daadf90894f508a9f1c4627267c4e6a792",
+      "changed": false,
+      "bytes": 284896
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp.o",
+      "before": "caf8528c31097a2918ff397a327f2c996f3ec03b317755fc4034ea96e34e1617",
+      "after": "caf8528c31097a2918ff397a327f2c996f3ec03b317755fc4034ea96e34e1617",
+      "changed": false,
+      "bytes": 136560
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp.o",
+      "before": "fde51b5cbec34b89b25699fa1ba825d437f67da9a59e29ab730342b04d4e0a2a",
+      "after": "fde51b5cbec34b89b25699fa1ba825d437f67da9a59e29ab730342b04d4e0a2a",
+      "changed": false,
+      "bytes": 173664
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet38-integrated/adapter.cpp.o",
+      "before": "786bd7ed61d640178fbecb5e6ce416ec7aefe6383b1a713f02de228cce6e2798",
+      "after": "786bd7ed61d640178fbecb5e6ce416ec7aefe6383b1a713f02de228cce6e2798",
+      "changed": false,
+      "bytes": 656072
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet38-integrated/adapter_fixture.cpp.o",
+      "before": "8e91d89989831e94e40e05bcdefe6a2aa24c633c9d7aaa4db59029f88e5c4800",
+      "after": "8e91d89989831e94e40e05bcdefe6a2aa24c633c9d7aaa4db59029f88e5c4800",
+      "changed": false,
+      "bytes": 274520
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet38-integrated/expert_down.cpp.o",
+      "before": "2eba807223f80542efdcd4604dd33b7ea299ccbc245d7ff409ab3b813643742a",
+      "after": "2eba807223f80542efdcd4604dd33b7ea299ccbc245d7ff409ab3b813643742a",
+      "changed": false,
+      "bytes": 66912
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet38-integrated/gemv_timing.cpp.o",
+      "before": "e6c03a336679a4743afa9c790bd7142875a163254b34b40e3309442586a2b806",
+      "after": "e6c03a336679a4743afa9c790bd7142875a163254b34b40e3309442586a2b806",
+      "changed": false,
+      "bytes": 233736
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet38-integrated/mtp_kernels.cpp.o",
+      "before": "4fa4db2e5afc82b45cb127feebfd24ea22616eac3521e897234e11b65d2a3f4e",
+      "after": "4fa4db2e5afc82b45cb127feebfd24ea22616eac3521e897234e11b65d2a3f4e",
+      "changed": false,
+      "bytes": 1164600
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet38-integrated/native.cpp.o",
+      "before": "e631791647dbe456f304190bdfa312659d76b8bf7032bf8de269f3ca9bf1823b",
+      "after": "e631791647dbe456f304190bdfa312659d76b8bf7032bf8de269f3ca9bf1823b",
+      "changed": false,
+      "bytes": 104976
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet38-integrated/owner.cpp.o",
+      "before": "b64358d5ca548f6c6bc84e3981ba22d194fdbccea7aa131fefd2a56990fa2254",
+      "after": "b64358d5ca548f6c6bc84e3981ba22d194fdbccea7aa131fefd2a56990fa2254",
+      "changed": false,
+      "bytes": 1151720
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet38-integrated/owner_retire.cpp.o",
+      "before": "4a632d1c01dfe0fa8712f790cc6f820b9c428b06c8fa617b994d6e9d26d587af",
+      "after": "4a632d1c01dfe0fa8712f790cc6f820b9c428b06c8fa617b994d6e9d26d587af",
+      "changed": false,
+      "bytes": 7720
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet38-integrated/p25_bridge.cpp.o",
+      "before": "2fee1f0726ade62afe4ce862b0a785b920b2b05e689e85041266dff01f9593ed",
+      "after": "2fee1f0726ade62afe4ce862b0a785b920b2b05e689e85041266dff01f9593ed",
+      "changed": false,
+      "bytes": 1353064
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet38-integrated/p28/submit.cpp.o",
+      "before": "1de50e0ef097fa7be4172478b1efc14c5ec87beee86a453971d29b46c53beae7",
+      "after": "1de50e0ef097fa7be4172478b1efc14c5ec87beee86a453971d29b46c53beae7",
+      "changed": false,
+      "bytes": 2445808
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet38-integrated/p30_submit.cpp.o",
+      "before": "d4d11c220ae6c6f54c8265c826d78434d82e830ca5657ae5b24dd614a58098af",
+      "after": "d4d11c220ae6c6f54c8265c826d78434d82e830ca5657ae5b24dd614a58098af",
+      "changed": false,
+      "bytes": 216952
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet38-integrated/p33_submit.cpp.o",
+      "before": "63a2dd5874f74a96b71092c48f52b8f1e284fe44f8dc702a248e4dd1c413e7e0",
+      "after": "63a2dd5874f74a96b71092c48f52b8f1e284fe44f8dc702a248e4dd1c413e7e0",
+      "changed": false,
+      "bytes": 1025016
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet38-integrated/p33r2.cpp.o",
+      "before": "aac328c084183effeb6ad7ebf07552067d6c6295429d0597542d11d565686de9",
+      "after": "aac328c084183effeb6ad7ebf07552067d6c6295429d0597542d11d565686de9",
+      "changed": false,
+      "bytes": 281352
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet38-integrated/performance.cpp.o",
+      "before": "ac2cb1aa73057d106638a8f5db639054d8ac873995c8a6a708284d26324c11e4",
+      "after": "ac2cb1aa73057d106638a8f5db639054d8ac873995c8a6a708284d26324c11e4",
+      "changed": false,
+      "bytes": 6864
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet38-integrated/round2_submit.cpp.o",
+      "before": "17a35b54ba0e943d3ead99caaa96c929ad231e109b420a4bd7fed9ed3f950409",
+      "after": "17a35b54ba0e943d3ead99caaa96c929ad231e109b420a4bd7fed9ed3f950409",
+      "changed": false,
+      "bytes": 644272
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet38-integrated/runtime_kernels.cpp.o",
+      "before": "cd81b7dd40590996a04907bb1f829f5c6bf3fe934772acd53f937a2e7a30e11e",
+      "after": "cd81b7dd40590996a04907bb1f829f5c6bf3fe934772acd53f937a2e7a30e11e",
+      "changed": false,
+      "bytes": 245408
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet38-integrated/single_device.cpp.o",
+      "before": "465eb089413c086df80f3e965fe9624036ebd433aebf0843a2cdae614c282266",
+      "after": "465eb089413c086df80f3e965fe9624036ebd433aebf0843a2cdae614c282266",
+      "changed": false,
+      "bytes": 72240
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet38-integrated/small_gemv.cpp.o",
+      "before": "73122dc2575dbd8d0c72930bf0e83f0a5de2ad6500a6d9f83b35403933ea9ee5",
+      "after": "73122dc2575dbd8d0c72930bf0e83f0a5de2ad6500a6d9f83b35403933ea9ee5",
+      "changed": false,
+      "bytes": 194072
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet38-integrated/small_gemv_fixture.cpp.o",
+      "before": "efc862468728218c1de0f3e6737b2bf2d062b817e88239ddbbcc5d071b258088",
+      "after": "efc862468728218c1de0f3e6737b2bf2d062b817e88239ddbbcc5d071b258088",
+      "changed": false,
+      "bytes": 156984
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet38-integrated/specialised_submit.cpp.o",
+      "before": "12a437435b1cb2b8d4012efb46b0c3521db66b3c5e97a4ccfd3cdd8dc60320f0",
+      "after": "12a437435b1cb2b8d4012efb46b0c3521db66b3c5e97a4ccfd3cdd8dc60320f0",
+      "changed": false,
+      "bytes": 1335424
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp.o",
+      "before": "3891786fa8aacff6b7f00256aff0a4d1248bff8f30dc519378d63e293a20ad62",
+      "after": "3891786fa8aacff6b7f00256aff0a4d1248bff8f30dc519378d63e293a20ad62",
+      "changed": false,
+      "bytes": 461152
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp.o",
+      "before": "426b8f5c4dd1e2ea24b0b553e077094132dc494782af31d14654fb3383a35f59",
+      "after": "426b8f5c4dd1e2ea24b0b553e077094132dc494782af31d14654fb3383a35f59",
+      "changed": false,
+      "bytes": 529024
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp.o",
+      "before": "8b35322bdb4d5f40f90436935bda4675ebac697d8dc027cef786a1b359060e1b",
+      "after": "8b35322bdb4d5f40f90436935bda4675ebac697d8dc027cef786a1b359060e1b",
+      "changed": false,
+      "bytes": 519072
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.cpp.o",
+      "before": "a263a11ba1429dfd97019bfd43b0cf3854c3f32728e1a78ccdfcaf8c94facd17",
+      "after": "a263a11ba1429dfd97019bfd43b0cf3854c3f32728e1a78ccdfcaf8c94facd17",
+      "changed": false,
+      "bytes": 136400
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/entry-k2_fixture.cpp.o",
+      "before": "cb43ce42f255d5252d5b690e467b552d765f80f5efe4f55857ed3b622245f33b",
+      "after": "399b0c21183ce4a6605786e880cb54202ffca0ec359bde92e5ac9f3e04ed1c90",
+      "changed": true,
+      "bytes": 1004408
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/entry-main.cpp.o",
+      "before": "ea20acaf11828d988cf54a0c0b4dfd888c3c6458d470a610824fdb0bf0cffe35",
+      "after": "ea20acaf11828d988cf54a0c0b4dfd888c3c6458d470a610824fdb0bf0cffe35",
+      "changed": false,
+      "bytes": 1368840
+    },
+    {
+      "path": "build/device/CMakeFiles/programs.dir/entry-nongemv_fixture.cpp.o",
+      "before": "23a3e4ce39efae774bb1c6d1d93ab4cb162f1e01efa43919af956a108dcc14a6",
+      "after": "15a9b5bb2c0535e5d35bc866c0f0e0d2ea37f11cda59b622fac06b31bd17f1a5",
+      "changed": true,
+      "bytes": 990200
+    }
+  ],
+  "unexpected": [],
+  "binaries": {
+    "k2-fixtures": "a157b97523b731900ba31d9bd16d16c9bf5564edb588f9c1358207827b1c5d7f",
+    "nongemv-fixtures": "68b6539b8b51cc66b98338ab2c68d72d1868b2539a5e0ac0893cd52dafa08147",
+    "own-rt-iq3": "c57d3f3a45a008410b90885b0e59c756e9564fac11225c9adbf86949e6ff5619",
+    "p33-linked-fixtures": "de93be6eeaab990befb4fc01acc9cb6c3453e84da9eba8b28880490b021d3978",
+    "jit-smoke": "0c1e5407ed66ac89672bcc166d7dbfe90e8ae035fee799a23923623e18bef977"
+  }
+}

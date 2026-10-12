@@ -23,9 +23,20 @@ def failed_owner(child,out,watch,error,stop_w):
  try:save(out/'retained.json',dict(pids=[child.pid] if child.poll() is None else [],signals_sent=0,stop_requested=True))
  except Exception:pass
 
+def reference_binary(build):
+ current=build['artifacts_sha256']['gnu-host/own-rt-iq3']
+ proof=build.get('model_gate_carry_forward')
+ if proof is None:return current
+ require(proof.get('passed') is True and sha(P/proof['path'])==proof['sha256'],'KD relink proof identity')
+ retained=json.loads((P/proof['path']).read_text())
+ require(retained['model_binary_mapping']==proof['model_binary_mapping'],'KD relink proof mapping')
+ row=retained['model_binary_mapping']['gnu-host']
+ require(row['current_sha256']==current,'KD relink current binary identity')
+ return row['executed_sha256']
+
 def run(a,out,env,watch,build):
  source=json.loads((P/'capture-run-incident-retrospective.json').read_text());reference=Path(source['output'])
- require(source['binary_sha256']==build['artifacts_sha256']['gnu-host/own-rt-iq3'],'KD CPU reference binary identity')
+ require(source['binary_sha256']==reference_binary(build),'KD CPU reference binary identity')
  table=B/'capture-incident-retrospective.tsv'
  require(sha(table)==source['table_sha256'],'KD table identity')
  require(source['table_sha256']==json.loads((P/'capture-input-incident-retrospective.json').read_text())['table_sha256'],'KD sealed table identity')

@@ -16,14 +16,14 @@
     "test_controller_review.py": "d794647d3ca3e40143f13288153ec16588832cf7c3a8ad698f45cf45e33f6661",
     "suite.py": "ff60b3900a5b0210f0e5d9fcd6e0a29316b3fe6338246413bfc833efca453cad",
     "test_failure_storage.py": "d2bc95e6db229729949e696d6429616586a7a6dd4bb8e9e1712fc08a941735d2",
-    "window.py": "69b8ae293a20330816a96a44bd0da837f64b0d44498c5d90e655a7353cfd2f75",
+    "window.py": "d9f5751b92c6964b0b5b2499e0ada9e603d0233baa9b6b080c2ef93b9cb7862c",
     "test_window_storage.py": "86001852f3d91eb0afde1698e2a29d5962c6b5109e54a5e4347a8fcaaa7276e5",
     "native_mini_gate.py": "aa5859a27c141476abb8885f1feda049de9a0622d757a8b85655659d61d8c8c7",
     "request_reset.hpp": "b35ad7753e3b2155e62e9d02700c24c52292f773c5f0b5f496914c705b6fbe99",
     "request_state_inventory.hpp": "c4818d42606ec5f29e00c7fa0ede2f12b4bdc6c6c2f5ca1740ca5e9cc023ea65",
     "storage.py": "53787deddc760e89f4d3bb9b25e96b2b9bdf3cc54bcc96a99df3286e19badbe3",
     "suite_gates.py": "d209c17d779c2e8710d8ac78a791552436da1084e2515f6f65bdf663504be17b",
-    "test_window.py": "324b34693f39ff876273d72135d8951c2b7251f06f58a0b4cac5d8e868a3785d",
+    "test_window.py": "7ec70cc8552ae8ec32e6361dec23ea498127b66ad3af4b7a6e627619bdb63f6c",
     "test_storage_race.py": "4633a0f7df6a7e70c4ed416b38a13ba509b59f7cd4c72e06d5fa78b6d36474a6"
   },
   "findings": [
@@ -64,7 +64,7 @@
   "regression_receipt": "review-resume-storage-gates.json",
   "regression_receipt_sha256": "ea81eb9557f5c38f7f8194a8d42e25933826e1f201d140b299b632059731b8aa",
   "window_storage_regression_receipt": "review-resume-window-storage-gates.json",
-  "window_storage_regression_receipt_sha256": "2bd16e6f47c460c38589692e298a922f59503d54a038393db7f3244d1b15730c",
+  "window_storage_regression_receipt_sha256": "1a67cb7da4c47395c743ed554c963b15d6709db96c463466f282a75cc68fe3c0",
   "final_rereview": {
     "utc": "2026-10-12T05:15:47.402452+00:00",
     "kind": "source-only rereview after request snapshot retention changes",
@@ -128,5 +128,28 @@
     "change": "Per-request rate numerator, interval endpoints and decode rank occupancy now consistently use non-EOG events. Per-output rank fields added. No token generation, reset, IPC or speculation state transition changes.",
     "current_suite_sha256": "ff60b3900a5b0210f0e5d9fcd6e0a29316b3fe6338246413bfc833efca453cad",
     "dynamic_controller_claim": false
+  },
+  "k2_repair_rereview": {
+    "date": "2026-10-12",
+    "reviewer": "independent repair_review subagent",
+    "kind": "read-only source review; no test/device execution by reviewer",
+    "passed": true,
+    "checks": [
+      "Watchdog guard precedes output creation, Watch and launches",
+      "No changes to timeout/signal/cooperative-stop/fault/teardown/retention paths",
+      "QSA chains stages and waits once; exact output/status checked every repetition",
+      "Missing or wrong state_storage rejects every QSA arm",
+      "Host-only arithmetic smoke requires 144 comparisons and cannot execute in device build"
+    ],
+    "previous_source_sha256": {
+      "window.py": "69b8ae293a20330816a96a44bd0da837f64b0d44498c5d90e655a7353cfd2f75",
+      "test_window.py": "324b34693f39ff876273d72135d8951c2b7251f06f58a0b4cac5d8e868a3785d"
+    },
+    "source_sha256": {
+      "window.py": "d9f5751b92c6964b0b5b2499e0ada9e603d0233baa9b6b080c2ef93b9cb7862c",
+      "test_window.py": "7ec70cc8552ae8ec32e6361dec23ea498127b66ad3af4b7a6e627619bdb63f6c",
+      "fixture_driver.cpp": "321f790cece417bd2ab8afa9e01f6d16c2a26c32d5000be448635515cb9556fb",
+      "k2_summary.py": "774880bc33dcc0f5134bb1173f45140c38264458ea11e549da30335ee7a01bf7"
+    }
   }
 }
