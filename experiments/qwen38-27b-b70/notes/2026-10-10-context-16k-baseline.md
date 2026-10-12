@@ -1149,3 +1149,35 @@ R32b: retrieval only.
 - One seed per cell beyond these. One or two questions between arms is not a ranking.
 
 Runner `longrun-campaign11.sh` (queue file; one server start; Gemma stopped first and restored at the end).
+
+## Campaign 11 results (2026-10-12 03:12-): in-place notes in the proxy; a rule that names nothing
+
+One server start, arms from a queue. Minutes are agent time.
+
+### The proxy with in-place notes (plain agent that sends its whole history, 32K window)
+
+| proxy, 240K rules stream | seed 0 (39) | seed 1 (46) |
+| --- | ---: | ---: |
+| X32b: full NOTES rewrite at each cut (campaign 9) | 39 in 17 min | 44 in 18 min |
+| X32i: in-place notes, first build | 39 in 10.2 min | **40 in 12.3 min** |
+| **X32m: in-place notes after the merge fix** | **39 in 10.2 min** | **46 in 13.1 min** |
+| N32u: the same policy inside the harness (campaign 10b) | 39 in 9.9 min | 46 in 10.0 min |
+
+X32m meets the bar on both seeds (within one question of X32b, at least 25 % less time: 40 % and 27 % less). Seed 0
+of X32m is the same run as X32i, call for call (the fix did not come into play). Per run: 17 in-place cuts, no failed
+attempt, no ordinary cut; a reply asked for again 8 and 14 times; notes calls read 431K and 544K prompt tokens of
+which 387K and 487K came from the server's cache (90 %), and wrote 22K and 31K. An audit of the proxy's saved NOTES
+versions against the true ledger (`proxy_notes_audit.py`): no counter ever wrong, 17 of 17 versions, on both seeds.
+
+**The defect X32i seed 1 exposed (in the harness arm too, never hit there).** 40/46, with 15 counters wrong in the
+NOTES from the version that covers items 100 to 108 on. When a reply fails a check the model is asked for "the
+three complete sections again", and the second reply was applied on its own. At that cut the second reply held four
+lines where the first held 27 (the model answered with the lines that had been in question), and the changes of
+nine items were gone. Fixed in both (`merge_replies`): an asked-for reply replaces the lines of the names it
+mentions, `name: (no change)` withdraws a name, and every other line of the reply before it stays; the proxy now
+logs every notes reply, which is how the four-line reply was seen in the re-run. The same run showed the checks
+earning their keep: "The clerk recorded domo86 at three hundred and forty-two" came back as `-342`, the sign check
+refused it (the text states 342), and the corrected line was applied.
+
+My audit tool misread a typographic minus sign as no sign and reported five wrong counters on the first proxy run;
+fixed before any figure was written down (harness figures did not change).

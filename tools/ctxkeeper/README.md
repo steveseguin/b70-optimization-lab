@@ -98,8 +98,13 @@ Measured in the test harness (the same policy inside the lab's agent harness, la
 39/39 and 46/46 at 240K in 10 minutes against 16 for the full rewrite, and 228/228 on the 1M-token stream in 50
 minutes against 226/228 in 83, with NOTES that an audit against the true ledger found right in all 63 versions at
 1M. `notesdelta.py` holds the parsing, applying and checks; its core is copied unchanged from that harness
-(`sync_notesdelta.py` checks or renews the copy). As this proxy it has its unit tests and a scripted end-to-end run;
-see Limits for what has been run against the real server.
+(`sync_notesdelta.py` checks or renews the copy).
+
+As this proxy (campaign 11, a plain agent that sends its whole history, `--notes-checks near`): 39/39 in 10 minutes
+and 46/46 in 13 on the two 240K streams, against 39 in 17 and 44 in 18 for the full rewrite, with no value wrong in
+any saved NOTES version (`proxy_notes_audit.py`). Its first run on the second stream scored 40/46: an asked-for
+second reply had replaced the first and lost nine items' changes; replies are merged now, and every notes reply is
+written to `events.jsonl`.
 
 ## Limits
 
