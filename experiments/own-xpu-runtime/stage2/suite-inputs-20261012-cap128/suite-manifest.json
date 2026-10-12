@@ -5,7 +5,7 @@
   "token_cap": 128,
   "suite_sha256": "0ad543d1c1f379a0b6cee88e06236e495c45eee7ba12cfcef062b6e03303e812",
   "prompts_manifest_sha256": "dc78a59a085d4d426936645a887fd3718ba6743715f5b78ebd0d2b6af543d29b",
-  "complete": false,
+  "complete": true,
   "prompts": [
     {
       "prompt_id": "incident-retrospective",
@@ -666,9 +666,69 @@
       "elapsed_seconds": 3213.3504135279945,
       "cpu_seconds": 5446.071210000001,
       "suite64_equality": true
+    },
+    {
+      "prompt_id": "decision-memo",
+      "prompt_tokens": 60,
+      "input_bundle": "experiments/own-xpu-runtime/stage2/suite-inputs-20261012/decision-memo",
+      "input_bundle_hashes": {
+        "identity.tsv": "85992a7027dca5de4478e9a5cef4e24722a7065aca66bc1a9954d8d3f617e257",
+        "input.json": "ec9dcf9af26e98b77e2a7f6675a8ac018f4f57f054da358491eb35e3335e6b88",
+        "plan.tsv": "9926b7a266ba2774f02fe00583257ab2aaff96ee0313d350d3ba54602ae2a656",
+        "tokens.txt": "f4d15e79f8052c1598fa5a0cedaa83a9bc39e117d7d397b9938281b33f8d1069",
+        "vocab.bin": "7a0e612475366f8d368dbfee6a0a01336f1059e71fa98d91300eb62abd996a64"
+      },
+      "oracle_directory": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/decision-memo",
+      "oracle_receipt_sha256": "67b78ea04ae07920c9fcb20c29b6a873fe71e6d2426e7697fa37f83e59637ac4",
+      "generated_tokens": 128,
+      "first_8_token_ids": [
+        332,
+        30918,
+        842,
+        3843,
+        2705,
+        332,
+        271,
+        332
+      ],
+      "last_8_token_ids": [
+        417,
+        2980,
+        3050,
+        328,
+        9215,
+        12521,
+        1,
+        513
+      ],
+      "ended_early": false,
+      "termination": "token-cap",
+      "context": 256,
+      "fixture_steps": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        97,
+        98,
+        99,
+        100,
+        101,
+        102,
+        103,
+        104
+      ],
+      "mean_seconds_per_position": 14.652644919786097,
+      "elapsed_seconds": 2742.3805430659995,
+      "cpu_seconds": 4834.081101,
+      "suite64_equality": true
     }
   ],
-  "total_elapsed_seconds": 40907.48854370396,
-  "total_cpu_hours": 18.856354101388888,
+  "total_elapsed_seconds": 43649.86908676996,
+  "total_cpu_hours": 20.199154407222224,
   "cpu_accounting_complete": true
 }
