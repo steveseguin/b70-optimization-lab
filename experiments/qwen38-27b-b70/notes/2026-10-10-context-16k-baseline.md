@@ -1543,3 +1543,43 @@ with campaign 12's options plus `--recall-label '(?m)^ITEM (\d+)/' --recall-unit
 Gate passed; the 1M run follows in the same queue. The OPEN section no longer lists live values (three short lines
 now), but the notes calls wrote as much as before: most of what they write is thinking. None of the new paths
 (misspelled name, lines left out, the first reply standing) was needed in these two runs.
+
+### X32p at one million tokens: 226 of 228 in 50 minutes
+
+| 1M tokens (stream seed 0), 32K window | right | minutes | notes calls | searches | counters ever wrong in the NOTES |
+| --- | ---: | ---: | --- | ---: | ---: |
+| harness keeper, in-place notes (N32u) | 228/228 | 50.2 | 63 cuts, 20 asked again | 124 | 0 of 63 versions |
+| proxy, full rewrite (X32b) | 222/228 | 95.1 | 102 cuts | | not audited |
+| proxy, in-place, first build (X32m) | 216/228 | 75.8 | 77 cuts, 33 asked again | 255 | 2 of 77 |
+| proxy, in-place, this morning (X32n2) | 220/228 | 53.3 | 76 cuts, 5 asked again | 161 | 2 of 76 |
+| **proxy, in-place, code state p (X32p)** | **226/228** | **49.6** | 75 cuts, 15 asked again, none failed | 112 | 5 of 75 |
+
+Expected 225 or more in 46 to 54 minutes: met. Not void, no blank. By type: final list 25/25, current 58/58,
+earlier value 58/58, who 29/29, rule 29/29, method 27/29 (both misses are tallies). **The proxy is now within two
+answers of the harness arm it was built from, and as fast.** No guard event; host memory never below 1.83 GiB.
+
+- `recall` in item numbers did what it was for: every earlier-value question right (58 of 58; X32n2 54, X32m 53),
+  with fewer searches (112 against 161 and 255).
+- Server time: 869 s reading (2.36M tokens not in the cache) and 1,676 s writing (172K tokens at 103 a second:
+  93K notes, 55K main loop, 24K search rounds), 86 % of the 2,975 seconds. Twelve calls over 20 seconds, 6.5
+  minutes in all (X32n2: 24 calls, 12 minutes; X32m: 60 calls, 42 minutes).
+- New paths used: lines for names the noted turns never mention left out 7 times (the model still writes down
+  what its kept message says, now without effect); one misspelled name put right (`roke83` for `voke83`); the first
+  reply stood once.
+
+**The audit is worse, and two of the five wrong counters are my own new rule's doing.** Neither cost an answer here.
+- "A line whose number the turns do not state is left out" took out three lines that were right or nearly right
+  but written in a form the checker cannot follow: `faxamo72: 279 → 415 (set, item 582), then 415 - 18 = 397, then
+  removed (item 587)` and the same shape for `jaru53` (an arrow inside a packed line: not followed, so the checker
+  saw only "397 is not in the turns"); and `vozimi36: 522 - 20 = 502, 502 - 17 = 485, 485 + 58 = 498`, where the
+  last sum is wrong (543) and a plain line would simply have been recomputed. Left out, all three kept stale values
+  (two counters that should have read "removed").
+- `lodo77` and `tudi76`: read wrongly by the model (as in earlier runs: one line in about 75 notes calls); `tudi76`
+  is behind one of the two wrong tallies.
+- Eight of the fifteen questions were about amounts; six of those were a set written as made-up working whose
+  result is right (`436 + 78 = 514` for "recorded at 514"): a question each, about 13 seconds.
+
+Fixed after the run, before the next (not yet run): a packed line is followed through arrows and its sums are
+recomputed like a plain line's; a line is left out only when it is a bare value that the turns do not state, or
+working with an amount they do not state, never because the checker could not follow it; working whose result is a
+value the turns state for the thing is taken as that set without a question.
