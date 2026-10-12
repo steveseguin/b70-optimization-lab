@@ -155,19 +155,29 @@ def main(argv=None, services=None):
             requested.append("new postflight GPU fault")
             persist(out / "FAULT.json", dict(reason=requested[-1], cursor=cursor, lines=fresh))
         native = json.loads((run / "receipt.json").read_text())
-        if child.returncode != 0 or requested or native.get("passed") is not True:
+        infrastructure_ok = native.get("infrastructure_passed", native.get("passed")) is True
+        if child.returncode != 0 or requested or not infrastructure_ok:
             raise RuntimeError("native window failed: " + str(requested))
         if a.window == "G4":
             dispatch = json.loads((run / "dispatch-measured.json").read_text())
-            if not dispatch.get("fusions"):
-                raise RuntimeError("missing fusion timing rows")
+            if not isinstance(dispatch.get("fusions"), dict):
+                raise RuntimeError("missing fusion timing mapping")
+            summary = json.loads((run / "summary.json").read_text())
+            case_rows = summary["rows"]
+            failed = {r["class"]: r for r in case_rows if not r["passed"]}
+            row.update(cases_passed=not failed, failed_cases=len(failed),
+                       cases_completed=len(case_rows), infrastructure_passed=True)
             # Timing alone cannot resurrect a fusion rejected by offline codegen.
             review = services.assembly()
             provisional = run / "dispatch-provisional.json"
             (run / "dispatch-measured.json").replace(provisional)
-            selection = []
+            selection = [dict(class_name=name, selected=False, reason="case failed: " + r.get("failure_kind", "unknown")) for name, r in failed.items()]
             kept = {}
             for name, candidate in dispatch["fusions"].items():
+                if name in failed:
+                    continue
+                if not any(r["class"] == name and r["passed"] for r in case_rows):
+                    raise RuntimeError("dispatch without passing case row: " + name)
                 verdict = review.get(name, {})
                 accepted = candidate == "p39.epilogue" and verdict.get("accepted") is True
                 reason = ("measured winner; assembly accepted" if accepted else

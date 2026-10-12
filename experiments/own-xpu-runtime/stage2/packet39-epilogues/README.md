@@ -1,9 +1,14 @@
 # Packet 39: exact row epilogues, prepared on CPU
 
 Seven of twelve compiled format/shape cases pass the offline assembly gate.
-They could remove **431 launches per token**. No device program or discovery ran,
-no speed was measured, and no runtime default changed. K0 and G4 are prepared
-for the coordinator. The lane remains open; this packet closes CPU preparation.
+They could remove **431 launches per token**. The coordinator's original K0
+passed and G4 measured five cases before a host stride check rejected HC.
+[The retained failure and timing table](evidence/20261012-g4-row-stride-check/README.md)
+explain the cause, rotated full-size buffers and per-token savings. This repair
+ran CPU-only, fixes expanded-row metadata validation, and gates all twelve
+shared G4 bindings with both host compilers. Case failures now continue and
+remain explicit failed rows. Fresh K0/G4 output names end in `card3b`.
+No runtime default changed; repeat and full-model native gates remain pending. The lane remains open; this packet closes CPU preparation.
 
 The model is the separately scoped Unsloth IQ3_XXS quantized compressed version
 of Qwen3.8 Flash-Next, using the lab's arithmetic identity v2. The controls come
@@ -71,6 +76,8 @@ retains those assumptions and the rejected full proposal's 517-launch budget.
 
 ## Identity and prepared timing gates
 
+[Full-size G4 binding gate](g4-binding-gate.json) checks all twelve cases, every bank, truncated/packed stride rejection and failure continuation with GCC and icpx.
+
 [CPU receipts](cpu-gates.json): GCC and icpx, two fresh processes each,
 1,440 fixtures, **10,400 finite/control observable comparisons passed**,
 and **7,200 hostile admission rejections passed**. Fixtures cover every family,
@@ -94,12 +101,12 @@ GEMV backend with seven substituted scalar epilogues, not the device lane bodies
 The source/helper/object pins distinguish that CPU evidence from native proof.
 [CPU identity details](cpu-identity.md) explain the gate's scope.
 
-[Wrapper tests](protocol-tests.json): twelve CPU mock groups passed, including
+[Wrapper tests](protocol-tests.json): fourteen CPU mock groups passed, including
 JSON persistence, unchanged `LD_LIBRARY_PATH`, missing libraries, cursor-relative
 fault latches, graceful failure and dispatch rejection/conflict handling.
 G4 is prepared for **84 device byte checks**, then **200 repetitions per arm per
 class**, using eight independent full-size banks above 8 MB and event sums for
-all launches in each chain. It has not run. One G4 window is screening only;
+all launches in each chain. The original window completed five cases; the repaired build has not run on a device. One G4 window is screening only;
 a fresh repeat and native full-model oracle are still required for a verdict.
 
 ## Coordinator and restoration

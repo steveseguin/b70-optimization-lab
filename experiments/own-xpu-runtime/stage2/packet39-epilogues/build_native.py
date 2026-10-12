@@ -11,6 +11,9 @@ def main():
  ap=argparse.ArgumentParser();ap.add_argument('--source',required=True);ap.add_argument('--output',required=True);ap.add_argument('--define',action='append',default=[]);a=ap.parse_args()
  assert os.getpriority(os.PRIO_PROCESS,0)==19 and os.environ.get('OMP_NUM_THREADS')=='2'
  resource.setrlimit(resource.RLIMIT_AS,(3*1024**3,3*1024**3))
+ binding=json.loads((P/'g4-binding-gate.json').read_text())
+ assert binding['passed'] and not binding['device_executed'] and len(binding['runs'])==2
+ for n,h in binding['sources'].items():assert sha(P/n)==h, 'stale G4 binding gate: '+n
  B.mkdir(exist_ok=True)
  if a.output=='p39-k0':
   if a.source!='k0.cpp':raise ValueError('K0 source shim expected')

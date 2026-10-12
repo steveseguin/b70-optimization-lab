@@ -1,6 +1,6 @@
 # Packet 39 negative and deferred arms
 
-Preparation closeout: [CLOSEOUT.md](CLOSEOUT.md). No device ran.
+Preparation closeout: [CLOSEOUT.md](CLOSEOUT.md). Coordinator device history and CPU repair: [stride failure](evidence/20261012-g4-row-stride-check/README.md).
 
 | Arm | Evidence and reason | Reopen condition |
 | --- | --- | --- |
@@ -15,3 +15,6 @@ Preparation closeout: [CLOSEOUT.md](CLOSEOUT.md). No device ran.
 | Treat NaNs as equal | [CPU receipts](cpu-gates.json): GCC records 36 exact-byte mismatches | Exact payload preservation demonstrated under a separately registered nonfinite contract |
 | Independent small K0 binary | Could compile different device images than G4 | Final K0 is a byte-identical copy of G4 with `--compile-smoke`; keep that guarantee |
 | Handwritten shortened unfused tails | Can understate actual runtime tiny-launch cost | Retain original source-extracted ng/status/simple bodies and geometry |
+| Expanded Q6/Q8 stride without metadata | Original G4 stopped at HC: 12160 bound versus 11520 expected. The old CPU fixture duplicated the same wrong formula. | Use `expanded::row_bytes`, including metadata; require shared G4 binding gate with all twelve exact cases before sealing. |
+| Abort whole G4 on validation/byte mismatch | Seven cases lost their window when the sixth rejected its binding. | Record failed case, skip timing/dispatch, continue; reserve nonzero exit for infrastructure failures. CPU injection must prove continuation and infrastructure stop. |
+| Bare partial timing numbers | Per-group timings without rotation and format frequency can misstate benefit. | Preserve raw arrays; label event-sum units, complete bank rotation and `(control-fused)*groups/token`; never sum mutually exclusive expert candidates. |

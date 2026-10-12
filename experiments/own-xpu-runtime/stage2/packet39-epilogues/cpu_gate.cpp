@@ -41,11 +41,11 @@ template<Type T,unsigned K,Kind E,unsigned Split=1>void run(unsigned rows,unsign
  current_class=std::to_string(int(E))+":"+std::to_string(int(T))+":"+std::to_string(K)+":"+std::to_string(Split);
  constexpr bool routed=E==Kind::expert_act||E==Kind::expert_checks||E==Kind::down_status;
  Fixture f;f.rows=rows;f.count=routed?10:1;f.experts=routed?2:1;
- if constexpr(T==Type::Q6_K||T==Type::Q8_0)f.rb=K+4*(K/(T==Type::Q6_K?16:32));else f.rb=K/iq3::layout(T).elements*iq3::layout(T).bytes;
+ if constexpr(T==Type::Q6_K||T==Type::Q8_0)f.rb=iq3::expanded::row_bytes(T,K);else f.rb=K/iq3::layout(T).elements*iq3::layout(T).bytes;
  f.w.resize(f.experts*rows*f.rb);f.peer.resize(f.w.size());
  uint32_t state=0x713246ab;auto byte=[&](){state=1664525*state+1013904223;return uint8_t(state>>24);};for(auto&v:f.w)v=byte();
  for(unsigned row=0;row<f.experts*rows;++row){auto p=f.w.data()+row*f.rb;
-  if constexpr(T==Type::Q6_K||T==Type::Q8_0){for(unsigned k=K;k<f.rb;k+=4){float scale=0.001f;std::memcpy(p+k,&scale,4);}}
+  if constexpr(T==Type::Q6_K||T==Type::Q8_0){for(unsigned k=K;k<K+4*(K/(T==Type::Q6_K?16:32));k+=4){float scale=0.001f;std::memcpy(p+k,&scale,4);}}
   else if constexpr(T==Type::F32){for(unsigned k=0;k<K;++k){float value=(int(byte())-128)*.001f;std::memcpy(p+4*k,&value,4);}}
   else {for(unsigned k=0;k<f.rb;k+=iq3::layout(T).bytes){p[k]=0x00;p[k+1]=0x20;}}
  }

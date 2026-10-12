@@ -1,5 +1,5 @@
 {
-  "review": "independent source arithmetic/control review, no native execution",
+  "review": "Historical independent arithmetic review retained; 2026-10-12 host-only repair reviewed by implementation author, see repair-review.md",
   "finite_contract": "packet29/NONFINITE-GEMV.md",
   "device_executed": false,
   "reviewed_fusion_kinds": [
@@ -15,7 +15,7 @@
   "sources": [
     {
       "path": "fused.hpp",
-      "sha256": "6fa98c93d1e9f289d4f70edf4a603e1b9b4b14e45c2733945ee15bb0326a22ca"
+      "sha256": "de5d1c2ca6fb1aaf9b67d219d30a6307edf83d50e3f9d4febc5a4eba04443432"
     },
     {
       "path": "fused_sycl.hpp",
@@ -66,5 +66,7 @@
     "mixed nonfinite GEMV diagnostics are unqualified, never counted exact",
     "actual allocation extents belong to coordinator admission",
     "native bytes and timing pending"
-  ]
+  ],
+  "prior_review": "evidence/20261012-g4-row-stride-check/identity-review.json",
+  "repair_arithmetic_suffix_unchanged": true
 }

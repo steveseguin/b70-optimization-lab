@@ -2,7 +2,7 @@
   "passed": true,
   "cpu_only": true,
   "device_executed": false,
-  "checks": 12,
+  "checks": 14,
   "cases": [
     "K0 success, stale fault ignored, JSON persisted, LD_LIBRARY_PATH byte-for-byte",
     "G4 success + matching K0 + dispatch persistence",
@@ -15,6 +15,8 @@
     "offline assembly rejection removes measured winner and retains raw proposal",
     "slower candidate absent from dispatch; no unfused fake fusion",
     "activation and status-only expert fusions mutually exclusive",
-    "status-only fallback selected when activation rejected offline"
+    "status-only fallback selected when activation rejected offline",
+    "case validation/mismatch failures retained; later passing case selected; exit zero",
+    "all case failures complete without infrastructure failure or fabricated timings"
   ]
 }

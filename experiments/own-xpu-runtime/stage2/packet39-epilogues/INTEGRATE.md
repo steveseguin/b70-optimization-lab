@@ -93,6 +93,7 @@ device binary (run sequentially):
 
 ```sh
 nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B experiments/own-xpu-runtime/stage2/packet39-epilogues/generate_baseline.py
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B experiments/own-xpu-runtime/stage2/packet39-epilogues/g4_binding_gate.py
 nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B experiments/own-xpu-runtime/stage2/packet39-epilogues/build_native.py --source timing.cpp --output p39-timing
 nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B experiments/own-xpu-runtime/stage2/packet39-epilogues/build_native.py --source k0.cpp --output p39-k0
 nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B experiments/own-xpu-runtime/stage2/packet39-epilogues/offline.py
@@ -107,3 +108,9 @@ The host build needs packet29's read-only host objects and original local model
 inputs, whose paths/hashes are in `host-build-receipt.json` and `real-eight.json`.
 Those local dependencies are intentionally not advertised as a public recipe.
 Do not merely reseal after changing sources: rerun the affected gates and reviews.
+
+The October 12 host-only repair uses `g4_fixture.hpp` for both native G4 and
+`g4_binding_gate.cpp`; never duplicate its bindings in a miniature test. Q6/Q8
+row strides are `expanded::row_bytes(type, K)`, including original block
+metadata after code bytes and FP32 scales. BF16 x/y and split choices do not
+change this layout. Build and seal reject missing or stale binding evidence.

@@ -64,3 +64,14 @@ The coordinator can run [K0/G4](WINDOW.md) on one assigned card, then follow
 Reopen a rejected assembly arm only with new emitted code removing its identified
 spill/loop regression while preserving identity. Any nonfinite adoption needs
 its own exact gate; do not relax comparisons. The model lane remains open.
+
+## October 12 CPU repair addendum
+
+The coordinator's partial G4 run found an incorrect dense expanded-row stride
+check. [Original evidence and screening table](evidence/20261012-g4-row-stride-check/README.md)
+retain the failed sixth case and all five completed rows. [Repair review](repair-review.md)
+records the corrected metadata-inclusive validation, exact shared G4 host gate,
+case-level continuation, unchanged device images and retained assembly rejects.
+The repaired K0/G4 binaries are prepared only; new coordinator output names are
+`k0-card3b` and `g4-card3b`. This closes the fixture-validation defect; device and
+model-level qualification remain open.

@@ -29,7 +29,9 @@ template<Type T,unsigned K,Kind E,unsigned Split=1> inline void validate(Bound b
  if(!b.rows||b.rows>248320||!b.count||b.count>10||!b.experts||b.experts>512||(!routed&&(b.count!=1||b.experts!=1)))throw std::invalid_argument("p39 shape");
  if constexpr(E==Kind::expert_act||E==Kind::expert_checks)static_assert((T==Type::IQ2_S||T==Type::IQ3_S)&&K==2560&&Split==1);
  if constexpr(E==Kind::down_status)static_assert(T==Type::IQ4_NL&&K==640&&Split==1);
- constexpr unsigned expected=(T==Type::Q6_K||T==Type::Q8_0)?K+4*(K/(T==Type::Q6_K?16:32)):K/iq3::layout(T).elements*iq3::layout(T).bytes;
+ // Expanded rows retain their original block metadata after codes/FP32 scales.
+ // Split count changes arithmetic, never the row layout; x/y remain BF16.
+ const size_t expected=(T==Type::Q6_K||T==Type::Q8_0)?iq3::expanded::row_bytes(T,K):K/iq3::layout(T).elements*iq3::layout(T).bytes;
  if(b.rb!=expected||uint64_t(b.experts)*b.rows*b.rb>UINT32_MAX)throw std::invalid_argument("p39 row stride/offset");
  struct Range {uintptr_t lo,hi;bool write;};std::vector<Range> ranges;
  auto add=[&](const void* p,size_t n,bool write,unsigned align){if(!p||uintptr_t(p)%align||uintptr_t(p)+n<uintptr_t(p))throw std::invalid_argument("p39 null/alignment/extent");ranges.push_back({uintptr_t(p),uintptr_t(p)+n,write});};

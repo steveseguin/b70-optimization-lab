@@ -9,9 +9,16 @@ MOCK = r'''import argparse,json,os
 from pathlib import Path
 p=argparse.ArgumentParser();p.add_argument('--output');p.add_argument('--mode');a=p.parse_args()
 out=Path(a.output)
-(out/'receipt.json').write_text(json.dumps({'passed':a.mode!='failure','device_executed':False,'mock':True,'LD_LIBRARY_PATH':os.environ.get('LD_LIBRARY_PATH')}))
+(out/'receipt.json').write_text(json.dumps({'passed':a.mode not in ('failure','partial','all-failed'),'infrastructure_passed':a.mode!='failure','device_executed':False,'mock':True,'LD_LIBRARY_PATH':os.environ.get('LD_LIBRARY_PATH')}))
 fusions={'mock':'unfused' if a.mode=='slower' else 'p39.epilogue'}
 if a.mode in ('conflict','act-rejected'):fusions={'expert-act-iq2':'p39.epilogue','expert-checks-iq2':'p39.epilogue'}
+rows=[{'class':name,'passed':True} for name in fusions]
+if a.mode in ('partial','all-failed'):
+ rows=[{'class':'bad','passed':False,'failure_kind':'validation'},{'class':'bad-bytes','passed':False,'failure_kind':'byte_mismatch'}]+(rows if a.mode=='partial' else [])
+ # Stale failing proposals must never become selected.
+ fusions.update({'bad':'p39.epilogue','bad-bytes':'p39.epilogue'})
+ if a.mode=='all-failed':fusions={}
+(out/'summary.json').write_text(json.dumps({'rows':rows}))
 (out/'dispatch-measured.json').write_text(json.dumps({'schema':'packet26.dispatch.v1','classes':{},'gemv':{},'fusions':fusions}))
 raise SystemExit(1 if a.mode=='failure' else 0)
 '''
@@ -70,6 +77,8 @@ def main():
         out,row,s=run('slower',mode='slower',window_name='G4',k0=root/'k0/window.json');assert row['passed'] and not json.loads((out/'run/dispatch-measured.json').read_text())['fusions'];cases.append('slower candidate absent from dispatch; no unfused fake fusion')
         out,row,s=run('conflict',mode='conflict',window_name='G4',k0=root/'k0/window.json');assert row['passed'] and json.loads((out/'run/dispatch-measured.json').read_text())['fusions']=={'expert-act-iq2':'p39.epilogue'};cases.append('activation and status-only expert fusions mutually exclusive')
         out,row,s=run('act-rejected',mode='act-rejected',window_name='G4',k0=root/'k0/window.json');assert row['passed'] and json.loads((out/'run/dispatch-measured.json').read_text())['fusions']=={'expert-checks-iq2':'p39.epilogue'};cases.append('status-only fallback selected when activation rejected offline')
+        out,row,s=run('partial',mode='partial',window_name='G4',k0=root/'k0/window.json');assert row['passed'] and not row['cases_passed'] and row['failed_cases']==2 and json.loads((out/'run/dispatch-measured.json').read_text())['fusions']=={'mock':'p39.epilogue'};cases.append('case validation/mismatch failures retained; later passing case selected; exit zero')
+        out,row,s=run('all-failed',mode='all-failed',window_name='G4',k0=root/'k0/window.json');assert row['passed'] and not row['cases_passed'] and row['failed_cases']==2 and not json.loads((out/'run/dispatch-measured.json').read_text())['fusions'];cases.append('all case failures complete without infrastructure failure or fabricated timings')
         window.persist(window.P/'protocol-tests.json',dict(passed=True,cpu_only=True,device_executed=False,checks=len(cases),cases=cases))
         print(json.dumps({'passed':True,'checks':len(cases),'device_executed':False}))
     finally:
