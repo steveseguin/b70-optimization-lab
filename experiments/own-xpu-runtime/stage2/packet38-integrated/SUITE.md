@@ -8,8 +8,17 @@ identity and model directory for the entire launch. Prompt token lists come from
 those snapshots. The checker source is itself read and compiled from one byte
 snapshot; receipts hash those executed bytes even if its external file changes.
 
-Warm-up traverses the first prompt and two generated tokens, so every layer and
-the target head run before timed requests. With MTP, draft generation also runs.
+Warm-up uses a deterministic synthetic five-token input that appears in no
+contiguous five-token span of any admitted suite input. Its selection is
+independent of prompt order. It requests two generated tokens, crosses the
+four-position QSA pooling boundary and exercises both target state banks and
+the target output head. With MTP, the draft output head also runs. Capacity,
+budget and dense geometry remain those of the sealed launch; active position
+is runtime data. Warm-up tokens, their hash and the selection rule are recorded.
+EOS termination is disabled only for this excluded warm-up; the wrapper
+requires exactly two outputs even if the first token is EOS. Measured requests
+keep their normal EOS behavior. The complete RESET after warm-up runs before
+the first measured request.
 The rank launch receipt records its packet-local persistent-cache HOME and
 whether files were present before launch. File presence is not proof that a
 driver cache lookup hit. The warm-up and every request record each rank's first

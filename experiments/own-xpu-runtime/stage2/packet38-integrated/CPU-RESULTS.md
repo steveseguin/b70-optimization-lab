@@ -14,7 +14,7 @@ No device executable ran, and no model speed is claimed.
 - Native mailbox failure/lifetime gate: five checks and 32 repeated requests
   in each of the same three configurations. No bounded spin was used.
 - CPU controller hand-over: median 11.04 microseconds, p95 17.78 microseconds;
-  mailbox wake-up median 4.11 microseconds. This is a CPU diagnostic, not a
+  mailbox wake-up median 4.11 microseconds. This is a two-thread CPU diagnostic, not a cross-process rank,
   GPU latency or model-throughput claim.
 - Parent miniature runtime gates: 130 cases per GNU/Intel/sanitized build;
   draft gates: seven per build. Prepared capture invalidation: 15 tests;

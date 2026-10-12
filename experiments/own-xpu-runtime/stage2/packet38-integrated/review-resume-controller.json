@@ -14,7 +14,7 @@
     "native_controller_test.cpp": "db276644ce9fcb90871533b141f768723361c78e52f28533aadb6c8769a587e7",
     "native_mailbox_fault_test.cpp": "f6d1102a02c9bb0594cf9681d87c9f34a417f35715c0be3ac3be1a8905ec044a",
     "test_controller_review.py": "d794647d3ca3e40143f13288153ec16588832cf7c3a8ad698f45cf45e33f6661",
-    "suite.py": "532e7bcad914ccd98319d80060dc070839093cd3987d5b0d16449a2c4ba4ff54",
+    "suite.py": "28cd8afff3df0eb0fd7eec1153f5e64b13873561e55423e75ac6326dc8fe8d4a",
     "test_failure_storage.py": "d2bc95e6db229729949e696d6429616586a7a6dd4bb8e9e1712fc08a941735d2",
     "window.py": "69b8ae293a20330816a96a44bd0da837f64b0d44498c5d90e655a7353cfd2f75",
     "test_window_storage.py": "86001852f3d91eb0afde1698e2a29d5962c6b5109e54a5e4347a8fcaaa7276e5",
@@ -62,7 +62,7 @@
     "Device backend cancellation and owner drain require coordinator device windows."
   ],
   "regression_receipt": "review-resume-storage-gates.json",
-  "regression_receipt_sha256": "81a38a8cc5e5b7027dc37da43b0b75b6d5d30843459ff5caa0df698c08eb54eb",
+  "regression_receipt_sha256": "ae256874eb3ec82087d2329cbb7994fedfc79ad1b69d94ba67e9cea2216b4357",
   "window_storage_regression_receipt": "review-resume-window-storage-gates.json",
   "window_storage_regression_receipt_sha256": "2bd16e6f47c460c38589692e298a922f59503d54a038393db7f3244d1b15730c",
   "final_rereview": {
@@ -109,5 +109,17 @@
     "receipt_sha256": "e1866dff7473b679dd852bda913f332393d4baac3eee9a0606f4a85a0afc9bea",
     "tests": "3 mock-only checks plus 6 synthetic export/retention checks rerun; no ranks or device",
     "change": "A single-pass build_size helper ignores only FileNotFoundError from a member disappearing between discovery/type check/stat. Other filesystem errors still propagate. No retry loop, no weakened disk thresholds."
+  },
+  "distinct_warmup_rereview": {
+    "utc": "2026-10-12T06:01:10.167257+00:00",
+    "passed": true,
+    "source_sha256": "28cd8afff3df0eb0fd7eec1153f5e64b13873561e55423e75ac6326dc8fe8d4a",
+    "evidence_receipt": "suite-warmup-gates.json",
+    "evidence_receipt_sha256": "a5854deb3377e3f6df57eb1dc6c1c8b6ce1721de4ac4458ed2290e1a7f0954a1",
+    "reported_no_rank_checks": 11,
+    "receipt_source_hashes_verified": true,
+    "findings": [],
+    "review": "Bounded deterministic five-token selection is absent from every contiguous suite span and independent of prompt order. Initial short synthetic request is excluded from measurements and followed by complete request reset. Review found first-token EOS could leave draft head cold; final code suppresses EOS only for keyword-selected excluded warmup and requires both target outputs. Normal measured requests retain their original EOS behavior. Controller/IPC/reset code unchanged.",
+    "tests_this_turn": "Three mocked ENOSPC/hook cases rerun and passed; no rank or device execution; integrated suite results remain separate."
   }
 }

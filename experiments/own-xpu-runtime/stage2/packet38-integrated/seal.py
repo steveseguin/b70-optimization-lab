@@ -132,7 +132,7 @@ def bind_cpu_suite(row,host_sha):
 
 def main():
  from build import sources
- names="""argument-block-tests.json argument-state-gates.json prepared-invalidation.json prepared-host-benchmark.json submission-overlay-gates.json review-prepared-gates.json p33-candidate-gates.json p33-linked-fixture-gates.json k2-admission-tests.json k2-selection-tests.json p38-k2-selection-tests.json p38-kernel-gates.json p38-qsa-capacity-gates.json p30-attention-cpu.json p30-small-cpu.json owner-gates.json fixture-gates.json validation-gates.json entry-codes.json window-tests.json identity-tree-tests.json kernel-sizes.json expert-down-review-gates.json state-machine-tests.json mtp-controller-tests.json review-controller-tests.json review-native-faults.json canary-host-gates.json resident-host-gates.json rollback-inventory.json draft-auth-gates.json pipeline-draft-agreement.json native-controller-cpu.json native-controller-asan.json native-controller-tsan.json native-mailbox-faults.json native-mailbox-faults-asan.json native-mailbox-faults-tsan.json native-mini-cpu.json receipt-metadata-gates.json suite-gate-results.json real-controller-gates.json review-resume-controller.json review-resume-reset.json review-resume-authority.json review-resume-storage-gates.json review-resume-window-storage-gates.json draft-window-cleanup-gates.json reset-retention-gate-results.json suite-export-retention-gates.json storage-race-gates.json resume-input-integrity.json review-draft-capture.json window-cpu-fixtures.json window-cpu-models.json suite-real-cpu.json""".split()
+ names="""argument-block-tests.json argument-state-gates.json prepared-invalidation.json prepared-host-benchmark.json submission-overlay-gates.json review-prepared-gates.json p33-candidate-gates.json p33-linked-fixture-gates.json k2-admission-tests.json k2-selection-tests.json p38-k2-selection-tests.json p38-kernel-gates.json p38-qsa-capacity-gates.json p30-attention-cpu.json p30-small-cpu.json owner-gates.json fixture-gates.json validation-gates.json entry-codes.json window-tests.json identity-tree-tests.json kernel-sizes.json expert-down-review-gates.json state-machine-tests.json mtp-controller-tests.json review-controller-tests.json review-native-faults.json canary-host-gates.json resident-host-gates.json rollback-inventory.json draft-auth-gates.json pipeline-draft-agreement.json native-controller-cpu.json native-controller-asan.json native-controller-tsan.json native-mailbox-faults.json native-mailbox-faults-asan.json native-mailbox-faults-tsan.json native-mini-cpu.json receipt-metadata-gates.json suite-gate-results.json real-controller-gates.json review-resume-controller.json review-resume-reset.json review-resume-authority.json review-resume-storage-gates.json review-resume-window-storage-gates.json draft-window-cleanup-gates.json reset-retention-gate-results.json suite-export-retention-gates.json storage-race-gates.json suite-warmup-gates.json resume-input-integrity.json review-draft-capture.json window-cpu-fixtures.json window-cpu-models.json suite-real-cpu.json""".split()
  for c in ('gnu-host','icpx-host','asan'):names.extend([f'mini-{c}.json',f'mtp-gates-{c}.json'])
  for c,prefix in (('gnu-host',''),('icpx-host','icpx-host-')):
   names.append(f'real-campaign-{c}.json')
@@ -141,7 +141,11 @@ def main():
  prompts=('incident-retrospective','code-review','customer-email','benchmark-analysis')
  names.extend(f'agreement-{n}.json' for n in prompts)
  gates={n:json.loads((P/n).read_text()) for n in names}
- for n,r in gates.items():assert r.get('passed',r.get('source_review_passed')) is True,('gate incomplete',n)
+ for n,r in gates.items():
+  assert r.get('passed',r.get('source_review_passed')) is True,('gate incomplete',n)
+  for field in ('source_sha256','sources_sha256'):
+   if isinstance(r.get(field),dict):
+    for source,digest in r[field].items():assert sha(P/source)==digest,('stale gate source',n,source)
  entries=('p33-linked-fixtures','own-rt-iq3','nongemv-fixtures','k2-fixtures','jit-smoke','authority-tests','owner-retirement-tests','chain-tests','queue-tests','lifetime-tests','prepared-invalidation-tests')
  binaries={str(f.relative_to(B)):sha(f) for c in ('gnu-host','icpx-host','asan','device') for f in (B/c).iterdir() if f.name in entries}
  # Native controller and reset evidence must name this exact final host binary.

@@ -56,5 +56,8 @@ def main():
   assert any(r['class']=='gemv:logits' and r['variant']=='specialised' for r in events)
   results.append(dict(compiler=compiler,continued_after_failures=sorted({r['class'] for r in failures})))
  report=dict(passed=True,device_executed=False,scope='K1 and K2 argument validation, every registered class and linked candidate; exact production K2 extents; no arithmetic in validate-only mode',checks=results,maxrss_kib=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss)
+ (P/'validation-gates.json').write_text(json.dumps(report,indent=2)+'\n')
+ from storage import discard
+ report['scratch_archive']=discard(root)
  (P/'validation-gates.json').write_text(json.dumps(report,indent=2)+'\n');print('all fixture entry validations and poison/continuation controls PASS')
 if __name__=='__main__':main()

@@ -31,17 +31,19 @@ Python Controller: all 1,093 ternary hit/miss/no-guess scripts of lengths 0–6,
 24 long random scripts, and six reference-mode/overlap/end cases. It compares
 tokens, the complete guess and hit/miss sequences, counters, final state and
 fixtures. `native_mini_gate.py` additionally runs the actual host Engine through
-both controllers using the same ranks and complete request resets. The final
-resident/prepared host binary passed 1,109 cases: the same 1,093 exhaustive
+both controllers using the same ranks and complete request resets. The
+resident/prepared host gate requires 1,109 cases: the same 1,093 exhaustive
 patterns, twelve random 64-token requests, and four mode/end cases. It compares
 every target allocation and alternate bank, retained fixture, draft final state,
 emitted token, guess and hit/miss event. `native-mini-cpu.json` binds this proof
-to the final binary SHA256; its 399.001-second wall time is test duration only.
+to the final binary SHA256 when complete. The resumed exhaustive run is still
+in progress; earlier interrupted receipts are not qualification.
 
 The retained ordinary CPU microbenchmark measured 11.04 microseconds median
 between one half finishing and the other half starting (p95 17.78 us), and
-4.11 us median mailbox send-to-worker start. This is a tiny CPU model with no
-GPU work; it predicts no model throughput. Exact receipt values are in
+4.11 us median mailbox send-to-worker start. This is a two-thread mailbox microbenchmark with a tiny CPU model and no
+GPU work; it is not a cross-process rank measurement and predicts no model
+throughput. Exact receipt values are in
 `native-controller-cpu.json`. Zero spin iterations were used.
 
 AddressSanitizer, UndefinedBehaviorSanitizer, and ThreadSanitizer passed all

@@ -80,3 +80,22 @@ root-space and build-space thresholds are unchanged. The three mocked race
 checks and the rerun six synthetic export/retention checks were parsed and
 all their recorded source hashes verified against current files. This review
 did not rerun tests or launch ranks.
+
+The distinct warm-up correction was independently checked against reset. The
+bounded selector uses a deterministic five-token sequence absent from every
+five-token span in admitted inputs and is independent of input order. It
+changes only warm-up input selection and receipt metadata. Both rank RESETs
+still follow warm-up before the first measured request, clearing full target,
+draft, host history, mailbox and counters as before. The ten no-rank warm-up
+checks were parsed and their source hashes verified. The six export/retention
+receipt hashes remain current; that receipt does not bind suite.py, so no
+redundant execution was performed. Final integrated reset/window gates remain
+parent-session work.
+
+The final EOS refinement is confined to the excluded warm-up: a keyword-only
+flag passes no terminating EOS tuple and requires exactly two outputs. Every
+measured request retains the normal tuple. The following complete RESET is
+unchanged, so neither a synthetic EOS token nor its state/history survives into
+a measured request. Eleven warm-up checks are source-bound and verified. The
+five lightweight state-retention checks were rerun successfully against the
+final suite/storage sources; no rank or device process ran.

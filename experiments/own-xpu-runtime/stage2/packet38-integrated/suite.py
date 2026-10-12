@@ -10,6 +10,33 @@ RESET=11
 CHECKER=ROOT/'experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite/suite_check.py'
 EOS=(248044,248046)
 
+def select_warmup(prompts,context,vocab):
+    """A short synthetic request absent from every contiguous suite input span.
+
+    Capacity/budget/dense geometry select compiled kernels; active position is
+    runtime data. Five input positions cross the four-position QSA pooling
+    boundary and exercise both target banks. Two requested outputs reach the
+    target and (when enabled) draft output heads; no measured prompt is warmed.
+    """
+    length=5;alphabet=15
+    pipeline.require(context>=length+1 and vocab>alphabet,'warmup context/vocabulary bounds')
+    prompts=[tuple(p) for p in prompts]
+    pipeline.require(prompts and all(p for p in prompts),'warmup needs nonempty admitted prompts')
+    spans={p[start:start+length] for p in prompts for start in range(max(0,len(p)-length+1))}
+    seed=0
+    for token in (2,5,3,7,1):seed=seed*alphabet+token-1
+    space=alphabet**length
+    pipeline.require(len(spans)<space,'warmup candidate space exhausted')
+    # At most len(spans) distinct candidates are blocked, so this bound always
+    # finds one without an unbounded search. Candidate tokens exclude EOS IDs.
+    for offset in range(len(spans)+1):
+        value=(seed+offset)%space;tokens=[0]*length
+        for index in range(length-1,-1,-1):tokens[index]=value%alphabet+1;value//=alphabet
+        if tuple(tokens) not in spans:
+            pipeline.require(tuple(tokens) not in prompts,'warmup repeats suite prompt')
+            return tokens
+    raise AssertionError('warmup selection bound')
+
 def checker_module(path=CHECKER):
     # Hash and execute the same immutable byte snapshot: another producer may
     # update the read-only external source after this load. Never hash it later.
@@ -127,10 +154,15 @@ def collect_fixtures(output,count,mini=False):
             records.append(dict(layer=layer,shape=[1,4,16 if mini else 2560],dtype='BF16 little-endian',sha256=pipeline.sha(target)))
         (dest/'layers.jsonl').write_text(''.join(json.dumps(row)+'\n' for row in records))
 
-def run_request(transport,args,prompt,count):
+def run_request(transport,args,prompt,count,*,kernel_warmup=False):
     storage.admit(8_000_000 if args.mini else 32_000_000)
     provider=pipeline.Draft(args.draft,list(map(int,args.script.read_text().split())) if args.script else [])
-    result=pipeline.request_run(transport,provider,prompt,count,() if args.mini else EOS,args.prompt_overlap=='on',args.dump_state)
+    # EOS termination is disabled only for the excluded synthetic warmup. Two
+    # outputs must run even if its first target token happens to be EOS, so the
+    # draft decode/output-head path executes before any measured request.
+    eos=() if args.mini or kernel_warmup else EOS
+    result=pipeline.request_run(transport,provider,prompt,count,eos,args.prompt_overlap=='on',args.dump_state)
+    if kernel_warmup:pipeline.require(count==2 and len(result['tokens'])==2,'incomplete kernel warmup')
     result['rank_trace']=copy.deepcopy(transport.trace);result['rank_metrics']=copy.deepcopy(transport.metrics)
     result.update(schema='own-runtime.iq3.packet26.run.v1',arithmetic='iq3-p17-detmath-v2',passed=True,
                   device_executed=args.device,draft=args.draft,controller=getattr(args,'controller','python'),
@@ -201,9 +233,17 @@ def run(args,environment=None,check=None,failure_hook=None,launch_hook=None):
         transport.__init__(launch,ranks,environment,check_all,launch_hook)
         if failure_hook:transport.failure_hook=failure_hook
         warm=args.output/'warmup';reset(transport,warm)
-        warm_prompt=[2,5,3,7,1] if args.mini else list(map(int,(launch.input/'tokens.txt').read_text().split()))
-        warm_result=run_request(transport,args,warm_prompt,2)
+        measured_prompts=[entry['mini_tokens'] if args.mini else snapshots[entry['prompt_id']][1] for entry in entries]
+        warm_prompt=select_warmup(measured_prompts,args.context,16 if args.mini else 248320)
+        warm_result=run_request(transport,args,warm_prompt,2,kernel_warmup=True)
         warm_result['excluded_from_timing']=True
+        warm_result['warmup_selection']=dict(schema='packet38.distinct-kernel-warmup.v1',
+            token_ids=warm_prompt,prompt_tokens=len(warm_prompt),requested_output_tokens=2,
+            eos_termination_disabled_only_for_excluded_warmup=True,completed_output_tokens=len(warm_result['tokens']),
+            token_sha256=hashlib.sha256(json.dumps(warm_prompt,separators=(',',':')).encode()).hexdigest(),
+            distinct_from_every_suite_prompt=True,absent_from_every_contiguous_suite_input_span=True,
+            suite_prompt_count=len(measured_prompts),complete_reset_before_measured_requests=True,
+            kernel_scope='same fixed capacity/budget/dense geometry; active position is runtime data; five inputs cross QSA pooling boundary and both target banks; output heads execute before any timed request')
         warm_result['first_position_ms_by_rank']=[next((r['busy_ms'] for r in transport.trace if r['rank']==rank and r['op']==pipeline.HALF),None) for rank in (0,1)]
         pipeline.save(warm/'receipt.json',warm_result)
         for repeat in range(1,args.repeat+1):

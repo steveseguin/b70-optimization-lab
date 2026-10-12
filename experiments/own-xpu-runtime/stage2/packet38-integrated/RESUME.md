@@ -23,3 +23,10 @@ buffers, both recurrent banks, draft state, tokens and retained fixtures.
 
 Final CPU results and any open coordinator-only checks are recorded in
 CPU-RESULTS.md and build-receipt.json when qualification finishes.
+
+The first resumed exhaustive mini run reached 553 exact comparisons, then hit
+a concurrent scratch-deletion race in its already-imported disk-size helper.
+Both ranks exited cleanly. The failure is retained in
+`native-mini-resume-storage-race-failed.json`. The helper now ignores only a
+vanished file during the accounting scan, with three regression checks; other
+I/O errors still propagate. The full gate was launched again after that fix.

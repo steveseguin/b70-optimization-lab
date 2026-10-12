@@ -4,7 +4,9 @@ Packet32 is the common base. Packet37 contributes the prepared command owner,
 argument serialization, fixed K2 fusion selection and packet33 kernels. Packet36
 contributes the official draft preparation, authentication, captures, provider,
 controller interface and draft receipts. The three-way source inventory is in
-merge-inventory.json; source-overlay.json records the final local overlay.
+merge-inventory.json; source-overlay.json records the final local overlay against
+the immutable parent commits. Later coordinator changes in parent working files
+are labeled separately and cannot silently change that comparison.
 
 The draft issues captured commands through the same prepared owner as its
 target. It does not release scratch independently. All target and draft mutable

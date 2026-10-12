@@ -44,3 +44,15 @@ I also reviewed request_state_inventory.hpp and the suite raw-state retention
 change. Inventory runs at quiescent request boundaries. Both RESET replies
 precede retention and shared-mapping clearing. Hash and archive checks precede
 raw-state deletion; emitted tokens and retained layer fixtures are unchanged.
+
+Warmup follow-up: the excluded request now uses a synthetic five-token sequence
+absent from all admitted prompt spans. Only that request disables EOS termination
+to guarantee two target outputs and the draft decode head before measurement;
+normal requests retain the original EOS and complete reset path. K2 picks one
+class winner across its workloads (`k2_summary.py:268-272`), and prepared dispatch
+uses label/op only (`dispatch.hpp:40`, `main.cpp:1074`). Active position cannot
+select a new QSA kernel type later. Capture itself does not execute every
+candidate; warmup exercises the selected types. Driver compilation/cache-hit
+behavior remains a device-window observation. The separate no-rank warmup
+regression is implementation evidence, not part of this independent source
+review or a runtime/device exactness claim.
