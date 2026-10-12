@@ -6,10 +6,12 @@ import shutil
 import tempfile
 import unittest
 import suite_check as check
+import suite_run as runner
 
 class ExactChecks(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        runner.disk_guard()
         cls.reference=check.HERE/'incident-retrospective'
         cls.temp=tempfile.TemporaryDirectory(prefix='.checker.partial-',dir=check.HERE)
         cls.copy=Path(cls.temp.name)/'incident-retrospective'

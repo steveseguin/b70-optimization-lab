@@ -1,14 +1,15 @@
 # Arithmetic-v2 128-token CPU suite
 
-Verified prompts: 0/12. Complete: False.
+Verified prompts: 1/12. Complete: False.
 Arithmetic `iq3-p17-detmath-v2`, quantized Unsloth UD-IQ3_XXS; context 256; cap 128.
 EOS 248044 or 248046 is included and then stops generation; no forced continuation.
 
 | Prompt | Prompt tokens | Generated | Early end | First 8 token IDs | Last 8 token IDs | Seconds/position | 64-prefix equal |
 | --- | ---: | ---: | --- | --- | --- | ---: | --- |
+| incident-retrospective | 87 | 128 | False | 332, 37947, 1653, 10082, 3508, 8812, 25, 23288 | 11164, 6297, 6679, 13, 271, 332, 69075, 35059 | 20.3990 | True |
 
-Numerical-process wall time (sum): 0.000 seconds.
-Measured user + system CPU time: 0.000000 CPU hours.
+Numerical-process wall time (sum): 4368.791 seconds.
+Measured user + system CPU time: 1.987790 CPU hours.
 Per-position wall times are in `positions.jsonl`; per-generated-token times and IDs are
 in `tokens.jsonl`; decoded text is in `result.json`. Token 1 includes prefill time.
 These are CPU oracle costs, not serving speeds.
@@ -19,7 +20,7 @@ the incident run must reproduce the sealed 64 tokens, all 64 logit/top-five reco
 384 BF16 layer fixtures and 8 ledgers byte for byte at context 256. Other prompts cannot
 start until this incident result is sealed. Each prompt's `suite64-equality-proof.json`
 compares the finished 64-token suite when available; any difference stops the campaign.
-The source analysis predicts comparable prefixes; measured confirmation is PENDING.
+The source analysis predicts comparable prefixes; measured confirmation is PASS.
 
 The sealed program hard-codes cap 64/context 192: `oracle128.patch` changes only those
 limits, captures steps 97–104 as well as 1–8, and adds the prefix checkpoint wait.
