@@ -342,13 +342,17 @@ def same_rule(a: str, b: str) -> bool:
 # ---- end of the copy ----
 
 
+TRAILER = re.compile(r"\n*\(exit_code=-?\d+\)\s*$")       # a shell tool's status line is not part of what was said
+
+
+def _sentences(text: str) -> list[str]:
+    text = re.sub(r"ITEM \d+/\d+ \(\w+\)", " ", TRAILER.sub("", text))
+    return [s for s in re.split(r"(?<=[.!?])\s+", " ".join(text.split())) if s]
+
+
 def statements(texts: list[str]) -> list[list[str]]:
     """Each text as its sentences, questions left out (a mention inside a question changes nothing)."""
-    out = []
-    for t in texts:
-        t = re.sub(r"ITEM \d+/\d+ \(\w+\)", " ", t)
-        out.append([s for s in re.split(r"(?<=[.!?])\s+", " ".join(t.split())) if s and not s.endswith("?")])
-    return out
+    return [[s for s in _sentences(t) if not s.endswith("?")] for t in texts]
 
 
 def _checked(names: list[str]) -> list[str]:
@@ -377,9 +381,11 @@ def mention_counts(names: list[str], texts: list[str]) -> dict[str, int]:
 
 def numbers_near(names: list[str], texts: list[str], signed: bool = True) -> dict[str, set[int]]:
     """For each (identifier-like) name: the numbers stated in a sentence that mentions it, or in the sentence right
-    after one ("Next on the list was abcd12. It was opened at 591."), with the sign as stated."""
+    after one ("Next on the list was abcd12. It was opened at 591."), with the sign as stated. Neighbours are taken
+    in the text as written (a question between two statements stays between them)."""
     want, out = set(_checked(names)), {}
-    for sents in statements(texts):
+    for t in texts:
+        sents = _sentences(t)
         for i, sent in enumerate(sents):
             here = want & set(re.findall(r"[a-z0-9_]+", sent.lower()))
             if here:

@@ -84,7 +84,11 @@ time. In-place notes avoid all three:
   `--think-when` / `--think-until`; no in-place cut is made until it is closed), and the latest user message if it
   has been moved out while the model is still working on it.
 - If an in-place attempt fails (no usable reply twice), nothing changes and the ordinary cut handles those turns
-  when the window fills.
+  when the window fills. A cut is all or nothing: if saving it fails, the state is as before and the archive takes
+  no message twice when the cut is made again.
+- The cache only helps if the start of the prompt is the same in the notes call as in the call before it. On Qwen
+  pass `--effort medium` (as for `--think-when`): without it, thinking in the notes call changes the system message
+  and the server reads the whole request again. The notes are still right; the call is just slower.
 - `--notes-checks count|near` adds two checks for ledger-like state whose things have names like `abcd12`: every
   mention of such a name in the noted turns must be accounted for by a change (or a `name: (no change)` line), and
   a value written without working must be one the turns state (`near`: in a sentence that names the thing, or the

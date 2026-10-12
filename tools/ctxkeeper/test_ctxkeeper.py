@@ -228,6 +228,94 @@ class InPlace(unittest.TestCase):
         s2 = next(iter(again.sessions.values()))
         self.assertEqual((s2.state["cut"], s2.state["notes"], s2.state.get("restarts", 0)), (cut, notes, 0))
 
+    def test_a_tool_call_is_never_parted_from_its_results(self):
+        """Review, 2026-10-12: assistant(tool calls) -> results -> a user message. The whole exchange stays in view."""
+        model = LedgerModel()
+        keeper = self.keeper(model)
+        msgs = conversation(6) + [{"role": "user", "content": "And now close counter abcd02."}]
+        keeper.complete({"model": "m", "messages": msgs})
+        s = next(iter(keeper.sessions.values()))
+        self.assertEqual(s.state["inplace_cuts"], 1)
+        view = model.requests[-1]["messages"]
+        self.assertEqual([m["role"] for m in view[:6]], ["system", "user", "user", "assistant", "tool", "user"])
+        self.assertEqual(view[3]["tool_calls"][0]["id"], view[4]["tool_call_id"])
+        self.assertEqual(view[5]["content"], "And now close counter abcd02.")
+        self.assertTrue(view[6]["content"].startswith("[[RULES in force"))             # the reminder after a user message, as always
+        notes_req = model.notes_requests[0]["messages"]
+        self.assertEqual(notes_req[-2]["role"], "tool")                            # the noted part ends on a completed exchange
+        for i, m in enumerate(notes_req):
+            if m.get("role") == "tool":
+                self.assertEqual(notes_req[i - 1]["role"], "assistant")
+
+    def test_the_archive_takes_no_number_twice_and_a_failed_commit_changes_nothing(self):
+        model = LedgerModel()
+        keeper = self.keeper(model)
+        s0 = keeper.session({"model": "m", "messages": conversation(1)}, None)
+        calls = {"n": 0}
+        real = s0.log_notes
+        def failing(upto):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                raise OSError("disk full")
+            return real(upto)
+        s0.log_notes = failing
+        with self.assertRaises(OSError):
+            self.run_conversation(keeper, 3)
+        self.assertEqual((s0.state["cut"], s0.state["notes"], s0.state["inplace_cuts"]), (0, "", 0))
+        rows_after_failure = len(s0.archive.rows())
+        self.run_conversation(keeper, 4, start=3)                                  # the same cut is made again
+        self.assertEqual(s0.state["inplace_cuts"], 1)
+        numbers = [r["n"] for r in s0.archive.rows()]
+        self.assertEqual(numbers, sorted(set(numbers)))                            # nothing archived twice
+        self.assertEqual(len(numbers), s0.state["cut"])
+        self.assertGreater(rows_after_failure, 0)
+        self.assertEqual(s0.state["notes"].count("abcd00: 0"), 1)                  # and its changes applied once
+
+    def test_a_kept_user_message_is_not_counted_again_and_keeps_thinking_on(self):
+        model = LedgerModel()
+        keeper = self.keeper(model, think_when=r"QUESTION:", think_until=r"NEVER MATCHES")
+        msgs = conversation(3) + [{"role": "user", "content": "Add 5 to stock, then keep auditing."}]
+        for i in range(3, 9):
+            msgs += conversation(i + 1)[2 + 2 * i:]
+            keeper.complete({"model": "m", "messages": list(msgs)})
+        s = next(iter(keeper.sessions.values()))
+        self.assertIsNotNone(s.state["kept_user"])
+        later = [r for r in model.notes_requests if any(m.get("content") == "Add 5 to stock, then keep auditing." for m in r["messages"][2:4])]
+        self.assertTrue(later)
+        self.assertIn("do not count it again", later[-1]["messages"][-1]["content"])
+        self.assertTrue(model.requests[-1]["chat_template_kwargs"]["enable_thinking"])   # the request is still open
+        # a question arriving in a tool result does not release the user's message
+        msgs += [{"role": "assistant", "content": "", "tool_calls": [{"id": "q", "type": "function", "function": {"name": "bash", "arguments": "{}"}}]},
+                 {"role": "tool", "tool_call_id": "q", "content": "QUESTION: is abcd03 still open?"}]
+        keeper.complete({"model": "m", "messages": list(msgs)})
+        self.assertIsNotNone(s.state["kept_user"])
+
+    def test_a_failed_attempt_waits_for_the_ordinary_cut_whatever_the_token_estimate(self):
+        model = LedgerModel(script=["no layout", "still none"])
+        keeper = self.keeper(model)
+        s = self.run_conversation(keeper, 4)
+        self.assertEqual((s.state["inplace_failed"], s.state["hold"]), (1, 1))
+        tried = len(model.notes_requests)
+        s.state["ratio"] = 6.0                                                     # the same turns now look smaller
+        self.run_conversation(keeper, 5, start=5)
+        s.state["ratio"] = 2.5                                                     # or larger
+        self.run_conversation(keeper, 6, start=6)
+        self.assertEqual(len(model.notes_requests), tried)
+
+    def test_full_mode_ignores_a_kept_user_message_left_in_saved_state(self):
+        model = Model()
+        d = tempfile.TemporaryDirectory()
+        self.addCleanup(d.cleanup)
+        keeper = ck.Keeper(model, Path(d.name), budget=2400, reply_reserve=400, headroom=100, target_ratio=0.5, notes_cap=400, memory_note=False)
+        for n in range(1, 21):
+            keeper.complete({"model": "m", "messages": conversation(n)})
+        s = next(iter(keeper.sessions.values()))
+        self.assertGreater(s.state["cut"], 4)
+        s.state["kept_user"] = 3                                                   # as if left by an earlier in-place run
+        view = keeper.view(s, conversation(20))
+        self.assertTrue(view[2]["content"].startswith("[[NOTES kept"))
+        self.assertEqual(view[3], conversation(20)[2 + s.state["cut"]])            # straight on to the recent turns
+
     def test_options_are_checked(self):
         with self.assertRaises(ValueError):
             ck.Keeper(lambda b: None, Path(tempfile.gettempdir()), notes_mode="fast")

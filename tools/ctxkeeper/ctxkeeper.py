@@ -309,11 +309,23 @@ class Archive:
     def __init__(self, path: Path) -> None:
         self.path = path
         self.lock = threading.Lock()
+        self.last = None                              # the highest message number in the file (read once, then tracked)
 
     def add(self, first_number: int, messages: list[dict[str, Any]]) -> None:
-        with self.lock, self.path.open("a") as f:
-            for k, m in enumerate(messages):
-                f.write(json.dumps({"n": first_number + k, "role": m.get("role"), "text": text_of(m), "message": m}) + "\n")
+        """Append messages numbered from first_number. A number already in the archive is skipped, so a cut that
+        failed after this step can be made again without archiving anything twice."""
+        with self.lock:
+            if self.last is None:
+                self.last = 0
+                if self.path.exists():
+                    for line in self.path.read_text().splitlines():
+                        if line.strip():
+                            self.last = max(self.last, json.loads(line)["n"])
+            with self.path.open("a") as f:
+                for k, m in enumerate(messages):
+                    if first_number + k > self.last:
+                        f.write(json.dumps({"n": first_number + k, "role": m.get("role"), "text": text_of(m), "message": m}) + "\n")
+                        self.last = first_number + k
 
     def rows(self) -> list[dict[str, Any]]:
         if not self.path.exists():
@@ -397,6 +409,7 @@ class Session:
             (self.dir / "notes-history.jsonl").rename(self.dir / f"notes-history-until-{stamp}.jsonl")
         if self.archive.path.exists():
             self.archive.path.rename(self.dir / f"archive-until-{stamp}.jsonl")
+        self.archive.last = None
         self.log_event({"event": "new conversation: the history no longer contains what was archived", "set_aside": stamp})
         self.state.update(cut=0, notes="", boundary="", cuts=0, largest_turn=0, hold=0, kept_user=None,
                           restarts=self.state.get("restarts", 0) + 1)
@@ -493,7 +506,7 @@ class Keeper:
         with in-place notes, the latest user message if it has been moved out while still being worked on."""
         if not s.state["cut"]:
             return messages[:h]
-        kept = s.state.get("kept_user")
+        kept = s.state.get("kept_user") if self.notes_mode == "inplace" else None
         mid = [messages[kept]] if kept is not None and h <= kept < h + s.state["cut"] else []
         return messages[:h] + [self.pin(s)] + mid
 
@@ -523,8 +536,15 @@ class Keeper:
         """With in-place notes a user message can be moved out while the model is still working on it (hundreds of
         tool steps can follow one request). The newest such message stays in view, word for word, until a later
         user message arrives or a message matching --think-until closes it."""
-        found = self.opener(messages[h:])
-        at = h + found[1] if found and found[0] == "user" else None
+        at = None
+        for i in range(len(messages) - 1, h - 1, -1):
+            m = messages[i]
+            if m.get("role") == "user":
+                at = i
+                break
+            # only a closing message ends it; a question in a tool result (--think-when) does not
+            if self.think_until is not None and m.get("role") != "assistant" and self.think_until.search(text_of(m)):
+                break
         s.state["kept_user"] = at if at is not None and at < h + s.state["cut"] else None
 
     def notes_call(self, s: Session, model: Any, head: list[dict[str, Any]], gone: list[dict[str, Any]], upto: int = 0) -> None:
@@ -610,25 +630,29 @@ class Keeper:
         if j < 0:
             return False
         tail = body[j + 1:]
-        # the newest exchange stays in view: the assistant's tool calls with their results, or whatever came after
-        # its last reply (a user message); an assistant message at the very end stays too
-        calls_answered = bool(tail) and all(m.get("role") == "tool" for m in tail) and bool(body[j].get("tool_calls"))
-        keep_from = j if calls_answered or not tail else j + 1
+        # the newest exchange stays in view: the assistant's last message with its tool calls and everything after it
+        # (their results, and a user message that may follow them: a call is never parted from its results), or,
+        # after a reply without tool calls, whatever came after that reply; an assistant message at the very end stays
+        keep_from = j if body[j].get("tool_calls") or not tail else j + 1
         noted = body[:keep_from]
         size = self.tokens(s, noted) if noted else 0
-        if size <= self.inplace_tokens or (s.state.get("hold") and size >= s.state["hold"]):
-            return False
+        if size <= self.inplace_tokens or s.state.get("hold"):
+            return False                             # too little yet, or an attempt failed and the ordinary cut is awaited
         found = self.opener(body)
         if found and found[0] == "pattern":
             return False                             # a question that arrived in a tool result is open: it stays in view
         base = self.fixed(s, messages, h) + noted
-        req = base + [{"role": "user", "content": INPLACE_REQUEST.format(
-            start="message that holds the NOTES" if s.state["cut"] else "first turn after the opening messages")}]
+        kept_shown = s.state["cut"] and len(self.fixed(s, messages, h)) > h + 1
+        start = ("first turn after the opening messages" if not s.state["cut"] else
+                 "first turn after the user message that follows the NOTES (that message is already in the NOTES; it "
+                 "is shown only because it is still being worked on, so do not count it again)" if kept_shown else
+                 "message that holds the NOTES")
+        req = base + [{"role": "user", "content": INPLACE_REQUEST.format(start=start)}]
         tools = list(client.get("tools") or [])
         if s.state["cut"] or self.memory_note:       # the same tool list as the ordinary calls: the same prompt start
             tools = tools + [RECALL_TOOL]
         texts = [text_of(m) for m in noted if m.get("role") in ("tool", "user")]
-        seen = nd.numbers_in("\n".join(text_of(m) for m in noted))
+        seen = nd.numbers_in("\n".join(nd.TRAILER.sub("", text_of(m)) for m in noted))
         strict = self.notes_checks in ("count", "near")
         thinking, asked_count, asked_working, asked_layout = self.notes_thinking, not strict, False, False
         rules_seen: list[str] = []
@@ -700,22 +724,28 @@ class Keeper:
             break
         if why:
             s.state["inplace_failed"] += 1
-            s.state["hold"] = size
+            s.state["hold"] = 1                      # no new attempt until the ordinary cut has taken these turns
             s.log_event({"event": "in-place notes not applied", "why": why, "turns": len(noted), "tokens": size})
             s.save()
             return False
         if info.get("mismatch"):
             s.log_event({"event": "in-place notes: a doubtful line accepted after the second reply", "lines": info["mismatch"][:6]})
-        s.archive.add(h + s.state["cut"] + 1, noted)
-        s.state["notes"] = new
-        s.log_notes(h + s.state["cut"] + len(noted))
-        s.state["cut"] += len(noted)
-        s.state["boundary"] = fingerprint(messages[h:h + s.state["cut"]])
-        s.state["cuts"] += 1
-        s.state["inplace_cuts"] += 1
-        s.state["hold"] = 0
-        self.set_kept_user(s, messages, h)
-        s.save()
+        before = dict(s.state)
+        try:                                         # all or nothing: a failure here leaves the state as it was, and the
+            s.archive.add(h + s.state["cut"] + 1, noted)    # archive takes no number twice when the cut is made again
+            s.state["notes"] = new
+            s.log_notes(h + s.state["cut"] + len(noted))
+            s.state["cut"] += len(noted)
+            s.state["boundary"] = fingerprint(messages[h:h + s.state["cut"]])
+            s.state["cuts"] += 1
+            s.state["inplace_cuts"] += 1
+            s.state["hold"] = 0
+            self.set_kept_user(s, messages, h)
+            s.save()
+        except Exception:
+            s.state.clear()
+            s.state.update(before)
+            raise
         return True
 
     def complete(self, body: dict[str, Any], header: str | None = None) -> dict[str, Any]:
@@ -747,7 +777,9 @@ class Keeper:
                 if self.think_when is not None:
                     h = head_length(messages)
                     ctk["enable_thinking"] = (from_user or bool(self.think_when.search(newest)) or bool(stuck) or (
-                        self.think_until is not None and question_open(messages[h + s.state["cut"]:], self.think_when, self.think_until)))
+                        self.think_until is not None and (
+                            question_open(messages[h + s.state["cut"]:], self.think_when, self.think_until)
+                            or (self.notes_mode == "inplace" and s.state.get("kept_user") is not None))))
                 elif stuck:
                     ctk["enable_thinking"] = True
                 if self.effort:

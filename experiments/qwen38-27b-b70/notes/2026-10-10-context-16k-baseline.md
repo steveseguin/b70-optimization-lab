@@ -1098,3 +1098,54 @@ cost records. One finding is left as designed and is a known limit: after one re
 even if a check still objects (once in 63 cuts at 1M, and that reply was right). The arm names N32xth to N32sr are
 states of the code on the night, not switches; the header of `second-comparison.sh` says which commit ran what. Not yet run: N32sr at 1M; any of this in the proxy; a second seed of the hard stream, which stays
 exploratory until it has one.
+
+## Campaign 11 (2026-10-12, preregistered before any result): in-place notes in the proxy; a rule that names nothing
+
+The owner asked what I suggest next. Suggested and started: (1) put in-place notes into the proxy, the form a real
+agent uses; (2) stop tuning on the rules stream, which the fully-checked keeper now answers 313 of 313, and test what
+it cannot show; (3) a real task. This campaign is (1) and the first of (2).
+
+**Built before the run (no GPU):**
+
+- `tools/ctxkeeper`: `--notes-mode inplace` (commit 4c5fb18fd and the fixes after it). The notes call is the view the
+  server has just read, without the newest exchange, plus one message, with the same tool list and `tool_choice`
+  none; the reply is the changes only; the proxy applies and checks it (`notesdelta.py`, its core copied unchanged
+  from the harness keeper and held in step by `sync_notesdelta.py`); the noted messages are archived and the view
+  becomes the opening messages, NOTES and the newest exchange. Differences from the harness arm, forced by a client
+  that resends its history: the newest exchange stays in view (the model has to act on it), so about nine items are
+  noted per call instead of ten; the latest user message stays in view while it is being worked on; a question that
+  arrived in a tool result blocks the cut until it is closed. 44 unit tests, a scripted end-to-end run of the plain
+  agent through the proxy, and a Codex read-only review: 10 findings, all fixed before the run (the two that
+  mattered: with a user message after tool results the assistant's call could be archived and its results kept;
+  a save that failed half-way could archive the same messages twice).
+- `make_sparse_prose_tasks.py --class-rule`: a second standing rule in item 1 that names no counter and shares no
+  word with the questions it governs: "any figure below zero is reported as the single word overdrawn, never as a
+  number", for every answer about a counter, now or earlier, and the final list (a tally stays a number). 7 of 39
+  expected answers on seed 0 and 9 of 46 on seed 1 are that word. A question about X cannot find this rule by X's
+  name or by its own wording (`rag_retrieve` shares no term with it); it has to be kept in view. This is the claim
+  about notes against retrieval that no run has tested: in campaign 10 retrieval found the rule because the rule
+  named its counters.
+- The runner passes `emit_ctx_trajectory=false` on 1M runs: the end-of-run export of a 1M-token history is what took
+  0.8 GiB of host memory and stopped the server three times. Untested, so a 1M run still goes last.
+
+**Arms.** X32i: the plain agent (it sends its whole history) through the proxy with `--notes-mode inplace
+--inplace-tokens 15000 --notes-checks near`, otherwise the proxy flags of campaign 9. N32k / N32kr: the harness
+keeper with in-place notes, without and with retrieval at each question, on today's code (after both reviews).
+R32b: retrieval only.
+
+**Reading rules, fixed now.**
+
+- **Proxy.** "The proxy carries the gain" if on both 240K seeds X32i is within one question of X32b (39 and 44) and
+  takes at least 25 % less time (X32b: 17 and 18 minutes, so 12.75 and 13.5 or less), and on the 1M stream scores
+  220 or more of 228 (X32b 222) in under 70 minutes (X32b 95; harness N32u 50). Reported with it: in-place cuts,
+  failed attempts, replies asked for again, cached share of the notes calls, and an audit of the proxy's saved NOTES
+  versions against the true ledger.
+- **Rule by condition.** On each seed: of the questions whose answer is the word, how many are right, keeper against
+  retrieval. "The rule is kept" at 80 % or more; "lost" at 20 % or less. My expectation, written down so it can be
+  wrong: the keeper keeps it (the rule sits in NOTES and is repeated at each question), retrieval loses it. The
+  other questions are reported too (a method that answers "overdrawn" for a positive value has not kept the rule).
+- **Hard stream, second seed** (if time allows before the 1M run): N32kr against N32k. Seed 0 had 47 and 46 with
+  retrieval, 42 and 43 without. Exploratory still; the direction of the difference is what a second seed can add.
+- One seed per cell beyond these. One or two questions between arms is not a ranking.
+
+Runner `longrun-campaign11.sh` (queue file; one server start; Gemma stopped first and restored at the end).
