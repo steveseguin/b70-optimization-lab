@@ -192,7 +192,7 @@ turns are read back after each cut, and when cut turns are shown to the notes ca
 | --- | ---: | ---: | ---: |
 | N32j keeper (full NOTES rewrite at each cut) | 39 in 15.7 min | 46 in 16.5 min | 226 in 83 min; NOTES audit: 5 counters lost in one version |
 | **In-place notes** (the notes call is the live conversation plus one message; changes only, with thinking; checked by the harness; then every turn is moved out) | **39 in 9.5 min** (N32xth), 38 and 39 (N32z, N32w) | **46 in 8.5 min** (N32y), 45 (N32v) | **228 in 50 min (N32u); NOTES audit: 0 wrong in 63 versions** |
-| Changes-only notes without thinking (N32d, N32e, N32e35, N32e25, N32c35) | 39, 39, 36, 39, 38 in 10 to 14 min; 2 to 8 counters wrong in the NOTES of every run | | not run: not adopted |
+| Changes-only notes without thinking (N32d, N32e, N32e35, N32e25, N32c35, N32x) | 39, 39, 36, 39, 38, 39 in 10 to 14 min; 2 to 8 counters wrong in the NOTES of every run | | not run: not adopted |
 | **Retrieval only, built right** (R32b: every item in a store outside the sandbox, BM25 over sentences, 20 per question, no notes) | **39 in 9.2 min** | **45 in 9.7 min** | see the note (R32c40) |
 | Retrieval only, first two builds (R32, R32a) | 32, 38 | 30 | |
 

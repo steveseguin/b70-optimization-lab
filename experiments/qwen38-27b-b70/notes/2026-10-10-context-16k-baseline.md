@@ -818,9 +818,10 @@ calls 492 + shell 17.
 ### Changes-only notes without thinking: fast, but the NOTES go wrong (not adopted)
 
 The notes call writes only the changed lines, with the working on the line, and the harness applies them: 570 tokens
-a call instead of 1,865, notes time halved (N32e: 241 s against 492 s). All four first scores looked fine (39, 39, 36,
+a call instead of 1,865, notes time halved (N32e: 241 s against 492 s). The first four scores looked fine (39, 39, 36,
 39 of 39), and the 36 looked like the price of a deeper cut until the 25 % setting scored 39. The audit settles it:
-**every no-thinking run had wrong values in its NOTES (2 to 8 counters at some point), the thinking runs had 0 or 1.**
+**every one of the six no-thinking runs (N32d, N32e, N32e35, N32e25, N32c35 and the first in-place run N32x) had
+wrong values in its NOTES, 2 to 8 counters at some point; the thinking runs of that evening had 0 to 3.**
 Example, the same in N32d and N32e: "The clerk recorded domo86 at three hundred and forty-two. ... Ten were taken
 from domo86." was noted as `-390 - 342 - 10 = -742` (a set read as a subtraction; true value 332). The working check
 passes such a line: it starts from the right value and the sum is right. The value stayed wrong for 35 items, until
@@ -999,8 +1000,8 @@ server is stopped, or without per-call snapshots; the campaign runner should do 
    in all 63 versions. Two things made it: the notes call reuses what the server has already read, and after it the
    window is emptied instead of trimmed, so nothing is read back. And three checks keep a changes-only reply
    complete: every mention accounted for, every worked-out value with its working, every sum redone by the harness.
-2. **Notes written without thinking are not safe, whatever they score.** 2 to 8 wrong values in the NOTES of every
-   such run, with scores of 39, 39, 36, 39 and 38 of 39. Only the audit showed it.
+2. **Notes written without thinking are not safe, whatever they score.** 2 to 8 wrong values in the NOTES of each
+   of the six such runs, with scores of 39, 39, 36, 39, 38 and 39 of 39. Only the audit showed it.
 3. **Retrieval alone is much better than I said, and not enough at scale.** Built right it equals the keeper at
    240K (39/39, 45/46) with no notes call at all, and for the first 420 items of the 1M stream. It falls behind
    where the history is long (56/70 in the last third, the rule lost 4 times in 29) and where the text refers to
