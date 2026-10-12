@@ -121,7 +121,13 @@ class ExactChecks(unittest.TestCase):
         try:
             self.copy.rename(target)
             self.assertEqual(check.check_prompt(wrapper,self.reference),(64,384))
+            (wrapper/'receipt.json').write_text(json.dumps({'schema':'window','passed':True}))
+            self.assertEqual(check.check_prompt(wrapper,self.reference),(64,384))
+            (wrapper/'receipt.json').write_text(json.dumps({'schema':'window','passed':False}))
+            with self.assertRaisesRegex(ValueError,'runtime wrapper failed'):
+                check.check_prompt(wrapper,self.reference)
         finally:
+            (wrapper/'receipt.json').unlink(missing_ok=True)
             target.rename(self.copy);wrapper.rmdir()
 
     def test_runtime_receipt(self):

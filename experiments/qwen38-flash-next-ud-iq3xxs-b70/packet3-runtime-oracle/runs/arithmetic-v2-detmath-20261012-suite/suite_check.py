@@ -65,7 +65,10 @@ def fixture_inventory(directory, count):
     return inventory
 
 def check_prompt(actual, oracle, entry=None, repo_root=ROOT):
-    if not (actual/'receipt.json').exists() and not (actual/'result.json').exists() and (actual/'run').is_dir():
+    if (actual/'run').is_dir():
+        if (actual/'receipt.json').exists():
+            wrapper = read(actual/'receipt.json')
+            require(wrapper.get('passed') is not False and not wrapper.get('teardown_pending'), 'runtime wrapper failed')
         actual = actual/'run'
     if entry is not None:
         require(sha(oracle/'receipt.json') == entry['oracle_receipt_sha256'], 'oracle receipt binding differs')
