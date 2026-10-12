@@ -527,6 +527,9 @@ class Keeper(unittest.TestCase):
         self.assertEqual(run(10, "abcd12 gained 5.", "10 \u2192 15")[:2], (1, [0]))                             # a number was stated: show the working
         self.assertEqual(run(10, "The clerk looked at abcd12. It gained 5.", "10 \u2192 15"), (0, [], [], 15))  # (named without a number: followed)
         self.assertEqual(run(29, "abcd12 lost 73.", "-132")[:2], (1, [0]))                                       # 29 - 73 is not -132 (N32w)
+        # the old value written again is not "halved", also when the thing is named without a number somewhere
+        self.assertEqual(run(10, "The clerk checked abcd12. abcd12 was set to 20.", "10 -> 20", "10"), (1, [1], ["abcd12: 10"], 20))
+        self.assertEqual(run(10, "The clerk checked abcd12. abcd12 was set to 20.", "10 -> 20, then 10")[:2], (1, [0]))
         self.assertEqual(run(10, "abcd12 gained 5. abcd12 gained 7.", "10 \u2192 22")[:2], (1, [0]))            # two changes need their working
         self.assertEqual(run(100, "abcd12 gained 5.", "100 - 37 = 63")[:2], (1, [0]))                            # 37 is no fraction of 100
         ok = NS["implied_ok"]

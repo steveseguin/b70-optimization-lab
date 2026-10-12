@@ -627,7 +627,8 @@ def chain_of(value: str, held: int | None, stated: set[int], amounts: set[int] |
             if cur is not None and n == cur:
                 continue                             # the value so far, written again
             if n not in stated or n in sets:         # (a thing really set to one value twice costs a question)
-                if cur is not None and amounts is not None and implied_ok(cur, n, amounts, relative):
+                # (not back to the value the line began with: that is the old value written again, not a change)
+                if cur is not None and amounts is not None and n != held and implied_ok(cur, n, amounts, relative):
                     cur = n                          # `520 -> 1040` for "was doubled" (see implied_ok): no set
                     continue
                 return None
@@ -713,6 +714,7 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
             have.append(r)
             info["new_rules"] += 1
     at: list[int] = info.setdefault("mismatch_at", [])   # for each question, the index of the CHANGES line it is about
+    began: dict[str, int | None] = {}
     where = {fact_of(ln)[0]: i for i, ln in enumerate(state)}
     # values that things mentioned in these turns hold, now and as the reply is applied: an amount may be one of them
     ever = {v for k, v in ((fact_of(ln)[0], number_of(fact_of(ln)[1])) for ln in state) if v is not None and near is not None and k in near}
@@ -723,6 +725,7 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
             continue
         old = fact_of(state[where[name]])[1] if name in where else None
         held = number_of(old) if old is not None else None
+        began.setdefault(name, held)                     # what the thing held when this reply began
         value = restated(value) or value                 # one sum written out twice is that sum
         if re.search(r"\d{25,}", value):                 # a number of 25 digits or more is not a value: asked about, not kept
             info["mismatch"].append(f"{name}: `{value[:60]}...` is not a value; write the line again")
@@ -821,7 +824,7 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
             held, now = (number_of(old) if old is not None else None), number_of(value)
             stated = seen if near is None else near.get(name, set())
             if now is not None and now != held:
-                if (now not in stated and near is not None and held is not None
+                if (now not in stated and near is not None and held is not None and now != began.get(name, held)
                         and implied_ok(held, now, stated | ever, name in near.get(LOOSE, ()))):
                     info["implied"] = info.get("implied", 0) + 1     # `520 -> 1040`: a change the turns can have said so
                 elif now not in stated:
