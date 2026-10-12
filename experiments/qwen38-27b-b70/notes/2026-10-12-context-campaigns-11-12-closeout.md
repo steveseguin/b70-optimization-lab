@@ -75,9 +75,9 @@ Scope of the quality claim: one model, one machine, one synthetic task family, o
   tool. Fixed in code state p (X32p: 226, every earlier-value question right).
 - X32p at 1M (226): its NOTES had five counters wrong at some point (X32n2: two), two of them because the new
   rule "a line whose number the turns do not state is left out" took out lines that were right but written in a
-  form the checker could not follow. Corrected after the run (commit `7ff735ef1`), not yet run.
+  form the checker could not follow. Corrected after the run (commit `88be34af3`), not yet run.
 - N32n on the second 1M stream (210/222): an ordinary cut moved an open question item out of view (seven blank).
-  Fixed in the repo after the run (commits `d6d99188d`, `69a86c64c`), not yet run.
+  Fixed in the repo after the run (commits `d6d99188d`, `e2fff75c8`), not yet run.
 - Not caught by any check: a change noted with the wrong sign, a set noted as a change by the same number (about
   one line in 75 notes calls).
 - The hard stream is slow with the day's stricter checks (23 minutes; a run hung). The fix (an amount may be
