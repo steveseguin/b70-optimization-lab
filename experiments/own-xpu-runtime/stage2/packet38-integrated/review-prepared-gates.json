@@ -1,0 +1,37 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "structural_checks": [
+    "bank ids/maps/commands/parity move together after drain",
+    "both command parities captured before request admission",
+    "miss drains before bank restore and history/cache reset",
+    "rank1 cannot speculate and rank0 swaps only after drain",
+    "audit compares selected commands to independent current-bank reconstruction",
+    "audit bypasses cached operation binding map",
+    "issue rejects changed owner and generation",
+    "release requires idle and invalidates commands",
+    "single native owner supports prepared submission on in-order queue",
+    "device accessor rejects only on failure without temporary string",
+    "prepared issue site has no allocation/string/map/query calls",
+    "owner issue success has no allocation/string/map/query calls",
+    "rank loop uses captured metadata and fixed layer capture array",
+    "per-launch prepared decision is cached boolean"
+  ],
+  "checks": 14,
+  "negative_mutations_rejected": 6,
+  "mutations": [
+    "prepared.swap(alternate_prepared)",
+    "issue_sites.swap(alternate_issue_sites)",
+    "std::swap(buffers[0].at(name).id,id)",
+    "bank_parity^=1",
+    "x.operation_bytes==y.operation_bytes",
+    "fresh_arguments=true"
+  ],
+  "source_sha256": {
+    "main.cpp": "d409f9ab0f096338c3a0a93f547d635d04eac7339f6c9f50cd17b350b0259251",
+    "rank.hpp": "668c402ca38175ee77f7388f4f5b711709923eb29ba639df5f51b4255bae1274",
+    "owner.cpp": "b792de9ae31c600e81f44b2496de49d4ce08c091a4d33a9b7ba70df41b223b45",
+    "single_device.cpp": "4275f214b3727f5d23231b844992db35443446d004c0d34b5cc30b374a3fe11b"
+  },
+  "limitation": "Source/mutation proof only; execution gates independently establish arguments, tokens, layers and rollback bytes."
+}

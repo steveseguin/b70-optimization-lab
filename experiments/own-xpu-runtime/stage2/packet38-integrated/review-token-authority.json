@@ -1,0 +1,38 @@
+{
+  "review": "independent emitted-token authority and draft allocation alias audit",
+  "reviewer": "suite subagent (not native/draft implementation author)",
+  "passed": true,
+  "device_executed": false,
+  "scope": "source audit; dynamic CPU equivalence gates recorded separately",
+  "findings": [
+    {
+      "id": "queued-before-abort",
+      "status": "fixed; independent source rereview complete",
+      "description": "Unconditional stop/abort admission checks added to worker already-queued path and Backend.start; fifth mailbox regression rejects remote and local execution after pre-existing abort."
+    }
+  ],
+  "evidence": {
+    "native_controller.hpp": "582097261c478c30fb511c43771e53b071eabf17ea87c2f4af1196657e9a43a0",
+    "rank.hpp": "4086517afb0d6d204b21e852ff06f6b507d2096f94f27eb4a6915328945e7115",
+    "mtp.hpp": "dbef887e12fe8d1e398a83e5a6a8dbdb7bc29dbabd803a25d2870c974552845d",
+    "pipeline.py": "509d6587f8f7a3cd1967539e00b5e398250fc910a89f8a13f001f2e48769e324",
+    "request_reset.hpp": "bd97a57a06194c31811f203d48662a6877c8889ff16cdc3acdac6f45ad16d625",
+    "native_mailbox_fault_test.cpp": "f6d1102a02c9bb0594cf9681d87c9f34a417f35715c0be3ac3be1a8905ec044a"
+  },
+  "invariants": [
+    "Only rank1 HALF result.token is appended to emitted tokens.",
+    "Draft result is range/position/sequence/status checked and used solely as a rank0 speculative input.",
+    "Rank0 acceptance requires equality with rank1 unchanged target result; mismatch undoes state and recomputes actual target token.",
+    "Rank1 never executes speculative HALF; target streams publication occurs only after rank0 acceptance.",
+    "EOS pending speculation is rolled back before completion.",
+    "Draft plan outputs bind private draft allocations; target shared output weights and RoPE are immutable read dependencies.",
+    "Draft hidden stream is copied from target streams into draft merge.hidden; target token preparation/history is never called.",
+    "Draft request reset retains allocation IDs/captures and never releases shared owner allocations."
+  ],
+  "cpu_gate_evidence": "suite-gate-results.json",
+  "cpu_gate_sha256": "87d0cf490a3a9c848abe2cc158f955847d203f815dc929b06da1193b59d0403f",
+  "resident_prepared_reset_verified": true,
+  "final_cpu_rerun_pending": false,
+  "final_binary_sha256": "490db2320878a19dc0f0bead086a466ff859bc1173bf58227d92e64f04dc1ab6",
+  "receipt_metadata_review": "post-request-only timestamp derivation; terminal rollback excluded, overlap signed separately, all-command union supplies conservative token-mode GPU idle lower bound; final dumps excluded from model timing"
+}
