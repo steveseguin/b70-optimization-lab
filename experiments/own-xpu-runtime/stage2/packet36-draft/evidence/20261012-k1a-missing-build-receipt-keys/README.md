@@ -12,3 +12,8 @@ Fix by the coordinator: both keys added to `build-receipt.json` from this packet
 sealed gate files (checked against `gate_receipts`), recorded there under
 `coordinator_amendments`. No binary, source or gate changed. Because K0 binds the
 receipt hash, the whole chain is rerun under the suffix `r36b`.
+
+**Latch.** The wrapper's failure path wrote `build/FAULT.json` for this boot. It is kept
+here as `FAULT-retired.json`. Coordinator decision, 2026-10-12 04:28 UTC: retired; the
+failure was a wrapper receipt gate after a correct, cleanly torn-down fixture run; no
+GPU fault line, no retained process.
