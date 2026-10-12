@@ -254,6 +254,9 @@ class Keeper(unittest.TestCase):
         self.assertEqual(ap([("wxyz56", "100 + 52 = 152, then +18 = 170")], near=near),          # a packed line with a made-up amount
                          ["wxyz56: 170 is not a value the turns state; write the working from the value the NOTES hold, 100"])
         self.assertEqual(ap([("wxyz56", "99 + 1 = 100")], near=near), [])                         # noted before: no question at all
+        # a line of several parts that cannot be followed is not asked about an "amount" that is one of its own results
+        packed = "100 \u2192 164 (item 137), then 164 + 52 + 17 = 233 (item 139), then 233 + 52 = 285 (item 144)"
+        self.assertFalse([m for m in ap([("wxyz56", packed)], near=near) if "adds or takes" in m])
 
     def test_an_amount_may_be_another_things_value_or_a_small_factor(self):
         """The hard stream: "went up by as much as bamo35 held at that moment", "was doubled". The amount is another

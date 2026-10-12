@@ -391,7 +391,11 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
                 info["mismatch"].append(f"{name}: working starts from {start}, NOTES hold {held}")
             elif start is not None and old is not None and re.match(r"(removed|closed|struck|deleted|gone)\b", old.lower()):
                 info["mismatch"].append(f"{name}: working starts from {start}, NOTES say {old.split()[0]}")
-            if near is not None and strict and start is not None and len(info["mismatch"]) == asked:
+            plain = sum(bool(x.strip()) for x in PARTS.split(REMARK.sub(" ", value))) == 1 and not re.search(r"\u2192|->|=>", value)
+            # (a line of several parts that could not be followed is judged by its result only: its last piece of
+            # working is not the whole line, and X32p at 1M was asked about `517 -> 164, then 164 + 76 + 85 = 325,
+            # then 325 + 18 = 343` for an "amount" of 325)
+            if near is not None and strict and start is not None and len(info["mismatch"]) == asked and plain:
                 expr = REMARK.sub(" ", value).replace("\u2212", "-").split("=")[-2]
                 first = re.match(r"\(?\s*-?\d+", expr.strip())
                 if first and not amounts_ok(expr.strip()[first.end():], near.get(name, set()) | ever):
