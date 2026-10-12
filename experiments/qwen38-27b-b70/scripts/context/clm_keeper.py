@@ -71,7 +71,8 @@ MEMORY_NOTE = """
   out. It holds the standing RULES and methods stated so far and the current STATE. Read the RULES before you answer
   any question, and apply every one that covers it.
 - Everything moved out of view is kept verbatim in a read-only archive. `recall PATTERN` prints the archived
-  sentences that match (as `item N: ...`); `recall --item N` prints item N. Use it whenever a question is about
+  sentences that match (as `item N: ...`; with `--before N` only those up to item N, the nearest ones when there
+  are many); `recall --item N` prints item N. Use it whenever a question is about
   something no longer in view: an earlier item, a value something held earlier, who did something. Its output enters
   your context, so search narrowly.
 - Fetch each item with `next` as a command of its own (nothing chained to it), so it can be archived word for word.
@@ -887,6 +888,27 @@ def numbers_near(names: list[str], turns: list[dict[str, Any]], signed: bool = T
     return out
 
 
+OPEN_QUESTION = "[[The question you are answering, kept in view by the harness while you work on it]]"
+ASKED = re.compile(r"(?m)^(?:ASK \S+?:|QUERY \S+|GET \S+)")
+
+
+def open_question(body: list[dict[str, Any]]) -> int | None:
+    """The index in `body` of the newest delivered item that asks questions and has not been followed by an
+    ordinary delivery (the model has not moved on), or None. N32n at 1M, second stream: while the model was fetching
+    archived items for the last question item, the ordinary cut moved that item itself out of view; the model then
+    saw no question, ran `next`, and seven answers were never written."""
+    for i in range(len(body) - 1, -1, -1):
+        m = body[i]
+        if m.get("role") == "assistant":
+            continue
+        text = str(m.get("content") or "")
+        if ASKED.search(text):
+            return i
+        if m.get("role") == "tool" and ITEMS.search(text):
+            return None                              # a later item was delivered: the question is behind us
+    return None
+
+
 def under_accounted(mentions: dict[str, int], steps: dict[str, int]) -> list[str]:
     """`name (mentioned 3 times, 2 changes written)` for every name whose lines account for fewer changes than the
     items mention it. N32z seed 0: three counters went wrong in the NOTES although each had a line (the second of two
@@ -1223,6 +1245,7 @@ class KeeperAgent(TruncateAgent):
         self._pin_tail = ""
         self.inplace_failures: list[dict[str, Any]] = []
         self.n_inplace_redone = 0
+        self.n_questions_kept = 0                     # ordinary cuts that would have moved an open question out of view
         # mention_check (in-place notes): a STATE name that the items being moved out mention, outside a question,
         # without a line in CHANGES is asked about once (see unaccounted)
         # mention_check=count: the name's lines must account for as many changes as the items mention it
@@ -1427,6 +1450,12 @@ class KeeperAgent(TruncateAgent):
         if not n:
             return
         gone = body[:len(body) - len(keep)]
+        asked = open_question(body)                   # an open question never leaves the view (see open_question)
+        still = []
+        if asked is not None and asked < len(gone):
+            text = str(body[asked].get("content") or "")
+            still = [{"role": "user", "content": text if text.startswith(OPEN_QUESTION) else OPEN_QUESTION + "\n" + text}]
+            self.n_questions_kept += 1
         self._pin_tail, self.inplace_turn_hold = "", 0     # the turns that an in-place call could not note are going now
         rec: dict[str, Any] = {"reason": "keep", "turns_dropped": n, "before": before,
                                "items_archived": await self._archive(environment, gone)}
@@ -1438,8 +1467,10 @@ class KeeperAgent(TruncateAgent):
                        notes_pieces=len(pieces))
             for piece in pieces:
                 await self._take_notes(head, render_turns(piece), rec, piece)
-        messages[:] = head + [self._pin(prev + n)] + keep
+        messages[:] = head + [self._pin(prev + n)] + still + keep
         rec["after"] = self._budget.count(messages)
+        if still:
+            rec["question_kept"] = True
         self._record(rec)
 
     async def _keep_inplace(self, environment: Any, messages: list[dict[str, Any]], before: int) -> bool:
@@ -1708,7 +1739,7 @@ class KeeperAgent(TruncateAgent):
                     "notes_mode": self.notes_mode, "delta_fallbacks": self.n_delta_fallbacks,
                     "notes_chunk_tokens": self.notes_chunk_tokens, "notes_inplace": self.notes_inplace,
                     "inplace_cuts": self.n_inplace, "inplace_failed": self.n_inplace_failed,
-                    "inplace_redone_with_thinking": self.n_inplace_redone,
+                    "inplace_redone_with_thinking": self.n_inplace_redone, "questions_kept_in_view": self.n_questions_kept,
                     "mention_check": self.mention_check, "mention_reasks": self.n_mention_reasks,
                     "inplace_failures": self.inplace_failures[:20], "inplace_prompt_tokens": self.inplace_prompt,
                     "inplace_cached_tokens": self.inplace_cached, "inplace_turn_tokens": self.inplace_turn_tokens,

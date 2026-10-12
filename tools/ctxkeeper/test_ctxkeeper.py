@@ -302,6 +302,36 @@ class InPlace(unittest.TestCase):
         self.run_conversation(keeper, 6, start=6)
         self.assertEqual(len(model.notes_requests), tried)
 
+    def test_an_open_question_from_a_tool_result_survives_the_ordinary_cut(self):
+        """The in-place cut waits while such a question is open; the ordinary cut does not, and it must not take the
+        question out of view (the harness arm lost seven answers at 1M that way)."""
+        model = LedgerModel()
+        keeper = self.keeper(model, budget=2600, think_when=r"(?m)^ASK ", think_until=r"(?m)^ITEM \d+:", inplace_tokens=100000)
+        msgs = conversation(3)
+        msgs.append({"role": "assistant", "content": "", "tool_calls": [{"id": "q", "type": "function", "function": {"name": "bash", "arguments": "{}"}}]})
+        msgs.append({"role": "tool", "tool_call_id": "q", "content": "PROBE: answer now.\nASK p1_1: What value does abcd01 hold?"})
+        for i in range(12):                                                        # the model reads a lot before it answers
+            msgs.append({"role": "assistant", "content": "", "tool_calls": [{"id": f"r{i}", "type": "function", "function": {"name": "bash", "arguments": json.dumps({"command": f"cat part{i}"})}}]})
+            msgs.append({"role": "tool", "tool_call_id": f"r{i}", "content": "archived text " + "filler " * 150})
+            keeper.complete({"model": "m", "messages": list(msgs)})
+        s = next(iter(keeper.sessions.values()))
+        self.assertGreater(s.state["cuts"], 0)
+        self.assertEqual(s.state["inplace_cuts"], 0)                               # the question was open: only ordinary cuts
+        self.assertIsNotNone(s.state["kept_open"])
+        view = model.requests[-1]["messages"]
+        shown = [m for m in view if str(m.get("content")).startswith(ck.OPEN_HEAD)]
+        self.assertEqual(len(shown), 1)
+        self.assertEqual(shown[0]["role"], "user")
+        self.assertIn("ASK p1_1: What value does abcd01 hold?", shown[0]["content"])
+        self.assertTrue(view[2]["content"].startswith("[[NOTES kept"))             # after the opening two and NOTES
+        self.assertIs(view[3], shown[0])
+        # the next ordinary item closes it
+        msgs.append({"role": "assistant", "content": "", "tool_calls": [{"id": "n", "type": "function", "function": {"name": "bash", "arguments": json.dumps({"command": "next"})}}]})
+        msgs.append({"role": "tool", "tool_call_id": "n", "content": "ITEM 4: the clerk moved counter abcd04 to 28. " + "filler " * 60})
+        keeper.complete({"model": "m", "messages": list(msgs)})
+        self.assertIsNone(s.state["kept_open"])
+        self.assertFalse([m for m in model.requests[-1]["messages"] if str(m.get("content")).startswith(ck.OPEN_HEAD)])
+
     def test_full_mode_ignores_a_kept_user_message_left_in_saved_state(self):
         model = Model()
         d = tempfile.TemporaryDirectory()

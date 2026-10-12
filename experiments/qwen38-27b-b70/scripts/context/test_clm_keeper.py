@@ -309,6 +309,18 @@ class Keeper(unittest.TestCase):
         self.assertEqual(ap([("vohi44", "228 + 402 (bamo35) = 630")])[1]["mismatch"], [])
         self.assertTrue(NS["amounts_ok"](" + 402 (bamo35's value)", {402}) and not NS["amounts_ok"](" + 35", {402}))
 
+    def test_an_open_question_is_found_until_the_next_delivery(self):
+        tool = lambda text: {"role": "tool", "content": text}
+        ask = tool("ITEM 609/618 (PROBE)\nPROBE: answer these questions now.\nASK p29_1: What value does javo77 hold now?")
+        body = [{"role": "assistant", "content": "next"}, tool("ITEM 608/618 (UPDATE)\ntext"), {"role": "assistant", "content": ""}, ask,
+                {"role": "user", "content": "[[RULES in force]] - a rule"}, {"role": "assistant", "content": "", "tool_calls": []},
+                tool("ITEM 468 (archived)\nketaqi61 now stands at 12."), {"role": "assistant", "content": ""}, tool("item 36: diro90 gained six.")]
+        self.assertEqual(NS["open_question"](body), 3)                              # recall output does not close it
+        self.assertIsNone(NS["open_question"](body + [{"role": "assistant", "content": ""}, tool("ITEM 610/618 (UPDATE)\nmore text")]))
+        self.assertIsNone(NS["open_question"](body[:2]))
+        kept = [{"role": "user", "content": NS["OPEN_QUESTION"] + "\n" + ask["content"]}] + body[5:]
+        self.assertEqual(NS["open_question"](kept), 0)                              # the kept copy is still the open question
+
     def test_a_misspelled_name_is_put_right(self):
         mentions = {"vozimi36": 1, "abcd12": 2, "vozu36": 1, "wxyz56": 1}
         delta = {"rules": [], "open": None, "changes": [("vozi36", "212 - 47 = 165"), ("abcd12", "5"), ("qqqq99", "7"), ("plain", "x")]}

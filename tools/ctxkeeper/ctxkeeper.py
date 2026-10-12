@@ -52,6 +52,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import notesdelta as nd  # noqa: E402  (same folder: the pure part of changes-only notes)
 
+OPEN_HEAD = "[[Still open, kept in view by the context keeper while you work on it]]"
 PIN_HEAD = "[[NOTES kept by the context keeper: {n} earlier messages are in the archive (search it with the `recall` tool)]]"
 RECITE_HEAD = "[[RULES in force (from NOTES); apply every one that covers this before you answer]]"
 MEMORY_NOTE = """
@@ -438,7 +439,7 @@ class Session:
                       # in-place notes: cuts made that way, attempts that failed, replies asked for again, the size
                       # of the turns a failed attempt left for the ordinary cut, the number (in the client's history)
                       # of an archived user message that is still shown, and the tokens the notes calls cost
-                      "inplace_cuts": 0, "inplace_failed": 0, "inplace_reasks": 0, "hold": 0, "kept_user": None,
+                      "inplace_cuts": 0, "inplace_failed": 0, "inplace_reasks": 0, "hold": 0, "kept_user": None, "kept_open": None,
                       "notes_prompt_tokens": 0, "notes_cached_tokens": 0, "notes_written_tokens": 0,
                       # the archive searches of a turn that ended without a command, shown again in the next request
                       "carry": None}
@@ -479,7 +480,7 @@ class Session:
             self.archive.path.rename(self.dir / f"archive-until-{stamp}.jsonl")
         self.archive.last = None
         self.log_event({"event": "new conversation: the history no longer contains what was archived", "set_aside": stamp})
-        self.state.update(cut=0, notes="", boundary="", cuts=0, largest_turn=0, hold=0, kept_user=None, carry=None,
+        self.state.update(cut=0, notes="", boundary="", cuts=0, largest_turn=0, hold=0, kept_user=None, kept_open=None, carry=None,
                           restarts=self.state.get("restarts", 0) + 1)
         self.save()
 
@@ -598,6 +599,10 @@ class Keeper:
             return messages[:h]
         kept = s.state.get("kept_user") if self.notes_mode == "inplace" else None
         mid = [messages[kept]] if kept is not None and h <= kept < h + s.state["cut"] else []
+        still = s.state.get("kept_open") if self.notes_mode == "inplace" else None
+        if still is not None and h <= still < h + s.state["cut"]:
+            # a tool result cannot stand without its call: it is shown as a message of the keeper's
+            mid.append({"role": "user", "content": OPEN_HEAD + "\n" + text_of(messages[still])[:12000]})
         return messages[:h] + [self.pin(s)] + mid
 
     def view(self, s: Session, messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -636,6 +641,21 @@ class Keeper:
             if self.think_until is not None and m.get("role") != "assistant" and self.think_until.search(text_of(m)):
                 break
         s.state["kept_user"] = at if at is not None and at < h + s.state["cut"] else None
+        # The same for a question that arrived in a tool result (--think-when) and is still open: the in-place cut
+        # waits for it, the ordinary cut does not. (The harness arm lost seven answers at 1M when its ordinary cut
+        # moved the question item out of view while the model was still fetching archived items for it.)
+        still = None
+        for i in range(len(messages) - 1, h - 1, -1):
+            m = messages[i]
+            if m.get("role") == "assistant":
+                continue
+            text = text_of(m)
+            if m.get("role") == "tool" and self.think_when is not None and self.think_when.search(text):
+                still = i
+                break
+            if m.get("role") == "user" or (self.think_until is not None and self.think_until.search(text)):
+                break
+        s.state["kept_open"] = still if still is not None and still < h + s.state["cut"] else None
 
     def notes_call(self, s: Session, model: Any, head: list[dict[str, Any]], gone: list[dict[str, Any]], upto: int = 0) -> None:
         req = head + [{"role": "user", "content": NOTES_REQUEST.format(
@@ -939,7 +959,8 @@ class Keeper:
                     ctk["enable_thinking"] = (from_user or bool(self.think_when.search(newest)) or bool(stuck) or (
                         self.think_until is not None and (
                             question_open(messages[h + s.state["cut"]:], self.think_when, self.think_until)
-                            or (self.notes_mode == "inplace" and s.state.get("kept_user") is not None))))
+                            or (self.notes_mode == "inplace" and (s.state.get("kept_user") is not None
+                                                                  or s.state.get("kept_open") is not None)))))
                 elif stuck:
                     ctk["enable_thinking"] = True
                 if self.effort:

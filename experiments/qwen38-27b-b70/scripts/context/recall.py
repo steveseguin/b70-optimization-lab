@@ -6,9 +6,14 @@ Every item that `ctxfold --drop` removes from the context is first written verba
 /tmp/.live_ctx/archive/item-NNN.txt; nothing is ever deleted, only moved out of view. The output of
 `recall` lands in your context like any tool output (it counts against your budget), so keep it small.
 
-  recall PATTERN [--max-lines N]     sentences matching PATTERN (case-insensitive regex; plain text
+  recall PATTERN [--before N] [--after N] [--max-lines N]
+                                     sentences matching PATTERN (case-insensitive regex; plain text
                                      works too), each with the sentence after it, in item order, as
-                                     "item N: <sentence> <next sentence>"; default 40 lines
+                                     "item N: <sentence> <next sentence>"; default 40 lines.
+                                     --before N / --after N: only items up to N / from N on (inclusive).
+                                     When more match than fit, the ones nearest to --before (or to --after,
+                                     or else the newest) are shown, and the first line says how many were
+                                     left out.
   recall --item N [--max-lines N]    the text of item N, one paragraph per line; default 80 lines
 """
 import os
@@ -29,10 +34,16 @@ def items():
 
 def main():
     args = sys.argv[1:]
-    maxl = None
-    if "--max-lines" in args:
-        i = args.index("--max-lines")
-        maxl = int(args[i + 1]); del args[i:i + 2]
+    opt = {}
+    for name in ("--max-lines", "--before", "--after"):
+        if name in args:
+            i = args.index(name)
+            try:
+                opt[name] = int(args[i + 1])
+            except (IndexError, ValueError):
+                print(f"recall: {name} needs a whole number"); return
+            del args[i:i + 2]
+    maxl, before, after = opt.get("--max-lines"), opt.get("--before"), opt.get("--after")
     if not args:
         print(__doc__.strip().split("\n\n")[-1]); return
     arch = items()
@@ -57,6 +68,8 @@ def main():
     lim = maxl or 40
     hits = []
     for n, txt in arch:
+        if (before is not None and n > before) or (after is not None and n < after):
+            continue
         sents = re.split(r"(?<=[.!?])\s+", " ".join(txt.split()))
         for i, s in enumerate(sents):
             if rx.search(s):
@@ -64,11 +77,26 @@ def main():
                 # in the next ("Next on the list was abcd12. It was opened at 591.")
                 # (not when the next sentence matches too: it gets a line of its own, and printing it twice would
                 # read as two changes)
-                after = (" " + sents[i + 1][:200]) if i + 1 < len(sents) and not rx.search(sents[i + 1]) else ""
-                hits.append(f"item {n}: {s[:300]}{after}")
-    print("\n".join(hits[:lim]) if hits else f"recall: no archived sentence matches {pat!r}")
+                more = (" " + sents[i + 1][:200]) if i + 1 < len(sents) and not rx.search(sents[i + 1]) else ""
+                hits.append(f"item {n}: {s[:300]}{more}")
+    if not hits:
+        print(f"recall: no archived sentence matches {pat!r}" + (f" up to item {before}" if before is not None else "")
+              + (f" from item {after} on" if after is not None else ""))
+        return
     if len(hits) > lim:
-        print(f"[{len(hits)} matches; showing the first {lim}; narrow the pattern or use --max-lines]")
+        # The count comes first and the matches nearest to where the search is anchored are shown. (The first 40 in
+        # item order, with the note last, were read as "that is all": at 1M the model then fetched whole items to
+        # find the later changes, the window filled, and the question it was answering was cut out of view.)
+        if after is not None and before is None:
+            print(f"[{len(hits)} matches; showing the first {lim} from item {after} on; {len(hits) - lim} later ones "
+                  f"are not shown: narrow with --before N]")
+            hits = hits[:lim]
+        else:
+            where = f"the {lim} nearest before item {before}" if before is not None else f"the newest {lim}"
+            print(f"[{len(hits)} matches; showing {where}; {len(hits) - lim} earlier ones are not shown: narrow with "
+                  f"--after N" + ("" if before is not None else " or --before N") + "]")
+            hits = hits[-lim:]
+    print("\n".join(hits))
 
 
 if __name__ == "__main__":
