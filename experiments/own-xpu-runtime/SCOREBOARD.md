@@ -1,6 +1,6 @@
-# Our Intel Xe runtime — measured state, 2026-10-12 02:35 UTC
+# Our Intel Xe runtime — measured state, 2026-10-12 06:00 UTC
 
-**Bit-exact on one card and on two; 22.49 tok/s measured on two cards.** For Unsloth
+**Bit-exact on two cards at 30.37 and 31.02 tok/s with the model's own draft head ([packet 36][p36r], one development prompt; the 28.49 reference is a twelve-prompt median, so the comparable sealed figure is still to come); 22.49 tok/s sequential.** For Unsloth
 UD-IQ3_XXS, the **quantized compressed version**, full 16-bit KV: the runtime reproduces
 its CPU oracle exactly on the cards (64/64 tokens, 384/384 layer fixtures). Two-card
 decode, all exact, within one day: **3.15 tok/s** as first sealed, **12.08** after a
@@ -12,10 +12,7 @@ per token) with the paired expert gate/up kernel and the dense GEMV variants mea
 the card ([packet 29][p29r]). Reference **28.49 tok/s**. GPU kernel time is 41.2 ms per
 token; the host issues 2,307 launches one by one (5.4–11.7 µs each depending on what
 else the host is doing), so the GPU now waits for the host between small kernels.
-**Since 02:19 UTC both cards work at once** in a two-process pipeline: 24–26 ms per token
-when every guess is right (diagnostic), bit-exact; the official draft head agrees with
-this target 77% of the time on CPU, which projects to about 30 tok/s once it is on the
-card ([details below](#both-cards)).
+**Since 05:48 UTC the official draft head runs on the second card** and the two-card decode is at 30.37 and 31.02 tok/s, bit-exact, on the development prompt ([details below](#both-cards)).
 [First exact decode and its reading][w2note].
 
 **Kernel progress.** Effective GB/s means payload bytes divided by device time,
@@ -125,39 +122,44 @@ expert down 6.25 ms (48 × 130 µs, no winning candidate yet); expert gate/up 4.
 1.73; logits 1.68; gdn.recurrence 1.23; qsa.qgate 1.10; HC gates 2.13; about 9 ms in
 some 1,500 launches of 3–15 µs each.
 
-<a id="both-cards"></a>**Both cards now work at the same time** ([packet 32][p32r], 2026-10-12 02:19 UTC). The
+<a id="both-cards"></a>**Both cards work at the same time** ([packet 32][p32r], [packet 36][p36r]). The
 runtime runs as two processes, one per card. The first card starts the next position on a
 guessed token while the second finishes the current one; a wrong guess is discarded and
 redone, and the emitted token is always the target's own, so output is bit-identical to
-sequential decode. Measured on cards 0+1, every run 64/64 tokens and 384/384 layers:
+sequential decode. Every run below: 64/64 tokens and 384/384 layers against the oracle.
 
-| Run | Guesses | ms per token | Reading |
-| --- | --- | ---: | --- |
-| sequential generation | none | 51.4 (19.47 tok/s) | the two halves take 23.8 + 23.4 ms; the Python controller adds about 4 ms |
-| token n-gram guesser | 4 right of 32 | 50.9 (19.64 tok/s) | 28 rollbacks on the cards, output exact; a wrong guess costs nothing extra |
-| **diagnostic**: guesses fed from the oracle | 63 right of 63 | **26.2 mean, 24.1 median** | the pipeline's ceiling today; not a speed result |
+| Run | Guesser | Guesses right | ms per token | tok/s |
+| --- | --- | --- | ---: | ---: |
+| sequential generation (packet 32 kernels) | none | — | 51.4 | 19.47 |
+| sequential generation, new kernels ([packet 37][p37r]) | none | — | 46.5 (median 42.3) | 21.50 |
+| token n-gram lookup | weight-free | 4 of 32 | 50.9 | 19.64 |
+| **official draft head on the second card** | the model's own one-token draft head, experts requantised to 8 bits for the draft only | **53 of 63** | **32.9** (median 27.8) | **30.37**, repeat **31.02** |
+| diagnostic: guesses fed from the oracle (not a speed result) | — | 63 of 63 | 26.2 (median 24.1) | — |
 
-The real guesser is the model's official one-token draft head. On CPU it agrees with this
-quantized target **77.3% of the time** (198 of 256 over four prompts, 95% interval
-71.8–82.0%; [packet 31][p31]). With a right guess at about 27 ms (24 + about 3 ms to
-compute the guess) and a wrong one at about 50 ms, that is about **32–33 ms per token
-(about 30 tok/s) with today's kernels**, against the 28.49 reference. [Packet 36][p36]
-(Codex, in progress) builds the draft head into the second card's process.
+A right guess costs 28.7 ms (4.2 ms draft + one half), a wrong one 55.3 ms. The draft
+head agrees with this quantized target 77.7% of the time over four prompts on CPU
+(67–84% by prompt), and its device arithmetic equals the host implementation byte for
+byte ([KD window][p36r]).
 
-**What else is in flight:**
+**What is being built now:**
 
-1. **Kernels.** The generated-code study produced the first winner for routed expert
-   down, 127 → 90 µs, and a dense kernel that takes gdn.qkv from 75 to 62 µs
-   ([packet 33][p33r], card 2, byte-equal). Together with the other dense classes that is
-   about 4 ms of the 41 ms. [Packet 37][p37] (Codex, in progress) merges these and the
-   lean host path of [packet 35][p35] into the pipeline runtime. [Packet 30][p30]
-   (route, QSA attention, HC gates, combine/mix merges) is waiting for its timing window.
-2. **Host issuing.** Our own per-launch work was only 0.1–0.2 µs ([packet 35][p35] host
-   benchmark); the 5–8 µs per launch is the SYCL and driver submission path. A recorded
-   half token replayed with one submission would remove it; [packet 34][p34] is the
-   one-card benchmark for that (direct versus recorded command graph, real kernels).
-3. **Controller.** The Python controller costs about 4 ms per token in sequential mode
-   and 1.5–3 ms per right guess; it should move into the native processes.
+1. **[Packet 38][p38]** (Codex, in progress): one runtime with the draft head, the
+   packet 33 kernels (each half 23 → 20.7 ms, measured in [packet 37][p37r]), the
+   packet 30 QSA attention kernel, a native controller instead of the Python one, and a
+   suite mode that runs the reference's twelve prompts in one launch with a state reset
+   and an oracle check per prompt. That window gives the sealed, comparable figure.
+2. **Suite oracles** (Codex, CPU): the arithmetic-v2 oracle for the other eleven
+   prompts, about half an hour of CPU each.
+3. **After that, in order of expected gain:** cancel a wrong half as soon as the miss is
+   known (some misses cost 60 ms instead of 48); draft on the first card with a second
+   copy of the output head and rebalanced layers, which hides the draft time
+   ((T+m)/2 per right guess instead of T/2+m); a cheaper draft (4.2 ms now); the
+   epilogue fusions of [packet 39][p39r] (1.2 ms per token, measured).
+
+**Closed tonight:** replaying a recorded launch list is not faster than one-by-one
+submission (19.86 against 19.82 ms per half token, [packet 34][p34r]): the token is GPU
+kernel time and our own host code is 0.1–0.2 µs per launch ([packet 35][p35r]); merging
+launches by serialising work inside a kernel is 5–10 times slower ([packet 30][p30r]).
 
 **Measurement hygiene found on 2026-10-12.** Decode windows are now pinned to four
 reserved cores and the CPU helper jobs kept off them; token preparation (table lookups
@@ -240,3 +242,10 @@ leading suspect of the 09:09 fault); the fused generic kernels of packets 21, 23
 [p33r]: stage2/packet33-codegen/receipts-card2-20261012-k2/README.md
 [p36]: stage2/packet36-draft/README.md
 [p37]: stage2/packet37-merged2/README.md
+[p36r]: stage2/packet36-draft/receipts-cards01-20261012-chain/README.md
+[p37r]: stage2/packet37-merged2/receipts-cards23-20261012-chain/README.md
+[p38]: stage2/packet38-integrated/README.md
+[p39r]: stage2/packet39-epilogues/receipts-card3-20261012-g4/README.md
+[p34r]: stage2/packet34-replay-bench/receipts-card3-20261012-r1/README.md
+[p35r]: stage2/packet35-hostpath/receipts-cards01-20261012-chain/README.md
+[p30r]: stage2/packet30-leftovers/receipts-card2-20261012-g3/README.md
