@@ -1850,3 +1850,46 @@ pass without a question, and its result is reported as such, not as the test of 
 corrected (the other thing's value counts only as the amount added or taken), registered as arms N32g, N32gr and
 X32g, and N32hr was taken off the queue before it started. What was written down for N32h and N32hr above now
 stands for N32g and N32gr.
+
+### The checks scored against the true ledger (2026-10-12 15:00; no cards needed)
+
+Six reviews had been finding inputs for which the checks would store a wrong value. None of them could say how
+often the model writes such a line, or what the wrong values that do get through look like. The proxy saves every
+notes reply, and the streams come with the true value of every counter after every item, so the question can be
+put directly: `tools/ctxkeeper/check_score.py` applies the first reply of every cut to the NOTES the run held
+before it, with the checks of any commit, and sorts each counter the reply writes into accepted and right,
+accepted and wrong, asked about and wrong, asked about and right (counters whose value was already wrong before
+the cut are set aside). Five saved runs on the rules streams (X32p: two 240K streams and the 1M stream; X32q: the
+two 240K streams), 2,006 counter lines, fifteen seconds:
+
+| checks of | accepted, right | accepted, **wrong** | asked about, wrong | asked about, right |
+| --- | ---: | ---: | ---: | ---: |
+| `33d6588d4` (yesterday) | 1,958 | 5 | 9 | 34 |
+| `9711d42d4` (this morning's proxy) | 1,961 | 5 | 9 | 31 |
+| `47fa9ae60` (after the rewrite and six reviews) | 1,966 | 4 | 7 | 29 |
+| `a7f76c8c1` (two rules from this table) | 1,967 | 0 | 10 | 29 |
+
+What it shows:
+
+- The model's first reply is wrong on about 11 to 14 of 2,006 counters (0.6 %); the checks ask about two thirds of
+  those and about 1.5 % of the right ones. All of the wrong ones are in the 1M run; the four 240K runs have none.
+- A day of rewriting and reviewing moved the silent wrong values from 5 to 4. It did real work on lines that were
+  being asked about needlessly or stored wrongly after a question (three wrong became right), but the reviews'
+  probes were not where the remaining wrong values were.
+- The four that every version let through are two habits. Three are a set written as a sum, with a remark that
+  says so: `lodo77: 173 + 549 = 722 (set, item 373)` (true value after that item 549; all three in one reply).
+  The sum is right and its amount is in the text, so nothing fired. The fourth was made wrong by the checker:
+  `tudi76: -87 - 71 = -16` has the right result and one wrong sign in the working, and the sum was "corrected" to
+  -158.
+- Two rules follow (`set_written_as_a_sum`, `one_sign`): a sum whose remark says set / recorded / opened and
+  whose result the turns do not state is asked about; a sum that gives its written result with the sign of one
+  amount turned round is read that way. On these replies: no silent wrong value left, no question more.
+
+That last row is fitted to the lines it is scored on and proves nothing by itself. The replies of campaign 13b
+(X32g on the rules stream, on the hard stream and on the second 1M stream) are the first that these rules have
+not seen, and the same tool scores them. The hard stream had no proxy run before; X32g replaces N32gr in the
+queue for that reason (retrieval at question time is set aside: in N32pr the retrieved sentences sit among the
+turns being noted, and whether they are counted as mentions there has not been looked at).
+
+The lesson for this lane: when there is ground truth and the replies are saved, measure the checker against it
+first; ask reviewers for probes second. The tool also works for any future stream that has a reference.
