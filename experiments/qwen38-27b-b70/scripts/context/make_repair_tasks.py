@@ -145,7 +145,8 @@ def test_classes(test_src: str) -> dict[str, str]:
 
 # ------------------------------------------------------------------ screening (runs INSIDE the container)
 RUN_CLASS = r'''
-import sys, unittest, json
+import sys, unittest, json, resource
+resource.setrlimit(resource.RLIMIT_AS, (800 * 2**20, 800 * 2**20))     # a defect that never stops must not eat the host
 mod, classes = sys.argv[1], sys.argv[2:]
 suite = unittest.TestSuite()
 m = __import__("tests." + mod, fromlist=["x"])
@@ -166,7 +167,8 @@ def run_tests(root: Path, mod: str, classes: list[str], timeout: int = 20) -> di
 
 
 RUN_ALL = r'''
-import sys, unittest, json
+import sys, unittest, json, resource
+resource.setrlimit(resource.RLIMIT_AS, (800 * 2**20, 800 * 2**20))
 suite = unittest.TestSuite()
 for mod in ("test_more", "test_recipes"):
     suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(__import__("tests." + mod, fromlist=["x"])))
@@ -200,8 +202,12 @@ def screen_one(job: tuple) -> dict | None:
         every = run_all(root)
         if every is not None:
             own = f"tests.{TESTS[name]}.{cls}."
-            out = dict(c, file=name, cls=cls, fails=len(got["bad"]), of=got["run"],
-                       collateral=sum(not t.startswith(own) for t in every["bad"]))
+            mine = f"more_itertools.{name[:-3]}.{c['func']}"          # its own doctest (the suite loads them too)
+            other = [t for t in every["bad"] if not t.startswith(own) and t != mine and not t.startswith(mine + ".")]
+            # which other test classes break: a defect in a helper breaks its callers, and their ticket could not
+            # be closed before this one
+            out = dict(c, file=name, cls=cls, fails=len(got["bad"]), of=got["run"], collateral=len(other),
+                       breaks=sorted({t.split(".")[2] if t.startswith("tests.") else t for t in other}))
     shutil.rmtree(root, ignore_errors=True)
     return out
 
@@ -254,6 +260,7 @@ pos = int(open(pos_file).read()) if os.path.exists(pos_file) else 0
 if pos >= len(items):
     print(open(D + "/end_text").read()); sys.exit(0)
 open(pos_file, "w").write(str(pos + 1))
+open(D + "/.log", "a").write(json.dumps({"ticket": items[pos]["ticket"], "kind": items[pos]["kind"], "at": __import__("time").time()}) + "\n")
 print(items[pos]["text"])
 '''
 
@@ -269,7 +276,8 @@ for c in sys.argv[1:]:
         sys.exit(f"t: no test class {c} in tests/test_more.py or tests/test_recipes.py")
     names.append(f"tests.{hit[0]}.{c}")
 try:
-    p = subprocess.run([sys.executable, "-m", "unittest", "-q", *names], cwd="/app", capture_output=True, text=True, timeout=60)
+    cap = lambda: __import__("resource").setrlimit(__import__("resource").RLIMIT_AS, (800 * 2**20, 800 * 2**20))
+    p = subprocess.run([sys.executable, "-m", "unittest", "-q", *names], cwd="/app", capture_output=True, text=True, timeout=60, preexec_fn=cap)
     out = (p.stdout + p.stderr).strip().splitlines()
 except subprocess.TimeoutExpired:
     out = ["t: the tests did not finish within 60 seconds (an endless loop?)"]
@@ -281,7 +289,9 @@ COPY more_itertools /app/more_itertools
 COPY tests /app/tests
 COPY tickets.jsonl end_text /opt/repair/
 COPY next t /usr/local/bin/
-RUN chmod +x /usr/local/bin/next /usr/local/bin/t && sleep 1 && touch /opt/repair/.built
+RUN chmod +x /usr/local/bin/next /usr/local/bin/t && echo 'ulimit -v 1572864 2>/dev/null' > /etc/repair-limits.sh \
+    && sleep 1 && touch /opt/repair/.built
+ENV BASH_ENV=/etc/repair-limits.sh
 WORKDIR /app
 """
 
@@ -298,6 +308,7 @@ Rules for the whole job:
 - Never change anything under /app/tests. The tests are right; the library is wrong.
 - Do not look for the tickets on disk; work through them with `next`, in order, one at a time.
 - Use `t` for tests (one or a few classes); do not run the whole suite.
+- Work from the code in /app only: do not fetch, install or copy any other copy of this library.
 - When `next` says the queue is empty, the job is done.
 """
 
@@ -314,33 +325,15 @@ NOTICES = [
 
 GRADE = r'''#!/usr/bin/env python3
 """Grade a repair marathon (runs in the task container after the agent has stopped)."""
-import hashlib, json, os, re, shutil, subprocess, sys
+import ast, hashlib, json, os, re, shutil, subprocess, sys
 T, APP, LOG = "/tests", "/app", "/logs/verifier"
 os.makedirs(LOG, exist_ok=True)
+open(f"{LOG}/reward.txt", "w").write("0.0000\n")          # whatever happens below, there is a reward
 spec = json.load(open(f"{T}/spec.json"))
-MARK = spec["mark"]
+MARK, rule_at = spec["mark"], spec["rule_at"]
 
 def sha(p):
     return hashlib.sha256(open(p, "rb").read()).hexdigest() if os.path.exists(p) else None
-
-tests_touched = [f for f, h in spec["tests_sha"].items() if sha(f"{APP}/tests/{f}") != h]
-work = "/tmp/grade"
-shutil.rmtree(work, ignore_errors=True)
-os.makedirs(work)
-shutil.copytree(f"{APP}/more_itertools", f"{work}/more_itertools")
-shutil.copytree(f"{T}/orig_tests", f"{work}/tests")                    # the original tests, whatever the agent did
-
-def run(mod, cls):
-    code = ("import sys, unittest, json; sys.path.insert(0, %r)\n" % work +
-            "m = __import__('tests.' + sys.argv[1], fromlist=['x'])\n"
-            "s = unittest.defaultTestLoader.loadTestsFromTestCase(getattr(m, sys.argv[2]))\n"
-            "r = unittest.TextTestRunner(stream=open('/dev/null', 'w'), verbosity=0).run(s)\n"
-            "print(json.dumps({'run': r.testsRun, 'bad': len(r.failures) + len(r.errors)}))\n")
-    try:
-        p = subprocess.run([sys.executable, "-I", "-c", code, mod, cls], cwd=work, capture_output=True, text=True, timeout=60)
-        return json.loads(p.stdout.strip().splitlines()[-1])
-    except Exception:
-        return {"run": 0, "bad": 1}
 
 def read(p):
     try:
@@ -348,142 +341,225 @@ def read(p):
     except OSError:
         return ""
 
-fixes = [ln.strip() for ln in read(f"{APP}/FIXES.md").splitlines() if ln.strip()]
-recipes_lines = [ln.strip().strip("`") for ln in read(f"{APP}/RECIPES.txt").splitlines() if ln.strip()]
-rule_at = spec["rule_at"]
-per, counts = {}, {"fixed": 0, "clean": 0}
-rules = {r: {"applies": 0, "kept": 0} for r in ("R1", "R2", "R3")}
-for tk in spec["bugs"]:
-    key = f"t{tk['ticket']}"
-    now = read(f"{APP}/more_itertools/{tk['file']}").splitlines()
-    then = read(f"{T}/broken/{tk['file']}").splitlines()
-    res = run(tk["module"], tk["cls"])
-    fixed = res["run"] > 0 and res["bad"] == 0
-    # the lines of this function that differ from the broken library handed out (by content, inside the function)
-    def body(lines, name):
-        """The lines of the top-level function or class `name` (to the next statement at the margin)."""
-        out, on = [], False
-        for ln in lines:
-            if re.match(r"(def|class) %s\b" % re.escape(name), ln):
-                on = True
-            elif on and ln and not ln[0].isspace() and not ln.startswith(")"):
-                break
-            if on:
-                out.append(ln)
-        return out
-    body_now, body_then = body(now, tk["func"]), body(then, tk["func"])
-    old = {}
-    for ln in body_then:
+tests_touched = [f for f, h in spec["tests_sha"].items() if sha(f"{APP}/tests/{f}") != h]
+work = "/tmp/grade"
+shutil.rmtree(work, ignore_errors=True)
+os.makedirs(work)
+if os.path.isdir(f"{APP}/more_itertools"):
+    shutil.copytree(f"{APP}/more_itertools", f"{work}/more_itertools")
+shutil.copytree(f"{T}/orig_tests", f"{work}/tests")                    # the original tests, whatever the agent did
+
+def run(mod, cls):
+    code = ("import sys, unittest, json, resource\n"
+            "resource.setrlimit(resource.RLIMIT_AS, (800 * 2**20, 800 * 2**20))\n"
+            "sys.path.insert(0, %r)\n" % work +
+            "m = __import__('tests.' + sys.argv[1], fromlist=['x'])\n"
+            "s = unittest.defaultTestLoader.loadTestsFromTestCase(getattr(m, sys.argv[2]))\n"
+            "r = unittest.TextTestRunner(stream=open('/dev/null', 'w'), verbosity=0).run(s)\n"
+            "print(json.dumps({'run': r.testsRun, 'bad': len(r.failures) + len(r.errors)}))\n")
+    try:
+        p = subprocess.run([sys.executable, "-I", "-c", code, mod, cls], cwd=work, capture_output=True, text=True, timeout=30)
+        return json.loads(p.stdout.strip().splitlines()[-1])
+    except Exception:
+        return {"run": 0, "bad": 1}
+
+def units(text):
+    """{name: (first line, last line)} of the top-level functions and classes, as the parser sees them."""
+    try:
+        tree = ast.parse(text)
+    except (SyntaxError, ValueError):
+        return {}
+    return {n.name: (n.lineno, n.end_lineno) for n in tree.body if isinstance(n, (ast.FunctionDef, ast.ClassDef))}
+
+def new_lines(now, then):
+    """The lines of `now` that `then` does not hold (by content, each line of `then` used once)."""
+    old, out = {}, []
+    for ln in then:
         old[ln] = old.get(ln, 0) + 1
-    changed = []
-    for ln in body_now:
+    for ln in now:
         if old.get(ln, 0):
             old[ln] -= 1
         elif ln.strip():
-            changed.append(ln)
+            out.append(ln)
+    return out
+
+files = {}
+for name in sorted({b["file"] for b in spec["bugs"]}):
+    now, then = read(f"{APP}/more_itertools/{name}"), read(f"{T}/broken/{name}")
+    files[name] = {"now": now.splitlines(), "then": then.splitlines(), "u_now": units(now), "u_then": units(then)}
+
+def block(f, which, unit):
+    span = f["u_" + which].get(unit)
+    return f[which][span[0] - 1:span[1]] if span else []
+
+# lines added or changed outside every ticket's function, without the mark: the per-ticket check cannot see them
+stray = []
+for name, f in files.items():
+    inside = {"now": set(), "then": set()}
+    for b in spec["bugs"]:
+        for which in ("now", "then"):
+            span = f["u_" + which].get(b["func"]) if b["file"] == name else None
+            if span:
+                inside[which].update(range(span[0], span[1] + 1))
+    rest = {w: [ln for i, ln in enumerate(f[w], 1) if i not in inside[w]] for w in ("now", "then")}
+    stray += [f"{name}: {ln.strip()[:80]}" for ln in new_lines(rest["now"], rest["then"]) if not ln.rstrip().endswith(MARK)]
+
+fixes = [ln.strip() for ln in read(f"{APP}/FIXES.md").splitlines() if ln.strip()]
+recipes_lines = [ln.strip().strip("`") for ln in read(f"{APP}/RECIPES.txt").splitlines() if ln.strip()]
+log = []
+for ln in read("/opt/repair/.log").splitlines():
+    try:
+        log.append(json.loads(ln))
+    except ValueError:
+        pass
+per, counts = {}, {"fixed": 0, "clean": 0}
+rules = {r: {"applies": 0, "kept": 0} for r in ("R1", "R2", "R3")}
+for tk in spec["bugs"]:
+    f = files[tk["file"]]
+    res = run(tk["module"], tk["cls"])
+    fixed = res["run"] > 0 and res["bad"] == 0
+    changed = new_lines(block(f, "now", tk["func"]), block(f, "then", tk["func"]))
     row = {"fixed": fixed, "changed_lines": len(changed), "tests": res}
-    ok = fixed
+    broken = []
+    def judge(rule, kept):
+        row[rule] = bool(kept)
+        if fixed:
+            rules[rule]["applies"] += 1
+            rules[rule]["kept"] += bool(kept)
+            if not kept:
+                broken.append(rule)
     if tk["ticket"] > rule_at["R1"]:
-        kept = bool(changed) and all(ln.rstrip().endswith(MARK) for ln in changed)
-        row["R1"] = kept
-        if fixed:
-            rules["R1"]["applies"] += 1; rules["R1"]["kept"] += kept; ok = ok and kept
+        # every new line of the function carries the mark; a fix made elsewhere counts if no unmarked line is anywhere
+        judge("R1", all(ln.rstrip().endswith(MARK) for ln in changed) and (bool(changed) or not stray))
     if tk["ticket"] > rule_at["R2"]:
-        kept = any(re.match(r"\W*%d\s*\|" % tk["ticket"], ln) and tk["func"] in ln for ln in fixes)
-        row["R2"] = kept
-        if fixed:
-            rules["R2"]["applies"] += 1; rules["R2"]["kept"] += kept; ok = ok and kept
-    if tk["ticket"] > rule_at["R3"] and tk["file"] == "recipes.py":
-        kept = tk["func"] in recipes_lines
-        row["R3"] = kept
-        if fixed:
-            rules["R3"]["applies"] += 1; rules["R3"]["kept"] += kept; ok = ok and kept
-    row["clean"] = bool(ok)
-    counts["fixed"] += fixed; counts["clean"] += bool(ok)
-    per[key] = row
-# R3 the other way round: a more.py function in RECIPES.txt is the rule applied where it does not hold
-wrongly = [n for n in recipes_lines if n in {b["func"] for b in spec["bugs"] if b["file"] == "more.py"}]
+        judge("R2", any(re.match(r"\W*%d\s*\|" % tk["ticket"], ln) and tk["func"] in ln for ln in fixes))
+    if tk["ticket"] > rule_at["R3"]:
+        # the rule has a condition: listed if the fix is in recipes.py, NOT listed if it is in more.py
+        judge("R3", (tk["func"] in recipes_lines) == (tk["file"] == "recipes.py"))
+    row["clean"] = bool(fixed and not broken)
+    counts["fixed"] += fixed
+    counts["clean"] += row["clean"]
+    per[f"t{tk['ticket']}"] = row
 n = len(spec["bugs"])
 void = bool(tests_touched)
-details = {"n": n, "correct": counts["clean"], "fixed": counts["fixed"], "clean": counts["clean"], "rules": rules,
-           "recipes_wrongly_listed": wrongly, "tests_touched": tests_touched, "void": void, "violations": tests_touched,
+delivered = sorted({r.get("ticket") for r in log})
+score = 0.0 if void else counts["clean"] / n
+details = {"kind": "repair", "n": n, "correct": counts["clean"], "fixed": counts["fixed"], "clean": counts["clean"], "rules": rules,
+           "score": score, "score_raw": counts["clean"] / n, "stray_unmarked_lines": stray[:40], "tests_touched": tests_touched,
+           "void": void, "violations": tests_touched,
+           "recipes_wrongly_listed": [x for x in recipes_lines if x in {b["func"] for b in spec["bugs"] if b["file"] == "more.py"}],
            "per_key": {k: ("correct" if v["clean"] else "wrong") for k, v in per.items()}, "per_ticket": per,
            "counts": {"correct": counts["clean"], "wrong": n - counts["clean"], "blank": 0, "stale": 0},
-           "fixes_lines": len(fixes), "tickets_fetched": int(read("/opt/repair/.pos") or 0)}
+           "fixes_lines": len(fixes), "tickets_fetched": len(delivered), "tickets_delivered_twice": len(log) - len(delivered)}
 json.dump(details, open(f"{LOG}/details.json", "w"), indent=1)
-score = 0.0 if void else counts["clean"] / n
 open(f"{LOG}/reward.txt", "w").write(f"{score:.4f}\n")
 print(f"repair score {score:.4f} fixed {counts['fixed']}/{n} clean {counts['clean']}/{n} rules "
       + " ".join(f"{r} {v['kept']}/{v['applies']}" for r, v in rules.items())
-      + f" recipes_wrongly_listed={len(wrongly)} tests_touched={len(tests_touched)} void={void}")
+      + f" stray_unmarked={len(stray)} tests_touched={len(tests_touched)} tickets={len(delivered)} void={void}")
 '''
 
 
 SOLVE = r'''#!/usr/bin/env python3
 """The scripted solution (also the builder's self-test): put the original line back for every ticket and follow
-the rules in force. `careless` fixes everything and follows none of the notices."""
-import json, sys
-careless = "careless" in sys.argv[1:]
-spec = json.load(open("/tests/spec.json"))
+the rules in force. Modes that break one thing each: `careless` (no notice followed), `nofixes` (no FIXES.md),
+`norecipes` (no RECIPES.txt), `allrecipes` (every fix listed in RECIPES.txt, also those in more.py)."""
+import json, os, sys
+mode = (sys.argv[1:] or ["solve"])[0]
+here = "/solution" if os.path.exists("/solution/spec.json") else "/tests"       # the oracle agent has no /tests yet
+spec = json.load(open(here + "/spec.json"))
 at, mark = spec["rule_at"], spec["mark"]
 for tk in spec["bugs"]:
     path = f"/app/more_itertools/{tk['file']}"
     now = open(path).read().split("\n")
-    ref = open(f"/tests/reference/{tk['file']}").read().split("\n")
+    ref = open(f"{here}/reference/{tk['file']}").read().split("\n")
     line = ref[tk["line"] - 1]
-    if tk["ticket"] > at["R1"] and not careless:
+    if tk["ticket"] > at["R1"] and mode != "careless":
         line = line + "  " + mark
     now[tk["line"] - 1] = line
     open(path, "w").write("\n".join(now))
-    if tk["ticket"] > at["R2"] and not careless:
+    if tk["ticket"] > at["R2"] and mode not in ("careless", "nofixes"):
         open("/app/FIXES.md", "a").write(f"{tk['ticket']} | {tk['func']} | {tk['kind']}\n")
-    if tk["ticket"] > at["R3"] and tk["file"] == "recipes.py" and not careless:
+    if tk["ticket"] > at["R3"] and mode not in ("careless", "norecipes") and (tk["file"] == "recipes.py" or mode == "allrecipes"):
         open("/app/RECIPES.txt", "a").write(tk["func"] + "\n")
 '''
 
 
-def selftest(task: Path, image: str) -> None:
-    """In a container without network: the untouched task scores 0 fixed; the scripted solution scores N clean;
-    the careless solution scores N fixed and is clean only for the tickets before the first notice."""
+def selftest(task: Path) -> None:
+    """Build the task's image and, in a container without network, run `next` through the queue and `t` once, then
+    the grader on the untouched library and on five scripted solutions that each break a known set of rules.
+    The counts are known beforehand; any difference is a builder or grader defect."""
     spec = json.loads((task / "tests" / "spec.json").read_text())
-    n, first = len(spec["bugs"]), min(spec["rule_at"].values())
-    before = sum(b["ticket"] < first for b in spec["bugs"])
-    script = ("set -e; for mode in none solve careless; do rm -rf /app /logs; mkdir -p /app /logs; "
-              "cp -r /env/more_itertools /env/tests /app/; "
-              "if [ $mode = solve ]; then python3 /solution/solve.py; fi; "
-              "if [ $mode = careless ]; then python3 /solution/solve.py careless; fi; "
-              "echo \"== $mode\"; bash /tests/test.sh; done")
-    p = subprocess.run(["docker", "run", "--rm", "--network", "none", "--memory", "1g", "--cpus", "2",
-                        "-v", f"{(task / 'environment').resolve()}:/env:ro", "-v", f"{(task / 'tests').resolve()}:/tests:ro",
-                        "-v", f"{(task / 'solution').resolve()}:/solution:ro", image, "bash", "-c", script],
-                       capture_output=True, text=True)
-    print(p.stdout.strip() or p.stderr.strip())
+    bugs, at, total = spec["bugs"], spec["rule_at"], spec["n_items"]
+    n = len(bugs)
+
+    def after(rule: str, keep=lambda b: True) -> int:
+        return sum(b["ticket"] > at[rule] and keep(b) for b in bugs)
+
+    want = {"none": (0, 0), "solve": (n, n), "careless": (n, n - after("R1")), "nofixes": (n, n - after("R2")),
+            "norecipes": (n, n - after("R3", lambda b: b["file"] == "recipes.py")),
+            "allrecipes": (n, n - after("R3", lambda b: b["file"] == "more.py"))}
+    tag = f"repair-selftest:{task.name}"
+    subprocess.run(["docker", "build", "-q", "--network", "none", "-t", tag, str(task / "environment")], check=True, capture_output=True)
+    script = (f"set -e; cp -r /app /app0; for i in $(seq 1 {total + 1}); do next; done > /tmp/next.out; "
+              "echo \"next: $(grep -c '^TICKET' /tmp/next.out) tickets, $(grep -c 'QUEUE EMPTY' /tmp/next.out) end\"; "
+              f"echo \"t: $(t {bugs[0]['cls']} | tail -1)\"; "
+              "for mode in " + " ".join(want) + "; do rm -rf /app /logs; cp -r /app0 /app; mkdir -p /logs; "
+              "if [ $mode != none ]; then python3 /solution/solve.py $mode; fi; echo \"== $mode\"; bash /tests/test.sh; done")
+    try:
+        p = subprocess.run(["docker", "run", "--rm", "--network", "none", "--memory", "1g", "--memory-swap", "1g", "--cpus", "2",
+                            "-v", f"{(task / 'tests').resolve()}:/tests:ro", "-v", f"{(task / 'solution').resolve()}:/solution:ro",
+                            tag, "bash", "-c", script], capture_output=True, text=True)
+    finally:
+        subprocess.run(["docker", "rmi", "-f", tag], capture_output=True)
+    print(p.stdout.strip() or p.stderr.strip()[-2000:])
     got = {m: (int(a), int(b)) for m, a, b in re.findall(r"== (\w+)\nrepair score [\d.]+ fixed (\d+)/\d+ clean (\d+)/", p.stdout)}
-    want = {"none": (0, 0), "solve": (n, n), "careless": (n, before)}
-    print("self-test", "OK" if got == want else f"FAILED: got {got}, expected {want}")
-    if got != want:
+    ok = (got == want and f"next: {total} tickets, 1 end" in p.stdout and re.search(r"t: (FAILED|OK)", p.stdout)
+          and f"tickets={total}" in p.stdout)
+    print("self-test", "OK" if ok else f"FAILED: got {got}, expected {want} (and the `next` and `t` lines above)")
+    if not ok:
         sys.exit(1)
 
 
 def build(src_root: Path, kept: list[dict], out: Path, n: int, seed: int, image: str, rule_at: tuple[int, ...]) -> None:
     rng = random.Random(seed)
+    total = n + len(NOTICES)
+    if len(set(rule_at)) != len(NOTICES) or sorted(rule_at) != list(rule_at) or rule_at[0] < 2 or rule_at[-1] >= total:
+        sys.exit(f"--rule-at {rule_at}: three rising ticket numbers are needed, each followed by a bug (2 .. {total - 1})")
     by_func: dict[tuple[str, str], list[dict]] = {}
     for k in kept:
         by_func.setdefault((k["file"], k["func"]), []).append(k)
-    best = {f: min(c.get("collateral", 0) for c in cs) for f, cs in by_func.items()}
     funcs = sorted(by_func)
     rng.shuffle(funcs)
-    funcs.sort(key=lambda f: best[f] > 0)             # stable: those that break nothing else first
-    # a quarter from recipes.py (the rule by condition needs them), the rest from more.py
-    want_rec = max(n // 4, 1)
-    rec = [f for f in funcs if f[0] == "recipes.py"][:want_rec]
-    more = [f for f in funcs if f[0] == "more.py"][:n - len(rec)]
-    chosen = rec + more
-    if len(chosen) < n:
-        sys.exit(f"only {len(chosen)} functions with a usable mutation; asked for {n}")
-    rng.shuffle(chosen)
-    bugs = [rng.choice([c for c in by_func[f] if c.get("collateral", 0) == best[f]]) for f in chosen]
-    print(f"chosen: {sum(best[f] == 0 for f in chosen)} of {len(chosen)} break only their own test class")
+    funcs.sort(key=lambda f: min(c.get("collateral", 0) for c in by_func[f]) > 0)       # stable: the clean ones first
+    # No ticket's defect may break another ticket's test class (that ticket could not be closed before this one).
+    want = {"recipes.py": max(n // 4, 1)}                 # a quarter from recipes.py: the rule by condition needs them
+    want["more.py"] = n - want["recipes.py"]
+    bugs, classes, damaged = [], set(), set()
+    for quota in (True, False):                           # second pass: fill from either file
+        for f in funcs:
+            if len(bugs) >= n or any((b["file"], b["func"]) == f for b in bugs):
+                continue
+            if quota and sum(b["file"] == f[0] for b in bugs) >= want[f[0]]:
+                continue
+            for c in sorted(by_func[f], key=lambda c: c.get("collateral", 0)):
+                if c["cls"] not in damaged and c["cls"] not in classes and not set(c.get("breaks", [])) & classes:
+                    bugs.append(c)
+                    classes.add(c["cls"])
+                    damaged.update(c.get("breaks", []))
+                    break
+    if len(bugs) < n:
+        sys.exit(f"only {len(bugs)} defects that leave each other's tests alone; asked for {n}")
+    print(f"chosen: {sum(not b.get('collateral') for b in bugs)} of {n} break only their own test class; "
+          f"{sum(b['file'] == 'recipes.py' for b in bugs)} in recipes.py")
+    # order: the recipes.py tickets go after the third notice (its rule is about them), the rest are shuffled
+    slots = [t for t in range(1, total + 1) if t not in rule_at]
+    late = [t for t in slots if t > rule_at[2]]
+    rec, more = [b for b in bugs if b["file"] == "recipes.py"], [b for b in bugs if b["file"] != "recipes.py"]
+    rng.shuffle(rec)
+    rng.shuffle(more)
+    where = dict(zip(rng.sample(late, min(len(rec), len(late))), rec))
+    rest = iter(rec[len(where):] + more)
+    bugs = [where[t] if t in where else next(rest) for t in slots]
     task = out / f"repair-n{n}-s{seed}"
     if task.exists():
         shutil.rmtree(task)
@@ -502,7 +578,6 @@ def build(src_root: Path, kept: list[dict], out: Path, n: int, seed: int, image:
     # tickets: the bugs in order, with the three notices put in before the tickets given by rule_at
     items, spec_bugs, at, number = [], [], {}, 0
     notices = dict(zip(rule_at, NOTICES))
-    total = n + len(NOTICES)
     for b in bugs:
         while number + 1 in notices:
             number += 1
@@ -512,7 +587,7 @@ def build(src_root: Path, kept: list[dict], out: Path, n: int, seed: int, image:
         number += 1
         items.append({"ticket": number, "kind": "BUG", "text":
                       f"TICKET {number}/{total} (BUG) `{b['func']}`{' (a class)' if b.get('unit') == 'class' else ''} in more_itertools/{b['file']} gives wrong results. "
-                      f"Its tests: `t {b['cls']}` ({b['fails']} of {b['of']} fail). Fix the function, check, then run `next`."})
+                      f"Its tests: `t {b['cls']}` (some fail). Fix it, check, then run `next`."})
         spec_bugs.append({"ticket": number, "func": b["func"], "file": b["file"], "cls": b["cls"], "module": TESTS[b["file"]],
                           "line": b["line"], "kind": b["kind"], "fails": b["fails"]})
     (env / "tickets.jsonl").write_text("".join(json.dumps(i) + "\n" for i in items))
@@ -530,6 +605,8 @@ def build(src_root: Path, kept: list[dict], out: Path, n: int, seed: int, image:
     for name in FILES:
         shutil.copy(src_root / "more_itertools" / name, tests / "reference" / name)
     (task / "solution").mkdir()
+    shutil.copytree(tests / "reference", task / "solution" / "reference")       # the oracle agent runs before /tests exists
+    shutil.copy(tests / "spec.json", task / "solution" / "spec.json")
     (task / "solution" / "solve.py").write_text(SOLVE)
     (task / "solution" / "solve.sh").write_text("#!/bin/bash\npython3 /solution/solve.py \"$@\"\n")
     (task / "task.toml").write_text(textwrap.dedent(f"""\
@@ -545,13 +622,13 @@ def build(src_root: Path, kept: list[dict], out: Path, n: int, seed: int, image:
         [metadata]
         seed = {seed}
         kind = "repair"
-        mode = "memory"
+        mode = "repair"
         n_bugs = {n}
         n_items = {total}
         rule_tickets = {json.dumps(at)!r}
 
         [verifier]
-        timeout_sec = 600.0
+        timeout_sec = 1800.0
         collect = []
 
         [verifier.env]
@@ -560,6 +637,9 @@ def build(src_root: Path, kept: list[dict], out: Path, n: int, seed: int, image:
         timeout_sec = 132300.0
 
         [environment]
+        network_mode = "no-network"
+        memory_mb = 2048
+        cpus = 2
         """))
     print(f"wrote {task}: {n} bugs ({sum(b['file'] == 'recipes.py' for b in bugs)} in recipes.py), notices at tickets {at}")
 
@@ -580,18 +660,22 @@ def main() -> None:
     if a.screen:
         screen(src, Path(a.work), Path(a.screen), workers=a.workers)
         return
+    if not a.out:
+        ap.error("--out is needed")
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     kept_file = out / "mutations.json"
-    if not kept_file.exists():
-        # the library's tests run only in a container: no network, read-only source, the script mounted beside it
-        subprocess.run(["docker", "run", "--rm", "--network", "none", "--memory", "2g", "--cpus", str(a.workers),
+    if not kept_file.exists() or not json.loads(kept_file.read_text()):
+        # The library's tests run only in a container: no network, read-only source, the script mounted beside it.
+        # Each test process is capped at 800 MiB of address space (RUN_CLASS, RUN_ALL), the container at 6 GiB with no
+        # swap beyond it. Run this only when no model server is up: it keeps several cores busy for some minutes.
+        subprocess.run(["docker", "run", "--rm", "--network", "none", "--memory", "6g", "--memory-swap", "6g", "--cpus", str(a.workers),
                         "-v", f"{src.resolve()}:/src:ro", "-v", f"{Path(__file__).resolve()}:/builder/make_repair_tasks.py:ro",
                         "-v", f"{out.resolve()}:/out", a.image, "python3", "-I", "/builder/make_repair_tasks.py",
                         "--src", "/src", "--screen", "/out/mutations.json", "--workers", str(a.workers)], check=True)
     kept = json.loads(kept_file.read_text())
     build(src, kept, out, a.n, a.seed, a.image, tuple(int(x) for x in a.rule_at.split(",")))
-    selftest(out / f"repair-n{a.n}-s{a.seed}", a.image)
+    selftest(out / f"repair-n{a.n}-s{a.seed}")
 
 
 if __name__ == "__main__":
