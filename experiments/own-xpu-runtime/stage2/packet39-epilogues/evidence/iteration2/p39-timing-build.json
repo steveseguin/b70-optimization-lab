@@ -1,0 +1,39 @@
+{
+  "device_executed": false,
+  "argv": [
+    "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+    "-std=c++20",
+    "-O2",
+    "-Werror=return-type",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-fdenormal-fp-math=ieee",
+    "-foffload-fp32-prec-div",
+    "-foffload-fp32-prec-sqrt",
+    "-fsycl",
+    "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet39-epilogues",
+    "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+    "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+    "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader",
+    "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet39-epilogues/timing.cpp",
+    "-o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet39-epilogues/build/p39-timing",
+    "-fsycl-dump-device-code=/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet39-epilogues/build/spv"
+  ],
+  "returncode": 0,
+  "seconds": 15.26509951899061,
+  "source_sha256": "663fa781d80dac1920790abef4f040bbb0dd54cb444d366b2bab3b662cb0f38f",
+  "compile_and_link_precision": [
+    "-std=c++20",
+    "-O2",
+    "-Werror=return-type",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-fdenormal-fp-math=ieee",
+    "-foffload-fp32-prec-div",
+    "-foffload-fp32-prec-sqrt",
+    "-fsycl"
+  ],
+  "binary_sha256": "0da34ce6919d747bd19408d480c87d28aee7eacd6fa7b28c64027d2bd99f9c62"
+}

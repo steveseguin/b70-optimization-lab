@@ -1,0 +1,9 @@
+{
+  "description": "Scalar helper bodies used by the seven-kind host integration. Verified unchanged since first host compile; Bound shape additions do not change these expressions.",
+  "functions": {
+    "activation": "inline uint16_t activation(uint16_t gate,uint16_t up){return iq3::bf16_bits(ng::silu(widen(gate))*widen(up));}",
+    "hc_activation": "inline uint16_t hc_activation(uint16_t low){return iq3::bf16_bits(ng::silu(widen(low)/4.f));}",
+    "combine": "inline uint16_t combine(uint16_t residual,uint16_t branch,uint16_t inject){return iq3::bf16_bits(widen(residual)+widen(branch)*(2.f*ng::sigmoid(widen(inject)/4.f)));}",
+    "shared_blend": "inline uint16_t shared_blend(uint16_t mixture,uint16_t down,uint16_t gate){\n // Packet29's mixture already stores BF16, then moe uses extra=1 and one=1.f.\n // Preserve its +0, *1, first BF16 round, and rounded shared contribution.\n float sum=0;sum=sum+widen(mixture)*1.f;\n return iq3::bf16_bits(round(sum)+round(widen(down)*ng::sigmoid(widen(gate))));\n}"
+  }
+}

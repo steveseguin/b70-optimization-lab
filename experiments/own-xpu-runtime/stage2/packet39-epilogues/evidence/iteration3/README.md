@@ -1,0 +1,1 @@
+Status-only fallback adds no nonlinear math. IQ2 gate passes but IQ3 loop adds an instruction, so only IQ2 fallback passes this assembly gate. Subsequent independent review found HC/shared-up control geometry used wg32+finish instead of actual rows4; that implementation is not a matching runtime-chain timing control. Next iteration corrects those classes. No device ran.

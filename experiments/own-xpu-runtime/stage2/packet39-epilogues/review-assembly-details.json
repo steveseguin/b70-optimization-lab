@@ -1,0 +1,322 @@
+{
+  "source_codegen_sha256": "f1b80732d72148f5f2ea161e86d822e474bbcf72d138a72860ee8e0c2b88f379",
+  "device_ran": false,
+  "independent_loop_opcode_review": [
+    {
+      "tuple": [
+        "GemvKernel",
+        "22",
+        "2560",
+        "0",
+        "1"
+      ],
+      "baseline_asm": "build/igc-p39-f83ecde6e634/OCL_asm19e5a27d5fc01626_simd32_entry_0004.asm",
+      "fused_asm": "build/igc-p39-f83ecde6e634/OCL_asm19e5a27d5fc01626_simd32_entry_0003.asm",
+      "baseline_asm_sha256": "55d5c9f8169f49db3e21914578f0b78f2b20cca8488303d19bf46a033437817e",
+      "fused_asm_sha256": "dc3d9dc51b43a674866de25b260377aabe015a2175dfa6a80bc1854017934491",
+      "largest_baseline_region": [
+        1112,
+        1725
+      ],
+      "largest_fused_region": [
+        1463,
+        2077
+      ],
+      "added_opcodes": {
+        "sync.nop": 1
+      },
+      "removed_opcodes": {}
+    },
+    {
+      "tuple": [
+        "GemvKernel",
+        "21",
+        "2560",
+        "0",
+        "1"
+      ],
+      "baseline_asm": "build/igc-p39-f83ecde6e634/OCL_asm19e5a27d5fc01626_simd32_entry_0006.asm",
+      "fused_asm": "build/igc-p39-f83ecde6e634/OCL_asm19e5a27d5fc01626_simd32_entry_0005.asm",
+      "baseline_asm_sha256": "bbcbccd220a2a9f56208b4a49537306c70a811ebec7d324ac9615ce24949fc17",
+      "fused_asm_sha256": "3174f9847e74b09500f33c95a7cd623f17bb45dcac2ac286b2336ca28e2af5e8",
+      "largest_baseline_region": [
+        1190,
+        1841
+      ],
+      "largest_fused_region": [
+        1541,
+        2191
+      ],
+      "added_opcodes": {},
+      "removed_opcodes": {
+        "sync.nop": 1
+      }
+    },
+    {
+      "tuple": [
+        "GemvKernel",
+        "22",
+        "2560",
+        "7",
+        "1"
+      ],
+      "baseline_asm": "build/igc-p39-f83ecde6e634/OCL_asm19e5a27d5fc01626_simd32_entry_0008.asm",
+      "fused_asm": "build/igc-p39-f83ecde6e634/OCL_asm19e5a27d5fc01626_simd32_entry_0007.asm",
+      "baseline_asm_sha256": "e951cf6b57a122208e9467552286e7493d07048e170fd4988bd7c5b3c7ba704f",
+      "fused_asm_sha256": "106ee1fde5bd6f3c9715774bbc7d93a26930a61ee3963b025745745e9f49675c",
+      "largest_baseline_region": [
+        1112,
+        1725
+      ],
+      "largest_fused_region": [
+        1127,
+        1740
+      ],
+      "added_opcodes": {},
+      "removed_opcodes": {}
+    },
+    {
+      "tuple": [
+        "GemvKernel",
+        "21",
+        "2560",
+        "7",
+        "1"
+      ],
+      "baseline_asm": "build/igc-p39-f83ecde6e634/OCL_asm19e5a27d5fc01626_simd32_entry_0010.asm",
+      "fused_asm": "build/igc-p39-f83ecde6e634/OCL_asm19e5a27d5fc01626_simd32_entry_0009.asm",
+      "baseline_asm_sha256": "bdc39a95246c2375ad8e0f50cd6b64dedc65dc433c1ef8ce50b0893270514f7b",
+      "fused_asm_sha256": "acdc68e72354fb3c7abf445c56c546a9c62b0e92b5832377431ed2b5b90c4dd9",
+      "largest_baseline_region": [
+        1190,
+        1841
+      ],
+      "largest_fused_region": [
+        1205,
+        1857
+      ],
+      "added_opcodes": {
+        "sync.nop": 1
+      },
+      "removed_opcodes": {}
+    },
+    {
+      "tuple": [
+        "GemvKernel",
+        "20",
+        "640",
+        "1",
+        "1"
+      ],
+      "baseline_asm": "build/igc-p39-f83ecde6e634/OCL_asm19e5a27d5fc01626_simd32_entry_0012.asm",
+      "fused_asm": "build/igc-p39-f83ecde6e634/OCL_asm19e5a27d5fc01626_simd32_entry_0011.asm",
+      "baseline_asm_sha256": "fcf0885b51fc1cfd94cf569ebdcb300d9daabdc43d2211f4a5af20e71da4db43",
+      "fused_asm_sha256": "79b0f7c7f06a7536d7c0a3c948826f88ab7f27e84b4104b2ef00252e3e5600da",
+      "largest_baseline_region": [
+        1660,
+        1668
+      ],
+      "largest_fused_region": [
+        1675,
+        1683
+      ],
+      "added_opcodes": {},
+      "removed_opcodes": {},
+      "down_unrolled_before_first_store": {
+        "note": "Added row-zero sticky-guard IDs1657+ can schedule before raw output store; omit those new epilogue IDs when comparing unchanged core. Original core IDs through1656 retained.",
+        "baseline_instructions": 1696,
+        "fused_instructions": 1696,
+        "opcode_histogram_equal": true,
+        "messages": {
+          "true": {
+            "load.ugm.d32x32t.a32.ca.cc": 1,
+            "load.ugm.d32x16t.a32.ca.cc": 1,
+            "load.ugm.d32x2t.a64": 1,
+            "load.ugm.d32x1t.a64": 1,
+            "load.ugm.d16u32.a64": 27,
+            "load.ugm.d8u32.a64": 24,
+            "store.ugm.d16u32.a64": 1
+          },
+          "false": {
+            "load.ugm.d32x32t.a32.ca.cc": 1,
+            "load.ugm.d32x16t.a32.ca.cc": 1,
+            "load.ugm.d32x2t.a64": 1,
+            "load.ugm.d32x1t.a64": 1,
+            "load.ugm.d16u32.a64": 27,
+            "load.ugm.d8u32.a64": 24,
+            "store.ugm.d16u32.a64": 1
+          }
+        },
+        "float_mul_add_instructions": {
+          "true": 90,
+          "false": 90
+        }
+      }
+    },
+    {
+      "tuple": [
+        "Rows4GemvKernel",
+        "8",
+        "10240",
+        "2",
+        "4"
+      ],
+      "baseline_asm": "build/igc-p39-f83ecde6e634/OCL_asm19e5a27d5fc01626_simd32_entry_0014.asm",
+      "fused_asm": "build/igc-p39-f83ecde6e634/OCL_asm19e5a27d5fc01626_simd32_entry_0013.asm",
+      "baseline_asm_sha256": "09becffa990dec4ab506d9522cbdd3d916a6039d1263486cf5ef73a96c52d404",
+      "fused_asm_sha256": "edd7e5e283e80be1d879ed863d2dcaa57614ae234bcdb97ac1ff334849e2ebef",
+      "largest_baseline_region": [
+        368,
+        493
+      ],
+      "largest_fused_region": [
+        861,
+        986
+      ],
+      "added_opcodes": {},
+      "removed_opcodes": {}
+    },
+    {
+      "tuple": [
+        "Rows4GemvKernel",
+        "14",
+        "2560",
+        "3",
+        "4"
+      ],
+      "baseline_asm": "build/igc-p39-f83ecde6e634/OCL_asm19e5a27d5fc01626_simd32_entry_0016.asm",
+      "fused_asm": "build/igc-p39-f83ecde6e634/OCL_asm19e5a27d5fc01626_simd32_entry_0015.asm",
+      "baseline_asm_sha256": "a14a58a1af3dfba9a8e3eb6aec8a00c40410f874fa4d2414e45262f6c98210a3",
+      "fused_asm_sha256": "26ef0badfe7c88ff2ab3ad22f58401bc48b8a0574c7cee5cf07765a5f85ae4cb",
+      "largest_baseline_region": [
+        372,
+        497
+      ],
+      "largest_fused_region": [
+        870,
+        995
+      ],
+      "added_opcodes": {},
+      "removed_opcodes": {}
+    },
+    {
+      "tuple": [
+        "Rows4GemvKernel",
+        "8",
+        "2560",
+        "3",
+        "1"
+      ],
+      "baseline_asm": "build/igc-p39-f83ecde6e634/OCL_asm19e5a27d5fc01626_simd32_entry_0018.asm",
+      "fused_asm": "build/igc-p39-f83ecde6e634/OCL_asm19e5a27d5fc01626_simd32_entry_0017.asm",
+      "baseline_asm_sha256": "c98ad5c0a7b8e760373cc3afde9c921c6ed0a8a3c5856a542fed4e70d9ef7297",
+      "fused_asm_sha256": "ee37611bbea91b9993e03ed9a5a974bccba9c01665873c9dc427ddf4c79f47d7",
+      "largest_baseline_region": [
+        310,
+        430
+      ],
+      "largest_fused_region": [
+        815,
+        935
+      ],
+      "added_opcodes": {},
+      "removed_opcodes": {}
+    },
+    {
+      "tuple": [
+        "GemvKernel",
+        "8",
+        "640",
+        "5",
+        "1"
+      ],
+      "baseline_asm": "build/igc-p39-f83ecde6e634/OCL_asm19e5a27d5fc01626_simd32_entry_0020.asm",
+      "fused_asm": "build/igc-p39-f83ecde6e634/OCL_asm19e5a27d5fc01626_simd32_entry_0019.asm",
+      "baseline_asm_sha256": "717fecc587621ae2dc763a93f800a6f59c34d22a893e4fcc111d245f1e62956e",
+      "fused_asm_sha256": "cf377eec2811ec5fc6fb117ba8e58c450c795f7f3f7c7ff8959c2db9a758f583",
+      "largest_baseline_region": [
+        542,
+        647
+      ],
+      "largest_fused_region": [
+        3015,
+        3120
+      ],
+      "added_opcodes": {},
+      "removed_opcodes": {}
+    },
+    {
+      "tuple": [
+        "GemvKernel",
+        "14",
+        "2560",
+        "6",
+        "1"
+      ],
+      "baseline_asm": "build/igc-p39-f83ecde6e634/OCL_asm19e5a27d5fc01626_simd32_entry_0022.asm",
+      "fused_asm": "build/igc-p39-f83ecde6e634/OCL_asm19e5a27d5fc01626_simd32_entry_0021.asm",
+      "baseline_asm_sha256": "b54d426d6d648212ca219ed97952d6930866760da286c0ede504ffd5571218eb",
+      "fused_asm_sha256": "c200d8847ab00c4e8ed00b1e1ca3eb7222c058aaaf5b5e8b82ce465576577c84",
+      "largest_baseline_region": [
+        408,
+        523
+      ],
+      "largest_fused_region": [
+        753,
+        869
+      ],
+      "added_opcodes": {
+        "sync.nop": 1
+      },
+      "removed_opcodes": {}
+    },
+    {
+      "tuple": [
+        "GemvKernel",
+        "8",
+        "2560",
+        "6",
+        "1"
+      ],
+      "baseline_asm": "build/igc-p39-f83ecde6e634/OCL_asm19e5a27d5fc01626_simd32_entry_0024.asm",
+      "fused_asm": "build/igc-p39-f83ecde6e634/OCL_asm19e5a27d5fc01626_simd32_entry_0023.asm",
+      "baseline_asm_sha256": "d5896c3e970c8b4cc3443e3cdb19bb629ea5d75f2e46c21ea4c0d4ed7df6c9ab",
+      "fused_asm_sha256": "9dbc619cee766157b093e92179e074e2373f7d5d22b336c30e79f3b5cabdf0a8",
+      "largest_baseline_region": [
+        408,
+        523
+      ],
+      "largest_fused_region": [
+        753,
+        869
+      ],
+      "added_opcodes": {
+        "sync.nop": 1
+      },
+      "removed_opcodes": {}
+    },
+    {
+      "tuple": [
+        "GemvKernel",
+        "14",
+        "6144",
+        "4",
+        "4"
+      ],
+      "baseline_asm": "build/igc-p39-f83ecde6e634/OCL_asm19e5a27d5fc01626_simd32_entry_0026.asm",
+      "fused_asm": "build/igc-p39-f83ecde6e634/OCL_asm19e5a27d5fc01626_simd32_entry_0025.asm",
+      "baseline_asm_sha256": "4a7a7fd90e2a1a93aef0a6609c4aaedd0cfeb9b048b6a4ff4c562d151db33621",
+      "fused_asm_sha256": "e949eb2413f1f6f6b356e90a18f0ee752a63e2a1d04a1904b8dd37f25f8652b1",
+      "largest_baseline_region": [
+        378,
+        503
+      ],
+      "largest_fused_region": [
+        378,
+        503
+      ],
+      "added_opcodes": {},
+      "removed_opcodes": {}
+    }
+  ]
+}

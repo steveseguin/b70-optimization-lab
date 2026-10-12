@@ -1,0 +1,97 @@
+{
+  "device_executed": false,
+  "estimate_only": true,
+  "source": "experiments/own-xpu-runtime/stage2/packet29-merged/receipts-cards01-20261012-chain/w2c-r29/class-times.json",
+  "source_sha256": "6dc8c630632949d3f91ff6bf78e2fcaa3134861bbfb76f4f3c1dbc344d7f5903",
+  "baseline_tokens": 63,
+  "rows": [
+    {
+      "fusion": "expert gate/up + checks + activation",
+      "launches_removed_per_token": 144,
+      "estimated_ms_removed_per_token": 0.5482584126984126,
+      "source_classes": [
+        "expsgate.check",
+        "expsup.check",
+        "expsact"
+      ],
+      "note": null
+    },
+    {
+      "fusion": "expert down + check",
+      "launches_removed_per_token": 48,
+      "estimated_ms_removed_per_token": 0.13870603174603174,
+      "source_classes": [
+        "expsdown.check"
+      ],
+      "note": null
+    },
+    {
+      "fusion": "HC low + activation, including final",
+      "launches_removed_per_token": 97,
+      "estimated_ms_removed_per_token": 0.4085296666666667,
+      "source_classes": [
+        "hc.a.act",
+        "hc.f.act",
+        "final.act"
+      ],
+      "note": null
+    },
+    {
+      "fusion": "shared up + activation",
+      "launches_removed_per_token": 48,
+      "estimated_ms_removed_per_token": 0.19448253968253967,
+      "source_classes": [
+        "shexpact"
+      ],
+      "note": null
+    },
+    {
+      "fusion": "attention projection finish + combine",
+      "launches_removed_per_token": 48,
+      "estimated_ms_removed_per_token": 0.5348031746031746,
+      "source_classes": [
+        "attn.combine"
+      ],
+      "note": null
+    },
+    {
+      "fusion": "shared down + shared blend + FFN combine",
+      "launches_removed_per_token": 96,
+      "estimated_ms_removed_per_token": 0.6788166666666666,
+      "source_classes": [
+        "ffn.combine"
+      ],
+      "note": "moe contains two groups per layer without separate timings; half its measured sum is allocated to shared blend as an explicit equal-cost estimate, not a measured split."
+    },
+    {
+      "fusion": "GDN QKV + channel convolution",
+      "launches_removed_per_token": 36,
+      "estimated_ms_removed_per_token": 0.2493920634920635,
+      "source_classes": [
+        "gdn.conv"
+      ],
+      "note": null
+    }
+  ],
+  "total_launches_removed_per_token": 517,
+  "total_estimated_ms_removed_per_token": 2.7529885555555555,
+  "caveat": "Launch-removal budget only, before added epilogue work and codegen rejection; not speed or net saving.",
+  "alternatives": [
+    {
+      "fusion": "expert paired gate/up + two checks only",
+      "launches_removed_per_token": 96,
+      "estimated_ms_removed_per_token": 0.32820603174603175,
+      "replaces_primary_row": "expert gate/up + checks + activation",
+      "not_additive": true
+    }
+  ],
+  "offline_admitted": {
+    "launches_removed_per_token": 431,
+    "estimated_removed_tiny_launch_ms_per_token": 2.2767064854497354,
+    "expert_checks_fraction": {
+      "iq2_layers": 47,
+      "all_layers": 48
+    },
+    "caveat": "Removal budget, not net saving. IQ2 check share prorates aggregate measured checks by layer count; individual-format timing was not retained. Added epilogue work remains unmeasured."
+  }
+}

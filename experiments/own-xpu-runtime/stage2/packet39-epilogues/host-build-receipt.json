@@ -1,0 +1,115 @@
+{
+  "device_executed": false,
+  "compile": [
+    "g++",
+    "-std=gnu++20",
+    "-O3",
+    "-march=native",
+    "-fopenmp",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-Werror=return-type",
+    "-DOWN_RT_HOST_ONLY",
+    "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet39-epilogues",
+    "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+    "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/host/validation",
+    "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../../stage1/packet3-prep/src",
+    "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../packet2/kernels",
+    "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../packet2/loader",
+    "-c",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet39-epilogues/build/host-gate/main.cpp",
+    "-o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet39-epilogues/build/host-gate/main.o"
+  ],
+  "link": [
+    "g++",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-fopenmp",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet39-epilogues/build/host-gate/main.o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/host/CMakeFiles/programs.dir/adapter.cpp.o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/host/CMakeFiles/programs.dir/adapter_fixture.cpp.o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/host/CMakeFiles/programs.dir/expert_down.cpp.o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/host/CMakeFiles/programs.dir/gemv_timing.cpp.o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/host/CMakeFiles/programs.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp.o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/host/CMakeFiles/programs.dir/owner.cpp.o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/host/CMakeFiles/programs.dir/owner_retire.cpp.o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/host/CMakeFiles/programs.dir/p25_bridge.cpp.o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/host/CMakeFiles/programs.dir/p28/submit.cpp.o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/host/CMakeFiles/programs.dir/performance.cpp.o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/host/CMakeFiles/programs.dir/round2_submit.cpp.o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/host/CMakeFiles/programs.dir/runtime_kernels.cpp.o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/host/CMakeFiles/programs.dir/small_gemv.cpp.o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/host/CMakeFiles/programs.dir/small_gemv_fixture.cpp.o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/host/CMakeFiles/programs.dir/specialised_submit.cpp.o",
+    "-lcrypto",
+    "-o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet39-epilogues/build/host-gate/own-rt-iq3-host"
+  ],
+  "binary_sha256": "0a21f647c36f01fba8928e74470adafd6f08fbd732f30be70e93e37e3091656d",
+  "source_sha256": "25e0e36b3baaf0d9bc637de84b38e2b117c45875554e9a5d61e0c2ceb503db23",
+  "overlay_sha256": "98ae3e739d4b9f47e1868f63e9aa4bcfd4915757ee1a848393bfd53ce3462f2b",
+  "fused_sha256": "efcc7e476b23c43e0e8950905e5845f76de58c7837e56d503f8be8a8a5f7f4ea",
+  "objects": [
+    {
+      "path": "build/host/CMakeFiles/programs.dir/adapter.cpp.o",
+      "sha256": "5422b4c25ea78afa493f7493b1d22494837ed6c4d6079b404788902f8c5696e6"
+    },
+    {
+      "path": "build/host/CMakeFiles/programs.dir/adapter_fixture.cpp.o",
+      "sha256": "f032f109b990caa91d68b3543282ebf5d0b8bbfb734676a3f2892f432c105b7c"
+    },
+    {
+      "path": "build/host/CMakeFiles/programs.dir/expert_down.cpp.o",
+      "sha256": "ec12f243a60b8f9e8af1f0adbc633e6086d12685a52aaca89ae47addb0c555ad"
+    },
+    {
+      "path": "build/host/CMakeFiles/programs.dir/gemv_timing.cpp.o",
+      "sha256": "549076c9ed9a571935af2ea1af72f43a64930c6963181fd7a1f9abc8ae26acf2"
+    },
+    {
+      "path": "build/host/CMakeFiles/programs.dir/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp.o",
+      "sha256": "08c1d523e22fa5808ddaa1620f708eb2863c82cbbd32641b1ed1c37500b22969"
+    },
+    {
+      "path": "build/host/CMakeFiles/programs.dir/owner.cpp.o",
+      "sha256": "0ace561482cf2b3c00b69c0ca00bd539b8d1ec3266bc3a3024b3d86bdf3e20fb"
+    },
+    {
+      "path": "build/host/CMakeFiles/programs.dir/owner_retire.cpp.o",
+      "sha256": "29835a13b834b061782a5fce1664f1774c65535108f0e25e28f919ec13496a12"
+    },
+    {
+      "path": "build/host/CMakeFiles/programs.dir/p25_bridge.cpp.o",
+      "sha256": "32ff5a8be00f3b4efb8ea60589418f67537b451c01a8fa91178c801e0bd7b2ae"
+    },
+    {
+      "path": "build/host/CMakeFiles/programs.dir/p28/submit.cpp.o",
+      "sha256": "9b4769bb3a2a83150963b26454f7008162d496fb522e26edb72e2695860e15c7"
+    },
+    {
+      "path": "build/host/CMakeFiles/programs.dir/performance.cpp.o",
+      "sha256": "36c8afa1289763b8392f1fc4ba08f4575e51020f3e07033de466c936aa203b5c"
+    },
+    {
+      "path": "build/host/CMakeFiles/programs.dir/round2_submit.cpp.o",
+      "sha256": "f9e1a15094fad83df14d676b65a475d4997c4896b01b29c91237f97dd942438a"
+    },
+    {
+      "path": "build/host/CMakeFiles/programs.dir/runtime_kernels.cpp.o",
+      "sha256": "b4db3155d4bdb5c4fb3ba465aafd5673aa69068f81b34ae7fc9d11e53faaa3a0"
+    },
+    {
+      "path": "build/host/CMakeFiles/programs.dir/small_gemv.cpp.o",
+      "sha256": "602d193ae6f2eefb02e75d8ed2465fbe37289eb33eeadc2c8f182a0efd445b91"
+    },
+    {
+      "path": "build/host/CMakeFiles/programs.dir/small_gemv_fixture.cpp.o",
+      "sha256": "4d50b5799ff2723314702855bb7092181f6048585a3f8802c02bf660b34a2868"
+    },
+    {
+      "path": "build/host/CMakeFiles/programs.dir/specialised_submit.cpp.o",
+      "sha256": "b549be2f18c1db5798f34c0562c0146b7e4b4d96e17600c48e9f205504146d2c"
+    }
+  ]
+}

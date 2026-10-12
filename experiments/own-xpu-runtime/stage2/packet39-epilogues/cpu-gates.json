@@ -1,0 +1,485 @@
+{
+  "schema": "packet39.cpu-identity.v1",
+  "device_ran": false,
+  "sources": {
+    "cpu_gate.cpp": "7ed64e13591e5cd283670a7bd186abdc5d129fec49ee9e20296928411a8e7b18",
+    "fused.hpp": "6fa98c93d1e9f289d4f70edf4a603e1b9b4b14e45c2733945ee15bb0326a22ca"
+  },
+  "compilers": {
+    "gcc": {
+      "compiler": "/usr/bin/g++",
+      "compiler_sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769",
+      "commands": [
+        [
+          "/usr/bin/g++",
+          "-std=c++20",
+          "-O2",
+          "-ffp-contract=off",
+          "-fno-fast-math",
+          "-fno-associative-math",
+          "-c",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet39-epilogues/cpu_gate.cpp",
+          "-o",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet39-epilogues/build/cpu-gcc.o"
+        ],
+        [
+          "/usr/bin/g++",
+          "-std=c++20",
+          "-O2",
+          "-ffp-contract=off",
+          "-fno-fast-math",
+          "-fno-associative-math",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet39-epilogues/build/cpu-gcc.o",
+          "-o",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet39-epilogues/build/cpu-gcc"
+        ]
+      ],
+      "binary_sha256": "c85777fdf4ad10bd391eec1e955557cfe3e1864566ad9fc16914092cea598e08"
+    },
+    "icpx": {
+      "compiler": "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+      "compiler_sha256": "9fe05a4aef59abce8d8f0631964dd0f12932345d0d38fc9e9d6f6af844e94b33",
+      "commands": [
+        [
+          "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+          "-std=c++20",
+          "-O2",
+          "-ffp-contract=off",
+          "-fno-fast-math",
+          "-fno-associative-math",
+          "-fp-model=precise",
+          "-c",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet39-epilogues/cpu_gate.cpp",
+          "-o",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet39-epilogues/build/cpu-icpx.o"
+        ],
+        [
+          "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+          "-std=c++20",
+          "-O2",
+          "-ffp-contract=off",
+          "-fno-fast-math",
+          "-fno-associative-math",
+          "-fp-model=precise",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet39-epilogues/build/cpu-icpx.o",
+          "-o",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet39-epilogues/build/cpu-icpx"
+        ]
+      ],
+      "binary_sha256": "4b9652e6422e3c102e627c2979b4b8fcd4f9361731998abf913f171fdf016922"
+    }
+  },
+  "runs": [
+    {
+      "finite_and_control_passed": true,
+      "passed": false,
+      "fixtures": 360,
+      "observable_comparisons": 2600,
+      "nonfinite_diagnostic_comparisons": 648,
+      "nonfinite_diagnostic_mismatches": 18,
+      "finite_output_fnv64": "f6cefd04029194fc",
+      "nonfinite_output_fnv64": "b33f787bfeb555ea",
+      "guard_rejections": 1800,
+      "nonfinite_qualified": false,
+      "nan_tolerance": false,
+      "device_ran": false,
+      "classes": {
+        "0:21:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 6
+        },
+        "0:22:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 6
+        },
+        "1:20:640:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "2:8:10240:4": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "3:14:2560:4": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 3
+        },
+        "3:8:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 3
+        },
+        "4:14:6144:4": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "5:8:640:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "6:14:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "6:8:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "7:21:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "7:22:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "bf16-rounding": {
+          "finite_checks": 8,
+          "nonfinite_checks": 0,
+          "nonfinite_mismatches": 0
+        }
+      },
+      "compiler": "gcc",
+      "repeat": 0
+    },
+    {
+      "finite_and_control_passed": true,
+      "passed": false,
+      "fixtures": 360,
+      "observable_comparisons": 2600,
+      "nonfinite_diagnostic_comparisons": 648,
+      "nonfinite_diagnostic_mismatches": 18,
+      "finite_output_fnv64": "f6cefd04029194fc",
+      "nonfinite_output_fnv64": "b33f787bfeb555ea",
+      "guard_rejections": 1800,
+      "nonfinite_qualified": false,
+      "nan_tolerance": false,
+      "device_ran": false,
+      "classes": {
+        "0:21:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 6
+        },
+        "0:22:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 6
+        },
+        "1:20:640:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "2:8:10240:4": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "3:14:2560:4": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 3
+        },
+        "3:8:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 3
+        },
+        "4:14:6144:4": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "5:8:640:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "6:14:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "6:8:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "7:21:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "7:22:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "bf16-rounding": {
+          "finite_checks": 8,
+          "nonfinite_checks": 0,
+          "nonfinite_mismatches": 0
+        }
+      },
+      "compiler": "gcc",
+      "repeat": 1
+    },
+    {
+      "finite_and_control_passed": true,
+      "passed": true,
+      "fixtures": 360,
+      "observable_comparisons": 2600,
+      "nonfinite_diagnostic_comparisons": 648,
+      "nonfinite_diagnostic_mismatches": 0,
+      "finite_output_fnv64": "f6cefd04029194fc",
+      "nonfinite_output_fnv64": "b33f787bfeb555ea",
+      "guard_rejections": 1800,
+      "nonfinite_qualified": false,
+      "nan_tolerance": false,
+      "device_ran": false,
+      "classes": {
+        "0:21:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "0:22:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "1:20:640:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "2:8:10240:4": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "3:14:2560:4": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "3:8:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "4:14:6144:4": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "5:8:640:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "6:14:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "6:8:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "7:21:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "7:22:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "bf16-rounding": {
+          "finite_checks": 8,
+          "nonfinite_checks": 0,
+          "nonfinite_mismatches": 0
+        }
+      },
+      "compiler": "icpx",
+      "repeat": 0
+    },
+    {
+      "finite_and_control_passed": true,
+      "passed": true,
+      "fixtures": 360,
+      "observable_comparisons": 2600,
+      "nonfinite_diagnostic_comparisons": 648,
+      "nonfinite_diagnostic_mismatches": 0,
+      "finite_output_fnv64": "f6cefd04029194fc",
+      "nonfinite_output_fnv64": "b33f787bfeb555ea",
+      "guard_rejections": 1800,
+      "nonfinite_qualified": false,
+      "nan_tolerance": false,
+      "device_ran": false,
+      "classes": {
+        "0:21:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "0:22:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "1:20:640:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "2:8:10240:4": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "3:14:2560:4": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "3:8:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "4:14:6144:4": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "5:8:640:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "6:14:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "6:8:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "7:21:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "7:22:2560:1": {
+          "finite_checks": 216,
+          "nonfinite_checks": 54,
+          "nonfinite_mismatches": 0
+        },
+        "bf16-rounding": {
+          "finite_checks": 8,
+          "nonfinite_checks": 0,
+          "nonfinite_mismatches": 0
+        }
+      },
+      "compiler": "icpx",
+      "repeat": 1
+    }
+  ],
+  "finite_and_control_passed": true,
+  "passed": false,
+  "finite_and_control_observable_comparisons": 10400,
+  "finite_fresh_process_and_compiler_determinism": true,
+  "total_fixtures": 1440,
+  "total_guard_rejections": 7200,
+  "total_nonfinite_comparisons": 2592,
+  "aggregate_per_class": {
+    "0:21:2560:1": {
+      "finite_checks": 864,
+      "nonfinite_checks": 216,
+      "nonfinite_mismatches": 12
+    },
+    "0:22:2560:1": {
+      "finite_checks": 864,
+      "nonfinite_checks": 216,
+      "nonfinite_mismatches": 12
+    },
+    "1:20:640:1": {
+      "finite_checks": 864,
+      "nonfinite_checks": 216,
+      "nonfinite_mismatches": 0
+    },
+    "2:8:10240:4": {
+      "finite_checks": 864,
+      "nonfinite_checks": 216,
+      "nonfinite_mismatches": 0
+    },
+    "3:14:2560:4": {
+      "finite_checks": 864,
+      "nonfinite_checks": 216,
+      "nonfinite_mismatches": 6
+    },
+    "3:8:2560:1": {
+      "finite_checks": 864,
+      "nonfinite_checks": 216,
+      "nonfinite_mismatches": 6
+    },
+    "4:14:6144:4": {
+      "finite_checks": 864,
+      "nonfinite_checks": 216,
+      "nonfinite_mismatches": 0
+    },
+    "5:8:640:1": {
+      "finite_checks": 864,
+      "nonfinite_checks": 216,
+      "nonfinite_mismatches": 0
+    },
+    "6:14:2560:1": {
+      "finite_checks": 864,
+      "nonfinite_checks": 216,
+      "nonfinite_mismatches": 0
+    },
+    "6:8:2560:1": {
+      "finite_checks": 864,
+      "nonfinite_checks": 216,
+      "nonfinite_mismatches": 0
+    },
+    "7:21:2560:1": {
+      "finite_checks": 864,
+      "nonfinite_checks": 216,
+      "nonfinite_mismatches": 0
+    },
+    "7:22:2560:1": {
+      "finite_checks": 864,
+      "nonfinite_checks": 216,
+      "nonfinite_mismatches": 0
+    },
+    "bf16-rounding": {
+      "finite_checks": 32,
+      "nonfinite_checks": 0,
+      "nonfinite_mismatches": 0
+    }
+  },
+  "nonfinite_qualified": false,
+  "nonfinite_policy": "Exact bytes compared without NaN tolerance; valid-route poisoned arithmetic remains unqualified diagnostic as packet29. Invalid routes and sticky controls are required gates.",
+  "math_grep": {
+    "source_forbidden_intrinsics": []
+  }
+}

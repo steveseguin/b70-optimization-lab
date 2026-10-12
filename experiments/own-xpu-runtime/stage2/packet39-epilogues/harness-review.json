@@ -1,0 +1,144 @@
+{
+  "schema": "packet39.harness-review.v1",
+  "device_executed": false,
+  "native_sha256": {
+    "p39-k0": "82dc9d5afd72e669412d76c83b46e79e13f85f38dac6e1c4c2a73d78d5858ffe",
+    "p39-timing": "82dc9d5afd72e669412d76c83b46e79e13f85f38dac6e1c4c2a73d78d5858ffe"
+  },
+  "prospective_byte_checks": 84,
+  "repetitions_per_arm": 200,
+  "full_bank_rotation_above_bytes": 8388608,
+  "rotation_count": 8,
+  "cases": [
+    {
+      "class_name": "expert-act-iq2",
+      "type": "IQ2_S",
+      "columns": 2560,
+      "kind": "expert_act",
+      "split": 1,
+      "rows": 640,
+      "groups_per_token": 47,
+      "launches_removed_per_group": 3
+    },
+    {
+      "class_name": "expert-act-iq3",
+      "type": "IQ3_S",
+      "columns": 2560,
+      "kind": "expert_act",
+      "split": 1,
+      "rows": 640,
+      "groups_per_token": 1,
+      "launches_removed_per_group": 3
+    },
+    {
+      "class_name": "expert-checks-iq2",
+      "type": "IQ2_S",
+      "columns": 2560,
+      "kind": "expert_checks",
+      "split": 1,
+      "rows": 640,
+      "groups_per_token": 47,
+      "launches_removed_per_group": 2
+    },
+    {
+      "class_name": "expert-checks-iq3",
+      "type": "IQ3_S",
+      "columns": 2560,
+      "kind": "expert_checks",
+      "split": 1,
+      "rows": 640,
+      "groups_per_token": 1,
+      "launches_removed_per_group": 2
+    },
+    {
+      "class_name": "down-status",
+      "type": "IQ4_NL",
+      "columns": 640,
+      "kind": "down_status",
+      "split": 1,
+      "rows": 2560,
+      "groups_per_token": 48,
+      "launches_removed_per_group": 1
+    },
+    {
+      "class_name": "hc-low-act",
+      "type": "Q8_0",
+      "columns": 10240,
+      "kind": "silu_div4",
+      "split": 4,
+      "rows": 320,
+      "groups_per_token": 97,
+      "launches_removed_per_group": 1
+    },
+    {
+      "class_name": "shared-up-act-q6",
+      "type": "Q6_K",
+      "columns": 2560,
+      "kind": "shared_act",
+      "split": 4,
+      "rows": 640,
+      "groups_per_token": 47,
+      "launches_removed_per_group": 1
+    },
+    {
+      "class_name": "shared-up-act-q8",
+      "type": "Q8_0",
+      "columns": 2560,
+      "kind": "shared_act",
+      "split": 1,
+      "rows": 640,
+      "groups_per_token": 1,
+      "launches_removed_per_group": 1
+    },
+    {
+      "class_name": "shared-down-combine",
+      "type": "Q8_0",
+      "columns": 640,
+      "kind": "shared_combine",
+      "split": 1,
+      "rows": 2560,
+      "groups_per_token": 48,
+      "launches_removed_per_group": 2
+    },
+    {
+      "class_name": "gdn-qkv-conv-q6",
+      "type": "Q6_K",
+      "columns": 2560,
+      "kind": "gdn_conv",
+      "split": 1,
+      "rows": 10240,
+      "groups_per_token": 35,
+      "launches_removed_per_group": 1
+    },
+    {
+      "class_name": "gdn-qkv-conv-q8",
+      "type": "Q8_0",
+      "columns": 2560,
+      "kind": "gdn_conv",
+      "split": 1,
+      "rows": 10240,
+      "groups_per_token": 1,
+      "launches_removed_per_group": 1
+    },
+    {
+      "class_name": "attention-combine",
+      "type": "Q6_K",
+      "columns": 6144,
+      "kind": "attention_combine",
+      "split": 4,
+      "rows": 2560,
+      "groups_per_token": 48,
+      "launches_removed_per_group": 1
+    }
+  ],
+  "native_vs_assembly_metadata_match": true,
+  "eligible_launches_removed_per_token": 431,
+  "reviewed_source_sha256": {
+    "timing.cpp": "b9f8220e2d85b1976c8cb2c0eae3eb4933a4adaa12aa970e990184da5f36b3b6",
+    "fused_sycl.hpp": "afa845da9a8bacb6266fe55d580c09b2c9349a5c0079c5650cba898a89cb35ce",
+    "runtime_baseline.hpp": "c2c121fb048104c044ed0efc25d6ddec229d3cbac9fc512c4f110bd473b66b14",
+    "runtime_bodies.hpp": "d29272822353595cf2e053e73c08b022b267398c3a4f73fe478b4ab3489b6214",
+    "window.py": "92e75ebb37631428107cf867f6ee89a2c39bfef6e05f503907139d3db1182616",
+    "assembly-review.json": "5f3f91a49b1cbdf758217fad531fb3dc8050b5c54609d741602e6146f779c23f"
+  }
+}

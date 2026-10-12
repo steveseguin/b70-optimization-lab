@@ -1,0 +1,165 @@
+{
+  "device_executed": false,
+  "review": "actual packet29 selected geometry with packet33 measured down/qkv overrides",
+  "source_files": [
+    {
+      "path": "packet29-merged/receipts-cards01-20261012-chain/k2-r29/dispatch-measured.json",
+      "sha256": "896a5a270ad0bdbdf21bd57f08b554644b8049da4f71bd1c758f861f6e48f25d"
+    },
+    {
+      "path": "packet29-merged/receipts-cards01-20261012-chain/w2c-r29/class-times.json",
+      "sha256": "6dc8c630632949d3f91ff6bf78e2fcaa3134861bbfb76f4f3c1dbc344d7f5903"
+    },
+    {
+      "path": "packet29-merged/build/w2c-r29/run/plan.json",
+      "sha256": "ecf7f44ca61912f22a48e26b5038abf61b8894f8632047e7f72b77aa7794ee96"
+    },
+    {
+      "path": "packet29-merged/build/input/plan.tsv",
+      "sha256": "9926b7a266ba2774f02fe00583257ab2aaff96ee0313d350d3ba54602ae2a656"
+    },
+    {
+      "path": "packet29-merged/p28/submit.cpp",
+      "sha256": "10ba4dee0b311c7d0f487d11159d06d8f16304ff3f9e745e62950d5ff54aa92d"
+    },
+    {
+      "path": "packet33-codegen/receipts-card2-20261012-k2/dispatch-measured.json",
+      "sha256": "55b4ea82e95921a7ce328f435409df15fb37e62ed8863fa3422a983b8bb7f911"
+    },
+    {
+      "path": "packet33-codegen/p33_submit.cpp",
+      "sha256": "2bd85f093c825a0c15344aaa856e23a8a2cffd7430f006c3708584574cc2defb"
+    }
+  ],
+  "rows": [
+    {
+      "class_name": "expert gate/up, full act or checks only",
+      "formats": "IQ2_S / IQ3_S",
+      "counts": [
+        47,
+        1
+      ],
+      "K": 2560,
+      "N": 640,
+      "slots": 10,
+      "split": 1,
+      "rows_per_group": 1,
+      "work_group": 32,
+      "gemv_launches": 1,
+      "body": "p28.paired.wg32"
+    },
+    {
+      "class_name": "expert down",
+      "formats": "IQ4_NL",
+      "counts": [
+        48
+      ],
+      "K": 640,
+      "N": 2560,
+      "slots": 10,
+      "split": 1,
+      "rows_per_group": 1,
+      "work_group": 32,
+      "gemv_launches": 1,
+      "body": "p33.down.select"
+    },
+    {
+      "class_name": "HC low including final",
+      "formats": "Q8_0",
+      "counts": [
+        97
+      ],
+      "K": 10240,
+      "N": 320,
+      "slots": 1,
+      "split": 4,
+      "rows_per_group": 4,
+      "work_group": 512,
+      "gemv_launches": 1,
+      "body": "p28.dense.rows4"
+    },
+    {
+      "class_name": "shared up Q6",
+      "formats": "Q6_K",
+      "counts": [
+        47
+      ],
+      "K": 2560,
+      "N": 640,
+      "slots": 1,
+      "split": 4,
+      "rows_per_group": 4,
+      "work_group": 512,
+      "gemv_launches": 1,
+      "body": "p28.dense.rows4"
+    },
+    {
+      "class_name": "shared up Q8",
+      "formats": "Q8_0",
+      "counts": [
+        1
+      ],
+      "K": 2560,
+      "N": 640,
+      "slots": 1,
+      "split": 1,
+      "rows_per_group": 4,
+      "work_group": 128,
+      "gemv_launches": 1,
+      "body": "p28.dense.rows4"
+    },
+    {
+      "class_name": "shared down",
+      "formats": "Q8_0",
+      "counts": [
+        48
+      ],
+      "K": 640,
+      "N": 2560,
+      "slots": 1,
+      "split": 1,
+      "rows_per_group": 1,
+      "work_group": 32,
+      "gemv_launches": 1,
+      "body": "p28.dense.wg32"
+    },
+    {
+      "class_name": "GDN qkv",
+      "formats": "Q6_K / Q8_0",
+      "counts": [
+        35,
+        1
+      ],
+      "K": 2560,
+      "N": 10240,
+      "slots": 1,
+      "split": 1,
+      "rows_per_group": 1,
+      "work_group": 32,
+      "gemv_launches": 1,
+      "body": "p33.dense.segment"
+    },
+    {
+      "class_name": "attention output projection",
+      "formats": "Q6_K",
+      "counts": [
+        48
+      ],
+      "K": 6144,
+      "N": 2560,
+      "slots": 1,
+      "split": 4,
+      "rows_per_group": 1,
+      "work_group": 32,
+      "gemv_launches": 2,
+      "body": "p28.dense.wg32"
+    }
+  ],
+  "corrections_required_in_initial_g4": [
+    "HC low split4 rows4 WG512 one GEMV launch, not WG32 two",
+    "shared up Q6 split4 rows4 WG512 one GEMV launch",
+    "shared up Q8 split1 rows4 WG128, not WG32"
+  ],
+  "dense_body_note": "p33 segment is measured only for gdn.qkv and qsa.k. Reusing p33 segment in shared-up preserves arithmetic but is a changed GEMV control, and must be identified separately from exact packet29 control.",
+  "corrections_status": "closed by gemv_rows4: HC/shared both formats match pinned actual geometry; shared_up keeps p28 dense body"
+}

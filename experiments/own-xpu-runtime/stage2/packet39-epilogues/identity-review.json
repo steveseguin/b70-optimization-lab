@@ -1,0 +1,70 @@
+{
+  "review": "independent source arithmetic/control review, no native execution",
+  "finite_contract": "packet29/NONFINITE-GEMV.md",
+  "device_executed": false,
+  "reviewed_fusion_kinds": [
+    "expert_act",
+    "down_status",
+    "silu_div4",
+    "shared_act",
+    "attention_combine",
+    "shared_combine",
+    "gdn_conv",
+    "expert_checks"
+  ],
+  "sources": [
+    {
+      "path": "fused.hpp",
+      "sha256": "6fa98c93d1e9f289d4f70edf4a603e1b9b4b14e45c2733945ee15bb0326a22ca"
+    },
+    {
+      "path": "fused_sycl.hpp",
+      "sha256": "afa845da9a8bacb6266fe55d580c09b2c9349a5c0079c5650cba898a89cb35ce"
+    },
+    {
+      "path": "host_overlay.inc",
+      "sha256": "98ae3e739d4b9f47e1868f63e9aa4bcfd4915757ee1a848393bfd53ce3462f2b"
+    },
+    {
+      "path": "../packet29-merged/core_v2.hpp",
+      "sha256": "c3c265894d5041e0d6e026d53094b67f9b58bb86bd1aa1c8fea06ab4d8692ffd"
+    },
+    {
+      "path": "../packet29-merged/runtime_kernels.hpp",
+      "sha256": "ab201fd52d9cfdd33b1f2fa9f5648bd13dc5af1ab0f82986fd11a82e7ba00cdc"
+    },
+    {
+      "path": "../packet29-merged/p28/submit.cpp",
+      "sha256": "10ba4dee0b311c7d0f487d11159d06d8f16304ff3f9e745e62950d5ff54aa92d"
+    },
+    {
+      "path": "../packet29-merged/p28/expert.hpp",
+      "sha256": "fe0edeb0afedccd2b835d636c9d5e53f7725c995c192be2c6526377cdb58f63b"
+    },
+    {
+      "path": "../packet29-merged/p28/dense.hpp",
+      "sha256": "bc6d77353fa71520e15f2b349db381ced4370d8413fae3b6687cefed56297b47"
+    },
+    {
+      "path": "../packet33-codegen/candidates.hpp",
+      "sha256": "ee7d7d3489466dc5e9a31c7edaf0999fad3e132054878c0bf243f09d189b2f17"
+    },
+    {
+      "path": "../packet29-merged/kernels.hpp",
+      "sha256": "24e24e660203c959db09d30dc633490906508b749cf4e2838e2df50d4013d43a"
+    }
+  ],
+  "closed_findings": [
+    "read/write alias and mandatory pointer admission",
+    "position guard distinction",
+    "qkv convolution eligible and implemented",
+    "iteration2: expert vote after GEMV, down own-slot CAS without global vote",
+    "expert_checks fallback keeps both outputs/statuses, own-slot CAS, no activation, no position check",
+    "actual selected rows4 HC/shared geometry restored, shared-up p28 body retained"
+  ],
+  "limits": [
+    "mixed nonfinite GEMV diagnostics are unqualified, never counted exact",
+    "actual allocation extents belong to coordinator admission",
+    "native bytes and timing pending"
+  ]
+}

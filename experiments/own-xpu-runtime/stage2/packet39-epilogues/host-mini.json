@@ -1,0 +1,66 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "actual_chain_overlay": true,
+  "fusion_kinds": [
+    "expert_act",
+    "down_status",
+    "silu_div4",
+    "shared_act",
+    "attention_combine",
+    "shared_combine",
+    "gdn_conv"
+  ],
+  "argv": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet39-epilogues/build/host-gate/own-rt-iq3-host",
+    "--cards",
+    "1",
+    "--card",
+    "0",
+    "--memory",
+    "layer-streaming",
+    "--dispatch",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet39-epilogues/build/host-gate/dispatch.json",
+    "--gemv",
+    "r5",
+    "--timing",
+    "token",
+    "--stage",
+    "decode",
+    "--context",
+    "256",
+    "--max-new",
+    "8",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet39-epilogues/build/host-gate/mini-1791774379874657597",
+    "--mini",
+    "--max-new",
+    "4"
+  ],
+  "returncode": 0,
+  "binary_sha256": "0a21f647c36f01fba8928e74470adafd6f08fbd732f30be70e93e37e3091656d",
+  "seconds": 0.03223593899747357,
+  "maxrss_kib": 20756,
+  "tokens": [
+    1,
+    1,
+    1,
+    1
+  ],
+  "layer_matches": 0,
+  "layers": [],
+  "source_receipt_sha256": "8fbef65b73ab47ad8caff7401532f7ab152d27c3db4dd5e2117e8abcf3ded3a9",
+  "source_receipt_archive": "evidence/host-mini-runtime.json.gz",
+  "source_summary": {
+    "passed": true,
+    "oracle_exact": null,
+    "tokens": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "device_executed": false
+  },
+  "smoke_only": true
+}

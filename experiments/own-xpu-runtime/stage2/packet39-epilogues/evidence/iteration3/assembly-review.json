@@ -1,0 +1,997 @@
+{
+  "schema": "packet39.assembly-review.v1",
+  "device_executed": false,
+  "arithmetic_qualified": false,
+  "codegen_sha256": "317c51b8e35a3bebbb5a50cfbc4ad65053adbf2c7ce8e86ee8d627b910ee2a81",
+  "classes": {
+    "expert-act-iq2": {
+      "accepted": false,
+      "reason": "Gemv adds flag-register spills; GEMV loop grows (includes scheduling instructions)",
+      "groups_per_token": 47,
+      "launches_removed_per_group": 3,
+      "static_per_row_body_delta": {
+        "instructions": 545,
+        "memory_messages": 5,
+        "scope": "Static full-program delta for one row owner. SG32 GEMV covers one row; range finish SIMD32 covers up to32 independent rows. Alternate math branches included; not a dynamic executed-path count.",
+        "rows_per_simd_dispatch": 1,
+        "static_instruction_delta_per_row_amortized": 545.0,
+        "static_message_delta_per_row_amortized": 5.0
+      },
+      "gemv_loops_before": [
+        [
+          7,
+          0
+        ],
+        [
+          7,
+          0
+        ],
+        [
+          553,
+          22
+        ]
+      ],
+      "gemv_loops_after": [
+        [
+          7,
+          0
+        ],
+        [
+          7,
+          0
+        ],
+        [
+          554,
+          22
+        ]
+      ],
+      "variants": [
+        {
+          "stage": "Gemv",
+          "unfused": {
+            "instructions": 823,
+            "messages": 31,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 36,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 208,
+            "asm": "build/igc-p39-a7e4a70c0a48/OCL_asm9d52e5bbcf60d49d_simd32_entry_0004.asm",
+            "asm_sha256": "956a387e77700c0d10278d52f2060567920ea7462cc8ba31a43e9770b54bdb48",
+            "kernel": "_ZTSN3p3910GemvKernelILN3iq34TypeE22ELj2560ELNS_4KindE0ELb0ELj1EEE"
+          },
+          "fused": {
+            "instructions": 1368,
+            "messages": 36,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 42,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 208,
+            "asm": "build/igc-p39-a7e4a70c0a48/OCL_asm9d52e5bbcf60d49d_simd32_entry_0003.asm",
+            "asm_sha256": "b0286d1f73118f60fb0404887f4b4c64b3c825b525b0a780cb1343510f343ea4",
+            "kernel": "_ZTSN3p3910GemvKernelILN3iq34TypeE22ELj2560ELNS_4KindE0ELb1ELj1EEE"
+          }
+        }
+      ]
+    },
+    "expert-act-iq3": {
+      "accepted": false,
+      "reason": "Gemv adds flag-register spills",
+      "groups_per_token": 1,
+      "launches_removed_per_group": 3,
+      "static_per_row_body_delta": {
+        "instructions": 543,
+        "memory_messages": 5,
+        "scope": "Static full-program delta for one row owner. SG32 GEMV covers one row; range finish SIMD32 covers up to32 independent rows. Alternate math branches included; not a dynamic executed-path count.",
+        "rows_per_simd_dispatch": 1,
+        "static_instruction_delta_per_row_amortized": 543.0,
+        "static_message_delta_per_row_amortized": 5.0
+      },
+      "gemv_loops_before": [
+        [
+          7,
+          0
+        ],
+        [
+          7,
+          0
+        ],
+        [
+          591,
+          22
+        ]
+      ],
+      "gemv_loops_after": [
+        [
+          7,
+          0
+        ],
+        [
+          7,
+          0
+        ],
+        [
+          590,
+          22
+        ]
+      ],
+      "variants": [
+        {
+          "stage": "Gemv",
+          "unfused": {
+            "instructions": 873,
+            "messages": 31,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 36,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 208,
+            "asm": "build/igc-p39-a7e4a70c0a48/OCL_asm9d52e5bbcf60d49d_simd32_entry_0006.asm",
+            "asm_sha256": "7c86881e2921a66f3840d62220339c7cea7b0d8d0fc7c15b1b48c331ade20dc5",
+            "kernel": "_ZTSN3p3910GemvKernelILN3iq34TypeE21ELj2560ELNS_4KindE0ELb0ELj1EEE"
+          },
+          "fused": {
+            "instructions": 1416,
+            "messages": 36,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 42,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 208,
+            "asm": "build/igc-p39-a7e4a70c0a48/OCL_asm9d52e5bbcf60d49d_simd32_entry_0005.asm",
+            "asm_sha256": "7d940be5f4e1e06c19bd1d164b08ac0e8276f16be3947de6af57e35e2c13eeac",
+            "kernel": "_ZTSN3p3910GemvKernelILN3iq34TypeE21ELj2560ELNS_4KindE0ELb1ELj1EEE"
+          }
+        }
+      ]
+    },
+    "down-status": {
+      "accepted": true,
+      "reason": "SIMD/loop/SLM/barrier/spill static gates pass; device identity and timing pending",
+      "groups_per_token": 48,
+      "launches_removed_per_group": 1,
+      "static_per_row_body_delta": {
+        "instructions": 18,
+        "memory_messages": 1,
+        "scope": "Static full-program delta for one row owner. SG32 GEMV covers one row; range finish SIMD32 covers up to32 independent rows. Alternate math branches included; not a dynamic executed-path count.",
+        "rows_per_simd_dispatch": 1,
+        "static_instruction_delta_per_row_amortized": 18.0,
+        "static_message_delta_per_row_amortized": 1.0
+      },
+      "gemv_loops_before": [
+        [
+          6,
+          0
+        ],
+        [
+          6,
+          0
+        ],
+        [
+          6,
+          0
+        ]
+      ],
+      "gemv_loops_after": [
+        [
+          6,
+          0
+        ],
+        [
+          6,
+          0
+        ],
+        [
+          6,
+          0
+        ]
+      ],
+      "variants": [
+        {
+          "stage": "Gemv",
+          "unfused": {
+            "instructions": 1726,
+            "messages": 58,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 208,
+            "asm": "build/igc-p39-a7e4a70c0a48/OCL_asm9d52e5bbcf60d49d_simd32_entry_0012.asm",
+            "asm_sha256": "ddc73e323f5489e76bf96a27439902354154e35897f8b3680dedd39bb30c94ca",
+            "kernel": "_ZTSN3p3910GemvKernelILN3iq34TypeE20ELj640ELNS_4KindE1ELb0ELj1EEE"
+          },
+          "fused": {
+            "instructions": 1744,
+            "messages": 59,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 208,
+            "asm": "build/igc-p39-a7e4a70c0a48/OCL_asm9d52e5bbcf60d49d_simd32_entry_0011.asm",
+            "asm_sha256": "325714a477378165ae37aeac2493ccf065c3a6256e4320defabf96068a51b986",
+            "kernel": "_ZTSN3p3910GemvKernelILN3iq34TypeE20ELj640ELNS_4KindE1ELb1ELj1EEE"
+          }
+        }
+      ]
+    },
+    "hc-low-act": {
+      "accepted": true,
+      "reason": "SIMD/loop/SLM/barrier/spill static gates pass; device identity and timing pending",
+      "groups_per_token": 97,
+      "launches_removed_per_group": 1,
+      "static_per_row_body_delta": {
+        "instructions": 480,
+        "memory_messages": 3,
+        "scope": "Static full-program delta for one row owner. SG32 GEMV covers one row; range finish SIMD32 covers up to32 independent rows. Alternate math branches included; not a dynamic executed-path count.",
+        "rows_per_simd_dispatch": 32,
+        "static_instruction_delta_per_row_amortized": 15.0,
+        "static_message_delta_per_row_amortized": 0.09375
+      },
+      "gemv_loops_before": [
+        [
+          84,
+          6
+        ],
+        [
+          95,
+          6
+        ]
+      ],
+      "gemv_loops_after": [
+        [
+          84,
+          6
+        ],
+        [
+          95,
+          6
+        ]
+      ],
+      "variants": [
+        {
+          "stage": "Gemv",
+          "unfused": {
+            "instructions": 239,
+            "messages": 10,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 208,
+            "asm": "build/igc-p39-a7e4a70c0a48/OCL_asm9d52e5bbcf60d49d_simd32_entry_0014.asm",
+            "asm_sha256": "cd14917625905279119f3cf22054625bb17c6f6f2c3e339220cc235e2bcab2d7",
+            "kernel": "_ZTSN3p3910GemvKernelILN3iq34TypeE8ELj10240ELNS_4KindE2ELb0ELj4EEE"
+          },
+          "fused": {
+            "instructions": 239,
+            "messages": 10,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 208,
+            "asm": "build/igc-p39-a7e4a70c0a48/OCL_asm9d52e5bbcf60d49d_simd32_entry_0013.asm",
+            "asm_sha256": "93cee8dcf2729efd7a52d60feca1bb5765a9fd41035f1e71008b0f989326835c",
+            "kernel": "_ZTSN3p3910GemvKernelILN3iq34TypeE8ELj10240ELNS_4KindE2ELb1ELj4EEE"
+          }
+        },
+        {
+          "stage": "Finish",
+          "unfused": {
+            "instructions": 59,
+            "messages": 6,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 212,
+            "asm": "build/igc-p39-6aade8f58370/OCL_asme317eff385c75c6c_simd32_entry_0006.asm",
+            "asm_sha256": "c933084748f476409b7258ccaf0b130ef280f67b9d8207ec2927f469f843b123",
+            "kernel": "_ZTSN3p3912FinishKernelILN3iq34TypeE8ELj10240ELNS_4KindE2ELb0ELj4EEE"
+          },
+          "fused": {
+            "instructions": 539,
+            "messages": 9,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 212,
+            "asm": "build/igc-p39-6aade8f58370/OCL_asme317eff385c75c6c_simd32_entry_0004.asm",
+            "asm_sha256": "cd9bae9b3bd19a451115733ed153ce5a16c25cd95689cd59ef21cc172756b26b",
+            "kernel": "_ZTSN3p3912FinishKernelILN3iq34TypeE8ELj10240ELNS_4KindE2ELb1ELj4EEE"
+          }
+        },
+        {
+          "stage": "Finish work-item wrapper",
+          "unfused": {
+            "instructions": 93,
+            "messages": 7,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 236,
+            "asm": "build/igc-p39-6aade8f58370/OCL_asme317eff385c75c6c_simd32_entry_0005.asm",
+            "asm_sha256": "2a5d4246282fbd0f32a6be39b464926b1dd0f852f92899797e0b776a06f1e626",
+            "kernel": "_ZTSN4sycl3_V16detail19__pf_kernel_wrapperIN3p3912FinishKernelILN3iq34TypeE8ELj10240ELNS3_4KindE2ELb0ELj4EEEEE"
+          },
+          "fused": {
+            "instructions": 573,
+            "messages": 10,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 236,
+            "asm": "build/igc-p39-6aade8f58370/OCL_asme317eff385c75c6c_simd32_entry_0003.asm",
+            "asm_sha256": "7f43030cdd16480076d354a0a6b335381b1b04ed96fc0183fe7a6d5a032eb130",
+            "kernel": "_ZTSN4sycl3_V16detail19__pf_kernel_wrapperIN3p3912FinishKernelILN3iq34TypeE8ELj10240ELNS3_4KindE2ELb1ELj4EEEEE"
+          }
+        }
+      ]
+    },
+    "shared-up-act-q6": {
+      "accepted": true,
+      "reason": "SIMD/loop/SLM/barrier/spill static gates pass; device identity and timing pending",
+      "groups_per_token": 47,
+      "launches_removed_per_group": 1,
+      "static_per_row_body_delta": {
+        "instructions": 484,
+        "memory_messages": 4,
+        "scope": "Static full-program delta for one row owner. SG32 GEMV covers one row; range finish SIMD32 covers up to32 independent rows. Alternate math branches included; not a dynamic executed-path count.",
+        "rows_per_simd_dispatch": 32,
+        "static_instruction_delta_per_row_amortized": 15.125,
+        "static_message_delta_per_row_amortized": 0.125
+      },
+      "gemv_loops_before": [],
+      "gemv_loops_after": [],
+      "variants": [
+        {
+          "stage": "Gemv",
+          "unfused": {
+            "instructions": 345,
+            "messages": 21,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 208,
+            "asm": "build/igc-p39-a7e4a70c0a48/OCL_asm9d52e5bbcf60d49d_simd32_entry_0016.asm",
+            "asm_sha256": "88a1b74661e6bb54a7aaa245619fa675401c2e058b042791a3b8308d9bbef735",
+            "kernel": "_ZTSN3p3910GemvKernelILN3iq34TypeE14ELj2560ELNS_4KindE3ELb0ELj4EEE"
+          },
+          "fused": {
+            "instructions": 345,
+            "messages": 21,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 208,
+            "asm": "build/igc-p39-a7e4a70c0a48/OCL_asm9d52e5bbcf60d49d_simd32_entry_0015.asm",
+            "asm_sha256": "ce35e0d2f7a2def22415d9ef3bf8450d4fd16e05227c6b2ddb6d2c93d523ef61",
+            "kernel": "_ZTSN3p3910GemvKernelILN3iq34TypeE14ELj2560ELNS_4KindE3ELb1ELj4EEE"
+          }
+        },
+        {
+          "stage": "Finish",
+          "unfused": {
+            "instructions": 59,
+            "messages": 6,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 212,
+            "asm": "build/igc-p39-6aade8f58370/OCL_asme317eff385c75c6c_simd32_entry_0010.asm",
+            "asm_sha256": "451aa3b29cbb987ea32e775f4d149b3a08ca993bf688f8ed0b8af19e280e501d",
+            "kernel": "_ZTSN3p3912FinishKernelILN3iq34TypeE14ELj2560ELNS_4KindE3ELb0ELj4EEE"
+          },
+          "fused": {
+            "instructions": 543,
+            "messages": 10,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 212,
+            "asm": "build/igc-p39-6aade8f58370/OCL_asme317eff385c75c6c_simd32_entry_0008.asm",
+            "asm_sha256": "7c099b24f30a4d236ae79aa2db353972aab107ad4aa883adc0386db0a613fcff",
+            "kernel": "_ZTSN3p3912FinishKernelILN3iq34TypeE14ELj2560ELNS_4KindE3ELb1ELj4EEE"
+          }
+        },
+        {
+          "stage": "Finish work-item wrapper",
+          "unfused": {
+            "instructions": 93,
+            "messages": 7,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 236,
+            "asm": "build/igc-p39-6aade8f58370/OCL_asme317eff385c75c6c_simd32_entry_0009.asm",
+            "asm_sha256": "540e028d989fb886731d591dc36c619b01b8ad229eaedd1fd108668fed2dba07",
+            "kernel": "_ZTSN4sycl3_V16detail19__pf_kernel_wrapperIN3p3912FinishKernelILN3iq34TypeE14ELj2560ELNS3_4KindE3ELb0ELj4EEEEE"
+          },
+          "fused": {
+            "instructions": 577,
+            "messages": 11,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 236,
+            "asm": "build/igc-p39-6aade8f58370/OCL_asme317eff385c75c6c_simd32_entry_0007.asm",
+            "asm_sha256": "18ada40232aa03c5706c5423904ca1e26bf170caa9424d4f3353d22bc02729e1",
+            "kernel": "_ZTSN4sycl3_V16detail19__pf_kernel_wrapperIN3p3912FinishKernelILN3iq34TypeE14ELj2560ELNS3_4KindE3ELb1ELj4EEEEE"
+          }
+        }
+      ]
+    },
+    "shared-up-act-q8": {
+      "accepted": true,
+      "reason": "SIMD/loop/SLM/barrier/spill static gates pass; device identity and timing pending",
+      "groups_per_token": 1,
+      "launches_removed_per_group": 1,
+      "static_per_row_body_delta": {
+        "instructions": 469,
+        "memory_messages": 4,
+        "scope": "Static full-program delta for one row owner. SG32 GEMV covers one row; range finish SIMD32 covers up to32 independent rows. Alternate math branches included; not a dynamic executed-path count.",
+        "rows_per_simd_dispatch": 1,
+        "static_instruction_delta_per_row_amortized": 469.0,
+        "static_message_delta_per_row_amortized": 4.0
+      },
+      "gemv_loops_before": [
+        [
+          113,
+          7
+        ]
+      ],
+      "gemv_loops_after": [
+        [
+          113,
+          7
+        ]
+      ],
+      "variants": [
+        {
+          "stage": "Gemv",
+          "unfused": {
+            "instructions": 258,
+            "messages": 11,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 208,
+            "asm": "build/igc-p39-a7e4a70c0a48/OCL_asm9d52e5bbcf60d49d_simd32_entry_0018.asm",
+            "asm_sha256": "75af0da63fcdeb3bf4c5f77045f0ad327d832488e4d5c097c33a28155c58e176",
+            "kernel": "_ZTSN3p3910GemvKernelILN3iq34TypeE8ELj2560ELNS_4KindE3ELb0ELj1EEE"
+          },
+          "fused": {
+            "instructions": 727,
+            "messages": 15,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 208,
+            "asm": "build/igc-p39-a7e4a70c0a48/OCL_asm9d52e5bbcf60d49d_simd32_entry_0017.asm",
+            "asm_sha256": "297ae4f3b634d34577cad3588ec7d3c32f92ac4bd4a997f77117659df034f65f",
+            "kernel": "_ZTSN3p3910GemvKernelILN3iq34TypeE8ELj2560ELNS_4KindE3ELb1ELj1EEE"
+          }
+        }
+      ]
+    },
+    "attention-combine": {
+      "accepted": true,
+      "reason": "SIMD/loop/SLM/barrier/spill static gates pass; device identity and timing pending",
+      "groups_per_token": 48,
+      "launches_removed_per_group": 1,
+      "static_per_row_body_delta": {
+        "instructions": 1761,
+        "memory_messages": 13,
+        "scope": "Static full-program delta for one row owner. SG32 GEMV covers one row; range finish SIMD32 covers up to32 independent rows. Alternate math branches included; not a dynamic executed-path count.",
+        "rows_per_simd_dispatch": 32,
+        "static_instruction_delta_per_row_amortized": 55.03125,
+        "static_message_delta_per_row_amortized": 0.40625
+      },
+      "gemv_loops_before": [
+        [
+          84,
+          6
+        ],
+        [
+          95,
+          6
+        ]
+      ],
+      "gemv_loops_after": [
+        [
+          84,
+          6
+        ],
+        [
+          95,
+          6
+        ]
+      ],
+      "variants": [
+        {
+          "stage": "Gemv",
+          "unfused": {
+            "instructions": 239,
+            "messages": 10,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 208,
+            "asm": "build/igc-p39-a7e4a70c0a48/OCL_asm9d52e5bbcf60d49d_simd32_entry_0026.asm",
+            "asm_sha256": "9998af66c64a0999a2004e471ac474255dc55451ccd1a45c68c8a64eebc8e385",
+            "kernel": "_ZTSN3p3910GemvKernelILN3iq34TypeE14ELj6144ELNS_4KindE4ELb0ELj4EEE"
+          },
+          "fused": {
+            "instructions": 239,
+            "messages": 10,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 208,
+            "asm": "build/igc-p39-a7e4a70c0a48/OCL_asm9d52e5bbcf60d49d_simd32_entry_0025.asm",
+            "asm_sha256": "cf7c2fa867c1ec227ace50870c396c04b934cc55f941aac946855fa5e51ad207",
+            "kernel": "_ZTSN3p3910GemvKernelILN3iq34TypeE14ELj6144ELNS_4KindE4ELb1ELj4EEE"
+          }
+        },
+        {
+          "stage": "Finish",
+          "unfused": {
+            "instructions": 59,
+            "messages": 6,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 212,
+            "asm": "build/igc-p39-6aade8f58370/OCL_asme317eff385c75c6c_simd32_entry_0014.asm",
+            "asm_sha256": "598bd2ff6410dcd688570ead881b4a7f039f4190e9774333b0c6fb13cc77c4c2",
+            "kernel": "_ZTSN3p3912FinishKernelILN3iq34TypeE14ELj6144ELNS_4KindE4ELb0ELj4EEE"
+          },
+          "fused": {
+            "instructions": 1820,
+            "messages": 19,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 212,
+            "asm": "build/igc-p39-6aade8f58370/OCL_asme317eff385c75c6c_simd32_entry_0012.asm",
+            "asm_sha256": "5b56a0c8c69dbefa096d9bb1a7fc92b83f5a8c6c6f74e729d2e255b1de884135",
+            "kernel": "_ZTSN3p3912FinishKernelILN3iq34TypeE14ELj6144ELNS_4KindE4ELb1ELj4EEE"
+          }
+        },
+        {
+          "stage": "Finish work-item wrapper",
+          "unfused": {
+            "instructions": 93,
+            "messages": 7,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 236,
+            "asm": "build/igc-p39-6aade8f58370/OCL_asme317eff385c75c6c_simd32_entry_0013.asm",
+            "asm_sha256": "efa8ddfb5ed9b0e381fe5b652135226bff9afc24c2e3be08075e420313c6aaff",
+            "kernel": "_ZTSN4sycl3_V16detail19__pf_kernel_wrapperIN3p3912FinishKernelILN3iq34TypeE14ELj6144ELNS3_4KindE4ELb0ELj4EEEEE"
+          },
+          "fused": {
+            "instructions": 1860,
+            "messages": 20,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 236,
+            "asm": "build/igc-p39-6aade8f58370/OCL_asme317eff385c75c6c_simd32_entry_0011.asm",
+            "asm_sha256": "409bb5dc96f9481ba5b2483189550f094f658b66e1dfbb50e6285e50f2817cc5",
+            "kernel": "_ZTSN4sycl3_V16detail19__pf_kernel_wrapperIN3p3912FinishKernelILN3iq34TypeE14ELj6144ELNS3_4KindE4ELb1ELj4EEEEE"
+          }
+        }
+      ]
+    },
+    "shared-down-combine": {
+      "accepted": true,
+      "reason": "SIMD/loop/SLM/barrier/spill static gates pass; device identity and timing pending",
+      "groups_per_token": 48,
+      "launches_removed_per_group": 2,
+      "static_per_row_body_delta": {
+        "instructions": 2241,
+        "memory_messages": 17,
+        "scope": "Static full-program delta for one row owner. SG32 GEMV covers one row; range finish SIMD32 covers up to32 independent rows. Alternate math branches included; not a dynamic executed-path count.",
+        "rows_per_simd_dispatch": 1,
+        "static_instruction_delta_per_row_amortized": 2241.0,
+        "static_message_delta_per_row_amortized": 17.0
+      },
+      "gemv_loops_before": [
+        [
+          84,
+          6
+        ],
+        [
+          84,
+          6
+        ]
+      ],
+      "gemv_loops_after": [
+        [
+          84,
+          6
+        ],
+        [
+          84,
+          6
+        ]
+      ],
+      "variants": [
+        {
+          "stage": "Gemv",
+          "unfused": {
+            "instructions": 418,
+            "messages": 22,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 208,
+            "asm": "build/igc-p39-a7e4a70c0a48/OCL_asm9d52e5bbcf60d49d_simd32_entry_0020.asm",
+            "asm_sha256": "48e9b579d8d3a955d761bfbe8c9eaa40d8c4424194ba5e3ec7ea7727693aa650",
+            "kernel": "_ZTSN3p3910GemvKernelILN3iq34TypeE8ELj640ELNS_4KindE5ELb0ELj1EEE"
+          },
+          "fused": {
+            "instructions": 2659,
+            "messages": 39,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 208,
+            "asm": "build/igc-p39-a7e4a70c0a48/OCL_asm9d52e5bbcf60d49d_simd32_entry_0019.asm",
+            "asm_sha256": "74cf76811f9643ed1ca4745e3e34c2c4f65d129f3124a2c88423de5f14869b4a",
+            "kernel": "_ZTSN3p3910GemvKernelILN3iq34TypeE8ELj640ELNS_4KindE5ELb1ELj1EEE"
+          }
+        }
+      ]
+    },
+    "gdn-qkv-conv-q6": {
+      "accepted": false,
+      "reason": "GEMV loop grows (includes scheduling instructions)",
+      "groups_per_token": 35,
+      "launches_removed_per_group": 1,
+      "static_per_row_body_delta": {
+        "instructions": 523,
+        "memory_messages": 9,
+        "scope": "Static full-program delta for one row owner. SG32 GEMV covers one row; range finish SIMD32 covers up to32 independent rows. Alternate math branches included; not a dynamic executed-path count.",
+        "rows_per_simd_dispatch": 1,
+        "static_instruction_delta_per_row_amortized": 523.0,
+        "static_message_delta_per_row_amortized": 9.0
+      },
+      "gemv_loops_before": [
+        [
+          113,
+          7
+        ]
+      ],
+      "gemv_loops_after": [
+        [
+          114,
+          7
+        ]
+      ],
+      "variants": [
+        {
+          "stage": "Gemv",
+          "unfused": {
+            "instructions": 258,
+            "messages": 11,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 208,
+            "asm": "build/igc-p39-a7e4a70c0a48/OCL_asm9d52e5bbcf60d49d_simd32_entry_0022.asm",
+            "asm_sha256": "9bd55c8396e329d543ebc563fa17d727979058419c5aeb6fb254b138fdf62ac1",
+            "kernel": "_ZTSN3p3910GemvKernelILN3iq34TypeE14ELj2560ELNS_4KindE6ELb0ELj1EEE"
+          },
+          "fused": {
+            "instructions": 781,
+            "messages": 20,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 208,
+            "asm": "build/igc-p39-a7e4a70c0a48/OCL_asm9d52e5bbcf60d49d_simd32_entry_0021.asm",
+            "asm_sha256": "e1ca224732890c413ea412145f5c4fd9738b5cbde9a76440edee0699c85c9bb3",
+            "kernel": "_ZTSN3p3910GemvKernelILN3iq34TypeE14ELj2560ELNS_4KindE6ELb1ELj1EEE"
+          }
+        }
+      ]
+    },
+    "gdn-qkv-conv-q8": {
+      "accepted": false,
+      "reason": "GEMV loop grows (includes scheduling instructions)",
+      "groups_per_token": 1,
+      "launches_removed_per_group": 1,
+      "static_per_row_body_delta": {
+        "instructions": 523,
+        "memory_messages": 9,
+        "scope": "Static full-program delta for one row owner. SG32 GEMV covers one row; range finish SIMD32 covers up to32 independent rows. Alternate math branches included; not a dynamic executed-path count.",
+        "rows_per_simd_dispatch": 1,
+        "static_instruction_delta_per_row_amortized": 523.0,
+        "static_message_delta_per_row_amortized": 9.0
+      },
+      "gemv_loops_before": [
+        [
+          113,
+          7
+        ]
+      ],
+      "gemv_loops_after": [
+        [
+          114,
+          7
+        ]
+      ],
+      "variants": [
+        {
+          "stage": "Gemv",
+          "unfused": {
+            "instructions": 258,
+            "messages": 11,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 208,
+            "asm": "build/igc-p39-a7e4a70c0a48/OCL_asm9d52e5bbcf60d49d_simd32_entry_0024.asm",
+            "asm_sha256": "aecd4760c6ec8d44a94f586b4c4f91ccb206b140b4441e70311fe68fc278618e",
+            "kernel": "_ZTSN3p3910GemvKernelILN3iq34TypeE8ELj2560ELNS_4KindE6ELb0ELj1EEE"
+          },
+          "fused": {
+            "instructions": 781,
+            "messages": 20,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 0,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 208,
+            "asm": "build/igc-p39-a7e4a70c0a48/OCL_asm9d52e5bbcf60d49d_simd32_entry_0023.asm",
+            "asm_sha256": "d8c456b4a1a51e921a1d5f610a5016077ef729bce676bf0ace16b6fae8b12187",
+            "kernel": "_ZTSN3p3910GemvKernelILN3iq34TypeE8ELj2560ELNS_4KindE6ELb1ELj1EEE"
+          }
+        }
+      ]
+    },
+    "expert-checks-iq2": {
+      "accepted": true,
+      "reason": "SIMD/loop/SLM/barrier/spill static gates pass; device identity and timing pending",
+      "groups_per_token": 47,
+      "launches_removed_per_group": 2,
+      "static_per_row_body_delta": {
+        "instructions": 19,
+        "memory_messages": 1,
+        "scope": "Static full-program delta for one row owner. SG32 GEMV covers one row; range finish SIMD32 covers up to32 independent rows. Alternate math branches included; not a dynamic executed-path count.",
+        "rows_per_simd_dispatch": 1,
+        "static_instruction_delta_per_row_amortized": 19.0,
+        "static_message_delta_per_row_amortized": 1.0
+      },
+      "gemv_loops_before": [
+        [
+          7,
+          0
+        ],
+        [
+          7,
+          0
+        ],
+        [
+          553,
+          22
+        ]
+      ],
+      "gemv_loops_after": [
+        [
+          7,
+          0
+        ],
+        [
+          7,
+          0
+        ],
+        [
+          553,
+          22
+        ]
+      ],
+      "variants": [
+        {
+          "stage": "Gemv",
+          "unfused": {
+            "instructions": 823,
+            "messages": 31,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 36,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 208,
+            "asm": "build/igc-p39-a7e4a70c0a48/OCL_asm9d52e5bbcf60d49d_simd32_entry_0008.asm",
+            "asm_sha256": "b455b6a0f31aca7d5ac9ba3afc9b567a485eacbf637e849318950951f9615aca",
+            "kernel": "_ZTSN3p3910GemvKernelILN3iq34TypeE22ELj2560ELNS_4KindE7ELb0ELj1EEE"
+          },
+          "fused": {
+            "instructions": 842,
+            "messages": 32,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 36,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 208,
+            "asm": "build/igc-p39-a7e4a70c0a48/OCL_asm9d52e5bbcf60d49d_simd32_entry_0007.asm",
+            "asm_sha256": "34befc3fd0fd840378bf6e1253848bc33f2c593d1bda088076dee84317b75e33",
+            "kernel": "_ZTSN3p3910GemvKernelILN3iq34TypeE22ELj2560ELNS_4KindE7ELb1ELj1EEE"
+          }
+        }
+      ]
+    },
+    "expert-checks-iq3": {
+      "accepted": false,
+      "reason": "GEMV loop grows (includes scheduling instructions)",
+      "groups_per_token": 1,
+      "launches_removed_per_group": 2,
+      "static_per_row_body_delta": {
+        "instructions": 20,
+        "memory_messages": 1,
+        "scope": "Static full-program delta for one row owner. SG32 GEMV covers one row; range finish SIMD32 covers up to32 independent rows. Alternate math branches included; not a dynamic executed-path count.",
+        "rows_per_simd_dispatch": 1,
+        "static_instruction_delta_per_row_amortized": 20.0,
+        "static_message_delta_per_row_amortized": 1.0
+      },
+      "gemv_loops_before": [
+        [
+          7,
+          0
+        ],
+        [
+          7,
+          0
+        ],
+        [
+          591,
+          22
+        ]
+      ],
+      "gemv_loops_after": [
+        [
+          7,
+          0
+        ],
+        [
+          7,
+          0
+        ],
+        [
+          592,
+          22
+        ]
+      ],
+      "variants": [
+        {
+          "stage": "Gemv",
+          "unfused": {
+            "instructions": 873,
+            "messages": 31,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 36,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 208,
+            "asm": "build/igc-p39-a7e4a70c0a48/OCL_asm9d52e5bbcf60d49d_simd32_entry_0010.asm",
+            "asm_sha256": "282e6b61f705ce0c5950a5e9deca05af513a10c72710ae320fd1e0b52ff36dbc",
+            "kernel": "_ZTSN3p3910GemvKernelILN3iq34TypeE21ELj2560ELNS_4KindE7ELb0ELj1EEE"
+          },
+          "fused": {
+            "instructions": 893,
+            "messages": 32,
+            "simd": 32,
+            "grf": 128,
+            "flag_spills": 36,
+            "data_spill_or_scratch_bytes": 0,
+            "barriers": 0,
+            "slm": 0,
+            "payload_bytes": 208,
+            "asm": "build/igc-p39-a7e4a70c0a48/OCL_asm9d52e5bbcf60d49d_simd32_entry_0009.asm",
+            "asm_sha256": "6c270b617b99e8b14cedb53ad4abf87e1c86c8dc65480d906560418233f5cc5a",
+            "kernel": "_ZTSN3p3910GemvKernelILN3iq34TypeE21ELj2560ELNS_4KindE7ELb1ELj1EEE"
+          }
+        }
+      ]
+    }
+  },
+  "eligible_launches_removed_per_token": 431
+}
