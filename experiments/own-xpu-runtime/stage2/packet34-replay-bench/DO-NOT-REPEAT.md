@@ -15,5 +15,7 @@
 | Retry failed native teardown | [Lifetime review](review-lifetime.md), lifetime tests | Retain owner; coordinator owns recovery. |
 | Run many CPU gates concurrently beside a GPU window | Owner's scope | Sequential gates, OMP2, compile jobs<=2, inherited affinity/nice19/idle I/O. |
 | Trust an object written after a source edit began mid-compilation | Final ASan rebuild audit | Freeze source while compiling; force rebuilding affected object and fresh gates. |
+| Turn old reviewed whole-boot faults into a new packet 34 latch before any native launch | [October 12 refusal archive](evidence/20261012-k0-refused-old-boot-fault-lines/README.md), [window tests](window-tests.json) | Explicit UTC coordinator review bound across K0/R1; new faults still latch. Without review, faults older than one hour refuse without latching only if no packet 34 launch was attempted on that boot. |
+| Pass a bare calendar time to journalctl as though it were UTC | `test_review_timezone_and_empty_interval_cursor` | Parse timezone-aware UTC input and pass `--since @epoch`; preserve cursor when no newer entries exist. |
 
 No device experiment closed here. Graph behavior and speed remain unmeasured.

@@ -3,6 +3,9 @@
 import io
 import copy
 import json
+import os
+import time
+from unittest.mock import patch
 from pathlib import Path
 from types import SimpleNamespace
 import unittest
@@ -103,6 +106,120 @@ class WindowTests(unittest.TestCase):
                 path = root / relative; original = path.read_bytes(); path.write_text("changed after seal")
                 with self.assertRaises(ValueError): window.sealed_build_gate(build, native, root, root)
                 path.write_bytes(original)
+
+    REVIEW = "2026-10-12T02:20:00Z"
+    REVIEW_US = 1791771600000000
+    START_US = REVIEW_US + 235000000
+
+    def kernel_line(self, stamp, message):
+        return json.dumps({"__REALTIME_TIMESTAMP": str(stamp), "MESSAGE": message}) + "\n"
+
+    def run_preflight(self, root, reviewed=True, fresh_fault=False):
+        (root / "build/device").mkdir(parents=True)
+        for name in ("jit-smoke", "replay-bench"):
+            (root / "build/device" / name).write_text("mock native; never executed")
+        (root / "build-receipt.json").write_text("{}")
+        old = self.kernel_line(self.REVIEW_US - 7200000000, "engine reset")
+        initial = old + self.kernel_line(self.REVIEW_US, "coordinator boundary")
+        fresh = self.kernel_line(self.REVIEW_US + 1, "Fault response") if fresh_fault else ""
+        reads = [initial + fresh, fresh] if reviewed else [initial]
+        def fake_launch(command, **kwargs):
+            run = root / "build/k0/run"; run.mkdir()
+            (run / "receipt.json").write_text(json.dumps(dict(passed=True, kernel_execution=False,
+                explicit_allocations=0, cards=1, kernels_per_device=24)))
+            return SimpleNamespace(pid=42, returncode=0, poll=lambda: 0)
+        args = ["--authorized-device-window", "--window", "K0", "--card", "3",
+                "--output", str(root / "build/k0")]
+        if reviewed:
+            args += ["--faults-reviewed-through", self.REVIEW]
+        with patch.object(window, "HERE", root), \
+             patch.object(window.time, "time_ns", return_value=self.START_US * 1000), \
+             patch.object(window, "environment_gate", return_value={"LD_LIBRARY_PATH": "/mock"}), \
+             patch.object(window, "sealed_build_gate", return_value={}), \
+             patch.object(window, "ldd_preflight", return_value={}), \
+             patch.object(window, "journal", side_effect=[(text, "boot-cursor") for text in reads]) as read, \
+             patch.object(window.subprocess, "Popen", side_effect=fake_launch) as launch, \
+             patch.object(window, "supervise", return_value={"child_still_running": False}):
+            status = window.main(args)
+        row = json.loads((root / "build/k0/window.json").read_text())
+        return status, row, list((root / "build").glob("fault-*.json")), launch, read
+
+    def test_old_lines_with_review_passes(self):
+        with tempfile.TemporaryDirectory(prefix="review-test-", dir=window.HERE / "build") as tmp:
+            status, row, latches, launch, read = self.run_preflight(Path(tmp))
+            self.assertEqual(status, 0); self.assertTrue(row["passed"])
+            self.assertEqual(latches, []); launch.assert_called_once()
+            self.assertEqual(row["coordinator_fault_review"],
+                             {"through": self.REVIEW, "lines_before": 2, "fault_lines_before": 1})
+            self.assertEqual(read.call_args.kwargs, {"since_us": self.REVIEW_US})
+
+    def test_old_lines_without_review_refuses_without_latch(self):
+        with tempfile.TemporaryDirectory(prefix="review-test-", dir=window.HERE / "build") as tmp:
+            status, row, latches, launch, read = self.run_preflight(Path(tmp), reviewed=False)
+            self.assertEqual(status, 1); self.assertFalse(row["device_executed"])
+            self.assertEqual(latches, []); launch.assert_not_called()
+            self.assertIn("old fault lines in this boot: coordinator review argument required", row["stop_reasons"])
+
+    def test_new_fault_after_review_latches(self):
+        with tempfile.TemporaryDirectory(prefix="review-test-", dir=window.HERE / "build") as tmp:
+            status, row, latches, launch, read = self.run_preflight(Path(tmp), fresh_fault=True)
+            self.assertEqual(status, 1); self.assertFalse(row["device_executed"])
+            self.assertEqual(len(latches), 1); launch.assert_not_called()
+            self.assertIsNone(json.loads(latches[0].read_text())["pid"])
+            self.assertEqual(row["coordinator_fault_review"]["fault_lines_before"], 1)
+
+    def test_review_timezone_and_empty_interval_cursor(self):
+        calls = []
+        def runner(argv, **kwargs):
+            calls.append(argv)
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+        try:
+            for zone in ("UTC", "America/Toronto", "Pacific/Auckland"):
+                with patch.dict(os.environ, {"TZ": zone}):
+                    time.tzset()
+                    through, micros = window.fault_review(self.REVIEW, self.START_US)
+                    self.assertEqual(micros, self.REVIEW_US)
+                    text, cursor = window.journal("boot-cursor", runner, since_us=micros)
+                    self.assertEqual(cursor, "boot-cursor")
+                    self.assertEqual(calls[-1][-2:], ["--since", "@1791771600.000001"])
+                    self.assertNotIn("--after-cursor", calls[-1])
+        finally:
+            time.tzset()
+        self.assertEqual(window.fault_review("2026-10-12T02:20:00+00:00", self.START_US),
+                         (self.REVIEW, self.REVIEW_US))
+        for value in ("2026-10-12T02:20:00", "2026-10-11T22:20:00-04:00", "2026-10-13T02:20:00Z"):
+            with self.assertRaises(ValueError): window.fault_review(value, self.START_US)
+
+    def test_recent_or_prior_packet_fault_still_latches(self):
+        with tempfile.TemporaryDirectory(prefix="review-test-", dir=window.HERE / "build") as tmp:
+            root = Path(tmp)
+            for stamp in (self.START_US - 1, self.START_US - 3600000000):
+                events = []
+                with self.assertRaisesRegex(ValueError, "recent kernel fault"):
+                    window.initial_fault_gate(self.kernel_line(stamp, "engine reset"),
+                        self.START_US, False, "boot", events.append, root)
+                self.assertEqual(len(events), 1)
+            evidence = root / "evidence"; evidence.mkdir()
+            for field in ({"device_executed": True}, {"command": ["native"]}, {"pid": 42}):
+                (evidence / "window.json").write_text(json.dumps({"boot_id": "boot", **field}))
+                events = []
+                with self.assertRaisesRegex(ValueError, "recent kernel fault"):
+                    window.initial_fault_gate(self.kernel_line(self.REVIEW_US - 7200000000, "engine reset"),
+                        self.START_US, False, "boot", events.append, root)
+                self.assertEqual(len(events), 1)
+            (evidence / "window.json").write_text(json.dumps({"boot_id": "other-boot", "pid": 42}))
+            self.assertFalse(window.packet_started_on_boot("boot", root))
+
+    def test_k0_r1_binds_review_instant_only(self):
+        previous = {"coordinator_fault_review": {"through": self.REVIEW, "lines_before": 1}}
+        window.review_identity_gate(previous,
+            {"coordinator_fault_review": {"through": self.REVIEW, "lines_before": 2}})
+        window.review_identity_gate({}, {})
+        for current in ({}, {"coordinator_fault_review": {"through": "2026-10-12T02:21:00Z"}}):
+            with self.assertRaisesRegex(ValueError, "fault review instant"):
+                window.review_identity_gate(previous, current)
+            with self.assertRaisesRegex(ValueError, "fault review instant"):
+                window.review_identity_gate(current, previous)
 
     def test_environment(self):
         self.assertEqual(set(window.environment_gate({"LD_LIBRARY_PATH": "/x"})), window.NATIVE_KEYS)

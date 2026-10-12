@@ -1,4 +1,4 @@
-# Our Intel Xe runtime — measured state, 2026-10-12 01:30 UTC
+# Our Intel Xe runtime — measured state, 2026-10-12 02:35 UTC
 
 **Bit-exact on one card and on two; 22.49 tok/s measured on two cards.** For Unsloth
 UD-IQ3_XXS, the **quantized compressed version**, full 16-bit KV: the runtime reproduces
@@ -12,6 +12,10 @@ per token) with the paired expert gate/up kernel and the dense GEMV variants mea
 the card ([packet 29][p29r]). Reference **28.49 tok/s**. GPU kernel time is 41.2 ms per
 token; the host issues 2,307 launches one by one (5.4–11.7 µs each depending on what
 else the host is doing), so the GPU now waits for the host between small kernels.
+**Since 02:19 UTC both cards work at once** in a two-process pipeline: 24–26 ms per token
+when every guess is right (diagnostic), bit-exact; the official draft head agrees with
+this target 77% of the time on CPU, which projects to about 30 tok/s once it is on the
+card ([details below](#both-cards)).
 [First exact decode and its reading][w2note].
 
 **Kernel progress.** Effective GB/s means payload bytes divided by device time,
@@ -121,28 +125,39 @@ expert down 6.25 ms (48 × 130 µs, no winning candidate yet); expert gate/up 4.
 1.73; logits 1.68; gdn.recurrence 1.23; qsa.qgate 1.10; HC gates 2.13; about 9 ms in
 some 1,500 launches of 3–15 µs each.
 
-**Three things now limit the token, in this order:**
+<a id="both-cards"></a>**Both cards now work at the same time** ([packet 32][p32r], 2026-10-12 02:19 UTC). The
+runtime runs as two processes, one per card. The first card starts the next position on a
+guessed token while the second finishes the current one; a wrong guess is discarded and
+redone, and the emitted token is always the target's own, so output is bit-identical to
+sequential decode. Measured on cards 0+1, every run 64/64 tokens and 384/384 layers:
 
-1. **One card is idle at any moment.** Layers 0–23 run on one card, 24–47 on the other.
-   [Packet 32][p32] (Codex, CPU, in progress) turns the runtime into a two-stage
-   pipeline, one process per card: the first card starts the next position on a guessed
-   token while the second finishes the current one; a wrong guess is discarded and
-   redone, so the emitted tokens stay the target's own and the output stays bit-exact.
-   A right guess costs half a token time. The guess comes from the model's official
-   one-token draft head; [packet 31][p31] (Codex, CPU, in progress) measures on CPU how
-   often that head agrees with this quantized target (about 80% on the full-precision
-   line). At 75% agreement the model gives about 1.5 times the sequential speed.
-2. **The host issues every launch separately.** 12–18 ms per token of host work for
-   2,307 launches, part of it avoidable validation and device queries per launch
-   ([packet 35][p35], Codex, in progress: prepared launches, cheaper submission forms);
-   the rest goes away if a card's half token is recorded once and replayed
-   ([packet 34][p34], Codex, in progress: a one-card replay benchmark with the real
-   kernels before any integration).
-3. **Kernel time.** Expert down (6.25 ms) has resisted eleven exact candidates; a
-   generated-code study ([packet 33][p33], Codex, in progress) reads the GPU assembly of
-   the winners and losers to build a cost model before the next round.
-   [Packet 30][p30] (Codex, in progress) covers route, QSA attention, HC gates and the
-   combine/mix merges.
+| Run | Guesses | ms per token | Reading |
+| --- | --- | ---: | --- |
+| sequential generation | none | 51.4 (19.47 tok/s) | the two halves take 23.8 + 23.4 ms; the Python controller adds about 4 ms |
+| token n-gram guesser | 4 right of 32 | 50.9 (19.64 tok/s) | 28 rollbacks on the cards, output exact; a wrong guess costs nothing extra |
+| **diagnostic**: guesses fed from the oracle | 63 right of 63 | **26.2 mean, 24.1 median** | the pipeline's ceiling today; not a speed result |
+
+The real guesser is the model's official one-token draft head. On CPU it agrees with this
+quantized target **77.3% of the time** (198 of 256 over four prompts, 95% interval
+71.8–82.0%; [packet 31][p31]). With a right guess at about 27 ms (24 + about 3 ms to
+compute the guess) and a wrong one at about 50 ms, that is about **32–33 ms per token
+(about 30 tok/s) with today's kernels**, against the 28.49 reference. [Packet 36][p36]
+(Codex, in progress) builds the draft head into the second card's process.
+
+**What else is in flight:**
+
+1. **Kernels.** The generated-code study produced the first winner for routed expert
+   down, 127 → 90 µs, and a dense kernel that takes gdn.qkv from 75 to 62 µs
+   ([packet 33][p33r], card 2, byte-equal). Together with the other dense classes that is
+   about 4 ms of the 41 ms. [Packet 37][p37] (Codex, in progress) merges these and the
+   lean host path of [packet 35][p35] into the pipeline runtime. [Packet 30][p30]
+   (route, QSA attention, HC gates, combine/mix merges) is waiting for its timing window.
+2. **Host issuing.** Our own per-launch work was only 0.1–0.2 µs ([packet 35][p35] host
+   benchmark); the 5–8 µs per launch is the SYCL and driver submission path. A recorded
+   half token replayed with one submission would remove it; [packet 34][p34] is the
+   one-card benchmark for that (direct versus recorded command graph, real kernels).
+3. **Controller.** The Python controller costs about 4 ms per token in sequential mode
+   and 1.5–3 ms per right guess; it should move into the native processes.
 
 **Measurement hygiene found on 2026-10-12.** Decode windows are now pinned to four
 reserved cores and the CPU helper jobs kept off them; token preparation (table lookups
@@ -221,3 +236,7 @@ leading suspect of the 09:09 fault); the fused generic kernels of packets 21, 23
 [p33]: stage2/packet33-codegen/README.md
 [p34]: stage2/packet34-replay-bench/README.md
 [p35]: stage2/packet35-hostpath/README.md
+[p32r]: stage2/packet32-pipeline/receipts-cards01-20261012-chain/README.md
+[p33r]: stage2/packet33-codegen/receipts-card2-20261012-k2/README.md
+[p36]: stage2/packet36-draft/README.md
+[p37]: stage2/packet37-merged2/README.md

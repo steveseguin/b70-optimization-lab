@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """CPU-only admission; R1 may launch the explicitly authorized coordinator binary."""
 import argparse
+from datetime import datetime, timedelta, timezone
 import hashlib
 import json
 import math
@@ -134,9 +135,15 @@ def watchdog(seconds):
     return value
 
 
-def journal(cursor=None, runner=subprocess.run):
-    argv = ["/usr/bin/journalctl", "-k", "--no-pager", "--show-cursor"]
-    argv += ["--after-cursor", cursor] if cursor else ["-n", "200"]
+def journal(cursor=None, runner=subprocess.run, *, since_us=None):
+    argv = ["/usr/bin/journalctl", "-k", "-b", "--no-pager", "--show-cursor", "--output=json"]
+    if since_us is not None:
+        # journalctl's bare calendar times are LOCAL. Epoch syntax is timezone independent.
+        # --since is inclusive; journal timestamps have microsecond resolution.
+        after_us = since_us + 1
+        argv += ["--since", f"@{after_us // 1000000}.{after_us % 1000000:06d}"]
+    elif cursor:
+        argv += ["--after-cursor", cursor]
     row = runner(helper(argv), capture_output=True, text=True, timeout=2,
                  env={"PATH": "/usr/bin:/bin", "OMP_NUM_THREADS": "2"})
     require(row.returncode == 0 and not row.stderr.strip(), "kernel journal unavailable: " + row.stderr)
@@ -144,6 +151,60 @@ def journal(cursor=None, runner=subprocess.run):
     cursors = [line[11:] for line in lines if line.startswith("-- cursor: ")]
     require(bool(cursors or cursor), "kernel journal boundary missing")
     return "\n".join(line for line in lines if not line.startswith("-- cursor: ")) + "\n", cursors[-1] if cursors else cursor
+
+
+
+def fault_review(value, started_us):
+    if value is None:
+        return None, None
+    require("T" in value, "fault review must be a UTC ISO time")
+    instant = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    require(instant.tzinfo is not None and instant.utcoffset() == timedelta(0),
+            "fault review must include UTC Z or +00:00")
+    micros = (instant - datetime(1970, 1, 1, tzinfo=timezone.utc)) // timedelta(microseconds=1)
+    require(0 <= micros <= started_us, "fault review cannot be in the future")
+    return instant.isoformat().replace("+00:00", "Z"), micros
+
+
+def journal_entries(text):
+    rows = []
+    for line in text.splitlines():
+        if not line.strip():
+            continue
+        row = json.loads(line)
+        rows.append((int(row["__REALTIME_TIMESTAMP"]), line))
+    return rows
+
+
+def packet_started_on_boot(boot, root=HERE):
+    # Include archived receipts. A durable pre-Popen command is conservative evidence
+    # of a launch attempt, even if the wrapper died before recording the child PID.
+    for path in root.rglob("window.json"):
+        row = json.loads(path.read_text())
+        if row.get("boot_id") == boot and (row.get("device_executed") or
+                                          row.get("pid") or row.get("command")):
+            return True
+    return False
+
+
+def initial_fault_gate(initial, started_us, reviewed, boot, latch, root=HERE):
+    if not FAULT.search(initial):
+        return
+    if not reviewed:
+        rows = journal_entries(initial)
+        faults = [stamp for stamp, line in rows if FAULT.search(line)]
+        if (faults and all(stamp < started_us - 3600 * 1000000 for stamp in faults)
+                and not packet_started_on_boot(boot, root)):
+            raise ValueError("old fault lines in this boot: coordinator review argument required")
+    reason = "recent kernel fault requires coordinator review"
+    latch(reason)
+    raise ValueError(reason)
+
+
+def review_identity_gate(previous, current):
+    def through(row):
+        return (row.get("coordinator_fault_review") or {}).get("through")
+    require(through(previous) == through(current), "K0 identity changed: fault review instant")
 
 
 def ldd_preflight(binary, environment, runner=subprocess.run):
@@ -269,16 +330,19 @@ def under_packet(path):
 
 
 def main(argv=None):
+    started_us = time.time_ns() // 1000
     parser = argparse.ArgumentParser()
     parser.add_argument("--window", choices=["K0", "R1"], required=True)
     parser.add_argument("--card", type=int, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--k0", type=Path)
+    parser.add_argument("--faults-reviewed-through", help="coordinator-reviewed UTC ISO time (Z or +00:00)")
     parser.add_argument("--seconds", type=float)
     parser.add_argument("--authorized-device-window", action="store_true")
     args = parser.parse_args(argv)
     require(args.card >= 0, "card must be nonnegative")
     require(args.authorized_device_window, "window needs explicit coordinator authorization")
+    reviewed_through, reviewed_us = fault_review(args.faults_reviewed_through, started_us)
     environment = environment_gate()
     out = under_packet(args.output)
     require(not out.exists(), "output must be new")
@@ -286,8 +350,11 @@ def main(argv=None):
     binary = HERE / "build/device" / ("jit-smoke" if args.window == "K0" else "replay-bench")
     build_receipt = HERE / "build-receipt.json"
     record = dict(schema=SCHEMA, window=args.window, card=args.card, passed=False,
-                  device_executed=False, environment=environment,
+                  device_executed=False, environment=environment, started_epoch_us=started_us,
                   affinity=sorted(os.sched_getaffinity(0)), native_nice=os.getpriority(os.PRIO_PROCESS, 0))
+    if reviewed_through is not None:
+        record["coordinator_fault_review"] = {"through": reviewed_through,
+                                              "lines_before": None, "fault_lines_before": None}
     reasons = []
     child = None
     def persist():
@@ -315,15 +382,21 @@ def main(argv=None):
                     "K0 compile receipt incomplete")
             for key in ("boot_id", "card", "environment", "binaries", "build_receipt_sha256"):
                 require(previous.get(key) == record.get(key), "K0 identity changed: " + key)
+            review_identity_gate(previous, record)
             prior_native = args.k0.parent / "run/receipt.json"
             require(previous.get("native_receipt_sha256") == sha(prior_native), "K0 native receipt changed")
             record["k0_sha256"] = sha(args.k0)
         record["ldd"] = ldd_preflight(binary, environment)
         initial, cursor = journal()
+        if reviewed_us is not None:
+            (out / "kernel-boot-before-review.txt").write_text(initial)
+            before = [line for stamp, line in journal_entries(initial) if stamp <= reviewed_us]
+            record["coordinator_fault_review"].update(
+                lines_before=len(before), fault_lines_before=sum(bool(FAULT.search(line)) for line in before))
+            # Preserve the first cursor if the reviewed interval has no entries.
+            initial, cursor = journal(cursor, since_us=reviewed_us)
         (out / "kernel-before.txt").write_text(initial)
-        if FAULT.search(initial):
-            latch("recent kernel fault requires coordinator review")
-            raise ValueError("recent kernel fault requires coordinator review")
+        initial_fault_gate(initial, started_us, reviewed_through is not None, boot, latch, root=HERE)
         requested = lambda signum, frame: reasons.append("watcher signal " + str(signum))
         previous_signals = {sig: signal.signal(sig, requested) for sig in (signal.SIGINT, signal.SIGTERM)}
         try:
