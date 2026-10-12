@@ -71,7 +71,8 @@ MEMORY_NOTE = """
   out. It holds the standing RULES and methods stated so far and the current STATE. Read the RULES before you answer
   any question, and apply every one that covers it.
 - Everything moved out of view is kept verbatim in a read-only archive. `recall PATTERN` prints the archived
-  sentences that match (as `item N: ...`); `recall --item N` prints item N. Use it whenever a question is about
+  sentences that match (as `item N: ...`; with `--before N` only those up to item N, the nearest ones when there
+  are many); `recall --item N` prints item N. Use it whenever a question is about
   something no longer in view: an earlier item, a value something held earlier, who did something. Its output enters
   your context, so search narrowly.
 - Fetch each item with `next` as a command of its own (nothing chained to it), so it can be archived word for word.
@@ -186,7 +187,8 @@ something is removed. Go through the turns from the first to the last and leave 
 change nothing, write (none).
 OPEN
 at most three short lines: what is unfinished right now and what to watch for (this replaces the old OPEN \
-section; may be empty). Do not list what has been received or answers already given.
+section; may be empty). Do not list what has been received or answers already given, and do not repeat \
+values here: they are in STATE.
 
 Output only these three sections.
 """
@@ -242,7 +244,8 @@ that names a thing of STATE is either a change (a line of its own, or one step i
 it changes nothing, a line `name: (no change)`. If the turns change nothing, write (none).
 OPEN
 at most three short lines: what is unfinished right now and what to watch for (this replaces the old OPEN \
-section; may be empty). Do not list what has been received or answers already given.
+section; may be empty). Do not list what has been received or answers already given, and do not repeat \
+values here: they are in STATE.
 
 Output only these three sections.
 """
@@ -416,6 +419,113 @@ def parse_delta(reply: str, need_changes: bool = True) -> dict | None:
             "open": [ln for ln in out["OPEN"] if not _is_none(ln)] if "OPEN" in seen else None}
 
 
+PARTS = re.compile(r",(?!\d{3}\b)|;|\bthen\b")       # what separates the changes packed onto one line
+REMARK = re.compile(r"\([^()]*[A-Za-z][^()]*\)")      # `(item 451)`, `(struck off the books)`; not `(5)` in working
+# the words a part may use to say "the value is now N"; anything else with a number in it is not read as a set
+SET_WORDS = frozenset("opened reopened re set reset recorded now stands starts started start at to as is was back again new page value".split())
+
+
+def steps_in(value: str) -> int:
+    """How many changes one CHANGES line writes. A model packs several onto a line in its own ways:
+    `578 + 62 = 640, then set to 174`, `opened at 117, set to -190, +46 = -144`, `539 - 31 = 508 - 48 = 460, then
+    removed`, `468 - 19 = 449, set to 473 (item 449); +31 = 504 (item 450)`, `112 + 16 + 45 = 173`. Each part between
+    commas, semicolons and "then" that holds a number or a removal is a change; a part with working counts once per
+    operation. Remarks in parentheses are not read. (Counting a line as one change made the count check ask again on
+    a third of the notes calls at 1M, harness and proxy alike; 14 of 25 such questions in the proxy run were this.)"""
+    n = 0
+    for part in PARTS.split(REMARK.sub(" ", value)):
+        part = part.strip()
+        if not (re.search(r"\d", part) or re.match(r"(removed|closed|struck|deleted|gone)\b", part.lower())):
+            continue
+        ops = len(re.findall(r"(?<=[\d)])\s*[-+*/x\u00d7\u2212]\s*(?=[\d(-])", part))
+        # `+5 = 132`: the line goes on from the value before (one change); `-10 + 5 = -5` starts from minus ten
+        lead = 1 if "=" in part and re.fullmatch(r"[-+\u2212]\s*\d+", part.split("=")[0].strip()) else 0
+        n += max(ops + lead, 1)
+    return max(n, 1)
+
+
+def amounts_ok(working: str, amounts: set[int] | None) -> bool:
+    """Every number in this stretch of working (what is added to or taken from the value it starts from) is one the
+    turns state for the thing, whatever its sign there; the caller adds every value a thing of STATE holds or held
+    while the reply was applied ("went up by as much as bamo35 held at that moment"), and times or divided by a
+    small whole number passes ("was doubled"). Working that is right as arithmetic can still be made up:
+    X32m at 1M read "recorded katu85 at five hundred and twenty-three" as 623 and wrote `650 - 27 = 623`, which
+    starts from the value held and adds up; 27 is nowhere in the turns."""
+    if amounts is None:
+        return True
+    have = {abs(a) for a in amounts}
+    text = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", working).replace("\u2212", "-").replace("\u00d7", "*").replace("\u00f7", "/")
+    text = re.sub(r"(?:(?<=[\d)])|^)\s*x\s*(?=[\d(-])", " * ", text)
+    text = re.sub(r"(?<![\w.])[A-Za-z_]\w*", " ", text)        # a name in the working (`+ 402 (bamo35)`) is not an amount
+    for op, k in re.findall(r"([-+*/]?)\s*\(?\s*-?(\d+)", text):
+        # "was doubled", "lost a third": times or divided by a small whole number is said in words, not in figures
+        if int(k) not in have and not (op in ("*", "/") and 2 <= int(k) <= 10):
+            return False
+    return True
+
+
+
+
+def chain_of(value: str, held: int | None, stated: set[int], amounts: set[int] | None = None) -> tuple[int | None, list[int], int] | None:
+    """A CHANGES line that packs several changes, followed part by part from the value the NOTES hold:
+    (the value at the end, or None after a removal; the sets it took from the turns; how many of those open a part
+    of working instead of standing as a part of their own). None when a part cannot be followed, and the line is
+    then judged as before. A part is a set (`opened at 117`, `set to -190`: one number, which the turns must state),
+    working from the value so far (`292 - 67 = 225`, also `539 - 31 = 508 - 48 = 460`), working that goes on from
+    it (`+46 = -144`), working from a value the turns state (a set and a change in one), or a removal. Remarks in
+    parentheses are set aside; brackets inside working are part of the sum.
+    Every line in the 1M proxy run that the working check questioned and then accepted was such a line.
+    With `amounts` (see amounts_ok) every amount added or taken in the working must be one of them."""
+    v = REMARK.sub(" ", value)
+    v = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", v).replace("\u2212", "-").replace("\u00d7", "*").replace("\u00f7", "/")
+    v = re.sub(r"(?<=[\d)])\s*x\s*(?=[\d(-])", " * ", v)
+    cur, sets, opening, parts = held, [], 0, 0
+    for part in PARTS.split(v):
+        part = part.strip().rstrip(".").strip()
+        if not part:
+            continue
+        parts += 1
+        if re.match(r"(removed|closed|struck|deleted|gone)\b", part.lower()):
+            cur = None
+            continue
+        if "=" not in part:
+            nums = re.findall(r"(?<![\w.])-?\d+(?![\d.]*\d)", part)
+            # one number, and nothing round it but words that say "the value is now" (`increased by 5` is a change
+            # written without working, not a set to 5: such a line is judged as before)
+            if len(nums) != 1 or re.search(r"[()\u2192>]", part) or not set(re.findall(r"[a-z]+", part.lower())) <= SET_WORDS:
+                return None
+            n = int(nums[0])
+            if n != cur:
+                if n not in stated or n in sets:
+                    return None
+                sets.append(n)
+            cur = n
+            continue
+        pieces = [x.strip() for x in part.split("=")]
+        if not re.fullmatch(r"-?\d+", pieces[-1]):
+            return None
+        for expr, after in zip(pieces, pieces[1:]):
+            first = re.match(r"\(?\s*(-?\d+)(?![\d.])", expr)
+            taken = expr[first.end():] if first else expr
+            if first and cur is not None and int(first.group(1)) == cur:
+                pass                                 # working from the value so far
+            elif re.match(r"[-+*/]\s*\(?\d", expr) and cur is not None:
+                taken, expr = expr, f"({cur}) {expr}"     # working that goes on from it
+            elif first and int(first.group(1)) in stated and int(first.group(1)) not in sets:
+                sets.append(int(first.group(1)))     # the turns set this value and the working starts from it
+                opening += 1
+            else:
+                return None
+            if not amounts_ok(taken, amounts):
+                return None
+            val = _calc(expr) if re.fullmatch(r"[\d\s+\-*/().]+", expr) else None
+            head = re.match(r"\(?\s*(-?\d+)(?![\d.])", after)
+            if val is None or not float(val).is_integer() or not head or int(head.group(1)) != int(val):
+                return None                          # not plain arithmetic, or a sum that is wrong: judged as before
+            cur = int(val)
+    return (cur, sets, opening) if parts > 1 else None
+
+
 def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: bool = False,
                 near: dict[str, set[int]] | None = None) -> tuple[str, dict]:
     """The NOTES after the changes, and what happened: lines changed and added, sums corrected, and `mismatch`:
@@ -450,19 +560,43 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
             have.append(r)
             info["new_rules"] += 1
     where = {fact_of(ln)[0]: i for i, ln in enumerate(state)}
+    # values that things mentioned in these turns hold, now and as the reply is applied: an amount may be one of them
+    ever = {v for k, v in ((fact_of(ln)[0], number_of(fact_of(ln)[1])) for ln in state) if v is not None and near is not None and k in near}
     for name, value in delta.get("changes", []):
         if NO_CHANGE.fullmatch(value.strip()):           # `name: (no change)`: mentioned, not changed
             steps[name] = steps.get(name, 0) + 1
             continue
+        old = fact_of(state[where[name]])[1] if name in where else None
+        held = number_of(old) if old is not None else None
+        counted, asked = steps_in(value), len(info["mismatch"])
+        if strict and seen is not None:
+            # several changes on one line: followed part by part; a line that can be followed is right as it stands
+            ch = chain_of(value, held, (seen if near is None else near.get(name, set())) - used.get(name, set()),
+                          None if near is None else near.get(name, set()) | ever)
+            if ch is not None:
+                final, sets, opening = ch
+                used.setdefault(name, set()).update(sets)
+                steps[name] = steps.get(name, 0) + counted + opening
+                info["chained"] = info.get("chained", 0) + 1
+                line = f"{name}: {final}" if final is not None else f"{name}: removed"
+                ever.update(sets if final is None else sets + [final])
+                if name in where:
+                    state[where[name]] = line
+                    info["changed"] += 1
+                else:
+                    where[name] = len(state)
+                    state.append(line)
+                    info["added"] += 1
+                continue
         w = work_out(value)
-        steps[name] = steps.get(name, 0) + 1
         if w:
             start, total, stated = w
-            old = fact_of(state[where[name]])[1] if name in where else None
-            held = number_of(old) if old is not None else None
-            ops = len(re.findall(r"(?<=[\d)])\s*[-+*/x\u00d7\u2212]\s*(?=[\d(-])", value.split("=")[-2] if "=" in value else ""))
-            # the steps of the working, plus the set it starts from when that is not the value the NOTES hold
-            steps[name] += max(ops, 1) - 1 + (1 if start is not None and start != held else 0)
+            # the steps the line writes, plus the set it starts from when the line opens with working from a value
+            # that is not the one the NOTES hold (`585 - 79 = 506` after "opened at 585", "went down by 79")
+            if start is not None and start != held and re.match(r"\s*[-\u2212]?\d+\s*[-+*/x\u00d7\u2212]", value):
+                counted += 1
+        steps[name] = steps.get(name, 0) + counted
+        if w:
             if total is None:
                 info["mismatch"].append(f"{name}: `{value}` has no whole-number value")
                 total = stated
@@ -473,10 +607,25 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
                 # the turns set this value and the line starts from it; a set is good for one start
                 info["set_in_turns"] = info.get("set_in_turns", 0) + 1
                 used.setdefault(name, set()).add(start)
+            elif start is not None and held is not None and total == held:
+                # The line ends at the value the NOTES already hold, from another start: a change that was noted
+                # before and is written again (with in-place notes through the proxy the newest exchange stays in
+                # view, and its thought about the item just noted is read again at the next call: 6 such lines at
+                # 1M, each one a reply asked for again). Applying it or not gives the same value; it is no change.
+                info["renoted"] = info.get("renoted", 0) + 1
+                steps[name] -= counted
+                if not steps[name]:
+                    del steps[name]
+                continue
             elif start is not None and held is not None and held != start:
                 info["mismatch"].append(f"{name}: working starts from {start}, NOTES hold {held}")
             elif start is not None and old is not None and re.match(r"(removed|closed|struck|deleted|gone)\b", old.lower()):
                 info["mismatch"].append(f"{name}: working starts from {start}, NOTES say {old.split()[0]}")
+            if near is not None and strict and start is not None and len(info["mismatch"]) == asked:
+                expr = REMARK.sub(" ", value).replace("\u2212", "-").split("=")[-2]
+                first = re.match(r"\(?\s*-?\d+", expr.strip())
+                if first and not amounts_ok(expr.strip()[first.end():], near.get(name, set()) | ever):
+                    info["mismatch"].append(f"{name}: `{value}` adds or takes an amount the turns do not state for it; read the item again")
             if total != stated:
                 info["sums_corrected"].append(f"{name}: {value} -> {total}")
             value = str(total)
@@ -494,6 +643,8 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
                 else:
                     used.setdefault(name, set()).add(now)
         line = f"{name}: {value}" if value else name
+        if number_of(value) is not None:
+            ever.add(number_of(value))
         if name in where:
             state[where[name]] = line
             info["changed"] += 1
@@ -505,6 +656,80 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
         opened = list(delta["open"])
     info["steps"] = steps
     return "\n".join(["RULES"] + (rules or ["(none)"]) + ["STATE"] + state + ["OPEN"] + opened), info
+
+
+def respell(delta: dict, mentions: dict[str, int], known: list[str] | tuple = ()) -> tuple[dict, dict[str, str]]:
+    """A line for an identifier-like name that the turns never mention, a letter or two from a name they do mention
+    and for which the reply has no line, is that name misspelled: the line is given to it. Returns the reply and
+    {written: meant}. (X32n2 at 1M wrote `vozi36` for `vozimi36`; the line was left out as unsupported, the count
+    question about vozimi36 got an 8,192-token reply that could not be used, and the change was lost.)
+    `mentions`: how often the turns mention each identifier-like name (mention_counts). A name the NOTES hold
+    (`known`) is never taken for a misspelling: `bako35` and `bamo35` can both be real."""
+    import difflib
+    names = list(dict.fromkeys(k for k, _ in delta["changes"]))
+    free = [m for m in mentions if m not in names]
+    fixed: dict[str, str] = {}
+    for n in names:
+        if n in mentions or n in known or len(n) < 3 or not re.search(r"[\d_]", n) or " " in n:
+            continue
+        tail = re.search(r"\d*$", n).group(0)
+        close = [m for m in free if re.search(r"\d*$", m).group(0) == tail
+                 and difflib.SequenceMatcher(None, n, m).ratio() >= 0.75]
+        if len(close) == 1:
+            fixed[n] = close[0]
+            free.remove(close[0])
+    if not fixed:
+        return delta, {}
+    return dict(delta, changes=[(fixed.get(k, k), v) for k, v in delta["changes"]]), fixed
+
+
+DROPPABLE = ("is not a value the turns state", "adds or takes an amount the turns do not state")
+
+
+def without_doubtful(notes: str, delta: dict, seen: set[int] | None, strict: bool, near: dict | None) -> tuple[dict, list[str]]:
+    """The reply without the lines the checks still question because the turns do not state their number
+    (DROPPABLE): after a second reply such a line was wrong or pointless every time it was looked at (campaign 12),
+    so it is left out and the old value stays. One line at a time: the line of that name whose removal makes the
+    question go away. Returns the reply and the lines left out."""
+    changes, dropped = list(delta["changes"]), []
+    for _ in range(12):
+        _, info = apply_delta(notes, dict(delta, changes=changes), seen, strict=strict, near=near)
+        bad = [m for m in info["mismatch"] if any(d in m for d in DROPPABLE)]
+        if not bad:
+            break
+        name = bad[0].split(":", 1)[0]
+        mine = [m for m in info["mismatch"] if m.split(":", 1)[0] == name]
+        for i in [i for i, (k, _) in enumerate(changes) if k == name]:
+            trial = changes[:i] + changes[i + 1:]
+            _, t = apply_delta(notes, dict(delta, changes=trial), seen, strict=strict, near=near)
+            left = [m for m in t["mismatch"] if m.split(":", 1)[0] == name]
+            # fewer questions, and no working that now starts from a value not questioned before: taking out
+            # `70 - 27 = 43` must not leave `43 - 31 = 12` standing as "working starts from 43" (it would be
+            # applied: 12 stored for 75)
+            starts = lambda ms: set(re.findall(r"working starts from (-?\d+)", " | ".join(ms)))
+            if len(left) < len(mine) and starts(left) <= starts(mine):
+                dropped.append(f"{changes[i][0]}: {changes[i][1]}")
+                changes = trial
+                break
+        else:                                        # no single line explains it: every line of that name goes
+            dropped += [f"{k}: {v}" for k, v in changes if k == name]
+            changes = [(k, v) for k, v in changes if k != name]
+    return dict(delta, changes=changes), dropped
+
+
+def merge_replies(first: dict | None, second: dict) -> dict:
+    """What to apply when a reply was asked for again: the second reply's lines for every name it mentions (also
+    `name: (no change)`, which withdraws the first reply's lines for that name), and the first reply's lines for
+    the names the second does not mention; rules from both; the newer OPEN section if it has one.
+    Why: the retry asks for "the three complete sections again", but a model sometimes answers with only the lines
+    that were in question, or with (none). The proxy's second 240K run (campaign 11, X32i seed 1) applied such a
+    reply on its own and lost every change of nine items: 15 counters wrong in the NOTES, 6 answers."""
+    if not first:
+        return second
+    named = {k for k, _ in second["changes"]}
+    rules = list(first["rules"]) + [r for r in second["rules"] if not any(same_rule(r, x) for x in first["rules"])]
+    return {"rules": rules, "changes": [(k, v) for k, v in first["changes"] if k not in named] + list(second["changes"]),
+            "open": second["open"] if second.get("open") is not None else first.get("open")}
 
 
 def section_of(line: str) -> str:
@@ -661,6 +886,27 @@ def numbers_near(names: list[str], turns: list[dict[str, Any]], signed: bool = T
                 for n in here:
                     out.setdefault(n, set()).update(nums)
     return out
+
+
+OPEN_QUESTION = "[[The question you are answering, kept in view by the harness while you work on it]]"
+ASKED = re.compile(r"(?m)^(?:ASK \S+?:|QUERY \S+|GET \S+)")
+
+
+def open_question(body: list[dict[str, Any]]) -> int | None:
+    """The index in `body` of the newest delivered item that asks questions and has not been followed by an
+    ordinary delivery (the model has not moved on), or None. N32n at 1M, second stream: while the model was fetching
+    archived items for the last question item, the ordinary cut moved that item itself out of view; the model then
+    saw no question, ran `next`, and seven answers were never written."""
+    for i in range(len(body) - 1, -1, -1):
+        m = body[i]
+        if m.get("role") == "assistant":
+            continue
+        text = str(m.get("content") or "")
+        if ASKED.search(text):
+            return i
+        if m.get("role") == "tool" and ITEMS.search(text):
+            return None                              # a later item was delivered: the question is behind us
+    return None
 
 
 def under_accounted(mentions: dict[str, int], steps: dict[str, int]) -> list[str]:
@@ -999,6 +1245,7 @@ class KeeperAgent(TruncateAgent):
         self._pin_tail = ""
         self.inplace_failures: list[dict[str, Any]] = []
         self.n_inplace_redone = 0
+        self.n_questions_kept = 0                     # ordinary cuts that would have moved an open question out of view
         # mention_check (in-place notes): a STATE name that the items being moved out mention, outside a question,
         # without a line in CHANGES is asked about once (see unaccounted)
         # mention_check=count: the name's lines must account for as many changes as the items mention it
@@ -1203,6 +1450,12 @@ class KeeperAgent(TruncateAgent):
         if not n:
             return
         gone = body[:len(body) - len(keep)]
+        asked = open_question(body)                   # an open question never leaves the view (see open_question)
+        still = []
+        if asked is not None and asked < len(gone):
+            text = str(body[asked].get("content") or "")
+            still = [{"role": "user", "content": text if text.startswith(OPEN_QUESTION) else OPEN_QUESTION + "\n" + text}]
+            self.n_questions_kept += 1
         self._pin_tail, self.inplace_turn_hold = "", 0     # the turns that an in-place call could not note are going now
         rec: dict[str, Any] = {"reason": "keep", "turns_dropped": n, "before": before,
                                "items_archived": await self._archive(environment, gone)}
@@ -1214,8 +1467,10 @@ class KeeperAgent(TruncateAgent):
                        notes_pieces=len(pieces))
             for piece in pieces:
                 await self._take_notes(head, render_turns(piece), rec, piece)
-        messages[:] = head + [self._pin(prev + n)] + keep
+        messages[:] = head + [self._pin(prev + n)] + still + keep
         rec["after"] = self._budget.count(messages)
+        if still:
+            rec["question_kept"] = True
         self._record(rec)
 
     async def _keep_inplace(self, environment: Any, messages: list[dict[str, Any]], before: int) -> bool:
@@ -1238,6 +1493,8 @@ class KeeperAgent(TruncateAgent):
         base, seen, why = req, numbers_in(render_turns(body)), "no reply"
         thinking, hinted = self.notes_thinking, not self.mention_check
         rules_seen: list[str] = []                    # a rule named in any reply of this cut is kept: a second reply
+        earlier: dict | None = None                   # the reply before an asked-for one (see merge_replies)
+        spelt: dict[str, str] = {}                    # misspelled names of this cut and what was meant (see respell)
         for _attempt in (1, 2, 3, 4):                 # that leaves it out must not lose it (hard stream, 2026-10-12)
             # a reply without the layout is asked for once more; working that cannot be trusted is asked for again
             # from the start with thinking on (first run of N32x: one such reply ended the in-place cuts for good)
@@ -1251,22 +1508,40 @@ class KeeperAgent(TruncateAgent):
             rec["cached"] += getattr(details, "cached_tokens", 0) or 0
             delta = parse_delta(text) if rec["notes_finish"] != "length" else None
             if delta is None:
-                why = "reply without the NEW RULES layout" if rec["notes_finish"] != "length" else "reply cut at the token cap"
-                rec["notes_bad_layout"] = text[:200]
                 part = parse_delta(text, need_changes=False)     # its rules still count, if that section is complete
                 if part and re.search(r"(?m)^\W*(CHANGES|OPEN)\W*$", text):
                     rules_seen += [r for r in part["rules"] if not any(same_rule(r, x) for x in rules_seen)]
+            stands = (delta is None and earlier is not None
+                      and (not text.strip() or rec["notes_finish"] == "length" or bool(rec.get("layout_retries"))))
+            if stands:
+                # asked about a reply that was in the layout, the model wrote nothing usable: the reply before it
+                # stands (the proxy's rule since X32n2; a fall back to the full rewrite lost changes and cost minutes)
+                rec["first_reply_stands"] = text[:120]
+                delta = {"rules": [], "changes": [], "open": None}
+            if delta is None:
+                why = "reply without the NEW RULES layout" if rec["notes_finish"] != "length" else "reply cut at the token cap"
+                rec["notes_bad_layout"] = text[:200]
                 if rec.get("layout_retries"):
                     break                             # asked twice already
                 rec["layout_retries"] = 1
                 req = req + [{"role": "assistant", "content": text}, {"role": "user", "content": DELTA_RETRY}]
                 continue
+            rules_seen += [r for r in delta["rules"] if not any(same_rule(r, x) for x in rules_seen)]
+            if self.mention_check in ("count", "near"):
+                # a misspelled name is put right in every reply of this cut, before the replies are merged (a
+                # correction written under the same misspelling must replace the line it corrects)
+                held = state_keys(self.notes)
+                delta = dict(delta, changes=[(spelt.get(k, k), v) for k, v in delta["changes"]])
+                delta, more = respell(delta, mention_counts(held + identifiers_in(body), body), held)
+                spelt.update(more)
+                if spelt:
+                    rec["respelled"] = dict(spelt)
+            delta = earlier = merge_replies(earlier, delta)
+            delta["rules"] = list(rules_seen)
             near = None
             known = state_keys(self.notes) + [k for k, _ in delta["changes"]]
             if self.mention_check == "near":
                 near = numbers_near(known, body)
-            rules_seen += [r for r in delta["rules"] if not any(same_rule(r, x) for x in rules_seen)]
-            delta["rules"] = list(rules_seen)
             new, info = apply_delta(self.notes, delta, seen, strict=self.mention_check in ("count", "near"), near=near)
             steps = info.pop("steps")
             if hinted:
@@ -1276,7 +1551,7 @@ class KeeperAgent(TruncateAgent):
                 missing = under_accounted(mention_counts(known + identifiers_in(body), body), steps)
             else:
                 missing = unaccounted(state_keys(self.notes), body, delta["changes"])
-            if missing:                               # asked once: a name the turns mention is not accounted for
+            if missing and not stands:                # asked once: a name the turns mention is not accounted for
                 hinted = True
                 rec["unaccounted"] = missing[:30]
                 self.n_mention_reasks += 1
@@ -1284,8 +1559,15 @@ class KeeperAgent(TruncateAgent):
                 req = req + [{"role": "assistant", "content": text},
                              {"role": "user", "content": retry.format(names=", ".join(missing[:30]))}]
                 continue
+            if info["mismatch"] and (stands or "inplace_redo" in rec):
+                # after the second reply (or without one): a line whose number the turns do not state is left out
+                kept, left = without_doubtful(self.notes, delta, seen, self.mention_check in ("count", "near"), near)
+                if left:
+                    rec["lines_left_out"] = left[:12]
+                    new, info = apply_delta(self.notes, kept, seen, strict=self.mention_check in ("count", "near"), near=near)
+                    info.pop("steps", None)
             size = self._budget.count([{"role": "user", "content": new}])
-            if info["mismatch"] and "inplace_redo" not in rec:
+            if info["mismatch"] and "inplace_redo" not in rec and not stands:
                 # asked once more, with thinking and with the lines in question named; the second reply stands
                 # (the check has false alarms: a model that thinks may start from a value it worked out itself)
                 rec["inplace_redo"] = "; ".join(info["mismatch"][:6])
@@ -1457,7 +1739,7 @@ class KeeperAgent(TruncateAgent):
                     "notes_mode": self.notes_mode, "delta_fallbacks": self.n_delta_fallbacks,
                     "notes_chunk_tokens": self.notes_chunk_tokens, "notes_inplace": self.notes_inplace,
                     "inplace_cuts": self.n_inplace, "inplace_failed": self.n_inplace_failed,
-                    "inplace_redone_with_thinking": self.n_inplace_redone,
+                    "inplace_redone_with_thinking": self.n_inplace_redone, "questions_kept_in_view": self.n_questions_kept,
                     "mention_check": self.mention_check, "mention_reasks": self.n_mention_reasks,
                     "inplace_failures": self.inplace_failures[:20], "inplace_prompt_tokens": self.inplace_prompt,
                     "inplace_cached_tokens": self.inplace_cached, "inplace_turn_tokens": self.inplace_turn_tokens,

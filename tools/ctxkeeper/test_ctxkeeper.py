@@ -302,6 +302,36 @@ class InPlace(unittest.TestCase):
         self.run_conversation(keeper, 6, start=6)
         self.assertEqual(len(model.notes_requests), tried)
 
+    def test_an_open_question_from_a_tool_result_survives_the_ordinary_cut(self):
+        """The in-place cut waits while such a question is open; the ordinary cut does not, and it must not take the
+        question out of view (the harness arm lost seven answers at 1M that way)."""
+        model = LedgerModel()
+        keeper = self.keeper(model, budget=2600, think_when=r"(?m)^ASK ", think_until=r"(?m)^ITEM \d+:", inplace_tokens=100000)
+        msgs = conversation(3)
+        msgs.append({"role": "assistant", "content": "", "tool_calls": [{"id": "q", "type": "function", "function": {"name": "bash", "arguments": "{}"}}]})
+        msgs.append({"role": "tool", "tool_call_id": "q", "content": "PROBE: answer now.\nASK p1_1: What value does abcd01 hold?"})
+        for i in range(12):                                                        # the model reads a lot before it answers
+            msgs.append({"role": "assistant", "content": "", "tool_calls": [{"id": f"r{i}", "type": "function", "function": {"name": "bash", "arguments": json.dumps({"command": f"cat part{i}"})}}]})
+            msgs.append({"role": "tool", "tool_call_id": f"r{i}", "content": "archived text " + "filler " * 150})
+            keeper.complete({"model": "m", "messages": list(msgs)})
+        s = next(iter(keeper.sessions.values()))
+        self.assertGreater(s.state["cuts"], 0)
+        self.assertEqual(s.state["inplace_cuts"], 0)                               # the question was open: only ordinary cuts
+        self.assertIsNotNone(s.state["kept_open"])
+        view = model.requests[-1]["messages"]
+        shown = [m for m in view if str(m.get("content")).startswith(ck.OPEN_HEAD)]
+        self.assertEqual(len(shown), 1)
+        self.assertEqual(shown[0]["role"], "user")
+        self.assertIn("ASK p1_1: What value does abcd01 hold?", shown[0]["content"])
+        self.assertTrue(view[2]["content"].startswith("[[NOTES kept"))             # after the opening two and NOTES
+        self.assertIs(view[3], shown[0])
+        # the next ordinary item closes it
+        msgs.append({"role": "assistant", "content": "", "tool_calls": [{"id": "n", "type": "function", "function": {"name": "bash", "arguments": json.dumps({"command": "next"})}}]})
+        msgs.append({"role": "tool", "tool_call_id": "n", "content": "ITEM 4: the clerk moved counter abcd04 to 28. " + "filler " * 60})
+        keeper.complete({"model": "m", "messages": list(msgs)})
+        self.assertIsNone(s.state["kept_open"])
+        self.assertFalse([m for m in model.requests[-1]["messages"] if str(m.get("content")).startswith(ck.OPEN_HEAD)])
+
     def test_full_mode_ignores_a_kept_user_message_left_in_saved_state(self):
         model = Model()
         d = tempfile.TemporaryDirectory()
@@ -315,6 +345,145 @@ class InPlace(unittest.TestCase):
         view = keeper.view(s, conversation(20))
         self.assertTrue(view[2]["content"].startswith("[[NOTES kept"))
         self.assertEqual(view[3], conversation(20)[2 + s.state["cut"]])            # straight on to the recent turns
+
+    def test_an_asked_for_reply_with_only_the_corrected_line_loses_nothing(self):
+        """Campaign 11, X32i seed 1: the model answered a re-ask with one line and the changes of nine items were gone."""
+        first = "NEW RULES\n- R one.\nCHANGES\nstock: 99 + 1 = 100\nabcd00: 0\nabcd01: 7\nOPEN\n- watch stock"
+        only = "NEW RULES\n(none)\nCHANGES\nstock: 7 + 1 = 8\nOPEN\n"
+        nothing = "NEW RULES\n(none)\nCHANGES\n(none)\nOPEN\n"
+        for second, stock in ((only, "stock: 8"), (nothing, "stock: 100")):
+            model = LedgerModel(script=["NEW RULES\n(none)\nCHANGES\nstock: 7\nOPEN\n", first, second])
+            keeper = self.keeper(model)
+            s = self.run_conversation(keeper, 6)
+            self.assertEqual(s.state["inplace_cuts"], 2)
+            for line in (stock, "abcd00: 0", "abcd01: 7"):
+                self.assertIn(line, s.state["notes"])
+            self.assertEqual(ck.rule_lines(s.state["notes"]), ["R one."])
+            events = (Path(self.dir.name) / next(iter(keeper.sessions)) / "events.jsonl").read_text()
+            self.assertIn('"event": "in-place notes reply"', events)               # every reply is kept for later reading
+
+    def test_only_matching_messages_are_read_for_the_checks(self):
+        """1M proxy run: the agent printed its answers file and the keys (p21_7 ...) were taken for things of STATE."""
+        reply_text = "NEW RULES\n(none)\nCHANGES\n" + "\n".join(f"abcd{i:02d}: {i * 7}" for i in range(5)) + "\nOPEN\n"
+        for scan, reasks in ((None, 1), (r"^ITEM \d+: the clerk", 0)):
+            model = LedgerModel(script=[reply_text, reply_text])
+            keeper = self.keeper(model, notes_checks="near", notes_scan=scan, inplace_tokens=700)
+            msgs = conversation(6)
+            msgs[6:6] = [{"role": "assistant", "content": "", "tool_calls": [{"id": "cat", "type": "function", "function": {"name": "bash", "arguments": "{}"}}]},
+                         {"role": "tool", "tool_call_id": "cat", "content": '{"p21_7": 571, "p22_1": 3} ' + "filler " * 60}]   # a printed answers file
+            s = keeper.session({"model": "m", "messages": msgs}, None)
+            s.state["notes"] = "RULES\n(none)\nSTATE\np21_7: 571\nOPEN"       # the model had noted an answer key as a thing of STATE
+            keeper.complete({"model": "m", "messages": msgs})
+            self.assertEqual((s.state["inplace_cuts"], s.state["inplace_reasks"]), (1, reasks))
+
+    class Tampering(LedgerModel):
+        """The scripted ledger, with lines added to the CHANGES of chosen notes replies ({reply number: [lines]}, the
+        first notes reply is 1), and fixed answers to a "Check these lines" question."""
+
+        def __init__(self, add, on_check=None):
+            super().__init__()
+            self.add, self.on_check, self.replies = add, list(on_check or []), 0
+
+        def __call__(self, body):
+            last = str(body["messages"][-1].get("content") or "")
+            if last.startswith("Check these lines") and self.on_check:
+                self.requests.append(body)
+                self.notes_requests.append(body)
+                return reply(self.on_check.pop(0))
+            resp = super().__call__(body)
+            text = resp["choices"][0]["message"]["content"]
+            if text.startswith("NEW RULES"):
+                self.replies += 1
+                extra = self.add.get(self.replies)
+                if extra:
+                    resp["choices"][0]["message"]["content"] = text.replace("\nOPEN", "\n" + "\n".join(extra) + "\nOPEN", 1)
+            return resp
+
+    def events(self, keeper):
+        return (Path(self.dir.name) / next(iter(keeper.sessions)) / "events.jsonl").read_text()
+
+    def test_what_the_kept_message_says_about_a_noted_result_is_not_noted_twice(self):
+        """After a cut the newest exchange stays in view; its assistant message was written about the result before
+        it, which the NOTES already cover. The model is told, and a line for a name that none of the turns being
+        noted mentions is left out without a question (X32n seed 1: `sahidi23: 423 - 84 = 339`, a stale answer)."""
+        model = self.Tampering({2: ["abcd00: 0 - 84 = -84", "abcd01: opened at 214"]})
+        keeper = self.keeper(model, notes_checks="near")
+        s = self.run_conversation(keeper, 12)
+        self.assertGreaterEqual(s.state["inplace_cuts"], 2)
+        first, second = (r["messages"] for r in model.notes_requests[:2])
+        self.assertNotIn(ck.OVERLAP_NOTE.strip(), first[-1]["content"])           # nothing was noted before the first cut
+        self.assertIn(ck.OVERLAP_NOTE.strip(), second[-1]["content"])
+        self.assertEqual(second[3]["role"], "assistant")                         # the opening two, NOTES, then the kept message
+        self.assertIn("abcd00: 0", s.state["notes"].splitlines())
+        self.assertIn("abcd01: 7", s.state["notes"].splitlines())
+        self.assertEqual((s.state["inplace_reasks"], s.state["inplace_failed"]), (0, 0))
+        self.assertIn("names the turns do not mention left out", self.events(keeper))
+
+    def test_a_misspelled_name_in_the_notes_is_put_right(self):
+        """X32n2 at 1M wrote `vozi36` for `vozimi36`: the line was left out as unsupported and the change was lost."""
+        class Misspelling(LedgerModel):
+            def __call__(self, body):
+                resp = super().__call__(body)
+                msg = resp["choices"][0]["message"]
+                if str(msg.get("content")).startswith("NEW RULES") and len(self.notes_requests) == 1:
+                    msg["content"] = msg["content"].replace("abcd01:", "abd01:")
+                return resp
+
+        keeper = self.keeper(Misspelling(), notes_checks="near")
+        s = self.run_conversation(keeper, 4)
+        notes = s.state["notes"].splitlines()
+        self.assertIn("abcd01: 7", notes)
+        self.assertFalse([ln for ln in notes if ln.startswith("abd01")])
+        self.assertEqual((s.state["inplace_reasks"], s.state["inplace_failed"]), (0, 0))
+        self.assertIn("a misspelled name put right", self.events(keeper))
+
+    def test_a_correction_under_the_same_misspelling_replaces_the_line_it_corrects(self):
+        first = "NEW RULES\n(none)\nCHANGES\nabcd00: 0\nabd01: 999\nOPEN\n"
+        second = "NEW RULES\n(none)\nCHANGES\nabd01: 7\nOPEN\n"
+        model = LedgerModel(script=[first, second])
+        keeper = self.keeper(model, notes_checks="near")
+        s = self.run_conversation(keeper, 4)
+        notes = s.state["notes"].splitlines()
+        self.assertIn("abcd01: 7", notes)                                          # asked about the working; the answer came under the same misspelling
+        self.assertFalse([ln for ln in notes if ln.startswith("abd01")])
+        self.assertEqual(s.state["inplace_reasks"], 1)
+
+    def test_a_second_reply_without_the_layout_is_asked_for_the_layout_once_and_its_rules_count(self):
+        first = "NEW RULES\n(none)\nCHANGES\nabcd00: 0\nabcd01: 999\nabcd02: 14\nOPEN\n"
+        loose = "You are right, the line should read abcd01: 7."
+        cut_off = "NEW RULES\n- A late rule.\nCHANGES\nabcd01: 7"
+        model = LedgerModel(script=[first, loose, cut_off])
+        keeper = self.keeper(model, notes_checks="near")
+        s = self.run_conversation(keeper, 4)
+        asked = [r["messages"][-1]["content"][:40] for r in model.notes_requests]
+        self.assertTrue(asked[1].startswith("Check these lines") and asked[2].startswith("Your reply did not use the layout"), asked)
+        self.assertIn("abcd01: 7", s.state["notes"].splitlines())                 # the third reply was in the layout and is used
+        self.assertEqual(ck.rule_lines(s.state["notes"]), ["A late rule."])
+        self.assertEqual(s.state["inplace_failed"], 0)
+
+    def test_no_usable_second_reply_means_the_first_stands_without_the_questioned_line(self):
+        model = self.Tampering({1: ["abcd01: 999"]}, on_check=[""])
+        keeper = self.keeper(model, notes_checks="near")
+        s = self.run_conversation(keeper, 6)
+        self.assertEqual((s.state["inplace_failed"], s.state["inplace_reasks"]), (0, 1))
+        self.assertGreaterEqual(s.state["inplace_cuts"], 1)                       # the cut was made in place, no full rewrite
+        self.assertIn("abcd01: 7", s.state["notes"].splitlines())
+        self.assertNotIn("999", s.state["notes"])
+        self.assertIn("abcd00: 0", s.state["notes"].splitlines())
+        ev = self.events(keeper)
+        self.assertIn("no usable second reply, the first stands", ev)
+        self.assertIn("abcd01: 999", ev)
+
+    def test_a_number_the_turns_do_not_state_is_left_out_after_the_second_reply(self):
+        again = "NEW RULES\n(none)\nCHANGES\nabcd00: 0\nabcd01: 7\nabcd01: 999\nabcd02: 14\nOPEN\n"
+        model = self.Tampering({1: ["abcd01: 999"]}, on_check=[again])
+        keeper = self.keeper(model, notes_checks="near")
+        s = self.run_conversation(keeper, 4)
+        notes = s.state["notes"].splitlines()
+        self.assertTrue({"abcd00: 0", "abcd01: 7"} <= set(notes), notes)
+        self.assertNotIn("999", s.state["notes"])
+        self.assertEqual(s.state["inplace_failed"], 0)
+        self.assertIn("lines left out (the turns do not bear them out)", self.events(keeper))
 
     def test_options_are_checked(self):
         with self.assertRaises(ValueError):
@@ -391,6 +560,32 @@ class Policy(unittest.TestCase):
         self.assertIn("counter abcd03 to 21", second[-1]["content"])
         self.assertGreaterEqual(len(self.model.requests) - before, 2)
 
+    def test_recall_and_notes_at_use_the_contents_own_numbers_when_told_to(self):
+        k = ck.Keeper(self.model, Path(self.dir.name) / "lab", budget=2400, reply_reserve=400, headroom=100, target_ratio=0.5,
+                      notes_cap=400, memory_note=False, recall_label=r"ITEM (\d+):", recall_unit="item")
+        for n in range(1, 31):
+            k.complete({"model": "m", "messages": conversation(n)})
+        s = next(iter(k.sessions.values()))
+        self.assertGreater(s.state["cuts"], 1)
+        asked = conversation(30) + [{"role": "user", "content": "What was counter abcd03 set to?"}]
+        self.model.recall_once = {"pattern": "abcd03", "before": 5}
+        k.complete({"model": "m", "messages": asked})
+        sent = self.model.requests[-1]
+        self.assertEqual(sent["messages"][-1]["content"], "item 3 (tool): ITEM 3: the clerk moved counter abcd03 to 21.")
+        self.assertIn("All numbers here are item numbers", sent["tools"][-1]["function"]["description"])
+        saves = [json.loads(l)["upto"] for l in (s.dir / "notes-history.jsonl").read_text().splitlines()]
+        item = {r["n"]: r["k"] for r in s.archive.labelled(k.recall_label)}
+        first_item, first_msg = item[saves[0]], saves[0]
+        self.assertLess(first_item, first_msg - 2)                                 # the two numberings differ here, so the test can tell
+        self.model.recall_once = {"notes_at": first_item - 1}
+        k.complete({"model": "m", "messages": asked})
+        self.assertEqual(self.model.requests[-1]["messages"][-1]["content"],
+                         f"recall: no NOTES were saved at or before item {first_item - 1} (the first save covers items up to {first_item})")
+        self.model.recall_once = {"notes_at": first_item + 1}                      # as a message number this is before the first save
+        k.complete({"model": "m", "messages": asked})
+        text = self.model.requests[-1]["messages"][-1]["content"]
+        self.assertTrue(text.startswith(f"NOTES as saved after item {first_item}. Anything said in items {first_item + 1}-{first_item + 1} is not in them"), text[:160])
+
     def test_notes_history_answers_what_was_true_then(self):
         s = self.run_conversation(30)
         rows = [json.loads(l) for l in (s.dir / "notes-history.jsonl").read_text().splitlines()]
@@ -454,6 +649,124 @@ class Policy(unittest.TestCase):
         self.assertIn("last archive search for this turn", seen[-1]["messages"][-1]["content"])
         s = next(iter(k.sessions.values()))
         self.assertEqual((s.state["recalls"], s.state["recall_limit_hit"]), (3, 1))
+
+    def test_searches_of_a_turn_that_ended_empty_are_shown_again_once(self):
+        """The proxy answers `recall` itself, so the client's history never holds what was found. A turn that ends
+        with nothing for the client (X32m at 1M: six blank answers) must not lose it."""
+        s = self.run_conversation(30)
+        seen = []
+        call = lambda: reply(None, [{"id": f"c{len(seen)}", "type": "function", "function": {"name": "recall", "arguments": json.dumps({"pattern": "abcd03"})}}])
+
+        def thinks_it_away(body):
+            seen.append(body)
+            return call() if len(seen) == 1 else reply(None)
+
+        self.keeper.ask = thinks_it_away
+        asked = conversation(30) + [{"role": "user", "content": "What was counter abcd03 set to?"}]
+        resp = self.keeper.complete({"model": "m", "messages": asked, "chat_template_kwargs": {"enable_thinking": True}})
+        self.assertFalse(resp["choices"][0]["message"].get("content"))
+        self.assertEqual(len(seen), 3)                                            # the search, the empty reply, one more try
+        self.assertIs(seen[2]["chat_template_kwargs"]["enable_thinking"], False)  # ... without thinking
+        self.assertEqual(seen[2]["messages"], seen[1]["messages"])
+        self.assertEqual((s.state["empty_replies_retried"], s.state["carried"]), (1, 1))
+        self.assertIn("counter abcd03 to 21", s.state["carry"]["text"])
+        # the client nudges; the next request shows the searches again, and an answer ends the carrying
+        self.keeper.ask = lambda body: seen.append(body) or reply("It was set to 21.")
+        nudged = asked + [{"role": "assistant", "content": ""}, {"role": "user", "content": "(No tool call in your last turn.)"}]
+        self.keeper.complete({"model": "m", "messages": nudged})
+        shown = [m for m in seen[-1]["messages"] if str(m.get("content")).startswith(ck.CARRY_HEAD)]
+        self.assertEqual(len(shown), 1)
+        self.assertIn("recall(pattern='abcd03') returned:", shown[0]["content"])
+        self.assertIn("counter abcd03 to 21", shown[0]["content"])
+        self.assertIsNone(s.state["carry"])
+        self.keeper.complete({"model": "m", "messages": nudged + [{"role": "assistant", "content": "It was set to 21."}, {"role": "user", "content": "Thanks."}]})
+        self.assertFalse([m for m in seen[-1]["messages"] if str(m.get("content")).startswith(ck.CARRY_HEAD)])
+
+    def test_carried_searches_stay_with_their_conversation_and_inside_the_window(self):
+        calls = []
+
+        def model(body):
+            calls.append(body)
+            if len(calls) == 1:
+                return reply(None, [{"id": "c1", "type": "function", "function": {"name": "recall", "arguments": json.dumps({"pattern": "secret"})}}])
+            return reply(None)
+
+        k = ck.Keeper(model, Path(self.dir.name) / "c", budget=3000, reply_reserve=400, memory_note=True)
+        s = k.session({"messages": conversation(1)}, "one-client")
+        s.archive.add(3, [{"role": "tool", "content": "The secret of task A is 4711. " + "filler " * 40}] * 30)
+        k.complete({"model": "m", "messages": conversation(1)}, "one-client")
+        self.assertIn("4711", s.state["carry"]["text"])
+        # the same session header, another conversation, and still before any cut: nothing of task A is shown
+        k.ask = lambda body: calls.append(body) or reply("ok")
+        k.complete({"model": "m", "messages": [{"role": "user", "content": "Unrelated task B"}]}, "one-client")
+        self.assertNotIn("4711", json.dumps(calls[-1]["messages"]))
+        self.assertIsNone(s.state["carry"])
+        # a history that goes on, with a large new message: the carried text is cut to the room that is left
+        s.state["carry"] = {"text": "found: 4711. " * 600, "n": 4, "of": ck.fingerprint(ck.with_memory_note(conversation(1)))}
+        long = conversation(1) + [{"role": "assistant", "content": ""}, {"role": "user", "content": "go on " * 900}]
+        k.complete({"model": "m", "messages": long}, "one-client")
+        sent = calls[-1]["messages"]
+        self.assertTrue(any(str(m.get("content")).startswith(ck.CARRY_HEAD) for m in sent))
+        self.assertLessEqual(k.tokens(s, sent), k.budget - k.reply_reserve)
+
+    def test_a_batch_of_searches_shares_the_room(self):
+        calls = []
+
+        def model(body):
+            calls.append(body)
+            if len(calls) == 1:
+                return reply(None, [{"id": f"c{i}", "type": "function", "function": {"name": "recall", "arguments": json.dumps({"pattern": "filler"})}} for i in range(32)])
+            return reply("done")
+
+        k = ck.Keeper(model, Path(self.dir.name) / "b", budget=4000, reply_reserve=1000, memory_note=True)
+        s = k.session({"messages": conversation(1)}, "batch")
+        s.archive.add(3, [{"role": "tool", "content": "filler " * 300}] * 40)
+        k.complete({"model": "m", "messages": conversation(1)}, "batch")
+        sent = calls[-1]["messages"]
+        results = [m["content"] for m in sent if m.get("role") == "tool" and m.get("tool_call_id", "").startswith("c")]
+        self.assertEqual(len(results), 32)                                        # every call has its result
+        self.assertGreaterEqual(results.count(ck.RECALL_NONE_NOTE), 25)
+        self.assertLessEqual(k.tokens(s, sent), k.budget - k.reply_reserve + 600)   # the short lines of 32 calls, no more
+
+    def test_an_empty_reply_is_asked_once_more_without_thinking(self):
+        seen = []
+
+        def model(body):
+            seen.append(body)
+            return reply(None) if (body.get("chat_template_kwargs") or {}).get("enable_thinking") is not False else reply("done")
+
+        k = ck.Keeper(model, Path(self.dir.name) / "e", budget=100000)
+        resp = k.complete({"model": "m", "messages": conversation(2), "chat_template_kwargs": {"enable_thinking": True, "x": 1}})
+        self.assertEqual(resp["choices"][0]["message"]["content"], "done")
+        self.assertEqual([b["chat_template_kwargs"] for b in seen], [{"enable_thinking": True, "x": 1}, {"enable_thinking": False, "x": 1}])
+        self.assertIsNone(next(iter(k.sessions.values())).state["carry"])        # nothing was searched: nothing to carry
+        seen.clear()
+        k.complete({"model": "m", "messages": conversation(2), "chat_template_kwargs": {"enable_thinking": False}})
+        self.assertEqual(len(seen), 1)                                            # thinking was off already: the reply stands
+
+    def test_searches_stop_when_the_window_has_no_room_left(self):
+        """A search result is cut to the room left beside the reply, and then no further search is made this turn."""
+        s = self.run_conversation(30)
+        seen = []
+
+        def greedy(body):
+            seen.append(body)
+            if any(t["function"]["name"] == "recall" for t in body.get("tools") or []):
+                return reply(None, [{"id": f"c{len(seen)}", "type": "function", "function": {"name": "recall", "arguments": json.dumps({"pattern": "counter"})}}])
+            return reply("Answer with what I have.")
+
+        self.keeper.ask = greedy
+        resp = self.keeper.complete({"model": "m", "messages": conversation(30) + [{"role": "user", "content": "List every counter."}]})
+        self.assertEqual(resp["choices"][0]["message"]["content"], "Answer with what I have.")
+        final = seen[-1]["messages"]
+        self.assertEqual(final[-1]["content"], ck.RECALL_ROOM_NOTE)
+        results = [m["content"] for m in final if m.get("role") == "tool" and str(m.get("tool_call_id", "")).startswith("c")]
+        self.assertTrue(results and results[0].startswith("["), results[:1])      # fitted: the count line, then the nearest matches
+        self.assertRegex(results[0].splitlines()[0], r"^\[\d+ matches; showing the newest \d+; \d+ earlier ones are not shown")
+        self.assertTrue(results[0].splitlines()[-1].startswith("message "))
+        self.assertLess(len(seen), self.keeper.max_recalls + 1)                   # stopped by room, not by the count
+        self.assertLessEqual(self.keeper.tokens(s, final), self.keeper.budget - self.keeper.reply_reserve + 150)
+        self.assertEqual(s.state["recall_limit_hit"], 1)
 
     def test_rules_are_recited_after_a_new_user_message(self):
         self.run_conversation(30)
@@ -611,18 +924,89 @@ class Pure(unittest.TestCase):
         self.assertFalse(ck.same_rule("the tally is value times 5 plus 13", "the tally is value times 3 plus 15"))
         self.assertTrue(ck.same_rule("abcd12 is secret: answer protected", "abcd12 is secret, so answer protected."))
 
+    def test_recall_places_a_sentence_by_the_first_line_of_its_message(self):
+        d = tempfile.TemporaryDirectory()
+        self.addCleanup(d.cleanup)
+        a = ck.Archive(Path(d.name) / "a.jsonl")
+        a.add(5, [{"role": "tool", "content": "ITEM 50/617 (UPDATE)\nThe cook slept. ziru63 was set to 485. It rained."},
+                  {"role": "assistant", "content": "ziru63 is 485 now."}])
+        out = a.recall("ziru63").splitlines()
+        self.assertEqual(out[0], 'message 5 (tool, "ITEM 50/617 (UPDATE)"): ziru63 was set to 485.')
+        self.assertEqual(out[1], "message 6 (assistant): ziru63 is 485 now.")            # a one-line message needs no heading
+
     def test_archive_recall(self):
         with tempfile.TemporaryDirectory() as d:
             a = ck.Archive(Path(d) / "a.jsonl")
             a.add(5, [{"role": "tool", "content": f"The porter moved box {i}. Nothing else happened."} for i in range(50)])
-            out = a.recall(pattern="porter")
-            self.assertIn("message 5 (tool): The porter moved box 0.", out)
-            self.assertIn("50 matches; showing the first 40", out)
-            self.assertEqual(a.recall(pattern="porter", before=20, last=2).splitlines()[:2],
-                             ["message 19 (tool): The porter moved box 14.", "message 20 (tool): The porter moved box 15."])
+            out = a.recall(pattern="porter").splitlines()
+            # more than fit: the count comes first and the newest are shown (the first 40 of 63, with the note last,
+            # were read as "that is all" at 1M and hid every later change)
+            self.assertEqual(out[0], "[50 matches; showing the newest 40; 10 earlier ones are not shown (narrow with `after`, or search for less)]")
+            self.assertEqual((out[1], out[-1], len(out)), ("message 15 (tool): The porter moved box 10.", "message 54 (tool): The porter moved box 49.", 41))
+            near = a.recall(pattern="porter", before=48).splitlines()
+            self.assertEqual(near[0], "[44 matches; showing the 40 nearest before message 48; 4 earlier ones are not shown (narrow with `after`, or search for less)]")
+            self.assertEqual((near[1], near[-1]), ("message 9 (tool): The porter moved box 4.", "message 48 (tool): The porter moved box 43."))
+            onward = a.recall(pattern="porter", after=10).splitlines()
+            self.assertEqual(onward[0], "[45 matches; showing the first 40 from message 10 on; 5 later ones are not shown (narrow with `before`, or search for less)]")
+            self.assertEqual(onward[1], "message 10 (tool): The porter moved box 5.")
+            self.assertEqual(a.recall(pattern="porter", before=20, last=2).splitlines(),
+                             ["[16 matches; showing the newest 2; 14 earlier ones are not shown (narrow with `after`, or search for less)]",
+                              "message 19 (tool): The porter moved box 14.", "message 20 (tool): The porter moved box 15."])
             self.assertTrue(a.recall(message=7).startswith("message 7 (tool):\nThe porter moved box 2."))
             self.assertIn("is not in the archive", a.recall(message=99))
             self.assertIn("nothing in the archive matches", a.recall(pattern="zebra"))
+
+    def test_recall_in_the_contents_own_numbering(self):
+        """With --recall-label every number the tool shows or takes is the content's own (items here), never a
+        message number: X32n2 at 1M passed `before` 332 meaning item 332 and was cut off at message 332, item 150."""
+        d = tempfile.TemporaryDirectory()
+        self.addCleanup(d.cleanup)
+        a = ck.Archive(Path(d.name) / "a.jsonl")
+        msgs = []
+        for i in range(1, 61):
+            msgs.append({"role": "tool", "content": f"ITEM {i}/617 (UPDATE)\nThe fog lifted. moja47 was set to {i * 3}. It rained."})
+            msgs.append({"role": "assistant", "content": f"moja47 is {i * 3} now."})
+        a.add(3, msgs)
+        label = ck.re.compile(r"(?m)^ITEM (\d+)/")
+        out = a.recall("moja47 was set", before=58, label=label, unit="item").splitlines()
+        self.assertEqual(out[0], "[58 matches; showing the 40 nearest before item 58; 18 earlier ones are not shown (narrow with `after`, or search for less)]")
+        self.assertEqual((out[1], out[-1]), ("item 19 (tool): moja47 was set to 57.", "item 58 (tool): moja47 was set to 174."))
+        self.assertEqual(a.recall("moja47", after=59, label=label, unit="item").splitlines(),
+                         ["item 59 (tool): moja47 was set to 177.", "item 59 (assistant): moja47 is 177 now.",
+                          "item 60 (tool): moja47 was set to 180.", "item 60 (assistant): moja47 is 180 now."])
+        self.assertEqual(a.recall(message=7, label=label, unit="item"), "item 7 (tool):\nITEM 7/617 (UPDATE)\nThe fog lifted. moja47 was set to 21. It rained.")
+        self.assertIn("item 99 is not in the archive", a.recall(message=99, label=label, unit="item"))
+        self.assertEqual(a.recall("zebra", before=5, label=label, unit="item"), "recall: nothing in the archive matches 'zebra' at or before item 5")
+        tool = ck.recall_tool("item")["function"]["description"]
+        self.assertIn("All numbers here are item numbers", tool)
+        self.assertNotIn("message number", tool)
+        self.assertIn("All numbers here are message numbers", ck.RECALL_TOOL["function"]["description"])
+
+    def test_labels_come_only_from_what_the_task_delivered_and_the_pattern_is_checked(self):
+        d = tempfile.TemporaryDirectory()
+        self.addCleanup(d.cleanup)
+        a = ck.Archive(Path(d.name) / "a.jsonl")
+        a.add(3, [{"role": "tool", "content": "ITEM 7/9 (UPDATE)\nabcd12 was set to 5."},
+                  {"role": "assistant", "content": "ITEM 2/9 was the one with the rule.\nabcd12 is 5 now."},
+                  {"role": "tool", "content": "ITEM x/9 (UPDATE)\nabcd12 gained 1."}])
+        label = ck.re.compile(r"(?m)^ITEM (\w+)/")
+        self.assertEqual([(r["k"], r["own"]) for r in a.labelled(label)], [(7, True), (7, False), (7, False)])
+        with self.assertRaises(ValueError):
+            ck.Keeper(lambda b: reply("ok"), Path(d.name) / "k", recall_label=r"^ITEM \d+/")
+
+    def test_a_search_result_is_fitted_by_leaving_out_the_farthest_matches(self):
+        d = tempfile.TemporaryDirectory()
+        self.addCleanup(d.cleanup)
+        a = ck.Archive(Path(d.name) / "a.jsonl")
+        a.add(5, [{"role": "tool", "content": f"The porter moved box {i}. Nothing else happened."} for i in range(50)])
+        out = a.recall(pattern="porter", before=40, max_chars=600).splitlines()
+        self.assertRegex(out[0], r"^\[36 matches; showing the \d+ nearest before message 40; \d+ earlier ones are not shown")
+        self.assertEqual(out[-1], "message 40 (tool): The porter moved box 35.")     # the nearest one is there
+        self.assertLessEqual(sum(len(x) + 1 for x in out), 600)
+        self.assertLess(len(out), 20)
+        onward = a.recall(pattern="porter", after=10, max_chars=600).splitlines()
+        self.assertEqual(onward[1], "message 10 (tool): The porter moved box 5.")
+        self.assertLessEqual(sum(len(x) + 1 for x in onward), 600)
 
     def test_text_of_counts_calls_and_parts(self):
         m = {"role": "assistant", "content": [{"type": "text", "text": "hello"}], "reasoning_content": "hmm",

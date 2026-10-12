@@ -52,6 +52,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import notesdelta as nd  # noqa: E402  (same folder: the pure part of changes-only notes)
 
+OPEN_HEAD = "[[Still open, kept in view by the context keeper while you work on it]]"
 PIN_HEAD = "[[NOTES kept by the context keeper: {n} earlier messages are in the archive (search it with the `recall` tool)]]"
 RECITE_HEAD = "[[RULES in force (from NOTES); apply every one that covers this before you answer]]"
 MEMORY_NOTE = """
@@ -63,21 +64,31 @@ MEMORY_NOTE = """
   Read the RULES before you answer or act, and apply every one that covers what you are doing.
 - Everything moved out of view is kept verbatim in an archive. The `recall` tool searches it; you may call it in
   addition to any other tool whenever something you need is no longer in view."""
-RECALL_TOOL = {
-    "type": "function",
-    "function": {
-        "name": "recall",
-        "description": ("Search the archive of earlier conversation that was moved out of view (it is kept verbatim). "
-                        "Give `pattern` (text or a regular expression, case-insensitive) to list matching sentences "
-                        "with their message numbers; narrow with `before` / `after` (message numbers) and take the "
-                        "newest with `last`. Give `message` alone to print one archived message in full. Give "
-                        "`notes_at` alone (a message number) to see the NOTES as they stood at the last save at or "
-                        "before that message: what was true then, not now."),
-        "parameters": {"type": "object", "properties": {
-            "pattern": {"type": "string"}, "before": {"type": "integer"}, "after": {"type": "integer"},
-            "last": {"type": "integer"}, "message": {"type": "integer"}, "notes_at": {"type": "integer"}}},
-    },
-}
+def recall_tool(unit: str = "message") -> dict[str, Any]:
+    """The `recall` tool as the model sees it. Every number it takes or shows counts one thing, named here: archived
+    messages, or (with --recall-label) the content's own numbering, such as items. Two numberings in one tool were
+    mixed up at once (X32n2 at 1M: `before` 332 meant as item 332 cut the search off at message 332, item 150)."""
+    return {
+        "type": "function",
+        "function": {
+            "name": "recall",
+            "description": ("Search the archive of earlier conversation that was moved out of view (it is kept verbatim). "
+                            "Give `pattern` (text or a regular expression, case-insensitive) to list matching sentences, "
+                            f"each with the number of its {unit}"
+                            + (" and the first line of that message" if unit == "message" else "")
+                            + f". All numbers here are {unit} numbers. Narrow with `before` / `after` (inclusive); when "
+                            "there are more matches than fit, the ones nearest to `before` (or after `after`, or the "
+                            f"newest) are shown; `last` takes the newest N. Give `message` alone to print one archived {unit} "
+                            f"in full. Give `notes_at` alone to see the NOTES as they stood at the last save at or "
+                            f"before that {unit}: what was true then, not now."),
+            "parameters": {"type": "object", "properties": {
+                "pattern": {"type": "string"}, "before": {"type": "integer"}, "after": {"type": "integer"},
+                "last": {"type": "integer"}, "message": {"type": "integer"}, "notes_at": {"type": "integer"}}},
+        },
+    }
+
+
+RECALL_TOOL = recall_tool()
 # The instruction comes AFTER the turns: asked first, the model reads its own turns last and writes one more of them.
 NOTES_REQUEST = """\
 The oldest part of this conversation is about to be moved out of view. It stays in a searchable archive, but you \
@@ -118,7 +129,7 @@ INPLACE_REQUEST = """\
 [[Message from the context keeper, not part of the task]] Every turn above, from the {start} on, is about to be \
 moved out of view. It all stays in a searchable archive, but you will no longer see it. Do not continue the task \
 and do not call any tool. Write only what those turns change in the NOTES; the keeper applies it and keeps every \
-line you do not mention. Use exactly this layout; the first line of your reply is the words NEW RULES:
+line you do not mention.{overlap} Use exactly this layout; the first line of your reply is the words NEW RULES:
 
 NEW RULES
 one line per standing rule, instruction, method or definition that those turns state and that applies from then \
@@ -136,12 +147,30 @@ that names a thing of STATE is either a change (a line of its own, or one step i
 it changes nothing, a line `name: (no change)`. If the turns change nothing, write (none).
 OPEN
 at most three short lines: what is unfinished right now and what to watch for (this replaces the old OPEN \
-section; may be empty). Do not list what has been received or answers already given.
+section; may be empty). Do not list what has been received or answers already given, and do not repeat \
+values here: they are in STATE.
 
 Output only these three sections.
 """
-RECALL_LIMIT_NOTE = ("[[That was the last archive search for this turn ({n} made). Do not call `recall` again now: "
-                     "act or answer with what you have. You can search again on a later turn.]]")
+# After a cut the newest exchange stays in view, and its assistant message was written about the result before it,
+# which the NOTES of that cut already cover. Unsaid, the model writes that result's changes a second time (X32n,
+# seed 1: `423 - 84 = 339` for a +84 already in the NOTES; an "opened at 214" the check then could not find).
+OVERLAP_NOTE = (" The first assistant message of those turns was written before the NOTES were last brought up to "
+                "date: what it says about a result that came before it is already in the NOTES, so do not write "
+                "that again; a change counts only if a result or message among those turns states it.")
+RECALL_LIMIT_NOTE = ("[[That was the last archive search for this turn ({n} made). Do not call `recall` again now: take "
+                     "the next step with what you have, for what you are sure of. You can search again right after "
+                     "that step for anything still missing; do not give something up as unknown because of this limit.]]")
+RECALL_ROOM_NOTE = ("[[There is no room left in this turn for another archive search. Do not call `recall` again now: "
+                    "take the next step with what you have, for what you are sure of. You can search again right "
+                    "after that step for anything still missing.]]")
+RECALL_NONE_NOTE = "recall: not run, no room left in this turn"
+RECALL_CUT_NOTE = "\n[cut here: no more room in this turn; narrow the search with `before` / `after` / `last`]"
+CARRY_HEAD = ("[[Message from the context keeper, not part of the task. Your last turn ended without a command. These "
+              "are the archive searches you made in it and what they returned; they were not saved anywhere else, "
+              "so use them now.]]")
+RECALL_MARGIN = 600                                 # tokens kept free beside the reply reserve while searching
+CARRY_CHARS = 24000                                  # the searches of an unfinished turn that are shown again, at most
 REPEAT_NOTE = ("[[You have made the same tool call {n} times in a row with the same result. Calling it again will not "
                "change anything: use the result you have and decide the next step.]]")
 LAYOUT_RETRY = ("Your reply did not use the layout. Reply with the NOTES only: first line RULES, then the rules, "
@@ -333,34 +362,69 @@ class Archive:
         with self.lock:
             return [json.loads(l) for l in self.path.read_text().splitlines() if l.strip()]
 
+    def labelled(self, label: re.Pattern | None) -> list[dict[str, Any]]:
+        """The rows with the number each one is known by: its message number, or with `label` (a pattern whose first
+        group is a whole number, such as `^ITEM (\\d+)/`) the number of the labelled message it is or follows; `own`
+        is true for the message that carries the label itself."""
+        rows, at = self.rows(), 0
+        for r in rows:
+            # only a tool result or a user message carries a label: the model's own text may quote one
+            m = label.search(r["text"]) if label and r["role"] in ("tool", "user") else None
+            if m and m.group(1) and m.group(1).isdigit():
+                at = int(m.group(1))
+            else:
+                m = None
+            r["k"], r["own"] = (at if label else r["n"]), bool(m) or not label
+        return rows
+
     def recall(self, pattern: str | None = None, before: int | None = None, after: int | None = None,
-               last: int | None = None, message: int | None = None, limit: int = 40) -> str:
-        rows = self.rows()
+               last: int | None = None, message: int | None = None, limit: int = 40,
+               label: re.Pattern | None = None, unit: str = "message", max_chars: int | None = None) -> str:
+        """`max_chars`: the room there is; matches are left out, farthest from the anchor first, until the result
+        fits (the count line says so)."""
+        rows = self.labelled(label)
         if message is not None:
-            hit = [r for r in rows if r["n"] == message]
-            return (f"message {message} ({hit[0]['role']}):\n{hit[0]['text']}" if hit else
-                    f"recall: message {message} is not in the archive (it holds {len(rows)} messages"
-                    + (f", numbers {rows[0]['n']}-{rows[-1]['n']})" if rows else ")"))
+            hit = [r for r in rows if r["k"] == message and r["own"]]
+            if hit:
+                return "\n\n".join(f"{unit} {message} ({r['role']}):\n{r['text']}" for r in hit)
+            return (f"recall: {unit} {message} is not in the archive (it holds {len(rows)} messages"
+                    + (f", {unit}s {rows[0]['k']}-{rows[-1]['k']})" if rows else ")"))
         if not pattern:
-            return "recall: give `pattern`, or `message` for one archived message in full"
+            return f"recall: give `pattern`, or `message` for one archived {unit} in full"
         try:
             rx = re.compile(pattern, re.I)
         except re.error:
             rx = re.compile(re.escape(pattern), re.I)
         hits = []
         for r in rows:
-            if (before is not None and r["n"] > before) or (after is not None and r["n"] < after):
+            if (before is not None and r["k"] > before) or (after is not None and r["k"] < after):
                 continue
+            first = r["text"].strip().split("\n", 1)[0].strip()[:60]
             for s in re.split(r"(?<=[.!?])\s+|\n+", r["text"]):
                 if s.strip() and rx.search(s):
-                    hits.append(f"message {r['n']} ({r['role']}): {s.strip()[:300]}")
+                    # with the first line of its message, so that a sentence can be placed (a file name, a command);
+                    # with a label the number says it
+                    where = (f', "{first}"' if not label and first and "\n" in r["text"].strip() and s.strip() not in first
+                             and not first.startswith(s.strip()[:40]) else "")
+                    hits.append(f"{unit} {r['k']} ({r['role']}{where}): {s.strip()[:300]}")
         if not hits:
-            return f"recall: nothing in the archive matches {pattern!r}"
-        shown = hits[-last:] if last else hits[:limit]
-        note = ("" if len(shown) == len(hits) else
-                f"\n[{len(hits)} matches; showing the {'last' if last else 'first'} {len(shown)}. Narrow with "
-                f"`before` / `after`, or take the newest with `last`]")
-        return "\n".join(shown) + note
+            return f"recall: nothing in the archive matches {pattern!r}" + (
+                f" at or before {unit} {before}" if before is not None else "") + (f" from {unit} {after} on" if after is not None else "")
+        # More than fit (the limit, or the room): the ones nearest to where the search was anchored, and the count
+        # comes FIRST (a note at the end was read as "these are all": the first 40 of 63 hid every later change).
+        tail = bool(last) or before is not None or after is None       # the nearest matches are the last ones
+        keep = min(last or limit, len(hits))
+        while keep > 1 and max_chars is not None and sum(len(h) + 1 for h in (hits[-keep:] if tail else hits[:keep])) + 160 > max_chars:
+            keep -= 1
+        if keep == len(hits):
+            return "\n".join(hits)
+        if tail:
+            shown, which = hits[-keep:], (f"the {keep} nearest before {unit} {before}" if before is not None and not last else f"the newest {keep}")
+            more = f"{len(hits) - keep} earlier ones are not shown (narrow with `after`, or search for less)"
+        else:
+            shown, which = hits[:keep], f"the first {keep} from {unit} {after} on"
+            more = f"{len(hits) - keep} later ones are not shown (narrow with `before`, or search for less)"
+        return f"[{len(hits)} matches; showing {which}; {more}]\n" + "\n".join(shown)
 
 
 # ------------------------------------------------------------------ one conversation
@@ -375,8 +439,10 @@ class Session:
                       # in-place notes: cuts made that way, attempts that failed, replies asked for again, the size
                       # of the turns a failed attempt left for the ordinary cut, the number (in the client's history)
                       # of an archived user message that is still shown, and the tokens the notes calls cost
-                      "inplace_cuts": 0, "inplace_failed": 0, "inplace_reasks": 0, "hold": 0, "kept_user": None,
-                      "notes_prompt_tokens": 0, "notes_cached_tokens": 0, "notes_written_tokens": 0}
+                      "inplace_cuts": 0, "inplace_failed": 0, "inplace_reasks": 0, "hold": 0, "kept_user": None, "kept_open": None,
+                      "notes_prompt_tokens": 0, "notes_cached_tokens": 0, "notes_written_tokens": 0,
+                      # the archive searches of a turn that ended without a command, shown again in the next request
+                      "carry": None}
         f = self.dir / "state.json"
         if f.exists():
             self.state.update(json.loads(f.read_text()))
@@ -391,17 +457,20 @@ class Session:
         with (self.dir / "notes-history.jsonl").open("a") as f:
             f.write(json.dumps({"upto": upto, "at": round(time.time(), 1), "notes": self.state["notes"]}) + "\n")
 
-    def notes_at(self, n: int) -> str:
+    def notes_at(self, n: int, label: re.Pattern | None = None, unit: str = "message") -> str:
         f = self.dir / "notes-history.jsonl"
         rows = [json.loads(l) for l in f.read_text().splitlines() if l.strip()] if f.exists() else []
-        older = [r for r in rows if r["upto"] <= n]
+        number = {r["n"]: r["k"] for r in self.archive.labelled(label)} if label else {}
+        for r in rows:                               # each save, in the numbering the model uses
+            r["k"] = number.get(r["upto"], r["upto"]) if label else r["upto"]
+        older = [r for r in rows if r["k"] <= n]
         if not older:
-            return (f"recall: no NOTES were saved at or before message {n}"
-                    + (f" (the first save covers messages up to {rows[0]['upto']})" if rows else " (none saved yet)"))
+            return (f"recall: no NOTES were saved at or before {unit} {n}"
+                    + (f" (the first save covers {unit}s up to {rows[0]['k']})" if rows else " (none saved yet)"))
         r = older[-1]
-        later = "" if r["upto"] == n else (f" Anything said in messages {r['upto'] + 1}-{n} is not in them: "
-                                           f"search those with `pattern`, `after` {r['upto'] + 1} and `before` {n}.")
-        return f"NOTES as saved after message {r['upto']}.{later}\n{r['notes']}"
+        later = "" if r["k"] == n else (f" Anything said in {unit}s {r['k'] + 1}-{n} is not in them: "
+                                        f"search those with `pattern`, `after` {r['k'] + 1} and `before` {n}.")
+        return f"NOTES as saved after {unit} {r['k']}.{later}\n{r['notes']}"
 
     def restart(self) -> None:
         stamp = f"{time.strftime('%Y%m%dT%H%M%S')}-{self.state['cuts']}"
@@ -411,7 +480,7 @@ class Session:
             self.archive.path.rename(self.dir / f"archive-until-{stamp}.jsonl")
         self.archive.last = None
         self.log_event({"event": "new conversation: the history no longer contains what was archived", "set_aside": stamp})
-        self.state.update(cut=0, notes="", boundary="", cuts=0, largest_turn=0, hold=0, kept_user=None,
+        self.state.update(cut=0, notes="", boundary="", cuts=0, largest_turn=0, hold=0, kept_user=None, kept_open=None, carry=None,
                           restarts=self.state.get("restarts", 0) + 1)
         self.save()
 
@@ -443,7 +512,8 @@ class Keeper:
                  recite: bool = True, max_recalls: int = 8, reply_reserve: int = 4096,
                  recite_when: str | None = None, think_when: str | None = None, effort: str | None = None,
                  memory_note: bool = True, think_until: str | None = None, repeat_limit: int = 3,
-                 notes_mode: str = "full", inplace_tokens: int = 15000, notes_checks: str = "off") -> None:
+                 notes_mode: str = "full", inplace_tokens: int = 15000, notes_checks: str = "off",
+                 notes_scan: str | None = None, recall_label: str | None = None, recall_unit: str = "item") -> None:
         self.ask, self.root = ask, Path(state_dir)
         self.budget, self.target_ratio, self.headroom = budget, target_ratio, headroom
         self.notes_cap, self.notes_max_tokens, self.notes_thinking = notes_cap, notes_max_tokens, notes_thinking
@@ -474,7 +544,19 @@ class Keeper:
         if notes_mode not in ("full", "inplace") or notes_checks not in ("off", "count", "near"):
             raise ValueError("notes_mode is full or inplace; notes_checks is off, count or near")
         self.notes_mode, self.inplace_tokens, self.notes_checks = notes_mode, inplace_tokens, notes_checks
+        # notes_scan: with notes_checks count or near, only tool results and user messages matching this pattern are
+        # read for mentions and stated numbers (default: all of them). The 1M run counted the keys of an answers file
+        # that the agent printed (p21_7 ...) as things to account for; the harness arm reads delivered items only.
+        self.notes_scan = re.compile(notes_scan) if notes_scan else None
+        # recall_label: a pattern whose first group is the content's own number (`(?m)^ITEM (\d+)/`); `recall` then
+        # shows and takes that number, called recall_unit, instead of message numbers
+        self.recall_label = re.compile(recall_label) if recall_label else None
+        if self.recall_label is not None and self.recall_label.groups < 1:
+            raise ValueError("--recall-label needs one group for the number, such as '(?m)^ITEM (\\d+)/'")
+        self.recall_unit = recall_unit if recall_label else "message"
+        self.recall_tool = recall_tool(self.recall_unit) if recall_label else RECALL_TOOL
         self.sessions: dict[str, Session] = {}
+        self.clock = threading.local()                 # per request thread: seconds spent in the model server
         self.lock = threading.Lock()
 
     def session(self, body: dict[str, Any], header: str | None) -> Session:
@@ -489,6 +571,15 @@ class Keeper:
     # -- sizes: characters over a ratio learned from the server's own prompt_tokens
     def tokens(self, s: Session, messages: list[dict[str, Any]]) -> int:
         return int(chars_of(messages) / s.state["ratio"]) + 1
+
+    def upstream(self, body: dict[str, Any]) -> dict[str, Any]:
+        """One call to the model server, timed (the session's state keeps the totals: where a run's minutes went)."""
+        t = time.monotonic()
+        try:
+            return self.ask(body)
+        finally:
+            self.clock.spent = getattr(self.clock, "spent", 0.0) + time.monotonic() - t
+            self.clock.calls = getattr(self.clock, "calls", 0) + 1
 
     def learn(self, s: Session, sent: list[dict[str, Any]], response: dict[str, Any]) -> None:
         """Characters per token, from the server's own count. Only sizeable prompts teach (on a short one the tool
@@ -508,6 +599,10 @@ class Keeper:
             return messages[:h]
         kept = s.state.get("kept_user") if self.notes_mode == "inplace" else None
         mid = [messages[kept]] if kept is not None and h <= kept < h + s.state["cut"] else []
+        still = s.state.get("kept_open") if self.notes_mode == "inplace" else None
+        if still is not None and h <= still < h + s.state["cut"]:
+            # a tool result cannot stand without its call: it is shown as a message of the keeper's
+            mid.append({"role": "user", "content": OPEN_HEAD + "\n" + text_of(messages[still])[:12000]})
         return messages[:h] + [self.pin(s)] + mid
 
     def view(self, s: Session, messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -546,6 +641,21 @@ class Keeper:
             if self.think_until is not None and m.get("role") != "assistant" and self.think_until.search(text_of(m)):
                 break
         s.state["kept_user"] = at if at is not None and at < h + s.state["cut"] else None
+        # The same for a question that arrived in a tool result (--think-when) and is still open: the in-place cut
+        # waits for it, the ordinary cut does not. (The harness arm lost seven answers at 1M when its ordinary cut
+        # moved the question item out of view while the model was still fetching archived items for it.)
+        still = None
+        for i in range(len(messages) - 1, h - 1, -1):
+            m = messages[i]
+            if m.get("role") == "assistant":
+                continue
+            text = text_of(m)
+            if m.get("role") == "tool" and self.think_when is not None and self.think_when.search(text):
+                still = i
+                break
+            if m.get("role") == "user" or (self.think_until is not None and self.think_until.search(text)):
+                break
+        s.state["kept_open"] = still if still is not None and still < h + s.state["cut"] else None
 
     def notes_call(self, s: Session, model: Any, head: list[dict[str, Any]], gone: list[dict[str, Any]], upto: int = 0) -> None:
         req = head + [{"role": "user", "content": NOTES_REQUEST.format(
@@ -559,7 +669,7 @@ class Keeper:
                 body.setdefault("chat_template_kwargs", {})["reasoning_effort"] = self.effort   # call thinks at full effort
             why, text, finish = "", "", None
             try:
-                resp = self.ask(body)
+                resp = self.upstream(body)
                 choice = (resp.get("choices") or [{}])[0]
                 finish = choice.get("finish_reason")
                 text = from_rules(str((choice.get("message") or {}).get("content") or "").strip())
@@ -622,6 +732,19 @@ class Keeper:
             self.set_kept_user(s, messages, h)
         s.save()
 
+    @staticmethod
+    def supported(delta: dict, texts: list[str], strict: bool) -> dict:
+        """The reply without the lines of identifier-like names that the turns being noted never mention (only with
+        --notes-checks count or near: there, a change is something a tool result or user message states)."""
+        if not strict:
+            return delta
+        names = [k for k, _ in delta["changes"]]
+        seen = nd.mention_counts(names, texts)
+        gone = [k for k in dict.fromkeys(names) if k in nd._checked([k]) and not seen.get(k)]
+        if not gone:
+            return delta
+        return dict(delta, changes=[(k, v) for k, v in delta["changes"] if k not in gone], unsupported=gone)
+
     def keep_inplace(self, s: Session, model: Any, messages: list[dict[str, Any]], h: int, client: dict[str, Any]) -> bool:
         """In-place notes (see INPLACE_REQUEST). True when the turns before the newest exchange were noted and moved
         out; False leaves everything as it was, and the ordinary cut handles those turns when the window fills."""
@@ -647,15 +770,19 @@ class Keeper:
                  "first turn after the user message that follows the NOTES (that message is already in the NOTES; it "
                  "is shown only because it is still being worked on, so do not count it again)" if kept_shown else
                  "message that holds the NOTES")
-        req = base + [{"role": "user", "content": INPLACE_REQUEST.format(start=start)}]
+        overlap = OVERLAP_NOTE if s.state["cut"] and noted and noted[0].get("role") == "assistant" else ""
+        req = base + [{"role": "user", "content": INPLACE_REQUEST.format(start=start, overlap=overlap)}]
         tools = list(client.get("tools") or [])
         if s.state["cut"] or self.memory_note:       # the same tool list as the ordinary calls: the same prompt start
-            tools = tools + [RECALL_TOOL]
-        texts = [text_of(m) for m in noted if m.get("role") in ("tool", "user")]
+            tools = tools + [self.recall_tool]
+        texts = [t for t in (text_of(m) for m in noted if m.get("role") in ("tool", "user"))
+                 if self.notes_scan is None or self.notes_scan.search(t)]
         seen = nd.numbers_in("\n".join(nd.TRAILER.sub("", text_of(m)) for m in noted))
         strict = self.notes_checks in ("count", "near")
         thinking, asked_count, asked_working, asked_layout = self.notes_thinking, not strict, False, False
         rules_seen: list[str] = []
+        earlier: dict | None = None                  # the reply before an asked-for one (see notesdelta.merge_replies)
+        spelt: dict[str, str] = {}                   # misspelled names of this cut and what was meant (notesdelta.respell)
         why, new, info = "no reply", "", {}
         for attempt in (1, 2, 3, 4):
             out: dict[str, Any] = {"model": model, "messages": req, "max_tokens": self.notes_max_tokens, "temperature": 0}
@@ -669,7 +796,7 @@ class Keeper:
             if ctk:
                 out["chat_template_kwargs"] = ctk
             try:
-                resp = self.ask(out)
+                resp = self.upstream(out)
             except Exception as exc:
                 why = f"{type(exc).__name__}: {exc}"
                 break
@@ -680,11 +807,28 @@ class Keeper:
             s.state["notes_cached_tokens"] += (usage.get("prompt_tokens_details") or {}).get("cached_tokens") or 0
             s.state["notes_written_tokens"] += usage.get("completion_tokens") or 0
             delta = nd.parse_delta(text) if finish != "length" else None
+            s.log_event({"event": "in-place notes reply", "attempt": attempt, "finish_reason": finish, "thinking": thinking,
+                         "written": usage.get("completion_tokens"), "reply": text[:6000]})
             if delta is None:
-                why = "reply cut off by the token cap" if finish == "length" else "reply without the NEW RULES / CHANGES layout"
                 part = nd.parse_delta(text, need_changes=False)      # its rules still count, if that section is complete
                 if part and re.search(r"(?m)^\W*(CHANGES|OPEN)\W*$", text):
                     rules_seen += [r for r in part["rules"] if not any(nd.same_rule(r, x) for x in rules_seen)]
+            if delta is None and earlier is not None and (not text or finish == "length" or asked_layout):
+                # Asked about some lines of a reply that was in the layout, the model wrote nothing usable (X32n,
+                # seed 1: an empty reply, twice; the whole cut then went to the full rewrite, which lost a change).
+                # The reply before it stands, without the lines whose number the turns do not state.
+                s.log_event({"event": "in-place notes: no usable second reply, the first stands", "attempt": attempt})
+                kept = self.supported(earlier, texts, strict)
+                near = nd.numbers_near(nd.state_keys(s.state["notes"]) + [k for k, _ in kept["changes"]], texts) if self.notes_checks == "near" else None
+                delta, dropped = nd.without_doubtful(s.state["notes"], dict(kept, rules=list(rules_seen)), seen, strict, near)
+                new, info = nd.apply_delta(s.state["notes"], delta, seen, strict=strict, near=near)
+                info.pop("steps", None)
+                if dropped:
+                    s.log_event({"event": "in-place notes: lines left out (the turns do not bear them out)", "lines": dropped[:12]})
+                why = ""
+                break
+            if delta is None:
+                why = "reply cut off by the token cap" if finish == "length" else "reply without the NEW RULES / CHANGES layout"
                 s.log_event({"event": "in-place notes reply rejected", "attempt": attempt, "why": why, "reply_start": text[:160]})
                 if asked_layout:
                     break
@@ -694,7 +838,22 @@ class Keeper:
                 continue
             # a rule named in any reply of this cut is kept: a second, asked-for reply that leaves it out must not lose it
             rules_seen += [r for r in delta["rules"] if not any(nd.same_rule(r, x) for x in rules_seen)]
+            # an asked-for reply replaces the lines of the names it mentions; the other lines of the reply before it stay
+            if strict:
+                # a misspelled name is put right in every reply of this cut, before the replies are merged (a
+                # correction written under the same misspelling must replace the line it corrects)
+                held = nd.state_keys(s.state["notes"])
+                delta = dict(delta, changes=[(spelt.get(k, k), v) for k, v in delta["changes"]])
+                delta, more = nd.respell(delta, nd.mention_counts(held + nd.identifiers_in(texts), texts), held)
+                if more:
+                    spelt.update(more)
+                    s.log_event({"event": "in-place notes: a misspelled name put right", "names": more})
+            delta = earlier = nd.merge_replies(earlier, delta)
             delta["rules"] = list(rules_seen)
+            # a line for a name that none of these turns mentions is not a change these turns made (see OVERLAP_NOTE)
+            delta = self.supported(delta, texts, strict)
+            if delta.get("unsupported"):
+                s.log_event({"event": "in-place notes: lines for names the turns do not mention left out", "names": delta["unsupported"][:20]})
             known = nd.state_keys(s.state["notes"]) + [k for k, _ in delta["changes"]]
             near = nd.numbers_near(known, texts) if self.notes_checks == "near" else None
             new, info = nd.apply_delta(s.state["notes"], delta, seen, strict=strict, near=near)
@@ -729,7 +888,15 @@ class Keeper:
             s.save()
             return False
         if info.get("mismatch"):
-            s.log_event({"event": "in-place notes: a doubtful line accepted after the second reply", "lines": info["mismatch"][:6]})
+            # After the second reply: a line whose number the turns do not state is left out (the old value stays);
+            # working from another start than the NOTES hold is taken (a model that thinks may be right about it).
+            kept, dropped = nd.without_doubtful(s.state["notes"], delta, seen, strict, near)
+            if dropped:
+                new, info = nd.apply_delta(s.state["notes"], kept, seen, strict=strict, near=near)
+                info.pop("steps", None)
+                s.log_event({"event": "in-place notes: lines left out (the turns do not bear them out)", "lines": dropped[:12]})
+            if info.get("mismatch"):
+                s.log_event({"event": "in-place notes: a doubtful line accepted after the second reply", "lines": info["mismatch"][:6]})
         before = dict(s.state)
         try:                                         # all or nothing: a failure here leaves the state as it was, and the
             s.archive.add(h + s.state["cut"] + 1, noted)    # archive takes no number twice when the cut is made again
@@ -752,6 +919,7 @@ class Keeper:
         """One chat completion through the keeper. Returns the server's response for the client."""
         if (body.get("n") or 1) != 1:
             raise ValueError("ctxkeeper handles one choice per request (n = 1)")
+        began, self.clock.spent, self.clock.calls = time.monotonic(), 0.0, 0
         s = self.session(body, header)
         with s.lock:
             messages = list(body.get("messages") or [])
@@ -766,6 +934,18 @@ class Keeper:
             asked = from_user or bool(self.recite_when and self.recite_when.search(newest))
             if self.recite and asked and rule_lines(s.state["notes"]):
                 view.append({"role": "user", "content": RECITE_HEAD + "\n" + "\n".join("- " + r for r in rule_lines(s.state["notes"]))})
+            carry, carried = s.state.get("carry"), ""
+            # The proxy answers `recall` itself, so the client's history never holds the searches. A turn that
+            # ends without a command (the model thought its reply away, or the search limit stopped it) would
+            # lose all it found: X32m at 1M left six answers blank that way. They are shown once more: only to a
+            # history that continues the one they were made in, and only as far as the window has room.
+            if carry and len(messages) >= carry["n"] and fingerprint(messages[:carry["n"]]) == carry["of"]:
+                room = self.budget - self.reply_reserve - RECALL_MARGIN - self.tokens(s, view + [{"role": "user", "content": CARRY_HEAD}])
+                carried = carry["text"][-int(max(room, 0) * s.state["ratio"]):] if room > 0 else ""
+            if carried:
+                view.append({"role": "user", "content": CARRY_HEAD + "\n" + carried})
+            else:
+                s.state["carry"] = None
             stuck = self.repeat_limit and repeats(messages) >= self.repeat_limit
             if stuck:
                 view.append({"role": "user", "content": REPEAT_NOTE.format(n=repeats(messages))})
@@ -779,32 +959,47 @@ class Keeper:
                     ctk["enable_thinking"] = (from_user or bool(self.think_when.search(newest)) or bool(stuck) or (
                         self.think_until is not None and (
                             question_open(messages[h + s.state["cut"]:], self.think_when, self.think_until)
-                            or (self.notes_mode == "inplace" and s.state.get("kept_user") is not None))))
+                            or (self.notes_mode == "inplace" and (s.state.get("kept_user") is not None
+                                                                  or s.state.get("kept_open") is not None)))))
                 elif stuck:
                     ctk["enable_thinking"] = True
                 if self.effort:
                     ctk["reasoning_effort"] = self.effort
                 out["chat_template_kwargs"] = ctk
             if s.state["cut"] or self.memory_note:   # with the note the tool is there from the start (a stable prompt)
-                out["tools"] = list(body.get("tools") or []) + [RECALL_TOOL]
+                out["tools"] = list(body.get("tools") or []) + [self.recall_tool]
             resp: dict[str, Any] = {}
+            rounds: list[str] = []                   # this turn's searches and what they returned, as text
+            full = False                             # no room in the window for another search
             for round_ in range(self.max_recalls + 1):
-                if round_ == self.max_recalls:
-                    # The budget of searches for one turn is used up. The client must never be handed a `recall` call
-                    # (it does not know the tool): ask once more without it, and say why.
-                    out = dict(out, messages=out["messages"] + [{"role": "user", "content": RECALL_LIMIT_NOTE.format(n=self.max_recalls)}],
-                               tools=[t for t in out.get("tools") or [] if t is not RECALL_TOOL])
+                last = round_ == self.max_recalls or full
+                if last:
+                    # The searches for one turn are used up (their number, or the room in the window). The client
+                    # must never be handed a `recall` call (it does not know the tool): ask once more without it,
+                    # and say why.
+                    note = RECALL_ROOM_NOTE if full else RECALL_LIMIT_NOTE.format(n=self.max_recalls)
+                    out = dict(out, messages=out["messages"] + [{"role": "user", "content": note}],
+                               tools=[t for t in out.get("tools") or [] if t is not self.recall_tool])
                     if not out["tools"]:
                         out.pop("tools")
                     s.state["recall_limit_hit"] = s.state.get("recall_limit_hit", 0) + 1
-                resp = self.ask(out)
+                resp = self.upstream(out)
                 self.learn(s, out["messages"], resp)
                 msg = ((resp.get("choices") or [{}])[0].get("message") or {})
+                if (not msg.get("tool_calls") and not str(msg.get("content") or "").strip()
+                        and (out.get("chat_template_kwargs") or {}).get("enable_thinking") is not False):
+                    # Nothing for the client at all: the thinking used the reply up. Asked once more without it.
+                    s.state["empty_replies_retried"] = s.state.get("empty_replies_retried", 0) + 1
+                    again = dict(out, chat_template_kwargs=dict(out.get("chat_template_kwargs") or {}, enable_thinking=False))
+                    second = self.upstream(again)
+                    m2 = ((second.get("choices") or [{}])[0].get("message") or {})
+                    if m2.get("tool_calls") or str(m2.get("content") or "").strip():
+                        resp, msg = second, m2
                 calls = msg.get("tool_calls") or []
                 mine = [c for c in calls if ((c.get("function") or {}).get("name")) == "recall"]
                 if not mine:
                     break
-                if round_ == self.max_recalls:      # it asked anyway: the client gets the words without the call
+                if last:                            # it asked anyway: the client gets the words without the call
                     rest = [c for c in calls if c not in mine]
                     if rest:
                         msg["tool_calls"] = rest
@@ -817,18 +1012,44 @@ class Keeper:
                     msg["tool_calls"] = [c for c in calls if c not in mine]
                     break
                 results = []
+                room = self.budget - self.reply_reserve - self.tokens(s, out["messages"] + [msg])
                 for c in mine:
                     try:
                         args = json.loads((c.get("function") or {}).get("arguments") or "{}")
                         if args.get("notes_at") is not None:
-                            text = s.notes_at(int(args["notes_at"]))
+                            text = s.notes_at(int(args["notes_at"]), self.recall_label, self.recall_unit)
                         else:
-                            text = s.archive.recall(**{k: args[k] for k in ("pattern", "before", "after", "last", "message") if args.get(k) is not None})
+                            text = s.archive.recall(**{k: args[k] for k in ("pattern", "before", "after", "last", "message") if args.get(k) is not None},
+                                                    label=self.recall_label, unit=self.recall_unit,
+                                                    max_chars=int(max(room - RECALL_MARGIN, 0) * s.state["ratio"]))
                     except Exception as exc:
-                        text = f"recall: bad arguments ({exc})"
+                        args, text = {}, f"recall: bad arguments ({exc})"
+                    # a result never takes the window past the room for the reply: it is cut to what is left, and
+                    # once nothing is left the other searches of the same reply get one short line each
+                    fits = int(max(room - RECALL_MARGIN, 0) * s.state["ratio"])
+                    if fits < 200:
+                        text, full = RECALL_NONE_NOTE, True
+                    elif len(text) > fits:
+                        text, full = text[:fits] + RECALL_CUT_NOTE, True
+                    room -= self.tokens(s, [{"role": "tool", "content": text}])
                     s.state["recalls"] += 1
                     results.append({"role": "tool", "tool_call_id": c.get("id"), "content": text})
+                    rounds.append("recall(" + ", ".join(f"{k}={v!r}" for k, v in args.items()) + ") returned:\n" + text)
+                full = full or room < RECALL_MARGIN
                 out = dict(out, messages=out["messages"] + [msg] + results)
+            # What the searches found stays for the next request only if this turn gave the client nothing to act on
+            empty = not msg.get("tool_calls") and not str(msg.get("content") or "").strip()
+            if empty and (rounds or carried):
+                text = "\n\n".join(([carried] if carried else []) + rounds)
+                s.state["carry"] = {"text": text[-CARRY_CHARS:], "n": len(messages), "of": fingerprint(messages)}
+                s.state["carried"] = s.state.get("carried", 0) + 1
+            else:
+                s.state["carry"] = None
+            # requests handled, calls made to the server for them (main, notes, searches), and the seconds of both
+            s.state["requests"] = s.state.get("requests", 0) + 1
+            s.state["upstream_calls"] = s.state.get("upstream_calls", 0) + self.clock.calls
+            s.state["upstream_s"] = round(s.state.get("upstream_s", 0.0) + self.clock.spent, 3)
+            s.state["handle_s"] = round(s.state.get("handle_s", 0.0) + time.monotonic() - began, 3)
             s.save()
             return resp
 
@@ -951,6 +1172,14 @@ def main() -> None:
                     help="with --notes-mode inplace: extra checks of the reply for ledger-like state with names such as "
                          "abcd12 (count: every mention accounted for, values without working must be stated; near: "
                          "stated in a sentence that names the thing)")
+    ap.add_argument("--recall-label", help="a pattern whose first group is the content's own number, such as '(?m)^ITEM (\\d+)/': "
+                                          "`recall` then shows and takes that number instead of message numbers")
+    ap.add_argument("--recall-unit", default="item", help="what --recall-label counts, as the model is told (default: item)")
+    ap.add_argument("--notes-scan", help="with --notes-checks count or near: read only the tool results and user messages "
+                                         "matching this regular expression for mentions and stated numbers")
+    ap.add_argument("--max-recalls", type=int, default=8,
+                    help="archive searches the model may make within one client call before it is asked to go on "
+                         "(with in-place notes little is in view, and a turn with several questions needs more: 24)")
     ap.add_argument("--state-dir", type=Path, default=Path.home() / ".cache" / "ctxkeeper")
     ap.add_argument("--timeout", type=float, default=1800)
     a = ap.parse_args()
@@ -961,7 +1190,8 @@ def main() -> None:
                     recite=not a.no_recite, reply_reserve=a.reply_reserve, recite_when=a.recite_when,
                     think_when=a.think_when, effort=a.effort, memory_note=not a.no_memory_note,
                     think_until=a.think_until, repeat_limit=a.repeat_limit, notes_mode=a.notes_mode,
-                    inplace_tokens=a.inplace_tokens, notes_checks=a.notes_checks)
+                    inplace_tokens=a.inplace_tokens, notes_checks=a.notes_checks, notes_scan=a.notes_scan,
+                    max_recalls=a.max_recalls, recall_label=a.recall_label, recall_unit=a.recall_unit)
     server = ThreadingHTTPServer((a.host, a.port), make_handler(keeper, upstream, a.timeout))
     print(f"ctxkeeper: http://{a.host}:{a.port}/v1 -> {upstream}/v1, live window {a.budget} tokens, notes {a.notes_mode}"
           + (f" every {a.inplace_tokens} tokens, checks {a.notes_checks}" if a.notes_mode == "inplace" else "")
