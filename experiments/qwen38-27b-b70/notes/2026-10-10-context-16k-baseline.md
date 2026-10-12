@@ -2037,7 +2037,7 @@ harness keeper, with the same score within one answer. Retrieval at question tim
 The gate on the final code is unchanged to the token from this afternoon's (the replay said the rules streams
 would not notice the new rules: no reply there contains what they act on).
 
-### Campaign 13c so far, and its control (13d), registered 2026-10-12 19:45 before the control runs
+### Campaign 13c so far, and its control (13d), registered 2026-10-12 19:27 before the control runs
 
 **XR4** (the proxy as XR3, plus `--effort medium`: `reasoning_effort=medium` added to every call it forwards) on
 `repair-n40-s1x`: 40 fixed, **40 clean**, audit **7 of 7**, **29.5 minutes** (XR3: 47.1). Expected 36 or more
@@ -2066,7 +2066,7 @@ loses instructions or the audit again, the difference is in the method.
 W32 is being run again in 13c with the task's own time limit (graded where it stops), at the default effort, as
 the row that 13b could not grade. After C32m the queue runs the proxy on the second 1M ledger stream (X32g).
 
-**XR5**, registered with the control (19:50): XR4 plus `--think-cap 3072` (new: a call that may think is first sent
+**XR5**, registered with the control (19:29): XR4 plus `--think-cap 3072` (new: a call that may think is first sent
 with its reply cut to 3,072 tokens; one that spent them all on thinking is asked again without thinking at the
 client's own size, one that was cut inside its answer is asked again in full). Expected on `repair-n40-s1x`: 38 or
 more clean, audit 6 or 7, 23 minutes or less (XR4: 29.5), fewer than 25,000 tokens thrown away, and fewer than ten
