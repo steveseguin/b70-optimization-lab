@@ -36,7 +36,12 @@ The library is more-itertools 10.7.0 (MIT; sdist checked by sha256, never instal
   touches pip, curl, wget, urllib or the proxy variables.
 
   Safety: the builder's own screening and self-test run in containers without network; every test process is capped at
-  800 MiB of address space and every shell the agent starts at 1.5 GiB; no two chosen defects break each other's
+  128 MiB of address space, every shell the agent starts at 160 MiB, the task container at 384 MiB (the whole
+  reference suite, 671 tests in 156 classes, passes class by class under 96 MiB). The first caps were 800 MiB, 1.5 GiB
+  and 2 GiB, and the first run beside the model server lasted 40 seconds: at its 13th command the agent ran
+  `t IchunkedTests` on a defect that never stops, the test grew by 70 MiB a second, and the server's memory guard
+  (floor 1.6 GiB, about 0.55 GiB of room at that moment) stopped the server before the cap was reached. A cap has to
+  be smaller than the room on the host it protects, not merely finite; no two chosen defects break each other's
   test class. Screening keeps several cores busy for some minutes: run the builder only when no model server is up.
   The builder ends with a self-test (the real image, `next` through the queue, `t` once, six scripted solutions with
   known scores) and exits non-zero if any count is off.
@@ -158,7 +163,7 @@ def test_classes(test_src: str) -> dict[str, str]:
 # ------------------------------------------------------------------ screening (runs INSIDE the container)
 RUN_CLASS = r'''
 import sys, unittest, json, resource
-resource.setrlimit(resource.RLIMIT_AS, (800 * 2**20, 800 * 2**20))     # a defect that never stops must not eat the host
+resource.setrlimit(resource.RLIMIT_AS, (128 * 2**20, 128 * 2**20))     # a defect that never stops must not eat the host (see the module text)
 mod, classes = sys.argv[1], sys.argv[2:]
 suite = unittest.TestSuite()
 m = __import__("tests." + mod, fromlist=["x"])
@@ -180,7 +185,7 @@ def run_tests(root: Path, mod: str, classes: list[str], timeout: int = 20) -> di
 
 RUN_ALL = r'''
 import sys, unittest, json, resource
-resource.setrlimit(resource.RLIMIT_AS, (800 * 2**20, 800 * 2**20))
+resource.setrlimit(resource.RLIMIT_AS, (128 * 2**20, 128 * 2**20))
 suite = unittest.TestSuite()
 for mod in ("test_more", "test_recipes"):
     suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(__import__("tests." + mod, fromlist=["x"])))
@@ -288,7 +293,7 @@ for c in sys.argv[1:]:
         sys.exit(f"t: no test class {c} in tests/test_more.py or tests/test_recipes.py")
     names.append(f"tests.{hit[0]}.{c}")
 try:
-    cap = lambda: __import__("resource").setrlimit(__import__("resource").RLIMIT_AS, (800 * 2**20, 800 * 2**20))
+    cap = lambda: __import__("resource").setrlimit(__import__("resource").RLIMIT_AS, (128 * 2**20, 128 * 2**20))
     p = subprocess.run([sys.executable, "-m", "unittest", "-q", *names], cwd="/app", capture_output=True, text=True, timeout=60, preexec_fn=cap)
     out = (p.stdout + p.stderr).strip().splitlines()
 except subprocess.TimeoutExpired:
@@ -301,7 +306,7 @@ COPY more_itertools /app/more_itertools
 COPY tests /app/tests
 COPY tickets.jsonl end_text /opt/repair/
 COPY next t /usr/local/bin/
-RUN chmod +x /usr/local/bin/next /usr/local/bin/t && echo 'ulimit -v 1572864 2>/dev/null' > /etc/repair-limits.sh \
+RUN chmod +x /usr/local/bin/next /usr/local/bin/t && echo 'ulimit -v 163840 2>/dev/null' > /etc/repair-limits.sh \
     && sleep 1 && touch /opt/repair/.built
 ENV BASH_ENV=/etc/repair-limits.sh
 ENV http_proxy=http://127.0.0.1:9 https_proxy=http://127.0.0.1:9 HTTP_PROXY=http://127.0.0.1:9 HTTPS_PROXY=http://127.0.0.1:9 \\
@@ -365,7 +370,7 @@ shutil.copytree(f"{T}/orig_tests", f"{work}/tests")                    # the ori
 
 def run(mod, cls):
     code = ("import sys, unittest, json, resource\n"
-            "resource.setrlimit(resource.RLIMIT_AS, (800 * 2**20, 800 * 2**20))\n"
+            "resource.setrlimit(resource.RLIMIT_AS, (128 * 2**20, 128 * 2**20))\n"
             "sys.path.insert(0, %r)\n" % work +
             "m = __import__('tests.' + sys.argv[1], fromlist=['x'])\n"
             "s = unittest.defaultTestLoader.loadTestsFromTestCase(getattr(m, sys.argv[2]))\n"
@@ -520,7 +525,7 @@ def selftest(task: Path) -> None:
               "for mode in " + " ".join(want) + "; do rm -rf /app /logs; cp -r /app0 /app; mkdir -p /logs; "
               "if [ $mode != none ]; then python3 /solution/solve.py $mode; fi; echo \"== $mode\"; bash /tests/test.sh; done")
     try:
-        p = subprocess.run(["docker", "run", "--rm", "--network", "none", "--memory", "1g", "--memory-swap", "1g", "--cpus", "2",
+        p = subprocess.run(["docker", "run", "--rm", "--network", "none", "--memory", "384m", "--memory-swap", "384m", "--cpus", "2",
                             "-v", f"{(task / 'tests').resolve()}:/tests:ro", "-v", f"{(task / 'solution').resolve()}:/solution:ro",
                             tag, "bash", "-c", script], capture_output=True, text=True)
     finally:
@@ -651,7 +656,7 @@ def build(src_root: Path, kept: list[dict], out: Path, n: int, seed: int, image:
         timeout_sec = 132300.0
 
         [environment]
-        memory_mb = 2048
+        memory_mb = 384
         cpus = 2
         """))
     print(f"wrote {task}: {n} bugs ({sum(b['file'] == 'recipes.py' for b in bugs)} in recipes.py), notices at tickets {at}")
@@ -680,7 +685,7 @@ def main() -> None:
     kept_file = out / "mutations.json"
     if not kept_file.exists() or not json.loads(kept_file.read_text()):
         # The library's tests run only in a container: no network, read-only source, the script mounted beside it.
-        # Each test process is capped at 800 MiB of address space (RUN_CLASS, RUN_ALL), the container at 6 GiB with no
+        # Each test process is capped at 128 MiB of address space (RUN_CLASS, RUN_ALL), the container at 6 GiB with no
         # swap beyond it. Run this only when no model server is up: it keeps several cores busy for some minutes.
         subprocess.run(["docker", "run", "--rm", "--network", "none", "--memory", "6g", "--memory-swap", "6g", "--cpus", str(a.workers),
                         "-v", f"{src.resolve()}:/src:ro", "-v", f"{Path(__file__).resolve()}:/builder/make_repair_tasks.py:ro",
