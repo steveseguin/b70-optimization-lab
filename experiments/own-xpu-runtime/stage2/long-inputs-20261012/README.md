@@ -1,14 +1,15 @@
 # Long-context arithmetic-v2 CPU oracles
 
-Completed and verified: 0/2. Arithmetic `iq3-p17-detmath-v2` for the separate
+Completed and verified: 1/2. Arithmetic `iq3-p17-detmath-v2` for the separate
 Unsloth UD-IQ3_XXS quantized compressed model; context capacity 4,096, 32 generated tokens.
 EOG 248044 or 248046 is retained and then stops generation. No device was accessed.
 
 | Prompt | Prompt tokens | Generated | End | Processes | First 8 IDs | Last 8 IDs | Seconds/position | CPU hours |
 | --- | ---: | ---: | --- | ---: | --- | --- | ---: | ---: |
+| LONG-A | 598 | 32 | token-cap | 7 | 760, 3212, 174183, 3047, 4866, 16545, 430, 264 | 1510, 43208, 20668, 27653, 1049, 31966, 5090, 3302 | 16.8193 | 5.2273 |
 
-Numerical-process wall time including resume segments: 0.000 seconds.
-Measured user + system time: 0.000000 CPU hours.
+Numerical-process wall time including resume segments: 10600.406 seconds.
+Measured user + system time: 5.227267 CPU hours.
 These are CPU oracle costs, not serving speeds. Per-position times include the original
 streaming weight loader and per-site logging; selected capture positions also include
 the selection audit. Checkpoint write/verification is outside those position timings. Receipt totals include
@@ -19,9 +20,17 @@ Token 1 includes initialization and prefill. `positions.jsonl`, `tokens.jsonl`, 
 
 | Prompt | Zero-based positions | Mean seconds/position |
 | --- | --- | ---: |
+| LONG-A | 0–99 | 17.5843 |
+| LONG-A | 100–255 | 15.3833 |
+| LONG-A | 256–511 | 17.1060 |
+| LONG-A | 512–628 | 17.4525 |
 
 | Prompt | Zero-based positions | Pool s/position | Select s/position | Attention s/position | All sites s/position |
 | --- | --- | ---: | ---: | ---: | ---: |
+| LONG-A | 0–99 | 0.1318 | 0.0018 | 0.0850 | 15.3682 |
+| LONG-A | 100–255 | 0.1185 | 0.0020 | 0.1407 | 13.4822 |
+| LONG-A | 256–511 | 0.1272 | 0.0027 | 0.2537 | 14.7763 |
+| LONG-A | 512–628 | 0.1306 | 0.0033 | 0.3811 | 15.3482 |
 
 QSA recomputes all complete four-token pools and scores them at every position.
 Attention reduces the selected positions in score order, at most 2,048 plus up to
@@ -95,6 +104,7 @@ unchanged Core::dot and detmath::sqrt, without altering model buffers.
 
 | Prompt | Position (zero-based) | Consumed tokens | Admitted | Dropped | Layers with score ties | Cutoff tie layers |
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| LONG-A | 597 | 598 | 598 | 0 | 0/12 | [] |
 
 The budget is 512 complete pools × 4 tokens, plus an incomplete trailing pool. Thus
 zero-based 2048 and 2049 may still admit every token; first dropped positions appear

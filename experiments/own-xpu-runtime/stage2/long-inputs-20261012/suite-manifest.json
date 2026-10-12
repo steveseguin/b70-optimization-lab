@@ -6,8 +6,163 @@
   "suite_sha256": "789a8aad103abefa39b8d54f5cff0fd76a4c48ae131ca7ddfbc9b7e1fbafd5b5",
   "prompts_manifest_sha256": "98df7f6c5a9bad25df4ea8b19b611da791a5f295e1bd2d6f599d4b2aa1dbe0f3",
   "complete": false,
-  "prompts": [],
-  "total_elapsed_seconds": 0,
-  "total_cpu_hours": 0.0,
+  "prompts": [
+    {
+      "prompt_id": "LONG-A",
+      "prompt_tokens": 598,
+      "input_bundle": "experiments/own-xpu-runtime/stage2/long-inputs-20261012/LONG-A",
+      "input_bundle_hashes": {
+        "tokens.txt": "12c7511e707e8ea85e2c8d2fb1443db4bcf159074da9844a32f7d0eda2a84185",
+        "input.json": "b4520f68d6ef05e4b40659fd88f2d0a97994b30ac8fcbc32c1ef77681651e75d",
+        "identity.tsv": "85992a7027dca5de4478e9a5cef4e24722a7065aca66bc1a9954d8d3f617e257",
+        "plan.tsv": "9926b7a266ba2774f02fe00583257ab2aaff96ee0313d350d3ba54602ae2a656",
+        "vocab.bin": "7a0e612475366f8d368dbfee6a0a01336f1059e71fa98d91300eb62abd996a64"
+      },
+      "oracle_directory": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-long/LONG-A",
+      "oracle_receipt_sha256": "1b0ea0ccf2544ed085871345384072bcefbd4862f8bfaf6617d0e283e6ea9d88",
+      "generated_tokens": 32,
+      "first_8_token_ids": [
+        760,
+        3212,
+        174183,
+        3047,
+        4866,
+        16545,
+        430,
+        264
+      ],
+      "last_8_token_ids": [
+        1510,
+        43208,
+        20668,
+        27653,
+        1049,
+        31966,
+        5090,
+        3302
+      ],
+      "ended_early": false,
+      "termination": "token-cap",
+      "context": 4096,
+      "fixture_steps": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "midprompt_positions": [
+        597
+      ],
+      "selection_summary": [
+        {
+          "position": 597,
+          "prompt_ordinal": 598,
+          "admitted": 598,
+          "dropped": 0,
+          "layers": 12,
+          "layers_with_ties": 0,
+          "cutoff_tie_layers": []
+        }
+      ],
+      "mean_seconds_per_position": 16.819263910969795,
+      "elapsed_seconds": 10600.40572685696,
+      "cpu_seconds": 18818.159798,
+      "position_timing_bins": [
+        {
+          "first_position": 0,
+          "last_position": 99,
+          "positions": 100,
+          "mean_seconds_per_position": 17.584329
+        },
+        {
+          "first_position": 100,
+          "last_position": 255,
+          "positions": 156,
+          "mean_seconds_per_position": 15.38328205128205
+        },
+        {
+          "first_position": 256,
+          "last_position": 511,
+          "positions": 256,
+          "mean_seconds_per_position": 17.106041796875
+        },
+        {
+          "first_position": 512,
+          "last_position": 628,
+          "positions": 117,
+          "mean_seconds_per_position": 17.452524786324787
+        }
+      ],
+      "site_cost_bins": [
+        {
+          "first_position": 0,
+          "last_position": 99,
+          "positions": 100,
+          "position_seconds": 17.584329,
+          "site_seconds": 15.368210055210001,
+          "qsa_pool_seconds": 0.1318068182,
+          "qsa_select_seconds": 0.00178100723,
+          "qsa_attention_seconds": 0.08499336040000001
+        },
+        {
+          "first_position": 100,
+          "last_position": 255,
+          "positions": 156,
+          "position_seconds": 15.38328205128205,
+          "site_seconds": 13.482204462673076,
+          "qsa_pool_seconds": 0.11853016333333333,
+          "qsa_select_seconds": 0.0020089473974358976,
+          "qsa_attention_seconds": 0.14069895448717948
+        },
+        {
+          "first_position": 256,
+          "last_position": 511,
+          "positions": 256,
+          "position_seconds": 17.106041796875,
+          "site_seconds": 14.776274373789063,
+          "qsa_pool_seconds": 0.1271751644921875,
+          "qsa_select_seconds": 0.00269998053125,
+          "qsa_attention_seconds": 0.25368013828125
+        },
+        {
+          "first_position": 512,
+          "last_position": 628,
+          "positions": 117,
+          "position_seconds": 17.452524786324787,
+          "site_seconds": 15.348172138632478,
+          "qsa_pool_seconds": 0.13064729632478633,
+          "qsa_select_seconds": 0.0033404464017094014,
+          "qsa_attention_seconds": 0.3811343162393162
+        }
+      ],
+      "prompt_source": {
+        "id": "LONG-A",
+        "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/long-inputs-20261012/LONG-A.txt",
+        "rendered_sha256": "93ad49363f9f83ee735a772d90208660161699ce2eb147b322cc98fb40270040",
+        "raw_sha256": "183821ef17a5b65fe2b47804a5909ad872b583fd131b03d2c00fbeb55a5d4a9f",
+        "document_sha256": "70c7beb8f65c41e239d406cf278bc04aa735448abe29c5ef97dcf82d099116e2",
+        "prompt_tokens": 598,
+        "document_tokens": 571,
+        "source_files": [
+          {
+            "path": "docs/current-reproducibility-map.md",
+            "sha256": "b28abea91f6a5a74cca943e9b618a76eec16ce4c62050dd2455d9a8ec312baf5",
+            "revision": "92f2c17bcdbb8c7e7bf590fdfe68b371e64cf3f6"
+          }
+        ],
+        "source_char_start": 0,
+        "source_char_end": 2001,
+        "corpus_text_char_start": 0,
+        "source_repetition": false
+      },
+      "execution_segments": 7
+    }
+  ],
+  "total_elapsed_seconds": 10600.40572685696,
+  "total_cpu_hours": 5.227266610555556,
   "cpu_accounting_complete": true
 }
