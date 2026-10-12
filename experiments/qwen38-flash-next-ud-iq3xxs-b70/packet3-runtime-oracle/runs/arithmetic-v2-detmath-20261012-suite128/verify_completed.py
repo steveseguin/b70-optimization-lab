@@ -18,6 +18,10 @@ def main():
   stored=r.read(d/'suite64-equality-proof.json')
   r.check(stored['passed'] is True,'stored prefix comparison missing')
   receipt=r.read(d/'receipt.json')
+  snapshot=r.HERE/'runner-snapshots'/(receipt['runner_sha256']+'.py')
+  r.check(r.sha(snapshot)==receipt['runner_sha256'],'runner snapshot binding')
+  r.check(receipt['build_receipt_sha256']==r.sha(r.HERE/'build-receipt.json'),'build receipt binding')
+  r.check(receipt['binary_sha256']==r.read(r.HERE/'build-receipt.json')['binary_sha256'],'CPU binary binding')
   r.check(receipt['suite64_equality_sha256']==r.sha(d/'suite64-equality-proof.json'),'prefix receipt binding')
   for name,info in receipt['compressed_logs'].items():
    with r.gzip.open(d/(name+'.gz'),'rb') as stream:
