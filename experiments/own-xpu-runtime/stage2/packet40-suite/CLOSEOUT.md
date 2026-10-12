@@ -19,8 +19,8 @@ CPU qualification remains in progress. Copied packet38 passing receipts are
 historical inputs, not packet40 qualification. No packet40 speed is claimed.
 The final gate inventory is authoritative only after a fresh successful seal;
 [qualification-checklist.json](qualification-checklist.json) maps inherited
-obligations. The strict terminal-EOS state requirement remains unresolved and
-blocks sealing independently of the remaining CPU checks.
+obligations. Strict terminal-EOS restoration is implemented; its current-source
+full-state qualification remains a prerequisite for sealing.
 
 ## What worked
 
@@ -45,10 +45,12 @@ structural assertions were updated to check the new bank-ownership rules, with
 negative mutation checks retained. The seal audit also exposed an omitted
 nested helper binary; its inventory check and regression test were corrected.
 
-At terminal EOS, abandoned speculative work can leave different unused physical
-bytes even though committed state and emitted tokens agree. No owner exception
-has been assumed; [EOS-STATE-SCOPE.md](EOS-STATE-SCOPE.md) describes the exact
-limit and pending decision. Device overlap, KD device parity, cancellation
+The original terminal-EOS path left abandoned physical bytes and token/cache
+metadata unrestored. The replacement preserves a private pre-speculation image
+and restores it on every rollback, including terminal abandonment. No reduced
+state exception is assumed; [EOS-STATE-SCOPE.md](EOS-STATE-SCOPE.md) records the
+finding and correction. Current-source full-state proof must complete before
+sealing. Device overlap, KD device parity, cancellation
 savings and boot-bound exactness/speed pairs remain unmeasured. A 128-token cap
 can provide the 100-event rate but cannot satisfy the repository's 512-token
 publication gate or promotion-attestation requirement. The historical 28.49
@@ -69,8 +71,8 @@ parent path, mapped by [inherited-evidence-links.json](inherited-evidence-links.
 
 ## When to revisit
 
-Resolve the terminal-EOS physical-state requirement, finish current CPU
-qualification and seal, then run the admitted coordinator-only device windows.
+Complete strict terminal-EOS and remaining current-source CPU qualification,
+seal, then run the admitted coordinator-only device windows.
 Changed arithmetic, kernel choices, compiler, protocol, lifetime, retention,
 input identity or metric definitions require the corresponding gates again.
 [INTEGRATE.md](INTEGRATE.md) records the next rank0-draft/rebalance and packet39

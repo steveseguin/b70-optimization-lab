@@ -34,7 +34,8 @@ individual receipts and the final execution audit for current hash bindings.
 Inherited real-model qualification, selected-kernel draft references, actual
 128-token tail fixtures and final admission checks remain in progress.
 
-The terminal-EOS physical-byte limitation is unresolved; see EOS-STATE-SCOPE.md.
-No all-byte claim is made for unused abandoned speculative state at EOS, and no
-owner exception has been assumed. This blocks a completed seal independently of
-the remaining CPU checks.
+The strict terminal-EOS image restoration is now implemented; see
+EOS-STATE-SCOPE.md. The coverage listed above records earlier completed work and
+must not substitute for current-source qualification of the rebuilt snapshot
+implementation. No reduced-state exception is assumed. The final seal must
+authenticate fresh full-state terminal, retention and cancellation evidence.

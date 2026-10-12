@@ -1,4 +1,5 @@
 #pragma once
+#include "strict_snapshot.hpp"
 #include <poll.h>
 #include <functional>
 #include <sys/mman.h>
@@ -8,6 +9,7 @@
 // Wire ABI is little-endian, fixed-width on the admitted Linux x86_64 host.
 namespace pipeline {
 constexpr size_t slot_bytes=65536, shared_bytes=2*slot_bytes+4096;
+static_assert(slot_bytes==65536,"strict snapshot shared slot extent");
 enum Command:int32_t { half=1, accept=2, rollback=3, dump=4, finish=5, canary=6, fail=7, stall=8, draft=9 };
 struct Request { int32_t op,token,position,fixture,speculative,sequence, reserved[2]; };
 struct Reply { int32_t status,token,error,bytes,sequence,rank,reserved[2]; double busy_ms,gpu_ms,redo_ms,reserved_ms; };
@@ -97,7 +99,7 @@ static void publish(Engine& e,const Candidate& c) {
   std::ofstream f(dest/name,std::ios::binary);f.write(reinterpret_cast<const char*>(bytes.data()),bytes.size());require(bool(f),"fixture write");
  }
 }
-static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uint8_t* shared,bool prepared_inputs=false) {
+static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uint8_t* shared,SpeculativeImage& image,bool prepared_inputs=false) {
  require(!candidate.pending,"half before resolving prior candidate");
  require(request.position>=0&&request.position<e.p.g.context,"half position bound");
  if(!prepared_inputs)require(e.integer(0,"position")==request.position,"position sequence mismatch");
@@ -108,6 +110,7 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  struct rusage before{},after{},thread_before{},thread_after{};getrusage(RUSAGE_SELF,&before);getrusage(RUSAGE_THREAD,&thread_before);
  auto waits=e.host_waits;double waited=e.wait_ms;e.family_ms.fill(0);
  auto start=std::chrono::steady_clock::now();double gpu=e.gemv_ms+e.nongemv_ms;
+ if(request.speculative)image.begin(shared);
  candidate={};candidate.pending=true;candidate.position=request.position;candidate.fixture=request.fixture;candidate.speculative=request.speculative;
  if(e.a.rank==0){candidate.h0=e.history0;candidate.h1=e.history1;
   if(e.buffers[0].count("token_history"))candidate.token_history=e.readback(0,e.buffers[0].at("token_history").id,16);}
@@ -166,12 +169,10 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  if(!e.class_timing)e.timings<<"null";else {e.timings<<'{';for(size_t j=0;j<e.families.size();++j)e.timings<<(j?",":"")<<ownrt::quote(e.families[j])<<':'<<e.family_ms[j];e.timings<<'}';}e.timings<<"}\n";
  return {0,token,error,int32_t(bytes),request.sequence,e.a.rank,{int32_t(candidate.cancelled),int32_t(issued)},Engine::ms(start),e.gemv_ms+e.nongemv_ms-gpu,0,0};
 }
-static void undo(Engine& e,Candidate& c) {
+static void undo(Engine& e,Candidate& c,SpeculativeImage& image) {
  require(e.a.rank==0&&c.pending&&c.speculative,"rollback outside rank0 speculation");
  e.drain();require(!e.integer(0,"error"),"sticky error cannot be rolled back");
- if(c.swapped)e.swap_state_banks();e.history0=c.h0;e.history1=c.h1;
- if(!c.token_history.empty())e.put(0,"token_history",c.token_history.data(),c.token_history.size());
- e.put(0,"position",&c.position,4);e.lookup_ids.clear();e.fp32_sources[0]=0;e.fp32_extents[0]=0;c={};
+ if(c.swapped)e.swap_state_banks();image.restore();c={};
 }
 static void state_dump(Engine& e,int sequence) {
  std::ostringstream o;o<<"{\"history0\":"<<e.history0<<",\"history1\":"<<e.history1<<",\"buffers\":{";bool comma=false;
@@ -206,6 +207,7 @@ static int run_rank(const Options& a) {
   dump_plan(a.output/"launch-plan.json",p);write_plan(a.output/"plan.json",p,*weights,1,a);
   engine=std::make_unique<Engine>(*weights,a,p);record_host_memory(a.output,"before_load");engine->initialize();
   if(a.rank==0)banks(*engine);else {engine->prepare_plan();engine->prepare_commands();}
+  SpeculativeImage image(*engine);
 #ifndef OWN_RT_HOST_ONLY
   if(a.rank==0)weights->warm_lookups();
 #endif
@@ -241,12 +243,15 @@ static int run_rank(const Options& a) {
    else if(r.op==half){
     bool prepared_inputs=async_half_ready;
     if(prepared_inputs){require(r.position==async_half_position&&r.token==async_half_token,"asynchronous draft/half confirmed identity");provider->queue_half_inputs(r.token,static_cast<uint8_t*>(mapping)+slot_bytes);async_half_ready=false;}
-    response=half_step(*engine,c,r,static_cast<uint8_t*>(mapping),prepared_inputs);
+    response=half_step(*engine,c,r,static_cast<uint8_t*>(mapping),image,prepared_inputs);
    }
-   else if(r.op==pipeline::accept){require(c.pending,"accept without candidate");publish(*engine,c);if(c.fixture>0)++accepted;c={};}
-   else if(r.op==rollback)undo(*engine,c);
-   else if(r.op==dump){require(!c.pending,"dump uncommitted state");state_dump(*engine,r.position);if(r.position==2147483647)request_state_inventory(*engine);}
-   else if(r.op==11){request_reset(*engine,c,provider.get(),a.output/("reset-"+std::to_string(r.sequence)+".txt"),accepted);accepted=0;}
+   else if(r.op==pipeline::accept){require(c.pending,"accept without candidate");publish(*engine,c);if(c.speculative)image.accept();if(c.fixture>0)++accepted;c={};}
+   else if(r.op==rollback)undo(*engine,c,image);
+   else if(r.op==dump){require(!c.pending,"dump uncommitted state");image.boundary();state_dump(*engine,r.position);if(r.position==2147483647)request_state_inventory(*engine);}
+   else if(r.op==11){image.boundary();request_reset(*engine,c,provider.get(),a.output/("reset-"+std::to_string(r.sequence)+".txt"),accepted);accepted=0;}
+   #ifdef OWN_RT_HOST_ONLY
+   else if(r.op==12){require(a.rank==0&&c.pending&&c.speculative,"negative control ownership");image.corrupt_protected_for_gate(r.token);}
+#endif
    else if(r.op==fail)throw std::runtime_error("injected rank failure");
    else if(r.op==stall){auto until=std::chrono::steady_clock::now()+std::chrono::seconds(a.seconds);while(std::chrono::steady_clock::now()<until){pipeline_cancel_check();poll(nullptr,0,10);}throw std::runtime_error("bounded injected stall");}
    else throw std::runtime_error("unknown rank command");
@@ -255,7 +260,7 @@ static int run_rank(const Options& a) {
    return response;
   };
   for(;;){Request r{};transfer(a.channel,&r,sizeof r,false,a.seconds);require(r.sequence==++sequence,"command sequence");
-   if(r.op==finish){require(!c.pending,"finish with unresolved candidate");if(provider)provider->dump(engine->a.output/"draft-final-state");break;}
+   if(r.op==finish){require(!c.pending,"finish with unresolved candidate");image.boundary();if(provider)provider->dump(engine->a.output/"draft-final-state");break;}
    Reply response{};
    if(r.op==10){
     require(!c.pending,"native entry unresolved candidate");

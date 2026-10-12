@@ -20,6 +20,7 @@ packet40_cpu "$packet40/build.py" icpx-host
 packet40_cpu "$packet40/build.py" asan
 packet40_cpu "$packet40/build.py" device
 packet40_cpu "$packet40/build_native_controller.py"
+packet40_cpu "$packet40/seal40.py" --record-phase build-identity --receipt build-identity40.json -- "$packet40_python" -B "$packet40/build_identity40.py"
 packet40_cpu "$packet40/seal40.py" --record-phase cheap -- "$packet40_python" -B "$packet40/cpu_campaign.py" cheap
 packet40_cpu "$packet40/seal40.py" --record-phase mini -- "$packet40_python" -B "$packet40/cpu_campaign.py" mini
 packet40_cpu "$packet40/seal40.py" --record-phase real-gnu -- "$packet40_python" -B "$packet40/cpu_campaign.py" real-gnu
@@ -99,3 +100,11 @@ through `seal40.py --record-phase suite128-tail --receipt
 suite128-tail-cpu-gates.json -- COMMAND`; the command is the lab Python with
 `-B` and `suite128_cpu_gate.py`. The resulting receipt determines whether this
 additional gate has passed; this instruction does not assert its completion.
+
+CMake compiles the generated `build/checked` source mirrors. An ordinary
+`cmake --build` can report no work while those mirrors still contain old source.
+`build_identity40.py` regenerates checked/JIT and host validation mirrors, binds
+their actual hashes and generator/overlay inputs, builds each mode sequentially,
+then requires a second build pass with no compile/link actions or changed
+artifacts. Run it before qualification and again after any source change;
+source metadata alone is not proof of what was compiled.

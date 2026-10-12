@@ -95,6 +95,29 @@ class Tests(unittest.TestCase):
   archive.write_bytes(b'changed');self.assertTrue(s.wrapper_bindings(row,self.p))
  def test_missing_current_build_verification_refused(self):
   self.assertTrue(s.build_identity_bindings({},self.p))
+ def build_proof(self):
+  import build_identity40 as build
+  for name in build.GENERATORS:(self.p/name).write_text('synthetic generator '+name)
+  mirror=self.p/'build/checked/source.hpp';mirror.parent.mkdir();mirror.write_text('generated current source')
+  (self.p/'source.hpp').write_text('current source');log=self.p/'evidence/build.log.gz';log.write_bytes(b'compressed log bytes')
+  mirrors=build.mirror_identity(self.p/'build');generators={n:s.sha(self.p/n) for n in build.GENERATORS}
+  row=dict(passed=True,device_executed=False,binary_sha256={},sources_unchanged_during_build=True,source_sha256={'source.hpp':s.sha(self.p/'source.hpp')},compile_jobs=1,
+   dependency_graph_noop=True,mirror_second_refresh_unchanged=True,mirror_sha256=mirrors,mirror_generator_sha256=generators,
+   mirror_regeneration=dict(regenerated=True,actual_sha256=mirrors,generator_sha256=generators),
+   rows=[dict(pass_name=phase,mode=mode,returncode=0,build_actions=[],log='evidence/build.log.gz',log_sha256=s.sha(log)) for phase in ('refresh','noop') for mode in s.MODES])
+  self.put('build-identity40.json',row);return row,mirror
+ def test_current_generated_build_proof_accepted(self):
+  self.build_proof();self.assertEqual(s.build_identity_bindings({},self.p),[])
+ def test_stale_checked_mirror_refused_despite_source_metadata(self):
+  row,mirror=self.build_proof();mirror.write_text('stale mirrored header')
+  self.assertTrue(any('actual compiler mirrors' in e for e in s.build_identity_bindings({},self.p)))
+ def test_changed_mirror_generator_refused(self):
+  self.build_proof();(self.p/'kernel_overlay.py').write_text('changed overlay')
+  self.assertTrue(any('generator/overlay' in e for e in s.build_identity_bindings({},self.p)))
+ def test_refresh_only_or_active_noop_build_refused(self):
+  row,_=self.build_proof();row['rows']=row['rows'][:4];self.put('build-identity40.json',row);self.assertTrue(s.build_identity_bindings({},self.p))
+  row['rows'] += [dict(row['rows'][i],pass_name='noop',build_actions=['Building CXX object stale']) for i in range(4)]
+  self.put('build-identity40.json',row);self.assertTrue(s.build_identity_bindings({},self.p))
  def test_nested_archived_evidence_hash_is_bound(self):
   archive=self.p/'evidence/gate.gz';archive.write_bytes(b'archive')
   row={'rows':[{'archive':{'path':'evidence/gate.gz','sha256':s.sha(archive)}}]}

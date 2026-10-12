@@ -31,16 +31,30 @@ def compress_reference_rows():
                    compressed_path=str(target.relative_to(P)),compressed_sha256=digest(target)))
   path.unlink()
  return rows
+def sealed_artifacts(seal):
+ artifacts={}
+ for name,expected in seal['artifacts_sha256'].items():
+  rel=Path(name);assert not rel.is_absolute() and '..' not in rel.parts,'unsafe sealed artifact path'
+  path=B/rel;assert not path.is_symlink() and path.resolve().is_relative_to(B.resolve()) and path.is_file(),'sealed artifact missing/outside build'
+  assert digest(path)==expected,'sealed artifact changed before cleanup: '+name
+  artifacts[path.resolve()]=expected
+ return artifacts
+def contains_artifact(directory,artifacts):
+ directory=directory.resolve()
+ return any(path==directory or directory in path.parents for path in artifacts)
 def main():
  seal=json.loads((P/'build-receipt.json').read_text());assert seal['passed'] and seal['device_executed'] is False
+ artifacts=sealed_artifacts(seal);preserved=[]
  prefixes=('linked-fixtures-','first-mini','real-','gates-','validation-','fixtures-','entry-codes-','resident-host-','canary-host-','fault-gates-','review-','suite-gates-','suite-real-','window-cpu-','native-mini-')
- dirs=[d for d in B.iterdir() if d.is_dir() and d.name.startswith(prefixes)]
+ candidates=[d for d in B.iterdir() if d.is_dir() and d.name.startswith(prefixes)]
+ preserved.extend(str(d.relative_to(P)) for d in candidates if contains_artifact(d,artifacts))
+ dirs=[d for d in candidates if not contains_artifact(d,artifacts)]
  from storage import archive_files
  paths=[]
  for d in dirs:
   assert d.parent==B and not d.is_symlink()
   paths.extend(f for f in d.rglob('*') if f.is_file())
- paths.extend(B.glob('*.log'))
+ paths.extend(f for f in B.glob('*.log') if f.resolve() not in artifacts)
  # Finished capture event logs are scratch. The two draft reference tables
  # (draft-rows/draft-capture) remain inputs to agreement/rebinding consumers.
  capture_logs=capture_files(('timings.jsonl','prefill-timings.jsonl','progress.jsonl','sites.jsonl'))
@@ -50,14 +64,20 @@ def main():
  # Raw test states/fixtures are explicitly authorized scratch. Their hashes and
  # exact input/source-bound reproduction gates survive, not a fictitious backup.
  for d in dirs:shutil.rmtree(d)
- for f in B.glob('*.log'):f.unlink()
+ for f in B.glob('*.log'):
+  if f.resolve() not in artifacts:f.unlink()
  for f in capture_logs:f.unlink()
  compressed_rows=compress_reference_rows()
  removed=[str(d.relative_to(P)) for d in dirs]
  for name in ('tmp','p33-candidate-tmp','host-issue'):
   d=B/name
-  if d.exists():assert d.parent==B and not d.is_symlink();shutil.rmtree(d);removed.append(str(d.relative_to(P)))
- report=dict(passed=True,device_executed=False,archive=str(target.relative_to(P)),archive_sha256=digest(target),text_members=archived['retained_files'],hashed_generated_files=archived['files'],round_trip_text_bytes_verified=True,nested_gzip_bytes_verified=True,archive_format=archived['format'],removed_directories=removed,compressed_capture_event_logs=len(capture_logs),compressed_draft_reference_rows=compressed_rows,
+  if d.exists():
+   assert d.parent==B and not d.is_symlink()
+   if contains_artifact(d,artifacts):preserved.append(str(d.relative_to(P)));continue
+   shutil.rmtree(d);removed.append(str(d.relative_to(P)))
+ for path,expected in artifacts.items():assert path.is_file() and digest(path)==expected,'sealed artifact lost/changed during cleanup'
+
+ report=dict(passed=True,device_executed=False,sealed_artifacts_preserved={str(path.relative_to(B)):expected for path,expected in artifacts.items()},preserved_artifact_directories=preserved,archive=str(target.relative_to(P)),archive_sha256=digest(target),text_members=archived['retained_files'],hashed_generated_files=archived['files'],round_trip_text_bytes_verified=True,nested_gzip_bytes_verified=True,archive_format=archived['format'],removed_directories=removed,compressed_capture_event_logs=len(capture_logs),compressed_draft_reference_rows=compressed_rows,
   raw_fixture_restore='Regenerate with source-bound CPU gates. Raw test fixture/state bytes are discarded scratch; exact text and nested gzip evidence bytes are archived, every generated file hash is retained.',
   retained='Sealed binary/build trees, checked sources, immutable input bundles, official draft inputs, CPU capture inputs/results needed by KD and comparison, source-bound gate receipts.')
  (P/'scratch-cleanup.json').write_text(json.dumps(report,indent=2)+'\n')

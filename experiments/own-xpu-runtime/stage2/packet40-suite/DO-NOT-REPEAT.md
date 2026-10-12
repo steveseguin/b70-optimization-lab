@@ -47,5 +47,6 @@ Prior packet36 and37 negative histories remain in their read-only directories.
 | Reuse CPU wrapper receipts as device prerequisites | Explicit CPU rehearsal identity is refused by production admission. |
 | A zombie /proc status lacks RssAnon | Default the missing field to zero and reap the child normally. |
 | Missing build receipt keys reject a valid window | Rehearse all wrapper consumers and bind cpu_tests_sha256. |
+| Trust a no-op CMake build with stale checked mirrors | Regenerate checked/JIT and host validation sources, bind actual mirror and generator hashes, rebuild, then verify a second no-op pass. |
 
 Fresh-process full-state hashes also cover unused standalone controls and compact-route scratch. Initialize those allocations before timing; do not explain nondeterministic bytes away as a retention effect. The original failure is retained in `retention-initialization-finding.json`.

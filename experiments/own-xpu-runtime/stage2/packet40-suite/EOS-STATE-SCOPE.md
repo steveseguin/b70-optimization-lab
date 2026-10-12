@@ -1,6 +1,26 @@
-# Terminal EOS state scope
+# Terminal EOS strict restoration
 
-Packet40 does **not** currently prove universal physical-byte equality after an abandoned speculative half at EOS. The owner was asked whether the logical-state scope below is acceptable; that decision is pending. This exception must remain visible in the final closeout. It cannot be described as an all-state or all-byte pass.
+The original implementation did not restore every physical byte after terminal
+abandonment. Packet40 now implements `strict_snapshot.hpp`: a private pre-half
+image restores inactive banks, overwritten intermediates, uncommitted QSA tails,
+token/history controls, standalone mutable allocations and exact host metadata.
+It also restores rank0's shared slot, without touching rank1 publications.
+Committed active banks and valid QSA prefixes are excluded from the image, so
+an illegal mutation remains detectable. Sticky failures cannot be rolled back.
+Only the private image is zeroed at a quiescent boundary; target state is not
+canonicalized before comparison. See the independent
+[retention/token-authority review](review-retention-token-authority.json).
+
+Current-source full-state CPU qualification is required before sealing. This
+source review is not an execution result or a device performance claim. No
+reduced-state exception is assumed.
+
+## Historical finding and design assessment
+
+The remainder preserves the pre-fix investigation and proposed design. Its
+statements about an unimplemented snapshot or pending scope exception describe
+the earlier implementation, not current behavior. The actual implementation
+restores the image on every rollback, including a miss followed by redo.
 
 ## What is identical
 

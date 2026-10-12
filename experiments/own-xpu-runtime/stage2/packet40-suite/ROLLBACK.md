@@ -24,8 +24,9 @@ GDN and QSA plus layer-1 PLE on rank 0.
 | Fixture snapshots | initialized 983,040-byte workspace | Candidate bytes held privately; publish only after acceptance. Redo replaces candidate. |
 
 The extra state bank is **29,601,792 bytes**, covering 37 allocations. The GDN
-and convolution hot path copies **zero state bytes**. All banks are initialized
-once, including unused output bytes read by the host reference adapter.
+and convolution bank swap itself copies **zero state bytes**. The packet40
+strict speculative image adds the separate copies described below. All banks
+are initialized once, including unused output bytes read by the host adapter.
 
 There are 1,015 rank-0 plan buffers and 890 plan sites: 37 banked, 24 QSA append
 arrays, three temporal controls, four externally initialized, and 947 overwrite-only
@@ -37,10 +38,10 @@ slabs, routes, mixture buffers, snapshots and FP32 input storage.
 
 QSA appends 1,024 bytes of keys, 1,024 bytes of values and 256 bytes of raw index
 state per layer/position. A completed four-token block writes its 256-byte pooled
-row. A miss followed by redo rewrites exactly those locations. Rows beyond the
-committed extent after an abandoned terminal guess are outside the valid cache
-state, although their raw hashes remain recorded. They must be overwritten
-before any future reuse. The terminal exception is detailed below.
+row. A miss followed by redo rewrites exactly those locations. Strict rollback
+also restores all QSA bytes beyond the pre-speculation committed extent,
+including a terminal abandon without redo. The already-committed prefix is
+excluded from the backup so illegal writes to it cannot be hidden.
 
 ## Hot-path copy ledger
 
@@ -60,10 +61,17 @@ produce the BF16 upload bytes. Resident model weights and static constants have
 no per-token uploads. The CPU gate's layer-streaming weight uploads are separate
 from the native resident path.
 
-The rollback-specific overhead is the 16-byte D2H checkpoint on every rank-0
-half, plus **20 bytes H2D per miss** (16 history + 4 position), and 16 bytes of
-host scalar restoration. Large state bank selection costs no copy. Speculative
-halves and redos incur the ordinary half ledger again.
+The original rollback ledger contained a 16-byte D2H history checkpoint and
+20 bytes H2D per miss. That is not the complete packet40 cost: before each
+speculative half, a private image copies every potentially overwritten plan
+output, inactive state bank, uncommitted QSA suffix and standalone mutable
+allocation. On a miss or terminal abandon those saved extents are copied back.
+The image also saves the rank0 shared slot and exact host-derived metadata.
+`speculative-snapshot.json` records capacity, captures, restorations and payload
+bytes. Private backup bytes are zeroed at quiescent dump/reset/finish boundaries;
+model allocations are never scrubbed to manufacture equality. This adds memory
+traffic whose device performance is unmeasured. Bank selection itself remains
+a permutation, and redos incur the ordinary half ledger again.
 
 For each of the eight retained fixture positions, each rank makes 24 × 20,480
 bytes of local-device snapshot copies, then reads its initialized 983,040-byte
@@ -81,7 +89,8 @@ compares every standalone mutable allocation, including invalid FP32 scratch
 bytes, plus every host inventory field except the separately recorded logical
 event counter. No model buffer is exempted from this nonterminal proof. Rank 1
 only consumes confirmed streams; its target history stays sequential and needs
-no rollback. This is distinct from the pending terminal EOS exception below.
+no rollback. Strict terminal abandonment now uses the same physical image
+restoration and requires its own current-source full-state proof below.
 
 ## Prepared launch parity
 
@@ -97,8 +106,10 @@ A completed, uncancelled half writes candidate state into the spare bank,
 drains, then swaps all four artifacts. Acceptance keeps that selection. A miss
 drains again, checks the sticky error, and swaps all four back only if the
 candidate previously swapped. A partially cancelled half never swapped. Both
-paths restore position and token/host history, clear lookup IDs and invalidate
-FP32-input cache state before redo.
+paths restore the pre-half physical image, including position, token/history,
+lookup IDs, selected routes and exact FP32 cache source/extent before redo.
+Streaming layers must already be released; restoration checks that any saved
+nonzero FP32 source is still live and cannot resurrect a freed allocation.
 There is no allocation, pointer rebinding or command rebuild in the bank swap.
 Appending QSA rows still follows the unchanged same-position overwrite rule.
 
@@ -198,18 +209,20 @@ standalone allocation and host-inventory equality for all 204 forced-cut cases
 event counter while retaining its actual value and raw inventory hash.
 The `--cancel-launch` option is rejected by device builds.
 
-An EOS response is different: its pending next-position guess is discarded
-without redo because the request has ended. Inactive alternate bytes, scratch
-and QSA rows beyond the committed extent can differ with how early cancellation
-happens. They are not committed model state, but they are real physical bytes: a
-universal all-byte equality claim would therefore be incorrect. The terminal CPU parity gate
-compares active recurrent/conv banks, PLE histories, controls and exact valid
-QSA prefixes. It does not claim equality of abandoned scratch/tail bytes. The
-complete raw state hashes remain recorded. A subsequent request zeros all those
-allocations before use. Forced-miss-plus-redo tests retain their stricter full
-physical-buffer comparison. The owner's decision on accepting this terminal
-scope is pending; see [EOS-STATE-SCOPE.md](EOS-STATE-SCOPE.md) for the exact
-allocation extents, evidence boundary and cost of a stricter implementation.
+An EOS response discards its pending next-position guess without redo because
+only the confirmed target may end the request. `SpeculativeImage` captures the
+pre-half bytes before guessed token upload or history preparation. Rollback
+drains, refuses a sticky failure, reverses a completed bank swap, then restores
+saved physical extents and exact host metadata. It restores only rank0's shared
+slot, never rank1 verification or draft publication. The active recurrent bank
+and committed QSA prefix are deliberately not backed up; illegal mutation there
+must survive rollback and fail comparison. Host-only negative controls exercise
+this requirement. At a quiescent boundary only the private backup is zeroed.
+
+The earlier committed-state-only EOS comparison is historical diagnostic
+evidence. The strict implementation requires fresh complete physical-state
+terminal, retention and cancellation checks before sealing. See
+[EOS-STATE-SCOPE.md](EOS-STATE-SCOPE.md) for the original failure and correction.
 
 Actual speculative launch counts can differ with process scheduling. Controller
 parity excludes only the `logical_event` issue counter from ordinary inventory

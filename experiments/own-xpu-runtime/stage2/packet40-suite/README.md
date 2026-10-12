@@ -35,11 +35,12 @@ measurement correction, not a claimed kernel gain. `--retain-steps none` is for
 speed; `1-8` and `1-8,97-104` are exactness diagnostics. The speed receipt names
 a completed exactness window on the same boot with the same inputs and identity.
 CPU gates compare tokens and final mutable state for retention on and off.
-The strict terminal-EOS case remains unresolved: timing-dependent abandoned
-speculation can leave different unused physical bytes, although committed state
-and tokens agree. [EOS-STATE-SCOPE.md](EOS-STATE-SCOPE.md) records the exact
-limit. An owner decision or a new full-state rollback proof is required before
-sealing; no exception has been assumed.
+The strict terminal-EOS fix now restores a private pre-speculation image,
+including abandoned physical bytes and host metadata. It preserves committed
+banks and QSA prefixes so an illegal mutation remains visible.
+[EOS-STATE-SCOPE.md](EOS-STATE-SCOPE.md) records the original finding and the
+implemented correction. Current-source full-state CPU qualification is required
+before sealing; no reduced-state exception is assumed.
 
 `--max-new N` is bounded by prompt length plus context capacity. With capacity
 256, the suite's 60–90-token prompts fit 128 outputs. The complete 64- and

@@ -31,3 +31,5 @@ never supplies an emitted token: only the checked rank-1 target Reply can emit.
 No unresolved source-level ordering or lifetime defect was found. Device event
 completion, driver scheduling, real overlap and KD host/device parity remain
 coordinator gates. Python's controller retains its synchronous draft path.
+
+The applied strict rollback image was checked separately: rank 1 allocates no image and its draft callbacks/input ordering stay unchanged. Rank 0 restores only its producer stream slot, never the separate draft/verification publications or native mailbox. The independent JSON receipt binds the current applied sources.

@@ -124,7 +124,7 @@ def main():
  # Evidence contains hashes, exact summaries and compressed event logs before
  # scratch is deleted; never retain raw CPU outputs as a second build tree.
  import gzip
- packet={str(f.relative_to(root)):json.loads(f.read_text()) for f in root.rglob('window.json')}
+ packet={str(f.relative_to(seal)):json.loads(f.read_text()) for f in seal.rglob('window.json')}
  data=json.dumps(packet,sort_keys=True,separators=(',',':')).encode();storage.admit(len(data)+1_000_000);archive=P/'evidence/full-wrapper-windows.json.gz';archive.parent.mkdir(exist_ok=True);archive.write_bytes(gzip.compress(data,mtime=0))
  pp.require(source_sha256=={name:pp.sha(P/name) for name in SOURCES},'wrapper sources changed during rehearsal')
  report=dict(source_sha256=source_sha256,archive_path=str(archive.relative_to(P)),passed=True,in_progress=False,device_executed=False,no_speed_claim=True,windows=len(rows),failure_windows=len(rows),rows=rows,

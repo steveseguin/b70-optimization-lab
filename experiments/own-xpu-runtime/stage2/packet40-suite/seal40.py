@@ -310,7 +310,11 @@ def build_identity_bindings(binaries,packet=P):
   if row['sources_unchanged_during_build'] is not True or not row['source_sha256']:raise ValueError('build source closure unbound')
   errors=verify_sources(row['source_sha256'],packet)
   if errors:raise ValueError('; '.join(errors))
-  if [r['mode'] for r in row['rows']]!=list(MODES) or row['compile_jobs']!=1:raise ValueError('four sequential build modes required')
+  expected=[(phase,mode) for phase in ('refresh','noop') for mode in MODES]
+  if [(r.get('pass_name'),r['mode']) for r in row['rows']]!=expected or row['compile_jobs']!=1:raise ValueError('four sequential refresh and no-op build modes required')
+  if any(result.get('build_actions')!=[] for result in row['rows'] if result['pass_name']=='noop'):raise ValueError('no-op build submitted compile/link actions')
+  from build_identity40 import verify_mirror_receipt
+  verify_mirror_receipt(row,packet,packet/'build')
   for result in row['rows']:
    if result['returncode']!=0 or sha(packet/result['log'])!=result['log_sha256']:raise ValueError('build verification log changed or failed')
   return []
