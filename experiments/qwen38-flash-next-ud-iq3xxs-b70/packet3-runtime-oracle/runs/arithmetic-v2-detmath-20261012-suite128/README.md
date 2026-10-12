@@ -1,6 +1,6 @@
 # Arithmetic-v2 128-token CPU suite
 
-Verified prompts: 7/12. Complete: False.
+Verified prompts: 8/12. Complete: False.
 Arithmetic `iq3-p17-detmath-v2`, quantized Unsloth UD-IQ3_XXS; context 256; cap 128.
 EOS 248044 or 248046 is included and then stops generation; no forced continuation.
 
@@ -13,9 +13,10 @@ EOS 248044 or 248046 is included and then stops generation; no forced continuati
 | release-plan | 68 | 128 | False | 2, 16107, 16870, 9392, 25, 7134, 21753, 343 | 5839, 5614, 369, 310, 17833, 4610, 45702, 1973 | 20.8130 | True |
 | benchmark-analysis | 65 | 128 | False | 1919, 369, 264, 11088, 46931, 314, 2972, 66 | 318, 68, 1257, 2487, 343, 3950, 44, 11 | 16.5751 | True |
 | architecture-tradeoff | 67 | 128 | False | 1919, 369, 264, 11088, 41052, 6355, 12105, 303 | 11, 28121, 28, 19, 369, 279, 1132, 2904 | 17.1900 | True |
+| bug-report-synthesis | 71 | 128 | False | 2, 29505, 8001, 25, 769, 1519, 5764, 25375 | 52369, 92217, 52738, 1420, 1510, 31826, 27896, 835 | 17.0556 | True |
 
-Numerical-process wall time (sum): 27750.359 seconds.
-Measured user + system CPU time: 12.689462 CPU hours.
+Numerical-process wall time (sum): 31129.694 seconds.
+Measured user + system CPU time: 14.272332 CPU hours.
 Per-position wall times are in `positions.jsonl`; per-generated-token times and IDs are
 in `tokens.jsonl`; decoded text is in `result.json`. Token 1 includes prefill time.
 These are CPU oracle costs, not serving speeds.
