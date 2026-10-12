@@ -54,6 +54,7 @@ binary. Device windows are pending and must be rerun after integration.
 | specialised.hpp | a5604dcf33c1f01940505b3ab5e6fab8d05e9f6ba6fed2884f40ae95b47c88cb | 0d7489d31fb869a49db3a7a365dbe78af52931c0e7d5cdf38ff05b01e594c126 |
 | suite.py | 43401ba3f5b40a5a1a8c4ebfd341ee6b97e818270ef76f2f4464785c90425ea6 | 2a9a5c1cf4e7a57f6c5b5a68997c7133d7c9954c3edc52b1519ed226b04d054e |
 | test_window.py | 7ec70cc8552ae8ec32e6361dec23ea498127b66ad3af4b7a6e627619bdb63f6c | cb05ab154b11d516a763bd054fdbc6ced0aac030a963c04e42d5acc30e3c29ee |
+| test_window_seal_admission.py | 0314333ff27ef80005f67e8afd2b4e96cf76d6ca3a5a7c845a4755b4fab6db9f | ab26efc28f2b0c9542c4a8645adf04b32fdfd74418c0bc84afad17e94ff4dd95 |
 | test_window_storage.py | 86001852f3d91eb0afde1698e2a29d5962c6b5109e54a5e4347a8fcaaa7276e5 | ee3f366a8ccc8bf9336721c716a38b0110ab8a3fbc334315941bed834cdd5b1a |
 | window.py | 0ffd70228f1bddc6a932fd9655dea6eb10112612fd3747e66995faf37db7ddb0 | 67b024be6bba40deb319a53df0574298c0a13138a4a3115afa3f89d5f1c87548 |
 | window_safety.py | 735d64f9c6cbbb605c414bc87fe7042f909efae126f323974b2365132794057b | 353ce418d0570d3b85d23dc63dc91f7e005e528e91057d7a7ee620d390d02264 |
@@ -76,5 +77,7 @@ The complete new-file list (including every evidence artifact) is the `added_fil
 - `memory_plan.py`
 - `post_python_gates.py`
 - `remaining_cpu_gates.py`
+- `resume_draft_references.py`
+- `resume_intel_composite.py`
 - `run_native_gates.py`
 - `seal_context.py`

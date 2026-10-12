@@ -1,6 +1,8 @@
 # Packet 44: real allocation capacities
 
-CPU preparation in progress. No device ran and no speed is claimed.
+CPU qualification passed under the coordinator’s reduced plan. GNU covers all
+three allocation capacities; Intel has the required composite case. No device
+ran and no speed is claimed. [CPU-GATES.md](CPU-GATES.md) gives the counts.
 
 This is a copy of packet38-integrated for the quantized compressed
 Qwen3.8 Flash-Next model, with target arithmetic
@@ -56,6 +58,5 @@ extended table with a pinned receipt. The table defines arithmetic, not a cache.
 for the table and the large gate ledgers.
 
 WINDOW.md contains coordinator commands. INTEGRATE.md lists deltas against the
-copied base for the independent packet40 work. build-receipt.json will mark
-qualification complete only after the actual CPU gates and compiled artifacts
-are verified. Historical packet38 receipts are not reused as packet44 passes.
+copied base for the independent packet40 work. build-receipt.json binds the completed CPU gates and compiled artifacts.
+Device qualification remains pending. Historical packet38 receipts are not reused as packet44 passes.

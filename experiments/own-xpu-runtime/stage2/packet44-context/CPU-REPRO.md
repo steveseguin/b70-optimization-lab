@@ -1,3 +1,11 @@
+# Resume scope takes precedence
+
+All already-passing commands below are historical reproduction instructions,
+not instructions to rerun them during this resume. Parse and hash their receipts.
+The only new target-model execution is resume_intel_composite.py. Required
+new draft-head references are resume_draft_references.py. New final-seal
+admission checks execute no model/device binaries. See CLOSEOUT.md.
+
 # CPU reproduction: ordered, serial, no device execution
 
 These are reproduction commands, not a statement that the gates have passed.
@@ -9,8 +17,8 @@ compiles and links; never execute anything in `build/device/` on this path.
 
 The sequence uses one compiler or one gate runner at a time. Compilation uses
 `-j1`; at most two compile jobs are permitted if another coordinator explicitly
-schedules parallel work. Allow no more than four CPU-bound processes in total,
-including the other host jobs. Runtime gates may own two rank processes. Keep
+schedules parallel work. The resumed job may own at most two CPU-bound model processes;
+other coordinator CPU jobs are sharing memory bandwidth. Runtime gates may own two rank processes. Keep
 aggregate anonymous memory below 10 GB. The gate monitor's own 8 GB ceiling is
 not permission to exceed that host-wide limit.
 
@@ -108,26 +116,28 @@ before deleting scratch. Mini and MTP sanitizer gates use host binaries only.
 it preserves binaries, compile commands and link proof. Do not rebuild again
 unless a source correction actually requires it.
 
-Then run real-model CPU gates serially. The 38-arm runner covers three suite
-prompts at all three capacities, four development pipeline modes at 4096, and
-both controller implementations across the rollback boundary cases, for both
-host compilers. Each real prefix compares 8 tokens and 384 retained layers.
-Its resumable ledger only accepts current source/binary/input/oracle hashes.
+The coordinator reduced the resumed CPU plan on 2026-10-12. Do not rerun the
+completed GNU matrix or expand the Intel matrix. The retained 25 cases are
+verified by parsing/hash only. See resume-receipt-verification.json. Exactly
+one Intel composite and the two needed GNU draft references remain authorized:
 
 ```bash
-packet44_run capacity_cpu_gate.py --phase all --compiler both
-packet44_run draft_baseline.py
-packet44_run capacity_draft_gate.py --run
+packet44_run resume_intel_composite.py
+packet44_run resume_draft_references.py
 ```
 
-The draft runner creates the admitted capture inputs and runs six GNU/icpx
-capacity combinations. Retain `build/draft-reference-c256`,
-`build/draft-reference-c4096` and `build/draft-reference-c32768`: they are hashed
-coordinator KD inputs, not disposable scratch. The second compiler's outputs
-are compared, archived and deleted. Never delete a scratch directory before
-its gate receipt and raw hashes are durable. Successful runners handle their
-own scratch cleanup; investigate and archive a failed scratch before removing
-only that packet-local failed directory.
+Run sequentially, at most two model rank processes. The Intel diagnostic uses
+four tokens at capacity 4,096 and real MTP, with two forced mailbox misses;
+192 retained layer files must equal the oracle. The native controller lacks
+that diagnostic override, so this one request uses its Python peer. GNU native
+MTP and both-compilers' native-controller gates remain separately required.
+
+The draft runner uses confirmed captured streams, not another target-model
+request. Keep build/draft-reference-c4096 and build/draft-reference-c32768 plus
+the captured streams and table for KD. The original capacity_cpu_gate.py and
+six-arm capacity_draft_gate.py remain available for future explicitly expanded
+qualification, but are not the resumed plan. The waived Intel matrix is never
+reported as passed.
 
 Generate the inherited pure-Python receipt with this exact serial driver. It
 retains compressed stdout/stderr immediately after hashing; any failure makes
@@ -206,6 +216,8 @@ PY_MEMORY
 packet44_run draft_auth_gate.py
 packet44_run capacity_rollback_asan.py
 packet44_run post_python_gates.py
+packet44_run seal_context.py --bootstrap
+packet44_run test_window_seal_admission.py --build-receipt "$packet44/build-admission-candidate.json"
 packet44_run seal_context.py
 packet44_run integration_inventory.py
 packet44_admit

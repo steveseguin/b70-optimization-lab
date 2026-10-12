@@ -24,17 +24,19 @@ class Watch:
     def postflight(self):raise AssertionError('blocked launch cannot pass postflight')
 
 def contract(build):
-    fields=('model_gate_carry_forward','passed','sources','artifacts_sha256','official_manifest_sha256','memory_plan','input_sha256',
+    fields=('passed','sources','artifacts_sha256','official_manifest_sha256','memory_plan','input_sha256',
             'p33_linked_fixture_host_sha256','nongemv_fixture_host_sha256',
-            'draft_capture_fixture_sha256','draft_capture_input_sha256')
+            'draft_capture_fixture_sha256_by_context','draft_capture_input_sha256','cpu_tests_sha256','nongemv_fixture_host_sha256_by_context')
     assert all(name in build for name in fields),['missing seal field',*[name for name in fields if name not in build]]
     assert build['passed'] is True and build['device_executed'] is False
     assert all(name in build['artifacts_sha256'] for name in ('gnu-host/own-rt-iq3','device/own-rt-iq3','device/p33-linked-fixtures','device/nongemv-fixtures','device/k2-fixtures','device/jit-smoke'))
     assert build['sources'] and build['memory_plan']
     for name in ('official_manifest_sha256','input_sha256','p33_linked_fixture_host_sha256','nongemv_fixture_host_sha256'):
         assert len(build[name])==64 and set(build[name])<=set('0123456789abcdef'),name
-    for name in ('draft_capture_fixture_sha256','draft_capture_input_sha256'):
-        assert build[name].get('incident-retrospective'),name
+    assert build['draft_capture_input_sha256'].get('incident-retrospective')
+    for context in ('4096','32768'):
+        assert build['draft_capture_fixture_sha256_by_context'].get(context)
+        assert build['nongemv_fixture_host_sha256_by_context'].get(context)
     return {name:build[name] for name in fields}
 
 def main():
@@ -63,11 +65,11 @@ def main():
         return dict(identity,passed=True,window=name,pids=([101,102] if name=='K1a' else [103,104]),
                     candidate_dispatch_sha256=pp.sha(P/'dispatch-p38.json'),dispatch_sha256=pp.sha(P/'dispatch-p38.json'))
     try:
-        for name in window.CONFIG:
+        for context,name in ((c,n) for c in (4096,32768) for n in ('K0','K1a','K1b','K2','W0p','KD','W2m','WS','WSs')):
             modes=('python','native') if name.startswith('W2') else ('native',) if name.startswith('WS') else ('python',)
             for controller in modes:
-                out=root/(name+'-'+controller);seen.clear()
-                argv=['window.py','--authorized-device-window','--window',name,'--card','0','--output',str(out),
+                out=root/(str(context)+'-'+name+'-'+controller);seen.clear()
+                argv=['window.py','--authorized-device-window','--window',name,'--card','0','--context',str(context),'--output',str(out),
                       '--controller',controller,'--input',str(B/'input'),'--oracle',str(root/'mock-oracle'),
                       '--dispatch',str(P/'dispatch-p38.json'),'--suite-manifest',str(P.parent/'suite-inputs-20261012/suite-manifest.json')]
                 for key in ('k0','k1a','k1b','k2','w0p','kd'):argv.extend(['--'+key,str(root/('mock-'+key))])
@@ -98,7 +100,7 @@ def main():
                 record=json.loads((out/'window.json').read_text())
                 assert seen==[True] and rc==1 and record['passed'] is False and record['device_executed'] is False,(name,controller,record)
                 assert 'launch intentionally blocked' in record['error'] and not record['launched_pids']
-                rows.append(dict(window=name,controller=controller,admission_reached_blocked_launcher=True,device_executed=False,window_passed=False,
+                rows.append(dict(window=name,context=context,controller=controller,admission_reached_blocked_launcher=True,device_executed=False,window_passed=False,
                                  prerequisite_and_host_health_inputs='explicit CPU mocks',retained_capture_admission_exercised=name=='KD'))
         assert source_before=={name:pp.sha(P/name) for name in source_before},'source changed during admission test'
         result=dict(passed=True,device_executed=False,gates=len(rows)+1,rehearsed_seal=str(a.build_receipt.resolve().relative_to(P)),seal_fields=list(consumed),consumed_seal_sha256=consumed_hash,

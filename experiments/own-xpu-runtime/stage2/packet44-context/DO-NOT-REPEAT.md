@@ -21,3 +21,11 @@ which still expected 262,144 BF16 RoPE entries. The table now uses
 rope_constants::bytes/2. Its failed receipt and archived log remain in
 capacity-fixture-gates.json. Do not remove compiler objects before the first
 full fixture pass; doing so forced a full rebuild for this one-line harness fix.
+
+| Resumed scope mistake | Required behavior |
+| --- | --- |
+| Repeat the whole Intel matrix after coordinator waiver | Use the single four-token MTP composite; cards repeat exactness in minutes. |
+| Count the interrupted Intel case as failed or passed | Mark not run; keep the stop receipt and compressed inventory; partial scratch removed. |
+| Claim 25 GNU real-model cases | The retained 25 include 13 GNU real-model and 12 both-compiler rollback cases. |
+| Invent obsolete inherited receipt keys | Test actual production consumers and capacity-specific maps. |
+| Run six draft arms when only two references are requested | Generate GNU KD references at 4096 and 32768; label remaining arms unclosed. |

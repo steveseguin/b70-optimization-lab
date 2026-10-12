@@ -10,7 +10,16 @@ set device selector, cache or precision variables. --card names the first card
 of the adjacent pair. Each capacity needs its own full chain and fresh output
 paths. A window never retries a failed child.
 
-From the repository root, set the admitted pair and capacity. Execute this
+Exact complete-chain commands from the repository root, inside the
+coordinator's nice-0 systemd unit (card 0 is the first card of pair 0/1):
+
+```bash
+bash experiments/own-xpu-runtime/stage2/packet44-context/coordinator_windows.sh 0 4096
+bash experiments/own-xpu-runtime/stage2/packet44-context/coordinator_windows.sh 0 32768
+```
+
+The helper runs the following exact sequence and inherits LD_LIBRARY_PATH.
+Run each chain once; output paths must be fresh. From the repository root, set the admitted pair and capacity. Execute this
 sequence once with context 4096, then once with context 32768. The suite defaults
 to the 128-token manifest; the 64-token path below is also accepted.
 

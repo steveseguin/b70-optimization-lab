@@ -50,3 +50,11 @@ upper bound for the largest synthetic cases. Fixture storage still includes
 full-capacity allocation tails so the gates can detect unintended writes.
 That storage and full evidence serialization are fixture costs, outside the
 production token path.
+
+Resume evidence scope: the GNU suite/pipeline receipts qualify valid bytes at
+all three capacities. The separate Intel four-token composite qualifies the
+requested reduced real-model path at 4,096; no complete Intel target matrix is
+claimed. Both compilers already passed beyond-budget synthetic fixtures and
+rollback checks. The seal binds the existing native guard admitting 128 output
+tokens and context 32,768 to the actual compiled binaries. KD host references
+are prepared only at the two requested coordinator window capacities.

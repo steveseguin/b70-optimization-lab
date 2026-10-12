@@ -75,3 +75,8 @@ fixture hash cannot substitute for the new context-specific wrapper selection.
 Device execution, real K2 duration, actual memory residency, and native kernel
 fault behavior remain coordinator-window checks. Mock passes cannot satisfy
 those gates.
+
+Resume verification: the final inherited wrapper archive records 37 passing
+tests including the actual host diagnostic. Its SHA256 matches the receipt;
+the earlier 36-test/exclusion wording above describes the earlier review.
+The current source includes missing-library and second-loader refusal checks.

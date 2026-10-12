@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Fail-closed packet44 CPU qualification seal. Never executes a model/device binary."""
-import argparse,gzip,hashlib,json,re,shlex,subprocess
+import argparse,base64,gzip,hashlib,json,re,shlex,subprocess,sys
 from pathlib import Path
 P=Path(__file__).resolve().parent
 B=P/'build'
@@ -10,7 +10,7 @@ COMPILERS=('gnu-host','icpx-host')
 MODES=(*COMPILERS,'asan','device')
 PRECISE=('-fno-fast-math','-ffp-contract=off')
 DEVICE_PRECISE=('-fdenormal-fp-math=ieee','-foffload-fp32-prec-div','-foffload-fp32-prec-sqrt')
-GATES=('capacity-cpu-gates.json','capacity-rollback-asan.json','draft-auth-gates.json','capacity-selection-gates.json','capacity-draft-gates.json',
+GATES=('capacity-cpu-gates.json','intel-composite-gate.json','capacity-rollback-asan.json','draft-auth-gates.json','capacity-selection-gates.json','capacity-draft-gates.json',
  'capacity-fixture-gates.json','capacity-fixture-light-tests.json','p33-linked-fixture-gates.json','context-window-gates.json',
  'window-mocked-inherited-tests.json','memory-plan-gates.json','owner-gates.json',
  'argument-block-tests.json','prepared-invalidation.json','kernel-sizes.json',
@@ -111,8 +111,8 @@ def cpu_capacity(gates,artifacts):
  require(row['source_sha256']==source,'capacity CPU source identity changed')
  chosen,development=entries(json.loads(MANIFEST.read_text()));prompts={e['prompt_id'] for e in chosen}
  require(len(prompts)>=3,'fewer than three suite prompts')
- expected={(compiler,'suite',c,'none','native',f'suite-{prompt}-{c}') for compiler in COMPILERS for prompt in prompts for c in CONTEXTS}
- expected|={(compiler,'modes',4096,mode,'native',f'development-4096-{mode}') for compiler in COMPILERS for mode in ('none','hit','miss','mtp')}
+ expected={(compiler,'suite',c,'none','native',f'suite-{prompt}-{c}') for compiler in ('gnu-host',) for prompt in prompts for c in CONTEXTS}
+ expected|={(compiler,'modes',4096,mode,'native',f'development-4096-{mode}') for compiler in ('gnu-host',) for mode in ('none','hit','miss','mtp')}
  expected|={(compiler,'rollback',4096,mode,controller,f'rollback-4096-{controller}-{mode}') for compiler in COMPILERS for controller in ('python','native') for mode in ('none','hit','miss')}
  actual={}
  for item in row['rows']:
@@ -133,12 +133,31 @@ def cpu_capacity(gates,artifacts):
    require(all(t['launch_extent']==64 and t['capacity_reprepares']>0 for t in item['boundary_timing_rows']),'rollback reprepare evidence')
   archive=item.get('archive');require(archive and sha(P/archive['path'])==archive['sha256'],'CPU fixture archive missing/changed')
   actual[key]=item
- require(set(actual)==expected and len(actual)==38,'capacity CPU matrix does not contain exactly the required 38 current cases')
- for compiler in COMPILERS:
+ require(set(actual)==expected and len(actual)==25,'capacity CPU matrix does not contain exactly the required 25 retained current cases')
+ for compiler in ('gnu-host',):
   for prompt in prompts:
    rows=[actual[(compiler,'suite',c,'none','native',f'suite-{prompt}-{c}')] for c in CONTEXTS]
    require(all((r['tokens'],r['fixture_sha256'])==(rows[0]['tokens'],rows[0]['fixture_sha256']) for r in rows),'cross-capacity valid output differs')
- return dict(cases=len(actual),token_matches=sum(r['token_matches'] for r in actual.values()),layer_matches=sum(r['layer_matches'] for r in actual.values()),suite_prompts=sorted(prompts))
+ intel=gates['intel-composite-gate.json']
+ binary_bound(intel,'icpx-host/own-rt-iq3',artifacts)
+ require(intel['source_sha256']==source and intel['harness_sha256']==sha(P/'resume_intel_composite.py'),'Intel composite source identity')
+ require(intel['context']==4096 and intel['draft']=='mtp' and intel['controller']=='python','Intel composite execution identity')
+ require(intel['token_matches']==len(intel['tokens'])==4 and intel['tokens']==intel['oracle_tokens'],'Intel composite tokens')
+ require(intel['layer_matches']==len(intel['fixture_sha256'])==192 and intel['fixture_sha256']==intel['oracle_fixtures'],'Intel composite layer bytes')
+ require(intel['stats']['misses']==2 and intel['stats']['hits']==1 and len(intel['injections'])==3,'Intel composite forced misses')
+ require(intel['manifest_sha256']==sha(MANIFEST) and sha(P/intel['archive']['path'])==intel['archive']['sha256'],'Intel composite evidence binding')
+ require(all(isinstance(r['original'],int) and 0<=r['original']<248320 for r in intel['injections']),'Intel composite must consume valid real draft guesses')
+ payload=bytearray();selected=False
+ with gzip.open(P/intel['archive']['path'],'rt') as stream:
+  for line in stream:
+   item=json.loads(line)
+   if item.get('kind')=='file':selected=item['path'].endswith('/run/receipt.json')
+   elif item.get('kind')=='chunk' and selected:payload.extend(base64.b64decode(item['base64'],validate=True))
+ require(hashlib.sha256(payload).hexdigest()==intel['pipeline_receipt_sha256'],'Intel pipeline raw receipt binding')
+ native=json.loads(payload)
+ require(native['passed'] and native['draft_rows'] and all(r.get('provider_error')==0 for r in native['draft_rows']),'Intel composite real MTP provider error')
+ require(native['tokens']==intel['tokens'] and native['stats']==intel['stats'],'Intel composite archived output differs')
+ return dict(retained_cases=len(actual),gnu_real_cases=13,rollback_cases_both_compilers=12,intel_composite_cases=1,intel_composite_tokens=4,intel_composite_layers=192,coordinator_waiver='Full Intel real-model matrix waived 2026-10-12; device windows repeat exactness in minutes',token_matches=sum(r['token_matches'] for r in actual.values()),layer_matches=sum(r['layer_matches'] for r in actual.values()),suite_prompts=sorted(prompts))
 
 
 def rollback_asan(gates,artifacts):
@@ -200,28 +219,25 @@ def draft(gates,artifacts):
  from capacity_draft_gate import fixtures
  from draft_baseline import load as load_baseline, ORACLE
  baseline=load_baseline();baseline_hash=sha(ORACLE)
- row=gates['capacity-draft-gates.json'];require(row['arms']==6 and row['contexts']==list(CONTEXTS),'draft capacity coverage')
+ row=gates['capacity-draft-gates.json'];require(row['arms']==2 and row['contexts']==[4096,32768],'coordinator draft reference coverage')
  require(row['capture_rows']==94 and row['generated_prefix_tokens']==8,'draft prefix coverage')
  require(row['retained_reference_bytes']<300_000_000,'draft retained-reference budget')
- require(row['baseline_oracle_sha256']==baseline_hash and row['baseline_compared_arms']==6 and row['baseline_fixture_files_per_arm']==63,'frozen packet38 draft comparison missing')
+ require(row['baseline_oracle_sha256']==baseline_hash and row['baseline_compared_arms']==2 and row['baseline_fixture_files_per_arm']==63,'frozen draft comparison missing')
  sealed={};prefix=None
  input_file=P/'capture-input-incident-retrospective.json';inp=json.loads(input_file.read_text());table=B/'capture-incident-retrospective.tsv'
  require(sha(table)==inp['table_sha256'],'draft capture table changed')
  require(inp['source_capture_receipt_sha256']==baseline['source_receipts']['capture-input-incident-retrospective.json']['sha256'],'draft frozen/input source differs')
  for name,digest in inp['streams'].items():require(sha(B/'captured-incident-retrospective'/name)==digest,'draft captured input changed')
- for c in CONTEXTS:
+ for c in (4096,32768):
   run=read(f'capture-run-incident-retrospective-c{c}.json');require(run['passed'] is True and run['device_executed'] is False,'draft CPU reference failed')
   binary_bound(run,'gnu-host/own-rt-iq3',artifacts);require(run['context']==c and run['table_sha256']==sha(table),'draft reference context/input')
   require(run['dispatch_sha256']==sha(P/'dispatch-p38.json'),'draft reference dispatch changed')
   reference=Path(run['output']).resolve();require(reference==B.resolve()/f'draft-reference-c{c}','draft reference outside expected directory')
   actual=fixtures(reference);require(actual==run['fixture_sha256']==row['draft_capture_fixture_sha256_by_context'][str(c)],'draft reference fixture bytes changed')
   compare=next((r for r in row['rows'] if r['context']==c),None)
-  require(compare and compare['passed'] and compare['compilers']==list(COMPILERS),'draft compiler comparison missing')
+  require(compare and compare['passed'] and compare['compiler']=='gnu-host','draft reference comparison missing')
   require(compare['baseline_oracle_sha256']==baseline_hash and compare['baseline_fixture_matches']==63,'draft baseline comparison stale/incomplete')
-  require(compare['gnu_binary_sha256']==artifacts['gnu-host/own-rt-iq3'] and compare['icpx_binary_sha256']==artifacts['icpx-host/own-rt-iq3'],'draft comparison binary stale')
-  icpx=read(f'draft-icpx-host-c{c}.json');binary_bound(icpx,'icpx-host/own-rt-iq3',artifacts)
-  require(icpx['passed'] and icpx['fixture_sha256']==actual,'icpx draft bytes differ')
-  archive=compare['icpx_archive'];require(sha(P/archive['path'])==archive['sha256'],'icpx draft archive changed')
+  require(compare['binary_sha256']==artifacts['gnu-host/own-rt-iq3'],'draft reference binary stale')
   current={k:v for k,v in actual.items() if k.startswith('row-')}
   require(current==baseline['valid_fixture_sha256'],'draft valid-position bytes differ from frozen packet38 oracle')
   if prefix is None:prefix=current
@@ -338,13 +354,13 @@ def main():
  from queue_gate import check as queuecheck
  official_path=P.parent/'packet38-integrated/official-tensors.json'
  official=json.loads(official_path.read_text())
- source_hashes=sources();source_hashes[str(official_path.relative_to(ROOT))]=sha(official_path)
+ source_hashes=sources();source_hashes[str((P/'coordinator_windows.sh').relative_to(ROOT))]=sha(P/'coordinator_windows.sh');source_hashes[str(official_path.relative_to(ROOT))]=sha(official_path)
  baseline=read('draft-baseline-oracle.json')
  for filename in ('draft-baseline-oracle.json',baseline['archive']['path']):source_hashes[str((P/filename).relative_to(ROOT))]=sha(P/filename)
  source_map(source_hashes,ROOT)
  receipt=dict(schema='own-runtime.iq3.packet44.build.v1',passed=True,device_executed=False,
-  real_model_device_qualified=False,seal_status='complete',arithmetic='iq3-p17-detmath-v2',
-  context_capacities=list(CONTEXTS),sources=source_hashes,artifacts_sha256=artifacts,
+  real_model_device_qualified=False,seal_status='complete_under_coordinator_reduced_cpu_plan',arithmetic='iq3-p17-detmath-v2',
+  context_capacities=list(CONTEXTS),coordinator_window_capacities=[4096,32768],sources=source_hashes,artifacts_sha256=artifacts,
   precision=precision,link_commands=links,mode_build_receipts_sha256=build_receipts,disposable_fixture_binary_sha256=disposed_fixtures,
   input_sha256=sha(B/'input/input.json'),nongemv_fixture_host_sha256_by_context=fixture_hashes,
   nongemv_fixture_host_sha256=fixture_hashes['256'],p33_linked_fixture_host_sha256=linked_hash,
@@ -354,10 +370,22 @@ def main():
   gate_receipts={n:sha(P/n) for n in GATES},native_build_receipt_sha256=sha(P/'native-build-receipt.json'),
   math_gate=mathcheck(),queue_gate=queuecheck(),memory_plan=memory,cpu_capacity_gate_counts=counts,asan_capacity_boundary_counts=asan_boundary_counts,
   legacy_fixture_support_entry='disabled; coordinator uses window.py; no invented legacy census',
-  max_compile_jobs=2,numeric_threads_per_rank=2,max_cpu_bound_processes=4,anonymous_memory_limit_bytes=10_000_000_000,
+  max_compile_jobs=2,numeric_threads_per_rank=2,max_cpu_bound_processes=2,anonymous_memory_limit_bytes=10_000_000_000,
+  not_closed_on_cpu=['full Intel real-model matrix waived by coordinator','Intel draft reference matrix and capacity256 KD reference outside resumed window scope'],
   pending=['all coordinator device windows','device timing at each capacity','device residency and driver overhead','full 12-prompt device suite'])
  cpu=dict(passed=True,device_executed=False,gate_count=len(GATES),gates=receipt['gate_receipts'],capacity_counts=counts,asan_boundary_counts=asan_boundary_counts)
  (P/'cpu-tests.json').write_text(json.dumps(cpu,indent=2)+'\n');receipt['cpu_tests_sha256']=sha(P/'cpu-tests.json')
+ if '--bootstrap' in sys.argv:
+  (P/'build-admission-candidate.json').write_text(json.dumps(receipt,indent=2)+'\n')
+  print('CPU candidate verified; final seal requires actual-receipt admission rehearsal');return
+ admission=read('window-seal-admission-gates.json')
+ require(admission['passed'] and admission['device_executed'] is False,'final window seal admission did not pass')
+ source_map(admission['source_sha256'])
+ consumed={name:receipt[name] for name in admission['seal_fields']}
+ require(hashlib.sha256(json.dumps(consumed,sort_keys=True).encode()).hexdigest()==admission['consumed_seal_sha256'],'admission rehearsed different seal fields')
+ require(len(admission['rows'])==20 and {(r['context'],r['window']) for r in admission['rows']}=={(c,n) for c in (4096,32768) for n in ('K0','K1a','K1b','K2','W0p','KD','W2m','WS','WSs')},'final admission window coverage')
+ require(all(r['admission_reached_blocked_launcher'] and r['device_executed'] is False and r['window_passed'] is False for r in admission['rows']),'admission attempted execution')
+ receipt['window_seal_admission_sha256']=sha(P/'window-seal-admission-gates.json')
  (P/'build-receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
  (P/'BINARY-HASHES.md').write_text('# Binary SHA256\n\nNo device ran. All hashes bind the completed CPU seal.\n\n| Binary | SHA256 |\n| --- | --- |\n'+''.join(f'| {n} | {h} |\n' for n,h in sorted(artifacts.items())))
  print('SEALED packet44:',len(GATES),'gate receipts;',len(artifacts),'binary hashes; no device qualification')

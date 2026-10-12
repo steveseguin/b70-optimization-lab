@@ -20,8 +20,16 @@ ceiling during preparation is 4 GB; every large-write admission reserves an
 8 GB root free-space floor.
 
 `evidence/draft-baseline-rows.jsonl.gz` preserves the full original bytes of
-63 frozen packet38 draft fixtures. These are the independent baseline for all
-six new draft arms. `draft-baseline-oracle.json` retains their full and valid
+63 frozen packet38 draft fixtures. These are the independent baseline for the two coordinator-required
+GNU draft references. `draft-baseline-oracle.json` retains their full and valid
 prefix hashes and compressed original source receipts. `draft_baseline.py`
 verifies every archived member; each JSONL member's `data_b64` restores the
 original file bytes. Keeping the original tails makes cropping auditable.
+
+The resumed Intel composite and deliberately interrupted attempt retain their
+compressed logs/receipts even when larger than 1 MiB. They distinguish actual
+qualification from a coordinator stop and preserve the byte hashes behind the
+seal. storage.py documents the stream archive: retained members are restored
+by concatenating their base64 chunk records; binary fixture members retain
+hashes and can be regenerated only by their documented gates. Do not rerun
+the waived matrix solely to recreate disposable scratch.

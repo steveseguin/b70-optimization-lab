@@ -13,9 +13,12 @@ compiled but never executed by this agent.
 
 ## Outcome
 
-Qualification is in progress. A successful build is not a CPU or device gate.
-The final authority will be build-receipt.json, emitted
-only after all required current-binary CPU receipts pass. No speed is claimed.
+CPU qualification passed under the coordinator’s reduced plan. The 25 retained
+cases matched 200 tokens and 5,376 layer fixtures (13 GNU real-model cases
+plus 12 rollback cases). The Intel composite matched four tokens and 192
+layers with two forced misses. Both requested GNU KD references passed. See
+[CPU-GATES.md](CPU-GATES.md) and [build-receipt.json](build-receipt.json).
+All device windows remain pending. No speed is claimed.
 
 ## What worked
 
@@ -71,3 +74,46 @@ Repeat qualification after merging packet40; receipts do not transfer to a
 changed binary. A device fault follows the host's evidence/recovery procedure,
 never an automatic retry. Any slower short-context device result requires
 investigation before adopting this capacity extension.
+
+## Coordinator reduction, 2026-10-12
+
+The coordinator deliberately stopped the previous session at 22:35 UTC.
+The remaining full Intel-host real-model matrix would cost about five more
+CPU hours while the cards waited. It was waived because the coordinator's
+real-hardware windows repeat the full exactness check in minutes. The retained
+25 passes comprise 13 GNU real-model cases and 12 both-compiler rollback cases;
+all were rechecked by parsing and SHA256 only, without rerunning a model.
+The interrupted Intel decision-memo/capacity-256 attempt is **not run** for
+qualification. Its stop receipt and compressed scratch inventory are retained
+under evidence/. The graceful stop had already removed its partial scratch;
+resume verified that none remains. This was not a model failure.
+
+The replacement Intel qualification is one development-prompt request at
+capacity 4,096, four generated tokens, real MTP execution and a guess script
+forcing two misses and one hit. The compiled native controller does not accept
+an MTP guess override, so this diagnostic uses the existing Python controller
+and substitutes only the provider mailbox guesses after the real draft runs.
+The target binary, model arithmetic and verifier remain unchanged. The GNU
+native MTP gate and both compilers' native-controller gates remain qualified.
+The exact outcome is in intel-composite-gate.json; no diagnostic speed is used.
+
+Only GNU draft-head references at capacities 4,096 and 32,768 are generated
+for KD. They consume the previously captured confirmed streams, without
+running another target-model request, and each must match the frozen draft
+valid-prefix oracle. The reduced seal explicitly records this two-reference
+scope instead of claiming the original six-arm draft matrix.
+
+## Not closed on CPU
+
+The full Intel real-model matrix is waived, not passed. Intel draft-reference
+arms and a capacity-256 KD reference are outside the resumed window scope.
+Long real conversations, physical card residency, device output exactness,
+prepared-launch wall time, selection latency and speeds remain coordinator
+window work. A CPU seal is not a device or publication qualification.
+
+The composite archive retains the unchanged pipeline receipt, whose inherited
+`diagnostic` label does not know about harness mailbox injection. Its rates
+and label are not performance evidence. The enclosing gate explicitly records
+`no_speed_claim: true`, the script, all original/forced guesses and injection
+scope. The seal also parses the archived receipt, checks real draft-provider
+success, and rejects missing/invalid original guesses.

@@ -21,3 +21,9 @@ cooperatively and retained if their bounded drain cannot finish.
 Real CPU gates run serially: at most two rank processes, two OpenMP threads
 per rank, nice 19 and idle I/O, inherited affinity. Compiles use at most two
 concurrent single-job builds and do not overlap real-model gate execution.
+
+Resume deadline: the coordinator requested a seal within about one hour. Do not
+spend five hours duplicating the Intel matrix. One four-token Intel composite,
+two required GNU draft-head references, receipt verification and final wrapper
+admission are the bounded remaining work. If a requirement cannot fit, record
+it under "not closed on CPU" and do not claim its pass.
