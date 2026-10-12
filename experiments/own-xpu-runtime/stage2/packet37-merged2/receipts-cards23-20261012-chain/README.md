@@ -32,3 +32,8 @@ About 4 ms of GPU time per token less than packet 29's selection.
 
 The all-right-guess diagnostic (W2d) for this runtime is queued behind packet 36's
 windows.
+
+**W2d (diagnostic, 06:00 UTC):** guesses fed from the oracle, every guess right: 64/64
+tokens, 384/384 layers; median token interval **21.3 ms** (mean 23.3), halves 20.0 and
+20.5 ms. Not a speed result: it is the ceiling of this runtime before the draft's own
+cost ([receipt](w2d-r37/receipt.json); packet 32 with the previous kernels: 24.1 ms).

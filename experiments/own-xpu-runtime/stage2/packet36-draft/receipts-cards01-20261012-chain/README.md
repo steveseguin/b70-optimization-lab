@@ -47,3 +47,13 @@ from about 23 to about 20.7 ms; the draft's output head gets the faster dense ke
 to the first card with a second copy of the head and rebalancing layers hides the draft
 time ((T+m)/2 per right guess instead of T/2+m); a native controller removes 1–2 ms per
 token.
+
+**Where the draft's time goes** ([W2mc](w2mc-r36e/rank1/class-times.json), per-class GPU
+time on the second card, diagnostic): 3.3 ms of GPU time per guess, 4.3 ms of wall time.
+The output head takes 1.68 ms, the draft's argmax 0.31 ms (it still uses the old
+kernel; the target's takes 0.02 ms), QSA attention 0.20, the query/gate projection 0.12,
+routed experts 0.15, route 0.07, the merge projections 0.09, the rest of the layer about
+0.4 ms. About 1 ms of each guess is not kernel time: the second card's process waits for
+the guess and publishes it before it issues its half. Issuing the half right behind the
+draft's kernels and reading the guess when it arrives would remove that wait; the newer
+dense kernel and the newer argmax take another 0.6 ms off.

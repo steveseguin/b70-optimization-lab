@@ -1,0 +1,650 @@
+{
+  "profiling": true,
+  "timing_definition": "sum of individual GPU event execution durations",
+  "tokens": 64,
+  "classes": [
+    {
+      "class": "begin.0",
+      "device_ms": 0.421883,
+      "launches": 150,
+      "groups": 150
+    },
+    {
+      "class": "hc.a.norm",
+      "device_ms": 27.5066,
+      "launches": 7200,
+      "groups": 3600
+    },
+    {
+      "class": "hc.a.low",
+      "device_ms": 52.9104,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "hc.a.act",
+      "device_ms": 14.6415,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "hc.a.gate",
+      "device_ms": 80.5834,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "hc.a.mix",
+      "device_ms": 30.2961,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "hc.a.inject",
+      "device_ms": 41.9682,
+      "launches": 7200,
+      "groups": 3600
+    },
+    {
+      "class": "gdn.qkv",
+      "device_ms": 213.497,
+      "launches": 2700,
+      "groups": 2700
+    },
+    {
+      "class": "gdn.z",
+      "device_ms": 130.415,
+      "launches": 2700,
+      "groups": 2700
+    },
+    {
+      "class": "gdn.a",
+      "device_ms": 13.9586,
+      "launches": 2700,
+      "groups": 2700
+    },
+    {
+      "class": "gdn.b",
+      "device_ms": 13.6413,
+      "launches": 2700,
+      "groups": 2700
+    },
+    {
+      "class": "gdn.conv",
+      "device_ms": 18.8052,
+      "launches": 2700,
+      "groups": 2700
+    },
+    {
+      "class": "gdn.recurrence",
+      "device_ms": 93.214,
+      "launches": 2700,
+      "groups": 2700
+    },
+    {
+      "class": "gdn.gated",
+      "device_ms": 20.3206,
+      "launches": 2700,
+      "groups": 2700
+    },
+    {
+      "class": "attention",
+      "device_ms": 192.916,
+      "launches": 7200,
+      "groups": 3600
+    },
+    {
+      "class": "attn.combine",
+      "device_ms": 40.0792,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "hc.f.norm",
+      "device_ms": 27.1737,
+      "launches": 7200,
+      "groups": 3600
+    },
+    {
+      "class": "hc.f.low",
+      "device_ms": 52.7161,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "hc.f.act",
+      "device_ms": 16.9581,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "hc.f.gate",
+      "device_ms": 80.8285,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "hc.f.mix",
+      "device_ms": 30.4031,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "hc.f.inject",
+      "device_ms": 40.3796,
+      "launches": 7200,
+      "groups": 3600
+    },
+    {
+      "class": "router",
+      "device_ms": 51.0862,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "route",
+      "device_ms": 248.377,
+      "launches": 18000,
+      "groups": 3600
+    },
+    {
+      "class": "expsgate",
+      "device_ms": 305.248,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "expsgate.check",
+      "device_ms": 14.0702,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "expsup.check",
+      "device_ms": 11.712,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "expsact",
+      "device_ms": 16.3547,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "expsdown",
+      "device_ms": 474.089,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "expsdown.check",
+      "device_ms": 10.5444,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "shexpgate",
+      "device_ms": 46.8808,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "shexpup",
+      "device_ms": 44.1946,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "shexpact",
+      "device_ms": 14.9526,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "shexpdown",
+      "device_ms": 48.3046,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "shared_gate",
+      "device_ms": 15.4132,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "moe",
+      "device_ms": 22.5831,
+      "launches": 7200,
+      "groups": 7200
+    },
+    {
+      "class": "ffn.combine",
+      "device_ms": 39.329,
+      "launches": 3600,
+      "groups": 3600
+    },
+    {
+      "class": "qsa.qgate",
+      "device_ms": 83.5172,
+      "launches": 900,
+      "groups": 900
+    },
+    {
+      "class": "qsa.k",
+      "device_ms": 7.46178,
+      "launches": 900,
+      "groups": 900
+    },
+    {
+      "class": "qsa.v",
+      "device_ms": 7.55938,
+      "launches": 900,
+      "groups": 900
+    },
+    {
+      "class": "qsa.iq",
+      "device_ms": 8.33126,
+      "launches": 900,
+      "groups": 900
+    },
+    {
+      "class": "qsa.ik",
+      "device_ms": 5.88634,
+      "launches": 1800,
+      "groups": 900
+    },
+    {
+      "class": "qsa.prepare",
+      "device_ms": 7.5377,
+      "launches": 900,
+      "groups": 900
+    },
+    {
+      "class": "qsa.pool",
+      "device_ms": 4.33928,
+      "launches": 900,
+      "groups": 900
+    },
+    {
+      "class": "qsa.select",
+      "device_ms": 12.5701,
+      "launches": 1800,
+      "groups": 900
+    },
+    {
+      "class": "qsa.attention",
+      "device_ms": 179.503,
+      "launches": 2700,
+      "groups": 900
+    },
+    {
+      "class": "commit.final",
+      "device_ms": 0.521761,
+      "launches": 150,
+      "groups": 150
+    },
+    {
+      "class": "draft.merge.embedding_norm",
+      "device_ms": 3.53043,
+      "launches": 298,
+      "groups": 149
+    },
+    {
+      "class": "draft.merge.hidden_norm",
+      "device_ms": 1.34198,
+      "launches": 298,
+      "groups": 149
+    },
+    {
+      "class": "draft.merge.embedding_projected",
+      "device_ms": 5.01354,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.merge.projected",
+      "device_ms": 9.00333,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.merge.add",
+      "device_ms": 0.378025,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.begin.0",
+      "device_ms": 0.518118,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.hc.a.norm",
+      "device_ms": 1.2749,
+      "launches": 298,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.hc.a.low",
+      "device_ms": 3.35594,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.hc.a.act",
+      "device_ms": 0.511982,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.hc.a.gate",
+      "device_ms": 3.86178,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.hc.a.mix",
+      "device_ms": 1.07125,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.hc.a.inject",
+      "device_ms": 3.01354,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.qsa.qgate",
+      "device_ms": 18.0076,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.qsa.k",
+      "device_ms": 1.43531,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.qsa.v",
+      "device_ms": 1.26584,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.qsa.iq",
+      "device_ms": 1.25667,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.qsa.ik",
+      "device_ms": 1.10521,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.qsa.prepare",
+      "device_ms": 2.65489,
+      "launches": 298,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.qsa.pool",
+      "device_ms": 1.59748,
+      "launches": 298,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.qsa.select",
+      "device_ms": 10.1485,
+      "launches": 298,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.qsa.attention",
+      "device_ms": 29.7818,
+      "launches": 894,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.attention",
+      "device_ms": 12.6595,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.attn.combine",
+      "device_ms": 1.82302,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.hc.f.norm",
+      "device_ms": 1.08437,
+      "launches": 298,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.hc.f.low",
+      "device_ms": 3.3401,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.hc.f.act",
+      "device_ms": 0.454373,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.hc.f.gate",
+      "device_ms": 3.74531,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.hc.f.mix",
+      "device_ms": 1.05563,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.hc.f.inject",
+      "device_ms": 2.99614,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.router",
+      "device_ms": 1.34646,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.route",
+      "device_ms": 10.6994,
+      "launches": 745,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.gather",
+      "device_ms": 3.46905,
+      "launches": 298,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.expsgate",
+      "device_ms": 12.3632,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.expsgate.check",
+      "device_ms": 0.730412,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.expsup.check",
+      "device_ms": 0.494057,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.expsact",
+      "device_ms": 0.509679,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.expsdown",
+      "device_ms": 9.69792,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.expsdown.check",
+      "device_ms": 0.467398,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.shexpgate",
+      "device_ms": 1.57376,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.shexpup",
+      "device_ms": 1.53126,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.shexpact",
+      "device_ms": 0.449481,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.shexpdown",
+      "device_ms": 2.05666,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.shared_gate",
+      "device_ms": 0.870939,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.moe",
+      "device_ms": 0.774059,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.blk.0.ffn.combine",
+      "device_ms": 1.66854,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.commit.final",
+      "device_ms": 0.528755,
+      "launches": 149,
+      "groups": 149
+    },
+    {
+      "class": "draft.final.norm",
+      "device_ms": 0.509164,
+      "launches": 128,
+      "groups": 64
+    },
+    {
+      "class": "draft.final.low",
+      "device_ms": 1.39135,
+      "launches": 64,
+      "groups": 64
+    },
+    {
+      "class": "draft.final.act",
+      "device_ms": 0.180733,
+      "launches": 64,
+      "groups": 64
+    },
+    {
+      "class": "draft.final.gate",
+      "device_ms": 1.65604,
+      "launches": 64,
+      "groups": 64
+    },
+    {
+      "class": "draft.final.mix",
+      "device_ms": 0.449897,
+      "launches": 64,
+      "groups": 64
+    },
+    {
+      "class": "draft.logits",
+      "device_ms": 107.532,
+      "launches": 64,
+      "groups": 64
+    },
+    {
+      "class": "draft.argmax",
+      "device_ms": 19.9198,
+      "launches": 128,
+      "groups": 64
+    },
+    {
+      "class": "final.norm",
+      "device_ms": 0.469478,
+      "launches": 128,
+      "groups": 64
+    },
+    {
+      "class": "final.low",
+      "device_ms": 0.93,
+      "launches": 64,
+      "groups": 64
+    },
+    {
+      "class": "final.act",
+      "device_ms": 0.246875,
+      "launches": 64,
+      "groups": 64
+    },
+    {
+      "class": "final.gate",
+      "device_ms": 1.40636,
+      "launches": 64,
+      "groups": 64
+    },
+    {
+      "class": "final.mix",
+      "device_ms": 0.52354,
+      "launches": 64,
+      "groups": 64
+    },
+    {
+      "class": "logits",
+      "device_ms": 107.483,
+      "launches": 64,
+      "groups": 64
+    },
+    {
+      "class": "argmax",
+      "device_ms": 1.54281,
+      "launches": 128,
+      "groups": 64
+    }
+  ],
+  "scope": "entire request: prompt plus accepted, rejected and redone halves"
+}

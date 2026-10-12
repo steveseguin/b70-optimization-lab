@@ -1,0 +1,362 @@
+{
+  "profiling": true,
+  "timing_definition": "sum of individual GPU event execution durations",
+  "tokens": 64,
+  "classes": [
+    {
+      "class": "begin.0",
+      "device_ms": 1.10625,
+      "launches": 160,
+      "groups": 160
+    },
+    {
+      "class": "embedding",
+      "device_ms": 0,
+      "launches": 0,
+      "groups": 0
+    },
+    {
+      "class": "streams",
+      "device_ms": 1.60854,
+      "launches": 160,
+      "groups": 160
+    },
+    {
+      "class": "hc.a.norm",
+      "device_ms": 29.3962,
+      "launches": 7680,
+      "groups": 3840
+    },
+    {
+      "class": "hc.a.low",
+      "device_ms": 54.5359,
+      "launches": 3840,
+      "groups": 3840
+    },
+    {
+      "class": "hc.a.act",
+      "device_ms": 15.0838,
+      "launches": 3840,
+      "groups": 3840
+    },
+    {
+      "class": "hc.a.gate",
+      "device_ms": 85.4226,
+      "launches": 3840,
+      "groups": 3840
+    },
+    {
+      "class": "hc.a.mix",
+      "device_ms": 32.1646,
+      "launches": 3840,
+      "groups": 3840
+    },
+    {
+      "class": "hc.a.inject",
+      "device_ms": 44.3048,
+      "launches": 7680,
+      "groups": 3840
+    },
+    {
+      "class": "gdn.qkv",
+      "device_ms": 224.056,
+      "launches": 2880,
+      "groups": 2880
+    },
+    {
+      "class": "gdn.z",
+      "device_ms": 137.97,
+      "launches": 2880,
+      "groups": 2880
+    },
+    {
+      "class": "gdn.a",
+      "device_ms": 14.9882,
+      "launches": 2880,
+      "groups": 2880
+    },
+    {
+      "class": "gdn.b",
+      "device_ms": 14.325,
+      "launches": 2880,
+      "groups": 2880
+    },
+    {
+      "class": "gdn.conv",
+      "device_ms": 21.4041,
+      "launches": 2880,
+      "groups": 2880
+    },
+    {
+      "class": "gdn.recurrence",
+      "device_ms": 106.143,
+      "launches": 2880,
+      "groups": 2880
+    },
+    {
+      "class": "gdn.gated",
+      "device_ms": 21.4715,
+      "launches": 2880,
+      "groups": 2880
+    },
+    {
+      "class": "attention",
+      "device_ms": 204.334,
+      "launches": 7680,
+      "groups": 3840
+    },
+    {
+      "class": "attn.combine",
+      "device_ms": 42.6336,
+      "launches": 3840,
+      "groups": 3840
+    },
+    {
+      "class": "hc.f.norm",
+      "device_ms": 28.9265,
+      "launches": 7680,
+      "groups": 3840
+    },
+    {
+      "class": "hc.f.low",
+      "device_ms": 54.8867,
+      "launches": 3840,
+      "groups": 3840
+    },
+    {
+      "class": "hc.f.act",
+      "device_ms": 17.4669,
+      "launches": 3840,
+      "groups": 3840
+    },
+    {
+      "class": "hc.f.gate",
+      "device_ms": 85.7104,
+      "launches": 3840,
+      "groups": 3840
+    },
+    {
+      "class": "hc.f.mix",
+      "device_ms": 32.3495,
+      "launches": 3840,
+      "groups": 3840
+    },
+    {
+      "class": "hc.f.inject",
+      "device_ms": 42.7309,
+      "launches": 7680,
+      "groups": 3840
+    },
+    {
+      "class": "router",
+      "device_ms": 53.633,
+      "launches": 3840,
+      "groups": 3840
+    },
+    {
+      "class": "route",
+      "device_ms": 261.612,
+      "launches": 19200,
+      "groups": 3840
+    },
+    {
+      "class": "expsgate",
+      "device_ms": 323.049,
+      "launches": 3840,
+      "groups": 3840
+    },
+    {
+      "class": "expsgate.check",
+      "device_ms": 15.25,
+      "launches": 3840,
+      "groups": 3840
+    },
+    {
+      "class": "expsup.check",
+      "device_ms": 12.5754,
+      "launches": 3840,
+      "groups": 3840
+    },
+    {
+      "class": "expsact",
+      "device_ms": 17.2686,
+      "launches": 3840,
+      "groups": 3840
+    },
+    {
+      "class": "expsdown",
+      "device_ms": 501.793,
+      "launches": 3840,
+      "groups": 3840
+    },
+    {
+      "class": "expsdown.check",
+      "device_ms": 11.1176,
+      "launches": 3840,
+      "groups": 3840
+    },
+    {
+      "class": "shexpgate",
+      "device_ms": 49.2243,
+      "launches": 3840,
+      "groups": 3840
+    },
+    {
+      "class": "shexpup",
+      "device_ms": 46.7323,
+      "launches": 3840,
+      "groups": 3840
+    },
+    {
+      "class": "shexpact",
+      "device_ms": 15.7346,
+      "launches": 3840,
+      "groups": 3840
+    },
+    {
+      "class": "shexpdown",
+      "device_ms": 50.972,
+      "launches": 3840,
+      "groups": 3840
+    },
+    {
+      "class": "shared_gate",
+      "device_ms": 16.4357,
+      "launches": 3840,
+      "groups": 3840
+    },
+    {
+      "class": "moe",
+      "device_ms": 23.9505,
+      "launches": 7680,
+      "groups": 7680
+    },
+    {
+      "class": "ffn.combine",
+      "device_ms": 41.8479,
+      "launches": 3840,
+      "groups": 3840
+    },
+    {
+      "class": "ple.hash",
+      "device_ms": 1.72198,
+      "launches": 160,
+      "groups": 160
+    },
+    {
+      "class": "ple.lookup",
+      "device_ms": 0,
+      "launches": 0,
+      "groups": 0
+    },
+    {
+      "class": "ple.key",
+      "device_ms": 12.0478,
+      "launches": 160,
+      "groups": 160
+    },
+    {
+      "class": "ple.value",
+      "device_ms": 4.39249,
+      "launches": 320,
+      "groups": 160
+    },
+    {
+      "class": "ple.kn",
+      "device_ms": 1.32844,
+      "launches": 320,
+      "groups": 160
+    },
+    {
+      "class": "ple.qn",
+      "device_ms": 1.16271,
+      "launches": 320,
+      "groups": 160
+    },
+    {
+      "class": "ple.gated",
+      "device_ms": 3.57792,
+      "launches": 160,
+      "groups": 160
+    },
+    {
+      "class": "ple.cn",
+      "device_ms": 1.12686,
+      "launches": 320,
+      "groups": 160
+    },
+    {
+      "class": "ple.conv",
+      "device_ms": 1.33011,
+      "launches": 160,
+      "groups": 160
+    },
+    {
+      "class": "ple.add",
+      "device_ms": 1.54218,
+      "launches": 160,
+      "groups": 160
+    },
+    {
+      "class": "qsa.qgate",
+      "device_ms": 87.9171,
+      "launches": 960,
+      "groups": 960
+    },
+    {
+      "class": "qsa.k",
+      "device_ms": 7.92396,
+      "launches": 960,
+      "groups": 960
+    },
+    {
+      "class": "qsa.v",
+      "device_ms": 8.00009,
+      "launches": 960,
+      "groups": 960
+    },
+    {
+      "class": "qsa.iq",
+      "device_ms": 8.79179,
+      "launches": 960,
+      "groups": 960
+    },
+    {
+      "class": "qsa.ik",
+      "device_ms": 6.21616,
+      "launches": 1920,
+      "groups": 960
+    },
+    {
+      "class": "qsa.prepare",
+      "device_ms": 7.99436,
+      "launches": 960,
+      "groups": 960
+    },
+    {
+      "class": "qsa.pool",
+      "device_ms": 4.53574,
+      "launches": 960,
+      "groups": 960
+    },
+    {
+      "class": "qsa.select",
+      "device_ms": 13.4596,
+      "launches": 1920,
+      "groups": 960
+    },
+    {
+      "class": "qsa.attention",
+      "device_ms": 194.716,
+      "launches": 2880,
+      "groups": 960
+    },
+    {
+      "class": "commit.final",
+      "device_ms": 0.501765,
+      "launches": 160,
+      "groups": 160
+    }
+  ],
+  "scope": "entire request: prompt plus accepted, rejected and redone halves"
+}
