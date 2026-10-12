@@ -82,6 +82,9 @@
 #                                           (N32s lost the standing rule when a second, asked-for reply left it out): everything together
 #   N32k N32kr                              campaign 11 (2026-10-12): the keeper with in-place notes (N32u's settings) and the same with retrieval at
 #                                           each question (N32sr's settings), on the code after the second review (lab commit 080ebd6b9 and later)
+#   X32q                                    X32p with the proxy code of 2026-10-12 10:00: a question that arrived in a tool result and is still open
+#                                           is never cut out of view. (N32p / N32pr were first run after that commit: for the harness they also
+#                                           include the open question kept across the ordinary cut and `recall --before N` with nearest matches.)
 #   N32p N32pr X32p                         N32n / N32nr / X32n2 with the code of 2026-10-12 09:00 (after the second 1M proxy run): an amount in
 #                                           working may be another thing's value or a small factor; a questioned notes reply never falls back to
 #                                           the full rewrite (the first reply stands) and a line whose number the turns do not state is left out;
@@ -238,6 +241,7 @@ ARMS["X32b"] = ("plain", "memory", 0)                 # X32 again after the prox
 ARMS["X32i"] = ("plain", "memory", 0)                 # X32 with the proxy started with --notes-mode inplace (2026-10-12; the runner sets the proxy's options)
 ARMS["X32m"] = ("plain", "memory", 0)                 # X32i after the merge fix (an asked-for notes reply no longer replaces the one before it)
 ARMS["X32n"] = ("plain", "memory", 0)                 # X32m with the proxy code and options of 2026-10-12 07:00 (see the header)
+ARMS["X32q"] = ("plain", "memory", 0)                 # X32p plus: an open question survives every cut (see the header)
 ARMS["X32p"] = ("plain", "memory", 0)                 # X32n2 with the proxy code of 2026-10-12 09:00 (see the header); the proxy is started by hand with --recall-label
 ARMS["X32n2"] = ("plain", "memory", 0)                # X32n after the fix of 2026-10-12 06:55: what the kept message says about a result already noted is not noted twice
 ARMS["X32ir"] = ("plain", "memory", 0)                # the same with retrieval in the proxy as well, once it has that (reserved)
@@ -357,7 +361,7 @@ run_one() {  # arm agent budget task_dir job_name drop_old_thinking
   fi
   local fb=${FOLD_BATCHES:-}
   local api=$API_BASE
-  if [[ "$arm" == X32 || "$arm" == X32b || "$arm" == X32i || "$arm" == X32m || "$arm" == X32n || "$arm" == X32n2 || "$arm" == X32p || "$arm" == X32ir ]]; then   # the keeper policy as a proxy: the agent sends everything, the proxy keeps the window
+  if [[ "$arm" == X32 || "$arm" == X32b || "$arm" == X32i || "$arm" == X32m || "$arm" == X32n || "$arm" == X32n2 || "$arm" == X32p || "$arm" == X32q || "$arm" == X32ir ]]; then   # the keeper policy as a proxy: the agent sends everything, the proxy keeps the window
     api=${CTXKEEPER_BASE:?arm X32 needs CTXKEEPER_BASE, the URL of a running tools/ctxkeeper proxy (http://host:port/v1)}
   fi
   if [[ "$arm" == B32iraR || "$arm" == B32iraR4 || "$arm" == B32iraRH ]]; then   # B32ira + pinned RULE lines (standing rules and methods stay in view)
