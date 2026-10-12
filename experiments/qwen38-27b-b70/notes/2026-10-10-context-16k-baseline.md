@@ -876,3 +876,45 @@ correctly. Why it works here, and what remains to be shown: the things asked abo
 reset every third change, so a value needs one or two old sentences; and the questions are explicit. The 1M stream
 (20 sentences per question cover 187 of 228 questions; a probe item asks seven) and the stream with "it" and
 cross-references are the tests that follow.
+
+### Making the in-place notes complete: three checks, each from an audited error
+
+The in-place arm was run five times at 240K while its checks were tightened. Every change came from an error the
+audit found in the NOTES, and each arm name is one state of the code, so the table keeps them apart.
+
+| arm | seed | score | min | notes calls | asked again | notes wrong | what was new in this arm |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| N32xth | 0 | 39/39 | 9.5 | 18 | | 0 | in-place notes that think, every ten items |
+| N32y | 1 | 46/46 | 8.5 | 14 | 0 | 1 | a doubtful reply is asked for again in place; a STATE value is read as its last number |
+| N32z | 0 | 38/39 | 9.3 | 16 | 1 | 3 | a name the items mention must have a line in CHANGES |
+| N32w | 0 | 39/39 | 9.6 | 19 | 4 | 2 | the lines of a name must account for as many changes as the items mention it |
+| N32v | 1 | 45/46 | 9.7 | 18 | 4 | 1 | a value written without working must be one the items state |
+
+What the audit found, in order: a removal that was the only mention of its counter in ten items, left out (N32y);
+the second of two changes in one item left out, twice, with one wrong answer (N32z: `fasu60`, asked while wrong);
+`rumi16: -132` written without working for 29 - 73 (N32w); and `zija81: -62` for 134 - 16 (N32v, one wrong answer),
+which the last check should have caught and did not, because my number scanner counted the 62 inside the counter
+name `xasa62` as a number the items state. That is fixed (digits inside a name and item headings are not numbers),
+and arm N32u also narrows "the items state it" to a sentence that names the thing, or the one after it. So the
+honest reading of the 240K table is: **same scores as the full keeper within one question (39, 46, 38, 39, 45
+against 39 and 46), in 8.5 to 9.7 minutes against 15.7 and 16.5, with 0 to 3 wrong values in the NOTES per run
+where the full keeper had 0.** The remaining errors are of the kinds the checks now reject; N32u is the first arm
+with all of them and has only run at 1M (below). Ten items per notes call is also more than the full keeper's six;
+six per call (arm N32w6) is wired and not run.
+
+### The stream that says "it" and refers to other counters (exploratory, one seed)
+
+`client-hard`: every change names its counter in one sentence and changes it in the next, with doublings, thirds and
+"it went up by as much as Y held at that moment". 50 questions.
+
+| arm | score | probes | final list | min | notes wrong |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| N32z keeper, in-place notes | 42/50 | 23/25 | 19/25 | 14.9 | 14 |
+| R32b retrieval only | stopped by me at 20.5 min, item 104 of 147 | 10/15 answered (3 blank); the keeper had 15/15 at that point | | | |
+
+Neither method is good here. The keeper's NOTES went wrong mostly at the cross-references (nearly every first wrong
+value follows a "went up by as much as Y held" change), and one wrong counter then spoils the ones that copy from it.
+Retrieval was both slower and worse: a question about X retrieves "X ... it went up by as much as Y held", but
+nothing about Y, and the model spent long thinking turns on what it could not see. This stream is the place to
+measure the next version of either method; it is not calibrated, and one seed says only which way the difference
+points.
