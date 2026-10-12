@@ -14,3 +14,5 @@ compressed copy. Coordinator fix: cap raised to 6 GB in `storage.py`; the 8 GB
 free-space floor on the root filesystem stays. Seal amended in `build-receipt.json`.
 The raw `output.bin` of this attempt was removed (SHA-256 `f9058741…` in its native
 receipt). K0, K1a, K1b and K2 are rerun under the suffix `c`.
+
+Note: the amendment entry in `build-receipt.json` is stamped 16:10Z; the edit was made at about 16:04Z, before K0c started at 16:04:30Z. The stamp is left as written because K0c binds the receipt hash.
