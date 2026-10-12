@@ -28,8 +28,8 @@ def admit(extra=0, *, build_extra=None):
     free = int(result.stdout.splitlines()[-1].split()[3])
     used = build_size(B)
     build_extra = extra if build_extra is None else build_extra
-    if free < 8_000_000_000 + extra or used + build_extra >= 3_000_000_000:
-        raise RuntimeError(f'Packet38 storage admission refused: free={free}, build={used}, reserve write={extra}; require 8 GB free and build below 3 GB')
+    if free < 8_000_000_000 + extra or used + build_extra >= 6_000_000_000:  # build cap raised from 3 GB by the coordinator on 2026-10-12; the 8 GB root floor is unchanged
+        raise RuntimeError(f'Packet38 storage admission refused: free={free}, build={used}, reserve write={extra}; require 8 GB free and build below 6 GB')
     return dict(root_free_bytes=free, build_bytes=used, admitted_write_bytes=extra)
 
 RETAINED_SUFFIXES = {'.json', '.jsonl', '.log', '.txt', '.tsv', '.gz', '.py'}
