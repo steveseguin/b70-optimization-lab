@@ -1,0 +1,60 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "rows": [
+    {
+      "phase": "p38kernels",
+      "passed": true,
+      "execution_start_unix_ns": 1791836036779939334
+    },
+    {
+      "phase": "capacity",
+      "passed": true,
+      "execution_start_unix_ns": 1791836044546582032
+    },
+    {
+      "phase": "cancel-mini-native",
+      "passed": true,
+      "execution_start_unix_ns": 1791836052655313309,
+      "inventory_case": "cancellation-retention-mini-native.json:scratch-p40-cancellation-1791836052763747551",
+      "receipt_sha256": "f6f7fdf719103b6081d99ce7c8be21e50a5419afa88af1c32cc00ae77acfe4bf",
+      "reference_archive": {
+        "path": "evidence/scratch-p40-cancellation-1791836052763747551-reference.jsonl.gz",
+        "sha256": "844f7aa14dd1b0ed35f395def37bb9ddd0fb2ba45b4d93a865776de013b6e405"
+      }
+    },
+    {
+      "phase": "cancel-mini-python",
+      "passed": true,
+      "execution_start_unix_ns": 1791836232618350845,
+      "inventory_case": "cancellation-retention-mini-python.json:scratch-p40-cancellation-1791836232732543452",
+      "receipt_sha256": "ebb5d04f9de99a2252045833dfc81c709bd2a824013628899a2414b8840e6fe0",
+      "reference_archive": {
+        "path": "evidence/scratch-p40-cancellation-1791836232732543452-reference.jsonl.gz",
+        "sha256": "4f187b13e67ee1bf3ca33f7913dd85f1239943ec3417cf2d5d631bf607b9d1d9"
+      }
+    },
+    {
+      "phase": "cancel-real",
+      "passed": true,
+      "execution_start_unix_ns": 1791836413200056134,
+      "inventory_case": "cancellation-retention-real-native.json:scratch-p40-cancellation-1791836413302498463",
+      "receipt_sha256": "6c875901bf4ec528683856cb356a8f7e6c9bb580f28a42366f028ceb30e2e2c5",
+      "reference_archive": {
+        "path": "evidence/scratch-p40-cancellation-1791836413302498463-reference.jsonl.gz",
+        "sha256": "e0565b152b639b06d28dcfd691e1874c50b7030b86cd9d5e20e466a959ab2954"
+      }
+    }
+  ],
+  "planned": [
+    "p38kernels",
+    "capacity",
+    "cancel-mini-native",
+    "cancel-mini-python",
+    "cancel-real"
+  ],
+  "deferred": [
+    "cheap: run separately after concurrent strict real proof so nested host-issue helper cannot change during that proof",
+    "draft-final: execute pipeline_draft_agreement.py only after fresh GNU and Intel MTP receipts plus captures; GNU campaign is scheduled separately"
+  ]
+}

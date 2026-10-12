@@ -7,7 +7,7 @@
   "findings": [],
   "sources_sha256": {
     "mtp.hpp": "13c5dd22a6e9ec7225c7c3900a8a406a1a95b2315b8d10bb0597b8be3889d4a8",
-    "rank.hpp": "3defe947138b86e2c453b02a006288c8fca75f52bd59d156f3d1d8dc94ac053c",
+    "rank.hpp": "78ea575effa36de9622d2c9df8339367bf398a4287f3d01afc57978c1b91f9ea",
     "native_controller.hpp": "2e183a51553f32422158d35d5ca7d0cae050157082f9728f6ef316e66b52f368",
     "main.cpp": "93a9b7be9803decbb4929e28561b4972ebdcb204b5ce79713b6fcdbcdeea7de2",
     "owner_api.hpp": "1c712169fca15d34319ab082701a054a4a1fc63caccdfd7515a00067f4843608",
@@ -18,5 +18,9 @@
     "real overlap timing",
     "KD host/device parity"
   ],
-  "reviewed_followup": "standalone scratch initialization happens before request/draft timing and does not change async ordering"
+  "reviewed_followup": "Rereviewed applied strict rollback integration: rank1 image is allocation-free and does not alter provider begin/poll/publication or confirmed half input ordering; rank0 image restores only its producer slot, excludes publication/verification/mailbox regions, and runs on the existing owner thread. Standalone scratch initialization remains before request/draft timing.",
+  "gate_receipts_sha256": {
+    "draft-async-gates-gnu.json": "ec5130d59bab6a689d23dbe125ab91e85da23a4e7a3d280f73ea422fcf28b3bf"
+  },
+  "current_cpu_async_cases": 28
 }

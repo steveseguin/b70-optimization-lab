@@ -39,8 +39,12 @@ The strict terminal-EOS fix now restores a private pre-speculation image,
 including abandoned physical bytes and host metadata. It preserves committed
 banks and QSA prefixes so an illegal mutation remains visible.
 [EOS-STATE-SCOPE.md](EOS-STATE-SCOPE.md) records the original finding and the
-implemented correction. Current-source full-state CPU qualification is required
-before sealing; no reduced-state exception is assumed.
+implemented correction. The current-source strict terminal proof passed 472
+checks: 460 state-equality comparisons and 12 corruption controls, across both
+controllers. [The aggregate receipt](terminal-eos-all-state-gates.json) binds
+408 miniature and 64 sampled real-model checks plus 480 owner archives. This
+closes the tested terminal-state requirement without a reduced-state exception;
+remaining CPU qualification and final sealing are still in progress.
 
 `--max-new N` is bounded by prompt length plus context capacity. With capacity
 256, the suite's 60–90-token prompts fit 128 outputs. The complete 64- and

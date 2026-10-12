@@ -19,6 +19,11 @@
       "passed": true,
       "device_executed": false,
       "cpu_receipt_contract": true,
+      "artifacts_sha256": {
+        "gnu-host/nongemv-fixtures": "b85f1c642d64cad0d283cd5bf27f191260e7b8a12969bd5adfaa093f3eaaf774",
+        "gnu-host/p33-linked-fixtures": "185e9bd51bd38f7fadad9189a656f1a3c1ae7281525510ce4b11dc3b7059e907",
+        "gnu-host/k2-fixtures": "4a1e208c68cd11621c1c8c2c3c8209664c0bf86c6f94cebb8fb0ab1176f263a8"
+      },
       "retained_artifacts": {
         "fixture.log": {
           "path": "fixture.log.gz",
@@ -39,23 +44,53 @@
           "uncompressed_bytes": 1588290
         },
         "run0/output.bin": {
-          "path": "run0/output.bin.gz",
-          "sha256": "a768d88b7a49be2c10cd74525df1d072a7ce67ff0ac6e71c726db771176a3111",
-          "uncompressed_sha256": "b05d4d9f4bb98e1efceedd7f5ca112e2cd49bb16891a740569f683900e3f001b",
-          "uncompressed_bytes": 23175840
+          "disposition": "sha256-only",
+          "uncompressed_sha256": "70e203b9ccb4abb5f08cd669579dad03d3fcefe03704b2b032660a1ad2145a1b",
+          "uncompressed_bytes": 23175840,
+          "native_receipt_path": "run0/receipt.json",
+          "native_receipt_sha256": "db1fc52b0fc55f04d7f81dd66bcc7763d134b7aa056f632a35f4bf4578259430",
+          "children_path": "children.json",
+          "children_sha256": "771a2eaa2c5dbfca38cc16b4fdec169e6684d1e54e6e4184db0db143093ff689",
+          "launch_entry": {
+            "binary": "nongemv-fixtures",
+            "binary_sha256": "b85f1c642d64cad0d283cd5bf27f191260e7b8a12969bd5adfaa093f3eaaf774",
+            "directory": "run0",
+            "pid": 763359,
+            "argv": [
+              "nice",
+              "-n",
+              "19",
+              "ionice",
+              "-c",
+              "3",
+              "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/gnu-host/nongemv-fixtures",
+              "--validate-only",
+              "--dispatch",
+              "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/dispatch-p38.json",
+              "--fixtures",
+              "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/fusion-fixtures",
+              "--output",
+              "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/window-cpu-fixtures-current/K1a/run0"
+            ]
+          },
+          "restoration": "Rerun the sealed fixture binary with children.json argv, a fresh output and newly allocated stop descriptor; same binary, dispatch and inputs. Device execution requires coordinator authorization.",
+          "restoration_dispatch": {
+            "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/dispatch-p38.json",
+            "sha256": "2c7783ae00f9bbaee355a285b56fe46fc2178e483274c5e03c8e0e1bcbf335a5"
+          }
         }
       },
-      "fixture_binary_sha256": "bdbe7eeae41ca89a57f67d249a99ccb12edafd053c730c462d0b6d2cc70d476b",
-      "linked_binary_sha256": "e0728215db1b2a07c0f89a1ec172e4130276fb8c8e34e4b1a4526729afc8c8bd",
+      "fixture_binary_sha256": "b85f1c642d64cad0d283cd5bf27f191260e7b8a12969bd5adfaa093f3eaaf774",
+      "linked_binary_sha256": "185e9bd51bd38f7fadad9189a656f1a3c1ae7281525510ce4b11dc3b7059e907",
       "pids": [
-        663126,
-        663134
+        763359,
+        763372
       ],
       "fixture_entry_checks": 446,
       "linked_checks": 216,
       "validation_only": true,
       "receipts": {
-        "run0/receipt.json": "51e87fdefbc024377ebdc324e976396449b35cd5a414ac41f5be093a37283c1e",
+        "run0/receipt.json": "db1fc52b0fc55f04d7f81dd66bcc7763d134b7aa056f632a35f4bf4578259430",
         "linked/receipt.json": "c7d173cd5e2e631958fac331522332f33a3b512bafdb66d77fffe335eacd55ec"
       }
     },
@@ -64,6 +99,11 @@
       "passed": true,
       "device_executed": false,
       "cpu_receipt_contract": true,
+      "artifacts_sha256": {
+        "gnu-host/nongemv-fixtures": "b85f1c642d64cad0d283cd5bf27f191260e7b8a12969bd5adfaa093f3eaaf774",
+        "gnu-host/p33-linked-fixtures": "185e9bd51bd38f7fadad9189a656f1a3c1ae7281525510ce4b11dc3b7059e907",
+        "gnu-host/k2-fixtures": "4a1e208c68cd11621c1c8c2c3c8209664c0bf86c6f94cebb8fb0ab1176f263a8"
+      },
       "retained_artifacts": {
         "fixture.log": {
           "path": "fixture.log.gz",
@@ -84,23 +124,53 @@
           "uncompressed_bytes": 1588290
         },
         "run0/output.bin": {
-          "path": "run0/output.bin.gz",
-          "sha256": "843e8b7c7155abba7d94ae8db0a0fbc2e87af72e7aea852adafc6a0d7ae37ec0",
-          "uncompressed_sha256": "a1624db2247ea11afe8af1315756dc47ee777b8296daf984a7fca33299086a53",
-          "uncompressed_bytes": 23175840
+          "disposition": "sha256-only",
+          "uncompressed_sha256": "12d42b87427ba794ad1a5037285a63861de638d2fafc32bd44f7adc7209d5c66",
+          "uncompressed_bytes": 23175840,
+          "native_receipt_path": "run0/receipt.json",
+          "native_receipt_sha256": "f9653bc4ba35df6bc16f1ae0c5223e1ee43d10f2529d30be6ef109c6fd487e71",
+          "children_path": "children.json",
+          "children_sha256": "c9a3a4e9f7c7011f25480d72f513d80cdeb70285dba5c974524d991c0993d810",
+          "launch_entry": {
+            "binary": "nongemv-fixtures",
+            "binary_sha256": "b85f1c642d64cad0d283cd5bf27f191260e7b8a12969bd5adfaa093f3eaaf774",
+            "directory": "run0",
+            "pid": 763377,
+            "argv": [
+              "nice",
+              "-n",
+              "19",
+              "ionice",
+              "-c",
+              "3",
+              "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/gnu-host/nongemv-fixtures",
+              "--validate-only",
+              "--dispatch",
+              "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/dispatch-p38.json",
+              "--fixtures",
+              "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/fusion-fixtures",
+              "--output",
+              "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/window-cpu-fixtures-current/K1b/run0"
+            ]
+          },
+          "restoration": "Rerun the sealed fixture binary with children.json argv, a fresh output and newly allocated stop descriptor; same binary, dispatch and inputs. Device execution requires coordinator authorization.",
+          "restoration_dispatch": {
+            "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/dispatch-p38.json",
+            "sha256": "2c7783ae00f9bbaee355a285b56fe46fc2178e483274c5e03c8e0e1bcbf335a5"
+          }
         }
       },
-      "fixture_binary_sha256": "bdbe7eeae41ca89a57f67d249a99ccb12edafd053c730c462d0b6d2cc70d476b",
-      "linked_binary_sha256": "e0728215db1b2a07c0f89a1ec172e4130276fb8c8e34e4b1a4526729afc8c8bd",
+      "fixture_binary_sha256": "b85f1c642d64cad0d283cd5bf27f191260e7b8a12969bd5adfaa093f3eaaf774",
+      "linked_binary_sha256": "185e9bd51bd38f7fadad9189a656f1a3c1ae7281525510ce4b11dc3b7059e907",
       "pids": [
-        663140,
-        663150
+        763377,
+        763381
       ],
       "fixture_entry_checks": 446,
       "linked_checks": 216,
       "validation_only": true,
       "receipts": {
-        "run0/receipt.json": "ad91e5a5523c7fee8946bc0c51f031934010858c092687bd39b2c7e498d9e5ce",
+        "run0/receipt.json": "f9653bc4ba35df6bc16f1ae0c5223e1ee43d10f2529d30be6ef109c6fd487e71",
         "linked/receipt.json": "c7d173cd5e2e631958fac331522332f33a3b512bafdb66d77fffe335eacd55ec"
       }
     },
@@ -109,6 +179,11 @@
       "passed": true,
       "device_executed": false,
       "cpu_receipt_contract": true,
+      "artifacts_sha256": {
+        "gnu-host/nongemv-fixtures": "b85f1c642d64cad0d283cd5bf27f191260e7b8a12969bd5adfaa093f3eaaf774",
+        "gnu-host/p33-linked-fixtures": "185e9bd51bd38f7fadad9189a656f1a3c1ae7281525510ce4b11dc3b7059e907",
+        "gnu-host/k2-fixtures": "4a1e208c68cd11621c1c8c2c3c8209664c0bf86c6f94cebb8fb0ab1176f263a8"
+      },
       "retained_artifacts": {
         "fixture.log": {
           "path": "fixture.log.gz",
@@ -130,9 +205,9 @@
         }
       },
       "summary_archive": "evidence/window-cpu-k2-summary.json.gz",
-      "summary_archive_sha256": "6b714637596e13e3e4a3bbeb998bb681057c242a784d9fb5c009c7f4a1c0d0a6",
-      "summary_sha256": "a8f1dde73ff260664c6a9a82b0197b26ecd37e3254c12feebee24b2633e25def",
-      "fixture_binary_sha256": "c3e38a441041b4e526fd81387776cff56b8ec90472c94d6323bf6c40cb63abca",
+      "summary_archive_sha256": "f9b7a62224f24bdc533a997e29166d88f0cbdebc8141e8d27c511bd9d4a1ff92",
+      "summary_sha256": "102ba556d1faa22e99ca65619d22ce9cb26d137f140a1a7620460137fbb00f35",
+      "fixture_binary_sha256": "4a1e208c68cd11621c1c8c2c3c8209664c0bf86c6f94cebb8fb0ab1176f263a8",
       "entry_checks": 552,
       "summary_exercised": true,
       "device_timing_rejected": true,
@@ -149,7 +224,7 @@
   "wrapper_tests": 36,
   "wrapper_tests_deferred_to": null,
   "new_latch_regressions": 3,
-  "binary_sha256": "b60ace4f20d5445cf3bb18313b786a84671ccc67b27a850ae650bf21b94870ec",
+  "binary_sha256": "e912aa65c6d276aeecfe574babc4945f31ee9477055052e804a60bd5c09a6683",
   "limitations": [
     "K0 SYCL bundle build has no host equivalent and remains coordinator-only",
     "K1 registration dryrun uses validation-only mode; full arithmetic gate is separate",

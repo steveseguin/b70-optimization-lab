@@ -2,10 +2,10 @@
   "source_review_passed": true,
   "passed": true,
   "reviewer": "/root/cancel_runtime independent of strict rollback implementation",
-  "review_kind": "patch-stage source review; execution qualification pending",
+  "review_kind": "applied-source independent review with current exhaustive-mini and sampled-real terminal proof",
   "device_executed": false,
   "patch": "strict-terminal-snapshot.patch",
-  "patch_sha256": "5e4fbbe8f62f10a8d1d127c7df0a7fdc16cb11c5c67e9950005dc45c8b7c4d75",
+  "patch_sha256": "1f25b4ee7d9e28b410c9b9960f313575d2b8d309f36bb1cb39684e57ae472881",
   "checks": [
     "Checkpoint begins before speculative token upload, host PLE preparation, and any target compute; rank0 owns the image and no asynchronous worker accesses it.",
     "Every saved D2D copy is chained by the owner, and each successful copy updates Engine tail. Later writes drain the saved prefix; rollback drains compute and restores after any completed bank swap is reversed.",
@@ -18,22 +18,61 @@
     "The private backup is initialized and cleared only after resolution at dump/reset/finish, and remains included in the ordinary allocation inventory. Model allocations are never scrubbed before hashing.",
     "Engine owns the persistent backup allocation; it participates in normal admission, reset, drain and teardown. Constructor now runs before after-load memory recording, census and READY.",
     "Rank1 allocates no rollback image. Its target token authority and asynchronous draft publication are unchanged.",
-    "CPU-only command12 corrupts an excluded active-bank or valid-QSA byte after speculation. It cannot compile into the device command handler and must cause final-state comparison failure."
+    "CPU-only command12 corrupts an excluded active-bank or valid-QSA byte after speculation. It cannot compile into the device command handler and must cause final-state comparison failure.",
+    "Resolved boundary clears only private saved host vectors/history/parity after draining and zeroing private device backup; it does not clear live Engine metadata. Validity is false and remaining counts are explicitly telemetry.",
+    "The shared snapshot covers exactly rank0 producer bytes0..65535. Both coordinators hand over only by reading this region and writing the separate rank1 slot; rank1 publication, verifier and native mailbox lie above both slots and are never restored. Mapping stays live through restoration.",
+    "Private backup uses runtime_overhead with process lifetime, exactly matching owner.cpp planned(category); normal owner teardown still frees it after drain."
   ],
   "findings": [
     {
       "issue": "Initial draft allocated backup after census and READY, omitting capacity from startup census and exposing incomplete readiness.",
       "resolution": "Latest patch constructs SpeculativeImage before after-load memory accounting, census and READY.",
       "status": "resolved in reviewed patch"
+    },
+    {
+      "issue": "Earlier draft paired runtime_overhead category with request lifetime; implementer corrected the owner contract mismatch.",
+      "resolution": "Independent rereview confirms runtime_overhead maps to process lifetime in owner.cpp.",
+      "status": "resolved in reviewed patch"
     }
   ],
   "unresolved_source_findings": [],
   "pending": [
-    "Apply reviewed patch after existing campaign completes",
-    "Compile and sanitizer checks",
-    "Strict terminal/no-speculative full-buffer and whole-inventory equivalence",
-    "Protected-state negative corruption gates",
-    "Requalify existing cancellation/retention/controllers on final binaries",
+    "Completion of separately running five-mode native real comparison on final GNU binary",
     "Coordinator-only device behavior and measured snapshot overhead"
-  ]
+  ],
+  "reviewed_followup": "Independent rereview of shared producer-slot restoration, private host-backup retirement and owner category/lifetime match. Protocol static_assert now binds the shared snapshot extent to slot_bytes. Current-source ordinary cancellation, inventory, long-retention and asynchronous-draft gates now passed; GNU/Intel/ASAN mini and ASAN MTP receipts are bound. Source review remains independent of the strict image author.",
+  "source_sha256": {
+    "strict_snapshot.hpp": "4bddafeb8d3a8c3243f8a885ca25127637a71135ede6dff11dbea3d645cf833e",
+    "rank.hpp": "78ea575effa36de9622d2c9df8339367bf398a4287f3d01afc57978c1b91f9ea",
+    "main.cpp": "93a9b7be9803decbb4929e28561b4972ebdcb204b5ce79713b6fcdbcdeea7de2",
+    "native_controller.hpp": "2e183a51553f32422158d35d5ca7d0cae050157082f9728f6ef316e66b52f368",
+    "owner.cpp": "8e82affd2c119ef2ef13df14c11063f60ec8ba641ed643b7f2c652e7c256e94b",
+    "owner_api.hpp": "1c712169fca15d34319ab082701a054a4a1fc63caccdfd7515a00067f4843608",
+    "request_state_inventory.hpp": "c4818d42606ec5f29e00c7fa0ede2f12b4bdc6c6c2f5ca1740ca5e9cc023ea65"
+  },
+  "screen_evidence": {
+    "receipt": "terminal-eos-all-state-mini-both-screen.json",
+    "sha256": "67f037892ef5e5ff59e4fd8377c5ea9f31ad84255daf0cdd3ceba06a9971dbae",
+    "cases": 20,
+    "scope": "Both controllers, retention on/off, cuts0,49,99,100 and committed-bank/QSA corruption negatives; diagnostic screening only, exhaustive proof pending."
+  },
+  "gate_receipts_sha256": {
+    "terminal-eos-all-state-mini-both.json": "2df6407c2076af949e0b1025b51635df22f7e98340c2d17605555ed238b41387",
+    "terminal-eos-all-state-real-both.json": "ca0358adfe9186952f7a832bdafaefb8603982f9347b8147c37591aa68e383a3",
+    "terminal-eos-all-state-gates.json": "68fd9b282479042ceb1c22944e43161badc18af86d0f8bfbb29256b59e1da97d",
+    "mini-gnu-host.json": "7c4af5c32fc42e2e5c0ddaa038c2d6c19c77c3d97e9b39ef79c81283efad4f30",
+    "mini-icpx-host.json": "8f83916c1343c077eb201a24bfc8df8e3aa6b292b0a4f4170a44e5b2fb1099cb",
+    "mini-asan.json": "f8af3e7811065bc63ecc64ec470ecd464574ff0a0e37c6a29574f8a9c63a20c5",
+    "mtp-gates-asan.json": "dd9b27da0de23bb6b92a98e10434632563997c76a110e97be2b0fafbde8ef89c",
+    "native-mini-cpu.json": "312a32f3e7668a940e317655d274e7c060f74c168271d7026804401067e4b089",
+    "cancellation-retention-mini-native.json": "f6f7fdf719103b6081d99ce7c8be21e50a5419afa88af1c32cc00ae77acfe4bf",
+    "cancellation-retention-mini-python.json": "ebb5d04f9de99a2252045833dfc81c709bd2a824013628899a2414b8840e6fe0",
+    "cancellation-retention-real-native.json": "6c875901bf4ec528683856cb356a8f7e6c9bb580f28a42366f028ceb30e2e2c5",
+    "cancellation-inventory-gates.json": "648ce550c5e6ff75b7f98dadeb2cfe0b3e433a12dcdc2e1ca3fcf166474feaae",
+    "retention-caps-gates.json": "7c3b754f5ffd4d28c273c4b6ac1920c27530f872a35105401d5aed52bcff91cc",
+    "draft-async-gates-gnu.json": "ec5130d59bab6a689d23dbe125ab91e85da23a4e7a3d280f73ea422fcf28b3bf"
+  },
+  "qualified_terminal_gates": 472,
+  "qualified_owner_pairs": 480,
+  "execution_scope": "408 mini gates: every99-kernel boundary plus completed half, both controllers/retention;64 real gates at positions7/8 using original7-token prefix and one verified generated token, full production weights/909-launch half; includes12 actual committed-state corruption negatives. Diagnostic only, not all-context or device qualification."
 }

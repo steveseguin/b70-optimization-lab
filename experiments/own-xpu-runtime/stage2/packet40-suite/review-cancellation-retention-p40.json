@@ -1,7 +1,7 @@
 {
   "schema": "packet40.independent-cancellation-retention-review.v1",
   "reviewer": "draft_runtime subagent (not cancellation author)",
-  "source_review_passed": false,
+  "source_review_passed": true,
   "device_executed": false,
   "findings": [
     {
@@ -12,7 +12,7 @@
     {
       "finding": "An incomplete speculative prefix must not exchange active temporal state banks.",
       "status": "verified",
-      "evidence": "candidate.swapped only after an uncancelled half; undo swaps only when candidate.swapped, then restores position/history and invalidates lookup/fp32 caches."
+      "evidence": "candidate.swapped only after an uncancelled half; undo swaps only when candidate.swapped, then image.restore restores physical write-set, position/history, token and exact lookup/routing/FP32 metadata."
     },
     {
       "finding": "Shared target-verification token publication must not admit draft guesses or stale positions.",
@@ -31,27 +31,86 @@
     },
     {
       "finding": "Terminal rollback leaves token input and host-derived cache/routing metadata different from the exact pre-speculation image.",
-      "status": "open",
-      "evidence": "half_step writes token and prepare_token before first cancellation boundary; undo restores history/position/token_history but not token, clears lookup_ids/fp32 metadata, and does not restore selected. Existing committed_terminal gate omits these fields.",
-      "scope": "Strict terminal all-state equivalence only; preserved nonterminal redo and retention receipts do not prove this case."
+      "status": "resolved by strict image, independently reviewed by cancel_runtime",
+      "evidence": "SpeculativeImage captures before guessed token/prepare_token, restores complete mutable write-set and exact host routing/cache metadata after drained conditional bank swap-back; restores only rank0 producer slot. Strict mini 408 + real-prefix 64 CPU gates include 12 actual protected-state corruption negatives.",
+      "scope": "Strict terminal all-state equivalence only; preserved nonterminal redo and retention receipts do not prove this case.",
+      "historical_status": "open before strict image implementation",
+      "historical_evidence": "half_step writes token and prepare_token before first cancellation boundary; undo restores history/position/token_history but not token, clears lookup_ids/fp32 metadata, and does not restore selected. Existing committed_terminal gate omits these fields."
     }
   ],
-  "runtime_gates": "Use cancellation_gate.py and draft_async_gate.py receipts; code review alone is not runtime qualification.",
+  "runtime_gates": "Use cancellation_retention_gate.py, cancellation_inventory_gate.py, retention_caps_gate.py and draft_async_gate.py receipts; code review alone is not runtime qualification.",
   "source_sha256": {
     "main.cpp": "93a9b7be9803decbb4929e28561b4972ebdcb204b5ce79713b6fcdbcdeea7de2",
-    "rank.hpp": "3defe947138b86e2c453b02a006288c8fca75f52bd59d156f3d1d8dc94ac053c",
+    "rank.hpp": "78ea575effa36de9622d2c9df8339367bf398a4287f3d01afc57978c1b91f9ea",
     "owner.cpp": "8e82affd2c119ef2ef13df14c11063f60ec8ba641ed643b7f2c652e7c256e94b",
     "owner_api.hpp": "1c712169fca15d34319ab082701a054a4a1fc63caccdfd7515a00067f4843608",
     "native_controller.hpp": "2e183a51553f32422158d35d5ca7d0cae050157082f9728f6ef316e66b52f368",
     "request_state_inventory.hpp": "c4818d42606ec5f29e00c7fa0ede2f12b4bdc6c6c2f5ca1740ca5e9cc023ea65",
-    "request_reset.hpp": "b35ad7753e3b2155e62e9d02700c24c52292f773c5f0b5f496914c705b6fbe99"
+    "request_reset.hpp": "b35ad7753e3b2155e62e9d02700c24c52292f773c5f0b5f496914c705b6fbe99",
+    "strict_snapshot.hpp": "4bddafeb8d3a8c3243f8a885ca25127637a71135ede6dff11dbea3d645cf833e",
+    "audit_rollback.py": "94535cfccb31df176271430ff890fe205ad4f1598d59d888edd0ba52023c34b4",
+    "test_audit_rollback.py": "dbea60a558ec37fc8f4afaf63365a299c6631f52e7b2e264b67c653d567b9cf1",
+    "review-cancellation-retention-p40.md": "25b856e1a885a9aab2ceb9846e25f290149f322da79d31dc4fcd9752d223653a"
   },
   "gate_receipts_sha256": {
-    "cancellation-retention-mini-native.json": "18f46cab06f62cfb9bab708f745a8246aa24eeb12d3935ca5fd6909d49f99ac5",
-    "cancellation-retention-mini-python.json": "3805000febbcea8f4c9dbfef42e1cc7b0c1613ef1fe93f73a85cf945e8ef0de8",
-    "draft-async-gates-gnu.json": "960b83f2d2712f888f8a638c5d37580fbbb10802ee12f3635c462455fbf96830"
+    "cancellation-retention-mini-native.json": "f6f7fdf719103b6081d99ce7c8be21e50a5419afa88af1c32cc00ae77acfe4bf",
+    "cancellation-retention-mini-python.json": "ebb5d04f9de99a2252045833dfc81c709bd2a824013628899a2414b8840e6fe0",
+    "cancellation-retention-real-native.json": "6c875901bf4ec528683856cb356a8f7e6c9bb580f28a42366f028ceb30e2e2c5",
+    "cancellation-inventory-gates.json": "648ce550c5e6ff75b7f98dadeb2cfe0b3e433a12dcdc2e1ca3fcf166474feaae",
+    "retention-caps-gates.json": "7c3b754f5ffd4d28c273c4b6ac1920c27530f872a35105401d5aed52bcff91cc",
+    "draft-async-gates-gnu.json": "ec5130d59bab6a689d23dbe125ab91e85da23a4e7a3d280f73ea422fcf28b3bf",
+    "terminal-eos-all-state-mini-both.json": "2df6407c2076af949e0b1025b51635df22f7e98340c2d17605555ed238b41387",
+    "terminal-eos-all-state-real-both.json": "ca0358adfe9186952f7a832bdafaefb8603982f9347b8147c37591aa68e383a3",
+    "terminal-eos-all-state-gates.json": "68fd9b282479042ceb1c22944e43161badc18af86d0f8bfbb29256b59e1da97d",
+    "review-p40-strict-rollback.json": "c856a086c26dc836f81511a6c3d14873cf452943dbb8361a57a171c4a1ace3d6",
+    "rollback-audit-unit-tests.json": "2d2439b42fb67e5a982a4a4084a4e0d65c4ed1e295d45c0e6bfc671cb5449f07"
   },
-  "reviewed_followup": "Standalone scratch initialization is deterministic zeroing at construction. It closes retention full-allocation parity without changing arithmetic. Actual native/Python cancellation gates total202 and draft/retention gates28 pass current GNU binary.",
+  "reviewed_followup": "Current-source CPU proof: mini cancellation 101 native +101 Python gates; original full 87-token real prompt with four sampled cuts plus retention comparison (5 gates); complete standalone/host inventory validation across204 forced-miss cases; 64/128 retention8 comparisons/12 requests; draft async28; strict terminal408 mini +64 full-weight seven-token-prefix diagnostic gates. Only logical-event telemetry is excluded; original hashes/counters retained. No device run or speed verdict.",
   "nonterminal_source_review_passed": true,
-  "strict_terminal_state_review_passed": false
+  "strict_terminal_state_review_passed": true,
+  "prior_review_archive": {
+    "path": "evidence/prior-independent-cancellation-review-1791841277274877830.jsonl.gz",
+    "sha256": "0a54636f8805430a8548499e3fa945137581c6a0b517754d2fcc906cf29d0f58",
+    "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
+    "files": 2,
+    "retained_files": 1,
+    "retained_bytes": 3913
+  },
+  "final_original_cancellation_peer_signoff": {
+    "reviewer": "draft_runtime, not author of original launch-boundary cancellation/retention",
+    "source_review_passed": true,
+    "tests_run_by_reviewer": false,
+    "native_owners_launched": 0,
+    "unresolved_findings": [],
+    "scope": [
+      "Actual kernel boundaries and submitted-prefix drain ownership",
+      "Normal/cancel/exception callback lifetimes",
+      "Sticky target failure and conditional bank-parity restoration",
+      "Target-only position-bound publication and stable generation protocol",
+      "Retention target reads and dedicated snapshot scratch cleanup",
+      "Current ordinary cancellation/inventory/retention/async receipt identities"
+    ],
+    "excluded_independent_scope": "Strict image authored by this reviewer; rely on separately attributed cancel_runtime peer review for its independent signoff"
+  },
+  "review_roles": {
+    "original_cancellation_retention_reviewer": "draft_runtime; did not author launch-boundary cancellation/retention",
+    "strict_image_author": "draft_runtime",
+    "strict_image_independent_reviewer": "cancel_runtime; did not author strict_snapshot.hpp",
+    "final_evidence_refresh": "cancel_runtime; receipt verification and strict-image resolution only, not self-review of original cancellation"
+  },
+  "remaining": "Coordinator device event/dispatch/KD and speed measurements; full native-real campaign is running separately.",
+  "rollback_accounting_peer_review": {
+    "reviewer": "draft_runtime; implementation author cancel_runtime",
+    "source_review_passed": true,
+    "tests_run_by_reviewer": false,
+    "provided_tests": 8,
+    "buffer_count": 1015,
+    "private_capacity_bytes": 319074840,
+    "payload_bytes_each_direction": {
+      "7": 318976536,
+      "8": 318961176
+    },
+    "shared_transport_host_bytes": 65536,
+    "performance_claim": false
+  }
 }

@@ -19,8 +19,9 @@ CPU qualification remains in progress. Copied packet38 passing receipts are
 historical inputs, not packet40 qualification. No packet40 speed is claimed.
 The final gate inventory is authoritative only after a fresh successful seal;
 [qualification-checklist.json](qualification-checklist.json) maps inherited
-obligations. Strict terminal-EOS restoration is implemented; its current-source
-full-state qualification remains a prerequisite for sealing.
+obligations. Current-source strict terminal-EOS qualification passed 472 checks,
+including 460 physical-state comparisons and 12 corruption controls. Remaining
+CPU qualification and the final seal are still in progress.
 
 ## What worked
 
@@ -30,11 +31,24 @@ rank0 at the next compute-launch boundary, drains submitted work, restores its
 checkpoint and recomputes the confirmed token. Speed receipts require a
 same-boot exactness companion covering their prompts and identity.
 
-Current completed CPU evidence includes all miniature cancellation boundaries,
-four sampled real-model boundaries, full nonterminal state inventories,
-retention independence, native/Python controller equivalence and every-window
-CPU wrapper rehearsals. [CPU-RESULTS.md](CPU-RESULTS.md) records the precise
-counts and scope. These are correctness checks, not device speed measurements.
+Current completed CPU evidence includes 408 strict terminal miniature checks,
+64 strict terminal sampled real-model checks, 1,109 actual native/Python
+controller cases, and the refreshed GNU/Intel/ASAN mini gates. The strict proof
+binds 480 owner archives and covers both controllers. Nonterminal cancellation
+and its 204-case inventory audit, eight long-retention comparisons over twelve
+requests, and 28 draft publication/failure cases now pass on current builds.
+GNU and Intel Python-controller qualification each passes five modes, totaling
+40 exact tokens and 1,920 fixtures per compiler. The refreshed cheap campaign
+records 23 receipts, including 29 structural checks and 43 rejected mutations;
+eight rollback-audit tests pass separately. Independent cancellation/retention
+and suite-prefix reviews are signed. [CPU-RESULTS.md](CPU-RESULTS.md) preserves
+these scopes without adding overlapping audits as extra model executions.
+These are correctness checks, not device speed measurements.
+
+Captures and agreement are active. The full three-prompt 64-token suite,
+separate one-prompt 128-token tail-fixture gate, final native real-controller
+campaign, wrapper/admission refresh, build/evidence validation and seal remain
+pending. Earlier receipts do not substitute for their required current evidence.
 
 ## What failed or remains uncertain
 
@@ -49,8 +63,10 @@ The original terminal-EOS path left abandoned physical bytes and token/cache
 metadata unrestored. The replacement preserves a private pre-speculation image
 and restores it on every rollback, including terminal abandonment. No reduced
 state exception is assumed; [EOS-STATE-SCOPE.md](EOS-STATE-SCOPE.md) records the
-finding and correction. Current-source full-state proof must complete before
-sealing. Device overlap, KD device parity, cancellation
+finding and correction. The current-source strict proof now passes exhaustive
+miniature boundaries and sampled full-weight real boundaries at positions 7
+and 8 on the original seven-token prefix. This diagnostic is not a full-prompt
+oracle or speed measurement. Device overlap, KD device parity, cancellation
 savings and boot-bound exactness/speed pairs remain unmeasured. A 128-token cap
 can provide the 100-event rate but cannot satisfy the repository's 512-token
 publication gate or promotion-attestation requirement. The historical 28.49
@@ -71,8 +87,8 @@ parent path, mapped by [inherited-evidence-links.json](inherited-evidence-links.
 
 ## When to revisit
 
-Complete strict terminal-EOS and remaining current-source CPU qualification,
-seal, then run the admitted coordinator-only device windows.
+Complete the remaining current-source CPU qualification, seal, then run the
+admitted coordinator-only device windows.
 Changed arithmetic, kernel choices, compiler, protocol, lifetime, retention,
 input identity or metric definitions require the corresponding gates again.
 [INTEGRATE.md](INTEGRATE.md) records the next rank0-draft/rebalance and packet39

@@ -11,9 +11,20 @@ Only the private image is zeroed at a quiescent boundary; target state is not
 canonicalized before comparison. See the independent
 [retention/token-authority review](review-retention-token-authority.json).
 
-Current-source full-state CPU qualification is required before sealing. This
-source review is not an execution result or a device performance claim. No
-reduced-state exception is assumed.
+The current-source [strict aggregate](terminal-eos-all-state-gates.json) passed
+472 checks: 408 miniature and 64 sampled real-model checks, comprising 460
+physical-state equality comparisons and 12 committed-state corruption controls.
+It binds 480 owner archives and both native and Python controllers. Miniature
+coverage visits every actual launch boundary and the completed-half case. Real
+coverage uses full-weight production launches at positions 7 and 8 on the
+original seven-token prompt prefix. It is diagnostic state evidence, not a
+full-prompt oracle run or device performance measurement. Raw inventories and
+logical scheduling counters remain separately recorded; no model-state bytes
+are exempted from the strict comparison. No reduced-state exception is assumed.
+
+This closes the tested terminal-state requirement. Remaining CPU qualification
+and final sealing are still in progress; the source review alone never
+substitutes for these execution receipts.
 
 ## Historical finding and design assessment
 

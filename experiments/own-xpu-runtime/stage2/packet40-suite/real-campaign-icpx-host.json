@@ -2,7 +2,7 @@
   "passed": true,
   "compiler": "icpx-host",
   "device_executed": false,
-  "binary_sha256": "7cc2c88e2a2e1d4e31ffbefa305476a67e8b7619a2dfb8c973664db5c99b2f20",
+  "binary_sha256": "1586d2f7a375d13023e6b666e7c0715c9e15ba4004a11837af49a6f86fc1116b",
   "source_sha256": {
     "compare_controllers.py": "5de58f1541eb71354f7db973b8bc43656757ecf0e0c17fd11edc210199783638",
     "gates.py": "5830e92e568d20b5474798da33abd46e1cb56b8d700e1a6d210107b28d9ee136",
@@ -53,7 +53,7 @@
     "owner.cpp": "8e82affd2c119ef2ef13df14c11063f60ec8ba641ed643b7f2c652e7c256e94b",
     "dispatch.hpp": "976a59a53d77d4456efaf7b6883180543e571a3afa5f3d0b4637f0df61b28196",
     "performance.cpp": "9f0b52da35dff6d71a4f4eea72b0cfee26a9796934aa033295cf73256bca04d1",
-    "rank.hpp": "3defe947138b86e2c453b02a006288c8fca75f52bd59d156f3d1d8dc94ac053c",
+    "rank.hpp": "78ea575effa36de9622d2c9df8339367bf398a4287f3d01afc57978c1b91f9ea",
     "prepared_invalidation_test.cpp": "b082a461f27c10b7e678e6c37f810e78fef6fa587645ae0e327a730ece01f27d",
     "small_gemv_fixture.hpp": "8bd00ce4476cd9427c1f1bc9d222c3ee6ec66c41fb95d3fedbf663323a690180",
     "gemv_timing.cpp": "4181a6d79c5c84886d2a052213d5a84d584e142bc310468bb7e9407c601ca205",
@@ -75,6 +75,7 @@
     "p33_submit.cpp": "c7bcacd934e0d06639aaecf46625a0c3e1a8fea47dda799d415e5c392f21b84a",
     "synthetic.hpp": "0f3285642055d61ff84790f668b7e19fdf347b2c7875aed804a88db5f9c06f35",
     "mtp.hpp": "13c5dd22a6e9ec7225c7c3900a8a406a1a95b2315b8d10bb0597b8be3889d4a8",
+    "strict_snapshot.hpp": "4bddafeb8d3a8c3243f8a885ca25127637a71135ede6dff11dbea3d645cf833e",
     "request_reset.hpp": "b35ad7753e3b2155e62e9d02700c24c52292f773c5f0b5f496914c705b6fbe99",
     "specialised.hpp": "a5604dcf33c1f01940505b3ab5e6fab8d05e9f6ba6fed2884f40ae95b47c88cb",
     "argument_block.hpp": "f2cc8a5709ae443e2fcaa755cfb86e36080a710e9964422b12d3a8425433db35",
@@ -126,100 +127,93 @@
       "mode": "none",
       "passed": true,
       "receipt": "real-icpx-host-none.json",
-      "receipt_sha256": "90c16534120670fcc371f3636062853cdf536e073e94a88bf385933fccde64f4",
-      "seconds": 769.6256437539996,
+      "receipt_sha256": "ef65393c30787c9bf65403c23131073f0db5600bb1a3f1555905e7e70faa0cbb",
+      "seconds": 916.4697920999897,
       "token_matches": 8,
       "layer_matches": 384,
-      "prior_archive": {
-        "path": "evidence/prior-real-icpx-host-none-1791820561281715342.jsonl.gz",
-        "sha256": "39c02117298a325bbe4729a753c2d0c2ea91f5128b7492769f80bc661acc16a2",
-        "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
-        "files": 1,
-        "retained_files": 1,
-        "retained_bytes": 524925
-      },
       "execution_phase": "real-icpx-host-none",
-      "execution_start_unix_ns": 1791820562011692438
+      "execution_start_unix_ns": 1791830680243922960,
+      "execution_end_unix_ns": 1791831598579816419,
+      "execution_ledger": "evidence/qualification-real-icpx-host-none-1791830680243922960.json",
+      "execution_ledger_sha256": "87d016d760717a437d791c520058260c4957a9e047ba9428fdc2773bb5394890",
+      "output_root": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/real-icpx-host-none-1791830680316341198"
     },
     {
       "mode": "ngram",
       "passed": true,
       "receipt": "real-icpx-host-ngram.json",
-      "receipt_sha256": "723c3c4e502006de309474ed8f5d502549e8668f157af6d84cb45f591fdfca51",
-      "seconds": 759.8606169029954,
+      "receipt_sha256": "5e2a28828111f78b43d967df110ddb73766a3ec1167525f8551e0b880d4dff86",
+      "seconds": 931.3871332929994,
       "token_matches": 8,
       "layer_matches": 384,
-      "prior_archive": {
-        "path": "evidence/prior-real-icpx-host-ngram-1791821333576408122.jsonl.gz",
-        "sha256": "58a93b0e3986b6a348f0a93d881f30d721423f278c6fddf8a3cd34910a8a108a",
-        "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
-        "files": 1,
-        "retained_files": 1,
-        "retained_bytes": 525057
-      },
       "execution_phase": "real-icpx-host-ngram",
-      "execution_start_unix_ns": 1791821334303862434
+      "execution_start_unix_ns": 1791831599583953254,
+      "execution_end_unix_ns": 1791832532871333236,
+      "execution_ledger": "evidence/qualification-real-icpx-host-ngram-1791831599583953254.json",
+      "execution_ledger_sha256": "d28eecb7f4cc3f6b0f6f988f13e82d43ea46b0d461f74577a01dc5755f4c7a68",
+      "output_root": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/real-icpx-host-ngram-1791831599660734375"
     },
     {
       "mode": "hit",
       "passed": true,
       "receipt": "real-icpx-host-hit.json",
-      "receipt_sha256": "b9fbc66fe6e8bf05d5026cbae41b8d641f8893947d95d91d8c484d7ef838dfd1",
-      "seconds": 709.5682150299835,
+      "receipt_sha256": "a0b9ea46ad772aa7fa670ec611b4e7c01a0686109f8ab321910da477246641f8",
+      "seconds": 866.5899812909774,
       "token_matches": 8,
       "layer_matches": 384,
-      "prior_archive": {
-        "path": "evidence/prior-real-icpx-host-hit-1791822096099079536.jsonl.gz",
-        "sha256": "fbea5d5a113756175fa416167f2606987e4adada10c4e76672ac9e7819e4b61b",
-        "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
-        "files": 1,
-        "retained_files": 1,
-        "retained_bytes": 525680
-      },
       "execution_phase": "real-icpx-host-hit",
-      "execution_start_unix_ns": 1791822096830004439
+      "execution_start_unix_ns": 1791832534026691265,
+      "execution_end_unix_ns": 1791833402546452012,
+      "execution_ledger": "evidence/qualification-real-icpx-host-hit-1791832534026691265.json",
+      "execution_ledger_sha256": "c820ed14b0701a933aac4a26f7011156153672932a651f488d37805b30c28e9e",
+      "output_root": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/real-icpx-host-hit-1791832534101168620"
     },
     {
       "mode": "miss",
       "passed": true,
       "receipt": "real-icpx-host-miss.json",
-      "receipt_sha256": "87cf799a087f532ff6d09a37e655a7186e17ac88254aed2ede115293c4522a01",
-      "seconds": 751.6787251579808,
+      "receipt_sha256": "1a9a889f4072686fe1252db63799ff25e2337527f8a9547ac3d2d8de7aaae86b",
+      "seconds": 923.3342723280075,
       "token_matches": 8,
       "layer_matches": 384,
-      "prior_archive": {
-        "path": "evidence/prior-real-icpx-host-miss-1791822808368017595.jsonl.gz",
-        "sha256": "7402a989a65f1352be5f41c59a7fb182ad219f685496099166453d44d73ea18b",
-        "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
-        "files": 1,
-        "retained_files": 1,
-        "retained_bytes": 525703
-      },
       "execution_phase": "real-icpx-host-miss",
-      "execution_start_unix_ns": 1791822809108558492
+      "execution_start_unix_ns": 1791833403604413283,
+      "execution_end_unix_ns": 1791834328869897499,
+      "execution_ledger": "evidence/qualification-real-icpx-host-miss-1791833403604413283.json",
+      "execution_ledger_sha256": "a95719817cfec75a8b663ea25a4addcd95cbc706ca814312739e6c76036ea17f",
+      "output_root": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/real-icpx-host-miss-1791833403689296115"
     },
     {
       "mode": "mtp",
       "passed": true,
       "receipt": "real-icpx-host-mtp.json",
-      "receipt_sha256": "aa22a16b243bfa84e2dfb328acce2c5a1fd02c5ff4029b00637096c8fee4c206",
-      "seconds": 747.5681004640064,
+      "receipt_sha256": "403b3d50c879b4506ad9968ee99031a975ad73b8be0f0c7c1eeed45315252029",
+      "seconds": 893.7590649290069,
       "token_matches": 8,
       "layer_matches": 384,
-      "prior_archive": {
-        "path": "evidence/prior-real-icpx-host-mtp-1791823562750814640.jsonl.gz",
-        "sha256": "5f132ed8dc8dee1f098b3e9041d183c32267ef5e7aa529d796a820ca372f1b89",
-        "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
-        "files": 1,
-        "retained_files": 1,
-        "retained_bytes": 539508
-      },
       "execution_phase": "real-icpx-host-mtp",
-      "execution_start_unix_ns": 1791823563487232015
+      "execution_start_unix_ns": 1791834329871236463,
+      "execution_end_unix_ns": 1791835225536053039,
+      "execution_ledger": "evidence/qualification-real-icpx-host-mtp-1791834329871236463.json",
+      "execution_ledger_sha256": "11f4d9abfeab39da810e01451f19ca5b59996249c70195c82647abd356d2407c",
+      "output_root": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet40-suite/build/real-icpx-host-mtp-1791834329949399354"
     }
   ],
   "modes": 5,
-  "start_unix_ns": 1791820560997853036,
-  "end_unix_ns": 1791824312885458809,
-  "no_speed_claim": true
+  "start_unix_ns": 1791830680243922960,
+  "end_unix_ns": 1791835225536053039,
+  "no_speed_claim": true,
+  "aggregation_only": true,
+  "models_launched": 0,
+  "aggregated_unix_ns": 1791839476512862329,
+  "producer_sha256": "7d4e51089ce5b64851e1797c3cb1babbd377b188224bc1bfb8e86b9b17c5e7f0",
+  "scope": "Five current, exact receipt-bound narrow execution ledgers; outer failed campaign evidence is preserved unchanged.",
+  "prior_summary_archive": {
+    "path": "evidence/prior-real-summary-icpx-host-1791839476513079298.jsonl.gz",
+    "sha256": "0bc0c802be31b3a98bf56745234e4ccb310687c964fe35e9a030d14a9cb19999",
+    "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
+    "files": 1,
+    "retained_files": 1,
+    "retained_bytes": 15766
+  }
 }

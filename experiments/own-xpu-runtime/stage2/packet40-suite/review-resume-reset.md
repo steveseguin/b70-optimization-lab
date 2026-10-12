@@ -148,10 +148,21 @@ and child/binary receipts. This qualification-only correction leaves the suite
 launch command, controller and request/reset paths unchanged. No tests or ranks
 were launched for this source review.
 
-Final SUITE.md result paragraph matches the separate parent-run real CPU suite
+Historical packet38 result review (preserved from the copied packet): its
+then-current SUITE.md paragraph matched the separate parent-run real CPU suite
 receipt: three distinct prompts, 64 tokens and 384 retained layer fixtures each
 (192 tokens/1,152 fixtures total), native controller with MTP, exact outcomes.
 This reviewer checked those receipt fields plus the current Intel host binary,
 qualification-plan and retained archive hashes. It remains a partial snapshot
 of the twelve-prompt suite and makes no device or speed claim. No independent
 model execution is claimed; only the documentation/source binding changed.
+
+
+Packet40 scope clarification: the current campaign explicitly requests
+`--max-new 64`, preserving that inherited three-prompt/192-token/1,152-fixture
+gate. The explicit argument is necessary because the general packet40 suite
+API uses its requested cap, whose parser default is eight. Separately requested
+eight-token prefixes are diagnostics and cannot replace this inherited gate.
+Current request and export receipts must establish completion. The separate
+`suite128_cpu_gate.py` requests a full 128-token response for one prompt and
+checks early/tail fixtures; neither path is a complete twelve-prompt CPU suite.

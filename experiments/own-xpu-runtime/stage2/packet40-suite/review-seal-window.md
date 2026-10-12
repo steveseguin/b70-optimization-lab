@@ -1,5 +1,10 @@
 # Seal and window source review
 
+Historical packet38 review copied for provenance. Its commands and pending
+statuses are not packet40 operating instructions. Use [CPU-REPRO.md](CPU-REPRO.md)
+for the current packet40 seal/admission sequence with absolute packet-local
+`TMPDIR`; do not run the packet38 commands below during this task.
+
 The requested window/controller matrix is present, and deadline values agree with the wrapper and satisfy the minimum watchdog rule. This review ran no rank or device. Seven isolated seal/warmup mock checks passed; actual final seal and complete wrapper admission rehearsal remain pending.
 
 Two source gaps were fixed with parent authorization. First, `seal.py --bootstrap` writes only `build-admission-candidate.json`, preserving final build receipt, CPU test summary and binary hash document. A default final seal requires the admission gate and verifies its source hashes and exact consumed seal contract. The CPU admission test can inject a candidate only inside its mocks; no production wrapper candidate option or bypass was added.

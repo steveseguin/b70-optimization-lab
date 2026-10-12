@@ -130,9 +130,11 @@ real receipts for both controllers, complete declared position/retention/cut
 coverage and successful corruption controls. It writes
 `terminal-eos-all-state-gates.json`, binding both child receipts, their execution
 ledgers and every owner archive. `--screen` receipts cannot qualify this
-aggregate. File names alone, a source review or these documented commands do
-not establish that the pending real or aggregate gate has passed; consult the
-current receipts and successful seal.
+aggregate. The current aggregate records 472 passing checks and 480 owner
+archives; [CPU-RESULTS.md](CPU-RESULTS.md) gives the exact tested scope. File
+names alone, a source review or these documented commands are not qualification
+proof. Consult the bound execution receipts; the overall final seal remains
+pending.
 
 Reproduction commands, from the repository root after rebuilding and verifying
 current host binaries, are below. Run them sequentially within the shared CPU,

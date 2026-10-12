@@ -90,7 +90,7 @@ bytes, plus every host inventory field except the separately recorded logical
 event counter. No model buffer is exempted from this nonterminal proof. Rank 1
 only consumes confirmed streams; its target history stays sequential and needs
 no rollback. Strict terminal abandonment now uses the same physical image
-restoration and requires its own current-source full-state proof below.
+restoration; its separate current-source full-state proof passed as detailed below.
 
 ## Prepared launch parity
 
@@ -220,8 +220,19 @@ must survive rollback and fail comparison. Host-only negative controls exercise
 this requirement. At a quiescent boundary only the private backup is zeroed.
 
 The earlier committed-state-only EOS comparison is historical diagnostic
-evidence. The strict implementation requires fresh complete physical-state
-terminal, retention and cancellation checks before sealing. See
+evidence. The current [strict aggregate](terminal-eos-all-state-gates.json)
+passed 472 checks: 408 miniature and 64 sampled real checks, comprising 460
+physical-state comparisons and 12 corruption controls, bound to 480 owner
+archives. Both native and Python controllers are covered. The real scope is
+the original seven-token prefix, with zero or one verified generated token
+appended, exercising full-weight production launches at positions 7 and 8.
+This is diagnostic state evidence, not a full-prompt oracle or speed run.
+Logical event counters remain separate telemetry with their original inventory
+hashes; model-state bytes are not exempted. No state-scope exception is required.
+Current nonterminal cancellation, its 204-case inventory audit, and eight
+long-retention comparisons over twelve requests also pass. Final real-suite,
+native-controller, capture, wrapper and build/admission qualification still
+must finish before sealing. See
 [EOS-STATE-SCOPE.md](EOS-STATE-SCOPE.md) for the original failure and correction.
 
 Actual speculative launch counts can differ with process scheduling. Controller
