@@ -116,6 +116,10 @@ class Keeper(unittest.TestCase):
         self.assertFalse(rep("next", "next", True))                                 # a fetch is never a repeat
         self.assertFalse(rep("", "", False))
         self.assertIn("NOT RUN", NS["REPEAT_NOTE"])                                 # the words that turn thinking on
+        self.assertEqual(NS["repeat_note"](1), NS["REPEAT_NOTE"])
+        self.assertIn("5 times in a row", NS["repeat_note"](5))
+        self.assertTrue(NS["QUESTION"].search(NS["repeat_note"](5)))                # still turns thinking on
+        self.assertEqual([NS["loop_temperature"](n) for n in (0, 2, 3, 5, 20)], [None, None, 0.5, 0.7, 1.0])
         self.assertTrue(NS["QUESTION"].search(NS["REPEAT_NOTE"] + "\n\n(exit_code=75)"))
 
     def test_a_reworded_rule_comes_back_in_its_own_words_once(self):
