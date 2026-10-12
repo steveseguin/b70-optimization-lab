@@ -14,7 +14,7 @@ def main():
             name=stem+'-'+suffix;binary=P/'build'/name
             cmd=['nice','-n','19','ionice','-c','3',compiler,'-std=c++20',*flags,'-fno-fast-math','-ffp-contract=off','-pthread',str(P/source),'-o',str(binary)]
             subprocess.run(cmd,check=True,timeout=300,env=env)
-            rows.append(dict(binary=str(binary.relative_to(P)),sha256=hashlib.sha256(binary.read_bytes()).hexdigest(),command=cmd,environment={'OMP_NUM_THREADS':'2','TMPDIR':str(tmp)},compile_and_link_same_invocation=True,source_sha256={s:hashlib.sha256((P/s).read_bytes()).hexdigest() for s in [source,'native_controller.hpp']}))
+            rows.append(dict(binary=str(binary.relative_to(P)),sha256=hashlib.sha256(binary.read_bytes()).hexdigest(),command=cmd,environment={'OMP_NUM_THREADS':'2','TMPDIR':str(tmp)},compile_and_link_same_invocation=True,source_sha256={s:hashlib.sha256((P/s).read_bytes()).hexdigest() for s in ([source,'native_controller.hpp']+(['native_controller_test.cpp'] if source=='native_mailbox_fault_test.cpp' else []))}))
     receipt=dict(device_executed=False,binaries=rows,precision_flags_on_compile_and_link=True,serial_compile_jobs=1)
     (P/'native-build-receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
 if __name__=='__main__':main()

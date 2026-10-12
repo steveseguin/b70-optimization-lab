@@ -59,3 +59,24 @@ Retention performs no target/draft computation, and comparisons still use the
 same complete byte hashes. ROLLBACK.md and SUITE.md now describe the expanded
 inventory and verified archive retention. The source review passes; this is
 not a substitute for the parent's final integrated runtime gates.
+
+Final export/cleanup review found and closed the nested-archive evidence gap.
+`storage.py` and `cleanup.py` now preserve exact nested gzip metadata instead
+of retaining only its outer hash. They use a streamed JSONL/gzip format with
+per-file hashes and bounded base64 chunks, check disk admission before writes,
+and verify all retained contents before removal. Suite export binds state
+archive and runtime-inventory hashes, checks one nonempty clean teardown owner,
+and validates frozen prompt coverage and exposed identity fields. The CPU suite
+campaign archives scratch and logs only after successful export. Six synthetic
+tempfile-only checks passed in `suite-export-retention-gates.json`; no native
+ranks ran for those tests. The final native-mini gate's single reset boundary
+still captures the completed request before preparing the next and preserves
+the same archived-state comparison. Its current source hash is included below.
+
+The final narrow storage race fix was independently re-read. `build_size`
+skips only `FileNotFoundError` for members removed between discovery and type,
+symlink or stat checks. Permission and other I/O failures remain errors; the
+root-space and build-space thresholds are unchanged. The three mocked race
+checks and the rerun six synthetic export/retention checks were parsed and
+all their recorded source hashes verified against current files. This review
+did not rerun tests or launch ranks.

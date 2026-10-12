@@ -66,6 +66,14 @@ def main():
   run=B/('suite-real-'+str(time.time_ns()))
   rows.append(execute('suite-real',[PY,'-B',P/'suite.py','--binary',B/'gnu-host/own-rt-iq3','--output',run,'--suite-manifest',snapshot,'--controller','native','--draft','mtp','--dispatch',P/'dispatch-p38.json','--repeat','1','--context','256','--seconds','172800','--wait-seconds','7200']))
   from suite_export import export_run
-  export_run(run,P/'suite-real-cpu.json')
+  exported=export_run(run,P/'suite-real-cpu.json')
+  from storage import discard,archive_files
+  exported['scratch_archive']=discard(run)
+  rows[-1]['scratch_archive']=exported['scratch_archive']
+  log=B/'campaign-suite-real.log'
+  if log.exists():
+   exported['campaign_log_archive']=archive_files([log],P/'evidence/campaign-suite-real.log.jsonl.gz');log.unlink()
+   rows[-1]['log_archive']=exported['campaign_log_archive']
+  (P/'suite-real-cpu.json').write_text(json.dumps(exported,indent=2)+'\n')
  (P/('campaign-'+a.phase+'.json')).write_text(json.dumps(dict(passed=True,rows=rows,device_executed=False),indent=2)+'\n')
 if __name__=='__main__':main()

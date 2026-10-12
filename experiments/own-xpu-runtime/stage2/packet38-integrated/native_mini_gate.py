@@ -27,13 +27,15 @@ def main():
     try:
         transport=pipeline.Transport.__new__(pipeline.Transport);transport.__init__(args,root)
         counter=0
+        suite.reset(transport,root/'case-0')
         def request(controller,prompt,count,mode='none',script=(),eos=()):
             nonlocal counter
-            dest=root/f'case-{counter}';counter+=1;suite.reset(transport,dest)
+            dest=root/f'case-{counter}';counter+=1
             provider=pipeline.Draft(mode,script)
             cls=pipeline.Controller if controller=='python' else pipeline.NativeController
             result=cls(transport,provider,True,False).run(prompt,count,eos)
-            suite.reset(transport,root/'between')
+            # One boundary both captures this result and prepares the next request.
+            suite.reset(transport,root/f'case-{counter}')
             data=signature(dest,result);shutil.rmtree(dest)
             return result,data
         prompt=[2,5,3,7,1];base,_=request('python',prompt,8)

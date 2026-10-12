@@ -1,0 +1,95 @@
+{
+  "schema": "packet38.independent-reset-review.v1",
+  "reviewed_at_utc": "2026-10-12T05:43:22.667298+00:00",
+  "reviewer": "independent reset_review subagent",
+  "source_review_passed": true,
+  "blocking_findings": [],
+  "device_executed": false,
+  "tests_executed": [
+    "test_state_retention.py (5 lightweight CPU-only retention checks)",
+    "test_suite_export_retention.py (6 synthetic tempfile-only export/archive checks; no ranks)"
+  ],
+  "existing_receipts_trusted": false,
+  "source_sha256": {
+    "ROLLBACK.md": "e942ccea8fe32d1f330479e5b1f1a22ff953cd2f03cd7c672ee298f682eae406",
+    "request_reset.hpp": "b35ad7753e3b2155e62e9d02700c24c52292f773c5f0b5f496914c705b6fbe99",
+    "rank.hpp": "668c402ca38175ee77f7388f4f5b711709923eb29ba639df5f51b4255bae1274",
+    "mtp.hpp": "dbef887e12fe8d1e398a83e5a6a8dbdb7bc29dbabd803a25d2870c974552845d",
+    "main.cpp": "d409f9ab0f096338c3a0a93f547d635d04eac7339f6c9f50cd17b350b0259251",
+    "native.cpp": "4e8f5683b6ad8fe2a8a9b44fd1a0cba7dfc6c90616eb06cd583bc0d7ba087b8d",
+    "native_controller.hpp": "582097261c478c30fb511c43771e53b071eabf17ea87c2f4af1196657e9a43a0",
+    "pipeline.py": "d8f9ae3a34c4942c14c5e12df23c7fb729de1f917f94feac08b794b2e0949c23",
+    "suite.py": "532e7bcad914ccd98319d80060dc070839093cd3987d5b0d16449a2c4ba4ff54",
+    "suite_gates.py": "d209c17d779c2e8710d8ac78a791552436da1084e2515f6f65bdf663504be17b",
+    "request_state_inventory.hpp": "c4818d42606ec5f29e00c7fa0ede2f12b4bdc6c6c2f5ca1740ca5e9cc023ea65",
+    "native_mini_gate.py": "aa5859a27c141476abb8885f1feda049de9a0622d757a8b85655659d61d8c8c7",
+    "test_state_retention.py": "3a5dbca0a17937139df29adfd4b0dd110e9dadd1d3f2e894545932218f9f4811",
+    "storage.py": "53787deddc760e89f4d3bb9b25e96b2b9bdf3cc54bcc96a99df3286e19badbe3",
+    "SUITE.md": "4e2a3f2935649dce248fe93817a80a5abb11342290ffd251db31bee3d2d781ed",
+    "suite_export.py": "da417fbb2a1bc3a77fa1ab83af54ea175736bdbc3c56891c5343d57449b826d5",
+    "cpu_campaign.py": "99de7fd8d1adb90c0344ce86470462238b0f40fbd652d2336d5f3434ac57fdf9",
+    "cleanup.py": "d96cf504468482b8a983a70f9cd9438d3adc1ccae755810cd306fc00c6c7d081",
+    "test_suite_export_retention.py": "dc96f579bad16cac22caa9eb2c4fec622b73f1218ba4829bfa05d74cf9a81b3b",
+    "test_storage_race.py": "4633a0f7df6a7e70c4ed416b38a13ba509b59f7cd4c72e06d5fa78b6d36474a6"
+  },
+  "observations": [
+    {
+      "id": "R1",
+      "severity": "closed-in-source-pending-gate",
+      "text": "Extended request-boundary inventory covers standalone live target mutable allocation hashes and host metadata. Parent ran four expanded order proofs successfully. Subsequent Python-only state retention archives exact file hashes and metadata, checks runtime-recorded state hashes, then deletes raw snapshots. Lightweight retention gate passed; integrated suite rerun remains parent responsibility."
+    },
+    {
+      "id": "R2",
+      "severity": "scope",
+      "text": "Engine cooperative deadline remains launch-scoped across suite requests. Socket sequence numbers remain monotonic. These are transport/supervision state, deliberately not model request state."
+    }
+  ],
+  "reviewed_invariants": [
+    "reset accepts no unresolved candidate and drains before touching allocations",
+    "target poison/sticky error fails before zeroing",
+    "bank parity restored together with allocation bindings and prepared maps/commands",
+    "all live mutable allocations including QSA unused tails zeroed without releasing owner allocations",
+    "weights and RoPE retained; unit scalar active flag EOS history and PLE metadata restored",
+    "host histories lookup IDs selected experts FP32 validity logical event and request timing counters reset",
+    "provider resets private bytes position disabled and trace; counters cleared after provider reset uploads",
+    "new Python/native controller history result counters and script cursor per request",
+    "shared publications and native mailbox cleared only after both RESET replies",
+    "layer-streaming halves release loaded layer and set loaded_layer=-1 before returning",
+    "reset does not silently clear failed target state; request exactness errors remain reportable independently",
+    "retention verifies recorded target buffer hashes and archive roundtrip before raw snapshot deletion",
+    "suite diagnostic write failures cannot bypass cooperative stop and bounded close",
+    "both rank RESET replies precede shared-memory reset and snapshot retention",
+    "nested state archive exact bytes survive CPU scratch cleanup",
+    "streaming archive retains exact text/source/nested gzip and all file hashes before removal",
+    "suite export binds expanded runtime state inventories and validates one clean teardown owner",
+    "complete flag requires twelve unique frozen IDs and matching exposed identity bindings",
+    "build-size scan tolerates only vanished-member FileNotFoundError; permission and other I/O errors remain failures"
+  ],
+  "changes_authored": [
+    "request_state_inventory.hpp",
+    "request_reset.hpp",
+    "suite_gates.py",
+    "suite.py",
+    "native_mini_gate.py",
+    "test_state_retention.py",
+    "suite_export.py",
+    "cpu_campaign.py",
+    "storage.py",
+    "cleanup.py",
+    "test_suite_export_retention.py"
+  ],
+  "fresh_parent_report": "Four expanded request-order proofs passed before Python-only retention update; fresh integrated run after storage update pending parent.",
+  "final_review_scope": "Reset state, final native-mini single-boundary consumer, suite export and streaming scratch retention; no new native/device execution claimed.",
+  "verified_external_test_receipts": {
+    "storage-race-gates.json": {
+      "receipt_sha256": "e1866dff7473b679dd852bda913f332393d4baac3eee9a0606f4a85a0afc9bea",
+      "checks": 3,
+      "all_source_hashes_current": true
+    },
+    "suite-export-retention-gates.json": {
+      "receipt_sha256": "9ddadfc53fec966052d4998bcfbd6203cf44299add942deb512888d67ac995ce",
+      "checks": 6,
+      "all_source_hashes_current": true
+    }
+  }
+}

@@ -89,3 +89,22 @@ request's token IDs and trace/timing hashes, the input admission, and retained
 fixture inventory hashes. It rechecks each request against the read-only oracle.
 Partial manifests retain their actual admitted/request counts and explicitly
 report `complete_frozen_suite=false`; they cannot establish twelve-prompt coverage.
+
+The export also validates each request's `state-retention.json` against its
+compressed state archive and binds both ranks' expanded runtime-inventory
+hashes. It requires exactly one clean teardown owner per rank. A complete-suite
+claim requires all twelve unique frozen prompt IDs; supplied suite and prompt
+manifest identities must match the canonical manifest. The checker used for
+export is copied with its verified source hash into the run evidence.
+
+After successful CPU export, the campaign archives the run and removes its
+scratch directory, then archives and removes its raw campaign log. Both archive
+references are recorded in the exported result and campaign row. The shared
+archive helper streams JSONL into gzip in bounded chunks, preserving exact
+text, checker source and nested `state-evidence.json.gz` bytes, alongside hashes
+of every generated fixture/state file. It checks disk admission first and
+verifies every retained member before deletion. The format is
+`packet38.scratch-stream.v1`; historical JSON-list archives remain historical
+evidence. Raw eight-step fixtures survive through both oracle checks; their
+hashes remain after CPU scratch cleanup, and their bytes are reproducible by
+the recorded gate.
