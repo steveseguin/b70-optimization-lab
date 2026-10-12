@@ -220,15 +220,19 @@ class Keeper(unittest.TestCase):
         self.assertEqual(c("461 \u2192 26 (recorded at, item 584), then 26 + 82 = 108", 461, {26}), (108, [26], 0))
         self.assertEqual(c("438 \u2212 56 = 382, then set to \u221255 (382 \u2192 \u221255)", 438, {-55}, {56}), (-55, [-55], 0))   # a remark with an arrow
         self.assertEqual(c("517 -> 164 (item 137), then 164 + 76 + 85 = 325 (item 139), then 325 + 18 = 343", 517, {164}), (343, [164], 0))
+        # one wrong sum is redone: the last of the line, from the value so far, with stated amounts (X32p at 1M)
         fixed = []
-        self.assertEqual(c("522 - 20 = 502, 502 - 17 = 485, 485 + 58 = 498 (item 442)", 522, set(), None, fixed), (543, [], 0))
+        self.assertEqual(c("522 - 20 = 502, 502 - 17 = 485, 485 + 58 = 498 (item 442)", 522, set(), {20, 17, 58}, fixed), (543, [], 0))
         self.assertEqual(fixed, ["485 + 58 = 498 -> 543"])
-        # brackets belong to the sum (17, not 12); what goes on from a miscounted result is not guessed at: asked about
+        self.assertIsNone(c("522 - 20 = 502, 502 - 17 = 485, 485 + 58 = 498", 522, set(), {20, 17}))      # 58 is nowhere
+        self.assertIsNone(c("522 - 20 = 502, 502 - 17 = 485, 485 + 58 = 498", 522, {498}, {20, 17, 58}))  # 498 is stated: a set?
+        self.assertIsNone(c("522 - 20 = 502, 502 - 17 = 485, +58 = 498", 522, set(), {20, 17, 58}))       # not from the value so far
+        # a wrong sum anywhere else is asked about, whatever comes after it; brackets belong to the sum (17, not 12)
         self.assertIsNone(c("10 + (5) + 2 = 12, then +1 = 13", 10, {5, 2, 1}))
-        self.assertEqual(c("10 + (5) + 2 = 12, then 12 + 1 = 13", 10, {5, 2, 1}), (18, [], 0))
-        fixed = []
-        self.assertEqual(c("set to 600, then 600 + 63 = 664, then 664 - 4 = 660", -120, {600}, None, fixed), (659, [600], 0))
-        self.assertEqual(fixed, ["600 + 63 = 664 -> 663", "(663) - 4 = 660 -> 659"])
+        self.assertIsNone(c("10 + (5) + 2 = 12, then 12 + 1 = 13", 10, {5, 2, 1}))
+        self.assertEqual(c("10 + (5) + 2 = 17, then 17 + 1 = 18", 10, {5, 2, 1}), (18, [], 0))
+        self.assertIsNone(c("set to 600, then 600 + 63 = 664, then 664 - 4 = 660", -120, {600}))
+        self.assertEqual(c("set to 600, then 600 + 63 = 663, then 663 - 4 = 659", -120, {600}), (659, [600], 0))
         for value, held, stated in (("set to 600, then 600 + 63 = 663", -120, set()),            # 600 is not in the turns
                                     ("opened at 117, +46 = 163, about right", None, {117}),      # a part without a number
                                     ("-20 \u2192 set to -159, then -2 \u2192 -161", -20, {-159}),  # arrows are not followed
@@ -397,8 +401,8 @@ class Keeper(unittest.TestCase):
         # 1. a removal, then a reopening at the number the working ended on: the reopening counts
         line, bad, _, _ = run(10, "abcd12 gained five. abcd12 was removed. abcd12 was reopened at fifteen.", "10 + 5 = 15, then removed, then reopened at 15")
         self.assertEqual((line, bad), ("abcd12: 15", []))
-        line, bad, _, _ = run(100, "abcd12 gained five. abcd12 was set to 112.", "100 + 5 = 112, then set to 112")
-        self.assertEqual((line, bad), ("abcd12: 112", []))
+        line, bad, _, after = run(100, "abcd12 gained five. abcd12 was set to 112.", "100 + 5 = 112, then set to 112")
+        self.assertEqual((len(bad), NS["number_of"](after.split(": ", 1)[1])), (1, 112))      # a wrong sum mid-line: asked; the line's own end stands
         # 2. a negative value set and then changed is not "minus twenty from the value held"
         line, bad, _, _ = run(10, "abcd12 was set to minus twenty. abcd12 gained five.", "-20 + 5 = -15, then -15")
         self.assertEqual((line, bad), ("abcd12: -15", []))
@@ -408,15 +412,57 @@ class Keeper(unittest.TestCase):
         # 3. a made-up amount is not let through by writing the value held in front of it
         line, bad, left, after = run(100, "abcd12 gained five.", "100, then 100 + 999 = 1099")
         self.assertEqual(len(bad), 1)
-        # 4. a number the turns state as an amount is not a result that excuses the working
+        # 4. a number the turns state as an amount is not a result that excuses the working: asked about. (It is not
+        #    left out afterwards: working that ends on a number the turns state may be a set written as working.)
         line, bad, left, after = run(100, "abcd12 gained five.", "100 - 95 = 5")
-        self.assertEqual((len(bad), left, after), (1, ["abcd12: 100 - 95 = 5"], "abcd12: 100"))
+        self.assertEqual((len(bad), left), (1, []))
         # 5. `old -> new` to a number that is nowhere is left out after the second reply
         line, bad, left, after = run(100, "abcd12 gained five.", "100 \u2192 999")
         self.assertEqual((len(bad), left, after), (1, ["abcd12: 100 \u2192 999"], "abcd12: 100"))
         # a sum is redone only when the working starts from the value so far; `+46 = 163` after a wrong reading is not "corrected"
         self.assertIsNone(NS["chain_of"]("opened at 117, +46 = 173", None, {117}))
         self.assertEqual(NS["chain_of"]("opened at 117, +46 = 163", None, {117}), (163, [117], 0))
+
+    def test_second_review_of_the_chain_and_the_filter(self):
+        """Six more ways to a wrong value (Codex, second pass on 2026-10-12): each is now right, or asked about and
+        then left as the reply wrote it; none is put right by guessing."""
+        tool = lambda text: {"role": "tool", "content": "ITEM 9/147 (UPDATE)\n" + text + "\n\n(exit_code=0)"}
+        def run(held, said, *lines):
+            turns = [tool(said)]
+            notes = f"RULES\n(none)\nSTATE\nabcd12: {held}\nOPEN"
+            near, seen = NS["numbers_near"](["abcd12"], turns), NS["numbers_in"](turns[0]["content"])
+            delta = {"rules": [], "open": None, "changes": [("abcd12", v) for v in lines]}
+            _, info = NS["apply_delta"](notes, delta, seen, strict=True, near=near)
+            kept, left = NS["without_doubtful"](notes, delta, seen, True, near)
+            after, _ = NS["apply_delta"](notes, kept, seen, strict=True, near=near)
+            return len(info["mismatch"]), info["mismatch_at"], left, NS["number_of"](after.splitlines()[3].split(": ", 1)[1])
+        # 1. an arrow inside a remark does not switch the amount check off
+        self.assertEqual(run(100, "abcd12 gained five.", "100 - 95 = 5 (100 -> 5)")[:2], (1, [0]))
+        # 2. `-3 = -6` after a set to -3 takes three away; it is not the value written again
+        self.assertEqual(run(10, "abcd12 was set to -3. abcd12 lost 3.", "set to -3, then -3 = -6"), (0, [], [], -6))
+        # 3. the line that is left out is the one that was questioned, not the first of that name
+        self.assertEqual(run(10, "abcd12 was set to 20.", "10 -> 20", "10"), (1, [1], ["abcd12: 10"], 20))
+        # 4. a wrong sum followed by its own result, where the turns set that number: asked, and the set stands
+        self.assertEqual(run(10, "abcd12 gained 5. abcd12 was set to 16.", "10 + 5 = 16, then 16"), (1, [0], [], 16))
+        self.assertEqual(run(10, "abcd12 gained 5. abcd12 was set to 16.", "10 + 5 = 16")[:3], (1, [0], []))      # the same on a plain line
+        self.assertEqual(run(10, "abcd12 gained 5.", "10 + 5 = 16"), (0, [], [], 15))                            # a plain miscount is redone
+        # 5. a set written as working is asked about, and kept: its result is a number the turns state for the thing
+        self.assertEqual(run(436, "abcd12 was recorded at 514.", "436 + 78 = 514"), (1, [0], [], 514))
+        self.assertEqual(run(650, "abcd12 was recorded at 523.", "650 - 27 = 623"), (1, [0], ["abcd12: 650 - 27 = 623"], 650))   # neither 27 nor 623: out
+        # 6. a thing set to one value twice in a line: asked (known cost), nothing lost
+        self.assertEqual(run(10, "abcd12 was set to 20. abcd12 gained 5. abcd12 was set to 20.", "set to 20, then 20 + 5 = 25, set to 20"), (1, [0], [], 20))
+        # third pass: a line goes with a left-out line only when it comes after it
+        self.assertEqual(run(10, "abcd12 gained five. abcd12 gained five.", "15 + 5 = 20", "15"), (2, [0, 1], ["abcd12: 15"], 20))
+        self.assertEqual(run(10, "abcd12 gained 5.", "10 + 5 = 15", "15 - 84 = -69", "-69 + 5 = -64")[2:], (["abcd12: 15 - 84 = -69", "abcd12: -69 + 5 = -64"], 15))
+        # `(5 x 2)` is part of the sum; a remark where an amount should be leaves a hole, and that is not a sum
+        self.assertEqual(run(10, "abcd12 gained five twice, then gained one.", "10, then 10 + (5 x 2) + 1 = 21"), (0, [], [], 21))
+        self.assertEqual(run(10, "abcd12 gained five, then gained one.", "10, then 10 + (five more) + 1 = 16")[:2], (1, [0]))
+        self.assertEqual(NS["steps_in"]("10, then 10 + (5 x 2) + 1 = 21"), 4)
+        # a minus sign standing apart is not dropped: `reopened at - 3` is not a set to 3
+        self.assertEqual(run(10, "abcd12 lost 3. abcd12 was removed. abcd12 was reopened at minus three.", "10 - 3 = 7, then removed, then reopened at - 3")[:2], (1, [0]))
+        self.assertEqual(run(10, "abcd12 lost 3. abcd12 was removed. abcd12 was reopened at minus three.", "10 - 3 = 7, then removed, then reopened at -3"), (0, [], [], -3))
+        # every question is bound to its line (the line after a wrong value is questioned too, and is right once that one is out)
+        self.assertEqual(run(10, "abcd12 gained 5. abcd12 gained 5.", "10 + 5 = 15", "(no change)", "999", "15 + 5 = 20"), (2, [2, 3], ["abcd12: 999"], 20))
 
     def test_a_misspelled_name_is_put_right(self):
         mentions = {"vozimi36": 1, "abcd12": 2, "vozu36": 1, "wxyz56": 1}
