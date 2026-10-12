@@ -252,9 +252,9 @@ def main(argv=None):
             persist()
             cursor = owner["journal_cursor"]
         distinct_owners(record["owners"], OWNERS[a.window])
-        if a.window == "G3":
-            require(len({r["exactness_sha256"] for r in record["owners"]}) == 1,
-                    "fresh owners disagree on fixture exactness/exclusions")
+        # The summary checks repeats per qualified candidate. Failed candidates
+        # may have different bad bytes/exclusions across owners; they must not
+        # block unrelated candidates that pass both owners exactly.
         record["completed"] = True
         record["passed"] = all(r["passed"] for r in record["owners"])
         record["finite_element_gate_failures"] = sum(r["finite_element_gate_failures"] for r in record["owners"])

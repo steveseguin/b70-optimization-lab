@@ -79,3 +79,18 @@ runtime update. Neither the corrected device commands nor G3 were executed.
 Actual device equality, all baseline representativeness checks, safe timing,
 and model-level improvement remain pending. No further source-level blocker
 was found in the reviewed report/admission logic after these fixes.
+
+## Final failed-candidate isolation review
+
+The wrapper previously required identical whole exactness-file hashes between
+fresh owners. That could reject unrelated valid candidates when an already-failed
+candidate produced different bad bytes. The wrapper now leaves repeat equality
+to the summary's per-qualified-candidate checks. Evidence files remain hash-bound.
+A regression fixture makes the rejected candidate differ between owners while
+requiring the other candidate to qualify. All 38 protocol tests pass.
+
+The independent attention reviewer inspected the wrapper diff and summary logic
+and found no issues: qualified candidates still match their incumbent and the
+other fresh owner; failed candidates cannot qualify or block unrelated candidates.
+This Python-only correction leaves native binaries, compiled source dependencies,
+and CPU family evidence unchanged; see `protocol-revalidation.json`.

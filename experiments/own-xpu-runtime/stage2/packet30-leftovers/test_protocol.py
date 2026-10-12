@@ -156,6 +156,20 @@ class Protocol(unittest.TestCase):
         r=self.result(f);by={row["raw_candidate"]:row for row in r["rows"]}
         self.assertFalse(by["sg32"]["qualified"]);self.assertTrue(by["tiled"]["qualified"])
         self.assertEqual(r["dispatch"]["classes"]["norm"],"p30.fusion.tiled")
+    def test_failed_candidate_hash_variation_does_not_block(self):
+        f=fixture();f[2]["classes"][0]["candidates"].append("tiled")
+        for index,(packet,owner) in enumerate(zip(f[1],f[0]["owners"])):
+            for kind in ["exactness","timing"]:
+                addition=copy.deepcopy([r for r in packet[kind] if r["candidate"]=="sg32"])
+                for row in addition:row["candidate"]="tiled"
+                packet[kind]+=addition
+            packet["exactness"][1]["passed"]=False
+            packet["exactness"][1]["output_hashes"]="different-bad-output-"+str(index)
+            packet["native"]["passed"]=False;packet["native"]["finite_element_gate_failures"]=1;owner["returncode"]=2
+        result=self.result(f)
+        self.assertEqual(result["dispatch"]["classes"],{"norm":"p30.fusion.tiled"})
+        source=Path(__file__).with_name("window.py").read_text()
+        self.assertNotIn('len({r["exactness_sha256"]',source)
     def test_unknown_selection(self):
         with self.assertRaises(ValueError):summarize(*fixture(),overlap_selection=["invented"])
     def test_safety_precedes_latch(self):
