@@ -2065,3 +2065,11 @@ loses instructions or the audit again, the difference is in the method.
 
 W32 is being run again in 13c with the task's own time limit (graded where it stops), at the default effort, as
 the row that 13b could not grade. After C32m the queue runs the proxy on the second 1M ledger stream (X32g).
+
+**XR5**, registered with the control (19:50): XR4 plus `--think-cap 3072` (new: a call that may think is first sent
+with its reply cut to 3,072 tokens; one that spent them all on thinking is asked again without thinking at the
+client's own size, one that was cut inside its answer is asked again in full). Expected on `repair-n40-s1x`: 38 or
+more clean, audit 6 or 7, 23 minutes or less (XR4: 29.5), fewer than 25,000 tokens thrown away, and fewer than ten
+replies redone in full. The risk is on the hard tickets: a think of 3,000 to 8,000 tokens that would have ended in
+the right fix is now replaced by an answer without thinking. If it costs fixes or clean tickets, the cap stays off.
+Queue of 13d: C32m, XR5, then the proxy on the second 1M stream.

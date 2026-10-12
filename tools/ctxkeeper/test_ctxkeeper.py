@@ -832,6 +832,39 @@ class Policy(unittest.TestCase):
         self.assertNotIn("tools", seen[0])                                        # and nothing but the effort was added
         self.assertEqual(seen[0]["messages"], conversation(2))
 
+    def test_a_thinking_reply_gets_a_short_leash_first(self):
+        seen = []
+
+        def model(body):
+            seen.append(body)
+            thinking = (body.get("chat_template_kwargs") or {}).get("enable_thinking") is not False
+            if thinking and body.get("max_tokens") == 2048:
+                out = reply(None)                                                  # thought to the small cap, wrote nothing
+                out["choices"][0]["finish_reason"] = "length"
+                return out
+            return reply("done" if not thinking else "thought and done")
+
+        k = ck.Keeper(model, Path(self.dir.name) / "t", budget=100000, think_cap=2048)
+        resp = k.complete({"model": "m", "messages": conversation(2), "max_tokens": 8192, "chat_template_kwargs": {"enable_thinking": True}})
+        self.assertEqual(resp["choices"][0]["message"]["content"], "done")
+        self.assertEqual([(b["max_tokens"], b["chat_template_kwargs"]["enable_thinking"]) for b in seen], [(2048, True), (8192, False)])
+        seen.clear()
+        k.complete({"model": "m", "messages": conversation(2), "max_tokens": 1024, "chat_template_kwargs": {"enable_thinking": True}})
+        k.complete({"model": "m", "messages": conversation(2), "max_tokens": 8192, "chat_template_kwargs": {"enable_thinking": False}})
+        self.assertEqual([b["max_tokens"] for b in seen], [1024, 8192])           # a smaller cap of the client's, or no thinking: untouched
+
+        def cut(body):                                                             # the answer itself was long: cut inside it
+            seen.append(body)
+            out = reply("a long answer ...")
+            out["choices"][0]["finish_reason"] = "length" if body.get("max_tokens") == 2048 else "stop"
+            return out
+
+        seen.clear()
+        k2 = ck.Keeper(cut, Path(self.dir.name) / "t2", budget=100000, think_cap=2048)
+        resp = k2.complete({"model": "m", "messages": conversation(2), "max_tokens": 8192})
+        self.assertEqual(([b["max_tokens"] for b in seen], resp["choices"][0]["finish_reason"]), ([2048, 8192], "stop"))
+        self.assertEqual(next(iter(k2.sessions.values())).state["think_cap_full"], 1)
+
     def test_searches_stop_when_the_window_has_no_room_left(self):
         """A search result is cut to the room left beside the reply, and then no further search is made this turn."""
         s = self.run_conversation(30)

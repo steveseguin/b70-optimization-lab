@@ -515,9 +515,14 @@ class Keeper:
                  memory_note: bool = True, think_until: str | None = None, repeat_limit: int = 3,
                  notes_mode: str = "full", inplace_tokens: int = 15000, notes_checks: str = "off",
                  notes_scan: str | None = None, recall_label: str | None = None, recall_unit: str = "item",
-                 empty_retry: bool = True) -> None:
+                 empty_retry: bool = True, think_cap: int = 0) -> None:
         self.ask, self.root = ask, Path(state_dir)
         self.empty_retry = empty_retry               # ask once more without thinking when a reply comes back empty
+        # think_cap: a call that may think is first sent with max_tokens cut to this. A reply that used it all up on
+        # thinking is then asked for again without thinking, at the client's own size (the empty-reply rule); one
+        # that had got as far as its answer is asked for again in full. On real code, at medium effort, 8 of 290
+        # calls thought to the client's 8,192 tokens and took 797 of the run's 1,703 model seconds (campaign 13c).
+        self.think_cap = think_cap
         self.budget, self.target_ratio, self.headroom = budget, target_ratio, headroom
         self.notes_cap, self.notes_max_tokens, self.notes_thinking = notes_cap, notes_max_tokens, notes_thinking
         self.recite, self.max_recalls, self.reply_reserve = recite, max_recalls, reply_reserve
@@ -1002,9 +1007,19 @@ class Keeper:
                     if not out["tools"]:
                         out.pop("tools")
                     s.state["recall_limit_hit"] = s.state.get("recall_limit_hit", 0) + 1
-                resp = self.upstream(out)
+                first = out
+                if (self.think_cap and (out.get("chat_template_kwargs") or {}).get("enable_thinking") is not False
+                        and (out.get("max_tokens") or 10**9) > self.think_cap):
+                    first = dict(out, max_tokens=self.think_cap)
+                resp = self.upstream(first)
                 self.learn(s, out["messages"], resp)
                 msg = ((resp.get("choices") or [{}])[0].get("message") or {})
+                if (first is not out and (resp.get("choices") or [{}])[0].get("finish_reason") == "length"
+                        and (msg.get("tool_calls") or str(msg.get("content") or "").strip())):
+                    # the short leash cut a reply that had got as far as its answer: once more at the client's size
+                    s.state["think_cap_full"] = s.state.get("think_cap_full", 0) + 1
+                    resp = self.upstream(out)
+                    msg = ((resp.get("choices") or [{}])[0].get("message") or {})
                 if (self.empty_retry and not msg.get("tool_calls") and not str(msg.get("content") or "").strip()
                         and (out.get("chat_template_kwargs") or {}).get("enable_thinking") is not False):
                     # Nothing for the client at all: the thinking used the reply up. Asked once more without it.
@@ -1199,6 +1214,10 @@ def main() -> None:
     ap.add_argument("--recall-unit", default="item", help="what --recall-label counts, as the model is told (default: item)")
     ap.add_argument("--notes-scan", help="with --notes-checks count or near: read only the tool results and user messages "
                                          "matching this regular expression for mentions and stated numbers")
+    ap.add_argument("--think-cap", type=int, default=0, metavar="TOKENS",
+                    help="send a call that may think with max_tokens cut to this first; a reply that spent it all on "
+                         "thinking is asked for again without thinking at the client's size, one that was cut inside "
+                         "its answer is asked for again in full (0: off)")
     ap.add_argument("--no-empty-retry", action="store_true",
                     help="do not ask again without thinking when a reply comes back empty (for control runs: with a "
                          "window larger than the client ever fills and --effort, the proxy then only sets the effort)")
@@ -1218,7 +1237,7 @@ def main() -> None:
                     think_until=a.think_until, repeat_limit=a.repeat_limit, notes_mode=a.notes_mode,
                     inplace_tokens=a.inplace_tokens, notes_checks=a.notes_checks, notes_scan=a.notes_scan,
                     max_recalls=a.max_recalls, recall_label=a.recall_label, recall_unit=a.recall_unit,
-                    empty_retry=not a.no_empty_retry)
+                    empty_retry=not a.no_empty_retry, think_cap=a.think_cap)
     server = ThreadingHTTPServer((a.host, a.port), make_handler(keeper, upstream, a.timeout))
     print(f"ctxkeeper: http://{a.host}:{a.port}/v1 -> {upstream}/v1, live window {a.budget} tokens, notes {a.notes_mode}"
           + (f" every {a.inplace_tokens} tokens, checks {a.notes_checks}" if a.notes_mode == "inplace" else "")
