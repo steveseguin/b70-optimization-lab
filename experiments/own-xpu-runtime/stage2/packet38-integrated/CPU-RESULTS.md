@@ -1,7 +1,8 @@
 # CPU qualification
 
-Qualification is still running. This file is not a seal. The final authority
-will be `build-receipt.json`, bound to the source, binary and evidence hashes.
+CPU qualification completed on 2026-10-12. All 91 required gate receipts passed.
+The final authority is `build-receipt.json`, bound to source, binary and evidence
+hashes; this summary does not replace it.
 No device executable ran, and no model speed is claimed.
 
 ## Verified during the resumed session
@@ -51,14 +52,34 @@ No device executable ran, and no model speed is claimed.
   matched guesses, hit/miss events and both ranks' complete target/draft state.
 - Four fresh draft captures passed and match the parent streams and fixtures.
 
-## Remaining qualification
+## Persistent real CPU suite
 
-The persistent real CPU suite is running. It uses Intel's current host binary after its five
-real-model modes pass; GNU retains the controller and request-order proofs.
-The real CPU suite uses the three-request
-snapshot frozen when those were the available complete oracles. Its partial
-coverage is explicit. Twelve-prompt device qualification remains separate
-coordinator work.
+The Intel host binary ran native control with MTP and the packet38 candidate
+map through one distinct two-token warm-up, then three 64-token requests in the
+same two rank processes. All 192 tokens and 1,152 retained fixtures matched the
+read-only suite oracle exactly. Both ranks shut down cleanly. Each request's
+2,070 state-evidence files were hash-verified and archived before scratch removal.
+The final export rechecked every request. See `suite-real-cpu.json`.
+
+| Prompt | Exact tokens | Exact fixtures | Draft hits / guesses |
+| --- | ---: | ---: | ---: |
+| incident-retrospective | 64 | 384 | 53 / 63 |
+| code-review | 64 | 384 | 43 / 63 |
+| customer-email | 64 | 384 | 51 / 63 |
+
+This is the preregistered three-request snapshot, one repeat. Its partial scope
+is explicit: `complete_frozen_suite=false`. The twelve-oracle schema checks and
+miniature reset-order proof are separate evidence. CPU decode rates are null;
+these results do not establish a speed or GPU latency result.
+
+## Remaining coordinator qualification
+
+Run the exact sequence in `WINDOW.md`: device build/admission and identity,
+model-shape K2 selection, fresh-owner draft validation, both controllers on the
+single-prompt modes, and the full twelve-prompt WS/WSs suite with two repeats.
+All twelve oracle entries were available and passed schema checks at final seal.
+Only coordinator windows can close device exactness, controller latency, kernel
+selection, cache behavior and model speed. No CPU timing substitutes for them.
 
 ## Independent review
 

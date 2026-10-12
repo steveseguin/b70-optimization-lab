@@ -1,6 +1,9 @@
 # Packet38 integrated runtime
 
-CPU preparation in progress. No device ran and no model speed is claimed.
+CPU preparation is sealed: 91 gate receipts passed. No device ran and no model
+speed is claimed. The persistent native/MTP CPU suite matched all 192 tokens
+and 1,152 retained fixtures for its three-prompt snapshot. The complete twelve-
+prompt device suite remains coordinator work. See [CPU-RESULTS.md](CPU-RESULTS.md).
 
 The runtime merges packet36's official draft provider into packet37's prepared
 host path and packet33 kernels, against their common packet32 base. The target
@@ -26,4 +29,4 @@ window. See [SUITE.md](SUITE.md), [ROLLBACK.md](ROLLBACK.md).
 
 [KERNELS.md](KERNELS.md) describes model-shape K2 coverage. [WINDOW.md](WINDOW.md)
 lists coordinator commands; [DEADLINES.md](DEADLINES.md) separates estimates from
-watchdogs. Build/gate authority is build-receipt.json, when sealed.
+watchdogs. Build/gate authority is [build-receipt.json](build-receipt.json).

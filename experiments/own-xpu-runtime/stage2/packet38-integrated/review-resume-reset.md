@@ -147,3 +147,11 @@ validated and bound alongside current p30/capacity kernel gates, source hashes
 and child/binary receipts. This qualification-only correction leaves the suite
 launch command, controller and request/reset paths unchanged. No tests or ranks
 were launched for this source review.
+
+Final SUITE.md result paragraph matches the separate parent-run real CPU suite
+receipt: three distinct prompts, 64 tokens and 384 retained layer fixtures each
+(192 tokens/1,152 fixtures total), native controller with MTP, exact outcomes.
+This reviewer checked those receipt fields plus the current Intel host binary,
+qualification-plan and retained archive hashes. It remains a partial snapshot
+of the twelve-prompt suite and makes no device or speed claim. No independent
+model execution is claimed; only the documentation/source binding changed.

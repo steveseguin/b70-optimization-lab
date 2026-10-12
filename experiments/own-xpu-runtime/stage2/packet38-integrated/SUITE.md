@@ -81,8 +81,10 @@ in the gate JSON.
 This proves request-order independence on the CPU miniature. The receipt schema
 is also checked against the exact real-model oracles available at gate time by
 using oracle-derived fixtures and rejecting a deliberately changed token. Those
-schema checks are not described as real-model runtime executions. Full model
-suite execution remains a coordinator window.
+schema checks are not described as real-model runtime executions. The sealed
+real CPU execution separately passed three prompts, 64 tokens each and 1,152
+fixtures total, using the same native/MTP rank pair. This is a partial snapshot;
+full twelve-prompt device execution remains a coordinator window.
 
 Per-token receipts retain the rank-0-to-rank-1 handover and the reverse direction
 when a confirmed next half exists. A successful guess may start before rank 1

@@ -10,7 +10,10 @@ Identity: packet36 draft plus packet37 prepared runtime on the packet32 base,
 with packet30 candidates and arithmetic iq3-p17-detmath-v2. The final exact
 source closure and binary hashes are in build-receipt.json.
 
-Outcome: CPU qualification is being completed. No device ran; no speed claim.
+Outcome: CPU preparation is sealed with 91 passing gate receipts. The native/MTP
+persistent CPU suite matched 192 tokens and 1,152 fixtures over three prompts.
+Reset-order proof passed 24 miniature requests and twelve comparisons.
+No device ran; no speed claim.
 Coordinator windows and device qualification are separate outstanding work.
 
 Useful mechanisms: captured draft commands share stable owner allocations;
@@ -31,5 +34,6 @@ retention and restoration are documented in scratch-cleanup.json and ARTIFACTS.m
 
 Revisit conditions: any arithmetic, owner-lifetime, protocol, reset, input
 identity, compiler or dispatch change requires its corresponding gates again.
-Device K2 must decide dispatch; no CPU timing substitutes for it. The complete
-twelve-prompt speed window waits for all suite oracles and coordinator access.
+Device K2 must decide dispatch; no CPU timing substitutes for it. All twelve
+oracle entries passed schema checks; the complete twelve-prompt speed window
+waits for coordinator device qualification.
