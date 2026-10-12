@@ -329,6 +329,7 @@ def number_of(value: str) -> int | None:
     `-58 - 35 = -93, then set to 82 (item 48)` -> 82); None for `removed ...` and for a value without a whole number.
     (A model that thinks writes such lines; reading the first number instead sent correct replies to the fallback.)"""
     v = re.sub(r"\([^()]*\)", " ", value).replace("\u2212", "-").strip()
+    v = re.split(r"\u2192|->|=>", v)[-1].strip()         # `286 -> removed`: what it is now comes last
     if re.match(r"(removed|closed|struck|deleted|gone)\b", v.lower()):
         return None
     nums = re.findall(r"(?<![\w.])-?\d[\d,]*(?![\d.]*\d)", v)

@@ -918,3 +918,41 @@ Retrieval was both slower and worse: a question about X retrieves "X ... it went
 nothing about Y, and the model spent long thinking turns on what it could not see. This stream is the place to
 measure the next version of either method; it is not calibrated, and one seed says only which way the difference
 points.
+
+### One million tokens with in-place notes: 228 of 228 in 50 minutes
+
+Arm N32u (N32v with the scanner fix, and "the items state it" narrowed to a sentence that names the thing). The
+first start of the 1M run (N32v, 21:34) was stopped by me after 3 minutes when the audit of its 240K run showed the
+scanner defect; N32u started at 21:37 on the same server. Same stream as campaigns 5 to 9 (999,460 tokens, 617
+items, 228 questions), 32K live window, official grade, not void, 610 archive files, all verbatim.
+
+| | N32u in-place notes | N32j keeper (campaign 8) | proxy X32b (campaign 9) |
+| --- | ---: | ---: | ---: |
+| all 228 questions | **228 (100 %)** | 226 (99.1 %) | 222 (97.4 %) |
+| current / old value / who / rule / method | 58/58, 58/58, 29/29, 29/29, 29/29 | 58/58, 58/58, 27/29, 29/29, 29/29 | 58/58, 56/58, 28/29, 28/29, 27/29 |
+| by distance back: 1-4 / 5-24 / 25-99 / 100-399 / 400+ items | 50/50, 50/50, 30/30, 48/48, 25/25 | 49/50, 49/50, 30/30, 48/48, 25/25 | 49/50, 50/50, 30/30, 44/48, 24/25 |
+| final list | 25/25 | 25/25 | 25/25 |
+| **agent minutes** | **50.2** | 82.9 | 95 |
+| model calls (of which notes calls) | 870 (84) | 865 (110) | 657 by the agent |
+| prompt tokens sent / of which from the cache | 10.0M / 7.9M | 16.7M / 12.9M | |
+| tokens written: main loop / notes calls | 68K / 111K | 66K / 231K | |
+| time: main loop / notes calls / shell | 1,586 s / 1,345 s / 82 s | 2,262 s / 2,633 s / 79 s | |
+| counters ever wrong in the NOTES (audit) | **0** in 63 versions | 5, all in one version | |
+
+Per 100K tokens: 4.2, 4.3, 6.4, 4.5, 5.2, 5.1, 3.7, 4.9 and 6.1 minutes (no trend; the keeper took about 8.3).
+The preregistered bar was 222 or better in under 60 minutes.
+
+What the notes calls did: 63 cuts, 59 of them in place (four by the ordinary cut, when a question was open as the
+window filled). 1.75M prompt tokens in the in-place calls, 1.51M of them from the cache. A reply was asked for again
+19 times: 13 times because a name's lines accounted for fewer changes than the items mention it, 5 times because
+working did not start from the value held (`suru92: working starts from -14, NOTES say removed`), once for both;
+one doubtful line was accepted after the second reply. NOTES stayed between 391 and 1,147 tokens with both rules in
+place. The audit finds no counter ever wrong.
+
+What the audit shows about the full keeper on the same stream, which its score had hidden: at one cut (model call
+178) its rewritten NOTES ended mid-list, 39 lines instead of 62, without an OPEN section, and five live counters
+were gone from STATE until later cuts brought them back. A full rewrite can lose lines that way and still pass the
+layout check; changes-only notes cannot, because the harness keeps every line the model does not mention.
+
+One seed, one stream. The 240K runs of the earlier in-place arms had one wrong answer in two of five runs; N32u is
+the first arm with every check and has this one run. Its two 240K runs are queued behind the retrieval-only run.

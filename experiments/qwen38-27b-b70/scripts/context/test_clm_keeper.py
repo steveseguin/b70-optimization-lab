@@ -293,6 +293,7 @@ class Delta(unittest.TestCase):
         self.assertEqual(NS["number_of"]("-51 (confidential; 36, lost 87 in item 608)"), -51)
         self.assertEqual(NS["number_of"]("1,200"), 1200)
         self.assertIsNone(NS["number_of"]("struck off (item 5)"))
+        self.assertIsNone(NS["number_of"]("286 \u2192 removed (item 86)"))
         self.assertEqual(w("-107 \u2192 -31"), (-107, -31, -31))
         self.assertEqual(w("75 -> 80."), (75, 80, 80))
 
