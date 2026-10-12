@@ -1,0 +1,125 @@
+{
+  "schema": "packet34.build.v1",
+  "device_executed": false,
+  "qualified": false,
+  "max_compile_jobs": 1,
+  "numeric_threads": 2,
+  "binaries": {
+    "host/replay-bench": "842e6bd5a94235079333bfd1e0b75c5c24b088731fd84bdf6f607ab2bad7a519",
+    "device/replay-bench": "d88ddd9e41c535f752d91ec0600c6f7351cb163c4b1c3ddd4cecbf5faed91d41",
+    "device/jit-smoke": "36bd44717979aa301f9c0a6be125d660724498984d0c9abea9bc42cc6014a610",
+    "icpx-host/replay-bench": "5cf9760a0e2f805a75574032d5f1b23f64e4fb6830b5334bcdccf8d603f33b0a",
+    "asan/replay-bench": "80742adc123cde4a295e9683cc93d0b5516235a5ee6945c16893089289ad6e86"
+  },
+  "precision": {
+    "host": {
+      "flags": [
+        "-fno-fast-math",
+        "-ffp-contract=off"
+      ],
+      "compile_commands": 14,
+      "link_commands": 1,
+      "asserted_compile_and_link": true
+    },
+    "device": {
+      "flags": [
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fdenormal-fp-math=ieee",
+        "-foffload-fp32-prec-div",
+        "-foffload-fp32-prec-sqrt",
+        "-fsycl"
+      ],
+      "compile_commands": 23,
+      "link_commands": 2,
+      "asserted_compile_and_link": true
+    },
+    "icpx-host": {
+      "flags": [
+        "-fno-fast-math",
+        "-ffp-contract=off"
+      ],
+      "compile_commands": 14,
+      "link_commands": 1,
+      "asserted_compile_and_link": true
+    },
+    "asan": {
+      "flags": [
+        "-fno-fast-math",
+        "-ffp-contract=off"
+      ],
+      "compile_commands": 14,
+      "link_commands": 1,
+      "asserted_compile_and_link": true
+    }
+  },
+  "passed": true,
+  "modes_built": [
+    "direct",
+    "graph-whole",
+    "graph-layer"
+  ],
+  "raw_available": false,
+  "native_launches_source_census": 1142,
+  "application_device_bytes": 4766268444,
+  "gate_receipts": {
+    "cpu-tests.json": "681edade154fe74dbc23644b3552fa7ad6fbb8eeeeb6cd26dc398f58b08c1229",
+    "capture-gates.json": "820d5ffb0524ba04de8672ca389edde059b7b57b6c1093eb974738e78b815c28",
+    "lifetime-tests.json": "f81466425f57ab390e275cc4ae9fad56fbb8090085a7087ca85d415511747120",
+    "window-tests.json": "46a28d550a0ee6c57ef1d64706a6dd6dee5f106645490cd9a5137a432a14d873",
+    "raw-abi-gate.json": "27f0965f8ba31cd841ae0eaea4345bd646854d643152878865365f14ce535fe3"
+  },
+  "source_files": {
+    "experiments/own-xpu-runtime/stage2/packet34-replay-bench/CMakeLists.txt": "51cf25fbd735462ff9a8b3a97b22d694fe9dd83e61784ed8702e5273b79c9a50",
+    "experiments/own-xpu-runtime/stage2/packet34-replay-bench/test_window.py": "8978ec10a8f802609d17deff444da5e3127c2f0de5f66abf67dbdc3b829e1001",
+    "experiments/own-xpu-runtime/stage2/packet34-replay-bench/capture_gate.py": "21ea0d7166126b279013a7e838aecb0ca3c1244351418f651d3a23554b9fc5c4",
+    "experiments/own-xpu-runtime/stage2/packet34-replay-bench/build.py": "7e6aaa1482e314912f70721d4fa2ffe2254647b50bf3719e9fff4e9505663044",
+    "experiments/own-xpu-runtime/stage2/packet34-replay-bench/fixture34.hpp": "a84356df4e71ab3229ba30b1fbe40542aa214a832e6a2f45aee15e3d951352a4",
+    "experiments/own-xpu-runtime/stage2/packet34-replay-bench/backend34.hpp": "c65fd4d7e922b207ed26ec6675db55c60553ddba44d8e557a9001545cf9246a7",
+    "experiments/own-xpu-runtime/stage2/packet34-replay-bench/mirror.py": "05efb82b659b4e3772566d104192e9b30d038fba43e9c9e0a0d9530d19174d3c",
+    "experiments/own-xpu-runtime/stage2/packet34-replay-bench/summarize.py": "1157f1d6db6aef8642f4dd0b91b07ebd59b52d91f7ae8c3d70e16caa18ba6c92",
+    "experiments/own-xpu-runtime/stage2/packet34-replay-bench/window.py": "2b91e50fec38e1b440f3fa234a99e3be9181f2654d3cb61e896f6dcb5d4d9246",
+    "experiments/own-xpu-runtime/stage2/packet34-replay-bench/test_lifetime.py": "95d5e4d3bad50eb91ed58bd0e5d3a02a3f97a7192e224ffa994840904d01125f",
+    "experiments/own-xpu-runtime/stage2/packet34-replay-bench/directory.tsv": "8352dc77cdb0e584068274b388b14bfba716ff315ff613bbe4ba67f62fd58507",
+    "experiments/own-xpu-runtime/stage2/packet34-replay-bench/cpu_gates.py": "59bb61b021696944325674bfe5c947d7e4f6f57cda040bcbdf49a52b9b3f6e89",
+    "experiments/own-xpu-runtime/stage2/packet34-replay-bench/cleanup.py": "c72f1d43a424f61249481d5709529b03af2a66ad5eae97d6c043acf400913e66",
+    "experiments/own-xpu-runtime/stage2/packet34-replay-bench/lifetime_test.cpp": "5182f70ee3a5be02082c6c135328db983242c92d05e8f4b1b858454c6736ccba",
+    "experiments/own-xpu-runtime/stage2/packet34-replay-bench/dispatch-measured.json": "896a5a270ad0bdbdf21bd57f08b554644b8049da4f71bd1c758f861f6e48f25d",
+    "experiments/own-xpu-runtime/stage2/packet34-replay-bench/seal.py": "955af3c13a6a5c4dceeefbe2538c13e44987be94b9cfbb39abcb80242a0294c4",
+    "experiments/own-xpu-runtime/stage2/packet34-replay-bench/bench.cpp": "748094f0479fda489de1302a5ab467b61a46585fffc963ade26e6f42c632c37f",
+    "experiments/own-xpu-runtime/stage2/packet34-replay-bench/raw_abi_gate.py": "498e1e9471b35b94a1ffe46432a424b9e2df8ae607c5e492d279f28f16fb401c"
+  },
+  "upstream_source_proof_sha256": "54bd5efd728c91b3364fa5fc9ea4fc12cf9891d8b42e856cbf6429b64c094acb",
+  "compiler_versions": {
+    "/usr/bin/g++": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+    "/opt/intel/oneapi/compiler/2026.0/bin/icpx": "Intel(R) oneAPI DPC++/C++ Compiler 2026.0.0 (2026.0.0.20260331)"
+  },
+  "preparation_affinity": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+  ],
+  "preparation_nice": 19,
+  "host_only_gates": true
+}

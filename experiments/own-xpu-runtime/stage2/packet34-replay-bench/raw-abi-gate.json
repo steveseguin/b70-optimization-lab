@@ -1,0 +1,154 @@
+{
+  "schema": "own-runtime.packet34.raw-capability-audit.v1",
+  "passed": true,
+  "passed_meaning": "fail_closed_capability_tests_only",
+  "raw_available": false,
+  "qualified": false,
+  "device_executed": false,
+  "native_abi_gate_passed": false,
+  "reason": "unchanged current submissions lack typed functor exports and current final ELF/SPIR-V manifests",
+  "source_sha256": {
+    "packet29-merged/p28/submit.cpp": "10ba4dee0b311c7d0f487d11159d06d8f16304ff3f9e745e62950d5ff54aa92d",
+    "packet29-merged/p28/submit.hpp": "6d0bddcbb38d635c9d5194b73cba7624db27a7617754af5369bfa51e731c5bbf",
+    "packet29-merged/specialised_submit.cpp": "46f74d87620ff9f627a098905b8d6cfca7e2d2ebb3077a32ed906060442ade7d",
+    "packet29-merged/round2_submit.cpp": "9376df1464877b7e5f0e24eb56000df350ade782582bd42ad18cc5cbb2a7c45b",
+    "packet29-merged/adapter.cpp": "5583d32af6bb9d9f1d10da5df7e6babe0f08ecd908e26760622dee95d2b2af10",
+    "packet29-merged/native.cpp": "4e8f5683b6ad8fe2a8a9b44fd1a0cba7dfc6c90616eb06cd583bc0d7ba087b8d",
+    "packet29-merged/runtime_kernels.cpp": "ff95284fda68e0097c35e7ee0b03851563b77cf935602b4e2ea0d5ba526f37f0",
+    "packet29-merged/kernel_guard.hpp": "3ea4ec84bfcc75b51d98163afc6c4912ce1b34e9f248b9a348a55d2d0e29d4ad",
+    "packet29-merged/backend.hpp": "4020cebb5bbde7934958ff3e9cfdec1ba11481dc1b7b4b324b99fcb34176f976",
+    "packet29-merged/KERNELS.md": "efed1fad6f42df5565a9a2fd49a5985d898912416d6dc89a0b13f9907989bae9",
+    "packet10-kopt5/kernels.cpp": "f3b311c18744091930ed4a038db8acb4fd4b30d8e348a62a0c25d377d309f1fc",
+    "packet22-replay/raw_typed.hpp": "b35bbca966389aac7b7cf0d9cd9ab5d955d8510703b3dd407547468ec9984748",
+    "packet22-replay/raw_abi_gate.py": "9267fa60353e3647a42f347c856140ed237a032a477ff3877bf793a6bb92a5fd",
+    "packet22-replay/recording_native.hpp": "5842687b3f9ed1613167f1bed293c1af97340a28f39d321cf55ddb333c3db646",
+    "packet22-replay/recording_native.cpp": "f01859d59e1287348fd9530db418902c0d2a749843a9dd5a038f3342fbf25c18",
+    "packet22-replay/backend-notes.md": "59f362b36d852db4d97724d3f56cc1c4e568d1a1417c48108ca5051180867312",
+    "packet29-merged/build/k2-r29/run/dispatch-measured.json": "896a5a270ad0bdbdf21bd57f08b554644b8049da4f71bd1c758f861f6e48f25d",
+    "packet34-replay-bench/raw_abi_gate.py": "498e1e9471b35b94a1ffe46432a424b9e2df8ae607c5e492d279f28f16fb401c"
+  },
+  "selected_dispatch": {
+    "schema": "packet26.dispatch.v1",
+    "classes": {
+      "hc.a.norm": "specialised",
+      "hc.f.norm": "specialised",
+      "final.norm": "specialised",
+      "ple.kn": "specialised",
+      "ple.qn": "specialised",
+      "ple.cn": "specialised",
+      "gdn.norm": "packet18",
+      "gdn.recurrence": "round2",
+      "qsa.prepare": "packet18",
+      "qsa.pool": "packet18",
+      "qsa.select": "round2",
+      "qsa.attention": "packet18",
+      "attn.combine": "specialised",
+      "ffn.combine": "specialised",
+      "route": "specialised",
+      "gather": "specialised",
+      "argmax": "round2",
+      "streams": "specialised",
+      "ple.add": "specialised"
+    },
+    "fusions": {
+      "attn.combine+norm": "specialised",
+      "ffn.combine+norm": "specialised",
+      "route+gather": "specialised",
+      "small.hc": "packet18",
+      "small.gdn.ab": "packet18",
+      "small.ffn": "packet18"
+    },
+    "gemv": {
+      "expsgate": "p28.paired.wg32",
+      "expsdown": "r5",
+      "gdn.qkv": "p28.dense.wg32",
+      "gdn.z": "p28.dense.wg32",
+      "qsa.qgate": "p28.dense.wg32",
+      "qsa.k": "p28.dense.rows4",
+      "qsa.v": "p28.dense.rows4",
+      "attention": "p28.dense.wg32",
+      "ple.key": "p28.dense.wg32",
+      "ple.value": "p28.dense.wg32",
+      "hc.gate": "r5",
+      "hc.low": "r5",
+      "logits": "p28.dense.wg32",
+      "hc.a.gate": "p28.dense.wg32",
+      "hc.a.low": "p28.dense.rows4",
+      "hc.a.inject": "p28.dense.wg32",
+      "hc.f.gate": "p28.dense.wg32",
+      "hc.f.low": "p28.dense.rows4",
+      "hc.f.inject": "p28.dense.wg32",
+      "final.gate": "p28.dense.wg32",
+      "final.low": "p28.dense.rows4",
+      "qsa.iq": "p28.dense.rows4",
+      "qsa.ik": "p28.dense.wg32",
+      "router": "p28.dense.rows4",
+      "gdn.a": "p28.dense.rows4",
+      "gdn.b": "p28.dense.rows4",
+      "shexpgate": "p28.dense.rows4",
+      "shexpup": "p28.dense.rows4",
+      "shexpdown": "p28.dense.wg32",
+      "shared_gate": "p28.dense.rows4"
+    }
+  },
+  "entry_source_audit": [
+    {
+      "path": "packet29-merged/p28/submit.cpp",
+      "raw_hooks": 0,
+      "named_kernel_exports": 0
+    },
+    {
+      "path": "packet29-merged/specialised_submit.cpp",
+      "raw_hooks": 0,
+      "named_kernel_exports": 0
+    },
+    {
+      "path": "packet29-merged/round2_submit.cpp",
+      "raw_hooks": 0,
+      "named_kernel_exports": 0
+    },
+    {
+      "path": "packet29-merged/adapter.cpp",
+      "raw_hooks": 0,
+      "named_kernel_exports": 0
+    },
+    {
+      "path": "packet29-merged/native.cpp",
+      "raw_hooks": 0,
+      "named_kernel_exports": 0
+    },
+    {
+      "path": "packet29-merged/runtime_kernels.cpp",
+      "raw_hooks": 0,
+      "named_kernel_exports": 0
+    },
+    {
+      "path": "packet10-kopt5/kernels.cpp",
+      "raw_hooks": 0,
+      "named_kernel_exports": 0
+    }
+  ],
+  "checks": [
+    {
+      "name": "old_packet22_receipt_rejected",
+      "passed": true,
+      "reason": "raw unavailable: current packet29 exports and final ABI qualification missing"
+    },
+    {
+      "name": "empty_receipt_rejected",
+      "passed": true,
+      "reason": "raw unavailable: current packet29 exports and final ABI qualification missing"
+    },
+    {
+      "name": "asserted_current_receipt_rejected",
+      "passed": true,
+      "reason": "raw unavailable: current packet29 exports and final ABI qualification missing"
+    },
+    {
+      "name": "current_entries_have_no_raw_exports",
+      "passed": true
+    }
+  ],
+  "gate_count": 4,
+  "native_cli_rejection_test": "pending independent source/parser gate; native binary must not be run on CPU"
+}
