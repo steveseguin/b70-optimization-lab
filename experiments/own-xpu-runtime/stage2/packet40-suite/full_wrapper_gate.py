@@ -106,6 +106,13 @@ def main():
    result=json.loads((output/'window.json').read_text());pp.require(code==0 and result['passed'],label+' wrapper failed: '+str(result.get('error')))
    pp.require(result['device_executed'] is False and result['cpu_rehearsal'] is True,'CPU wrapper mislabeled')
    if name=='K2':pp.require(result['device_timing_qualified'] is False,'CPU timestamps promoted');dispatch=output/'run0/dispatch-measured.json'
+   if name=='KD':
+    identity=json.loads((output/'host-reference-identity.json').read_text());archive=output/'host-reference.jsonl.gz'
+    pp.require(not (output/'host-reference').exists() and identity['scratch_removed'],'KD CPU scratch survived its receipt')
+    pp.require(pp.sha(archive)==identity['scratch_archive']['sha256']==result['receipts']['host-reference.jsonl.gz'],'KD CPU archive binding')
+    verified=storage.verify_archive(archive)
+    pp.require(verified['files']==identity['scratch_archive']['files'] and verified['retained_files']>0,'KD CPU archive verification')
+    pp.require('host-reference/receipt.json' not in result['receipts'],'KD receipt references removed scratch')
    success[label]=output/'window.json'
    try:window.prerequisites(success[label],name,result)
    except ValueError as error:pp.require('CPU rehearsal cannot authorize device work' in str(error),'CPU seal refusal reason')

@@ -2,7 +2,12 @@
 
 This packet owns only this directory. Device programs are compiled but never
 executed during CPU preparation. `build-receipt.json` and its named gate receipts
-are the qualification authority; older attempts are historical evidence.
+are the qualification authority only after a successful current-source seal.
+A `passed` field in an older receipt is not current qualification: the execution
+ledger must bind its receipt bytes, current source closure and actual binary
+hashes. Rebuilds can make an earlier successful run historical. Failed attempts,
+source reviews and miniature screening runs remain useful evidence, with their
+own limited scopes.
 
 `parent-copy.json` records the amended packet38 tracked source copy. Unchanged
 large parent evidence was not duplicated: `inherited-evidence-links.json` maps
@@ -17,10 +22,12 @@ Large artifacts are intentional and reviewed for retention:
   `prepare_mtp.py` against the pinned publisher shards; it contains no weights.
 - `p33-candidate-gates.json` retains every operator identity case. Regenerate
   with `p33_candidate_gates.py`; do not reduce it to an unbound pass boolean.
-- `native-mini-cpu.json` retains all 1,109 controller comparison cases and raw
-  per-request inventory hashes/counters, including the declared terminal-state
-  scope. Regenerate with `native_mini_gate.py` against the sealed GNU host binary;
-  its size preserves auditable coverage instead of a bare pass count.
+- `native-mini-cpu.json` retains the enumerated controller comparison cases and
+  raw per-request inventory hashes/counters. Read the receipt for the exact
+  count, binary identity and terminal-state scope of that attempt. Earlier
+  committed-state-only terminal comparisons do not replace the strict physical
+  state proof. Regenerate with `native_mini_gate.py` against the sealed GNU host
+  binary; its size preserves auditable coverage instead of a bare pass count.
 - Historical `resume-*` archives belong to packet38 and are reachable through
   `inherited-evidence-links.json`; they are not new packet40 gate executions.
 - `evidence/qualification-*.json` binds a command, return code, exact source and
@@ -72,3 +79,58 @@ and stop descriptor; device reproduction remains coordinator-only. Small
 linked fixture bytes remain available. Raw event logs still retain verified
 compressed bytes. This policy applies to `output.bin` only, never to arbitrary
 missing prerequisite files.
+
+## Strict terminal owner evidence
+
+`evidence/scratch-strict-terminal-*.jsonl.gz` is the strict terminal owner archive
+family. Each completed owner writes `strict-terminal-owner.json`, its token
+list, exact final allocation-file SHA-256 values, both ranks' complete request
+state inventories, the rank0 shared-slot hash, launch timing rows, private
+snapshot lifecycle receipt, and owner-log hashes before `storage.discard`
+archives metadata and removes the owner's raw scratch. A live retained rank
+prevents that deletion. The archive contains verified text and hashes of raw
+state files; it is **not a backup of those raw allocation bytes**. Reproduce
+raw state by rerunning the source- and binary-bound gate, not by treating a
+hash record as restorable data.
+
+Equality excludes only each rank's `logical_event` scheduling counter. Its
+actual value and the SHA-256 of the original, unmodified inventory file are
+retained separately as bookkeeping. The strict comparison includes physical
+plan/spare-bank files, standalone mutable allocations, host metadata and the
+rank0 shared slot. It hashes after a quiescent dump, before request reset. Only
+the private rollback image is cleared at that boundary; committed model state
+is not scrubbed. Negative controls corrupt an active bank or a committed QSA
+prefix and require the complete comparison to detect the difference.
+
+`terminal-eos-all-state-mini-both.json` and
+`terminal-eos-all-state-real-both.json` deliberately retain every comparison,
+negative control, owner archive path/hash and source/binary identity. These
+receipts and their many compressed owner archives are intentional qualification
+evidence; their size preserves which launch boundaries were actually exercised.
+The mini gate covers every actual launch boundary plus the completed-half case.
+The real gate uses sampled boundaries with full-weight production launches on
+the original seven-token prompt prefix, at two positions by default. That is
+partial diagnostic state evidence, not a full-prompt oracle run or a speed test.
+Retention selectors are `none` and `1-8,97-104`; a terminal one-token response
+does not itself exercise the late fixture steps.
+
+`strict_terminal_aggregate.py` requires fresh ledger-bound, non-screen mini and
+real receipts for both controllers, complete declared position/retention/cut
+coverage and successful corruption controls. It writes
+`terminal-eos-all-state-gates.json`, binding both child receipts, their execution
+ledgers and every owner archive. `--screen` receipts cannot qualify this
+aggregate. File names alone, a source review or these documented commands do
+not establish that the pending real or aggregate gate has passed; consult the
+current receipts and successful seal.
+
+Reproduction commands, from the repository root after rebuilding and verifying
+current host binaries, are below. Run them sequentially within the shared CPU,
+memory and disk budget; each owner needs the two CPU-rank slots. The real gate
+is a diagnostic and can take substantially longer than the miniature gate.
+
+```bash
+p40=experiments/own-xpu-runtime/stage2/packet40-suite
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$p40/seal40.py" --record-phase strict-terminal-mini --receipt terminal-eos-all-state-mini-both.json -- python3 -B "$p40/strict_terminal_gate.py" --binary "$p40/build/gnu-host/own-rt-iq3" --controller both
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$p40/seal40.py" --record-phase strict-terminal-real --receipt terminal-eos-all-state-real-both.json -- python3 -B "$p40/strict_terminal_gate.py" --binary "$p40/build/icpx-host/own-rt-iq3" --real --controller both --real-prefix 7 --positions 0,1 --random-count 4
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$p40/seal40.py" --record-phase strict-terminal-aggregate --receipt terminal-eos-all-state-gates.json -- python3 -B "$p40/strict_terminal_aggregate.py"
+```

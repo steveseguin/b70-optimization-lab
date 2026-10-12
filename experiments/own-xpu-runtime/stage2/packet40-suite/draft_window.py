@@ -1,5 +1,5 @@
 """Coordinator KD: two fresh owners, complete captured draft rows, byte comparisons."""
-import gzip,json,os,shutil,subprocess,time
+import gzip,json,os,shutil,subprocess,sys,time
 from pathlib import Path
 from pipeline import P,sha,require,save
 B=P/'build'
@@ -23,7 +23,52 @@ def failed_owner(child,out,watch,error,stop_w):
  try:save(out/'retained.json',dict(pids=[child.pid] if child.poll() is None else [],signals_sent=0,stop_requested=True))
  except Exception:pass
 
+def archive_host_reference(out):
+ # archive_files verifies every retained text byte and binds all raw hashes.
+ # The caller alone decides that the CPU producer has exited.
+ from storage import archive_files,P as storage_packet
+ root=Path(out)/'host-reference'
+ require(not root.is_symlink() and root.resolve().is_relative_to(storage_packet),'KD host scratch outside packet')
+ archive=archive_files([f for f in root.rglob('*') if f.is_file()],Path(out)/'host-reference.jsonl.gz')
+ return archive
+
+def cleanup_failed_host_reference(out,child,error):
+ root=Path(out)/'host-reference'
+ if not root.exists():return
+ disposition=dict(passed=False,device_executed=False,original_error=str(error),scratch_removed=False)
+ try:
+  # A missing handle cannot establish process exit. Preserve uncertain files.
+  if child is None or child.poll() is None:
+   disposition.update(status='preserved-live-or-unconfirmed-host',host_pid=getattr(child,'pid',None))
+  else:
+   disposition.update(status='archived-exited-host',host_pid=child.pid,host_returncode=child.returncode)
+   archive=archive_host_reference(out)
+   disposition['scratch_archive']=archive
+   receipt=root/'receipt.json'
+   if receipt.is_file():disposition['host_receipt_sha256']=sha(receipt)
+   # Persist evidence before removing only this fixed, exited-host directory.
+   save(Path(out)/'host-reference-failure-disposition.json',disposition)
+   shutil.rmtree(root)
+   disposition['scratch_removed']=True
+  save(Path(out)/'host-reference-failure-disposition.json',disposition)
+ except Exception as cleanup_error:
+  disposition.update(status='cleanup-failed',cleanup_error=str(cleanup_error),scratch_removed=not root.exists())
+  try:save(Path(out)/'host-reference-failure-disposition.json',disposition)
+  except Exception as receipt_error:print('KD host scratch cleanup receipt failed: '+str(receipt_error),file=sys.stderr)
+  print('KD host scratch cleanup failed; original window error preserved: '+str(cleanup_error),file=sys.stderr)
+
 def run(a,out,env,watch,build,*,cpu_rehearsal=False):
+ lifecycle={};failure=None
+ try:return _run(a,out,env,watch,build,cpu_rehearsal=cpu_rehearsal,host_lifecycle=lifecycle)
+ except BaseException as error:
+  failure=error
+  raise
+ finally:
+  if failure is not None:
+   try:cleanup_failed_host_reference(out,lifecycle.get('child'),failure)
+   except Exception as cleanup_error:print('KD cleanup could not inspect scratch; original window error preserved: '+str(cleanup_error),file=sys.stderr)
+
+def _run(a,out,env,watch,build,*,cpu_rehearsal=False,host_lifecycle):
  def cpu_capture(cmd):
   if not cpu_rehearsal:return cmd
   result=[];index=0
@@ -68,6 +113,7 @@ def run(a,out,env,watch,build,*,cpu_rehearsal=False):
  try:
   with (out/'host-reference.log').open('w') as log:
    child=subprocess.Popen(['nice','-n','19','ionice','-c','3']+cpu_capture(host_cmd),env=env,stdout=log,stderr=subprocess.STDOUT,pass_fds=(stop_r,))
+   host_lifecycle['child']=child
    try:
     while child.poll() is None:
      watch.check()
@@ -140,4 +186,19 @@ def run(a,out,env,watch,build,*,cpu_rehearsal=False):
      if not left:require(restored.read(1)==b'','KD compressed log trailing bytes');break
    raw.unlink()
  require(len(set(pids))==2,'KD fresh owners')
+ # Both fresh owners have compared every byte. Retain exact CPU receipts/logs
+ # and fixture hashes in a verified archive; no later gate needs these raw bytes.
+ from storage import P as storage_packet
+ archive=archive_host_reference(out)
+ identity=json.loads((out/'host-reference-identity.json').read_text())
+ identity.update(scratch_archive=archive,host_receipt_sha256=sha(host_reference/'receipt.json'),
+                 host_receipt_archive_member=str((host_reference/'receipt.json').relative_to(storage_packet)),
+                 raw_fixture_retention='hashes only after both complete byte comparisons',scratch_removed=False)
+ save(out/'host-reference-identity.json',identity)
+ shutil.rmtree(host_reference)
+ identity['scratch_removed']=True
+ save(out/'host-reference-identity.json',identity)
+ receipts.pop('host-reference/receipt.json')
+ receipts['host-reference-identity.json']=sha(out/'host-reference-identity.json')
+ receipts['host-reference.jsonl.gz']=sha(out/'host-reference.jsonl.gz')
  return receipts,pids

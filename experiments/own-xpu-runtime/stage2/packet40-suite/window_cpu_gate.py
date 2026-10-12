@@ -13,12 +13,28 @@ import pipeline as pp
 import suite,window,k2_summary
 P=Path(__file__).resolve().parent
 
-def child(binary,argv,log):
+def child(binary,argv,log,provenance_root=None):
     pp.require('/device/' not in str(binary.resolve()),'never execute a device binary')
+    binary_hash=pp.sha(binary)
+    command=['nice','-n','19','ionice','-c','3',str(binary),*map(str,argv)]
+    provenance=None
+    if provenance_root is not None:
+        provenance_path=provenance_root/'children.json'
+        provenance=json.loads(provenance_path.read_text()) if provenance_path.exists() else dict(pids=[],entries=[],signals_sent=0)
+        destination=Path(command[command.index('--output')+1]).resolve()
+        pp.require(provenance_root.resolve() in destination.parents,'fixture child output outside rehearsal')
+        directory=str(destination.relative_to(provenance_root.resolve()))
+        pp.require(not any(entry['directory']==directory for entry in provenance['entries']),'duplicate fixture child output')
     with log.open('w') as output:
-        process=subprocess.Popen(['nice','-n','19','ionice','-c','3',str(binary),*map(str,argv)],stdout=output,stderr=subprocess.STDOUT,
+        process=subprocess.Popen(command,stdout=output,stderr=subprocess.STDOUT,
                                  env={'PATH':'/usr/bin:/bin','OMP_NUM_THREADS':'2'})
+        if provenance is not None:
+            provenance['pids'].append(process.pid)
+            provenance['entries'].append(dict(binary=binary.name,binary_sha256=binary_hash,directory=directory,pid=process.pid,argv=command))
+            # Record the actual launched owner before waiting for fixture output.
+            pp.save(provenance_path,provenance)
         code=process.wait(timeout=10800)
+    pp.require(pp.sha(binary)==binary_hash,'fixture child binary changed during execution')
     pp.require(code==0,log.read_text()[-3000:]);return process.pid
 
 def receipt(path):
@@ -45,21 +61,22 @@ def main():
         (root/'K0-host-refusal.log').write_text(refusal.stdout+refusal.stderr)
         pp.require(refusal.returncode!=0 and 'host binary cannot authorize device execution' in refusal.stderr,'host authorization refusal must precede owner creation')
         note('K0',scope='source/argument contract only; SYCL bundle build remains coordinator-only',kernel_execution=False,host_authorization_refused=True)
+        fixture_artifacts={str((bindir/name).resolve().relative_to((P/'build').resolve())):pp.sha(bindir/name) for name in ('nongemv-fixtures','p33-linked-fixtures','k2-fixtures')}
         fresh=[]
         for name in ('K1a','K1b'):
             out=root/name;out.mkdir();run=out/'run0';linked=out/'linked'
-            pid=child(bindir/'nongemv-fixtures',['--validate-only','--dispatch',P/'dispatch-p38.json','--fixtures',P/'build/fusion-fixtures','--output',run],out/'fixture.log')
+            pid=child(bindir/'nongemv-fixtures',['--validate-only','--dispatch',P/'dispatch-p38.json','--fixtures',P/'build/fusion-fixtures','--output',run],out/'fixture.log',provenance_root=out)
             r=receipt(run/'receipt.json');pp.require(r.get('validation_only') is True and r['fixtures']>=72,'K1 entry coverage')
-            lpid=child(bindir/'p33-linked-fixtures',['--output',linked,'--seconds','300'],out/'linked.log')
+            lpid=child(bindir/'p33-linked-fixtures',['--output',linked,'--seconds','300'],out/'linked.log',provenance_root=out)
             l=receipt(linked/'receipt.json');pp.require(l['checks']==216 and l['split_instantiations']==36 and l['reference_exact'],'linked fixture checks')
             pp.require(pp.sha(linked/'output.bin')==l['output_sha256'],'linked output digest')
             owner=dict(pids=[pid,lpid]);fresh.append(owner)
-            retained=window.compress_evidence(out,{})
-            note(name,retained_artifacts=retained,fixture_binary_sha256=pp.sha(bindir/'nongemv-fixtures'),linked_binary_sha256=pp.sha(bindir/'p33-linked-fixtures'),pids=owner['pids'],fixture_entry_checks=r['fixtures'],linked_checks=l['checks'],validation_only=True,
+            retained=window.compress_evidence(out,dict(artifacts_sha256=fixture_artifacts))
+            note(name,artifacts_sha256=fixture_artifacts,retained_artifacts=retained,fixture_binary_sha256=pp.sha(bindir/'nongemv-fixtures'),linked_binary_sha256=pp.sha(bindir/'p33-linked-fixtures'),pids=owner['pids'],fixture_entry_checks=r['fixtures'],linked_checks=l['checks'],validation_only=True,
                  receipts=hashes(out,['run0/receipt.json','linked/receipt.json']))
         window.fresh_k1_owners(*fresh)
         out=root/'K2';out.mkdir();run=out/'run0'
-        child(bindir/'k2-fixtures',['--validate-only','--dispatch',P/'dispatch-p38.json','--fixtures',P/'build/fusion-fixtures','--output',run,'--repetitions','200'],out/'fixture.log')
+        child(bindir/'k2-fixtures',['--validate-only','--dispatch',P/'dispatch-p38.json','--fixtures',P/'build/fusion-fixtures','--output',run,'--repetitions','200'],out/'fixture.log',provenance_root=out)
         r=receipt(run/'receipt.json')
         with (out/'summary.log').open('w') as log,contextlib.redirect_stdout(log):summary=k2_summary.summarize(run)
         pp.require(summary['passed'] is False,'CPU zero timestamps must never pass device K2')
@@ -67,8 +84,8 @@ def main():
             pp.require((run/name).is_file(),'K2 summary receipt missing '+name);json.loads((run/name).read_text())
         packed=P/'evidence/window-cpu-k2-summary.json.gz';packed.parent.mkdir(exist_ok=True)
         raw=(run/'summary.json').read_bytes();packed.write_bytes(gzip.compress(raw,mtime=0));pp.require(gzip.decompress(packed.read_bytes())==raw,'K2 evidence archive roundtrip')
-        retained=window.compress_evidence(out,{})
-        note('K2',retained_artifacts=retained,summary_archive=str(packed.relative_to(P)),summary_archive_sha256=pp.sha(packed),summary_sha256=pp.sha(run/'summary.json'),fixture_binary_sha256=pp.sha(bindir/'k2-fixtures'),entry_checks=r['fixtures'],summary_exercised=True,device_timing_rejected=True,
+        retained=window.compress_evidence(out,dict(artifacts_sha256=fixture_artifacts))
+        note('K2',artifacts_sha256=fixture_artifacts,retained_artifacts=retained,summary_archive=str(packed.relative_to(P)),summary_archive_sha256=pp.sha(packed),summary_sha256=pp.sha(run/'summary.json'),fixture_binary_sha256=pp.sha(bindir/'k2-fixtures'),entry_checks=r['fixtures'],summary_exercised=True,device_timing_rejected=True,
              summary_failure_count=len(summary['failures']),summary_failure_examples=summary['failures'][:4],validation_only=True)
     if a.phase in ('all','models'):
         base=pp.parser().parse_args(['--binary',str(a.binary),'--output',str(root/'unused'),'--mini','--tokens','8','--context','32','--seconds','300','--wait-seconds','300','--dump-state'])

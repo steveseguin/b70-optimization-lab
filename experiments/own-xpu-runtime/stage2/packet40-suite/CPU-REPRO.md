@@ -108,3 +108,34 @@ their actual hashes and generator/overlay inputs, builds each mode sequentially,
 then requires a second build pass with no compile/link actions or changed
 artifacts. Run it before qualification and again after any source change;
 source metadata alone is not proof of what was compiled.
+
+The strict terminal rollback proof is separate from ordinary miss-and-redo
+tests. After the four builds are stable, run:
+
+```bash
+packet40_cpu "$packet40/seal40.py" --record-phase strict-terminal-mini --receipt terminal-eos-all-state-mini-both.json -- "$packet40_python" -B "$packet40/strict_terminal_gate.py" --binary "$packet40/build/gnu-host/own-rt-iq3"
+packet40_cpu "$packet40/seal40.py" --record-phase strict-terminal-real --receipt terminal-eos-all-state-real-both.json -- "$packet40_python" -B "$packet40/strict_terminal_gate.py" --binary "$packet40/build/icpx-host/own-rt-iq3" --real
+packet40_cpu "$packet40/seal40.py" --record-phase strict-terminal-aggregate --receipt terminal-eos-all-state-gates.json -- "$packet40_python" -B "$packet40/strict_terminal_aggregate.py"
+```
+
+The miniature proof visits every launch boundary and the completed bank swap,
+with both controllers and both retention settings. The real proof uses the
+first seven original prompt tokens, then one confirmed generated token, to
+exercise positions seven and eight. It uses full weights and production plans,
+four seeded internal boundaries plus the start/end/completed boundaries, and
+actual active-bank and valid-QSA-prefix corruption controls. It is a diagnostic
+state proof, not full-prompt oracle or performance evidence. `--screen` is only
+a preliminary diagnostic and cannot satisfy this gate.
+
+`small40_campaign.py` runs the inherited miniature, resident, standalone
+controller/sanitizer, suite reset and window CPU gates with individual ledgers.
+`refresh40_campaign.py` runs the remaining parent-owned qualification serially,
+including Intel real-model modes, ordinary cancellation/redo, retention caps,
+draft publication failures, selected-kernel captures, partial real suites and
+wrapper rehearsals. It stops on the first failure and never retries. A bounded
+`--start`/`--stop-after` selection is recorded as that subset only. The GNU and
+native real-mode companions are `real40_campaign.py --compiler gnu-host` and
+`real40_native_campaign.py`; the latter requires the fresh GNU reference modes.
+Use `cancellation_inventory_gate.py` with the exact newly recorded archive
+prefixes in `refresh40-campaign-*.json` to authenticate every ordinary
+cancellation allocation inventory after scratch removal.

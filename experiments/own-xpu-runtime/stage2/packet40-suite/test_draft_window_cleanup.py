@@ -1,21 +1,67 @@
-"""CPU mocks: KD stop/drain cannot be bypassed by failed receipt writes."""
-import ast,hashlib,json
+"""Synthetic KD scratch lifecycle tests, without subprocesses or device access."""
+import ast,contextlib,io,json,shutil,tempfile,unittest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock,patch
 import draft_window as kd
-P=Path(__file__).resolve().parent
+import storage
+from seal40 import save,sha
 
-def main():
- rows=[]
- for label,receipt_error,latch_error,write_error,stalled in (
-     ('normal',False,False,False,False),
-     ('disk-full-and-journal-error',True,True,False,False),
-     ('stop-write-error',True,True,True,False),
-     ('bounded-retained-owner',True,True,False,True)):
+class CleanupTests(unittest.TestCase):
+ def setUp(self):
+  storage.admit(100000)
+  self.temp=tempfile.TemporaryDirectory(prefix='kd-cleanup-test-',dir=storage.B)
+  self.addCleanup(self.temp.cleanup);self.out=Path(self.temp.name);self.root=self.out/'host-reference';self.root.mkdir()
+  (self.root/'receipt.json').write_text('{"passed":false,"device_executed":false}')
+  (self.root/'events.jsonl').write_text('{"event":"complete"}\n')
+  (self.root/'fixture.bin').write_bytes(b'captured bytes')
+ def child(self,status):return SimpleNamespace(pid=12345,returncode=status,poll=lambda:status)
+ def invoke(self,child,failure=None,archive_success=False):
+  def stub(*args,host_lifecycle,**kwargs):
+   host_lifecycle['child']=child
+   if failure is not None:raise failure
+   if archive_success:
+    kd.archive_host_reference(self.out);shutil.rmtree(self.root)
+   return {'ok':True}
+  with patch.object(kd,'_run',stub):return kd.run(None,self.out,{},None,{})
+ def disposition(self):return json.loads((self.out/'host-reference-failure-disposition.json').read_text())
+ def test_success(self):
+  self.assertEqual(self.invoke(self.child(0),archive_success=True),{'ok':True})
+  self.assertFalse(self.root.exists());self.assertFalse((self.out/'host-reference-failure-disposition.json').exists())
+  self.assertEqual(storage.verify_archive(self.out/'host-reference.jsonl.gz')['files'],3)
+ def test_comparison_failure(self):
+  error=ValueError('comparison mismatch')
+  with self.assertRaises(ValueError) as caught:self.invoke(self.child(0),error)
+  self.assertIs(caught.exception,error);self.assertFalse(self.root.exists())
+  row=self.disposition();self.assertFalse(row['passed']);self.assertTrue(row['scratch_removed']);self.assertEqual(row['host_returncode'],0)
+  self.assertEqual(storage.verify_archive(self.out/'host-reference.jsonl.gz')['files'],3)
+ def test_exited_host_failure(self):
+  error=ValueError('host returned failure')
+  with self.assertRaises(ValueError) as caught:self.invoke(self.child(2),error)
+  self.assertIs(caught.exception,error);self.assertFalse(self.root.exists());self.assertEqual(self.disposition()['host_returncode'],2)
+ def test_live_host_preserved(self):
+  error=ValueError('host still draining')
+  with self.assertRaises(ValueError) as caught:self.invoke(self.child(None),error)
+  self.assertIs(caught.exception,error);self.assertTrue(self.root.exists());self.assertFalse(self.disposition()['scratch_removed'])
+  self.assertFalse((self.out/'host-reference.jsonl.gz').exists())
+ def test_archive_failure_preserves_original(self):
+  error=ValueError('original comparison failure')
+  with patch.object(kd,'archive_host_reference',side_effect=OSError('synthetic full disk')),contextlib.redirect_stderr(io.StringIO()):
+   with self.assertRaises(ValueError) as caught:self.invoke(self.child(0),error)
+  self.assertIs(caught.exception,error);self.assertTrue(self.root.exists())
+  self.assertEqual(self.disposition()['status'],'cleanup-failed');self.assertIn('full disk',self.disposition()['cleanup_error'])
+ def test_unconfirmed_host_preserved(self):
+  error=ValueError('spawn failed before handle')
+  with self.assertRaises(ValueError):self.invoke(None,error)
+  self.assertTrue(self.root.exists());self.assertFalse(self.disposition()['scratch_removed'])
+
+class TeardownTests(unittest.TestCase):
+ # Preserve every inherited failure/pipe/storage scenario from the original
+ # packet40 test, independently of the new raw-reference lifecycle cases.
+ def scenario(self,receipt_error,latch_error,write_error,stalled):
   events=[];child=Mock(pid=1234)
   child.poll=Mock(side_effect=(lambda:None) if stalled else [None,None,0,0])
-  def save(*unused):
+  def write_receipt(*unused):
    events.append('receipt')
    if receipt_error:raise OSError('No space left on device')
   def latch(*unused):
@@ -25,20 +71,27 @@ def main():
    events.append('stop')
    if write_error:raise BrokenPipeError('closed pipe')
   ticks=iter(range(0,200,10))
-  with patch.object(kd,'save',save),patch.object(kd.os,'write',write),patch.object(kd.os,'close') as close,patch.object(kd.time,'sleep'),patch.object(kd.time,'monotonic',side_effect=lambda:next(ticks)):
+  with patch.object(kd,'save',write_receipt),patch.object(kd.os,'write',write),patch.object(kd.os,'close') as close,patch.object(kd.time,'sleep'),patch.object(kd.time,'monotonic',side_effect=lambda:next(ticks)):
    watch=SimpleNamespace(latch=latch,poll_kernel=Mock(side_effect=OSError('journal failed')))
-   kd.failed_owner(child,P,watch,ValueError('initial fault'),9)
-   assert events[:3]==['latch','receipt','stop'] and events[-1]=='receipt'
-   assert child.poll.call_count>=3 and watch.poll_kernel.call_count>=1
-   assert close.call_count==int(write_error)
-   if stalled:assert child.poll.call_count<12
-  rows.append(dict(case=label,passed=True,cooperative_stop=True,bounded_drain=True))
- # Ensure post-Popen bookkeeping is protected too, the failure that caused the
- # original ENOSPC teardown escape. This is additional structural coverage.
- tree=ast.parse((P/'draft_window.py').read_text())
- guarded=[n for n in ast.walk(tree) if isinstance(n,ast.Try) and any(isinstance(h.type,ast.Name) and h.type.id=='Exception' for h in n.handlers)]
- assert any('children.json' in ast.unparse(n.body) and 'failed_owner(child' in ast.unparse(n.handlers) for n in guarded)
- result=dict(passed=True,device_executed=False,gates=len(rows)+1,rows=rows,post_launch_bookkeeping_guarded=True,source_sha256={name:hashlib.sha256((P/name).read_bytes()).hexdigest() for name in ('draft_window.py','test_draft_window_cleanup.py')})
- (P/'draft-window-cleanup-gates.json').write_text(json.dumps(result,indent=2)+'\n')
- print(json.dumps(result))
-if __name__=='__main__':main()
+   kd.failed_owner(child,storage.P,watch,ValueError('initial fault'),9)
+   self.assertEqual(events[:3],['latch','receipt','stop']);self.assertEqual(events[-1],'receipt')
+   self.assertGreaterEqual(child.poll.call_count,3);self.assertGreaterEqual(watch.poll_kernel.call_count,1)
+   self.assertEqual(close.call_count,int(write_error))
+   if stalled:self.assertLess(child.poll.call_count,12)
+ def test_normal(self):self.scenario(False,False,False,False)
+ def test_disk_full_and_journal_error(self):self.scenario(True,True,False,False)
+ def test_stop_write_error(self):self.scenario(True,True,True,False)
+ def test_bounded_retained_owner(self):self.scenario(True,True,False,True)
+ def test_post_launch_bookkeeping_guarded(self):
+  tree=ast.parse((storage.P/'draft_window.py').read_text())
+  guarded=[node for node in ast.walk(tree) if isinstance(node,ast.Try) and any(isinstance(handler.type,ast.Name) and handler.type.id=='Exception' for handler in node.handlers)]
+  self.assertTrue(any('children.json' in ast.unparse(node.body) and 'failed_owner(child' in ast.unparse(node.handlers) for node in guarded))
+
+def main():
+ suite=unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromTestCase(case) for case in (CleanupTests,TeardownTests))
+ result=unittest.TextTestRunner(verbosity=1).run(suite)
+ save(storage.P/'draft-window-cleanup-gates.json',dict(passed=result.wasSuccessful(),gates=result.testsRun,tests=result.testsRun,failures=len(result.failures),errors=len(result.errors),device_executed=False,models_launched=0,
+  inherited_teardown_checks=5,new_lifecycle_checks=6,post_launch_bookkeeping_guarded=result.wasSuccessful(),
+  source_sha256={name:sha(storage.P/name) for name in ('draft_window.py','test_draft_window_cleanup.py','storage.py')},scope='Five inherited teardown/pipe/storage/bookkeeping checks plus six synthetic host lifecycle/archive checks; no child launched'))
+ return not result.wasSuccessful()
+if __name__=='__main__':raise SystemExit(main())

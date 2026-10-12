@@ -48,5 +48,6 @@ Prior packet36 and37 negative histories remain in their read-only directories.
 | A zombie /proc status lacks RssAnon | Default the missing field to zero and reap the child normally. |
 | Missing build receipt keys reject a valid window | Rehearse all wrapper consumers and bind cpu_tests_sha256. |
 | Trust a no-op CMake build with stale checked mirrors | Regenerate checked/JIT and host validation sources, bind actual mirror and generator hashes, rebuild, then verify a second no-op pass. |
+| Pass an empty evidence record from the legacy CPU fixture rehearsal | Record actual child argv, PID, binary hash and output directory before waiting; supply authenticated host artifact hashes to oversized-output retention. The ordinary failed attempt is preserved in `evidence/window-cpu-fixtures-missing-provenance-failure.json`; production retention checks are unchanged. |
 
 Fresh-process full-state hashes also cover unused standalone controls and compact-route scratch. Initialize those allocations before timing; do not explain nondeterministic bytes away as a retention effect. The original failure is retained in `retention-initialization-finding.json`.

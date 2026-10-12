@@ -1,36 +1,18 @@
 {
   "passed": true,
+  "gates": 11,
+  "tests": 11,
+  "failures": 0,
+  "errors": 0,
   "device_executed": false,
-  "gates": 5,
-  "rows": [
-    {
-      "case": "normal",
-      "passed": true,
-      "cooperative_stop": true,
-      "bounded_drain": true
-    },
-    {
-      "case": "disk-full-and-journal-error",
-      "passed": true,
-      "cooperative_stop": true,
-      "bounded_drain": true
-    },
-    {
-      "case": "stop-write-error",
-      "passed": true,
-      "cooperative_stop": true,
-      "bounded_drain": true
-    },
-    {
-      "case": "bounded-retained-owner",
-      "passed": true,
-      "cooperative_stop": true,
-      "bounded_drain": true
-    }
-  ],
+  "models_launched": 0,
+  "inherited_teardown_checks": 5,
+  "new_lifecycle_checks": 6,
   "post_launch_bookkeeping_guarded": true,
   "source_sha256": {
-    "draft_window.py": "daa3c2637e9027c0eec35a98e03a70ddd86f927531a83be032431dd6f458013f",
-    "test_draft_window_cleanup.py": "65bfe069969c2d9bf476ec6566740b47bb118743b5f2a12a5ec347e248d00fc9"
-  }
+    "draft_window.py": "91990aa4911ec55d2dde2b534b1c66ff04800f7eb786506727a1356d7548e11a",
+    "test_draft_window_cleanup.py": "ebf0bfa91ca8b083eb77bd6040452993947c33e3341b814b6393684b34b63be6",
+    "storage.py": "53787deddc760e89f4d3bb9b25e96b2b9bdf3cc54bcc96a99df3286e19badbe3"
+  },
+  "scope": "Five inherited teardown/pipe/storage/bookkeeping checks plus six synthetic host lifecycle/archive checks; no child launched"
 }

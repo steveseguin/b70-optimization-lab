@@ -2,7 +2,10 @@
 
 Run from the repository root, only after coordinator admission. `--card N`
 is the first card of an adjacent pair (0, 1, or 2). W windows require a nice-0
-parent. `taskset` may prefix each call; all ranks keep the inherited affinity.
+parent. To select an allowed affinity, save the complete shell block below as a
+script and invoke that script with `taskset -c ALLOWED_CPUS bash SCRIPT_PATH`.
+Do not prefix a shell function name with `taskset`; all ranks inherit the
+script’s affinity.
 The only supplied library environment is `LD_LIBRARY_PATH`, forwarded unchanged.
 No device selector or tuning variables are permitted. The wrapper sets private
 HOME paths for driver caches without claiming that file presence proves a hit.
@@ -70,3 +73,8 @@ second compressed copy. Logs retain verified gzip bytes. Keep prerequisites
 and exactness companions available through all their consumers.
 K0's device image build has no CPU execution equivalent. CPU wrapper rehearsal
 checks that branch's protocol and failures; it does not qualify a driver image.
+
+KD archives its completed CPU reference after both fresh-owner byte comparisons.
+`host-reference.jsonl.gz` retains exact receipts and logs plus every fixture hash;
+`host-reference-identity.json` binds the archive and original host receipt. The
+raw `host-reference/` scratch directory is removed before successful return.
