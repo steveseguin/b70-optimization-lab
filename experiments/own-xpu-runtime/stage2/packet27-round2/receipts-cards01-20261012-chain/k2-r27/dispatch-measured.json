@@ -1,0 +1,51 @@
+{
+  "schema": "packet26.dispatch.v1",
+  "classes": {
+    "hc.a.norm": "specialised",
+    "hc.f.norm": "specialised",
+    "final.norm": "specialised",
+    "ple.kn": "specialised",
+    "ple.qn": "specialised",
+    "ple.cn": "specialised",
+    "gdn.norm": "packet18",
+    "gdn.recurrence": "round2",
+    "qsa.prepare": "packet18",
+    "qsa.pool": "packet18",
+    "qsa.select": "round2",
+    "qsa.attention": "packet18",
+    "attn.combine": "specialised",
+    "ffn.combine": "specialised",
+    "route": "specialised",
+    "gather": "specialised",
+    "argmax": "round2",
+    "streams": "specialised",
+    "ple.add": "specialised"
+  },
+  "fusions": {
+    "attn.combine+norm": "specialised",
+    "ffn.combine+norm": "specialised",
+    "route+gather": "specialised",
+    "small.hc": "round2",
+    "small.gdn.ab": "round2",
+    "small.ffn": "round2"
+  },
+  "gemv": {
+    "expsgate": "r5",
+    "expsdown": "r5",
+    "gdn.qkv": "p25.rows4",
+    "gdn.z": "p25.rows4",
+    "qsa.qgate": "p25.rows4",
+    "qsa.k": "r5",
+    "qsa.v": "r5",
+    "attention": "r5",
+    "ple.key": "p25.rows4",
+    "ple.value": "r5",
+    "hc.gate": "r5",
+    "hc.low": "r5",
+    "logits": "p25.rows4",
+    "hc.a.gate": "r5",
+    "hc.f.gate": "r5",
+    "hc.a.low": "p25.rows4",
+    "hc.f.low": "p25.rows4"
+  }
+}
