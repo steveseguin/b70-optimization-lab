@@ -66,3 +66,24 @@ four-B70 host; the kernel log stayed clean all night. Reference to beat: 28.49 t
 2. [Packet 37](../experiments/own-xpu-runtime/stage2/packet37-merged2/README.md) (in progress): the pipeline runtime with the packet 33 kernels and the fixed selection rule; then one merge with packet 36, the packet 30 QSA attention, and a native controller (the Python one costs about 4 ms per token).
 3. [Packet 39](../experiments/own-xpu-runtime/stage2/packet39-epilogues/README.md) (in progress): element-wise steps folded into the store of the GEMV that feeds them, to remove several hundred of the 1,500 small launches without serial work.
 4. Oracles for the other eleven prompts of the reference suite are being generated on CPU, so a sealed speed result can use the same twelve prompts as the reference.
+
+## Later the same day (UTC)
+
+| When | Packet | What ran | Result |
+| --- | --- | --- | --- |
+| 05:24–05:56 | [36](../experiments/own-xpu-runtime/stage2/packet36-draft/receipts-cards01-20261012-chain/README.md) | official draft head on the second card as the guess provider | **30.37 and 31.02 tok/s**, exact, development prompt; 53 of 63 guesses right; draft host == device |
+| 04:20–06:01 | [37](../experiments/own-xpu-runtime/stage2/packet37-merged2/receipts-cards23-20261012-chain/README.md) | pipeline runtime with the packet 33 kernels | sequential 21.50 tok/s; all-right diagnostic 21.3 ms median per token |
+| 04:14 | [39](../experiments/own-xpu-runtime/stage2/packet39-epilogues/receipts-card3-20261012-g4/README.md) | epilogue fusions, card 3 | twelve cases exact, about 1.2 ms per token in total |
+| 15:20–15:27 | [42](../experiments/own-xpu-runtime/stage2/packet42-codegen2/receipts-card2-20261012/README.md) | launch-floor benchmark and second kernel round, card 2 | a near-empty launch costs 0.5–1.5 µs; first faster route kernel (−1.2 ms per token) |
+| 16:04–16:41 | [38](../experiments/own-xpu-runtime/stage2/packet38-integrated/receipts-cards01-20261012-chain/README.md) | integrated runtime, twelve-prompt suite, two repeats | **median 38.25 tok/s, 24 of 24 requests exact**; 39.05 on the development prompt |
+
+Also that day: the root filesystem filled up at 04:57 UTC ([record](../experiments/own-xpu-runtime/stage2/DISK-CLEANUP-20261012.md));
+the session waited for a login from 08:50 to 14:23 UTC with nothing running on the cards;
+CPU oracles for all twelve prompts were produced (64 tokens and 128 tokens).
+
+More wrapper stops, none a device problem: packet 36 (two build-receipt keys; a race
+reading the status of a just-exited child), packet 38 (a 66-length timing grid longer
+than its watchdog; a packet-local storage cap that failed a compression step), packet
+42 (a compile-smoke path that submitted a kernel with no bound buffer), packet 35 (a
+receipt field required in every mode but written in one). Each has an evidence folder
+in its packet.
