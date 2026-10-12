@@ -57,6 +57,17 @@ tokens per prompt), are prepared in packet 40.
 | [W2s](W2s-native/window.json) | development prompt without guesses (sequential generation): 64/64, 384/384, **24.93 tok/s** |
 | [WSs](WSs/summary.json) | the twelve-prompt suite without guesses, two repeats: 24 of 24 requests exact, **median 25.36 tok/s** (25.16–25.48) |
 
+**Diagnostics (17:06–17:14 UTC, not speed results).** [W2d](W2d-native/receipt.json),
+guesses fed from the oracle so that every guess is right: 64/64, 384/384, median token
+interval 19.2 ms (mean 20.1): the ceiling of this runtime before the draft's own cost
+and wrong guesses. [W2mc](W2mc-native/rank0/class-times.json), per-class GPU time per
+rank: about 16.6 and 17.1 ms of kernel time per half (33.7 ms per token, against 41.2
+for packet 29's selection). Largest classes per token now: routed expert down 4.4 ms,
+gate/up 4.0, route 3.25, attention projection 2.5, gdn.qkv 2.4, gdn.z 1.4,
+gdn.recurrence 1.3, the router/shared-expert group 1.3, QSA attention 1.1 (was 3.2).
+The draft costs 2.85 ms of GPU time and 3.6 ms of wall time per guess (output head
+1.40 ms, argmax 0.15, the layer about 1.2).
+
 Stops on the way, none a device problem, each with an evidence folder:
 [K2's 66-length grid](../evidence/20261012-k2-grid-exceeds-watchdog/README.md),
 [K2's compression step against the packet's own storage cap](../evidence/20261012-k2-retention-storage-cap/README.md).
