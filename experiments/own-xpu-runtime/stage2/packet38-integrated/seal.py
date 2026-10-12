@@ -91,6 +91,10 @@ def bind_cpu_suite(row,suite_host_sha,suite_binary):
  expected={f'real-icpx-host-{mode}.json' for mode in ('none','ngram','hit','miss','mtp')}
  assert set(plan['prerequisite_receipts_sha256'])==expected
  for name,digest in plan['prerequisite_receipts_sha256'].items():assert sha(P/name)==digest,'Intel suite prerequisite changed'
+ assert plan['prerequisite_dispatch_sha256']==sha(P/'dispatch-p33.json')
+ assert plan['suite_dispatch_sha256']==sha(P/'dispatch-p38.json')
+ assert set(plan['kernel_qualification_receipts_sha256'])=={'p38-kernel-gates.json','p38-qsa-capacity-gates.json'}
+ for name,digest in plan['kernel_qualification_receipts_sha256'].items():assert sha(P/name)==digest,'suite p38 kernel qualification changed'
  assert json.loads((P/'suite-cpu-freeze.json').read_text())['sha256']==row['manifest_sha256']
  checker=checker_module();assert row['frozen_coverage']==frozen_coverage(manifest,checker)
  assert row['export_checker_sha256']==checker.source_sha256

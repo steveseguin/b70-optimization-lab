@@ -25,5 +25,6 @@
 | Let warm-up EOS skip a required head | Suppress EOS termination only for excluded warm-up and require two outputs; measured requests keep normal EOS handling. |
 | Compare parent files while calling them pinned commits | Read immutable Git objects; label newer working-tree hashes separately; `source-overlay.json`. |
 | Seal a stale no-launch admission pass | Recheck its source hashes and exact consumed seal contract; `test_window_seal_admission.py`. |
+| Require the suite candidate hash in inherited real-mode receipts | Bind the inherited packet33 dispatch and the packet38 suite candidate separately; qualify the latter through its own kernel gates and actual suite. `suite-preflight-refusal.json` preserves the no-launch refusal. |
 
 Prior packet36 and37 negative histories remain in their read-only directories.

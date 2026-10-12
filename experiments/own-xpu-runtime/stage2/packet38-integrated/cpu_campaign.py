@@ -32,14 +32,32 @@ def suite_compiler_preflight(packet=P):
  from storage import digest
  from suite_export import cpu_suite_identity
  identity=cpu_suite_identity(packet);receipts={}
- dispatch=digest(packet/'dispatch-p38.json')
+ prerequisite_dispatch=digest(packet/'dispatch-p33.json')
+ suite_dispatch=digest(packet/'dispatch-p38.json')
  for mode in ('none','ngram','hit','miss','mtp'):
   name=f'real-icpx-host-{mode}.json';path=packet/name;row=json.loads(path.read_text())
   assert row['passed'] is True and row['device_executed'] is False and row['mode']==mode,('Intel suite prerequisite failed',mode)
-  assert row['binary_sha256']==identity['binary_sha256'] and row['dispatch_sha256']==dispatch,('Intel suite prerequisite identity differs',mode)
+  assert row['binary_sha256']==identity['binary_sha256'] and row['dispatch_sha256']==prerequisite_dispatch,('Intel suite prerequisite identity differs',mode)
   assert row['token_matches']==8 and row['layer_matches']==row['layer_total']==384,('Intel suite prerequisite coverage incomplete',mode)
   receipts[name]=digest(path)
- return dict(passed=True,device_executed=False,**identity,dispatch_sha256=dispatch,prerequisite_receipts_sha256=receipts,
+ from merge_dispatch import validate
+ validate(json.loads((packet/'dispatch-p38.json').read_text()))
+ kernel_receipts={}
+ for name in ('p38-kernel-gates.json','p38-qsa-capacity-gates.json'):
+  path=packet/name;gate=json.loads(path.read_text())
+  assert gate['passed'] is True and gate['device_executed'] is False,('p38 kernel qualification failed',name)
+  sources=gate['sources_sha256'];assert sources,('p38 qualification source coverage missing',name)
+  for source,expected in sources.items():assert digest(packet/source)==expected,('p38 qualification source changed',name,source)
+  if name=='p38-kernel-gates.json':
+   assert gate['schema']=='packet38.p30-cpu-gates.v1' and gate['arithmetic']=='iq3-p17-detmath-v2'
+   assert {'p30-attention-cpu.json','p30-small-cpu.json'}<=set(gate['receipts'])
+   for child,record in gate['receipts'].items():
+    assert digest(packet/child)==record['sha256'] and json.loads((packet/child).read_text())['passed'] is True,('p38 child qualification changed',child)
+   assert gate['binaries_sha256']
+   for binary,expected in gate['binaries_sha256'].items():assert digest(packet/binary)==expected,('p38 qualification binary changed',binary)
+  else:assert gate['checks']>=528 and gate['compilers']==2 and gate['full_arrays_identical'] is True
+  kernel_receipts[name]=digest(path)
+ return dict(passed=True,device_executed=False,**identity,prerequisite_dispatch_sha256=prerequisite_dispatch,suite_dispatch_sha256=suite_dispatch,prerequisite_receipts_sha256=receipts,kernel_qualification_receipts_sha256=kernel_receipts,
              purpose='CPU qualification only; independently qualified Intel host build selected before suite launch to reduce qualification time; no model speed claim',
              preserves='GNU native-mini, request-order proof, real-native controller comparison and capture identities remain unchanged')
 

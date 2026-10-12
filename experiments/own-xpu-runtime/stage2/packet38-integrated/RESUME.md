@@ -30,3 +30,10 @@ Both ranks exited cleanly. The failure is retained in
 `native-mini-resume-storage-race-failed.json`. The helper now ignores only a
 vanished file during the accounting scan, with three regression checks; other
 I/O errors still propagate. The full gate was launched again after that fix.
+
+The Intel suite preflight later refused before launching any rank: it incorrectly
+expected the packet38 candidate dispatch hash in the inherited five-mode receipts,
+which use packet33 dispatch. `suite-preflight-refusal.json` and its verified
+archive preserve the refusal. The corrected prerequisite records both dispatch
+identities separately. `resume_suite_after_refusal.py` provides one reviewed
+continuation; it preserves all completed stages and performs no automatic retry.

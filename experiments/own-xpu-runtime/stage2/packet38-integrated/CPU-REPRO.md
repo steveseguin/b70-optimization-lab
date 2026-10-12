@@ -46,7 +46,9 @@ real CPU suite. Do not silently substitute a growing live manifest into that
 receipt. `cpu_campaign.py suite` runs this frozen snapshot in two persistent
 Intel host ranks and archives it after exporting exactness evidence. Before
 launch, all five Intel real-model mode receipts must pass with the current
-binary and dispatch. The qualification plan records this choice before launch;
+binary and their inherited packet33 dispatch. The plan separately binds the
+packet38 suite dispatch and its current CPU kernel gates. The actual suite
+qualifies that combined dispatch. The qualification plan records this choice before launch;
 export and seal bind both rank executables and every request to that identity.
 GNU remains the compiler for native/Python equivalence and request-order proof.
 Compiler choice here makes no model-speed claim. Coordinator WS
