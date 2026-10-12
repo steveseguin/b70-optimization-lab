@@ -506,6 +506,7 @@ class Keeper:
         # that the agent printed (p21_7 ...) as things to account for; the harness arm reads delivered items only.
         self.notes_scan = re.compile(notes_scan) if notes_scan else None
         self.sessions: dict[str, Session] = {}
+        self.clock = threading.local()                 # per request thread: seconds spent in the model server
         self.lock = threading.Lock()
 
     def session(self, body: dict[str, Any], header: str | None) -> Session:
@@ -520,6 +521,15 @@ class Keeper:
     # -- sizes: characters over a ratio learned from the server's own prompt_tokens
     def tokens(self, s: Session, messages: list[dict[str, Any]]) -> int:
         return int(chars_of(messages) / s.state["ratio"]) + 1
+
+    def upstream(self, body: dict[str, Any]) -> dict[str, Any]:
+        """One call to the model server, timed (the session's state keeps the totals: where a run's minutes went)."""
+        t = time.monotonic()
+        try:
+            return self.ask(body)
+        finally:
+            self.clock.spent = getattr(self.clock, "spent", 0.0) + time.monotonic() - t
+            self.clock.calls = getattr(self.clock, "calls", 0) + 1
 
     def learn(self, s: Session, sent: list[dict[str, Any]], response: dict[str, Any]) -> None:
         """Characters per token, from the server's own count. Only sizeable prompts teach (on a short one the tool
@@ -590,7 +600,7 @@ class Keeper:
                 body.setdefault("chat_template_kwargs", {})["reasoning_effort"] = self.effort   # call thinks at full effort
             why, text, finish = "", "", None
             try:
-                resp = self.ask(body)
+                resp = self.upstream(body)
                 choice = (resp.get("choices") or [{}])[0]
                 finish = choice.get("finish_reason")
                 text = from_rules(str((choice.get("message") or {}).get("content") or "").strip())
@@ -741,7 +751,7 @@ class Keeper:
             if ctk:
                 out["chat_template_kwargs"] = ctk
             try:
-                resp = self.ask(out)
+                resp = self.upstream(out)
             except Exception as exc:
                 why = f"{type(exc).__name__}: {exc}"
                 break
@@ -855,6 +865,7 @@ class Keeper:
         """One chat completion through the keeper. Returns the server's response for the client."""
         if (body.get("n") or 1) != 1:
             raise ValueError("ctxkeeper handles one choice per request (n = 1)")
+        began, self.clock.spent, self.clock.calls = time.monotonic(), 0.0, 0
         s = self.session(body, header)
         with s.lock:
             messages = list(body.get("messages") or [])
@@ -917,7 +928,7 @@ class Keeper:
                     if not out["tools"]:
                         out.pop("tools")
                     s.state["recall_limit_hit"] = s.state.get("recall_limit_hit", 0) + 1
-                resp = self.ask(out)
+                resp = self.upstream(out)
                 self.learn(s, out["messages"], resp)
                 msg = ((resp.get("choices") or [{}])[0].get("message") or {})
                 if (not msg.get("tool_calls") and not str(msg.get("content") or "").strip()
@@ -925,7 +936,7 @@ class Keeper:
                     # Nothing for the client at all: the thinking used the reply up. Asked once more without it.
                     s.state["empty_replies_retried"] = s.state.get("empty_replies_retried", 0) + 1
                     again = dict(out, chat_template_kwargs=dict(out.get("chat_template_kwargs") or {}, enable_thinking=False))
-                    second = self.ask(again)
+                    second = self.upstream(again)
                     m2 = ((second.get("choices") or [{}])[0].get("message") or {})
                     if m2.get("tool_calls") or str(m2.get("content") or "").strip():
                         resp, msg = second, m2
@@ -977,6 +988,11 @@ class Keeper:
                 s.state["carried"] = s.state.get("carried", 0) + 1
             else:
                 s.state["carry"] = None
+            # requests handled, calls made to the server for them (main, notes, searches), and the seconds of both
+            s.state["requests"] = s.state.get("requests", 0) + 1
+            s.state["upstream_calls"] = s.state.get("upstream_calls", 0) + self.clock.calls
+            s.state["upstream_s"] = round(s.state.get("upstream_s", 0.0) + self.clock.spent, 3)
+            s.state["handle_s"] = round(s.state.get("handle_s", 0.0) + time.monotonic() - began, 3)
             s.save()
             return resp
 
