@@ -1,14 +1,17 @@
-# Our Intel Xe runtime — measured state, 2026-10-12 00:15 UTC
+# Our Intel Xe runtime — measured state, 2026-10-12 01:30 UTC
 
-**Bit-exact on one card and on two; 19.63 tok/s measured on two cards.** For Unsloth
+**Bit-exact on one card and on two; 22.49 tok/s measured on two cards.** For Unsloth
 UD-IQ3_XXS, the **quantized compressed version**, full 16-bit KV: the runtime reproduces
 its CPU oracle exactly on the cards (64/64 tokens, 384/384 layer fixtures). Two-card
 decode, all exact, within one day: **3.15 tok/s** as first sealed, **12.08** after a
 linear allocation scan in the two-card backend was replaced by an ordered lookup
 ([evidence][locscan]), **17.85** with specialised non-GEMV kernels selected class by
 class from a timing run on the card ([receipts][p26w2m]), **19.63** (50.2 ms per token)
-with the second kernel round, sealed end to end ([packet 27][p27r]). Reference **28.49
-tok/s**. The token is GPU-bound: 12 ms of host issuing, 38 ms waiting on the cards.
+with the second kernel round, sealed end to end ([packet 27][p27r]), **22.49** (44.3 ms
+per token) with the paired expert gate/up kernel and the dense GEMV variants measured on
+the card ([packet 29][p29r]). Reference **28.49 tok/s**. GPU kernel time is 41.2 ms per
+token; the host issues 2,307 launches one by one (5.4–11.7 µs each depending on what
+else the host is doing), so the GPU now waits for the host between small kernels.
 [First exact decode and its reading][w2note].
 
 **Kernel progress.** Effective GB/s means payload bytes divided by device time,
@@ -112,27 +115,45 @@ expert decoders][r6] reached only **13.6 / 8.4 / 7.6 GB/s** versus the retained
 **66 GB/s** path. [Expanding all experts does not fit two cards][expansion];
 keep experts packed and qualify dense-only expansion separately.
 
-**Where the 53.5 ms of GPU time per token goes** ([measured][p26w2m]): routed expert
-gate/up 8.5 ms and down 6.2; gdn.qkv 3.6; route 3.3; attention projections 3.2; QSA
-attention 3.2; gdn.z 2.2; logits 2.1; recurrence 1.9; about 11 ms in roughly 720 small
-GEMV launches of 15–30 µs (HC gates, low, inject, router, shared expert).
+**Where the 41.2 ms of GPU time per token goes** ([measured][p29r], 2,307 launches):
+expert down 6.25 ms (48 × 130 µs, no winning candidate yet); expert gate/up 4.02 (was
+8.62); route 3.27; QSA attention 3.18; gdn.qkv 2.81; attention projection 2.56; gdn.z
+1.73; logits 1.68; gdn.recurrence 1.23; qsa.qgate 1.10; HC gates 2.13; about 9 ms in
+some 1,500 launches of 3–15 µs each.
 
-**Next, in order:**
+**Three things now limit the token, in this order:**
 
-1. **[Packet 29][p29], merge** (Codex, CPU, in progress): packet 27's runtime plus the
-   [packet 28][p28g2] GEMV kernels measured on the card: a paired expert gate/up kernel
-   that roughly halves that class (about 4.25 ms per token) and dense variants worth
-   about 4 ms more; new expert-down candidates. Expected near 24 tok/s.
-2. **Routed expert down** (6.2 ms, no winner yet) and **QSA attention** (3.2 ms, no
-   winner yet).
-3. **What a GEMV can reach here** ([bounding study][bounds]): the dense classes are
-   close to the card's streaming-read limit; the packed expert kernels are bound by
-   per-weight work.
-4. **Two cards inside a layer:** only one card works at a time. Host-fenced exchanges of
-   about 50 µs do not pay for kernels of 100–200 µs, and chaining events between the
-   cards directly is the leading suspect of the 09:09 fault.
-5. **Abandoned:** the fused generic kernels of packets 21, 23 and 24 (bit-exact, 50–100
-   times slower per launch, [measurement][k2slow]) and replay ([packet 22][p22]).
+1. **One card is idle at any moment.** Layers 0–23 run on one card, 24–47 on the other.
+   [Packet 32][p32] (Codex, CPU, in progress) turns the runtime into a two-stage
+   pipeline, one process per card: the first card starts the next position on a guessed
+   token while the second finishes the current one; a wrong guess is discarded and
+   redone, so the emitted tokens stay the target's own and the output stays bit-exact.
+   A right guess costs half a token time. The guess comes from the model's official
+   one-token draft head; [packet 31][p31] (Codex, CPU, in progress) measures on CPU how
+   often that head agrees with this quantized target (about 80% on the full-precision
+   line). At 75% agreement the model gives about 1.5 times the sequential speed.
+2. **The host issues every launch separately.** 12–18 ms per token of host work for
+   2,307 launches, part of it avoidable validation and device queries per launch
+   ([packet 35][p35], Codex, in progress: prepared launches, cheaper submission forms);
+   the rest goes away if a card's half token is recorded once and replayed
+   ([packet 34][p34], Codex, in progress: a one-card replay benchmark with the real
+   kernels before any integration).
+3. **Kernel time.** Expert down (6.25 ms) has resisted eleven exact candidates; a
+   generated-code study ([packet 33][p33], Codex, in progress) reads the GPU assembly of
+   the winners and losers to build a cost model before the next round.
+   [Packet 30][p30] (Codex, in progress) covers route, QSA attention, HC gates and the
+   combine/mix merges.
+
+**Measurement hygiene found on 2026-10-12.** Decode windows are now pinned to four
+reserved cores and the CPU helper jobs kept off them; token preparation (table lookups
+from the memory-mapped model file) page-faulted in three runs while another job read the
+same file, costing 4–9 ms per token; K2's rule for conflicting fusions discarded three
+measured winners ([details][p29r]).
+
+**Not pursued:** two cards inside one layer (host-fenced exchanges of about 50 µs do
+not pay for kernels of 100–200 µs; chaining events between the cards directly is the
+leading suspect of the 09:09 fault); the fused generic kernels of packets 21, 23 and 24
+(bit-exact, 50–100 times slower per launch, [measurement][k2slow]).
 
 [r1]: stage2/packet6-kopt/receipts-card3-20261011/timing/timing.json
 [r2]: stage2/packet7-kopt2/receipts-card3-20261011/timing.json
@@ -193,3 +214,10 @@ GEMV launches of 15–30 µs (HC gates, low, inject, router, shared expert).
 [p29]: stage2/packet29-merged/README.md
 [p28g2]: stage2/packet28-dense/receipts-card2-20261011-g2/timing-table.md
 [bounds]: stage2/bounds-20261011-gemv/README.md
+[p29r]: stage2/packet29-merged/receipts-cards01-20261012-chain/README.md
+[p30]: stage2/packet30-leftovers/README.md
+[p31]: stage2/packet31-mtp-acceptance/README.md
+[p32]: stage2/packet32-pipeline/README.md
+[p33]: stage2/packet33-codegen/README.md
+[p34]: stage2/packet34-replay-bench/README.md
+[p35]: stage2/packet35-hostpath/README.md
