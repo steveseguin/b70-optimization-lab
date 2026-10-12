@@ -332,6 +332,19 @@ class InPlace(unittest.TestCase):
             events = (Path(self.dir.name) / next(iter(keeper.sessions)) / "events.jsonl").read_text()
             self.assertIn('"event": "in-place notes reply"', events)               # every reply is kept for later reading
 
+    def test_only_matching_messages_are_read_for_the_checks(self):
+        """1M proxy run: the agent printed its answers file and the keys (p21_7 ...) were taken for things of STATE."""
+        reply_text = "NEW RULES\n(none)\nCHANGES\n" + "\n".join(f"abcd{i:02d}: {i * 7}" for i in range(5)) + "\nOPEN\n"
+        for scan, reasks in ((None, 1), (r"^ITEM \d+: the clerk", 0)):
+            model = LedgerModel(script=[reply_text, reply_text])
+            keeper = self.keeper(model, notes_checks="near", notes_scan=scan, inplace_tokens=700)
+            msgs = conversation(6)
+            msgs[6:6] = [{"role": "assistant", "content": "", "tool_calls": [{"id": "cat", "type": "function", "function": {"name": "bash", "arguments": "{}"}}]},
+                         {"role": "tool", "tool_call_id": "cat", "content": '{"p21_7": 571, "p22_1": 3} ' + "filler " * 60}]   # a printed answers file
+            keeper.complete({"model": "m", "messages": msgs})
+            s = next(iter(keeper.sessions.values()))
+            self.assertEqual((s.state["inplace_cuts"], s.state["inplace_reasks"]), (1, reasks))
+
     def test_options_are_checked(self):
         with self.assertRaises(ValueError):
             ck.Keeper(lambda b: None, Path(tempfile.gettempdir()), notes_mode="fast")
@@ -626,6 +639,16 @@ class Pure(unittest.TestCase):
         self.assertFalse(ck.same_rule("abcd12 is secret: answer protected", "efgh34 is secret: answer protected"))
         self.assertFalse(ck.same_rule("the tally is value times 5 plus 13", "the tally is value times 3 plus 15"))
         self.assertTrue(ck.same_rule("abcd12 is secret: answer protected", "abcd12 is secret, so answer protected."))
+
+    def test_recall_places_a_sentence_by_the_first_line_of_its_message(self):
+        d = tempfile.TemporaryDirectory()
+        self.addCleanup(d.cleanup)
+        a = ck.Archive(Path(d.name) / "a.jsonl")
+        a.add(5, [{"role": "tool", "content": "ITEM 50/617 (UPDATE)\nThe cook slept. ziru63 was set to 485. It rained."},
+                  {"role": "assistant", "content": "ziru63 is 485 now."}])
+        out = a.recall("ziru63").splitlines()
+        self.assertEqual(out[0], 'message 5 (tool, "ITEM 50/617 (UPDATE)"): ziru63 was set to 485.')
+        self.assertEqual(out[1], "message 6 (assistant): ziru63 is 485 now.")            # a one-line message needs no heading
 
     def test_archive_recall(self):
         with tempfile.TemporaryDirectory() as d:

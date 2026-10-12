@@ -68,9 +68,9 @@ RECALL_TOOL = {
     "function": {
         "name": "recall",
         "description": ("Search the archive of earlier conversation that was moved out of view (it is kept verbatim). "
-                        "Give `pattern` (text or a regular expression, case-insensitive) to list matching sentences "
-                        "with their message numbers; narrow with `before` / `after` (message numbers) and take the "
-                        "newest with `last`. Give `message` alone to print one archived message in full. Give "
+                        "Give `pattern` (text or a regular expression, case-insensitive) to list matching sentences, "
+                        "each with its message number and the first line of that message; narrow with `before` / "
+                        "`after` (message numbers) and take the newest with `last`. Give `message` alone to print one archived message in full. Give "
                         "`notes_at` alone (a message number) to see the NOTES as they stood at the last save at or "
                         "before that message: what was true then, not now."),
         "parameters": {"type": "object", "properties": {
@@ -140,8 +140,9 @@ section; may be empty). Do not list what has been received or answers already gi
 
 Output only these three sections.
 """
-RECALL_LIMIT_NOTE = ("[[That was the last archive search for this turn ({n} made). Do not call `recall` again now: "
-                     "act or answer with what you have. You can search again on a later turn.]]")
+RECALL_LIMIT_NOTE = ("[[That was the last archive search for this turn ({n} made). Do not call `recall` again now: take "
+                     "the next step with what you have, for what you are sure of. You can search again right after "
+                     "that step for anything still missing; do not give something up as unknown because of this limit.]]")
 REPEAT_NOTE = ("[[You have made the same tool call {n} times in a row with the same result. Calling it again will not "
                "change anything: use the result you have and decide the next step.]]")
 LAYOUT_RETRY = ("Your reply did not use the layout. Reply with the NOTES only: first line RULES, then the rules, "
@@ -351,9 +352,15 @@ class Archive:
         for r in rows:
             if (before is not None and r["n"] > before) or (after is not None and r["n"] < after):
                 continue
+            first = r["text"].strip().split("\n", 1)[0].strip()[:60]
             for s in re.split(r"(?<=[.!?])\s+|\n+", r["text"]):
                 if s.strip() and rx.search(s):
-                    hits.append(f"message {r['n']} ({r['role']}): {s.strip()[:300]}")
+                    # with the first line of its message, so that a sentence can be placed ("ITEM 50/617 (UPDATE)",
+                    # a file name, a command): the 1M proxy run with in-place notes replayed old values from
+                    # sentences it could not tell apart by item
+                    where = (f', "{first}"' if first and "\n" in r["text"].strip() and s.strip() not in first
+                             and not first.startswith(s.strip()[:40]) else "")
+                    hits.append(f"message {r['n']} ({r['role']}{where}): {s.strip()[:300]}")
         if not hits:
             return f"recall: nothing in the archive matches {pattern!r}"
         shown = hits[-last:] if last else hits[:limit]
@@ -443,7 +450,8 @@ class Keeper:
                  recite: bool = True, max_recalls: int = 8, reply_reserve: int = 4096,
                  recite_when: str | None = None, think_when: str | None = None, effort: str | None = None,
                  memory_note: bool = True, think_until: str | None = None, repeat_limit: int = 3,
-                 notes_mode: str = "full", inplace_tokens: int = 15000, notes_checks: str = "off") -> None:
+                 notes_mode: str = "full", inplace_tokens: int = 15000, notes_checks: str = "off",
+                 notes_scan: str | None = None) -> None:
         self.ask, self.root = ask, Path(state_dir)
         self.budget, self.target_ratio, self.headroom = budget, target_ratio, headroom
         self.notes_cap, self.notes_max_tokens, self.notes_thinking = notes_cap, notes_max_tokens, notes_thinking
@@ -474,6 +482,10 @@ class Keeper:
         if notes_mode not in ("full", "inplace") or notes_checks not in ("off", "count", "near"):
             raise ValueError("notes_mode is full or inplace; notes_checks is off, count or near")
         self.notes_mode, self.inplace_tokens, self.notes_checks = notes_mode, inplace_tokens, notes_checks
+        # notes_scan: with notes_checks count or near, only tool results and user messages matching this pattern are
+        # read for mentions and stated numbers (default: all of them). The 1M run counted the keys of an answers file
+        # that the agent printed (p21_7 ...) as things to account for; the harness arm reads delivered items only.
+        self.notes_scan = re.compile(notes_scan) if notes_scan else None
         self.sessions: dict[str, Session] = {}
         self.lock = threading.Lock()
 
@@ -651,7 +663,8 @@ class Keeper:
         tools = list(client.get("tools") or [])
         if s.state["cut"] or self.memory_note:       # the same tool list as the ordinary calls: the same prompt start
             tools = tools + [RECALL_TOOL]
-        texts = [text_of(m) for m in noted if m.get("role") in ("tool", "user")]
+        texts = [t for t in (text_of(m) for m in noted if m.get("role") in ("tool", "user"))
+                 if self.notes_scan is None or self.notes_scan.search(t)]
         seen = nd.numbers_in("\n".join(nd.TRAILER.sub("", text_of(m)) for m in noted))
         strict = self.notes_checks in ("count", "near")
         thinking, asked_count, asked_working, asked_layout = self.notes_thinking, not strict, False, False
@@ -956,6 +969,11 @@ def main() -> None:
                     help="with --notes-mode inplace: extra checks of the reply for ledger-like state with names such as "
                          "abcd12 (count: every mention accounted for, values without working must be stated; near: "
                          "stated in a sentence that names the thing)")
+    ap.add_argument("--notes-scan", help="with --notes-checks count or near: read only the tool results and user messages "
+                                         "matching this regular expression for mentions and stated numbers")
+    ap.add_argument("--max-recalls", type=int, default=8,
+                    help="archive searches the model may make within one client call before it is asked to go on "
+                         "(with in-place notes little is in view, and a turn with several questions needs more: 24)")
     ap.add_argument("--state-dir", type=Path, default=Path.home() / ".cache" / "ctxkeeper")
     ap.add_argument("--timeout", type=float, default=1800)
     a = ap.parse_args()
@@ -966,7 +984,8 @@ def main() -> None:
                     recite=not a.no_recite, reply_reserve=a.reply_reserve, recite_when=a.recite_when,
                     think_when=a.think_when, effort=a.effort, memory_note=not a.no_memory_note,
                     think_until=a.think_until, repeat_limit=a.repeat_limit, notes_mode=a.notes_mode,
-                    inplace_tokens=a.inplace_tokens, notes_checks=a.notes_checks)
+                    inplace_tokens=a.inplace_tokens, notes_checks=a.notes_checks, notes_scan=a.notes_scan,
+                    max_recalls=a.max_recalls)
     server = ThreadingHTTPServer((a.host, a.port), make_handler(keeper, upstream, a.timeout))
     print(f"ctxkeeper: http://{a.host}:{a.port}/v1 -> {upstream}/v1, live window {a.budget} tokens, notes {a.notes_mode}"
           + (f" every {a.inplace_tokens} tokens, checks {a.notes_checks}" if a.notes_mode == "inplace" else "")
