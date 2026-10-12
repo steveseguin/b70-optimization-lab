@@ -22,7 +22,8 @@ DELTA_RETRY = ("Your reply did not use the layout. Reply with the sections only:
 DELTA_HEADS = ("NEW RULES", "CHANGES", "OPEN")
 
 
-RESULT = re.compile(r"\s*(-?\d+)\.?(?:\s*\(.*\))?\s*$")        # the last part of working: `= 169`, `= 169 (item 4)`
+# the last part of working: `= 169`, `= 169 (item 4)`, `= 169. (item 4) (set)`; not `= 169 (item 4). Then set to 5 (item 6)`
+RESULT = re.compile(r"\s*(-?\d{1,24})\.?(?:\s*\((?:[^()]|\([^()]*\))*\))*\s*\.?\s*$")
 
 
 _UNITS = {w: i for i, w in enumerate("zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen "
@@ -134,8 +135,17 @@ def _calc(expr: str) -> float | None:
     if len(expr) > 400 or re.search(r"\d{16,}", expr):
         return None                                  # not a sum anyone wrote: no huge numbers, no endless rows of signs
     try:
-        return ev(ast.parse(expr.strip(), mode="eval").body)
+        out = ev(ast.parse(expr.strip(), mode="eval").body)
+        return out if abs(out) < 10**18 else None
     except (ValueError, SyntaxError, ZeroDivisionError, RecursionError, OverflowError, MemoryError):
+        return None
+
+
+def _whole(val: float | None) -> int | None:
+    """The whole number a computed value is, if it is one."""
+    try:
+        return int(val) if val is not None and abs(val) < 10**18 and float(val).is_integer() else None
+    except (OverflowError, ValueError):
         return None
 
 
@@ -146,6 +156,8 @@ def work_out(value: str) -> tuple[int | None, int | None, int] | None:
     is plain arithmetic; it is None when plain arithmetic has no whole-number value (`7 / 2`, `7 / 0`): such a line
     cannot be right. Working in words (`119 + what efgh34 holds (402) = 521`) cannot be checked: `result` is then
     the stated result."""
+    if re.search(r"\d{25,}", value):
+        return None                                  # not a number anyone holds
     v = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", value.strip())
     v = v.replace("\u2212", "-").replace("\u00d7", "*").replace("\u00f7", "/")
     if re.fullmatch(r"(-?\d+)\s*(?:\u2192|->|=>)\s*(-?\d+)\.?", v):
@@ -161,7 +173,7 @@ def work_out(value: str) -> tuple[int | None, int | None, int] | None:
     total: int | None = stated
     if re.fullmatch(r"[\d\s+\-*/().]+", expr):
         val = _calc(expr)
-        total = int(val) if val is not None and float(val).is_integer() else None
+        total = _whole(val)
         if total != stated and _ltr(expr) == stated:
             total = stated                           # `10 + 5 * 2 = 30`: taken from left to right, as the line means it
     return (int(first.group(1)) if first else None), total, stated
@@ -289,7 +301,22 @@ def amounts_ok(working: str, amounts: set[int] | None) -> bool:
     return True
 
 
-PARTS = re.compile(r",(?!\d{3}\b)|;|\bthen\b")       # what separates the changes packed onto one line
+PARTS = re.compile(r",(?!\d{3}\b)|;|(?i:\bthen\b)")   # what separates the changes packed onto one line (also `. Then`)
+
+
+def restated(value: str) -> str | None:
+    """`112 + 16 + 45 = 128 + 45 = 173` is one sum written out twice, not two changes. When every piece between
+    the `=` signs of a line without separators has the same value, the line is its first piece and the result
+    (`112 + 16 + 45 = 173`; `90 - 90/3 = 90 - 30 = 60` is `90 - 90/3 = 60`, and the 30 is no amount to look for in
+    the turns). None for anything else, such as `539 - 31 = 508 - 48 = 460`, which is two changes."""
+    flat = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", unremarked(value)).replace("\u2212", "-").replace("\u00f7", "/")
+    if flat.count("=") < 2 or re.search(PARTS.pattern + r"|\u2192|->|=>|\d{25,}", flat):
+        return None
+    pieces = [x.strip().rstrip(".").strip() for x in flat.split("=")]
+    vals = [_whole(_calc(x)) if re.fullmatch(r"[\d\s+\-*/().]+", x) else None for x in pieces]
+    if not re.fullmatch(r"-?\d+", pieces[-1]) or vals[0] is None or any(v != vals[0] for v in vals):
+        return None
+    return f"{pieces[0]} = {pieces[-1]}"
 
 
 def chain_of(value: str, held: int | None, stated: set[int], amounts: set[int] | None = None,
@@ -320,8 +347,11 @@ def chain_of(value: str, held: int | None, stated: set[int], amounts: set[int] |
     2026-10-12 found a dozen ways in which redoing it and reading on stored a wrong value without a question
     (the next part starting from the miscounted result, or repeating it; a remark that held the amount, as in
     `10 + (five more) - 1 = 14`; `10 + 2 (then doubled) = 24`)."""
+    if re.search(r"\d{25,}", value):
+        return None
     v = unremarked(value, f" {MARK} ")
     v = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", v).replace("\u2212", "-").replace("\u00d7", "*").replace("\u00f7", "/")
+    remark_at_the_end = MARK in v[max(v.rfind("="), 0):]     # also as a part of its own: `..., 12 + 2 = 28, (then doubled)`
     parts = [re.sub(r"^x\s*(?=[\d(])", "* ", x) for x in (y.strip().rstrip(".").strip() for y in re.split(PARTS.pattern + r"|\u2192|->|=>", v))
              if x.replace(MARK, "").strip()]
     if len(parts) < 2 and (not parts or parts[0].count("=") < 2):
@@ -337,7 +367,7 @@ def chain_of(value: str, held: int | None, stated: set[int], amounts: set[int] |
             words = set(re.findall(r"[a-z]+", bare.lower()))
             # (`increased by 5` is a change written without working, not a set to 5: not followed; nor is anything
             # with a sign or bracket left over, such as `reopened at - 3`, which is not a set to 3, or a bare `+5`)
-            bare = re.sub(r"\*+\s*(-?\d+)\s*\*+", r"\1", bare)       # `set to **5**`; a lone `*5` is not a set to 5
+            bare = re.sub(r"\*+([^*]+)\*+", r"\1", bare)             # `set to **5**`, `**set to 174**`; a lone `*5` is not a set to 5
             left = re.sub(r"[a-z]+(?:-[a-z]+)*|(?<![\w.])-?\d+", "", bare.lower()).strip(" :`")
             if len(nums) != 1 or not words <= SET_WORDS or left:
                 return None
@@ -365,8 +395,7 @@ def chain_of(value: str, held: int | None, stated: set[int], amounts: set[int] |
                 if (not re.fullmatch(r"[\d\s+\-*/().]+", full) or re.search(r"[-+*/]\s*(?:[+*/)]|$)|\(\s*\)", full)
                         or not amounts_ok(taken, amounts)):
                     return None
-                val = _calc(full)
-                return int(val) if val is not None and float(val).is_integer() else None
+                return _whole(_calc(full))
 
             readings = []                            # (the sum, the amounts in it, the set it starts from)
             if first and cur is not None and n == cur:
@@ -384,7 +413,7 @@ def chain_of(value: str, held: int | None, stated: set[int], amounts: set[int] |
                     break
             else:
                 last = k == len(parts) - 1 and j == len(pieces) - 2
-                plain = (MARK not in raw and MARK not in after and re.search(r"[\d)]\s*[-+*/]\s*[\d(-]", expr)
+                plain = (MARK not in raw and not remark_at_the_end and re.search(r"[\d)]\s*[-+*/]\s*[\d(-]", expr)
                          and not two_readings(expr))
                 val = worth(expr, expr[first.end():]) if last and plain and first and cur is not None and n == cur else None
                 if val is None or wrote in stated or wrote in (amounts or ()):
@@ -439,6 +468,10 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
             continue
         old = fact_of(state[where[name]])[1] if name in where else None
         held = number_of(old) if old is not None else None
+        value = restated(value) or value                 # one sum written out twice is that sum
+        if re.search(r"\d{25,}", value):                 # a number of 25 digits or more is not a value: asked about, not kept
+            info["mismatch"].append(f"{name}: `{value[:60]}...` is not a value; write the line again")
+            continue
         counted, asked, written = steps_in(value), len(info["mismatch"]), value
         flat = unremarked(value)
         several = sum(bool(x.strip()) for x in re.split(PARTS.pattern + r"|\u2192|->|=>", flat)) > 1 or flat.count("=") > 1
@@ -504,7 +537,7 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
             # (Not excused: working whose result the turns state for the thing. `436 + 78 = 514` for "recorded at
             # 514" costs a question, but "gained five" also states a 5, and `100 - 95 = 5` must not pass.)
             if near is not None and strict and start is not None and len(info["mismatch"]) == asked and plain:
-                expr = unremarked(value).replace("\u2212", "-").split("=")[-2]
+                expr = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", flat).replace("\u2212", "-").split("=")[-2]
                 first = re.match(r"\(?\s*-?\d+", expr.strip())
                 if first and not amounts_ok(expr.strip()[first.end():], near.get(name, set()) | ever):
                     info["mismatch"].append(f"{name}: `{value}` adds or takes an amount the turns do not state for it; read the item again")
