@@ -1,0 +1,34 @@
+--- packet17-detmath/oracle.cpp
++++ suite128/oracle128.cpp
+@@ -42,9 +42,9 @@
+     rlimit limit{38'000'000'000ull,38'000'000'000ull};require(setrlimit(RLIMIT_AS,&limit)==0,"address cap");
+     Options a;a.inputs=fs::path(argv[1])/"tokens.txt";a.plan=fs::path(argv[1])/"plan.tsv";
+     a.auth=fs::path(argv[1])/"identity.tsv";a.output=out=argv[2];
+-    a.seconds=std::stoi(argv[3]);a.tokens=std::stoi(argv[4]);a.context=192;
++    a.seconds=std::stoi(argv[3]);a.tokens=std::stoi(argv[4]);a.context=256;
+     a.first=argc==6;require(!a.first || std::string(argv[5])=="first-layer","mode");
+-    require(a.seconds>0 && a.seconds<=10800 && a.tokens>0 && a.tokens<=64,"bounds");
++    require(a.seconds>0 && a.seconds<=10800 && a.tokens>0 && a.tokens<=128,"bounds");
+     require(getenv("IQ3_MODEL_DIR"),"model directory");a.model=getenv("IQ3_MODEL_DIR");
+     require(!fs::exists(out),"new output required");created_output=fs::create_directories(out);
+     std::signal(SIGTERM,stop);std::signal(SIGINT,stop);
+@@ -58,7 +58,7 @@
+     auto forward=[&](int token,int capture,size_t position) {
+       auto t=std::chrono::steady_clock::now();engine->put(0,"token",&token,4);
+       auto dir=out/("step"+std::to_string(capture));std::ofstream hashes;
+-      if(capture>0 && capture<=8){fs::create_directories(dir);hashes.open(dir/"layers.jsonl");}
++      if(capture>0 && (capture<=8 || (capture>=97 && capture<=104))){fs::create_directories(dir);hashes.open(dir/"layers.jsonl");}
+       for(const auto& l:p.launches) {
+         // Intermediate prefill predictions are unused; preserve commit/state.
+         if(capture==0 && (l.label.starts_with("final.") || l.label=="logits" || l.label=="argmax"))continue;
+@@ -94,6 +94,10 @@
+       for(int j=0;j<5;++j)row<<(j?",":"")<<logits.get(rank[j]);row<<"],\"logits_bf16_sha256\":"<<ownrt::quote(hash(raw))<<"}";
+       steps.push_back(row.str());generated.push_back(next);costs.push_back(step==1?prefill:last);
+       tokenlog<<row.str()<<'\n';tokenlog.flush();persist();
++      if(step==64 && getenv("IQ3_PREFIX_GATE")) {
++        // CPU-only checkpoint: supervisor verifies sealed bytes before the tail.
++        while(!fs::exists(getenv("IQ3_PREFIX_GATE"))) { engine->guard(); usleep(100000); }
++      }
+       if(step==8)fs::copy_file(out/"result.json",out/"pilot8.json");
+       if(next==p.g.eos || next==248046){status="eos";break;}
+       if(step==a.tokens){status="token-cap";break;}
