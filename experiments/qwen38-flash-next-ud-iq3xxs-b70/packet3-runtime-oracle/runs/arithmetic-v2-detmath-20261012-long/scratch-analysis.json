@@ -1,0 +1,54 @@
+{
+  "schema": "iq3-long.qsa-scratch-symbolic.v1",
+  "passed": true,
+  "method": "Exact monotonic allocation count; includes active/error input copies; verified against unmodified Core at eight boundary counts",
+  "scope": "QSA attention, all admitted counts 1..2051 at context4096",
+  "device_executed": false,
+  "model_loaded": false,
+  "context": 4096,
+  "geometry": {
+    "qh": 24,
+    "kvh": 2,
+    "ad": 256,
+    "budget": 2048
+  },
+  "original_float_capacity": 67108864,
+  "overlay_float_capacity": 134217728,
+  "first_original_failure": {
+    "admitted_positions": 1225,
+    "float_slots": 67110653,
+    "bytes": 268442612,
+    "parts": {
+      "converted_inputs_and_output": 4214789,
+      "attention_y": 6144,
+      "admitted_ids": 4080,
+      "score_dot_products": 15052800,
+      "score_vectors": 97920,
+      "score_reduction_trees": 88200,
+      "value_term_vectors": 25067520,
+      "value_reduction_trees": 22579200
+    }
+  },
+  "maximum": {
+    "admitted_positions": 2051,
+    "float_slots": 117813069,
+    "bytes": 471252276,
+    "parts": {
+      "converted_inputs_and_output": 4214789,
+      "attention_y": 6144,
+      "admitted_ids": 8176,
+      "score_dot_products": 25202688,
+      "score_vectors": 196224,
+      "score_reduction_trees": 147672,
+      "value_term_vectors": 50233344,
+      "value_reduction_trees": 37804032
+    }
+  },
+  "overlay_remaining_bytes_at_maximum": 65618636,
+  "script_sha256": "edf8b5e486299aaaf40abc1e14acfa15dc5aa852099f940301441b0e36ab9d40",
+  "probe_source_sha256": "7c9d9ce559e1904de898abb7671e2b6dd035babcb41d2a9589e27ab0ec1cbf3b",
+  "probe_binary_sha256": "9e80d63af4d64f456efa2149fb8ba4b30fa9d773e7543e8a20322d746b2e431e",
+  "probe_result_sha256": "1a8686728ab1f541d2ee417d8ebadc7afd906dd539305b69fb4fc67b4ce938f9",
+  "core_sha256": "e267cda96d17f7c95d4313abc878b531b152548ed7004471d6cee822a2cab8f6",
+  "all_counts_sha256": "554c282889f1c4505985710175cbda5fe0f58629cbb8cf6187f1ed901d8cd9b3"
+}

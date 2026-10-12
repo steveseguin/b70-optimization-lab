@@ -1,0 +1,43 @@
+<|im_start|>user
+Summarize the following document in about 200 words.
+
+# Reproducibility Map
+
+This is a durable catalog of runnable recipes and promoted evidence. It is not
+the authority for the currently loaded service or active research lane; use
+[`CURRENT.md`](../CURRENT.md) for that live state. Historical service claims
+below describe recorded lane context and may not describe what is running now.
+
+This page connects the active Gemma 4 service, the deployable MiniMax baseline,
+the session-cache experiments, the TurboQuant patch, and the long-context
+research path. It is meant for a fresh human or agent who needs to reproduce or
+review the current work without reading every historical note first.
+
+Hardware scope: the local Intel lab is four Arc Pro B70 32 GB GPUs
+(`128 GB` aggregate VRAM). Results here are useful because they are produced on
+real community-accessible XPU hardware, but the same limit also constrains
+larger model coverage. Additional high-VRAM Intel hardware would let this map
+include larger GLM/DeepSeek-class lanes and more concurrent service/optimization
+comparisons without sacrificing the current endpoint. The lab has spare EPYC
+9015 PCIe 5.0 slot capacity, so the missing piece for broader Intel coverage is
+higher-memory XPU hardware rather than host expansion.
+
+## Promoted Closed Recipes
+
+### Muse-Glimmer-30B Q8/WOQ Century Result
+
+- [result packet](../results/muse-glimmer-30b-q8-woq-b70/README.md)
+- [standalone reproduction](../repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md)
+- [source patch and history bundle](../patches/muse-glimmer-30b-b70/README.md)
+- [structured result](../data/muse-q8-woq-argmax-century-20260813.json)
+- [LocalMaxxing approved run](https://www.localmaxxing.com/en/runs/cmss8515c00n0ms01n3begqgg)
+
+Identity: four B70s, TP4/concurrency one, Muse UD-Q8_K_XL target, pretrained
+BF16 DFlash, fixed-N16 direct oneDNN WOQ, distributed ARGMAX. Two canonical
+full-256 arithmetic means were `100.088` and `100.649 tok/s`; the frozen
+15-prompt conventional first-100 median was `161.900 tok/s`, p10<|im_end|>
+<|im_start|>assistant
+<think>
+
+</think>
+

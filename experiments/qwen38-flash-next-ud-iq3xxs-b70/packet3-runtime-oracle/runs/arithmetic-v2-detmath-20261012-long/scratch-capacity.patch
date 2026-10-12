@@ -1,0 +1,22 @@
+--- packet17/runtime_main.cpp
++++ host-overlay/runtime_main.cpp
+@@ -512,7 +512,7 @@
+       slab.push_back(allocate(c, "bounded-copy", 4 * 1024 * 1024,
+                               Category::pinned_slab, Lifetime::transfer,
+                               Memory::pinned));
+-      scratch.push_back(allocate(c, "operator-scratch", 256ull * 1024 * 1024,
++      scratch.push_back(allocate(c, "operator-scratch", 512ull * 1024 * 1024,
+                                  Category::scratch, Lifetime::transaction));
+     }
+     for (auto &b : p.buffers)
+--- packet17/runtime_kernels.hpp
++++ host-overlay/runtime_kernels.hpp
+@@ -124,7 +124,7 @@
+     return;
+   }
+   Core c;
+-  c.pool = {scratch, 0, 64ull * 1024 * 1024, 0};
++  c.pool = {scratch, 0, 128ull * 1024 * 1024, 0};
+   c.g = spec.g;
+   c.op = spec.op;
+   c.l = spec.site;

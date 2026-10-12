@@ -1,0 +1,122 @@
+<|im_start|>user
+Summarize the following document in about 200 words.
+
+# Model Effort Index
+
+This page is the cross-model work queue and archive. It is meant to help the
+next agent switch models without rereading every historical note.
+
+Hardware planning note: the measuring host has four Intel B70 32 GB cards and
+about 125 GiB system RAM. A second host (`steve-TURIND8-2L2T`) has two ASRock
+B70 32 GB cards and about 15 GiB system RAM. That second host is no longer
+restricted to source/build/op-level work: since 2026-09-07 it carries the
+measured Qwen3.5 4B and 9B lanes end to end, including strict pairs, identity
+ladders, 2K-32K depth ladders, and promoted LocalMaxxing submissions. What it
+still cannot do is anything in the four-card band, which is a VRAM and system
+RAM limit rather than a policy: MiniMax M2.7 INT4 alone is about 115 GB of
+weights against 64 GiB of VRAM here. Route four-card lanes to the measuring
+host. Higher-VRAM Intel hardware would make larger future efforts, such as GLM
+5.2 and DeepSeek Flash-class models, much more realistic to validate under the
+same quality rules.
+
+## How To Add A Model Effort
+
+For the full optimization lifecycle, read
+[`model-optimization-guide.md`](model-optimization-guide.md) before creating a
+new lane.
+
+Create or update the smallest set of files that makes the lane understandable:
+
+1. `results/<model>-<hardware>/README.md` for promoted or closed-out outcomes.
+2. `results/<model>-<hardware>/validity-gates.md` for what counts as a record.
+3. `results/<model>-<hardware>/reproduce.md` for the best known commands.
+4. `results/<model>-<hardware>/bugs-failed-paths.md` for invalid fast lanes and
+   failure signatures.
+5. `notes/YYYY-MM-DD-<model>-...md` for chronological experiment notes.
+6. `patches/<model>-...patch` for source or config deltas worth preserving.
+7. `data/<model>-...json` for compact structured result evidence.
+
+Do not move old files just to make the tree look tidy. Add indexes and links
+unless a file is clearly misplaced and no one is likely to reference the old
+path.
+
+## Active / Recent Efforts
+
+### Qwen3.8 Flash-Next FP8, four B70s — campaign closed September 13
+
+Fable's A340-A394 campaign is complete: **46.854250 tok/s** approved
+class-balanced record (+23.87%), exact-GDN MTP1, and **44.052 tok/s** four-row
+32K depth median with cross-server output parity. Larger-prefill, MTP2 and
+many-user trials were not promoted. No further runs queued. See the
+[closeout](../results/qwen38-flash-next-fp8-b70/CLOSEOUT-20260913.md) and
+[recipe](../repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md).
+
+
+### Qwen3.5 4B And 9B On One Or Two B70s
+
+Main entries:
+
+- [9B W4A16 recipe](../repro/qwen35-9b-w4a16-b70/README.md) and
+  [container packet](../packages/qwen35-9b-w4a16-b70/README.md)
+- [9B FP8 recipe](../repro/qwen35-9b-fp8-b70/README.md) and
+  [container packet](../packages/qwen35-9b-fp8-b70/README.md)
+- [4B W4A16 recipe](../repro/qwen35-4b-w4a16-b70/README.md) and
+  [container packet](../packages/qwen35-4b-w4a16-b70/README.md)
+- [experiment archive](../experiments/qwen35-9b-b70/) and
+  [4B archive](../experiments/qwen35-4b-b70/)
+
+Status: active, and the lane where the lab's output-identity work now lives. Seven LocalMaxxing
+submissions between 2026-09-07 and 2026-09-08. Best measured single-user figures, all lossless
+against a same-configuration MTP0 oracle: 4B W4A16 `236.916` on two cards and `177.287` on one; 9B
+W4A16 `172.296` on two and `113.265` on one; 9B FP8 `147.8` on two and `98.251` on one. Depth 3 with
+the draft-only INT4 lm_head and full decode-only graph capture is the operating point on every route,
+confirmed by sweeps on both models rather than inherited.
+
+What this lane established, and what it costs to re-derive, is the identity account:
+
+- The INT4 W4A16 route is byte-exact against a sequential oracle where the FP8 route is not, on both
+  models, because its GEMM does not vary its reduction with the decode row count. Five independent
+  confirmations, most usefully the depth sweeps: depth `d` makes the verify step process `d+1` rows,
+  so it varies row count without varying users, and FP8 loses a third of the suite from depth 4 up
+  while W4A16 is lossless at 3, 4, 5 and 6 on both models.
+- The guarantee is one-card. On two cards the 9B loses about one request at 64 users and the 4B holds
+  only to 32. Note before designing any experiment here: that metric is **intermittent** - six
+  control passes read four at 63/64 and two at 64/64 - so two passes per arm cannot decide whether an
+  intervention worked
+  ([why, and what to measure instead](../experiments/qwen35-9b-b70/notes/2026-09-08-the-two-card-c64-identity-metric-is-intermittent.md)).
+  Four powered arms now exist, 1280 requests each with knob presence verified: control 9 divergent,
+  serialised norm 7, row-wise all-reduce 6, both 3. The trend is monotone and in the predicted
+  direction, and **none of it is significant** - the pair reaches only `p = 0.15`
+  ([note](../experiments/qwen35-9b-b70/notes/2026-09-08-powered-arms-neither-mechanism-nor-the-pair-is-established.md)).
+  **Settled, and it closes this line:** with the batch filled by the twelve flip-prone prompts the
+  control yields 23 events instead of 9, and at that power the pair of interventions scores 24
+  against 23 - two-sided `p = 1.00`. Neither the cross-card all-reduce nor the serialised norm, alone
+  or together, affects the divergence. The same data shows why: byte-identical prompts issued in the
+  same batch disagree with each other, 23 of 240 prompt-groups per campaign, so batch *size* cannot
+  be the explanation and shape-invariance interventions were never going to help
+  ([note](../experiments/qwen35-9b-b70/notes/2026-09-08-identical-prompts-in-one-batch-diverge-from-each-other.md)).
+  **It does not reproduce offline at all.** Five configurations through the in-process API - lockstep,
+  graph capture, induced drift, the twelve fragile prompts, and the ladder's own chunked-prefill
+  scheduling - all match a strictly single-row oracle exactly, while the same prompts diverge at
+  1.7% through `vllm serve`
+  ([note](../experiments/qwen35-9b-b70/notes/2026-09-08-the-divergence-does-not-reproduce-offline.md)).
+  The remaining difference is asynchronous admission: the server's batch grows from one to sixty-four
+  while early requests decode, where the offline batch is assembled once and only shrinks. Instrument
+  the server path rather than rebuilding it offline - the layer hook works in eager mode and the
+  strict launcher can run eager.
+  **Newest result, and it reframes the target.** A batch of constant composition is deterministic:
+  64 identical prompts in lockstep at TP2 give byte-identical outputs, eager *and* with full
+  decode-only graph capture, and the per-layer hook finds no same-position row disagreeing in 8000
+  observations. The ladder differs by having its requests drift - about three decode steps of spread -
+  so step composition varies
+  ([note](../experiments/qwen35-9b-b70/notes/2026-09-08-a-lockstep-batch-is-deterministic-the-ladder-is-not.md)).
+  That explains all four failed interventions at once: if the mechanism is a request meeting a
+  differently-composed step than the oracle did, every row-count-dependent op contributes and fixing
+  them singly cannot help. **Next: reproduce the divergence offline by inducing drift** - staggered
+  arrival or unequal generation caps - rather than probing another op.
+  position, the body is bitwise deterministic - 8000 decode observations at TP2, none disagreeing<|im_end|>
+<|im_start|>assistant
+<think>
+
+</think>
+
