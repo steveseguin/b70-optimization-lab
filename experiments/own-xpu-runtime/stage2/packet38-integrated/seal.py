@@ -1,5 +1,5 @@
 """Seal the integrated packet from current CPU receipts; never runs device code."""
-import base64,hashlib,json,gzip
+import argparse,base64,hashlib,json,gzip
 from pathlib import Path
 P=Path(__file__).resolve().parent;B=P/'build'
 def sha(p):
@@ -60,6 +60,22 @@ def native_signature(table):
   counts={k:result['stats'][k] for k in ('guesses','hits','misses','no_guess')},fixtures=fixtures,
   final_states=states,final_state_bytes=final,draft_final_state=draft)
 
+def bind_suite_warmup(table,prompts):
+ from suite import select_warmup
+ row=table['warmup/receipt.json'];warm=json.loads(row['text'])
+ assert hashlib.sha256(row['text'].encode()).hexdigest()==row['sha256'],'warmup receipt hash differs'
+ assert warm['passed'] is True and warm['device_executed'] is False and warm['excluded_from_timing'] is True
+ assert warm['controller']=='native' and warm['draft']=='mtp' and len(warm['tokens'])==2
+ selection=warm['warmup_selection'];tokens=selection['token_ids']
+ assert selection['schema']=='packet38.distinct-kernel-warmup.v1'
+ assert tokens==select_warmup(prompts,256,248320),'warmup is not the admitted synthetic request'
+ assert selection['token_sha256']==canonical(tokens) and selection['prompt_tokens']==5
+ assert selection['requested_output_tokens']==selection['completed_output_tokens']==2
+ assert selection['eos_termination_disabled_only_for_excluded_warmup'] is True
+ assert selection['distinct_from_every_suite_prompt'] is True and selection['absent_from_every_contiguous_suite_input_span'] is True
+ assert selection['suite_prompt_count']==len(prompts) and selection['complete_reset_before_measured_requests'] is True
+ return row['sha256']
+
 def bind_cpu_suite(row,host_sha):
  from suite import checker_module
  from suite_export import frozen_coverage
@@ -77,6 +93,12 @@ def bind_cpu_suite(row,host_sha):
  root=P/row['evidence_directory'];archive,table=archived_run(root)
  assert row['scratch_archive']['path']==str(archive.relative_to(P)) and row['scratch_archive']['sha256']==sha(archive)
  assert table['suite-manifest.snapshot.json']['sha256']==row['manifest_sha256']
+ admitted_prompts=[]
+ for entry in entries.values():
+  snapshot=table[f"input-bundles/{entry['prompt_id']}/input.json"]
+  assert snapshot['sha256']==entry['input_bundle_hashes']['input.json'],'warmup admitted input binding differs'
+  admitted_prompts.append(json.loads(snapshot['text'])['tokens'])
+ warmup_hash=bind_suite_warmup(table,admitted_prompts)
  snapshot=str((P/row['export_checker_snapshot']).relative_to(root))
  assert table[snapshot]['sha256']==row['export_checker_sha256'] and 'text' in table[snapshot]
  assert table['summary.json']['sha256']==row['summary_sha256'] and table['input-admission.json']['sha256']==row['input_admission_sha256']
@@ -128,11 +150,11 @@ def bind_cpu_suite(row,host_sha):
     leaf=('alternate-'+name[len('alternate:'):] if name.startswith('alternate:') else name)+'.bin'
     assert states[f'rank{rank}/state-2147483647/{leaf}']['sha256']==digest
  assert row['token_count']==sum(r['token_count'] for r in requests) and row['fixture_files']==sum(r['fixture_files'] for r in requests)
- return {str(archive.relative_to(P)):sha(archive)}
+ return {str(archive.relative_to(P)):sha(archive)},warmup_hash
 
-def main():
+def main(*,bootstrap=False):
  from build import sources
- names="""argument-block-tests.json argument-state-gates.json prepared-invalidation.json prepared-host-benchmark.json submission-overlay-gates.json review-prepared-gates.json p33-candidate-gates.json p33-linked-fixture-gates.json k2-admission-tests.json k2-selection-tests.json p38-k2-selection-tests.json p38-kernel-gates.json p38-qsa-capacity-gates.json p30-attention-cpu.json p30-small-cpu.json owner-gates.json fixture-gates.json validation-gates.json entry-codes.json window-tests.json identity-tree-tests.json kernel-sizes.json expert-down-review-gates.json state-machine-tests.json mtp-controller-tests.json review-controller-tests.json review-native-faults.json canary-host-gates.json resident-host-gates.json rollback-inventory.json draft-auth-gates.json pipeline-draft-agreement.json native-controller-cpu.json native-controller-asan.json native-controller-tsan.json native-mailbox-faults.json native-mailbox-faults-asan.json native-mailbox-faults-tsan.json native-mini-cpu.json receipt-metadata-gates.json suite-gate-results.json real-controller-gates.json review-resume-controller.json review-resume-reset.json review-resume-authority.json review-resume-storage-gates.json review-resume-window-storage-gates.json draft-window-cleanup-gates.json reset-retention-gate-results.json suite-export-retention-gates.json storage-race-gates.json suite-warmup-gates.json resume-input-integrity.json review-draft-capture.json window-cpu-fixtures.json window-cpu-models.json suite-real-cpu.json""".split()
+ names="""argument-block-tests.json argument-state-gates.json prepared-invalidation.json prepared-host-benchmark.json submission-overlay-gates.json review-prepared-gates.json p33-candidate-gates.json p33-linked-fixture-gates.json k2-admission-tests.json k2-selection-tests.json p38-k2-selection-tests.json p38-kernel-gates.json p38-qsa-capacity-gates.json p30-attention-cpu.json p30-small-cpu.json owner-gates.json fixture-gates.json validation-gates.json entry-codes.json window-tests.json identity-tree-tests.json kernel-sizes.json expert-down-review-gates.json state-machine-tests.json mtp-controller-tests.json review-controller-tests.json review-native-faults.json canary-host-gates.json resident-host-gates.json rollback-inventory.json draft-auth-gates.json pipeline-draft-agreement.json native-controller-cpu.json native-controller-asan.json native-controller-tsan.json native-mailbox-faults.json native-mailbox-faults-asan.json native-mailbox-faults-tsan.json native-mini-cpu.json receipt-metadata-gates.json cpu-handover-cost.json suite-gate-results.json real-controller-gates.json review-resume-controller.json review-resume-reset.json review-resume-authority.json review-resume-storage-gates.json review-resume-window-storage-gates.json draft-window-cleanup-gates.json reset-retention-gate-results.json suite-export-retention-gates.json storage-race-gates.json suite-warmup-gates.json seal-bootstrap-gates.json window-retention-gates.json resume-input-integrity.json review-draft-capture.json window-cpu-fixtures.json window-cpu-models.json suite-real-cpu.json""".split()
  for c in ('gnu-host','icpx-host','asan'):names.extend([f'mini-{c}.json',f'mtp-gates-{c}.json'])
  for c,prefix in (('gnu-host',''),('icpx-host','icpx-host-')):
   names.append(f'real-campaign-{c}.json')
@@ -162,7 +184,7 @@ def main():
   for row in evidence:
    digests=row['canonical_sha256_by_order'];assert len(digests)>=2 and len(set(digests))==1 and row['fixture_files']==32 and row['state_files']>=(214 if proof['draft']=='mtp' else 208)
  assert suite['formula_test'] and suite['checker_snapshot_binding'] and suite['exactness_failure_continues']==[False,True,True]
- suite_archives=bind_cpu_suite(gates['suite-real-cpu.json'],host_sha)
+ suite_archives,suite_warmup_hash=bind_cpu_suite(gates['suite-real-cpu.json'],host_sha)
  # Independent resumed reviews bind the source, dynamic gates bind the binaries.
  for name in ('review-resume-controller.json','review-resume-reset.json','review-resume-authority.json','review-draft-capture.json'):
   review=gates[name];assert review['source_sha256']
@@ -233,11 +255,12 @@ def main():
   assert actual and actual==expected
   capture_inputs[prompt]=sha(P/f'capture-input-{prompt}.json');capture_fixtures[prompt]=actual
  admission=None
- if (P/'window-seal-admission-gates.json').exists():
+ if not bootstrap:
+  assert (P/'window-seal-admission-gates.json').is_file(),'run seal.py --bootstrap then test_window_seal_admission.py --build-receipt build-admission-candidate.json before final seal'
   admission=json.loads((P/'window-seal-admission-gates.json').read_text());assert admission['passed']
   names.append('window-seal-admission-gates.json')
 
- receipt=dict(schema='own-runtime.iq3.packet38.build.v1',passed=True,device_executed=False,real_model_device_qualified=False,
+ receipt=dict(schema='own-runtime.iq3.packet38.build.v1',passed=True,device_executed=False,real_model_device_qualified=False,seal_status='admission-candidate' if bootstrap else 'complete',
   source_parents={'packet32':'2e8ec7585c0b0fdd24c7aa07e5752167d6ff2637','packet36':'3048343bff','packet37':'3c03e29a4e'},arithmetic='iq3-p17-detmath-v2',
   sources=sources(),artifacts_sha256=binaries,precision=precision,link_commands=links,input_sha256=sha(B/'input/input.json'),
   nongemv_fixture_host_sha256=gates['fixture-gates.json']['output_sha256'],
@@ -246,7 +269,7 @@ def main():
   official_manifest_sha256=sha(P/'mtp-manifest.tsv'),official_tensor_receipt_sha256=sha(P/'official-tensors.json'),
   official_tensor_sha256={n:r['sha256'] for n,r in official['tensors'].items()},gate_receipts={n:sha(P/n) for n in names},native_build_receipt_sha256=sha(P/'native-build-receipt.json'),
   math_gate=check(),queue_gate=queuecheck(),memory_plan=json.loads((P/'memory-plan.json').read_text()),
-  native_controller_archive_sha256=native_archives,suite_execution_archive_sha256=suite_archives,
+  native_controller_archive_sha256=native_archives,suite_execution_archive_sha256=suite_archives,suite_warmup_receipt_sha256=suite_warmup_hash,
   max_compile_jobs=2,numeric_threads_per_rank=2,max_cpu_bound_processes=4,anonymous_memory_limit_bytes=10000000000,
   pending=['all coordinator device windows','device kernel timing and K2 selection','GPU controller equivalence and latency','complete twelve-prompt suite when all oracles arrive'])
  if admission is not None:
@@ -262,8 +285,17 @@ def main():
   assert admission['seal_fields']==list(consumed),'admission seal field coverage'
   digest=hashlib.sha256(json.dumps(consumed,sort_keys=True).encode()).hexdigest()
   assert admission['consumed_seal_sha256']==digest,'window admission consumed a different seal'
+ write_seal_outputs(receipt,names,binaries,bootstrap=bootstrap)
+
+def write_seal_outputs(receipt,names,binaries,*,bootstrap=False):
+ if bootstrap:
+  (P/'build-admission-candidate.json').write_text(json.dumps(receipt,indent=2)+'\n')
+  print('ADMISSION CANDIDATE ONLY; final build receipt unchanged')
+  return
  (P/'build-receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
  (P/'cpu-tests.json').write_text(json.dumps(dict(passed=True,device_executed=False,gate_count=len(names),gates=receipt['gate_receipts']),indent=2)+'\n')
  (P/'BINARY-HASHES.md').write_text('# Binary SHA256\n\nNo device binary ran. Ignored build trees remain for coordinator windows.\n\n| Binary | SHA256 |\n| --- | --- |\n'+''.join(f'| {n} | {h} |\n' for n,h in sorted(binaries.items())))
  print('SEALED',len(names),'CPU gate receipts;',len(binaries),'binaries')
-if __name__=='__main__':main()
+if __name__=='__main__':
+ parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--bootstrap',action='store_true')
+ main(bootstrap=parser.parse_args().bootstrap)

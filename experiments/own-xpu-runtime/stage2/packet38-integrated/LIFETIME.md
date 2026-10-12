@@ -19,8 +19,9 @@ unbounded spin. Cancellation/failure wakes both waits and is checked at bounded
 intervals. A stuck owner is reported and retained, never force-killed/retried.
 
 Request reset inventory: [ROLLBACK.md](ROLLBACK.md). Independent source reviews:
-[controller](review-native-concurrency.md), [token authority](review-token-authority.md),
-[reset](review-reset.md). Dynamic gates and unresolved tools are in the seal.
+[controller](review-resume-controller.md), [token authority](review-resume-authority.md),
+[reset](review-resume-reset.md). Earlier reviews remain historical evidence.
+Dynamic gates and remaining device qualification are in the seal.
 
 KD needs a small retained CPU reference after preparation cleanup. Keep the
 `output` directory named by `capture-run-incident-retrospective.json`,

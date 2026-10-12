@@ -1,0 +1,59 @@
+{
+  "schema": "packet38.seal-window-source-review.v1",
+  "reviewed_utc": "2026-10-12T06:34:24.825836+00:00",
+  "review_complete": true,
+  "source_review_passed": true,
+  "device_executed": false,
+  "rank_processes_started": 0,
+  "dynamic_final_seal_pending": true,
+  "source_sha256": {
+    "seal.py": "b36a396dcfcef1172ed560707b28d3d3949e5404727ad6ec9091539726d9b3d1",
+    "test_window_seal_admission.py": "9da8ba8d22c64e164dd044537414e48c6ac785b9685985df2a1750529cff5901",
+    "test_seal_bootstrap.py": "514a7192d35fe4015a45a23484acc8772809d30a4abf884588ef199ea5c7042c",
+    "window.py": "69b8ae293a20330816a96a44bd0da837f64b0d44498c5d90e655a7353cfd2f75",
+    "draft_window.py": "ad8e90f12f584cb5385b04986b85ea623ea8a6d7392092ed6b0a1f13ca45d8be",
+    "suite.py": "28cd8afff3df0eb0fd7eec1153f5e64b13873561e55423e75ac6326dc8fe8d4a"
+  },
+  "document_snapshots": {
+    "WINDOW.md": "567284b27d45ffa113fa729085ba81311ca2dc0f1ca32d9507da5e81699a8aba",
+    "DEADLINES.md": "91a24ba609f81b8cc8b157eede9c50d99641d095ada3f027c470633afcdd3801"
+  },
+  "findings": [
+    {
+      "id": "seal-final-admission",
+      "status": "fixed-source; actual admission pending",
+      "finding": "An optional admission receipt allowed a final-looking seal before complete wrapper admission rehearsal.",
+      "resolution": "Explicit --bootstrap writes only build-admission-candidate.json. Default final seal requires source/consumed-contract-bound window-seal-admission-gates.json. Production wrapper still reads only final build-receipt.json; candidate injection exists only in CPU test mocks."
+    },
+    {
+      "id": "seal-warmup-binding",
+      "status": "fixed-source; actual suite evidence pending",
+      "finding": "Binary/checker/manifest binding alone did not reject old Python suite evidence that warmed the first measured prompt.",
+      "resolution": "Final seal parses archived warmup receipt, verifies excluded status, two outputs, deterministic distinct five-token prompt against admitted input snapshots, token hash, EOS-only-warmup rule and complete reset assertion; final receipt binds warmup receipt hash."
+    },
+    {
+      "id": "window-disk-sequencing",
+      "status": "parent updating documentation",
+      "finding": "Keeping all sequential W2 pair final-state snapshots under build can exhaust the 3GB packet budget.",
+      "resolution_requested": "Archive each completed controller pair only after parity comparison, preserve K/KD prerequisites and captured CPU references for later windows; parent owns documentation."
+    }
+  ],
+  "confirmed": [
+    "Required K0/K1a/K1b/K2/W0p/KD windows present.",
+    "W2s/W2m/W2d/W2mc have both python/native commands; ngram/all-miss parity commands also present.",
+    "WS native MTP and WSs native none suite commands present, repeat2 explicit.",
+    "Deadline table agrees with CONFIG and every watchdog exceeds max(300,4*(estimate+17)).",
+    "Nice0 W parent, inherited taskset affinity, LD_LIBRARY_PATH unchanged, packet-local HOME and diagnostics labels documented.",
+    "cpu-handover-cost.json remains mandatory seal gate.",
+    "build.py seal still invokes main() without argv parsing; argparse exists only at standalone entry.",
+    "window-retention-gates.json is mandatory final/bootstrap source-bound gate."
+  ],
+  "mock_gate_receipt": "seal-bootstrap-gates.json",
+  "mock_gate_receipt_sha256": "9f699b1aae835b3d7344086ed41e4338e031065a2709ff21e84296741241bb7a",
+  "mock_checks": 7,
+  "limits": [
+    "No actual final seal, admission rehearsal or GPU window was executed by this review.",
+    "Existing/full queued CPU campaigns remain owned by parent; source review does not declare them passed.",
+    "The new mock gate tests seal output isolation and warmup refusal cases, not the complete all-window admission path."
+  ]
+}

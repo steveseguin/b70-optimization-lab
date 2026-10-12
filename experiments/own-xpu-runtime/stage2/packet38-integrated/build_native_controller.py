@@ -11,6 +11,8 @@ def main():
     rows=[]
     for source,stem in [('native_controller_test.cpp','native-controller'),('native_mailbox_fault_test.cpp','native-mailbox-fault')]:
         for suffix,compiler,flags in [('test','g++',['-O2']),('asan','g++',['-O1','-g','-fsanitize=address,undefined','-fno-omit-frame-pointer']),('tsan-llvm22',str(a.llvm),['-O1','-g','-fsanitize=thread','-fno-omit-frame-pointer'])]:
+            from storage import admit
+            admit(100_000_000)
             name=stem+'-'+suffix;binary=P/'build'/name
             cmd=['nice','-n','19','ionice','-c','3',compiler,'-std=c++20',*flags,'-fno-fast-math','-ffp-contract=off','-pthread',str(P/source),'-o',str(binary)]
             subprocess.run(cmd,check=True,timeout=300,env=env)

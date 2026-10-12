@@ -39,7 +39,13 @@ def contract(build):
 
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--build-receipt',type=Path,default=P/'build-receipt.json');a=ap.parse_args()
-    assert a.build_receipt.resolve()==(P/'build-receipt.json').resolve(),'window.main reads the packet final seal'
+    assert a.build_receipt.resolve() in {(P/'build-receipt.json').resolve(),(P/'build-admission-candidate.json').resolve()},'only packet final/candidate seal may be rehearsed'
+    supplied=a.build_receipt.read_text();supplied_sha=hashlib.sha256(supplied.encode()).hexdigest()
+    original_read_text=Path.read_text;original_sha=window.sha
+    def seal_read(path,*args,**kwargs):
+        return supplied if path.resolve()==(P/'build-receipt.json').resolve() else original_read_text(path,*args,**kwargs)
+    def seal_sha(path):
+        return supplied_sha if Path(path).resolve()==(P/'build-receipt.json').resolve() else original_sha(path)
     build=json.loads(a.build_receipt.read_text());consumed=contract(build)
     consumed_hash=hashlib.sha256(json.dumps(consumed,sort_keys=True).encode()).hexdigest()
     source_before={name:pp.sha(P/name) for name in ('window.py','fixture_support.py','draft_window.py','test_window_seal_admission.py')}
@@ -66,6 +72,10 @@ def main():
                       '--dispatch',str(P/'dispatch-p38.json'),'--suite-manifest',str(P.parent/'suite-inputs-20261012/suite-manifest.json')]
                 for key in ('k0','k1a','k1b','k2','w0p','kd'):argv.extend(['--'+key,str(root/('mock-'+key))])
                 with contextlib.ExitStack() as stack:
+                    # CPU test only: inject the candidate at the fixed final-seal read.
+                    # The production wrapper has no candidate option or bypass.
+                    stack.enter_context(patch.object(Path,'read_text',seal_read))
+                    stack.enter_context(patch.object(window,'sha',seal_sha))
                     stack.enter_context(patch.dict(os.environ,env,clear=True))
                     stack.enter_context(patch('sys.argv',argv))
                     stack.enter_context(patch.object(window.os,'getpriority',return_value=0 if name.startswith('W') else 19))
@@ -91,7 +101,7 @@ def main():
                 rows.append(dict(window=name,controller=controller,admission_reached_blocked_launcher=True,device_executed=False,window_passed=False,
                                  prerequisite_and_host_health_inputs='explicit CPU mocks',retained_capture_admission_exercised=name=='KD'))
         assert source_before=={name:pp.sha(P/name) for name in source_before},'source changed during admission test'
-        result=dict(passed=True,device_executed=False,gates=len(rows)+1,seal_fields=list(consumed),consumed_seal_sha256=consumed_hash,
+        result=dict(passed=True,device_executed=False,gates=len(rows)+1,rehearsed_seal=str(a.build_receipt.resolve().relative_to(P)),seal_fields=list(consumed),consumed_seal_sha256=consumed_hash,
                     source_sha256=source_before,rows=rows,meaning='CPU admission/field-contract test passed; every window remained failed and no launch executed')
         pp.save(P/'window-seal-admission-gates.json',result);print(json.dumps(result))
     finally:shutil.rmtree(root)

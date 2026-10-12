@@ -10,6 +10,7 @@ commands use the sealed device binaries; CPU preparation must never run them.
 Shell setup (substitute the admitted first card):
 
 ```bash
+set -e
 packet38=experiments/own-xpu-runtime/stage2/packet38-integrated
 packet38_card=0
 packet38_oracle=experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261011/incident-retrospective
@@ -37,18 +38,26 @@ packet38_window --window W0p --output "$packet38/build/W0p"
 nice -n 19 ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 -B "$packet38/window.py" --authorized-device-window --window KD --card "$packet38_card" --output "$packet38/build/KD" --input "$packet38/build/input" --dispatch "$packet38/build/K2/run0/dispatch-measured.json" --k0 "$packet38/build/K0/window.json" --k1a "$packet38/build/K1a/window.json" --k1b "$packet38/build/K1b/window.json" --k2 "$packet38/build/K2/window.json"
 packet38_window --window W2s --controller python --output "$packet38/build/W2s-python"
 packet38_window --window W2s --controller native --output "$packet38/build/W2s-native"
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$packet38/retain_window.py" --pair W2s
 packet38_window --window W2m --controller python --output "$packet38/build/W2m-python"
 packet38_window --window W2m --controller native --output "$packet38/build/W2m-native"
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$packet38/retain_window.py" --pair W2m
 packet38_window --window W2d --controller python --output "$packet38/build/W2d-python"
 packet38_window --window W2d --controller native --output "$packet38/build/W2d-native"
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$packet38/retain_window.py" --pair W2d
 packet38_window --window W2n --controller python --output "$packet38/build/W2n-python"
 packet38_window --window W2n --controller native --output "$packet38/build/W2n-native"
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$packet38/retain_window.py" --pair W2n
 packet38_window --window W2x --controller python --output "$packet38/build/W2x-python"
 packet38_window --window W2x --controller native --output "$packet38/build/W2x-native"
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$packet38/retain_window.py" --pair W2x
 packet38_window --window W2mc --controller python --output "$packet38/build/W2mc-python"
 packet38_window --window W2mc --controller native --output "$packet38/build/W2mc-native"
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$packet38/retain_window.py" --pair W2mc
 packet38_window --window WS --controller native --suite-manifest "$packet38_suite" --repeat 2 --output "$packet38/build/WS"
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$packet38/retain_window.py" --suite WS
 packet38_window --window WSs --controller native --suite-manifest "$packet38_suite" --repeat 2 --output "$packet38/build/WSs"
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$packet38/retain_window.py" --suite WSs
 ```
 
 W2s/WSs use draft none; W2m/W2mc/WS use MTP. W2n uses prompt-local n-grams. W2x is an all-miss oracle-derived diagnostic.
@@ -64,20 +73,16 @@ receipt dryruns test its schema/refusal path only; coordinator K0 remains mandat
 K1a/b use fresh owners; KD uses two fresh rank1 owners. Keep all receipts before
 teardown and preserve retained ownership on a fault. No automatic retry.
 
-Compare each completed real-model controller pair before interpreting timings:
-
-```bash
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$packet38/compare_controllers.py" --python "$packet38/build/W2s-python/run" --native "$packet38/build/W2s-native/run" --require-final-state --output "$packet38/build/W2s-controller-parity.json"
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$packet38/compare_controllers.py" --python "$packet38/build/W2m-python/run" --native "$packet38/build/W2m-native/run" --require-final-state --output "$packet38/build/W2m-controller-parity.json"
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$packet38/compare_controllers.py" --python "$packet38/build/W2d-python/run" --native "$packet38/build/W2d-native/run" --require-final-state --output "$packet38/build/W2d-controller-parity.json"
-```
-
-Additional controller equivalence modes (all state dumps occur after timed decode):
-
-```bash
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$packet38/compare_controllers.py" --python "$packet38/build/W2n-python/run" --native "$packet38/build/W2n-native/run" --require-final-state --output "$packet38/build/W2n-controller-parity.json"
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$packet38/compare_controllers.py" --python "$packet38/build/W2x-python/run" --native "$packet38/build/W2x-native/run" --require-final-state --output "$packet38/build/W2x-controller-parity.json"
-```
+Run the sequence with shell error checking (`set -e`) so a failed window or
+comparison stops it. After each pair, `retain_window.py` compares tokens,
+guesses, hit/miss events, target/draft final states and fixture hashes, then
+archives and verifies all text/nested compressed evidence and every raw-file
+hash before deleting that pair's scratch. Its parity/retention receipt lives
+under `evidence/`. No speed verdict follows from one pair. Failed windows are
+never deleted by this helper. K0/K1/K2/W0p/KD prerequisites remain intact.
+Suite windows are likewise archived before the next one, keeping the ignored
+build tree below 3 GB. Use unique output/retention names for a new campaign;
+the listed names describe the first sealed campaign only.
 
 `dispatch-p38.json` is the concrete unmeasured candidate map: p33 dense/expert
 kernels, packet30 SG32 attention, packet30 HC gates/shared-down and small HC/FFN
