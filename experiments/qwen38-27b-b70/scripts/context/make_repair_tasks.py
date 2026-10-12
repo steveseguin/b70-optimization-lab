@@ -22,12 +22,19 @@ The library is more-itertools 10.7.0 (MIT; sdist checked by sha256, never instal
      R0  never change anything under /app/tests                                  (instruction)
      R1  every line added or changed in the library ends with the comment `# fixed`
      R2  after each fix, one line in /app/FIXES.md: `<ticket> | <function> | <a few words>`
-     R3  only for fixes in recipes.py: the function's name also goes into /app/RECIPES.txt   (a rule by condition)
+     R3  only for fixes in recipes.py: the function's name also goes into /app/RECIPES.txt   (a rule by condition:
+         listing a more.py fix there breaks it too; the recipes.py tickets come after its notice)
 
   The grader (tests/grade.py, run in the container after the agent stops) restores the original tests, runs each
   ticket's test classes against the agent's library, and checks each rule for every ticket that came after it:
   a ticket is `fixed` when its tests pass and `clean` when it is fixed and no rule in force was broken for it.
   reward = clean / N.
+
+  Safety: the library's tests are run only inside containers without network; every test process is capped at
+  800 MiB of address space and every shell the agent starts at 1.5 GiB; no two chosen defects break each other's
+  test class. Screening keeps several cores busy for some minutes: run the builder only when no model server is up.
+  The builder ends with a self-test (the real image, `next` through the queue, `t` once, six scripted solutions with
+  known scores) and exits non-zero if any count is off.
 
   make_repair_tasks.py --src DIR --out TASKS_DIR [--n 40] [--seed 0] [--image python:3.12-slim]
 """
