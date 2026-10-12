@@ -1334,25 +1334,30 @@ at item 104, the last five compared by hand with the expected values) and the NO
 the final item the model wrote the 14 final values with `cat > /app/answers.json`, and the 25 answers were gone.
 **Seed 1, 45/46:** one counter stale in the final list (`sahidi23`: 339 for 423).
 
-**Both come from one chain, and it starts with something the proxy does and the harness does not.** After an
-in-place cut the newest exchange stays in view (a real agent needs the result it has just fetched). Its assistant
-message was written about the result *before* it, which the NOTES of that cut already cover. At the next notes call
-that message is the first of the turns to be noted, and the model writes that result's changes again:
+**Both come from the same weak point: a notes reply is questioned, the model gives no usable second reply, and the
+whole cut falls back to the full rewrite.** Last night's X32m was asked the same kinds of question and always
+answered; today it did not, twice.
 
-1. `pediba69: opened at 214` (from the remark about item 8, already noted). The value check looks in the turns
-   being noted, does not find 214, and asks. The model answers with nothing, twice. The attempt fails and the
-   turns go to the ordinary cut, a full rewrite.
-2. On seed 1 that full rewrite lost a change (`yomoke87`, the -17 of item 13). On seed 0 it added four "rules" that
-   restate the task's opening message, among them "Final item lists 14 counters to report; write /app/answers.json
-   mapping each to its current integer value". Rules are repeated at every question item; at the final item the
-   model did exactly that.
-3. `sahidi23: 423 - 84 = 339`: a +84 already in the NOTES, written again and the wrong way round. The new amount
-   check questioned it (84 is nowhere in those turns); the model insisted, and "the second reply stands" took it.
+- *Seed 0, at the first cut.* The count check asked about the three confidential counters (the rule sentence of
+  item 1 names them without changing them: a known false alarm). The model answered "Let me verify each mention in
+  the archive before replying", twice (it may not call a tool in a notes call). The attempt failed and the turns
+  went to the ordinary cut. That full rewrite wrote six RULES lines instead of two: four restate the task's
+  opening message, among them "Final item lists 14 counters to report; write /app/answers.json mapping each to
+  its current integer value". Rules are repeated at every question item; at the final item the model did exactly
+  that.
+- *Seed 1, at the second cut.* Here the trigger is something the proxy does and the harness does not. After an
+  in-place cut the newest exchange stays in view (a real agent needs the result it has just fetched). Its
+  assistant message was written about the result *before* it, which the NOTES of that cut already cover; at the
+  next notes call that message is the first of the turns to be noted, and the model wrote that result's changes
+  again: `pediba69: opened at 214` (item 8, already noted). The value check looks in the turns being noted, does
+  not find 214, and asks. The model answered with nothing, twice. The full rewrite that followed lost a change
+  (`yomoke87`, the -17 of item 13).
+- *Seed 1, the stale answer.* The same overlap, not caught: `sahidi23: 423 - 84 = 339`, a +84 already in the
+  NOTES, written again and the wrong way round. The new amount check questioned it (84 is nowhere in those
+  turns); the model insisted, and "the second reply stands" took it.
 
-Last night's X32m had the same overlap and no failed attempt: there the count check asked first, in words the
-model always answered. Today's counting fix removed most count questions, which exposed the working question's
-empty replies. Replayed on saved sessions, a line for a name that none of the turns being noted mentions occurs
-in 5 of 77 cuts at 1M (X32m) and 2 of 17 at 240K.
+Replayed on saved sessions, a line for a name that none of the turns being noted mentions occurs in 5 of 77 cuts
+at 1M (X32m) and 2 of 17 at 240K: the overlap is not rare, the checks had been absorbing it.
 
 **Fix (arm X32n2, proxy only, unit-tested; the queue was reordered so that the two harness runs go first):**
 the notes request says what that first message is; with the checks on, a line for a name that none of the turns
