@@ -30,7 +30,12 @@ The library is more-itertools 10.7.0 (MIT; sdist checked by sha256, never instal
   a ticket is `fixed` when its tests pass and `clean` when it is fixed and no rule in force was broken for it.
   reward = clean / N.
 
-  Safety: the library's tests are run only inside containers without network; every test process is capped at
+  The task container: the harness cannot run it without network on this host (its `no-network` mode needs docker
+  buildx for a sidecar image), so pip and anything that honours the proxy variables are pointed at a dead address
+  and the instruction forbids fetching another copy of the library; the runner lists any command of a run that
+  touches pip, curl, wget, urllib or the proxy variables.
+
+  Safety: the builder's own screening and self-test run in containers without network; every test process is capped at
   800 MiB of address space and every shell the agent starts at 1.5 GiB; no two chosen defects break each other's
   test class. Screening keeps several cores busy for some minutes: run the builder only when no model server is up.
   The builder ends with a self-test (the real image, `next` through the queue, `t` once, six scripted solutions with
@@ -299,6 +304,8 @@ COPY next t /usr/local/bin/
 RUN chmod +x /usr/local/bin/next /usr/local/bin/t && echo 'ulimit -v 1572864 2>/dev/null' > /etc/repair-limits.sh \
     && sleep 1 && touch /opt/repair/.built
 ENV BASH_ENV=/etc/repair-limits.sh
+ENV http_proxy=http://127.0.0.1:9 https_proxy=http://127.0.0.1:9 HTTP_PROXY=http://127.0.0.1:9 HTTPS_PROXY=http://127.0.0.1:9 \\
+    PIP_NO_INDEX=1 PIP_DISABLE_PIP_VERSION_CHECK=1
 WORKDIR /app
 """
 
@@ -644,7 +651,6 @@ def build(src_root: Path, kept: list[dict], out: Path, n: int, seed: int, image:
         timeout_sec = 132300.0
 
         [environment]
-        network_mode = "no-network"
         memory_mb = 2048
         cpus = 2
         """))
