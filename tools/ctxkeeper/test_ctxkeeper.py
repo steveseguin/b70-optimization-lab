@@ -302,35 +302,74 @@ class InPlace(unittest.TestCase):
         self.run_conversation(keeper, 6, start=6)
         self.assertEqual(len(model.notes_requests), tried)
 
-    def test_an_open_question_from_a_tool_result_survives_the_ordinary_cut(self):
-        """The in-place cut waits while such a question is open; the ordinary cut does not, and it must not take the
-        question out of view (the harness arm lost seven answers at 1M that way)."""
-        model = LedgerModel()
-        keeper = self.keeper(model, budget=2600, think_when=r"(?m)^ASK ", think_until=r"(?m)^ITEM \d+:", inplace_tokens=100000)
+    THINK = r"(?m)^(?:ASK \S+?:|QUERY \S+)|^PROBE:|Traceback|\(exit_code=[1-9-]"     # as the campaigns set them
+    RECITE = r"(?m)^(?:ASK \S+?:|QUERY \S+)"
+    UNTIL = r"(?m)^ITEM \d+:"
+
+    def asking(self, extra=0):
+        """Three items, a question item, then the model reads a lot before it answers (one read fails)."""
         msgs = conversation(3)
         msgs.append({"role": "assistant", "content": "", "tool_calls": [{"id": "q", "type": "function", "function": {"name": "bash", "arguments": "{}"}}]})
-        msgs.append({"role": "tool", "tool_call_id": "q", "content": "PROBE: answer now.\nASK p1_1: What value does abcd01 hold?"})
-        for i in range(12):                                                        # the model reads a lot before it answers
-            msgs.append({"role": "assistant", "content": "", "tool_calls": [{"id": f"r{i}", "type": "function", "function": {"name": "bash", "arguments": json.dumps({"command": f"cat part{i}"})}}]})
-            msgs.append({"role": "tool", "tool_call_id": f"r{i}", "content": "archived text " + "filler " * 150})
+        msgs.append({"role": "tool", "tool_call_id": "q", "content": "PROBE: answer now.\nASK p1_1: What value does abcd01 hold?" + "\nASK more: x" * extra})
+        steps = []
+        for i in range(12):
+            call = {"role": "assistant", "content": "", "tool_calls": [{"id": f"r{i}", "type": "function", "function": {"name": "bash", "arguments": json.dumps({"command": f"cat part{i}"})}}]}
+            out = "cat: part: No such file\n\n(exit_code=1)" if i == 5 else "archived text " + "filler " * 150
+            steps.append([call, {"role": "tool", "tool_call_id": f"r{i}", "content": out}])
+        return msgs, steps
+
+    def test_an_open_question_from_a_tool_result_survives_every_cut(self):
+        """The in-place cut waits while such a question is open; the ordinary cut does not, and it must not take the
+        question out of view (the harness arm lost seven answers at 1M that way). A failed command, a client's
+        nudge, or enough turns for an in-place cut do not unpin it; the next ordinary item does."""
+        model = LedgerModel()
+        keeper = self.keeper(model, budget=2600, think_when=self.THINK, recite_when=self.RECITE, think_until=self.UNTIL, inplace_tokens=300)
+        msgs, steps = self.asking()
+        for i, step in enumerate(steps):
+            msgs += step
+            if i == 8:
+                msgs.append({"role": "user", "content": "(No tool call in your last turn.)"})
             keeper.complete({"model": "m", "messages": list(msgs)})
         s = next(iter(keeper.sessions.values()))
-        self.assertGreater(s.state["cuts"], 0)
-        self.assertEqual(s.state["inplace_cuts"], 0)                               # the question was open: only ordinary cuts
-        self.assertIsNotNone(s.state["kept_open"])
+        self.assertGreater(s.state["cuts"], 1)
+        self.assertEqual(s.state["inplace_cuts"], 0)                               # enough turns for one, but the question is open
         view = model.requests[-1]["messages"]
         shown = [m for m in view if str(m.get("content")).startswith(ck.OPEN_HEAD)]
         self.assertEqual(len(shown), 1)
         self.assertEqual(shown[0]["role"], "user")
         self.assertIn("ASK p1_1: What value does abcd01 hold?", shown[0]["content"])
         self.assertTrue(view[2]["content"].startswith("[[NOTES kept"))             # after the opening two and NOTES
-        self.assertIs(view[3], shown[0])
+        self.assertIn(shown[0], view[3:5])                                         # beside the kept user message, if any
+        self.assertNotIn("No such file", shown[0]["content"])                      # the failed command did not take its place
         # the next ordinary item closes it
         msgs.append({"role": "assistant", "content": "", "tool_calls": [{"id": "n", "type": "function", "function": {"name": "bash", "arguments": json.dumps({"command": "next"})}}]})
         msgs.append({"role": "tool", "tool_call_id": "n", "content": "ITEM 4: the clerk moved counter abcd04 to 28. " + "filler " * 60})
         keeper.complete({"model": "m", "messages": list(msgs)})
         self.assertIsNone(s.state["kept_open"])
         self.assertFalse([m for m in model.requests[-1]["messages"] if str(m.get("content")).startswith(ck.OPEN_HEAD)])
+
+    def test_nothing_is_pinned_without_a_pattern_that_closes_it_and_a_long_question_says_where_it_is_cut(self):
+        model = LedgerModel()
+        keeper = self.keeper(model, budget=2600, think_when=self.THINK, recite_when=self.RECITE, inplace_tokens=100000)
+        msgs, steps = self.asking()
+        for step in steps:
+            msgs += step
+            keeper.complete({"model": "m", "messages": list(msgs)})
+        s = next(iter(keeper.sessions.values()))
+        self.assertGreater(s.state["cuts"], 0)
+        self.assertIsNone(s.state["kept_open"])                                    # nothing could ever close it: not kept
+        old = ck.OPEN_CHARS
+        ck.OPEN_CHARS = 60
+        self.addCleanup(setattr, ck, "OPEN_CHARS", old)
+        model2 = LedgerModel()
+        k2 = self.keeper(model2, budget=2600, think_when=self.THINK, recite_when=self.RECITE, think_until=self.UNTIL, inplace_tokens=100000)
+        msgs, steps = self.asking(extra=20)
+        for step in steps:
+            msgs += step
+            k2.complete({"model": "m", "messages": list(msgs)})
+        shown = [m["content"] for m in model2.requests[-1]["messages"] if str(m.get("content")).startswith(ck.OPEN_HEAD)]
+        self.assertEqual(len(shown), 1)
+        self.assertRegex(shown[0].splitlines()[-1], r"^\[cut here: \d+ more characters; `recall` has the whole message\]$")
 
     def test_full_mode_ignores_a_kept_user_message_left_in_saved_state(self):
         model = Model()

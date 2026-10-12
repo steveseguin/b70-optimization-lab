@@ -1,0 +1,194 @@
+### 03:12:42 campaign 11 start; queue /mnt/fast-ai/bench-results/context-longrun-20261012/QUEUE11.txt (4 lines); MemAvailable 13045 MiB
+### 03:12:42 queue checked: X32i rules 0 2400;X32i rules 1 2400;N32k crule 0 2400;R32b crule 0 2400;
+### 03:12:42 stopping the Gemma service (front door state: 0 0)
+### 03:12:48 cards free; MemAvailable 13371 MiB
+Running as unit: ctx-fp8-tp2-server.service; invocation ID: ff5b5e2e82874935804b83c6eb2f42a2
+### 03:15:18 server ready after ~165 s; MemAvailable 2831 MiB
+Running as unit: ctx-keeper-proxy.service; invocation ID: e886fd7cfaa847149f29952de7b65de8
+### 03:15:19 [X32i, client-rules, seed 0] start (cap 2400s); MemAvailable 2780 MiB; server totals: prompt 15 cached 0 generated 64
+### 03:25:30 [X32i, client-rules, seed 0] done rc=0 in 10 min 12 s; MemAvailable 2629 MiB; server totals: prompt 2119143 cached 1574976 generated 37358
+   rc=0 ledger score 1.0000 raw 1.0000 ({'correct': 39, 'blank': 0, 'wrong': 0, 'stale': 0}) void=False
+   RESULT X32i seed 0: 39/39 void=False violations=0 archive={'files': 0, 'verbatim': 0} counts={'correct': 39, 'blank': 0, 'wrong': 0, 'stale': 0}
+   by type: final 14/14  current 5/5  old_value 5/5  who 5/5  rule 5/5  procedure 5/5
+   calls 154 (main loop 154), main-loop tokens written 11856, prompt 1563192 cached 1090752
+   proxy: cuts 17 (in place 17, failed attempts 0, asked again 8), messages archived 290, recalls 17, full-rewrite notes failed 0, notes calls: read 431259 of which cached 386880, written 21883, restarts 0, chars per token 4.0208
+Running as unit: ctx-keeper-proxy.service; invocation ID: 357a860a7b204f81b6eb57fde5ec3818
+### 03:25:34 [X32i, client-rules, seed 1] start (cap 2400s); MemAvailable 2618 MiB; server totals: prompt 2119143 cached 1574976 generated 37358
+### 03:37:48 [X32i, client-rules, seed 1] done rc=0 in 12 min 15 s; MemAvailable 2581 MiB; server totals: prompt 4299348 cached 3202368 generated 85967
+   rc=0 ledger score 0.8696 raw 0.8696 ({'correct': 40, 'blank': 0, 'wrong': 6, 'stale': 0}) void=False
+   RESULT X32i seed 1: 40/46 void=False violations=0 archive={'files': 0, 'verbatim': 0} counts={'correct': 40, 'blank': 0, 'wrong': 6, 'stale': 0}
+   by type: final 16/21  current 4/5  old_value 5/5  who 5/5  rule 5/5  procedure 5/5
+   calls 155 (main loop 155), main-loop tokens written 14521, prompt 1564378 cached 1091584
+   proxy: cuts 17 (in place 17, failed attempts 0, asked again 12), messages archived 292, recalls 16, full-rewrite notes failed 0, notes calls: read 505636 of which cached 452608, written 27791, restarts 0, chars per token 3.9628
+### 03:37:51 [N32k, client-crule, seed 0] start (cap 2400s); MemAvailable 2583 MiB; server totals: prompt 4299348 cached 3202368 generated 85967
+### 03:47:31 [N32k, client-crule, seed 0] done rc=2 in 9 min 40 s; MemAvailable 2566 MiB; server totals: prompt 6346412 cached 4723264 generated 117584
+   rc=0 ledger score 0.9744 raw 0.9744 ({'correct': 38, 'blank': 0, 'wrong': 1, 'stale': 0}) void=False
+   RESULT N32k seed 0: 38/39 void=False violations=0 archive={'files': 145, 'verbatim': 145} counts={'correct': 38, 'blank': 0, 'wrong': 1, 'stale': 0}
+   by type: final 14/14  current 5/5  old_value 5/5  who 5/5  rule 5/5  procedure 4/5
+   rule by condition: 7/7 of the questions whose answer is the word overdrawn; 31/32 of the others
+   calls 187 (main loop 169), main-loop tokens written 10544, prompt 1683157 cached 1215552
+   keeper: {'notes_mode': 'delta', 'notes_calls': 18, 'notes_failed': 0, 'delta_fallbacks': 0, 'sums_corrected': 1, 'rules_put_back': 0, 'recitals': 6, 'retrievals': 0, 'retrieved_chars': 0, 'repeats_refused': 0, 'thinking_on_calls': 28, 'answers_put_back': 0} rules kept: 3
+   notes calls: tokens written 21073, read 363907, cuts 15, fallbacks []
+### 03:47:34 [R32b, client-crule, seed 0] start (cap 2400s); MemAvailable 2569 MiB; server totals: prompt 6346412 cached 4723264 generated 117584
+### 03:57:56 [R32b, client-crule, seed 0] done rc=0 in 10 min 22 s; MemAvailable 2550 MiB; server totals: prompt 9726763 cached 7215104 generated 137938
+   rc=0 ledger score 0.7949 raw 0.7949 ({'correct': 31, 'blank': 0, 'wrong': 8, 'stale': 0}) void=False
+   RESULT R32b seed 0: 31/39 void=False violations=0 archive={'files': 0, 'verbatim': 0} counts={'correct': 31, 'blank': 0, 'wrong': 8, 'stale': 0}
+   by type: final 12/14  current 2/5  old_value 2/5  who 5/5  rule 5/5  procedure 5/5
+   rule by condition: 0/7 of the questions whose answer is the word overdrawn; 31/32 of the others
+   calls 161 (main loop 161), main-loop tokens written 20354, prompt 3380351 cached 2491840
+   keeper: {'notes_mode': 'none', 'notes_calls': 0, 'notes_failed': 0, 'delta_fallbacks': 0, 'sums_corrected': 0, 'rules_put_back': 0, 'recitals': 0, 'retrievals': 6, 'retrieved_chars': 75592, 'repeats_refused': 0, 'thinking_on_calls': 20, 'answers_put_back': 0} rules kept: 0
+   notes calls: tokens written 0, read 0, cuts 27, fallbacks []
+### 03:58:00 [X32m, client-rules, seed 1] start (cap 2400s); MemAvailable 2545 MiB; server totals: prompt 9726763 cached 7215104 generated 137938
+### 04:11:07 [X32m, client-rules, seed 1] done rc=0 in 13 min 8 s; MemAvailable 2547 MiB; server totals: prompt 12016810 cached 8937344 generated 190868
+   rc=0 ledger score 1.0000 raw 1.0000 ({'correct': 46, 'blank': 0, 'wrong': 0, 'stale': 0}) void=False
+   RESULT X32m seed 1: 46/46 void=False violations=0 archive={'files': 0, 'verbatim': 0} counts={'correct': 46, 'blank': 0, 'wrong': 0, 'stale': 0}
+   by type: final 21/21  current 5/5  old_value 5/5  who 5/5  rule 5/5  procedure 5/5
+   calls 155 (main loop 155), main-loop tokens written 14621, prompt 1572622 cached 1098240
+### 04:11:10 [X32m, client-rules, seed 0] start (cap 2400s); MemAvailable 2516 MiB; server totals: prompt 12016810 cached 8937344 generated 190868
+### 04:21:20 [X32m, client-rules, seed 0] done rc=0 in 10 min 10 s; MemAvailable 2553 MiB; server totals: prompt 14135938 cached 10512320 generated 228162
+   rc=0 ledger score 1.0000 raw 1.0000 ({'correct': 39, 'blank': 0, 'wrong': 0, 'stale': 0}) void=False
+   RESULT X32m seed 0: 39/39 void=False violations=0 archive={'files': 0, 'verbatim': 0} counts={'correct': 39, 'blank': 0, 'wrong': 0, 'stale': 0}
+   by type: final 14/14  current 5/5  old_value 5/5  who 5/5  rule 5/5  procedure 5/5
+   calls 154 (main loop 154), main-loop tokens written 11856, prompt 1563192 cached 1090752
+### 04:21:23 [N32m, client-crule, seed 1] start (cap 2400s); MemAvailable 2534 MiB; server totals: prompt 14135938 cached 10512320 generated 228162
+### 04:32:46 [N32m, client-crule, seed 1] done rc=0 in 11 min 23 s; MemAvailable 2495 MiB; server totals: prompt 16275777 cached 12120576 generated 269554
+   rc=0 ledger score 0.9348 raw 0.9348 ({'correct': 43, 'blank': 0, 'wrong': 3, 'stale': 0}) void=False
+   RESULT N32m seed 1: 43/46 void=False violations=0 archive={'files': 137, 'verbatim': 137} counts={'correct': 43, 'blank': 0, 'wrong': 3, 'stale': 0}
+   by type: final 21/21  current 5/5  old_value 5/5  who 5/5  rule 5/5  procedure 2/5
+   rule by condition: 9/9 of the questions whose answer is the word overdrawn; 34/37 of the others
+   calls 189 (main loop 170), main-loop tokens written 14328, prompt 1745807 cached 1274624
+   keeper: {'notes_mode': 'delta', 'notes_calls': 19, 'notes_failed': 0, 'delta_fallbacks': 0, 'sums_corrected': 0, 'rules_put_back': 0, 'recitals': 6, 'retrievals': 0, 'retrieved_chars': 0, 'repeats_refused': 0, 'thinking_on_calls': 29, 'answers_put_back': 0} rules kept: 3
+   notes calls: tokens written 27064, read 394032, cuts 14, fallbacks []
+### 04:32:49 [R32b, client-crule, seed 1] start (cap 2400s); MemAvailable 2513 MiB; server totals: prompt 16275777 cached 12120576 generated 269554
+### 04:42:39 [R32b, client-crule, seed 1] done rc=0 in 9 min 50 s; MemAvailable 2521 MiB; server totals: prompt 19616528 cached 14562496 generated 287477
+   rc=0 ledger score 0.7826 raw 0.7826 ({'correct': 36, 'blank': 0, 'wrong': 10, 'stale': 0}) void=False
+   RESULT R32b seed 1: 36/46 void=False violations=0 archive={'files': 0, 'verbatim': 0} counts={'correct': 36, 'blank': 0, 'wrong': 10, 'stale': 0}
+   by type: final 15/21  current 4/5  old_value 2/5  who 5/5  rule 5/5  procedure 5/5
+   rule by condition: 0/9 of the questions whose answer is the word overdrawn; 36/37 of the others
+   calls 160 (main loop 160), main-loop tokens written 17923, prompt 3340751 cached 2441920
+   keeper: {'notes_mode': 'none', 'notes_calls': 0, 'notes_failed': 0, 'delta_fallbacks': 0, 'sums_corrected': 0, 'rules_put_back': 0, 'recitals': 0, 'retrievals': 6, 'retrieved_chars': 78619, 'repeats_refused': 0, 'thinking_on_calls': 19, 'answers_put_back': 0} rules kept: 0
+   notes calls: tokens written 0, read 0, cuts 28, fallbacks []
+### 04:42:42 [X32m, client-1m, seed 0] start (cap 6000s); MemAvailable 2496 MiB; server totals: prompt 19616528 cached 14562496 generated 287477
+### 05:58:27 [X32m, client-1m, seed 0] done rc=0 in 75 min 45 s; MemAvailable 13500 MiB; server totals: prompt 0 cached 0 generated 0
+   rc=0 ledger score 0.9474 raw 0.9474 ({'correct': 216, 'blank': 6, 'wrong': 6, 'stale': 0}) void=False
+   RESULT X32m seed 0: 216/228 void=False violations=0 archive={'files': 0, 'verbatim': 0} counts={'correct': 216, 'blank': 6, 'wrong': 6, 'stale': 0}
+   by type: final 25/25  current 56/58  old_value 53/58  who 26/29  rule 28/29  procedure 28/29
+   calls 662 (main loop 662), main-loop tokens written 79752, prompt 7299162 cached 5039424
+### 05:58:30 server is gone; no further arms (no restart)
+### 05:58:30 stopping the server; MemAvailable 13513 MiB
+server state: failed RuntimeError: Server exited 137 stop_confirmed True
+### 05:58:35 MEMORY GUARD fired: available host memory fell to 1.58 GiB
+host memory available while the server ran: min 1.58  1% 2.08  median 2.24 GiB  (19818 samples)
+### 05:58:40 client-rules: probes by distance and type, all arms so far
+# 1. probe accuracy (correct/n=acc, pooled over trials; distance in items)
+arm	trials	probes	d1-4	d5-24	d25-99	d100-399	d400+	t:current	t:old_value	t:procedure	t:rule	t:who	final_query	total_correct
+B32ir	1	6/25=0.24	4/5=0.80	2/9=0.22	0/6=0.00	0/5=0.00	n/a	3/5=0.60	3/5=0.60	0/5=0.00	0/5=0.00	0/5=0.00	12/14	18/39
+B32ira	1	20/25=0.80	5/5=1.00	9/9=1.00	3/6=0.50	3/5=0.60	n/a	5/5=1.00	5/5=1.00	5/5=1.00	0/5=0.00	5/5=1.00	13/14	33/39
+B32ira-free	1	19/25=0.76	3/5=0.60	8/9=0.89	4/6=0.67	4/5=0.80	n/a	3/5=0.60	5/5=1.00	3/5=0.60	4/5=0.80	4/5=0.80	9/14	28/39
+B32iraR	1	22/25=0.88	5/5=1.00	8/9=0.89	6/6=1.00	3/5=0.60	n/a	4/5=0.80	4/5=0.80	4/5=0.80	5/5=1.00	5/5=1.00	13/14	35/39
+N32c35	1	24/25=0.96	4/5=0.80	9/9=1.00	6/6=1.00	5/5=1.00	n/a	4/5=0.80	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	14/14	38/39
+N32d	1	25/25=1.00	5/5=1.00	9/9=1.00	6/6=1.00	5/5=1.00	n/a	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	14/14	39/39
+N32e	1	25/25=1.00	5/5=1.00	9/9=1.00	6/6=1.00	5/5=1.00	n/a	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	14/14	39/39
+N32e25	1	25/25=1.00	5/5=1.00	9/9=1.00	6/6=1.00	5/5=1.00	n/a	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	14/14	39/39
+N32e35	1	24/25=0.96	4/5=0.80	9/9=1.00	6/6=1.00	5/5=1.00	n/a	4/5=0.80	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	12/14	36/39
+N32f	1	24/25=0.96	4/5=0.80	9/9=1.00	6/6=1.00	5/5=1.00	n/a	4/5=0.80	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	13/14	37/39
+N32j	2	50/50=1.00	10/10=1.00	17/17=1.00	13/13=1.00	10/10=1.00	n/a	10/10=1.00	10/10=1.00	10/10=1.00	10/10=1.00	10/10=1.00	35/35	85/85
+N32j35	1	25/25=1.00	5/5=1.00	9/9=1.00	6/6=1.00	5/5=1.00	n/a	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	14/14	39/39
+N32sr	1	25/25=1.00	5/5=1.00	8/8=1.00	7/7=1.00	5/5=1.00	n/a	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	21/21	46/46
+N32u	2	50/50=1.00	10/10=1.00	17/17=1.00	13/13=1.00	10/10=1.00	n/a	10/10=1.00	10/10=1.00	10/10=1.00	10/10=1.00	10/10=1.00	35/35	85/85
+N32u6	1	25/25=1.00	5/5=1.00	9/9=1.00	6/6=1.00	5/5=1.00	n/a	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	14/14	39/39
+N32v	1	25/25=1.00	5/5=1.00	8/8=1.00	7/7=1.00	5/5=1.00	n/a	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	20/21	45/46
+N32w	1	25/25=1.00	5/5=1.00	9/9=1.00	6/6=1.00	5/5=1.00	n/a	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	14/14	39/39
+N32x	1	25/25=1.00	5/5=1.00	9/9=1.00	6/6=1.00	5/5=1.00	n/a	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	14/14	39/39
+N32xth	1	25/25=1.00	5/5=1.00	9/9=1.00	6/6=1.00	5/5=1.00	n/a	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	14/14	39/39
+N32y	1	25/25=1.00	5/5=1.00	8/8=1.00	7/7=1.00	5/5=1.00	n/a	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	21/21	46/46
+N32z	1	24/25=0.96	4/5=0.80	9/9=1.00	6/6=1.00	5/5=1.00	n/a	4/5=0.80	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	14/14	38/39
+P32	1	9/25=0.36	1/5=0.20	5/9=0.56	1/6=0.17	2/5=0.40	n/a	3/5=0.60	3/5=0.60	3/5=0.60	0/5=0.00	0/5=0.00	11/14	20/39
+R32	1	25/25=1.00	5/5=1.00	9/9=1.00	6/6=1.00	5/5=1.00	n/a	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	7/14	32/39
+R32a	2	50/50=1.00	10/10=1.00	17/17=1.00	13/13=1.00	10/10=1.00	n/a	10/10=1.00	10/10=1.00	10/10=1.00	10/10=1.00	10/10=1.00	18/35	68/85
+R32b	2	50/50=1.00	10/10=1.00	17/17=1.00	13/13=1.00	10/10=1.00	n/a	10/10=1.00	10/10=1.00	10/10=1.00	10/10=1.00	10/10=1.00	34/35	84/85
+W32	1	10/25=0.40	5/5=1.00	5/9=0.56	0/6=0.00	0/5=0.00	n/a	5/5=1.00	3/5=0.60	0/5=0.00	0/5=0.00	2/5=0.40	13/14	23/39
+X32	2	46/50=0.92	8/10=0.80	16/17=0.94	13/13=1.00	9/10=0.90	n/a	8/10=0.80	10/10=1.00	10/10=1.00	10/10=1.00	8/10=0.80	33/35	79/85
+X32b	2	48/50=0.96	9/10=0.90	17/17=1.00	13/13=1.00	9/10=0.90	n/a	10/10=1.00	10/10=1.00	10/10=1.00	10/10=1.00	8/10=0.80	35/35	83/85
+### 05:58:41 client-crule: probes by distance and type, all arms so far
+# 1. probe accuracy (correct/n=acc, pooled over trials; distance in items)
+arm	trials	probes	d1-4	d5-24	d25-99	d100-399	d400+	t:current	t:old_value	t:procedure	t:rule	t:who	final_query	total_correct
+N32k	1	24/25=0.96	5/5=1.00	9/9=1.00	6/6=1.00	4/5=0.80	n/a	5/5=1.00	5/5=1.00	4/5=0.80	5/5=1.00	5/5=1.00	14/14	38/39
+N32m	1	22/25=0.88	5/5=1.00	7/8=0.88	6/7=0.86	4/5=0.80	n/a	5/5=1.00	5/5=1.00	2/5=0.40	5/5=1.00	5/5=1.00	21/21	43/46
+R32b	2	40/50=0.80	3/10=0.30	14/17=0.82	13/13=1.00	10/10=1.00	n/a	6/10=0.60	4/10=0.40	10/10=1.00	10/10=1.00	10/10=1.00	27/35	67/85
+
+# 2a. speed: cumulative minutes when the history reached N tokens (mean over trials reaching it)
+arm	source	coverage	100K	200K
+N32k	timing+ctx	0.52	n/a	n/a
+N32m	timing+ctx	0.505	n/a	n/a
+R32b	timing+ctx	0.994	2.94	6.18
+
+# 2b. speed: minutes per 100K tokens of history in each segment (rises if the method slows down)
+arm	0-100K	100-200K
+N32k	n/a	n/a
+N32m	n/a	n/a
+R32b	2.94	3.25
+
+# 3. totals (mean per trial; peak_ctx_max = max over trials)
+arm	trials	tokens_written	lm_calls	peak_ctx	wall_s	real_edits	summaries	summary_failed	ctxfold_calls	fold_batches	truncations	compactions	recalls	rollbacks	window_refusals	peak_ctx_max
+N32k	1	10544	187	16992	577	0	n/a	n/a	n/a	n/a	n/a	n/a	n/a	0	n/a	16992
+N32m	1	14328	189	19045	680	0	n/a	n/a	n/a	n/a	n/a	n/a	n/a	0	n/a	19045
+R32b	2	19138	160	25128	603	0	n/a	n/a	n/a	n/a	n/a	n/a	n/a	0	n/a	25159
+# trials used=4 skipped=0
+### 05:58:42 client-hard: probes by distance and type, all arms so far
+# 1. probe accuracy (correct/n=acc, pooled over trials; distance in items)
+arm	trials	probes	d1-4	d5-24	d25-99	d100-399	d400+	t:current	t:old_value	t:procedure	t:rule	t:who	final_query	total_correct
+N32sr	1	22/25=0.88	4/5=0.80	5/6=0.83	8/9=0.89	5/5=1.00	n/a	3/5=0.60	4/5=0.80	5/5=1.00	5/5=1.00	5/5=1.00	24/25	46/50
+N32u	1	3/25=0.12	1/5=0.20	2/6=0.33	0/9=0.00	0/5=0.00	n/a	1/5=0.20	0/5=0.00	1/5=0.20	0/5=0.00	1/5=0.20	0/25	3/50
+N32ur	1	23/25=0.92	5/5=1.00	5/6=0.83	8/9=0.89	5/5=1.00	n/a	3/5=0.60	5/5=1.00	5/5=1.00	5/5=1.00	5/5=1.00	24/25	47/50
+N32z	1	23/25=0.92	4/5=0.80	6/6=1.00	8/9=0.89	5/5=1.00	n/a	4/5=0.80	4/5=0.80	5/5=1.00	5/5=1.00	5/5=1.00	19/25	42/50
+
+# 2a. speed: cumulative minutes when the history reached N tokens (mean over trials reaching it)
+n/a (no per-step timing)
+
+# 3. totals (mean per trial; peak_ctx_max = max over trials)
+arm	trials	tokens_written	lm_calls	peak_ctx	wall_s	real_edits	summaries	summary_failed	ctxfold_calls	fold_batches	truncations	compactions	recalls	rollbacks	window_refusals	peak_ctx_max
+N32sr	1	13628	199	16849	874	0	n/a	n/a	n/a	n/a	n/a	n/a	n/a	0	n/a	16849
+N32u	1	25737	639	16441	1056	0	n/a	n/a	n/a	n/a	n/a	n/a	n/a	0	n/a	16441
+N32ur	1	17385	234	24281	1176	0	n/a	n/a	n/a	n/a	n/a	n/a	n/a	0	n/a	24281
+N32z	1	16742	225	16651	910	0	n/a	n/a	n/a	n/a	n/a	n/a	n/a	0	n/a	16651
+# skipped N32s__sparse-memory-t240k-s0/sparse-memory-t240k-s0__2C9CJQ4: void=True ended_by=submit rule=VOID+archive
+# skipped N32t__sparse-memory-t240k-s0/sparse-memory-t240k-s0__9oAQqUR: void=False ended_by=EXC:CancelledError rule=ok
+# skipped R32b__sparse-memory-t240k-s0/sparse-memory-t240k-s0__zPyP6Rb: void=False ended_by=EXC:CancelledError rule=ok
+# trials used=4 skipped=3
+### 05:58:53 client-1m: probes by distance and type, all arms so far
+# 1. probe accuracy (correct/n=acc, pooled over trials; distance in items)
+arm	trials	probes	d1-4	d5-24	d25-99	d100-399	d400+	t:current	t:old_value	t:procedure	t:rule	t:who	final_query	total_correct
+N32j	1	201/203=0.99	49/50=0.98	49/50=0.98	30/30=1.00	48/48=1.00	25/25=1.00	58/58=1.00	58/58=1.00	29/29=1.00	29/29=1.00	27/29=0.93	25/25	226/228
+N32u	1	203/203=1.00	50/50=1.00	50/50=1.00	30/30=1.00	48/48=1.00	25/25=1.00	58/58=1.00	58/58=1.00	29/29=1.00	29/29=1.00	29/29=1.00	25/25	228/228
+X32b	1	197/203=0.97	49/50=0.98	50/50=1.00	30/30=1.00	44/48=0.92	24/25=0.96	58/58=1.00	56/58=0.97	27/29=0.93	28/29=0.97	28/29=0.97	25/25	222/228
+X32m	1	191/203=0.94	48/50=0.96	47/50=0.94	28/30=0.93	46/48=0.96	22/25=0.88	56/58=0.97	53/58=0.91	28/29=0.97	28/29=0.97	26/29=0.90	25/25	216/228
+
+# 2a. speed: cumulative minutes when the history reached N tokens (mean over trials reaching it)
+arm	source	coverage	100K	200K	300K	400K	500K	600K	700K	800K	900K
+N32j	timing+ctx	0.471	n/a	n/a	n/a	n/a	n/a	n/a	n/a	n/a	n/a
+N32u	timing+ctx	0.554	n/a	n/a	n/a	n/a	n/a	n/a	n/a	n/a	n/a
+X32b	timing+ctx	0.962	6.9	15.99	27.86	37.43	45.67	53.5	62.05	70.37	80.67
+X32m	timing+next-order	0.954	17.56	26.1	31.58	39.64	45.27	54.81	62.98	71.22	n/a
+
+# 2b. speed: minutes per 100K tokens of history in each segment (rises if the method slows down)
+arm	0-100K	100-200K	200-300K	300-400K	400-500K	500-600K	600-700K	700-800K	800-900K
+N32j	n/a	n/a	n/a	n/a	n/a	n/a	n/a	n/a	n/a
+N32u	n/a	n/a	n/a	n/a	n/a	n/a	n/a	n/a	n/a
+X32b	6.9	9.09	11.87	9.57	8.24	7.83	8.55	8.32	10.3
+X32m	17.56	8.54	5.48	8.06	5.63	9.54	8.17	8.24	n/a
+
+# 3. totals (mean per trial; peak_ctx_max = max over trials)
+arm	trials	tokens_written	lm_calls	peak_ctx	wall_s	real_edits	summaries	summary_failed	ctxfold_calls	fold_batches	truncations	compactions	recalls	rollbacks	window_refusals	peak_ctx_max
+N32j	1	65960	865	25198	4988	0	n/a	n/a	n/a	n/a	n/a	n/a	n/a	0	n/a	25198
+N32u	1	68258	870	24078	3028	0	n/a	n/a	n/a	n/a	n/a	n/a	n/a	0	n/a	24078
+X32b	1	79877	657	1047346	5705	0	n/a	n/a	n/a	n/a	n/a	n/a	n/a	0	n/a	1047346
+X32m	1	79752	662	1060725	4518	0	n/a	n/a	n/a	n/a	n/a	n/a	n/a	0	n/a	1060725
+# skipped B32iraRH__sparse-memory-t1000k-s0/sparse-memory-t1000k-s0__hJnx59a: void=False ended_by=EXC:CancelledError rule=ok
+# skipped B32iraR__sparse-memory-t1000k-s0/sparse-memory-t1000k-s0__GGuqj3L: void=False ended_by=EXC:CancelledError rule=ok
+# skipped N32v__sparse-memory-t1000k-s0/sparse-memory-t1000k-s0__fXadbgv: void=False ended_by=EXC:CancelledError rule=ok
+### 05:58:53 kernel log clean since 2026-10-12 03:12:42; restoring Gemma (throughput)
+backend 19350: slots 8 x 4096 tokens
+backend 19351: slots 8 x 4096 tokens
+frontdoor: throughput-ctx32768-parallel8-4k-slots-nospec-2gpu active 0 queued 0
+### 06:03:19 campaign 11 complete

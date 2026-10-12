@@ -369,3 +369,22 @@ is duplicated in Git. The notebook paths and SHA-256 values are the audit trail.
 | Treat the 8/128-counter screen as an isolated state-size or temporal-reasoning comparison | The [sparse result](notes/2026-10-07-sparse-state-result.md) has 13/16 historical values different from final at eight counters, but only 2/16 at 128. Different streams and question difficulty confound the size contrast. Keep the frozen tasks; disclose coverage and test transfer separately. |
 | Replace the dispatch archive run or waive its early extra-zero checkpoints because final answers pass | The [replication](notes/2026-10-07-sparse-state-replication-result.md) preserves 24/24 final answers but only 17/24 exact archive checkpoints. The model introduced a zero before the counter's first posting; questions begin after the later correction. Keep the registered quality failure and follow the prewritten next-study branch. |
 | Present short temporal retrieval diagnostics as proof that external memory is necessary | Each new authored document fits in one prompt when all its batches are supplied. These are protocol correctness/cost checks. Broader efficiency claims need a direct full-source baseline where it fits and separate realistic streams beyond the context window. |
+
+## Context keeper and proxy: closed mistakes (2026-10-12, campaigns 11 and 12)
+
+Record: [closeout](notes/2026-10-12-context-campaigns-11-12-closeout.md); every run and table is in the
+[lab note](notes/2026-10-10-context-16k-baseline.md), sections "Campaign 11" and "Campaign 12".
+
+| Do not repeat | Evidence and next boundary |
+| --- | --- |
+| Let a questioned notes reply fall back to a different, slower path (the full rewrite) | X32n: the fallback lost a change on one seed and on the other wrote a "rule" restating the task's opening message; recited at the last item it made the model overwrite 25 right answers (14/39). The first reply stands; lines whose number the turns do not state are left out. |
+| Accept the second reply as it comes when a number is not in the turns | Every such line looked at (5 of 5) was wrong or pointless. A wrong *start* is still taken (the model may be right about it); revisit only with a way to tell which side is wrong. |
+| Give the search tool two numberings, or show one beside the other | X32n2 at 1M: hits labelled with items beside `before` in message numbers; "before 332" stopped at item 150, and the model trusted that search over correct NOTES (7 of 8 misses). One numbering, the content's own (`--recall-label`). |
+| Print the first N matches with the "there are more" note at the end | Read as "that is all" in the proxy and in the harness; the harness model then fetched whole items until the window overflowed. Count line first, nearest matches. |
+| Drop a notes line because its name is unknown, without checking for a misspelling | `vozi36` for `vozimi36`: change lost. Repair near-misses first, never away from a name the NOTES hold. |
+| Let any cut move an open question out of view | N32n, second 1M stream: seven answers never written. Kept word for word until the next ordinary delivery, in harness and proxy; in the proxy only `--think-until` closes it. |
+| Count one CHANGES line as one change | A third of all notes calls were asked again for nothing (harness and proxy). Count and follow the parts. |
+| Tell a model to "write the working" without checking the amounts | It writes working that adds up (`650 - 27 = 623` for a set to 523). Amounts must be stated for the thing, or be a value a mentioned thing holds. Still open: wrong sign, and a set written as a change by the same number. |
+| Hold all context snapshots in memory in a post-run script | `summarize_results.py` took 2.1 GB after a 1M proxy run and the guard killed the server (twice). Measure post-run scripts with `/usr/bin/time -v` on the largest job folder. |
+| Trust a self-written check, parser or task builder without a second reader before its first run | Five read-only reviews on this day (two Codex, three by a second Claude instance beside the running server) found 46 issues before any GPU time was spent on them. |
+| Edit a shell script that a running job is reading, or rebase while an arm is starting | Rename a new file over the old one; rebase only while a long arm is in progress and nothing else reads the tree. |

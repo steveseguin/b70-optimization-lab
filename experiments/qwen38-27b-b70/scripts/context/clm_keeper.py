@@ -466,7 +466,8 @@ def amounts_ok(working: str, amounts: set[int] | None) -> bool:
 
 
 
-def chain_of(value: str, held: int | None, stated: set[int], amounts: set[int] | None = None) -> tuple[int | None, list[int], int] | None:
+def chain_of(value: str, held: int | None, stated: set[int], amounts: set[int] | None = None,
+             fixed: list[str] | None = None) -> tuple[int | None, list[int], int] | None:
     """A CHANGES line that packs several changes, followed part by part from the value the NOTES hold:
     (the value at the end, or None after a removal; the sets it took from the turns; how many of those open a part
     of working instead of standing as a part of their own). None when a part cannot be followed, and the line is
@@ -475,12 +476,16 @@ def chain_of(value: str, held: int | None, stated: set[int], amounts: set[int] |
     it (`+46 = -144`), working from a value the turns state (a set and a change in one), or a removal. Remarks in
     parentheses are set aside; brackets inside working are part of the sum.
     Every line in the 1M proxy run that the working check questioned and then accepted was such a line.
-    With `amounts` (see amounts_ok) every amount added or taken in the working must be one of them."""
+    With `amounts` (see amounts_ok) every amount added or taken in the working must be one of them.
+    An arrow separates parts too (`279 -> 415, then 415 - 18 = 397, then removed`: the value held, a set, a change,
+    a removal). A sum that is wrong is recomputed, as on a plain line, and noted in `fixed`; the part after it may
+    start from the result as the model wrote it. (X32p at 1M: three such lines could not be followed, were then
+    questioned for "a number the turns do not state", and were left out although they were right.)"""
     v = REMARK.sub(" ", value)
     v = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", v).replace("\u2212", "-").replace("\u00d7", "*").replace("\u00f7", "/")
     v = re.sub(r"(?<=[\d)])\s*x\s*(?=[\d(-])", " * ", v)
-    cur, sets, opening, parts = held, [], 0, 0
-    for part in PARTS.split(v):
+    cur, sets, opening, parts, said = held, [], 0, 0, None
+    for part in re.split(PARTS.pattern + r"|\u2192|->|=>", v):
         part = part.strip().rstrip(".").strip()
         if not part:
             continue
@@ -492,14 +497,15 @@ def chain_of(value: str, held: int | None, stated: set[int], amounts: set[int] |
             nums = re.findall(r"(?<![\w.])-?\d+(?![\d.]*\d)", part)
             # one number, and nothing round it but words that say "the value is now" (`increased by 5` is a change
             # written without working, not a set to 5: such a line is judged as before)
-            if len(nums) != 1 or re.search(r"[()\u2192>]", part) or not set(re.findall(r"[a-z]+", part.lower())) <= SET_WORDS:
+            if len(nums) != 1 or re.search(r"[()]", part) or not set(re.findall(r"[a-z]+", part.lower())) <= SET_WORDS:
                 return None
             n = int(nums[0])
-            if n != cur:
+            if n != cur and n != said:
                 if n not in stated or n in sets:
                     return None
                 sets.append(n)
-            cur = n
+                cur = n
+            said = None
             continue
         pieces = [x.strip() for x in part.split("=")]
         if not re.fullmatch(r"-?\d+", pieces[-1]):
@@ -507,8 +513,8 @@ def chain_of(value: str, held: int | None, stated: set[int], amounts: set[int] |
         for expr, after in zip(pieces, pieces[1:]):
             first = re.match(r"\(?\s*(-?\d+)(?![\d.])", expr)
             taken = expr[first.end():] if first else expr
-            if first and cur is not None and int(first.group(1)) == cur:
-                pass                                 # working from the value so far
+            if first and cur is not None and int(first.group(1)) in (cur, said):
+                expr = f"({cur}) {expr[first.end():]}"   # working from the value so far (or from it as the model wrote it)
             elif re.match(r"[-+*/]\s*\(?\d", expr) and cur is not None:
                 taken, expr = expr, f"({cur}) {expr}"     # working that goes on from it
             elif first and int(first.group(1)) in stated and int(first.group(1)) not in sets:
@@ -520,8 +526,11 @@ def chain_of(value: str, held: int | None, stated: set[int], amounts: set[int] |
                 return None
             val = _calc(expr) if re.fullmatch(r"[\d\s+\-*/().]+", expr) else None
             head = re.match(r"\(?\s*(-?\d+)(?![\d.])", after)
-            if val is None or not float(val).is_integer() or not head or int(head.group(1)) != int(val):
-                return None                          # not plain arithmetic, or a sum that is wrong: judged as before
+            if val is None or not float(val).is_integer() or not head:
+                return None                          # not plain arithmetic: judged as before
+            said = int(head.group(1))
+            if said != int(val) and fixed is not None:
+                fixed.append(f"{' '.join(expr.split())} = {said} -> {int(val)}")
             cur = int(val)
     return (cur, sets, opening) if parts > 1 else None
 
@@ -571,10 +580,12 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
         counted, asked = steps_in(value), len(info["mismatch"])
         if strict and seen is not None:
             # several changes on one line: followed part by part; a line that can be followed is right as it stands
+            redone: list[str] = []
             ch = chain_of(value, held, (seen if near is None else near.get(name, set())) - used.get(name, set()),
-                          None if near is None else near.get(name, set()) | ever)
+                          None if near is None else near.get(name, set()) | ever, redone)
             if ch is not None:
                 final, sets, opening = ch
+                info["sums_corrected"] += [f"{name}: {x}" for x in redone]
                 used.setdefault(name, set()).update(sets)
                 steps[name] = steps.get(name, 0) + counted + opening
                 info["chained"] = info.get("chained", 0) + 1
@@ -621,7 +632,14 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
                 info["mismatch"].append(f"{name}: working starts from {start}, NOTES hold {held}")
             elif start is not None and old is not None and re.match(r"(removed|closed|struck|deleted|gone)\b", old.lower()):
                 info["mismatch"].append(f"{name}: working starts from {start}, NOTES say {old.split()[0]}")
-            if near is not None and strict and start is not None and len(info["mismatch"]) == asked:
+            plain = sum(bool(x.strip()) for x in PARTS.split(REMARK.sub(" ", value))) == 1 and not re.search(r"\u2192|->|=>", value)
+            # (a line of several parts that could not be followed is judged by its result only: its last piece of
+            # working is not the whole line, and X32p at 1M was asked about `517 -> 164, then 164 + 76 + 85 = 325,
+            # then 325 + 18 = 343` for an "amount" of 325)
+            # working whose result is a value the turns state for the thing is the model's way of writing a set
+            # (`436 + 78 = 514` for "recorded at 514": six questions at 1M, all for nothing)
+            a_set = near is not None and total is not None and total in near.get(name, set())
+            if near is not None and strict and start is not None and len(info["mismatch"]) == asked and plain and not a_set:
                 expr = REMARK.sub(" ", value).replace("\u2212", "-").split("=")[-2]
                 first = re.match(r"\(?\s*-?\d+", expr.strip())
                 if first and not amounts_ok(expr.strip()[first.end():], near.get(name, set()) | ever):
@@ -687,33 +705,42 @@ DROPPABLE = ("is not a value the turns state", "adds or takes an amount the turn
 
 
 def without_doubtful(notes: str, delta: dict, seen: set[int] | None, strict: bool, near: dict | None) -> tuple[dict, list[str]]:
-    """The reply without the lines the checks still question because the turns do not state their number
-    (DROPPABLE): after a second reply such a line was wrong or pointless every time it was looked at (campaign 12),
-    so it is left out and the old value stays. One line at a time: the line of that name whose removal makes the
-    question go away. Returns the reply and the lines left out."""
+    """The reply without the lines the checks still question because the turns do not state their number: a bare
+    value the turns do not state for the thing (`abcd01: 999`), or working with an amount they do not state (the
+    line the question quotes). After a second reply such a line was wrong or pointless every time it was looked at
+    (campaign 12), so it is left out and the old value stays. A line of several parts is never left out: when the
+    checker cannot follow it, that says nothing about the turns (X32p at 1M lost two removals and a correct change
+    that way). One line at a time; a line goes only if its going leaves fewer questions and no working that now
+    starts from a value not questioned before. Returns the reply and the lines left out."""
+    def bare(value: str) -> bool:
+        return ("=" not in value and not re.search(r"\u2192|->|=>", value)
+                and sum(bool(x.strip()) for x in PARTS.split(REMARK.sub(" ", value))) == 1)
+
+    def starts(ms: list[str]) -> set[str]:
+        return set(re.findall(r"working starts from (-?\d+)", " | ".join(ms)))
+
     changes, dropped = list(delta["changes"]), []
     for _ in range(12):
         _, info = apply_delta(notes, dict(delta, changes=changes), seen, strict=strict, near=near)
-        bad = [m for m in info["mismatch"] if any(d in m for d in DROPPABLE)]
-        if not bad:
-            break
-        name = bad[0].split(":", 1)[0]
-        mine = [m for m in info["mismatch"] if m.split(":", 1)[0] == name]
-        for i in [i for i, (k, _) in enumerate(changes) if k == name]:
-            trial = changes[:i] + changes[i + 1:]
-            _, t = apply_delta(notes, dict(delta, changes=trial), seen, strict=strict, near=near)
-            left = [m for m in t["mismatch"] if m.split(":", 1)[0] == name]
-            # fewer questions, and no working that now starts from a value not questioned before: taking out
-            # `70 - 27 = 43` must not leave `43 - 31 = 12` standing as "working starts from 43" (it would be
-            # applied: 12 stored for 75)
-            starts = lambda ms: set(re.findall(r"working starts from (-?\d+)", " | ".join(ms)))
-            if len(left) < len(mine) and starts(left) <= starts(mine):
-                dropped.append(f"{changes[i][0]}: {changes[i][1]}")
-                changes = trial
+        gone = None
+        for m in info["mismatch"]:
+            name = m.split(":", 1)[0]
+            mine = [x for x in info["mismatch"] if x.split(":", 1)[0] == name]
+            for i, (k, v) in enumerate(changes):
+                if k != name or not ((DROPPABLE[1] in m and f"`{v}`" in m) or (DROPPABLE[0] in m and bare(v))):
+                    continue
+                trial = changes[:i] + changes[i + 1:]
+                left = [x for x in apply_delta(notes, dict(delta, changes=trial), seen, strict=strict, near=near)[1]["mismatch"]
+                        if x.split(":", 1)[0] == name]
+                if len(left) < len(mine) and starts(left) <= starts(mine):
+                    gone = i
+                    break
+            if gone is not None:
                 break
-        else:                                        # no single line explains it: every line of that name goes
-            dropped += [f"{k}: {v}" for k, v in changes if k == name]
-            changes = [(k, v) for k, v in changes if k != name]
+        if gone is None:
+            break
+        dropped.append(f"{changes[gone][0]}: {changes[gone][1]}")
+        changes = changes[:gone] + changes[gone + 1:]
     return dict(delta, changes=changes), dropped
 
 
@@ -902,11 +929,27 @@ def open_question(body: list[dict[str, Any]]) -> int | None:
         if m.get("role") == "assistant":
             continue
         text = str(m.get("content") or "")
-        if ASKED.search(text):
-            return i
-        if m.get("role") == "tool" and ITEMS.search(text):
+        delivered = (m.get("role") == "tool" and bool(ITEMS.search(text))) or text.startswith(OPEN_QUESTION)
+        if delivered and ASKED.search(text):
+            return i                                 # not `recall --item N` printing an archived question item
+        if delivered:
             return None                              # a later item was delivered: the question is behind us
     return None
+
+
+def kept_question(body: list[dict[str, Any]], n_gone: int) -> list[dict[str, Any]]:
+    """What a cut of the first `n_gone` messages of `body` keeps in view: the open question as one message of the
+    harness's, if the cut would take it; else nothing."""
+    asked = open_question(body)
+    if asked is None or asked >= n_gone:
+        return []
+    text = str(body[asked].get("content") or "")
+    return [{"role": "user", "content": text if text.startswith(OPEN_QUESTION) else OPEN_QUESTION + "\n" + text}]
+
+
+def answered_copy(body: list[dict[str, Any]]) -> bool:
+    """True when `body` starts with a kept copy of a question that is no longer the open one."""
+    return bool(body) and str(body[0].get("content") or "").startswith(OPEN_QUESTION) and open_question(body) != 0
 
 
 def under_accounted(mentions: dict[str, int], steps: dict[str, int]) -> list[str]:
@@ -1024,7 +1067,10 @@ def wants_thinking(messages: list[dict[str, Any]]) -> bool:
     if codes and codes[-1] != "0":
         return True
     for m in reversed(messages):                     # the newest delivery: is it a question item?
-        text = str(m.get("content") or "") if m.get("role") == "tool" else ""
+        text = str(m.get("content") or "")
+        if m.get("role") == "user" and text.startswith(OPEN_QUESTION):
+            return True                              # the question, kept in view by the ordinary cut, is still open
+        text = text if m.get("role") == "tool" else ""
         if ITEMS.search(text):
             return bool(ASKS.search(text) or QUESTION.search(text))
     return False
@@ -1430,6 +1476,9 @@ class KeeperAgent(TruncateAgent):
         limit = self._budget.strict_target
         if not limit:
             return
+        start, prev = self._head(messages)
+        if answered_copy(messages[start:]):            # the question it held has been answered and left behind
+            del messages[start]
         before = self._budget.count(messages)
         if self.notes_inplace and await self._keep_inplace(environment, messages, before):
             return
@@ -1437,6 +1486,8 @@ class KeeperAgent(TruncateAgent):
             return
         start, prev = self._head(messages)
         head, body = messages[:self._protect], messages[start:]
+        copy = body[:1] if body and str(body[0].get("content") or "").startswith(OPEN_QUESTION) else []
+        body = body[len(copy):]                       # a kept question is carried over as it is: not a turn, not noted again
         starts = [k for k, m in enumerate(body) if m.get("role") == "assistant"]
         if starts and starts[0] > 0:
             starts.insert(0, 0)                       # leading non-assistant messages count as one turn
@@ -1450,12 +1501,8 @@ class KeeperAgent(TruncateAgent):
         if not n:
             return
         gone = body[:len(body) - len(keep)]
-        asked = open_question(body)                   # an open question never leaves the view (see open_question)
-        still = []
-        if asked is not None and asked < len(gone):
-            text = str(body[asked].get("content") or "")
-            still = [{"role": "user", "content": text if text.startswith(OPEN_QUESTION) else OPEN_QUESTION + "\n" + text}]
-            self.n_questions_kept += 1
+        still = copy or kept_question(body, len(gone))    # an open question never leaves the view (see open_question)
+        self.n_questions_kept = getattr(self, "n_questions_kept", 0) + int(bool(still) and not copy)
         self._pin_tail, self.inplace_turn_hold = "", 0     # the turns that an in-place call could not note are going now
         rec: dict[str, Any] = {"reason": "keep", "turns_dropped": n, "before": before,
                                "items_archived": await self._archive(environment, gone)}
@@ -1739,7 +1786,7 @@ class KeeperAgent(TruncateAgent):
                     "notes_mode": self.notes_mode, "delta_fallbacks": self.n_delta_fallbacks,
                     "notes_chunk_tokens": self.notes_chunk_tokens, "notes_inplace": self.notes_inplace,
                     "inplace_cuts": self.n_inplace, "inplace_failed": self.n_inplace_failed,
-                    "inplace_redone_with_thinking": self.n_inplace_redone, "questions_kept_in_view": self.n_questions_kept,
+                    "inplace_redone_with_thinking": self.n_inplace_redone, "questions_kept_in_view": getattr(self, "n_questions_kept", 0),
                     "mention_check": self.mention_check, "mention_reasks": self.n_mention_reasks,
                     "inplace_failures": self.inplace_failures[:20], "inplace_prompt_tokens": self.inplace_prompt,
                     "inplace_cached_tokens": self.inplace_cached, "inplace_turn_tokens": self.inplace_turn_tokens,

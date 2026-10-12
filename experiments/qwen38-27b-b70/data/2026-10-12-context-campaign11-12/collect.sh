@@ -10,15 +10,15 @@ O=/mnt/fast-ai/bench-results/context-longrun-20261012
 O11=/mnt/fast-ai/bench-results/context-longrun-20261011
 ODR=/mnt/fast-ai/bench-results/context-longrun-20261010/client-rules
 ODC=$O11/client-crule; ODH=$O11/client-hard; OD1M=$O11/client-1m
-for f in campaign11.log QUEUE11.txt longrun-campaign11.sh campaign12.log QUEUE12.txt longrun-campaign12.sh metrics-c12.tsv metrics-sampler.sh; do
+for f in campaign11.log QUEUE11.txt longrun-campaign11.sh campaign12.log QUEUE12.txt longrun-campaign12.sh metrics-c12.tsv metrics-sampler.sh start-proxy-p.sh; do
   [[ -e $O/$f ]] && cp "$O/$f" "$D/"
 done
 for e in campaign11.err campaign12.err; do [[ -s $O/$e ]] && cp "$O/$e" "$D/"; done
 cd "$CTX" || exit 2
-python3 c10_table.py "$ODR" X32b X32i X32m X32n X32n2 N32u --json "$D/table-rules-240k.json" > "$D/table-rules-240k.txt" 2>&1
+python3 c10_table.py "$ODR" X32b X32i X32m X32n X32n2 X32p N32u --json "$D/table-rules-240k.json" > "$D/table-rules-240k.txt" 2>&1
 python3 c10_table.py "$ODC" N32k:0 N32m:1 R32b --json "$D/table-crule-240k.json" > "$D/table-crule-240k.txt" 2>&1
 python3 c10_table.py "$ODH" N32sr:0 N32z:0 N32nr:1 N32n:1 --json "$D/table-hard-240k.json" > "$D/table-hard-240k.txt" 2>&1
-python3 c10_table.py "$OD1M" N32j:0 N32u:0 X32b:0 X32m:0 X32n2:0 N32n:1 --json "$D/table-1m.json" > "$D/table-1m.txt" 2>&1
+python3 c10_table.py "$OD1M" N32j:0 N32u:0 X32b:0 X32m:0 X32n2:0 X32p:0 N32n:1 --json "$D/table-1m.json" > "$D/table-1m.txt" 2>&1
 # harness arms: NOTES audited against the true ledger
 for spec in "$ODC N32k 0" "$ODC N32m 1" "$ODH N32nr 1" "$ODH N32n 1" "$OD1M N32n 1"; do
   set -- $spec
@@ -45,8 +45,11 @@ proxy X32n-rules-s1 "$(first "$O/proxy-state/c12-X32n-240k-s1")" "$ODR" X32n 1
 proxy X32n2-rules-s0 "$(first "$O/proxy-state/c12-X32n2-240k-s0")" "$ODR" X32n2 0
 proxy X32n2-rules-s1 "$(first "$O/proxy-state/c12-X32n2-240k-s1")" "$ODR" X32n2 1
 proxy X32n2-1m-s0 "$(first "$O/proxy-state/c12-X32n2-1000k-s0")" "$OD1M" X32n2 0
+proxy X32p-rules-s0 "$O/proxy-state/p-shared/ce3c96361e3bf2dc" "$ODR" X32p 0
+proxy X32p-rules-s1 "$O/proxy-state/p-shared/853755a555265b82" "$ODR" X32p 1
+proxy X32p-1m-s0 "$O/proxy-state/p-shared/1a5e3739d935d6d3" "$OD1M" X32p 0
 for od in "$ODR" "$ODC" "$ODH" "$OD1M"; do
-  for j in "$od"/runs/jobs/{X32i,X32m,X32n,X32n2,N32k,N32m,N32n,N32nr,R32b}__*; do
+  for j in "$od"/runs/jobs/{X32i,X32m,X32n,X32n2,X32p,N32k,N32m,N32n,N32nr,R32b}__*; do
     [[ -d $j ]] || continue
     [[ $(basename "$od") == client-rules && $(basename "$j") == R32b__* ]] && continue      # campaign 10's, already in its folder
     t=$(ls -d "$j"/*/ 2>/dev/null | head -1); [[ -n $t && -e $t/verifier/details.json ]] || continue
