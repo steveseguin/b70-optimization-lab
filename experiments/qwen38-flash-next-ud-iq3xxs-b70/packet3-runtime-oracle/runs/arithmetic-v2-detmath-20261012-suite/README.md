@@ -1,6 +1,6 @@
 # Arithmetic-v2 twelve-prompt CPU suite
 
-Verified prompts: 3/12. Complete: False.
+Verified prompts: 4/12. Complete: False.
 The unchanged sealed CPU binary generates greedy tokens for the fixed rendered suite.
 Identity: `iq3-p17-detmath-v2`; 192-token context; maximum 64 generated tokens.
 EOS (248044) or 248046 is saved and then stops generation. No padding or forced continuation.
@@ -14,9 +14,10 @@ Each worker has a 5 GB anonymous-memory stop guard (10 GB combined).
 | incident-retrospective | 87 | 64 | 332, 37947, 1653, 10082, 3508, 8812, 25, 23288 | False | 20.4372 |
 | code-review | 90 | 64 | 1919, 369, 264, 4927, 41052, 6206, 494, 63723 | False | 18.0845 |
 | customer-email | 77 | 64 | 12646, 25, 5376, 383, 21503, 19389, 16870, 25 | False | 14.9021 |
+| benchmark-analysis | 65 | 64 | 1919, 369, 264, 11088, 46931, 314, 2972, 66 | False | 14.6825 |
 
-Total numerical-process wall time: 7925.776 seconds.
-Actual process CPU time (user + system): 3.764720 CPU hours.
+Total numerical-process wall time: 9806.932 seconds.
+Actual process CPU time (user + system): 4.690456 CPU hours.
 CPU accounting complete: True.
 Position timings include bounded weight reads and CPU work; these are oracle costs, not serving speeds.
 Every prompt retains `positions.jsonl`; means above include prefill and decode positions.
