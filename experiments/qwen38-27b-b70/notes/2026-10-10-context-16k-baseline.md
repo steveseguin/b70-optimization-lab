@@ -1367,3 +1367,32 @@ number the turns do not state is left out and the old value stays. Not reviewed 
 research server is up); to be reviewed before anything is published from it.
 
 Gate for X32n2, as before: 39/39 and 45/46 or better, no failed in-place attempt, then the 1M run.
+
+### The hard stream, seed 1: accurate with retrieval, and the new checks are too strict for it
+
+| hard stream (pronouns, values that depend on another counter), 240K, harness keeper | right | minutes |
+| --- | ---: | ---: |
+| seed 0, last night: in-place notes plus retrieved sentences (N32ur, N32sr) | 47, 46 of 50 | 19, 14 |
+| seed 0, last night: in-place notes only (N32z; N32s voided) | 42, 43 of 50 | 15, 20 |
+| **seed 1, today: in-place notes plus retrieved sentences (N32nr)** | **46 of 49** | **23.4** |
+| seed 1, today: in-place notes only (N32n) | stopped by me at item 78 of 147 after 22.7 min; 10 of 10 answered until then | does not count |
+
+N32nr missed two values in the final list and one tally; its NOTES had five counters wrong at some point (16 of
+16 versions audited), every one a change of the kind this stream is made of ("went up by as much as X held", a
+doubling, a set followed by a change in the next sentence). So the accuracy claim of last night holds on a second
+seed: 46 of 49 with retrieval. The comparison "retrieval adds questions" could not be made on this seed, because the
+partner run did not finish.
+
+**Why it was slow and why N32n hung.** 51 notes calls for 17 cuts and 85K tokens written by notes calls (a plain
+240K stream needs about 25K). Today's amount check ("every amount in the working must be stated for that thing")
+questions every line of the form `228 + 577 = 805 (went up by as much as bamo35 held)`: 577 is bamo35's value, not
+a number in the sentence. Each question costs a rewritten reply, and in the harness a reply questioned twice falls
+back to the full rewrite, which here writes up to 9K tokens with thinking at about 45 tokens a second. N32n then
+sat at one question item for eight minutes of long thinking calls and I stopped it (SIGINT to its `timeout`, the
+same signal its time cap sends; host memory stayed at 2.1 to 2.4 GiB and the server was untouched).
+
+Prepared, not applied while this queue runs (the queued harness run must use the same code as the finished one):
+an amount may also be any value a thing of STATE holds, and times or divided by a small whole number passes; a
+reply that is asked for again holds only the lines in question (`merge_replies` already keeps the rest), which cuts
+the cost of every question, on every stream, from about 1,500 tokens to a few hundred; and the harness takes the
+proxy's rule that a questioned reply never falls back to the full rewrite.
