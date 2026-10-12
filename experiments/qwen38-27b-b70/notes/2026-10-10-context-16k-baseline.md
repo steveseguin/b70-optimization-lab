@@ -1313,3 +1313,52 @@ retrieved sentences at each question. Queue, in this order, one server, Gemma of
 
 One stream each for the 1M runs: a 1M figure stays "one stream" until item 4 is done. If the guard fires again at
 the end of a 1M run, the cause above was not the whole story and that is reported as such.
+
+## Campaign 12 results (2026-10-12 06:26-)
+
+### The gate: X32n on the 240K rules stream is faster and failed the gate (one cause, found, fixed as X32n2)
+
+| 240K rules stream, proxy, 32K window | seed 0 | seed 1 |
+| --- | ---: | ---: |
+| X32m (last night): right, minutes | 39/39, 10.2 | 46/46, 13.1 |
+| **X32n: right, minutes** | **14/39**, 9.6 | **45/46**, 11.0 |
+| X32n: notes replies asked for again (X32m: 8, 14) | 4 | 6 |
+| X32n: in-place attempts that failed (X32m: 0, 0) | 1 | 1 |
+| X32n: tokens written by notes calls (X32m: 22K, 31K) | 17.9K | 23.9K |
+
+The speed is what the replay predicted (fewer replies asked for again). The scores are not, and by the rule written
+down before the run the 1M run was not made on this build.
+
+**Seed 0, 14/39: one command.** All 25 mid-stream answers were right (20 graded from the answers file as it stood
+at item 104, the last five compared by hand with the expected values) and the NOTES audit is clean, 17 of 17. At
+the final item the model wrote the 14 final values with `cat > /app/answers.json`, and the 25 answers were gone.
+**Seed 1, 45/46:** one counter stale in the final list (`sahidi23`: 339 for 423).
+
+**Both come from one chain, and it starts with something the proxy does and the harness does not.** After an
+in-place cut the newest exchange stays in view (a real agent needs the result it has just fetched). Its assistant
+message was written about the result *before* it, which the NOTES of that cut already cover. At the next notes call
+that message is the first of the turns to be noted, and the model writes that result's changes again:
+
+1. `pediba69: opened at 214` (from the remark about item 8, already noted). The value check looks in the turns
+   being noted, does not find 214, and asks. The model answers with nothing, twice. The attempt fails and the
+   turns go to the ordinary cut, a full rewrite.
+2. On seed 1 that full rewrite lost a change (`yomoke87`, the -17 of item 13). On seed 0 it added four "rules" that
+   restate the task's opening message, among them "Final item lists 14 counters to report; write /app/answers.json
+   mapping each to its current integer value". Rules are repeated at every question item; at the final item the
+   model did exactly that.
+3. `sahidi23: 423 - 84 = 339`: a +84 already in the NOTES, written again and the wrong way round. The new amount
+   check questioned it (84 is nowhere in those turns); the model insisted, and "the second reply stands" took it.
+
+Last night's X32m had the same overlap and no failed attempt: there the count check asked first, in words the
+model always answered. Today's counting fix removed most count questions, which exposed the working question's
+empty replies. Replayed on saved sessions, a line for a name that none of the turns being noted mentions occurs
+in 5 of 77 cuts at 1M (X32m) and 2 of 17 at 240K.
+
+**Fix (arm X32n2, proxy only, unit-tested; the queue was reordered so that the two harness runs go first):**
+the notes request says what that first message is; with the checks on, a line for a name that none of the turns
+being noted mentions is left out without a question; when the model gives no usable second reply the first one
+stands without the questioned lines (no failed attempt, no full rewrite); after the second reply a line whose
+number the turns do not state is left out and the old value stays. Not reviewed by Codex before the run (the
+research server is up); to be reviewed before anything is published from it.
+
+Gate for X32n2, as before: 39/39 and 45/46 or better, no failed in-place attempt, then the 1M run.
