@@ -1793,3 +1793,47 @@ What I expect:
 
 After the repair arms the queue runs the two 1M ledger lines that campaign 13 gave up for this (N32p and X32q on
 the second 1M stream, as registered under part B, items 3 and 4); they are dropped if the cards are wanted sooner.
+
+### Campaign 13, part B results so far (2026-10-12 13:20 to 14:15), and one more pair registered before it runs
+
+Code state for these runs: `47fa9ae60` (the note checks after six reviews).
+
+| run | result | time | notes calls | |
+| --- | ---: | ---: | --- | --- |
+| X32q, rules stream, seed 1 | 46/46 | 9.5 min | 17 cuts in place, 0 failed, 2 asked again | gate met |
+| X32q, rules stream, seed 0 | 39/39 | 8.8 min | 17 cuts in place, 0 failed, 3 asked again | gate met |
+| N32pr, hard stream, seed 1 (keeper + retrieval at questions) | 45/49 | 22.5 min | 42 calls for 16 in-place cuts; 11 lines left out | expected 45 or more in 16 min: score yes, time no |
+| N32p, hard stream, seed 1 (keeper alone) | 48/49 | 14.0 min | 34 calls for 14 cuts; 1 line left out | finished (this morning's N32n did not) |
+
+*The gate holds with the rewritten checks*, at this morning's speed (X32p: 8.5 and 9.4 minutes).
+
+*The hard-stream pair does not show what it was run to show.* "Retrieval adds two or more answers" came out the
+other way round: the keeper alone scored three more and was eight minutes faster. But the two runs differ mostly in
+something else. On this stream the text says changes without numbers ("was doubled", "a third written off",
+"received exactly what sajaro19 stood at then"), the model writes them as `520 -> 1040` or `849 - 283 = 566`, and
+the checks, which want every new number either stated in the turns or shown with working whose amounts are stated,
+asked about them at nearly every cut (40 questioned lines in N32pr, 21 in N32p, of 46 and 28 in all). After the
+second reply the "leave out what the turns do not state" rule then threw away 11 lines in N32pr, right ones among
+them (`yoyo70: 493 -> 549 (received exactly what sajaro19 stood at then)`, three lines of `kedo72` in a row), and
+1 in N32p. Which run lost lines was a matter of how the second replies happened to be written. So the count of
+answers says more about that rule than about retrieval, and the pair has to be run again on checks that can follow
+such lines.
+
+**Code state h** (commits `8ab078fc2`, `03ff28ce2` and the one that carries this paragraph; arms N32h, N32hr,
+X32h): a line without working is followed when some sentence of the turns names the thing without stating any
+number and the new value is the old one times 2..10, the old one with a whole fraction of itself added or taken,
+what another thing of these turns holds, or the old one with such a value added or taken; a fraction of the
+starting value also passes as an amount in working, under the same condition. A read-only review of the first
+version found eight ways in which it let a wrong value through (the part written for the remainder, a set read as
+a gain, a value the thing held earlier in the reply written again); the rule was narrowed until each of those is
+asked about again (tests). It is a loosening all the same: on this stream nearly every counter is named in a
+sentence without a number, and for small values many numbers are "a fraction of itself". What it costs is measured
+by the notes audit, not assumed. `replay_diff.py` against `47fa9ae60` over 3,299 real lines of the rules streams:
+no name differs, so the gate runs are not affected.
+
+Registered before the run, hard stream, seed 1:
+- N32h (keeper alone): 46 or more of 49 in 14 minutes or less; 25 notes calls or fewer (34 before); 2 lines or
+  fewer left out; the audit of its saved NOTES shows no more wrong values than N32p's.
+- N32hr (with retrieval at questions): 46 or more of 49 in 20 minutes or less; 3 lines or fewer left out.
+- If N32hr again scores no more than N32h, "retrieval at question time adds answers on indirect text" is withdrawn:
+  three of four comparisons would then be within one answer or against it.

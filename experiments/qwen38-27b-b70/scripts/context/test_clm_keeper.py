@@ -525,7 +525,8 @@ class Keeper(unittest.TestCase):
         self.assertEqual(run(-93, "abcd12 went down by a third again.", "-93 - 31 (a third) = -124 (item 42)"), (0, [], [], -124))
         self.assertEqual(run(849, "A third of abcd12 was written off.", "849 \u2192 566"), (0, [], [], 566))
         self.assertEqual(run(10, "abcd12 gained 5.", "10 \u2192 15")[:2], (1, [0]))                             # a number was stated: show the working
-        self.assertEqual(run(10, "The clerk looked at abcd12. It gained 5.", "10 \u2192 15"), (0, [], [], 15))  # (named without a number: followed)
+        self.assertEqual(run(10, "The clerk looked at abcd12. It gained 3.", "10 \u2192 13")[:2], (1, [0]))     # also when it is named without one
+        # (a known weakness: for small values many numbers are "a fraction of itself": 10 -> 15 would pass as a half more)
         self.assertEqual(run(29, "abcd12 lost 73.", "-132")[:2], (1, [0]))                                       # 29 - 73 is not -132 (N32w)
         # the old value written again is not "halved", also when the thing is named without a number somewhere
         self.assertEqual(run(10, "The clerk checked abcd12. abcd12 was set to 20.", "10 -> 20", "10"), (1, [1], ["abcd12: 10"], 20))
@@ -533,11 +534,23 @@ class Keeper(unittest.TestCase):
         self.assertEqual(run(10, "abcd12 gained 5. abcd12 gained 7.", "10 \u2192 22")[:2], (1, [0]))            # two changes need their working
         self.assertEqual(run(100, "abcd12 gained 5.", "100 - 37 = 63")[:2], (1, [0]))                            # 37 is no fraction of 100
         ok = NS["implied_ok"]
-        self.assertTrue(ok(10, 5, set(), True) and ok(9, 6, set(), True) and ok(7, 12, {5}, True) and not ok(7, 13, {5}, True) and not ok(10, 5, {5}, False))
+        self.assertTrue(ok(10, 5, True) and ok(9, 6, True) and ok(7, 12, True, {5}) and ok(7, 5, True, {5}) and ok(10, 30, True))
+        self.assertFalse(ok(7, 13, True, {5}) or ok(10, 5, False) or ok(849, 283, True) or ok(10, 2, True) or ok(520, 569, True))
+        # what a second reader's probes found in the first version of this rule: each is still asked about
+        for held, said, lines in ((849, "A third of abcd12 was written off.", ["849 \u2192 283"]),                   # the part for the remainder
+                                  (520, "Next on the list was abcd12. It was set to 49.", ["569"]),                    # a set read as a gain
+                                  (520, "abcd12 gained 15.", ["520 + 52 = 572"]),                                      # a tenth of itself, unasked for
+                                  (10, "abcd12 was doubled.", ["10 x 2"]),                                             # working without a result
+                                  (15, "abcd12 gained 5. The clerk checked abcd12 twice.", ["15 + 5 = 20", "20 -> 15"]),
+                                  (520, "abcd12 was doubled. abcd12 gained 49. The clerk checked abcd12 twice.", ["1040", "1040 + 49 = 1089", "1040"])):
+            self.assertGreaterEqual(run(held, said, *lines)[0], 1, lines)
         tool = lambda text: {"role": "tool", "content": "ITEM 9/147 (UPDATE)\n" + text + "\n\n(exit_code=0)"}
         turns = [tool("abcd12 received exactly what wxyz56 stood at then.")]
         notes = "RULES\n(none)\nSTATE\nabcd12: 493\nwxyz56: 56\nOPEN"
         near, seen = NS["numbers_near"](["abcd12", "wxyz56"], turns), NS["numbers_in"](turns[0]["content"])
+        set_to = NS["apply_delta"]("RULES\n(none)\nSTATE\nabcd12: -135\nwxyz56: 458\nOPEN", {"rules": [], "open": None, "changes": [
+            ("abcd12", "-135 \u2192 458 (received exactly what wxyz56 stood at then; per NOTES, wxyz56 = 458)")]}, seen, strict=True, near=near)
+        self.assertEqual((set_to[0].splitlines()[3], set_to[1]["mismatch"]), ("abcd12: 458", []))       # set to what the other holds
         for line in ("493 \u2192 549 (received exactly what wxyz56 stood at then)", "493 + 56 = 549"):
             new, info = NS["apply_delta"](notes, {"rules": [], "open": None, "changes": [("abcd12", line)]}, seen, strict=True, near=near)
             self.assertEqual((new.splitlines()[3], info["mismatch"]), ("abcd12: 549", []), line)
