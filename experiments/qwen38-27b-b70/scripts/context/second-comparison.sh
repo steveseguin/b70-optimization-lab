@@ -233,6 +233,7 @@ ARMS["X32b"] = ("plain", "memory", 0)                 # X32 again after the prox
 ARMS["X32i"] = ("plain", "memory", 0)                 # X32 with the proxy started with --notes-mode inplace (2026-10-12; the runner sets the proxy's options)
 ARMS["X32m"] = ("plain", "memory", 0)                 # X32i after the merge fix (an asked-for notes reply no longer replaces the one before it)
 ARMS["X32n"] = ("plain", "memory", 0)                 # X32m with the proxy code and options of 2026-10-12 07:00 (see the header)
+ARMS["X32n2"] = ("plain", "memory", 0)                # X32n after the fix of 2026-10-12 06:55: what the kept message says about a result already noted is not noted twice
 ARMS["X32ir"] = ("plain", "memory", 0)                # the same with retrieval in the proxy as well, once it has that (reserved)
 for a in ("A", "B32", "C32", "E32"):  # same arm with earlier thinking dropped from every call
     ARMS[a + "t"] = ARMS[a]
@@ -350,7 +351,7 @@ run_one() {  # arm agent budget task_dir job_name drop_old_thinking
   fi
   local fb=${FOLD_BATCHES:-}
   local api=$API_BASE
-  if [[ "$arm" == X32 || "$arm" == X32b || "$arm" == X32i || "$arm" == X32m || "$arm" == X32n || "$arm" == X32ir ]]; then   # the keeper policy as a proxy: the agent sends everything, the proxy keeps the window
+  if [[ "$arm" == X32 || "$arm" == X32b || "$arm" == X32i || "$arm" == X32m || "$arm" == X32n || "$arm" == X32n2 || "$arm" == X32ir ]]; then   # the keeper policy as a proxy: the agent sends everything, the proxy keeps the window
     api=${CTXKEEPER_BASE:?arm X32 needs CTXKEEPER_BASE, the URL of a running tools/ctxkeeper proxy (http://host:port/v1)}
   fi
   if [[ "$arm" == B32iraR || "$arm" == B32iraR4 || "$arm" == B32iraRH ]]; then   # B32ira + pinned RULE lines (standing rules and methods stay in view)

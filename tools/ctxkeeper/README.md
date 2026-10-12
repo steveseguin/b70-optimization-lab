@@ -106,20 +106,45 @@ any saved NOTES version (`proxy_notes_audit.py`). Its first run on the second st
 second reply had replaced the first and lost nine items' changes; replies are merged now, and every notes reply is
 written to `events.jsonl`.
 
+On the 1M-token stream the same build scored **216/228 in 76 minutes**: below the full rewrite's 222 (in 95) and
+below the bar set for it (220 in under 70). Six answers were blank because the searches of one turn were lost when
+that turn ended with an empty reply; six were questions about a numbered item, answered from search hits that
+showed message numbers only; two NOTES values were wrong for a while (a value set in words, written as made-up
+working that added up). What changed after that run:
+
+- A search hit shows the first line of its message (`message 105 (tool, "ITEM 50/617 (UPDATE)"): ...`), so a
+  sentence can be placed by item, file or command.
+- The searches of a turn that ended with nothing for the client are shown once more in the next request (only to a
+  history that continues the one they were made in, and only as far as the window has room). An empty reply is
+  asked for once more with thinking off before it is handed to the client.
+- `--max-recalls N` (8). A search result is cut to the room left beside the reply; once there is none, no further
+  search is made in that turn.
+- `--notes-scan REGEX`: with `--notes-checks`, only tool results and user messages that match are read as facts
+  (so a question that names a thing is not counted as a mention of it).
+- The checks follow a line that packs several changes part by part (`opened at 117, set to -190, +46 = -144`),
+  take a line that repeats a change noted at the last call as no change, and (with `near`) want every amount in a
+  line's working to be stated for that thing. On the saved replies of that run this would have asked again 9 times
+  instead of 33.
+
+These are unit-tested and replayed on the saved replies; see the lab note (campaign 12) for the re-run.
+
 ## Limits
 
 - Measured on one synthetic task family, one model and one machine. As a harness policy: 39/39 and 46/46 at 240K,
   226/228 on a 1M-token stream. As this proxy, with a plain agent that sends its whole history: 37/39 and 42/46 at
   240K on its first two runs against the real server; the second exposed a defect in the notes call (fixed, not yet
-  re-run; after the fixes 39/39, 44/46 and 222/228 on the 1M stream in 95 minutes). Not yet run under a real coding
-  or research agent. Tests against a scripted model: `python3 -m unittest test_ctxkeeper test_notesdelta`.
+  re-run; after the fixes 39/39, 44/46 and 222/228 on the 1M stream in 95 minutes; with in-place notes 39/39, 46/46
+  and 216/228 in 76 minutes, see above). Not yet run under a real coding or research agent. Tests against a scripted model: `python3 -m unittest test_ctxkeeper test_notesdelta`.
 - Token counts are characters over a ratio learned from the server's `usage.prompt_tokens`, with margins. A server
   that reports no usage keeps the starting guess of 3.6 characters per token.
 - `recall` is a text and regular-expression search over archived sentences with message numbers: it answers "what
   was said". For "what was true at message N" every saved version of NOTES is kept, and `recall` with `notes_at`
   returns the one saved at or before N; what happened between that save and N still has to be read from the archive.
 - If the model answers with `recall` and one of the client's tools in the same turn, the client's call is passed on
-  and the recall is dropped. A turn gets at most eight searches; after that the model is asked once more without
-  the tool, and the client is never handed a `recall` call.
+  and the recall is dropped. A turn gets at most `--max-recalls` searches (8) and no more than fit the window;
+  after that the model is asked once more without the tool, and the client is never handed a `recall` call.
+- A value set in words can still be noted as a change by the same number ("recorded at sixty-four" as `208 - 64 =
+  144`): the working adds up and the amount is in the sentence, so no check sees it. One such line in 77 notes
+  calls at 1M.
 - One choice per request (`n` = 1). A conversation is recognised as the same one by what was said (roles, text, tool
   calls), not by thinking the client may have dropped or by how text parts were split.

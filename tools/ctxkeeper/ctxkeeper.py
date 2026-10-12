@@ -118,7 +118,7 @@ INPLACE_REQUEST = """\
 [[Message from the context keeper, not part of the task]] Every turn above, from the {start} on, is about to be \
 moved out of view. It all stays in a searchable archive, but you will no longer see it. Do not continue the task \
 and do not call any tool. Write only what those turns change in the NOTES; the keeper applies it and keeps every \
-line you do not mention. Use exactly this layout; the first line of your reply is the words NEW RULES:
+line you do not mention.{overlap} Use exactly this layout; the first line of your reply is the words NEW RULES:
 
 NEW RULES
 one line per standing rule, instruction, method or definition that those turns state and that applies from then \
@@ -140,6 +140,13 @@ section; may be empty). Do not list what has been received or answers already gi
 
 Output only these three sections.
 """
+# After a cut the newest exchange stays in view, and its assistant message was written about the result before it,
+# which the NOTES of that cut already cover. Unsaid, the model writes that result's changes a second time (X32n,
+# seed 1: `423 - 84 = 339` for a +84 already in the NOTES; an "opened at 214" the check then could not find).
+OVERLAP_NOTE = (" The first assistant message of those turns was written before the NOTES were last brought up to "
+                "date: what it says about a result that came before it is already in the NOTES, so do not write "
+                "that again; a change counts only if a result or message among those turns states it.")
+DROPPABLE = ("is not a value the turns state", "adds or takes an amount the turns do not state")
 RECALL_LIMIT_NOTE = ("[[That was the last archive search for this turn ({n} made). Do not call `recall` again now: take "
                      "the next step with what you have, for what you are sure of. You can search again right after "
                      "that step for anything still missing; do not give something up as unknown because of this limit.]]")
@@ -646,6 +653,44 @@ class Keeper:
             self.set_kept_user(s, messages, h)
         s.save()
 
+    @staticmethod
+    def supported(delta: dict, texts: list[str], strict: bool) -> dict:
+        """The reply without the lines of identifier-like names that the turns being noted never mention (only with
+        --notes-checks count or near: there, a change is something a tool result or user message states)."""
+        if not strict:
+            return delta
+        names = [k for k, _ in delta["changes"]]
+        seen = nd.mention_counts(names, texts)
+        gone = [k for k in dict.fromkeys(names) if k in nd._checked([k]) and not seen.get(k)]
+        if not gone:
+            return delta
+        return dict(delta, changes=[(k, v) for k, v in delta["changes"] if k not in gone], unsupported=gone)
+
+    @staticmethod
+    def without_doubtful(notes: str, delta: dict, seen: set[int], strict: bool, near: dict | None, every: bool = False) -> tuple[dict, list[str]]:
+        """The reply without the lines the checks still question because the turns do not state their number
+        (DROPPABLE; with `every`, without any questioned line). One line at a time: the line of that name whose
+        removal makes the question go away. Returns the reply and the lines left out."""
+        changes, dropped = list(delta["changes"]), []
+        for _ in range(12):
+            _, info = nd.apply_delta(notes, dict(delta, changes=changes), seen, strict=strict, near=near)
+            bad = [m for m in info["mismatch"] if every or any(d in m for d in DROPPABLE)]
+            if not bad:
+                break
+            name = bad[0].split(":", 1)[0]
+            before = sum(m.split(":", 1)[0] == name for m in info["mismatch"])
+            for i in [i for i, (k, _) in enumerate(changes) if k == name]:
+                trial = changes[:i] + changes[i + 1:]
+                _, t = nd.apply_delta(notes, dict(delta, changes=trial), seen, strict=strict, near=near)
+                if sum(m.split(":", 1)[0] == name for m in t["mismatch"]) < before:
+                    dropped.append(f"{changes[i][0]}: {changes[i][1]}")
+                    changes = trial
+                    break
+            else:                                    # no single line explains it: every line of that name goes
+                dropped += [f"{k}: {v}" for k, v in changes if k == name]
+                changes = [(k, v) for k, v in changes if k != name]
+        return dict(delta, changes=changes), dropped
+
     def keep_inplace(self, s: Session, model: Any, messages: list[dict[str, Any]], h: int, client: dict[str, Any]) -> bool:
         """In-place notes (see INPLACE_REQUEST). True when the turns before the newest exchange were noted and moved
         out; False leaves everything as it was, and the ordinary cut handles those turns when the window fills."""
@@ -671,7 +716,8 @@ class Keeper:
                  "first turn after the user message that follows the NOTES (that message is already in the NOTES; it "
                  "is shown only because it is still being worked on, so do not count it again)" if kept_shown else
                  "message that holds the NOTES")
-        req = base + [{"role": "user", "content": INPLACE_REQUEST.format(start=start)}]
+        overlap = OVERLAP_NOTE if s.state["cut"] and noted and noted[0].get("role") == "assistant" else ""
+        req = base + [{"role": "user", "content": INPLACE_REQUEST.format(start=start, overlap=overlap)}]
         tools = list(client.get("tools") or [])
         if s.state["cut"] or self.memory_note:       # the same tool list as the ordinary calls: the same prompt start
             tools = tools + [RECALL_TOOL]
@@ -708,6 +754,21 @@ class Keeper:
             delta = nd.parse_delta(text) if finish != "length" else None
             s.log_event({"event": "in-place notes reply", "attempt": attempt, "finish_reason": finish, "thinking": thinking,
                          "written": usage.get("completion_tokens"), "reply": text[:6000]})
+            if delta is None and earlier is not None:
+                # Asked about some lines of a reply that was in the layout, the model wrote nothing usable (X32n,
+                # seed 1: an empty reply, twice; the whole cut then went to the full rewrite, which lost a change).
+                # The reply before it stands, without the lines that were in question.
+                s.log_event({"event": "in-place notes: no usable second reply, the first stands", "attempt": attempt})
+                delta, kept = dict(earlier, rules=list(rules_seen)), self.supported(earlier, texts, strict)
+                near = nd.numbers_near(nd.state_keys(s.state["notes"]) + [k for k, _ in kept["changes"]], texts) if self.notes_checks == "near" else None
+                kept, dropped = self.without_doubtful(s.state["notes"], dict(kept, rules=list(rules_seen)), seen, strict, near, every=True)
+                new, info = nd.apply_delta(s.state["notes"], kept, seen, strict=strict, near=near)
+                info.pop("steps", None)
+                info["mismatch"] = []
+                if dropped:
+                    s.log_event({"event": "in-place notes: lines left out (the turns do not bear them out)", "lines": dropped[:12]})
+                why = ""
+                break
             if delta is None:
                 why = "reply cut off by the token cap" if finish == "length" else "reply without the NEW RULES / CHANGES layout"
                 part = nd.parse_delta(text, need_changes=False)      # its rules still count, if that section is complete
@@ -725,6 +786,10 @@ class Keeper:
             # an asked-for reply replaces the lines of the names it mentions; the other lines of the reply before it stay
             delta = earlier = nd.merge_replies(earlier, delta)
             delta["rules"] = list(rules_seen)
+            # a line for a name that none of these turns mentions is not a change these turns made (see OVERLAP_NOTE)
+            delta = self.supported(delta, texts, strict)
+            if delta.get("unsupported"):
+                s.log_event({"event": "in-place notes: lines for names the turns do not mention left out", "names": delta["unsupported"][:20]})
             known = nd.state_keys(s.state["notes"]) + [k for k, _ in delta["changes"]]
             near = nd.numbers_near(known, texts) if self.notes_checks == "near" else None
             new, info = nd.apply_delta(s.state["notes"], delta, seen, strict=strict, near=near)
@@ -759,7 +824,15 @@ class Keeper:
             s.save()
             return False
         if info.get("mismatch"):
-            s.log_event({"event": "in-place notes: a doubtful line accepted after the second reply", "lines": info["mismatch"][:6]})
+            # After the second reply: a line whose number the turns do not state is left out (the old value stays);
+            # working from another start than the NOTES hold is taken (a model that thinks may be right about it).
+            kept, dropped = self.without_doubtful(s.state["notes"], delta, seen, strict, near)
+            if dropped:
+                new, info = nd.apply_delta(s.state["notes"], kept, seen, strict=strict, near=near)
+                info.pop("steps", None)
+                s.log_event({"event": "in-place notes: lines left out (the turns do not bear them out)", "lines": dropped[:12]})
+            if info.get("mismatch"):
+                s.log_event({"event": "in-place notes: a doubtful line accepted after the second reply", "lines": info["mismatch"][:6]})
         before = dict(s.state)
         try:                                         # all or nothing: a failure here leaves the state as it was, and the
             s.archive.add(h + s.state["cut"] + 1, noted)    # archive takes no number twice when the cut is made again

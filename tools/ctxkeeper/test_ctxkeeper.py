@@ -346,6 +346,73 @@ class InPlace(unittest.TestCase):
             keeper.complete({"model": "m", "messages": msgs})
             self.assertEqual((s.state["inplace_cuts"], s.state["inplace_reasks"]), (1, reasks))
 
+    class Tampering(LedgerModel):
+        """The scripted ledger, with lines added to the CHANGES of chosen notes replies ({reply number: [lines]}, the
+        first notes reply is 1), and fixed answers to a "Check these lines" question."""
+
+        def __init__(self, add, on_check=None):
+            super().__init__()
+            self.add, self.on_check, self.replies = add, list(on_check or []), 0
+
+        def __call__(self, body):
+            last = str(body["messages"][-1].get("content") or "")
+            if last.startswith("Check these lines") and self.on_check:
+                self.requests.append(body)
+                self.notes_requests.append(body)
+                return reply(self.on_check.pop(0))
+            resp = super().__call__(body)
+            text = resp["choices"][0]["message"]["content"]
+            if text.startswith("NEW RULES"):
+                self.replies += 1
+                extra = self.add.get(self.replies)
+                if extra:
+                    resp["choices"][0]["message"]["content"] = text.replace("\nOPEN", "\n" + "\n".join(extra) + "\nOPEN", 1)
+            return resp
+
+    def events(self, keeper):
+        return (Path(self.dir.name) / next(iter(keeper.sessions)) / "events.jsonl").read_text()
+
+    def test_what_the_kept_message_says_about_a_noted_result_is_not_noted_twice(self):
+        """After a cut the newest exchange stays in view; its assistant message was written about the result before
+        it, which the NOTES already cover. The model is told, and a line for a name that none of the turns being
+        noted mentions is left out without a question (X32n seed 1: `sahidi23: 423 - 84 = 339`, a stale answer)."""
+        model = self.Tampering({2: ["abcd00: 0 - 84 = -84", "abcd01: opened at 214"]})
+        keeper = self.keeper(model, notes_checks="near")
+        s = self.run_conversation(keeper, 12)
+        self.assertGreaterEqual(s.state["inplace_cuts"], 2)
+        first, second = (r["messages"] for r in model.notes_requests[:2])
+        self.assertNotIn(ck.OVERLAP_NOTE.strip(), first[-1]["content"])           # nothing was noted before the first cut
+        self.assertIn(ck.OVERLAP_NOTE.strip(), second[-1]["content"])
+        self.assertEqual(second[3]["role"], "assistant")                         # the opening two, NOTES, then the kept message
+        self.assertIn("abcd00: 0", s.state["notes"].splitlines())
+        self.assertIn("abcd01: 7", s.state["notes"].splitlines())
+        self.assertEqual((s.state["inplace_reasks"], s.state["inplace_failed"]), (0, 0))
+        self.assertIn("names the turns do not mention left out", self.events(keeper))
+
+    def test_no_usable_second_reply_means_the_first_stands_without_the_questioned_line(self):
+        model = self.Tampering({1: ["abcd01: 999"]}, on_check=[""])
+        keeper = self.keeper(model, notes_checks="near")
+        s = self.run_conversation(keeper, 6)
+        self.assertEqual((s.state["inplace_failed"], s.state["inplace_reasks"]), (0, 1))
+        self.assertGreaterEqual(s.state["inplace_cuts"], 1)                       # the cut was made in place, no full rewrite
+        self.assertIn("abcd01: 7", s.state["notes"].splitlines())
+        self.assertNotIn("999", s.state["notes"])
+        self.assertIn("abcd00: 0", s.state["notes"].splitlines())
+        ev = self.events(keeper)
+        self.assertIn("no usable second reply, the first stands", ev)
+        self.assertIn("abcd01: 999", ev)
+
+    def test_a_number_the_turns_do_not_state_is_left_out_after_the_second_reply(self):
+        again = "NEW RULES\n(none)\nCHANGES\nabcd00: 0\nabcd01: 7\nabcd01: 999\nabcd02: 14\nOPEN\n"
+        model = self.Tampering({1: ["abcd01: 999"]}, on_check=[again])
+        keeper = self.keeper(model, notes_checks="near")
+        s = self.run_conversation(keeper, 4)
+        notes = s.state["notes"].splitlines()
+        self.assertTrue({"abcd00: 0", "abcd01: 7"} <= set(notes), notes)
+        self.assertNotIn("999", s.state["notes"])
+        self.assertEqual(s.state["inplace_failed"], 0)
+        self.assertIn("lines left out (the turns do not bear them out)", self.events(keeper))
+
     def test_options_are_checked(self):
         with self.assertRaises(ValueError):
             ck.Keeper(lambda b: None, Path(tempfile.gettempdir()), notes_mode="fast")
