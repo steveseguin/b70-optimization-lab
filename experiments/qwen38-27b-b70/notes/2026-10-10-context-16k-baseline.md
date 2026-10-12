@@ -1026,14 +1026,14 @@ queue `QUEUE10b.txt`. Nine runs, no GPU fault line, no guard event (no 1M client
 
 | arm N32u | questions right | minutes | notes calls | counters ever wrong in the NOTES |
 | --- | ---: | ---: | ---: | ---: |
-| 240K rules stream, seed 0 | 39/39 | 10.3 | 20 | 0 |
-| 240K rules stream, seed 1 | 46/46 | 10.3 | 19 | 0 |
+| 240K rules stream, seed 0 | 39/39 | 9.9 | 20 | 0 |
+| 240K rules stream, seed 1 | 46/46 | 10.0 | 19 | 0 |
 | 1M rules stream (campaign 10) | 228/228 | 50.2 | 84 | 0 |
 
 313 of 313 answers over the three runs, against the full keeper's 311 of 313 in 15.7, 16.5 and 82.9 minutes. The
-checks cost about a minute at 240K (10.3 against 9.5 and 8.5 for the unchecked versions) and are why the audit is
-clean. Six items per notes call instead of ten (N32u6, seed 0): 39/39 in 10.3 minutes with 28 notes calls and one
-counter wrong in the NOTES for a while; no gain, ten stays. That run also showed a defect, fixed: a line
+checks cost up to a minute and a half at 240K (9.9 and 10.0 against 9.5 and 8.5 for the unchecked versions) and are
+why the audit is clean. Six items per notes call instead of ten (N32u6, seed 0): 39/39 in 10.0 minutes with 28 notes
+calls and two counters wrong in the NOTES for a while; no gain, ten stays. One of the two was a defect, fixed: a line
 `tamija29: (no change - mention is the confidentiality rule itself)` was stored as that counter's value (a no-change
 line with a remark after it is now still a no-change line).
 
@@ -1042,11 +1042,11 @@ line with a remark after it is now still a no-change line).
 | arm | score | probes | final list | min | notes wrong | what happened |
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | N32z (campaign 10) | 42/50 | 23/25 | 19/25 | 14.9 | 14 | |
-| N32u | 3/50 | | | 17.7 | | stuck at the first question item: one archive search refused 362 times in a row |
+| N32u | 3/50 | | | 17.4 | | stuck at the first question item: one archive search refused 362 times in a row |
 | N32t: N32u + the refusal says stop after three, and that call is sampled | stopped by me at 11 min | 5/5 on the first item | | | | circled between three different searches instead |
-| N32s: + `recall` shows the sentence after each match; a search sent a third time since the last item is refused | 43/50 raw, **void** | 20/25 | 23/25 | 19.9 | 10 | void for one key in the answers file that was not asked for; the standing rule lost at the first cut |
-| N32ur: N32u + retrieved sentences at each question | 47/50 | 23/25 | 24/25 | 19.6 | 9 | |
-| **N32sr: everything together** | **46/50** | 22/25 | 24/25 | **14.6** | 6 | |
+| N32s: + `recall` shows the sentence after each match; a search sent a third time since the last item is refused | 43/50 raw, **void** | 20/25 | 23/25 | 19.6 | 10 | void for one key in the answers file that was not asked for; the standing rule lost at the first cut |
+| N32ur: N32u + retrieved sentences at each question | 47/50 | 23/25 | 24/25 | 19.4 | 9 | |
+| **N32sr: everything together** | **46/50** | 22/25 | 24/25 | **14.4** | 6 | |
 | R32b retrieval only (campaign 10) | stopped at 20.5 min | 10/15 on the first three items | | | | |
 
 What this stream taught, each now in the code:
@@ -1062,10 +1062,11 @@ What this stream taught, each now in the code:
 - **An asked-for second reply must not lose what the first one had.** N32s lost the standing rule at its first cut:
   the first reply named it, the count check asked again, the second reply left NEW RULES empty, and the second
   reply stood. A rule named in any reply of one notes call is now kept. (Rule 3/5 in N32s, 5/5 again in N32sr.)
-- **Retrieval at question time helps the keeper here**: 47 and 46 of 50 with it, 42 and 43 without. The misses
-  that remain are the same four in both runs: values that passed through a chain of "as much as Y held" changes.
+- **Retrieval at question time helps the keeper here**: 47 and 46 of 50 with it, 42 and 43 without. The same three
+  misses remain in both runs with it (and a fourth in N32sr): values that passed through a chain of "as much as Y
+  held" changes.
 
-N32sr on the 240K rules stream, seed 1: 46/46 in 11.5 minutes, NOTES audit clean. Retrieval added to the keeper
+N32sr on the 240K rules stream, seed 1: 46/46 in 11.2 minutes, NOTES audit clean. Retrieval added to the keeper
 costs about a minute there and loses nothing.
 
 So after both campaigns the recommended form is the keeper with in-place notes and its checks (N32u: 313/313 on
