@@ -145,6 +145,7 @@ sequential decode. Every run below: 64/64 tokens and 384/384 layers against the 
 | **official draft head on the second card** | the model's own one-token draft head, experts requantised to 8 bits for the draft only | **53 of 63** | **32.9** (median 27.8) | **30.37**, repeat **31.02** |
 | **integrated runtime ([packet 38][p38r]): draft head, new kernels, native controller** | the same draft head | 53 of 63 | 25.6 (median 23.1) | **39.05** |
 | **the same, twelve-prompt suite, two repeats** | the same | 597 of 756 | — | **38.25 median** (35.05–41.43) |
+| **independent repeat on the other card pair ([cards 2+3][p38r2])** | the same | 597 of 756 | — | **38.11 median** (34.77–41.19), 24 of 24 exact |
 | diagnostic: guesses fed from the oracle (not a speed result) | — | 63 of 63 | 26.2 (median 24.1) | — |
 
 A right guess costs 28.7 ms (4.2 ms draft + one half), a wrong one 55.3 ms. The draft
@@ -265,3 +266,4 @@ leading suspect of the 09:09 fault); the fused generic kernels of packets 21, 23
 [p40]: stage2/packet40-suite/README.md
 [p42r]: stage2/packet42-codegen2/receipts-card2-20261012/README.md
 [p44]: stage2/packet44-context/README.md
+[p38r2]: stage2/packet38-integrated/receipts-cards23-20261012-repeat/README.md
