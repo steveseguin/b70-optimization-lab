@@ -11,7 +11,7 @@ import suite_check as checker
 
 def main():
     sealed,binary,affinity,prompts=run.preflight()
-    report=dict(started_utc=run.utc(),passed=False,affinity=affinity,models=[],prompts=[],files={})
+    report=dict(started_utc=run.utc(),passed=False,affinity=affinity,models=[],prompts=[],files={},verifier_sha256=run.sha(Path(__file__)))
     def verify(path,digest):
         actual=run.sha(path)
         run.check(actual==digest,"hash mismatch: "+str(path))
