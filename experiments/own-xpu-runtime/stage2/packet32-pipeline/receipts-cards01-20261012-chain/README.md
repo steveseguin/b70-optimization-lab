@@ -1,13 +1,14 @@
 # Packet 32 on cards 0+1 (2026-10-12 01:32 – 02:19 UTC): both cards working at once, exact
 
 Two rank processes, one card each, connected only by a small shared file. K0, K1a, K1b,
-K2, the new concurrency canary W0p and two full-model runs passed through the packet's
+K2, the new concurrency canary W0p and three full-model runs passed through the packet's
 own wrapper; clean kernel log (no `xe` line) throughout.
 
 | Window | What it shows | Result |
 | --- | --- | --- |
 | [W0p](w0p-r32/receipt.json) | both processes alive and issuing at once: 1,000 hand-overs, 1,000 chained kernels per rank | passed; 995 of 1,000 host work intervals overlapped; 0.14 ms per hand-over |
 | [W2s](w2s-r32/receipt.json) | sequential generation in the new process model (prompt overlapped) | **64/64 tokens, 384/384 layers; 19.47 tok/s** (51.4 ms per token; median interval 48.4) |
+| [W2n](w2n-r32/receipt.json) | the built-in token n-gram guesser (a real, weight-free predictor) | **64/64 tokens, 384/384 layers; 19.64 tok/s**: 32 guesses, 4 right, 28 wrong and redone, 31 positions without a guess. A wrong guess costs nothing against sequential decode (the discarded work ran while that card would have been idle), and 28 rollbacks on the cards left the output exact |
 | [W2d](w2d-r32/receipt.json) | **diagnostic only**: guesses fed from the oracle's tokens, so every guess is right: the pipeline's ceiling | **64/64 tokens, 384/384 layers**; 63 of 63 guesses kept; 26.2 ms per token mean, 24.1 median (38.1 / 41.5 tok/s as an interval rate, not a speed result) |
 
 What this establishes:
@@ -36,3 +37,9 @@ and costs 3 ms that is about 34 ms per token (about 30 tok/s) before any further
 or host-path gain; the reference is 28.49 tok/s. The real guesser (the model's official
 draft head, [packet 36](../../packet36-draft/README.md)) is being built;
 [packet 31](../../packet31-mtp-acceptance/README.md) measures its agreement on CPU.
+
+**The real guesser's hit rate, measured on CPU** ([packet 31](../../packet31-mtp-acceptance/README.md)):
+the official draft head fed with this quantized target's own final streams guesses the
+target's next token **198 times out of 256 (77.3%, 95% interval 71.8–82.0%)** over four
+development prompts (84%, 67%, 81%, 77%); requantising its experts to 8 bits changes 2
+of 256 guesses and not the hit count. Token lookups reach 6–9%, which is what W2n shows.
