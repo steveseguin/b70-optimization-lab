@@ -53,6 +53,9 @@ tokens per prompt), are prepared in packet 40.
 | [K2](K2c/window.json) | measured selection on card 0 ([selection](K2c/dispatch-measured.json)): `p30.attention.sg32` for QSA attention (fastest at all six timed context lengths), `p33.down.select`, `p33.dense.segment` for the large dense classes, `p30.small.rows4` for the router/shared-expert group |
 | [KD](KD/window.json) | draft head on the second card equals the host implementation byte for byte, two fresh owners |
 | [W2m, native controller](W2m-native/window.json) | development prompt: 64/64 tokens, 384/384 layers, **39.05 tok/s**, 53 of 63 guesses right |
+| [W2m, Python controller](W2m-python/window.json) | the same run with the Python controller: 64/64, 384/384, 36.26 tok/s: the native controller is worth 7.7% |
+| [W2s](W2s-native/window.json) | development prompt without guesses (sequential generation): 64/64, 384/384, **24.93 tok/s** |
+| [WSs](WSs/summary.json) | the twelve-prompt suite without guesses, two repeats: 24 of 24 requests exact, **median 25.36 tok/s** (25.16–25.48) |
 
 Stops on the way, none a device problem, each with an evidence folder:
 [K2's 66-length grid](../evidence/20261012-k2-grid-exceeds-watchdog/README.md),
