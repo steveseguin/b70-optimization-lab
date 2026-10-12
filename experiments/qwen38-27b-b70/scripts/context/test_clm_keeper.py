@@ -215,13 +215,22 @@ class Keeper(unittest.TestCase):
         self.assertEqual(c("3, set to 111 (item 452), +82 = 193 (item 454)", 3, {111}), (193, [111], 0))
         self.assertEqual(c("585 - 79 = 506, then removed", None, {585}), (None, [585], 1))     # the set opens the working
         self.assertEqual(c("opened at 79 (item 521, reopened after removal at 296); 79 \u2212 79 = 0 (item 523)", None, {79}), (0, [79], 0))
+        # an arrow separates parts; a wrong sum is recomputed and the next part may start from it as written (X32p at 1M)
+        self.assertEqual(c("279 \u2192 415 (set, item 582), then 415 - 18 = 397, then removed (item 587)", 279, {415}), (None, [415], 0))
+        self.assertEqual(c("461 \u2192 26 (recorded at, item 584), then 26 + 82 = 108", 461, {26}), (108, [26], 0))
+        self.assertEqual(c("517 -> 164 (item 137), then 164 + 76 + 85 = 325 (item 139), then 325 + 18 = 343", 517, {164}), (343, [164], 0))
+        fixed = []
+        self.assertEqual(c("522 - 20 = 502, 502 - 17 = 485, 485 + 58 = 498 (item 442)", 522, set(), None, fixed), (543, [], 0))
+        self.assertEqual(fixed, ["(485) + 58 = 498 -> 543"])
+        self.assertEqual(c("10 + (5) + 2 = 12, then +1 = 13", 10, {5, 2, 1}), (18, [], 0))       # brackets belong to the sum: 18, not 13
+        fixed = []
+        self.assertEqual(c("set to 600, then 600 + 63 = 664, then 664 - 4 = 660", -120, {600}, None, fixed), (659, [600], 0))
+        self.assertEqual(fixed, ["(600) + 63 = 664 -> 663", "(663) - 4 = 660 -> 659"])
         for value, held, stated in (("set to 600, then 600 + 63 = 663", -120, set()),            # 600 is not in the turns
-                                    ("set to 600, then 600 + 63 = 664", -120, {600}),            # a wrong sum
                                     ("opened at 117, +46 = 163, about right", None, {117}),      # a part without a number
                                     ("-20 \u2192 set to -159, then -2 \u2192 -161", -20, {-159}),  # arrows are not followed
                                     ("7 / 2 = 3, then set to 9", 7, {9}), ("480 + 5 = 485", 480, set()), ("removed", 5, set()),
                                     ("increased by 5, then +2 = 7", 10, {5, 2}),                 # a change in words is not a set
-                                    ("10 + (5) + 2 = 12, then +1 = 13", 10, {5, 2, 1}),          # brackets belong to the sum
                                     ("answered 571, then 12", None, {571, 12}), ("set to 5, set to 7, set to 5", 1, {5, 7})):   # a set is good once
             self.assertIsNone(c(value, held, stated), value)
         notes = "RULES\n(none)\nSTATE\nabcd12: 36\nefgh34: removed\nmnop78: 9\nOPEN"
@@ -279,6 +288,132 @@ class Keeper(unittest.TestCase):
         self.assertEqual(len(info["mismatch"]), 1)
         _, info = ap([("bamo35", "577 - 7 = 570"), ("mosu40", "392 + 577 = 969")])    # the value bamo35 held before its change: also held
         self.assertEqual(info["mismatch"], [])
+
+    def test_review_findings_of_code_state_p(self):
+        """Each of these stored a wrong value, or lost a right one, before it ran (read-only review, 2026-10-12)."""
+        tool = lambda text: {"role": "tool", "content": text + "\n\n(exit_code=0)"}
+        turns = [tool("ITEM 9/147 (UPDATE)\nabcd12 gained 5. vohi44 went up by as much as bamo35 held at that moment. katu85 was recorded at 523.")]
+        notes = "RULES\n(none)\nSTATE\nabcd12: 70\nvohi44: 228\nbamo35: 402\nkatu85: 650\nzzzz99: 27\nOPEN"
+        names = ["abcd12", "vohi44", "bamo35", "katu85", "zzzz99"]
+        near, seen = NS["numbers_near"](names, turns), NS["numbers_in"](turns[0]["content"])
+        ap = lambda changes: NS["apply_delta"](notes, {"rules": [], "open": None, "changes": changes}, seen, strict=True, near=near)
+        # 1. leaving out one made-up line must not leave the next one standing on it
+        for lines in ([("abcd12", "70 - 27 = 43"), ("abcd12", "43 - 31 = 12")], [("abcd12", "70 + 5 = 75"), ("abcd12", "75 - 27 = 48")]):
+            kept, left = NS["without_doubtful"](notes, {"rules": [], "open": None, "changes": lines}, seen, True, near)
+            new, _ = NS["apply_delta"](notes, kept, seen, strict=True, near=near)
+            self.assertIn(new.splitlines()[3], ("abcd12: 70", "abcd12: 75"), lines)
+            self.assertNotIn("abcd12: 12", new)
+        # 2. a name the NOTES hold is never taken for another name misspelled
+        delta = {"rules": [], "open": None, "changes": [("bako35", "40 + 5 = 45")]}
+        self.assertEqual(NS["respell"](delta, {"bamo35": 1}, ["bako35", "bamo35"])[1], {})
+        self.assertEqual(NS["respell"](delta, {"bamo35": 1})[1], {"bako35": "bamo35"})        # unknown to the NOTES: a misspelling
+        # 4. an amount is not excused by a value that a thing these turns never mention happens to hold (zzzz99: 27)
+        self.assertEqual(len(ap([("katu85", "650 - 27 = 623")])[1]["mismatch"]), 1)
+        self.assertEqual(ap([("vohi44", "228 + 402 = 630")])[1]["mismatch"], [])              # bamo35 is mentioned: its value counts
+        # 4b. the amounts of a packed line do not become values that later lines may use (its sets and its result do)
+        turns2 = [tool("ITEM 9/147 (UPDATE)\nabcd12 gained 27. abcd12 was set to 174. katu85 was recorded at 523.")]
+        notes2 = "RULES\n(none)\nSTATE\nabcd12: 578\nkatu85: 650\nOPEN"
+        near2, seen2 = NS["numbers_near"](["abcd12", "katu85"], turns2), NS["numbers_in"](turns2[0]["content"])
+        ap2 = lambda changes: NS["apply_delta"](notes2, {"rules": [], "open": None, "changes": changes}, seen2, strict=True, near=near2)[1]["mismatch"]
+        self.assertEqual(len(ap2([("abcd12", "578 + 27 = 605, then set to 174"), ("katu85", "650 - 27 = 623")])), 1)
+        self.assertEqual(ap2([("abcd12", "578 + 27 = 605, then set to 174"), ("katu85", "650 - 174 = 476")]), [])   # 174: abcd12 holds it now
+        # 5. a name written into the working is not an amount
+        self.assertEqual(ap([("vohi44", "228 + 402 (bamo35) = 630")])[1]["mismatch"], [])
+        self.assertTrue(NS["amounts_ok"](" + 402 (bamo35's value)", {402}) and not NS["amounts_ok"](" + 35", {402}))
+
+    def test_an_open_question_is_found_until_the_next_delivery(self):
+        tool = lambda text: {"role": "tool", "content": text}
+        ask = tool("ITEM 609/618 (PROBE)\nPROBE: answer these questions now.\nASK p29_1: What value does javo77 hold now?")
+        body = [{"role": "assistant", "content": "next"}, tool("ITEM 608/618 (UPDATE)\ntext"), {"role": "assistant", "content": ""}, ask,
+                {"role": "user", "content": "[[RULES in force]] - a rule"}, {"role": "assistant", "content": "", "tool_calls": []},
+                tool("ITEM 468 (archived)\nketaqi61 now stands at 12."), {"role": "assistant", "content": ""}, tool("item 36: diro90 gained six.")]
+        self.assertEqual(NS["open_question"](body), 3)                              # recall output does not close it
+        self.assertIsNone(NS["open_question"](body + [{"role": "assistant", "content": ""}, tool("ITEM 610/618 (UPDATE)\nmore text")]))
+        self.assertIsNone(NS["open_question"](body[:2]))
+        # an archived question item printed by `recall --item N` is not a question that was asked now
+        old = tool("ITEM 441 (archived)\nPROBE: answer these questions now.\nASK p21_1: What value does faxamo72 hold now?")
+        self.assertIsNone(NS["open_question"](body[:2] + [{"role": "assistant", "content": ""}, old]))
+        self.assertEqual(NS["open_question"](body + [{"role": "assistant", "content": ""}, old]), 3)
+
+    def test_the_ordinary_cut_keeps_an_open_question_and_lets_go_of_an_answered_one(self):
+        tool = lambda text: {"role": "tool", "content": text}
+        ask = tool("ITEM 609/618 (PROBE)\nPROBE: answer these questions now.\nASK p29_1: What value does javo77 hold now?")
+        fetch = [{"role": "assistant", "content": ""}, tool("ITEM 468 (archived)\nketaqi61 now stands at 12.")]
+        body = [{"role": "assistant", "content": "next"}, tool("ITEM 608/618 (UPDATE)\ntext"), {"role": "assistant", "content": ""}, ask] + fetch * 3
+        kept = NS["kept_question"](body, 6)                                          # the cut takes the question item
+        self.assertEqual(len(kept), 1)
+        self.assertEqual((kept[0]["role"], kept[0]["content"]), ("user", NS["OPEN_QUESTION"] + "\n" + ask["content"]))
+        self.assertEqual(NS["kept_question"](body, 3), [])                           # the cut stops before it: nothing to keep
+        self.assertEqual(NS["kept_question"](body[:2], 2), [])                       # no question open
+        view = kept + fetch * 2                                                      # as it stands after the cut
+        self.assertEqual(NS["open_question"](view), 0)
+        self.assertFalse(NS["answered_copy"](view))
+        self.assertEqual(NS["kept_question"](view, 3), kept)                         # cut again: the same text, the head not doubled
+        self.assertTrue(NS["wants_thinking"]([{"role": "system", "content": "s"}, {"role": "user", "content": "task"}] + view))
+        moved_on = view + [{"role": "assistant", "content": ""}, tool("ITEM 610/618 (UPDATE)\nmore text\n\n(exit_code=0)")]
+        self.assertTrue(NS["answered_copy"](moved_on))
+        self.assertFalse(NS["answered_copy"](moved_on[1:]))
+
+    def test_recall_shows_the_nearest_matches_and_counts_first(self):
+        import subprocess, sys, tempfile
+        d = tempfile.TemporaryDirectory()
+        self.addCleanup(d.cleanup)
+        arch = Path(d.name) / "archive"
+        arch.mkdir()
+        for i in list(range(1, 61)) + [1000, 1001]:                                  # file names sort wrongly from item 1000 on
+            (arch / f"item-{i:03d}.txt").write_text(f"The fog lifted. diro90 was set to {i * 3}. It rained.\n\nThe cook slept.")
+        tool = Path(d.name) / "recall.py"
+        tool.write_text((Path(__file__).parent / "recall.py").read_text().replace('D = "/tmp/.live_ctx/archive"', f'D = "{arch}"'))
+        run = lambda *a: subprocess.run([sys.executable, str(tool), *a], capture_output=True, text=True).stdout.strip().splitlines()
+        out = run("diro90", "--before", "48")
+        self.assertEqual(out[0], "[48 matches; showing the 40 nearest before item 48; 8 earlier ones are not shown: narrow with --after N]")
+        self.assertEqual((out[1], out[-1], len(out)), ("item 9: diro90 was set to 27. It rained.", "item 48: diro90 was set to 144. It rained.", 41))
+        self.assertEqual(run("diro90", "--before=48"), out)
+        out = run("diro90")
+        self.assertTrue(out[0].startswith("[62 matches; showing the newest 40; 22 earlier ones are not shown"))
+        self.assertEqual(out[-2:], ["item 1000: diro90 was set to 3000. It rained.", "item 1001: diro90 was set to 3003. It rained."])
+        out = run("diro90", "--after", "5", "--max-lines", "3")
+        self.assertEqual(out, ["[58 matches; showing the first 3 from item 5 on; 55 later ones are not shown: narrow with --before N]",
+                               "item 5: diro90 was set to 15. It rained.", "item 6: diro90 was set to 18. It rained.", "item 7: diro90 was set to 21. It rained."])
+        self.assertEqual(run("diro90", "--after", "59", "--before", "60"), ["item 59: diro90 was set to 177. It rained.", "item 60: diro90 was set to 180. It rained."])
+        self.assertEqual(run("zebra", "--before", "9"), ["recall: no archived sentence matches 'zebra' up to item 9"])
+        self.assertEqual(run("--item", "7")[:2], ["ITEM 7 (archived)", "The fog lifted. diro90 was set to 21. It rained."])
+
+    def test_a_misspelled_name_is_put_right(self):
+        mentions = {"vozimi36": 1, "abcd12": 2, "vozu36": 1, "wxyz56": 1}
+        delta = {"rules": [], "open": None, "changes": [("vozi36", "212 - 47 = 165"), ("abcd12", "5"), ("qqqq99", "7"), ("plain", "x")]}
+        out, fixed = NS["respell"](delta, {"vozimi36": 1, "abcd12": 2, "wxyz56": 1})
+        self.assertEqual((fixed, out["changes"][0]), ({"vozi36": "vozimi36"}, ("vozimi36", "212 - 47 = 165")))
+        self.assertEqual(NS["respell"](delta, mentions)[1], {})                      # two names as close: not guessed
+        self.assertEqual(NS["respell"](delta, {"vozimi37": 1, "abcd12": 1})[1], {})  # other digits: another thing
+        taken = {"rules": [], "open": None, "changes": [("vozi36", "1"), ("vozimi36", "2")]}
+        self.assertEqual(NS["respell"](taken, {"vozimi36": 2})[1], {})               # the right name has its own line already
+
+    def test_lines_the_turns_do_not_bear_out_are_left_out(self):
+        tool = lambda text: {"role": "tool", "content": text + "\n\n(exit_code=0)"}
+        turns = [tool("ITEM 9/147 (UPDATE)\nabcd12 gained 5. wxyz56 was struck off the books. wxyz56 was opened at 30. faxa72 was set to 415. "
+                      "faxa72 lost 18. faxa72 was removed from the ledger. ruyo11 was recorded at 514.")]
+        notes = "RULES\n(none)\nSTATE\nabcd12: 10\nwxyz56: 7\nfaxa72: 279\nruyo11: 436\nOPEN"
+        near, seen = NS["numbers_near"](["abcd12", "wxyz56", "faxa72", "ruyo11"], turns), NS["numbers_in"](turns[0]["content"])
+        delta = {"rules": [], "open": None, "changes": [("abcd12", "10 + 5 = 15"), ("abcd12", "15 - 84 = -69"), ("wxyz56", "removed"),
+                                                        ("wxyz56", "opened at 214"), ("wxyz56", "30"), ("abcd12", "99 + 1 = 100")]}
+        kept, left = NS["without_doubtful"](notes, delta, seen, True, near)
+        self.assertEqual(left, ["abcd12: 15 - 84 = -69", "wxyz56: opened at 214"])
+        new, info = NS["apply_delta"](notes, kept, seen, strict=True, near=near)
+        self.assertEqual(new.splitlines()[3:5], ["abcd12: 100", "wxyz56: 30"])          # a wrong start is not left out: it is taken
+        self.assertEqual(info["mismatch"], ["abcd12: working starts from 99, NOTES hold 15"])
+        # a line of several parts is followed, or kept as it stands: never left out because the checker lost its way
+        packed = {"rules": [], "open": None, "changes": [("faxa72", "279 \u2192 415 (set, item 582), then 415 - 18 = 397, then removed (item 587)")]}
+        new, info = NS["apply_delta"](notes, packed, seen, strict=True, near=near)
+        self.assertEqual((info["mismatch"], new.splitlines()[5]), ([], "faxa72: removed"))
+        odd = {"rules": [], "open": None, "changes": [("faxa72", "279 becomes 415 somehow, then 415 minus eighteen is 397, then gone")]}
+        kept, left = NS["without_doubtful"](notes, odd, seen, True, near)
+        self.assertEqual((left, kept["changes"]), ([], odd["changes"]))
+        # a set written as working: the result is in the turns, so it is taken as that set without a question
+        _, info = NS["apply_delta"](notes, {"rules": [], "open": None, "changes": [("ruyo11", "436 + 78 = 514")]}, seen, strict=True, near=near)
+        self.assertEqual(info["mismatch"], [])
+        _, info = NS["apply_delta"](notes, {"rules": [], "open": None, "changes": [("ruyo11", "436 + 78 = 515")]}, seen, strict=True, near=near)
+        self.assertEqual(len(info["mismatch"]), 1)
 
     def test_review_findings_of_code_state_p(self):
         """Each of these stored a wrong value, or lost a right one, before it ran (read-only review, 2026-10-12)."""
