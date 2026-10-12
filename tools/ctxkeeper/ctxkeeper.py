@@ -146,6 +146,7 @@ RECALL_LIMIT_NOTE = ("[[That was the last archive search for this turn ({n} made
 RECALL_ROOM_NOTE = ("[[There is no room left in this turn for another archive search. Do not call `recall` again now: "
                     "take the next step with what you have, for what you are sure of. You can search again right "
                     "after that step for anything still missing.]]")
+RECALL_NONE_NOTE = "recall: not run, no room left in this turn"
 RECALL_CUT_NOTE = "\n[cut here: no more room in this turn; narrow the search with `before` / `after` / `last`]"
 CARRY_HEAD = ("[[Message from the context keeper, not part of the task. Your last turn ended without a command. These "
               "are the archive searches you made in it and what they returned; they were not saved anywhere else, "
@@ -795,12 +796,18 @@ class Keeper:
             asked = from_user or bool(self.recite_when and self.recite_when.search(newest))
             if self.recite and asked and rule_lines(s.state["notes"]):
                 view.append({"role": "user", "content": RECITE_HEAD + "\n" + "\n".join("- " + r for r in rule_lines(s.state["notes"]))})
-            carried = s.state.get("carry")
+            carry, carried = s.state.get("carry"), ""
+            # The proxy answers `recall` itself, so the client's history never holds the searches. A turn that
+            # ends without a command (the model thought its reply away, or the search limit stopped it) would
+            # lose all it found: X32m at 1M left six answers blank that way. They are shown once more: only to a
+            # history that continues the one they were made in, and only as far as the window has room.
+            if carry and len(messages) >= carry["n"] and fingerprint(messages[:carry["n"]]) == carry["of"]:
+                room = self.budget - self.reply_reserve - RECALL_MARGIN - self.tokens(s, view + [{"role": "user", "content": CARRY_HEAD}])
+                carried = carry["text"][-int(max(room, 0) * s.state["ratio"]):] if room > 0 else ""
             if carried:
-                # The proxy answers `recall` itself, so the client's history never holds the searches. A turn that
-                # ends without a command (the model thought its reply away, or the search limit stopped it) would
-                # lose all it found: X32m at 1M left six answers blank that way. They are shown once more.
                 view.append({"role": "user", "content": CARRY_HEAD + "\n" + carried})
+            else:
+                s.state["carry"] = None
             stuck = self.repeat_limit and repeats(messages) >= self.repeat_limit
             if stuck:
                 view.append({"role": "user", "content": REPEAT_NOTE.format(n=repeats(messages))})
@@ -876,11 +883,13 @@ class Keeper:
                             text = s.archive.recall(**{k: args[k] for k in ("pattern", "before", "after", "last", "message") if args.get(k) is not None})
                     except Exception as exc:
                         args, text = {}, f"recall: bad arguments ({exc})"
-                    # a result never takes the window past the room for the reply: it is cut to what is left
+                    # a result never takes the window past the room for the reply: it is cut to what is left, and
+                    # once nothing is left the other searches of the same reply get one short line each
                     fits = int(max(room - RECALL_MARGIN, 0) * s.state["ratio"])
-                    if len(text) > fits:
-                        text = text[:max(fits, 200)] + RECALL_CUT_NOTE
-                        full = True
+                    if fits < 200:
+                        text, full = RECALL_NONE_NOTE, True
+                    elif len(text) > fits:
+                        text, full = text[:fits] + RECALL_CUT_NOTE, True
                     room -= self.tokens(s, [{"role": "tool", "content": text}])
                     s.state["recalls"] += 1
                     results.append({"role": "tool", "tool_call_id": c.get("id"), "content": text})
@@ -891,7 +900,7 @@ class Keeper:
             empty = not msg.get("tool_calls") and not str(msg.get("content") or "").strip()
             if empty and (rounds or carried):
                 text = "\n\n".join(([carried] if carried else []) + rounds)
-                s.state["carry"] = text[-CARRY_CHARS:]
+                s.state["carry"] = {"text": text[-CARRY_CHARS:], "n": len(messages), "of": fingerprint(messages)}
                 s.state["carried"] = s.state.get("carried", 0) + 1
             else:
                 s.state["carry"] = None

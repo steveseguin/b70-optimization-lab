@@ -196,7 +196,8 @@ class Keeper(unittest.TestCase):
                             ("771 + 75 = 846 (item 455), removed (item 456, struck off the books)", 2),
                             ("451 \u2212 89 = 362 (item 453), \u2212 75 = 287 (item 454)", 2), ("reopened at 183, then +64 = 247", 2),
                             ("removed (item 150, struck off the books)", 1), ("set to -3", 1), ("402", 1), ("-107 \u2192 -31", 1),
-                            ("uses argparse, reads the environment, writes a log", 1), ("1,234 + 6 = 1,240", 1)):
+                            ("uses argparse, reads the environment, writes a log", 1), ("1,234 + 6 = 1,240", 1),
+                            ("-10 + 5 = -5", 1), ("\u221210 + 5 = \u22125, +7 = 2", 2), ("10 + (5) + 2 = 17 (item 3)", 2)):   # a signed start is no change
             self.assertEqual(n(value), want, value)
         notes = "RULES\n(none)\nSTATE\nabcd12: 578\nefgh34: removed\nOPEN"
         seen = NS["numbers_in"]("efgh34 was opened at 585. It went down by 79.")
@@ -219,10 +220,12 @@ class Keeper(unittest.TestCase):
                                     ("opened at 117, +46 = 163, about right", None, {117}),      # a part without a number
                                     ("-20 \u2192 set to -159, then -2 \u2192 -161", -20, {-159}),  # arrows are not followed
                                     ("7 / 2 = 3, then set to 9", 7, {9}), ("480 + 5 = 485", 480, set()), ("removed", 5, set()),
-                                    ("answered 571, then 12", None, set()), ("set to 5, set to 7, set to 5", 1, {5, 7})):   # a set is good once
+                                    ("increased by 5, then +2 = 7", 10, {5, 2}),                 # a change in words is not a set
+                                    ("10 + (5) + 2 = 12, then +1 = 13", 10, {5, 2, 1}),          # brackets belong to the sum
+                                    ("answered 571, then 12", None, {571, 12}), ("set to 5, set to 7, set to 5", 1, {5, 7})):   # a set is good once
             self.assertIsNone(c(value, held, stated), value)
         notes = "RULES\n(none)\nSTATE\nabcd12: 36\nefgh34: removed\nmnop78: 9\nOPEN"
-        turns = "ITEM 17/147 (UPDATE)\nefgh34 came back onto the books at 183. efgh34 gained sixty-four. wxyz56 was opened at 585. wxyz56 went down by 79. wxyz56 was struck off."
+        turns = "ITEM 17/147 (UPDATE)\nabcd12 lost 2. Seventy-six were taken from abcd12. efgh34 came back onto the books at 183. efgh34 gained sixty-four. wxyz56 was opened at 585. wxyz56 went down by 79. wxyz56 was struck off."
         seen = NS["numbers_in"](turns)
         ap = lambda changes: NS["apply_delta"](notes, {"changes": changes}, seen, strict=True, near=NS["numbers_near"](["abcd12", "efgh34", "wxyz56", "mnop78"], [{"role": "tool", "content": turns}]))
         new, info = ap([("abcd12", "36 - 2 = 34, - 76 = -42 (item 451)"), ("efgh34", "reopened at 183, then +64 = 247 (item 17)"),
@@ -232,6 +235,25 @@ class Keeper(unittest.TestCase):
         self.assertEqual(info["steps"], {"abcd12": 2, "efgh34": 2, "wxyz56": 3, "mnop78": 2})
         _, loose = NS["apply_delta"](notes, {"changes": [("abcd12", "36 - 2 = 34, - 76 = -42")]}, seen)       # only with the strict checks
         self.assertNotIn("chained", loose)
+
+    def test_amounts_in_working_must_be_stated_for_the_thing(self):
+        """Working that adds up and starts from the value held can still be made up (X32m at 1M: "recorded katu85 at
+        five hundred and twenty-three" came back as `650 - 27 = 623`)."""
+        ok = NS["amounts_ok"]
+        self.assertTrue(ok(" - 27", {27}) and ok(" + 16 + 45", {-16, 45}) and ok(" - 27", None) and ok("", set()))
+        self.assertFalse(ok(" - 27", {523, 52, 17}) or ok(" + 16 + 45", {16}))
+        tool = lambda text: {"role": "tool", "content": text + "\n\n(exit_code=0)"}
+        turns = [tool("ITEM 246/617 (UPDATE)\nThe clerk recorded katu85 at five hundred and twenty-three. wxyz56 gained 52, and then 17 more.")]
+        notes = "RULES\n(none)\nSTATE\nkatu85: 650\nwxyz56: 100\nOPEN"
+        near, seen = NS["numbers_near"](["katu85", "wxyz56"], turns), NS["numbers_in"](turns[0]["content"])
+        ap = lambda changes, **kw: NS["apply_delta"](notes, {"changes": changes}, seen, strict=True, **kw)[1]["mismatch"]
+        self.assertEqual(ap([("katu85", "650 - 27 = 623 (item 246)")], near=near),
+                         ["katu85: `650 - 27 = 623 (item 246)` adds or takes an amount the turns do not state for it; read the item again"])
+        self.assertEqual(ap([("katu85", "650 - 27 = 623 (item 246)")]), [])                    # only with the near check
+        self.assertEqual(ap([("katu85", "523"), ("wxyz56", "100 + 52 + 17 = 169")], near=near), [])
+        self.assertEqual(ap([("wxyz56", "100 + 52 = 152, then +18 = 170")], near=near),          # a packed line with a made-up amount
+                         ["wxyz56: 170 is not a value the turns state; write the working from the value the NOTES hold, 100"])
+        self.assertEqual(ap([("wxyz56", "99 + 1 = 100")], near=near), [])                         # noted before: no question at all
 
     def test_a_change_noted_before_and_written_again_is_no_change(self):
         """The line ends at the value the NOTES already hold, from another start: it was noted at the last call and

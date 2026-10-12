@@ -416,6 +416,12 @@ def parse_delta(reply: str, need_changes: bool = True) -> dict | None:
             "open": [ln for ln in out["OPEN"] if not _is_none(ln)] if "OPEN" in seen else None}
 
 
+PARTS = re.compile(r",(?!\d{3}\b)|;|\bthen\b")       # what separates the changes packed onto one line
+REMARK = re.compile(r"\([^()]*[A-Za-z][^()]*\)")      # `(item 451)`, `(struck off the books)`; not `(5)` in working
+# the words a part may use to say "the value is now N"; anything else with a number in it is not read as a set
+SET_WORDS = frozenset("opened reopened re set reset recorded now stands starts started start at to as is was back again new page value".split())
+
+
 def steps_in(value: str) -> int:
     """How many changes one CHANGES line writes. A model packs several onto a line in its own ways:
     `578 + 62 = 640, then set to 174`, `opened at 117, set to -190, +46 = -144`, `539 - 31 = 508 - 48 = 460, then
@@ -424,28 +430,41 @@ def steps_in(value: str) -> int:
     operation. Remarks in parentheses are not read. (Counting a line as one change made the count check ask again on
     a third of the notes calls at 1M, harness and proxy alike; 14 of 25 such questions in the proxy run were this.)"""
     n = 0
-    for part in re.split(r",(?!\d{3}\b)|;|\bthen\b", re.sub(r"\([^()]*\)", " ", value)):
+    for part in PARTS.split(REMARK.sub(" ", value)):
         part = part.strip()
         if not (re.search(r"\d", part) or re.match(r"(removed|closed|struck|deleted|gone)\b", part.lower())):
             continue
         ops = len(re.findall(r"(?<=[\d)])\s*[-+*/x\u00d7\u2212]\s*(?=[\d(-])", part))
-        lead = 1 if "=" in part and re.match(r"[-+\u2212]\s*\d", part) else 0      # `+5 = 132`: the line goes on
+        # `+5 = 132`: the line goes on from the value before (one change); `-10 + 5 = -5` starts from minus ten
+        lead = 1 if "=" in part and re.fullmatch(r"[-+\u2212]\s*\d+", part.split("=")[0].strip()) else 0
         n += max(ops + lead, 1)
     return max(n, 1)
 
 
-PARTS = re.compile(r",(?!\d{3}\b)|;|\bthen\b")       # what separates the changes packed onto one line
+def amounts_ok(working: str, amounts: set[int] | None) -> bool:
+    """Every number in this stretch of working (what is added to or taken from the value it starts from) is one the
+    turns state for the thing, whatever its sign there. Working that is right as arithmetic can still be made up:
+    X32m at 1M read "recorded katu85 at five hundred and twenty-three" as 623 and wrote `650 - 27 = 623`, which
+    starts from the value held and adds up; 27 is nowhere in the turns."""
+    if amounts is None:
+        return True
+    have = {abs(a) for a in amounts}
+    return all(int(k) in have for k in re.findall(r"\d+", re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", working)))
 
 
-def chain_of(value: str, held: int | None, stated: set[int]) -> tuple[int | None, list[int], int] | None:
+
+
+def chain_of(value: str, held: int | None, stated: set[int], amounts: set[int] | None = None) -> tuple[int | None, list[int], int] | None:
     """A CHANGES line that packs several changes, followed part by part from the value the NOTES hold:
     (the value at the end, or None after a removal; the sets it took from the turns; how many of those open a part
     of working instead of standing as a part of their own). None when a part cannot be followed, and the line is
     then judged as before. A part is a set (`opened at 117`, `set to -190`: one number, which the turns must state),
     working from the value so far (`292 - 67 = 225`, also `539 - 31 = 508 - 48 = 460`), working that goes on from
-    it (`+46 = -144`), working from a value the turns state (a set and a change in one), or a removal.
-    Every line in the 1M proxy run that the working check questioned and then accepted was such a line."""
-    v = re.sub(r"\([^()]*\)", " ", value)
+    it (`+46 = -144`), working from a value the turns state (a set and a change in one), or a removal. Remarks in
+    parentheses are set aside; brackets inside working are part of the sum.
+    Every line in the 1M proxy run that the working check questioned and then accepted was such a line.
+    With `amounts` (see amounts_ok) every amount added or taken in the working must be one of them."""
+    v = REMARK.sub(" ", value)
     v = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", v).replace("\u2212", "-").replace("\u00d7", "*").replace("\u00f7", "/")
     v = re.sub(r"(?<=[\d)])\s*x\s*(?=[\d(-])", " * ", v)
     cur, sets, opening, parts = held, [], 0, 0
@@ -459,7 +478,9 @@ def chain_of(value: str, held: int | None, stated: set[int]) -> tuple[int | None
             continue
         if "=" not in part:
             nums = re.findall(r"(?<![\w.])-?\d+(?![\d.]*\d)", part)
-            if len(nums) != 1 or re.search(r"\u2192|->|=>", part):
+            # one number, and nothing round it but words that say "the value is now" (`increased by 5` is a change
+            # written without working, not a set to 5: such a line is judged as before)
+            if len(nums) != 1 or re.search(r"[()\u2192>]", part) or not set(re.findall(r"[a-z]+", part.lower())) <= SET_WORDS:
                 return None
             n = int(nums[0])
             if n != cur:
@@ -473,14 +494,17 @@ def chain_of(value: str, held: int | None, stated: set[int]) -> tuple[int | None
             return None
         for expr, after in zip(pieces, pieces[1:]):
             first = re.match(r"\(?\s*(-?\d+)(?![\d.])", expr)
+            taken = expr[first.end():] if first else expr
             if first and cur is not None and int(first.group(1)) == cur:
                 pass                                 # working from the value so far
             elif re.match(r"[-+*/]\s*\(?\d", expr) and cur is not None:
-                expr = f"({cur}) {expr}"             # working that goes on from it
+                taken, expr = expr, f"({cur}) {expr}"     # working that goes on from it
             elif first and int(first.group(1)) in stated and int(first.group(1)) not in sets:
                 sets.append(int(first.group(1)))     # the turns set this value and the working starts from it
                 opening += 1
             else:
+                return None
+            if not amounts_ok(taken, amounts):
                 return None
             val = _calc(expr) if re.fullmatch(r"[\d\s+\-*/().]+", expr) else None
             head = re.match(r"\(?\s*(-?\d+)(?![\d.])", after)
@@ -530,10 +554,11 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
             continue
         old = fact_of(state[where[name]])[1] if name in where else None
         held = number_of(old) if old is not None else None
-        counted = steps_in(value)
+        counted, asked = steps_in(value), len(info["mismatch"])
         if strict and seen is not None:
             # several changes on one line: followed part by part; a line that can be followed is right as it stands
-            ch = chain_of(value, held, (seen if near is None else near.get(name, set())) - used.get(name, set()))
+            ch = chain_of(value, held, (seen if near is None else near.get(name, set())) - used.get(name, set()),
+                          None if near is None else near.get(name, set()))
             if ch is not None:
                 final, sets, opening = ch
                 used.setdefault(name, set()).update(sets)
@@ -581,6 +606,11 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
                 info["mismatch"].append(f"{name}: working starts from {start}, NOTES hold {held}")
             elif start is not None and old is not None and re.match(r"(removed|closed|struck|deleted|gone)\b", old.lower()):
                 info["mismatch"].append(f"{name}: working starts from {start}, NOTES say {old.split()[0]}")
+            if near is not None and strict and start is not None and len(info["mismatch"]) == asked:
+                expr = value.replace("\u2212", "-").split("=")[-2]
+                first = re.match(r"\(?\s*-?\d+", expr.strip())
+                if first and not amounts_ok(expr.strip()[first.end():], near.get(name, set())):
+                    info["mismatch"].append(f"{name}: `{value}` adds or takes an amount the turns do not state for it; read the item again")
             if total != stated:
                 info["sums_corrected"].append(f"{name}: {value} -> {total}")
             value = str(total)

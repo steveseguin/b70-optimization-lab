@@ -504,7 +504,7 @@ class Policy(unittest.TestCase):
         self.assertIs(seen[2]["chat_template_kwargs"]["enable_thinking"], False)  # ... without thinking
         self.assertEqual(seen[2]["messages"], seen[1]["messages"])
         self.assertEqual((s.state["empty_replies_retried"], s.state["carried"]), (1, 1))
-        self.assertIn("counter abcd03 to 21", s.state["carry"])
+        self.assertIn("counter abcd03 to 21", s.state["carry"]["text"])
         # the client nudges; the next request shows the searches again, and an answer ends the carrying
         self.keeper.ask = lambda body: seen.append(body) or reply("It was set to 21.")
         nudged = asked + [{"role": "assistant", "content": ""}, {"role": "user", "content": "(No tool call in your last turn.)"}]
@@ -516,6 +516,52 @@ class Policy(unittest.TestCase):
         self.assertIsNone(s.state["carry"])
         self.keeper.complete({"model": "m", "messages": nudged + [{"role": "assistant", "content": "It was set to 21."}, {"role": "user", "content": "Thanks."}]})
         self.assertFalse([m for m in seen[-1]["messages"] if str(m.get("content")).startswith(ck.CARRY_HEAD)])
+
+    def test_carried_searches_stay_with_their_conversation_and_inside_the_window(self):
+        calls = []
+
+        def model(body):
+            calls.append(body)
+            if len(calls) == 1:
+                return reply(None, [{"id": "c1", "type": "function", "function": {"name": "recall", "arguments": json.dumps({"pattern": "secret"})}}])
+            return reply(None)
+
+        k = ck.Keeper(model, Path(self.dir.name) / "c", budget=3000, reply_reserve=400, memory_note=True)
+        s = k.session({"messages": conversation(1)}, "one-client")
+        s.archive.add(3, [{"role": "tool", "content": "The secret of task A is 4711. " + "filler " * 40}] * 30)
+        k.complete({"model": "m", "messages": conversation(1)}, "one-client")
+        self.assertIn("4711", s.state["carry"]["text"])
+        # the same session header, another conversation, and still before any cut: nothing of task A is shown
+        k.ask = lambda body: calls.append(body) or reply("ok")
+        k.complete({"model": "m", "messages": [{"role": "user", "content": "Unrelated task B"}]}, "one-client")
+        self.assertNotIn("4711", json.dumps(calls[-1]["messages"]))
+        self.assertIsNone(s.state["carry"])
+        # a history that goes on, with a large new message: the carried text is cut to the room that is left
+        s.state["carry"] = {"text": "found: 4711. " * 600, "n": 4, "of": ck.fingerprint(ck.with_memory_note(conversation(1)))}
+        long = conversation(1) + [{"role": "assistant", "content": ""}, {"role": "user", "content": "go on " * 900}]
+        k.complete({"model": "m", "messages": long}, "one-client")
+        sent = calls[-1]["messages"]
+        self.assertTrue(any(str(m.get("content")).startswith(ck.CARRY_HEAD) for m in sent))
+        self.assertLessEqual(k.tokens(s, sent), k.budget - k.reply_reserve)
+
+    def test_a_batch_of_searches_shares_the_room(self):
+        calls = []
+
+        def model(body):
+            calls.append(body)
+            if len(calls) == 1:
+                return reply(None, [{"id": f"c{i}", "type": "function", "function": {"name": "recall", "arguments": json.dumps({"pattern": "filler"})}} for i in range(32)])
+            return reply("done")
+
+        k = ck.Keeper(model, Path(self.dir.name) / "b", budget=4000, reply_reserve=1000, memory_note=True)
+        s = k.session({"messages": conversation(1)}, "batch")
+        s.archive.add(3, [{"role": "tool", "content": "filler " * 300}] * 40)
+        k.complete({"model": "m", "messages": conversation(1)}, "batch")
+        sent = calls[-1]["messages"]
+        results = [m["content"] for m in sent if m.get("role") == "tool" and m.get("tool_call_id", "").startswith("c")]
+        self.assertEqual(len(results), 32)                                        # every call has its result
+        self.assertGreaterEqual(results.count(ck.RECALL_NONE_NOTE), 25)
+        self.assertLessEqual(k.tokens(s, sent), k.budget - k.reply_reserve + 600)   # the short lines of 32 calls, no more
 
     def test_an_empty_reply_is_asked_once_more_without_thinking(self):
         seen = []
