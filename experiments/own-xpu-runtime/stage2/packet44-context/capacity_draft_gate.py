@@ -160,25 +160,29 @@ def main():
         fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
         table,input_receipt=prepare()
         if args.prepare_only:return
-        rows=[];reference_rows=None;sealed={}
+        from draft_baseline import load as load_baseline, ORACLE
+        baseline=load_baseline();baseline_hash=sha(ORACLE)
+        require(input_receipt['source_capture_receipt_sha256']==baseline['source_receipts']['capture-input-'+NAME+'.json']['sha256'],'draft golden/input source differs')
+        rows=[];reference_rows=baseline['valid_fixture_sha256'];sealed={}
         for context in CONTEXTS:
             reference,gnu=run_arm('gnu-host',context,table)
             current_rows={k:v for k,v in gnu['fixture_sha256'].items() if k.startswith('row-')}
-            if reference_rows is None:reference_rows=current_rows
-            require(current_rows==reference_rows,'valid-position draft fixture bytes changed with capacity')
+            require(current_rows==reference_rows,'valid-position draft bytes differ from frozen packet38 oracle')
             scratch,icpx=run_arm('icpx-host',context,table)
             require(icpx['fixture_sha256']==gnu['fixture_sha256'],'GNU/icpx draft fixture bytes differ')
+            require({k:v for k,v in icpx['fixture_sha256'].items() if k.startswith('row-')}==reference_rows,'icpx draft bytes differ from frozen packet38 oracle')
             sealed[str(context)]=gnu['fixture_sha256']
             row=dict(context=context,compilers=['gnu-host','icpx-host'],fixture_matches=len(sealed[str(context)]),
-                     capacity_prefix_fixture_matches=len(current_rows),gnu_binary_sha256=gnu['binary_sha256'],
+                     capacity_prefix_fixture_matches=len(current_rows),baseline_fixture_matches=len(current_rows),baseline_oracle_sha256=baseline_hash,gnu_binary_sha256=gnu['binary_sha256'],
                      icpx_binary_sha256=icpx['binary_sha256'],passed=True)
             save(P/f'draft-capacity-c{context}-comparison.json',row)
             # GNU's exact fixtures remain the coordinator reference. A verified
             # archive keeps icpx logs/JSON and every raw fixture hash, then deletes
             # its duplicate scratch immediately after the comparison receipt.
-            row['icpx_archive']=discard(scratch);rows.append(row)
+            row['icpx_archive']=discard(scratch);save(P/f'draft-capacity-c{context}-comparison.json',row);rows.append(row)
         receipt=dict(passed=True,device_executed=False,arms=6,contexts=list(CONTEXTS),
             generated_prefix_tokens=RETAINED_TOKENS,capture_rows=input_receipt['capture_rows'],
+            baseline_oracle_sha256=baseline_hash,baseline_compared_arms=6,baseline_fixture_files_per_arm=len(reference_rows),
             rows=rows,draft_capture_fixture_sha256_by_context=sealed,
             draft_capture_input_sha256={NAME:sha(P/('capture-input-'+NAME+'.json'))},
             retained_reference_bytes=sum(build_size(B/f'draft-reference-c{c}') for c in CONTEXTS))

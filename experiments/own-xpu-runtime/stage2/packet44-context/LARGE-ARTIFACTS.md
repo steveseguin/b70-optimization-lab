@@ -18,3 +18,10 @@ bundle and GNU draft references are needed for the prepared windows. Regenerable
 objects and disposable CPU fixture directories are removed. The local build
 ceiling during preparation is 4 GB; every large-write admission reserves an
 8 GB root free-space floor.
+
+`evidence/draft-baseline-rows.jsonl.gz` preserves the full original bytes of
+63 frozen packet38 draft fixtures. These are the independent baseline for all
+six new draft arms. `draft-baseline-oracle.json` retains their full and valid
+prefix hashes and compressed original source receipts. `draft_baseline.py`
+verifies every archived member; each JSONL member's `data_b64` restores the
+original file bytes. Keeping the original tails makes cropping auditable.

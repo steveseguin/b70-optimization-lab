@@ -67,6 +67,7 @@ The complete new-file list (including every evidence artifact) is the `added_fil
 - `capacity_selection_gate.py`
 - `cleanup_objects.py`
 - `context_window_gate.py`
+- `draft_baseline.py`
 - `final_build.py`
 - `finalize_docs.py`
 - `finish_cpu_gates.py`

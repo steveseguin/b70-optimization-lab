@@ -27,7 +27,7 @@ No device ran. No device speed or residency is qualified.
 | Mini pipeline | GNU 130 cases, Intel seven, ASAN/UBSAN seven |
 | MTP isolation | Seven cases in each of GNU, Intel and ASAN/UBSAN builds |
 | Draft authentication | Four safe CPU rejection cases |
-| Draft capacity capture | Six arms, 94 confirmed input rows each; both compilers and all three capacities agree on valid-prefix fixtures |
+| Draft capacity capture | Six arms, 94 confirmed input rows each; both compilers and all three capacities match 63 frozen packet38 valid-prefix fixtures per arm |
 | Ownership and lifetime | Ten suites across both compilers; 15 prepared-invalidation ASAN/UBSAN checks |
 | Argument bounds | 16 serializer checks; 410 linked device captures, maximum 752 bytes; 1,025-byte negative compile refused |
 | Wrappers and admission | 37 inherited window tests; ten new tests covering 22 window/capacity/manifest combinations; 27 memory admission checks |
@@ -50,6 +50,7 @@ f.write_text(s)
 f=P/'SEAL-AUDIT.md';s=f.read_text().replace('`seal_context.py` is implemented and syntax checked. **The seal has not run.**', '`seal_context.py` completed successfully against the current compiled artifacts.\n[build-receipt.json](build-receipt.json) is the hash-bound CPU qualification seal.')
 s=s.replace('The real-model capacity matrix and six draft capture arms remain pending;\nthe final seal has not run.', 'The real-model capacity matrix and six draft capture arms also passed.\nThe final seal includes all required current-binary receipts; see CPU-GATES.md.')
 f.write_text(s)
+f=P/'DRAFT-CAPACITY-GATE.md';s=f.read_text().replace('`capacity_draft_gate.py` is prepared but has not been executed by its author.', '`capacity_draft_gate.py` passed all six CPU arms. Each matched the 63 frozen\npacket38 valid-prefix draft fixtures.');f.write_text(s)
 (P/'binary-sha256.txt').write_text(''.join(h+'  build/'+name+'\n' for name,h in sorted(r['artifacts_sha256'].items())))
 subprocess.run(['nice','-n','19','ionice','-c','3','python3','-B',str(P/'integration_inventory.py')],check=True)
 print('Final CPU docs generated from the completed seal')

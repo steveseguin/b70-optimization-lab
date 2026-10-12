@@ -198,12 +198,16 @@ def selection(gates,artifacts):
 
 def draft(gates,artifacts):
  from capacity_draft_gate import fixtures
+ from draft_baseline import load as load_baseline, ORACLE
+ baseline=load_baseline();baseline_hash=sha(ORACLE)
  row=gates['capacity-draft-gates.json'];require(row['arms']==6 and row['contexts']==list(CONTEXTS),'draft capacity coverage')
  require(row['capture_rows']==94 and row['generated_prefix_tokens']==8,'draft prefix coverage')
  require(row['retained_reference_bytes']<300_000_000,'draft retained-reference budget')
+ require(row['baseline_oracle_sha256']==baseline_hash and row['baseline_compared_arms']==6 and row['baseline_fixture_files_per_arm']==63,'frozen packet38 draft comparison missing')
  sealed={};prefix=None
  input_file=P/'capture-input-incident-retrospective.json';inp=json.loads(input_file.read_text());table=B/'capture-incident-retrospective.tsv'
  require(sha(table)==inp['table_sha256'],'draft capture table changed')
+ require(inp['source_capture_receipt_sha256']==baseline['source_receipts']['capture-input-incident-retrospective.json']['sha256'],'draft frozen/input source differs')
  for name,digest in inp['streams'].items():require(sha(B/'captured-incident-retrospective'/name)==digest,'draft captured input changed')
  for c in CONTEXTS:
   run=read(f'capture-run-incident-retrospective-c{c}.json');require(run['passed'] is True and run['device_executed'] is False,'draft CPU reference failed')
@@ -213,11 +217,13 @@ def draft(gates,artifacts):
   actual=fixtures(reference);require(actual==run['fixture_sha256']==row['draft_capture_fixture_sha256_by_context'][str(c)],'draft reference fixture bytes changed')
   compare=next((r for r in row['rows'] if r['context']==c),None)
   require(compare and compare['passed'] and compare['compilers']==list(COMPILERS),'draft compiler comparison missing')
+  require(compare['baseline_oracle_sha256']==baseline_hash and compare['baseline_fixture_matches']==63,'draft baseline comparison stale/incomplete')
   require(compare['gnu_binary_sha256']==artifacts['gnu-host/own-rt-iq3'] and compare['icpx_binary_sha256']==artifacts['icpx-host/own-rt-iq3'],'draft comparison binary stale')
   icpx=read(f'draft-icpx-host-c{c}.json');binary_bound(icpx,'icpx-host/own-rt-iq3',artifacts)
   require(icpx['passed'] and icpx['fixture_sha256']==actual,'icpx draft bytes differ')
   archive=compare['icpx_archive'];require(sha(P/archive['path'])==archive['sha256'],'icpx draft archive changed')
   current={k:v for k,v in actual.items() if k.startswith('row-')}
+  require(current==baseline['valid_fixture_sha256'],'draft valid-position bytes differ from frozen packet38 oracle')
   if prefix is None:prefix=current
   require(current==prefix,'draft valid-position output depends on capacity');sealed[str(c)]=actual
  expected={'incident-retrospective':sha(input_file)}
@@ -330,13 +336,16 @@ def main():
  official_path=P.parent/'packet38-integrated/official-tensors.json'
  official=json.loads(official_path.read_text())
  source_hashes=sources();source_hashes[str(official_path.relative_to(ROOT))]=sha(official_path)
+ baseline=read('draft-baseline-oracle.json')
+ for filename in ('draft-baseline-oracle.json',baseline['archive']['path']):source_hashes[str((P/filename).relative_to(ROOT))]=sha(P/filename)
+ source_map(source_hashes,ROOT)
  receipt=dict(schema='own-runtime.iq3.packet44.build.v1',passed=True,device_executed=False,
   real_model_device_qualified=False,seal_status='complete',arithmetic='iq3-p17-detmath-v2',
   context_capacities=list(CONTEXTS),sources=source_hashes,artifacts_sha256=artifacts,
   precision=precision,link_commands=links,mode_build_receipts_sha256=build_receipts,disposable_fixture_binary_sha256=disposed_fixtures,
   input_sha256=sha(B/'input/input.json'),nongemv_fixture_host_sha256_by_context=fixture_hashes,
   nongemv_fixture_host_sha256=fixture_hashes['256'],p33_linked_fixture_host_sha256=linked_hash,
-  draft_capture_fixture_sha256_by_context=draft_fixtures,draft_capture_input_sha256=draft_inputs,
+  draft_capture_fixture_sha256_by_context=draft_fixtures,draft_capture_input_sha256=draft_inputs,draft_baseline_oracle_sha256=sha(P/'draft-baseline-oracle.json'),
   official_manifest_sha256=sha(P/'mtp-manifest.tsv'),official_tensor_receipt_sha256=sha(official_path),official_tensor_receipt_path=str(official_path.relative_to(ROOT)),
   official_tensor_sha256={n:r['sha256'] for n,r in official['tensors'].items()},
   gate_receipts={n:sha(P/n) for n in GATES},native_build_receipt_sha256=sha(P/'native-build-receipt.json'),

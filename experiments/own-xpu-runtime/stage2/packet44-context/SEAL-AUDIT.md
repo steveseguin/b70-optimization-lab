@@ -61,3 +61,9 @@ They pass. All three mini/MTP variants and the 1,109-case actual-Engine native
 controller gate are mandatory seal inputs, as is the exact current memory-plan
 hash. The real-model capacity matrix and six draft capture arms remain pending;
 the final seal has not run.
+
+The draft proof requires 63 frozen packet38 valid-prefix files per new arm,
+across six arms. The shipped full-byte archive is verified against the original
+sealed fixture map. The embedded capture execution and input table hashes must
+match, and the packet44 input receipt must name that same source input receipt.
+The final seal rechecks these links and hashes the baseline JSON and archive.

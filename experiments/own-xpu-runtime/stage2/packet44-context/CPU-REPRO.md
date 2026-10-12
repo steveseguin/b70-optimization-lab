@@ -93,6 +93,7 @@ packet44_run gates.py mini asan
 packet44_run mtp_gates.py gnu-host
 packet44_run mtp_gates.py icpx-host
 packet44_run mtp_gates.py asan
+packet44_run native_mini_gate.py --binary "$packet44/build/gnu-host/own-rt-iq3" --output "$packet44/native-mini-cpu.json"
 packet44_run cleanup_objects.py
 ```
 
@@ -115,6 +116,7 @@ Its resumable ledger only accepts current source/binary/input/oracle hashes.
 
 ```bash
 packet44_run capacity_cpu_gate.py --phase all --compiler both
+packet44_run draft_baseline.py
 packet44_run capacity_draft_gate.py --run
 ```
 
@@ -178,7 +180,7 @@ allocation arithmetic checks, not a physical residency measurement.
 ```bash
 packet44_run memory_plan.py
 packet44_admit && "${packet44_cpu[@]}" - "$packet44" <<'PY_MEMORY'
-import json, pathlib, sys
+import hashlib, json, pathlib, sys
 p=pathlib.Path(sys.argv[1]);sys.path.insert(0,str(p))
 from memory_gate import check
 ledger=json.loads((p/'memory-plan.json').read_text()); checks=0
@@ -198,6 +200,7 @@ for context in (256,4096,32768):
 assert checks==27
 (p/'memory-plan-gates.json').write_text(json.dumps(dict(passed=True,
     device_executed=False,checks=checks,
+    memory_plan_sha256=hashlib.sha256((p/'memory-plan.json').read_bytes()).hexdigest(),
     scope='12 rank/context/draft admission successes; 12 over-plan rejections; 3 unlisted-context rejections'),indent=2)+'\n')
 PY_MEMORY
 packet44_run draft_auth_gate.py
