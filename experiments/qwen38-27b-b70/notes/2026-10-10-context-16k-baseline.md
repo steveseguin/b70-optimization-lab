@@ -1525,3 +1525,21 @@ is 438 of 450 (97.3 %)**, and both streams took 50 minutes. To fix, in this orde
 the matches nearest to where it is asked (as the proxy's now does) and takes `--before` / `--after`; an open
 question is never cut out of view by any cut (kept word for word until it is answered), in the harness and in the
 proxy.
+
+### X32p (code state p) at 240K: 39/39 in 8.5 minutes, 46/46 in 9.4, NOTES clean
+
+The proxy at commit `9711d42d4` (the hash after this morning's rebase onto the other host's work), started by hand
+with campaign 12's options plus `--recall-label '(?m)^ITEM (\d+)/' --recall-unit item`.
+
+| 240K rules stream, proxy with in-place notes | seed 0 | seed 1 |
+| --- | ---: | ---: |
+| X32m (last night) | 39/39, 10.2 min | 46/46, 13.1 min |
+| X32n2 (this morning) | 39/39, 8.8 min | 46/46, 9.7 min |
+| **X32p** | **39/39, 8.5 min** | **46/46, 9.4 min** |
+| X32p: in-place cuts, failed, replies asked for again | 17, 0, 2 | 17, 0, 2 |
+| X32p: tokens written by notes calls | 15.7K | 20.1K |
+| X32p: counters ever wrong in the NOTES (17 of 17 versions) | 0 | 0 |
+
+Gate passed; the 1M run follows in the same queue. The OPEN section no longer lists live values (three short lines
+now), but the notes calls wrote as much as before: most of what they write is thinking. None of the new paths
+(misspelled name, lines left out, the first reply standing) was needed in these two runs.
