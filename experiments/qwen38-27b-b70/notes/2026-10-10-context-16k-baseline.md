@@ -775,3 +775,243 @@ trusted, working that starts from a number for a counter the NOTES call removed 
 OPEN heading keeps the old OPEN section, the space budget is applied to the rendered message, and the coverage tool
 counted the method sentence under the wrong question type (my first coverage figures, never published, were wrong
 for that reason and are replaced above).
+
+## Campaign 10 results (2026-10-11 17:47-): cheaper notes, and retrieval alone
+
+One server start, arms from a queue; no GPU fault line. Rules stream, 240K, 32K live window. Minutes are agent time.
+"Notes wrong" is from `notes_audit.py`: every version of the pinned NOTES is compared with the grader's true ledger at
+the point it covers, and the counters whose value was ever wrong are counted (a wrong value can sit in the NOTES
+without costing an answer if nothing asks for that counter before it is set again).
+
+| arm | seed | score | final list | min | model calls | notes calls | notes tokens written | notes wrong |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| N32j keeper (campaigns 6, 7) | 0 | 39/39 | 14/14 | 15.7 | 197 | 23 | 42,887 | 0 |
+| N32j | 1 | 46/46 | 21/21 | 16.5 | 188 | 23 | 48,220 | 0 |
+| N32j35: cut to 35 % | 0 | 39/39 | 14/14 | 12.7 | 176 | 14 | 31,995 | 1 |
+| N32d: changes only, no thinking (first version) | 0 | 39/39 | 14/14 | 14.4 | 192 | 31 | 28,351 | 2 |
+| N32e: the same after two fixes | 0 | 39/39 | 14/14 | 12.2 | 200 | 25 | 13,158 | 8 |
+| N32e35: N32e, cut to 35 % | 0 | 36/39 | 12/14 | 10.3 | 177 | 17 | 16,129 | 6 |
+| N32e25: N32e, cut to 25 % | 0 | 39/39 | 14/14 | 9.8 | 174 | 13 | 14,511 | 2 |
+| N32c35: N32e35, notes in pieces of six items | 0 | 38/39 | 14/14 | 10.8 | 196 | 33 | 16,022 | 2 |
+| N32x: in-place notes, no thinking | 0 | 39/39 | 14/14 | 11.3 | 194 | 28 | 20,267 | 2 |
+| **N32xth: in-place notes that think, every ten items** | 0 | **39/39** | 14/14 | **9.5** | 182 | 18 | 22,770 | **0** |
+| **N32y: the same after two robustness fixes** | 1 | **46/46** | 21/21 | **8.5** | 190 | 14 | 17,510 | 1 |
+| R32: retrieval only, store = what left the window | 0 | 32/39 | 7/14 | 13.0 | 170 | 0 | 0 | |
+| R32a: retrieval only, store = every item | 0 | 38/39 | 13/14 | 10.8 | 169 | 0 | 0 | |
+| R32a | 1 | 30/46 | 5/21 | 11.7 | 173 | 0 | 0 | |
+| **R32b: R32a, store out of the model's reach** | 0 | **39/39** | 14/14 | **9.2** | 160 | 0 | 0 | |
+| **R32b** | 1 | **45/46** | 20/21 | **9.7** | 161 | 0 | 0 | |
+
+Every arm answered all 25 mid-stream questions on its stream (current value, old value, who, rule, method: 5/5 each)
+except N32e35 and N32c35 (one current value each). The differences are in the final list and in the NOTES.
+
+### What the time is made of
+
+Server counters after 1,170 requests of this campaign: 54 % of the server's time is reading (6.3M new prompt tokens at
+2,640 tokens/s) and 46 % writing (194K tokens at 96 tokens/s). My statement before the campaign, "the cost is written
+tokens, not reading", was right for the notes call of N32j and wrong for the run as a whole. In N32j and N32e every
+stream token is read about four times: when it arrives; when the turns kept by a cut are read back at their new
+place (23 cuts x 17K = 391K tokens at 240K: the fetch after a cut takes 6.7 s against 1.6 s otherwise); and when the
+cut turns are shown to the notes call as text (312K). Agent time of N32j seed 0: 941 s = main loop 432 + notes
+calls 492 + shell 17.
+
+### Changes-only notes without thinking: fast, but the NOTES go wrong (not adopted)
+
+The notes call writes only the changed lines, with the working on the line, and the harness applies them: 570 tokens
+a call instead of 1,865, notes time halved (N32e: 241 s against 492 s). All four first scores looked fine (39, 39, 36,
+39 of 39), and the 36 looked like the price of a deeper cut until the 25 % setting scored 39. The audit settles it:
+**every no-thinking run had wrong values in its NOTES (2 to 8 counters at some point), the thinking runs had 0 or 1.**
+Example, the same in N32d and N32e: "The clerk recorded domo86 at three hundred and forty-two. ... Ten were taken
+from domo86." was noted as `-390 - 342 - 10 = -742` (a set read as a subtraction; true value 332). The working check
+passes such a line: it starts from the right value and the sum is right. The value stayed wrong for 35 items, until
+the next set; no question asked for it in between. So a perfect score on 39 questions does not show that the NOTES
+are right, and at 1M, with six times the questions, these errors would be answers. Thinking in the notes call stays.
+
+Two defects of mine found on the way, both fixed: the working check sent 8 of 23 cuts to the slow path because the
+model writes a set and a following change on one line (`294 + 12 = 306`), which is right (working may now start from
+a number the cut turns state); and the harness read `-107 -> -31` and `-58 - 35 = -93, then set to 82` as their
+first number (it now reads the last one).
+
+### In-place notes: the same notes, nothing read twice (the result of this campaign)
+
+Arm N32xth / N32y. Every ten items (17K tokens of turns), when the newest turn is an ordinary delivery, the notes
+call is the live conversation itself with one more message at its end (same tool list, `tool_choice` none), so the
+server has already read all of it: 20K prompt tokens of which 16.6K come from the cache. The reply is the changes
+only, written with thinking; the harness applies them; then every turn in view is moved to the archive and the
+context is the task statement and the NOTES again (1.5K to 2K tokens). Nothing is read back after the cut, and the
+agent's own calls run at 2K to 20K of context instead of 18K to 28K.
+
+- seed 0 (N32xth): 39/39 in 9 min 49 s against 15 min 41 s (-37 %); seed 1 (N32y): 46/46 in 8 min 47 s against
+  16 min 30 s (-47 %). The bar was within one question on both seeds and 25 % less time.
+- where the time went, seed 1: 511 s = main loop 268 (147 fetches at a median 1.3 s) + notes 224 (14 calls of about
+  1,250 written tokens) + shell 18. Prompt tokens of the whole run: 1.79M against 3.7M.
+- NOTES audit: 0 counters ever wrong on seed 0, 1 on seed 1 (a removal, the only mention of that counter in a batch
+  of ten items; N32j had 0 and 0). Arm N32z adds a check for exactly that: a name of a STATE line that the items
+  being moved out mention, outside a question, without a line in CHANGES is asked about once.
+- N32y differs from N32xth in two things that only act on a doubtful reply: it is asked for again in place (with
+  thinking and the lines named) instead of handing the turns to the ordinary cut, and a STATE value is read as its
+  last number.
+
+### Retrieval alone ("RAG"): it matches the keeper at 240K once it is built right
+
+Three versions, each fixing something the one before showed:
+
+- **R32, 32/39.** The store held only what had left the window. All 25 mid-stream questions right, including the
+  rule 5/5 and the method 5/5; the final list 7/14, four of them stale values. Every sentence a right answer needed
+  was in its context (`final_evidence` check): the older changes in the retrieved list, the newer ones in the
+  window, and it did not put the two together.
+- **R32a, 38/39 and 30/46.** The store holds every item from the moment it arrives, so the retrieved list is
+  complete on its own. But in all three runs so far the model had gone looking under `/tmp/.live_ctx` (the task
+  statement names that directory), found the archive files the harness writes there, and answered the final list
+  with its own scripts over them: right on seed 0, and on seed 1 with a number-word parser that added about 100 to
+  most values (5/21). Those runs were not retrieval-only.
+- **R32b, 39/39 and 45/46, in 9.2 and 9.7 minutes.** The same with the store kept by the harness only (no files).
+  The model answers from the retrieved sentences and gets the final list 14/14 and 20/21.
+
+So, on this stream at 240K, **retrieval alone is within one question of the keeper on both seeds** (the preregistered
+test), with no notes call at all, and as fast as the fastest keeper setting. What I told the owner before the run
+("rules never get retrieved"; "what is true now becomes a replay that fails") is not what happened: the rule names
+its counters, so a question about one of them retrieves it, and a 27B that thinks replays a short list of changes
+correctly. Why it works here, and what remains to be shown: the things asked about are exact strings; a counter is
+reset every third change, so a value needs one or two old sentences; and the questions are explicit. The 1M stream
+(20 sentences per question cover 187 of 228 questions; a probe item asks seven) and the stream with "it" and
+cross-references are the tests that follow.
+
+### Making the in-place notes complete: three checks, each from an audited error
+
+The in-place arm was run five times at 240K while its checks were tightened. Every change came from an error the
+audit found in the NOTES, and each arm name is one state of the code, so the table keeps them apart.
+
+| arm | seed | score | min | notes calls | asked again | notes wrong | what was new in this arm |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| N32xth | 0 | 39/39 | 9.5 | 18 | | 0 | in-place notes that think, every ten items |
+| N32y | 1 | 46/46 | 8.5 | 14 | 0 | 1 | a doubtful reply is asked for again in place; a STATE value is read as its last number |
+| N32z | 0 | 38/39 | 9.3 | 16 | 1 | 3 | a name the items mention must have a line in CHANGES |
+| N32w | 0 | 39/39 | 9.6 | 19 | 4 | 2 | the lines of a name must account for as many changes as the items mention it |
+| N32v | 1 | 45/46 | 9.7 | 18 | 4 | 1 | a value written without working must be one the items state |
+
+What the audit found, in order: a removal that was the only mention of its counter in ten items, left out (N32y);
+the second of two changes in one item left out, twice, with one wrong answer (N32z: `fasu60`, asked while wrong);
+`rumi16: -132` written without working for 29 - 73 (N32w); and `zija81: -62` for 134 - 16 (N32v, one wrong answer),
+which the last check should have caught and did not, because my number scanner counted the 62 inside the counter
+name `xasa62` as a number the items state. That is fixed (digits inside a name and item headings are not numbers),
+and arm N32u also narrows "the items state it" to a sentence that names the thing, or the one after it. So the
+honest reading of the 240K table is: **same scores as the full keeper within one question (39, 46, 38, 39, 45
+against 39 and 46), in 8.5 to 9.7 minutes against 15.7 and 16.5, with 0 to 3 wrong values in the NOTES per run
+where the full keeper had 0.** The remaining errors are of the kinds the checks now reject; N32u is the first arm
+with all of them and has only run at 1M (below). Ten items per notes call is also more than the full keeper's six;
+six per call (arm N32w6) is wired and not run.
+
+### The stream that says "it" and refers to other counters (exploratory, one seed)
+
+`client-hard`: every change names its counter in one sentence and changes it in the next, with doublings, thirds and
+"it went up by as much as Y held at that moment". 50 questions.
+
+| arm | score | probes | final list | min | notes wrong |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| N32z keeper, in-place notes | 42/50 | 23/25 | 19/25 | 14.9 | 14 |
+| R32b retrieval only | stopped by me at 20.5 min, item 104 of 147 | 10/15 answered (3 blank); the keeper had 15/15 at that point | | | |
+
+Neither method is good here. The keeper's NOTES went wrong mostly at the cross-references (nearly every first wrong
+value follows a "went up by as much as Y held" change), and one wrong counter then spoils the ones that copy from it.
+Retrieval was both slower and worse: a question about X retrieves "X ... it went up by as much as Y held", but
+nothing about Y, and the model spent long thinking turns on what it could not see. This stream is the place to
+measure the next version of either method; it is not calibrated, and one seed says only which way the difference
+points.
+
+### One million tokens with in-place notes: 228 of 228 in 50 minutes
+
+Arm N32u (N32v with the scanner fix, and "the items state it" narrowed to a sentence that names the thing). The
+first start of the 1M run (N32v, 21:34) was stopped by me after 3 minutes when the audit of its 240K run showed the
+scanner defect; N32u started at 21:37 on the same server. Same stream as campaigns 5 to 9 (999,460 tokens, 617
+items, 228 questions), 32K live window, official grade, not void, 610 archive files, all verbatim.
+
+| | N32u in-place notes | N32j keeper (campaign 8) | proxy X32b (campaign 9) |
+| --- | ---: | ---: | ---: |
+| all 228 questions | **228 (100 %)** | 226 (99.1 %) | 222 (97.4 %) |
+| current / old value / who / rule / method | 58/58, 58/58, 29/29, 29/29, 29/29 | 58/58, 58/58, 27/29, 29/29, 29/29 | 58/58, 56/58, 28/29, 28/29, 27/29 |
+| by distance back: 1-4 / 5-24 / 25-99 / 100-399 / 400+ items | 50/50, 50/50, 30/30, 48/48, 25/25 | 49/50, 49/50, 30/30, 48/48, 25/25 | 49/50, 50/50, 30/30, 44/48, 24/25 |
+| final list | 25/25 | 25/25 | 25/25 |
+| **agent minutes** | **50.2** | 82.9 | 95 |
+| model calls (of which notes calls) | 870 (84) | 865 (110) | 657 by the agent |
+| prompt tokens sent / of which from the cache | 10.0M / 7.9M | 16.7M / 12.9M | |
+| tokens written: main loop / notes calls | 68K / 111K | 66K / 231K | |
+| time: main loop / notes calls / shell | 1,586 s / 1,345 s / 82 s | 2,262 s / 2,633 s / 79 s | |
+| counters ever wrong in the NOTES (audit) | **0** in 63 versions | 5, all in one version | |
+
+Per 100K tokens: 4.2, 4.3, 6.4, 4.5, 5.2, 5.1, 3.7, 4.9 and 6.1 minutes (no trend; the keeper took about 8.3).
+The preregistered bar was 222 or better in under 60 minutes.
+
+What the notes calls did: 63 cuts, 59 of them in place (four by the ordinary cut, when a question was open as the
+window filled; three of those were noted in two pieces). 1.75M prompt tokens in the in-place calls, 1.51M of them
+from the cache. An in-place reply was asked for again 18 times in 17 of the 59 cuts: 13 times because a name's
+lines accounted for fewer changes than the items mention it, 5 times because working did not start from the value
+held (`suru92: working starts from -14, NOTES say removed`); one doubtful line was accepted after the second reply. NOTES stayed between 391 and 1,147 tokens with both rules in
+place. The audit finds no counter ever wrong.
+
+What the audit shows about the full keeper on the same stream, which its score had hidden: at one cut (model call
+178) its rewritten NOTES ended mid-list, 39 lines instead of 62, without an OPEN section, and five live counters
+were gone from STATE until later cuts brought them back. A full rewrite can lose lines that way and still pass the
+layout check; changes-only notes cannot, because the harness keeps every line the model does not mention.
+
+One seed, one stream. The 240K runs of the earlier in-place arms had one wrong answer in two of five runs; N32u is
+the first arm with every check and has this one run. Its two 240K runs are queued behind the retrieval-only run.
+
+### Retrieval alone at one million tokens: perfect for two thirds, then it falls behind
+
+Arm R32c40: the retrieval-only build that scored 39/39 and 45/46 at 240K, with 40 sentences per question and room
+for 70,000 characters of retrieved text (a question item asks seven questions here). Same 1M stream, same window.
+A stopped run: I ended it after 59 minutes, when it had answered every question item and then issued 223 empty
+commands at the final list.
+
+| mid-stream questions (203) | R32c40 retrieval only | N32u in-place notes |
+| --- | ---: | ---: |
+| all | 189 (93 %) | 203 (100 %) |
+| first / middle / last third of the run | 63/63, 70/70, **56/70** | 63/63, 70/70, 70/70 |
+| current / old value / who / rule / method | 55/58, 53/58, 28/29, **25/29**, 28/29 | 58/58, 58/58, 29/29, 29/29, 29/29 |
+| by distance back: 1-4 / 5-24 / 25-99 / 100-399 / 400+ items | 50/50, 46/50, 27/30, 47/48, **19/25** | 50/50, 50/50, 30/30, 48/48, 25/25 |
+| final list of 25 | not answered | 25/25 |
+| minutes | 46.9 to reach the final item | 50.2 for the whole run |
+
+Through item 420 it was perfect (140 of 140) and slightly faster than the keeper. All 14 errors are after item 500.
+Four are the standing rule: by then a confidential counter has been mentioned dozens of times, the 40 best matches
+for its name are recent changes (ties go to the later sentence), and the rule from item 1 is no longer among them;
+the model answered a number or null. The rest are values worked out from an incomplete list. This is what the
+coverage figures predicted before the run (187 of 228 questions coverable at 20 sentences, 220 at 40): the evidence
+a question needs grows with the history, and the rule is one sentence among thousands. The keeper's NOTES stayed
+at about 1,000 tokens with both rules in them.
+
+The final list is a limit of this build rather than of retrieval: the retrieved text for 25 questions filled the
+window, the next cut removed the question item and that text, and the model had nothing left to work from. A build
+that answers a long list a few questions at a time would not fail this way. The mid-stream comparison is the clean
+one.
+
+**The memory guard fired at 23:27:09** (1.28 GiB available; the floor is 1.6) two seconds after I stopped that
+client: its shutdown wrote out a 900-call history. Same cause as on campaign 9. The server was idle, nothing was
+lost but the three runs still queued (N32u on the two 240K seeds and on the hard stream); no GPU fault line in the
+kernel log; Gemma was restored at 23:32 and answers. For 1M runs the client's bookkeeping has to happen after the
+server is stopped, or without per-call snapshots; the campaign runner should do that itself.
+
+### Reading (campaign 10)
+
+1. **The fast form of the keeper is in-place notes.** Same or better answers at every size tested: 240K in 8.5 to 9.7
+   minutes against 15.7 and 16.5; 1M in 50 minutes against 83, at 228 of 228 with NOTES that the audit finds right
+   in all 63 versions. Two things made it: the notes call reuses what the server has already read, and after it the
+   window is emptied instead of trimmed, so nothing is read back. And three checks keep a changes-only reply
+   complete: every mention accounted for, every worked-out value with its working, every sum redone by the harness.
+2. **Notes written without thinking are not safe, whatever they score.** 2 to 8 wrong values in the NOTES of every
+   such run, with scores of 39, 39, 36, 39 and 38 of 39. Only the audit showed it.
+3. **Retrieval alone is much better than I said, and not enough at scale.** Built right it equals the keeper at
+   240K (39/39, 45/46) with no notes call at all, and for the first 420 items of the 1M stream. It falls behind
+   where the history is long (56/70 in the last third, the rule lost 4 times in 29) and where the text refers to
+   things indirectly (10/15 against 15/15 on the hard stream). Building it right took three tries: the store has
+   to hold everything from the moment it arrives, and the model must not be able to reach it with its own scripts.
+4. **So the two are not rivals.** Retrieval finds; notes hold what must always be in view (rules, current state)
+   at a fixed size. The keeper already has both halves (`recall` is retrieval on demand); automatic retrieval at
+   question time is wired as arms N32jr and N32er and not yet run.
+5. **A full rewrite of the notes can lose lines silently** (the keeper's own 1M run, once, five counters). Changes
+   applied by the harness cannot.
+
+Owed: N32u on both 240K seeds and on the hard stream (queued, lost to the guard); a second seed at 1M; the proxy
+with in-place notes (designed in the charter, not built); the hybrid arms; six items per notes call; a rule that
+does not name what it covers, which neither retrieval nor this benchmark has been tested on.

@@ -80,6 +80,11 @@ So this directory adds, without patching upstream:
 | `smoke.sh` | one tiny task (1 batch of 8 SETs, 3 GETs) for each agent; `STUB=1` runs it against the fake server |
 | `fake_openai_server.py` | ~90-line stub OpenAI server (scripted `next`/answer/submit tool calls), for wiring tests only |
 | `summarize_results.py` | per-trial score + token/turn table for one or more job dirs |
+| `clm_keeper.py` | the keeper (arms N32*, R32*): a sliding window whose cut turns go to a verbatim archive, with NOTES (RULES / STATE / OPEN) kept by one tool-less model call per cut, pinned rules, a rules reminder at questions and `recall`. `notes_mode` full, delta (changes only, applied and checked by the harness), rules, none; `notes_inplace` (the notes call is the live conversation plus one message, then every turn is moved out); `auto_retrieve` (BM25 retrieval at questions); `mention_check` (names, count, near). Module docstring and the arm table at the top of `second-comparison.sh` |
+| `rag_retrieve.py`, `rag_coverage.py` | BM25 over sentences of the stored items, each indexed with its item number and shown with the sentence after it (arms R32, R32a, R32b); and what retrieval can reach on a task, measured without a GPU (an upper bound) |
+| `notes_audit.py` | every version of a keeper run's pinned NOTES against the grader's true ledger at the point it covers: which counters were ever wrong. A perfect score does not show the NOTES are right |
+| `c10_table.py` | one row per trial: score by question type, minutes, calls, notes-call tokens, where the time went, the audit count |
+| `keeper_flow_check.py` | control flow of the keeper's cuts (in-place and ordinary) with a fake budget, sandbox and notes call: no model, no docker (`PYTHONPATH=. /mnt/fast-ai/venvs/clm/bin/python keeper_flow_check.py`) |
 
 ## How the harness talks to the model
 
