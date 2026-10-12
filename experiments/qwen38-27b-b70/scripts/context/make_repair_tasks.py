@@ -571,7 +571,7 @@ def selftest(task: Path) -> None:
 
 
 def build(src_root: Path, kept: list[dict], out: Path, n: int, seed: int, image: str, rule_at: tuple[int, ...],
-          audit: bool = False, exclude: tuple[str, ...] = (), tag: str = "") -> Path:
+          audit: bool = False, exclude: tuple[str, ...] = (), tag: str = "", agent_timeout: float = 3300.0) -> Path:
     rng = random.Random(seed)
     kept = [k for k in kept if k["func"] not in exclude]
     body = n + len(NOTICES)                               # bugs and notices; the audit ticket, if any, comes after them
@@ -692,7 +692,7 @@ def build(src_root: Path, kept: list[dict], out: Path, n: int, seed: int, image:
         [verifier.env]
 
         [agent]
-        timeout_sec = 132300.0
+        timeout_sec = {agent_timeout}
 
         [environment]
         memory_mb = 384
@@ -717,6 +717,10 @@ def main() -> None:
                          "first campaign 3 to 11 minutes and the first arm on the second seed more than 25 (the model "
                          "starts rewriting the function): one ticket then decides the whole run")
     ap.add_argument("--tag", default="", help="suffix of the task's folder name (repair-nN-sSEED<tag>)")
+    ap.add_argument("--agent-timeout", type=float, default=3300.0,
+                    help="seconds the agent may work (task.toml). The harness stops the agent there and still grades "
+                         "what it left; a run cut from outside (`timeout`) is not graded at all (W32 on the second "
+                         "seed, campaign 13b: 37 tickets in, stuck on one, cut at 60 minutes, no result)")
     ap.add_argument("--no-selftest", action="store_true",
                     help="write the task only (no container is started). For a build beside a running model server; "
                          "run the builder again without this flag afterwards, on the same arguments, to get the self-test")
@@ -746,7 +750,7 @@ def main() -> None:
                         "--src", "/src", "--screen", "/out/mutations.json", "--workers", str(a.workers)], check=True)
     kept = json.loads(kept_file.read_text())
     task = build(src, kept, out, a.n, a.seed, a.image, tuple(int(x) for x in a.rule_at.split(",")), audit=a.audit,
-                 exclude=tuple(x for x in a.exclude.split(",") if x), tag=a.tag)
+                 exclude=tuple(x for x in a.exclude.split(",") if x), tag=a.tag, agent_timeout=a.agent_timeout)
     if a.no_selftest:
         print("no self-test was run (--no-selftest)")
     else:
