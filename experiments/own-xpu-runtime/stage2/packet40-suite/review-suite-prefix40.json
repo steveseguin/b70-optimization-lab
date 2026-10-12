@@ -1,0 +1,59 @@
+{
+  "schema": "packet40.independent-suite-prefix-review.v1",
+  "source_review_passed": true,
+  "reviewer": "draft-runtime agent, independent of suite-metrics implementation",
+  "device_executed": false,
+  "tests_run_by_reviewer": false,
+  "native_owners_launched": 0,
+  "source_sha256": {
+    "suite_export.py": "75de48416701e712e3b73a77c640e2a5e76c822e2598ee612e21e9ee5cf11e58",
+    "seal.py": "f6e6432413383e4d0535e469c5491aa6166099c7c238966e7a6dea76294367d2",
+    "cpu_campaign.py": "e203ebef34a60401a622e864302060daa13af42741492d8e4ef665384dff1832",
+    "test_suite_export_retention.py": "331df8c27dfa89c2b8c01809e3d5f1b0dd68969541cd6455148ffe9eeec72a95",
+    "test_suite_compiler.py": "73358d245bcb339fb4a9efadce522b8459d56b4cfd15b65e558a48b93a67c117",
+    "review-suite-prefix40.md": "e2abc15d5f1ec62387cfe4315c2dbd20e9c9a39276cbd419f6bec8c671b49462"
+  },
+  "gate_receipts_sha256": {
+    "suite-export-retention-gates.json": "71b3484b84d5ef8a57da6ea85453bab3b22dcbb1eda76cc81e5aff9f874767f5",
+    "suite-compiler-gates.json": "e8c9ae681a16bb6d330958c30aa3c98f6524b065e5a1952a481113964fe06d54"
+  },
+  "provided_test_receipts": {
+    "suite-export-retention-gates.json": {
+      "sha256": "71b3484b84d5ef8a57da6ea85453bab3b22dcbb1eda76cc81e5aff9f874767f5",
+      "provided_checks": 27,
+      "source_sha256": {
+        "storage.py": "53787deddc760e89f4d3bb9b25e96b2b9bdf3cc54bcc96a99df3286e19badbe3",
+        "cleanup.py": "2987873456a25f8ab8ac0206a16d610ec9497c0f5e7dadaa6e3dba0ce8e0ba56",
+        "suite_export.py": "75de48416701e712e3b73a77c640e2a5e76c822e2598ee612e21e9ee5cf11e58",
+        "cpu_campaign.py": "e203ebef34a60401a622e864302060daa13af42741492d8e4ef665384dff1832",
+        "seal.py": "f6e6432413383e4d0535e469c5491aa6166099c7c238966e7a6dea76294367d2",
+        "test_suite_export_retention.py": "331df8c27dfa89c2b8c01809e3d5f1b0dd68969541cd6455148ffe9eeec72a95"
+      },
+      "tests_run_by_reviewer": false
+    },
+    "suite-compiler-gates.json": {
+      "sha256": "e8c9ae681a16bb6d330958c30aa3c98f6524b065e5a1952a481113964fe06d54",
+      "provided_checks": 10,
+      "source_sha256": {
+        "cpu_campaign.py": "e203ebef34a60401a622e864302060daa13af42741492d8e4ef665384dff1832",
+        "suite_export.py": "75de48416701e712e3b73a77c640e2a5e76c822e2598ee612e21e9ee5cf11e58",
+        "test_suite_compiler.py": "73358d245bcb339fb4a9efadce522b8459d56b4cfd15b65e558a48b93a67c117"
+      },
+      "tests_run_by_reviewer": false
+    }
+  },
+  "checks": [
+    "Campaign explicit64 preserves inherited3prompt/192token/1152fixture scope",
+    "Seal upfront full64 requirement rejects prefix8 even with forged full-generation flags",
+    "Complete immutable oracle and input bundle reauthenticated before prefix comparison",
+    "Every emitted prefix token and every retained layer fixture hash and byte rechecked",
+    "Archived summary/request/rank launch cap and current Intel binary identities agree",
+    "Existing teardown-before-export/archive-after-validation lifetime remains intact",
+    "No source race or receipt integrity regression identified in changed path"
+  ],
+  "unresolved_findings": [],
+  "pending": [
+    "Actual inherited three-prompt full64 CPU suite execution and final source-bound qualification",
+    "All coordinator device and performance windows"
+  ]
+}

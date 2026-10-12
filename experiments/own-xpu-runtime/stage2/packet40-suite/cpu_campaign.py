@@ -100,7 +100,7 @@ def main():
   (P/'suite-cpu-qualification-plan.json').write_text(json.dumps(qualification,indent=2)+'\n')
   source=P/'suite-cpu-manifest.json';snapshot=B/'suite-cpu-manifest.json';snapshot.write_bytes(source.read_bytes())
   run=B/('suite-real-'+str(time.time_ns()))
-  rows.append(execute('suite-real',[PY,'-B',P/'suite.py','--binary',B/qualification['binary_relative_to_build'],'--output',run,'--suite-manifest',snapshot,'--controller','native','--draft','mtp','--dispatch',P/'dispatch-p38.json','--repeat','1','--context','256','--seconds','172800','--wait-seconds','7200']))
+  rows.append(execute('suite-real',[PY,'-B',P/'suite.py','--binary',B/qualification['binary_relative_to_build'],'--output',run,'--suite-manifest',snapshot,'--controller','native','--draft','mtp','--dispatch',P/'dispatch-p38.json','--repeat','1','--context','256','--max-new','64','--seconds','172800','--wait-seconds','7200']))
   from suite_export import export_run
   exported=export_run(run,P/'suite-real-cpu.json')
   from storage import digest

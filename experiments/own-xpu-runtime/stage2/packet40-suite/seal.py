@@ -76,9 +76,15 @@ def bind_suite_warmup(table,prompts):
  assert selection['suite_prompt_count']==len(prompts) and selection['complete_reset_before_measured_requests'] is True
  return row['sha256']
 
+def require_full_cpu_suite(row):
+ # Short-prefix exports remain diagnostics and cannot replace packet38's gate.
+ assert type(row.get('requested_max_new')) is int and row['requested_max_new']==64,'inherited CPU suite requires requested64'
+ assert row.get('oracle_token_cap')==64 and row.get('prefix_only') is False and row.get('full_oracle_generation') is True,'inherited CPU suite requires full oracle generation'
+
 def bind_cpu_suite(row,suite_host_sha,suite_binary):
+ require_full_cpu_suite(row)
  from suite import checker_module
- from suite_export import frozen_coverage
+ from suite_export import frozen_coverage,launch_cap
  manifest_path=P/'suite-cpu-manifest.json';manifest=json.loads(manifest_path.read_text())
  assert row['schema']=='packet38.real-suite-cpu.v1' and row['device_executed'] is False and row['real_model_execution'] is True
  assert row['host_compiler']=='icpx-host' and row['binary_relative_to_build']=='icpx-host/own-rt-iq3'
@@ -101,6 +107,9 @@ def bind_cpu_suite(row,suite_host_sha,suite_binary):
  entries={e['prompt_id']:e for e in manifest['prompts']};repeats=row['repeats']
  assert type(repeats) is int and repeats>0 and row['admitted_prompts']==len(entries) and row['expected_frozen_prompts']==12
  assert row['complete_frozen_suite'] is (manifest.get('complete') is True)
+ cap=row['requested_max_new'];assert type(cap) is int and 1<=cap<=64 and row['oracle_token_cap']==manifest['token_cap']==64
+ assert row['prefix_only'] is any(cap<e['generated_tokens'] for e in entries.values())
+ assert row['full_oracle_generation'] is (not row['prefix_only'])
  requests=row['rows'];assert row['requests']==len(requests)==len(entries)*repeats
  assert {(r['prompt_id'],r['repeat']) for r in requests}=={(p,n) for p in entries for n in range(1,repeats+1)}
  root=P/row['evidence_directory'];archive,table=archived_run(root)
@@ -118,6 +127,7 @@ def bind_cpu_suite(row,suite_host_sha,suite_binary):
  summary=json.loads(table['summary.json']['text']);admission=json.loads(table['input-admission.json']['text'])
  assert summary['passed'] is True and summary['device_executed'] is False and summary['same_rank_processes'] is True
  assert summary['controller']=='native' and summary['draft']=='mtp' and summary['manifest_sha256']==row['manifest_sha256']
+ assert summary['requested_max_new']==cap
  assert admission['passed'] is True and admission['one_model_plan_identity'] is True
  assert len(row['ranks'])==2 and {r['rank'] for r in row['ranks']}=={0,1} and len({r['pid'] for r in row['ranks']})==2
  for rank in row['ranks']:
@@ -125,6 +135,7 @@ def bind_cpu_suite(row,suite_host_sha,suite_binary):
   assert launch['sha256']==rank['launch_sha256'] and closed['sha256']==rank['teardown_sha256']
   launch=json.loads(launch['text']);closed=json.loads(closed['text'])
   assert launch['pid']==rank['pid'] and launch['device_executed'] is False and Path(launch['argv'][0]).resolve()==suite_binary.resolve()
+  assert launch_cap(launch['argv'])==cap
   assert closed['passed'] is True and closed['device_executed'] is False and closed['rank']==rank['rank'] and len(closed['teardown'])==1
   assert all(t['safe_to_exit'] and t['live_bytes']==t['in_flight']==0 for t in closed['teardown'])
  summary_rows={(r['prompt_id'],r['repeat']):r for r in summary['rows']};assert len(summary_rows)==len(requests)
@@ -134,7 +145,11 @@ def bind_cpu_suite(row,suite_host_sha,suite_binary):
   assert item['passed'] is True and request['exact'] is True and result['passed'] is True and result['device_executed'] is False
   assert receipt['sha256']==request['receipt_sha256'] and request['binary_sha256']==result['binary_sha256']==suite_host_sha
   assert request['controller']==result['controller']=='native' and request['draft']==result['draft']=='mtp'
-  count=entry['generated_tokens'];assert len(request['tokens'])==request['token_count']==item['tokens']==count
+  count=min(cap,entry['generated_tokens']);assert len(request['tokens'])==request['token_count']==item['tokens']==count
+  assert request['requested_max_new']==result['requested_max_new']==item['requested_max_new']==cap
+  assert request['oracle_token_cap']==64 and request['prefix_only'] is (cap<entry['generated_tokens'])
+  from pipeline import retention_steps
+  selected=retention_steps(result['retain_steps'],count);assert selected==list(range(1,min(count,8)+1))
   assert request['tokens']==result['tokens'] and request['token_sha256']==canonical(result['tokens'])
   assert request['stats']==result['stats'] and request['rank_trace_sha256']==canonical(result['rank_trace'])
   oracle=result['oracle_check'];assert oracle['passed'] is True and oracle['tokens']==count and oracle['fixture_files']==min(count,8)*48
@@ -147,8 +162,11 @@ def bind_cpu_suite(row,suite_host_sha,suite_binary):
   assert len(fixtures)==request['fixture_files']==min(count,8)*48 and canonical(fixtures)==request['fixture_inventory_sha256']
   oracle_root=P.parents[3]/entry['oracle_directory'];oracle_receipt=json.loads((oracle_root/'receipt.json').read_text())
   assert sha(oracle_root/'receipt.json')==entry['oracle_receipt_sha256']
-  assert sha(oracle_root/'result.json')==oracle_receipt['result_sha256'] and json.loads((oracle_root/'result.json').read_text())['tokens']==request['tokens']
-  assert sha(oracle_root/'validation.json')==oracle_receipt['validation_sha256'] and json.loads((oracle_root/'validation.json').read_text())['fixture_hashes']==fixtures
+  checker.check_prompt(oracle_root,oracle_root,entry,P.parents[3])
+  assert sha(oracle_root/'result.json')==oracle_receipt['result_sha256'] and checker.token_record(oracle_root)[:cap]==request['tokens']
+  assert sha(oracle_root/'validation.json')==oracle_receipt['validation_sha256']
+  expected_fixtures={name:digest for name,digest in json.loads((oracle_root/'validation.json').read_text())['fixture_hashes'].items() if int(Path(name).parts[0][4:]) in selected}
+  assert expected_fixtures==fixtures
   state=table[directory+'state-evidence.json.gz'];retained=table[directory+'state-retention.json'];metadata=json.loads(retained['text'])
   assert state['sha256']==request['state_evidence_sha256']==metadata['sha256'] and retained['sha256']==request['state_retention_sha256']
   state_rows=json.loads(gzip.decompress(state['data']))['files'];states={r['path']:r for r in state_rows}

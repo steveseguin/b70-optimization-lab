@@ -6,27 +6,31 @@ parent. To select an allowed affinity, save the complete shell block below as a
 script and invoke that script with `taskset -c ALLOWED_CPUS bash SCRIPT_PATH`.
 Do not prefix a shell function name with `taskset`; all ranks inherit the
 script’s affinity.
-The only supplied library environment is `LD_LIBRARY_PATH`, forwarded unchanged.
+The only caller-supplied library configuration is `LD_LIBRARY_PATH`, forwarded
+unchanged. The helpers fix `TMPDIR` to an absolute packet-local path, just as
+the wrapper fixes private HOME paths; it is not a library or tuning setting.
 No device selector or tuning variables are permitted. The wrapper sets private
 HOME paths for driver caches without claiming that file presence proves a hit.
 
 ```bash
 set -e
 p40=experiments/own-xpu-runtime/stage2/packet40-suite
+p40_tmp="$PWD/$p40/build/tmp"
+nice -n 19 ionice -c 3 mkdir -p "$p40_tmp"
 p40_card=0
 p40_receipts="$p40/receipts-firstcard${p40_card}-UNIQUE"
 p40_oracle=experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite/incident-retrospective
 p40_suite64=experiments/own-xpu-runtime/stage2/suite-inputs-20261012/suite-manifest.json
 p40_suite128=experiments/own-xpu-runtime/stage2/suite-inputs-20261012-cap128/suite-manifest.json
 p40_k() {
-  nice -n 19 ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 -B "$p40/window.py" --authorized-device-window --card "$p40_card" "$@"
+  nice -n 19 ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 TMPDIR="$p40_tmp" LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 -B "$p40/window.py" --authorized-device-window --card "$p40_card" "$@"
 }
 p40_k --window K0 --output "$p40_receipts/K0"
 p40_k --window K1a --output "$p40_receipts/K1a" --k0 "$p40_receipts/K0/window.json" --dispatch "$p40/dispatch-p38.json"
 p40_k --window K1b --output "$p40_receipts/K1b" --k0 "$p40_receipts/K0/window.json" --k1a "$p40_receipts/K1a/window.json" --dispatch "$p40/dispatch-p38.json"
 p40_k --window K2 --output "$p40_receipts/K2" --k0 "$p40_receipts/K0/window.json" --k1a "$p40_receipts/K1a/window.json" --k1b "$p40_receipts/K1b/window.json" --dispatch "$p40/dispatch-p38.json"
 p40_w() {
-  nice -n 0 ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 -B "$p40/window.py" --authorized-device-window --card "$p40_card" --controller native --input "$p40/build/input" --oracle "$p40_oracle" --dispatch "$p40_receipts/K2/run0/dispatch-measured.json" --k0 "$p40_receipts/K0/window.json" --k1a "$p40_receipts/K1a/window.json" --k1b "$p40_receipts/K1b/window.json" --k2 "$p40_receipts/K2/window.json" --w0p "$p40_receipts/W0p/window.json" --kd "$p40_receipts/KD/window.json" "$@"
+  nice -n 0 ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 TMPDIR="$p40_tmp" LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 -B "$p40/window.py" --authorized-device-window --card "$p40_card" --controller native --input "$p40/build/input" --oracle "$p40_oracle" --dispatch "$p40_receipts/K2/run0/dispatch-measured.json" --k0 "$p40_receipts/K0/window.json" --k1a "$p40_receipts/K1a/window.json" --k1b "$p40_receipts/K1b/window.json" --k2 "$p40_receipts/K2/window.json" --w0p "$p40_receipts/W0p/window.json" --kd "$p40_receipts/KD/window.json" "$@"
 }
 p40_w --window W0p --output "$p40_receipts/W0p"
 p40_k --window KD --output "$p40_receipts/KD" --input "$p40/build/input" --dispatch "$p40_receipts/K2/run0/dispatch-measured.json" --k0 "$p40_receipts/K0/window.json" --k1a "$p40_receipts/K1a/window.json" --k1b "$p40_receipts/K1b/window.json" --k2 "$p40_receipts/K2/window.json"

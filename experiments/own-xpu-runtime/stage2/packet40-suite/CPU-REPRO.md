@@ -10,9 +10,11 @@ draft shards listed by `official-tensors.json`. No download is implicit.
 ```bash
 set -e
 packet40=experiments/own-xpu-runtime/stage2/packet40-suite
+packet40_tmp="$PWD/$packet40/build/tmp"
+nice -n 19 ionice -c 3 mkdir -p "$packet40_tmp"
 packet40_python=/home/steve/.venvs/vllm-xpu/bin/python
 packet40_cpu() {
-  nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 "$packet40_python" -B "$@"
+  nice -n 19 ionice -c 3 env TMPDIR="$packet40_tmp" OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 "$packet40_python" -B "$@"
 }
 packet40_cpu "$packet40/build.py" prepare
 packet40_cpu "$packet40/build.py" gnu-host
@@ -32,6 +34,12 @@ packet40_cpu "$packet40/seal40.py" --record-phase draft-final -- "$packet40_pyth
 packet40_cpu "$packet40/seal40.py" --record-phase suite -- "$packet40_python" -B "$packet40/cpu_campaign.py" suite
 ```
 
+The helper fixes compiler and subprocess temporary files to the absolute
+packet-local `build/tmp` path. Keep this environment assignment when invoking
+individual gate producers, including CMake verification, kernel and capacity
+gates. Older receipts did not always record the temporary directory; this does
+not establish where their transient compiler files were written.
+
 These campaign phases reproduce the inherited parent gates and real-model
 comparisons. Record every additional gate command with the same `seal40.py --record-phase PHASE -- COMMAND` pattern; final sealing rejects unrecorded or stale execution.
 
@@ -48,9 +56,21 @@ Archive completed gate scratch with `storage.discard` before the next stage.
 
 The retained `suite-cpu-manifest.json` and `suite-cpu-freeze.json` pin the partial
 real CPU suite. Do not silently substitute a growing live manifest into that
-receipt. `cpu_campaign.py suite` runs this frozen snapshot in two persistent
-Intel host ranks and archives it after exporting exactness evidence. Before
-launch, all five Intel real-model mode receipts must pass with the current
+receipt. `cpu_campaign.py suite` explicitly requests **64 generated tokens per
+prompt** with `--max-new 64`, preserving packet38's actual three-prompt gate:
+192 tokens and 1,152 early layer fixtures. Packet38 used the manifest cap at
+execution; packet40's general suite API honors its requested cap, so the
+campaign pins 64 rather than inheriting the eight-token parser default.
+The run uses two persistent Intel host ranks and archives completed evidence
+after export. Its request/export receipts determine actual completed coverage.
+The exporter also supports deliberately shortened CPU diagnostics: it first
+authenticates the complete immutable oracle, then checks the requested prefix
+and every early fixture. Export and seal bind the cap to both rank launch
+arguments, keeping prompt completeness separate from full-oracle generation.
+An eight-token diagnostic prefix cannot replace the inherited 64-token gate.
+The separate `suite128_cpu_gate.py` below requests all 128 outputs for one prompt
+and checks the late fixture range. Before launch, all five Intel real-model
+mode receipts must pass with the current
 binary and their inherited packet33 dispatch. The plan separately binds the
 packet40 suite dispatch and its current CPU kernel gates. The actual suite
 qualifies that combined dispatch. The qualification plan records this choice before launch;

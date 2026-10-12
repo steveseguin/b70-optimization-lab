@@ -86,8 +86,21 @@ through its CPU backend success and ordinary failure paths; CPU receipts cannot
 authorize a device prerequisite. K0's JIT body and device timing remain explicit
 coordinator-only gates.
 
-The inherited `suite_export.py` and `retain_window.py` utilities retain their
-frozen 64-token CPU qualification and original fixture-retention scope. They
-do not export 128-token or retention-disabled windows. The packet40 window
-wrappers write their own current receipts and compressed evidence, and
-`full_wrapper_gate.py` archives its rehearsal evidence separately.
+The inherited `suite_export.py` and `retain_window.py` utilities use the frozen
+64-token oracle snapshot and original early-fixture scope. `cpu_campaign.py
+suite` explicitly requests `--max-new 64` for each of its three prompts,
+preserving the inherited gate's 192 generated tokens and 1,152 early fixtures.
+That cap must be explicit because the general packet40 parser defaults to eight
+tokens. Current request/export receipts establish actual completion.
+
+The exporter also admits explicitly shortened CPU diagnostics. It authenticates
+the full oracle first, checks exact prefix tokens and every early fixture, and
+binds caps to summary, request and both rank launch arguments. The seal repeats
+those bindings from the archive. `prefix_only` and `full_oracle_generation`
+separate response coverage from prompt-set completeness; an eight-token prefix
+cannot substitute for the inherited full-cap gate. These utilities do not export
+128-token or retention-disabled windows. The separate `suite128_cpu_gate.py`
+requests 128 outputs for `incident-retrospective`, checks 768 early/tail fixtures
+and stays partial 1/12 evidence. Packet40 window wrappers write their own current
+receipts and compressed evidence; `full_wrapper_gate.py` archives rehearsal
+separately.

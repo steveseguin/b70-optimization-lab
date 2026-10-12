@@ -50,6 +50,33 @@ def retained_state_binding(output):
     return dict(state_evidence_sha256=pipeline.sha(archive),state_retention_sha256=pipeline.sha(receipt),
                 runtime_state_inventory_sha256=inventory,retained_state_files=len(rows))
 
+def launch_cap(argv):
+    indices=[i for i,arg in enumerate(argv) if arg in ('--max-new','--tokens')]
+    pipeline.require(len(indices)==1 and indices[0]+1<len(argv),'CPU suite launch needs one explicit output cap')
+    text=argv[indices[0]+1]
+    pipeline.require(isinstance(text,str) and text.isdecimal(),'CPU suite launch cap malformed')
+    return int(text)
+
+def check_cpu_prefix(output,oracle,entry,checker,cap):
+    # Authenticate the entire frozen oracle and input bundle with its unchanged
+    # checker before using any prefix. This is a CPU-export policy only.
+    oracle_count,_=checker.check_prompt(oracle,oracle,entry,suite.ROOT)
+    pipeline.require(type(cap) is int and 1<=cap<=64,'CPU suite prefix cap outside oracle contract')
+    result=json.loads((output/'receipt.json').read_text())
+    pipeline.require(result.get('requested_max_new')==cap,'CPU suite request cap differs')
+    expected=checker.token_record(oracle)
+    actual=checker.token_record(output)
+    pipeline.require(len(expected)==oracle_count and actual==expected[:cap],'CPU suite prefix tokens differ or truncated')
+    selected=pipeline.retention_steps(result.get('retain_steps','none'),len(actual))
+    pipeline.require(selected==list(range(1,min(len(actual),8)+1)),'CPU suite prefix requires every early fixture')
+    reference=checker.fixture_inventory(oracle,oracle_count)
+    candidate=checker.fixture_inventory(output,len(actual))
+    expected_fixtures={name:digest for name,digest in reference.items() if int(Path(name).parts[0][4:]) in selected}
+    pipeline.require(candidate==expected_fixtures,'CPU suite prefix fixture inventory differs')
+    for name in candidate:
+        pipeline.require((output/name).read_bytes()==(oracle/name).read_bytes(),'CPU suite prefix fixture bytes differ '+name)
+    return len(actual),len(candidate),candidate
+
 def export_run(run,destination):
     run=run.resolve();summary=json.loads((run/'summary.json').read_text())
     manifest=json.loads((run/'suite-manifest.snapshot.json').read_text())
@@ -57,6 +84,8 @@ def export_run(run,destination):
     pipeline.require(summary.get('passed') is True,'cannot export failed suite as passing')
     pipeline.require(summary['manifest_sha256']==pipeline.sha(run/'suite-manifest.snapshot.json'),'suite manifest snapshot changed')
     checker=suite.checker_module();coverage=frozen_coverage(manifest,checker)
+    cap=summary.get('requested_max_new')
+    pipeline.require(manifest.get('token_cap')==64 and type(cap) is int and 1<=cap<=64,'CPU suite oracle/request cap contract')
     entries={entry['prompt_id']:entry for entry in manifest['prompts']};rows=summary['rows']
     repeats={row['repeat'] for row in rows};pipeline.require(repeats and repeats==set(range(1,max(repeats)+1)),'repeat coverage')
     pipeline.require(len(rows)==len(entries)*len(repeats) and {(r['prompt_id'],r['repeat']) for r in rows}=={(p,r) for p in entries for r in repeats},'executed request coverage')
@@ -68,6 +97,7 @@ def export_run(run,destination):
         launched=json.loads(launch.read_text());closed=json.loads(teardown.read_text())
         pipeline.require(launched.get('device_executed') is False and closed.get('passed') is True,'rank execution receipt failed')
         pipeline.require(Path(launched['argv'][0]).resolve()==expected_binary,'CPU suite rank compiler/executable identity differs')
+        pipeline.require(launch_cap(launched['argv'])==cap,'CPU suite rank launch cap differs')
         pipeline.require(closed.get('rank')==rank and len(closed['teardown'])==1 and all(row.get('safe_to_exit') and row.get('live_bytes')==0 and row.get('in_flight')==0 for row in closed['teardown']),'rank teardown ownership')
         ranks.append(dict(rank=rank,pid=launched['pid'],launch_sha256=pipeline.sha(launch),teardown_sha256=pipeline.sha(teardown)))
     pipeline.require(ranks[0]['pid']!=ranks[1]['pid'],'rank PID identity')
@@ -84,11 +114,13 @@ def export_run(run,destination):
         trace=result['rank_trace']
         pipeline.require(all(any(r['rank']==rank and r['op']==pipeline.HALF for r in trace) for rank in (0,1)),'missing executed rank HALF evidence')
         timing_hashes={str(rank):pipeline.sha(output/f'rank{rank}/timings.jsonl') for rank in (0,1)}
-        tokens,fixtures=checker.check_prompt(output,suite.ROOT/entry['oracle_directory'],entry,suite.ROOT)
-        inventory=checker.fixture_inventory(output,tokens);binaries.add(result['binary_sha256'])
+        tokens,fixtures,inventory=check_cpu_prefix(output,suite.ROOT/entry['oracle_directory'],entry,checker,cap)
+        pipeline.require(row.get('requested_max_new')==cap and row.get('tokens')==tokens,'CPU suite summary request count differs')
+        binaries.add(result['binary_sha256'])
         pipeline.require(result['binary_sha256']==identity['binary_sha256'],'CPU suite request differs from qualified Intel binary')
         state_binding=retained_state_binding(output)
         observed.append(dict(prompt_id=row['prompt_id'],repeat=row['repeat'],tokens=result['tokens'],token_count=tokens,
+                    requested_max_new=cap,oracle_token_cap=64,prefix_only=cap<entry['generated_tokens'],
                     token_sha256=canonical_hash(result['tokens']),fixture_files=fixtures,fixture_inventory_sha256=canonical_hash(inventory),
                     receipt_sha256=pipeline.sha(receipt),rank_timing_sha256=timing_hashes,rank_trace_sha256=canonical_hash(trace),binary_sha256=result['binary_sha256'],
                     run_checker_sha256=result['oracle_check']['checker_sha256'],export_checker_sha256=checker.source_sha256,
@@ -97,13 +129,15 @@ def export_run(run,destination):
     pipeline.require(cpu_suite_identity()==identity,'CPU suite binary changed during export')
     result=dict(schema='packet38.real-suite-cpu.v1',passed=True,device_executed=False,real_model_execution=True,
                 no_speed_claim=True,complete_frozen_suite=coverage['complete'],frozen_coverage=coverage,
+                requested_max_new=cap,oracle_token_cap=64,prefix_only=any(r['prefix_only'] for r in observed),
+                full_oracle_generation=all(not r['prefix_only'] for r in observed),
                 export_checker_sha256=checker.source_sha256,export_checker_snapshot=str(checker_snapshot.relative_to(P)),
                 admitted_prompts=len(entries),expected_frozen_prompts=12,repeats=len(repeats),requests=len(observed),
                 token_count=sum(r['token_count'] for r in observed),fixture_files=sum(r['fixture_files'] for r in observed),
                 **identity,manifest_sha256=summary['manifest_sha256'],summary_sha256=pipeline.sha(run/'summary.json'),
                 input_admission_sha256=pipeline.sha(run/'input-admission.json'),ranks=ranks,rows=observed,
                 evidence_directory=str(run.relative_to(P)) if run.is_relative_to(P) else str(run),
-                scope='actual persistent CPU rank executions; exact tokens and every retained fixture rechecked; incomplete manifest explicitly reported')
+                scope='actual persistent CPU ranks; every requested oracle-prefix token and early fixture rechecked; prompt-set completeness and full-oracle generation reported separately; no performance evidence')
     pipeline.save(destination,result);return result
 
 if __name__=='__main__':
