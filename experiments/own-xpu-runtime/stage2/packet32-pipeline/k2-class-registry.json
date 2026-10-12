@@ -1,0 +1,826 @@
+{
+  "schema": "packet26.k2.registry.v1",
+  "classes": {
+    "norm": {
+      "dispatch_section": "classes",
+      "dispatch_key": "norm",
+      "candidate_available": true,
+      "dispatch_keys": [
+        "hc.a.norm",
+        "hc.f.norm",
+        "final.norm",
+        "ple.kn",
+        "ple.qn",
+        "ple.cn"
+      ],
+      "shared_workload": "same norm Op, four rows x2560, F32 gains, unit=0; aliases are independently selectable, not separate measurements",
+      "incumbent": "specialised"
+    },
+    "gdn.norm": {
+      "dispatch_section": "classes",
+      "dispatch_key": "gdn.norm",
+      "candidate_available": true,
+      "incumbent": "packet18"
+    },
+    "gdn.recurrence": {
+      "dispatch_section": "classes",
+      "dispatch_key": "gdn.recurrence",
+      "candidate_available": true,
+      "incumbent": "packet18",
+      "candidate_implementation": "round2"
+    },
+    "qsa.prepare": {
+      "dispatch_section": "classes",
+      "dispatch_key": "qsa.prepare",
+      "candidate_available": true,
+      "incumbent": "packet18"
+    },
+    "qsa.pool": {
+      "dispatch_section": "classes",
+      "dispatch_key": "qsa.pool",
+      "candidate_available": true,
+      "incumbent": "packet18"
+    },
+    "qsa.select": {
+      "dispatch_section": "classes",
+      "dispatch_key": "qsa.select",
+      "candidate_available": true,
+      "incumbent": "packet18",
+      "candidate_implementation": "round2"
+    },
+    "qsa.attention": {
+      "dispatch_section": "classes",
+      "dispatch_key": "qsa.attention",
+      "candidate_available": true,
+      "incumbent": "packet18",
+      "candidate_implementation": "round2"
+    },
+    "attn.combine": {
+      "dispatch_section": "classes",
+      "dispatch_key": "attn.combine",
+      "candidate_available": true,
+      "incumbent": "specialised"
+    },
+    "ffn.combine": {
+      "dispatch_section": "classes",
+      "dispatch_key": "ffn.combine",
+      "candidate_available": true,
+      "incumbent": "specialised"
+    },
+    "route": {
+      "dispatch_section": "classes",
+      "dispatch_key": "route",
+      "candidate_available": true,
+      "incumbent": "specialised",
+      "candidate_implementation": "round2"
+    },
+    "gather": {
+      "dispatch_section": "classes",
+      "dispatch_key": "gather",
+      "candidate_available": true,
+      "incumbent": "specialised"
+    },
+    "argmax": {
+      "dispatch_section": "classes",
+      "dispatch_key": "argmax",
+      "candidate_available": true,
+      "incumbent": "specialised",
+      "candidate_implementation": "round2"
+    },
+    "hc.combine_norm": {
+      "dispatch_section": null,
+      "dispatch_key": null,
+      "candidate_available": true,
+      "diagnostic_only": true,
+      "incumbent": "specialised"
+    },
+    "route_gather": {
+      "dispatch_section": null,
+      "dispatch_key": null,
+      "candidate_available": true,
+      "diagnostic_only": true,
+      "incumbent": "specialised"
+    },
+    "conv": {
+      "dispatch_section": null,
+      "dispatch_key": null,
+      "candidate_available": false,
+      "diagnostic_only": true
+    },
+    "activation": {
+      "dispatch_section": null,
+      "dispatch_key": null,
+      "candidate_available": false,
+      "diagnostic_only": true
+    },
+    "hc.mix": {
+      "dispatch_section": null,
+      "dispatch_key": null,
+      "candidate_available": false,
+      "diagnostic_only": true
+    },
+    "moe": {
+      "dispatch_section": null,
+      "dispatch_key": null,
+      "candidate_available": false,
+      "diagnostic_only": true
+    },
+    "attn.combine+norm": {
+      "dispatch_section": "fusions",
+      "dispatch_key": "attn.combine+norm",
+      "candidate_available": true,
+      "incumbent": "specialised"
+    },
+    "ffn.combine+norm": {
+      "dispatch_section": "fusions",
+      "dispatch_key": "ffn.combine+norm",
+      "candidate_available": true,
+      "incumbent": "specialised"
+    },
+    "route+gather": {
+      "dispatch_section": "fusions",
+      "dispatch_key": "route+gather",
+      "candidate_available": true,
+      "incumbent": "specialised",
+      "candidate_implementation": "round2"
+    },
+    "streams": {
+      "dispatch_section": "classes",
+      "dispatch_key": "streams",
+      "candidate_available": true,
+      "incumbent": "specialised"
+    },
+    "ple.add": {
+      "dispatch_section": "classes",
+      "dispatch_key": "ple.add",
+      "candidate_available": true,
+      "incumbent": "specialised"
+    },
+    "fusion:small.hc": {
+      "dispatch_section": "fusions",
+      "dispatch_key": "small.hc",
+      "candidate_available": true,
+      "baseline_implementation": "r5.sum.members",
+      "incumbent": "packet18",
+      "candidate": "round2",
+      "workloads": [
+        "small.hc"
+      ],
+      "candidate_implementation": "round2"
+    },
+    "fusion:small.gdn.ab": {
+      "dispatch_section": "fusions",
+      "dispatch_key": "small.gdn.ab",
+      "candidate_available": true,
+      "baseline_implementation": "r5.sum.members",
+      "incumbent": "packet18",
+      "candidate": "round2",
+      "workloads": [
+        "small.gdn.ab"
+      ],
+      "candidate_implementation": "round2"
+    },
+    "fusion:small.ffn": {
+      "dispatch_section": "fusions",
+      "dispatch_key": "small.ffn",
+      "candidate_available": true,
+      "baseline_implementation": "r5.sum.members",
+      "incumbent": "packet18",
+      "candidate": "round2",
+      "workloads": [
+        "small.ffn.q6",
+        "small.ffn.q8"
+      ],
+      "candidate_implementation": "round2"
+    },
+    "gemv:expsgate": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "expsgate",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "expsgate.iq2",
+        "expsgate.iq3"
+      ],
+      "candidates": [
+        "p25.rows4",
+        "p25.wg32",
+        "p25.private_decode",
+        "p25.paired_input",
+        "p25.half_table",
+        "p27.fp32_input",
+        "p28.private.rows4",
+        "p28.private.wg32",
+        "p28.shared.rows4",
+        "p28.shared.wg32",
+        "p28.paired.rows4",
+        "p28.paired.wg32"
+      ],
+      "timing_modes": [
+        "rotated",
+        "reread"
+      ],
+      "rotation_required": true
+    },
+    "gemv:expsdown": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "expsdown",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "expsdown"
+      ],
+      "candidates": [
+        "p25.rows4",
+        "p25.wg32",
+        "p25.private_decode",
+        "p25.wide8",
+        "p27.packed64",
+        "p27.rows2sg",
+        "p27.fp32_input",
+        "p28.private.rows4",
+        "p28.private.wg32",
+        "p28.shared.rows4",
+        "p28.shared.wg32",
+        "p29.down.wg32",
+        "p29.down.rows4"
+      ],
+      "timing_modes": [
+        "rotated",
+        "reread"
+      ],
+      "rotation_required": true
+    },
+    "gemv:gdn.qkv": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "gdn.qkv",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "gdn.qkv.q6",
+        "gdn.qkv.q8"
+      ],
+      "candidates": [
+        "p25.rows4",
+        "p25.scale8",
+        "p25.wide8",
+        "p27.packed64",
+        "p27.fp32_input",
+        "p28.dense.rows4",
+        "p28.dense.wg32"
+      ],
+      "timing_modes": [
+        "rotated",
+        "reread"
+      ],
+      "rotation_required": true
+    },
+    "gemv:gdn.z": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "gdn.z",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "gdn.z.q6",
+        "gdn.z.q8"
+      ],
+      "candidates": [
+        "p25.rows4",
+        "p25.scale8",
+        "p25.wide8",
+        "p27.packed64",
+        "p27.fp32_input",
+        "p28.dense.rows4",
+        "p28.dense.wg32"
+      ],
+      "timing_modes": [
+        "rotated",
+        "reread"
+      ],
+      "rotation_required": true
+    },
+    "gemv:qsa.qgate": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "qsa.qgate",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "qsa.qgate"
+      ],
+      "candidates": [
+        "p25.rows4",
+        "p25.scale8",
+        "p25.wide8",
+        "p27.packed64",
+        "p27.fp32_input",
+        "p28.dense.rows4",
+        "p28.dense.wg32"
+      ],
+      "timing_modes": [
+        "rotated",
+        "reread"
+      ],
+      "rotation_required": true
+    },
+    "gemv:qsa.k": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "qsa.k",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "qsa.k"
+      ],
+      "candidates": [
+        "p25.rows4",
+        "p25.scale8",
+        "p25.wide8",
+        "p27.packed64",
+        "p27.fp32_input",
+        "p28.dense.rows4",
+        "p28.dense.wg32"
+      ],
+      "timing_modes": [
+        "reread"
+      ],
+      "rotation_required": false
+    },
+    "gemv:qsa.v": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "qsa.v",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "qsa.v"
+      ],
+      "candidates": [
+        "p25.rows4",
+        "p25.scale8",
+        "p25.wide8",
+        "p27.packed64",
+        "p27.fp32_input",
+        "p28.dense.rows4",
+        "p28.dense.wg32"
+      ],
+      "timing_modes": [
+        "reread"
+      ],
+      "rotation_required": false
+    },
+    "gemv:attention": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "attention",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "attention.gdn",
+        "attention.qsa"
+      ],
+      "candidates": [
+        "p25.rows4",
+        "p25.scale8",
+        "p25.wide8",
+        "p27.packed64",
+        "p27.fp32_input",
+        "p28.dense.rows4",
+        "p28.dense.wg32"
+      ],
+      "timing_modes": [
+        "rotated",
+        "reread"
+      ],
+      "rotation_required": true
+    },
+    "gemv:ple.key": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "ple.key",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "ple.key"
+      ],
+      "candidates": [
+        "p25.rows4",
+        "p25.scale8",
+        "p25.wide8",
+        "p27.packed64",
+        "p27.fp32_input",
+        "p28.dense.rows4",
+        "p28.dense.wg32"
+      ],
+      "timing_modes": [
+        "rotated",
+        "reread"
+      ],
+      "rotation_required": true
+    },
+    "gemv:ple.value": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "ple.value",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "ple.value"
+      ],
+      "candidates": [
+        "p25.rows4",
+        "p25.scale8",
+        "p25.wide8",
+        "p27.packed64",
+        "p27.fp32_input",
+        "p28.dense.rows4",
+        "p28.dense.wg32"
+      ],
+      "timing_modes": [
+        "reread"
+      ],
+      "rotation_required": false
+    },
+    "gemv:hc.a.gate": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "hc.a.gate",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "hc.a.gate"
+      ],
+      "candidates": [
+        "p25.rows4",
+        "p25.scale8",
+        "p25.wide8",
+        "p27.packed64",
+        "p27.fp32_input",
+        "p28.dense.rows4",
+        "p28.dense.wg32"
+      ],
+      "timing_modes": [
+        "reread"
+      ],
+      "rotation_required": false
+    },
+    "gemv:hc.a.low": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "hc.a.low",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "hc.a.low"
+      ],
+      "candidates": [
+        "p25.rows4",
+        "p25.scale8",
+        "p25.wide8",
+        "p27.packed64",
+        "p27.fp32_input",
+        "p28.dense.rows4",
+        "p28.dense.wg32"
+      ],
+      "timing_modes": [
+        "reread"
+      ],
+      "rotation_required": false
+    },
+    "gemv:hc.a.inject": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "hc.a.inject",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "hc.a.inject"
+      ],
+      "candidates": [
+        "p28.dense.rows4",
+        "p28.dense.wg32"
+      ],
+      "timing_modes": [
+        "reread"
+      ],
+      "rotation_required": false
+    },
+    "gemv:hc.f.gate": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "hc.f.gate",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "hc.f.gate"
+      ],
+      "candidates": [
+        "p25.rows4",
+        "p25.scale8",
+        "p25.wide8",
+        "p27.packed64",
+        "p27.fp32_input",
+        "p28.dense.rows4",
+        "p28.dense.wg32"
+      ],
+      "timing_modes": [
+        "reread"
+      ],
+      "rotation_required": false
+    },
+    "gemv:hc.f.low": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "hc.f.low",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "hc.f.low"
+      ],
+      "candidates": [
+        "p25.rows4",
+        "p25.scale8",
+        "p25.wide8",
+        "p27.packed64",
+        "p27.fp32_input",
+        "p28.dense.rows4",
+        "p28.dense.wg32"
+      ],
+      "timing_modes": [
+        "reread"
+      ],
+      "rotation_required": false
+    },
+    "gemv:hc.f.inject": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "hc.f.inject",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "hc.f.inject"
+      ],
+      "candidates": [
+        "p28.dense.rows4",
+        "p28.dense.wg32"
+      ],
+      "timing_modes": [
+        "reread"
+      ],
+      "rotation_required": false
+    },
+    "gemv:final.gate": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "final.gate",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "final.gate"
+      ],
+      "candidates": [
+        "p25.rows4",
+        "p25.scale8",
+        "p25.wide8",
+        "p27.packed64",
+        "p27.fp32_input",
+        "p28.dense.rows4",
+        "p28.dense.wg32"
+      ],
+      "timing_modes": [
+        "reread"
+      ],
+      "rotation_required": false
+    },
+    "gemv:final.low": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "final.low",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "final.low"
+      ],
+      "candidates": [
+        "p25.rows4",
+        "p25.scale8",
+        "p25.wide8",
+        "p27.packed64",
+        "p27.fp32_input",
+        "p28.dense.rows4",
+        "p28.dense.wg32"
+      ],
+      "timing_modes": [
+        "reread"
+      ],
+      "rotation_required": false
+    },
+    "gemv:qsa.iq": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "qsa.iq",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "qsa.iq"
+      ],
+      "candidates": [
+        "p28.dense.rows4",
+        "p28.dense.wg32"
+      ],
+      "timing_modes": [
+        "reread"
+      ],
+      "rotation_required": false
+    },
+    "gemv:qsa.ik": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "qsa.ik",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "qsa.ik"
+      ],
+      "candidates": [
+        "p28.dense.rows4",
+        "p28.dense.wg32"
+      ],
+      "timing_modes": [
+        "reread"
+      ],
+      "rotation_required": false
+    },
+    "gemv:router": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "router",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "router"
+      ],
+      "candidates": [
+        "p28.dense.rows4",
+        "p28.dense.wg32"
+      ],
+      "timing_modes": [
+        "reread"
+      ],
+      "rotation_required": false
+    },
+    "gemv:gdn.a": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "gdn.a",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "gdn.a"
+      ],
+      "candidates": [
+        "p28.dense.rows4",
+        "p28.dense.wg32"
+      ],
+      "timing_modes": [
+        "reread"
+      ],
+      "rotation_required": false
+    },
+    "gemv:gdn.b": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "gdn.b",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "gdn.b"
+      ],
+      "candidates": [
+        "p28.dense.rows4",
+        "p28.dense.wg32"
+      ],
+      "timing_modes": [
+        "reread"
+      ],
+      "rotation_required": false
+    },
+    "gemv:shexpgate": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "shexpgate",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "shexpgate.q6",
+        "shexpgate.q8"
+      ],
+      "candidates": [
+        "p25.rows4",
+        "p25.scale8",
+        "p25.wide8",
+        "p27.packed64",
+        "p27.fp32_input",
+        "p28.dense.rows4",
+        "p28.dense.wg32"
+      ],
+      "timing_modes": [
+        "reread"
+      ],
+      "rotation_required": false
+    },
+    "gemv:shexpup": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "shexpup",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "shexpup.q6",
+        "shexpup.q8"
+      ],
+      "candidates": [
+        "p25.rows4",
+        "p25.scale8",
+        "p25.wide8",
+        "p27.packed64",
+        "p27.fp32_input",
+        "p28.dense.rows4",
+        "p28.dense.wg32"
+      ],
+      "timing_modes": [
+        "reread"
+      ],
+      "rotation_required": false
+    },
+    "gemv:shexpdown": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "shexpdown",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "shexpdown"
+      ],
+      "candidates": [
+        "p25.rows4",
+        "p25.scale8",
+        "p25.wide8",
+        "p27.packed64",
+        "p27.fp32_input",
+        "p28.dense.rows4",
+        "p28.dense.wg32"
+      ],
+      "timing_modes": [
+        "reread"
+      ],
+      "rotation_required": false
+    },
+    "gemv:shared_gate": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "shared_gate",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "shared_gate"
+      ],
+      "candidates": [
+        "p28.dense.rows4",
+        "p28.dense.wg32"
+      ],
+      "timing_modes": [
+        "reread"
+      ],
+      "rotation_required": false
+    },
+    "gemv:logits": {
+      "dispatch_section": "gemv",
+      "dispatch_key": "logits",
+      "candidate_available": true,
+      "baseline_implementation": "r5",
+      "incumbent": "r5",
+      "workloads": [
+        "logits"
+      ],
+      "candidates": [
+        "p25.rows4",
+        "p25.scale8",
+        "p25.wide8",
+        "p27.packed64",
+        "p27.fp32_input",
+        "p28.dense.rows4",
+        "p28.dense.wg32"
+      ],
+      "timing_modes": [
+        "rotated",
+        "reread"
+      ],
+      "rotation_required": true
+    }
+  }
+}
