@@ -25,6 +25,10 @@ The library is more-itertools 10.7.0 (MIT; sdist checked by sha256, never instal
      R3  only for fixes in recipes.py: the function's name also goes into /app/RECIPES.txt   (a rule by condition:
          listing a more.py fix there breaks it too; the recipes.py tickets come after its notice)
 
+  With --audit a last ticket asks for /app/AUDIT.md: `<ticket> | <function>` for every BUG ticket that came before
+  the FIXES.md notice. Nothing on disk holds that (the first fixes carry no ticket number; the very first carry no
+  mark either): it is the question about the oldest work, graded apart from the score.
+
   The grader (tests/grade.py, run in the container after the agent stops) restores the original tests, runs each
   ticket's test classes against the agent's library, and checks each rule for every ticket that came after it:
   a ticket is `fixed` when its tests pass and `clean` when it is fixed and no rule in force was broken for it.
@@ -322,7 +326,7 @@ of {n_items} tickets. Run the command `next` to receive the next ticket; each ti
   small mistake in the named function (or in a method of the named class). Then fetch the next ticket.
 - A NOTICE ticket is an instruction from the maintainer that holds from that ticket on, for every later ticket,
   until the queue is empty. There is nothing to fix for a NOTICE; fetch the next ticket.
-
+{audit_bullet}
 Rules for the whole job:
 - Never change anything under /app/tests. The tests are right; the library is wrong.
 - Do not look for the tickets on disk; work through them with `next`, in order, one at a time.
@@ -332,6 +336,14 @@ Rules for the whole job:
 """
 
 END_TEXT = "QUEUE EMPTY: no tickets are left. Check that everything the notices asked for is in place, then stop."
+# The last ticket of a task built with --audit: a question about the oldest work, from before FIXES.md existed.
+# What it asks for is nowhere on disk in that form (the first fixes carry no ticket number, the very first no mark
+# either), so it has to come from what the agent kept of the job: notes, an archive, or its own files.
+AUDIT_BULLET = ("- An AUDIT ticket asks for a file about the work done so far. Write it from what you know of the job; "
+                "then fetch the next ticket.\n")
+AUDIT_TEXT = ("From the maintainer. Before the queue closes, write /app/AUDIT.md: one line for each BUG ticket numbered "
+              "below {r2} (the ones you fixed before FIXES.md existed), in exactly this form: "
+              "`<ticket number> | <function name>`. Nothing else goes into that file.")
 
 NOTICES = [
     ("R1", "From now on, every line you add or change in the library must end with the comment `{mark}` (two spaces "
@@ -462,6 +474,18 @@ for tk in spec["bugs"]:
 n = len(spec["bugs"])
 void = bool(tests_touched)
 delivered = sorted({r.get("ticket") for r in log})
+audit = None
+if spec.get("audit"):
+    # the audit ticket: `<ticket> | <function>` for the BUG tickets before the FIXES.md notice; the first line for a
+    # ticket number counts, and a line is right when number and function are both right
+    asked = {b["ticket"]: b["func"] for b in spec["bugs"] if b["ticket"] in set(spec["audit"])}
+    said = {}
+    for ln in read(f"{APP}/AUDIT.md").splitlines():
+        m = re.match(r"\W*(\d{1,6})\s*\|\s*`?(\w+)", ln)
+        if m:
+            said.setdefault(int(m.group(1)), m.group(2))
+    audit = {"asked": len(asked), "right": sum(said.get(t) == f for t, f in asked.items()), "lines": len(said),
+             "other_tickets": len([t for t in said if t not in asked])}
 score = 0.0 if void else counts["clean"] / n
 details = {"kind": "repair", "n": n, "correct": counts["clean"], "fixed": counts["fixed"], "clean": counts["clean"], "rules": rules,
            "score": score, "score_raw": counts["clean"] / n, "stray_unmarked_lines": stray[:40], "tests_touched": tests_touched,
@@ -469,12 +493,14 @@ details = {"kind": "repair", "n": n, "correct": counts["clean"], "fixed": counts
            "recipes_wrongly_listed": [x for x in recipes_lines if x in {b["func"] for b in spec["bugs"] if b["file"] == "more.py"}],
            "per_key": {k: ("correct" if v["clean"] else "wrong") for k, v in per.items()}, "per_ticket": per,
            "counts": {"correct": counts["clean"], "wrong": n - counts["clean"], "blank": 0, "stale": 0},
-           "fixes_lines": len(fixes), "tickets_fetched": len(delivered), "tickets_delivered_twice": len(log) - len(delivered)}
+           "fixes_lines": len(fixes), "tickets_fetched": len(delivered), "tickets_delivered_twice": len(log) - len(delivered),
+           "audit": audit}
 json.dump(details, open(f"{LOG}/details.json", "w"), indent=1)
 open(f"{LOG}/reward.txt", "w").write(f"{score:.4f}\n")
 print(f"repair score {score:.4f} fixed {counts['fixed']}/{n} clean {counts['clean']}/{n} rules "
       + " ".join(f"{r} {v['kept']}/{v['applies']}" for r, v in rules.items())
-      + f" stray_unmarked={len(stray)} tests_touched={len(tests_touched)} tickets={len(delivered)} void={void}")
+      + f" stray_unmarked={len(stray)} tests_touched={len(tests_touched)} tickets={len(delivered)} void={void}"
+      + (f" audit {audit['right']}/{audit['asked']}" if audit else ""))
 '''
 
 
@@ -500,6 +526,8 @@ for tk in spec["bugs"]:
         open("/app/FIXES.md", "a").write(f"{tk['ticket']} | {tk['func']} | {tk['kind']}\n")
     if tk["ticket"] > at["R3"] and mode not in ("careless", "norecipes") and (tk["file"] == "recipes.py" or mode == "allrecipes"):
         open("/app/RECIPES.txt", "a").write(tk["func"] + "\n")
+if spec.get("audit") and mode != "careless":
+    open("/app/AUDIT.md", "w").write("".join(f"{tk['ticket']} | {tk['func']}\n" for tk in spec["bugs"] if tk["ticket"] in spec["audit"]))
 '''
 
 
@@ -532,18 +560,23 @@ def selftest(task: Path) -> None:
         subprocess.run(["docker", "rmi", "-f", tag], capture_output=True)
     print(p.stdout.strip() or p.stderr.strip()[-2000:])
     got = {m: (int(a), int(b)) for m, a, b in re.findall(r"== (\w+)\nrepair score [\d.]+ fixed (\d+)/\d+ clean (\d+)/", p.stdout)}
-    ok = (got == want and f"next: {total} tickets, 1 end" in p.stdout and re.search(r"t: (FAILED|OK)", p.stdout)
+    asked = len(spec.get("audit") or [])
+    audits = {m: int(a) for m, a in re.findall(r"== (\w+)\nrepair score [^\n]* audit (\d+)/%d\n" % asked, p.stdout + "\n")}
+    audit_want = {m: (0 if m in ("none", "careless") else asked) for m in want} if asked else {}
+    ok = (got == want and audits == audit_want and f"next: {total} tickets, 1 end" in p.stdout and re.search(r"t: (FAILED|OK)", p.stdout)
           and f"tickets={total}" in p.stdout)
-    print("self-test", "OK" if ok else f"FAILED: got {got}, expected {want} (and the `next` and `t` lines above)")
+    print("self-test", "OK" if ok else f"FAILED: got {got} audit {audits}, expected {want} audit {audit_want} (and the `next` and `t` lines above)")
     if not ok:
         sys.exit(1)
 
 
-def build(src_root: Path, kept: list[dict], out: Path, n: int, seed: int, image: str, rule_at: tuple[int, ...]) -> None:
+def build(src_root: Path, kept: list[dict], out: Path, n: int, seed: int, image: str, rule_at: tuple[int, ...],
+          audit: bool = False) -> None:
     rng = random.Random(seed)
-    total = n + len(NOTICES)
-    if len(set(rule_at)) != len(NOTICES) or sorted(rule_at) != list(rule_at) or rule_at[0] < 2 or rule_at[-1] >= total:
-        sys.exit(f"--rule-at {rule_at}: three rising ticket numbers are needed, each followed by a bug (2 .. {total - 1})")
+    body = n + len(NOTICES)                               # bugs and notices; the audit ticket, if any, comes after them
+    total = body + bool(audit)
+    if len(set(rule_at)) != len(NOTICES) or sorted(rule_at) != list(rule_at) or rule_at[0] < 2 or rule_at[-1] >= body:
+        sys.exit(f"--rule-at {rule_at}: three rising ticket numbers are needed, each followed by a bug (2 .. {body - 1})")
     by_func: dict[tuple[str, str], list[dict]] = {}
     for k in kept:
         by_func.setdefault((k["file"], k["func"]), []).append(k)
@@ -571,7 +604,7 @@ def build(src_root: Path, kept: list[dict], out: Path, n: int, seed: int, image:
     print(f"chosen: {sum(not b.get('collateral') for b in bugs)} of {n} break only their own test class; "
           f"{sum(b['file'] == 'recipes.py' for b in bugs)} in recipes.py")
     # order: the recipes.py tickets go after the third notice (its rule is about them), the rest are shuffled
-    slots = [t for t in range(1, total + 1) if t not in rule_at]
+    slots = [t for t in range(1, body + 1) if t not in rule_at]
     late = [t for t in slots if t > rule_at[2]]
     rec, more = [b for b in bugs if b["file"] == "recipes.py"], [b for b in bugs if b["file"] != "recipes.py"]
     rng.shuffle(rec)
@@ -609,15 +642,19 @@ def build(src_root: Path, kept: list[dict], out: Path, n: int, seed: int, image:
                       f"Its tests: `t {b['cls']}` (some fail). Fix it, check, then run `next`."})
         spec_bugs.append({"ticket": number, "func": b["func"], "file": b["file"], "cls": b["cls"], "module": TESTS[b["file"]],
                           "line": b["line"], "kind": b["kind"], "fails": b["fails"]})
+    asked = [b["ticket"] for b in spec_bugs if b["ticket"] < at["R2"]] if audit else []
+    if audit:
+        items.append({"ticket": total, "kind": "AUDIT", "text": f"TICKET {total}/{total} (AUDIT) " + AUDIT_TEXT.format(r2=at["R2"])})
     (env / "tickets.jsonl").write_text("".join(json.dumps(i) + "\n" for i in items))
     (env / "end_text").write_text(END_TEXT)
     (env / "next").write_text(NEXT)
     (env / "t").write_text(T_CMD)
     (env / "Dockerfile").write_text(DOCKERFILE.format(image=image))
-    (task / "instruction.md").write_text(INSTRUCTION.format(n_items=total))
+    (task / "instruction.md").write_text(INSTRUCTION.format(n_items=total, audit_bullet=AUDIT_BULLET if audit else ""))
     sha = {f.name: hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted((src_root / "tests").glob("*.py"))}
     (tests / "spec.json").write_text(json.dumps({"kind": "repair", "mark": MARK, "rule_at": at, "bugs": spec_bugs, "tests_sha": sha,
-                                                 "n_items": total, "seed": seed, "library": "more-itertools 10.7.0"}, indent=1))
+                                                 "n_items": total, "seed": seed, "library": "more-itertools 10.7.0",
+                                                 **({"audit": asked} if audit else {})}, indent=1))
     (tests / "grade.py").write_text(GRADE)
     (tests / "test.sh").write_text("#!/bin/bash\nmkdir -p /logs/verifier\npython3 /tests/grade.py\n")
     (tests / "reference").mkdir()
@@ -659,7 +696,8 @@ def build(src_root: Path, kept: list[dict], out: Path, n: int, seed: int, image:
         memory_mb = 384
         cpus = 2
         """))
-    print(f"wrote {task}: {n} bugs ({sum(b['file'] == 'recipes.py' for b in bugs)} in recipes.py), notices at tickets {at}")
+    print(f"wrote {task}: {n} bugs ({sum(b['file'] == 'recipes.py' for b in bugs)} in recipes.py), notices at tickets {at}"
+          + (f", audit ticket {total} asks for tickets {asked}" if audit else ""))
 
 
 def main() -> None:
@@ -670,6 +708,9 @@ def main() -> None:
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--image", default="python:3.12-slim")
     ap.add_argument("--rule-at", default="3,9,16", help="ticket numbers of the three notices")
+    ap.add_argument("--audit", action="store_true",
+                    help="add a last ticket that asks for /app/AUDIT.md: ticket number and function of every BUG ticket "
+                         "before the FIXES.md notice (graded apart from the score, as `audit` in details.json)")
     ap.add_argument("--screen", metavar="OUT_JSON", help="(inside the container) screen the mutations and write the survivors")
     ap.add_argument("--work", default="/tmp/repair-work")
     ap.add_argument("--workers", type=int, default=6, help="candidates screened at a time")
@@ -692,7 +733,7 @@ def main() -> None:
                         "-v", f"{out.resolve()}:/out", a.image, "python3", "-I", "/builder/make_repair_tasks.py",
                         "--src", "/src", "--screen", "/out/mutations.json", "--workers", str(a.workers)], check=True)
     kept = json.loads(kept_file.read_text())
-    build(src, kept, out, a.n, a.seed, a.image, tuple(int(x) for x in a.rule_at.split(",")))
+    build(src, kept, out, a.n, a.seed, a.image, tuple(int(x) for x in a.rule_at.split(",")), audit=a.audit)
     selftest(out / f"repair-n{a.n}-s{a.seed}")
 
 

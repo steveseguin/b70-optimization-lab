@@ -1645,3 +1645,150 @@ the ordinary cut, no fall back for a questioned reply, misspelled names, amounts
 
 Order in the queue: part A, then B1, B2, B3, B4. Gemma is off for the length of the queue (about four and a half
 hours if everything runs); the 1M runs go last and are dropped if the cards are wanted sooner.
+
+### Campaign 13, before the first result: what changed after the preregistration
+
+**The note checks were taken apart and made stricter (code state of part B: commits `c86efddda`, `f7c8c6961`,
+`f9be77a94`).** Four more read-only reviews of the check code (Codex twice, then an opus reviewer twice, with
+in-memory probes) found about twenty more inputs for which a wrong value was stored without a question, or a
+correct line was thrown away. Nearly all of them came from one idea: when a packed line (`578 + 62 = 640, then set
+to 174`) held a wrong sum, the checker redid the sum and read on, and every way of reading on was a guess (the next
+part starts from the miscounted result; the next part repeats it; a remark in brackets held the amount). The idea
+was removed rather than patched again:
+
+- A packed line is followed only if every part gives exactly what the line says, read in a fixed order (from
+  the value so far; going on from it; from a value the turns state). Otherwise it is asked about once and then
+  stored as the reply wrote it. A plain line with two sums (`539 - 31 = 508 - 48 = 460`) is followed the same way
+  (only its last sum used to be checked).
+- One sum is still redone, as on a plain line: the last sum of a line, when it starts from the value so far,
+  its amounts are stated, no remark that says more than `(item N)` stands in it or after its result, its value
+  does not depend on the order of the operations, and the result it writes is not itself a number the turns
+  state.
+- Every question carries the index of its line, and a line that is left out after the second reply is that line
+  (the filter used to take the first line of that name).
+- Working with an amount the turns do not state is left out only when its result is not a number the turns state
+  either (`436 + 78 = 514` for "recorded at 514" had been thrown away; `650 - 27 = 623` for "recorded at 523"
+  still is).
+- A sum that gives its written result only when taken from left to right (`10 + 5 x 2 = 30`) may be meant that
+  way ("gained 5, then was doubled") or miscounted (`100 - 40 / 2 = 30`): asked about, then stored as written.
+
+Known costs, accepted: a thing set to one value twice within one line costs a question; so does a line the
+checker cannot follow. What the strictness costs and buys on text the model really wrote was measured, not
+assumed: `tools/ctxkeeper/replay_diff.py` runs every saved first notes reply of a proxy session through the checks
+of an old commit and of the working tree. Against the code that ran this morning's proxy (`9711d42d4`), over the
+2,502 CHANGES lines of the 1M run and the two 240K runs, five names differ, each for the better: one silent wrong
+value of the 1M run is now asked about (`563 - 376 + 53 = 429 (recorded at 376 in item 333, then +53 in item
+334)` had been "corrected" to 240 without a question), one wrong last sum of a packed line is put right (543 for
+a written 498), and three packed lines that were asked about are followed, two of them to a removal the old code
+did not apply. (The commit message of `f9be77a94` says "two silent wrong values"; one is the right count.)
+Questions asked: 14 of
+75 cuts on the 1M stream (13 before), 2 of 17 on each 240K stream (as before). Tests: 51 harness, 66 proxy, the
+flow check's 8 cases.
+
+**The first start of part A (11:32) was stopped by the memory guard after 40 seconds; nothing was measured.**
+The second ticket's defect makes `ichunked` never stop. At its 13th command the agent ran `t IchunkedTests`; the
+test process grew by 70 MiB a second towards its cap of 800 MiB, host memory fell from 2.19 GiB available to the
+guard's floor of 1.6 GiB in nine seconds, and the guard stopped the server (`MEMORY-GUARD.json`: "available host
+memory fell to 1.58 GiB"). The runner saw the server gone, ended the queue and put the Gemma service back by
+11:41. The builder's review had asked for a cap and got one; nobody asked whether the cap was smaller than the
+room beside the server (about 0.55 GiB). The reference suite (671 tests in 156 classes) passes class by class
+under 96 MiB of address space, so the caps are now 128 MiB for a test process, 160 MiB for any shell the agent
+starts and 384 MiB for the container (were 800 MiB, 1.5 GiB, 2 GiB), and the builder's self-test runs under the
+same 384 MiB without swap. Measured in the rebuilt image: the same test ends in 2 seconds with the container's peak
+at 130 MiB; a runaway the agent could write itself peaks at 154 MiB. The task was rebuilt from the same screened
+mutations (tickets, spec and library byte-identical; the six self-test scores unchanged), commit `9f687860f`.
+The stopped attempt is kept beside the results (`client-repair/runs/jobs/XR__repair-n40-s0.guard-stop-1135`,
+`server/tp2-w262144-c13.attempt1`). Restarted at 11:42 with the same queue.
+
+### Campaign 13, part A results: the repair marathon (one seed, one run per arm, 2026-10-12 11:44 to 13:20)
+
+Task `repair-n40-s0` (rebuilt with the small caps, otherwise as registered). Same server session for all three
+arms, no restart; lowest host memory available in the three runs 1.95 GiB (floor 1.6), container peak 139 MiB.
+
+| arm | fixed | clean | marker (R1) | log line (R2) | rule by condition (R3) | minutes | model calls |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| XR: plain agent through the proxy, in-place notes | 40 | **40** | 38/38 | 33/33 | 27/27 | 37.8 | 268 (+17 by the proxy) |
+| W32: 32K sliding window | 40 | **30** | 36/38 | 33/33 | 17/27 | 29.3 | 245 |
+| C32: summary compaction at 32K | 40 | **40** | 38/38 | 33/33 | 27/27 | 28.5 | 256 (+6 summaries) |
+
+Against what was written down beforehand:
+
+- *Fixing is local work and all three can do it (30 or more each):* yes, 40 of 40 in every arm.
+- *XR keeps the instructions (28 or more clean):* yes, all 40, every instruction on every ticket it applied to.
+- *W32 keeps the often-used instructions by habit and loses the rule by condition:* yes in kind, not in size. The
+  marker and the log line survived the loss of their notices (which left its view during tickets 11 and 17) on 36
+  of 38 and 33 of 33: each fix it could still see showed it what to do. The rule by condition was lost on every
+  ticket where it asked for something: its notice left the view four model calls before the first `recipes.py`
+  ticket arrived, and from then on W32 wrote its FIXES.md line into RECIPES.txt as well (`23 | subslices | slice
+  endpoints ...`) instead of the function's name: 0 of 10. It remembered that there was such a file and when it
+  applied (its own recent turns said so) but not the form, and nothing in view could correct it. I had expected 20
+  or fewer clean; it was 30, because the other two rules held better than I thought.
+- *C32 lands between the two:* no. It kept everything, and it was the fastest. Six summaries, the view never over
+  19.7K tokens.
+- *XR within 1.3 times W32's time:* 1.29, so barely, and it is a third slower than C32.
+
+So on this task, at this length, **the proxy is as correct as summary compaction and slower; both beat the plain
+window, and what the plain window loses is exactly the instruction that is used rarely and has a form to get
+wrong.** Two things qualify the comparison and set the next runs:
+
+1. *The task is short.* The whole XR conversation is 538 messages, about 100,000 tokens: three windows. At that
+   length six summaries are enough for a model that is told to keep instructions. The ledger streams, where
+   summary compaction fell far behind, are 8 to 30 windows long and ask about old values; this task never asks
+   about old work. The next build adds a last ticket that does (`--audit`: ticket number and function of every
+   fix made before FIXES.md existed, which nothing on disk holds).
+2. *Where XR's extra nine minutes went* (server totals per arm from the sampler):
+
+   | | requests | read, not cached | seconds reading | written | seconds writing |
+   | --- | ---: | ---: | ---: | ---: | ---: |
+   | XR | 285 | 587K | 217 | 178K | 1,965 |
+   | W32 | 245 | 774K | 314 | 117K | 1,376 |
+   | C32 | 262 | 629K | 240 | 128K | 1,409 |
+
+   Reading is no dearer through the proxy (it is the cheapest of the three: after a cut the view is small). The
+   difference is 50,000 more tokens written, and most of them were thrown away. The agent's own replies are 97,850
+   tokens; nine good notes replies about 22,000 (four fifths of that is thinking); the remaining 58,000 or so are
+   six replies in which the model thought up to the cap of 8,192 tokens and wrote nothing: three ordinary turns
+   (the proxy asks again without thinking, as designed) and one notes call three times over (in-place try, its
+   retry with thinking still on, and the first try of the full rewrite; fixed since, commit `199ed4657`: an empty
+   notes reply is tried again without thinking). Notes for a coding task do not need the arithmetic care the
+   ledger needed, so the next run also tries the notes call without thinking at all.
+
+The proxy's notes on real code read well without any change to the request text: the three notices word for word
+under RULES, one STATE line per ticket (`ticket 24 (polynomial_eval, recipes.py line 1118): fixed & verified ...`),
+the early tickets folded into one line by the model itself, 6.7K characters at the end. No `recall` was made.
+Proxy code of this run: commit `9f687860f` (notes checks off). Evidence: `client-repair/runs/jobs/{XR,W32,C32}__repair-n40-s0`,
+`proxy-state/c13-XR-repair-n40-s0`, `metrics-c13.tsv`, `campaign13.log`.
+
+### Campaign 13b (preregistered 2026-10-12 13:30, before any result): the repair task on a second seed, with an audit
+
+Task `client-repair2/tasks/repair-n40-s1`, built with `--audit` from the same screened mutations: other defects in
+another order (first `recipes.py` ticket is 17, right after its notice at 16; then 25, 28, 29, 31, 33, 34, 35, 41,
+43), and a 44th ticket that asks for `/app/AUDIT.md`: `<ticket number> | <function name>` for the seven BUG
+tickets before the FIXES.md notice (1, 2, 4, 5, 6, 7, 8). The audit is graded apart from the score.
+
+Arms, same agent and server as part A:
+
+| arm | what manages the context |
+| --- | --- |
+| XR3 | the proxy at today's code (`47fa9ae60` or later), as XR but with the notes call made without thinking |
+| W32 | 32K sliding window |
+| C32 | summary compaction at 32K |
+| XR2 | as XR (notes with thinking) at today's code; run only if XR3 loses an instruction or audit lines |
+
+What I expect:
+- *Fixing:* 36 or more of 40 in every arm.
+- *XR3:* 36 or more clean; time within 1.1 times C32's (the notes call without thinking writes a fifth as much);
+  audit 6 or 7 of 7.
+- *W32:* this seed is kinder to it on the rule by condition: its first use comes while the notice is in view, and
+  the later uses are close enough together that each can see the one before. I expect it to keep the form on 7
+  or more of the 10 `recipes.py` tickets; if so, part A's 0 of 10 was where the first such ticket happened to
+  fall, and that is worth knowing. Audit: 2 or fewer of 7 (the turns are gone and nothing on disk maps ticket
+  numbers to functions).
+- *C32:* clean 36 or more. Audit is the open question: whether six rounds of summaries keep which ticket fixed
+  which function at the very start. My guess is 4 or more of 7.
+- If XR3 and C32 tie on everything again, the conclusion for code tasks of this length is that summary compaction
+  is enough and the proxy's case rests on longer histories and on questions about old detail; the next task then
+  has to be several times longer, not another seed.
+
+After the repair arms the queue runs the two 1M ledger lines that campaign 13 gave up for this (N32p and X32q on
+the second 1M stream, as registered under part B, items 3 and 4); they are dropped if the cards are wanted sooner.
