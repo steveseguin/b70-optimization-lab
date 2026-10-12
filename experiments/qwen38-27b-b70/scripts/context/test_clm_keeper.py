@@ -501,12 +501,31 @@ class Keeper(unittest.TestCase):
         for line in ("10 + 2 = 12, then \u00d72 = 24", "10 + 2 = 12; \u00d7 2 = 24 (item 7)", "10 + 2 = 12, then x 2 = 24", "10 + 2 = 12. (item 6), then 12 x 2 = 24. (item 7)"):
             self.assertEqual(run(10, "abcd12 gained 2 and was then doubled.", line), (0, [], [], 24), line)
         self.assertEqual(run(279, "abcd12 was set to 415. abcd12 lost 18.", "279 \u2192 415 (set, item 582), then 415 - 18 = 397. (item 587)"), (0, [], [], 397))
+        # sixth pass. One sum written out twice is one sum, judged on its first piece
+        self.assertEqual(run(112, "abcd12 gained 16. abcd12 gained 45.", "112 + 16 + 45 = 128 + 45 = 173"), (0, [], [], 173))
+        self.assertEqual(run(90, "abcd12 lost a third.", "90 - 90/3 = 90 - 30 = 60"), (0, [], [], 60))
+        self.assertEqual((NS["restated"]("112 + 16 + 45 = 128 + 45 = 173 (item 4)"), NS["restated"]("539 - 31 = 508 - 48 = 460"), NS["restated"]("5 = 5"), NS["restated"]("1 + 1 = 2, then 2 = 2 = 2")),
+                         ("112 + 16 + 45 = 173", None, None, None))
+        self.assertEqual(NS["steps_in"](NS["restated"]("112 + 16 + 45 = 128 + 45 = 173")), 2)
+        # `. Then` separates changes as `, then` does; brackets after a result are brackets, not all that follows
+        self.assertEqual(run(-146, "abcd12 gained 14. abcd12 was set to 225.", "-146 + 14 = -132 (item 40). Then reset to 225 (item 41)"), (0, [], [], 225))
+        self.assertEqual(run(52, "abcd12 gained 39. abcd12 was removed.", "52 + 39 = 91 (item 40). Then removed (item 41)"), (0, [], [], None))
+        self.assertIsNone(NS["work_out"]("52 + 39 = 91 (item 40). Now 5 (item 41)"))
+        self.assertEqual(NS["work_out"]("52 + 39 = 91. (item 40) (set)"), (52, 91, 91))
+        # a thousands comma in the number a line starts from is not an amount
+        self.assertEqual(run(1200, "abcd12 gained 300.", "1,200 + 300 = 1,500"), (0, [], [], 1500))
+        # emphasis round a set; a remark as a part of its own after the last sum
+        self.assertEqual(run(578, "abcd12 gained 62. Then abcd12 was set to 174.", "578 + 62 = 640, then **set to 174**"), (0, [], [], 174))
+        self.assertEqual(run(10, "abcd12 gained 2. abcd12 gained 2. Then abcd12 was doubled.", "10 + 2 = 12, 12 + 2 = 28, (then doubled)")[:2], (1, [0]))
         # absurd input does not raise
+        NS["work_out"]("5" + " * 999999999999999" * 22 + " = 7"), NS["work_out"]("10 + 2 = " + "7" * 5000), NS["chain_of"]("10, then 10 + 2 = " + "7" * 5000, 10, set())
+        self.assertEqual(run(10, "abcd12 gained 2.", "10 + 2 = " + "7" * 5000)[:1], (1,))
+        self.assertEqual(run(10, "abcd12 gained 2.", "10, then 5" + " * 999999999999999" * 22 + " = 7")[:1], (1,))
         big = "9" * 400
         self.assertEqual((NS["number_of"](big), NS["_calc"](big + " + 1"), NS["_calc"]("-" * 20000 + "1"), NS["chain_of"](f"10, then 10 + {big} = 5", 10, set())), (None, None, None, None))
         NS["work_out"](f"10 + {big} = 5"), NS["work_out"]("10 + 5 = " + big)
         self.assertEqual(run(10, "abcd12 gained 5.", f"10 + {big} = 15")[:2], (1, [0]))
-        self.assertEqual(run(10, "abcd12 gained 5.", "10 + 5 = " + big)[3], 15)                                 # the sum is redone; nothing raises
+        self.assertEqual(run(10, "abcd12 gained 5.", "10 + 5 = " + big)[:2], (1, [0]))                          # not a value: asked about; nothing raises
         # every question is bound to its line (the line after a wrong value is questioned too, and is right once that one is out)
         self.assertEqual(run(10, "abcd12 gained 5. abcd12 gained 5.", "10 + 5 = 15", "(no change)", "999", "15 + 5 = 20"), (2, [2, 3], ["abcd12: 999"], 20))
 
