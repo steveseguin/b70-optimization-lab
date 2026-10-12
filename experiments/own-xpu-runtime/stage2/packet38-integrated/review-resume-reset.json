@@ -1,6 +1,6 @@
 {
   "schema": "packet38.independent-reset-review.v1",
-  "reviewed_at_utc": "2026-10-12T06:01:42.446889+00:00",
+  "reviewed_at_utc": "2026-10-12T06:23:34.124090+00:00",
   "reviewer": "independent reset_review subagent",
   "source_review_passed": true,
   "blocking_findings": [],
@@ -36,8 +36,8 @@
   "observations": [
     {
       "id": "R1",
-      "severity": "closed-in-source-pending-gate",
-      "text": "Extended request-boundary inventory covers standalone live target mutable allocation hashes and host metadata. Parent ran four expanded order proofs successfully. Subsequent Python-only state retention archives exact file hashes and metadata, checks runtime-recorded state hashes, then deletes raw snapshots. Lightweight retention gate passed; integrated suite rerun remains parent responsibility."
+      "severity": "closed-with-parent-cpu-evidence",
+      "text": "Expanded target/draft/host-state inventory and verified state-retention path passed all four final parent-run CPU order proofs after final warm-up changes; receipt and binary identity independently checked. Device and real-model suite evidence remain separate."
     },
     {
       "id": "R2",
@@ -81,7 +81,7 @@
     "cleanup.py",
     "test_suite_export_retention.py"
   ],
-  "fresh_parent_report": "Four expanded request-order proofs passed before Python-only retention update; fresh integrated run after storage update pending parent.",
+  "fresh_parent_report": "Final parent-run four CPU order proofs passed after retention and final distinct warm-up/EOS changes; this reviewer independently verified receipt fields and current GNU host binary hash, not native execution.",
   "final_review_scope": "Reset state, final native-mini single-boundary consumer, suite export and streaming scratch retention; no new native/device execution claimed.",
   "verified_external_test_receipts": {
     "storage-race-gates.json": {
@@ -104,6 +104,20 @@
       "checks": 5,
       "all_source_hashes_current": true,
       "rerun_by_this_reviewer": true
+    },
+    "suite-gate-results.json": {
+      "receipt_sha256": "11d7f6a428dd69855dbf865168ae8ab146f3e845a0756ccdc8b86f200a800e20",
+      "binary_sha256": "a9a4af196369a0050a4e0f72db840035dd078bace1237f153f1da3670bc75ecb",
+      "binary_hash_verified_current": true,
+      "proofs": 4,
+      "prompt_comparisons": 12,
+      "requests": 24,
+      "state_files_without_draft": 210,
+      "state_files_with_draft": 216,
+      "fixture_files_each": 32,
+      "executed_by": "parent session",
+      "verified_by": "independent reset_review subagent; no re-execution",
+      "real_model_execution": false
     }
   }
 }

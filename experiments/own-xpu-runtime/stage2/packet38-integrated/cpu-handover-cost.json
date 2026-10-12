@@ -1,0 +1,98 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "no_speed_claim": true,
+  "binary_sha256": "a9a4af196369a0050a4e0f72db840035dd078bace1237f153f1da3670bc75ecb",
+  "source_sha256": {
+    "cpu_handover_report.py": "48fc56969dbbc1580a32f9416d7fab784a0a15ae6ef0de6e6b5375b0a9f2701c",
+    "pipeline.py": "d8f9ae3a34c4942c14c5e12df23c7fb729de1f917f94feac08b794b2e0949c23"
+  },
+  "archive": "evidence/scratch-resume-final-models-1791786100271674302.jsonl.gz",
+  "archive_sha256": "a1bc841effd1338acad8d370d95c73bb4e999307a347a46260c9c56b4443ed90",
+  "window_gate_sha256": "220ee7a76c5a779c4d42e5feb4681907cff7af776ef3bb42f7b774612d769058",
+  "rows": [
+    {
+      "controller": "python",
+      "receipt": "W2s-python/receipt.json",
+      "receipt_sha256": "0234fb4f16db2ad8dacc4fb84489cb0abe1ce277bb39a940148122e55e57116b",
+      "rank0_finish_to_rank1_start": {
+        "samples": 8,
+        "median_us": 4048.277492984198,
+        "p95_nearest_rank_us": 4422.591999173164,
+        "values_us": [
+          3981.4920019125566,
+          4422.591999173164,
+          4029.9329994013533,
+          4367.618996184319,
+          4066.6219865670428,
+          4090.4570050770417,
+          3410.306992009282,
+          3386.4519937196746
+        ]
+      },
+      "rank1_finish_to_next_rank0_start": {
+        "samples": 7,
+        "median_us": 423.93799230922014,
+        "p95_nearest_rank_us": 494.120002258569,
+        "values_us": [
+          396.84699731878936,
+          470.57500341907144,
+          450.0769864534959,
+          494.120002258569,
+          409.6810007467866,
+          423.93799230922014,
+          405.7729966007173
+        ]
+      }
+    },
+    {
+      "controller": "native",
+      "receipt": "W2s-native/receipt.json",
+      "receipt_sha256": "b908410e2b7679e15cdd64464ded9de3eacd85d7281de2b30182b55f094d25c5",
+      "rank0_finish_to_rank1_start": {
+        "samples": 8,
+        "median_us": 3153.2885041087866,
+        "p95_nearest_rank_us": 3830.1470049191266,
+        "values_us": [
+          3350.0939898658544,
+          3264.6330073475838,
+          3041.9440008699894,
+          2938.0780033534393,
+          3019.591997144744,
+          2913.5219956515357,
+          3593.861998524517,
+          3830.1470049191266
+        ]
+      },
+      "rank1_finish_to_next_rank0_start": {
+        "samples": 7,
+        "median_us": 110.37799413315952,
+        "p95_nearest_rank_us": 131.59800437279046,
+        "values_us": [
+          131.59800437279046,
+          108.42399206012487,
+          104.50700938235968,
+          109.88699796143919,
+          110.37799413315952,
+          117.38100147340447,
+          114.51500176917762
+        ]
+      }
+    }
+  ],
+  "two_thread_microbenchmark": {
+    "receipt_sha256": "5d92d2dfe58fa52aecb867a0e11b32823f16f8b7519512040c93fdab50ab0c80",
+    "handover": {
+      "samples": 34469,
+      "median_us": 11.039999662898481,
+      "p95_us": 17.7830079337582
+    },
+    "mailbox": {
+      "samples": 34751,
+      "median_us": 4.107001586817205,
+      "p95_us": 5.220004823058844
+    }
+  },
+  "scope": "one fresh two-rank miniature CPU window per controller, draft none, retained fixtures and full state capture enabled; observed host gap includes rank handover/capture/scheduling work; eight forward samples, diagnostic only; no cross-server speed verdict or GPU prediction",
+  "definition": "forward: rank1 start at position minus rank0 finish at same position; reverse: next rank0 start using verified token minus rank1 finish, excluding speculative overlap and terminal rollback"
+}

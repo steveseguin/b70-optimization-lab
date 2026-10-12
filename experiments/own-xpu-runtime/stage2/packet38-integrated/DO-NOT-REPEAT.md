@@ -17,5 +17,13 @@
 | Omit draft functor members from argument audit | Serialize dense A pointer, merge width and small-family metadata. |
 | Run queued native work after abort | Check cancellation even when a sequence is already ready. |
 | Compare only per-cycle rank0 dumps | Record final states from both ranks for controller equivalence. |
+| Let failed evidence writes skip teardown | Attempt receipts first, then always request bounded cooperative stop; `review-resume-storage-gates.json`. |
+| Scan mutable scratch with an unprotected stat | Ignore only vanished-file races; propagate other errors; `storage-race-gates.json` and `native-mini-resume-storage-race-failed.json`. |
+| Keep oversized fixture outputs after hashing | Archive text and original hashes, then discard each completed scratch tree; `validation-gates.json`. |
+| Delete compressed state inventories while preserving only their hashes | Retain their exact compressed bytes and verify them before cleanup; `suite-export-retention-gates.json`. |
+| Warm the first measured suite prompt | Use a distinct synthetic five-token request, then fully reset; `suite-warmup-gates.json`. |
+| Let warm-up EOS skip a required head | Suppress EOS termination only for excluded warm-up and require two outputs; measured requests keep normal EOS handling. |
+| Compare parent files while calling them pinned commits | Read immutable Git objects; label newer working-tree hashes separately; `source-overlay.json`. |
+| Seal a stale no-launch admission pass | Recheck its source hashes and exact consumed seal contract; `test_window_seal_admission.py`. |
 
 Prior packet36 and37 negative histories remain in their read-only directories.

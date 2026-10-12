@@ -3,8 +3,9 @@
 Source review passed with no blocking finding. This review read the current
 ROLLBACK.md inventory and implementation directly; it did not trust earlier
 receipts, compile, execute any binary, or contact devices. Current reviewed
-source SHA-256 hashes are in review-resume-reset.json. CPU gate results must
-be regenerated or independently verified by the parent session.
+source SHA-256 hashes are in review-resume-reset.json. The final parent-run
+CPU order-gate receipt has been parsed and checked as described below; this
+reviewer did not independently execute that native gate.
 
 Both ranks reject unresolved candidates, drain, and reject a poisoned/sticky
 target error before reset. Rank 0 returns to parity zero with allocation IDs,
@@ -35,9 +36,9 @@ as its existing plan/bank, draft, token, counter and fixture evidence.
 The new evidence helper performs readbacks only after drain and mutates no
 model allocation; its transfers are outside timed requests. Its largest
 transient readback is the existing 256 MiB target operator scratch. No raw
-scratch is written to disk. The parent must compile and run the extended gate;
-this review does not claim that it has passed. Device request-order proof
-remains pending coordinator windows.
+scratch is written to disk. The final parent-run CPU gate passed after the
+retention and warm-up changes. Device request-order proof remains pending
+coordinator windows.
 
 Fresh expanded order proofs passed in the parent session against host binary
 `a9a4af196369a0050a4e0f72db840035dd078bace1237f153f1da3670bc75ecb`.
@@ -48,8 +49,8 @@ text, and the archive is decompressed and verified before deleting raw state.
 All eight fixture steps remain raw for the suite oracle checker. Every reset
 admits one raw snapshot reserve and cleans it before the next request.
 `test_state_retention.py` checks hash/metadata preservation, fixture retention
-and refusal to discard corrupt state. Fresh integrated suite/controller gates
-after this storage change remain the parent session's responsibility.
+and refusal to discard corrupt state. The final parent-run order proof below
+covers this storage path.
 
 Final source rereview includes the wrapper safety changes: receipt or archive
 write failure cannot bypass the suite's stop/finally-close path, and stop-pipe
@@ -58,7 +59,8 @@ RESET acknowledgements still precede shared-memory clearing and state retention.
 Retention performs no target/draft computation, and comparisons still use the
 same complete byte hashes. ROLLBACK.md and SUITE.md now describe the expanded
 inventory and verified archive retention. The source review passes; this is
-not a substitute for the parent's final integrated runtime gates.
+separate from the verified parent-run CPU result and from pending real-model
+and device evidence.
 
 Final export/cleanup review found and closed the nested-archive evidence gap.
 `storage.py` and `cleanup.py` now preserve exact nested gzip metadata instead
@@ -89,8 +91,8 @@ still follow warm-up before the first measured request, clearing full target,
 draft, host history, mailbox and counters as before. The ten no-rank warm-up
 checks were parsed and their source hashes verified. The six export/retention
 receipt hashes remain current; that receipt does not bind suite.py, so no
-redundant execution was performed. Final integrated reset/window gates remain
-parent-session work.
+redundant execution was performed. The final CPU reset result below includes
+the subsequent warm-up/EOS refinement; device windows remain parent-session work.
 
 The final EOS refinement is confined to the excluded warm-up: a keyword-only
 flag passes no terminating EOS tuple and requires exactly two outputs. Every
@@ -99,3 +101,16 @@ unchanged, so neither a synthetic EOS token nor its state/history survives into
 a measured request. Eleven warm-up checks are source-bound and verified. The
 five lightweight state-retention checks were rerun successfully against the
 final suite/storage sources; no rank or device process ran.
+
+Final parent-run CPU evidence was independently inspected after all warm-up
+changes. `suite-gate-results.json` passes four proofs: Python/native controllers
+with none/MTP, each running three prompts in two orders under resident prepared
+owners and argument auditing. All twelve prompt comparisons have equal
+per-order hashes, 32 retained fixture files, and 210 state-evidence files without
+draft or 216 with MTP. The receipt's binary SHA-256 matches a fresh hash of the
+current GNU host binary:
+`a9a4af196369a0050a4e0f72db840035dd078bace1237f153f1da3670bc75ecb`.
+This reviewer verified the receipt, proof fields and binary identity; the parent
+executed the gate. The five real-oracle schema checks in that receipt are
+oracle-derived fixture checks, not real-model runtime executions. Device
+request-order and real-model suite execution remain separate evidence.

@@ -1,0 +1,206 @@
+{
+  "schema": "packet38.window-cpu-rehearsal.v1",
+  "passed": true,
+  "device_executed": false,
+  "no_speed_claim": true,
+  "phase": "models",
+  "rows": [
+    {
+      "window": "W0p",
+      "passed": true,
+      "device_executed": false,
+      "cpu_receipt_contract": true,
+      "handovers": 1000,
+      "pids": [
+        572270,
+        572271
+      ]
+    },
+    {
+      "window": "KD",
+      "passed": true,
+      "device_executed": false,
+      "cpu_receipt_contract": true,
+      "fixture_files": 26,
+      "pids": [
+        572272,
+        572274
+      ],
+      "miniature": true
+    },
+    {
+      "window": "W2s",
+      "passed": true,
+      "device_executed": false,
+      "cpu_receipt_contract": true,
+      "controller": "python",
+      "draft": "none",
+      "timing": "token",
+      "tokens": 8,
+      "retained_fixtures": 32,
+      "class_receipt_required": false
+    },
+    {
+      "window": "W2n",
+      "passed": true,
+      "device_executed": false,
+      "cpu_receipt_contract": true,
+      "controller": "python",
+      "draft": "ngram",
+      "timing": "token",
+      "tokens": 8,
+      "retained_fixtures": 32,
+      "class_receipt_required": false
+    },
+    {
+      "window": "W2m",
+      "passed": true,
+      "device_executed": false,
+      "cpu_receipt_contract": true,
+      "controller": "python",
+      "draft": "mtp",
+      "timing": "token",
+      "tokens": 8,
+      "retained_fixtures": 32,
+      "class_receipt_required": false
+    },
+    {
+      "window": "W2d",
+      "passed": true,
+      "device_executed": false,
+      "cpu_receipt_contract": true,
+      "controller": "python",
+      "draft": "script",
+      "timing": "token",
+      "tokens": 8,
+      "retained_fixtures": 32,
+      "class_receipt_required": false
+    },
+    {
+      "window": "W2x",
+      "passed": true,
+      "device_executed": false,
+      "cpu_receipt_contract": true,
+      "controller": "python",
+      "draft": "script",
+      "timing": "token",
+      "tokens": 8,
+      "retained_fixtures": 32,
+      "class_receipt_required": false
+    },
+    {
+      "window": "W2mc",
+      "passed": true,
+      "device_executed": false,
+      "cpu_receipt_contract": true,
+      "controller": "python",
+      "draft": "mtp",
+      "timing": "class",
+      "tokens": 8,
+      "retained_fixtures": 32,
+      "class_receipt_required": true
+    },
+    {
+      "window": "W2s",
+      "passed": true,
+      "device_executed": false,
+      "cpu_receipt_contract": true,
+      "controller": "native",
+      "draft": "none",
+      "timing": "token",
+      "tokens": 8,
+      "retained_fixtures": 32,
+      "class_receipt_required": false
+    },
+    {
+      "window": "W2n",
+      "passed": true,
+      "device_executed": false,
+      "cpu_receipt_contract": true,
+      "controller": "native",
+      "draft": "ngram",
+      "timing": "token",
+      "tokens": 8,
+      "retained_fixtures": 32,
+      "class_receipt_required": false
+    },
+    {
+      "window": "W2m",
+      "passed": true,
+      "device_executed": false,
+      "cpu_receipt_contract": true,
+      "controller": "native",
+      "draft": "mtp",
+      "timing": "token",
+      "tokens": 8,
+      "retained_fixtures": 32,
+      "class_receipt_required": false
+    },
+    {
+      "window": "W2d",
+      "passed": true,
+      "device_executed": false,
+      "cpu_receipt_contract": true,
+      "controller": "native",
+      "draft": "script",
+      "timing": "token",
+      "tokens": 8,
+      "retained_fixtures": 32,
+      "class_receipt_required": false
+    },
+    {
+      "window": "W2x",
+      "passed": true,
+      "device_executed": false,
+      "cpu_receipt_contract": true,
+      "controller": "native",
+      "draft": "script",
+      "timing": "token",
+      "tokens": 8,
+      "retained_fixtures": 32,
+      "class_receipt_required": false
+    },
+    {
+      "window": "W2mc",
+      "passed": true,
+      "device_executed": false,
+      "cpu_receipt_contract": true,
+      "controller": "native",
+      "draft": "mtp",
+      "timing": "class",
+      "tokens": 8,
+      "retained_fixtures": 32,
+      "class_receipt_required": true
+    },
+    {
+      "window": "WS",
+      "passed": true,
+      "device_executed": false,
+      "cpu_receipt_contract": true,
+      "controller": "native",
+      "draft": "mtp",
+      "requests": 3,
+      "summary_exercised": true
+    },
+    {
+      "window": "WSs",
+      "passed": true,
+      "device_executed": false,
+      "cpu_receipt_contract": true,
+      "controller": "native",
+      "draft": "none",
+      "requests": 3,
+      "summary_exercised": true
+    }
+  ],
+  "wrapper_tests": 36,
+  "wrapper_tests_deferred_to": null,
+  "new_latch_regressions": 3,
+  "binary_sha256": "a9a4af196369a0050a4e0f72db840035dd078bace1237f153f1da3670bc75ecb",
+  "limitations": [
+    "K0 SYCL bundle build has no host equivalent and remains coordinator-only",
+    "K1 registration dryrun uses validation-only mode; full arithmetic gate is separate",
+    "CPU K2 emits zero GPU timestamps and is required to fail device timing admission",
+    "mini requests exercise receipts/controller/reset; real-model oracle windows remain pending"
+  ]
+}

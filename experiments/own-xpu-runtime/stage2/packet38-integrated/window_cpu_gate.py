@@ -54,7 +54,8 @@ def main():
             l=receipt(linked/'receipt.json');pp.require(l['checks']==216 and l['split_instantiations']==36 and l['reference_exact'],'linked fixture checks')
             pp.require(pp.sha(linked/'output.bin')==l['output_sha256'],'linked output digest')
             owner=dict(pids=[pid,lpid]);fresh.append(owner)
-            note(name,fixture_binary_sha256=pp.sha(bindir/'nongemv-fixtures'),linked_binary_sha256=pp.sha(bindir/'p33-linked-fixtures'),pids=owner['pids'],fixture_entry_checks=r['fixtures'],linked_checks=l['checks'],validation_only=True,
+            retained=window.compress_evidence(out,{})
+            note(name,retained_artifacts=retained,fixture_binary_sha256=pp.sha(bindir/'nongemv-fixtures'),linked_binary_sha256=pp.sha(bindir/'p33-linked-fixtures'),pids=owner['pids'],fixture_entry_checks=r['fixtures'],linked_checks=l['checks'],validation_only=True,
                  receipts=hashes(out,['run0/receipt.json','linked/receipt.json']))
         window.fresh_k1_owners(*fresh)
         out=root/'K2';out.mkdir();run=out/'run0'
@@ -66,7 +67,8 @@ def main():
             pp.require((run/name).is_file(),'K2 summary receipt missing '+name);json.loads((run/name).read_text())
         packed=P/'evidence/window-cpu-k2-summary.json.gz';packed.parent.mkdir(exist_ok=True)
         raw=(run/'summary.json').read_bytes();packed.write_bytes(gzip.compress(raw,mtime=0));pp.require(gzip.decompress(packed.read_bytes())==raw,'K2 evidence archive roundtrip')
-        note('K2',summary_archive=str(packed.relative_to(P)),summary_archive_sha256=pp.sha(packed),summary_sha256=pp.sha(run/'summary.json'),fixture_binary_sha256=pp.sha(bindir/'k2-fixtures'),entry_checks=r['fixtures'],summary_exercised=True,device_timing_rejected=True,
+        retained=window.compress_evidence(out,{})
+        note('K2',retained_artifacts=retained,summary_archive=str(packed.relative_to(P)),summary_archive_sha256=pp.sha(packed),summary_sha256=pp.sha(run/'summary.json'),fixture_binary_sha256=pp.sha(bindir/'k2-fixtures'),entry_checks=r['fixtures'],summary_exercised=True,device_timing_rejected=True,
              summary_failure_count=len(summary['failures']),summary_failure_examples=summary['failures'][:4],validation_only=True)
     if a.phase in ('all','models'):
         base=pp.parser().parse_args(['--binary',str(a.binary),'--output',str(root/'unused'),'--mini','--tokens','8','--context','32','--seconds','300','--wait-seconds','300','--dump-state'])

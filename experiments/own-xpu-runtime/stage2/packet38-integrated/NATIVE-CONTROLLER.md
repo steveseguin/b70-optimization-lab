@@ -36,8 +36,8 @@ resident/prepared host gate requires 1,109 cases: the same 1,093 exhaustive
 patterns, twelve random 64-token requests, and four mode/end cases. It compares
 every target allocation and alternate bank, retained fixture, draft final state,
 emitted token, guess and hit/miss event. `native-mini-cpu.json` binds this proof
-to the final binary SHA256 when complete. The resumed exhaustive run is still
-in progress; earlier interrupted receipts are not qualification.
+to the final GNU host binary SHA256. All 1,109 cases passed during this
+resumed session; earlier interrupted receipts are not qualification.
 
 The retained ordinary CPU microbenchmark measured 11.04 microseconds median
 between one half finishing and the other half starting (p95 17.78 us), and
@@ -45,6 +45,13 @@ between one half finishing and the other half starting (p95 17.78 us), and
 GPU work; it is not a cross-process rank measurement and predicts no model
 throughput. Exact receipt values are in
 `native-controller-cpu.json`. Zero spin iterations were used.
+
+The actual two-process miniature host windows measured a median forward gap
+of 3.15 ms with the native controller and 4.05 ms with Python. Each is only
+eight samples from one fresh pair, with retained fixtures and full state
+capture enabled. The gap includes capture and host scheduling work, so this
+is a receipt-path diagnostic, not a speed verdict. `cpu-handover-cost.json`
+binds the timing rows to their compressed source receipts.
 
 AddressSanitizer, UndefinedBehaviorSanitizer, and ThreadSanitizer passed all
 1,123 cases and all five fault/lifecycle gates. GCC 13's ThreadSanitizer runtime
