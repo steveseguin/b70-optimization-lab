@@ -798,7 +798,18 @@ class _KeeperEnv(_cb._NoMirrorEnv):
         # hundred times in a row, each with the same result, until the run had to be stopped. A command identical to
         # the one just run is not run again unless it is a fetch; the refusal says so, and "NOT RUN" turns thinking on.
         cmd = (command or "").strip()
-        if a.repeat_guard and is_repeat(cmd, a._last_cmd, bool(a._guard_cmd.search(cmd))):
+        fetch = bool(a._guard_cmd.search(cmd))
+        if fetch:
+            a._searches = {}
+        # A search sent for the third time since the last item arrived is a repeat too, even with other commands in
+        # between: the archive has not changed. (Hard stream: the agent circled between three searches for ten
+        # minutes; a guard that looks only at the command just before never fired twice in a row.)
+        circling = a.repeat_guard and cmd.startswith("recall") and a._searches.get(cmd, 0) >= 2
+        if cmd.startswith("recall") and not circling:
+            a._searches[cmd] = a._searches.get(cmd, 0) + 1
+        if circling:
+            a._repeat_streak = max(a._repeat_streak, 2)
+        if circling or (a.repeat_guard and is_repeat(cmd, a._last_cmd, fetch)):
             a.n_repeats_refused += 1
             a._repeat_streak += 1
             a.longest_repeat_streak = max(a.longest_repeat_streak, a._repeat_streak)
@@ -806,7 +817,9 @@ class _KeeperEnv(_cb._NoMirrorEnv):
             res = types.SimpleNamespace(stdout=note, stderr="", return_code=75)
             return StepResult(result=res, ctx_changed=False, stdout_block=note + "\n\n(exit_code=75)",
                               readout="", notes="", exec_time=0.0, touched_ctx=False)
-        a._last_cmd, a._repeat_streak = cmd, 0
+        a._last_cmd = cmd
+        if fetch or not cmd.startswith("recall"):
+            a._repeat_streak = 0                      # a search that runs does not end a streak of refused searches
         res = await super().step(command, messages, environment=environment, pending=pending)
         got = split_items(getattr(res.result, "stdout", "") or "")
         if got:
@@ -901,6 +914,7 @@ class KeeperAgent(TruncateAgent):
         self._mixed: dict[int, str] = {}              # items delivered by a command that printed something else too
         self.repeat_guard, self._last_cmd, self.n_repeats_refused = _cb._as_bool(repeat_guard), "", 0
         self._repeat_streak = self.longest_repeat_streak = self.n_sampled_calls = 0
+        self._searches: dict[str, int] = {}           # each search command sent since the last item arrived
         self._answers: dict = {}                      # the answers file as last seen; earlier keys are never lost
         self.n_answers_put_back = 0
         self.n_archive_failed = self.n_not_archived_mixed = 0
