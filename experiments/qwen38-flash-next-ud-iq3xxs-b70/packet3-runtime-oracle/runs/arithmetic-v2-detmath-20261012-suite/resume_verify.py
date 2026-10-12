@@ -57,6 +57,7 @@ def main():
         d=run.HERE/row["id"]
         if not d.exists():continue
         receipt=run.read(d/"receipt.json")
+        run.check(receipt["affinity"]==affinity,"oracle affinity differs")
         result=run.read(d/"result.json")
         if len(result["tokens"])>=8:
             pilot=run.read(d/"pilot8.json")

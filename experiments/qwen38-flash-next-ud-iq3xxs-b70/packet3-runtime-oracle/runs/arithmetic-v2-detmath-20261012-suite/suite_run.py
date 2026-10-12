@@ -397,6 +397,8 @@ def refresh():
 
 Verified prompts: {len(entries)}/12. Complete: {manifest['complete']}.
 The unchanged sealed CPU binary generates greedy tokens for the fixed rendered suite.
+Model: Unsloth Qwen3.8-Flash-Next UD-IQ3_XXS, a **quantized compressed version**,
+revision `766911a6b7369840a91dbcd95f9f997acaab6cd6`. No binary rebuild was needed.
 Identity: `iq3-p17-detmath-v2`; 192-token context; maximum 64 generated tokens.
 EOS (248044) or 248046 is saved and then stops generation. No padding or forced continuation.
 The runtime uses the same stop rule. llama.cpp's immediate code-review EOG is information only.
@@ -408,6 +410,8 @@ Each worker has a 5 GB anonymous-memory stop guard (10 GB combined).
 Total numerical-process wall time: {manifest['total_elapsed_seconds']:.3f} seconds.
 Actual process CPU time (user + system): {manifest['total_cpu_hours']:.6f} CPU hours.
 CPU accounting complete: {manifest['cpu_accounting_complete']}.
+Totals cover completed oracle attempts. The interrupted SQL prefill and validation overhead
+are excluded; the interrupted attempt's process CPU time was not retained.
 Position timings include bounded weight reads and CPU work; these are oracle costs, not serving speeds.
 Every prompt retains `positions.jsonl`; means above include prefill and decode positions.
 
@@ -458,6 +462,16 @@ subsequent launcher revisions preserve the same numerical binary and arithmetic.
 This is oracle coverage, not a runtime speed result or the 512-token final performance gate.
 Only incident-retrospective is a new full fresh-process repeat; other prompts have one new oracle run.
 The reference screen uses two repeats; runtime qualification still requires its own repeats.
+
+Final checks are recorded in `suite-final-check.json` in the oracle directory; it binds
+this suite manifest, the complete read-only checker result, and the final audit/tests.
+`resume-audit.json` checks all model payloads and headers, binary/arithmetic sources,
+input bundles, consumed tokens, retained fixtures, checkpoints and compressed-log JSON.
+The original sealed receipt also lists historical helper sources that were not compiled
+into or used by this suite; their differing hashes are explicitly recorded in that audit.
+The executed binary and every arithmetic dependency match the sealed identities.
+`resume-cleanup.json` records the truncated SQL trace tails and removed empty scratch file.
+The interrupted SQL attempt was not reused; its replacement reached 64 tokens and passed.
 '''
     for root in (HERE, INPUTS):
         temporary = root/'README.md.tmp'
