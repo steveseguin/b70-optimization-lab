@@ -461,6 +461,27 @@ class Keeper(unittest.TestCase):
         # a minus sign standing apart is not dropped: `reopened at - 3` is not a set to 3
         self.assertEqual(run(10, "abcd12 lost 3. abcd12 was removed. abcd12 was reopened at minus three.", "10 - 3 = 7, then removed, then reopened at - 3")[:2], (1, [0]))
         self.assertEqual(run(10, "abcd12 lost 3. abcd12 was removed. abcd12 was reopened at minus three.", "10 - 3 = 7, then removed, then reopened at -3"), (0, [], [], -3))
+        # fourth pass: no sum is redone where a remark stood, or where there is no sum; each is asked about
+        for held, said, line in ((10, "abcd12 gained five more and then lost 1.", "10, then 10 + (five more) - 1 = 14"),
+                                 (10, "abcd12 lost five and then lost 1.", "10, then 10 - (five) - 1 = 4"),
+                                 (10, "abcd12 lost 5 twice and then lost 1.", "10, then 10 - (5 X 2) - 1 = -1"),
+                                 (10, "abcd12 was opened at 10. abcd12 gained five.", "opened at 10, then 10 (gained five) = 15"),
+                                 (10, "abcd12 gained 2 and was then doubled.", "10, then 10 + 2 (then doubled) = 24")):
+            self.assertEqual(run(held, said, line)[:3], (1, [0], []), line)
+        self.assertEqual(run(10, "abcd12 gained 2 and was then doubled.", "10, then 10 + 2 (then doubled) = 24")[3], 24)    # as the reply wrote it
+        self.assertEqual(run(10, "abcd12 gained 5 and then gained 2.", "10, then 10 + 5 (item 3) + 2 = 17"), (0, [], [], 17))   # a remark beside a right sum
+        # words with a hyphen, and marks round a number, are not "something left over"
+        self.assertEqual(run(10, "abcd12 was removed. abcd12 was reopened at 3.", "removed, then re-opened at 3"), (0, [], [], 3))
+        self.assertEqual(run(10, "abcd12 was reset to 5. abcd12 gained 3.", "re-set to 5, then 5 + 3 = 8"), (0, [], [], 8))
+        self.assertEqual(run(10, "abcd12 gained 3. abcd12 was set to 5.", "10 + 3 = 13, then set to **5**"), (0, [], [], 5))
+        self.assertEqual(run(10, "abcd12 gained 5.", "10, +5")[:2], (1, [0]))                                    # a bare `+5` is not a set to 5
+        # a sum written in the order of the changes is right as the line says it; a wrong one with two readings is asked about
+        self.assertEqual(run(10, "abcd12 gained 5 and was then doubled.", "10, then 10 + 5 x 2 = 30"), (0, [], [], 30))
+        self.assertEqual(run(10, "abcd12 gained 5 and was then doubled.", "10 + 5 x 2 = 30"), (0, [], [], 30))
+        self.assertEqual(run(10, "abcd12 gained 5 twice.", "10 + 5 x 2 = 20"), (0, [], [], 20))
+        self.assertEqual(run(10, "abcd12 gained 5 and was then doubled.", "10 + 5 x 2 = 31")[:2], (1, [0]))
+        self.assertEqual(run(10, "abcd12 gained 5 and was then doubled.", "10, then 10 + 5 x 2 = 31")[:2], (1, [0]))
+        self.assertEqual((NS["_ltr"]("10 + 5 * 2"), NS["_ltr"]("-3 - -3 * 2"), NS["_ltr"]("(10 + 5) * 2"), NS["_ltr"]("10 +"), NS["_ltr"]("7 / 0")), (30, 0, None, None, None))
         # every question is bound to its line (the line after a wrong value is questioned too, and is right once that one is out)
         self.assertEqual(run(10, "abcd12 gained 5. abcd12 gained 5.", "10 + 5 = 15", "(no change)", "999", "15 + 5 = 20"), (2, [2, 3], ["abcd12: 999"], 20))
 
