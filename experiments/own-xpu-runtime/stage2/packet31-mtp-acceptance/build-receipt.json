@@ -1,0 +1,461 @@
+{
+  "schema": "own-runtime.mtp-acceptance.build.v1",
+  "device_executed": false,
+  "captured_utc": "2026-10-12T02:26:13.735661+00:00",
+  "target_arithmetic": "iq3-p17-detmath-v2",
+  "official_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+  "compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0\nCopyright (C) 2023 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+  "scripts": {
+    "analyze.py": "67f9579146198b9d6b70e8f3508c7aa350c36344c9562f492174a03d0c9c24c2",
+    "archive_receipts.py": "e0181e443641cd8f6fdd1d9d14d6cd2e2eb328e3325379da1be254ee99a05a1a",
+    "cleanup.py": "a52605965912cea982ecdccf53b3f4a8530372f121a30fd099a46b12f7783328",
+    "draft_reference.py": "3b8abd9a9a7f43aac721fb03b5835d35b4fc2887a71bb116012034aabdfa9bee",
+    "finalize.py": "2ed9b78ed26f1b18673e0b5713f3d8936e085580d73e8970e4f2b16a6baf494e",
+    "prepare_target.py": "61b37da43e8009277d0fdc2f2aa4f292cfd9e85f6d11247725ae46af73643b10",
+    "qsa_reference.py": "9cda036cdb6330c260f9c7de8123d49f97b6e34788be60c35ebe64beaa2d3c53",
+    "reproduce.sh": "b771f6e40f99cbbc10d218a8e6684194cb2fd17c4db7c820e32c44932fc5235e",
+    "run_draft.py": "04c7c0ae1f5cfc772b4cce87a74994df5e8693a718aa159194e9523be3653a72",
+    "run_target.py": "ca267d04d0f6d7f805d75c38f66e85bd13eabaf6adfc1609216f9b90e1fca788",
+    "status.py": "41d4eb8699f584abc714f5adceef138b2ab023cecb2ade0356ff6732c8c69dbb",
+    "test_protocol.py": "f5b2fc61197cd8a5a30fc9f31b8e9096297ea587ad6af783bc2c1123c08cecba"
+  },
+  "official_container_file_hashes": {
+    "model-00037-of-00131.safetensors": {
+      "expected_file_sha256": "b824a11bf460bd78c068e3d301e914a0bec2f243a6eea4679be7200d179248e7",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "fc0e7a811910dc1be833d9af9e7d993791e115b98e18d02e6c6b849197882300",
+      "bytes": 942343240,
+      "mtime_ns": 1787763244771812700,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00041-of-00131.safetensors": {
+      "expected_file_sha256": "1d79949b61730a0fa1f6cd1af149fa50fedc051566cdea48283de8c7a32d972c",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "4fcfa3c70cc37f5e39a3e0ca30568295a469517b5c6facd9b06138462e26a440",
+      "bytes": 1103350296,
+      "mtime_ns": 1787763743835134300,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00043-of-00131.safetensors": {
+      "expected_file_sha256": "bab92cfefbb811ee63c4e32595024117c7df3537f5359606eb1de23fe4f115b2",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "c184555d86d0d51ade4328897bf42317eb6d53807854f7b8d974d94f3207b1aa",
+      "bytes": 1000455912,
+      "mtime_ns": 1787763753640190200,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00047-of-00131.safetensors": {
+      "expected_file_sha256": "efa6c0cc0e527486dc5955b00fa75665151d99997b722d8e56bd32da575e414c",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "8ea809eabaf7042053b0c89594dadbbf2ddd2c07b51e824afe3df26c26007ea6",
+      "bytes": 878065752,
+      "mtime_ns": 1787764242853260400,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00049-of-00131.safetensors": {
+      "expected_file_sha256": "801dd3b475b43413ade810f4e8d3ace69d6ef5ee4bac5cb98d15e369343a5569",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "8d941814236a068307a429d3642b85a51d45981e47faa70250100b5c20db75db",
+      "bytes": 1096817160,
+      "mtime_ns": 1787764717773363300,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00053-of-00131.safetensors": {
+      "expected_file_sha256": "147d38f786512f1a8f570a00100b46a3faab1bd649b3445ca0a50c00aa2e99a3",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "189c84aaa6e4a96b78da8585e21aee13d8745db504378673d56fee6c61faf5ea",
+      "bytes": 1000455920,
+      "mtime_ns": 1787765336473747000,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00057-of-00131.safetensors": {
+      "expected_file_sha256": "d6acae1622abfa1e0253ae548bc1bdd4bc38cd9b096082acd455b6be592f4a54",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "129edfbef10b4e96354d06f16ae385642901e6ddba05f388e4cc6c22fc521edc",
+      "bytes": 1103350288,
+      "mtime_ns": 1787765975085230500,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00060-of-00131.safetensors": {
+      "expected_file_sha256": "908cce7f5fe8dc34f4cca1fc8a676569ab6ce08bad536bd0091c4d75e7b65a05",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "73444a9dfd608b0e5d283218de59176a3d60c7ce27db4f109779600fb6f95350",
+      "bytes": 1794100080,
+      "mtime_ns": 1787766351688016700,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00062-of-00131.safetensors": {
+      "expected_file_sha256": "3c21b895a5a4f0dc03b669c730f8d8d9ce9a29cbc7628a25894a16ffda6f0a7a",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "2cd4425f82b5f09f5705e909295bba5b62c99d9777308a5794b34fcb80fe2346",
+      "bytes": 1832994688,
+      "mtime_ns": 1787767565111077700,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00066-of-00131.safetensors": {
+      "expected_file_sha256": "5dbe501e4e0cb9e3f37cc43da46673b4157fdffba09c065ca0b12d75092a79f2",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "f8d03ea8d25c5d61513812a52f45213807558f89fb81795a395e2f8249ffe02b",
+      "bytes": 880605240,
+      "mtime_ns": 1787768722806774700,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00070-of-00131.safetensors": {
+      "expected_file_sha256": "eac7940317ee401859caf38089b2b924274ab81a3e5fbd87c42d89923361aad8",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "876000e61d10a1ba8a3e95e5156d034459e7985987f5801e2cae45b5d80d0397",
+      "bytes": 993907416,
+      "mtime_ns": 1787769614750353800,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00072-of-00131.safetensors": {
+      "expected_file_sha256": "b50a05c4c426fb00635d513a733a290da1007a89b8785f1ec02aad8e4d93d955",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "ff5aca20bac442be2b27d2a1117c310405bbf1d27c85a6a856a043e88d2b6ce1",
+      "bytes": 1000456024,
+      "mtime_ns": 1787769668773308100,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00076-of-00131.safetensors": {
+      "expected_file_sha256": "d95ebacb144b4220f2df60cce85a2c86e87cb8291b836d1bd04f9902fcbb9297",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "c2457985f2d6e8ede363d8a666099cd995b6b643b2716f7351c65056a67038b7",
+      "bytes": 1100073480,
+      "mtime_ns": 1787770109435512600,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00078-of-00131.safetensors": {
+      "expected_file_sha256": "6fd46a95777392265b2afa66bf71d488856dafb7b76ff0337a0fe4ac857e961c",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "48ece7d8fec85627187e6badf0d065f7cd78786bc02d140826ed602aa887f0a0",
+      "bytes": 993984232,
+      "mtime_ns": 1787771035578110700,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00082-of-00131.safetensors": {
+      "expected_file_sha256": "83e0e171116c22eb8fdddfa3c387bebb9017eb0586410fd704ce70e7b3d23d68",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "f6727f588801a603d49c4bf5b20586c559e374232678ec85c54bfa6eb050b2ce",
+      "bytes": 1096816112,
+      "mtime_ns": 1787772480707650800,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00086-of-00131.safetensors": {
+      "expected_file_sha256": "885e570a662aaf266fd9af9562c65116998df5710b2a27d1bf6aa0c8708b3b74",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "85f759e1d745ced6ab772f8396c74a3556a3fc94f62af6f0b5c431c967b52d5c",
+      "bytes": 1103350296,
+      "mtime_ns": 1787773892735875500,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00088-of-00131.safetensors": {
+      "expected_file_sha256": "e7273f5435571e761429330ece81732e8fb3f8b5f0087bf80db693630cf702a1",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "25655e838652e32efd96e9ae96bcd0baeaf161fd3232624573ad0ad3add12e2a",
+      "bytes": 1000455920,
+      "mtime_ns": 1787773892778081400,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00090-of-00131.safetensors": {
+      "expected_file_sha256": "532915eebd4e231a240e185ba838a95a00ee14277e28fb04ad21508da5ff50aa",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "5f714df65a87bb4603c68e26f237c2e634ff4dd27812ebaa076a55ab0d0c3842",
+      "bytes": 997179104,
+      "mtime_ns": 1787774337294201800,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00094-of-00131.safetensors": {
+      "expected_file_sha256": "cac515a778e89fb37e9f38fde6c8fdfa01ebf9d8944a2d6ff35c51ecf4bc875f",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "7df6ff41fbb1c68f01eb12c88e33905d6269ed3f5e9b1bf064503965874c0b58",
+      "bytes": 1096796928,
+      "mtime_ns": 1787774815112562200,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00100-of-00131.safetensors": {
+      "expected_file_sha256": "43752e81a5c2b376073d5d0d7b70da8d08c49bdbbfcfeb695ea947a2913e4bc8",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "3e07f18156fb5ab2505a4b0dc056e387ffe2946819bf5aafded869597385f8d1",
+      "bytes": 877984072,
+      "mtime_ns": 1787775266310850900,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00102-of-00131.safetensors": {
+      "expected_file_sha256": "639efed3ea400a8dddeae25db120096898a514697dfc4cbbc0cd15f621c18421",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "ffae3026dd92d9a1f92d20a6840b28d8ad501dcbc128b573321e84fac90a458d",
+      "bytes": 1096797160,
+      "mtime_ns": 1787775734691081600,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00106-of-00131.safetensors": {
+      "expected_file_sha256": "680495ea0a23e73844e91670437b7b2a5ac5d46f9582923fb7fa91fe640821df",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "656b7c4dbc6b8c89a28478a26bfc44e18bc3f8e2be80519fcd8e2c4b0652311c",
+      "bytes": 1025359600,
+      "mtime_ns": 1787776197609447500,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00108-of-00131.safetensors": {
+      "expected_file_sha256": "a966c28a6267d43052fe87cb19e2e5730bad6154b12eb806b9ce49e007bfec96",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "58864fdc8c522dbbcd6e428240233dac338cf1c3e232cbf3f7a853cce8a59834",
+      "bytes": 1062060032,
+      "mtime_ns": 1787776195453518800,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00112-of-00131.safetensors": {
+      "expected_file_sha256": "e61a9a6ef0e538afca09d97a3ccbf3e7e2c647f65cc8eeebebb18621d7779b02",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "00485761133a69b991d369370a932d7206879f0298c3f2afe55604de5a8248fa",
+      "bytes": 1096797168,
+      "mtime_ns": 1787776656130896800,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00114-of-00131.safetensors": {
+      "expected_file_sha256": "ce4aeac52776038ec0c885915bb270dc65ee07d70d5f71827d5fba1045e2b43b",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "48ead23d53fb9628abb91089948bdda57eb1cddc4b8bf14bcc68485ad8666f69",
+      "bytes": 993907400,
+      "mtime_ns": 1787777114759725600,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00118-of-00131.safetensors": {
+      "expected_file_sha256": "2d06ec9c1726f42bfc9ce0bbb47129917d8ab373c88eed4e758fb6940c92ad4a",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "667a3ab9c551ed06b5a8deb9a809ca20e9698a8c1a15b1636a25ccd2881c3444",
+      "bytes": 878004272,
+      "mtime_ns": 1787777579344580600,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00120-of-00131.safetensors": {
+      "expected_file_sha256": "49e4f90d92f60f6489bfe6d3e5250d8fe879c5995ae72ce67379cc7187fa4b0a",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "1ccf0a6e7ecb9f72cd7dfc7d7f2352f8aee1e0a3e4a1b7492f33a304899bc8b4",
+      "bytes": 1109903856,
+      "mtime_ns": 1787777583721158000,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00124-of-00131.safetensors": {
+      "expected_file_sha256": "e857f36ddd0db135f858c2c87c9fcf39c758965c626b280e47cb0c1e6c1423f8",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "b742d252483442ce7b323dd35f476e5f34e4a67b85eaad356ad35e240e9d4714",
+      "bytes": 891089968,
+      "mtime_ns": 1787778037528004300,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00130-of-00131.safetensors": {
+      "expected_file_sha256": "204b122d02425f61115db9ab896648d95f6dadd6a716c65daf6aec297392ed56",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "6223635f5a36f60c897ad03af6e284b326ec6608cb1c2952b01dea12758f5be3",
+      "bytes": 2136177320,
+      "mtime_ns": 1787778919170420200,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    },
+    "model-00131-of-00131.safetensors": {
+      "expected_file_sha256": "ba6fc69ebb6a9da1938c2e041b8ef625f4550b641812da75845bc7dd7c361d80",
+      "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "metadata_sha256": "fb9e658527ea17d285e5582f57dd59dec8d0103aaead928897dec64a81eb895a",
+      "bytes": 1271398496,
+      "mtime_ns": 1787778916355990800,
+      "whole_file_rehashed_in_this_packet": false,
+      "verification": "Fresh SHA256 of each consumed tensor range; full-file SHA256 from pinned local Hugging Face download metadata"
+    }
+  },
+  "official_metadata": {
+    "config.json": "99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e70a15a90a8d",
+    "model.safetensors.index.json": "0419e2c2dfbb925257d7409405433a793cf7ff7d96f3eba882a815ec6d9fe7a6"
+  },
+  "tensor_range_hashes_file": {
+    "path": "tensor-read-receipt.json.gz",
+    "sha256": "c9732d84d9f80794897879465b97785729007d64bbcd73b2c2a2a1428bad9be0",
+    "uncompressed_sha256": "eee04853667befaa72d26c82c90f79357f473694be194e1effb7308005d3fe3a",
+    "uncompressed_bytes": 1156992,
+    "roundtrip_verified": true
+  },
+  "iq3_binding_range_hashes_file": {
+    "path": "iq3-binding-read-receipt.json.gz",
+    "sha256": "a9eb943d0a9b1aa589bc43e7b19a6d8eb1c47901ad846ce36b448c431fafe644",
+    "uncompressed_sha256": "8f397ec6d5d08e3b0e388d942f3f908a48ebec9b9eb122d74ef042f35e8ac7d5",
+    "uncompressed_bytes": 597331,
+    "roundtrip_verified": true
+  },
+  "iq3_admitted_files": [
+    {
+      "after": {
+        "bytes": 10946624,
+        "ctime_ns": 1791667841381886400,
+        "device": 2050,
+        "inode": 2741158,
+        "mtime_ns": 1791667841378924200
+      },
+      "before": {
+        "bytes": 10946624,
+        "ctime_ns": 1791667841381886400,
+        "device": 2050,
+        "inode": 2741158,
+        "mtime_ns": 1791667841378924200
+      },
+      "bytes": 10946624,
+      "data_start": 10946624,
+      "elapsed_seconds": 0.024303521000547335,
+      "expected_bytes": 10946624,
+      "expected_sha256": "268f81fdedf3149a538f252308927a4d5d1f6e062c178568a51e3b519744f8a8",
+      "header_bytes": 10946618,
+      "header_matches_range_capture": true,
+      "header_sha256": "7c1460a95eb2e95377c32b14deb92cf74fe504d4feb5a62a40d48f78e9e0dcb8",
+      "padding_bytes": 6,
+      "passed": true,
+      "path": "UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00001-of-00003.gguf",
+      "sha256": "268f81fdedf3149a538f252308927a4d5d1f6e062c178568a51e3b519744f8a8",
+      "tensor_bytes": 0,
+      "tensor_count": 0
+    },
+    {
+      "after": {
+        "bytes": 49567921344,
+        "ctime_ns": 1791675421213040100,
+        "device": 2050,
+        "inode": 2740947,
+        "mtime_ns": 1791675421206920900
+      },
+      "before": {
+        "bytes": 49567921344,
+        "ctime_ns": 1791675421213040100,
+        "device": 2050,
+        "inode": 2740947,
+        "mtime_ns": 1791675421206920900
+      },
+      "bytes": 49567921344,
+      "data_start": 29632,
+      "elapsed_seconds": 81.5139079450164,
+      "expected_bytes": 49567921344,
+      "expected_sha256": "cfe600b236b88c7fad1613a5ca5e83b9f2beb63cbd44c32b2be50a44747c695f",
+      "header_bytes": 29604,
+      "header_matches_range_capture": true,
+      "header_sha256": "7744187256a32b79476b0c443b912a887160258793dddf86782608874b31de64",
+      "padding_bytes": 28,
+      "passed": true,
+      "path": "UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+      "sha256": "cfe600b236b88c7fad1613a5ca5e83b9f2beb63cbd44c32b2be50a44747c695f",
+      "tensor_bytes": 49567891712,
+      "tensor_count": 468
+    },
+    {
+      "after": {
+        "bytes": 32382955968,
+        "ctime_ns": 1791675159197568800,
+        "device": 2050,
+        "inode": 2740946,
+        "mtime_ns": 1791675159184122100
+      },
+      "before": {
+        "bytes": 32382955968,
+        "ctime_ns": 1791675159197568800,
+        "device": 2050,
+        "inode": 2740946,
+        "mtime_ns": 1791675159184122100
+      },
+      "bytes": 32382955968,
+      "data_start": 48320,
+      "elapsed_seconds": 72.46776958799455,
+      "expected_bytes": 32382955968,
+      "expected_sha256": "f1912ba34c79427d2295a58dcb2b732b5931af5bef7a373c60557a57d9ee7250",
+      "header_bytes": 48297,
+      "header_matches_range_capture": true,
+      "header_sha256": "77ceba7e90d26ca4e93b4e39b96573e52d69022c32369c0cd0ed441f3eac4c0f",
+      "padding_bytes": 23,
+      "passed": true,
+      "path": "UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00003-of-00003.gguf",
+      "sha256": "f1912ba34c79427d2295a58dcb2b732b5931af5bef7a373c60557a57d9ee7250",
+      "tensor_bytes": 32382907648,
+      "tensor_count": 756
+    }
+  ],
+  "private_rope_header": {
+    "sha256": "90cecf716358c8bc10d8bc166d3257eeacef783b0ef882ad9be0beb9efc83885",
+    "source": "experiments/own-xpu-runtime/stage2/packet17-detmath/rope.bf16",
+    "source_sha256": "ccdfe87fa7360fc6b4aa7c999fa7b920f791f5635010cf303ae76f4d01dca058",
+    "matches_measured_oracle_header": true
+  },
+  "evidence_hashes": {
+    "target-gates.json": "29f3682c2a5f3efa52a353557c9c1e6efa4b25e1812a81e5485e8e471a0850dc",
+    "target-evidence.json": "6084e1313189d7fee3be7743a99007c16f2721ab5ef38a0a77e7c9e3e0bbcf55",
+    "target-timing.json": "a0910ab2ca1d6f9e5197df82392b74d6f9dbdd5a231ee4c534c0301a3650acb4",
+    "timing-model.json": "cd390d21fd967b6f0131883aaafe5025666a6621830c0bebac520b49fdb4c6c5",
+    "target-run-receipt.json": "d48544d84f66d46bcb7c0bc139147580c2f6932eff7d448f80193c36a64d72d0",
+    "draft-run-receipt.json": "723b0f924a5e2249dc67728fada6cf9c565f11202e66e90054f2c9c5f24fea6d",
+    "draft-repeat-gate.json": "97737e90263a87bae9da6695adca6a06f33b0cf629cb1c4b4bb2c29a4ef5e68e",
+    "draft-repeat-first.jsonl": "f08c020eb0148fbfd7d86272576d316e7a8e8bf5a424b69a9ca4f70c33cc5942",
+    "draft-repeat-first-receipt.json": "2d1f65b1fc7146778f62e7addec8f9ecf25191d06d67ac80539f5c2ac1a28008",
+    "source-identity-gate.json": "2296c3b77a19bd3bc1dc01c774b85d684151c0335fd536a130f0e841a33ba5ad",
+    "resource-samples.jsonl": "344d0cdd9476cf5a8eb2212c828df5917d1472f60ab29f331365dae70c962103",
+    "test-results.txt": "a6b3cd786f26a13a800b3c1490f235693f1bc5abe90c9e2035afbe839e115e08"
+  },
+  "target_build_receipt_sha256": "e6b2d3e48e7ae8324c45995a44a696aebacb20a5803124f414f40b21be61e8d7",
+  "matmul_binary_sha256": "00555ed00aacf9620eaad0f417623d1e3195d71fe6142cd229b8e403ef4ec6b6",
+  "python": "3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]",
+  "matmul_sources": {
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/matmul.cpp": "81900f76281853ff984e00a34972b0ab55d4e99ff39354cbf31974981c2d767f",
+    "experiments/own-xpu-runtime/stage2/packet13-integrate/arithmetic.hpp": "5fa871445c0bef63f60ce6bf06e5a2102e4c71fd8ec350e7b4b46ffd7e22dde7",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/reference.hpp": "95bdc549c66d5cb72fd54cc73696187dae08568f15b19d206cc954ca290c85f4",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/reference.hpp": "f744a148509ed091d69a708262d0fcbc94c179da8ca5ed364791e8ba77a328af",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/decode.hpp": "7db4f3b62f899f8d5f245d193ba5e5a39007f8512e4e378f312ed8391b44332c",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/reference.hpp": "7532f67c6d9a0be2a9187ce149b2004d9f1ea045705327d0ce542a283ad5ed72",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp": "2ec2a1defe33d873b87a121c37bee62d45b8ad0b1b4bc93e7ceb0ba3ca59dc3f",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/dispatch.hpp": "8f1895c0209b88057253b44a9aee82c4cd1e73cd207e4c1d3d233da1cc8d6495"
+  },
+  "draft_reference_dependencies": {
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/reference_gguf.py": "08cf7aeb3e55601fb63ce60a84b299897e174678ef1277388716c7844741f47b",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/oracle.py": "79cb6454459c4b1808f39003cb3b5dc76bd63e735d3b82b0279a20f45c61448b",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/packed.py": "44c8891a1236d29212c6614aefa16e7c510f3205a4635020e77e627f0dd7d578",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/tokenizer.py": "1c284c06b6a159c39cb9a00acd7cc411ed9adae87b4850e98da5dd4fd33543a7",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/linear.py": "e38b75b2d8d4b9fb314c0d1d5b4b8a7fa87b6aa69591fcd02d494ccc2ba4b9dc"
+  },
+  "torch": "2.11.0+xpu",
+  "threads": {
+    "target": 5,
+    "draft": 1
+  },
+  "draft_device_arithmetic_parity": false,
+  "source_review_sha256": "ffa0a9cc34a0aa4b3c424cb29d966cf0d40d395eb9de5de92d557e1348d34754",
+  "acceptance_sha256": "cf03ef55003b36034f3c2c15832d52a7b5b05d7cbd14b11c7ebe082703d0134a",
+  "post_measurement_edits": [
+    {
+      "file": "qsa_reference.py",
+      "old_sha256": "eb8951d3bbe8520228a97cace79d957c0f02393637ffb4e7ae53413b6e3a6456",
+      "reason": "Remove trailing blank line only for git diff --check; arithmetic unchanged"
+    }
+  ]
+}
