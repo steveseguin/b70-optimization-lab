@@ -181,6 +181,16 @@ class Keeper(unittest.TestCase):
         new, info = NS["apply_delta"]("RULES\n(none)\nSTATE\nabcd12: 5\nOPEN", {"changes": [("abcd12", "(no change)"), ("efgh34", "no change")]})
         self.assertEqual((new, info["changed"], info["added"]), ("RULES\n(none)\nSTATE\nabcd12: 5\nOPEN", 0, 0))
 
+    def test_a_worked_out_value_must_show_its_working(self):
+        notes = "RULES\n(none)\nSTATE\nrumi16: 29\nabcd12: 5\nOPEN"
+        seen = NS["numbers_in"]("rumi16 lost 73. abcd12 was set to four hundred and two. wxyz56 was opened at 9.")
+        ap = lambda changes: NS["apply_delta"](notes, {"changes": changes}, seen, strict=True)[1]["mismatch"]
+        self.assertEqual(ap([("rumi16", "-132")]), ["rumi16: -132 is not a value the turns state; write the working from the value the NOTES hold, 29"])
+        self.assertEqual(ap([("rumi16", "29 - 73 = -44"), ("abcd12", "402"), ("wxyz56", "9"), ("abcd12", "(no change)")]), [])
+        self.assertEqual(ap([("rumi16", "removed"), ("abcd12", "5")]), [])                      # removed, or unchanged
+        self.assertEqual(ap([("qqqq11", "77")]), ["qqqq11: 77 is not a value the turns state; write the working"])
+        self.assertEqual(NS["apply_delta"](notes, {"changes": [("rumi16", "-132")]}, seen)[1]["mismatch"], [])   # not strict: as before
+
     def test_mentions_must_be_accounted_for(self):
         tool = lambda text: {"role": "tool", "content": text + "\n\n(exit_code=0)"}
         turns = [tool("ITEM 61/147 (UPDATE)\nyodo94 lost eighty-seven. The cook slept. Twenty-six were taken from yodo94."),

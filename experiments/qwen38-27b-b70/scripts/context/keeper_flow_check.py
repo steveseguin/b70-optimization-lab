@@ -93,6 +93,12 @@ async def main():
     a._delivered = {i: f"item {i} text" for i in range(1, 6)}
     assert await a._keep_inplace(Env(), msgs, 1) is True and "abcd12: 317" in a.notes and a.n_mention_reasks == 1, a.notes
     assert a.manage_calls[-1]["unaccounted"] == ["abcd12 (mentioned 3 times, 1 changes written)"] and "steps" not in a.manage_calls[-1]["delta"], a.manage_calls[-1]
+    # 5e. strict: a worked-out value without working is asked about once, then the reply with working is applied
+    a = agent([reply("NEW RULES\n(none)\nCHANGES\nabcd12: 317\nOPEN\n"), reply("NEW RULES\n(none)\nCHANGES\nabcd12: 294 + 12 = 306\nOPEN\n")],
+              mention_check="count", notes="RULES\n(none)\nSTATE\nabcd12: 7\nOPEN"); msgs = convo(5)
+    a._delivered = {i: f"item {i} text" for i in range(1, 6)}
+    assert await a._keep_inplace(Env(), msgs, 1) is True and "abcd12: 306" in a.notes and a.n_inplace_redone == 1, (a.notes, a.manage_calls[-1])
+    assert "317 is not a value the turns state" in a.manage_calls[-1]["inplace_redo"], a.manage_calls[-1]
     # 6. the ordinary cut with pieces: two delta calls for one cut, then a second cut continues from the pin
     a = agent([reply("NEW RULES\n- R one\nCHANGES\nabcd12: 294\nOPEN\n"), reply("NEW RULES\n(none)\nCHANGES\nabcd12: 294 + 12 = 306\nOPEN\n"),
                reply("NEW RULES\n(none)\nCHANGES\n(none)\nOPEN\n")], notes_inplace=False)

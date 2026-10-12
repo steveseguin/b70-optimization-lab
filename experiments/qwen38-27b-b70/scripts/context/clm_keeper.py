@@ -400,14 +400,15 @@ def parse_delta(reply: str, need_changes: bool = True) -> dict | None:
             "open": [ln for ln in out["OPEN"] if not _is_none(ln)] if "OPEN" in seen else None}
 
 
-def apply_delta(notes: str, delta: dict, seen: set[int] | None = None) -> tuple[str, dict]:
+def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: bool = False) -> tuple[str, dict]:
     """The NOTES after the changes, and what happened: lines changed and added, sums corrected, and `mismatch`:
     working that cannot be trusted (it starts from a value the NOTES do not hold, it starts from a number although
     the NOTES say the thing was removed, or it is arithmetic without a whole-number value); the caller then falls
     back to a full rewrite. `seen` is every number the turns being moved out state (numbers_in): working may start
     from one of those instead of the NOTES value, because the turns can set a thing and then change it and the
     model writes both on one line (`abcd12: 294 + 12 = 306`). The first run of arm N32d (rules stream, seed 0) sent
-    8 of 23 cuts to the full rewrite for exactly that; all eight were such lines. RULES lines are never removed; a new rule that rewords an existing one is not added.
+    8 of 23 cuts to the full rewrite for exactly that; all eight were such lines. With `strict`, a bare number that
+    the turns do not state is `mismatch` too: a worked-out value has to show its working. RULES lines are never removed; a new rule that rewords an existing one is not added.
     A STATE line keeps its place; a value given as working is stored as its result. The OPEN section is replaced
     when the reply has one and kept otherwise."""
     rules, state, opened, sec = [], [], [], ""
@@ -455,6 +456,14 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None) -> tuple[
             if total != stated:
                 info["sums_corrected"].append(f"{name}: {value} -> {total}")
             value = str(total)
+        elif seen is not None and strict:
+            # a bare new number must be one the turns state (a set); anything worked out must show its working, so
+            # that the sum can be checked (N32w seed 0: `rumi16: -132` for 29 - 73, written without working)
+            old = fact_of(state[where[name]])[1] if name in where else None
+            held, now = (number_of(old) if old is not None else None), number_of(value)
+            if now is not None and now != held and now not in seen and re.fullmatch(r"-?[\d,]+\.?", value.strip()):
+                info["mismatch"].append(f"{name}: {now} is not a value the turns state; write the working"
+                                        + (f" from the value the NOTES hold, {held}" if held is not None else ""))
         line = f"{name}: {value}" if value else name
         if name in where:
             state[where[name]] = line
@@ -1136,7 +1145,7 @@ class KeeperAgent(TruncateAgent):
                 rec["layout_retries"] = 1
                 req = req + [{"role": "assistant", "content": text}, {"role": "user", "content": DELTA_RETRY}]
                 continue
-            new, info = apply_delta(self.notes, delta, seen)
+            new, info = apply_delta(self.notes, delta, seen, strict=self.mention_check == "count")
             steps = info.pop("steps")
             if hinted:
                 missing = []
