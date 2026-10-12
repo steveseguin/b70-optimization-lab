@@ -312,7 +312,10 @@ def support(gates,artifacts):
   if 'packet26::capture_size<' in line:
    fields=line.split(None,3);observed.append(dict(kernel=fields[3],bytes=int(fields[1],16)))
  require(observed==sizes['rows'] and len(observed)==sizes['kernel_classes'] and max(r['bytes'] for r in observed)==sizes['max_after'],'kernel size receipt not current linked image')
- require('device kernel capture exceeds 1024 bytes' in (P/'oversized-capture.log').read_text(),'negative argument guard compile evidence missing')
+ diagnostic=sizes['negative_compile_log'];require(sha(P/diagnostic['path'])==diagnostic['sha256'],'negative argument guard archive changed')
+ raw=gzip.decompress((P/diagnostic['path']).read_bytes())
+ require(hashlib.sha256(raw).hexdigest()==diagnostic['raw_sha256'] and len(raw)==diagnostic['raw_bytes'],'negative argument guard raw evidence changed')
+ require(b'device kernel capture exceeds 1024 bytes' in raw,'negative argument guard compile evidence missing')
  wrappers=gates['context-window-gates.json'];require(wrappers['tests']>=10 and wrappers['window_cases']==22,'context window matrix incomplete')
  require(gates['window-mocked-inherited-tests.json']['tests']>=36,'inherited wrapper coverage')
  require(gates['memory-plan-gates.json']['checks']>=27 and gates['memory-plan-gates.json']['memory_plan_sha256']==sha(P/'memory-plan.json'),'memory admission boundary coverage/identity')

@@ -67,3 +67,9 @@ across six arms. The shipped full-byte archive is verified against the original
 sealed fixture map. The embedded capture execution and input table hashes must
 match, and the packet44 input receipt must name that same source input receipt.
 The final seal rechecks these links and hashes the baseline JSON and archive.
+
+The negative 1,025-byte capture diagnostic is retained as
+`oversized-capture.log.gz`. Its receipt binds compressed and original SHA256,
+byte count and the expected compiler rejection. The original 1,119 bytes were
+round-trip checked before deleting the raw log. This was an evidence-format
+change; it does not claim another compiler execution.
