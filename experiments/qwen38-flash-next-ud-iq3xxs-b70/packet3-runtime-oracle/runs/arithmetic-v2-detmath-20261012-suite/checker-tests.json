@@ -1,0 +1,29 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "command": [
+    "nice",
+    "-n",
+    "19",
+    "ionice",
+    "-c",
+    "3",
+    "python3",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite",
+    "-p",
+    "test_suite_check.py",
+    "-v"
+  ],
+  "returncode": 0,
+  "output": "test_copied_oracle (test_suite_check.ExactChecks.test_copied_oracle) ... ok\ntest_corrupted_fixture (test_suite_check.ExactChecks.test_corrupted_fixture) ... ok\ntest_corruption_with_updated_hash (test_suite_check.ExactChecks.test_corruption_with_updated_hash) ... ok\ntest_early_eos (test_suite_check.ExactChecks.test_early_eos) ... ok\ntest_manifest_binding (test_suite_check.ExactChecks.test_manifest_binding) ... ok\ntest_missing_fixture (test_suite_check.ExactChecks.test_missing_fixture) ... ok\ntest_oracle_own_files (test_suite_check.ExactChecks.test_oracle_own_files) ... ok\ntest_run_wrapper (test_suite_check.ExactChecks.test_run_wrapper) ... ok\ntest_runtime_receipt (test_suite_check.ExactChecks.test_runtime_receipt) ... ok\ntest_tokens_changed_truncated_extra (test_suite_check.ExactChecks.test_tokens_changed_truncated_extra) ... ok\n\n----------------------------------------------------------------------\nRan 10 tests in 0.609s\n\nOK\n",
+  "completed_utc": "2026-10-12T02:41:39.253205+00:00",
+  "sources": {
+    "suite_check.py": "50cb7e616a4852dcb8a7bbc59e38dfa5bc9f15e8e3abe3f25522fd5d36f373df",
+    "test_suite_check.py": "402ef2e683618bd492268dfe8c5fef4968cc682dd9da9a88fc1734f6c5f49f1e"
+  }
+}
