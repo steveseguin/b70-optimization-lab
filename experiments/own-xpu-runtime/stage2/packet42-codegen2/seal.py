@@ -30,7 +30,11 @@ def main():
   dependencies[str(f.relative_to(P.parent))]=sha(f)
  for path in (P.parent/"packet29-merged/rope.bf16",P.parent/"packet29-merged/receipts-cards01-20261012-chain/w2c-r29/class-times.json",P.parent/"packet37-merged2/dispatch-incumbent.json",P.parent/"packet37-merged2/receipts-cards23-20261012-chain/k2-r37/dispatch-measured.json"):
   dependencies[str(path.relative_to(P.parent))]=sha(path)
- gate_files=["expert-gates.json","parallel-gates.json","route42-gates.json","tiny-cpu-gates.json","extras-cpu-gates.json","tiny-build-receipt.json","extras-build-receipt.json","protocol-tests.json"]
+ gate_files=["expert-gates.json","parallel-gates.json","route42-gates.json","tiny-cpu-gates.json","extras-cpu-gates.json","tiny-build-receipt.json","extras-build-receipt.json","protocol-tests.json","binding-gates.json","repair-module-proof.json"]
+ gate=json.loads((P/"binding-gates.json").read_text())
+ if not gate.get("passed") or gate.get("device_executed") or {(r["program"],r["window"]) for r in gate["results"]}!={(n,w) for n in BINARIES for w in ("K0","T1" if n=="floor" else "K2")} or gate["negative_controls"]["rejection_checks"]!=9:raise RuntimeError("real-owner binding gate missing or incomplete")
+ for path,digest in gate["source_sha256"].items():
+  if sha(path)!=digest:raise RuntimeError("stale real-owner gate input: "+path)
  gates={name:sha(P/name) for name in gate_files}
  row=dict(schema="packet42.build.v1",device_executed=False,device_discovery=False,branch="main",base_repository_commit=subprocess.check_output(["git","rev-parse","HEAD"],cwd=P,text=True).strip(),cpu_affinity=sorted(os.sched_getaffinity(0)),native_binary_sha256=binary,source_sha256=sources,readonly_dependency_sha256=dependencies,gate_sha256=gates,windows=windows,root_free_bytes=shutil.disk_usage("/").free,build_bytes=total,host_constraints=dict(nice=19,ionice_class=3,OMP_NUM_THREADS=2,max_compile_jobs=2,max_cpu_processes=4,anonymous_memory_limit_bytes=8_000_000_000),qualification="CPU preparation only; no device parity or timing claim")
  (P/"build-receipt.json").write_text(json.dumps(row,indent=2,ensure_ascii=False)+"\n")

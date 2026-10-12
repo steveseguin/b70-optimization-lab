@@ -5,6 +5,8 @@ p=argparse.ArgumentParser();p.add_argument("--authorized-device-window",action="
 a.output.mkdir(exist_ok=True)
 if a.mode=="bad-json":
  (a.output/"receipt.json").write_text("");sys.exit(0)
+if a.mode=="empty-bindings":
+ print("empty compute bindings",file=sys.stderr);sys.exit(1)
 if a.mode=="enospc":
  print("FAILED WINDOW: ENOSPC during receipt write",file=sys.stderr);sys.exit(1)
 row=dict(passed=True,infrastructure_passed=True,ld_library_path=os.environ.get("LD_LIBRARY_PATH"),mock=True)

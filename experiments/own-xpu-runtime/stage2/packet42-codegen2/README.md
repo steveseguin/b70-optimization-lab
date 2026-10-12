@@ -1,7 +1,8 @@
 # Packet 42: launch floor and code generation, round 2
 
-Prepared on 2026-10-12 for one coordinator-controlled B70. **No device binary,
-device discovery or GPU kernel ran. No speed is claimed.** The local binaries
+Repaired on 2026-10-12 after the coordinator's card-2 K0 failed on empty
+compute bindings. **This repair ran CPU builds and gates only; no device
+binary, discovery or kernel ran in the repair. No speed is claimed.** The local binaries
 are ready for K0 compile smoke, T1 launch-floor measurement, then K2 candidate
 screening. Exact commands are in [WINDOW.md](WINDOW.md); hashes and input seals
 are in [build-receipt.json](build-receipt.json).
@@ -114,10 +115,14 @@ geometry, 610 compact/scheduled incumbent/Core, and 240 in-place geometry
 checks per process. Across four processes those are 76, 304, 2,700, 2,440 and
 960 checks respectively.
 See [extras-cpu-gates.json](extras-cpu-gates.json).
-The 15 [CPU window tests](protocol-tests.json) exercise all three windows through a mock
+The 16 [CPU window tests](protocol-tests.json) exercise all three windows through a mock
 native program and the real summary, including missing libraries, failed cases,
 new versus historical faults, missing /proc fields, and ENOSPC during writes.
-Mocks are test data, never device measurements.
+Mocks are test data, never device measurements. The new sealed
+[real-owner binding gate](BINDING-GATE.md) separately traverses all six native
+programs through the unchanged owner and native validators, covering every
+window case and repetition, plus nine rejection controls. The [repair
+closeout](binding-repair-closeout.md) records the failed K0 and the new boundary.
 
 Packet29 excludes nonfinite GEMV from production qualification. GNU retains
 256 frozen-reference nonfinite lane differences per process; candidate versus
@@ -166,9 +171,14 @@ restoration of compressed evidence.
 
 | Local binary | SHA-256 |
 |---|---|
-| `build/launch/p42-launch-floor` | `a06df687f86fba805ffbecb0584d372982705055b5278640d748199debc35364` |
-| `build/gemv/p42-gemv` | `c728efbb256487c3e72dc9a46cc215523fe433935e858a9e84564fec7cdf2e54` |
+| `build/launch/p42-launch-floor` | `e56a0981425389441688dde155a958d285cf1eb1bd26290bf5d10402271ae759` |
+| `build/gemv/p42-gemv` | `98fdcff6b25c1783113e379af72aa6a8dcdd3a092de8bcc7f34e3d86b9ce2f5b` |
 | `build/parallel/parallel-native` | `89a91eb8e12229c72e231a0bda1da129313be337e37d01ca53bd67855609ba93` |
 | `build/route42/p42-route` | `62ebd4c8b76b3dfd02e968d2e0cb5724931e707f50352c309ca23b85ad24571e` |
-| `build/tiny/p42-tiny` | `acd86240a7755a4bd8791948a059863ae6f56b8b52003e2aa752a21b4e603c66` |
+| `build/tiny/p42-tiny` | `374dc9f613c9dffc5639cf1f743a08fe5a3ceb3d38f79281ecdf85c0250a6645` |
 | `build/extras/p42-extras` | `bd2331a4567030b8101ea58d46b7a0ddbc4ebb3e0084398968d893f03e99a00c` |
+
+The historical assembly receipts keep their original binary hashes.
+[Repair module proof](repair-module-proof.json) verifies the recorded SPIR-V
+bytes in the rebuilt executables; parallel, route and extras executables are
+unchanged byte for byte. Use only the new `k0b`, `t1b`, `k2b` output names.

@@ -2,6 +2,8 @@
 
 | Closed error or unsupported inference | Required behavior |
 |---|---|
+| 2026-10-12: floor/tiny CompileSmoke called compute with empty bindings | Compile the executable bundle directly before constructing Runner; no compute submission for K0. Preserve the failed K0 evidence. |
+| Mock window success establishes native binding admission | Require the sealed real-owner host-only gate through all six native argument builders, including warm-ups, all repetitions and eight GEMV buffer rotations. |
 | Fewer messages means faster down | Select already beat bank with more sends; dynamic counts alone do not identify stalls. Time both combinations. |
 | Static instruction total divided by K is a dynamic cost | Trace conditional CFG paths, state active weights and exceptional exclusions. |
 | Four independent row-part subgroups can finish without communication | They need another launch or synchronization; the alternative here uses one subgroup per row and loses that parallelism. |
@@ -21,3 +23,6 @@
 | Two timing rows for IQ2/IQ3 count 96 gate groups/token | Use 47 IQ2 + 1 IQ3; do not add mutually exclusive candidates. |
 
 No device result is claimed. See [CLOSEOUT.md](CLOSEOUT.md).
+
+[Empty-binding repair closeout](binding-repair-closeout.md) records the cause,
+real-owner gate, retained failed K0 and remaining device checks.

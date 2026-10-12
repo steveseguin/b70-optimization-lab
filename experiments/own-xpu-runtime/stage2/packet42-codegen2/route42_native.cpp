@@ -1,5 +1,6 @@
 #include <iostream>
 #include "compile_smoke.hpp"
+#include "gate_mode.hpp"
 #include "stop.hpp"
 #include "adapter_fixture.hpp"
 #include "owner.hpp"
@@ -16,6 +17,6 @@ int main(int argc,char**argv){
   if(smoke){auto n=p42_compile_smoke(card);std::ofstream f(out/"receipt.json");f.exceptions(std::ios::badbit|std::ios::failbit);f<<"{\"passed\":true,\"infrastructure_passed\":true,\"kernel_execution\":false,\"kernels\":"<<n<<"}\n";f.close();return 0;}
   auto r=route42_timing(card,out);
   std::ofstream f(out/"receipt.json");f.exceptions(std::ios::badbit|std::ios::failbit);
-  f<<"{\"passed\":true,\"infrastructure_passed\":true,\"device_executed\":true,\"reference_exact\":true,\"checks\":"<<r.checks<<",\"teardown\":"<<r.teardown<<"}\n";f.close();return 0;
+  f<<"{\"passed\":true,\"infrastructure_passed\":true,\"device_executed\":" P42_DEVICE_EXECUTED ",\"reference_exact\":true,\"checks\":"<<r.checks<<",\"teardown\":"<<r.teardown<<"}\n";f.close();return 0;
  }catch(const std::exception&e){std::cerr<<"FAILED WINDOW: "<<e.what()<<std::endl;try{if(!out.empty()){std::ofstream f(out/"receipt.json");f.exceptions(std::ios::badbit|std::ios::failbit);f<<"{\"passed\":false,\"infrastructure_passed\":false,\"error\":"<<ownrt::quote(e.what())<<"}\n";f.close();}}catch(const std::exception&w){std::cerr<<"FAILED RECEIPT WRITE: "<<w.what()<<std::endl;}return 1;}
 }

@@ -28,6 +28,11 @@ def generate():
  s=s.replace("auto launched=variant?", "auto host_start=std::chrono::steady_clock::now();auto launched=variant?")
  s=s.replace("r.finish(launched.last);std::vector", "r.finish(launched.last);double host_us=std::chrono::duration<double,std::micro>(std::chrono::steady_clock::now()-host_start).count();std::vector")
  s=s.replace('<<",\\"stage_count\\":"<<times.size()','<<",\\"host_wall_us\\":"<<host_us<<",\\"stage_count\\":"<<times.size()')
+ # Binding-only twins retain every warm-up, measurement, postflight and rotation.
+ s='#include "gate_mode.hpp"\n'+s
+ s=s.replace("fixture_validation::only", "p42gate::bindings_only")
+ s=s.replace("timing&&!p42gate::bindings_only?216u:1u", "timing?216u:1u")
+ s=s.replace("timing&&!p42gate::bindings_only&&iteration", "timing&&iteration")
  (B/"gemv_generated.cpp").write_text(s)
  return B/"gemv_generated.cpp"
 def main():

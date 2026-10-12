@@ -19,6 +19,30 @@
         "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
         "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader",
         "-c",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/parallel_submit.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/parallel/parallel_submit.o"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=gnu++20",
+        "-O2",
+        "-Werror=return-type",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fdenormal-fp-math=ieee",
+        "-foffload-fp32-prec-div",
+        "-foffload-fp32-prec-sqrt",
+        "-fsycl",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader",
+        "-c",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/parallel_native.cpp",
         "-o",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/parallel/parallel_native.o"

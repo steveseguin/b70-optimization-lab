@@ -108,6 +108,13 @@ class Tests(unittest.TestCase):
    s=Services();c,k,_=self.runwindow("K0",s);self.assertEqual(c,0)
   with patch.dict(os.environ,{"ZE_AFFINITY_MASK":"1"}):
    s=Services();c,o,e=self.runwindow("T1",s,k);self.assertEqual(c,1);self.assertEqual(s.launched,0);self.assertIn("environment",e);self.assertFalse((o/"FAULT.json").exists())
+ def test_empty_bindings_k0_blocks_dependents_without_latch(self):
+  s=Services(mode="empty-bindings");c,k,e=self.runwindow("K0",s)
+  self.assertEqual(c,1);self.assertIn("empty compute bindings",e);self.assertFalse((k/"FAULT.json").exists())
+  self.assertFalse(json.loads((k/"window.json").read_text())["passed"])
+  for name in ("T1","K2"):
+   s=Services();c,o,e=self.runwindow(name,s,k)
+   self.assertEqual(c,1);self.assertEqual(s.launched,0);self.assertIn("K0 failed",e);self.assertFalse((o/"FAULT.json").exists())
  def test_missing_proc_status(self):self.assertEqual(window.proc_memory(999999999),{})
 if __name__=="__main__":
  result=unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(Tests))

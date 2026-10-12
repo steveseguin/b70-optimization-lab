@@ -136,7 +136,7 @@
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/gemv/gemv_generated.o",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/gemv/gemv_main.o",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/gemv/expert_submit.o",
-        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/parallel/parallel_submit.o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/gemv/parallel_submit.o",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/gemv/p33_submit.o",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/p28/submit.cpp.o",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/expert_down.cpp.o",
@@ -144,6 +144,7 @@
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/small_gemv.cpp.o",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/small_gemv_fixture.cpp.o",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/p25_bridge.cpp.o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/adapter_fixture.cpp.o",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/performance.cpp.o",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/adapter.cpp.o",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/specialised_submit.cpp.o",
@@ -162,7 +163,6 @@
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/entry-main.cpp.o",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/entry-nongemv_fixture.cpp.o",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/entry-k2_fixture.cpp.o",
-        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/adapter_fixture.cpp.o",
         "-o",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/gemv/p42-gemv",
         "-Wl,-rpath,/opt/intel/oneapi/compiler/2026.0/lib:/usr/lib/x86_64-linux-gnu",
@@ -180,6 +180,7 @@
     "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/small_gemv.cpp.o": "68c44c5b312d267f92732d7864cbe57aac6d06c7131a68377e20096b98c353ad",
     "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/small_gemv_fixture.cpp.o": "73883221622b2523d5d0c263bdccffd5681380de5b2c3482bee032a057680a96",
     "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/p25_bridge.cpp.o": "65bcf78f718d6f527f1464c85c7e4228654e5a99163e7dda941204410bda5e1a",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/adapter_fixture.cpp.o": "bc12586ee6d0e05566170ae3a251fae2b7cfbaa349ae7572d374ad09cb9733c1",
     "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/performance.cpp.o": "ac2cb1aa73057d106638a8f5db639054d8ac873995c8a6a708284d26324c11e4",
     "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/adapter.cpp.o": "0d55128e10a918a48c863c9fb10dafa973a1ad13f8bc102bfed22b8264e90eaf",
     "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/specialised_submit.cpp.o": "37046473703dc51972f40d935f4641928b14b0f0482e09d62e1f8f05ef14ae6d",
@@ -197,9 +198,8 @@
     "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp.o": "049eb8827aee6046b8eb7398a12d0b0c5b5b01d18e43762ba6580b8f8f4c2edc",
     "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/entry-main.cpp.o": "7435ca91f7eb10a0fc36822806ccbea7b42c040d992e6587e8f988b9ee607688",
     "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/entry-nongemv_fixture.cpp.o": "d86be5d6f5442962dca1c4028ed7d0b74912c2e2d23b6c8c1b3661f312c4536f",
-    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/entry-k2_fixture.cpp.o": "46ae08353a1cb949b20b6190230eb02f3d4bf03a9e4a6c1a6469447cf4147040",
-    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet29-merged/adapter_fixture.cpp.o": "bc12586ee6d0e05566170ae3a251fae2b7cfbaa349ae7572d374ad09cb9733c1"
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/CMakeFiles/programs.dir/entry-k2_fixture.cpp.o": "46ae08353a1cb949b20b6190230eb02f3d4bf03a9e4a6c1a6469447cf4147040"
   },
-  "source_sha256": "71a605df4094e107079a821f9e55dfebfc70198440d9f21e6b47cc6f0c774925",
-  "binary_sha256": "c728efbb256487c3e72dc9a46cc215523fe433935e858a9e84564fec7cdf2e54"
+  "source_sha256": "79d46634c9e7f965ec91bc006ee5e2de03eef5c355498585f625c3f0330a96a3",
+  "binary_sha256": "98fdcff6b25c1783113e379af72aa6a8dcdd3a092de8bcc7f34e3d86b9ce2f5b"
 }

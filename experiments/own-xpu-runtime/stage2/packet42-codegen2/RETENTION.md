@@ -18,3 +18,15 @@ Ignored build executables, objects and SPIR-V are local coordinator inputs.
 Build scripts and build receipts record how to restore them. Temporary IGC/AOT,
 compiler and mock-window scratch is removed after evidence retention. No raw
 output.bin larger than 20 MB is retained.
+
+## October 12 real-owner gate receipt
+
+`binding-gates.json` is about 1.6 MB and intentionally retained despite the
+1 MiB review threshold. Most of it is the real parallel owner's complete
+allocation/free teardown sequence from 800 case-arm repetitions. Keeping the
+unabridged receipt makes the same-owner traversal and clean teardown
+reviewable alongside the binding counts, source pins and exact commands.
+It is evidence, not a build cache. Restore it byte for byte from this Git
+commit; `binding_gate.py` can regenerate a new measured gate receipt, whose
+host timing fields need not have the same bytes. The local build tree is about
+129 MB, below its 2 GB limit.

@@ -1,4 +1,5 @@
 #include "parallel.hpp"
+#include "gate_mode.hpp"
 #include "compile_smoke.hpp"
 #include "stop.hpp"
 #include "k2_failure.hpp"
@@ -123,7 +124,7 @@ struct Runner {
  }
 };
 SHA256_CTX output_hash;
-void compare(const Fixture& a,const Fixture& b,std::ofstream& bytes){if(fixture_validation::only)return;for(int j=0;j<19;++j)if(a.outputs[j]){check(a.data[j]==b.data[j],a.name+" mismatch slot "+std::to_string(j));SHA256_Update(&output_hash,b.data[j].data(),b.data[j].size());}}
+void compare(const Fixture& a,const Fixture& b,std::ofstream& bytes){if(p42gate::bindings_only||fixture_validation::only)return;for(int j=0;j<19;++j)if(a.outputs[j]){check(a.data[j]==b.data[j],a.name+" mismatch slot "+std::to_string(j));SHA256_Update(&output_hash,b.data[j].data(),b.data[j].size());}}
 }
 int main(int argc,char**argv){std::filesystem::path out;std::unique_ptr<Runner> runner;try{p42::install_stop();SHA256_Init(&output_hash);unsigned card=0,repetitions=200;bool smoke=false,authorized=false;
  for(int i=1;i<argc;++i){std::string arg=argv[i];if(arg=="--card"&&i+1<argc)card=std::stoul(argv[++i]);else if(arg=="--output"&&i+1<argc)out=argv[++i];else if(arg=="--repetitions"&&i+1<argc)repetitions=std::stoul(argv[++i]);else if(arg=="--compile-smoke")smoke=true;else if(arg=="--authorized-device-window")authorized=true;else throw std::invalid_argument("parallel arguments");}
@@ -140,5 +141,5 @@ int main(int argc,char**argv){std::filesystem::path out;std::unique_ptr<Runner> 
   runner->clear();
  }
  bytes.close();events.close();walls.close();failures.close();unsigned char digest[32];SHA256_Final(digest,&output_hash);std::ostringstream hex;for(auto v:digest)hex<<std::hex<<std::setw(2)<<std::setfill('0')<<unsigned(v);std::filesystem::remove(out/"output.bin");
- auto shutdown=runner->device.shutdown(std::chrono::seconds(300));check(shutdown.safe_to_exit&&!shutdown.exit_code,"parallel teardown");std::ofstream receipt;receipt.exceptions(std::ios::failbit|std::ios::badbit);receipt.open(out/"receipt.json");receipt<<"{\"infrastructure_passed\":true,\"device_executed\":true,\"cases\":"<<cases<<",\"failed_cases\":"<<failed<<",\"output_sha256\":\""<<hex.str()<<"\",\"teardown\":"<<shutdown.json()<<"}\n";receipt.close();return 0;
+ auto shutdown=runner->device.shutdown(std::chrono::seconds(300));check(shutdown.safe_to_exit&&!shutdown.exit_code,"parallel teardown");std::ofstream receipt;receipt.exceptions(std::ios::failbit|std::ios::badbit);receipt.open(out/"receipt.json");receipt<<"{\"infrastructure_passed\":true,\"device_executed\":" P42_DEVICE_EXECUTED ",\"cases\":"<<cases<<",\"failed_cases\":"<<failed<<",\"output_sha256\":\""<<hex.str()<<"\",\"teardown\":"<<shutdown.json()<<"}\n";receipt.close();return 0;
  }catch(const std::exception&e){std::cerr<<"FAILED parallel window: "<<e.what()<<'\n';try{if(!out.empty()){std::ofstream failure;failure.exceptions(std::ios::failbit|std::ios::badbit);failure.open(out/"failure.json");failure<<"{\"infrastructure_passed\":false,\"error\":"<<ownrt::quote(e.what())<<"}\n";failure.close();}}catch(const std::exception&storage){std::cerr<<"FAILED writing receipt: "<<storage.what()<<'\n';}if(runner)runner->device.shutdown(std::chrono::seconds(300));return 1;}}

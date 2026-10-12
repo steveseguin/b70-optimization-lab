@@ -2,6 +2,10 @@
 #include <sycl/sycl.hpp>
 #include <stdexcept>
 inline unsigned p42_compile_smoke(unsigned card) {
+#ifdef P42_BINDING_GATE
+ // CPU entry traversal only: bundle compilation is an offline/device K0 gate.
+ (void)card;return 0;
+#else
  std::vector<sycl::device> devices;
  for(auto p:sycl::platform::get_platforms()) if(p.get_backend()==sycl::backend::ext_oneapi_level_zero)
   for(auto d:p.get_devices(sycl::info::device_type::gpu)) devices.push_back(d);
@@ -12,4 +16,5 @@ inline unsigned p42_compile_smoke(unsigned card) {
  auto executable=sycl::build(input,{d});
  for(auto id:ids)if(!executable.has_kernel(id,d))throw std::runtime_error("kernel missing after build");
  return ids.size();
+#endif
 }

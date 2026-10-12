@@ -1,6 +1,8 @@
 #pragma once
 #include "../packet29-merged/owner.hpp"
 #include "../../stage1/packet3-prep/src/sycl_operation.hpp"
+#include "compile_smoke.hpp"
+#include "gate_mode.hpp"
 #include <algorithm>
 #include <array>
 #include <bit>
@@ -31,6 +33,5 @@ struct Runner{
  void clear(){d.retire_completed_events();for(auto a:owned)d.arena.release(a);owned.clear();}
 };
 struct Options{unsigned card=0,repetitions=200;bool smoke=false;std::filesystem::path output;Options(int argc,char**argv){bool auth=false;for(int i=1;i<argc;++i){std::string v=argv[i];if(v=="--card"&&i+1<argc)card=std::stoul(argv[++i]);else if(v=="--output"&&i+1<argc)output=argv[++i];else if(v=="--repetitions"&&i+1<argc)repetitions=std::stoul(argv[++i]);else if(v=="--compile-smoke")smoke=true;else if(v=="--authorized-device-window")auth=true;else throw std::runtime_error("invalid argument: "+v);}if(!auth||output.empty()||repetitions!=200)throw std::runtime_error("explicit authorized window, output, 200 repetitions required");std::filesystem::create_directories(output);std::signal(SIGTERM,signal_stop);std::signal(SIGINT,signal_stop);}};
-struct CompileSmoke:ownrt::SyclOperation{sycl::event submit(sycl::queue&q,std::span<void*const>,const std::vector<sycl::event>&deps)const override{auto b=sycl::get_kernel_bundle<sycl::bundle_state::executable>(q.get_context(),std::vector<sycl::device>{q.get_device()});if(b.empty())throw std::runtime_error("empty kernel bundle");return q.ext_oneapi_submit_barrier(deps);}};
-inline int smoke(Runner&r,const Options&o){CompileSmoke op;auto e=r.d.compute(op,{},{});r.finish(e);write(o.output/"receipt.json","{\"passed\":true,\"infrastructure_passed\":true,\"compile_smoke\":true,\"kernel_execution\":false,\"device_contact\":true}");return 0;}
+inline int smoke(const Options&o){auto n=p42_compile_smoke(o.card);write(o.output/"receipt.json","{\"passed\":true,\"infrastructure_passed\":true,\"compile_smoke\":true,\"kernel_execution\":false,\"kernels\":"+std::to_string(n)+"}");return 0;}
 }
