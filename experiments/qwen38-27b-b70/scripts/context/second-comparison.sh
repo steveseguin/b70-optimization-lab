@@ -82,11 +82,13 @@
 #                                           (N32s lost the standing rule when a second, asked-for reply left it out): everything together
 #   N32k N32kr                              campaign 11 (2026-10-12): the keeper with in-place notes (N32u's settings) and the same with retrieval at
 #                                           each question (N32sr's settings), on the code after the second review (lab commit 080ebd6b9 and later)
-#   N32h N32hr X32h                         N32p / N32pr / X32q with the code of 2026-10-12 14:10 (after N32pr on the hard stream, seed 1, where most
-#                                           notes questions were about changes said without their number and right lines were left out): a line
-#                                           without working is followed when the turns name the thing in a sentence without any number and the
-#                                           change is times or divided by 2..10, a whole fraction of the old value, or by another thing's value;
-#                                           also the note-check rewrite of that day (packed lines followed exactly or asked about)
+#   N32g N32gr X32g                         N32p / N32pr / X32q with the code of 2026-10-12 14:45: the note-check rewrite of that day (packed
+#                                           lines followed exactly or asked about) and changes said without their number: a line without working
+#                                           is followed when the turns name the thing in a sentence without any number and the new value is the
+#                                           old one times 2..10, the old one with a whole fraction of itself added or taken, or the old one with
+#                                           another thing's value added or taken
+#   N32h                                    the first version of that rule (14:18), which also took another thing's value as the NEW value: the
+#                                           model's misreading of "received exactly what X stood at" as a set passed without a question
 #   X32q                                    X32p with the proxy code of 2026-10-12 10:00: a question that arrived in a tool result and is still open
 #                                           is never cut out of view. (N32p / N32pr were first run after that commit: for the harness they also
 #                                           include the open question kept across the ordinary cut and `recall --before N` with nearest matches.)
@@ -239,7 +241,7 @@ ARMS["N32j"] = ("truncate", "memory", 32768)          # N32 thinking only on cal
 ARMS["N32f"] = ("truncate", "memory", 32768)          # N32j with a notes call that does not think and a deeper cut (to 50 %): the fast setting
 ARMS["N200j"] = ("truncate", "memory", 204800)        # N32j at the 200K cap
 ARMS["N64j"] = ("truncate", "memory", 65536)          # N32j at a 64K live window
-for a in ("N32j35", "N32d", "N32dth", "N32d35", "N32e", "N32e35", "N32e25", "N32c35", "N32c25", "N32c15", "N32x", "N32x8", "N32xth", "N32xth6", "N32y", "N32z", "N32w", "N32w6", "N32v", "N32u", "N32u6", "N32ur", "N32t", "N32s", "N32sr", "N32k", "N32kr", "N32m", "N32mr", "N32n", "N32nr", "N32p", "N32pr", "N32h", "N32hr", "R32", "R32a", "R32a40", "R32b", "R32b40", "R32c40", "N32r", "N32ra", "N32jr", "N32dr", "N32er"):   # campaign 10 (see the header)
+for a in ("N32j35", "N32d", "N32dth", "N32d35", "N32e", "N32e35", "N32e25", "N32c35", "N32c25", "N32c15", "N32x", "N32x8", "N32xth", "N32xth6", "N32y", "N32z", "N32w", "N32w6", "N32v", "N32u", "N32u6", "N32ur", "N32t", "N32s", "N32sr", "N32k", "N32kr", "N32m", "N32mr", "N32n", "N32nr", "N32p", "N32pr", "N32h", "N32g", "N32gr", "R32", "R32a", "R32a40", "R32b", "R32b40", "R32c40", "N32r", "N32ra", "N32jr", "N32dr", "N32er"):   # campaign 10 (see the header)
     ARMS[a] = ("truncate", "memory", 32768)
 ARMS["X32"] = ("plain", "memory", 0)                  # the plain agent with no budget of its own, served through tools/ctxkeeper
 ARMS["X32b"] = ("plain", "memory", 0)                 # X32 again after the proxy fixes of 2026-10-11 (same arm; a new name keeps both results)
@@ -247,7 +249,7 @@ ARMS["X32i"] = ("plain", "memory", 0)                 # X32 with the proxy start
 ARMS["X32m"] = ("plain", "memory", 0)                 # X32i after the merge fix (an asked-for notes reply no longer replaces the one before it)
 ARMS["X32n"] = ("plain", "memory", 0)                 # X32m with the proxy code and options of 2026-10-12 07:00 (see the header)
 ARMS["X32q"] = ("plain", "memory", 0)                 # X32p plus: an open question survives every cut (see the header)
-ARMS["X32h"] = ("plain", "memory", 0)                 # X32q with the proxy code of 2026-10-12 14:10 (see the header)
+ARMS["X32g"] = ("plain", "memory", 0)                 # X32q with the proxy code of 2026-10-12 14:45 (see the header)
 ARMS["X32p"] = ("plain", "memory", 0)                 # X32n2 with the proxy code of 2026-10-12 09:00 (see the header); the proxy is started by hand with --recall-label
 ARMS["X32n2"] = ("plain", "memory", 0)                # X32n after the fix of 2026-10-12 06:55: what the kept message says about a result already noted is not noted twice
 ARMS["X32ir"] = ("plain", "memory", 0)                # the same with retrieval in the proxy as well, once it has that (reserved)
@@ -367,7 +369,7 @@ run_one() {  # arm agent budget task_dir job_name drop_old_thinking
   fi
   local fb=${FOLD_BATCHES:-}
   local api=$API_BASE
-  if [[ "$arm" == X32 || "$arm" == X32b || "$arm" == X32i || "$arm" == X32m || "$arm" == X32n || "$arm" == X32n2 || "$arm" == X32p || "$arm" == X32q || "$arm" == X32h || "$arm" == X32ir ]]; then   # the keeper policy as a proxy: the agent sends everything, the proxy keeps the window
+  if [[ "$arm" == X32 || "$arm" == X32b || "$arm" == X32i || "$arm" == X32m || "$arm" == X32n || "$arm" == X32n2 || "$arm" == X32p || "$arm" == X32q || "$arm" == X32g || "$arm" == X32ir ]]; then   # the keeper policy as a proxy: the agent sends everything, the proxy keeps the window
     api=${CTXKEEPER_BASE:?arm X32 needs CTXKEEPER_BASE, the URL of a running tools/ctxkeeper proxy (http://host:port/v1)}
   fi
   if [[ "$arm" == B32iraR || "$arm" == B32iraR4 || "$arm" == B32iraRH ]]; then   # B32ira + pinned RULE lines (standing rules and methods stay in view)
@@ -408,8 +410,9 @@ run_one() {  # arm agent budget task_dir job_name drop_old_thinking
     N32nr)  xa=(-a clm_keeper:KeeperAgent); extra="$jt notes_mode=delta notes_inplace=true notes_chunk_tokens=11000 inplace_turn_tokens=17000 mention_check=near auto_retrieve=20 retrieve_scope=all" ;;
     N32p)   xa=(-a clm_keeper:KeeperAgent); extra="$jt notes_mode=delta notes_inplace=true notes_chunk_tokens=11000 inplace_turn_tokens=17000 mention_check=near" ;;
     N32h)   xa=(-a clm_keeper:KeeperAgent); extra="$jt notes_mode=delta notes_inplace=true notes_chunk_tokens=11000 inplace_turn_tokens=17000 mention_check=near" ;;
+    N32g)   xa=(-a clm_keeper:KeeperAgent); extra="$jt notes_mode=delta notes_inplace=true notes_chunk_tokens=11000 inplace_turn_tokens=17000 mention_check=near" ;;
     N32pr)  xa=(-a clm_keeper:KeeperAgent); extra="$jt notes_mode=delta notes_inplace=true notes_chunk_tokens=11000 inplace_turn_tokens=17000 mention_check=near auto_retrieve=20 retrieve_scope=all" ;;
-    N32hr)  xa=(-a clm_keeper:KeeperAgent); extra="$jt notes_mode=delta notes_inplace=true notes_chunk_tokens=11000 inplace_turn_tokens=17000 mention_check=near auto_retrieve=20 retrieve_scope=all" ;;
+    N32gr)  xa=(-a clm_keeper:KeeperAgent); extra="$jt notes_mode=delta notes_inplace=true notes_chunk_tokens=11000 inplace_turn_tokens=17000 mention_check=near auto_retrieve=20 retrieve_scope=all" ;;
     N32u6)  xa=(-a clm_keeper:KeeperAgent); extra="$jt notes_mode=delta notes_inplace=true notes_chunk_tokens=11000 inplace_turn_tokens=9500 mention_check=near" ;;
     N32ur)  xa=(-a clm_keeper:KeeperAgent); extra="$jt notes_mode=delta notes_inplace=true notes_chunk_tokens=11000 inplace_turn_tokens=17000 mention_check=near auto_retrieve=20 retrieve_scope=all" ;;
     N32w)   xa=(-a clm_keeper:KeeperAgent); extra="$jt notes_mode=delta notes_inplace=true notes_chunk_tokens=11000 inplace_turn_tokens=17000 mention_check=count" ;;

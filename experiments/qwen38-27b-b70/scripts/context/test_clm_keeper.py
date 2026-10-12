@@ -534,8 +534,8 @@ class Keeper(unittest.TestCase):
         self.assertEqual(run(10, "abcd12 gained 5. abcd12 gained 7.", "10 \u2192 22")[:2], (1, [0]))            # two changes need their working
         self.assertEqual(run(100, "abcd12 gained 5.", "100 - 37 = 63")[:2], (1, [0]))                            # 37 is no fraction of 100
         ok = NS["implied_ok"]
-        self.assertTrue(ok(10, 5, True) and ok(9, 6, True) and ok(7, 12, True, {5}) and ok(7, 5, True, {5}) and ok(10, 30, True))
-        self.assertFalse(ok(7, 13, True, {5}) or ok(10, 5, False) or ok(849, 283, True) or ok(10, 2, True) or ok(520, 569, True))
+        self.assertTrue(ok(10, 5, True) and ok(9, 6, True) and ok(7, 12, True, {5}) and ok(10, 30, True))
+        self.assertFalse(ok(7, 13, True, {5}) or ok(10, 5, False) or ok(849, 283, True) or ok(10, 2, True) or ok(520, 569, True) or ok(-135, 458, True, {458}))
         # what a second reader's probes found in the first version of this rule: each is still asked about
         for held, said, lines in ((849, "A third of abcd12 was written off.", ["849 \u2192 283"]),                   # the part for the remainder
                                   (520, "Next on the list was abcd12. It was set to 49.", ["569"]),                    # a set read as a gain
@@ -550,7 +550,7 @@ class Keeper(unittest.TestCase):
         near, seen = NS["numbers_near"](["abcd12", "wxyz56"], turns), NS["numbers_in"](turns[0]["content"])
         set_to = NS["apply_delta"]("RULES\n(none)\nSTATE\nabcd12: -135\nwxyz56: 458\nOPEN", {"rules": [], "open": None, "changes": [
             ("abcd12", "-135 \u2192 458 (received exactly what wxyz56 stood at then; per NOTES, wxyz56 = 458)")]}, seen, strict=True, near=near)
-        self.assertEqual((set_to[0].splitlines()[3], set_to[1]["mismatch"]), ("abcd12: 458", []))       # set to what the other holds
+        self.assertEqual(len(set_to[1]["mismatch"]), 1)       # the other's value as the NEW value is not what the sentence means: asked
         for line in ("493 \u2192 549 (received exactly what wxyz56 stood at then)", "493 + 56 = 549"):
             new, info = NS["apply_delta"](notes, {"rules": [], "open": None, "changes": [("abcd12", line)]}, seen, strict=True, near=near)
             self.assertEqual((new.splitlines()[3], info["mismatch"]), ("abcd12: 549", []), line)

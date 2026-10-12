@@ -1837,3 +1837,16 @@ Registered before the run, hard stream, seed 1:
 - N32hr (with retrieval at questions): 46 or more of 49 in 20 minutes or less; 3 lines or fewer left out.
 - If N32hr again scores no more than N32h, "retrieval at question time adds answers on indirect text" is withdrawn:
   three of four comparisons would then be within one answer or against it.
+
+**Correction at 14:45, while N32h was running.** I had read "received exactly what sajaro19 stood at then" as "is
+set to that value", because that is how the model's own lines read it (`mizike76: -135 -> 458 (per NOTES, dico82 =
+458)`), and the first committed version of code state h (`42df34618`) accepts another thing's value as the new
+value. The generator means an increase by that value (`make_sparse_prose_tasks.py`: "went up by as much as {s} held
+at that moment" and this sentence are two wordings of one operation), and the task statement says so ("increased
+by as much as another counter holds"). So (1) several of the eleven lines that N32pr "wrongly" left out were the
+model's misreading, which the old checks had rightly questioned: the leave-out rule did less harm there than the
+paragraph above says, and how much is for the audit to show; (2) N32h runs with a rule that lets that misreading
+pass without a question, and its result is reported as such, not as the test of the idea; (3) the rule is
+corrected (the other thing's value counts only as the amount added or taken), registered as arms N32g, N32gr and
+X32g, and N32hr was taken off the queue before it started. What was written down for N32h and N32hr above now
+stands for N32g and N32gr.

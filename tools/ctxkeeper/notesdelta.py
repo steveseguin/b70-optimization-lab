@@ -291,18 +291,21 @@ def implied_ok(old: int, new: int, relative: bool, others: set[int] = frozenset(
     Only when some sentence mentions the thing without a number (`relative`), and then if the new value is
     - the old one times a small whole number ("was doubled"),
     - the old one with a whole fraction of itself added or taken ("a third written off", "was halved"),
-    - what another thing of these turns holds (`others`; "received exactly what sajaro19 stood at then"), or the
-      old one with such a value added or taken.
+    - the old one with what another thing of these turns holds (`others`) added or taken ("went up by as much as
+      sajaro19 held at that moment", "received exactly what sajaro19 stood at then").
     Then the line is as good as its working. On the stream with such changes (hard, seed 1, 2026-10-12) most
     questions were about lines like this, and after the second reply eleven of them, right ones among them, were
-    left out. What does NOT pass, each found by a reviewer's probe: a change by an amount the turns state ("It was
-    set to 49" as plus 49: the working is asked for, as always); the old value divided by a number (`849 -> 283`
-    is the third that was written off, not what is left); a value the thing held earlier in the reply (the caller
-    takes those out: `10 -> 20` then `10` is the old value written again, not "halved")."""
+    left out. What does NOT pass: a change by an amount the turns state ("It was set to 49" as plus 49: the
+    working is asked for, as always); the old value divided by a number (`849 -> 283` is the third that was
+    written off, not what is left); a value the thing held earlier in the reply (the caller takes those out:
+    `10 -> 20` then `10` is the old value written again, not "halved"); and the other thing's value as the NEW
+    value (`-135 -> 458` where the other holds 458): the model reads "received exactly what dico82 stood at" as a
+    set now and then, the stream means an increase, and the first version of this rule let that reading through
+    (arm N32h ran with it)."""
     if not relative:
         return False
     d = abs(new - old)
-    return new in others or d in {abs(a) for a in others} or any(new == old * k or d * k == abs(old) for k in range(2, 11))
+    return d in {abs(a) for a in others} or any(new == old * k or d * k == abs(old) for k in range(2, 11))
 
 
 def amounts_ok(working: str, amounts: set[int] | None, start: int | None = None) -> bool:
