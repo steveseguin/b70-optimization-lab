@@ -155,13 +155,15 @@ def trial_row(t: Path) -> dict:
             pass
 
     # snapshots: peak context, items seen / cut, loss attribution
-    snaps = []
-    for s in sorted((agent / "context_snapshots").glob("turn-*.json")):
-        d = load(s) or {}
-        if d.get("kind") in ("agent", None) and d.get("messages") is not None:
-            snaps.append(d)
-    peak = max((int(d.get("sent_tokens") or d.get("tokens") or 0) for d in snaps
-                if d.get("kind") == "agent"), default=0)
+    # One snapshot is held at a time: a client that resends its whole history (the proxy arms) leaves 1.7 GB of
+    # snapshots after a 1M-token run, and holding them all took 2.1 GB beside a server with 2 GB to spare (the
+    # memory guard fired at the end of four such runs before this was found, 2026-10-12).
+    def snapshots():
+        for s in sorted((agent / "context_snapshots").glob("turn-*.json")):
+            d = load(s) or {}
+            if d.get("kind") in ("agent", None) and d.get("messages") is not None:
+                yield d
+    snaps = peak = 0
     seen_whole, cut, headers_seen = set(), set(), set()
     # an item counts as seen whole only if its LAST line reached the context (a `| head -1`
     # shows the header but not the batch)
@@ -176,7 +178,10 @@ def trial_row(t: Path) -> dict:
     seen_val = set()
     last_text = ""
     think_chars = all_chars = 0
-    for d in snaps:
+    for d in snapshots():
+        snaps += 1
+        if d.get("kind") == "agent":
+            peak = max(peak, int(d.get("sent_tokens") or d.get("tokens") or 0))
         texts = []
         for m in d["messages"]:
             if not isinstance(m, dict):

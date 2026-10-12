@@ -416,6 +416,80 @@ def parse_delta(reply: str, need_changes: bool = True) -> dict | None:
             "open": [ln for ln in out["OPEN"] if not _is_none(ln)] if "OPEN" in seen else None}
 
 
+def steps_in(value: str) -> int:
+    """How many changes one CHANGES line writes. A model packs several onto a line in its own ways:
+    `578 + 62 = 640, then set to 174`, `opened at 117, set to -190, +46 = -144`, `539 - 31 = 508 - 48 = 460, then
+    removed`, `468 - 19 = 449, set to 473 (item 449); +31 = 504 (item 450)`, `112 + 16 + 45 = 173`. Each part between
+    commas, semicolons and "then" that holds a number or a removal is a change; a part with working counts once per
+    operation. Remarks in parentheses are not read. (Counting a line as one change made the count check ask again on
+    a third of the notes calls at 1M, harness and proxy alike; 14 of 25 such questions in the proxy run were this.)"""
+    n = 0
+    for part in re.split(r",(?!\d{3}\b)|;|\bthen\b", re.sub(r"\([^()]*\)", " ", value)):
+        part = part.strip()
+        if not (re.search(r"\d", part) or re.match(r"(removed|closed|struck|deleted|gone)\b", part.lower())):
+            continue
+        ops = len(re.findall(r"(?<=[\d)])\s*[-+*/x\u00d7\u2212]\s*(?=[\d(-])", part))
+        lead = 1 if "=" in part and re.match(r"[-+\u2212]\s*\d", part) else 0      # `+5 = 132`: the line goes on
+        n += max(ops + lead, 1)
+    return max(n, 1)
+
+
+PARTS = re.compile(r",(?!\d{3}\b)|;|\bthen\b")       # what separates the changes packed onto one line
+
+
+def chain_of(value: str, held: int | None, stated: set[int]) -> tuple[int | None, list[int], int] | None:
+    """A CHANGES line that packs several changes, followed part by part from the value the NOTES hold:
+    (the value at the end, or None after a removal; the sets it took from the turns; how many of those open a part
+    of working instead of standing as a part of their own). None when a part cannot be followed, and the line is
+    then judged as before. A part is a set (`opened at 117`, `set to -190`: one number, which the turns must state),
+    working from the value so far (`292 - 67 = 225`, also `539 - 31 = 508 - 48 = 460`), working that goes on from
+    it (`+46 = -144`), working from a value the turns state (a set and a change in one), or a removal.
+    Every line in the 1M proxy run that the working check questioned and then accepted was such a line."""
+    v = re.sub(r"\([^()]*\)", " ", value)
+    v = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", v).replace("\u2212", "-").replace("\u00d7", "*").replace("\u00f7", "/")
+    v = re.sub(r"(?<=[\d)])\s*x\s*(?=[\d(-])", " * ", v)
+    cur, sets, opening, parts = held, [], 0, 0
+    for part in PARTS.split(v):
+        part = part.strip().rstrip(".").strip()
+        if not part:
+            continue
+        parts += 1
+        if re.match(r"(removed|closed|struck|deleted|gone)\b", part.lower()):
+            cur = None
+            continue
+        if "=" not in part:
+            nums = re.findall(r"(?<![\w.])-?\d+(?![\d.]*\d)", part)
+            if len(nums) != 1 or re.search(r"\u2192|->|=>", part):
+                return None
+            n = int(nums[0])
+            if n != cur:
+                if n not in stated or n in sets:
+                    return None
+                sets.append(n)
+            cur = n
+            continue
+        pieces = [x.strip() for x in part.split("=")]
+        if not re.fullmatch(r"-?\d+", pieces[-1]):
+            return None
+        for expr, after in zip(pieces, pieces[1:]):
+            first = re.match(r"\(?\s*(-?\d+)(?![\d.])", expr)
+            if first and cur is not None and int(first.group(1)) == cur:
+                pass                                 # working from the value so far
+            elif re.match(r"[-+*/]\s*\(?\d", expr) and cur is not None:
+                expr = f"({cur}) {expr}"             # working that goes on from it
+            elif first and int(first.group(1)) in stated and int(first.group(1)) not in sets:
+                sets.append(int(first.group(1)))     # the turns set this value and the working starts from it
+                opening += 1
+            else:
+                return None
+            val = _calc(expr) if re.fullmatch(r"[\d\s+\-*/().]+", expr) else None
+            head = re.match(r"\(?\s*(-?\d+)(?![\d.])", after)
+            if val is None or not float(val).is_integer() or not head or int(head.group(1)) != int(val):
+                return None                          # not plain arithmetic, or a sum that is wrong: judged as before
+            cur = int(val)
+    return (cur, sets, opening) if parts > 1 else None
+
+
 def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: bool = False,
                 near: dict[str, set[int]] | None = None) -> tuple[str, dict]:
     """The NOTES after the changes, and what happened: lines changed and added, sums corrected, and `mismatch`:
@@ -454,15 +528,35 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
         if NO_CHANGE.fullmatch(value.strip()):           # `name: (no change)`: mentioned, not changed
             steps[name] = steps.get(name, 0) + 1
             continue
+        old = fact_of(state[where[name]])[1] if name in where else None
+        held = number_of(old) if old is not None else None
+        counted = steps_in(value)
+        if strict and seen is not None:
+            # several changes on one line: followed part by part; a line that can be followed is right as it stands
+            ch = chain_of(value, held, (seen if near is None else near.get(name, set())) - used.get(name, set()))
+            if ch is not None:
+                final, sets, opening = ch
+                used.setdefault(name, set()).update(sets)
+                steps[name] = steps.get(name, 0) + counted + opening
+                info["chained"] = info.get("chained", 0) + 1
+                line = f"{name}: {final}" if final is not None else f"{name}: removed"
+                if name in where:
+                    state[where[name]] = line
+                    info["changed"] += 1
+                else:
+                    where[name] = len(state)
+                    state.append(line)
+                    info["added"] += 1
+                continue
         w = work_out(value)
-        steps[name] = steps.get(name, 0) + 1
         if w:
             start, total, stated = w
-            old = fact_of(state[where[name]])[1] if name in where else None
-            held = number_of(old) if old is not None else None
-            ops = len(re.findall(r"(?<=[\d)])\s*[-+*/x\u00d7\u2212]\s*(?=[\d(-])", value.split("=")[-2] if "=" in value else ""))
-            # the steps of the working, plus the set it starts from when that is not the value the NOTES hold
-            steps[name] += max(ops, 1) - 1 + (1 if start is not None and start != held else 0)
+            # the steps the line writes, plus the set it starts from when the line opens with working from a value
+            # that is not the one the NOTES hold (`585 - 79 = 506` after "opened at 585", "went down by 79")
+            if start is not None and start != held and re.match(r"\s*[-\u2212]?\d+\s*[-+*/x\u00d7\u2212]", value):
+                counted += 1
+        steps[name] = steps.get(name, 0) + counted
+        if w:
             if total is None:
                 info["mismatch"].append(f"{name}: `{value}` has no whole-number value")
                 total = stated
@@ -473,6 +567,16 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
                 # the turns set this value and the line starts from it; a set is good for one start
                 info["set_in_turns"] = info.get("set_in_turns", 0) + 1
                 used.setdefault(name, set()).add(start)
+            elif start is not None and held is not None and total == held:
+                # The line ends at the value the NOTES already hold, from another start: a change that was noted
+                # before and is written again (with in-place notes through the proxy the newest exchange stays in
+                # view, and its thought about the item just noted is read again at the next call: 6 such lines at
+                # 1M, each one a reply asked for again). Applying it or not gives the same value; it is no change.
+                info["renoted"] = info.get("renoted", 0) + 1
+                steps[name] -= counted
+                if not steps[name]:
+                    del steps[name]
+                continue
             elif start is not None and held is not None and held != start:
                 info["mismatch"].append(f"{name}: working starts from {start}, NOTES hold {held}")
             elif start is not None and old is not None and re.match(r"(removed|closed|struck|deleted|gone)\b", old.lower()):

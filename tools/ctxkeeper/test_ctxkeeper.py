@@ -485,6 +485,76 @@ class Policy(unittest.TestCase):
         s = next(iter(k.sessions.values()))
         self.assertEqual((s.state["recalls"], s.state["recall_limit_hit"]), (3, 1))
 
+    def test_searches_of_a_turn_that_ended_empty_are_shown_again_once(self):
+        """The proxy answers `recall` itself, so the client's history never holds what was found. A turn that ends
+        with nothing for the client (X32m at 1M: six blank answers) must not lose it."""
+        s = self.run_conversation(30)
+        seen = []
+        call = lambda: reply(None, [{"id": f"c{len(seen)}", "type": "function", "function": {"name": "recall", "arguments": json.dumps({"pattern": "abcd03"})}}])
+
+        def thinks_it_away(body):
+            seen.append(body)
+            return call() if len(seen) == 1 else reply(None)
+
+        self.keeper.ask = thinks_it_away
+        asked = conversation(30) + [{"role": "user", "content": "What was counter abcd03 set to?"}]
+        resp = self.keeper.complete({"model": "m", "messages": asked, "chat_template_kwargs": {"enable_thinking": True}})
+        self.assertFalse(resp["choices"][0]["message"].get("content"))
+        self.assertEqual(len(seen), 3)                                            # the search, the empty reply, one more try
+        self.assertIs(seen[2]["chat_template_kwargs"]["enable_thinking"], False)  # ... without thinking
+        self.assertEqual(seen[2]["messages"], seen[1]["messages"])
+        self.assertEqual((s.state["empty_replies_retried"], s.state["carried"]), (1, 1))
+        self.assertIn("counter abcd03 to 21", s.state["carry"])
+        # the client nudges; the next request shows the searches again, and an answer ends the carrying
+        self.keeper.ask = lambda body: seen.append(body) or reply("It was set to 21.")
+        nudged = asked + [{"role": "assistant", "content": ""}, {"role": "user", "content": "(No tool call in your last turn.)"}]
+        self.keeper.complete({"model": "m", "messages": nudged})
+        shown = [m for m in seen[-1]["messages"] if str(m.get("content")).startswith(ck.CARRY_HEAD)]
+        self.assertEqual(len(shown), 1)
+        self.assertIn("recall(pattern='abcd03') returned:", shown[0]["content"])
+        self.assertIn("counter abcd03 to 21", shown[0]["content"])
+        self.assertIsNone(s.state["carry"])
+        self.keeper.complete({"model": "m", "messages": nudged + [{"role": "assistant", "content": "It was set to 21."}, {"role": "user", "content": "Thanks."}]})
+        self.assertFalse([m for m in seen[-1]["messages"] if str(m.get("content")).startswith(ck.CARRY_HEAD)])
+
+    def test_an_empty_reply_is_asked_once_more_without_thinking(self):
+        seen = []
+
+        def model(body):
+            seen.append(body)
+            return reply(None) if (body.get("chat_template_kwargs") or {}).get("enable_thinking") is not False else reply("done")
+
+        k = ck.Keeper(model, Path(self.dir.name) / "e", budget=100000)
+        resp = k.complete({"model": "m", "messages": conversation(2), "chat_template_kwargs": {"enable_thinking": True, "x": 1}})
+        self.assertEqual(resp["choices"][0]["message"]["content"], "done")
+        self.assertEqual([b["chat_template_kwargs"] for b in seen], [{"enable_thinking": True, "x": 1}, {"enable_thinking": False, "x": 1}])
+        self.assertIsNone(next(iter(k.sessions.values())).state["carry"])        # nothing was searched: nothing to carry
+        seen.clear()
+        k.complete({"model": "m", "messages": conversation(2), "chat_template_kwargs": {"enable_thinking": False}})
+        self.assertEqual(len(seen), 1)                                            # thinking was off already: the reply stands
+
+    def test_searches_stop_when_the_window_has_no_room_left(self):
+        """A search result is cut to the room left beside the reply, and then no further search is made this turn."""
+        s = self.run_conversation(30)
+        seen = []
+
+        def greedy(body):
+            seen.append(body)
+            if any(t["function"]["name"] == "recall" for t in body.get("tools") or []):
+                return reply(None, [{"id": f"c{len(seen)}", "type": "function", "function": {"name": "recall", "arguments": json.dumps({"pattern": "counter"})}}])
+            return reply("Answer with what I have.")
+
+        self.keeper.ask = greedy
+        resp = self.keeper.complete({"model": "m", "messages": conversation(30) + [{"role": "user", "content": "List every counter."}]})
+        self.assertEqual(resp["choices"][0]["message"]["content"], "Answer with what I have.")
+        final = seen[-1]["messages"]
+        self.assertEqual(final[-1]["content"], ck.RECALL_ROOM_NOTE)
+        results = [m["content"] for m in final if m.get("role") == "tool" and str(m.get("content")).startswith("message ")]
+        self.assertTrue(results and results[-1].endswith(ck.RECALL_CUT_NOTE))
+        self.assertLess(len(seen), self.keeper.max_recalls + 1)                   # stopped by room, not by the count
+        self.assertLessEqual(self.keeper.tokens(s, final), self.keeper.budget - self.keeper.reply_reserve + 150)
+        self.assertEqual(s.state["recall_limit_hit"], 1)
+
     def test_rules_are_recited_after_a_new_user_message(self):
         self.run_conversation(30)
         self.keeper.complete({"model": "m", "messages": conversation(30) + [{"role": "user", "content": "And in item 3?"}]})

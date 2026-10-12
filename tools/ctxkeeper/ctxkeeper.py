@@ -143,6 +143,15 @@ Output only these three sections.
 RECALL_LIMIT_NOTE = ("[[That was the last archive search for this turn ({n} made). Do not call `recall` again now: take "
                      "the next step with what you have, for what you are sure of. You can search again right after "
                      "that step for anything still missing; do not give something up as unknown because of this limit.]]")
+RECALL_ROOM_NOTE = ("[[There is no room left in this turn for another archive search. Do not call `recall` again now: "
+                    "take the next step with what you have, for what you are sure of. You can search again right "
+                    "after that step for anything still missing.]]")
+RECALL_CUT_NOTE = "\n[cut here: no more room in this turn; narrow the search with `before` / `after` / `last`]"
+CARRY_HEAD = ("[[Message from the context keeper, not part of the task. Your last turn ended without a command. These "
+              "are the archive searches you made in it and what they returned; they were not saved anywhere else, "
+              "so use them now.]]")
+RECALL_MARGIN = 600                                 # tokens kept free beside the reply reserve while searching
+CARRY_CHARS = 24000                                  # the searches of an unfinished turn that are shown again, at most
 REPEAT_NOTE = ("[[You have made the same tool call {n} times in a row with the same result. Calling it again will not "
                "change anything: use the result you have and decide the next step.]]")
 LAYOUT_RETRY = ("Your reply did not use the layout. Reply with the NOTES only: first line RULES, then the rules, "
@@ -383,7 +392,9 @@ class Session:
                       # of the turns a failed attempt left for the ordinary cut, the number (in the client's history)
                       # of an archived user message that is still shown, and the tokens the notes calls cost
                       "inplace_cuts": 0, "inplace_failed": 0, "inplace_reasks": 0, "hold": 0, "kept_user": None,
-                      "notes_prompt_tokens": 0, "notes_cached_tokens": 0, "notes_written_tokens": 0}
+                      "notes_prompt_tokens": 0, "notes_cached_tokens": 0, "notes_written_tokens": 0,
+                      # the archive searches of a turn that ended without a command, shown again in the next request
+                      "carry": None}
         f = self.dir / "state.json"
         if f.exists():
             self.state.update(json.loads(f.read_text()))
@@ -418,7 +429,7 @@ class Session:
             self.archive.path.rename(self.dir / f"archive-until-{stamp}.jsonl")
         self.archive.last = None
         self.log_event({"event": "new conversation: the history no longer contains what was archived", "set_aside": stamp})
-        self.state.update(cut=0, notes="", boundary="", cuts=0, largest_turn=0, hold=0, kept_user=None,
+        self.state.update(cut=0, notes="", boundary="", cuts=0, largest_turn=0, hold=0, kept_user=None, carry=None,
                           restarts=self.state.get("restarts", 0) + 1)
         self.save()
 
@@ -784,6 +795,12 @@ class Keeper:
             asked = from_user or bool(self.recite_when and self.recite_when.search(newest))
             if self.recite and asked and rule_lines(s.state["notes"]):
                 view.append({"role": "user", "content": RECITE_HEAD + "\n" + "\n".join("- " + r for r in rule_lines(s.state["notes"]))})
+            carried = s.state.get("carry")
+            if carried:
+                # The proxy answers `recall` itself, so the client's history never holds the searches. A turn that
+                # ends without a command (the model thought its reply away, or the search limit stopped it) would
+                # lose all it found: X32m at 1M left six answers blank that way. They are shown once more.
+                view.append({"role": "user", "content": CARRY_HEAD + "\n" + carried})
             stuck = self.repeat_limit and repeats(messages) >= self.repeat_limit
             if stuck:
                 view.append({"role": "user", "content": REPEAT_NOTE.format(n=repeats(messages))})
@@ -806,11 +823,16 @@ class Keeper:
             if s.state["cut"] or self.memory_note:   # with the note the tool is there from the start (a stable prompt)
                 out["tools"] = list(body.get("tools") or []) + [RECALL_TOOL]
             resp: dict[str, Any] = {}
+            rounds: list[str] = []                   # this turn's searches and what they returned, as text
+            full = False                             # no room in the window for another search
             for round_ in range(self.max_recalls + 1):
-                if round_ == self.max_recalls:
-                    # The budget of searches for one turn is used up. The client must never be handed a `recall` call
-                    # (it does not know the tool): ask once more without it, and say why.
-                    out = dict(out, messages=out["messages"] + [{"role": "user", "content": RECALL_LIMIT_NOTE.format(n=self.max_recalls)}],
+                last = round_ == self.max_recalls or full
+                if last:
+                    # The searches for one turn are used up (their number, or the room in the window). The client
+                    # must never be handed a `recall` call (it does not know the tool): ask once more without it,
+                    # and say why.
+                    note = RECALL_ROOM_NOTE if full else RECALL_LIMIT_NOTE.format(n=self.max_recalls)
+                    out = dict(out, messages=out["messages"] + [{"role": "user", "content": note}],
                                tools=[t for t in out.get("tools") or [] if t is not RECALL_TOOL])
                     if not out["tools"]:
                         out.pop("tools")
@@ -818,11 +840,20 @@ class Keeper:
                 resp = self.ask(out)
                 self.learn(s, out["messages"], resp)
                 msg = ((resp.get("choices") or [{}])[0].get("message") or {})
+                if (not msg.get("tool_calls") and not str(msg.get("content") or "").strip()
+                        and (out.get("chat_template_kwargs") or {}).get("enable_thinking") is not False):
+                    # Nothing for the client at all: the thinking used the reply up. Asked once more without it.
+                    s.state["empty_replies_retried"] = s.state.get("empty_replies_retried", 0) + 1
+                    again = dict(out, chat_template_kwargs=dict(out.get("chat_template_kwargs") or {}, enable_thinking=False))
+                    second = self.ask(again)
+                    m2 = ((second.get("choices") or [{}])[0].get("message") or {})
+                    if m2.get("tool_calls") or str(m2.get("content") or "").strip():
+                        resp, msg = second, m2
                 calls = msg.get("tool_calls") or []
                 mine = [c for c in calls if ((c.get("function") or {}).get("name")) == "recall"]
                 if not mine:
                     break
-                if round_ == self.max_recalls:      # it asked anyway: the client gets the words without the call
+                if last:                            # it asked anyway: the client gets the words without the call
                     rest = [c for c in calls if c not in mine]
                     if rest:
                         msg["tool_calls"] = rest
@@ -835,6 +866,7 @@ class Keeper:
                     msg["tool_calls"] = [c for c in calls if c not in mine]
                     break
                 results = []
+                room = self.budget - self.reply_reserve - self.tokens(s, out["messages"] + [msg])
                 for c in mine:
                     try:
                         args = json.loads((c.get("function") or {}).get("arguments") or "{}")
@@ -843,10 +875,26 @@ class Keeper:
                         else:
                             text = s.archive.recall(**{k: args[k] for k in ("pattern", "before", "after", "last", "message") if args.get(k) is not None})
                     except Exception as exc:
-                        text = f"recall: bad arguments ({exc})"
+                        args, text = {}, f"recall: bad arguments ({exc})"
+                    # a result never takes the window past the room for the reply: it is cut to what is left
+                    fits = int(max(room - RECALL_MARGIN, 0) * s.state["ratio"])
+                    if len(text) > fits:
+                        text = text[:max(fits, 200)] + RECALL_CUT_NOTE
+                        full = True
+                    room -= self.tokens(s, [{"role": "tool", "content": text}])
                     s.state["recalls"] += 1
                     results.append({"role": "tool", "tool_call_id": c.get("id"), "content": text})
+                    rounds.append("recall(" + ", ".join(f"{k}={v!r}" for k, v in args.items()) + ") returned:\n" + text)
+                full = full or room < RECALL_MARGIN
                 out = dict(out, messages=out["messages"] + [msg] + results)
+            # What the searches found stays for the next request only if this turn gave the client nothing to act on
+            empty = not msg.get("tool_calls") and not str(msg.get("content") or "").strip()
+            if empty and (rounds or carried):
+                text = "\n\n".join(([carried] if carried else []) + rounds)
+                s.state["carry"] = text[-CARRY_CHARS:]
+                s.state["carried"] = s.state.get("carried", 0) + 1
+            else:
+                s.state["carry"] = None
             s.save()
             return resp
 

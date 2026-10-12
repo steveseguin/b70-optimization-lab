@@ -188,6 +188,62 @@ class Keeper(unittest.TestCase):
         new, info = NS["apply_delta"]("RULES\n(none)\nSTATE\nabcd12: 5\nOPEN", {"changes": [("abcd12", "(no change \u2014 mention is the confidentiality rule itself)")]})
         self.assertEqual((new, info["steps"]), ("RULES\n(none)\nSTATE\nabcd12: 5\nOPEN", {"abcd12": 1}))
 
+    def test_changes_packed_onto_one_line_are_counted(self):
+        n = NS["steps_in"]
+        for value, want in (("578 + 62 = 640, then set to 174 (item 16)", 2), ("opened at 117, set to -190, +46 = -144 (item 39)", 3),
+                            ("539 - 31 = 508 - 48 = 460, then removed (item 25)", 3), ("112 + 16 + 45 = 173 (item 539)", 2),
+                            ("468 \u2212 19 = 449, set to 473 (item 449); +31 = 504 (item 450); set to 327 (item 454)", 4),
+                            ("771 + 75 = 846 (item 455), removed (item 456, struck off the books)", 2),
+                            ("451 \u2212 89 = 362 (item 453), \u2212 75 = 287 (item 454)", 2), ("reopened at 183, then +64 = 247", 2),
+                            ("removed (item 150, struck off the books)", 1), ("set to -3", 1), ("402", 1), ("-107 \u2192 -31", 1),
+                            ("uses argparse, reads the environment, writes a log", 1), ("1,234 + 6 = 1,240", 1)):
+            self.assertEqual(n(value), want, value)
+        notes = "RULES\n(none)\nSTATE\nabcd12: 578\nefgh34: removed\nOPEN"
+        seen = NS["numbers_in"]("efgh34 was opened at 585. It went down by 79.")
+        _, info = NS["apply_delta"](notes, {"changes": [("abcd12", "578 + 62 = 640, then set to 174"), ("efgh34", "585 - 79 = 506"),
+                                                        ("ijkl56", "opened at 127, +5 = 132")]}, seen)
+        self.assertEqual(info["steps"], {"abcd12": 2, "efgh34": 2, "ijkl56": 2})      # efgh34: the set it starts from, and the change
+
+    def test_a_line_that_packs_several_changes_is_followed_part_by_part(self):
+        c = NS["chain_of"]
+        self.assertEqual(c("reopened at 183, then +64 = 247 (item 17)", None, {183}), (247, [183], 0))
+        self.assertEqual(c("opened at 117, set to -190, +46 = -144 (item 39)", None, {117, -190}), (-144, [117, -190], 0))
+        self.assertEqual(c("539 - 31 = 508 - 48 = 460, then removed (item 25)", 539, set()), (None, [], 0))
+        self.assertEqual(c("36 \u2212 2 = 34, \u2212 76 = \u221242 (item 451); +40 = \u22122 (item 452)", 36, set()), (-2, [], 0))
+        self.assertEqual(c("set to \u22123, then \u22123 + 39 = 36 (item 445)", 366, {-3}), (36, [-3], 0))
+        self.assertEqual(c("3, set to 111 (item 452), +82 = 193 (item 454)", 3, {111}), (193, [111], 0))
+        self.assertEqual(c("585 - 79 = 506, then removed", None, {585}), (None, [585], 1))     # the set opens the working
+        self.assertEqual(c("opened at 79 (item 521, reopened after removal at 296); 79 \u2212 79 = 0 (item 523)", None, {79}), (0, [79], 0))
+        for value, held, stated in (("set to 600, then 600 + 63 = 663", -120, set()),            # 600 is not in the turns
+                                    ("set to 600, then 600 + 63 = 664", -120, {600}),            # a wrong sum
+                                    ("opened at 117, +46 = 163, about right", None, {117}),      # a part without a number
+                                    ("-20 \u2192 set to -159, then -2 \u2192 -161", -20, {-159}),  # arrows are not followed
+                                    ("7 / 2 = 3, then set to 9", 7, {9}), ("480 + 5 = 485", 480, set()), ("removed", 5, set()),
+                                    ("answered 571, then 12", None, set()), ("set to 5, set to 7, set to 5", 1, {5, 7})):   # a set is good once
+            self.assertIsNone(c(value, held, stated), value)
+        notes = "RULES\n(none)\nSTATE\nabcd12: 36\nefgh34: removed\nmnop78: 9\nOPEN"
+        turns = "ITEM 17/147 (UPDATE)\nefgh34 came back onto the books at 183. efgh34 gained sixty-four. wxyz56 was opened at 585. wxyz56 went down by 79. wxyz56 was struck off."
+        seen = NS["numbers_in"](turns)
+        ap = lambda changes: NS["apply_delta"](notes, {"changes": changes}, seen, strict=True, near=NS["numbers_near"](["abcd12", "efgh34", "wxyz56", "mnop78"], [{"role": "tool", "content": turns}]))
+        new, info = ap([("abcd12", "36 - 2 = 34, - 76 = -42 (item 451)"), ("efgh34", "reopened at 183, then +64 = 247 (item 17)"),
+                        ("wxyz56", "585 - 79 = 506, then removed"), ("mnop78", "set to 600, then 600 + 63 = 663")])
+        self.assertEqual(new.splitlines()[3:7], ["abcd12: -42", "efgh34: 247", "mnop78: set to 600, then 600 + 63 = 663", "wxyz56: removed"])
+        self.assertEqual((info["chained"], info["mismatch"]), (3, ["mnop78: 663 is not a value the turns state; write the working from the value the NOTES hold, 9"]))
+        self.assertEqual(info["steps"], {"abcd12": 2, "efgh34": 2, "wxyz56": 3, "mnop78": 2})
+        _, loose = NS["apply_delta"](notes, {"changes": [("abcd12", "36 - 2 = 34, - 76 = -42")]}, seen)       # only with the strict checks
+        self.assertNotIn("chained", loose)
+
+    def test_a_change_noted_before_and_written_again_is_no_change(self):
+        """The line ends at the value the NOTES already hold, from another start: it was noted at the last call and
+        is read again (the newest exchange stays in view). No question about it, no change, no mention accounted."""
+        notes = "RULES\n(none)\nSTATE\nabcd12: 19\nefgh34: 682\nOPEN"
+        new, info = NS["apply_delta"](notes, {"changes": [("abcd12", "-10 + 29 = 19"), ("efgh34", "751 \u2212 69 = 682"), ("efgh34", "682 + 24 = 706")]}, set(), strict=True)
+        self.assertEqual((info["mismatch"], info["renoted"], info["changed"]), ([], 2, 1))
+        self.assertEqual(new.splitlines()[3:5], ["abcd12: 19", "efgh34: 706"])
+        self.assertEqual(info["steps"], {"efgh34": 1})
+        _, info = NS["apply_delta"](notes, {"changes": [("abcd12", "-10 + 28 = 18")]}, set(), strict=True)        # another value: still asked about
+        self.assertEqual(info["mismatch"], ["abcd12: working starts from -10, NOTES hold 19"])
+
     def test_a_worked_out_value_must_show_its_working(self):
         notes = "RULES\n(none)\nSTATE\nrumi16: 29\nabcd12: 5\nOPEN"
         seen = NS["numbers_in"]("rumi16 lost 73. abcd12 was set to four hundred and two. wxyz56 was opened at 9.")
@@ -371,8 +427,10 @@ class Delta(unittest.TestCase):
         self.assertTrue(NS["has_layout"](new))
 
     def test_apply_delta_mismatch_and_first_cut(self):
-        _, info = NS["apply_delta"](self.NOTES, {"changes": [("abcd12", "70 + 5 = 75")]})
+        _, info = NS["apply_delta"](self.NOTES, {"changes": [("abcd12", "70 + 6 = 76")]})
         self.assertEqual(info["mismatch"], ["abcd12: working starts from 70, NOTES hold 75"])
+        _, info = NS["apply_delta"](self.NOTES, {"changes": [("abcd12", "70 + 5 = 75")]})
+        self.assertEqual((info["mismatch"], info["renoted"]), ([], 1))      # ends at the value held: noted before (2026-10-12)
         _, info = NS["apply_delta"](self.NOTES, {"changes": [("qqqq11", "10 + 5 = 15")]})
         self.assertEqual(info["mismatch"], [])            # a name the NOTES do not hold: nothing to check against
         _, info = NS["apply_delta"](self.NOTES, {"changes": [("efgh34", "75 + 5 = 80")]})
