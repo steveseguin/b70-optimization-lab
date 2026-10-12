@@ -1,0 +1,110 @@
+{
+  "schema": "packet33.k2-summary.v1",
+  "device_executed": true,
+  "passed": true,
+  "selection_scope": "one-card kernel diagnostic; not model speed",
+  "table": [
+    {
+      "klass": "gemv:expsgate",
+      "candidate": "p33.gate.restrict",
+      "workloads": [
+        {
+          "workload": "expsgate.iq2",
+          "incumbent_us": 175.937,
+          "candidate_us": 81.459
+        },
+        {
+          "workload": "expsgate.iq3",
+          "incumbent_us": 175.313,
+          "candidate_us": 82.44800000000001
+        }
+      ],
+      "conservative_ms_per_token_saved": 4.457519999999999,
+      "selected": true
+    },
+    {
+      "klass": "gemv:expsdown",
+      "candidate": "p33.down.select",
+      "workloads": [
+        {
+          "workload": "expsdown",
+          "incumbent_us": 127.396,
+          "candidate_us": 90.208
+        }
+      ],
+      "conservative_ms_per_token_saved": 1.7850240000000002,
+      "selected": true
+    },
+    {
+      "klass": "gemv:gdn.qkv",
+      "candidate": "p33.dense.segment",
+      "workloads": [
+        {
+          "workload": "gdn.qkv.q6",
+          "incumbent_us": 99.2185,
+          "candidate_us": 62.292
+        },
+        {
+          "workload": "gdn.qkv.q8",
+          "incumbent_us": 96.666,
+          "candidate_us": 56.875
+        }
+      ],
+      "conservative_ms_per_token_saved": 1.3293540000000004,
+      "selected": true
+    },
+    {
+      "klass": "gemv:expsdown",
+      "candidate": "p33.down.bank",
+      "workloads": [
+        {
+          "workload": "expsdown",
+          "incumbent_us": 127.5,
+          "candidate_us": 101.25
+        }
+      ],
+      "conservative_ms_per_token_saved": 1.26,
+      "selected": true
+    },
+    {
+      "klass": "qsa.attention",
+      "candidate": "p33.qsa.shape",
+      "workloads": [
+        {
+          "workload": "",
+          "incumbent_us": 189.635,
+          "candidate_us": 159.271
+        }
+      ],
+      "conservative_ms_per_token_saved": 0.364368,
+      "selected": true
+    },
+    {
+      "klass": "gemv:qsa.k",
+      "candidate": "p33.dense.segment",
+      "workloads": [
+        {
+          "workload": "qsa.k",
+          "incumbent_us": 10.0,
+          "candidate_us": 8.333
+        }
+      ],
+      "conservative_ms_per_token_saved": 0.020003999999999997,
+      "selected": true
+    },
+    {
+      "klass": "route",
+      "candidate": "p33.route.rank4",
+      "workloads": [
+        {
+          "workload": "",
+          "incumbent_us": 66.875,
+          "candidate_us": 77.396
+        }
+      ],
+      "conservative_ms_per_token_saved": -0.505008,
+      "selected": false
+    }
+  ],
+  "events_sha256": "a935f3973cb8eff94df5e695e63e63f479f5b026d530da682c4f78167c80872e"
+}

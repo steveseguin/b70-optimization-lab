@@ -1,0 +1,45 @@
+{
+  "schema": "packet33.window.v1",
+  "window": "K0",
+  "passed": true,
+  "card": 2,
+  "boot_id": "13858eef-ec68-44ea-a67c-9444933b7100",
+  "native_binary_sha256": {
+    "p33-k0": "2423d4d685de900f40329d6187298d63dba5142ff479dbf378bf0b3f15c89820",
+    "p33-timing": "3179b6952979361253364b1a50079eb5e0a84645343042c1e448e6e607585daf"
+  },
+  "environment": {
+    "HOME": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/native-home",
+    "TMPDIR": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/native-tmp",
+    "PATH": "/usr/bin:/bin",
+    "LANG": "C.UTF-8",
+    "OMP_NUM_THREADS": "2",
+    "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib"
+  },
+  "expected_seconds": 60,
+  "expectation_enforced": false,
+  "watchdog_seconds": 300,
+  "ldd": "\tlinux-vdso.so.1 (0x00007f1c1cf6e000)\n\tlibcrypto.so.3 => /usr/lib/x86_64-linux-gnu/libcrypto.so.3 (0x00007f1c1ca00000)\n\tlibze_loader.so.1 => /usr/lib/x86_64-linux-gnu/libze_loader.so.1 (0x00007f1c1c87b000)\n\tlibstdc++.so.6 => /usr/lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007f1c1c400000)\n\tlibm.so.6 => /usr/lib/x86_64-linux-gnu/libm.so.6 (0x00007f1c1c792000)\n\tlibgcc_s.so.1 => /usr/lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007f1c1cf36000)\n\tlibsycl.so.9 => /opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9 (0x00007f1c1c000000)\n\tlibc.so.6 => /usr/lib/x86_64-linux-gnu/libc.so.6 (0x00007f1c1bc00000)\n\t/lib64/ld-linux-x86-64.so.2 (0x00007f1c1cf70000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007f1c1cf1d000)\n\tlibur_loader.so.0 => /opt/intel/oneapi/compiler/2026.0/lib/libur_loader.so.0 (0x00007f1c1ae00000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007f1c1cf16000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x00007f1c1c78d000)\n\tlibimf.so => /opt/intel/oneapi/compiler/2026.0/lib/libimf.so (0x00007f1c1a800000)\n\tlibz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x00007f1c1c771000)\n\tlibsvml.so => /opt/intel/oneapi/compiler/2026.0/lib/libsvml.so (0x00007f1c19000000)\n\tlibirng.so => /opt/intel/oneapi/compiler/2026.0/lib/libirng.so (0x00007f1c1bf07000)\n\tlibintlc.so.5 => /opt/intel/oneapi/compiler/2026.0/lib/libintlc.so.5 (0x00007f1c1c70e000)\n",
+  "device_accessed": true,
+  "kernel_execution": false,
+  "device_executed": false,
+  "command": [
+    "nice",
+    "-n",
+    "19",
+    "ionice",
+    "-c",
+    "3",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/p33-k0",
+    "--authorized-device-window",
+    "--card",
+    "2",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/k0-card2/run",
+    "--cards",
+    "1"
+  ],
+  "pid": 454874,
+  "returncode": 0,
+  "elapsed_seconds": 57.91394095099531
+}
