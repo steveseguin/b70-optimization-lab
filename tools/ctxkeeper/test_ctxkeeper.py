@@ -45,6 +45,194 @@ def conversation(turns, words=60):
     return msgs
 
 
+class LedgerModel:
+    """A scripted model for in-place notes: asked for the changes, it writes one line per `counter abcdNN to V` it can
+    see in the turns after the NOTES message (the scripted replies in `script` come first); otherwise 'ok'."""
+
+    def __init__(self, script=None, rules=("Always answer in French.",)):
+        self.requests, self.script, self.rules, self.notes_requests = [], list(script or []), list(rules), []
+
+    def __call__(self, body):
+        self.requests.append(body)
+        last = str(body["messages"][-1].get("content") or "")
+        asked = last.startswith("[[Message from the context keeper") or last.startswith("The turns mention these names") \
+            or last.startswith("Check these lines") or last.startswith("Your reply did not use the layout")
+        if not asked:
+            return reply(f"ok {len(body['messages'])}", prompt_tokens=0)
+        self.notes_requests.append(body)
+        if self.script:
+            text = self.script.pop(0)
+        else:
+            import re
+            seen = []
+            for m in body["messages"]:
+                if m.get("role") == "tool":
+                    seen += re.findall(r"counter (abcd\d\d) to (\d+)", str(m.get("content")))
+            first = not any(str(m.get("content") or "").startswith("[[NOTES kept") for m in body["messages"])
+            text = ("NEW RULES\n" + ("\n".join("- " + r for r in self.rules) if first else "(none)")
+                    + "\nCHANGES\n" + ("\n".join(f"{k}: {v}" for k, v in seen) or "(none)") + "\nOPEN\n- keep going")
+        resp = reply(text)
+        resp["usage"] = {"prompt_tokens": 1000, "completion_tokens": 50, "prompt_tokens_details": {"cached_tokens": 900}}
+        return resp
+
+
+class InPlace(unittest.TestCase):
+    """--notes-mode inplace: the notes call rides on the request the server has just read; the reply is the changes."""
+
+    def keeper(self, model, **kw):
+        self.dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.dir.cleanup)
+        args = dict(budget=6000, reply_reserve=400, headroom=100, target_ratio=0.5, notes_cap=600, memory_note=False,
+                    notes_mode="inplace", inplace_tokens=300)
+        args.update(kw)
+        return ck.Keeper(model, Path(self.dir.name), **args)
+
+    def run_conversation(self, keeper, turns, start=1, tools=None):
+        for n in range(start, turns + 1):
+            body = {"model": "m", "messages": conversation(n)}
+            if tools:
+                body["tools"] = tools
+            keeper.complete(body)
+        return next(iter(keeper.sessions.values()))
+
+    def test_turns_are_noted_in_place_and_all_moved_out(self):
+        model = LedgerModel()
+        tools = [{"type": "function", "function": {"name": "bash"}}]
+        keeper = self.keeper(model)
+        s = self.run_conversation(keeper, 12, tools=tools)
+        self.assertGreaterEqual(s.state["inplace_cuts"], 2)
+        self.assertEqual(s.state["cuts"], s.state["inplace_cuts"])                 # the ordinary cut never had to run
+        self.assertEqual(s.state["inplace_failed"], 0)
+        self.assertEqual(len(s.archive.rows()), s.state["cut"])                    # everything moved out is in the archive
+        self.assertEqual(s.archive.rows()[1]["message"], conversation(12)[3])      # verbatim
+        self.assertEqual(ck.rule_lines(s.state["notes"]), ["Always answer in French."])
+        self.assertIn("abcd00: 0", s.state["notes"])
+        # the view right after an in-place cut: opening messages, NOTES, and the newest exchange only
+        first = model.notes_requests[0]
+        i = model.requests.index(first)
+        after = model.requests[i + 1]["messages"]
+        self.assertEqual([m["role"] for m in after], ["system", "user", "user", "assistant", "tool"])
+        self.assertTrue(after[2]["content"].startswith("[[NOTES kept by the context keeper"))
+        # the notes request is the request before it with one message added (so the server has read all but the end)
+        before = model.requests[i - 1]["messages"]
+        self.assertEqual(first["messages"][:-1], before)
+        self.assertTrue(first["messages"][-1]["content"].startswith("[[Message from the context keeper"))
+        self.assertEqual(first["tool_choice"], "none")
+        self.assertEqual([t["function"]["name"] for t in first["tools"]], ["bash"])    # the tool list of the calls before it
+        self.assertEqual([t["function"]["name"] for t in model.notes_requests[1]["tools"]], ["bash", "recall"])
+        self.assertEqual(s.state["notes_cached_tokens"], 900 * len(model.notes_requests))
+        self.assertGreater(len((Path(self.dir.name) / next(iter(keeper.sessions)) / "notes-history.jsonl").read_text().splitlines()), 1)
+
+    def test_the_prefix_is_stable_between_in_place_cuts(self):
+        model = LedgerModel()
+        keeper = self.keeper(model)
+        self.run_conversation(keeper, 12)
+        main = [r["messages"] for r in model.requests if r not in model.notes_requests]
+        grown = sum(1 for a, b in zip(main, main[1:]) if b[:len(a)] == a)
+        self.assertEqual(grown + len(model.notes_requests), len(main) - 1)         # every other call only adds to the last one
+
+    def test_changes_are_applied_and_sums_recomputed(self):
+        model = LedgerModel(script=["NEW RULES\n(none)\nCHANGES\nstock: 7\nabcd00: 0\nOPEN\n",
+                                    "NEW RULES\n- Second rule.\nCHANGES\nstock: 7 + 5 = 13\nOPEN\n- check stock"])
+        keeper = self.keeper(model)
+        s = self.run_conversation(keeper, 6)
+        self.assertEqual(s.state["inplace_cuts"], 2)
+        self.assertIn("stock: 12", s.state["notes"])                               # the proxy did the sum
+        self.assertIn("abcd00: 0", s.state["notes"])                               # a line not mentioned again is kept
+        self.assertEqual(ck.rule_lines(s.state["notes"]), ["Second rule."])
+        self.assertTrue(s.state["notes"].rstrip().endswith("- check stock"))
+
+    def test_working_from_a_wrong_value_is_asked_about_once(self):
+        bad, good = "NEW RULES\n- R one.\nCHANGES\nstock: 99 + 1 = 100\nOPEN\n", "NEW RULES\n(none)\nCHANGES\nstock: 7 + 1 = 8\nOPEN\n"
+        model = LedgerModel(script=["NEW RULES\n(none)\nCHANGES\nstock: 7\nOPEN\n", bad, good])
+        keeper = self.keeper(model)
+        s = self.run_conversation(keeper, 9)
+        self.assertIn("stock: 8", s.state["notes"])
+        self.assertEqual(ck.rule_lines(s.state["notes"]), ["R one."])              # named only in the reply that was asked for again
+        self.assertEqual(s.state["inplace_reasks"], 1)
+        again = model.notes_requests[2]["messages"]
+        self.assertTrue(again[-1]["content"].startswith("Check these lines"))
+        self.assertEqual(again[-2], {"role": "assistant", "content": bad.strip()})
+        events = (Path(self.dir.name) / next(iter(keeper.sessions)) / "events.jsonl").read_text()
+        self.assertIn("asked again", events)
+
+    def test_a_reply_without_the_layout_twice_leaves_the_turns_to_the_ordinary_cut(self):
+        model = LedgerModel(script=["I will continue the task.", "next"])
+        keeper = self.keeper(model, budget=2400, inplace_tokens=300)
+        notes = Model()                                                        # the full rewrite answers the ordinary cut
+        def both(body):
+            last = str(body["messages"][-1].get("content") or "")
+            return notes(body) if "=== TURNS BEING MOVED OUT ===" in last else model(body)
+        keeper.ask = both
+        s = self.run_conversation(keeper, 4)
+        self.assertEqual((s.state["inplace_failed"], s.state["cut"], s.state["notes"]), (1, 0, ""))
+        self.assertGreater(s.state["hold"], 0)
+        tried = len(model.notes_requests)
+        s = self.run_conversation(keeper, 6, start=5)
+        self.assertEqual(len(model.notes_requests), tried)                         # not tried again on the same turns
+        s = self.run_conversation(keeper, 30, start=7)
+        self.assertGreater(s.state["cuts"], 0)                                     # the ordinary cut took over, then in-place again
+        self.assertGreater(s.state["inplace_cuts"], 0)
+        self.assertEqual(len(s.archive.rows()), s.state["cut"])
+        self.assertEqual([r["n"] for r in s.archive.rows()], list(range(3, 3 + s.state["cut"])))   # nothing twice, nothing missing
+
+    def test_a_question_in_a_tool_result_blocks_the_in_place_cut(self):
+        model = LedgerModel()
+        keeper = self.keeper(model, think_when=r"QUESTION:", think_until=r"ITEM \d+: the clerk")
+        msgs = conversation(8)
+        msgs[-1] = dict(msgs[-1], content="QUESTION: what is abcd03 now? " + "filler " * 60)
+        keeper.complete({"model": "m", "messages": msgs})
+        s = next(iter(keeper.sessions.values()))
+        self.assertEqual((s.state["inplace_cuts"], len(model.notes_requests)), (0, 0))
+        more = msgs + conversation(10)[len(msgs):]                               # two ordinary items follow: the question is closed
+        keeper.complete({"model": "m", "messages": more})
+        self.assertEqual(s.state["inplace_cuts"], 1)
+
+    def test_the_latest_user_message_stays_in_view_until_the_next_one(self):
+        model = LedgerModel()
+        keeper = self.keeper(model)
+        msgs = conversation(3) + [{"role": "user", "content": "Now tidy the ledger, counter by counter."}]
+        for i in range(3, 12):
+            msgs += conversation(i + 1)[2 + 2 * i:]
+            keeper.complete({"model": "m", "messages": list(msgs)})
+        s = next(iter(keeper.sessions.values()))
+        self.assertGreater(s.state["inplace_cuts"], 0)
+        self.assertEqual(msgs[s.state["kept_user"]]["content"], "Now tidy the ledger, counter by counter.")
+        view = model.requests[-1]["messages"]
+        self.assertEqual([m["role"] for m in view[:4]], ["system", "user", "user", "user"])
+        self.assertEqual(view[3]["content"], "Now tidy the ledger, counter by counter.")
+        self.assertEqual(len(s.archive.rows()), s.state["cut"])                    # it is in the archive as well
+        msgs.append({"role": "assistant", "content": "Tidied."})
+        msgs.append({"role": "user", "content": "Thanks. Next: close counter abcd02."})
+        keeper.complete({"model": "m", "messages": list(msgs)})
+        self.assertIsNone(s.state["kept_user"])                                    # a newer user message is in view now
+        self.assertNotIn("Now tidy the ledger", json.dumps(model.requests[-1]["messages"][3:4]))
+
+    def test_count_check_asks_about_a_name_left_out(self):
+        short = "NEW RULES\n(none)\nCHANGES\nabcd00: 0\nOPEN\n"
+        model = LedgerModel(script=[short])
+        keeper = self.keeper(model, notes_checks="near")
+        s = self.run_conversation(keeper, 6)
+        self.assertEqual(s.state["inplace_reasks"], 1)                             # abcd01.. were mentioned and not accounted for
+        self.assertIn("more often than your CHANGES account for", model.notes_requests[1]["messages"][-1]["content"])
+        self.assertIn("abcd01: 7", s.state["notes"])                               # the second reply (the scripted ledger) is applied
+
+    def test_state_survives_a_restart_in_place(self):
+        model = LedgerModel()
+        keeper = self.keeper(model)
+        s = self.run_conversation(keeper, 9)
+        cut, notes = s.state["cut"], s.state["notes"]
+        again = ck.Keeper(model, Path(self.dir.name), budget=6000, reply_reserve=400, headroom=100, target_ratio=0.5,
+                          notes_cap=600, memory_note=False, notes_mode="inplace", inplace_tokens=300)
+        again.complete({"model": "m", "messages": conversation(9)})
+        s2 = next(iter(again.sessions.values()))
+        self.assertEqual((s2.state["cut"], s2.state["notes"], s2.state.get("restarts", 0)), (cut, notes, 0))
+
+    def test_options_are_checked(self):
+        with self.assertRaises(ValueError):
+            ck.Keeper(lambda b: None, Path(tempfile.gettempdir()), notes_mode="fast")
+
+
 class Policy(unittest.TestCase):
     def setUp(self):
         self.dir = tempfile.TemporaryDirectory()

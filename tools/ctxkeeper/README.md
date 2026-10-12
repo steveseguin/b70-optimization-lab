@@ -65,13 +65,45 @@ python3 tools/ctxkeeper/ctxkeeper.py --upstream http://127.0.0.1:18196 --port 18
 - Streaming clients get the finished reply as one server-sent event (the proxy has to see whether the model called
   `recall` before anything is sent on).
 
+## In-place notes (`--notes-mode inplace`)
+
+The first form above reads the cut turns a second time (as text in the notes call), rewrites the whole NOTES each
+time, and reads the kept turns again at their new place after every cut. In the lab's 1M-token run that was half the
+time. In-place notes avoid all three:
+
+- When the turns before the newest exchange hold more than `--inplace-tokens` (15,000), the notes call is **the
+  request the server has just read, plus one message** (same tool list, `tool_choice` none), so the server's prefix
+  cache serves nearly all of it.
+- The reply is **only what changed**: `NEW RULES`, `CHANGES` (one `name: value` line per fact, with the working when
+  a value follows from the old one: `stock: 120 + 49 = 169`), `OPEN`. The proxy applies it: a line not mentioned is
+  kept, a sum is recomputed, working must start from the value held. A reply that fails a check is asked for once
+  more with the lines named; rules named in either reply are kept.
+- Then **every turn it covered is moved out**. The view is the opening messages, NOTES and the newest exchange
+  (the assistant's last tool calls with their results, or the newest user message). Nothing is read back.
+- Two things stay in view on purpose: a question that arrived in a tool result and is still open (with
+  `--think-when` / `--think-until`; no in-place cut is made until it is closed), and the latest user message if it
+  has been moved out while the model is still working on it.
+- If an in-place attempt fails (no usable reply twice), nothing changes and the ordinary cut handles those turns
+  when the window fills.
+- `--notes-checks count|near` adds two checks for ledger-like state whose things have names like `abcd12`: every
+  mention of such a name in the noted turns must be accounted for by a change (or a `name: (no change)` line), and
+  a value written without working must be one the turns state (`near`: in a sentence that names the thing, or the
+  next one). Leave it `off` for ordinary agent work: tool output is full of such words that are not state.
+
+Measured in the test harness (the same policy inside the lab's agent harness, lab note campaigns 10 and 10b):
+39/39 and 46/46 at 240K in 10 minutes against 16 for the full rewrite, and 228/228 on the 1M-token stream in 50
+minutes against 226/228 in 83, with NOTES that an audit against the true ledger found right in all 63 versions at
+1M. `notesdelta.py` holds the parsing, applying and checks; its core is copied unchanged from that harness
+(`sync_notesdelta.py` checks or renews the copy). As this proxy it has its unit tests and a scripted end-to-end run;
+see Limits for what has been run against the real server.
+
 ## Limits
 
 - Measured on one synthetic task family, one model and one machine. As a harness policy: 39/39 and 46/46 at 240K,
   226/228 on a 1M-token stream. As this proxy, with a plain agent that sends its whole history: 37/39 and 42/46 at
   240K on its first two runs against the real server; the second exposed a defect in the notes call (fixed, not yet
-  re-run). Not yet run under a real coding or research agent, nor on the 1M stream. Tests against a scripted model:
-  `python3 -m unittest test_ctxkeeper`.
+  re-run; after the fixes 39/39, 44/46 and 222/228 on the 1M stream in 95 minutes). Not yet run under a real coding
+  or research agent. Tests against a scripted model: `python3 -m unittest test_ctxkeeper test_notesdelta`.
 - Token counts are characters over a ratio learned from the server's `usage.prompt_tokens`, with margins. A server
   that reports no usage keeps the starting guess of 3.6 characters per token.
 - `recall` is a text and regular-expression search over archived sentences with message numbers: it answers "what

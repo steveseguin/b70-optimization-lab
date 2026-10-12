@@ -22,11 +22,17 @@ This is the "keeper" policy measured in experiments/qwen38-27b-b70/notes/2026-10
 N32j: 39/39 and 46/46 on two 240K rule streams at a 32K live budget, where a plain sliding window scored 23/39).
 The model is served exactly as before; only what it is shown changes, and what is not shown is kept and searchable.
 
+With `--notes-mode inplace` the notes are taken earlier and more cheaply: once enough turns have gathered, the
+notes call is the request the server has just read with one message added (so the server's prefix cache serves
+almost all of it), the reply is only what changed, the proxy applies and checks it, and every turn it covered is
+moved out, leaving the opening messages, NOTES and the newest exchange (see INPLACE_REQUEST and notesdelta.py).
+
 Everything else (`/v1/models`, `/health`, `/v1/completions`, ...) is passed through untouched.
 
   ctxkeeper.py --upstream http://127.0.0.1:18196 --port 18200 --budget 32768
+  ctxkeeper.py --upstream http://127.0.0.1:18196 --port 18200 --budget 32768 --notes-mode inplace
 
-Standard library only. State (archive, notes) is kept per conversation under --state-dir.
+Standard library only (this file and notesdelta.py). State (archive, notes) is kept per conversation under --state-dir.
 """
 from __future__ import annotations
 
@@ -34,6 +40,7 @@ import argparse
 import hashlib
 import json
 import re
+import sys
 import threading
 import time
 import urllib.error
@@ -41,6 +48,9 @@ import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import notesdelta as nd  # noqa: E402  (same folder: the pure part of changes-only notes)
 
 PIN_HEAD = "[[NOTES kept by the context keeper: {n} earlier messages are in the archive (search it with the `recall` tool)]]"
 RECITE_HEAD = "[[RULES in force (from NOTES); apply every one that covers this before you answer]]"
@@ -97,6 +107,38 @@ OPEN
 what is unfinished or should be watched for (may be empty).
 
 Keep the whole NOTES under about {cap} tokens. Output only the NOTES.
+"""
+# In-place notes (--notes-mode inplace). The notes call is the request the server has just read (the same view, the
+# same tool list) with this one message added, so almost all of it comes from the server's prefix cache; the reply
+# is only what changed, which the proxy applies and checks; then every turn it covered is moved out. Measured in the
+# test harness as arm N32u (lab note, campaigns 10 and 10b): the same answers as a full rewrite at each cut in about
+# 40 % less time (1M tokens: 228 of 228 in 50 minutes against 226 in 83), and no line can be lost by a reply that
+# stops early, because every line the model does not mention is kept.
+INPLACE_REQUEST = """\
+[[Message from the context keeper, not part of the task]] Every turn above, from the {start} on, is about to be \
+moved out of view. It all stays in a searchable archive, but you will no longer see it. Do not continue the task \
+and do not call any tool. Write only what those turns change in the NOTES; the keeper applies it and keeps every \
+line you do not mention. Use exactly this layout; the first line of your reply is the words NEW RULES:
+
+NEW RULES
+one line per standing rule, instruction, method or definition that those turns state and that applies from then \
+on, complete and in its original words. The rules already in the NOTES stay; do not repeat them, and do not repeat \
+the system message or the first message of the conversation: they stay in view. If the turns state no new rule, \
+write (none).
+CHANGES
+one line `name: value` per fact of STATE that those turns set or change, in the order in which the turns give the \
+changes (so a thing changed twice has two lines). The keeper replaces the STATE line of that name, or adds one. \
+When the new value follows from the old one, write the working and put the result last, like \
+`stock: 120 + 49 = 169`, starting from the value in the NOTES or in your earlier line. A thing that is new, or \
+opened again after it was removed, first gets a line with its opening value. Write `name: removed` when \
+something is removed. Go through the turns from the first to the last and leave no change out: every sentence \
+that names a thing of STATE is either a change (a line of its own, or one step in the working of a line) or, if \
+it changes nothing, a line `name: (no change)`. If the turns change nothing, write (none).
+OPEN
+at most three short lines: what is unfinished right now and what to watch for (this replaces the old OPEN \
+section; may be empty). Do not list what has been received or answers already given.
+
+Output only these three sections.
 """
 RECALL_LIMIT_NOTE = ("[[That was the last archive search for this turn ({n} made). Do not call `recall` again now: "
                      "act or answer with what you have. You can search again on a later turn.]]")
@@ -317,7 +359,12 @@ class Session:
         self.archive = Archive(self.dir / "archive.jsonl")
         self.lock = threading.Lock()
         self.state = {"cut": 0, "notes": "", "boundary": "", "ratio": 3.6, "cuts": 0, "rules_put_back": 0,
-                      "notes_failed": 0, "recalls": 0, "largest_turn": 0}
+                      "notes_failed": 0, "recalls": 0, "largest_turn": 0,
+                      # in-place notes: cuts made that way, attempts that failed, replies asked for again, the size
+                      # of the turns a failed attempt left for the ordinary cut, the number (in the client's history)
+                      # of an archived user message that is still shown, and the tokens the notes calls cost
+                      "inplace_cuts": 0, "inplace_failed": 0, "inplace_reasks": 0, "hold": 0, "kept_user": None,
+                      "notes_prompt_tokens": 0, "notes_cached_tokens": 0, "notes_written_tokens": 0}
         f = self.dir / "state.json"
         if f.exists():
             self.state.update(json.loads(f.read_text()))
@@ -351,7 +398,8 @@ class Session:
         if self.archive.path.exists():
             self.archive.path.rename(self.dir / f"archive-until-{stamp}.jsonl")
         self.log_event({"event": "new conversation: the history no longer contains what was archived", "set_aside": stamp})
-        self.state.update(cut=0, notes="", boundary="", cuts=0, largest_turn=0, restarts=self.state.get("restarts", 0) + 1)
+        self.state.update(cut=0, notes="", boundary="", cuts=0, largest_turn=0, hold=0, kept_user=None,
+                          restarts=self.state.get("restarts", 0) + 1)
         self.save()
 
     def save(self) -> None:
@@ -381,7 +429,8 @@ class Keeper:
                  notes_cap: int = 2048, notes_max_tokens: int = 8192, notes_thinking: bool | None = True,
                  recite: bool = True, max_recalls: int = 8, reply_reserve: int = 4096,
                  recite_when: str | None = None, think_when: str | None = None, effort: str | None = None,
-                 memory_note: bool = True, think_until: str | None = None, repeat_limit: int = 3) -> None:
+                 memory_note: bool = True, think_until: str | None = None, repeat_limit: int = 3,
+                 notes_mode: str = "full", inplace_tokens: int = 15000, notes_checks: str = "off") -> None:
         self.ask, self.root = ask, Path(state_dir)
         self.budget, self.target_ratio, self.headroom = budget, target_ratio, headroom
         self.notes_cap, self.notes_max_tokens, self.notes_thinking = notes_cap, notes_max_tokens, notes_thinking
@@ -401,6 +450,17 @@ class Keeper:
         # thinks on that call, whatever else is set (0 turns the check off).
         self.think_until = re.compile(think_until) if think_until else None
         self.repeat_limit = repeat_limit
+        # notes_mode: full = NOTES rewritten from the cut turns at each cut (the first measured form); inplace = see
+        # INPLACE_REQUEST: once the turns before the newest exchange hold more than inplace_tokens, and no question
+        # that arrived in a tool result is open, they are noted in place and all moved out. notes_checks (inplace):
+        # off = the working on a line is recomputed and must start from the value held; count = also, a name's
+        # lines must account for as many changes as the turns mention it, and a value without working must be one
+        # the turns state; near = count, with "state" meaning in a sentence that names the thing or the one after
+        # it. count and near suit ledger-like state with names such as abcd12; they are off by default because in
+        # ordinary tool output (utf8, sha256, test_foo2) such names are mentioned without being state.
+        if notes_mode not in ("full", "inplace") or notes_checks not in ("off", "count", "near"):
+            raise ValueError("notes_mode is full or inplace; notes_checks is off, count or near")
+        self.notes_mode, self.inplace_tokens, self.notes_checks = notes_mode, inplace_tokens, notes_checks
         self.sessions: dict[str, Session] = {}
         self.lock = threading.Lock()
 
@@ -428,11 +488,44 @@ class Keeper:
     def pin(self, s: Session) -> dict[str, Any]:
         return {"role": "user", "content": PIN_HEAD.format(n=s.state["cut"]) + "\n" + (s.state["notes"] or "(no notes yet)")}
 
+    def fixed(self, s: Session, messages: list[dict[str, Any]], h: int) -> list[dict[str, Any]]:
+        """What stands before the turns still in view: the protected start, then (after the first cut) NOTES and,
+        with in-place notes, the latest user message if it has been moved out while still being worked on."""
+        if not s.state["cut"]:
+            return messages[:h]
+        kept = s.state.get("kept_user")
+        mid = [messages[kept]] if kept is not None and h <= kept < h + s.state["cut"] else []
+        return messages[:h] + [self.pin(s)] + mid
+
     def view(self, s: Session, messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
         h = head_length(messages)
         if not s.state["cut"]:
             return list(messages)
-        return messages[:h] + [self.pin(s)] + messages[h + s.state["cut"]:]
+        return self.fixed(s, messages, h) + messages[h + s.state["cut"]:]
+
+    def opener(self, body: list[dict[str, Any]]) -> tuple[str, int] | None:
+        """The newest message of `body` that opens a question still being worked on: ("user", index) for a user
+        message, ("pattern", index) for a tool result matching --think-when; None if a message matching
+        --think-until comes after it, or there is none."""
+        for i in range(len(body) - 1, -1, -1):
+            m = body[i]
+            if m.get("role") == "user":
+                return "user", i
+            if m.get("role") != "assistant":
+                text = text_of(m)
+                if self.think_when is not None and self.think_when.search(text):
+                    return "pattern", i
+                if self.think_until is not None and self.think_until.search(text):
+                    return None
+        return None
+
+    def set_kept_user(self, s: Session, messages: list[dict[str, Any]], h: int) -> None:
+        """With in-place notes a user message can be moved out while the model is still working on it (hundreds of
+        tool steps can follow one request). The newest such message stays in view, word for word, until a later
+        user message arrives or a message matching --think-until closes it."""
+        found = self.opener(messages[h:])
+        at = h + found[1] if found and found[0] == "user" else None
+        s.state["kept_user"] = at if at is not None and at < h + s.state["cut"] else None
 
     def notes_call(self, s: Session, model: Any, head: list[dict[str, Any]], gone: list[dict[str, Any]], upto: int = 0) -> None:
         req = head + [{"role": "user", "content": NOTES_REQUEST.format(
@@ -473,20 +566,26 @@ class Keeper:
                 thinking = False
         s.state["notes_failed"] += 1                 # the cut still happens: the turns are in the archive
 
-    def keep(self, s: Session, model: Any, messages: list[dict[str, Any]]) -> None:
-        """Cut, archive and take notes if the view no longer leaves room for a reply and one more large turn."""
+    def keep(self, s: Session, model: Any, messages: list[dict[str, Any]], body: dict[str, Any] | None = None) -> None:
+        """Cut, archive and take notes if the view no longer leaves room for a reply and one more large turn (and,
+        with in-place notes, earlier: as soon as enough turns have gathered and no question is open)."""
         h = head_length(messages)
         # A history that no longer contains what was archived (the client rewrote it, or started the same task again)
         # is a new conversation: notes and cut start over, and the old archive is set aside, not searched.
         if s.state["cut"] and (len(messages) < h + s.state["cut"]
                                or fingerprint(messages[h:h + s.state["cut"]]) != s.state["boundary"]):
             s.restart()
+        if self.notes_mode == "inplace":
+            if s.state["cut"]:
+                self.set_kept_user(s, messages, h)
+            if self.keep_inplace(s, model, messages, h, body or {}):
+                return
         view = self.view(s, messages)
         limit = self.budget - self.reply_reserve
         if self.tokens(s, view) <= limit - max(s.state["largest_turn"], 0) - self.headroom:
             return
         body = messages[h + s.state["cut"]:]
-        fixed = messages[:h] + [self.pin(s)]
+        fixed = self.fixed(s, messages, h) if s.state["cut"] else messages[:h] + [self.pin(s)]
         n = choose_cut(body, lambda kept: self.tokens(s, fixed + kept), int(self.target_ratio * limit))
         if not n:
             if self.tokens(s, view) > limit:         # one turn larger than the window: nothing can be cut; say so once
@@ -498,7 +597,126 @@ class Keeper:
         s.state["cut"] += n
         s.state["boundary"] = fingerprint(messages[h:h + s.state["cut"]])   # everything archived so far, not only its end
         s.state["cuts"] += 1
+        if self.notes_mode == "inplace":
+            s.state["hold"] = 0                      # the turns an in-place attempt could not note have gone now
+            self.set_kept_user(s, messages, h)
         s.save()
+
+    def keep_inplace(self, s: Session, model: Any, messages: list[dict[str, Any]], h: int, client: dict[str, Any]) -> bool:
+        """In-place notes (see INPLACE_REQUEST). True when the turns before the newest exchange were noted and moved
+        out; False leaves everything as it was, and the ordinary cut handles those turns when the window fills."""
+        body = messages[h + s.state["cut"]:]
+        j = max((i for i, m in enumerate(body) if m.get("role") == "assistant"), default=-1)
+        if j < 0:
+            return False
+        tail = body[j + 1:]
+        # the newest exchange stays in view: the assistant's tool calls with their results, or whatever came after
+        # its last reply (a user message); an assistant message at the very end stays too
+        calls_answered = bool(tail) and all(m.get("role") == "tool" for m in tail) and bool(body[j].get("tool_calls"))
+        keep_from = j if calls_answered or not tail else j + 1
+        noted = body[:keep_from]
+        size = self.tokens(s, noted) if noted else 0
+        if size <= self.inplace_tokens or (s.state.get("hold") and size >= s.state["hold"]):
+            return False
+        found = self.opener(body)
+        if found and found[0] == "pattern":
+            return False                             # a question that arrived in a tool result is open: it stays in view
+        base = self.fixed(s, messages, h) + noted
+        req = base + [{"role": "user", "content": INPLACE_REQUEST.format(
+            start="message that holds the NOTES" if s.state["cut"] else "first turn after the opening messages")}]
+        tools = list(client.get("tools") or [])
+        if s.state["cut"] or self.memory_note:       # the same tool list as the ordinary calls: the same prompt start
+            tools = tools + [RECALL_TOOL]
+        texts = [text_of(m) for m in noted if m.get("role") in ("tool", "user")]
+        seen = nd.numbers_in("\n".join(text_of(m) for m in noted))
+        strict = self.notes_checks in ("count", "near")
+        thinking, asked_count, asked_working, asked_layout = self.notes_thinking, not strict, False, False
+        rules_seen: list[str] = []
+        why, new, info = "no reply", "", {}
+        for attempt in (1, 2, 3, 4):
+            out: dict[str, Any] = {"model": model, "messages": req, "max_tokens": self.notes_max_tokens, "temperature": 0}
+            if tools:
+                out.update(tools=tools, tool_choice="none")
+            ctk = dict(client.get("chat_template_kwargs") or {})
+            if thinking is not None:
+                ctk["enable_thinking"] = bool(thinking)
+            if self.effort:
+                ctk["reasoning_effort"] = self.effort
+            if ctk:
+                out["chat_template_kwargs"] = ctk
+            try:
+                resp = self.ask(out)
+            except Exception as exc:
+                why = f"{type(exc).__name__}: {exc}"
+                break
+            choice = (resp.get("choices") or [{}])[0]
+            finish, usage = choice.get("finish_reason"), resp.get("usage") or {}
+            text = str((choice.get("message") or {}).get("content") or "").strip()
+            s.state["notes_prompt_tokens"] += usage.get("prompt_tokens") or 0
+            s.state["notes_cached_tokens"] += (usage.get("prompt_tokens_details") or {}).get("cached_tokens") or 0
+            s.state["notes_written_tokens"] += usage.get("completion_tokens") or 0
+            delta = nd.parse_delta(text) if finish != "length" else None
+            if delta is None:
+                why = "reply cut off by the token cap" if finish == "length" else "reply without the NEW RULES / CHANGES layout"
+                part = nd.parse_delta(text, need_changes=False)      # its rules still count, if that section is complete
+                if part and re.search(r"(?m)^\W*(CHANGES|OPEN)\W*$", text):
+                    rules_seen += [r for r in part["rules"] if not any(nd.same_rule(r, x) for x in rules_seen)]
+                s.log_event({"event": "in-place notes reply rejected", "attempt": attempt, "why": why, "reply_start": text[:160]})
+                if asked_layout:
+                    break
+                asked_layout = True
+                req = req + ([{"role": "assistant", "content": text}] if text and finish != "length" else []) + [
+                    {"role": "user", "content": nd.DELTA_RETRY}]
+                continue
+            # a rule named in any reply of this cut is kept: a second, asked-for reply that leaves it out must not lose it
+            rules_seen += [r for r in delta["rules"] if not any(nd.same_rule(r, x) for x in rules_seen)]
+            delta["rules"] = list(rules_seen)
+            known = nd.state_keys(s.state["notes"]) + [k for k, _ in delta["changes"]]
+            near = nd.numbers_near(known, texts) if self.notes_checks == "near" else None
+            new, info = nd.apply_delta(s.state["notes"], delta, seen, strict=strict, near=near)
+            steps = info.pop("steps")
+            missing = [] if asked_count else nd.under_accounted(nd.mention_counts(known + nd.identifiers_in(texts), texts), steps)
+            if missing:                              # asked once: the turns mention a name more often than the lines account for
+                asked_count = True
+                s.state["inplace_reasks"] += 1
+                s.log_event({"event": "in-place notes asked again", "why": "mentions not accounted for", "names": missing[:30]})
+                req = req + [{"role": "assistant", "content": text},
+                             {"role": "user", "content": nd.COUNT_RETRY.format(names=", ".join(missing[:30]))}]
+                continue
+            if info["mismatch"] and not asked_working:
+                # asked once more, with thinking and with the lines named; the second reply stands (the check has
+                # false alarms: a model that thinks may start from a value it worked out itself)
+                asked_working = True
+                s.state["inplace_reasks"] += 1
+                s.log_event({"event": "in-place notes asked again", "why": "working", "lines": info["mismatch"][:6]})
+                req = req + [{"role": "assistant", "content": text},
+                             {"role": "user", "content": nd.MISMATCH_RETRY.format(lines="; ".join(info["mismatch"][:6]))}]
+                thinking = True if self.notes_thinking is not None else None
+                continue
+            if self.tokens(s, [{"role": "user", "content": new}]) > 2 * self.notes_cap:
+                why = "NOTES over twice the cap after the changes"
+                break
+            why = ""
+            break
+        if why:
+            s.state["inplace_failed"] += 1
+            s.state["hold"] = size
+            s.log_event({"event": "in-place notes not applied", "why": why, "turns": len(noted), "tokens": size})
+            s.save()
+            return False
+        if info.get("mismatch"):
+            s.log_event({"event": "in-place notes: a doubtful line accepted after the second reply", "lines": info["mismatch"][:6]})
+        s.archive.add(h + s.state["cut"] + 1, noted)
+        s.state["notes"] = new
+        s.log_notes(h + s.state["cut"] + len(noted))
+        s.state["cut"] += len(noted)
+        s.state["boundary"] = fingerprint(messages[h:h + s.state["cut"]])
+        s.state["cuts"] += 1
+        s.state["inplace_cuts"] += 1
+        s.state["hold"] = 0
+        self.set_kept_user(s, messages, h)
+        s.save()
+        return True
 
     def complete(self, body: dict[str, Any], header: str | None = None) -> dict[str, Any]:
         """One chat completion through the keeper. Returns the server's response for the client."""
@@ -511,7 +729,7 @@ class Keeper:
                 messages = with_memory_note(messages)
             if messages:
                 s.state["largest_turn"] = max(s.state["largest_turn"], self.tokens(s, messages[-1:]))
-            self.keep(s, body.get("model"), messages)
+            self.keep(s, body.get("model"), messages, body)
             view = self.view(s, messages)
             newest = text_of(messages[-1]) if messages else ""
             from_user = bool(messages) and messages[-1].get("role") == "user"
@@ -691,6 +909,16 @@ def main() -> None:
                                      "on Qwen: medium keeps the system message the same whether thinking is on or off)")
     ap.add_argument("--no-memory-note", action="store_true",
                     help="do not add the Memory paragraph to the system message (the recall tool then appears after the first cut)")
+    ap.add_argument("--notes-mode", choices=("full", "inplace"), default="full",
+                    help="full: NOTES rewritten from the cut turns at each cut; inplace: the notes call is the request the "
+                         "server has just read plus one message, the reply is the changes only, and the turns it "
+                         "covers are all moved out (about 40 %% less time in the lab's measurements)")
+    ap.add_argument("--inplace-tokens", type=int, default=15000,
+                    help="with --notes-mode inplace: take notes once the turns before the newest exchange hold this many tokens")
+    ap.add_argument("--notes-checks", choices=("off", "count", "near"), default="off",
+                    help="with --notes-mode inplace: extra checks of the reply for ledger-like state with names such as "
+                         "abcd12 (count: every mention accounted for, values without working must be stated; near: "
+                         "stated in a sentence that names the thing)")
     ap.add_argument("--state-dir", type=Path, default=Path.home() / ".cache" / "ctxkeeper")
     ap.add_argument("--timeout", type=float, default=1800)
     a = ap.parse_args()
@@ -700,9 +928,12 @@ def main() -> None:
                     notes_thinking={"on": True, "off": False, "unset": None}[a.notes_thinking],
                     recite=not a.no_recite, reply_reserve=a.reply_reserve, recite_when=a.recite_when,
                     think_when=a.think_when, effort=a.effort, memory_note=not a.no_memory_note,
-                    think_until=a.think_until, repeat_limit=a.repeat_limit)
+                    think_until=a.think_until, repeat_limit=a.repeat_limit, notes_mode=a.notes_mode,
+                    inplace_tokens=a.inplace_tokens, notes_checks=a.notes_checks)
     server = ThreadingHTTPServer((a.host, a.port), make_handler(keeper, upstream, a.timeout))
-    print(f"ctxkeeper: http://{a.host}:{a.port}/v1 -> {upstream}/v1, live window {a.budget} tokens, state in {a.state_dir}", flush=True)
+    print(f"ctxkeeper: http://{a.host}:{a.port}/v1 -> {upstream}/v1, live window {a.budget} tokens, notes {a.notes_mode}"
+          + (f" every {a.inplace_tokens} tokens, checks {a.notes_checks}" if a.notes_mode == "inplace" else "")
+          + f", state in {a.state_dir}", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
