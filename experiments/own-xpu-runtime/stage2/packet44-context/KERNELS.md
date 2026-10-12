@@ -33,3 +33,10 @@ and control status retain their exact contract.
 
 Argument guards remain at1024 bytes. Precision flags apply to compilation and
 linking. No device binary has been executed by this packet's preparation agent.
+
+The copied attention dispatch remains `p30.attention.sg32`, with the same
+arithmetic body and runtime cache stride at every capacity. The optional P33
+attention candidate has fixed 128/256 specializations and uses its existing
+generic body for larger capacities; K2 measures it under the same all-length
+selection rule. Existing P33 GEMV selections are independent of context
+capacity. No measured short-context wall-time claim is made before the windows.

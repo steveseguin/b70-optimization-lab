@@ -31,3 +31,22 @@ Fixture serialization is also capacity-sensitive: historical fixture headers
 contain eight integers even though the in-memory Shape now has nine fields.
 Both readers preserve the old header width and initialize extent separately.
 The adapter fixture sizes RoPE from rope_constants::bytes, not its old literal.
+
+Compile-time shape constants also occur in `p33r2.cpp::issue` and
+`p33_candidates.hpp::qsa_group`: capacity 128/256, budget 2048 and one token.
+Those existing P33 attention candidates keep their fixed-capacity variants;
+larger capacities take the same wrapper's existing generic round2 body, with
+the admitted extent and valid reduction count. K2 must measure that candidate
+at each new capacity. The copied production dispatch selects
+`p30.attention.sg32`, whose body already takes runtime capacity/stride; its
+implementation choice is unchanged. The P33 GEMV choices have no context
+capacity parameter and remain unchanged. Budget 2048 always means 512 complete
+four-position pools plus at most three tail positions, hence 2051 ID slots.
+
+The host fixture oracle in `prototype/snapshot/reference.hpp` also separates
+capacity from valid length. Its temporary arena and copied cache prefixes use
+valid n; short cases keep the 64 MiB arena at every capacity, with a 768 MiB
+upper bound for the largest synthetic cases. Fixture storage still includes
+full-capacity allocation tails so the gates can detect unintended writes.
+That storage and full evidence serialization are fixture costs, outside the
+production token path.
