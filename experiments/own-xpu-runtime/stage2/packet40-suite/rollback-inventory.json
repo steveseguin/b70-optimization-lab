@@ -1,14 +1,20 @@
 {
-  "schema": "packet37.rollback-inventory.v1",
+  "schema": "packet40.rollback-inventory.v2",
   "passed": true,
   "device_executed": false,
+  "performance_claim": false,
   "provenance": {
     "launch-plan-rank0.json": "78111f10a6b5406e40a64c92e622bb63181d155bb7b9a71fc62ae49f343ff6b9",
-    "main.cpp": "d409f9ab0f096338c3a0a93f547d635d04eac7339f6c9f50cd17b350b0259251",
-    "rank.hpp": "668c402ca38175ee77f7388f4f5b711709923eb29ba639df5f51b4255bae1274",
+    "main.cpp": "93a9b7be9803decbb4929e28561b4972ebdcb204b5ce79713b6fcdbcdeea7de2",
+    "rank.hpp": "78ea575effa36de9622d2c9df8339367bf398a4287f3d01afc57978c1b91f9ea",
+    "strict_snapshot.hpp": "4bddafeb8d3a8c3243f8a885ca25127637a71135ede6dff11dbea3d645cf833e",
+    "owner_api.hpp": "1c712169fca15d34319ab082701a054a4a1fc63caccdfd7515a00067f4843608",
+    "owner.cpp": "8e82affd2c119ef2ef13df14c11063f60ec8ba641ed643b7f2c652e7c256e94b",
+    "request_state_inventory.hpp": "c4818d42606ec5f29e00c7fa0ede2f12b4bdc6c6c2f5ca1740ca5e9cc023ea65",
     "adapter.cpp": "1c754cbd5775e463660e37b05330743d34fb552fda68aa193b4df1a8f7c3f882",
     "kernels.hpp": "24e24e660203c959db09d30dc633490906508b749cf4e2838e2df50d4013d43a",
-    "specialised.hpp": "a5604dcf33c1f01940505b3ab5e6fab8d05e9f6ba6fed2884f40ae95b47c88cb"
+    "specialised.hpp": "a5604dcf33c1f01940505b3ab5e6fab8d05e9f6ba6fed2884f40ae95b47c88cb",
+    "audit_rollback.py": "94535cfccb31df176271430ff890fe205ad4f1598d59d888edd0ba52023c34b4"
   },
   "buffer_count": 1015,
   "launch_count": 890,
@@ -20,65 +26,64 @@
       "name": "blk.0.gdn.history",
       "bytes": 61440,
       "writer": "blk.0.gdn.conv",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 61440
     },
     {
       "name": "blk.0.gdn.state",
       "bytes": 1572864,
       "writer": "blk.0.gdn.recurrence",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 1572864
     },
     {
       "name": "blk.1.gdn.history",
       "bytes": 61440,
       "writer": "blk.1.gdn.conv",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 61440
     },
     {
       "name": "blk.1.gdn.state",
       "bytes": 1572864,
       "writer": "blk.1.gdn.recurrence",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 1572864
     },
     {
       "name": "blk.1.ple.history",
       "bytes": 184320,
       "writer": "blk.1.ple.conv",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 184320
     },
     {
       "name": "blk.10.gdn.history",
       "bytes": 61440,
       "writer": "blk.10.gdn.conv",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 61440
     },
     {
       "name": "blk.10.gdn.state",
       "bytes": 1572864,
       "writer": "blk.10.gdn.recurrence",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 1572864
     },
     {
       "name": "blk.11.qsa.keys",
       "bytes": 262144,
       "writer": "blk.11.qsa.pool",
-      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "strategy": "already-valid prefix excluded; entire invalid tail saved before issue and restored on rollback",
       "bankable": false,
-      "hot_copy_bytes": 0,
       "row_bytes": 1024,
       "offset": "position*1024",
       "write_condition": "every half"
@@ -87,9 +92,8 @@
       "name": "blk.11.qsa.pooled",
       "bytes": 16384,
       "writer": "blk.11.qsa.pool",
-      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "strategy": "already-valid prefix excluded; entire invalid tail saved before issue and restored on rollback",
       "bankable": false,
-      "hot_copy_bytes": 0,
       "row_bytes": 256,
       "offset": "(position//4)*256",
       "write_condition": "position%4==3"
@@ -98,9 +102,8 @@
       "name": "blk.11.qsa.raw",
       "bytes": 65536,
       "writer": "blk.11.qsa.pool",
-      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "strategy": "already-valid prefix excluded; entire invalid tail saved before issue and restored on rollback",
       "bankable": false,
-      "hot_copy_bytes": 0,
       "row_bytes": 256,
       "offset": "position*256",
       "write_condition": "every half"
@@ -109,9 +112,8 @@
       "name": "blk.11.qsa.values",
       "bytes": 262144,
       "writer": "blk.11.qsa.pool",
-      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "strategy": "already-valid prefix excluded; entire invalid tail saved before issue and restored on rollback",
       "bankable": false,
-      "hot_copy_bytes": 0,
       "row_bytes": 1024,
       "offset": "position*1024",
       "write_condition": "every half"
@@ -120,57 +122,56 @@
       "name": "blk.12.gdn.history",
       "bytes": 61440,
       "writer": "blk.12.gdn.conv",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 61440
     },
     {
       "name": "blk.12.gdn.state",
       "bytes": 1572864,
       "writer": "blk.12.gdn.recurrence",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 1572864
     },
     {
       "name": "blk.13.gdn.history",
       "bytes": 61440,
       "writer": "blk.13.gdn.conv",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 61440
     },
     {
       "name": "blk.13.gdn.state",
       "bytes": 1572864,
       "writer": "blk.13.gdn.recurrence",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 1572864
     },
     {
       "name": "blk.14.gdn.history",
       "bytes": 61440,
       "writer": "blk.14.gdn.conv",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 61440
     },
     {
       "name": "blk.14.gdn.state",
       "bytes": 1572864,
       "writer": "blk.14.gdn.recurrence",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 1572864
     },
     {
       "name": "blk.15.qsa.keys",
       "bytes": 262144,
       "writer": "blk.15.qsa.pool",
-      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "strategy": "already-valid prefix excluded; entire invalid tail saved before issue and restored on rollback",
       "bankable": false,
-      "hot_copy_bytes": 0,
       "row_bytes": 1024,
       "offset": "position*1024",
       "write_condition": "every half"
@@ -179,9 +180,8 @@
       "name": "blk.15.qsa.pooled",
       "bytes": 16384,
       "writer": "blk.15.qsa.pool",
-      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "strategy": "already-valid prefix excluded; entire invalid tail saved before issue and restored on rollback",
       "bankable": false,
-      "hot_copy_bytes": 0,
       "row_bytes": 256,
       "offset": "(position//4)*256",
       "write_condition": "position%4==3"
@@ -190,9 +190,8 @@
       "name": "blk.15.qsa.raw",
       "bytes": 65536,
       "writer": "blk.15.qsa.pool",
-      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "strategy": "already-valid prefix excluded; entire invalid tail saved before issue and restored on rollback",
       "bankable": false,
-      "hot_copy_bytes": 0,
       "row_bytes": 256,
       "offset": "position*256",
       "write_condition": "every half"
@@ -201,9 +200,8 @@
       "name": "blk.15.qsa.values",
       "bytes": 262144,
       "writer": "blk.15.qsa.pool",
-      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "strategy": "already-valid prefix excluded; entire invalid tail saved before issue and restored on rollback",
       "bankable": false,
-      "hot_copy_bytes": 0,
       "row_bytes": 1024,
       "offset": "position*1024",
       "write_condition": "every half"
@@ -212,57 +210,56 @@
       "name": "blk.16.gdn.history",
       "bytes": 61440,
       "writer": "blk.16.gdn.conv",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 61440
     },
     {
       "name": "blk.16.gdn.state",
       "bytes": 1572864,
       "writer": "blk.16.gdn.recurrence",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 1572864
     },
     {
       "name": "blk.17.gdn.history",
       "bytes": 61440,
       "writer": "blk.17.gdn.conv",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 61440
     },
     {
       "name": "blk.17.gdn.state",
       "bytes": 1572864,
       "writer": "blk.17.gdn.recurrence",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 1572864
     },
     {
       "name": "blk.18.gdn.history",
       "bytes": 61440,
       "writer": "blk.18.gdn.conv",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 61440
     },
     {
       "name": "blk.18.gdn.state",
       "bytes": 1572864,
       "writer": "blk.18.gdn.recurrence",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 1572864
     },
     {
       "name": "blk.19.qsa.keys",
       "bytes": 262144,
       "writer": "blk.19.qsa.pool",
-      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "strategy": "already-valid prefix excluded; entire invalid tail saved before issue and restored on rollback",
       "bankable": false,
-      "hot_copy_bytes": 0,
       "row_bytes": 1024,
       "offset": "position*1024",
       "write_condition": "every half"
@@ -271,9 +268,8 @@
       "name": "blk.19.qsa.pooled",
       "bytes": 16384,
       "writer": "blk.19.qsa.pool",
-      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "strategy": "already-valid prefix excluded; entire invalid tail saved before issue and restored on rollback",
       "bankable": false,
-      "hot_copy_bytes": 0,
       "row_bytes": 256,
       "offset": "(position//4)*256",
       "write_condition": "position%4==3"
@@ -282,9 +278,8 @@
       "name": "blk.19.qsa.raw",
       "bytes": 65536,
       "writer": "blk.19.qsa.pool",
-      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "strategy": "already-valid prefix excluded; entire invalid tail saved before issue and restored on rollback",
       "bankable": false,
-      "hot_copy_bytes": 0,
       "row_bytes": 256,
       "offset": "position*256",
       "write_condition": "every half"
@@ -293,9 +288,8 @@
       "name": "blk.19.qsa.values",
       "bytes": 262144,
       "writer": "blk.19.qsa.pool",
-      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "strategy": "already-valid prefix excluded; entire invalid tail saved before issue and restored on rollback",
       "bankable": false,
-      "hot_copy_bytes": 0,
       "row_bytes": 1024,
       "offset": "position*1024",
       "write_condition": "every half"
@@ -304,73 +298,72 @@
       "name": "blk.2.gdn.history",
       "bytes": 61440,
       "writer": "blk.2.gdn.conv",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 61440
     },
     {
       "name": "blk.2.gdn.state",
       "bytes": 1572864,
       "writer": "blk.2.gdn.recurrence",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 1572864
     },
     {
       "name": "blk.20.gdn.history",
       "bytes": 61440,
       "writer": "blk.20.gdn.conv",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 61440
     },
     {
       "name": "blk.20.gdn.state",
       "bytes": 1572864,
       "writer": "blk.20.gdn.recurrence",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 1572864
     },
     {
       "name": "blk.21.gdn.history",
       "bytes": 61440,
       "writer": "blk.21.gdn.conv",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 61440
     },
     {
       "name": "blk.21.gdn.state",
       "bytes": 1572864,
       "writer": "blk.21.gdn.recurrence",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 1572864
     },
     {
       "name": "blk.22.gdn.history",
       "bytes": 61440,
       "writer": "blk.22.gdn.conv",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 61440
     },
     {
       "name": "blk.22.gdn.state",
       "bytes": 1572864,
       "writer": "blk.22.gdn.recurrence",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 1572864
     },
     {
       "name": "blk.23.qsa.keys",
       "bytes": 262144,
       "writer": "blk.23.qsa.pool",
-      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "strategy": "already-valid prefix excluded; entire invalid tail saved before issue and restored on rollback",
       "bankable": false,
-      "hot_copy_bytes": 0,
       "row_bytes": 1024,
       "offset": "position*1024",
       "write_condition": "every half"
@@ -379,9 +372,8 @@
       "name": "blk.23.qsa.pooled",
       "bytes": 16384,
       "writer": "blk.23.qsa.pool",
-      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "strategy": "already-valid prefix excluded; entire invalid tail saved before issue and restored on rollback",
       "bankable": false,
-      "hot_copy_bytes": 0,
       "row_bytes": 256,
       "offset": "(position//4)*256",
       "write_condition": "position%4==3"
@@ -390,9 +382,8 @@
       "name": "blk.23.qsa.raw",
       "bytes": 65536,
       "writer": "blk.23.qsa.pool",
-      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "strategy": "already-valid prefix excluded; entire invalid tail saved before issue and restored on rollback",
       "bankable": false,
-      "hot_copy_bytes": 0,
       "row_bytes": 256,
       "offset": "position*256",
       "write_condition": "every half"
@@ -401,9 +392,8 @@
       "name": "blk.23.qsa.values",
       "bytes": 262144,
       "writer": "blk.23.qsa.pool",
-      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "strategy": "already-valid prefix excluded; entire invalid tail saved before issue and restored on rollback",
       "bankable": false,
-      "hot_copy_bytes": 0,
       "row_bytes": 1024,
       "offset": "position*1024",
       "write_condition": "every half"
@@ -412,9 +402,8 @@
       "name": "blk.3.qsa.keys",
       "bytes": 262144,
       "writer": "blk.3.qsa.pool",
-      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "strategy": "already-valid prefix excluded; entire invalid tail saved before issue and restored on rollback",
       "bankable": false,
-      "hot_copy_bytes": 0,
       "row_bytes": 1024,
       "offset": "position*1024",
       "write_condition": "every half"
@@ -423,9 +412,8 @@
       "name": "blk.3.qsa.pooled",
       "bytes": 16384,
       "writer": "blk.3.qsa.pool",
-      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "strategy": "already-valid prefix excluded; entire invalid tail saved before issue and restored on rollback",
       "bankable": false,
-      "hot_copy_bytes": 0,
       "row_bytes": 256,
       "offset": "(position//4)*256",
       "write_condition": "position%4==3"
@@ -434,9 +422,8 @@
       "name": "blk.3.qsa.raw",
       "bytes": 65536,
       "writer": "blk.3.qsa.pool",
-      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "strategy": "already-valid prefix excluded; entire invalid tail saved before issue and restored on rollback",
       "bankable": false,
-      "hot_copy_bytes": 0,
       "row_bytes": 256,
       "offset": "position*256",
       "write_condition": "every half"
@@ -445,9 +432,8 @@
       "name": "blk.3.qsa.values",
       "bytes": 262144,
       "writer": "blk.3.qsa.pool",
-      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "strategy": "already-valid prefix excluded; entire invalid tail saved before issue and restored on rollback",
       "bankable": false,
-      "hot_copy_bytes": 0,
       "row_bytes": 1024,
       "offset": "position*1024",
       "write_condition": "every half"
@@ -456,57 +442,56 @@
       "name": "blk.4.gdn.history",
       "bytes": 61440,
       "writer": "blk.4.gdn.conv",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 61440
     },
     {
       "name": "blk.4.gdn.state",
       "bytes": 1572864,
       "writer": "blk.4.gdn.recurrence",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 1572864
     },
     {
       "name": "blk.5.gdn.history",
       "bytes": 61440,
       "writer": "blk.5.gdn.conv",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 61440
     },
     {
       "name": "blk.5.gdn.state",
       "bytes": 1572864,
       "writer": "blk.5.gdn.recurrence",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 1572864
     },
     {
       "name": "blk.6.gdn.history",
       "bytes": 61440,
       "writer": "blk.6.gdn.conv",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 61440
     },
     {
       "name": "blk.6.gdn.state",
       "bytes": 1572864,
       "writer": "blk.6.gdn.recurrence",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 1572864
     },
     {
       "name": "blk.7.qsa.keys",
       "bytes": 262144,
       "writer": "blk.7.qsa.pool",
-      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "strategy": "already-valid prefix excluded; entire invalid tail saved before issue and restored on rollback",
       "bankable": false,
-      "hot_copy_bytes": 0,
       "row_bytes": 1024,
       "offset": "position*1024",
       "write_condition": "every half"
@@ -515,9 +500,8 @@
       "name": "blk.7.qsa.pooled",
       "bytes": 16384,
       "writer": "blk.7.qsa.pool",
-      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "strategy": "already-valid prefix excluded; entire invalid tail saved before issue and restored on rollback",
       "bankable": false,
-      "hot_copy_bytes": 0,
       "row_bytes": 256,
       "offset": "(position//4)*256",
       "write_condition": "position%4==3"
@@ -526,9 +510,8 @@
       "name": "blk.7.qsa.raw",
       "bytes": 65536,
       "writer": "blk.7.qsa.pool",
-      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "strategy": "already-valid prefix excluded; entire invalid tail saved before issue and restored on rollback",
       "bankable": false,
-      "hot_copy_bytes": 0,
       "row_bytes": 256,
       "offset": "position*256",
       "write_condition": "every half"
@@ -537,9 +520,8 @@
       "name": "blk.7.qsa.values",
       "bytes": 262144,
       "writer": "blk.7.qsa.pool",
-      "strategy": "redo overwrites same append-only row; old rows untouched",
+      "strategy": "already-valid prefix excluded; entire invalid tail saved before issue and restored on rollback",
       "bankable": false,
-      "hot_copy_bytes": 0,
       "row_bytes": 1024,
       "offset": "position*1024",
       "write_condition": "every half"
@@ -548,33 +530,33 @@
       "name": "blk.8.gdn.history",
       "bytes": 61440,
       "writer": "blk.8.gdn.conv",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 61440
     },
     {
       "name": "blk.8.gdn.state",
       "bytes": 1572864,
       "writer": "blk.8.gdn.recurrence",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 1572864
     },
     {
       "name": "blk.9.gdn.history",
       "bytes": 61440,
       "writer": "blk.9.gdn.conv",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 61440
     },
     {
       "name": "blk.9.gdn.state",
       "bytes": 1572864,
       "writer": "blk.9.gdn.recurrence",
-      "strategy": "distinct committed input and candidate output; pointer/binding bank swap",
+      "strategy": "active committed bank excluded from snapshot; inactive candidate bank saved before issue and restored after conditional swap-back",
       "bankable": true,
-      "hot_copy_bytes": 0
+      "snapshot_copy_bytes": 1572864
     },
     {
       "name": "error",
@@ -654,9 +636,9 @@
         "blk.23.expsup.check",
         "blk.23.expsdown.check"
       ],
-      "strategy": "sticky implicit and explicit writers; any failure aborts; never cleared",
+      "strategy": "saved only when zero; guards reject sticky failure before restore; never erased after failure",
       "bankable": false,
-      "restore_bytes_per_miss": 0
+      "restore_bytes_per_miss": 4
     },
     {
       "name": "position",
@@ -664,7 +646,7 @@
       "writers": [
         "commit.final"
       ],
-      "strategy": "commit increments; restore attempted position before redo",
+      "strategy": "strict image saves/restores original position",
       "bankable": false,
       "restore_bytes_per_miss": 4
     },
@@ -674,7 +656,7 @@
       "writers": [
         "blk.1.ple.hash"
       ],
-      "strategy": "snapshot before half; restore before redo (ple_hash mutates input)",
+      "strategy": "strict image saves/restores all bytes; ple_hash mutates input",
       "bankable": false,
       "restore_bytes_per_miss": 16
     }
@@ -682,7 +664,7 @@
   "externally_initialized": {
     "active": "immutable initialized guard",
     "ple_metadata": "immutable uploaded model metadata",
-    "token": "host uploads current token before half",
+    "token": "strict image saves previous token before guessed upload; rollback restores it",
     "next_token": "rank0 never reads or writes; initialized placeholder"
   },
   "overwrite_only_count": 947,
@@ -5423,27 +5405,197 @@
       "first_writer": "streams"
     }
   ],
-  "proof": "Every allocation classified exactly once. Every overwrite-only buffer has a reviewed full-write producer before its first plan read. QSA partial writes and implicit sticky error writes are separately classified by kernel contracts. Streams first writer is broadcast, so no temporal HC carry.",
+  "proof": "Every plan allocation is classified exactly once. Producer-before-consumer identifies old logical dependencies; it is NOT permission to omit scratch from strict physical rollback. All declared outputs and token/position/history are saved, using inactive recurrent banks and invalid QSA tails. Already-active banks and valid QSA prefixes are excluded so illegal writes remain observable.",
   "host_state": {
     "history0_history1_bytes": 16,
-    "rollback": "restored before prepare_token redo",
-    "lookup_ids": "cleared/recomputed",
-    "fp32_sources_extents": "invalidated on every bank swap and rollback",
+    "rollback": "exact saved values restored after drain and conditional bank swap-back",
+    "lookup_ids_selected_loaded_layer_fp32_sources_extents": "saved before guessed token preparation and restored exactly; streaming layers must already be released; restored FP32 allocation IDs must remain live",
     "prepared_operator_maps": "two bank-specific binding maps swap with allocation IDs",
-    "prepared_command_vectors": "two captured issue-site vectors swap with the maps and explicit parity; fresh reconstruction audit after swaps",
-    "matrices": "no banked temporal allocation appears as GEMV input/output"
+    "prepared_command_vectors": "two captured issue-site vectors swap with maps and explicit parity; no reconstruction during restore",
+    "rank0_transport_slot": "65536 host bytes saved/restored; rank1 streams, verification and draft publication regions untouched"
   },
   "nonplan_storage": {
-    "snapshots": "only confirmed candidate fixture bytes published; scratch rewritten per captured layer",
-    "scratch_controls_scores_probabilities_workspace_routes_mixture": "producer-before-consumer within half; not cross-position model state",
-    "weights_rope_unit_scalar": "immutable",
-    "events_counters_profiling": "execution bookkeeping intentionally records attempts, not rolled back"
+    "mutable_standalone": "all live device allocations except represented plan/spare buffers, weights, pinned slabs and immutable one scalar are saved/restored, including scratch and snapshots",
+    "private_backup": "zeroed at construction and resolved dump/reset/finish boundaries; host vectors/slot retired; no model buffers scrubbed",
+    "weights_rope_unit_scalar": "immutable and excluded from snapshot",
+    "events_counters_profiling": "attempt telemetry is retained, not rolled back; raw counters/hashes recorded separately"
   },
   "rollback_transfer_bytes": {
-    "device_to_host_per_rank0_half": 16,
-    "host_to_device_per_miss": 20,
-    "banked_state_copy": 0,
-    "qsa_cache_copy": 0
+    "scope": "source-level byte accounting, not measured latency or exhaustive half-step traffic",
+    "private_device_capacity": 319074840,
+    "device_to_device_per_capture": "position-dependent payload_bytes; see authenticated examples",
+    "device_to_device_per_rollback": "same saved extents as capture",
+    "private_zero_host_to_device_per_construction_or_dirty_boundary": 319074840,
+    "host_to_host_transport_per_capture_or_restore": 65536,
+    "additional_snapshot_begin_scalar_device_to_host": 8,
+    "additional_undo_and_snapshot_restore_scalar_device_to_host": 8,
+    "existing_candidate_history_device_to_host_per_rank0_half": 16,
+    "host_metadata_copy_bytes": "variable; exact vectors/maps saved and restored, not included in device capacity",
+    "active_committed_bank_copy": 0,
+    "valid_qsa_prefix_copy": 0,
+    "inactive_bank_and_invalid_qsa_tail_copy": "included in payload; not zero"
   },
-  "rank1": "No speculation: only confirmed stream handovers enter its half; no rollback needed"
+  "strict_snapshot_evidence": {
+    "receipt": "terminal-eos-all-state-real-both.json",
+    "receipt_sha256": "ca0358adfe9186952f7a832bdafaefb8603982f9347b8147c37591aa68e383a3",
+    "binary_sha256": "1586d2f7a375d13023e6b666e7c0715c9e15ba4004a11837af49a6f86fc1116b",
+    "diagnostic_prompt_scope": "unchanged original prompt prefix; full-weight production launch plan",
+    "capacity_bytes": 319074840,
+    "examples": [
+      {
+        "position": 7,
+        "capacity_bytes": 319074840,
+        "plan_candidate_bytes": 40172372,
+        "standalone_mutable_bytes": 278902468,
+        "snapshot_device_to_device_bytes": 318976536,
+        "restore_device_to_device_bytes": 318976536,
+        "protected_qsa_prefix_bytes": 98304,
+        "archive": "evidence/scratch-strict-terminal-1791827454134079150-native-p0-r0-c0.jsonl.gz",
+        "archive_sha256": "19e1a5a3d52ffc4b730b3a87e352b77bcfc07f2b0a2d734f287f5a969cfc5d45"
+      },
+      {
+        "position": 8,
+        "capacity_bytes": 319074840,
+        "plan_candidate_bytes": 40172372,
+        "standalone_mutable_bytes": 278902468,
+        "snapshot_device_to_device_bytes": 318961176,
+        "restore_device_to_device_bytes": 318961176,
+        "protected_qsa_prefix_bytes": 113664,
+        "archive": "evidence/scratch-strict-terminal-1791827454134079150-native-p1-r0-c0.jsonl.gz",
+        "archive_sha256": "862a6bf72d02297322f9d27aeedd5eab8638999d1c91f1b0444571240ac2cc37"
+      }
+    ],
+    "payload_formula": "capacity_bytes - sum(valid_rows * row_bytes); valid_rows=position for keys/values/raw, floor(position/4) for pooled",
+    "qsa_rows": [
+      {
+        "name": "blk.3.qsa.keys",
+        "row_bytes": 1024,
+        "pooled": false
+      },
+      {
+        "name": "blk.3.qsa.values",
+        "row_bytes": 1024,
+        "pooled": false
+      },
+      {
+        "name": "blk.3.qsa.raw",
+        "row_bytes": 256,
+        "pooled": false
+      },
+      {
+        "name": "blk.3.qsa.pooled",
+        "row_bytes": 256,
+        "pooled": true
+      },
+      {
+        "name": "blk.7.qsa.keys",
+        "row_bytes": 1024,
+        "pooled": false
+      },
+      {
+        "name": "blk.7.qsa.values",
+        "row_bytes": 1024,
+        "pooled": false
+      },
+      {
+        "name": "blk.7.qsa.raw",
+        "row_bytes": 256,
+        "pooled": false
+      },
+      {
+        "name": "blk.7.qsa.pooled",
+        "row_bytes": 256,
+        "pooled": true
+      },
+      {
+        "name": "blk.11.qsa.keys",
+        "row_bytes": 1024,
+        "pooled": false
+      },
+      {
+        "name": "blk.11.qsa.values",
+        "row_bytes": 1024,
+        "pooled": false
+      },
+      {
+        "name": "blk.11.qsa.raw",
+        "row_bytes": 256,
+        "pooled": false
+      },
+      {
+        "name": "blk.11.qsa.pooled",
+        "row_bytes": 256,
+        "pooled": true
+      },
+      {
+        "name": "blk.15.qsa.keys",
+        "row_bytes": 1024,
+        "pooled": false
+      },
+      {
+        "name": "blk.15.qsa.values",
+        "row_bytes": 1024,
+        "pooled": false
+      },
+      {
+        "name": "blk.15.qsa.raw",
+        "row_bytes": 256,
+        "pooled": false
+      },
+      {
+        "name": "blk.15.qsa.pooled",
+        "row_bytes": 256,
+        "pooled": true
+      },
+      {
+        "name": "blk.19.qsa.keys",
+        "row_bytes": 1024,
+        "pooled": false
+      },
+      {
+        "name": "blk.19.qsa.values",
+        "row_bytes": 1024,
+        "pooled": false
+      },
+      {
+        "name": "blk.19.qsa.raw",
+        "row_bytes": 256,
+        "pooled": false
+      },
+      {
+        "name": "blk.19.qsa.pooled",
+        "row_bytes": 256,
+        "pooled": true
+      },
+      {
+        "name": "blk.23.qsa.keys",
+        "row_bytes": 1024,
+        "pooled": false
+      },
+      {
+        "name": "blk.23.qsa.values",
+        "row_bytes": 1024,
+        "pooled": false
+      },
+      {
+        "name": "blk.23.qsa.raw",
+        "row_bytes": 256,
+        "pooled": false
+      },
+      {
+        "name": "blk.23.qsa.pooled",
+        "row_bytes": 256,
+        "pooled": true
+      }
+    ]
+  },
+  "rank1": "Never speculates; no strict image allocation or restore. Draft state is private and only checked target results authorize emitted tokens.",
+  "prior_inventory_archive": {
+    "path": "evidence/prior-rollback-inventory-1791839170304946417.jsonl.gz",
+    "sha256": "de7d17574be6a464dcf3c027773e0f461c444fd734fec277a1676d2039bdf444",
+    "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
+    "files": 1,
+    "retained_files": 1,
+    "retained_bytes": 123059
+  }
 }

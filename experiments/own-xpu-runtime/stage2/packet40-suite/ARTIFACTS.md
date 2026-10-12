@@ -56,6 +56,17 @@ available through the exactness check (1–8, plus 97–104 for the 128-token
 companion). Speed windows retain none and check every emitted token. Raw event logs are
 compressed. Nothing outside this packet is cleaned.
 
+The retained `build/host-issue/host-issue-benchmark` is a historical CPU mock
+helper. Earlier execution ledgers bind that exact file and hash; do not rebuild,
+move or delete it. It does not qualify the current prepared-launch gate after
+runtime objects change. The current `prepared_host_benchmark.py` writes the
+separate `build/prepared-host-issue-benchmark` ELF and names that path in
+`prepared-host-benchmark.json` with every current linked-object hash. The seal's
+existing top-level ELF inventory discovers the new file automatically. Build it
+once outside any active execution recorder at the shared campaign boundary,
+then run the recorded cheap gate on the stable artifact set. Its existence
+alone is not a passing gate, and historical ledgers are not rewritten.
+
 Coordinator inputs are retained under ignored `build/`: sealed executables,
 compile/link metadata, fixture inputs, target input bundle, official-draft capture
 inputs, and the small authenticated target streams used to regenerate KD references. These are required
@@ -130,7 +141,9 @@ is a diagnostic and can take substantially longer than the miniature gate.
 
 ```bash
 p40=experiments/own-xpu-runtime/stage2/packet40-suite
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$p40/seal40.py" --record-phase strict-terminal-mini --receipt terminal-eos-all-state-mini-both.json -- python3 -B "$p40/strict_terminal_gate.py" --binary "$p40/build/gnu-host/own-rt-iq3" --controller both
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$p40/seal40.py" --record-phase strict-terminal-real --receipt terminal-eos-all-state-real-both.json -- python3 -B "$p40/strict_terminal_gate.py" --binary "$p40/build/icpx-host/own-rt-iq3" --real --controller both --real-prefix 7 --positions 0,1 --random-count 4
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$p40/seal40.py" --record-phase strict-terminal-aggregate --receipt terminal-eos-all-state-gates.json -- python3 -B "$p40/strict_terminal_aggregate.py"
+p40_tmp="$PWD/$p40/build/tmp"
+nice -n 19 ionice -c 3 mkdir -p "$p40_tmp"
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 TMPDIR="$p40_tmp" python3 -B "$p40/seal40.py" --record-phase strict-terminal-mini --receipt terminal-eos-all-state-mini-both.json -- python3 -B "$p40/strict_terminal_gate.py" --binary "$p40/build/gnu-host/own-rt-iq3" --controller both
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 TMPDIR="$p40_tmp" python3 -B "$p40/seal40.py" --record-phase strict-terminal-real --receipt terminal-eos-all-state-real-both.json -- python3 -B "$p40/strict_terminal_gate.py" --binary "$p40/build/icpx-host/own-rt-iq3" --real --controller both --real-prefix 7 --positions 0,1 --random-count 4
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 TMPDIR="$p40_tmp" python3 -B "$p40/seal40.py" --record-phase strict-terminal-aggregate --receipt terminal-eos-all-state-gates.json -- python3 -B "$p40/strict_terminal_aggregate.py"
 ```
