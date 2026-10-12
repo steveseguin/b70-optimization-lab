@@ -2073,3 +2073,35 @@ more clean, audit 6 or 7, 23 minutes or less (XR4: 29.5), fewer than 25,000 toke
 replies redone in full. The risk is on the hard tickets: a think of 3,000 to 8,000 tokens that would have ended in
 the right fix is now replaced by an answer without thinking. If it costs fixes or clean tickets, the cap stays off.
 Queue of 13d: C32m, XR5, then the proxy on the second 1M stream.
+
+### Campaign 13c ended early (2026-10-12 19:57); state at the end of the day
+
+W32's second run on `repair-n40-s1x` was not graded either. It reached ticket 26 (`combination_index`) after 13
+minutes and stayed there; at minute 31 host memory available fell from 1.99 to 1.56 GiB within three seconds and
+the memory guard stopped the research server (`MEMORY-GUARD.json` in `server/tp2-w262144-c13c`). What its files
+showed when last looked at is what the first run showed at that point: 15 FIXES.md lines, 4 names in RECIPES.txt.
+The room beside the server was 0.36 GiB at that moment and the task container may use 0.38 GiB: the container's
+cap is still larger than the room, which is the morning's lesson a second time at a tighter margin (the per-process
+caps held; what the agent ran in those seconds is not known, the trial was not saved). Before the next run beside
+the server the container goes to 256 MiB, and the runner should refuse to start an arm when the room is under
+twice the container's cap.
+
+The kill left a fault line and an engine reset on card `e3:00.0` in the kernel log (page faults at the teardown
+of a compute job that was running when the container was killed; no "wedged" or failed-reset line after it). The
+runner does not put the Gemma service back after a fault line, by design, so **the Gemma LAN service is down** and
+the cards are idle; nothing was restarted by hand. Campaign 13d (C32m, XR5, the proxy on the second 1M stream) is
+registered and generated (`longrun-campaign13d.sh`, `QUEUE13D.txt`) and has not been started.
+
+Where the lane stands:
+
+| | proxy | summary compaction | sliding window |
+| --- | --- | --- | --- |
+| repair task, seed 0 (default effort) | 40 of 40 clean, 37.8 min | 40 of 40 clean, 28.5 min | 30 of 40 clean, 29.3 min |
+| repair task, seed 1x (default effort) | 40 of 40 clean, audit 7/7, 47.1 min | 33 of 40 clean, audit 0/7, cut at 60 min | not graded twice (stuck on one ticket) |
+| repair task, seed 1x, effort medium set by the proxy | 40 of 40 clean, audit 7/7, 29.5 min | control not run | |
+
+Owed, in this order: C32m (the summariser at the same effort: without it the last row has no comparison); XR5
+(the short first limit on thinking replies); a graded sliding-window row on the second seed; the proxy on the
+second 1M ledger stream, which is also the first text the two fitted check rules have not seen; a task without the
+`*_index` functions and `peekable`, or with leave to give a ticket up; the skindeep pages for all of the above
+(not updated since this morning: no site build can run beside a research server, and the day ended on one).
