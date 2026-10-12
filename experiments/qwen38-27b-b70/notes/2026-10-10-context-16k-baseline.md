@@ -943,10 +943,10 @@ Per 100K tokens: 4.2, 4.3, 6.4, 4.5, 5.2, 5.1, 3.7, 4.9 and 6.1 minutes (no tren
 The preregistered bar was 222 or better in under 60 minutes.
 
 What the notes calls did: 63 cuts, 59 of them in place (four by the ordinary cut, when a question was open as the
-window filled). 1.75M prompt tokens in the in-place calls, 1.51M of them from the cache. A reply was asked for again
-19 times: 13 times because a name's lines accounted for fewer changes than the items mention it, 5 times because
-working did not start from the value held (`suru92: working starts from -14, NOTES say removed`), once for both;
-one doubtful line was accepted after the second reply. NOTES stayed between 391 and 1,147 tokens with both rules in
+window filled; three of those were noted in two pieces). 1.75M prompt tokens in the in-place calls, 1.51M of them
+from the cache. An in-place reply was asked for again 18 times in 17 of the 59 cuts: 13 times because a name's
+lines accounted for fewer changes than the items mention it, 5 times because working did not start from the value
+held (`suru92: working starts from -14, NOTES say removed`); one doubtful line was accepted after the second reply. NOTES stayed between 391 and 1,147 tokens with both rules in
 place. The audit finds no counter ever wrong.
 
 What the audit shows about the full keeper on the same stream, which its score had hidden: at one cut (model call
