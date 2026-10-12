@@ -52,3 +52,22 @@ cost nor successful arithmetic gates establish a GPU serving speed or quality re
 Preparation history: two incomplete short replays were stopped cooperatively while
 review found the scratch bound and final teardown storage check. They are retained
 under preparation-stopped-* and are not counted as capacity passes or long oracles.
+
+## Qualified segmentation and receipt retention
+
+After the uninterrupted 4096-capacity incident gate passed, its measured first
+100 positions averaged14.544seconds and the next50 averaged21.403seconds, while
+QSA pool/select/attention together grew only from0.188 to0.227seconds per position.
+This substantiates the non-model allocation-history cost. Subject to the exact
+short resume proof, LONG-A/B now run as preregistered100-position segments: save
+and verify state, stop cleanly, restore in a fresh CPU process, continue the same
+request. No numerical operation or binary changes. No prompt/KV/model history is
+dropped. Planned checkpoint stops are not failures; failed segments are never
+retried automatically. The two runs require at most7 and24 processes respectively
+under ordinary cap32 completion, one at a time. All actual segment CPU/wall costs
+and prior receipts are retained.
+
+Completed teardown JSON and every segment's old teardown are compressed losslessly
+with original/raw hashes verified before removal. This avoids a single>100MB
+GitHub object for a long run. Loaders accept either original JSON or its verified
+compressed form. The CPU fixtures, token streams and mid-prompt bytes are unchanged.

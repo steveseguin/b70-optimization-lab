@@ -1,0 +1,33 @@
+{
+  "schema": "iq3-long.site-cost-summary.v1",
+  "passed": true,
+  "oracle_receipt_sha256": "6f65943747c4882a4d698a1d45ac2b974dda0d70147be644d7f943f373007344",
+  "raw_log_hashes": {
+    "timings.jsonl.segment-100-719157": "b2e512cd4fe49290ebd48d57683d52a95a1f20a67d171d234179a3af0b27d07b",
+    "timings.jsonl.segment-final-1791829940919178935": "d271e2007d136976cc122a83c07e507162d5e50ad0b9b7c827f869f2a7a7193d"
+  },
+  "positions": 150,
+  "bins": [
+    {
+      "first_position": 0,
+      "last_position": 99,
+      "positions": 100,
+      "position_seconds": 14.543992000000001,
+      "site_seconds": 12.20652883318,
+      "qsa_pool_seconds": 0.1087193085,
+      "qsa_select_seconds": 0.00164110612,
+      "qsa_attention_seconds": 0.0780314429
+    },
+    {
+      "first_position": 100,
+      "last_position": 149,
+      "positions": 50,
+      "position_seconds": 21.402802,
+      "site_seconds": 14.578544632579998,
+      "qsa_pool_seconds": 0.11098862920000001,
+      "qsa_select_seconds": 0.00184778898,
+      "qsa_attention_seconds": 0.1140148644
+    }
+  ],
+  "caveat": "Site wall time includes host dispatch/lookup overhead. Full position time also includes layer staging, capture and release; checkpoint writes are outside it. These are CPU oracle costs, not serving speed."
+}

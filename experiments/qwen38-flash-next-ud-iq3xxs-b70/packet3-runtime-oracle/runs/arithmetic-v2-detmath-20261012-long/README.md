@@ -4,25 +4,34 @@ Completed and verified: 0/2. Arithmetic `iq3-p17-detmath-v2` for the separate
 Unsloth UD-IQ3_XXS quantized compressed model; context capacity 4,096, 32 generated tokens.
 EOG 248044 or 248046 is retained and then stops generation. No device was accessed.
 
-| Prompt | Prompt tokens | Generated | End | First 8 IDs | Last 8 IDs | Seconds/position | CPU hours |
-| --- | ---: | ---: | --- | --- | --- | ---: | ---: |
+| Prompt | Prompt tokens | Generated | End | Processes | First 8 IDs | Last 8 IDs | Seconds/position | CPU hours |
+| --- | ---: | ---: | --- | ---: | --- | --- | ---: | ---: |
 
 Numerical-process wall time including resume segments: 0.000 seconds.
 Measured user + system time: 0.000000 CPU hours.
 These are CPU oracle costs, not serving speeds. Per-position times include the original
 streaming weight loader and per-site logging; selected capture positions also include
-the selection audit. Checkpoint write/verification is outside those position timings.
+the selection audit. Checkpoint write/verification is outside those position timings. Receipt totals include
+every segment, including each fresh initialization and state restoration; position bins
+use the accepted forward passes, while receipts retain any discarded interrupted work.
 Token 1 includes initialization and prefill. `positions.jsonl`, `tokens.jsonl`, and
 `result.json` retain timings, every token, top-five logits, logit hashes and decoded text.
 
 | Prompt | Zero-based positions | Mean seconds/position |
 | --- | --- | ---: |
 
+| Prompt | Zero-based positions | Pool s/position | Select s/position | Attention s/position | All sites s/position |
+| --- | --- | ---: | ---: | ---: | ---: |
+
 QSA recomputes all complete four-token pools and scores them at every position.
 Attention reduces the selected positions in score order, at most 2,048 plus up to
 three trailing positions. Its cost grows through the budget edge; pool scoring
 continues to grow after it. The frozen CPU allocator also scans its growing allocation
-history, so wall-time growth cannot be attributed solely to QSA. The retained site
+history. The long runs therefore use preregistered 100-position segments, carrying
+the exact saved state into a fresh process after each segment. This bounds bookkeeping
+and separates it from long-context attention cost. No model history is reset. Every
+segment runs once; a failed segment stops the campaign without automatic retry.
+Wall-time growth still cannot be attributed solely to QSA. The retained site
 logs allow that distinction to be examined; no faster arithmetic was substituted.
 
 One host allocation adaptation was required: the sealed adapter's 256 MiB temporary
@@ -30,10 +39,13 @@ pool would overflow near 1,225 admitted positions. `scratch-capacity.patch` enla
 both its backing allocation and its pool bound to 512 MiB, without changing any
 arithmetic. The initial short replay was stopped cleanly before the long runs; its
 partial evidence is retained in `preparation-stopped-capacity/`. Both equality gates
-use the final enlarged-pool build. The original numerical sources remain read-only;
+use the final enlarged-pool build. A second short preparation replay stopped to add
+an immediate disk check before the final teardown write. The completed capacity gate
+was then preserved while receipt compression was finalized. These preparation stops
+do not count as a numerical failure or as long-context oracle coverage. The original numerical sources remain read-only;
 `build-receipt.json` binds the two-constant overlay and generated include relocation.
 
-Capacity proof: **PENDING**. Capacity changes allocated cache extents and bounds only;
+Capacity proof: **PASS**. Capacity changes allocated cache extents and bounds only;
 valid-position arithmetic and the frozen 4,096-position RoPE table stay unchanged.
 See `capacity-analysis.md` and the 4,096-capacity `capacity-incident/equality-proof.json`:
 64 sealed tokens, all logit hashes/top-five records, 384 BF16 fixtures and eight layer
@@ -102,7 +114,8 @@ checked below 11.5 GB; no device access, sudo, mlock or host setting changes.
 8 GB stops work. Scratch stays below 2 GB. Site logs rotate at checkpoints, compress
 losslessly with restored-hash verification, and retain raw/compressed hashes in
 `log-retention.json`. Large log and teardown artifacts are necessary execution
-receipts; restore `.gz` with gzip and verify that manifest's raw SHA256. Checkpoints
+receipts; completed long-run teardown is losslessly compressed with a raw-hash receipt
+in `teardown-retention.json`, and earlier segment teardowns in `resume-archives.json`; restore `.gz` with gzip and verify that manifest's raw SHA256. Checkpoints
 are removed only after complete validation, with their hash and regeneration recipe
 retained. No executable, weights or generated cache is committed.
 

@@ -1,5 +1,5 @@
 """Resume qualification, exact checker tests, documentation and explicit-path publication."""
-import gzip,json,os,shutil,struct,subprocess,time
+import gzip,hashlib,json,os,shutil,struct,subprocess,time
 from pathlib import Path
 
 def install(m):
@@ -17,6 +17,12 @@ def install(m):
    # This is explicitly a synthetic six-token checkpoint test, never a long oracle.
    inp['checkpoint_test_only']=True;inp['source_input_sha256']=m.sha(original/'input.json')
    inp['files']={p.name:m.sha(p) for p in tmp.iterdir()};m.save(tmp/'input.json',inp);tmp.rename(bundle)
+  inp=m.read(bundle/'input.json');vocab=[]
+  with (bundle/'vocab.bin').open('rb') as f:
+   while raw:=f.read(4):vocab.append(f.read(struct.unpack('<I',raw)[0]))
+  prefix=b''.join(vocab[t] for t in inp['tokens']);prompt=I/'resume-test.txt';prompt.write_bytes(prefix)
+  inp.update(source_prompt=inp.get('source_prompt',inp['prompt']),prompt=str(prompt),prompt_sha256=hashlib.sha256(prefix).hexdigest())
+  m.save(bundle/'input.json',inp)
   d=m.launch('resume-uninterrupted',bundle,8,resume=allow_resume and (H/'.resume-uninterrupted.partial/native').exists(),extra={'IQ3_CHECKPOINT_INTERVAL':'4'})
   reference=m.seal('resume-uninterrupted',bundle,8)
   m.check(not m.read(reference/'receipt.json')['resumed'],'control must be uninterrupted')
@@ -78,6 +84,7 @@ def install(m):
   shutil.rmtree(copy);scratch.rmdir()
   path=H/'checker-tests.json';all_checks=m.read(path) if path.exists() else {};all_checks[label]=checks;m.save(path,all_checks)
 
+ def count_prior(r):return 1+count_prior(r['prior_attempt']) if r.get('prior_attempt') else 0
  def elapsed(r,key):return r.get(key,0)+(elapsed(r['prior_attempt'],key) if r.get('prior_attempt') else 0)
  def refresh():
   prompts=m.read(I/'prompts.json');entries=[]
@@ -92,14 +99,17 @@ def install(m):
     if vals:bins.append(dict(first_position=lo,last_position=min(hi-1,len(positions)-1),positions=len(vals),mean_seconds_per_position=sum(vals)/len(vals)))
    entries.append(dict(prompt_id=label,prompt_tokens=r['prompt_tokens'],input_bundle=str(bundle.relative_to(R)),input_bundle_hashes={n:m.sha(bundle/n) for n in ('tokens.txt','input.json','identity.tsv','plan.tsv','vocab.bin')},
     oracle_directory=str(d.relative_to(R)),oracle_receipt_sha256=m.sha(d/'receipt.json'),generated_tokens=len(result['tokens']),first_8_token_ids=result['tokens'][:8],last_8_token_ids=result['tokens'][-8:],ended_early=len(result['tokens'])<32,termination=result['status'],context=4096,
-    fixture_steps=list(range(1,min(8,len(result['tokens']))+1)),midprompt_positions=[r['position'] for r in v['selection_summary']],selection_summary=v['selection_summary'],mean_seconds_per_position=r['mean_seconds_per_position'],elapsed_seconds=elapsed(r,'elapsed_seconds'),cpu_seconds=elapsed(r,'cpu_seconds'),position_timing_bins=bins,prompt_source=row))
+    fixture_steps=list(range(1,min(8,len(result['tokens']))+1)),midprompt_positions=[r['position'] for r in v['selection_summary']],selection_summary=v['selection_summary'],mean_seconds_per_position=r['mean_seconds_per_position'],elapsed_seconds=elapsed(r,'elapsed_seconds'),cpu_seconds=elapsed(r,'cpu_seconds'),position_timing_bins=bins,site_cost_bins=m.read(d/'site-cost-summary.json')['bins'] if (d/'site-cost-summary.json').exists() else [],prompt_source=row,execution_segments=1+count_prior(r)))
   manifest=dict(schema='own-runtime.iq3.suite-inputs.v1',arithmetic='iq3-p17-detmath-v2',context=4096,token_cap=32,suite_sha256=prompts['corpus_sha256'],prompts_manifest_sha256=m.sha(I/'prompts.json'),complete=len(entries)==2,prompts=entries,total_elapsed_seconds=sum(e['elapsed_seconds'] for e in entries),total_cpu_hours=sum(e['cpu_seconds'] for e in entries)/3600,cpu_accounting_complete=True)
   m.save(I/'suite-manifest.json',manifest)
-  table='| Prompt | Prompt tokens | Generated | End | First 8 IDs | Last 8 IDs | Seconds/position | CPU hours |\n| --- | ---: | ---: | --- | --- | --- | ---: | ---: |\n'
-  for e in entries:table+=f"| {e['prompt_id']} | {e['prompt_tokens']} | {e['generated_tokens']} | {e['termination']} | {', '.join(map(str,e['first_8_token_ids']))} | {', '.join(map(str,e['last_8_token_ids']))} | {e['mean_seconds_per_position']:.4f} | {e['cpu_seconds']/3600:.4f} |\n"
+  table='| Prompt | Prompt tokens | Generated | End | Processes | First 8 IDs | Last 8 IDs | Seconds/position | CPU hours |\n| --- | ---: | ---: | --- | ---: | --- | --- | ---: | ---: |\n'
+  for e in entries:table+=f"| {e['prompt_id']} | {e['prompt_tokens']} | {e['generated_tokens']} | {e['termination']} | {e['execution_segments']} | {', '.join(map(str,e['first_8_token_ids']))} | {', '.join(map(str,e['last_8_token_ids']))} | {e['mean_seconds_per_position']:.4f} | {e['cpu_seconds']/3600:.4f} |\n"
   timing='| Prompt | Zero-based positions | Mean seconds/position |\n| --- | --- | ---: |\n'
   for e in entries:
    for b in e['position_timing_bins']:timing+=f"| {e['prompt_id']} | {b['first_position']}–{b['last_position']} | {b['mean_seconds_per_position']:.4f} |\n"
+  qsa='| Prompt | Zero-based positions | Pool s/position | Select s/position | Attention s/position | All sites s/position |\n| --- | --- | ---: | ---: | ---: | ---: |\n'
+  for e in entries:
+   for b in e['site_cost_bins']:qsa+=f"| {e['prompt_id']} | {b['first_position']}–{b['last_position']} | {b['qsa_pool_seconds']:.4f} | {b['qsa_select_seconds']:.4f} | {b['qsa_attention_seconds']:.4f} | {b['site_seconds']:.4f} |\n"
   selections='| Prompt | Position (zero-based) | Consumed tokens | Admitted | Dropped | Layers with score ties | Cutoff tie layers |\n| --- | ---: | ---: | ---: | ---: | ---: | --- |\n'
   for e in entries:
    for s in e['selection_summary']:selections+=f"| {e['prompt_id']} | {s['position']} | {s['prompt_ordinal']} | {s['admitted']} | {s['dropped']} | {s['layers_with_ties']}/12 | {s['cutoff_tie_layers']} |\n"
@@ -116,16 +126,23 @@ Numerical-process wall time including resume segments: {manifest['total_elapsed_
 Measured user + system time: {manifest['total_cpu_hours']:.6f} CPU hours.
 These are CPU oracle costs, not serving speeds. Per-position times include the original
 streaming weight loader and per-site logging; selected capture positions also include
-the selection audit. Checkpoint write/verification is outside those position timings.
+the selection audit. Checkpoint write/verification is outside those position timings. Receipt totals include
+every segment, including each fresh initialization and state restoration; position bins
+use the accepted forward passes, while receipts retain any discarded interrupted work.
 Token 1 includes initialization and prefill. `positions.jsonl`, `tokens.jsonl`, and
 `result.json` retain timings, every token, top-five logits, logit hashes and decoded text.
 
 {timing}
+{qsa}
 QSA recomputes all complete four-token pools and scores them at every position.
 Attention reduces the selected positions in score order, at most 2,048 plus up to
 three trailing positions. Its cost grows through the budget edge; pool scoring
 continues to grow after it. The frozen CPU allocator also scans its growing allocation
-history, so wall-time growth cannot be attributed solely to QSA. The retained site
+history. The long runs therefore use preregistered 100-position segments, carrying
+the exact saved state into a fresh process after each segment. This bounds bookkeeping
+and separates it from long-context attention cost. No model history is reset. Every
+segment runs once; a failed segment stops the campaign without automatic retry.
+Wall-time growth still cannot be attributed solely to QSA. The retained site
 logs allow that distinction to be examined; no faster arithmetic was substituted.
 
 One host allocation adaptation was required: the sealed adapter's 256 MiB temporary
@@ -133,7 +150,10 @@ pool would overflow near 1,225 admitted positions. `scratch-capacity.patch` enla
 both its backing allocation and its pool bound to 512 MiB, without changing any
 arithmetic. The initial short replay was stopped cleanly before the long runs; its
 partial evidence is retained in `preparation-stopped-capacity/`. Both equality gates
-use the final enlarged-pool build. The original numerical sources remain read-only;
+use the final enlarged-pool build. A second short preparation replay stopped to add
+an immediate disk check before the final teardown write. The completed capacity gate
+was then preserved while receipt compression was finalized. These preparation stops
+do not count as a numerical failure or as long-context oracle coverage. The original numerical sources remain read-only;
 `build-receipt.json` binds the two-constant overlay and generated include relocation.
 
 Capacity proof: **{capacity}**. Capacity changes allocated cache extents and bounds only;
@@ -203,7 +223,8 @@ checked below 11.5 GB; no device access, sudo, mlock or host setting changes.
 8 GB stops work. Scratch stays below 2 GB. Site logs rotate at checkpoints, compress
 losslessly with restored-hash verification, and retain raw/compressed hashes in
 `log-retention.json`. Large log and teardown artifacts are necessary execution
-receipts; restore `.gz` with gzip and verify that manifest's raw SHA256. Checkpoints
+receipts; completed long-run teardown is losslessly compressed with a raw-hash receipt
+in `teardown-retention.json`, and earlier segment teardowns in `resume-archives.json`; restore `.gz` with gzip and verify that manifest's raw SHA256. Checkpoints
 are removed only after complete validation, with their hash and regeneration recipe
 retained. No executable, weights or generated cache is committed.
 

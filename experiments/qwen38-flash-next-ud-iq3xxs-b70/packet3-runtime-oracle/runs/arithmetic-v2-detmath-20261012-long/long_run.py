@@ -1,7 +1,8 @@
 """Sequential CPU campaign with exact gates, bounded resources and atomic receipts."""
-import argparse,fcntl,gzip,hashlib,importlib.util,json,os,resource,shutil,signal,struct,subprocess,sys,time
+import argparse,fcntl,gzip,hashlib,importlib.util,json,os,resource,re,shutil,signal,struct,subprocess,sys,time
 from datetime import datetime,timezone
 from pathlib import Path
+from retention import load_teardown,retain_teardown
 HERE=Path(__file__).resolve().parent
 ROOT=HERE.parents[4]
 INPUTS=ROOT/'experiments/own-xpu-runtime/stage2/long-inputs-20261012'
@@ -29,6 +30,8 @@ def preflight():
  affinity=sorted(os.sched_getaffinity(0));check(not set(affinity)&{0,1,2,3,16,17,18,19},'reserved cores')
  check(affinity==read(HERE/'host-contract.json')['affinity'],'inherited affinity changed')
  build=read(HERE/'build-receipt.json');check(build['passed'],'build passed')
+ snapshot=read(HERE/'campaign-source-snapshot.json')
+ for name,digest in snapshot['sources'].items():check(sha(HERE/name)==digest,'campaign source changed: '+name)
  check(sha(HERE/'build/oracle')==build['binary_sha256'] and sha(HERE/'oracle_long.cpp')==build['source_sha256'],'build identity')
  for name,h in build['arithmetic']['arithmetic_sources'].items():check(sha(ROOT/name)==h,'frozen arithmetic changed: '+name)
  deps=subprocess.check_output(PREFIX+['readelf','-d',str(HERE/'build/oracle')],text=True)
@@ -51,7 +54,10 @@ def archived_logs(d,finished=False):
   for p in (d/'progress.jsonl',d/'timings.jsonl'):
    if p.exists():
     unique=p.with_name(p.name+'.segment-final-'+str(time.time_ns()));p.rename(unique);names.append(unique)
- for p in sorted(names):records[p.name]=compress_one(p);save(ledger,records)
+ for p in sorted(names):
+  info=compress_one(p);match=re.match(r'(?:progress|timings)\.jsonl\.segment-(\d+)-',p.name)
+  info['end_position']=int(match[1]) if match else read(d/'result.json')['next_position']
+  info['recorded_utc']=utc();records[p.name]=info;save(ledger,records)
  return records
 
 def launch(label,bundle,cap,*,resume=False,extra=None):
@@ -63,15 +69,20 @@ def launch(label,bundle,cap,*,resume=False,extra=None):
  for n,h in inp['files'].items():check(sha(bundle/n)==h,'input file '+n)
  check(list(map(int,(bundle/'tokens.txt').read_text().split()))==inp['tokens'],'input tokens')
  prior=read(attempt/'receipt.json') if (attempt/'receipt.json').exists() else None
- if prior and (d/'result.json').exists() and (d/'teardown.json').exists() and read(d/'result.json')['status'] in ('token-cap','eos'):
+ if prior and (d/'result.json').exists() and ((d/'teardown.json').exists() or (d/'teardown.json.gz').exists()) and read(d/'result.json')['status'] in ('token-cap','eos'):
   check(prior['binary_sha256']==build['binary_sha256'] and prior['input_sha256']==sha(bundle/'input.json'),'completed partial identity');return d
  if resume:
   check(prior and prior['binary_sha256']==build['binary_sha256'] and prior['input_sha256']==sha(bundle/'input.json'),'resume identity')
   check((d/'checkpoint.bin').exists(),'no checkpoint')
   current=read(d/'result.json')
   check(current['status'] in ('running','checkpoint-stopped') or (current['status']=='failed-or-stopped' and current['error'] in ('cooperative stop','cooperative deadline')),'numerical failure is not resumable')
+  archives=read(d/'resume-archives.json') if (d/'resume-archives.json').exists() else {}
   for name in ('teardown.json','result.json'):
-   if (d/name).exists():shutil.copyfile(d/name,d/(name+'.attempt-'+str(time.time_ns())))
+   if (d/name).exists():
+    target=d/(name+'.attempt-'+str(time.time_ns()));disk_guard();shutil.copyfile(d/name,target)
+    if name=='teardown.json':archives[target.name]=compress_one(target)
+    else:archives[target.name]=dict(sha256=sha(target),bytes=target.stat().st_size)
+  save(d/'resume-archives.json',archives)
  else:check(not d.exists(),'unfinished run exists; explicit --resume required')
  check(len(base.oracle_processes())<2,'at most two oracle processes')
  cmd=PREFIX+[str(HERE/'build/oracle'),str(bundle),str(d),'259200',str(cap)]+(['resume'] if resume else [])
@@ -79,7 +90,7 @@ def launch(label,bundle,cap,*,resume=False,extra=None):
   arithmetic=build['arithmetic'],binary_sha256=build['binary_sha256'],source_hashes=build['arithmetic']['arithmetic_sources'],runner_sha256=sha(Path(__file__)),support_sha256=sha(HERE/'campaign_support.py'),checker_sha256=sha(HERE/'suite_check.py'),campaign_sources_sha256=sha(HERE/'campaign-source-snapshot.json'),
   model=read(SEALED/'receipt.json')['model'],prompt_id=label,prompt_sha256=inp['prompt_sha256'],prompt_tokens=len(inp['tokens']),requested_tokens=cap,context=4096,
   input_sha256=sha(bundle/'input.json'),device_executed=False,nice=19,ionice='idle',OMP_NUM_THREADS=2,affinity=sorted(os.sched_getaffinity(0)),
-  address_space_cap_bytes=38_000_000_000,anonymous_memory_guard_bytes=11_500_000_000,resumed=resume,prior_attempt=prior)
+  oracle_environment_overrides=extra or {},checkpoint_interval=int((extra or {}).get('IQ3_CHECKPOINT_INTERVAL','100')),address_space_cap_bytes=38_000_000_000,anonymous_memory_guard_bytes=11_500_000_000,resumed=resume,prior_attempt=prior)
  save(attempt/'receipt.json',r);snapshot=HERE/'runner-snapshots'/(r['runner_sha256']+'.py');snapshot.parent.mkdir(exist_ok=True)
  if not snapshot.exists():shutil.copyfile(Path(__file__),snapshot)
  child=None;start=time.monotonic();before=resource.getrusage(resource.RUSAGE_CHILDREN);peak=0;last_pos=-1;last_disk=0
@@ -93,7 +104,10 @@ def launch(label,bundle,cap,*,resume=False,extra=None):
    while child.poll() is None:
     if time.monotonic()-last_disk>10:free,scratch=disk_guard();last_disk=time.monotonic();archived_logs(d) if d.exists() else None
     processes=base.oracle_processes();anon=sum(p['anon'] for p in processes)
-    threads=sum(next(int(s.split()[1]) for s in Path(f"/proc/{p['pid']}/status").read_text().splitlines() if s.startswith('Threads:')) for p in processes)
+    threads=0
+    for process in processes:
+     try:threads+=next(int(s.split()[1]) for s in Path(f"/proc/{process['pid']}/status").read_text().splitlines() if s.startswith('Threads:'))
+     except (FileNotFoundError,ProcessLookupError):pass
     check(threads<=6,'STOP: oracle/helper compute-thread budget exceeds eight')
     own=next(int(s.split()[1])*1024 for s in Path('/proc/self/status').read_text().splitlines() if s.startswith('RssAnon:'))
     anon+=own;peak=max(peak,anon)
@@ -118,7 +132,7 @@ def launch(label,bundle,cap,*,resume=False,extra=None):
   finally:
    for sig,handler in old.items():signal.signal(sig,handler)
  after=resource.getrusage(resource.RUSAGE_CHILDREN)
- r.update(returncode=child.returncode,elapsed_seconds=time.monotonic()-start,cpu_seconds=after.ru_utime+after.ru_stime-before.ru_utime-before.ru_stime,peak_anonymous_bytes=peak,completed_utc=utc())
+ r.update(status=read(d/'result.json')['status'],returncode=child.returncode,elapsed_seconds=time.monotonic()-start,cpu_seconds=after.ru_utime+after.ru_stime-before.ru_utime-before.ru_stime,peak_anonymous_bytes=peak,completed_utc=utc())
  save(attempt/'receipt.json',r);archived_logs(d,True)
  check(child.returncode==0,'CPU oracle failed; no automatic retry')
  return d
@@ -165,7 +179,7 @@ def validate(d,bundle,cap):
  check([r['position'] for r in positions]==list(range(len(consumed))) and [r['input_token'] for r in positions]==consumed,'position/token coverage')
  checker=module('long_checker',HERE/'suite_check.py');fixtures=checker.fixture_inventory(d,len(tokens))
  mid,summaries=mid_inventory(d,len(inp['tokens']))
- teardown=read(d/'teardown.json');check(len(teardown)==1 and teardown[0]['safe_to_exit'] and teardown[0]['live_bytes']==teardown[0]['in_flight']==0,'CPU teardown')
+ teardown=load_teardown(d);check(len(teardown)==1 and teardown[0]['safe_to_exit'] and teardown[0]['live_bytes']==teardown[0]['in_flight']==0,'CPU teardown')
  return dict(passed=True,fixture_hashes=fixtures,midprompt_hashes=mid,selection_summary=summaries,generated_tokens=len(tokens),prompt_tokens=len(inp['tokens']),consumed_tokens_exact=True,positions=len(positions),mean_seconds_per_position=sum(r['seconds'] for r in positions)/len(positions))
 
 def seal(label,bundle,cap):
@@ -182,9 +196,26 @@ def seal(label,bundle,cap):
  if (d/'checkpoint.bin').exists():
   save(d/'checkpoint-retention.json',dict(sha256=sha(d/'checkpoint.bin'),bytes=(d/'checkpoint.bin').stat().st_size,state=read(d/'checkpoint.json'),disposition='regenerable scratch; removed only after verified complete run'))
   (d/'checkpoint.bin').unlink()
+ r['teardown_retention']=retain_teardown(d,compress_one,save,sha)
  save(d/'receipt.json',r)
  for p in attempt.glob('stdout*.txt'):shutil.copyfile(p,d/p.name)
  d.rename(dest);return dest
+
+def run_segmented(label,bundle,cap,allow_resume):
+ # Preregistered segments, each executed once. Failure exits; it is never retried.
+ if (HERE/label).exists():return launch(label,bundle,cap)
+ d=HERE/('.'+label+'.partial/native');resuming=d.exists()
+ check(not resuming or allow_resume,'existing partial requires explicit --resume')
+ consumed_limit=len(read(bundle/'input.json')['tokens'])+cap-1
+ while True:
+  start=read(d/'checkpoint.json')['next_position'] if resuming else 0
+  boundary=(start//100+1)*100
+  check(start<=consumed_limit and boundary<=((consumed_limit+99)//100)*100+100,'segment bound')
+  launch(label,bundle,cap,resume=resuming,extra={'IQ3_STOP_AT_CHECKPOINT':str(boundary)})
+  result=read(d/'result.json')
+  if result['status'] in ('eos','token-cap'):return
+  check(result['status']=='checkpoint-stopped' and read(d/'checkpoint.json')['next_position']==boundary,'planned checkpoint stop required')
+  resuming=True
 
 def main():
  ap=argparse.ArgumentParser();ap.add_argument('--stage',choices=['all','capacity','resume-test','long','refresh'],required=True);ap.add_argument('--resume',action='store_true');ap.add_argument('--publish',action='store_true');a=ap.parse_args()
@@ -199,7 +230,7 @@ def main():
   if a.stage in ('all','long'):
    check(read(HERE/'capacity-incident/equality-proof.json')['passed'],'capacity gate required');check(read(HERE/'resume-equality-proof.json')['passed'],'resume gate required')
    for label in ('LONG-A','LONG-B'):
-    launch(label,INPUTS/label,32,resume=a.resume and (HERE/('.'+label+'.partial/native')).exists());seal(label,INPUTS/label,32);refresh();checker_tests(label)
+    run_segmented(label,INPUTS/label,32,a.resume);seal(label,INPUTS/label,32);module('site_costs',HERE/'summarize_costs.py').summarize(HERE/label);refresh();checker_tests(label)
     if a.publish:publish(label)
    save(HERE/'status.json',dict(status='complete',updated_utc=utc()))
 from campaign_support import install
