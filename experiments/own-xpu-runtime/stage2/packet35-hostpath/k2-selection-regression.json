@@ -1,0 +1,138 @@
+{
+  "schema": "packet35.k2.selection-regression.v1",
+  "passed": true,
+  "device_executed": false,
+  "input_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+  "input_sha256": "c73836b6ef3fbd6de4e46e23143038ef49dacc552a6b27cd5f61178145103d71",
+  "note": "CPU reaggregation of packet29 historical measurements; not packet35 device measurements",
+  "resolutions": [
+    {
+      "fusion": "small.ffn",
+      "selected": "fusion",
+      "comparisons": [
+        {
+          "workload": "small.ffn.q6",
+          "fusion_ns": 20521.0,
+          "selected_members_ns": 32551.5,
+          "members_ns": {
+            "gemv:router": 7708.0,
+            "gemv:shexpgate": 10781.5,
+            "gemv:shexpup": 10729.0,
+            "gemv:shared_gate": 3333.0
+          }
+        },
+        {
+          "workload": "small.ffn.q8",
+          "fusion_ns": 14687.0,
+          "selected_members_ns": 31978.0,
+          "members_ns": {
+            "gemv:router": 7708.0,
+            "gemv:shexpgate": 10520.0,
+            "gemv:shexpup": 10417.0,
+            "gemv:shared_gate": 3333.0
+          }
+        }
+      ],
+      "rule": "fusion strictly cheaper for every workload; ties select members",
+      "incumbent_cost_rule": "median of same-run incumbent comparison medians when no candidate qualified"
+    },
+    {
+      "fusion": "small.gdn.ab",
+      "selected": "fusion",
+      "comparisons": [
+        {
+          "workload": "small.gdn.ab",
+          "fusion_ns": 4583.0,
+          "selected_members_ns": 7292.0,
+          "members_ns": {
+            "gemv:gdn.a": 3646.0,
+            "gemv:gdn.b": 3646.0
+          }
+        }
+      ],
+      "rule": "fusion strictly cheaper for every workload; ties select members",
+      "incumbent_cost_rule": "median of same-run incumbent comparison medians when no candidate qualified"
+    },
+    {
+      "fusion": "small.hc",
+      "selected": "fusion",
+      "comparisons": [
+        {
+          "workload": "small.hc",
+          "fusion_ns": 15625.0,
+          "selected_members_ns": 20104.0,
+          "members_ns": {
+            "gemv:hc.a.low": 11979.0,
+            "gemv:hc.a.inject": 8125.0
+          }
+        }
+      ],
+      "rule": "fusion strictly cheaper for every workload; ties select members",
+      "incumbent_cost_rule": "median of same-run incumbent comparison medians when no candidate qualified"
+    }
+  ],
+  "dispatch": {
+    "schema": "packet26.dispatch.v1",
+    "classes": {
+      "hc.a.norm": "specialised",
+      "hc.f.norm": "specialised",
+      "final.norm": "specialised",
+      "ple.kn": "specialised",
+      "ple.qn": "specialised",
+      "ple.cn": "specialised",
+      "gdn.norm": "packet18",
+      "gdn.recurrence": "round2",
+      "qsa.prepare": "packet18",
+      "qsa.pool": "packet18",
+      "qsa.select": "round2",
+      "qsa.attention": "packet18",
+      "attn.combine": "specialised",
+      "ffn.combine": "specialised",
+      "route": "specialised",
+      "gather": "specialised",
+      "argmax": "round2",
+      "streams": "specialised",
+      "ple.add": "specialised"
+    },
+    "fusions": {
+      "attn.combine+norm": "specialised",
+      "ffn.combine+norm": "specialised",
+      "route+gather": "specialised",
+      "small.hc": "round2",
+      "small.gdn.ab": "round2",
+      "small.ffn": "round2"
+    },
+    "gemv": {
+      "expsgate": "p28.paired.wg32",
+      "expsdown": "r5",
+      "gdn.qkv": "p28.dense.wg32",
+      "gdn.z": "p28.dense.wg32",
+      "qsa.qgate": "p28.dense.wg32",
+      "qsa.k": "p28.dense.rows4",
+      "qsa.v": "p28.dense.rows4",
+      "attention": "p28.dense.wg32",
+      "ple.key": "p28.dense.wg32",
+      "ple.value": "p28.dense.wg32",
+      "hc.gate": "r5",
+      "hc.low": "r5",
+      "logits": "p28.dense.wg32",
+      "hc.a.gate": "p28.dense.wg32",
+      "hc.a.low": "r5",
+      "hc.a.inject": "r5",
+      "hc.f.gate": "p28.dense.wg32",
+      "hc.f.low": "r5",
+      "hc.f.inject": "r5",
+      "final.gate": "p28.dense.wg32",
+      "final.low": "p28.dense.rows4",
+      "qsa.iq": "p28.dense.rows4",
+      "qsa.ik": "p28.dense.wg32",
+      "router": "r5",
+      "gdn.a": "r5",
+      "gdn.b": "r5",
+      "shexpgate": "r5",
+      "shexpup": "r5",
+      "shexpdown": "p28.dense.wg32",
+      "shared_gate": "r5"
+    }
+  }
+}

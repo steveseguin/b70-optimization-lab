@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "checks": {
+    "device_no_lookup_or_construction": true,
+    "device_one_bound_call": true,
+    "engine_no_string_dispatch": true,
+    "engine_clock_guarded": true,
+    "finish_mode_cached": true,
+    "device_generation_guard": true
+  },
+  "count": 6,
+  "reviewed_hotpath_sha256": {
+    "Device::issue": "761555ac7d011e06668ca0570194c2bd66f8eef6478896c257c29dfeda24a1b8",
+    "Engine::issue_site": "1f9a517d8732ea687b24b7c59401f8dacccb819354847220072ce89ec9a88175",
+    "Engine::finish": "b4e5a1db81b649338fb8bb8811786c5e762ff2a5a7611b46a1b537365f13c525"
+  },
+  "scope": "Application fast path source audit. Failure branches may construct diagnostics; checked/mini/class modes deliberately perform extra work. Per-family malloc/new hooks cover actual owner issue calls. SYCL internals excluded."
+}

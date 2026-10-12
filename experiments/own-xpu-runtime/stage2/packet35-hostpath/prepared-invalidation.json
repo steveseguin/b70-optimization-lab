@@ -1,0 +1,50 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "tests": 13,
+  "schema": "packet35.prepared-invalidation.v1",
+  "sanitizers": [
+    "address",
+    "undefined"
+  ],
+  "leak_detection": true,
+  "precision_flags_compile_and_link": [
+    "-fno-fast-math",
+    "-ffp-contract=off"
+  ],
+  "binary_sha256": "f2f30804286909ca6201de4fb20062fa897bba0377e16ea0b9192aac5bd5a465",
+  "source_sha256": {
+    "prepared_invalidation_test.cpp": "0a290443fa00e8bcaa51358bdef09b6fae1c6b45d8137dea1f59b55ec7951d90",
+    "owner.cpp": "c435f1c472cc45e56d39fca13cce2c53f32a51ccde5fc5bff529e5671e2f978d",
+    "owner_retire.cpp": "e35c366f640d8909b519891fa814aa80228b01ce69bd19ccdf00a8d13cae0da2",
+    "owner_api.hpp": "00fb5ff600fbb39e2c48acec13a0fe60c8507fdfb9c2cb104b55c32a7d57e94a",
+    "owner.hpp": "a0a56c8019c9132a9205383d9c1a0bc3135036e1872eee3b3502d028ea1325b6",
+    "argument_block.hpp": "58c09e4a08b15521250ab22db87260ae9337c06fc0d9a174bd1ea916d809f4fb"
+  },
+  "compile_argv": [
+    "g++",
+    "-std=c++20",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-DOWN_RT_HOST_ONLY",
+    "-I",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet35-hostpath",
+    "-O1",
+    "-g",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet35-hostpath/prepared_invalidation_test.cpp",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet35-hostpath/owner.cpp",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet35-hostpath/owner_retire.cpp",
+    "-o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet35-hostpath/build/prepared-invalidation-tests-asan"
+  ],
+  "run_argv": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet35-hostpath/build/prepared-invalidation-tests-asan"
+  ],
+  "run_environment": {
+    "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1",
+    "UBSAN_OPTIONS": "halt_on_error=1",
+    "OMP_NUM_THREADS": "2"
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "binary_sha256": "852082be201b1a4ea291621f795cd478a2d72cd57c99036f528c4d22c437e06b",
+  "tests": [
+    {
+      "wrapper_nice": 19,
+      "native_nice": 19,
+      "helper_nice": 19,
+      "passed": true,
+      "device_executed": false,
+      "requested_nice": 19,
+      "actual_nice": 19,
+      "mismatched_priority_rejected": true,
+      "argv": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet35-hostpath/build/host/own-rt-iq3",
+        "--native-nice",
+        "19",
+        "--card",
+        "0",
+        "--cards",
+        "1",
+        "--timing",
+        "token",
+        "--memory",
+        "layer-streaming",
+        "--stage",
+        "decode",
+        "--nongemv",
+        "parallel",
+        "--gemv",
+        "r5",
+        "--prompt-tokens",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet35-hostpath/build/input/tokens.txt",
+        "--max-new",
+        "8",
+        "--context",
+        "256",
+        "--plan",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet35-hostpath/build/input/plan.tsv",
+        "--identity",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet35-hostpath/build/input/identity.tsv",
+        "--model-dir",
+        "unused",
+        "--oracle",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet35-hostpath/build/unused",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet35-hostpath/build/priority-1791769860923715370/19/run",
+        "--seconds",
+        "600",
+        "--wait-seconds",
+        "60",
+        "--priority-probe"
+      ]
+    },
+    {
+      "requested_nice": 0,
+      "executed": false,
+      "command_verified": true,
+      "coordinator_only": true
+    }
+  ]
+}
