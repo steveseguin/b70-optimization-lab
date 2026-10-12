@@ -1,0 +1,67 @@
+{
+  "schema": "packet39.dispatch-selection.v1",
+  "screening_only": true,
+  "native_provisional_sha256": "891a27bd22302a7fdeb900bfddcc526ad4333c07e81250278a9725a2e25f313a",
+  "rows": [
+    {
+      "class_name": "expert-checks-iq2",
+      "selected": true,
+      "reason": "measured winner; assembly accepted"
+    },
+    {
+      "class_name": "attention-combine",
+      "selected": true,
+      "reason": "measured winner; assembly accepted"
+    },
+    {
+      "class_name": "hc-low-act",
+      "selected": true,
+      "reason": "measured winner; assembly accepted"
+    },
+    {
+      "class_name": "expert-act-iq2",
+      "selected": false,
+      "reason": "Gemv adds flag-register spills; GEMV loop grows (includes scheduling instructions)"
+    },
+    {
+      "class_name": "down-status",
+      "selected": true,
+      "reason": "measured winner; assembly accepted"
+    },
+    {
+      "class_name": "shared-up-act-q6",
+      "selected": true,
+      "reason": "measured winner; assembly accepted"
+    },
+    {
+      "class_name": "shared-down-combine",
+      "selected": true,
+      "reason": "measured winner; assembly accepted"
+    },
+    {
+      "class_name": "gdn-qkv-conv-q6",
+      "selected": false,
+      "reason": "GEMV loop grows (includes scheduling instructions)"
+    },
+    {
+      "class_name": "expert-checks-iq3",
+      "selected": false,
+      "reason": "GEMV loop grows (includes scheduling instructions)"
+    },
+    {
+      "class_name": "expert-act-iq3",
+      "selected": false,
+      "reason": "Gemv adds flag-register spills"
+    },
+    {
+      "class_name": "shared-up-act-q8",
+      "selected": true,
+      "reason": "measured winner; assembly accepted"
+    },
+    {
+      "class_name": "gdn-qkv-conv-q8",
+      "selected": false,
+      "reason": "not faster than unfused"
+    }
+  ]
+}

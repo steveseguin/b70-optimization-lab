@@ -1,0 +1,49 @@
+{
+  "schema": "packet39.window.v1",
+  "window": "G4",
+  "passed": true,
+  "card": 3,
+  "device_accessed": true,
+  "device_executed": true,
+  "kernel_execution": true,
+  "environment": {
+    "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+    "PATH": "/home/steve/.local/bin:/home/steve/bin:/home/steve/.opencode/bin:/home/steve/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin",
+    "OMP_NUM_THREADS": "2"
+  },
+  "expected_seconds": 240,
+  "expectation_enforced": false,
+  "no_retry": true,
+  "watchdog_seconds": 960,
+  "native_binary_sha256": {
+    "p39-k0": "7a98d0ffcd59d009d8ce91414bd90bddfd9f8ea00cfaacfc3ee82514e7278153",
+    "p39-timing": "7a98d0ffcd59d009d8ce91414bd90bddfd9f8ea00cfaacfc3ee82514e7278153"
+  },
+  "boot_id": "13858eef-ec68-44ea-a67c-9444933b7100",
+  "command": [
+    "nice",
+    "-n",
+    "19",
+    "ionice",
+    "-c",
+    "3",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet39-epilogues/build/p39-timing",
+    "--authorized-device-window",
+    "--card",
+    "3",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet39-epilogues/build/g4-card3b/run",
+    "--repetitions",
+    "200"
+  ],
+  "ldd": "\tlinux-vdso.so.1 (0x000079b952218000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x000079b951e00000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x000079b952113000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x000079b9520e5000)\n\tlibsycl.so.9 => /opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9 (0x000079b951a00000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x000079b951600000)\n\t/lib64/ld-linux-x86-64.so.2 (0x000079b95221a000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x000079b9520de000)\n\tlibur_loader.so.0 => /opt/intel/oneapi/compiler/2026.0/lib/libur_loader.so.0 (0x000079b950800000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x000079b9520d9000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x000079b9520d4000)\n\tlibimf.so => /opt/intel/oneapi/compiler/2026.0/lib/libimf.so (0x000079b950200000)\n\tlibz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x000079b9520b6000)\n\tlibsvml.so => /opt/intel/oneapi/compiler/2026.0/lib/libsvml.so (0x000079b94ea00000)\n\tlibirng.so => /opt/intel/oneapi/compiler/2026.0/lib/libirng.so (0x000079b951907000)\n\tlibintlc.so.5 => /opt/intel/oneapi/compiler/2026.0/lib/libintlc.so.5 (0x000079b9518a4000)\n",
+  "journal_start_cursor": "s=8e1ce8af49604bb695d987d83f007ab5;i=20d6341;b=13858eefec6844eaa67c9444933b7100;m=161086e37c;t=65d9cbc8a7f67;x=e37bb59571360a24",
+  "pid": 507758,
+  "returncode": 0,
+  "elapsed_seconds": 7.226836383997579,
+  "cases_passed": true,
+  "failed_cases": 0,
+  "cases_completed": 12,
+  "infrastructure_passed": true,
+  "dispatch_sha256": "37e3e52708697141ffe5c7d520354ca0e97433388d25c5126bee429269e41a95"
+}
