@@ -191,6 +191,20 @@ class Keeper(unittest.TestCase):
         self.assertEqual(ap([("qqqq11", "77")]), ["qqqq11: 77 is not a value the turns state; write the working"])
         self.assertEqual(NS["apply_delta"](notes, {"changes": [("rumi16", "-132")]}, seen)[1]["mismatch"], [])   # not strict: as before
 
+    def test_a_bare_value_must_be_stated_near_its_name(self):
+        tool = lambda text: {"role": "tool", "content": text + "\n\n(exit_code=0)"}
+        turns = [tool("ITEM 132/147 (UPDATE)\nzija81 went down by sixteen. The bus was 62 minutes late. Next on the list was abcd12. It was opened at 591. "
+                      "wxyz56 was set to minus sixty-two.")]
+        near = NS["numbers_near"](["zija81", "abcd12", "wxyz56", "plain"], turns)
+        self.assertEqual({k: sorted(v) for k, v in near.items()}, {"zija81": [-62, -16, 16, 62], "abcd12": [-591, 591], "wxyz56": [-62, 62]})
+        notes = "RULES\n(none)\nSTATE\nzija81: 134\nmnop78: 5\nOPEN"
+        seen = NS["numbers_in"](turns[0]["content"])
+        ap = lambda changes: NS["apply_delta"](notes, {"changes": changes}, seen, strict=True, near=near)[1]["mismatch"]
+        self.assertEqual(ap([("zija81", "134 - 16 = 118"), ("abcd12", "591"), ("wxyz56", "-62")]), [])
+        self.assertEqual(ap([("mnop78", "-62")]), ["mnop78: -62 is not a value the turns state; write the working from the value the NOTES hold, 5"])
+        self.assertEqual(NS["apply_delta"](notes, {"changes": [("mnop78", "-62")]}, seen, strict=True)[1]["mismatch"], [])   # the looser test passes it
+        self.assertEqual(ap([("mnop78", "591 + 1 = 592")]), ["mnop78: working starts from 591, NOTES hold 5"])              # 591 is abcd12's
+
     def test_mentions_must_be_accounted_for(self):
         tool = lambda text: {"role": "tool", "content": text + "\n\n(exit_code=0)"}
         turns = [tool("ITEM 61/147 (UPDATE)\nyodo94 lost eighty-seven. The cook slept. Twenty-six were taken from yodo94."),

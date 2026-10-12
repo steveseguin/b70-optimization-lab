@@ -400,7 +400,8 @@ def parse_delta(reply: str, need_changes: bool = True) -> dict | None:
             "open": [ln for ln in out["OPEN"] if not _is_none(ln)] if "OPEN" in seen else None}
 
 
-def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: bool = False) -> tuple[str, dict]:
+def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: bool = False,
+                near: dict[str, set[int]] | None = None) -> tuple[str, dict]:
     """The NOTES after the changes, and what happened: lines changed and added, sums corrected, and `mismatch`:
     working that cannot be trusted (it starts from a value the NOTES do not hold, it starts from a number although
     the NOTES say the thing was removed, or it is arithmetic without a whole-number value); the caller then falls
@@ -408,7 +409,8 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
     from one of those instead of the NOTES value, because the turns can set a thing and then change it and the
     model writes both on one line (`abcd12: 294 + 12 = 306`). The first run of arm N32d (rules stream, seed 0) sent
     8 of 23 cuts to the full rewrite for exactly that; all eight were such lines. With `strict`, a bare number that
-    the turns do not state is `mismatch` too: a worked-out value has to show its working. RULES lines are never removed; a new rule that rewords an existing one is not added.
+    the turns do not state is `mismatch` too: a worked-out value has to show its working. With `near` (see
+    numbers_near) "the turns state it" means: in a sentence that names the thing, or the one after it. RULES lines are never removed; a new rule that rewords an existing one is not added.
     A STATE line keeps its place; a value given as working is stored as its result. The OPEN section is replaced
     when the reply has one and kept otherwise."""
     rules, state, opened, sec = [], [], [], ""
@@ -447,7 +449,7 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
             if total is None:
                 info["mismatch"].append(f"{name}: `{value}` has no whole-number value")
                 total = stated
-            elif start is not None and seen is not None and start in seen:
+            elif start is not None and seen is not None and start in (seen if near is None else near.get(name, set())):
                 info["set_in_turns"] = info.get("set_in_turns", 0) + (held != start)
             elif start is not None and held is not None and held != start:
                 info["mismatch"].append(f"{name}: working starts from {start}, NOTES hold {held}")
@@ -461,7 +463,8 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
             # that the sum can be checked (N32w seed 0: `rumi16: -132` for 29 - 73, written without working)
             old = fact_of(state[where[name]])[1] if name in where else None
             held, now = (number_of(old) if old is not None else None), number_of(value)
-            if now is not None and now != held and now not in seen and re.fullmatch(r"-?[\d,]+\.?", value.strip()):
+            stated = seen if near is None else near.get(name, set())
+            if now is not None and now != held and now not in stated and re.fullmatch(r"-?[\d,]+\.?", value.strip()):
                 info["mismatch"].append(f"{name}: {now} is not a value the turns state; write the working"
                                         + (f" from the value the NOTES hold, {held}" if held is not None else ""))
         line = f"{name}: {value}" if value else name
@@ -594,6 +597,27 @@ def mention_counts(names: list[str], turns: list[dict[str, Any]]) -> dict[str, i
     low = " ".join(text).lower()
     out = {n: len(re.findall(rf"(?<![\w]){re.escape(n)}(?![\w])", low)) for n in names}
     return {n: c for n, c in out.items() if c}
+
+
+def numbers_near(names: list[str], turns: list[dict[str, Any]]) -> dict[str, set[int]]:
+    """For each name (identifier-like only): the numbers stated in a sentence of a delivered item that mentions it, or
+    in the sentence right after one ("Next on the list was abcd12. It was opened at 591."). A value that the model
+    writes without working has to be one of these: N32v seed 1 wrote `zija81: -62` for 134 - 16 and the looser test
+    (the number occurs somewhere in the turns) let it pass."""
+    want = {n for n in names if len(n) >= 3 and re.search(r"[\d_]", n) and " " not in n}
+    out: dict[str, set[int]] = {}
+    for m in turns:
+        body = str(m.get("content") or "") if m.get("role") == "tool" else ""
+        if not ITEMS.search(body):
+            continue
+        sents = re.split(r"(?<=[.!?])\s+", " ".join(body.split("\n\n(exit_code=")[0].split()))
+        for i, sent in enumerate(sents):
+            here = want & set(re.findall(r"[a-z0-9_]+", sent.lower()))
+            if here:
+                nums = numbers_in(sent) | (numbers_in(sents[i + 1]) if i + 1 < len(sents) else set())
+                for n in here:
+                    out.setdefault(n, set()).update(nums)
+    return out
 
 
 def under_accounted(mentions: dict[str, int], steps: dict[str, int]) -> list[str]:
@@ -902,7 +926,8 @@ class KeeperAgent(TruncateAgent):
         # without a line in CHANGES is asked about once (see unaccounted)
         # mention_check=count: the name's lines must account for as many changes as the items mention it
         mc = str(mention_check).strip().lower()
-        self.mention_check = "count" if mc == "count" else ("names" if _cb._as_bool(mention_check) else "")
+        # mention_check=near: the count check, and a value written without working must be stated near its name
+        self.mention_check = mc if mc in ("count", "near") else ("names" if _cb._as_bool(mention_check) else "")
         self.n_mention_reasks = 0
         self.inplace_turn_hold = 0                    # after a failed in-place call: no new attempt on the same turns
         # auto_retrieve=K: when a delivered item asks questions, the K best-matching archived sentences per question
@@ -1145,11 +1170,14 @@ class KeeperAgent(TruncateAgent):
                 rec["layout_retries"] = 1
                 req = req + [{"role": "assistant", "content": text}, {"role": "user", "content": DELTA_RETRY}]
                 continue
-            new, info = apply_delta(self.notes, delta, seen, strict=self.mention_check == "count")
+            near = None
+            if self.mention_check == "near":
+                near = numbers_near(state_keys(self.notes) + [k for k, _ in delta["changes"]], body)
+            new, info = apply_delta(self.notes, delta, seen, strict=self.mention_check in ("count", "near"), near=near)
             steps = info.pop("steps")
             if hinted:
                 missing = []
-            elif self.mention_check == "count":
+            elif self.mention_check in ("count", "near"):
                 names = state_keys(self.notes) + [k for k, _ in delta["changes"]]
                 missing = under_accounted(mention_counts(names, body), steps)
             else:
@@ -1158,7 +1186,7 @@ class KeeperAgent(TruncateAgent):
                 hinted = True
                 rec["unaccounted"] = missing[:30]
                 self.n_mention_reasks += 1
-                retry = COUNT_RETRY if self.mention_check == "count" else MENTION_RETRY
+                retry = COUNT_RETRY if self.mention_check in ("count", "near") else MENTION_RETRY
                 req = req + [{"role": "assistant", "content": text},
                              {"role": "user", "content": retry.format(names=", ".join(missing[:30]))}]
                 continue
