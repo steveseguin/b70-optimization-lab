@@ -1936,3 +1936,58 @@ if their client set it, and a comparison at medium effort for all three is the r
 Then the queue runs the two 1M ledger lines on the day's final check code (N32g and X32g on the second 1M stream;
 expectations as registered under campaign 13, part B, items 3 and 4). The self-test of `repair-n40-s1x` runs
 between 13b and 13c, while no server is up.
+
+### Campaign 13b results: the repair task on the second seed (`repair-n40-s1x`, 2026-10-12 15:19 to 18:07)
+
+One run per arm, same server session. Every arm met the same two hard tickets (26 `combination_index`, 37
+`peekable`), on which this model thinks to its reply limit again and again; what each arm did with that is most of
+the story.
+
+| arm | fixed | clean | marker (R1) | log line (R2) | rule by condition (R3) | audit | minutes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| XR3: through the proxy, notes call without thinking | 40 | **40** | 38/38 | 33/33 | 27/27 | **7/7** | 47.1 |
+| C32: summary compaction at 32K | 40 | **33** | 31/38 | 26/33 | 24/27 | 0/7 | 60 (cut) |
+| W32: 32K sliding window | not graded | | | 15 lines for 26 tickets | 4 names for 7 tickets | | 60 (cut) |
+
+- **XR3** did everything: every fix, every instruction on every ticket, and the audit, which it answered after one
+  search of the archive (its notes, taken without thinking, had kept only the newest ticket under STATE). It spent
+  twelve minutes on ticket 37. Eleven replies came back empty after 8,192 tokens of thinking; the proxy asked
+  each again without thinking, and the run went on.
+- **C32** fixed all 40 and lost all three instructions for the last seven tickets. The cause is one summary: the
+  seventh of eleven, made in the middle of ticket 37, is 164 characters long and is not a summary but one more
+  step of the work ("I need to fix my experiment script (missing `__getitem__`), but more importantly let me
+  re-verify the exact current state of the `_get_slice` lines before editing."). The harness took it for the
+  summary, and the six good ones before it, which held the three notices word for word and the functions of
+  tickets 1 to 8, were gone. The summaries after it picked the marker up again from the source and the two files
+  from a listing, too late for tickets 37 to 43. At the audit ticket it had nothing to go on, read
+  `/opt/repair/tickets.jsonl` (which the task forbids) and was cut at the 60-minute cap before it wrote the file.
+  Graded in its live container at minute 56 (`runs/live-grade-C32__repair-n40-s1x`), because a run that the outer
+  cap cuts is not graded by the harness.
+- **W32** was cut at the cap without a grade: it reached ticket 37 after 21 minutes and stayed there for 39, most
+  of them a loop of empty replies (nothing asks again without thinking in that arm). What its files showed when
+  last looked at: FIXES.md had stopped at 15 lines when 26 tickets called for one, and RECIPES.txt held the first
+  4 of 7 names (in the right form this time: the notice was in view at the first use, as expected for this seed).
+  It is run again in 13c with a time limit inside the task, so that it is graded where it stops.
+
+Against what was written down: XR3 clean 36 or more and audit 6 or 7: yes (40, 7/7). XR3 within 1.1 times C32's
+time: not comparable, C32 did not finish. W32 keeps the form on 7 or more of the 10 `recipes.py` tickets: no
+(it stopped keeping it, and the log line, around ticket 26). C32 clean 36 or more: no (33). C32's audit 4 or more:
+no (0, and by forbidden means had it finished).
+
+**What this adds to part A.** There the summariser matched the proxy and was faster; here it lost the
+instructions and the oldest work in one step, and nothing in it could notice or undo that. That is the difference
+between the two designs, shown once: a summary replaces the history, so one bad summary is the end of everything
+before it; the proxy's notes are changed line by line (a reply that says nothing useful changes nothing), the
+RULES section cannot lose a line, and the turns themselves stay in the archive, which answered the audit. Over
+the two seeds: proxy 80 of 80 clean, summariser 73 of 80, window 30 of 40 on the one seed where it was graded.
+The limits are the same as before (one model, one library, one run per cell), plus one: the bad summary came out
+of a stall that this task and this model produce, and a harness that checked its summaries (length, layout) and
+asked again would have caught this one. The proxy does that checking; "summary compaction as agent programs
+usually do it" does not, and that is the comparison that was run.
+
+**The task's own problems, found on the way.** (1) Three functions of the `*_index` kind and `peekable` cost every
+arm between three minutes and the rest of its cap; one is excluded now and the other two decide runs. They belong
+out of the pool, or the instruction should allow a ticket to be given up after so many commands. (2) The outer
+time cap leaves no grade behind; the task now carries the agent's time limit itself (`--agent-timeout`, 55
+minutes), and the harness grades what is there when it expires. (3) Half of the model's time in every arm is
+thinking that runs to the limit; XR4 in 13c tries the obvious setting.
