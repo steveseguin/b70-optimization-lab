@@ -1,0 +1,2437 @@
+{
+  "device_executed": true,
+  "dispatch": {
+    "classes": {},
+    "fusions": {},
+    "gemv": {},
+    "schema": "packet26.dispatch.v1"
+  },
+  "fresh_owners": 2,
+  "overlap_selection": [],
+  "performance_claim": "fixture event timing only; no measured model throughput",
+  "proposals": [],
+  "rows": [
+    {
+      "anchor": {
+        "classes": [
+          "small.ffn.q6"
+        ],
+        "expected_group_us": 30.877710233029383,
+        "launches_per_group": 1.0,
+        "prior_group_us": 30.877710233029383,
+        "reason": "Actual W2c class-group GPU event sum.",
+        "status": "matched_class"
+      },
+      "candidate": "p30.small.rows4",
+      "dispatch": {
+        "key": "small.ffn",
+        "section": "fusions"
+      },
+      "groups_per_token": 47.0,
+      "klass": "small.ffn.q6",
+      "ms_per_token_saved": 0.15669799999999998,
+      "owners": [
+        {
+          "baseline_representative": true,
+          "candidate": {
+            "copies": 8,
+            "launches_per_group": 1,
+            "median_us": 26.25,
+            "p90_us": 26.677400000000002,
+            "payload_bytes": 9600000,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 8,
+            "launches_per_group": 1,
+            "median_us": 29.687,
+            "p90_us": 30.3233,
+            "payload_bytes": 9600000,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": 0.11577458146663526,
+          "us_per_group_saved": 3.437000000000001
+        },
+        {
+          "baseline_representative": true,
+          "candidate": {
+            "copies": 8,
+            "launches_per_group": 1,
+            "median_us": 26.354,
+            "p90_us": 26.7814,
+            "payload_bytes": 9600000,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 8,
+            "launches_per_group": 1,
+            "median_us": 29.688,
+            "p90_us": 30.417,
+            "payload_bytes": 9600000,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": 0.11230126650498518,
+          "us_per_group_saved": 3.3339999999999996
+        }
+      ],
+      "qualified": true,
+      "raw_candidate": "rows4",
+      "reasons": [],
+      "resources": [
+        "small.ffn.q6"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "small.ffn.q6"
+        ],
+        "expected_group_us": 30.877710233029383,
+        "launches_per_group": 1.0,
+        "prior_group_us": 30.877710233029383,
+        "reason": "Actual W2c class-group GPU event sum.",
+        "status": "matched_class"
+      },
+      "candidate": "p30.small.sg32",
+      "dispatch": {
+        "key": "small.ffn",
+        "section": "fusions"
+      },
+      "groups_per_token": 47.0,
+      "klass": "small.ffn.q6",
+      "ms_per_token_saved": 0.15181000000000003,
+      "owners": [
+        {
+          "baseline_representative": true,
+          "candidate": {
+            "copies": 8,
+            "launches_per_group": 1,
+            "median_us": 26.354,
+            "p90_us": 27.083,
+            "payload_bytes": 9600000,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 8,
+            "launches_per_group": 1,
+            "median_us": 29.687,
+            "p90_us": 30.3233,
+            "payload_bytes": 9600000,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": 0.11227136457035072,
+          "us_per_group_saved": 3.333000000000002
+        },
+        {
+          "baseline_representative": true,
+          "candidate": {
+            "copies": 8,
+            "launches_per_group": 1,
+            "median_us": 26.458,
+            "p90_us": 27.187,
+            "payload_bytes": 9600000,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 8,
+            "launches_per_group": 1,
+            "median_us": 29.688,
+            "p90_us": 30.417,
+            "payload_bytes": 9600000,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": 0.10879816760980869,
+          "us_per_group_saved": 3.2300000000000004
+        }
+      ],
+      "qualified": true,
+      "raw_candidate": "sg32",
+      "reasons": [],
+      "resources": [
+        "small.ffn.q6"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "attn.combine",
+          "hc.f.norm"
+        ],
+        "expected_group_us": 18.615310846560845,
+        "launches_per_group": 3.0,
+        "prior_group_us": 18.615310846560845,
+        "reason": "Actual W2c class-group GPU event sum.",
+        "status": "matched_class"
+      },
+      "candidate": "p30.fusion.sg32",
+      "dispatch": {
+        "key": "attn.combine+norm",
+        "section": "fusions"
+      },
+      "groups_per_token": 48.0,
+      "klass": "attn.combine+norm",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": true,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 225.41649999999998,
+            "p90_us": 226.25,
+            "payload_bytes": 631864,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 3,
+            "median_us": 17.083,
+            "p90_us": 21.8751,
+            "payload_bytes": 631864,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": -12.195369665749576,
+          "us_per_group_saved": -208.3335
+        },
+        {
+          "baseline_representative": true,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 225.625,
+            "p90_us": 226.146,
+            "payload_bytes": 631864,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 3,
+            "median_us": 17.0835,
+            "p90_us": 21.98,
+            "payload_bytes": 631864,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": -12.207188222553924,
+          "us_per_group_saved": -208.54149999999998
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "sg32",
+      "reasons": [
+        "owner1: less than10% saving",
+        "owner2: less than10% saving"
+      ],
+      "resources": [
+        "attn.combine",
+        "hc.f.norm"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "attn.combine",
+          "hc.f.norm"
+        ],
+        "expected_group_us": 18.615310846560845,
+        "launches_per_group": 3.0,
+        "prior_group_us": 18.615310846560845,
+        "reason": "Actual W2c class-group GPU event sum.",
+        "status": "matched_class"
+      },
+      "candidate": "p30.fusion.tiled",
+      "dispatch": {
+        "key": "attn.combine+norm",
+        "section": "fusions"
+      },
+      "groups_per_token": 48.0,
+      "klass": "attn.combine+norm",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": true,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 143.541,
+            "p90_us": 143.75,
+            "payload_bytes": 631864,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 3,
+            "median_us": 17.083,
+            "p90_us": 21.8751,
+            "payload_bytes": 631864,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": -7.402563952467366,
+          "us_per_group_saved": -126.458
+        },
+        {
+          "baseline_representative": true,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 143.23,
+            "p90_us": 143.5523,
+            "payload_bytes": 631864,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 3,
+            "median_us": 17.0835,
+            "p90_us": 21.98,
+            "payload_bytes": 631864,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": -7.384113325723651,
+          "us_per_group_saved": -126.14649999999999
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "tiled",
+      "reasons": [
+        "owner1: less than10% saving",
+        "owner2: less than10% saving"
+      ],
+      "resources": [
+        "attn.combine",
+        "hc.f.norm"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "ffn.combine",
+          "hc.a.norm"
+        ],
+        "expected_group_us": null,
+        "launches_per_group": 3.0,
+        "prior_group_us": 18.77251984126984,
+        "reason": "Last FFN flows to final.norm and first hc.a.norm has no preceding FFN; aggregate class means cannot pin the full fused schedule.",
+        "status": "cross_layer_anchor_pending"
+      },
+      "candidate": "p30.fusion.sg32",
+      "dispatch": {
+        "key": "ffn.combine+norm",
+        "section": "fusions"
+      },
+      "groups_per_token": 48.0,
+      "klass": "ffn.combine+norm",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 225.3645,
+            "p90_us": 226.25,
+            "payload_bytes": 631864,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 3,
+            "median_us": 16.98,
+            "p90_us": 17.2901,
+            "payload_bytes": 631864,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": -12.272349823321555,
+          "us_per_group_saved": -208.3845
+        },
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 225.625,
+            "p90_us": 226.354,
+            "payload_bytes": 631864,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 3,
+            "median_us": 20.625,
+            "p90_us": 20.938,
+            "payload_bytes": 631864,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": -9.93939393939394,
+          "us_per_group_saved": -205.0
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "sg32",
+      "reasons": [
+        "owner1: baseline not representative: cross_layer_anchor_pending",
+        "owner2: baseline not representative: cross_layer_anchor_pending"
+      ],
+      "resources": [
+        "ffn.combine",
+        "hc.a.norm"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "ffn.combine",
+          "hc.a.norm"
+        ],
+        "expected_group_us": null,
+        "launches_per_group": 3.0,
+        "prior_group_us": 18.77251984126984,
+        "reason": "Last FFN flows to final.norm and first hc.a.norm has no preceding FFN; aggregate class means cannot pin the full fused schedule.",
+        "status": "cross_layer_anchor_pending"
+      },
+      "candidate": "p30.fusion.tiled",
+      "dispatch": {
+        "key": "ffn.combine+norm",
+        "section": "fusions"
+      },
+      "groups_per_token": 48.0,
+      "klass": "ffn.combine+norm",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 143.438,
+            "p90_us": 143.75,
+            "payload_bytes": 631864,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 3,
+            "median_us": 16.98,
+            "p90_us": 17.2901,
+            "payload_bytes": 631864,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": -7.4474676089517065,
+          "us_per_group_saved": -126.45799999999998
+        },
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 143.333,
+            "p90_us": 143.542,
+            "payload_bytes": 631864,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 3,
+            "median_us": 20.625,
+            "p90_us": 20.938,
+            "payload_bytes": 631864,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": -5.949478787878788,
+          "us_per_group_saved": -122.708
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "tiled",
+      "reasons": [
+        "owner1: baseline not representative: cross_layer_anchor_pending",
+        "owner2: baseline not representative: cross_layer_anchor_pending"
+      ],
+      "resources": [
+        "ffn.combine",
+        "hc.a.norm"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "hc.a.gate"
+        ],
+        "expected_group_us": null,
+        "g2_fixture_only": {
+          "candidate": "p28.dense.wg32",
+          "median_us": 20.834,
+          "not_an_in_model_anchor": true,
+          "p90_us": 21.042,
+          "source": "experiments/own-xpu-runtime/stage2/packet28-dense/receipts-card2-20261011-g2/summary.json",
+          "source_sha256": "d3dcd5220bbca609869422e90794bfac72cffd3a0aa8927c26e128c12b11b04f"
+        },
+        "launches_per_group": 1.0,
+        "prior_group_us": 29.761044973544973,
+        "reason": "G3 incumbent is selected p28.dense.wg32, not measured pre-p28 runtime; G2 fixture winner is not an in-model replacement anchor.",
+        "status": "post_p28_in_model_anchor_missing"
+      },
+      "candidate": "p30.small.rows4",
+      "dispatch": {
+        "key": "hc.a.gate",
+        "section": "gemv"
+      },
+      "groups_per_token": 48.0,
+      "klass": "hc.a.gate",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 19.271,
+            "p90_us": 19.479,
+            "payload_bytes": 3891840,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 20.625,
+            "p90_us": 20.833,
+            "payload_bytes": 3891840,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": 0.0656484848484848,
+          "us_per_group_saved": 1.3539999999999992
+        },
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 19.271,
+            "p90_us": 19.375,
+            "payload_bytes": 3891840,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 20.625,
+            "p90_us": 20.833,
+            "payload_bytes": 3891840,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": 0.0656484848484848,
+          "us_per_group_saved": 1.3539999999999992
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "rows4",
+      "reasons": [
+        "owner1: baseline not representative: post_p28_in_model_anchor_missing",
+        "owner2: baseline not representative: post_p28_in_model_anchor_missing"
+      ],
+      "resources": [
+        "hc.a.gate"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "hc.a.gate"
+        ],
+        "expected_group_us": null,
+        "g2_fixture_only": {
+          "candidate": "p28.dense.wg32",
+          "median_us": 20.834,
+          "not_an_in_model_anchor": true,
+          "p90_us": 21.042,
+          "source": "experiments/own-xpu-runtime/stage2/packet28-dense/receipts-card2-20261011-g2/summary.json",
+          "source_sha256": "d3dcd5220bbca609869422e90794bfac72cffd3a0aa8927c26e128c12b11b04f"
+        },
+        "launches_per_group": 1.0,
+        "prior_group_us": 29.761044973544973,
+        "reason": "G3 incumbent is selected p28.dense.wg32, not measured pre-p28 runtime; G2 fixture winner is not an in-model replacement anchor.",
+        "status": "post_p28_in_model_anchor_missing"
+      },
+      "candidate": "p30.small.sg32",
+      "dispatch": {
+        "key": "hc.a.gate",
+        "section": "gemv"
+      },
+      "groups_per_token": 48.0,
+      "klass": "hc.a.gate",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 19.375,
+            "p90_us": 19.583099999999998,
+            "payload_bytes": 3891840,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 20.625,
+            "p90_us": 20.833,
+            "payload_bytes": 3891840,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": 0.06060606060606061,
+          "us_per_group_saved": 1.25
+        },
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 19.375,
+            "p90_us": 19.48,
+            "payload_bytes": 3891840,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 20.625,
+            "p90_us": 20.833,
+            "payload_bytes": 3891840,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": 0.06060606060606061,
+          "us_per_group_saved": 1.25
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "sg32",
+      "reasons": [
+        "owner1: baseline not representative: post_p28_in_model_anchor_missing",
+        "owner2: baseline not representative: post_p28_in_model_anchor_missing"
+      ],
+      "resources": [
+        "hc.a.gate"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "hc.a.mix"
+        ],
+        "expected_group_us": 8.371560846560845,
+        "launches_per_group": 1.0,
+        "prior_group_us": 8.371560846560845,
+        "reason": "Actual W2c class-group GPU event sum.",
+        "status": "matched_class"
+      },
+      "candidate": "p30.fusion.sg32",
+      "dispatch": {
+        "key": "hc.mix",
+        "section": "classes"
+      },
+      "groups_per_token": 48.0,
+      "klass": "hc.a.mix",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": true,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 9.688,
+            "p90_us": 10.625,
+            "payload_bytes": 570428,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 9.583,
+            "p90_us": 9.687,
+            "payload_bytes": 570428,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": -0.010956902848794785,
+          "us_per_group_saved": -0.10500000000000043
+        },
+        {
+          "baseline_representative": true,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 10.312,
+            "p90_us": 10.417,
+            "payload_bytes": 570428,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 9.271,
+            "p90_us": 9.375,
+            "payload_bytes": 570428,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": -0.11228562183151747,
+          "us_per_group_saved": -1.0409999999999986
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "sg32",
+      "reasons": [
+        "owner1: less than10% saving",
+        "owner2: less than10% saving"
+      ],
+      "resources": [
+        "hc.a.mix"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "hc.a.mix"
+        ],
+        "expected_group_us": 8.371560846560845,
+        "launches_per_group": 1.0,
+        "prior_group_us": 8.371560846560845,
+        "reason": "Actual W2c class-group GPU event sum.",
+        "status": "matched_class"
+      },
+      "candidate": "p30.fusion.tiled",
+      "dispatch": {
+        "key": "hc.mix",
+        "section": "classes"
+      },
+      "groups_per_token": 48.0,
+      "klass": "hc.a.mix",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": true,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 9.687,
+            "p90_us": 9.688,
+            "payload_bytes": 570428,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 9.583,
+            "p90_us": 9.687,
+            "payload_bytes": 570428,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": -0.010852551393091851,
+          "us_per_group_saved": -0.1039999999999992
+        },
+        {
+          "baseline_representative": true,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 9.687,
+            "p90_us": 9.688,
+            "payload_bytes": 570428,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 9.271,
+            "p90_us": 9.375,
+            "payload_bytes": 570428,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": -0.04487110344083686,
+          "us_per_group_saved": -0.4159999999999986
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "tiled",
+      "reasons": [
+        "owner1: less than10% saving",
+        "owner2: less than10% saving"
+      ],
+      "resources": [
+        "hc.a.mix"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "hc.a.norm"
+        ],
+        "expected_group_us": 7.749537037037037,
+        "launches_per_group": 2.0,
+        "prior_group_us": 7.749537037037037,
+        "reason": "Actual W2c class-group GPU event sum.",
+        "status": "matched_class"
+      },
+      "candidate": "p30.fusion.sg32",
+      "dispatch": {
+        "key": "norm",
+        "section": "classes"
+      },
+      "groups_per_token": 48.0,
+      "klass": "hc.a.norm",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": true,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 98.958,
+            "p90_us": 99.896,
+            "payload_bytes": 606268,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 2,
+            "median_us": 8.646,
+            "p90_us": 8.958,
+            "payload_bytes": 606268,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": -10.445523941707146,
+          "us_per_group_saved": -90.312
+        },
+        {
+          "baseline_representative": true,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 98.75,
+            "p90_us": 100.313,
+            "payload_bytes": 606268,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 2,
+            "median_us": 8.541,
+            "p90_us": 8.854099999999999,
+            "payload_bytes": 606268,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": -10.561878000234165,
+          "us_per_group_saved": -90.209
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "sg32",
+      "reasons": [
+        "owner1: less than10% saving",
+        "owner2: less than10% saving"
+      ],
+      "resources": [
+        "hc.a.norm"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "hc.a.norm"
+        ],
+        "expected_group_us": 7.749537037037037,
+        "launches_per_group": 2.0,
+        "prior_group_us": 7.749537037037037,
+        "reason": "Actual W2c class-group GPU event sum.",
+        "status": "matched_class"
+      },
+      "candidate": "p30.fusion.tiled",
+      "dispatch": {
+        "key": "norm",
+        "section": "classes"
+      },
+      "groups_per_token": 48.0,
+      "klass": "hc.a.norm",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": true,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 65.417,
+            "p90_us": 65.729,
+            "payload_bytes": 606268,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 2,
+            "median_us": 8.646,
+            "p90_us": 8.958,
+            "payload_bytes": 606268,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": -6.5661577608142485,
+          "us_per_group_saved": -56.771
+        },
+        {
+          "baseline_representative": true,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 65.313,
+            "p90_us": 65.625,
+            "payload_bytes": 606268,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 2,
+            "median_us": 8.541,
+            "p90_us": 8.854099999999999,
+            "payload_bytes": 606268,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": -6.646996838777661,
+          "us_per_group_saved": -56.772000000000006
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "tiled",
+      "reasons": [
+        "owner1: less than10% saving",
+        "owner2: less than10% saving"
+      ],
+      "resources": [
+        "hc.a.norm"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "hc.f.gate"
+        ],
+        "expected_group_us": null,
+        "g2_fixture_only": {
+          "candidate": "p28.dense.wg32",
+          "median_us": 20.7815,
+          "not_an_in_model_anchor": true,
+          "p90_us": 21.042,
+          "source": "experiments/own-xpu-runtime/stage2/packet28-dense/receipts-card2-20261011-g2/summary.json",
+          "source_sha256": "d3dcd5220bbca609869422e90794bfac72cffd3a0aa8927c26e128c12b11b04f"
+        },
+        "launches_per_group": 1.0,
+        "prior_group_us": 30.405919312169313,
+        "reason": "G3 incumbent is selected p28.dense.wg32, not measured pre-p28 runtime; G2 fixture winner is not an in-model replacement anchor.",
+        "status": "post_p28_in_model_anchor_missing"
+      },
+      "candidate": "p30.small.rows4",
+      "dispatch": {
+        "key": "hc.f.gate",
+        "section": "gemv"
+      },
+      "groups_per_token": 48.0,
+      "klass": "hc.f.gate",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 19.2705,
+            "p90_us": 19.375,
+            "payload_bytes": 3891840,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 20.625,
+            "p90_us": 20.833,
+            "payload_bytes": 3891840,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": 0.06567272727272735,
+          "us_per_group_saved": 1.3545000000000016
+        },
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 19.27,
+            "p90_us": 19.375,
+            "payload_bytes": 3891840,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 20.625,
+            "p90_us": 20.833,
+            "payload_bytes": 3891840,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": 0.06569696969696971,
+          "us_per_group_saved": 1.3550000000000004
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "rows4",
+      "reasons": [
+        "owner1: baseline not representative: post_p28_in_model_anchor_missing",
+        "owner2: baseline not representative: post_p28_in_model_anchor_missing"
+      ],
+      "resources": [
+        "hc.f.gate"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "hc.f.gate"
+        ],
+        "expected_group_us": null,
+        "g2_fixture_only": {
+          "candidate": "p28.dense.wg32",
+          "median_us": 20.7815,
+          "not_an_in_model_anchor": true,
+          "p90_us": 21.042,
+          "source": "experiments/own-xpu-runtime/stage2/packet28-dense/receipts-card2-20261011-g2/summary.json",
+          "source_sha256": "d3dcd5220bbca609869422e90794bfac72cffd3a0aa8927c26e128c12b11b04f"
+        },
+        "launches_per_group": 1.0,
+        "prior_group_us": 30.405919312169313,
+        "reason": "G3 incumbent is selected p28.dense.wg32, not measured pre-p28 runtime; G2 fixture winner is not an in-model replacement anchor.",
+        "status": "post_p28_in_model_anchor_missing"
+      },
+      "candidate": "p30.small.sg32",
+      "dispatch": {
+        "key": "hc.f.gate",
+        "section": "gemv"
+      },
+      "groups_per_token": 48.0,
+      "klass": "hc.f.gate",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 19.375,
+            "p90_us": 19.48,
+            "payload_bytes": 3891840,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 20.625,
+            "p90_us": 20.833,
+            "payload_bytes": 3891840,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": 0.06060606060606061,
+          "us_per_group_saved": 1.25
+        },
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 19.375,
+            "p90_us": 19.4903,
+            "payload_bytes": 3891840,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 20.625,
+            "p90_us": 20.833,
+            "payload_bytes": 3891840,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": 0.06060606060606061,
+          "us_per_group_saved": 1.25
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "sg32",
+      "reasons": [
+        "owner1: baseline not representative: post_p28_in_model_anchor_missing",
+        "owner2: baseline not representative: post_p28_in_model_anchor_missing"
+      ],
+      "resources": [
+        "hc.f.gate"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "hc.f.mix"
+        ],
+        "expected_group_us": 8.477347883597885,
+        "launches_per_group": 1.0,
+        "prior_group_us": 8.477347883597885,
+        "reason": "Actual W2c class-group GPU event sum.",
+        "status": "matched_class"
+      },
+      "candidate": "p30.fusion.sg32",
+      "dispatch": {
+        "key": "hc.mix",
+        "section": "classes"
+      },
+      "groups_per_token": 48.0,
+      "klass": "hc.f.mix",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 10.105,
+            "p90_us": 10.938,
+            "payload_bytes": 570428,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 9.791,
+            "p90_us": 9.896,
+            "payload_bytes": 570428,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": -0.0320702686140333,
+          "us_per_group_saved": -0.31400000000000006
+        },
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 11.458,
+            "p90_us": 12.709,
+            "payload_bytes": 570428,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 11.458,
+            "p90_us": 11.563,
+            "payload_bytes": 570428,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": 0.0,
+          "us_per_group_saved": 0.0
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "sg32",
+      "reasons": [
+        "owner1: baseline not representative: matched_class",
+        "owner2: baseline not representative: matched_class"
+      ],
+      "resources": [
+        "hc.f.mix"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "hc.f.mix"
+        ],
+        "expected_group_us": 8.477347883597885,
+        "launches_per_group": 1.0,
+        "prior_group_us": 8.477347883597885,
+        "reason": "Actual W2c class-group GPU event sum.",
+        "status": "matched_class"
+      },
+      "candidate": "p30.fusion.tiled",
+      "dispatch": {
+        "key": "hc.mix",
+        "section": "classes"
+      },
+      "groups_per_token": 48.0,
+      "klass": "hc.f.mix",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 10.104,
+            "p90_us": 10.208,
+            "payload_bytes": 570428,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 9.791,
+            "p90_us": 9.896,
+            "payload_bytes": 570428,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": -0.031968134000612686,
+          "us_per_group_saved": -0.31299999999999883
+        },
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 11.355,
+            "p90_us": 11.459,
+            "payload_bytes": 570428,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 11.458,
+            "p90_us": 11.563,
+            "payload_bytes": 570428,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": 0.008989352417524852,
+          "us_per_group_saved": 0.10299999999999976
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "tiled",
+      "reasons": [
+        "owner1: baseline not representative: matched_class",
+        "owner2: baseline not representative: matched_class"
+      ],
+      "resources": [
+        "hc.f.mix"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "hc.f.norm"
+        ],
+        "expected_group_us": 7.5141865079365076,
+        "launches_per_group": 2.0,
+        "prior_group_us": 7.5141865079365076,
+        "reason": "Actual W2c class-group GPU event sum.",
+        "status": "matched_class"
+      },
+      "candidate": "p30.fusion.sg32",
+      "dispatch": {
+        "key": "norm",
+        "section": "classes"
+      },
+      "groups_per_token": 48.0,
+      "klass": "hc.f.norm",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 98.906,
+            "p90_us": 99.896,
+            "payload_bytes": 606268,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 2,
+            "median_us": 8.645,
+            "p90_us": 8.959,
+            "payload_bytes": 606268,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": -10.440832851359168,
+          "us_per_group_saved": -90.26100000000001
+        },
+        {
+          "baseline_representative": true,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 98.75,
+            "p90_us": 100.313,
+            "payload_bytes": 606268,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 2,
+            "median_us": 8.437,
+            "p90_us": 8.75,
+            "payload_bytes": 606268,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": -10.704397297617637,
+          "us_per_group_saved": -90.313
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "sg32",
+      "reasons": [
+        "owner1: baseline not representative: matched_class",
+        "owner2: less than10% saving"
+      ],
+      "resources": [
+        "hc.f.norm"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "hc.f.norm"
+        ],
+        "expected_group_us": 7.5141865079365076,
+        "launches_per_group": 2.0,
+        "prior_group_us": 7.5141865079365076,
+        "reason": "Actual W2c class-group GPU event sum.",
+        "status": "matched_class"
+      },
+      "candidate": "p30.fusion.tiled",
+      "dispatch": {
+        "key": "norm",
+        "section": "classes"
+      },
+      "groups_per_token": 48.0,
+      "klass": "hc.f.norm",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 65.417,
+            "p90_us": 65.625,
+            "payload_bytes": 606268,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 2,
+            "median_us": 8.645,
+            "p90_us": 8.959,
+            "payload_bytes": 606268,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": -6.567032967032968,
+          "us_per_group_saved": -56.772000000000006
+        },
+        {
+          "baseline_representative": true,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 65.312,
+            "p90_us": 65.625,
+            "payload_bytes": 606268,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 2,
+            "median_us": 8.437,
+            "p90_us": 8.75,
+            "payload_bytes": 606268,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": -6.741140215716487,
+          "us_per_group_saved": -56.875
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "tiled",
+      "reasons": [
+        "owner1: baseline not representative: matched_class",
+        "owner2: less than10% saving"
+      ],
+      "resources": [
+        "hc.f.norm"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "qsa.attention"
+        ],
+        "expected_group_us": 267.73280423280426,
+        "launches_per_group": 3.0,
+        "prior_group_us": 267.73280423280426,
+        "reason": "Actual W2c class-group GPU event sum.",
+        "status": "matched_class"
+      },
+      "candidate": "p30.attention.score_softmax",
+      "dispatch": {
+        "key": "qsa.attention",
+        "section": "classes"
+      },
+      "groups_per_token": 12.0,
+      "klass": "qsa.attention",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 8,
+            "launches_per_group": 2,
+            "median_us": 156.562,
+            "p90_us": 157.188,
+            "payload_bytes": 9351796,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 8,
+            "launches_per_group": 3,
+            "median_us": 346.666,
+            "p90_us": 347.084,
+            "payload_bytes": 9351796,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": 0.548377977649957,
+          "us_per_group_saved": 190.10399999999998
+        },
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 8,
+            "launches_per_group": 2,
+            "median_us": 156.459,
+            "p90_us": 157.3127,
+            "payload_bytes": 9351796,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 8,
+            "launches_per_group": 3,
+            "median_us": 346.667,
+            "p90_us": 347.0831,
+            "payload_bytes": 9351796,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": 0.5486763955034658,
+          "us_per_group_saved": 190.20799999999997
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "p30.attention.score_softmax",
+      "reasons": [
+        "owner1: baseline not representative: matched_class",
+        "owner2: baseline not representative: matched_class"
+      ],
+      "resources": [
+        "qsa.attention"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "qsa.attention"
+        ],
+        "expected_group_us": 267.73280423280426,
+        "launches_per_group": 3.0,
+        "prior_group_us": 267.73280423280426,
+        "reason": "Actual W2c class-group GPU event sum.",
+        "status": "matched_class"
+      },
+      "candidate": "p30.attention.sg32",
+      "dispatch": {
+        "key": "qsa.attention",
+        "section": "classes"
+      },
+      "groups_per_token": 12.0,
+      "klass": "qsa.attention",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 8,
+            "launches_per_group": 3,
+            "median_us": 117.135,
+            "p90_us": 117.708,
+            "payload_bytes": 9351796,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 8,
+            "launches_per_group": 3,
+            "median_us": 346.666,
+            "p90_us": 347.084,
+            "payload_bytes": 9351796,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": 0.6621099271344753,
+          "us_per_group_saved": 229.531
+        },
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 8,
+            "launches_per_group": 3,
+            "median_us": 117.084,
+            "p90_us": 118.438,
+            "payload_bytes": 9351796,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 8,
+            "launches_per_group": 3,
+            "median_us": 346.667,
+            "p90_us": 347.0831,
+            "payload_bytes": 9351796,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": 0.662258017059599,
+          "us_per_group_saved": 229.58299999999997
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "p30.attention.sg32",
+      "reasons": [
+        "owner1: baseline not representative: matched_class",
+        "owner2: baseline not representative: matched_class"
+      ],
+      "resources": [
+        "qsa.attention"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "route"
+        ],
+        "expected_group_us": 68.76984126984128,
+        "launches_per_group": 5.0,
+        "prior_group_us": 68.76984126984128,
+        "reason": "Actual W2c class-group GPU event sum.",
+        "status": "matched_class"
+      },
+      "candidate": "p30.route.single.sg32",
+      "dispatch": {
+        "key": "route+gather",
+        "section": "fusions"
+      },
+      "groups_per_token": 48.0,
+      "klass": "route",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 747.916,
+            "p90_us": 748.125,
+            "payload_bytes": 581996,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 5,
+            "median_us": 87.396,
+            "p90_us": 93.959,
+            "payload_bytes": 581996,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": -7.55778296489542,
+          "us_per_group_saved": -660.5200000000001
+        },
+        {
+          "baseline_representative": true,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 747.916,
+            "p90_us": 748.125,
+            "payload_bytes": 581996,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 5,
+            "median_us": 67.343,
+            "p90_us": 68.542,
+            "payload_bytes": 581996,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": -10.106068930698068,
+          "us_per_group_saved": -680.5730000000001
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "p30.route.single.sg32",
+      "reasons": [
+        "owner1: baseline not representative: matched_class",
+        "owner2: less than10% saving"
+      ],
+      "resources": [
+        "route"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "route"
+        ],
+        "expected_group_us": 68.76984126984128,
+        "launches_per_group": 5.0,
+        "prior_group_us": 68.76984126984128,
+        "reason": "Actual W2c class-group GPU event sum.",
+        "status": "matched_class"
+      },
+      "candidate": "p30.route.two.g1.wg32",
+      "dispatch": {
+        "key": "route+gather",
+        "section": "fusions"
+      },
+      "groups_per_token": 48.0,
+      "klass": "route",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 2,
+            "median_us": 634.583,
+            "p90_us": 634.688,
+            "payload_bytes": 581996,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 5,
+            "median_us": 87.396,
+            "p90_us": 93.959,
+            "payload_bytes": 581996,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": -6.261007368758295,
+          "us_per_group_saved": -547.187
+        },
+        {
+          "baseline_representative": true,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 2,
+            "median_us": 634.6355,
+            "p90_us": 634.896,
+            "payload_bytes": 581996,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 5,
+            "median_us": 67.343,
+            "p90_us": 68.542,
+            "payload_bytes": 581996,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": -8.423926762989472,
+          "us_per_group_saved": -567.2925
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "p30.route.two.g1.wg32",
+      "reasons": [
+        "owner1: baseline not representative: matched_class",
+        "owner2: less than10% saving"
+      ],
+      "resources": [
+        "route"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "route"
+        ],
+        "expected_group_us": 68.76984126984128,
+        "launches_per_group": 5.0,
+        "prior_group_us": 68.76984126984128,
+        "reason": "Actual W2c class-group GPU event sum.",
+        "status": "matched_class"
+      },
+      "candidate": "p30.route.two.g16.wg32",
+      "dispatch": {
+        "key": "route+gather",
+        "section": "fusions"
+      },
+      "groups_per_token": 48.0,
+      "klass": "route",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 2,
+            "median_us": 89.375,
+            "p90_us": 89.583,
+            "payload_bytes": 581996,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 5,
+            "median_us": 87.396,
+            "p90_us": 93.959,
+            "payload_bytes": 581996,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": -0.022644056936244213,
+          "us_per_group_saved": -1.9789999999999992
+        },
+        {
+          "baseline_representative": true,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 2,
+            "median_us": 89.375,
+            "p90_us": 89.6983,
+            "payload_bytes": 581996,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 5,
+            "median_us": 67.343,
+            "p90_us": 68.542,
+            "payload_bytes": 581996,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": -0.3271609521405342,
+          "us_per_group_saved": -22.031999999999996
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "p30.route.two.g16.wg32",
+      "reasons": [
+        "owner1: baseline not representative: matched_class",
+        "owner2: less than10% saving"
+      ],
+      "resources": [
+        "route"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "route"
+        ],
+        "expected_group_us": 68.76984126984128,
+        "launches_per_group": 5.0,
+        "prior_group_us": 68.76984126984128,
+        "reason": "Actual W2c class-group GPU event sum.",
+        "status": "matched_class"
+      },
+      "candidate": "p30.route.two.g16.wg64",
+      "dispatch": {
+        "key": "route+gather",
+        "section": "fusions"
+      },
+      "groups_per_token": 48.0,
+      "klass": "route",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 2,
+            "median_us": 89.688,
+            "p90_us": 90.0001,
+            "payload_bytes": 581996,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 5,
+            "median_us": 87.396,
+            "p90_us": 93.959,
+            "payload_bytes": 581996,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": -0.026225456542633547,
+          "us_per_group_saved": -2.2920000000000016
+        },
+        {
+          "baseline_representative": true,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 2,
+            "median_us": 89.688,
+            "p90_us": 89.896,
+            "payload_bytes": 581996,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 5,
+            "median_us": 67.343,
+            "p90_us": 68.542,
+            "payload_bytes": 581996,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": -0.33180879972677185,
+          "us_per_group_saved": -22.345
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "p30.route.two.g16.wg64",
+      "reasons": [
+        "owner1: baseline not representative: matched_class",
+        "owner2: less than10% saving"
+      ],
+      "resources": [
+        "route"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "shexpdown"
+        ],
+        "expected_group_us": null,
+        "g2_fixture_only": {
+          "candidate": "p28.dense.wg32",
+          "median_us": 11.25,
+          "not_an_in_model_anchor": true,
+          "p90_us": 11.458,
+          "source": "experiments/own-xpu-runtime/stage2/packet28-dense/receipts-card2-20261011-g2/summary.json",
+          "source_sha256": "d3dcd5220bbca609869422e90794bfac72cffd3a0aa8927c26e128c12b11b04f"
+        },
+        "launches_per_group": 1.0,
+        "prior_group_us": 16.1666335978836,
+        "reason": "G3 incumbent is selected p28.dense.wg32, not measured pre-p28 runtime; G2 fixture winner is not an in-model replacement anchor.",
+        "status": "post_p28_in_model_anchor_missing"
+      },
+      "candidate": "p30.small.rows4",
+      "dispatch": {
+        "key": "shexpdown",
+        "section": "gemv"
+      },
+      "groups_per_token": 48.0,
+      "klass": "shexpdown",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 10.521,
+            "p90_us": 10.729,
+            "payload_bytes": 1946880,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 11.146,
+            "p90_us": 11.25,
+            "payload_bytes": 1946880,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": 0.05607392786649919,
+          "us_per_group_saved": 0.625
+        },
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 10.5205,
+            "p90_us": 10.625,
+            "payload_bytes": 1946880,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 11.042,
+            "p90_us": 11.25,
+            "payload_bytes": 1946880,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": 0.047228762905270755,
+          "us_per_group_saved": 0.5214999999999996
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "rows4",
+      "reasons": [
+        "owner1: baseline not representative: post_p28_in_model_anchor_missing",
+        "owner2: baseline not representative: post_p28_in_model_anchor_missing"
+      ],
+      "resources": [
+        "shexpdown"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "shexpdown"
+        ],
+        "expected_group_us": null,
+        "g2_fixture_only": {
+          "candidate": "p28.dense.wg32",
+          "median_us": 11.25,
+          "not_an_in_model_anchor": true,
+          "p90_us": 11.458,
+          "source": "experiments/own-xpu-runtime/stage2/packet28-dense/receipts-card2-20261011-g2/summary.json",
+          "source_sha256": "d3dcd5220bbca609869422e90794bfac72cffd3a0aa8927c26e128c12b11b04f"
+        },
+        "launches_per_group": 1.0,
+        "prior_group_us": 16.1666335978836,
+        "reason": "G3 incumbent is selected p28.dense.wg32, not measured pre-p28 runtime; G2 fixture winner is not an in-model replacement anchor.",
+        "status": "post_p28_in_model_anchor_missing"
+      },
+      "candidate": "p30.small.sg32",
+      "dispatch": {
+        "key": "shexpdown",
+        "section": "gemv"
+      },
+      "groups_per_token": 48.0,
+      "klass": "shexpdown",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 10.521,
+            "p90_us": 10.729,
+            "payload_bytes": 1946880,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 11.146,
+            "p90_us": 11.25,
+            "payload_bytes": 1946880,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": 0.05607392786649919,
+          "us_per_group_saved": 0.625
+        },
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 10.521,
+            "p90_us": 10.625,
+            "payload_bytes": 1946880,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 11.042,
+            "p90_us": 11.25,
+            "payload_bytes": 1946880,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": 0.04718348125339603,
+          "us_per_group_saved": 0.520999999999999
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "sg32",
+      "reasons": [
+        "owner1: baseline not representative: post_p28_in_model_anchor_missing",
+        "owner2: baseline not representative: post_p28_in_model_anchor_missing"
+      ],
+      "resources": [
+        "shexpdown"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "small.ffn.q8"
+        ],
+        "expected_group_us": 24.536984126984127,
+        "launches_per_group": 1.0,
+        "prior_group_us": 24.536984126984127,
+        "reason": "Actual W2c class-group GPU event sum.",
+        "status": "matched_class"
+      },
+      "candidate": "p30.small.rows4",
+      "dispatch": {
+        "key": "small.ffn",
+        "section": "fusions"
+      },
+      "groups_per_token": 1.0,
+      "klass": "small.ffn.q8",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": true,
+          "candidate": {
+            "copies": 8,
+            "launches_per_group": 1,
+            "median_us": 24.271,
+            "p90_us": 25.0,
+            "payload_bytes": 9164800,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 8,
+            "launches_per_group": 1,
+            "median_us": 23.542,
+            "p90_us": 24.166,
+            "payload_bytes": 9164800,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": -0.0309659332257242,
+          "us_per_group_saved": -0.7289999999999992
+        },
+        {
+          "baseline_representative": true,
+          "candidate": {
+            "copies": 8,
+            "launches_per_group": 1,
+            "median_us": 24.48,
+            "p90_us": 25.208,
+            "payload_bytes": 9164800,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 8,
+            "launches_per_group": 1,
+            "median_us": 23.541,
+            "p90_us": 24.063,
+            "payload_bytes": 9164800,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": -0.039887855231298584,
+          "us_per_group_saved": -0.9390000000000001
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "rows4",
+      "reasons": [
+        "owner1: less than10% saving",
+        "owner2: less than10% saving"
+      ],
+      "resources": [
+        "small.ffn.q8"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "small.ffn.q8"
+        ],
+        "expected_group_us": 24.536984126984127,
+        "launches_per_group": 1.0,
+        "prior_group_us": 24.536984126984127,
+        "reason": "Actual W2c class-group GPU event sum.",
+        "status": "matched_class"
+      },
+      "candidate": "p30.small.sg32",
+      "dispatch": {
+        "key": "small.ffn",
+        "section": "fusions"
+      },
+      "groups_per_token": 1.0,
+      "klass": "small.ffn.q8",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": true,
+          "candidate": {
+            "copies": 8,
+            "launches_per_group": 1,
+            "median_us": 24.583,
+            "p90_us": 25.427300000000002,
+            "payload_bytes": 9164800,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 8,
+            "launches_per_group": 1,
+            "median_us": 23.542,
+            "p90_us": 24.166,
+            "payload_bytes": 9164800,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": -0.04421884291903817,
+          "us_per_group_saved": -1.0409999999999968
+        },
+        {
+          "baseline_representative": true,
+          "candidate": {
+            "copies": 8,
+            "launches_per_group": 1,
+            "median_us": 24.687,
+            "p90_us": 25.834,
+            "payload_bytes": 9164800,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 8,
+            "launches_per_group": 1,
+            "median_us": 23.541,
+            "p90_us": 24.063,
+            "payload_bytes": 9164800,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": -0.048681024595386806,
+          "us_per_group_saved": -1.1460000000000008
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "sg32",
+      "reasons": [
+        "owner1: less than10% saving",
+        "owner2: less than10% saving"
+      ],
+      "resources": [
+        "small.ffn.q8"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "small.hc"
+        ],
+        "expected_group_us": 18.472056878306876,
+        "launches_per_group": 1.0,
+        "prior_group_us": 18.472056878306876,
+        "reason": "Actual W2c class-group GPU event sum.",
+        "status": "matched_class"
+      },
+      "candidate": "p30.small.rows4",
+      "dispatch": {
+        "key": "small.hc",
+        "section": "fusions"
+      },
+      "groups_per_token": 96.0,
+      "klass": "small.hc",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 37.396,
+            "p90_us": 37.604,
+            "payload_bytes": 4096000,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 15.0,
+            "p90_us": 15.521,
+            "payload_bytes": 4096000,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": -1.4930666666666668,
+          "us_per_group_saved": -22.396
+        },
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 37.396,
+            "p90_us": 37.604,
+            "payload_bytes": 4096000,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 14.896,
+            "p90_us": 15.313,
+            "payload_bytes": 4096000,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": -1.51047261009667,
+          "us_per_group_saved": -22.5
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "rows4",
+      "reasons": [
+        "owner1: baseline not representative: matched_class",
+        "owner2: baseline not representative: matched_class"
+      ],
+      "resources": [
+        "small.hc"
+      ]
+    },
+    {
+      "anchor": {
+        "classes": [
+          "small.hc"
+        ],
+        "expected_group_us": 18.472056878306876,
+        "launches_per_group": 1.0,
+        "prior_group_us": 18.472056878306876,
+        "reason": "Actual W2c class-group GPU event sum.",
+        "status": "matched_class"
+      },
+      "candidate": "p30.small.sg32",
+      "dispatch": {
+        "key": "small.hc",
+        "section": "fusions"
+      },
+      "groups_per_token": 96.0,
+      "klass": "small.hc",
+      "ms_per_token_saved": 0,
+      "owners": [
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 37.083,
+            "p90_us": 37.292,
+            "payload_bytes": 4096000,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 15.0,
+            "p90_us": 15.521,
+            "payload_bytes": 4096000,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 1,
+          "relative_saving": -1.4722,
+          "us_per_group_saved": -22.083
+        },
+        {
+          "baseline_representative": false,
+          "candidate": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 37.084,
+            "p90_us": 37.291,
+            "payload_bytes": 4096000,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "incumbent": {
+            "copies": 1,
+            "launches_per_group": 1,
+            "median_us": 14.896,
+            "p90_us": 15.313,
+            "payload_bytes": 4096000,
+            "repetitions": 200,
+            "timing_definition": "sum of GPU execution duration of each event in one launch group"
+          },
+          "owner": 2,
+          "relative_saving": -1.48952738990333,
+          "us_per_group_saved": -22.188000000000002
+        }
+      ],
+      "qualified": false,
+      "raw_candidate": "sg32",
+      "reasons": [
+        "owner1: baseline not representative: matched_class",
+        "owner2: baseline not representative: matched_class"
+      ],
+      "resources": [
+        "small.hc"
+      ]
+    }
+  ],
+  "schema": "packet30.summary.v1",
+  "selected_ms_per_token_saved": 0
+}
