@@ -1,0 +1,58 @@
+--- iteration0/candidates.hpp
++++ iteration1/candidates.hpp
+@@ -1,16 +1,20 @@
+ #pragma once
++#if defined(__SYCL_DEVICE_ONLY__)
++#include <sycl/sycl.hpp>
++#endif
+ #include "../packet29-merged/p28/expert.hpp"
+ #include "../packet29-merged/p28/dense.hpp"
+ #include "../packet29-merged/round2.hpp"
+ namespace p33 {
+ // No memory lookup and no 64-bit integer code word. Each selected bank has four
+-// signed bytes, converted by explicit arithmetic to avoid signed-shift rules.
++// signed bytes. C++20 unsigned-to-int8_t conversion is modulo 256, followed
++// by sign extension to int; no signed right shift is used.
+ inline int level_bank(unsigned q) {
+  const uint32_t lo=(q&4)?0xf6eaddcfu:0xbfad9881u;
+  const uint32_t hi=(q&4)?0x71594535u:0x26190d01u;
+  const uint32_t bank=(q&8)?hi:lo;
+  const unsigned byte=(bank>>(8*(q&3)))&255;
+- return byte<128?int(byte):int(byte)-256;
++ return int(int8_t(byte));
+ }
+ inline int level_select(unsigned q) {
+  const int a=(q&1)?-104:-127,b=(q&1)?-65:-83;
+@@ -28,13 +32,30 @@
+   const uint8_t* block=row+(k/32)*18;
+   const float scale=iq3::half(uint16_t(block[0])|(uint16_t(block[1])<<8));
+   const unsigned offset=k%32;
++#if defined(__SYCL_DEVICE_ONLY__)
++  // Production K640 has complete eight-weight lane tiles. Explicit vectors
++  // request the same contiguous bytes the scalar path uses, with no overread.
++  // Odd CPU diagnostic lengths retain their bounds-checked scalar spelling.
++  sycl::vec<uint8_t,8> packed_codes;
++  sycl::vec<uint16_t,8> packed_inputs;
++  if constexpr(Mode==0 && K%8==0){
++   packed_codes.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(block+2+offset%16));
++   packed_inputs.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(x+k));
++  }
++#endif
+   #pragma unroll
+   for(unsigned j=0;j<8;++j)if(k+j<K){
+-   const uint8_t code=block[2+(offset+j)%16];
++   uint8_t code;
++   uint16_t input_bits;
++#if defined(__SYCL_DEVICE_ONLY__)
++   if constexpr(Mode==0 && K%8==0){code=packed_codes[j];input_bits=packed_inputs[j];}
++   else
++#endif
++   {code=block[2+(offset+j)%16];input_bits=x[k+j];}
+    const unsigned q=(code>>(4*((offset+j)/16)))&15;
+    const int level=Mode==0?level_bank(q):level_select(q);
+    const float value=scale*float(level);
+-   const float input=iq3::bits_float(uint32_t(x[k+j])<<16);
++   const float input=iq3::bits_float(uint32_t(input_bits)<<16);
+    const float product=value*input;sum=sum+product;
+   }
+  }

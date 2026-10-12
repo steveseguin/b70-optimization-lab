@@ -1,0 +1,166 @@
+{
+  "reviewer": "independent runtime-options/identity subagent",
+  "status": "finite-source-and-cpu-gates-reviewed; device-gates-pending",
+  "device_executed": false,
+  "new_compilation_performed_by_reviewer": false,
+  "sources_sha256": {
+    "candidates.hpp": "ee7d7d3489466dc5e9a31c7edaf0999fad3e132054878c0bf243f09d189b2f17",
+    "p33_submit.cpp": "2bd85f093c825a0c15344aaa856e23a8a2cffd7430f006c3708584574cc2defb",
+    "candidate_cpu.cpp": "3abb17b23a13443905ebbf047af36cfc551563a347c71976fc45a7b32d482395",
+    "candidate-gates.py": "22a7ac05a7bffb249a1b04684f3c3e3d04d7b9b6d62cdb49192a23ab95402d5d",
+    "candidate-gates.json": "98b5fcfb5f164a558bf8ec04017c06f5bbc221ad0c0cc63574d2bcac2454c21b",
+    "build_driver.py": "1e56fc37593ca011c6a0528cdfbbff5ebde81b8fbf72a8fe54cf09c4e33748bc",
+    "build/p33_round2_submit.cpp": "179ae6fd1240467727f093569b2ebe6801f9d8c49e8c0488c00ddddbdfce8396",
+    "build/p33_gemv_timing.cpp": "93bd69569ec7dc44707191eae6578ce04b3f6dfc778b45cf78199a41d73a2f24",
+    "build/route_gate_core.hpp": "988f069a4de0f3964484b6133d660a8228e1426c1e137b5065bd742677f0a04b",
+    "timing_prepare.py": "5a7cc679d99cf2084086874d508b9ade781b9fc497209fbaacee9e8daf995777",
+    "p33_stop.hpp": "aabcc48a4f29040589c906da3e2231935139493322ac8cc2f292af08526f72db",
+    "build/timing_main.cpp": "81b71be15ba1e8dfd77890a029ddeb9843891e4c87bbfd00c9073cfd624631de",
+    "build/timing_adapter.cpp": "d4ec5a41b2734cefb7da453b6dbfc2a0df441c0d4f9a50476dabceec5106a605",
+    "summarize.py": "853e7f9f237f5116a44614853f2a3a6c1cd2efb78f90f267366ddddb0184e93d",
+    "window.py": "c2ad82bf3ab86416dcef9b0f92cd84f5374571db6fef775dc1100105224ede39",
+    "analyze.py": "25a423b8f1516bd42c842dfb0bb2b671ab52b10e7f11a98c8966ac9a0985ea57",
+    "make_table.py": "d92b0dea9b217a048031ad3da666d21fcfb12069a8ed4d53f502a0b020cd7bd0",
+    "kernel-table.md": "8e130b6351a59d692f1623c0e9dcb3840098e794bcc766415f43fba4cf6957f3"
+  },
+  "candidates": [
+    {
+      "candidate": "p33.down.bank",
+      "verdict": "source-equivalent finite arithmetic; no arithmetic reorder",
+      "basis": "16-entry signed byte constants decode exactly; same scale*level, then *BF16 input, then accumulator add. Same lane*8+256 tile order and tree32."
+    },
+    {
+      "candidate": "p33.down.select",
+      "verdict": "source-equivalent finite arithmetic; no arithmetic reorder",
+      "basis": "Nested integer selects encode same 16 values. Floating point operation order and tree unchanged."
+    },
+    {
+      "candidate": "p33.gate.restrict",
+      "verdict": "delegates unchanged p28 paired body",
+      "basis": "Paired=true Shared=false matches p28.paired.wg32; __restrict affects alias analysis only. Read operands unmodified; writable overlaps rejected by inherited validate."
+    },
+    {
+      "candidate": "p33.dense.segment",
+      "verdict": "equivalent within admitted aligned ranges",
+      "basis": "K2560 split bounds multiples256; 8-wide lane tile cannot cross scale group16/32. Same scale*signed8, product and sum order; finish computes (p0+p1)+(p2+p3). Unaligned begin unsupported."
+    },
+    {
+      "candidate": "p33 route rank4",
+      "verdict": "integer scheduling equivalent for all winners",
+      "basis": "Loop comparisons unchanged including tie-by-id. If rank<Top, scan reaches end and exact rank matches. Overshoot only for losing ranks, whose bodies do not write. Generated diff changes only rank helper call at fixed512/top10."
+    },
+    {
+      "candidate": "p33 QSA specialization",
+      "verdict": "same arithmetic body under exact shape guard",
+      "basis": "Generated branch checks capacity128,budget2048,tokens1 and sets exactly those constants before unchanged round2::group call; generic fallback retained. CPU also tests helper Tokens3."
+    }
+  ],
+  "findings": [
+    {
+      "id": "I1",
+      "severity": "coverage",
+      "status": "resolved",
+      "finding": "Expert CPU tests initially K512 only; submitted IQ2/IQ3 specializations are K2560. Add production-K comparison including full reduction and BF16 output.",
+      "resolution": "Expanded exact gate, both host compilers, two fresh processes each; reviewed new source and hash-bound candidate-gates.json, all required finite comparisons pass."
+    },
+    {
+      "id": "I2",
+      "severity": "coverage",
+      "status": "resolved",
+      "finding": "Dense CPU tests initially K512/Q6 and K640/Q8, begin0 only, no split4 tree. Add K2560 both formats, nonzero aligned starts, split4 partial and final tree/BF16.",
+      "resolution": "Expanded exact gate, both host compilers, two fresh processes each; reviewed new source and hash-bound candidate-gates.json, all required finite comparisons pass."
+    },
+    {
+      "id": "I3",
+      "severity": "coverage",
+      "status": "resolved",
+      "finding": "Route helper checks clipped ranks but not generated stages/output binding. Add full generated three-stage comparison for ids, probabilities, gate/down tuples including ties.",
+      "resolution": "Expanded exact gate, both host compilers, two fresh processes each; reviewed new source and hash-bound candidate-gates.json, all required finite comparisons pass."
+    },
+    {
+      "id": "I4",
+      "severity": "scope",
+      "status": "must-label",
+      "finding": "Nonfinite mismatches explicitly remain unqualified, consistent with packet29 diagnostic policy. passed means finite-domain gates only, not all-bit-pattern identity."
+    },
+    {
+      "id": "I5",
+      "severity": "scope",
+      "status": "must-label",
+      "finding": "New SYCL submit wrapper is code reviewed but not exercised by CPU helper gates; on-card equality is prepared, not executed."
+    }
+  ],
+  "other_checks": [
+    "Route index guard and row-byte overflow limit make unsigned address offsets safe before native pointer addition.",
+    "Lane tree width1,2,4,8,16 and split4 (p0+p1)+(p2+p3) match reference order.",
+    "Invalid route yields canonical 0x7fc00000 before BF16 conversion and status per slot.",
+    "All three generated round2 lambdas and p33 lambdas use p28::checked for <=1024-byte capture.",
+    "GEMV generated diff leaves integrated::experts/dense incumbent path unchanged, 200 measurements and rotated full-size banks unchanged.",
+    "Both expert-down final GEN dumps byte-identical after explicit option rerun."
+  ],
+  "cpu_gate_summary": {
+    "processes": 4,
+    "passed": true,
+    "fresh_repeat_identical": true,
+    "finite_cross_compiler_identical": true,
+    "required_checks_per_process": 3442552,
+    "nonfinite_qualified": false,
+    "binary_sha256": {
+      "gcc": "233bc6ea7f3b6c4ef27b4ad2f04c402c8ae863eebd38683033d2d05b884a0249",
+      "icpx": "c20e8439cb5ea75d5f695c5470e5b3c52e299026b3f0117418513dcb5020f321"
+    },
+    "expanded_coverage": [
+      "expert IQ2/IQ3 K2560 lanes, pair/unpaired, tree, BF16",
+      "dense Q6/Q8 K2560 split1/split4 with per-group varying finite signed/subnormal/normal scales, lane/tree/row/BF16",
+      "12 generated route stage fixtures: ties, varied, inactive and invalid NaN input; 972 output comparisons"
+    ]
+  },
+  "timing_harness_followup": {
+    "status": "resolved by generated-source inspection",
+    "checks": [
+      "Main rope and default fixtures paths now point at packet29 read-only inputs.",
+      "QSA failures name p33.qsa.shape vs round2; route failure names p33.route.rank4 vs specialised.",
+      "Receipt passed=all_exact and exit returns all_exact?0:1; cannot silently PASS excluded failures.",
+      "SIGTERM/SIGINT handler only sets volatile sig_atomic_t; stop check runs between completed repetitions and throws to failure-before-teardown path."
+    ]
+  },
+  "iteration1_review": {
+    "source_sha256": "ee7d7d3489466dc5e9a31c7edaf0999fad3e132054878c0bf243f09d189b2f17",
+    "patch_sha256": "2bc3c1e65bf9dc6b00d67003336280a3f98cc67923f523f32b6d6e5335a82cac",
+    "verdict": "No arithmetic change; vector read addresses proven equal and in bounds for admitted production shape.",
+    "proof": [
+      "k=lane*8+256*t implies k%8==0 and offset%16 in {0,8}. Eight codes at block+2+offset%16 end at offset<=17 within 18-byte block.",
+      "K%8==0 plus k<K means k+7<K. Eight input halfwords are within the row. Odd lengths retain scalar guarded fallback.",
+      "Installed SYCL vector.hpp:674 load loops over element-pointer loads and adds no alignment precondition beyond element alignment; code bytes align1, BF16 align2.",
+      "int8_t conversion uses C++20 modulo signed conversion and unchanged integer result for all16 valid indices; exhaustive level gate passes.",
+      "Only load scheduling changes; scale*level, then product with bit-expanded BF16, then accumulator add unchanged.",
+      "Device-only vector branch is source-reviewed and offline compiled; host gate tests scalar load fallback, not a device execution."
+    ]
+  },
+  "qsa_selector_final_review": "Host submission chooses Kernel<Code,0,true> only for the same exact128/2048/1 dimensions and non-GDN code; kernel uses if constexpr(Fixed) to call unchanged qsa_group. Generic fallback retained; no arithmetic or reduction change. Explicitly reviewed final generated source.",
+  "final_extraction_and_harness_review": {
+    "status": "findings resolved by final source inspection and CPU-only binary byte comparison",
+    "selected_codegen_count": 330,
+    "rejected_igc_retry_attempts": 3,
+    "study_rows": 53,
+    "checks": [
+      "Every selected GEN .dat exactly matches the matching offline ELF .text section with only all-zero trailing padding. This binds the selected dump to final offline code, not actual untraced runtime JIT.",
+      "Three initial IGC attempts do not match final ELF text and remain in rejected_compile_attempts; not summed into study rows. Generic ng kernel final is12241 static instructions, not30863 aggregate.",
+      "All payload extents now restricted to the matching cross-thread or per-thread zeinfo section; five helper payload values were corrected.",
+      "64-bit typed instruction count includes moves and arithmetic; table no longer labels it specifically A64 address ALU.",
+      "Generic notes no longer assert IQ-half decoding, octet lane order or the down reduction tree for every kernel.",
+      "Whole-function static counts and lexical backward-branch envelopes are not dynamic loop counts. Unknown per-weight fields remain explicit. First-branch prefix is not fixed launch latency.",
+      "Generic runtime-op ng::Kernel cannot isolate a tiny activation fixed-cost reference. Launch fixed cost is unidentifiable from this aggregate.",
+      "Spill-size metadata is separate from private_size and scratch allocation. Final ng kernel has private_size21504 and32768 scratch allocation without //.spill size; no-scratch may not be inferred from no spill.",
+      "Summarizer rejects unknown variants and noninteger/out-of-range repetitions; requires exactly200 complete reps/arm and class-specific stage counts. GEMV qsa.k incumbent1/candidate2 matches original expanded::gemv and new main+Finish.",
+      "Route incumbent5/candidate3 and QSA3-stage expected counts match generated path. Both Q6/Q8 gdn.qkv and qsa.k split4 required workload coverage present.",
+      "Window now distinguishes device_accessed=true K0 from kernel_execution=false. K2 binds K0 boot/card/binary/environment identity, uses ldd preflight, closed env and cooperative termination; no hard kill added.",
+      "Table now reports scratch allocation and execution_env private bytes per hardware SIMD thread separately from unrounded GRF spill bytes. Underlying global is_simt_thread private allocations retain per-lane units in memory_buffer_metadata; R5 184bytes/lane times32=5888private bytes/HW thread. Row aggregates use max, not sum. Sizes are not additive."
+    ],
+    "limitations": [
+      "Prepared harness was source-reviewed, not executed on any device.",
+      "Host helper gates do not execute SYCL device-only vector load branch.",
+      "Nonfinite arithmetic remains explicitly unqualified."
+    ]
+  }
+}

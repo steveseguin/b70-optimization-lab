@@ -1,0 +1,50 @@
+[
+  {
+    "argv": [
+      "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+      "-std=gnu++20",
+      "-O2",
+      "-Werror=return-type",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-fdenormal-fp-math=ieee",
+      "-foffload-fp32-prec-div",
+      "-foffload-fp32-prec-sqrt",
+      "-fsycl",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../../stage1/packet3-prep/src",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../packet2/kernels",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../packet2/loader",
+      "-c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/timing_main.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/timing_main.o"
+    ],
+    "returncode": 0
+  },
+  {
+    "argv": [
+      "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+      "-std=gnu++20",
+      "-O2",
+      "-Werror=return-type",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-fdenormal-fp-math=ieee",
+      "-foffload-fp32-prec-div",
+      "-foffload-fp32-prec-sqrt",
+      "-fsycl",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../../stage1/packet3-prep/src",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../packet2/kernels",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../packet2/loader",
+      "-c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/timing_adapter.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/timing_adapter.o"
+    ],
+    "returncode": 0
+  }
+]

@@ -1,0 +1,121 @@
+{
+  "device_executed": false,
+  "sources": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/gemv_timing.cpp": "15bfa0bc28582fd4487dddad8062a04c49da80059767d5a702f133da01bac918",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/round2_submit.cpp": "9376df1464877b7e5f0e24eb56000df350ade782582bd42ad18cc5cbb2a7c45b"
+  },
+  "generated": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/p33_gemv_timing.cpp": "93bd69569ec7dc44707191eae6578ce04b3f6dfc778b45cf78199a41d73a2f24",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/p33_round2_submit.cpp": "179ae6fd1240467727f093569b2ebe6801f9d8c49e8c0488c00ddddbdfce8396"
+  },
+  "changes": {
+    "gemv": [
+      "prepend p33 submit declaration",
+      "restrict unchanged shape rows to expsgate IQ2/IQ3, expsdown IQ4, gdn.qkv Q6/Q8",
+      "replace candidate list with four packet33 IDs",
+      "replace only candidate submit expression; R5 integrated::experts/dense unchanged",
+      "216 iterations, 8 preflight+200 measured+8 postflight, heavy buffers8 unchanged"
+    ],
+    "round2": [
+      "rename own namespace to p33r2, import unchanged round2 headers",
+      "stage1 route: p33 route_rank for512/top10 only, generic fallback retained",
+      "fixed QSA shape128/2048/1 delegates unchanged arithmetic body; generic fallback retained",
+      "wrap all3 parallel_for captures with p28::checked (<=1024 bytes)"
+    ]
+  },
+  "compile": [
+    {
+      "source": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/p33_submit.cpp",
+      "source_sha256": "2bd85f093c825a0c15344aaa856e23a8a2cffd7430f006c3708584574cc2defb",
+      "command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/validation",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../../stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../packet2/loader",
+        "-std=gnu++20",
+        "-O2",
+        "-Werror=return-type",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fdenormal-fp-math=ieee",
+        "-foffload-fp32-prec-div",
+        "-foffload-fp32-prec-sqrt",
+        "-fsycl",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen",
+        "-fsycl-dump-device-code=/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build",
+        "-c",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/p33_submit.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/p33_submit.o"
+      ],
+      "object": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/p33_submit.o",
+      "returncode": 0,
+      "log": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/p33_submit-compile.log",
+      "object_sha256": "154b1889c609443c75cbae0257e4f1a45fbdf240176d3fb9468951d8d754820d"
+    },
+    {
+      "source": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/p33_gemv_timing.cpp",
+      "source_sha256": "93bd69569ec7dc44707191eae6578ce04b3f6dfc778b45cf78199a41d73a2f24",
+      "command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/validation",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../../stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../packet2/loader",
+        "-std=gnu++20",
+        "-O2",
+        "-Werror=return-type",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fdenormal-fp-math=ieee",
+        "-foffload-fp32-prec-div",
+        "-foffload-fp32-prec-sqrt",
+        "-fsycl",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen",
+        "-fsycl-dump-device-code=/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build",
+        "-c",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/p33_gemv_timing.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/p33_gemv_timing.o"
+      ],
+      "object": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/p33_gemv_timing.o",
+      "returncode": 0,
+      "log": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/p33_gemv_timing-compile.log",
+      "object_sha256": "f71e5bca89fa613f98064a913199350b46d2c5bdccb12f82eb9ab540d2ddf26e"
+    },
+    {
+      "source": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/p33_round2_submit.cpp",
+      "source_sha256": "179ae6fd1240467727f093569b2ebe6801f9d8c49e8c0488c00ddddbdfce8396",
+      "command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/build/device/validation",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../../stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged/../packet2/loader",
+        "-std=gnu++20",
+        "-O2",
+        "-Werror=return-type",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fdenormal-fp-math=ieee",
+        "-foffload-fp32-prec-div",
+        "-foffload-fp32-prec-sqrt",
+        "-fsycl",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen",
+        "-fsycl-dump-device-code=/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build",
+        "-c",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/p33_round2_submit.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/p33_round2_submit.o"
+      ],
+      "object": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/p33_round2_submit.o",
+      "returncode": 0,
+      "log": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/p33_round2_submit-compile.log",
+      "object_sha256": "9ee8bc8bbae9428bdc6a45230d0f0d0b5e9d779785420692e1e38028931fc999"
+    }
+  ]
+}

@@ -1,0 +1,2610 @@
+{
+  "schema": "packet33.static-surrogate.v1",
+  "device_ran": false,
+  "predictive_model_qualified": false,
+  "description": "log(t / family workload R5 median) = intercept + coefficients times standardized log ratios of whole-main-kernel static SIMD16-equivalent instructions, memory messages and 64-bit operations + extra event count + explicit spill-size KiB difference; ridge penalty fixed at 1 before fitting",
+  "feature_names": [
+    "log_ratio_simd16_issue_equivalents",
+    "log_ratio_memory_messages",
+    "log_ratio_alu64",
+    "extra_stage_count",
+    "spill_kib_difference"
+  ],
+  "coefficients": {
+    "intercept": -0.05538214576514874,
+    "standardized_coefficients": [
+      -0.2334517683600055,
+      -0.03654701613116565,
+      0.4040416898286867,
+      0.050158214163326637,
+      0.2071064502649958
+    ],
+    "feature_means": [
+      -0.3242970290942134,
+      -0.055408981672889615,
+      -0.24721202865962177,
+      0.18055555555555555,
+      0.1918402777777778
+    ],
+    "feature_scales": [
+      0.4727824464467961,
+      0.5343400347478758,
+      0.7442467833997896,
+      0.38464951178128415,
+      0.9760214550607029
+    ],
+    "ridge_penalty": 1.0
+  },
+  "training": {
+    "n": 72,
+    "mae_us": 16.159526972942956,
+    "rmse_us": 23.54083297299919,
+    "r2": 0.9379798119488885,
+    "mape_percent": 13.254964854870568,
+    "max_absolute_error_us": 68.73587240202822
+  },
+  "leave_implementation_out": {
+    "n": 72,
+    "mae_us": 32.30615680115634,
+    "rmse_us": 105.50216417766441,
+    "r2": -0.2456962692411775,
+    "mape_percent": 19.47092054261548,
+    "max_absolute_error_us": 858.4942493234948
+  },
+  "uncertainty": {
+    "empirical_candidate_held_out_p90_absolute_us": 52.458462849994206,
+    "empirical_candidate_held_out_p90_relative_fraction": 0.4507064246601324,
+    "minimum_fraction": 0.1,
+    "policy": "Use max(p90 held-out absolute error, 10% prediction) as heuristic +/- band; not a statistical confidence interval"
+  },
+  "rows": [
+    {
+      "id": "p29:gemv:expsgate:p25.half_table:expsgate.iq2:specialised:rotated",
+      "implementation": "p25.half_table",
+      "workload": "expsgate.iq2",
+      "actual_us": 318.958,
+      "baseline_us": 175.20875,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.03421086191631627,
+        "log_ratio_memory_messages": 0.842359578746621,
+        "log_ratio_alu64": 0.18553036083073943,
+        "extra_stage_count": 1.0,
+        "spill_kib_difference": 1.6875
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE22ELN3p251CE5EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "08140d309ab14bee81fb8022cc518e496e2c376c1c4bce2777fc90cafe6ea1dc",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE22EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 2799,
+        "simd16_issue_equivalents": 3879.0,
+        "memory_messages": 202,
+        "alu64": 437,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsgate/comparisons/p25.half_table/workloads/expsgate.iq2/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 2.0,
+      "fitted_us": 261.15354403507274,
+      "held_out_us": 245.14884343845193
+    },
+    {
+      "id": "p29:gemv:expsgate:p25.half_table:expsgate.iq3:specialised:rotated",
+      "implementation": "p25.half_table",
+      "workload": "expsgate.iq3",
+      "actual_us": 316.7185,
+      "baseline_us": 174.896,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.05112532162458515,
+        "log_ratio_memory_messages": 0.7466358655109315,
+        "log_ratio_alu64": 0.15109023367415214,
+        "extra_stage_count": 1.0,
+        "spill_kib_difference": 2.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE21ELN3p251CE5EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "286ba3f3d7f2457123e006c59f80bbd2000bc515d906a86713abe4097a1253f1",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE21EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 2773,
+        "simd16_issue_equivalents": 3870.0,
+        "memory_messages": 192,
+        "alu64": 435,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsgate/comparisons/p25.half_table/workloads/expsgate.iq3/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 2.0,
+      "fitted_us": 277.5038676432584,
+      "held_out_us": 261.18353553193765
+    },
+    {
+      "id": "p29:gemv:expsgate:p25.paired_input:expsgate.iq2:specialised:rotated",
+      "implementation": "p25.paired_input",
+      "workload": "expsgate.iq2",
+      "actual_us": 215.0,
+      "baseline_us": 175.20875,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.06032882600679444,
+        "log_ratio_memory_messages": 0.7490276389544019,
+        "log_ratio_alu64": 0.0027510333718897976,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 2.5
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE22ELN3p251CE4EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "ed76077ae5bd0ca4dac87e42070d050a33405675d6ede08ebd263652769f963e",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE22EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 2716,
+        "simd16_issue_equivalents": 3779.0,
+        "memory_messages": 184,
+        "alu64": 364,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsgate/comparisons/p25.paired_input/workloads/expsgate.iq2/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 251.4309847267862,
+      "held_out_us": 323.4344328682045
+    },
+    {
+      "id": "p29:gemv:expsgate:p25.paired_input:expsgate.iq3:specialised:rotated",
+      "implementation": "p25.paired_input",
+      "workload": "expsgate.iq3",
+      "actual_us": 705.4165,
+      "baseline_us": 174.896,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": 0.005875169898458443,
+        "log_ratio_memory_messages": 1.0875624524815248,
+        "log_ratio_alu64": 0.007989390033478861,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 7.625
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE21ELN3p251CE4EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "58f4b620463cfe7b3dcaaf66642e8c959de2633c13b7ffdec7fa9fef7abe9018",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE21EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 2965,
+        "simd16_issue_equivalents": 4097.0,
+        "memory_messages": 270,
+        "alu64": 377,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsgate/comparisons/p25.paired_input/workloads/expsgate.iq3/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 706.1854792344922,
+      "held_out_us": 1563.9107493234949
+    },
+    {
+      "id": "p29:gemv:expsgate:p25.private_decode:expsgate.iq2:specialised:rotated",
+      "implementation": "p25.private_decode",
+      "workload": "expsgate.iq2",
+      "actual_us": 186.614,
+      "baseline_us": 175.20875,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.1633692572183804,
+        "log_ratio_memory_messages": 0.033901551675681416,
+        "log_ratio_alu64": -0.042200354490376416,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE22ELN3p251CE3EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "dfc0d83158409f32c49dbf0c0c26078c50ebea1dccb5ef76eef9dc0df4364020",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE22EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 2385,
+        "simd16_issue_equivalents": 3409.0,
+        "memory_messages": 90,
+        "alu64": 348,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsgate/comparisons/p25.private_decode/workloads/expsgate.iq2/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 159.50421429833102,
+      "held_out_us": 158.38062035273458
+    },
+    {
+      "id": "p29:gemv:expsgate:p25.private_decode:expsgate.iq3:specialised:rotated",
+      "implementation": "p25.private_decode",
+      "workload": "expsgate.iq3",
+      "actual_us": 188.958,
+      "baseline_us": 174.896,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.15133118669374687,
+        "log_ratio_memory_messages": 0.04301738508369086,
+        "log_ratio_alu64": -0.021622464013165657,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE21ELN3p251CE3EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "aaf7feafa0e570ee5aa820066468f4842712cc6d06683a01f96d08ab4a780b83",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE21EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 2428,
+        "simd16_issue_equivalents": 3501.0,
+        "memory_messages": 95,
+        "alu64": 366,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsgate/comparisons/p25.private_decode/workloads/expsgate.iq3/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 159.95419877291383,
+      "held_out_us": 158.8166384666065
+    },
+    {
+      "id": "p29:gemv:expsgate:p25.rows4:expsgate.iq2:specialised:rotated",
+      "implementation": "p25.rows4",
+      "workload": "expsgate.iq2",
+      "actual_us": 181.3545,
+      "baseline_us": 175.20875,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.15664506874843062,
+        "log_ratio_memory_messages": -0.12210269680089984,
+        "log_ratio_alu64": -0.013869847864150502,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE22ELN3p251CE1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "518bde29c3508d8ed5ca31cd9d17387c02cbb3e22e8d6f71acab4681a4618fc8",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE22EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 2407,
+        "simd16_issue_equivalents": 3432.0,
+        "memory_messages": 77,
+        "alu64": 358,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsgate/comparisons/p25.rows4/workloads/expsgate.iq2/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 163.1712829249246,
+      "held_out_us": 160.6372136705367
+    },
+    {
+      "id": "p29:gemv:expsgate:p25.rows4:expsgate.iq3:specialised:rotated",
+      "implementation": "p25.rows4",
+      "workload": "expsgate.iq3",
+      "actual_us": 183.906,
+      "baseline_us": 174.896,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.1536188628415806,
+        "log_ratio_memory_messages": -0.11641035184441134,
+        "log_ratio_alu64": -0.01075279177626185,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE21ELN3p251CE1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "86135fa941a0038a9848f738c82cc608f9ab82b345ba3f64099b32c891e525ed",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE21EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 2425,
+        "simd16_issue_equivalents": 3493.0,
+        "memory_messages": 81,
+        "alu64": 370,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsgate/comparisons/p25.rows4/workloads/expsgate.iq3/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 162.8488450436223,
+      "held_out_us": 160.4732760771132
+    },
+    {
+      "id": "p29:gemv:expsgate:p25.wg32:expsgate.iq2:specialised:rotated",
+      "implementation": "p25.wg32",
+      "workload": "expsgate.iq2",
+      "actual_us": 181.771,
+      "baseline_us": 175.20875,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.15664506874843062,
+        "log_ratio_memory_messages": -0.12210269680089984,
+        "log_ratio_alu64": -0.013869847864150502,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE22ELN3p251CE2EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "71602ec30c50ec2bbf06c031ba264f42e23e940833c7ad0ab683159f0cd1d51c",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE22EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 2407,
+        "simd16_issue_equivalents": 3432.0,
+        "memory_messages": 77,
+        "alu64": 358,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsgate/comparisons/p25.wg32/workloads/expsgate.iq2/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 163.1712829249246,
+      "held_out_us": 159.35028412925286
+    },
+    {
+      "id": "p29:gemv:expsgate:p25.wg32:expsgate.iq3:specialised:rotated",
+      "implementation": "p25.wg32",
+      "workload": "expsgate.iq3",
+      "actual_us": 182.292,
+      "baseline_us": 174.896,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.1536188628415806,
+        "log_ratio_memory_messages": -0.11641035184441134,
+        "log_ratio_alu64": -0.01075279177626185,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE21ELN3p251CE2EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "9ba579ad0ba90c555171ec7c3ae440a34513f4fe2ae1b2a8c9f04123c2d532bd",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE21EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 2425,
+        "simd16_issue_equivalents": 3493.0,
+        "memory_messages": 81,
+        "alu64": 370,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsgate/comparisons/p25.wg32/workloads/expsgate.iq3/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 162.8488450436223,
+      "held_out_us": 159.05789442462967
+    },
+    {
+      "id": "p29:gemv:expsgate:p27.fp32_input:expsgate.iq2:specialised:rotated",
+      "implementation": "p27.fp32_input",
+      "workload": "expsgate.iq2",
+      "actual_us": 190.9895,
+      "baseline_us": 175.20875,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.14476947661220937,
+        "log_ratio_memory_messages": 0.05588045839445663,
+        "log_ratio_alu64": -0.013869847864150502,
+        "extra_stage_count": 1.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE22ELN3p251CE9EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "f3cf82736a371f133a8f0e3ead5d10845d3bd1ec2a013cfba570c8388f9f0a22",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE22EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 2433,
+        "simd16_issue_equivalents": 3473.0,
+        "memory_messages": 92,
+        "alu64": 358,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsgate/comparisons/p27.fp32_input/workloads/expsgate.iq2/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 2.0,
+      "fitted_us": 182.57533008229402,
+      "held_out_us": 182.57320879468125
+    },
+    {
+      "id": "p29:gemv:expsgate:p27.fp32_input:expsgate.iq3:specialised:rotated",
+      "implementation": "p27.fp32_input",
+      "workload": "expsgate.iq3",
+      "actual_us": 194.792,
+      "baseline_us": 174.896,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.14194945476877083,
+        "log_ratio_memory_messages": 0.05348868495098622,
+        "log_ratio_alu64": -0.01075279177626185,
+        "extra_stage_count": 1.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE21ELN3p251CE9EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "1b70b1dee6e057f54bd3ef957d6c29ea64bfdf57cd741239e753b00e3b67b6e8",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE21EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 2451,
+        "simd16_issue_equivalents": 3534.0,
+        "memory_messages": 96,
+        "alu64": 370,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsgate/comparisons/p27.fp32_input/workloads/expsgate.iq3/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 2.0,
+      "fitted_us": 182.33388992294388,
+      "held_out_us": 182.31108642835358
+    },
+    {
+      "id": "p29:gemv:expsgate:p28.paired.rows4:expsgate.iq2:specialised:rotated",
+      "implementation": "p28.paired.rows4",
+      "workload": "expsgate.iq2",
+      "actual_us": 85.625,
+      "baseline_us": 175.20875,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.9260542341420063,
+        "log_ratio_memory_messages": -0.8823891801984737,
+        "log_ratio_alu64": -1.4755622264682529,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p286KernelILN3iq34TypeE22ELj2560ELj1ELj4ELb0ELb1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "asm_sha256": "e1a4f2bf60c6d0bb72929e7429b1d85dc4a7e48c0357e85735b7377e087baa8d",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE22EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 1047,
+        "simd16_issue_equivalents": 1590.0,
+        "memory_messages": 36,
+        "alu64": 83,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsgate/comparisons/p28.paired.rows4/workloads/expsgate.iq2/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 113.65743442266366,
+      "held_out_us": 117.8523178306317
+    },
+    {
+      "id": "p29:gemv:expsgate:p28.paired.rows4:expsgate.iq3:specialised:rotated",
+      "implementation": "p28.paired.rows4",
+      "workload": "expsgate.iq3",
+      "actual_us": 89.271,
+      "baseline_us": 174.896,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.8987677719531724,
+        "log_ratio_memory_messages": -0.9273405680607401,
+        "log_ratio_alu64": -1.3392883187439601,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p286KernelILN3iq34TypeE21ELj2560ELj1ELj4ELb0ELb1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "asm_sha256": "2694d419d8b67c5c84f2631d7854912649b8122a5f14a8f122f1feed5ce63e38",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE21EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 1097,
+        "simd16_issue_equivalents": 1658.0,
+        "memory_messages": 36,
+        "alu64": 98,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsgate/comparisons/p28.paired.rows4/workloads/expsgate.iq3/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 120.9025182760141,
+      "held_out_us": 125.44394264493978
+    },
+    {
+      "id": "p29:gemv:expsgate:p28.paired.wg32:expsgate.iq2:specialised:rotated",
+      "implementation": "p28.paired.wg32",
+      "workload": "expsgate.iq2",
+      "actual_us": 82.5,
+      "baseline_us": 175.20875,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.9704202370969907,
+        "log_ratio_memory_messages": -0.9395475940384223,
+        "log_ratio_alu64": -1.6039433931164597,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p286KernelILN3iq34TypeE22ELj2560ELj1ELj1ELb0ELb1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "asm_sha256": "b6a7d9f05fb0e46549d60bcc605c6bd5ebd5fba821c489e43caa52d4cb4ebf1e",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE22EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 982,
+        "simd16_issue_equivalents": 1521.0,
+        "memory_messages": 34,
+        "alu64": 73,
+        "simd": 32,
+        "barriers": 0,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsgate/comparisons/p28.paired.wg32/workloads/expsgate.iq2/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 108.77800287602389,
+      "held_out_us": 113.61950016771175
+    },
+    {
+      "id": "p29:gemv:expsgate:p28.paired.wg32:expsgate.iq3:specialised:rotated",
+      "implementation": "p28.paired.wg32",
+      "workload": "expsgate.iq3",
+      "actual_us": 84.167,
+      "baseline_us": 174.896,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.9412749411116966,
+        "log_ratio_memory_messages": -0.9844989819006886,
+        "log_ratio_alu64": -1.4469189829363254,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p286KernelILN3iq34TypeE21ELj2560ELj1ELj1ELb0ELb1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "asm_sha256": "ed9c7584f156aebf7e5c32b1ab1dfc39350d9bcb49328b0118cb76794f64c23d",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE21EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 1032,
+        "simd16_issue_equivalents": 1589.0,
+        "memory_messages": 34,
+        "alu64": 88,
+        "simd": 32,
+        "barriers": 0,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsgate/comparisons/p28.paired.wg32/workloads/expsgate.iq3/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 116.9155723319104,
+      "held_out_us": 122.10160764436937
+    },
+    {
+      "id": "p29:gemv:expsgate:p28.private.rows4:expsgate.iq2:specialised:rotated",
+      "implementation": "p28.private.rows4",
+      "workload": "expsgate.iq2",
+      "actual_us": 109.063,
+      "baseline_us": 175.20875,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.31512718252854993,
+        "log_ratio_memory_messages": -0.10919929196499197,
+        "log_ratio_alu64": -0.7824150459083076,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p286KernelILN3iq34TypeE22ELj2560ELj1ELj4ELb0ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "asm_sha256": "2824b92f9f3b62d370ed904ecc053443cef4196deb01467d6d18123b55c4588a",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE22EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 1861,
+        "simd16_issue_equivalents": 2929.0,
+        "memory_messages": 78,
+        "alu64": 166,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsgate/comparisons/p28.private.rows4/workloads/expsgate.iq2/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 116.15675995070727,
+      "held_out_us": 117.2213213727203
+    },
+    {
+      "id": "p29:gemv:expsgate:p28.private.rows4:expsgate.iq3:specialised:rotated",
+      "implementation": "p28.private.rows4",
+      "workload": "expsgate.iq3",
+      "actual_us": 113.229,
+      "baseline_us": 174.896,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.28989419084187573,
+        "log_ratio_memory_messages": -0.15415067982725836,
+        "log_ratio_alu64": -0.671982369367902,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p286KernelILN3iq34TypeE21ELj2560ELj1ELj4ELb0ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "asm_sha256": "bb7697b24a6560884d4c2daf0565b6206aa9456841167f455bceb63e4086ae14",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE21EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 1944,
+        "simd16_issue_equivalents": 3048.0,
+        "memory_messages": 78,
+        "alu64": 191,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsgate/comparisons/p28.private.rows4/workloads/expsgate.iq3/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 121.96344739648725,
+      "held_out_us": 123.04111139920505
+    },
+    {
+      "id": "p29:gemv:expsgate:p28.private.wg32:expsgate.iq2:specialised:rotated",
+      "implementation": "p28.private.wg32",
+      "workload": "expsgate.iq2",
+      "actual_us": 103.541,
+      "baseline_us": 175.20875,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.3389666255423851,
+        "log_ratio_memory_messages": -0.1351747783682526,
+        "log_ratio_alu64": -0.8445468270153137,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p286KernelILN3iq34TypeE22ELj2560ELj1ELj1ELb0ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "asm_sha256": "f2f7b065a428698ce80df75658920cc9596d6762aa0528fb7df14961ac093556",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE22EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 1796,
+        "simd16_issue_equivalents": 2860.0,
+        "memory_messages": 76,
+        "alu64": 156,
+        "simd": 32,
+        "barriers": 0,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsgate/comparisons/p28.private.wg32/workloads/expsgate.iq2/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 113.83593854827282,
+      "held_out_us": 115.43156397287072
+    },
+    {
+      "id": "p29:gemv:expsgate:p28.private.wg32:expsgate.iq3:specialised:rotated",
+      "implementation": "p28.private.wg32",
+      "workload": "expsgate.iq3",
+      "actual_us": 109.271,
+      "baseline_us": 174.896,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.31279215493513024,
+        "log_ratio_memory_messages": -0.1801261662305189,
+        "log_ratio_alu64": -0.7257587661487062,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p286KernelILN3iq34TypeE21ELj2560ELj1ELj1ELb0ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "asm_sha256": "31d287920d0b59cab24510f4e32b70d4d02f8b91ea498ee2ef96acf33878846f",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE21EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 1879,
+        "simd16_issue_equivalents": 2979.0,
+        "memory_messages": 76,
+        "alu64": 181,
+        "simd": 32,
+        "barriers": 0,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsgate/comparisons/p28.private.wg32/workloads/expsgate.iq3/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 120.01420948126042,
+      "held_out_us": 121.54613737114744
+    },
+    {
+      "id": "p29:gemv:expsgate:p28.shared.rows4:expsgate.iq2:specialised:rotated",
+      "implementation": "p28.shared.rows4",
+      "workload": "expsgate.iq2",
+      "actual_us": 92.5,
+      "baseline_us": 175.20875,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.3995038385916651,
+        "log_ratio_memory_messages": -0.33877373360949214,
+        "log_ratio_alu64": -1.1939224684724346,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p286KernelILN3iq34TypeE22ELj2560ELj1ELj4ELb1ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "asm_sha256": "a39d54b873b75e707e0e83bf919de7e8afbf811b3763a52979b27a816ef6699d",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE22EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 1705,
+        "simd16_issue_equivalents": 2692.0,
+        "memory_messages": 62,
+        "alu64": 110,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsgate/comparisons/p28.shared.rows4/workloads/expsgate.iq2/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 98.38659594407626,
+      "held_out_us": 100.78883249344585
+    },
+    {
+      "id": "p29:gemv:expsgate:p28.shared.rows4:expsgate.iq3:specialised:rotated",
+      "implementation": "p28.shared.rows4",
+      "workload": "expsgate.iq3",
+      "actual_us": 96.459,
+      "baseline_us": 174.896,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.37048385471785705,
+        "log_ratio_memory_messages": -0.38372512147175847,
+        "log_ratio_alu64": -1.0189810189761024,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p286KernelILN3iq34TypeE21ELj2560ELj1ELj4ELb1ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "asm_sha256": "707edcca93f70cabc73f218dcb58c47b9c892e6ccd69a8da473dec057e350141",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE21EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 1789,
+        "simd16_issue_equivalents": 2812.0,
+        "memory_messages": 62,
+        "alu64": 135,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsgate/comparisons/p28.shared.rows4/workloads/expsgate.iq3/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 106.78701214559345,
+      "held_out_us": 109.13378333356025
+    },
+    {
+      "id": "p29:gemv:expsgate:p28.shared.wg32:expsgate.iq2:specialised:rotated",
+      "implementation": "p28.shared.wg32",
+      "workload": "expsgate.iq2",
+      "actual_us": 89.062,
+      "baseline_us": 175.20875,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.4254695494894097,
+        "log_ratio_memory_messages": -0.37156355643248296,
+        "log_ratio_alu64": -1.2892326482767593,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p286KernelILN3iq34TypeE22ELj2560ELj1ELj1ELb1ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "asm_sha256": "2e08c826ab07e2bca081c64321a87d8dd700ec0376406c6f98a12d3b1581f74a",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE22EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 1640,
+        "simd16_issue_equivalents": 2623.0,
+        "memory_messages": 60,
+        "alu64": 100,
+        "simd": 32,
+        "barriers": 0,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsgate/comparisons/p28.shared.wg32/workloads/expsgate.iq2/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 94.84330158948954,
+      "held_out_us": 97.85994067996441
+    },
+    {
+      "id": "p29:gemv:expsgate:p28.shared.wg32:expsgate.iq3:specialised:rotated",
+      "implementation": "p28.shared.wg32",
+      "workload": "expsgate.iq3",
+      "actual_us": 90.938,
+      "baseline_us": 174.896,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.3953276167108094,
+        "log_ratio_memory_messages": -0.4165149442947494,
+        "log_ratio_alu64": -1.0959420601122307,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p286KernelILN3iq34TypeE21ELj2560ELj1ELj1ELb1ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "asm_sha256": "f9703546c2cc0e55c11b88abc7b85171d6501461941b4f5661ad0ebd10698fc3",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE21EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 1724,
+        "simd16_issue_equivalents": 2743.0,
+        "memory_messages": 60,
+        "alu64": 125,
+        "simd": 32,
+        "barriers": 0,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsgate/comparisons/p28.shared.wg32/workloads/expsgate.iq3/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 103.91417445143982,
+      "held_out_us": 106.8065873425921
+    },
+    {
+      "id": "p29:gemv:expsdown:p25.private_decode:expsdown:specialised:rotated",
+      "implementation": "p25.private_decode",
+      "workload": "expsdown",
+      "actual_us": 120.312,
+      "baseline_us": 127.448,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.1826207340587142,
+        "log_ratio_memory_messages": 0.06213178110700618,
+        "log_ratio_alu64": -0.02298951822469872,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE20ELN3p251CE3EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "f96b0685b1760a7e2c85cb28faa720a9171d2423e7ae91367a971ce88b53158f",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE20EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 1969,
+        "simd16_issue_equivalents": 2785.0,
+        "memory_messages": 83,
+        "alu64": 258,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsdown/comparisons/p25.private_decode/workloads/expsdown/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 118.13229783317773,
+      "held_out_us": 117.30245622805113
+    },
+    {
+      "id": "p29:gemv:expsdown:p25.rows4:expsdown:specialised:rotated",
+      "implementation": "p25.rows4",
+      "workload": "expsdown",
+      "actual_us": 183.4375,
+      "baseline_us": 127.448,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.14769038801525897,
+        "log_ratio_memory_messages": -0.137201121513485,
+        "log_ratio_alu64": -0.07061756721395342,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE20ELN3p251CE1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "9f882d3b53da30fc81d66e59edb06980b3c0aaaedd55f377a009774b9ef78658",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE20EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 2031,
+        "simd16_issue_equivalents": 2884.0,
+        "memory_messages": 68,
+        "alu64": 246,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsdown/comparisons/p25.rows4/workloads/expsdown/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 114.70162759797178,
+      "held_out_us": 112.00040101387822
+    },
+    {
+      "id": "p29:gemv:expsdown:p25.wg32:expsdown:specialised:rotated",
+      "implementation": "p25.wg32",
+      "workload": "expsdown",
+      "actual_us": 183.021,
+      "baseline_us": 127.448,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.14769038801525897,
+        "log_ratio_memory_messages": -0.137201121513485,
+        "log_ratio_alu64": -0.07061756721395342,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE20ELN3p251CE2EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "776bd79c1b6482516c91a880854ba0f1b09b651cc10f0200b3ff4f95c5d6bc05",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE20EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 2031,
+        "simd16_issue_equivalents": 2884.0,
+        "memory_messages": 68,
+        "alu64": 246,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsdown/comparisons/p25.wg32/workloads/expsdown/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 114.70162759797178,
+      "held_out_us": 112.03040768076855
+    },
+    {
+      "id": "p29:gemv:expsdown:p25.wide8:expsdown:specialised:rotated",
+      "implementation": "p25.wide8",
+      "workload": "expsdown",
+      "actual_us": 156.979,
+      "baseline_us": 127.448,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.4460627784042015,
+        "log_ratio_memory_messages": -0.34937564145712074,
+        "log_ratio_alu64": -0.15541410387403026,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE20ELN3p251CE8EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "eeccdcd81e995ffe185df473e9c667f30fd7159fe5a352befd5ee2cd01c16140",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE20EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 1572,
+        "simd16_issue_equivalents": 2140.0,
+        "memory_messages": 55,
+        "alu64": 226,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsdown/comparisons/p25.wide8/workloads/expsdown/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 128.784751245061,
+      "held_out_us": 128.28358702787887
+    },
+    {
+      "id": "p29:gemv:expsdown:p27.fp32_input:expsdown:specialised:rotated",
+      "implementation": "p27.fp32_input",
+      "workload": "expsdown",
+      "actual_us": 182.084,
+      "baseline_us": 127.448,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.13494258403235762,
+        "log_ratio_memory_messages": 0.06213178110700618,
+        "log_ratio_alu64": -0.07061756721395342,
+        "extra_stage_count": 1.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE20ELN3p251CE9EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "be24ef5caa63bbd87ba418698058c287b5fe4f6e89cb7eec1daa5b7f715cb9a5",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE20EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 2053,
+        "simd16_issue_equivalents": 2921.0,
+        "memory_messages": 83,
+        "alu64": 246,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsdown/comparisons/p27.fp32_input/workloads/expsdown/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 2.0,
+      "fitted_us": 128.09929081965944,
+      "held_out_us": 128.00400262404978
+    },
+    {
+      "id": "p29:gemv:expsdown:p27.packed64:expsdown:specialised:rotated",
+      "implementation": "p27.packed64",
+      "workload": "expsdown",
+      "actual_us": 150.417,
+      "baseline_us": 127.448,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.2897781953932421,
+        "log_ratio_memory_messages": -0.34937564145712074,
+        "log_ratio_alu64": 0.22314355131420976,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE20ELN3p251CE10EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "b04e144281c3e4e54f12499e2b4b362f521ff28f3fff1dcd48c5bfc4c902ac87",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE20EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 1895,
+        "simd16_issue_equivalents": 2502.0,
+        "memory_messages": 55,
+        "alu64": 330,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsdown/comparisons/p27.packed64/workloads/expsdown/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 146.4209542674637,
+      "held_out_us": 145.2410432861538
+    },
+    {
+      "id": "p29:gemv:expsdown:p27.rows2sg:expsdown:specialised:rotated",
+      "implementation": "p27.rows2sg",
+      "workload": "expsdown",
+      "actual_us": 145.729,
+      "baseline_us": 127.448,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.5032761690164776,
+        "log_ratio_memory_messages": -0.42488319396526597,
+        "log_ratio_alu64": -0.5455111817538806,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE20ELN3p251CE11EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "b41b9cbff3c60898e85249facc83fcac73de40f7767ddd3d1df849ff30bbcdda",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE20EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 1275,
+        "simd16_issue_equivalents": 2021.0,
+        "memory_messages": 51,
+        "alu64": 153,
+        "simd": 32,
+        "barriers": 0,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsdown/comparisons/p27.rows2sg/workloads/expsdown/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 107.74629369911953,
+      "held_out_us": 106.86900139047592
+    },
+    {
+      "id": "p29:gemv:expsdown:p28.private.rows4:expsdown:specialised:rotated",
+      "implementation": "p28.private.rows4",
+      "workload": "expsdown",
+      "actual_us": 165.521,
+      "baseline_us": 127.448,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.785530150173507,
+        "log_ratio_memory_messages": -0.1823215567939546,
+        "log_ratio_alu64": -0.5653138090500603,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p286KernelILN3iq34TypeE20ELj640ELj1ELj4ELb0ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "asm_sha256": "4508c0680dd90277fa370423954cd04fb7b040488154bd65de33e47c13382948",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE20EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 990,
+        "simd16_issue_equivalents": 1524.0,
+        "memory_messages": 65,
+        "alu64": 150,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsdown/comparisons/p28.private.rows4/workloads/expsdown/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 120.51936994766983,
+      "held_out_us": 118.0069562796524
+    },
+    {
+      "id": "p29:gemv:expsdown:p28.private.wg32:expsdown:specialised:rotated",
+      "implementation": "p28.private.wg32",
+      "workload": "expsdown",
+      "actual_us": 158.334,
+      "baseline_us": 127.448,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.832550228326634,
+        "log_ratio_memory_messages": -0.21357410029805904,
+        "log_ratio_alu64": -0.6343066805370119,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p286KernelILN3iq34TypeE20ELj640ELj1ELj1ELb0ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "asm_sha256": "7b9a74d11469a84bc6b98e8c0f3e55743c38bbe0d3182d8d48fd7d29b8c6e48f",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE20EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 924,
+        "simd16_issue_equivalents": 1454.0,
+        "memory_messages": 63,
+        "alu64": 140,
+        "simd": 32,
+        "barriers": 0,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsdown/comparisons/p28.private.wg32/workloads/expsdown/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 119.06986696507458,
+      "held_out_us": 116.73321138960617
+    },
+    {
+      "id": "p29:gemv:expsdown:p28.shared.rows4:expsdown:specialised:rotated",
+      "implementation": "p28.shared.rows4",
+      "workload": "expsdown",
+      "actual_us": 165.833,
+      "baseline_us": 127.448,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.7456534842253053,
+        "log_ratio_memory_messages": -0.1823215567939546,
+        "log_ratio_alu64": -0.5653138090500603,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p286KernelILN3iq34TypeE20ELj640ELj1ELj4ELb1ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "asm_sha256": "9db59aa3778289efb1ad6eb18d0d121fedc6d76e0a97936cbf4d8fb273cb125a",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE20EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 1032,
+        "simd16_issue_equivalents": 1586.0,
+        "memory_messages": 65,
+        "alu64": 150,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsdown/comparisons/p28.shared.rows4/workloads/expsdown/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 118.16950547230901,
+      "held_out_us": 115.75134734956303
+    },
+    {
+      "id": "p29:gemv:expsdown:p28.shared.wg32:expsdown:specialised:rotated",
+      "implementation": "p28.shared.wg32",
+      "workload": "expsdown",
+      "actual_us": 158.125,
+      "baseline_us": 127.448,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.7907933202177816,
+        "log_ratio_memory_messages": -0.21357410029805904,
+        "log_ratio_alu64": -0.6343066805370119,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p286KernelILN3iq34TypeE20ELj640ELj1ELj1ELb1ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "asm_sha256": "1d7bf4d0c39cde100f05cd52c47570750c4e1fe45c1384c614f8860c523252df",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE20EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 966,
+        "simd16_issue_equivalents": 1516.0,
+        "memory_messages": 63,
+        "alu64": 140,
+        "simd": 32,
+        "barriers": 0,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsdown/comparisons/p28.shared.wg32/workloads/expsdown/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 116.63992223126768,
+      "held_out_us": 114.3164788029247
+    },
+    {
+      "id": "p29:gemv:expsdown:p29.down.rows4:expsdown:specialised:rotated",
+      "implementation": "p29.down.rows4",
+      "workload": "expsdown",
+      "actual_us": 123.646,
+      "baseline_us": 127.448,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -1.0055617507329264,
+        "log_ratio_memory_messages": -0.42488319396526597,
+        "log_ratio_alu64": -1.1571084953497182,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p296KernelILj4EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS3_5eventESaISB_EEENKUlRNS3_7handlerEE_clESH_EUlNS3_7nd_itemILi1EEEE_",
+      "asm_sha256": "a1d5a618c6a248cdd0fdf0ca71ad533ed8862250e06a3714db20638606798aea",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE20EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 738,
+        "simd16_issue_equivalents": 1223.0,
+        "memory_messages": 51,
+        "alu64": 83,
+        "simd": 32,
+        "barriers": 0,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsdown/comparisons/p29.down.rows4/workloads/expsdown/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 99.06450271901834,
+      "held_out_us": 97.31042611813373
+    },
+    {
+      "id": "p29:gemv:expsdown:p29.down.wg32:expsdown:specialised:rotated",
+      "implementation": "p29.down.wg32",
+      "workload": "expsdown",
+      "actual_us": 123.437,
+      "baseline_us": 127.448,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -1.006379746688558,
+        "log_ratio_memory_messages": -0.42488319396526597,
+        "log_ratio_alu64": -1.1571084953497182,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p296KernelILj1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS3_5eventESaISB_EEENKUlRNS3_7handlerEE_clESH_EUlNS3_7nd_itemILi1EEEE_",
+      "asm_sha256": "b25c2da06596be4685f176e249d57fca1728722b0cff08a7f8a65dd1fa93fe7a",
+      "baseline_kernel": "_ZTSZZNK3iq35kopt412_GLOBAL__N_110Projection3runILNS_4TypeE20EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi3EEEE_",
+      "main_static": {
+        "instructions": 737,
+        "simd16_issue_equivalents": 1222.0,
+        "memory_messages": 51,
+        "alu64": 83,
+        "simd": 32,
+        "barriers": 0,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:expsdown/comparisons/p29.down.wg32/workloads/expsdown/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 99.10452416318279,
+      "held_out_us": 97.36267654198153
+    },
+    {
+      "id": "p29:gemv:gdn.qkv:p25.rows4:gdn.qkv.q6:specialised:rotated",
+      "implementation": "p25.rows4",
+      "workload": "gdn.qkv.q6",
+      "actual_us": 88.229,
+      "baseline_us": 98.229,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": 0.0,
+        "log_ratio_memory_messages": 0.6773988235918061,
+        "log_ratio_alu64": 0.6616485135005743,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE14ELN3p251CE1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "3c582a33e19b3b911cc01dfdcbbe0c7fba19d94e97a7ed18919955494371f20a",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 1321,
+        "simd16_issue_equivalents": 1720.0,
+        "memory_messages": 63,
+        "alu64": 250,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:gdn.qkv/comparisons/p25.rows4/workloads/gdn.qkv.q6/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 115.67933504308951,
+      "held_out_us": 140.6874628499942
+    },
+    {
+      "id": "p29:gemv:gdn.qkv:p25.rows4:gdn.qkv.q8:specialised:rotated",
+      "implementation": "p25.rows4",
+      "workload": "gdn.qkv.q8",
+      "actual_us": 85.521,
+      "baseline_us": 95.833,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": 0.0,
+        "log_ratio_memory_messages": 0.6773988235918061,
+        "log_ratio_alu64": 0.6616485135005743,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE8ELN3p251CE1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "ecdb5a2ff35e2d86587381e34d15358b6242b576bb99e916cd399b65e345ce0d",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE8EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 1321,
+        "simd16_issue_equivalents": 1720.0,
+        "memory_messages": 63,
+        "alu64": 250,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:gdn.qkv/comparisons/p25.rows4/workloads/gdn.qkv.q8/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 112.85768678480282,
+      "held_out_us": 137.25581678835675
+    },
+    {
+      "id": "p29:gemv:gdn.qkv:p25.scale8:gdn.qkv.q6:specialised:rotated",
+      "implementation": "p25.scale8",
+      "workload": "gdn.qkv.q6",
+      "actual_us": 93.645,
+      "baseline_us": 98.229,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": 0.09478149885095868,
+        "log_ratio_memory_messages": 0.19782574332991987,
+        "log_ratio_alu64": 0.39768296766610944,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE14ELN3p251CE7EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "2b7d1b089a2e1a86ea69bf306fc51a9c3e454b9ea27e02341db87a0f5ba6d882",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 1411,
+        "simd16_issue_equivalents": 1891.0,
+        "memory_messages": 39,
+        "alu64": 192,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:gdn.qkv/comparisons/p25.scale8/workloads/gdn.qkv.q6/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 98.84157426753164,
+      "held_out_us": 99.9511385030693
+    },
+    {
+      "id": "p29:gemv:gdn.qkv:p25.scale8:gdn.qkv.q8:specialised:rotated",
+      "implementation": "p25.scale8",
+      "workload": "gdn.qkv.q8",
+      "actual_us": 91.354,
+      "baseline_us": 95.833,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": 0.09478149885095868,
+        "log_ratio_memory_messages": 0.19782574332991987,
+        "log_ratio_alu64": 0.39768296766610944,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE8ELN3p251CE7EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "f3b7e69b46d8412a5ea077a3d33a8fc237dda641016a2d77d76211d18d8064b3",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE8EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 1411,
+        "simd16_issue_equivalents": 1891.0,
+        "memory_messages": 39,
+        "alu64": 192,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:gdn.qkv/comparisons/p25.scale8/workloads/gdn.qkv.q8/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 96.43063236702359,
+      "held_out_us": 97.51313213169878
+    },
+    {
+      "id": "p29:gemv:gdn.qkv:p25.wide8:gdn.qkv.q6:specialised:rotated",
+      "implementation": "p25.wide8",
+      "workload": "gdn.qkv.q6",
+      "actual_us": 93.542,
+      "baseline_us": 98.229,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": 0.09478149885095868,
+        "log_ratio_memory_messages": 0.19782574332991987,
+        "log_ratio_alu64": 0.39768296766610944,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE14ELN3p251CE8EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "3ee996807acf0a17716126ca0285ea7a3b945ce599978e1da62a76515502fb9e",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 1411,
+        "simd16_issue_equivalents": 1891.0,
+        "memory_messages": 39,
+        "alu64": 192,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:gdn.qkv/comparisons/p25.wide8/workloads/gdn.qkv.q6/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 98.84157426753164,
+      "held_out_us": 99.22571175346675
+    },
+    {
+      "id": "p29:gemv:gdn.qkv:p25.wide8:gdn.qkv.q8:specialised:rotated",
+      "implementation": "p25.wide8",
+      "workload": "gdn.qkv.q8",
+      "actual_us": 91.354,
+      "baseline_us": 95.833,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": 0.09478149885095868,
+        "log_ratio_memory_messages": 0.19782574332991987,
+        "log_ratio_alu64": 0.39768296766610944,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE8ELN3p251CE8EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "3952935879c1dc307b257c64794af434be3ffe8acbaf78db5b92cd86520fc943",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE8EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 1411,
+        "simd16_issue_equivalents": 1891.0,
+        "memory_messages": 39,
+        "alu64": 192,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:gdn.qkv/comparisons/p25.wide8/workloads/gdn.qkv.q8/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 96.43063236702359,
+      "held_out_us": 96.80539997831576
+    },
+    {
+      "id": "p29:gemv:gdn.qkv:p27.fp32_input:gdn.qkv.q6:specialised:rotated",
+      "implementation": "p27.fp32_input",
+      "workload": "gdn.qkv.q6",
+      "actual_us": 110.312,
+      "baseline_us": 98.229,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": 0.2601256246250338,
+        "log_ratio_memory_messages": 0.7086513670959106,
+        "log_ratio_alu64": 0.8100685186188475,
+        "extra_stage_count": 1.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE14ELN3p251CE9EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "d2bd038534a9bafcfecb653917a3a3ded96b7c1474600f259cb2fc4e43993608",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 1657,
+        "simd16_issue_equivalents": 2231.0,
+        "memory_messages": 65,
+        "alu64": 290,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:gdn.qkv/comparisons/p27.fp32_input/workloads/gdn.qkv.q6/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 2.0,
+      "fitted_us": 125.36305395704433,
+      "held_out_us": 127.38117423056705
+    },
+    {
+      "id": "p29:gemv:gdn.qkv:p27.fp32_input:gdn.qkv.q8:specialised:rotated",
+      "implementation": "p27.fp32_input",
+      "workload": "gdn.qkv.q8",
+      "actual_us": 107.187,
+      "baseline_us": 95.833,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": 0.2601256246250338,
+        "log_ratio_memory_messages": 0.7086513670959106,
+        "log_ratio_alu64": 0.8100685186188475,
+        "extra_stage_count": 1.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE8ELN3p251CE9EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "003952cc4e8fd9f01069c343b5646a2e6daf179d30b2679105540ec6090ce2ee",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE8EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 1657,
+        "simd16_issue_equivalents": 2231.0,
+        "memory_messages": 65,
+        "alu64": 290,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:gdn.qkv/comparisons/p27.fp32_input/workloads/gdn.qkv.q8/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 2.0,
+      "fitted_us": 122.30520060130338,
+      "held_out_us": 124.27409492143799
+    },
+    {
+      "id": "p29:gemv:gdn.qkv:p27.packed64:gdn.qkv.q6:specialised:rotated",
+      "implementation": "p27.packed64",
+      "workload": "gdn.qkv.q6",
+      "actual_us": 95.937,
+      "baseline_us": 98.229,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": 0.16521877001831595,
+        "log_ratio_memory_messages": 0.19782574332991987,
+        "log_ratio_alu64": 0.39768296766610944,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE14ELN3p251CE10EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "3936ad6f07a311c2de69445700f05ef1b66642894f1326b3afad6e36f2be7055",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 1475,
+        "simd16_issue_equivalents": 2029.0,
+        "memory_messages": 39,
+        "alu64": 192,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:gdn.qkv/comparisons/p27.packed64/workloads/gdn.qkv.q6/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 95.46289196351849,
+      "held_out_us": 95.08517541553296
+    },
+    {
+      "id": "p29:gemv:gdn.qkv:p27.packed64:gdn.qkv.q8:specialised:rotated",
+      "implementation": "p27.packed64",
+      "workload": "gdn.qkv.q8",
+      "actual_us": 93.854,
+      "baseline_us": 95.833,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": 0.16521877001831595,
+        "log_ratio_memory_messages": 0.19782574332991987,
+        "log_ratio_alu64": 0.39768296766610944,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE8ELN3p251CE10EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "5de579931052b2094dded3e9b2efc2412b587001acf52da3d26f83724a8848f7",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE8EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 1475,
+        "simd16_issue_equivalents": 2029.0,
+        "memory_messages": 39,
+        "alu64": 192,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:gdn.qkv/comparisons/p27.packed64/workloads/gdn.qkv.q8/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 93.13436282095783,
+      "held_out_us": 92.76585952821235
+    },
+    {
+      "id": "p29:gemv:gdn.qkv:p28.dense.rows4:gdn.qkv.q6:specialised:rotated",
+      "implementation": "p28.dense.rows4",
+      "workload": "gdn.qkv.q6",
+      "actual_us": 80.208,
+      "baseline_us": 98.229,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -1.1026903601514886,
+        "log_ratio_memory_messages": -0.8266785731844679,
+        "log_ratio_alu64": -1.1221427860783038,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p286KernelILN3iq34TypeE14ELj2560ELj1ELj4ELb0ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "asm_sha256": "9d6f7659ab5e4a1b3e0369dd5cb69cc164b53d53934e9952d1fa163acc07ba94",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 420,
+        "simd16_issue_equivalents": 571.0,
+        "memory_messages": 14,
+        "alu64": 42,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:gdn.qkv/comparisons/p28.dense.rows4/workloads/gdn.qkv.q6/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 83.91366640008944,
+      "held_out_us": 85.05809649289564
+    },
+    {
+      "id": "p29:gemv:gdn.qkv:p28.dense.rows4:gdn.qkv.q8:specialised:rotated",
+      "implementation": "p28.dense.rows4",
+      "workload": "gdn.qkv.q8",
+      "actual_us": 75.937,
+      "baseline_us": 95.833,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -1.1026903601514886,
+        "log_ratio_memory_messages": -0.8266785731844679,
+        "log_ratio_alu64": -1.1221427860783038,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p286KernelILN3iq34TypeE8ELj2560ELj1ELj4ELb0ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "asm_sha256": "16eb4f59d931fbeeb7bb7682587d0e5c12cd63ceada32a6d8bf739f1d1fdac8d",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE8EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 420,
+        "simd16_issue_equivalents": 571.0,
+        "memory_messages": 14,
+        "alu64": 42,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:gdn.qkv/comparisons/p28.dense.rows4/workloads/gdn.qkv.q8/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 81.86684575960024,
+      "held_out_us": 82.98336093418104
+    },
+    {
+      "id": "p29:gemv:gdn.qkv:p28.dense.wg32:gdn.qkv.q6:specialised:rotated",
+      "implementation": "p28.dense.wg32",
+      "workload": "gdn.qkv.q6",
+      "actual_us": 75.209,
+      "baseline_us": 98.229,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -1.235471471385307,
+        "log_ratio_memory_messages": -0.9808292530117262,
+        "log_ratio_alu64": -1.3940765015619456,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p286KernelILN3iq34TypeE14ELj2560ELj1ELj1ELb0ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "asm_sha256": "f5f148f2a286f4e5bc76ee568f42d1e7e52dbab4fe6998e7e80d7a4ecb38245c",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 353,
+        "simd16_issue_equivalents": 500.0,
+        "memory_messages": 12,
+        "alu64": 32,
+        "simd": 32,
+        "barriers": 0,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:gdn.qkv/comparisons/p28.dense.wg32/workloads/gdn.qkv.q6/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 78.12168476807895,
+      "held_out_us": 83.73653801612046
+    },
+    {
+      "id": "p29:gemv:gdn.qkv:p28.dense.wg32:gdn.qkv.q8:specialised:rotated",
+      "implementation": "p28.dense.wg32",
+      "workload": "gdn.qkv.q8",
+      "actual_us": 72.083,
+      "baseline_us": 95.833,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -1.235471471385307,
+        "log_ratio_memory_messages": -0.9808292530117262,
+        "log_ratio_alu64": -1.3940765015619456,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p286KernelILN3iq34TypeE8ELj2560ELj1ELj1ELb0ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "asm_sha256": "597cef431a1a56c6ab83a5964e8b5f507e2848ca69977fe4637f0a3513c0e1d1",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE8EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 353,
+        "simd16_issue_equivalents": 500.0,
+        "memory_messages": 12,
+        "alu64": 32,
+        "simd": 32,
+        "barriers": 0,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:gdn.qkv/comparisons/p28.dense.wg32/workloads/gdn.qkv.q8/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 76.21614203930926,
+      "held_out_us": 81.69403788798493
+    },
+    {
+      "id": "p29:gemv:qsa.k:p25.rows4:qsa.k:specialised:reread",
+      "implementation": "p25.rows4",
+      "workload": "qsa.k",
+      "actual_us": 9.375,
+      "baseline_us": 9.687,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": 0.0,
+        "log_ratio_memory_messages": 0.6773988235918061,
+        "log_ratio_alu64": 0.6616485135005743,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE14ELN3p251CE1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "3c582a33e19b3b911cc01dfdcbbe0c7fba19d94e97a7ed18919955494371f20a",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 1321,
+        "simd16_issue_equivalents": 1720.0,
+        "memory_messages": 63,
+        "alu64": 250,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:qsa.k/comparisons/p25.rows4/workloads/qsa.k/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 11.407890934066396,
+      "held_out_us": 13.874104924491686
+    },
+    {
+      "id": "p29:gemv:qsa.k:p25.scale8:qsa.k:specialised:reread",
+      "implementation": "p25.scale8",
+      "workload": "qsa.k",
+      "actual_us": 9.063,
+      "baseline_us": 9.687,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": 0.09478149885095868,
+        "log_ratio_memory_messages": 0.19782574332991987,
+        "log_ratio_alu64": 0.39768296766610944,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE14ELN3p251CE7EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "2b7d1b089a2e1a86ea69bf306fc51a9c3e454b9ea27e02341db87a0f5ba6d882",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 1411,
+        "simd16_issue_equivalents": 1891.0,
+        "memory_messages": 39,
+        "alu64": 192,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:qsa.k/comparisons/p25.scale8/workloads/qsa.k/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 9.747409929140876,
+      "held_out_us": 9.856831268558492
+    },
+    {
+      "id": "p29:gemv:qsa.k:p25.wide8:qsa.k:specialised:reread",
+      "implementation": "p25.wide8",
+      "workload": "qsa.k",
+      "actual_us": 9.166,
+      "baseline_us": 9.687,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": 0.09478149885095868,
+        "log_ratio_memory_messages": 0.19782574332991987,
+        "log_ratio_alu64": 0.39768296766610944,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE14ELN3p251CE8EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "3ee996807acf0a17716126ca0285ea7a3b945ce599978e1da62a76515502fb9e",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 1411,
+        "simd16_issue_equivalents": 1891.0,
+        "memory_messages": 39,
+        "alu64": 192,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:qsa.k/comparisons/p25.wide8/workloads/qsa.k/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 9.747409929140876,
+      "held_out_us": 9.785292222824546
+    },
+    {
+      "id": "p29:gemv:qsa.k:p27.fp32_input:qsa.k:specialised:reread",
+      "implementation": "p27.fp32_input",
+      "workload": "qsa.k",
+      "actual_us": 11.146,
+      "baseline_us": 9.687,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": 0.2601256246250338,
+        "log_ratio_memory_messages": 0.7086513670959106,
+        "log_ratio_alu64": 0.8100685186188475,
+        "extra_stage_count": 1.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE14ELN3p251CE9EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "d2bd038534a9bafcfecb653917a3a3ded96b7c1474600f259cb2fc4e43993608",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 1657,
+        "simd16_issue_equivalents": 2231.0,
+        "memory_messages": 65,
+        "alu64": 290,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:qsa.k/comparisons/p27.fp32_input/workloads/qsa.k/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 2.0,
+      "fitted_us": 12.362865382747339,
+      "held_out_us": 12.5618853370339
+    },
+    {
+      "id": "p29:gemv:qsa.k:p27.packed64:qsa.k:specialised:reread",
+      "implementation": "p27.packed64",
+      "workload": "qsa.k",
+      "actual_us": 9.375,
+      "baseline_us": 9.687,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": 0.16521877001831595,
+        "log_ratio_memory_messages": 0.19782574332991987,
+        "log_ratio_alu64": 0.39768296766610944,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE14ELN3p251CE10EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "3936ad6f07a311c2de69445700f05ef1b66642894f1326b3afad6e36f2be7055",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 1475,
+        "simd16_issue_equivalents": 2029.0,
+        "memory_messages": 39,
+        "alu64": 192,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:qsa.k/comparisons/p27.packed64/workloads/qsa.k/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 9.414216111846843,
+      "held_out_us": 9.37696702857881
+    },
+    {
+      "id": "p29:gemv:qsa.k:p28.dense.rows4:qsa.k:specialised:reread",
+      "implementation": "p28.dense.rows4",
+      "workload": "qsa.k",
+      "actual_us": 7.292,
+      "baseline_us": 9.687,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -1.0107291987074003,
+        "log_ratio_memory_messages": -0.5753641449035618,
+        "log_ratio_alu64": -1.0986122886681098,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p286KernelILN3iq34TypeE14ELj2560ELj4ELj4ELb0ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "asm_sha256": "81afd761b4133903da5862a18a6bc0cc178c826157f12b6f8d5ef84936fd546e",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 467,
+        "simd16_issue_equivalents": 626.0,
+        "memory_messages": 18,
+        "alu64": 43,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:qsa.k/comparisons/p28.dense.rows4/workloads/qsa.k/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 7.873071851674528,
+      "held_out_us": 7.960355247536589
+    },
+    {
+      "id": "p29:gemv:qsa.k:p28.dense.wg32:qsa.k:specialised:reread",
+      "implementation": "p28.dense.wg32",
+      "workload": "qsa.k",
+      "actual_us": 8.542,
+      "baseline_us": 9.687,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -1.2455218072388083,
+        "log_ratio_memory_messages": -0.9808292530117262,
+        "log_ratio_alu64": -1.363304842895192,
+        "extra_stage_count": 1.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p286KernelILN3iq34TypeE14ELj2560ELj4ELj1ELb0ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "asm_sha256": "acd89231b03d9ad912edf74a0d99a042ce31a0ead77a37828c3fec5008970dfe",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 353,
+        "simd16_issue_equivalents": 495.0,
+        "memory_messages": 12,
+        "alu64": 33,
+        "simd": 32,
+        "barriers": 0,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:qsa.k/comparisons/p28.dense.wg32/workloads/qsa.k/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 2.0,
+      "fitted_us": 8.969401555561983,
+      "held_out_us": 10.27270111519202
+    },
+    {
+      "id": "p29:gemv:attention:p25.rows4:attention.gdn:specialised:rotated",
+      "implementation": "p25.rows4",
+      "workload": "attention.gdn",
+      "actual_us": 60.417,
+      "baseline_us": 64.792,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": 0.0,
+        "log_ratio_memory_messages": 0.6773988235918061,
+        "log_ratio_alu64": 0.6616485135005743,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE14ELN3p251CE1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "3c582a33e19b3b911cc01dfdcbbe0c7fba19d94e97a7ed18919955494371f20a",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 1321,
+        "simd16_issue_equivalents": 1720.0,
+        "memory_messages": 63,
+        "alu64": 250,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:attention/comparisons/p25.rows4/workloads/attention.gdn/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 76.3022679260896,
+      "held_out_us": 92.79766762337827
+    },
+    {
+      "id": "p29:gemv:attention:p25.rows4:attention.qsa:specialised:rotated",
+      "implementation": "p25.rows4",
+      "workload": "attention.qsa",
+      "actual_us": 60.52,
+      "baseline_us": 64.791,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": 0.0,
+        "log_ratio_memory_messages": 0.6773988235918061,
+        "log_ratio_alu64": 0.6616485135005743,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE14ELN3p251CE1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "3c582a33e19b3b911cc01dfdcbbe0c7fba19d94e97a7ed18919955494371f20a",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 1321,
+        "simd16_issue_equivalents": 1720.0,
+        "memory_messages": 63,
+        "alu64": 250,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:attention/comparisons/p25.rows4/workloads/attention.qsa/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 76.3010902765661,
+      "held_out_us": 92.7962353837866
+    },
+    {
+      "id": "p29:gemv:attention:p25.scale8:attention.gdn:specialised:rotated",
+      "implementation": "p25.scale8",
+      "workload": "attention.gdn",
+      "actual_us": 62.5,
+      "baseline_us": 64.792,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": 0.09478149885095868,
+        "log_ratio_memory_messages": 0.19782574332991987,
+        "log_ratio_alu64": 0.39768296766610944,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE14ELN3p251CE7EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "2b7d1b089a2e1a86ea69bf306fc51a9c3e454b9ea27e02341db87a0f5ba6d882",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 1411,
+        "simd16_issue_equivalents": 1891.0,
+        "memory_messages": 39,
+        "alu64": 192,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:attention/comparisons/p25.scale8/workloads/attention.gdn/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 65.1960549322696,
+      "held_out_us": 65.92792521445669
+    },
+    {
+      "id": "p29:gemv:attention:p25.scale8:attention.qsa:specialised:rotated",
+      "implementation": "p25.scale8",
+      "workload": "attention.qsa",
+      "actual_us": 62.448,
+      "baseline_us": 64.791,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": 0.09478149885095868,
+        "log_ratio_memory_messages": 0.19782574332991987,
+        "log_ratio_alu64": 0.39768296766610944,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE14ELN3p251CE7EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "2b7d1b089a2e1a86ea69bf306fc51a9c3e454b9ea27e02341db87a0f5ba6d882",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 1411,
+        "simd16_issue_equivalents": 1891.0,
+        "memory_messages": 39,
+        "alu64": 192,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:attention/comparisons/p25.scale8/workloads/attention.qsa/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 65.19504869608407,
+      "held_out_us": 65.92690768258215
+    },
+    {
+      "id": "p29:gemv:attention:p25.wide8:attention.gdn:specialised:rotated",
+      "implementation": "p25.wide8",
+      "workload": "attention.gdn",
+      "actual_us": 62.5,
+      "baseline_us": 64.792,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": 0.09478149885095868,
+        "log_ratio_memory_messages": 0.19782574332991987,
+        "log_ratio_alu64": 0.39768296766610944,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE14ELN3p251CE8EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "3ee996807acf0a17716126ca0285ea7a3b945ce599978e1da62a76515502fb9e",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 1411,
+        "simd16_issue_equivalents": 1891.0,
+        "memory_messages": 39,
+        "alu64": 192,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:attention/comparisons/p25.wide8/workloads/attention.gdn/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 65.1960549322696,
+      "held_out_us": 65.44943261084423
+    },
+    {
+      "id": "p29:gemv:attention:p25.wide8:attention.qsa:specialised:rotated",
+      "implementation": "p25.wide8",
+      "workload": "attention.qsa",
+      "actual_us": 62.5,
+      "baseline_us": 64.791,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": 0.09478149885095868,
+        "log_ratio_memory_messages": 0.19782574332991987,
+        "log_ratio_alu64": 0.39768296766610944,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE14ELN3p251CE8EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "3ee996807acf0a17716126ca0285ea7a3b945ce599978e1da62a76515502fb9e",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 1411,
+        "simd16_issue_equivalents": 1891.0,
+        "memory_messages": 39,
+        "alu64": 192,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:attention/comparisons/p25.wide8/workloads/attention.qsa/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 65.19504869608407,
+      "held_out_us": 65.44842246402655
+    },
+    {
+      "id": "p29:gemv:attention:p27.fp32_input:attention.gdn:specialised:rotated",
+      "implementation": "p27.fp32_input",
+      "workload": "attention.gdn",
+      "actual_us": 79.791,
+      "baseline_us": 64.792,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": 0.2601256246250338,
+        "log_ratio_memory_messages": 0.7086513670959106,
+        "log_ratio_alu64": 0.8100685186188475,
+        "extra_stage_count": 1.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE14ELN3p251CE9EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "d2bd038534a9bafcfecb653917a3a3ded96b7c1474600f259cb2fc4e43993608",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 1657,
+        "simd16_issue_equivalents": 2231.0,
+        "memory_messages": 65,
+        "alu64": 290,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:attention/comparisons/p27.fp32_input/workloads/attention.gdn/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 2.0,
+      "fitted_us": 82.68966386693153,
+      "held_out_us": 84.02081911397755
+    },
+    {
+      "id": "p29:gemv:attention:p27.fp32_input:attention.qsa:specialised:rotated",
+      "implementation": "p27.fp32_input",
+      "workload": "attention.qsa",
+      "actual_us": 79.688,
+      "baseline_us": 64.791,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": 0.2601256246250338,
+        "log_ratio_memory_messages": 0.7086513670959106,
+        "log_ratio_alu64": 0.8100685186188475,
+        "extra_stage_count": 1.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE14ELN3p251CE9EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "d2bd038534a9bafcfecb653917a3a3ded96b7c1474600f259cb2fc4e43993608",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 1657,
+        "simd16_issue_equivalents": 2231.0,
+        "memory_messages": 65,
+        "alu64": 290,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:attention/comparisons/p27.fp32_input/workloads/attention.qsa/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 2.0,
+      "fitted_us": 82.68838763431226,
+      "held_out_us": 84.01952233630261
+    },
+    {
+      "id": "p29:gemv:attention:p27.packed64:attention.gdn:specialised:rotated",
+      "implementation": "p27.packed64",
+      "workload": "attention.gdn",
+      "actual_us": 63.958,
+      "baseline_us": 64.792,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": 0.16521877001831595,
+        "log_ratio_memory_messages": 0.19782574332991987,
+        "log_ratio_alu64": 0.39768296766610944,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE14ELN3p251CE10EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "3936ad6f07a311c2de69445700f05ef1b66642894f1326b3afad6e36f2be7055",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 1475,
+        "simd16_issue_equivalents": 2029.0,
+        "memory_messages": 39,
+        "alu64": 192,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:attention/comparisons/p27.packed64/workloads/attention.gdn/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 62.9674708701126,
+      "held_out_us": 62.71832845211915
+    },
+    {
+      "id": "p29:gemv:attention:p27.packed64:attention.qsa:specialised:rotated",
+      "implementation": "p27.packed64",
+      "workload": "attention.qsa",
+      "actual_us": 63.854,
+      "baseline_us": 64.791,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": 0.16521877001831595,
+        "log_ratio_memory_messages": 0.19782574332991987,
+        "log_ratio_alu64": 0.39768296766610944,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK8packet269p25bridge6KernelILN3iq34TypeE14ELN3p251CE10EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS8_5eventESaISG_EEENKUlRNS8_7handlerEE_clESM_EUlNS8_7nd_itemILi1EEEE_",
+      "asm_sha256": "3936ad6f07a311c2de69445700f05ef1b66642894f1326b3afad6e36f2be7055",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 1475,
+        "simd16_issue_equivalents": 2029.0,
+        "memory_messages": 39,
+        "alu64": 192,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:attention/comparisons/p27.packed64/workloads/attention.qsa/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 62.96649902990284,
+      "held_out_us": 62.71736045717452
+    },
+    {
+      "id": "p29:gemv:attention:p28.dense.rows4:attention.gdn:specialised:rotated",
+      "implementation": "p28.dense.rows4",
+      "workload": "attention.gdn",
+      "actual_us": 54.375,
+      "baseline_us": 64.792,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -1.013929201438071,
+        "log_ratio_memory_messages": -0.5753641449035618,
+        "log_ratio_alu64": -1.0986122886681098,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p286KernelILN3iq34TypeE14ELj6144ELj4ELj4ELb0ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "asm_sha256": "de2ad614daa4c0ff7840c3e0500b96d12a3845485863e8ce09d07feac1c1de48",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 465,
+        "simd16_issue_equivalents": 624.0,
+        "memory_messages": 18,
+        "alu64": 43,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:attention/comparisons/p28.dense.rows4/workloads/attention.gdn/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 52.742721132486516,
+      "held_out_us": 53.33137398856012
+    },
+    {
+      "id": "p29:gemv:attention:p28.dense.rows4:attention.qsa:specialised:rotated",
+      "implementation": "p28.dense.rows4",
+      "workload": "attention.qsa",
+      "actual_us": 54.271,
+      "baseline_us": 64.791,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -1.013929201438071,
+        "log_ratio_memory_messages": -0.5753641449035618,
+        "log_ratio_alu64": -1.0986122886681098,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p286KernelILN3iq34TypeE14ELj6144ELj4ELj4ELb0ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "asm_sha256": "de2ad614daa4c0ff7840c3e0500b96d12a3845485863e8ce09d07feac1c1de48",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 465,
+        "simd16_issue_equivalents": 624.0,
+        "memory_messages": 18,
+        "alu64": 43,
+        "simd": 32,
+        "barriers": 3,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:attention/comparisons/p28.dense.rows4/workloads/attention.qsa/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 1.0,
+      "fitted_us": 52.74190710110714,
+      "held_out_us": 53.330550871910084
+    },
+    {
+      "id": "p29:gemv:attention:p28.dense.wg32:attention.gdn:specialised:rotated",
+      "implementation": "p28.dense.wg32",
+      "workload": "attention.gdn",
+      "actual_us": 51.98,
+      "baseline_us": 64.792,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -1.2495703957648088,
+        "log_ratio_memory_messages": -0.9808292530117262,
+        "log_ratio_alu64": -1.363304842895192,
+        "extra_stage_count": 1.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p286KernelILN3iq34TypeE14ELj6144ELj4ELj1ELb0ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "asm_sha256": "c8164d71beeac7395b15abc980cd230ac0fb8a8582eb5c8170422863caa83573",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 351,
+        "simd16_issue_equivalents": 493.0,
+        "memory_messages": 12,
+        "alu64": 33,
+        "simd": 32,
+        "barriers": 0,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:attention/comparisons/p28.dense.wg32/workloads/attention.gdn/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 2.0,
+      "fitted_us": 60.11235767139129,
+      "held_out_us": 68.8661179088084
+    },
+    {
+      "id": "p29:gemv:attention:p28.dense.wg32:attention.qsa:specialised:rotated",
+      "implementation": "p28.dense.wg32",
+      "workload": "attention.qsa",
+      "actual_us": 51.979,
+      "baseline_us": 64.791,
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -1.2495703957648088,
+        "log_ratio_memory_messages": -0.9808292530117262,
+        "log_ratio_alu64": -1.363304842895192,
+        "extra_stage_count": 1.0,
+        "spill_kib_difference": 0.0
+      },
+      "kernel": "_ZTSZZNK3p286KernelILN3iq34TypeE14ELj6144ELj4ELj1ELb0ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "asm_sha256": "c8164d71beeac7395b15abc980cd230ac0fb8a8582eb5c8170422863caa83573",
+      "baseline_kernel": "_ZTSZZNK3iq38expanded12_GLOBAL__N_18Multiply3runILNS_4TypeE14EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "main_static": {
+        "instructions": 351,
+        "simd16_issue_equivalents": 493.0,
+        "memory_messages": 12,
+        "alu64": 33,
+        "simd": 32,
+        "barriers": 0,
+        "grf": 128
+      },
+      "measurement_source": "experiments/own-xpu-runtime/stage2/packet29-merged/build/k2-r29/run/summary.json",
+      "measurement_pointer": "/classes/gemv:attention/comparisons/p28.dense.wg32/workloads/attention.qsa/variants/specialised/execution_sum",
+      "stage_events_per_repetition": 2.0,
+      "fitted_us": 60.11142989701062,
+      "held_out_us": 68.8650550288555
+    }
+  ],
+  "omitted": [],
+  "limitations": [
+    "whole static functions include cold invalid-route and alternate-runtime-shape paths; not dynamic per-weight instruction counts",
+    "main kernel only; preprocessing/finalization represented by event count, not their instructions",
+    "offline AOT driver option matching unconfirmed: see packet toolchain notes",
+    "family normalization uses independently measured baseline and does not predict unseen-shape baseline",
+    "leave-one-implementation-out keeps no rows of same candidate but may retain closely related source variants",
+    "times from one p29 K2 process; within-run repetitions do not establish fresh-process stability",
+    "routing/QSA/recurrence/activation omitted from GEMV fit; branch-dependent monolithic Glue cannot be equated to one timed path"
+  ],
+  "source_hashes": {
+    "codegen.json": "5643ba260d80fbc3bafec76a8710773ed6234dff7c068b2121a14e7f74651bc2",
+    "measurements.json": "b5bc015dbeea470c07e55aac4a76a605a344ff57b7b79faca7fadb6102a58572"
+  },
+  "new_candidate_predictions": [
+    {
+      "candidate": "p33.down.bank",
+      "workload": "expsdown",
+      "kind": "unqualified static-surrogate prediction",
+      "device_measured": false,
+      "baseline_us": 127.448,
+      "predicted_us": 63.33696579638763,
+      "heuristic_interval_us": [
+        10.878502946393425,
+        115.79542864638184
+      ],
+      "asm_sha256": "497df8874df8e865f907aa898d33a39a741f9199d0f7b948c6840831f86ad48e",
+      "kernel": "_ZTSZZNK3p336KernelILj0ELN3iq34TypeE20ELj640ELj1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.8141510721522999,
+        "log_ratio_memory_messages": -1.0608719606852628,
+        "log_ratio_alu64": -1.8870696490323797,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "status": "prediction; failed cross-validation means ordering is unqualified"
+    },
+    {
+      "candidate": "p33.down.select",
+      "workload": "expsdown",
+      "kind": "unqualified static-surrogate prediction",
+      "device_measured": false,
+      "baseline_us": 127.448,
+      "predicted_us": 83.76894774876202,
+      "heuristic_interval_us": [
+        31.31048489876781,
+        136.22741059875622
+      ],
+      "asm_sha256": "a70470ec568125f27ea57ed5868f5b4dbf6fae3197956bb7a97c5737afdada83",
+      "kernel": "_ZTSZZNK3p336KernelILj1ELN3iq34TypeE20ELj640ELj1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.12235524314935353,
+        "log_ratio_memory_messages": -0.31365755885504165,
+        "log_ratio_alu64": -0.6486954179891115,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "status": "prediction; failed cross-validation means ordering is unqualified"
+    },
+    {
+      "candidate": "p33.gate.restrict",
+      "workload": "expsgate.iq2",
+      "kind": "unqualified static-surrogate prediction",
+      "device_measured": false,
+      "baseline_us": 175.20875,
+      "predicted_us": 107.16775292376437,
+      "heuristic_interval_us": [
+        54.70929007377016,
+        159.6262157737586
+      ],
+      "asm_sha256": "b7677acd66d6eaac01e07f8634f930350635446ee50f2aa634978cc5cdf191c3",
+      "kernel": "_ZTSZZNK3p336KernelILj0ELN3iq34TypeE22ELj2560ELj1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -1.0182246939416633,
+        "log_ratio_memory_messages": -0.9395475940384223,
+        "log_ratio_alu64": -1.6748951290887442,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "status": "prediction; failed cross-validation means ordering is unqualified"
+    },
+    {
+      "candidate": "p33.gate.restrict",
+      "workload": "expsgate.iq3",
+      "kind": "unqualified static-surrogate prediction",
+      "device_measured": false,
+      "baseline_us": 174.896,
+      "predicted_us": 115.80890715936476,
+      "heuristic_interval_us": [
+        63.35044430937056,
+        168.26737000935896
+      ],
+      "asm_sha256": "01b231da8884ae6eec0a1afd097cac3112c12f851ed5ceec7f1c06ac38c4e925",
+      "kernel": "_ZTSZZNK3p336KernelILj0ELN3iq34TypeE21ELj2560ELj1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -0.9863276050526398,
+        "log_ratio_memory_messages": -0.9844989819006886,
+        "log_ratio_alu64": -1.505415189617934,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "status": "prediction; failed cross-validation means ordering is unqualified"
+    },
+    {
+      "candidate": "p33.dense.segment",
+      "workload": "gdn.qkv.q6",
+      "kind": "unqualified static-surrogate prediction",
+      "device_measured": false,
+      "baseline_us": 98.229,
+      "predicted_us": 51.957422258258156,
+      "heuristic_interval_us": [
+        0,
+        104.41588510825235
+      ],
+      "asm_sha256": "54c631050c3be1baf4ebad73d4f8f621ec13940920a325cfe60eee0e38508712",
+      "kernel": "_ZTSZZNK3p336KernelILj0ELN3iq34TypeE14ELj2560ELj1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -1.253635442012978,
+        "log_ratio_memory_messages": -0.9007865453381898,
+        "log_ratio_alu64": -2.151762203259462,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "status": "prediction; failed cross-validation means ordering is unqualified"
+    },
+    {
+      "candidate": "p33.dense.segment",
+      "workload": "gdn.qkv.q8",
+      "kind": "unqualified static-surrogate prediction",
+      "device_measured": false,
+      "baseline_us": 95.833,
+      "predicted_us": 50.69007774970379,
+      "heuristic_interval_us": [
+        0,
+        103.148540599698
+      ],
+      "asm_sha256": "562ea9100e98e637acf09ef3701301a64137e3d17a0373fcf3192380c6babd3b",
+      "kernel": "_ZTSZZNK3p336KernelILj0ELN3iq34TypeE8ELj2560ELj1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -1.253635442012978,
+        "log_ratio_memory_messages": -0.9007865453381898,
+        "log_ratio_alu64": -2.151762203259462,
+        "extra_stage_count": 0.0,
+        "spill_kib_difference": 0.0
+      },
+      "status": "prediction; failed cross-validation means ordering is unqualified"
+    },
+    {
+      "candidate": "p33.dense.segment",
+      "workload": "qsa.k",
+      "kind": "unqualified static-surrogate prediction",
+      "device_measured": false,
+      "baseline_us": 9.687,
+      "predicted_us": 10.522517986100274,
+      "heuristic_interval_us": [
+        0,
+        62.98098083609448
+      ],
+      "asm_sha256": "21106a1b15f2e8ef8bb12cc11ef77f001559935cc7b0efa6c29d7312f3393397",
+      "kernel": "_ZTSZZNK3p336KernelILj0ELN3iq34TypeE14ELj2560ELj4EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "features": {
+        "log_ratio_simd16_issue_equivalents": -1.0581624564148968,
+        "log_ratio_memory_messages": -0.33024168687057687,
+        "log_ratio_alu64": -0.8167611365271219,
+        "extra_stage_count": 1.0,
+        "spill_kib_difference": 0.0
+      },
+      "status": "prediction; failed cross-validation means ordering is unqualified"
+    },
+    {
+      "candidate": "p33.route.rank4",
+      "workload": "route",
+      "kind": "null-effect prior for unchanged round2 source path; NOT fitted GEMV estimate",
+      "predicted_us": 82.916,
+      "heuristic_interval_us": [
+        59.9994,
+        92.73
+      ],
+      "incumbent_us": 66.666,
+      "device_measured": false,
+      "source_measurement_ids": [
+        "p29:route:round2:<single>:packet18:reread",
+        "p29:route:round2:<single>:specialised:reread",
+        "p27-table:11:packet18",
+        "p27-table:11:specialised"
+      ],
+      "uncertainty": "historical incumbent/candidate span enlarged by 10%; not a confidence interval or a claimed bound",
+      "status": "requires coordinator timing; assembly cannot determine dynamic rank/attention cost"
+    },
+    {
+      "candidate": "p33.qsa.shape",
+      "workload": "qsa.attention",
+      "kind": "null-effect prior for unchanged round2 source path; NOT fitted GEMV estimate",
+      "predicted_us": 189.6355,
+      "heuristic_interval_us": [
+        156.65625,
+        208.59905000000003
+      ],
+      "incumbent_us": 174.0625,
+      "device_measured": false,
+      "source_measurement_ids": [
+        "p29:qsa.attention:round2:<single>:packet18:reread",
+        "p29:qsa.attention:round2:<single>:specialised:reread",
+        "p27-table:8:packet18",
+        "p27-table:8:specialised"
+      ],
+      "uncertainty": "historical incumbent/candidate span enlarged by 10%; not a confidence interval or a claimed bound",
+      "status": "requires coordinator timing; assembly cannot determine dynamic rank/attention cost"
+    }
+  ],
+  "held_out_by_workload": {
+    "expsgate.iq2": {
+      "n": 12,
+      "mae_us": 30.209478249990994,
+      "rmse_us": 42.19670750339041,
+      "r2": 0.6266215630216947,
+      "mape_percent": 19.169293955931472,
+      "max_absolute_error_us": 108.43443286820451
+    },
+    "expsgate.iq3": {
+      "n": 12,
+      "mae_us": 94.00470734422235,
+      "rmse_us": 249.27505465049757,
+      "r2": -1.2346494343166232,
+      "mape_percent": 26.93009025643636,
+      "max_absolute_error_us": 858.4942493234948
+    },
+    "expsdown": {
+      "n": 13,
+      "mae_us": 39.05103878976017,
+      "rmse_us": 44.05062188121468,
+      "r2": -3.2978069866489452,
+      "mape_percent": 24.12524783217238,
+      "max_absolute_error_us": 71.43709898612178
+    },
+    "gdn.qkv.q6": {
+      "n": 7,
+      "mae_us": 13.678135204368639,
+      "rmse_us": 21.421907816010446,
+      "r2": -3.0958131050507047,
+      "mape_percent": 15.14487969211912,
+      "max_absolute_error_us": 52.458462849994206
+    },
+    "gdn.qkv.q8": {
+      "n": 7,
+      "mae_us": 14.025426159108989,
+      "rmse_us": 21.31170051773624,
+      "r2": -2.8319673717472487,
+      "mape_percent": 16.130911784658426,
+      "max_absolute_error_us": 51.73481678835675
+    },
+    "qsa.k": {
+      "n": 7,
+      "mae_us": 1.389876734888006,
+      "rmse_us": 1.9531072790974136,
+      "r2": -2.3741833573476674,
+      "mape_percent": 15.09380387318074,
+      "max_absolute_error_us": 4.499104924491686
+    },
+    "attention.gdn": {
+      "n": 7,
+      "mae_us": 8.879608575826555,
+      "rmse_us": 14.013339299717488,
+      "r2": -1.8544471763631178,
+      "mape_percent": 15.063365268376725,
+      "max_absolute_error_us": 32.38066762337827
+    },
+    "attention.qsa": {
+      "n": 7,
+      "mae_us": 8.856890223781257,
+      "rmse_us": 13.982788902484812,
+      "r2": -1.8580091643405443,
+      "mape_percent": 15.007817481902094,
+      "max_absolute_error_us": 32.27623538378659
+    }
+  },
+  "without_spill_feature_ablation": {
+    "training": {
+      "n": 72,
+      "mae_us": 25.111298938343786,
+      "rmse_us": 60.72403968087503,
+      "r2": 0.5873225506286288,
+      "mape_percent": 17.037467521278298,
+      "max_absolute_error_us": 463.00273131774986
+    },
+    "leave_implementation_out": {
+      "n": 72,
+      "mae_us": 31.037731727804754,
+      "rmse_us": 71.80426564956076,
+      "r2": 0.42298126168149686,
+      "mape_percent": 22.782128244742587,
+      "max_absolute_error_us": 538.9860963937687
+    },
+    "coefficients": {
+      "intercept": -0.055382145765148744,
+      "standardized_coefficients": [
+        -0.2788537972117909,
+        0.24242310180314344,
+        0.21909747885777792,
+        0.03643475961611666
+      ],
+      "feature_means": [
+        -0.3242970290942134,
+        -0.055408981672889615,
+        -0.24721202865962177,
+        0.18055555555555555
+      ],
+      "feature_scales": [
+        0.4727824464467961,
+        0.5343400347478758,
+        0.7442467833997896,
+        0.38464951178128415
+      ],
+      "ridge_penalty": 1.0
+    }
+  }
+}

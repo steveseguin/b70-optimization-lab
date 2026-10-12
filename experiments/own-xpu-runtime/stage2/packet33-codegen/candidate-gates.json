@@ -1,0 +1,668 @@
+{
+  "device_executed": false,
+  "passed": true,
+  "processes": 4,
+  "rows": [
+    {
+      "compiler": "gcc",
+      "repeat": 0,
+      "binary_sha256": "233bc6ea7f3b6c4ef27b4ad2f04c402c8ae863eebd38683033d2d05b884a0249",
+      "command": [
+        "/usr/bin/g++",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-DOWN_RT_HOST_ONLY",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/candidate_cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/candidate-cpu-gcc"
+      ],
+      "returncode": 0,
+      "receipt": {
+        "device_executed": false,
+        "nan_tolerance": false,
+        "nonfinite_qualified": false,
+        "candidates": {
+          "dense.aligned": {
+            "checks": 4480,
+            "failures": 0,
+            "nonfinite_checks": 1920,
+            "nonfinite_failures": 0,
+            "hash": "9c57f7bbc6eeea53"
+          },
+          "dense.production-bf16": {
+            "checks": 56,
+            "failures": 0,
+            "nonfinite_checks": 24,
+            "nonfinite_failures": 0,
+            "hash": "df10a2be7bed6223"
+          },
+          "dense.production-lane": {
+            "checks": 4480,
+            "failures": 0,
+            "nonfinite_checks": 1920,
+            "nonfinite_failures": 0,
+            "hash": "3c185174de4efa0d"
+          },
+          "dense.production-row": {
+            "checks": 56,
+            "failures": 0,
+            "nonfinite_checks": 24,
+            "nonfinite_failures": 0,
+            "hash": "a74f8c2824d3807a"
+          },
+          "dense.production-tree": {
+            "checks": 140,
+            "failures": 0,
+            "nonfinite_checks": 60,
+            "nonfinite_failures": 0,
+            "hash": "229e3beaf72ad6ab"
+          },
+          "down.bank": {
+            "checks": 84014,
+            "failures": 0,
+            "nonfinite_checks": 136306,
+            "nonfinite_failures": 0,
+            "hash": "55c2c4b030040839"
+          },
+          "down.select": {
+            "checks": 84014,
+            "failures": 0,
+            "nonfinite_checks": 136306,
+            "nonfinite_failures": 0,
+            "hash": "55c2c4b030040839"
+          },
+          "expert.production-bf16": {
+            "checks": 56,
+            "failures": 0,
+            "nonfinite_checks": 24,
+            "nonfinite_failures": 8,
+            "hash": "f0f78d345fc47423"
+          },
+          "expert.production-lane": {
+            "checks": 1792,
+            "failures": 0,
+            "nonfinite_checks": 768,
+            "nonfinite_failures": 256,
+            "hash": "88e2c69d64fa3d67"
+          },
+          "expert.production-tree": {
+            "checks": 56,
+            "failures": 0,
+            "nonfinite_checks": 24,
+            "nonfinite_failures": 8,
+            "hash": "93c6f837ee786001"
+          },
+          "expert.production-unpaired": {
+            "checks": 896,
+            "failures": 0,
+            "nonfinite_checks": 384,
+            "nonfinite_failures": 0,
+            "hash": "9e3c05cd890a4d09"
+          },
+          "expert.reference": {
+            "checks": 2688,
+            "failures": 0,
+            "nonfinite_checks": 1920,
+            "nonfinite_failures": 380,
+            "hash": "d5eb9f259b47f3c5"
+          },
+          "expert.restrict": {
+            "checks": 5376,
+            "failures": 0,
+            "nonfinite_checks": 3840,
+            "nonfinite_failures": 0,
+            "hash": "f9f3d18a4ebc04bb"
+          },
+          "level.exhaustive": {
+            "checks": 32,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "7d3db5c0528d8503"
+          },
+          "qsa.fixture-reference": {
+            "checks": 1624328,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "e999582d030a3de3"
+          },
+          "qsa.specialized": {
+            "checks": 1624328,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "e999582d030a3de3"
+          },
+          "qsa.stored-expected-diagnostic": {
+            "checks": 1624320,
+            "failures": 2,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "8a5e1016c4b56f83"
+          },
+          "route.outputs": {
+            "checks": 972,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "887e07941252047e"
+          },
+          "route.rank4": {
+            "checks": 4788,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "82af6cb6a340bd73"
+          }
+        },
+        "passed": true
+      }
+    },
+    {
+      "compiler": "gcc",
+      "repeat": 1,
+      "binary_sha256": "233bc6ea7f3b6c4ef27b4ad2f04c402c8ae863eebd38683033d2d05b884a0249",
+      "command": [
+        "/usr/bin/g++",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-DOWN_RT_HOST_ONLY",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/candidate_cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/candidate-cpu-gcc"
+      ],
+      "returncode": 0,
+      "receipt": {
+        "device_executed": false,
+        "nan_tolerance": false,
+        "nonfinite_qualified": false,
+        "candidates": {
+          "dense.aligned": {
+            "checks": 4480,
+            "failures": 0,
+            "nonfinite_checks": 1920,
+            "nonfinite_failures": 0,
+            "hash": "9c57f7bbc6eeea53"
+          },
+          "dense.production-bf16": {
+            "checks": 56,
+            "failures": 0,
+            "nonfinite_checks": 24,
+            "nonfinite_failures": 0,
+            "hash": "df10a2be7bed6223"
+          },
+          "dense.production-lane": {
+            "checks": 4480,
+            "failures": 0,
+            "nonfinite_checks": 1920,
+            "nonfinite_failures": 0,
+            "hash": "3c185174de4efa0d"
+          },
+          "dense.production-row": {
+            "checks": 56,
+            "failures": 0,
+            "nonfinite_checks": 24,
+            "nonfinite_failures": 0,
+            "hash": "a74f8c2824d3807a"
+          },
+          "dense.production-tree": {
+            "checks": 140,
+            "failures": 0,
+            "nonfinite_checks": 60,
+            "nonfinite_failures": 0,
+            "hash": "229e3beaf72ad6ab"
+          },
+          "down.bank": {
+            "checks": 84014,
+            "failures": 0,
+            "nonfinite_checks": 136306,
+            "nonfinite_failures": 0,
+            "hash": "55c2c4b030040839"
+          },
+          "down.select": {
+            "checks": 84014,
+            "failures": 0,
+            "nonfinite_checks": 136306,
+            "nonfinite_failures": 0,
+            "hash": "55c2c4b030040839"
+          },
+          "expert.production-bf16": {
+            "checks": 56,
+            "failures": 0,
+            "nonfinite_checks": 24,
+            "nonfinite_failures": 8,
+            "hash": "f0f78d345fc47423"
+          },
+          "expert.production-lane": {
+            "checks": 1792,
+            "failures": 0,
+            "nonfinite_checks": 768,
+            "nonfinite_failures": 256,
+            "hash": "88e2c69d64fa3d67"
+          },
+          "expert.production-tree": {
+            "checks": 56,
+            "failures": 0,
+            "nonfinite_checks": 24,
+            "nonfinite_failures": 8,
+            "hash": "93c6f837ee786001"
+          },
+          "expert.production-unpaired": {
+            "checks": 896,
+            "failures": 0,
+            "nonfinite_checks": 384,
+            "nonfinite_failures": 0,
+            "hash": "9e3c05cd890a4d09"
+          },
+          "expert.reference": {
+            "checks": 2688,
+            "failures": 0,
+            "nonfinite_checks": 1920,
+            "nonfinite_failures": 380,
+            "hash": "d5eb9f259b47f3c5"
+          },
+          "expert.restrict": {
+            "checks": 5376,
+            "failures": 0,
+            "nonfinite_checks": 3840,
+            "nonfinite_failures": 0,
+            "hash": "f9f3d18a4ebc04bb"
+          },
+          "level.exhaustive": {
+            "checks": 32,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "7d3db5c0528d8503"
+          },
+          "qsa.fixture-reference": {
+            "checks": 1624328,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "e999582d030a3de3"
+          },
+          "qsa.specialized": {
+            "checks": 1624328,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "e999582d030a3de3"
+          },
+          "qsa.stored-expected-diagnostic": {
+            "checks": 1624320,
+            "failures": 2,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "8a5e1016c4b56f83"
+          },
+          "route.outputs": {
+            "checks": 972,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "887e07941252047e"
+          },
+          "route.rank4": {
+            "checks": 4788,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "82af6cb6a340bd73"
+          }
+        },
+        "passed": true
+      }
+    },
+    {
+      "compiler": "icpx",
+      "repeat": 0,
+      "binary_sha256": "c20e8439cb5ea75d5f695c5470e5b3c52e299026b3f0117418513dcb5020f321",
+      "command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-DOWN_RT_HOST_ONLY",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/candidate_cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/candidate-cpu-icpx"
+      ],
+      "returncode": 0,
+      "receipt": {
+        "device_executed": false,
+        "nan_tolerance": false,
+        "nonfinite_qualified": false,
+        "candidates": {
+          "dense.aligned": {
+            "checks": 4480,
+            "failures": 0,
+            "nonfinite_checks": 1920,
+            "nonfinite_failures": 0,
+            "hash": "9c57f7bbc6eeea53"
+          },
+          "dense.production-bf16": {
+            "checks": 56,
+            "failures": 0,
+            "nonfinite_checks": 24,
+            "nonfinite_failures": 0,
+            "hash": "df10a2be7bed6223"
+          },
+          "dense.production-lane": {
+            "checks": 4480,
+            "failures": 0,
+            "nonfinite_checks": 1920,
+            "nonfinite_failures": 0,
+            "hash": "3c185174de4efa0d"
+          },
+          "dense.production-row": {
+            "checks": 56,
+            "failures": 0,
+            "nonfinite_checks": 24,
+            "nonfinite_failures": 0,
+            "hash": "a74f8c2824d3807a"
+          },
+          "dense.production-tree": {
+            "checks": 140,
+            "failures": 0,
+            "nonfinite_checks": 60,
+            "nonfinite_failures": 0,
+            "hash": "229e3beaf72ad6ab"
+          },
+          "down.bank": {
+            "checks": 84014,
+            "failures": 0,
+            "nonfinite_checks": 136306,
+            "nonfinite_failures": 0,
+            "hash": "55c2c4b030040839"
+          },
+          "down.select": {
+            "checks": 84014,
+            "failures": 0,
+            "nonfinite_checks": 136306,
+            "nonfinite_failures": 0,
+            "hash": "55c2c4b030040839"
+          },
+          "expert.production-bf16": {
+            "checks": 56,
+            "failures": 0,
+            "nonfinite_checks": 24,
+            "nonfinite_failures": 0,
+            "hash": "f0f78d345fc47423"
+          },
+          "expert.production-lane": {
+            "checks": 1792,
+            "failures": 0,
+            "nonfinite_checks": 768,
+            "nonfinite_failures": 0,
+            "hash": "88e2c69d64fa3d67"
+          },
+          "expert.production-tree": {
+            "checks": 56,
+            "failures": 0,
+            "nonfinite_checks": 24,
+            "nonfinite_failures": 0,
+            "hash": "93c6f837ee786001"
+          },
+          "expert.production-unpaired": {
+            "checks": 896,
+            "failures": 0,
+            "nonfinite_checks": 384,
+            "nonfinite_failures": 0,
+            "hash": "9e3c05cd890a4d09"
+          },
+          "expert.reference": {
+            "checks": 2688,
+            "failures": 0,
+            "nonfinite_checks": 1920,
+            "nonfinite_failures": 0,
+            "hash": "d5eb9f259b47f3c5"
+          },
+          "expert.restrict": {
+            "checks": 5376,
+            "failures": 0,
+            "nonfinite_checks": 3840,
+            "nonfinite_failures": 0,
+            "hash": "f9f3d18a4ebc04bb"
+          },
+          "level.exhaustive": {
+            "checks": 32,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "7d3db5c0528d8503"
+          },
+          "qsa.fixture-reference": {
+            "checks": 1624328,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "e999582d030a3de3"
+          },
+          "qsa.specialized": {
+            "checks": 1624328,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "e999582d030a3de3"
+          },
+          "qsa.stored-expected-diagnostic": {
+            "checks": 1624320,
+            "failures": 2,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "8a5e1016c4b56f83"
+          },
+          "route.outputs": {
+            "checks": 972,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "887e07941252047e"
+          },
+          "route.rank4": {
+            "checks": 4788,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "82af6cb6a340bd73"
+          }
+        },
+        "passed": true
+      }
+    },
+    {
+      "compiler": "icpx",
+      "repeat": 1,
+      "binary_sha256": "c20e8439cb5ea75d5f695c5470e5b3c52e299026b3f0117418513dcb5020f321",
+      "command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-DOWN_RT_HOST_ONLY",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet29-merged",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/candidate_cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet33-codegen/build/candidate-cpu-icpx"
+      ],
+      "returncode": 0,
+      "receipt": {
+        "device_executed": false,
+        "nan_tolerance": false,
+        "nonfinite_qualified": false,
+        "candidates": {
+          "dense.aligned": {
+            "checks": 4480,
+            "failures": 0,
+            "nonfinite_checks": 1920,
+            "nonfinite_failures": 0,
+            "hash": "9c57f7bbc6eeea53"
+          },
+          "dense.production-bf16": {
+            "checks": 56,
+            "failures": 0,
+            "nonfinite_checks": 24,
+            "nonfinite_failures": 0,
+            "hash": "df10a2be7bed6223"
+          },
+          "dense.production-lane": {
+            "checks": 4480,
+            "failures": 0,
+            "nonfinite_checks": 1920,
+            "nonfinite_failures": 0,
+            "hash": "3c185174de4efa0d"
+          },
+          "dense.production-row": {
+            "checks": 56,
+            "failures": 0,
+            "nonfinite_checks": 24,
+            "nonfinite_failures": 0,
+            "hash": "a74f8c2824d3807a"
+          },
+          "dense.production-tree": {
+            "checks": 140,
+            "failures": 0,
+            "nonfinite_checks": 60,
+            "nonfinite_failures": 0,
+            "hash": "229e3beaf72ad6ab"
+          },
+          "down.bank": {
+            "checks": 84014,
+            "failures": 0,
+            "nonfinite_checks": 136306,
+            "nonfinite_failures": 0,
+            "hash": "55c2c4b030040839"
+          },
+          "down.select": {
+            "checks": 84014,
+            "failures": 0,
+            "nonfinite_checks": 136306,
+            "nonfinite_failures": 0,
+            "hash": "55c2c4b030040839"
+          },
+          "expert.production-bf16": {
+            "checks": 56,
+            "failures": 0,
+            "nonfinite_checks": 24,
+            "nonfinite_failures": 0,
+            "hash": "f0f78d345fc47423"
+          },
+          "expert.production-lane": {
+            "checks": 1792,
+            "failures": 0,
+            "nonfinite_checks": 768,
+            "nonfinite_failures": 0,
+            "hash": "88e2c69d64fa3d67"
+          },
+          "expert.production-tree": {
+            "checks": 56,
+            "failures": 0,
+            "nonfinite_checks": 24,
+            "nonfinite_failures": 0,
+            "hash": "93c6f837ee786001"
+          },
+          "expert.production-unpaired": {
+            "checks": 896,
+            "failures": 0,
+            "nonfinite_checks": 384,
+            "nonfinite_failures": 0,
+            "hash": "9e3c05cd890a4d09"
+          },
+          "expert.reference": {
+            "checks": 2688,
+            "failures": 0,
+            "nonfinite_checks": 1920,
+            "nonfinite_failures": 0,
+            "hash": "d5eb9f259b47f3c5"
+          },
+          "expert.restrict": {
+            "checks": 5376,
+            "failures": 0,
+            "nonfinite_checks": 3840,
+            "nonfinite_failures": 0,
+            "hash": "f9f3d18a4ebc04bb"
+          },
+          "level.exhaustive": {
+            "checks": 32,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "7d3db5c0528d8503"
+          },
+          "qsa.fixture-reference": {
+            "checks": 1624328,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "e999582d030a3de3"
+          },
+          "qsa.specialized": {
+            "checks": 1624328,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "e999582d030a3de3"
+          },
+          "qsa.stored-expected-diagnostic": {
+            "checks": 1624320,
+            "failures": 2,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "8a5e1016c4b56f83"
+          },
+          "route.outputs": {
+            "checks": 972,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "887e07941252047e"
+          },
+          "route.rank4": {
+            "checks": 4788,
+            "failures": 0,
+            "nonfinite_checks": 0,
+            "nonfinite_failures": 0,
+            "hash": "82af6cb6a340bd73"
+          }
+        },
+        "passed": true
+      }
+    }
+  ],
+  "source_sha256": {
+    "candidates.hpp": "ee7d7d3489466dc5e9a31c7edaf0999fad3e132054878c0bf243f09d189b2f17",
+    "candidate_cpu.cpp": "3abb17b23a13443905ebbf047af36cfc551563a347c71976fc45a7b32d482395",
+    "candidate-gates.py": "22a7ac05a7bffb249a1b04684f3c3e3d04d7b9b6d62cdb49192a23ab95402d5d",
+    "build/route_gate_core.hpp": "988f069a4de0f3964484b6133d660a8228e1426c1e137b5065bd742677f0a04b",
+    "build_driver.py": "25258cf646dfd13b9f43ad2eff27631d742745b8dfd3d0334334fceb796a5227"
+  },
+  "fixture_sha256": {
+    "qsa-attention-1.fixture": "f42f50099d20a6be7de8f27ae913961510b974ca2c2f4d0f030312285de688bd",
+    "qsa-attention-3.fixture": "77b21cd7d6b8d0198440cf74f2f258c0081fb2166f0f719636708f4fb69ff03d"
+  },
+  "fresh_repeat_identical": true,
+  "finite_cross_compiler_identical": true
+}

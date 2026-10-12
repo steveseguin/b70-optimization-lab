@@ -1,0 +1,143 @@
+{
+  "device": {
+    "pci_id": "0xe223",
+    "revision": "0x00",
+    "source": "sysfs text only"
+  },
+  "offline_options": "-ze-opt-level=O2 -cl-fp32-correctly-rounded-divide-sqrt",
+  "runtime_expected_options": [
+    "-ze-opt-level=2",
+    "-ze-fp32-correctly-rounded-divide-sqrt"
+  ],
+  "mapping": [
+    {
+      "input": "-O1/-O2/-O3",
+      "ur": "-ze-opt-level=2",
+      "igc": "-ze-opt-level=O2"
+    },
+    {
+      "input": "-O0",
+      "ur": "-ze-opt-disable",
+      "igc": "-cl-opt-disable"
+    },
+    {
+      "input": "-foffload-fp32-prec-div or -foffload-fp32-prec-sqrt",
+      "ur": "-ze-fp32-correctly-rounded-divide-sqrt",
+      "igc_equivalent": "-cl-fp32-correctly-rounded-divide-sqrt"
+    }
+  ],
+  "sources": [
+    {
+      "local_scratch": "experiments/own-xpu-runtime/stage2/packet33-codegen/build/options/llvm-sycl_source_detail_program_manager_program_manager.cpp",
+      "sha256": "a90756ad7d5ae3c2db068b9a127b1ae9e774f350a3bb37dadf2475d260583934",
+      "repo": "intel/llvm",
+      "commit": "3ae8b8c55b5f4a7c08f279044a2b4083501ce78e",
+      "filename": "llvm-sycl_source_detail_program_manager_program_manager.cpp"
+    },
+    {
+      "local_scratch": "experiments/own-xpu-runtime/stage2/packet33-codegen/build/options/neo-level_zero_core_source_module_module_imp.cpp",
+      "sha256": "11ed8df81939f2d9fa57eea54e82f16bb4c74a1c9cd72513d70bd9fa475bfe0e",
+      "repo": "intel/compute-runtime",
+      "commit": "82aab87fc932edc0558a0302d545a5bcc22edf41",
+      "filename": "neo-level_zero_core_source_module_module_imp.cpp"
+    },
+    {
+      "local_scratch": "experiments/own-xpu-runtime/stage2/packet33-codegen/build/options/neo-shared_offline_compiler_source_offline_compiler.cpp",
+      "sha256": "e2c67a2a4bba1276059b62eb10ab371dc547c184d7f1eb0a26faf4d2f738bdd5",
+      "repo": "intel/compute-runtime",
+      "commit": "82aab87fc932edc0558a0302d545a5bcc22edf41",
+      "filename": "neo-shared_offline_compiler_source_offline_compiler.cpp"
+    },
+    {
+      "local_scratch": "experiments/own-xpu-runtime/stage2/packet33-codegen/build/options/neo-shared_source_compiler_interface_compiler_interface.cpp",
+      "sha256": "9ffd8f75990691dadb8a9ed3ee4ddb84afb0173689d7fdb736bd35905f2b6cab",
+      "repo": "intel/compute-runtime",
+      "commit": "82aab87fc932edc0558a0302d545a5bcc22edf41",
+      "filename": "neo-shared_source_compiler_interface_compiler_interface.cpp"
+    },
+    {
+      "local_scratch": "experiments/own-xpu-runtime/stage2/packet33-codegen/build/options/neo-shared_source_xe2_hpg_core_hw_info_bmg.cpp",
+      "sha256": "9a56213e3e0a37e2f71ade2cbe9dd0e0af13991e483d46e455a3a22a28221017",
+      "repo": "intel/compute-runtime",
+      "commit": "82aab87fc932edc0558a0302d545a5bcc22edf41",
+      "filename": "neo-shared_source_xe2_hpg_core_hw_info_bmg.cpp"
+    },
+    {
+      "local_scratch": "experiments/own-xpu-runtime/stage2/packet33-codegen/build/options/ur-source_adapters_level_zero_common_device.cpp",
+      "sha256": "fdd51006d8198d7e405dcf3cd388afaa9d0d3dc91a262675a0e738ad5ee0b574",
+      "repo": "oneapi-src/unified-runtime",
+      "commit": "89d2582a8720e7507ccf531d508f52c1ab068f5c",
+      "filename": "ur-source_adapters_level_zero_common_device.cpp"
+    },
+    {
+      "local_scratch": "experiments/own-xpu-runtime/stage2/packet33-codegen/build/options/ur-source_adapters_level_zero_common_platform.cpp",
+      "sha256": "a7abaccbfa833d245186cb02906e204bf9fc6ec6239f8884305a8d42a06c8aa9",
+      "repo": "oneapi-src/unified-runtime",
+      "commit": "89d2582a8720e7507ccf531d508f52c1ab068f5c",
+      "filename": "ur-source_adapters_level_zero_common_platform.cpp"
+    },
+    {
+      "local_scratch": "experiments/own-xpu-runtime/stage2/packet33-codegen/build/options/ur-source_adapters_level_zero_common_program.cpp",
+      "sha256": "d7106966a148654dbb5ba1ebc8d7045ea1362d84b2f07e4170dc4ae7ad58fbde",
+      "repo": "oneapi-src/unified-runtime",
+      "commit": "89d2582a8720e7507ccf531d508f52c1ab068f5c",
+      "filename": "ur-source_adapters_level_zero_common_program.cpp"
+    },
+    {
+      "local_scratch": "experiments/own-xpu-runtime/stage2/packet33-codegen/build/options/ur-source_adapters_level_zero_ur_level_zero.cpp",
+      "sha256": "193970612c0172a14fd29eeb900c4ae796c4c2171ef0a940e168361297eb3b3b",
+      "repo": "oneapi-src/unified-runtime",
+      "commit": "89d2582a8720e7507ccf531d508f52c1ab068f5c",
+      "filename": "ur-source_adapters_level_zero_ur_level_zero.cpp"
+    },
+    {
+      "local_scratch": "experiments/own-xpu-runtime/stage2/packet33-codegen/build/options/ur-source_adapters_level_zero_v2_platform.cpp",
+      "sha256": "d1bd85c3fa8137286cbc3306a97896b777183295d34c8cc7ef3cb0c5ce68b2b9",
+      "repo": "oneapi-src/unified-runtime",
+      "commit": "89d2582a8720e7507ccf531d508f52c1ab068f5c",
+      "filename": "ur-source_adapters_level_zero_v2_platform.cpp"
+    },
+    {
+      "local_scratch": "experiments/own-xpu-runtime/stage2/packet33-codegen/build/options/neo-shared_source_compiler_interface_compiler_options.h",
+      "sha256": "bab71716321bc54e650488d284bdce58f6d52a983ea82cbda24528b11d50816f",
+      "repo": "intel/compute-runtime",
+      "commit": "82aab87fc932edc0558a0302d545a5bcc22edf41",
+      "filename": "neo-shared_source_compiler_interface_compiler_options.h"
+    },
+    {
+      "local_scratch": "experiments/own-xpu-runtime/stage2/packet33-codegen/build/options/ur-source_adapters_level_zero_common_device.hpp",
+      "sha256": "ae4b6420c51240f8d6d00ecb4c738f3328dd8c25ff9d37929fc34ffedebfc0d3",
+      "repo": "oneapi-src/unified-runtime",
+      "commit": "89d2582a8720e7507ccf531d508f52c1ab068f5c",
+      "filename": "ur-source_adapters_level_zero_common_device.hpp"
+    }
+  ],
+  "upstream": {
+    "ur": {
+      "repo": "oneapi-src/unified-runtime",
+      "sha": "89d2582a8720e7507ccf531d508f52c1ab068f5c"
+    },
+    "neo": {
+      "repo": "intel/compute-runtime",
+      "sha": "82aab87fc932edc0558a0302d545a5bcc22edf41"
+    },
+    "llvm": {
+      "repo": "intel/llvm",
+      "sha": "3ae8b8c55b5f4a7c08f279044a2b4083501ce78e"
+    }
+  },
+  "installed_sha256": {
+    "/opt/intel/oneapi/compiler/2026.0/lib/libur_adapter_level_zero.so.0.12.0": "c0b6d1d3f6f282655a034cfc874f48b2f0196970aea41af372d730bbc2124b48",
+    "/opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9.0.0": "1fae524cade4c3599cfb6fe74d3d01dabe48fbeaa344c2f42c5d264b46abf45a",
+    "/usr/lib/x86_64-linux-gnu/libigc.so.1.0.1": "1e1f25d72bd173ce51cf8d5816555bf5c67dcb3969b12a544615e6ff53d23491",
+    "/usr/lib/x86_64-linux-gnu/libze_intel_gpu.so.1.15.38308": "26fa68779adb03b200a8c3001cf81e59fc9a3d63e0f38627ec0005ffce574e7a"
+  },
+  "confirmed_runtime_trace": false,
+  "limits": [
+    "Installed adapter and libsycl source commits are not proven equal to current upstream; binary strings agree with mapping.",
+    "No device, UR, or Level Zero discovery or module creation was executed.",
+    "Actual JIT options and final live-driver code were not traced. Offline output is modelled JIT equivalent, not proven byte-identical resident code.",
+    "SYCL_PROGRAM_COMPILE_OPTIONS overrides embedded options; original packet29 closed environment disallows it.",
+    "Architecture/default debug/caching policy may differ between ocloc and runtime; dumped internal options are evidence of offline invocation only."
+  ]
+}
