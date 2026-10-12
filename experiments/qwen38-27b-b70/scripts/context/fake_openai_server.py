@@ -187,7 +187,7 @@ def plan_read(msgs):
     if os.environ.get("FAKE_ARCHIVE") == "1" and not items and "ctxfold: removed items" in alltext:
         if "ITEM 1 (archived)" not in alltext and "recall: item" not in alltext:
             return "recall --item 1"
-        if "item 1:" not in alltext and "no archived sentence" not in alltext:
+        if not re.search(r"(?m)^item \d+:", alltext) and "no archived sentence" not in alltext:
             nm = sorted(set(re.findall(r"\b[a-z]+\d\d\b", json.dumps(ref[0]["state"]))))
             return f"recall {nm[0] if nm else 'the'} --max-lines 5"
         if "archive is read-only" not in alltext:

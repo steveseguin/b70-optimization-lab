@@ -53,6 +53,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import notesdelta as nd  # noqa: E402  (same folder: the pure part of changes-only notes)
 
 OPEN_HEAD = "[[Still open, kept in view by the context keeper while you work on it]]"
+OPEN_CHARS = 12000                                   # of a kept question that is shown; the rest is in the archive
 PIN_HEAD = "[[NOTES kept by the context keeper: {n} earlier messages are in the archive (search it with the `recall` tool)]]"
 RECITE_HEAD = "[[RULES in force (from NOTES); apply every one that covers this before you answer]]"
 MEMORY_NOTE = """
@@ -602,7 +603,10 @@ class Keeper:
         still = s.state.get("kept_open") if self.notes_mode == "inplace" else None
         if still is not None and h <= still < h + s.state["cut"]:
             # a tool result cannot stand without its call: it is shown as a message of the keeper's
-            mid.append({"role": "user", "content": OPEN_HEAD + "\n" + text_of(messages[still])[:12000]})
+            text = text_of(messages[still])
+            if len(text) > OPEN_CHARS:
+                text = text[:OPEN_CHARS] + f"\n[cut here: {len(text) - OPEN_CHARS} more characters; `recall` has the whole message]"
+            mid.append({"role": "user", "content": OPEN_HEAD + "\n" + text})
         return messages[:h] + [self.pin(s)] + mid
 
     def view(self, s: Session, messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -641,20 +645,24 @@ class Keeper:
             if self.think_until is not None and m.get("role") != "assistant" and self.think_until.search(text_of(m)):
                 break
         s.state["kept_user"] = at if at is not None and at < h + s.state["cut"] else None
-        # The same for a question that arrived in a tool result (--think-when) and is still open: the in-place cut
-        # waits for it, the ordinary cut does not. (The harness arm lost seven answers at 1M when its ordinary cut
-        # moved the question item out of view while the model was still fetching archived items for it.)
-        still = None
-        for i in range(len(messages) - 1, h - 1, -1):
-            m = messages[i]
-            if m.get("role") == "assistant":
-                continue
-            text = text_of(m)
-            if m.get("role") == "tool" and self.think_when is not None and self.think_when.search(text):
-                still = i
-                break
-            if m.get("role") == "user" or (self.think_until is not None and self.think_until.search(text)):
-                break
+        # The same for a question that arrived in a tool result and is still open: the in-place cut waits for it, the
+        # ordinary cut does not. (The harness arm lost seven answers at 1M when its ordinary cut moved the question
+        # item out of view while the model was still fetching archived items for it.) A question is a tool result
+        # that matches --recite-when (else --think-when); only a message that matches --think-until closes it, so
+        # without --think-until nothing is kept: a failed command, another match of --think-when or a client's
+        # nudge in between must not take the pin away, and a match must not stay pinned for ever.
+        still, asks = None, (self.recite_when or self.think_when)
+        if asks is not None and self.think_until is not None:
+            for i in range(len(messages) - 1, h - 1, -1):
+                m = messages[i]
+                if m.get("role") == "assistant":
+                    continue
+                text = text_of(m)
+                if self.think_until.search(text):
+                    break
+                if m.get("role") == "tool" and asks.search(text):
+                    still = i
+                    break
         s.state["kept_open"] = still if still is not None and still < h + s.state["cut"] else None
 
     def notes_call(self, s: Session, model: Any, head: list[dict[str, Any]], gone: list[dict[str, Any]], upto: int = 0) -> None:
@@ -762,13 +770,15 @@ class Keeper:
         if size <= self.inplace_tokens or s.state.get("hold"):
             return False                             # too little yet, or an attempt failed and the ordinary cut is awaited
         found = self.opener(body)
-        if found and found[0] == "pattern":
+        if (found and found[0] == "pattern") or s.state.get("kept_open") is not None:
             return False                             # a question that arrived in a tool result is open: it stays in view
         base = self.fixed(s, messages, h) + noted
-        kept_shown = s.state["cut"] and len(self.fixed(s, messages, h)) > h + 1
+        kept_shown = len(self.fixed(s, messages, h)) - h - 1 if s.state["cut"] else 0
         start = ("first turn after the opening messages" if not s.state["cut"] else
                  "first turn after the user message that follows the NOTES (that message is already in the NOTES; it "
-                 "is shown only because it is still being worked on, so do not count it again)" if kept_shown else
+                 "is shown only because it is still being worked on, so do not count it again)" if kept_shown == 1 else
+                 f"first turn after the {kept_shown} messages that follow the NOTES (those are already in the NOTES; "
+                 "they are shown only because they are still being worked on, so do not count them again)" if kept_shown else
                  "message that holds the NOTES")
         overlap = OVERLAP_NOTE if s.state["cut"] and noted and noted[0].get("role") == "assistant" else ""
         req = base + [{"role": "user", "content": INPLACE_REQUEST.format(start=start, overlap=overlap)}]

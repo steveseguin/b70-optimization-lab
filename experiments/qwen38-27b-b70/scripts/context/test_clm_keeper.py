@@ -318,8 +318,54 @@ class Keeper(unittest.TestCase):
         self.assertEqual(NS["open_question"](body), 3)                              # recall output does not close it
         self.assertIsNone(NS["open_question"](body + [{"role": "assistant", "content": ""}, tool("ITEM 610/618 (UPDATE)\nmore text")]))
         self.assertIsNone(NS["open_question"](body[:2]))
-        kept = [{"role": "user", "content": NS["OPEN_QUESTION"] + "\n" + ask["content"]}] + body[5:]
-        self.assertEqual(NS["open_question"](kept), 0)                              # the kept copy is still the open question
+        # an archived question item printed by `recall --item N` is not a question that was asked now
+        old = tool("ITEM 441 (archived)\nPROBE: answer these questions now.\nASK p21_1: What value does faxamo72 hold now?")
+        self.assertIsNone(NS["open_question"](body[:2] + [{"role": "assistant", "content": ""}, old]))
+        self.assertEqual(NS["open_question"](body + [{"role": "assistant", "content": ""}, old]), 3)
+
+    def test_the_ordinary_cut_keeps_an_open_question_and_lets_go_of_an_answered_one(self):
+        tool = lambda text: {"role": "tool", "content": text}
+        ask = tool("ITEM 609/618 (PROBE)\nPROBE: answer these questions now.\nASK p29_1: What value does javo77 hold now?")
+        fetch = [{"role": "assistant", "content": ""}, tool("ITEM 468 (archived)\nketaqi61 now stands at 12.")]
+        body = [{"role": "assistant", "content": "next"}, tool("ITEM 608/618 (UPDATE)\ntext"), {"role": "assistant", "content": ""}, ask] + fetch * 3
+        kept = NS["kept_question"](body, 6)                                          # the cut takes the question item
+        self.assertEqual(len(kept), 1)
+        self.assertEqual((kept[0]["role"], kept[0]["content"]), ("user", NS["OPEN_QUESTION"] + "\n" + ask["content"]))
+        self.assertEqual(NS["kept_question"](body, 3), [])                           # the cut stops before it: nothing to keep
+        self.assertEqual(NS["kept_question"](body[:2], 2), [])                       # no question open
+        view = kept + fetch * 2                                                      # as it stands after the cut
+        self.assertEqual(NS["open_question"](view), 0)
+        self.assertFalse(NS["answered_copy"](view))
+        self.assertEqual(NS["kept_question"](view, 3), kept)                         # cut again: the same text, the head not doubled
+        self.assertTrue(NS["wants_thinking"]([{"role": "system", "content": "s"}, {"role": "user", "content": "task"}] + view))
+        moved_on = view + [{"role": "assistant", "content": ""}, tool("ITEM 610/618 (UPDATE)\nmore text\n\n(exit_code=0)")]
+        self.assertTrue(NS["answered_copy"](moved_on))
+        self.assertFalse(NS["answered_copy"](moved_on[1:]))
+
+    def test_recall_shows_the_nearest_matches_and_counts_first(self):
+        import subprocess, sys, tempfile
+        d = tempfile.TemporaryDirectory()
+        self.addCleanup(d.cleanup)
+        arch = Path(d.name) / "archive"
+        arch.mkdir()
+        for i in list(range(1, 61)) + [1000, 1001]:                                  # file names sort wrongly from item 1000 on
+            (arch / f"item-{i:03d}.txt").write_text(f"The fog lifted. diro90 was set to {i * 3}. It rained.\n\nThe cook slept.")
+        tool = Path(d.name) / "recall.py"
+        tool.write_text((Path(__file__).parent / "recall.py").read_text().replace('D = "/tmp/.live_ctx/archive"', f'D = "{arch}"'))
+        run = lambda *a: subprocess.run([sys.executable, str(tool), *a], capture_output=True, text=True).stdout.strip().splitlines()
+        out = run("diro90", "--before", "48")
+        self.assertEqual(out[0], "[48 matches; showing the 40 nearest before item 48; 8 earlier ones are not shown: narrow with --after N]")
+        self.assertEqual((out[1], out[-1], len(out)), ("item 9: diro90 was set to 27. It rained.", "item 48: diro90 was set to 144. It rained.", 41))
+        self.assertEqual(run("diro90", "--before=48"), out)
+        out = run("diro90")
+        self.assertTrue(out[0].startswith("[62 matches; showing the newest 40; 22 earlier ones are not shown"))
+        self.assertEqual(out[-2:], ["item 1000: diro90 was set to 3000. It rained.", "item 1001: diro90 was set to 3003. It rained."])
+        out = run("diro90", "--after", "5", "--max-lines", "3")
+        self.assertEqual(out, ["[58 matches; showing the first 3 from item 5 on; 55 later ones are not shown: narrow with --before N]",
+                               "item 5: diro90 was set to 15. It rained.", "item 6: diro90 was set to 18. It rained.", "item 7: diro90 was set to 21. It rained."])
+        self.assertEqual(run("diro90", "--after", "59", "--before", "60"), ["item 59: diro90 was set to 177. It rained.", "item 60: diro90 was set to 180. It rained."])
+        self.assertEqual(run("zebra", "--before", "9"), ["recall: no archived sentence matches 'zebra' up to item 9"])
+        self.assertEqual(run("--item", "7")[:2], ["ITEM 7 (archived)", "The fog lifted. diro90 was set to 21. It rained."])
 
     def test_a_misspelled_name_is_put_right(self):
         mentions = {"vozimi36": 1, "abcd12": 2, "vozu36": 1, "wxyz56": 1}

@@ -902,11 +902,27 @@ def open_question(body: list[dict[str, Any]]) -> int | None:
         if m.get("role") == "assistant":
             continue
         text = str(m.get("content") or "")
-        if ASKED.search(text):
-            return i
-        if m.get("role") == "tool" and ITEMS.search(text):
+        delivered = (m.get("role") == "tool" and bool(ITEMS.search(text))) or text.startswith(OPEN_QUESTION)
+        if delivered and ASKED.search(text):
+            return i                                 # not `recall --item N` printing an archived question item
+        if delivered:
             return None                              # a later item was delivered: the question is behind us
     return None
+
+
+def kept_question(body: list[dict[str, Any]], n_gone: int) -> list[dict[str, Any]]:
+    """What a cut of the first `n_gone` messages of `body` keeps in view: the open question as one message of the
+    harness's, if the cut would take it; else nothing."""
+    asked = open_question(body)
+    if asked is None or asked >= n_gone:
+        return []
+    text = str(body[asked].get("content") or "")
+    return [{"role": "user", "content": text if text.startswith(OPEN_QUESTION) else OPEN_QUESTION + "\n" + text}]
+
+
+def answered_copy(body: list[dict[str, Any]]) -> bool:
+    """True when `body` starts with a kept copy of a question that is no longer the open one."""
+    return bool(body) and str(body[0].get("content") or "").startswith(OPEN_QUESTION) and open_question(body) != 0
 
 
 def under_accounted(mentions: dict[str, int], steps: dict[str, int]) -> list[str]:
@@ -1024,7 +1040,10 @@ def wants_thinking(messages: list[dict[str, Any]]) -> bool:
     if codes and codes[-1] != "0":
         return True
     for m in reversed(messages):                     # the newest delivery: is it a question item?
-        text = str(m.get("content") or "") if m.get("role") == "tool" else ""
+        text = str(m.get("content") or "")
+        if m.get("role") == "user" and text.startswith(OPEN_QUESTION):
+            return True                              # the question, kept in view by the ordinary cut, is still open
+        text = text if m.get("role") == "tool" else ""
         if ITEMS.search(text):
             return bool(ASKS.search(text) or QUESTION.search(text))
     return False
@@ -1430,6 +1449,9 @@ class KeeperAgent(TruncateAgent):
         limit = self._budget.strict_target
         if not limit:
             return
+        start, prev = self._head(messages)
+        if answered_copy(messages[start:]):            # the question it held has been answered and left behind
+            del messages[start]
         before = self._budget.count(messages)
         if self.notes_inplace and await self._keep_inplace(environment, messages, before):
             return
@@ -1437,6 +1459,8 @@ class KeeperAgent(TruncateAgent):
             return
         start, prev = self._head(messages)
         head, body = messages[:self._protect], messages[start:]
+        copy = body[:1] if body and str(body[0].get("content") or "").startswith(OPEN_QUESTION) else []
+        body = body[len(copy):]                       # a kept question is carried over as it is: not a turn, not noted again
         starts = [k for k, m in enumerate(body) if m.get("role") == "assistant"]
         if starts and starts[0] > 0:
             starts.insert(0, 0)                       # leading non-assistant messages count as one turn
@@ -1450,12 +1474,8 @@ class KeeperAgent(TruncateAgent):
         if not n:
             return
         gone = body[:len(body) - len(keep)]
-        asked = open_question(body)                   # an open question never leaves the view (see open_question)
-        still = []
-        if asked is not None and asked < len(gone):
-            text = str(body[asked].get("content") or "")
-            still = [{"role": "user", "content": text if text.startswith(OPEN_QUESTION) else OPEN_QUESTION + "\n" + text}]
-            self.n_questions_kept += 1
+        still = copy or kept_question(body, len(gone))    # an open question never leaves the view (see open_question)
+        self.n_questions_kept = getattr(self, "n_questions_kept", 0) + int(bool(still) and not copy)
         self._pin_tail, self.inplace_turn_hold = "", 0     # the turns that an in-place call could not note are going now
         rec: dict[str, Any] = {"reason": "keep", "turns_dropped": n, "before": before,
                                "items_archived": await self._archive(environment, gone)}
@@ -1739,7 +1759,7 @@ class KeeperAgent(TruncateAgent):
                     "notes_mode": self.notes_mode, "delta_fallbacks": self.n_delta_fallbacks,
                     "notes_chunk_tokens": self.notes_chunk_tokens, "notes_inplace": self.notes_inplace,
                     "inplace_cuts": self.n_inplace, "inplace_failed": self.n_inplace_failed,
-                    "inplace_redone_with_thinking": self.n_inplace_redone, "questions_kept_in_view": self.n_questions_kept,
+                    "inplace_redone_with_thinking": self.n_inplace_redone, "questions_kept_in_view": getattr(self, "n_questions_kept", 0),
                     "mention_check": self.mention_check, "mention_reasks": self.n_mention_reasks,
                     "inplace_failures": self.inplace_failures[:20], "inplace_prompt_tokens": self.inplace_prompt,
                     "inplace_cached_tokens": self.inplace_cached, "inplace_turn_tokens": self.inplace_turn_tokens,

@@ -127,5 +127,31 @@ async def main():
     assert rec["reason"] == "keep" and rec["notes_pieces"] >= 2 and "abcd12: 306" in a.notes and "R one" in a.notes, (rec, a.notes)
     assert msgs[2]["content"].startswith("[[NOTES kept") and msgs[-1]["role"] == "tool"
     print("6 ok:", {k: rec[k] for k in ("turns_dropped", "notes_pieces", "notes_attempts", "before", "after")}, "| calls", len(a.calls))
+    # 7. the ordinary cut while a question is open: the question stays in view as one message of the harness's (N32n at
+    #    1M lost seven answers when it did not); cut again: still one copy; the next delivery lets it go
+    a = agent([reply("NEW RULES\n(none)\nCHANGES\n(none)\nOPEN\n")] * 12, notes_inplace=False)
+    a._budget.strict_target = 1100
+    a._delivered = {i: f"item {i} text" for i in range(1, 5)}
+    msgs = convo(4, ask_last=True)
+    def fetch(k):
+        return [{"role": "assistant", "content": "", "tool_calls": [{"function": {"name": "bash", "arguments": json.dumps({"command": f"recall --item {k}"})}}]},
+                {"role": "tool", "content": f"ITEM {k} (archived)\n" + "old text. " * 60 + "\n\n(exit_code=0)"}]
+    for k in range(6):
+        msgs += fetch(k)
+    await a._keep(Env(), msgs)
+    head = [str(m.get("content"))[:40] for m in msgs[:5]]
+    assert msgs[2]["content"].startswith("[[NOTES kept") and msgs[3]["role"] == "user" and msgs[3]["content"].startswith(ck.OPEN_QUESTION), head
+    assert "ASK p1_1: What value does abcd12 hold now?" in msgs[3]["content"] and a.manage_calls[-1].get("question_kept") and ck.wants_thinking(msgs)
+    assert a.n_questions_kept == 1
+    for k in range(6, 12):
+        msgs += fetch(k)
+    await a._keep(Env(), msgs)
+    assert sum(str(m.get("content")).startswith(ck.OPEN_QUESTION) for m in msgs) == 1 and msgs[3]["content"].startswith(ck.OPEN_QUESTION)
+    assert msgs[3]["content"].count(ck.OPEN_QUESTION) == 1 and a.n_questions_kept == 1
+    msgs += [{"role": "assistant", "content": "", "tool_calls": [{"function": {"name": "bash", "arguments": json.dumps({"command": "next"})}}]},
+             {"role": "tool", "content": "ITEM 5/9 (UPDATE)\n" + "x went up by forty-nine. " * 4 + "\n\n(exit_code=0)"}]
+    await a._keep(Env(), msgs)
+    assert not any(str(m.get("content")).startswith(ck.OPEN_QUESTION) for m in msgs), [str(m.get("content"))[:40] for m in msgs[:5]]
+    print("7 ok: an open question survives two ordinary cuts and is let go at the next delivery")
     print("ALL OK")
 asyncio.run(main())

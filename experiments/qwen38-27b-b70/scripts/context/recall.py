@@ -29,11 +29,14 @@ def items():
         m = re.fullmatch(r"item-(\d+)\.txt", f)
         if m:
             out.append((int(m.group(1)), open(os.path.join(D, f), errors="replace").read()))
-    return out
+    return sorted(out)                               # by item number: file names sort wrongly from item 1000 on
 
 
 def main():
-    args = sys.argv[1:]
+    args = []
+    for a in sys.argv[1:]:                           # `--before=300` is `--before 300`
+        m = re.fullmatch(r"(--(?:max-lines|before|after|item))=(.*)", a)
+        args += [m.group(1), m.group(2)] if m else [a]
     opt = {}
     for name in ("--max-lines", "--before", "--after"):
         if name in args:
