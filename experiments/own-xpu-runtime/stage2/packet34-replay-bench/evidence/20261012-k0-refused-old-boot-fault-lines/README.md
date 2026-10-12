@@ -9,7 +9,8 @@ work; the coordinator reports about forty clean packet 17–33 windows since.
 The refusal did not report a new incident.
 
 The original boot latch and the complete `build/k0-r34` directory were moved
-here byte-for-byte. `SHA256SUMS` verifies those original bytes. The refused
+here byte-for-byte, including three original trailing spaces in the kernel log.
+`SHA256SUMS` verifies those original bytes. The refused
 `window.json` records `device_executed=false`, with no PID or command; the
 latch has `pid=null`. The original hash-bound build receipt is also retained.
 There is no active packet 34 latch left from this refusal. No device coredump
