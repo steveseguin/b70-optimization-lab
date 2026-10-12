@@ -316,6 +316,22 @@ class InPlace(unittest.TestCase):
         self.assertTrue(view[2]["content"].startswith("[[NOTES kept"))
         self.assertEqual(view[3], conversation(20)[2 + s.state["cut"]])            # straight on to the recent turns
 
+    def test_an_asked_for_reply_with_only_the_corrected_line_loses_nothing(self):
+        """Campaign 11, X32i seed 1: the model answered a re-ask with one line and the changes of nine items were gone."""
+        first = "NEW RULES\n- R one.\nCHANGES\nstock: 99 + 1 = 100\nabcd00: 0\nabcd01: 7\nOPEN\n- watch stock"
+        only = "NEW RULES\n(none)\nCHANGES\nstock: 7 + 1 = 8\nOPEN\n"
+        nothing = "NEW RULES\n(none)\nCHANGES\n(none)\nOPEN\n"
+        for second, stock in ((only, "stock: 8"), (nothing, "stock: 100")):
+            model = LedgerModel(script=["NEW RULES\n(none)\nCHANGES\nstock: 7\nOPEN\n", first, second])
+            keeper = self.keeper(model)
+            s = self.run_conversation(keeper, 6)
+            self.assertEqual(s.state["inplace_cuts"], 2)
+            for line in (stock, "abcd00: 0", "abcd01: 7"):
+                self.assertIn(line, s.state["notes"])
+            self.assertEqual(ck.rule_lines(s.state["notes"]), ["R one."])
+            events = (Path(self.dir.name) / next(iter(keeper.sessions)) / "events.jsonl").read_text()
+            self.assertIn('"event": "in-place notes reply"', events)               # every reply is kept for later reading
+
     def test_options_are_checked(self):
         with self.assertRaises(ValueError):
             ck.Keeper(lambda b: None, Path(tempfile.gettempdir()), notes_mode="fast")

@@ -656,6 +656,7 @@ class Keeper:
         strict = self.notes_checks in ("count", "near")
         thinking, asked_count, asked_working, asked_layout = self.notes_thinking, not strict, False, False
         rules_seen: list[str] = []
+        earlier: dict | None = None                  # the reply before an asked-for one (see notesdelta.merge_replies)
         why, new, info = "no reply", "", {}
         for attempt in (1, 2, 3, 4):
             out: dict[str, Any] = {"model": model, "messages": req, "max_tokens": self.notes_max_tokens, "temperature": 0}
@@ -680,6 +681,8 @@ class Keeper:
             s.state["notes_cached_tokens"] += (usage.get("prompt_tokens_details") or {}).get("cached_tokens") or 0
             s.state["notes_written_tokens"] += usage.get("completion_tokens") or 0
             delta = nd.parse_delta(text) if finish != "length" else None
+            s.log_event({"event": "in-place notes reply", "attempt": attempt, "finish_reason": finish, "thinking": thinking,
+                         "written": usage.get("completion_tokens"), "reply": text[:6000]})
             if delta is None:
                 why = "reply cut off by the token cap" if finish == "length" else "reply without the NEW RULES / CHANGES layout"
                 part = nd.parse_delta(text, need_changes=False)      # its rules still count, if that section is complete
@@ -694,6 +697,8 @@ class Keeper:
                 continue
             # a rule named in any reply of this cut is kept: a second, asked-for reply that leaves it out must not lose it
             rules_seen += [r for r in delta["rules"] if not any(nd.same_rule(r, x) for x in rules_seen)]
+            # an asked-for reply replaces the lines of the names it mentions; the other lines of the reply before it stay
+            delta = earlier = nd.merge_replies(earlier, delta)
             delta["rules"] = list(rules_seen)
             known = nd.state_keys(s.state["notes"]) + [k for k, _ in delta["changes"]]
             near = nd.numbers_near(known, texts) if self.notes_checks == "near" else None

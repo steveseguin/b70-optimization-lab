@@ -212,6 +212,20 @@ class Keeper(unittest.TestCase):
         self.assertEqual(NS["apply_delta"](notes, {"changes": [("mnop78", "-62")]}, seen, strict=True)[1]["mismatch"], [])   # the looser test passes it
         self.assertEqual(ap([("mnop78", "591 + 1 = 592")]), ["mnop78: working starts from 591, NOTES hold 5"])              # 591 is abcd12's
 
+    def test_an_asked_for_reply_does_not_lose_what_the_first_one_had(self):
+        first = {"rules": ["R one"], "changes": [("abcd12", "7 + 5 = 12"), ("efgh34", "9"), ("wxyz56", "removed"), ("zzzz11", "3")], "open": ["- a"]}
+        partial = {"rules": [], "changes": [("efgh34", "9 + 1 = 10"), ("zzzz11", "(no change)")], "open": None}
+        m = NS["merge_replies"](first, partial)
+        self.assertEqual(m["changes"], [("abcd12", "7 + 5 = 12"), ("wxyz56", "removed"), ("efgh34", "9 + 1 = 10"), ("zzzz11", "(no change)")])
+        self.assertEqual((m["rules"], m["open"]), (["R one"], ["- a"]))
+        new, info = NS["apply_delta"]("RULES\n(none)\nSTATE\nabcd12: 7\nefgh34: 9\nwxyz56: 4\nOPEN", m)
+        self.assertEqual(new.splitlines()[2:], ["STATE", "abcd12: 12", "efgh34: 10", "wxyz56: removed", "OPEN", "- a"])   # zzzz11 withdrawn
+        empty = {"rules": ["R two"], "changes": [], "open": []}
+        self.assertEqual(NS["merge_replies"](first, empty), {"rules": ["R one", "R two"], "changes": first["changes"], "open": []})
+        whole = {"rules": [], "changes": [("abcd12", "7 + 5 = 12"), ("efgh34", "9"), ("wxyz56", "removed")], "open": ["- b"]}
+        self.assertEqual(NS["merge_replies"](first, whole)["changes"][-3:], whole["changes"])       # a complete second reply stands for its names
+        self.assertEqual(NS["merge_replies"](None, whole), whole)
+
     def test_review_2_cases(self):
         """The cases of the second review (2026-10-12): signs, annotated numbers, arrows, a set used twice, steps."""
         tool = lambda text: {"role": "tool", "content": text + "\n\n(exit_code=0)"}

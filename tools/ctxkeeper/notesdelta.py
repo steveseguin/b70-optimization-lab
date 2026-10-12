@@ -278,6 +278,21 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
     return "\n".join(["RULES"] + (rules or ["(none)"]) + ["STATE"] + state + ["OPEN"] + opened), info
 
 
+def merge_replies(first: dict | None, second: dict) -> dict:
+    """What to apply when a reply was asked for again: the second reply's lines for every name it mentions (also
+    `name: (no change)`, which withdraws the first reply's lines for that name), and the first reply's lines for
+    the names the second does not mention; rules from both; the newer OPEN section if it has one.
+    Why: the retry asks for "the three complete sections again", but a model sometimes answers with only the lines
+    that were in question, or with (none). The proxy's second 240K run (campaign 11, X32i seed 1) applied such a
+    reply on its own and lost every change of nine items: 15 counters wrong in the NOTES, 6 answers."""
+    if not first:
+        return second
+    named = {k for k, _ in second["changes"]}
+    rules = list(first["rules"]) + [r for r in second["rules"] if not any(same_rule(r, x) for x in first["rules"])]
+    return {"rules": rules, "changes": [(k, v) for k, v in first["changes"] if k not in named] + list(second["changes"]),
+            "open": second["open"] if second.get("open") is not None else first.get("open")}
+
+
 def section_of(line: str) -> str:
     """RULES, STATE or OPEN if the line is that heading (plain, with a colon, or as a markdown heading), else ''."""
     head = line.strip().strip("#*_ ").rstrip(":").strip("*_ ").upper()

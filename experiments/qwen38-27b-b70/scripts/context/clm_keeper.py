@@ -507,6 +507,21 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
     return "\n".join(["RULES"] + (rules or ["(none)"]) + ["STATE"] + state + ["OPEN"] + opened), info
 
 
+def merge_replies(first: dict | None, second: dict) -> dict:
+    """What to apply when a reply was asked for again: the second reply's lines for every name it mentions (also
+    `name: (no change)`, which withdraws the first reply's lines for that name), and the first reply's lines for
+    the names the second does not mention; rules from both; the newer OPEN section if it has one.
+    Why: the retry asks for "the three complete sections again", but a model sometimes answers with only the lines
+    that were in question, or with (none). The proxy's second 240K run (campaign 11, X32i seed 1) applied such a
+    reply on its own and lost every change of nine items: 15 counters wrong in the NOTES, 6 answers."""
+    if not first:
+        return second
+    named = {k for k, _ in second["changes"]}
+    rules = list(first["rules"]) + [r for r in second["rules"] if not any(same_rule(r, x) for x in first["rules"])]
+    return {"rules": rules, "changes": [(k, v) for k, v in first["changes"] if k not in named] + list(second["changes"]),
+            "open": second["open"] if second.get("open") is not None else first.get("open")}
+
+
 def section_of(line: str) -> str:
     """RULES, STATE or OPEN if the line is that heading (plain, with a colon, or as a markdown heading), else ''."""
     head = line.strip().strip("#*_ ").rstrip(":").strip("*_ ").upper()
@@ -1238,6 +1253,7 @@ class KeeperAgent(TruncateAgent):
         base, seen, why = req, numbers_in(render_turns(body)), "no reply"
         thinking, hinted = self.notes_thinking, not self.mention_check
         rules_seen: list[str] = []                    # a rule named in any reply of this cut is kept: a second reply
+        earlier: dict | None = None                   # the reply before an asked-for one (see merge_replies)
         for _attempt in (1, 2, 3, 4):                 # that leaves it out must not lose it (hard stream, 2026-10-12)
             # a reply without the layout is asked for once more; working that cannot be trusted is asked for again
             # from the start with thinking on (first run of N32x: one such reply ended the in-place cuts for good)
@@ -1261,12 +1277,13 @@ class KeeperAgent(TruncateAgent):
                 rec["layout_retries"] = 1
                 req = req + [{"role": "assistant", "content": text}, {"role": "user", "content": DELTA_RETRY}]
                 continue
+            rules_seen += [r for r in delta["rules"] if not any(same_rule(r, x) for x in rules_seen)]
+            delta = earlier = merge_replies(earlier, delta)
+            delta["rules"] = list(rules_seen)
             near = None
             known = state_keys(self.notes) + [k for k, _ in delta["changes"]]
             if self.mention_check == "near":
                 near = numbers_near(known, body)
-            rules_seen += [r for r in delta["rules"] if not any(same_rule(r, x) for x in rules_seen)]
-            delta["rules"] = list(rules_seen)
             new, info = apply_delta(self.notes, delta, seen, strict=self.mention_check in ("count", "near"), near=near)
             steps = info.pop("steps")
             if hinted:

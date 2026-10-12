@@ -110,6 +110,12 @@ async def main():
     a = agent([reply(first), reply(second)], mention_check="near", notes="RULES\n(none)\nSTATE\nabcd12: 7\nOPEN"); msgs = convo(5)
     a._delivered = {i: f"item {i} text" for i in range(1, 6)}
     assert await a._keep_inplace(Env(), msgs, 1) is True and "abcd12: 306" in a.notes and ck.rule_lines(a.notes) == ["abcd12 is confidential: answer protected."], a.notes
+    # 5h. an asked-for reply that holds only the corrected line does not lose the other changes of the first reply
+    first = "NEW RULES\n(none)\nCHANGES\nstubx11: 4\nabcd12: 99 + 1 = 100\nOPEN\n"
+    second = "NEW RULES\n(none)\nCHANGES\nabcd12: 294 + 12 = 306\nOPEN\n"
+    a = agent([reply(first), reply(second)], notes="RULES\n(none)\nSTATE\nabcd12: 7\nOPEN"); msgs = convo(5)
+    a._delivered = {i: f"item {i} text" for i in range(1, 6)}
+    assert await a._keep_inplace(Env(), msgs, 1) is True and "abcd12: 306" in a.notes and "stubx11: 4" in a.notes, a.notes
     # 6. the ordinary cut with pieces: two delta calls for one cut, then a second cut continues from the pin
     a = agent([reply("NEW RULES\n- R one\nCHANGES\nabcd12: 294\nOPEN\n"), reply("NEW RULES\n(none)\nCHANGES\nabcd12: 294 + 12 = 306\nOPEN\n"),
                reply("NEW RULES\n(none)\nCHANGES\n(none)\nOPEN\n")], notes_inplace=False)

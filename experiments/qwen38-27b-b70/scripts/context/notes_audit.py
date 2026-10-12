@@ -38,7 +38,7 @@ for f in sorted(glob.glob(t + "agent/context_snapshots/turn-*.json")):
         if sec == "STATE" and s:
             m = re.match(r"`?([a-z]+\d\d)`?\s*[:=]?\s*(.*)$", s)
             if m:
-                v = re.sub(r"\([^()]*\)", " ", m.group(2)).strip()        # as clm_keeper.number_of: the last number counts
+                v = re.sub(r"\([^()]*\)", " ", m.group(2)).replace("\u2212", "-").strip()        # as clm_keeper.number_of: the last number counts
                 v = re.split(r"\u2192|->|=>", v)[-1].strip()                # "286 -> removed": what it is now comes last
                 nums = re.findall(r"(?<![\w.])-?\d[\d,]*(?![\d.]*\d)", v)
                 gone = re.match(r"(removed|closed|struck|deleted|gone)\b", v.lower())
