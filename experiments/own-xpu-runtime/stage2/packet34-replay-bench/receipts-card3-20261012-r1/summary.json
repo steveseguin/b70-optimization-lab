@@ -1,0 +1,197 @@
+{
+  "passed": true,
+  "device_executed": true,
+  "state_matches": 420,
+  "final_state_sha256": "2683431fd2a339606d1175616c0509986b380eb01403e59f1f4e53ef950c94b9",
+  "measured_iterations_per_mode": 200,
+  "modes": {
+    "direct": {
+      "wall_ns": {
+        "median": 19823266.5,
+        "mean": 19829870.105,
+        "min": 18822369,
+        "max": 20839523
+      },
+      "thread_cpu_ns": {
+        "median": 19823003.0,
+        "mean": 19827855.63,
+        "min": 18804918,
+        "max": 20836308
+      },
+      "direct_gpu_ns": {
+        "median": 19520360.0,
+        "mean": 19541204.95,
+        "min": 18513764,
+        "max": 20526881
+      }
+    },
+    "graph-whole": {
+      "wall_ns": {
+        "median": 19857781.5,
+        "mean": 19893439.67,
+        "min": 18890998,
+        "max": 20876492
+      },
+      "thread_cpu_ns": {
+        "median": 19857372.5,
+        "mean": 19890512.685,
+        "min": 18888414,
+        "max": 20874019
+      }
+    },
+    "graph-layer": {
+      "wall_ns": {
+        "median": 20109364.5,
+        "mean": 20122369.43,
+        "min": 19053293,
+        "max": 21125982
+      },
+      "thread_cpu_ns": {
+        "median": 20105954.0,
+        "mean": 20120153.3,
+        "min": 19055729,
+        "max": 21122876
+      }
+    }
+  },
+  "speed_claim": false,
+  "memory": {
+    "allocation_accounting_within_bound": true,
+    "driver_counter_available": true,
+    "driver_growth_bytes": 106987520,
+    "bounded_memory_proven": true,
+    "recordings": [
+      {
+        "mode": "graph-whole",
+        "recording": 1,
+        "record_finalize_ns": 22748202,
+        "host_rss_before": 1214853120,
+        "host_rss_after": 1215115264,
+        "application_device_bytes": 4766268444,
+        "graph_required_bytes_total": 0,
+        "graphs_retained": 1,
+        "nodes": 1142,
+        "driver_memory_before": {
+          "available": true,
+          "free_bytes": 29044715520,
+          "total_bytes": 34242297856
+        },
+        "driver_memory_after": {
+          "available": true,
+          "free_bytes": 29035433984,
+          "total_bytes": 34242297856
+        }
+      },
+      {
+        "mode": "graph-whole",
+        "recording": 2,
+        "record_finalize_ns": 6829324,
+        "host_rss_before": 1215115264,
+        "host_rss_after": 1215135744,
+        "application_device_bytes": 4766268444,
+        "graph_required_bytes_total": 0,
+        "graphs_retained": 2,
+        "nodes": 1142,
+        "driver_memory_before": {
+          "available": true,
+          "free_bytes": 29035433984,
+          "total_bytes": 34242297856
+        },
+        "driver_memory_after": {
+          "available": true,
+          "free_bytes": 29033857024,
+          "total_bytes": 34242297856
+        }
+      },
+      {
+        "mode": "graph-whole",
+        "recording": 3,
+        "record_finalize_ns": 6543035,
+        "host_rss_before": 1215135744,
+        "host_rss_after": 1215152128,
+        "application_device_bytes": 4766268444,
+        "graph_required_bytes_total": 0,
+        "graphs_retained": 3,
+        "nodes": 1142,
+        "driver_memory_before": {
+          "available": true,
+          "free_bytes": 29033857024,
+          "total_bytes": 34242297856
+        },
+        "driver_memory_after": {
+          "available": true,
+          "free_bytes": 29032284160,
+          "total_bytes": 34242297856
+        }
+      },
+      {
+        "mode": "graph-layer",
+        "recording": 1,
+        "record_finalize_ns": 24673813,
+        "host_rss_before": 1215152128,
+        "host_rss_after": 1215172608,
+        "application_device_bytes": 4766268444,
+        "graph_required_bytes_total": 0,
+        "graphs_retained": 27,
+        "nodes": 1142,
+        "driver_memory_before": {
+          "available": true,
+          "free_bytes": 29032284160,
+          "total_bytes": 34242297856
+        },
+        "driver_memory_after": {
+          "available": true,
+          "free_bytes": 29000765440,
+          "total_bytes": 34242297856
+        }
+      },
+      {
+        "mode": "graph-layer",
+        "recording": 2,
+        "record_finalize_ns": 24924205,
+        "host_rss_before": 1215172608,
+        "host_rss_after": 1215188992,
+        "application_device_bytes": 4766268444,
+        "graph_required_bytes_total": 0,
+        "graphs_retained": 51,
+        "nodes": 1142,
+        "driver_memory_before": {
+          "available": true,
+          "free_bytes": 29000765440,
+          "total_bytes": 34242297856
+        },
+        "driver_memory_after": {
+          "available": true,
+          "free_bytes": 28969242624,
+          "total_bytes": 34242297856
+        }
+      },
+      {
+        "mode": "graph-layer",
+        "recording": 3,
+        "record_finalize_ns": 26889741,
+        "host_rss_before": 1215188992,
+        "host_rss_after": 1215209472,
+        "application_device_bytes": 4766268444,
+        "graph_required_bytes_total": 0,
+        "graphs_retained": 75,
+        "nodes": 1142,
+        "driver_memory_before": {
+          "available": true,
+          "free_bytes": 28969242624,
+          "total_bytes": 34242297856
+        },
+        "driver_memory_after": {
+          "available": true,
+          "free_bytes": 28937728000,
+          "total_bytes": 34242297856
+        }
+      }
+    ]
+  },
+  "replay_pays": {
+    "graph-whole": false,
+    "graph-layer": false
+  },
+  "criterion": "median replay wall <= median direct sum of GPU kernel durations; every iteration bytes identical; measured recording-memory growth <=1GiB; RSS<8GiB. No driver counter leaves bounded-memory verdict pending."
+}

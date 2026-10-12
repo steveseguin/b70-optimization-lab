@@ -1,0 +1,94 @@
+{
+  "schema": "own-runtime.packet34.window.v1",
+  "window": "R1",
+  "card": 3,
+  "passed": true,
+  "device_executed": true,
+  "environment": {
+    "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+    "OMP_NUM_THREADS": "2",
+    "PATH": "/usr/bin:/bin"
+  },
+  "started_epoch_us": 1791773233340914,
+  "affinity": [
+    0,
+    1,
+    2,
+    3,
+    16,
+    17,
+    18,
+    19
+  ],
+  "native_nice": 0,
+  "coordinator_fault_review": {
+    "through": "2026-10-12T02:20:00Z",
+    "lines_before": 2417,
+    "fault_lines_before": 18
+  },
+  "stop_reasons": [],
+  "sealed_gates_verified": true,
+  "gate_receipts": {
+    "cpu-tests.json": "681edade154fe74dbc23644b3552fa7ad6fbb8eeeeb6cd26dc398f58b08c1229",
+    "capture-gates.json": "820d5ffb0524ba04de8672ca389edde059b7b57b6c1093eb974738e78b815c28",
+    "lifetime-tests.json": "f81466425f57ab390e275cc4ae9fad56fbb8090085a7087ca85d415511747120",
+    "window-tests.json": "6e7770fa82af3614c6c69621ad62e6c7493cf9d68a82fd334069d199c3c83655",
+    "raw-abi-gate.json": "27f0965f8ba31cd841ae0eaea4345bd646854d643152878865365f14ce535fe3"
+  },
+  "source_closure_verified": true,
+  "host_binaries_verified": {
+    "asan": "80742adc123cde4a295e9683cc93d0b5516235a5ee6945c16893089289ad6e86",
+    "host": "842e6bd5a94235079333bfd1e0b75c5c24b088731fd84bdf6f607ab2bad7a519",
+    "icpx-host": "5cf9760a0e2f805a75574032d5f1b23f64e4fb6830b5334bcdccf8d603f33b0a"
+  },
+  "boot_id": "13858eef-ec68-44ea-a67c-9444933b7100",
+  "binaries": {
+    "device/jit-smoke": "36bd44717979aa301f9c0a6be125d660724498984d0c9abea9bc42cc6014a610",
+    "device/replay-bench": "d88ddd9e41c535f752d91ec0600c6f7351cb163c4b1c3ddd4cecbf5faed91d41"
+  },
+  "build_receipt_sha256": "8041f36ec299cf5984460e5e033c83799edc552914af9b485a10765b04dad0fe",
+  "watchdog_seconds": 1200.0,
+  "expected_seconds": 300.0,
+  "expectation_enforced": false,
+  "drain_seconds": 60.0,
+  "k0_sha256": "63631a125815dc5328f1a5b866c545fc61f9ad3be9382f5b3efe5a7a05c1d51d",
+  "ldd": {
+    "returncode": 0,
+    "stdout": "\tlinux-vdso.so.1 (0x00007507ed90c000)\n\tlibcrypto.so.3 => /usr/lib/x86_64-linux-gnu/libcrypto.so.3 (0x00007507ed200000)\n\tlibze_loader.so.1 => /usr/lib/x86_64-linux-gnu/libze_loader.so.1 (0x00007507ed77f000)\n\tlibstdc++.so.6 => /usr/lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007507ece00000)\n\tlibm.so.6 => /usr/lib/x86_64-linux-gnu/libm.so.6 (0x00007507ed117000)\n\tlibgcc_s.so.1 => /usr/lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007507ed74f000)\n\tlibsycl.so.9 => /opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9 (0x00007507eca00000)\n\tlibc.so.6 => /usr/lib/x86_64-linux-gnu/libc.so.6 (0x00007507ec600000)\n\t/lib64/ld-linux-x86-64.so.2 (0x00007507ed90e000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007507ed736000)\n\tlibur_loader.so.0 => /opt/intel/oneapi/compiler/2026.0/lib/libur_loader.so.0 (0x00007507eb800000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007507ed72f000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x00007507ed72a000)\n\tlibimf.so => /opt/intel/oneapi/compiler/2026.0/lib/libimf.so (0x00007507eb200000)\n\tlibz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x00007507ed0fb000)\n\tlibsvml.so => /opt/intel/oneapi/compiler/2026.0/lib/libsvml.so (0x00007507e9a00000)\n\tlibirng.so => /opt/intel/oneapi/compiler/2026.0/lib/libirng.so (0x00007507ec907000)\n\tlibintlc.so.5 => /opt/intel/oneapi/compiler/2026.0/lib/libintlc.so.5 (0x00007507ed098000)\n",
+    "stderr": ""
+  },
+  "command": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet34-replay-bench/build/device/replay-bench",
+    "--card",
+    "3",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet34-replay-bench/build/r1-r34b/run",
+    "--authorized-device-window"
+  ],
+  "pid": 483053,
+  "anonymous_peak_bytes": 1200693248,
+  "anonymous_limit_bytes": 8589934592,
+  "anonymous_stop_bytes": 8053063680,
+  "memory_last_sample": {
+    "anonymous_bytes": 394883072,
+    "root_seen": true,
+    "processes": [
+      {
+        "pid": 483053,
+        "rss_anon_bytes": 394883072
+      }
+    ]
+  },
+  "returncode": 0,
+  "child_still_running": false,
+  "sigterm_sent": false,
+  "elapsed_seconds": 276.6775901619985,
+  "native_receipt_sha256": "d188e4c87c87dbee573267ec2e68c4f0636622753a21090c6905ece2fe92a7e3",
+  "summary_sha256": "1adc36df312514fa86b1028ec434750aadab2a7b143f1a54db2ecf8ef134fa22",
+  "summary_passed": true,
+  "replay_pays": {
+    "graph-whole": false,
+    "graph-layer": false
+  },
+  "kernel_execution": true
+}
