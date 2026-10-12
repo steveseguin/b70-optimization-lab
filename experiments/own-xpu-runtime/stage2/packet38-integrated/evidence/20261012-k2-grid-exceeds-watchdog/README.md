@@ -7,8 +7,7 @@ window's 10,800-second watchdog, before the GEMV classes even start. After 44 mi
 and 12 shapes the coordinator sent one interrupt to the wrapper process (not to the GPU
 process); the wrapper wrote its cooperative stop request, the native program finished
 its current repetition and exited cleanly within a second; no kernel fault line. The
-wrapper's failure path wrote the boot latch, kept here as `FAULT-retired.json`
-(coordinator decision: retired, a planned cooperative stop).
+wrapper recorded "coordinator stop requested" and wrote no fault latch.
 
 The partial timing is kept ([events](k2-partial-events.jsonl.gz)) and already answers
 the question the grid was for. QSA attention at capacity 256, µs per group, medians of
