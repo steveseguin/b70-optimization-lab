@@ -5458,5 +5458,19 @@
   "max_compile_jobs": 2,
   "numeric_threads_per_rank": 2,
   "max_cpu_bound_processes": 4,
-  "anonymous_memory_limit_bytes": 10000000000
+  "anonymous_memory_limit_bytes": 10000000000,
+  "nongemv_fixture_host_sha256": "5e3409d32ad481607f85170b5f418dd4ddf9b80a71d4536f2a3b62c426dc5e5e",
+  "cpu_tests_sha256": "18b7116d26497a52c9ef5584516c1b5ba75dd81a2b3a073a5e8d08becb977246",
+  "coordinator_amendments": [
+    {
+      "utc": "2026-10-12T04:25Z",
+      "file": "build-receipt.json",
+      "before_sha256": "8d28d96a836f50bfb2de4456d725221afa3212c3ffb6cda7e4a77e88234ccda4",
+      "added": {
+        "nongemv_fixture_host_sha256": "5e3409d32ad481607f85170b5f418dd4ddf9b80a71d4536f2a3b62c426dc5e5e",
+        "cpu_tests_sha256": "18b7116d26497a52c9ef5584516c1b5ba75dd81a2b3a073a5e8d08becb977246"
+      },
+      "reason": "K1a ran correctly on card 0 (111 fixtures, output hash equal to this packet's own sealed host fixture gate and to packets 29/32/35) but the inherited wrapper gate reads two build-receipt keys that this packet's restructured receipt no longer wrote; values taken from this packet's own sealed gate files, no binary, source or gate changed. K0 is rerun because it binds the receipt hash."
+    }
+  ]
 }
