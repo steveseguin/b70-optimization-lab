@@ -5,7 +5,7 @@
   "token_cap": 64,
   "suite_sha256": "0ad543d1c1f379a0b6cee88e06236e495c45eee7ba12cfcef062b6e03303e812",
   "prompts_manifest_sha256": "dc78a59a085d4d426936645a887fd3718ba6743715f5b78ebd0d2b6af543d29b",
-  "complete": false,
+  "complete": true,
   "prompts": [
     {
       "prompt_id": "incident-retrospective",
@@ -336,9 +336,39 @@
       "mean_seconds_per_position": 15.993338582677165,
       "elapsed_seconds": 2032.7139197789948,
       "cpu_seconds": 3524.665918
+    },
+    {
+      "prompt_id": "decision-memo",
+      "prompt_tokens": 60,
+      "input_bundle": "experiments/own-xpu-runtime/stage2/suite-inputs-20261012/decision-memo",
+      "input_bundle_hashes": {
+        "identity.tsv": "85992a7027dca5de4478e9a5cef4e24722a7065aca66bc1a9954d8d3f617e257",
+        "input.json": "ec9dcf9af26e98b77e2a7f6675a8ac018f4f57f054da358491eb35e3335e6b88",
+        "plan.tsv": "9926b7a266ba2774f02fe00583257ab2aaff96ee0313d350d3ba54602ae2a656",
+        "tokens.txt": "f4d15e79f8052c1598fa5a0cedaa83a9bc39e117d7d397b9938281b33f8d1069",
+        "vocab.bin": "7a0e612475366f8d368dbfee6a0a01336f1059e71fa98d91300eb62abd996a64"
+      },
+      "oracle_directory": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite/decision-memo",
+      "oracle_receipt_sha256": "0a3a53856a14c534b8d1e806b56d3d21cb24e5255f42bbfeddc10faaf82b71d7",
+      "generated_tokens": 64,
+      "first_8_token_ids": [
+        332,
+        30918,
+        842,
+        3843,
+        2705,
+        332,
+        271,
+        332
+      ],
+      "ended_early": false,
+      "termination": "token-cap",
+      "mean_seconds_per_position": 15.885334146341464,
+      "elapsed_seconds": 1955.3969741730107,
+      "cpu_seconds": 3396.2011199999997
     }
   ],
-  "total_elapsed_seconds": 25317.862466421007,
-  "total_cpu_hours": 12.1258281775,
+  "total_elapsed_seconds": 27273.259440594018,
+  "total_cpu_hours": 13.0692173775,
   "cpu_accounting_complete": true
 }
