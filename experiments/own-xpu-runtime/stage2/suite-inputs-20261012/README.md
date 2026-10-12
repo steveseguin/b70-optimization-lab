@@ -5,7 +5,9 @@ The unchanged sealed CPU binary generates greedy tokens for the fixed rendered s
 Identity: `iq3-p17-detmath-v2`; 192-token context; maximum 64 generated tokens.
 EOS (248044) or 248046 is saved and then stops generation. No padding or forced continuation.
 The runtime uses the same stop rule. llama.cpp's immediate code-review EOG is information only.
-Two OpenMP threads, nice 19, idle I/O; inherited CPU affinity, no device execution.
+Two OpenMP threads per oracle, at most two CPU oracles, nice 19, idle I/O;
+inherited CPU affinity, no device execution. The parent alone validates and commits.
+Each worker has a 5 GB anonymous-memory stop guard (10 GB combined).
 
 | Prompt | Prompt tokens | Generated | First 8 token IDs | Early end | Seconds/position |
 | --- | ---: | ---: | --- | --- | ---: |
@@ -33,7 +35,7 @@ Each compressed log's original hash/size is in its receipt. Restore with gzip an
 Run from the repository root (Python environment needs the existing `regex` dependency):
 
 ```sh
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 /home/steve/.venvs/vllm-xpu/bin/python -B experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite/suite_run.py --all --publish
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 /home/steve/.venvs/vllm-xpu/bin/python -B experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite/suite_run.py --all --jobs 2 --publish
 nice -n 19 ionice -c 3 python3 -B experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite/suite_check.py RUNTIME_OUTPUTS
 ```
 
@@ -55,7 +57,11 @@ verifies completed prompt hashes and skips their computation; completed native p
 are recovered without rerunning. An interrupted unfinished prompt starts a new attempt,
 retaining old partial evidence. A surviving oracle blocks duplicate launches. No automatic
 retry occurs after native failure or packet31 disagreement. Completed prompts are committed
-with explicit paths and pushed only when main is a fast-forward; no stash or branches.
+with explicit paths. If remote main moves, fetch and merge it before pushing; no stash or branches.
+Root free space is checked with df before large writes and every ten seconds while running;
+less than 8 GB stops the CPU child cooperatively. No task build tree is needed.
+The resume audit rechecks the previously completed prompts, all model payloads, sources,
+compressed logs and fixture hashes; interrupted SQL prefill is retained separately and restarted.
 The incident repeat's original launcher is retained under `runner-snapshots/` by hash;
 subsequent launcher revisions preserve the same numerical binary and arithmetic.
 

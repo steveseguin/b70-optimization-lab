@@ -7,6 +7,8 @@ import gzip
 import hashlib
 import importlib.util
 import json
+import multiprocessing
+import queue
 import os
 from pathlib import Path
 import resource
@@ -37,7 +39,7 @@ def sha(p):
         return hashlib.file_digest(f, 'sha256').hexdigest()
 
 def save(p, value):
-    temp = p.with_name(p.name + '.tmp')
+    temp = p.with_name(p.name + '.' + str(os.getpid()) + '.tmp')
     with temp.open('w') as f:
         f.write(json.dumps(value, indent=2, ensure_ascii=False) + '\n')
         f.flush()
@@ -53,6 +55,15 @@ def rows(p):
 def check(condition, message):
     if not condition:
         raise RuntimeError(message)
+
+def disk_guard():
+    report = subprocess.check_output(PREFIX + ['df', '-B1', '/'], text=True)
+    check(int(report.splitlines()[-1].split()[3]) >= 8_000_000_000,
+          'STOP: less than 8 GB free on root filesystem; no further large writes')
+    for root in (HERE, INPUTS):
+        build = root/'build'
+        check(not build.exists() or sum(f.stat().st_size for f in build.rglob('*') if f.is_file()) < 3_000_000_000,
+              'STOP: task build tree is at least 3 GB')
 
 def preflight():
     check(os.getpriority(os.PRIO_PROCESS, 0) == 19, 'nice 19 required')
@@ -82,10 +93,11 @@ def preflight():
     check(sha(ROOT / prompt_manifest['suite_path']) == prompt_manifest['suite_sha256'], 'suite changed')
     for row in prompt_manifest['prompts']:
         check(sha(Path(row['file'])) == row['rendered_sha256'], 'rendered prompt changed')
-    check(shutil.disk_usage(HERE).free > 2_000_000_000, 'less than 2 GB output working reserve')
+    disk_guard()
     return sealed, binary, affinity, prompt_manifest
 
 def prepare(row):
+    disk_guard()
     dest = INPUTS / row['id']
     if not dest.exists():
         temp = INPUTS / ('.' + row['id'] + '.partial-' + str(time.time_ns()))
@@ -177,6 +189,7 @@ def packet31(directory, prompt):
                 first_difference=next((i+1 for i in range(max(len(actual),len(expected))) if i>=len(actual) or i>=len(expected) or actual[i]!=expected[i]), None))
 
 def compress(directory, receipt):
+    disk_guard()
     receipt['compressed_logs'] = {}
     for name in ('progress.jsonl', 'timings.jsonl'):
         source = directory / name
@@ -198,7 +211,7 @@ def compress(directory, receipt):
         temp.rename(directory / (name + '.gz'))
         source.unlink()
 
-def run_prompt(row, sealed, binary, affinity):
+def run_prompt(row, sealed, binary, affinity, defer_finalize=False):
     check(sha(binary) == sealed['binary_sha256'], 'sealed binary changed between prompts')
     for name, digest in sealed['arithmetic']['arithmetic_sources'].items():
         check(sha(ROOT/name) == digest, 'arithmetic source changed between prompts: ' + name)
@@ -233,8 +246,11 @@ def run_prompt(row, sealed, binary, affinity):
             prior.update(cpu_seconds=None, cpu_accounting_lost_on_resume=True,
                          elapsed_seconds=read(native/'result.json')['seconds'],
                          completed_utc=utc(), returncode=None)
+        if defer_finalize:
+            return (row, sealed, bundle, inp, previous, native, dest, prior)
         finalize_prompt(row, sealed, bundle, inp, previous, native, dest, prior)
         return
+    disk_guard()
     attempt = HERE / ('.' + prompt + '.partial-' + str(time.time_ns()))
     attempt.mkdir()
     directory = attempt / 'native'
@@ -247,7 +263,7 @@ def run_prompt(row, sealed, binary, affinity):
                    prompt_tokens=len(inp['tokens']), requested_tokens=64, context=192,
                    input_sha256=sha(bundle/'input.json'), device_executed=False, nice=19,
                    ionice='idle', OMP_NUM_THREADS=2, affinity=affinity,
-                   address_space_cap_bytes=38_000_000_000, anonymous_memory_guard_bytes=10_000_000_000)
+                   address_space_cap_bytes=38_000_000_000, anonymous_memory_guard_bytes=5_000_000_000)
     snapshot = HERE/'runner-snapshots'/(receipt['runner_sha256']+'.py')
     snapshot.parent.mkdir(exist_ok=True)
     if not snapshot.exists():
@@ -266,7 +282,16 @@ def run_prompt(row, sealed, binary, affinity):
                 child.send_signal(sig)
         signal.signal(signal.SIGTERM, stop)
         signal.signal(signal.SIGINT, stop)
+        last_disk_check = 0
         while child.poll() is None:
+            if time.monotonic() - last_disk_check > 10:
+                try:
+                    disk_guard()
+                except Exception:
+                    child.send_signal(signal.SIGTERM)
+                    child.wait(timeout=60)
+                    raise
+                last_disk_check = time.monotonic()
             anon = 0
             for pid in (os.getpid(), child.pid):
                 try:
@@ -275,7 +300,7 @@ def run_prompt(row, sealed, binary, affinity):
                 except (FileNotFoundError, StopIteration):
                     pass
             maximum_anon = max(maximum_anon, anon)
-            if anon >= 10_000_000_000 or time.monotonic()-start > 10860:
+            if anon >= 5_000_000_000 or time.monotonic()-start > 10860:
                 child.send_signal(signal.SIGTERM)
                 child.wait(timeout=60)
                 raise RuntimeError('CPU memory/time guard: stopped; no retry')
@@ -292,6 +317,7 @@ def run_prompt(row, sealed, binary, affinity):
                                   prompt_positions=len(inp['tokens']), last_position=last,
                                   elapsed_seconds=time.monotonic()-start, anonymous_bytes=anon,
                                   peak_anonymous_bytes=maximum_anon, pid=child.pid, updated_utc=utc())
+                    save(attempt/'status.json', status)
                     save(HERE/'status.json', status)
             time.sleep(1)
     after = resource.getrusage(resource.RUSAGE_CHILDREN)
@@ -300,6 +326,8 @@ def run_prompt(row, sealed, binary, affinity):
                    peak_anonymous_bytes=maximum_anon, completed_utc=utc())
     save(attempt/'receipt.json', receipt)
     check(child.returncode == 0, 'native CPU process failed; retained partial attempt')
+    if defer_finalize:
+        return (row, sealed, bundle, inp, attempt, directory, dest, receipt)
     finalize_prompt(row, sealed, bundle, inp, attempt, directory, dest, receipt)
 
 def finalize_prompt(row, sealed, bundle, inp, attempt, directory, dest, receipt):
@@ -372,7 +400,9 @@ The unchanged sealed CPU binary generates greedy tokens for the fixed rendered s
 Identity: `iq3-p17-detmath-v2`; 192-token context; maximum 64 generated tokens.
 EOS (248044) or 248046 is saved and then stops generation. No padding or forced continuation.
 The runtime uses the same stop rule. llama.cpp's immediate code-review EOG is information only.
-Two OpenMP threads, nice 19, idle I/O; inherited CPU affinity, no device execution.
+Two OpenMP threads per oracle, at most two CPU oracles, nice 19, idle I/O;
+inherited CPU affinity, no device execution. The parent alone validates and commits.
+Each worker has a 5 GB anonymous-memory stop guard (10 GB combined).
 
 {table}
 Total numerical-process wall time: {manifest['total_elapsed_seconds']:.3f} seconds.
@@ -395,7 +425,7 @@ Each compressed log's original hash/size is in its receipt. Restore with gzip an
 Run from the repository root (Python environment needs the existing `regex` dependency):
 
 ```sh
-nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 /home/steve/.venvs/vllm-xpu/bin/python -B {HERE.relative_to(ROOT)}/suite_run.py --all --publish
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 /home/steve/.venvs/vllm-xpu/bin/python -B {HERE.relative_to(ROOT)}/suite_run.py --all --jobs 2 --publish
 nice -n 19 ionice -c 3 python3 -B {HERE.relative_to(ROOT)}/suite_check.py RUNTIME_OUTPUTS
 ```
 
@@ -417,7 +447,11 @@ verifies completed prompt hashes and skips their computation; completed native p
 are recovered without rerunning. An interrupted unfinished prompt starts a new attempt,
 retaining old partial evidence. A surviving oracle blocks duplicate launches. No automatic
 retry occurs after native failure or packet31 disagreement. Completed prompts are committed
-with explicit paths and pushed only when main is a fast-forward; no stash or branches.
+with explicit paths. If remote main moves, fetch and merge it before pushing; no stash or branches.
+Root free space is checked with df before large writes and every ten seconds while running;
+less than 8 GB stops the CPU child cooperatively. No task build tree is needed.
+The resume audit rechecks the previously completed prompts, all model payloads, sources,
+compressed logs and fixture hashes; interrupted SQL prefill is retained separately and restarted.
 The incident repeat's original launcher is retained under `runner-snapshots/` by hash;
 subsequent launcher revisions preserve the same numerical binary and arithmetic.
 
@@ -437,16 +471,62 @@ def publish(prompt):
     check(git('branch','--show-current').strip() == 'main', 'main only')
     check(not git('diff','--cached','--name-only').strip(), 'unrelated staged files; do not commit')
     paths = [HERE/prompt, INPUTS/prompt, HERE/'suite_run.py', HERE/'runner-snapshots', HERE/'.gitignore', HERE/'README.md', INPUTS/'.gitignore', INPUTS/'README.md', INPUTS/'suite-manifest.json']
-    for name in ('suite_check.py', 'test_suite_check.py', 'checker-tests.json'):
+    for name in ('suite_check.py', 'test_suite_check.py', 'test_suite_run.py', 'checker-tests.json', 'resume-cleanup.json', 'resume-audit.json', 'resume_verify.py'):
         if (HERE/name).exists(): paths.append(HERE/name)
     paths = [str(p.relative_to(ROOT)) for p in paths]
     git('add','--',*paths)
     git('diff','--cached','--check')
     if git('diff','--cached','--name-only').strip():
-        print(git('commit','--quiet','-m',f'Add verified arithmetic-v2 suite oracle: {prompt}','-m','Co-Authored-By: Codex <noreply@openai.com>'), flush=True)
+        print(git('commit','--quiet','-m',f'Add verified arithmetic-v2 suite oracle: {prompt}','-m','Co-Authored-By: Codex <noreply@openai.com>','--',*paths), flush=True)
     git('fetch','origin','main')
-    check(subprocess.call(PREFIX+['git','merge-base','--is-ancestor','origin/main','HEAD'],cwd=ROOT)==0, 'remote main diverged; no rebase or stash; focused commit retained')
+    if subprocess.call(PREFIX+['git','merge-base','--is-ancestor','origin/main','HEAD'],cwd=ROOT) != 0:
+        print(git('diff','--stat','HEAD','origin/main'), flush=True)
+        print(git('merge','--no-edit','origin/main'), flush=True)
     print(git('push','origin','HEAD:main'), flush=True)
+
+def parallel_worker(row, sealed, binary, affinity, results):
+    try:
+        result = run_prompt(row, sealed, binary, affinity, defer_finalize=True)
+        results.put((row['id'], True, result))
+    except BaseException as error:
+        results.put((row['id'], False, repr(error)))
+
+def remaining_parallel(selected, sealed, binary, affinity, publish_results):
+    # Two independent frozen two-thread CPU programs; parent alone seals and commits.
+    ctx = multiprocessing.get_context('fork')
+    results = ctx.Queue()
+    active = {}
+    pending = list(selected)
+    def stop_all(sig, frame):
+        raise RuntimeError('suite interrupted; stopping CPU children cooperatively')
+    signal.signal(signal.SIGTERM, stop_all)
+    signal.signal(signal.SIGINT, stop_all)
+    try:
+        while pending or active:
+            while pending and len(active) < 2:
+                row = pending.pop(0)
+                disk_guard()
+                child = ctx.Process(target=parallel_worker, args=(row,sealed,binary,affinity,results))
+                child.start()
+                active[row['id']] = child
+            try:
+                prompt, passed, payload = results.get(timeout=5)
+            except queue.Empty:
+                check(all(c.is_alive() for c in active.values()), 'CPU worker exited without a result')
+                continue
+            child = active.pop(prompt)
+            child.join(timeout=60)
+            check(passed and child.exitcode==0, 'CPU worker failed: '+str(payload))
+            finalize_prompt(*payload)
+            if publish_results:
+                publish(prompt)
+    finally:
+        for child in active.values():
+            if child.is_alive():
+                child.terminate()  # worker forwards SIGTERM to its one CPU oracle
+        for child in active.values():
+            child.join(timeout=60)
+        results.close()
 
 def main():
     ap = argparse.ArgumentParser()
@@ -454,6 +534,7 @@ def main():
     ap.add_argument('--all', action='store_true')
     ap.add_argument('--publish', action='store_true')
     ap.add_argument('--refresh', action='store_true')
+    ap.add_argument('--jobs', type=int, choices=(1,2), default=1)
     args = ap.parse_args()
     with (HERE/'.runner.lock').open('w') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX|fcntl.LOCK_NB)
@@ -464,11 +545,21 @@ def main():
         check(args.prompt or args.all, 'select prompt or --all')
         selected = [r for r in prompts['prompts'] if args.all or r['id']==args.prompt]
         check(bool(selected), 'unknown prompt')
+        # Check all retained independent CPU token lists before the remaining coverage.
+        if args.all:
+            priority = ['incident-retrospective', 'code-review', 'customer-email', 'benchmark-analysis']
+            selected.sort(key=lambda row: priority.index(row['id']) if row['id'] in priority else 4)
+        remaining = []
         for row in selected:
+            if args.jobs==2 and row['id'] not in ('incident-retrospective','code-review','customer-email','benchmark-analysis') and not (HERE/row['id']).exists():
+                remaining.append(row)
+                continue
             check(not (HERE/'STOP-disagreement.json').exists(), 'CPU disagreement latch present')
             run_prompt(row, sealed, binary, affinity)
             if args.publish:
                 publish(row['id'])
+        if remaining:
+            remaining_parallel(remaining,sealed,binary,affinity,args.publish)
         save(HERE/'status.json', dict(status='selected-prompts-complete', updated_utc=utc()))
 
 if __name__ == '__main__':
