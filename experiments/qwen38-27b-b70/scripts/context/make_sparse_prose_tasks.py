@@ -25,6 +25,11 @@ Difficulty switches (each adds ONE kind of difficulty):
                the end of item b (later overwritten), who did X at Y in item b, a small number in item b.
                Answers are graded exactly (numbers as integers; names case- and article-insensitive). The
                report text is identical with and without --surprise.
+--class-rule   (with --rules) a second standing rule in item 1 that names no counter and shares no word with the
+               questions it governs: "any figure below zero is reported as the single word overdrawn". Every
+               answer about a counter's value, now or earlier, and every entry of the final list is then the word
+               overdrawn where the value is negative (a tally is still a number). A question about X cannot find
+               this rule by X's name or by its own wording; it has to be kept in view.
 --density D = mean real changes per 2,000 tokens of text (default 3).
 Same grader, layout and per-batch reference (tests/reference.json: state and operations after every
 batch) as make_prose_ledger_tasks.py; task metadata kind = "sparse".
@@ -298,6 +303,8 @@ def probe_questions(prng: random.Random, after_batch: int, k: int, refs: list, f
     now = state(b)
     cands = {}
     protected = set((rules or {}).get("protected", ()))   # --rules: never asked as plain current/old values
+    word = (rules or {}).get("class_word")                # --class-rule: a negative value is reported as this word
+    shown = lambda v: word if word and isinstance(v, int) and v < 0 else v
     # current: counters alive now, keyed by the batch of their last change
     last = {}
     for i in range(1, b + 1):
@@ -307,13 +314,13 @@ def probe_questions(prng: random.Random, after_batch: int, k: int, refs: list, f
                 last[c] = i
     for c, i in last.items():
         if c in now and c not in protected:
-            cands.setdefault(b - i, []).append(("current", c, i, now[c], f"What value does {c} hold now?"))
+            cands.setdefault(b - i, []).append(("current", c, i, shown(now[c]), f"What value does {c} hold now?"))
     # old values: v held by c at the end of batch i, set at i, and no longer the value now
     for i in range(1, b):
         prev = state(i - 1) if i > 1 else {}
         for c, v in state(i).items():
             if prev.get(c) != v and now.get(c) != v and c not in protected:
-                cands.setdefault(b - i, []).append(("old_value", c, i, v, f"What value did {c} hold at the end of item {item_no[i]}?"))
+                cands.setdefault(b - i, []).append(("old_value", c, i, shown(v), f"What value did {c} hold at the end of item {item_no[i]}?"))
     if rules:
         # rule: a standing rule stated in item 1 (confidential counters -> answer "protected"); distance = since item 1.
         # The question is phrased per probe ("as of item N") so the same counter can be probed again later.
@@ -369,7 +376,7 @@ def probe_questions(prng: random.Random, after_batch: int, k: int, refs: list, f
 def build(out: Path, name: str, target_tokens: int, seed: int, batch_tokens: int, density: float,
           n_get: int, n_counters: int, mode: str, opts: dict, cpt: float, count_exact,
           n_batches: int | None, surprise: int = 0, probes_every: int = 0, probes_k: int = 3,
-          rules: bool = False) -> dict:
+          rules: bool = False, class_rule: bool = False) -> dict:
     tag = "".join(k[0] for k in ("words", "pronouns", "corrections", "plans", "relative") if opts[k]) or "plain"
     rng = random.Random(f"sparse-{seed}-{target_tokens}-{batch_tokens}-{density}-{tag}-{n_counters}")
     g = Sparse(rng, n_counters, opts)
@@ -429,6 +436,13 @@ def build(out: Path, name: str, target_tokens: int, seed: int, batch_tokens: int
             batches[1] = (f"House method, used from now on: the tally of a counter is its value times {a_} plus {b_}. "
                           f"When a question asks for a counter's tally, apply this method to its current value.\n\n"
                           + batches[1])
+        if class_rule:
+            # a rule by condition, in words the questions do not use (no "value", "hold", "item", no counter name)
+            rules_info["class_word"] = "overdrawn"
+            batches[0] = ("Standing rule for this whole day book: any figure below zero is reported as the single word "
+                          "overdrawn, never as a number. This applies to every answer about a counter, present or past, "
+                          "and to the final list. A tally is still worked out from the true figure. This rule stays in "
+                          "force throughout.\n\n" + batches[0])
         for i in (1, 2):
             if i <= len(batches):
                 tokens -= bt[i]; bt[i] = count(batches[i - 1]); tokens += bt[i]
@@ -441,6 +455,8 @@ def build(out: Path, name: str, target_tokens: int, seed: int, batch_tokens: int
     queried = rng.sample(gone, n_gone) + rng.sample(alive, min(n_get - n_gone, len(alive)))
     rng.shuffle(queried)
     exp = {n: g.state.get(n) for n in queried}
+    if rules_info and rules_info.get("class_word"):
+        exp = {n: (rules_info["class_word"] if isinstance(v, int) and v < 0 else v) for n, v in exp.items()}
     if rules_info:
         pq = rules_info["protected"][0]        # one confidential counter in the final query: the rule must still hold
         queried.append(pq)
@@ -479,6 +495,8 @@ def build(out: Path, name: str, target_tokens: int, seed: int, batch_tokens: int
                 exp[key] = a
                 probes[key] = {"q": q, "a": a, "type": t, "item": item_no[bi] + 1, "ref_item": item_no[rb],
                                "distance": item_no[bi] + 1 - item_no[rb], "tokens_back": back}
+                if rules_info and rules_info.get("class_word"):
+                    probes[key]["class_rule"] = a == rules_info["class_word"]
                 lines.append(f"ASK {key}: {q}")
             probe_items[bi] = ("PROBE: answer these questions now, before fetching the next item. Add the keys to "
                                "/app/answers.json (create it if needed; keep every key already in it; a number, or the "
@@ -516,7 +534,8 @@ def build(out: Path, name: str, target_tokens: int, seed: int, batch_tokens: int
     if rules_info:
         extra.append("Some sentences in the day book state a standing rule or a method (for example that certain "
                      "counters are confidential, or how a counter's tally is computed). They apply to every later "
-                     "question that mentions them, including the final query.")
+                     + ("question they cover, including the final query." if rules_info.get("class_word") else
+                        "question that mentions them, including the final query."))
     if asks:
         extra.append("The final item may also ask questions about earlier items: a value a counter held at the "
                      "end of a given item, or a detail of the day book (who did something, a small number); answer "
@@ -567,12 +586,17 @@ def main() -> None:
     ap.add_argument("--rules", action="store_true",
                     help="plant a standing rule (item 1) and a house method (item 2); probes add 'rule' and 'procedure' "
                          "questions (+2 per PROBE item) and the final query includes one confidential counter")
+    ap.add_argument("--class-rule", action="store_true",
+                    help="with --rules: also plant a rule by condition that names no counter (a negative value is "
+                         "reported as the word overdrawn); see the module text")
     ap.add_argument("--surprise", type=int, default=0,
                     help="add K hidden retention questions to the final item (old values, filler details)")
     ap.add_argument("--n-counters", type=int, default=60)
     ap.add_argument("--chars-per-token", type=float, default=3.9)
     ap.add_argument("--exact-tokens", action="store_true")
     a = ap.parse_args()
+    if a.class_rule and not a.rules:
+        ap.error("--class-rule needs --rules")
     opts = {k: (getattr(a, k) or a.all) for k in ("words", "pronouns", "corrections", "plans", "relative")}
     count_exact = None
     if a.exact_tokens:
@@ -586,7 +610,7 @@ def main() -> None:
             size = f"b{a.n_batches}" if a.n_batches else f"t{n // 1000}k"
             print(json.dumps(build(out, f"sparse-{a.mode}-{size}-s{s}", n, s, a.batch_tokens, a.density,
                                    a.n_get, a.n_counters, a.mode, opts, a.chars_per_token, count_exact,
-                                   a.n_batches, a.surprise, a.probes_every, a.probes_k, a.rules)))
+                                   a.n_batches, a.surprise, a.probes_every, a.probes_k, a.rules, a.class_rule)))
 
 
 if __name__ == "__main__":

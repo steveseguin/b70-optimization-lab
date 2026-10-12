@@ -26,6 +26,15 @@ def row(od: str, arm: str, seed: str) -> dict | None:
         a = by.setdefault(ref[key]["type"] if key in ref else "final", [0, 0])
         a[0] += res == "correct"
         a[1] += 1
+    governed = None                                   # questions whose answer is the word of a rule by condition
+    try:
+        spec = json.load(open(json.load(open(t + "config.json"))["task"]["path"] + "/tests/spec.json"))
+        word = (spec.get("rules") or {}).get("class_word")
+        if word:
+            gov = [k for k, v in spec["expected"].items() if v == word]
+            governed = f"{sum(d['per_key'].get(k) == 'correct' for k in gov)}/{len(gov)}"
+    except Exception:
+        pass
     ex = json.load(open(t + "result.json"))["agent_execution"]
     f = lambda x: dt.datetime.fromisoformat(x.replace("Z", "+00:00"))
     total = (f(ex["finished_at"]) - f(ex["started_at"])).total_seconds()
@@ -43,7 +52,8 @@ def row(od: str, arm: str, seed: str) -> dict | None:
             "inplace_cached": s.get("inplace_cached_tokens", 0), "inplace_prompt": s.get("inplace_prompt_tokens", 0),
             "mention_reasks": s.get("mention_reasks", 0), "recalls": sum(1 for x in tm if str(x.get("cmd") or "").strip().startswith("recall")),
             "archive_reads": sum(1 for x in tm if "live_ctx/archive" in str(x.get("cmd") or "")), "retrievals": s.get("retrievals", 0),
-            "retrieved_chars": s.get("retrieved_chars", 0), "notes_wrong_ever": audit, "archive": d.get("archive")}
+            "retrieved_chars": s.get("retrieved_chars", 0), "notes_wrong_ever": audit, "archive": d.get("archive"),
+            "rule_by_condition": governed}
 
 
 def main() -> None:
@@ -60,7 +70,8 @@ def main() -> None:
         b = r["by_type"]
         print(f"{r['arm']:8s} {r['seed']}  {r['correct']:>3}/{r['n']:<3} {b.get('final', '-'):>6} {b.get('current', '-'):>5} {b.get('old_value', '-'):>5} {b.get('who', '-'):>5} "
               f"{b.get('rule', '-'):>5} {b.get('procedure', '-'):>5} {r['minutes']:>5} {r['calls']:>6} {r['main_loop_s']:>6} {r['notes_s']:>6}  {r['notes_calls']:>12} {r['notes_written']:>7} {r['notes_read']:>7} "
-              f"{str(r['notes_wrong_ever']):>6} {r['recalls']:>6}" + (f"  archive_reads={r['archive_reads']}" if r["archive_reads"] else ""))
+              f"{str(r['notes_wrong_ever']):>6} {r['recalls']:>6}" + (f"  archive_reads={r['archive_reads']}" if r["archive_reads"] else "")
+              + (f"  rule_by_condition={r['rule_by_condition']}" if r.get("rule_by_condition") else ""))
     if "--json" in sys.argv:
         Path(sys.argv[sys.argv.index("--json") + 1]).write_text(json.dumps(rows, indent=1) + "\n")
 
