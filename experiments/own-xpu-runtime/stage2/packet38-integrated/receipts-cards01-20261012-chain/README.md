@@ -40,6 +40,11 @@ the decode rate follows it. On the development prompt a right guess costs 23.0 m
 wrong one 38.7 ms on average. Prompt reading runs at about 48 tokens/s (both cards
 overlapped; the reference reads at about 55).
 
+**Context capacity.** These windows run with `--context 256` (prompt plus generated
+tokens stay under 256 positions); the reference ran with a 4,096-token context. The
+figures are comparable as decode rates on these prompts, not yet as products: the
+runtime has to run at 4,096 and 32,768 positions on the cards (packet 44).
+
 What is still inside these numbers: the first eight generated tokens of every request
 also copy 48 layer snapshots each to the host for the fixture check, which slows those
 tokens; the measured rate includes them. A run without that instrumentation, and a

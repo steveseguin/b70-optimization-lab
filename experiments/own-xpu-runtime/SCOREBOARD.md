@@ -1,6 +1,15 @@
 # Our Intel Xe runtime — measured state, 2026-10-12 16:45 UTC
 
-**Twelve-prompt median 38.25 tok/s on two cards, every request bit-exact ([packet 38][p38r]); the reference on the same twelve prompts is 28.49 tok/s.** Sequential (no guesses): 22.49 tok/s. For Unsloth
+**Twelve-prompt median 38.25 tok/s on two cards, every request bit-exact ([packet 38][p38r]); the reference on the same twelve prompts is 28.49 tok/s.** Sequential (no guesses): 25.36 tok/s on the same suite.
+
+**Limit to read with that number:** every run of our runtime so far uses a context
+capacity of 256 positions (the prompts are 60–90 tokens and 64 tokens are generated);
+the reference ran with a 4,096-token context. Capacity does not change the arithmetic
+of the positions that exist, and the QSA kernels' cost follows the positions actually
+used, but that has to be shown on the cards at 4,096 and 32,768 before the two figures
+are comparable as products. [Packet 44][p44] (Codex, in progress) does that. Nothing has
+been submitted to LocalMaxxing: its gate also needs at least 100 generated tokens per
+prompt (128-token oracles exist; that run is being prepared). For Unsloth
 UD-IQ3_XXS, the **quantized compressed version**, full 16-bit KV: the runtime reproduces
 its CPU oracle exactly on the cards (64/64 tokens, 384/384 layer fixtures). Two-card
 decode, all exact, within one day: **3.15 tok/s** as first sealed, **12.08** after a
@@ -255,3 +264,4 @@ leading suspect of the 09:09 fault); the fused generic kernels of packets 21, 23
 [p38r]: stage2/packet38-integrated/receipts-cards01-20261012-chain/README.md
 [p40]: stage2/packet40-suite/README.md
 [p42r]: stage2/packet42-codegen2/receipts-card2-20261012/README.md
+[p44]: stage2/packet44-context/README.md
