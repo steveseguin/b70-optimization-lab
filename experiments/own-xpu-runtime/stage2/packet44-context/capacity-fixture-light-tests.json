@@ -1,0 +1,52 @@
+{
+  "command": [
+    "nice",
+    "-n",
+    "19",
+    "ionice",
+    "-c",
+    "3",
+    "/usr/bin/python3",
+    "-B",
+    "-m",
+    "unittest",
+    "test_k2_selection",
+    "test_k2_admission"
+  ],
+  "source_sha256": {
+    "test_k2_selection": "afb6669afb518093ad9f1a4c5f57ae56cf318801047fd404cfa905de6729122b",
+    "test_k2_admission": "3474170b4d2746faca9803617aa73608f48f05d4860e92e29feed78d384a6e78",
+    "k2_summary.py": "caf95768673ae391d4bc26a930f9086e49bd4d2f03695da97b42e39012d8915d",
+    "merge_dispatch.py": "f78ae9b6fff6d9fddd56a661f413cb2aca0a80bec1da108f2b3b8d5c3e33ad02",
+    "window.py": "67b024be6bba40deb319a53df0574298c0a13138a4a3115afa3f89d5f1c87548",
+    "storage.py": "7285e6f08cb592f7ef5f85a599a62bffc74f64ce4c21d49bba31717b4992cbc5",
+    "test_storage_race.py": "4633a0f7df6a7e70c4ed416b38a13ba509b59f7cd4c72e06d5fa78b6d36474a6",
+    "test_window_storage.py": "ee3f366a8ccc8bf9336721c716a38b0110ab8a3fbc334315941bed834cdd5b1a",
+    "dispatch-p38.json": "2c7783ae00f9bbaee355a285b56fe46fc2178e483274c5e03c8e0e1bcbf335a5",
+    "kernel-registry.json": "f90172f6c0a36b80e38165c6ab4dec4cc580e60056e29a80a6814dc1f3e13b41",
+    "k2-class-registry.json": "fedf79c7dcc975a286d47da8ef8550bf46c3d03386a18ca622d652a3c754dbe2"
+  },
+  "device_executed": false,
+  "seconds": 0.6027529019920621,
+  "peak_aggregate_rss_anon_bytes": 39063552,
+  "tests": 58,
+  "storage_race_execution": {
+    "seconds": 0.10094652601401322,
+    "peak_aggregate_rss_anon_bytes": 23056384
+  },
+  "storage_race_checks": 3,
+  "window_storage_execution": {
+    "seconds": 0.5026165189919993,
+    "peak_aggregate_rss_anon_bytes": 44167168
+  },
+  "window_storage_checks": 4,
+  "passed": true,
+  "archive": {
+    "path": "evidence/scratch-capacity-fixture-light-1791828174695314191.jsonl.gz",
+    "sha256": "2b10ae619957f47c4f4a8f7f1aa82c6c786e1ea65db55ad02b18798ca0f3268e",
+    "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
+    "files": 4,
+    "retained_files": 4,
+    "retained_bytes": 8444
+  }
+}

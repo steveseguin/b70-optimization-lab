@@ -1,0 +1,19 @@
+--- a/adapter_fixture.cpp
++++ b/adapter_fixture.cpp
+@@ -3,6 +3,7 @@
+ #include "fixture_validation.hpp"
+ 
+ #include "adapter_fixture.hpp"
++#include "rope.hpp"
+ #include "adapter.hpp"
+ #include "failure.hpp"
+ #include <fstream>
+@@ -31,7 +32,7 @@
+ struct Case {
+  Geometry g;std::vector<Buffer> buffers;std::vector<Site> sites,new_sites;std::set<int> outputs;int error,position,active,rope;bool rank=false;int rank_ids=-1,rank_prob=-1,rank_gate=-1,rank_down=-1;
+  Case(){g.context=128;g.budget=2048;error=add(1,Scalar::u32,0,0);position=add(1,Scalar::u32,0,0);active=add(1,Scalar::u32,0,0);*reinterpret_cast<uint32_t*>(buffers[active].data.data())=1;
+-  std::ifstream in(std::filesystem::path(__FILE__).parent_path()/"rope.bf16",std::ios::binary);Buffer b{Scalar::bf16,262144,{}};b.data.assign(std::istreambuf_iterator<char>(in),{});if(b.data.size()!=b.n*2)throw std::runtime_error("adapter fixture RoPE bytes");rope=buffers.size();buffers.push_back(std::move(b));}
++  std::ifstream in(std::filesystem::path(__FILE__).parent_path()/"rope.bf16",std::ios::binary);Buffer b{Scalar::bf16,rope_constants::bytes/2,{}};b.data.assign(std::istreambuf_iterator<char>(in),{});if(b.data.size()!=b.n*2)throw std::runtime_error("adapter fixture RoPE bytes");rope=buffers.size();buffers.push_back(std::move(b));}
+  int add(size_t n,Scalar type=Scalar::bf16,float base=0,float scale=0.03125f){Buffer b{type,n,std::vector<uint8_t>(n*flash::scalar_bytes(type))};View view{b.data.data(),n,type};unsigned salt=buffers.size();for(size_t i=0;i<n;++i)view.put(i,base+scale*float(int((i*13+salt*7)%31)-15));int id=buffers.size();buffers.push_back(std::move(b));return id;}
+  Site site(Op op,std::vector<int> inputs,std::vector<int> outs,std::vector<int> weights={},std::initializer_list<int> shape={}){Site r;r.spec.g=g;r.spec.packed_heads=true;r.spec.op=op;r.spec.ni=inputs.size();r.spec.no=outs.size();r.spec.nw=weights.size();r.ids=inputs;r.ids.insert(r.ids.end(),outs.begin(),outs.end());r.ids.insert(r.ids.end(),weights.begin(),weights.end());unsigned j=0;for(auto id:r.ids){r.spec.sizes[j]=buffers[id].n;r.spec.types[j++]=buffers[id].type;}j=0;for(auto id:weights){r.spec.grids[j]=buffers[id].type==Scalar::f32?iq3::Type::F32:iq3::Type::BF16;r.spec.weight_elements[j++]=buffers[id].n;}j=0;for(int v:shape)r.spec.site.shape[j++]=v;outputs.insert(outs.begin(),outs.end());return r;}
+ };

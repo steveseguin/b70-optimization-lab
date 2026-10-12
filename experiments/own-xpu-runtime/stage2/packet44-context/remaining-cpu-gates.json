@@ -1,0 +1,249 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "rows": [
+    {
+      "stage": "owners",
+      "passed": true,
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "ionice",
+        "-c",
+        "3",
+        "python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet44-context/cpu_gates.py"
+      ],
+      "seconds": 0.11209790801513009,
+      "raw_sha256": "505598137255b8714536c26ed1afdaee376da3e05d3dd1f5891e302d13b82197",
+      "archive": "evidence/remaining-cpu-1791828190482450698/owners.log.gz",
+      "archive_sha256": "cd1e2d307a686683b65b603dc87b4d285f93f131729131347334c9ae7fd8cecc"
+    },
+    {
+      "stage": "capture-guards",
+      "passed": true,
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "ionice",
+        "-c",
+        "3",
+        "python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet44-context/capture_gate.py"
+      ],
+      "seconds": 1.9722443330101669,
+      "raw_sha256": "bb5b843b30e2603075b68efb56483b53be46fd57fc1f1e285f79f895eeb1bf42",
+      "archive": "evidence/remaining-cpu-1791828190482450698/capture-guards.log.gz",
+      "archive_sha256": "2c7bfb20408d60377f2399d8b1ed1df79786bf6a651df9d462496e861711cbff"
+    },
+    {
+      "stage": "mini-gnu-host",
+      "passed": true,
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "ionice",
+        "-c",
+        "3",
+        "python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet44-context/gates.py",
+        "mini",
+        "gnu-host"
+      ],
+      "seconds": 87.2685679619899,
+      "raw_sha256": "2b4f8ce86cc335a6efb04135cc9cc991a8b897c2413867b30c60ccd6c9e15fdd",
+      "archive": "evidence/remaining-cpu-1791828190482450698/mini-gnu-host.log.gz",
+      "archive_sha256": "825ff962a751df10fc1be35d81676243d246a42c190c55bf870b2776313666bf"
+    },
+    {
+      "stage": "mtp-gnu-host",
+      "passed": true,
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "ionice",
+        "-c",
+        "3",
+        "python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet44-context/mtp_gates.py",
+        "gnu-host"
+      ],
+      "seconds": 5.403453137987526,
+      "raw_sha256": "737dabdb3c80e29a9d6377e5cfd79daefce9178aa5f520d42fc9fc3b4b09987b",
+      "archive": "evidence/remaining-cpu-1791828190482450698/mtp-gnu-host.log.gz",
+      "archive_sha256": "3bc062e67a3c84925fe41ebc3653e3e5719049886b0baf6bc37d09f0c5721ca0"
+    },
+    {
+      "stage": "mini-icpx-host",
+      "passed": true,
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "ionice",
+        "-c",
+        "3",
+        "python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet44-context/gates.py",
+        "mini",
+        "icpx-host"
+      ],
+      "seconds": 5.109721685003024,
+      "raw_sha256": "ecf9e0ed03c95753743abd8e1dc1c6684144b09d127748c4bc79135844de7255",
+      "archive": "evidence/remaining-cpu-1791828190482450698/mini-icpx-host.log.gz",
+      "archive_sha256": "0c288641126c860cbd816f3cf06c11b339466854153fd6a590a4da9f1e277087"
+    },
+    {
+      "stage": "mtp-icpx-host",
+      "passed": true,
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "ionice",
+        "-c",
+        "3",
+        "python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet44-context/mtp_gates.py",
+        "icpx-host"
+      ],
+      "seconds": 5.66305993401329,
+      "raw_sha256": "d19e318c06a29c27157f1b0981d5a648841405a62dca32ef4d4bb30d7c42497d",
+      "archive": "evidence/remaining-cpu-1791828190482450698/mtp-icpx-host.log.gz",
+      "archive_sha256": "2ccf7ced053c95e71ca4d4729053ce0237b9d1e9de4c0543806e80a4f0bcebb9"
+    },
+    {
+      "stage": "mini-asan",
+      "passed": true,
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "ionice",
+        "-c",
+        "3",
+        "python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet44-context/gates.py",
+        "mini",
+        "asan"
+      ],
+      "seconds": 12.883049259020481,
+      "raw_sha256": "6dde5c0d7ab7b1cc4a900599cbb0007e2303a90ab41bf0e9a5492ac01da02801",
+      "archive": "evidence/remaining-cpu-1791828190482450698/mini-asan.log.gz",
+      "archive_sha256": "6201d0d4596f100886667060521178c95e533cd10fd740ba0f965d3b82cd1e73"
+    },
+    {
+      "stage": "mtp-asan",
+      "passed": true,
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "ionice",
+        "-c",
+        "3",
+        "python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet44-context/mtp_gates.py",
+        "asan"
+      ],
+      "seconds": 11.42370209301589,
+      "raw_sha256": "b15556fa6ace48c820847488bf23dfdbc0a7f73fc383241aba3b32a571037592",
+      "archive": "evidence/remaining-cpu-1791828190482450698/mtp-asan.log.gz",
+      "archive_sha256": "6e92990a5e98f4f0531ec2ae3ff2673db80050b7644bde62e1dd4fff30824e11"
+    },
+    {
+      "stage": "draft-auth",
+      "passed": true,
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "ionice",
+        "-c",
+        "3",
+        "python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet44-context/draft_auth_gate.py"
+      ],
+      "seconds": 3.2648291689984035,
+      "raw_sha256": "ee7b8c75027716c4b08381277789ab359f7c6c06cf36cb3c4452fd505325ebf7",
+      "archive": "evidence/remaining-cpu-1791828190482450698/draft-auth.log.gz",
+      "archive_sha256": "142f22be75399f0bcbce33eed40047e636acb9d051949dfffbb6717cf9efcd80"
+    },
+    {
+      "stage": "native-mini",
+      "passed": true,
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "ionice",
+        "-c",
+        "3",
+        "python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet44-context/native_mini_gate.py",
+        "--binary",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet44-context/build/gnu-host/own-rt-iq3",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet44-context/native-mini-cpu.json"
+      ],
+      "seconds": 1926.7128384429961,
+      "raw_sha256": "cafa5a3a765243535144a16d6d9dcf1ad9df0418e1d67912156fed8226e523c6",
+      "archive": "evidence/remaining-cpu-1791828190482450698/native-mini.log.gz",
+      "archive_sha256": "612944c6b17e6476aa0dc34e26e57505ff281d5c184793ba98ba797b900405a8"
+    },
+    {
+      "stage": "rollback",
+      "passed": true,
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "ionice",
+        "-c",
+        "3",
+        "python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet44-context/capacity_cpu_gate.py",
+        "--phase",
+        "rollback"
+      ],
+      "seconds": 7.711102641012985,
+      "raw_sha256": "549aef2ede648ad32414d527535c99424e14f7a4f1cdfb1743cbd22e3e4635e8",
+      "archive": "evidence/remaining-cpu-1791828190482450698/rollback.log.gz",
+      "archive_sha256": "237cac0f851d12a0c8ed9b7cadb465612e9da59614142ffdc4fe92fb6ee15dbc"
+    },
+    {
+      "stage": "rollback-asan",
+      "passed": true,
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "ionice",
+        "-c",
+        "3",
+        "python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet44-context/capacity_rollback_asan.py"
+      ],
+      "seconds": 5.276851607981371,
+      "raw_sha256": "fd8cea78e8fe16b579278165c90a9d4486fab0da08171c4eb97758f48f93a436",
+      "archive": "evidence/remaining-cpu-1791828190482450698/rollback-asan.log.gz",
+      "archive_sha256": "97e9fb8839b767b37d7181a2c8ebfc984b5909df538bcdbd37c51a5f37fb8b09"
+    }
+  ]
+}
