@@ -56,13 +56,25 @@ Current completed coverage, verified against the strict rollback builds:
   The prefix exporter has 27 synthetic checks and compiler preflight has ten;
   shortened diagnostics cannot replace the inherited full64 suite gate.
 
-Remaining qualification is explicit: selected-kernel GNU/Intel captures and
-agreement are active; the inherited three-prompt suite must generate all 64
-outputs per prompt (192 tokens/1,152 early fixtures), and the separate one-prompt
-128-token gate must check all 128 tokens and 768 early/tail fixtures. The final
-native real-controller campaign, every-window wrapper/admission refresh,
-complete build/evidence validation and final seal remain pending. Earlier
-successful capture or wrapper receipts are historical until their current
+- [Inherited real CPU suite](suite-real-cpu.json): all three requests pass at
+  64 outputs each, totaling 192 exact tokens and 1,152 layer fixtures. The
+  Intel host backend uses native MTP with a fresh state reset per request.
+  `incident-retrospective`, `code-review` and `customer-email` constitute a
+  partial 3/12 prompt set; `requested_max_new=64`, `oracle_token_cap=64`,
+  `prefix_only=false` and `full_oracle_generation=true` distinguish full
+  responses from complete suite coverage. Scratch was archived and removed.
+- Selected-dispatch GNU captures match fresh Intel host references for four
+  prompts at 64 positions each, including full-vocabulary logits, cache and
+  control bytes. [Pipeline draft agreement](pipeline-draft-agreement.json)
+  also passes for both compilers: each has 93 draft rows, eight scored rows,
+  identical proposals and byte-equal final cache/control files. This is draft
+  arithmetic/identity evidence, not a target suite throughput sample.
+
+Remaining qualification is explicit: the separate one-prompt 128-token gate
+must check all 128 tokens and 768 early/tail fixtures. The native real-controller
+campaign has passed its first four modes; MTP remains active. Every-window
+wrapper/admission refresh, complete build/evidence validation and the final seal
+remain pending. Earlier wrapper receipts are historical until their current
 source/binary bindings and required fresh execution are established.
 
 The strict terminal proof resolves the earlier abandoned-byte limitation for

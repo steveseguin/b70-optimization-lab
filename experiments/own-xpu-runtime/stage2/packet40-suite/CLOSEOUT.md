@@ -45,10 +45,17 @@ and suite-prefix reviews are signed. [CPU-RESULTS.md](CPU-RESULTS.md) preserves
 these scopes without adding overlapping audits as extra model executions.
 These are correctness checks, not device speed measurements.
 
-Captures and agreement are active. The full three-prompt 64-token suite,
-separate one-prompt 128-token tail-fixture gate, final native real-controller
-campaign, wrapper/admission refresh, build/evidence validation and seal remain
-pending. Earlier receipts do not substitute for their required current evidence.
+The inherited real CPU suite now passes all three 64-token requests: 192 exact
+tokens and 1,152 fixtures, native MTP on Intel host ranks. It covers three of
+twelve prompts; full response generation does not imply complete prompt-set
+coverage. Its scratch is archived and removed. Four selected-dispatch capture
+prompts match fresh GNU/Intel references, and the pipeline draft-agreement join
+passes for both compilers.
+
+The one-prompt 128-token tail-fixture gate remains pending. The final native
+real-controller campaign has passed four modes while MTP is active. Wrapper
+and admission refresh, build/evidence validation and seal remain pending.
+Earlier receipts do not substitute for their required current evidence.
 
 ## What failed or remains uncertain
 

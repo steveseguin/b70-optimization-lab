@@ -91,7 +91,12 @@ The inherited `suite_export.py` and `retain_window.py` utilities use the frozen
 suite` explicitly requests `--max-new 64` for each of its three prompts,
 preserving the inherited gate's 192 generated tokens and 1,152 early fixtures.
 That cap must be explicit because the general packet40 parser defaults to eight
-tokens. Current request/export receipts establish actual completion.
+tokens. The current [export receipt](suite-real-cpu.json) passes all three requests:
+192 exact tokens and 1,152 fixtures, with `prefix_only=false` and
+`full_oracle_generation=true`. The prompt set is still partial 3/12
+(`complete_frozen_suite=false`): incident-retrospective, code-review and
+customer-email. Both Intel host ranks ran native MTP; scratch was archived and
+removed. This is CPU correctness evidence, not device throughput.
 
 The exporter also admits explicitly shortened CPU diagnostics. It authenticates
 the full oracle first, checks exact prefix tokens and every early fixture, and

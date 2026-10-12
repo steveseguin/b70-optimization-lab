@@ -230,9 +230,9 @@ This is diagnostic state evidence, not a full-prompt oracle or speed run.
 Logical event counters remain separate telemetry with their original inventory
 hashes; model-state bytes are not exempted. No state-scope exception is required.
 Current nonterminal cancellation, its 204-case inventory audit, and eight
-long-retention comparisons over twelve requests also pass. Final real-suite,
-native-controller, capture, wrapper and build/admission qualification still
-must finish before sealing. See
+long-retention comparisons over twelve requests also pass. The inherited three-prompt 64-token suite and draft captures/agreement now
+pass. The separate 128-token tail fixture, final native-controller, wrapper and
+build/admission qualification still must finish before sealing. See
 [EOS-STATE-SCOPE.md](EOS-STATE-SCOPE.md) for the original failure and correction.
 
 Actual speculative launch counts can differ with process scheduling. Controller

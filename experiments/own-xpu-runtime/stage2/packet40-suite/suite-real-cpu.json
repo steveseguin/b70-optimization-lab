@@ -31,8 +31,12 @@
       "prompts_manifest_sha256": "dc78a59a085d4d426936645a887fd3718ba6743715f5b78ebd0d2b6af543d29b"
     }
   },
+  "requested_max_new": 64,
+  "oracle_token_cap": 64,
+  "prefix_only": false,
+  "full_oracle_generation": true,
   "export_checker_sha256": "c5574e59b58e0a410353bb6c47db09a89c6da20e2226ec155d17efaa3e8f77bc",
-  "export_checker_snapshot": "build/suite-real-1791792796048736881/export-suite-checker.py",
+  "export_checker_snapshot": "build/suite-real-1791841771273594687/export-suite-checker.py",
   "admitted_prompts": 3,
   "expected_frozen_prompts": 12,
   "repeats": 1,
@@ -41,22 +45,22 @@
   "fixture_files": 1152,
   "host_compiler": "icpx-host",
   "binary_relative_to_build": "icpx-host/own-rt-iq3",
-  "binary_sha256": "50563ff9e6b20f5aeb6de8eea9187c4e584ef439a5822e0c6c60e36d3e86b3c5",
+  "binary_sha256": "1586d2f7a375d13023e6b666e7c0715c9e15ba4004a11837af49a6f86fc1116b",
   "manifest_sha256": "213904cfecc88c0183e174c83043381a810afae2f66daa445d181168ea195f44",
-  "summary_sha256": "cada7f08a72e6047b2302c9b2a375f4428eca2ee5fb9b38e8d8fdd7329edda0e",
+  "summary_sha256": "226baf0e3c761ce9e4333bc832f1d4bf9664899087d9f7daf826c0cd019a873f",
   "input_admission_sha256": "f4e14b71f14e2cfed8f10f221922492fce9cefde95f45caf11be1e50c460eb0e",
   "ranks": [
     {
       "rank": 0,
-      "pid": 584001,
-      "launch_sha256": "a7bfe2162e7e42504741c8fa58dfa4b17f3b0a1f42db87c37bc8f67c0155ad2d",
-      "teardown_sha256": "0705a6e6dc000bc82ced8bff4c2788f05579db72b8a3346c4a815c550392c7b9"
+      "pid": 769128,
+      "launch_sha256": "f9e37dc0cda2192813e25737ae98beb2e603339ac77786bb8e6a9c3f514cbb67",
+      "teardown_sha256": "d982059fad84a3c6a30e711c3c4dc53d8325a6071b8b19eb41f92e8f171daac6"
     },
     {
       "rank": 1,
-      "pid": 584002,
-      "launch_sha256": "2e606c629f02bf81f7c89eef37f7c4510fe03061da1a39cf63af90dcd479eed9",
-      "teardown_sha256": "007324db961ece89790403caaad85bb6b37ac99c13ea15e09d8d5b2e15539edb"
+      "pid": 769129,
+      "launch_sha256": "8d3887ef8af6523ef4c34c42c6ca21e8c7550c85d0225b481fd1d5a9cb72ce51",
+      "teardown_sha256": "d759a59e6b8df473c208982f3afa4123e325ec29678410413a0898e3de31f4cb"
     }
   ],
   "rows": [
@@ -130,16 +134,19 @@
         561
       ],
       "token_count": 64,
+      "requested_max_new": 64,
+      "oracle_token_cap": 64,
+      "prefix_only": false,
       "token_sha256": "f4223dea06d404371a0d86a77f3c0f07b11eeef31b8e6068b953830f43659203",
       "fixture_files": 384,
       "fixture_inventory_sha256": "3c1c77fad21d4de10c9a827276986e66aebdcb07bb5bbd5f2b93b76d1aae5919",
-      "receipt_sha256": "2b9d733ffd16e225ca1698a7ba60a141d826f23b3bf0aec76245dada3bcc5db0",
+      "receipt_sha256": "3a325fe6122634daafb7c561470451e6d0cef19fe53b1c7d76cc5f2f9e37eff4",
       "rank_timing_sha256": {
-        "0": "edfa48a886ba5359a18edd0ef6cc7b94edda7441f710aca6125c1a882c621e19",
-        "1": "e16cf20545912f61298fc0d683dad2cba5ec2de1060e3b2840dadc8ca543e693"
+        "0": "d30369e948d9f9b56b4043bc9bd74e7c5cf1dbc346b7a5e675598984fa69d284",
+        "1": "d61f2874b58c7a0e6e2ef8675f5a112ced904692c92b83f54cac0522f49c45dd"
       },
-      "rank_trace_sha256": "95300a302e1bf3937b74b1336a6456f347d81cd99e294745638255b75627a971",
-      "binary_sha256": "50563ff9e6b20f5aeb6de8eea9187c4e584ef439a5822e0c6c60e36d3e86b3c5",
+      "rank_trace_sha256": "5b8bb1bea24f7ecf8ee4b94a51f4fd8031e8c99e335c04d1a716fa0238b9634a",
+      "binary_sha256": "1586d2f7a375d13023e6b666e7c0715c9e15ba4004a11837af49a6f86fc1116b",
       "run_checker_sha256": "c5574e59b58e0a410353bb6c47db09a89c6da20e2226ec155d17efaa3e8f77bc",
       "export_checker_sha256": "c5574e59b58e0a410353bb6c47db09a89c6da20e2226ec155d17efaa3e8f77bc",
       "acceptance": 0.8412698412698413,
@@ -148,16 +155,16 @@
         "hits": 53,
         "misses": 10,
         "no_guess": 0,
-        "redo_ms": 77450.62265600427
+        "redo_ms": 84228.92779295216
       },
       "controller": "native",
       "draft": "mtp",
       "exact": true,
-      "state_evidence_sha256": "632680583b733a092af7af9bed5be80339c9daa89d86285f3e745fddea45ab36",
-      "state_retention_sha256": "936bd9f6c2f9bf980f839ca2ac9bae0c6eea9d1151c0c005c3e410847190bc3d",
+      "state_evidence_sha256": "391b7207c0972f803b93287fd676e07f16d469ece70afab284289f25af9feb06",
+      "state_retention_sha256": "1ab90ad36e5a001148212171bc57a44c93da57d7ec4ce8b3ccb650d4f643daea",
       "runtime_state_inventory_sha256": {
-        "0": "ee27d8a146fdc9145920642ea5b16cc5148805d312f0bc909df74dfcccb58c1f",
-        "1": "8fbc4df0c64fb8dabbc31acf087f48711a8975557c59abe7da51a609827a5ddc"
+        "0": "91a5dc2d9cd7d419d160c74139f51192b5e148d02fd3644d8dac111dbcd5cd59",
+        "1": "9b32f835f4ef55a00df4a5cd90669bc2245630e74758b1f0cf4836f53bef44fd"
       },
       "retained_state_files": 2070
     },
@@ -231,16 +238,19 @@
         6277
       ],
       "token_count": 64,
+      "requested_max_new": 64,
+      "oracle_token_cap": 64,
+      "prefix_only": false,
       "token_sha256": "259ea30de28e6ea62db330b1d0aaf39500a74d4b16dfd4cc465a61edf00ccbe8",
       "fixture_files": 384,
       "fixture_inventory_sha256": "09e27a295c02375d02361c4cb3674524a29e03c7265fc96dedfbcb9577808c0f",
-      "receipt_sha256": "941586f2124c498af06969471f4759eea49aff679f5b2228841f1791178edfbb",
+      "receipt_sha256": "edc6d5936709ea2cd7a80cb6b1cd97b9c4880aaefa3bb1c345c08f8108efd634",
       "rank_timing_sha256": {
-        "0": "a42b07793b717b99dadd7c737784511b119733a5c4dd4979d0bec5771b22694d",
-        "1": "c1e7e9cc68006ba2c78c6cccfd86535d500ae851483b403f68c07d332204d383"
+        "0": "bffd080d7e6265e7c8dab91acd15005a01f303d690422bddac98d135570eb5f5",
+        "1": "a10f1e870be87e25ef030e0b31cb13c3bdb0c67af304a736cd6ab999c4fa5599"
       },
-      "rank_trace_sha256": "197540e744425bf86c5dbffa63e3c73bc909bf8f1f60c1b7cea341f203f63c50",
-      "binary_sha256": "50563ff9e6b20f5aeb6de8eea9187c4e584ef439a5822e0c6c60e36d3e86b3c5",
+      "rank_trace_sha256": "f610df48c9ecdb05603d927a2da8bdc363e07fd5f7c0744f7a47e3b9cbc94311",
+      "binary_sha256": "1586d2f7a375d13023e6b666e7c0715c9e15ba4004a11837af49a6f86fc1116b",
       "run_checker_sha256": "c5574e59b58e0a410353bb6c47db09a89c6da20e2226ec155d17efaa3e8f77bc",
       "export_checker_sha256": "c5574e59b58e0a410353bb6c47db09a89c6da20e2226ec155d17efaa3e8f77bc",
       "acceptance": 0.6825396825396826,
@@ -249,16 +259,16 @@
         "hits": 43,
         "misses": 20,
         "no_guess": 0,
-        "redo_ms": 172101.99600402848
+        "redo_ms": 159283.97704902454
       },
       "controller": "native",
       "draft": "mtp",
       "exact": true,
-      "state_evidence_sha256": "cf59c92bf5da03b0cc6a06709ec9f244e28d460fce1166fe632e1cc2c889f727",
-      "state_retention_sha256": "068c59aa2174d88d601938a079bac81192d4f22a001dd34c81680dd5de523e71",
+      "state_evidence_sha256": "9eb439ee887fdc49321e21c6fa0823b41add551ff4551937885fece93e203078",
+      "state_retention_sha256": "b60b629ed00445adac43d8381d67d9d9f3f3aabb4d02f03a4414e59df7add16c",
       "runtime_state_inventory_sha256": {
-        "0": "61ae288c2d030149098ffe466f6ff1e0f4fd6ef0eab395b9f9e9d862958a2e13",
-        "1": "0a0e3d6e77c2e26b5a68a101941dce42ae5b9098bbd6a9390558a73241e563d9"
+        "0": "0678fbd48983db7fe081928259fe2d7329ba2d332aa3fe7d39a4f9787c3c026e",
+        "1": "cddc296a1b040ae8e4871f139c0079d216770d5413484182ae07387945d9adee"
       },
       "retained_state_files": 2070
     },
@@ -332,16 +342,19 @@
         15542
       ],
       "token_count": 64,
+      "requested_max_new": 64,
+      "oracle_token_cap": 64,
+      "prefix_only": false,
       "token_sha256": "3e0efb63508c1ca5a26fa452c13efc27fa0a39777ec721c5e13b459030ea6a6c",
       "fixture_files": 384,
       "fixture_inventory_sha256": "69afb160cce1e49a7bd37dc5f2919379d091da0a1a2c84ef3915bc973c01e3e7",
-      "receipt_sha256": "c7bd830d1566d01e1a26f92e0b50f2264d6b433ffad94da88b5615d0cb3e3e48",
+      "receipt_sha256": "4c26826f25d9994e48b4721600e9bb1306eb4ab3f2d7f13e00e5064e78c5544c",
       "rank_timing_sha256": {
-        "0": "91c2462570548a3ede135eab4640c60c0df9af22dd6b1cc5a800f750bd0fa8a8",
-        "1": "946ed1b220ffe9e8586e265252d65a2e80c75c0a6c82030cde97acd1ed67d13f"
+        "0": "d1abc32d8216cf2427f7f074f8ffdc537a9b1fe511931cfef0d0b191d1615fe3",
+        "1": "a4a9c794708f109049505c22e52408edf647ad73c06d4dcacbec79d727beab64"
       },
-      "rank_trace_sha256": "9b6011ccb70fde1f6fe91831040972ab9501eb8cb3ac30622851575cc274ed34",
-      "binary_sha256": "50563ff9e6b20f5aeb6de8eea9187c4e584ef439a5822e0c6c60e36d3e86b3c5",
+      "rank_trace_sha256": "9884ec497f6e7fb3f879227c4a2a2261833a907ca0b429599d90c02eb9ab194e",
+      "binary_sha256": "1586d2f7a375d13023e6b666e7c0715c9e15ba4004a11837af49a6f86fc1116b",
       "run_checker_sha256": "c5574e59b58e0a410353bb6c47db09a89c6da20e2226ec155d17efaa3e8f77bc",
       "export_checker_sha256": "c5574e59b58e0a410353bb6c47db09a89c6da20e2226ec155d17efaa3e8f77bc",
       "acceptance": 0.8095238095238095,
@@ -350,30 +363,30 @@
         "hits": 51,
         "misses": 12,
         "no_guess": 0,
-        "redo_ms": 118429.57360498258
+        "redo_ms": 97997.03126601526
       },
       "controller": "native",
       "draft": "mtp",
       "exact": true,
-      "state_evidence_sha256": "52a60a29b8f7343953a46a665689a9992667521e3c1f455f16c98aa8329ca82a",
-      "state_retention_sha256": "939ce363a1cfb549b01fd3e5aeacc57cca0f577a426b16df78de4fa7802c218b",
+      "state_evidence_sha256": "f1f40ca0df46a63cd51fa7390d01af223739feb90f000596b9b0be58ca9620f8",
+      "state_retention_sha256": "478a7860f8529be4370e27e92b2dc502175effc042719ca15cdd44b8c6de7305",
       "runtime_state_inventory_sha256": {
-        "0": "048bfb0b9b3e1a262b72795769a590379fc65df262d08d8d21880e73a1d35b8d",
-        "1": "f3e311c933ac680b0b7a161f5252f659659778a532d06618c24fbd0ff0238483"
+        "0": "f1307061fe32177428f5d35bd6e02a538901da1f59cc5483f44fe7b68e5bb65a",
+        "1": "bd60f325805deeb0c7e95a9fc562b8fe1a8505b9f1f59c776667f973a355e3b2"
       },
       "retained_state_files": 2070
     }
   ],
-  "evidence_directory": "build/suite-real-1791792796048736881",
-  "scope": "actual persistent CPU rank executions; exact tokens and every retained fixture rechecked; incomplete manifest explicitly reported",
-  "qualification_plan_sha256": "c3a9053dedb62debca1f799cab791b2a9c0ab66a878b0c7544379d4e417b6ee4",
+  "evidence_directory": "build/suite-real-1791841771273594687",
+  "scope": "actual persistent CPU ranks; every requested oracle-prefix token and early fixture rechecked; prompt-set completeness and full-oracle generation reported separately; no performance evidence",
+  "qualification_plan_sha256": "f73b762e5f028935a2470a074285c1f8d87dd93a22940dc7c82b9c215e1ee865",
   "scratch_archive": {
-    "path": "evidence/scratch-suite-real-1791792796048736881.jsonl.gz",
-    "sha256": "c6da10d952813dec3cbcf06b0ebdec2bd4a448518cf79b7c9d065564fa45ac42",
+    "path": "evidence/scratch-suite-real-1791841771273594687.jsonl.gz",
+    "sha256": "758519942ccc0de7790bb4d4da7b02f91c21c18d7c2a2a1d1e9f1b1a57380fa8",
     "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
-    "files": 2568,
-    "retained_files": 160,
-    "retained_bytes": 67947392
+    "files": 2575,
+    "retained_files": 167,
+    "retained_bytes": 68054316
   },
   "campaign_log_archive": {
     "path": "evidence/campaign-suite-real.log.jsonl.gz",

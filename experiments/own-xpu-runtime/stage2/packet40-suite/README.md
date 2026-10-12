@@ -53,6 +53,12 @@ say partial. Each suite warms a distinct synthetic request, fully resets, and
 uses each selected prompt once per attempt. Failed exactness requests do not
 prevent the remaining requests from running. Repeats are reported separately.
 
+The [current inherited CPU suite](suite-real-cpu.json) passes three full
+64-token requests: 192 exact tokens and 1,152 fixtures on Intel host ranks with
+native MTP. This is partial 3/12 prompt coverage; its scratch is archived and
+removed. The separate 128-token tail-fixture gate and final qualification
+remain pending. No CPU timing is presented as device speed.
+
 The suite records token timestamps, prompt/output counts and hashes, TTFT, wall
 rate, early ends, guesses, hits and hit/miss cycle times. It reports the fixed
 64-event comparison and the 100-event submission metric, plus the separately
