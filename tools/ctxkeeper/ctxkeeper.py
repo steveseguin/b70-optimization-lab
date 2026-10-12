@@ -845,6 +845,13 @@ class Keeper:
                 asked_layout = True
                 req = req + ([{"role": "assistant", "content": text}] if text and finish != "length" else []) + [
                     {"role": "user", "content": nd.DELTA_RETRY}]
+                if thinking and (not text or finish == "length"):
+                    # Nothing came back: the think took the whole reply. Once more without it, as an ordinary turn
+                    # and the full notes call already do. (First run on real code, campaign 13: after a long stretch
+                    # of debugging the notes call thought for 8,192 tokens and wrote nothing, the second try thought
+                    # for 4,192 more and wrote nothing, and the cut went to the full rewrite, whose first try did
+                    # the same: 160 seconds and three empty replies before a reply without thinking did the job.)
+                    thinking = False
                 continue
             # a rule named in any reply of this cut is kept: a second, asked-for reply that leaves it out must not lose it
             rules_seen += [r for r in delta["rules"] if not any(nd.same_rule(r, x) for x in rules_seen)]
@@ -1158,6 +1165,9 @@ def main() -> None:
     ap.add_argument("--target-ratio", type=float, default=0.6, help="a cut goes down to this share of the window")
     ap.add_argument("--headroom", type=int, default=2048)
     ap.add_argument("--notes-cap", type=int, default=2048, help="NOTES size the model is asked to stay under")
+    ap.add_argument("--notes-max-tokens", type=int, default=8192,
+                    help="max_tokens of a notes call, thinking included (a good in-place reply is 2,000 to 3,000 with "
+                         "thinking; what a runaway think costs before the retry without thinking is this many tokens)")
     ap.add_argument("--notes-thinking", choices=("on", "off", "unset"), default="on",
                     help="chat_template_kwargs.enable_thinking for the notes call (unset: do not send the field)")
     ap.add_argument("--no-recite", action="store_true", help="do not repeat the RULES after a new user message")
@@ -1196,6 +1206,7 @@ def main() -> None:
     upstream = a.upstream.rstrip("/")
     keeper = Keeper(lambda body: post_json(upstream + "/v1/chat/completions", body, a.timeout), a.state_dir,
                     budget=a.budget, target_ratio=a.target_ratio, headroom=a.headroom, notes_cap=a.notes_cap,
+                    notes_max_tokens=a.notes_max_tokens,
                     notes_thinking={"on": True, "off": False, "unset": None}[a.notes_thinking],
                     recite=not a.no_recite, reply_reserve=a.reply_reserve, recite_when=a.recite_when,
                     think_when=a.think_when, effort=a.effort, memory_note=not a.no_memory_note,

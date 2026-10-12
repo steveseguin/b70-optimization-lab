@@ -123,6 +123,31 @@ class InPlace(unittest.TestCase):
         self.assertEqual(s.state["notes_cached_tokens"], 900 * len(model.notes_requests))
         self.assertGreater(len((Path(self.dir.name) / next(iter(keeper.sessions)) / "notes-history.jsonl").read_text().splitlines()), 1)
 
+    def test_a_think_that_eats_the_notes_reply_is_followed_by_a_try_without_thinking(self):
+        """Campaign 13, the first run on real code: the notes call thought to the token cap and wrote nothing."""
+        class Thinker(LedgerModel):
+            def __call__(self, body):
+                last = str(body["messages"][-1].get("content") or "")
+                notes = last.startswith("[[Message from the context keeper") or last.startswith("Your reply did not use the layout")
+                if notes and (body.get("chat_template_kwargs") or {}).get("enable_thinking"):
+                    self.requests.append(body)
+                    self.notes_requests.append(body)
+                    out = reply("")
+                    out["choices"][0]["finish_reason"] = "length"
+                    out["usage"] = {"prompt_tokens": 1000, "completion_tokens": 8192, "prompt_tokens_details": {"cached_tokens": 900}}
+                    return out
+                return super().__call__(body)
+        model = Thinker()
+        keeper = self.keeper(model, notes_thinking=True, notes_max_tokens=4096)
+        s = self.run_conversation(keeper, 8)
+        self.assertGreaterEqual(s.state["inplace_cuts"], 1)
+        self.assertEqual((s.state["inplace_failed"], s.state["notes_failed"]), (0, 0))        # the ordinary cut never had to run
+        first, second = model.notes_requests[0], model.notes_requests[1]
+        self.assertEqual((first["chat_template_kwargs"]["enable_thinking"], second["chat_template_kwargs"]["enable_thinking"]), (True, False))
+        self.assertEqual((first["max_tokens"], second["max_tokens"]), (4096, 4096))
+        self.assertTrue(second["messages"][-1]["content"].startswith("Your reply did not use the layout"))
+        self.assertIn("abcd00: 0", s.state["notes"])
+
     def test_the_prefix_is_stable_between_in_place_cuts(self):
         model = LedgerModel()
         keeper = self.keeper(model)

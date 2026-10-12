@@ -1688,8 +1688,11 @@ class KeeperAgent(TruncateAgent):
                 if rec.get("layout_retries"):
                     break                             # asked twice already
                 rec["layout_retries"] = 1
-                req = req + [{"role": "assistant", "content": text}, {"role": "user", "content": DELTA_RETRY}]
-                continue
+                nothing = not text.strip() or rec["notes_finish"] == "length"
+                req = req + ([] if nothing else [{"role": "assistant", "content": text}]) + [{"role": "user", "content": DELTA_RETRY}]
+                if thinking and nothing:
+                    thinking = False                  # the think took the whole reply: once more without it (the proxy's
+                continue                              # rule too; first run on real code, campaign 13)
             rules_seen += [r for r in delta["rules"] if not any(same_rule(r, x) for x in rules_seen)]
             if self.mention_check in ("count", "near"):
                 # a misspelled name is put right in every reply of this cut, before the replies are merged (a
