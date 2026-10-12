@@ -1,0 +1,18 @@
+#!/usr/bin/env python3
+"""t CLASS [CLASS ...]: run those test classes of /app/tests against /app/more_itertools (the last 40 lines)."""
+import subprocess, sys, re
+if len(sys.argv) < 2:
+    sys.exit("usage: t TestClass [TestClass ...]   (a class of tests/test_more.py or tests/test_recipes.py)")
+names = []
+for c in sys.argv[1:]:
+    hit = [m for m in ("test_more", "test_recipes") if re.search(r"(?m)^class %s\(" % re.escape(c), open(f"/app/tests/{m}.py").read())]
+    if not hit:
+        sys.exit(f"t: no test class {c} in tests/test_more.py or tests/test_recipes.py")
+    names.append(f"tests.{hit[0]}.{c}")
+try:
+    cap = lambda: __import__("resource").setrlimit(__import__("resource").RLIMIT_AS, (128 * 2**20, 128 * 2**20))
+    p = subprocess.run([sys.executable, "-m", "unittest", "-q", *names], cwd="/app", capture_output=True, text=True, timeout=60, preexec_fn=cap)
+    out = (p.stdout + p.stderr).strip().splitlines()
+except subprocess.TimeoutExpired:
+    out = ["t: the tests did not finish within 60 seconds (an endless loop?)"]
+print("\n".join(out[-40:]))

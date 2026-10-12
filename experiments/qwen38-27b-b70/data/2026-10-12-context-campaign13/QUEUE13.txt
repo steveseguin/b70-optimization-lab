@@ -1,0 +1,12 @@
+# campaign 13 queue: ARM STREAM SEED CAP_SECONDS (lines may be appended while it runs)
+XR repair 0 3600
+W32 repair 0 3600
+C32 repair 0 3600
+X32q rules 1 2400
+X32q rules 0 2400
+N32pr hard 1 2400
+N32p hard 1 2400
+# 12:54: the two 1M lines (N32p 1m 1, X32q 1m 1) moved to campaign 13b, after a second seed of the repair task
+# 14:19: code state h on the hard stream (registered in the note first)
+N32h hard 1 2400
+# 14:41: N32hr taken off: N32h is running with a reading of "received exactly what X stood at" as a set, which the stream does not mean; the pair is run again on the corrected rule in 13b

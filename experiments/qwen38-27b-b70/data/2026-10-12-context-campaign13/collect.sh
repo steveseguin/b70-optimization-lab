@@ -47,10 +47,10 @@ done
 
 # ---- the ledger runs of part B (and of 13b)
 cd "$CTX" || exit 2
-python3 c10_table.py "$ODR" X32p X32q N32u --json "$D/table-rules-240k.json" > "$D/table-rules-240k.txt" 2>&1
-python3 c10_table.py "$ODH" N32sr:0 N32z:0 N32nr:1 N32n:1 N32pr:1 N32p:1 --json "$D/table-hard-240k.json" > "$D/table-hard-240k.txt" 2>&1
-python3 c10_table.py "$OD1M" N32u:0 X32p:0 N32n:1 N32p:1 X32q:1 --json "$D/table-1m.json" > "$D/table-1m.txt" 2>&1
-for spec in "$ODH N32pr 1" "$ODH N32p 1" "$OD1M N32p 1"; do
+python3 c10_table.py "$ODR" X32p X32q X32g N32u --json "$D/table-rules-240k.json" > "$D/table-rules-240k.txt" 2>&1
+python3 c10_table.py "$ODH" N32sr:0 N32z:0 N32nr:1 N32pr:1 N32p:1 N32h:1 N32gr:1 N32g:1 --json "$D/table-hard-240k.json" > "$D/table-hard-240k.txt" 2>&1
+python3 c10_table.py "$OD1M" N32u:0 X32p:0 N32n:1 N32g:1 X32g:1 --json "$D/table-1m.json" > "$D/table-1m.txt" 2>&1
+for spec in "$ODH N32pr 1" "$ODH N32p 1" "$ODH N32h 1" "$ODH N32gr 1" "$ODH N32g 1" "$OD1M N32g 1"; do
   set -- $spec
   compgen -G "$1/runs/jobs/$2__sparse-memory-t*k-s$3/*/verifier/details.json" >/dev/null || continue
   python3 notes_audit.py "$1" "$2" "$3" > "$D/audit-$(basename "$1")-$2-s$3.txt" 2>&1
@@ -65,9 +65,10 @@ proxy() {  # label session_dir out_dir arm seed
 }
 proxy X32q-rules-s0 "$(first "$O/proxy-state/c13-X32q-240k-s0")" "$ODR" X32q 0
 proxy X32q-rules-s1 "$(first "$O/proxy-state/c13-X32q-240k-s1")" "$ODR" X32q 1
-proxy X32q-1m-s1 "$(first "$O/proxy-state/c13b-X32q-1000k-s1")" "$OD1M" X32q 1
+proxy X32g-rules-s1 "$(first "$O/proxy-state/c13b-X32g-240k-s1")" "$ODR" X32g 1
+proxy X32g-1m-s1 "$(first "$O/proxy-state/c13b-X32g-1000k-s1")" "$OD1M" X32g 1
 for od in "$ODR" "$ODH" "$OD1M"; do
-  for j in "$od"/runs/jobs/{X32q,N32p,N32pr}__*; do
+  for j in "$od"/runs/jobs/{X32q,X32g,N32p,N32pr,N32h,N32g,N32gr}__*; do
     [[ -d $j ]] || continue
     t=$(first "$j"); [[ -n $t && -e $t/verifier/details.json ]] || continue
     out="$D/runs/$(basename "$od")/$(basename "$j")"; mkdir -p "$out"
