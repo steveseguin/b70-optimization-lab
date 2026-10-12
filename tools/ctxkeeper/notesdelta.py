@@ -116,7 +116,7 @@ def number_of(value: str) -> int | None:
     if re.match(r"(removed|closed|struck|deleted|gone)\b", v.lower()):
         return None
     nums = re.findall(r"(?<![\w.])-?\d[\d,]*(?![\d.]*\d)", v)
-    return int(nums[-1].replace(",", "")) if nums else None
+    return int(nums[-1].replace(",", "")) if nums and len(nums[-1]) <= 24 else None
 
 
 def _calc(expr: str) -> float | None:
@@ -131,9 +131,11 @@ def _calc(expr: str) -> float | None:
             x, y = ev(n.left), ev(n.right)
             return {ast.Add: x + y, ast.Sub: x - y, ast.Mult: x * y}.get(type(n.op)) if not isinstance(n.op, ast.Div) else x / y
         raise ValueError(n)
+    if len(expr) > 400 or re.search(r"\d{16,}", expr):
+        return None                                  # not a sum anyone wrote: no huge numbers, no endless rows of signs
     try:
         return ev(ast.parse(expr.strip(), mode="eval").body)
-    except (ValueError, SyntaxError, ZeroDivisionError, RecursionError):
+    except (ValueError, SyntaxError, ZeroDivisionError, RecursionError, OverflowError, MemoryError):
         return None
 
 
@@ -192,16 +194,21 @@ def parse_delta(reply: str, need_changes: bool = True) -> dict | None:
 REMARK = re.compile(r"\([^()]*(?:[A-Za-z]|\u2192|->|=>)[^()]*\)")      # `(item 451)`, `(382 -> -55)`; not `(5)` in working
 
 
+# a remark that only says where the change is from; anything else in brackets may be part of what happened
+REFERENCE = re.compile(r"\(\s*items?\s+\d+(?:\s*(?:,|&|-|\u2013|and|to)\s*(?:items?\s+)?\d+)*\s*\)", re.I)
+
+
 # the words a part may use to say "the value is now N"; anything else with a number in it is not read as a set
 MARK = "\x00"                                        # stands where a remark was taken out of a line (see chain_of)
 
 
 def unremarked(value: str, mark: str = " ") -> str:
-    """A CHANGES value without its remarks in brackets (`mark` is put where each one stood). `(5 x 2)` inside
-    working is a sum, not a remark: the `x` between two numbers is made a times sign first (as a remark it vanished,
-    and `10 + (5 x 2) + 1 = 21` was read as 10 + 1)."""
+    """A CHANGES value without its remarks in brackets. `mark` is put where a remark stood that says more than
+    where the change is from (`(then doubled)`, `(five more)`; not `(item 451)`): such a remark may hold part of
+    the change. `(5 x 2)` inside working is a sum, not a remark: the `x` between two numbers is made a times sign
+    first (as a remark it vanished, and `10 + (5 x 2) + 1 = 21` was read as 10 + 1)."""
     v = re.sub(r"(?<=[\d)])\s*[x\u00d7]\s*(?=[\d(-])", " * ", value)
-    return REMARK.sub(mark, v)
+    return REMARK.sub(lambda m: " " if REFERENCE.fullmatch(m.group(0)) else mark, v)
 
 
 def _ltr(expr: str) -> float | None:
@@ -209,7 +216,7 @@ def _ltr(expr: str) -> float | None:
     another are meant ("gained 5, then was doubled"). None for anything else."""
     text = expr.replace(" ", "")
     toks = re.findall(r"\d+(?:\.\d+)?|[-+*/]", text)
-    if not toks or "".join(toks) != text:
+    if not toks or "".join(toks) != text or re.search(r"[\d.]\s+[\d.]", expr) or len(text) > 400:
         return None
     i = 0
 
@@ -298,25 +305,27 @@ def chain_of(value: str, held: int | None, stated: set[int], amounts: set[int] |
     - one number, with nothing round it but words that say "the value is now": the value so far written again, or
       a set, which the turns must state and which this line has not taken already (`opened at 117`, `set to -190`,
       the `415` of `279 -> 415`);
-    - working whose every sum gives what the line says, by the rules of arithmetic or taken from left to right
-      (`10 + 5 x 2 = 30`), read in the first of these ways that does: from the value so far (`292 - 67 = 225`, also
-      `539 - 31 = 508 - 48 = 460`), going on from it (`+46 = -144`, `- 75 = 287`), or from a value the turns state
-      (a set and a change in one: `585 - 79 = 506`).
+    - working whose every sum is right as written, read in the first of these ways that gives the written result:
+      from the value so far (`292 - 67 = 225`, also `539 - 31 = 508 - 48 = 460`, which is followed when it is the
+      whole line too), going on from it (`+46 = -144`, `- 75 = 287`), or from a value the turns state (a set and a
+      change in one: `585 - 79 = 506`). A sum that gives the written result only when taken from left to right
+      (`10 + 5 x 2 = 30`) is not followed: it may be meant that way ("gained 5, then was doubled") or miscounted
+      (`100 - 40 / 2 = 30`).
     With `amounts` (see amounts_ok) every amount added or taken must be one of them.
     One wrong sum is redone, as on a plain line (and listed in `fixed`): the last sum of the line, when it starts
-    from the value so far, its amounts are stated, it is plain arithmetic with one value (no remark stood inside
-    it, and its value does not depend on the order of the operations), and the result it writes is not a number
-    the turns state (then the line may have run a change and a set together: asked about). X32p at 1M wrote
+    from the value so far, its amounts are stated, it is plain arithmetic with one value (no remark that says
+    more than `(item N)` stood in it or after its result, and its value does not depend on the order of the
+    operations), and the result it writes is not a number the turns state (then the line may have run a change and a set together: asked about). X32p at 1M wrote
     `522 - 20 = 502, 502 - 17 = 485, 485 + 58 = 498`. A wrong sum anywhere else is asked about: three reviews on
     2026-10-12 found a dozen ways in which redoing it and reading on stored a wrong value without a question
     (the next part starting from the miscounted result, or repeating it; a remark that held the amount, as in
     `10 + (five more) - 1 = 14`; `10 + 2 (then doubled) = 24`)."""
     v = unremarked(value, f" {MARK} ")
-    v = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", v).replace("\u2212", "-").replace("\u00f7", "/")
-    parts = [x for x in (y.strip().rstrip(".").strip() for y in re.split(PARTS.pattern + r"|\u2192|->|=>", v))
+    v = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", v).replace("\u2212", "-").replace("\u00d7", "*").replace("\u00f7", "/")
+    parts = [re.sub(r"^x\s*(?=[\d(])", "* ", x) for x in (y.strip().rstrip(".").strip() for y in re.split(PARTS.pattern + r"|\u2192|->|=>", v))
              if x.replace(MARK, "").strip()]
-    if len(parts) < 2:
-        return None
+    if len(parts) < 2 and (not parts or parts[0].count("=") < 2):
+        return None                                  # one change: apply_delta's own business
     cur, sets, opening = held, [], 0
     for k, part in enumerate(parts):
         bare = part.replace(MARK, " ").strip().rstrip(".").strip()
@@ -328,7 +337,8 @@ def chain_of(value: str, held: int | None, stated: set[int], amounts: set[int] |
             words = set(re.findall(r"[a-z]+", bare.lower()))
             # (`increased by 5` is a change written without working, not a set to 5: not followed; nor is anything
             # with a sign or bracket left over, such as `reopened at - 3`, which is not a set to 3, or a bare `+5`)
-            left = re.sub(r"[a-z]+(?:-[a-z]+)*|(?<![\w.])-?\d+", "", bare.lower()).strip(" :*`!")
+            bare = re.sub(r"\*+\s*(-?\d+)\s*\*+", r"\1", bare)       # `set to **5**`; a lone `*5` is not a set to 5
+            left = re.sub(r"[a-z]+(?:-[a-z]+)*|(?<![\w.])-?\d+", "", bare.lower()).strip(" :`")
             if len(nums) != 1 or not words <= SET_WORDS or left:
                 return None
             n = int(nums[0])
@@ -345,29 +355,28 @@ def chain_of(value: str, held: int | None, stated: set[int], amounts: set[int] |
         for j, (raw, after) in enumerate(zip(pieces, pieces[1:])):
             expr = raw.replace(MARK, " ").strip()
             first = re.match(r"\(?\s*(-?\d+)(?![\d.])", expr)
-            head = re.match(r"\(?\s*(-?\d+)(?![\d.])", after.replace(MARK, " ").strip())
+            head = re.match(r"\(?\s*(-?\d+)(?![\d.])", after.replace(MARK, " ").strip().rstrip(".").strip())
             if not head:
                 return None
             wrote, n = int(head.group(1)), (int(first.group(1)) if first else None)
 
-            def worth(full: str, taken: str, in_order: str | None = None) -> set[int]:
-                """What the sum comes to: by the rules of arithmetic and, without brackets, from left to right."""
+            def worth(full: str, taken: str) -> int | None:
                 # (an operator with nothing after it, or two in a row: something that was not a number stood there)
                 if (not re.fullmatch(r"[\d\s+\-*/().]+", full) or re.search(r"[-+*/]\s*(?:[+*/)]|$)|\(\s*\)", full)
                         or not amounts_ok(taken, amounts)):
-                    return set()
-                vals = (_calc(full), _ltr(in_order or full))
-                return {int(x) for x in vals if x is not None and float(x).is_integer()}
+                    return None
+                val = _calc(full)
+                return int(val) if val is not None and float(val).is_integer() else None
 
-            readings = []                            # (the sum, the amounts in it, the set it starts from, the sum in order)
+            readings = []                            # (the sum, the amounts in it, the set it starts from)
             if first and cur is not None and n == cur:
-                readings.append((expr, expr[first.end():], None, None))
+                readings.append((expr, expr[first.end():], None))
             if cur is not None and re.match(r"[-+*/]\s*\(?\d", expr):
-                readings.append((f"({cur}) {expr}", expr, None, f"{cur} {expr}"))
+                readings.append((f"({cur}) {expr}", expr, None))
             if first and n in stated and n not in sets:
-                readings.append((expr, expr[first.end():], n, None))
-            for full, taken, a_set, in_order in readings:
-                if wrote in worth(full, taken, in_order):
+                readings.append((expr, expr[first.end():], n))
+            for full, taken, a_set in readings:
+                if worth(full, taken) == wrote:
                     if a_set is not None:
                         sets.append(a_set)
                         opening += 1
@@ -375,11 +384,12 @@ def chain_of(value: str, held: int | None, stated: set[int], amounts: set[int] |
                     break
             else:
                 last = k == len(parts) - 1 and j == len(pieces) - 2
-                plain = MARK not in raw and re.search(r"[\d)]\s*[-+*/]\s*[\d(-]", expr) and not two_readings(expr)
-                vals = worth(expr, expr[first.end():]) if last and plain and first and cur is not None and n == cur else set()
-                if len(vals) != 1 or wrote in stated or wrote in (amounts or ()):
+                plain = (MARK not in raw and MARK not in after and re.search(r"[\d)]\s*[-+*/]\s*[\d(-]", expr)
+                         and not two_readings(expr))
+                val = worth(expr, expr[first.end():]) if last and plain and first and cur is not None and n == cur else None
+                if val is None or wrote in stated or wrote in (amounts or ()):
                     return None
-                cur = vals.pop()
+                cur = val
                 if fixed is not None:
                     fixed.append(f"{expr} = {wrote} -> {cur}")
     return cur, sets, opening
@@ -430,7 +440,8 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
         old = fact_of(state[where[name]])[1] if name in where else None
         held = number_of(old) if old is not None else None
         counted, asked, written = steps_in(value), len(info["mismatch"]), value
-        several = sum(bool(x.strip()) for x in re.split(PARTS.pattern + r"|\u2192|->|=>", unremarked(value))) > 1
+        flat = unremarked(value)
+        several = sum(bool(x.strip()) for x in re.split(PARTS.pattern + r"|\u2192|->|=>", flat)) > 1 or flat.count("=") > 1
         if strict and seen is not None:
             # several changes on one line: followed part by part; a line that can be followed is right as it stands
             redone: list[str] = []
@@ -497,13 +508,20 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
                 first = re.match(r"\(?\s*-?\d+", expr.strip())
                 if first and not amounts_ok(expr.strip()[first.end():], near.get(name, set()) | ever):
                     info["mismatch"].append(f"{name}: `{value}` adds or takes an amount the turns do not state for it; read the item again")
-            if total != stated:
-                sum_text = unremarked(value).replace("\u2212", "-").replace("\u00f7", "/").split("=")[-2]
-                if strict and near is not None and len(info["mismatch"]) == asked and (stated in near.get(name, set()) or two_readings(sum_text)):
-                    # the sum is wrong, and either the result it writes is a number the turns state for the thing
-                    # (the line may have run a change and a set together: `10 + 5 = 16` for "gained 5", "set to
-                    # 16"), or what it comes to depends on the order of the operations (`10 + 5 x 2 = 31`)
+            sum_text = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", flat).replace("\u2212", "-").replace("\u00f7", "/").split("=")[-2]
+            by_rule = _calc(sum_text)
+            if strict and near is not None and len(info["mismatch"]) == asked:
+                if two_readings(sum_text) and by_rule != stated:
+                    # what the sum comes to depends on the order of the operations and the line does not write the
+                    # value arithmetic gives: meant from left to right (`10 + 5 x 2 = 30` for "gained 5, then was
+                    # doubled"; stored as written) or miscounted (`100 - 40 / 2 = 30`)
+                    info["mismatch"].append(f"{name}: `{value}` is {by_rule:g} by the rules of arithmetic, not {stated}; write each change on a line of its own, with its working")
+                elif total != stated and (stated in near.get(name, set()) or MARK in unremarked(value, MARK)):
+                    # the sum is wrong, and the result it writes is a number the turns state for the thing (the line
+                    # may have run a change and a set together: `10 + 5 = 16` for "gained 5", "set to 16"), or a
+                    # remark holds part of what happened (`10 + 2 = 24 (then doubled)`)
                     info["mismatch"].append(f"{name}: `{value}` comes to {total}, not {stated}; write each change on a line of its own, with its working")
+            if total != stated:
                 info["sums_corrected"].append(f"{name}: {value} -> {total}")
             value = str(total)
         elif seen is not None and strict and re.search(r"[\d_]", name) and " " not in name:

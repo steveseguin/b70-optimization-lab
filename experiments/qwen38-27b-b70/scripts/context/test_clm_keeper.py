@@ -475,13 +475,38 @@ class Keeper(unittest.TestCase):
         self.assertEqual(run(10, "abcd12 was reset to 5. abcd12 gained 3.", "re-set to 5, then 5 + 3 = 8"), (0, [], [], 8))
         self.assertEqual(run(10, "abcd12 gained 3. abcd12 was set to 5.", "10 + 3 = 13, then set to **5**"), (0, [], [], 5))
         self.assertEqual(run(10, "abcd12 gained 5.", "10, +5")[:2], (1, [0]))                                    # a bare `+5` is not a set to 5
-        # a sum written in the order of the changes is right as the line says it; a wrong one with two readings is asked about
-        self.assertEqual(run(10, "abcd12 gained 5 and was then doubled.", "10, then 10 + 5 x 2 = 30"), (0, [], [], 30))
-        self.assertEqual(run(10, "abcd12 gained 5 and was then doubled.", "10 + 5 x 2 = 30"), (0, [], [], 30))
-        self.assertEqual(run(10, "abcd12 gained 5 twice.", "10 + 5 x 2 = 20"), (0, [], [], 20))
+        # a sum that gives the written result only when taken from left to right may be meant so ("gained 5, then was
+        # doubled") or miscounted ("went down by 40 divided by 2"): asked about, then stored as the reply wrote it
+        self.assertEqual(run(10, "abcd12 gained 5 and was then doubled.", "10, then 10 + 5 x 2 = 30"), (1, [0], [], 30))
+        self.assertEqual(run(10, "abcd12 gained 5 and was then doubled.", "10 + 5 x 2 = 30"), (1, [0], [], 30))
+        self.assertEqual(run(100, "abcd12 went down by 40 divided by 2.", "100 - 40 / 2 = 30")[:2], (1, [0]))
+        self.assertEqual(run(10, "abcd12 gained 5 twice.", "10 + 5 x 2 = 20"), (0, [], [], 20))                 # what arithmetic gives: right
+        self.assertEqual(run(90, "abcd12 lost a third.", "90 - 90/3 = 60"), (0, [], [], 60))
         self.assertEqual(run(10, "abcd12 gained 5 and was then doubled.", "10 + 5 x 2 = 31")[:2], (1, [0]))
         self.assertEqual(run(10, "abcd12 gained 5 and was then doubled.", "10, then 10 + 5 x 2 = 31")[:2], (1, [0]))
-        self.assertEqual((NS["_ltr"]("10 + 5 * 2"), NS["_ltr"]("-3 - -3 * 2"), NS["_ltr"]("(10 + 5) * 2"), NS["_ltr"]("10 +"), NS["_ltr"]("7 / 0")), (30, 0, None, None, None))
+        self.assertEqual(run(10, "abcd12 gained 1000 twice.", "10 + 1,000 x 2 = 2,021")[:2], (1, [0]))          # also with a thousands comma
+        self.assertEqual((NS["_ltr"]("10 + 5 * 2"), NS["_ltr"]("-3 - -3 * 2"), NS["_ltr"]("(10 + 5) * 2"), NS["_ltr"]("10 +"), NS["_ltr"]("7 / 0"), NS["_ltr"]("10 + 1 5")),
+                         (30, 0, None, None, None, None))
+        self.assertEqual(run(10, "abcd12 gained 1. abcd12 gained 5.", "10 + 1 5 = 25")[:2], (1, [0]))            # two numbers are not one
+        # fifth pass. Two sums on a plain line: both are checked
+        self.assertEqual(run(539, "abcd12 lost 31. abcd12 lost 48.", "539 - 31 = 500 - 48 = 452")[:2], (1, [0]))
+        self.assertEqual(run(539, "abcd12 lost 31. abcd12 lost 48.", "539 - 31 = 508 - 48 = 460"), (0, [], [], 460))
+        # a remark after the result that says more than where the change is from: the sum is not redone
+        for line in ("10, then 10 + 2 = 24 (then doubled, item 7)", "10, then 10 + 2 = (doubled) 24", "10 + 2 = 24 (then doubled)"):
+            self.assertEqual(run(10, "abcd12 gained 2 and was then doubled.", line)[:2], (1, [0]), line)
+        self.assertEqual(run(10, "abcd12 gained 2.", "10, then 10 + 2 = 13 (item 7)"), (0, [], [], 12))          # a plain miscount still is
+        # a lone `*5` or `5!` is not a set to 5; a times sign may open a part; a full stop may stand before a remark
+        for line in ("10 + 2 = 12, then *5", "10 + 2 = 12, then 5*", "10 + 2 = 12, then 5!"):
+            self.assertEqual(run(10, "abcd12 gained 2. abcd12 was multiplied by 5.", line)[:2], (1, [0]), line)
+        for line in ("10 + 2 = 12, then \u00d72 = 24", "10 + 2 = 12; \u00d7 2 = 24 (item 7)", "10 + 2 = 12, then x 2 = 24", "10 + 2 = 12. (item 6), then 12 x 2 = 24. (item 7)"):
+            self.assertEqual(run(10, "abcd12 gained 2 and was then doubled.", line), (0, [], [], 24), line)
+        self.assertEqual(run(279, "abcd12 was set to 415. abcd12 lost 18.", "279 \u2192 415 (set, item 582), then 415 - 18 = 397. (item 587)"), (0, [], [], 397))
+        # absurd input does not raise
+        big = "9" * 400
+        self.assertEqual((NS["number_of"](big), NS["_calc"](big + " + 1"), NS["_calc"]("-" * 20000 + "1"), NS["chain_of"](f"10, then 10 + {big} = 5", 10, set())), (None, None, None, None))
+        NS["work_out"](f"10 + {big} = 5"), NS["work_out"]("10 + 5 = " + big)
+        self.assertEqual(run(10, "abcd12 gained 5.", f"10 + {big} = 15")[:2], (1, [0]))
+        self.assertEqual(run(10, "abcd12 gained 5.", "10 + 5 = " + big)[3], 15)                                 # the sum is redone; nothing raises
         # every question is bound to its line (the line after a wrong value is questioned too, and is right once that one is out)
         self.assertEqual(run(10, "abcd12 gained 5. abcd12 gained 5.", "10 + 5 = 15", "(no change)", "999", "15 + 5 = 20"), (2, [2, 3], ["abcd12: 999"], 20))
 
