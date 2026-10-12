@@ -261,30 +261,41 @@ _UNITS = {w: i for i, w in enumerate("zero one two three four five six seven eig
 _TENS = {w: 10 * (i + 2) for i, w in enumerate("twenty thirty forty fifty sixty seventy eighty ninety".split())}
 
 
-def numbers_in(text: str) -> set[int]:
-    """Every whole number the text states, in digits or in English words ("four hundred and two", "forty-nine"),
-    each with both signs (a "minus" or "lost" before it is not parsed). Digits inside a name (`abcd62`) and the
-    numbers of an `ITEM 132/147 (UPDATE)` heading are not numbers the text states."""
-    text = re.sub(r"ITEM \d+/\d+ \(\w+\)", " ", text)
+def numbers_in(text: str, signed: bool = False) -> set[int]:
+    """Every whole number the text states, in digits or in English words ("four hundred and two", "forty-nine").
+    Default: each with both signs (for "lost forty-nine" the sign is in the verb). With `signed`, as stated: negative
+    only after "minus" / "negative" or a leading "-" ("at -106", "minus ninety-seven"); that is what a value SET by
+    the text has to match. Digits inside a name (`abcd62`) and the numbers of an `ITEM 132/147 (UPDATE)` heading
+    are not numbers the text states, and number words do not run on across punctuation ("one hundred. Two birds")."""
+    text = re.sub(r"ITEM \d+/\d+ \(\w+\)", " ", text).replace("\u2212", "-")
     out: set[int] = set()
     total = part = 0
-    open_ = False
+    open_ = neg = False
+
+    def emit(n: int, minus: bool) -> None:
+        out.update((-n,) if signed and minus else (n,) if signed else (n, -n))
+
     def close() -> None:
-        nonlocal total, part, open_
+        nonlocal total, part, open_, neg
         if open_:
-            out.update((total + part, -(total + part)))
-        total, part, open_ = 0, 0, False
-    for tok in re.findall(r"[a-z_]+\d\w*|[a-z]+|\d[\d,]*", text.lower()):
+            emit(total + part, neg)
+        total, part, open_, neg = 0, 0, False, False
+
+    minus_next = False
+    for tok in re.findall(r"[a-z_]+\d\w*|[a-z]+|(?<![\w)])-(?=\d)|\d[\d,]*|[.!?;:,]", text.lower()):
+        if tok in ("minus", "negative", "-"):
+            close()
+            minus_next = True
+            continue
         if tok[0].isalpha() and tok[-1].isdigit() or "_" in tok:
             close()                                  # a name such as abcd62
         elif tok[0].isdigit():
             close()
-            n = int(tok.replace(",", "") or 0)
-            out.update((n, -n))
-        elif tok in _UNITS:
-            part, open_ = part + _UNITS[tok], True
-        elif tok in _TENS:
-            part, open_ = part + _TENS[tok], True
+            emit(int(tok.replace(",", "") or 0), minus_next)
+        elif tok in _UNITS or tok in _TENS:
+            if not open_:
+                neg = minus_next
+            part, open_ = part + (_UNITS[tok] if tok in _UNITS else _TENS[tok]), True
         elif tok == "hundred" and open_:
             part *= 100
         elif tok == "thousand" and open_:
@@ -293,6 +304,7 @@ def numbers_in(text: str) -> set[int]:
             continue
         else:
             close()
+        minus_next = False
     close()
     return out
 
@@ -363,9 +375,8 @@ def work_out(value: str) -> tuple[int | None, int | None, int] | None:
     the stated result."""
     v = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", value.strip())
     v = v.replace("\u2212", "-").replace("\u00d7", "*").replace("\u00f7", "/")
-    arrow = re.fullmatch(r"(-?\d+)\s*(?:\u2192|->|=>)\s*(-?\d+)\.?", v)      # `-107 -> -31`: old value, then the new one
-    if arrow:
-        return int(arrow.group(1)), int(arrow.group(2)), int(arrow.group(2))
+    if re.fullmatch(r"(-?\d+)\s*(?:\u2192|->|=>)\s*(-?\d+)\.?", v):
+        return None                                  # `-107 -> -31` is an assignment of -31, checked as one; not working
     v = re.sub(r"(?<=[\d)])\s*x\s*(?=[\d(-])", " * ", v)
     parts = v.split("=")
     m = RESULT.fullmatch(parts[-1]) if len(parts) > 1 else None
@@ -431,6 +442,7 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
             opened.append(ln.rstrip())
     info: dict[str, Any] = {"changed": 0, "added": 0, "sums_corrected": [], "mismatch": [], "new_rules": 0}
     steps: dict[str, int] = {}                       # changes each name's lines account for (a line, or a step of its working)
+    used: dict[str, set[int]] = {}                   # values of a name already taken from the turns as a set
     have = [_plain(r) for r in rules]
     for r in delta.get("rules", []):
         if not any(same_rule(r, h) for h in have):
@@ -448,14 +460,19 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
             start, total, stated = w
             old = fact_of(state[where[name]])[1] if name in where else None
             held = number_of(old) if old is not None else None
-            ops = len(re.findall(r"[\d)]\s*[-+*/x\u00d7\u2212]\s*[\d(-]", value.split("=")[-2] if "=" in value else ""))
+            ops = len(re.findall(r"(?<=[\d)])\s*[-+*/x\u00d7\u2212]\s*(?=[\d(-])", value.split("=")[-2] if "=" in value else ""))
             # the steps of the working, plus the set it starts from when that is not the value the NOTES hold
             steps[name] += max(ops, 1) - 1 + (1 if start is not None and start != held else 0)
             if total is None:
                 info["mismatch"].append(f"{name}: `{value}` has no whole-number value")
                 total = stated
-            elif start is not None and seen is not None and start in (seen if near is None else near.get(name, set())):
-                info["set_in_turns"] = info.get("set_in_turns", 0) + (held != start)
+            elif start is not None and start == held:
+                pass
+            elif (start is not None and seen is not None and start in (seen if near is None else near.get(name, set()))
+                  and start not in used.get(name, ())):
+                # the turns set this value and the line starts from it; a set is good for one start
+                info["set_in_turns"] = info.get("set_in_turns", 0) + 1
+                used.setdefault(name, set()).add(start)
             elif start is not None and held is not None and held != start:
                 info["mismatch"].append(f"{name}: working starts from {start}, NOTES hold {held}")
             elif start is not None and old is not None and re.match(r"(removed|closed|struck|deleted|gone)\b", old.lower()):
@@ -463,15 +480,19 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
             if total != stated:
                 info["sums_corrected"].append(f"{name}: {value} -> {total}")
             value = str(total)
-        elif seen is not None and strict:
-            # a bare new number must be one the turns state (a set); anything worked out must show its working, so
-            # that the sum can be checked (N32w seed 0: `rumi16: -132` for 29 - 73, written without working)
+        elif seen is not None and strict and re.search(r"[\d_]", name) and " " not in name:
+            # a new number without working must be one the turns state for this thing (a set), whatever is written
+            # round it (`402`, `opened at 402`, `402 (item 7)`, `-107 -> 402`); anything worked out must show its
+            # working, so that the sum can be checked (N32w seed 0: `rumi16: -132` for 29 - 73, without working)
             old = fact_of(state[where[name]])[1] if name in where else None
             held, now = (number_of(old) if old is not None else None), number_of(value)
             stated = seen if near is None else near.get(name, set())
-            if now is not None and now != held and now not in stated and re.fullmatch(r"-?[\d,]+\.?", value.strip()):
-                info["mismatch"].append(f"{name}: {now} is not a value the turns state; write the working"
-                                        + (f" from the value the NOTES hold, {held}" if held is not None else ""))
+            if now is not None and now != held:
+                if now not in stated:
+                    info["mismatch"].append(f"{name}: {now} is not a value the turns state; write the working"
+                                            + (f" from the value the NOTES hold, {held}" if held is not None else ""))
+                else:
+                    used.setdefault(name, set()).add(now)
         line = f"{name}: {value}" if value else name
         if name in where:
             state[where[name]] = line
@@ -592,6 +613,21 @@ COUNT_RETRY = ("The turns mention these names more often than your CHANGES accou
                "nothing, write `name: (no change)`.")
 
 
+def identifiers_in(turns: list[dict[str, Any]]) -> list[str]:
+    """Identifier-like words (letters then digits: abcd12, build_7) in the delivered items of the turns, outside
+    questions: things a reply may have left out altogether, such as a counter opened in these turns that neither
+    the NOTES nor the reply's CHANGES name."""
+    seen: dict[str, None] = {}
+    for m in turns:
+        body = str(m.get("content") or "") if m.get("role") == "tool" else ""
+        if ITEMS.search(body):
+            for sent in re.split(r"(?<=[.!?])\s+", " ".join(ITEMS.sub("", body.split("\n\n(exit_code=")[0]).split())):
+                if not sent.endswith("?"):
+                    for w in re.findall(r"(?<![\w])[a-z]{2,}_?\d+[a-z0-9_]*(?![\w])", sent.lower()):
+                        seen.setdefault(w)
+    return list(seen)
+
+
 def mention_counts(names: list[str], turns: list[dict[str, Any]]) -> dict[str, int]:
     """How often each name (identifier-like only, as in `unaccounted`) is mentioned in the delivered items of the
     turns, outside questions."""
@@ -606,10 +642,10 @@ def mention_counts(names: list[str], turns: list[dict[str, Any]]) -> dict[str, i
     return {n: c for n, c in out.items() if c}
 
 
-def numbers_near(names: list[str], turns: list[dict[str, Any]]) -> dict[str, set[int]]:
+def numbers_near(names: list[str], turns: list[dict[str, Any]], signed: bool = True) -> dict[str, set[int]]:
     """For each name (identifier-like only): the numbers stated in a sentence of a delivered item that mentions it, or
-    in the sentence right after one ("Next on the list was abcd12. It was opened at 591."). A value that the model
-    writes without working has to be one of these: N32v seed 1 wrote `zija81: -62` for 134 - 16 and the looser test
+    in the sentence right after one ("Next on the list was abcd12. It was opened at 591."), with the sign as stated
+    (see numbers_in). A value that the model writes without working has to be one of these: N32v seed 1 wrote `zija81: -62` for 134 - 16 and the looser test
     (the number occurs somewhere in the turns) let it pass."""
     want = {n for n in names if len(n) >= 3 and re.search(r"[\d_]", n) and " " not in n}
     out: dict[str, set[int]] = {}
@@ -621,7 +657,7 @@ def numbers_near(names: list[str], turns: list[dict[str, Any]]) -> dict[str, set
         for i, sent in enumerate(sents):
             here = want & set(re.findall(r"[a-z0-9_]+", sent.lower()))
             if here:
-                nums = numbers_in(sent) | (numbers_in(sents[i + 1]) if i + 1 < len(sents) else set())
+                nums = numbers_in(sent, signed) | (numbers_in(sents[i + 1], signed) if i + 1 < len(sents) else set())
                 for n in here:
                     out.setdefault(n, set()).update(nums)
     return out
@@ -817,9 +853,7 @@ class _KeeperEnv(_cb._NoMirrorEnv):
             res = types.SimpleNamespace(stdout=note, stderr="", return_code=75)
             return StepResult(result=res, ctx_changed=False, stdout_block=note + "\n\n(exit_code=75)",
                               readout="", notes="", exec_time=0.0, touched_ctx=False)
-        a._last_cmd = cmd
-        if fetch or not cmd.startswith("recall"):
-            a._repeat_streak = 0                      # a search that runs does not end a streak of refused searches
+        a._last_cmd, a._repeat_streak = cmd, 0        # a command that runs ends the streak (circling is caught by _searches)
         res = await super().step(command, messages, environment=environment, pending=pending)
         got = split_items(getattr(res.result, "stdout", "") or "")
         if got:
@@ -1117,6 +1151,8 @@ class KeeperAgent(TruncateAgent):
                     n += 1
                 else:
                     self.n_archive_failed += 1
+        if n:
+            self._searches = {}                       # the archive has grown: an earlier search may now find more
         return n
 
     def _notes_call(self, req: list[dict[str, Any]], thinking: bool | None = None, live: bool = False):
@@ -1177,7 +1213,7 @@ class KeeperAgent(TruncateAgent):
             rec.update(notes_prompt_tokens=0, notes_completion_tokens=0, notes_attempts=0, notes_mode=self.notes_mode,
                        notes_pieces=len(pieces))
             for piece in pieces:
-                await self._take_notes(head, render_turns(piece), rec)
+                await self._take_notes(head, render_turns(piece), rec, piece)
         messages[:] = head + [self._pin(prev + n)] + keep
         rec["after"] = self._budget.count(messages)
         self._record(rec)
@@ -1217,14 +1253,18 @@ class KeeperAgent(TruncateAgent):
             if delta is None:
                 why = "reply without the NEW RULES layout" if rec["notes_finish"] != "length" else "reply cut at the token cap"
                 rec["notes_bad_layout"] = text[:200]
+                part = parse_delta(text, need_changes=False)     # its rules still count, if that section is complete
+                if part and re.search(r"(?m)^\W*(CHANGES|OPEN)\W*$", text):
+                    rules_seen += [r for r in part["rules"] if not any(same_rule(r, x) for x in rules_seen)]
                 if rec.get("layout_retries"):
                     break                             # asked twice already
                 rec["layout_retries"] = 1
                 req = req + [{"role": "assistant", "content": text}, {"role": "user", "content": DELTA_RETRY}]
                 continue
             near = None
+            known = state_keys(self.notes) + [k for k, _ in delta["changes"]]
             if self.mention_check == "near":
-                near = numbers_near(state_keys(self.notes) + [k for k, _ in delta["changes"]], body)
+                near = numbers_near(known, body)
             rules_seen += [r for r in delta["rules"] if not any(same_rule(r, x) for x in rules_seen)]
             delta["rules"] = list(rules_seen)
             new, info = apply_delta(self.notes, delta, seen, strict=self.mention_check in ("count", "near"), near=near)
@@ -1232,8 +1272,8 @@ class KeeperAgent(TruncateAgent):
             if hinted:
                 missing = []
             elif self.mention_check in ("count", "near"):
-                names = state_keys(self.notes) + [k for k, _ in delta["changes"]]
-                missing = under_accounted(mention_counts(names, body), steps)
+                # also names that only the items know: a thing opened in these turns and left out of the reply
+                missing = under_accounted(mention_counts(known + identifiers_in(body), body), steps)
             else:
                 missing = unaccounted(state_keys(self.notes), body, delta["changes"])
             if missing:                               # asked once: a name the turns mention is not accounted for
@@ -1275,15 +1315,17 @@ class KeeperAgent(TruncateAgent):
             break
         self.n_inplace_failed += 1                    # nothing was changed; the ordinary cut will handle these turns
         logger.warning("keeper: in-place notes not applied: %s", why)
+        self._record({**rec, "reason": "keep-inplace-failed", "turns_dropped": 0, "why": why, "after": before})
         self.inplace_failures.append({"step": self.n_lm_calls, "why": why, "prompt": rec["notes_prompt_tokens"],
                                       "written": rec["notes_completion_tokens"]})
         self.inplace_turn_hold = self._budget.count(body)
         return False
 
-    async def _take_notes(self, head: list[dict[str, Any]], turns: str, rec: dict[str, Any]) -> None:
+    async def _take_notes(self, head: list[dict[str, Any]], turns: str, rec: dict[str, Any],
+                          piece: list[dict[str, Any]] | None = None) -> None:
         thinking = None
         if self.notes_mode in ("delta", "rules"):
-            why = await self._notes_delta(head, turns, rec)
+            why = await self._notes_delta(head, turns, rec, piece)
             if not why:
                 return
             rec.setdefault("delta_fallback", why)     # the first reason of this cut; the count is in delta_fallbacks_n
@@ -1303,8 +1345,11 @@ class KeeperAgent(TruncateAgent):
         rec["notes_finish"] = resp.choices[0].finish_reason
         return (resp.choices[0].message.content or "").strip()
 
-    async def _notes_delta(self, head: list[dict[str, Any]], turns: str, rec: dict[str, Any]) -> str:
-        """Changes-only notes for one cut. Returns '' when the NOTES were updated, else why not."""
+    async def _notes_delta(self, head: list[dict[str, Any]], turns: str, rec: dict[str, Any],
+                           piece: list[dict[str, Any]] | None = None) -> str:
+        """Changes-only notes for one cut (or one piece of it). Returns '' when the NOTES were updated, else why not.
+        With mention_check count or near the reply is held to the same value checks as an in-place reply; a reply
+        that fails them goes to the full rewrite."""
         delta_mode = self.notes_mode == "delta"
         req = head + [{"role": "user", "content": (NOTES_REQUEST_DELTA if delta_mode else NOTES_REQUEST_RULES).format(
             notes=self.notes or "(none yet)", turns=turns)}]
@@ -1328,7 +1373,10 @@ class KeeperAgent(TruncateAgent):
                 continue
             if not delta_mode:
                 delta["changes"] = []
-            new, info = apply_delta(self.notes, delta, numbers_in(turns))
+            strict, near = self.mention_check in ("count", "near"), None
+            if self.mention_check == "near" and piece is not None:
+                near = numbers_near(state_keys(self.notes) + [k for k, _ in delta["changes"]], piece)
+            new, info = apply_delta(self.notes, delta, numbers_in(turns), strict=strict, near=near)
             info.pop("steps", None)
             if info["mismatch"]:
                 return "working starts from a value the NOTES do not hold: " + "; ".join(info["mismatch"][:3])

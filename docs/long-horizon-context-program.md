@@ -191,7 +191,7 @@ turns are read back after each cut, and when cut turns are shown to the notes ca
 | arm | 240K rules stream, seed 0 (39) | seed 1 (46) | 1M rules stream (228) |
 | --- | ---: | ---: | ---: |
 | N32j keeper (full NOTES rewrite at each cut) | 39 in 15.7 min | 46 in 16.5 min | 226 in 83 min; NOTES audit: 5 counters lost in one version |
-| **In-place notes** (the notes call is the live conversation plus one message; changes only, with thinking; checked by the harness; then every turn is moved out) | **39 in 9.9 min (N32u, every check; NOTES audit clean)**; while the checks were added: 39, 38, 39 | **46 in 10.0 min (N32u; audit clean)**; earlier: 46, 45 | **228 in 50 min (N32u); NOTES audit: 0 wrong in 63 versions** |
+| **In-place notes** (the notes call is the live conversation plus one message; changes only, with thinking; checked by the harness; then every turn is moved out) | **39 in 9.9 min (N32u, every check; NOTES audit clean)**; while the checks were added: 39, 38, 39 | **46 in 10.0 min (N32u; one counter wrong in the NOTES for a stretch)**; earlier: 46, 45 | **228 in 50 min (N32u); NOTES audit: 0 wrong in 63 versions** |
 | Changes-only notes without thinking (N32d, N32e, N32e35, N32e25, N32c35, N32x) | 39, 39, 36, 39, 38, 39 in 10 to 14 min; 2 to 8 counters wrong in the NOTES of every run | | not run: not adopted |
 | **Retrieval only, built right** (R32b: every item in a store outside the sandbox, BM25 over sentences, 20 per question, no notes) | **39 in 9.2 min** | **45 in 9.7 min** | see the note (R32c40) |
 | Retrieval only, first two builds (R32, R32a) | 32, 38 | 30 | |
@@ -207,7 +207,8 @@ retrieval 10/15 and too slow to finish), and the 1M run recorded in the note. Th
 not retrieval-only: the model found the archive directory by itself and ran scripts over it.
 
 Campaign 10b (the night after) completed the record of the fully-checked arm: **313 of 313 answers over the two
-240K seeds and the 1M stream, no value ever wrong in the NOTES** (full keeper 311 of 313). On the hard stream the
+240K seeds and the 1M stream; the NOTES audit finds nothing wrong at 1M (63 of 63 versions) and on seed 0, and one
+counter wrong for a stretch on seed 1** (a sentence read past, not a bookkeeping slip; full keeper 311 of 313). On the hard stream the
 keeper with retrieval at question time added scored 47 and 46 of 50 (42 and 43 without; retrieval alone 10/15 on
 the first three question items), after four fixes that stream forced: a sampled call to leave a loop of refused
 repeats, `recall` showing the sentence after each match, a guard against circling between searches, and keeping a

@@ -11,17 +11,22 @@ state_after_item = {item_of_batch[b]: rec["state"] for b, rec in enumerate(ref["
 ops_in_item = {item_of_batch[b]: rec["ops"] for b, rec in enumerate(ref["after_batch"], 1)}
 wrong = {k: v for k, v in det["per_key"].items() if v != "correct"}
 print(arm, "seed", seed, "wrong:", {k: (v, spec["expected"].get(k)) for k, v in wrong.items()})
-seen, first_bad = set(), {}
+seen, pins, first_bad = set(), set(), {}
 for f in sorted(glob.glob(t + "agent/context_snapshots/turn-*.json")):
     d = json.load(open(f)); msgs = d.get("messages", d) if isinstance(d, dict) else d
     pin = next((str(m.get("content")) for m in msgs if str(m.get("content") or "").startswith("[[NOTES kept")), None)
-    if not pin or pin in seen:
+    if not pin:
         continue
-    seen.add(pin)
-    # items still in view in this snapshot: the notes cover everything before the first of them
+    pins.add(pin)
+    if pin in seen:
+        continue
+    # items still in view in this snapshot: the notes cover everything before the first of them. A version is marked
+    # as audited only once a snapshot shows it together with an item (right after an in-place cut the context is the
+    # task and the NOTES alone; an earlier version of this tool marked the version seen there and never audited it).
     inview = [int(x) for m in msgs if m.get("role") == "tool" for x in re.findall(r"(?m)^ITEM (\d+)/\d+ \(UPDATE\)", str(m.get("content") or ""))]
     if not inview:
         continue
+    seen.add(pin)
     upto = max(i for i in state_after_item if i < min(inview))
     truth = state_after_item[upto]
     state = {}
@@ -46,3 +51,4 @@ for k, (upto, v, f) in sorted(first_bad.items(), key=lambda x: x[1][0]):
     hist = [(i, [o for o in ops if o[0] == k]) for i, ops in ops_in_item.items() if any(o[0] == k for o in ops) and i <= upto][-3:]
     print(f"  {k}: NOTES first wrong when covering items up to {upto} ({f}): notes {v[0]} truth {v[1]}; last ops: {hist}")
 print("  counters ever wrong in NOTES:", len(first_bad))
+print(f"  NOTES versions audited: {len(seen)} of {len(pins)}")

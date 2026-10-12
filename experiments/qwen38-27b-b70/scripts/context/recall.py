@@ -62,7 +62,9 @@ def main():
             if rx.search(s):
                 # with the sentence after it: text often names a thing in one sentence and says what happened to it
                 # in the next ("Next on the list was abcd12. It was opened at 591.")
-                after = (" " + sents[i + 1][:200]) if i + 1 < len(sents) else ""
+                # (not when the next sentence matches too: it gets a line of its own, and printing it twice would
+                # read as two changes)
+                after = (" " + sents[i + 1][:200]) if i + 1 < len(sents) and not rx.search(sents[i + 1]) else ""
                 hits.append(f"item {n}: {s[:300]}{after}")
     print("\n".join(hits[:lim]) if hits else f"recall: no archived sentence matches {pat!r}")
     if len(hits) > lim:

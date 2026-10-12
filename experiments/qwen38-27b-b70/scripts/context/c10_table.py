@@ -38,7 +38,7 @@ def row(od: str, arm: str, seed: str) -> dict | None:
     return {"arm": arm, "seed": int(seed), "correct": d["correct"], "n": d["n"], "void": d["void"], "by_type": {a: f"{b[0]}/{b[1]}" for a, b in by.items()},
             "seconds": round(total), "minutes": round(total / 60, 1), "calls": u["n_lm_calls"], "main_loop_s": round(llm), "shell_s": round(sh),
             "notes_s": round(total - llm - sh), "main_written": u["completion_tokens"], "notes_calls": s.get("notes_calls", 0),
-            "cuts": len(k), "notes_written": sum(c.get("notes_completion_tokens", 0) for c in k), "notes_read": sum(c.get("notes_prompt_tokens", 0) for c in k),
+            "cuts": sum(1 for c in k if c.get("reason") != "keep-inplace-failed"), "notes_written": sum(c.get("notes_completion_tokens", 0) for c in k), "notes_read": sum(c.get("notes_prompt_tokens", 0) for c in k),
             "prompt": u["prompt_tokens"], "cached": u["cached_tokens"], "fallbacks": s.get("delta_fallbacks", 0), "inplace_cuts": s.get("inplace_cuts", 0),
             "inplace_cached": s.get("inplace_cached_tokens", 0), "inplace_prompt": s.get("inplace_prompt_tokens", 0),
             "mention_reasks": s.get("mention_reasks", 0), "recalls": sum(1 for x in tm if str(x.get("cmd") or "").strip().startswith("recall")),

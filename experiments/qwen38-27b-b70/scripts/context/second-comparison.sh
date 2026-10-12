@@ -80,6 +80,10 @@
 #                                           after it, and a search sent a third time since the last item arrived is refused like a repeat
 #   N32sr                                   N32s plus the retrieved sentences at each question, and a rule named in any reply of one notes call is kept
 #                                           (N32s lost the standing rule when a second, asked-for reply left it out): everything together
+#   NOTE on the N32x..N32sr names: each is one state of clm_keeper.py on the night it ran, not a switch. With today's code
+#   N32xth, N32y share one setting, N32z has mention_check=true, N32w/N32v count, N32u/N32t/N32s near (identical now), and
+#   N32ur/N32sr are identical; re-running a name reproduces today's code under that name, not the run on record. The runs
+#   on record: lab commits 20ef39323 (campaign 10) and b7d6413b8 (campaign 10b), evidence data/2026-10-11-context-campaign10.
 #   N32er                                   N32e plus the retrieved sentences (store holds every item)
 #   R32                                     retrieval only ("RAG"): the plain window agent, cut items go to a store, and at each question
 #                                           the 20 best-matching stored sentences per question are shown, each with the sentence

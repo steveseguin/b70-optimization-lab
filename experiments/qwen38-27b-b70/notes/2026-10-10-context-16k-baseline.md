@@ -795,7 +795,7 @@ without costing an answer if nothing asks for that counter before it is set agai
 | N32c35: N32e35, notes in pieces of six items | 0 | 38/39 | 14/14 | 10.8 | 196 | 33 | 16,022 | 2 |
 | N32x: in-place notes, no thinking | 0 | 39/39 | 14/14 | 11.3 | 194 | 28 | 20,267 | 2 |
 | **N32xth: in-place notes that think, every ten items** | 0 | **39/39** | 14/14 | **9.5** | 182 | 18 | 22,770 | **0** |
-| **N32y: the same after two robustness fixes** | 1 | **46/46** | 21/21 | **8.5** | 190 | 14 | 17,510 | 1 |
+| **N32y: the same after two robustness fixes** | 1 | **46/46** | 21/21 | **8.5** | 190 | 14 | 17,510 | 2 |
 | R32: retrieval only, store = what left the window | 0 | 32/39 | 7/14 | 13.0 | 170 | 0 | 0 | |
 | R32a: retrieval only, store = every item | 0 | 38/39 | 13/14 | 10.8 | 169 | 0 | 0 | |
 | R32a | 1 | 30/46 | 5/21 | 11.7 | 173 | 0 | 0 | |
@@ -846,8 +846,8 @@ agent's own calls run at 2K to 20K of context instead of 18K to 28K.
   16 min 30 s (-47 %). The bar was within one question on both seeds and 25 % less time.
 - where the time went, seed 1: 511 s = main loop 268 (147 fetches at a median 1.3 s) + notes 224 (14 calls of about
   1,250 written tokens) + shell 18. Prompt tokens of the whole run: 1.79M against 3.7M.
-- NOTES audit: 0 counters ever wrong on seed 0, 1 on seed 1 (a removal, the only mention of that counter in a batch
-  of ten items; N32j had 0 and 0). Arm N32z adds a check for exactly that: a name of a STATE line that the items
+- NOTES audit: 0 counters ever wrong on seed 0, 2 on seed 1 (a removal, the only mention of that counter in a batch
+  of ten items; and a set that was read past, see the correction below; N32j had 0 and 0). Arm N32z adds a check for exactly that: a name of a STATE line that the items
   being moved out mention, outside a question, without a line in CHANGES is asked about once.
 - N32y differs from N32xth in two things that only act on a doubtful reply: it is asked for again in place (with
   thinking and the lines named) instead of handing the turns to the ordinary cut, and a STATE value is read as its
@@ -886,10 +886,10 @@ audit found in the NOTES, and each arm name is one state of the code, so the tab
 | arm | seed | score | min | notes calls | asked again | notes wrong | what was new in this arm |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | N32xth | 0 | 39/39 | 9.5 | 18 | | 0 | in-place notes that think, every ten items |
-| N32y | 1 | 46/46 | 8.5 | 14 | 0 | 1 | a doubtful reply is asked for again in place; a STATE value is read as its last number |
+| N32y | 1 | 46/46 | 8.5 | 14 | 0 | 2 | a doubtful reply is asked for again in place; a STATE value is read as its last number |
 | N32z | 0 | 38/39 | 9.3 | 16 | 1 | 3 | a name the items mention must have a line in CHANGES |
 | N32w | 0 | 39/39 | 9.6 | 19 | 4 | 2 | the lines of a name must account for as many changes as the items mention it |
-| N32v | 1 | 45/46 | 9.7 | 18 | 4 | 1 | a value written without working must be one the items state |
+| N32v | 1 | 45/46 | 9.7 | 18 | 4 | 2 | a value written without working must be one the items state |
 
 What the audit found, in order: a removal that was the only mention of its counter in ten items, left out (N32y);
 the second of two changes in one item left out, twice, with one wrong answer (N32z: `fasu60`, asked while wrong);
@@ -1022,17 +1022,22 @@ does not name what it covers, which neither retrieval nor this benchmark has bee
 Same server recipe, started once more after Gemma had been back for half an hour; runner `longrun-campaign10b.sh`,
 queue `QUEUE10b.txt`. Nine runs, no GPU fault line, no guard event (no 1M client).
 
-**The fully-checked in-place arm on both 240K seeds: 39/39 and 46/46, and nothing wrong in the NOTES.**
+**The fully-checked in-place arm on both 240K seeds: 39/39 and 46/46; one counter wrong in the NOTES on seed 1.**
 
 | arm N32u | questions right | minutes | notes calls | counters ever wrong in the NOTES |
 | --- | ---: | ---: | ---: | ---: |
 | 240K rules stream, seed 0 | 39/39 | 9.9 | 20 | 0 |
-| 240K rules stream, seed 1 | 46/46 | 10.0 | 19 | 0 |
+| 240K rules stream, seed 1 | 46/46 | 10.0 | 19 | 1 |
 | 1M rules stream (campaign 10) | 228/228 | 50.2 | 84 | 0 |
 
 313 of 313 answers over the three runs, against the full keeper's 311 of 313 in 15.7, 16.5 and 82.9 minutes. The
-checks cost up to a minute and a half at 240K (9.9 and 10.0 against 9.5 and 8.5 for the unchecked versions) and are
-why the audit is clean. Six items per notes call instead of ten (N32u6, seed 0): 39/39 in 10.0 minutes with 28 notes
+checks cost up to a minute and a half at 240K (9.9 and 10.0 against 9.5 and 8.5 for the unchecked versions). The one
+wrong counter (seed 1, `dope10`, wrong from item 121 until it was next set; no question asked for it meanwhile) is
+a misreading no check here can see: "The clerk recorded dope10 at six." was not taken as a new value, and
+"Thirty were taken from dope10." was then worked from the old one (`92 - 30 = 62`; true value -24). The same
+sentence was misread the same way in the two earlier in-place runs on that seed, and the same phrase ("the clerk
+recorded X at N") is the one the no-thinking notes turned into a subtraction. It is the model's reading, not its
+bookkeeping. Six items per notes call instead of ten (N32u6, seed 0): 39/39 in 10.0 minutes with 28 notes
 calls and two counters wrong in the NOTES for a while; no gain, ten stays. One of the two was a defect, fixed: a line
 `tamija29: (no change - mention is the confidentiality rule itself)` was stored as that counter's value (a no-change
 line with a remark after it is now still a no-change line).
@@ -1045,7 +1050,7 @@ line with a remark after it is now still a no-change line).
 | N32u | 3/50 | | | 17.4 | | stuck at the first question item: one archive search refused 362 times in a row |
 | N32t: N32u + the refusal says stop after three, and that call is sampled | stopped by me at 11 min | 5/5 on the first item | | | | circled between three different searches instead |
 | N32s: + `recall` shows the sentence after each match; a search sent a third time since the last item is refused | 43/50 raw, **void** | 20/25 | 23/25 | 19.6 | 10 | void for one key in the answers file that was not asked for; the standing rule lost at the first cut |
-| N32ur: N32u + retrieved sentences at each question | 47/50 | 23/25 | 24/25 | 19.4 | 9 | |
+| N32ur: N32u + retrieved sentences at each question | 47/50 | 23/25 | 24/25 | 19.4 | 10 | |
 | **N32sr: everything together** | **46/50** | 22/25 | 24/25 | **14.4** | 6 | |
 | R32b retrieval only (campaign 10) | stopped at 20.5 min | 10/15 on the first three items | | | | |
 
@@ -1066,10 +1071,30 @@ What this stream taught, each now in the code:
   misses remain in both runs with it (and a fourth in N32sr): values that passed through a chain of "as much as Y
   held" changes.
 
-N32sr on the 240K rules stream, seed 1: 46/46 in 11.2 minutes, NOTES audit clean. Retrieval added to the keeper
+N32sr on the 240K rules stream, seed 1: 46/46 in 11.2 minutes, no counter wrong in the 14 of 15 NOTES versions the
+audit can place. Retrieval added to the keeper
 costs about a minute there and loses nothing.
 
 So after both campaigns the recommended form is the keeper with in-place notes and its checks (N32u: 313/313 on
 the rules streams up to 1M), with retrieval at question time switched on where the text refers to things indirectly
-(N32sr). Not yet run: N32sr at 1M; any of this in the proxy; a second seed of the hard stream, which stays
+(N32sr).
+
+**Correction to the audit figures (02:40, after a second Codex read-only review of the night's code).** The review
+found that `notes_audit.py` could skip a NOTES version: right after an in-place cut the context is the task and the
+NOTES alone, the tool marked that version as seen there, and never audited it once items were in view again. Fixed
+(a version counts as audited only when it is seen together with an item; the tool now prints how many versions it
+audited), and every audit was run again. Changed: N32y 1 to 2, N32v 1 to 2, N32u seed 1 0 to 1 (all three the
+`dope10` misreading above), N32ur on the hard stream 9 to 10. Unchanged: every other run, including **N32u at 1M: 0
+counters wrong, 63 of 63 versions audited**, and N32j (0, 0, and 5 at 1M). The tables above carry the corrected
+figures. The review's other 14 findings change no result on record and are fixed in the code (review text:
+`data/2026-10-11-context-campaign10/codex-review-2-findings.md`): a value written with words round it or as
+`old -> new` escaped the "stated in the items" check; a value the items set could excuse two workings; the sign of
+a set value was not checked (`opened at 402` allowed `-402`); the ordinary cut's pieces skipped the checks; the count
+of steps in working missed single-digit operands (a needless re-ask); a counter opened and left out altogether was
+not noticed; number words ran on across a full stop; a search refused as a repeat stayed refused after the archive
+had grown; sampling stayed on after the loop was left; rules in a reply without the full layout were dropped; the
+search tool printed a sentence twice when two neighbours matched; failed in-place attempts were missing from the
+cost records. One finding is left as designed and is a known limit: after one re-ask the second reply is accepted
+even if a check still objects (once in 63 cuts at 1M, and that reply was right). The arm names N32xth to N32sr are
+states of the code on the night, not switches; the header of `second-comparison.sh` says which commit ran what. Not yet run: N32sr at 1M; any of this in the proxy; a second seed of the hard stream, which stays
 exploratory until it has one.

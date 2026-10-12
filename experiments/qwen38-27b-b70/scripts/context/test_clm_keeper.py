@@ -153,7 +153,7 @@ class Keeper(unittest.TestCase):
         _, info = NS["apply_delta"](notes, {"changes": [("abcd12", "-31 + 12 = -19")]}, seen)
         self.assertEqual((info["mismatch"], info.get("set_in_turns", 0)), ([], 0))
         new, info = NS["apply_delta"](notes, {"changes": [("abcd12", "-31 \u2192 294"), ("abcd12", "294 + 12 = 306")]}, seen)
-        self.assertEqual((info["mismatch"], new.splitlines()[3]), ([], "abcd12: 306"))       # an arrow line is stored as its result
+        self.assertEqual((info["mismatch"], new.splitlines()[3]), ([], "abcd12: 306"))       # an arrow line, then working from its value
         new, info = NS["apply_delta"]("RULES\n(none)\nSTATE\nabcd12: opened at 402\nOPEN", {"changes": [("abcd12", "400 + 5 = 405")]}, set())
         self.assertEqual(info["mismatch"], ["abcd12: working starts from 400, NOTES hold 402"])
 
@@ -203,7 +203,7 @@ class Keeper(unittest.TestCase):
         turns = [tool("ITEM 132/147 (UPDATE)\nzija81 went down by sixteen. The bus was 62 minutes late. Next on the list was abcd12. It was opened at 591. "
                       "wxyz56 was set to minus sixty-two.")]
         near = NS["numbers_near"](["zija81", "abcd12", "wxyz56", "plain"], turns)
-        self.assertEqual({k: sorted(v) for k, v in near.items()}, {"zija81": [-62, -16, 16, 62], "abcd12": [-591, 591], "wxyz56": [-62, 62]})
+        self.assertEqual({k: sorted(v) for k, v in near.items()}, {"zija81": [16, 62], "abcd12": [591], "wxyz56": [-62]})   # signs as stated
         notes = "RULES\n(none)\nSTATE\nzija81: 134\nmnop78: 5\nOPEN"
         seen = NS["numbers_in"](turns[0]["content"])
         ap = lambda changes: NS["apply_delta"](notes, {"changes": changes}, seen, strict=True, near=near)[1]["mismatch"]
@@ -211,6 +211,33 @@ class Keeper(unittest.TestCase):
         self.assertEqual(ap([("mnop78", "-62")]), ["mnop78: -62 is not a value the turns state; write the working from the value the NOTES hold, 5"])
         self.assertEqual(NS["apply_delta"](notes, {"changes": [("mnop78", "-62")]}, seen, strict=True)[1]["mismatch"], [])   # the looser test passes it
         self.assertEqual(ap([("mnop78", "591 + 1 = 592")]), ["mnop78: working starts from 591, NOTES hold 5"])              # 591 is abcd12's
+
+    def test_review_2_cases(self):
+        """The cases of the second review (2026-10-12): signs, annotated numbers, arrows, a set used twice, steps."""
+        tool = lambda text: {"role": "tool", "content": text + "\n\n(exit_code=0)"}
+        turns = [tool("ITEM 7/9 (UPDATE)\nabcd12 was opened at 402. efgh34 was set to one hundred. efgh34 gained five. efgh34 gained seven. "
+                      "wxyz56 was set to minus sixty-two.")]
+        notes = "RULES\n(none)\nSTATE\nabcd12: -107\nefgh34: 9\nwxyz56: 1\nOPEN"
+        names = ["abcd12", "efgh34", "wxyz56"]
+        near, seen = NS["numbers_near"](names, turns), NS["numbers_in"](turns[0]["content"])
+        ap = lambda changes: NS["apply_delta"](notes, {"changes": changes}, seen, strict=True, near=near)[1]
+        self.assertEqual(ap([("abcd12", "402"), ("wxyz56", "-62")])["mismatch"], [])
+        self.assertEqual(len(ap([("abcd12", "-402")])["mismatch"]), 1)                       # the sign is part of the value
+        self.assertEqual(len(ap([("wxyz56", "62")])["mismatch"]), 1)
+        self.assertEqual(len(ap([("abcd12", "opened at 999")])["mismatch"]), 1)              # words round the number do not excuse it
+        self.assertEqual(len(ap([("abcd12", "999 (item 7)")])["mismatch"]), 1)
+        self.assertEqual(len(ap([("abcd12", "-107 -> 999")])["mismatch"]), 1)                # nor does an arrow
+        self.assertEqual(ap([("abcd12", "-107 -> 402"), ("abcd12", "opened at 402 (item 7)")])["mismatch"], [])
+        good = ap([("efgh34", "100"), ("efgh34", "100 + 5 = 105"), ("efgh34", "105 + 7 = 112")])
+        self.assertEqual((good["mismatch"], good["steps"]), ([], {"efgh34": 3}))
+        stale = ap([("efgh34", "100"), ("efgh34", "100 + 5 = 105"), ("efgh34", "100 + 7 = 107")])
+        self.assertEqual(stale["mismatch"], ["efgh34: working starts from 100, NOTES hold 105"])   # the set was used once already
+        self.assertEqual(ap([("efgh34", "100 + 5 + 7 = 112")])["steps"], {"efgh34": 3})        # two operators and the set: three
+        self.assertEqual(ap([("efgh34", "9 + 4 + 5 = 18")])["steps"], {"efgh34": 2})           # single digits are counted too
+        self.assertEqual(NS["numbers_in"]("abcd12 was set to one hundred. Two birds arrived."), {100, -100, 2, -2})
+        self.assertEqual(NS["numbers_in"]("at minus ninety-seven, then at -106, then (\u22124) and 3-5", True), {-97, -106, -4, 3, 5})
+        self.assertEqual(NS["identifiers_in"]([tool("ITEM 3/9 (UPDATE)\nnewc12 was opened at 9. The build_7 ran. What about qq11? v2 stays.")]), ["newc12", "build_7"])
+        self.assertEqual(ap([("plain name", "999")])["mismatch"], [])                        # only identifier-like names are held to this
 
     def test_mentions_must_be_accounted_for(self):
         tool = lambda text: {"role": "tool", "content": text + "\n\n(exit_code=0)"}
@@ -300,8 +327,8 @@ class Delta(unittest.TestCase):
         self.assertEqual(NS["number_of"]("1,200"), 1200)
         self.assertIsNone(NS["number_of"]("struck off (item 5)"))
         self.assertIsNone(NS["number_of"]("286 \u2192 removed (item 86)"))
-        self.assertEqual(w("-107 \u2192 -31"), (-107, -31, -31))
-        self.assertEqual(w("75 -> 80."), (75, 80, 80))
+        self.assertIsNone(w("-107 \u2192 -31"))                                  # an arrow is an assignment, not working
+        self.assertIsNone(w("75 -> 80."))
 
     def test_parse_delta(self):
         d = NS["parse_delta"]("THOUGHT: here.\nNEW RULES\n(none)\n**CHANGES**\n- abcd12: 75 + 5 = 80\n- efgh34: 12\n"
