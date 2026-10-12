@@ -64,7 +64,7 @@
     "experiments/own-xpu-runtime/stage2/packet38-integrated/dispatch.hpp": "976a59a53d77d4456efaf7b6883180543e571a3afa5f3d0b4637f0df61b28196",
     "experiments/own-xpu-runtime/stage2/packet38-integrated/dispatch_registry.hpp": "72d9ad5510b40489e6baf7728bd414ce2c4739b9d2e7ddff4f4071b2ce8144a5",
     "experiments/own-xpu-runtime/stage2/packet38-integrated/draft_auth_gate.py": "30a167ca3a30d5da04ffe87d5b53232b1002e839c09b9b4158260473bda3e7d0",
-    "experiments/own-xpu-runtime/stage2/packet38-integrated/draft_window.py": "ad8e90f12f584cb5385b04986b85ea623ea8a6d7392092ed6b0a1f13ca45d8be",
+    "experiments/own-xpu-runtime/stage2/packet38-integrated/draft_window.py": "414e70c700ce9f831afe70ae6930b594e12e9b051cdba0aeea0de8bdfbbb9af4",
     "experiments/own-xpu-runtime/stage2/packet38-integrated/entry_codes.py": "f85208c77c7f7111161a9436e7170032be84143785198315e80d88b89c42545a",
     "experiments/own-xpu-runtime/stage2/packet38-integrated/epilogue_hook.hpp": "37a1d35582ff2d542f85a802cbf9ac9d7ba536222123edcc2050bc2ff8b33a96",
     "experiments/own-xpu-runtime/stage2/packet38-integrated/expert_down.cpp": "027dd4750e4d285b55dd83e4289c19bee59398fbe84ca54e63d139866e1451ba",
@@ -5622,5 +5622,22 @@
     "device kernel timing and K2 selection",
     "GPU controller equivalence and latency",
     "complete twelve-prompt suite when all oracles arrive"
+  ],
+  "cpu_tests_sha256": "c204e52b20272d8eabc4becb42a9f832add217a7a915240c0aced635c25a6159",
+  "coordinator_amendments": [
+    {
+      "utc": "2026-10-12T14:30Z",
+      "before_build_receipt_sha256": "0936456aa554ac79b32818b23e2059ec467af578e1352ce9e4d183eb533dd308",
+      "changes": {
+        "draft_window.py": {
+          "before_sha256": "ad8e90f12f584cb5385b04986b85ea623ea8a6d7392092ed6b0a1f13ca45d8be",
+          "after_sha256": "414e70c700ce9f831afe70ae6930b594e12e9b051cdba0aeea0de8bdfbbb9af4"
+        },
+        "added_keys": {
+          "cpu_tests_sha256": "c204e52b20272d8eabc4becb42a9f832add217a7a915240c0aced635c25a6159"
+        }
+      },
+      "reason": "Two defects already met on the cards with packet 36, carried over because this packet's copy was taken before they were fixed there: (1) the KD wrapper's memory watch raised StopIteration on a just-exited, not yet reaped child (no RssAnon line) and failed a correct window; (2) the inherited fixture wrapper reads build-receipt['cpu_tests_sha256'], which this packet's seal did not write. One default value added; one key added from this packet's own cpu-tests.json. No native binary, kernel source or gate changed. Applied before any device window of this packet ran."
+    }
   ]
 }
