@@ -1,0 +1,107 @@
+{
+  "schema": "packet42.window.v1",
+  "window": "K2",
+  "card": 2,
+  "passed": true,
+  "device_accessed": true,
+  "device_executed": true,
+  "no_retry": true,
+  "expected_seconds": 600,
+  "environment": {
+    "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+    "OMP_NUM_THREADS": "2"
+  },
+  "watchdog_seconds": 2400,
+  "expectation_enforced": false,
+  "boot_id": "13858eef-ec68-44ea-a67c-9444933b7100",
+  "native_binary_sha256": {
+    "build/launch/p42-launch-floor": "e56a0981425389441688dde155a958d285cf1eb1bd26290bf5d10402271ae759",
+    "build/gemv/p42-gemv": "98fdcff6b25c1783113e379af72aa6a8dcdd3a092de8bcc7f34e3d86b9ce2f5b",
+    "build/parallel/parallel-native": "89a91eb8e12229c72e231a0bda1da129313be337e37d01ca53bd67855609ba93",
+    "build/route42/p42-route": "62ebd4c8b76b3dfd02e968d2e0cb5724931e707f50352c309ca23b85ad24571e",
+    "build/tiny/p42-tiny": "374dc9f613c9dffc5639cf1f743a08fe5a3ceb3d38f79281ecdf85c0250a6645",
+    "build/extras/p42-extras": "bd2331a4567030b8101ea58d46b7a0ddbc4ebb3e0084398968d893f03e99a00c"
+  },
+  "components": [
+    {
+      "name": "gemv",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/gemv/p42-gemv",
+        "--authorized-device-window",
+        "--card",
+        "2",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/k2b/gemv",
+        "--repetitions",
+        "200"
+      ],
+      "passed": true,
+      "returncode": 0
+    },
+    {
+      "name": "parallel",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/parallel/parallel-native",
+        "--authorized-device-window",
+        "--card",
+        "2",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/k2b/parallel",
+        "--repetitions",
+        "200"
+      ],
+      "passed": true,
+      "returncode": 0
+    },
+    {
+      "name": "route",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/route42/p42-route",
+        "--authorized-device-window",
+        "--card",
+        "2",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/k2b/route",
+        "--repetitions",
+        "200"
+      ],
+      "passed": true,
+      "returncode": 0
+    },
+    {
+      "name": "tiny",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/tiny/p42-tiny",
+        "--authorized-device-window",
+        "--card",
+        "2",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/k2b/tiny",
+        "--repetitions",
+        "200"
+      ],
+      "passed": true,
+      "returncode": 0
+    },
+    {
+      "name": "extras",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/extras/p42-extras",
+        "--authorized-device-window",
+        "--card",
+        "2",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet42-codegen2/build/k2b/extras",
+        "--repetitions",
+        "200"
+      ],
+      "passed": true,
+      "returncode": 0
+    }
+  ],
+  "journal_start_cursor": "s=8e1ce8af49604bb695d987d83f007ab5;i=20d8ebf;b=13858eefec6844eaa67c9444933b7100;m=1d9b975606;t=65da4479af1f1;x=88986cbe8f33c70c",
+  "pid": 652445,
+  "summary_sha256": "b4b041ef9cd9d3c9350e530c6b6f6aac3902c0d7a7d0a0a0d77d09356d62649e",
+  "cases_passed": false,
+  "elapsed_seconds": 123.64214368301327
+}
