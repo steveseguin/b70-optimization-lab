@@ -1207,3 +1207,109 @@ figure", does not say how a tally that comes out below zero is to be reported, a
 view, answered "overdrawn" for those (4 of the keeper's 4 misses outside the governed questions; retrieval, which
 had lost the rule, gave the number and was marked right). The grader expects the number. Read the "other questions"
 row with that in mind; the clause should say "and is reported as a number" before this stream is used again.
+
+### The proxy at one million tokens: 216 of 228 in 76 minutes, below the bar
+
+Stream `client-1m` seed 0 (617 items, 228 questions), arm X32m: the plain agent sends its whole history, the proxy
+keeps a 32K window with in-place notes.
+
+| 1M tokens, 32K window | right | minutes | notes |
+| --- | ---: | ---: | --- |
+| harness keeper, in-place notes (N32u, campaign 10) | 228/228 | 50.2 | NOTES audit 0 wrong of 63 versions |
+| harness keeper, full rewrite (N32j, campaign 10) | 226/228 | 82.9 | |
+| proxy, full rewrite (X32b, campaign 9) | 222/228 | 95.1 | |
+| **proxy, in-place notes (X32m)** | **216/228** | **75.8** | 6 blank, 6 wrong; not void |
+
+The bar written down before the run was 220 or more in under 70 minutes. **Missed on both counts.** It is 20 % faster
+than the proxy's full rewrite and six questions worse. By type: final list 25/25, current 56/58, earlier value
+53/58, who 26/29, rule 28/29, method 28/29. Counters: 662 client calls, 79.8K tokens written in the main loop;
+77 in-place cuts, none failed, 111 notes replies (33 asked for again: 29 by the count check, 4 by the working
+check) that wrote 133.8K tokens and read 1.98M of which 1.77M (89 %) came from the cache; 255 archive searches,
+and the limit of eight searches in one turn was reached six times. Of 75.8 minutes, 70.6 are model time, and the 60
+calls that took over 20 seconds each (the turns with a notes call or with a question item) are 41.6 of them: three
+question turns took 160 to 172 seconds each.
+
+**Where the twelve went.**
+
+- *Six blank, all at one question item (item 441).* The model made its eight searches, then spent the one further
+  call it was allowed thinking about which item "message 424" belonged to and returned nothing: no words, no
+  command. The client nudged ("no tool call in your last turn"). The proxy answers `recall` itself, so the client's
+  history never holds the searches, and in the next request everything found was gone. The model then believed only
+  the seventh question was pending, answered that one (right) and never wrote the other six.
+- *Six wrong: four earlier values (items 50, 56, 71 and 10) and two "who" questions (items 58 and 443).* All six
+  ask about a numbered item. A search hit was labelled with its message number, not its item, and the thinking that
+  was logged shows the model building a table from message numbers to items by hand. The harness keeper prints the
+  item with each hit and got all six right on the same stream. (Attribution by that comparison and that thinking;
+  the proxy did not log the searches themselves.)
+
+**The NOTES were not as clean as the harness's.** `proxy_notes_audit.py`, 77 of 77 versions: two counters were
+wrong for a while (`katu85` from item 246, `peroco54` from item 377; neither was asked about while wrong, and both
+were reset before the final list). Both are one mistake: "The clerk recorded katu85 at five hundred and
+twenty-three" (a set) came back as `650 - 27 = 623`, and "recorded peroco54 at sixty-four" as `208 - 64 = 144`.
+Each starts from the value held and adds up, so the checks passed it. Also, twice the model stored its answers as
+STATE lines (`p21_7: answered 571`); the working check asked, the model insisted, and the second reply stood.
+
+**What the count check was really asking about.** Replaying the first reply of every cut through the checks: 14 of
+the 25 count questions that remain once question items are no longer read as facts were lines that pack several
+changes (`578 + 62 = 640, then set to 174`, `opened at 117, set to -190, +46 = -144`), which the counter took as
+one change each. The harness keeper has the same counter: N32u asked again on 20 of its 63 cuts.
+
+### What killed the server at the end of the long proxy runs
+
+The guard fired at 05:58:05, two seconds after the trial's `result.json` was written: available memory went from
+2.07 to 1.58 GiB. It was not the client. `summarize_results.py`, which the job script runs twice right after a
+trial, loaded every context snapshot of the trial into a list, and a client that resends its whole history leaves
+664 snapshots of up to 5 MB each: 1.7 GB on disk, **2.1 GB resident** (measured afterwards on that job folder).
+Beside a server with about 2 GB to spare that is certain to fire the guard. One snapshot is held at a time now:
+50 MB, the same output byte for byte. This explains the events after the two 1M proxy runs (X32b in campaign 9,
+X32m here). It does not explain the event in campaign 10, which followed an interrupted retrieval run whose job
+folder is 104 MB. `emit_ctx_trajectory=false`, which I had passed as the cure, was beside the point. The three
+runs queued behind X32m were lost (hard stream seed 1 twice, the second 1M stream).
+
+### Fixes made from this run (unit-tested and replayed on the saved replies; not yet run on the cards)
+
+Proxy (`tools/ctxkeeper`):
+- A search hit shows the first line of its message (`message 105 (tool, "ITEM 50/617 (UPDATE)"): ...`).
+- The searches of a turn that ended with nothing for the client are shown again in the next request (bound to the
+  history they were made in, cut to the room left in the window), and an empty reply is asked for once more with
+  thinking off.
+- `--max-recalls` (default 8), and a search result is cut to the room left beside the reply; once there is no room
+  no further search is made in that turn.
+- `--notes-scan`: only tool results that match are read as facts by the checks (question items are not).
+
+Notes checks (shared by the harness keeper and the proxy):
+- A line is counted by its parts (`steps_in`) and a line that packs several changes is followed part by part
+  (`chain_of`): each set must be stated in the turns, each sum must be right, each step must start from the value
+  before it.
+- A line that ends at the value already held, from another start, is a change noted at the last call and read
+  again (the newest exchange stays in view): no change, no question.
+- With the near check, every amount added or taken in a line's working must be stated for that thing in the turns.
+  This catches `650 - 27 = 623`. It cannot catch `208 - 64 = 144`, where the 64 is in the sentence.
+- Replayed on the saved first replies: 33 replies asked for again at 1M become 9, of which 4 are lines the model
+  really left out and one is the `katu85` error; at 240K, 8 and 14 become 4 and 4.
+
+An independent review of the new code (Codex, read-only, before any run) reproduced six defects: a negative start
+counted as a change, any part with one number read as a set (`increased by 5, then +2 = 7` stored 7 for 17),
+brackets inside working dropped (`10 + (5) + 2 = 12` passed), the carried searches able to overflow the window, a
+batch of searches sharing no budget, and carried searches reaching another conversation under the same session
+header. All six are fixed, each with a test.
+
+## Campaign 12 (2026-10-12 morning, preregistered before any result): the proxy after its fixes; the second seeds
+
+Arms are today's code under new names (`second-comparison.sh`): X32n is the proxy as above with `--max-recalls 16
+--notes-scan '^ITEM n/m (UPDATE)'`; N32n is the harness keeper with in-place notes and the same checks; N32nr adds
+retrieved sentences at each question. Queue, in this order, one server, Gemma off for about three hours:
+
+1. X32n, rules stream, seeds 1 and 0. Gate: 39/39 and 45/46 or better, in no more time than X32m (10.2 and 13.1
+   min). If either seed is two or more questions below X32m the 1M run is not made and the cause is found first.
+2. X32n, 1M stream seed 0. **Bar, unchanged: 220 or more of 228 in under 70 minutes.** Expected from the replay
+   and the per-call times: 222 or more, 58 to 66 minutes. Also reported: blank answers, searches, how often the
+   search limit and the carry were used, replies asked for again, and the NOTES audit (expected: no counter wrong
+   that the amount check can see; a set read as a change with the same number can still slip through).
+3. N32nr and N32n, hard stream seed 1 (the pair owed since 10b). On seed 0 retrieval took the keeper from 42 or 43
+   to 46 or 47 of 50. Expected: retrieval adds two or more questions; "no difference" is a result.
+4. N32n, 1M stream seed 1 (the second stream for the headline 1M claim). Expected: 97 % or more of its questions
+   in 45 to 60 minutes, NOTES audit clean.
+
+One stream each for the 1M runs: a 1M figure stays "one stream" until item 4 is done. If the guard fires again at
+the end of a 1M run, the cause above was not the whole story and that is reported as such.
