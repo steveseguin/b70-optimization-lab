@@ -658,10 +658,10 @@ class Keeper:
                 if m.get("role") == "assistant":
                     continue
                 text = text_of(m)
-                if self.think_until.search(text):
-                    break
                 if m.get("role") == "tool" and asks.search(text):
-                    still = i
+                    still = i                        # first, as in `opener`: a question that also matches the
+                    break                            # closing pattern is a question, closed only by a later message
+                if self.think_until.search(text):
                     break
         s.state["kept_open"] = still if still is not None and still < h + s.state["cut"] else None
 

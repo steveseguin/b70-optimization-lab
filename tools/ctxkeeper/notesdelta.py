@@ -187,7 +187,7 @@ def parse_delta(reply: str, need_changes: bool = True) -> dict | None:
             "open": [ln for ln in out["OPEN"] if not _is_none(ln)] if "OPEN" in seen else None}
 
 
-REMARK = re.compile(r"\([^()]*[A-Za-z][^()]*\)")      # `(item 451)`, `(struck off the books)`; not `(5)` in working
+REMARK = re.compile(r"\([^()]*(?:[A-Za-z]|\u2192|->|=>)[^()]*\)")      # `(item 451)`, `(382 -> -55)`; not `(5)` in working
 
 
 # the words a part may use to say "the value is now N"; anything else with a number in it is not read as a set
@@ -261,46 +261,57 @@ def chain_of(value: str, held: int | None, stated: set[int], amounts: set[int] |
             continue
         parts += 1
         if re.match(r"(removed|closed|struck|deleted|gone)\b", part.lower()):
-            cur = None
+            cur, said = None, None
             continue
         if "=" not in part:
             nums = re.findall(r"(?<![\w.])-?\d+(?![\d.]*\d)", part)
+            words = set(re.findall(r"[a-z]+", part.lower()))
             # one number, and nothing round it but words that say "the value is now" (`increased by 5` is a change
             # written without working, not a set to 5: such a line is judged as before)
-            if len(nums) != 1 or re.search(r"[()]", part) or not set(re.findall(r"[a-z]+", part.lower())) <= SET_WORDS:
+            if len(nums) != 1 or re.search(r"[()]", part) or not words <= SET_WORDS:
                 return None
             n = int(nums[0])
-            if n != cur and n != said:
-                if n not in stated or n in sets:
-                    return None
-                sets.append(n)
-                cur = n
-            said = None
+            if cur is not None and (n == cur or (not words and n == said)):
+                said = None                          # the value so far written again (also as the model miscounted it)
+                continue
+            if n not in stated or n in sets:         # a set: the turns must state it, and a stated value is good once
+                return None
+            sets.append(n)
+            cur, said = n, None
             continue
         pieces = [x.strip() for x in part.split("=")]
         if not re.fullmatch(r"-?\d+", pieces[-1]):
             return None
         for expr, after in zip(pieces, pieces[1:]):
             first = re.match(r"\(?\s*(-?\d+)(?![\d.])", expr)
-            taken = expr[first.end():] if first else expr
-            if first and cur is not None and int(first.group(1)) in (cur, said):
-                expr = f"({cur}) {expr[first.end():]}"   # working from the value so far (or from it as the model wrote it)
-            elif re.match(r"[-+*/]\s*\(?\d", expr) and cur is not None:
-                taken, expr = expr, f"({cur}) {expr}"     # working that goes on from it
-            elif first and int(first.group(1)) in stated and int(first.group(1)) not in sets:
-                sets.append(int(first.group(1)))     # the turns set this value and the working starts from it
+            n = int(first.group(1)) if first else None
+            sure = True                              # the start is the value so far: a wrong sum is a slip and is redone
+            if first and cur is not None and n == cur:
+                taken = expr[first.end():]
+            elif first and cur is not None and said is not None and n == said:
+                taken = expr[first.end():]           # from the result as the model wrote it: from the value so far
+                expr = f"({cur}) {taken}"
+            elif cur is not None and (re.match(r"[+*/]\s*\(?\d", expr) or re.fullmatch(r"-\s*\(?\d+\)?", expr)):
+                taken, expr, sure = expr, f"({cur}) {expr}", False     # `+46`, `- 75`: goes on from the value so far
+            elif first and n in stated and n not in sets:
+                sets.append(n)                       # the turns set this value and the working starts from it
                 opening += 1
+                taken, sure = expr[first.end():], False
             else:
-                return None
+                return None                          # `-20 + 5` from a value that is neither held nor set: not followed
             if not amounts_ok(taken, amounts):
                 return None
             val = _calc(expr) if re.fullmatch(r"[\d\s+\-*/().]+", expr) else None
             head = re.match(r"\(?\s*(-?\d+)(?![\d.])", after)
             if val is None or not float(val).is_integer() or not head:
                 return None                          # not plain arithmetic: judged as before
-            said = int(head.group(1))
-            if said != int(val) and fixed is not None:
-                fixed.append(f"{' '.join(expr.split())} = {said} -> {int(val)}")
+            wrote = int(head.group(1))
+            if wrote != int(val):
+                if not sure:
+                    return None                      # the reading itself may be wrong: judged as before
+                if fixed is not None:
+                    fixed.append(f"{' '.join(expr.split())} = {wrote} -> {int(val)}")
+            said = wrote if wrote != int(val) else None
             cur = int(val)
     return (cur, sets, opening) if parts > 1 else None
 
@@ -347,7 +358,8 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
             continue
         old = fact_of(state[where[name]])[1] if name in where else None
         held = number_of(old) if old is not None else None
-        counted, asked = steps_in(value), len(info["mismatch"])
+        counted, asked, written = steps_in(value), len(info["mismatch"]), value
+        several = sum(bool(x.strip()) for x in re.split(PARTS.pattern + r"|\u2192|->|=>", REMARK.sub(" ", value))) > 1
         if strict and seen is not None:
             # several changes on one line: followed part by part; a line that can be followed is right as it stands
             redone: list[str] = []
@@ -406,10 +418,9 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
             # (a line of several parts that could not be followed is judged by its result only: its last piece of
             # working is not the whole line, and X32p at 1M was asked about `517 -> 164, then 164 + 76 + 85 = 325,
             # then 325 + 18 = 343` for an "amount" of 325)
-            # working whose result is a value the turns state for the thing is the model's way of writing a set
-            # (`436 + 78 = 514` for "recorded at 514": six questions at 1M, all for nothing)
-            a_set = near is not None and total is not None and total in near.get(name, set())
-            if near is not None and strict and start is not None and len(info["mismatch"]) == asked and plain and not a_set:
+            # (Not excused: working whose result the turns state for the thing. `436 + 78 = 514` for "recorded at
+            # 514" costs a question, but "gained five" also states a 5, and `100 - 95 = 5` must not pass.)
+            if near is not None and strict and start is not None and len(info["mismatch"]) == asked and plain:
                 expr = REMARK.sub(" ", value).replace("\u2212", "-").split("=")[-2]
                 first = re.match(r"\(?\s*-?\d+", expr.strip())
                 if first and not amounts_ok(expr.strip()[first.end():], near.get(name, set()) | ever):
@@ -430,6 +441,10 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
                                             + (f" from the value the NOTES hold, {held}" if held is not None else ""))
                 else:
                     used.setdefault(name, set()).add(now)
+        if several and strict and near is not None and len(info["mismatch"]) == asked:
+            # several parts, and they could not be followed one by one: nothing has checked this line (`100, then
+            # 100 + 999 = 1099` would otherwise pass because its amounts are looked at only on a plain line)
+            info["mismatch"].append(f"{name}: `{written}` could not be followed part by part; write each change on a line of its own, with its working")
         line = f"{name}: {value}" if value else name
         if number_of(value) is not None:
             ever.add(number_of(value))
@@ -483,8 +498,10 @@ def without_doubtful(notes: str, delta: dict, seen: set[int] | None, strict: boo
     that way). One line at a time; a line goes only if its going leaves fewer questions and no working that now
     starts from a value not questioned before. Returns the reply and the lines left out."""
     def bare(value: str) -> bool:
-        return ("=" not in value and not re.search(r"\u2192|->|=>", value)
-                and sum(bool(x.strip()) for x in PARTS.split(REMARK.sub(" ", value))) == 1)
+        v = REMARK.sub(" ", value).replace("\u2212", "-").strip()
+        if re.fullmatch(r"-?\d+\s*(?:\u2192|->|=>)\s*[a-z ]*?-?\d+\.?", v):
+            return True                              # `100 -> 999`: one value, with the old one before it
+        return "=" not in v and not re.search(r"\u2192|->|=>", v) and sum(bool(x.strip()) for x in PARTS.split(v)) == 1
 
     def starts(ms: list[str]) -> set[str]:
         return set(re.findall(r"working starts from (-?\d+)", " | ".join(ms)))

@@ -153,5 +153,18 @@ async def main():
     await a._keep(Env(), msgs)
     assert not any(str(m.get("content")).startswith(ck.OPEN_QUESTION) for m in msgs), [str(m.get("content"))[:40] for m in msgs[:5]]
     print("7 ok: an open question survives two ordinary cuts and is let go at the next delivery")
+    # 8. the kept question counts in the sizes the cut is chosen by: a long question and a little else, over the
+    #    limit, must still be cut down (it used to leave everything in place)
+    a = agent([reply("NEW RULES\n(none)\nCHANGES\n(none)\nOPEN\n")] * 6, notes_inplace=False, trigger_ratio=1.0, target_ratio=0.5, keep_headroom=0, _largest_delivery=0)
+    a._budget.strict_target = 250
+    long_q = ck.OPEN_QUESTION + "\nITEM 9/10 (PROBE)\nASK q1: " + "what was it? " * 60
+    msgs = [{"role": "system", "content": "sys"}, {"role": "user", "content": "task"}, {"role": "user", "content": "[[NOTES kept by the harness: 3 earlier turns are in the archive (search it with `recall`)]]\nRULES\n(none)\nSTATE\nOPEN"},
+            {"role": "user", "content": long_q}]
+    for k in range(3):
+        msgs += fetch(k)
+    before = a._budget.count(msgs)
+    await a._keep(Env(), msgs)
+    assert a._budget.count(msgs) < before and msgs[3]["content"] == long_q, (before, a._budget.count(msgs), [str(m.get("content"))[:30] for m in msgs[:5]])
+    print("8 ok: the kept question counts when the cut is chosen:", before, "->", a._budget.count(msgs))
     print("ALL OK")
 asyncio.run(main())

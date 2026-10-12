@@ -348,6 +348,23 @@ class InPlace(unittest.TestCase):
         self.assertIsNone(s.state["kept_open"])
         self.assertFalse([m for m in model.requests[-1]["messages"] if str(m.get("content")).startswith(ck.OPEN_HEAD)])
 
+    def test_a_question_that_also_matches_the_closing_pattern_keeps_its_pin(self):
+        """The question's own message matches --think-until too (`ITEM 9: ...` with ASK lines): it is a question,
+        and only a later message closes it (as `opener` already reads it)."""
+        model = LedgerModel()
+        keeper = self.keeper(model, budget=2600, think_when=r"(?m)^ASK ", recite_when=r"(?m)^ASK ", think_until=r"(?m)^ITEM ", inplace_tokens=100000)
+        msgs = conversation(3)
+        msgs.append({"role": "assistant", "content": "", "tool_calls": [{"id": "q", "type": "function", "function": {"name": "bash", "arguments": "{}"}}]})
+        msgs.append({"role": "tool", "tool_call_id": "q", "content": "ITEM 9: question\nASK q1: What is abcd12?"})
+        for i in range(12):
+            msgs.append({"role": "assistant", "content": "", "tool_calls": [{"id": f"r{i}", "type": "function", "function": {"name": "bash", "arguments": json.dumps({"command": f"cat part{i}"})}}]})
+            msgs.append({"role": "tool", "tool_call_id": f"r{i}", "content": "some recalled facts " + "filler " * 150})
+            keeper.complete({"model": "m", "messages": list(msgs)})
+        s = next(iter(keeper.sessions.values()))
+        self.assertGreater(s.state["cuts"], 0)
+        self.assertIsNotNone(s.state["kept_open"])
+        self.assertTrue([m for m in model.requests[-1]["messages"] if str(m.get("content")).startswith(ck.OPEN_HEAD) and "ASK q1" in m["content"]])
+
     def test_nothing_is_pinned_without_a_pattern_that_closes_it_and_a_long_question_says_where_it_is_cut(self):
         model = LedgerModel()
         keeper = self.keeper(model, budget=2600, think_when=self.THINK, recite_when=self.RECITE, inplace_tokens=100000)
