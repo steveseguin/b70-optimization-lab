@@ -1,11 +1,59 @@
-# Packet40 binary hashes
+# Binary SHA256
 
-Current strict rollback builds. Device binaries were compiled but never executed.
-Passing qualification is authoritative only in a completed build-receipt.json; CPU requalification is still in progress.
+No device binary ran.
 
-| Build | SHA-256 |
+| Binary | SHA256 |
 | --- | --- |
-| gnu-host | `e912aa65c6d276aeecfe574babc4945f31ee9477055052e804a60bd5c09a6683` |
-| icpx-host | `1586d2f7a375d13023e6b666e7c0715c9e15ba4004a11837af49a6f86fc1116b` |
-| asan | `4b0ebbed323335216952e4bc6f7d55a826e2ac5e373bffeb2d8f7e655787482d` |
-| device | `a79dfb51e5d1c4dc60dec4629247f73809b7eb03de55400e6a6dfaa6c8a5fa46` |
+| argument-block-test | 601652e0dd154fdab635dd7232c644a8eb7cbda5e3eaf7189ac9d30a6dc4820c |
+| asan/authority-tests | 3626c796c71a5cdb2abae95373f447061d2dab522ab60dd4000712ee464f36b0 |
+| asan/chain-tests | 2b3c67171be1e26eed59854d8c32f487dbd6493d071e8a4646a7b40ca637398d |
+| asan/k2-fixtures | 192df2e12c354aa4cb61179173a27138889c273694b1537901b1bd6e888561a8 |
+| asan/lifetime-tests | 02b6c374e156f6e2d4d1701f7c4c91b3d9d04f664fea8491511f0f78219adb4b |
+| asan/nongemv-fixtures | 7cbd4cdc33b60969233bea264586fc8d5cfc12cfffa0e32bef211f51290d9f78 |
+| asan/own-rt-iq3 | 4b0ebbed323335216952e4bc6f7d55a826e2ac5e373bffeb2d8f7e655787482d |
+| asan/owner-retirement-tests | 048f9e4dcb94c2f45ca7d1c47785c32b9e37594289d040911d60a43902557015 |
+| asan/p33-linked-fixtures | d140699d2a1fb5159eca33ec63d5320bdc0fe775c1ad1b6c6123a922cc08a618 |
+| asan/prepared-invalidation-tests | 9d972ccb5d814375110536bc98e0e705decc0e509be0f051a6383eead89bf73e |
+| asan/queue-tests | 82c98d70dee258dbd2ca94a44aead2c9253a6b612e44d0897ba4e36c6e47f4c7 |
+| device/jit-smoke | c0b88c2f0f9cf1bf0f170415fb271fe546a5f91b11b221357ca7099b98cd33bb |
+| device/k2-fixtures | b21a32ed16eff951278e8301b1df25513127a9a40d2635cfd1d75a804d0d5bb8 |
+| device/nongemv-fixtures | e0c659fa5127dc03342c3a620e941d168788889c856a6e8e55a4187458b0c615 |
+| device/own-rt-iq3 | a79dfb51e5d1c4dc60dec4629247f73809b7eb03de55400e6a6dfaa6c8a5fa46 |
+| device/p33-linked-fixtures | 8c138ee2cedfcda064661962d178210974d6e8e6891fcf5fe50b615b3109e226 |
+| expert-down-review-gcc | 2dd532cb359ead75d7ff18efcbf8ba0f2003e3d5996760c7bbc5839269023ae6 |
+| expert-down-review-icpx | b2f05b80303595d4d8ca039e759bbe8097123e5effbcc6a5ccc98038dc6b0960 |
+| gnu-host/authority-tests | ff7ebb15eb4e26d261d275054fb22b42615f92643c3a652e5b6a6cbd32bf24a4 |
+| gnu-host/chain-tests | 709aa83950e8c97bf130eb64e9cac4f78831cf952fcfb7a5836b4cbcf05021c9 |
+| gnu-host/k2-fixtures | 4a1e208c68cd11621c1c8c2c3c8209664c0bf86c6f94cebb8fb0ab1176f263a8 |
+| gnu-host/lifetime-tests | 55e515851da93fa2cd5d7575c19e36888b51f8793922a7e6a8305acf284fec08 |
+| gnu-host/nongemv-fixtures | b85f1c642d64cad0d283cd5bf27f191260e7b8a12969bd5adfaa093f3eaaf774 |
+| gnu-host/own-rt-iq3 | e912aa65c6d276aeecfe574babc4945f31ee9477055052e804a60bd5c09a6683 |
+| gnu-host/owner-retirement-tests | 77cb38d56619ab82735c3de96d0331e1cf2779f7248e999963367093943f75b0 |
+| gnu-host/p33-linked-fixtures | 185e9bd51bd38f7fadad9189a656f1a3c1ae7281525510ce4b11dc3b7059e907 |
+| gnu-host/prepared-invalidation-tests | d8576bb49eb05d466a1c9cb822ef0e2c5883a5db8700bc9770ef61c7672edd91 |
+| gnu-host/queue-tests | 70b36073b618e7de59555e51a5e91315349bf3f28c0832d5d5ce4e7a7118addf |
+| host-issue/host-issue-benchmark | 1bd8fc179970050c699cd85fb575f95d1cb1a8de2ce4c27426118a78f1e3d442 |
+| icpx-host/authority-tests | 88c7b08cfaa9e2bcb0b49b695f8ae700e393553daa14819a14dd8e72c317c4d7 |
+| icpx-host/chain-tests | 134cbc85fe81753e1aae0b37a74347ea76bde34bc132ab353e163d4367362f0a |
+| icpx-host/k2-fixtures | 411b2a66021676f006313f55b3208d7908814399b8e97fd3fa4e0f4579dea7c8 |
+| icpx-host/lifetime-tests | d2e44382716467ae35b29fe25ba2dd4c5ba9bb1e0831f1a0cec3b80115f90059 |
+| icpx-host/nongemv-fixtures | f5f1b9f29caa87beceb148e1a1975405e2c1478f80af3b7c048a914220585cb9 |
+| icpx-host/own-rt-iq3 | 1586d2f7a375d13023e6b666e7c0715c9e15ba4004a11837af49a6f86fc1116b |
+| icpx-host/owner-retirement-tests | 16e42190a635e5a4f75bdc89a03b10504e24833a08f8efe730966b1212a26fee |
+| icpx-host/p33-linked-fixtures | 2c93ae4598847d4fb9a7e757cc5c565d17d3b1ed3b8534a8ed93cea843c0eea9 |
+| icpx-host/prepared-invalidation-tests | ca0c09af847b82d3f5c83639e688ef8ca6ac1e5ee98d2fd294a7ee5ce4bf11f0 |
+| icpx-host/queue-tests | 85f8fca7207c76fe4f5a0583ef0d588720463758bc0b829338bd84746fe0ee85 |
+| native-controller-asan | 399dfe916cc810cb7639a77a91d9f807896814b086f408d33b35993955dd42a1 |
+| native-controller-test | bfe76af842228aacea9612c4a7bddc382fb7a45a3a33b3350b56396723c2141b |
+| native-controller-tsan-llvm22 | 6e0f3bd37ee40ec41b693a1b9c8d551fb77473d77bbef9895a12a82fe798c84c |
+| native-mailbox-fault-asan | d6cfc2c4220a25875bce52cc04b209caf9277aaa6edecfe1f27126257149148c |
+| native-mailbox-fault-test | 4d0c20536ec2a70e7c76c30e173948ab474a4c8f61679d45504e345f9fd7f719 |
+| native-mailbox-fault-tsan-llvm22 | 789e0348fd0b97422189e25e538e5ad0e6e9e683421cda8cc0fbdaa35ffc64ec |
+| p30-attention-cpu | 72f521cc141169a512f9d74acd731046b9a6e30b6c2d3b97ee89aea9fe848185 |
+| p30-small-cpu | 5c37dea9848716875c84314ed3a7f5817c47609a64d7ca423942e8121e46aceb |
+| p33-candidate-cpu-gcc | 0395dd55da2dc9cd479fd5b32f9d69e5cc15e5ead5d9cb90e2c01f0db743cd8f |
+| p33-candidate-cpu-icpx | d36764868fda10421bb9e5eb9fb641e6c5e29e795507e875aac01255b1d6ad62 |
+| p38-qsa-cpu-gnu | b5bb9c502d1ba3ea281b85ccd10bcc78b1fd7f7053740772303fe80a1c0a88de |
+| p38-qsa-cpu-icpx | 6ccafafa62a411f8e60c34144706c24d0afb450ac8202a59d88e6036008828c2 |
+| prepared-host-issue-benchmark | 20c84a8b2942e113b48815ecf2cd498457a9777f4d33075f16b1cd6b5d202ff8 |
+| prepared-invalidation-tests-asan | b674011c6155da8d82ee093815e21fafba0fd280f6a088a651e1d8cf1887be61 |

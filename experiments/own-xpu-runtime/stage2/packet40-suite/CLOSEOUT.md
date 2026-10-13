@@ -15,13 +15,13 @@ qualification status belong in [build-receipt.json](build-receipt.json).
 
 ## Outcome
 
-CPU qualification remains in progress. Copied packet38 passing receipts are
-historical inputs, not packet40 qualification. No packet40 speed is claimed.
-The final gate inventory is authoritative only after a fresh successful seal;
-[qualification-checklist.json](qualification-checklist.json) maps inherited
-obligations. Current-source strict terminal-EOS qualification passed 472 checks,
-including 460 physical-state comparisons and 12 corruption controls. Remaining
-CPU qualification and the final seal are still in progress.
+CPU preparation is sealed: [build-receipt.json](build-receipt.json) binds 104
+current gate receipts and 53 artifacts, and [seal40-audit.json](seal40-audit.json)
+passes all 91 inherited obligations mapped by
+[qualification-checklist.json](qualification-checklist.json). Copied packet38
+receipts remain historical inputs. No packet40 device ran or speed is claimed.
+Current-source strict terminal-EOS qualification passed 472 checks, including
+460 physical-state comparisons and 12 corruption controls.
 
 ## What worked
 
@@ -52,10 +52,24 @@ coverage. Its scratch is archived and removed. Four selected-dispatch capture
 prompts match fresh GNU/Intel references, and the pipeline draft-agreement join
 passes for both compilers.
 
-The one-prompt 128-token tail-fixture gate remains pending. The final native
-real-controller campaign has passed four modes while MTP is active. Wrapper
-and admission refresh, build/evidence validation and seal remain pending.
-Earlier receipts do not substitute for their required current evidence.
+The native real-controller campaign now passes all five modes against matching
+GNU Python-controller references: 40 tokens and 1,920 fixtures, including full
+final-state allocation and host-inventory comparison. Only the separately
+recorded logical-event scheduling counter is excluded. This is CPU equivalence
+evidence, not a device overlap or speed result.
+
+The one-prompt 128-token tail-fixture gate also passes: 128 exact tokens and 768
+fixtures at steps 1–8 and 97–104 for incident-retrospective, native MTP on the
+Intel host backend. It remains partial 1/12 CPU correctness evidence with no
+speed or publication claim. Scratch is archived and removed. Input integrity
+passes 3,718 hash checks, and all twelve standalone Python producers pass.
+
+Final Python discovery passes 211 tests. All 22 window success/failure
+rehearsal pairs and 31 admission checks pass on CPU. Final build validation
+preserves all 53 artifact hashes, with a second no-op dependency pass for all
+four builds. Cleanup passes, preserves those artifacts and leaves no packet
+binary owners. These counts describe separate checks, not additional model
+requests or device measurements.
 
 ## What failed or remains uncertain
 
@@ -94,8 +108,8 @@ parent path, mapped by [inherited-evidence-links.json](inherited-evidence-links.
 
 ## When to revisit
 
-Complete the remaining current-source CPU qualification, seal, then run the
-admitted coordinator-only device windows.
+Run the admitted coordinator-only device windows, starting with their
+prerequisites and exactness companions in WINDOW.md.
 Changed arithmetic, kernel choices, compiler, protocol, lifetime, retention,
 input identity or metric definitions require the corresponding gates again.
 [INTEGRATE.md](INTEGRATE.md) records the next rank0-draft/rebalance and packet39

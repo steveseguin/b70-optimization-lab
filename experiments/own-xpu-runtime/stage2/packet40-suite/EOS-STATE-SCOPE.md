@@ -22,9 +22,9 @@ full-prompt oracle run or device performance measurement. Raw inventories and
 logical scheduling counters remain separately recorded; no model-state bytes
 are exempted from the strict comparison. No reduced-state exception is assumed.
 
-This closes the tested terminal-state requirement. Remaining CPU qualification
-and final sealing are still in progress; the source review alone never
-substitutes for these execution receipts.
+This closes the tested terminal-state requirement. Current CPU qualification
+and final sealing are complete; the source review alone never substitutes for
+these execution receipts. Actual device behavior and timing remain unmeasured.
 
 ## Historical finding and design assessment
 

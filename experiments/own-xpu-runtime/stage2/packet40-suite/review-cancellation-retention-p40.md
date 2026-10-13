@@ -54,3 +54,5 @@ separate. Whole-archive identity and selected-member byte/hash authentication
 precede accounting; plan equality and snapshot counters/retirement flags bind
 the examples. The provided eight focused tests are current; none were rerun by
 this reviewer. Byte accounting is not measured device cost.
+
+Final CPU follow-up: all five GNU native modes now match their current Python receipts on eight tokens, 384 fixtures and complete compared final state per mode. The seven-receipt `real-native` qualification ledger passed, as did both comparison and rollback-audit child ledgers. This is additional runtime evidence; independent source-review attribution is unchanged. Only coordinator device qualification and measured copy/overlap/speed cost remain pending.

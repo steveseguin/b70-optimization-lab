@@ -2,7 +2,11 @@
 
 `window.py` is the device entry point. Its exact commands and prerequisite
 order are in WINDOW.md. `suite.py` and `pipeline.py` default to the CPU backend;
-this packet's preparation did not execute any device binary.
+this packet's sealed CPU preparation did not execute any device binary.
+The current real CPU evidence covers three full 64-token prompts (192 tokens,
+1,152 fixtures) and a separate one-prompt 128-token tail gate (128 tokens,
+768 fixtures). These are partial 3/12 and 1/12 correctness checks, respectively;
+complete twelve-prompt device performance remains unmeasured.
 
 Use `--max-new 64` with the complete twelve-prompt 64-token oracle manifest,
 or `--max-new 128` with the complete 128-token manifest. The input bundles are
@@ -105,7 +109,9 @@ those bindings from the archive. `prefix_only` and `full_oracle_generation`
 separate response coverage from prompt-set completeness; an eight-token prefix
 cannot substitute for the inherited full-cap gate. These utilities do not export
 128-token or retention-disabled windows. The separate `suite128_cpu_gate.py`
-requests 128 outputs for `incident-retrospective`, checks 768 early/tail fixtures
-and stays partial 1/12 evidence. Packet40 window wrappers write their own current
+now [passes](suite128-tail-cpu-gates.json) 128 outputs for
+`incident-retrospective` and all 768 early/tail fixtures on Intel host ranks
+with native MTP. Its scratch is archived and removed; it stays partial 1/12
+CPU correctness evidence, with `realistic_final_gate.passed=false`. Packet40 window wrappers write their own current
 receipts and compressed evidence; `full_wrapper_gate.py` archives rehearsal
 separately.

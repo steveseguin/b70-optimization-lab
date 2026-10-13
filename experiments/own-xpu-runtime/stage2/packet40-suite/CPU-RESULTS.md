@@ -1,9 +1,11 @@
-# Packet40 CPU qualification in progress
+# Packet40 sealed CPU qualification
 
 This supersedes the copied packet38 summary. No device ran and no packet40
-speed is claimed. The build receipt remains incomplete until all current-source
-qualification is sealed. Copied parent receipts and pre-rebuild attempts are
-historical inputs, not authorization for the current binaries.
+speed is claimed. The current-source [build receipt](build-receipt.json) is
+sealed with 104 gate receipts and 53 artifact hashes. The
+[final audit](seal40-audit.json) passes all 91 inherited obligations. Copied
+parent receipts and pre-rebuild attempts remain historical inputs, not
+authorization for the current binaries.
 
 Current completed coverage, verified against the strict rollback builds:
 
@@ -70,19 +72,53 @@ Current completed coverage, verified against the strict rollback builds:
   identical proposals and byte-equal final cache/control files. This is draft
   arithmetic/identity evidence, not a target suite throughput sample.
 
-Remaining qualification is explicit: the separate one-prompt 128-token gate
-must check all 128 tokens and 768 early/tail fixtures. The native real-controller
-campaign has passed its first four modes; MTP remains active. Every-window
-wrapper/admission refresh, complete build/evidence validation and the final seal
-remain pending. Earlier wrapper receipts are historical until their current
-source/binary bindings and required fresh execution are established.
+- [Native real-controller comparison](real-controller-gates.json): all five
+  modes (none, ngram, forced hit, forced miss, MTP) pass against their matching
+  GNU Python-controller references. Each mode has eight exact tokens and 384
+  fixtures, totaling 40 tokens and 1,920 fixtures. The comparison includes both
+  ranks' full final-state bytes and all allocation/host inventory fields;
+  only `logical_event` scheduling telemetry is excluded, with original counters
+  and raw inventory hashes retained. These paired comparisons reuse the Python
+  reference evidence described above; their counts are not independent target
+  oracle coverage to add to it.
+
+- [128-token tail-fixture gate](suite128-tail-cpu-gates.json):
+  `incident-retrospective` passes all 128 tokens and 768 fixtures at steps
+  1–8 and 97–104 on the real Intel host backend with native MTP. The owner
+  scratch was archived and removed. This is partial 1/12 CPU correctness
+  evidence, not a complete suite or a speed/publication result; the final
+  realistic-suite gate remains false.
+- [Input integrity](resume-input-integrity.json) reauthenticates 3,718 hashes,
+  covering the target input bundle, official draft contract and shard/tensor
+  bytes, and imported target streams. No accelerator is opened.
+- All [12 standalone Python producers](python-standalone-gates.json) pass.
+  These are producer counts, not twelve model executions; they launch no
+  native ranks.
+
+Final qualification also passes:
+
+- [Python discovery](python-regression-gates.json): 211 tests, no failures,
+  errors or skips.
+- [Every-window rehearsal](full-wrapper-gates.json): 22 complete success/failure
+  pairs through the host backend, including summaries; no device timing is
+  qualified. [Admission checks](window-seal-admission-gates.json) pass 31 gates
+  without launching a device.
+- [Build identity](build-identity40.json): all 53 artifacts are unchanged after
+  current mirror regeneration and four dependency builds; a second pass is
+  a no-op for all four builds.
+- [Scratch cleanup](scratch-cleanup.json) and
+  [final cleanup](final-scratch-cleanup.json) pass, preserving all 53 sealed
+  artifacts and leaving no packet binary owners.
 
 The strict terminal proof resolves the earlier abandoned-byte limitation for
 its exhaustive miniature and sampled real coverage, without an owner exception
-or model-state canonicalization. It does not replace the remaining oracle,
-wrapper, capture, build or admission obligations.
+or model-state canonicalization. Oracle, wrapper, capture, build and admission
+obligations have their own current, sealed receipts.
 
 The 27 metric unit tests and other pure/kernel checks have their own receipts;
 consult the final execution audit for current source and binary bindings. These
-are separate gate counts, not one combined benchmark sample size. Overall CPU
-qualification and sealing remain in progress.
+are separate gate counts, not one combined benchmark sample size. CPU
+preparation is sealed. Device validation, actual queue overlap and latency,
+same-boot exactness/speed companions and complete twelve-prompt performance
+remain unmeasured. The 128-token screening cap does not satisfy the 512-token
+response-cap publication gate.

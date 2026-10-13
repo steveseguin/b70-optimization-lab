@@ -22,7 +22,7 @@
   },
   "current_evidence": {
     "review-p40-nonblocking-draft.json": "9408e92f7963d1ef7a6364536aa42dc61c193b00f37e2b1497bf81bb472860f9",
-    "review-cancellation-retention-p40.json": "70385850578f0bbf20ad000f12fac0e2dd53b8ad173dd6f064d7987360079189",
+    "review-cancellation-retention-p40.json": "8a12d5b19acaefc4db7e25aec6a8931f03334c06567dbc3bcec3af85f7577570",
     "review-metrics-retention.md": "60db898792fffbedf80d6473dd422ec6a509fbcb44d423a272cbb332eb43f5f5",
     "cancellation-retention-mini-native.json": "f6f7fdf719103b6081d99ce7c8be21e50a5419afa88af1c32cc00ae77acfe4bf",
     "cancellation-retention-mini-python.json": "ebb5d04f9de99a2252045833dfc81c709bd2a824013628899a2414b8840e6fe0",
@@ -30,12 +30,14 @@
     "cancellation-retention-real-native.json": "6c875901bf4ec528683856cb356a8f7e6c9bb580f28a42366f028ceb30e2e2c5",
     "cancellation-inventory-gates.json": "648ce550c5e6ff75b7f98dadeb2cfe0b3e433a12dcdc2e1ca3fcf166474feaae",
     "native-mini-cpu.json": "312a32f3e7668a940e317655d274e7c060f74c168271d7026804401067e4b089",
-    "review-p40-strict-rollback.json": "c856a086c26dc836f81511a6c3d14873cf452943dbb8361a57a171c4a1ace3d6",
+    "review-p40-strict-rollback.json": "8de9bd031695182e544c6a375fd499b638e6eaafd5383fa97dafb728f1fc896c",
     "terminal-eos-all-state-mini-both.json": "2df6407c2076af949e0b1025b51635df22f7e98340c2d17605555ed238b41387",
     "terminal-eos-all-state-real-both.json": "ca0358adfe9186952f7a832bdafaefb8603982f9347b8147c37591aa68e383a3",
     "terminal-eos-all-state-gates.json": "68fd9b282479042ceb1c22944e43161badc18af86d0f8bfbb29256b59e1da97d",
     "retention-caps-gates.json": "7c3b754f5ffd4d28c273c4b6ac1920c27530f872a35105401d5aed52bcff91cc",
-    "rollback-audit-unit-tests.json": "2d2439b42fb67e5a982a4a4084a4e0d65c4ed1e295d45c0e6bfc671cb5449f07"
+    "rollback-audit-unit-tests.json": "2d2439b42fb67e5a982a4a4084a4e0d65c4ed1e295d45c0e6bfc671cb5449f07",
+    "real-controller-gates.json": "8a33e621f42dc320ec32785219174f1dd504562e7802955d4f801346372ab2bf",
+    "rollback-inventory.json": "eaf3a79a607194459d404f0e121aee7b714d9065f50db7c4a7e8f47614a36470"
   },
   "mapping": [
     {
@@ -82,7 +84,6 @@
     }
   ],
   "pending": [
-    "Completion of separate five-mode native real campaign",
     "Coordinator event/device qualification and measured snapshot overhead"
   ],
   "async_cpu_cases": 28,
@@ -104,7 +105,10 @@
     "strict_terminal_gates": 472,
     "strict_terminal_negative_controls": 12,
     "strict_terminal_owner_pairs": 480,
-    "terminal_scope": "Full inventoried model state and rank0 producer slot; logical-event telemetry alone excluded with raw hashes/counters retained. Mini every boundary, real production weights at seven-token original prefix plus zero/one verified generated token; diagnostic real scope, not full-prompt or performance evidence."
+    "terminal_scope": "Full inventoried model state and rank0 producer slot; logical-event telemetry alone excluded with raw hashes/counters retained. Mini every boundary, real production weights at seven-token original prefix plus zero/one verified generated token; diagnostic real scope, not full-prompt or performance evidence.",
+    "real_native_modes": 5,
+    "real_native_tokens_per_mode": 8,
+    "real_native_fixtures_per_mode": 384
   },
   "prior_map_archive": {
     "path": "evidence/prior-inherited-review-map-1791841371774849561.jsonl.gz",

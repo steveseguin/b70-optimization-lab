@@ -1,5 +1,13 @@
 # CPU preparation and final sealing
 
+The current preparation is sealed: 104 gate receipts, 91/91 inherited
+obligations and 53 bound artifacts. Python discovery passes 211 tests; all 22
+window success/failure rehearsal pairs pass on the host backend. Final mirror
+refresh and dependency builds leave every artifact unchanged, and a second
+pass is a no-op. Cleanup preserves all 53 artifacts and leaves no packet
+binary owners. These commands reproduce CPU qualification; device execution,
+full twelve-prompt performance and publication qualification remain separate.
+
 Run from the repository root with the inherited CPU affinity. These commands
 never execute a device program. At most two compilation jobs and four CPU-bound
 processes are permitted; the simplest reproduction is serial. Every Python
@@ -118,8 +126,10 @@ fixture matches, then archives and deletes its scratch. Its scope is partial
 1/12 CPU correctness, not twelve-prompt qualification or performance. Run it
 through `seal40.py --record-phase suite128-tail --receipt
 suite128-tail-cpu-gates.json -- COMMAND`; the command is the lab Python with
-`-B` and `suite128_cpu_gate.py`. The resulting receipt determines whether this
-additional gate has passed; this instruction does not assert its completion.
+`-B` and `suite128_cpu_gate.py`. The current
+[suite128-tail-cpu-gates.json](suite128-tail-cpu-gates.json) records its pass,
+128 tokens and 768 fixtures; the documented command is its reproduction recipe,
+not a substitute for that source/binary-bound execution evidence.
 
 CMake compiles the generated `build/checked` source mirrors. An ordinary
 `cmake --build` can report no work while those mirrors still contain old source.

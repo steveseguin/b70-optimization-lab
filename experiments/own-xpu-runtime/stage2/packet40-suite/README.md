@@ -3,7 +3,10 @@
 Packet40 copies amended packet38 and separates exactness instrumentation from
 speed windows. Work here is CPU preparation. No device ran and no packet40
 model speed is claimed. Qualification status and binary identities are in
-[build-receipt.json](build-receipt.json); an incomplete receipt is not admission.
+[build-receipt.json](build-receipt.json): CPU preparation is sealed with 104
+current gate receipts, 91/91 inherited obligations and 53 artifact hashes.
+The final checks pass 211 Python tests and 22 complete window success/failure
+rehearsal pairs; [CPU-RESULTS.md](CPU-RESULTS.md) records their separate scopes.
 The [parent copy inventory](parent-copy.json) distinguishes inherited historical
 receipts from current packet40 qualification.
 
@@ -44,7 +47,8 @@ checks: 460 state-equality comparisons and 12 corruption controls, across both
 controllers. [The aggregate receipt](terminal-eos-all-state-gates.json) binds
 408 miniature and 64 sampled real-model checks plus 480 owner archives. This
 closes the tested terminal-state requirement without a reduced-state exception;
-remaining CPU qualification and final sealing are still in progress.
+the current CPU qualification and final seal are complete. Device validation
+and timing remain for the coordinator.
 
 `--max-new N` is bounded by prompt length plus context capacity. With capacity
 256, the suite's 60–90-token prompts fit 128 outputs. The complete 64- and
@@ -56,8 +60,10 @@ prevent the remaining requests from running. Repeats are reported separately.
 The [current inherited CPU suite](suite-real-cpu.json) passes three full
 64-token requests: 192 exact tokens and 1,152 fixtures on Intel host ranks with
 native MTP. This is partial 3/12 prompt coverage; its scratch is archived and
-removed. The separate 128-token tail-fixture gate and final qualification
-remain pending. No CPU timing is presented as device speed.
+removed. The separate [128-token tail gate](suite128-tail-cpu-gates.json) also
+passes 128 exact tokens and 768 early/tail fixtures for incident-retrospective,
+partial 1/12 coverage. These CPU subsets do not establish a complete
+twelve-prompt device result. No CPU timing is presented as device speed.
 
 The suite records token timestamps, prompt/output counts and hashes, TTFT, wall
 rate, early ends, guesses, hits and hit/miss cycle times. It reports the fixed

@@ -231,8 +231,14 @@ Logical event counters remain separate telemetry with their original inventory
 hashes; model-state bytes are not exempted. No state-scope exception is required.
 Current nonterminal cancellation, its 204-case inventory audit, and eight
 long-retention comparisons over twelve requests also pass. The inherited three-prompt 64-token suite and draft captures/agreement now
-pass. The separate 128-token tail fixture, final native-controller, wrapper and
-build/admission qualification still must finish before sealing. See
+pass. The native real-controller comparison also passes all five modes against
+GNU Python-controller references, with 40 exact tokens, 1,920 fixtures and full
+final-state/inventory equality except separately recorded logical-event
+telemetry. The separate one-prompt 128-token gate passes all 128 tokens and
+768 early/tail fixtures, retaining its partial 1/12 diagnostic scope. Current
+Python discovery, wrappers and build/admission qualification also pass, and
+the CPU receipt is sealed. Actual device cancellation behavior and timing
+remain unmeasured. See
 [EOS-STATE-SCOPE.md](EOS-STATE-SCOPE.md) for the original failure and correction.
 
 Actual speculative launch counts can differ with process scheduling. Controller

@@ -133,8 +133,9 @@ ledgers and every owner archive. `--screen` receipts cannot qualify this
 aggregate. The current aggregate records 472 passing checks and 480 owner
 archives; [CPU-RESULTS.md](CPU-RESULTS.md) gives the exact tested scope. File
 names alone, a source review or these documented commands are not qualification
-proof. Consult the bound execution receipts; the overall final seal remains
-pending.
+proof. The current final seal binds 104 gate receipts and passes all 91
+inherited obligations; consult [build-receipt.json](build-receipt.json) and
+[seal40-audit.json](seal40-audit.json) for their identities.
 
 Reproduction commands, from the repository root after rebuilding and verifying
 current host binaries, are below. Run them sequentially within the shared CPU,
@@ -149,3 +150,16 @@ nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 TMPDIR="$p40_tmp" python3 -B "$p40/
 nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 TMPDIR="$p40_tmp" python3 -B "$p40/seal40.py" --record-phase strict-terminal-real --receipt terminal-eos-all-state-real-both.json -- python3 -B "$p40/strict_terminal_gate.py" --binary "$p40/build/icpx-host/own-rt-iq3" --real --controller both --real-prefix 7 --positions 0,1 --random-count 4
 nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 TMPDIR="$p40_tmp" python3 -B "$p40/seal40.py" --record-phase strict-terminal-aggregate --receipt terminal-eos-all-state-gates.json -- python3 -B "$p40/strict_terminal_aggregate.py"
 ```
+
+## Final native and tail-fixture archives
+
+The intentionally retained archives
+`evidence/scratch-real-native-mtp-1791846648337767192.jsonl.gz` (about 11.7 MB)
+and `evidence/scratch-suite128-tail-cpu.jsonl.gz` (about 2.5 MB) exceed the
+repository's 1 MiB retention-review threshold. Their exact text/log bytes and
+generated-file hashes authenticate the native final-state comparison and the
+128-token early/tail fixture gate. The verified storage archive can restore
+its text members; raw fixture/state bytes must be regenerated with the
+source-bound CPU commands in [CPU-REPRO.md](CPU-REPRO.md). These archives are
+not raw-state byte backups. Their hashes and owner receipts preserve the
+evidence chain after scratch deletion.
