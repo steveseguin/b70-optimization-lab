@@ -386,31 +386,29 @@ def _validate_chain_release(
     return valid
 
 
-def _validate_native_video_draft(repo: Path, manifest: dict[str, Any], label: str) -> list[str]:
-    """Record incomplete native video packets without inventing vLLM assets.
-
-    This branch cannot certify publication, even with all gates set true.
-    Completed native releases need a separately reviewed asset/build contract.
-    """
+def _validate_incomplete_native_draft(
+    repo: Path, manifest: dict[str, Any], label: str, kind: str
+) -> list[str]:
+    """Audit incomplete native evidence; this contract never certifies publication."""
     errors: list[str] = []
     if manifest.get('publication_status') != 'draft':
-        errors.append(f'{label}: native-video draft contract cannot certify published recipes')
+        errors.append(f'{label}: {kind} draft contract cannot certify published recipes')
     if not isinstance(manifest.get('missing'), list) or not manifest['missing'] or not all(
         isinstance(x, str) and x.strip() for x in manifest['missing']
     ):
-        errors.append(f'{label}: native-video draft requires explicit missing gates')
+        errors.append(f'{label}: {kind} draft requires explicit missing gates')
     if manifest.get('release') != {'assets': [], 'remote_verified_at': None}:
-        errors.append(f'{label}: native-video draft cannot claim release assets or remote verification')
+        errors.append(f'{label}: {kind} draft cannot claim release assets or remote verification')
     validation = manifest.get('validation', {})
     if not isinstance(validation, dict):
-        errors.append(f'{label}: native-video validation must be an object')
+        errors.append(f'{label}: {kind} validation must be an object')
         validation = {}
     for field in ('clean_source_build', 'runtime_smoke', 'quality_gate'):
         if validation.get(field) is not False:
-            errors.append(f'{label}: incomplete native-video {field} must remain false')
+            errors.append(f'{label}: incomplete {kind} {field} must remain false')
     bindings = manifest.get('evidence')
     if not isinstance(bindings, list) or not bindings:
-        errors.append(f'{label}: native-video draft requires hash-bound evidence')
+        errors.append(f'{label}: {kind} draft requires hash-bound evidence')
     else:
         for item in bindings:
             if not isinstance(item, dict):
@@ -424,6 +422,53 @@ def _validate_native_video_draft(repo: Path, manifest: dict[str, Any], label: st
                 errors.append(f'{label}: evidence must be a file')
             elif path is not None and path.is_file() and _sha256(path) != digest:
                 errors.append(f'{label}: evidence digest mismatch: {item["path"]}')
+    return errors
+
+
+def _validate_native_video_draft(repo: Path, manifest: dict[str, Any], label: str) -> list[str]:
+    return _validate_incomplete_native_draft(repo, manifest, label, "native-video")
+
+
+def _validate_native_text_lab_replay(repo: Path, manifest: dict[str, Any], label: str) -> list[str]:
+    """Bind native text replay sources without claiming a public binary release."""
+    errors = _validate_incomplete_native_draft(repo, manifest, label, "native-text-lab-replay")
+    repository = manifest.get("repository")
+    if not isinstance(repository, dict):
+        errors.append(f"{label}.repository must be an object")
+        repository = {}
+    commit = repository.get("source_commit")
+    if not isinstance(commit, str) or not COMMIT_RE.fullmatch(commit):
+        errors.append(f"{label}.repository.source_commit must be a full 40-character Git commit")
+        commit = None
+    elif subprocess.run(
+        ["git", "-C", str(repo), "cat-file", "-e", f"{commit}^{{commit}}"],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False,
+    ).returncode != 0:
+        errors.append(f"{label}.repository.source_commit is unavailable in this clone")
+        commit = None
+    for field in ("build_scripts", "immutable_inputs"):
+        bindings = repository.get(field)
+        if not isinstance(bindings, list) or not bindings:
+            errors.append(f"{label}.repository.{field} must be a non-empty list")
+            continue
+        for index, item in enumerate(bindings):
+            item_label = f"{label}.repository.{field}[{index}]"
+            if not isinstance(item, dict):
+                errors.append(f"{item_label} must bind path and sha256")
+                continue
+            value, digest = item.get("path"), item.get("sha256")
+            path = _repo_path(repo, value, f"{item_label}.path", errors)
+            if not isinstance(digest, str) or not SHA256_RE.fullmatch(digest):
+                errors.append(f"{item_label}.sha256 must be a lowercase SHA-256 digest")
+                continue
+            if path is not None and path.is_file() and _sha256(path) != digest:
+                errors.append(f"{item_label}: repository artifact digest mismatch")
+            if commit is not None and path is not None:
+                blob = _git_blob(repo, commit, value)
+                if blob is None:
+                    errors.append(f"{item_label}: absent from source commit {commit}")
+                elif hashlib.sha256(blob).hexdigest() != digest:
+                    errors.append(f"{item_label}: source-commit artifact digest mismatch")
     return errors
 
 
@@ -445,6 +490,8 @@ def validate_manifest(repo: Path, manifest_path: Path, check_remote: bool = Fals
 
     if manifest.get('runtime_kind') == 'native-video-draft':
         return errors + _validate_native_video_draft(repo, manifest, label)
+    if manifest.get('runtime_kind') == 'native-text-lab-replay':
+        return errors + _validate_native_text_lab_replay(repo, manifest, label)
 
     repository = manifest.get("repository")
     if not isinstance(repository, dict):

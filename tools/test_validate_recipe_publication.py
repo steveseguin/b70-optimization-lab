@@ -49,6 +49,79 @@ class RecipePublicationValidationTest(unittest.TestCase):
             manifest['release']['remote_verified_at'] = '2026-10-10T00:00:00Z'
             self.assertTrue(any('cannot claim' in x for x in MODULE._validate_native_video_draft(repo, manifest, 'draft')))
 
+    def test_native_text_lab_replay_checks_sources_and_cannot_certify(self):
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw)
+            subprocess.run(['git', 'init', '-q', str(repo)], check=True)
+            for name, content in {'README.md': '# Replay\n', 'build.py': '# source build\n',
+                                  'main.cpp': '// native source\n', 'receipt.json': '{}\n'}.items():
+                (repo / name).write_text(content)
+            paths = ['README.md', 'build.py', 'main.cpp', 'receipt.json']
+            subprocess.run(['git', '-C', str(repo), 'add', '--', *paths], check=True)
+            subprocess.run(['git', '-C', str(repo), '-c', 'user.name=test', '-c',
+                            'user.email=test@example.invalid', 'commit', '-qm', 'fixture',
+                            '--', *paths], check=True)
+            commit = subprocess.check_output(['git', '-C', str(repo), 'rev-parse', 'HEAD'], text=True).strip()
+            binding = lambda name: {'path': name, 'sha256': MODULE._sha256(repo / name)}
+            manifest = {
+                'format': MODULE.FORMAT, 'runtime_kind': 'native-text-lab-replay',
+                'publication_status': 'draft', 'guide': 'README.md',
+                'missing': ['Pristine public source build and binary assets remain pending'],
+                'release': {'assets': [], 'remote_verified_at': None},
+                'validation': dict(clean_source_build=False, runtime_smoke=False, quality_gate=False),
+                'evidence': [binding('receipt.json')],
+                'repository': {'source_commit': commit, 'build_scripts': [binding('build.py')],
+                               'immutable_inputs': [binding('main.cpp')]},
+            }
+            manifest_path = repo / 'publication-manifest.json'
+            manifest_path.write_text(json.dumps(manifest))
+            subprocess.run(['git', '-C', str(repo), 'add', '--', manifest_path.name], check=True)
+
+            def validate(remote=False):
+                manifest_path.write_text(json.dumps(manifest))
+                return MODULE.validate_manifest(repo, manifest_path, check_remote=remote)
+
+            self.assertEqual(validate(), [])
+            with mock.patch.object(MODULE, 'urlopen', side_effect=AssertionError('draft has no release')):
+                self.assertEqual(validate(remote=True), [])
+            for field, bad, fragment in (
+                ('publication_status', 'published', 'cannot certify'),
+                ('missing', [], 'requires explicit missing gates'),
+                ('release', {'assets': [{'name': 'fake'}], 'remote_verified_at': None}, 'cannot claim'),
+                ('evidence', [], 'requires hash-bound evidence'),
+            ):
+                saved = manifest[field]
+                manifest[field] = bad
+                self.assertTrue(any(fragment in x for x in validate()), field)
+                manifest[field] = saved
+            for gate in manifest['validation']:
+                manifest['validation'][gate] = True
+                self.assertTrue(any('must remain false' in x for x in validate()), gate)
+                manifest['validation'][gate] = False
+            manifest['repository']['source_commit'] = commit[:10]
+            self.assertTrue(any('full 40-character' in x for x in validate()))
+            manifest['repository']['source_commit'] = 'f' * 40
+            self.assertTrue(any('unavailable in this clone' in x for x in validate()))
+            manifest['repository']['source_commit'] = commit
+            for field in ('build_scripts', 'immutable_inputs'):
+                saved = manifest['repository'][field]
+                manifest['repository'][field] = []
+                self.assertTrue(any('non-empty list' in x for x in validate()), field)
+                manifest['repository'][field] = saved
+            (repo / 'build.py').write_text('# changed source build\n')
+            self.assertTrue(any('repository artifact digest mismatch' in x for x in validate()))
+            manifest['repository']['build_scripts'] = [binding('build.py')]
+            self.assertTrue(any('source-commit artifact digest mismatch' in x for x in validate()))
+            (repo / 'new.py').write_text('# untracked\n')
+            manifest['repository']['build_scripts'] = [binding('new.py')]
+            errors = validate()
+            self.assertTrue(any('not tracked' in x for x in errors))
+            self.assertTrue(any('absent from source commit' in x for x in errors))
+            manifest['repository']['build_scripts'] = [{'path': '../outside', 'sha256': '0' * 64}]
+            self.assertTrue(any('must stay inside' in x for x in validate()))
+            (repo / 'receipt.json').write_text('{"changed": true}\n')
+            self.assertTrue(any('evidence digest mismatch' in x for x in validate()))
+
     def test_rejects_build_script_digest_disagreement(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             repo = Path(raw)

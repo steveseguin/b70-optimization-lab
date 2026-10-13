@@ -6,7 +6,7 @@
   "name": "Qwen Flash-Next",
   "display_name": "Qwen3.8 Flash-Next · 125B-A6B",
   "publisher": "Qwen",
-  "updated_at": "2026-10-10",
+  "updated_at": "2026-10-13",
   "summary": "Flash-Next is Qwen’s 125B model with about 6B parameters active per token. On four B70 cards it writes 46.854250 tokens/s for one person, using official FP8 weights, BF16 KV and one target-verified draft token. The fixed cold realistic suite kept all 12 reference outputs unchanged. The previous matched line measured 37.825654 tokens/s. A separate 32K-input test measured 44.052 tokens/s; it is a depth diagnostic, not the same benchmark. Prompt-reading throughput is not measured for the headline setup. The recipe is an expert lab replay; a clean-host install, portable safe replay and sustained-use qualification remain open. The 875 tokens/s shared-user result belongs to the separate Qwen 27B two-card package. Historical coverage classifies all 25 practical TP4 eager-text MTP/context cells through 8K; those screens remain separate from the approved record.",
   "featured_results": [
     {
@@ -135,16 +135,19 @@
   },
   "dimensions": {
     "weight_revision": [
-      "qwen38-flash-next"
+      "qwen38-flash-next",
+      "qwen38-flash-next-ud-iq3xxs"
     ],
     "weight_quantization": [
-      "FP8 block-128"
+      "FP8 block-128",
+      "UD-IQ3_XXS"
     ],
     "runtime": [
       "vLLM XPU 658965050 + kernels 2f829747",
       "vLLM XPU 1372c62d + staged kernels 2f829747",
       "vLLM XPU 2169dbfe (overlay on 1372c62d) + staged kernels 2f829747",
-      "vLLM XPU 1b2a17c1 (overlay on 1372c62d) + staged kernels 2f829747"
+      "vLLM XPU 1b2a17c1 (overlay on 1372c62d) + staged kernels 2f829747",
+      "Own Xe runtime packet 44 through 421a4ab50"
     ],
     "tp": [
       1,
@@ -210,6 +213,24 @@
           "repository": "Qwen/Qwen3.8-Flash-Next-FP8",
           "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
           "evidence": "model-intake/post-download-validation-20260826.md"
+        }
+      ]
+    },
+    {
+      "id": "qwen38-flash-next-ud-iq3xxs",
+      "label": "Qwen3.8 Flash-Next UD-IQ3_XXS · separate quantized compressed version",
+      "role": "separate quantized model with its own arithmetic-v2 CPU oracle; not the official FP8 authority",
+      "repository": "unsloth/Qwen3.8-Flash-Next-GGUF",
+      "revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+      "quantized_artifacts": [
+        {
+          "id": "qwen38-flash-next-ud-iq3xxs-766911a",
+          "label": "Unsloth UD-IQ3_XXS quantized compressed version",
+          "quantization": "UD-IQ3_XXS",
+          "quantization_origin": "export",
+          "repository": "unsloth/Qwen3.8-Flash-Next-GGUF",
+          "revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+          "evidence": "results/qwen38-flash-next-ud-iq3xxs-b70/README.md"
         }
       ]
     }
@@ -3094,6 +3115,49 @@
         "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp4-512-attempt1-result.json"
       },
       "manifest": "results/qwen38-flash-next-fp8-b70/README.md"
+    },
+    {
+      "id": "qwen38-flash-next-iq3xxs-ownrt-tp2-b70",
+      "label": "Qwen3.8 Flash-Next UD-IQ3_XXS · separate quantized compressed version · own Xe runtime TP2",
+      "revision": "qwen38-flash-next-ud-iq3xxs",
+      "artifact_id": "qwen38-flash-next-ud-iq3xxs-766911a",
+      "quantization": "UD-IQ3_XXS",
+      "runtime": "Own Xe runtime packet 44 through 421a4ab50; arithmetic-v2; native controller; official target-verified MTP draft head",
+      "cards": 2,
+      "status": "candidate",
+      "evidence_level": "B70-verified 128-token lab replay; public build and 512-token final performance gate pending",
+      "coverage": [
+        "decode screen",
+        "exactness against own CPU oracle",
+        "runtime provenance",
+        "lab-replay recipe"
+      ],
+      "manifest": "packages/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/package.json",
+      "guide": "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/README.md",
+      "evidence": "results/qwen38-flash-next-ud-iq3xxs-b70/README.md",
+      "limitations": "LocalMaxxing cmv6pugme0020oa01fjrho6nx approved the 37.856264 class-balanced 99-interval result. Its 128-token cap is screening evidence under the current 512-token final gate. All 12 requests match the arithmetic-v2 CPU oracle for these quantized bytes. This is not a performance or quality comparison with official FP8.",
+      "grades": {
+        "capability": {
+          "grade": "C",
+          "scope": "Bounded 128-token text generation for the separate Unsloth UD-IQ3_XXS model on two B70 cards, using own arithmetic-v2 and target-verified MTP.",
+          "basis": "All twelve varied requests match their quantized-model CPU oracle exactly. This does not establish official-FP8 quality equivalence, a 512-token natural-completion final gate, or general deployment readiness.",
+          "reviewed_at": "2026-10-13",
+          "evidence": [
+            "results/qwen38-flash-next-ud-iq3xxs-b70/README.md",
+            "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261013-own-rt-iq3-tp2-c4096-realistic-suite-v1-result.json"
+          ]
+        },
+        "evidence": {
+          "grade": "C",
+          "scope": "Sealed packet44 4,096-capacity 128-token suite and independent 32,768-capacity card-pair receipts; expert lab replay.",
+          "basis": "Source identities, per-prompt tokens and timings, CPU oracles and receipt chains are retained. Public pristine-build assets, clean-host replay and the current 512-token final performance gate remain open; capacity results are not a real-prompt-length curve.",
+          "reviewed_at": "2026-10-13",
+          "evidence": [
+            "results/qwen38-flash-next-ud-iq3xxs-b70/README.md",
+            "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261013-own-rt-iq3-tp2-c4096-realistic-suite-v1-result.json"
+          ]
+        }
+      }
     }
   ],
   "views": [

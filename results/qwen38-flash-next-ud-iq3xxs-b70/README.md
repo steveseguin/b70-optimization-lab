@@ -1,5 +1,58 @@
 # Qwen3.8 Flash-Next UD-IQ3_XXS — quantized compressed version
 
+## Own Xe runtime record: packet 44, October 13
+
+**Two B70 cards, two rank processes (TP2), native controller, full BF16 KV,
+official MTP draft head with target verification.** This quantized compressed
+model uses Unsloth revision `766911a6b7369840a91dbcd95f9f997acaab6cd6` and the
+lab's arithmetic-v2 CPU oracle. It is a separate lane from official FP8.
+
+LocalMaxxing approved **37.85626413203107 tok/s**, submission
+`cmv6pugme0020oa01fjrho6nx`: median within each of six prompt classes, then
+median across those class medians, using **99 intervals between generated-token
+timestamps 1 and 100**. The ordinary all-prompt median is 37.77, not the same
+aggregation. Each of twelve prompts ran once with a 128-token cap, after an
+excluded distinct warmup, with full state reset and no prompt/KV/response reuse.
+
+| Allocation capacity | Cap / requests | Decode median (63 intervals, tokens 1–64) | All-prompt submission median (99 intervals) | Exact requests |
+| ---: | --- | ---: | ---: | --- |
+| 256, packet 38 predecessor | 64 / 24 | 38.25 tok/s | unavailable | 24/24 |
+| 4,096, packet 44 | 128 / 12 | 37.59 tok/s | 37.77 tok/s | 12/12 |
+| 32,768, packet 44, other card pair | 128 / 12 | 37.71 tok/s | 37.70 tok/s | 12/12 |
+
+At both packet44 capacities, all **1,536 token IDs and 4,608 retained layer
+fixtures** match CPU oracles byte for byte, with zero tolerance. Fixture checks
+cover generated steps 1–8, not every intermediate state. Draft-only 8-bit
+requantization changes guesses, which the unchanged target verifies; it does
+not change accepted tokens. Sequential target-only decode at 4,096 is 25.00
+tok/s on its separate 128-token suite. The 64-token suites repeat 24/24 exactly.
+
+At 4,096 the per-prompt decode range is 34.45–40.71 tok/s; at 32,768 it is
+34.27–40.46. **Prefill at 512 input tokens: not measured.** Median TTFT is
+1,422.011 ms and median wall speed 26.634 tok/s for the 4,096 suite, whose median
+input is 68 tokens. Capacities reserve storage; these short-input measurements
+are not a prompt-length performance curve. Separate WL checks retain exact
+32-token outputs from 598- and 2,271-token prompts, with no intermediate
+midprompt comparison. No official-FP8 or llama.cpp output equivalence is claimed.
+
+The approved result is preserved as recorded. A 128-token cap does not pass
+the repository's 512-token natural-completion final gate; two fresh complete
+128-token suite launches are also not established. The linked historical
+attestation is `lab.promotion-attestation.v1`, not the newer hash-bound
+`neural.download.promotion-attestation.v1` contract. No new external submission
+or strict headline promotion is made by this publication. Clean-host rebuild,
+portable admission and binary release verification remain pending.
+
+- [256-position predecessor chain](../../experiments/own-xpu-runtime/stage2/packet38-integrated/receipts-cards01-20261012-chain/README.md)
+- [4,096 receipt chain](../../experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/README.md)
+- [32,768 receipt chain](../../experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/README.md)
+- [Class-balanced result and prompt/output hashes](../../experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261013-own-rt-iq3-tp2-c4096-realistic-suite-v1-result.json)
+- [Historical attestation](../../experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261013-own-rt-iq3-tp2-c4096-promotion-attestation.json)
+- [Payload queue](../../experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261013-own-rt-iq3-tp2-c4096-localmaxxing-payload-queue.json) and [submission ledger](../localmaxxing-submissions.md)
+- [Lab replay recipe and CPU verification](../../repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/README.md), [publication chain](../../repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/publication-manifest.json)
+
+## Preserved reference-runtime screening record
+
 **Reference-runtime baseline screening; not our runtime, not certified.**
 Two B70s are the primary owner target and one B70 is a secondary target.
 This separate Unsloth model has its own weights and CPU oracle; it does not

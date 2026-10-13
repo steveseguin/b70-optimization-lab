@@ -88,6 +88,25 @@ This contract rejects `published` unconditionally. A completed native video
 release needs a separately reviewed native build/asset contract, not invented
 vLLM or GDN binaries. Existing binary publication gates are unchanged.
 
+An incomplete native text source recipe may declare
+`runtime_kind: native-text-lab-replay`. It has the same draft-only restrictions:
+tracked hash-bound `evidence`, a nonempty `missing` list, all three certification
+booleans false, and `release` exactly `{ "assets": [], "remote_verified_at": null }`.
+In addition, `repository.source_commit` must be a full available Git commit;
+`repository.build_scripts` and `repository.immutable_inputs` must each be a
+nonempty list of `{ "path": "...", "sha256": "..." }` bindings. Each bound file
+must be tracked and match both the working tree and that source commit. The
+normal v2 `format` and tracked `guide` fields still apply.
+
+This mode records a source-pinned expert replay whose host adaptations and
+missing public build/release gates are disclosed. Existing experimental runtime
+and quality receipts can be retained as evidence, but do not set the public
+build/smoke/quality certification booleans to true. Both validator modes audit
+the source and evidence bindings; neither downloads nonexistent release assets
+or certifies publication. `published` is always rejected. A completed native
+text release requires a separately reviewed build/asset contract. The existing
+binary publication and native-video draft gates are unchanged.
+
 - `draft`: assets or a gate may still be missing. Direct URLs can be planned,
   but the website and README must say the packet is incomplete.
 - `published`: all required asset types exist, all three validation gates pass,

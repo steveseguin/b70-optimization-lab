@@ -1,7 +1,7 @@
 {
   "reviewed_at": "2026-10-10",
-  "scope": "All 21 cataloged families and all 29 site-listed packages, including candidate/lab-replay states. Site-listed does not mean recipe-publication.v2 published.",
-  "formula": "5*popularity + 7*recency_capability + 8*optimization (0\u2013100 editorial score); final order applies card-fit and distinct-role constraints.",
+  "scope": "Catalog family/deployment coverage, including candidate/lab-replay states. October 13 addition: IQ3 own-runtime is unscored; historical editorial scores remain unchanged. Site-listed does not mean recipe-publication.v2 published.",
+  "formula": "5*popularity + 7*recency_capability + 8*optimization (0–100 editorial score); final order applies card-fit and distinct-role constraints.",
   "families": [
     {
       "family_id": "deepseek-coder-v2",
@@ -494,7 +494,7 @@
         "value": 26.668277,
         "unit": "tok/s",
         "label": "decode (MTP-assisted, full package resident)",
-        "scope": "Conventional 99-interval median, cold 12-prompt suite, up to 512-token responses, cache-zero, at 262144 configured capacity with q8_0 K/V, vision mmproj, and MTP draft loaded; active prompts were 48\u201378 tokens and the second fresh-server run measured 26.640510. Speculation-assisted and labeled as such; target-only tg128 at depth 0 is 22.64 tok/s (raw engine).",
+        "scope": "Conventional 99-interval median, cold 12-prompt suite, up to 512-token responses, cache-zero, at 262144 configured capacity with q8_0 K/V, vision mmproj, and MTP draft loaded; active prompts were 48–78 tokens and the second fresh-server run measured 26.640510. Speculation-assisted and labeled as such; target-only tg128 at depth 0 is 22.64 tok/s (raw engine).",
         "evidence": "repro/qwen38-27b-256k-vision-mtp-b70/README.md"
       },
       "guide": "repro/qwen38-27b-256k-vision-mtp-b70/README.md",
@@ -530,7 +530,7 @@
       "metric": {
         "value": 54.03648366755944,
         "unit": "tok/s",
-        "label": "Writing speed \u00b7 MTP depth 5 \u00b7 one card",
+        "label": "Writing speed · MTP depth 5 · one card",
         "scope": "Median of two strict runs on a fresh R312d-c package-launcher server (54.047 / 54.026) at a 32,768-token context (2,048-token prefill chunk, single-checkpoint recurrent state, one-pass verifier attention) on the fixed 12-prompt six-class suite, 512-token answers, class-balanced median of tokens 1-100, cache zero, canaries passed, 12/12 complete outputs identical to no-MTP decoding on both runs, 64/64 on the sequential oracle. The research launcher measured 54.212 / 53.896 on its own fresh server of the same image.",
         "evidence": "experiments/qwen38-27b-b70/data/2026-10-04-fp8-onecard-chunked-upload/tp1-pkg-32k-strict-performance.json"
       },
@@ -549,7 +549,7 @@
       "metric": {
         "value": 90.30984105545438,
         "unit": "tok/s",
-        "label": "Writing speed \u00b7 MTP depth 5 \u00b7 allgather allreduce \u00b7 two cards",
+        "label": "Writing speed · MTP depth 5 · allgather allreduce · two cards",
         "scope": "Median of two fresh R310 two-card servers (90.370 / 90.250) at a 33,024-token context on the fixed 12-prompt six-class suite, 512-token answers, class-balanced median of tokens 1-100, cache zero, canaries passed, 12/12 complete outputs identical to no-MTP decoding (33.86 tok/s on the same image), 64/64 on the sequential oracle.",
         "evidence": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-comm2/tp2-ag-mtp5-strict-performance.json"
       },
@@ -807,6 +807,21 @@
       "metric": null,
       "guide": "repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md",
       "decision": "Owner-selected two-card independent-video role"
+    },
+    {
+      "package_id": "qwen38-flash-next-iq3xxs-ownrt-tp2-b70",
+      "family_id": "qwen-flash-next",
+      "popularity": null,
+      "recency_capability": null,
+      "optimization": null,
+      "score": null,
+      "score_status": "Not scored; separate quantized compressed model with capped lab evidence; strict final performance gate pending",
+      "featured_rank": null,
+      "cards": 2,
+      "metric": null,
+      "guide": "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/README.md",
+      "evidence": "results/qwen38-flash-next-ud-iq3xxs-b70/README.md",
+      "decision": "Discoverable expert lab replay; no invented editorial ranking or FP8-equivalent capability score."
     }
   ],
   "h3": {

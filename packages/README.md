@@ -39,6 +39,7 @@ evidence and remaining gates):
 
 | Family | Deployment packet |
 | --- | --- |
+| Flash-Next UD-IQ3_XXS (separate quantized model) | [Own Xe runtime, two B70 cards; lab replay](qwen38-flash-next-iq3xxs-ownrt-tp2-b70/) |
 | MiniMax-H3 | [Owner-approved Comfy-Org pruned BF16 video, two-B70 measured batch; rebuild incomplete](minimax-h3-pruned-bf16-tp2-b70-20261004/) |
 | LTX 2.5 | [145-frame continuation video, four-B70 lab replay](ltx25-continuation-stream-b70-145f-20261010/) |
 | Gemma 4 26B A4B | [Q8 one-B70 reconstruction](gemma4-26b-a4b-q8-b70/) |

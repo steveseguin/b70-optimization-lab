@@ -1,0 +1,202 @@
+{
+  "date": "2026-10-13",
+  "scope": "CPU-only publication plumbing; no runtime build, device discovery, GPU binary, driver, power or memory-setting action",
+  "source_commit": "421a4ab5029680c2f88c78c7c7fdb4a05d6fc6c4",
+  "classification": "lab-replay",
+  "publication_status": "draft",
+  "workflow_checks": [
+    {
+      "command": "python3 -B tools/validate-repro-guides.py",
+      "exit_code": 0
+    },
+    {
+      "command": "node --test tools/test_guides_browser.cjs",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B -m unittest tools/test_validate_repro_guides.py tools/test_sync_depth_sweep_profiles.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B tools/validate-recipe-publication.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B -m unittest tools/test_validate_recipe_publication.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B tools/sync-public-result-summary.py --check",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B -m unittest tools/test_sync_public_result_summary.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B tools/build-family-pages.py --check",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B -m unittest tools/test_build_family_pages.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B -m unittest tools/test_measured_opt_contract.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B tools/sync-short-prefill-profiles.py --check",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B experiments/qwen38-27b-b70/scripts/verify-prefill-followup-evidence.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B tools/sync-prefill-followup-profiles.py --check",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B tools/replay_fp8_prefill_source_drift.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B -m unittest tools/test_source_drift_proofs.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B tools/sync-fp8-prefill-focus-profile.py --check",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B tools/sync-amd-transfer-prefill-profile.py --check",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B -m unittest tools/test_sync_fp8_prefill_focus_profile.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*fp8_prefill*.py\"",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B -m unittest tools/test_sync_prefill_followup_profiles.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*prefill_followup.py\"",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B -m unittest tools/test_build_model_pages.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B -m unittest tools/test_fp8_serve.py tools/test_fp8_practical_session.py tools/test_fp8_tp2_acceptance_evidence.py tools/test_fp8_tp2_acceptance_session.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B experiments/qwen38-27b-b70/scripts/collect-fp8-tp2-acceptance-evidence.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B tools/build-model-pages.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B tools/check-doc-links.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B tools/check-doc-links.py --all-tracked --baseline audits/repository-cleanup/2026-10-10/link-baseline.json",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B -m unittest tools/test_check_doc_links.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B tools/check-pinned-hashes.py --historical-manifest audits/repository-cleanup/2026-10-10/pin-audit.json",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B -m unittest tools/test_pinned_hashes.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B tools/restore-source-archives.py patches/laguna-s-2.1-xpu-b70/source-archive-manifest.json",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B tools/restore-source-archives.py patches/gemma4-26b-a4b-q8-b70/source-archive-manifest.json",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B tools/test-restore-source-archives.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B -m unittest tools/test_xccl_probe.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B -m unittest tools/test_pr45_gpu_review.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B tools/check-manifest-paths.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B -m unittest tools/test_container_packet_smoke.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B -c \"import yaml; print(yaml.__version__)\"",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B tools/check-container-packet.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B -m unittest tools/test_check_container_packet.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B -m unittest tools/test_audit_launcher_env_implemented.py tools/test_flash_next_frozen_verifiers.py tools/test_flash_next_replay_cleanup.py",
+      "exit_code": 0
+    }
+  ],
+  "workflow_notes": [
+    "All 41 applicable run lines passed; existing PyYAML import/version checked instead of reinstalling it.",
+    "Generated-page git diff check runs after commit; page generators and check mode passed before commit."
+  ],
+  "additional_checks": {
+    "receipt_health": "PASS: 176 evidence hashes, 266 sealed sources; 12/12 requests and 1536/1536 token IDs exact at each capacity; 4096 class-balanced metric recomputed as 37.856264132031",
+    "receipt_rejection_tests": "3 tests passed, including changed token and missing prompt rejection",
+    "launcher": "Mocked WS128, W2m and cooperative supervisor-stop commands passed; benchmark checks live OUT_DIR/run",
+    "recipe_publication_local": "PASS manifests=4; this package remains draft",
+    "recipe_publication_remote": "PASS manifests=1 remote=True for this package; draft-only audit, no release assets claimed",
+    "doc_links": "232 public documents, zero broken; all-tracked: 5308 documents, zero new broken, four historical known-broken",
+    "manifest_paths": "6502 repo-relative paths in 56 manifests; zero missing",
+    "raw_pinned_hashes": "Known failure retained: 318 pins, 87 match, 231 historical drift, zero absent. No frozen pin changed.",
+    "historical_pinned_hashes": "PASS: 230 recoverable, one explicitly blocked, five maintained verifier identities match",
+    "pages": "22 family pages and 31 package pages; coverage 49 lanes / 96 artifacts"
+  },
+  "historical_link_repair": {
+    "path": "experiments/own-xpu-runtime/stage2/packet27-round2/evidence/gemv-nonfinite-diagnostic/receipt.json",
+    "action": "Tracked relative symlink to the original packet26 diagnostic receipt restores the copied note link without changing its sealed source-proof hash."
+  },
+  "not_performed": [
+    "runtime compilation or device replay",
+    "oneAPI 2026.1 requalification (sealed build pins compiler 2026.0)",
+    "model download and full local-weight preflight",
+    "independent pristine supported-host rebuild",
+    "512-token final suite or new LocalMaxxing submission",
+    "browser rendering; no browser/device process launched",
+    "public binary release/asset verification (no assets published)"
+  ]
+}

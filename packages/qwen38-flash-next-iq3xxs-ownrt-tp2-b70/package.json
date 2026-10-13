@@ -1,0 +1,119 @@
+{
+  "format": "b70-model-package-v1",
+  "id": "qwen38-flash-next-iq3xxs-ownrt-tp2-b70",
+  "name": "Flash-Next UD-IQ3_XXS quantized compressed version: own Xe runtime, two B70 cards",
+  "status": "candidate",
+  "audience": "expert",
+  "guide": "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/README.md",
+  "clean_host_tested": false,
+  "certification": {
+    "classification": "lab-replay",
+    "publication_status": "draft"
+  },
+  "library": {
+    "model_family": "Qwen3.8 Flash-Next UD-IQ3_XXS",
+    "publisher": "Unsloth (quantized Qwen weights)",
+    "variant": "UD-IQ3_XXS quantized compressed version; own arithmetic-v2 oracle",
+    "summary": "Our Xe runtime on two B70 cards. The approved capped lab result is 37.856264 tok/s, with all twelve 128-token outputs exactly matching CPU oracles. Separate from official FP8. Clean-host replay and the 512-token final performance gate remain pending.",
+    "quantization": "UD-IQ3_XXS",
+    "runtime_label": "Own Xe runtime (packet 44)",
+    "operating_systems": [
+      "Linux"
+    ],
+    "delivery": [
+      "native"
+    ],
+    "modalities": [
+      "text"
+    ],
+    "use_cases": [
+      "general",
+      "coding"
+    ],
+    "tags": [
+      "qwen",
+      "quantized compressed version",
+      "iq3xxs",
+      "own runtime",
+      "b70",
+      "two cards",
+      "mtp",
+      "lab replay"
+    ],
+    "published_at": "2026-10-13",
+    "featured_metric": null,
+    "benchmark_status": "Approved LocalMaxxing cmv6pugme0020oa01fjrho6nx: 37.85626413203107 tok/s class-balanced over 99 intervals at capacity 4096, 12/12 exact 128-token requests. This capped observation is retained in Test details; 512-token final gate and fresh full-suite repeats pending. Standard 512-token prefill not measured."
+  },
+  "hardware": {
+    "accelerator": "Intel Arc Pro B70 32 GiB",
+    "cards": 2,
+    "host_ram_min_bytes": 137438953472,
+    "model_weight_bytes": 81961823936,
+    "note": "97 GiB available required by guarded model windows; adjacent pair, two rank processes (TP2)."
+  },
+  "model": {
+    "repository": "unsloth/Qwen3.8-Flash-Next-GGUF",
+    "hfId": "unsloth/Qwen3.8-Flash-Next-GGUF",
+    "revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+    "manifest": "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/manifests/models.json"
+  },
+  "runtime": {
+    "kind": "native",
+    "engine": "Own Xe runtime, packet44-context; arithmetic iq3-p17-detmath-v2",
+    "source_commit": "421a4ab5029680c2f88c78c7c7fdb4a05d6fc6c4",
+    "build_entrypoint": "experiments/own-xpu-runtime/stage2/packet44-context/build.py",
+    "compiler": "Intel oneAPI compiler 2026.0; 2026.1 rebuild unverified",
+    "kv_cache": "BF16",
+    "note": "Source build; no published image or binary assets. Native controller, official MTP draft with draft-only 8-bit requantization, unchanged target verification."
+  },
+  "project_patches": {
+    "required": false,
+    "items": [],
+    "note": "Own source runtime; no external runtime base or patch overlay."
+  },
+  "commands": {
+    "benchmark": "bash repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/scripts/window.sh benchmark --authorized-device-window",
+    "health": "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/scripts/verify.py",
+    "launch": "bash repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/scripts/window.sh launch --authorized-device-window",
+    "preflight": "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/scripts/preflight.py --model-dir \"$TARGET_DOWNLOAD/UD-IQ3_XXS\" --draft-dir \"$DRAFT_DOWNLOAD\" --vram-report \"$VRAM_REPORT\" --card \"$CARD\" --context 4096",
+    "stop": "bash repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/scripts/window.sh stop"
+  },
+  "dependencies": [
+    "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/README.md",
+    "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/expected-outputs.md",
+    "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/manifests/models.json",
+    "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/manifests/evidence.json",
+    "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/publication-manifest.json",
+    "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/scripts/verify.py",
+    "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/scripts/preflight.py",
+    "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/scripts/window.sh",
+    "experiments/own-xpu-runtime/stage1",
+    "experiments/own-xpu-runtime/stage2",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70",
+    "results/qwen38-flash-next-ud-iq3xxs-b70/README.md"
+  ],
+  "evidence": [
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261013-own-rt-iq3-tp2-c4096-realistic-suite-v1-result.json",
+    "results/qwen38-flash-next-ud-iq3xxs-b70/README.md"
+  ],
+  "contributors": [
+    {
+      "id": "b70-optimization-lab",
+      "name": "neural.download lab",
+      "kind": "lab",
+      "status": "integrated",
+      "contribution": "Model-specific Xe runtime, deterministic arithmetic-v2 CPU oracle, native two-rank controller and target-verified draft integration.",
+      "validated_effect": "12/12 capped requests exact; 37.856264 class-balanced tok/s at 4096 capacity. This is not a matched FP8 or cross-arithmetic quality comparison.",
+      "evidence": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261013-own-rt-iq3-tp2-c4096-realistic-suite-v1-result.json",
+      "profile": "https://github.com/steveseguin/b70-optimization-lab"
+    }
+  ],
+  "missing": [
+    "Pristine clean-source rebuild and independent supported-host device replay",
+    "oneAPI 2026.1 port and requalification; recorded compiler is 2026.0",
+    "Portable regeneration of local model admission, input bundles and capture prerequisites",
+    "Public binary, build-log and toolchain release assets with remote verification",
+    "512-token natural-completion final performance gate, two fresh suites and current promotion-attestation format",
+    "Standard 512-token prefill measurement"
+  ]
+}
