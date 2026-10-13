@@ -87,3 +87,20 @@ than its watchdog; a packet-local storage cap that failed a compression step), p
 42 (a compile-smoke path that submitted a kernel with no bound buffer), packet 35 (a
 receipt field required in every mode but written in one). Each has an evidence folder
 in its packet.
+
+## Packet 44 windows, late UTC (capacities 4,096 and 32,768)
+
+| When | Packet | What ran | Result |
+| --- | --- | --- | --- |
+| 23:22–00:57 | [44](../experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/README.md) | full window chain at `--context 4096`, cards 0+1 | 128-token suite **12/12 exact**, decode median **37.59 tok/s**, submission metric **37.77 tok/s**; 64-token suite 24/24 exact at 37.77; sequential 128-token 25.00; development prompt 38.33 |
+| 23:22–01:08 | [44](../experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/README.md) | same chain at `--context 32768`, cards 2+3 | 128-token suite **12/12 exact**, decode **37.71**, submission **37.70 tok/s**; 64-token suite 24/24 at 37.57; development prompt 38.22, same 64 tokens as at 256 |
+
+Capacity is now shown on the cards to change allocation and bounds only: per-token
+cost follows the positions used (suite 38.25 → 37.77 → 37.57 tok/s across 256 →
+4,096 → 32,768). The 4,096 figures are the product-comparable ones against the
+28.49 tok/s reference, and the 128-token runs supply the >= 100 generated tokens
+the public submission gate needs. Wrapper incidents, both recorded in the receipts
+and neither a device problem: a storage-admission refusal on the first 32,768
+WS64 (6 GB build-tree cap; about 1 GB of unhashed regenerable KV state dumps was
+deleted and the window rerun clean) and a queue-runner stale-log mislabel on that
+rerun (its log path strips the numeric prefix; ledger corrected).

@@ -1,15 +1,11 @@
-# Our Intel Xe runtime — measured state, 2026-10-12 16:45 UTC
+# Our Intel Xe runtime — measured state, 2026-10-13 01:20 UTC
 
-**Twelve-prompt median 38.25 tok/s on two cards, every request bit-exact ([packet 38][p38r]); the reference on the same twelve prompts is 28.49 tok/s.** Sequential (no guesses): 25.36 tok/s on the same suite.
+**At the reference's 4,096-position context, the 128-token twelve-prompt suite: decode median 37.59 tok/s, submission median (99 intervals, tokens 1–100) 37.77 tok/s, every request bit-exact ([packet 44, cards 0+1][p44c]); at 32,768 positions: 37.71 / 37.70 tok/s ([cards 2+3][p44d]).** The reference on the same twelve prompts at 4,096 is 28.49 tok/s. At the original 256-position capacity the same suite runs 38.25 tok/s ([packet 38][p38r]); sequential (no guesses) 25.36 tok/s at 256 and 25.00 at 4,096. Nothing has been submitted to LocalMaxxing yet: the 128-token evidence its gate needs now exists (this chain); submission is the owner's decision.
 
-**Limit to read with that number:** every run of our runtime so far uses a context
-capacity of 256 positions (the prompts are 60–90 tokens and 64 tokens are generated);
-the reference ran with a 4,096-token context. Capacity does not change the arithmetic
-of the positions that exist, and the QSA kernels' cost follows the positions actually
-used, but that has to be shown on the cards at 4,096 and 32,768 before the two figures
-are comparable as products. [Packet 44][p44] (Codex, in progress) does that. Nothing has
-been submitted to LocalMaxxing: its gate also needs at least 100 generated tokens per
-prompt (128-token oracles exist; that run is being prepared). For Unsloth
+[Packet 44][p44] took packet 38's runtime to real context capacities with the output
+bit-identical at 256, 4,096 and 32,768 positions (same tokens, same layer fixtures,
+same development-prompt speed within 2%: 39.05 → 38.33 → 38.22 tok/s). Capacity changes
+allocation and bounds only; per-token cost follows the positions used. For Unsloth
 UD-IQ3_XXS, the **quantized compressed version**, full 16-bit KV: the runtime reproduces
 its CPU oracle exactly on the cards (64/64 tokens, 384/384 layer fixtures). Two-card
 decode, all exact, within one day: **3.15 tok/s** as first sealed, **12.08** after a
@@ -267,3 +263,5 @@ leading suspect of the 09:09 fault); the fused generic kernels of packets 21, 23
 [p42r]: stage2/packet42-codegen2/receipts-card2-20261012/README.md
 [p44]: stage2/packet44-context/README.md
 [p38r2]: stage2/packet38-integrated/receipts-cards23-20261012-repeat/README.md
+[p44c]: stage2/packet44-context/receipts-cards01-20261013-c4096/README.md
+[p44d]: stage2/packet44-context/receipts-cards23-20261013-c32768/README.md
