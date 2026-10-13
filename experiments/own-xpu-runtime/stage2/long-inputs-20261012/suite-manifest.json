@@ -5,7 +5,7 @@
   "token_cap": 32,
   "suite_sha256": "789a8aad103abefa39b8d54f5cff0fd76a4c48ae131ca7ddfbc9b7e1fbafd5b5",
   "prompts_manifest_sha256": "98df7f6c5a9bad25df4ea8b19b611da791a5f295e1bd2d6f599d4b2aa1dbe0f3",
-  "complete": false,
+  "complete": true,
   "prompts": [
     {
       "prompt_id": "LONG-A",
@@ -160,9 +160,297 @@
         "source_repetition": false
       },
       "execution_segments": 7
+    },
+    {
+      "prompt_id": "LONG-B",
+      "prompt_tokens": 2271,
+      "input_bundle": "experiments/own-xpu-runtime/stage2/long-inputs-20261012/LONG-B",
+      "input_bundle_hashes": {
+        "tokens.txt": "38064e69a671307e4274a14d5d32098120eb77f00f11f7283ddc6aa101e73890",
+        "input.json": "52195f150c05635e0dfc523729203b3b67c46bba6c2cfc2382ff8cda9e860324",
+        "identity.tsv": "85992a7027dca5de4478e9a5cef4e24722a7065aca66bc1a9954d8d3f617e257",
+        "plan.tsv": "9926b7a266ba2774f02fe00583257ab2aaff96ee0313d350d3ba54602ae2a656",
+        "vocab.bin": "7a0e612475366f8d368dbfee6a0a01336f1059e71fa98d91300eb62abd996a64"
+      },
+      "oracle_directory": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-long/LONG-B",
+      "oracle_receipt_sha256": "5d75277cf6b4180cdfff1bb9e8679602e32c8d3c9f78d653c800b854c2f641df",
+      "generated_tokens": 32,
+      "first_8_token_ids": [
+        760,
+        4744,
+        29039,
+        366,
+        7757,
+        16545,
+        430,
+        264
+      ],
+      "last_8_token_ids": [
+        21998,
+        264,
+        3286,
+        314,
+        13263,
+        8129,
+        13,
+        35547
+      ],
+      "ended_early": false,
+      "termination": "token-cap",
+      "context": 4096,
+      "fixture_steps": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "midprompt_positions": [
+        2040,
+        2047,
+        2048,
+        2049,
+        2050,
+        2051,
+        2100,
+        2270
+      ],
+      "selection_summary": [
+        {
+          "position": 2040,
+          "prompt_ordinal": 2041,
+          "admitted": 2041,
+          "dropped": 0,
+          "layers": 12,
+          "layers_with_ties": 0,
+          "cutoff_tie_layers": []
+        },
+        {
+          "position": 2047,
+          "prompt_ordinal": 2048,
+          "admitted": 2048,
+          "dropped": 0,
+          "layers": 12,
+          "layers_with_ties": 0,
+          "cutoff_tie_layers": []
+        },
+        {
+          "position": 2048,
+          "prompt_ordinal": 2049,
+          "admitted": 2049,
+          "dropped": 0,
+          "layers": 12,
+          "layers_with_ties": 0,
+          "cutoff_tie_layers": []
+        },
+        {
+          "position": 2049,
+          "prompt_ordinal": 2050,
+          "admitted": 2050,
+          "dropped": 0,
+          "layers": 12,
+          "layers_with_ties": 0,
+          "cutoff_tie_layers": []
+        },
+        {
+          "position": 2050,
+          "prompt_ordinal": 2051,
+          "admitted": 2051,
+          "dropped": 0,
+          "layers": 12,
+          "layers_with_ties": 0,
+          "cutoff_tie_layers": []
+        },
+        {
+          "position": 2051,
+          "prompt_ordinal": 2052,
+          "admitted": 2048,
+          "dropped": 4,
+          "layers": 12,
+          "layers_with_ties": 0,
+          "cutoff_tie_layers": []
+        },
+        {
+          "position": 2100,
+          "prompt_ordinal": 2101,
+          "admitted": 2049,
+          "dropped": 52,
+          "layers": 12,
+          "layers_with_ties": 0,
+          "cutoff_tie_layers": []
+        },
+        {
+          "position": 2270,
+          "prompt_ordinal": 2271,
+          "admitted": 2051,
+          "dropped": 220,
+          "layers": 12,
+          "layers_with_ties": 0,
+          "cutoff_tie_layers": []
+        }
+      ],
+      "mean_seconds_per_position": 13.306007080799304,
+      "elapsed_seconds": 30696.352854501893,
+      "cpu_seconds": 55178.13096099996,
+      "position_timing_bins": [
+        {
+          "first_position": 0,
+          "last_position": 99,
+          "positions": 100,
+          "mean_seconds_per_position": 16.163498
+        },
+        {
+          "first_position": 100,
+          "last_position": 255,
+          "positions": 156,
+          "mean_seconds_per_position": 13.695084615384616
+        },
+        {
+          "first_position": 256,
+          "last_position": 511,
+          "positions": 256,
+          "mean_seconds_per_position": 13.259824609375
+        },
+        {
+          "first_position": 512,
+          "last_position": 1023,
+          "positions": 512,
+          "mean_seconds_per_position": 12.7908970703125
+        },
+        {
+          "first_position": 1024,
+          "last_position": 1535,
+          "positions": 512,
+          "mean_seconds_per_position": 13.0074859375
+        },
+        {
+          "first_position": 1536,
+          "last_position": 2047,
+          "positions": 512,
+          "mean_seconds_per_position": 13.270225390625
+        },
+        {
+          "first_position": 2048,
+          "last_position": 2299,
+          "positions": 252,
+          "mean_seconds_per_position": 13.698832936507937
+        },
+        {
+          "first_position": 2300,
+          "last_position": 2301,
+          "positions": 2,
+          "mean_seconds_per_position": 13.9484
+        }
+      ],
+      "site_cost_bins": [
+        {
+          "first_position": 0,
+          "last_position": 99,
+          "positions": 100,
+          "position_seconds": 16.163498,
+          "site_seconds": 14.05498269658,
+          "qsa_pool_seconds": 0.12210397869999999,
+          "qsa_select_seconds": 0.00166222908,
+          "qsa_attention_seconds": 0.08080510889999999
+        },
+        {
+          "first_position": 100,
+          "last_position": 255,
+          "positions": 156,
+          "position_seconds": 13.695084615384616,
+          "site_seconds": 11.96016157399359,
+          "qsa_pool_seconds": 0.10556430057692309,
+          "qsa_select_seconds": 0.0018474113012820514,
+          "qsa_attention_seconds": 0.1293483532051282
+        },
+        {
+          "first_position": 256,
+          "last_position": 511,
+          "positions": 256,
+          "position_seconds": 13.259824609375,
+          "site_seconds": 11.459706246359374,
+          "qsa_pool_seconds": 0.1018876959375,
+          "qsa_select_seconds": 0.00225943977734375,
+          "qsa_attention_seconds": 0.214443271484375
+        },
+        {
+          "first_position": 512,
+          "last_position": 1023,
+          "positions": 512,
+          "position_seconds": 12.7908970703125,
+          "site_seconds": 11.214515417099609,
+          "qsa_pool_seconds": 0.1007517204296875,
+          "qsa_select_seconds": 0.002994780453125,
+          "qsa_attention_seconds": 0.3889733818359375
+        },
+        {
+          "first_position": 1024,
+          "last_position": 1535,
+          "positions": 512,
+          "position_seconds": 13.0074859375,
+          "site_seconds": 11.461076318146485,
+          "qsa_pool_seconds": 0.10279286080078125,
+          "qsa_select_seconds": 0.004285815681640625,
+          "qsa_attention_seconds": 0.6560490578125
+        },
+        {
+          "first_position": 1536,
+          "last_position": 2047,
+          "positions": 512,
+          "position_seconds": 13.270225390625,
+          "site_seconds": 11.697461272556641,
+          "qsa_pool_seconds": 0.10503760140625,
+          "qsa_select_seconds": 0.00567420476953125,
+          "qsa_attention_seconds": 0.887510861328125
+        },
+        {
+          "first_position": 2048,
+          "last_position": 2299,
+          "positions": 252,
+          "position_seconds": 13.698832936507937,
+          "site_seconds": 12.04395184167857,
+          "qsa_pool_seconds": 0.10690623611111112,
+          "qsa_select_seconds": 0.0067013142619047625,
+          "qsa_attention_seconds": 1.0479842916666666
+        },
+        {
+          "first_position": 2300,
+          "last_position": 2301,
+          "positions": 2,
+          "position_seconds": 13.9484,
+          "site_seconds": 12.848275737500021,
+          "qsa_pool_seconds": 0.106497795,
+          "qsa_select_seconds": 0.006683054000000001,
+          "qsa_attention_seconds": 1.1490708
+        }
+      ],
+      "prompt_source": {
+        "id": "LONG-B",
+        "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/long-inputs-20261012/LONG-B.txt",
+        "rendered_sha256": "91651ed7aa1230fad8edf9090c7b82a2dd61c105166e276a7358b23a99d247f5",
+        "raw_sha256": "ed1f8ad10edd542453fc86cb00c02670fdeca7cf289a593bb90c00c831e74666",
+        "document_sha256": "e67bf97a1832d197e8044121ac22c4c973031f094c98fd37846fd94ac099a509",
+        "prompt_tokens": 2271,
+        "document_tokens": 2244,
+        "source_files": [
+          {
+            "path": "docs/model-effort-index.md",
+            "sha256": "d2155222ae7acb03aece6e413a26ba9d54b0fb719ce3b197eb3460fd413fbeeb",
+            "revision": "92f2c17bcdbb8c7e7bf590fdfe68b371e64cf3f6"
+          }
+        ],
+        "source_char_start": 0,
+        "source_char_end": 7496,
+        "corpus_text_char_start": 51437,
+        "source_repetition": false
+      },
+      "execution_segments": 24
     }
   ],
-  "total_elapsed_seconds": 10600.40572685696,
-  "total_cpu_hours": 5.227266610555556,
+  "total_elapsed_seconds": 41296.75858135885,
+  "total_cpu_hours": 20.554525210833326,
   "cpu_accounting_complete": true
 }

@@ -1,15 +1,16 @@
 # Long-context arithmetic-v2 CPU oracles
 
-Completed and verified: 1/2. Arithmetic `iq3-p17-detmath-v2` for the separate
+Completed and verified: 2/2. Arithmetic `iq3-p17-detmath-v2` for the separate
 Unsloth UD-IQ3_XXS quantized compressed model; context capacity 4,096, 32 generated tokens.
 EOG 248044 or 248046 is retained and then stops generation. No device was accessed.
 
 | Prompt | Prompt tokens | Generated | End | Processes | First 8 IDs | Last 8 IDs | Seconds/position | CPU hours |
 | --- | ---: | ---: | --- | ---: | --- | --- | ---: | ---: |
 | LONG-A | 598 | 32 | token-cap | 7 | 760, 3212, 174183, 3047, 4866, 16545, 430, 264 | 1510, 43208, 20668, 27653, 1049, 31966, 5090, 3302 | 16.8193 | 5.2273 |
+| LONG-B | 2271 | 32 | token-cap | 24 | 760, 4744, 29039, 366, 7757, 16545, 430, 264 | 21998, 264, 3286, 314, 13263, 8129, 13, 35547 | 13.3060 | 15.3273 |
 
-Numerical-process wall time including resume segments: 10600.406 seconds.
-Measured user + system time: 5.227267 CPU hours.
+Numerical-process wall time including resume segments: 41296.759 seconds.
+Measured user + system time: 20.554525 CPU hours.
 These are CPU oracle costs, not serving speeds. Per-position times include the original
 streaming weight loader and per-site logging; selected capture positions also include
 the selection audit. Checkpoint write/verification is outside those position timings. Receipt totals include
@@ -24,6 +25,14 @@ Token 1 includes initialization and prefill. `positions.jsonl`, `tokens.jsonl`, 
 | LONG-A | 100–255 | 15.3833 |
 | LONG-A | 256–511 | 17.1060 |
 | LONG-A | 512–628 | 17.4525 |
+| LONG-B | 0–99 | 16.1635 |
+| LONG-B | 100–255 | 13.6951 |
+| LONG-B | 256–511 | 13.2598 |
+| LONG-B | 512–1023 | 12.7909 |
+| LONG-B | 1024–1535 | 13.0075 |
+| LONG-B | 1536–2047 | 13.2702 |
+| LONG-B | 2048–2299 | 13.6988 |
+| LONG-B | 2300–2301 | 13.9484 |
 
 | Prompt | Zero-based positions | Pool s/position | Select s/position | Attention s/position | All sites s/position |
 | --- | --- | ---: | ---: | ---: | ---: |
@@ -31,6 +40,14 @@ Token 1 includes initialization and prefill. `positions.jsonl`, `tokens.jsonl`, 
 | LONG-A | 100–255 | 0.1185 | 0.0020 | 0.1407 | 13.4822 |
 | LONG-A | 256–511 | 0.1272 | 0.0027 | 0.2537 | 14.7763 |
 | LONG-A | 512–628 | 0.1306 | 0.0033 | 0.3811 | 15.3482 |
+| LONG-B | 0–99 | 0.1221 | 0.0017 | 0.0808 | 14.0550 |
+| LONG-B | 100–255 | 0.1056 | 0.0018 | 0.1293 | 11.9602 |
+| LONG-B | 256–511 | 0.1019 | 0.0023 | 0.2144 | 11.4597 |
+| LONG-B | 512–1023 | 0.1008 | 0.0030 | 0.3890 | 11.2145 |
+| LONG-B | 1024–1535 | 0.1028 | 0.0043 | 0.6560 | 11.4611 |
+| LONG-B | 1536–2047 | 0.1050 | 0.0057 | 0.8875 | 11.6975 |
+| LONG-B | 2048–2299 | 0.1069 | 0.0067 | 1.0480 | 12.0440 |
+| LONG-B | 2300–2301 | 0.1065 | 0.0067 | 1.1491 | 12.8483 |
 
 QSA recomputes all complete four-token pools and scores them at every position.
 Attention reduces the selected positions in score order, at most 2,048 plus up to
@@ -105,6 +122,14 @@ unchanged Core::dot and detmath::sqrt, without altering model buffers.
 | Prompt | Position (zero-based) | Consumed tokens | Admitted | Dropped | Layers with score ties | Cutoff tie layers |
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | LONG-A | 597 | 598 | 598 | 0 | 0/12 | [] |
+| LONG-B | 2040 | 2041 | 2041 | 0 | 0/12 | [] |
+| LONG-B | 2047 | 2048 | 2048 | 0 | 0/12 | [] |
+| LONG-B | 2048 | 2049 | 2049 | 0 | 0/12 | [] |
+| LONG-B | 2049 | 2050 | 2050 | 0 | 0/12 | [] |
+| LONG-B | 2050 | 2051 | 2051 | 0 | 0/12 | [] |
+| LONG-B | 2051 | 2052 | 2048 | 4 | 0/12 | [] |
+| LONG-B | 2100 | 2101 | 2049 | 52 | 0/12 | [] |
+| LONG-B | 2270 | 2271 | 2051 | 220 | 0/12 | [] |
 
 The budget is 512 complete pools × 4 tokens, plus an incomplete trailing pool. Thus
 zero-based 2048 and 2049 may still admit every token; first dropped positions appear

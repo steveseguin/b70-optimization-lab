@@ -34,5 +34,41 @@
       "passed": true,
       "rejection": "mid-prompt position coverage differs"
     }
+  ],
+  "LONG-B": [
+    {
+      "test": "oracle self comparison",
+      "passed": true
+    },
+    {
+      "test": "tail token",
+      "passed": true,
+      "rejection": "tokens differ: first index (one-based) 32"
+    },
+    {
+      "test": "generation stream byte",
+      "passed": true,
+      "rejection": "step8/layer-47.bf16 recorded hash differs"
+    },
+    {
+      "test": "mid-prompt selection byte",
+      "passed": true,
+      "rejection": "midprompt/2270/layer-03.ids.i32 byte mismatch"
+    },
+    {
+      "test": "mid-prompt layer47 byte",
+      "passed": true,
+      "rejection": "midprompt/2270/layer-47.bf16 byte mismatch"
+    },
+    {
+      "test": "mid-prompt truncated selection",
+      "passed": true,
+      "rejection": "mid-prompt record length"
+    },
+    {
+      "test": "missing mid-prompt position",
+      "passed": true,
+      "rejection": "mid-prompt position coverage differs"
+    }
   ]
 }
