@@ -139,6 +139,7 @@ the conventional 99-interval field.
 | Qwen3.8 Flash-Next 125B-A6B official FP8, TP4+EP4 deterministic full-decode graph, lossless MTP1, VRAM headroom | 4x Arc Pro B70 | **27.048435 conventional interval median (class-balanced; 27.526174 all-prompt median)**, fixed cold realistic gate, one speculative token with every output pin equal to the MTP0 rows (twelve suite rows, exact-2K and exact-4K authorities) | [`cmtp5u0ip02eln701lntsl2ns`](https://www.localmaxxing.com/runs/cmtp5u0ip02eln701lntsl2ns) | [packet](qwen38-flash-next-fp8-b70/README.md); [suite result](../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp1-a189-realistic-suite-v1-result.json); [battery](../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp1-a190-fresh-repeat-deterministic-summary.json) |
 | Qwen3.8 Flash-Next 125B-A6B official FP8, TP4+EP4 deterministic full-decode graph, MTP0, both reference Triton kernels + W13-N64 map | 4x Arc Pro B70 | **34.495292 conventional interval median (class-balanced)**, fixed cold realistic gate, no speculation; two cold suites (34.510128, 34.495292), every row above every row of the record it supersedes; outputs bit-identical across three servers | [`cmts8zca50032ps01e0ddqm18`](https://www.localmaxxing.com/runs/cmts8zca50032ps01e0ddqm18) | [guide](../repro/qwen38-flash-next-fp8-tp4-mtp0-w13n64-b70-34tps-20260908/), [attestation](../experiments/qwen38-flash-next-fp8-b70/data/20260908-tp4-mtp0-a326-w13n64-promotion-attestation.json) |
 | Qwen3.8 Flash-Next 125B-A6B official FP8, TP4+EP4 deterministic full-decode graph, lossless MTP1, exact serial GDN rows in the kernel extension | 4x Arc Pro B70 | **46.854250 conventional interval median (class-balanced)**, fixed cold realistic gate, one speculative token with every output pin equal to the 37.83 line (12/12 suite outputs bit-identical) | [`cmtzask41000nlq011f16bpbc`](https://www.localmaxxing.com/runs/cmtzask41000nlq011f16bpbc) | [packet](qwen38-flash-next-fp8-b70/README.md) |
+| Qwen3.8 Flash-Next 125B-A6B Unsloth UD-IQ3_XXS (GGUF), lab's own Xe runtime, TP2, official MTP draft head target-verified | 2x Arc Pro B70 | **37.856264 conventional interval median (class-balanced; 37.766554 all-prompt median)**, fixed cold realistic gate at 4,096-position context, 128 tokens per prompt, 12/12 requests bit-exact vs arithmetic-v2 CPU oracles | [`cmv6pugme0020oa01fjrho6nx`](https://www.localmaxxing.com/runs/cmv6pugme0020oa01fjrho6nx) | [packet](../experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/README.md); [suite result](../experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261013-own-rt-iq3-tp2-c4096-realistic-suite-v1-result.json); [attestation](../experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261013-own-rt-iq3-tp2-c4096-promotion-attestation.json) |
 | Qwen3.8 Flash-Next 125B-A6B official FP8, TP4+EP4 deterministic full-decode graph, lossless MTP1, both reference Triton kernels | 4x Arc Pro B70 | **37.825654 conventional interval median (class-balanced)**, fixed cold realistic gate, one speculative token with every output pin equal to the MTP0 rows | [`cmtrmp3mj001fps01thcathd0`](https://www.localmaxxing.com/runs/cmtrmp3mj001fps01thcathd0) | [guide](../repro/qwen38-flash-next-fp8-tp4-mtp1-qsafused-b70-38tps-20260907/) |
 | Qwen3.8 Flash-Next 125B-A6B official FP8, TP4+EP4 deterministic full-decode graph, MTP0, both reference Triton kernels | 4x Arc Pro B70 | **33.797067 conventional interval median (class-balanced)**, fixed cold realistic gate, no speculation. Superseded 2026-09-08 by `cmts8zca50032ps01e0ddqm18`; retained | [`cmtrmp37v001bps01a7fi46nf`](https://www.localmaxxing.com/runs/cmtrmp37v001bps01a7fi46nf) | [attestation](../experiments/qwen38-flash-next-fp8-b70/data/20260907-tp4-mtp0-a301-promotion-attestation.json) |
 | Qwen3.6 35B Quark INT8, TP4 | 4x Arc Pro B70 | 93.551 output tok/s, strict deep gate | `cmqq4mw4c00yfqo01gb2ucgxj` | [packet](qwen36-35b-quark-int8-b70/README.md) |
@@ -928,3 +929,27 @@ pairs under the recipe contract are 191.37/191.41 (4B), 123.22/123.86 (9B) and 1
 approved figures, so no re-submission was made; the R304 attestations and queue payloads are in each lane's `data/`
 (`*-20260912-r304-strict-result.json`, `localmaxxing-*-r304-strict-20260913.queue.json`) should a resubmission ever be
 wanted.
+
+### Qwen3.8 Flash-Next Unsloth UD-IQ3_XXS, lab own Xe runtime, TP2, target-verified official MTP draft head (2026-10-13)
+
+Approved on submission (HTTP 201, run `cmv6pugme0020oa01fjrho6nx`), validated against the
+server dry-run endpoint first (HTTP 200 `{"valid": true}`). Identity: packet 44
+(`a668240d6`, device binary `e9ccb50a…`), the lab's own two-process Xe runtime
+(arithmetic identity `iq3-p17-detmath-v2`), one rank per card, the model's official
+one-token draft head on rank 1 supplying guesses with every accepted token verified by
+the unchanged target (output identical to sequential decode), K2-selected kernels,
+native controller, context capacity 4,096 (the reference's context). The fixed
+realistic suite ran once per prompt, cold, 128 generated tokens each, complete state
+reset per request; 12/12 requests bit-exact against their arithmetic-v2 CPU oracles
+(1,536/1,536 tokens, 4,608/4,608 retained layer fixtures). Headline is the
+class-balanced median of the 99-interval metric: **37.856264 tok/s** (all-prompt
+median 37.766554). The same binary is exact at 32,768 positions (37.71/37.70 tok/s,
+chain receipts linked from the packet). Reference llama.cpp SYCL two-card median on
+the same suite: 28.49 tok/s. First submission for this model/quantization/GPU-count
+category. Payload queue:
+`experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261013-own-rt-iq3-tp2-c4096-localmaxxing-payload-queue.json`;
+receipt `data/localmaxxing-responses/qwen38-flash-next-unsloth-iq3xxs-ownrt-tp2-mtp1-c4096-realistic-20261013.json`.
+
+| label | run id | c | headline | notes |
+| --- | --- | ---: | ---: | --- |
+| `qwen38-flash-next-unsloth-iq3xxs-ownrt-tp2-mtp1-c4096-realistic-20261013` | `cmv6pugme0020oa01fjrho6nx` | 1 | **37.856264 class-balanced median of prompt-class medians, 99 intervals after TTFT** | lab's own runtime; engineName `custom`; 2x B70; target-verified MTP1 |

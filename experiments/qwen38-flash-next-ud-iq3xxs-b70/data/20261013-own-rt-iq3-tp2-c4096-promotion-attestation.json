@@ -1,0 +1,23 @@
+{
+ "schema": "lab.promotion-attestation.v1",
+ "label": "qwen38-flash-next-unsloth-iq3xxs-ownrt-tp2-mtp1-c4096-realistic-20261013",
+ "date": "2026-10-13",
+ "gates": {
+  "fixed_realistic_suite_each_prompt_once_cold": true,
+  "cached_tokens_zero_equivalent": "complete rank state reset before every request; runtime retains no cross-request cache",
+  "no_prompt_kv_history_response_reuse": true,
+  "target_model_and_quantization_unchanged": "UD-IQ3_XXS GGUF revision 766911a6b7369840a91dbcd95f9f997acaab6cd6, weights untouched",
+  "speculative_decoding_target_verified": true,
+  "output_identical_to_sequential_decode": true,
+  "every_row_has_100_generated_token_events": true,
+  "metric_window": "99 inter-token intervals between generated-token completion timestamps 1 and 100, per prompt; median of prompt-class medians",
+  "bit_exact_vs_cpu_oracles": "12/12 requests, 1536/1536 tokens, 4608/4608 retained layer fixtures, byte equality",
+  "kernel_log_clean": true
+ },
+ "evidence": [
+  "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS128/summary.json",
+  "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/README.md",
+  "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261013-own-rt-iq3-tp2-c4096-realistic-suite-v1-result.json"
+ ],
+ "reference_median_tok_s_same_suite_llamacpp_sycl_2card": 28.49
+}
