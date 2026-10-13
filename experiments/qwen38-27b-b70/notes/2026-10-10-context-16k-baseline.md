@@ -2106,7 +2106,7 @@ Where the lane stands:
 | | proxy | summary compaction | sliding window |
 | --- | --- | --- | --- |
 | repair task, seed 0 (default effort) | 40 of 40 clean, 37.8 min | 40 of 40 clean, 28.5 min | 30 of 40 clean, 29.3 min |
-| repair task, seed 1x (default effort) | 40 of 40 clean, audit 7/7, 47.1 min | 33 of 40 clean, audit 0/7, cut at 60 min | not graded twice (stuck on one ticket) |
+| repair task, seed 1x (default effort) | 40 of 40 clean, audit 7/7, 47.1 min | 33 of 40 clean, audit 0/7, cut at 60 min | 22 of 40 clean, audit 0/7, 55 min (W32f, campaign 14; two earlier runs stuck and ungraded) |
 | repair task, seed 1x, effort medium set by the proxy | 40 of 40 clean, audit 7/7, 29.5 min | **40 of 40 clean, audit 7/7, 20.9 min (C32m)** | |
 
 ### Campaign 13d results (2026-10-12 21:16 to 23:22; one server, no restart, kernel log clean; container cap in fact 384 MiB — see the correction in campaign 14)
@@ -2173,3 +2173,36 @@ Registered expectations:
   window's seed-1x failures were the task or the method. Fixed 36 or more; clean 25 to 35 (the recipe-name rule
   still drops once its notice leaves the window; the window on seed 0: 30 of 40 clean); audit 0 to 2 of 7; 50
   minutes or less.
+
+### Campaign 14 results (2026-10-13 09:25 to 11:44; one server, no restart, kernel log clean; containers at 256 MiB)
+
+**W32f: the window's first grade on the second seed — and the stall was luck, not certainty.** Given the task's own
+55-minute limit, the window did not stick on ticket 26 or 37 this time: it fetched all 44 tickets and fixed all 40,
+and was graded where it stopped. Clean **22 of 40**: the marker rule broke on 18 of its 38 tickets and the log rule
+on 18 of 33 (15 FIXES.md lines written) — both notices had long left the window. The recipe-name rule held on 21 of
+27. Audit 0 of 7 (the ticket was reached; nothing about the oldest fixes was left in view). Two earlier runs on the
+same seed stuck on one trap ticket and were never graded; the third attempt shows that outcome is probabilistic.
+
+**XR6 on the trap-free task: the proxy is unchanged.** 40 of 40 fixed, **40 of 40 clean**, audit **7 of 7**,
+**20 minutes 7 seconds** — against the registered 40-minute bar, and 27 minutes faster than XR3 on the seed with the
+trap tickets (47.1), the difference being the thinking stalls that never happened. 8 cuts, all in place, none failed,
+0 recalls; the notes calls wrote 4,370 tokens.
+
+**W32g: the window finishes when no ticket can trap it.** 40 of 40 fixed, **35 of 40 clean** — the recipe-name rule
+held everywhere this time (its notice was still in view when the recipe tickets came; R1 34/38, R2 28/33, 60 FIXES
+lines for 33 fixes), audit 0 of 7, **45 minutes 25 seconds**. On seed 0 the same window was 30 of 40 clean.
+
+What the three rows settle: the window's missing grades on the second seed were the trap tickets' doing, not a
+property of the method — without them it completes the queue on both seeds, and even with them it completed once in
+three tries. What does not change with the task: the window answers nothing about the oldest work (no archive), and
+the proxy's clean record does not depend on the trap tickets (40 of 40 clean with them and without).
+
+| | proxy | summary compaction | sliding window |
+| --- | --- | --- | --- |
+| repair task, seed 0 (default effort) | 40 of 40 clean, 37.8 min | 40 of 40 clean, 28.5 min | 30 of 40 clean, 29.3 min |
+| repair task, seed 1x (default effort) | 40 of 40 clean, audit 7/7, 47.1 min | 33 of 40 clean, audit 0/7, cut at 60 min | **22 of 40 clean, audit 0/7, 55 min (W32f)** |
+| repair task, seed 1x, effort medium set by the proxy | 40 of 40 clean, audit 7/7, 29.5 min | 40 of 40 clean, audit 7/7, 20.9 min (C32m) | |
+| repair task, seed 2x, no trap tickets (default effort) | 40 of 40 clean, audit 7/7, 20.1 min (XR6) | | 35 of 40 clean, audit 0/7, 45.4 min (W32g) |
+
+Owed: the proxy under a real agent program (the owner's pick); everything else registered for the repair task has
+run.
