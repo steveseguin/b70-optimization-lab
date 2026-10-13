@@ -49,6 +49,7 @@ context capacity is **28.49 tok/s** (llama.cpp SYCL, two cards).
 | [W2m](W2m/window.json) | development prompt: 64/64 tokens, 384/384 layer fixtures, **38.33 tok/s**, 53 of 63 guesses right (39.05 tok/s at capacity 256) |
 | [WS64](WS64/summary.json) | the 64-token suite, two repeats: **24 of 24 exact**, median **37.77 tok/s** (38.25 at capacity 256) |
 | [WSs128](WSs128/summary.json) | sequential (no guesses) 128-token suite: **12 of 12 exact**, median **25.00 tok/s** (25.36 at capacity 256) |
+| [WL](WL/window.json) | long-prompt oracles (2026-10-13 13:48–13:50 UTC, after the wrapper's [long-suite amendment](../CLOSEOUT.md#long-suite-wrapper-amendment-2026-10-13)): LONG-A (598-token prompt) and LONG-B (2,271-token prompt, beyond the 2,048 QSA budget) both **32/32 tokens and 384/384 fixtures exact** at 32.74/22.42 tok/s decode. The beyond-budget selection path is thereby exact end-to-end on the cards; mid-prompt records are not retained by this binary and that comparison is recorded as not performed in each receipt (`midprompt_comparison`). LONG-B decode is slower because its prefill is 26× longer and its fixture capture covers 8 of 32 steps |
 
 ## Reading against capacity 256
 
