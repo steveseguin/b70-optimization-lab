@@ -2096,7 +2096,8 @@ Campaign 13d started 2026-10-12 21:16 EDT. The owner supplied the sudo password 
 
 Before the next run beside the server (2026-10-12 20:15, no GPU work): the repair task container is now capped at
 **256 MiB** (`memory_mb` in the three generated `task.toml` files and in `make_repair_tasks.py`; the suite passes
-class by class under 96 MiB), and the 13d runner refuses to start an arm while the room beside the server
+class by class under 96 MiB) [correction, found 2026-10-13: only the generator was changed that evening; the three
+task directories kept 384 MiB until campaign 14, so 13c and 13d ran at 384], and the 13d runner refuses to start an arm while the room beside the server
 (MemAvailable minus the 1.6 GiB guard floor) is under twice the cap. 13d then waits only on the owner: the Gemma
 restart after the fault line is the owner's call, and the runner needs `SUDO_ASKPASS`.
 
@@ -2108,7 +2109,7 @@ Where the lane stands:
 | repair task, seed 1x (default effort) | 40 of 40 clean, audit 7/7, 47.1 min | 33 of 40 clean, audit 0/7, cut at 60 min | not graded twice (stuck on one ticket) |
 | repair task, seed 1x, effort medium set by the proxy | 40 of 40 clean, audit 7/7, 29.5 min | **40 of 40 clean, audit 7/7, 20.9 min (C32m)** | |
 
-### Campaign 13d results (2026-10-12 21:16 to 23:22; one server, no restart, kernel log clean; container cap 256 MiB)
+### Campaign 13d results (2026-10-12 21:16 to 23:22; one server, no restart, kernel log clean; container cap in fact 384 MiB — see the correction in campaign 14)
 
 **C32m, the control: the summariser at medium effort matches the proxy on this task.** 40 fixed, **40 clean** (every
 instruction on every ticket), audit **7 of 7**, **20 min 55 s** — against XR4's 29.5 minutes and the same scores.
@@ -2137,10 +2138,38 @@ against the keeper's 228 + 210.
 
 Server: ready in 165 seconds (warm page cache); the lowest host memory available during the runs was 2,507 MiB, so
 the new room check (refuse an arm under 512 MiB of room) never came close to firing. The 1M arm's container has no
-explicit cap (the repair task carries the 256 MiB one); its peak use beside the server stayed inside the room.
+explicit cap (the repair task then carried 384 MiB; 256 MiB applies from campaign 14); its peak use beside the server stayed inside the room.
 Gemma was restored at 23:22, no fault lines logged since 21:16.
 
 Owed, in this order: a graded sliding-window row on the second seed; a task without the `*_index` functions and
 `peekable`, or with leave to give a ticket up; the skindeep rows for the controls above (the repair marathon
 itself is published: skindeep.ai commit e5ae534, section "Real code: the repair marathon"); the proxy under a real
 agent program.
+
+### Campaign 14, registered 2026-10-13 before any run: the window's missing grade, and the task without its trap tickets
+
+A record correction first. The 20:15 entry above says the repair container was capped at 256 MiB for 13d; in fact
+only the generator was changed that evening, and the three existing task directories still carried 384 MiB, so
+13c's and 13d's repair runs ran at 384 MiB (the room check, 512 MiB, stayed conservative against that; the lowest
+room seen in 13d was 2,507 MiB). All three task.toml files now carry 256 MiB, and new tasks are built with it.
+
+The task variant the owed list asked for is built as **`repair-n40-s2x`**: seed 2 (a ticket order no arm has seen),
+the audit ticket kept, and the whole trap family left out of the pool — `combination_index`,
+`combination_with_replacement_index`, `permutation_index`, `product_index`, `iter_index` and `peekable`. The
+self-test passes (the six scripted solutions grade to their known scores). Same 40 defects, three notices, 55-minute
+agent limit, 256 MiB.
+
+Queue (one server, repair arms only): **W32f** on `repair-n40-s1x`, then **XR6** and **W32g** on `repair-n40-s2x`.
+
+Registered expectations:
+
+- **W32f** (32K window, seed 1x, graded where the task's own 55-minute limit stops it — the row 13b and 13c could
+  not produce): sticks again on ticket 26 (`combination_index`) or 37 (`peekable`); graded there. Fixed 25 to 37;
+  clean below fixed (the recipe-name rule's notice leaves the window early); audit 0 of 7, the ticket never
+  reached. The bar for the row is that a grade exists at all.
+- **XR6** (the proxy at default effort on the trap-free task): 40 of 40 fixed and clean, audit 7 of 7, 40 minutes
+  or less (XR3 with the trap tickets: 47.1).
+- **W32g** (the window on the trap-free task): finishes the queue inside the limit — the answer to whether the
+  window's seed-1x failures were the task or the method. Fixed 36 or more; clean 25 to 35 (the recipe-name rule
+  still drops once its notice leaves the window; the window on seed 0: 30 of 40 clean); audit 0 to 2 of 7; 50
+  minutes or less.
