@@ -2109,5 +2109,4 @@ Where the lane stands:
 Owed, in this order: C32m (the summariser at the same effort: without it the last row has no comparison); XR5
 (the short first limit on thinking replies); a graded sliding-window row on the second seed; the proxy on the
 second 1M ledger stream, which is also the first text the two fitted check rules have not seen; a task without the
-`*_index` functions and `peekable`, or with leave to give a ticket up; the skindeep pages for all of the above
-(not updated since this morning: no site build can run beside a research server, and the day ended on one).
+`*_index` functions and `peekable`, or with leave to give a ticket up; the skindeep pages for the controls above (the repair marathon itself is published: skindeep.ai commit e5ae534, section "Real code: the repair marathon"; the controls' rows go in when they have run).
