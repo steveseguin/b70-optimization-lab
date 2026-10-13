@@ -30,7 +30,7 @@ The full RoPE table preserves every old byte. Reconcile packet40 draft fixture
 retention with packet44's valid-prefix row dumps; final state remains complete.
 
 Merge wrapper safety fixes once, preserving unchanged LD_LIBRARY_PATH and
-structured owner-failure evidence. Both suite caps come from their manifest;
+structured owner-failure evidence. Suite token caps (32/64/128) come from their manifest;
 context is separately checked against it. Regenerate all merged receipts and
 rerun CPU qualification. Neither packet's receipts qualify a different merged
 binary. Device windows are pending and must be rerun after integration.

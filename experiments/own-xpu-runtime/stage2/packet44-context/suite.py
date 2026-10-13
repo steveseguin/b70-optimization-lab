@@ -10,11 +10,13 @@ RESET=11
 CHECKER=ROOT/'experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite/suite_check.py'
 EOS=(248044,248046)
 
+CHECKER32=ROOT/'experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-long/suite_check.py'
+
 CHECKER128=ROOT/'experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/suite_check.py'
 
 def validate_manifest(manifest,context=256,mini=False):
     cap=manifest.get('token_cap')
-    pipeline.require(manifest.get('arithmetic')=='iq3-p17-detmath-v2' and type(cap) is int and cap in (64,128),'suite identity: token_cap must be 64 or 128')
+    pipeline.require(manifest.get('arithmetic')=='iq3-p17-detmath-v2' and type(cap) is int and cap in (32,64,128),'suite identity: token_cap must be 32, 64 or 128')
     pipeline.require((mini or context in (256,4096,32768)) and context>=manifest.get('context',0),'suite capacity must cover oracle capacity')
     entries=manifest['prompts']
     pipeline.require(entries and len({e['prompt_id'] for e in entries})==len(entries),'empty/duplicate suite')
@@ -53,6 +55,40 @@ class RetainedFixtureChecker:
                 pipeline.require(len(raw)==20480 and hashlib.sha256(raw).hexdigest()==row.get('sha256'),'retained fixture length/hash differs')
                 pipeline.require(raw==(oracle/name).read_bytes(),name+' byte mismatch')
         return n,len(steps)*48
+
+class LongPromptChecker:
+    """Keep the long checker's full token/fixture and oracle-binding contract.
+
+    Only missing actual midprompt output is adapted; even then the original
+    comparator validates the oracle's positions and validation.json hashes.
+    A private globals snapshot leaves the read-only checker unchanged.
+    """
+    def __init__(self,oracle_checker):
+        self.oracle_checker=oracle_checker
+        self.source_sha256=oracle_checker.source_sha256
+        original=oracle_checker.midprompt_compare
+        def retained_midprompt(actual,oracle,prompt_tokens,entry=None):
+            if not (actual/'midprompt').exists():
+                return original(oracle,oracle,prompt_tokens,entry)
+            return original(actual,oracle,prompt_tokens,entry)
+        check=oracle_checker.check_prompt
+        self.compare=types.FunctionType(check.__code__,dict(check.__globals__,midprompt_compare=retained_midprompt),
+                                        check.__name__,check.__defaults__,check.__closure__)
+    def check_prompt(self,actual,oracle,entry,repo_root=ROOT):
+        self.oracle_checker.check_prompt(oracle,oracle,entry,repo_root)
+        return self.compare(actual,oracle,entry,repo_root)
+    def comparison_metadata(self,actual):
+        return dict(midprompt_comparison='compared' if (actual/'midprompt').exists() else 'not retained by this binary',
+                    midprompt_comparison_comment='Oracle midprompt positions and validation.json hashes remain checked. '
+                    'This window provides end-to-end equality at generation steps with the selection path active '
+                    '(LONG-B prompt positions exceed the 2,048 budget), plus unchanged token and retained steps 1-8 '
+                    'comparison; absent actual midprompt records provide no intermediate-state equality evidence.')
+
+def checker_for_cap(cap):
+    if cap==32:return LongPromptChecker(checker_module(CHECKER32))
+    if cap==128:return RetainedFixtureChecker(checker_module(CHECKER128))
+    pipeline.require(cap==64,'unsupported suite checker cap')
+    return checker_module()
 
 def select_warmup(prompts,context,vocab):
     """A short synthetic request absent from every contiguous suite input span.
@@ -260,6 +296,7 @@ def compare_request(output,result,entry,compare):
     """Exactness is a request outcome, not a rank-execution exception."""
     try:
         if compare:
+            if hasattr(compare,'comparison_metadata'):result.update(compare.comparison_metadata(output))
             n,f=compare.check_prompt(output,ROOT/entry['oracle_directory'],entry,ROOT)
             result['oracle_check']=dict(passed=True,tokens=n,fixture_files=f,checker_sha256=compare.source_sha256)
     except (OSError,ValueError,KeyError,TypeError) as error:
@@ -301,7 +338,7 @@ def run(args,environment=None,check=None,failure_hook=None,launch_hook=None):
     cap=validate_manifest(manifest,args.context,args.mini)
     pipeline.require(all(Path(e['prompt_id']).name==e['prompt_id'] and e['prompt_id'] not in ('.','..') for e in entries),'unsafe prompt id')
     args.output.mkdir(parents=True);(args.output/'suite-manifest.snapshot.json').write_bytes(manifest_bytes);ranks=args.output/'ranks';ranks.mkdir()
-    compare=(RetainedFixtureChecker(checker_module(CHECKER128)) if cap==128 else checker_module()) if not args.mini else None
+    compare=checker_for_cap(cap) if not args.mini else None
     snapshots=admit_inputs(entries,args.output,compare) if compare else {}
     launch=copy.copy(args);launch.input=(snapshots[entries[0]['prompt_id']][0] if compare else ROOT/entries[0]['input_bundle']);launch.oracle=None;launch.tokens=cap
     pipeline.require(args.context>=manifest['context'],'suite context admission')

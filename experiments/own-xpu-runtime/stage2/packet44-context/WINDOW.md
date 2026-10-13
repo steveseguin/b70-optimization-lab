@@ -64,3 +64,46 @@ Storage failures never become device-fault latches. Post-run compression errors
 keep raw evidence and the completed verdict. For a fresh fault signature or an
 owner that failed after device contact, preserve evidence and follow coordinator
 recovery; do not retry automatically.
+
+## Long-prompt WL amendment, 2026-10-13
+
+Coordinator only, from the repository root and the same nice-0 systemd parent
+as WS128. This command was prepared and its prerequisite files checked on CPU;
+it was not executed by the amendment agent. Preserve the parent's affinity
+and existing LD_LIBRARY_PATH. The CPU-only amendment agent must stay nice19;
+that is separate from this coordinator-only W window.
+
+```bash
+packet44=experiments/own-xpu-runtime/stage2/packet44-context
+packet44_out="$packet44/build/c4096b"
+ionice -c 3 env -i PATH=/usr/bin:/bin LD_LIBRARY_PATH="$LD_LIBRARY_PATH" \
+  python3 -B "$packet44/window.py" --authorized-device-window \
+  --window WS --card 0 --context 4096 --output "$packet44_out/WL" \
+  --k0 "$packet44_out/K0/window.json" \
+  --k1a "$packet44_out/K1a/window.json" \
+  --k1b "$packet44_out/K1b/window.json" \
+  --k2 "$packet44_out/K2/window.json" \
+  --w0p "$packet44_out/W0p/window.json" \
+  --kd "$packet44_out/KD/window.json" \
+  --dispatch "$packet44_out/K2/run0/dispatch-measured.json" \
+  --suite-manifest experiments/own-xpu-runtime/stage2/long-inputs-20261012/suite-manifest.json \
+  --controller native --repeat 1
+```
+
+This uses the same six prerequisites, measured dispatch, card pair, controller
+and one repeat as c4096b/WS128. WL must be a fresh output path. The amended
+seal records the exact preceding seal hash and permits its prerequisites only
+for WS/WSs using the hash-bound long manifest. The new request records the new
+seal hash. Binary hashes, boot, context, cards, environment and all retained
+child-receipt hashes still have to match. Nothing rewrites old card receipts.
+
+Two requests run, plus one excluded distinct synthetic warmup. LONG-A has 598
+prompt tokens and LONG-B 2,271, with 32 generated tokens each. The 100-token
+submission metric is unavailable. All 32 tokens and retained layer fixtures at
+steps 1–8 are compared. No late generation fixtures are declared missing.
+The oracle's full admission, including validation.json midprompt hashes, runs
+unchanged. Request receipts say `midprompt_comparison: not retained by this
+binary` when actual midprompt records are absent; their companion comment
+states that the evidence is end-to-end equality at generation steps with the
+selection path active (LONG-B exceeds the 2,048 budget), not intermediate-state
+equality. If a future binary retains midprompt records, they must compare.

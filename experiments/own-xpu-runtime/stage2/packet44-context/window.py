@@ -145,7 +145,10 @@ def prerequisites(path,name,identity):
     require(path is not None,'missing prerequisite '+name)
     row=json.loads(path.read_text());require(row.get('passed') is True and row.get('window')==name,'failed prerequisite '+name)
     for field in ('boot_id','artifacts_sha256','environment','card','build_receipt_sha256','context'):
-        require(row.get(field)==identity.get(field),'prerequisite identity changed: '+name+' '+field)
+        compatible=(field=='build_receipt_sha256' and name in ('K0','K1a','K1b','K2','W0p','KD')
+                    and identity.get('compatible_prerequisite_build_receipt_sha256') is not None
+                    and row.get(field)==identity['compatible_prerequisite_build_receipt_sha256'])
+        require(row.get(field)==identity.get(field) or compatible,'prerequisite identity changed: '+name+' '+field)
     if name in ('K1a','K1b'):
         linked=row.get('linked_p33',{})
         require(linked.get('checks')==216 and linked.get('split_instantiations')==36 and linked.get('binary_sha256')==identity['artifacts_sha256'].get('device/p33-linked-fixtures') and linked.get('card')==identity.get('card'),'K1 linked fixture prerequisite coverage/identity changed')
@@ -281,6 +284,13 @@ def main():
     boot=Path('/proc/sys/kernel/random/boot_id').read_text().strip()
     if (B/'FAULT.json').exists():require(json.loads((B/'FAULT.json').read_text()).get('boot_id')!=boot,'boot fault latch requires coordinator recovery')
     identity=dict(schema='packet44.window.v1',window=a.window,card=a.card,context=a.context,boot_id=boot,artifacts_sha256=artifacts,environment=environment,build_receipt_sha256=sha(P/'build-receipt.json'))
+    # The long-suite wrapper amendment changes no compiled bytes. Its seal
+    # authorizes only the exact prior seal and long manifest for prerequisite
+    # reuse; the request itself always records the current build receipt hash.
+    amendment=build.get('long_suite_wrapper_amendment',{})
+    if (a.window in ('WS','WSs') and a.suite_manifest and
+            sha(a.suite_manifest)==amendment.get('suite_manifest_sha256')):
+        identity['compatible_prerequisite_build_receipt_sha256']=amendment['parent_build_receipt_sha256']
     record=dict(identity,prompt_overlap=a.prompt_overlap,passed=False,device_executed=False,expected_seconds=(estimated_seconds(a.context) if a.window=='K2' else CONFIG[a.window][0])+17,expectation_enforced=True,expectation_policy='prelaunch expected+17s <= watchdog/4; no early runtime stop',watchdog_seconds=seconds,cpu_affinity=sorted(os.sched_getaffinity(0)),load_average=list(os.getloadavg()))
     if a.window!='K0':prerequisites(a.k0,'K0',identity)
     if a.window=='K1b':prerequisites(a.k1a,'K1a',identity)

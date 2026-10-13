@@ -29,3 +29,10 @@ full fixture pass; doing so forced a full rebuild for this one-line harness fix.
 | Claim 25 GNU real-model cases | The retained 25 include 13 GNU real-model and 12 both-compiler rollback cases. |
 | Invent obsolete inherited receipt keys | Test actual production consumers and capacity-specific maps. |
 | Run six draft arms when only two references are requested | Generate GNU KD references at 4096 and 32768; label remaining arms unclosed. |
+
+| Long-window wrapper mistake (2026-10-13) | Required behavior |
+| --- | --- |
+| Assume all suite manifests have 64/128 generated tokens | Admit 32/64/128 while retaining arithmetic-v2 identity; cap32 uses the long oracle checker. |
+| Treat absent runtime midprompt files as an oracle failure or silently skip their comparison | Preserve all oracle bindings; disclose missing actual records in each request receipt, and compare them when retained. |
+| Repin old model gates after a wrapper-only edit | Preserve their historical source identities; bind new CPU wrapper gates in an explicit amendment. |
+| Reuse any old seal as a prerequisite | Only the exact recorded parent seal is compatible, only for the hash-bound long manifest; all remaining identity/child hashes stay strict. |

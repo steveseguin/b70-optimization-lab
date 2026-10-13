@@ -117,3 +117,67 @@ and label are not performance evidence. The enclosing gate explicitly records
 `no_speed_claim: true`, the script, all original/forced guesses and injection
 scope. The seal also parses the archived receipt, checks real draft-provider
 success, and rejects missing/invalid original guesses.
+
+## Long-suite wrapper amendment, 2026-10-13
+
+The coordinator queued the long-manifest WS window. `validate_manifest` refused
+its 32-token cap before device contact because it admitted only 64/128. The
+oracles and devices were not the cause. The completed c4096 and c32768 card
+chains remain historical evidence under their original seal; this amendment
+runs no device or real-model CPU request.
+
+`suite.py` now accepts cap32 with the unchanged arithmetic-v2 identity and
+selects the long run's checker. Its private adapter preserves the checker's
+oracle admission, input/result/fixture bindings and validation.json midprompt
+hashes. Token equality and steps 1–8 are unchanged. Absent actual midprompt
+records are explicitly recorded in the request receipt with the evidence
+limit: generation-step end-to-end equality with selection active for LONG-B,
+not midprompt byte equality. Present records, even empty/incomplete directories,
+must compare. No late fixture steps are claimed for cap32, and the submission
+metric requires 100 events and stays unavailable here.
+
+Changing the seal also changes the prerequisite identity. `window.py` therefore
+accepts the exact prior seal only for K0/K1a/K1b/K2/W0p/KD prerequisites of
+WS/WSs using this exact long-manifest hash. The current request still records
+the amended seal. All other identity fields, dispatch and retained child hashes
+remain strict. A read-only audit passed all six existing c4096b prerequisites.
+No historical card receipt or model gate was rewritten.
+
+CPU evidence: [long-suite-wrapper-gates.json](long-suite-wrapper-gates.json)
+binds **131 checks**: 14 long-wrapper tests (including two mocked long windows),
+10 compiler mocks, nine export checks, 11 warmup gates, four storage checks,
+10 context tests (22 combinations), 37 inherited window tests including their
+mini-model profiling case, and a separate 36-test mocked-only inherited run.
+The two direct `suite.py --mini` dry paths (Python/native controller) each ran
+four requests and 128 tokens, plus excluded warmup. Both real oracle directories
+passed read-only admission: 32 tokens and 384 retained fixtures each. The seal
+rehearsal passed **21 gates / 20 deliberately blocked window launches**.
+These counts overlap by design; none is a model performance measurement.
+
+The first storage-test invocation lacked its required `--output` argument and
+exited at argument parsing. Its failed log is retained alongside the successful
+rerun. No binary or device was reached by that invocation.
+
+[amend_long_suite.py](amend_long_suite.py) regenerates the amendment from the
+byte-preserved parent build receipt and CPU summary in
+`evidence/long-wrapper-20261013/`. It rejects unrelated source changes and any
+changed compiled artifact. Original model/rollback gates keep their old source
+identities; they were not rerun. The amendment pins the changed wrappers, new
+test/seal scripts, long checker, long manifest, new gate receipts and updated
+admission rehearsal. The existing full `seal_context.py` describes the original
+model qualification; do not repin those historical gates to make it pass after
+this edit. Use the explicit amendment procedure below.
+
+From the repository root, retaining affinity and numerical threads at two:
+
+```bash
+packet44=experiments/own-xpu-runtime/stage2/packet44-context
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 python3 -B "$packet44/long_suite_cpu_gate.py"
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$packet44/amend_long_suite.py" --candidate
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$packet44/test_window_seal_admission.py" --build-receipt "$packet44/build-admission-candidate.json"
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$packet44/amend_long_suite.py"
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B "$packet44/integration_inventory.py"
+```
+
+[WINDOW.md](WINDOW.md#long-prompt-wl-amendment-2026-10-13) contains the exact
+coordinator command. Actual long-prompt device equality remains pending WL.

@@ -24,15 +24,17 @@ class ContextWindows(unittest.TestCase):
   build=dict(passed=True,sources={},official_manifest_sha256='hash',memory_plan=ledger,
    artifacts_sha256={'device/p33-linked-fixtures':'hash','device/own-rt-iq3':'hash'},
    p33_linked_fixture_host_sha256='hash',nongemv_fixture_host_sha256_by_context={str(context):'host-'+str(context)},input_sha256='hash')
+  if cap==32:build['long_suite_wrapper_amendment']=dict(suite_manifest_sha256='hash',parent_build_receipt_sha256='parent-seal')
   (packet/'build-receipt.json').write_text(json.dumps(build))
   prereq=packet/'prereq.json';prereq.write_text(json.dumps(dict(pids=[101,102])))
   dispatch=packet/'dispatch.json';dispatch.write_text('{}')
-  manifest=packet/'suite.json';manifest.write_text(json.dumps(dict(cap=cap,requests=[{}]*12)))
+  manifest=packet/'suite.json';manifest.write_text(json.dumps(dict(cap=cap,requests=[{}]*(2 if cap==32 else 12))))
   output=builddir/'result'
   argv=['window.py','--authorized-device-window','--window',name,'--context',str(context),'--card','1','--output',str(output),'--input',str(inp),'--oracle',str(packet/'oracle'),'--dispatch',str(dispatch),'--controller','native','--suite-manifest',str(manifest)]
   for key in ('k0','k1a','k1b','k2','w0p','kd'):argv+=['--'+key,str(prereq)]
-  calls=[];fixture_checks=[]
+  calls=[];fixture_checks=[];write_requests=[]
   def prerequisite(path,key,identity):
+   self.assertEqual(identity.get('compatible_prerequisite_build_receipt_sha256'),'parent-seal' if cap==32 and name in ('WS','WSs') else None)
    return dict(pids=[101,102] if key=='K1a' else [103,104],candidate_dispatch_sha256='hash',dispatch_sha256='hash')
   def fixtures(a,out,env,watch):
    calls.append(('fixture',a.context,env.copy()))
@@ -62,6 +64,8 @@ class ContextWindows(unittest.TestCase):
    stack.enter_context(patch.object(w,'validate'))
    stack.enter_context(patch.object(w,'memory_snapshot',return_value={'MemAvailable':128*1024**3}))
    stack.enter_context(patch.object(w,'admit',return_value={}))
+   original_projection=w.projected_write_bytes
+   stack.enter_context(patch.object(w,'projected_write_bytes',side_effect=lambda window,count:write_requests.append(count) or original_projection(window,count)))
    stack.enter_context(patch.object(w,'foreign_engines',return_value={}))
    stack.enter_context(patch.object(w,'journal',return_value=('', 'cursor')))
    stack.enter_context(patch.object(w.Watch,'postflight'))
@@ -87,7 +91,9 @@ class ContextWindows(unittest.TestCase):
   if compression_failure:self.assertTrue(record['raw_evidence_retained']);self.assertIn('retention_error',record)
   if name=='K2' and not summary_failure:self.assertIn(('summary',context),calls);self.assertEqual(len(record['rank_dispatches']),2)
   if name in ('K1a','K1b'):self.assertEqual(fixture_checks,['host-'+str(context)])
-  if name in ('WS','WSs'):self.assertEqual(record['token_cap'],cap);self.assertEqual(record['summary']['token_cap'],cap)
+  if name in ('WS','WSs'):
+   self.assertEqual(record['token_cap'],cap);self.assertEqual(record['summary']['token_cap'],cap)
+   self.assertEqual(write_requests,[1+(2 if cap==32 else 12)*2])
   return record
  def test_every_window_context_and_summaries(self):
   for context in (4096,32768):
