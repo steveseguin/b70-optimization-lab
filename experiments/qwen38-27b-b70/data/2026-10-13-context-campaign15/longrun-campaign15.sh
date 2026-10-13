@@ -8,7 +8,7 @@ LAB=/home/steve/b70-optimization-lab
 CTX=$LAB/experiments/qwen38-27b-b70/scripts/context
 O=/mnt/fast-ai/bench-results/context-longrun-20261012
 O11=/mnt/fast-ai/bench-results/context-longrun-20261011
-SRV=$O/server/tp2-w262154-c15
+SRV=$O/server/tp2-w262144-c15
 O10=/mnt/fast-ai/bench-results/context-longrun-20261010
 OD1M=$O11/client-1m
 ODC=$O11/client-crule
@@ -108,8 +108,8 @@ say "cards free; MemAvailable $(avail) MiB"
 systemctl --user reset-failed ctx-fp8-tp2-server 2>/dev/null
 systemd-run --user --unit=ctx-fp8-tp2-server --collect -p WorkingDirectory=$LAB -E B70_GUARD_MIN_AVAILABLE_GIB=1.6 \
   python3 experiments/qwen38-27b-b70/scripts/run-fp8-tp1-server.py --out "$SRV" --port $PORT \
-  --image neural-download/vllm-openai-xpu:qwen38-fp8-v0290-r315-state-stride --warmup --keep --startup-timeout 1800 \
-  --tp 2 --mem 0.95 --max-model-len 262154 --batched 832 --fa-verify-rows --mtp 5 --draft-int4 \
+  --image neural-download/vllm-openai-xpu:qwen38-fp8-v0290-r314-state-stride --warmup --keep --startup-timeout 1800 \
+  --tp 2 --mem 0.95 --max-model-len 262144 --batched 832 --fa-verify-rows --mtp 5 --draft-int4 \
   --shortlist /opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt \
   --overlay b70-allgather-allreduce --extra-env B70_ALLGATHER_ALLREDUCE=1 \
   --overlay b70-chunked-upload --extra-env B70_CHUNKED_UPLOAD=1 \
@@ -258,7 +258,7 @@ run_arm() {  # arm cap_seconds out_dir size sparse_args seed
 start_proxy_effort() {  # state tag: the proxy as a pass-through that only adds reasoning_effort=medium to every call
   systemctl --user reset-failed ctx-keeper-proxy 2>/dev/null   # (a window the client never fills, no memory note, no retry of empty replies)
   systemd-run --user --unit=ctx-keeper-proxy --collect -p WorkingDirectory=$LAB python3 tools/ctxkeeper/ctxkeeper.py \
-    --upstream "http://127.0.0.1:$PORT" --port $PPORT --budget 262154 --reply-reserve 2048 --headroom 1024 \
+    --upstream "http://127.0.0.1:$PORT" --port $PPORT --budget 262144 --reply-reserve 2048 --headroom 1024 \
     --no-memory-note --no-empty-retry --effort medium --state-dir "$O/proxy-state/$1" 2>&1 | tail -1
   for i in $(seq 1 30); do curl -fsS -m 3 "http://127.0.0.1:$PPORT/v1/models" >/dev/null 2>&1 && return 0; sleep 1; done
   say "proxy did not come up"; return 1
@@ -302,8 +302,8 @@ run_free() {  # arm task cap: freeagent on the repair task, through the proxy (F
   local arm=$1 task=$2 cap=$3 t0=$SECONDS rc api="http://127.0.0.1:$PORT/v1" job="${1}__${2}"
   [[ $arm == FAp ]] && api="http://127.0.0.1:$PPORT/v1"
   [[ -e $ODX/runs/jobs/$job ]] && { say "[$arm $task] already run, skipped"; return 0; }
-  smoke "$api" || { say "[$arm] smoke test failed; arm skipped"; return 1; }
   if [[ $arm == FAp ]]; then start_proxy_repair "c15-$arm-$task" XR6 || return 1; fi
+  smoke "$api" || { say "[$arm] smoke test failed; arm skipped"; [[ $arm == FAp ]] && stop_proxy "$ODX/runs/proxy-status-$job.json"; return 1; }
   say "[$arm, $task] start (cap ${cap}s); MemAvailable $(avail) MiB; $(mline)"
   timeout -s INT -k 180 "$cap" env TASKS="$ODX/tasks/$task" API_BASE="$api" MODEL_NAME=qwen38-27b-fp8 TIME_LIMIT=3300 MAX_STEPS=900 \
       "$LAB/tools/freeagent/run-freeagent-job.sh" "$ODX/tasks/$task" "$ODX/runs" "$job" > "$ODX/runs/$job.out" 2>&1
