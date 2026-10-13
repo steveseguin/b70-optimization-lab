@@ -2229,3 +2229,30 @@ and the three notices are the ones already measured. Two arms, one server:
 
 What the pair shows: with the proxy the same agent works at a 32K live window; without it the same agent needs the
 full 262K. Equal scores put the proxy's cost beside the window's on an agent the harness never shaped.
+
+### Campaign 15 results (2026-10-13 18:00 to 19:49; one server per launch, two launches; kernel log clean)
+
+Both arms scored the maximum: **fixed 40/40, clean 40/40, audit 7/7** on repair-n40-s2x.
+
+| arm | window | time | calls | prompt tokens | completion tokens | proxy session |
+|---|---|---|---|---|---|---|
+| **FAp** (proxy, XR6 config) | 32K | **33 min 16 s** | 287 | 2,902,995 | 137,488 | 12 in-place cuts, 562 messages archived, 1 recall, 6,264 notes tokens, 0 failed |
+| **FAd** (direct) | 262K | 54 min 58 s | 276 | 29,934,764 | 125,264 | — |
+
+Against the registrations: FAp met every bound (clean 40 ≥ 38, audit 7 ≥ 6, 33.3 ≤ 45 min); FAd met the score
+bounds and missed the time bound (55 > 30 min). The miss has a named cause: freeagent returns each reply's
+reasoning with the history, so the direct run's live history grew to ~215K tokens of which only ~20K was visible
+work; every call re-read it (29.9M prompt tokens, 98% from cache). The proxy strips reasoning from what it keeps,
+which is most of the 10.3× prompt gap; its cut/archive machinery did the rest and was exercised in full by a
+client that shares no code with the harness (287 requests, 302 upstream calls, one recall against the 562-message
+archive, 2 empty replies retried; the audit questions about the earliest tickets were answered 7/7). The harness client in the same proxy configuration (XR6: 221 calls,
+8 cuts, 20.1 min) remains faster; freeagent makes more, smaller calls and pays the per-call proxy overhead.
+
+What the pair shows, as registered: the same agent, the same task, the same perfect score — through the proxy at
+a 32K live window in 33 minutes, or direct at the full 262K window in 55. The proxy's cost beside the window's,
+on an agent the harness never shaped: −40% time, −90% prompt traffic, ±0 score.
+
+Process notes: the first launch aborted on a corrupted sed rename in the runner (the image tag `r314` became
+`r315`, the window `262144` became `262154`; fixed by hand and re-checked against the campaign 14 script). On the
+second launch FAp was skipped without running — the runner smoked the proxy's port before starting the proxy;
+the order is fixed in the runner and FAp ran on the third launch. Both faults are recorded in QUEUE15.txt.

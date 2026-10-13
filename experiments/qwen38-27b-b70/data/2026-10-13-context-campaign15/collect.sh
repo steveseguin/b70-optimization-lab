@@ -21,10 +21,22 @@ for name in FAp__repair-n40-s2x FAd__repair-n40-s2x; do
   for f in verifier/details.json verifier/test-stdout.txt agent/usage.json agent/timing.json agent/trajectory.json; do
     [[ -e $t/$f ]] && cp "$t/$f" "$out/$(basename "$f")"
   done
-  cp "$ODX/runs/$job.out" "$out/run.out" 2>/dev/null
+  cp "$ODX/runs/$name.out" "$out/run.out" 2>/dev/null
   cp "$ODX/runs/proxy-status-$name.json" "$out/proxy-status.json" 2>/dev/null
   arm=${name%%__*}; rest=${name#*__}
-  s=$(first "$O/proxy-state/c15-$arm-$rest")
+  s=$(python3 - "$O/proxy-state/c15-$arm-$rest" <<'PY'
+import glob, json, os, sys
+best, bestn = None, -1
+for d in glob.glob(os.path.join(sys.argv[1], "*/")):
+    try:
+        n = json.load(open(os.path.join(d, "state.json"))).get("requests", 0)
+    except Exception:
+        continue
+    if n > bestn:
+        best, bestn = d, n
+print(best or "")
+PY
+)
   [[ -n $s ]] && { mkdir -p "$out/proxy"; cp "$s/notes-history.jsonl" "$s/events.jsonl" "$s/state.json" "$out/proxy/" 2>/dev/null; }
 done
 
