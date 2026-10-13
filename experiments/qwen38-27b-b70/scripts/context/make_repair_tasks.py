@@ -40,8 +40,9 @@ The library is more-itertools 10.7.0 (MIT; sdist checked by sha256, never instal
   touches pip, curl, wget, urllib or the proxy variables.
 
   Safety: the builder's own screening and self-test run in containers without network; every test process is capped at
-  128 MiB of address space, every shell the agent starts at 160 MiB, the task container at 384 MiB (the whole
-  reference suite, 671 tests in 156 classes, passes class by class under 96 MiB). The first caps were 800 MiB, 1.5 GiB
+  128 MiB of address space, every shell the agent starts at 160 MiB, the task container at 256 MiB (the whole
+  reference suite, 671 tests in 156 classes, passes class by class under 96 MiB; 384 MiB was still larger than the
+  room beside the model server on 2026-10-12, twice in one day). The first caps were 800 MiB, 1.5 GiB
   and 2 GiB, and the first run beside the model server lasted 40 seconds: at its 13th command the agent ran
   `t IchunkedTests` on a defect that never stops, the test grew by 70 MiB a second, and the server's memory guard
   (floor 1.6 GiB, about 0.55 GiB of room at that moment) stopped the server before the cap was reached. A cap has to
@@ -553,7 +554,7 @@ def selftest(task: Path) -> None:
               "for mode in " + " ".join(want) + "; do rm -rf /app /logs; cp -r /app0 /app; mkdir -p /logs; "
               "if [ $mode != none ]; then python3 /solution/solve.py $mode; fi; echo \"== $mode\"; bash /tests/test.sh; done")
     try:
-        p = subprocess.run(["docker", "run", "--rm", "--network", "none", "--memory", "384m", "--memory-swap", "384m", "--cpus", "2",
+        p = subprocess.run(["docker", "run", "--rm", "--network", "none", "--memory", "256m", "--memory-swap", "256m", "--cpus", "2",
                             "-v", f"{(task / 'tests').resolve()}:/tests:ro", "-v", f"{(task / 'solution').resolve()}:/solution:ro",
                             tag, "bash", "-c", script], capture_output=True, text=True)
     finally:
@@ -695,7 +696,7 @@ def build(src_root: Path, kept: list[dict], out: Path, n: int, seed: int, image:
         timeout_sec = {agent_timeout}
 
         [environment]
-        memory_mb = 384
+        memory_mb = 256
         cpus = 2
         """))
     print(f"wrote {task}: {n} bugs ({sum(b['file'] == 'recipes.py' for b in bugs)} in recipes.py), notices at tickets {at}"
