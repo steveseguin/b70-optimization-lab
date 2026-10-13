@@ -1,0 +1,93 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "rows": [
+    {
+      "compiler": "gnu",
+      "compiler_version": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+      "source_sha256": {
+        "capacity_selection_gate.cpp": "d2135ab287d8456a4c87851e46ad1a9e9b37b360e90d76410fe533d3966c71ba",
+        "core_v2.hpp": "c3c265894d5041e0d6e026d53094b67f9b58bb86bd1aa1c8fea06ab4d8692ffd",
+        "kernels.hpp": "a8c19f5ccf8dec343f70ca14223d5ac52df42c8c3ae68072179f61e285e17466",
+        "round2.hpp": "bd614a9944e33903a6f0c7c2d4a1dd1de4786f8b1cdc8418df73e6d54b7e38ef",
+        "specialised.hpp": "0d7489d31fb869a49db3a7a365dbe78af52931c0e7d5cdf38ff05b01e594c126",
+        "p30_attention.hpp": "9d5eb89f4aa6515922a74b144a4bc3d19813169261f1cb1bb2ce6bf042608ddf",
+        "detmath.hpp": "eba96cc4599d21ab24fe97276bda0c954c60878d3b696a77393abbfa2a4e049c",
+        "rope.hpp": "83782198e96337883f7e226d5fc474360841f6ca26a00bce43a6d87f42b74929"
+      },
+      "command": [
+        "/usr/bin/g++",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fno-associative-math",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/capacity_selection_gate.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-selection/selection-gnu"
+      ],
+      "binary_sha256": "ddfee9fcf6d90025ff2e0327426947f797903aac5c24c9796df777edf012f9cc",
+      "seconds": 9.457843844982563,
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "checks": 427082,
+        "selection_fixtures": 48,
+        "attention_fixtures": 16,
+        "nonfinite_backend_fixtures": 48,
+        "selection_backends": 3,
+        "attention_candidates": 3,
+        "diagnostic_fnv64": 6880091980588590403
+      },
+      "stdout_sha256": "87521155b33c2738f780b6c52b4fddb84a41809745ff56c514066344252e3c4b",
+      "stderr": "",
+      "raw_output": "capacity-selection-gnu.jsonl.gz",
+      "binary_retention": "deleted_after_hashed_receipt",
+      "deleted_after_hashed_receipt": true
+    },
+    {
+      "compiler": "icpx",
+      "compiler_version": "Intel(R) oneAPI DPC++/C++ Compiler 2026.0.0 (2026.0.0.20260331)",
+      "source_sha256": {
+        "capacity_selection_gate.cpp": "d2135ab287d8456a4c87851e46ad1a9e9b37b360e90d76410fe533d3966c71ba",
+        "core_v2.hpp": "c3c265894d5041e0d6e026d53094b67f9b58bb86bd1aa1c8fea06ab4d8692ffd",
+        "kernels.hpp": "a8c19f5ccf8dec343f70ca14223d5ac52df42c8c3ae68072179f61e285e17466",
+        "round2.hpp": "bd614a9944e33903a6f0c7c2d4a1dd1de4786f8b1cdc8418df73e6d54b7e38ef",
+        "specialised.hpp": "0d7489d31fb869a49db3a7a365dbe78af52931c0e7d5cdf38ff05b01e594c126",
+        "p30_attention.hpp": "9d5eb89f4aa6515922a74b144a4bc3d19813169261f1cb1bb2ce6bf042608ddf",
+        "detmath.hpp": "eba96cc4599d21ab24fe97276bda0c954c60878d3b696a77393abbfa2a4e049c",
+        "rope.hpp": "83782198e96337883f7e226d5fc474360841f6ca26a00bce43a6d87f42b74929"
+      },
+      "command": [
+        "/opt/intel/oneapi/compiler/latest/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fno-associative-math",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/capacity_selection_gate.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-selection/selection-icpx"
+      ],
+      "binary_sha256": "747cff3d5d91f8e31ccf823bae31aaacd0bd9afaa3883b557dae3ba541820e61",
+      "seconds": 8.664016107009957,
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "checks": 427082,
+        "selection_fixtures": 48,
+        "attention_fixtures": 16,
+        "nonfinite_backend_fixtures": 48,
+        "selection_backends": 3,
+        "attention_candidates": 3,
+        "diagnostic_fnv64": 6880091980588590403
+      },
+      "stdout_sha256": "87521155b33c2738f780b6c52b4fddb84a41809745ff56c514066344252e3c4b",
+      "stderr": "",
+      "raw_output": "capacity-selection-icpx.jsonl.gz",
+      "binary_retention": "deleted_after_hashed_receipt",
+      "deleted_after_hashed_receipt": true
+    }
+  ],
+  "source_sha256": "d2135ab287d8456a4c87851e46ad1a9e9b37b360e90d76410fe533d3966c71ba"
+}
