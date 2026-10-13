@@ -13,6 +13,7 @@ ODR=/mnt/fast-ai/bench-results/context-longrun-20261010/client-rules
 ODH=$O11/client-hard; OD1M=$O11/client-1m
 for f in campaign13.attempt1.log campaign13.log QUEUE13.txt longrun-campaign13.sh metrics-c13.attempt1.tsv metrics-c13.tsv \
          campaign13b.log QUEUE13B.txt longrun-campaign13b.sh metrics-c13b.tsv campaign13c.log QUEUE13C.txt longrun-campaign13c.sh \
+         campaign13d.log QUEUE13D.txt longrun-campaign13d.sh metrics-c13d.tsv \
          metrics-c13c.tsv metrics-sampler.sh; do
   [[ -e $O/$f ]] && cp "$O/$f" "$D/"
 done
@@ -39,7 +40,7 @@ for odx in "$O/client-repair" "$O/client-repair2"; do
     arm=${name%%__*}; rest=${name#*__}                # XR__repair-n40-s0.guard-stop-1135 -> XR, repair-n40-s0.guard-stop-1135
     for x in settings.txt summary.txt; do cp "$odx/runs/$name.$x" "$out/" 2>/dev/null; done
     cp "$odx/runs/proxy-status-$name.json" "$out/proxy-status.json" 2>/dev/null
-    for tag in c13 c13b c13c; do
+    for tag in c13 c13b c13c c13d; do
       s=$(first "$O/proxy-state/$tag-$arm-$rest")
       [[ -n $s ]] && { mkdir -p "$out/proxy"; cp "$s/notes-history.jsonl" "$s/events.jsonl" "$s/state.json" "$out/proxy/" 2>/dev/null; }
     done
@@ -50,7 +51,7 @@ done
 for g in "$O"/client-repair2/runs/live-grade-*; do
   [[ -d $g ]] && { mkdir -p "$D/repair/client-repair2/$(basename "$g")"; cp "$g"/* "$D/repair/client-repair2/$(basename "$g")/" 2>/dev/null; }
 done
-for j in "$O"/client-repair2/runs/jobs/C32__repair-*; do     # the summariser's own record of its summaries
+for j in "$O"/client-repair2/runs/jobs/C32__repair-* "$O"/client-repair2/runs/jobs/C32m__repair-*; do     # the summariser's own record of its summaries
   t=$(first "$j"); [[ -n $t && -e $t/agent/summary_calls.json ]] && cp "$t/agent/summary_calls.json" "$D/repair/client-repair2/$(basename "$j")/"
 done
 
@@ -79,7 +80,7 @@ for sdir in "$O"/proxy-state/c13b-X32g-240k-s1/*/; do
   [[ -d $sdir ]] || continue
   if grep -q "reduced by a third" "$sdir/archive.jsonl" 2>/dev/null; then proxy X32g-hard-s1 "${sdir%/}" "$ODH" X32g 1; else proxy X32g-rules-s1 "${sdir%/}" "$ODR" X32g 1; fi
 done
-proxy X32g-1m-s1 "$(first "$O/proxy-state/c13c-X32g-1000k-s1")" "$OD1M" X32g 1
+proxy X32g-1m-s1 "$(first "$O/proxy-state/c13d-X32g-1000k-s1")" "$OD1M" X32g 1
 for od in "$ODR" "$ODH" "$OD1M"; do
   for j in "$od"/runs/jobs/{X32q,X32g,N32p,N32pr,N32h,N32g,N32gr}__*; do
     [[ -d $j ]] || continue
@@ -92,7 +93,7 @@ for od in "$ODR" "$ODH" "$OD1M"; do
     cp "$od"/proxy-status-c13*-"$(basename "$j" | cut -d_ -f1)"-*-s"$(basename "$j" | sed 's/.*-s//')".json "$out/" 2>/dev/null
   done
 done
-for tag in c13.attempt1 c13 c13b c13c; do
+for tag in c13.attempt1 c13 c13b c13c c13d; do
   SRV=$O/server/tp2-w262144-$tag
   [[ -e $SRV/state.json ]] && cp "$SRV/state.json" "$D/server-state-$tag.json"
   [[ -e $SRV/MEMORY-GUARD.json ]] && cp "$SRV/MEMORY-GUARD.json" "$D/server-MEMORY-GUARD-$tag.json"
