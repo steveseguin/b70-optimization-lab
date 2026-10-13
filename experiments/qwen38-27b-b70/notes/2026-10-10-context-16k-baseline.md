@@ -2106,9 +2106,41 @@ Where the lane stands:
 | --- | --- | --- | --- |
 | repair task, seed 0 (default effort) | 40 of 40 clean, 37.8 min | 40 of 40 clean, 28.5 min | 30 of 40 clean, 29.3 min |
 | repair task, seed 1x (default effort) | 40 of 40 clean, audit 7/7, 47.1 min | 33 of 40 clean, audit 0/7, cut at 60 min | not graded twice (stuck on one ticket) |
-| repair task, seed 1x, effort medium set by the proxy | 40 of 40 clean, audit 7/7, 29.5 min | control not run | |
+| repair task, seed 1x, effort medium set by the proxy | 40 of 40 clean, audit 7/7, 29.5 min | **40 of 40 clean, audit 7/7, 20.9 min (C32m)** | |
 
-Owed, in this order: C32m (the summariser at the same effort: without it the last row has no comparison); XR5
-(the short first limit on thinking replies); a graded sliding-window row on the second seed; the proxy on the
-second 1M ledger stream, which is also the first text the two fitted check rules have not seen; a task without the
-`*_index` functions and `peekable`, or with leave to give a ticket up; the skindeep pages for the controls above (the repair marathon itself is published: skindeep.ai commit e5ae534, section "Real code: the repair marathon"; the controls' rows go in when they have run).
+### Campaign 13d results (2026-10-12 21:16 to 23:22; one server, no restart, kernel log clean; container cap 256 MiB)
+
+**C32m, the control: the summariser at medium effort matches the proxy on this task.** 40 fixed, **40 clean** (every
+instruction on every ticket), audit **7 of 7**, **20 min 55 s** — against XR4's 29.5 minutes and the same scores.
+The proxy in front of it was a pass-through to the token: 0 cuts, 0 notes calls, 0 retries of its own. Five
+summaries, all of them real summaries (one was retried without thinking after a thinking attempt wrote nothing);
+the 164-character pathology of 13b did not occur. As registered: with the model's thinking kept in bounds the two
+methods tie on this task, and what 13b showed is the proxy's robustness to one bad compaction step, not a
+difference in the ordinary case. The case for the proxy rests on longer histories, questions about old detail,
+and clients that cannot set the effort.
+
+**XR5, the short first limit on thinking replies: the cap stays off.** 40 fixed, **34 clean** (the recipe-name
+rule broke on 6 of its 27 tickets; the other two rules held everywhere), audit **7 of 7**, **38 min 24 s** — slower
+than XR4's 29.5, not faster. About **102,000 tokens thrown away** (the server wrote 192,505, the agent received
+86,435, the notes calls 4,068), against the registered 25,000; 33 replies came back empty off the 3,072-token
+leash and were asked again without thinking, and **0** replies were cut inside their answer and redone in full
+(fewer than ten was the bar). The registered risk happened: a think of a few thousand tokens that would have ended
+in the right fix was replaced by an answer without thinking, and on the tickets where the rule by condition was in
+force that answer missed the RECIPES.txt line. It cost clean tickets, so the cap stays off (registered).
+
+**X32g on the second 1M stream: 214 of 222 (96 %), 48 minutes, no void.** By type: final lists 19/19, current
+58/58, old values 57/58, who 27/28, rule 27/29, procedure 25/29. Expectations (213 or more, 45 to 55 minutes):
+both met. This stream is the first text the two fitted check rules had not seen: 75 cuts in place, 0 failed, 14
+asked again, 118 archive recalls, and the checks did not loosen on fresh text. The harness keeper's run on the
+same stream this morning was 210 of 222 in 50 minutes; over the two million-token streams the proxy is 226 + 214
+against the keeper's 228 + 210.
+
+Server: ready in 165 seconds (warm page cache); the lowest host memory available during the runs was 2,507 MiB, so
+the new room check (refuse an arm under 512 MiB of room) never came close to firing. The 1M arm's container has no
+explicit cap (the repair task carries the 256 MiB one); its peak use beside the server stayed inside the room.
+Gemma was restored at 23:22, no fault lines logged since 21:16.
+
+Owed, in this order: a graded sliding-window row on the second seed; a task without the `*_index` functions and
+`peekable`, or with leave to give a ticket up; the skindeep rows for the controls above (the repair marathon
+itself is published: skindeep.ai commit e5ae534, section "Real code: the repair marathon"); the proxy under a real
+agent program.
