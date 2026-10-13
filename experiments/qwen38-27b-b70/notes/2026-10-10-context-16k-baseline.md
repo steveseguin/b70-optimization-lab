@@ -2092,6 +2092,12 @@ runner does not put the Gemma service back after a fault line, by design, so **t
 the cards are idle; nothing was restarted by hand. Campaign 13d (C32m, XR5, the proxy on the second 1M stream) is
 registered and generated (`longrun-campaign13d.sh`, `QUEUE13D.txt`) and has not been started.
 
+Before the next run beside the server (2026-10-12 20:15, no GPU work): the repair task container is now capped at
+**256 MiB** (`memory_mb` in the three generated `task.toml` files and in `make_repair_tasks.py`; the suite passes
+class by class under 96 MiB), and the 13d runner refuses to start an arm while the room beside the server
+(MemAvailable minus the 1.6 GiB guard floor) is under twice the cap. 13d then waits only on the owner: the Gemma
+restart after the fault line is the owner's call, and the runner needs `SUDO_ASKPASS`.
+
 Where the lane stands:
 
 | | proxy | summary compaction | sliding window |
