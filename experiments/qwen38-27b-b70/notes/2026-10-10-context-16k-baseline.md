@@ -2206,3 +2206,26 @@ the proxy's clean record does not depend on the trap tickets (40 of 40 clean wit
 
 Owed: the proxy under a real agent program (the owner's pick); everything else registered for the repair task has
 run.
+
+### Campaign 15, registered 2026-10-13 before any run: the proxy under an agent program of our own, against the full window
+
+The owner's answer to the open question is to build the agent program ourselves: **freeagent**
+(`tools/freeagent/freeagent.py`, ~120 lines, shares no code with the test harness). One loop, one tool — a
+structured `shell(command)` tool call, with a fenced bash block accepted as a fallback — a generic
+autonomous-engineer system prompt, thinking on, 8,192-token replies, temperature 0. It sends its whole history on
+every call and manages nothing: no truncation, no summary, no notes, and it is never told a window size. That is
+the property under test.
+
+The task is `repair-n40-s2x` unchanged (the trap-free seed 2 with the audit ticket), so the grader, the 40 defects
+and the three notices are the ones already measured. Two arms, one server:
+
+- **FAp**: freeagent through the proxy, in XR6's exact configuration (32K window, in-place notes, checks off, the
+  rules recited when a ticket arrives, default effort). Expected: 40 of 40 fixed, 38 or more clean, audit 6 or 7,
+  45 minutes or less (the harness client through the same proxy: 40/40 clean, 7/7, 20.1 min).
+- **FAd**: freeagent direct against the server (262K window). The repair history is a few hundred thousand tokens
+  at most, so it should fit whole: expected fixed 38 or more, clean 38 or more (every notice stays in view), audit
+  6 or 7, 30 minutes or less (no proxy overhead). If the history does not fit, the run errors out mid-way — that
+  would be the finding, and it is registered as a possible outcome here.
+
+What the pair shows: with the proxy the same agent works at a 32K live window; without it the same agent needs the
+full 262K. Equal scores put the proxy's cost beside the window's on an agent the harness never shaped.
