@@ -11,6 +11,9 @@ EOG 248044 or 248046 is retained and then stops generation. No device was access
 
 Numerical-process wall time including resume segments: 41296.759 seconds.
 Measured user + system time: 20.554525 CPU hours.
+CPU/wall accounting complete for every segment: **True**.
+If false after recovering a crashed supervisor, totals cover only saved timing receipts;
+missing time remains unknown. Numerical state and bytes are verified independently.
 These are CPU oracle costs, not serving speeds. Per-position times include the original
 streaming weight loader and per-site logging; selected capture positions also include
 the selection audit. Checkpoint write/verification is outside those position timings. Receipt totals include
@@ -92,7 +95,10 @@ The earlier six-token diagnostic ended naturally after three tokens and therefor
 proved only prefill restoration; its narrow evidence is retained separately. LONG-A
 was stopped during initial prefill until the stronger gate passed.
 See `resume-equality-proof.json`. Failed runs never retry automatically; use `--resume`
-explicitly. Completed runs are verified and skipped. Status updates after every position.
+explicitly. Recovery first archives active logs against their old position endpoint,
+before state rollback. Completed partials also finalize log retention; a lost supervisor
+timing receipt is marked incomplete instead of silently counting it as zero.
+Completed runs are verified and skipped. Status updates after every position.
 
 Prompts use distinct source files, once each, from the tracked corpus's **prose** class:
 LONG-A is 598 rendered tokens from `docs/current-reproducibility-map.md`; LONG-B is
@@ -173,3 +179,5 @@ Long runs use private systemd user units with the same affinity, nice/IO setting
 SIGTERM forwarding and SendSIGKILL=no. Each verified run is atomically renamed,
 committed with explicit paths and the requested coauthor, fetched/merged if needed,
 and pushed to main. No branch, stash, rebase or unrelated file edits.
+
+Final records: [closeout](closeout.md), [receipt audit](final-audit.json), [recovery tests](recovery-tests.json).

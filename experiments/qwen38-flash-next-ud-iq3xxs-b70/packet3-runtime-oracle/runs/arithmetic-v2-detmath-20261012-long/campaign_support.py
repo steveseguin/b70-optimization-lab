@@ -90,8 +90,8 @@ def install(m):
     if vals:bins.append(dict(first_position=lo,last_position=min(hi-1,len(positions)-1),positions=len(vals),mean_seconds_per_position=sum(vals)/len(vals)))
    entries.append(dict(prompt_id=label,prompt_tokens=r['prompt_tokens'],input_bundle=str(bundle.relative_to(R)),input_bundle_hashes={n:m.sha(bundle/n) for n in ('tokens.txt','input.json','identity.tsv','plan.tsv','vocab.bin')},
     oracle_directory=str(d.relative_to(R)),oracle_receipt_sha256=m.sha(d/'receipt.json'),generated_tokens=len(result['tokens']),first_8_token_ids=result['tokens'][:8],last_8_token_ids=result['tokens'][-8:],ended_early=len(result['tokens'])<32,termination=result['status'],context=4096,
-    fixture_steps=list(range(1,min(8,len(result['tokens']))+1)),midprompt_positions=[r['position'] for r in v['selection_summary']],selection_summary=v['selection_summary'],mean_seconds_per_position=r['mean_seconds_per_position'],elapsed_seconds=elapsed(r,'elapsed_seconds'),cpu_seconds=elapsed(r,'cpu_seconds'),position_timing_bins=bins,site_cost_bins=m.read(d/'site-cost-summary.json')['bins'] if (d/'site-cost-summary.json').exists() else [],prompt_source=row,execution_segments=1+count_prior(r)))
-  manifest=dict(schema='own-runtime.iq3.suite-inputs.v1',arithmetic='iq3-p17-detmath-v2',context=4096,token_cap=32,suite_sha256=prompts['corpus_sha256'],prompts_manifest_sha256=m.sha(I/'prompts.json'),complete=len(entries)==2,prompts=entries,total_elapsed_seconds=sum(e['elapsed_seconds'] for e in entries),total_cpu_hours=sum(e['cpu_seconds'] for e in entries)/3600,cpu_accounting_complete=True)
+    fixture_steps=list(range(1,min(8,len(result['tokens']))+1)),midprompt_positions=[r['position'] for r in v['selection_summary']],selection_summary=v['selection_summary'],mean_seconds_per_position=r['mean_seconds_per_position'],elapsed_seconds=elapsed(r,'elapsed_seconds'),cpu_seconds=elapsed(r,'cpu_seconds'),cpu_accounting_complete=m.timing_complete(r),position_timing_bins=bins,site_cost_bins=m.read(d/'site-cost-summary.json')['bins'] if (d/'site-cost-summary.json').exists() else [],prompt_source=row,execution_segments=1+count_prior(r)))
+  manifest=dict(schema='own-runtime.iq3.suite-inputs.v1',arithmetic='iq3-p17-detmath-v2',context=4096,token_cap=32,suite_sha256=prompts['corpus_sha256'],prompts_manifest_sha256=m.sha(I/'prompts.json'),complete=len(entries)==2,prompts=entries,total_elapsed_seconds=sum(e['elapsed_seconds'] for e in entries),total_cpu_hours=sum(e['cpu_seconds'] for e in entries)/3600,cpu_accounting_complete=all(e['cpu_accounting_complete'] for e in entries))
   m.save(I/'suite-manifest.json',manifest)
   table='| Prompt | Prompt tokens | Generated | End | Processes | First 8 IDs | Last 8 IDs | Seconds/position | CPU hours |\n| --- | ---: | ---: | --- | ---: | --- | --- | ---: | ---: |\n'
   for e in entries:table+=f"| {e['prompt_id']} | {e['prompt_tokens']} | {e['generated_tokens']} | {e['termination']} | {e['execution_segments']} | {', '.join(map(str,e['first_8_token_ids']))} | {', '.join(map(str,e['last_8_token_ids']))} | {e['mean_seconds_per_position']:.4f} | {e['cpu_seconds']/3600:.4f} |\n"
@@ -115,6 +115,9 @@ EOG 248044 or 248046 is retained and then stops generation. No device was access
 {table}
 Numerical-process wall time including resume segments: {manifest['total_elapsed_seconds']:.3f} seconds.
 Measured user + system time: {manifest['total_cpu_hours']:.6f} CPU hours.
+CPU/wall accounting complete for every segment: **{manifest['cpu_accounting_complete']}**.
+If false after recovering a crashed supervisor, totals cover only saved timing receipts;
+missing time remains unknown. Numerical state and bytes are verified independently.
 These are CPU oracle costs, not serving speeds. Per-position times include the original
 streaming weight loader and per-site logging; selected capture positions also include
 the selection audit. Checkpoint write/verification is outside those position timings. Receipt totals include
@@ -168,7 +171,10 @@ The earlier six-token diagnostic ended naturally after three tokens and therefor
 proved only prefill restoration; its narrow evidence is retained separately. LONG-A
 was stopped during initial prefill until the stronger gate passed.
 See `resume-equality-proof.json`. Failed runs never retry automatically; use `--resume`
-explicitly. Completed runs are verified and skipped. Status updates after every position.
+explicitly. Recovery first archives active logs against their old position endpoint,
+before state rollback. Completed partials also finalize log retention; a lost supervisor
+timing receipt is marked incomplete instead of silently counting it as zero.
+Completed runs are verified and skipped. Status updates after every position.
 
 Prompts use distinct source files, once each, from the tracked corpus's **prose** class:
 LONG-A is 598 rendered tokens from `docs/current-reproducibility-map.md`; LONG-B is
@@ -240,7 +246,9 @@ committed with explicit paths and the requested coauthor, fetched/merged if need
 and pushed to main. No branch, stash, rebase or unrelated file edits.
 '''
   for root in (H,I):
-   tmp=root/'README.md.tmp';tmp.write_text(text);m.check(tmp.read_text()==text,'README readback');tmp.replace(root/'README.md')
+   links='\nFinal records: [closeout]('+os.path.relpath(H/'closeout.md',root)+'), [receipt audit]('+os.path.relpath(H/'final-audit.json',root)+'), [recovery tests]('+os.path.relpath(H/'recovery-tests.json',root)+').\n'
+   content=text+links
+   tmp=root/'README.md.tmp';tmp.write_text(content);m.check(tmp.read_text()==content,'README readback');tmp.replace(root/'README.md')
   # Consumer convenience: a tiny CPU-only forwarder; authoritative checker stays with evidence.
   wrapper='''"""Run the exact long-oracle checker; standard library only."""
 import runpy

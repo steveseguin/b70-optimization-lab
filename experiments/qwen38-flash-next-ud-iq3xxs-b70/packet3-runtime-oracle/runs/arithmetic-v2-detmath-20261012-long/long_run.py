@@ -60,6 +60,17 @@ def archived_logs(d,finished=False):
   info['recorded_utc']=utc();records[p.name]=info;save(ledger,records)
  return records
 
+def timing_complete(receipt):
+ return all(k in receipt for k in ('elapsed_seconds','cpu_seconds')) and receipt.get('timing_complete',True) and (not receipt.get('prior_attempt') or timing_complete(receipt['prior_attempt']))
+
+def finalize_partial_logs(d,attempt,prior):
+ # Capture old log endpoints BEFORE native resume rolls state and JSON back.
+ archived_logs(d,True)
+ prior['timing_complete']=timing_complete(prior)
+ if not prior['timing_complete']:
+  prior['timing_note']='Supervisor exited before complete timing was saved; missing CPU/wall time is unknown, not zero.'
+ save(attempt/'receipt.json',prior)
+
 def launch(label,bundle,cap,*,resume=False,extra=None):
  build=preflight();dest=HERE/label
  if dest.exists():
@@ -70,12 +81,13 @@ def launch(label,bundle,cap,*,resume=False,extra=None):
  check(list(map(int,(bundle/'tokens.txt').read_text().split()))==inp['tokens'],'input tokens')
  prior=read(attempt/'receipt.json') if (attempt/'receipt.json').exists() else None
  if prior and (d/'result.json').exists() and ((d/'teardown.json').exists() or (d/'teardown.json.gz').exists()) and read(d/'result.json')['status'] in ('token-cap','eos'):
-  check(prior['binary_sha256']==build['binary_sha256'] and prior['input_sha256']==sha(bundle/'input.json'),'completed partial identity');return d
+  check(prior['binary_sha256']==build['binary_sha256'] and prior['input_sha256']==sha(bundle/'input.json'),'completed partial identity');finalize_partial_logs(d,attempt,prior);return d
  if resume:
   check(prior and prior['binary_sha256']==build['binary_sha256'] and prior['input_sha256']==sha(bundle/'input.json'),'resume identity')
   check((d/'checkpoint.bin').exists(),'no checkpoint')
   current=read(d/'result.json')
   check(current['status'] in ('running','checkpoint-stopped') or (current['status']=='failed-or-stopped' and current['error'] in ('cooperative stop','cooperative deadline')),'numerical failure is not resumable')
+  finalize_partial_logs(d,attempt,prior)
   archives=read(d/'resume-archives.json') if (d/'resume-archives.json').exists() else {}
   for name in ('teardown.json','result.json'):
    if (d/name).exists():
@@ -232,6 +244,11 @@ def main():
   if a.stage in ('all','resume-test'):resume_test(a.resume)
   if a.stage in ('all','long'):
    check(read(HERE/'capacity-incident/equality-proof.json')['passed'],'capacity gate required');proof=read(HERE/'resume-equality-proof.json');check(proof['passed'] and proof['tokens']==8 and proof['raw_fixtures']==384 and proof['generated_tokens_after_decode_resume']==4,'nonterminal resume gate required')
+   build=read(HERE/'build-receipt.json')
+   for label,key in (('capacity-incident','uninterrupted_receipt_sha256'),('resume-incident','resumed_receipt_sha256')):
+    receipt=HERE/label/'receipt.json';check(sha(receipt)==proof[key],'proof receipt hash: '+label);r=read(receipt)
+    check(r['verified'] and r['binary_sha256']==build['binary_sha256'],'proof binary identity: '+label)
+    check(r['result_sha256']==sha(HERE/label/'result.json'),'proof result hash: '+label)
    for label in ('LONG-A','LONG-B'):
     run_segmented(label,INPUTS/label,32,a.resume);seal(label,INPUTS/label,32);module('site_costs',HERE/'summarize_costs.py').summarize(HERE/label);refresh();checker_tests(label)
     if a.publish:publish(label)
