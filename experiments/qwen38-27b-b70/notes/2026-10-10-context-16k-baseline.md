@@ -2356,3 +2356,28 @@ one run each; the server recipe unchanged.
 
 Gate for the campaign: XR8 first (it changes the recipe); X24 and X16 are measurements and run regardless of
 XR8's result, but against the recipe that won the gate.
+
+### Campaign 18, design registered 2026-10-13 night before any generation: the 2M adversarial stream
+
+The next ledger stream doubles the length and turns on every difficulty the generator has, plus one new one aimed
+at the only silent-wrong class the fresh-text validation left standing (the notes reply that keeps a stale value
+through a coincidental -52/+52 round trip while the real setter was never read).
+
+Stream: 2,000,000 tokens, seed 0, memory mode, 2,000-token batches, density 3, `--words --pronouns --relative
+--corrections --plans --rules --class-rule --surprise 8 --probes-every 20 --probes-k 5`, and the new
+`--roundtrips 12`: twelve counters each get an ADD of -k and a later ADD of +k (net zero) with at least one SET
+between them, placed so the pair spans a probe distance bin; the probes and the final list grade the true value
+inside and after each decoy window (the reference ledger is exact by construction, as for every switch).
+
+Arms (the repair gate recipe — XR7 or XR6 — denoted BASE; proxy at 32K window):
+
+- **N2M**, the harness keeper on this stream: the comparison-table row.
+- **X2M** = BASE through the proxy on this stream. Registered expectations: overall score at least 90% of the
+  graded answers; silent-wrong notes (scored by `check_score.py` against the reference, the standing loop) at or
+  under the 1M rate (1 in 1,435); the 12 round-trip decoys read directly from the scorer's accepted-and-wrong
+  lines — the design's target is **0 of 12** slipping through; surprise audit at least 7 of 8; runtime cap 4
+  hours. If a decoy slips, the next check rule is fitted against it and validated on the following campaign's
+  streams, per the standing loop.
+
+Generation happens after the `--roundtrips` switch lands with its unit tests; the campaign launches only after
+campaign 17's gate, one server, the memory floor and room check standing.
