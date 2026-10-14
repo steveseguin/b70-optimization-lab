@@ -2259,20 +2259,29 @@ the order is fixed in the runner and FAp ran on the third launch. Both faults ar
 
 ### Campaign 16, registered 2026-10-13 evening before any run: cache-aligned notes, and the missing controls
 
-**The finding that motivates it** (measured 2026-10-13 from the saved proxy states, no GPU): the notes call is a
-separate conversation (`head` + one user message holding the notes text and the turns being cut), so its only
-cacheable prefix is the part of the notes text that stayed block-identical since the previous cut. Where the edits
-land decides the hit rate: XR4 84% and XR5 90% against XR6 2.2% and FAp 3.9% — same code, same server flags,
-edit-position luck. The notes path read 154K-234K prompt tokens per repair run to write 2-6K (XR3-s1x 227K, XR6
-154K, FAp 234K): at campaign 10's 2,640 tokens/s cold-read rate that is 60-90 s of cold reading per run that a
-warm prefix turns into seconds.
+**The finding that motivates it** (measured 2026-10-13 from the saved proxy states, no GPU): across the repair runs
+the notes calls' share of prompt tokens served from the prefix cache swung from 84-90% (XR4, XR5) to 2-4% (XR6,
+FAp) — 154K-234K prompt tokens read per run to write 2-6K of notes (XR3-s1x 227K, XR6 154K, FAp 234K).
 
-**The fix under test** (`--notes-continuation`): issue the notes call as a continuation of the conversation the
-proxy has just served — the client's pre-cut history plus the notes request as the next user message — so the
-whole window (up to ~30K tokens) is a deterministic prefix-cache hit from the main call moments before, whatever
-the notes text does. The notes reply stays proxy-side; the cut happens after the notes update, as now. Trade-off
-registered: the model sees the whole window instead of only the cut turns when it updates the notes; that is a
-prompt change, so quality must re-pass the gate in full.
+**Narrowed cause (same evening, offline; replay harness over FAp's recorded trajectory, 297 captured calls):** the
+in-place notes call is already a continuation of the conversation just served — 97% of its messages are the main
+call's exact prefix, and rendered with the model's real chat template the two prompts are byte-identical for
+99.95% of their length (they part only at the final generation marker). The proxy's construction is not the
+problem. The miss is server-side, in how the request is handled rather than what it contains. Two suspects stand:
+(S1) vLLM's reasoning path changes the tokenized prompt when `enable_thinking` is false — the notes calls run with
+thinking off, the main calls with it on; (S2) the exact-prefix-cache overlay keys on something request-scoped
+beyond the tokens. The flags-identical template render clears the template itself; XR4's 84% with thinking off but
+`reasoning_effort=medium` on both call kinds points at the same place.
+
+**Prepended diagnostic (before any arm; minutes, no registration needed as it claims nothing):** against the live
+server, one ~19K-token prompt replayed four ways — thinking on, thinking off, a repeat of the first, and the first
+with a different `max_tokens` — reading `cached_tokens` on each repeat. S1 predicts the thinking-off repeat
+misses; S2 predicts the changed-`max_tokens` repeat misses; neither predicts trouble for the first repeat.
+
+**The fix under test** — chosen by the diagnostic, both registered here: if S1, **XR7** = XR6 with the notes
+calls keeping the client's thinking setting (thinking on in the notes call; the notes reply cap still applies);
+if S2, XR7 = XR6 with the notes calls' request fields aligned field-by-field to the main calls'. The earlier
+sketch (continuation-style notes calls) is withdrawn: the replay shows the calls are continuations already.
 
 **Arms** (repair task, thinking on, in-place notes, checks off, recite on tickets; server recipe unchanged):
 
