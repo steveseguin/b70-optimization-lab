@@ -2375,6 +2375,10 @@ tonight).
 (bound: 44; XR3: 47.1). Notes calls read 175,572 prompt tokens, 160,576 of them cached (**91.5%**; XR3's notes
 ran 81%), and wrote 28,286 (9 cuts). Both seeds: the change stands.
 
+**C32 on s2x (22:44): the summariser's missing row, and it is full marks** — 40/40 fixed, **40/40 clean**, audit
+7/7, 33 min 0 s (registered floor: clean 33 or more; its s1x run lost the three notices once). No summary broke
+this time. The repair table's summariser column now reads 40/40 clean on both seeds.
+
 ### Campaign 18, design registered 2026-10-13 night before any generation: the 2M adversarial stream
 
 The next ledger stream doubles the length and turns on every difficulty the generator has, plus one new one aimed
