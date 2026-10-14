@@ -349,6 +349,26 @@ def one_sign(expr: str, result: int) -> bool:
     return sum(steps) + start != result and any(start + sum(steps) - 2 * x == result for x in steps)
 
 
+THIRD_LOSS = re.compile(r"\ba third\b|third of [^)]*written off", re.I)
+
+
+def third_loss_away_from_zero(value: str, start: int | None) -> bool:
+    """A third lost from a NEGATIVE value moves it TOWARD zero on these streams (the generator's
+    `state -= state // 3`): `-129 - 43 = -172` for "lost a third of its value" applied the fraction with the
+    wrong sign (true: `-129 + 43 = -86`). Five of the fourteen silent-wrong lines of X2M at 2M (2026-10-14) were
+    this; the amounts check passes the 43 fairly enough (a third of the start), but the direction was never
+    checked. The remark's own words decide whether this is the fraction loss (a stated-amount loss, "lost 15",
+    rightly moves away from zero and does not match)."""
+    if start is None or start >= 0 or not THIRD_LOSS.search(value):
+        return False
+    flat = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", unremarked(value)).replace("\u2212", "-")
+    left = flat.split("=")[0]
+    first = re.match(r"\(?\s*-?\d+", left.strip())
+    if not first:
+        return False
+    return re.search(r"-\s*" + str(abs(start) // 3) + r"(?!\d)", left[first.end():]) is not None
+
+
 # A remark that says the value was SET (`(set, item 373)`, `(recorded at, item 377)`), written after the result of
 # a sum. If that result is not a number the turns state for the thing, the line has added the set value to the old
 # one instead of setting it: three of the four wrong values that every version of the checks let through in the
@@ -622,6 +642,8 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
                 if first and not amounts_ok(expr.strip()[first.end():], near.get(name, set()) | ever,
                                             start if name in near.get(LOOSE, ()) else None):
                     info["mismatch"].append(f"{name}: `{value}` adds or takes an amount the turns do not state for it; read the item again")
+            if near is not None and strict and len(info["mismatch"]) == asked and third_loss_away_from_zero(value, start):
+                info["mismatch"].append(f"{name}: `{value}` moves a negative value away from zero for a third lost; it moves toward zero (a third of {start} is {start // 3}: add it); read the item again")
             sum_text = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", flat).replace("\u2212", "-").replace("\u00f7", "/").split("=")[-2]
             if total != stated and one_sign(sum_text, stated):
                 total = stated                           # one sign written the wrong way round: the result is what was meant

@@ -2521,3 +2521,22 @@ memory never went under 1.98 GiB; the kernel log is clean from campaign start to
 restore at 16:10 found a clean kernel log but the service is a system unit and the runner has no sudo password —
 the Gemma LAN service is down until the owner starts it (`sudo systemctl start
 gemma4-26b-q8-quad-backends.service gemma4-26b-q8-quad-frontdoor.service`).
+
+### The next check rule, fitted offline (2026-10-14, CPU-only; no GPU job ran)
+
+Per the standing loop the first rule against campaign 18's 14 accepted-wrong lines is fitted and regression-checked
+against every saved session. Of the 14, five are one class: **a third lost from a negative value, moved away from
+zero** — `-129 - 43 = -172` for "lost a third of its value" (true `-129 + 43 = -86`; the generator's `third` op is
+`state -= state // 3`, which always moves toward zero for negatives). The amounts check passes the 43 fairly (a
+third of the start); the direction was never checked. The new rule (`third_loss_away_from_zero` in
+`tools/ctxkeeper/notesdelta.py`) fires only when the NOTES hold a negative start, the line's own remark names the
+fraction ("a third"), and the working subtracts `|start|/3`; the reply is then asked about with the toward-zero
+rule spelled out. A stated-amount loss ("lost 15") does not match the phrase and stays untouched.
+
+On X2M's saved replies (the fitting ground): accepted-and-WRONG **14 → 9** (all five fraction-direction lines now
+asked about), accepted-and-right 1,376 unchanged, asked-about-and-right 393 unchanged, left-out 130 unchanged.
+Regression on every other saved proxy session is byte-identical to HEAD: the 240k fitting pair (454 right, 0 wrong,
+both seeds) and both 1M streams, X32n2-s0 and X32g-s1 (2,043 right, 2 wrong, 18 asked-right combined). The nine
+remaining accepted-wrong at 2M are the cross-counter staleness class ("received what gupe37 stood at", read stale)
+and singletons (a "no change" claim against prose that states a number in words; a fraction-sum slip). Those need
+value-at-time alignment, not another arithmetic rule, and stay open for the following campaign.
