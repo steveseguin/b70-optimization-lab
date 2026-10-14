@@ -373,7 +373,7 @@ run_one() {  # arm agent budget task_dir job_name drop_old_thinking
   fi
   local fb=${FOLD_BATCHES:-}
   local api=$API_BASE
-  if [[ "$arm" == X32 || "$arm" == X32b || "$arm" == X32i || "$arm" == X32m || "$arm" == X32n || "$arm" == X32n2 || "$arm" == X32p || "$arm" == X32q || "$arm" == X32g || "$arm" == X32ir ]]; then   # the keeper policy as a proxy: the agent sends everything, the proxy keeps the window
+  if [[ "$arm" == X32 || "$arm" == X32b || "$arm" == X32i || "$arm" == X32m || "$arm" == X32n || "$arm" == X32n2 || "$arm" == X32p || "$arm" == X32q || "$arm" == X32g || "$arm" == X32ir ]] || "$arm" == X2M ]]; then   # the keeper policy as a proxy: the agent sends everything, the proxy keeps the window
     api=${CTXKEEPER_BASE:?arm X32 needs CTXKEEPER_BASE, the URL of a running tools/ctxkeeper proxy (http://host:port/v1)}
   fi
   if [[ "$arm" == B32iraR || "$arm" == B32iraR4 || "$arm" == B32iraRH ]]; then   # B32ira + pinned RULE lines (standing rules and methods stay in view)
@@ -417,6 +417,7 @@ run_one() {  # arm agent budget task_dir job_name drop_old_thinking
     N32g)   xa=(-a clm_keeper:KeeperAgent); extra="$jt notes_mode=delta notes_inplace=true notes_chunk_tokens=11000 inplace_turn_tokens=17000 mention_check=near" ;;
     N32pr)  xa=(-a clm_keeper:KeeperAgent); extra="$jt notes_mode=delta notes_inplace=true notes_chunk_tokens=11000 inplace_turn_tokens=17000 mention_check=near auto_retrieve=20 retrieve_scope=all" ;;
     N32gr)  xa=(-a clm_keeper:KeeperAgent); extra="$jt notes_mode=delta notes_inplace=true notes_chunk_tokens=11000 inplace_turn_tokens=17000 mention_check=near auto_retrieve=20 retrieve_scope=all" ;;
+    N2M)    xa=(-a clm_keeper:KeeperAgent); extra="$jt notes_mode=delta notes_inplace=true notes_chunk_tokens=11000 inplace_turn_tokens=17000 mention_check=near" ;;   # campaign 18: the keeper on the 2M adversarial stream
     N32u6)  xa=(-a clm_keeper:KeeperAgent); extra="$jt notes_mode=delta notes_inplace=true notes_chunk_tokens=11000 inplace_turn_tokens=9500 mention_check=near" ;;
     N32ur)  xa=(-a clm_keeper:KeeperAgent); extra="$jt notes_mode=delta notes_inplace=true notes_chunk_tokens=11000 inplace_turn_tokens=17000 mention_check=near auto_retrieve=20 retrieve_scope=all" ;;
     N32w)   xa=(-a clm_keeper:KeeperAgent); extra="$jt notes_mode=delta notes_inplace=true notes_chunk_tokens=11000 inplace_turn_tokens=17000 mention_check=count" ;;

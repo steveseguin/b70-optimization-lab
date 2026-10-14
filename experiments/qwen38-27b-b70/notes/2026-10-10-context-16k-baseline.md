@@ -2455,8 +2455,18 @@ staged (`longrun-campaign18.sh`, `QUEUE18.txt`, `collect.sh`; arms N2M/X2M regis
 validates both — its time estimates, 12.6 h and 23.9 h, come from the 2026-10-05 measurements and overstate: the
 1M actuals ran about 50 minutes; the 4-hour caps stand).
 
-**Running (05:05-09:08):** N2M reached probe 37 of 49 (259 answers snapshotted) in 240 min 41 s and was cut at
-the cap; the runner grades the snapshot as the registered partial row. The keeper's pace on the adversarial 2M
-stream was ~6.2 min per 100K tokens (probe 37 of 49 ≈ 1.49M tokens in 241 min) against ~4.4 on the kinder 1M
-rules stream — the difficulty switches cost keeper time per item, and at 2M that ends at the cap. X2M (XR4's
-recipe) started 09:08.
+**Attempt 1 invalid; relaunched 10:07.** The first N2M and X2M runs do not count: both were misrouted by
+`second-comparison.sh`. Its proxy routing listed the X32* names one by one, so X2M's agent got the direct server
+port and grew its window until the server refused a request at item ~97 (`ended_by=server_window`, 21/382); its
+keeper-agent list likewise lacks N2M, which therefore ran as the plain truncating window (its 4-hour cut and the
+259-answer snapshot were graded as designed, but the row is a window row, not the keeper row). The proxy itself
+came up and served zero requests (its state directory is created on the first request, which is why none exists
+for attempt 1). The campaign's own planning dry-run could not catch this: it checks the arm registry, not the two
+routing lists. Fixed in `second-comparison.sh` (X2M joins the proxy-routed arms; N2M gets the current keeper
+recipe) and checked against the resolved code paths; the invalid job directories were deleted and both arms
+re-queued. Process lesson, now standing for any new arm: within the first minutes of an arm, read the job's
+`config.json` and check the agent class and `api_base` against the design. The relaunch runs as the systemd unit
+`ctx-campaign18.service` (the plain `nohup &` runner died with its launching shell at 10:03; the orphaned server
+was stopped and the state directory set aside). One more `xe` fault line was logged during the 09:49 teardown
+(e3:00.0, 09:59:26); the cards came back and the fault gate, scoped to the campaign's own start, is clear. N2M
+starts after the standing gate (~10:35), X2M after it.
