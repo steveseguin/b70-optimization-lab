@@ -29,6 +29,10 @@ Each clause is a standing work queue, not a milestone:
 - **same answers** — the no-cheating rule applied to memory: no speed or space win counts unless accuracy and
   rule-keeping are unchanged (repair marathon 40/40 clean, audit 7/7, both seeds, is the standing gate), with the
   evidence kept and published — including the runs that hurt.
+- **with urgency** (owner-added 2026-10-13) — pursue the four clauses above without wasting time. Prefer the
+  experiment that decides soonest, run arms concurrently against one server, stop when the gap is clear (section 2's
+  standing rule), re-use evidence before re-measuring, and never let a queue sit idle when a registered arm is
+  runnable. Urgency spends time, never quality: the same-answers gate is the one thing haste may not touch.
 
 Opening evidence: campaigns 1-15 in `experiments/qwen38-27b-b70/notes/2026-10-10-context-16k-baseline.md` —
 flat accuracy and flat speed at 31 times the live window, a real-code repair marathon passed at the maximum score
