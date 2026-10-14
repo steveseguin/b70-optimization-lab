@@ -156,6 +156,27 @@ class InPlace(unittest.TestCase):
         grown = sum(1 for a, b in zip(main, main[1:]) if b[:len(a)] == a)
         self.assertEqual(grown + len(model.notes_requests), len(main) - 1)         # every other call only adds to the last one
 
+    def test_unset_notes_thinking_keeps_the_clients_kwargs(self):
+        # --notes-thinking unset: the notes call carries the client's chat_template_kwargs unchanged, so its
+        # rendered prompt matches the main calls' (diag-c16: thinking off renders a different token stream and
+        # misses the whole prefix cache; aligned kwargs are the fix tested by arm XR7).
+        model = LedgerModel()
+        keeper = self.keeper(model, notes_thinking=None)
+        for n in range(1, 13):
+            keeper.complete({"model": "m", "messages": conversation(n),
+                             "chat_template_kwargs": {"enable_thinking": True}})
+        self.assertGreaterEqual(len(model.notes_requests), 2)
+        for req in model.notes_requests:
+            self.assertEqual(req.get("chat_template_kwargs"), {"enable_thinking": True})
+        keeper_off_model = LedgerModel()
+        keeper_off = self.keeper(keeper_off_model, notes_thinking=False)
+        for n in range(1, 13):
+            keeper_off.complete({"model": "m", "messages": conversation(n),
+                                 "chat_template_kwargs": {"enable_thinking": True}})
+        self.assertTrue(keeper_off_model.notes_requests)
+        self.assertTrue(all(r["chat_template_kwargs"]["enable_thinking"] is False
+                            for r in keeper_off_model.notes_requests))
+
     def test_changes_are_applied_and_sums_recomputed(self):
         model = LedgerModel(script=["NEW RULES\n(none)\nCHANGES\nstock: 7\nabcd00: 0\nOPEN\n",
                                     "NEW RULES\n- Second rule.\nCHANGES\nstock: 7 + 5 = 13\nOPEN\n- check stock"])

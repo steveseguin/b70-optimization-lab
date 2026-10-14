@@ -2278,10 +2278,18 @@ server, one ~19K-token prompt replayed four ways — thinking on, thinking off, 
 with a different `max_tokens` — reading `cached_tokens` on each repeat. S1 predicts the thinking-off repeat
 misses; S2 predicts the changed-`max_tokens` repeat misses; neither predicts trouble for the first repeat.
 
-**The fix under test** — chosen by the diagnostic, both registered here: if S1, **XR7** = XR6 with the notes
-calls keeping the client's thinking setting (thinking on in the notes call; the notes reply cap still applies);
-if S2, XR7 = XR6 with the notes calls' request fields aligned field-by-field to the main calls'. The earlier
-sketch (continuation-style notes calls) is withdrawn: the replay shows the calls are continuations already.
+**Diagnostic result (20:44, `diag-c16.sh`/`diag-c16.json`): S1 confirmed, S2 refuted.** One real 17,231-token
+FAp prompt: its repeat hit 15,808 from the cache; the same prompt with `enable_thinking` false came back 36 tokens
+shorter (17,195) and hit **zero** — thinking-off renders a different token stream from the first message on; a
+changed `max_tokens` hit in full (15,808), so request fields are not keyed; the real notes call (thinking off)
+then hit 15,808 of 17,658 (89.5%) — once its own rendering was warm, the continuation design works exactly as
+drawn. The historical spread is consistent: XR3-s1 (notes thinking on) 81%, XR4/XR5 (effort medium on every call,
+which overrides the thinking flag) 84-90%, and the thinking-off-at-default-effort runs 2-12%. **XR7 is therefore
+XR6 with `--notes-thinking unset`** — the notes calls carry the client's own `chat_template_kwargs` and render the
+stream the main calls just warmed. No code change was needed; a regression test pins the alignment. Expected
+notes-call cache share 85% or more of notes prompt tokens (the diagnostic's 89.5% is the ceiling: the request's
+own tail cannot be warm); the trade registered: notes calls will think again (bounded by the 8,192-token notes cap
+and the retry ladder), which is what `off` had been bought with — at 19K uncached tokens per cut it was a bad buy.
 
 **Arms** (repair task, thinking on, in-place notes, checks off, recite on tickets; server recipe unchanged):
 

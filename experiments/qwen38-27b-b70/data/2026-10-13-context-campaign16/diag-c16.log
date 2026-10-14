@@ -1,0 +1,14 @@
+### 20:41:03 diag start; MemAvailable 13385 MiB
+### 20:41:03 Gemma stopped
+### 20:41:03 cards free; MemAvailable 13632 MiB
+Running as unit: ctx-fp8-tp2-server.service; invocation ID: 807a02579d2449ab84dd9f03d88bbd75
+### 20:43:49 server ready after ~180 s
+R1 main, thinking on (warms)                     prompt=  17231 cached=      0 gen=8
+R2 repeat of R1 (sanity: expect ~full hit)       prompt=  17231 cached=  15808 gen=8
+R3 same prompt, thinking off (S1 test)           prompt=  17195 cached=      0 gen=8
+R4 repeat of R1 again (control after R3)         prompt=  17231 cached=  15808 gen=8
+R5 same prompt, different max_tokens (S2 test)   prompt=  17231 cached=  15808 gen=4096
+R6 the real notes call, thinking off             prompt=  17658 cached=  15808 gen=8
+R7 repeat of R6 (its own cache)                  prompt=  17658 cached=  16640 gen=8
+### 20:44:55 probe done; stopping the server
+### 20:45:02 Gemma restored; diag complete

@@ -1186,7 +1186,9 @@ def main() -> None:
                     help="max_tokens of a notes call, thinking included (a good in-place reply is 2,000 to 3,000 with "
                          "thinking; what a runaway think costs before the retry without thinking is this many tokens)")
     ap.add_argument("--notes-thinking", choices=("on", "off", "unset"), default="on",
-                    help="chat_template_kwargs.enable_thinking for the notes call (unset: do not send the field)")
+                    help="chat_template_kwargs.enable_thinking for the notes call (unset: pass the client's own "
+                    "chat_template_kwargs through unchanged — the notes call then renders the same prompt the main "
+                    "calls rendered and hits the prefix cache; 'off' renders a different stream and misses it all)")
     ap.add_argument("--no-recite", action="store_true", help="do not repeat the RULES after a new user message")
     ap.add_argument("--recite-when", help="also repeat the RULES when the newest message matches this regular expression")
     ap.add_argument("--think-when", help="set enable_thinking per call: on for a user message or a newest message "
