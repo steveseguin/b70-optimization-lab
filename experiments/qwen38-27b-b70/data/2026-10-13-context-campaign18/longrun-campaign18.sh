@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Campaign 18 (registered in the lab note 2026-10-13 night, before any generation): the 2M adversarial stream.
 # N2M = the harness keeper on sparse-memory-t2000k-s0 (the comparison-table row); X2M = the winning repair
-# recipe through the proxy on the same stream (32K window; notes-thinking = BASE_NT: unset for XR7's recipe,
-# off for XR6's). Registered expectations for X2M: score at least 90% of graded answers, silent-wrong notes at
+# recipe through the proxy on the same stream (32K window, XR4's recipe: notes-thinking off, effort
+# medium on every call — amended at launch after campaign 17's head-to-head). Registered expectations for X2M: score at least 90% of graded answers, silent-wrong notes at
 # or under the 1M rate, 0 of the 12 round-trip decoys slipping, surprise audit 7 of 8 or better, 4-hour cap.
 # Server recipe unchanged from campaigns 14/15/16/17. Queue lines: "ARM STREAM SEED CAP_SECONDS".
 set -uo pipefail
@@ -203,7 +203,7 @@ start_proxy() {  # state tag: one fresh proxy per X32i run
   systemctl --user reset-failed ctx-keeper-proxy 2>/dev/null
   systemd-run --user --unit=ctx-keeper-proxy --collect -p WorkingDirectory=$LAB python3 tools/ctxkeeper/ctxkeeper.py \
     --upstream "http://127.0.0.1:$PORT" --port $PPORT --budget 32768 --reply-reserve 2048 --headroom 1024 --target-ratio 0.6 \
-    --notes-thinking ${BASE_NT:-unset} --think-when "$THINK_RE" --think-until "$UNTIL_RE" --recite-when "$RECITE_RE" \
+    --notes-thinking off --effort medium --think-when "$THINK_RE" --think-until "$UNTIL_RE" --recite-when "$RECITE_RE" \
     --notes-mode inplace --inplace-tokens 15000 --notes-checks near --max-recalls 16 --notes-scan "$SCAN_RE" --recall-label "$LABEL_RE" --recall-unit item --state-dir "$O/proxy-state/$1" 2>&1 | tail -1
   for i in $(seq 1 30); do curl -fsS -m 3 "http://127.0.0.1:$PPORT/v1/models" >/dev/null 2>&1 && return 0; sleep 1; done
   say "proxy did not come up"; return 1

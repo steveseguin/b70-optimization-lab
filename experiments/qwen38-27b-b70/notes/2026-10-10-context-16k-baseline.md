@@ -2438,6 +2438,11 @@ Arms (the repair gate recipe — XR7 or XR6 — denoted BASE; proxy at 32K windo
   hours. If a decoy slips, the next check rule is fitted against it and validated on the following campaign's
   streams, per the standing loop.
 
+**Amended at launch (05:05, after campaign 17):** X2M's recipe is XR4's (notes-thinking off, `--effort medium` on
+every call) — the winner of the repair head-to-head (15.6 min and 90.1% notes cache against XR7's 38.1 and
+91.2%, both at 40/40 clean). The registration's "XR7 or XR6" choice predates that measurement. The ledger
+configuration's checks (`near`), scan and recall labels are unchanged from X32g's runs.
+
 Generation happens after the `--roundtrips` switch lands with its unit tests; the campaign launches only after
 campaign 17's gate, one server, the memory floor and room check standing.
 
