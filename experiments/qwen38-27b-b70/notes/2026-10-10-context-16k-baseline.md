@@ -1894,6 +1894,23 @@ turns being noted, and whether they are counted as mentions there has not been l
 The lesson for this lane: when there is ground truth and the replies are saved, measure the checker against it
 first; ask reviewers for probes second. The tool also works for any future stream that has a reference.
 
+**The promised fresh-text check (2026-10-13 evening, while campaign 16 runs):** X32g's three saved sessions (the
+rules 240K, the hard 240K and the second 1M stream's seed 1; 1,435 counter lines scored, 12 set aside) under the
+checks of the two commits of the table above:
+
+| checks of | accepted, right | accepted, **wrong** | asked about, wrong | asked about, right |
+| --- | ---: | ---: | ---: | ---: |
+| `47fa9ae60` (before the two rules) | 1,345 | 2 | 10 | 78 |
+| `a7f76c8c1` (the two rules) | 1,387 | **1** | 11 | 36 |
+
+The rules generalize: on text they were not fitted to, silent wrong values halve (2 to 1) and needless questions
+drop from 78 to 36, with one more catch. The line that still gets through (`sajagu11`, items 266-272 of the second
+1M stream) is the hard remainder: the reply kept the old 510 with a round trip of working (`510 - 52 = 458`, then
+`458 + 52 = 510`) while the true value after those items was 145 — the items that set it are not in the reply's
+working at all, so no arithmetic check can see it; only a check that every item in the span was accounted for
+could. A rule for it would now be fitted to 3,441 lines and would await its own fresh text; that is the standing
+loop from here — every proxy run's streams are scored before the rules move again.
+
 ### Campaign 13b, a change to the task before any arm has finished on it (2026-10-12 15:20)
 
 The first arm on `repair-n40-s1` (XR3, started 14:50) was stopped by hand after 27 minutes: it had fixed four
@@ -2141,10 +2158,12 @@ the new room check (refuse an arm under 512 MiB of room) never came close to fir
 explicit cap (the repair task then carried 384 MiB; 256 MiB applies from campaign 14); its peak use beside the server stayed inside the room.
 Gemma was restored at 23:22, no fault lines logged since 21:16.
 
-Owed, in this order: a graded sliding-window row on the second seed; a task without the `*_index` functions and
-`peekable`, or with leave to give a ticket up; the skindeep rows for the controls above (the repair marathon
-itself is published: skindeep.ai commit e5ae534, section "Real code: the repair marathon"); the proxy under a real
-agent program.
+Owed, in this order: the campaign-16 results (XR7's gate, C32's seed-2x row, the W200 plain-window control —
+running) and staged campaign 17 (XR8's cut-depth gate, then the X24/X16 window curve); the skindeep rows for the
+controls above (the repair marathon itself is published: skindeep.ai commit e5ae534, section "Real code: the
+repair marathon"). Delivered since this list was written: the graded sliding-window row on the second seed (W32g,
+campaign 14), the task without the trap tickets (`repair-n40-s2x`, campaign 14), and the proxy under a real agent
+program (FreeAgent, campaign 15: FAp met every registered bound; a second agent is the owner's pick).
 
 ### Campaign 14, registered 2026-10-13 before any run: the window's missing grade, and the task without its trap tickets
 
@@ -2229,3 +2248,163 @@ and the three notices are the ones already measured. Two arms, one server:
 
 What the pair shows: with the proxy the same agent works at a 32K live window; without it the same agent needs the
 full 262K. Equal scores put the proxy's cost beside the window's on an agent the harness never shaped.
+
+### Campaign 15 results (2026-10-13 18:00 to 19:49; one server per launch, two launches; kernel log clean)
+
+Both arms scored the maximum: **fixed 40/40, clean 40/40, audit 7/7** on repair-n40-s2x.
+
+| arm | window | time | calls | prompt tokens | completion tokens | proxy session |
+|---|---|---|---|---|---|---|
+| **FAp** (proxy, XR6 config) | 32K | **33 min 16 s** | 287 | 2,902,995 | 137,488 | 12 in-place cuts, 562 messages archived, 1 recall, 6,264 notes tokens, 0 failed |
+| **FAd** (direct) | 262K | 54 min 58 s | 276 | 29,934,764 | 125,264 | — |
+
+Against the registrations: FAp met every bound (clean 40 ≥ 38, audit 7 ≥ 6, 33.3 ≤ 45 min); FAd met the score
+bounds and missed the time bound (55 > 30 min). The miss has a named cause: freeagent returns each reply's
+reasoning with the history, so the direct run's live history grew to ~215K tokens of which only ~20K was visible
+work; every call re-read it (29.9M prompt tokens, 98% from cache). The proxy strips reasoning from what it keeps,
+which is most of the 10.3× prompt gap; its cut/archive machinery did the rest and was exercised in full by a
+client that shares no code with the harness (287 requests, 302 upstream calls, one recall against the 562-message
+archive, 2 empty replies retried; the audit questions about the earliest tickets were answered 7/7). The harness client in the same proxy configuration (XR6: 221 calls,
+8 cuts, 20.1 min) remains faster; freeagent makes more, smaller calls and pays the per-call proxy overhead.
+
+What the pair shows, as registered: the same agent, the same task, the same perfect score — through the proxy at
+a 32K live window in 33 minutes, or direct at the full 262K window in 55. The proxy's cost beside the window's,
+on an agent the harness never shaped: −40% time, −90% prompt traffic, ±0 score.
+
+Process notes: the first launch aborted on a corrupted sed rename in the runner (the image tag `r314` became
+`r315`, the window `262144` became `262154`; fixed by hand and re-checked against the campaign 14 script). On the
+second launch FAp was skipped without running — the runner smoked the proxy's port before starting the proxy;
+the order is fixed in the runner and FAp ran on the third launch. Both faults are recorded in QUEUE15.txt.
+
+### Campaign 16, registered 2026-10-13 evening before any run: cache-aligned notes, and the missing controls
+
+**The finding that motivates it** (measured 2026-10-13 from the saved proxy states, no GPU): across the repair runs
+the notes calls' share of prompt tokens served from the prefix cache swung from 84-90% (XR4, XR5) to 2-4% (XR6,
+FAp) — 154K-234K prompt tokens read per run to write 2-6K of notes (XR3-s1x 227K, XR6 154K, FAp 234K).
+
+**Narrowed cause (same evening, offline; replay harness over FAp's recorded trajectory, 297 captured calls):** the
+in-place notes call is already a continuation of the conversation just served — 97% of its messages are the main
+call's exact prefix, and rendered with the model's real chat template the two prompts are byte-identical for
+99.95% of their length (they part only at the final generation marker). The proxy's construction is not the
+problem. The miss is server-side, in how the request is handled rather than what it contains. Two suspects stand:
+(S1) vLLM's reasoning path changes the tokenized prompt when `enable_thinking` is false — the notes calls run with
+thinking off, the main calls with it on; (S2) the exact-prefix-cache overlay keys on something request-scoped
+beyond the tokens. The flags-identical template render clears the template itself; XR4's 84% with thinking off but
+`reasoning_effort=medium` on both call kinds points at the same place.
+
+**Prepended diagnostic (before any arm; minutes, no registration needed as it claims nothing):** against the live
+server, one ~19K-token prompt replayed four ways — thinking on, thinking off, a repeat of the first, and the first
+with a different `max_tokens` — reading `cached_tokens` on each repeat. S1 predicts the thinking-off repeat
+misses; S2 predicts the changed-`max_tokens` repeat misses; neither predicts trouble for the first repeat.
+
+**Diagnostic result (20:44, `diag-c16.sh`/`diag-c16.json`): S1 confirmed, S2 refuted.** One real 17,231-token
+FAp prompt: its repeat hit 15,808 from the cache; the same prompt with `enable_thinking` false came back 36 tokens
+shorter (17,195) and hit **zero** — thinking-off renders a different token stream from the first message on; a
+changed `max_tokens` hit in full (15,808), so request fields are not keyed; the real notes call (thinking off)
+then hit 15,808 of 17,658 (89.5%) — once its own rendering was warm, the continuation design works exactly as
+drawn. The historical spread is consistent: XR3-s1 (notes thinking on) 81%, XR4/XR5 (effort medium on every call,
+which overrides the thinking flag) 84-90%, and the thinking-off-at-default-effort runs 2-12%. **XR7 is therefore
+XR6 with `--notes-thinking unset`** — the notes calls carry the client's own `chat_template_kwargs` and render the
+stream the main calls just warmed. No code change was needed; a regression test pins the alignment. Expected
+notes-call cache share 85% or more of notes prompt tokens (the diagnostic's 89.5% is the ceiling: the request's
+own tail cannot be warm); the trade registered: notes calls will think again (bounded by the 8,192-token notes cap
+and the retry ladder), which is what `off` had been bought with — at 19K uncached tokens per cut it was a bad buy.
+
+**Read:write follow-ons ranked (same evening, analysis only):** the notes path reads ~37 tokens per token written
+(FAp: 233,674 / 6,264). With XR7's alignment the read is ~89% cache-warm; what remains is the count of calls.
+Measured constraints: (1) **no cut is skippable** — across all 709 saved in-place notes replies (every proxy
+session on disk), zero carried an empty RULES+CHANGES delta, so a "skip cuts that change nothing" heuristic would
+have saved nothing on any run to date; (2) **fewer, deeper cuts are proven safe one layer down** — N32j35 (cut to
+35% instead of 60%) halved the keeper's notes calls (23 to 14), kept 39/39 with one counter wrong for a stretch,
+19% faster; the proxy equivalent is `--target-ratio 0.35`, registered here as **XR8 = XR7 at target-ratio 0.35**,
+to run only if XR7 passes its gate (expected: notes calls per repair run 8-13 → 5-7, the same 40/40 clean and 7/7
+audit, another minute or two less); (3) per-call keyword differences between call kinds are forbidden by the
+cache finding — a notes-only effort flag would re-break the very alignment XR7 tests; (4) delegating notes to the
+INT4 draft is parked: the stored values are checkable but the prose rules are not, and the gate is the whole
+point.
+
+**Arms** (repair task, thinking on, in-place notes, checks off, recite on tickets; server recipe unchanged):
+
+- **XR7** = XR6 with `--notes-thinking unset`, on `repair-n40-s2x`: expected fixed 40/40, clean 40/40, audit 7/7
+  (the gate; a clean-ticket loss rejects the change), notes_cached/notes_prompt 85% or more (XR6: 2.2%), 18.5
+  minutes or less (XR6: 20.1).
+- **XR7** on `repair-n40-s1x` at default effort: expected the same gate, 44 minutes or less (XR3: 47.1).
+- **C32** on `repair-n40-s2x` (the summariser's missing seed-2x row, at its s1x settings): expected fixed 40/40,
+  clean 33 or more (its s1x run lost the three notices once; seed 2x keeps the audit ticket), audit 0-7, 60-minute
+  cap.
+- **W200** on the 1M rules stream seed 0 (the charter's missing plain-window control at the 200K cap a dedicated
+  card allows): expected to fall behind the proxy's 226/228, strongest in the last third; the measured size of the
+  gap is the deliverable. 4-hour cap.
+
+Order: XR7-s2x, XR7-s1x, C32-s2x, W200. Each repair arm's containers at 256 MiB; the memory-guard floor and the
+room check stand. If XR7-s2x loses a clean ticket the change is reverted and XR7-s1x does not run.
+
+### Campaign 17, registered 2026-10-13 evening before campaign 16 has finished: the window curve and the cut depth
+
+Base recipe: XR7 if it passes its gate, else XR6 (denoted BASE below). All arms on `repair-n40-s2x`, thinking on,
+in-place notes, checks off, recite on tickets, 256 MiB containers, the memory-guard floor and room check stand;
+one run each; the server recipe unchanged.
+
+- **XR8** = BASE at `--target-ratio 0.35` (cuts land deeper, about half as many notes calls; the harness-level
+  precedent N32j35 halved them at full score). Runs only if XR7 passed its gate. Expected: fixed 40/40, clean
+  40/40, audit 7/7, notes calls 5-7 (XR7 expects 8-13), one to three minutes faster than XR7-s2x.
+- **X24** = BASE at context budget 24,576: expected fixed 40/40, clean 40/40, audit 7/7, more cuts than at 32K,
+  runtime at most XR7-s2x + 5 min.
+- **X16** = BASE at 16,384: the starvation end of the curve (the ledger harness refused `next` 121 times at 16K
+  and self-edit read collapsed there). No quality bar is registered; the deliverable is the curve point and, if
+  it fails, the failure mode read from the events (notes-call starvation vs. recall loss). Runtime cap 60 min.
+
+Gate for the campaign: XR8 first (it changes the recipe); X24 and X16 are measurements and run regardless of
+XR8's result, but against the recipe that won the gate.
+
+**Campaign 16 partial result (XR7 on s2x, 21:35):** the gate holds — 40/40 fixed, **40/40 clean**, audit 7/7 —
+and the notes cache read 217,152 of 237,916 prompt tokens (**91.2%**, expectation 85% or more; XR6: 2.2%). The
+time bound missed: 38 min 9 s against the registered 18.5 (XR6: 20.1). The cause is in the counters: with
+thinking unset-aligned, the ten notes calls generated **70,138** tokens (~7K of thinking per cut; XR6's notes
+wrote ~2K). The alignment bought the read and paid for it in decode. The other way to align — XR4's recipe,
+effort medium on every call, notes thinking off — hit 84-90% notes cache in campaigns 13d/14 without that decode,
+but was never run on s2x. That cell is added to campaign 17 as its first arm.
+
+**Added to campaign 17 (registered 21:40, before its launch):** **XR4 on `repair-n40-s2x`** (effort medium on
+every call, notes thinking off — the cache alignment that does not think). Gate: fixed 40/40, clean 40/40, audit
+7/7, notes cache 84% or more, notes written 10,000 tokens or less, 30 minutes or less (XR4-s1x: 29.5). If it
+passes it is the recipe the window curve is read against; XR8 stays as registered (BASE = XR7, whose gate passed
+tonight).
+
+**XR7 on s1x (22:11): the gate holds on the second seed too** — 40/40 fixed, **40/40 clean**, audit 7/7, 36 min 4 s
+(bound: 44; XR3: 47.1). Notes calls read 175,572 prompt tokens, 160,576 of them cached (**91.5%**; XR3's notes
+ran 81%), and wrote 28,286 (9 cuts). Both seeds: the change stands.
+
+### Campaign 18, design registered 2026-10-13 night before any generation: the 2M adversarial stream
+
+The next ledger stream doubles the length and turns on every difficulty the generator has, plus one new one aimed
+at the only silent-wrong class the fresh-text validation left standing (the notes reply that keeps a stale value
+through a coincidental -52/+52 round trip while the real setter was never read).
+
+Stream: 2,000,000 tokens, seed 0, memory mode, 2,000-token batches, density 3, `--words --pronouns --relative
+--corrections --plans --rules --class-rule --surprise 8 --probes-every 20 --probes-k 5`, and the new
+`--roundtrips 12`: twelve counters each get an ADD of -k and a later ADD of +k (net zero) with at least one SET
+between them, placed so the pair spans a probe distance bin; the probes and the final list grade the true value
+inside and after each decoy window (the reference ledger is exact by construction, as for every switch).
+
+Arms (the repair gate recipe — XR7 or XR6 — denoted BASE; proxy at 32K window):
+
+- **N2M**, the harness keeper on this stream: the comparison-table row.
+- **X2M** = BASE through the proxy on this stream. Registered expectations: overall score at least 90% of the
+  graded answers; silent-wrong notes (scored by `check_score.py` against the reference, the standing loop) at or
+  under the 1M rate (1 in 1,435); the 12 round-trip decoys read directly from the scorer's accepted-and-wrong
+  lines — the design's target is **0 of 12** slipping through; surprise audit at least 7 of 8; runtime cap 4
+  hours. If a decoy slips, the next check rule is fitted against it and validated on the following campaign's
+  streams, per the standing loop.
+
+Generation happens after the `--roundtrips` switch lands with its unit tests; the campaign launches only after
+campaign 17's gate, one server, the memory floor and room check standing.
+
+**Landed the same night:** the switch is in `make_sparse_prose_tasks.py` (decoy counters are reserved from the
+quiet set to the end of the stream, so the final query reads the decoy value; four regression tests in
+`test_make_sparse_roundtrips.py`, neighbouring generator tests green), and the stream itself is generated and in
+place (`client-1m/tasks/sparse-memory/sparse-memory-t2000k-s0`: 993 batches, 2,000,864 tokens, 343 probes, 2,933
+changes, all 12 decoys placed with windows of 123-176 batches and present in the final query). The campaign is
+staged (`longrun-campaign18.sh`, `QUEUE18.txt`, `collect.sh`; arms N2M/X2M registered in the planner, which
+validates both — its time estimates, 12.6 h and 23.9 h, come from the 2026-10-05 measurements and overstate: the
+1M actuals ran about 50 minutes; the 4-hour caps stand).

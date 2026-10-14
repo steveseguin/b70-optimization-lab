@@ -30,6 +30,12 @@ Difficulty switches (each adds ONE kind of difficulty):
                answer about a counter's value, now or earlier, and every entry of the final list is then the word
                overdrawn where the value is negative (a tally is still a number). A question about X cannot find
                this rule by X's name or by its own wording; it has to be kept in view.
+--roundtrips K K round-trip decoys: a counter is quietly set to a new value, then much later loses k and, much
+               later still, gains the same k back (net zero across the pair). A reader who misses the quiet set
+               but does the loud arithmetic lands on the stale value with clean-looking working. The counter is
+               left alone from the quiet set to the end of the stream, the windows span probe bins, and every
+               decoy counter is in the final query at the decoy value. The reference ledger stays exact (the
+               decoys are ordinary set/add lines).
 --density D = mean real changes per 2,000 tokens of text (default 3).
 Same grader, layout and per-batch reference (tests/reference.json: state and operations after every
 batch) as make_prose_ledger_tasks.py; task metadata kind = "sparse".
@@ -153,6 +159,11 @@ class Sparse:
         live = sorted(self.state)
         # mostly change existing counters once a few exist (otherwise early batches are all openings)
         nm = r.choice(live) if len(live) >= 8 and r.random() < 0.8 else r.choice(self.names)
+        res = getattr(self, "reserved", None)          # round-trip decoy counters inside their window: hands off
+        if res and nm in res:
+            pool = [x for x in (live if len(live) >= 8 else self.names) if x not in res]
+            if pool:
+                nm = r.choice(pool)
         if nm not in self.state:
             v = r.randint(-200, 600)
             sents = self._say(nm, "set", v, opening=True)
@@ -376,7 +387,7 @@ def probe_questions(prng: random.Random, after_batch: int, k: int, refs: list, f
 def build(out: Path, name: str, target_tokens: int, seed: int, batch_tokens: int, density: float,
           n_get: int, n_counters: int, mode: str, opts: dict, cpt: float, count_exact,
           n_batches: int | None, surprise: int = 0, probes_every: int = 0, probes_k: int = 3,
-          rules: bool = False, class_rule: bool = False) -> dict:
+          rules: bool = False, class_rule: bool = False, roundtrips: int = 0) -> dict:
     tag = "".join(k[0] for k in ("words", "pronouns", "corrections", "plans", "relative") if opts[k]) or "plain"
     rng = random.Random(f"sparse-{seed}-{target_tokens}-{batch_tokens}-{density}-{tag}-{n_counters}")
     g = Sparse(rng, n_counters, opts)
@@ -384,12 +395,40 @@ def build(out: Path, name: str, target_tokens: int, seed: int, batch_tokens: int
     batches, refs, tokens = [], [], 0
     fills = []
     bt: list[int] = [0]   # tokens per batch, 1-based
+    # --roundtrips K: schedule K decoys as (batch of the quiet set, batch of the -k, batch of the +k). The
+    # counter is reserved (no random change touches it) from the set until the give-back.
+    decoy_ops: dict[int, list[tuple[str, str, int]]] = {}
+    decoy_windows: dict[str, list[int]] = {}
+    if roundtrips:
+        est = n_batches or max(40, int(target_tokens / batch_tokens))
+        drng = random.Random(f"roundtrips-{seed}-{target_tokens}-{density}-{tag}")
+        span = max(probes_every + 2, 10)
+        for nm in drng.sample(g.names, min(roundtrips, len(g.names))):
+            b1 = drng.randint(2, max(3, est // 3))
+            b2 = b1 + drng.randint(span, max(span + 1, est // 6))
+            b3 = b2 + drng.randint(span, max(span + 1, est // 6))
+            if b3 >= est * 0.92:
+                continue
+            kv = drng.randint(11, 89)
+            wv = drng.randint(-200, 600)
+            decoy_ops.setdefault(b1, []).append((nm, "set", wv))
+            decoy_ops.setdefault(b2, []).append((nm, "sub", kv))
+            decoy_ops.setdefault(b3, []).append((nm, "add", kv))
+            decoy_windows[nm] = [b1, b3]
     while True:
         g.ops = []
         g.fill_log = []
+        bi = len(batches) + 1
+        g.reserved = {n for n, (a_, b_) in decoy_windows.items() if a_ <= bi}   # hands off from the quiet set on
         mean = density * batch_tokens / 2000
         k = max(0, round(rng.gauss(mean, max(1.0, mean ** 0.5))))
         units = [g.change() for _ in range(k)]
+        for nm, op, arg in decoy_ops.get(bi, []):
+            units.append(g._say(nm, op, arg))
+            if op == "set":
+                g.apply(nm, "set", arg)
+            else:  # the pair: a loss of k, later a gain of the same k
+                g.apply(nm, "add", -arg if op == "sub" else arg)
         # interleave the changes with filler until the batch has its size
         sents: list[str] = []
         budget_chars = batch_tokens * cpt
@@ -453,6 +492,9 @@ def build(out: Path, name: str, target_tokens: int, seed: int, batch_tokens: int
         alive = [n for n in alive if n not in rules_info["protected"]]
     n_gone = min(len(gone), max(1, n_get // 8)) if gone else 0
     queried = rng.sample(gone, n_gone) + rng.sample(alive, min(n_get - n_gone, len(alive)))
+    for n in decoy_windows:      # every decoy counter is asked in the final query
+        if n in g.state and n not in queried and (not rules_info or n not in rules_info["protected"]):
+            queried.append(n)
     rng.shuffle(queried)
     exp = {n: g.state.get(n) for n in queried}
     if rules_info and rules_info.get("class_word"):
@@ -556,12 +598,13 @@ def build(out: Path, name: str, target_tokens: int, seed: int, batch_tokens: int
                          "batch_tokens": tokens // len(batches), "density": density, "setting": tag,
                          "n_get": len(queried), "n_counters": len(g.ever), "n_deleted_queried": n_gone,
                          "n_surprise": len(asks), "n_probes": len(probes), "probes_every": probes_every,
-                         "rules": bool(rules_info)},
+                         "rules": bool(rules_info), "roundtrips": len(decoy_windows)},
                description=f"sparse prose ledger ({tag}, density {density}), {mode}, ~{tokens} tokens, seed {seed}",
                kind="sparse")
     (d / "tests" / "reference.json").write_text(json.dumps({
         "after_batch": refs,
         "surprise": {k: {"q": q, "a": a, "type": t, "item": b} for k, q, a, t, b in asks},
+        "roundtrips": decoy_windows,
         "probes": probes, "item_no": item_no, "batch_tokens_list": bt[1:], "rules": rules_info}))
     return {"name": name, "setting": tag, "density": density, "n_batches": len(batches),
             "stream_tokens": tokens, "counters": len(g.ever), "probes": len(probes),
@@ -591,6 +634,9 @@ def main() -> None:
                          "reported as the word overdrawn); see the module text")
     ap.add_argument("--surprise", type=int, default=0,
                     help="add K hidden retention questions to the final item (old values, filler details)")
+    ap.add_argument("--roundtrips", type=int, default=0,
+                    help="plant K round-trip decoys (a quiet set, then a loss and an equal give-back far apart); "
+                         "the counter is untouched between the three events and is in the final query")
     ap.add_argument("--n-counters", type=int, default=60)
     ap.add_argument("--chars-per-token", type=float, default=3.9)
     ap.add_argument("--exact-tokens", action="store_true")
@@ -610,7 +656,8 @@ def main() -> None:
             size = f"b{a.n_batches}" if a.n_batches else f"t{n // 1000}k"
             print(json.dumps(build(out, f"sparse-{a.mode}-{size}-s{s}", n, s, a.batch_tokens, a.density,
                                    a.n_get, a.n_counters, a.mode, opts, a.chars_per_token, count_exact,
-                                   a.n_batches, a.surprise, a.probes_every, a.probes_k, a.rules, a.class_rule)))
+                                   a.n_batches, a.surprise, a.probes_every, a.probes_k, a.rules, a.class_rule,
+                                   a.roundtrips)))
 
 
 if __name__ == "__main__":
