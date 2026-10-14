@@ -2525,7 +2525,7 @@ gemma4-26b-q8-quad-backends.service gemma4-26b-q8-quad-frontdoor.service`).
 ### The next check rule, fitted offline (2026-10-14, CPU-only; no GPU job ran)
 
 Per the standing loop the first rule against campaign 18's 14 accepted-wrong lines is fitted and regression-checked
-against every saved session. Of the 14, five are one class: **a third lost from a negative value, moved away from
+against the saved sessions. Of the 14, five are one class: **a third lost from a negative value, moved away from
 zero** — `-129 - 43 = -172` for "lost a third of its value" (true `-129 + 43 = -86`; the generator's `third` op is
 `state -= state // 3`, which always moves toward zero for negatives). The amounts check passes the 43 fairly (a
 third of the start); the direction was never checked. The new rule (`third_loss_away_from_zero` in
@@ -2535,8 +2535,18 @@ rule spelled out. A stated-amount loss ("lost 15") does not match the phrase and
 
 On X2M's saved replies (the fitting ground): accepted-and-WRONG **14 → 9** (all five fraction-direction lines now
 asked about), accepted-and-right 1,376 unchanged, asked-about-and-right 393 unchanged, left-out 130 unchanged.
-Regression on every other saved proxy session is byte-identical to HEAD: the 240k fitting pair (454 right, 0 wrong,
-both seeds) and both 1M streams, X32n2-s0 and X32g-s1 (2,043 right, 2 wrong, 18 asked-right combined). The nine
+Against the code before the rule (1a60d6efd), every other saved proxy session the scorer can read gives identical
+counts — nine sessions: the 240k pairs of X32n, X32n2 and X32q, X32g's 240k seed 1, and both 1M streams (X32n2-s0
+and X32g-s1: 2,043 right, 2 wrong, 18 asked-right combined). The campaign 8-9 sessions predate the proxy's event log
+and campaign 11's give the scorer no lines, so those cannot be checked this way. (The first version of this
+paragraph said "every other saved session" after four had been run; the other five were run in the same day's
+review.) The same review fixed the question the rule sends back: it read "a third of -129 is -43: add it", which
+invites the very mistake; it now spells out the toward-zero sum (`-129 + 43 = -86`). The first commit also broke
+the copy check: `notesdelta.py`'s checks are copied from the harness keeper (`clm_keeper.py`, tool
+`sync_notesdelta.py`) and the rule had been added to the copy only. It now lives in the harness and is synced, so
+the keeper arms get it too; one harness test whose example was this very mistake (`-93 - 31 (a third) = -124`,
+accepted) now expects a question, and the remark-parsing it was written for is tested on a positive value. Proxy and
+harness tests: 69 and 54, all passing. The nine
 remaining accepted-wrong at 2M are the cross-counter staleness class ("received what gupe37 stood at", read stale)
 and singletons (a "no change" claim against prose that states a number in words; a fraction-sum slip). Those need
 value-at-time alignment, not another arithmetic rule, and stay open for the following campaign.

@@ -522,7 +522,11 @@ class Keeper(unittest.TestCase):
         self.assertEqual(run(520, "abcd12 was doubled.", "520 \u2192 1040"), (0, [], [], 1040))
         self.assertEqual(run(520, "abcd12 was doubled.", "1040"), (0, [], [], 1040))
         self.assertEqual(run(849, "A third of abcd12 was written off.", "849 - 283 = 566 (item 36, a third written off)"), (0, [], [], 566))
-        self.assertEqual(run(-93, "abcd12 went down by a third again.", "-93 - 31 (a third) = -124 (item 42)"), (0, [], [], -124))
+        self.assertEqual(run(93, "abcd12 went down by a third again.", "93 - 31 (a third) = 62 (item 42)"), (0, [], [], 62))
+        # a third lost from a negative value moves it toward zero (the streams' `state -= state // 3`; 2026-10-14):
+        # taking the third away from zero is asked about (this line used to pass with -93 as the start)
+        self.assertEqual(run(-93, "A third of abcd12 was written off.", "-93 - 31 (a third) = -124 (item 42)")[:2], (1, [0]))
+        self.assertEqual(run(-93, "A third of abcd12 was written off.", "-93 + 31 (a third) = -62 (item 42)"), (0, [], [], -62))
         self.assertEqual(run(849, "A third of abcd12 was written off.", "849 \u2192 566"), (0, [], [], 566))
         self.assertEqual(run(10, "abcd12 gained 5.", "10 \u2192 15")[:2], (1, [0]))                             # a number was stated: show the working
         self.assertEqual(run(10, "The clerk looked at abcd12. It gained 3.", "10 \u2192 13")[:2], (1, [0]))     # also when it is named without one
