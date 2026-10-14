@@ -1894,6 +1894,23 @@ turns being noted, and whether they are counted as mentions there has not been l
 The lesson for this lane: when there is ground truth and the replies are saved, measure the checker against it
 first; ask reviewers for probes second. The tool also works for any future stream that has a reference.
 
+**The promised fresh-text check (2026-10-13 evening, while campaign 16 runs):** X32g's three saved sessions (the
+rules 240K, the hard 240K and the second 1M stream's seed 1; 1,435 counter lines scored, 12 set aside) under the
+checks of the two commits of the table above:
+
+| checks of | accepted, right | accepted, **wrong** | asked about, wrong | asked about, right |
+| --- | ---: | ---: | ---: | ---: |
+| `47fa9ae60` (before the two rules) | 1,345 | 2 | 10 | 78 |
+| `a7f76c8c1` (the two rules) | 1,387 | **1** | 11 | 36 |
+
+The rules generalize: on text they were not fitted to, silent wrong values halve (2 to 1) and needless questions
+drop from 78 to 36, with one more catch. The line that still gets through (`sajagu11`, items 266-272 of the second
+1M stream) is the hard remainder: the reply kept the old 510 with a round trip of working (`510 - 52 = 458`, then
+`458 + 52 = 510`) while the true value after those items was 145 — the items that set it are not in the reply's
+working at all, so no arithmetic check can see it; only a check that every item in the span was accounted for
+could. A rule for it would now be fitted to 3,441 lines and would await its own fresh text; that is the standing
+loop from here — every proxy run's streams are scored before the rules move again.
+
 ### Campaign 13b, a change to the task before any arm has finished on it (2026-10-12 15:20)
 
 The first arm on `repair-n40-s1` (XR3, started 14:50) was stopped by hand after 27 minutes: it had fixed four
