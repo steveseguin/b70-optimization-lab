@@ -2379,6 +2379,14 @@ ran 81%), and wrote 28,286 (9 cuts). Both seeds: the change stands.
 7/7, 33 min 0 s (registered floor: clean 33 or more; its s1x run lost the three notices once). No summary broke
 this time. The repair table's summariser column now reads 40/40 clean on both seeds.
 
+**W200 on the 1M rules stream (02:32): the missing plain-window control, and the gap is measured.** 166 of 228
+(72.8%), no void, 228 minutes. By type: final lists 24/25, current values 58/58, old values 40/58, who 15/29,
+**rule 0/29**, procedure 29/29. The proxy's row on the same stream is 226/228 (X32p). The 60-answer gap
+concentrates exactly where the design says it must: a 200K window slides past item 1's standing rule (0 of 29
+rule answers) and loses old values and names; what fits in the window stays perfect (current 58/58, procedure
+29/29). Campaign 16's four arms are the charter's control set complete: the proxy (both seeds), the summariser
+(both seeds), and now the plain window at the largest cap a dedicated card allows.
+
 ### Campaign 18, design registered 2026-10-13 night before any generation: the 2M adversarial stream
 
 The next ledger stream doubles the length and turns on every difficulty the generator has, plus one new one aimed
