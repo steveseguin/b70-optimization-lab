@@ -1,0 +1,37 @@
+endpoint ok: qwen38-27b-fp8 max_model_len=262144
+agent=plain (clm_baselines:PlainAgent) api_base=http://127.0.0.1:18200/v1 model=openai/qwen38-27b-fp8
+budget=0 reserve=2048 max_tokens=8192 temperature=0 top_p=none thinking=true max_steps=900 lm_call_cap=2700 obs_max_chars=60000 task_template=open_problems drop_old_thinking=0 think_cap=0
+tasks=/mnt/fast-ai/bench-results/context-longrun-20261012/client-repair2/tasks/repair-n40-s1x job=/mnt/fast-ai/bench-results/context-longrun-20261012/client-repair2/runs/jobs/XR7__repair-n40-s1x
+clm_commit=18dc11115f50f261233c5bba7937834491e307e8
+  1/1 Mean: 1.000 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 0:36:02 0:00:00
+adhoc • plain-baseline • qwen38-27b-fp8
+┏━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━┓
+┃ Trials ┃ Exceptions ┃  Mean ┃
+┡━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━┩
+│      1 │          0 │ 1.000 │
+└────────┴────────────┴───────┘
+
+┏━━━━━━━━┳━━━━━━━┓
+┃ Reward ┃ Count ┃
+┡━━━━━━━━╇━━━━━━━┩
+│ 1.0    │     1 │
+└────────┴───────┘
+
+Job Info
+Total runtime: 36m 2s
+Results written to 
+/mnt/fast-ai/bench-results/context-longrun-20261012/client-repair2/runs/jobs/XR7
+__repair-n40-s1x/result.json
+Inspect results by running `harbor view 
+/mnt/fast-ai/bench-results/context-longrun-20261012/client-repair2/runs/jobs`
+Share results by running `harbor upload 
+/mnt/fast-ai/bench-results/context-longrun-20261012/client-repair2/runs/jobs/XR7
+__repair-n40-s1x`
+
+arm	kind	mode	size	seed	budget	reward	lm_calls	real_edits	summaries	summary_failed	peak_sent_ctx	prompt_tokens	cached_tokens	think_share	completion_tokens	think_tok_est	other_tok_est	thinking_off_calls	prefix_stable_share	wall_s	items_lost	ended_by	rule
+XR7	repair	repair		1	0	1.000	241	0	0	0	134236	2338798	1845376	0.462	97390	78459	18930	0		2161		submit	ok
+
+# diagnostics
+arm	kind	mode	size	seed	correct	blank	stale	wrong	lost_never	lost_dropped	lost_copy	stored_frac	items	delivered	seen_whole	items_lost	cut	gate_refusals	protected_rollbacks	state_rejected	think_cap_cont	loop_guard	ctxfold_calls	ctxfold_refused	events_applied	ev_ref_quote	ev_ref_counter	ev_ref_format	ev_ref_amount	event_retries	prefix_unstable_no_edit	broken_pipe	to_file	tee	refused	hit_max_tokens	rollbacks	nudges	suspect_cmds	score_raw
+XR7	repair	repair		1	40	0	0	0					44		0		0																			0	0	0	0	1.000
+# trials=1 mean_reward=1.0000 prompt_tokens=2338798 cached_tokens=1845376 completion_tokens=97390 lm_calls=241
