@@ -2400,6 +2400,16 @@ end-of-run client bookkeeping — the third time this class bites (campaign 12's
 40/40 fixed, **40/40 clean**, audit 7/7, **13 min 5 s** (faster than the 32K run's 15:38; the smaller window
 shortens every prompt), notes cache 90.2%, 6 cuts, notes written 4,399.
 
+**X16 on s2x (04:46, XR4's recipe at a 16,384-token window): the starvation end, and the first imperfect proxy
+row** — 40/40 fixed, **39/40 clean** (one rule-1 line wrong; R2/R3 intact), audit **7/7**, 29 min 48 s. The
+registered failure mode is the one observed: **notes-call starvation** — 29 cuts (24K/32K: 6) with **zero**
+in-place notes written (the 16K window never leaves the 15K-token gather threshold room), one full-rewrite
+fallback failed, 2 recalls. The one clean-ticket loss is t20: the fix landed and its tests pass (6 run, 0 bad),
+but one of its three changed lines missed the maintainer's marker — the standing rule from the first tickets
+slipped exactly once, mid-run, while the archive still answered the audit 7/7 at the end. The curve on s2x: 32K →
+40/40 in 15:38, 24K → 40/40 in 13:05, 16K → 39/40 in 29:48 — flat quality down to 24K, one-ticket degradation
+with an honest signature at 16K.
+
 **XR7 on s1x (22:11): the gate holds on the second seed too** — 40/40 fixed, **40/40 clean**, audit 7/7, 36 min 4 s
 (bound: 44; XR3: 47.1). Notes calls read 175,572 prompt tokens, 160,576 of them cached (**91.5%**; XR3's notes
 ran 81%), and wrote 28,286 (9 cuts). Both seeds: the change stands.
