@@ -66,7 +66,7 @@ stream_of() {  # stream name -> "out_dir size" and the generator options in SP
 }
 task_dir() { ls -d "$1"/tasks/sparse-memory/sparse-memory-t*k-s"$3" 2>/dev/null | head -1; }   # out_dir size seed
 
-say "campaign 18 start; queue $Q ($(grep -cvE '^\s*(#|$)' "$Q" 2>/dev/null || echo 0) lines); MemAvailable $(avail) MiB"
+say "campaign 16 start; queue $Q ($(grep -cvE '^\s*(#|$)' "$Q" 2>/dev/null || echo 0) lines); MemAvailable $(avail) MiB"
 [[ -s $Q ]] || { say "ABORT: the queue file is missing or empty"; exit 2; }
 [[ -e $SRV ]] && { say "ABORT: $SRV already exists"; exit 2; }
 ss -tln | grep -q ":$PORT " && { say "ABORT: port $PORT is in use"; exit 2; }
@@ -392,4 +392,4 @@ else
   say "kernel log clean since $START; restoring Gemma ($GEMMA_RECIPE)"
   cd "$LAB" && timeout 900 scripts/gemma4-26b-two-b70-recipe.sh "$GEMMA_RECIPE" 2>&1 | grep -E '^backend|^frontdoor|timed out|died'
 fi
-say "campaign 18 complete"
+say "campaign 16 complete"
