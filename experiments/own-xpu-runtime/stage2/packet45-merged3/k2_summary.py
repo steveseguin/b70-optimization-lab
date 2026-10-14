@@ -350,3 +350,37 @@ def summarize(root,identity=None,classes=None):
 if __name__=='__main__':
  parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('root',type=Path);parser.add_argument('--context',type=int,choices=tuple(CONTEXT_LENGTHS));a=parser.parse_args()
  raise SystemExit(0 if summarize(a.root,classes=registry_for_context(a.context) if a.context else None)['passed'] else 1)
+
+
+def cpu_structure(root):
+ """Validate actual host K2 structure independently of its expected timing fail.
+ No timestamps or repetitions are synthesized to make a speed gate pass.
+ """
+ root=Path(root);receipt=json.loads((root/'receipt.json').read_text())
+ if not (receipt.get('schema')=='packet26.k2.v1' and receipt.get('passed') is True and receipt.get('device_executed') is False and receipt.get('validation_only') is True):raise ValueError('K2 CPU receipt mode')
+ classes=registry_for_context(receipt['context'])
+ omitted={n for n in classes if n.startswith('fusion:p39.')}
+ # p39_fixture.cpp runs seven exact scenario pairs per merged kind, but emits
+ # timing rows only when timing && !fixture_validation::only.
+ if len(omitted)!=8 or receipt.get('p39_checks')!=7*len(omitted):raise ValueError('K2 CPU p39 scenario coverage')
+ rows=[json.loads(s) for s in (root/'events.jsonl').read_text().splitlines() if s.strip()]
+ expected=set(classes)-omitted
+ if {r['class'] for r in rows}!=expected:raise ValueError('K2 CPU class coverage')
+ for name in expected:
+  selected=[r for r in rows if r['class']==name];entry=classes[name]
+  candidates={r['candidate'] for r in selected}
+  if 'candidates' in entry and candidates!=set(entry['candidates']):raise ValueError('K2 CPU candidate coverage: '+name)
+  for candidate in candidates:
+   arm=[r for r in selected if r['candidate']==candidate]
+   if {r['variant'] for r in arm}!={'packet18','specialised'}:raise ValueError('K2 CPU variant coverage: '+name)
+   for variant in ('packet18','specialised'):
+    if 'workloads' in entry and {r.get('workload') for r in arm if r['variant']==variant}!=set(entry['workloads']):raise ValueError('K2 CPU workload coverage: '+name)
+ groups={}
+ for r in rows:
+  if r['start_ns']!=0 or r['end_ns']!=0 or r['repetition']!=0:raise ValueError('K2 CPU timestamps/repetitions mislabeled')
+  key=tuple(r.get(n) for n in ('class','candidate','variant','workload','timing_mode'))
+  groups.setdefault(key,[]).append(r)
+ for key,group in groups.items():
+  if any(r.get('stage_count')!=len(group) for r in group):raise ValueError('K2 CPU stage coverage: '+str(key))
+ return dict(passed=True,device_executed=False,classes=len(expected),event_rows=len(rows),stage_groups=len(groups),
+  p39_checks=receipt['p39_checks'],p39_timing_deliberately_absent=sorted(omitted),timing_qualified=False)

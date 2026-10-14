@@ -140,6 +140,8 @@ def run_arm(compiler,kind,context,report,seconds):
         else:
             require(actual['context']==context,'fixture context ignored')
             require(actual['p39_checks']==56,'merged p39 scenario coverage')
+            from fixture_support import sequential_teardown
+            require(sequential_teardown(actual),'merged fixture owner set/teardown failed')
             require(actual['source_fixtures']==(72 if kind=='k2-validation' else 93)+4*len(LENGTHS[context]),'capacity fixture coverage')
             source_ops=[struct.unpack('<ii', (B/'fusion-fixtures'/name).read_bytes()[:8]) for name in (B/'fusion-fixtures/cases.txt').read_text().split()]
             added=sum(op in (3,8,9,10,11) or (op==1 and tokens==1) for op,tokens in source_ops)+1+3*len(LENGTHS[context])
@@ -205,7 +207,7 @@ def main():
     parser=argparse.ArgumentParser();parser.add_argument('--phase',choices=('all','arithmetic','validation','light'),default='all')
     parser.add_argument('--compiler',choices=('both','gnu-host','icpx-host'),default='both')
     parser.add_argument('--context',type=int,choices=(256,4096,32768));parser.add_argument('--seconds',type=int,default=1800)
-    parser.add_argument('--list',action='store_true');args=parser.parse_args()
+    parser.add_argument('--list',action='store_true');parser.add_argument('--fresh',action='store_true',help='rerun every arm, retaining the previous receipt');args=parser.parse_args()
     compilers=('gnu-host','icpx-host') if args.compiler=='both' else (args.compiler,)
     contexts=(args.context,) if args.context else (256,4096,32768)
     arms=[]
@@ -220,6 +222,9 @@ def main():
     require(os.getpriority(os.PRIO_PROCESS,0)==19 and os.environ.get('OMP_NUM_THREADS')=='2','nice19 OMP2 required')
     B.mkdir(exist_ok=True);lock=(B/'capacity-fixture.lock').open('a');fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
     report=json.loads(REPORT.read_text()) if REPORT.exists() else dict(schema='packet45.capacity-fixtures.v1',passed=False,device_executed=False,rows=[])
+    if args.fresh:
+        prior=P/'evidence/sequential-owner-fix'/('capacity-before-'+str(time.time_ns())+'.json');prior.parent.mkdir(parents=True,exist_ok=True);save(prior,report)
+        report['rows']=[]
     report['passed']=False;selected=[run_arm(*arm,report,args.seconds) for arm in arms]
     if args.phase in ('all','light'):light_tests(report,args.seconds)
     hashes={};linked=None

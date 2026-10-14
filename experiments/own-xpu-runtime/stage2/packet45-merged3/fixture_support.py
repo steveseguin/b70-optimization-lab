@@ -5,6 +5,7 @@ import importlib.util
 import json
 import math
 import os
+import re
 from pathlib import Path
 import signal
 import struct
@@ -240,16 +241,38 @@ def k0_gate(path,identity,cfg):
  return row
 
 
-def sequential_teardown(row,count):
+# Receipt order in fixture_driver.cpp (the GEMV owner executes before small,
+# but its completed teardown is appended after small). Allocation namespaces
+# identify owners in existing binaries, so this host gate needs no ABI change.
+FIXTURE_OWNER_SEQUENCE = (
+ ('nongemv', 'fixture-'),
+ ('actual-adapter', 'actual-adapter-fixture-'),
+ ('small-gemv', 'small-gemv-'),
+ ('gemv-k2', 'gemv-k2-'),
+ ('p39', 'p39-fixture-'),
+)
+
+def sequential_teardown(row):
+ expected=FIXTURE_OWNER_SEQUENCE
  rows=row.get('teardown',[])
- return row.get('owner_cards')==1 and len(rows)==count and all(r.get('safe_to_exit') is True and r.get('live_bytes')==0 and r.get('in_flight')==0 for r in rows)
+ if type(row.get('owner_cards')) is not int or row['owner_cards']!=1 or not isinstance(rows,list) or len(rows)!=len(expected):return False
+ for state,(_,prefix) in zip(rows,expected):
+  if not isinstance(state,dict):return False
+  if state.get('status')!='complete' or state.get('safe_to_exit') is not True:return False
+  if any(type(state.get(k)) is not int or state[k]!=0 for k in ('exit_code','live_bytes','in_flight')):return False
+  sequence=state.get('sequence')
+  if not isinstance(sequence,list) or not all(isinstance(s,str) for s in sequence):return False
+  frees=[s for s in sequence if s.startswith('free:')]
+  # Every row must contain its own allocations and no other owner's allocations.
+  if not frees or not all(re.fullmatch('free:workspace:'+re.escape(prefix)+r'[0-9]+',s) for s in frees):return False
+ return True
 
 
 def fixture_receipt_gate(root,build,*,cpu_rehearsal=False):
  row=read(root/'receipt.json')
  require(row.get('schema')=='packet26.fixtures.v1' and row.get('passed') is True and row.get('device_executed') is (not cpu_rehearsal) and ((row.get('validation_only') is True and row.get('reference_exact') is False and row.get('packet18_exact') is False) if cpu_rehearsal else (row.get('reference_exact') is True and row.get('packet18_exact') is True)),'K1 exactness incomplete')
  require(row.get('fixtures',0)>=72 and all(type(row.get(k)) is int and row[k]>0 for k in ('odd_lengths','ties','nan_routes')),'K1 fixture/edge coverage incomplete')
- require(sequential_teardown(row,4),'K1 unsafe/missing sequential-owner teardown')
+ require(sequential_teardown(row),'K1 unsafe/missing sequential-owner teardown')
  require(type(row.get('max_submission_ns')) in (int,float) and (0<=row['max_submission_ns']<4e9 if cpu_rehearsal else 0<row['max_submission_ns']<4e9),'K1 submission budget failed')
  output=root/'output.bin'
  require(isinstance(build.get('nongemv_fixture_host_sha256'),str),'K1 host fixture digest missing')
@@ -413,7 +436,7 @@ def main():
   command=[str(binary),'--authorized-device-window','--card',str(a.card),'--repetitions','200','--output',str(out/'run')]
   def check(r):
    n=read(out/'run/receipt.json')
-   require(n.get('schema')=='packet26.k2.v1' and n.get('passed') is True and n.get('device_executed') is True and n.get('diagnostic') is True and n.get('repetitions')==200 and n.get('owner_cards')==1 and sequential_teardown(n,4),'K2 native coverage/teardown incomplete')
+   require(n.get('schema')=='packet26.k2.v1' and n.get('passed') is True and n.get('device_executed') is True and n.get('diagnostic') is True and n.get('repetitions')==200 and n.get('owner_cards')==1 and sequential_teardown(n),'K2 native coverage/teardown incomplete')
    summary=summarize(out/'run',identity)
    require(type(n.get('max_submission_ns')) in (int,float) and 0<n['max_submission_ns']<=4e9,'K2 submission budget failed')
    require(summary['passed'],'K2 timing/exactness gate failed')

@@ -80,3 +80,31 @@ and links. The final phase seals and rehearses admission with launchers blocked.
 Logs and stage receipts live in `evidence/hc-activation-fix/`. Commands in
 `WINDOW.md` and `coordinator_windows.sh` remain unchanged, but a new seal needs
 fresh device chains.
+
+## Sequential-owner gate repair
+
+`sequential_owner_campaign.py all` reruns the complete CPU qualification and
+reseals without rebuilding or executing device artifacts. It includes fresh
+capacity fixture arms (`capacity_fixture_gate.py --fresh`), both host compilers,
+ASAN, HC compiler checks, owner/controller gates, 79 miniature cases, six real
+model cases, draft captures, seal tests and blocked-launch admission. It runs
+serially under the same nice/ionice/OMP limits above. Logs and the prior seal
+are retained in `evidence/sequential-owner-fix/`.
+
+`wrapper_cpu_gate.py` now also runs `coordinator_cpu_gate.py`. The latter invokes
+the exact, unchanged `coordinator_windows.sh` for all nine windows at
+4096/rank0, 4096/rank1 and 32768/rank0. Its test-only shell prefix interception
+routes the script's actual window arguments into `window.main(cpu_rehearsal=True)`.
+It uses private miniature inputs and a host-only pre-seal identity, with mocked
+hardware admission. All fixture, prerequisite, summary and retention gates run.
+The device path cannot consume these rehearsal receipts. K0 is a structural
+shim; K1/K2 use host validation mode; K2 must fail device timing while passing a
+separate exact event-structure gate. The miniature suites are correctness and
+orchestration checks, not model speed results.
+
+The seal requires the complete retained three-chain matrix within its existing
+wrapper receipts. `full_wrapper_gate.py` delegates to this maintained rehearsal;
+its inherited packet40 harness is no longer an alternative way to qualify the
+merged wrapper. After final sealing, `sequential_owner_summary.py` verifies all
+41 artifacts, all source/gate bindings, the three-chain archive, the detached
+admission binding and the preserved coordinator history.

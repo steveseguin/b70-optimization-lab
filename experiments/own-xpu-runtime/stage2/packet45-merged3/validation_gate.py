@@ -40,14 +40,21 @@ def main():
       assert all(r['rows']==(2560 if workload in ('expsdown','shexpdown') else 10240 if workload in ('hc.a.gate','hc.f.gate','final.gate') else 9 if r['mode']==4 else 8) for r in arm) if entry=='nongemv-fixtures' else all(r['rows']>=1 for r in arm)
      if entry=='k2-fixtures':
       events=[json.loads(s) for s in (out/'events.jsonl').read_text().splitlines()]
-      registry=json.loads((P/'k2-class-registry.json').read_text())['classes']
-      assert {r['class'] for r in events}==set(registry)
+      from k2_summary import registry_for_context
+      registry=registry_for_context(receipt['context'])
+      # p39 validates both arms of all seven scenarios, but deliberately emits
+      # timing rows only outside validate-only mode (p39_fixture.cpp).
+      p39={name for name in registry if name.startswith('fusion:p39.')}
+      assert len(p39)==8 and receipt['p39_checks']==7*len(p39)
+      timed=set(registry)-p39
+      assert {r['class'] for r in events}==timed
       assert {r['workload'] for r in events if r['class']=='qsa.attention'}==set(registry['qsa.attention']['workloads'])
-      assert all({r['variant'] for r in events if r['class']==k}=={'packet18','specialised'} for k in registry)
+      assert all({r['variant'] for r in events if r['class']==k}=={'packet18','specialised'} for k in timed)
      else:
       qsa_grid=json.loads((P/'k2-class-registry.json').read_text())['classes']['qsa.attention']['workloads']
       assert qsa_grid==['qsa-c256-n'+str(n) for n in (88,104,120,136,152,256)]
-      assert receipt['source_fixtures']==93+66 and receipt['fixtures']>receipt['source_fixtures']
+      from capacity_fixture_gate import LENGTHS
+      assert receipt['source_fixtures']==93+4*len(LENGTHS[receipt['context']]) and receipt['fixtures']>receipt['source_fixtures']
     results.append(dict(compiler=compiler,entry=entry,poison=poison,returncode=r.returncode,binary_sha256=sha(binary),evidence=str(out.relative_to(B)),**({} if poison else dict(gemv_entry_calls=len(rows),small_entry_calls=len(small_rows),small_workloads=sorted(small_workloads),workloads=sorted(workloads),candidate_coverage={w:sorted({r['candidate'] for r in rows if r['workload']==w}) for w in sorted(workloads)},entry_trace_sha256=sha(out/'validation-entries.jsonl'),receipt_sha256=sha(out/'receipt.json')))))
   out=root/(compiler+'-continue');r=subprocess.run([str(B/compiler/'k2-fixtures'),'--validate-only','--inject-candidate-failures','--output',str(out)],capture_output=True,text=True,timeout=120)
   assert r.returncode==0,r.stderr

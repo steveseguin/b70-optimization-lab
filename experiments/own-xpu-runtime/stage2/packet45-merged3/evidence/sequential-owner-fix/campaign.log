@@ -1,0 +1,21 @@
+START phase-gates
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/sequential_owner_campaign.py", line 29, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/sequential_owner_campaign.py", line 18, in main
+    for next_phase in ('gates','models','final'):campaign.py('phase-'+next_phase,Path(__file__),next_phase)
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/hc_fix_campaign.py", line 16, in py
+    def py(name,*args):run(name,[sys.executable,'-B',*args])
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/hc_fix_campaign.py", line 14, in run
+    if r.returncode:raise RuntimeError('CPU stage failed: '+str(log))
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: CPU stage failed: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/evidence/sequential-owner-fix/phase-gates.log
+START phase-gates
+PASS phase-gates 811.26
+START phase-models
+PASS phase-models 9350.64
+START phase-final
+PASS phase-final 103.28

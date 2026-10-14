@@ -40,7 +40,7 @@ class ContextWindows(unittest.TestCase):
    calls.append(('fixture',a.context,env.copy()))
    (out/'children.json').write_text(json.dumps(dict(pids=[103,104])))
    for i in (0,1):
-    d=out/f'run{i}';d.mkdir();(d/'receipt.json').write_text(json.dumps(dict(cards=1,kernel_execution=False,explicit_allocations=0,kernels_per_device=1)))
+    d=out/f'run{i}';d.mkdir();(d/'receipt.json').write_text(json.dumps(dict(cards=1,kernel_execution=False,explicit_allocations=0,kernels_per_device=1,owner_cards=1,teardown=[dict(status='complete',exit_code=0,safe_to_exit=True,live_bytes=0,in_flight=0,sequence=['free:workspace:'+prefix+'0']) for _,prefix in __import__('fixture_support').FIXTURE_OWNER_SEQUENCE])))
    return {}
   def summary(root,identity):
    calls.append(('summary',identity['context']))

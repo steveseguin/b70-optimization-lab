@@ -5,7 +5,7 @@ from pathlib import Path
 import pipeline as pp
 from pipeline import P,save,sha,require,Transport,CANARY,SLOT
 from window_safety import environment_gate,memory_snapshot
-from fixture_support import journal,ldd_preflight,oracle_gate,fixture_receipt_gate,k1_gate
+from fixture_support import journal,ldd_preflight,oracle_gate,fixture_receipt_gate,k1_gate,sequential_teardown
 from k2_summary import summarize, estimated_seconds
 from merge_dispatch import validate
 from storage import admit
@@ -456,6 +456,10 @@ def main(*,cpu_rehearsal=False):
                 record['candidate_dispatch_sha256']=sha(a.dispatch) if a.dispatch else None
                 if a.window=='K1b':fresh_k1_owners(json.loads(a.k1a.read_text()),record)
             else:
+                require(sequential_teardown(json.loads((out/'run0/receipt.json').read_text())),'K2 unsafe/missing sequential-owner teardown')
+                if cpu_rehearsal:
+                    from k2_summary import cpu_structure
+                    record['cpu_k2_structure']=cpu_structure(out/'run0')
                 summary=summarize(out/'run0',identity)
                 record['device_timing_qualified']=bool(summary['passed'])
                 require(not summary['passed'] if cpu_rehearsal else summary['passed'],'CPU must fail K2 device timing' if cpu_rehearsal else 'K2 exact/timing gate')

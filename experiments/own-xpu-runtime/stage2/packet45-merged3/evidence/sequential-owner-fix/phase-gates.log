@@ -1,0 +1,105 @@
+START hc-activation
+PASS hc-activation 54.72
+START legacy-entry-validation
+PASS legacy-entry-validation 29.06
+START capacity-fixtures-fresh
+PASS capacity-fixtures-fresh 274.75
+START capacity_selection_gate
+PASS capacity_selection_gate 23.59
+START capacity_fixture_gate
+PASS capacity_fixture_gate 4.12
+START asan_fixture_gate
+PASS asan_fixture_gate 235.67
+START p39_merged_fixture_gate
+PASS p39_merged_fixture_gate 2.24
+START cpu_gates
+PASS cpu_gates 0.35
+START wrapper_cpu_gate
+PASS wrapper_cpu_gate 175.98
+START test_memory_plan
+PASS test_memory_plan 0.05
+hc.a.act p42.tiny.range same_kernel=False bytes_equal=True incumbent_us=0.1 incumbent_p90_us=0.1 candidate_us=0.08 candidate_p90_us=0.08
+hc.f.act p42.tiny.range same_kernel=False bytes_equal=True incumbent_us=0.1 incumbent_p90_us=0.1 candidate_us=0.08 candidate_p90_us=0.08
+final.act p42.tiny.range same_kernel=False bytes_equal=True incumbent_us=0.1 incumbent_p90_us=0.1 candidate_us=0.08 candidate_p90_us=0.08
+fusion:p39.hc-low-act p39.epilogue same_kernel=False bytes_equal=True incumbent_us=0.1 incumbent_p90_us=0.1 candidate_us=0.12 candidate_p90_us=0.12
+fusion:p39.expert-checks-iq2 p39.epilogue same_kernel=False bytes_equal=True incumbent_us=100.0 incumbent_p90_us=100.0 candidate_us=80.0 candidate_p90_us=80.0
+fusion:p39.expert-checks-iq3 p39.epilogue same_kernel=False bytes_equal=True incumbent_us=100.0 incumbent_p90_us=100.0 candidate_us=80.0 candidate_p90_us=80.0
+fusion:p39.down-status p39.epilogue same_kernel=False bytes_equal=True incumbent_us=100.0 incumbent_p90_us=100.0 candidate_us=80.0 candidate_p90_us=80.0
+fusion:p39.hc-low-act p39.epilogue same_kernel=False bytes_equal=True incumbent_us=100.0 incumbent_p90_us=100.0 candidate_us=80.0 candidate_p90_us=80.0
+fusion:p39.shared-up-act-q6 p39.epilogue same_kernel=False bytes_equal=True incumbent_us=100.0 incumbent_p90_us=100.0 candidate_us=80.0 candidate_p90_us=80.0
+fusion:p39.shared-up-act-q8 p39.epilogue same_kernel=False bytes_equal=True incumbent_us=100.0 incumbent_p90_us=100.0 candidate_us=80.0 candidate_p90_us=80.0
+fusion:p39.attention-combine p39.epilogue same_kernel=False bytes_equal=True incumbent_us=100.0 incumbent_p90_us=100.0 candidate_us=80.0 candidate_p90_us=80.0
+fusion:p39.shared-down-combine p39.epilogue same_kernel=False bytes_equal=True incumbent_us=100.0 incumbent_p90_us=100.0 candidate_us=80.0 candidate_p90_us=80.0
+qsa.attention p30.attention.sg32 same_kernel=False bytes_equal=True incumbent_us=0.6 incumbent_p90_us=0.6 candidate_us=0.3 candidate_p90_us=0.3
+qsa.attention p30.attention.sg32 same_kernel=False bytes_equal=True incumbent_us=0.6 incumbent_p90_us=0.6 candidate_us=0.3 candidate_p90_us=0.3
+qsa.attention p30.attention.sg32 same_kernel=False bytes_equal=True incumbent_us=0.6 incumbent_p90_us=0.6 candidate_us=0.3 candidate_p90_us=0.3
+qsa.attention p30.attention.sg32 same_kernel=False bytes_equal=True incumbent_us=0.6 incumbent_p90_us=0.6 candidate_us=0.3 candidate_p90_us=0.3
+gemv:test specialised same_kernel=False bytes_equal=True incumbent_us=0.1 incumbent_p90_us=0.1 candidate_us=0.08 candidate_p90_us=0.08
+norm specialised same_kernel=False bytes_equal=True incumbent_us=0.1 incumbent_p90_us=0.1 candidate_us=0.08 candidate_p90_us=0.08
+route specialised same_kernel=False bytes_equal=False incumbent_us=0.1 incumbent_p90_us=0.1 candidate_us=None candidate_p90_us=None
+streams specialised same_kernel=False bytes_equal=False incumbent_us=0.1 incumbent_p90_us=0.1 candidate_us=None candidate_p90_us=None
+norm specialised same_kernel=False bytes_equal=True incumbent_us=0.1 incumbent_p90_us=0.1 candidate_us=0.08 candidate_p90_us=0.08
+route specialised same_kernel=False bytes_equal=False incumbent_us=0.1 incumbent_p90_us=0.1 candidate_us=4999999.9 candidate_p90_us=4999999.9
+streams specialised same_kernel=False bytes_equal=False incumbent_us=0.1 incumbent_p90_us=0.1 candidate_us=None candidate_p90_us=None
+norm specialised same_kernel=False bytes_equal=True incumbent_us=0.1 incumbent_p90_us=0.1 candidate_us=0.08 candidate_p90_us=0.08
+route specialised same_kernel=False bytes_equal=False incumbent_us=0.1 incumbent_p90_us=0.1 candidate_us=None candidate_p90_us=None
+streams specialised same_kernel=False bytes_equal=False incumbent_us=0.1 incumbent_p90_us=0.1 candidate_us=None candidate_p90_us=None
+gemv:expsdown p29.down.wg32 same_kernel=False bytes_equal=True incumbent_us=0.1 incumbent_p90_us=0.1 candidate_us=0.08 candidate_p90_us=0.08
+gemv:expsdown p29.down.wg32 same_kernel=False bytes_equal=True incumbent_us=0.1 incumbent_p90_us=0.1 candidate_us=0.08 candidate_p90_us=0.08
+gemv:expsdown p29.down.wg32 same_kernel=False bytes_equal=True incumbent_us=0.1 incumbent_p90_us=0.1 candidate_us=0.095 candidate_p90_us=0.095
+gemv:expsdown p29.down.wg32 same_kernel=False bytes_equal=True incumbent_us=0.1 incumbent_p90_us=0.1 candidate_us=0.08 candidate_p90_us=0.08
+gemv:expsdown p29.down.wg32 same_kernel=False bytes_equal=True incumbent_us=0.1 incumbent_p90_us=0.1 candidate_us=0.09 candidate_p90_us=0.09
+gemv:expsdown p29.down.wg32 same_kernel=False bytes_equal=True incumbent_us=0.1 incumbent_p90_us=0.1 candidate_us=0.08 candidate_p90_us=0.08
+gemv:expsdown p29.down.wg32 same_kernel=False bytes_equal=True incumbent_us=0.1 incumbent_p90_us=0.1 candidate_us=0.04 candidate_p90_us=0.04
+gemv:expsdown p29.down.wg32 same_kernel=False bytes_equal=True incumbent_us=0.1 incumbent_p90_us=0.1 candidate_us=0.08 candidate_p90_us=0.08
+gemv:test fast same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.12 candidate_p90_us=0.12
+gemv:test other same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.16 candidate_p90_us=0.16
+gemv:test fast same_kernel=True bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.12 candidate_p90_us=0.12
+gemv:test other same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.16 candidate_p90_us=0.16
+gemv:test fast same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.12 candidate_p90_us=0.12
+gemv:test other same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.16 candidate_p90_us=0.16
+gemv:test fast same_kernel=False bytes_equal=False incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=None candidate_p90_us=None
+gemv:test other same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.16 candidate_p90_us=0.16
+gemv:test fast same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.12 candidate_p90_us=0.12
+gemv:test other same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.16 candidate_p90_us=0.16
+gemv:test fast same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.12 candidate_p90_us=0.12
+gemv:test other same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.16 candidate_p90_us=0.16
+gemv:test fast same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.12 candidate_p90_us=0.12
+gemv:test other same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.16 candidate_p90_us=0.16
+gemv:test fast same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.12 candidate_p90_us=0.12
+gemv:test other same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.16 candidate_p90_us=0.16
+gemv:test fast same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.12 candidate_p90_us=0.12
+gemv:test other same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.16 candidate_p90_us=0.16
+gemv:test fast same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.12 candidate_p90_us=0.12
+gemv:test fast same_kernel=False bytes_equal=False incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.12 candidate_p90_us=0.12
+gemv:test other same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.16 candidate_p90_us=0.16
+gemv:test fast same_kernel=True bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.12 candidate_p90_us=0.12
+gemv:test other same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.16 candidate_p90_us=0.16
+gemv:test fast same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.12 candidate_p90_us=0.12
+gemv:test other same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.16 candidate_p90_us=0.16
+gemv:test fast same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.12 candidate_p90_us=0.12
+gemv:test other same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.16 candidate_p90_us=0.16
+gemv:test fast same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.12 candidate_p90_us=0.12
+gemv:test other same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.16 candidate_p90_us=0.16
+gemv:test fast same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.12 candidate_p90_us=0.12
+gemv:test other same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.16 candidate_p90_us=0.16
+gemv:test fast same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.12 candidate_p90_us=0.12
+gemv:test other same_kernel=False bytes_equal=True incumbent_us=0.2 incumbent_p90_us=0.2 candidate_us=0.16 candidate_p90_us=0.16
+route round2 same_kernel=True bytes_equal=True incumbent_us=0.1 incumbent_p90_us=0.1 candidate_us=0.05 candidate_p90_us=0.05
+route round2 same_kernel=False bytes_equal=True incumbent_us=0.1 incumbent_p90_us=0.1 candidate_us=0.095 candidate_p90_us=0.095
+route round2 same_kernel=False bytes_equal=True incumbent_us=0.1 incumbent_p90_us=0.1 candidate_us=0.08 candidate_p90_us=0.08
+route third same_kernel=False bytes_equal=True incumbent_us=0.1 incumbent_p90_us=0.1 candidate_us=0.06 candidate_p90_us=0.06
+PASS p45-kernel-tests 72
+PASS merged-campaign-completion-gates 2
+START native-controller-cpu
+PASS native-controller-cpu 1.43
+START native-mailbox-faults
+PASS native-mailbox-faults 1.04
+START native-controller-asan
+PASS native-controller-asan 2.34
+START native-mailbox-faults-asan
+PASS native-mailbox-faults-asan 1.05
+START native-controller-tsan
+PASS native-controller-tsan 2.44
+START native-mailbox-faults-tsan
+PASS native-mailbox-faults-tsan 1.06

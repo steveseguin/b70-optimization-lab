@@ -69,3 +69,21 @@ nine failure-evidence files (base64 members, individually hashed), including the
 latch. Its retention receipt records verified restoration. The original files
 and both partial binary outputs remain untouched; all 13 protected input hashes
 were checked against the initial snapshot.
+
+The sequential-owner follow-up retains `evidence/sequential-owner-fix/` and new
+CPU scratch archives. `before-*.json` and `capacity-before-*.json` preserve the
+previous seal and case matrices before fresh execution; historical fixture rows
+remain available there, with their original retained output/scratch archives.
+`first-audit-attempt.jsonl.gz` and its retention receipt preserve the failed
+validate-only timing-class assumption and exact logs. `coordinator-chains.jsonl.gz`
+retains all three complete host rehearsal trees: window/native receipts, launch
+arguments, logs and hashes of regenerable binary outputs. Verify its members with
+`storage.verify_archive`; reproduce with `coordinator_cpu_gate.py`.
+
+New `scratch-merged-gate-*-real-*.jsonl.gz` archives and prior case matrices may
+exceed 1 MiB. They preserve this requested full CPU rerun and bind each result to
+its actual source and binary identity. Restore text with the archive's base64
+chunks, or regenerate hash-only model fixtures with `cpu_real_gate.py` and the
+recorded approved local input files. Do not remove earlier qualification or
+failure archives. `protected-inputs.json` covers all 49 existing fault/incident
+files; none is a cleanup target.

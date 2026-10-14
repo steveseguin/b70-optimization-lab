@@ -279,6 +279,14 @@ def main():
 
  for name in ('wrapper-merge-tests.json','context-window-gates.json'):
   if 'sources' in gates[name]:bound_sources(gates[name]['sources'])
+  chain=gates[name]['coordinator_chains']
+  assert chain['passed'] and chain['device_executed'] is False
+  gate_sources(chain);archive_bound(chain['archive'])
+  assert chain['host_binary_sha256']==artifacts['gnu-host/own-rt-iq3']
+  assert [(r['context'],r['draft_rank']) for r in chain['rows']]==[(4096,0),(4096,1),(32768,0)]
+  for run in chain['rows']:
+   assert run['passed'] and [r['window'] for r in run['windows']]==['K0','K1a','K1b','K2','W0p','KD','W2m','WS','WSs']
+   assert all(r['passed'] and r['device_executed'] is False for r in run['windows'])
  draft=gates['capacity-draft-gates.json'];draft_bindings(draft,artifacts)
  native_bindings(gates)
  for row in gates['owner-gates.json']['rows']:

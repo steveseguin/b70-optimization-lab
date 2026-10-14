@@ -26,7 +26,8 @@ The CPU checks include 79 fresh pipeline executions, 854,164 selection checks,
 22,326 arithmetic checks across GNU/Intel and all capacities, 6,899 dispatch
 validation checks, 3,657 maximum-capacity ASAN/UBSAN checks, six captured draft
 arms with 378 frozen-reference matches, 18 owner/lifetime suites, 72 kernel/K2
-tests, 101 wrapper tests (78 mocked window combinations), and 65 memory-plan
+tests, 115 wrapper tests (78 mocked combinations plus 27 actual coordinator
+CPU rehearsal windows), and 65 memory-plan
 checks. Normal/ASAN/TSAN controller mocks cover 1,123 cases each; mailbox tests
 cover five gates each. Counts overlap where a helper is included in a larger
 fixture arm; they are not one summed headline. Real-model correctness subsets
@@ -46,7 +47,7 @@ complete draft-state hashes. All six runs share the same guesses and decision
 counts; 17 fixed-size semantic draft buffers match across capacities. Full cache
 hashes across capacities are deliberately not compared because their allocated
 tails differ. The observed aggregate CPU anonymous-memory peak was
-7,942,012,928 bytes. No model process remains from this CPU campaign.
+7,964,266,496 bytes. No model process remains from this CPU campaign.
 
 The final [build receipt](build-receipt.json) binds the implementation, 41 linked
 artifacts, parent/source pins and all required CPU receipts. The detached
@@ -62,3 +63,11 @@ chain failure: case 54 is the NaN scenario, not the pre-seeded error scenario
 arms close the CPU code-generation gap. The repaired seal supersedes the old
 binary identities and requires new coordinator chains. The historical failure
 latch and commands are retained unchanged; device qualification is pending.
+
+The [October 14 sequential-owner repair](SEQUENTIAL-OWNER-CLOSEOUT.md) accepts
+exactly the five merged fixture owners while retaining every exit safety check.
+The owner reports that the NaN repair passed K1a arithmetic on both card pairs;
+the host gate then rejected its healthy fifth owner. The [sibling audit](SIBLING-AUDIT.md)
+and all three complete coordinator CPU rehearsals now pass. The full CPU suite
+was rerun and resealed; all 41 build artifacts, including all five device binaries,
+are unchanged. Fresh device chains still need the new host seal.
