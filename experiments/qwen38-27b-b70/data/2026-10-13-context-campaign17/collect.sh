@@ -13,7 +13,7 @@ done
 [[ -s $O/campaign17.err ]] && cp "$O/campaign17.err" "$D/"
 first() { ls -d "$1"/*/ 2>/dev/null | head -1; }
 
-for name in XR8__repair-n40-s2x X24__repair-n40-s2x X16__repair-n40-s2x; do
+for name in XR4__repair-n40-s2x XR8__repair-n40-s2x X24__repair-n40-s2x X16__repair-n40-s2x; do
   j="$ODX/runs/jobs/$name"
   [[ -d $j ]] || continue
   t=$(first "$j"); [[ -n $t ]] || continue

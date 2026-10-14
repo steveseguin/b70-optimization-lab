@@ -2357,6 +2357,20 @@ one run each; the server recipe unchanged.
 Gate for the campaign: XR8 first (it changes the recipe); X24 and X16 are measurements and run regardless of
 XR8's result, but against the recipe that won the gate.
 
+**Campaign 16 partial result (XR7 on s2x, 21:35):** the gate holds — 40/40 fixed, **40/40 clean**, audit 7/7 —
+and the notes cache read 217,152 of 237,916 prompt tokens (**91.2%**, expectation 85% or more; XR6: 2.2%). The
+time bound missed: 38 min 9 s against the registered 18.5 (XR6: 20.1). The cause is in the counters: with
+thinking unset-aligned, the ten notes calls generated **70,138** tokens (~7K of thinking per cut; XR6's notes
+wrote ~2K). The alignment bought the read and paid for it in decode. The other way to align — XR4's recipe,
+effort medium on every call, notes thinking off — hit 84-90% notes cache in campaigns 13d/14 without that decode,
+but was never run on s2x. That cell is added to campaign 17 as its first arm.
+
+**Added to campaign 17 (registered 21:40, before its launch):** **XR4 on `repair-n40-s2x`** (effort medium on
+every call, notes thinking off — the cache alignment that does not think). Gate: fixed 40/40, clean 40/40, audit
+7/7, notes cache 84% or more, notes written 10,000 tokens or less, 30 minutes or less (XR4-s1x: 29.5). If it
+passes it is the recipe the window curve is read against; XR8 stays as registered (BASE = XR7, whose gate passed
+tonight).
+
 ### Campaign 18, design registered 2026-10-13 night before any generation: the 2M adversarial stream
 
 The next ledger stream doubles the length and turns on every difficulty the generator has, plus one new one aimed
