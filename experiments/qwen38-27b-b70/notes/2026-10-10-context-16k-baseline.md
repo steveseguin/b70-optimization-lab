@@ -2550,3 +2550,14 @@ harness tests: 69 and 54, all passing. The nine
 remaining accepted-wrong at 2M are the cross-counter staleness class ("received what gupe37 stood at", read stale)
 and singletons (a "no change" claim against prose that states a number in words; a fraction-sum slip). Those need
 value-at-time alignment, not another arithmetic rule, and stay open for the following campaign.
+
+### Record correction and the Gemma restart (2026-10-14 evening)
+
+The campaign 18 record above names one fault line at the attempt-1 teardown (e3:00.0, 09:59:26). The kernel log
+holds more: at 09:59:26 both cards logged engine-memory CAT errors with fault responses (03:00.0 a compute-engine
+reset, e3:00.0 a copy-engine reset), and at 10:05:48, when the orphaned server was stopped, 03:00.0 logged
+"Schedule disable failed to respond", a GT reset and a devcoredump. The coredump was not copied before it expired,
+so no evidence folder exists for it. Nothing followed: N2M and X2M ran about six hours afterwards with a clean
+log, and the log is still clean. The owner then gave sudo for the Gemma system units; the LAN service was started
+at 19:51 with the installed throughput recipe (8 x 4K slots per card), both cards loaded in about 25 s each, the
+production health check passed and http://192.168.2.45:8000 answers. No fault line during or after the load.
